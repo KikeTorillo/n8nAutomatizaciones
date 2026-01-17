@@ -15,12 +15,12 @@ export default function TecladoBilletes({
 
   // Denominaciones mexicanas
   const billetes = [
-    { valor: 1000, label: '$1,000', color: 'purple' },
-    { valor: 500, label: '$500', color: 'blue' },
+    { valor: 1000, label: '$1,000', color: 'secondary' },
+    { valor: 500, label: '$500', color: 'primary' },
     { valor: 200, label: '$200', color: 'green' },
     { valor: 100, label: '$100', color: 'red' },
     { valor: 50, label: '$50', color: 'pink' },
-    { valor: 20, label: '$20', color: 'indigo' },
+    { valor: 20, label: '$20', color: 'primary' },
   ];
 
   const monedas = [
@@ -54,12 +54,11 @@ export default function TecladoBilletes({
   };
 
   const colorClasses = {
-    purple: 'bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 hover:bg-purple-200 dark:hover:bg-purple-900/60 border-purple-200 dark:border-purple-800',
-    blue: 'bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300 hover:bg-primary-200 dark:hover:bg-primary-900/60 border-primary-200 dark:border-primary-800',
+    secondary: 'bg-secondary-100 dark:bg-secondary-900/40 text-secondary-700 dark:text-secondary-300 hover:bg-secondary-200 dark:hover:bg-secondary-900/60 border-secondary-200 dark:border-secondary-800',
+    primary: 'bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300 hover:bg-primary-200 dark:hover:bg-primary-900/60 border-primary-200 dark:border-primary-800',
     green: 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-900/60 border-green-200 dark:border-green-800',
     red: 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-900/60 border-red-200 dark:border-red-800',
     pink: 'bg-pink-100 dark:bg-pink-900/40 text-pink-700 dark:text-pink-300 hover:bg-pink-200 dark:hover:bg-pink-900/60 border-pink-200 dark:border-pink-800',
-    indigo: 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-200 dark:hover:bg-indigo-900/60 border-indigo-200 dark:border-indigo-800',
   };
 
   return (

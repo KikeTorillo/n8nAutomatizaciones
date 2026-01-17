@@ -231,7 +231,7 @@ export default function AjustesMasivosPage() {
                     icon: FileCheck,
                     label: 'Validar',
                     onClick: () => handleAbrirModalValidar(ajuste),
-                    className: 'text-blue-600 hover:text-blue-800',
+                    className: 'text-primary-600 hover:text-primary-800',
                 });
                 acciones.push({
                     icon: XCircle,

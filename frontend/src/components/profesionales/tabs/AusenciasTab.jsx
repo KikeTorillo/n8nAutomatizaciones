@@ -274,7 +274,7 @@ function AusenciasTab({ profesional }) {
           {saldo ? (
             <div className="space-y-3">
               <div className="flex items-end gap-2">
-                <span className="text-4xl font-bold text-blue-600 dark:text-blue-400">
+                <span className="text-4xl font-bold text-primary-600 dark:text-primary-400">
                   {saldo.dias_disponibles}
                 </span>
                 <span className="text-lg text-gray-500 dark:text-gray-400 mb-1">

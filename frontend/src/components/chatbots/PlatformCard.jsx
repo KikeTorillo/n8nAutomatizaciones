@@ -43,10 +43,10 @@ function PlatformCard({
       bgSelected: 'bg-pink-50 dark:bg-pink-900/20',
     },
     purple: {
-      bg: 'bg-purple-100 dark:bg-purple-900/40',
-      text: 'text-purple-600 dark:text-purple-400',
-      border: 'border-purple-600 dark:border-purple-500',
-      bgSelected: 'bg-purple-50 dark:bg-purple-900/20',
+      bg: 'bg-secondary-100 dark:bg-secondary-900/40',
+      text: 'text-secondary-600 dark:text-secondary-400',
+      border: 'border-secondary-600 dark:border-secondary-500',
+      bgSelected: 'bg-secondary-50 dark:bg-secondary-900/20',
     },
   };
 

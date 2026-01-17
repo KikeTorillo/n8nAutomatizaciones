@@ -25,7 +25,7 @@ function ProductoFormConfigTab({
     <>
       <div className="space-y-4">
         <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 flex items-center">
-          <Tag className="h-5 w-5 mr-2 text-purple-600 dark:text-purple-400" />
+          <Tag className="h-5 w-5 mr-2 text-secondary-600 dark:text-secondary-400" />
           Configuración
         </h3>
 

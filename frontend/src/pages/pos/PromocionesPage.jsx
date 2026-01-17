@@ -30,7 +30,7 @@ import PromocionStatsModal from '@/components/pos/PromocionStatsModal';
 import { useToast } from '@/hooks/useToast';
 import { useModalManager } from '@/hooks/useModalManager';
 import { useFilters } from '@/hooks/useFilters';
-import useSucursalStore from '@/store/sucursalStore';
+import useSucursalStore, { selectSucursalActiva } from '@/store/sucursalStore';
 import {
   usePromociones,
   useEliminarPromocion,
@@ -103,7 +103,7 @@ const getEstadoInfo = (promocion) => {
 
   if (hoy < inicio) {
     return {
-      color: 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400',
+      color: 'bg-primary-100 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400',
       label: 'Programada',
     };
   }
@@ -125,7 +125,7 @@ const getEstadoInfo = (promocion) => {
  */
 export default function PromocionesPage() {
   const toast = useToast();
-  const { sucursalActiva } = useSucursalStore();
+  const sucursalActiva = useSucursalStore(selectSucursalActiva);
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
 
@@ -244,7 +244,7 @@ export default function PromocionesPage() {
                   {estado.label}
                 </span>
                 {row.exclusiva && (
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 font-medium">
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-secondary-100 dark:bg-secondary-900/30 text-secondary-600 dark:text-secondary-400 font-medium">
                     Exclusiva
                   </span>
                 )}

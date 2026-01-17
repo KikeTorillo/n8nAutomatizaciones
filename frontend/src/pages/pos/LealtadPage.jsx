@@ -18,11 +18,11 @@ import {
   useEstadisticasLealtad,
   useClientesConPuntos
 } from '@/hooks/useLealtad';
-import useSucursalStore from '@/store/sucursalStore';
+import useSucursalStore, { selectSucursalActiva } from '@/store/sucursalStore';
 
 export default function LealtadPage() {
   const toast = useToast();
-  const { sucursalActiva } = useSucursalStore();
+  const sucursalActiva = useSucursalStore(selectSucursalActiva);
   const [tabActivo, setTabActivo] = useState('configuracion');
   const [drawerKey, setDrawerKey] = useState(0);
 

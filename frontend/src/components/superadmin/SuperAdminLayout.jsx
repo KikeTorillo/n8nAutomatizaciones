@@ -5,11 +5,12 @@
 import { Outlet, Link, useNavigate } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { authApi } from '@/services/api/endpoints';
-import useAuthStore from '../../store/authStore';
+import useAuthStore, { selectUser, selectLogout } from '../../store/authStore';
 import useOnboardingStore from '../../store/onboardingStore';
 
 export default function SuperAdminLayout() {
-    const { user, logout: clearAuth } = useAuthStore();
+    const user = useAuthStore(selectUser);
+    const clearAuth = useAuthStore(selectLogout);
     const { resetOnboarding } = useOnboardingStore();
     const navigate = useNavigate();
     const queryClient = useQueryClient();

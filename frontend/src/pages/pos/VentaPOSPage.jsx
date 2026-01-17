@@ -2,8 +2,8 @@ import { useState, useEffect, useMemo } from 'react';
 import { Check } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/useToast';
-import useAuthStore from '@/store/authStore';
-import useSucursalStore from '@/store/sucursalStore';
+import useAuthStore, { selectUser } from '@/store/authStore';
+import useSucursalStore, { selectGetSucursalId } from '@/store/sucursalStore';
 import { useCrearVenta } from '@/hooks/useVentas';
 import { useAccesoModulo } from '@/hooks/useAccesoModulo';
 import { useSesionCajaActiva, useCategoriasPOS, useProductosPOS, useRegistrarPagosSplit } from '@/hooks/usePOS';
@@ -32,8 +32,8 @@ import { playCashRegisterSound } from '@/utils/audioFeedback';
  */
 export default function VentaPOSPage() {
   const navigate = useNavigate();
-  const { user } = useAuthStore();
-  const { getSucursalId } = useSucursalStore();
+  const user = useAuthStore(selectUser);
+  const getSucursalId = useSucursalStore(selectGetSucursalId);
   const toast = useToast();
   const crearVenta = useCrearVenta();
   const registrarPagosSplit = useRegistrarPagosSplit();

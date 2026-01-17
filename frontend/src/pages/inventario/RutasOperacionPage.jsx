@@ -21,8 +21,8 @@ import {
 
 // Tipos de ruta con sus iconos y colores
 const TIPOS_RUTA = {
-  compra: { label: 'Compra', icon: ShoppingCart, color: 'bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300' },
-  transferencia: { label: 'Transferencia', icon: Truck, color: 'bg-purple-100 dark:bg-purple-900/40 text-purple-800 dark:text-purple-300' },
+  compra: { label: 'Compra', icon: ShoppingCart, color: 'bg-primary-100 dark:bg-primary-900/40 text-primary-800 dark:text-primary-300' },
+  transferencia: { label: 'Transferencia', icon: Truck, color: 'bg-secondary-100 dark:bg-secondary-900/40 text-secondary-800 dark:text-secondary-300' },
   dropship: { label: 'Dropship', icon: Route, color: 'bg-orange-100 dark:bg-orange-900/40 text-orange-800 dark:text-orange-300' },
   fabricacion: { label: 'Fabricación', icon: Factory, color: 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300' },
 };

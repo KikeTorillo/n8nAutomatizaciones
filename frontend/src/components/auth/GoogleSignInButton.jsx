@@ -10,7 +10,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { authApi } from '@/services/api/endpoints';
-import useAuthStore from '@/store/authStore';
+import useAuthStore, { selectSetAuth } from '@/store/authStore';
 import { useToast } from '@/hooks/useToast';
 import { Loader2 } from 'lucide-react';
 
@@ -35,7 +35,7 @@ function GoogleSignInButton({
 }) {
   const buttonRef = useRef(null);
   const navigate = useNavigate();
-  const { setAuth } = useAuthStore();
+  const setAuth = useAuthStore(selectSetAuth);
   const toast = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoaded, setIsGoogleLoaded] = useState(false);

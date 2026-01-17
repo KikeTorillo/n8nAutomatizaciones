@@ -133,7 +133,7 @@ function ConfiguracionContablePage() {
                       <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-primary-100 dark:bg-primary-900/40 text-primary-800 dark:text-primary-400">
                         POS → Contabilidad
                       </span>
-                      <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 dark:bg-purple-900/40 text-purple-800 dark:text-purple-400">
+                      <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-secondary-100 dark:bg-secondary-900/40 text-secondary-800 dark:text-secondary-400">
                         Compras → Contabilidad
                       </span>
                     </div>

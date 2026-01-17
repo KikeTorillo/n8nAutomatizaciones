@@ -819,7 +819,7 @@ function PlantillasEventos() {
                       </span>
                     )}
                     {plantilla.subcategoria && (
-                      <span className="px-2 py-0.5 text-xs bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-300 rounded-full">
+                      <span className="px-2 py-0.5 text-xs bg-secondary-100 dark:bg-secondary-900/40 text-secondary-600 dark:text-secondary-300 rounded-full">
                         {plantilla.subcategoria}
                       </span>
                     )}

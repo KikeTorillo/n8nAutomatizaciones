@@ -432,8 +432,8 @@ export function getColorEstadoTarea(estado) {
  */
 export function getResponsableInfo(tipo) {
   const info = {
-    empleado: { label: 'Empleado', color: 'text-blue-600 dark:text-blue-400' },
-    supervisor: { label: 'Supervisor', color: 'text-purple-600 dark:text-purple-400' },
+    empleado: { label: 'Empleado', color: 'text-primary-600 dark:text-primary-400' },
+    supervisor: { label: 'Supervisor', color: 'text-secondary-600 dark:text-secondary-400' },
     rrhh: { label: 'RRHH', color: 'text-green-600 dark:text-green-400' },
   };
   return info[tipo] || info.empleado;
@@ -446,7 +446,7 @@ export function getResponsableInfo(tipo) {
  */
 export function getColorProgreso(porcentaje) {
   if (porcentaje >= 100) return 'bg-green-500';
-  if (porcentaje >= 75) return 'bg-blue-500';
+  if (porcentaje >= 75) return 'bg-primary-500';
   if (porcentaje >= 50) return 'bg-yellow-500';
   if (porcentaje >= 25) return 'bg-orange-500';
   return 'bg-red-500';

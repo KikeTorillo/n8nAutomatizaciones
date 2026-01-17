@@ -46,11 +46,11 @@ export default function PromocionesAplicadas({
   const getColorTipo = (tipo) => {
     switch (tipo) {
       case 'cantidad':
-        return 'text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/40';
+        return 'text-primary-600 dark:text-primary-400 bg-primary-100 dark:bg-primary-900/40';
       case 'porcentaje':
         return 'text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/40';
       case 'monto_fijo':
-        return 'text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-900/40';
+        return 'text-secondary-600 dark:text-secondary-400 bg-secondary-100 dark:bg-secondary-900/40';
       case 'regalo':
         return 'text-pink-600 dark:text-pink-400 bg-pink-100 dark:bg-pink-900/40';
       case 'precio_especial':

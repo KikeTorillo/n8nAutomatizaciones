@@ -14,8 +14,8 @@ const ICONOS_TIPO = {
 
 // Colores por tipo de categoría
 const COLORES_TIPO = {
-  especialidad: 'bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-700',
-  nivel: 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-700',
+  especialidad: 'bg-secondary-100 dark:bg-secondary-900/40 text-secondary-700 dark:text-secondary-300 border-secondary-200 dark:border-secondary-700',
+  nivel: 'bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300 border-primary-200 dark:border-primary-700',
   area: 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 border-green-200 dark:border-green-700',
   certificacion: 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-300 border-yellow-200 dark:border-yellow-700',
   general: 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-600',

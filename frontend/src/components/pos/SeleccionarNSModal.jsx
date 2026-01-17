@@ -82,17 +82,17 @@ export default function SeleccionarNSModal({
     >
       <div className="space-y-4">
         {/* Info del producto */}
-        <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4 border border-purple-200 dark:border-purple-800">
+        <div className="bg-secondary-50 dark:bg-secondary-900/20 rounded-lg p-4 border border-secondary-200 dark:border-secondary-800">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-purple-100 dark:bg-purple-800 rounded-lg">
-              <Hash className="h-5 w-5 text-purple-600 dark:text-purple-300" />
+            <div className="p-2 bg-secondary-100 dark:bg-secondary-800 rounded-lg">
+              <Hash className="h-5 w-5 text-secondary-600 dark:text-secondary-300" />
             </div>
             <div>
-              <p className="font-medium text-purple-900 dark:text-purple-200">
+              <p className="font-medium text-secondary-900 dark:text-secondary-200">
                 {producto?.nombre}
               </p>
-              <p className="text-sm text-purple-700 dark:text-purple-400">
-                Selecciona {cantidad} número{cantidad > 1 ? 's' : ''} de serie
+              <p className="text-sm text-secondary-700 dark:text-secondary-400">
+                Selecciona {cantidad} numero{cantidad > 1 ? 's' : ''} de serie
               </p>
             </div>
           </div>

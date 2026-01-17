@@ -17,9 +17,9 @@ import { clientesApi } from '@/services/api/endpoints';
 // ====================================================================
 
 export const TIPOS_ACTIVIDAD = [
-  { value: 'nota', label: 'Nota', icon: 'FileText', color: 'text-blue-500' },
+  { value: 'nota', label: 'Nota', icon: 'FileText', color: 'text-primary-500' },
   { value: 'llamada', label: 'Llamada', icon: 'Phone', color: 'text-green-500' },
-  { value: 'email', label: 'Email', icon: 'Mail', color: 'text-purple-500' },
+  { value: 'email', label: 'Email', icon: 'Mail', color: 'text-secondary-500' },
   { value: 'tarea', label: 'Tarea', icon: 'CheckSquare', color: 'text-orange-500' },
   { value: 'sistema', label: 'Sistema', icon: 'Settings', color: 'text-gray-500' },
 ];
@@ -32,7 +32,7 @@ export const TIPOS_TIMELINE = [
 
 export const PRIORIDADES = [
   { value: 'baja', label: 'Baja', color: 'text-gray-500', bgColor: 'bg-gray-100 dark:bg-gray-700' },
-  { value: 'normal', label: 'Normal', color: 'text-blue-500', bgColor: 'bg-blue-100 dark:bg-blue-900' },
+  { value: 'normal', label: 'Normal', color: 'text-primary-500', bgColor: 'bg-primary-100 dark:bg-primary-900' },
   { value: 'alta', label: 'Alta', color: 'text-orange-500', bgColor: 'bg-orange-100 dark:bg-orange-900' },
   { value: 'urgente', label: 'Urgente', color: 'text-red-500', bgColor: 'bg-red-100 dark:bg-red-900' },
 ];

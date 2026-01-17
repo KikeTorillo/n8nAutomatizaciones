@@ -1,18 +1,26 @@
 import { useEffect } from 'react';
-import useThemeStore from '@/store/themeStore';
+import useThemeStore, {
+  selectTheme,
+  selectResolvedTheme,
+  selectSetTheme,
+  selectToggleTheme,
+  selectIsDark,
+  selectInitSystemListener,
+  selectApplyTheme,
+} from '@/store/themeStore';
 
 /**
  * Hook para acceder al tema de la aplicación
  * @returns {Object} - { theme, resolvedTheme, setTheme, toggleTheme, isDark }
  */
 export function useTheme() {
-  const theme = useThemeStore((state) => state.theme);
-  const resolvedTheme = useThemeStore((state) => state.resolvedTheme);
-  const setTheme = useThemeStore((state) => state.setTheme);
-  const toggleTheme = useThemeStore((state) => state.toggleTheme);
-  const isDark = useThemeStore((state) => state.isDark);
-  const initSystemListener = useThemeStore((state) => state.initSystemListener);
-  const applyTheme = useThemeStore((state) => state.applyTheme);
+  const theme = useThemeStore(selectTheme);
+  const resolvedTheme = useThemeStore(selectResolvedTheme);
+  const setTheme = useThemeStore(selectSetTheme);
+  const toggleTheme = useThemeStore(selectToggleTheme);
+  const isDark = useThemeStore(selectIsDark);
+  const initSystemListener = useThemeStore(selectInitSystemListener);
+  const applyTheme = useThemeStore(selectApplyTheme);
 
   // Inicializar el tema al montar
   useEffect(() => {

@@ -24,7 +24,7 @@ import {
   CalendarOff,
 } from 'lucide-react';
 
-import useAuthStore from '@/store/authStore';
+import useAuthStore, { selectLogout, selectUser } from '@/store/authStore';
 import useOnboardingStore from '@/store/onboardingStore';
 import { useModulos } from '@/hooks/useModulos';
 import { useAppNotifications } from '@/hooks/useAppNotifications';
@@ -46,7 +46,8 @@ import { NotificacionesBell } from '@/components/notificaciones';
 function AppHomePage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { logout: clearAuth, user } = useAuthStore();
+  const clearAuth = useAuthStore(selectLogout);
+  const user = useAuthStore(selectUser);
   const { resetOnboarding } = useOnboardingStore();
 
   // Modales centralizados
@@ -437,8 +438,8 @@ function AppHomePage() {
                     </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">Ventas Hoy</p>
                   </div>
-                  <div className="text-center p-2 bg-blue-50 dark:bg-blue-900/20 rounded">
-                    <p className="text-lg font-bold text-blue-600 dark:text-blue-400">
+                  <div className="text-center p-2 bg-primary-50 dark:bg-primary-900/20 rounded">
+                    <p className="text-lg font-bold text-primary-600 dark:text-primary-400">
                       {metricasSucursales?.citas?.hoy?.total || 0}
                     </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">Citas Hoy</p>

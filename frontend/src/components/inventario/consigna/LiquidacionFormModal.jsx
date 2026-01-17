@@ -178,10 +178,10 @@ export default function LiquidacionFormModal({ isOpen, onClose, acuerdos = [] })
         </div>
 
         {/* Info */}
-        <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+        <div className="p-3 bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg">
           <div className="flex items-start gap-2">
-            <Calculator className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5" />
-            <p className="text-sm text-blue-700 dark:text-blue-300">
+            <Calculator className="h-4 w-4 text-primary-600 dark:text-primary-400 mt-0.5" />
+            <p className="text-sm text-primary-700 dark:text-primary-300">
               Se calcularan todas las ventas del periodo seleccionado que no hayan sido liquidadas previamente.
             </p>
           </div>

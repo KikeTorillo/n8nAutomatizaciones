@@ -242,7 +242,7 @@ export default function ConteosPage() {
                     icon: Play,
                     label: 'Iniciar',
                     onClick: () => handleAbrirModalIniciar(conteo),
-                    className: 'text-blue-600 hover:text-blue-800',
+                    className: 'text-primary-600 hover:text-primary-800',
                 });
                 acciones.push({
                     icon: XCircle,
@@ -257,7 +257,7 @@ export default function ConteosPage() {
                     icon: ClipboardList,
                     label: 'Continuar conteo',
                     onClick: () => handleVerDetalle(conteo.id),
-                    className: 'text-blue-600 hover:text-blue-800',
+                    className: 'text-primary-600 hover:text-primary-800',
                 });
                 acciones.push({
                     icon: XCircle,

@@ -53,8 +53,8 @@ const colorClasses = {
     text: 'text-red-600 dark:text-red-400',
   },
   purple: {
-    bg: 'bg-purple-100 dark:bg-purple-900/40',
-    text: 'text-purple-600 dark:text-purple-400',
+    bg: 'bg-secondary-100 dark:bg-secondary-900/40',
+    text: 'text-secondary-600 dark:text-secondary-400',
   },
   cyan: {
     bg: 'bg-cyan-100 dark:bg-cyan-900/40',

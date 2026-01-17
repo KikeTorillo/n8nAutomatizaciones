@@ -18,11 +18,11 @@ const normalizarFecha = (fecha) => {
  */
 export const COLORES_TIPO_BLOQUEO = {
   vacaciones: {
-    bg: 'bg-blue-100',
-    text: 'text-blue-800',
-    border: 'border-blue-500',
-    badge: 'bg-blue-500',
-    hex: '#3B82F6',
+    bg: 'bg-primary-100',
+    text: 'text-primary-800',
+    border: 'border-primary-500',
+    badge: 'bg-primary-500',
+    hex: '#753572',
   },
   feriado: {
     bg: 'bg-red-100',
@@ -39,10 +39,10 @@ export const COLORES_TIPO_BLOQUEO = {
     hex: '#F59E0B',
   },
   evento_especial: {
-    bg: 'bg-purple-100',
-    text: 'text-purple-800',
-    border: 'border-purple-500',
-    badge: 'bg-purple-500',
+    bg: 'bg-secondary-100',
+    text: 'text-secondary-800',
+    border: 'border-secondary-500',
+    badge: 'bg-secondary-500',
     hex: '#8B5CF6',
   },
   emergencia: {
@@ -140,7 +140,7 @@ export const ORIGENES_BLOQUEO = {
   vacaciones: {
     label: 'Vacaciones',
     descripcion: 'Generado por solicitud de vacaciones aprobada',
-    color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
+    color: 'bg-primary-100 text-primary-700 dark:bg-primary-900/40 dark:text-primary-300',
     editable: false,
     moduloRelacionado: 'Vacaciones',
   },
@@ -154,7 +154,7 @@ export const ORIGENES_BLOQUEO = {
   importado: {
     label: 'Importado',
     descripcion: 'Importado desde sistema externo',
-    color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300',
+    color: 'bg-secondary-100 text-secondary-700 dark:bg-secondary-900/40 dark:text-secondary-300',
     editable: false,
   },
   // 🏥 INCAPACIDAD (Enero 2026)

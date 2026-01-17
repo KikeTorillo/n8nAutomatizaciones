@@ -40,9 +40,9 @@ const ICONOS = {
 
 // Colores por tipo
 const COLORES_TIPO = {
-  nota: 'bg-blue-500',
+  nota: 'bg-primary-500',
   llamada: 'bg-green-500',
-  email: 'bg-purple-500',
+  email: 'bg-secondary-500',
   tarea: 'bg-orange-500',
   sistema: 'bg-gray-500',
   cita: 'bg-primary-500',

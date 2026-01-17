@@ -10,7 +10,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { authApi } from '@/services/api/endpoints';
-import useAuthStore from '@/store/authStore';
+import useAuthStore, { selectSetAuth } from '@/store/authStore';
 import { useToast } from '@/hooks/useToast';
 import AuthLayout from '@/components/auth/AuthLayout';
 import { Loader2, CheckCircle, XCircle, RefreshCw } from 'lucide-react';
@@ -19,7 +19,7 @@ import { Button } from '@/components/ui';
 function MagicLinkVerifyPage() {
   const { token } = useParams();
   const navigate = useNavigate();
-  const { setAuth } = useAuthStore();
+  const setAuth = useAuthStore(selectSetAuth);
   const toast = useToast();
 
   const [status, setStatus] = useState('verificando'); // verificando, exito, error

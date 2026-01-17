@@ -7,7 +7,7 @@ import {
   Textarea
 } from '@/components/ui';
 import { useToast } from '@/hooks/useToast';
-import useAuthStore from '@/store/authStore';
+import useAuthStore, { selectUser } from '@/store/authStore';
 import { useCancelarVenta } from '@/hooks/useVentas';
 
 /**
@@ -16,7 +16,7 @@ import { useCancelarVenta } from '@/hooks/useVentas';
  */
 export default function CancelarVentaModal({ isOpen, onClose, venta }) {
   const toast = useToast();
-  const { user } = useAuthStore();
+  const user = useAuthStore(selectUser);
   const cancelarMutation = useCancelarVenta();
 
   const [motivo, setMotivo] = useState('');

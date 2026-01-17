@@ -129,7 +129,7 @@ export default function ConfiguracionLealtadTab({ config, isLoading, onGuardar }
             error={errors.puntos_por_peso?.message}
           />
           <div className="flex items-end">
-            <div className="p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg text-sm text-blue-800 dark:text-blue-300 flex-1">
+            <div className="p-3 bg-primary-50 dark:bg-primary-900/30 rounded-lg text-sm text-primary-800 dark:text-primary-300 flex-1">
               Compra de $100 = <strong>{(100 * puntosGanados).toFixed(0)} puntos</strong>
             </div>
           </div>

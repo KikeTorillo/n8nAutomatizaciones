@@ -49,7 +49,7 @@ export default function CorteCajaPage() {
     const colores = {
       efectivo: 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300',
       tarjeta: 'bg-primary-100 dark:bg-primary-900/40 text-primary-800 dark:text-primary-300',
-      transferencia: 'bg-purple-100 dark:bg-purple-900/40 text-purple-800 dark:text-purple-300',
+      transferencia: 'bg-secondary-100 dark:bg-secondary-900/40 text-secondary-800 dark:text-secondary-300',
       qr: 'bg-cyan-100 dark:bg-cyan-900/40 text-cyan-800 dark:text-cyan-300',
       mixto: 'bg-orange-100 dark:bg-orange-900/40 text-orange-800 dark:text-orange-300',
     };
@@ -179,8 +179,8 @@ export default function CorteCajaPage() {
                     ${parseFloat(resumen.ticket_promedio || 0).toFixed(2)}
                   </p>
                 </div>
-                <div className="bg-purple-100 dark:bg-purple-900/40 p-3 rounded-lg">
-                  <TrendingUp className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                <div className="bg-secondary-100 dark:bg-secondary-900/40 p-3 rounded-lg">
+                  <TrendingUp className="h-6 w-6 text-secondary-600 dark:text-secondary-400" />
                 </div>
               </div>
             </div>

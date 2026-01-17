@@ -147,7 +147,7 @@ function ClienteHeader({ cliente, estadisticas, onEdit }) {
         icon: Calendar,
         label: 'Total Citas',
         value: estadisticas?.total_citas || 0,
-        color: 'blue',
+        color: 'primary',
       },
       {
         key: 'compras',
@@ -205,8 +205,8 @@ function ClienteHeader({ cliente, estadisticas, onEdit }) {
                 <span
                   className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full ${
                     cliente.tipo === 'empresa'
-                      ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300'
-                      : 'bg-purple-100 dark:bg-purple-900/40 text-purple-800 dark:text-purple-300'
+                      ? 'bg-primary-100 dark:bg-primary-900/40 text-primary-800 dark:text-primary-300'
+                      : 'bg-secondary-100 dark:bg-secondary-900/40 text-secondary-800 dark:text-secondary-300'
                   }`}
                 >
                   {cliente.tipo === 'empresa' ? (

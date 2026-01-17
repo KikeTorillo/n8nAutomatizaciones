@@ -193,8 +193,8 @@ function MiPerfilPage() {
           {/* Widget Saldo de Vacaciones */}
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
             <div className="flex items-center gap-3 mb-4">
-              <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                <Palmtree className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+              <div className="p-3 bg-primary-100 dark:bg-primary-900/30 rounded-lg">
+                <Palmtree className="h-6 w-6 text-primary-600 dark:text-primary-400" />
               </div>
               <div>
                 <h3 className="font-semibold text-gray-900 dark:text-gray-100">
@@ -209,7 +209,7 @@ function MiPerfilPage() {
             {saldo ? (
               <div className="space-y-3">
                 <div className="flex items-end gap-2">
-                  <span className="text-4xl font-bold text-blue-600 dark:text-blue-400">
+                  <span className="text-4xl font-bold text-primary-600 dark:text-primary-400">
                     {saldo.dias_disponibles}
                   </span>
                   <span className="text-lg text-gray-500 dark:text-gray-400 mb-1">

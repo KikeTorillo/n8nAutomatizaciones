@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { serviciosApi } from '@/services/api/endpoints';
-import useAuthStore from '@/store/authStore';
+import useAuthStore, { selectUser } from '@/store/authStore';
 import { useModulos } from '@/hooks/useModulos';
 import { BackButton, Button, LimitProgressBar } from '@/components/ui';
 import CitasDelDia from '@/components/dashboard/CitasDelDia';
@@ -22,7 +22,7 @@ import {
  */
 function Dashboard() {
   const navigate = useNavigate();
-  const { user } = useAuthStore();
+  const user = useAuthStore(selectUser);
 
   // Hook de módulos activos
   const { tieneInventario } = useModulos();

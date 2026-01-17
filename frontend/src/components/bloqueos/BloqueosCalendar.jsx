@@ -163,7 +163,7 @@ function BloqueosCalendar({ profesionalId = null, onVerBloqueo, onCrearBloqueo }
           <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2">Tipos de bloqueo:</p>
           <div className="flex flex-wrap gap-3">
             <div className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded-full bg-purple-500"></div>
+              <div className="w-3 h-3 rounded-full bg-secondary-500"></div>
               <span className="text-xs text-gray-600 dark:text-gray-400">{LABELS_TIPO_BLOQUEO.vacaciones}</span>
             </div>
             <div className="flex items-center gap-1.5">

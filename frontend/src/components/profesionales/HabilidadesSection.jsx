@@ -21,15 +21,15 @@ import {
 // Colores para niveles
 const nivelColors = {
   basico: 'bg-gray-200 dark:bg-gray-600',
-  intermedio: 'bg-blue-200 dark:bg-blue-800',
+  intermedio: 'bg-primary-200 dark:bg-primary-800',
   avanzado: 'bg-green-200 dark:bg-green-800',
-  experto: 'bg-purple-200 dark:bg-purple-800',
+  experto: 'bg-secondary-200 dark:bg-secondary-800',
 };
 
 // Colores para categorías
 const categoriaColors = {
-  tecnica: 'text-blue-600 dark:text-blue-400',
-  blanda: 'text-purple-600 dark:text-purple-400',
+  tecnica: 'text-primary-600 dark:text-primary-400',
+  blanda: 'text-secondary-600 dark:text-secondary-400',
   idioma: 'text-green-600 dark:text-green-400',
   software: 'text-orange-600 dark:text-orange-400',
   certificacion: 'text-red-600 dark:text-red-400',
@@ -82,7 +82,7 @@ function HabilidadTag({ item: hab, onEdit, onDelete, onVerificar, canVerify, isV
         <button
           type="button"
           onClick={onEdit}
-          className="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded transition-colors"
+          className="p-1 text-gray-400 hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded transition-colors"
           title="Editar"
         >
           <Edit2 className="h-3.5 w-3.5" />

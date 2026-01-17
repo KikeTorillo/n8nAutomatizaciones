@@ -1,4 +1,4 @@
-import { forwardRef, useState, useRef, useEffect } from 'react';
+import { forwardRef, useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import { Check, ChevronDown, X } from 'lucide-react';
 
@@ -45,11 +45,14 @@ const MultiSelect = forwardRef(
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    // Opciones seleccionadas
-    const selectedOptions = options.filter(opt => value.includes(opt.value));
+    // Opciones seleccionadas (memoizado)
+    const selectedOptions = useMemo(() =>
+      options.filter(opt => value.includes(opt.value)),
+      [options, value]
+    );
 
-    // Handler para toggle de una opción
-    const handleToggle = (optionValue) => {
+    // Handler para toggle de una opción (memoizado)
+    const handleToggle = useCallback((optionValue) => {
       if (disabled) return;
 
       let newValue;
@@ -65,23 +68,23 @@ const MultiSelect = forwardRef(
       }
 
       onChange?.(newValue);
-    };
+    }, [disabled, value, max, onChange]);
 
-    // Handler para remover un tag
-    const handleRemove = (optionValue, e) => {
+    // Handler para remover un tag (memoizado)
+    const handleRemove = useCallback((optionValue, e) => {
       e.stopPropagation();
       if (disabled) return;
 
       const newValue = value.filter(v => v !== optionValue);
       onChange?.(newValue);
-    };
+    }, [disabled, value, onChange]);
 
-    // Handler para limpiar todo
-    const handleClearAll = (e) => {
+    // Handler para limpiar todo (memoizado)
+    const handleClearAll = useCallback((e) => {
       e.stopPropagation();
       if (disabled) return;
       onChange?.([]);
-    };
+    }, [disabled, onChange]);
 
     const baseStyles = 'w-full min-h-[48px] px-4 py-2 border rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-0 disabled:opacity-50 disabled:cursor-not-allowed bg-white dark:bg-gray-800 cursor-pointer';
 

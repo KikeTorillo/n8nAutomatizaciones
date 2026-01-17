@@ -41,7 +41,6 @@ function SmartButton({ icon: Icon, value, label, onClick, color = 'primary' }) {
   const colorClasses = {
     primary: 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 hover:bg-primary-100 dark:hover:bg-primary-900/30',
     green: 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/30',
-    blue: 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30',
     yellow: 'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400 hover:bg-yellow-100 dark:hover:bg-yellow-900/30',
   };
 
@@ -118,7 +117,7 @@ export default function ClienteGeneralTab({ cliente, estadisticas }) {
           icon={ShoppingCart}
           value={estadisticas?.total_compras || 0}
           label="Ventas POS"
-          color="blue"
+          color="primary"
           onClick={() => navigate(`/pos/historial?cliente_id=${clienteId}`)}
         />
         <SmartButton
@@ -180,7 +179,7 @@ export default function ClienteGeneralTab({ cliente, estadisticas }) {
               {/* Canales Digitales */}
               {cliente.telegram_chat_id && (
                 <div className="flex items-center gap-3">
-                  <Send className="w-5 h-5 text-blue-500" />
+                  <Send className="w-5 h-5 text-primary-500" />
                   <div>
                     <p className="text-sm text-gray-600 dark:text-gray-400">Telegram</p>
                     <p className="text-sm font-medium text-gray-900 dark:text-gray-100 font-mono">

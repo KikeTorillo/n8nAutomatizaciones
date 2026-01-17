@@ -18,7 +18,7 @@ import { cn } from '@/lib/utils';
 
 const colorClasses = {
   primary: 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300',
-  blue: 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300',
+  blue: 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300',
   green: 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300',
   yellow: 'bg-yellow-50 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300',
   red: 'bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300',

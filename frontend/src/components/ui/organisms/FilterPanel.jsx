@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback, memo } from 'react';
 import { Filter, X, ChevronDown, ChevronUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Button from '../atoms/Button';
@@ -89,13 +89,13 @@ export function FilterPanel({
     return count;
   }, [filters, filterConfig, searchKey]);
 
-  const handleSearchChange = (e) => {
+  const handleSearchChange = useCallback((e) => {
     onFilterChange(searchKey, e.target.value);
-  };
+  }, [onFilterChange, searchKey]);
 
-  const handleFilterChange = (key, value) => {
+  const handleFilterChange = useCallback((key, value) => {
     onFilterChange(key, value);
-  };
+  }, [onFilterChange]);
 
   const renderFilterInput = (config) => {
     const value = filters[config.key] ?? '';

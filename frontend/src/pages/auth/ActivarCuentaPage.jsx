@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { Eye, EyeOff, Check, AlertCircle, Loader2, Building2 } from 'lucide-react';
 import { useToast } from '@/hooks/useToast';
 import { authApi } from '@/services/api/endpoints';
-import useAuthStore from '@/store/authStore';
+import useAuthStore, { selectSetAuth } from '@/store/authStore';
 import AuthLayout from '@/components/auth/AuthLayout';
 import FormField from '@/components/forms/FormField';
 import { Button } from '@/components/ui';
@@ -34,7 +34,7 @@ export default function ActivarCuentaPage() {
   const { token } = useParams();
   const navigate = useNavigate();
   const toast = useToast();
-  const { setAuth } = useAuthStore();
+  const setAuth = useAuthStore(selectSetAuth);
 
   const [validando, setValidando] = useState(true);
   const [activacion, setActivacion] = useState(null);

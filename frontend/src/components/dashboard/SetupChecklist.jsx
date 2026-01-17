@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { organizacionesApi } from '@/services/api/endpoints';
-import useAuthStore from '@/store/authStore';
+import useAuthStore, { selectUser } from '@/store/authStore';
 import { Button } from '@/components/ui';
 import {
   Rocket,
@@ -22,7 +22,7 @@ import {
  */
 function SetupChecklist() {
   const navigate = useNavigate();
-  const { user } = useAuthStore();
+  const user = useAuthStore(selectUser);
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   // Obtener progreso del setup

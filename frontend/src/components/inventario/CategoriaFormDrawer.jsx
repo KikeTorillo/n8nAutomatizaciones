@@ -39,10 +39,10 @@ const COLORES_PREDEFINIDOS = [
   '#EF4444', // red-500
   '#F59E0B', // amber-500
   '#10B981', // green-500
-  '#3B82F6', // primary-500
-  '#8B5CF6', // violet-500
+  '#753572', // primary-500
+  '#8B5CF6', // primary-500 (violet)
   '#EC4899', // pink-500
-  '#6366F1', // primary-500
+  '#753572', // primary-500
   '#14B8A6', // teal-500
 ];
 

@@ -79,7 +79,7 @@ function ContabilidadPage() {
     const colors = {
       blue: 'bg-primary-100 dark:bg-primary-900/40 text-primary-600 dark:text-primary-400',
       green: 'bg-green-100 dark:bg-green-900/40 text-green-600 dark:text-green-400',
-      purple: 'bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400',
+      purple: 'bg-secondary-100 dark:bg-secondary-900/40 text-secondary-600 dark:text-secondary-400',
       yellow: 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-600 dark:text-yellow-400',
     };
     return colors[color] || colors.blue;
@@ -262,8 +262,8 @@ function ContabilidadPage() {
             onClick={() => navigate('/contabilidad/reportes?tipo=resultados')}
           >
             <div className="flex items-center gap-4">
-              <div className="p-3 bg-purple-100 dark:bg-purple-900/40 rounded-lg">
-                <DollarSign className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+              <div className="p-3 bg-secondary-100 dark:bg-secondary-900/40 rounded-lg">
+                <DollarSign className="w-6 h-6 text-secondary-600 dark:text-secondary-400" />
               </div>
               <div>
                 <h3 className="font-semibold text-gray-900 dark:text-gray-100">Estado de Resultados</h3>

@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { authApi } from '@/services/api/endpoints';
-import useAuthStore from '@/store/authStore';
+import useAuthStore, { selectSetAuth, selectIsAuthenticated, selectUser } from '@/store/authStore';
 import { loginSchema } from '@/lib/validations';
 import AuthLayout from '@/components/auth/AuthLayout';
 import FormField from '@/components/forms/FormField';
@@ -22,7 +22,9 @@ const magicLinkSchema = z.object({
 function Login() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { setAuth, isAuthenticated, user } = useAuthStore();
+  const setAuth = useAuthStore(selectSetAuth);
+  const isAuthenticated = useAuthStore(selectIsAuthenticated);
+  const user = useAuthStore(selectUser);
   const toast = useToast();
   const [showPassword, setShowPassword] = useState(false);
   const [showMagicLink, setShowMagicLink] = useState(false);

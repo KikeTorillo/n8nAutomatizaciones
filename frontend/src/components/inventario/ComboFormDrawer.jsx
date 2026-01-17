@@ -6,7 +6,7 @@ import { Button, Drawer, Input } from '@/components/ui';
 import ProductoSelectorInline from '@/components/pos/ProductoSelectorInline';
 import { useToast } from '@/hooks/useToast';
 import { useCombo, useCrearCombo, useActualizarCombo } from '@/hooks/useCombosModificadores';
-import useSucursalStore from '@/store/sucursalStore';
+import useSucursalStore, { selectSucursalActiva } from '@/store/sucursalStore';
 
 // Tipos de precio disponibles
 const TIPOS_PRECIO = [
@@ -29,7 +29,7 @@ export default function ComboFormDrawer({ isOpen, onClose, combo, onSuccess }) {
   const toast = useToast();
   const crearMutation = useCrearCombo();
   const actualizarMutation = useActualizarCombo();
-  const { sucursalActiva } = useSucursalStore();
+  const sucursalActiva = useSucursalStore(selectSucursalActiva);
 
   const esEdicion = !!combo;
 

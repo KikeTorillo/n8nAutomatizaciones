@@ -14,15 +14,15 @@ import {
 import { Button, StatCardGrid } from '@/components/ui';
 import ProfesionalesPageLayout from '@/components/profesionales/ProfesionalesPageLayout';
 import { useOrganigrama } from '@/hooks/useOrganigrama';
-import useThemeStore from '@/store/themeStore';
+import useThemeStore, { selectResolvedTheme } from '@/store/themeStore';
 
 // Ene 2026: Lazy loading de D3OrgChart (~650KB d3)
 const D3OrgChart = lazy(() => import('@/components/profesionales/D3OrgChart'));
 
 // Colores por tipo de empleado (para leyenda)
 const TIPO_COLORS = {
-  gerencial: 'bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 border-purple-300 dark:border-purple-700',
-  administrativo: 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-700',
+  gerencial: 'bg-secondary-100 dark:bg-secondary-900/40 text-secondary-700 dark:text-secondary-300 border-secondary-300 dark:border-secondary-700',
+  administrativo: 'bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300 border-primary-300 dark:border-primary-700',
   operativo: 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 border-green-300 dark:border-green-700',
   ventas: 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-700',
 };
@@ -48,7 +48,7 @@ const ESTADO_COLORS = {
  */
 function OrganigramaPage() {
   const navigate = useNavigate();
-  const { resolvedTheme } = useThemeStore();
+  const resolvedTheme = useThemeStore(selectResolvedTheme);
   const isDarkMode = resolvedTheme === 'dark';
 
   const { arbol, stats, isLoading, departamentos } = useOrganigrama();
@@ -105,8 +105,8 @@ function OrganigramaPage() {
   const statCards = [
     { icon: Users, label: 'Total', value: stats.total, color: 'gray' },
     { icon: User, label: 'Activos', value: stats.activos, color: 'green' },
-    { icon: Network, label: 'Top-level', value: stats.raices, color: 'blue' },
-    { icon: BarChart3, label: 'Niveles', value: stats.profundidadMaxima, color: 'purple' },
+    { icon: Network, label: 'Top-level', value: stats.raices, color: 'primary' },
+    { icon: BarChart3, label: 'Niveles', value: stats.profundidadMaxima, color: 'secondary' },
   ];
 
   return (

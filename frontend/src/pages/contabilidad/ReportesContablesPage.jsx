@@ -594,8 +594,8 @@ function ReporteBalanceGeneral({ data, isLoading }) {
       total: 'text-red-600 dark:text-red-400',
     },
     purple: {
-      title: 'text-purple-800 dark:text-purple-300',
-      total: 'text-purple-600 dark:text-purple-400',
+      title: 'text-secondary-800 dark:text-secondary-300',
+      total: 'text-secondary-600 dark:text-secondary-400',
     },
   };
 
@@ -657,7 +657,7 @@ function ReporteBalanceGeneral({ data, isLoading }) {
               {formatCurrency(data.pasivos?.total || 0)}
             </span>
             <span className="text-gray-700 dark:text-gray-300">+</span>
-            <span className="font-bold text-purple-600 dark:text-purple-400">
+            <span className="font-bold text-secondary-600 dark:text-secondary-400">
               {formatCurrency(data.capital?.total || 0)}
             </span>
           </div>

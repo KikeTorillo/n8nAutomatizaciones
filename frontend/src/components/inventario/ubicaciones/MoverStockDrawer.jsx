@@ -129,8 +129,8 @@ function MoverStockDrawer({ isOpen, onClose, sucursalId }) {
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col h-full">
         <div className="flex-1 overflow-y-auto px-6 py-4 space-y-6">
           {/* Info */}
-          <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-            <p className="text-sm text-blue-800 dark:text-blue-300">
+          <div className="bg-primary-50 dark:bg-primary-900/30 border border-primary-200 dark:border-primary-800 rounded-lg p-4">
+            <p className="text-sm text-primary-800 dark:text-primary-300">
               Selecciona la ubicación de origen, el producto a mover y la ubicación de destino.
             </p>
           </div>

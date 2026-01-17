@@ -30,8 +30,8 @@ export const NODE_STYLES = {
     icon: 'text-white',
   },
   accion: {
-    bg: 'bg-blue-500 dark:bg-blue-600',
-    border: 'border-blue-600 dark:border-blue-500',
+    bg: 'bg-primary-500 dark:bg-primary-600',
+    border: 'border-primary-600 dark:border-primary-500',
     text: 'text-white',
     icon: 'text-white',
   },

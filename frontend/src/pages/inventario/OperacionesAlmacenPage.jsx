@@ -42,8 +42,8 @@ import {
   LABELS_ESTADO_OPERACION,
   COLORES_ESTADO_OPERACION,
 } from '@/hooks/useOperacionesAlmacen';
-import useSucursalStore from '@/store/sucursalStore';
-import useAuthStore from '@/store/authStore';
+import useSucursalStore, { selectGetSucursalId } from '@/store/sucursalStore';
+import useAuthStore, { selectUser } from '@/store/authStore';
 
 /**
  * Iconos por tipo de operación
@@ -62,10 +62,10 @@ const ICONOS_TIPO = {
  * Colores de badge por tipo de operación
  */
 const COLORES_TIPO = {
-  [TIPOS_OPERACION.RECEPCION]: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
+  [TIPOS_OPERACION.RECEPCION]: 'bg-primary-100 text-primary-800 dark:bg-primary-900/30 dark:text-primary-300',
   [TIPOS_OPERACION.CONTROL_CALIDAD]: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300',
   [TIPOS_OPERACION.ALMACENAMIENTO]: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
-  [TIPOS_OPERACION.PICKING]: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300',
+  [TIPOS_OPERACION.PICKING]: 'bg-secondary-100 text-secondary-800 dark:bg-secondary-900/30 dark:text-secondary-300',
   [TIPOS_OPERACION.EMPAQUE]: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300',
   [TIPOS_OPERACION.ENVIO]: 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300',
   [TIPOS_OPERACION.TRANSFERENCIA_INTERNA]: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300',
@@ -79,7 +79,7 @@ function OperacionCard({ operacion, onVerDetalle, onAsignar, onIniciar, onCancel
 
   const colorEstado = {
     borrador: 'border-l-gray-400',
-    asignada: 'border-l-blue-400',
+    asignada: 'border-l-primary-400',
     en_proceso: 'border-l-yellow-400',
     parcial: 'border-l-orange-400',
     completada: 'border-l-green-400',
@@ -190,7 +190,7 @@ function KanbanColumn({ titulo, operaciones, onVerDetalle, onAsignar, onIniciar,
 
   const coloresHeader = {
     gray: 'bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-600',
-    blue: 'bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-700',
+    blue: 'bg-primary-50 dark:bg-primary-900/20 border-primary-300 dark:border-primary-700',
     yellow: 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-300 dark:border-yellow-700',
     orange: 'bg-orange-50 dark:bg-orange-900/20 border-orange-300 dark:border-orange-700',
     green: 'bg-green-50 dark:bg-green-900/20 border-green-300 dark:border-green-700',
@@ -249,8 +249,8 @@ function KanbanColumn({ titulo, operaciones, onVerDetalle, onAsignar, onIniciar,
 export default function OperacionesAlmacenPage() {
   const navigate = useNavigate();
   const { success: showSuccess, error: showError, warning: showWarning } = useToast();
-  const { getSucursalId } = useSucursalStore();
-  const { user } = useAuthStore();
+  const getSucursalId = useSucursalStore(selectGetSucursalId);
+  const user = useAuthStore(selectUser);
 
   // Estado de filtros
   const [filtros, setFiltros] = useState({

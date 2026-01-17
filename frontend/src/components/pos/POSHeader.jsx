@@ -46,7 +46,7 @@ export default function POSHeader({
           <div
             className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs ${
               isDisplayConnected
-                ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'
                 : 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500'
             }`}
             title={isDisplayConnected ? 'Pantalla del cliente conectada' : 'Pantalla del cliente desconectada'}
@@ -64,7 +64,7 @@ export default function POSHeader({
               >
                 <DollarSign className="h-4 w-4" />
                 <span className="font-medium hidden sm:inline">Caja:</span>
-                <span className="font-bold">${(totalesSesion?.monto_esperado || sesionActiva.monto_inicial || 0).toFixed(2)}</span>
+                <span className="font-bold">${Number(totalesSesion?.monto_esperado || sesionActiva?.monto_inicial || 0).toFixed(2)}</span>
                 <MoreVertical className="h-4 w-4" />
               </button>
 

@@ -19,12 +19,12 @@ import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
 import ComboFormDrawer from '@/components/inventario/ComboFormDrawer';
 import { useCrudHandlers } from '@/hooks/useCrudHandlers';
 import { useCombos, useEliminarCombo } from '@/hooks/useCombosModificadores';
-import useSucursalStore from '@/store/sucursalStore';
+import useSucursalStore, { selectSucursalActiva } from '@/store/sucursalStore';
 
 // Etiquetas para tipos de precio
 const TIPO_PRECIO_LABELS = {
   fijo: { label: 'Precio fijo', color: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300' },
-  suma_componentes: { label: 'Suma', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' },
+  suma_componentes: { label: 'Suma', color: 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300' },
   descuento_porcentaje: { label: 'Descuento', color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' },
 };
 
@@ -35,7 +35,7 @@ const MANEJO_STOCK_LABELS = {
 };
 
 export default function CombosPage() {
-  const { sucursalActiva } = useSucursalStore();
+  const sucursalActiva = useSucursalStore(selectSucursalActiva);
   const [page, setPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   const limit = 10;
@@ -90,7 +90,7 @@ export default function CombosPage() {
             <div className="flex items-center gap-4 flex-1">
               <div>
                 <div className="flex items-center gap-2">
-                  <Layers className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                  <Layers className="h-6 w-6 text-secondary-600 dark:text-secondary-400" />
                   <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">
                     Combos / Kits
                   </h1>
@@ -162,8 +162,8 @@ export default function CombosPage() {
                   >
                     <div className="flex items-start gap-4">
                       {/* Icono */}
-                      <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <Layers className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                      <div className="w-12 h-12 bg-secondary-100 dark:bg-secondary-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <Layers className="h-6 w-6 text-secondary-600 dark:text-secondary-400" />
                       </div>
 
                       {/* Info */}

@@ -21,7 +21,7 @@ import {
   Briefcase,
 } from 'lucide-react';
 
-import useAuthStore from '@/store/authStore';
+import useAuthStore, { selectUser } from '@/store/authStore';
 import { organizacionesApi, monedasApi } from '@/services/api/endpoints';
 import { useToast } from '@/hooks/useToast';
 import { useUploadArchivo } from '@/hooks/useStorage';
@@ -36,7 +36,7 @@ function NegocioPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const toast = useToast();
-  const { user } = useAuthStore();
+  const user = useAuthStore(selectUser);
   const organizacionId = user?.organizacion_id;
 
   // Estado para preview del logo

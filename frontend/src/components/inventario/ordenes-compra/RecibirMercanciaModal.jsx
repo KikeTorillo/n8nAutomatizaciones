@@ -458,7 +458,7 @@ export default function RecibirMercanciaModal({ isOpen, onClose, orden }) {
                       <div className="flex items-center gap-2">
                         <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{item.producto_nombre}</div>
                         {item.requiere_numero_serie && (
-                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300" title="Requiere número de serie">
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-secondary-100 text-secondary-800 dark:bg-secondary-900/40 dark:text-secondary-300" title="Requiere número de serie">
                             <Hash size={10} className="mr-0.5" />NS
                           </span>
                         )}
@@ -513,8 +513,8 @@ export default function RecibirMercanciaModal({ isOpen, onClose, orden }) {
 
           {/* Sección de números de serie */}
           {recepciones.some(r => r.cantidad > 0 && r.requiere_numero_serie) && (
-            <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4 border border-purple-200 dark:border-purple-800">
-              <h4 className="text-sm font-medium text-purple-800 dark:text-purple-300 mb-3 flex items-center gap-2">
+            <div className="bg-secondary-50 dark:bg-secondary-900/20 rounded-lg p-4 border border-secondary-200 dark:border-secondary-800">
+              <h4 className="text-sm font-medium text-secondary-800 dark:text-secondary-300 mb-3 flex items-center gap-2">
                 <Hash size={16} />
                 Números de Serie Requeridos
               </h4>
@@ -528,7 +528,7 @@ export default function RecibirMercanciaModal({ isOpen, onClose, orden }) {
                     const nsTotal = item.cantidad;
 
                     return (
-                      <div key={item.item_id} className="bg-white dark:bg-gray-800 rounded-lg border border-purple-200 dark:border-purple-700 overflow-hidden">
+                      <div key={item.item_id} className="bg-white dark:bg-gray-800 rounded-lg border border-secondary-200 dark:border-secondary-700 overflow-hidden">
                         <button
                           type="button"
                           onClick={() => toggleExpandNS(item.item_id)}
@@ -554,7 +554,7 @@ export default function RecibirMercanciaModal({ isOpen, onClose, orden }) {
                               <button
                                 type="button"
                                 onClick={() => openScannerForNS(originalIndex)}
-                                className="mt-3 mb-2 w-full py-2 px-3 bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 rounded-lg text-sm font-medium flex items-center justify-center gap-2 hover:bg-purple-200 dark:hover:bg-purple-900/60 transition-colors"
+                                className="mt-3 mb-2 w-full py-2 px-3 bg-secondary-100 dark:bg-secondary-900/40 text-secondary-700 dark:text-secondary-300 rounded-lg text-sm font-medium flex items-center justify-center gap-2 hover:bg-secondary-200 dark:hover:bg-secondary-900/60 transition-colors"
                               >
                                 <ScanLine size={16} />
                                 Escanear Números de Serie ({nsTotal - nsCompletos} pendientes)

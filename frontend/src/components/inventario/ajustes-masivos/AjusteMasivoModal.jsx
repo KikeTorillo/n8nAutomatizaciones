@@ -403,10 +403,10 @@ export default function AjusteMasivoModal({ isOpen, onClose, onSuccess }) {
                         </div>
 
                         {/* Info */}
-                        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                        <div className="bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg p-3">
                             <div className="flex items-start gap-2">
-                                <AlertCircle className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5" />
-                                <div className="text-sm text-blue-700 dark:text-blue-300">
+                                <AlertCircle className="h-5 w-5 text-primary-600 dark:text-primary-400 mt-0.5" />
+                                <div className="text-sm text-primary-700 dark:text-primary-300">
                                     <p>Al crear el ajuste:</p>
                                     <ul className="list-disc list-inside mt-1 space-y-1">
                                         <li>Se guardaran los items para revision</li>

@@ -15,7 +15,7 @@ import {
   CalendarDays,
 } from 'lucide-react';
 import { BackButton } from '@/components/ui';
-import useAuthStore from '@/store/authStore';
+import useAuthStore, { selectUser } from '@/store/authStore';
 
 /**
  * Hub de Configuración
@@ -23,7 +23,7 @@ import useAuthStore from '@/store/authStore';
  */
 function ConfiguracionPage() {
   const navigate = useNavigate();
-  const { user } = useAuthStore();
+  const user = useAuthStore(selectUser);
   const esAdmin = ['admin', 'propietario', 'super_admin'].includes(user?.rol);
 
   // Secciones de configuración - Dic 2025: Nuevo orden con Usuarios después de Mi Negocio

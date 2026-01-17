@@ -102,4 +102,20 @@ const useThemeStore = create(
   )
 );
 
+// ====================================================================
+// SELECTORES - Ene 2026: Optimización para evitar re-renders
+// Usar estos selectores en lugar de desestructurar todo el store
+// ====================================================================
+
+// State
+export const selectTheme = (state) => state.theme;
+export const selectResolvedTheme = (state) => state.resolvedTheme;
+
+// Actions
+export const selectSetTheme = (state) => state.setTheme;
+export const selectToggleTheme = (state) => state.toggleTheme;
+export const selectApplyTheme = (state) => state.applyTheme;
+export const selectInitSystemListener = (state) => state.initSystemListener;
+export const selectIsDark = (state) => state.isDark;
+
 export default useThemeStore;

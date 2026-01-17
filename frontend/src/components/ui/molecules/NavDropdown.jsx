@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronDown, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -48,10 +48,10 @@ export function NavDropdown({
     }
   }, [isOpen]);
 
-  const handleItemClick = (path) => {
+  const handleItemClick = useCallback((path) => {
     navigate(path);
     setIsOpen(false);
-  };
+  }, [navigate]);
 
   return (
     <div className="relative" ref={dropdownRef}>

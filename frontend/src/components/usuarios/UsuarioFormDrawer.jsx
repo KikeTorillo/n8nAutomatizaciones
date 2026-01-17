@@ -142,11 +142,11 @@ function UsuarioFormDrawer({ isOpen, onClose, mode = 'create', usuario = null })
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Mensaje informativo sobre invitación */}
         {!isEditMode && (
-          <div className="flex items-start gap-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-            <Info className="w-5 h-5 text-blue-500 dark:text-blue-400 flex-shrink-0 mt-0.5" />
-            <div className="text-sm text-blue-700 dark:text-blue-300">
+          <div className="flex items-start gap-3 p-3 bg-primary-50 dark:bg-primary-900/20 rounded-lg border border-primary-200 dark:border-primary-800">
+            <Info className="w-5 h-5 text-primary-500 dark:text-primary-400 flex-shrink-0 mt-0.5" />
+            <div className="text-sm text-primary-700 dark:text-primary-300">
               <p className="font-medium">Se enviará un correo de invitación</p>
-              <p className="text-blue-600 dark:text-blue-400 mt-1">
+              <p className="text-primary-600 dark:text-primary-400 mt-1">
                 El usuario recibirá un enlace para crear su contraseña y activar su cuenta.
               </p>
             </div>

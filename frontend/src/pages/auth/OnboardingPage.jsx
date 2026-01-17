@@ -13,7 +13,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { authApi } from '@/services/api/endpoints';
-import useAuthStore from '@/store/authStore';
+import useAuthStore, { selectUser, selectSetAuth, selectIsAuthenticated } from '@/store/authStore';
 import { useToast } from '@/hooks/useToast';
 import AuthLayout from '@/components/auth/AuthLayout';
 import FormField from '@/components/forms/FormField';
@@ -44,7 +44,9 @@ const onboardingSchema = z.object({
 function OnboardingPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { user, setAuth, isAuthenticated } = useAuthStore();
+  const user = useAuthStore(selectUser);
+  const setAuth = useAuthStore(selectSetAuth);
+  const isAuthenticated = useAuthStore(selectIsAuthenticated);
   const toast = useToast();
 
   // Verificar que el usuario está autenticado pero sin organización

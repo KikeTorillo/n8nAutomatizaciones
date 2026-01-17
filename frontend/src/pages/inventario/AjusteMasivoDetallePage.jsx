@@ -127,7 +127,7 @@ export default function AjusteMasivoDetallePage() {
         if (!info) return 'default';
         const colorMap = {
             'bg-gray-100': 'default',
-            'bg-blue-100': 'info',
+            'bg-primary-100': 'info',
             'bg-green-100': 'success',
             'bg-yellow-100': 'warning',
             'bg-red-100': 'error',

@@ -21,7 +21,7 @@ import {
   FileSpreadsheet,
 } from 'lucide-react';
 import { BackButton, Button } from '@/components/ui';
-import useAuthStore from '@/store/authStore';
+import useAuthStore, { selectUser } from '@/store/authStore';
 import { useToast } from '@/hooks/useToast';
 import { useExportCSV } from '@/hooks/useExportCSV';
 import {
@@ -283,7 +283,7 @@ function AusenciasPage() {
   const toast = useToast();
   const { exportCSV } = useExportCSV();
 
-  const { user } = useAuthStore();
+  const user = useAuthStore(selectUser);
   const esAdmin = ['admin', 'propietario', 'super_admin'].includes(user?.rol);
 
   // Verificar si es supervisor (tiene solicitudes pendientes de su equipo)

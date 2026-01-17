@@ -307,7 +307,7 @@ export function useEliminarNotificacionPlantilla() {
  * Niveles de notificacion con sus colores
  */
 export const NOTIFICACION_NIVELES = {
-  info: { label: 'Informacion', color: 'text-blue-500 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-900/30' },
+  info: { label: 'Informacion', color: 'text-primary-500 dark:text-primary-400', bg: 'bg-primary-50 dark:bg-primary-900/30' },
   success: { label: 'Exito', color: 'text-green-500 dark:text-green-400', bg: 'bg-green-50 dark:bg-green-900/30' },
   warning: { label: 'Advertencia', color: 'text-yellow-500 dark:text-yellow-400', bg: 'bg-yellow-50 dark:bg-yellow-900/30' },
   error: { label: 'Error', color: 'text-red-500 dark:text-red-400', bg: 'bg-red-50 dark:bg-red-900/30' },

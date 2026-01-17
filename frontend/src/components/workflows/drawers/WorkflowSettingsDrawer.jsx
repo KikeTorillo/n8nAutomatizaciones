@@ -343,9 +343,9 @@ function WorkflowSettingsDrawer({ isOpen, onClose, workflowData, onSave, isNew =
               </div>
 
               {/* Info */}
-              <div className="flex items-start gap-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                <Info className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
-                <p className="text-xs text-blue-700 dark:text-blue-300">
+              <div className="flex items-start gap-2 p-3 bg-primary-50 dark:bg-primary-900/20 rounded-lg">
+                <Info className="w-4 h-4 text-primary-600 dark:text-primary-400 flex-shrink-0 mt-0.5" />
+                <p className="text-xs text-primary-700 dark:text-primary-300">
                   La condición de activación y prioridad permiten tener múltiples workflows para
                   el mismo tipo de entidad con reglas diferentes.
                 </p>

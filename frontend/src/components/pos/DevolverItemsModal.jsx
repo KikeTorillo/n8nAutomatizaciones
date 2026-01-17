@@ -7,8 +7,8 @@ import {
   Textarea
 } from '@/components/ui';
 import { useToast } from '@/hooks/useToast';
-import useAuthStore from '@/store/authStore';
-import useSucursalStore from '@/store/sucursalStore';
+import useAuthStore, { selectUser } from '@/store/authStore';
+import useSucursalStore, { selectSucursalActiva } from '@/store/sucursalStore';
 import { useVenta, useDevolverItems } from '@/hooks/useVentas';
 
 /**
@@ -17,8 +17,8 @@ import { useVenta, useDevolverItems } from '@/hooks/useVentas';
  */
 export default function DevolverItemsModal({ isOpen, onClose, venta }) {
   const toast = useToast();
-  const { user } = useAuthStore();
-  const { sucursalActiva } = useSucursalStore();
+  const user = useAuthStore(selectUser);
+  const sucursalActiva = useSucursalStore(selectSucursalActiva);
   const devolverMutation = useDevolverItems();
 
   // Obtener detalle de la venta con items

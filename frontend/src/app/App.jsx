@@ -7,15 +7,15 @@ import { queryClient } from './queryClient';
 import { ToastContainer } from '@/components/ui';
 import SetupGuard from '@/components/auth/SetupGuard';
 import useAuthStore, { selectIsAuthenticated, selectSetUser } from '@/store/authStore';
-import useThemeStore from '@/store/themeStore';
+import useThemeStore, { selectApplyTheme, selectInitSystemListener } from '@/store/themeStore';
 import { authApi } from '@/services/api/endpoints';
 
 function App() {
   // Ene 2026: Usar selectores para evitar re-renders
   const isAuthenticated = useAuthStore(selectIsAuthenticated);
   const setUser = useAuthStore(selectSetUser);
-  const initSystemListener = useThemeStore((state) => state.initSystemListener);
-  const applyTheme = useThemeStore((state) => state.applyTheme);
+  const initSystemListener = useThemeStore(selectInitSystemListener);
+  const applyTheme = useThemeStore(selectApplyTheme);
 
   // Inicializar tema al montar la aplicación
   useEffect(() => {

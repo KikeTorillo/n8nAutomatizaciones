@@ -209,8 +209,8 @@ function AnalyticsDashboard({ perfilId }) {
                 %
               </p>
             </div>
-            <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/40 rounded-lg flex items-center justify-center">
-              <TrendingUp className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+            <div className="w-12 h-12 bg-secondary-100 dark:bg-secondary-900/40 rounded-lg flex items-center justify-center">
+              <TrendingUp className="w-6 h-6 text-secondary-600 dark:text-secondary-400" />
             </div>
           </div>
         </div>

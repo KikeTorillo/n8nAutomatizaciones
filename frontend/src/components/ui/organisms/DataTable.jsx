@@ -1,12 +1,26 @@
-import { useMemo } from 'react';
+import { useMemo, memo, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import { SkeletonTable } from '../molecules/SkeletonTable';
 import EmptyState from '../molecules/EmptyState';
 import Pagination from '../molecules/Pagination';
 import { Inbox } from 'lucide-react';
 
-// Constante externa para evitar recreación en cada render
+// Constantes externas para evitar recreación en cada render
 const WIDTH_MAP = { sm: 'sm', md: 'md', lg: 'lg', xl: 'xl', auto: 'md' };
+
+const ALIGN_CLASSES = {
+  left: 'text-left',
+  center: 'text-center',
+  right: 'text-right',
+};
+
+const WIDTH_CLASSES = {
+  sm: 'w-20',
+  md: 'w-32',
+  lg: 'w-48',
+  xl: 'w-64',
+  auto: '',
+};
 
 /**
  * DataTable - Tabla de datos genérica reutilizable
@@ -94,6 +108,11 @@ export function DataTable({
     return columns.map(col => WIDTH_MAP[col.width] || 'md');
   }, [columns]);
 
+  // Handler memoizado para click en fila (DEBE estar antes de returns condicionales)
+  const handleRowClick = useCallback((row) => {
+    if (onRowClick) onRowClick(row);
+  }, [onRowClick]);
+
   // Estado de carga
   if (isLoading) {
     return (
@@ -123,22 +142,6 @@ export function DataTable({
     );
   }
 
-  // Helpers de alineación
-  const alignClasses = {
-    left: 'text-left',
-    center: 'text-center',
-    right: 'text-right',
-  };
-
-  // Helpers de ancho
-  const widthClasses = {
-    sm: 'w-20',
-    md: 'w-32',
-    lg: 'w-48',
-    xl: 'w-64',
-    auto: '',
-  };
-
   return (
     <div className={cn('space-y-4', className)}>
       {/* Tabla */}
@@ -154,8 +157,8 @@ export function DataTable({
                     className={cn(
                       'px-4 sm:px-6 py-3',
                       'text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider',
-                      alignClasses[column.align] || 'text-left',
-                      widthClasses[column.width],
+                      ALIGN_CLASSES[column.align] || 'text-left',
+                      WIDTH_CLASSES[column.width],
                       column.hideOnMobile && 'hidden md:table-cell',
                       column.headerClassName
                     )}
@@ -169,38 +172,15 @@ export function DataTable({
             {/* Body */}
             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
               {data.map((row, rowIndex) => (
-                <tr
+                <DataTableRow
                   key={row[keyField] || rowIndex}
-                  onClick={onRowClick ? () => onRowClick(row) : undefined}
-                  className={cn(
-                    'transition-colors',
-                    hoverable && 'hover:bg-gray-50 dark:hover:bg-gray-700/50',
-                    onRowClick && 'cursor-pointer',
-                    striped && rowIndex % 2 === 1 && 'bg-gray-50/50 dark:bg-gray-800/50'
-                  )}
-                >
-                  {columns.map((column, colIndex) => {
-                    const value = column.key ? row[column.key] : null;
-                    const content = column.render
-                      ? column.render(row, value, rowIndex)
-                      : value;
-
-                    return (
-                      <td
-                        key={column.key || colIndex}
-                        className={cn(
-                          'px-4 sm:px-6 py-4',
-                          'text-sm text-gray-900 dark:text-gray-100',
-                          alignClasses[column.align] || 'text-left',
-                          column.hideOnMobile && 'hidden md:table-cell',
-                          column.className
-                        )}
-                      >
-                        {content}
-                      </td>
-                    );
-                  })}
-                </tr>
+                  row={row}
+                  rowIndex={rowIndex}
+                  columns={columns}
+                  onRowClick={handleRowClick}
+                  hoverable={hoverable}
+                  striped={striped}
+                />
               ))}
             </tbody>
           </table>
@@ -264,5 +244,55 @@ export function DataTableActionButton({
     </button>
   );
 }
+
+/**
+ * DataTableRow - Fila memoizada para evitar re-renders innecesarios
+ */
+const DataTableRow = memo(function DataTableRow({
+  row,
+  rowIndex,
+  columns,
+  onRowClick,
+  hoverable,
+  striped,
+}) {
+  const handleClick = useCallback(() => {
+    if (onRowClick) onRowClick(row);
+  }, [onRowClick, row]);
+
+  return (
+    <tr
+      onClick={onRowClick ? handleClick : undefined}
+      className={cn(
+        'transition-colors',
+        hoverable && 'hover:bg-gray-50 dark:hover:bg-gray-700/50',
+        onRowClick && 'cursor-pointer',
+        striped && rowIndex % 2 === 1 && 'bg-gray-50/50 dark:bg-gray-800/50'
+      )}
+    >
+      {columns.map((column, colIndex) => {
+        const value = column.key ? row[column.key] : null;
+        const content = column.render
+          ? column.render(row, value, rowIndex)
+          : value;
+
+        return (
+          <td
+            key={column.key || colIndex}
+            className={cn(
+              'px-4 sm:px-6 py-4',
+              'text-sm text-gray-900 dark:text-gray-100',
+              ALIGN_CLASSES[column.align] || 'text-left',
+              column.hideOnMobile && 'hidden md:table-cell',
+              column.className
+            )}
+          >
+            {content}
+          </td>
+        );
+      })}
+    </tr>
+  );
+});
 
 export default DataTable;

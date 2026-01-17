@@ -220,8 +220,8 @@ export const ESTADOS_AJUSTE_MASIVO_CONFIG = {
     },
     [ESTADOS_AJUSTE_MASIVO.VALIDADO]: {
         label: 'Validado',
-        color: 'blue',
-        badgeClass: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
+        color: 'primary',
+        badgeClass: 'bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-300',
     },
     [ESTADOS_AJUSTE_MASIVO.APLICADO]: {
         label: 'Aplicado',
@@ -250,8 +250,8 @@ export const ESTADOS_ITEM_AJUSTE_CONFIG = {
     },
     [ESTADOS_ITEM_AJUSTE.VALIDO]: {
         label: 'Válido',
-        color: 'blue',
-        badgeClass: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
+        color: 'primary',
+        badgeClass: 'bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-300',
     },
     [ESTADOS_ITEM_AJUSTE.ERROR]: {
         label: 'Error',

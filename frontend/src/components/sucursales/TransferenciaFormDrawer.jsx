@@ -21,7 +21,7 @@ import {
   useCrearTransferencia,
 } from '@/hooks/useSucursales';
 import { useProductos } from '@/hooks/useProductos';
-import useSucursalStore from '@/store/sucursalStore';
+import useSucursalStore, { selectSucursalActiva } from '@/store/sucursalStore';
 
 // Schema de validación
 const transferenciaSchema = z.object({
@@ -38,7 +38,7 @@ const transferenciaSchema = z.object({
  */
 function TransferenciaFormDrawer({ isOpen, onClose }) {
   const toast = useToast();
-  const { sucursalActiva } = useSucursalStore();
+  const sucursalActiva = useSucursalStore(selectSucursalActiva);
 
   // Estado para items de la transferencia
   const [items, setItems] = useState([]);

@@ -32,7 +32,7 @@ import {
   DESCRIPCIONES_PASOS_ENVIO,
 } from '@/hooks/useConfiguracionAlmacen';
 import { useArbolUbicaciones } from '@/hooks/useUbicacionesAlmacen';
-import useSucursalStore from '@/store/sucursalStore';
+import useSucursalStore, { selectGetSucursalId } from '@/store/sucursalStore';
 
 /**
  * Visualización del flujo de pasos
@@ -477,7 +477,7 @@ function ConfiguracionSucursalCard({ sucursalId }) {
  * Página de Configuración de Almacén
  */
 export default function ConfiguracionAlmacenPage() {
-  const { getSucursalId } = useSucursalStore();
+  const getSucursalId = useSucursalStore(selectGetSucursalId);
   const sucursalId = getSucursalId();
 
   return (
@@ -487,10 +487,10 @@ export default function ConfiguracionAlmacenPage() {
       subtitle="Configura rutas de recepción y envío multi-paso por sucursal"
     >
       <div className="space-y-6">
-        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
+        <div className="bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg p-4 mb-6">
           <div className="flex gap-3">
-            <Info className="h-5 w-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
-            <div className="text-sm text-blue-700 dark:text-blue-300">
+            <Info className="h-5 w-5 text-primary-600 dark:text-primary-400 flex-shrink-0 mt-0.5" />
+            <div className="text-sm text-primary-700 dark:text-primary-300">
               <p className="font-medium mb-1">Rutas Multietapa</p>
               <p>
                 Configura cuántos pasos tiene el proceso de recepción y envío de mercancía.

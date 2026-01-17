@@ -195,7 +195,7 @@ function EventosPage() {
                   className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-md transition-shadow"
                 >
                   {/* Imagen/Preview */}
-                  <div className="h-40 bg-gradient-to-br from-pink-100 to-purple-100 dark:from-pink-900/30 dark:to-purple-900/30 flex items-center justify-center">
+                  <div className="h-40 bg-gradient-to-br from-pink-100 to-secondary-100 dark:from-pink-900/30 dark:to-secondary-900/30 flex items-center justify-center">
                     <PartyPopper className="w-16 h-16 text-pink-300 dark:text-pink-500" />
                   </div>
 

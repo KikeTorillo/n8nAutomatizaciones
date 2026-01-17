@@ -188,7 +188,7 @@ export default function ReordenPage() {
                         </p>
                         <LineChart className="h-4 w-4 text-primary-500 flex-shrink-0" title="Ver pronostico" />
                         {producto.tiene_oc_pendiente && (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary-100 text-primary-800 dark:bg-primary-900/30 dark:text-primary-300">
                             OC: {producto.oc_pendiente_folio}
                           </span>
                         )}
@@ -319,14 +319,14 @@ export default function ReordenPage() {
 
       {/* Info del job */}
       {dashboard?.job && (
-        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+        <div className="bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg p-4">
           <div className="flex items-start gap-3">
-            <RefreshCw className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5" />
+            <RefreshCw className="h-5 w-5 text-primary-600 dark:text-primary-400 mt-0.5" />
             <div className="text-sm">
-              <p className="font-medium text-blue-800 dark:text-blue-200">
+              <p className="font-medium text-primary-800 dark:text-primary-200">
                 Job automatico configurado: {dashboard.job.schedule}
               </p>
-              <p className="text-blue-600 dark:text-blue-400 mt-1">
+              <p className="text-primary-600 dark:text-primary-400 mt-1">
                 El sistema evalua las reglas de reabastecimiento todos los dias a las 6:00 AM.
                 Los productos con stock bajo y reglas activas generaran OCs automaticamente en estado borrador.
               </p>
@@ -376,7 +376,7 @@ function MetricCard({ title, value, subtitle, icon: Icon, color, loading }) {
     primary: 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400',
     red: 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400',
     green: 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400',
-    blue: 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400',
+    blue: 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400',
   };
 
   return (

@@ -468,7 +468,7 @@ export default function ConteoDetallePage() {
                                                 className={`text-xl font-bold ${parseInt(cantidadInput) - itemActivo.cantidad_sistema === 0
                                                         ? 'text-green-600 dark:text-green-400'
                                                         : parseInt(cantidadInput) - itemActivo.cantidad_sistema > 0
-                                                            ? 'text-blue-600 dark:text-blue-400'
+                                                            ? 'text-primary-600 dark:text-primary-400'
                                                             : 'text-red-600 dark:text-red-400'
                                                     }`}
                                             >
@@ -634,7 +634,7 @@ export default function ConteoDetallePage() {
                                                                 className={`font-medium ${item.diferencia === 0
                                                                         ? 'text-green-600 dark:text-green-400'
                                                                         : item.diferencia > 0
-                                                                            ? 'text-blue-600 dark:text-blue-400'
+                                                                            ? 'text-primary-600 dark:text-primary-400'
                                                                             : 'text-red-600 dark:text-red-400'
                                                                     }`}
                                                             >
@@ -658,7 +658,7 @@ export default function ConteoDetallePage() {
                                                                 Contado
                                                             </span>
                                                         ) : (
-                                                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">
+                                                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-300">
                                                                 Ajustado
                                                             </span>
                                                         )}

@@ -41,7 +41,7 @@ import {
   LABELS_ESTADO_BATCH,
   COLORES_ESTADO_BATCH,
 } from '@/hooks/useBatchPicking';
-import useSucursalStore from '@/store/sucursalStore';
+import useSucursalStore, { selectGetSucursalId } from '@/store/sucursalStore';
 
 /**
  * Card de batch individual
@@ -53,7 +53,7 @@ function BatchCard({ batch, onVerDetalle, onIniciar, onCompletar, onCancelar, on
 
   const colorEstado = {
     borrador: 'border-l-gray-400 bg-gray-50 dark:bg-gray-800',
-    confirmado: 'border-l-blue-400 bg-blue-50/50 dark:bg-blue-900/20',
+    confirmado: 'border-l-primary-400 bg-primary-50/50 dark:bg-primary-900/20',
     en_proceso: 'border-l-yellow-400 bg-yellow-50/50 dark:bg-yellow-900/20',
     completado: 'border-l-green-400 bg-green-50/50 dark:bg-green-900/20',
     cancelado: 'border-l-red-400 bg-red-50/50 dark:bg-red-900/20',
@@ -61,7 +61,7 @@ function BatchCard({ batch, onVerDetalle, onIniciar, onCompletar, onCancelar, on
 
   const colorBadge = {
     borrador: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
-    confirmado: 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300',
+    confirmado: 'bg-primary-100 text-primary-800 dark:bg-primary-900/50 dark:text-primary-300',
     en_proceso: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300',
     completado: 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300',
     cancelado: 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300',
@@ -326,7 +326,7 @@ function CrearBatchModal({ isOpen, onClose, operacionesDisponibles, onCrear, isC
 export default function BatchPickingPage() {
   const navigate = useNavigate();
   const { success: showSuccess, error: showError, warning: showWarning } = useToast();
-  const { getSucursalId } = useSucursalStore();
+  const getSucursalId = useSucursalStore(selectGetSucursalId);
 
   // Estado de filtros
   const [filtros, setFiltros] = useState({

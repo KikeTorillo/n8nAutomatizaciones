@@ -141,17 +141,17 @@ export default function BuscadorProductosPOS({ onProductoSeleccionado }) {
 
       {/* Info GS1 del último escaneo */}
       {ultimoGS1 && (
-        <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg text-sm">
+        <div className="mt-2 p-2 bg-primary-50 dark:bg-primary-900/30 border border-primary-200 dark:border-primary-800 rounded-lg text-sm">
           <div className="flex items-center justify-between">
-            <span className="text-blue-700 dark:text-blue-300 font-medium">Código GS1 detectado:</span>
+            <span className="text-primary-700 dark:text-primary-300 font-medium">Código GS1 detectado:</span>
             <button
               onClick={() => setUltimoGS1(null)}
-              className="text-blue-500 hover:text-blue-700"
+              className="text-primary-500 hover:text-primary-700"
             >
               <X className="h-4 w-4" />
             </button>
           </div>
-          <div className="flex flex-wrap gap-3 mt-1 text-blue-600 dark:text-blue-400">
+          <div className="flex flex-wrap gap-3 mt-1 text-primary-600 dark:text-primary-400">
             {ultimoGS1.lot && <span>Lote: <strong>{ultimoGS1.lot}</strong></span>}
             {ultimoGS1.expirationDateFormatted && <span>Vence: <strong>{ultimoGS1.expirationDateFormatted}</strong></span>}
             {ultimoGS1.serial && <span>Serie: <strong>{ultimoGS1.serial}</strong></span>}
@@ -195,7 +195,7 @@ export default function BuscadorProductosPOS({ onProductoSeleccionado }) {
                         <Package className="h-5 w-5 text-gray-400 dark:text-gray-500 group-hover:text-primary-500 dark:group-hover:text-primary-400" />
                         <span className="font-medium text-gray-900 dark:text-gray-100">{producto.nombre}</span>
                         {producto.es_variante && (
-                          <span className="px-1.5 py-0.5 text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded">
+                          <span className="px-1.5 py-0.5 text-xs bg-secondary-100 dark:bg-secondary-900/30 text-secondary-700 dark:text-secondary-300 rounded">
                             Variante
                           </span>
                         )}

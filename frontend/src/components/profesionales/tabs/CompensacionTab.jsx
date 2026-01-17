@@ -8,7 +8,7 @@ import MisComisionesSection from '@/components/profesionales/MisComisionesSectio
 import { FORMAS_PAGO } from '@/hooks/useProfesionales';
 import { useCategoriasPagoOptions } from '@/hooks/useCategoriasPago';
 import { useCurrency } from '@/hooks/useCurrency';
-import useAuthStore from '@/store/authStore';
+import useAuthStore, { selectUser } from '@/store/authStore';
 
 /**
  * Tab Compensación del profesional
@@ -17,7 +17,7 @@ import useAuthStore from '@/store/authStore';
  */
 function CompensacionTab({ profesional }) {
   const [editModal, setEditModal] = useState(null);
-  const { user } = useAuthStore();
+  const user = useAuthStore(selectUser);
   const { formatCurrency } = useCurrency();
   const { data: categoriasPago = [] } = useCategoriasPagoOptions();
 

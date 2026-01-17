@@ -22,6 +22,20 @@ export default {
           900: '#4d2749',
           950: '#2f1030',
         },
+        // Secondary - Púrpura claro (#A86B9D como base)
+        secondary: {
+          50: '#faf7f9',
+          100: '#f5eef3',
+          200: '#ebdce7',
+          300: '#ddc3d5',
+          400: '#c89fba',
+          500: '#a86b9d',  // Base elegido
+          600: '#8f5a85',
+          700: '#74486b',
+          800: '#5f3c58',
+          900: '#51344b',
+          950: '#2f1c2b',
+        },
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],

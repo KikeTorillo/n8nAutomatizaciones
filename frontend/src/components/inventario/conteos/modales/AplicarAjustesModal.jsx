@@ -23,9 +23,9 @@ export default function AplicarAjustesModal({
         <p className="text-gray-600 dark:text-gray-300 mb-4">
           ¿Deseas aplicar los ajustes del conteo <strong>{conteo?.folio}</strong>?
         </p>
-        <div className="flex items-start gap-2 p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg mb-4">
-          <Package className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5" />
-          <p className="text-sm text-blue-700 dark:text-blue-300">
+        <div className="flex items-start gap-2 p-3 bg-primary-50 dark:bg-primary-900/30 rounded-lg mb-4">
+          <Package className="h-5 w-5 text-primary-600 dark:text-primary-400 mt-0.5" />
+          <p className="text-sm text-primary-700 dark:text-primary-300">
             Se crearán movimientos de inventario para ajustar el stock de los{' '}
             {conDiferencia} producto(s) con diferencia.
           </p>

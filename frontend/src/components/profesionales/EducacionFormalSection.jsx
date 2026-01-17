@@ -21,7 +21,7 @@ import {
 function EducacionCard({ item: edu, onEdit, onDelete }) {
   const estado = getEstadoEstudio(edu.en_curso, edu.fecha_fin);
   const estadoColors = {
-    blue: 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-400',
+    blue: 'bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-400',
     green: 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-400',
     gray: 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400',
   };
@@ -30,13 +30,13 @@ function EducacionCard({ item: edu, onEdit, onDelete }) {
     <div
       className={`p-3 rounded-lg border ${
         edu.en_curso
-          ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+          ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
           : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800'
       }`}
     >
       <div className="flex items-start justify-between">
         <div className="flex items-start gap-3">
-          <BookOpen className={`h-5 w-5 mt-0.5 ${edu.en_curso ? 'text-blue-600' : 'text-gray-400'}`} />
+          <BookOpen className={`h-5 w-5 mt-0.5 ${edu.en_curso ? 'text-primary-600' : 'text-gray-400'}`} />
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="font-medium text-gray-900 dark:text-gray-100">{edu.titulo}</span>
@@ -61,7 +61,7 @@ function EducacionCard({ item: edu, onEdit, onDelete }) {
           <button
             type="button"
             onClick={onEdit}
-            className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded transition-colors"
+            className="p-1.5 text-gray-500 hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded transition-colors"
             title="Editar"
           >
             <Edit2 className="h-4 w-4" />

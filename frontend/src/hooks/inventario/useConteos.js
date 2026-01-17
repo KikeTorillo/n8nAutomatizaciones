@@ -333,8 +333,8 @@ export const ESTADOS_CONTEO_CONFIG = {
     },
     [ESTADOS_CONTEO.EN_PROCESO]: {
         label: 'En Proceso',
-        color: 'blue',
-        badgeClass: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
+        color: 'primary',
+        badgeClass: 'bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-300',
     },
     [ESTADOS_CONTEO.COMPLETADO]: {
         label: 'Completado',

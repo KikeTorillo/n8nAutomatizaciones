@@ -6,7 +6,7 @@ import {
   useActivarModulo,
   useDesactivarModulo,
 } from '@/hooks/useModulos';
-import useAuthStore from '@/store/authStore';
+import useAuthStore, { selectIsAdmin } from '@/store/authStore';
 import { BackButton, ConfirmDialog } from '@/components/ui';
 import { useToast } from '@/hooks/useToast';
 import { useModalManager } from '@/hooks/useModalManager';
@@ -67,7 +67,7 @@ const COLORES = {
 function ModulosPage() {
   const toast = useToast();
   const queryClient = useQueryClient();
-  const { isAdmin } = useAuthStore();
+  const isAdmin = useAuthStore(selectIsAdmin);
 
   // Estado de expansión de módulos
   const [expandedModules, setExpandedModules] = useState({});

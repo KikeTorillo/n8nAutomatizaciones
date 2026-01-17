@@ -64,9 +64,9 @@ export default function PromocionFormTipoTab({ register, watch, errors }) {
         )}
       </div>
 
-      {/* Campos según tipo */}
+      {/* Campos segun tipo */}
       {tipoSeleccionado === 'cantidad' && (
-        <div className="grid grid-cols-2 gap-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+        <div className="grid grid-cols-2 gap-4 p-3 bg-primary-50 dark:bg-primary-900/20 rounded-lg border border-primary-200 dark:border-primary-800">
           <Input
             label="Cantidad requerida"
             type="number"

@@ -344,9 +344,9 @@ function DiasFestivosPage() {
         size="md"
       >
         <div className="space-y-6">
-          <div className="flex items-center gap-3 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-            <Globe className="h-6 w-6 text-blue-600 dark:text-blue-400 flex-shrink-0" />
-            <p className="text-sm text-blue-700 dark:text-blue-300">
+          <div className="flex items-center gap-3 p-4 bg-primary-50 dark:bg-primary-900/20 rounded-lg">
+            <Globe className="h-6 w-6 text-primary-600 dark:text-primary-400 flex-shrink-0" />
+            <p className="text-sm text-primary-700 dark:text-primary-300">
               Importa los feriados nacionales de un país de Latinoamérica para el año {anioSeleccionado}.
             </p>
           </div>

@@ -207,7 +207,7 @@ function CartState({ cart, organizacion }) {
  */
 function PaymentState({ payment, organizacion }) {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-600 to-blue-800 flex flex-col items-center justify-center text-white p-8">
+    <div className="min-h-screen bg-gradient-to-br from-primary-600 to-primary-800 flex flex-col items-center justify-center text-white p-8">
       <div className="w-24 h-24 bg-white/10 rounded-full flex items-center justify-center mb-8 animate-pulse">
         <CreditCard className="w-12 h-12" />
       </div>

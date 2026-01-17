@@ -22,7 +22,7 @@ const BG_COLORS = {
   green: 'bg-green-500 hover:bg-green-600',
   primary: 'bg-primary-500 hover:bg-primary-600',
   amber: 'bg-amber-500 hover:bg-amber-600',
-  blue: 'bg-blue-500 hover:bg-blue-600',
+  blue: 'bg-primary-500 hover:bg-primary-600',
   red: 'bg-red-500 hover:bg-red-600',
 };
 

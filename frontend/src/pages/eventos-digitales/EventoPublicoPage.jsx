@@ -323,7 +323,7 @@ function EventoPublicoPage() {
 
   if (loadingEvento) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-pink-50 to-secondary-50 flex items-center justify-center">
         <LoadingSpinner />
       </div>
     );
@@ -331,7 +331,7 @@ function EventoPublicoPage() {
 
   if (errorEvento || !evento) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-pink-50 to-secondary-50 flex items-center justify-center">
         <div className="text-center px-4">
           <PartyPopper className="w-20 h-20 text-pink-300 mx-auto mb-6" />
           <h1 className="text-3xl font-bold text-gray-800 mb-3">Evento no encontrado</h1>

@@ -57,12 +57,12 @@ const ENTIDAD_LABELS = {
 };
 
 const ENTIDAD_COLORS = {
-  orden_compra: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
+  orden_compra: 'bg-primary-100 text-primary-800 dark:bg-primary-900/30 dark:text-primary-300',
   venta_pos: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
   descuento_pos: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
-  cita: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300',
+  cita: 'bg-secondary-100 text-secondary-800 dark:bg-secondary-900/30 dark:text-secondary-300',
   gasto: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
-  requisicion: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300',
+  requisicion: 'bg-primary-100 text-primary-800 dark:bg-primary-900/30 dark:text-primary-300',
 };
 
 function WorkflowsListPage() {

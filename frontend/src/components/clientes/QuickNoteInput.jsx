@@ -13,9 +13,9 @@ import { useState } from 'react';
 import { FileText, Phone, Mail, ListTodo, Send, Loader2 } from 'lucide-react';
 
 const TIPOS_RAPIDOS = [
-  { value: 'nota', icon: FileText, label: 'Nota', color: 'text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/30' },
+  { value: 'nota', icon: FileText, label: 'Nota', color: 'text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/30' },
   { value: 'llamada', icon: Phone, label: 'Llamada', color: 'text-green-500 hover:bg-green-50 dark:hover:bg-green-900/30' },
-  { value: 'email', icon: Mail, label: 'Email', color: 'text-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/30' },
+  { value: 'email', icon: Mail, label: 'Email', color: 'text-secondary-500 hover:bg-secondary-50 dark:hover:bg-secondary-900/30' },
 ];
 
 export default function QuickNoteInput({

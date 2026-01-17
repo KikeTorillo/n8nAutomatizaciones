@@ -196,7 +196,7 @@ function ResumenStats({ stats }) {
         <div className="text-sm text-gray-500">Total</div>
       </div>
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
-        <div className="text-2xl font-bold text-blue-500">
+        <div className="text-2xl font-bold text-primary-500">
           {stats.abiertas || 0}
         </div>
         <div className="text-sm text-gray-500">Abiertas</div>

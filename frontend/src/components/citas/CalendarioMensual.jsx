@@ -254,7 +254,7 @@ function CalendarioMensual({ onVerCita, onCrearCita }) {
               <span className="text-xs text-gray-600 dark:text-gray-400">Confirmada</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded-full bg-purple-500"></div>
+              <div className="w-3 h-3 rounded-full bg-secondary-500"></div>
               <span className="text-xs text-gray-600 dark:text-gray-400">En curso</span>
             </div>
             <div className="flex items-center gap-1.5">

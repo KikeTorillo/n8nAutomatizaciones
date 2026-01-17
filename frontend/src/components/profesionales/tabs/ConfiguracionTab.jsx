@@ -19,7 +19,7 @@ import QuickEditDrawer from '@/components/profesionales/cards/QuickEditDrawer';
 import HorariosProfesionalModal from '@/components/profesionales/HorariosProfesionalModal';
 import ServiciosProfesionalModal from '@/components/profesionales/ServiciosProfesionalModal';
 import OnboardingProgresoSection from '@/components/profesionales/OnboardingProgresoSection';
-import useAuthStore from '@/store/authStore';
+import useAuthStore, { selectUser } from '@/store/authStore';
 
 /**
  * Tab Configuración del profesional
@@ -29,7 +29,7 @@ function ConfiguracionTab({ profesional }) {
   const [editModal, setEditModal] = useState(null);
   const [isHorariosModalOpen, setIsHorariosModalOpen] = useState(false);
   const [isServiciosModalOpen, setIsServiciosModalOpen] = useState(false);
-  const { user } = useAuthStore();
+  const user = useAuthStore(selectUser);
 
   // Verificar si puede gestionar acceso
   const puedeGestionarAcceso = ['admin', 'propietario', 'super_admin'].includes(user?.rol);

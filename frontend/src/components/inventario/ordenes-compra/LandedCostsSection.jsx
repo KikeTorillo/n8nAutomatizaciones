@@ -372,9 +372,9 @@ export default function LandedCostsSection({ ordenCompraId, readOnly = false }) 
           )}
 
           {/* Nota informativa */}
-          <div className="flex items-start gap-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-sm">
-            <AlertTriangle className="h-4 w-4 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
-            <p className="text-blue-700 dark:text-blue-300">
+          <div className="flex items-start gap-2 p-3 bg-primary-50 dark:bg-primary-900/20 rounded-lg text-sm">
+            <AlertTriangle className="h-4 w-4 text-primary-600 dark:text-primary-400 flex-shrink-0 mt-0.5" />
+            <p className="text-primary-700 dark:text-primary-300">
               Los costos distribuidos se agregan al costo unitario de cada producto al recibir la
               mercancia. Use &quot;Por Valor&quot; para distribuir proporcionalmente al precio de
               cada linea.

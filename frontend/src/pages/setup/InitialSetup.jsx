@@ -10,7 +10,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 import { Eye, EyeOff, CheckCircle2, AlertCircle } from 'lucide-react';
-import useAuthStore from '@/store/authStore';
+import useAuthStore, { selectSetAuth } from '@/store/authStore';
 import { authApi } from '@/services/api/endpoints';
 import apiClient from '@/services/api/client';
 import FormField from '@/components/forms/FormField';
@@ -43,7 +43,7 @@ const setupSchema = z.object({
 export default function InitialSetup() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { setAuth } = useAuthStore();
+  const setAuth = useAuthStore(selectSetAuth);
   const toast = useToast();
   const [showPassword, setShowPassword] = useState(false);
   const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);

@@ -5,7 +5,7 @@ import { Loader2, FileText, Sparkles, Settings } from 'lucide-react';
 
 import { Button, Drawer } from '@/components/ui';
 import { useToast } from '@/hooks/useToast';
-import useSucursalStore from '@/store/sucursalStore';
+import useSucursalStore, { selectSucursalActiva } from '@/store/sucursalStore';
 import { useCrearPromocion, useActualizarPromocion } from '@/hooks/usePromociones';
 
 import {
@@ -33,7 +33,7 @@ const TABS = [
  */
 export default function PromocionFormDrawer({ isOpen, onClose, promocion, onSuccess }) {
   const toast = useToast();
-  const { sucursalActiva } = useSucursalStore();
+  const sucursalActiva = useSucursalStore(selectSucursalActiva);
   const [activeTab, setActiveTab] = useState('general');
 
   const crearMutation = useCrearPromocion();

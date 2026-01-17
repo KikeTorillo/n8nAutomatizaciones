@@ -164,7 +164,7 @@ function ClientesPage() {
         icon: Mail,
         label: 'Permiten Marketing',
         value: estadisticas?.clientes_marketing || 0,
-        color: 'blue',
+        color: 'primary',
       },
       {
         key: 'inactivos',
@@ -496,7 +496,7 @@ function ClientesPage() {
                     <div className="bg-gray-50 dark:bg-gray-700/50 px-4 py-3 flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         {agruparPor === 'tipo' && (
-                          <Building2 className={`w-4 h-4 ${grupo === 'Empresas' ? 'text-blue-500' : 'text-purple-500'}`} />
+                          <Building2 className={`w-4 h-4 ${grupo === 'Empresas' ? 'text-primary-500' : 'text-secondary-500'}`} />
                         )}
                         {agruparPor === 'activo' && (
                           <span className={`w-2 h-2 rounded-full ${grupo === 'Activos' ? 'bg-green-500' : 'bg-gray-400'}`} />

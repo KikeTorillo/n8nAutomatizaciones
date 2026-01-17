@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import useAuthStore from '@/store/authStore';
+import useAuthStore, { selectUser } from '@/store/authStore';
 import { useSucursales, useMetricasSucursales } from '@/hooks/useSucursales';
 import { BackButton, Button } from '@/components/ui';
 import {
@@ -22,7 +22,7 @@ import {
  */
 function DashboardSucursalesPage() {
   const navigate = useNavigate();
-  const { user } = useAuthStore();
+  const user = useAuthStore(selectUser);
   const [sucursalSeleccionada, setSucursalSeleccionada] = useState(null);
 
   // Cargar sucursales para el selector
@@ -64,7 +64,7 @@ function DashboardSucursalesPage() {
     const colorClasses = {
       primary: 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400',
       green: 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400',
-      blue: 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400',
+      blue: 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400',
       amber: 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400',
     };
 
@@ -96,7 +96,7 @@ function DashboardSucursalesPage() {
     const percentage = maxValue > 0 ? (value / maxValue * 100) : 0;
     const colorClasses = {
       primary: 'bg-primary-500',
-      blue: 'bg-blue-500',
+      blue: 'bg-primary-500',
       green: 'bg-green-500',
       amber: 'bg-amber-500',
     };
@@ -311,11 +311,11 @@ function DashboardSucursalesPage() {
                       </p>
                       <p className="text-xs text-amber-700 dark:text-amber-300">Pendientes</p>
                     </div>
-                    <div className="text-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                      <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                    <div className="text-center p-3 bg-primary-50 dark:bg-primary-900/20 rounded-lg">
+                      <p className="text-2xl font-bold text-primary-600 dark:text-primary-400">
                         {metricas.transferencias?.enviadas || 0}
                       </p>
-                      <p className="text-xs text-blue-700 dark:text-blue-300">Enviadas</p>
+                      <p className="text-xs text-primary-700 dark:text-primary-300">Enviadas</p>
                     </div>
                   </div>
 

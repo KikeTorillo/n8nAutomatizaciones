@@ -23,7 +23,7 @@ import {
   useTreeExpansion
 } from '@/components/ui';
 import { useToast } from '@/hooks/useToast';
-import useSucursalStore from '@/store/sucursalStore';
+import useSucursalStore, { selectGetSucursalId } from '@/store/sucursalStore';
 import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
 import {
   useArbolUbicaciones,
@@ -37,10 +37,10 @@ import MoverStockDrawer from '@/components/inventario/ubicaciones/MoverStockDraw
 
 // Tipos de ubicación con íconos y colores
 const TIPOS_UBICACION = {
-  zona: { label: 'Zona', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300' },
+  zona: { label: 'Zona', color: 'bg-primary-100 text-primary-700 dark:bg-primary-900/40 dark:text-primary-300' },
   pasillo: { label: 'Pasillo', color: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300' },
   estante: { label: 'Estante', color: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300' },
-  bin: { label: 'Bin', color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300' },
+  bin: { label: 'Bin', color: 'bg-secondary-100 text-secondary-700 dark:bg-secondary-900/40 dark:text-secondary-300' },
 };
 
 /**
@@ -52,7 +52,7 @@ function EstadisticaCard({ label, value, icon: Icon, color = 'primary' }) {
     green: 'bg-green-100 text-green-600 dark:bg-green-900/40 dark:text-green-400',
     yellow: 'bg-yellow-100 text-yellow-600 dark:bg-yellow-900/40 dark:text-yellow-400',
     red: 'bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-400',
-    blue: 'bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400',
+    blue: 'bg-primary-100 text-primary-600 dark:bg-primary-900/40 dark:text-primary-400',
   };
 
   return (
@@ -151,7 +151,7 @@ function StockUbicacionModal({ ubicacion, isOpen, onClose }) {
  */
 function UbicacionesAlmacenPage() {
   const { success: showSuccess, error: showError } = useToast();
-  const { getSucursalId } = useSucursalStore();
+  const getSucursalId = useSucursalStore(selectGetSucursalId);
   const sucursalId = getSucursalId();
 
   // Estado de modales unificado

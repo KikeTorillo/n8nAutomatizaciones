@@ -18,13 +18,13 @@ import { oportunidadesApi } from '@/services/api/endpoints';
 
 export const PRIORIDADES_OPORTUNIDAD = [
   { value: 'baja', label: 'Baja', color: 'text-gray-500', bgColor: 'bg-gray-100 dark:bg-gray-700' },
-  { value: 'normal', label: 'Normal', color: 'text-blue-500', bgColor: 'bg-blue-100 dark:bg-blue-900/30' },
+  { value: 'normal', label: 'Normal', color: 'text-primary-500', bgColor: 'bg-primary-100 dark:bg-primary-900/30' },
   { value: 'alta', label: 'Alta', color: 'text-orange-500', bgColor: 'bg-orange-100 dark:bg-orange-900/30' },
   { value: 'urgente', label: 'Urgente', color: 'text-red-500', bgColor: 'bg-red-100 dark:bg-red-900/30' },
 ];
 
 export const ESTADOS_OPORTUNIDAD = [
-  { value: 'abierta', label: 'Abierta', color: 'text-blue-500', bgColor: 'bg-blue-100 dark:bg-blue-900/30' },
+  { value: 'abierta', label: 'Abierta', color: 'text-primary-500', bgColor: 'bg-primary-100 dark:bg-primary-900/30' },
   { value: 'ganada', label: 'Ganada', color: 'text-green-500', bgColor: 'bg-green-100 dark:bg-green-900/30' },
   { value: 'perdida', label: 'Perdida', color: 'text-red-500', bgColor: 'bg-red-100 dark:bg-red-900/30' },
 ];
@@ -474,7 +474,7 @@ export function calcularValorPonderado(ingreso, probabilidad) {
  */
 export function getProbabilidadColor(probabilidad) {
   if (probabilidad >= 75) return 'text-green-500';
-  if (probabilidad >= 50) return 'text-blue-500';
+  if (probabilidad >= 50) return 'text-primary-500';
   if (probabilidad >= 25) return 'text-yellow-500';
   return 'text-gray-500';
 }

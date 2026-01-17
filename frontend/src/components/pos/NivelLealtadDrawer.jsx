@@ -14,8 +14,8 @@ const COLORES_NIVEL = [
   { value: '#E5E4E2', label: 'Platino', bg: 'bg-gray-300' },
   { value: '#753572', label: 'Primario', bg: 'bg-primary-600' },
   { value: '#10B981', label: 'Esmeralda', bg: 'bg-emerald-500' },
-  { value: '#3B82F6', label: 'Azul', bg: 'bg-blue-500' },
-  { value: '#8B5CF6', label: 'Violeta', bg: 'bg-violet-500' },
+  { value: '#3B82F6', label: 'Azul', bg: 'bg-primary-500' },
+  { value: '#8B5CF6', label: 'Violeta', bg: 'bg-primary-500' },
 ];
 
 // Iconos disponibles
@@ -298,10 +298,10 @@ export default function NivelLealtadDrawer({ isOpen, onClose, nivel, onSuccess }
         </div>
 
         {/* Explicación del multiplicador */}
-        <div className="p-3 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-lg">
-          <p className="text-sm text-blue-800 dark:text-blue-300">
-            <strong>Multiplicador:</strong> Los clientes en este nivel ganarán puntos multiplicados.
-            Por ejemplo, con multiplicador 1.5, una compra de $100 otorgará 150 puntos en lugar de 100.
+        <div className="p-3 bg-primary-50 dark:bg-primary-900/30 border border-primary-200 dark:border-primary-700 rounded-lg">
+          <p className="text-sm text-primary-800 dark:text-primary-300">
+            <strong>Multiplicador:</strong> Los clientes en este nivel ganaran puntos multiplicados.
+            Por ejemplo, con multiplicador 1.5, una compra de $100 otorgara 150 puntos en lugar de 100.
           </p>
         </div>
 

@@ -26,12 +26,12 @@ const defaultIcons = {
 
 const variantStyles = {
   info: {
-    bg: 'bg-blue-50 dark:bg-blue-900/20',
-    border: 'border-blue-200 dark:border-blue-800',
-    iconBg: 'bg-blue-100 dark:bg-blue-900/40',
-    iconColor: 'text-blue-600 dark:text-blue-400',
-    titleColor: 'text-blue-800 dark:text-blue-200',
-    textColor: 'text-blue-700 dark:text-blue-300',
+    bg: 'bg-primary-50 dark:bg-primary-900/20',
+    border: 'border-primary-200 dark:border-primary-800',
+    iconBg: 'bg-primary-100 dark:bg-primary-900/40',
+    iconColor: 'text-primary-600 dark:text-primary-400',
+    titleColor: 'text-primary-800 dark:text-primary-200',
+    textColor: 'text-primary-700 dark:text-primary-300',
   },
   success: {
     bg: 'bg-green-50 dark:bg-green-900/20',

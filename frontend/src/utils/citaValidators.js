@@ -24,7 +24,7 @@ export function obtenerColorEstado(estado) {
   const colores = {
     pendiente: 'bg-yellow-100 text-yellow-800 border-yellow-200',
     confirmada: 'bg-green-100 text-green-800 border-green-200',
-    en_curso: 'bg-blue-100 text-blue-800 border-blue-200',
+    en_curso: 'bg-primary-100 text-primary-800 border-primary-200',
     completada: 'bg-gray-100 text-gray-800 border-gray-200',
     cancelada: 'bg-red-100 text-red-800 border-red-200',
     no_show: 'bg-orange-100 text-orange-800 border-orange-200',
@@ -265,12 +265,12 @@ export function obtenerAccionesDisponibles(estado) {
   const acciones = {
     pendiente: [
       { accion: 'confirmar', label: 'Confirmar', icono: 'CheckCircle', color: 'green' },
-      { accion: 'iniciar', label: 'Iniciar', icono: 'PlayCircle', color: 'blue' },
+      { accion: 'iniciar', label: 'Iniciar', icono: 'PlayCircle', color: 'primary' },
       { accion: 'editar', label: 'Editar', icono: 'Edit', color: 'gray' },
       { accion: 'cancelar', label: 'Cancelar', icono: 'XCircle', color: 'red' },
     ],
     confirmada: [
-      { accion: 'iniciar', label: 'Iniciar', icono: 'PlayCircle', color: 'blue' },
+      { accion: 'iniciar', label: 'Iniciar', icono: 'PlayCircle', color: 'primary' },
       { accion: 'editar', label: 'Editar', icono: 'Edit', color: 'gray' },
       { accion: 'no_show', label: 'No Show', icono: 'AlertCircle', color: 'orange' },
       { accion: 'cancelar', label: 'Cancelar', icono: 'XCircle', color: 'red' },

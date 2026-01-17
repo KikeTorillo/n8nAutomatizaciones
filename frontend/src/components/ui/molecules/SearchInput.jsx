@@ -1,6 +1,31 @@
-import { forwardRef, useState, useEffect, useCallback, useRef } from 'react';
+import { forwardRef, useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { Search, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
+// Constantes externas para evitar recreación en cada render
+const SIZE_STYLES = {
+  sm: {
+    input: 'py-1.5 text-sm',
+    icon: 'w-4 h-4',
+    paddingLeft: 'pl-8',
+    paddingRightWithClear: 'pr-8',
+    paddingRightNormal: 'pr-3',
+  },
+  md: {
+    input: 'py-2 text-base',
+    icon: 'w-5 h-5',
+    paddingLeft: 'pl-10',
+    paddingRightWithClear: 'pr-10',
+    paddingRightNormal: 'pr-4',
+  },
+  lg: {
+    input: 'py-3 text-lg',
+    icon: 'w-6 h-6',
+    paddingLeft: 'pl-12',
+    paddingRightWithClear: 'pr-12',
+    paddingRightNormal: 'pr-4',
+  },
+};
 
 /**
  * SearchInput - Componente de búsqueda reutilizable con debounce
@@ -89,28 +114,16 @@ const SearchInput = forwardRef(
       onSearch?.('');
     }, [onChange, onSearch]);
 
-    const sizeStyles = {
-      sm: {
-        input: 'py-1.5 text-sm',
-        icon: 'w-4 h-4',
-        paddingLeft: 'pl-8',
-        paddingRight: showClear && internalValue ? 'pr-8' : 'pr-3',
-      },
-      md: {
-        input: 'py-2 text-base',
-        icon: 'w-5 h-5',
-        paddingLeft: 'pl-10',
-        paddingRight: showClear && internalValue ? 'pr-10' : 'pr-4',
-      },
-      lg: {
-        input: 'py-3 text-lg',
-        icon: 'w-6 h-6',
-        paddingLeft: 'pl-12',
-        paddingRight: showClear && internalValue ? 'pr-12' : 'pr-4',
-      },
-    };
-
-    const currentSize = sizeStyles[size] || sizeStyles.md;
+    // Memoizar estilos de tamaño con padding dinámico
+    const currentSize = useMemo(() => {
+      const baseSize = SIZE_STYLES[size] || SIZE_STYLES.md;
+      return {
+        ...baseSize,
+        paddingRight: showClear && internalValue
+          ? baseSize.paddingRightWithClear
+          : baseSize.paddingRightNormal,
+      };
+    }, [size, showClear, internalValue]);
 
     return (
       <div className={cn('relative', className)}>

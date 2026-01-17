@@ -619,7 +619,7 @@ function ClienteForm({ cliente = null, onSubmit, isLoading = false }) {
             render={({ field }) => (
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-2">
-                  <Send className="w-4 h-4 text-blue-500" />
+                  <Send className="w-4 h-4 text-primary-500" />
                   Telegram Chat ID
                 </label>
                 <Input {...field} placeholder="123456789" />

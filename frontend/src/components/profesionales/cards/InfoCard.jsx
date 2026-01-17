@@ -30,7 +30,7 @@ function InfoCard({
 }) {
   // Mapeo de colores para el icono
   const iconColorClasses = {
-    blue: 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400',
+    blue: 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400',
     amber: 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400',
     primary: 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400',
     green: 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400',

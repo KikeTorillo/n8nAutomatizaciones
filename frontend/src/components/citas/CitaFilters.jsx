@@ -1,7 +1,7 @@
 import { Search, X, Filter, Building2 } from 'lucide-react';
 import { useState } from 'react';
 import { Button, Select } from '@/components/ui';
-import useSucursalStore from '@/store/sucursalStore';
+import useSucursalStore, { selectSucursalesDisponibles, selectSucursalActiva } from '@/store/sucursalStore';
 
 /**
  * Componente de filtros para el módulo de citas
@@ -15,7 +15,8 @@ function CitaFilters({
   onLimpiarFiltros,
 }) {
   // ✅ Multi-sucursal: Obtener sucursales disponibles
-  const { sucursalesDisponibles, sucursalActiva } = useSucursalStore();
+  const sucursalesDisponibles = useSucursalStore(selectSucursalesDisponibles);
+  const sucursalActiva = useSucursalStore(selectSucursalActiva);
   const [mostrarFiltrosAvanzados, setMostrarFiltrosAvanzados] = useState(false);
 
   // Estados disponibles

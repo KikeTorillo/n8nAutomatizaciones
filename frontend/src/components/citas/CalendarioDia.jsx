@@ -10,7 +10,7 @@ const obtenerColorFondo = (estado) => {
   const colores = {
     pendiente: 'bg-yellow-500',
     confirmada: 'bg-primary-500',
-    en_curso: 'bg-purple-500',
+    en_curso: 'bg-secondary-500',
     completada: 'bg-green-500',
     cancelada: 'bg-red-500',
     no_show: 'bg-orange-500',

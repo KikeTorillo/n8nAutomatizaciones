@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback, memo } from 'react';
 import {
   Search, X,
   // Productos y comercio
@@ -194,21 +194,21 @@ function IconPicker({ value, onChange, error }) {
     return lista;
   }, [busqueda, categoriaActiva, todosLosIconos]);
 
-  // Renderizar icono
-  const renderIcon = (nombreIcono, size = 20) => {
+  // Renderizar icono (memoizado)
+  const renderIcon = useCallback((nombreIcono, size = 20) => {
     const IconComponent = ICONOS_MAP[nombreIcono];
     if (!IconComponent) return null;
     return <IconComponent size={size} />;
-  };
+  }, []);
 
-  const handleSelect = (nombreIcono) => {
+  const handleSelect = useCallback((nombreIcono) => {
     onChange(nombreIcono);
-  };
+  }, [onChange]);
 
-  const handleClear = () => {
+  const handleClear = useCallback(() => {
     onChange('');
     setBusqueda('');
-  };
+  }, [onChange]);
 
   return (
     <div className="space-y-3">
@@ -279,28 +279,14 @@ function IconPicker({ value, onChange, error }) {
       <div className="max-h-52 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg p-2">
         {iconosFiltrados.length > 0 ? (
           <div className="grid grid-cols-6 sm:grid-cols-8 gap-1">
-            {iconosFiltrados.map((nombreIcono) => {
-              const isSelected = value === nombreIcono;
-              const IconComponent = ICONOS_MAP[nombreIcono];
-              if (!IconComponent) return null;
-
-              return (
-                <button
-                  key={nombreIcono}
-                  type="button"
-                  onClick={() => handleSelect(nombreIcono)}
-                  className={`p-2.5 rounded-lg transition-all flex items-center justify-center ${
-                    isSelected
-                      ? 'bg-primary-100 dark:bg-primary-900/50 text-primary-600 dark:text-primary-400 ring-2 ring-primary-500'
-                      : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400'
-                  }`}
-                  title={nombreIcono}
-                  aria-label={`Seleccionar icono ${nombreIcono}`}
-                >
-                  <IconComponent size={20} />
-                </button>
-              );
-            })}
+            {iconosFiltrados.map((nombreIcono) => (
+              <IconButton
+                key={nombreIcono}
+                nombreIcono={nombreIcono}
+                isSelected={value === nombreIcono}
+                onSelect={handleSelect}
+              />
+            ))}
           </div>
         ) : (
           <p className="text-center text-sm text-gray-500 dark:text-gray-400 py-4">
@@ -320,5 +306,33 @@ function IconPicker({ value, onChange, error }) {
     </div>
   );
 }
+
+/**
+ * IconButton - Botón de icono memoizado
+ */
+const IconButton = memo(function IconButton({ nombreIcono, isSelected, onSelect }) {
+  const IconComponent = ICONOS_MAP[nombreIcono];
+  if (!IconComponent) return null;
+
+  const handleClick = useCallback(() => {
+    onSelect(nombreIcono);
+  }, [onSelect, nombreIcono]);
+
+  return (
+    <button
+      type="button"
+      onClick={handleClick}
+      className={`p-2.5 rounded-lg transition-all flex items-center justify-center ${
+        isSelected
+          ? 'bg-primary-100 dark:bg-primary-900/50 text-primary-600 dark:text-primary-400 ring-2 ring-primary-500'
+          : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400'
+      }`}
+      title={nombreIcono}
+      aria-label={`Seleccionar icono ${nombreIcono}`}
+    >
+      <IconComponent size={20} />
+    </button>
+  );
+});
 
 export default IconPicker;

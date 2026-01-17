@@ -29,8 +29,8 @@ const APPS_INFO = {
   pos: {
     nombre: 'Punto de Venta',
     icon: ShoppingCart,
-    color: 'text-purple-600',
-    bg: 'bg-purple-100'
+    color: 'text-secondary-600',
+    bg: 'bg-secondary-100'
   }
 };
 
@@ -123,7 +123,7 @@ function PlanStatusBanner() {
   // Banner para Plan Pro (mostrar que tiene todo)
   if (esPlanPro) {
     return (
-      <div className="bg-gradient-to-r from-primary-50 to-purple-50 dark:from-primary-900/30 dark:to-purple-900/30 border border-primary-200 dark:border-primary-800 rounded-lg p-3 mb-6">
+      <div className="bg-gradient-to-r from-primary-50 to-secondary-50 dark:from-primary-900/30 dark:to-secondary-900/30 border border-primary-200 dark:border-primary-800 rounded-lg p-3 mb-6">
         <div className="flex items-center gap-3">
           <div className="bg-primary-600 dark:bg-primary-500 text-white rounded-full p-1.5">
             <Crown className="w-4 h-4" />

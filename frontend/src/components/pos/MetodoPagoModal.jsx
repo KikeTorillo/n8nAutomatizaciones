@@ -38,7 +38,7 @@ export default function MetodoPagoModal({
     const metodos = [
       { value: 'efectivo', label: 'Efectivo', icon: DollarSign, color: 'green' },
       { value: 'tarjeta_debito', label: 'Débito', icon: CreditCard, color: 'blue' },
-      { value: 'tarjeta_credito', label: 'Crédito', icon: CreditCard, color: 'purple' },
+      { value: 'tarjeta_credito', label: 'Credito', icon: CreditCard, color: 'secondary' },
       { value: 'transferencia', label: 'Transferencia', icon: RefreshCw, color: 'orange' },
       { value: 'qr_mercadopago', label: 'QR MP', icon: Smartphone, color: 'cyan' },
     ];
@@ -196,7 +196,7 @@ export default function MetodoPagoModal({
   const colorClasses = {
     green: 'bg-green-50 dark:bg-green-900/30 border-green-200 dark:border-green-800',
     blue: 'bg-primary-50 dark:bg-primary-900/30 border-primary-200 dark:border-primary-800',
-    purple: 'bg-purple-50 dark:bg-purple-900/30 border-purple-200 dark:border-purple-800',
+    secondary: 'bg-secondary-50 dark:bg-secondary-900/30 border-secondary-200 dark:border-secondary-800',
     orange: 'bg-orange-50 dark:bg-orange-900/30 border-orange-200 dark:border-orange-800',
     cyan: 'bg-cyan-50 dark:bg-cyan-900/30 border-cyan-200 dark:border-cyan-800',
     amber: 'bg-amber-50 dark:bg-amber-900/30 border-amber-200 dark:border-amber-800',
@@ -205,7 +205,7 @@ export default function MetodoPagoModal({
   const selectedColorClasses = {
     green: 'ring-2 ring-green-500 border-green-500',
     blue: 'ring-2 ring-primary-500 border-primary-500',
-    purple: 'ring-2 ring-purple-500 border-purple-500',
+    secondary: 'ring-2 ring-secondary-500 border-secondary-500',
     orange: 'ring-2 ring-orange-500 border-orange-500',
     cyan: 'ring-2 ring-cyan-500 border-cyan-500',
     amber: 'ring-2 ring-amber-500 border-amber-500',
@@ -214,7 +214,7 @@ export default function MetodoPagoModal({
   const iconColorClasses = {
     green: 'text-green-600 dark:text-green-400',
     blue: 'text-primary-600 dark:text-primary-400',
-    purple: 'text-purple-600 dark:text-purple-400',
+    secondary: 'text-secondary-600 dark:text-secondary-400',
     orange: 'text-orange-600 dark:text-orange-400',
     cyan: 'text-cyan-600 dark:text-cyan-400',
     amber: 'text-amber-600 dark:text-amber-400',

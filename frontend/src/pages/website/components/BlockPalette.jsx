@@ -34,7 +34,7 @@ const ICONOS_BLOQUES = {
  * Colores para cada tipo de bloque
  */
 const COLORES_BLOQUES = {
-  hero: { bg: 'bg-purple-100', text: 'text-purple-600' },
+  hero: { bg: 'bg-secondary-100', text: 'text-secondary-600' },
   servicios: { bg: 'bg-primary-100', text: 'text-primary-600' },
   testimonios: { bg: 'bg-amber-100', text: 'text-amber-600' },
   equipo: { bg: 'bg-green-100', text: 'text-green-600' },

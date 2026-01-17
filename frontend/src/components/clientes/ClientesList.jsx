@@ -58,7 +58,7 @@ function ClientesList({
                   {row.nombre}
                 </span>
                 {row.tipo === 'empresa' && (
-                  <Building2 className="w-3.5 h-3.5 text-blue-500" />
+                  <Building2 className="w-3.5 h-3.5 text-primary-500" />
                 )}
               </div>
               {row.email && (
