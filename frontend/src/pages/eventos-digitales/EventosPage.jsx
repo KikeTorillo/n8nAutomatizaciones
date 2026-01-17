@@ -16,9 +16,9 @@ import {
   BackButton,
   Button,
   ConfirmDialog,
-  Input
+  Input,
+  LoadingSpinner
 } from '@/components/ui';
-import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { useEventos, useEliminarEvento, usePublicarEvento } from '@/hooks/useEventosDigitales';
 import { useToast } from '@/hooks/useToast';
 import { useModalManager } from '@/hooks/useModalManager';

@@ -1,6 +1,6 @@
 import { forwardRef } from 'react';
 import { Check, X, QrCode } from 'lucide-react';
-import LoadingSpinner from '@/components/common/LoadingSpinner';
+import { LoadingSpinner } from '@/components/ui';
 
 /**
  * Sección de confirmación RSVP para página pública de eventos

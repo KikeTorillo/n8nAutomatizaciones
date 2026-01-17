@@ -27,14 +27,18 @@
  *   drawerProps={{ profesionalId }}
  * />
  */
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import PropTypes from 'prop-types';
 import { ChevronDown, Loader2, AlertCircle, Plus } from 'lucide-react';
 import Button from '../atoms/Button';
 import ConfirmDialog from './ConfirmDialog';
 import { useToast } from '@/hooks/useToast';
 
-function ExpandableCrudSection({
+/**
+ * IMPORTANTE: Memoizar `renderItem` con useCallback en el componente padre
+ * para evitar re-renders innecesarios.
+ */
+const ExpandableCrudSection = memo(function ExpandableCrudSection({
   // Header
   icon: Icon,
   title,
@@ -63,6 +67,7 @@ function ExpandableCrudSection({
   // Drawer/Modal
   DrawerComponent,
   drawerProps = {},
+  itemPropName = 'item', // Nombre del prop para pasar el item al drawer
 
   // Extra actions (for custom buttons in header)
   headerActions,
@@ -226,16 +231,12 @@ function ExpandableCrudSection({
           onClose={handleCloseDrawer}
           onSuccess={handleCloseDrawer}
           {...drawerProps}
-          // Pass item to edit (prop name varies by drawer)
-          educacion={itemToEdit}
-          experiencia={itemToEdit}
-          habilidadEmpleado={itemToEdit}
-          cuenta={itemToEdit}
+          {...(itemToEdit && { [itemPropName]: itemToEdit })}
         />
       )}
     </div>
   );
-}
+});
 
 ExpandableCrudSection.propTypes = {
   // Header
@@ -275,6 +276,7 @@ ExpandableCrudSection.propTypes = {
   // Drawer
   DrawerComponent: PropTypes.elementType,
   drawerProps: PropTypes.object,
+  itemPropName: PropTypes.string,
 
   // Extra actions
   headerActions: PropTypes.node,

@@ -30,6 +30,7 @@ export default {
         'fade-in': 'fadeIn 0.5s ease-in-out',
         'slide-up': 'slideUp 0.5s ease-out',
         'slide-down': 'slideDown 0.5s ease-out',
+        'scan-line': 'scanLine 2s ease-in-out infinite',
       },
       keyframes: {
         fadeIn: {
@@ -43,6 +44,10 @@ export default {
         slideDown: {
           '0%': { transform: 'translateY(-20px)', opacity: '0' },
           '100%': { transform: 'translateY(0)', opacity: '1' },
+        },
+        scanLine: {
+          '0%, 100%': { top: '10%' },
+          '50%': { top: '85%' },
         },
       },
     },

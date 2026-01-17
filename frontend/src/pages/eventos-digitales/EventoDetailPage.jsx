@@ -14,8 +14,7 @@ import {
   ScanLine,
   LayoutGrid,
 } from 'lucide-react';
-import { BackButton, Button } from '@/components/ui';
-import LoadingSpinner from '@/components/common/LoadingSpinner';
+import { BackButton, Button, LoadingSpinner } from '@/components/ui';
 import { useToast } from '@/hooks/useToast';
 import { SeatingChartEditor } from '@/components/eventos-digitales';
 import useAuthStore from '@/store/authStore';

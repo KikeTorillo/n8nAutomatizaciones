@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Package, Check, AlertTriangle, Hash, Plus, X, ChevronDown, ChevronUp, ScanLine, Info } from 'lucide-react';
-import { Button, Drawer } from '@/components/ui';
+import { BarcodeScanner, Button, Drawer } from '@/components/ui';
 import { useToast } from '@/hooks/useToast';
 import { useOrdenCompra, useRecibirMercancia } from '@/hooks/useOrdenesCompra';
 import { useVerificarExistencia } from '@/hooks/useNumerosSerie';
 import { useResumenCostos } from '@/hooks/useLandedCosts';
-import BarcodeScanner from '@/components/common/BarcodeScanner';
 
 /**
  * Modal para registrar recepción de mercancía

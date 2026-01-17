@@ -5,6 +5,9 @@ import EmptyState from '../molecules/EmptyState';
 import Pagination from '../molecules/Pagination';
 import { Inbox } from 'lucide-react';
 
+// Constante externa para evitar recreación en cada render
+const WIDTH_MAP = { sm: 'sm', md: 'md', lg: 'lg', xl: 'xl', auto: 'md' };
+
 /**
  * DataTable - Tabla de datos genérica reutilizable
  *
@@ -88,8 +91,7 @@ export function DataTable({
 }) {
   // Calcular anchos de columna para skeleton
   const columnWidths = useMemo(() => {
-    const widthMap = { sm: 'sm', md: 'md', lg: 'lg', xl: 'xl', auto: 'md' };
-    return columns.map(col => widthMap[col.width] || 'md');
+    return columns.map(col => WIDTH_MAP[col.width] || 'md');
   }, [columns]);
 
   // Estado de carga

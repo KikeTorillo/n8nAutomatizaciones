@@ -22,10 +22,10 @@ import {
   BackButton,
   Button,
   Input,
+  LoadingSpinner,
   Modal,
   Select
 } from '@/components/ui';
-import LoadingSpinner from '@/components/common/LoadingSpinner';
 import SucursalFormDrawer from '@/components/sucursales/SucursalFormDrawer';
 import { useSucursales, useEliminarSucursal } from '@/hooks/useSucursales';
 import { useToast } from '@/hooks/useToast';

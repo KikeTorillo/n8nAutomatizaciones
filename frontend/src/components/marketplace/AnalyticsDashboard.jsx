@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useEstadisticasPerfil } from '@/hooks/useMarketplace';
-import LoadingSpinner from '@/components/common/LoadingSpinner';
+import { LoadingSpinner } from '@/components/ui';
 import {
   Chart as ChartJS,
   CategoryScale,

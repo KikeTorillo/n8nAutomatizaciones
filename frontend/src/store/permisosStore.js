@@ -196,3 +196,27 @@ const usePermisosStore = create(
 );
 
 export default usePermisosStore;
+
+// ====================================================================
+// SELECTORES - Para evitar re-renders innecesarios
+// Usar: const permisos = usePermisosStore(selectPermisos);
+// ====================================================================
+
+// State
+export const selectPermisos = (state) => state.permisos;
+export const selectPermisosVerificados = (state) => state.permisosVerificados;
+export const selectUltimaSincronizacion = (state) => state.ultimaSincronizacion;
+
+// Getters
+export const selectTienePermiso = (state) => state.tienePermiso;
+export const selectNecesitaSincronizar = (state) => state.necesitaSincronizar;
+export const selectEstaEnCache = (state) => state.estaEnCache;
+
+// Actions
+export const selectSetPermisoVerificado = (state) => state.setPermisoVerificado;
+export const selectSetMultiplesPermisos = (state) => state.setMultiplesPermisos;
+export const selectSetPermisos = (state) => state.setPermisos;
+export const selectInvalidarSucursal = (state) => state.invalidarSucursal;
+export const selectInvalidarCache = (state) => state.invalidarCache;
+export const selectRefrescarSincronizacion = (state) => state.refrescarSincronizacion;
+export const selectClear = (state) => state.clear;

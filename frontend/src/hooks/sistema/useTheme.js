@@ -19,7 +19,7 @@ export function useTheme() {
     applyTheme();
     const cleanup = initSystemListener();
     return cleanup;
-  }, []);
+  }, [applyTheme, initSystemListener]);
 
   return {
     theme,

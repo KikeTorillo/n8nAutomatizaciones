@@ -28,8 +28,7 @@ import {
   MessageCircle,
   User,
 } from 'lucide-react';
-import { Button } from '@/components/ui';
-import LoadingSpinner from '@/components/common/LoadingSpinner';
+import { Button, LoadingSpinner } from '@/components/ui';
 import { citasApi } from '@/services/api/endpoints';
 import { useQuery } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';

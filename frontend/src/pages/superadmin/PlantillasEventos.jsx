@@ -11,10 +11,10 @@ import {
   Checkbox,
   ConfirmDialog,
   Input,
+  LoadingSpinner,
   Select,
   Textarea
 } from '@/components/ui';
-import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { useToast } from '@/hooks/useToast';
 import { useModalManager } from '@/hooks/useModalManager';
 import {

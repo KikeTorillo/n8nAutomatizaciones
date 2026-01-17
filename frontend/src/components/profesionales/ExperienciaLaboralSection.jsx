@@ -112,6 +112,7 @@ function ExperienciaLaboralSection({ profesionalId }) {
       }}
       DrawerComponent={ExperienciaDrawer}
       drawerProps={{ profesionalId }}
+      itemPropName="experiencia"
     />
   );
 }

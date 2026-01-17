@@ -1,5 +1,14 @@
-import { X, AlertTriangle } from 'lucide-react';
+import { X, AlertTriangle, Info, CheckCircle, XCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
+// Mapeo de iconos por defecto según la variante
+const defaultIcons = {
+  info: Info,
+  success: CheckCircle,
+  warning: AlertTriangle,
+  error: XCircle,
+  rose: AlertTriangle,
+};
 
 /**
  * Alert - Componente de alerta reutilizable
@@ -69,6 +78,7 @@ function Alert({
   className,
 }) {
   const styles = variantStyles[variant] || variantStyles.info;
+  const DefaultIcon = defaultIcons[variant] || defaultIcons.warning;
 
   return (
     <div
@@ -90,27 +100,29 @@ function Alert({
         {/* Contenido */}
         <div className="flex-1 min-w-0">
           {/* Header con título y botón cerrar */}
-          <div className="flex items-center justify-between gap-2 mb-1">
-            <div className="flex items-center gap-2">
-              <AlertTriangle className={cn('h-4 w-4', styles.iconColor)} />
-              <h3 className={cn('font-semibold', styles.titleColor)}>
-                {title}
-              </h3>
+          {title && (
+            <div className="flex items-center justify-between gap-2 mb-1">
+              <div className="flex items-center gap-2">
+                <DefaultIcon className={cn('h-4 w-4', styles.iconColor)} />
+                <h3 className={cn('font-semibold', styles.titleColor)}>
+                  {title}
+                </h3>
+              </div>
+              {dismissible && onDismiss && (
+                <button
+                  type="button"
+                  onClick={onDismiss}
+                  className={cn(
+                    'p-1 rounded-lg transition-colors',
+                    styles.textColor,
+                    'hover:bg-black/5 dark:hover:bg-white/5'
+                  )}
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
             </div>
-            {dismissible && onDismiss && (
-              <button
-                type="button"
-                onClick={onDismiss}
-                className={cn(
-                  'p-1 rounded-lg transition-colors',
-                  styles.textColor,
-                  'hover:bg-black/5 dark:hover:bg-white/5'
-                )}
-              >
-                <X className="h-4 w-4" />
-              </button>
-            )}
-          </div>
+          )}
 
           {/* Contenido de la alerta */}
           <div className={styles.textColor}>

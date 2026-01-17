@@ -203,22 +203,6 @@ const BarcodeScanner = ({
                     )}
                 </div>
             </div>
-
-            {/* Estilos para la animación de línea de escaneo */}
-            <style>{`
-                @keyframes scan-line {
-                    0%, 100% { top: 10%; }
-                    50% { top: 85%; }
-                }
-                .animate-scan-line {
-                    animation: scan-line 2s ease-in-out infinite;
-                }
-                #${elementId} video {
-                    object-fit: cover !important;
-                    width: 100% !important;
-                    height: 100% !important;
-                }
-            `}</style>
         </div>
     );
 };

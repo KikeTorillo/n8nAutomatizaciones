@@ -1,4 +1,4 @@
-import { forwardRef, useState, useEffect, useCallback } from 'react';
+import { forwardRef, useState, useEffect, useCallback, useRef } from 'react';
 import { Search, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -51,21 +51,27 @@ const SearchInput = forwardRef(
   ) => {
     const [internalValue, setInternalValue] = useState(value);
 
+    // Ref para mantener callback estable y evitar cancelaciones de debounce
+    const onSearchRef = useRef(onSearch);
+    useEffect(() => {
+      onSearchRef.current = onSearch;
+    }, [onSearch]);
+
     // Sincronizar valor externo
     useEffect(() => {
       setInternalValue(value);
     }, [value]);
 
-    // Debounce para onSearch
+    // Debounce para onSearch (sin onSearch en deps para evitar cancelaciones)
     useEffect(() => {
-      if (!onSearch) return;
+      if (!onSearchRef.current) return;
 
       const timer = setTimeout(() => {
-        onSearch(internalValue);
+        onSearchRef.current(internalValue);
       }, debounceMs);
 
       return () => clearTimeout(timer);
-    }, [internalValue, debounceMs, onSearch]);
+    }, [internalValue, debounceMs]);
 
     const handleChange = useCallback((e) => {
       const newValue = e.target.value;

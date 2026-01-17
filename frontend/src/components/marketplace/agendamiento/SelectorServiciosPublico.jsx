@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Clock, DollarSign, Check } from 'lucide-react';
-import { Button } from '@/components/ui';
-import LoadingSpinner from '@/components/common/LoadingSpinner';
+import { Button, LoadingSpinner } from '@/components/ui';
 import { useServiciosPublicos } from '@/hooks/useMarketplace';
 
 /**

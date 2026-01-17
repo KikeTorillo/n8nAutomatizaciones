@@ -14,7 +14,7 @@ import {
   Download,
   Camera
 } from 'lucide-react';
-import LoadingSpinner from '@/components/common/LoadingSpinner';
+import { LoadingSpinner } from '@/components/ui';
 import { useToast } from '@/hooks/useToast';
 import {
   useEventoPublico,

@@ -20,8 +20,7 @@ import {
     ChevronUp,
 } from 'lucide-react';
 import { extractProductCode } from '@/utils/gs1Parser';
-import { Button, Textarea } from '@/components/ui';
-import BarcodeScanner from '@/components/common/BarcodeScanner';
+import { BarcodeScanner, Button, Textarea } from '@/components/ui';
 import {
     IniciarConteoModal,
     CompletarConteoModal,

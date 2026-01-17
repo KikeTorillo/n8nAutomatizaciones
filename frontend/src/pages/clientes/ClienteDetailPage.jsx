@@ -31,8 +31,7 @@ import {
   ShoppingCart,
   DollarSign,
 } from 'lucide-react';
-import { BackButton, Button, StatCardGrid } from '@/components/ui';
-import LoadingSpinner from '@/components/common/LoadingSpinner';
+import { BackButton, Button, LoadingSpinner, StatCardGrid } from '@/components/ui';
 import ClienteEtiquetasEditor from '@/components/clientes/ClienteEtiquetasEditor';
 import { useCliente, useEstadisticasCliente } from '@/hooks/useClientes';
 import { useUsuarios } from '@/hooks/useUsuarios';

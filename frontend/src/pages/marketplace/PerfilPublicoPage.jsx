@@ -11,8 +11,7 @@ import {
   ArrowLeft,
   AlertCircle,
 } from 'lucide-react';
-import { Button } from '@/components/ui';
-import LoadingSpinner from '@/components/common/LoadingSpinner';
+import { Button, LoadingSpinner } from '@/components/ui';
 import SEOHead from '@/components/marketplace/SEOHead';
 import EstrellaRating from '@/components/marketplace/EstrellaRating';
 import ReseñasSection from '@/components/marketplace/ReseñasSection';

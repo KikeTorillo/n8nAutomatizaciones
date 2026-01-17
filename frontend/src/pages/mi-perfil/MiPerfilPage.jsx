@@ -27,8 +27,7 @@ import {
 } from '@/utils/bloqueoHelpers';
 import { format, parseISO, differenceInDays, isFuture } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Button } from '@/components/ui';
-import LoadingSpinner from '@/components/common/LoadingSpinner';
+import { Button, LoadingSpinner } from '@/components/ui';
 
 /**
  * MiPerfilPage - Portal de autoservicio para empleados

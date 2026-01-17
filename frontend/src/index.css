@@ -110,3 +110,10 @@ input[type="datetime-local"]::-webkit-date-and-time-value {
   min-width: 0;
   min-height: 1.5em; /* Altura mínima para texto */
 }
+
+/* BarcodeScanner - Estilos para el video del escáner */
+[id^="scanner-"] video {
+  object-fit: cover !important;
+  width: 100% !important;
+  height: 100% !important;
+}

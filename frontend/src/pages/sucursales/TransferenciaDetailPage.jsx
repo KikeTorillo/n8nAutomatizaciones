@@ -18,9 +18,9 @@ import {
   BackButton,
   Button,
   Input,
+  LoadingSpinner,
   Modal
 } from '@/components/ui';
-import LoadingSpinner from '@/components/common/LoadingSpinner';
 import {
   useTransferencia,
   useEnviarTransferencia,

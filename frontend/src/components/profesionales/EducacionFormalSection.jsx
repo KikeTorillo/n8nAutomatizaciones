@@ -117,6 +117,7 @@ function EducacionFormalSection({ profesionalId }) {
       }}
       DrawerComponent={EducacionDrawer}
       drawerProps={{ profesionalId }}
+      itemPropName="educacion"
     />
   );
 }

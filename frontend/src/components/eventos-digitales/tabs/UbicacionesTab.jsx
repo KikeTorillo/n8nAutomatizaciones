@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Plus, Edit, Trash2, MapPin, Clock, ExternalLink } from 'lucide-react';
-import { Button, Input } from '@/components/ui';
-import LoadingSpinner from '@/components/common/LoadingSpinner';
+import { Button, Input, LoadingSpinner } from '@/components/ui';
 import { useToast } from '@/hooks/useToast';
 
 /**

@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { useReseñasNegocio, useResponderReseña, useModerarReseña } from '@/hooks/useMarketplace';
 import { useToast } from '@/hooks/useToast';
-import { Button } from '@/components/ui';
-import LoadingSpinner from '@/components/common/LoadingSpinner';
+import { Button, LoadingSpinner } from '@/components/ui';
 import { Star, Reply, EyeOff, Eye, MessageCircle } from 'lucide-react';
 
 /**

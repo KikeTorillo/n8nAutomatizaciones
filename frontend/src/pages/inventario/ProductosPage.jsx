@@ -28,7 +28,7 @@ import ProductoFormDrawer from '@/components/inventario/ProductoFormDrawer';
 import BulkProductosModal from '@/components/inventario/BulkProductosModal';
 import AjustarStockModal from '@/components/inventario/AjustarStockModal';
 import GenerarEtiquetaModal from '@/components/inventario/GenerarEtiquetaModal';
-import BarcodeScanner from '@/components/common/BarcodeScanner';
+import { BarcodeScanner } from '@/components/ui';
 
 /**
  * Página principal de Gestión de Productos

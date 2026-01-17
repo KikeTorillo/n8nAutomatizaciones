@@ -8,7 +8,27 @@ import { useState, useCallback, useMemo } from 'react';
  * @param {Object} initialState - Estado inicial con claves para cada modal
  * @returns {Object} - Objeto con estado y funciones de control
  *
+ * IMPORTANTE: `initialState` se captura solo en el primer render (useMemo con deps vacías).
+ * Para evitar problemas:
+ * - Definir initialState como constante fuera del componente, o
+ * - Memoizarlo con useMemo si depende de props
+ *
+ * Esto es intencional: los estados iniciales de modales raramente necesitan
+ * cambiar dinámicamente después del primer render.
+ *
  * @example
+ * // ✅ Correcto: constante fuera del componente
+ * const MODAL_INITIAL_STATE = {
+ *   detalles: { isOpen: false, data: null },
+ *   formulario: { isOpen: false, data: null, mode: 'create' },
+ * };
+ *
+ * function MiComponente() {
+ *   const { modals, openModal, closeModal } = useModalManager(MODAL_INITIAL_STATE);
+ * }
+ *
+ * @example
+ * // ✅ Correcto: inline (objeto literal estable)
  * const { modals, openModal, closeModal, closeAll, isOpen, getModalData } = useModalManager({
  *   detalles: { isOpen: false, data: null },
  *   formulario: { isOpen: false, data: null, mode: 'create' },

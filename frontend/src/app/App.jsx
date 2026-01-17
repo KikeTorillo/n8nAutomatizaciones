@@ -4,7 +4,7 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { HelmetProvider } from 'react-helmet-async';
 import { Toaster } from 'sonner';
 import { queryClient } from './queryClient';
-import ToastContainer from '@/components/common/ToastContainer';
+import { ToastContainer } from '@/components/ui';
 import SetupGuard from '@/components/auth/SetupGuard';
 import useAuthStore, { selectIsAuthenticated, selectSetUser } from '@/store/authStore';
 import useThemeStore from '@/store/themeStore';

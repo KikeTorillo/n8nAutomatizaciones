@@ -1,6 +1,5 @@
-import { forwardRef } from 'react';
+import { forwardRef, useId } from 'react';
 import { cn } from '@/lib/utils';
-import { Check } from 'lucide-react';
 
 /**
  * Componente Checkbox reutilizable
@@ -25,7 +24,8 @@ const Checkbox = forwardRef(
     },
     ref
   ) => {
-    const checkboxId = id || `checkbox-${Math.random().toString(36).substr(2, 9)}`;
+    const generatedId = useId();
+    const checkboxId = id || generatedId;
 
     return (
       <div className={cn('flex items-start gap-3', className)}>

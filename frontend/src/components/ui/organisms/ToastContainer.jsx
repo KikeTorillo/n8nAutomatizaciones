@@ -1,11 +1,15 @@
+import { memo } from 'react';
 import { Toast } from '@/components/ui';
 import { useToast } from '@/hooks/useToast';
 
 /**
  * Contenedor de toasts posicionado en la esquina superior derecha
  * Renderiza todos los toasts activos del sistema
+ *
+ * Memoizado para evitar re-renders innecesarios cuando cambian
+ * estados no relacionados en componentes padre.
  */
-function ToastContainer() {
+const ToastContainer = memo(function ToastContainer() {
   const { toasts, remove } = useToast();
 
   if (toasts.length === 0) {
@@ -26,6 +30,6 @@ function ToastContainer() {
       ))}
     </div>
   );
-}
+});
 
 export default ToastContainer;

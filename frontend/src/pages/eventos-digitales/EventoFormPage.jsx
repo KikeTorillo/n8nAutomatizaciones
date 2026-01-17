@@ -5,9 +5,9 @@ import {
   BackButton,
   Button,
   Checkbox,
-  Input
+  Input,
+  LoadingSpinner
 } from '@/components/ui';
-import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { useToast } from '@/hooks/useToast';
 import { useUploadArchivo } from '@/hooks/useStorage';
 import {

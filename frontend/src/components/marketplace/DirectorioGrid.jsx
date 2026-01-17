@@ -1,7 +1,6 @@
 import { ChevronLeft, ChevronRight, Store } from 'lucide-react';
-import { Button } from '@/components/ui';
+import { Button, LoadingSpinner } from '@/components/ui';
 import NegocioCard from './NegocioCard';
-import LoadingSpinner from '@/components/common/LoadingSpinner';
 
 /**
  * Grid de negocios con paginación

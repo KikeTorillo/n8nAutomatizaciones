@@ -1,6 +1,5 @@
 import { Check, X, MessageCircle } from 'lucide-react';
-import { Button } from '@/components/ui';
-import LoadingSpinner from '@/components/common/LoadingSpinner';
+import { Button, LoadingSpinner } from '@/components/ui';
 
 /**
  * Tab de felicitaciones del evento

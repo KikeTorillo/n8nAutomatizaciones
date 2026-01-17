@@ -1,6 +1,14 @@
-import { useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
+
+// Constante externa para evitar recreación en cada render
+const SIZE_CLASSES = {
+  sm: 'max-w-md',
+  md: 'max-w-2xl',
+  lg: 'max-w-4xl',
+  xl: 'max-w-6xl',
+};
 
 /**
  * Componente Modal reutilizable
@@ -41,24 +49,18 @@ function Modal({
     };
   }, [isOpen]);
 
-  // Cerrar con ESC
-  useEffect(() => {
-    const handleEscape = (e) => {
-      if (e.key === 'Escape' && isOpen && !disableClose) {
-        onClose();
-      }
-    };
-
-    document.addEventListener('keydown', handleEscape);
-    return () => document.removeEventListener('keydown', handleEscape);
+  // Memoizar handleEscape para evitar recrear listener en cada render
+  const handleEscape = useCallback((e) => {
+    if (e.key === 'Escape' && isOpen && !disableClose) {
+      onClose();
+    }
   }, [isOpen, onClose, disableClose]);
 
-  const sizeClasses = {
-    sm: 'max-w-md',
-    md: 'max-w-2xl',
-    lg: 'max-w-4xl',
-    xl: 'max-w-6xl',
-  };
+  // Cerrar con ESC
+  useEffect(() => {
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [handleEscape]);
 
   return (
     <AnimatePresence>
@@ -83,7 +85,7 @@ function Modal({
               transition={{ duration: 0.2 }}
               onClick={(e) => e.stopPropagation()}
               className={`
-                bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full ${sizeClasses[size]}
+                bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full ${SIZE_CLASSES[size]}
                 max-h-[90vh] overflow-hidden flex flex-col
               `}
             >

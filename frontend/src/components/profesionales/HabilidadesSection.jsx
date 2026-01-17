@@ -175,6 +175,7 @@ function HabilidadesSection({ profesionalId, canVerify = false }) {
       }}
       DrawerComponent={HabilidadDrawer}
       drawerProps={{ profesionalId }}
+      itemPropName="habilidadEmpleado"
     />
   );
 }

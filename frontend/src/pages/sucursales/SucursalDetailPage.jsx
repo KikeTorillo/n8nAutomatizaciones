@@ -17,8 +17,7 @@ import {
   Plus,
   Trash2,
 } from 'lucide-react';
-import { Button } from '@/components/ui';
-import LoadingSpinner from '@/components/common/LoadingSpinner';
+import { Button, LoadingSpinner } from '@/components/ui';
 import SucursalFormDrawer from '@/components/sucursales/SucursalFormDrawer';
 import SucursalUsuariosModal from '@/components/sucursales/SucursalUsuariosModal';
 import SucursalProfesionalesModal from '@/components/sucursales/SucursalProfesionalesModal';

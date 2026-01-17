@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { UserCheck, Search, Check } from 'lucide-react';
-import { Button, Drawer, Input } from '@/components/ui';
-import LoadingSpinner from '@/components/common/LoadingSpinner';
+import { Button, Drawer, Input, LoadingSpinner } from '@/components/ui';
 import { useProfesionales } from '@/hooks/useProfesionales';
 import { useAsignarProfesionalSucursal } from '@/hooks/useSucursales';
 import { useToast } from '@/hooks/useToast';

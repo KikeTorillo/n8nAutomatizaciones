@@ -159,6 +159,7 @@ function CuentasBancariasSection({ profesionalId }) {
       }}
       DrawerComponent={CuentaBancariaDrawer}
       drawerProps={{ profesionalId }}
+      itemPropName="cuenta"
     />
   );
 }

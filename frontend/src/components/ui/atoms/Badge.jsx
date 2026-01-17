@@ -1,3 +1,5 @@
+import { cn } from '@/lib/utils';
+
 /**
  * Badge - Componente de etiqueta/badge
  */
@@ -32,12 +34,12 @@ function Badge({
 }) {
   return (
     <span
-      className={`
-        inline-flex items-center gap-1 font-medium rounded-full
-        ${variantStyles[variant] || variantStyles.default}
-        ${sizeStyles[size] || sizeStyles.md}
-        ${className}
-      `}
+      className={cn(
+        'inline-flex items-center gap-1 font-medium rounded-full',
+        variantStyles[variant] || variantStyles.default,
+        sizeStyles[size] || sizeStyles.md,
+        className
+      )}
     >
       {children}
     </span>
