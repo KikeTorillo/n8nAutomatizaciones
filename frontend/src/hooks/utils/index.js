@@ -21,3 +21,10 @@ export * from './useStorage';
 // CRUD genérico
 export * from './useCrudHandlers';
 export * from './useConfigCrud';
+
+// Eventos DOM (Ene 2026 - Optimización arquitectónica)
+export * from './useClickOutside';
+export * from './useEscapeKey';
+
+// Multi-tenant (Ene 2026 - Optimización arquitectónica)
+export * from './useMultiTenantMutation';

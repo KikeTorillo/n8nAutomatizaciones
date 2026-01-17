@@ -1,6 +1,10 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+// Ene 2026: Variable de control para evitar memory leaks
+// Almacena la función de cleanup del listener del sistema
+let systemListenerCleanup = null;
+
 /**
  * Store de tema con Zustand
  * Maneja el tema de la aplicación (light/dark/system)
@@ -65,8 +69,14 @@ const useThemeStore = create(
 
       /**
        * Inicializar listener para cambios en preferencia del sistema
+       * Ene 2026: Previene múltiples listeners (memory leak)
        */
       initSystemListener: () => {
+        // Limpiar listener anterior si existe
+        if (systemListenerCleanup) {
+          systemListenerCleanup();
+        }
+
         const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
 
         const handleChange = () => {
@@ -81,8 +91,13 @@ const useThemeStore = create(
         // Aplicar tema inicial
         get().applyTheme();
 
-        // Retornar cleanup function
-        return () => mediaQuery.removeEventListener('change', handleChange);
+        // Guardar función de cleanup
+        systemListenerCleanup = () => {
+          mediaQuery.removeEventListener('change', handleChange);
+          systemListenerCleanup = null;
+        };
+
+        return systemListenerCleanup;
       },
 
       /**

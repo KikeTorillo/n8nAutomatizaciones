@@ -23,3 +23,7 @@ export { default as IconPicker } from './IconPicker';
 
 // Nuevos (Ene 2026) - Fase 2 mejoras UI
 export { default as FormGroup } from './FormGroup';
+
+// Nuevos (Ene 2026) - Optimización arquitectónica
+export { default as FilterChip } from './FilterChip';
+export { default as SearchFilterBar } from './SearchFilterBar';

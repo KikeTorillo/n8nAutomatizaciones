@@ -99,4 +99,21 @@ const useOnboardingStore = create(
   )
 );
 
+// ====================================================================
+// SELECTORES - Ene 2026: Optimización para evitar re-renders
+// Usar estos selectores en lugar de desestructurar todo el store
+// ====================================================================
+
+// State
+export const selectFormData = (state) => state.formData;
+export const selectRegistroEnviado = (state) => state.registroEnviado;
+export const selectEmailEnviado = (state) => state.emailEnviado;
+export const selectOrganizacionId = (state) => state.organizacion_id;
+
+// Actions
+export const selectUpdateFormData = (state) => state.updateFormData;
+export const selectSetRegistroEnviado = (state) => state.setRegistroEnviado;
+export const selectSetOrganizacionId = (state) => state.setOrganizacionId;
+export const selectResetOnboarding = (state) => state.resetOnboarding;
+
 export default useOnboardingStore;

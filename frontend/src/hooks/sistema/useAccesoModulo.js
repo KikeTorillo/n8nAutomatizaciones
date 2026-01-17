@@ -2,7 +2,12 @@ import { useQuery } from '@tanstack/react-query';
 import { useCallback, useEffect } from 'react';
 import { profesionalesApi, permisosApi } from '@/services/api/endpoints';
 import useAuthStore, { selectUser, selectIsAuthenticated } from '@/store/authStore';
-import usePermisosStore from '@/store/permisosStore';
+import usePermisosStore, {
+  selectTienePermiso,
+  selectSetPermisoVerificado,
+  selectSetMultiplesPermisos,
+  selectInvalidarCache,
+} from '@/store/permisosStore';
 
 /**
  * Hook para validar acceso a módulos y obtener profesional vinculado
@@ -19,10 +24,8 @@ export function useAccesoModulo(modulo) {
   // Ene 2026: Usar selectores para evitar re-renders
   const user = useAuthStore(selectUser);
   const isAuthenticated = useAuthStore(selectIsAuthenticated);
-  const {
-    tienePermiso: tienePermisoCache,
-    setPermisoVerificado,
-  } = usePermisosStore();
+  const tienePermisoCache = usePermisosStore(selectTienePermiso);
+  const setPermisoVerificado = usePermisosStore(selectSetPermisoVerificado);
 
   // Obtener profesional vinculado
   const {
@@ -131,10 +134,9 @@ export function usePermiso(codigoPermiso, sucursalIdParam) {
   const isAuthenticated = useAuthStore(selectIsAuthenticated);
   const sucursalId = sucursalIdParam || user?.sucursal_id || user?.sucursales?.[0]?.id;
 
-  const {
-    tienePermiso: tienePermisoCache,
-    setPermisoVerificado,
-  } = usePermisosStore();
+  // Ene 2026: Usar selectores para evitar re-renders
+  const tienePermisoCache = usePermisosStore(selectTienePermiso);
+  const setPermisoVerificado = usePermisosStore(selectSetPermisoVerificado);
 
   // Consultar cache del store primero
   const permisoCacheado = tienePermisoCache(codigoPermiso, sucursalId);
@@ -193,7 +195,8 @@ export function useResumenPermisos(sucursalIdParam) {
   const isAuthenticated = useAuthStore(selectIsAuthenticated);
   const sucursalId = sucursalIdParam || user?.sucursal_id || user?.sucursales?.[0]?.id;
 
-  const { setMultiplesPermisos } = usePermisosStore();
+  // Ene 2026: Usar selector para evitar re-renders
+  const setMultiplesPermisos = usePermisosStore(selectSetMultiplesPermisos);
 
   const { data, isLoading, error, isError, refetch } = useQuery({
     queryKey: ['permisos-resumen', user?.id, sucursalId],
@@ -277,7 +280,8 @@ export function useUsuariosDisponibles() {
  * @param {number} sucursalId - ID de la sucursal actual
  */
 export function useInvalidarPermisosAlCambiarSucursal(sucursalId) {
-  const { invalidarCache } = usePermisosStore();
+  // Ene 2026: Usar selector para evitar re-renders
+  const invalidarCache = usePermisosStore(selectInvalidarCache);
 
   useEffect(() => {
     // Invalidar cache cuando cambia la sucursal

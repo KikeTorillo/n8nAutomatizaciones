@@ -2,7 +2,8 @@
  * Exportaciones centralizadas de componentes de filtros avanzados
  */
 export { default as AdvancedFilterPanel } from './AdvancedFilterPanel';
-export { default as FilterChip } from './FilterChip';
+// Ene 2026: FilterChip movido a molecules, re-exportar para compatibilidad
+export { default as FilterChip } from '../../molecules/FilterChip';
 export { default as FilterSection, FilterCheckbox, FilterSelect } from './FilterSection';
 export { default as SavedSearchList } from './SavedSearchList';
 export { default as SavedSearchModal } from './SavedSearchModal';

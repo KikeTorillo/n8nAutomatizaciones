@@ -6,16 +6,21 @@ import { Outlet, Link, useNavigate } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { authApi } from '@/services/api/endpoints';
 import useAuthStore, { selectUser, selectLogout } from '../../store/authStore';
-import useOnboardingStore from '../../store/onboardingStore';
+import useOnboardingStore, { selectResetOnboarding } from '../../store/onboardingStore';
+import useSucursalStore, { selectClear as selectClearSucursal } from '../../store/sucursalStore';
+import usePermisosStore, { selectClear as selectClearPermisos } from '../../store/permisosStore';
 
 export default function SuperAdminLayout() {
     const user = useAuthStore(selectUser);
     const clearAuth = useAuthStore(selectLogout);
-    const { resetOnboarding } = useOnboardingStore();
+    // Ene 2026: Usar selectores para evitar re-renders
+    const resetOnboarding = useOnboardingStore(selectResetOnboarding);
+    const clearSucursal = useSucursalStore(selectClearSucursal);
+    const clearPermisos = usePermisosStore(selectClearPermisos);
     const navigate = useNavigate();
     const queryClient = useQueryClient();
 
-    // Mutation de logout (igual que Dashboard normal)
+    // Mutation de logout - Ene 2026: Limpieza completa de todos los stores
     const logoutMutation = useMutation({
         mutationFn: authApi.logout,
         onSuccess: () => {
@@ -25,9 +30,11 @@ export default function SuperAdminLayout() {
             queryClient.clear();
             console.log('✅ Cache de React Query limpiado');
 
-            // 🧹 CRÍTICO: Limpiar onboarding storage
+            // 🧹 Ene 2026: Limpiar todos los stores
             resetOnboarding();
-            console.log('✅ Onboarding storage limpiado');
+            clearSucursal();
+            clearPermisos();
+            console.log('✅ Stores limpiados');
 
             clearAuth();
             navigate('/login');
@@ -38,6 +45,8 @@ export default function SuperAdminLayout() {
             // Limpiar cache incluso si hay error
             queryClient.clear();
             resetOnboarding();
+            clearSucursal();
+            clearPermisos();
 
             clearAuth();
             navigate('/login');

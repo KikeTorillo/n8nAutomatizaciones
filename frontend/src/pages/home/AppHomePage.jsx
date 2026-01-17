@@ -25,7 +25,9 @@ import {
 } from 'lucide-react';
 
 import useAuthStore, { selectLogout, selectUser } from '@/store/authStore';
-import useOnboardingStore from '@/store/onboardingStore';
+import useOnboardingStore, { selectResetOnboarding } from '@/store/onboardingStore';
+import useSucursalStore, { selectClear as selectClearSucursal } from '@/store/sucursalStore';
+import usePermisosStore, { selectClear as selectClearPermisos } from '@/store/permisosStore';
 import { useModulos } from '@/hooks/sistema';
 import { useAppNotifications } from '@/hooks/sistema';
 import { useSucursales, useMetricasSucursales } from '@/hooks/sistema';
@@ -48,7 +50,10 @@ function AppHomePage() {
   const queryClient = useQueryClient();
   const clearAuth = useAuthStore(selectLogout);
   const user = useAuthStore(selectUser);
-  const { resetOnboarding } = useOnboardingStore();
+  // Ene 2026: Usar selectores para evitar re-renders
+  const resetOnboarding = useOnboardingStore(selectResetOnboarding);
+  const clearSucursal = useSucursalStore(selectClearSucursal);
+  const clearPermisos = usePermisosStore(selectClearPermisos);
 
   // Modales centralizados
   const { openModal, closeModal, isOpen } = useModalManager({
@@ -83,18 +88,22 @@ function AppHomePage() {
   const esEmpleado = user?.rol === 'empleado';
   const esSuperAdmin = user?.rol === 'super_admin';
 
-  // Mutation de logout
+  // Mutation de logout - Ene 2026: Limpieza completa de todos los stores
   const logoutMutation = useMutation({
     mutationFn: authApi.logout,
     onSuccess: () => {
       queryClient.clear();
       resetOnboarding();
+      clearSucursal();
+      clearPermisos();
       clearAuth();
       navigate('/login');
     },
     onError: () => {
       queryClient.clear();
       resetOnboarding();
+      clearSucursal();
+      clearPermisos();
       clearAuth();
       navigate('/login');
     },

@@ -1,16 +1,27 @@
+import { memo } from 'react';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 /**
  * FilterChip - Chip de filtro activo con botón para remover
  *
+ * Ene 2026: Movido de organisms/filters a molecules
+ * Componente atómico reutilizable para mostrar filtros activos.
+ *
  * @param {string} label - Texto del chip (nombre del filtro)
  * @param {string} value - Valor actual del filtro (opcional)
  * @param {Function} onRemove - Callback al hacer click en X
  * @param {string} variant - Variante de color: 'primary' | 'gray'
  * @param {string} className - Clases adicionales
+ *
+ * @example
+ * <FilterChip
+ *   label="Categoría"
+ *   value="Electrónicos"
+ *   onRemove={() => clearFilter('categoria')}
+ * />
  */
-export function FilterChip({
+function FilterChip({
   label,
   value,
   onRemove,
@@ -65,4 +76,6 @@ export function FilterChip({
   );
 }
 
-export default FilterChip;
+FilterChip.displayName = 'FilterChip';
+
+export default memo(FilterChip);
