@@ -1,7 +1,10 @@
+import { lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Settings, FileText } from 'lucide-react';
+import { Settings, FileText, Loader2 } from 'lucide-react';
 import { BackButton, Button } from '@/components/ui';
-import ComisionesDashboard from '@/components/comisiones/ComisionesDashboard';
+
+// Ene 2026: Lazy loading de ComisionesDashboard (~200KB chart.js)
+const ComisionesDashboard = lazy(() => import('@/components/comisiones/ComisionesDashboard'));
 
 /**
  * Página principal del sistema de comisiones
@@ -51,7 +54,13 @@ function ComisionesPage() {
         </div>
 
         {/* Dashboard de Comisiones */}
-        <ComisionesDashboard />
+        <Suspense fallback={
+          <div className="flex items-center justify-center py-20">
+            <Loader2 className="w-10 h-10 animate-spin text-primary-600" />
+          </div>
+        }>
+          <ComisionesDashboard />
+        </Suspense>
       </div>
     </div>
   );

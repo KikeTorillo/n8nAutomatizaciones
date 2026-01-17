@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { clientesApi, citasApi } from '@/services/api/endpoints';
+import { sanitizeParams } from '@/lib/params';
 
 /**
  * Hook para listar clientes con paginación
@@ -8,16 +9,7 @@ export function useClientes(params = {}) {
   return useQuery({
     queryKey: ['clientes', params],
     queryFn: async () => {
-      // ⚠️ CRÍTICO: Sanitizar params - eliminar strings vacíos
-      // Backend Joi rechaza busqueda="" (requiere min 2 caracteres si se envía)
-      const sanitizedParams = Object.entries(params).reduce((acc, [key, value]) => {
-        if (value !== '' && value !== null && value !== undefined) {
-          acc[key] = value;
-        }
-        return acc;
-      }, {});
-
-      const response = await clientesApi.listar(sanitizedParams);
+      const response = await clientesApi.listar(sanitizeParams(params));
       return {
         clientes: response.data.data,
         pagination: response.data.pagination,

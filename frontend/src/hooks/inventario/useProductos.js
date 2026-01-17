@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { inventarioApi } from '@/services/api/endpoints';
+import { sanitizeParams } from '@/lib/params';
 
 /**
  * Hook para listar productos con filtros
@@ -9,15 +10,7 @@ export function useProductos(params = {}) {
   return useQuery({
     queryKey: ['productos', params],
     queryFn: async () => {
-      // ⚠️ CRÍTICO: Sanitizar params - eliminar valores vacíos
-      const sanitizedParams = Object.entries(params).reduce((acc, [key, value]) => {
-        if (value !== '' && value !== null && value !== undefined) {
-          acc[key] = value;
-        }
-        return acc;
-      }, {});
-
-      const response = await inventarioApi.listarProductos(sanitizedParams);
+      const response = await inventarioApi.listarProductos(sanitizeParams(params));
       return response.data.data || { productos: [], total: 0 };
     },
     staleTime: 1000 * 60 * 5, // 5 minutos
@@ -48,14 +41,7 @@ export function useBuscarProductos(params) {
   return useQuery({
     queryKey: ['buscar-productos', params],
     queryFn: async () => {
-      const sanitizedParams = Object.entries(params).reduce((acc, [key, value]) => {
-        if (value !== '' && value !== null && value !== undefined) {
-          acc[key] = value;
-        }
-        return acc;
-      }, {});
-
-      const response = await inventarioApi.buscarProductos(sanitizedParams);
+      const response = await inventarioApi.buscarProductos(sanitizeParams(params));
       return response.data.data || [];
     },
     enabled: !!params.q && params.q.length >= 2,

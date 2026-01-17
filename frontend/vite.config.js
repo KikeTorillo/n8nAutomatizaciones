@@ -25,6 +25,10 @@ export default defineConfig({
           'query-vendor': ['@tanstack/react-query'],
           // Iconos (lucide es pesado)
           'icons-vendor': ['lucide-react'],
+          // Ene 2026: Librerías pesadas para lazy loading
+          'charts-vendor': ['chart.js', 'react-chartjs-2'],
+          'd3-vendor': ['d3', 'd3-org-chart'],
+          'reactflow-vendor': ['reactflow'],
         },
         // Nombres de chunks estables para mejor caching
         chunkFileNames: 'js/[name]-[hash].js',

@@ -1,13 +1,14 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { useToast } from '@/hooks/useToast';
-import useSucursalStore from '@/store/sucursalStore';
-import useAuthStore from '@/store/authStore';
+import useSucursalStore, { selectGetSucursalId } from '@/store/sucursalStore';
+import useAuthStore, { selectUser } from '@/store/authStore';
 import { listasPreciosApi } from '@/services/api/endpoints';
 import { playSuccessBeep } from '@/utils/audioFeedback';
 
 /**
  * Hook centralizado para el estado del carrito del POS
  * Ene 2026: Extrae toda la lógica del carrito de VentaPOSPage.jsx
+ * Ene 2026: Migrado a selectores para evitar re-renders
  *
  * Responsabilidades:
  * - Estado del carrito (items, cliente, descuentos)
@@ -18,8 +19,9 @@ import { playSuccessBeep } from '@/utils/audioFeedback';
  */
 export function usePOSCart({ hayPromocionExclusiva = false, descuentoPromociones = 0 } = {}) {
   const toast = useToast();
-  const { getSucursalId } = useSucursalStore();
-  const { user } = useAuthStore();
+  // Ene 2026: Usar selectores para evitar re-renders
+  const getSucursalId = useSucursalStore(selectGetSucursalId);
+  const user = useAuthStore(selectUser);
   const sucursalId = getSucursalId() || user?.sucursal_id;
 
   // ==================== ESTADO DEL CARRITO ====================

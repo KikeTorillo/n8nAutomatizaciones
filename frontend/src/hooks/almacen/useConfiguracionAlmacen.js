@@ -9,7 +9,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { configuracionAlmacenApi } from '@/services/api/endpoints';
-import useSucursalStore from '@/store/sucursalStore';
+import useSucursalStore, { selectGetSucursalId } from '@/store/sucursalStore';
 import { useToast } from '@/hooks/useToast';
 
 /**
@@ -44,7 +44,7 @@ export function useConfiguracionesAlmacen() {
  * @param {number} sucursalId - ID de la sucursal
  */
 export function useConfiguracionAlmacen(sucursalId) {
-  const { getSucursalId } = useSucursalStore();
+  const getSucursalId = useSucursalStore(selectGetSucursalId);
   const efectiveSucursalId = sucursalId || getSucursalId();
 
   return useQuery({
@@ -64,7 +64,7 @@ export function useConfiguracionAlmacen(sucursalId) {
  * @param {string} tipo - 'recepcion' | 'envio' | undefined (ambos)
  */
 export function useMultietapa(sucursalId, tipo) {
-  const { getSucursalId } = useSucursalStore();
+  const getSucursalId = useSucursalStore(selectGetSucursalId);
   const efectiveSucursalId = sucursalId || getSucursalId();
 
   return useQuery({
@@ -178,7 +178,7 @@ export function useCrearUbicacionesDefault() {
  * @param {Object} options - { sucursalId }
  */
 export function useConfiguracionAlmacenManager({ sucursalId } = {}) {
-  const { getSucursalId } = useSucursalStore();
+  const getSucursalId = useSucursalStore(selectGetSucursalId);
   const efectiveSucursalId = sucursalId || getSucursalId();
 
   // Queries

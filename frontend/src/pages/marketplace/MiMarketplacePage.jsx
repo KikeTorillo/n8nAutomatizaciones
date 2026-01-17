@@ -1,13 +1,15 @@
-import { useState } from 'react';
+import { useState, lazy, Suspense } from 'react';
 import { useModalManager } from '@/hooks/useModalManager';
-import { Store, FileText, BarChart3 } from 'lucide-react';
+import { Store, FileText, BarChart3, Loader2 } from 'lucide-react';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { BackButton, Button } from '@/components/ui';
 import { useMiPerfilMarketplace } from '@/hooks/useMarketplace';
 import PerfilFormulario from '@/components/marketplace/PerfilFormulario';
 import ListaReseñas from '@/components/marketplace/ListaReseñas';
-import AnalyticsDashboard from '@/components/marketplace/AnalyticsDashboard';
 import CrearPerfilMarketplaceModal from '@/components/marketplace/CrearPerfilMarketplaceModal';
+
+// Ene 2026: Lazy loading de AnalyticsDashboard (~200KB chart.js)
+const AnalyticsDashboard = lazy(() => import('@/components/marketplace/AnalyticsDashboard'));
 
 /**
  * Página de gestión del perfil de marketplace
@@ -208,7 +210,13 @@ function MiMarketplacePage() {
                 Métricas de visibilidad y conversión de tu perfil público
               </p>
             </div>
-            <AnalyticsDashboard perfilId={perfil.id} />
+            <Suspense fallback={
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-8 h-8 animate-spin text-primary-600" />
+              </div>
+            }>
+              <AnalyticsDashboard perfilId={perfil.id} />
+            </Suspense>
           </div>
         )}
       </div>

@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { posApi, inventarioApi } from '@/services/api/endpoints';
-import useSucursalStore from '@/store/sucursalStore';
+import useSucursalStore, { selectGetSucursalId } from '@/store/sucursalStore';
+import { sanitizeParams } from '@/lib/params';
 
 // ==================== VENTAS POS ====================
 // ✅ FEATURE: Multi-sucursal - Los hooks inyectan sucursal_id automáticamente
@@ -13,14 +14,7 @@ export function useVentas(params = {}) {
   return useQuery({
     queryKey: ['ventas-pos', params],
     queryFn: async () => {
-      const sanitizedParams = Object.entries(params).reduce((acc, [key, value]) => {
-        if (value !== '' && value !== null && value !== undefined) {
-          acc[key] = value;
-        }
-        return acc;
-      }, {});
-
-      const response = await posApi.listarVentas(sanitizedParams);
+      const response = await posApi.listarVentas(sanitizeParams(params));
       return response.data.data || { ventas: [], total: 0 };
     },
     staleTime: 1000 * 60 * 2, // 2 minutos
@@ -48,7 +42,8 @@ export function useVenta(id) {
 export function useCrearVenta() {
   const queryClient = useQueryClient();
   // ✅ Multi-sucursal: Obtener sucursal activa del store
-  const { getSucursalId } = useSucursalStore();
+  // Ene 2026: Usar selector para evitar re-renders
+  const getSucursalId = useSucursalStore(selectGetSucursalId);
 
   return useMutation({
     mutationFn: async (data) => {
@@ -373,14 +368,7 @@ export function useCorteCaja(params) {
   return useQuery({
     queryKey: ['corte-caja', params],
     queryFn: async () => {
-      const sanitizedParams = Object.entries(params).reduce((acc, [key, value]) => {
-        if (value !== '' && value !== null && value !== undefined) {
-          acc[key] = value;
-        }
-        return acc;
-      }, {});
-
-      const response = await posApi.obtenerCorteCaja(sanitizedParams);
+      const response = await posApi.obtenerCorteCaja(sanitizeParams(params));
       return response.data.data || {
         resumen: {},
         totales_por_metodo: [],
@@ -401,14 +389,7 @@ export function useVentasDiarias(params) {
   return useQuery({
     queryKey: ['ventas-diarias', params],
     queryFn: async () => {
-      const sanitizedParams = Object.entries(params).reduce((acc, [key, value]) => {
-        if (value !== '' && value !== null && value !== undefined) {
-          acc[key] = value;
-        }
-        return acc;
-      }, {});
-
-      const response = await posApi.obtenerVentasDiarias(sanitizedParams);
+      const response = await posApi.obtenerVentasDiarias(sanitizeParams(params));
       return response.data.data || {
         resumen: {},
         ventas_por_hora: [],
@@ -493,7 +474,7 @@ export function usePagosVenta(ventaId) {
  * @param {Object} params - { sucursal_id? }
  */
 export function useSesionCajaActiva(params = {}) {
-  const { getSucursalId } = useSucursalStore();
+  const getSucursalId = useSucursalStore(selectGetSucursalId);
 
   return useQuery({
     queryKey: ['sesion-caja-activa', params],
@@ -547,14 +528,7 @@ export function useSesionesCaja(params = {}) {
   return useQuery({
     queryKey: ['sesiones-caja', params],
     queryFn: async () => {
-      const sanitizedParams = Object.entries(params).reduce((acc, [key, value]) => {
-        if (value !== '' && value !== null && value !== undefined) {
-          acc[key] = value;
-        }
-        return acc;
-      }, {});
-
-      const response = await posApi.listarSesionesCaja(sanitizedParams);
+      const response = await posApi.listarSesionesCaja(sanitizeParams(params));
       return response.data.data || { sesiones: [], total: 0 };
     },
     staleTime: 1000 * 60 * 5, // 5 minutos - Ene 2026: aumentado
@@ -584,7 +558,7 @@ export function useMovimientosCaja(sesionId) {
  */
 export function useAbrirSesionCaja() {
   const queryClient = useQueryClient();
-  const { getSucursalId } = useSucursalStore();
+  const getSucursalId = useSucursalStore(selectGetSucursalId);
 
   return useMutation({
     mutationFn: async (data) => {

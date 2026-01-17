@@ -14,6 +14,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { posApi } from '@/services/api/endpoints';
+import { sanitizeParams } from '@/lib/params';
 
 // =========================================================================
 // HOOKS PARA POS (Uso en ventas)
@@ -138,15 +139,7 @@ export function usePromociones(params = {}) {
   return useQuery({
     queryKey: ['promociones', params],
     queryFn: async () => {
-      // Sanitizar params
-      const sanitizedParams = Object.entries(params).reduce((acc, [key, value]) => {
-        if (value !== '' && value !== null && value !== undefined) {
-          acc[key] = value;
-        }
-        return acc;
-      }, {});
-
-      const response = await posApi.listarPromociones(sanitizedParams);
+      const response = await posApi.listarPromociones(sanitizeParams(params));
       return {
         promociones: response.data.data,
         paginacion: response.data.pagination,

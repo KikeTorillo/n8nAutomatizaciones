@@ -100,4 +100,24 @@ const useAuthStore = create(
   )
 );
 
+// ====================================================================
+// SELECTORES - Ene 2026: Optimización para evitar re-renders
+// Usar estos selectores en lugar de desestructurar todo el store
+// ====================================================================
+
+// State
+export const selectUser = (state) => state.user;
+export const selectAccessToken = (state) => state.accessToken;
+export const selectRefreshToken = (state) => state.refreshToken;
+export const selectIsAuthenticated = (state) => state.isAuthenticated;
+
+// Actions
+export const selectSetAuth = (state) => state.setAuth;
+export const selectSetTokens = (state) => state.setTokens;
+export const selectSetUser = (state) => state.setUser;
+export const selectLogout = (state) => state.logout;
+export const selectHasRole = (state) => state.hasRole;
+export const selectIsAdmin = (state) => state.isAdmin;
+export const selectGetOrganizacionId = (state) => state.getOrganizacionId;
+
 export default useAuthStore;

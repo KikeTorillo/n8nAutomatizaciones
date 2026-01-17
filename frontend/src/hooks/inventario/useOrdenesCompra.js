@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ordenesCompraApi } from '@/services/api/endpoints';
+import { sanitizeParams } from '@/lib/params';
 
 // ==================== QUERIES ====================
 
@@ -11,14 +12,7 @@ export function useOrdenesCompra(params = {}) {
   return useQuery({
     queryKey: ['ordenes-compra', params],
     queryFn: async () => {
-      const sanitizedParams = Object.entries(params).reduce((acc, [key, value]) => {
-        if (value !== '' && value !== null && value !== undefined) {
-          acc[key] = value;
-        }
-        return acc;
-      }, {});
-
-      const response = await ordenesCompraApi.listar(sanitizedParams);
+      const response = await ordenesCompraApi.listar(sanitizeParams(params));
       return response.data.data || { ordenes: [], totales: {} };
     },
     staleTime: 1000 * 60 * 2, // 2 minutos
@@ -77,14 +71,7 @@ export function useEstadisticasComprasPorProveedor(params = {}) {
   return useQuery({
     queryKey: ['estadisticas-compras-proveedor', params],
     queryFn: async () => {
-      const sanitizedParams = Object.entries(params).reduce((acc, [key, value]) => {
-        if (value !== '' && value !== null && value !== undefined) {
-          acc[key] = value;
-        }
-        return acc;
-      }, {});
-
-      const response = await ordenesCompraApi.estadisticasPorProveedor(sanitizedParams);
+      const response = await ordenesCompraApi.estadisticasPorProveedor(sanitizeParams(params));
       return response.data.data || [];
     },
     staleTime: 1000 * 60 * 5,

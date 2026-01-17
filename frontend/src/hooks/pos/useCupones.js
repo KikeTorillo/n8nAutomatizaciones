@@ -14,7 +14,8 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { posApi } from '@/services/api/endpoints';
-import useSucursalStore from '@/store/sucursalStore';
+import useSucursalStore, { selectSucursalActiva } from '@/store/sucursalStore';
+import { sanitizeParams } from '@/lib/params';
 
 // =========================================================================
 // HOOKS PARA POS (Uso en ventas)
@@ -89,19 +90,13 @@ export function useAplicarCupon() {
  * @param {Object} params - { page, limit, busqueda, activo, vigente, ordenPor, orden }
  */
 export function useCupones(params = {}) {
-  const { sucursalActiva } = useSucursalStore();
+  const sucursalActiva = useSucursalStore(selectSucursalActiva);
   const sucursalId = sucursalActiva?.id;
 
   return useQuery({
     queryKey: ['cupones', params, sucursalId],
     queryFn: async () => {
-      // Sanitizar params
-      const sanitizedParams = Object.entries(params).reduce((acc, [key, value]) => {
-        if (value !== '' && value !== null && value !== undefined) {
-          acc[key] = value;
-        }
-        return acc;
-      }, {});
+      const sanitizedParams = sanitizeParams(params);
 
       // Agregar sucursalId para verificación de permisos
       if (sucursalId) {
@@ -199,7 +194,7 @@ export function useEliminarCupon() {
  * GET /pos/cupones/:id/historial
  */
 export function useHistorialCupon(cuponId, params = {}) {
-  const { sucursalActiva } = useSucursalStore();
+  const sucursalActiva = useSucursalStore(selectSucursalActiva);
   const sucursalId = sucursalActiva?.id;
 
   return useQuery({
@@ -222,7 +217,7 @@ export function useHistorialCupon(cuponId, params = {}) {
  * GET /pos/cupones/:id/estadisticas
  */
 export function useEstadisticasCupon(cuponId) {
-  const { sucursalActiva } = useSucursalStore();
+  const sucursalActiva = useSucursalStore(selectSucursalActiva);
   const sucursalId = sucursalActiva?.id;
 
   return useQuery({

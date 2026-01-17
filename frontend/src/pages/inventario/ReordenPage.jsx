@@ -4,7 +4,7 @@
  * Fecha: 29 Diciembre 2025
  */
 
-import { useState } from 'react';
+import { useState, lazy, Suspense } from 'react';
 import {
   RefreshCw,
   AlertTriangle,
@@ -18,6 +18,7 @@ import {
   XCircle,
   ChevronRight,
   LineChart,
+  Loader2,
 } from 'lucide-react';
 import { useModalManager } from '@/hooks/useModalManager';
 import {
@@ -31,7 +32,9 @@ import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Button, ConfirmDialog, Modal } from '@/components/ui';
 import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
-import StockPronosticoChart from '@/components/inventario/reorden/StockPronosticoChart';
+
+// Ene 2026: Lazy loading de StockPronosticoChart (~200KB chart.js)
+const StockPronosticoChart = lazy(() => import('@/components/inventario/reorden/StockPronosticoChart'));
 
 export default function ReordenPage() {
   const [soloSinOC, setSoloSinOC] = useState(true);
@@ -342,7 +345,13 @@ export default function ReordenPage() {
         size="xl"
       >
         {getModalData('pronostico') && (
-          <StockPronosticoChart productoId={getModalData('pronostico').producto_id} dias={30} />
+          <Suspense fallback={
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-8 h-8 animate-spin text-primary-600" />
+            </div>
+          }>
+            <StockPronosticoChart productoId={getModalData('pronostico').producto_id} dias={30} />
+          </Suspense>
         )}
       </Modal>
 

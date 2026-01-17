@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useCallback, useEffect } from 'react';
 import { profesionalesApi, permisosApi } from '@/services/api/endpoints';
-import useAuthStore from '@/store/authStore';
+import useAuthStore, { selectUser, selectIsAuthenticated } from '@/store/authStore';
 import usePermisosStore from '@/store/permisosStore';
 
 /**
@@ -10,12 +10,15 @@ import usePermisosStore from '@/store/permisosStore';
  * ACTUALIZADO Ene 2026:
  * Integrado con permisosStore para cache local optimizada.
  * Los permisos se cachean en localStorage y se invalidan al cambiar sucursal.
+ * Migrado a selectores Zustand para evitar re-renders.
  *
  * @param {string} modulo - Módulo a validar: 'agendamiento' | 'pos' | 'inventario'
  * @returns {Object} { tieneAcceso, profesional, isLoading, error }
  */
 export function useAccesoModulo(modulo) {
-  const { user, isAuthenticated } = useAuthStore();
+  // Ene 2026: Usar selectores para evitar re-renders
+  const user = useAuthStore(selectUser);
+  const isAuthenticated = useAuthStore(selectIsAuthenticated);
   const {
     tienePermiso: tienePermisoCache,
     setPermisoVerificado,
@@ -124,7 +127,8 @@ export function useAccesoModulo(modulo) {
  * @returns {Object} { tiene, valor, isLoading, error, desdeCache }
  */
 export function usePermiso(codigoPermiso, sucursalIdParam) {
-  const { user, isAuthenticated } = useAuthStore();
+  const user = useAuthStore(selectUser);
+  const isAuthenticated = useAuthStore(selectIsAuthenticated);
   const sucursalId = sucursalIdParam || user?.sucursal_id || user?.sucursales?.[0]?.id;
 
   const {
@@ -185,7 +189,8 @@ export function usePermiso(codigoPermiso, sucursalIdParam) {
  * @returns {Object} { permisos, isLoading, error }
  */
 export function useResumenPermisos(sucursalIdParam) {
-  const { user, isAuthenticated } = useAuthStore();
+  const user = useAuthStore(selectUser);
+  const isAuthenticated = useAuthStore(selectIsAuthenticated);
   const sucursalId = sucursalIdParam || user?.sucursal_id || user?.sucursales?.[0]?.id;
 
   const { setMultiplesPermisos } = usePermisosStore();
@@ -231,7 +236,8 @@ export function useResumenPermisos(sucursalIdParam) {
  * @returns {Object} { profesional, isLoading, error }
  */
 export function useProfesionalUsuario() {
-  const { user, isAuthenticated } = useAuthStore();
+  const user = useAuthStore(selectUser);
+  const isAuthenticated = useAuthStore(selectIsAuthenticated);
 
   return useQuery({
     queryKey: ['profesional-usuario', user?.id],

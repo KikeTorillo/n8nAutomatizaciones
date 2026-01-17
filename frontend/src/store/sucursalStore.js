@@ -107,4 +107,21 @@ const useSucursalStore = create(
   )
 );
 
+// ====================================================================
+// SELECTORES - Ene 2026: Optimización para evitar re-renders
+// Usar estos selectores en lugar de desestructurar todo el store
+// ====================================================================
+
+// State
+export const selectSucursalActiva = (state) => state.sucursalActiva;
+export const selectSucursalesDisponibles = (state) => state.sucursalesDisponibles;
+
+// Actions
+export const selectSetSucursalActiva = (state) => state.setSucursalActiva;
+export const selectSetSucursalesDisponibles = (state) => state.setSucursalesDisponibles;
+export const selectGetSucursalId = (state) => state.getSucursalId;
+export const selectEsMatriz = (state) => state.esMatriz;
+export const selectTieneMultiplesSucursales = (state) => state.tieneMultiplesSucursales;
+export const selectClear = (state) => state.clear;
+
 export default useSucursalStore;

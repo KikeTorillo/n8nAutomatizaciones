@@ -2,7 +2,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { citasApi } from '@/services/api/endpoints';
 import { useToast } from '../utils/useToast';
 import { aFormatoISO } from '@/utils/dateHelpers';
-import useSucursalStore from '@/store/sucursalStore';
+import useSucursalStore, { selectGetSucursalId } from '@/store/sucursalStore';
+import { sanitizeParams } from '@/lib/params';
 
 /**
  * Hooks personalizados para gestión de citas
@@ -32,16 +33,7 @@ export function useCitas(params = {}) {
   return useQuery({
     queryKey: ['citas', params],
     queryFn: async () => {
-      // Sanitizar parámetros: eliminar valores vacíos (backend Joi los rechaza)
-      const sanitizedParams = Object.entries(params).reduce((acc, [key, value]) => {
-        // Solo incluir valores que no sean undefined, null, o string vacío
-        if (value !== undefined && value !== null && value !== '') {
-          acc[key] = value;
-        }
-        return acc;
-      }, {});
-
-      const response = await citasApi.listar(sanitizedParams);
+      const response = await citasApi.listar(sanitizeParams(params));
       // Backend usa ResponseHelper: { success, data: { citas: [...], meta: {...} } }
       const data = response.data?.data || {};
       return {
@@ -151,7 +143,7 @@ export function useCitasPendientes() {
 export function useCrearCita() {
   const queryClient = useQueryClient();
   // ✅ Multi-sucursal: Obtener sucursal activa del store
-  const { getSucursalId } = useSucursalStore();
+  const getSucursalId = useSucursalStore(selectGetSucursalId);
 
   return useMutation({
     mutationFn: async (citaData) => {
@@ -418,7 +410,7 @@ export function useCrearCitaWalkIn() {
   const queryClient = useQueryClient();
   const { success, error: showError } = useToast();
   // ✅ Multi-sucursal: Obtener sucursal activa del store
-  const { getSucursalId } = useSucursalStore();
+  const getSucursalId = useSucursalStore(selectGetSucursalId);
 
   return useMutation({
     mutationFn: async (citaData) => {
@@ -542,7 +534,7 @@ export function useRecordatorios(citaId) {
 export function useCrearCitaRecurrente() {
   const queryClient = useQueryClient();
   const { success, error: showError } = useToast();
-  const { getSucursalId } = useSucursalStore();
+  const getSucursalId = useSucursalStore(selectGetSucursalId);
 
   return useMutation({
     mutationFn: async (citaData) => {

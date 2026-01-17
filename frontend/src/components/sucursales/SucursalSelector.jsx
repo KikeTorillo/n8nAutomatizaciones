@@ -1,23 +1,29 @@
 import { useState, useRef, useEffect } from 'react';
 import { Building2, ChevronDown, Check, Star } from 'lucide-react';
-import useSucursalStore from '@/store/sucursalStore';
+import useSucursalStore, {
+  selectSucursalActiva,
+  selectSucursalesDisponibles,
+  selectSetSucursalActiva,
+  selectSetSucursalesDisponibles,
+} from '@/store/sucursalStore';
 import { useSucursalesUsuario } from '@/hooks/useSucursales';
-import useAuthStore from '@/store/authStore';
+import useAuthStore, { selectUser } from '@/store/authStore';
 
 /**
  * Selector de sucursal para el header
  * Permite cambiar la sucursal activa del contexto de trabajo
+ * Ene 2026: Migrado a selectores para evitar re-renders
  */
 function SucursalSelector() {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
 
-  // Auth store para obtener el usuario actual
-  const { user } = useAuthStore();
-
-  // Sucursal store
-  const { sucursalActiva, sucursalesDisponibles, setSucursalActiva, setSucursalesDisponibles } =
-    useSucursalStore();
+  // Ene 2026: Usar selectores individuales
+  const user = useAuthStore(selectUser);
+  const sucursalActiva = useSucursalStore(selectSucursalActiva);
+  const sucursalesDisponibles = useSucursalStore(selectSucursalesDisponibles);
+  const setSucursalActiva = useSucursalStore(selectSetSucursalActiva);
+  const setSucursalesDisponibles = useSucursalStore(selectSetSucursalesDisponibles);
 
   // Fetch sucursales del usuario
   const { data: sucursales = [] } = useSucursalesUsuario(user?.id);

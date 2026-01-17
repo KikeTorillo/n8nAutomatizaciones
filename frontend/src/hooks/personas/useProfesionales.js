@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { profesionalesApi } from '@/services/api/endpoints';
+import { sanitizeParams } from '@/lib/params';
 
 /**
  * Hook para listar profesionales con filtros y paginación
@@ -13,16 +14,7 @@ export function useProfesionales(params = {}) {
   return useQuery({
     queryKey: ['profesionales', { page, limit, ...filtros }],
     queryFn: async () => {
-      // ⚠️ CRÍTICO: Sanitizar params - eliminar valores vacíos
-      const sanitizedParams = Object.entries({ page, limit, ...filtros }).reduce((acc, [key, value]) => {
-        // Excluir: "", null, undefined
-        if (value !== '' && value !== null && value !== undefined) {
-          acc[key] = value;
-        }
-        return acc;
-      }, {});
-
-      const response = await profesionalesApi.listar(sanitizedParams);
+      const response = await profesionalesApi.listar(sanitizeParams({ page, limit, ...filtros }));
 
       // Backend retorna: { success, data: { profesionales: [...], pagination: {...} } }
       return response.data.data;

@@ -8,7 +8,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ordenesCompraApi } from '@/services/api/endpoints';
-import useSucursalStore from '@/store/sucursalStore';
+import useSucursalStore, { selectGetSucursalId } from '@/store/sucursalStore';
 
 /**
  * QUERY KEYS para ubicaciones de almacén
@@ -31,7 +31,7 @@ export const UBICACIONES_ALMACEN_KEYS = {
  * @param {Object} params - { sucursal_id?, tipo?, parent_id?, es_picking?, es_recepcion?, activo?, bloqueada?, busqueda?, limit?, offset? }
  */
 export function useUbicacionesAlmacen(params = {}) {
-  const { getSucursalId } = useSucursalStore();
+  const getSucursalId = useSucursalStore(selectGetSucursalId);
 
   return useQuery({
     queryKey: UBICACIONES_ALMACEN_KEYS.list(params),
@@ -60,7 +60,7 @@ export function useUbicacionesAlmacen(params = {}) {
  * @param {number} sucursalId - ID de la sucursal
  */
 export function useArbolUbicaciones(sucursalId) {
-  const { getSucursalId } = useSucursalStore();
+  const getSucursalId = useSucursalStore(selectGetSucursalId);
   const efectiveSucursalId = sucursalId || getSucursalId();
 
   return useQuery({
@@ -112,7 +112,7 @@ export function useStockUbicacion(ubicacionId) {
  * @param {number} cantidad - Cantidad a almacenar
  */
 export function useUbicacionesDisponibles(sucursalId, cantidad = 1) {
-  const { getSucursalId } = useSucursalStore();
+  const getSucursalId = useSucursalStore(selectGetSucursalId);
   const efectiveSucursalId = sucursalId || getSucursalId();
 
   return useQuery({
@@ -131,7 +131,7 @@ export function useUbicacionesDisponibles(sucursalId, cantidad = 1) {
  * @param {number} sucursalId - ID de la sucursal
  */
 export function useEstadisticasUbicaciones(sucursalId) {
-  const { getSucursalId } = useSucursalStore();
+  const getSucursalId = useSucursalStore(selectGetSucursalId);
   const efectiveSucursalId = sucursalId || getSucursalId();
 
   return useQuery({
@@ -168,7 +168,7 @@ export function useUbicacionesProducto(productoId) {
  */
 export function useCrearUbicacion() {
   const queryClient = useQueryClient();
-  const { getSucursalId } = useSucursalStore();
+  const getSucursalId = useSucursalStore(selectGetSucursalId);
 
   return useMutation({
     mutationFn: async (data) => {
@@ -338,7 +338,7 @@ export function useMoverStockUbicacion() {
  * @param {Object} options - { sucursalId }
  */
 export function useUbicacionesAlmacenManager({ sucursalId } = {}) {
-  const { getSucursalId } = useSucursalStore();
+  const getSucursalId = useSucursalStore(selectGetSucursalId);
   const efectiveSucursalId = sucursalId || getSucursalId();
 
   // Queries

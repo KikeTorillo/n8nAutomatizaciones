@@ -9,7 +9,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { batchPickingApi } from '@/services/api/endpoints';
-import useSucursalStore from '@/store/sucursalStore';
+import useSucursalStore, { selectGetSucursalId } from '@/store/sucursalStore';
 import { OPERACIONES_ALMACEN_KEYS } from './useOperacionesAlmacen';
 import { useToast } from '@/hooks/useToast';
 
@@ -33,7 +33,7 @@ export const BATCH_PICKING_KEYS = {
  * @param {Object} params - { sucursal_id?, estado?, estados?, asignado_a?, limit? }
  */
 export function useBatchPickings(params = {}) {
-  const { getSucursalId } = useSucursalStore();
+  const getSucursalId = useSucursalStore(selectGetSucursalId);
 
   return useQuery({
     queryKey: BATCH_PICKING_KEYS.list(params),
@@ -110,7 +110,7 @@ export function useEstadisticasBatch(id) {
  * @param {number} sucursalId - ID de la sucursal
  */
 export function useBatchesPendientes(sucursalId) {
-  const { getSucursalId } = useSucursalStore();
+  const getSucursalId = useSucursalStore(selectGetSucursalId);
   const efectiveSucursalId = sucursalId || getSucursalId();
 
   return useQuery({
@@ -129,7 +129,7 @@ export function useBatchesPendientes(sucursalId) {
  * @param {number} sucursalId - ID de la sucursal
  */
 export function useOperacionesDisponiblesParaBatch(sucursalId) {
-  const { getSucursalId } = useSucursalStore();
+  const getSucursalId = useSucursalStore(selectGetSucursalId);
   const efectiveSucursalId = sucursalId || getSucursalId();
 
   return useQuery({
@@ -386,7 +386,7 @@ export function useCancelarBatch() {
  * @param {Object} options - { sucursalId }
  */
 export function useBatchPickingManager({ sucursalId } = {}) {
-  const { getSucursalId } = useSucursalStore();
+  const getSucursalId = useSucursalStore(selectGetSucursalId);
   const efectiveSucursalId = sucursalId || getSucursalId();
 
   // Queries

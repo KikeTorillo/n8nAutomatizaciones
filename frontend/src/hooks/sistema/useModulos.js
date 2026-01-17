@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { modulosApi } from '@/services/api/endpoints';
-import useAuthStore from '@/store/authStore';
+import useAuthStore, { selectIsAuthenticated, selectUser } from '@/store/authStore';
 
 /**
  * QUERY KEYS para módulos
@@ -34,7 +34,7 @@ export function useModulosDisponibles() {
  * Requiere autenticación
  */
 export function useModulosActivos() {
-  const { isAuthenticated } = useAuthStore();
+  const isAuthenticated = useAuthStore(selectIsAuthenticated);
 
   return useQuery({
     queryKey: MODULOS_KEYS.activos(),
@@ -53,7 +53,7 @@ export function useModulosActivos() {
  * @param {string} modulo - Nombre del módulo
  */
 export function useVerificarModulo(modulo) {
-  const { isAuthenticated } = useAuthStore();
+  const isAuthenticated = useAuthStore(selectIsAuthenticated);
 
   return useQuery({
     queryKey: MODULOS_KEYS.verificar(modulo),
@@ -142,7 +142,7 @@ export function useDesactivarModulo() {
  */
 export function useModulos() {
   const { data: modulosData, isLoading, error, refetch } = useModulosActivos();
-  const { user } = useAuthStore();
+  const user = useAuthStore(selectUser);
 
   // Super Admin bypass: tiene acceso a TODOS los módulos
   const esSuperAdmin = user?.rol === 'super_admin';

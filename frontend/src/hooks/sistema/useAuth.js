@@ -1,14 +1,24 @@
 import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { authApi } from '@/services/api/endpoints';
-import useAuthStore from '@/store/authStore';
+import useAuthStore, {
+  selectSetAuth,
+  selectLogout,
+  selectIsAuthenticated,
+  selectUser,
+} from '@/store/authStore';
 
 /**
  * Hook personalizado para manejo de autenticación
+ * Ene 2026: Migrado a selectores para evitar re-renders
  */
 export function useAuth() {
   const navigate = useNavigate();
-  const { setAuth, logout: clearAuth, isAuthenticated, user } = useAuthStore();
+  // Ene 2026: Usar selectores individuales para evitar re-renders innecesarios
+  const setAuth = useAuthStore(selectSetAuth);
+  const clearAuth = useAuthStore(selectLogout);
+  const isAuthenticated = useAuthStore(selectIsAuthenticated);
+  const user = useAuthStore(selectUser);
 
   // Login mutation
   const loginMutation = useMutation({

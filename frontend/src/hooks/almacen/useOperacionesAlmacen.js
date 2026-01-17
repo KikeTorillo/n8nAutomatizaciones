@@ -9,7 +9,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { operacionesAlmacenApi } from '@/services/api/endpoints';
-import useSucursalStore from '@/store/sucursalStore';
+import useSucursalStore, { selectGetSucursalId } from '@/store/sucursalStore';
 import { useToast } from '@/hooks/useToast';
 
 /**
@@ -32,7 +32,7 @@ export const OPERACIONES_ALMACEN_KEYS = {
  * @param {Object} params - { sucursal_id?, tipo_operacion?, estado?, estados?, asignado_a?, origen_tipo?, limit? }
  */
 export function useOperacionesAlmacen(params = {}) {
-  const { getSucursalId } = useSucursalStore();
+  const getSucursalId = useSucursalStore(selectGetSucursalId);
 
   return useQuery({
     queryKey: OPERACIONES_ALMACEN_KEYS.list(params),
@@ -93,7 +93,7 @@ export function useCadenaOperaciones(id) {
  * @param {number} sucursalId - ID de la sucursal
  */
 export function useOperacionesPendientes(sucursalId) {
-  const { getSucursalId } = useSucursalStore();
+  const getSucursalId = useSucursalStore(selectGetSucursalId);
   const efectiveSucursalId = sucursalId || getSucursalId();
 
   return useQuery({
@@ -112,7 +112,7 @@ export function useOperacionesPendientes(sucursalId) {
  * @param {number} sucursalId - ID de la sucursal
  */
 export function useEstadisticasOperaciones(sucursalId) {
-  const { getSucursalId } = useSucursalStore();
+  const getSucursalId = useSucursalStore(selectGetSucursalId);
   const efectiveSucursalId = sucursalId || getSucursalId();
 
   return useQuery({
@@ -131,7 +131,7 @@ export function useEstadisticasOperaciones(sucursalId) {
  * @param {number} sucursalId - ID de la sucursal
  */
 export function useOperacionesKanban(sucursalId) {
-  const { getSucursalId } = useSucursalStore();
+  const getSucursalId = useSucursalStore(selectGetSucursalId);
   const efectiveSucursalId = sucursalId || getSucursalId();
 
   return useQuery({
@@ -351,7 +351,7 @@ export function useCancelarItem() {
  * @param {Object} options - { sucursalId, tipoOperacion }
  */
 export function useOperacionesAlmacenManager({ sucursalId, tipoOperacion } = {}) {
-  const { getSucursalId } = useSucursalStore();
+  const getSucursalId = useSucursalStore(selectGetSucursalId);
   const efectiveSucursalId = sucursalId || getSucursalId();
 
   // Filtros base

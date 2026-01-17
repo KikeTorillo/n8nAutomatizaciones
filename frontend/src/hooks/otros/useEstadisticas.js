@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { organizacionesApi, serviciosApi, bloqueosApi } from '@/services/api/endpoints';
-import useAuthStore from '@/store/authStore';
+import useAuthStore, { selectUser } from '@/store/authStore';
 import { aFormatoISO } from '@/utils/dateHelpers';
 
 /**
@@ -19,7 +19,7 @@ import { aFormatoISO } from '@/utils/dateHelpers';
  * @returns {Object} { data, isLoading, error }
  */
 export function useEstadisticasOrganizacion() {
-  const { user } = useAuthStore();
+  const user = useAuthStore(selectUser);
 
   return useQuery({
     queryKey: ['estadisticas', user?.organizacion_id],

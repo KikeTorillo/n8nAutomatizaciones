@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { websiteApi } from '@/services/api/endpoints';
-import useAuthStore from '@/store/authStore';
+import useAuthStore, { selectIsAuthenticated } from '@/store/authStore';
 
 /**
  * QUERY KEYS para website
@@ -23,7 +23,7 @@ export const WEBSITE_KEYS = {
  * Hook para obtener la configuración del sitio web
  */
 export function useWebsiteConfig() {
-  const { isAuthenticated } = useAuthStore();
+  const isAuthenticated = useAuthStore(selectIsAuthenticated);
 
   return useQuery({
     queryKey: WEBSITE_KEYS.config(),
@@ -57,7 +57,7 @@ export function useVerificarSlug(slug, excludeId) {
  * Hook para listar páginas del sitio
  */
 export function useWebsitePaginas() {
-  const { isAuthenticated } = useAuthStore();
+  const isAuthenticated = useAuthStore(selectIsAuthenticated);
 
   return useQuery({
     queryKey: WEBSITE_KEYS.paginas(),
@@ -74,7 +74,7 @@ export function useWebsitePaginas() {
  * Hook para obtener una página por ID
  */
 export function useWebsitePagina(id) {
-  const { isAuthenticated } = useAuthStore();
+  const isAuthenticated = useAuthStore(selectIsAuthenticated);
 
   return useQuery({
     queryKey: WEBSITE_KEYS.pagina(id),
@@ -92,7 +92,7 @@ export function useWebsitePagina(id) {
  * Hook para listar bloques de una página
  */
 export function useWebsiteBloques(paginaId) {
-  const { isAuthenticated } = useAuthStore();
+  const isAuthenticated = useAuthStore(selectIsAuthenticated);
 
   return useQuery({
     queryKey: WEBSITE_KEYS.bloques(paginaId),

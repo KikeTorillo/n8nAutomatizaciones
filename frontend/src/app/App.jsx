@@ -6,12 +6,14 @@ import { Toaster } from 'sonner';
 import { queryClient } from './queryClient';
 import ToastContainer from '@/components/common/ToastContainer';
 import SetupGuard from '@/components/auth/SetupGuard';
-import useAuthStore from '@/store/authStore';
+import useAuthStore, { selectIsAuthenticated, selectSetUser } from '@/store/authStore';
 import useThemeStore from '@/store/themeStore';
 import { authApi } from '@/services/api/endpoints';
 
 function App() {
-  const { isAuthenticated, setUser } = useAuthStore();
+  // Ene 2026: Usar selectores para evitar re-renders
+  const isAuthenticated = useAuthStore(selectIsAuthenticated);
+  const setUser = useAuthStore(selectSetUser);
   const initSystemListener = useThemeStore((state) => state.initSystemListener);
   const applyTheme = useThemeStore((state) => state.applyTheme);
 

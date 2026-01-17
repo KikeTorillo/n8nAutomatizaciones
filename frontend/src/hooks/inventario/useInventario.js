@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { inventarioApi, ordenesCompraApi } from '@/services/api/endpoints';
-import useSucursalStore from '@/store/sucursalStore';
+import useSucursalStore, { selectGetSucursalId, selectSucursalActiva } from '@/store/sucursalStore';
+import { sanitizeParams } from '@/lib/params';
 
 // ==================== MOVIMIENTOS DE INVENTARIO ====================
 // ✅ FEATURE: Multi-sucursal - Los hooks inyectan sucursal_id automáticamente
@@ -13,14 +14,7 @@ export function useMovimientos(params = {}) {
   return useQuery({
     queryKey: ['movimientos', params],
     queryFn: async () => {
-      const sanitizedParams = Object.entries(params).reduce((acc, [key, value]) => {
-        if (value !== '' && value !== null && value !== undefined) {
-          acc[key] = value;
-        }
-        return acc;
-      }, {});
-
-      const response = await inventarioApi.listarMovimientos(sanitizedParams);
+      const response = await inventarioApi.listarMovimientos(sanitizeParams(params));
       return response.data.data || { movimientos: [], total: 0 };
     },
     staleTime: 1000 * 60 * 2, // 2 minutos (movimientos requieren frescura)
@@ -36,14 +30,7 @@ export function useKardex(productoId, params = {}) {
   return useQuery({
     queryKey: ['kardex', productoId, params],
     queryFn: async () => {
-      const sanitizedParams = Object.entries(params).reduce((acc, [key, value]) => {
-        if (value !== '' && value !== null && value !== undefined) {
-          acc[key] = value;
-        }
-        return acc;
-      }, {});
-
-      const response = await inventarioApi.obtenerKardex(productoId, sanitizedParams);
+      const response = await inventarioApi.obtenerKardex(productoId, sanitizeParams(params));
       return response.data.data || { kardex: [], producto: null };
     },
     enabled: !!productoId,
@@ -73,7 +60,7 @@ export function useEstadisticasMovimientos(params) {
 export function useRegistrarMovimiento() {
   const queryClient = useQueryClient();
   // ✅ Multi-sucursal: Obtener sucursal activa del store
-  const { getSucursalId } = useSucursalStore();
+  const getSucursalId = useSucursalStore(selectGetSucursalId);
 
   return useMutation({
     mutationFn: async (data) => {
@@ -133,14 +120,7 @@ export function useAlertas(params = {}) {
   return useQuery({
     queryKey: ['alertas', params],
     queryFn: async () => {
-      const sanitizedParams = Object.entries(params).reduce((acc, [key, value]) => {
-        if (value !== '' && value !== null && value !== undefined) {
-          acc[key] = value;
-        }
-        return acc;
-      }, {});
-
-      const response = await inventarioApi.listarAlertas(sanitizedParams);
+      const response = await inventarioApi.listarAlertas(sanitizeParams(params));
       return response.data.data || { alertas: [], total: 0 };
     },
     staleTime: 1000 * 60 * 1, // 1 minuto (alertas requieren actualización frecuente)
@@ -242,14 +222,7 @@ export function useAnalisisABC(params) {
   return useQuery({
     queryKey: ['analisis-abc', params],
     queryFn: async () => {
-      const sanitizedParams = Object.entries(params).reduce((acc, [key, value]) => {
-        if (value !== '' && value !== null && value !== undefined) {
-          acc[key] = value;
-        }
-        return acc;
-      }, {});
-
-      const response = await inventarioApi.obtenerAnalisisABC(sanitizedParams);
+      const response = await inventarioApi.obtenerAnalisisABC(sanitizeParams(params));
       return response.data.data.productos_abc || [];
     },
     enabled: !!params.fecha_desde && !!params.fecha_hasta,
@@ -265,14 +238,7 @@ export function useRotacionInventario(params) {
   return useQuery({
     queryKey: ['rotacion-inventario', params],
     queryFn: async () => {
-      const sanitizedParams = Object.entries(params).reduce((acc, [key, value]) => {
-        if (value !== '' && value !== null && value !== undefined) {
-          acc[key] = value;
-        }
-        return acc;
-      }, {});
-
-      const response = await inventarioApi.obtenerRotacionInventario(sanitizedParams);
+      const response = await inventarioApi.obtenerRotacionInventario(sanitizeParams(params));
       return response.data.data.productos_rotacion || [];
     },
     enabled: !!params.fecha_desde && !!params.fecha_hasta,
@@ -303,7 +269,7 @@ export function useResumenAlertas() {
  * @param {Object} options - { sucursalId?, enabled? }
  */
 export function useStockDisponible(productoId, options = {}) {
-  const { getSucursalId } = useSucursalStore();
+  const getSucursalId = useSucursalStore(selectGetSucursalId);
   const sucursalId = options.sucursalId || getSucursalId();
 
   return useQuery({
@@ -325,7 +291,7 @@ export function useStockDisponible(productoId, options = {}) {
  * @param {Object} options - { sucursalId?, enabled? }
  */
 export function useStockDisponibleMultiple(productosIds, options = {}) {
-  const { getSucursalId } = useSucursalStore();
+  const getSucursalId = useSucursalStore(selectGetSucursalId);
   const sucursalId = options.sucursalId || getSucursalId();
 
   return useQuery({
@@ -350,7 +316,7 @@ export function useStockDisponibleMultiple(productosIds, options = {}) {
  * @param {Object} options - { sucursalId?, enabled? }
  */
 export function useVerificarDisponibilidad(productoId, cantidad, options = {}) {
-  const { getSucursalId } = useSucursalStore();
+  const getSucursalId = useSucursalStore(selectGetSucursalId);
   const sucursalId = options.sucursalId || getSucursalId();
 
   return useQuery({
@@ -373,7 +339,7 @@ export function useVerificarDisponibilidad(productoId, cantidad, options = {}) {
  */
 export function useCrearReserva() {
   const queryClient = useQueryClient();
-  const { getSucursalId } = useSucursalStore();
+  const getSucursalId = useSucursalStore(selectGetSucursalId);
 
   return useMutation({
     mutationFn: async (data) => {
@@ -405,7 +371,7 @@ export function useCrearReserva() {
  */
 export function useCrearReservasMultiple() {
   const queryClient = useQueryClient();
-  const { getSucursalId } = useSucursalStore();
+  const getSucursalId = useSucursalStore(selectGetSucursalId);
 
   return useMutation({
     mutationFn: async (data) => {
@@ -500,14 +466,7 @@ export function useReservas(params = {}) {
   return useQuery({
     queryKey: ['reservas', params],
     queryFn: async () => {
-      const sanitizedParams = Object.entries(params).reduce((acc, [key, value]) => {
-        if (value !== '' && value !== null && value !== undefined) {
-          acc[key] = value;
-        }
-        return acc;
-      }, {});
-
-      const response = await inventarioApi.listarReservas(sanitizedParams);
+      const response = await inventarioApi.listarReservas(sanitizeParams(params));
       return response.data.data || [];
     },
     staleTime: 1000 * 30,

@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { conteosApi } from '@/services/api/endpoints';
-import useSucursalStore from '@/store/sucursalStore';
+import useSucursalStore, { selectGetSucursalId } from '@/store/sucursalStore';
 
 /**
  * Hooks para gestión de Conteos de Inventario (Conteo Físico)
@@ -22,7 +22,7 @@ import useSucursalStore from '@/store/sucursalStore';
  * @param {number} params.offset - Offset para paginación
  */
 export function useConteos(params = {}) {
-    const { getSucursalId } = useSucursalStore();
+    const getSucursalId = useSucursalStore(selectGetSucursalId);
 
     return useQuery({
         queryKey: ['conteos', params],
@@ -97,7 +97,7 @@ export function useEstadisticasConteos(params = {}) {
  */
 export function useCrearConteo() {
     const queryClient = useQueryClient();
-    const { getSucursalId } = useSucursalStore();
+    const getSucursalId = useSucursalStore(selectGetSucursalId);
 
     return useMutation({
         mutationFn: async (data) => {

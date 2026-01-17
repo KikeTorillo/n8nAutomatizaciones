@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Users,
@@ -15,7 +15,9 @@ import { Button, StatCardGrid } from '@/components/ui';
 import ProfesionalesPageLayout from '@/components/profesionales/ProfesionalesPageLayout';
 import { useOrganigrama } from '@/hooks/useOrganigrama';
 import useThemeStore from '@/store/themeStore';
-import D3OrgChart from '@/components/profesionales/D3OrgChart';
+
+// Ene 2026: Lazy loading de D3OrgChart (~650KB d3)
+const D3OrgChart = lazy(() => import('@/components/profesionales/D3OrgChart'));
 
 // Colores por tipo de empleado (para leyenda)
 const TIPO_COLORS = {
@@ -201,12 +203,20 @@ function OrganigramaPage() {
           </div>
         </div>
       ) : (
-        <D3OrgChart
-          data={arbolFiltrado}
-          onNodeClick={handleNodeClick}
-          isDarkMode={isDarkMode}
-          organizacionNombre="Mi Organización"
-        />
+        <Suspense fallback={
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 md:p-6">
+            <div className="flex items-center justify-center py-20">
+              <Loader2 className="w-10 h-10 animate-spin text-primary-600" />
+            </div>
+          </div>
+        }>
+          <D3OrgChart
+            data={arbolFiltrado}
+            onNodeClick={handleNodeClick}
+            isDarkMode={isDarkMode}
+            organizacionNombre="Mi Organización"
+          />
+        </Suspense>
       )}
 
       {/* Leyenda */}

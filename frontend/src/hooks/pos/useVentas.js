@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { posApi } from '@/services/api/endpoints';
-import useSucursalStore from '@/store/sucursalStore';
+import useSucursalStore, { selectGetSucursalId } from '@/store/sucursalStore';
 
 // ==================== VENTAS POS ====================
 // ✅ FEATURE: Multi-sucursal - Los hooks inyectan sucursal_id automáticamente
@@ -10,7 +10,7 @@ import useSucursalStore from '@/store/sucursalStore';
  * @param {Object} params - { estado?, estado_pago?, tipo_venta?, cliente_id?, profesional_id?, metodo_pago?, fecha_desde?, fecha_hasta?, folio?, limit?, offset? }
  */
 export function useVentas(params = {}) {
-  const { getSucursalId } = useSucursalStore();
+  const getSucursalId = useSucursalStore(selectGetSucursalId);
   const sucursalId = getSucursalId();
 
   return useQuery({
@@ -58,7 +58,7 @@ export function useVenta(ventaId) {
 export function useCrearVenta() {
   const queryClient = useQueryClient();
   // ✅ Multi-sucursal: Obtener sucursal activa del store
-  const { getSucursalId } = useSucursalStore();
+  const getSucursalId = useSucursalStore(selectGetSucursalId);
 
   return useMutation({
     mutationFn: async (data) => {
@@ -280,7 +280,7 @@ export function useEliminarVenta() {
  * @param {Object} params - { fecha_inicio, fecha_fin, usuario_id? }
  */
 export function useCorteCaja(params) {
-  const { getSucursalId } = useSucursalStore();
+  const getSucursalId = useSucursalStore(selectGetSucursalId);
   const sucursalId = getSucursalId();
 
   return useQuery({

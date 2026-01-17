@@ -1,5 +1,5 @@
 import { Navigate } from 'react-router-dom';
-import useAuthStore from '@/store/authStore';
+import useAuthStore, { selectIsAuthenticated, selectUser } from '@/store/authStore';
 
 /**
  * Jerarquía de roles del sistema
@@ -62,7 +62,9 @@ function hasRoleAccess(userRole, requiredRoles) {
  * <ProtectedRoute excludeRoles="super_admin" redirectTo="/superadmin">
  */
 function ProtectedRoute({ children, requiredRole = null, excludeRoles = null, redirectTo = '/dashboard' }) {
-  const { isAuthenticated, user } = useAuthStore();
+  // Ene 2026: Usar selectores para evitar re-renders
+  const isAuthenticated = useAuthStore(selectIsAuthenticated);
+  const user = useAuthStore(selectUser);
 
   // Verificación 1: Autenticación
   if (!isAuthenticated) {
