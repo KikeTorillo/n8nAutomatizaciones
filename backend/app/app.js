@@ -78,17 +78,46 @@ class SaaSApplication {
     // los headers X-Forwarded-* enviados por el proxy
     this.app.set('trust proxy', true);
 
-    // HELMET: Configuración de seguridad HTTP
+    // CORRELATION ID: Trazabilidad de requests
+    // Genera ID único para cada request, permite rastrear logs relacionados
+    const { correlationMiddleware } = require('./middleware/correlationId');
+    this.app.use(correlationMiddleware);
+
+    // HELMET: Configuración completa de seguridad HTTP
+    // Protección contra XSS, clickjacking, MIME sniffing y más
     this.app.use(helmet({
-      // Content Security Policy - previene ataques XSS
+      // Content Security Policy - previene ataques XSS e inyección de contenido
       contentSecurityPolicy: {
         directives: {
-          defaultSrc: ["'self'"],                    // Solo contenido del mismo origen por defecto
-          styleSrc: ["'self'", "'unsafe-inline'"],  // CSS del mismo origen + inline styles
-          scriptSrc: ["'self'"],                     // Solo scripts del mismo origen
-          imgSrc: ["'self'", "data:", "https:"]      // Imágenes: mismo origen + data URLs + HTTPS
+          defaultSrc: ["'self'"],                              // Solo contenido del mismo origen
+          styleSrc: ["'self'", "'unsafe-inline'"],            // CSS + inline styles (Tailwind)
+          scriptSrc: ["'self'"],                               // Solo scripts del mismo origen
+          imgSrc: ["'self'", "data:", "https:", "blob:"],     // Imágenes: mismo origen + data URLs + HTTPS + blobs
+          connectSrc: ["'self'", "https://accounts.google.com"], // APIs permitidas (OAuth Google)
+          frameSrc: ["'self'", "https://accounts.google.com"],   // Frames permitidos (OAuth Google popup)
+          fontSrc: ["'self'", "https:", "data:"]               // Fuentes: mismo origen + CDNs + data URLs
         }
-      }
+      },
+      // Strict Transport Security - fuerza HTTPS (solo en producción)
+      strictTransportSecurity: this.environment === 'production' ? {
+        maxAge: 31536000,      // 1 año
+        includeSubDomains: true,
+        preload: true
+      } : false,
+      // Frame Options - previene clickjacking
+      frameguard: { action: 'deny' },
+      // X-Content-Type-Options - previene MIME sniffing
+      noSniff: true,
+      // Ocultar header X-Powered-By
+      hidePoweredBy: true,
+      // X-XSS-Protection - protección legacy XSS (navegadores antiguos)
+      xssFilter: true,
+      // Referrer Policy - controla información enviada en header Referer
+      referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+      // Cross-Origin-Opener-Policy - permite popups OAuth (Google Sign-In)
+      crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' },
+      // Cross-Origin-Resource-Policy - permite carga cross-origin de recursos
+      crossOriginResourcePolicy: { policy: 'cross-origin' }
     }));
 
     // CORS: Configuración de Cross-Origin Resource Sharing

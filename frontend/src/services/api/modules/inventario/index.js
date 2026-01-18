@@ -50,6 +50,9 @@ export const inventarioApi = {
 
   // Inteligencia: Reportes, alertas, analytics, snapshots
   ...inteligenciaApi,
+
+  // Aliases de compatibilidad (Ene 2026)
+  obtenerAlertas: inteligenciaApi.listarAlertas,
 };
 
 // Exports granulares para uso futuro

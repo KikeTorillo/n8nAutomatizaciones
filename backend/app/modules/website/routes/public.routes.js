@@ -17,7 +17,7 @@
 const express = require('express');
 const { WebsitePublicController } = require('../controllers');
 const { rateLimiting, validation } = require('../../../middleware');
-const websiteSchemas = require('../validators/website.schemas');
+const websiteSchemas = require('../schemas/website.schemas');
 
 const router = express.Router();
 const validate = validation.validate;

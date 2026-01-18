@@ -23,7 +23,7 @@ const {
     WebsiteBloquesController
 } = require('../controllers');
 const { auth, tenant, rateLimiting, validation, subscription, modules } = require('../../../middleware');
-const websiteSchemas = require('../validators/website.schemas');
+const websiteSchemas = require('../schemas/website.schemas');
 
 const router = express.Router();
 const validate = validation.validate;

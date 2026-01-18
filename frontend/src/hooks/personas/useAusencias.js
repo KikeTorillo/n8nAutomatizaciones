@@ -6,6 +6,10 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
+import {
+  calcularDiasRestantes as calcularDiasRestantesLib,
+  formatRangoFechas as formatRangoFechasLib,
+} from '@/lib/dateHelpers';
 
 // Re-exportar hooks existentes para conveniencia
 export {
@@ -483,30 +487,15 @@ export function getTipoAusenciaConfig(tipo) {
 
 /**
  * Formatea rango de fechas para mostrar
+ * Re-exportado desde @/lib/dateHelpers
  */
-export function formatRangoFechas(fechaInicio, fechaFin) {
-  const opciones = { day: 'numeric', month: 'short' };
-  const inicio = new Date(fechaInicio).toLocaleDateString('es-MX', opciones);
-  const fin = new Date(fechaFin).toLocaleDateString('es-MX', opciones);
-
-  if (fechaInicio === fechaFin) {
-    return inicio;
-  }
-  return `${inicio} - ${fin}`;
-}
+export const formatRangoFechas = formatRangoFechasLib;
 
 /**
  * Calcula días restantes de una ausencia activa
+ * Re-exportado desde @/lib/dateHelpers
  */
-export function calcularDiasRestantes(fechaFin) {
-  const hoy = new Date();
-  hoy.setHours(0, 0, 0, 0);
-  const fin = new Date(fechaFin);
-  fin.setHours(0, 0, 0, 0);
-
-  const diff = fin - hoy;
-  return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
-}
+export const calcularDiasRestantes = calcularDiasRestantesLib;
 
 // ==================== EXPORT DEFAULT ====================
 

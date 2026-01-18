@@ -8,6 +8,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { eventosDigitalesApi } from '@/services/api/endpoints';
 import { sanitizeParams } from '@/lib/params';
+import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 
 // ==================== QUERIES MESA DE REGALOS ====================
 
@@ -51,11 +52,7 @@ export function useCrearRegalo() {
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['mesa-regalos-evento', variables.eventoId] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) throw new Error(backendMessage);
-      throw new Error('Error al crear regalo');
-    },
+    onError: createCRUDErrorHandler('create', 'Regalo'),
   });
 }
 
@@ -79,11 +76,7 @@ export function useActualizarRegalo() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['mesa-regalos-evento', data.eventoId] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) throw new Error(backendMessage);
-      throw new Error('Error al actualizar regalo');
-    },
+    onError: createCRUDErrorHandler('update', 'Regalo'),
   });
 }
 
@@ -101,11 +94,7 @@ export function useMarcarRegaloComprado() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['mesa-regalos-evento', data.eventoId] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) throw new Error(backendMessage);
-      throw new Error('Error al marcar regalo como comprado');
-    },
+    onError: createCRUDErrorHandler('update', 'Regalo'),
   });
 }
 
@@ -123,11 +112,7 @@ export function useEliminarRegalo() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['mesa-regalos-evento', data.eventoId] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) throw new Error(backendMessage);
-      throw new Error('Error al eliminar regalo');
-    },
+    onError: createCRUDErrorHandler('delete', 'Regalo'),
   });
 }
 
@@ -175,11 +160,7 @@ export function useCrearFelicitacion() {
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['felicitaciones-evento', variables.eventoId] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) throw new Error(backendMessage);
-      throw new Error('Error al crear felicitación');
-    },
+    onError: createCRUDErrorHandler('create', 'Felicitacion'),
   });
 }
 
@@ -197,11 +178,7 @@ export function useAprobarFelicitacion() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['felicitaciones-evento', data.eventoId] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) throw new Error(backendMessage);
-      throw new Error('Error al aprobar felicitación');
-    },
+    onError: createCRUDErrorHandler('update', 'Felicitacion'),
   });
 }
 
@@ -219,11 +196,7 @@ export function useRechazarFelicitacion() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['felicitaciones-evento', data.eventoId] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) throw new Error(backendMessage);
-      throw new Error('Error al rechazar felicitación');
-    },
+    onError: createCRUDErrorHandler('update', 'Felicitacion'),
   });
 }
 
@@ -241,11 +214,7 @@ export function useEliminarFelicitacion() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['felicitaciones-evento', data.eventoId] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) throw new Error(backendMessage);
-      throw new Error('Error al eliminar felicitación');
-    },
+    onError: createCRUDErrorHandler('delete', 'Felicitacion'),
   });
 }
 
@@ -308,11 +277,7 @@ export function useSubirFoto() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['galeria-evento', data.eventoId] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) throw new Error(backendMessage);
-      throw new Error('Error al subir foto');
-    },
+    onError: createCRUDErrorHandler('create', 'Foto'),
   });
 }
 
@@ -330,11 +295,7 @@ export function useCambiarEstadoFoto() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['galeria-evento', data.eventoId] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) throw new Error(backendMessage);
-      throw new Error('Error al cambiar estado de foto');
-    },
+    onError: createCRUDErrorHandler('update', 'Foto'),
   });
 }
 
@@ -352,11 +313,7 @@ export function useEliminarFoto() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['galeria-evento', data.eventoId] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) throw new Error(backendMessage);
-      throw new Error('Error al eliminar foto');
-    },
+    onError: createCRUDErrorHandler('delete', 'Foto'),
   });
 }
 
@@ -374,11 +331,7 @@ export function useEliminarFotoPermanente() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['galeria-evento', data.eventoId] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) throw new Error(backendMessage);
-      throw new Error('Error al eliminar foto permanentemente');
-    },
+    onError: createCRUDErrorHandler('delete', 'Foto'),
   });
 }
 
@@ -396,19 +349,10 @@ export function useSubirFotoPublica() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['galeria-publica', data.slug] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) throw new Error(backendMessage);
-
-      const errorMessages = {
-        400: 'No está permitido subir fotos en este evento',
-        404: 'Invitación no encontrada',
-        413: 'La imagen es demasiado grande. Máximo 10MB.',
-      };
-
-      const statusCode = error.response?.status;
-      throw new Error(errorMessages[statusCode] || 'Error al subir foto');
-    },
+    onError: createCRUDErrorHandler('create', 'Foto', {
+      400: 'No esta permitido subir fotos en este evento',
+      413: 'La imagen es demasiado grande. Maximo 10MB.',
+    }),
   });
 }
 
@@ -421,10 +365,6 @@ export function useReportarFoto() {
       const response = await eventosDigitalesApi.reportarFoto(fotoId, motivo);
       return response.data;
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) throw new Error(backendMessage);
-      throw new Error('Error al reportar foto');
-    },
+    onError: createCRUDErrorHandler('create', 'Reporte'),
   });
 }

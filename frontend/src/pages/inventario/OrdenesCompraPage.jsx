@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useFilters } from '@/hooks/utils';
 import {
   ShoppingCart,
   Plus,
@@ -52,6 +53,18 @@ import OrdenCompraDetalleModal from '@/components/inventario/ordenes-compra/Orde
 import RecibirMercanciaModal from '@/components/inventario/ordenes-compra/RecibirMercanciaModal';
 import RegistrarPagoModal from '@/components/inventario/ordenes-compra/RegistrarPagoModal';
 
+// Filtros iniciales (fuera del componente)
+const INITIAL_FILTERS = {
+  proveedor_id: '',
+  estado: '',
+  estado_pago: '',
+  fecha_desde: '',
+  fecha_hasta: '',
+  folio: '',
+  limit: 50,
+  offset: 0,
+};
+
 /**
  * Página principal de Órdenes de Compra
  * Gestión completa del ciclo de compras a proveedores
@@ -60,17 +73,11 @@ export default function OrdenesCompraPage() {
   const { success: showSuccess, error: showError, warning: showWarning, info: showInfo } = useToast();
   const { exportCSV } = useExportCSV();
 
-  // Estado de filtros
-  const [filtros, setFiltros] = useState({
-    proveedor_id: '',
-    estado: '',
-    estado_pago: '',
-    fecha_desde: '',
-    fecha_hasta: '',
-    folio: '',
-    limit: 50,
-    offset: 0,
-  });
+  // Filtros con useFilters para persistencia y debounce
+  const { filtros, filtrosQuery, setFiltro, setFiltros, limpiarFiltros } = useFilters(
+    INITIAL_FILTERS,
+    { moduloId: 'inventario.ordenes-compra', debounceFields: ['folio'] }
+  );
 
   const [mostrarFiltros, setMostrarFiltros] = useState(false);
   const [mostrarSugerencias, setMostrarSugerencias] = useState(false);
@@ -79,8 +86,8 @@ export default function OrdenesCompraPage() {
   // Estado de modales unificado
   const { isOpen, getModalData, openModal, closeModal } = useModalManager();
 
-  // Queries
-  const { data: ordenesData, isLoading } = useOrdenesCompra(filtros);
+  // Queries - usando filtrosQuery con debounce
+  const { data: ordenesData, isLoading } = useOrdenesCompra(filtrosQuery);
   const ordenes = ordenesData?.ordenes || [];
   const totales = ordenesData?.totales || {};
   const total = totales.cantidad || 0;
@@ -112,7 +119,7 @@ export default function OrdenesCompraPage() {
         value: totales.cantidad || 0,
         label: 'Total',
         color: filtros.estado === '' ? 'primary' : 'gray',
-        onClick: () => setFiltros(prev => ({ ...prev, estado: '', offset: 0 })),
+        onClick: () => setFiltros((prev) => ({ ...prev, estado: '', offset: 0 })),
       },
       {
         id: 'borradores',
@@ -120,7 +127,7 @@ export default function OrdenesCompraPage() {
         value: conteoEstados.borrador || 0,
         label: 'Borradores',
         color: filtros.estado === 'borrador' ? 'yellow' : 'gray',
-        onClick: () => setFiltros(prev => ({ ...prev, estado: 'borrador', offset: 0 })),
+        onClick: () => setFiltros((prev) => ({ ...prev, estado: 'borrador', offset: 0 })),
       },
       {
         id: 'enviadas',
@@ -128,7 +135,7 @@ export default function OrdenesCompraPage() {
         value: conteoEstados.enviada || 0,
         label: 'Enviadas',
         color: filtros.estado === 'enviada' ? 'blue' : 'gray',
-        onClick: () => setFiltros(prev => ({ ...prev, estado: 'enviada', offset: 0 })),
+        onClick: () => setFiltros((prev) => ({ ...prev, estado: 'enviada', offset: 0 })),
       },
       {
         id: 'recibidas',
@@ -136,7 +143,7 @@ export default function OrdenesCompraPage() {
         value: conteoEstados.recibida || 0,
         label: 'Recibidas',
         color: filtros.estado === 'recibida' ? 'green' : 'gray',
-        onClick: () => setFiltros(prev => ({ ...prev, estado: 'recibida', offset: 0 })),
+        onClick: () => setFiltros((prev) => ({ ...prev, estado: 'recibida', offset: 0 })),
       },
       {
         id: 'alertas',
@@ -148,7 +155,7 @@ export default function OrdenesCompraPage() {
         disabled: sugerencias.length === 0,
       },
     ];
-  }, [totales.cantidad, ordenes, filtros.estado, sugerencias.length]);
+  }, [totales.cantidad, ordenes, filtros.estado, sugerencias.length, setFiltros]);
 
   // Handlers de filtros
   const handleFiltroChange = (campo, valor) => {
@@ -156,16 +163,7 @@ export default function OrdenesCompraPage() {
   };
 
   const handleLimpiarFiltros = () => {
-    setFiltros({
-      proveedor_id: '',
-      estado: '',
-      estado_pago: '',
-      fecha_desde: '',
-      fecha_hasta: '',
-      folio: '',
-      limit: 50,
-      offset: 0,
-    });
+    limpiarFiltros();
   };
 
   // Handlers de acciones

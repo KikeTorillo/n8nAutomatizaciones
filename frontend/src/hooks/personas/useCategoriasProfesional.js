@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { categoriasProfesionalApi } from '@/services/api/endpoints';
+import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 
 // ==================== HOOKS CRUD CATEGORÍAS PROFESIONAL ====================
 
@@ -98,19 +99,9 @@ export function useCrearCategoriaProfesional() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categorias-profesional'] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) throw new Error(backendMessage);
-
-      const errorMessages = {
-        409: 'Ya existe una categoría con ese nombre en ese tipo',
-        400: 'Datos inválidos. Revisa los campos',
-        500: 'Error del servidor',
-      };
-
-      const statusCode = error.response?.status;
-      throw new Error(errorMessages[statusCode] || 'Error al crear categoría');
-    },
+    onError: createCRUDErrorHandler('create', 'Categoría', {
+      409: 'Ya existe una categoría con ese nombre en ese tipo',
+    }),
   });
 }
 
@@ -137,11 +128,7 @@ export function useActualizarCategoriaProfesional() {
       queryClient.invalidateQueries({ queryKey: ['categoria-profesional', data.id] });
       queryClient.invalidateQueries({ queryKey: ['categorias-profesional'] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) throw new Error(backendMessage);
-      throw new Error('Error al actualizar categoría');
-    },
+    onError: createCRUDErrorHandler('update', 'Categoría'),
   });
 }
 
@@ -159,15 +146,9 @@ export function useEliminarCategoriaProfesional() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categorias-profesional'] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) throw new Error(backendMessage);
-
-      if (error.response?.data?.error?.includes('profesionales')) {
-        throw new Error('No se puede eliminar: hay profesionales con esta categoría');
-      }
-      throw new Error('Error al eliminar categoría');
-    },
+    onError: createCRUDErrorHandler('delete', 'Categoría', {
+      400: 'No se puede eliminar: hay profesionales con esta categoría',
+    }),
   });
 }
 

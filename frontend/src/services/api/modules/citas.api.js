@@ -131,6 +131,9 @@ export const citasApi = {
    * @returns {Promise<Object>} { fechas_disponibles, fechas_no_disponibles, porcentaje_disponibilidad }
    */
   previewRecurrencia: (data) => apiClient.post('/citas/recurrente/preview', data),
+
+  // Alias de compatibilidad (Ene 2026)
+  obtenerPorFecha: (fecha) => apiClient.get('/citas', { params: { fecha_cita: fecha } }),
 };
 
 // ==================== CONFIGURACIÓN AGENDAMIENTO (Ene 2026) ====================

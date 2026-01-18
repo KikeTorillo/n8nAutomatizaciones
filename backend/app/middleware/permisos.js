@@ -1,53 +1,32 @@
 /**
  * @fileoverview Middleware de Verificación de Permisos
  * @description Middleware para verificar permisos usando el sistema normalizado
- * @version 1.0.0
- * @date Diciembre 2025
+ * @version 2.0.0
+ * @date Enero 2026
+ *
+ * Características v2:
+ * - Cache distribuido con Redis Pub/Sub (DB 4)
+ * - Sincronización en tiempo real entre instancias
+ * - Fallback automático a cache local
  */
 
 const { getDb } = require('../config/database');
 const logger = require('../utils/logger');
 const { ResponseHelper } = require('../utils/helpers');
+const permisosCacheService = require('../services/permisosCacheService');
 
 /**
- * Cache en memoria para permisos (TTL: 5 minutos)
- * Reduce queries a la BD para verificaciones frecuentes
- */
-const permisosCache = new Map();
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutos
-
-/**
- * Limpiar cache cada 10 minutos
- */
-setInterval(() => {
-    const now = Date.now();
-    for (const [key, entry] of permisosCache.entries()) {
-        if (now - entry.timestamp > CACHE_TTL) {
-            permisosCache.delete(key);
-        }
-    }
-}, 10 * 60 * 1000);
-
-/**
- * Generar clave de cache
- */
-function getCacheKey(usuarioId, sucursalId, codigoPermiso) {
-    return `${usuarioId}:${sucursalId}:${codigoPermiso}`;
-}
-
-/**
- * Verificar si usuario tiene un permiso (con cache)
+ * Verificar si usuario tiene un permiso (con cache Redis + fallback local)
  * @param {number} usuarioId
  * @param {number} sucursalId
  * @param {string} codigoPermiso
  * @returns {Promise<boolean>}
  */
 async function tienePermiso(usuarioId, sucursalId, codigoPermiso) {
-    // Verificar cache
-    const cacheKey = getCacheKey(usuarioId, sucursalId, codigoPermiso);
-    const cached = permisosCache.get(cacheKey);
+    // Verificar cache (Redis o local)
+    const cached = await permisosCacheService.get(usuarioId, sucursalId, codigoPermiso);
 
-    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    if (cached.found) {
         return cached.valor;
     }
 
@@ -60,11 +39,8 @@ async function tienePermiso(usuarioId, sucursalId, codigoPermiso) {
         );
         const tiene = result.rows[0]?.tiene === true;
 
-        // Guardar en cache
-        permisosCache.set(cacheKey, {
-            valor: tiene,
-            timestamp: Date.now()
-        });
+        // Guardar en cache (Redis + local)
+        await permisosCacheService.set(usuarioId, sucursalId, codigoPermiso, tiene);
 
         return tiene;
     } finally {
@@ -73,17 +49,18 @@ async function tienePermiso(usuarioId, sucursalId, codigoPermiso) {
 }
 
 /**
- * Obtener valor numérico de un permiso (con cache)
+ * Obtener valor numérico de un permiso (con cache Redis + fallback local)
  * @param {number} usuarioId
  * @param {number} sucursalId
  * @param {string} codigoPermiso
  * @returns {Promise<number>}
  */
 async function obtenerValorNumerico(usuarioId, sucursalId, codigoPermiso) {
-    const cacheKey = getCacheKey(usuarioId, sucursalId, `num:${codigoPermiso}`);
-    const cached = permisosCache.get(cacheKey);
+    // Usar prefijo 'num:' para diferenciar de permisos boolean
+    const codigoConPrefijo = `num:${codigoPermiso}`;
+    const cached = await permisosCacheService.get(usuarioId, sucursalId, codigoConPrefijo);
 
-    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    if (cached.found) {
         return cached.valor;
     }
 
@@ -95,10 +72,7 @@ async function obtenerValorNumerico(usuarioId, sucursalId, codigoPermiso) {
         );
         const valor = result.rows[0]?.valor || 0;
 
-        permisosCache.set(cacheKey, {
-            valor,
-            timestamp: Date.now()
-        });
+        await permisosCacheService.set(usuarioId, sucursalId, codigoConPrefijo, valor);
 
         return valor;
     } finally {
@@ -107,25 +81,38 @@ async function obtenerValorNumerico(usuarioId, sucursalId, codigoPermiso) {
 }
 
 /**
- * Limpiar cache de un usuario específico
+ * Limpiar cache de un usuario específico (con Pub/Sub para sincronizar instancias)
  * Llamar después de modificar permisos
  * @param {number} usuarioId
  */
-function invalidarCacheUsuario(usuarioId) {
-    for (const key of permisosCache.keys()) {
-        if (key.startsWith(`${usuarioId}:`)) {
-            permisosCache.delete(key);
-        }
-    }
+async function invalidarCacheUsuario(usuarioId) {
+    await permisosCacheService.invalidarUsuario(usuarioId);
     logger.debug('[Permisos] Cache invalidado para usuario', { usuarioId });
 }
 
 /**
- * Limpiar todo el cache
+ * Limpiar cache de una sucursal específica (con Pub/Sub para sincronizar instancias)
+ * @param {number} sucursalId
  */
-function invalidarTodoCache() {
-    permisosCache.clear();
+async function invalidarCacheSucursal(sucursalId) {
+    await permisosCacheService.invalidarSucursal(sucursalId);
+    logger.debug('[Permisos] Cache invalidado para sucursal', { sucursalId });
+}
+
+/**
+ * Limpiar todo el cache (con Pub/Sub para sincronizar instancias)
+ */
+async function invalidarTodoCache() {
+    await permisosCacheService.invalidarTodo();
     logger.debug('[Permisos] Cache global invalidado');
+}
+
+/**
+ * Obtener estadísticas del cache de permisos
+ * @returns {Promise<Object>}
+ */
+async function getCacheStats() {
+    return await permisosCacheService.getStats();
 }
 
 /**
@@ -399,5 +386,7 @@ module.exports = {
     tienePermiso,
     obtenerValorNumerico,
     invalidarCacheUsuario,
-    invalidarTodoCache
+    invalidarCacheSucursal,
+    invalidarTodoCache,
+    getCacheStats
 };

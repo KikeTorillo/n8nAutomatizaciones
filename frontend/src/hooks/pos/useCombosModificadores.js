@@ -14,7 +14,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { posApi } from '@/services/api/endpoints';
 import { useToast } from '@/hooks/utils';
-import { createCRUDErrorHandler, getErrorMessage } from '@/hooks/config/errorHandlerFactory';
+import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 
 // ========================================================================
 // CONSTANTES
@@ -107,7 +107,11 @@ export function useCrearCombo() {
             toast.success('Combo creado exitosamente');
         },
         onError: (error) => {
-            toast.error(getErrorMessage(error, 'Error al crear combo'));
+            try {
+                createCRUDErrorHandler('create', 'Combo')(error);
+            } catch (e) {
+                toast.error(e.message);
+            }
         },
     });
 }
@@ -128,7 +132,11 @@ export function useActualizarCombo() {
             toast.success('Combo actualizado exitosamente');
         },
         onError: (error) => {
-            toast.error(getErrorMessage(error, 'Error al actualizar combo'));
+            try {
+                createCRUDErrorHandler('update', 'Combo')(error);
+            } catch (e) {
+                toast.error(e.message);
+            }
         },
     });
 }
@@ -148,7 +156,11 @@ export function useEliminarCombo() {
             toast.success('Combo eliminado exitosamente');
         },
         onError: (error) => {
-            toast.error(getErrorMessage(error, 'Error al eliminar combo'));
+            try {
+                createCRUDErrorHandler('delete', 'Combo')(error);
+            } catch (e) {
+                toast.error(e.message);
+            }
         },
     });
 }
@@ -230,11 +242,11 @@ export function useCrearGrupoModificadores() {
             });
         },
         onError: (error) => {
-            toast({
-                title: 'Error al crear grupo',
-                description: getErrorMessage(error, 'Error inesperado'),
-                variant: 'error',
-            });
+            try {
+                createCRUDErrorHandler('create', 'Grupo de modificadores')(error);
+            } catch (e) {
+                toast.error(e.message);
+            }
         },
     });
 }
@@ -258,11 +270,11 @@ export function useActualizarGrupoModificadores() {
             });
         },
         onError: (error) => {
-            toast({
-                title: 'Error al actualizar grupo',
-                description: getErrorMessage(error, 'Error inesperado'),
-                variant: 'error',
-            });
+            try {
+                createCRUDErrorHandler('update', 'Grupo de modificadores')(error);
+            } catch (e) {
+                toast.error(e.message);
+            }
         },
     });
 }
@@ -286,11 +298,11 @@ export function useEliminarGrupoModificadores() {
             });
         },
         onError: (error) => {
-            toast({
-                title: 'Error al eliminar grupo',
-                description: getErrorMessage(error, 'Error inesperado'),
-                variant: 'error',
-            });
+            try {
+                createCRUDErrorHandler('delete', 'Grupo de modificadores')(error);
+            } catch (e) {
+                toast.error(e.message);
+            }
         },
     });
 }
@@ -318,11 +330,11 @@ export function useCrearModificador() {
             });
         },
         onError: (error) => {
-            toast({
-                title: 'Error al crear modificador',
-                description: getErrorMessage(error, 'Error inesperado'),
-                variant: 'error',
-            });
+            try {
+                createCRUDErrorHandler('create', 'Modificador')(error);
+            } catch (e) {
+                toast.error(e.message);
+            }
         },
     });
 }
@@ -346,11 +358,11 @@ export function useActualizarModificador() {
             });
         },
         onError: (error) => {
-            toast({
-                title: 'Error al actualizar modificador',
-                description: getErrorMessage(error, 'Error inesperado'),
-                variant: 'error',
-            });
+            try {
+                createCRUDErrorHandler('update', 'Modificador')(error);
+            } catch (e) {
+                toast.error(e.message);
+            }
         },
     });
 }
@@ -374,11 +386,11 @@ export function useEliminarModificador() {
             });
         },
         onError: (error) => {
-            toast({
-                title: 'Error al eliminar modificador',
-                description: getErrorMessage(error, 'Error inesperado'),
-                variant: 'error',
-            });
+            try {
+                createCRUDErrorHandler('delete', 'Modificador')(error);
+            } catch (e) {
+                toast.error(e.message);
+            }
         },
     });
 }
@@ -466,11 +478,11 @@ export function useAsignarGrupoAProducto() {
             });
         },
         onError: (error) => {
-            toast({
-                title: 'Error al asignar grupo',
-                description: getErrorMessage(error, 'Error inesperado'),
-                variant: 'error',
-            });
+            try {
+                createCRUDErrorHandler('create', 'Asignacion de grupo')(error);
+            } catch (e) {
+                toast.error(e.message);
+            }
         },
     });
 }
@@ -496,11 +508,11 @@ export function useAsignarGrupoACategoria() {
             });
         },
         onError: (error) => {
-            toast({
-                title: 'Error al asignar grupo',
-                description: getErrorMessage(error, 'Error inesperado'),
-                variant: 'error',
-            });
+            try {
+                createCRUDErrorHandler('create', 'Asignacion de grupo')(error);
+            } catch (e) {
+                toast.error(e.message);
+            }
         },
     });
 }
@@ -526,11 +538,11 @@ export function useEliminarAsignacionProducto() {
             });
         },
         onError: (error) => {
-            toast({
-                title: 'Error al eliminar asignación',
-                description: getErrorMessage(error, 'Error inesperado'),
-                variant: 'error',
-            });
+            try {
+                createCRUDErrorHandler('delete', 'Asignacion')(error);
+            } catch (e) {
+                toast.error(e.message);
+            }
         },
     });
 }

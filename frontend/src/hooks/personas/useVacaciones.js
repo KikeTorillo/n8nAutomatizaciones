@@ -6,6 +6,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { vacacionesApi } from '@/services/api/endpoints';
 import { useToast } from '@/hooks/utils';
+import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 
 // === Constantes ===
 
@@ -74,7 +75,11 @@ export function useActualizarPoliticaVacaciones() {
       toast.success('Política de vacaciones actualizada');
     },
     onError: (error) => {
-      toast.error(error.response?.data?.error || 'Error al actualizar política');
+      try {
+        createCRUDErrorHandler('update', 'Política')(error);
+      } catch (e) {
+        toast.error(e.message);
+      }
     },
   });
 }
@@ -112,7 +117,11 @@ export function useCrearNivelVacaciones() {
       toast.success('Nivel creado correctamente');
     },
     onError: (error) => {
-      toast.error(error.response?.data?.error || 'Error al crear nivel');
+      try {
+        createCRUDErrorHandler('create', 'Nivel')(error);
+      } catch (e) {
+        toast.error(e.message);
+      }
     },
   });
 }
@@ -134,7 +143,11 @@ export function useActualizarNivelVacaciones() {
       toast.success('Nivel actualizado');
     },
     onError: (error) => {
-      toast.error(error.response?.data?.error || 'Error al actualizar nivel');
+      try {
+        createCRUDErrorHandler('update', 'Nivel')(error);
+      } catch (e) {
+        toast.error(e.message);
+      }
     },
   });
 }
@@ -156,7 +169,11 @@ export function useEliminarNivelVacaciones() {
       toast.success('Nivel eliminado');
     },
     onError: (error) => {
-      toast.error(error.response?.data?.error || 'Error al eliminar nivel');
+      try {
+        createCRUDErrorHandler('delete', 'Nivel')(error);
+      } catch (e) {
+        toast.error(e.message);
+      }
     },
   });
 }
@@ -179,7 +196,11 @@ export function useCrearNivelesPreset() {
       toast.success(`Niveles de ${pais} creados correctamente`);
     },
     onError: (error) => {
-      toast.error(error.response?.data?.error || 'Error al crear niveles preset');
+      try {
+        createCRUDErrorHandler('create', 'Niveles preset')(error);
+      } catch (e) {
+        toast.error(e.message);
+      }
     },
   });
 }
@@ -232,7 +253,11 @@ export function useAjustarSaldo() {
       toast.success('Saldo ajustado correctamente');
     },
     onError: (error) => {
-      toast.error(error.response?.data?.error || 'Error al ajustar saldo');
+      try {
+        createCRUDErrorHandler('update', 'Saldo')(error);
+      } catch (e) {
+        toast.error(e.message);
+      }
     },
   });
 }
@@ -254,7 +279,11 @@ export function useGenerarSaldosAnio() {
       toast.success(`Saldos generados: ${result.creados} nuevos, ${result.actualizados} actualizados`);
     },
     onError: (error) => {
-      toast.error(error.response?.data?.error || 'Error al generar saldos');
+      try {
+        createCRUDErrorHandler('create', 'Saldos')(error);
+      } catch (e) {
+        toast.error(e.message);
+      }
     },
   });
 }
@@ -280,7 +309,11 @@ export function useCrearSolicitudVacaciones() {
       toast.success('Solicitud de vacaciones enviada');
     },
     onError: (error) => {
-      toast.error(error.response?.data?.error || 'Error al crear solicitud');
+      try {
+        createCRUDErrorHandler('create', 'Solicitud')(error);
+      } catch (e) {
+        toast.error(e.message);
+      }
     },
   });
 }
@@ -383,7 +416,11 @@ export function useAprobarSolicitud() {
       toast.success('Solicitud aprobada. Se ha creado el bloqueo en el calendario.');
     },
     onError: (error) => {
-      toast.error(error.response?.data?.error || 'Error al aprobar solicitud');
+      try {
+        createCRUDErrorHandler('update', 'Solicitud')(error);
+      } catch (e) {
+        toast.error(e.message);
+      }
     },
   });
 }
@@ -405,7 +442,11 @@ export function useRechazarSolicitud() {
       toast.success('Solicitud rechazada');
     },
     onError: (error) => {
-      toast.error(error.response?.data?.error || 'Error al rechazar solicitud');
+      try {
+        createCRUDErrorHandler('update', 'Solicitud')(error);
+      } catch (e) {
+        toast.error(e.message);
+      }
     },
   });
 }
@@ -427,7 +468,11 @@ export function useCancelarSolicitud() {
       toast.success('Solicitud cancelada');
     },
     onError: (error) => {
-      toast.error(error.response?.data?.error || 'Error al cancelar solicitud');
+      try {
+        createCRUDErrorHandler('update', 'Solicitud')(error);
+      } catch (e) {
+        toast.error(e.message);
+      }
     },
   });
 }

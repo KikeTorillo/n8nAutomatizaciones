@@ -16,6 +16,20 @@ const PasswordHelper = require('../../../utils/passwordHelper');
 const asyncHandler = require('../../../middleware/asyncHandler');
 const emailService = require('../../../services/emailService');
 
+/**
+ * Opciones de cookie para refreshToken - configuración centralizada
+ * - httpOnly: No accesible desde JavaScript (previene XSS)
+ * - secure: Solo HTTPS en producción
+ * - sameSite: Previene CSRF
+ * - maxAge: 7 días de duración
+ */
+const REFRESH_TOKEN_COOKIE_OPTIONS = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    maxAge: 7 * 24 * 60 * 60 * 1000  // 7 días
+};
+
 class AuthController {
 
     static login = asyncHandler(async (req, res) => {
@@ -24,12 +38,7 @@ class AuthController {
 
         const resultado = await UsuarioModel.autenticar(email, password, ipAddress);
 
-        res.cookie('refreshToken', resultado.refreshToken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
-            maxAge: 7 * 24 * 60 * 60 * 1000
-        });
+        res.cookie('refreshToken', resultado.refreshToken, REFRESH_TOKEN_COOKIE_OPTIONS);
 
         const responseData = {
             usuario: resultado.usuario,
@@ -400,12 +409,7 @@ class AuthController {
         );
 
         // 4. Establecer cookie de refresh
-        res.cookie('refreshToken', refreshToken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
-            maxAge: 7 * 24 * 60 * 60 * 1000 // 7 días
-        });
+        res.cookie('refreshToken', refreshToken, REFRESH_TOKEN_COOKIE_OPTIONS);
 
         // 5. Responder con datos del usuario y tokens
         const responseData = {
@@ -511,12 +515,7 @@ class AuthController {
         );
 
         // 3. Establecer cookie de refresh
-        res.cookie('refreshToken', refreshToken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
-            maxAge: 7 * 24 * 60 * 60 * 1000 // 7 días
-        });
+        res.cookie('refreshToken', refreshToken, REFRESH_TOKEN_COOKIE_OPTIONS);
 
         // 4. Responder con datos del usuario y tokens
         const responseData = {
@@ -633,12 +632,7 @@ class AuthController {
         );
 
         // 6. Establecer cookie de refresh
-        res.cookie('refreshToken', refreshToken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
-            maxAge: 7 * 24 * 60 * 60 * 1000
-        });
+        res.cookie('refreshToken', refreshToken, REFRESH_TOKEN_COOKIE_OPTIONS);
 
         // 7. Responder
         const responseData = {
@@ -724,12 +718,7 @@ class AuthController {
         const { accessToken, refreshToken } = UsuarioModel.generarTokens(usuarioActualizado);
 
         // Actualizar cookie
-        res.cookie('refreshToken', refreshToken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
-            maxAge: 7 * 24 * 60 * 60 * 1000
-        });
+        res.cookie('refreshToken', refreshToken, REFRESH_TOKEN_COOKIE_OPTIONS);
 
         const responseData = {
             usuario: resultado.usuario,
@@ -782,12 +771,7 @@ class AuthController {
         const { accessToken, refreshToken } = UsuarioModel.generarTokens(usuarioActualizado);
 
         // 5. Actualizar cookie
-        res.cookie('refreshToken', refreshToken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
-            maxAge: 7 * 24 * 60 * 60 * 1000
-        });
+        res.cookie('refreshToken', refreshToken, REFRESH_TOKEN_COOKIE_OPTIONS);
 
         // 6. Obtener datos de sucursal
         const SucursalesModel = require('../../sucursales/models/sucursales.model');

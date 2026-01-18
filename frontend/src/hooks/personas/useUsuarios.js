@@ -15,6 +15,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { usuariosApi } from '@/services/api/endpoints';
+import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 
 // ====================================================================
 // QUERIES
@@ -116,23 +117,9 @@ export function useCrearUsuarioDirecto() {
       queryClient.invalidateQueries({ queryKey: ['usuarios'] });
       queryClient.invalidateQueries({ queryKey: ['profesionales-sin-usuario'] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) {
-        throw new Error(backendMessage);
-      }
-
-      const errorMessages = {
-        409: 'Ya existe un usuario con ese email',
-        400: 'Datos inválidos. Revisa los campos',
-        403: 'No tienes permisos para crear usuarios',
-        500: 'Error del servidor. Intenta nuevamente',
-      };
-
-      const statusCode = error.response?.status;
-      const message = errorMessages[statusCode] || 'Error inesperado';
-      throw new Error(message);
-    },
+    onError: createCRUDErrorHandler('create', 'Usuario', {
+      409: 'Ya existe un usuario con ese email',
+    }),
   });
 }
 
@@ -157,13 +144,7 @@ export function useCambiarEstadoUsuario() {
         queryClient.invalidateQueries({ queryKey: ['profesional', data.profesional.id] });
       }
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) {
-        throw new Error(backendMessage);
-      }
-      throw new Error('Error al cambiar estado del usuario');
-    },
+    onError: createCRUDErrorHandler('update', 'Usuario'),
   });
 }
 
@@ -182,21 +163,9 @@ export function useCambiarRolUsuario() {
       queryClient.invalidateQueries({ queryKey: ['usuarios'] });
       queryClient.invalidateQueries({ queryKey: ['usuario', data.usuario?.id] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) {
-        throw new Error(backendMessage);
-      }
-
-      const errorMessages = {
-        404: 'Usuario no encontrado',
-        400: 'Rol no válido',
-        403: 'No tienes permisos para cambiar roles',
-      };
-
-      const statusCode = error.response?.status;
-      throw new Error(errorMessages[statusCode] || 'Error al cambiar rol');
-    },
+    onError: createCRUDErrorHandler('update', 'Usuario', {
+      400: 'Rol no válido',
+    }),
   });
 }
 
@@ -223,15 +192,9 @@ export function useVincularProfesionalAUsuario() {
         queryClient.invalidateQueries({ queryKey: ['profesional', data.profesional_anterior] });
       }
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) {
-        throw new Error(backendMessage);
-      }
-      throw new Error(error.response?.status === 409
-        ? 'El profesional ya está vinculado a otro usuario'
-        : 'Error al vincular profesional');
-    },
+    onError: createCRUDErrorHandler('update', 'Usuario', {
+      409: 'El profesional ya está vinculado a otro usuario',
+    }),
   });
 }
 
@@ -255,13 +218,7 @@ export function useActualizarUsuario() {
       queryClient.invalidateQueries({ queryKey: ['usuarios'] });
       queryClient.invalidateQueries({ queryKey: ['usuario', data.id] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) {
-        throw new Error(backendMessage);
-      }
-      throw new Error('Error al actualizar usuario');
-    },
+    onError: createCRUDErrorHandler('update', 'Usuario'),
   });
 }
 

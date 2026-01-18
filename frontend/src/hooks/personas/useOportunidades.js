@@ -12,6 +12,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { oportunidadesApi } from '@/services/api/endpoints';
+import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 
 // ====================================================================
 // CONSTANTES
@@ -190,10 +191,7 @@ export function useCrearEtapa() {
       queryClient.invalidateQueries({ queryKey: ['etapas-pipeline'] });
       queryClient.invalidateQueries({ queryKey: ['pipeline'] });
     },
-    onError: (error) => {
-      const message = error.response?.data?.message || 'Error al crear etapa';
-      throw new Error(message);
-    },
+    onError: createCRUDErrorHandler('create', 'Etapa'),
   });
 }
 
@@ -212,10 +210,7 @@ export function useActualizarEtapa() {
       queryClient.invalidateQueries({ queryKey: ['etapas-pipeline'] });
       queryClient.invalidateQueries({ queryKey: ['pipeline'] });
     },
-    onError: (error) => {
-      const message = error.response?.data?.message || 'Error al actualizar etapa';
-      throw new Error(message);
-    },
+    onError: createCRUDErrorHandler('update', 'Etapa'),
   });
 }
 
@@ -234,10 +229,7 @@ export function useEliminarEtapa() {
       queryClient.invalidateQueries({ queryKey: ['etapas-pipeline'] });
       queryClient.invalidateQueries({ queryKey: ['pipeline'] });
     },
-    onError: (error) => {
-      const message = error.response?.data?.message || 'Error al eliminar etapa';
-      throw new Error(message);
-    },
+    onError: createCRUDErrorHandler('delete', 'Etapa'),
   });
 }
 
@@ -256,10 +248,7 @@ export function useReordenarEtapas() {
       queryClient.invalidateQueries({ queryKey: ['etapas-pipeline'] });
       queryClient.invalidateQueries({ queryKey: ['pipeline'] });
     },
-    onError: (error) => {
-      const message = error.response?.data?.message || 'Error al reordenar etapas';
-      throw new Error(message);
-    },
+    onError: createCRUDErrorHandler('update', 'Etapas'),
   });
 }
 
@@ -287,10 +276,7 @@ export function useCrearOportunidad() {
         queryClient.invalidateQueries({ queryKey: ['oportunidades-cliente-estadisticas', data.cliente_id] });
       }
     },
-    onError: (error) => {
-      const message = error.response?.data?.message || 'Error al crear oportunidad';
-      throw new Error(message);
-    },
+    onError: createCRUDErrorHandler('create', 'Oportunidad'),
   });
 }
 
@@ -311,10 +297,7 @@ export function useActualizarOportunidad() {
       queryClient.invalidateQueries({ queryKey: ['pipeline'] });
       queryClient.invalidateQueries({ queryKey: ['pipeline-estadisticas'] });
     },
-    onError: (error) => {
-      const message = error.response?.data?.message || 'Error al actualizar oportunidad';
-      throw new Error(message);
-    },
+    onError: createCRUDErrorHandler('update', 'Oportunidad'),
   });
 }
 
@@ -334,10 +317,7 @@ export function useEliminarOportunidad() {
       queryClient.invalidateQueries({ queryKey: ['pipeline'] });
       queryClient.invalidateQueries({ queryKey: ['pipeline-estadisticas'] });
     },
-    onError: (error) => {
-      const message = error.response?.data?.message || 'Error al eliminar oportunidad';
-      throw new Error(message);
-    },
+    onError: createCRUDErrorHandler('delete', 'Oportunidad'),
   });
 }
 
@@ -363,8 +343,7 @@ export function useMoverOportunidad() {
       if (context?.previousPipeline) {
         queryClient.setQueryData({ queryKey: ['pipeline'] }, context.previousPipeline);
       }
-      const message = error.response?.data?.message || 'Error al mover oportunidad';
-      throw new Error(message);
+      createCRUDErrorHandler('update', 'Oportunidad')(error);
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['pipeline'] });
@@ -392,10 +371,7 @@ export function useMarcarGanada() {
       queryClient.invalidateQueries({ queryKey: ['pipeline-estadisticas'] });
       queryClient.invalidateQueries({ queryKey: ['pronostico-ventas'] });
     },
-    onError: (error) => {
-      const message = error.response?.data?.message || 'Error al marcar como ganada';
-      throw new Error(message);
-    },
+    onError: createCRUDErrorHandler('update', 'Oportunidad'),
   });
 }
 
@@ -417,10 +393,7 @@ export function useMarcarPerdida() {
       queryClient.invalidateQueries({ queryKey: ['pipeline-estadisticas'] });
       queryClient.invalidateQueries({ queryKey: ['pronostico-ventas'] });
     },
-    onError: (error) => {
-      const message = error.response?.data?.message || 'Error al marcar como perdida';
-      throw new Error(message);
-    },
+    onError: createCRUDErrorHandler('update', 'Oportunidad'),
   });
 }
 

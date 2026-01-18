@@ -8,6 +8,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { eventosDigitalesApi } from '@/services/api/endpoints';
 import { sanitizeParams } from '@/lib/params';
+import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 
 // ==================== QUERIES INVITADOS ====================
 
@@ -60,19 +61,10 @@ export function useCrearInvitado() {
       queryClient.invalidateQueries({ queryKey: ['invitados-evento', variables.eventoId] });
       queryClient.invalidateQueries({ queryKey: ['evento-digital-estadisticas', variables.eventoId] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) throw new Error(backendMessage);
-
-      const errorMessages = {
-        400: 'Datos inválidos',
-        409: 'Ya existe un invitado con ese email o teléfono',
-        429: 'Has alcanzado el límite de invitados de tu plan',
-      };
-
-      const statusCode = error.response?.status;
-      throw new Error(errorMessages[statusCode] || 'Error al crear invitado');
-    },
+    onError: createCRUDErrorHandler('create', 'Invitado', {
+      409: 'Ya existe un invitado con ese email o telefono',
+      429: 'Has alcanzado el limite de invitados de tu plan',
+    }),
   });
 }
 
@@ -99,18 +91,7 @@ export function useActualizarInvitado() {
       queryClient.invalidateQueries({ queryKey: ['invitados-evento', data.eventoId] });
       queryClient.invalidateQueries({ queryKey: ['evento-digital-estadisticas', data.eventoId] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) throw new Error(backendMessage);
-
-      const errorMessages = {
-        404: 'Invitado no encontrado',
-        400: 'Datos inválidos',
-      };
-
-      const statusCode = error.response?.status;
-      throw new Error(errorMessages[statusCode] || 'Error al actualizar invitado');
-    },
+    onError: createCRUDErrorHandler('update', 'Invitado'),
   });
 }
 
@@ -130,11 +111,7 @@ export function useEliminarInvitado() {
       queryClient.invalidateQueries({ queryKey: ['invitados-evento', data.eventoId] });
       queryClient.invalidateQueries({ queryKey: ['evento-digital-estadisticas', data.eventoId] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) throw new Error(backendMessage);
-      throw new Error('Error al eliminar invitado');
-    },
+    onError: createCRUDErrorHandler('delete', 'Invitado'),
   });
 }
 
@@ -154,11 +131,7 @@ export function useImportarInvitados() {
       queryClient.invalidateQueries({ queryKey: ['invitados-evento', data.eventoId] });
       queryClient.invalidateQueries({ queryKey: ['evento-digital-estadisticas', data.eventoId] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) throw new Error(backendMessage);
-      throw new Error('Error al importar invitados');
-    },
+    onError: createCRUDErrorHandler('create', 'Invitados'),
   });
 }
 
@@ -172,11 +145,7 @@ export function useExportarInvitados() {
       const response = await eventosDigitalesApi.exportarInvitados(eventoId);
       return response.data;
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) throw new Error(backendMessage);
-      throw new Error('Error al exportar invitados');
-    },
+    onError: createCRUDErrorHandler('fetch', 'Invitados'),
   });
 }
 
@@ -244,10 +213,7 @@ export function useCrearUbicacion() {
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['ubicaciones-evento', variables.eventoId] });
     },
-    onError: (error) => {
-      const mensaje = extraerMensajesValidacion(error.response?.data);
-      throw new Error(mensaje);
-    },
+    onError: createCRUDErrorHandler('create', 'Ubicacion'),
   });
 }
 
@@ -274,10 +240,7 @@ export function useActualizarUbicacion() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['ubicaciones-evento', data.eventoId] });
     },
-    onError: (error) => {
-      const mensaje = extraerMensajesValidacion(error.response?.data);
-      throw new Error(mensaje);
-    },
+    onError: createCRUDErrorHandler('update', 'Ubicacion'),
   });
 }
 
@@ -296,10 +259,6 @@ export function useEliminarUbicacion() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['ubicaciones-evento', data.eventoId] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) throw new Error(backendMessage);
-      throw new Error('Error al eliminar ubicación');
-    },
+    onError: createCRUDErrorHandler('delete', 'Ubicacion'),
   });
 }

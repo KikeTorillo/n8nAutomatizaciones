@@ -1,6 +1,7 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useDebounce } from '@/hooks/utils';
+import { useFilters } from '@/hooks/utils';
 import {
     ClipboardList,
     Plus,
@@ -41,20 +42,26 @@ import ConteoFormModal from '@/components/inventario/conteos/ConteoFormModal';
  * Página principal de Conteos de Inventario
  * Gestión del ciclo completo de conteo físico
  */
+// Constantes de filtros iniciales (fuera del componente)
+const INITIAL_FILTERS = {
+    estado: '',
+    tipo_conteo: '',
+    fecha_desde: '',
+    fecha_hasta: '',
+    folio: '',
+    limit: 50,
+    offset: 0,
+};
+
 export default function ConteosPage() {
     const navigate = useNavigate();
     const { success: showSuccess, error: showError, warning: showWarning } = useToast();
 
-    // Estado de filtros
-    const [filtros, setFiltros] = useState({
-        estado: '',
-        tipo_conteo: '',
-        fecha_desde: '',
-        fecha_hasta: '',
-        folio: '',
-        limit: 50,
-        offset: 0,
-    });
+    // Filtros con useFilters para persistencia y debounce
+    const { filtros, filtrosQuery, setFiltro, setFiltros, limpiarFiltros } = useFilters(
+        INITIAL_FILTERS,
+        { moduloId: 'inventario.conteos', debounceFields: ['folio'] }
+    );
 
     const [motivoCancelacion, setMotivoCancelacion] = useState('');
 
@@ -100,8 +107,8 @@ export default function ConteosPage() {
     // Modal manager
     const { isOpen, getModalData, openModal, closeModal } = useModalManager();
 
-    // Queries
-    const { data: conteosData, isLoading } = useConteos(filtros);
+    // Queries - usando filtrosQuery con debounce
+    const { data: conteosData, isLoading } = useConteos(filtrosQuery);
     const conteos = conteosData?.conteos || [];
     const totales = conteosData?.totales || {};
     const total = parseInt(totales.cantidad) || 0;
@@ -123,16 +130,7 @@ export default function ConteosPage() {
     };
 
     const handleLimpiarFiltros = () => {
-        setBusquedaInput('');
-        setFiltros({
-            estado: '',
-            tipo_conteo: '',
-            fecha_desde: '',
-            fecha_hasta: '',
-            folio: '',
-            limit: 50,
-            offset: 0,
-        });
+        limpiarFiltros();
     };
 
     // Handlers de acciones

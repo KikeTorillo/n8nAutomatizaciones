@@ -169,11 +169,7 @@ export function useActualizarMesa() {
       queryClient.invalidateQueries({ queryKey: ['mesas-evento', data.eventoId] });
       queryClient.invalidateQueries({ queryKey: ['mesas-estadisticas', data.eventoId] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) throw new Error(backendMessage);
-      throw new Error('Error al actualizar mesa');
-    },
+    onError: createCRUDErrorHandler('update', 'Mesa'),
   });
 }
 
@@ -193,11 +189,7 @@ export function useEliminarMesa() {
       queryClient.invalidateQueries({ queryKey: ['mesas-estadisticas', data.eventoId] });
       queryClient.invalidateQueries({ queryKey: ['invitados-evento', data.eventoId] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) throw new Error(backendMessage);
-      throw new Error('Error al eliminar mesa');
-    },
+    onError: createCRUDErrorHandler('delete', 'Mesa'),
   });
 }
 
@@ -215,11 +207,7 @@ export function useActualizarPosicionesMesas() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['mesas-evento', data.eventoId] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) throw new Error(backendMessage);
-      throw new Error('Error al actualizar posiciones');
-    },
+    onError: createCRUDErrorHandler('update', 'Posiciones'),
   });
 }
 
@@ -239,18 +227,9 @@ export function useAsignarInvitadoAMesa() {
       queryClient.invalidateQueries({ queryKey: ['mesas-estadisticas', data.eventoId] });
       queryClient.invalidateQueries({ queryKey: ['invitados-evento', data.eventoId] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) throw new Error(backendMessage);
-
-      const errorMessages = {
-        400: 'La mesa está llena o el invitado ya tiene mesa asignada',
-        404: 'Mesa o invitado no encontrado',
-      };
-
-      const statusCode = error.response?.status;
-      throw new Error(errorMessages[statusCode] || 'Error al asignar invitado');
-    },
+    onError: createCRUDErrorHandler('update', 'Invitado', {
+      400: 'La mesa esta llena o el invitado ya tiene mesa asignada',
+    }),
   });
 }
 
@@ -270,10 +249,6 @@ export function useDesasignarInvitadoDeMesa() {
       queryClient.invalidateQueries({ queryKey: ['mesas-estadisticas', data.eventoId] });
       queryClient.invalidateQueries({ queryKey: ['invitados-evento', data.eventoId] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) throw new Error(backendMessage);
-      throw new Error('Error al desasignar invitado');
-    },
+    onError: createCRUDErrorHandler('update', 'Invitado'),
   });
 }

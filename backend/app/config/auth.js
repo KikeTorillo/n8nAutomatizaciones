@@ -10,7 +10,7 @@ class AuthConfig {
   constructor() {
     this.jwtSecret = process.env.JWT_SECRET;
     this.jwtExpiresIn = process.env.JWT_EXPIRES_IN || '7d';
-    this.jwtRefreshExpiresIn = process.env.JWT_REFRESH_EXPIRES_IN || '30d';
+    this.jwtRefreshExpiresIn = process.env.JWT_REFRESH_EXPIRES_IN || '7d';
     this.bcryptRounds = parseInt(process.env.BCRYPT_ROUNDS) || 12;
 
     if (!this.jwtSecret) {

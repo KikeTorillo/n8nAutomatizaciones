@@ -20,7 +20,8 @@ export function useAppNotifications() {
     queryFn: async () => {
       const today = new Date().toISOString().split('T')[0];
       const response = await citasApi.obtenerPorFecha(today);
-      return response.data.data || [];
+      // Ene 2026: API devuelve { citas: [...], meta: {...} }
+      return response.data.data?.citas || [];
     },
     enabled: tieneAgendamiento,
     staleTime: STALE_TIMES.DYNAMIC, // 2 minutos

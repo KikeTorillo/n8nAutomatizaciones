@@ -13,36 +13,20 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { clientesApi } from '@/services/api/endpoints';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
+import {
+  TIPOS_DOCUMENTO_CLIENTE,
+  ESTADOS_VENCIMIENTO_CLIENTE,
+  getTipoDocumentoCliente,
+  getEstadoVencimientoCliente,
+} from '@/lib/documentConstants';
+import { estaProximoAVencer, estaVencido } from '@/lib/dateHelpers';
 
 // ====================================================================
-// CONSTANTES
+// CONSTANTES (re-exportadas desde lib)
 // ====================================================================
 
-export const TIPOS_DOCUMENTO = [
-  { value: 'ine', label: 'INE / Identificación oficial', categoria: 'identificacion' },
-  { value: 'pasaporte', label: 'Pasaporte', categoria: 'identificacion' },
-  { value: 'curp', label: 'CURP', categoria: 'identificacion' },
-  { value: 'rfc', label: 'Constancia RFC', categoria: 'fiscal' },
-  { value: 'comprobante_domicilio', label: 'Comprobante de domicilio', categoria: 'identificacion' },
-  { value: 'contrato', label: 'Contrato de servicios', categoria: 'legal' },
-  { value: 'consentimiento', label: 'Consentimiento informado', categoria: 'legal' },
-  { value: 'historia_clinica', label: 'Historia clínica', categoria: 'medico' },
-  { value: 'receta_medica', label: 'Receta médica', categoria: 'medico' },
-  { value: 'estudios_laboratorio', label: 'Estudios de laboratorio', categoria: 'medico' },
-  { value: 'radiografia', label: 'Radiografía / Imagen', categoria: 'medico' },
-  { value: 'poliza_seguro', label: 'Póliza de seguro', categoria: 'financiero' },
-  { value: 'factura', label: 'Factura', categoria: 'financiero' },
-  { value: 'comprobante_pago', label: 'Comprobante de pago', categoria: 'financiero' },
-  { value: 'foto', label: 'Fotografía', categoria: 'otro' },
-  { value: 'otro', label: 'Otro documento', categoria: 'otro' },
-];
-
-export const ESTADOS_VENCIMIENTO = [
-  { value: 'vencido', label: 'Vencido', color: 'text-red-500', bgColor: 'bg-red-100 dark:bg-red-900' },
-  { value: 'por_vencer', label: 'Por vencer', color: 'text-yellow-500', bgColor: 'bg-yellow-100 dark:bg-yellow-900' },
-  { value: 'vigente', label: 'Vigente', color: 'text-green-500', bgColor: 'bg-green-100 dark:bg-green-900' },
-  { value: 'sin_vencimiento', label: 'Sin vencimiento', color: 'text-gray-500', bgColor: 'bg-gray-100 dark:bg-gray-700' },
-];
+export const TIPOS_DOCUMENTO = TIPOS_DOCUMENTO_CLIENTE;
+export const ESTADOS_VENCIMIENTO = ESTADOS_VENCIMIENTO_CLIENTE;
 
 // ====================================================================
 // QUERIES
@@ -252,46 +236,22 @@ export function useObtenerPresigned() {
 }
 
 // ====================================================================
-// HELPER FUNCTIONS
+// HELPER FUNCTIONS (re-exportadas desde lib)
 // ====================================================================
 
 /**
  * Obtener configuración de tipo de documento
+ * Re-exportado desde @/lib/documentConstants
  */
-export function getTipoDocumento(tipo) {
-  return TIPOS_DOCUMENTO.find(t => t.value === tipo) || TIPOS_DOCUMENTO[TIPOS_DOCUMENTO.length - 1];
-}
+export const getTipoDocumento = getTipoDocumentoCliente;
 
 /**
  * Obtener configuración de estado de vencimiento
+ * Re-exportado desde @/lib/documentConstants
  */
-export function getEstadoVencimiento(estado) {
-  return ESTADOS_VENCIMIENTO.find(e => e.value === estado) || ESTADOS_VENCIMIENTO[3];
-}
+export const getEstadoVencimiento = getEstadoVencimientoCliente;
 
 // NOTA: formatFileSize movido a @/lib/utils
 
-/**
- * Verificar si un documento está por vencer (próximos 30 días)
- */
-export function estaProximoAVencer(fechaVencimiento, dias = 30) {
-  if (!fechaVencimiento) return false;
-
-  const hoy = new Date();
-  const vencimiento = new Date(fechaVencimiento);
-  const diferenciaDias = Math.ceil((vencimiento - hoy) / (1000 * 60 * 60 * 24));
-
-  return diferenciaDias >= 0 && diferenciaDias <= dias;
-}
-
-/**
- * Verificar si un documento está vencido
- */
-export function estaVencido(fechaVencimiento) {
-  if (!fechaVencimiento) return false;
-
-  const hoy = new Date();
-  const vencimiento = new Date(fechaVencimiento);
-
-  return vencimiento < hoy;
-}
+// Re-exportar helpers de fecha desde @/lib/dateHelpers
+export { estaProximoAVencer, estaVencido };

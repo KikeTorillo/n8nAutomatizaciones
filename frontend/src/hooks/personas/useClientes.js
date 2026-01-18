@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { clientesApi, citasApi } from '@/services/api/endpoints';
 import { sanitizeParams } from '@/lib/params';
+import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 
 /**
  * Hook para listar clientes con paginación
@@ -81,29 +82,9 @@ export function useCrearCliente() {
       // Invalidar lista de clientes para refrescar
       queryClient.invalidateQueries({ queryKey: ['clientes'] });
     },
-    onError: (error) => {
-      // Priorizar mensaje del backend si existe
-      const backendMessage = error.response?.data?.message;
-
-      // Si el backend envió un mensaje específico (ej: límite de plan), usarlo
-      if (backendMessage) {
-        throw new Error(backendMessage);
-      }
-
-      // Fallback a mensajes genéricos por código de error
-      const errorMessages = {
-        409: 'Ya existe un cliente con ese email o teléfono',
-        400: 'Datos inválidos. Revisa los campos',
-        403: 'No tienes permisos para crear clientes',
-        500: 'Error del servidor. Intenta nuevamente',
-      };
-
-      const statusCode = error.response?.status;
-      const message = errorMessages[statusCode] || error.response?.data?.error || 'Error inesperado';
-
-      // Re-throw con mensaje amigable
-      throw new Error(message);
-    },
+    onError: createCRUDErrorHandler('create', 'Cliente', {
+      409: 'Ya existe un cliente con ese email o teléfono',
+    }),
   });
 }
 
@@ -123,25 +104,9 @@ export function useActualizarCliente() {
       queryClient.invalidateQueries({ queryKey: ['cliente', data.id] });
       queryClient.invalidateQueries({ queryKey: ['clientes'] });
     },
-    onError: (error) => {
-      // Priorizar mensaje del backend si existe
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) {
-        throw new Error(backendMessage);
-      }
-
-      const errorMessages = {
-        404: 'Cliente no encontrado',
-        400: 'Datos inválidos',
-        409: 'Ya existe un cliente con ese email o teléfono',
-        500: 'Error del servidor',
-      };
-
-      const statusCode = error.response?.status;
-      const message = errorMessages[statusCode] || error.response?.data?.error || 'Error al actualizar';
-
-      throw new Error(message);
-    },
+    onError: createCRUDErrorHandler('update', 'Cliente', {
+      409: 'Ya existe un cliente con ese email o teléfono',
+    }),
   });
 }
 
@@ -159,24 +124,9 @@ export function useEliminarCliente() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['clientes'] });
     },
-    onError: (error) => {
-      // Priorizar mensaje del backend si existe
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) {
-        throw new Error(backendMessage);
-      }
-
-      const errorMessages = {
-        404: 'Cliente no encontrado',
-        400: 'No se puede eliminar el cliente (puede tener citas asociadas)',
-        500: 'Error del servidor',
-      };
-
-      const statusCode = error.response?.status;
-      const message = errorMessages[statusCode] || 'Error al eliminar cliente';
-
-      throw new Error(message);
-    },
+    onError: createCRUDErrorHandler('delete', 'Cliente', {
+      400: 'No se puede eliminar el cliente (puede tener citas asociadas)',
+    }),
   });
 }
 
@@ -265,9 +215,6 @@ export function useImportarClientesCSV() {
       queryClient.invalidateQueries({ queryKey: ['clientes'] });
       queryClient.invalidateQueries({ queryKey: ['clientes-estadisticas'] });
     },
-    onError: (error) => {
-      const message = error.response?.data?.message || 'Error al importar clientes';
-      throw new Error(message);
-    },
+    onError: createCRUDErrorHandler('create', 'Clientes'),
   });
 }

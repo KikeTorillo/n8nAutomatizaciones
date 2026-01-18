@@ -658,6 +658,9 @@ export const posApi = {
    * @returns {Promise<Object>} Asignación creada
    */
   asignarGrupoACategoria: (categoriaId, data) => apiClient.post(`/inventario/categorias/${categoriaId}/grupos`, data),
+
+  // Alias de compatibilidad (Ene 2026)
+  obtenerVentas: (params = {}) => apiClient.get('/pos/ventas', { params }),
 };
 
 // ==================== MÓDULOS ====================

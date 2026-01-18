@@ -7,6 +7,11 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { profesionalesApi, onboardingEmpleadosApi } from '@/services/api/endpoints';
 import { useToast } from '@/hooks/utils';
+import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
+import {
+  calcularDiasRestantesDetallado as calcularDiasRestantesDetalladoLib,
+  formatearFecha,
+} from '@/lib/dateHelpers';
 
 // ==================== QUERY KEYS ====================
 
@@ -100,8 +105,11 @@ export function useCrearPlantilla() {
       toast.success('Plantilla creada exitosamente');
     },
     onError: (error) => {
-      const mensaje = error.response?.data?.error || 'Error al crear plantilla';
-      toast.error(mensaje);
+      try {
+        createCRUDErrorHandler('create', 'Plantilla')(error);
+      } catch (e) {
+        toast.error(e.message);
+      }
     },
   });
 }
@@ -126,8 +134,11 @@ export function useActualizarPlantilla() {
       toast.success('Plantilla actualizada');
     },
     onError: (error) => {
-      const mensaje = error.response?.data?.error || 'Error al actualizar plantilla';
-      toast.error(mensaje);
+      try {
+        createCRUDErrorHandler('update', 'Plantilla')(error);
+      } catch (e) {
+        toast.error(e.message);
+      }
     },
   });
 }
@@ -149,8 +160,11 @@ export function useEliminarPlantilla() {
       toast.success('Plantilla eliminada');
     },
     onError: (error) => {
-      const mensaje = error.response?.data?.error || 'Error al eliminar plantilla';
-      toast.error(mensaje);
+      try {
+        createCRUDErrorHandler('delete', 'Plantilla')(error);
+      } catch (e) {
+        toast.error(e.message);
+      }
     },
   });
 }
@@ -176,8 +190,11 @@ export function useCrearTarea() {
       toast.success('Tarea agregada');
     },
     onError: (error) => {
-      const mensaje = error.response?.data?.error || 'Error al agregar tarea';
-      toast.error(mensaje);
+      try {
+        createCRUDErrorHandler('create', 'Tarea')(error);
+      } catch (e) {
+        toast.error(e.message);
+      }
     },
   });
 }
@@ -204,8 +221,11 @@ export function useActualizarTarea() {
       toast.success('Tarea actualizada');
     },
     onError: (error) => {
-      const mensaje = error.response?.data?.error || 'Error al actualizar tarea';
-      toast.error(mensaje);
+      try {
+        createCRUDErrorHandler('update', 'Tarea')(error);
+      } catch (e) {
+        toast.error(e.message);
+      }
     },
   });
 }
@@ -231,8 +251,11 @@ export function useEliminarTarea() {
       toast.success('Tarea eliminada');
     },
     onError: (error) => {
-      const mensaje = error.response?.data?.error || 'Error al eliminar tarea';
-      toast.error(mensaje);
+      try {
+        createCRUDErrorHandler('delete', 'Tarea')(error);
+      } catch (e) {
+        toast.error(e.message);
+      }
     },
   });
 }
@@ -258,8 +281,11 @@ export function useReordenarTareas() {
       toast.success('Orden actualizado');
     },
     onError: (error) => {
-      const mensaje = error.response?.data?.error || 'Error al reordenar tareas';
-      toast.error(mensaje);
+      try {
+        createCRUDErrorHandler('update', 'Tareas')(error);
+      } catch (e) {
+        toast.error(e.message);
+      }
     },
   });
 }
@@ -307,8 +333,11 @@ export function useAplicarPlantilla() {
       toast.success(`Plantilla aplicada (${data.tareas_creadas} tareas creadas)`);
     },
     onError: (error) => {
-      const mensaje = error.response?.data?.error || 'Error al aplicar plantilla';
-      toast.error(mensaje);
+      try {
+        createCRUDErrorHandler('create', 'Plantilla')(error);
+      } catch (e) {
+        toast.error(e.message);
+      }
     },
   });
 }
@@ -338,8 +367,11 @@ export function useMarcarTareaOnboarding() {
       toast.success(mensaje);
     },
     onError: (error) => {
-      const mensaje = error.response?.data?.error || 'Error al actualizar tarea';
-      toast.error(mensaje);
+      try {
+        createCRUDErrorHandler('update', 'Tarea')(error);
+      } catch (e) {
+        toast.error(e.message);
+      }
     },
   });
 }
@@ -364,8 +396,11 @@ export function useEliminarProgresoOnboarding() {
       toast.success('Progreso de onboarding eliminado');
     },
     onError: (error) => {
-      const mensaje = error.response?.data?.error || 'Error al eliminar progreso';
-      toast.error(mensaje);
+      try {
+        createCRUDErrorHandler('delete', 'Progreso')(error);
+      } catch (e) {
+        toast.error(e.message);
+      }
     },
   });
 }
@@ -454,52 +489,15 @@ export function getColorProgreso(porcentaje) {
 }
 
 /**
- * Formatea fecha para visualizacion
- * @param {string} fecha - Fecha ISO
- * @returns {string} Fecha formateada
+ * Formatea fecha para visualización
+ * Re-exportado desde @/lib/dateHelpers
  */
 export function formatearFechaOnboarding(fecha) {
-  if (!fecha) return '-';
-  const d = new Date(fecha);
-  return d.toLocaleDateString('es-MX', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric'
-  });
+  return formatearFecha(fecha);
 }
 
 /**
- * Calcula dias restantes o vencidos
- * @param {string} fechaLimite - Fecha limite ISO
- * @returns {Object} { dias, texto, vencido }
+ * Calcula días restantes o vencidos
+ * Re-exportado desde @/lib/dateHelpers
  */
-export function calcularDiasRestantes(fechaLimite) {
-  if (!fechaLimite) return { dias: null, texto: 'Sin fecha limite', vencido: false };
-
-  const hoy = new Date();
-  hoy.setHours(0, 0, 0, 0);
-
-  const limite = new Date(fechaLimite);
-  limite.setHours(0, 0, 0, 0);
-
-  const diffTime = limite - hoy;
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-  if (diffDays < 0) {
-    return {
-      dias: Math.abs(diffDays),
-      texto: `Vencida hace ${Math.abs(diffDays)} ${Math.abs(diffDays) === 1 ? 'dia' : 'dias'}`,
-      vencido: true
-    };
-  }
-
-  if (diffDays === 0) {
-    return { dias: 0, texto: 'Vence hoy', vencido: false };
-  }
-
-  return {
-    dias: diffDays,
-    texto: `${diffDays} ${diffDays === 1 ? 'dia' : 'dias'} restantes`,
-    vencido: false
-  };
-}
+export const calcularDiasRestantes = calcularDiasRestantesDetalladoLib;

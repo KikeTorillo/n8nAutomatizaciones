@@ -8,33 +8,17 @@ import { STALE_TIMES } from '@/app/queryClient';
 import { profesionalesApi } from '@/services/api/endpoints';
 import { useToast } from '@/hooks/utils';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
+import {
+  TIPOS_DOCUMENTO_EMPLEADO as TIPOS_DOCUMENTO_EMPLEADO_LIB,
+  ESTADOS_VENCIMIENTO_EMPLEADO,
+  getTipoDocumentoEmpleado,
+  getEstadoVencimientoEmpleado,
+} from '@/lib/documentConstants';
 
-// ==================== CONSTANTES ====================
+// ==================== CONSTANTES (re-exportadas desde lib) ====================
 
-export const TIPOS_DOCUMENTO_EMPLEADO = [
-  { value: 'identificacion', label: 'Identificación (INE/Cédula)' },
-  { value: 'pasaporte', label: 'Pasaporte' },
-  { value: 'licencia_conducir', label: 'Licencia de conducir' },
-  { value: 'contrato', label: 'Contrato laboral' },
-  { value: 'visa', label: 'Visa de trabajo' },
-  { value: 'certificado', label: 'Certificado profesional' },
-  { value: 'seguro_social', label: 'Seguro social (IMSS/ISSSTE)' },
-  { value: 'comprobante_domicilio', label: 'Comprobante de domicilio' },
-  { value: 'carta_recomendacion', label: 'Carta de recomendación' },
-  { value: 'acta_nacimiento', label: 'Acta de nacimiento' },
-  { value: 'curp', label: 'CURP' },
-  { value: 'rfc', label: 'RFC' },
-  { value: 'titulo_profesional', label: 'Título profesional' },
-  { value: 'cedula_profesional', label: 'Cédula profesional' },
-  { value: 'otro', label: 'Otro documento' },
-];
-
-export const ESTADOS_VENCIMIENTO = {
-  sin_vencimiento: { label: 'Sin vencimiento', color: 'gray', icon: '📄' },
-  vigente: { label: 'Vigente', color: 'green', icon: '✅' },
-  por_vencer: { label: 'Por vencer', color: 'yellow', icon: '⚠️' },
-  vencido: { label: 'Vencido', color: 'red', icon: '❌' },
-};
+export const TIPOS_DOCUMENTO_EMPLEADO = TIPOS_DOCUMENTO_EMPLEADO_LIB;
+export const ESTADOS_VENCIMIENTO = ESTADOS_VENCIMIENTO_EMPLEADO;
 
 // ==================== QUERY KEYS ====================
 
@@ -252,27 +236,21 @@ export function useReemplazarArchivo() {
   });
 }
 
-// ==================== UTILIDADES ====================
+// ==================== UTILIDADES (re-exportadas desde lib) ====================
 
 // NOTA: formatFileSize movido a @/lib/utils
 
 /**
  * Obtiene el label de un tipo de documento
- * @param {string} tipo - Tipo de documento
- * @returns {string} Label del tipo
+ * Re-exportado desde @/lib/documentConstants
  */
-export function getTipoDocumentoLabel(tipo) {
-  return TIPOS_DOCUMENTO_EMPLEADO.find(t => t.value === tipo)?.label || tipo;
-}
+export const getTipoDocumentoLabel = getTipoDocumentoEmpleado;
 
 /**
  * Obtiene el estado de vencimiento con su configuración visual
- * @param {string} estado - Estado de vencimiento
- * @returns {Object} { label, color, icon }
+ * Re-exportado desde @/lib/documentConstants
  */
-export function getEstadoVencimiento(estado) {
-  return ESTADOS_VENCIMIENTO[estado] || ESTADOS_VENCIMIENTO.sin_vencimiento;
-}
+export const getEstadoVencimiento = getEstadoVencimientoEmpleado;
 
 /**
  * Prepara FormData para subir documento

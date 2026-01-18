@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { storageApi } from '@/services/api/endpoints';
 import { STALE_TIMES } from '@/app/queryClient';
+import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 
 /**
  * Hook para listar archivos con filtros
@@ -77,23 +78,10 @@ export function useUploadArchivo() {
       queryClient.invalidateQueries({ queryKey: ['archivos'] });
       queryClient.invalidateQueries({ queryKey: ['storage-usage'] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) {
-        throw new Error(backendMessage);
-      }
-
-      const errorMessages = {
-        400: 'Archivo inválido o tipo no permitido',
-        413: 'El archivo excede el tamaño máximo permitido',
-        403: 'Has alcanzado el límite de almacenamiento de tu plan',
-        500: 'Error del servidor. Intenta nuevamente',
-      };
-
-      const statusCode = error.response?.status;
-      const message = errorMessages[statusCode] || 'Error al subir archivo';
-      throw new Error(message);
-    },
+    onError: createCRUDErrorHandler('create', 'Archivo', {
+      413: 'El archivo excede el tamano maximo permitido',
+      403: 'Has alcanzado el limite de almacenamiento de tu plan',
+    }),
   });
 }
 
@@ -112,21 +100,7 @@ export function useEliminarArchivo() {
       queryClient.invalidateQueries({ queryKey: ['archivos'] });
       queryClient.invalidateQueries({ queryKey: ['storage-usage'] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) {
-        throw new Error(backendMessage);
-      }
-
-      const errorMessages = {
-        404: 'Archivo no encontrado',
-        403: 'No tienes permisos para eliminar este archivo',
-      };
-
-      const statusCode = error.response?.status;
-      const message = errorMessages[statusCode] || 'Error al eliminar archivo';
-      throw new Error(message);
-    },
+    onError: createCRUDErrorHandler('delete', 'Archivo'),
   });
 }
 

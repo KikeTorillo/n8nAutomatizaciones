@@ -1,6 +1,6 @@
-import { useState, useMemo } from 'react';
+import { useMemo, useCallback } from 'react';
 import { FileBarChart, TrendingUp, TrendingDown, ArrowLeftRight, FileSpreadsheet } from 'lucide-react';
-import { useModalManager, useToast, useExportCSV, usePagination } from '@/hooks/utils';
+import { useModalManager, useToast, useExportCSV, useFilters } from '@/hooks/utils';
 import {
   Badge,
   Button,
@@ -11,53 +11,206 @@ import {
   Pagination
 } from '@/components/ui';
 import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
-import { useMovimientos } from '@/hooks/inventario';
-import { useProductos } from '@/hooks/inventario';
-import { useProveedores } from '@/hooks/inventario';
+import { useMovimientos, useProductos, useProveedores } from '@/hooks/inventario';
 import KardexModal from '@/components/inventario/KardexModal';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
+// ==================== CONSTANTES ====================
+
 const ITEMS_PER_PAGE = 25;
 
-/**
- * Página principal de Movimientos de Inventario
- */
+const INITIAL_FILTERS = {
+  tipo_movimiento: '',
+  categoria: '',
+  producto_id: '',
+  proveedor_id: '',
+  fecha_desde: '',
+  fecha_hasta: '',
+  limit: ITEMS_PER_PAGE,
+  offset: 0,
+};
+
+const TIPOS_MOVIMIENTO_LABELS = {
+  entrada_compra: 'Entrada - Compra',
+  entrada_devolucion: 'Entrada - Devolución',
+  entrada_ajuste: 'Entrada - Ajuste',
+  salida_venta: 'Salida - Venta',
+  salida_uso_servicio: 'Salida - Uso en Servicio',
+  salida_merma: 'Salida - Merma',
+  salida_robo: 'Salida - Robo',
+  salida_devolucion: 'Salida - Devolución',
+  salida_ajuste: 'Salida - Ajuste',
+};
+
+const TIPOS_MOVIMIENTO_OPTIONS = Object.entries(TIPOS_MOVIMIENTO_LABELS).map(([value, label]) => ({
+  value,
+  label,
+}));
+
+// ==================== HELPERS ====================
+
+const getTipoMovimientoVariant = (tipo) => tipo?.startsWith('entrada') ? 'success' : 'error';
+const getTipoMovimientoLabel = (tipo) => TIPOS_MOVIMIENTO_LABELS[tipo] || tipo;
+
+// ==================== COLUMNAS ====================
+
+const createColumns = (onVerKardex) => [
+  {
+    key: 'fecha',
+    header: 'Fecha',
+    render: (row) => (
+      <div>
+        <div className="text-sm text-gray-900 dark:text-gray-100">
+          {format(new Date(row.creado_en), 'dd/MM/yyyy', { locale: es })}
+        </div>
+        <div className="text-xs text-gray-500 dark:text-gray-400">
+          {format(new Date(row.creado_en), 'HH:mm', { locale: es })}
+        </div>
+      </div>
+    ),
+  },
+  {
+    key: 'tipo',
+    header: 'Tipo',
+    render: (row) => (
+      <Badge variant={getTipoMovimientoVariant(row.tipo_movimiento)} size="sm">
+        {getTipoMovimientoLabel(row.tipo_movimiento)}
+      </Badge>
+    ),
+  },
+  {
+    key: 'producto',
+    header: 'Producto',
+    width: 'lg',
+    render: (row) => (
+      <div>
+        <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+          {row.producto_nombre}
+        </div>
+        {row.producto_sku && (
+          <div className="text-xs text-gray-500 dark:text-gray-400">
+            SKU: {row.producto_sku}
+          </div>
+        )}
+      </div>
+    ),
+  },
+  {
+    key: 'cantidad',
+    header: 'Cantidad',
+    align: 'center',
+    render: (row) => (
+      <div className="flex items-center justify-center space-x-1">
+        {row.cantidad > 0 ? (
+          <TrendingUp className="h-4 w-4 text-green-600 dark:text-green-400" />
+        ) : (
+          <TrendingDown className="h-4 w-4 text-red-600 dark:text-red-400" />
+        )}
+        <span
+          className={`text-sm font-medium ${
+            row.cantidad > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
+          }`}
+        >
+          {row.cantidad > 0 ? '+' : ''}{row.cantidad}
+        </span>
+      </div>
+    ),
+  },
+  {
+    key: 'stock',
+    header: 'Stock',
+    align: 'center',
+    hideOnMobile: true,
+    render: (row) => (
+      <span className="text-sm font-bold text-primary-600 dark:text-primary-400">
+        {row.stock_resultante}
+      </span>
+    ),
+  },
+  {
+    key: 'costo',
+    header: 'Costo Unit.',
+    align: 'right',
+    hideOnMobile: true,
+    render: (row) => (
+      row.costo_unitario ? (
+        <span className="text-sm text-gray-900 dark:text-gray-100">
+          ${row.costo_unitario.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+        </span>
+      ) : (
+        <span className="text-sm text-gray-400 dark:text-gray-500">-</span>
+      )
+    ),
+  },
+  {
+    key: 'referencia',
+    header: 'Referencia',
+    hideOnMobile: true,
+    render: (row) => (
+      <div>
+        <div className="text-sm text-gray-600 dark:text-gray-400">
+          {row.referencia || '-'}
+        </div>
+        {row.motivo && (
+          <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            {row.motivo}
+          </div>
+        )}
+      </div>
+    ),
+  },
+  {
+    key: 'actions',
+    header: '',
+    align: 'right',
+    render: (row) => (
+      <DataTableActions>
+        <DataTableActionButton
+          icon={FileBarChart}
+          label="Ver Kardex"
+          onClick={() => onVerKardex({
+            id: row.producto_id,
+            nombre: row.nombre_producto,
+            sku: row.sku
+          })}
+          variant="primary"
+        />
+      </DataTableActions>
+    ),
+  },
+];
+
+// ==================== PÁGINA PRINCIPAL ====================
+
 function MovimientosPage() {
   const { showToast } = useToast();
   const { exportCSV } = useExportCSV();
 
-  // Estado de filtros
-  const [filtros, setFiltros] = useState({
-    tipo_movimiento: '',
-    categoria: '',
-    producto_id: '',
-    proveedor_id: '',
-    fecha_desde: '',
-    fecha_hasta: '',
-  });
+  // Filtros con persistencia
+  const { filtros, filtrosQuery, setFiltros, limpiarFiltros } = useFilters(
+    INITIAL_FILTERS,
+    { moduloId: 'inventario.movimientos' }
+  );
 
-  // Paginación
-  const { page, handlePageChange, resetPage } = usePagination({ limit: ITEMS_PER_PAGE });
-
-  // Estado de modales unificado
+  // Modales
   const { openModal, closeModal, isOpen, getModalData } = useModalManager({
     kardex: { isOpen: false, data: null },
   });
 
-  // Query params con paginación
-  const queryParams = useMemo(() => ({
-    ...filtros,
-    limit: ITEMS_PER_PAGE,
-    offset: (page - 1) * ITEMS_PER_PAGE,
-  }), [filtros, page]);
-
   // Queries
-  const { data: movimientosData, isLoading: cargandoMovimientos } = useMovimientos(queryParams);
+  const { data: movimientosData, isLoading } = useMovimientos(filtrosQuery);
   const movimientos = movimientosData?.movimientos || [];
   const total = movimientosData?.totales?.total_movimientos || movimientosData?.total || 0;
 
-  // Calcular paginación
+  const { data: productosData } = useProductos({ activo: true });
+  const productos = productosData?.productos || [];
+
+  const { data: proveedoresData } = useProveedores({ activo: true });
+  const proveedores = proveedoresData?.proveedores || [];
+
+  // Paginación
+  const page = Math.floor(filtrosQuery.offset / ITEMS_PER_PAGE) + 1;
   const totalPages = Math.ceil(total / ITEMS_PER_PAGE);
   const pagination = {
     page,
@@ -68,29 +221,13 @@ function MovimientosPage() {
     hasPrev: page > 1,
   };
 
-  const { data: productosData } = useProductos({ activo: true });
-  const productos = productosData?.productos || [];
-
-  const { data: proveedoresData } = useProveedores({ activo: true });
-  const proveedores = proveedoresData?.proveedores || [];
-
-  // Config de filtros para FilterPanel
+  // Config de filtros
   const filterConfig = useMemo(() => [
     {
       key: 'tipo_movimiento',
       label: 'Tipo',
       type: 'select',
-      options: [
-        { value: 'entrada_compra', label: 'Entrada - Compra' },
-        { value: 'entrada_devolucion', label: 'Entrada - Devolución' },
-        { value: 'entrada_ajuste', label: 'Entrada - Ajuste' },
-        { value: 'salida_venta', label: 'Salida - Venta' },
-        { value: 'salida_uso_servicio', label: 'Salida - Uso en Servicio' },
-        { value: 'salida_merma', label: 'Salida - Merma' },
-        { value: 'salida_robo', label: 'Salida - Robo' },
-        { value: 'salida_devolucion', label: 'Salida - Devolución' },
-        { value: 'salida_ajuste', label: 'Salida - Ajuste' },
-      ],
+      options: TIPOS_MOVIMIENTO_OPTIONS,
     },
     {
       key: 'categoria',
@@ -114,60 +251,26 @@ function MovimientosPage() {
       key: 'proveedor_id',
       label: 'Proveedor',
       type: 'select',
-      options: proveedores.map((p) => ({
-        value: p.id,
-        label: p.nombre,
-      })),
+      options: proveedores.map((p) => ({ value: p.id, label: p.nombre })),
     },
     { key: 'fecha_desde', label: 'Desde', type: 'date' },
     { key: 'fecha_hasta', label: 'Hasta', type: 'date' },
   ], [productos, proveedores]);
 
-  // Handlers de filtros
-  const handleFiltroChange = (campo, valor) => {
-    setFiltros((prev) => ({ ...prev, [campo]: valor }));
-    resetPage(); // Reset página al cambiar filtros
-  };
+  // Handlers
+  const handleFiltroChange = useCallback((campo, valor) => {
+    setFiltros((prev) => ({ ...prev, [campo]: valor, offset: 0 }));
+  }, [setFiltros]);
 
-  const handleLimpiarFiltros = () => {
-    setFiltros({
-      tipo_movimiento: '',
-      categoria: '',
-      producto_id: '',
-      proveedor_id: '',
-      fecha_desde: '',
-      fecha_hasta: '',
-    });
-    resetPage();
-  };
+  const handlePageChange = useCallback((newPage) => {
+    setFiltros((prev) => ({ ...prev, offset: (newPage - 1) * ITEMS_PER_PAGE }));
+  }, [setFiltros]);
 
-  // Handlers de acciones
-  const handleVerKardex = (producto) => {
+  const handleVerKardex = useCallback((producto) => {
     openModal('kardex', producto);
-  };
+  }, [openModal]);
 
-  // Helpers
-  const getTipoMovimientoVariant = (tipo) => {
-    return tipo.startsWith('entrada') ? 'success' : 'error';
-  };
-
-  const getTipoMovimientoLabel = (tipo) => {
-    const labels = {
-      entrada_compra: 'Entrada - Compra',
-      entrada_devolucion: 'Entrada - Devolución',
-      entrada_ajuste: 'Entrada - Ajuste',
-      salida_venta: 'Salida - Venta',
-      salida_uso_servicio: 'Salida - Uso en Servicio',
-      salida_merma: 'Salida - Merma',
-      salida_robo: 'Salida - Robo',
-      salida_devolucion: 'Salida - Devolución',
-      salida_ajuste: 'Salida - Ajuste',
-    };
-    return labels[tipo] || tipo;
-  };
-
-  // Exportar CSV usando hook centralizado
-  const handleExportarCSV = () => {
+  const handleExportarCSV = useCallback(() => {
     if (!movimientos || movimientos.length === 0) {
       showToast('No hay datos para exportar', 'warning');
       return;
@@ -198,7 +301,10 @@ function MovimientosPage() {
       { key: 'referencia', header: 'Referencia' },
       { key: 'motivo', header: 'Motivo' },
     ], `kardex_${format(new Date(), 'yyyyMMdd')}`);
-  };
+  }, [movimientos, exportCSV, showToast]);
+
+  // Columnas memoizadas
+  const columns = useMemo(() => createColumns(handleVerKardex), [handleVerKardex]);
 
   return (
     <InventarioPageLayout
@@ -216,165 +322,40 @@ function MovimientosPage() {
         </Button>
       }
     >
+      {/* Filtros */}
+      <FilterPanel
+        filters={filtros}
+        onFilterChange={handleFiltroChange}
+        onClearFilters={limpiarFiltros}
+        filterConfig={filterConfig}
+        showSearch={false}
+        defaultExpanded={false}
+        className="mb-6"
+      />
 
-        {/* Filtros */}
-        <FilterPanel
-          filters={filtros}
-          onFilterChange={handleFiltroChange}
-          onClearFilters={handleLimpiarFiltros}
-          filterConfig={filterConfig}
-          showSearch={false}
-          defaultExpanded={false}
-          className="mb-6"
+      {/* Tabla de Movimientos */}
+      <DataTable
+        columns={columns}
+        data={movimientos}
+        isLoading={isLoading}
+        emptyState={{
+          icon: ArrowLeftRight,
+          title: 'No hay movimientos',
+          description: 'No se encontraron movimientos con los filtros aplicados',
+        }}
+        skeletonRows={8}
+      />
+
+      {/* Paginación */}
+      {!isLoading && total > 0 && (
+        <Pagination
+          pagination={pagination}
+          onPageChange={handlePageChange}
+          showInfo={true}
+          size="md"
+          className="mt-4"
         />
-
-        {/* Tabla de Movimientos */}
-        <DataTable
-          columns={useMemo(() => [
-            {
-              key: 'fecha',
-              header: 'Fecha',
-              render: (row) => (
-                <div>
-                  <div className="text-sm text-gray-900 dark:text-gray-100">
-                    {format(new Date(row.creado_en), 'dd/MM/yyyy', { locale: es })}
-                  </div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">
-                    {format(new Date(row.creado_en), 'HH:mm', { locale: es })}
-                  </div>
-                </div>
-              ),
-            },
-            {
-              key: 'tipo',
-              header: 'Tipo',
-              render: (row) => (
-                <Badge variant={getTipoMovimientoVariant(row.tipo_movimiento)} size="sm">
-                  {getTipoMovimientoLabel(row.tipo_movimiento)}
-                </Badge>
-              ),
-            },
-            {
-              key: 'producto',
-              header: 'Producto',
-              width: 'lg',
-              render: (row) => (
-                <div>
-                  <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                    {row.producto_nombre}
-                  </div>
-                  {row.producto_sku && (
-                    <div className="text-xs text-gray-500 dark:text-gray-400">
-                      SKU: {row.producto_sku}
-                    </div>
-                  )}
-                </div>
-              ),
-            },
-            {
-              key: 'cantidad',
-              header: 'Cantidad',
-              align: 'center',
-              render: (row) => (
-                <div className="flex items-center justify-center space-x-1">
-                  {row.cantidad > 0 ? (
-                    <TrendingUp className="h-4 w-4 text-green-600 dark:text-green-400" />
-                  ) : (
-                    <TrendingDown className="h-4 w-4 text-red-600 dark:text-red-400" />
-                  )}
-                  <span
-                    className={`text-sm font-medium ${
-                      row.cantidad > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
-                    }`}
-                  >
-                    {row.cantidad > 0 ? '+' : ''}{row.cantidad}
-                  </span>
-                </div>
-              ),
-            },
-            {
-              key: 'stock',
-              header: 'Stock',
-              align: 'center',
-              hideOnMobile: true,
-              render: (row) => (
-                <span className="text-sm font-bold text-primary-600 dark:text-primary-400">
-                  {row.stock_resultante}
-                </span>
-              ),
-            },
-            {
-              key: 'costo',
-              header: 'Costo Unit.',
-              align: 'right',
-              hideOnMobile: true,
-              render: (row) => (
-                row.costo_unitario ? (
-                  <span className="text-sm text-gray-900 dark:text-gray-100">
-                    ${row.costo_unitario.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
-                  </span>
-                ) : (
-                  <span className="text-sm text-gray-400 dark:text-gray-500">-</span>
-                )
-              ),
-            },
-            {
-              key: 'referencia',
-              header: 'Referencia',
-              hideOnMobile: true,
-              render: (row) => (
-                <div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">
-                    {row.referencia || '-'}
-                  </div>
-                  {row.motivo && (
-                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      {row.motivo}
-                    </div>
-                  )}
-                </div>
-              ),
-            },
-            {
-              key: 'actions',
-              header: '',
-              align: 'right',
-              render: (row) => (
-                <DataTableActions>
-                  <DataTableActionButton
-                    icon={FileBarChart}
-                    label="Ver Kardex"
-                    onClick={() => handleVerKardex({
-                      id: row.producto_id,
-                      nombre: row.nombre_producto,
-                      sku: row.sku
-                    })}
-                    variant="primary"
-                  />
-                </DataTableActions>
-              ),
-            },
-          ], [])}
-          data={movimientos}
-          isLoading={cargandoMovimientos}
-          emptyState={{
-            icon: ArrowLeftRight,
-            title: 'No hay movimientos',
-            description: 'No se encontraron movimientos con los filtros aplicados',
-          }}
-          skeletonRows={8}
-        />
-
-        {/* Paginación */}
-        {!cargandoMovimientos && total > 0 && (
-          <Pagination
-            pagination={pagination}
-            onPageChange={handlePageChange}
-            showInfo={true}
-            size="md"
-            className="mt-4"
-          />
-        )}
+      )}
 
       {/* Modal de Kardex */}
       <KardexModal

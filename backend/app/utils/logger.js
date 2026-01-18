@@ -1,9 +1,19 @@
 /**
  * Sistema de logging estructurado con Winston
+ * Incluye soporte para correlationId para trazabilidad de requests
  */
 
 const winston = require('winston');
 const path = require('path');
+
+// Importar función para obtener correlationId del contexto
+let getCorrelationId = () => undefined;
+try {
+  const { getCorrelationId: getCorId } = require('../middleware/correlationId');
+  getCorrelationId = getCorId;
+} catch (e) {
+  // El middleware puede no estar cargado aún durante el bootstrap
+}
 
 // Configuración de formatos
 const logFormat = winston.format.combine(
@@ -99,6 +109,7 @@ if (!fs.existsSync(logsDir)) {
 
 /**
  * Logger con métodos de conveniencia para diferentes contextos
+ * Incluye correlationId automáticamente en todos los logs
  */
 class AppLogger {
   constructor(baseLogger) {
@@ -106,38 +117,50 @@ class AppLogger {
   }
 
   /**
+   * Añade correlationId al meta si está disponible
+   * @private
+   */
+  _enrichMeta(meta = {}) {
+    const correlationId = getCorrelationId();
+    if (correlationId) {
+      return { correlationId, ...meta };
+    }
+    return meta;
+  }
+
+  /**
    * Log de información general
    */
   info(message, meta = {}) {
-    this.logger.info(message, meta);
+    this.logger.info(message, this._enrichMeta(meta));
   }
 
   /**
    * Log de errores
    */
   error(message, meta = {}) {
-    this.logger.error(message, meta);
+    this.logger.error(message, this._enrichMeta(meta));
   }
 
   /**
    * Log de advertencias
    */
   warn(message, meta = {}) {
-    this.logger.warn(message, meta);
+    this.logger.warn(message, this._enrichMeta(meta));
   }
 
   /**
    * Log de debug (solo en desarrollo)
    */
   debug(message, meta = {}) {
-    this.logger.debug(message, meta);
+    this.logger.debug(message, this._enrichMeta(meta));
   }
 
   /**
    * Log específico para requests HTTP
    */
   httpRequest(req, res, duration) {
-    const meta = {
+    const meta = this._enrichMeta({
       method: req.method,
       url: req.originalUrl,
       statusCode: res.statusCode,
@@ -146,7 +169,7 @@ class AppLogger {
       ip: req.ip,
       userId: req.user?.id,
       organizacionId: req.tenant?.id
-    };
+    });
 
     const level = res.statusCode >= 400 ? 'warn' : 'info';
     this.logger.log(level, `${req.method} ${req.originalUrl}`, meta);

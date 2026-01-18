@@ -7,6 +7,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { profesionalesApi } from '@/services/api/endpoints';
 import { useToast } from '@/hooks/utils';
+import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 
 // ==================== QUERY KEYS ====================
 
@@ -95,8 +96,11 @@ export function useCrearExperiencia() {
       toast.success('Experiencia laboral agregada');
     },
     onError: (error) => {
-      const mensaje = error.response?.data?.error || 'Error al agregar experiencia';
-      toast.error(mensaje);
+      try {
+        createCRUDErrorHandler('create', 'Experiencia')(error);
+      } catch (e) {
+        toast.error(e.message);
+      }
     },
   });
 }
@@ -122,8 +126,11 @@ export function useActualizarExperiencia() {
       toast.success('Experiencia actualizada');
     },
     onError: (error) => {
-      const mensaje = error.response?.data?.error || 'Error al actualizar experiencia';
-      toast.error(mensaje);
+      try {
+        createCRUDErrorHandler('update', 'Experiencia')(error);
+      } catch (e) {
+        toast.error(e.message);
+      }
     },
   });
 }
@@ -146,8 +153,11 @@ export function useEliminarExperiencia() {
       toast.success('Experiencia eliminada');
     },
     onError: (error) => {
-      const mensaje = error.response?.data?.error || 'Error al eliminar experiencia';
-      toast.error(mensaje);
+      try {
+        createCRUDErrorHandler('delete', 'Experiencia')(error);
+      } catch (e) {
+        toast.error(e.message);
+      }
     },
   });
 }
@@ -169,8 +179,11 @@ export function useReordenarExperiencia() {
       toast.success('Orden actualizado');
     },
     onError: (error) => {
-      const mensaje = error.response?.data?.error || 'Error al reordenar';
-      toast.error(mensaje);
+      try {
+        createCRUDErrorHandler('update', 'Experiencia')(error);
+      } catch (e) {
+        toast.error(e.message);
+      }
     },
   });
 }
