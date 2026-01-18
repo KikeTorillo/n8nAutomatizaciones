@@ -4,6 +4,7 @@
  */
 
 const Joi = require('joi');
+const { withPagination, idOptional } = require('../../../schemas/shared');
 
 const ubicacionesSchemas = {
     /**
@@ -88,8 +89,8 @@ const ubicacionesSchemas = {
      * GET /api/v1/inventario/ubicaciones
      */
     listarUbicaciones: {
-        query: Joi.object({
-            sucursal_id: Joi.number().integer().positive().optional(),
+        query: withPagination({
+            sucursal_id: idOptional,
             tipo: Joi.string().valid('zona', 'pasillo', 'estante', 'bin').optional(),
             parent_id: Joi.alternatives().try(
                 Joi.number().integer().positive(),
@@ -99,9 +100,7 @@ const ubicacionesSchemas = {
             es_recepcion: Joi.boolean().optional(),
             activo: Joi.boolean().optional(),
             bloqueada: Joi.boolean().optional(),
-            busqueda: Joi.string().max(100).optional(),
-            limit: Joi.number().integer().min(1).max(500).optional().default(100),
-            offset: Joi.number().integer().min(0).optional().default(0)
+            busqueda: Joi.string().max(100).optional()
         })
     },
 

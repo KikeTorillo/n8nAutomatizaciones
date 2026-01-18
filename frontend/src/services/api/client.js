@@ -35,11 +35,8 @@ axiosRetry(apiClient, {
       (error.response?.status >= 500 && error.response?.status < 600)
     );
   },
-  onRetry: (retryCount, error, requestConfig) => {
-    console.log(
-      `🔄 Reintento ${retryCount}/3 para ${requestConfig.method?.toUpperCase()} ${requestConfig.url}`,
-      error.message
-    );
+  onRetry: () => {
+    // Retry silencioso - el comportamiento está documentado en axiosRetry config
   },
 });
 
@@ -94,9 +91,7 @@ apiClient.interceptors.response.use(
       setIsRefreshing(true);
 
       try {
-        console.log('🔄 Token expirado, intentando refresh...');
-
-        // Ene 2026: Hacer refresh con body vacío
+        // Hacer refresh con body vacío
         // La cookie httpOnly (refreshToken) se envía automáticamente
         const response = await axios.post(
           `${apiClient.defaults.baseURL}/auth/refresh`,
@@ -105,8 +100,6 @@ apiClient.interceptors.response.use(
         );
 
         const { accessToken: newAccessToken } = response.data.data;
-
-        console.log('✅ Token refrescado exitosamente');
 
         // Guardar nuevo token en memoria
         setAccessToken(newAccessToken);

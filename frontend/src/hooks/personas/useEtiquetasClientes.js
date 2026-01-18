@@ -3,15 +3,15 @@
  * HOOKS - ETIQUETAS DE CLIENTES
  * ====================================================================
  *
- * Fase 2 - Segmentación de Clientes (Ene 2026)
- * Hooks TanStack Query para gestión de etiquetas
- *
+ * Migrado a factory - Ene 2026
+ * Reducción de ~200 líneas a ~130 líneas
  * ====================================================================
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { clientesApi } from '@/services/api/endpoints';
+import { createCRUDHooks } from '@/hooks/factories';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 
 // Colores predefinidos para el selector
@@ -26,95 +26,36 @@ export const COLORES_ETIQUETAS = [
   { value: '#14B8A6', label: 'Teal', description: 'Referido' },
 ];
 
-/**
- * Hook para listar etiquetas de la organización
- */
-export function useEtiquetas(params = {}) {
-  return useQuery({
-    queryKey: ['etiquetas-clientes', params],
-    queryFn: async () => {
-      const response = await clientesApi.listarEtiquetas(params);
-      return response.data.data;
-    },
-    staleTime: STALE_TIMES.SEMI_STATIC, // 5 minutos
-  });
-}
+// Crear hooks CRUD
+const hooks = createCRUDHooks({
+  name: 'etiqueta-cliente',
+  namePlural: 'etiquetas-clientes',
+  api: clientesApi,
+  baseKey: 'etiquetas-clientes',
+  apiMethods: {
+    list: 'listarEtiquetas',
+    get: 'obtenerEtiqueta',
+    create: 'crearEtiqueta',
+    update: 'actualizarEtiqueta',
+    delete: 'eliminarEtiqueta',
+  },
+  invalidateOnCreate: ['etiquetas-clientes'],
+  invalidateOnUpdate: ['etiquetas-clientes'],
+  invalidateOnDelete: ['etiquetas-clientes'],
+  errorMessages: {
+    create: { 409: 'Ya existe una etiqueta con ese nombre' },
+    update: { 409: 'Ya existe una etiqueta con ese nombre' },
+    delete: { 400: 'No se puede eliminar la etiqueta (tiene clientes asignados)' },
+  },
+  staleTime: STALE_TIMES.SEMI_STATIC,
+});
 
-/**
- * Hook para obtener una etiqueta por ID
- */
-export function useEtiqueta(id) {
-  return useQuery({
-    queryKey: ['etiqueta-cliente', id],
-    queryFn: async () => {
-      const response = await clientesApi.obtenerEtiqueta(id);
-      return response.data.data;
-    },
-    enabled: !!id,
-    staleTime: STALE_TIMES.SEMI_STATIC,
-  });
-}
-
-/**
- * Hook para crear etiqueta
- */
-export function useCrearEtiqueta() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (data) => {
-      const response = await clientesApi.crearEtiqueta(data);
-      return response.data.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['etiquetas-clientes'] });
-    },
-    onError: createCRUDErrorHandler('create', 'Etiqueta', {
-      409: 'Ya existe una etiqueta con ese nombre',
-    }),
-  });
-}
-
-/**
- * Hook para actualizar etiqueta
- */
-export function useActualizarEtiqueta() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ id, data }) => {
-      const response = await clientesApi.actualizarEtiqueta(id, data);
-      return response.data.data;
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['etiqueta-cliente', data.id] });
-      queryClient.invalidateQueries({ queryKey: ['etiquetas-clientes'] });
-    },
-    onError: createCRUDErrorHandler('update', 'Etiqueta', {
-      409: 'Ya existe una etiqueta con ese nombre',
-    }),
-  });
-}
-
-/**
- * Hook para eliminar etiqueta
- */
-export function useEliminarEtiqueta() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (id) => {
-      await clientesApi.eliminarEtiqueta(id);
-      return id;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['etiquetas-clientes'] });
-    },
-    onError: createCRUDErrorHandler('delete', 'Etiqueta', {
-      400: 'No se puede eliminar la etiqueta (tiene clientes asignados)',
-    }),
-  });
-}
+// Exportar hooks CRUD
+export const useEtiquetas = hooks.useList;
+export const useEtiqueta = hooks.useDetail;
+export const useCrearEtiqueta = hooks.useCreate;
+export const useActualizarEtiqueta = hooks.useUpdate;
+export const useEliminarEtiqueta = hooks.useDelete;
 
 // ====================================================================
 // ASIGNACIÓN DE ETIQUETAS A CLIENTES
@@ -131,7 +72,7 @@ export function useEtiquetasCliente(clienteId) {
       return response.data.data;
     },
     enabled: !!clienteId,
-    staleTime: STALE_TIMES.DYNAMIC, // 2 minutos
+    staleTime: STALE_TIMES.DYNAMIC,
   });
 }
 
@@ -147,13 +88,9 @@ export function useAsignarEtiquetasCliente() {
       return response.data.data;
     },
     onSuccess: (data, variables) => {
-      // Invalidar etiquetas del cliente
       queryClient.invalidateQueries({ queryKey: ['cliente-etiquetas', variables.clienteId] });
-      // Invalidar cliente específico (tiene etiquetas en la respuesta)
       queryClient.invalidateQueries({ queryKey: ['cliente', variables.clienteId] });
-      // Invalidar lista de clientes (incluye etiquetas)
       queryClient.invalidateQueries({ queryKey: ['clientes'] });
-      // Invalidar contadores de etiquetas
       queryClient.invalidateQueries({ queryKey: ['etiquetas-clientes'] });
     },
     onError: createCRUDErrorHandler('update', 'Etiquetas'),

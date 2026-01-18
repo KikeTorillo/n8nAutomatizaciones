@@ -146,16 +146,13 @@ class AuthConfig {
 
   /**
    * Genera un código de verificación aleatorio
+   * Usa SecureRandom para seguridad criptográfica
    * @param {number} length - Longitud del código
    * @returns {string} Código de verificación
    */
   generateVerificationCode(length = 6) {
-    const chars = '0123456789';
-    let code = '';
-    for (let i = 0; i < length; i++) {
-      code += chars[Math.floor(Math.random() * chars.length)];
-    }
-    return code;
+    const SecureRandom = require('../utils/helpers/SecureRandom');
+    return SecureRandom.numericCode(length);
   }
 
   /**
@@ -169,6 +166,13 @@ class AuthConfig {
 
   /**
    * Valida la fortaleza de una contraseña
+   * POLÍTICA HOMOLOGADA (passwordHelper.js, validation.js, auth.schemas.js):
+   * - Mínimo 8 caracteres (OBLIGATORIO)
+   * - Al menos 1 mayúscula (OBLIGATORIO)
+   * - Al menos 1 minúscula (OBLIGATORIO)
+   * - Al menos 1 número (OBLIGATORIO)
+   * - Caracteres especiales: OPCIONALES (mejoran score)
+   *
    * @param {string} password - Contraseña a validar
    * @returns {Object} Resultado de validación
    */
@@ -179,41 +183,40 @@ class AuthConfig {
       issues: []
     };
 
-    // Longitud mínima
+    // Longitud mínima (OBLIGATORIO)
     if (password.length < 8) {
       result.issues.push('Mínimo 8 caracteres');
     } else {
       result.score += 1;
     }
 
-    // Al menos una mayúscula
+    // Al menos una mayúscula (OBLIGATORIO)
     if (!/[A-Z]/.test(password)) {
       result.issues.push('Al menos una mayúscula');
     } else {
       result.score += 1;
     }
 
-    // Al menos una minúscula
+    // Al menos una minúscula (OBLIGATORIO)
     if (!/[a-z]/.test(password)) {
       result.issues.push('Al menos una minúscula');
     } else {
       result.score += 1;
     }
 
-    // Al menos un número
+    // Al menos un número (OBLIGATORIO)
     if (!/\d/.test(password)) {
       result.issues.push('Al menos un número');
     } else {
       result.score += 1;
     }
 
-    // Al menos un caracter especial
-    if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
-      result.issues.push('Al menos un caracter especial');
-    } else {
-      result.score += 1;
+    // Caracteres especiales (OPCIONAL - bonificación)
+    if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+      result.score += 1; // Bonificación por seguridad extra
     }
 
+    // isValid = 4 requisitos obligatorios cumplidos
     result.isValid = result.score >= 4 && result.issues.length === 0;
     return result;
   }

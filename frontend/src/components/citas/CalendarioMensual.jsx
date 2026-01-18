@@ -47,10 +47,11 @@ function CalendarioMensual({ onVerCita, onCrearCita }) {
   }, [mesActual]);
 
   // Cargar citas del mes actual
-  const { data: citas = [], isLoading } = useCitas({
+  const { data: citasData, isLoading } = useCitas({
     fecha_desde: inicio,
     fecha_hasta: fin,
   });
+  const citas = citasData?.citas || [];
 
   // Generar array de días a mostrar (42 días = 6 semanas completas)
   const diasDelCalendario = useMemo(() => {

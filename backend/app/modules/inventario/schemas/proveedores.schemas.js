@@ -4,6 +4,7 @@
  */
 
 const Joi = require('joi');
+const { withPagination, fields } = require('../../../schemas/shared');
 
 const proveedoresSchemas = {
     /**
@@ -19,11 +20,11 @@ const proveedoresSchemas = {
 
             razon_social: Joi.string().max(200).optional().allow(null, ''),
 
-            rfc: Joi.string().max(13).optional().allow(null, '').regex(/^[A-Z0-9]+$/i).messages({
-                'string.pattern.base': 'El RFC solo puede contener letras y números'
-            }),
+            // Usa validación RFC compartida (formato mexicano correcto)
+            rfc: fields.rfc.optional(),
 
-            telefono: Joi.string().max(20).optional().allow(null, ''),
+            // Usa validación teléfono compartida
+            telefono: fields.telefonoConLada.optional().allow(null, ''),
             email: Joi.string().email().max(255).optional().allow(null, ''),
             sitio_web: Joi.string().uri().max(255).optional().allow(null, ''),
 
@@ -55,8 +56,8 @@ const proveedoresSchemas = {
         body: Joi.object({
             nombre: Joi.string().max(200).optional(),
             razon_social: Joi.string().max(200).optional().allow(null, ''),
-            rfc: Joi.string().max(13).optional().allow(null, ''),
-            telefono: Joi.string().max(20).optional().allow(null, ''),
+            rfc: fields.rfc.optional(),
+            telefono: fields.telefonoConLada.optional().allow(null, ''),
             email: Joi.string().email().max(255).optional().allow(null, ''),
             sitio_web: Joi.string().uri().max(255).optional().allow(null, ''),
             direccion: Joi.string().max(500).optional().allow(null, ''),
@@ -78,13 +79,11 @@ const proveedoresSchemas = {
      * GET /api/v1/inventario/proveedores
      */
     listarProveedores: {
-        query: Joi.object({
+        query: withPagination({
             activo: Joi.boolean().optional(),
             busqueda: Joi.string().max(100).optional(),
             ciudad: Joi.string().max(100).optional(),
-            rfc: Joi.string().max(13).optional(),
-            limit: Joi.number().integer().min(1).max(100).optional().default(50),
-            offset: Joi.number().integer().min(0).optional().default(0)
+            rfc: Joi.string().max(13).optional()
         })
     }
 };

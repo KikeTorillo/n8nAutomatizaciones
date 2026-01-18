@@ -4,6 +4,7 @@ const { getDb } = require('../../../config/database');
 const RLSHelper = require('../../../utils/rlsHelper');
 const RLSContextManager = require('../../../utils/rlsContextManager');
 const { SELECT_FIELDS, CAMPOS_ACTUALIZABLES } = require('../../../constants/organizacion.constants');
+const SecureRandom = require('../../../utils/helpers/SecureRandom');
 
 
 class OrganizacionModel {
@@ -23,7 +24,7 @@ class OrganizacionModel {
                 RETURNING *
             `;
 
-            const codigoTenant = `org_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+            const codigoTenant = `org_${Date.now()}_${SecureRandom.slugSuffix(6)}`;
 
             // Generar slug único con timestamp
             const baseSlug = organizacionData.nombre_comercial.toLowerCase()
@@ -734,6 +735,37 @@ class OrganizacionModel {
             ]);
 
             return result.rows[0];
+        });
+    }
+
+    /**
+     * Obtener datos de organización para tickets/recibos POS
+     * Incluye ubicación geográfica formateada
+     * @param {number} organizacionId - ID de la organización
+     * @returns {Promise<Object|null>} Datos de la organización para ticket
+     */
+    static async obtenerParaTicket(organizacionId) {
+        return await RLSContextManager.withBypass(async (db) => {
+            const result = await db.query(`
+                SELECT
+                    o.nombre_comercial,
+                    o.razon_social,
+                    o.rfc_nif,
+                    o.telefono,
+                    o.email_admin,
+                    o.logo_url,
+                    CONCAT_WS(', ',
+                        c.nombre,
+                        e.nombre,
+                        p.nombre
+                    ) AS direccion
+                FROM organizaciones o
+                LEFT JOIN ciudades c ON c.id = o.ciudad_id
+                LEFT JOIN estados e ON e.id = o.estado_id
+                LEFT JOIN paises p ON p.id = o.pais_id
+                WHERE o.id = $1
+            `, [organizacionId]);
+            return result.rows[0] || null;
         });
     }
 }

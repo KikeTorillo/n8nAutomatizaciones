@@ -92,10 +92,13 @@ class PasswordHelper {
 
     /**
      * Genera una contraseña aleatoria segura
+     * Usa SecureRandom para seguridad criptográfica
      * @param {number} length - Longitud de la contraseña (default: 12)
      * @returns {string} Contraseña generada
      */
     static generarPasswordSegura(length = 12) {
+        const SecureRandom = require('./helpers/SecureRandom');
+
         const lowercase = 'abcdefghijklmnopqrstuvwxyz';
         const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
         const numbers = '0123456789';
@@ -104,19 +107,21 @@ class PasswordHelper {
         const allChars = lowercase + uppercase + numbers + symbols;
         let password = '';
 
-        // Garantizar al menos un caracter de cada tipo
-        password += lowercase[Math.floor(Math.random() * lowercase.length)];
-        password += uppercase[Math.floor(Math.random() * uppercase.length)];
-        password += numbers[Math.floor(Math.random() * numbers.length)];
-        password += symbols[Math.floor(Math.random() * symbols.length)];
+        // Garantizar al menos un caracter de cada tipo (crypto-secure)
+        password += SecureRandom.char(lowercase);
+        password += SecureRandom.char(uppercase);
+        password += SecureRandom.char(numbers);
+        password += SecureRandom.char(symbols);
 
-        // Rellenar el resto
+        // Rellenar el resto (crypto-secure)
         for (let i = password.length; i < length; i++) {
-            password += allChars[Math.floor(Math.random() * allChars.length)];
+            password += SecureRandom.char(allChars);
         }
 
-        // Mezclar caracteres
-        return password.split('').sort(() => Math.random() - 0.5).join('');
+        // Mezclar caracteres con Fisher-Yates (crypto-secure)
+        const chars = password.split('');
+        SecureRandom.shuffle(chars);
+        return chars.join('');
     }
 }
 

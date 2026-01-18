@@ -1,41 +1,59 @@
+/**
+ * ====================================================================
+ * HOOKS CRUD CLIENTES
+ * ====================================================================
+ *
+ * Migrado a factory - Ene 2026
+ * Reducción de ~220 líneas a ~160 líneas
+ * ====================================================================
+ */
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { clientesApi, citasApi } from '@/services/api/endpoints';
-import { sanitizeParams } from '@/lib/params';
+import { createCRUDHooks, createSanitizer } from '@/hooks/factories';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 
-/**
- * Hook para listar clientes con paginación
- */
-export function useClientes(params = {}) {
-  return useQuery({
-    queryKey: ['clientes', params],
-    queryFn: async () => {
-      const response = await clientesApi.listar(sanitizeParams(params));
-      return {
-        clientes: response.data.data,
-        pagination: response.data.pagination,
-      };
-    },
-    staleTime: STALE_TIMES.SEMI_STATIC, // 5 minutos
-    keepPreviousData: true, // Mantener datos anteriores durante cambio de página
-  });
-}
+// Crear hooks CRUD
+const hooks = createCRUDHooks({
+  name: 'cliente',
+  namePlural: 'clientes',
+  api: clientesApi,
+  baseKey: 'clientes',
+  apiMethods: {
+    list: 'listar',
+    get: 'obtener',
+    create: 'crear',
+    update: 'actualizar',
+    delete: 'eliminar',
+  },
+  invalidateOnCreate: ['clientes'],
+  invalidateOnUpdate: ['clientes'],
+  invalidateOnDelete: ['clientes'],
+  errorMessages: {
+    create: { 409: 'Ya existe un cliente con ese email o teléfono' },
+    update: { 409: 'Ya existe un cliente con ese email o teléfono' },
+    delete: { 400: 'No se puede eliminar el cliente (puede tener citas asociadas)' },
+  },
+  staleTime: STALE_TIMES.SEMI_STATIC,
+  keepPreviousData: true,
+  responseKey: 'clientes',
+  transformList: (data) => ({
+    clientes: data.clientes || data,
+    pagination: data.pagination,
+  }),
+});
 
-/**
- * Hook para obtener cliente por ID
- */
-export function useCliente(id) {
-  return useQuery({
-    queryKey: ['cliente', id],
-    queryFn: async () => {
-      const response = await clientesApi.obtener(id);
-      return response.data.data;
-    },
-    enabled: !!id,
-    staleTime: STALE_TIMES.SEMI_STATIC,
-  });
-}
+// Exportar hooks CRUD
+export const useClientes = hooks.useList;
+export const useCliente = hooks.useDetail;
+export const useCrearCliente = hooks.useCreate;
+export const useActualizarCliente = hooks.useUpdate;
+export const useEliminarCliente = hooks.useDelete;
+
+// ====================================================================
+// HOOKS ESPECIALIZADOS
+// ====================================================================
 
 /**
  * Hook para buscar clientes (búsqueda rápida)
@@ -47,8 +65,8 @@ export function useBuscarClientes(termino, options = {}) {
       const response = await clientesApi.buscar({ q: termino, ...options });
       return response.data.data;
     },
-    enabled: termino.length >= 2, // Solo buscar si hay al menos 2 caracteres
-    staleTime: STALE_TIMES.DYNAMIC, // 2 minutos - Ene 2026: aumentado para reducir requests
+    enabled: termino.length >= 2,
+    staleTime: STALE_TIMES.DYNAMIC,
   });
 }
 
@@ -63,70 +81,7 @@ export function useBuscarPorTelefono(telefono, enabled = false) {
       return response.data.data;
     },
     enabled: enabled && telefono.length >= 10,
-    staleTime: STALE_TIMES.DYNAMIC, // 2 minutos - Ene 2026: aumentado para reducir requests
-  });
-}
-
-/**
- * Hook para crear cliente
- */
-export function useCrearCliente() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (data) => {
-      const response = await clientesApi.crear(data);
-      return response.data.data;
-    },
-    onSuccess: () => {
-      // Invalidar lista de clientes para refrescar
-      queryClient.invalidateQueries({ queryKey: ['clientes'] });
-    },
-    onError: createCRUDErrorHandler('create', 'Cliente', {
-      409: 'Ya existe un cliente con ese email o teléfono',
-    }),
-  });
-}
-
-/**
- * Hook para actualizar cliente
- */
-export function useActualizarCliente() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ id, data }) => {
-      const response = await clientesApi.actualizar(id, data);
-      return response.data.data;
-    },
-    onSuccess: (data) => {
-      // Invalidar cache del cliente específico y la lista
-      queryClient.invalidateQueries({ queryKey: ['cliente', data.id] });
-      queryClient.invalidateQueries({ queryKey: ['clientes'] });
-    },
-    onError: createCRUDErrorHandler('update', 'Cliente', {
-      409: 'Ya existe un cliente con ese email o teléfono',
-    }),
-  });
-}
-
-/**
- * Hook para eliminar cliente
- */
-export function useEliminarCliente() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (id) => {
-      await clientesApi.eliminar(id);
-      return id;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['clientes'] });
-    },
-    onError: createCRUDErrorHandler('delete', 'Cliente', {
-      400: 'No se puede eliminar el cliente (puede tener citas asociadas)',
-    }),
+    staleTime: STALE_TIMES.DYNAMIC,
   });
 }
 
@@ -142,7 +97,6 @@ export function useCrearWalkIn() {
       return response.data.data;
     },
     onSuccess: () => {
-      // Invalidar citas y clientes
       queryClient.invalidateQueries({ queryKey: ['citas'] });
       queryClient.invalidateQueries({ queryKey: ['citas-del-dia'] });
     },
@@ -163,8 +117,8 @@ export function useDisponibilidadInmediata(servicioId, profesionalId = null) {
       return response.data.data;
     },
     enabled: !!servicioId,
-    staleTime: STALE_TIMES.FREQUENT, // 1 minuto
-    refetchInterval: 1000 * 60, // Refetch cada minuto
+    staleTime: STALE_TIMES.FREQUENT,
+    refetchInterval: 1000 * 60,
   });
 }
 
@@ -178,13 +132,12 @@ export function useEstadisticasClientes() {
       const response = await clientesApi.obtenerEstadisticas();
       return response.data.data;
     },
-    staleTime: STALE_TIMES.SEMI_STATIC, // 5 minutos
+    staleTime: STALE_TIMES.SEMI_STATIC,
   });
 }
 
 /**
  * Hook para obtener estadísticas de un cliente específico (Vista 360°)
- * Ene 2026: Usado por ClienteDetailPage para Smart Buttons
  * @param {number|string} clienteId - ID del cliente
  */
 export function useEstadisticasCliente(clienteId) {
@@ -195,13 +148,12 @@ export function useEstadisticasCliente(clienteId) {
       return response.data.data;
     },
     enabled: !!clienteId,
-    staleTime: STALE_TIMES.DYNAMIC, // 2 minutos
+    staleTime: STALE_TIMES.DYNAMIC,
   });
 }
 
 /**
  * Hook para importar clientes desde CSV
- * Ene 2026: Importacion masiva de clientes
  */
 export function useImportarClientesCSV() {
   const queryClient = useQueryClient();

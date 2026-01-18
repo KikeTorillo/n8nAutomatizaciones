@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Monitor, Tablet, Smartphone, ExternalLink } from 'lucide-react';
+import { sanitizeHTML } from '@/lib/sanitize';
 
 /**
  * PreviewPanel - Panel de vista previa del sitio
@@ -226,7 +227,7 @@ function PreviewBloque({ bloque, tema, dispositivo }) {
             className="text-sm"
             style={{ color: colorTexto }}
             dangerouslySetInnerHTML={{
-              __html: contenido.html || '<p>Contenido de texto...</p>'
+              __html: sanitizeHTML(contenido.html) || '<p>Contenido de texto...</p>'
             }}
           />
         </div>

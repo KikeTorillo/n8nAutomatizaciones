@@ -1,0 +1,354 @@
+/**
+ * Query Keys Centralizadas
+ *
+ * Ene 2026: Centraliza todas las query keys del frontend para:
+ * - Consistencia en invalidaciones
+ * - Evitar errores de tipeo
+ * - Facilitar refactoring
+ * - Mejorar DX con autocompletado
+ *
+ * Convenciones:
+ * - `all`: Lista sin filtros
+ * - `list(params)`: Lista con filtros/paginación
+ * - `detail(id)`: Detalle por ID
+ * - `search(params)`: Búsqueda
+ *
+ * Uso:
+ * ```js
+ * import { queryKeys } from '@/hooks/config';
+ *
+ * // En queries
+ * queryKey: queryKeys.inventario.productos.list(params)
+ *
+ * // En invalidaciones
+ * queryClient.invalidateQueries({ queryKey: queryKeys.inventario.productos.all })
+ * ```
+ */
+
+export const queryKeys = {
+  // ============================================================
+  // INVENTARIO
+  // ============================================================
+  inventario: {
+    productos: {
+      all: ['productos'],
+      list: (params) => ['productos', params],
+      detail: (id) => ['producto', id],
+      search: (params) => ['buscar-productos', params],
+      stockCritico: ['stock-critico'],
+      kardex: (id) => ['kardex', id],
+    },
+    categorias: {
+      all: ['categorias'],
+      list: (params) => ['categorias', params],
+      detail: (id) => ['categoria', id],
+      arbol: ['categorias-arbol'],
+    },
+    proveedores: {
+      all: ['proveedores'],
+      list: (params) => ['proveedores', params],
+      detail: (id) => ['proveedor', id],
+    },
+    ordenesCompra: {
+      all: ['ordenes-compra'],
+      list: (params) => ['ordenes-compra', params],
+      detail: (id) => ['orden-compra', id],
+      pendientes: ['ordenes-compra-pendientes'],
+      sugerencias: ['sugerencias-oc'],
+    },
+    movimientos: {
+      all: ['movimientos'],
+      list: (params) => ['movimientos', params],
+    },
+    numerosSerie: {
+      all: ['numeros-serie'],
+      list: (params) => ['numeros-serie', params],
+      detail: (id) => ['numero-serie', id],
+      disponibles: (productoId) => ['numeros-serie-disponibles', productoId],
+    },
+    variantes: {
+      all: ['variantes'],
+      list: (productoId) => ['variantes', productoId],
+      detail: (id) => ['variante', id],
+    },
+    atributos: {
+      all: ['atributos'],
+      list: (params) => ['atributos', params],
+    },
+    conteos: {
+      all: ['conteos'],
+      list: (params) => ['conteos', params],
+      detail: (id) => ['conteo', id],
+    },
+    ubicaciones: {
+      all: ['ubicaciones-almacen'],
+      list: (params) => ['ubicaciones-almacen', params],
+      detail: (id) => ['ubicacion', id],
+      arbol: ['ubicaciones-arbol'],
+    },
+    valoracion: {
+      resumen: ['valor-inventario'],
+      historico: (params) => ['valoracion-historico', params],
+    },
+    landedCosts: {
+      all: ['landed-costs'],
+      list: (params) => ['landed-costs', params],
+    },
+    alertas: {
+      all: ['alertas-inventario'],
+      vencimientos: ['alertas-vencimientos'],
+    },
+    reportes: {
+      abc: (params) => ['reporte-abc', params],
+      rotacion: (params) => ['reporte-rotacion', params],
+    },
+  },
+
+  // ============================================================
+  // ALMACEN
+  // ============================================================
+  almacen: {
+    operaciones: {
+      all: ['operaciones-almacen'],
+      list: (params) => ['operaciones-almacen', params],
+      detail: (id) => ['operacion', id],
+    },
+    batchPicking: {
+      all: ['batch-picking'],
+      list: (params) => ['batch-picking', params],
+    },
+    configuracion: ['configuracion-almacen'],
+    consigna: {
+      all: ['consigna'],
+      list: (params) => ['consigna', params],
+    },
+    dropship: {
+      all: ['dropship'],
+      list: (params) => ['dropship', params],
+    },
+  },
+
+  // ============================================================
+  // POS
+  // ============================================================
+  pos: {
+    ventas: {
+      all: ['ventas'],
+      list: (params) => ['ventas', params],
+      detail: (id) => ['venta', id],
+      resumen: (params) => ['ventas-resumen', params],
+    },
+    cupones: {
+      all: ['cupones'],
+      list: (params) => ['cupones', params],
+      validar: (codigo) => ['validar-cupon', codigo],
+    },
+    promociones: {
+      all: ['promociones'],
+      list: (params) => ['promociones', params],
+      evaluar: (params) => ['promociones-evaluar', params],
+    },
+    sesionCaja: {
+      actual: ['sesion-caja'],
+      historial: (params) => ['sesiones-caja', params],
+    },
+    stockDisponible: (productoId) => ['stock-disponible', productoId],
+    categoriasPOS: ['categorias-pos'],
+  },
+
+  // ============================================================
+  // AGENDAMIENTO
+  // ============================================================
+  agendamiento: {
+    citas: {
+      all: ['citas'],
+      list: (params) => ['citas', params],
+      detail: (id) => ['cita', id],
+      calendario: (params) => ['citas-calendario', params],
+    },
+    servicios: {
+      all: ['servicios'],
+      list: (params) => ['servicios', params],
+      detail: (id) => ['servicio', id],
+    },
+    horarios: {
+      all: ['horarios'],
+      list: (params) => ['horarios', params],
+      profesional: (profesionalId) => ['horarios-profesional', profesionalId],
+    },
+    disponibilidad: (params) => ['disponibilidad', params],
+    bloqueos: {
+      all: ['bloqueos'],
+      list: (params) => ['bloqueos', params],
+    },
+    tiposBloqueo: ['tipos-bloqueo'],
+  },
+
+  // ============================================================
+  // PERSONAS
+  // ============================================================
+  personas: {
+    clientes: {
+      all: ['clientes'],
+      list: (params) => ['clientes', params],
+      detail: (id) => ['cliente', id],
+      actividades: (id) => ['cliente-actividades', id],
+      documentos: (id) => ['cliente-documentos', id],
+      credito: (id) => ['cliente-credito', id],
+    },
+    profesionales: {
+      all: ['profesionales'],
+      list: (params) => ['profesionales', params],
+      detail: (id) => ['profesional', id],
+      usuario: (usuarioId) => ['profesional-usuario', usuarioId],
+      disponibles: ['usuarios-disponibles'],
+    },
+    usuarios: {
+      all: ['usuarios'],
+      list: (params) => ['usuarios', params],
+      detail: (id) => ['usuario', id],
+    },
+    departamentos: {
+      all: ['departamentos'],
+      list: (params) => ['departamentos', params],
+      arbol: ['departamentos-arbol'],
+    },
+    puestos: {
+      all: ['puestos'],
+      list: (params) => ['puestos', params],
+    },
+    vacaciones: {
+      solicitudes: (params) => ['vacaciones-solicitudes', params],
+      saldos: (usuarioId) => ['vacaciones-saldos', usuarioId],
+      politicas: ['vacaciones-politicas'],
+    },
+    // Tabs de profesionales
+    educacionFormal: (profesionalId) => ['educacion-formal', profesionalId],
+    experienciaLaboral: (profesionalId) => ['experiencia-laboral', profesionalId],
+    habilidades: (profesionalId) => ['habilidades', profesionalId],
+    cuentasBancarias: (profesionalId) => ['cuentas-bancarias', profesionalId],
+    documentosEmpleado: (profesionalId) => ['documentos-empleado', profesionalId],
+  },
+
+  // ============================================================
+  // SISTEMA
+  // ============================================================
+  sistema: {
+    permisos: {
+      verificar: (codigo, sucursalId) => ['permiso', codigo, sucursalId],
+      resumen: (usuarioId, sucursalId) => ['permisos-resumen', usuarioId, sucursalId],
+    },
+    modulos: ['modulos'],
+    notificaciones: {
+      all: ['notificaciones'],
+      noLeidas: ['notificaciones-no-leidas'],
+    },
+    sucursales: {
+      all: ['sucursales'],
+      detail: (id) => ['sucursal', id],
+    },
+    workflows: {
+      all: ['workflows'],
+      list: (params) => ['workflows', params],
+      detail: (id) => ['workflow', id],
+    },
+    customFields: (entidad) => ['custom-fields', entidad],
+  },
+
+  // ============================================================
+  // CATALOGOS
+  // ============================================================
+  catalogos: {
+    categoriasPago: ['categorias-pago'],
+    motivosSalida: ['motivos-salida'],
+    ubicacionesTrabajo: ['ubicaciones-trabajo'],
+    categoriasProfesional: ['categorias-profesional'],
+    etiquetasClientes: ['etiquetas-clientes'],
+    monedas: ['monedas'],
+    paises: ['paises'],
+    estados: (paisId) => ['estados', paisId],
+    ciudades: (estadoId) => ['ciudades', estadoId],
+  },
+
+  // ============================================================
+  // OTROS MODULOS
+  // ============================================================
+  estadisticas: {
+    dashboard: (params) => ['estadisticas-dashboard', params],
+    ventas: (params) => ['estadisticas-ventas', params],
+    inventario: (params) => ['estadisticas-inventario', params],
+  },
+
+  contabilidad: {
+    cuentas: {
+      all: ['cuentas-contables'],
+      arbol: ['cuentas-arbol'],
+    },
+    asientos: {
+      all: ['asientos'],
+      list: (params) => ['asientos', params],
+    },
+  },
+
+  marketplace: {
+    perfiles: {
+      all: ['marketplace-perfiles'],
+      list: (params) => ['marketplace-perfiles', params],
+      miPerfil: ['mi-perfil-marketplace'],
+    },
+    resenas: (perfilSlug) => ['resenas', perfilSlug],
+    categorias: ['marketplace-categorias'],
+  },
+
+  website: {
+    config: ['website-config'],
+    paginas: ['website-paginas'],
+    bloques: (paginaId) => ['website-bloques', paginaId],
+  },
+
+  chatbots: {
+    all: ['chatbots'],
+    detail: (id) => ['chatbot', id],
+    conversaciones: (botId) => ['conversaciones', botId],
+  },
+
+  comisiones: {
+    config: ['comisiones-config'],
+    calculo: (params) => ['comisiones-calculo', params],
+    historial: (params) => ['comisiones-historial', params],
+  },
+};
+
+/**
+ * Helper para obtener todas las keys de un dominio (para invalidación masiva)
+ * @param {string} dominio - 'inventario' | 'pos' | 'agendamiento' | etc.
+ * @returns {string[]} Array de query keys base
+ *
+ * @example
+ * // Invalidar todo el inventario
+ * getDomainKeys('inventario').forEach(key => {
+ *   queryClient.invalidateQueries({ queryKey: [key] });
+ * });
+ */
+export function getDomainKeys(dominio) {
+  const domain = queryKeys[dominio];
+  if (!domain) return [];
+
+  const keys = [];
+  const extractKeys = (obj, prefix = '') => {
+    Object.entries(obj).forEach(([key, value]) => {
+      if (Array.isArray(value)) {
+        keys.push(value[0]);
+      } else if (typeof value === 'function') {
+        // Ignorar funciones
+      } else if (typeof value === 'object') {
+        extractKeys(value, `${prefix}${key}.`);
+      }
+    });
+  };
+
+  extractKeys(domain);
+  return [...new Set(keys)];
+}
+
+export default queryKeys;

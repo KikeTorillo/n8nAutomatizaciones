@@ -11,6 +11,7 @@
 
 const Joi = require('joi');
 const { commonSchemas } = require('../../../middleware/validation');
+const { withPagination } = require('../../../schemas/shared');
 
 // ====================================================================
 // CONSTANTES
@@ -106,9 +107,7 @@ const listar = {
     params: Joi.object({
         clienteId: commonSchemas.id
     }),
-    query: Joi.object({
-        page: Joi.number().integer().min(1).default(1),
-        limit: Joi.number().integer().min(1).max(100).default(20),
+    query: withPagination({
         tipo: Joi.string().valid(...TIPOS_ACTIVIDAD),
         estado: Joi.string().valid(...ESTADOS_ACTIVIDAD),
         soloTareas: Joi.string().valid('true', 'false')
@@ -123,10 +122,7 @@ const timeline = {
     params: Joi.object({
         clienteId: commonSchemas.id
     }),
-    query: Joi.object({
-        limit: Joi.number().integer().min(1).max(100).default(20),
-        offset: Joi.number().integer().min(0).default(0)
-    })
+    query: withPagination({})
 };
 
 // ====================================================================

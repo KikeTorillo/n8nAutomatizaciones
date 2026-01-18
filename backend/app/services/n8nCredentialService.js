@@ -25,69 +25,8 @@
  * @module services/n8nCredentialService
  */
 
-const axios = require('axios');
 const logger = require('../utils/logger');
-const configService = require('./configService');
-
-/**
- * ================================================================
- * 🏭 CREAR CLIENTE N8N CON API KEY DINÁMICA
- * ================================================================
- * Crea instancia axios con API Key leído desde BD (hot-reload).
- * Se crea una nueva instancia por cada request para garantizar
- * que siempre usa el API Key más actualizado.
- *
- * @returns {Promise<axios.AxiosInstance>}
- */
-async function createN8nClient() {
-    const apiKey = await configService.getN8nApiKey();
-
-    if (!apiKey) {
-        throw new Error(
-            'N8N_API_KEY no configurado. ' +
-            'Ejecuta setup inicial: POST /api/v1/setup/unified-setup'
-        );
-    }
-
-    const client = axios.create({
-        baseURL: process.env.N8N_API_URL || 'http://n8n-main:5678',
-        headers: {
-            'X-N8N-API-KEY': apiKey,
-            'Content-Type': 'application/json'
-        },
-        timeout: 10000
-    });
-
-    // Interceptor para logging de requests
-    client.interceptors.request.use(
-        (config) => {
-            logger.debug(`n8n Credential API Request: ${config.method.toUpperCase()} ${config.url}`);
-            return config;
-        },
-        (error) => {
-            logger.error('n8n Credential API Request Error:', error);
-            return Promise.reject(error);
-        }
-    );
-
-    // Interceptor para logging de responses
-    client.interceptors.response.use(
-        (response) => {
-            logger.debug(`n8n Credential API Response: ${response.status} ${response.config.url}`);
-            return response;
-        },
-        (error) => {
-            if (error.response) {
-                logger.error(`n8n Credential API Error ${error.response.status}:`, error.response.data);
-            } else {
-                logger.error('n8n Credential API Network Error:', error.message);
-            }
-            return Promise.reject(error);
-        }
-    );
-
-    return client;
-}
+const { createCredentialClient: createN8nClient } = require('./n8nClientFactory');
 
 /**
  * Mapeo de plataformas a tipos de credential de n8n

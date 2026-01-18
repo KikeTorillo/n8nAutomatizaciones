@@ -12,66 +12,17 @@
  * los workflows de chatbots.
  */
 
-const axios = require('axios');
 const logger = require('../utils/logger');
 const configService = require('./configService');
+const { createGlobalCredentialClient } = require('./n8nClientFactory');
 
 class N8nGlobalCredentialsService {
     /**
-     * ================================================================
-     * 🏭 CREAR CLIENTE N8N CON API KEY DINÁMICA
-     * ================================================================
-     * Crea instancia axios con API Key leído desde BD (hot-reload).
-     * Se crea una nueva instancia por cada request para garantizar
-     * que siempre usa el API Key más actualizado.
-     *
+     * Crea cliente N8N usando la fábrica centralizada
      * @returns {Promise<axios.AxiosInstance>}
      */
     async createN8nClient() {
-        const apiKey = await configService.getN8nApiKey();
-
-        if (!apiKey) {
-            throw new Error(
-                'N8N_API_KEY no configurado. ' +
-                'Ejecuta setup inicial: POST /api/v1/setup/unified-setup'
-            );
-        }
-
-        const client = axios.create({
-            baseURL: process.env.N8N_API_URL || 'http://n8n-main:5678',
-            headers: {
-                'X-N8N-API-KEY': apiKey,
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
-            timeout: 10000
-        });
-
-        // Interceptor para logging de requests
-        client.interceptors.request.use(
-            (config) => {
-                logger.debug(`[N8nGlobalCreds] ${config.method.toUpperCase()} ${config.url}`);
-                return config;
-            },
-            (error) => {
-                logger.error('[N8nGlobalCreds] Request error:', error.message);
-                return Promise.reject(error);
-            }
-        );
-
-        // Interceptor para logging de responses
-        client.interceptors.response.use(
-            (response) => {
-                logger.debug(`[N8nGlobalCreds] Response ${response.status}`);
-                return response;
-            },
-            (error) => {
-                logger.error('[N8nGlobalCreds] Response error:', error.message);
-                return Promise.reject(error);
-            }
-        );
-
-        return client;
+        return createGlobalCredentialClient();
     }
 
 

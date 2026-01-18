@@ -6,6 +6,7 @@ import {
   Select,
   Textarea
 } from '@/components/ui';
+import { sanitizeHTML } from '@/lib/sanitize';
 
 /**
  * TextoEditor - Editor del bloque de texto enriquecido
@@ -185,7 +186,7 @@ function TextoEditor({ contenido, onGuardar, tema, isSaving }) {
           <div
             className="prose prose-sm max-w-none dark:prose-invert"
             style={{ color: tema?.colores?.texto }}
-            dangerouslySetInnerHTML={{ __html: form.html || '<p class="text-gray-400 dark:text-gray-500">Vista previa del contenido...</p>' }}
+            dangerouslySetInnerHTML={{ __html: sanitizeHTML(form.html) || '<p class="text-gray-400 dark:text-gray-500">Vista previa del contenido...</p>' }}
           />
         </div>
       </div>

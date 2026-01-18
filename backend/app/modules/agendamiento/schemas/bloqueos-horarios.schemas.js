@@ -5,6 +5,7 @@
 
 const Joi = require('joi');
 const { commonSchemas } = require('../../../middleware/validation');
+const { withPagination, idOptional } = require('../../../schemas/shared');
 
 /**
  * Schema para crear bloqueo
@@ -146,16 +147,14 @@ const obtener = {
     params: Joi.object({
         id: commonSchemas.id.optional()
     }).optional(),
-    query: Joi.object({
-        organizacion_id: commonSchemas.id.optional(), // Solo super_admin
-        id: commonSchemas.id.optional(),
-        profesional_id: commonSchemas.id.optional(),
-        tipo_bloqueo_id: commonSchemas.id.optional(),
+    query: withPagination({
+        organizacion_id: idOptional, // Solo super_admin
+        id: idOptional,
+        profesional_id: idOptional,
+        tipo_bloqueo_id: idOptional,
         fecha_inicio: Joi.string().pattern(/^\d{4}-\d{2}-\d{2}$/).optional(),
         fecha_fin: Joi.string().pattern(/^\d{4}-\d{2}-\d{2}$/).optional(),
-        solo_organizacionales: Joi.boolean().optional(),
-        limite: Joi.number().integer().min(1).max(100).default(50),
-        offset: Joi.number().integer().min(0).default(0)
+        solo_organizacionales: Joi.boolean().optional()
     })
 };
 

@@ -81,6 +81,7 @@ export function useAccesoModulo(modulo) {
     },
     enabled: isAuthenticated && !!user?.id && !!sucursalId && permisoCacheado === null,
     staleTime: STALE_TIMES.SEMI_STATIC, // 5 minutos
+    gcTime: 0, // Evitar cache duplicado - permisosStore ya cachea
     refetchOnWindowFocus: false,
   });
 
@@ -157,6 +158,7 @@ export function usePermiso(codigoPermiso, sucursalIdParam) {
     },
     enabled: isAuthenticated && !!user?.id && !!sucursalId && !!codigoPermiso && permisoCacheado === null,
     staleTime: STALE_TIMES.SEMI_STATIC,
+    gcTime: 0, // Evitar cache duplicado - permisosStore ya cachea
     refetchOnWindowFocus: false,
   });
 

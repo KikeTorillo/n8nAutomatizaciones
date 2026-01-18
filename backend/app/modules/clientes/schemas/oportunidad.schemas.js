@@ -10,6 +10,7 @@
  */
 
 const Joi = require('joi');
+const { withPagination, idOptional, prioridad } = require('../../../schemas/shared');
 
 // ====================================================================
 // SCHEMAS DE ETAPAS
@@ -112,12 +113,10 @@ const marcarPerdidaSchema = Joi.object({
 // SCHEMAS DE QUERY PARAMS
 // ====================================================================
 
-const listarOportunidadesQuerySchema = Joi.object({
-    page: Joi.number().integer().min(1).default(1),
-    limit: Joi.number().integer().min(1).max(100).default(20),
-    cliente_id: Joi.number().integer().positive(),
-    etapa_id: Joi.number().integer().positive(),
-    vendedor_id: Joi.number().integer().positive(),
+const listarOportunidadesQuerySchema = withPagination({
+    cliente_id: idOptional,
+    etapa_id: idOptional,
+    vendedor_id: idOptional,
     estado: Joi.string().valid('abierta', 'ganada', 'perdida'),
     prioridad: Joi.string().valid('baja', 'normal', 'alta', 'urgente'),
     fecha_desde: Joi.date().iso(),

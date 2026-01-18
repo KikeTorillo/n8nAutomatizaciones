@@ -1,11 +1,12 @@
-import { useMemo, useCallback } from 'react';
+import { useMemo, useCallback, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { DataTable } from '../organisms/DataTable';
 import SearchInput from '../molecules/SearchInput';
 import Button from '../atoms/Button';
 import StatCardGrid from '../organisms/StatCardGrid';
-import { useFilters, usePagination, useModalManager, useDeleteConfirmation } from '@/hooks/utils';
-import { Plus, Search } from 'lucide-react';
+import ViewTabs from '../molecules/ViewTabs';
+import { useFilters, usePagination, useModalManager, useDeleteConfirmation, useExportCSV } from '@/hooks/utils';
+import { Plus, Search, Download } from 'lucide-react';
 
 /**
  * ListadoCRUDPage - Template para paginas CRUD estandar
@@ -90,6 +91,16 @@ export default function ListadoCRUDPage({
   showNewButton = true,
   newButtonLabel = 'Nuevo',
 
+  // ViewModes (tabla/cards)
+  viewModes, // [{ id, label, icon, component }]
+  defaultViewMode = 'table',
+
+  // Extra modals
+  extraModals = {}, // { nombreModal: { component, mapData } }
+
+  // Export CSV
+  exportConfig, // { filename, columns, mapRow }
+
   // Customization
   renderFilters,
   renderBeforeTable,
@@ -97,6 +108,8 @@ export default function ListadoCRUDPage({
   className,
   children,
 }) {
+  // View mode state
+  const [activeView, setActiveView] = useState(defaultViewMode);
   // Paginacion
   const { page, handlePageChange, resetPage, queryParams } = usePagination({
     limit
@@ -113,10 +126,18 @@ export default function ListadoCRUDPage({
     moduloId: filterPersistId
   });
 
-  // Modales
+  // Modales base + extras
+  const extraModalConfig = useMemo(() =>
+    Object.keys(extraModals).reduce((acc, key) => {
+      acc[key] = { isOpen: false, data: null };
+      return acc;
+    }, {}), [extraModals]
+  );
+
   const { openModal, closeModal, isOpen, getModalData } = useModalManager({
     form: { isOpen: false, data: null },
     stats: { isOpen: false, data: null },
+    ...extraModalConfig,
   });
 
   // Query de datos
@@ -137,6 +158,18 @@ export default function ListadoCRUDPage({
     ...data?.paginacion,
   };
 
+  // Export CSV
+  const { exportar, isExporting } = useExportCSV();
+  const handleExport = useCallback(() => {
+    if (!exportConfig || items.length === 0) return;
+    exportar({
+      data: items,
+      filename: exportConfig.filename || `${title?.toLowerCase() || 'export'}_${new Date().toISOString().split('T')[0]}.csv`,
+      columns: exportConfig.columns,
+      mapRow: exportConfig.mapRow,
+    });
+  }, [exportConfig, items, exportar, title]);
+
   // Delete mutation + confirmation
   const deleteMutation = useDeleteMutation?.();
   const { confirmDelete, DeleteConfirmModal } = useDeleteConfirmation({
@@ -156,8 +189,9 @@ export default function ListadoCRUDPage({
     onEdit: handleEditar,
     onDelete: handleEliminar,
     onViewStats: handleVerStats,
+    openModal, // Para modales extra
     extraMutations,
-  }), [handleEditar, handleEliminar, handleVerStats, extraMutations]);
+  }), [handleEditar, handleEliminar, handleVerStats, openModal, extraMutations]);
 
   // Columnas con acciones automáticas si rowActions está definido
   const columns = useMemo(() => {
@@ -186,53 +220,100 @@ export default function ListadoCRUDPage({
       {/* Stats */}
       {statsConfig && <StatCardGrid stats={statsConfig} className="mb-6" />}
 
-      {/* Filtros */}
-      {renderFilters ? (
-        renderFilters({ filtros, setFiltro, limpiarFiltros, filtrosActivos, resetPage })
-      ) : (
-        <div className="mb-6 flex flex-col sm:flex-row gap-3">
-          <div className="flex-1">
-            <SearchInput
-              value={filtros.busqueda || ''}
-              onChange={(value) => {
-                setFiltro('busqueda', value);
-                resetPage();
-              }}
-              placeholder="Buscar..."
-              icon={Search}
-            />
+      {/* ViewTabs + Filtros + Export */}
+      <div className="mb-6 space-y-4">
+        {/* ViewTabs si hay múltiples vistas */}
+        {viewModes && viewModes.length > 1 && (
+          <ViewTabs
+            views={viewModes}
+            activeView={activeView}
+            onViewChange={setActiveView}
+          />
+        )}
+
+        {/* Filtros */}
+        {renderFilters ? (
+          renderFilters({ filtros, setFiltro, limpiarFiltros, filtrosActivos, resetPage })
+        ) : (
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="flex-1">
+              <SearchInput
+                value={filtros.busqueda || ''}
+                onChange={(value) => {
+                  setFiltro('busqueda', value);
+                  resetPage();
+                }}
+                placeholder="Buscar..."
+                icon={Search}
+              />
+            </div>
+            <div className="flex gap-2">
+              {filtrosActivos > 0 && (
+                <Button variant="ghost" size="sm" onClick={limpiarFiltros}>
+                  Limpiar filtros
+                </Button>
+              )}
+              {exportConfig && items.length > 0 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleExport}
+                  disabled={isExporting}
+                  className="flex items-center gap-2"
+                >
+                  <Download className="h-4 w-4" />
+                  <span className="hidden sm:inline">Exportar</span>
+                </Button>
+              )}
+            </div>
           </div>
-          {filtrosActivos > 0 && (
-            <Button variant="ghost" size="sm" onClick={limpiarFiltros}>
-              Limpiar filtros
-            </Button>
-          )}
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Before table slot */}
       {renderBeforeTable?.({ items, isLoading })}
 
-      {/* Table */}
-      <DataTable
-        columns={columns}
-        data={items}
-        isLoading={isLoading}
-        keyField={keyField}
-        onRowClick={onRowClick || handleEditar}
-        pagination={paginacion}
-        onPageChange={handlePageChange}
-        emptyState={{
-          icon: Icon,
-          title: `No hay ${title?.toLowerCase() || 'elementos'}`,
-          description: filtrosActivos > 0
-            ? 'No se encontraron resultados con esos filtros'
-            : `Crea tu primer ${title?.toLowerCase() || 'elemento'}`,
-          actionLabel: filtrosActivos === 0 && showNewButton ? newButtonLabel : undefined,
-          onAction: filtrosActivos === 0 && showNewButton ? handleNuevo : undefined,
-          ...emptyState,
-        }}
-      />
+      {/* Table o Vista Custom */}
+      {viewModes && activeView !== 'table' ? (
+        // Renderizar componente de vista custom
+        (() => {
+          const viewConfig = viewModes.find(v => v.id === activeView);
+          if (viewConfig?.component) {
+            const ViewComponent = viewConfig.component;
+            return (
+              <ViewComponent
+                items={items}
+                isLoading={isLoading}
+                onItemClick={onRowClick || handleEditar}
+                handlers={handlers}
+                pagination={paginacion}
+                onPageChange={handlePageChange}
+              />
+            );
+          }
+          return null;
+        })()
+      ) : (
+        <DataTable
+          columns={columns}
+          data={items}
+          isLoading={isLoading}
+          keyField={keyField}
+          onRowClick={onRowClick || handleEditar}
+          pagination={paginacion}
+          onPageChange={handlePageChange}
+          emptyState={{
+            icon: Icon,
+            title: `No hay ${title?.toLowerCase() || 'elementos'}`,
+            description: filtrosActivos > 0
+              ? 'No se encontraron resultados con esos filtros'
+              : `Crea tu primer ${title?.toLowerCase() || 'elemento'}`,
+            actionLabel: filtrosActivos === 0 && showNewButton ? newButtonLabel : undefined,
+            onAction: filtrosActivos === 0 && showNewButton ? handleNuevo : undefined,
+            ...emptyState,
+          }}
+        />
+      )}
 
       {/* After table slot */}
       {renderAfterTable?.({ items, isLoading })}
@@ -258,6 +339,21 @@ export default function ListadoCRUDPage({
           {...statsModalProps}
         />
       )}
+
+      {/* Extra Modals */}
+      {Object.entries(extraModals).map(([modalKey, modalConfig]) => {
+        const { component: ModalComponent, mapData, props: modalProps = {} } = modalConfig;
+        if (!ModalComponent) return null;
+        return (
+          <ModalComponent
+            key={modalKey}
+            isOpen={isOpen(modalKey)}
+            onClose={() => closeModal(modalKey)}
+            {...(mapData ? mapData(getModalData(modalKey)) : { data: getModalData(modalKey) })}
+            {...modalProps}
+          />
+        );
+      })}
 
       {/* Delete Confirmation */}
       {deleteMutation && <DeleteConfirmModal />}

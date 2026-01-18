@@ -12,6 +12,7 @@
 
 const Joi = require('joi');
 const { commonSchemas } = require('../../../middleware/validation');
+const { withPagination } = require('../../../schemas/shared');
 
 const LIMITES = {
     NOMBRE_MIN: 2,
@@ -369,7 +370,7 @@ const actualizar = {
 };
 
 const listar = {
-    query: Joi.object({
+    query: withPagination({
         organizacion_id: commonSchemas.id.optional(), // Solo super_admin
         activo: Joi.string()
             .valid('true', 'false')
@@ -398,22 +399,7 @@ const listar = {
             .min(2)
             .max(100)
             .trim()
-            .optional(),
-        page: Joi.number()
-            .integer()
-            .min(1)
-            .default(1),
-        limit: Joi.number()
-            .integer()
-            .min(1)
-            .max(100)
-            .default(20),
-        ordenPor: Joi.string()
-            .valid('nombre', 'email', 'telefono', 'tipo', 'creado_en', 'actualizado_en')
-            .default('nombre'),
-        orden: Joi.string()
-            .valid('ASC', 'DESC', 'asc', 'desc')
-            .default('ASC')
+            .optional()
     })
 };
 
@@ -682,17 +668,7 @@ const listarMovimientosCredito = {
     params: Joi.object({
         id: commonSchemas.id
     }),
-    query: Joi.object({
-        limit: Joi.number()
-            .integer()
-            .min(1)
-            .max(100)
-            .default(50),
-        offset: Joi.number()
-            .integer()
-            .min(0)
-            .default(0)
-    })
+    query: withPagination({})
 };
 
 /**

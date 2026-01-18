@@ -77,3 +77,26 @@ export function debounce(func, wait) {
     timeout = setTimeout(later, wait);
   };
 }
+
+/**
+ * Genera un ID único y seguro usando crypto.randomUUID()
+ * Reemplaza Date.now() que puede generar colisiones en operaciones rápidas
+ *
+ * @returns {string} UUID v4 único
+ *
+ * @example
+ * const item = { id: generateId(), nombre: 'Producto' };
+ */
+export function generateId() {
+  // crypto.randomUUID() disponible en browsers modernos (Chrome 92+, Firefox 95+, Safari 15.4+)
+  // Fallback para entornos sin soporte
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  // Fallback: generar UUID v4 manualmente
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}

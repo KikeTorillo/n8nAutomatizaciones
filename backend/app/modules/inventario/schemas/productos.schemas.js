@@ -5,6 +5,7 @@
 
 const Joi = require('joi');
 const { precioMonedaSchema } = require('./shared.schemas');
+const { withPagination, idOptional } = require('../../../schemas/shared');
 
 const productosSchemas = {
     /**
@@ -243,20 +244,16 @@ const productosSchemas = {
      * GET /api/v1/inventario/productos
      */
     listarProductos: {
-        query: Joi.object({
+        query: withPagination({
             activo: Joi.boolean().optional(),
-            categoria_id: Joi.number().integer().positive().optional(),
-            proveedor_id: Joi.number().integer().positive().optional(),
+            categoria_id: idOptional,
+            proveedor_id: idOptional,
             busqueda: Joi.string().max(100).optional(),
             sku: Joi.string().max(50).optional(),
             codigo_barras: Joi.string().max(50).optional(),
             stock_bajo: Joi.boolean().optional(),
             stock_agotado: Joi.boolean().optional(),
-            permite_venta: Joi.boolean().optional(),
-            orden_por: Joi.string().valid('nombre', 'precio', 'stock', 'creado').optional(),
-            orden_dir: Joi.string().valid('asc', 'desc').optional().default('asc'),
-            limit: Joi.number().integer().min(1).max(100).optional().default(50),
-            offset: Joi.number().integer().min(0).optional().default(0)
+            permite_venta: Joi.boolean().optional()
         })
     }
 };

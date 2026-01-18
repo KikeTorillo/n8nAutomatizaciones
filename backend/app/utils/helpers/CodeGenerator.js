@@ -4,18 +4,15 @@
  */
 
 const crypto = require('crypto');
+const SecureRandom = require('./SecureRandom');
 
 class CodeGenerator {
   /**
    * Genera código único para citas
+   * Usa SecureRandom para seguridad criptográfica
    */
   static generateCitaCode() {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    let code = '';
-    for (let i = 0; i < 8; i++) {
-      code += chars[Math.floor(Math.random() * chars.length)];
-    }
-    return code;
+    return SecureRandom.alphanumericCode(8);
   }
 
   /**
@@ -32,10 +29,11 @@ class CodeGenerator {
 
   /**
    * Genera código de tenant
+   * Usa SecureRandom para el sufijo aleatorio
    */
   static generateTenantCode(name) {
     const slug = this.generateSlug(name);
-    const randomSuffix = Math.random().toString(36).substring(2, 5);
+    const randomSuffix = SecureRandom.slugSuffix(5);
     return `${slug}-${randomSuffix}`;
   }
 

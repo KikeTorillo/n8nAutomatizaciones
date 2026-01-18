@@ -209,10 +209,12 @@ const commonSchemas = {
   email: Joi.string().email().lowercase(),
   emailRequired: Joi.string().email().lowercase().required(),
 
-  // Contraseñas
-  password: Joi.string().min(8).pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>])/).messages({
+  // Contraseñas (política homologada con passwordHelper.js y auth.schemas.js)
+  // Requisitos obligatorios: mayúscula, minúscula, número
+  // Caracteres especiales: OPCIONALES (mejoran score pero no son requeridos)
+  password: Joi.string().min(8).pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/).messages({
     'string.min': 'La contraseña debe tener al menos 8 caracteres',
-    'string.pattern.base': 'La contraseña debe contener al menos: una mayúscula, una minúscula, un número y un caracter especial'
+    'string.pattern.base': 'La contraseña debe contener al menos: una mayúscula, una minúscula y un número'
   }),
 
   // Texto básico

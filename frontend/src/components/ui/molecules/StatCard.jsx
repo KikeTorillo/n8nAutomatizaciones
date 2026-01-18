@@ -1,66 +1,5 @@
 import { cn } from '@/lib/utils';
-
-/**
- * Colores disponibles para StatCard
- * - primary: Color principal de la marca
- * - success/green: Estados positivos
- * - warning/yellow/orange: Alertas
- * - danger/red: Errores o estados críticos
- * - info/blue/cyan/purple: Información neutral
- */
-const colorClasses = {
-  // Color principal - PREFERIDO
-  primary: {
-    bg: 'bg-primary-100 dark:bg-primary-900/40',
-    text: 'text-primary-600 dark:text-primary-400',
-  },
-  // Colores semánticos
-  success: {
-    bg: 'bg-green-100 dark:bg-green-900/40',
-    text: 'text-green-600 dark:text-green-400',
-  },
-  warning: {
-    bg: 'bg-yellow-100 dark:bg-yellow-900/40',
-    text: 'text-yellow-600 dark:text-yellow-400',
-  },
-  danger: {
-    bg: 'bg-red-100 dark:bg-red-900/40',
-    text: 'text-red-600 dark:text-red-400',
-  },
-  info: {
-    bg: 'bg-primary-100 dark:bg-primary-900/40',
-    text: 'text-primary-600 dark:text-primary-400',
-  },
-  // Aliases legacy (para compatibilidad)
-  blue: {
-    bg: 'bg-primary-100 dark:bg-primary-900/40',
-    text: 'text-primary-600 dark:text-primary-400',
-  },
-  green: {
-    bg: 'bg-green-100 dark:bg-green-900/40',
-    text: 'text-green-600 dark:text-green-400',
-  },
-  yellow: {
-    bg: 'bg-yellow-100 dark:bg-yellow-900/40',
-    text: 'text-yellow-600 dark:text-yellow-400',
-  },
-  orange: {
-    bg: 'bg-orange-100 dark:bg-orange-900/40',
-    text: 'text-orange-600 dark:text-orange-400',
-  },
-  red: {
-    bg: 'bg-red-100 dark:bg-red-900/40',
-    text: 'text-red-600 dark:text-red-400',
-  },
-  purple: {
-    bg: 'bg-secondary-100 dark:bg-secondary-900/40',
-    text: 'text-secondary-600 dark:text-secondary-400',
-  },
-  cyan: {
-    bg: 'bg-cyan-100 dark:bg-cyan-900/40',
-    text: 'text-cyan-600 dark:text-cyan-400',
-  },
-};
+import { ICON_BG_COLORS, SEMANTIC_COLORS, LOADING_STATES } from '@/lib/uiConstants';
 
 /**
  * Skeleton de carga para StatCard
@@ -70,11 +9,11 @@ function StatCardSkeleton({ variant = 'compact' }) {
     return (
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 animate-pulse">
         <div className="flex items-center justify-between mb-4">
-          <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-24" />
-          <div className="h-8 w-8 bg-gray-200 dark:bg-gray-700 rounded" />
+          <div className={cn('h-5 rounded w-24', LOADING_STATES.skeleton)} />
+          <div className={cn('h-8 w-8 rounded', LOADING_STATES.skeleton)} />
         </div>
-        <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-16 mb-2" />
-        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-20" />
+        <div className={cn('h-8 rounded w-16 mb-2', LOADING_STATES.skeleton)} />
+        <div className={cn('h-4 rounded w-20', LOADING_STATES.skeleton)} />
       </div>
     );
   }
@@ -82,10 +21,10 @@ function StatCardSkeleton({ variant = 'compact' }) {
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-3 sm:p-4 animate-pulse">
       <div className="flex items-center gap-2 sm:gap-3">
-        <div className="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-lg" />
+        <div className={cn('w-10 h-10 rounded-lg', LOADING_STATES.skeleton)} />
         <div className="flex-1">
-          <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-16 mb-2" />
-          <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-12" />
+          <div className={cn('h-3 rounded w-16 mb-2', LOADING_STATES.skeleton)} />
+          <div className={cn('h-6 rounded w-12', LOADING_STATES.skeleton)} />
         </div>
       </div>
     </div>
@@ -118,10 +57,10 @@ function StatCardSkeleton({ variant = 'compact' }) {
 export function StatCard({
   icon: Icon,
   label,
-  title, // Alias de label
+  title,
   value,
   subtext,
-  subtitle, // Alias de subtext
+  subtitle,
   color = 'primary',
   trend,
   variant = 'compact',
@@ -132,7 +71,7 @@ export function StatCard({
   // Resolver aliases
   const displayLabel = label || title;
   const displaySubtext = subtext || subtitle;
-  const colors = colorClasses[color] || colorClasses.primary;
+  const colors = ICON_BG_COLORS[color] || ICON_BG_COLORS.primary;
 
   // Estado de carga
   if (isLoading) {
@@ -159,14 +98,14 @@ export function StatCard({
             {displayLabel}
           </h3>
           <div className={cn('p-2 rounded-lg', colors.bg)}>
-            <Icon className={cn('w-6 h-6', colors.text)} />
+            <Icon className={cn('w-6 h-6', colors.icon)} />
           </div>
         </div>
         <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
           {value}
         </p>
         {displaySubtext && (
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+          <p className={cn('text-sm mt-1', SEMANTIC_COLORS.neutral.text)}>
             {displaySubtext}
           </p>
         )}
@@ -191,10 +130,10 @@ export function StatCard({
     >
       <div className="flex items-center gap-2 sm:gap-3">
         <div className={cn('p-2 rounded-lg', colors.bg)}>
-          <Icon className={cn('w-5 h-5 sm:w-6 sm:h-6', colors.text)} />
+          <Icon className={cn('w-5 h-5 sm:w-6 sm:h-6', colors.icon)} />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 truncate">
+          <p className={cn('text-xs sm:text-sm truncate', SEMANTIC_COLORS.neutral.text)}>
             {displayLabel}
           </p>
           <div className="flex items-baseline gap-2">
@@ -206,8 +145,8 @@ export function StatCard({
                 className={cn(
                   'text-xs font-medium',
                   trend.isPositive
-                    ? 'text-green-600 dark:text-green-400'
-                    : 'text-red-600 dark:text-red-400'
+                    ? SEMANTIC_COLORS.success.text
+                    : SEMANTIC_COLORS.danger.text
                 )}
               >
                 {trend.isPositive ? '+' : ''}{trend.value}%
@@ -215,7 +154,7 @@ export function StatCard({
             )}
           </div>
           {displaySubtext && (
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            <p className={cn('text-xs mt-1', SEMANTIC_COLORS.neutral.textLight)}>
               {displaySubtext}
             </p>
           )}

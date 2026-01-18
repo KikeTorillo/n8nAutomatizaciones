@@ -9,6 +9,7 @@ const multer = require('multer');
 const { getDb } = require('../config/database');
 const logger = require('../utils/logger');
 const { ALLOWED_MIME_TYPES } = require('../services/storage/content.validator');
+const { ResponseHelper } = require('../utils/helpers');
 
 // ============================================
 // CONFIGURACIÓN DE MULTER
@@ -90,10 +91,7 @@ async function checkStorageLimit(req, res, next) {
     const organizacionId = req.tenant?.organizacionId || req.user?.organizacion_id;
 
     if (!organizacionId) {
-      return res.status(401).json({
-        success: false,
-        error: 'No se pudo determinar la organización'
-      });
+      return ResponseHelper.unauthorized(res, 'No se pudo determinar la organización');
     }
 
     // Obtener límite del plan y uso actual
@@ -112,26 +110,22 @@ async function checkStorageLimit(req, res, next) {
     `;
 
     // Establecer bypass RLS para esta consulta (cross-table query)
-    // Usamos transacción porque SET LOCAL solo funciona dentro de una transacción
+    // Usamos set_config con is_local=false (sesión) en lugar de BEGIN/COMMIT
     const db = await getDb();
     let result;
     try {
-      await db.query('BEGIN');
-      await db.query("SET LOCAL app.bypass_rls = 'true'");
+      await db.query('SELECT set_config($1, $2, false)', ['app.bypass_rls', 'true']);
       result = await db.query(query, [organizacionId]);
-      await db.query('COMMIT');
     } catch (err) {
-      await db.query('ROLLBACK');
       throw err;
     } finally {
+      // Limpiar bypass_rls antes de liberar la conexión al pool
+      await db.query('SELECT set_config($1, $2, false)', ['app.bypass_rls', 'false']).catch(() => {});
       db.release();
     }
 
     if (result.rows.length === 0) {
-      return res.status(403).json({
-        success: false,
-        error: 'No se encontró suscripción activa'
-      });
+      return ResponseHelper.forbidden(res, 'No se encontró suscripción activa');
     }
 
     const { limite_almacenamiento_mb, uso_actual_bytes } = result.rows[0];
@@ -141,14 +135,10 @@ async function checkStorageLimit(req, res, next) {
     if (limite_almacenamiento_mb !== null) {
       // Verificar si ya está al límite
       if (usoActualMb >= limite_almacenamiento_mb) {
-        return res.status(403).json({
-          success: false,
-          error: 'Límite de almacenamiento alcanzado',
-          data: {
-            limite_mb: limite_almacenamiento_mb,
-            uso_actual_mb: Math.round(usoActualMb * 100) / 100,
-            disponible_mb: 0
-          }
+        return ResponseHelper.forbidden(res, 'Límite de almacenamiento alcanzado', {
+          limite_mb: limite_almacenamiento_mb,
+          uso_actual_mb: Math.round(usoActualMb * 100) / 100,
+          disponible_mb: 0
         });
       }
 
@@ -163,10 +153,7 @@ async function checkStorageLimit(req, res, next) {
     next();
   } catch (error) {
     logger.error('[StorageMiddleware] Error verificando límite:', error);
-    return res.status(500).json({
-      success: false,
-      error: 'Error verificando límite de almacenamiento'
-    });
+    return ResponseHelper.error(res, 'Error verificando límite de almacenamiento');
   }
 }
 
@@ -188,13 +175,9 @@ function validateFileSize(req, res, next) {
   // Si hay límite de storage, verificar
   if (req.storageLimit) {
     if (fileSizeMb > req.storageLimit.disponibleMb) {
-      return res.status(413).json({
-        success: false,
-        error: 'El archivo excede el espacio disponible',
-        data: {
-          archivo_mb: Math.round(fileSizeMb * 100) / 100,
-          disponible_mb: Math.round(req.storageLimit.disponibleMb * 100) / 100
-        }
+      return ResponseHelper.error(res, 'El archivo excede el espacio disponible', 413, {
+        archivo_mb: Math.round(fileSizeMb * 100) / 100,
+        disponible_mb: Math.round(req.storageLimit.disponibleMb * 100) / 100
       });
     }
   }
@@ -222,41 +205,23 @@ function handleMulterUpload(uploadFn) {
           // Errores específicos de Multer
           switch (err.code) {
             case 'LIMIT_FILE_SIZE':
-              return res.status(413).json({
-                success: false,
-                error: 'El archivo excede el tamaño máximo permitido'
-              });
+              return ResponseHelper.error(res, 'El archivo excede el tamaño máximo permitido', 413);
             case 'LIMIT_FILE_COUNT':
-              return res.status(400).json({
-                success: false,
-                error: 'Se excedió el número máximo de archivos'
-              });
+              return ResponseHelper.error(res, 'Se excedió el número máximo de archivos', 400);
             case 'LIMIT_UNEXPECTED_FILE':
-              return res.status(400).json({
-                success: false,
-                error: 'Campo de archivo inesperado'
-              });
+              return ResponseHelper.error(res, 'Campo de archivo inesperado', 400);
             default:
-              return res.status(400).json({
-                success: false,
-                error: `Error de upload: ${err.message}`
-              });
+              return ResponseHelper.error(res, `Error de upload: ${err.message}`, 400);
           }
         }
 
         // Error personalizado (tipo de archivo no permitido)
         if (err.code === 'INVALID_FILE_TYPE') {
-          return res.status(415).json({
-            success: false,
-            error: err.message
-          });
+          return ResponseHelper.error(res, err.message, 415);
         }
 
         // Otros errores
-        return res.status(500).json({
-          success: false,
-          error: 'Error procesando el archivo'
-        });
+        return ResponseHelper.error(res, 'Error procesando el archivo');
       }
 
       next();

@@ -51,7 +51,6 @@ function ActivarSuscripcion() {
         return;
       }
 
-      console.log('✅ Init point generado:', initPoint);
       toast.success('Redirigiendo a Mercado Pago...');
 
       // Redirigir al usuario a Mercado Pago para completar el pago
@@ -60,8 +59,6 @@ function ActivarSuscripcion() {
       }, 1000);
     },
     onError: (error) => {
-      console.error('❌ Error generando link de pago:', error);
-
       const errorMessage = error.response?.data?.message || 'Error al generar el link de pago';
       toast.error(`Error: ${errorMessage}`);
     },

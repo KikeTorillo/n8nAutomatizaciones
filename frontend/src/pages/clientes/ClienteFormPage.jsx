@@ -32,7 +32,7 @@ function ClienteFormPage() {
         {
           onSuccess: async () => {
             // Asignar etiquetas después de actualizar
-            if (etiquetaIds.length >= 0) {
+            if (etiquetaIds.length > 0) {
               try {
                 await asignarEtiquetas.mutateAsync({
                   clienteId: parseInt(id),

@@ -2,6 +2,7 @@
 
 const Joi = require('joi');
 const { commonSchemas } = require('../../../middleware/validation');
+const { withPagination } = require('../../../schemas/shared');
 
 // ========== Schemas CRUD Estándar ==========
 
@@ -63,11 +64,7 @@ const crear = {
 };
 
 const listar = {
-    query: Joi.object({
-        pagina: Joi.number().integer().min(1).default(1),
-        limite: Joi.number().integer().min(1).max(100).default(20),
-        orden: Joi.string().valid('nombre', 'categoria', 'precio', 'duracion_minutos', 'creado_en').default('nombre'),
-        direccion: Joi.string().valid('ASC', 'DESC').default('ASC'),
+    query: withPagination({
         activo: Joi.boolean().optional(),
         categoria: Joi.string().trim().min(1).max(50).optional(),
         busqueda: Joi.string().trim().min(1).max(100).optional(),

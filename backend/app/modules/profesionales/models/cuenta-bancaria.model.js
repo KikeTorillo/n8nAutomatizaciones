@@ -74,7 +74,7 @@ class CuentaBancariaModel {
             const {
                 uso = null,
                 activo = true,
-                limite = 20,
+                limit = 20,
                 offset = 0
             } = filtros;
 
@@ -107,7 +107,7 @@ class CuentaBancariaModel {
             // Principal primero, luego por fecha de creación
             query += ` ORDER BY cb.es_principal DESC, cb.creado_en DESC`;
             query += ` LIMIT $${contador} OFFSET $${contador + 1}`;
-            values.push(limite, offset);
+            values.push(limit, offset);
 
             const result = await db.query(query, values);
             return result.rows;
@@ -316,7 +316,7 @@ class CuentaBancariaModel {
      */
     static async listarSinCuentaPrincipal(organizacionId, filtros = {}) {
         return await RLSContextManager.query(organizacionId, async (db) => {
-            const { limite = 50, offset = 0 } = filtros;
+            const { limit = 50, offset = 0 } = filtros;
 
             const query = `
                 SELECT

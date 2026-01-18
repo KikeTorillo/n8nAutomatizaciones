@@ -1,88 +1,47 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+/**
+ * ====================================================================
+ * HOOKS CRUD ATRIBUTOS DE PRODUCTO
+ * ====================================================================
+ *
+ * Migrado a factory - Ene 2026
+ * Reducción de ~160 líneas a ~110 líneas
+ * ====================================================================
+ */
+
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { inventarioApi } from '@/services/api/endpoints';
 import { STALE_TIMES } from '@/app/queryClient';
+import { createCRUDHooks } from '@/hooks/factories';
 
-/**
- * Hook para listar atributos de producto
- * @param {Object} params - { incluir_inactivos? }
- */
-export function useAtributos(params = {}) {
-  return useQuery({
-    queryKey: ['atributos', params],
-    queryFn: async () => {
-      const response = await inventarioApi.listarAtributos(params);
-      return response.data.data || [];
-    },
-    staleTime: STALE_TIMES.STATIC_DATA, // 10 minutos (atributos cambian poco)
-  });
-}
+// Crear hooks CRUD
+const hooks = createCRUDHooks({
+  name: 'atributo',
+  namePlural: 'atributos',
+  api: inventarioApi,
+  baseKey: 'atributos',
+  apiMethods: {
+    list: 'listarAtributos',
+    get: 'obtenerAtributo',
+    create: 'crearAtributo',
+    update: 'actualizarAtributo',
+    delete: 'eliminarAtributo',
+  },
+  invalidateOnCreate: ['atributos'],
+  invalidateOnUpdate: ['atributos'],
+  invalidateOnDelete: ['atributos'],
+  staleTime: STALE_TIMES.STATIC_DATA,
+});
 
-/**
- * Hook para obtener atributo por ID con sus valores
- */
-export function useAtributo(id) {
-  return useQuery({
-    queryKey: ['atributo', id],
-    queryFn: async () => {
-      const response = await inventarioApi.obtenerAtributo(id);
-      return response.data.data;
-    },
-    enabled: !!id,
-    staleTime: STALE_TIMES.STATIC_DATA,
-  });
-}
+// Exportar hooks CRUD
+export const useAtributos = hooks.useList;
+export const useAtributo = hooks.useDetail;
+export const useCrearAtributo = hooks.useCreate;
+export const useActualizarAtributo = hooks.useUpdate;
+export const useEliminarAtributo = hooks.useDelete;
 
-/**
- * Hook para crear atributo
- */
-export function useCrearAtributo() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (data) => {
-      const response = await inventarioApi.crearAtributo(data);
-      return response.data.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['atributos'] });
-    },
-  });
-}
-
-/**
- * Hook para actualizar atributo
- */
-export function useActualizarAtributo() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ id, data }) => {
-      const response = await inventarioApi.actualizarAtributo(id, data);
-      return response.data.data;
-    },
-    onSuccess: (_, { id }) => {
-      queryClient.invalidateQueries({ queryKey: ['atributos'] });
-      queryClient.invalidateQueries({ queryKey: ['atributo', id] });
-    },
-  });
-}
-
-/**
- * Hook para eliminar atributo
- */
-export function useEliminarAtributo() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (id) => {
-      const response = await inventarioApi.eliminarAtributo(id);
-      return response.data.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['atributos'] });
-    },
-  });
-}
+// ====================================================================
+// HOOKS PARA VALORES DE ATRIBUTOS
+// ====================================================================
 
 /**
  * Hook para agregar valor a un atributo
@@ -115,7 +74,6 @@ export function useActualizarValor() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['atributos'] });
-      // Invalidar todos los atributos individuales
       queryClient.invalidateQueries({ queryKey: ['atributo'] });
     },
   });

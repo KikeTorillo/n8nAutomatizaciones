@@ -4,6 +4,7 @@
  */
 
 const Joi = require('joi');
+const { withPagination, idOptional } = require('../../../schemas/shared');
 
 const reservasSchemas = {
     /**
@@ -67,14 +68,12 @@ const reservasSchemas = {
      * GET /api/v1/inventario/reservas
      */
     listarReservas: {
-        query: Joi.object({
+        query: withPagination({
             estado: Joi.string().valid('activa', 'confirmada', 'expirada', 'cancelada').optional(),
-            producto_id: Joi.number().integer().positive().optional(),
-            sucursal_id: Joi.number().integer().positive().optional(),
+            producto_id: idOptional,
+            sucursal_id: idOptional,
             tipo_origen: Joi.string().valid('venta_pos', 'orden_venta', 'cita_servicio', 'transferencia').optional(),
-            origen_id: Joi.number().integer().positive().optional(),
-            limit: Joi.number().integer().min(1).max(100).optional().default(50),
-            offset: Joi.number().integer().min(0).optional().default(0)
+            origen_id: idOptional
         })
     },
 

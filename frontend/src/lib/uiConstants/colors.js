@@ -1,0 +1,193 @@
+/**
+ * ====================================================================
+ * COLORES SEMANTICOS UI
+ * ====================================================================
+ *
+ * Centraliza clases de colores para consistencia en componentes UI.
+ * Usar factor 40 para dark mode: dark:bg-{color}-900/40
+ *
+ * Ene 2026 - Refactorización Frontend
+ * ====================================================================
+ */
+
+/**
+ * Colores semánticos para backgrounds, textos y bordes
+ * Cada color incluye variantes para diferentes niveles de intensidad
+ */
+export const SEMANTIC_COLORS = {
+  primary: {
+    bg: 'bg-primary-100 dark:bg-primary-900/40',
+    bgLight: 'bg-primary-50 dark:bg-primary-900/20',
+    bgSolid: 'bg-primary-700 dark:bg-primary-600',
+    text: 'text-primary-600 dark:text-primary-400',
+    textDark: 'text-primary-800 dark:text-primary-200',
+    textLight: 'text-primary-500 dark:text-primary-300',
+    border: 'border-primary-200 dark:border-primary-700',
+    borderSolid: 'border-primary-500 dark:border-primary-400',
+    icon: 'text-primary-600 dark:text-primary-400',
+    ring: 'focus:ring-primary-500',
+    hover: 'hover:bg-primary-200 dark:hover:bg-primary-800/40',
+  },
+  success: {
+    bg: 'bg-green-100 dark:bg-green-900/40',
+    bgLight: 'bg-green-50 dark:bg-green-900/20',
+    bgSolid: 'bg-green-600 dark:bg-green-500',
+    text: 'text-green-600 dark:text-green-400',
+    textDark: 'text-green-800 dark:text-green-200',
+    textLight: 'text-green-500 dark:text-green-300',
+    border: 'border-green-200 dark:border-green-700',
+    borderSolid: 'border-green-500 dark:border-green-400',
+    icon: 'text-green-600 dark:text-green-400',
+    ring: 'focus:ring-green-500',
+    hover: 'hover:bg-green-200 dark:hover:bg-green-800/40',
+  },
+  warning: {
+    bg: 'bg-yellow-100 dark:bg-yellow-900/40',
+    bgLight: 'bg-yellow-50 dark:bg-yellow-900/20',
+    bgSolid: 'bg-amber-600 dark:bg-amber-500',
+    text: 'text-yellow-600 dark:text-yellow-400',
+    textDark: 'text-yellow-800 dark:text-yellow-200',
+    textLight: 'text-yellow-500 dark:text-yellow-300',
+    border: 'border-yellow-200 dark:border-yellow-700',
+    borderSolid: 'border-yellow-500 dark:border-yellow-400',
+    icon: 'text-yellow-600 dark:text-yellow-400',
+    ring: 'focus:ring-amber-500',
+    hover: 'hover:bg-yellow-200 dark:hover:bg-yellow-800/40',
+  },
+  danger: {
+    bg: 'bg-red-100 dark:bg-red-900/40',
+    bgLight: 'bg-red-50 dark:bg-red-900/20',
+    bgSolid: 'bg-red-600 dark:bg-red-500',
+    text: 'text-red-600 dark:text-red-400',
+    textDark: 'text-red-800 dark:text-red-200',
+    textLight: 'text-red-500 dark:text-red-300',
+    border: 'border-red-200 dark:border-red-700',
+    borderSolid: 'border-red-500 dark:border-red-400',
+    icon: 'text-red-600 dark:text-red-400',
+    ring: 'focus:ring-red-500',
+    hover: 'hover:bg-red-200 dark:hover:bg-red-800/40',
+  },
+  info: {
+    bg: 'bg-primary-100 dark:bg-primary-900/40',
+    bgLight: 'bg-primary-50 dark:bg-primary-900/20',
+    bgSolid: 'bg-primary-600 dark:bg-primary-500',
+    text: 'text-primary-600 dark:text-primary-400',
+    textDark: 'text-primary-800 dark:text-primary-200',
+    textLight: 'text-primary-500 dark:text-primary-300',
+    border: 'border-primary-200 dark:border-primary-700',
+    borderSolid: 'border-primary-500 dark:border-primary-400',
+    icon: 'text-primary-600 dark:text-primary-400',
+    ring: 'focus:ring-primary-500',
+    hover: 'hover:bg-primary-200 dark:hover:bg-primary-800/40',
+  },
+  neutral: {
+    bg: 'bg-gray-100 dark:bg-gray-800',
+    bgLight: 'bg-gray-50 dark:bg-gray-900',
+    bgSolid: 'bg-gray-600 dark:bg-gray-500',
+    text: 'text-gray-600 dark:text-gray-400',
+    textDark: 'text-gray-800 dark:text-gray-200',
+    textLight: 'text-gray-500 dark:text-gray-300',
+    border: 'border-gray-200 dark:border-gray-700',
+    borderSolid: 'border-gray-500 dark:border-gray-400',
+    icon: 'text-gray-600 dark:text-gray-400',
+    ring: 'focus:ring-gray-500',
+    hover: 'hover:bg-gray-200 dark:hover:bg-gray-700',
+  },
+};
+
+/**
+ * Aliases para compatibilidad con código legacy
+ */
+export const COLOR_ALIASES = {
+  blue: 'primary',
+  green: 'success',
+  yellow: 'warning',
+  red: 'danger',
+  error: 'danger',
+  default: 'neutral',
+};
+
+/**
+ * Helper para obtener colores con fallback
+ * @param {string} color - Nombre del color
+ * @returns {Object} Objeto con clases de color
+ */
+export function getSemanticColor(color) {
+  const normalizedColor = COLOR_ALIASES[color] || color;
+  return SEMANTIC_COLORS[normalizedColor] || SEMANTIC_COLORS.neutral;
+}
+
+/**
+ * Colores para badges/estados
+ * Usados en indicadores de estado en tablas y cards
+ */
+export const BADGE_COLORS = {
+  default: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
+  primary: 'bg-primary-100 text-primary-800 dark:bg-primary-900/40 dark:text-primary-300',
+  success: 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300',
+  warning: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300',
+  error: 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300',
+  info: 'bg-primary-100 text-primary-800 dark:bg-primary-900/40 dark:text-primary-300',
+};
+
+/**
+ * Colores para iconos con fondo
+ * Usados en StatCards, EmptyState, etc.
+ */
+export const ICON_BG_COLORS = {
+  primary: {
+    bg: 'bg-primary-100 dark:bg-primary-900/40',
+    icon: 'text-primary-600 dark:text-primary-400',
+  },
+  success: {
+    bg: 'bg-green-100 dark:bg-green-900/40',
+    icon: 'text-green-600 dark:text-green-400',
+  },
+  warning: {
+    bg: 'bg-yellow-100 dark:bg-yellow-900/40',
+    icon: 'text-yellow-600 dark:text-yellow-400',
+  },
+  danger: {
+    bg: 'bg-red-100 dark:bg-red-900/40',
+    icon: 'text-red-600 dark:text-red-400',
+  },
+  info: {
+    bg: 'bg-primary-100 dark:bg-primary-900/40',
+    icon: 'text-primary-600 dark:text-primary-400',
+  },
+  neutral: {
+    bg: 'bg-gray-100 dark:bg-gray-800',
+    icon: 'text-gray-600 dark:text-gray-400',
+  },
+  // Aliases legacy
+  blue: {
+    bg: 'bg-primary-100 dark:bg-primary-900/40',
+    icon: 'text-primary-600 dark:text-primary-400',
+  },
+  green: {
+    bg: 'bg-green-100 dark:bg-green-900/40',
+    icon: 'text-green-600 dark:text-green-400',
+  },
+  yellow: {
+    bg: 'bg-yellow-100 dark:bg-yellow-900/40',
+    icon: 'text-yellow-600 dark:text-yellow-400',
+  },
+  orange: {
+    bg: 'bg-orange-100 dark:bg-orange-900/40',
+    icon: 'text-orange-600 dark:text-orange-400',
+  },
+  red: {
+    bg: 'bg-red-100 dark:bg-red-900/40',
+    icon: 'text-red-600 dark:text-red-400',
+  },
+  purple: {
+    bg: 'bg-secondary-100 dark:bg-secondary-900/40',
+    icon: 'text-secondary-600 dark:text-secondary-400',
+  },
+  cyan: {
+    bg: 'bg-cyan-100 dark:bg-cyan-900/40',
+    icon: 'text-cyan-600 dark:text-cyan-400',
+  },
+};
+
+export default SEMANTIC_COLORS;

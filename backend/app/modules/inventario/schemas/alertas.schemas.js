@@ -4,6 +4,7 @@
  */
 
 const Joi = require('joi');
+const { withPagination, idOptional } = require('../../../schemas/shared');
 
 const alertasSchemas = {
     /**
@@ -11,18 +12,16 @@ const alertasSchemas = {
      * GET /api/v1/inventario/alertas
      */
     listarAlertas: {
-        query: Joi.object({
+        query: withPagination({
             tipo_alerta: Joi.string().valid(
                 'stock_minimo', 'stock_agotado', 'proximo_vencimiento',
                 'vencido', 'sin_movimiento'
             ).optional(),
             nivel: Joi.string().valid('info', 'warning', 'critical').optional(),
             leida: Joi.boolean().optional(),
-            producto_id: Joi.number().integer().positive().optional(),
+            producto_id: idOptional,
             fecha_desde: Joi.string().isoDate().optional(),
-            fecha_hasta: Joi.string().isoDate().optional(),
-            limit: Joi.number().integer().min(1).max(100).optional().default(50),
-            offset: Joi.number().integer().min(0).optional().default(0)
+            fecha_hasta: Joi.string().isoDate().optional()
         })
     },
 

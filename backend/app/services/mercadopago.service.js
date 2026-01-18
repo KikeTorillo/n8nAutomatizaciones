@@ -370,10 +370,12 @@ class MercadoPagoService {
 
   /**
    * Generar clave de idempotencia para requests
+   * Usa SecureRandom para seguridad criptográfica
    * @private
    */
   _generateIdempotencyKey() {
-    return `${Date.now()}-${Math.random().toString(36).substring(7)}`;
+    const SecureRandom = require('../utils/helpers/SecureRandom');
+    return SecureRandom.idempotencyKey();
   }
 }
 

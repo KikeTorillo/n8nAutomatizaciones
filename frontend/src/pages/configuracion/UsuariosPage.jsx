@@ -4,7 +4,7 @@
  * Refactorizada con componentes genéricos de configuración
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, createContext, useContext } from 'react';
 import {
   Users,
   Plus,
@@ -20,8 +20,7 @@ import {
 
 import { Button, ConfirmDialog, StatCardGrid } from '@/components/ui';
 import { ConfigPageHeader, ConfigSearchBar, ConfigEmptyState } from '@/components/configuracion';
-import { useToast } from '@/hooks/utils';
-import { useModalManager } from '@/hooks/utils';
+import { useToast, useModalManager, useFilters } from '@/hooks/utils';
 import {
   useUsuarios,
   useCambiarEstadoUsuario,
@@ -31,6 +30,10 @@ import {
   ROLES_USUARIO,
 } from '@/hooks/personas';
 import UsuarioFormDrawer from '@/components/usuarios/UsuarioFormDrawer';
+
+// Context para compartir estado entre UsuariosPage y UsuarioRow
+const UsuariosContext = createContext(null);
+const useUsuariosContext = () => useContext(UsuariosContext);
 
 // Opciones de filtros
 const FILTROS_ROL = [
@@ -44,13 +47,28 @@ const FILTROS_ESTADO = [
   { value: 'false', label: 'Inactivos' },
 ];
 
+// Estado inicial de filtros
+const INITIAL_FILTERS = {
+  buscar: '',
+  rol: '',
+  activo: '',
+};
+
 function UsuariosPage() {
   const toast = useToast();
 
-  // Estado de filtros y UI
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filtroRol, setFiltroRol] = useState('');
-  const [filtroEstado, setFiltroEstado] = useState('');
+  // Filtros consolidados con useFilters
+  const {
+    filtros,
+    filtrosQuery,
+    setFiltro,
+    limpiarFiltros,
+    hasFiltrosActivos,
+  } = useFilters(INITIAL_FILTERS, {
+    moduloId: 'configuracion.usuarios',
+    debounceFields: ['buscar'],
+  });
+
   const [vinculandoUsuario, setVinculandoUsuario] = useState(null);
 
   // Modal manager
@@ -59,13 +77,11 @@ function UsuariosPage() {
     confirm: { isOpen: false, data: null, type: '', title: '', message: '' },
   });
 
-  // Query params
+  // Query params con filtrosQuery (debounced)
   const queryParams = useMemo(() => ({
-    buscar: searchTerm || undefined,
-    rol: filtroRol || undefined,
-    activo: filtroEstado || undefined,
+    ...filtrosQuery,
     limit: 100,
-  }), [searchTerm, filtroRol, filtroEstado]);
+  }), [filtrosQuery]);
 
   // Queries
   const { data: usuariosData, isLoading } = useUsuarios(queryParams);
@@ -157,107 +173,122 @@ function UsuariosPage() {
     return colors[rol] || 'gray';
   };
 
-  const isFiltered = !!(searchTerm || filtroRol || filtroEstado);
+  const isFiltered = hasFiltrosActivos;
+
+  // Contexto compartido para UsuarioRow (reduce prop drilling)
+  const contextValue = useMemo(() => ({
+    onCambiarRol: handleCambiarRol,
+    onDesvincular: handleDesvincular,
+    onVincular: handleVincularProfesional,
+    vinculandoUsuario,
+    setVinculandoUsuario,
+    profesionalesDisponibles,
+    getRolBadgeColor,
+    cambiarRolMutation,
+    cambiarEstadoMutation,
+  }), [vinculandoUsuario, profesionalesDisponibles, cambiarRolMutation, cambiarEstadoMutation]);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <ConfigPageHeader
-        title="Usuarios"
-        subtitle="Gestiona el acceso al sistema"
-        icon={Users}
-        maxWidth="max-w-6xl"
-        actions={
-          <Button onClick={handleNuevo} size="sm">
-            <Plus className="w-4 h-4 mr-2" />
-            Nuevo Usuario
-          </Button>
-        }
-      />
-
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <StatCardGrid stats={stats} columns={3} className="mb-6" />
-
-        <ConfigSearchBar
-          value={searchTerm}
-          onChange={setSearchTerm}
-          placeholder="Buscar por nombre o email..."
-          filters={[
-            { name: 'rol', value: filtroRol, onChange: setFiltroRol, options: FILTROS_ROL, placeholder: 'Todos los roles' },
-            { name: 'estado', value: filtroEstado, onChange: setFiltroEstado, options: FILTROS_ESTADO, placeholder: 'Todos' },
-          ]}
+    <UsuariosContext.Provider value={contextValue}>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <ConfigPageHeader
+          title="Usuarios"
+          subtitle="Gestiona el acceso al sistema"
+          icon={Users}
+          maxWidth="max-w-6xl"
+          actions={
+            <Button onClick={handleNuevo} size="sm">
+              <Plus className="w-4 h-4 mr-2" />
+              Nuevo Usuario
+            </Button>
+          }
         />
 
-        {/* Lista de usuarios */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-          {isLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 animate-spin text-primary-600" />
-            </div>
-          ) : usuarios.length === 0 ? (
-            <ConfigEmptyState
-              icon={Users}
-              title="No hay usuarios"
-              description="Crea el primer usuario para comenzar a gestionar accesos"
-              actionLabel="Crear primer usuario"
-              onAction={handleNuevo}
-              isFiltered={isFiltered}
-            />
-          ) : (
-            <div className="divide-y divide-gray-200 dark:divide-gray-700">
-              {usuarios.map((usuario) => (
-                <UsuarioRow
-                  key={usuario.id}
-                  usuario={usuario}
-                  onEdit={() => handleEditar(usuario)}
-                  onToggleActivo={() => handleToggleActivo(usuario)}
-                  onCambiarRol={handleCambiarRol}
-                  onDesvincular={handleDesvincular}
-                  onVincular={handleVincularProfesional}
-                  vinculandoUsuario={vinculandoUsuario}
-                  setVinculandoUsuario={setVinculandoUsuario}
-                  profesionalesDisponibles={profesionalesDisponibles}
-                  getRolBadgeColor={getRolBadgeColor}
-                  cambiarRolMutation={cambiarRolMutation}
-                  cambiarEstadoMutation={cambiarEstadoMutation}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-      </main>
+        <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <StatCardGrid stats={stats} columns={3} className="mb-6" />
 
-      <UsuarioFormDrawer
-        isOpen={isOpen('form')}
-        onClose={() => closeModal('form')}
-        mode={getModalData('form') ? 'edit' : 'create'}
-        usuario={getModalData('form')}
-      />
+          <ConfigSearchBar
+            value={filtros.buscar}
+            onChange={(value) => setFiltro('buscar', value)}
+            placeholder="Buscar por nombre o email..."
+            filters={[
+              { name: 'rol', value: filtros.rol, onChange: (value) => setFiltro('rol', value), options: FILTROS_ROL, placeholder: 'Todos los roles' },
+              { name: 'estado', value: filtros.activo, onChange: (value) => setFiltro('activo', value), options: FILTROS_ESTADO, placeholder: 'Todos' },
+            ]}
+          />
 
-      <ConfirmDialog
-        isOpen={isOpen('confirm')}
-        onClose={() => closeModal('confirm')}
-        title={getModalProps('confirm').title}
-        message={getModalProps('confirm').message}
-        confirmText={
-          getModalProps('confirm').type === 'desactivar' ? 'Desactivar' :
-          getModalProps('confirm').type === 'activar' ? 'Activar' : 'Confirmar'
-        }
-        variant={getModalProps('confirm').type === 'desactivar' ? 'danger' : 'default'}
-        onConfirm={confirmarAccion}
-        isLoading={cambiarEstadoMutation.isPending || vincularMutation.isPending}
-      />
-    </div>
+          {/* Lista de usuarios */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+            {isLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-8 h-8 animate-spin text-primary-600" />
+              </div>
+            ) : usuarios.length === 0 ? (
+              <ConfigEmptyState
+                icon={Users}
+                title="No hay usuarios"
+                description="Crea el primer usuario para comenzar a gestionar accesos"
+                actionLabel="Crear primer usuario"
+                onAction={handleNuevo}
+                isFiltered={isFiltered}
+              />
+            ) : (
+              <div className="divide-y divide-gray-200 dark:divide-gray-700">
+                {usuarios.map((usuario) => (
+                  <UsuarioRow
+                    key={usuario.id}
+                    usuario={usuario}
+                    onEdit={() => handleEditar(usuario)}
+                    onToggleActivo={() => handleToggleActivo(usuario)}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        </main>
+
+        <UsuarioFormDrawer
+          isOpen={isOpen('form')}
+          onClose={() => closeModal('form')}
+          mode={getModalData('form') ? 'edit' : 'create'}
+          usuario={getModalData('form')}
+        />
+
+        <ConfirmDialog
+          isOpen={isOpen('confirm')}
+          onClose={() => closeModal('confirm')}
+          title={getModalProps('confirm').title}
+          message={getModalProps('confirm').message}
+          confirmText={
+            getModalProps('confirm').type === 'desactivar' ? 'Desactivar' :
+            getModalProps('confirm').type === 'activar' ? 'Activar' : 'Confirmar'
+          }
+          variant={getModalProps('confirm').type === 'desactivar' ? 'danger' : 'default'}
+          onConfirm={confirmarAccion}
+          isLoading={cambiarEstadoMutation.isPending || vincularMutation.isPending}
+        />
+      </div>
+    </UsuariosContext.Provider>
   );
 }
 
 /**
  * Fila de usuario individual
+ * Usa UsuariosContext para reducir prop drilling (de 12 props a 3)
  */
-function UsuarioRow({
-  usuario, onEdit, onToggleActivo, onCambiarRol, onDesvincular, onVincular,
-  vinculandoUsuario, setVinculandoUsuario, profesionalesDisponibles,
-  getRolBadgeColor, cambiarRolMutation, cambiarEstadoMutation,
-}) {
+function UsuarioRow({ usuario, onEdit, onToggleActivo }) {
+  const {
+    onCambiarRol,
+    onDesvincular,
+    onVincular,
+    vinculandoUsuario,
+    setVinculandoUsuario,
+    profesionalesDisponibles,
+    getRolBadgeColor,
+    cambiarRolMutation,
+    cambiarEstadoMutation,
+  } = useUsuariosContext();
+
   return (
     <div className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
       <div className="flex items-start gap-4">

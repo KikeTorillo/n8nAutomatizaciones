@@ -67,7 +67,7 @@ class CatalogoHabilidadesModel {
             const {
                 categoria = null,
                 busqueda = null,
-                limite = 100,
+                limit = 100,
                 offset = 0
             } = filtros;
 
@@ -101,7 +101,7 @@ class CatalogoHabilidadesModel {
 
             query += ` ORDER BY ch.categoria ASC, ch.nombre ASC`;
             query += ` LIMIT $${contador} OFFSET $${contador + 1}`;
-            values.push(limite, offset);
+            values.push(limit, offset);
 
             const result = await db.query(query, values);
             return result.rows;
@@ -317,7 +317,7 @@ class HabilidadEmpleadoModel {
                 categoria = null,
                 nivel = null,
                 verificado = null,
-                limite = 50,
+                limit = 50,
                 offset = 0
             } = filtros;
 
@@ -372,7 +372,7 @@ class HabilidadEmpleadoModel {
                 END ASC,
                 ch.nombre ASC`;
             query += ` LIMIT $${contador} OFFSET $${contador + 1}`;
-            values.push(limite, offset);
+            values.push(limit, offset);
 
             const result = await db.query(query, values);
             return result.rows;
@@ -577,7 +577,7 @@ class HabilidadEmpleadoModel {
      */
     static async buscarProfesionalesPorHabilidad(organizacionId, habilidadId, filtros = {}) {
         return await RLSContextManager.query(organizacionId, async (db) => {
-            const { nivel_minimo = null, verificado = null, limite = 50, offset = 0 } = filtros;
+            const { nivel_minimo = null, verificado = null, limit = 50, offset = 0 } = filtros;
 
             let query = `
                 SELECT
@@ -631,7 +631,7 @@ class HabilidadEmpleadoModel {
                 he.anios_experiencia DESC,
                 p.nombre_completo ASC`;
             query += ` LIMIT $${contador} OFFSET $${contador + 1}`;
-            values.push(limite, offset);
+            values.push(limit, offset);
 
             const result = await db.query(query, values);
             return result.rows;

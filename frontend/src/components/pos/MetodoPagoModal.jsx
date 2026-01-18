@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { Button, Input, Drawer } from '@/components/ui';
 import TecladoBilletes from './TecladoBilletes';
+import { generateId } from '@/lib/utils';
 
 /**
  * Modal para seleccionar método(s) de pago y finalizar venta
@@ -113,7 +114,7 @@ export default function MetodoPagoModal({
     }
 
     const nuevoPago = {
-      id: Date.now(), // ID temporal para key
+      id: generateId(), // ID temporal para key
       metodo_pago: metodoPagoActual,
       monto,
       monto_recibido: montoRecibido,
@@ -487,7 +488,7 @@ export default function MetodoPagoModal({
                   }
 
                   const nuevoPago = {
-                    id: Date.now(),
+                    id: generateId(),
                     metodo_pago: metodoPagoActual,
                     monto: montoSplit,
                     monto_recibido: montoRecibido,

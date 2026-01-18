@@ -123,7 +123,11 @@ class SaaSApplication {
     // CORS: Configuración de Cross-Origin Resource Sharing
     this.app.use(cors({
       // Orígenes permitidos - desde env o localhost por defecto
-      origin: process.env.CORS_ORIGIN?.split(',') || ['http://localhost:3001'],
+      // .trim() previene bypass de CORS por espacios en la configuración
+      origin: (process.env.CORS_ORIGIN || 'http://localhost:3001')
+        .split(',')
+        .map(o => o.trim())
+        .filter(Boolean),
 
       // Permite el envío de cookies y headers de autenticación
       credentials: true,

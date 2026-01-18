@@ -3,6 +3,7 @@ import { STALE_TIMES } from '@/app/queryClient';
 import { comisionesApi } from '@/services/api/endpoints';
 import { useToast } from '../../utils/useToast';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
+import { sanitizeParams } from '@/lib/params';
 
 /**
  * Hooks personalizados para gestión de comisiones
@@ -28,12 +29,7 @@ export function useConfiguracionesComision(params = {}) {
     queryKey: ['comisiones', 'configuracion', params],
     queryFn: async () => {
       // Sanitizar parámetros: eliminar valores vacíos
-      const sanitizedParams = Object.entries(params).reduce((acc, [key, value]) => {
-        if (value !== undefined && value !== null && value !== '') {
-          acc[key] = value;
-        }
-        return acc;
-      }, {});
+      const sanitizedParams = sanitizeParams(params);
 
       const response = await comisionesApi.listarConfiguraciones(sanitizedParams);
       return response.data?.data || [];
@@ -57,12 +53,7 @@ export function useHistorialConfiguracion(params = {}) {
   return useQuery({
     queryKey: ['comisiones', 'historial-configuracion', params],
     queryFn: async () => {
-      const sanitizedParams = Object.entries(params).reduce((acc, [key, value]) => {
-        if (value !== undefined && value !== null && value !== '') {
-          acc[key] = value;
-        }
-        return acc;
-      }, {});
+      const sanitizedParams = sanitizeParams(params);
 
       const response = await comisionesApi.obtenerHistorialConfiguracion(sanitizedParams);
       return response.data?.data || [];
@@ -172,12 +163,7 @@ export function useComisionesProfesional(profesionalId, params = {}) {
   return useQuery({
     queryKey: ['comisiones', 'profesional', profesionalId, params],
     queryFn: async () => {
-      const sanitizedParams = Object.entries(params).reduce((acc, [key, value]) => {
-        if (value !== undefined && value !== null && value !== '') {
-          acc[key] = value;
-        }
-        return acc;
-      }, {});
+      const sanitizedParams = sanitizeParams(params);
 
       const response = await comisionesApi.obtenerPorProfesional(profesionalId, sanitizedParams);
       return {
@@ -207,12 +193,7 @@ export function useComisionesPorPeriodo(params = {}) {
   return useQuery({
     queryKey: ['comisiones', 'periodo', params],
     queryFn: async () => {
-      const sanitizedParams = Object.entries(params).reduce((acc, [key, value]) => {
-        if (value !== undefined && value !== null && value !== '') {
-          acc[key] = value;
-        }
-        return acc;
-      }, {});
+      const sanitizedParams = sanitizeParams(params);
 
       const response = await comisionesApi.obtenerPorPeriodo(sanitizedParams);
       const comisiones = response.data?.data || [];
@@ -328,12 +309,7 @@ export function useDashboardComisiones(params = {}) {
   return useQuery({
     queryKey: ['comisiones', 'dashboard', params],
     queryFn: async () => {
-      const sanitizedParams = Object.entries(params).reduce((acc, [key, value]) => {
-        if (value !== undefined && value !== null && value !== '') {
-          acc[key] = value;
-        }
-        return acc;
-      }, {});
+      const sanitizedParams = sanitizeParams(params);
 
       const response = await comisionesApi.obtenerDashboard(sanitizedParams);
       return response.data?.data || {};
@@ -359,12 +335,7 @@ export function useEstadisticasComisiones(params = {}) {
   return useQuery({
     queryKey: ['comisiones', 'estadisticas', params],
     queryFn: async () => {
-      const sanitizedParams = Object.entries(params).reduce((acc, [key, value]) => {
-        if (value !== undefined && value !== null && value !== '') {
-          acc[key] = value;
-        }
-        return acc;
-      }, {});
+      const sanitizedParams = sanitizeParams(params);
 
       const response = await comisionesApi.obtenerEstadisticas(sanitizedParams);
       return response.data?.data || {};
@@ -391,12 +362,7 @@ export function useGraficaComisionesPorDia(params = {}) {
   return useQuery({
     queryKey: ['comisiones', 'grafica-por-dia', params],
     queryFn: async () => {
-      const sanitizedParams = Object.entries(params).reduce((acc, [key, value]) => {
-        if (value !== undefined && value !== null && value !== '') {
-          acc[key] = value;
-        }
-        return acc;
-      }, {});
+      const sanitizedParams = sanitizeParams(params);
 
       const response = await comisionesApi.obtenerGraficaPorDia(sanitizedParams);
       return response.data?.data?.grafica || [];

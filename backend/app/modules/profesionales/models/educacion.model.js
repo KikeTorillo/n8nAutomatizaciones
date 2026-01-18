@@ -92,7 +92,7 @@ class EducacionFormalModel {
             const {
                 nivel = null,
                 en_curso = null,
-                limite = 20,
+                limit = 20,
                 offset = 0
             } = filtros;
 
@@ -136,7 +136,7 @@ class EducacionFormalModel {
                 END ASC,
                 e.orden ASC, e.fecha_inicio DESC`;
             query += ` LIMIT $${contador} OFFSET $${contador + 1}`;
-            values.push(limite, offset);
+            values.push(limit, offset);
 
             const result = await db.query(query, values);
             return result.rows;
@@ -378,7 +378,7 @@ class EducacionFormalModel {
      */
     static async buscarPorNivel(organizacionId, nivel, filtros = {}) {
         return await RLSContextManager.query(organizacionId, async (db) => {
-            const { limite = 50, offset = 0 } = filtros;
+            const { limit = 50, offset = 0 } = filtros;
 
             const query = `
                 SELECT DISTINCT ON (p.id)
@@ -402,7 +402,7 @@ class EducacionFormalModel {
                 LIMIT $3 OFFSET $4
             `;
 
-            const result = await db.query(query, [organizacionId, nivel, limite, offset]);
+            const result = await db.query(query, [organizacionId, nivel, limit, offset]);
             return result.rows;
         });
     }

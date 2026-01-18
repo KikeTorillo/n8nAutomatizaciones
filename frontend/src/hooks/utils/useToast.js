@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { generateId } from '@/lib/utils';
 
 /**
  * Store de Zustand para manejar toasts
@@ -7,7 +8,7 @@ const useToastStore = create((set) => ({
   toasts: [],
 
   addToast: (toast) => {
-    const id = Date.now() + Math.random();
+    const id = generateId();
     const newToast = {
       id,
       message: toast.message,

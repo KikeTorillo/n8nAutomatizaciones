@@ -1,131 +1,75 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+/**
+ * ====================================================================
+ * HOOKS CRUD CATEGORIAS
+ * ====================================================================
+ *
+ * Migrado a factory - Ene 2026
+ * Reducción de ~130 líneas a ~70 líneas
+ * ====================================================================
+ */
+
+import { useQuery } from '@tanstack/react-query';
 import { inventarioApi } from '@/services/api/endpoints';
 import { STALE_TIMES } from '@/app/queryClient';
-import { sanitizeParams } from '@/lib/params';
-import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
+import { createCRUDHooks, createSanitizer } from '@/hooks/factories';
 
-/**
- * Hook para listar categorías con filtros
- * @param {Object} params - { activo?, categoria_padre_id?, busqueda? }
- */
-export function useCategorias(params = {}) {
-  return useQuery({
-    queryKey: ['categorias', params],
-    queryFn: async () => {
-      const response = await inventarioApi.listarCategorias(sanitizeParams(params));
-      return response.data.data || { categorias: [], total: 0 };
+// Sanitizador para datos de categoría
+const sanitizeCategoria = createSanitizer([
+  'descripcion',
+  'icono',
+  'color',
+  { name: 'categoria_padre_id', type: 'id' },
+]);
+
+// Crear hooks CRUD
+const hooks = createCRUDHooks({
+  name: 'categoria',
+  namePlural: 'categorias',
+  api: inventarioApi,
+  baseKey: 'categorias',
+  apiMethods: {
+    list: 'listarCategorias',
+    get: 'obtenerCategoria',
+    create: 'crearCategoria',
+    update: 'actualizarCategoria',
+    delete: 'eliminarCategoria',
+  },
+  sanitize: sanitizeCategoria,
+  invalidateOnCreate: ['categorias', 'categorias-arbol'],
+  invalidateOnUpdate: ['categorias', 'categorias-arbol'],
+  invalidateOnDelete: ['categorias', 'categorias-arbol'],
+  errorMessages: {
+    create: { 409: 'Ya existe una categoría con ese nombre' },
+    update: {
+      409: 'Ya existe otra categoría con ese nombre',
+      400: 'Datos inválidos o crearía un ciclo en la jerarquía',
     },
-    staleTime: STALE_TIMES.STATIC_DATA, // 10 minutos (categorías cambian poco)
-  });
-}
+    delete: { 409: 'No se puede eliminar la categoría porque tiene productos o subcategorías asociadas' },
+  },
+  staleTime: STALE_TIMES.STATIC_DATA,
+  responseKey: 'categorias',
+});
+
+// Exportar hooks con nombres descriptivos
+export const useCategorias = hooks.useList;
+export const useCategoria = hooks.useDetail;
+export const useCrearCategoria = hooks.useCreate;
+export const useActualizarCategoria = hooks.useUpdate;
+export const useEliminarCategoria = hooks.useDelete;
+export const useCategoriasActivas = hooks.useListActive;
 
 /**
  * Hook para obtener árbol jerárquico de categorías
+ * (Hook especializado que no encaja en el CRUD estándar)
  */
 export function useArbolCategorias() {
   return useQuery({
     queryKey: ['categorias-arbol'],
     queryFn: async () => {
       const response = await inventarioApi.obtenerArbolCategorias();
-      // Backend retorna data directamente como array, no data.arbol
+      // Backend retorna data directamente como array
       return response.data.data || [];
     },
-    staleTime: STALE_TIMES.STATIC_DATA, // 10 minutos
-  });
-}
-
-/**
- * Hook para obtener categoría por ID
- */
-export function useCategoria(id) {
-  return useQuery({
-    queryKey: ['categoria', id],
-    queryFn: async () => {
-      const response = await inventarioApi.obtenerCategoria(id);
-      return response.data.data;
-    },
-    enabled: !!id,
     staleTime: STALE_TIMES.STATIC_DATA,
-  });
-}
-
-/**
- * Hook para crear categoría
- */
-export function useCrearCategoria() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (data) => {
-      const sanitized = {
-        ...data,
-        descripcion: data.descripcion?.trim() || undefined,
-        categoria_padre_id: data.categoria_padre_id || undefined,
-        icono: data.icono?.trim() || undefined,
-        color: data.color?.trim() || undefined,
-      };
-
-      const response = await inventarioApi.crearCategoria(sanitized);
-      return response.data.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['categorias'] });
-      queryClient.invalidateQueries({ queryKey: ['categorias-arbol'] });
-    },
-    onError: createCRUDErrorHandler('create', 'Categoría', {
-      409: 'Ya existe una categoría con ese nombre',
-    }),
-  });
-}
-
-/**
- * Hook para actualizar categoría
- */
-export function useActualizarCategoria() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ id, data }) => {
-      const sanitized = {
-        ...data,
-        descripcion: data.descripcion?.trim() || undefined,
-        categoria_padre_id: data.categoria_padre_id || undefined,
-        icono: data.icono?.trim() || undefined,
-        color: data.color?.trim() || undefined,
-      };
-
-      const response = await inventarioApi.actualizarCategoria(id, sanitized);
-      return response.data.data;
-    },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['categorias'] });
-      queryClient.invalidateQueries({ queryKey: ['categorias-arbol'] });
-      queryClient.invalidateQueries({ queryKey: ['categoria', variables.id] });
-    },
-    onError: createCRUDErrorHandler('update', 'Categoría', {
-      409: 'Ya existe otra categoría con ese nombre',
-      400: 'Datos inválidos o crearía un ciclo en la jerarquía',
-    }),
-  });
-}
-
-/**
- * Hook para eliminar categoría (soft delete)
- */
-export function useEliminarCategoria() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (id) => {
-      const response = await inventarioApi.eliminarCategoria(id);
-      return response.data.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['categorias'] });
-      queryClient.invalidateQueries({ queryKey: ['categorias-arbol'] });
-    },
-    onError: createCRUDErrorHandler('delete', 'Categoría', {
-      409: 'No se puede eliminar la categoría porque tiene productos o subcategorías asociadas',
-    }),
   });
 }

@@ -5,6 +5,7 @@
 
 const auth = require('./auth');
 const tenant = require('./tenant');
+const tenantContext = require('./tenantContext');
 const validation = require('./validation');
 const rateLimiting = require('./rateLimiting');
 const asyncHandler = require('./asyncHandler');
@@ -40,7 +41,11 @@ module.exports = {
     verifyTenantActive: tenant.verifyTenantActive,
     requirePlan: tenant.requirePlan,
     releaseTenantConnection: tenant.releaseTenantConnection,
-    simulateTenant: tenant.simulateTenant
+    simulateTenant: tenant.simulateTenant,
+    // Helpers centralizados para contexto de tenant (Ene 2026)
+    ensureTenantContext: tenantContext.ensureTenantContext,
+    extractOrganizacionId: tenantContext.extractOrganizacionId,
+    isSuperAdmin: tenantContext.isSuperAdmin
   },
 
   // Middleware de validación
@@ -116,10 +121,12 @@ module.exports = {
 
 /**
  * Middleware compuesto para rutas que requieren autenticación completa
- * Incluye: autenticación, tenant context, verificación de organización activa y liberación de conexión
+ * Incluye: autenticación, tenant context, verificación de organización activa
+ *
+ * NOTA: releaseTenantConnection fue removido (deprecated) - las conexiones
+ * ahora se liberan automáticamente por RLSContextManager
  */
 const requireFullAuth = [
-  tenant.releaseTenantConnection,  // Primero configurar liberación de conexión
   auth.authenticateToken,
   tenant.setTenantContext,
   tenant.verifyTenantActive

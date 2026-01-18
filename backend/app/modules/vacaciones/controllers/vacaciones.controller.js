@@ -4,6 +4,7 @@
  * Fase 3 del Plan de Empleados Competitivo
  */
 const asyncHandler = require('../../../middleware/asyncHandler');
+const { ResponseHelper } = require('../../../utils/helpers');
 const PoliticasVacacionesModel = require('../models/politicas.model');
 const NivelesVacacionesModel = require('../models/niveles.model');
 const SaldosVacacionesModel = require('../models/saldos.model');
@@ -21,10 +22,7 @@ const obtenerPolitica = asyncHandler(async (req, res) => {
 
     const politica = await PoliticasVacacionesModel.obtenerOCrear(organizacion_id, user_id);
 
-    res.json({
-        success: true,
-        data: politica,
-    });
+    return ResponseHelper.success(res, politica);
 });
 
 /**
@@ -38,11 +36,7 @@ const actualizarPolitica = asyncHandler(async (req, res) => {
 
     const politica = await PoliticasVacacionesModel.actualizar(organizacion_id, data, user_id);
 
-    res.json({
-        success: true,
-        message: 'Política actualizada correctamente',
-        data: politica,
-    });
+    return ResponseHelper.success(res, politica, 'Política actualizada correctamente');
 });
 
 // ==================== NIVELES ====================
@@ -59,11 +53,7 @@ const listarNiveles = asyncHandler(async (req, res) => {
         activo: activo !== undefined ? activo === 'true' : null,
     });
 
-    res.json({
-        success: true,
-        data: niveles,
-        total: niveles.length,
-    });
+    return ResponseHelper.success(res, { data: niveles, total: niveles.length });
 });
 
 /**
@@ -77,11 +67,7 @@ const crearNivel = asyncHandler(async (req, res) => {
 
     const nivel = await NivelesVacacionesModel.crear(organizacion_id, data, user_id);
 
-    res.status(201).json({
-        success: true,
-        message: 'Nivel creado correctamente',
-        data: nivel,
-    });
+    return ResponseHelper.created(res, nivel, 'Nivel creado correctamente');
 });
 
 /**
@@ -96,17 +82,10 @@ const actualizarNivel = asyncHandler(async (req, res) => {
     const nivel = await NivelesVacacionesModel.actualizar(organizacion_id, parseInt(id), data);
 
     if (!nivel) {
-        return res.status(404).json({
-            success: false,
-            error: 'Nivel no encontrado',
-        });
+        return ResponseHelper.notFound(res, 'Nivel no encontrado');
     }
 
-    res.json({
-        success: true,
-        message: 'Nivel actualizado correctamente',
-        data: nivel,
-    });
+    return ResponseHelper.success(res, nivel, 'Nivel actualizado correctamente');
 });
 
 /**
@@ -120,16 +99,10 @@ const eliminarNivel = asyncHandler(async (req, res) => {
     const eliminado = await NivelesVacacionesModel.eliminar(organizacion_id, parseInt(id));
 
     if (!eliminado) {
-        return res.status(404).json({
-            success: false,
-            error: 'Nivel no encontrado',
-        });
+        return ResponseHelper.notFound(res, 'Nivel no encontrado');
     }
 
-    res.json({
-        success: true,
-        message: 'Nivel eliminado correctamente',
-    });
+    return ResponseHelper.success(res, null, 'Nivel eliminado correctamente');
 });
 
 /**
@@ -142,12 +115,7 @@ const crearNivelesPreset = asyncHandler(async (req, res) => {
 
     const niveles = await NivelesVacacionesModel.crearNivelesPreset(organizacion_id, pais, sobrescribir);
 
-    res.status(201).json({
-        success: true,
-        message: `Niveles ${pais.toUpperCase()} creados correctamente`,
-        data: niveles,
-        total: niveles.length,
-    });
+    return ResponseHelper.created(res, { data: niveles, total: niveles.length }, `Niveles ${pais.toUpperCase()} creados correctamente`);
 });
 
 // ==================== SALDOS ====================
@@ -165,10 +133,7 @@ const obtenerMiSaldo = asyncHandler(async (req, res) => {
     const profesionalId = await obtenerProfesionalIdDeUsuario(organizacion_id, user_id);
 
     if (!profesionalId) {
-        return res.status(404).json({
-            success: false,
-            error: 'No se encontró un profesional asociado a tu usuario',
-        });
+        return ResponseHelper.notFound(res, 'No se encontró un profesional asociado a tu usuario');
     }
 
     const saldo = await SaldosVacacionesModel.obtenerSaldo(
@@ -180,13 +145,7 @@ const obtenerMiSaldo = asyncHandler(async (req, res) => {
     // Obtener información del nivel actual
     const nivelInfo = await NivelesVacacionesModel.obtenerNivelProfesional(organizacion_id, profesionalId);
 
-    res.json({
-        success: true,
-        data: {
-            saldo,
-            nivel: nivelInfo,
-        },
-    });
+    return ResponseHelper.success(res, { saldo, nivel: nivelInfo });
 });
 
 /**
@@ -203,10 +162,7 @@ const listarSaldos = asyncHandler(async (req, res) => {
         limit: filtros.limit ? parseInt(filtros.limit) : 20,
     });
 
-    res.json({
-        success: true,
-        ...resultado,
-    });
+    return ResponseHelper.success(res, resultado);
 });
 
 /**
@@ -227,11 +183,7 @@ const ajustarSaldo = asyncHandler(async (req, res) => {
         user_id
     );
 
-    res.json({
-        success: true,
-        message: `Saldo ajustado en ${dias_ajuste > 0 ? '+' : ''}${dias_ajuste} días`,
-        data: saldo,
-    });
+    return ResponseHelper.success(res, saldo, `Saldo ajustado en ${dias_ajuste > 0 ? '+' : ''}${dias_ajuste} días`);
 });
 
 /**
@@ -249,11 +201,7 @@ const generarSaldosAnio = asyncHandler(async (req, res) => {
         sobrescribir
     );
 
-    res.json({
-        success: true,
-        message: `Saldos generados: ${resultado.creados} creados, ${resultado.actualizados} actualizados`,
-        data: resultado,
-    });
+    return ResponseHelper.success(res, resultado, `Saldos generados: ${resultado.creados} creados, ${resultado.actualizados} actualizados`);
 });
 
 // ==================== SOLICITUDES ====================
@@ -271,10 +219,7 @@ const crearSolicitud = asyncHandler(async (req, res) => {
     const profesionalId = await obtenerProfesionalIdDeUsuario(organizacion_id, user_id);
 
     if (!profesionalId) {
-        return res.status(404).json({
-            success: false,
-            error: 'No se encontró un profesional asociado a tu usuario',
-        });
+        return ResponseHelper.notFound(res, 'No se encontró un profesional asociado a tu usuario');
     }
 
     const solicitud = await SolicitudesVacacionesModel.crear(
@@ -284,11 +229,7 @@ const crearSolicitud = asyncHandler(async (req, res) => {
         user_id
     );
 
-    res.status(201).json({
-        success: true,
-        message: 'Solicitud de vacaciones creada correctamente',
-        data: solicitud,
-    });
+    return ResponseHelper.created(res, solicitud, 'Solicitud de vacaciones creada correctamente');
 });
 
 /**
@@ -304,8 +245,7 @@ const listarMisSolicitudes = asyncHandler(async (req, res) => {
     const profesionalId = await obtenerProfesionalIdDeUsuario(organizacion_id, user_id);
 
     if (!profesionalId) {
-        return res.json({
-            success: true,
+        return ResponseHelper.success(res, {
             data: [],
             total: 0,
             page: 1,
@@ -324,10 +264,7 @@ const listarMisSolicitudes = asyncHandler(async (req, res) => {
         }
     );
 
-    res.json({
-        success: true,
-        ...resultado,
-    });
+    return ResponseHelper.success(res, resultado);
 });
 
 /**
@@ -344,10 +281,7 @@ const listarSolicitudes = asyncHandler(async (req, res) => {
         limit: filtros.limit ? parseInt(filtros.limit) : 20,
     });
 
-    res.json({
-        success: true,
-        ...resultado,
-    });
+    return ResponseHelper.success(res, resultado);
 });
 
 /**
@@ -363,10 +297,7 @@ const listarPendientes = asyncHandler(async (req, res) => {
         limit: filtros.limit ? parseInt(filtros.limit) : 20,
     });
 
-    res.json({
-        success: true,
-        ...resultado,
-    });
+    return ResponseHelper.success(res, resultado);
 });
 
 /**
@@ -380,16 +311,10 @@ const obtenerSolicitud = asyncHandler(async (req, res) => {
     const solicitud = await SolicitudesVacacionesModel.obtenerPorId(organizacion_id, parseInt(id));
 
     if (!solicitud) {
-        return res.status(404).json({
-            success: false,
-            error: 'Solicitud no encontrada',
-        });
+        return ResponseHelper.notFound(res, 'Solicitud no encontrada');
     }
 
-    res.json({
-        success: true,
-        data: solicitud,
-    });
+    return ResponseHelper.success(res, solicitud);
 });
 
 /**
@@ -409,11 +334,7 @@ const aprobarSolicitud = asyncHandler(async (req, res) => {
         notas_internas
     );
 
-    res.json({
-        success: true,
-        message: 'Solicitud aprobada correctamente. Se ha creado el bloqueo en el calendario.',
-        data: solicitud,
-    });
+    return ResponseHelper.success(res, solicitud, 'Solicitud aprobada correctamente. Se ha creado el bloqueo en el calendario.');
 });
 
 /**
@@ -434,11 +355,7 @@ const rechazarSolicitud = asyncHandler(async (req, res) => {
         notas_internas
     );
 
-    res.json({
-        success: true,
-        message: 'Solicitud rechazada',
-        data: solicitud,
-    });
+    return ResponseHelper.success(res, solicitud, 'Solicitud rechazada');
 });
 
 /**
@@ -458,11 +375,7 @@ const cancelarSolicitud = asyncHandler(async (req, res) => {
         motivo
     );
 
-    res.json({
-        success: true,
-        message: 'Solicitud cancelada',
-        data: solicitud,
-    });
+    return ResponseHelper.success(res, solicitud, 'Solicitud cancelada');
 });
 
 // ==================== DASHBOARD / ESTADÍSTICAS ====================
@@ -480,10 +393,7 @@ const obtenerDashboard = asyncHandler(async (req, res) => {
     const profesionalId = await obtenerProfesionalIdDeUsuario(organizacion_id, user_id);
 
     if (!profesionalId) {
-        return res.status(404).json({
-            success: false,
-            error: 'No se encontró un profesional asociado a tu usuario',
-        });
+        return ResponseHelper.notFound(res, 'No se encontró un profesional asociado a tu usuario');
     }
 
     const anioConsulta = anio ? parseInt(anio) : new Date().getFullYear();
@@ -501,14 +411,11 @@ const obtenerDashboard = asyncHandler(async (req, res) => {
         { limit: 5, page: 1 }
     );
 
-    res.json({
-        success: true,
-        data: {
-            anio: anioConsulta,
-            saldo,
-            nivel,
-            solicitudes_recientes: misSolicitudes.data,
-        },
+    return ResponseHelper.success(res, {
+        anio: anioConsulta,
+        saldo,
+        nivel,
+        solicitudes_recientes: misSolicitudes.data,
     });
 });
 
@@ -526,10 +433,7 @@ const obtenerEstadisticas = asyncHandler(async (req, res) => {
         departamento_id ? parseInt(departamento_id) : null
     );
 
-    res.json({
-        success: true,
-        data: estadisticas,
-    });
+    return ResponseHelper.success(res, estadisticas);
 });
 
 // ==================== UTILIDADES ====================

@@ -75,7 +75,7 @@ class DocumentoEmpleadoModel {
                 tipo = null,
                 verificado = null,
                 estado_vencimiento = null,
-                limite = 50,
+                limit = 50,
                 offset = 0
             } = filtros;
 
@@ -142,7 +142,7 @@ class DocumentoEmpleadoModel {
             }
 
             query += ` ORDER BY d.creado_en DESC LIMIT $${contador} OFFSET $${contador + 1}`;
-            values.push(limite, offset);
+            values.push(limit, offset);
 
             const result = await db.query(query, values);
             return result.rows;
@@ -313,7 +313,7 @@ class DocumentoEmpleadoModel {
         return await RLSContextManager.query(organizacionId, async (db) => {
             const {
                 dias = 30,
-                limite = 50,
+                limit = 50,
                 offset = 0
             } = filtros;
 
@@ -339,7 +339,7 @@ class DocumentoEmpleadoModel {
                 LIMIT $3 OFFSET $4
             `;
 
-            const result = await db.query(query, [organizacionId, dias, limite, offset]);
+            const result = await db.query(query, [organizacionId, dias, limit, offset]);
             return result.rows;
         });
     }

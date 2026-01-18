@@ -19,3 +19,7 @@ export { default as StateNavTabs } from './StateNavTabs';
 
 // Filters
 export { AdvancedFilterPanel, FilterChip, SavedSearchModal, SavedSearchList, FilterSection } from './filters';
+
+// Movidos desde molecules/ (Ene 2026) - demasiado complejos para molecule
+export { default as MultiSelect } from './MultiSelect';
+export { default as IconPicker } from './IconPicker';

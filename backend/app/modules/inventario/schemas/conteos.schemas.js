@@ -4,6 +4,7 @@
  */
 
 const Joi = require('joi');
+const { withPagination, idOptional } = require('../../../schemas/shared');
 
 const conteosSchemas = {
     /**
@@ -68,15 +69,13 @@ const conteosSchemas = {
      * GET /api/v1/inventario/conteos
      */
     listarConteos: {
-        query: Joi.object({
-            sucursal_id: Joi.number().integer().positive().optional(),
+        query: withPagination({
+            sucursal_id: idOptional,
             estado: Joi.string().valid('borrador', 'en_proceso', 'completado', 'ajustado', 'cancelado').optional(),
             tipo_conteo: Joi.string().valid('total', 'por_categoria', 'por_ubicacion', 'ciclico', 'aleatorio').optional(),
             fecha_desde: Joi.string().isoDate().optional(),
             fecha_hasta: Joi.string().isoDate().optional(),
-            folio: Joi.string().max(20).optional(),
-            limit: Joi.number().integer().min(1).max(100).optional().default(50),
-            offset: Joi.number().integer().min(0).optional().default(0)
+            folio: Joi.string().max(20).optional()
         })
     },
 

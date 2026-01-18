@@ -6,11 +6,12 @@ import {
   Button,
   Input,
   Select,
-  StatCardGrid
+  StatCardGrid,
+  DataTable,
+  DataTableActions,
+  DataTableActionButton,
 } from '@/components/ui';
-import { useToast } from '@/hooks/utils';
-import { useExportCSV } from '@/hooks/utils';
-import { useModalManager } from '@/hooks/utils';
+import { useToast, useExportCSV, useModalManager, useFilters } from '@/hooks/utils';
 import { useVentas } from '@/hooks/pos';
 import VentaDetalleModal from '@/components/pos/VentaDetalleModal';
 import CancelarVentaModal from '@/components/pos/CancelarVentaModal';
@@ -21,21 +22,33 @@ import POSNavTabs from '@/components/pos/POSNavTabs';
  * Página de lista de ventas POS con filtros
  * Permite ver, cancelar y procesar devoluciones
  */
+// Estado inicial de filtros (fuera del componente para estabilidad)
+const INITIAL_FILTERS = {
+  busqueda: '',
+  estado: '',
+  estado_pago: '',
+  metodo_pago: '',
+  tipo_venta: '',
+  fecha_desde: '',
+  fecha_hasta: '',
+  limit: 50,
+  offset: 0,
+};
+
 export default function VentasListPage() {
   const toast = useToast();
   const { exportCSV } = useExportCSV();
 
-  // Estado de filtros
-  const [filtros, setFiltros] = useState({
-    busqueda: '',
-    estado: '',
-    estado_pago: '',
-    metodo_pago: '',
-    tipo_venta: '',
-    fecha_desde: '',
-    fecha_hasta: '',
-    limit: 50,
-    offset: 0,
+  // Filtros con persistencia usando useFilters
+  const {
+    filtros,
+    filtrosQuery,
+    setFiltro,
+    limpiarFiltros,
+    hasFiltrosActivos,
+  } = useFilters(INITIAL_FILTERS, {
+    moduloId: 'pos.ventas',
+    debounceFields: ['busqueda'],
   });
 
   const [mostrarFiltros, setMostrarFiltros] = useState(false);
@@ -52,8 +65,8 @@ export default function VentasListPage() {
     devolver: { isOpen: false, data: null },
   });
 
-  // Query
-  const { data: ventasData, isLoading } = useVentas(filtros);
+  // Query - usar filtrosQuery para debounce
+  const { data: ventasData, isLoading } = useVentas(filtrosQuery);
   const ventas = ventasData?.ventas || [];
   const total = ventasData?.totales?.total_ventas || ventas.length;
 
@@ -103,23 +116,10 @@ export default function VentasListPage() {
     ], `ventas_${format(new Date(), 'yyyyMMdd_HHmm')}`);
   };
 
-  // Handlers de filtros
+  // Handler de filtros - usando setFiltro de useFilters
   const handleFiltroChange = (campo, valor) => {
-    setFiltros((prev) => ({ ...prev, [campo]: valor, offset: 0 }));
-  };
-
-  const handleLimpiarFiltros = () => {
-    setFiltros({
-      busqueda: '',
-      estado: '',
-      estado_pago: '',
-      metodo_pago: '',
-      tipo_venta: '',
-      fecha_desde: '',
-      fecha_hasta: '',
-      limit: 50,
-      offset: 0,
-    });
+    setFiltro(campo, valor);
+    if (campo !== 'offset') setFiltro('offset', 0); // Reset offset al cambiar filtros
   };
 
   // Handlers de acciones usando useModalManager
@@ -180,6 +180,102 @@ export default function VentasListPage() {
     };
     return metodos[metodo] || metodo;
   };
+
+  // Configuración de columnas para DataTable
+  const columns = useMemo(() => [
+    {
+      key: 'folio',
+      header: 'Folio',
+      render: (row) => (
+        <span className="font-medium text-gray-900 dark:text-gray-100">{row.folio}</span>
+      ),
+    },
+    {
+      key: 'fecha_venta',
+      header: 'Fecha',
+      hideOnMobile: true,
+      render: (row) => (
+        <span className="text-gray-900 dark:text-gray-100">
+          {new Date(row.fecha_venta).toLocaleDateString('es-MX', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+          })}
+        </span>
+      ),
+    },
+    {
+      key: 'cliente_nombre',
+      header: 'Cliente',
+      hideOnMobile: true,
+      render: (row) => row.cliente_nombre || 'Venta directa',
+    },
+    {
+      key: 'total',
+      header: 'Total',
+      render: (row) => (
+        <span className="font-semibold">${parseFloat(row.total || 0).toFixed(2)}</span>
+      ),
+    },
+    {
+      key: 'metodo_pago',
+      header: 'Método Pago',
+      hideOnMobile: true,
+      render: (row) => formatearMetodoPago(row.metodo_pago),
+    },
+    {
+      key: 'estado',
+      header: 'Estado',
+      render: (row) => (
+        <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getBadgeEstado(row.estado)}`}>
+          {row.estado}
+        </span>
+      ),
+    },
+    {
+      key: 'estado_pago',
+      header: 'Estado Pago',
+      hideOnMobile: true,
+      render: (row) => (
+        <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getBadgeEstadoPago(row.estado_pago)}`}>
+          {row.estado_pago}
+        </span>
+      ),
+    },
+    {
+      key: 'actions',
+      header: '',
+      align: 'right',
+      render: (row) => (
+        <DataTableActions>
+          <DataTableActionButton
+            icon={Eye}
+            label={`Ver detalle de venta ${row.folio}`}
+            variant="primary"
+            onClick={() => handleVerDetalle(row.id)}
+          />
+          {row.estado !== 'cancelada' && row.estado !== 'devolucion_total' && (
+            <>
+              <DataTableActionButton
+                icon={RefreshCw}
+                label={`Procesar devolución de venta ${row.folio}`}
+                variant="ghost"
+                onClick={() => handleDevolver(row)}
+              />
+              <DataTableActionButton
+                icon={XCircle}
+                label={`Cancelar venta ${row.folio}`}
+                variant="danger"
+                onClick={() => handleCancelar(row)}
+              />
+            </>
+          )}
+        </DataTableActions>
+      ),
+    },
+  ], []);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -324,159 +420,27 @@ export default function VentasListPage() {
           </div>
 
           {/* Botones de acción */}
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={handleLimpiarFiltros}>
-              Limpiar Filtros
-            </Button>
-          </div>
+          {hasFiltrosActivos && (
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={limpiarFiltros}>
+                Limpiar Filtros
+              </Button>
+            </div>
+          )}
         </div>
       )}
 
-      {/* Tabla de ventas */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-        {isLoading ? (
-          <div className="p-8 text-center text-gray-500 dark:text-gray-400">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 dark:border-primary-400 mx-auto mb-4"></div>
-            Cargando ventas...
-          </div>
-        ) : ventas.length === 0 ? (
-          <div className="p-8 text-center text-gray-500 dark:text-gray-400">
-            <Receipt className="h-16 w-16 mx-auto mb-4 text-gray-300 dark:text-gray-600" />
-            <p className="text-lg font-medium text-gray-900 dark:text-gray-100">No se encontraron ventas</p>
-            <p className="text-sm mt-1">Intenta ajustar los filtros de búsqueda</p>
-          </div>
-        ) : (
-          <>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead className="bg-gray-50 dark:bg-gray-700">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Folio
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Fecha
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Cliente
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Total
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Método Pago
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Estado
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Estado Pago
-                    </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Acciones
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                  {ventas.map((venta) => (
-                    <tr key={venta.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{venta.folio}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900 dark:text-gray-100">
-                          {new Date(venta.fecha_venta).toLocaleDateString('es-MX', {
-                            year: 'numeric',
-                            month: 'short',
-                            day: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900 dark:text-gray-100">
-                          {venta.cliente_nombre || 'Venta directa'}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                          ${parseFloat(venta.total || 0).toFixed(2)}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900 dark:text-gray-100">
-                          {formatearMetodoPago(venta.metodo_pago)}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span
-                          className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getBadgeEstado(
-                            venta.estado
-                          )}`}
-                        >
-                          {venta.estado}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span
-                          className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getBadgeEstadoPago(
-                            venta.estado_pago
-                          )}`}
-                        >
-                          {venta.estado_pago}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <div className="flex justify-end gap-2">
-                          <button
-                            onClick={() => handleVerDetalle(venta.id)}
-                            className="text-primary-600 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300"
-                            title="Ver detalle"
-                            aria-label={`Ver detalle de venta ${venta.folio}`}
-                          >
-                            <Eye className="h-5 w-5" />
-                          </button>
-                          {venta.estado !== 'cancelada' && venta.estado !== 'devolucion_total' && (
-                            <>
-                              <button
-                                onClick={() => handleDevolver(venta)}
-                                className="text-orange-600 dark:text-orange-400 hover:text-orange-900 dark:hover:text-orange-300"
-                                title="Procesar devolución"
-                                aria-label={`Procesar devolución de venta ${venta.folio}`}
-                              >
-                                <RefreshCw className="h-5 w-5" />
-                              </button>
-                              <button
-                                onClick={() => handleCancelar(venta)}
-                                className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300"
-                                title="Cancelar venta"
-                                aria-label={`Cancelar venta ${venta.folio}`}
-                              >
-                                <XCircle className="h-5 w-5" />
-                              </button>
-                            </>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Paginación */}
-            <div className="bg-white dark:bg-gray-800 px-4 py-3 border-t border-gray-200 dark:border-gray-700 sm:px-6">
-              <div className="flex items-center justify-between">
-                <div className="text-sm text-gray-700 dark:text-gray-300">
-                  Mostrando <span className="font-medium">{ventas.length}</span> de{' '}
-                  <span className="font-medium">{total}</span> ventas
-                </div>
-              </div>
-            </div>
-          </>
-        )}
-      </div>
+      {/* Tabla de ventas usando DataTable */}
+      <DataTable
+        columns={columns}
+        data={ventas}
+        isLoading={isLoading}
+        emptyState={{
+          icon: Receipt,
+          title: 'No se encontraron ventas',
+          description: 'Intenta ajustar los filtros de búsqueda',
+        }}
+      />
       </div>
 
       {/* Modales usando useModalManager */}

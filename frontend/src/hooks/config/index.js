@@ -19,3 +19,5 @@ export {
   createMutationOptions,
   buildQueryKey,
 } from './queryConfig';
+
+export { queryKeys, getDomainKeys } from './queryKeys';

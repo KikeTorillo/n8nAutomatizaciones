@@ -90,7 +90,7 @@ class ExperienciaModel {
         return await RLSContextManager.query(organizacionId, async (db) => {
             const {
                 es_empleo_actual = null,
-                limite = 20,
+                limit = 20,
                 offset = 0
             } = filtros;
 
@@ -117,7 +117,7 @@ class ExperienciaModel {
             // Ordenar por empleo actual primero, luego por orden personalizado
             query += ` ORDER BY e.es_empleo_actual DESC, e.orden ASC, e.fecha_inicio DESC`;
             query += ` LIMIT $${contador} OFFSET $${contador + 1}`;
-            values.push(limite, offset);
+            values.push(limit, offset);
 
             const result = await db.query(query, values);
             return result.rows;

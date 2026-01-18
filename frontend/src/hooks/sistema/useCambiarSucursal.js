@@ -2,8 +2,17 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { authApi } from '@/services/api/modules/auth.api';
 import useAuthStore, { selectSetTokens } from '@/store/authStore';
 import useSucursalStore, { selectSetSucursalActiva } from '@/store/sucursalStore';
+import usePermisosStore, { selectInvalidarCache } from '@/store/permisosStore';
 import { toast } from 'sonner';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
+
+// Queries que dependen del contexto de sucursal
+const QUERIES_DEPENDIENTES_SUCURSAL = [
+  'ventas', 'stock-disponible', 'permiso', 'permisos-resumen',
+  'promociones-evaluar', 'cupones', 'sesion-caja', 'operaciones-almacen',
+  'batch-picking', 'ubicaciones-almacen', 'numeros-serie', 'conteos',
+  'profesional-usuario', 'citas', 'horarios', 'disponibilidad'
+];
 
 /**
  * Hook para cambiar sucursal con regeneracion de tokens
@@ -21,6 +30,7 @@ export function useCambiarSucursal() {
   const queryClient = useQueryClient();
   const setTokens = useAuthStore(selectSetTokens);
   const setSucursalActiva = useSucursalStore(selectSetSucursalActiva);
+  const invalidarCachePermisos = usePermisosStore(selectInvalidarCache);
 
   return useMutation({
     mutationFn: async (sucursalId) => {
@@ -34,8 +44,16 @@ export function useCambiarSucursal() {
       // Actualizar sucursal en store
       setSucursalActiva(data.sucursal);
 
-      // Invalidar queries para refetch con nuevo contexto
-      queryClient.invalidateQueries();
+      // Invalidar cache de permisos en el store (Fase 1.3)
+      invalidarCachePermisos();
+
+      // Invalidar solo queries dependientes de sucursal (Fase 1.2)
+      queryClient.invalidateQueries({
+        predicate: (query) => {
+          const key = query.queryKey[0];
+          return QUERIES_DEPENDIENTES_SUCURSAL.includes(key);
+        },
+      });
 
       toast.success(`Cambiaste a ${data.sucursal.nombre}`);
     },

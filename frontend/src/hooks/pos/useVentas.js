@@ -3,6 +3,7 @@ import { STALE_TIMES } from '@/app/queryClient';
 import { posApi } from '@/services/api/endpoints';
 import useSucursalStore, { selectGetSucursalId } from '@/store/sucursalStore';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
+import { sanitizeParams } from '@/lib/params';
 
 // ==================== VENTAS POS ====================
 // ✅ FEATURE: Multi-sucursal - Los hooks inyectan sucursal_id automáticamente
@@ -18,19 +19,13 @@ export function useVentas(params = {}) {
   return useQuery({
     queryKey: ['ventas', params, sucursalId],
     queryFn: async () => {
-      const sanitizedParams = Object.entries(params).reduce((acc, [key, value]) => {
-        if (value !== '' && value !== null && value !== undefined) {
-          acc[key] = value;
-        }
-        return acc;
-      }, {});
-
       // Fix 27-Dic-2025: Agregar sucursalId para permisos
-      if (sucursalId) {
-        sanitizedParams.sucursalId = sucursalId;
-      }
+      const queryParams = sanitizeParams({
+        ...params,
+        ...(sucursalId && { sucursalId })
+      });
 
-      const response = await posApi.listarVentas(sanitizedParams);
+      const response = await posApi.listarVentas(queryParams);
       return response.data.data || { ventas: [], total: 0 };
     },
     staleTime: STALE_TIMES.DYNAMIC, // 2 minutos
@@ -282,19 +277,13 @@ export function useCorteCaja(params) {
   return useQuery({
     queryKey: ['corte-caja', params, sucursalId],
     queryFn: async () => {
-      const sanitizedParams = Object.entries(params).reduce((acc, [key, value]) => {
-        if (value !== '' && value !== null && value !== undefined) {
-          acc[key] = value;
-        }
-        return acc;
-      }, {});
-
       // Fix 27-Dic-2025: Agregar sucursalId para permisos
-      if (sucursalId) {
-        sanitizedParams.sucursalId = sucursalId;
-      }
+      const queryParams = sanitizeParams({
+        ...params,
+        ...(sucursalId && { sucursalId })
+      });
 
-      const response = await posApi.obtenerCorteCaja(sanitizedParams);
+      const response = await posApi.obtenerCorteCaja(queryParams);
       return response.data.data || { resumen: {}, totales_por_metodo: [], ventas_por_hora: [], top_productos: [] };
     },
     enabled: !!params.fecha_inicio && !!params.fecha_fin && !!sucursalId,
@@ -310,14 +299,7 @@ export function useVentasDiarias(params) {
   return useQuery({
     queryKey: ['ventas-diarias', params],
     queryFn: async () => {
-      const sanitizedParams = Object.entries(params).reduce((acc, [key, value]) => {
-        if (value !== '' && value !== null && value !== undefined) {
-          acc[key] = value;
-        }
-        return acc;
-      }, {});
-
-      const response = await posApi.obtenerVentasDiarias(sanitizedParams);
+      const response = await posApi.obtenerVentasDiarias(sanitizeParams(params));
       return response.data.data || { resumen: {}, ventas_por_hora: [], top_productos: [], detalle: [] };
     },
     enabled: !!params.fecha,

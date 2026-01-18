@@ -1,6 +1,7 @@
 import { forwardRef } from 'react';
 import { cn } from '@/lib/utils';
 import { Loader2 } from 'lucide-react';
+import { BUTTON_VARIANTS, BUTTON_SIZES, FOCUS_STATES } from '@/lib/uiConstants';
 
 /**
  * Componente Button reutilizable
@@ -20,24 +21,11 @@ const Button = forwardRef(
     },
     ref
   ) => {
-    const baseStyles = 'inline-flex items-center justify-center font-semibold rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed';
-
-    const variants = {
-      primary: 'bg-primary-700 text-white hover:bg-primary-800 focus:ring-primary-500 dark:bg-primary-600 dark:hover:bg-primary-500',
-      secondary: 'bg-gray-200 text-gray-900 hover:bg-gray-300 focus:ring-gray-500 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600',
-      outline: 'border-2 border-primary-300 text-primary-700 hover:bg-primary-50 focus:ring-primary-500 dark:border-primary-600 dark:text-primary-300 dark:hover:bg-primary-950',
-      danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500',
-      ghost: 'text-gray-700 hover:bg-gray-100 focus:ring-gray-500 dark:text-gray-300 dark:hover:bg-gray-800',
-      warning: 'bg-amber-600 text-white hover:bg-amber-700 focus:ring-amber-500',
-      success: 'bg-green-600 text-white hover:bg-green-700 focus:ring-green-500',
-    };
-
-    const sizes = {
-      sm: 'px-3 py-1.5 text-sm',
-      md: 'px-4 py-2 text-base',
-      lg: 'px-6 py-3 text-lg',
-      xl: 'px-8 py-4 text-xl',
-    };
+    const baseStyles = cn(
+      'inline-flex items-center justify-center font-semibold rounded-lg transition-colors',
+      FOCUS_STATES.ring,
+      'disabled:opacity-50 disabled:cursor-not-allowed'
+    );
 
     return (
       <button
@@ -46,8 +34,8 @@ const Button = forwardRef(
         disabled={disabled || isLoading}
         className={cn(
           baseStyles,
-          variants[variant],
-          sizes[size],
+          BUTTON_VARIANTS[variant] || BUTTON_VARIANTS.primary,
+          BUTTON_SIZES[size] || BUTTON_SIZES.md,
           className
         )}
         {...props}

@@ -16,6 +16,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { usuariosApi } from '@/services/api/endpoints';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
+import { sanitizeParams } from '@/lib/params';
 
 // ====================================================================
 // QUERIES
@@ -29,15 +30,7 @@ export function useUsuarios(params = {}) {
   return useQuery({
     queryKey: ['usuarios', params],
     queryFn: async () => {
-      // Sanitizar params - eliminar valores vacíos
-      const sanitizedParams = Object.entries(params).reduce((acc, [key, value]) => {
-        if (value !== '' && value !== null && value !== undefined) {
-          acc[key] = value;
-        }
-        return acc;
-      }, {});
-
-      const response = await usuariosApi.listarConFiltros(sanitizedParams);
+      const response = await usuariosApi.listarConFiltros(sanitizeParams(params));
       // Backend retorna: { success, data: { data: [...], pagination, resumen } }
       return response.data.data;
     },

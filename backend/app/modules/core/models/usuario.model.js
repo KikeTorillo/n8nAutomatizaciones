@@ -6,6 +6,7 @@ const RLSHelper = require('../../../utils/rlsHelper');
 const RLSContextManager = require('../../../utils/rlsContextManager');
 const emailService = require('../../../services/emailService');
 const RutasOperacionModel = require('../../inventario/models/rutas-operacion.model');
+const SecureRandom = require('../../../utils/helpers/SecureRandom');
 
 const AUTH_CONFIG = {
     BCRYPT_SALT_ROUNDS: 12,
@@ -1654,7 +1655,7 @@ class UsuarioModel {
                     .replace(/[\u0300-\u036f]/g, '')
                     .replace(/[^a-z0-9]+/g, '-')
                     .replace(/^-|-$/g, '')
-                    .substring(0, 50) + '-' + Math.random().toString(36).substring(2, 6);
+                    .substring(0, 50) + '-' + SecureRandom.slugSuffix(4);
 
                 // 4. Crear organización
                 const orgResult = await db.query(`

@@ -40,3 +40,6 @@ export * from './utils';
 
 // Otros módulos
 export * from './otros';
+
+// Factories (para crear hooks CRUD personalizados)
+export * from './factories';

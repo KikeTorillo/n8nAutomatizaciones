@@ -17,9 +17,8 @@ export { default as BackButton } from './BackButton';
 export { default as ThemeToggle } from './ThemeToggle';
 
 // Movidos desde atoms/ (Ene 2026) - componentes con lógica compleja
-export { default as MultiSelect } from './MultiSelect';
+// NOTA: MultiSelect e IconPicker movidos a organisms/ por complejidad (Ene 2026)
 export { ProgressBar, LimitProgressBar } from './ProgressBar';
-export { default as IconPicker } from './IconPicker';
 
 // Nuevos (Ene 2026) - Fase 2 mejoras UI
 export { default as FormGroup } from './FormGroup';

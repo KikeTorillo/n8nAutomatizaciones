@@ -1,3 +1,5 @@
+import { sanitizeHTML } from '@/lib/sanitize';
+
 /**
  * TextoPublico - Renderiza bloque de texto/contenido en sitio público
  */
@@ -48,7 +50,7 @@ export default function TextoPublico({ contenido }) {
           <div
             className="prose prose-lg max-w-none"
             style={{ color: 'var(--color-texto)' }}
-            dangerouslySetInnerHTML={{ __html: textoContenido }}
+            dangerouslySetInnerHTML={{ __html: sanitizeHTML(textoContenido) }}
           />
         )}
       </div>

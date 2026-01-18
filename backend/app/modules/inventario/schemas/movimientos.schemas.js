@@ -4,6 +4,7 @@
  */
 
 const Joi = require('joi');
+const { withPagination, idOptional } = require('../../../schemas/shared');
 
 const movimientosSchemas = {
     /**
@@ -68,21 +69,19 @@ const movimientosSchemas = {
      * GET /api/v1/inventario/movimientos
      */
     listarMovimientos: {
-        query: Joi.object({
+        query: withPagination({
             tipo_movimiento: Joi.string().valid(
                 'entrada_compra', 'entrada_devolucion', 'entrada_ajuste',
                 'salida_venta', 'salida_uso_servicio', 'salida_merma',
                 'salida_robo', 'salida_devolucion', 'salida_ajuste'
             ).optional(),
             categoria: Joi.string().valid('entrada', 'salida').optional(),
-            producto_id: Joi.number().integer().positive().optional(),
-            proveedor_id: Joi.number().integer().positive().optional(),
+            producto_id: idOptional,
+            proveedor_id: idOptional,
             // FEATURE: Multi-sucursal
-            sucursal_id: Joi.number().integer().positive().optional(),
+            sucursal_id: idOptional,
             fecha_desde: Joi.string().isoDate().optional(),
-            fecha_hasta: Joi.string().isoDate().optional(),
-            limit: Joi.number().integer().min(1).max(100).optional().default(50),
-            offset: Joi.number().integer().min(0).optional().default(0)
+            fecha_hasta: Joi.string().isoDate().optional()
         })
     },
 
@@ -94,13 +93,11 @@ const movimientosSchemas = {
         params: Joi.object({
             producto_id: Joi.number().integer().positive().required()
         }),
-        query: Joi.object({
+        query: withPagination({
             tipo_movimiento: Joi.string().optional(),
             fecha_desde: Joi.string().isoDate().optional(),
             fecha_hasta: Joi.string().isoDate().optional(),
-            proveedor_id: Joi.number().integer().positive().optional(),
-            limit: Joi.number().integer().min(1).max(200).optional().default(100),
-            offset: Joi.number().integer().min(0).optional().default(0)
+            proveedor_id: idOptional
         })
     },
 

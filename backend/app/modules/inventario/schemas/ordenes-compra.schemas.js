@@ -4,6 +4,7 @@
  */
 
 const Joi = require('joi');
+const { withPagination, idOptional, estadoOrdenCompra } = require('../../../schemas/shared');
 
 const ordenesCompraSchemas = {
     /**
@@ -74,15 +75,13 @@ const ordenesCompraSchemas = {
      * GET /api/v1/inventario/ordenes-compra
      */
     listarOrdenesCompra: {
-        query: Joi.object({
-            proveedor_id: Joi.number().integer().positive().optional(),
-            estado: Joi.string().valid('borrador', 'enviada', 'parcial', 'recibida', 'cancelada').optional(),
+        query: withPagination({
+            proveedor_id: idOptional,
+            estado: estadoOrdenCompra.optional(),
             estado_pago: Joi.string().valid('pendiente', 'parcial', 'pagado').optional(),
             fecha_desde: Joi.string().isoDate().optional(),
             fecha_hasta: Joi.string().isoDate().optional(),
-            folio: Joi.string().max(20).optional(),
-            limit: Joi.number().integer().min(1).max(100).optional().default(50),
-            offset: Joi.number().integer().min(0).optional().default(0)
+            folio: Joi.string().max(20).optional()
         })
     },
 

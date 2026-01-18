@@ -4,6 +4,7 @@
  */
 
 import { lazy } from 'react';
+import { Navigate } from 'react-router-dom';
 import { protectedRoute, ROLES } from './helpers/routeHelpers';
 
 // POS
@@ -16,6 +17,11 @@ const CuponesPage = lazy(() => import('@/pages/pos/CuponesPage'));
 const LealtadPage = lazy(() => import('@/pages/pos/LealtadPage'));
 
 export const posRoutes = [
+  // Index: redirige /pos a /pos/venta
+  {
+    path: 'pos',
+    element: <Navigate to="/pos/venta" replace />,
+  },
   // Venta (acceso para todo el equipo)
   protectedRoute('pos/venta', VentaPOSPage, { requiredRole: ROLES.TEAM }),
   protectedRoute('pos/ventas', VentasListPage, { requiredRole: ROLES.TEAM }),

@@ -14,6 +14,8 @@ const SanitizeHelper = require('./SanitizeHelper');
 const PaginationHelper = require('./PaginationHelper');
 const ErrorHelper = require('./ErrorHelper');
 const OrganizacionHelper = require('./OrganizacionHelper');
+const SecureRandom = require('./SecureRandom');
+const ParseHelper = require('./ParseHelper');
 
 // Helpers de dominio
 const InventarioHelper = require('./InventarioHelper');
@@ -29,6 +31,8 @@ module.exports = {
   PaginationHelper,
   ErrorHelper,
   OrganizacionHelper,
+  SecureRandom,
+  ParseHelper,
   // Helpers de dominio
   InventarioHelper,
   POSHelper

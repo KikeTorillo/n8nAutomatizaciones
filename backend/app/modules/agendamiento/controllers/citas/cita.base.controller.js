@@ -7,6 +7,135 @@ const RoundRobinService = require('../../services/round-robin.service');
 
 class CitaBaseController {
 
+    // =====================================================================
+    // MÉTODOS PRIVADOS - Lógica extraída para evitar duplicación
+    // =====================================================================
+
+    /**
+     * Resuelve el cliente: busca por email/teléfono o crea uno nuevo
+     * @param {Object} clienteInfo - Datos del cliente {nombre, apellidos, email, telefono}
+     * @param {number} organizacionId - ID de la organización
+     * @param {string} notaOrigen - Nota para identificar el origen del cliente
+     * @returns {Promise<number>} ID del cliente resuelto
+     */
+    static async _resolverCliente(clienteInfo, organizacionId, notaOrigen = 'Cliente creado desde agendamiento público') {
+        let clienteId = null;
+
+        // Buscar cliente existente por email (prioritario)
+        if (clienteInfo.email) {
+            const resultadoBusqueda = await RLSContextManager.query(organizacionId, async (db) => {
+                const query = 'SELECT id FROM clientes WHERE organizacion_id = $1 AND LOWER(email) = LOWER($2) LIMIT 1';
+                const result = await db.query(query, [organizacionId, clienteInfo.email]);
+                return result.rows[0];
+            });
+
+            if (resultadoBusqueda) {
+                clienteId = resultadoBusqueda.id;
+            }
+        }
+
+        // Si no se encontró por email, buscar por teléfono (via adapter)
+        if (!clienteId && clienteInfo.telefono) {
+            const resultadoBusqueda = await clienteAdapter.buscarPorTelefono(
+                clienteInfo.telefono,
+                organizacionId,
+                { exacto: true }
+            );
+
+            if (resultadoBusqueda.encontrado) {
+                clienteId = resultadoBusqueda.cliente.id;
+            }
+        }
+
+        // Si no existe, crear nuevo cliente (via adapter)
+        if (!clienteId) {
+            const nuevoCliente = await clienteAdapter.crear({
+                organizacion_id: organizacionId,
+                nombre: clienteInfo.nombre,
+                apellidos: clienteInfo.apellidos || null,
+                email: clienteInfo.email || null,
+                telefono: clienteInfo.telefono,
+                como_conocio: 'marketplace',
+                notas_especiales: notaOrigen,
+                activo: true,
+                marketing_permitido: true
+            });
+
+            clienteId = nuevoCliente.id;
+        }
+
+        return clienteId;
+    }
+
+    /**
+     * Calcula hora_fin basándose en duración de servicios
+     * @param {string} horaInicio - Hora de inicio (HH:MM)
+     * @param {number[]} serviciosIds - IDs de los servicios
+     * @param {number} organizacionId - ID de la organización
+     * @returns {Promise<string>} Hora de fin calculada (HH:MM)
+     */
+    static async _calcularHoraFin(horaInicio, serviciosIds, organizacionId) {
+        const duracionTotal = await RLSContextManager.query(organizacionId, async (db) => {
+            const query = 'SELECT SUM(duracion_minutos) as duracion_total FROM servicios WHERE organizacion_id = $1 AND id = ANY($2)';
+            const result = await db.query(query, [organizacionId, serviciosIds]);
+            return result.rows[0]?.duracion_total || 60; // Default 60 min
+        });
+
+        const [horas, minutos] = horaInicio.split(':').map(Number);
+        const horaInicioDate = new Date(2000, 0, 1, horas, minutos);
+        horaInicioDate.setMinutes(horaInicioDate.getMinutes() + parseInt(duracionTotal));
+
+        return `${String(horaInicioDate.getHours()).padStart(2, '0')}:${String(horaInicioDate.getMinutes()).padStart(2, '0')}`;
+    }
+
+    /**
+     * Asigna profesional automáticamente (Round-Robin o fallback)
+     * @param {Object} params - Parámetros para asignación
+     * @param {number[]} params.serviciosIds - IDs de servicios
+     * @param {string} params.fecha - Fecha de la cita
+     * @param {string} params.horaInicio - Hora de inicio
+     * @param {string} params.horaFin - Hora de fin
+     * @param {number} params.organizacionId - ID de la organización
+     * @returns {Promise<{id: number}|{error: string}>} Profesional asignado o error
+     */
+    static async _asignarProfesional({ serviciosIds, fecha, horaInicio, horaFin, organizacionId }) {
+        // Si hay servicio definido, usar Round-Robin inteligente
+        if (serviciosIds.length > 0 && fecha && horaInicio && horaFin) {
+            try {
+                const profesionalAsignado = await RLSContextManager.query(organizacionId, async (db) => {
+                    return await RoundRobinService.obtenerSiguienteProfesional({
+                        servicioId: serviciosIds[0],
+                        organizacionId,
+                        fecha,
+                        horaInicio,
+                        horaFin,
+                        db
+                    });
+                });
+                return { id: profesionalAsignado.id };
+            } catch (error) {
+                return { error: error.message || 'No hay profesionales disponibles para el horario solicitado' };
+            }
+        }
+
+        // Fallback: Sin servicio definido, asignar primer profesional activo
+        const profesionalAsignado = await RLSContextManager.query(organizacionId, async (db) => {
+            const query = 'SELECT id FROM profesionales WHERE organizacion_id = $1 AND activo = true ORDER BY id ASC LIMIT 1';
+            const result = await db.query(query, [organizacionId]);
+            return result.rows[0];
+        });
+
+        if (!profesionalAsignado) {
+            return { error: 'No hay profesionales activos disponibles' };
+        }
+
+        return { id: profesionalAsignado.id };
+    }
+
+    // =====================================================================
+    // ENDPOINTS PÚBLICOS
+    // =====================================================================
+
     static crear = asyncHandler(async (req, res) => {
         const organizacionId = req.tenant.organizacionId;
         let citaData = {
@@ -14,119 +143,42 @@ class CitaBaseController {
             organizacion_id: organizacionId
         };
 
-        // ✅ FEATURE: Agendamiento público - crear cliente automáticamente si se proporciona objeto
+        // Resolver cliente si se proporciona objeto en lugar de ID
         if (citaData.cliente && !citaData.cliente_id) {
-            const clienteInfo = citaData.cliente;
-
-            // Buscar cliente existente por email (prioritario) o teléfono
-            let clienteId = null;
-
-            if (clienteInfo.email) {
-                const resultadoBusqueda = await RLSContextManager.query(organizacionId, async (db) => {
-                    const query = 'SELECT id FROM clientes WHERE organizacion_id = $1 AND LOWER(email) = LOWER($2) LIMIT 1';
-                    const result = await db.query(query, [organizacionId, clienteInfo.email]);
-                    return result.rows[0];
-                });
-
-                if (resultadoBusqueda) {
-                    clienteId = resultadoBusqueda.id;
-                }
-            }
-
-            // Si no se encontró por email, buscar por teléfono (via adapter)
-            if (!clienteId && clienteInfo.telefono) {
-                const resultadoBusqueda = await clienteAdapter.buscarPorTelefono(
-                    clienteInfo.telefono,
-                    organizacionId,
-                    { exacto: true }
-                );
-
-                if (resultadoBusqueda.encontrado) {
-                    clienteId = resultadoBusqueda.cliente.id;
-                }
-            }
-
-            // Si no existe, crear nuevo cliente (via adapter)
-            if (!clienteId) {
-                const nuevoCliente = await clienteAdapter.crear({
-                    organizacion_id: organizacionId,
-                    nombre: clienteInfo.nombre,
-                    apellidos: clienteInfo.apellidos || null,
-                    email: clienteInfo.email || null,
-                    telefono: clienteInfo.telefono,
-                    como_conocio: 'marketplace',
-                    notas_especiales: 'Cliente creado desde agendamiento público',
-                    activo: true,
-                    marketing_permitido: true
-                });
-
-                clienteId = nuevoCliente.id;
-            }
-
-            // Reemplazar objeto cliente con cliente_id
-            citaData.cliente_id = clienteId;
+            citaData.cliente_id = await CitaBaseController._resolverCliente(
+                citaData.cliente,
+                organizacionId,
+                'Cliente creado desde agendamiento público'
+            );
             delete citaData.cliente;
         }
 
-        // ✅ FEATURE: Calcular hora_fin automáticamente si no se proporciona
-        // (Debe ejecutarse ANTES de auto-asignación porque RoundRobin necesita hora_fin)
+        // Calcular hora_fin si no se proporciona
         const serviciosIds = citaData.servicios_ids || (citaData.servicio_id ? [citaData.servicio_id] : []);
-
         if (!citaData.hora_fin && citaData.hora_inicio && serviciosIds.length > 0) {
-            // Obtener duración total de los servicios
-            const duracionTotal = await RLSContextManager.query(organizacionId, async (db) => {
-                const query = 'SELECT SUM(duracion_minutos) as duracion_total FROM servicios WHERE organizacion_id = $1 AND id = ANY($2)';
-                const result = await db.query(query, [organizacionId, serviciosIds]);
-                return result.rows[0]?.duracion_total || 60; // Default 60 min si no se encuentra
+            citaData.hora_fin = await CitaBaseController._calcularHoraFin(
+                citaData.hora_inicio,
+                serviciosIds,
+                organizacionId
+            );
+        }
+
+        // Asignar profesional automáticamente si no se especificó
+        if (!citaData.profesional_id) {
+            const asignacion = await CitaBaseController._asignarProfesional({
+                serviciosIds,
+                fecha: citaData.fecha_cita,
+                horaInicio: citaData.hora_inicio,
+                horaFin: citaData.hora_fin,
+                organizacionId
             });
 
-            // Calcular hora_fin sumando la duración a hora_inicio
-            const [horas, minutos] = citaData.hora_inicio.split(':').map(Number);
-            const horaInicioDate = new Date(2000, 0, 1, horas, minutos);
-            horaInicioDate.setMinutes(horaInicioDate.getMinutes() + parseInt(duracionTotal));
-
-            const horaFin = `${String(horaInicioDate.getHours()).padStart(2, '0')}:${String(horaInicioDate.getMinutes()).padStart(2, '0')}`;
-            citaData.hora_fin = horaFin;
-        }
-
-        // ✅ FEATURE: Round-Robin - Asignar profesional automáticamente si no se especificó
-        if (!citaData.profesional_id) {
-            // Si hay servicio definido, usar Round-Robin inteligente
-            if (serviciosIds.length > 0 && citaData.fecha_cita && citaData.hora_inicio && citaData.hora_fin) {
-                try {
-                    const profesionalAsignado = await RLSContextManager.query(organizacionId, async (db) => {
-                        return await RoundRobinService.obtenerSiguienteProfesional({
-                            servicioId: serviciosIds[0], // Usar primer servicio para determinar profesionales
-                            organizacionId,
-                            fecha: citaData.fecha_cita,
-                            horaInicio: citaData.hora_inicio,
-                            horaFin: citaData.hora_fin,
-                            db
-                        });
-                    });
-                    citaData.profesional_id = profesionalAsignado.id;
-                } catch (error) {
-                    // Si falla round-robin (ej: no hay profesionales disponibles), retornar error descriptivo
-                    return ResponseHelper.error(res, error.message || 'No hay profesionales disponibles para el horario solicitado', 400);
-                }
-            } else {
-                // Fallback: Sin servicio definido, asignar primer profesional activo
-                const profesionalAsignado = await RLSContextManager.query(organizacionId, async (db) => {
-                    const query = 'SELECT id FROM profesionales WHERE organizacion_id = $1 AND activo = true ORDER BY id ASC LIMIT 1';
-                    const result = await db.query(query, [organizacionId]);
-                    return result.rows[0];
-                });
-
-                if (!profesionalAsignado) {
-                    return ResponseHelper.error(res, 'No hay profesionales activos disponibles', 400);
-                }
-
-                citaData.profesional_id = profesionalAsignado.id;
+            if (asignacion.error) {
+                return ResponseHelper.error(res, asignacion.error, 400);
             }
+            citaData.profesional_id = asignacion.id;
         }
 
-        // ✅ FEATURE: Agendamiento público - req.user puede ser undefined
-        // Si no hay usuario autenticado, usar null (creado por sistema/marketplace)
         const usuarioId = req.user?.id || null;
         const nuevaCita = await CitaModel.crearEstandar(citaData, usuarioId);
 
@@ -244,118 +296,43 @@ class CitaBaseController {
             organizacion_id: organizacionId
         };
 
-        // ✅ FEATURE: Agendamiento público - crear cliente automáticamente si se proporciona objeto
+        // Resolver cliente si se proporciona objeto en lugar de ID
         if (citaData.cliente && !citaData.cliente_id) {
-            const clienteInfo = citaData.cliente;
-
-            // Buscar cliente existente por email (prioritario) o teléfono
-            let clienteId = null;
-
-            if (clienteInfo.email) {
-                const resultadoBusqueda = await RLSContextManager.query(organizacionId, async (db) => {
-                    const query = 'SELECT id FROM clientes WHERE organizacion_id = $1 AND LOWER(email) = LOWER($2) LIMIT 1';
-                    const result = await db.query(query, [organizacionId, clienteInfo.email]);
-                    return result.rows[0];
-                });
-
-                if (resultadoBusqueda) {
-                    clienteId = resultadoBusqueda.id;
-                }
-            }
-
-            // Si no se encontró por email, buscar por teléfono (via adapter)
-            if (!clienteId && clienteInfo.telefono) {
-                const resultadoBusqueda = await clienteAdapter.buscarPorTelefono(
-                    clienteInfo.telefono,
-                    organizacionId,
-                    { exacto: true }
-                );
-
-                if (resultadoBusqueda.encontrado) {
-                    clienteId = resultadoBusqueda.cliente.id;
-                }
-            }
-
-            // Si no existe, crear nuevo cliente (via adapter)
-            if (!clienteId) {
-                const nuevoCliente = await clienteAdapter.crear({
-                    organizacion_id: organizacionId,
-                    nombre: clienteInfo.nombre,
-                    apellidos: clienteInfo.apellidos || null,
-                    email: clienteInfo.email || null,
-                    telefono: clienteInfo.telefono,
-                    como_conocio: 'marketplace',
-                    notas_especiales: 'Cliente creado desde agendamiento público (serie recurrente)',
-                    activo: true,
-                    marketing_permitido: true
-                });
-
-                clienteId = nuevoCliente.id;
-            }
-
-            // Reemplazar objeto cliente con cliente_id
-            citaData.cliente_id = clienteId;
+            citaData.cliente_id = await CitaBaseController._resolverCliente(
+                citaData.cliente,
+                organizacionId,
+                'Cliente creado desde agendamiento público (serie recurrente)'
+            );
             delete citaData.cliente;
         }
 
-        // ✅ FEATURE: Calcular hora_fin automáticamente si no se proporciona
-        // (Debe ejecutarse ANTES de auto-asignación porque RoundRobin necesita hora_fin)
+        // Calcular hora_fin si no se proporciona
         const serviciosIds = citaData.servicios_ids || (citaData.servicio_id ? [citaData.servicio_id] : []);
-
         if (!citaData.hora_fin && citaData.hora_inicio && serviciosIds.length > 0) {
-            // Obtener duración total de los servicios
-            const duracionTotal = await RLSContextManager.query(organizacionId, async (db) => {
-                const query = 'SELECT SUM(duracion_minutos) as duracion_total FROM servicios WHERE organizacion_id = $1 AND id = ANY($2)';
-                const result = await db.query(query, [organizacionId, serviciosIds]);
-                return result.rows[0]?.duracion_total || 60;
-            });
-
-            // Calcular hora_fin sumando la duración a hora_inicio
-            const [horas, minutos] = citaData.hora_inicio.split(':').map(Number);
-            const horaInicioDate = new Date(2000, 0, 1, horas, minutos);
-            horaInicioDate.setMinutes(horaInicioDate.getMinutes() + parseInt(duracionTotal));
-
-            const horaFin = `${String(horaInicioDate.getHours()).padStart(2, '0')}:${String(horaInicioDate.getMinutes()).padStart(2, '0')}`;
-            citaData.hora_fin = horaFin;
+            citaData.hora_fin = await CitaBaseController._calcularHoraFin(
+                citaData.hora_inicio,
+                serviciosIds,
+                organizacionId
+            );
         }
 
-        // ✅ FEATURE: Round-Robin - Asignar profesional automáticamente si no se especificó
+        // Asignar profesional automáticamente si no se especificó
         if (!citaData.profesional_id) {
             // Para series recurrentes, usar fecha_inicio como referencia para round-robin
             const fechaReferencia = citaData.fecha_inicio || citaData.patron_recurrencia?.fecha_inicio;
 
-            // Si hay servicio definido, usar Round-Robin inteligente
-            if (serviciosIds.length > 0 && fechaReferencia && citaData.hora_inicio && citaData.hora_fin) {
-                try {
-                    const profesionalAsignado = await RLSContextManager.query(organizacionId, async (db) => {
-                        return await RoundRobinService.obtenerSiguienteProfesional({
-                            servicioId: serviciosIds[0], // Usar primer servicio para determinar profesionales
-                            organizacionId,
-                            fecha: fechaReferencia,
-                            horaInicio: citaData.hora_inicio,
-                            horaFin: citaData.hora_fin,
-                            db
-                        });
-                    });
-                    citaData.profesional_id = profesionalAsignado.id;
-                } catch (error) {
-                    // Si falla round-robin, retornar error descriptivo
-                    return ResponseHelper.error(res, error.message || 'No hay profesionales disponibles para el horario solicitado', 400);
-                }
-            } else {
-                // Fallback: Sin servicio definido, asignar primer profesional activo
-                const profesionalAsignado = await RLSContextManager.query(organizacionId, async (db) => {
-                    const query = 'SELECT id FROM profesionales WHERE organizacion_id = $1 AND activo = true ORDER BY id ASC LIMIT 1';
-                    const result = await db.query(query, [organizacionId]);
-                    return result.rows[0];
-                });
+            const asignacion = await CitaBaseController._asignarProfesional({
+                serviciosIds,
+                fecha: fechaReferencia,
+                horaInicio: citaData.hora_inicio,
+                horaFin: citaData.hora_fin,
+                organizacionId
+            });
 
-                if (!profesionalAsignado) {
-                    return ResponseHelper.error(res, 'No hay profesionales activos disponibles', 400);
-                }
-
-                citaData.profesional_id = profesionalAsignado.id;
+            if (asignacion.error) {
+                return ResponseHelper.error(res, asignacion.error, 400);
             }
+            citaData.profesional_id = asignacion.id;
         }
 
         const usuarioId = req.user?.id || null;

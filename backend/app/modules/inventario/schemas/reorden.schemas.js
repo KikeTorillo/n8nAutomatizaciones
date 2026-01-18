@@ -4,6 +4,7 @@
  */
 
 const Joi = require('joi');
+const { withPagination, idOptional } = require('../../../schemas/shared');
 
 const reordenSchemas = {
     /**
@@ -113,12 +114,10 @@ const reordenSchemas = {
      * GET /api/v1/inventario/reorden/logs
      */
     listarLogsReorden: {
-        query: Joi.object({
+        query: withPagination({
             tipo: Joi.string().valid('job_cron', 'manual').optional(),
             fecha_desde: Joi.date().iso().optional(),
-            fecha_hasta: Joi.date().iso().optional(),
-            limit: Joi.number().integer().min(1).max(100).optional().default(50),
-            offset: Joi.number().integer().min(0).optional().default(0)
+            fecha_hasta: Joi.date().iso().optional()
         })
     },
 

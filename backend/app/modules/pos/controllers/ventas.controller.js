@@ -420,29 +420,8 @@ class VentasPOSController {
             return ResponseHelper.error(res, 'Venta no encontrada', 404);
         }
 
-        // Obtener datos de la organización
-        const organizacion = await RLSContextManager.withBypass(async (db) => {
-            const result = await db.query(`
-                SELECT
-                    o.nombre_comercial,
-                    o.razon_social,
-                    o.rfc_nif,
-                    o.telefono,
-                    o.email_admin,
-                    o.logo_url,
-                    CONCAT_WS(', ',
-                        c.nombre,
-                        e.nombre,
-                        p.nombre
-                    ) AS direccion
-                FROM organizaciones o
-                LEFT JOIN ciudades c ON c.id = o.ciudad_id
-                LEFT JOIN estados e ON e.id = o.estado_id
-                LEFT JOIN paises p ON p.id = o.pais_id
-                WHERE o.id = $1
-            `, [organizacionId]);
-            return result.rows[0];
-        });
+        // Obtener datos de la organización (lógica movida al modelo)
+        const organizacion = await OrganizacionModel.obtenerParaTicket(organizacionId);
 
         if (!organizacion) {
             return ResponseHelper.error(res, 'Organización no encontrada', 404);

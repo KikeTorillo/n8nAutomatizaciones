@@ -37,8 +37,6 @@ export function useAuthInit() {
       // Hay sesión en localStorage pero no token en memoria
       // Intentar restaurar usando la cookie httpOnly
       try {
-        console.log('🔄 Restaurando sesión...');
-
         const response = await axios.post(
           '/api/v1/auth/refresh',
           {}, // Body vacío - el refreshToken viene en la cookie httpOnly
@@ -47,11 +45,7 @@ export function useAuthInit() {
 
         const { accessToken } = response.data.data;
         setAccessToken(accessToken);
-
-        console.log('✅ Sesión restaurada exitosamente');
-      } catch (error) {
-        console.warn('⚠️ No se pudo restaurar la sesión:', error.message);
-
+      } catch {
         // Cookie expirada o inválida - hacer logout
         logout();
       } finally {

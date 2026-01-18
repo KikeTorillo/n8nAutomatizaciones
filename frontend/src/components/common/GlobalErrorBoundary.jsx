@@ -48,8 +48,8 @@ class GlobalErrorBoundary extends React.Component {
   };
 
   handleGoHome = () => {
-    // Navegar al inicio (sin usar React Router para evitar posibles errores)
-    window.location.href = '/';
+    // Navegar al dashboard (sin usar React Router para evitar posibles errores)
+    window.location.href = '/home';
   };
 
   handleRetry = () => {

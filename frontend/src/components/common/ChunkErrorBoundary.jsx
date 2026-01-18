@@ -70,7 +70,7 @@ class ChunkErrorBoundary extends React.Component {
   };
 
   handleGoHome = () => {
-    window.location.href = '/';
+    window.location.href = '/home';
   };
 
   render() {
