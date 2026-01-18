@@ -1,5 +1,5 @@
 const ProfesionalModel = require('../models/profesional.model');
-const { ResponseHelper } = require('../../../utils/helpers');
+const { ResponseHelper, ParseHelper } = require('../../../utils/helpers');
 const asyncHandler = require('../../../middleware/asyncHandler');
 const logger = require('../../../utils/logger');
 
@@ -67,24 +67,21 @@ class ProfesionalController {
     });
 
     static listar = asyncHandler(async (req, res) => {
-        // Ene 2026: Soporte de paginación con page/limit
-        const page = Math.max(parseInt(req.query.page) || 1, 1);
-        const limit = Math.min(Math.max(parseInt(req.query.limit) || 20, 1), 100);
+        // Parseo centralizado con ParseHelper
+        const { page, limit } = ParseHelper.parsePagination(req.query, { maxLimit: 100 });
 
         const filtros = {
-            activo: req.query.activo !== undefined ? req.query.activo === 'true' : null,
-            disponible_online: req.query.disponible_online !== undefined ? req.query.disponible_online === 'true' : null,
-            busqueda: req.query.busqueda || null,
-            modulo: req.query.modulo || null, // Nov 2025: filtrar por módulo habilitado
-            con_usuario: req.query.con_usuario !== undefined ? req.query.con_usuario === 'true' : null, // Nov 2025
-            // Dic 2025: Filtros de clasificación y jerarquía
-            rol_usuario: req.query.rol_usuario || null, // puede ser string o array (admin, propietario para supervisores)
-            estado: req.query.estado || null,
-            tipo_contratacion: req.query.tipo_contratacion || null,
-            departamento_id: req.query.departamento_id ? parseInt(req.query.departamento_id) : null,
-            puesto_id: req.query.puesto_id ? parseInt(req.query.puesto_id) : null,
-            supervisor_id: req.query.supervisor_id ? parseInt(req.query.supervisor_id) : null,
-            // Ene 2026: Usar page en lugar de offset directo
+            activo: ParseHelper.parseBoolean(req.query.activo),
+            disponible_online: ParseHelper.parseBoolean(req.query.disponible_online),
+            busqueda: ParseHelper.parseString(req.query.busqueda),
+            modulo: ParseHelper.parseString(req.query.modulo),
+            con_usuario: ParseHelper.parseBoolean(req.query.con_usuario),
+            rol_usuario: ParseHelper.parseString(req.query.rol_usuario),
+            estado: ParseHelper.parseString(req.query.estado),
+            tipo_contratacion: ParseHelper.parseString(req.query.tipo_contratacion),
+            departamento_id: ParseHelper.parseInt(req.query.departamento_id),
+            puesto_id: ParseHelper.parseInt(req.query.puesto_id),
+            supervisor_id: ParseHelper.parseInt(req.query.supervisor_id),
             page,
             limite: limit
         };
@@ -325,8 +322,8 @@ class ProfesionalController {
      */
     static obtenerSubordinados = asyncHandler(async (req, res) => {
         const { id } = req.params;
-        const maxNivel = parseInt(req.query.max_nivel) || 10;
-        const soloDirectos = req.query.solo_directos === 'true';
+        const maxNivel = ParseHelper.parseInt(req.query.max_nivel, 10);
+        const soloDirectos = ParseHelper.parseBoolean(req.query.solo_directos, false);
 
         const subordinados = await ProfesionalModel.obtenerSubordinados(
             req.tenant.organizacionId,

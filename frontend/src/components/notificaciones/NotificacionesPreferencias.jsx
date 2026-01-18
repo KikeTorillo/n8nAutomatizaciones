@@ -15,7 +15,7 @@ import {
   NOTIFICACION_CATEGORIAS,
 } from '@/hooks/sistema';
 import { useToast } from '@/hooks/utils';
-import { Button, Checkbox } from '@/components/ui';
+import { Button } from '@/components/ui';
 
 /**
  * NotificacionesPreferencias - Configuracion de preferencias de notificacion

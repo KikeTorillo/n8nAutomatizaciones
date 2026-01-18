@@ -28,3 +28,4 @@ export { default as FilterChip } from './FilterChip';
 export { default as SearchFilterBar } from './SearchFilterBar';
 export { default as SmartButtons } from './SmartButtons';
 export { default as CheckboxGroup } from './CheckboxGroup';
+export { default as CheckboxField } from './CheckboxField';

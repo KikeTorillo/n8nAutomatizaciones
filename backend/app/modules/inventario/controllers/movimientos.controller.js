@@ -1,5 +1,5 @@
 const { MovimientosInventarioModel } = require('../models');
-const { ResponseHelper } = require('../../../utils/helpers');
+const { ResponseHelper, ParseHelper } = require('../../../utils/helpers');
 const { asyncHandler } = require('../../../middleware');
 
 /**
@@ -33,13 +33,16 @@ class MovimientosInventarioController {
         const { producto_id } = req.params;
         const organizacionId = req.tenant.organizacionId;
 
+        // Parseo centralizado con ParseHelper
+        const { limit, offset } = ParseHelper.parsePagination(req.query, { defaultLimit: 100 });
+
         const filtros = {
-            tipo_movimiento: req.query.tipo_movimiento || undefined,
-            fecha_desde: req.query.fecha_desde || undefined,
-            fecha_hasta: req.query.fecha_hasta || undefined,
-            proveedor_id: req.query.proveedor_id ? parseInt(req.query.proveedor_id) : undefined,
-            limit: req.query.limit ? parseInt(req.query.limit) : 100,
-            offset: req.query.offset ? parseInt(req.query.offset) : 0
+            tipo_movimiento: ParseHelper.parseString(req.query.tipo_movimiento),
+            fecha_desde: ParseHelper.parseString(req.query.fecha_desde),
+            fecha_hasta: ParseHelper.parseString(req.query.fecha_hasta),
+            proveedor_id: ParseHelper.parseInt(req.query.proveedor_id),
+            limit,
+            offset
         };
 
         const kardex = await MovimientosInventarioModel.obtenerKardex(
@@ -58,15 +61,18 @@ class MovimientosInventarioController {
     static listar = asyncHandler(async (req, res) => {
         const organizacionId = req.tenant.organizacionId;
 
+        // Parseo centralizado con ParseHelper
+        const { limit, offset } = ParseHelper.parsePagination(req.query, { defaultLimit: 50 });
+
         const filtros = {
-            tipo_movimiento: req.query.tipo_movimiento || undefined,
-            categoria: req.query.categoria || undefined, // 'entrada' o 'salida'
-            producto_id: req.query.producto_id ? parseInt(req.query.producto_id) : undefined,
-            proveedor_id: req.query.proveedor_id ? parseInt(req.query.proveedor_id) : undefined,
-            fecha_desde: req.query.fecha_desde || undefined,
-            fecha_hasta: req.query.fecha_hasta || undefined,
-            limit: req.query.limit ? parseInt(req.query.limit) : 50,
-            offset: req.query.offset ? parseInt(req.query.offset) : 0
+            tipo_movimiento: ParseHelper.parseString(req.query.tipo_movimiento),
+            categoria: ParseHelper.parseString(req.query.categoria),
+            producto_id: ParseHelper.parseInt(req.query.producto_id),
+            proveedor_id: ParseHelper.parseInt(req.query.proveedor_id),
+            fecha_desde: ParseHelper.parseString(req.query.fecha_desde),
+            fecha_hasta: ParseHelper.parseString(req.query.fecha_hasta),
+            limit,
+            offset
         };
 
         const movimientos = await MovimientosInventarioModel.listar(organizacionId, filtros);

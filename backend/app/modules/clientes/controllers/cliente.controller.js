@@ -11,7 +11,7 @@
  */
 
 const ClienteModel = require('../models/cliente.model');
-const { ResponseHelper } = require('../../../utils/helpers');
+const { ResponseHelper, ParseHelper } = require('../../../utils/helpers');
 const asyncHandler = require('../../../middleware/asyncHandler');
 
 class ClienteController {
@@ -37,39 +37,25 @@ class ClienteController {
     });
 
     static listar = asyncHandler(async (req, res) => {
-        const {
-            page = 1,
-            limit = 20,
-            busqueda,
-            activo,
-            marketing_permitido,
-            tipo,  // Filtro: 'persona' o 'empresa'
-            etiqueta_ids,  // Filtro por etiquetas (comma-separated o array)
-            ordenPor,
-            orden
-        } = req.query;
-
-        // Parsear etiqueta_ids si viene como string separado por comas
-        let etiquetaIdsArray = null;
-        if (etiqueta_ids) {
-            if (Array.isArray(etiqueta_ids)) {
-                etiquetaIdsArray = etiqueta_ids.map(id => parseInt(id));
-            } else if (typeof etiqueta_ids === 'string') {
-                etiquetaIdsArray = etiqueta_ids.split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id));
-            }
-        }
+        // Parseo centralizado con ParseHelper
+        const { page, limit } = ParseHelper.parsePagination(req.query, { maxLimit: 100 });
 
         const filtros = {
-            page: parseInt(page),
-            limit: Math.min(parseInt(limit), 100),
-            busqueda,
-            activos: activo !== undefined ? activo === 'true' : undefined,
-            marketing: marketing_permitido !== undefined ? marketing_permitido === 'true' : undefined,
-            tipo,
-            etiqueta_ids: etiquetaIdsArray,
-            ordenPor,
-            orden
+            page,
+            limit,
+            busqueda: ParseHelper.parseString(req.query.busqueda),
+            activos: ParseHelper.parseBoolean(req.query.activo),
+            marketing: ParseHelper.parseBoolean(req.query.marketing_permitido),
+            tipo: ParseHelper.parseString(req.query.tipo),
+            etiqueta_ids: ParseHelper.parseIntArray(req.query.etiqueta_ids),
+            ordenPor: ParseHelper.parseString(req.query.ordenPor) || 'nombre',
+            orden: ParseHelper.parseString(req.query.orden) || 'ASC'
         };
+
+        // Limpiar etiqueta_ids si está vacío
+        if (filtros.etiqueta_ids?.length === 0) {
+            filtros.etiqueta_ids = null;
+        }
 
         const resultado = await ClienteModel.listar(req.tenant.organizacionId, filtros);
 
@@ -109,12 +95,14 @@ class ClienteController {
     });
 
     static buscar = asyncHandler(async (req, res) => {
-        const { q: termino, tipo = 'nombre', limit = 10 } = req.query;
+        const termino = ParseHelper.parseString(req.query.q) || '';
+        const tipo = ParseHelper.parseString(req.query.tipo) || 'nombre';
+        const limit = Math.min(ParseHelper.parseInt(req.query.limit, 10), 50);
 
         const clientes = await ClienteModel.buscar(
             termino.trim(),
             req.tenant.organizacionId,
-            Math.min(parseInt(limit), 50),
+            limit,
             tipo
         );
 
@@ -172,15 +160,15 @@ class ClienteController {
     });
 
     static buscarPorTelefono = asyncHandler(async (req, res) => {
-        const { telefono, exacto, incluir_inactivos, crear_si_no_existe } = req.query;
+        const telefono = ParseHelper.parseString(req.query.telefono);
 
         const resultado = await ClienteModel.buscarPorTelefono(
             telefono,
             req.tenant.organizacionId,
             {
-                exacto: exacto === 'true',
-                incluir_inactivos: incluir_inactivos === 'true',
-                crear_si_no_existe: crear_si_no_existe === 'true'
+                exacto: ParseHelper.parseBoolean(req.query.exacto, false),
+                incluir_inactivos: ParseHelper.parseBoolean(req.query.incluir_inactivos, false),
+                crear_si_no_existe: ParseHelper.parseBoolean(req.query.crear_si_no_existe, false)
             }
         );
 
@@ -368,13 +356,13 @@ class ClienteController {
      */
     static listarMovimientosCredito = asyncHandler(async (req, res) => {
         const { id } = req.params;
-        const { limit = 50, offset = 0 } = req.query;
+        const { limit, offset } = ParseHelper.parsePagination(req.query, { defaultLimit: 50 });
         const organizacionId = req.tenant.organizacionId;
 
         const movimientos = await ClienteModel.listarMovimientosCredito(
             parseInt(id),
             organizacionId,
-            { limit: parseInt(limit), offset: parseInt(offset) }
+            { limit, offset }
         );
 
         return ResponseHelper.success(res, movimientos, 'Movimientos obtenidos');
@@ -385,12 +373,12 @@ class ClienteController {
      * GET /api/v1/clientes/credito/con-saldo
      */
     static listarClientesConSaldo = asyncHandler(async (req, res) => {
-        const { solo_vencidos = false } = req.query;
+        const soloVencidos = ParseHelper.parseBoolean(req.query.solo_vencidos, false);
         const organizacionId = req.tenant.organizacionId;
 
         const clientes = await ClienteModel.listarClientesConSaldo(
             organizacionId,
-            solo_vencidos === 'true'
+            soloVencidos
         );
 
         return ResponseHelper.success(res, clientes, 'Clientes con saldo obtenidos');

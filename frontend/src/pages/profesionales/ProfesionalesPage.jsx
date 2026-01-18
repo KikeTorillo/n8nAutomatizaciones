@@ -1,45 +1,103 @@
-import { useState, useMemo } from 'react';
+/**
+ * ====================================================================
+ * PROFESIONALES PAGE
+ * ====================================================================
+ *
+ * Migrado a ListadoCRUDPage - Ene 2026
+ * - ViewModes para tabla/tarjetas
+ * - Navegación a rutas (sin FormDrawer)
+ *
+ * Reducción: 432 → ~290 LOC (-33%)
+ * ====================================================================
+ */
+
+import { useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import {
-  Plus, Search, Filter, X, AlertTriangle, Users,
-  UserCheck, Umbrella, Stethoscope, LayoutGrid, LayoutList, Download
+  Plus, Search, Filter, X, Users,
+  LayoutGrid, LayoutList, Download
 } from 'lucide-react';
 import {
   Button,
   Input,
-  Modal,
   Select,
-  StatCardGrid,
-  ViewTabs
+  ListadoCRUDPage,
+  Modal,
+  ViewTabs,
 } from '@/components/ui';
 import ProfesionalesPageLayout from '@/components/profesionales/ProfesionalesPageLayout';
 import ProfesionalesList from '@/components/profesionales/ProfesionalesList';
 import HorariosProfesionalModal from '@/components/profesionales/HorariosProfesionalModal';
 import ServiciosProfesionalModal from '@/components/profesionales/ServiciosProfesionalModal';
-import {
-  useProfesionales,
-  useEliminarProfesional,
-  ESTADOS_LABORALES
-} from '@/hooks/personas';
+import { useProfesionales, ESTADOS_LABORALES } from '@/hooks/personas';
 import { useDepartamentos } from '@/hooks/personas';
-import { useToast, useExportCSV, useModalManager, useFilters, usePagination } from '@/hooks/utils';
+import { useToast, useExportCSV, useFilters } from '@/hooks/utils';
+import { ProfesionalesStatsGrid, ProfesionalesAlerta } from './components';
+
+/**
+ * Filtros iniciales
+ */
+const INITIAL_FILTERS = {
+  busqueda: '',
+  activo: '',
+  estado: '',
+  departamento_id: '',
+};
+
+/**
+ * Vista de tarjetas usando ProfesionalesList
+ */
+function ProfesionalesCardsView({
+  items, pagination, isLoading, onPageChange, handlers
+}) {
+  const navigate = useNavigate();
+  return (
+    <ProfesionalesList
+      profesionales={items}
+      pagination={pagination}
+      viewMode="cards"
+      isLoading={isLoading}
+      onVerDetalle={(p) => navigate(`/profesionales/${p.id}`)}
+      onDelete={(p) => handlers?.onDelete?.(p)}
+      onGestionarHorarios={(p) => handlers?.openModal?.('horarios', p)}
+      onGestionarServicios={(p) => handlers?.openModal?.('servicios', p)}
+      onPageChange={onPageChange}
+    />
+  );
+}
+
+/**
+ * Vista de tabla usando ProfesionalesList
+ */
+function ProfesionalesTableView({
+  items, pagination, isLoading, onPageChange, handlers
+}) {
+  const navigate = useNavigate();
+  return (
+    <ProfesionalesList
+      profesionales={items}
+      pagination={pagination}
+      viewMode="table"
+      isLoading={isLoading}
+      onVerDetalle={(p) => navigate(`/profesionales/${p.id}`)}
+      onDelete={(p) => handlers?.onDelete?.(p)}
+      onGestionarHorarios={(p) => handlers?.openModal?.('horarios', p)}
+      onGestionarServicios={(p) => handlers?.openModal?.('servicios', p)}
+      onPageChange={onPageChange}
+    />
+  );
+}
 
 /**
  * Página principal de gestión de profesionales
- * Usa ProfesionalesPageLayout para consistencia con Inventario
  */
 function ProfesionalesPage() {
   const navigate = useNavigate();
   const toast = useToast();
   const { exportCSV } = useExportCSV();
-  const [showFilters, setShowFilters] = useState(false);
 
-  // Vista
-  const [viewMode, setViewMode] = useState('cards');
-  const limit = 20;
-
-  // Filtros con persistencia y debounce automático
+  // Filtros con persistencia
   const {
     filtros,
     filtrosQuery,
@@ -47,70 +105,15 @@ function ProfesionalesPage() {
     filtrosActivos,
     setFiltro,
     limpiarFiltros,
-  } = useFilters(
-    {
-      busqueda: '',
-      activo: '',
-      estado: '',
-      departamento_id: '',
-    },
-    { moduloId: 'profesionales.lista' }
-  );
+  } = useFilters(INITIAL_FILTERS, { moduloId: 'profesionales.lista' });
 
-  // Fetch departamentos para filtros
+  // Departamentos para filtros
   const { data: departamentos = [] } = useDepartamentos({ activo: true });
 
-  // Estado de modales centralizado
-  const {
-    openModal,
-    closeModal,
-    isOpen,
-    getModalData,
-  } = useModalManager({
-    eliminar: { isOpen: false, data: null },
-    horarios: { isOpen: false, data: null },
-    servicios: { isOpen: false, data: null },
-  });
+  // Exportar CSV
+  const handleExportarCSV = useCallback((profesionales) => {
+    if (!profesionales || profesionales.length === 0) return;
 
-  // Paginación con reset automático cuando cambian filtros
-  const { page, handlePageChange } = usePagination({
-    limit,
-    resetOnChange: [filtrosQuery],
-  });
-
-  // Fetch profesionales con filtros y paginación
-  const { data, isLoading } = useProfesionales({
-    page,
-    limit,
-    busqueda: filtrosQuery.busqueda || undefined,
-    activo: filtrosQuery.activo === '' ? undefined : filtrosQuery.activo === 'true',
-    estado: filtrosQuery.estado || undefined,
-    departamento_id: filtrosQuery.departamento_id ? parseInt(filtrosQuery.departamento_id, 10) : undefined,
-  });
-
-  // Extraer profesionales y paginación de la respuesta
-  const profesionales = data?.profesionales || [];
-  const pagination = data?.pagination || { page: 1, limit: 20, total: 0, totalPages: 1, hasNext: false, hasPrev: false };
-
-  // Hook de eliminación
-  const eliminarMutation = useEliminarProfesional();
-
-  // Calcular estadísticas para StatCards
-  const stats = useMemo(() => {
-    const activos = profesionales.filter(p => p.estado === 'activo').length;
-    const vacaciones = profesionales.filter(p => p.estado === 'vacaciones').length;
-    const incapacidad = profesionales.filter(p => p.estado === 'incapacidad').length;
-
-    return [
-      { label: 'Total', value: pagination.total, icon: Users, color: 'gray' },
-      { label: 'Activos', value: activos, icon: UserCheck, color: 'green' },
-      { label: 'Vacaciones', value: vacaciones, icon: Umbrella, color: 'blue' },
-      { label: 'Incapacidad', value: incapacidad, icon: Stethoscope, color: 'amber' },
-    ];
-  }, [profesionales, pagination.total]);
-
-  // Exportar CSV usando hook centralizado
-  const handleExportarCSV = () => {
     const datosExportar = profesionales.map(p => ({
       nombre: p.nombre_completo || '',
       email: p.email || '',
@@ -130,162 +133,106 @@ function ProfesionalesPage() {
       { key: 'estado', header: 'Estado' },
       { key: 'fecha_contratacion', header: 'Fecha Contratación' },
     ], `profesionales_${format(new Date(), 'yyyyMMdd')}`);
-  };
+  }, [exportCSV]);
 
-  // Handlers
-  const handleLimpiarFiltros = () => {
-    limpiarFiltros();
-  };
-
-  const handleBusquedaChange = (e) => {
-    setFiltro('busqueda', e.target.value);
-  };
-
-  const handleFiltroChange = (campo, valor) => {
-    setFiltro(campo, valor);
-  };
-
-  const handleNuevoProfesional = () => {
-    navigate('/profesionales/nuevo');
-  };
-
-  const handleVerDetalle = (profesional) => {
-    navigate(`/profesionales/${profesional.id}`);
-  };
-
-  const handleDelete = (profesional) => {
-    openModal('eliminar', profesional);
-  };
-
-  const handleConfirmDelete = async () => {
-    const profesionalAEliminar = getModalData('eliminar');
-    if (!profesionalAEliminar) return;
-
-    try {
-      await eliminarMutation.mutateAsync(profesionalAEliminar.id);
-      toast.success(`Profesional "${profesionalAEliminar.nombre_completo}" desactivado correctamente`);
-      closeModal('eliminar');
-    } catch (error) {
-      toast.error(error.message || 'Error al desactivar el profesional');
-    }
-  };
-
-  const handleGestionarHorarios = (profesional) => {
-    openModal('horarios', profesional);
-  };
-
-  const handleGestionarServicios = (profesional) => {
-    openModal('servicios', profesional);
-  };
-
-  // Configuración de ViewTabs
-  const viewTabsConfig = useMemo(() => [
-    { id: 'cards', label: 'Tarjetas', icon: LayoutGrid },
-    { id: 'table', label: 'Tabla', icon: LayoutList },
+  // ViewModes
+  const viewModes = useMemo(() => [
+    { id: 'cards', label: 'Tarjetas', icon: LayoutGrid, component: ProfesionalesCardsView },
+    { id: 'table', label: 'Tabla', icon: LayoutList, component: ProfesionalesTableView },
   ], []);
 
-  // Alerta de profesionales sin servicios
-  const alertaProfesionalesSinServicios = useMemo(() => {
-    const sinServicios = profesionales.filter(
-      p => (p.total_servicios_asignados === 0 || p.total_servicios_asignados === '0') && p.activo
-    );
-    if (sinServicios.length === 0) return null;
-    return sinServicios;
-  }, [profesionales]);
-
   return (
-    <ProfesionalesPageLayout
-      icon={Users}
+    <ListadoCRUDPage
+      // Layout
       title="Lista de Profesionales"
-      subtitle={`${pagination.total} profesional${pagination.total !== 1 ? 'es' : ''} en total`}
-      actions={
+      icon={Users}
+      PageLayout={ProfesionalesPageLayout}
+
+      // Data
+      useListQuery={(params) => useProfesionales({
+        page: params.pagina,
+        limit: params.limite,
+        busqueda: filtrosQuery.busqueda || undefined,
+        activo: filtrosQuery.activo === '' ? undefined : filtrosQuery.activo === 'true',
+        estado: filtrosQuery.estado || undefined,
+        departamento_id: filtrosQuery.departamento_id ? parseInt(filtrosQuery.departamento_id, 10) : undefined,
+      })}
+      dataKey="profesionales"
+
+      // No usamos tabla nativa (usamos ProfesionalesList)
+      columns={[]}
+      useCustomTable
+
+      // ViewModes
+      viewModes={viewModes}
+      defaultViewMode="cards"
+
+      // Filters
+      initialFilters={INITIAL_FILTERS}
+      filterPersistId="profesionales.lista"
+      limit={20}
+
+      // Extra Modals
+      extraModals={{
+        horarios: {
+          component: HorariosProfesionalModal,
+          mapData: (data) => ({ profesional: data }),
+        },
+        servicios: {
+          component: ServiciosProfesionalModal,
+          mapData: (data) => ({ profesional: data }),
+        },
+      }}
+
+      // Actions
+      actions={({ items }) => (
         <>
-          <Button variant="outline" onClick={handleExportarCSV}>
+          <Button variant="outline" onClick={() => handleExportarCSV(items)} disabled={!items?.length}>
             <Download className="w-4 h-4 mr-2" />
             <span className="hidden sm:inline">Exportar CSV</span>
           </Button>
-          <Button onClick={handleNuevoProfesional}>
+          <Button onClick={() => navigate('/profesionales/nuevo')}>
             <Plus className="w-4 h-4 mr-2" />
             <span className="hidden sm:inline">Nuevo Profesional</span>
             <span className="sm:hidden">Nuevo</span>
           </Button>
         </>
-      }
-    >
-      {/* StatCards */}
-      <StatCardGrid stats={stats} className="mb-6" />
+      )}
+      showNewButton={false}
 
-      {/* Alerta: Profesionales sin servicios */}
-      {alertaProfesionalesSinServicios && (
-        <div className="bg-yellow-50 dark:bg-yellow-900/30 border-l-4 border-yellow-400 dark:border-yellow-600 p-4 rounded-r-lg mb-6">
-          <div className="flex items-start">
-            <AlertTriangle className="h-5 w-5 text-yellow-400 dark:text-yellow-500 flex-shrink-0" />
-            <div className="ml-3 flex-1">
-              <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
-                Atención: {alertaProfesionalesSinServicios.length} profesional{alertaProfesionalesSinServicios.length !== 1 ? 'es' : ''} sin servicios asignados
-              </h3>
-              <div className="mt-2 text-sm text-yellow-700 dark:text-yellow-300">
-                <p>Asigna al menos un servicio a cada profesional para que puedan recibir citas.</p>
-                <ul className="list-disc list-inside mt-2 space-y-1">
-                  {alertaProfesionalesSinServicios.slice(0, 3).map(profesional => (
-                    <li key={profesional.id}>{profesional.nombre_completo}</li>
-                  ))}
-                  {alertaProfesionalesSinServicios.length > 3 && (
-                    <li>y {alertaProfesionalesSinServicios.length - 3} más...</li>
-                  )}
-                </ul>
-              </div>
-              <div className="mt-3">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => handleGestionarServicios(alertaProfesionalesSinServicios[0])}
-                  className="bg-white dark:bg-gray-800 text-yellow-800 dark:text-yellow-300 border-yellow-300 dark:border-yellow-700"
-                >
-                  Asignar servicios
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
+      // Stats y Alerta antes de tabla
+      renderBeforeTable={({ items, paginacion, openModal }) => (
+        <>
+          <ProfesionalesStatsGrid
+            profesionales={items}
+            total={paginacion?.total ?? 0}
+            className="mb-6"
+          />
+          <ProfesionalesAlerta
+            profesionales={items}
+            onAsignarServicios={(p) => openModal('servicios', p)}
+          />
+        </>
       )}
 
-      {/* Search Bar y Filtros */}
-      <div className="space-y-4 mb-6">
-        <div className="flex gap-3">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <Input
-              type="text"
-              placeholder="Buscar por nombre o email..."
-              value={filtros.busqueda}
-              onChange={handleBusquedaChange}
-              className="pl-10"
-            />
+      // Custom filters
+      renderFilters={({ resetPage }) => (
+        <div className="space-y-4 mb-6">
+          <div className="flex gap-3">
+            {/* Search */}
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <Input
+                type="text"
+                placeholder="Buscar por nombre o email..."
+                value={filtros.busqueda}
+                onChange={(e) => { setFiltro('busqueda', e.target.value); resetPage(); }}
+                className="pl-10"
+              />
+            </div>
           </div>
-          <Button
-            variant="outline"
-            onClick={() => setShowFilters(!showFilters)}
-            className={showFilters ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400' : ''}
-          >
-            <Filter className="w-4 h-4 mr-2" />
-            Filtros
-            {hasFiltrosActivos && (
-              <span className="ml-2 px-2 py-0.5 text-xs bg-primary-600 text-white rounded-full">
-                {filtrosActivos}
-              </span>
-            )}
-          </Button>
-          <ViewTabs
-            tabs={viewTabsConfig}
-            activeTab={viewMode}
-            onChange={setViewMode}
-            className="border-b-0 mb-0"
-          />
-        </div>
 
-        {/* Panel de Filtros */}
-        {showFilters && (
+          {/* Filtros */}
           <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <div>
@@ -294,7 +241,7 @@ function ProfesionalesPage() {
                 </label>
                 <Select
                   value={filtros.activo}
-                  onChange={(e) => handleFiltroChange('activo', e.target.value)}
+                  onChange={(e) => { setFiltro('activo', e.target.value); resetPage(); }}
                 >
                   <option value="">Todos</option>
                   <option value="true">Activos</option>
@@ -307,7 +254,7 @@ function ProfesionalesPage() {
                 </label>
                 <Select
                   value={filtros.estado}
-                  onChange={(e) => handleFiltroChange('estado', e.target.value)}
+                  onChange={(e) => { setFiltro('estado', e.target.value); resetPage(); }}
                 >
                   <option value="">Todos los estados</option>
                   {Object.entries(ESTADOS_LABORALES).map(([key, val]) => (
@@ -321,7 +268,7 @@ function ProfesionalesPage() {
                 </label>
                 <Select
                   value={filtros.departamento_id}
-                  onChange={(e) => handleFiltroChange('departamento_id', e.target.value)}
+                  onChange={(e) => { setFiltro('departamento_id', e.target.value); resetPage(); }}
                 >
                   <option value="">Todos los departamentos</option>
                   {departamentos.map((depto) => (
@@ -332,100 +279,16 @@ function ProfesionalesPage() {
             </div>
             {hasFiltrosActivos && (
               <div className="mt-4 flex justify-end">
-                <Button variant="outline" size="sm" onClick={handleLimpiarFiltros}>
+                <Button variant="outline" size="sm" onClick={() => { limpiarFiltros(); resetPage(); }}>
                   <X className="w-4 h-4 mr-1" />
                   Limpiar Filtros
                 </Button>
               </div>
             )}
           </div>
-        )}
-      </div>
-
-      {/* Lista de Profesionales */}
-      <ProfesionalesList
-        profesionales={profesionales}
-        pagination={pagination}
-        viewMode={viewMode}
-        isLoading={isLoading}
-        onVerDetalle={handleVerDetalle}
-        onDelete={handleDelete}
-        onGestionarHorarios={handleGestionarHorarios}
-        onGestionarServicios={handleGestionarServicios}
-        onPageChange={handlePageChange}
-      />
-
-      {/* Modales */}
-      <HorariosProfesionalModal
-        isOpen={isOpen('horarios')}
-        onClose={() => closeModal('horarios')}
-        profesional={getModalData('horarios')}
-      />
-      <ServiciosProfesionalModal
-        isOpen={isOpen('servicios')}
-        onClose={() => closeModal('servicios')}
-        profesional={getModalData('servicios')}
-      />
-      <Modal
-        isOpen={isOpen('eliminar')}
-        onClose={() => closeModal('eliminar')}
-        title="Confirmar Desactivación"
-        maxWidth="md"
-      >
-        <div className="space-y-6">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-amber-100 dark:bg-amber-900/40 rounded-full flex items-center justify-center flex-shrink-0">
-              <AlertTriangle className="w-6 h-6 text-amber-600 dark:text-amber-400" />
-            </div>
-            <div className="flex-1">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                ¿Desactivar profesional?
-              </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                Esta acción no se puede deshacer fácilmente
-              </p>
-            </div>
-          </div>
-          {getModalData('eliminar') && (
-            <div className="bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg p-4">
-              <div className="flex items-center gap-3">
-                <div
-                  className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold"
-                  style={{ backgroundColor: getModalData('eliminar').color_calendario || '#753572' }}
-                >
-                  {getModalData('eliminar').nombre_completo?.charAt(0)}
-                </div>
-                <div>
-                  <p className="font-medium text-gray-900 dark:text-gray-100">
-                    {getModalData('eliminar').nombre_completo}
-                  </p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    {getModalData('eliminar').puesto_nombre || 'Sin puesto'}
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-          <div className="bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
-            <p className="text-sm text-amber-900 dark:text-amber-200">
-              <strong>Importante:</strong> El profesional será desactivado. Los horarios y citas existentes se mantendrán.
-            </p>
-          </div>
-          <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-            <Button variant="outline" onClick={() => closeModal('eliminar')} disabled={eliminarMutation.isPending}>
-              Cancelar
-            </Button>
-            <Button
-              onClick={handleConfirmDelete}
-              isLoading={eliminarMutation.isPending}
-              className="bg-red-600 hover:bg-red-700 text-white"
-            >
-              Sí, Desactivar
-            </Button>
-          </div>
         </div>
-      </Modal>
-    </ProfesionalesPageLayout>
+      )}
+    />
   );
 }
 

@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { posApi } from '@/services/api/endpoints';
-import useSucursalStore, { selectGetSucursalId } from '@/store/sucursalStore';
+import { useSucursalContext } from '@/hooks/factories';
 import { sanitizeParams } from '@/lib/params';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 
@@ -10,12 +10,11 @@ import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
  * @param {Object} params - { sucursal_id? }
  */
 export function useSesionCajaActiva(params = {}) {
-  const getSucursalId = useSucursalStore(selectGetSucursalId);
+  const sucursalId = useSucursalContext(params.sucursal_id);
 
   return useQuery({
     queryKey: ['sesion-caja-activa', params],
     queryFn: async () => {
-      const sucursalId = params.sucursal_id || getSucursalId();
       const response = await posApi.obtenerSesionActiva({ sucursal_id: sucursalId });
       return response.data.data || { activa: false, sesion: null, totales: null };
     },
@@ -92,12 +91,12 @@ export function useMovimientosCaja(sesionId) {
  */
 export function useAbrirSesionCaja() {
   const queryClient = useQueryClient();
-  const getSucursalId = useSucursalStore(selectGetSucursalId);
+  const defaultSucursalId = useSucursalContext();
 
   return useMutation({
     mutationFn: async (data) => {
       const sanitized = {
-        sucursal_id: data.sucursal_id || getSucursalId(),
+        sucursal_id: data.sucursal_id || defaultSucursalId,
         monto_inicial: data.monto_inicial || 0,
         nota_apertura: data.nota_apertura?.trim() || undefined,
       };

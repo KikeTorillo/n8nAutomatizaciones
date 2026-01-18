@@ -1,5 +1,5 @@
 const { ProductosModel } = require('../models');
-const { ResponseHelper } = require('../../../utils/helpers');
+const { ResponseHelper, ParseHelper } = require('../../../utils/helpers');
 const { asyncHandler } = require('../../../middleware');
 
 /**
@@ -49,23 +49,29 @@ class ProductosController {
     static listar = asyncHandler(async (req, res) => {
         const organizacionId = req.tenant.organizacionId;
 
-        const filtros = {
-            activo: req.query.activo !== undefined ? (req.query.activo === 'true' || req.query.activo === true) : undefined,
-            categoria_id: req.query.categoria_id ? parseInt(req.query.categoria_id) : undefined,
-            proveedor_id: req.query.proveedor_id ? parseInt(req.query.proveedor_id) : undefined,
-            busqueda: req.query.busqueda || undefined,
-            sku: req.query.sku || undefined,
-            codigo_barras: req.query.codigo_barras || undefined,
-            stock_bajo: req.query.stock_bajo !== undefined ? (req.query.stock_bajo === 'true' || req.query.stock_bajo === true) : undefined,
-            stock_agotado: req.query.stock_agotado !== undefined ? (req.query.stock_agotado === 'true' || req.query.stock_agotado === true) : undefined,
-            permite_venta: req.query.permite_venta !== undefined ? (req.query.permite_venta === 'true' || req.query.permite_venta === true) : undefined,
-            orden_por: req.query.orden_por || undefined,
-            orden_dir: req.query.orden_dir || 'asc',
-            limit: req.query.limit ? parseInt(req.query.limit) : 50,
-            offset: req.query.offset ? parseInt(req.query.offset) : 0
-        };
+        // Parseo centralizado con ParseHelper
+        const filtros = ParseHelper.parseFilters(req.query, {
+            activo: 'boolean',
+            categoria_id: 'int',
+            proveedor_id: 'int',
+            busqueda: 'string',
+            sku: 'string',
+            codigo_barras: 'string',
+            stock_bajo: 'boolean',
+            stock_agotado: 'boolean',
+            permite_venta: 'boolean',
+            orden_por: 'string',
+            orden_dir: 'string'
+        });
 
-        const productos = await ProductosModel.listar(organizacionId, filtros);
+        const { limit, offset } = ParseHelper.parsePagination(req.query, { defaultLimit: 50 });
+
+        const productos = await ProductosModel.listar(organizacionId, {
+            ...filtros,
+            orden_dir: filtros.orden_dir || 'asc',
+            limit,
+            offset
+        });
 
         return ResponseHelper.success(res, productos, 'Productos obtenidos exitosamente');
     });
@@ -158,14 +164,15 @@ class ProductosController {
     static buscar = asyncHandler(async (req, res) => {
         const organizacionId = req.tenant.organizacionId;
 
+        // Parseo centralizado con ParseHelper
         const filtros = {
-            q: req.query.q,
-            tipo_busqueda: req.query.tipo_busqueda || 'all',
-            categoria_id: req.query.categoria_id ? parseInt(req.query.categoria_id) : undefined,
-            proveedor_id: req.query.proveedor_id ? parseInt(req.query.proveedor_id) : undefined,
-            solo_activos: req.query.solo_activos !== 'false',
-            solo_con_stock: req.query.solo_con_stock === 'true',
-            limit: req.query.limit ? parseInt(req.query.limit) : 20
+            q: ParseHelper.parseString(req.query.q),
+            tipo_busqueda: ParseHelper.parseString(req.query.tipo_busqueda) || 'all',
+            categoria_id: ParseHelper.parseInt(req.query.categoria_id),
+            proveedor_id: ParseHelper.parseInt(req.query.proveedor_id),
+            solo_activos: ParseHelper.parseBoolean(req.query.solo_activos, true),
+            solo_con_stock: ParseHelper.parseBoolean(req.query.solo_con_stock, false),
+            limit: ParseHelper.parseInt(req.query.limit, 20)
         };
 
         const productos = await ProductosModel.buscar(filtros, organizacionId);

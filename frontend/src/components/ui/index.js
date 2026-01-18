@@ -43,6 +43,7 @@ export { default as FormGroup } from './molecules/FormGroup';
 // Nuevos (Ene 2026) - Optimización arquitectónica
 export { default as SearchFilterBar } from './molecules/SearchFilterBar';
 export { default as CheckboxGroup } from './molecules/CheckboxGroup';
+export { default as CheckboxField } from './molecules/CheckboxField';
 
 // ========== ORGANISMS ==========
 export { default as Modal } from './organisms/Modal';

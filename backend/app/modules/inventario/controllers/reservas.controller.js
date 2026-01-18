@@ -1,5 +1,5 @@
 const ReservasModel = require('../models/reservas.model');
-const { ResponseHelper } = require('../../../utils/helpers');
+const { ResponseHelper, ParseHelper } = require('../../../utils/helpers');
 const { asyncHandler } = require('../../../middleware');
 
 /**
@@ -89,16 +89,19 @@ class ReservasController {
     static listar = asyncHandler(async (req, res) => {
         const organizacionId = req.tenant.organizacionId;
 
+        // Parseo centralizado con ParseHelper
+        const { limit, offset } = ParseHelper.parsePagination(req.query, { defaultLimit: 50 });
+
         const filtros = {
-            estado: req.query.estado || undefined,
-            producto_id: req.query.producto_id ? parseInt(req.query.producto_id) : undefined,
-            variante_id: req.query.variante_id ? parseInt(req.query.variante_id) : undefined,
-            sucursal_id: req.query.sucursal_id ? parseInt(req.query.sucursal_id) : undefined,
-            tipo_origen: req.query.tipo_origen || undefined,
-            origen_id: req.query.origen_id ? parseInt(req.query.origen_id) : undefined,
-            solo_activas: req.query.solo_activas === 'true',
-            limit: req.query.limit ? parseInt(req.query.limit) : 50,
-            offset: req.query.offset ? parseInt(req.query.offset) : 0
+            estado: ParseHelper.parseString(req.query.estado),
+            producto_id: ParseHelper.parseInt(req.query.producto_id),
+            variante_id: ParseHelper.parseInt(req.query.variante_id),
+            sucursal_id: ParseHelper.parseInt(req.query.sucursal_id),
+            tipo_origen: ParseHelper.parseString(req.query.tipo_origen),
+            origen_id: ParseHelper.parseInt(req.query.origen_id),
+            solo_activas: ParseHelper.parseBoolean(req.query.solo_activas, false),
+            limit,
+            offset
         };
 
         const reservas = await ReservasModel.listar(organizacionId, filtros);
@@ -220,9 +223,9 @@ class ReservasController {
      */
     static stockDisponible = asyncHandler(async (req, res) => {
         const organizacionId = req.tenant.organizacionId;
-        const productoId = req.query.producto_id ? parseInt(req.query.producto_id) : null;
-        const varianteId = req.query.variante_id ? parseInt(req.query.variante_id) : null;
-        const sucursalId = req.query.sucursal_id ? parseInt(req.query.sucursal_id) : null;
+        const productoId = ParseHelper.parseInt(req.query.producto_id);
+        const varianteId = ParseHelper.parseInt(req.query.variante_id);
+        const sucursalId = ParseHelper.parseInt(req.query.sucursal_id);
 
         if (!productoId && !varianteId) {
             return ResponseHelper.error(res, 'Debe especificar producto_id o variante_id', 400);
@@ -252,9 +255,9 @@ class ReservasController {
      */
     static stockInfoCompleto = asyncHandler(async (req, res) => {
         const organizacionId = req.tenant.organizacionId;
-        const productoId = req.query.producto_id ? parseInt(req.query.producto_id) : null;
-        const varianteId = req.query.variante_id ? parseInt(req.query.variante_id) : null;
-        const sucursalId = req.query.sucursal_id ? parseInt(req.query.sucursal_id) : null;
+        const productoId = ParseHelper.parseInt(req.query.producto_id);
+        const varianteId = ParseHelper.parseInt(req.query.variante_id);
+        const sucursalId = ParseHelper.parseInt(req.query.sucursal_id);
 
         if (!productoId && !varianteId) {
             return ResponseHelper.error(res, 'Debe especificar producto_id o variante_id', 400);
@@ -310,10 +313,10 @@ class ReservasController {
      */
     static verificarDisponibilidad = asyncHandler(async (req, res) => {
         const organizacionId = req.tenant.organizacionId;
-        const productoId = req.query.producto_id ? parseInt(req.query.producto_id) : null;
-        const varianteId = req.query.variante_id ? parseInt(req.query.variante_id) : null;
-        const cantidad = parseInt(req.query.cantidad) || 1;
-        const sucursalId = req.query.sucursal_id ? parseInt(req.query.sucursal_id) : null;
+        const productoId = ParseHelper.parseInt(req.query.producto_id);
+        const varianteId = ParseHelper.parseInt(req.query.variante_id);
+        const cantidad = ParseHelper.parseInt(req.query.cantidad, 1);
+        const sucursalId = ParseHelper.parseInt(req.query.sucursal_id);
 
         if (!productoId && !varianteId) {
             return ResponseHelper.error(res, 'Debe especificar producto_id o variante_id', 400);
@@ -344,12 +347,13 @@ class ReservasController {
     static stockTiempoReal = asyncHandler(async (req, res) => {
         const organizacionId = req.tenant.organizacionId;
 
+        // Parseo centralizado con ParseHelper
         const filtros = {
-            nivel_stock: req.query.nivel_stock || undefined,
-            producto_id: req.query.producto_id ? parseInt(req.query.producto_id) : undefined,
-            solo_agotados: req.query.solo_agotados === 'true',
-            solo_bajos: req.query.solo_bajos === 'true',
-            limit: req.query.limit ? parseInt(req.query.limit) : 100
+            nivel_stock: ParseHelper.parseString(req.query.nivel_stock),
+            producto_id: ParseHelper.parseInt(req.query.producto_id),
+            solo_agotados: ParseHelper.parseBoolean(req.query.solo_agotados, false),
+            solo_bajos: ParseHelper.parseBoolean(req.query.solo_bajos, false),
+            limit: ParseHelper.parseInt(req.query.limit, 100)
         };
 
         const stock = await ReservasModel.obtenerStockTiempoReal(organizacionId, filtros);

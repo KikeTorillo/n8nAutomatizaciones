@@ -13,7 +13,7 @@ import {
 import PropTypes from 'prop-types';
 import { Alert, Button, EmptyState, LoadingSpinner } from '@/components/ui';
 import InfoCard from '@/components/profesionales/cards/InfoCard';
-import useAuthStore from '@/store/authStore';
+import useAuthStore, { selectUser } from '@/store/authStore';
 import { useBloqueos } from '@/hooks/agendamiento';
 import { useSaldosVacaciones } from '@/hooks/personas';
 import {
@@ -42,7 +42,7 @@ import { es } from 'date-fns/locale';
  */
 function AusenciasTab({ profesional }) {
   const profesionalId = profesional?.id;
-  const user = useAuthStore((state) => state.user);
+  const user = useAuthStore(selectUser);
 
   // Verificar si el usuario está viendo su propio perfil
   const esPropioPerfil = user?.profesional_id === profesionalId;

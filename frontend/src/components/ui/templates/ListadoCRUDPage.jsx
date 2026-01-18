@@ -213,6 +213,11 @@ export default function ListadoCRUDPage({
   // Computed subtitle
   const computedSubtitle = subtitle || `${paginacion.total} ${title?.toLowerCase() || 'elementos'}`;
 
+  // Computed actions - permite función o ReactNode
+  const computedActions = typeof actions === 'function'
+    ? actions({ openModal, closeModal, items, isLoading, handlers })
+    : actions;
+
   // Wrapper de layout
   const LayoutComponent = PageLayout || 'div';
   const layoutContent = (
@@ -225,9 +230,9 @@ export default function ListadoCRUDPage({
         {/* ViewTabs si hay múltiples vistas */}
         {viewModes && viewModes.length > 1 && (
           <ViewTabs
-            views={viewModes}
-            activeView={activeView}
-            onViewChange={setActiveView}
+            tabs={viewModes}
+            activeTab={activeView}
+            onChange={setActiveView}
           />
         )}
 
@@ -271,7 +276,7 @@ export default function ListadoCRUDPage({
       </div>
 
       {/* Before table slot */}
-      {renderBeforeTable?.({ items, isLoading })}
+      {renderBeforeTable?.({ items, isLoading, paginacion, openModal })}
 
       {/* Table o Vista Custom */}
       {viewModes && activeView !== 'table' ? (
@@ -371,7 +376,7 @@ export default function ListadoCRUDPage({
         title={title}
         subtitle={computedSubtitle}
         actions={
-          actions || (showNewButton && (
+          computedActions || (showNewButton && (
             <Button onClick={handleNuevo} className="flex items-center gap-2">
               <Plus className="h-4 w-4" />
               <span className="hidden sm:inline">{newButtonLabel}</span>
@@ -396,9 +401,9 @@ export default function ListadoCRUDPage({
             <p className="text-sm text-gray-600 dark:text-gray-400">{computedSubtitle}</p>
           </div>
         </div>
-        {(actions || showNewButton) && (
+        {(computedActions || showNewButton) && (
           <div className="flex gap-2">
-            {actions || (
+            {computedActions || (
               <Button onClick={handleNuevo} className="flex items-center gap-2">
                 <Plus className="h-4 w-4" />
                 {newButtonLabel}

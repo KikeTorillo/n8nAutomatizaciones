@@ -15,7 +15,7 @@
  */
 
 import { useMemo } from 'react';
-import useAuthStore from '@/store/authStore';
+import useAuthStore, { selectUser } from '@/store/authStore';
 import {
   formatCurrencyDynamic,
   getCurrencyConfig,
@@ -38,7 +38,7 @@ import {
  * return <span>{format(1500)}</span>; // "$1,500.00" si MXN
  */
 export function useCurrency() {
-  const user = useAuthStore((state) => state.user);
+  const user = useAuthStore(selectUser);
 
   // Moneda viene del backend: COALESCE(sucursal.moneda, organizacion.moneda)
   const currencyCode = user?.moneda || DEFAULT_CURRENCY;

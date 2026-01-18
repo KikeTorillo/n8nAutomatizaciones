@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Save, MapPin, Phone, Mail, Clock } from 'lucide-react';
-import { Button, Checkbox, Input } from '@/components/ui';
+import { Button, CheckboxField, Input } from '@/components/ui';
 
 /**
  * ContactoEditor - Editor del bloque Contacto
@@ -145,7 +145,7 @@ function ContactoEditor({ contenido, onGuardar, tema, isSaving }) {
       <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg space-y-3">
         <div className="flex items-center justify-between">
           <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Formulario de contacto</h4>
-          <Checkbox
+          <CheckboxField
             label="Mostrar"
             checked={form.mostrar_formulario}
             onChange={(e) => setForm({ ...form, mostrar_formulario: e.target.checked })}
@@ -177,7 +177,7 @@ function ContactoEditor({ contenido, onGuardar, tema, isSaving }) {
       <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg space-y-3">
         <div className="flex items-center justify-between">
           <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Mapa de Google</h4>
-          <Checkbox
+          <CheckboxField
             label="Mostrar"
             checked={form.mostrar_mapa}
             onChange={(e) => setForm({ ...form, mostrar_mapa: e.target.checked })}

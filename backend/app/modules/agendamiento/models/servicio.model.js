@@ -329,8 +329,11 @@ class ServicioModel {
             const pagina = Math.max(1, parseInt(paginacion.pagina) || 1);
             const limite = Math.min(100, Math.max(1, parseInt(paginacion.limite) || 20));
             const offset = (pagina - 1) * limite;
-            const orden = paginacion.orden || 'nombre';
-            const direccion = (paginacion.direccion || 'ASC').toUpperCase();
+
+            // Validación whitelist para ORDER BY (prevención SQL injection)
+            const CAMPOS_ORDEN_PERMITIDOS = ['nombre', 'precio', 'duracion_minutos', 'creado_en', 'categoria', 'activo'];
+            const orden = CAMPOS_ORDEN_PERMITIDOS.includes(paginacion.orden) ? paginacion.orden : 'nombre';
+            const direccion = paginacion.direccion?.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
 
             // Construir condiciones WHERE dinámicamente
             const condiciones = ['s.organizacion_id = $1'];

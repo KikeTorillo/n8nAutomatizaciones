@@ -43,7 +43,7 @@
  * ====================================================================
  */
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { sanitizeParams } from '@/lib/params';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
@@ -69,7 +69,7 @@ import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
  * @param {Object} [config.errorMessages] - Mensajes de error personalizados por operación
  * @param {number} [config.staleTime] - Tiempo de cache (default: SEMI_STATIC)
  * @param {string} [config.responseKey] - Key en la respuesta para extraer datos
- * @param {boolean} [config.keepPreviousData] - Mantener datos previos durante paginación
+ * @param {boolean} [config.usePreviousData] - Mantener datos previos durante paginación (placeholderData)
  * @param {Function} [config.transformList] - Transformar respuesta del list
  * @param {Function} [config.transformDetail] - Transformar respuesta del detail
  *
@@ -89,7 +89,7 @@ export function createCRUDHooks(config) {
     errorMessages = {},
     staleTime = STALE_TIMES.SEMI_STATIC,
     responseKey,
-    keepPreviousData = false,
+    usePreviousData = false,
     transformList,
     transformDetail,
   } = config;
@@ -125,7 +125,7 @@ export function createCRUDHooks(config) {
         return data;
       },
       staleTime,
-      keepPreviousData,
+      placeholderData: usePreviousData ? keepPreviousData : undefined,
     });
   }
 

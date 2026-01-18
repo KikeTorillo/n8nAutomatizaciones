@@ -58,6 +58,7 @@ const hooks = createCRUDHooks({
   },
   staleTime: STALE_TIMES.DYNAMIC,
   responseKey: 'ordenes',
+  usePreviousData: true, // Evita flash de loading al paginar/filtrar
 });
 
 // Exportar hooks CRUD

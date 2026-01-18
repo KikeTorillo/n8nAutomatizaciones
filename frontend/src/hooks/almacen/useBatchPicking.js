@@ -11,7 +11,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { batchPickingApi } from '@/services/api/endpoints';
 import useSucursalStore, { selectGetSucursalId } from '@/store/sucursalStore';
-import { OPERACIONES_ALMACEN_KEYS } from './useOperacionesAlmacen';
+import { OPERACIONES_ALMACEN_KEYS } from './operaciones-almacen';
 import { useToast } from '@/hooks/utils';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 

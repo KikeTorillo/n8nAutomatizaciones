@@ -5,50 +5,86 @@ import Button from '../atoms/Button';
 import SearchInput from '../molecules/SearchInput';
 
 /**
+ * Estilos compartidos para inputs de filtros
+ * Ene 2026 - Refactorización FilterPanel
+ */
+const FILTER_INPUT_STYLES = cn(
+  'w-full px-3 py-2 rounded-lg border transition-colors text-sm',
+  'bg-white dark:bg-gray-800',
+  'text-gray-900 dark:text-gray-100',
+  'border-gray-300 dark:border-gray-600',
+  'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500'
+);
+
+const CHECKBOX_STYLES = cn(
+  'w-4 h-4 rounded border-gray-300 dark:border-gray-600',
+  'text-primary-600 focus:ring-primary-500'
+);
+
+/**
+ * Componentes internos memorizados
+ */
+const FilterSelect = memo(function FilterSelect({ value, options, onChange }) {
+  return (
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className={FILTER_INPUT_STYLES}
+    >
+      {options?.map((option) => (
+        <option key={option.value} value={option.value}>
+          {option.label}
+        </option>
+      ))}
+    </select>
+  );
+});
+
+const FilterDate = memo(function FilterDate({ value, onChange }) {
+  return (
+    <input
+      type="date"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className={FILTER_INPUT_STYLES}
+    />
+  );
+});
+
+const FilterText = memo(function FilterText({ value, placeholder, onChange }) {
+  return (
+    <input
+      type="text"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder}
+      className={FILTER_INPUT_STYLES}
+    />
+  );
+});
+
+const FilterCheckbox = memo(function FilterCheckbox({ checked, label, onChange }) {
+  return (
+    <label className="flex items-center gap-2 cursor-pointer">
+      <input
+        type="checkbox"
+        checked={!!checked}
+        onChange={(e) => onChange(e.target.checked)}
+        className={CHECKBOX_STYLES}
+      />
+      <span className="text-sm text-gray-700 dark:text-gray-300">{label}</span>
+    </label>
+  );
+});
+
+/**
  * FilterPanel - Panel de filtros reutilizable con búsqueda y filtros expandibles
- *
- * @param {Object} props
- * @param {Object} props.filters - Valores actuales de los filtros
- * @param {Function} props.onFilterChange - Callback cuando cambia un filtro (key, value)
- * @param {Function} props.onClearFilters - Callback para limpiar todos los filtros
- * @param {Array<Object>} props.filterConfig - Configuración de filtros
- * @param {string} props.filterConfig[].key - Key del filtro
- * @param {string} props.filterConfig[].label - Label del filtro
- * @param {'select'|'text'|'date'|'dateRange'|'checkbox'} props.filterConfig[].type - Tipo de filtro
- * @param {Array<{value: string, label: string}>} [props.filterConfig[].options] - Opciones para select
- * @param {string} [props.filterConfig[].placeholder] - Placeholder
- * @param {boolean} [props.filterConfig[].defaultVisible] - Visible por defecto (no expandible)
- *
- * @param {string} [props.searchKey] - Key del filtro de búsqueda (default: 'busqueda')
- * @param {string} [props.searchPlaceholder] - Placeholder del buscador
- * @param {boolean} [props.showSearch] - Mostrar campo de búsqueda (default: true)
- * @param {boolean} [props.expandable] - Permitir expandir/colapsar filtros (default: true)
- * @param {boolean} [props.defaultExpanded] - Expandido por defecto (default: false)
- * @param {string} [props.className] - Clases adicionales
  *
  * @example
  * const filterConfig = [
- *   {
- *     key: 'estado',
- *     label: 'Estado',
- *     type: 'select',
- *     options: [
- *       { value: '', label: 'Todos' },
- *       { value: 'activo', label: 'Activo' },
- *       { value: 'inactivo', label: 'Inactivo' },
- *     ]
- *   },
- *   {
- *     key: 'categoria_id',
- *     label: 'Categoría',
- *     type: 'select',
- *     options: categorias.map(c => ({ value: c.id, label: c.nombre }))
- *   },
- *   {
- *     key: 'fecha_desde',
- *     label: 'Desde',
- *     type: 'date'
- *   }
+ *   { key: 'estado', label: 'Estado', type: 'select', options: [...] },
+ *   { key: 'fecha_desde', label: 'Desde', type: 'date' },
+ *   { key: 'activo', label: 'Solo activos', type: 'checkbox' }
  * ];
  *
  * <FilterPanel
@@ -56,7 +92,7 @@ import SearchInput from '../molecules/SearchInput';
  *   onFilterChange={(key, value) => setFiltro(key, value)}
  *   onClearFilters={limpiarFiltros}
  *   filterConfig={filterConfig}
- *   searchPlaceholder="Buscar por nombre o SKU..."
+ *   searchPlaceholder="Buscar por nombre..."
  * />
  */
 export function FilterPanel({
@@ -73,7 +109,7 @@ export function FilterPanel({
 }) {
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
 
-  // Contar filtros activos (excluyendo búsqueda y valores vacíos/default)
+  // Contar filtros activos
   const activeFilterCount = useMemo(() => {
     let count = 0;
     filterConfig.forEach(config => {
@@ -82,10 +118,7 @@ export function FilterPanel({
         count++;
       }
     });
-    // Incluir búsqueda si tiene valor
-    if (filters[searchKey] && filters[searchKey].trim() !== '') {
-      count++;
-    }
+    if (filters[searchKey]?.trim()) count++;
     return count;
   }, [filters, filterConfig, searchKey]);
 
@@ -93,97 +126,31 @@ export function FilterPanel({
     onFilterChange(searchKey, e.target.value);
   }, [onFilterChange, searchKey]);
 
-  const handleFilterChange = useCallback((key, value) => {
+  const handleFilterChange = useCallback((key) => (value) => {
     onFilterChange(key, value);
   }, [onFilterChange]);
 
-  const renderFilterInput = (config) => {
+  const renderFilterInput = useCallback((config) => {
     const value = filters[config.key] ?? '';
+    const onChange = handleFilterChange(config.key);
 
     switch (config.type) {
       case 'select':
-        return (
-          <select
-            value={value}
-            onChange={(e) => handleFilterChange(config.key, e.target.value)}
-            className={cn(
-              'w-full px-3 py-2 rounded-lg border transition-colors',
-              'bg-white dark:bg-gray-800',
-              'text-gray-900 dark:text-gray-100',
-              'border-gray-300 dark:border-gray-600',
-              'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500',
-              'text-sm'
-            )}
-          >
-            {config.options?.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        );
-
+        return <FilterSelect value={value} options={config.options} onChange={onChange} />;
       case 'date':
-        return (
-          <input
-            type="date"
-            value={value}
-            onChange={(e) => handleFilterChange(config.key, e.target.value)}
-            className={cn(
-              'w-full px-3 py-2 rounded-lg border transition-colors',
-              'bg-white dark:bg-gray-800',
-              'text-gray-900 dark:text-gray-100',
-              'border-gray-300 dark:border-gray-600',
-              'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500',
-              'text-sm'
-            )}
-          />
-        );
-
+        return <FilterDate value={value} onChange={onChange} />;
       case 'checkbox':
-        return (
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={!!value}
-              onChange={(e) => handleFilterChange(config.key, e.target.checked)}
-              className={cn(
-                'w-4 h-4 rounded border-gray-300 dark:border-gray-600',
-                'text-primary-600 focus:ring-primary-500'
-              )}
-            />
-            <span className="text-sm text-gray-700 dark:text-gray-300">
-              {config.checkboxLabel || config.label}
-            </span>
-          </label>
-        );
-
+        return <FilterCheckbox checked={value} label={config.checkboxLabel || config.label} onChange={onChange} />;
       case 'text':
       default:
-        return (
-          <input
-            type="text"
-            value={value}
-            onChange={(e) => handleFilterChange(config.key, e.target.value)}
-            placeholder={config.placeholder}
-            className={cn(
-              'w-full px-3 py-2 rounded-lg border transition-colors',
-              'bg-white dark:bg-gray-800',
-              'text-gray-900 dark:text-gray-100',
-              'border-gray-300 dark:border-gray-600',
-              'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500',
-              'text-sm'
-            )}
-          />
-        );
+        return <FilterText value={value} placeholder={config.placeholder} onChange={onChange} />;
     }
-  };
+  }, [filters, handleFilterChange]);
 
   return (
     <div className={cn('space-y-4', className)}>
       {/* Barra superior: Búsqueda + Toggle filtros */}
       <div className="flex flex-col sm:flex-row gap-3">
-        {/* Búsqueda */}
         {showSearch && (
           <div className="flex-1">
             <SearchInput
@@ -195,7 +162,6 @@ export function FilterPanel({
           </div>
         )}
 
-        {/* Botón toggle filtros */}
         {expandable && filterConfig.length > 0 && (
           <Button
             variant="outline"
@@ -209,15 +175,10 @@ export function FilterPanel({
                 {activeFilterCount}
               </span>
             )}
-            {isExpanded ? (
-              <ChevronUp className="w-4 h-4" />
-            ) : (
-              <ChevronDown className="w-4 h-4" />
-            )}
+            {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           </Button>
         )}
 
-        {/* Botón limpiar (visible si hay filtros activos) */}
         {activeFilterCount > 0 && onClearFilters && (
           <Button
             variant="ghost"
@@ -264,39 +225,24 @@ export function FilterChips({
   const activeFilters = useMemo(() => {
     const active = [];
 
-    // Agregar búsqueda si existe
-    if (filters[searchKey] && filters[searchKey].trim() !== '') {
+    if (filters[searchKey]?.trim()) {
       active.push({
         key: searchKey,
         label: 'Búsqueda',
-        value: filters[searchKey],
         displayValue: `"${filters[searchKey]}"`,
       });
     }
 
-    // Agregar filtros configurados
     filterConfig.forEach(config => {
       const value = filters[config.key];
       if (value !== undefined && value !== '' && value !== null && value !== false) {
         let displayValue = value;
-
-        // Para selects, buscar el label de la opción
         if (config.type === 'select' && config.options) {
-          const option = config.options.find(opt => opt.value === value);
-          displayValue = option?.label || value;
+          displayValue = config.options.find(opt => opt.value === value)?.label || value;
         }
+        if (config.type === 'checkbox') displayValue = 'Sí';
 
-        // Para checkboxes, mostrar "Sí"
-        if (config.type === 'checkbox') {
-          displayValue = 'Sí';
-        }
-
-        active.push({
-          key: config.key,
-          label: config.label,
-          value,
-          displayValue,
-        });
+        active.push({ key: config.key, label: config.label, displayValue });
       }
     });
 
@@ -310,11 +256,7 @@ export function FilterChips({
       {activeFilters.map((filter) => (
         <span
           key={filter.key}
-          className={cn(
-            'inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs',
-            'bg-primary-100 dark:bg-primary-900/40',
-            'text-primary-700 dark:text-primary-300'
-          )}
+          className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300"
         >
           <span className="font-medium">{filter.label}:</span>
           <span>{filter.displayValue}</span>
@@ -330,5 +272,24 @@ export function FilterChips({
     </div>
   );
 }
+
+/**
+ * FilterChip individual - Componente standalone para un chip de filtro
+ */
+export const FilterChip = memo(function FilterChip({ label, value, onRemove }) {
+  return (
+    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300">
+      <span className="font-medium">{label}</span>
+      {value && <span>: {value}</span>}
+      <button
+        type="button"
+        onClick={onRemove}
+        className="ml-1 hover:text-primary-900 dark:hover:text-primary-100"
+      >
+        <X className="w-3 h-3" />
+      </button>
+    </span>
+  );
+});
 
 export default FilterPanel;

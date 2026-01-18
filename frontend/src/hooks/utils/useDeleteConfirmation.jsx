@@ -68,7 +68,7 @@ export function useDeleteConfirmation({
 
   // Ejecutar eliminación
   const handleConfirm = useCallback(() => {
-    if (!itemToDelete) return;
+    if (!itemToDelete || !deleteMutation) return;
 
     const itemId = itemToDelete.id;
     const itemName = getName(itemToDelete);
@@ -111,6 +111,9 @@ export function useDeleteConfirmation({
 
   // Componente del modal (para renderizar en el JSX)
   const DeleteConfirmModal = useCallback(() => {
+    // Si no hay deleteMutation, no renderizar nada
+    if (!deleteMutation) return null;
+
     const children = renderChildren ? renderChildren(itemToDelete) : null;
 
     return (
@@ -135,7 +138,7 @@ export function useDeleteConfirmation({
     capitalizedEntity,
     finalMessage,
     confirmText,
-    deleteMutation.isPending,
+    deleteMutation,
     renderChildren,
     itemToDelete,
   ]);
@@ -143,7 +146,7 @@ export function useDeleteConfirmation({
   return {
     confirmDelete,
     DeleteConfirmModal,
-    isDeleting: deleteMutation.isPending,
+    isDeleting: deleteMutation?.isPending ?? false,
     itemToDelete,
     isOpen,
     closeModal,

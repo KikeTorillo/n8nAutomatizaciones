@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { serviciosApi } from '@/services/api/endpoints';
 import useAuthStore, { selectUser } from '@/store/authStore';
@@ -38,6 +38,7 @@ function Dashboard() {
     queryFn: () => serviciosApi.obtenerEstadisticasAsignaciones(),
     select: (response) => response.data.data,
     staleTime: 5 * 60 * 1000,
+    placeholderData: keepPreviousData,
   });
 
   return (

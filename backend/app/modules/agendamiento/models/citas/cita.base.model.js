@@ -881,7 +881,12 @@ class CitaBaseModel {
             }
 
             const whereClause = whereConditions.join(' AND ');
-            const orderClause = `ORDER BY c.${filtros.orden || 'fecha_cita'} ${filtros.direccion || 'DESC'}`;
+
+            // Validación whitelist para ORDER BY (prevención SQL injection)
+            const CAMPOS_ORDEN_PERMITIDOS = ['fecha_cita', 'creado_en', 'hora_inicio', 'estado', 'actualizado_en'];
+            const ordenSeguro = CAMPOS_ORDEN_PERMITIDOS.includes(filtros.orden) ? filtros.orden : 'fecha_cita';
+            const direccionSegura = filtros.direccion?.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+            const orderClause = `ORDER BY c.${ordenSeguro} ${direccionSegura}`;
 
             // Contar total
             const countQuery = `

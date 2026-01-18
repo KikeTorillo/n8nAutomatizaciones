@@ -1,5 +1,4 @@
-import axios from 'axios';
-import apiClient from '../client';
+import apiClient, { publicApiClient } from '../client';
 /**
  * API de Marketplace
  */
@@ -39,14 +38,8 @@ export const marketplaceApi = {
    *
    * IMPORTANTE: Crea instancia nueva de axios sin interceptores para evitar enviar token
    */
-  crearCitaPublica: (data) => {
-    // Crear instancia limpia de axios sin interceptores
-    const publicAxios = axios.create({
-      baseURL: '/api/v1',
-      headers: { 'Content-Type': 'application/json' }
-    });
-    return publicAxios.post('/citas', data);
-  },
+  crearCitaPublica: (data) =>
+    publicApiClient.post('/citas', data),
 
   /**
    * Consultar disponibilidad pública (sin auth)
@@ -55,14 +48,8 @@ export const marketplaceApi = {
    *
    * IMPORTANTE: Crea instancia nueva de axios sin interceptores para evitar enviar token
    */
-  consultarDisponibilidadPublica: (params) => {
-    // Crear instancia limpia de axios sin interceptores
-    const publicAxios = axios.create({
-      baseURL: '/api/v1',
-      headers: { 'Content-Type': 'application/json' }
-    });
-    return publicAxios.get('/disponibilidad', { params });
-  },
+  consultarDisponibilidadPublica: (params) =>
+    publicApiClient.get('/disponibilidad', { params }),
 
   // ========== Privadas (requieren auth) ==========
 

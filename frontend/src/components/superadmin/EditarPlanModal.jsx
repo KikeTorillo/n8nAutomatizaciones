@@ -7,7 +7,7 @@ import { useEffect } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Button, Checkbox, Drawer } from '@/components/ui';
+import { Button, CheckboxField, Drawer } from '@/components/ui';
 import FormField from '../forms/FormField';
 import { useToast } from '@/hooks/utils';
 import { useSuperAdmin } from '@/hooks/sistema';
@@ -258,7 +258,7 @@ export default function EditarPlanModal({ isOpen, onClose, plan }) {
             name="activo"
             control={control}
             render={({ field }) => (
-              <Checkbox
+              <CheckboxField
                 id="activo"
                 label="Plan activo (visible para nuevas organizaciones)"
                 checked={field.value}

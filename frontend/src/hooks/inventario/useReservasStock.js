@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { inventarioApi } from '@/services/api/endpoints';
-import useSucursalStore, { selectGetSucursalId } from '@/store/sucursalStore';
+import { useSucursalContext } from '@/hooks/factories';
 import { sanitizeParams } from '@/lib/params';
 import { STALE_TIMES } from '@/app/queryClient';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
@@ -12,8 +12,7 @@ import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
  * @param {Object} options - { sucursalId?, enabled? }
  */
 export function useStockDisponible(productoId, options = {}) {
-  const getSucursalId = useSucursalStore(selectGetSucursalId);
-  const sucursalId = options.sucursalId || getSucursalId();
+  const sucursalId = useSucursalContext(options.sucursalId);
 
   return useQuery({
     queryKey: ['stock-disponible', productoId, sucursalId],
@@ -34,8 +33,7 @@ export function useStockDisponible(productoId, options = {}) {
  * @param {Object} options - { sucursalId?, enabled? }
  */
 export function useStockDisponibleMultiple(productosIds, options = {}) {
-  const getSucursalId = useSucursalStore(selectGetSucursalId);
-  const sucursalId = options.sucursalId || getSucursalId();
+  const sucursalId = useSucursalContext(options.sucursalId);
 
   return useQuery({
     queryKey: ['stock-disponible-multiple', productosIds, sucursalId],
@@ -59,8 +57,7 @@ export function useStockDisponibleMultiple(productosIds, options = {}) {
  * @param {Object} options - { sucursalId?, enabled? }
  */
 export function useVerificarDisponibilidad(productoId, cantidad, options = {}) {
-  const getSucursalId = useSucursalStore(selectGetSucursalId);
-  const sucursalId = options.sucursalId || getSucursalId();
+  const sucursalId = useSucursalContext(options.sucursalId);
 
   return useQuery({
     queryKey: ['verificar-disponibilidad', productoId, cantidad, sucursalId],
@@ -82,7 +79,7 @@ export function useVerificarDisponibilidad(productoId, cantidad, options = {}) {
  */
 export function useCrearReserva() {
   const queryClient = useQueryClient();
-  const getSucursalId = useSucursalStore(selectGetSucursalId);
+  const defaultSucursalId = useSucursalContext();
 
   return useMutation({
     mutationFn: async (data) => {
@@ -91,7 +88,7 @@ export function useCrearReserva() {
         cantidad: data.cantidad,
         tipo_origen: data.tipo_origen || 'venta_pos',
         origen_id: data.origen_id || undefined,
-        sucursal_id: data.sucursal_id || getSucursalId() || undefined,
+        sucursal_id: data.sucursal_id || defaultSucursalId || undefined,
         minutos_expiracion: data.minutos_expiracion || 15,
       };
       const response = await inventarioApi.crearReserva(sanitized);
@@ -111,7 +108,7 @@ export function useCrearReserva() {
  */
 export function useCrearReservasMultiple() {
   const queryClient = useQueryClient();
-  const getSucursalId = useSucursalStore(selectGetSucursalId);
+  const defaultSucursalId = useSucursalContext();
 
   return useMutation({
     mutationFn: async (data) => {
@@ -122,7 +119,7 @@ export function useCrearReservasMultiple() {
         })),
         tipo_origen: data.tipo_origen || 'venta_pos',
         origen_id: data.origen_id || undefined,
-        sucursal_id: data.sucursal_id || getSucursalId() || undefined,
+        sucursal_id: data.sucursal_id || defaultSucursalId || undefined,
       };
       const response = await inventarioApi.crearReservasMultiple(sanitized);
       return response.data.data;

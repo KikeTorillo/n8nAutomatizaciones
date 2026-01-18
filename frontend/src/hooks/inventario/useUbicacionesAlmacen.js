@@ -8,7 +8,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ordenesCompraApi } from '@/services/api/endpoints';
-import useSucursalStore, { selectGetSucursalId } from '@/store/sucursalStore';
+import { useSucursalContext } from '@/hooks/factories';
 import { STALE_TIMES } from '@/app/queryClient';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 
@@ -33,14 +33,14 @@ export const UBICACIONES_ALMACEN_KEYS = {
  * @param {Object} params - { sucursal_id?, tipo?, parent_id?, es_picking?, es_recepcion?, activo?, bloqueada?, busqueda?, limit?, offset? }
  */
 export function useUbicacionesAlmacen(params = {}) {
-  const getSucursalId = useSucursalStore(selectGetSucursalId);
+  const defaultSucursalId = useSucursalContext(params.sucursal_id);
 
   return useQuery({
     queryKey: UBICACIONES_ALMACEN_KEYS.list(params),
     queryFn: async () => {
       const sanitizedParams = {
         ...params,
-        sucursal_id: params.sucursal_id || getSucursalId() || undefined,
+        sucursal_id: defaultSucursalId || undefined,
       };
 
       // Limpiar valores vacíos
@@ -62,8 +62,7 @@ export function useUbicacionesAlmacen(params = {}) {
  * @param {number} sucursalId - ID de la sucursal
  */
 export function useArbolUbicaciones(sucursalId) {
-  const getSucursalId = useSucursalStore(selectGetSucursalId);
-  const efectiveSucursalId = sucursalId || getSucursalId();
+  const efectiveSucursalId = useSucursalContext(sucursalId);
 
   return useQuery({
     queryKey: UBICACIONES_ALMACEN_KEYS.arbol(efectiveSucursalId),
@@ -114,8 +113,7 @@ export function useStockUbicacion(ubicacionId) {
  * @param {number} cantidad - Cantidad a almacenar
  */
 export function useUbicacionesDisponibles(sucursalId, cantidad = 1) {
-  const getSucursalId = useSucursalStore(selectGetSucursalId);
-  const efectiveSucursalId = sucursalId || getSucursalId();
+  const efectiveSucursalId = useSucursalContext(sucursalId);
 
   return useQuery({
     queryKey: UBICACIONES_ALMACEN_KEYS.disponibles(efectiveSucursalId, cantidad),
@@ -133,8 +131,7 @@ export function useUbicacionesDisponibles(sucursalId, cantidad = 1) {
  * @param {number} sucursalId - ID de la sucursal
  */
 export function useEstadisticasUbicaciones(sucursalId) {
-  const getSucursalId = useSucursalStore(selectGetSucursalId);
-  const efectiveSucursalId = sucursalId || getSucursalId();
+  const efectiveSucursalId = useSucursalContext(sucursalId);
 
   return useQuery({
     queryKey: UBICACIONES_ALMACEN_KEYS.estadisticas(efectiveSucursalId),
@@ -170,13 +167,13 @@ export function useUbicacionesProducto(productoId) {
  */
 export function useCrearUbicacion() {
   const queryClient = useQueryClient();
-  const getSucursalId = useSucursalStore(selectGetSucursalId);
+  const defaultSucursalId = useSucursalContext();
 
   return useMutation({
     mutationFn: async (data) => {
       const sanitized = {
         ...data,
-        sucursal_id: data.sucursal_id || getSucursalId(),
+        sucursal_id: data.sucursal_id || defaultSucursalId,
         nombre: data.nombre?.trim() || undefined,
         descripcion: data.descripcion?.trim() || undefined,
         parent_id: data.parent_id || undefined,
@@ -187,7 +184,7 @@ export function useCrearUbicacion() {
       return response.data.data;
     },
     onSuccess: (_, variables) => {
-      const sucursalId = variables.sucursal_id || getSucursalId();
+      const sucursalId = variables.sucursal_id || defaultSucursalId;
       queryClient.invalidateQueries(UBICACIONES_ALMACEN_KEYS.all);
       queryClient.invalidateQueries(UBICACIONES_ALMACEN_KEYS.arbol(sucursalId));
       queryClient.invalidateQueries(UBICACIONES_ALMACEN_KEYS.estadisticas(sucursalId));
@@ -322,8 +319,7 @@ export function useMoverStockUbicacion() {
  * @param {Object} options - { sucursalId }
  */
 export function useUbicacionesAlmacenManager({ sucursalId } = {}) {
-  const getSucursalId = useSucursalStore(selectGetSucursalId);
-  const efectiveSucursalId = sucursalId || getSucursalId();
+  const efectiveSucursalId = useSucursalContext(sucursalId);
 
   // Queries
   const {

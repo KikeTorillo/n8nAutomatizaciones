@@ -1,126 +1,74 @@
+/**
+ * ====================================================================
+ * HOOKS - PROFESIONALES
+ * ====================================================================
+ *
+ * Migrado parcialmente a factory - Ene 2026
+ * - CRUD básico via createCRUDHooks
+ * - Hooks especializados se mantienen para casos específicos
+ *
+ * ====================================================================
+ */
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { profesionalesApi } from '@/services/api/endpoints';
-import { sanitizeParams } from '@/lib/params';
+import { createCRUDHooks, createSanitizer } from '@/hooks/factories';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 
-/**
- * Hook para listar profesionales con filtros y paginación
- * @param {Object} params - { page, limit, activo, busqueda, estado, departamento_id, rol_usuario, etc. }
- * Ene 2026: Añadido soporte de paginación server-side
- */
-export function useProfesionales(params = {}) {
-  // Extraer page y limit con defaults
-  const { page = 1, limit = 20, ...filtros } = params;
+// ====================================================================
+// CRUD BÁSICO VIA FACTORY
+// ====================================================================
 
-  return useQuery({
-    queryKey: ['profesionales', { page, limit, ...filtros }],
-    queryFn: async () => {
-      const response = await profesionalesApi.listar(sanitizeParams({ page, limit, ...filtros }));
+// Sanitizador para datos de profesional
+const sanitizeProfesional = createSanitizer([
+  'email',
+  'telefono',
+  'descripcion',
+  'direccion',
+  'codigo_postal',
+  { name: 'departamento_id', type: 'id' },
+  { name: 'supervisor_id', type: 'id' },
+  { name: 'puesto_id', type: 'id' },
+]);
 
-      // Backend retorna: { success, data: { profesionales: [...], pagination: {...} } }
-      return response.data.data;
-    },
-    staleTime: STALE_TIMES.SEMI_STATIC, // 5 minutos
-    keepPreviousData: true, // Ene 2026: Transiciones suaves entre páginas
-  });
-}
+// Crear hooks CRUD básicos
+const hooks = createCRUDHooks({
+  name: 'profesional',
+  namePlural: 'profesionales',
+  api: profesionalesApi,
+  baseKey: 'profesionales',
+  apiMethods: {
+    list: 'listar',
+    get: 'obtener',
+    create: 'crear',
+    update: 'actualizar',
+    delete: 'eliminar',
+  },
+  sanitize: sanitizeProfesional,
+  invalidateOnCreate: ['profesionales', 'profesionales-dashboard', 'estadisticas'],
+  invalidateOnUpdate: ['profesionales', 'profesionales-dashboard'],
+  invalidateOnDelete: ['profesionales', 'profesionales-dashboard', 'estadisticas'],
+  errorMessages: {
+    create: { 409: 'Ya existe un profesional con ese email o teléfono' },
+    update: { 409: 'Ya existe un profesional con ese email o teléfono' },
+    delete: { 400: 'No se puede eliminar el profesional (puede tener citas asociadas)' },
+  },
+  staleTime: STALE_TIMES.SEMI_STATIC,
+  responseKey: 'profesionales',
+  usePreviousData: true,
+});
 
-/**
- * Hook para obtener profesional por ID
- */
-export function useProfesional(id) {
-  return useQuery({
-    queryKey: ['profesional', id],
-    queryFn: async () => {
-      const response = await profesionalesApi.obtener(id);
-      return response.data.data;
-    },
-    enabled: !!id,
-    staleTime: STALE_TIMES.SEMI_STATIC,
-  });
-}
+// Exportar hooks CRUD básicos
+export const useProfesionales = hooks.useList;
+export const useProfesional = hooks.useDetail;
+export const useCrearProfesional = hooks.useCreate;
+export const useActualizarProfesional = hooks.useUpdate;
+export const useEliminarProfesional = hooks.useDelete;
 
-/**
- * Hook para crear profesional
- */
-export function useCrearProfesional() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (data) => {
-      // ⚠️ Sanitizar campos opcionales vacíos
-      const sanitized = {
-        ...data,
-        email: data.email?.trim() || undefined,
-        telefono: data.telefono?.trim() || undefined,
-        descripcion: data.descripcion?.trim() || undefined,
-      };
-      const response = await profesionalesApi.crear(sanitized);
-      return response.data.data;
-    },
-    onSuccess: () => {
-      // Invalidar múltiples queries
-      queryClient.invalidateQueries({ queryKey: ['profesionales'] });
-      queryClient.invalidateQueries({ queryKey: ['profesionales-dashboard'] });
-      queryClient.invalidateQueries({ queryKey: ['estadisticas'] });
-    },
-    onError: createCRUDErrorHandler('create', 'Profesional', {
-      409: 'Ya existe un profesional con ese email o teléfono',
-    }),
-  });
-}
-
-/**
- * Hook para actualizar profesional
- */
-export function useActualizarProfesional() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ id, data }) => {
-      // ⚠️ Sanitizar campos opcionales vacíos
-      const sanitized = {
-        ...data,
-        email: data.email?.trim() || undefined,
-        telefono: data.telefono?.trim() || undefined,
-        descripcion: data.descripcion?.trim() || undefined,
-      };
-      const response = await profesionalesApi.actualizar(id, sanitized);
-      return response.data.data;
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['profesional', data.id] });
-      queryClient.invalidateQueries({ queryKey: ['profesionales'] });
-      queryClient.invalidateQueries({ queryKey: ['profesionales-dashboard'] });
-    },
-    onError: createCRUDErrorHandler('update', 'Profesional', {
-      409: 'Ya existe un profesional con ese email o teléfono',
-    }),
-  });
-}
-
-/**
- * Hook para eliminar profesional (soft delete)
- */
-export function useEliminarProfesional() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (id) => {
-      await profesionalesApi.eliminar(id);
-      return id;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['profesionales'] });
-      queryClient.invalidateQueries({ queryKey: ['profesionales-dashboard'] });
-      queryClient.invalidateQueries({ queryKey: ['estadisticas'] });
-    },
-    onError: createCRUDErrorHandler('delete', 'Profesional', {
-      400: 'No se puede eliminar el profesional (puede tener citas asociadas)',
-    }),
-  });
-}
+// ====================================================================
+// HOOKS ESPECIALIZADOS (no factorizables)
+// ====================================================================
 
 /**
  * Hook para buscar profesionales (búsqueda rápida)
@@ -131,26 +79,19 @@ export function useBuscarProfesionales(termino, options = {}) {
     queryFn: async () => {
       const params = {
         busqueda: termino,
-        limit: 50, // Búsqueda rápida sin paginación
+        limit: 50,
         ...options,
       };
       const response = await profesionalesApi.listar(params);
-      // Ene 2026: Adaptado a nueva estructura de respuesta
       return response.data.data?.profesionales || [];
     },
-    enabled: termino.length >= 2, // Solo buscar si hay al menos 2 caracteres
-    staleTime: STALE_TIMES.REAL_TIME, // 30 segundos
+    enabled: termino.length >= 2,
+    staleTime: STALE_TIMES.REAL_TIME,
   });
 }
 
-// ====================================================================
-// HOOKS PARA MODELO UNIFICADO PROFESIONAL-USUARIO (Nov 2025)
-// ====================================================================
-
 /**
  * Hook para listar profesionales por módulo habilitado
- * @param {string} modulo - 'agendamiento' | 'pos' | 'inventario'
- * @param {Object} options - { activos: boolean }
  */
 export function useProfesionalesPorModulo(modulo, options = {}) {
   return useQuery({
@@ -208,14 +149,8 @@ export function useActualizarModulos() {
   });
 }
 
-// ====================================================================
-// HOOKS PARA GESTIÓN DE EMPLEADOS - FILTROS (Dic 2025)
-// ====================================================================
-
 /**
  * Hook para listar profesionales por estado laboral
- * @param {string} estado - 'activo' | 'vacaciones' | 'incapacidad' | 'suspendido' | 'baja'
- * @param {Object} options - Filtros adicionales
  */
 export function useProfesionalesPorEstado(estado, options = {}) {
   return useQuery({
@@ -231,8 +166,6 @@ export function useProfesionalesPorEstado(estado, options = {}) {
 
 /**
  * Hook para listar profesionales por departamento
- * @param {number} departamentoId
- * @param {Object} options - Filtros adicionales
  */
 export function useProfesionalesPorDepartamento(departamentoId, options = {}) {
   return useQuery({
@@ -246,14 +179,8 @@ export function useProfesionalesPorDepartamento(departamentoId, options = {}) {
   });
 }
 
-// ====================================================================
-// HOOKS PARA JERARQUÍA ORGANIZACIONAL (Dic 2025)
-// ====================================================================
-
 /**
  * Hook para obtener subordinados de un profesional
- * @param {number} profesionalId
- * @param {Object} options - { directos_solo?: boolean }
  */
 export function useSubordinados(profesionalId, options = {}) {
   return useQuery({
@@ -269,7 +196,6 @@ export function useSubordinados(profesionalId, options = {}) {
 
 /**
  * Hook para obtener cadena de supervisores de un profesional
- * @param {number} profesionalId
  */
 export function useCadenaSupervisores(profesionalId) {
   return useQuery({
@@ -283,13 +209,8 @@ export function useCadenaSupervisores(profesionalId) {
   });
 }
 
-// ====================================================================
-// HOOKS PARA CATEGORÍAS DE PROFESIONAL (M:N) (Dic 2025)
-// ====================================================================
-
 /**
  * Hook para obtener categorías de un profesional
- * @param {number} profesionalId
  */
 export function useCategoriasDeProfesional(profesionalId) {
   return useQuery({
@@ -369,10 +290,6 @@ export function useSincronizarCategorias() {
 // ====================================================================
 // CONSTANTES PARA GESTIÓN DE EMPLEADOS
 // ====================================================================
-// NOTA (Dic 2025): TIPOS_EMPLEADO eliminado.
-// La capacidad de supervisar se determina por el ROL del usuario
-// (admin/propietario pueden supervisar, empleado no).
-// ====================================================================
 
 export const ESTADOS_LABORALES = {
   activo: { label: 'Activo', color: 'green' },
@@ -405,19 +322,11 @@ export const ESTADOS_CIVILES = {
   union_libre: { label: 'Unión libre' },
 };
 
-// ====================================================================
-// CONSTANTES PARA COMPENSACIÓN (Ene 2026)
-// ====================================================================
-
 export const FORMAS_PAGO = {
   comision: { label: 'Solo comisión', color: 'purple' },
   salario: { label: 'Solo salario', color: 'blue' },
   mixto: { label: 'Salario + Comisión', color: 'green' },
 };
-
-// ====================================================================
-// CONSTANTES PARA IDIOMAS (Ene 2026)
-// ====================================================================
 
 export const IDIOMAS_DISPONIBLES = [
   { value: 'es', label: 'Español' },

@@ -1,5 +1,5 @@
 import axios from 'axios';
-import apiClient from '../client';
+import apiClient, { publicApiClient } from '../client';
 
 /**
  * API de Eventos Digitales
@@ -165,13 +165,8 @@ export const eventosDigitalesApi = {
    * @param {string} formato - 'base64' | 'png' | 'svg'
    * @returns {Promise<Object>}
    */
-  obtenerQRPublico: (slug, token, formato = 'base64') => {
-    const publicAxios = axios.create({
-      baseURL: '/api/v1',
-      headers: { 'Content-Type': 'application/json' }
-    });
-    return publicAxios.get(`/public/evento/${slug}/${token}/qr`, { params: { formato } });
-  },
+  obtenerQRPublico: (slug, token, formato = 'base64') =>
+    publicApiClient.get(`/public/evento/${slug}/${token}/qr`, { params: { formato } }),
 
   // ========== Ubicaciones ==========
 
@@ -455,13 +450,8 @@ export const eventosDigitalesApi = {
    * @param {string} slug
    * @returns {Promise<Object>}
    */
-  obtenerEventoPublico: (slug) => {
-    const publicAxios = axios.create({
-      baseURL: '/api/v1',
-      headers: { 'Content-Type': 'application/json' }
-    });
-    return publicAxios.get(`/public/evento/${slug}`);
-  },
+  obtenerEventoPublico: (slug) =>
+    publicApiClient.get(`/public/evento/${slug}`),
 
   /**
    * Obtener invitación personalizada (sin auth)
@@ -469,13 +459,8 @@ export const eventosDigitalesApi = {
    * @param {string} token
    * @returns {Promise<Object>}
    */
-  obtenerInvitacion: (slug, token) => {
-    const publicAxios = axios.create({
-      baseURL: '/api/v1',
-      headers: { 'Content-Type': 'application/json' }
-    });
-    return publicAxios.get(`/public/evento/${slug}/${token}`);
-  },
+  obtenerInvitacion: (slug, token) =>
+    publicApiClient.get(`/public/evento/${slug}/${token}`),
 
   /**
    * Confirmar RSVP (sin auth)
@@ -484,13 +469,8 @@ export const eventosDigitalesApi = {
    * @param {Object} data - { asistira, num_asistentes?, mensaje_rsvp?, restricciones_dieteticas? }
    * @returns {Promise<Object>}
    */
-  confirmarRSVP: (slug, token, data) => {
-    const publicAxios = axios.create({
-      baseURL: '/api/v1',
-      headers: { 'Content-Type': 'application/json' }
-    });
-    return publicAxios.post(`/public/evento/${slug}/${token}/rsvp`, data);
-  },
+  confirmarRSVP: (slug, token, data) =>
+    publicApiClient.post(`/public/evento/${slug}/${token}/rsvp`, data),
 
   /**
    * Obtener URL de WhatsApp para compartir (sin auth)
@@ -498,13 +478,8 @@ export const eventosDigitalesApi = {
    * @param {string} token
    * @returns {Promise<Object>}
    */
-  obtenerWhatsAppUrl: (slug, token) => {
-    const publicAxios = axios.create({
-      baseURL: '/api/v1',
-      headers: { 'Content-Type': 'application/json' }
-    });
-    return publicAxios.get(`/public/evento/${slug}/${token}/whatsapp`);
-  },
+  obtenerWhatsAppUrl: (slug, token) =>
+    publicApiClient.get(`/public/evento/${slug}/${token}/whatsapp`),
 
   // ========== Galería Pública ==========
 
@@ -514,13 +489,8 @@ export const eventosDigitalesApi = {
    * @param {number} limit
    * @returns {Promise<Object>}
    */
-  obtenerGaleriaPublica: (slug, limit = 100) => {
-    const publicAxios = axios.create({
-      baseURL: '/api/v1',
-      headers: { 'Content-Type': 'application/json' }
-    });
-    return publicAxios.get(`/public/evento/${slug}/galeria`, { params: { limit } });
-  },
+  obtenerGaleriaPublica: (slug, limit = 100) =>
+    publicApiClient.get(`/public/evento/${slug}/galeria`, { params: { limit } }),
 
   /**
    * Subir foto como invitado (sin auth, requiere token)
@@ -537,12 +507,8 @@ export const eventosDigitalesApi = {
     if (caption) {
       formData.append('caption', caption);
     }
-
-    const publicAxios = axios.create({
-      baseURL: '/api/v1',
-      headers: { 'Content-Type': 'multipart/form-data' }
-    });
-    return publicAxios.post(`/public/evento/${slug}/${token}/galeria`, formData);
+    // Para FormData, axios detecta automáticamente el Content-Type
+    return publicApiClient.post(`/public/evento/${slug}/${token}/galeria`, formData);
   },
 
   /**
@@ -551,13 +517,8 @@ export const eventosDigitalesApi = {
    * @param {string} motivo
    * @returns {Promise<Object>}
    */
-  reportarFoto: (fotoId, motivo) => {
-    const publicAxios = axios.create({
-      baseURL: '/api/v1',
-      headers: { 'Content-Type': 'application/json' }
-    });
-    return publicAxios.post(`/public/galeria/${fotoId}/reportar`, { motivo });
-  },
+  reportarFoto: (fotoId, motivo) =>
+    publicApiClient.post(`/public/galeria/${fotoId}/reportar`, { motivo }),
 };
 
 // ==================== WEBSITE (Dic 2025) ====================

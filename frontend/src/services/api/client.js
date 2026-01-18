@@ -132,5 +132,24 @@ apiClient.interceptors.response.use(
   }
 );
 
+// ========== PUBLIC API CLIENT (Ene 2026) ==========
+// Cliente para rutas públicas sin autenticación (eventos-digitales, website, etc.)
+const publicApiClient = axios.create({
+  baseURL: '/api/v1',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  withCredentials: false, // No enviar cookies de sesión
+});
+
+// Retry básico para public client
+axiosRetry(publicApiClient, {
+  retries: 2,
+  retryDelay: axiosRetry.exponentialDelay,
+  retryCondition: (error) => {
+    return axiosRetry.isNetworkOrIdempotentRequestError(error);
+  },
+});
+
 export default apiClient;
-export { apiClient as api };
+export { apiClient as api, publicApiClient };

@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { inventarioApi } from '@/services/api/endpoints';
-import useSucursalStore, { selectGetSucursalId } from '@/store/sucursalStore';
+import { useSucursalContext } from '@/hooks/factories';
 import { sanitizeParams } from '@/lib/params';
 import { STALE_TIMES } from '@/app/queryClient';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
@@ -58,7 +58,7 @@ export function useEstadisticasMovimientos(params) {
  */
 export function useRegistrarMovimiento() {
   const queryClient = useQueryClient();
-  const getSucursalId = useSucursalStore(selectGetSucursalId);
+  const defaultSucursalId = useSucursalContext();
 
   return useMutation({
     mutationFn: async (data) => {
@@ -73,7 +73,7 @@ export function useRegistrarMovimiento() {
         motivo: data.motivo?.trim() || undefined,
         fecha_vencimiento: data.fecha_vencimiento || undefined,
         lote: data.lote?.trim() || undefined,
-        sucursal_id: data.sucursal_id || getSucursalId() || undefined,
+        sucursal_id: data.sucursal_id || defaultSucursalId || undefined,
       };
 
       const response = await inventarioApi.registrarMovimiento(sanitized);

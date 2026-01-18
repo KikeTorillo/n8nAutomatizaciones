@@ -1,5 +1,4 @@
-import axios from 'axios';
-import apiClient from '../client';
+import apiClient, { publicApiClient } from '../client';
 /**
  * API de Website
  */
@@ -170,13 +169,8 @@ export const websiteApi = {
    * @param {string} slug
    * @returns {Promise<Object>}
    */
-  obtenerSitioPublico: (slug) => {
-    const publicAxios = axios.create({
-      baseURL: '/api/v1',
-      headers: { 'Content-Type': 'application/json' }
-    });
-    return publicAxios.get(`/public/sitio/${slug}`);
-  },
+  obtenerSitioPublico: (slug) =>
+    publicApiClient.get(`/public/sitio/${slug}`),
 
   /**
    * Obtener página pública
@@ -184,13 +178,8 @@ export const websiteApi = {
    * @param {string} pagina - Slug de la página
    * @returns {Promise<Object>}
    */
-  obtenerPaginaPublica: (slug, pagina) => {
-    const publicAxios = axios.create({
-      baseURL: '/api/v1',
-      headers: { 'Content-Type': 'application/json' }
-    });
-    return publicAxios.get(`/public/sitio/${slug}/${pagina}`);
-  },
+  obtenerPaginaPublica: (slug, pagina) =>
+    publicApiClient.get(`/public/sitio/${slug}/${pagina}`),
 
   /**
    * Enviar formulario de contacto
@@ -198,13 +187,8 @@ export const websiteApi = {
    * @param {Object} data - { nombre, email, telefono?, mensaje? }
    * @returns {Promise<Object>}
    */
-  enviarContacto: (slug, data) => {
-    const publicAxios = axios.create({
-      baseURL: '/api/v1',
-      headers: { 'Content-Type': 'application/json' }
-    });
-    return publicAxios.post(`/public/sitio/${slug}/contacto`, data);
-  },
+  enviarContacto: (slug, data) =>
+    publicApiClient.post(`/public/sitio/${slug}/contacto`, data),
 };
 
 // ==================== CONTABILIDAD ====================

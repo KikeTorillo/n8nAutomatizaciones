@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils';
-import Checkbox from '../atoms/Checkbox';
+import CheckboxField from './CheckboxField';
 
 /**
  * CheckboxGroup - Grupo de checkboxes con título opcional
@@ -70,7 +70,7 @@ export function CheckboxGroup({
                   aria-hidden="true"
                 />
               )}
-              <Checkbox
+              <CheckboxField
                 id={fieldKey}
                 label={option.label}
                 description={option.description}
