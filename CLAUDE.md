@@ -251,6 +251,48 @@ Los componentes UI están organizados siguiendo Atomic Design en `components/ui/
 |------------|-----|
 | `BasePageLayout` | Layout base para páginas |
 | `ModuleGuard` | Protección de acceso a módulos |
+| `ListadoCRUDPage` | Template para páginas CRUD estándar (Ene 2026) |
+
+### Patrones de Páginas CRUD (Ene 2026)
+
+Para listados estándar con tabla, filtros y modales CRUD, usar `ListadoCRUDPage`:
+
+```jsx
+import { ListadoCRUDPage } from '@/components/ui';
+
+// Constantes fuera del componente
+const COLUMNS = [...];
+const INITIAL_FILTERS = { busqueda: '' };
+
+// Mapper para adaptar props del FormDrawer
+const mapFormData = (data) => ({ entidad: data, mode: data ? 'edit' : 'create' });
+
+export default function MiEntidadPage() {
+  return (
+    <ListadoCRUDPage
+      title="Mi Entidad"
+      icon={IconComponent}
+      PageLayout={MiPageLayout}
+      useListQuery={useMiEntidad}
+      useDeleteMutation={useEliminarMiEntidad}
+      dataKey="entidades"
+      columns={COLUMNS}
+      FormDrawer={MiEntidadFormDrawer}
+      mapFormData={mapFormData}
+      initialFilters={INITIAL_FILTERS}
+      newButtonLabel="Nueva Entidad"
+    />
+  );
+}
+```
+
+**Props clave**:
+- `rowActions`: `(row, handlers) => ReactNode` - Acciones custom por fila
+- `mapFormData`: `(data) => props` - Adaptar data a props del FormDrawer
+- `mapStatsData`: `(data) => props` - Adaptar data a props del StatsModal
+- `queryParams`: Parámetros extra para el query (ej: `{ sucursalId }`)
+
+**NO usar para**: TreeViews jerárquicos (CategoriasPage, DepartamentosPage)
 
 ### Hooks Reutilizables (Nuevos Ene 2026)
 | Hook | Uso |

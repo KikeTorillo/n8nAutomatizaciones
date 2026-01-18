@@ -17,7 +17,7 @@ import {
 } from '@/components/ui';
 import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
 import ComboFormDrawer from '@/components/inventario/ComboFormDrawer';
-import { useCrudHandlers } from '@/hooks/utils';
+import { useCrudHandlers, usePagination } from '@/hooks/utils';
 import { useCombos, useEliminarCombo } from '@/hooks/pos';
 import useSucursalStore, { selectSucursalActiva } from '@/store/sucursalStore';
 
@@ -36,9 +36,11 @@ const MANEJO_STOCK_LABELS = {
 
 export default function CombosPage() {
   const sucursalActiva = useSucursalStore(selectSucursalActiva);
-  const [page, setPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   const limit = 10;
+
+  // Paginación
+  const { page, handlePageChange, resetPage } = usePagination({ limit });
 
   // Mutations
   const eliminarMutation = useEliminarCombo();
@@ -78,7 +80,7 @@ export default function CombosPage() {
 
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
-    setPage(1);
+    resetPage();
   };
 
   return (
@@ -248,7 +250,7 @@ export default function CombosPage() {
                     total: paginacion.total,
                     totalPages: paginacion.totalPages
                   }}
-                  onPageChange={setPage}
+                  onPageChange={handlePageChange}
                 />
               </div>
             )}

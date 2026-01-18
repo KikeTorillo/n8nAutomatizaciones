@@ -5,3 +5,4 @@
 
 export { default as BasePageLayout } from './BasePageLayout';
 export { default as ModuleGuard } from './ModuleGuard';
+export { default as ListadoCRUDPage } from './ListadoCRUDPage';

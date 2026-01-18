@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { STALE_TIMES } from '@/app/queryClient';
 import { contabilidadApi } from '@/services/api/endpoints';
-import { useToast } from '../utils/useToast';
+import { useToast } from '../../utils/useToast';
 
 /**
  * ====================================================================
@@ -29,7 +30,7 @@ export function useDashboardContabilidad() {
       const response = await contabilidadApi.obtenerDashboard();
       return response.data?.data || {};
     },
-    staleTime: 2 * 60 * 1000, // 2 minutos
+    staleTime: STALE_TIMES.DYNAMIC, // 2 minutos
     refetchInterval: 5 * 60 * 1000, // Refetch cada 5 minutos
   });
 }
@@ -60,7 +61,7 @@ export function useCuentasContables(params = {}) {
         paginacion: response.data?.data?.paginacion || {},
       };
     },
-    staleTime: 5 * 60 * 1000,
+    staleTime: STALE_TIMES.SEMI_STATIC,
   });
 }
 
@@ -77,7 +78,7 @@ export function useArbolCuentas(params = {}) {
       // La API devuelve el array directamente en data
       return response.data?.data || [];
     },
-    staleTime: 10 * 60 * 1000, // 10 minutos (el árbol cambia poco)
+    staleTime: STALE_TIMES.STATIC_DATA, // 10 minutos (el árbol cambia poco)
   });
 }
 
@@ -94,7 +95,7 @@ export function useCuentasAfectables(params = {}) {
       // El controlador devuelve el array directamente en data
       return response.data?.data || [];
     },
-    staleTime: 5 * 60 * 1000,
+    staleTime: STALE_TIMES.SEMI_STATIC,
   });
 }
 
@@ -111,7 +112,7 @@ export function useCuenta(id) {
       return response.data?.data;
     },
     enabled: !!id,
-    staleTime: 5 * 60 * 1000,
+    staleTime: STALE_TIMES.SEMI_STATIC,
   });
 }
 
@@ -252,7 +253,7 @@ export function useAsientosContables(params = {}) {
         paginacion: response.data?.data?.paginacion || {},
       };
     },
-    staleTime: 2 * 60 * 1000,
+    staleTime: STALE_TIMES.DYNAMIC,
   });
 }
 
@@ -270,7 +271,7 @@ export function useAsiento(id, fecha) {
       return response.data?.data;
     },
     enabled: !!id && !!fecha,
-    staleTime: 5 * 60 * 1000,
+    staleTime: STALE_TIMES.SEMI_STATIC,
   });
 }
 
@@ -448,7 +449,7 @@ export function usePeriodosContables(params = {}) {
       // El controlador devuelve el array directamente en data
       return response.data?.data || [];
     },
-    staleTime: 10 * 60 * 1000,
+    staleTime: STALE_TIMES.STATIC_DATA,
   });
 }
 
@@ -494,7 +495,7 @@ export function useBalanzaComprobacion(periodoId) {
       return response.data?.data;
     },
     enabled: !!periodoId,
-    staleTime: 5 * 60 * 1000,
+    staleTime: STALE_TIMES.SEMI_STATIC,
   });
 }
 
@@ -513,7 +514,7 @@ export function useLibroMayor(cuentaId, fechaInicio, fechaFin) {
       return response.data?.data;
     },
     enabled: !!cuentaId && !!fechaInicio && !!fechaFin,
-    staleTime: 5 * 60 * 1000,
+    staleTime: STALE_TIMES.SEMI_STATIC,
   });
 }
 
@@ -531,7 +532,7 @@ export function useEstadoResultados(fechaInicio, fechaFin) {
       return response.data?.data;
     },
     enabled: !!fechaInicio && !!fechaFin,
-    staleTime: 5 * 60 * 1000,
+    staleTime: STALE_TIMES.SEMI_STATIC,
   });
 }
 
@@ -548,7 +549,7 @@ export function useBalanceGeneral(fecha) {
       return response.data?.data;
     },
     enabled: !!fecha,
-    staleTime: 5 * 60 * 1000,
+    staleTime: STALE_TIMES.SEMI_STATIC,
   });
 }
 
@@ -567,7 +568,7 @@ export function useConfiguracionContable() {
       const response = await contabilidadApi.obtenerConfiguracion();
       return response.data?.data;
     },
-    staleTime: 5 * 60 * 1000,
+    staleTime: STALE_TIMES.SEMI_STATIC,
   });
 }
 

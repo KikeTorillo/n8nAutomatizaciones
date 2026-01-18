@@ -122,7 +122,7 @@ function ServiciosEditor({ contenido, onGuardar, tema, isSaving }) {
                     value={servicio.nombre}
                     onChange={(e) => handleServicioChange(index, 'nombre', e.target.value)}
                     placeholder="Nombre del servicio"
-                    inputSize="sm"
+                    size="sm"
                     className="dark:bg-gray-600 dark:border-gray-500 dark:text-gray-100"
                   />
                   <Textarea
@@ -137,14 +137,14 @@ function ServiciosEditor({ contenido, onGuardar, tema, isSaving }) {
                       value={servicio.icono}
                       onChange={(e) => handleServicioChange(index, 'icono', e.target.value)}
                       placeholder="Icono (ej: Scissors)"
-                      inputSize="sm"
+                      size="sm"
                       className="dark:bg-gray-600 dark:border-gray-500 dark:text-gray-100"
                     />
                     <Input
                       value={servicio.precio}
                       onChange={(e) => handleServicioChange(index, 'precio', e.target.value)}
                       placeholder="Precio (opcional)"
-                      inputSize="sm"
+                      size="sm"
                       className="dark:bg-gray-600 dark:border-gray-500 dark:text-gray-100"
                     />
                   </div>

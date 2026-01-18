@@ -4,6 +4,7 @@
  * Enero 2026
  */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { STALE_TIMES } from '@/app/queryClient';
 import { profesionalesApi } from '@/services/api/endpoints';
 import { useToast } from '@/hooks/utils';
 
@@ -37,7 +38,7 @@ export function useExperienciaLaboral(profesionalId, options = {}) {
       return response.data?.data || response.data;
     },
     enabled: enabled && !!profesionalId,
-    staleTime: 30 * 1000, // 30 segundos
+    staleTime: STALE_TIMES.REAL_TIME, // 30 segundos
   });
 }
 
@@ -69,7 +70,7 @@ export function useEmpleoActual(profesionalId) {
       return response.data?.data || response.data;
     },
     enabled: !!profesionalId,
-    staleTime: 60 * 1000, // 1 minuto
+    staleTime: STALE_TIMES.FREQUENT, // 1 minuto
   });
 }
 

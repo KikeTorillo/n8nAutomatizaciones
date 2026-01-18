@@ -63,6 +63,7 @@ export { paquetesApi } from './paquetes.api';
 export { consignaApi } from './consigna.api';
 export { dropshipApi } from './dropship.api';
 export { reordenApi } from './reorden.api';
+export { ubicacionesAlmacenApi } from './ubicaciones-almacen.api';
 
 // POS
 export { posApi } from './pos.api';

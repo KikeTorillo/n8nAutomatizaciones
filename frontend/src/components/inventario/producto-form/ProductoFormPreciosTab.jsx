@@ -1,5 +1,5 @@
 import { DollarSign, Globe, ChevronDown, ChevronUp, Plus, Trash2 } from 'lucide-react';
-import { Input, Select } from '@/components/ui';
+import { FormGroup, Input, Select } from '@/components/ui';
 
 /**
  * Tab Precios del formulario de producto
@@ -24,26 +24,27 @@ function ProductoFormPreciosTab({
       </h3>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Input
-          type="number"
-          label="Precio de Compra"
-          {...register('precio_compra')}
-          step="0.01"
-          placeholder="0.00"
-          prefix="$"
-          error={errors.precio_compra?.message}
-        />
+        <FormGroup label="Precio de Compra" error={errors.precio_compra?.message}>
+          <Input
+            type="number"
+            {...register('precio_compra')}
+            step="0.01"
+            placeholder="0.00"
+            prefix="$"
+            hasError={!!errors.precio_compra}
+          />
+        </FormGroup>
 
-        <Input
-          type="number"
-          label="Precio de Venta"
-          {...register('precio_venta')}
-          step="0.01"
-          placeholder="0.00"
-          prefix="$"
-          error={errors.precio_venta?.message}
-          required
-        />
+        <FormGroup label="Precio de Venta" error={errors.precio_venta?.message} required>
+          <Input
+            type="number"
+            {...register('precio_venta')}
+            step="0.01"
+            placeholder="0.00"
+            prefix="$"
+            hasError={!!errors.precio_venta}
+          />
+        </FormGroup>
       </div>
 
       {/* Precios en otras monedas - Colapsable */}
@@ -101,25 +102,26 @@ function ProductoFormPreciosTab({
                     </div>
 
                     <div className="grid grid-cols-2 gap-3">
-                      <Input
-                        type="number"
-                        label="P. Compra"
-                        value={precio.precio_compra}
-                        onChange={(e) => onActualizarPrecioMoneda(index, 'precio_compra', e.target.value)}
-                        step="0.01"
-                        placeholder="0.00"
-                        prefix={monedaInfo?.simbolo || '$'}
-                      />
-                      <Input
-                        type="number"
-                        label="P. Venta"
-                        value={precio.precio_venta}
-                        onChange={(e) => onActualizarPrecioMoneda(index, 'precio_venta', e.target.value)}
-                        step="0.01"
-                        placeholder="0.00"
-                        prefix={monedaInfo?.simbolo || '$'}
-                        required
-                      />
+                      <FormGroup label="P. Compra">
+                        <Input
+                          type="number"
+                          value={precio.precio_compra}
+                          onChange={(e) => onActualizarPrecioMoneda(index, 'precio_compra', e.target.value)}
+                          step="0.01"
+                          placeholder="0.00"
+                          prefix={monedaInfo?.simbolo || '$'}
+                        />
+                      </FormGroup>
+                      <FormGroup label="P. Venta" required>
+                        <Input
+                          type="number"
+                          value={precio.precio_venta}
+                          onChange={(e) => onActualizarPrecioMoneda(index, 'precio_venta', e.target.value)}
+                          step="0.01"
+                          placeholder="0.00"
+                          prefix={monedaInfo?.simbolo || '$'}
+                        />
+                      </FormGroup>
                     </div>
                   </div>
                 );

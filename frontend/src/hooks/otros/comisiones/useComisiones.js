@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { STALE_TIMES } from '@/app/queryClient';
 import { comisionesApi } from '@/services/api/endpoints';
-import { useToast } from '../utils/useToast';
+import { useToast } from '../../utils/useToast';
 
 /**
  * Hooks personalizados para gestión de comisiones
@@ -36,7 +37,7 @@ export function useConfiguracionesComision(params = {}) {
       const response = await comisionesApi.listarConfiguraciones(sanitizedParams);
       return response.data?.data || [];
     },
-    staleTime: 5 * 60 * 1000, // 5 minutos
+    staleTime: STALE_TIMES.SEMI_STATIC, // 5 minutos
     enabled: true,
   });
 }
@@ -65,7 +66,7 @@ export function useHistorialConfiguracion(params = {}) {
       const response = await comisionesApi.obtenerHistorialConfiguracion(sanitizedParams);
       return response.data?.data || [];
     },
-    staleTime: 10 * 60 * 1000, // 10 minutos (el historial no cambia frecuentemente)
+    staleTime: STALE_TIMES.STATIC_DATA, // 10 minutos (el historial no cambia frecuentemente)
     enabled: Object.keys(params).length > 0, // Solo ejecutar si hay filtros
   });
 }
@@ -184,7 +185,7 @@ export function useComisionesProfesional(profesionalId, params = {}) {
       };
     },
     enabled: !!profesionalId,
-    staleTime: 2 * 60 * 1000, // 2 minutos
+    staleTime: STALE_TIMES.DYNAMIC, // 2 minutos
   });
 }
 
@@ -231,7 +232,7 @@ export function useComisionesPorPeriodo(params = {}) {
         resumen,
       };
     },
-    staleTime: 2 * 60 * 1000,
+    staleTime: STALE_TIMES.DYNAMIC,
     enabled: !!(params.fecha_desde && params.fecha_hasta),
   });
 }
@@ -252,7 +253,7 @@ export function useComision(id) {
       return response.data?.data;
     },
     enabled: !!id,
-    staleTime: 5 * 60 * 1000,
+    staleTime: STALE_TIMES.SEMI_STATIC,
   });
 }
 
@@ -334,7 +335,7 @@ export function useDashboardComisiones(params = {}) {
       const response = await comisionesApi.obtenerDashboard(sanitizedParams);
       return response.data?.data || {};
     },
-    staleTime: 1 * 60 * 1000, // 1 minuto (dashboard debe estar actualizado)
+    staleTime: STALE_TIMES.FREQUENT, // 1 minuto (dashboard debe estar actualizado)
     refetchInterval: 5 * 60 * 1000, // Refetch cada 5 minutos
   });
 }
@@ -365,7 +366,7 @@ export function useEstadisticasComisiones(params = {}) {
       const response = await comisionesApi.obtenerEstadisticas(sanitizedParams);
       return response.data?.data || {};
     },
-    staleTime: 5 * 60 * 1000,
+    staleTime: STALE_TIMES.SEMI_STATIC,
     enabled: !!(params.fecha_desde && params.fecha_hasta),
   });
 }
@@ -397,7 +398,7 @@ export function useGraficaComisionesPorDia(params = {}) {
       const response = await comisionesApi.obtenerGraficaPorDia(sanitizedParams);
       return response.data?.data?.grafica || [];
     },
-    staleTime: 5 * 60 * 1000,
+    staleTime: STALE_TIMES.SEMI_STATIC,
     enabled: !!(params.fecha_desde && params.fecha_hasta),
   });
 }

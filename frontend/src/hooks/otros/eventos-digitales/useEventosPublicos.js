@@ -5,6 +5,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { STALE_TIMES } from '@/app/queryClient';
 import { eventosDigitalesApi } from '@/services/api/endpoints';
 
 // ==================== QUERIES PÚBLICOS ====================
@@ -22,7 +23,7 @@ export function useEventoPublico(slug) {
       return response.data.data;
     },
     enabled: !!slug,
-    staleTime: 1000 * 60 * 5,
+    staleTime: STALE_TIMES.SEMI_STATIC,
   });
 }
 
@@ -40,7 +41,7 @@ export function useInvitacionPublica(slug, token) {
       return response.data.data;
     },
     enabled: !!slug && !!token,
-    staleTime: 1000 * 60 * 5,
+    staleTime: STALE_TIMES.SEMI_STATIC,
   });
 }
 
@@ -99,7 +100,7 @@ export function useMesas(eventoId) {
       return response.data.data || [];
     },
     enabled: !!eventoId,
-    staleTime: 1000 * 30,
+    staleTime: STALE_TIMES.REAL_TIME,
   });
 }
 
@@ -116,7 +117,7 @@ export function useEstadisticasMesas(eventoId) {
       return response.data.data;
     },
     enabled: !!eventoId,
-    staleTime: 1000 * 30,
+    staleTime: STALE_TIMES.REAL_TIME,
   });
 }
 

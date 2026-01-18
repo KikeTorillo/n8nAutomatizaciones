@@ -4,6 +4,7 @@
  * Enero 2026
  */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { STALE_TIMES } from '@/app/queryClient';
 import { profesionalesApi, onboardingEmpleadosApi } from '@/services/api/endpoints';
 import { useToast } from '@/hooks/utils';
 
@@ -46,7 +47,7 @@ export function usePlantillasOnboarding(options = {}) {
       return response.data?.data || response.data;
     },
     enabled,
-    staleTime: 60 * 1000, // 1 minuto
+    staleTime: STALE_TIMES.FREQUENT, // 1 minuto
   });
 }
 
@@ -62,7 +63,7 @@ export function usePlantillaOnboarding(plantillaId) {
       return response.data?.data || response.data;
     },
     enabled: !!plantillaId,
-    staleTime: 30 * 1000,
+    staleTime: STALE_TIMES.REAL_TIME,
   });
 }
 
@@ -78,7 +79,7 @@ export function usePlantillasSugeridas(profesionalId) {
       return response.data?.data || response.data;
     },
     enabled: !!profesionalId,
-    staleTime: 60 * 1000,
+    staleTime: STALE_TIMES.FREQUENT,
   });
 }
 
@@ -282,7 +283,7 @@ export function useProgresoOnboarding(profesionalId, options = {}) {
       return response.data?.data || response.data;
     },
     enabled: enabled && !!profesionalId,
-    staleTime: 30 * 1000,
+    staleTime: STALE_TIMES.REAL_TIME,
   });
 }
 
@@ -385,7 +386,7 @@ export function useDashboardOnboarding(options = {}) {
       return response.data?.data || response.data;
     },
     enabled,
-    staleTime: 30 * 1000,
+    staleTime: STALE_TIMES.REAL_TIME,
   });
 }
 
@@ -403,7 +404,7 @@ export function useTareasVencidasOnboarding(options = {}) {
       return response.data?.data || response.data;
     },
     enabled,
-    staleTime: 30 * 1000,
+    staleTime: STALE_TIMES.REAL_TIME,
   });
 }
 

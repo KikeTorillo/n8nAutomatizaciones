@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { STALE_TIMES } from '@/app/queryClient';
 import { posApi } from '@/services/api/endpoints';
 import useSucursalStore, { selectGetSucursalId } from '@/store/sucursalStore';
 
@@ -31,7 +32,7 @@ export function useVentas(params = {}) {
       const response = await posApi.listarVentas(sanitizedParams);
       return response.data.data || { ventas: [], total: 0 };
     },
-    staleTime: 1000 * 60 * 2, // 2 minutos
+    staleTime: STALE_TIMES.DYNAMIC, // 2 minutos
     enabled: !!sucursalId, // Solo ejecutar si hay sucursal
   });
 }
@@ -48,7 +49,7 @@ export function useVenta(ventaId) {
       return response.data.data || { venta: null, items: [] };
     },
     enabled: !!ventaId,
-    staleTime: 1000 * 60 * 2,
+    staleTime: STALE_TIMES.DYNAMIC,
   });
 }
 
@@ -83,10 +84,10 @@ export function useCrearVenta() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['ventas']);
-      queryClient.invalidateQueries(['productos']); // Stock se actualizó
-      queryClient.invalidateQueries(['stock-critico']);
-      queryClient.invalidateQueries(['movimientos']); // Se generó movimiento
+      queryClient.invalidateQueries({ queryKey: ['ventas'] });
+      queryClient.invalidateQueries({ queryKey: ['productos'] }); // Stock se actualizó
+      queryClient.invalidateQueries({ queryKey: ['stock-critico'] });
+      queryClient.invalidateQueries({ queryKey: ['movimientos'] }); // Se generó movimiento
     },
     onError: (error) => {
       console.error('Error al crear venta:', error);
@@ -119,8 +120,8 @@ export function useActualizarVenta() {
       return response.data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries(['ventas']);
-      queryClient.invalidateQueries(['venta', variables.id]);
+      queryClient.invalidateQueries({ queryKey: ['ventas'] });
+      queryClient.invalidateQueries({ queryKey: ['venta', variables.id] });
     },
     onError: (error) => {
       console.error('Error al actualizar venta:', error);
@@ -140,8 +141,8 @@ export function useActualizarEstadoVenta() {
       return response.data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries(['ventas']);
-      queryClient.invalidateQueries(['venta', variables.id]);
+      queryClient.invalidateQueries({ queryKey: ['ventas'] });
+      queryClient.invalidateQueries({ queryKey: ['venta', variables.id] });
     },
     onError: (error) => {
       console.error('Error al actualizar estado de venta:', error);
@@ -167,8 +168,8 @@ export function useRegistrarPago() {
       return response.data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries(['ventas']);
-      queryClient.invalidateQueries(['venta', variables.id]);
+      queryClient.invalidateQueries({ queryKey: ['ventas'] });
+      queryClient.invalidateQueries({ queryKey: ['venta', variables.id] });
     },
     onError: (error) => {
       console.error('Error al registrar pago:', error);
@@ -191,10 +192,10 @@ export function useCancelarVenta() {
       return response.data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries(['ventas']);
-      queryClient.invalidateQueries(['venta', variables.id]);
-      queryClient.invalidateQueries(['productos']); // Stock revertido
-      queryClient.invalidateQueries(['movimientos']); // Movimiento de reversión
+      queryClient.invalidateQueries({ queryKey: ['ventas'] });
+      queryClient.invalidateQueries({ queryKey: ['venta', variables.id] });
+      queryClient.invalidateQueries({ queryKey: ['productos'] }); // Stock revertido
+      queryClient.invalidateQueries({ queryKey: ['movimientos'] }); // Movimiento de reversión
     },
     onError: (error) => {
       console.error('Error al cancelar venta:', error);
@@ -218,10 +219,10 @@ export function useDevolverItems() {
       return response.data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries(['ventas']);
-      queryClient.invalidateQueries(['venta', variables.id]);
-      queryClient.invalidateQueries(['productos']); // Stock ajustado
-      queryClient.invalidateQueries(['movimientos']); // Movimiento de devolución
+      queryClient.invalidateQueries({ queryKey: ['ventas'] });
+      queryClient.invalidateQueries({ queryKey: ['venta', variables.id] });
+      queryClient.invalidateQueries({ queryKey: ['productos'] }); // Stock ajustado
+      queryClient.invalidateQueries({ queryKey: ['movimientos'] }); // Movimiento de devolución
     },
     onError: (error) => {
       console.error('Error al devolver items:', error);
@@ -241,9 +242,9 @@ export function useAgregarItems() {
       return response.data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries(['ventas']);
-      queryClient.invalidateQueries(['venta', variables.id]);
-      queryClient.invalidateQueries(['productos']); // Stock actualizado
+      queryClient.invalidateQueries({ queryKey: ['ventas'] });
+      queryClient.invalidateQueries({ queryKey: ['venta', variables.id] });
+      queryClient.invalidateQueries({ queryKey: ['productos'] }); // Stock actualizado
     },
     onError: (error) => {
       console.error('Error al agregar items:', error);
@@ -263,9 +264,9 @@ export function useEliminarVenta() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['ventas']);
-      queryClient.invalidateQueries(['productos']); // Stock revertido
-      queryClient.invalidateQueries(['movimientos']); // Movimiento de reversión
+      queryClient.invalidateQueries({ queryKey: ['ventas'] });
+      queryClient.invalidateQueries({ queryKey: ['productos'] }); // Stock revertido
+      queryClient.invalidateQueries({ queryKey: ['movimientos'] }); // Movimiento de reversión
     },
     onError: (error) => {
       console.error('Error al eliminar venta:', error);
@@ -302,7 +303,7 @@ export function useCorteCaja(params) {
       return response.data.data || { resumen: {}, totales_por_metodo: [], ventas_por_hora: [], top_productos: [] };
     },
     enabled: !!params.fecha_inicio && !!params.fecha_fin && !!sucursalId,
-    staleTime: 1000 * 60 * 5, // 5 minutos
+    staleTime: STALE_TIMES.SEMI_STATIC, // 5 minutos
   });
 }
 
@@ -325,6 +326,6 @@ export function useVentasDiarias(params) {
       return response.data.data || { resumen: {}, ventas_por_hora: [], top_productos: [], detalle: [] };
     },
     enabled: !!params.fecha,
-    staleTime: 1000 * 60 * 5,
+    staleTime: STALE_TIMES.SEMI_STATIC,
   });
 }

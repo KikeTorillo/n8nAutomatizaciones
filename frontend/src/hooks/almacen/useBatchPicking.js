@@ -8,6 +8,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { STALE_TIMES } from '@/app/queryClient';
 import { batchPickingApi } from '@/services/api/endpoints';
 import useSucursalStore, { selectGetSucursalId } from '@/store/sucursalStore';
 import { OPERACIONES_ALMACEN_KEYS } from './useOperacionesAlmacen';
@@ -53,7 +54,7 @@ export function useBatchPickings(params = {}) {
       const response = await batchPickingApi.listar(sanitizedParams);
       return response.data.data || [];
     },
-    staleTime: 1000 * 60 * 2, // 2 minutos
+    staleTime: STALE_TIMES.DYNAMIC, // 2 minutos
   });
 }
 
@@ -69,7 +70,7 @@ export function useBatchPicking(id) {
       return response.data.data;
     },
     enabled: !!id,
-    staleTime: 1000 * 60 * 2,
+    staleTime: STALE_TIMES.DYNAMIC,
   });
 }
 
@@ -85,7 +86,7 @@ export function useListaConsolidada(id) {
       return response.data.data || [];
     },
     enabled: !!id,
-    staleTime: 1000 * 60 * 2,
+    staleTime: STALE_TIMES.DYNAMIC,
   });
 }
 
@@ -101,7 +102,7 @@ export function useEstadisticasBatch(id) {
       return response.data.data || {};
     },
     enabled: !!id,
-    staleTime: 1000 * 60 * 2,
+    staleTime: STALE_TIMES.DYNAMIC,
   });
 }
 
@@ -120,7 +121,7 @@ export function useBatchesPendientes(sucursalId) {
       return response.data.data || [];
     },
     enabled: !!efectiveSucursalId,
-    staleTime: 1000 * 60 * 2,
+    staleTime: STALE_TIMES.DYNAMIC,
   });
 }
 
@@ -139,7 +140,7 @@ export function useOperacionesDisponiblesParaBatch(sucursalId) {
       return response.data.data || [];
     },
     enabled: !!efectiveSucursalId,
-    staleTime: 1000 * 60 * 2,
+    staleTime: STALE_TIMES.DYNAMIC,
   });
 }
 
@@ -344,8 +345,8 @@ export function useCompletarBatch() {
       queryClient.invalidateQueries(BATCH_PICKING_KEYS.all);
       queryClient.invalidateQueries(OPERACIONES_ALMACEN_KEYS.all);
       // Invalidar inventario ya que puede haber movimientos de stock
-      queryClient.invalidateQueries(['productos']);
-      queryClient.invalidateQueries(['movimientos-inventario']);
+      queryClient.invalidateQueries({ queryKey: ['productos'] });
+      queryClient.invalidateQueries({ queryKey: ['movimientos-inventario'] });
       toast.success('Batch completado');
     },
     onError: (error) => {

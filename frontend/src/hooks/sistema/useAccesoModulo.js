@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useCallback, useEffect } from 'react';
+import { STALE_TIMES } from '@/app/queryClient';
 import { profesionalesApi, permisosApi } from '@/services/api/endpoints';
 import useAuthStore, { selectUser, selectIsAuthenticated } from '@/store/authStore';
 import usePermisosStore, {
@@ -42,7 +43,7 @@ export function useAccesoModulo(modulo) {
       return response.data.data || null;
     },
     enabled: isAuthenticated && !!user?.id,
-    staleTime: 1000 * 60 * 10, // 10 minutos
+    staleTime: STALE_TIMES.STATIC_DATA, // 10 minutos
     refetchOnWindowFocus: false,
   });
 
@@ -79,7 +80,7 @@ export function useAccesoModulo(modulo) {
       }
     },
     enabled: isAuthenticated && !!user?.id && !!sucursalId && permisoCacheado === null,
-    staleTime: 1000 * 60 * 5, // 5 minutos
+    staleTime: STALE_TIMES.SEMI_STATIC, // 5 minutos
     refetchOnWindowFocus: false,
   });
 
@@ -155,7 +156,7 @@ export function usePermiso(codigoPermiso, sucursalIdParam) {
       return resultado;
     },
     enabled: isAuthenticated && !!user?.id && !!sucursalId && !!codigoPermiso && permisoCacheado === null,
-    staleTime: 1000 * 60 * 5,
+    staleTime: STALE_TIMES.SEMI_STATIC,
     refetchOnWindowFocus: false,
   });
 
@@ -219,7 +220,7 @@ export function useResumenPermisos(sucursalIdParam) {
       return permisos;
     },
     enabled: isAuthenticated && !!user?.id && !!sucursalId,
-    staleTime: 1000 * 60 * 5,
+    staleTime: STALE_TIMES.SEMI_STATIC,
     refetchOnWindowFocus: false,
   });
 
@@ -251,7 +252,7 @@ export function useProfesionalUsuario() {
       return response.data.data || null;
     },
     enabled: isAuthenticated && !!user?.id,
-    staleTime: 1000 * 60 * 10,
+    staleTime: STALE_TIMES.STATIC_DATA,
     refetchOnWindowFocus: false,
   });
 }
@@ -269,7 +270,7 @@ export function useUsuariosDisponibles() {
       const response = await profesionalesApi.usuariosDisponibles();
       return response.data.data?.usuarios || [];
     },
-    staleTime: 1000 * 60 * 5, // 5 minutos
+    staleTime: STALE_TIMES.SEMI_STATIC, // 5 minutos
   });
 }
 

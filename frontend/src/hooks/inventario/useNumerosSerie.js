@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { inventarioApi } from '@/services/api/endpoints';
+import { STALE_TIMES } from '@/app/queryClient';
 
 /**
  * Hooks para Numeros de Serie / Lotes
@@ -15,29 +16,17 @@ export function useNumerosSerie(filtros = {}) {
     return useQuery({
         queryKey: ['numeros-serie', filtros],
         queryFn: async () => {
-            console.log('[useNumerosSerie] queryFn ejecutándose con filtros:', filtros);
             const sanitizedParams = Object.entries(filtros).reduce((acc, [key, value]) => {
                 if (value !== '' && value !== null && value !== undefined) {
                     acc[key] = value;
                 }
                 return acc;
             }, {});
-            console.log('[useNumerosSerie] Parámetros sanitizados:', sanitizedParams);
 
-            try {
-                console.log('[useNumerosSerie] inventarioApi:', inventarioApi);
-                console.log('[useNumerosSerie] listarNumerosSerie:', inventarioApi?.listarNumerosSerie);
-                const response = await inventarioApi.listarNumerosSerie(sanitizedParams);
-                console.log('[useNumerosSerie] Respuesta recibida:', response.data);
-                return response.data;
-            } catch (error) {
-                console.error('[useNumerosSerie] Error en petición:', error);
-                console.error('[useNumerosSerie] Error message:', error?.message);
-                console.error('[useNumerosSerie] Error response:', error?.response);
-                throw error;
-            }
+            const response = await inventarioApi.listarNumerosSerie(sanitizedParams);
+            return response.data;
         },
-        staleTime: 1000 * 60 * 2,
+        staleTime: STALE_TIMES.DYNAMIC,
     });
 }
 
@@ -52,7 +41,7 @@ export function useBuscarNumeroSerie(termino) {
             return response.data.data;
         },
         enabled: termino?.length >= 2,
-        staleTime: 1000 * 30,
+        staleTime: STALE_TIMES.REAL_TIME,
     });
 }
 
@@ -67,7 +56,7 @@ export function useNumeroSerie(id) {
             return response.data.data;
         },
         enabled: !!id,
-        staleTime: 1000 * 60 * 2,
+        staleTime: STALE_TIMES.DYNAMIC,
     });
 }
 
@@ -82,7 +71,7 @@ export function useHistorialNumeroSerie(id) {
             return response.data.data;
         },
         enabled: !!id,
-        staleTime: 1000 * 60 * 2,
+        staleTime: STALE_TIMES.DYNAMIC,
     });
 }
 
@@ -108,7 +97,7 @@ export function useNumerosSerieDisponibles(productoId, options = {}) {
             return response.data.data;
         },
         enabled: !!productoId && enabled,
-        staleTime: 1000 * 30,
+        staleTime: STALE_TIMES.REAL_TIME,
     });
 }
 
@@ -123,7 +112,7 @@ export function useResumenNumeroSerieProducto(productoId) {
             return response.data.data;
         },
         enabled: !!productoId,
-        staleTime: 1000 * 60 * 2,
+        staleTime: STALE_TIMES.DYNAMIC,
     });
 }
 
@@ -137,7 +126,7 @@ export function useProductosConSerie() {
             const response = await inventarioApi.obtenerProductosConSerie();
             return response.data.data;
         },
-        staleTime: 1000 * 60 * 5,
+        staleTime: STALE_TIMES.SEMI_STATIC,
     });
 }
 
@@ -153,7 +142,7 @@ export function useEstadisticasNumerosSerie() {
             const response = await inventarioApi.obtenerEstadisticasNumerosSerie();
             return response.data.data;
         },
-        staleTime: 1000 * 60 * 5,
+        staleTime: STALE_TIMES.SEMI_STATIC,
     });
 }
 
@@ -167,7 +156,7 @@ export function useProximosVencer(dias = 30) {
             const response = await inventarioApi.obtenerProximosVencer(dias);
             return response.data.data;
         },
-        staleTime: 1000 * 60 * 5,
+        staleTime: STALE_TIMES.SEMI_STATIC,
     });
 }
 
@@ -185,7 +174,7 @@ export function useCrearNumeroSerie() {
             return response.data;
         },
         onSuccess: () => {
-            queryClient.invalidateQueries(['numeros-serie']);
+            queryClient.invalidateQueries({ queryKey: ['numeros-serie'] });
         },
     });
 }
@@ -202,7 +191,7 @@ export function useCrearNumerosSerieMultiple() {
             return response.data;
         },
         onSuccess: () => {
-            queryClient.invalidateQueries(['numeros-serie']);
+            queryClient.invalidateQueries({ queryKey: ['numeros-serie'] });
         },
     });
 }
@@ -222,7 +211,7 @@ export function useVenderNumeroSerie() {
             return response.data;
         },
         onSuccess: () => {
-            queryClient.invalidateQueries(['numeros-serie']);
+            queryClient.invalidateQueries({ queryKey: ['numeros-serie'] });
         },
     });
 }
@@ -243,7 +232,7 @@ export function useTransferirNumeroSerie() {
             return response.data;
         },
         onSuccess: () => {
-            queryClient.invalidateQueries(['numeros-serie']);
+            queryClient.invalidateQueries({ queryKey: ['numeros-serie'] });
         },
     });
 }
@@ -264,7 +253,7 @@ export function useDevolverNumeroSerie() {
             return response.data;
         },
         onSuccess: () => {
-            queryClient.invalidateQueries(['numeros-serie']);
+            queryClient.invalidateQueries({ queryKey: ['numeros-serie'] });
         },
     });
 }
@@ -281,7 +270,7 @@ export function useMarcarDefectuoso() {
             return response.data;
         },
         onSuccess: () => {
-            queryClient.invalidateQueries(['numeros-serie']);
+            queryClient.invalidateQueries({ queryKey: ['numeros-serie'] });
         },
     });
 }
@@ -298,7 +287,7 @@ export function useReservarNumeroSerie() {
             return response.data;
         },
         onSuccess: () => {
-            queryClient.invalidateQueries(['numeros-serie']);
+            queryClient.invalidateQueries({ queryKey: ['numeros-serie'] });
         },
     });
 }
@@ -315,7 +304,7 @@ export function useLiberarReservaNumeroSerie() {
             return response.data;
         },
         onSuccess: () => {
-            queryClient.invalidateQueries(['numeros-serie']);
+            queryClient.invalidateQueries({ queryKey: ['numeros-serie'] });
         },
     });
 }
@@ -332,7 +321,7 @@ export function useActualizarGarantia() {
             return response.data;
         },
         onSuccess: (_, variables) => {
-            queryClient.invalidateQueries(['numeros-serie', variables.id]);
+            queryClient.invalidateQueries({ queryKey: ['numeros-serie', variables.id] });
         },
     });
 }

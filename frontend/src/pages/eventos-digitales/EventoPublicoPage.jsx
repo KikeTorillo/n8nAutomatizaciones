@@ -209,11 +209,10 @@ function EventoPublicoPage() {
   useEffect(() => {
     if (token && invitado?.estado_rsvp === 'confirmado' && evento?.configuracion?.mostrar_qr_invitado === true) {
       setLoadingQR(true);
-      fetch(`/api/v1/public/evento/${slug}/${token}/qr?formato=base64`)
-        .then(res => res.json())
-        .then(data => {
-          if (data.success) {
-            setQrImage(data.data.qr);
+      eventosDigitalesApi.obtenerQRPublico(slug, token, 'base64')
+        .then(response => {
+          if (response.data?.success) {
+            setQrImage(response.data.data.qr);
           }
         })
         .catch(console.error)

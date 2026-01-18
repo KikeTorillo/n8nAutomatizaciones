@@ -4,6 +4,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { STALE_TIMES } from '@/app/queryClient';
 import { reordenApi, inventarioApi } from '@/services/api/endpoints';
 import { useToast } from '@/hooks/utils';
 
@@ -19,7 +20,7 @@ export function useDashboardReorden() {
       const response = await reordenApi.obtenerDashboard();
       return response.data.data;
     },
-    staleTime: 1000 * 60 * 2, // 2 minutos
+    staleTime: STALE_TIMES.DYNAMIC, // 2 minutos
     refetchInterval: 1000 * 60 * 5, // Refrescar cada 5 minutos
   });
 }
@@ -36,7 +37,7 @@ export function useProductosBajoMinimo(filtros = {}) {
       const response = await reordenApi.productosBajoMinimo(filtros);
       return response.data.data;
     },
-    staleTime: 1000 * 60, // 1 minuto
+    staleTime: STALE_TIMES.FREQUENT, // 1 minuto
   });
 }
 
@@ -52,7 +53,7 @@ export function useRutasOperacion(filtros = {}) {
       const response = await reordenApi.listarRutas(filtros);
       return response.data.data;
     },
-    staleTime: 1000 * 60 * 5, // 5 minutos
+    staleTime: STALE_TIMES.SEMI_STATIC, // 5 minutos
   });
 }
 
@@ -68,7 +69,7 @@ export function useReglasReorden(filtros = {}) {
       const response = await reordenApi.listarReglas(filtros);
       return response.data.data;
     },
-    staleTime: 1000 * 60, // 1 minuto
+    staleTime: STALE_TIMES.FREQUENT, // 1 minuto
   });
 }
 
@@ -185,7 +186,7 @@ export function useLogsReorden(filtros = {}) {
       const response = await reordenApi.listarLogs(filtros);
       return response.data.data;
     },
-    staleTime: 1000 * 30, // 30 segundos
+    staleTime: STALE_TIMES.REAL_TIME, // 30 segundos
   });
 }
 
@@ -218,6 +219,6 @@ export function useHistoricoStock(productoId, dias = 30) {
       return response.data.data;
     },
     enabled: !!productoId,
-    staleTime: 1000 * 60 * 5, // 5 minutos
+    staleTime: STALE_TIMES.SEMI_STATIC, // 5 minutos
   });
 }

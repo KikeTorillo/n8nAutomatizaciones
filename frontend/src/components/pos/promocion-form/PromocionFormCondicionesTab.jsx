@@ -1,5 +1,5 @@
 import { Controller } from 'react-hook-form';
-import { Input } from '@/components/ui';
+import { Input, FormGroup } from '@/components/ui';
 import { DIAS_SEMANA } from './schemas';
 
 /**
@@ -15,18 +15,19 @@ export default function PromocionFormCondicionesTab({ register, control, errors 
           Vigencia
         </h4>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Input
-            label="Fecha inicio"
-            type="date"
-            {...register('fecha_inicio', { required: 'Fecha inicio requerida' })}
-            error={errors.fecha_inicio?.message}
-          />
-          <Input
-            label="Fecha fin (opcional)"
-            type="date"
-            {...register('fecha_fin')}
-            helpText="Dejar vacío para sin fecha de expiración"
-          />
+          <FormGroup label="Fecha inicio" error={errors.fecha_inicio?.message}>
+            <Input
+              type="date"
+              {...register('fecha_inicio', { required: 'Fecha inicio requerida' })}
+              hasError={!!errors.fecha_inicio}
+            />
+          </FormGroup>
+          <FormGroup label="Fecha fin (opcional)" helper="Dejar vacío para sin fecha de expiración">
+            <Input
+              type="date"
+              {...register('fecha_fin')}
+            />
+          </FormGroup>
         </div>
       </div>
 
@@ -36,16 +37,18 @@ export default function PromocionFormCondicionesTab({ register, control, errors 
           Horario (opcional)
         </h4>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Input
-            label="Hora inicio"
-            type="time"
-            {...register('hora_inicio')}
-          />
-          <Input
-            label="Hora fin"
-            type="time"
-            {...register('hora_fin')}
-          />
+          <FormGroup label="Hora inicio">
+            <Input
+              type="time"
+              {...register('hora_inicio')}
+            />
+          </FormGroup>
+          <FormGroup label="Hora fin">
+            <Input
+              type="time"
+              {...register('hora_fin')}
+            />
+          </FormGroup>
         </div>
         <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
           Si defines horario, la promoción solo aplicará dentro de ese rango
@@ -99,20 +102,20 @@ export default function PromocionFormCondicionesTab({ register, control, errors 
           Límites de uso (opcional)
         </h4>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Input
-            label="Límite uso total"
-            type="number"
-            placeholder="Sin límite"
-            {...register('limite_uso_total')}
-            helpText="Máximo de veces que puede usarse en total"
-          />
-          <Input
-            label="Límite por cliente"
-            type="number"
-            placeholder="Sin límite"
-            {...register('limite_uso_cliente')}
-            helpText="Máximo de veces por cliente"
-          />
+          <FormGroup label="Límite uso total" helper="Máximo de veces que puede usarse en total">
+            <Input
+              type="number"
+              placeholder="Sin límite"
+              {...register('limite_uso_total')}
+            />
+          </FormGroup>
+          <FormGroup label="Límite por cliente" helper="Máximo de veces por cliente">
+            <Input
+              type="number"
+              placeholder="Sin límite"
+              {...register('limite_uso_cliente')}
+            />
+          </FormGroup>
         </div>
       </div>
 

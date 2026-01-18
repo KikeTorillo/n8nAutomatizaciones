@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { inventarioApi } from '@/services/api/endpoints';
+import { STALE_TIMES } from '@/app/queryClient';
 
 /**
  * Hook para listar proveedores con filtros
@@ -19,7 +20,7 @@ export function useProveedores(params = {}) {
       const response = await inventarioApi.listarProveedores(sanitizedParams);
       return response.data.data || { proveedores: [], total: 0 };
     },
-    staleTime: 1000 * 60 * 5, // 5 minutos
+    staleTime: STALE_TIMES.SEMI_STATIC, // 5 minutos
   });
 }
 
@@ -34,7 +35,7 @@ export function useProveedor(id) {
       return response.data.data;
     },
     enabled: !!id,
-    staleTime: 1000 * 60 * 5,
+    staleTime: STALE_TIMES.SEMI_STATIC,
   });
 }
 
@@ -68,7 +69,7 @@ export function useCrearProveedor() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['proveedores']);
+      queryClient.invalidateQueries({ queryKey: ['proveedores'] });
     },
     onError: (error) => {
       const backendMessage = error.response?.data?.message;
@@ -120,8 +121,8 @@ export function useActualizarProveedor() {
       return response.data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries(['proveedores']);
-      queryClient.invalidateQueries(['proveedor', variables.id]);
+      queryClient.invalidateQueries({ queryKey: ['proveedores'] });
+      queryClient.invalidateQueries({ queryKey: ['proveedor', variables.id] });
     },
     onError: (error) => {
       const backendMessage = error.response?.data?.message;
@@ -155,7 +156,7 @@ export function useEliminarProveedor() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['proveedores']);
+      queryClient.invalidateQueries({ queryKey: ['proveedores'] });
     },
     onError: (error) => {
       const backendMessage = error.response?.data?.message;

@@ -6,6 +6,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { landedCostsApi } from '@/services/api/endpoints';
+import { STALE_TIMES } from '@/app/queryClient';
 
 // ==================== QUERIES ====================
 
@@ -21,7 +22,7 @@ export function useCostosAdicionales(ordenCompraId) {
       return response.data.data;
     },
     enabled: !!ordenCompraId,
-    staleTime: 1000 * 60, // 1 minuto
+    staleTime: STALE_TIMES.FREQUENT, // 1 minuto
   });
 }
 
@@ -37,7 +38,7 @@ export function useResumenCostos(ordenCompraId) {
       return response.data.data;
     },
     enabled: !!ordenCompraId,
-    staleTime: 1000 * 30, // 30 segundos
+    staleTime: STALE_TIMES.REAL_TIME, // 30 segundos
   });
 }
 
@@ -69,7 +70,7 @@ export function useCostosPorItems(ordenCompraId) {
       return response.data.data;
     },
     enabled: !!ordenCompraId,
-    staleTime: 1000 * 30,
+    staleTime: STALE_TIMES.REAL_TIME,
   });
 }
 

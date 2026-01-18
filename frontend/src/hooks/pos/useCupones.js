@@ -13,6 +13,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { STALE_TIMES } from '@/app/queryClient';
 import { posApi } from '@/services/api/endpoints';
 import useSucursalStore, { selectSucursalActiva } from '@/store/sucursalStore';
 import { sanitizeParams } from '@/lib/params';
@@ -32,7 +33,7 @@ export function useCuponesVigentes() {
       const response = await posApi.listarCuponesVigentes();
       return response.data.data;
     },
-    staleTime: 1000 * 60 * 5, // 5 minutos
+    staleTime: STALE_TIMES.SEMI_STATIC, // 5 minutos
   });
 }
 
@@ -74,8 +75,8 @@ export function useAplicarCupon() {
     },
     onSuccess: (data, variables) => {
       // Invalidar venta para refrescar totales
-      queryClient.invalidateQueries(['venta', variables.ventaPosId]);
-      queryClient.invalidateQueries(['cupones-vigentes']);
+      queryClient.invalidateQueries({ queryKey: ['venta', variables.ventaPosId] });
+      queryClient.invalidateQueries({ queryKey: ['cupones-vigentes'] });
     },
   });
 }
@@ -109,7 +110,7 @@ export function useCupones(params = {}) {
         paginacion: response.data.pagination,
       };
     },
-    staleTime: 1000 * 60 * 2, // 2 minutos
+    staleTime: STALE_TIMES.DYNAMIC, // 2 minutos
     keepPreviousData: true,
     enabled: !!sucursalId, // Solo ejecutar si hay sucursal
   });
@@ -127,7 +128,7 @@ export function useCupon(id) {
       return response.data.data;
     },
     enabled: !!id,
-    staleTime: 1000 * 60 * 2,
+    staleTime: STALE_TIMES.DYNAMIC,
   });
 }
 
@@ -144,8 +145,8 @@ export function useCrearCupon() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['cupones']);
-      queryClient.invalidateQueries(['cupones-vigentes']);
+      queryClient.invalidateQueries({ queryKey: ['cupones'] });
+      queryClient.invalidateQueries({ queryKey: ['cupones-vigentes'] });
     },
   });
 }
@@ -163,9 +164,9 @@ export function useActualizarCupon() {
       return response.data.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries(['cupones']);
-      queryClient.invalidateQueries(['cupon', variables.id]);
-      queryClient.invalidateQueries(['cupones-vigentes']);
+      queryClient.invalidateQueries({ queryKey: ['cupones'] });
+      queryClient.invalidateQueries({ queryKey: ['cupon', variables.id] });
+      queryClient.invalidateQueries({ queryKey: ['cupones-vigentes'] });
     },
   });
 }
@@ -183,8 +184,8 @@ export function useEliminarCupon() {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['cupones']);
-      queryClient.invalidateQueries(['cupones-vigentes']);
+      queryClient.invalidateQueries({ queryKey: ['cupones'] });
+      queryClient.invalidateQueries({ queryKey: ['cupones-vigentes'] });
     },
   });
 }
@@ -208,7 +209,7 @@ export function useHistorialCupon(cuponId, params = {}) {
       return response.data.data;
     },
     enabled: !!cuponId && !!sucursalId,
-    staleTime: 1000 * 30, // 30 segundos
+    staleTime: STALE_TIMES.REAL_TIME, // 30 segundos
   });
 }
 
@@ -228,7 +229,7 @@ export function useEstadisticasCupon(cuponId) {
       return response.data.data;
     },
     enabled: !!cuponId && !!sucursalId,
-    staleTime: 1000 * 60, // 1 minuto
+    staleTime: STALE_TIMES.FREQUENT, // 1 minuto
   });
 }
 
@@ -245,9 +246,9 @@ export function useCambiarEstadoCupon() {
       return response.data.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries(['cupones']);
-      queryClient.invalidateQueries(['cupon', variables.id]);
-      queryClient.invalidateQueries(['cupones-vigentes']);
+      queryClient.invalidateQueries({ queryKey: ['cupones'] });
+      queryClient.invalidateQueries({ queryKey: ['cupon', variables.id] });
+      queryClient.invalidateQueries({ queryKey: ['cupones-vigentes'] });
     },
   });
 }

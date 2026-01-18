@@ -5,6 +5,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { STALE_TIMES } from '@/app/queryClient';
 import { eventosDigitalesApi } from '@/services/api/endpoints';
 import { sanitizeParams } from '@/lib/params';
 
@@ -24,7 +25,7 @@ export function useMesaRegalos(eventoId, params = {}) {
       return response.data.data.regalos || [];
     },
     enabled: !!eventoId,
-    staleTime: 1000 * 60 * 2,
+    staleTime: STALE_TIMES.DYNAMIC,
   });
 }
 
@@ -149,7 +150,7 @@ export function useFelicitaciones(eventoId, params = {}) {
       };
     },
     enabled: !!eventoId,
-    staleTime: 1000 * 60,
+    staleTime: STALE_TIMES.FREQUENT,
   });
 }
 
@@ -263,7 +264,7 @@ export function useGaleria(eventoId, params = {}) {
       return response.data.data;
     },
     enabled: !!eventoId,
-    staleTime: 1000 * 30,
+    staleTime: STALE_TIMES.REAL_TIME,
   });
 }
 
@@ -280,7 +281,7 @@ export function useGaleriaPublica(slug, limit = 100) {
       return response.data.data;
     },
     enabled: !!slug,
-    staleTime: 1000 * 60,
+    staleTime: STALE_TIMES.FREQUENT,
   });
 }
 

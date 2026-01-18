@@ -3,6 +3,7 @@
  * Fase 1 del Plan de Empleados Competitivo - Enero 2026
  */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { STALE_TIMES } from '@/app/queryClient';
 import { profesionalesApi } from '@/services/api/endpoints';
 
 // === Constantes ===
@@ -46,7 +47,7 @@ export function useCuentasBancarias(profesionalId, options = {}) {
       return response.data.data;
     },
     enabled: !!profesionalId,
-    staleTime: 30 * 1000, // 30 segundos
+    staleTime: STALE_TIMES.REAL_TIME, // 30 segundos
   });
 }
 

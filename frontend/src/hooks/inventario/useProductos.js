@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { inventarioApi } from '@/services/api/endpoints';
 import { sanitizeParams } from '@/lib/params';
+import { STALE_TIMES } from '@/app/queryClient';
 
 /**
  * Hook para listar productos con filtros
@@ -13,7 +14,7 @@ export function useProductos(params = {}) {
       const response = await inventarioApi.listarProductos(sanitizeParams(params));
       return response.data.data || { productos: [], total: 0 };
     },
-    staleTime: 1000 * 60 * 5, // 5 minutos
+    staleTime: STALE_TIMES.SEMI_STATIC, // 5 minutos
     refetchOnWindowFocus: false, // Ene 2026: evitar refetch innecesario en POS
   });
 }
@@ -29,7 +30,7 @@ export function useProducto(id) {
       return response.data.data;
     },
     enabled: !!id,
-    staleTime: 1000 * 60 * 5,
+    staleTime: STALE_TIMES.SEMI_STATIC,
   });
 }
 
@@ -45,7 +46,7 @@ export function useBuscarProductos(params) {
       return response.data.data || [];
     },
     enabled: !!params.q && params.q.length >= 2,
-    staleTime: 1000 * 60 * 2, // 2 minutos - Ene 2026: aumentado para reducir requests POS
+    staleTime: STALE_TIMES.DYNAMIC, // 2 minutos - Ene 2026: aumentado para reducir requests POS
   });
 }
 
@@ -59,7 +60,7 @@ export function useStockCritico() {
       const response = await inventarioApi.obtenerStockCritico();
       return response.data.data.productos || [];
     },
-    staleTime: 1000 * 60 * 2, // 2 minutos (stock crítico requiere actualización frecuente)
+    staleTime: STALE_TIMES.DYNAMIC, // 2 minutos (stock crítico requiere actualización frecuente)
   });
 }
 
@@ -88,9 +89,9 @@ export function useCrearProducto() {
     },
     onSuccess: () => {
       // Invalidar múltiples queries
-      queryClient.invalidateQueries(['productos']);
-      queryClient.invalidateQueries(['stock-critico']);
-      queryClient.invalidateQueries(['valor-inventario']);
+      queryClient.invalidateQueries({ queryKey: ['productos'] });
+      queryClient.invalidateQueries({ queryKey: ['stock-critico'] });
+      queryClient.invalidateQueries({ queryKey: ['valor-inventario'] });
     },
     onError: (error) => {
       // Priorizar mensaje del backend
@@ -125,9 +126,9 @@ export function useBulkCrearProductos() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['productos']);
-      queryClient.invalidateQueries(['stock-critico']);
-      queryClient.invalidateQueries(['valor-inventario']);
+      queryClient.invalidateQueries({ queryKey: ['productos'] });
+      queryClient.invalidateQueries({ queryKey: ['stock-critico'] });
+      queryClient.invalidateQueries({ queryKey: ['valor-inventario'] });
     },
     onError: (error) => {
       const backendMessage = error.response?.data?.message;
@@ -171,9 +172,9 @@ export function useActualizarProducto() {
       return response.data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries(['productos']);
-      queryClient.invalidateQueries(['producto', variables.id]);
-      queryClient.invalidateQueries(['stock-critico']);
+      queryClient.invalidateQueries({ queryKey: ['productos'] });
+      queryClient.invalidateQueries({ queryKey: ['producto', variables.id] });
+      queryClient.invalidateQueries({ queryKey: ['stock-critico'] });
     },
     onError: (error) => {
       const backendMessage = error.response?.data?.message;
@@ -211,11 +212,11 @@ export function useAjustarStock() {
       return response.data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries(['productos']);
-      queryClient.invalidateQueries(['producto', variables.id]);
-      queryClient.invalidateQueries(['stock-critico']);
-      queryClient.invalidateQueries(['movimientos']);
-      queryClient.invalidateQueries(['kardex', variables.id]);
+      queryClient.invalidateQueries({ queryKey: ['productos'] });
+      queryClient.invalidateQueries({ queryKey: ['producto', variables.id] });
+      queryClient.invalidateQueries({ queryKey: ['stock-critico'] });
+      queryClient.invalidateQueries({ queryKey: ['movimientos'] });
+      queryClient.invalidateQueries({ queryKey: ['kardex', variables.id] });
     },
     onError: (error) => {
       const backendMessage = error.response?.data?.message;
@@ -248,8 +249,8 @@ export function useEliminarProducto() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['productos']);
-      queryClient.invalidateQueries(['stock-critico']);
+      queryClient.invalidateQueries({ queryKey: ['productos'] });
+      queryClient.invalidateQueries({ queryKey: ['stock-critico'] });
     },
     onError: (error) => {
       const backendMessage = error.response?.data?.message;

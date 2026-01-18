@@ -17,7 +17,7 @@ import {
 import { BackButton, Button, LoadingSpinner } from '@/components/ui';
 import { useToast } from '@/hooks/utils';
 import { SeatingChartEditor } from '@/components/eventos-digitales';
-import useAuthStore from '@/store/authStore';
+import useAuthStore, { selectAccessToken } from '@/store/authStore';
 import {
   useEvento,
   useEventoEstadisticas,
@@ -47,6 +47,7 @@ import {
   RegalosTab,
   FelicitacionesTab,
 } from '@/components/eventos-digitales';
+import { eventosDigitalesApi } from '@/services/api/modules';
 
 /**
  * Pagina de detalle de evento digital con tabs
@@ -55,7 +56,7 @@ function EventoDetailPage() {
   const navigate = useNavigate();
   const { id } = useParams();
   const toast = useToast();
-  const accessToken = useAuthStore((state) => state.accessToken);
+  const accessToken = useAuthStore(selectAccessToken);
   const [activeTab, setActiveTab] = useState('invitados');
   const [checkinStats, setCheckinStats] = useState(null);
 
@@ -92,15 +93,9 @@ function EventoDetailPage() {
 
   const fetchCheckinStats = async () => {
     try {
-      const response = await fetch(
-        `/api/v1/eventos-digitales/eventos/${id}/checkin/stats`,
-        {
-          headers: { 'Authorization': `Bearer ${accessToken}` }
-        }
-      );
-      const data = await response.json();
-      if (data.success) {
-        setCheckinStats(data.data);
+      const response = await eventosDigitalesApi.obtenerCheckinStats(id);
+      if (response.data?.success) {
+        setCheckinStats(response.data.data);
       }
     } catch (error) {
       console.error('Error fetching checkin stats:', error);

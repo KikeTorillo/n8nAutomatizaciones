@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { inventarioApi } from '@/services/api/endpoints';
+import { STALE_TIMES } from '@/app/queryClient';
 
 /**
  * Hook para consultar inventario historico en una fecha especifica
@@ -15,7 +16,7 @@ export function useInventoryAtDate(fecha, filtros = {}, options = {}) {
             return response.data.data;
         },
         enabled: !!fecha && options.enabled !== false,
-        staleTime: 5 * 60 * 1000, // 5 minutos (datos historicos no cambian)
+        staleTime: STALE_TIMES.SEMI_STATIC, // 5 minutos (datos historicos no cambian)
         ...options
     });
 }
@@ -35,7 +36,7 @@ export function useCompararInventario(fechaDesde, fechaHasta, soloCambios = true
             return response.data.data;
         },
         enabled: !!fechaDesde && !!fechaHasta && options.enabled !== false,
-        staleTime: 5 * 60 * 1000,
+        staleTime: STALE_TIMES.SEMI_STATIC,
         ...options
     });
 }
@@ -52,7 +53,7 @@ export function useSnapshots(params = {}, options = {}) {
             const response = await inventarioApi.listarSnapshots(params);
             return response.data.data || [];
         },
-        staleTime: 60 * 1000, // 1 minuto
+        staleTime: STALE_TIMES.FREQUENT, // 1 minuto
         ...options
     });
 }
@@ -68,7 +69,7 @@ export function useFechasDisponibles(options = {}) {
             const response = await inventarioApi.obtenerFechasDisponibles();
             return response.data.data || [];
         },
-        staleTime: 5 * 60 * 1000,
+        staleTime: STALE_TIMES.SEMI_STATIC,
         ...options
     });
 }

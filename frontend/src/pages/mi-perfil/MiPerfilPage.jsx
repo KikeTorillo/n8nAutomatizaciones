@@ -15,7 +15,7 @@ import {
   Info,
   ExternalLink,
 } from 'lucide-react';
-import useAuthStore from '@/store/authStore';
+import useAuthStore, { selectUser } from '@/store/authStore';
 import { useProfesional } from '@/hooks/personas';
 import { useBloqueos } from '@/hooks/agendamiento';
 import { useSaldosVacaciones } from '@/hooks/personas';
@@ -35,7 +35,7 @@ import { Button, LoadingSpinner } from '@/components/ui';
  */
 function MiPerfilPage() {
   const navigate = useNavigate();
-  const user = useAuthStore((state) => state.user);
+  const user = useAuthStore(selectUser);
   const profesionalId = user?.profesional_id;
 
   // Si no tiene profesional vinculado, mostrar mensaje

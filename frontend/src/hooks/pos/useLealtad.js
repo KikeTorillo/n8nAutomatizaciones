@@ -14,6 +14,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { STALE_TIMES } from '@/app/queryClient';
 import { posApi } from '@/services/api/endpoints';
 
 // =========================================================================
@@ -31,7 +32,7 @@ export function useConfiguracionLealtad() {
       const response = await posApi.obtenerConfiguracionLealtad();
       return response.data.data;
     },
-    staleTime: 1000 * 60 * 10, // 10 minutos
+    staleTime: STALE_TIMES.STATIC_DATA, // 10 minutos
   });
 }
 
@@ -48,8 +49,8 @@ export function useGuardarConfiguracionLealtad() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['lealtad-configuracion']);
-      queryClient.invalidateQueries(['lealtad-niveles']);
+      queryClient.invalidateQueries({ queryKey: ['lealtad-configuracion'] });
+      queryClient.invalidateQueries({ queryKey: ['lealtad-niveles'] });
     },
   });
 }
@@ -72,7 +73,7 @@ export function useNivelesLealtad(options = {}) {
       });
       return response.data.data;
     },
-    staleTime: 1000 * 60 * 5, // 5 minutos
+    staleTime: STALE_TIMES.SEMI_STATIC, // 5 minutos
   });
 }
 
@@ -89,7 +90,7 @@ export function useCrearNivelLealtad() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['lealtad-niveles']);
+      queryClient.invalidateQueries({ queryKey: ['lealtad-niveles'] });
     },
   });
 }
@@ -107,7 +108,7 @@ export function useActualizarNivelLealtad() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['lealtad-niveles']);
+      queryClient.invalidateQueries({ queryKey: ['lealtad-niveles'] });
     },
   });
 }
@@ -125,7 +126,7 @@ export function useEliminarNivelLealtad() {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['lealtad-niveles']);
+      queryClient.invalidateQueries({ queryKey: ['lealtad-niveles'] });
     },
   });
 }
@@ -143,7 +144,7 @@ export function useCrearNivelesDefault() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['lealtad-niveles']);
+      queryClient.invalidateQueries({ queryKey: ['lealtad-niveles'] });
     },
   });
 }
@@ -165,7 +166,7 @@ export function usePuntosCliente(clienteId) {
       return response.data.data;
     },
     enabled: !!clienteId,
-    staleTime: 1000 * 30, // 30 segundos
+    staleTime: STALE_TIMES.REAL_TIME, // 30 segundos
   });
 }
 
@@ -224,10 +225,10 @@ export function useCanjearPuntos() {
       return response.data.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries(['lealtad-puntos', variables.clienteId]);
-      queryClient.invalidateQueries(['lealtad-historial', variables.clienteId]);
+      queryClient.invalidateQueries({ queryKey: ['lealtad-puntos', variables.clienteId] });
+      queryClient.invalidateQueries({ queryKey: ['lealtad-historial', variables.clienteId] });
       if (variables.ventaId) {
-        queryClient.invalidateQueries(['venta', variables.ventaId]);
+        queryClient.invalidateQueries({ queryKey: ['venta', variables.ventaId] });
       }
     },
   });
@@ -251,8 +252,8 @@ export function useAcumularPuntos() {
       return response.data.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries(['lealtad-puntos', variables.clienteId]);
-      queryClient.invalidateQueries(['lealtad-historial', variables.clienteId]);
+      queryClient.invalidateQueries({ queryKey: ['lealtad-puntos', variables.clienteId] });
+      queryClient.invalidateQueries({ queryKey: ['lealtad-historial', variables.clienteId] });
     },
   });
 }
@@ -274,9 +275,9 @@ export function useAjustarPuntos() {
       return response.data.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries(['lealtad-puntos', variables.clienteId]);
-      queryClient.invalidateQueries(['lealtad-historial', variables.clienteId]);
-      queryClient.invalidateQueries(['lealtad-clientes']);
+      queryClient.invalidateQueries({ queryKey: ['lealtad-puntos', variables.clienteId] });
+      queryClient.invalidateQueries({ queryKey: ['lealtad-historial', variables.clienteId] });
+      queryClient.invalidateQueries({ queryKey: ['lealtad-clientes'] });
     },
   });
 }
@@ -317,7 +318,7 @@ export function useHistorialPuntos(clienteId, params = {}) {
       };
     },
     enabled: !!clienteId,
-    staleTime: 1000 * 30, // 30 segundos
+    staleTime: STALE_TIMES.REAL_TIME, // 30 segundos
   });
 }
 
@@ -351,7 +352,7 @@ export function useClientesConPuntos(params = {}) {
         paginacion: response.data.pagination,
       };
     },
-    staleTime: 1000 * 60, // 1 minuto
+    staleTime: STALE_TIMES.FREQUENT, // 1 minuto
     keepPreviousData: true,
   });
 }
@@ -368,7 +369,7 @@ export function useEstadisticasLealtad(sucursalId) {
       const response = await posApi.obtenerEstadisticasLealtad(sucursalId);
       return response.data.data;
     },
-    staleTime: 1000 * 60 * 5, // 5 minutos
+    staleTime: STALE_TIMES.SEMI_STATIC, // 5 minutos
     enabled: !!sucursalId,
   });
 }
@@ -459,7 +460,7 @@ export function useLealtadPOS(clienteId, totalCarrito = 0, tieneCupon = false) {
   // Refrescar datos del cliente
   const refrescarPuntos = () => {
     if (clienteId) {
-      queryClient.invalidateQueries(['lealtad-puntos', clienteId]);
+      queryClient.invalidateQueries({ queryKey: ['lealtad-puntos', clienteId] });
     }
   };
 

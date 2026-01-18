@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { FileBarChart, TrendingUp, TrendingDown, ArrowLeftRight, FileSpreadsheet } from 'lucide-react';
-import { useModalManager } from '@/hooks/utils';
+import { useModalManager, useToast, useExportCSV, usePagination } from '@/hooks/utils';
 import {
   Badge,
   Button,
@@ -10,8 +10,6 @@ import {
   FilterPanel,
   Pagination
 } from '@/components/ui';
-import { useToast } from '@/hooks/utils';
-import { useExportCSV } from '@/hooks/utils';
 import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
 import { useMovimientos } from '@/hooks/inventario';
 import { useProductos } from '@/hooks/inventario';
@@ -29,7 +27,7 @@ function MovimientosPage() {
   const { showToast } = useToast();
   const { exportCSV } = useExportCSV();
 
-  // Estado de filtros y paginación
+  // Estado de filtros
   const [filtros, setFiltros] = useState({
     tipo_movimiento: '',
     categoria: '',
@@ -38,7 +36,9 @@ function MovimientosPage() {
     fecha_desde: '',
     fecha_hasta: '',
   });
-  const [page, setPage] = useState(1);
+
+  // Paginación
+  const { page, handlePageChange, resetPage } = usePagination({ limit: ITEMS_PER_PAGE });
 
   // Estado de modales unificado
   const { openModal, closeModal, isOpen, getModalData } = useModalManager({
@@ -126,7 +126,7 @@ function MovimientosPage() {
   // Handlers de filtros
   const handleFiltroChange = (campo, valor) => {
     setFiltros((prev) => ({ ...prev, [campo]: valor }));
-    setPage(1); // Reset página al cambiar filtros
+    resetPage(); // Reset página al cambiar filtros
   };
 
   const handleLimpiarFiltros = () => {
@@ -138,11 +138,7 @@ function MovimientosPage() {
       fecha_desde: '',
       fecha_hasta: '',
     });
-    setPage(1);
-  };
-
-  const handlePageChange = (newPage) => {
-    setPage(newPage);
+    resetPage();
   };
 
   // Handlers de acciones
@@ -234,7 +230,7 @@ function MovimientosPage() {
 
         {/* Tabla de Movimientos */}
         <DataTable
-          columns={[
+          columns={useMemo(() => [
             {
               key: 'fecha',
               header: 'Fecha',
@@ -358,7 +354,7 @@ function MovimientosPage() {
                 </DataTableActions>
               ),
             },
-          ]}
+          ], [])}
           data={movimientos}
           isLoading={cargandoMovimientos}
           emptyState={{

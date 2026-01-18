@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { STALE_TIMES } from '@/app/queryClient';
 import { citasApi, inventarioApi, posApi, workflowsApi } from '@/services/api/endpoints';
 import { useModulos } from './useModulos';
 
@@ -22,7 +23,7 @@ export function useAppNotifications() {
       return response.data.data || [];
     },
     enabled: tieneAgendamiento,
-    staleTime: 2 * 60 * 1000, // 2 minutos
+    staleTime: STALE_TIMES.DYNAMIC, // 2 minutos
     refetchInterval: 5 * 60 * 1000, // Refetch cada 5 minutos
   });
 
@@ -34,7 +35,7 @@ export function useAppNotifications() {
       return response.data.data?.alertas || [];
     },
     enabled: tieneInventario,
-    staleTime: 5 * 60 * 1000, // 5 minutos
+    staleTime: STALE_TIMES.SEMI_STATIC, // 5 minutos
     refetchInterval: 10 * 60 * 1000, // Refetch cada 10 minutos
   });
 
@@ -50,7 +51,7 @@ export function useAppNotifications() {
       return response.data.data?.ventas || [];
     },
     enabled: tienePOS,
-    staleTime: 2 * 60 * 1000,
+    staleTime: STALE_TIMES.DYNAMIC,
     refetchInterval: 5 * 60 * 1000,
   });
 
@@ -61,7 +62,7 @@ export function useAppNotifications() {
       const response = await workflowsApi.contarPendientes();
       return response.data.data?.total || 0;
     },
-    staleTime: 30 * 1000, // 30 segundos
+    staleTime: STALE_TIMES.REAL_TIME, // 30 segundos
     refetchInterval: 60 * 1000, // Refetch cada minuto
   });
 

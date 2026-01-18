@@ -146,8 +146,8 @@ export default function VentaPOSPage() {
         if (esCombo || tieneModificadores) {
           openModal('modificadores', { producto: { ...producto, id: producto.producto_id, precio: producto.precio_venta } });
         }
-      } catch (error) {
-        console.log('[POS] Error verificando combo/modificadores');
+      } catch {
+        // Silently ignore - producto doesn't have combo/modificadores
       }
     }
   };

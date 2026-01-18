@@ -10,6 +10,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { STALE_TIMES } from '@/app/queryClient';
 import { oportunidadesApi } from '@/services/api/endpoints';
 
 // ====================================================================
@@ -52,7 +53,7 @@ export function useEtapasPipeline(incluirInactivas = false) {
       const response = await oportunidadesApi.listarEtapas({ incluirInactivas });
       return response.data.data;
     },
-    staleTime: 1000 * 60 * 5, // 5 minutos
+    staleTime: STALE_TIMES.SEMI_STATIC, // 5 minutos
   });
 }
 
@@ -73,7 +74,7 @@ export function useOportunidades(params = {}) {
         paginacion: response.data.pagination,
       };
     },
-    staleTime: 1000 * 60 * 2, // 2 minutos
+    staleTime: STALE_TIMES.DYNAMIC, // 2 minutos
   });
 }
 
@@ -91,7 +92,7 @@ export function useOportunidadesCliente(clienteId, params = {}) {
       };
     },
     enabled: !!clienteId,
-    staleTime: 1000 * 60 * 2,
+    staleTime: STALE_TIMES.DYNAMIC,
   });
 }
 
@@ -106,7 +107,7 @@ export function useOportunidad(oportunidadId) {
       return response.data.data;
     },
     enabled: !!oportunidadId,
-    staleTime: 1000 * 60 * 2,
+    staleTime: STALE_TIMES.DYNAMIC,
   });
 }
 
@@ -120,7 +121,7 @@ export function usePipeline(vendedorId = null) {
       const response = await oportunidadesApi.obtenerPipeline({ vendedor_id: vendedorId });
       return response.data.data;
     },
-    staleTime: 1000 * 60 * 1, // 1 minuto para refrescar frecuentemente
+    staleTime: STALE_TIMES.FREQUENT, // 1 minuto para refrescar frecuentemente
   });
 }
 
@@ -134,7 +135,7 @@ export function useEstadisticasPipeline(vendedorId = null) {
       const response = await oportunidadesApi.obtenerEstadisticas({ vendedor_id: vendedorId });
       return response.data.data;
     },
-    staleTime: 1000 * 60 * 2,
+    staleTime: STALE_TIMES.DYNAMIC,
   });
 }
 
@@ -151,7 +152,7 @@ export function usePronosticoVentas(fechaInicio, fechaFin) {
       });
       return response.data.data;
     },
-    staleTime: 1000 * 60 * 5,
+    staleTime: STALE_TIMES.SEMI_STATIC,
   });
 }
 
@@ -166,7 +167,7 @@ export function useEstadisticasOportunidadesCliente(clienteId) {
       return response.data.data;
     },
     enabled: !!clienteId,
-    staleTime: 1000 * 60 * 2,
+    staleTime: STALE_TIMES.DYNAMIC,
   });
 }
 
@@ -186,8 +187,8 @@ export function useCrearEtapa() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['etapas-pipeline']);
-      queryClient.invalidateQueries(['pipeline']);
+      queryClient.invalidateQueries({ queryKey: ['etapas-pipeline'] });
+      queryClient.invalidateQueries({ queryKey: ['pipeline'] });
     },
     onError: (error) => {
       const message = error.response?.data?.message || 'Error al crear etapa';
@@ -208,8 +209,8 @@ export function useActualizarEtapa() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['etapas-pipeline']);
-      queryClient.invalidateQueries(['pipeline']);
+      queryClient.invalidateQueries({ queryKey: ['etapas-pipeline'] });
+      queryClient.invalidateQueries({ queryKey: ['pipeline'] });
     },
     onError: (error) => {
       const message = error.response?.data?.message || 'Error al actualizar etapa';
@@ -230,8 +231,8 @@ export function useEliminarEtapa() {
       return etapaId;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['etapas-pipeline']);
-      queryClient.invalidateQueries(['pipeline']);
+      queryClient.invalidateQueries({ queryKey: ['etapas-pipeline'] });
+      queryClient.invalidateQueries({ queryKey: ['pipeline'] });
     },
     onError: (error) => {
       const message = error.response?.data?.message || 'Error al eliminar etapa';
@@ -252,8 +253,8 @@ export function useReordenarEtapas() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['etapas-pipeline']);
-      queryClient.invalidateQueries(['pipeline']);
+      queryClient.invalidateQueries({ queryKey: ['etapas-pipeline'] });
+      queryClient.invalidateQueries({ queryKey: ['pipeline'] });
     },
     onError: (error) => {
       const message = error.response?.data?.message || 'Error al reordenar etapas';
@@ -278,12 +279,12 @@ export function useCrearOportunidad() {
       return response.data.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries(['oportunidades']);
-      queryClient.invalidateQueries(['pipeline']);
-      queryClient.invalidateQueries(['pipeline-estadisticas']);
+      queryClient.invalidateQueries({ queryKey: ['oportunidades'] });
+      queryClient.invalidateQueries({ queryKey: ['pipeline'] });
+      queryClient.invalidateQueries({ queryKey: ['pipeline-estadisticas'] });
       if (data.cliente_id) {
-        queryClient.invalidateQueries(['oportunidades-cliente', data.cliente_id]);
-        queryClient.invalidateQueries(['oportunidades-cliente-estadisticas', data.cliente_id]);
+        queryClient.invalidateQueries({ queryKey: ['oportunidades-cliente', data.cliente_id] });
+        queryClient.invalidateQueries({ queryKey: ['oportunidades-cliente-estadisticas', data.cliente_id] });
       }
     },
     onError: (error) => {
@@ -305,10 +306,10 @@ export function useActualizarOportunidad() {
       return response.data.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries(['oportunidad', variables.oportunidadId]);
-      queryClient.invalidateQueries(['oportunidades']);
-      queryClient.invalidateQueries(['pipeline']);
-      queryClient.invalidateQueries(['pipeline-estadisticas']);
+      queryClient.invalidateQueries({ queryKey: ['oportunidad', variables.oportunidadId] });
+      queryClient.invalidateQueries({ queryKey: ['oportunidades'] });
+      queryClient.invalidateQueries({ queryKey: ['pipeline'] });
+      queryClient.invalidateQueries({ queryKey: ['pipeline-estadisticas'] });
     },
     onError: (error) => {
       const message = error.response?.data?.message || 'Error al actualizar oportunidad';
@@ -329,9 +330,9 @@ export function useEliminarOportunidad() {
       return oportunidadId;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['oportunidades']);
-      queryClient.invalidateQueries(['pipeline']);
-      queryClient.invalidateQueries(['pipeline-estadisticas']);
+      queryClient.invalidateQueries({ queryKey: ['oportunidades'] });
+      queryClient.invalidateQueries({ queryKey: ['pipeline'] });
+      queryClient.invalidateQueries({ queryKey: ['pipeline-estadisticas'] });
     },
     onError: (error) => {
       const message = error.response?.data?.message || 'Error al eliminar oportunidad';
@@ -353,22 +354,22 @@ export function useMoverOportunidad() {
     },
     onMutate: async ({ oportunidadId, etapaId }) => {
       // Optimistic update para drag & drop fluido
-      await queryClient.cancelQueries(['pipeline']);
-      const previousPipeline = queryClient.getQueryData(['pipeline']);
+      await queryClient.cancelQueries({ queryKey: ['pipeline'] });
+      const previousPipeline = queryClient.getQueryData({ queryKey: ['pipeline'] });
       return { previousPipeline };
     },
     onError: (error, variables, context) => {
       // Rollback en caso de error
       if (context?.previousPipeline) {
-        queryClient.setQueryData(['pipeline'], context.previousPipeline);
+        queryClient.setQueryData({ queryKey: ['pipeline'] }, context.previousPipeline);
       }
       const message = error.response?.data?.message || 'Error al mover oportunidad';
       throw new Error(message);
     },
     onSettled: () => {
-      queryClient.invalidateQueries(['pipeline']);
-      queryClient.invalidateQueries(['pipeline-estadisticas']);
-      queryClient.invalidateQueries(['oportunidades']);
+      queryClient.invalidateQueries({ queryKey: ['pipeline'] });
+      queryClient.invalidateQueries({ queryKey: ['pipeline-estadisticas'] });
+      queryClient.invalidateQueries({ queryKey: ['oportunidades'] });
     },
   });
 }
@@ -385,11 +386,11 @@ export function useMarcarGanada() {
       return response.data.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries(['oportunidad', data.id]);
-      queryClient.invalidateQueries(['oportunidades']);
-      queryClient.invalidateQueries(['pipeline']);
-      queryClient.invalidateQueries(['pipeline-estadisticas']);
-      queryClient.invalidateQueries(['pronostico-ventas']);
+      queryClient.invalidateQueries({ queryKey: ['oportunidad', data.id] });
+      queryClient.invalidateQueries({ queryKey: ['oportunidades'] });
+      queryClient.invalidateQueries({ queryKey: ['pipeline'] });
+      queryClient.invalidateQueries({ queryKey: ['pipeline-estadisticas'] });
+      queryClient.invalidateQueries({ queryKey: ['pronostico-ventas'] });
     },
     onError: (error) => {
       const message = error.response?.data?.message || 'Error al marcar como ganada';
@@ -410,11 +411,11 @@ export function useMarcarPerdida() {
       return response.data.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries(['oportunidad', data.id]);
-      queryClient.invalidateQueries(['oportunidades']);
-      queryClient.invalidateQueries(['pipeline']);
-      queryClient.invalidateQueries(['pipeline-estadisticas']);
-      queryClient.invalidateQueries(['pronostico-ventas']);
+      queryClient.invalidateQueries({ queryKey: ['oportunidad', data.id] });
+      queryClient.invalidateQueries({ queryKey: ['oportunidades'] });
+      queryClient.invalidateQueries({ queryKey: ['pipeline'] });
+      queryClient.invalidateQueries({ queryKey: ['pipeline-estadisticas'] });
+      queryClient.invalidateQueries({ queryKey: ['pronostico-ventas'] });
     },
     onError: (error) => {
       const message = error.response?.data?.message || 'Error al marcar como perdida';

@@ -2,37 +2,50 @@ import { forwardRef } from 'react';
 import { cn } from '@/lib/utils';
 
 /**
- * Componente Input reutilizable
- * Compatible con React Hook Form
+ * Componente Input puro - Compatible con React Hook Form
+ *
+ * DEBE usarse con FormGroup para label/error/helper:
+ * <FormGroup label="Nombre" error={errors.nombre?.message}>
+ *   <Input hasError={!!errors.nombre} {...field} />
+ * </FormGroup>
+ *
+ * @param {string} type - Tipo de input (text, email, number, etc.)
+ * @param {string} size - Tamaño del input ('sm', 'md', 'lg')
+ * @param {boolean} hasError - Si tiene error (para styling del borde)
  * @param {string} prefix - Texto o símbolo antes del input (ej: "$")
  * @param {string} suffix - Texto o símbolo después del input (ej: "%")
- * @param {string} inputSize - Tamaño del input ('sm', 'md', 'lg')
+ * @param {string} className - Clases adicionales
  */
+const SIZE_CLASSES = {
+  sm: 'py-2 text-sm',
+  md: 'py-3 text-base',
+  lg: 'py-4 text-lg font-semibold',
+};
+
 const Input = forwardRef(
   (
     {
-      className,
       type = 'text',
-      error,
-      label,
-      helper,
-      required = false,
+      size = 'md',
+      hasError = false,
       prefix,
       suffix,
-      inputSize = 'md',
+      className,
       ...props
     },
     ref
   ) => {
-    const sizeStyles = {
-      sm: 'py-2 text-sm',
-      md: 'py-3 text-base',
-      lg: 'py-4 text-lg font-semibold',
-    };
+    const baseStyles = cn(
+      'w-full border rounded-lg transition-colors',
+      'focus:outline-none focus:ring-2 focus:ring-offset-0',
+      'disabled:opacity-50 disabled:cursor-not-allowed',
+      'bg-white dark:bg-gray-800',
+      'text-gray-900 dark:text-gray-100',
+      'placeholder:text-gray-400 dark:placeholder:text-gray-500',
+      SIZE_CLASSES[size]
+    );
 
-    const baseStyles = `w-full border rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-0 disabled:opacity-50 disabled:cursor-not-allowed bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 ${sizeStyles[inputSize]}`;
-
-    const stateStyles = error
+    const stateStyles = hasError
       ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
       : 'border-gray-300 dark:border-gray-600 focus:border-primary-500 focus:ring-primary-500';
 
@@ -44,15 +57,8 @@ const Input = forwardRef(
           ? 'pl-4 pr-8'
           : 'px-4';
 
-    return (
-      <div className="w-full">
-        {label && (
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            {label}
-            {required && <span className="text-red-500 ml-1">*</span>}
-          </label>
-        )}
-
+    if (prefix || suffix) {
+      return (
         <div className="relative">
           {prefix && (
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -73,15 +79,16 @@ const Input = forwardRef(
             </div>
           )}
         </div>
+      );
+    }
 
-        {helper && !error && (
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{helper}</p>
-        )}
-
-        {error && (
-          <p className="mt-1 text-sm text-red-600">{error}</p>
-        )}
-      </div>
+    return (
+      <input
+        ref={ref}
+        type={type}
+        className={cn(baseStyles, stateStyles, paddingStyles, className)}
+        {...props}
+      />
     );
   }
 );

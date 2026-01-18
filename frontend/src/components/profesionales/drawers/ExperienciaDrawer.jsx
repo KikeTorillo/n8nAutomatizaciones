@@ -11,6 +11,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import {
   Button,
   Drawer,
+  FormGroup,
   Input,
   Textarea
 } from '@/components/ui';
@@ -166,26 +167,25 @@ export default function ExperienciaDrawer({
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         {/* Empresa y Puesto */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Input
-            label="Empresa *"
-            placeholder="Nombre de la empresa"
-            error={errors.empresa?.message}
-            {...register('empresa')}
-          />
-          <Input
-            label="Puesto *"
-            placeholder="Cargo o posicion"
-            error={errors.puesto?.message}
-            {...register('puesto')}
-          />
+          <FormGroup label="Empresa" required error={errors.empresa?.message}>
+            <Input
+              placeholder="Nombre de la empresa"
+              hasError={!!errors.empresa}
+              {...register('empresa')}
+            />
+          </FormGroup>
+          <FormGroup label="Puesto" required error={errors.puesto?.message}>
+            <Input
+              placeholder="Cargo o posicion"
+              hasError={!!errors.puesto}
+              {...register('puesto')}
+            />
+          </FormGroup>
         </div>
 
         {/* Tipo de empleo y ubicacion */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Tipo de Empleo
-            </label>
+          <FormGroup label="Tipo de Empleo">
             <select
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               {...register('tipo_empleo')}
@@ -196,30 +196,33 @@ export default function ExperienciaDrawer({
                 </option>
               ))}
             </select>
-          </div>
-          <Input
-            label="Ubicacion"
-            placeholder="Ciudad, Pais"
-            error={errors.ubicacion?.message}
-            {...register('ubicacion')}
-          />
+          </FormGroup>
+          <FormGroup label="Ubicacion" error={errors.ubicacion?.message}>
+            <Input
+              placeholder="Ciudad, Pais"
+              hasError={!!errors.ubicacion}
+              {...register('ubicacion')}
+            />
+          </FormGroup>
         </div>
 
         {/* Fechas */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Input
-            type="date"
-            label="Fecha de Inicio *"
-            error={errors.fecha_inicio?.message}
-            {...register('fecha_inicio')}
-          />
-          <Input
-            type="date"
-            label="Fecha de Fin"
-            disabled={empleoActual}
-            error={errors.fecha_fin?.message}
-            {...register('fecha_fin')}
-          />
+          <FormGroup label="Fecha de Inicio" required error={errors.fecha_inicio?.message}>
+            <Input
+              type="date"
+              hasError={!!errors.fecha_inicio}
+              {...register('fecha_inicio')}
+            />
+          </FormGroup>
+          <FormGroup label="Fecha de Fin" error={errors.fecha_fin?.message}>
+            <Input
+              type="date"
+              disabled={empleoActual}
+              hasError={!!errors.fecha_fin}
+              {...register('fecha_fin')}
+            />
+          </FormGroup>
         </div>
 
         {/* Checkbox empleo actual */}
@@ -235,21 +238,23 @@ export default function ExperienciaDrawer({
         </label>
 
         {/* Sector/Industria */}
-        <Input
-          label="Sector / Industria"
-          placeholder="Ej: Tecnologia, Salud, Educacion..."
-          error={errors.sector_industria?.message}
-          {...register('sector_industria')}
-        />
+        <FormGroup label="Sector / Industria" error={errors.sector_industria?.message}>
+          <Input
+            placeholder="Ej: Tecnologia, Salud, Educacion..."
+            hasError={!!errors.sector_industria}
+            {...register('sector_industria')}
+          />
+        </FormGroup>
 
         {/* Descripcion */}
-        <Textarea
-          label="Descripcion"
-          placeholder="Describe tus responsabilidades y logros principales..."
-          rows={4}
-          error={errors.descripcion?.message}
-          {...register('descripcion')}
-        />
+        <FormGroup label="Descripcion" error={errors.descripcion?.message}>
+          <Textarea
+            placeholder="Describe tus responsabilidades y logros principales..."
+            rows={4}
+            hasError={!!errors.descripcion}
+            {...register('descripcion')}
+          />
+        </FormGroup>
 
         {/* Footer con botones */}
         <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700 mt-6">

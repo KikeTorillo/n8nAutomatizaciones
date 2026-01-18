@@ -11,6 +11,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import {
   Button,
   Drawer,
+  FormGroup,
   Input,
   Select
 } from '@/components/ui';
@@ -151,72 +152,83 @@ export default function CuentaBancariaDrawer({
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         {/* Banco y Numero de cuenta */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Input
-            label="Banco *"
-            placeholder="Ej: BBVA, Santander..."
-            error={errors.banco?.message}
-            {...register('banco')}
-          />
-          <Input
-            label="Numero de Cuenta *"
-            placeholder="Numero de cuenta"
-            error={errors.numero_cuenta?.message}
-            {...register('numero_cuenta')}
-          />
+          <FormGroup label="Banco" required error={errors.banco?.message}>
+            <Input
+              placeholder="Ej: BBVA, Santander..."
+              hasError={!!errors.banco}
+              {...register('banco')}
+            />
+          </FormGroup>
+          <FormGroup label="Numero de Cuenta" required error={errors.numero_cuenta?.message}>
+            <Input
+              placeholder="Numero de cuenta"
+              hasError={!!errors.numero_cuenta}
+              {...register('numero_cuenta')}
+            />
+          </FormGroup>
         </div>
 
         {/* CLABE */}
-        <Input
+        <FormGroup
           label="CLABE Interbancaria"
-          placeholder="18 digitos"
-          maxLength={18}
-          helperText="Requerida para transferencias SPEI"
           error={errors.clabe?.message}
-          {...register('clabe', {
-            onChange: (e) => {
-              // Auto-limpiar caracteres no numericos
-              const cleaned = e.target.value.replace(/\D/g, '').slice(0, 18);
-              setValue('clabe', cleaned, { shouldValidate: false });
-            },
-          })}
-        />
+          helper="Requerida para transferencias SPEI"
+        >
+          <Input
+            placeholder="18 digitos"
+            maxLength={18}
+            hasError={!!errors.clabe}
+            {...register('clabe', {
+              onChange: (e) => {
+                // Auto-limpiar caracteres no numericos
+                const cleaned = e.target.value.replace(/\D/g, '').slice(0, 18);
+                setValue('clabe', cleaned, { shouldValidate: false });
+              },
+            })}
+          />
+        </FormGroup>
 
         {/* Tipo, Uso, Moneda */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Select
-            label="Tipo de Cuenta"
-            options={tipoOptions}
-            error={errors.tipo_cuenta?.message}
-            {...register('tipo_cuenta')}
-          />
-          <Select
-            label="Uso"
-            options={usoOptions}
-            error={errors.uso?.message}
-            {...register('uso')}
-          />
-          <Select
-            label="Moneda"
-            options={monedaOptions}
-            error={errors.moneda?.message}
-            {...register('moneda')}
-          />
+          <FormGroup label="Tipo de Cuenta" error={errors.tipo_cuenta?.message}>
+            <Select
+              options={tipoOptions}
+              hasError={!!errors.tipo_cuenta}
+              {...register('tipo_cuenta')}
+            />
+          </FormGroup>
+          <FormGroup label="Uso" error={errors.uso?.message}>
+            <Select
+              options={usoOptions}
+              hasError={!!errors.uso}
+              {...register('uso')}
+            />
+          </FormGroup>
+          <FormGroup label="Moneda" error={errors.moneda?.message}>
+            <Select
+              options={monedaOptions}
+              hasError={!!errors.moneda}
+              {...register('moneda')}
+            />
+          </FormGroup>
         </div>
 
         {/* Titular */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Input
-            label="Nombre del Titular"
-            placeholder="Si difiere del empleado"
-            error={errors.titular_nombre?.message}
-            {...register('titular_nombre')}
-          />
-          <Input
-            label="Documento del Titular"
-            placeholder="INE, CURP..."
-            error={errors.titular_documento?.message}
-            {...register('titular_documento')}
-          />
+          <FormGroup label="Nombre del Titular" error={errors.titular_nombre?.message}>
+            <Input
+              placeholder="Si difiere del empleado"
+              hasError={!!errors.titular_nombre}
+              {...register('titular_nombre')}
+            />
+          </FormGroup>
+          <FormGroup label="Documento del Titular" error={errors.titular_documento?.message}>
+            <Input
+              placeholder="INE, CURP..."
+              hasError={!!errors.titular_documento}
+              {...register('titular_documento')}
+            />
+          </FormGroup>
         </div>
 
         {/* Checkbox cuenta principal */}

@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { storageApi } from '@/services/api/endpoints';
+import { STALE_TIMES } from '@/app/queryClient';
 
 /**
  * Hook para listar archivos con filtros
@@ -19,7 +20,7 @@ export function useArchivos(params = {}) {
       const response = await storageApi.listar(sanitizedParams);
       return response.data.data || [];
     },
-    staleTime: 1000 * 60 * 2, // 2 minutos
+    staleTime: STALE_TIMES.DYNAMIC,
   });
 }
 
@@ -34,7 +35,7 @@ export function useArchivo(id) {
       return response.data.data;
     },
     enabled: !!id,
-    staleTime: 1000 * 60 * 5,
+    staleTime: STALE_TIMES.SEMI_STATIC,
   });
 }
 
@@ -48,7 +49,7 @@ export function useStorageUsage() {
       const response = await storageApi.obtenerUso();
       return response.data.data;
     },
-    staleTime: 1000 * 60 * 2, // 2 minutos
+    staleTime: STALE_TIMES.DYNAMIC,
   });
 }
 
@@ -73,8 +74,8 @@ export function useUploadArchivo() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['archivos']);
-      queryClient.invalidateQueries(['storage-usage']);
+      queryClient.invalidateQueries({ queryKey: ['archivos'] });
+      queryClient.invalidateQueries({ queryKey: ['storage-usage'] });
     },
     onError: (error) => {
       const backendMessage = error.response?.data?.message;
@@ -108,8 +109,8 @@ export function useEliminarArchivo() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['archivos']);
-      queryClient.invalidateQueries(['storage-usage']);
+      queryClient.invalidateQueries({ queryKey: ['archivos'] });
+      queryClient.invalidateQueries({ queryKey: ['storage-usage'] });
     },
     onError: (error) => {
       const backendMessage = error.response?.data?.message;

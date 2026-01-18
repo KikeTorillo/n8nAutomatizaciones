@@ -8,6 +8,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { STALE_TIMES } from '@/app/queryClient';
 import { configuracionAlmacenApi } from '@/services/api/endpoints';
 import useSucursalStore, { selectGetSucursalId } from '@/store/sucursalStore';
 import { useToast } from '@/hooks/utils';
@@ -35,7 +36,7 @@ export function useConfiguracionesAlmacen() {
       const response = await configuracionAlmacenApi.listar();
       return response.data.data || [];
     },
-    staleTime: 1000 * 60 * 5, // 5 minutos
+    staleTime: STALE_TIMES.SEMI_STATIC, // 5 minutos
   });
 }
 
@@ -54,7 +55,7 @@ export function useConfiguracionAlmacen(sucursalId) {
       return response.data.data;
     },
     enabled: !!efectiveSucursalId,
-    staleTime: 1000 * 60 * 5,
+    staleTime: STALE_TIMES.SEMI_STATIC,
   });
 }
 
@@ -75,7 +76,7 @@ export function useMultietapa(sucursalId, tipo) {
       return response.data.data?.usa_multietapa;
     },
     enabled: !!efectiveSucursalId,
-    staleTime: 1000 * 60 * 5,
+    staleTime: STALE_TIMES.SEMI_STATIC,
   });
 }
 
@@ -89,7 +90,7 @@ export function useDescripcionesPasos() {
       const response = await configuracionAlmacenApi.obtenerDescripcionesPasos();
       return response.data.data || { recepcion: {}, envio: {} };
     },
-    staleTime: 1000 * 60 * 60, // 1 hora (no cambia)
+    staleTime: STALE_TIMES.VERY_STATIC, // 1 hora (no cambia)
   });
 }
 
@@ -142,7 +143,7 @@ export function useCrearUbicacionesDefault() {
     },
     onSuccess: (data, sucursalId) => {
       // Invalidar lista de ubicaciones para que aparezcan en selectores
-      queryClient.invalidateQueries(['ubicaciones-almacen']);
+      queryClient.invalidateQueries({ queryKey: ['ubicaciones-almacen'] });
 
       // Actualizar cache de configuración con los nuevos IDs de ubicaciones
       if (data?.ubicaciones) {

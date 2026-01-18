@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { STALE_TIMES } from '@/app/queryClient';
 import { sucursalesApi } from '@/services/api/endpoints';
 
 // ==================== HOOKS CRUD SUCURSALES ====================
@@ -22,7 +23,7 @@ export function useSucursales(params = {}) {
       const response = await sucursalesApi.listar(sanitizedParams);
       return response.data.data || [];
     },
-    staleTime: 1000 * 60 * 5, // 5 minutos
+    staleTime: STALE_TIMES.SEMI_STATIC, // 5 minutos
   });
 }
 
@@ -38,7 +39,7 @@ export function useSucursal(id) {
       return response.data.data;
     },
     enabled: !!id,
-    staleTime: 1000 * 60 * 5,
+    staleTime: STALE_TIMES.SEMI_STATIC,
   });
 }
 
@@ -52,7 +53,7 @@ export function useSucursalMatriz() {
       const response = await sucursalesApi.obtenerMatriz();
       return response.data.data;
     },
-    staleTime: 1000 * 60 * 10, // 10 minutos (cambia poco)
+    staleTime: STALE_TIMES.STATIC_DATA, // 10 minutos (cambia poco)
   });
 }
 
@@ -68,7 +69,7 @@ export function useSucursalesUsuario(usuarioId) {
       return response.data.data || [];
     },
     enabled: !!usuarioId,
-    staleTime: 1000 * 60 * 5,
+    staleTime: STALE_TIMES.SEMI_STATIC,
   });
 }
 
@@ -94,8 +95,8 @@ export function useCrearSucursal() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['sucursales']);
-      queryClient.invalidateQueries(['sucursal-matriz']);
+      queryClient.invalidateQueries({ queryKey: ['sucursales'] });
+      queryClient.invalidateQueries({ queryKey: ['sucursal-matriz'] });
     },
     onError: (error) => {
       const backendMessage = error.response?.data?.message;
@@ -127,8 +128,8 @@ export function useActualizarSucursal() {
       return response.data.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries(['sucursal', data.id]);
-      queryClient.invalidateQueries(['sucursales']);
+      queryClient.invalidateQueries({ queryKey: ['sucursal', data.id] });
+      queryClient.invalidateQueries({ queryKey: ['sucursales'] });
     },
     onError: (error) => {
       const backendMessage = error.response?.data?.message;
@@ -150,7 +151,7 @@ export function useEliminarSucursal() {
       return id;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['sucursales']);
+      queryClient.invalidateQueries({ queryKey: ['sucursales'] });
     },
     onError: (error) => {
       const backendMessage = error.response?.data?.message;
@@ -179,7 +180,7 @@ export function useUsuariosSucursal(sucursalId) {
       return response.data.data || [];
     },
     enabled: !!sucursalId,
-    staleTime: 1000 * 60 * 5,
+    staleTime: STALE_TIMES.SEMI_STATIC,
   });
 }
 
@@ -195,9 +196,9 @@ export function useAsignarUsuarioSucursal() {
       return response.data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries(['sucursal-usuarios', variables.sucursalId]);
-      queryClient.invalidateQueries(['sucursales']);
-      queryClient.invalidateQueries(['sucursales-usuario']);
+      queryClient.invalidateQueries({ queryKey: ['sucursal-usuarios', variables.sucursalId] });
+      queryClient.invalidateQueries({ queryKey: ['sucursales'] });
+      queryClient.invalidateQueries({ queryKey: ['sucursales-usuario'] });
     },
     onError: (error) => {
       const backendMessage = error.response?.data?.message;
@@ -221,7 +222,7 @@ export function useProfesionalesSucursal(sucursalId) {
       return response.data.data || [];
     },
     enabled: !!sucursalId,
-    staleTime: 1000 * 60 * 5,
+    staleTime: STALE_TIMES.SEMI_STATIC,
   });
 }
 
@@ -237,8 +238,8 @@ export function useAsignarProfesionalSucursal() {
       return response.data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries(['sucursal-profesionales', variables.sucursalId]);
-      queryClient.invalidateQueries(['sucursales']);
+      queryClient.invalidateQueries({ queryKey: ['sucursal-profesionales', variables.sucursalId] });
+      queryClient.invalidateQueries({ queryKey: ['sucursales'] });
     },
     onError: (error) => {
       const backendMessage = error.response?.data?.message;
@@ -270,7 +271,7 @@ export function useMetricasSucursales(params = {}) {
       const response = await sucursalesApi.obtenerMetricas(sanitizedParams);
       return response.data.data;
     },
-    staleTime: 1000 * 60 * 2, // 2 minutos - datos de dashboard
+    staleTime: STALE_TIMES.DYNAMIC, // 2 minutos - datos de dashboard
     refetchInterval: 1000 * 60 * 5, // Refetch cada 5 minutos
   });
 }
@@ -295,7 +296,7 @@ export function useTransferencias(params = {}) {
       const response = await sucursalesApi.listarTransferencias(sanitizedParams);
       return response.data.data || [];
     },
-    staleTime: 1000 * 60 * 2, // 2 minutos (datos más dinámicos)
+    staleTime: STALE_TIMES.DYNAMIC, // 2 minutos (datos más dinámicos)
   });
 }
 
@@ -311,7 +312,7 @@ export function useTransferencia(id) {
       return response.data.data;
     },
     enabled: !!id,
-    staleTime: 1000 * 60 * 2,
+    staleTime: STALE_TIMES.DYNAMIC,
   });
 }
 
@@ -331,7 +332,7 @@ export function useCrearTransferencia() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['transferencias']);
+      queryClient.invalidateQueries({ queryKey: ['transferencias'] });
     },
     onError: (error) => {
       const backendMessage = error.response?.data?.message;
@@ -353,8 +354,8 @@ export function useEnviarTransferencia() {
       return response.data.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries(['transferencia', data.id]);
-      queryClient.invalidateQueries(['transferencias']);
+      queryClient.invalidateQueries({ queryKey: ['transferencia', data.id] });
+      queryClient.invalidateQueries({ queryKey: ['transferencias'] });
     },
     onError: (error) => {
       const backendMessage = error.response?.data?.message;
@@ -376,8 +377,8 @@ export function useRecibirTransferencia() {
       return response.data.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries(['transferencia', data.id]);
-      queryClient.invalidateQueries(['transferencias']);
+      queryClient.invalidateQueries({ queryKey: ['transferencia', data.id] });
+      queryClient.invalidateQueries({ queryKey: ['transferencias'] });
     },
     onError: (error) => {
       const backendMessage = error.response?.data?.message;
@@ -399,8 +400,8 @@ export function useCancelarTransferencia() {
       return response.data.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries(['transferencia', data.id]);
-      queryClient.invalidateQueries(['transferencias']);
+      queryClient.invalidateQueries({ queryKey: ['transferencia', data.id] });
+      queryClient.invalidateQueries({ queryKey: ['transferencias'] });
     },
     onError: (error) => {
       const backendMessage = error.response?.data?.message;

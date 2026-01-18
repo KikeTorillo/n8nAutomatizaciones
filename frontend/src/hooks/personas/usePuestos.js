@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { STALE_TIMES } from '@/app/queryClient';
 import { puestosApi } from '@/services/api/endpoints';
 
 // ==================== HOOKS CRUD PUESTOS ====================
@@ -23,7 +24,7 @@ export function usePuestos(params = {}) {
       // La API retorna { data: [...], meta: {...} } sin wrapper 'puestos'
       return response.data.data || [];
     },
-    staleTime: 1000 * 60 * 5, // 5 minutos
+    staleTime: STALE_TIMES.SEMI_STATIC, // 5 minutos
   });
 }
 
@@ -39,7 +40,7 @@ export function usePuesto(id) {
       return response.data.data;
     },
     enabled: !!id,
-    staleTime: 1000 * 60 * 5,
+    staleTime: STALE_TIMES.SEMI_STATIC,
   });
 }
 
@@ -64,7 +65,7 @@ export function useCrearPuesto() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['puestos']);
+      queryClient.invalidateQueries({ queryKey: ['puestos'] });
     },
     onError: (error) => {
       const backendMessage = error.response?.data?.message;
@@ -103,8 +104,8 @@ export function useActualizarPuesto() {
       return response.data.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries(['puesto', data.id]);
-      queryClient.invalidateQueries(['puestos']);
+      queryClient.invalidateQueries({ queryKey: ['puesto', data.id] });
+      queryClient.invalidateQueries({ queryKey: ['puestos'] });
     },
     onError: (error) => {
       const backendMessage = error.response?.data?.message;
@@ -126,7 +127,7 @@ export function useEliminarPuesto() {
       return id;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['puestos']);
+      queryClient.invalidateQueries({ queryKey: ['puestos'] });
     },
     onError: (error) => {
       const backendMessage = error.response?.data?.message;

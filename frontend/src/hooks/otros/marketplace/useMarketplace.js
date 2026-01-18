@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { STALE_TIMES } from '@/app/queryClient';
 import { marketplaceApi } from '@/services/api/endpoints';
 import { sanitizeParams } from '@/lib/params';
 
@@ -24,7 +25,7 @@ export function useCategoriasMarketplace() {
       const response = await marketplaceApi.getCategorias();
       return response.data.data || [];
     },
-    staleTime: 1000 * 60 * 30, // 30 minutos (categorías cambian poco)
+    staleTime: STALE_TIMES.LONG, // 30 minutos (categorías cambian poco)
   });
 }
 
@@ -63,7 +64,7 @@ export function usePerfilesMarketplace(params = {}) {
         paginacion: response.data.data.paginacion || null,
       };
     },
-    staleTime: 1000 * 60 * 2, // 2 minutos (contenido público cambia poco)
+    staleTime: STALE_TIMES.DYNAMIC, // 2 minutos (contenido público cambia poco)
     keepPreviousData: true, // Evita flash durante paginación
   });
 }
@@ -93,7 +94,7 @@ export function usePerfilPublico(slug) {
       };
     },
     enabled: !!slug,
-    staleTime: 1000 * 60 * 5, // 5 minutos
+    staleTime: STALE_TIMES.SEMI_STATIC, // 5 minutos
   });
 }
 
@@ -111,7 +112,7 @@ export function useMiPerfilMarketplace() {
       const response = await marketplaceApi.getMiPerfil();
       return response.data.data;
     },
-    staleTime: 1000 * 60 * 5, // 5 minutos
+    staleTime: STALE_TIMES.SEMI_STATIC, // 5 minutos
   });
 }
 
@@ -135,7 +136,7 @@ export function useEstadisticasPerfil(id, params = {}) {
       return response.data.data;
     },
     enabled: !!id,
-    staleTime: 1000 * 60, // 1 minuto
+    staleTime: STALE_TIMES.FREQUENT, // 1 minuto
   });
 }
 
@@ -163,7 +164,7 @@ export function useReseñasNegocio(slug, params = {}) {
       };
     },
     enabled: !!slug,
-    staleTime: 1000 * 60 * 2, // 2 minutos
+    staleTime: STALE_TIMES.DYNAMIC, // 2 minutos
     keepPreviousData: true,
   });
 }
@@ -194,7 +195,7 @@ export function useServiciosPublicos(organizacionId) {
       return [];
     },
     enabled: !!organizacionId,
-    staleTime: 1000 * 60 * 5, // 5 minutos
+    staleTime: STALE_TIMES.SEMI_STATIC, // 5 minutos
   });
 }
 
@@ -259,7 +260,7 @@ export function useDisponibilidadPublica(organizacionId, params = {}) {
       (Array.isArray(params.servicios_ids) && params.servicios_ids.length > 0) ||
       !!params.servicio_id
     ),
-    staleTime: 1000 * 30, // 30 segundos (disponibilidad cambia rápido)
+    staleTime: STALE_TIMES.REAL_TIME, // 30 segundos (disponibilidad cambia rápido)
     retry: 1, // Solo un reintento en caso de error
   });
 }

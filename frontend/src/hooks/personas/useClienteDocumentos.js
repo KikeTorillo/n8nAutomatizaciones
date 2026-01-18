@@ -10,6 +10,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { STALE_TIMES } from '@/app/queryClient';
 import { clientesApi } from '@/services/api/endpoints';
 
 // ====================================================================
@@ -57,7 +58,7 @@ export function useDocumentosCliente(clienteId, params = {}) {
       return response.data.data;
     },
     enabled: !!clienteId,
-    staleTime: 1000 * 60 * 2, // 2 minutos
+    staleTime: STALE_TIMES.DYNAMIC, // 2 minutos
   });
 }
 
@@ -72,7 +73,7 @@ export function useDocumento(clienteId, documentoId) {
       return response.data.data;
     },
     enabled: !!clienteId && !!documentoId,
-    staleTime: 1000 * 60 * 2,
+    staleTime: STALE_TIMES.DYNAMIC,
   });
 }
 
@@ -87,7 +88,7 @@ export function useConteoDocumentos(clienteId) {
       return response.data.data;
     },
     enabled: !!clienteId,
-    staleTime: 1000 * 60 * 2,
+    staleTime: STALE_TIMES.DYNAMIC,
   });
 }
 
@@ -101,7 +102,7 @@ export function useTiposDocumento() {
       const response = await clientesApi.obtenerTiposDocumento();
       return response.data.data;
     },
-    staleTime: 1000 * 60 * 30, // 30 minutos (datos estáticos)
+    staleTime: STALE_TIMES.LONG, // 30 minutos (datos estáticos)
   });
 }
 
@@ -115,7 +116,7 @@ export function useDocumentosPorVencer(dias = 30) {
       const response = await clientesApi.listarDocumentosPorVencer({ dias });
       return response.data.data;
     },
-    staleTime: 1000 * 60 * 5, // 5 minutos
+    staleTime: STALE_TIMES.SEMI_STATIC, // 5 minutos
   });
 }
 
@@ -149,8 +150,8 @@ export function useCrearDocumento() {
       return response.data.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries(['cliente-documentos', variables.clienteId]);
-      queryClient.invalidateQueries(['cliente-documentos-conteo', variables.clienteId]);
+      queryClient.invalidateQueries({ queryKey: ['cliente-documentos', variables.clienteId] });
+      queryClient.invalidateQueries({ queryKey: ['cliente-documentos-conteo', variables.clienteId] });
     },
     onError: (error) => {
       const backendMessage = error.response?.data?.message;
@@ -175,8 +176,8 @@ export function useActualizarDocumento() {
       return response.data.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries(['cliente-documento', variables.clienteId, variables.documentoId]);
-      queryClient.invalidateQueries(['cliente-documentos', variables.clienteId]);
+      queryClient.invalidateQueries({ queryKey: ['cliente-documento', variables.clienteId, variables.documentoId] });
+      queryClient.invalidateQueries({ queryKey: ['cliente-documentos', variables.clienteId] });
     },
     onError: (error) => {
       const backendMessage = error.response?.data?.message;
@@ -201,8 +202,8 @@ export function useEliminarDocumento() {
       return { clienteId, documentoId };
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries(['cliente-documentos', variables.clienteId]);
-      queryClient.invalidateQueries(['cliente-documentos-conteo', variables.clienteId]);
+      queryClient.invalidateQueries({ queryKey: ['cliente-documentos', variables.clienteId] });
+      queryClient.invalidateQueries({ queryKey: ['cliente-documentos-conteo', variables.clienteId] });
     },
     onError: (error) => {
       const backendMessage = error.response?.data?.message;
@@ -227,9 +228,9 @@ export function useVerificarDocumento() {
       return response.data.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries(['cliente-documento', variables.clienteId, variables.documentoId]);
-      queryClient.invalidateQueries(['cliente-documentos', variables.clienteId]);
-      queryClient.invalidateQueries(['cliente-documentos-conteo', variables.clienteId]);
+      queryClient.invalidateQueries({ queryKey: ['cliente-documento', variables.clienteId, variables.documentoId] });
+      queryClient.invalidateQueries({ queryKey: ['cliente-documentos', variables.clienteId] });
+      queryClient.invalidateQueries({ queryKey: ['cliente-documentos-conteo', variables.clienteId] });
     },
     onError: (error) => {
       const backendMessage = error.response?.data?.message;
@@ -257,8 +258,8 @@ export function useSubirArchivoDocumento() {
       return response.data.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries(['cliente-documento', variables.clienteId, variables.documentoId]);
-      queryClient.invalidateQueries(['cliente-documentos', variables.clienteId]);
+      queryClient.invalidateQueries({ queryKey: ['cliente-documento', variables.clienteId, variables.documentoId] });
+      queryClient.invalidateQueries({ queryKey: ['cliente-documentos', variables.clienteId] });
     },
     onError: (error) => {
       const backendMessage = error.response?.data?.message;

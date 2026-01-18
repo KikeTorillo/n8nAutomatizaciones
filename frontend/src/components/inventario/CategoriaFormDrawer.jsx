@@ -7,11 +7,12 @@ import {
   Button,
   Checkbox,
   Drawer,
+  FormGroup,
   IconPicker,
+  Input,
   Select,
   Textarea
 } from '@/components/ui';
-import FieldWrapper from '@/components/forms/FieldWrapper';
 import { useCrearCategoria, useActualizarCategoria, useCategorias } from '@/hooks/inventario';
 import { useToast } from '@/hooks/utils';
 
@@ -167,65 +168,63 @@ function CategoriaFormDrawer({ isOpen, onClose, categoria = null, mode = 'create
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Nombre */}
-        <FieldWrapper label="Nombre" error={errors.nombre?.message} required>
-          <input
-            type="text"
+        <FormGroup label="Nombre" error={errors.nombre?.message} required>
+          <Input
             {...register('nombre')}
-            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+            hasError={!!errors.nombre}
             placeholder="Ej: Cuidado Capilar, Productos de Limpieza"
           />
-        </FieldWrapper>
+        </FormGroup>
 
         {/* Descripción */}
-        <Textarea
-          label="Descripción"
-          {...register('descripcion')}
-          rows={3}
-          placeholder="Descripción opcional de la categoría"
-          error={errors.descripcion?.message}
-        />
+        <FormGroup label="Descripción" error={errors.descripcion?.message}>
+          <Textarea
+            {...register('descripcion')}
+            rows={3}
+            hasError={!!errors.descripcion}
+            placeholder="Descripción opcional de la categoría"
+          />
+        </FormGroup>
 
         {/* Categoría Padre */}
-        <Select
+        <FormGroup
           label="Categoría Padre"
-          {...register('categoria_padre_id')}
-          placeholder="Sin categoría padre (categoría raíz)"
-          options={categoriasDisponibles.map((cat) => ({
-            value: cat.id.toString(),
-            label: cat.nombre,
-          }))}
-          helper="Opcional - Permite crear subcategorías"
           error={errors.categoria_padre_id?.message}
-        />
+          helper="Opcional - Permite crear subcategorías"
+        >
+          <Select
+            {...register('categoria_padre_id')}
+            hasError={!!errors.categoria_padre_id}
+            placeholder="Sin categoría padre (categoría raíz)"
+            options={categoriasDisponibles.map((cat) => ({
+              value: cat.id.toString(),
+              label: cat.nombre,
+            }))}
+          />
+        </FormGroup>
 
         {/* Icono */}
-        <FieldWrapper
-          label="Icono"
-          error={errors.icono?.message}
-        >
+        <FormGroup label="Icono" error={errors.icono?.message}>
           <IconPicker
             value={iconoSeleccionado}
             onChange={(icono) => setValue('icono', icono)}
-            error={errors.icono?.message}
+            hasError={!!errors.icono}
           />
-        </FieldWrapper>
+        </FormGroup>
 
         {/* Orden */}
-        <FieldWrapper
-          label="Orden de visualización"
-          error={errors.orden?.message}
-        >
-          <input
+        <FormGroup label="Orden de visualización" error={errors.orden?.message}>
+          <Input
             type="number"
             min="0"
             {...register('orden')}
-            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+            hasError={!!errors.orden}
             placeholder="0"
           />
-        </FieldWrapper>
+        </FormGroup>
 
         {/* Color */}
-        <FieldWrapper label="Color" error={errors.color?.message}>
+        <FormGroup label="Color" error={errors.color?.message}>
           <div className="space-y-3">
             {/* Colores Predefinidos */}
             <div className="flex items-center space-x-2">
@@ -264,7 +263,7 @@ function CategoriaFormDrawer({ isOpen, onClose, categoria = null, mode = 'create
               />
             </div>
           </div>
-        </FieldWrapper>
+        </FormGroup>
 
         {/* Activo */}
         <Checkbox

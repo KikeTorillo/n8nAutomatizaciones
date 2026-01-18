@@ -13,7 +13,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Shield, Loader2, Mail, Info } from 'lucide-react';
-import { Button, Drawer, Select } from '@/components/ui';
+import { Button, Drawer, FormGroup, Select } from '@/components/ui';
 import FormField from '@/components/forms/FormField';
 import {
   useCrearUsuarioDirecto,
@@ -185,10 +185,11 @@ function UsuarioFormDrawer({ isOpen, onClose, mode = 'create', usuario = null })
 
         {/* Rol (solo en creación) */}
         {!isEditMode && (
-          <div className="space-y-1">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-              Rol <span className="text-red-500">*</span>
-            </label>
+          <FormGroup
+            label="Rol"
+            required
+            helper={ROLES_USUARIO[rolActual]?.description}
+          >
             <Controller
               name="rol"
               control={control}
@@ -197,16 +198,11 @@ function UsuarioFormDrawer({ isOpen, onClose, mode = 'create', usuario = null })
                   {...field}
                   options={opcionesRol}
                   leftIcon={<Shield className="w-4 h-4" />}
-                  error={errors.rol?.message}
+                  hasError={!!errors.rol}
                 />
               )}
             />
-            {ROLES_USUARIO[rolActual]?.description && (
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                {ROLES_USUARIO[rolActual].description}
-              </p>
-            )}
-          </div>
+          </FormGroup>
         )}
 
         {/* Botones de acción */}

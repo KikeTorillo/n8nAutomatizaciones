@@ -20,8 +20,7 @@ import {
   LoadingSpinner
 } from '@/components/ui';
 import { useEventos, useEliminarEvento, usePublicarEvento } from '@/hooks/otros';
-import { useToast } from '@/hooks/utils';
-import { useModalManager } from '@/hooks/utils';
+import { useToast, useModalManager, usePagination } from '@/hooks/utils';
 
 /**
  * Página principal de gestión de eventos digitales
@@ -30,8 +29,10 @@ import { useModalManager } from '@/hooks/utils';
 function EventosPage() {
   const navigate = useNavigate();
   const toast = useToast();
-  const [page, setPage] = useState(1);
   const [busqueda, setBusqueda] = useState('');
+
+  // Paginación
+  const { page, handlePageChange } = usePagination({ limit: 12 });
   const [estadoFiltro, setEstadoFiltro] = useState('');
   const [tipoFiltro, setTipoFiltro] = useState('');
 
@@ -279,7 +280,7 @@ function EventosPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setPage(page - 1)}
+                  onClick={() => handlePageChange(page - 1)}
                   disabled={page === 1}
                 >
                   Anterior
@@ -290,7 +291,7 @@ function EventosPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setPage(page + 1)}
+                  onClick={() => handlePageChange(page + 1)}
                   disabled={page >= data.paginacion.total_paginas}
                 >
                   Siguiente

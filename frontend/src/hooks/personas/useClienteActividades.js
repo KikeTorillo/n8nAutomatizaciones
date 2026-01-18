@@ -10,6 +10,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { STALE_TIMES } from '@/app/queryClient';
 import { clientesApi } from '@/services/api/endpoints';
 
 // ====================================================================
@@ -61,7 +62,7 @@ export function useActividadesCliente(clienteId, params = {}) {
       };
     },
     enabled: !!clienteId,
-    staleTime: 1000 * 60 * 2, // 2 minutos
+    staleTime: STALE_TIMES.DYNAMIC, // 2 minutos
   });
 }
 
@@ -76,7 +77,7 @@ export function useTimelineCliente(clienteId, params = {}) {
       return response.data.data;
     },
     enabled: !!clienteId,
-    staleTime: 1000 * 60 * 1, // 1 minuto
+    staleTime: STALE_TIMES.FREQUENT, // 1 minuto
   });
 }
 
@@ -91,7 +92,7 @@ export function useActividad(clienteId, actividadId) {
       return response.data.data;
     },
     enabled: !!clienteId && !!actividadId,
-    staleTime: 1000 * 60 * 2,
+    staleTime: STALE_TIMES.DYNAMIC,
   });
 }
 
@@ -106,7 +107,7 @@ export function useConteoActividades(clienteId) {
       return response.data.data;
     },
     enabled: !!clienteId,
-    staleTime: 1000 * 60 * 2,
+    staleTime: STALE_TIMES.DYNAMIC,
   });
 }
 
@@ -127,9 +128,9 @@ export function useCrearActividad() {
     },
     onSuccess: (data, variables) => {
       // Invalidar lista de actividades y timeline
-      queryClient.invalidateQueries(['cliente-actividades', variables.clienteId]);
-      queryClient.invalidateQueries(['cliente-timeline', variables.clienteId]);
-      queryClient.invalidateQueries(['cliente-actividades-conteo', variables.clienteId]);
+      queryClient.invalidateQueries({ queryKey: ['cliente-actividades', variables.clienteId] });
+      queryClient.invalidateQueries({ queryKey: ['cliente-timeline', variables.clienteId] });
+      queryClient.invalidateQueries({ queryKey: ['cliente-actividades-conteo', variables.clienteId] });
     },
     onError: (error) => {
       const backendMessage = error.response?.data?.message;
@@ -164,10 +165,10 @@ export function useActualizarActividad() {
       return response.data.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries(['cliente-actividad', variables.clienteId, variables.actividadId]);
-      queryClient.invalidateQueries(['cliente-actividades', variables.clienteId]);
-      queryClient.invalidateQueries(['cliente-timeline', variables.clienteId]);
-      queryClient.invalidateQueries(['cliente-actividades-conteo', variables.clienteId]);
+      queryClient.invalidateQueries({ queryKey: ['cliente-actividad', variables.clienteId, variables.actividadId] });
+      queryClient.invalidateQueries({ queryKey: ['cliente-actividades', variables.clienteId] });
+      queryClient.invalidateQueries({ queryKey: ['cliente-timeline', variables.clienteId] });
+      queryClient.invalidateQueries({ queryKey: ['cliente-actividades-conteo', variables.clienteId] });
     },
     onError: (error) => {
       const backendMessage = error.response?.data?.message;
@@ -192,9 +193,9 @@ export function useEliminarActividad() {
       return { clienteId, actividadId };
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries(['cliente-actividades', variables.clienteId]);
-      queryClient.invalidateQueries(['cliente-timeline', variables.clienteId]);
-      queryClient.invalidateQueries(['cliente-actividades-conteo', variables.clienteId]);
+      queryClient.invalidateQueries({ queryKey: ['cliente-actividades', variables.clienteId] });
+      queryClient.invalidateQueries({ queryKey: ['cliente-timeline', variables.clienteId] });
+      queryClient.invalidateQueries({ queryKey: ['cliente-actividades-conteo', variables.clienteId] });
     },
     onError: (error) => {
       const backendMessage = error.response?.data?.message;
@@ -219,10 +220,10 @@ export function useCompletarTarea() {
       return response.data.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries(['cliente-actividad', variables.clienteId, variables.actividadId]);
-      queryClient.invalidateQueries(['cliente-actividades', variables.clienteId]);
-      queryClient.invalidateQueries(['cliente-timeline', variables.clienteId]);
-      queryClient.invalidateQueries(['cliente-actividades-conteo', variables.clienteId]);
+      queryClient.invalidateQueries({ queryKey: ['cliente-actividad', variables.clienteId, variables.actividadId] });
+      queryClient.invalidateQueries({ queryKey: ['cliente-actividades', variables.clienteId] });
+      queryClient.invalidateQueries({ queryKey: ['cliente-timeline', variables.clienteId] });
+      queryClient.invalidateQueries({ queryKey: ['cliente-actividades-conteo', variables.clienteId] });
     },
     onError: (error) => {
       const backendMessage = error.response?.data?.message;

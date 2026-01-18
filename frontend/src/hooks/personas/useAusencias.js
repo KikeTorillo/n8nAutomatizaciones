@@ -5,6 +5,7 @@
  */
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { STALE_TIMES } from '@/app/queryClient';
 
 // Re-exportar hooks existentes para conveniencia
 export {
@@ -283,7 +284,7 @@ export function useCalendarioAusencias(filtros = {}) {
       return response.data?.data || [];
     },
     enabled: !!fecha_inicio && !!fecha_fin && tipo !== 'vacaciones',
-    staleTime: 30 * 1000,
+    staleTime: STALE_TIMES.REAL_TIME,
     keepPreviousData: true,
   });
 
@@ -430,7 +431,7 @@ export function useEstadisticasAusencias(filtros = {}) {
       const response = await vacacionesApi.obtenerEstadisticas({ anio });
       return response.data?.data || {};
     },
-    staleTime: 60 * 1000,
+    staleTime: STALE_TIMES.FREQUENT,
   });
 
   // Estadísticas de incapacidades
@@ -444,7 +445,7 @@ export function useEstadisticasAusencias(filtros = {}) {
       const response = await incapacidadesApi.obtenerEstadisticas({ anio });
       return response.data?.data || {};
     },
-    staleTime: 60 * 1000,
+    staleTime: STALE_TIMES.FREQUENT,
   });
 
   const estadisticas = useMemo(() => {

@@ -14,6 +14,7 @@ import {
 import {
   Button,
   ConfirmDialog,
+  FormGroup,
   Input,
   StatCardGrid
 } from '@/components/ui';
@@ -290,23 +291,22 @@ function DepartamentosPage() {
         isLoading={isSubmitting}
         isEditing={isEditing}
       >
-        <Input
-          label="Nombre"
-          placeholder="Ej: Recursos Humanos"
-          error={errors.nombre?.message}
-          {...register('nombre', { required: 'El nombre es requerido' })}
-        />
+        <FormGroup label="Nombre" error={errors.nombre?.message} required>
+          <Input
+            placeholder="Ej: Recursos Humanos"
+            hasError={!!errors.nombre}
+            {...register('nombre', { required: 'El nombre es requerido' })}
+          />
+        </FormGroup>
 
-        <Input
-          label="Código (Opcional)"
-          placeholder="Ej: RRHH"
-          {...register('codigo')}
-        />
+        <FormGroup label="Codigo (Opcional)">
+          <Input
+            placeholder="Ej: RRHH"
+            {...register('codigo')}
+          />
+        </FormGroup>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Departamento Padre (Opcional)
-          </label>
+        <FormGroup label="Departamento Padre (Opcional)">
           <select
             {...register('parent_id')}
             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500"
@@ -320,19 +320,16 @@ function DepartamentosPage() {
                 </option>
               ))}
           </select>
-        </div>
+        </FormGroup>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Descripción (Opcional)
-          </label>
+        <FormGroup label="Descripcion (Opcional)">
           <textarea
             {...register('descripcion')}
             rows={3}
-            placeholder="Descripción del departamento..."
+            placeholder="Descripcion del departamento..."
             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500"
           />
-        </div>
+        </FormGroup>
 
         <div className="flex items-center gap-2">
           <input

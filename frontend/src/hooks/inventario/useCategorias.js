@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { inventarioApi } from '@/services/api/endpoints';
+import { STALE_TIMES } from '@/app/queryClient';
 
 /**
  * Hook para listar categorías con filtros
@@ -19,7 +20,7 @@ export function useCategorias(params = {}) {
       const response = await inventarioApi.listarCategorias(sanitizedParams);
       return response.data.data || { categorias: [], total: 0 };
     },
-    staleTime: 1000 * 60 * 10, // 10 minutos (categorías cambian poco)
+    staleTime: STALE_TIMES.STATIC_DATA, // 10 minutos (categorías cambian poco)
   });
 }
 
@@ -34,7 +35,7 @@ export function useArbolCategorias() {
       // Backend retorna data directamente como array, no data.arbol
       return response.data.data || [];
     },
-    staleTime: 1000 * 60 * 10, // 10 minutos
+    staleTime: STALE_TIMES.STATIC_DATA, // 10 minutos
   });
 }
 
@@ -49,7 +50,7 @@ export function useCategoria(id) {
       return response.data.data;
     },
     enabled: !!id,
-    staleTime: 1000 * 60 * 10,
+    staleTime: STALE_TIMES.STATIC_DATA,
   });
 }
 
@@ -73,8 +74,8 @@ export function useCrearCategoria() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['categorias']);
-      queryClient.invalidateQueries(['categorias-arbol']);
+      queryClient.invalidateQueries({ queryKey: ['categorias'] });
+      queryClient.invalidateQueries({ queryKey: ['categorias-arbol'] });
     },
     onError: (error) => {
       const backendMessage = error.response?.data?.message;
@@ -116,9 +117,9 @@ export function useActualizarCategoria() {
       return response.data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries(['categorias']);
-      queryClient.invalidateQueries(['categorias-arbol']);
-      queryClient.invalidateQueries(['categoria', variables.id]);
+      queryClient.invalidateQueries({ queryKey: ['categorias'] });
+      queryClient.invalidateQueries({ queryKey: ['categorias-arbol'] });
+      queryClient.invalidateQueries({ queryKey: ['categoria', variables.id] });
     },
     onError: (error) => {
       const backendMessage = error.response?.data?.message;
@@ -152,8 +153,8 @@ export function useEliminarCategoria() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['categorias']);
-      queryClient.invalidateQueries(['categorias-arbol']);
+      queryClient.invalidateQueries({ queryKey: ['categorias'] });
+      queryClient.invalidateQueries({ queryKey: ['categorias-arbol'] });
     },
     onError: (error) => {
       const backendMessage = error.response?.data?.message;

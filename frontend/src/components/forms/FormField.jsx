@@ -1,9 +1,10 @@
 import { Controller } from 'react-hook-form';
-import { Input, Select } from '@/components/ui';
+import { Input, Select, FormGroup } from '@/components/ui';
 
 /**
  * Componente FormField integrado con React Hook Form
  * Wrapper para Input y Select con validación automática
+ * Usa FormGroup para label/error/helper siguiendo Atomic Design
  */
 function FormField({
   name,
@@ -24,16 +25,20 @@ function FormField({
         // Si tiene options, renderizar Select
         if (options) {
           return (
-            <Select
-              {...field}
+            <FormGroup
               label={label}
-              placeholder={placeholder}
-              options={options}
               error={error?.message}
               helper={helper}
               required={required}
-              {...rest}
-            />
+            >
+              <Select
+                {...field}
+                placeholder={placeholder}
+                options={options}
+                hasError={!!error}
+                {...rest}
+              />
+            </FormGroup>
           );
         }
 
@@ -42,22 +47,26 @@ function FormField({
         const fieldValue = type === 'number' && field.value ? Number(field.value) : field.value;
 
         return (
-          <Input
-            {...field}
-            value={fieldValue}
-            onChange={(e) => {
-              // Convertir a número si es type="number"
-              const value = type === 'number' ? (e.target.value === '' ? 0 : Number(e.target.value)) : e.target.value;
-              field.onChange(value);
-            }}
-            type={type}
+          <FormGroup
             label={label}
-            placeholder={placeholder}
             error={error?.message}
             helper={helper}
             required={required}
-            {...rest}
-          />
+          >
+            <Input
+              {...field}
+              value={fieldValue}
+              onChange={(e) => {
+                // Convertir a número si es type="number"
+                const value = type === 'number' ? (e.target.value === '' ? 0 : Number(e.target.value)) : e.target.value;
+                field.onChange(value);
+              }}
+              type={type}
+              placeholder={placeholder}
+              hasError={!!error}
+              {...rest}
+            />
+          </FormGroup>
         );
       }}
     />

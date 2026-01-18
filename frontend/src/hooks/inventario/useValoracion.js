@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { inventarioApi } from '@/services/api/endpoints';
+import { STALE_TIMES } from '@/app/queryClient';
 
 /**
  * Hooks para valoracion de inventario FIFO/AVCO
@@ -18,7 +19,7 @@ export function useConfiguracionValoracion() {
             const response = await inventarioApi.obtenerConfiguracionValoracion();
             return response.data.data;
         },
-        staleTime: 1000 * 60 * 10, // 10 minutos
+        staleTime: STALE_TIMES.STATIC_DATA, // 10 minutos
     });
 }
 
@@ -34,7 +35,7 @@ export function useActualizarConfiguracionValoracion() {
             return response.data.data;
         },
         onSuccess: () => {
-            queryClient.invalidateQueries(['valoracion']);
+            queryClient.invalidateQueries({ queryKey: ['valoracion'] });
         },
     });
 }
@@ -52,7 +53,7 @@ export function useResumenValoracion() {
             const response = await inventarioApi.obtenerResumenValoracion();
             return response.data.data;
         },
-        staleTime: 1000 * 60 * 5, // 5 minutos
+        staleTime: STALE_TIMES.SEMI_STATIC, // 5 minutos
     });
 }
 
@@ -74,7 +75,7 @@ export function useValorTotalInventario(params = {}) {
             const response = await inventarioApi.obtenerValorTotal(sanitizedParams);
             return response.data.data;
         },
-        staleTime: 1000 * 60 * 5,
+        staleTime: STALE_TIMES.SEMI_STATIC,
     });
 }
 
@@ -98,7 +99,7 @@ export function useComparativaValoracion(params = {}) {
             const response = await inventarioApi.obtenerComparativaValoracion(sanitizedParams);
             return response.data.data;
         },
-        staleTime: 1000 * 60 * 5,
+        staleTime: STALE_TIMES.SEMI_STATIC,
     });
 }
 
@@ -122,7 +123,7 @@ export function useReporteValoracionCategorias(params = {}) {
             const response = await inventarioApi.obtenerReporteValoracionCategorias(sanitizedParams);
             return response.data.data;
         },
-        staleTime: 1000 * 60 * 5,
+        staleTime: STALE_TIMES.SEMI_STATIC,
     });
 }
 
@@ -144,7 +145,7 @@ export function useReporteDiferenciasValoracion(params = {}) {
             const response = await inventarioApi.obtenerReporteDiferenciasValoracion(sanitizedParams);
             return response.data.data;
         },
-        staleTime: 1000 * 60 * 5,
+        staleTime: STALE_TIMES.SEMI_STATIC,
     });
 }
 
@@ -162,7 +163,7 @@ export function useValoracionProducto(productoId) {
             return response.data.data;
         },
         enabled: !!productoId,
-        staleTime: 1000 * 60 * 3,
+        staleTime: STALE_TIMES.MEDIUM,
     });
 }
 
@@ -179,7 +180,7 @@ export function useValoracionFIFO(productoId, params = {}) {
             return response.data.data;
         },
         enabled: !!productoId,
-        staleTime: 1000 * 60 * 3,
+        staleTime: STALE_TIMES.MEDIUM,
     });
 }
 
@@ -196,7 +197,7 @@ export function useValoracionAVCO(productoId, params = {}) {
             return response.data.data;
         },
         enabled: !!productoId,
-        staleTime: 1000 * 60 * 3,
+        staleTime: STALE_TIMES.MEDIUM,
     });
 }
 
@@ -213,7 +214,7 @@ export function useCapasFIFO(productoId) {
             return response.data.data;
         },
         enabled: !!productoId,
-        staleTime: 1000 * 60 * 3,
+        staleTime: STALE_TIMES.MEDIUM,
     });
 }
 

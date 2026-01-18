@@ -3,7 +3,7 @@
  * Unifica Vacaciones + Incapacidades en una sola experiencia
  * Enero 2026
  */
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, lazy, Suspense } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { format } from 'date-fns';
 import {
@@ -13,259 +13,35 @@ import {
   HeartPulse,
   CalendarDays,
   Settings,
-  CalendarOff,
   Ban,
-  ChevronDown,
-  Check,
   ClipboardList,
   FileSpreadsheet,
 } from 'lucide-react';
-import { BackButton, Button } from '@/components/ui';
+import { BackButton, Button, StateNavTabs, LoadingSpinner } from '@/components/ui';
 import useAuthStore, { selectUser } from '@/store/authStore';
-import { useToast } from '@/hooks/utils';
-import { useExportCSV } from '@/hooks/utils';
+import { useToast, useExportCSV } from '@/hooks/utils';
 import {
   useSolicitudesPendientesAusencias,
   useMisAusencias,
 } from '@/hooks/personas';
 import { useIncapacidades } from '@/hooks/personas';
 
-// Tabs - Lazy loading para mejor performance
+// Tab principal (carga eager)
 import MisAusenciasTab from './tabs/MisAusenciasTab';
-import MiEquipoAusenciasTab from './tabs/MiEquipoAusenciasTab';
-import VacacionesAdminTab from './tabs/VacacionesAdminTab';
-import IncapacidadesAdminTab from './tabs/IncapacidadesAdminTab';
-import OtrosBloqueoTab from './tabs/OtrosBloqueoTab';
-import CalendarioAusenciasTab from './tabs/CalendarioAusenciasTab';
-import ConfiguracionAusenciasTab from './tabs/ConfiguracionAusenciasTab';
 
-/**
- * Tab item component - Solo visible en desktop (md+)
- */
-function TabItem({ icon: Icon, label, isActive, onClick, count, disabled }) {
-  if (disabled) return null;
+// Tabs secundarios (carga lazy para mejor performance)
+const MiEquipoAusenciasTab = lazy(() => import('./tabs/MiEquipoAusenciasTab'));
+const VacacionesAdminTab = lazy(() => import('./tabs/VacacionesAdminTab'));
+const IncapacidadesAdminTab = lazy(() => import('./tabs/IncapacidadesAdminTab'));
+const OtrosBloqueoTab = lazy(() => import('./tabs/OtrosBloqueoTab'));
+const CalendarioAusenciasTab = lazy(() => import('./tabs/CalendarioAusenciasTab'));
+const ConfiguracionAusenciasTab = lazy(() => import('./tabs/ConfiguracionAusenciasTab'));
 
+// Fallback para tabs lazy
+function TabLoadingFallback() {
   return (
-    <button
-      onClick={onClick}
-      className={`
-        flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors
-        ${isActive
-          ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'
-          : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
-        }
-      `}
-    >
-      <Icon className="w-4 h-4" />
-      <span>{label}</span>
-      {count !== undefined && count > 0 && (
-        <span
-          className={`
-          ml-1 px-2 py-0.5 text-xs rounded-full font-semibold
-          ${isActive
-              ? 'bg-primary-200 dark:bg-primary-800 text-primary-800 dark:text-primary-200'
-              : 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
-            }
-        `}
-        >
-          {count}
-        </span>
-      )}
-    </button>
-  );
-}
-
-/**
- * TabDropdown - Dropdown para agrupar tabs en desktop
- */
-function TabDropdown({ icon: Icon, label, items, activeTab, onTabChange }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef(null);
-
-  // Verificar si algún item del grupo está activo
-  const hasActiveItem = items.some((item) => item.id === activeTab);
-  const activeItem = items.find((item) => item.id === activeTab);
-
-  // Cerrar al hacer click fuera
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsOpen(false);
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  // Cerrar con Escape
-  useEffect(() => {
-    function handleKeyDown(event) {
-      if (event.key === 'Escape') setIsOpen(false);
-    }
-    if (isOpen) {
-      document.addEventListener('keydown', handleKeyDown);
-      return () => document.removeEventListener('keydown', handleKeyDown);
-    }
-  }, [isOpen]);
-
-  const handleItemClick = (tabId) => {
-    onTabChange(tabId);
-    setIsOpen(false);
-  };
-
-  return (
-    <div className="relative" ref={dropdownRef}>
-      <button
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className={`
-          flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors
-          ${hasActiveItem
-            ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'
-            : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
-          }
-        `}
-        aria-expanded={isOpen}
-        aria-haspopup="true"
-      >
-        {activeItem ? (
-          <>
-            {(() => {
-              const ActiveIcon = activeItem.icon;
-              return <ActiveIcon className="w-4 h-4" />;
-            })()}
-            <span>{activeItem.label}</span>
-          </>
-        ) : (
-          <>
-            <Icon className="w-4 h-4" />
-            <span>{label}</span>
-          </>
-        )}
-        <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-      </button>
-
-      {isOpen && (
-        <div
-          className="absolute left-0 mt-1 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-50"
-          role="menu"
-        >
-          {items.map((item) => {
-            const ItemIcon = item.icon;
-            const isItemActive = activeTab === item.id;
-            return (
-              <button
-                key={item.id}
-                onClick={() => handleItemClick(item.id)}
-                className={`w-full flex items-center gap-3 px-4 py-2 text-sm text-left transition-colors ${
-                  isItemActive
-                    ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400'
-                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-                }`}
-                role="menuitem"
-              >
-                <ItemIcon className={`h-4 w-4 ${isItemActive ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400'}`} />
-                <span className="flex-1">{item.label}</span>
-                {isItemActive && <Check className="h-4 w-4 text-primary-600 dark:text-primary-400" />}
-              </button>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-}
-
-/**
- * Mobile selector - Dropdown para navegación en móvil
- */
-function MobileAusenciasSelector({ tabs, activeTab, onTabChange }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef(null);
-
-  const activeTabData = tabs.find((t) => t.id === activeTab) || tabs[0];
-  const ActiveIcon = activeTabData?.icon || User;
-
-  // Cerrar al hacer click fuera
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsOpen(false);
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  // Cerrar con Escape
-  useEffect(() => {
-    function handleKeyDown(event) {
-      if (event.key === 'Escape') setIsOpen(false);
-    }
-    if (isOpen) {
-      document.addEventListener('keydown', handleKeyDown);
-      return () => document.removeEventListener('keydown', handleKeyDown);
-    }
-  }, [isOpen]);
-
-  const handleItemClick = (tabId) => {
-    onTabChange(tabId);
-    setIsOpen(false);
-  };
-
-  return (
-    <div className="relative" ref={dropdownRef}>
-      <button
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between gap-2 px-4 py-3 text-sm font-medium rounded-lg transition-colors bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100"
-        aria-expanded={isOpen}
-        aria-haspopup="true"
-      >
-        <div className="flex items-center gap-2">
-          <ActiveIcon className="h-4 w-4 text-primary-600 dark:text-primary-400" />
-          <span>{activeTabData?.label}</span>
-          {activeTabData?.count > 0 && (
-            <span className="px-2 py-0.5 text-xs rounded-full font-semibold bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400">
-              {activeTabData.count}
-            </span>
-          )}
-        </div>
-        <ChevronDown className={`h-5 w-5 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-      </button>
-
-      {isOpen && (
-        <div
-          className="absolute left-0 right-0 mt-1 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50"
-          role="menu"
-        >
-          {tabs.map((tab) => {
-            const ItemIcon = tab.icon;
-            const isItemActive = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => handleItemClick(tab.id)}
-                className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm text-left transition-colors ${
-                  isItemActive
-                    ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400'
-                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-                }`}
-                role="menuitem"
-              >
-                <ItemIcon className={`h-4 w-4 ${isItemActive ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400'}`} />
-                <span className="flex-1">{tab.label}</span>
-                {tab.count > 0 && (
-                  <span className="px-2 py-0.5 text-xs rounded-full font-semibold bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400">
-                    {tab.count}
-                  </span>
-                )}
-                {isItemActive && <Check className="h-4 w-4 text-primary-600 dark:text-primary-400" />}
-              </button>
-            );
-          })}
-        </div>
-      )}
+    <div className="flex items-center justify-center py-12">
+      <LoadingSpinner />
     </div>
   );
 }
@@ -362,6 +138,14 @@ function AusenciasPage() {
     return baseTabs;
   }, [esSupervisor, esAdmin, cantidadPendientes]);
 
+  // Grupos de tabs para desktop (solo admin tiene el dropdown de tipos)
+  const tabGroups = useMemo(() => {
+    if (!esAdmin) return [];
+    return [
+      { icon: ClipboardList, label: 'Tipos', tabIds: ['vacaciones', 'incapacidades', 'otros-bloqueos'] },
+    ];
+  }, [esAdmin]);
+
   // Estado del tab activo
   const [activeTab, setActiveTab] = useState(() => {
     // Si viene un tab por URL, usarlo si es válido
@@ -393,24 +177,43 @@ function AusenciasPage() {
 
   // Renderizar contenido del tab activo
   const renderTabContent = () => {
+    // Tab principal carga sin Suspense (eager)
+    if (activeTab === 'mis-ausencias') {
+      return <MisAusenciasTab />;
+    }
+
+    // Tabs secundarios con Suspense (lazy)
+    let content;
     switch (activeTab) {
-      case 'mis-ausencias':
-        return <MisAusenciasTab />;
       case 'mi-equipo':
-        return esSupervisor || esAdmin ? <MiEquipoAusenciasTab /> : null;
+        content = esSupervisor || esAdmin ? <MiEquipoAusenciasTab /> : null;
+        break;
       case 'vacaciones':
-        return esAdmin ? <VacacionesAdminTab /> : null;
+        content = esAdmin ? <VacacionesAdminTab /> : null;
+        break;
       case 'incapacidades':
-        return esAdmin ? <IncapacidadesAdminTab /> : null;
+        content = esAdmin ? <IncapacidadesAdminTab /> : null;
+        break;
       case 'otros-bloqueos':
-        return esAdmin ? <OtrosBloqueoTab /> : null;
+        content = esAdmin ? <OtrosBloqueoTab /> : null;
+        break;
       case 'calendario':
-        return <CalendarioAusenciasTab esAdmin={esAdmin} />;
+        content = <CalendarioAusenciasTab esAdmin={esAdmin} />;
+        break;
       case 'configuracion':
-        return esAdmin ? <ConfiguracionAusenciasTab /> : null;
+        content = esAdmin ? <ConfiguracionAusenciasTab /> : null;
+        break;
       default:
         return <MisAusenciasTab />;
     }
+
+    if (!content) return null;
+
+    return (
+      <Suspense fallback={<TabLoadingFallback />}>
+        {content}
+      </Suspense>
+    );
   };
 
   // Verificar si el tab actual es exportable
@@ -546,71 +349,14 @@ function AusenciasPage() {
         </div>
       </div>
 
-      {/* NavTabs - Barra separada como en otros módulos */}
-      <nav className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-        {/* Desktop: Tabs agrupados */}
-        <div className="hidden md:flex items-center gap-1 px-4 py-2">
-          {/* Mis Ausencias - siempre visible */}
-          <TabItem
-            icon={User}
-            label="Mis Ausencias"
-            isActive={activeTab === 'mis-ausencias'}
-            onClick={() => handleTabChange('mis-ausencias')}
-          />
-
-          {/* Mi Equipo - supervisor/admin */}
-          {(esSupervisor || esAdmin) && (
-            <TabItem
-              icon={Users}
-              label="Mi Equipo"
-              isActive={activeTab === 'mi-equipo'}
-              onClick={() => handleTabChange('mi-equipo')}
-              count={cantidadPendientes}
-            />
-          )}
-
-          {/* Tipos - dropdown para admin (Vacaciones, Incapacidades, Otros Bloqueos) */}
-          {esAdmin && (
-            <TabDropdown
-              icon={ClipboardList}
-              label="Tipos"
-              items={[
-                { id: 'vacaciones', label: 'Vacaciones', icon: Palmtree },
-                { id: 'incapacidades', label: 'Incapacidades', icon: HeartPulse },
-                { id: 'otros-bloqueos', label: 'Otros Bloqueos', icon: Ban },
-              ]}
-              activeTab={activeTab}
-              onTabChange={handleTabChange}
-            />
-          )}
-
-          {/* Calendario - siempre visible */}
-          <TabItem
-            icon={CalendarDays}
-            label="Calendario"
-            isActive={activeTab === 'calendario'}
-            onClick={() => handleTabChange('calendario')}
-          />
-
-          {/* Configuración - solo admin */}
-          {esAdmin && (
-            <TabItem
-              icon={Settings}
-              label="Configuración"
-              isActive={activeTab === 'configuracion'}
-              onClick={() => handleTabChange('configuracion')}
-            />
-          )}
-        </div>
-        {/* Mobile: Dropdown con todos los tabs */}
-        <div className="md:hidden px-4 py-2">
-          <MobileAusenciasSelector
-            tabs={tabs}
-            activeTab={activeTab}
-            onTabChange={handleTabChange}
-          />
-        </div>
-      </nav>
+      {/* NavTabs */}
+      <StateNavTabs
+        tabs={tabs}
+        activeTab={activeTab}
+        onTabChange={handleTabChange}
+        groups={tabGroups}
+        sticky={false}
+      />
 
       {/* Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">

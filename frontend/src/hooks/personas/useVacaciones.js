@@ -3,6 +3,7 @@
  * Fase 3 del Plan de Empleados Competitivo - Enero 2026
  */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { STALE_TIMES } from '@/app/queryClient';
 import { vacacionesApi } from '@/services/api/endpoints';
 import { useToast } from '@/hooks/utils';
 
@@ -52,7 +53,7 @@ export function usePoliticaVacaciones() {
       const response = await vacacionesApi.obtenerPolitica();
       return response.data.data;
     },
-    staleTime: 5 * 60 * 1000, // 5 minutos
+    staleTime: STALE_TIMES.SEMI_STATIC, // 5 minutos
   });
 }
 
@@ -90,7 +91,7 @@ export function useNivelesVacaciones(filtros = {}) {
       const response = await vacacionesApi.listarNiveles(filtros);
       return response.data.data;
     },
-    staleTime: 5 * 60 * 1000,
+    staleTime: STALE_TIMES.SEMI_STATIC,
   });
 }
 
@@ -195,7 +196,7 @@ export function useMiSaldoVacaciones(anio = null) {
       const response = await vacacionesApi.obtenerMiSaldo({ anio });
       return response.data.data;
     },
-    staleTime: 30 * 1000, // 30 segundos
+    staleTime: STALE_TIMES.REAL_TIME, // 30 segundos
   });
 }
 
@@ -209,7 +210,7 @@ export function useSaldosVacaciones(filtros = {}) {
       const response = await vacacionesApi.listarSaldos(filtros);
       return response.data;
     },
-    staleTime: 30 * 1000,
+    staleTime: STALE_TIMES.REAL_TIME,
   });
 }
 
@@ -294,7 +295,7 @@ export function useMisSolicitudesVacaciones(filtros = {}) {
       const response = await vacacionesApi.listarMisSolicitudes(filtros);
       return response.data;
     },
-    staleTime: 30 * 1000,
+    staleTime: STALE_TIMES.REAL_TIME,
   });
 }
 
@@ -308,7 +309,7 @@ export function useSolicitudesVacaciones(filtros = {}) {
       const response = await vacacionesApi.listarSolicitudes(filtros);
       return response.data;
     },
-    staleTime: 30 * 1000,
+    staleTime: STALE_TIMES.REAL_TIME,
   });
 }
 
@@ -332,7 +333,7 @@ export function useSolicitudesCalendario(filtros = {}) {
       return response.data.data || [];
     },
     enabled: !!filtros.fecha_inicio && !!filtros.fecha_fin,
-    staleTime: 30 * 1000,
+    staleTime: STALE_TIMES.REAL_TIME,
     keepPreviousData: true, // Suaviza transiciones al cambiar mes
   });
 }
@@ -347,7 +348,7 @@ export function useSolicitudesPendientes(filtros = {}) {
       const response = await vacacionesApi.listarPendientes(filtros);
       return response.data;
     },
-    staleTime: 30 * 1000,
+    staleTime: STALE_TIMES.REAL_TIME,
   });
 }
 
@@ -443,7 +444,7 @@ export function useDashboardVacaciones(anio = null) {
       const response = await vacacionesApi.obtenerDashboard({ anio });
       return response.data.data;
     },
-    staleTime: 30 * 1000,
+    staleTime: STALE_TIMES.REAL_TIME,
   });
 }
 
@@ -457,7 +458,7 @@ export function useEstadisticasVacaciones(filtros = {}) {
       const response = await vacacionesApi.obtenerEstadisticas(filtros);
       return response.data.data;
     },
-    staleTime: 60 * 1000, // 1 minuto
+    staleTime: STALE_TIMES.FREQUENT, // 1 minuto
   });
 }
 

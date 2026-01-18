@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { conteosApi } from '@/services/api/endpoints';
 import useSucursalStore, { selectGetSucursalId } from '@/store/sucursalStore';
+import { STALE_TIMES } from '@/app/queryClient';
 
 /**
  * Hooks para gestión de Conteos de Inventario (Conteo Físico)
@@ -40,7 +41,7 @@ export function useConteos(params = {}) {
             const response = await conteosApi.listar(sanitizedParams);
             return response.data.data || { conteos: [], totales: {} };
         },
-        staleTime: 1000 * 60 * 2, // 2 minutos
+        staleTime: STALE_TIMES.DYNAMIC, // 2 minutos
     });
 }
 
@@ -56,7 +57,7 @@ export function useConteo(id) {
             return response.data.data;
         },
         enabled: !!id,
-        staleTime: 1000 * 30, // 30 segundos (datos cambian durante conteo)
+        staleTime: STALE_TIMES.REAL_TIME, // 30 segundos (datos cambian durante conteo)
         refetchInterval: (query) => {
             // Refetch automático solo cuando está en proceso
             const data = query.state.data;
@@ -86,7 +87,7 @@ export function useEstadisticasConteos(params = {}) {
             const response = await conteosApi.obtenerEstadisticas(sanitizedParams);
             return response.data.data || {};
         },
-        staleTime: 1000 * 60 * 5, // 5 minutos
+        staleTime: STALE_TIMES.SEMI_STATIC, // 5 minutos
     });
 }
 
@@ -115,8 +116,8 @@ export function useCrearConteo() {
             return response.data.data;
         },
         onSuccess: () => {
-            queryClient.invalidateQueries(['conteos']);
-            queryClient.invalidateQueries(['estadisticas-conteos']);
+            queryClient.invalidateQueries({ queryKey: ['conteos'] });
+            queryClient.invalidateQueries({ queryKey: ['estadisticas-conteos'] });
         },
         onError: (error) => {
             const backendMessage = error.response?.data?.message;
@@ -148,8 +149,8 @@ export function useIniciarConteo() {
             return response.data.data;
         },
         onSuccess: (_, id) => {
-            queryClient.invalidateQueries(['conteo', id]);
-            queryClient.invalidateQueries(['conteos']);
+            queryClient.invalidateQueries({ queryKey: ['conteo', id] });
+            queryClient.invalidateQueries({ queryKey: ['conteos'] });
         },
         onError: (error) => {
             const backendMessage = error.response?.data?.message;
@@ -177,7 +178,7 @@ export function useRegistrarConteoItem() {
         },
         onSuccess: (data) => {
             // Invalidar el conteo padre para actualizar resumen
-            queryClient.invalidateQueries(['conteo']);
+            queryClient.invalidateQueries({ queryKey: ['conteo'] });
         },
         onError: (error) => {
             const backendMessage = error.response?.data?.message;
@@ -201,9 +202,9 @@ export function useCompletarConteo() {
             return response.data.data;
         },
         onSuccess: (_, id) => {
-            queryClient.invalidateQueries(['conteo', id]);
-            queryClient.invalidateQueries(['conteos']);
-            queryClient.invalidateQueries(['estadisticas-conteos']);
+            queryClient.invalidateQueries({ queryKey: ['conteo', id] });
+            queryClient.invalidateQueries({ queryKey: ['conteos'] });
+            queryClient.invalidateQueries({ queryKey: ['estadisticas-conteos'] });
         },
         onError: (error) => {
             const backendMessage = error.response?.data?.message;
@@ -227,15 +228,15 @@ export function useAplicarAjustesConteo() {
             return response.data.data;
         },
         onSuccess: (_, id) => {
-            queryClient.invalidateQueries(['conteo', id]);
-            queryClient.invalidateQueries(['conteos']);
-            queryClient.invalidateQueries(['estadisticas-conteos']);
+            queryClient.invalidateQueries({ queryKey: ['conteo', id] });
+            queryClient.invalidateQueries({ queryKey: ['conteos'] });
+            queryClient.invalidateQueries({ queryKey: ['estadisticas-conteos'] });
             // Invalidar datos de inventario afectados
-            queryClient.invalidateQueries(['productos']);
-            queryClient.invalidateQueries(['movimientos']);
-            queryClient.invalidateQueries(['kardex']);
-            queryClient.invalidateQueries(['stock-critico']);
-            queryClient.invalidateQueries(['valor-inventario']);
+            queryClient.invalidateQueries({ queryKey: ['productos'] });
+            queryClient.invalidateQueries({ queryKey: ['movimientos'] });
+            queryClient.invalidateQueries({ queryKey: ['kardex'] });
+            queryClient.invalidateQueries({ queryKey: ['stock-critico'] });
+            queryClient.invalidateQueries({ queryKey: ['valor-inventario'] });
         },
         onError: (error) => {
             const backendMessage = error.response?.data?.message;
@@ -259,9 +260,9 @@ export function useCancelarConteo() {
             return response.data.data;
         },
         onSuccess: (_, { id }) => {
-            queryClient.invalidateQueries(['conteo', id]);
-            queryClient.invalidateQueries(['conteos']);
-            queryClient.invalidateQueries(['estadisticas-conteos']);
+            queryClient.invalidateQueries({ queryKey: ['conteo', id] });
+            queryClient.invalidateQueries({ queryKey: ['conteos'] });
+            queryClient.invalidateQueries({ queryKey: ['estadisticas-conteos'] });
         },
         onError: (error) => {
             const backendMessage = error.response?.data?.message;

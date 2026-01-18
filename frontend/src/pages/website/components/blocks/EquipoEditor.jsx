@@ -151,14 +151,14 @@ function EquipoEditor({ contenido, onGuardar, tema, isSaving }) {
                     value={miembro.nombre}
                     onChange={(e) => handleChange(index, 'nombre', e.target.value)}
                     placeholder="Nombre completo"
-                    inputSize="sm"
+                    size="sm"
                     className="dark:bg-gray-600 dark:border-gray-500 dark:text-gray-100"
                   />
                   <Input
                     value={miembro.cargo}
                     onChange={(e) => handleChange(index, 'cargo', e.target.value)}
                     placeholder="Cargo o especialidad"
-                    inputSize="sm"
+                    size="sm"
                     className="dark:bg-gray-600 dark:border-gray-500 dark:text-gray-100"
                   />
                 </div>
@@ -168,7 +168,7 @@ function EquipoEditor({ contenido, onGuardar, tema, isSaving }) {
                   value={miembro.foto}
                   onChange={(e) => handleChange(index, 'foto', e.target.value)}
                   placeholder="URL de foto"
-                  inputSize="sm"
+                  size="sm"
                   className="dark:bg-gray-600 dark:border-gray-500 dark:text-gray-100"
                 />
 

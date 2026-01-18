@@ -5,18 +5,20 @@ import {
   AdvancedFilterPanel,
   Badge,
   Button,
-  ConfirmDialog,
   DataTable,
   DataTableActionButton,
   DataTableActions,
   FilterChip,
   SavedSearchModal
 } from '@/components/ui';
-import { useToast } from '@/hooks/utils';
-import { useModalManager } from '@/hooks/utils';
-import { useFilters } from '@/hooks/utils';
-import { useSavedFilters } from '@/hooks/utils';
-import { useExportCSV } from '@/hooks/utils';
+import {
+  useToast,
+  useModalManager,
+  useFilters,
+  useSavedFilters,
+  useExportCSV,
+  useDeleteConfirmation,
+} from '@/hooks/utils';
 import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
 import {
   useProductos,
@@ -87,6 +89,14 @@ function ProductosPage() {
   // Mutations
   const eliminarMutation = useEliminarProducto();
 
+  // Hook de confirmación de eliminación
+  const { confirmDelete, DeleteConfirmModal } = useDeleteConfirmation({
+    deleteMutation: eliminarMutation,
+    entityName: 'producto',
+    getName: (p) => p.nombre,
+    confirmMessage: '¿Estás seguro de que deseas eliminar el producto "{name}"? Esta acción marcará el producto como inactivo. Podrás reactivarlo después si lo necesitas.',
+  });
+
   // Configuración de filtros para AdvancedFilterPanel
   const filterConfig = useMemo(() => [
     {
@@ -142,25 +152,6 @@ function ProductosPage() {
 
   const handleGenerarEtiqueta = (producto) => {
     openModal('etiqueta', { producto });
-  };
-
-  const handleAbrirModalEliminar = (producto) => {
-    openModal('eliminar', { producto });
-  };
-
-  const handleEliminar = () => {
-    const { producto } = getModalData('eliminar');
-    eliminarMutation.mutate(producto.id, {
-      onSuccess: () => {
-        showSuccess('Producto eliminado correctamente');
-        closeModal('eliminar');
-      },
-      onError: (error) => {
-        showError(
-          error.response?.data?.mensaje || 'Error al eliminar producto'
-        );
-      },
-    });
   };
 
   // Helpers
@@ -351,7 +342,7 @@ function ProductosPage() {
 
         {/* Tabla de Productos */}
         <DataTable
-          columns={[
+          columns={useMemo(() => [
             {
               key: 'nombre',
               header: 'Producto',
@@ -466,13 +457,13 @@ function ProductosPage() {
                   <DataTableActionButton
                     icon={Trash2}
                     label="Eliminar"
-                    onClick={() => handleAbrirModalEliminar(row)}
+                    onClick={() => confirmDelete(row)}
                     variant="danger"
                   />
                 </DataTableActions>
               ),
             },
-          ]}
+          ], [categorias, proveedores])}
           data={productos}
           isLoading={cargandoProductos}
           emptyState={{
@@ -521,16 +512,7 @@ function ProductosPage() {
         )}
 
         {/* Modal Confirmar Eliminación */}
-        <ConfirmDialog
-          isOpen={isOpen('eliminar')}
-          onClose={() => closeModal('eliminar')}
-          onConfirm={handleEliminar}
-          title="Eliminar Producto"
-          message={`¿Estás seguro de que deseas eliminar el producto "${getModalData('eliminar')?.producto?.nombre}"? Esta acción marcará el producto como inactivo. Podrás reactivarlo después si lo necesitas.`}
-          confirmText="Eliminar"
-          variant="danger"
-          isLoading={eliminarMutation.isPending}
-        />
+        <DeleteConfirmModal />
 
         {/* Modal Guardar Búsqueda */}
         <SavedSearchModal

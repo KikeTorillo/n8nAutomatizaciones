@@ -8,6 +8,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { STALE_TIMES } from '@/app/queryClient';
 import { consignaApi } from '@/services/api/endpoints';
 import { useToast } from '@/hooks/utils';
 
@@ -48,7 +49,7 @@ export function useAcuerdosConsigna(filtros = {}) {
       const response = await consignaApi.listarAcuerdos(filtros);
       return response.data.data;
     },
-    staleTime: 1000 * 60 * 2, // 2 minutos
+    staleTime: STALE_TIMES.DYNAMIC, // 2 minutos
   });
 }
 
@@ -64,7 +65,7 @@ export function useAcuerdoConsigna(id) {
       return response.data.data;
     },
     enabled: !!id,
-    staleTime: 1000 * 60 * 2,
+    staleTime: STALE_TIMES.DYNAMIC,
   });
 }
 
@@ -80,7 +81,7 @@ export function useProductosAcuerdo(acuerdoId) {
       return response.data.data || [];
     },
     enabled: !!acuerdoId,
-    staleTime: 1000 * 60 * 2,
+    staleTime: STALE_TIMES.DYNAMIC,
   });
 }
 
@@ -97,7 +98,7 @@ export function useStockConsigna(filtros = {}) {
       const response = await consignaApi.consultarStock(filtros);
       return response.data.data || [];
     },
-    staleTime: 1000 * 60, // 1 minuto
+    staleTime: STALE_TIMES.FREQUENT, // 1 minuto
   });
 }
 
@@ -114,7 +115,7 @@ export function useLiquidacionesConsigna(filtros = {}) {
       const response = await consignaApi.listarLiquidaciones(filtros);
       return response.data.data || [];
     },
-    staleTime: 1000 * 60 * 2,
+    staleTime: STALE_TIMES.DYNAMIC,
   });
 }
 
@@ -130,7 +131,7 @@ export function useLiquidacionConsigna(id) {
       return response.data.data;
     },
     enabled: !!id,
-    staleTime: 1000 * 60 * 2,
+    staleTime: STALE_TIMES.DYNAMIC,
   });
 }
 
@@ -147,7 +148,7 @@ export function useReporteStockConsigna(filtros = {}) {
       const response = await consignaApi.reporteStock(filtros);
       return response.data.data || [];
     },
-    staleTime: 1000 * 60 * 5, // 5 minutos
+    staleTime: STALE_TIMES.SEMI_STATIC, // 5 minutos
   });
 }
 
@@ -163,7 +164,7 @@ export function useReporteVentasConsigna(filtros) {
       return response.data.data || [];
     },
     enabled: !!(filtros?.fecha_desde && filtros?.fecha_hasta),
-    staleTime: 1000 * 60 * 5,
+    staleTime: STALE_TIMES.SEMI_STATIC,
   });
 }
 
@@ -177,7 +178,7 @@ export function usePendienteLiquidar() {
       const response = await consignaApi.reportePendiente();
       return response.data.data || [];
     },
-    staleTime: 1000 * 60 * 5,
+    staleTime: STALE_TIMES.SEMI_STATIC,
   });
 }
 

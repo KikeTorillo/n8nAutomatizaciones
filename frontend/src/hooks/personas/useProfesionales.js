@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { STALE_TIMES } from '@/app/queryClient';
 import { profesionalesApi } from '@/services/api/endpoints';
 import { sanitizeParams } from '@/lib/params';
 
@@ -19,7 +20,7 @@ export function useProfesionales(params = {}) {
       // Backend retorna: { success, data: { profesionales: [...], pagination: {...} } }
       return response.data.data;
     },
-    staleTime: 1000 * 60 * 5, // 5 minutos
+    staleTime: STALE_TIMES.SEMI_STATIC, // 5 minutos
     keepPreviousData: true, // Ene 2026: Transiciones suaves entre páginas
   });
 }
@@ -35,7 +36,7 @@ export function useProfesional(id) {
       return response.data.data;
     },
     enabled: !!id,
-    staleTime: 1000 * 60 * 5,
+    staleTime: STALE_TIMES.SEMI_STATIC,
   });
 }
 
@@ -59,9 +60,9 @@ export function useCrearProfesional() {
     },
     onSuccess: () => {
       // Invalidar múltiples queries
-      queryClient.invalidateQueries(['profesionales']);
-      queryClient.invalidateQueries(['profesionales-dashboard']);
-      queryClient.invalidateQueries(['estadisticas']);
+      queryClient.invalidateQueries({ queryKey: ['profesionales'] });
+      queryClient.invalidateQueries({ queryKey: ['profesionales-dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['estadisticas'] });
     },
     onError: (error) => {
       // Priorizar mensaje del backend si existe
@@ -108,9 +109,9 @@ export function useActualizarProfesional() {
       return response.data.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries(['profesional', data.id]);
-      queryClient.invalidateQueries(['profesionales']);
-      queryClient.invalidateQueries(['profesionales-dashboard']);
+      queryClient.invalidateQueries({ queryKey: ['profesional', data.id] });
+      queryClient.invalidateQueries({ queryKey: ['profesionales'] });
+      queryClient.invalidateQueries({ queryKey: ['profesionales-dashboard'] });
     },
     onError: (error) => {
       // Priorizar mensaje del backend si existe
@@ -146,9 +147,9 @@ export function useEliminarProfesional() {
       return id;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['profesionales']);
-      queryClient.invalidateQueries(['profesionales-dashboard']);
-      queryClient.invalidateQueries(['estadisticas']);
+      queryClient.invalidateQueries({ queryKey: ['profesionales'] });
+      queryClient.invalidateQueries({ queryKey: ['profesionales-dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['estadisticas'] });
     },
     onError: (error) => {
       // Priorizar mensaje del backend si existe
@@ -188,7 +189,7 @@ export function useBuscarProfesionales(termino, options = {}) {
       return response.data.data?.profesionales || [];
     },
     enabled: termino.length >= 2, // Solo buscar si hay al menos 2 caracteres
-    staleTime: 1000 * 30, // 30 segundos
+    staleTime: STALE_TIMES.REAL_TIME, // 30 segundos
   });
 }
 
@@ -209,7 +210,7 @@ export function useProfesionalesPorModulo(modulo, options = {}) {
       return response.data.data?.profesionales || [];
     },
     enabled: !!modulo,
-    staleTime: 1000 * 60 * 5,
+    staleTime: STALE_TIMES.SEMI_STATIC,
   });
 }
 
@@ -225,10 +226,10 @@ export function useVincularUsuario() {
       return response.data.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries(['profesional', data.id]);
-      queryClient.invalidateQueries(['profesionales']);
-      queryClient.invalidateQueries(['usuarios-disponibles']);
-      queryClient.invalidateQueries(['profesional-usuario']);
+      queryClient.invalidateQueries({ queryKey: ['profesional', data.id] });
+      queryClient.invalidateQueries({ queryKey: ['profesionales'] });
+      queryClient.invalidateQueries({ queryKey: ['usuarios-disponibles'] });
+      queryClient.invalidateQueries({ queryKey: ['profesional-usuario'] });
     },
     onError: (error) => {
       const backendMessage = error.response?.data?.message;
@@ -254,10 +255,10 @@ export function useActualizarModulos() {
       return response.data.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries(['profesional', data.id]);
-      queryClient.invalidateQueries(['profesionales']);
-      queryClient.invalidateQueries(['profesionales-modulo']);
-      queryClient.invalidateQueries(['profesional-usuario']);
+      queryClient.invalidateQueries({ queryKey: ['profesional', data.id] });
+      queryClient.invalidateQueries({ queryKey: ['profesionales'] });
+      queryClient.invalidateQueries({ queryKey: ['profesionales-modulo'] });
+      queryClient.invalidateQueries({ queryKey: ['profesional-usuario'] });
     },
     onError: (error) => {
       const backendMessage = error.response?.data?.message;
@@ -283,7 +284,7 @@ export function useProfesionalesPorEstado(estado, options = {}) {
       return response.data.data?.profesionales || [];
     },
     enabled: !!estado,
-    staleTime: 1000 * 60 * 5,
+    staleTime: STALE_TIMES.SEMI_STATIC,
   });
 }
 
@@ -300,7 +301,7 @@ export function useProfesionalesPorDepartamento(departamentoId, options = {}) {
       return response.data.data?.profesionales || [];
     },
     enabled: !!departamentoId,
-    staleTime: 1000 * 60 * 5,
+    staleTime: STALE_TIMES.SEMI_STATIC,
   });
 }
 
@@ -321,7 +322,7 @@ export function useSubordinados(profesionalId, options = {}) {
       return response.data.data?.subordinados || [];
     },
     enabled: !!profesionalId,
-    staleTime: 1000 * 60 * 5,
+    staleTime: STALE_TIMES.SEMI_STATIC,
   });
 }
 
@@ -337,7 +338,7 @@ export function useCadenaSupervisores(profesionalId) {
       return response.data.data?.supervisores || [];
     },
     enabled: !!profesionalId,
-    staleTime: 1000 * 60 * 5,
+    staleTime: STALE_TIMES.SEMI_STATIC,
   });
 }
 
@@ -357,7 +358,7 @@ export function useCategoriasDeProfesional(profesionalId) {
       return response.data.data?.categorias || [];
     },
     enabled: !!profesionalId,
-    staleTime: 1000 * 60 * 5,
+    staleTime: STALE_TIMES.SEMI_STATIC,
   });
 }
 
@@ -373,9 +374,9 @@ export function useAsignarCategoria() {
       return response.data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries(['profesional-categorias', variables.profesionalId]);
-      queryClient.invalidateQueries(['profesional', variables.profesionalId]);
-      queryClient.invalidateQueries(['categoria-profesionales']);
+      queryClient.invalidateQueries({ queryKey: ['profesional-categorias', variables.profesionalId] });
+      queryClient.invalidateQueries({ queryKey: ['profesional', variables.profesionalId] });
+      queryClient.invalidateQueries({ queryKey: ['categoria-profesionales'] });
     },
     onError: (error) => {
       const backendMessage = error.response?.data?.message;
@@ -399,9 +400,9 @@ export function useEliminarCategoriaDeProf() {
       return { profesionalId, categoriaId };
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries(['profesional-categorias', variables.profesionalId]);
-      queryClient.invalidateQueries(['profesional', variables.profesionalId]);
-      queryClient.invalidateQueries(['categoria-profesionales']);
+      queryClient.invalidateQueries({ queryKey: ['profesional-categorias', variables.profesionalId] });
+      queryClient.invalidateQueries({ queryKey: ['profesional', variables.profesionalId] });
+      queryClient.invalidateQueries({ queryKey: ['categoria-profesionales'] });
     },
     onError: (error) => {
       const backendMessage = error.response?.data?.message;
@@ -422,10 +423,10 @@ export function useSincronizarCategorias() {
       return response.data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries(['profesional-categorias', variables.profesionalId]);
-      queryClient.invalidateQueries(['profesional', variables.profesionalId]);
-      queryClient.invalidateQueries(['categoria-profesionales']);
-      queryClient.invalidateQueries(['categorias-profesional']);
+      queryClient.invalidateQueries({ queryKey: ['profesional-categorias', variables.profesionalId] });
+      queryClient.invalidateQueries({ queryKey: ['profesional', variables.profesionalId] });
+      queryClient.invalidateQueries({ queryKey: ['categoria-profesionales'] });
+      queryClient.invalidateQueries({ queryKey: ['categorias-profesional'] });
     },
     onError: (error) => {
       const backendMessage = error.response?.data?.message;

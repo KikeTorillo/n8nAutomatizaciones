@@ -12,6 +12,7 @@ import {
 import {
   Button,
   ConfirmDialog,
+  FormGroup,
   Input,
   StatCardGrid
 } from '@/components/ui';
@@ -234,23 +235,22 @@ function PuestosPage() {
         isLoading={isSubmitting}
         isEditing={isEditing}
       >
-        <Input
-          label="Nombre"
-          placeholder="Ej: Gerente de Ventas"
-          error={errors.nombre?.message}
-          {...register('nombre', { required: 'El nombre es requerido' })}
-        />
+        <FormGroup label="Nombre" error={errors.nombre?.message} required>
+          <Input
+            placeholder="Ej: Gerente de Ventas"
+            hasError={!!errors.nombre}
+            {...register('nombre', { required: 'El nombre es requerido' })}
+          />
+        </FormGroup>
 
-        <Input
-          label="Código (Opcional)"
-          placeholder="Ej: GER-VEN"
-          {...register('codigo')}
-        />
+        <FormGroup label="Codigo (Opcional)">
+          <Input
+            placeholder="Ej: GER-VEN"
+            {...register('codigo')}
+          />
+        </FormGroup>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Departamento
-          </label>
+        <FormGroup label="Departamento">
           <select
             {...register('departamento_id')}
             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500"
@@ -260,33 +260,32 @@ function PuestosPage() {
               <option key={d.id} value={d.id}>{d.nombre}</option>
             ))}
           </select>
-        </div>
+        </FormGroup>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Descripción (Opcional)
-          </label>
+        <FormGroup label="Descripcion (Opcional)">
           <textarea
             {...register('descripcion')}
             rows={3}
             placeholder="Responsabilidades y funciones del puesto..."
             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500"
           />
-        </div>
+        </FormGroup>
 
         <div className="grid grid-cols-2 gap-4">
-          <Input
-            label="Salario Mínimo"
-            type="number"
-            placeholder="0.00"
-            {...register('salario_minimo')}
-          />
-          <Input
-            label="Salario Máximo"
-            type="number"
-            placeholder="0.00"
-            {...register('salario_maximo')}
-          />
+          <FormGroup label="Salario Minimo">
+            <Input
+              type="number"
+              placeholder="0.00"
+              {...register('salario_minimo')}
+            />
+          </FormGroup>
+          <FormGroup label="Salario Maximo">
+            <Input
+              type="number"
+              placeholder="0.00"
+              {...register('salario_maximo')}
+            />
+          </FormGroup>
         </div>
 
         <div className="flex items-center gap-2">

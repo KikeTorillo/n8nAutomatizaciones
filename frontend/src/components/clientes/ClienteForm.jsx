@@ -27,6 +27,7 @@ import {
 import {
   Button,
   Checkbox,
+  FormGroup,
   Input,
   Select,
   Textarea
@@ -591,12 +592,13 @@ function ClienteForm({ cliente = null, onSubmit, isLoading = false }) {
           name="notas_medicas"
           control={control}
           render={({ field }) => (
-            <Textarea
-              {...field}
-              label="Notas Medicas"
-              rows={3}
-              placeholder="Alergias, condiciones medicas relevantes, etc."
-            />
+            <FormGroup label="Notas Médicas">
+              <Textarea
+                {...field}
+                rows={3}
+                placeholder="Alergias, condiciones médicas relevantes, etc."
+              />
+            </FormGroup>
           )}
         />
       </div>
@@ -669,15 +671,16 @@ function ClienteForm({ cliente = null, onSubmit, isLoading = false }) {
             name="profesional_preferido"
             control={control}
             render={({ field }) => (
-              <Select
-                {...field}
-                label="Profesional Preferido"
-                placeholder="Sin preferencia"
-                options={profesionales.map((prof) => ({
-                  value: prof.id.toString(),
-                  label: prof.nombre_completo,
-                }))}
-              />
+              <FormGroup label="Profesional Preferido">
+                <Select
+                  {...field}
+                  placeholder="Sin preferencia"
+                  options={profesionales.map((prof) => ({
+                    value: prof.id.toString(),
+                    label: prof.nombre_completo,
+                  }))}
+                />
+              </FormGroup>
             )}
           />
 
@@ -686,16 +689,18 @@ function ClienteForm({ cliente = null, onSubmit, isLoading = false }) {
               name="lista_precios_id"
               control={control}
               render={({ field }) => (
-                <div>
+                <FormGroup
+                  label={
+                    <span className="flex items-center gap-1">
+                      <Tag className="h-4 w-4 text-primary-500" />
+                      Lista de Precios
+                    </span>
+                  }
+                  helper="Asigna una lista de precios para aplicar descuentos automáticos en el POS"
+                >
                   <Select
                     {...field}
-                    label={
-                      <span className="flex items-center gap-1">
-                        <Tag className="h-4 w-4 text-primary-500" />
-                        Lista de Precios
-                      </span>
-                    }
-                    placeholder="Sin lista asignada (precios estandar)"
+                    placeholder="Sin lista asignada (precios estándar)"
                     options={listasPrecios.map((lista) => ({
                       value: lista.id.toString(),
                       label: `${lista.codigo} - ${lista.nombre}${
@@ -703,10 +708,7 @@ function ClienteForm({ cliente = null, onSubmit, isLoading = false }) {
                       }`,
                     }))}
                   />
-                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                    Asigna una lista de precios para aplicar descuentos automaticos en el POS
-                  </p>
-                </div>
+                </FormGroup>
               )}
             />
           )}

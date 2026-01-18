@@ -3,7 +3,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import FormField from '@/components/forms/FormField';
-import { Button, Input, LoadingSpinner } from '@/components/ui';
+import { Button, FormGroup, Input, LoadingSpinner } from '@/components/ui';
 import { AlertCircle, CheckCircle2, ExternalLink } from 'lucide-react';
 
 // Schema de validación para WhatsApp Business Cloud API
@@ -155,15 +155,19 @@ function WhatsAppConfigForm({
           name="api_key"
           control={control}
           render={({ field }) => (
-            <Input
-              {...field}
-              type="password"
+            <FormGroup
               label="Access Token (API Key)"
-              placeholder="EAAxxxxxxxxxxxxxxxxxxxxxxxxxx"
-              required
               error={errors.api_key?.message}
               helperText="Token de acceso de WhatsApp Business Cloud API"
-            />
+              required
+            >
+              <Input
+                {...field}
+                type="password"
+                placeholder="EAAxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                hasError={!!errors.api_key}
+              />
+            </FormGroup>
           )}
         />
 
@@ -171,15 +175,19 @@ function WhatsAppConfigForm({
           name="phone_number_id"
           control={control}
           render={({ field }) => (
-            <Input
-              {...field}
-              type="text"
+            <FormGroup
               label="Phone Number ID"
-              placeholder="123456789012345"
-              required
               error={errors.phone_number_id?.message}
-              helperText="ID del número de teléfono desde Meta for Developers"
-            />
+              helperText="ID del numero de telefono desde Meta for Developers"
+              required
+            >
+              <Input
+                {...field}
+                type="text"
+                placeholder="123456789012345"
+                hasError={!!errors.phone_number_id}
+              />
+            </FormGroup>
           )}
         />
 
@@ -187,14 +195,18 @@ function WhatsAppConfigForm({
           name="business_account_id"
           control={control}
           render={({ field }) => (
-            <Input
-              {...field}
-              type="text"
+            <FormGroup
               label="Business Account ID (Opcional)"
-              placeholder="123456789012345"
               error={errors.business_account_id?.message}
               helperText="ID de tu cuenta de negocio de WhatsApp"
-            />
+            >
+              <Input
+                {...field}
+                type="text"
+                placeholder="123456789012345"
+                hasError={!!errors.business_account_id}
+              />
+            </FormGroup>
           )}
         />
 
@@ -202,14 +214,18 @@ function WhatsAppConfigForm({
           name="webhook_verify_token"
           control={control}
           render={({ field }) => (
-            <Input
-              {...field}
-              type="text"
+            <FormGroup
               label="Webhook Verify Token (Opcional)"
-              placeholder="mi-token-seguro-123"
               error={errors.webhook_verify_token?.message}
-              helperText="Token personalizado para verificación de webhook (se generará automáticamente si se deja vacío)"
-            />
+              helperText="Token personalizado para verificacion de webhook (se generara automaticamente si se deja vacio)"
+            >
+              <Input
+                {...field}
+                type="text"
+                placeholder="mi-token-seguro-123"
+                hasError={!!errors.webhook_verify_token}
+              />
+            </FormGroup>
           )}
         />
 

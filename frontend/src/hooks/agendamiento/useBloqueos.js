@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { STALE_TIMES } from '@/app/queryClient';
 import { bloqueosApi } from '@/services/api/endpoints';
 import { useToast } from '../utils/useToast';
 
@@ -18,7 +19,7 @@ export const useBloqueos = (params = {}) => {
       // El API devuelve { success, data: { bloqueos, paginacion, filtros_aplicados } }
       return response.data.data?.bloqueos || [];
     },
-    staleTime: 1000 * 60 * 5, // 5 minutos
+    staleTime: STALE_TIMES.SEMI_STATIC, // 5 minutos
     enabled: true,
   });
 };
@@ -39,7 +40,7 @@ export const useBloqueo = (id) => {
       return response.data;
     },
     enabled: !!id,
-    staleTime: 1000 * 60 * 5,
+    staleTime: STALE_TIMES.SEMI_STATIC,
   });
 };
 
@@ -63,7 +64,7 @@ export const useBloqueosPorProfesional = (profesionalId, params = {}) => {
       return response.data;
     },
     enabled: !!profesionalId,
-    staleTime: 1000 * 60 * 3, // 3 minutos
+    staleTime: STALE_TIMES.MEDIUM, // 3 minutos
   });
 };
 
@@ -82,7 +83,7 @@ export const useBloqueosOrganizacionales = (params = {}) => {
       const response = await bloqueosApi.obtenerOrganizacionales(params);
       return response.data;
     },
-    staleTime: 1000 * 60 * 5,
+    staleTime: STALE_TIMES.SEMI_STATIC,
   });
 };
 
@@ -104,7 +105,7 @@ export const useBloqueosPorRangoFechas = (fechaInicio, fechaFin, params = {}) =>
       return response.data;
     },
     enabled: !!fechaInicio && !!fechaFin,
-    staleTime: 1000 * 60 * 3,
+    staleTime: STALE_TIMES.MEDIUM,
   });
 };
 
@@ -125,7 +126,7 @@ export const useBloqueosPorTipo = (tipo, params = {}) => {
       return response.data;
     },
     enabled: !!tipo,
-    staleTime: 1000 * 60 * 5,
+    staleTime: STALE_TIMES.SEMI_STATIC,
   });
 };
 

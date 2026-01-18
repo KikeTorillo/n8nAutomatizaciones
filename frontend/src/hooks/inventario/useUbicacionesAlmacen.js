@@ -9,6 +9,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ordenesCompraApi } from '@/services/api/endpoints';
 import useSucursalStore, { selectGetSucursalId } from '@/store/sucursalStore';
+import { STALE_TIMES } from '@/app/queryClient';
 
 /**
  * QUERY KEYS para ubicaciones de almacén
@@ -51,7 +52,7 @@ export function useUbicacionesAlmacen(params = {}) {
       const response = await ordenesCompraApi.listarUbicaciones(sanitizedParams);
       return response.data.data || { ubicaciones: [], total: 0 };
     },
-    staleTime: 1000 * 60 * 5, // 5 minutos
+    staleTime: STALE_TIMES.SEMI_STATIC, // 5 minutos
   });
 }
 
@@ -70,7 +71,7 @@ export function useArbolUbicaciones(sucursalId) {
       return response.data.data || [];
     },
     enabled: !!efectiveSucursalId,
-    staleTime: 1000 * 60 * 5, // 5 minutos
+    staleTime: STALE_TIMES.SEMI_STATIC, // 5 minutos
   });
 }
 
@@ -86,7 +87,7 @@ export function useUbicacionAlmacen(id) {
       return response.data.data;
     },
     enabled: !!id,
-    staleTime: 1000 * 60 * 5,
+    staleTime: STALE_TIMES.SEMI_STATIC,
   });
 }
 
@@ -102,7 +103,7 @@ export function useStockUbicacion(ubicacionId) {
       return response.data.data || [];
     },
     enabled: !!ubicacionId,
-    staleTime: 1000 * 60 * 2, // 2 minutos (stock más volátil)
+    staleTime: STALE_TIMES.DYNAMIC, // 2 minutos (stock más volátil)
   });
 }
 
@@ -122,7 +123,7 @@ export function useUbicacionesDisponibles(sucursalId, cantidad = 1) {
       return response.data.data || [];
     },
     enabled: !!efectiveSucursalId,
-    staleTime: 1000 * 60 * 2,
+    staleTime: STALE_TIMES.DYNAMIC,
   });
 }
 
@@ -141,7 +142,7 @@ export function useEstadisticasUbicaciones(sucursalId) {
       return response.data.data || {};
     },
     enabled: !!efectiveSucursalId,
-    staleTime: 1000 * 60 * 5,
+    staleTime: STALE_TIMES.SEMI_STATIC,
   });
 }
 
@@ -157,7 +158,7 @@ export function useUbicacionesProducto(productoId) {
       return response.data.data || [];
     },
     enabled: !!productoId,
-    staleTime: 1000 * 60 * 2,
+    staleTime: STALE_TIMES.DYNAMIC,
   });
 }
 
@@ -294,7 +295,7 @@ export function useAgregarStockUbicacion() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries(UBICACIONES_ALMACEN_KEYS.stock(variables.ubicacionId));
       queryClient.invalidateQueries(UBICACIONES_ALMACEN_KEYS.all);
-      queryClient.invalidateQueries(['productos']);
+      queryClient.invalidateQueries({ queryKey: ['productos'] });
     },
     onError: (error) => {
       const backendMessage = error.response?.data?.message;

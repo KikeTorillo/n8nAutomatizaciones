@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { STALE_TIMES } from '@/app/queryClient';
 import { departamentosApi } from '@/services/api/endpoints';
 
 // ==================== HOOKS CRUD DEPARTAMENTOS ====================
@@ -23,7 +24,7 @@ export function useDepartamentos(params = {}) {
       // La API retorna { data: [...], meta: {...} } sin wrapper 'departamentos'
       return response.data.data || [];
     },
-    staleTime: 1000 * 60 * 5, // 5 minutos
+    staleTime: STALE_TIMES.SEMI_STATIC, // 5 minutos
   });
 }
 
@@ -59,7 +60,7 @@ export function useArbolDepartamentos() {
 
       return roots;
     },
-    staleTime: 1000 * 60 * 5,
+    staleTime: STALE_TIMES.SEMI_STATIC,
   });
 }
 
@@ -75,7 +76,7 @@ export function useDepartamento(id) {
       return response.data.data;
     },
     enabled: !!id,
-    staleTime: 1000 * 60 * 5,
+    staleTime: STALE_TIMES.SEMI_STATIC,
   });
 }
 
@@ -99,8 +100,8 @@ export function useCrearDepartamento() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['departamentos']);
-      queryClient.invalidateQueries(['departamentos-arbol']);
+      queryClient.invalidateQueries({ queryKey: ['departamentos'] });
+      queryClient.invalidateQueries({ queryKey: ['departamentos-arbol'] });
     },
     onError: (error) => {
       const backendMessage = error.response?.data?.message;
@@ -138,9 +139,9 @@ export function useActualizarDepartamento() {
       return response.data.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries(['departamento', data.id]);
-      queryClient.invalidateQueries(['departamentos']);
-      queryClient.invalidateQueries(['departamentos-arbol']);
+      queryClient.invalidateQueries({ queryKey: ['departamento', data.id] });
+      queryClient.invalidateQueries({ queryKey: ['departamentos'] });
+      queryClient.invalidateQueries({ queryKey: ['departamentos-arbol'] });
     },
     onError: (error) => {
       const backendMessage = error.response?.data?.message;
@@ -162,8 +163,8 @@ export function useEliminarDepartamento() {
       return id;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['departamentos']);
-      queryClient.invalidateQueries(['departamentos-arbol']);
+      queryClient.invalidateQueries({ queryKey: ['departamentos'] });
+      queryClient.invalidateQueries({ queryKey: ['departamentos-arbol'] });
     },
     onError: (error) => {
       const backendMessage = error.response?.data?.message;
@@ -199,6 +200,6 @@ export function useDepartamentosRaiz() {
       // Filtrar solo los que no tienen parent
       return departamentos.filter(d => !d.parent_id);
     },
-    staleTime: 1000 * 60 * 5,
+    staleTime: STALE_TIMES.SEMI_STATIC,
   });
 }

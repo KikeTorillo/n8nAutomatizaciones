@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import {
@@ -30,10 +30,7 @@ import {
 import ClientesPageLayout from '@/components/clientes/ClientesPageLayout';
 import { useClientes, useEstadisticasClientes } from '@/hooks/personas';
 import { useEtiquetas } from '@/hooks/personas';
-import { useToast } from '@/hooks/utils';
-import { useExportCSV } from '@/hooks/utils';
-import { useModalManager } from '@/hooks/utils';
-import { useFilters } from '@/hooks/utils';
+import { useToast, useExportCSV, useModalManager, useFilters, usePagination } from '@/hooks/utils';
 import WalkInModal from '@/components/clientes/WalkInModal';
 import ImportarClientesModal from '@/components/clientes/ImportarClientesModal';
 import ClientesList from '@/components/clientes/ClientesList';
@@ -48,7 +45,6 @@ function ClientesPage() {
   const navigate = useNavigate();
   const toast = useToast();
   const { exportCSV } = useExportCSV();
-  const [page, setPage] = useState(1);
   const [vistaActiva, setVistaActiva] = useState('tabla');
   const [agruparPor, setAgruparPor] = useState('');
   const [mostrarFiltros, setMostrarFiltros] = useState(false);
@@ -82,10 +78,11 @@ function ClientesPage() {
     { moduloId: 'clientes.lista' }
   );
 
-  // Reset page cuando cambian los filtros
-  useEffect(() => {
-    setPage(1);
-  }, [filtrosQuery]);
+  // Paginación con reset automático cuando cambian filtros
+  const { page, setPage, handlePageChange, resetPage } = usePagination({
+    limit: 20,
+    resetOnChange: [filtrosQuery],
+  });
 
   // Query de etiquetas disponibles
   const { data: etiquetasDisponibles = [] } = useEtiquetas();
@@ -107,7 +104,7 @@ function ClientesPage() {
   // Limpiar todos los filtros
   const limpiarFiltros = () => {
     resetFiltros();
-    setPage(1);
+    resetPage();
   };
 
   // Agrupar clientes (frontend) - solo si hay agrupación activa
@@ -541,7 +538,7 @@ function ClientesPage() {
                         variant="outline"
                         size="sm"
                         disabled={page <= 1}
-                        onClick={() => setPage(page - 1)}
+                        onClick={() => handlePageChange(page - 1)}
                       >
                         Anterior
                       </Button>
@@ -552,7 +549,7 @@ function ClientesPage() {
                         variant="outline"
                         size="sm"
                         disabled={page >= data.pagination.totalPaginas}
-                        onClick={() => setPage(page + 1)}
+                        onClick={() => handlePageChange(page + 1)}
                       >
                         Siguiente
                       </Button>
@@ -568,14 +565,14 @@ function ClientesPage() {
                     clientes={data?.clientes}
                     pagination={data?.pagination}
                     isLoading={isLoading}
-                    onPageChange={setPage}
+                    onPageChange={handlePageChange}
                   />
                 ) : (
                   <ClientesCardsGrid
                     clientes={data?.clientes}
                     pagination={data?.pagination}
                     isLoading={isLoading}
-                    onPageChange={setPage}
+                    onPageChange={handlePageChange}
                     onNuevoCliente={handleNuevoCliente}
                   />
                 )}

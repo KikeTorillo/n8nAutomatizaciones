@@ -19,7 +19,7 @@ import {
   Pagination,
   SkeletonTable
 } from '@/components/ui';
-import { useToast } from '@/hooks/utils';
+import { useToast, usePagination } from '@/hooks/utils';
 import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
 import {
   useAlertas,
@@ -38,7 +38,7 @@ const ITEMS_PER_PAGE = 20;
 function AlertasPage() {
   const { showToast } = useToast();
 
-  // Estado de filtros y paginación
+  // Estado de filtros
   // NOTA: soloNoLeidas controla el checkbox, luego se convierte a leida para el backend
   const [filtros, setFiltros] = useState({
     tipo_alerta: '',
@@ -48,7 +48,9 @@ function AlertasPage() {
     fecha_desde: '',
     fecha_hasta: '',
   });
-  const [page, setPage] = useState(1);
+
+  // Paginación
+  const { page, handlePageChange, resetPage } = usePagination({ limit: ITEMS_PER_PAGE });
 
   // Estado de selección
   const [alertasSeleccionadas, setAlertasSeleccionadas] = useState([]);
@@ -131,7 +133,7 @@ function AlertasPage() {
   // Handlers de filtros
   const handleFiltroChange = (campo, valor) => {
     setFiltros((prev) => ({ ...prev, [campo]: valor }));
-    setPage(1); // Reset página al cambiar filtros
+    resetPage(); // Reset página al cambiar filtros
   };
 
   const handleLimpiarFiltros = () => {
@@ -143,11 +145,7 @@ function AlertasPage() {
       fecha_desde: '',
       fecha_hasta: '',
     });
-    setPage(1);
-  };
-
-  const handlePageChange = (newPage) => {
-    setPage(newPage);
+    resetPage();
   };
 
   // Handlers de selección
@@ -211,7 +209,6 @@ function AlertasPage() {
   };
 
   const handleGenerarOC = (productoId, productoNombre) => {
-    console.log('handleGenerarOC called:', { productoId, productoNombre });
     generarOCMutation.mutate(productoId, {
       onSuccess: (orden) => {
         showToast(

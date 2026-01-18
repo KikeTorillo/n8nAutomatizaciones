@@ -47,8 +47,7 @@ function ReporteValorInventario() {
   const reporte = data || {};
 
   const handleExportar = () => {
-    // TODO: Implementar exportación
-    console.log('Exportando valor inventario...');
+    // TODO: Implementar exportación a CSV/Excel
   };
 
   if (isLoading) {

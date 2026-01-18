@@ -9,42 +9,15 @@
  * Enero 2026
  */
 import { z } from 'zod';
+import {
+  optionalString,
+  requiredString,
+  optionalDate,
+} from '@/lib/validations';
 
 // ==================== ENUMS REUTILIZABLES ====================
 
 export const TIPOS_CLIENTE_VALUES = ['persona', 'empresa'];
-
-// ==================== HELPERS ====================
-
-/**
- * Campo string opcional que acepta string vacio
- */
-const optionalString = (max = 500) =>
-  z
-    .string()
-    .max(max, `Maximo ${max} caracteres`)
-    .optional()
-    .or(z.literal(''))
-    .transform((val) => (val?.trim() ? val.trim() : undefined));
-
-/**
- * Campo string requerido con trim
- */
-const requiredString = (field, min = 2, max = 200) =>
-  z
-    .string()
-    .min(min, `${field} debe tener al menos ${min} caracteres`)
-    .max(max, `${field} no puede superar ${max} caracteres`)
-    .transform((val) => val.trim());
-
-/**
- * Campo fecha opcional (string vacio → undefined)
- */
-const optionalDate = z
-  .string()
-  .optional()
-  .or(z.literal(''))
-  .transform((val) => (val ? val : undefined));
 
 // ==================== SCHEMA PRINCIPAL ====================
 
@@ -57,9 +30,9 @@ export const clienteSchema = z
     nombre_completo: requiredString('El nombre', 2, 150),
     telefono: z
       .string()
-      .min(10, 'El telefono debe tener 10 digitos')
-      .max(10, 'El telefono debe tener 10 digitos')
-      .regex(/^[0-9]+$/, 'Solo digitos numericos')
+      .min(10, 'El teléfono debe tener 10 dígitos')
+      .max(10, 'El teléfono debe tener 10 dígitos')
+      .regex(/^[0-9]+$/, 'Solo dígitos numéricos')
       .transform((val) => val.trim()),
     email: z
       .string()
@@ -70,10 +43,10 @@ export const clienteSchema = z
           if (!val || val === '') return true;
           return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
         },
-        { message: 'El email no es valido' }
+        { message: 'El email no es válido' }
       )
       .transform((val) => (val?.trim() ? val.trim() : undefined)),
-    fecha_nacimiento: optionalDate,
+    fecha_nacimiento: optionalDate(),
 
     // Campos empresa (RFC, razon social)
     rfc: z
@@ -86,15 +59,15 @@ export const clienteSchema = z
           // RFC: 3-4 letras + 6 numeros + 3 caracteres alfanumericos
           return /^[A-ZÑ&]{3,4}[0-9]{6}[A-Z0-9]{3}$/i.test(val);
         },
-        { message: 'RFC invalido (formato: XAXX010101000)' }
+        { message: 'RFC inválido (formato: XAXX010101000)' }
       )
       .transform((val) => (val?.trim() ? val.trim().toUpperCase() : undefined)),
-    razon_social: optionalString(200),
+    razon_social: optionalString('Razón social', 0, 200),
 
     // Direccion estructurada
-    calle: optionalString(300),
-    colonia: optionalString(150),
-    ciudad: optionalString(100),
+    calle: optionalString('Calle', 0, 300),
+    colonia: optionalString('Colonia', 0, 150),
+    ciudad: optionalString('Ciudad', 0, 100),
     estado_id: z
       .string()
       .optional()
@@ -109,7 +82,7 @@ export const clienteSchema = z
           if (!val || val === '') return true;
           return /^[0-9]{5}$/.test(val);
         },
-        { message: 'El codigo postal debe ser de 5 digitos' }
+        { message: 'El código postal debe ser de 5 dígitos' }
       )
       .transform((val) => (val?.trim() ? val.trim() : undefined)),
     pais_id: z
@@ -119,10 +92,10 @@ export const clienteSchema = z
       .transform((val) => (val ? parseInt(val, 10) : 1)), // Mexico por defecto
 
     // Notas medicas / alergias
-    notas_medicas: optionalString(2000),
+    notas_medicas: optionalString('Notas médicas', 0, 2000),
 
     // Canales digitales
-    telegram_chat_id: optionalString(50),
+    telegram_chat_id: optionalString('Telegram Chat ID', 0, 50),
     whatsapp_phone: z
       .string()
       .optional()
@@ -153,7 +126,7 @@ export const clienteSchema = z
     activo: z.boolean().default(true),
 
     // Foto (URL, no archivo)
-    foto_url: optionalString(500),
+    foto_url: optionalString('URL de foto', 0, 500),
   })
   .superRefine((data, ctx) => {
     // Validacion condicional: RFC solo valido para empresas
@@ -162,7 +135,7 @@ export const clienteSchema = z
       if (!rfcPattern.test(data.rfc)) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: 'RFC invalido para empresa',
+          message: 'RFC inválido para empresa',
           path: ['rfc'],
         });
       }

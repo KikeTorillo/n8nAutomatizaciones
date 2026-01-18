@@ -1,5 +1,5 @@
 import { TrendingUp } from 'lucide-react';
-import { Input, Select } from '@/components/ui';
+import { FormGroup, Input, Select } from '@/components/ui';
 
 /**
  * Tab Inventario del formulario de producto
@@ -14,44 +14,48 @@ function ProductoFormInventarioTab({ register, errors }) {
       </h3>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <Input
-          type="number"
-          label="Stock Actual"
-          {...register('stock_actual')}
-          placeholder="0"
-          error={errors.stock_actual?.message}
-        />
+        <FormGroup label="Stock Actual" error={errors.stock_actual?.message}>
+          <Input
+            type="number"
+            {...register('stock_actual')}
+            placeholder="0"
+            hasError={!!errors.stock_actual}
+          />
+        </FormGroup>
 
-        <Input
-          type="number"
-          label="Stock Mínimo"
-          {...register('stock_minimo')}
-          placeholder="5"
-          error={errors.stock_minimo?.message}
-        />
+        <FormGroup label="Stock Mínimo" error={errors.stock_minimo?.message}>
+          <Input
+            type="number"
+            {...register('stock_minimo')}
+            placeholder="5"
+            hasError={!!errors.stock_minimo}
+          />
+        </FormGroup>
 
-        <Input
-          type="number"
-          label="Stock Máximo"
-          {...register('stock_maximo')}
-          placeholder="100"
-          error={errors.stock_maximo?.message}
-        />
+        <FormGroup label="Stock Máximo" error={errors.stock_maximo?.message}>
+          <Input
+            type="number"
+            {...register('stock_maximo')}
+            placeholder="100"
+            hasError={!!errors.stock_maximo}
+          />
+        </FormGroup>
 
-        <Select
-          label="Unidad de Medida"
-          {...register('unidad_medida')}
-          options={[
-            { value: 'unidad', label: 'Unidad' },
-            { value: 'caja', label: 'Caja' },
-            { value: 'paquete', label: 'Paquete' },
-            { value: 'pieza', label: 'Pieza' },
-            { value: 'litro', label: 'Litro' },
-            { value: 'kilogramo', label: 'Kilogramo' },
-            { value: 'metro', label: 'Metro' },
-          ]}
-          error={errors.unidad_medida?.message}
-        />
+        <FormGroup label="Unidad de Medida" error={errors.unidad_medida?.message}>
+          <Select
+            {...register('unidad_medida')}
+            options={[
+              { value: 'unidad', label: 'Unidad' },
+              { value: 'caja', label: 'Caja' },
+              { value: 'paquete', label: 'Paquete' },
+              { value: 'pieza', label: 'Pieza' },
+              { value: 'litro', label: 'Litro' },
+              { value: 'kilogramo', label: 'Kilogramo' },
+              { value: 'metro', label: 'Metro' },
+            ]}
+            hasError={!!errors.unidad_medida}
+          />
+        </FormGroup>
       </div>
     </div>
   );

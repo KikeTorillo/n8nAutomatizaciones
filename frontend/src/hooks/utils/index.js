@@ -6,6 +6,7 @@
 // UI y UX
 export * from './useToast';
 export * from './useModalManager';
+export * from './useFormModal';
 export * from './useDebounce';
 export * from './useRecordNavigation';
 
@@ -28,3 +29,9 @@ export * from './useEscapeKey';
 
 // Multi-tenant (Ene 2026 - Optimización arquitectónica)
 export * from './useMultiTenantMutation';
+
+// Confirmación de eliminación (Ene 2026 - Correcciones auditoría)
+export * from './useDeleteConfirmation.jsx';
+
+// Paginación (Ene 2026 - Correcciones auditoría)
+export * from './usePagination';

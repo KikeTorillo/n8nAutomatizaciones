@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { Controller } from 'react-hook-form';
-import { Select } from '@/components/ui';
+import { FormGroup, Select } from '@/components/ui';
 import { useUbicacionSelector } from '@/hooks/otros';
 
 /**
@@ -79,49 +79,57 @@ function SelectorUbicacion({
   return (
     <div className={containerClass}>
       {/* Selector de Estado */}
-      <Controller
-        name={estadoFieldName}
-        control={control}
-        render={({ field }) => (
-          <Select
-            {...field}
-            label="Estado"
-            placeholder={loadingEstados ? 'Cargando estados...' : 'Selecciona un estado'}
-            options={estadosOptions}
-            error={errors[estadoFieldName]?.message || (errorEstados ? 'Error cargando estados' : null)}
-            required={required}
-            disabled={disabled || loadingEstados}
-            onChange={(e) => {
-              field.onChange(e);
-              // Limpiar ciudad al cambiar estado
-              setValue(ciudadFieldName, '');
-            }}
-          />
-        )}
-      />
+      <FormGroup
+        label="Estado"
+        required={required}
+        error={errors[estadoFieldName]?.message || (errorEstados ? 'Error cargando estados' : null)}
+      >
+        <Controller
+          name={estadoFieldName}
+          control={control}
+          render={({ field }) => (
+            <Select
+              {...field}
+              placeholder={loadingEstados ? 'Cargando estados...' : 'Selecciona un estado'}
+              options={estadosOptions}
+              hasError={!!errors[estadoFieldName] || !!errorEstados}
+              disabled={disabled || loadingEstados}
+              onChange={(e) => {
+                field.onChange(e);
+                // Limpiar ciudad al cambiar estado
+                setValue(ciudadFieldName, '');
+              }}
+            />
+          )}
+        />
+      </FormGroup>
 
       {/* Selector de Ciudad */}
-      <Controller
-        name={ciudadFieldName}
-        control={control}
-        render={({ field }) => (
-          <Select
-            {...field}
-            label="Ciudad"
-            placeholder={
-              !estadoId
-                ? 'Primero selecciona un estado'
-                : loadingCiudades
-                  ? 'Cargando ciudades...'
-                  : 'Selecciona una ciudad'
-            }
-            options={ciudadesOptions}
-            error={errors[ciudadFieldName]?.message || (errorCiudades ? 'Error cargando ciudades' : null)}
-            required={required}
-            disabled={disabled || !estadoId || loadingCiudades}
-          />
-        )}
-      />
+      <FormGroup
+        label="Ciudad"
+        required={required}
+        error={errors[ciudadFieldName]?.message || (errorCiudades ? 'Error cargando ciudades' : null)}
+      >
+        <Controller
+          name={ciudadFieldName}
+          control={control}
+          render={({ field }) => (
+            <Select
+              {...field}
+              placeholder={
+                !estadoId
+                  ? 'Primero selecciona un estado'
+                  : loadingCiudades
+                    ? 'Cargando ciudades...'
+                    : 'Selecciona una ciudad'
+              }
+              options={ciudadesOptions}
+              hasError={!!errors[ciudadFieldName] || !!errorCiudades}
+              disabled={disabled || !estadoId || loadingCiudades}
+            />
+          )}
+        />
+      </FormGroup>
     </div>
   );
 }
@@ -176,33 +184,41 @@ export function SelectorUbicacionSimple({
 
   return (
     <div className={containerClass}>
-      <Select
-        value={estadoId || ''}
-        onChange={handleEstadoChange}
+      <FormGroup
         label="Estado"
-        placeholder={loadingEstados ? 'Cargando estados...' : 'Selecciona un estado'}
-        options={estadosOptions}
+        required={required}
         error={errors.estado_id}
-        required={required}
-        disabled={disabled || loadingEstados}
-      />
+      >
+        <Select
+          value={estadoId || ''}
+          onChange={handleEstadoChange}
+          placeholder={loadingEstados ? 'Cargando estados...' : 'Selecciona un estado'}
+          options={estadosOptions}
+          hasError={!!errors.estado_id}
+          disabled={disabled || loadingEstados}
+        />
+      </FormGroup>
 
-      <Select
-        value={ciudadId || ''}
-        onChange={(e) => onCiudadChange(e.target.value)}
+      <FormGroup
         label="Ciudad"
-        placeholder={
-          !estadoId
-            ? 'Primero selecciona un estado'
-            : loadingCiudades
-              ? 'Cargando ciudades...'
-              : 'Selecciona una ciudad'
-        }
-        options={ciudadesOptions}
-        error={errors.ciudad_id}
         required={required}
-        disabled={disabled || !estadoId || loadingCiudades}
-      />
+        error={errors.ciudad_id}
+      >
+        <Select
+          value={ciudadId || ''}
+          onChange={(e) => onCiudadChange(e.target.value)}
+          placeholder={
+            !estadoId
+              ? 'Primero selecciona un estado'
+              : loadingCiudades
+                ? 'Cargando ciudades...'
+                : 'Selecciona una ciudad'
+          }
+          options={ciudadesOptions}
+          hasError={!!errors.ciudad_id}
+          disabled={disabled || !estadoId || loadingCiudades}
+        />
+      </FormGroup>
     </div>
   );
 }

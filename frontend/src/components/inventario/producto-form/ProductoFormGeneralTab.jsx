@@ -1,5 +1,5 @@
 import { Package, ImageIcon, X, Loader2 } from 'lucide-react';
-import { Input, Select, Textarea } from '@/components/ui';
+import { FormGroup, Input, Select, Textarea } from '@/components/ui';
 
 /**
  * Tab General del formulario de producto
@@ -24,60 +24,65 @@ function ProductoFormGeneralTab({
           Información Básica
         </h3>
 
-        <Input
-          label="Nombre del Producto"
-          {...register('nombre')}
-          placeholder="Ej: Champú Premium 500ml"
-          error={errors.nombre?.message}
-          required
-        />
+        <FormGroup label="Nombre del Producto" error={errors.nombre?.message} required>
+          <Input
+            {...register('nombre')}
+            placeholder="Ej: Champú Premium 500ml"
+            hasError={!!errors.nombre}
+          />
+        </FormGroup>
 
-        <Textarea
-          label="Descripción"
-          {...register('descripcion')}
-          rows={3}
-          placeholder="Descripción detallada del producto"
-          error={errors.descripcion?.message}
-        />
+        <FormGroup label="Descripción" error={errors.descripcion?.message}>
+          <Textarea
+            {...register('descripcion')}
+            rows={3}
+            placeholder="Descripción detallada del producto"
+            hasError={!!errors.descripcion}
+          />
+        </FormGroup>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Input
-            label="SKU"
-            {...register('sku')}
-            placeholder="Ej: CHAMP-500"
-            error={errors.sku?.message}
-          />
+          <FormGroup label="SKU" error={errors.sku?.message}>
+            <Input
+              {...register('sku')}
+              placeholder="Ej: CHAMP-500"
+              hasError={!!errors.sku}
+            />
+          </FormGroup>
 
-          <Input
-            label="Código de Barras"
-            {...register('codigo_barras')}
-            placeholder="EAN8 o EAN13 (8-13 dígitos)"
-            error={errors.codigo_barras?.message}
-          />
+          <FormGroup label="Código de Barras" error={errors.codigo_barras?.message}>
+            <Input
+              {...register('codigo_barras')}
+              placeholder="EAN8 o EAN13 (8-13 dígitos)"
+              hasError={!!errors.codigo_barras}
+            />
+          </FormGroup>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Select
-            label="Categoría"
-            {...register('categoria_id')}
-            placeholder="Sin categoría"
-            options={categorias.map((categoria) => ({
-              value: categoria.id.toString(),
-              label: categoria.nombre,
-            }))}
-            error={errors.categoria_id?.message}
-          />
+          <FormGroup label="Categoría" error={errors.categoria_id?.message}>
+            <Select
+              {...register('categoria_id')}
+              placeholder="Sin categoría"
+              options={categorias.map((categoria) => ({
+                value: categoria.id.toString(),
+                label: categoria.nombre,
+              }))}
+              hasError={!!errors.categoria_id}
+            />
+          </FormGroup>
 
-          <Select
-            label="Proveedor"
-            {...register('proveedor_id')}
-            placeholder="Sin proveedor"
-            options={proveedores.map((proveedor) => ({
-              value: proveedor.id.toString(),
-              label: proveedor.nombre,
-            }))}
-            error={errors.proveedor_id?.message}
-          />
+          <FormGroup label="Proveedor" error={errors.proveedor_id?.message}>
+            <Select
+              {...register('proveedor_id')}
+              placeholder="Sin proveedor"
+              options={proveedores.map((proveedor) => ({
+                value: proveedor.id.toString(),
+                label: proveedor.nombre,
+              }))}
+              hasError={!!errors.proveedor_id}
+            />
+          </FormGroup>
         </div>
       </div>
 

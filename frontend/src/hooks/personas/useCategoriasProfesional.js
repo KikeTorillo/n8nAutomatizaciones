@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { STALE_TIMES } from '@/app/queryClient';
 import { categoriasProfesionalApi } from '@/services/api/endpoints';
 
 // ==================== HOOKS CRUD CATEGORÍAS PROFESIONAL ====================
@@ -23,7 +24,7 @@ export function useCategoriasProfesional(params = {}) {
       // La API retorna { data: [...], meta: {...} } sin wrapper 'categorias'
       return response.data.data || [];
     },
-    staleTime: 1000 * 60 * 5, // 5 minutos
+    staleTime: STALE_TIMES.SEMI_STATIC, // 5 minutos
   });
 }
 
@@ -39,7 +40,7 @@ export function useCategoriasAgrupadas() {
       // La API retorna { data: { area: [...], nivel: [...], ... } } directamente
       return response.data.data || {};
     },
-    staleTime: 1000 * 60 * 5,
+    staleTime: STALE_TIMES.SEMI_STATIC,
   });
 }
 
@@ -55,7 +56,7 @@ export function useCategoriaProfesional(id) {
       return response.data.data;
     },
     enabled: !!id,
-    staleTime: 1000 * 60 * 5,
+    staleTime: STALE_TIMES.SEMI_STATIC,
   });
 }
 
@@ -71,7 +72,7 @@ export function useProfesionalesDeCategoria(categoriaId) {
       return response.data.data?.profesionales || [];
     },
     enabled: !!categoriaId,
-    staleTime: 1000 * 60 * 5,
+    staleTime: STALE_TIMES.SEMI_STATIC,
   });
 }
 
@@ -95,7 +96,7 @@ export function useCrearCategoriaProfesional() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['categorias-profesional']);
+      queryClient.invalidateQueries({ queryKey: ['categorias-profesional'] });
     },
     onError: (error) => {
       const backendMessage = error.response?.data?.message;
@@ -133,8 +134,8 @@ export function useActualizarCategoriaProfesional() {
       return response.data.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries(['categoria-profesional', data.id]);
-      queryClient.invalidateQueries(['categorias-profesional']);
+      queryClient.invalidateQueries({ queryKey: ['categoria-profesional', data.id] });
+      queryClient.invalidateQueries({ queryKey: ['categorias-profesional'] });
     },
     onError: (error) => {
       const backendMessage = error.response?.data?.message;
@@ -156,7 +157,7 @@ export function useEliminarCategoriaProfesional() {
       return id;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['categorias-profesional']);
+      queryClient.invalidateQueries({ queryKey: ['categorias-profesional'] });
     },
     onError: (error) => {
       const backendMessage = error.response?.data?.message;

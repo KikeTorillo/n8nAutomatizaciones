@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import {
   Button,
+  FormGroup,
   Input,
   Modal,
   Select
@@ -236,10 +237,11 @@ function IncapacidadFormModal({ isOpen, onClose, profesionalInicial = null }) {
         </div>
 
         {/* Profesional */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Profesional <span className="text-red-500">*</span>
-          </label>
+        <FormGroup
+          label="Profesional"
+          required
+          error={errors.profesional_id?.message}
+        >
           <Controller
             name="profesional_id"
             control={control}
@@ -249,35 +251,32 @@ function IncapacidadFormModal({ isOpen, onClose, profesionalInicial = null }) {
                 options={opcionesProfesionales}
                 placeholder="Selecciona un profesional"
                 disabled={isLoadingProfesionales || !!profesionalInicial}
-                error={errors.profesional_id?.message}
+                hasError={!!errors.profesional_id}
               />
             )}
           />
-          {errors.profesional_id && (
-            <p className="mt-1 text-sm text-red-500">{errors.profesional_id.message}</p>
-          )}
-        </div>
+        </FormGroup>
 
         {/* Tipo de incapacidad */}
         <div className="space-y-3">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-            Tipo de Incapacidad <span className="text-red-500">*</span>
-          </label>
-          <Controller
-            name="tipo_incapacidad"
-            control={control}
-            render={({ field }) => (
-              <Select
-                {...field}
-                options={opcionesTipos}
-                placeholder="Selecciona el tipo"
-                error={errors.tipo_incapacidad?.message}
-              />
-            )}
-          />
-          {errors.tipo_incapacidad && (
-            <p className="mt-1 text-sm text-red-500">{errors.tipo_incapacidad.message}</p>
-          )}
+          <FormGroup
+            label="Tipo de Incapacidad"
+            required
+            error={errors.tipo_incapacidad?.message}
+          >
+            <Controller
+              name="tipo_incapacidad"
+              control={control}
+              render={({ field }) => (
+                <Select
+                  {...field}
+                  options={opcionesTipos}
+                  placeholder="Selecciona el tipo"
+                  hasError={!!errors.tipo_incapacidad}
+                />
+              )}
+            />
+          </FormGroup>
 
           {/* Info del tipo seleccionado */}
           {tipoIncapacidad && (
@@ -286,82 +285,64 @@ function IncapacidadFormModal({ isOpen, onClose, profesionalInicial = null }) {
         </div>
 
         {/* Folio IMSS */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Folio IMSS <span className="text-red-500">*</span>
-          </label>
+        <FormGroup
+          label="Folio IMSS"
+          required
+          error={errors.folio_imss?.message}
+          helper="Numero de folio asignado por el IMSS"
+        >
           <Input
             {...register('folio_imss')}
             placeholder="Ej: ABC123456"
-            error={errors.folio_imss?.message}
+            hasError={!!errors.folio_imss}
           />
-          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-            Número de folio asignado por el IMSS
-          </p>
-          {errors.folio_imss && (
-            <p className="mt-1 text-sm text-red-500">{errors.folio_imss.message}</p>
-          )}
-        </div>
+        </FormGroup>
 
         {/* Fechas */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Fecha de inicio <span className="text-red-500">*</span>
-            </label>
+          <FormGroup
+            label="Fecha de inicio"
+            required
+            error={errors.fecha_inicio?.message}
+          >
             <Input
               type="date"
               {...register('fecha_inicio')}
-              error={errors.fecha_inicio?.message}
+              hasError={!!errors.fecha_inicio}
             />
-            {errors.fecha_inicio && (
-              <p className="mt-1 text-sm text-red-500">{errors.fecha_inicio.message}</p>
-            )}
-          </div>
+          </FormGroup>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Fecha de fin <span className="text-red-500">*</span>
-            </label>
+          <FormGroup
+            label="Fecha de fin"
+            required
+            error={errors.fecha_fin?.message}
+            helper={tipoIncapacidad === 'maternidad' ? 'Calculada automaticamente (84 dias)' : undefined}
+          >
             <Input
               type="date"
               {...register('fecha_fin')}
               min={fechaInicio || undefined}
               disabled={tipoIncapacidad === 'maternidad'}
-              error={errors.fecha_fin?.message}
+              hasError={!!errors.fecha_fin}
             />
-            {tipoIncapacidad === 'maternidad' && (
-              <p className="mt-1 text-xs text-gray-500">
-                Calculada automáticamente (84 días)
-              </p>
-            )}
-            {errors.fecha_fin && (
-              <p className="mt-1 text-sm text-red-500">{errors.fecha_fin.message}</p>
-            )}
-          </div>
+          </FormGroup>
         </div>
 
         {/* Días autorizados */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Días autorizados <span className="text-red-500">*</span>
-          </label>
+        <FormGroup
+          label="Dias autorizados"
+          required
+          error={errors.dias_autorizados?.message}
+          helper={diasCalculados > 0 ? `Calculado: ${diasCalculados} dias segun las fechas` : undefined}
+        >
           <Input
             type="number"
             {...register('dias_autorizados')}
             min={1}
             max={365}
-            error={errors.dias_autorizados?.message}
+            hasError={!!errors.dias_autorizados}
           />
-          {diasCalculados > 0 && (
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              Calculado: {diasCalculados} días según las fechas
-            </p>
-          )}
-          {errors.dias_autorizados && (
-            <p className="mt-1 text-sm text-red-500">{errors.dias_autorizados.message}</p>
-          )}
-        </div>
+        </FormGroup>
 
         {/* Diagnóstico */}
         <div>

@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { STALE_TIMES } from '@/app/queryClient';
 import { websiteApi } from '@/services/api/endpoints';
 import useAuthStore, { selectIsAuthenticated } from '@/store/authStore';
 
@@ -32,7 +33,7 @@ export function useWebsiteConfig() {
       return response.data.data;
     },
     enabled: isAuthenticated,
-    staleTime: 1000 * 60 * 5,
+    staleTime: STALE_TIMES.SEMI_STATIC,
   });
 }
 
@@ -47,7 +48,7 @@ export function useVerificarSlug(slug, excludeId) {
       return response.data.data;
     },
     enabled: !!slug && slug.length >= 3,
-    staleTime: 1000 * 30,
+    staleTime: STALE_TIMES.REAL_TIME,
   });
 }
 
@@ -66,7 +67,7 @@ export function useWebsitePaginas() {
       return response.data.data;
     },
     enabled: isAuthenticated,
-    staleTime: 1000 * 60 * 2,
+    staleTime: STALE_TIMES.DYNAMIC,
   });
 }
 
@@ -101,7 +102,7 @@ export function useWebsiteBloques(paginaId) {
       return response.data.data;
     },
     enabled: isAuthenticated && !!paginaId,
-    staleTime: 1000 * 60,
+    staleTime: STALE_TIMES.FREQUENT,
   });
 }
 
@@ -115,7 +116,7 @@ export function useTiposBloques() {
       const response = await websiteApi.listarTiposBloques();
       return response.data.data;
     },
-    staleTime: 1000 * 60 * 30,
+    staleTime: STALE_TIMES.LONG,
   });
 }
 
@@ -130,7 +131,7 @@ export function useDefaultBloque(tipo) {
       return response.data.data;
     },
     enabled: !!tipo,
-    staleTime: 1000 * 60 * 30,
+    staleTime: STALE_TIMES.LONG,
   });
 }
 

@@ -10,6 +10,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { STALE_TIMES } from '@/app/queryClient';
 import { clientesApi } from '@/services/api/endpoints';
 
 // Colores predefinidos para el selector
@@ -34,7 +35,7 @@ export function useEtiquetas(params = {}) {
       const response = await clientesApi.listarEtiquetas(params);
       return response.data.data;
     },
-    staleTime: 1000 * 60 * 5, // 5 minutos
+    staleTime: STALE_TIMES.SEMI_STATIC, // 5 minutos
   });
 }
 
@@ -49,7 +50,7 @@ export function useEtiqueta(id) {
       return response.data.data;
     },
     enabled: !!id,
-    staleTime: 1000 * 60 * 5,
+    staleTime: STALE_TIMES.SEMI_STATIC,
   });
 }
 
@@ -65,7 +66,7 @@ export function useCrearEtiqueta() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['etiquetas-clientes']);
+      queryClient.invalidateQueries({ queryKey: ['etiquetas-clientes'] });
     },
     onError: (error) => {
       const backendMessage = error.response?.data?.message;
@@ -100,8 +101,8 @@ export function useActualizarEtiqueta() {
       return response.data.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries(['etiqueta-cliente', data.id]);
-      queryClient.invalidateQueries(['etiquetas-clientes']);
+      queryClient.invalidateQueries({ queryKey: ['etiqueta-cliente', data.id] });
+      queryClient.invalidateQueries({ queryKey: ['etiquetas-clientes'] });
     },
     onError: (error) => {
       const backendMessage = error.response?.data?.message;
@@ -136,7 +137,7 @@ export function useEliminarEtiqueta() {
       return id;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['etiquetas-clientes']);
+      queryClient.invalidateQueries({ queryKey: ['etiquetas-clientes'] });
     },
     onError: (error) => {
       const backendMessage = error.response?.data?.message;
@@ -173,7 +174,7 @@ export function useEtiquetasCliente(clienteId) {
       return response.data.data;
     },
     enabled: !!clienteId,
-    staleTime: 1000 * 60 * 2, // 2 minutos
+    staleTime: STALE_TIMES.DYNAMIC, // 2 minutos
   });
 }
 
@@ -190,13 +191,13 @@ export function useAsignarEtiquetasCliente() {
     },
     onSuccess: (data, variables) => {
       // Invalidar etiquetas del cliente
-      queryClient.invalidateQueries(['cliente-etiquetas', variables.clienteId]);
+      queryClient.invalidateQueries({ queryKey: ['cliente-etiquetas', variables.clienteId] });
       // Invalidar cliente específico (tiene etiquetas en la respuesta)
-      queryClient.invalidateQueries(['cliente', variables.clienteId]);
+      queryClient.invalidateQueries({ queryKey: ['cliente', variables.clienteId] });
       // Invalidar lista de clientes (incluye etiquetas)
-      queryClient.invalidateQueries(['clientes']);
+      queryClient.invalidateQueries({ queryKey: ['clientes'] });
       // Invalidar contadores de etiquetas
-      queryClient.invalidateQueries(['etiquetas-clientes']);
+      queryClient.invalidateQueries({ queryKey: ['etiquetas-clientes'] });
     },
     onError: (error) => {
       const backendMessage = error.response?.data?.message;
@@ -221,10 +222,10 @@ export function useAgregarEtiquetaCliente() {
       return response.data.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries(['cliente-etiquetas', variables.clienteId]);
-      queryClient.invalidateQueries(['cliente', variables.clienteId]);
-      queryClient.invalidateQueries(['clientes']);
-      queryClient.invalidateQueries(['etiquetas-clientes']);
+      queryClient.invalidateQueries({ queryKey: ['cliente-etiquetas', variables.clienteId] });
+      queryClient.invalidateQueries({ queryKey: ['cliente', variables.clienteId] });
+      queryClient.invalidateQueries({ queryKey: ['clientes'] });
+      queryClient.invalidateQueries({ queryKey: ['etiquetas-clientes'] });
     },
   });
 }
@@ -241,10 +242,10 @@ export function useQuitarEtiquetaCliente() {
       return response.data.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries(['cliente-etiquetas', variables.clienteId]);
-      queryClient.invalidateQueries(['cliente', variables.clienteId]);
-      queryClient.invalidateQueries(['clientes']);
-      queryClient.invalidateQueries(['etiquetas-clientes']);
+      queryClient.invalidateQueries({ queryKey: ['cliente-etiquetas', variables.clienteId] });
+      queryClient.invalidateQueries({ queryKey: ['cliente', variables.clienteId] });
+      queryClient.invalidateQueries({ queryKey: ['clientes'] });
+      queryClient.invalidateQueries({ queryKey: ['etiquetas-clientes'] });
     },
   });
 }

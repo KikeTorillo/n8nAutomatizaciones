@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { inventarioApi } from '@/services/api/endpoints';
+import { STALE_TIMES } from '@/app/queryClient';
 
 /**
  * Hook para listar atributos de producto
@@ -12,7 +13,7 @@ export function useAtributos(params = {}) {
       const response = await inventarioApi.listarAtributos(params);
       return response.data.data || [];
     },
-    staleTime: 1000 * 60 * 10, // 10 minutos (atributos cambian poco)
+    staleTime: STALE_TIMES.STATIC_DATA, // 10 minutos (atributos cambian poco)
   });
 }
 
@@ -27,7 +28,7 @@ export function useAtributo(id) {
       return response.data.data;
     },
     enabled: !!id,
-    staleTime: 1000 * 60 * 10,
+    staleTime: STALE_TIMES.STATIC_DATA,
   });
 }
 

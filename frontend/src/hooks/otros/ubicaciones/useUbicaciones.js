@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { STALE_TIMES } from '@/app/queryClient';
 import { ubicacionesApi } from '@/services/api/endpoints';
 
 /**
@@ -31,7 +32,7 @@ export function usePaises() {
       const response = await ubicacionesApi.listarPaises();
       return response.data.data.paises;
     },
-    staleTime: 1000 * 60 * 60, // 1 hora (datos estáticos)
+    staleTime: STALE_TIMES.VERY_STATIC, // 1 hora (datos estáticos)
   });
 }
 
@@ -61,7 +62,7 @@ export function useEstadosMexico() {
       const response = await ubicacionesApi.listarEstadosMexico();
       return response.data.data.estados;
     },
-    staleTime: 1000 * 60 * 60, // 1 hora
+    staleTime: STALE_TIMES.VERY_STATIC, // 1 hora
   });
 }
 
@@ -77,7 +78,7 @@ export function useEstadosPorPais(paisId) {
       return response.data.data.estados;
     },
     enabled: !!paisId,
-    staleTime: 1000 * 60 * 60,
+    staleTime: STALE_TIMES.VERY_STATIC,
   });
 }
 
@@ -93,7 +94,7 @@ export function useEstado(id) {
       return response.data.data;
     },
     enabled: !!id,
-    staleTime: 1000 * 60 * 60,
+    staleTime: STALE_TIMES.VERY_STATIC,
   });
 }
 
@@ -112,7 +113,7 @@ export function useCiudadesPorEstado(estadoId, principales = false) {
       return response.data.data.ciudades;
     },
     enabled: !!estadoId,
-    staleTime: 1000 * 60 * 30, // 30 minutos
+    staleTime: STALE_TIMES.LONG, // 30 minutos
   });
 }
 
@@ -127,7 +128,7 @@ export function useCiudadesPrincipales(limite = 50) {
       const response = await ubicacionesApi.listarCiudadesPrincipales(limite);
       return response.data.data.ciudades;
     },
-    staleTime: 1000 * 60 * 60, // 1 hora
+    staleTime: STALE_TIMES.VERY_STATIC, // 1 hora
   });
 }
 
@@ -143,7 +144,7 @@ export function useCiudad(id) {
       return response.data.data;
     },
     enabled: !!id,
-    staleTime: 1000 * 60 * 60,
+    staleTime: STALE_TIMES.VERY_STATIC,
   });
 }
 
@@ -159,7 +160,7 @@ export function useUbicacionCompleta(ciudadId) {
       return response.data.data;
     },
     enabled: !!ciudadId,
-    staleTime: 1000 * 60 * 60,
+    staleTime: STALE_TIMES.VERY_STATIC,
   });
 }
 

@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { STALE_TIMES } from '@/app/queryClient';
 import { tiposBloqueoApi } from '@/services/api/endpoints';
 import { useToast } from '@/hooks/utils';
 
@@ -27,7 +28,7 @@ export const useTiposBloqueo = (filtros = {}) => {
       const response = await tiposBloqueoApi.listar(filtros);
       return response.data.data; // Extraer el objeto data interno que contiene tipos, total, filtros_aplicados
     },
-    staleTime: 5 * 60 * 1000, // 5 minutos (los tipos de bloqueo no cambian frecuentemente)
+    staleTime: STALE_TIMES.SEMI_STATIC, // 5 minutos (los tipos de bloqueo no cambian frecuentemente)
   });
 };
 

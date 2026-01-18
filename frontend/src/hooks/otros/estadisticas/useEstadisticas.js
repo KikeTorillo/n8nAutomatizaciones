@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { STALE_TIMES } from '@/app/queryClient';
 import { organizacionesApi, serviciosApi, bloqueosApi } from '@/services/api/endpoints';
 import useAuthStore, { selectUser } from '@/store/authStore';
 import { aFormatoISO } from '@/utils/dateHelpers';
@@ -28,7 +29,7 @@ export function useEstadisticasOrganizacion() {
       return response.data.data;
     },
     enabled: !!user?.organizacion_id,
-    staleTime: 1000 * 60, // 1 minuto de cache
+    staleTime: STALE_TIMES.FREQUENT, // 1 minuto de cache
   });
 }
 
@@ -47,7 +48,7 @@ export function useServiciosDashboard() {
       // Backend retorna: { data: { servicios: [...], ... } }
       return response.data.data.servicios || [];
     },
-    staleTime: 1000 * 60 * 2, // 2 minutos de cache
+    staleTime: STALE_TIMES.DYNAMIC, // 2 minutos de cache
   });
 }
 
@@ -74,6 +75,6 @@ export function useBloqueosDashboard() {
       // Backend retorna: { data: { bloqueos: [...], paginacion: {...} } }
       return response.data.data?.bloqueos || [];
     },
-    staleTime: 1000 * 60 * 5, // 5 minutos
+    staleTime: STALE_TIMES.SEMI_STATIC, // 5 minutos
   });
 }

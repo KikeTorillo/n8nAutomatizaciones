@@ -5,6 +5,7 @@ import { HelmetProvider } from 'react-helmet-async';
 import { Toaster } from 'sonner';
 import { queryClient } from './queryClient';
 import { ToastContainer } from '@/components/ui';
+import GlobalErrorBoundary from '@/components/common/GlobalErrorBoundary';
 import SetupGuard from '@/components/auth/SetupGuard';
 import useAuthStore, { selectIsAuthenticated, selectSetUser } from '@/store/authStore';
 import useThemeStore, { selectApplyTheme, selectInitSystemListener } from '@/store/themeStore';
@@ -44,13 +45,15 @@ function App() {
   return (
     <HelmetProvider>
       <QueryClientProvider client={queryClient}>
-        <SetupGuard>
-          <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors">
-            <Outlet />
-            <ToastContainer />
-            <Toaster position="top-center" richColors closeButton theme="system" />
-          </div>
-        </SetupGuard>
+        <GlobalErrorBoundary>
+          <SetupGuard>
+            <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors">
+              <Outlet />
+              <ToastContainer />
+              <Toaster position="top-center" richColors closeButton theme="system" />
+            </div>
+          </SetupGuard>
+        </GlobalErrorBoundary>
       </QueryClientProvider>
     </HelmetProvider>
   );

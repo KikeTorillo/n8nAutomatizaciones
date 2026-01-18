@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { STALE_TIMES } from '@/app/queryClient';
 import { clientesApi, citasApi } from '@/services/api/endpoints';
 import { sanitizeParams } from '@/lib/params';
 
@@ -15,7 +16,7 @@ export function useClientes(params = {}) {
         pagination: response.data.pagination,
       };
     },
-    staleTime: 1000 * 60 * 5, // 5 minutos
+    staleTime: STALE_TIMES.SEMI_STATIC, // 5 minutos
     keepPreviousData: true, // Mantener datos anteriores durante cambio de página
   });
 }
@@ -31,7 +32,7 @@ export function useCliente(id) {
       return response.data.data;
     },
     enabled: !!id,
-    staleTime: 1000 * 60 * 5,
+    staleTime: STALE_TIMES.SEMI_STATIC,
   });
 }
 
@@ -46,7 +47,7 @@ export function useBuscarClientes(termino, options = {}) {
       return response.data.data;
     },
     enabled: termino.length >= 2, // Solo buscar si hay al menos 2 caracteres
-    staleTime: 1000 * 60 * 2, // 2 minutos - Ene 2026: aumentado para reducir requests
+    staleTime: STALE_TIMES.DYNAMIC, // 2 minutos - Ene 2026: aumentado para reducir requests
   });
 }
 
@@ -61,7 +62,7 @@ export function useBuscarPorTelefono(telefono, enabled = false) {
       return response.data.data;
     },
     enabled: enabled && telefono.length >= 10,
-    staleTime: 1000 * 60 * 2, // 2 minutos - Ene 2026: aumentado para reducir requests
+    staleTime: STALE_TIMES.DYNAMIC, // 2 minutos - Ene 2026: aumentado para reducir requests
   });
 }
 
@@ -78,7 +79,7 @@ export function useCrearCliente() {
     },
     onSuccess: () => {
       // Invalidar lista de clientes para refrescar
-      queryClient.invalidateQueries(['clientes']);
+      queryClient.invalidateQueries({ queryKey: ['clientes'] });
     },
     onError: (error) => {
       // Priorizar mensaje del backend si existe
@@ -119,8 +120,8 @@ export function useActualizarCliente() {
     },
     onSuccess: (data) => {
       // Invalidar cache del cliente específico y la lista
-      queryClient.invalidateQueries(['cliente', data.id]);
-      queryClient.invalidateQueries(['clientes']);
+      queryClient.invalidateQueries({ queryKey: ['cliente', data.id] });
+      queryClient.invalidateQueries({ queryKey: ['clientes'] });
     },
     onError: (error) => {
       // Priorizar mensaje del backend si existe
@@ -156,7 +157,7 @@ export function useEliminarCliente() {
       return id;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['clientes']);
+      queryClient.invalidateQueries({ queryKey: ['clientes'] });
     },
     onError: (error) => {
       // Priorizar mensaje del backend si existe
@@ -192,8 +193,8 @@ export function useCrearWalkIn() {
     },
     onSuccess: () => {
       // Invalidar citas y clientes
-      queryClient.invalidateQueries(['citas']);
-      queryClient.invalidateQueries(['citas-del-dia']);
+      queryClient.invalidateQueries({ queryKey: ['citas'] });
+      queryClient.invalidateQueries({ queryKey: ['citas-del-dia'] });
     },
   });
 }
@@ -212,7 +213,7 @@ export function useDisponibilidadInmediata(servicioId, profesionalId = null) {
       return response.data.data;
     },
     enabled: !!servicioId,
-    staleTime: 1000 * 60, // 1 minuto
+    staleTime: STALE_TIMES.FREQUENT, // 1 minuto
     refetchInterval: 1000 * 60, // Refetch cada minuto
   });
 }
@@ -227,7 +228,7 @@ export function useEstadisticasClientes() {
       const response = await clientesApi.obtenerEstadisticas();
       return response.data.data;
     },
-    staleTime: 1000 * 60 * 5, // 5 minutos
+    staleTime: STALE_TIMES.SEMI_STATIC, // 5 minutos
   });
 }
 
@@ -244,7 +245,7 @@ export function useEstadisticasCliente(clienteId) {
       return response.data.data;
     },
     enabled: !!clienteId,
-    staleTime: 1000 * 60 * 2, // 2 minutos
+    staleTime: STALE_TIMES.DYNAMIC, // 2 minutos
   });
 }
 
@@ -261,8 +262,8 @@ export function useImportarClientesCSV() {
       return response.data.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries(['clientes']);
-      queryClient.invalidateQueries(['clientes-estadisticas']);
+      queryClient.invalidateQueries({ queryKey: ['clientes'] });
+      queryClient.invalidateQueries({ queryKey: ['clientes-estadisticas'] });
     },
     onError: (error) => {
       const message = error.response?.data?.message || 'Error al importar clientes';

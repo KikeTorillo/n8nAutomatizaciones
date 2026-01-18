@@ -11,7 +11,7 @@ import {
   GraduationCap,
 } from 'lucide-react';
 
-import { Button, ConfirmDialog, Input } from '@/components/ui';
+import { Button, ConfirmDialog, FormGroup, Input } from '@/components/ui';
 import {
   ConfigPageHeader,
   ConfigSearchBar,
@@ -288,17 +288,15 @@ function CategoriasPage() {
         isLoading={isSubmitting}
         isEditing={isEditing}
       >
-        <Input
-          label="Nombre"
-          placeholder="Ej: Corte Clásico"
-          error={errors.nombre?.message}
-          {...register('nombre', { required: 'El nombre es requerido' })}
-        />
+        <FormGroup label="Nombre" error={errors.nombre?.message} required>
+          <Input
+            placeholder="Ej: Corte Clasico"
+            hasError={!!errors.nombre}
+            {...register('nombre', { required: 'El nombre es requerido' })}
+          />
+        </FormGroup>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Tipo de Categoría
-          </label>
+        <FormGroup label="Tipo de Categoria">
           <select
             {...register('tipo_categoria')}
             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500"
@@ -307,25 +305,19 @@ function CategoriasPage() {
               <option key={opt.value} value={opt.value}>{opt.label}</option>
             ))}
           </select>
-        </div>
+        </FormGroup>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Descripción (Opcional)
-          </label>
+        <FormGroup label="Descripcion (Opcional)">
           <textarea
             {...register('descripcion')}
             rows={3}
-            placeholder="Descripción de la categoría..."
+            placeholder="Descripcion de la categoria..."
             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500"
           />
-        </div>
+        </FormGroup>
 
         <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Color
-            </label>
+          <FormGroup label="Color">
             <div className="flex items-center gap-2">
               <input
                 type="color"
@@ -334,20 +326,22 @@ function CategoriasPage() {
               />
               <span className="text-sm text-gray-500">{colorSeleccionado}</span>
             </div>
-          </div>
-          <Input
-            label="Orden"
-            type="number"
-            placeholder="0"
-            {...register('orden')}
-          />
+          </FormGroup>
+          <FormGroup label="Orden">
+            <Input
+              type="number"
+              placeholder="0"
+              {...register('orden')}
+            />
+          </FormGroup>
         </div>
 
-        <Input
-          label="Icono (Opcional)"
-          placeholder="Nombre del icono Lucide"
-          {...register('icono')}
-        />
+        <FormGroup label="Icono (Opcional)">
+          <Input
+            placeholder="Nombre del icono Lucide"
+            {...register('icono')}
+          />
+        </FormGroup>
 
         <div className="flex items-center gap-2">
           <input

@@ -17,8 +17,7 @@ import NoShowModal from '@/components/citas/NoShowModal';
 import CancelarCitaModal from '@/components/citas/CancelarCitaModal';
 import CalendarioMensual from '@/components/citas/CalendarioMensual';
 import AgendamientoPageLayout from '@/components/agendamiento/AgendamientoPageLayout';
-import { useModalManager } from '@/hooks/utils';
-import { useFilters } from '@/hooks/utils';
+import { useModalManager, useFilters, usePagination } from '@/hooks/utils';
 import {
   useCitas,
   useCitasDelDia,
@@ -42,8 +41,7 @@ function CitasPage() {
   // Estado de vista activa (lista o calendario)
   const [vistaActiva, setVistaActiva] = useState('lista'); // 'lista' o 'calendario'
 
-  // Estado de paginación
-  const [page, setPage] = useState(1);
+  // Constante de items por página
   const ITEMS_PER_PAGE = 20;
 
   // Estado de filtros con persistencia usando useFilters
@@ -64,6 +62,12 @@ function CitasPage() {
     },
     { moduloId: 'agendamiento.citas' }
   );
+
+  // Paginación con reset automático cuando cambian filtros
+  const { page, handlePageChange, resetPage } = usePagination({
+    limit: ITEMS_PER_PAGE,
+    resetOnChange: [filtrosQuery],
+  });
 
   // Estado de modales centralizado con useModalManager
   const {
@@ -119,20 +123,14 @@ function CitasPage() {
   const confirmarMutation = useConfirmarCita();
   const iniciarMutation = useIniciarCita();
 
-  // Handlers de filtros (useFilters maneja la persistencia)
+  // Handlers de filtros (useFilters maneja la persistencia, usePagination resetea automáticamente)
   const handleFiltrosChange = (nuevosFiltros) => {
     setFiltros(nuevosFiltros);
-    setPage(1); // Resetear a página 1 al cambiar filtros
   };
 
   const handleLimpiarFiltros = () => {
     limpiarFiltros();
-    setPage(1); // Resetear a página 1 al limpiar filtros
-  };
-
-  // Handler de paginación
-  const handlePageChange = (newPage) => {
-    setPage(newPage);
+    resetPage();
   };
 
   // Handlers de acciones

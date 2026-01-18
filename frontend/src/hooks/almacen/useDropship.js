@@ -5,6 +5,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { STALE_TIMES } from '@/app/queryClient';
 import { dropshipApi } from '@/services/api/endpoints';
 import { useToast } from '@/hooks/utils';
 
@@ -20,7 +21,7 @@ export function useDropshipEstadisticas() {
       const response = await dropshipApi.obtenerEstadisticas();
       return response.data.data;
     },
-    staleTime: 1000 * 60, // 1 minuto
+    staleTime: STALE_TIMES.FREQUENT, // 1 minuto
   });
 }
 
@@ -34,7 +35,7 @@ export function useDropshipConfiguracion() {
       const response = await dropshipApi.obtenerConfiguracion();
       return response.data.data;
     },
-    staleTime: 1000 * 60 * 5, // 5 minutos
+    staleTime: STALE_TIMES.SEMI_STATIC, // 5 minutos
   });
 }
 
@@ -48,7 +49,7 @@ export function useVentasPendientesDropship() {
       const response = await dropshipApi.obtenerVentasPendientes();
       return response.data.data;
     },
-    staleTime: 1000 * 30, // 30 segundos
+    staleTime: STALE_TIMES.REAL_TIME, // 30 segundos
   });
 }
 
@@ -63,7 +64,7 @@ export function useOrdenesDropship(filtros = {}) {
       const response = await dropshipApi.listarOrdenes(filtros);
       return response.data.data;
     },
-    staleTime: 1000 * 30,
+    staleTime: STALE_TIMES.REAL_TIME,
   });
 }
 

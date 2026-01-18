@@ -142,14 +142,14 @@ function TestimoniosEditor({ contenido, onGuardar, tema, isSaving }) {
                     value={testimonio.autor}
                     onChange={(e) => handleChange(index, 'autor', e.target.value)}
                     placeholder="Nombre del cliente"
-                    inputSize="sm"
+                    size="sm"
                     className="dark:bg-gray-600 dark:border-gray-500 dark:text-gray-100"
                   />
                   <Input
                     value={testimonio.cargo}
                     onChange={(e) => handleChange(index, 'cargo', e.target.value)}
                     placeholder="Cargo o ubicación"
-                    inputSize="sm"
+                    size="sm"
                     className="dark:bg-gray-600 dark:border-gray-500 dark:text-gray-100"
                   />
                 </div>
@@ -179,7 +179,7 @@ function TestimoniosEditor({ contenido, onGuardar, tema, isSaving }) {
                     value={testimonio.foto}
                     onChange={(e) => handleChange(index, 'foto', e.target.value)}
                     placeholder="URL foto (opcional)"
-                    inputSize="sm"
+                    size="sm"
                     className="flex-1 dark:bg-gray-600 dark:border-gray-500 dark:text-gray-100"
                   />
                 </div>

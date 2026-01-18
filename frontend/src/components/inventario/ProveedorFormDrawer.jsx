@@ -7,6 +7,7 @@ import {
   Button,
   Checkbox,
   Drawer,
+  FormGroup,
   Input,
   Select,
   Textarea
@@ -260,28 +261,30 @@ function ProveedorFormDrawer({ isOpen, onClose, proveedor = null, mode = 'create
           </h3>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Input
-              label="Nombre Comercial"
-              {...register('nombre')}
-              placeholder="Ej: Distribuidora ABC"
-              error={errors.nombre?.message}
-              required
-            />
+            <FormGroup label="Nombre Comercial" error={errors.nombre?.message} required>
+              <Input
+                {...register('nombre')}
+                placeholder="Ej: Distribuidora ABC"
+                hasError={!!errors.nombre}
+              />
+            </FormGroup>
 
-            <Input
-              label="Razón Social"
-              {...register('razon_social')}
-              placeholder="Ej: ABC Distribuidora S.A. de C.V."
-              error={errors.razon_social?.message}
-            />
+            <FormGroup label="Razon Social" error={errors.razon_social?.message}>
+              <Input
+                {...register('razon_social')}
+                placeholder="Ej: ABC Distribuidora S.A. de C.V."
+                hasError={!!errors.razon_social}
+              />
+            </FormGroup>
 
-            <Input
-              label="RFC"
-              {...register('rfc')}
-              placeholder="Ej: XAXX010101000"
-              maxLength={13}
-              error={errors.rfc?.message}
-            />
+            <FormGroup label="RFC" error={errors.rfc?.message}>
+              <Input
+                {...register('rfc')}
+                placeholder="Ej: XAXX010101000"
+                maxLength={13}
+                hasError={!!errors.rfc}
+              />
+            </FormGroup>
           </div>
         </div>
 
@@ -293,29 +296,32 @@ function ProveedorFormDrawer({ isOpen, onClose, proveedor = null, mode = 'create
           </h3>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <Input
-              type="tel"
-              label="Teléfono"
-              {...register('telefono')}
-              placeholder="Ej: +52 55 1234 5678"
-              error={errors.telefono?.message}
-            />
+            <FormGroup label="Telefono" error={errors.telefono?.message}>
+              <Input
+                type="tel"
+                {...register('telefono')}
+                placeholder="Ej: +52 55 1234 5678"
+                hasError={!!errors.telefono}
+              />
+            </FormGroup>
 
-            <Input
-              type="email"
-              label="Email"
-              {...register('email')}
-              placeholder="contacto@proveedor.com"
-              error={errors.email?.message}
-            />
+            <FormGroup label="Email" error={errors.email?.message}>
+              <Input
+                type="email"
+                {...register('email')}
+                placeholder="contacto@proveedor.com"
+                hasError={!!errors.email}
+              />
+            </FormGroup>
 
-            <Input
-              type="url"
-              label="Sitio Web"
-              {...register('sitio_web')}
-              placeholder="https://proveedor.com"
-              error={errors.sitio_web?.message}
-            />
+            <FormGroup label="Sitio Web" error={errors.sitio_web?.message}>
+              <Input
+                type="url"
+                {...register('sitio_web')}
+                placeholder="https://proveedor.com"
+                hasError={!!errors.sitio_web}
+              />
+            </FormGroup>
           </div>
         </div>
 
@@ -327,84 +333,89 @@ function ProveedorFormDrawer({ isOpen, onClose, proveedor = null, mode = 'create
           </h3>
 
           <div className="space-y-4">
-            {/* Fila 1: País, Estado, Ciudad, CP */}
+            {/* Fila 1: Pais, Estado, Ciudad, CP */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <Select
-                label="País"
-                value={paisIdSeleccionado || ''}
-                onChange={(e) => {
-                  const paisId = e.target.value ? Number(e.target.value) : null;
-                  setPaisIdSeleccionado(paisId);
-                  setEstadoIdSeleccionado(null);
-                  setCiudadIdSeleccionado(null);
-                }}
-                disabled={loadingPaises}
-                placeholder="Seleccionar país"
-              >
-                <option value="">Seleccionar país</option>
-                {paises.map((pais) => (
-                  <option key={pais.id} value={pais.id}>
-                    {pais.nombre}
-                  </option>
-                ))}
-              </Select>
+              <FormGroup label="Pais">
+                <Select
+                  value={paisIdSeleccionado || ''}
+                  onChange={(e) => {
+                    const paisId = e.target.value ? Number(e.target.value) : null;
+                    setPaisIdSeleccionado(paisId);
+                    setEstadoIdSeleccionado(null);
+                    setCiudadIdSeleccionado(null);
+                  }}
+                  disabled={loadingPaises}
+                  placeholder="Seleccionar pais"
+                >
+                  <option value="">Seleccionar pais</option>
+                  {paises.map((pais) => (
+                    <option key={pais.id} value={pais.id}>
+                      {pais.nombre}
+                    </option>
+                  ))}
+                </Select>
+              </FormGroup>
 
-              <Select
-                label="Estado"
-                value={estadoIdSeleccionado || ''}
-                onChange={(e) => {
-                  const estadoId = e.target.value ? Number(e.target.value) : null;
-                  setEstadoIdSeleccionado(estadoId);
-                  setCiudadIdSeleccionado(null);
-                }}
-                disabled={!paisIdSeleccionado || loadingEstados}
-              >
-                <option value="">
-                  {loadingEstados ? 'Cargando...' : 'Seleccionar estado'}
-                </option>
-                {estados.map((estado) => (
-                  <option key={estado.id} value={estado.id}>
-                    {estado.nombre_corto || estado.nombre}
+              <FormGroup label="Estado">
+                <Select
+                  value={estadoIdSeleccionado || ''}
+                  onChange={(e) => {
+                    const estadoId = e.target.value ? Number(e.target.value) : null;
+                    setEstadoIdSeleccionado(estadoId);
+                    setCiudadIdSeleccionado(null);
+                  }}
+                  disabled={!paisIdSeleccionado || loadingEstados}
+                >
+                  <option value="">
+                    {loadingEstados ? 'Cargando...' : 'Seleccionar estado'}
                   </option>
-                ))}
-              </Select>
+                  {estados.map((estado) => (
+                    <option key={estado.id} value={estado.id}>
+                      {estado.nombre_corto || estado.nombre}
+                    </option>
+                  ))}
+                </Select>
+              </FormGroup>
 
-              <Select
-                label="Ciudad"
-                value={ciudadIdSeleccionado || ''}
-                onChange={(e) => {
-                  const ciudadId = e.target.value ? Number(e.target.value) : null;
-                  setCiudadIdSeleccionado(ciudadId);
-                }}
-                disabled={!estadoIdSeleccionado || loadingCiudades}
-              >
-                <option value="">
-                  {loadingCiudades ? 'Cargando...' : 'Seleccionar ciudad'}
-                </option>
-                {ciudades.map((ciudad) => (
-                  <option key={ciudad.id} value={ciudad.id}>
-                    {ciudad.nombre}
+              <FormGroup label="Ciudad">
+                <Select
+                  value={ciudadIdSeleccionado || ''}
+                  onChange={(e) => {
+                    const ciudadId = e.target.value ? Number(e.target.value) : null;
+                    setCiudadIdSeleccionado(ciudadId);
+                  }}
+                  disabled={!estadoIdSeleccionado || loadingCiudades}
+                >
+                  <option value="">
+                    {loadingCiudades ? 'Cargando...' : 'Seleccionar ciudad'}
                   </option>
-                ))}
-              </Select>
+                  {ciudades.map((ciudad) => (
+                    <option key={ciudad.id} value={ciudad.id}>
+                      {ciudad.nombre}
+                    </option>
+                  ))}
+                </Select>
+              </FormGroup>
 
-              <Input
-                label="CP"
-                {...register('codigo_postal')}
-                placeholder="44100"
-                maxLength={10}
-                error={errors.codigo_postal?.message}
-              />
+              <FormGroup label="CP" error={errors.codigo_postal?.message}>
+                <Input
+                  {...register('codigo_postal')}
+                  placeholder="44100"
+                  maxLength={10}
+                  hasError={!!errors.codigo_postal}
+                />
+              </FormGroup>
             </div>
 
-            {/* Fila 2: Dirección completa */}
-            <Textarea
-              label="Dirección"
-              {...register('direccion')}
-              rows={2}
-              placeholder="Calle, número, colonia"
-              error={errors.direccion?.message}
-            />
+            {/* Fila 2: Direccion completa */}
+            <FormGroup label="Direccion" error={errors.direccion?.message}>
+              <Textarea
+                {...register('direccion')}
+                rows={2}
+                placeholder="Calle, numero, colonia"
+                hasError={!!errors.direccion}
+              />
+            </FormGroup>
           </div>
         </div>
 
@@ -413,47 +424,48 @@ function ProveedorFormDrawer({ isOpen, onClose, proveedor = null, mode = 'create
           <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Términos Comerciales</h3>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <Input
-              type="number"
-              label="Días de Crédito"
-              {...register('dias_credito')}
-              min="0"
-              error={errors.dias_credito?.message}
-              helper="0 = Pago de contado"
-            />
+            <FormGroup label="Dias de Credito" error={errors.dias_credito?.message} helper="0 = Pago de contado">
+              <Input
+                type="number"
+                {...register('dias_credito')}
+                min="0"
+                hasError={!!errors.dias_credito}
+              />
+            </FormGroup>
 
-            <Input
-              type="number"
-              label="Días de Entrega"
-              {...register('dias_entrega_estimados')}
-              min="1"
-              placeholder="Opcional"
-              error={errors.dias_entrega_estimados?.message}
-              helper="Tiempo estimado"
-            />
+            <FormGroup label="Dias de Entrega" error={errors.dias_entrega_estimados?.message} helper="Tiempo estimado">
+              <Input
+                type="number"
+                {...register('dias_entrega_estimados')}
+                min="1"
+                placeholder="Opcional"
+                hasError={!!errors.dias_entrega_estimados}
+              />
+            </FormGroup>
 
-            <Input
-              type="number"
-              label="Monto Mínimo de Compra"
-              {...register('monto_minimo_compra')}
-              min="0"
-              step="0.01"
-              placeholder="0.00"
-              prefix="$"
-              error={errors.monto_minimo_compra?.message}
-              helper="Monto mínimo (MXN)"
-            />
+            <FormGroup label="Monto Minimo de Compra" error={errors.monto_minimo_compra?.message} helper="Monto minimo (MXN)">
+              <Input
+                type="number"
+                {...register('monto_minimo_compra')}
+                min="0"
+                step="0.01"
+                placeholder="0.00"
+                prefix="$"
+                hasError={!!errors.monto_minimo_compra}
+              />
+            </FormGroup>
           </div>
         </div>
 
         {/* NOTAS */}
-        <Textarea
-          label="Notas"
-          {...register('notas')}
-          rows={3}
-          placeholder="Notas adicionales sobre el proveedor"
-          error={errors.notas?.message}
-        />
+        <FormGroup label="Notas" error={errors.notas?.message}>
+          <Textarea
+            {...register('notas')}
+            rows={3}
+            placeholder="Notas adicionales sobre el proveedor"
+            hasError={!!errors.notas}
+          />
+        </FormGroup>
 
         {/* ACTIVO */}
         <Checkbox

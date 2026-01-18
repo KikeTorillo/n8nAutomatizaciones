@@ -13,6 +13,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { STALE_TIMES } from '@/app/queryClient';
 import { usuariosApi } from '@/services/api/endpoints';
 
 // ====================================================================
@@ -39,7 +40,7 @@ export function useUsuarios(params = {}) {
       // Backend retorna: { success, data: { data: [...], pagination, resumen } }
       return response.data.data;
     },
-    staleTime: 1000 * 60 * 5, // 5 minutos
+    staleTime: STALE_TIMES.SEMI_STATIC, // 5 minutos
   });
 }
 
@@ -55,7 +56,7 @@ export function useUsuario(id) {
       return response.data.data;
     },
     enabled: !!id,
-    staleTime: 1000 * 60 * 5,
+    staleTime: STALE_TIMES.SEMI_STATIC,
   });
 }
 
@@ -69,7 +70,7 @@ export function useProfesionalesSinUsuario() {
       const response = await usuariosApi.profesionalesDisponibles();
       return response.data.data || [];
     },
-    staleTime: 1000 * 60 * 2, // 2 minutos
+    staleTime: STALE_TIMES.DYNAMIC, // 2 minutos
   });
 }
 
@@ -84,7 +85,7 @@ export function useUsuariosSinProfesional() {
       const response = await usuariosApi.sinProfesional();
       return response.data.data || [];
     },
-    staleTime: 1000 * 60 * 2, // 2 minutos
+    staleTime: STALE_TIMES.DYNAMIC, // 2 minutos
   });
 }
 
@@ -112,8 +113,8 @@ export function useCrearUsuarioDirecto() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['usuarios']);
-      queryClient.invalidateQueries(['profesionales-sin-usuario']);
+      queryClient.invalidateQueries({ queryKey: ['usuarios'] });
+      queryClient.invalidateQueries({ queryKey: ['profesionales-sin-usuario'] });
     },
     onError: (error) => {
       const backendMessage = error.response?.data?.message;
@@ -148,12 +149,12 @@ export function useCambiarEstadoUsuario() {
       return response.data.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries(['usuarios']);
-      queryClient.invalidateQueries(['usuario', data.usuario?.id]);
+      queryClient.invalidateQueries({ queryKey: ['usuarios'] });
+      queryClient.invalidateQueries({ queryKey: ['usuario', data.usuario?.id] });
       // Si afectó un profesional, invalidar también
       if (data.profesional) {
-        queryClient.invalidateQueries(['profesionales']);
-        queryClient.invalidateQueries(['profesional', data.profesional.id]);
+        queryClient.invalidateQueries({ queryKey: ['profesionales'] });
+        queryClient.invalidateQueries({ queryKey: ['profesional', data.profesional.id] });
       }
     },
     onError: (error) => {
@@ -178,8 +179,8 @@ export function useCambiarRolUsuario() {
       return response.data.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries(['usuarios']);
-      queryClient.invalidateQueries(['usuario', data.usuario?.id]);
+      queryClient.invalidateQueries({ queryKey: ['usuarios'] });
+      queryClient.invalidateQueries({ queryKey: ['usuario', data.usuario?.id] });
     },
     onError: (error) => {
       const backendMessage = error.response?.data?.message;
@@ -211,15 +212,15 @@ export function useVincularProfesionalAUsuario() {
       return response.data.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries(['usuarios']);
-      queryClient.invalidateQueries(['usuario', data.usuario?.id]);
-      queryClient.invalidateQueries(['profesionales-sin-usuario']);
-      queryClient.invalidateQueries(['profesionales']);
+      queryClient.invalidateQueries({ queryKey: ['usuarios'] });
+      queryClient.invalidateQueries({ queryKey: ['usuario', data.usuario?.id] });
+      queryClient.invalidateQueries({ queryKey: ['profesionales-sin-usuario'] });
+      queryClient.invalidateQueries({ queryKey: ['profesionales'] });
       if (data.profesional) {
-        queryClient.invalidateQueries(['profesional', data.profesional.id]);
+        queryClient.invalidateQueries({ queryKey: ['profesional', data.profesional.id] });
       }
       if (data.profesional_anterior) {
-        queryClient.invalidateQueries(['profesional', data.profesional_anterior]);
+        queryClient.invalidateQueries({ queryKey: ['profesional', data.profesional_anterior] });
       }
     },
     onError: (error) => {
@@ -251,8 +252,8 @@ export function useActualizarUsuario() {
       return response.data.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries(['usuarios']);
-      queryClient.invalidateQueries(['usuario', data.id]);
+      queryClient.invalidateQueries({ queryKey: ['usuarios'] });
+      queryClient.invalidateQueries({ queryKey: ['usuario', data.id] });
     },
     onError: (error) => {
       const backendMessage = error.response?.data?.message;

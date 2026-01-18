@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { STALE_TIMES } from '@/app/queryClient';
 import { serviciosApi } from '@/services/api/endpoints';
 
 /**
@@ -33,7 +34,7 @@ export function useServicios(params = {}) {
         filtros_aplicados: response.data.data.filtros_aplicados || {},
       };
     },
-    staleTime: 1000 * 60 * 5, // 5 minutos
+    staleTime: STALE_TIMES.SEMI_STATIC, // 5 minutos
     keepPreviousData: true, // ⚠️ Mantener datos durante cambio de página (debouncing)
   });
 }
@@ -49,7 +50,7 @@ export function useServicio(id) {
       return response.data.data;
     },
     enabled: !!id,
-    staleTime: 1000 * 60 * 5,
+    staleTime: STALE_TIMES.SEMI_STATIC,
   });
 }
 
@@ -65,7 +66,7 @@ export function useBuscarServicios(termino, options = {}) {
       return response.data.data;
     },
     enabled: termino.length >= 2, // Solo buscar si hay al menos 2 caracteres
-    staleTime: 1000 * 30, // 30 segundos
+    staleTime: STALE_TIMES.REAL_TIME, // 30 segundos
   });
 }
 
@@ -88,9 +89,9 @@ export function useCrearServicio() {
     },
     onSuccess: () => {
       // Invalidar múltiples queries
-      queryClient.invalidateQueries(['servicios']);
-      queryClient.invalidateQueries(['servicios-dashboard']); // Dashboard
-      queryClient.invalidateQueries(['estadisticas']); // Stats
+      queryClient.invalidateQueries({ queryKey: ['servicios'] });
+      queryClient.invalidateQueries({ queryKey: ['servicios-dashboard'] }); // Dashboard
+      queryClient.invalidateQueries({ queryKey: ['estadisticas'] }); // Stats
     },
     onError: (error) => {
       // Priorizar mensaje del backend si existe
@@ -138,9 +139,9 @@ export function useActualizarServicio() {
       return response.data.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries(['servicio', data.id]);
-      queryClient.invalidateQueries(['servicios']);
-      queryClient.invalidateQueries(['servicios-dashboard']);
+      queryClient.invalidateQueries({ queryKey: ['servicio', data.id] });
+      queryClient.invalidateQueries({ queryKey: ['servicios'] });
+      queryClient.invalidateQueries({ queryKey: ['servicios-dashboard'] });
     },
     onError: (error) => {
       // Priorizar mensaje del backend si existe
@@ -176,9 +177,9 @@ export function useEliminarServicio() {
       return id;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['servicios']);
-      queryClient.invalidateQueries(['servicios-dashboard']);
-      queryClient.invalidateQueries(['estadisticas']);
+      queryClient.invalidateQueries({ queryKey: ['servicios'] });
+      queryClient.invalidateQueries({ queryKey: ['servicios-dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['estadisticas'] });
     },
     onError: (error) => {
       // Priorizar mensaje del backend si existe
@@ -213,7 +214,7 @@ export function useProfesionalesServicio(servicioId) {
       return response.data.data;
     },
     enabled: !!servicioId,
-    staleTime: 1000 * 60, // 1 minuto de cache para evitar refetches excesivos
+    staleTime: STALE_TIMES.FREQUENT, // 1 minuto de cache para evitar refetches excesivos
   });
 }
 

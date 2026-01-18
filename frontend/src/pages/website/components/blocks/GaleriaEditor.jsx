@@ -188,14 +188,14 @@ function GaleriaEditor({ contenido, onGuardar, tema, isSaving }) {
                     value={imagen.url}
                     onChange={(e) => handleChange(index, 'url', e.target.value)}
                     placeholder="URL de la imagen"
-                    inputSize="sm"
+                    size="sm"
                     className="dark:bg-gray-600 dark:border-gray-500 dark:text-gray-100"
                   />
                   <Input
                     value={imagen.alt}
                     onChange={(e) => handleChange(index, 'alt', e.target.value)}
                     placeholder="Texto alternativo"
-                    inputSize="sm"
+                    size="sm"
                     className="dark:bg-gray-600 dark:border-gray-500 dark:text-gray-100"
                   />
                 </div>

@@ -2,19 +2,18 @@ import { useState, useRef, useEffect } from 'react';
 import { Camera, ScanLine, X, UserCheck, AlertCircle } from 'lucide-react';
 import { Button, LoadingSpinner } from '@/components/ui';
 import { useToast } from '@/hooks/utils';
+import { eventosDigitalesApi } from '@/services/api/modules';
 
 /**
  * Tab de check-in con scanner QR
  * @param {Object} props
  * @param {string} props.eventoId - ID del evento
- * @param {string} props.accessToken - Token de autenticacion
  * @param {number} props.totalInvitados - Total de invitados
  * @param {Object} props.initialStats - Stats iniciales de check-in (opcional)
  * @param {Function} props.onStatsUpdate - Callback cuando cambian los stats (opcional)
  */
 export default function CheckinTab({
   eventoId,
-  accessToken,
   totalInvitados = 0,
   initialStats = null,
   onStatsUpdate,
@@ -30,18 +29,10 @@ export default function CheckinTab({
 
   const fetchCheckinStats = async () => {
     try {
-      const response = await fetch(
-        `/api/v1/eventos-digitales/eventos/${eventoId}/checkin/stats`,
-        {
-          headers: {
-            'Authorization': `Bearer ${accessToken}`
-          }
-        }
-      );
-      const data = await response.json();
-      if (data.success) {
-        setCheckinStats(data.data);
-        onStatsUpdate?.(data.data);
+      const response = await eventosDigitalesApi.obtenerCheckinStats(eventoId);
+      if (response.data?.success) {
+        setCheckinStats(response.data.data);
+        onStatsUpdate?.(response.data.data);
       }
     } catch (error) {
       console.error('Error fetching checkin stats:', error);
@@ -50,17 +41,9 @@ export default function CheckinTab({
 
   const fetchRecentCheckins = async () => {
     try {
-      const response = await fetch(
-        `/api/v1/eventos-digitales/eventos/${eventoId}/checkin/lista`,
-        {
-          headers: {
-            'Authorization': `Bearer ${accessToken}`
-          }
-        }
-      );
-      const data = await response.json();
-      if (data.success) {
-        setRecentCheckins(data.data);
+      const response = await eventosDigitalesApi.listarCheckinsRecientes(eventoId);
+      if (response.data?.success) {
+        setRecentCheckins(response.data.data);
       }
     } catch (error) {
       console.error('Error fetching recent checkins:', error);
@@ -70,30 +53,19 @@ export default function CheckinTab({
   const handleCheckin = async (token) => {
     setLoadingCheckin(true);
     try {
-      const response = await fetch(
-        `/api/v1/eventos-digitales/eventos/${eventoId}/checkin`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ token })
-        }
-      );
-      const data = await response.json();
-      if (data.success) {
-        setLastCheckin({ ...data.data, success: true });
-        toast.success(`Check-in exitoso: ${data.data.nombre}`);
+      const response = await eventosDigitalesApi.registrarCheckin(eventoId, { token });
+      if (response.data?.success) {
+        setLastCheckin({ ...response.data.data, success: true });
+        toast.success(`Check-in exitoso: ${response.data.data.nombre}`);
         fetchCheckinStats();
         fetchRecentCheckins();
       } else {
-        setLastCheckin({ success: false, mensaje: data.message });
-        toast.error(data.message || 'Error en check-in');
+        setLastCheckin({ success: false, mensaje: response.data?.message });
+        toast.error(response.data?.message || 'Error en check-in');
       }
     } catch (error) {
-      setLastCheckin({ success: false, mensaje: 'Error de conexion' });
-      toast.error('Error de conexion');
+      setLastCheckin({ success: false, mensaje: 'Error de conexión' });
+      toast.error('Error de conexión');
     } finally {
       setLoadingCheckin(false);
     }

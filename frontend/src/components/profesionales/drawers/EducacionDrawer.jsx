@@ -11,6 +11,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import {
   Button,
   Drawer,
+  FormGroup,
   Input,
   Textarea
 } from '@/components/ui';
@@ -161,26 +162,25 @@ export default function EducacionDrawer({
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         {/* Institucion y Titulo */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Input
-            label="Institucion *"
-            placeholder="Universidad, Instituto, Escuela..."
-            error={errors.institucion?.message}
-            {...register('institucion')}
-          />
-          <Input
-            label="Titulo / Carrera *"
-            placeholder="Nombre del titulo o carrera"
-            error={errors.titulo?.message}
-            {...register('titulo')}
-          />
+          <FormGroup label="Institucion" required error={errors.institucion?.message}>
+            <Input
+              placeholder="Universidad, Instituto, Escuela..."
+              hasError={!!errors.institucion}
+              {...register('institucion')}
+            />
+          </FormGroup>
+          <FormGroup label="Titulo / Carrera" required error={errors.titulo?.message}>
+            <Input
+              placeholder="Nombre del titulo o carrera"
+              hasError={!!errors.titulo}
+              {...register('titulo')}
+            />
+          </FormGroup>
         </div>
 
         {/* Nivel y Campo de estudio */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Nivel de Educacion *
-            </label>
+          <FormGroup label="Nivel de Educacion" required error={errors.nivel?.message}>
             <select
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               {...register('nivel')}
@@ -191,35 +191,33 @@ export default function EducacionDrawer({
                 </option>
               ))}
             </select>
-            {errors.nivel && (
-              <p className="mt-1 text-sm text-red-500">
-                {errors.nivel.message}
-              </p>
-            )}
-          </div>
-          <Input
-            label="Campo de Estudio"
-            placeholder="Ej: Ciencias de la Computacion"
-            error={errors.campo_estudio?.message}
-            {...register('campo_estudio')}
-          />
+          </FormGroup>
+          <FormGroup label="Campo de Estudio" error={errors.campo_estudio?.message}>
+            <Input
+              placeholder="Ej: Ciencias de la Computacion"
+              hasError={!!errors.campo_estudio}
+              {...register('campo_estudio')}
+            />
+          </FormGroup>
         </div>
 
         {/* Fechas */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Input
-            type="date"
-            label="Fecha de Inicio *"
-            error={errors.fecha_inicio?.message}
-            {...register('fecha_inicio')}
-          />
-          <Input
-            type="date"
-            label="Fecha de Fin"
-            disabled={enCurso}
-            error={errors.fecha_fin?.message}
-            {...register('fecha_fin')}
-          />
+          <FormGroup label="Fecha de Inicio" required error={errors.fecha_inicio?.message}>
+            <Input
+              type="date"
+              hasError={!!errors.fecha_inicio}
+              {...register('fecha_inicio')}
+            />
+          </FormGroup>
+          <FormGroup label="Fecha de Fin" error={errors.fecha_fin?.message}>
+            <Input
+              type="date"
+              disabled={enCurso}
+              hasError={!!errors.fecha_fin}
+              {...register('fecha_fin')}
+            />
+          </FormGroup>
         </div>
 
         {/* Checkbox en curso */}
@@ -236,32 +234,35 @@ export default function EducacionDrawer({
 
         {/* Promedio y Ubicacion */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Input
-            label="Promedio"
-            type="number"
-            step="0.1"
-            min="0"
-            max="10"
-            placeholder="0.0 - 10.0"
-            error={errors.promedio?.message}
-            {...register('promedio')}
-          />
-          <Input
-            label="Ubicacion"
-            placeholder="Ciudad, Pais"
-            error={errors.ubicacion?.message}
-            {...register('ubicacion')}
-          />
+          <FormGroup label="Promedio" error={errors.promedio?.message}>
+            <Input
+              type="number"
+              step="0.1"
+              min="0"
+              max="10"
+              placeholder="0.0 - 10.0"
+              hasError={!!errors.promedio}
+              {...register('promedio')}
+            />
+          </FormGroup>
+          <FormGroup label="Ubicacion" error={errors.ubicacion?.message}>
+            <Input
+              placeholder="Ciudad, Pais"
+              hasError={!!errors.ubicacion}
+              {...register('ubicacion')}
+            />
+          </FormGroup>
         </div>
 
         {/* Descripcion */}
-        <Textarea
-          label="Descripcion / Logros"
-          placeholder="Actividades destacadas, reconocimientos, proyectos..."
-          rows={3}
-          error={errors.descripcion?.message}
-          {...register('descripcion')}
-        />
+        <FormGroup label="Descripcion / Logros" error={errors.descripcion?.message}>
+          <Textarea
+            placeholder="Actividades destacadas, reconocimientos, proyectos..."
+            rows={3}
+            hasError={!!errors.descripcion}
+            {...register('descripcion')}
+          />
+        </FormGroup>
 
         {/* Footer con botones */}
         <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700 mt-6">

@@ -7,6 +7,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { STALE_TIMES } from '@/app/queryClient';
 import { paquetesApi } from '@/services/api/endpoints';
 import { useToast } from '@/hooks/utils';
 
@@ -36,7 +37,7 @@ export function usePaquetesOperacion(operacionId) {
       return response.data.data || [];
     },
     enabled: !!operacionId,
-    staleTime: 1000 * 60 * 2, // 2 minutos
+    staleTime: STALE_TIMES.DYNAMIC, // 2 minutos
   });
 }
 
@@ -52,7 +53,7 @@ export function usePaquete(id) {
       return response.data.data;
     },
     enabled: !!id,
-    staleTime: 1000 * 60 * 2,
+    staleTime: STALE_TIMES.DYNAMIC,
   });
 }
 
@@ -68,7 +69,7 @@ export function useItemsDisponibles(operacionId) {
       return response.data.data || [];
     },
     enabled: !!operacionId,
-    staleTime: 1000 * 30, // 30 segundos (cambia frecuentemente)
+    staleTime: STALE_TIMES.REAL_TIME, // 30 segundos (cambia frecuentemente)
   });
 }
 
@@ -84,7 +85,7 @@ export function useResumenEmpaque(operacionId) {
       return response.data.data;
     },
     enabled: !!operacionId,
-    staleTime: 1000 * 30,
+    staleTime: STALE_TIMES.REAL_TIME,
   });
 }
 
@@ -100,7 +101,7 @@ export function useEtiquetaPaquete(id) {
       return response.data.data;
     },
     enabled: !!id,
-    staleTime: 1000 * 60 * 5, // 5 minutos
+    staleTime: STALE_TIMES.SEMI_STATIC, // 5 minutos
   });
 }
 

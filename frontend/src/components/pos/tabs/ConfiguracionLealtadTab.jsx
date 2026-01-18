@@ -5,7 +5,7 @@ import {
   TrendingUp,
   Gift
 } from 'lucide-react';
-import { Button, Input } from '@/components/ui';
+import { Button, Input, FormGroup } from '@/components/ui';
 import { useToast } from '@/hooks/utils';
 
 /**
@@ -120,14 +120,15 @@ export default function ConfiguracionLealtadTab({ config, isLoading, onGuardar }
           Acumulación de Puntos
         </h3>
         <div className="grid sm:grid-cols-2 gap-4">
-          <Input
-            label="Puntos por cada $1 gastado"
-            type="number"
-            step="0.1"
-            min="0.1"
-            {...register('puntos_por_peso', { required: 'Requerido' })}
-            error={errors.puntos_por_peso?.message}
-          />
+          <FormGroup label="Puntos por cada $1 gastado" error={errors.puntos_por_peso?.message}>
+            <Input
+              type="number"
+              step="0.1"
+              min="0.1"
+              {...register('puntos_por_peso', { required: 'Requerido' })}
+              hasError={!!errors.puntos_por_peso}
+            />
+          </FormGroup>
           <div className="flex items-end">
             <div className="p-3 bg-primary-50 dark:bg-primary-900/30 rounded-lg text-sm text-primary-800 dark:text-primary-300 flex-1">
               Compra de $100 = <strong>{(100 * puntosGanados).toFixed(0)} puntos</strong>
@@ -143,27 +144,30 @@ export default function ConfiguracionLealtadTab({ config, isLoading, onGuardar }
           Canje de Puntos
         </h3>
         <div className="grid sm:grid-cols-2 gap-4">
-          <Input
-            label="Puntos necesarios para $1 de descuento"
-            type="number"
-            min="1"
-            {...register('puntos_por_peso_descuento', { required: 'Requerido' })}
-            error={errors.puntos_por_peso_descuento?.message}
-          />
-          <Input
-            label="Mínimo de puntos para canjear"
-            type="number"
-            min="0"
-            {...register('minimo_puntos_canje')}
-          />
-          <Input
-            label="Máximo % del total como descuento"
-            type="number"
-            min="1"
-            max="100"
-            {...register('maximo_descuento_porcentaje')}
-            suffix="%"
-          />
+          <FormGroup label="Puntos necesarios para $1 de descuento" error={errors.puntos_por_peso_descuento?.message}>
+            <Input
+              type="number"
+              min="1"
+              {...register('puntos_por_peso_descuento', { required: 'Requerido' })}
+              hasError={!!errors.puntos_por_peso_descuento}
+            />
+          </FormGroup>
+          <FormGroup label="Mínimo de puntos para canjear">
+            <Input
+              type="number"
+              min="0"
+              {...register('minimo_puntos_canje')}
+            />
+          </FormGroup>
+          <FormGroup label="Máximo % del total como descuento">
+            <Input
+              type="number"
+              min="1"
+              max="100"
+              {...register('maximo_descuento_porcentaje')}
+              suffix="%"
+            />
+          </FormGroup>
           <div className="flex items-end">
             <div className="p-3 bg-emerald-50 dark:bg-emerald-900/30 rounded-lg text-sm text-emerald-800 dark:text-emerald-300 flex-1">
               {puntosDescuento} puntos = <strong>$1 de descuento</strong>
@@ -189,14 +193,14 @@ export default function ConfiguracionLealtadTab({ config, isLoading, onGuardar }
             </span>
           </label>
           {puntosExpiran && (
-            <Input
-              label="Meses de vigencia"
-              type="number"
-              min="1"
-              max="60"
-              {...register('meses_expiracion')}
-              className="max-w-xs"
-            />
+            <FormGroup label="Meses de vigencia" className="max-w-xs">
+              <Input
+                type="number"
+                min="1"
+                max="60"
+                {...register('meses_expiracion')}
+              />
+            </FormGroup>
           )}
         </div>
       </div>

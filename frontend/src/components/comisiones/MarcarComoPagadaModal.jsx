@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { CheckCircle } from 'lucide-react';
 import {
   Button,
+  FormGroup,
   Input,
   Modal,
   Select,
@@ -125,46 +126,40 @@ function MarcarComoPagadaModal({ isOpen, onClose, comision }) {
         </div>
 
         {/* Fecha de Pago */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Fecha de Pago <span className="text-red-500">*</span>
-          </label>
-          <Controller
-            name="fecha_pago"
-            control={control}
-            render={({ field }) => (
+        <Controller
+          name="fecha_pago"
+          control={control}
+          render={({ field }) => (
+            <FormGroup label="Fecha de Pago" error={errors.fecha_pago?.message} required>
               <Input
                 {...field}
                 type="date"
                 max={format(new Date(), 'yyyy-MM-dd')}
-                className={errors.fecha_pago ? 'border-red-500' : ''}
+                hasError={!!errors.fecha_pago}
               />
-            )}
-          />
-          {errors.fecha_pago && (
-            <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.fecha_pago.message}</p>
+            </FormGroup>
           )}
-        </div>
+        />
 
         {/* Método de Pago */}
         <Controller
           name="metodo_pago"
           control={control}
           render={({ field }) => (
-            <Select
-              {...field}
-              label="Método de Pago"
-              required
-              placeholder="Selecciona un método de pago"
-              options={[
-                { value: 'efectivo', label: 'Efectivo' },
-                { value: 'transferencia', label: 'Transferencia' },
-                { value: 'cheque', label: 'Cheque' },
-                { value: 'tarjeta', label: 'Tarjeta' },
-                { value: 'otro', label: 'Otro' },
-              ]}
-              error={errors.metodo_pago?.message}
-            />
+            <FormGroup label="Metodo de Pago" error={errors.metodo_pago?.message} required>
+              <Select
+                {...field}
+                placeholder="Selecciona un metodo de pago"
+                options={[
+                  { value: 'efectivo', label: 'Efectivo' },
+                  { value: 'transferencia', label: 'Transferencia' },
+                  { value: 'cheque', label: 'Cheque' },
+                  { value: 'tarjeta', label: 'Tarjeta' },
+                  { value: 'otro', label: 'Otro' },
+                ]}
+                hasError={!!errors.metodo_pago}
+              />
+            </FormGroup>
           )}
         />
 
@@ -173,15 +168,19 @@ function MarcarComoPagadaModal({ isOpen, onClose, comision }) {
           name="referencia_pago"
           control={control}
           render={({ field }) => (
-            <Input
-              {...field}
+            <FormGroup
               label="Referencia de Pago"
-              type="text"
-              placeholder="Ej: TRX-123456, Cheque #789"
-              maxLength={100}
-              helper="Opcional - Número de transacción, cheque, etc."
               error={errors.referencia_pago?.message}
-            />
+              helper="Opcional - Numero de transaccion, cheque, etc."
+            >
+              <Input
+                {...field}
+                type="text"
+                placeholder="Ej: TRX-123456, Cheque #789"
+                maxLength={100}
+                hasError={!!errors.referencia_pago}
+              />
+            </FormGroup>
           )}
         />
 
@@ -190,15 +189,19 @@ function MarcarComoPagadaModal({ isOpen, onClose, comision }) {
           name="notas_pago"
           control={control}
           render={({ field }) => (
-            <Textarea
-              {...field}
+            <FormGroup
               label="Notas"
-              rows={3}
-              maxLength={500}
-              placeholder="Notas adicionales sobre el pago..."
-              helper="Opcional - Máximo 500 caracteres"
               error={errors.notas_pago?.message}
-            />
+              helper="Opcional - Maximo 500 caracteres"
+            >
+              <Textarea
+                {...field}
+                rows={3}
+                maxLength={500}
+                placeholder="Notas adicionales sobre el pago..."
+                hasError={!!errors.notas_pago}
+              />
+            </FormGroup>
           )}
         />
 

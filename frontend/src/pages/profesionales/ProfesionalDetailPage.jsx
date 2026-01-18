@@ -1,31 +1,60 @@
+import { lazy, Suspense } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { User, ArrowLeft } from 'lucide-react';
-import { Button, LoadingSpinner } from '@/components/ui';
+import {
+  User,
+  ArrowLeft,
+  Briefcase,
+  Heart,
+  GraduationCap,
+  FileText,
+  Wallet,
+  Calendar,
+  Settings,
+  UserCircle,
+  Shield,
+} from 'lucide-react';
+import { Button, LoadingSpinner, StateNavTabs } from '@/components/ui';
 import ProfesionalHeader from '@/components/profesionales/ProfesionalHeader';
-import ProfesionalTabs from '@/components/profesionales/ProfesionalTabs';
 import ProfesionalProgressBar from '@/components/profesionales/ProfesionalProgressBar';
 import { useProfesional } from '@/hooks/personas';
 
-// Tabs
+// Tab principal (carga eager)
 import GeneralTab from '@/components/profesionales/tabs/GeneralTab';
-import TrabajoTab from '@/components/profesionales/tabs/TrabajoTab';
-import PersonalTab from '@/components/profesionales/tabs/PersonalTab';
-import CurriculumTab from '@/components/profesionales/tabs/CurriculumTab';
-import DocumentosTab from '@/components/profesionales/tabs/DocumentosTab';
-import CompensacionTab from '@/components/profesionales/tabs/CompensacionTab';
-import AusenciasTab from '@/components/profesionales/tabs/AusenciasTab';
-import ConfiguracionTab from '@/components/profesionales/tabs/ConfiguracionTab';
 
-// Definición de tabs disponibles
+// Tabs secundarios (carga lazy para mejor performance)
+const TrabajoTab = lazy(() => import('@/components/profesionales/tabs/TrabajoTab'));
+const PersonalTab = lazy(() => import('@/components/profesionales/tabs/PersonalTab'));
+const CurriculumTab = lazy(() => import('@/components/profesionales/tabs/CurriculumTab'));
+const DocumentosTab = lazy(() => import('@/components/profesionales/tabs/DocumentosTab'));
+const CompensacionTab = lazy(() => import('@/components/profesionales/tabs/CompensacionTab'));
+const AusenciasTab = lazy(() => import('@/components/profesionales/tabs/AusenciasTab'));
+const ConfiguracionTab = lazy(() => import('@/components/profesionales/tabs/ConfiguracionTab'));
+
+// Fallback para tabs lazy
+function TabLoadingFallback() {
+  return (
+    <div className="flex items-center justify-center py-12">
+      <LoadingSpinner />
+    </div>
+  );
+}
+
+// Definición de tabs disponibles con iconos
 const TABS = [
-  { id: 'general', label: 'General' },
-  { id: 'trabajo', label: 'Trabajo' },
-  { id: 'personal', label: 'Personal' },
-  { id: 'curriculum', label: 'Currículum' },
-  { id: 'documentos', label: 'Documentos' },
-  { id: 'compensacion', label: 'Compensación' },
-  { id: 'ausencias', label: 'Ausencias' },
-  { id: 'configuracion', label: 'Configuración' },
+  { id: 'general', label: 'General', icon: User },
+  { id: 'trabajo', label: 'Trabajo', icon: Briefcase },
+  { id: 'personal', label: 'Personal', icon: Heart },
+  { id: 'curriculum', label: 'Currículum', icon: GraduationCap },
+  { id: 'documentos', label: 'Documentos', icon: FileText },
+  { id: 'compensacion', label: 'Compensación', icon: Wallet },
+  { id: 'ausencias', label: 'Ausencias', icon: Calendar },
+  { id: 'configuracion', label: 'Configuración', icon: Settings },
+];
+
+// Grupos de tabs para desktop (dropdowns)
+const TAB_GROUPS = [
+  { icon: UserCircle, label: 'Perfil', tabIds: ['personal', 'curriculum', 'documentos'] },
+  { icon: Shield, label: 'Gestión', tabIds: ['ausencias', 'configuracion'] },
 ];
 
 /**
@@ -78,26 +107,44 @@ function ProfesionalDetailPage() {
 
   // Renderizar tab activa
   const renderTabContent = () => {
+    // Tab general carga sin Suspense (eager)
+    if (activeTab === 'general') {
+      return <GeneralTab profesional={profesional} />;
+    }
+
+    // Tabs secundarios con Suspense (lazy)
+    let TabComponent;
     switch (activeTab) {
-      case 'general':
-        return <GeneralTab profesional={profesional} />;
       case 'trabajo':
-        return <TrabajoTab profesional={profesional} />;
+        TabComponent = TrabajoTab;
+        break;
       case 'personal':
-        return <PersonalTab profesional={profesional} />;
+        TabComponent = PersonalTab;
+        break;
       case 'curriculum':
-        return <CurriculumTab profesional={profesional} />;
+        TabComponent = CurriculumTab;
+        break;
       case 'documentos':
-        return <DocumentosTab profesional={profesional} />;
+        TabComponent = DocumentosTab;
+        break;
       case 'compensacion':
-        return <CompensacionTab profesional={profesional} />;
+        TabComponent = CompensacionTab;
+        break;
       case 'ausencias':
-        return <AusenciasTab profesional={profesional} />;
+        TabComponent = AusenciasTab;
+        break;
       case 'configuracion':
-        return <ConfiguracionTab profesional={profesional} />;
+        TabComponent = ConfiguracionTab;
+        break;
       default:
         return <GeneralTab profesional={profesional} />;
     }
+
+    return (
+      <Suspense fallback={<TabLoadingFallback />}>
+        <TabComponent profesional={profesional} />
+      </Suspense>
+    );
   };
 
   return (
@@ -113,10 +160,12 @@ function ProfesionalDetailPage() {
       </div>
 
       {/* Tabs Navigation */}
-      <ProfesionalTabs
+      <StateNavTabs
         tabs={TABS}
         activeTab={activeTab}
         onTabChange={handleTabChange}
+        groups={TAB_GROUPS}
+        stickyTop="top-[140px]"
       />
 
       {/* Tab Content */}

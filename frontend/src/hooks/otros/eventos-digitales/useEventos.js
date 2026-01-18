@@ -5,6 +5,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { STALE_TIMES } from '@/app/queryClient';
 import { eventosDigitalesApi } from '@/services/api/endpoints';
 import { sanitizeParams } from '@/lib/params';
 
@@ -26,7 +27,7 @@ export function useEventos(params = {}) {
         total: response.data.data.total || 0,
       };
     },
-    staleTime: 1000 * 60,
+    staleTime: STALE_TIMES.FREQUENT,
     keepPreviousData: true,
   });
 }
@@ -44,7 +45,7 @@ export function useEvento(id) {
       return response.data.data;
     },
     enabled: !!id,
-    staleTime: 1000 * 60 * 2,
+    staleTime: STALE_TIMES.DYNAMIC,
   });
 }
 
@@ -61,7 +62,7 @@ export function useEventoEstadisticas(eventoId) {
       return response.data.data;
     },
     enabled: !!eventoId,
-    staleTime: 1000 * 30,
+    staleTime: STALE_TIMES.REAL_TIME,
   });
 }
 
@@ -222,7 +223,7 @@ export function usePlantillas(params = {}) {
       const response = await eventosDigitalesApi.listarPlantillas(sanitizeParams(params));
       return response.data.data.plantillas || [];
     },
-    staleTime: 1000 * 60 * 10,
+    staleTime: STALE_TIMES.STATIC_DATA,
   });
 }
 
@@ -239,7 +240,7 @@ export function usePlantilla(id) {
       return response.data.data;
     },
     enabled: !!id,
-    staleTime: 1000 * 60 * 10,
+    staleTime: STALE_TIMES.STATIC_DATA,
   });
 }
 
@@ -256,7 +257,7 @@ export function usePlantillasPorTipo(tipoEvento) {
       return response.data.data.plantillas || [];
     },
     enabled: !!tipoEvento,
-    staleTime: 1000 * 60 * 10,
+    staleTime: STALE_TIMES.STATIC_DATA,
   });
 }
 
@@ -274,8 +275,8 @@ export function useCrearPlantilla() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['plantillas-eventos']);
-      queryClient.invalidateQueries(['plantillas-tipo']);
+      queryClient.invalidateQueries({ queryKey: ['plantillas-eventos'] });
+      queryClient.invalidateQueries({ queryKey: ['plantillas-tipo'] });
     },
   });
 }
@@ -292,9 +293,9 @@ export function useActualizarPlantilla() {
       return response.data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries(['plantillas-eventos']);
-      queryClient.invalidateQueries(['plantillas-tipo']);
-      queryClient.invalidateQueries(['plantilla-evento', variables.id]);
+      queryClient.invalidateQueries({ queryKey: ['plantillas-eventos'] });
+      queryClient.invalidateQueries({ queryKey: ['plantillas-tipo'] });
+      queryClient.invalidateQueries({ queryKey: ['plantilla-evento', variables.id] });
     },
   });
 }
@@ -311,8 +312,8 @@ export function useEliminarPlantilla() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['plantillas-eventos']);
-      queryClient.invalidateQueries(['plantillas-tipo']);
+      queryClient.invalidateQueries({ queryKey: ['plantillas-eventos'] });
+      queryClient.invalidateQueries({ queryKey: ['plantillas-tipo'] });
     },
   });
 }

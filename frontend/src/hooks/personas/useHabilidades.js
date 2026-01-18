@@ -4,6 +4,7 @@
  * Enero 2026
  */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { STALE_TIMES } from '@/app/queryClient';
 import { profesionalesApi, habilidadesApi } from '@/services/api/endpoints';
 import { useToast } from '@/hooks/utils';
 
@@ -62,7 +63,7 @@ export function useCatalogoHabilidades(options = {}) {
       return response.data?.data || response.data;
     },
     enabled,
-    staleTime: 60 * 1000, // 1 minuto
+    staleTime: STALE_TIMES.FREQUENT, // 1 minuto
   });
 }
 
@@ -96,7 +97,7 @@ export function useProfesionalesConHabilidad(habilidadId, options = {}) {
       return response.data?.data || response.data;
     },
     enabled: enabled && !!habilidadId,
-    staleTime: 30 * 1000,
+    staleTime: STALE_TIMES.REAL_TIME,
   });
 }
 
@@ -191,7 +192,7 @@ export function useHabilidadesEmpleado(profesionalId, options = {}) {
       return response.data?.data || response.data;
     },
     enabled: enabled && !!profesionalId,
-    staleTime: 30 * 1000,
+    staleTime: STALE_TIMES.REAL_TIME,
   });
 }
 

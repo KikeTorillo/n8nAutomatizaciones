@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { STALE_TIMES } from '@/app/queryClient';
 import { modulosApi } from '@/services/api/endpoints';
 import useAuthStore, { selectIsAuthenticated, selectUser } from '@/store/authStore';
 
@@ -25,7 +26,7 @@ export function useModulosDisponibles() {
       const response = await modulosApi.listarDisponibles();
       return response.data.data;
     },
-    staleTime: 1000 * 60 * 30, // 30 minutos (datos estáticos)
+    staleTime: STALE_TIMES.LONG, // 30 minutos (datos estáticos)
   });
 }
 
@@ -43,7 +44,7 @@ export function useModulosActivos() {
       return response.data.data;
     },
     enabled: isAuthenticated,
-    staleTime: 1000 * 60 * 5, // 5 minutos
+    staleTime: STALE_TIMES.SEMI_STATIC, // 5 minutos
     refetchOnWindowFocus: true, // Refetch al volver a la ventana
   });
 }
@@ -62,7 +63,7 @@ export function useVerificarModulo(modulo) {
       return response.data.data;
     },
     enabled: isAuthenticated && !!modulo,
-    staleTime: 1000 * 60 * 5,
+    staleTime: STALE_TIMES.SEMI_STATIC,
   });
 }
 

@@ -101,9 +101,7 @@ function BloqueoFormDrawer({ isOpen, onClose, bloqueo = null, modo = 'crear', fe
   // Cargar datos en modo edición o fecha inicial en modo crear
   useEffect(() => {
     if (isOpen && modo === 'editar' && bloqueo) {
-      console.log('[BloqueoFormModal] Cargando datos para edición:', bloqueo);
       const datosEdicion = prepararDatosParaEdicion(bloqueo);
-      console.log('[BloqueoFormModal] Datos preparados:', datosEdicion);
       reset(datosEdicion);
     } else if (isOpen && modo === 'crear') {
       const valoresIniciales = {

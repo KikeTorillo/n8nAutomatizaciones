@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import {
@@ -23,10 +23,7 @@ import {
   ESTADOS_LABORALES
 } from '@/hooks/personas';
 import { useDepartamentos } from '@/hooks/personas';
-import { useToast } from '@/hooks/utils';
-import { useExportCSV } from '@/hooks/utils';
-import { useModalManager } from '@/hooks/utils';
-import { useFilters } from '@/hooks/utils';
+import { useToast, useExportCSV, useModalManager, useFilters, usePagination } from '@/hooks/utils';
 
 /**
  * Página principal de gestión de profesionales
@@ -38,9 +35,8 @@ function ProfesionalesPage() {
   const { exportCSV } = useExportCSV();
   const [showFilters, setShowFilters] = useState(false);
 
-  // Vista y paginación
+  // Vista
   const [viewMode, setViewMode] = useState('cards');
-  const [page, setPage] = useState(1);
   const limit = 20;
 
   // Filtros con persistencia y debounce automático
@@ -76,10 +72,11 @@ function ProfesionalesPage() {
     servicios: { isOpen: false, data: null },
   });
 
-  // Resetear página al cambiar filtros
-  useEffect(() => {
-    setPage(1);
-  }, [filtrosQuery]);
+  // Paginación con reset automático cuando cambian filtros
+  const { page, handlePageChange } = usePagination({
+    limit,
+    resetOnChange: [filtrosQuery],
+  });
 
   // Fetch profesionales con filtros y paginación
   const { data, isLoading } = useProfesionales({
@@ -138,11 +135,6 @@ function ProfesionalesPage() {
   // Handlers
   const handleLimpiarFiltros = () => {
     limpiarFiltros();
-  };
-
-  const handlePageChange = (newPage) => {
-    setPage(newPage);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleBusquedaChange = (e) => {

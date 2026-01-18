@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 
 /**
  * Componente Label reutilizable
- * @param {string} label - Texto de la etiqueta
+ * @param {string|React.ReactNode} label - Texto o nodo React para la etiqueta
  * @param {boolean} required - Si el campo es obligatorio
  * @param {string} htmlFor - ID del elemento asociado
  * @param {string} className - Clases adicionales

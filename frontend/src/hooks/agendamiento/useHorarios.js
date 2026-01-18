@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { STALE_TIMES } from '@/app/queryClient';
 import { horariosApi } from '@/services/api/endpoints';
 
 /**
@@ -37,7 +38,7 @@ export function useHorariosProfesional(profesionalId, options = {}) {
       return response.data.data?.horarios || [];
     },
     enabled: !!profesionalId,
-    staleTime: 5 * 60 * 1000, // 5 minutos
+    staleTime: STALE_TIMES.SEMI_STATIC, // 5 minutos
   });
 }
 
@@ -53,7 +54,7 @@ export function useHorario(horarioId) {
       return response.data;
     },
     enabled: !!horarioId,
-    staleTime: 5 * 60 * 1000,
+    staleTime: STALE_TIMES.SEMI_STATIC,
   });
 }
 
@@ -218,6 +219,6 @@ export function useValidarConfiguracion(profesionalId) {
       return response.data;
     },
     enabled: !!profesionalId,
-    staleTime: 2 * 60 * 1000, // 2 minutos (validaciones más frecuentes)
+    staleTime: STALE_TIMES.DYNAMIC, // 2 minutos (validaciones más frecuentes)
   });
 }

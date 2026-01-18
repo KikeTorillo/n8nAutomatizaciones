@@ -8,6 +8,7 @@ import {
   Button,
   Checkbox,
   Drawer,
+  FormGroup,
   Input,
   Select,
   Textarea
@@ -426,13 +427,14 @@ function ServicioFormDrawer({ isOpen, onClose, mode = 'create', servicio = null 
                 name="descripcion"
                 control={control}
                 render={({ field }) => (
-                  <Textarea
-                    {...field}
-                    label="Descripción (Opcional)"
-                    placeholder="Breve descripción del servicio..."
-                    rows={3}
-                    error={errors.descripcion?.message}
-                  />
+                  <FormGroup label="Descripción (Opcional)" error={errors.descripcion?.message}>
+                    <Textarea
+                      {...field}
+                      placeholder="Breve descripción del servicio..."
+                      rows={3}
+                      hasError={!!errors.descripcion}
+                    />
+                  </FormGroup>
                 )}
               />
 
@@ -494,24 +496,25 @@ function ServicioFormDrawer({ isOpen, onClose, mode = 'create', servicio = null 
                       const minutos = field.value % 60;
 
                       return (
-                        <Input
-                          type="number"
-                          label="Horas"
-                          placeholder="0"
-                          min="0"
-                          max="8"
-                          value={horas === 0 ? '' : horas}
-                          onKeyDown={(e) => {
-                            if (['-', '+', 'e', 'E', '.'].includes(e.key)) {
-                              e.preventDefault();
-                            }
-                          }}
-                          onChange={(e) => {
-                            const value = e.target.value;
-                            const newHoras = value === '' ? 0 : Math.min(Math.max(parseInt(value), 0), 8);
-                            field.onChange(newHoras * 60 + minutos);
-                          }}
-                        />
+                        <FormGroup label="Horas">
+                          <Input
+                            type="number"
+                            placeholder="0"
+                            min="0"
+                            max="8"
+                            value={horas === 0 ? '' : horas}
+                            onKeyDown={(e) => {
+                              if (['-', '+', 'e', 'E', '.'].includes(e.key)) {
+                                e.preventDefault();
+                              }
+                            }}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              const newHoras = value === '' ? 0 : Math.min(Math.max(parseInt(value), 0), 8);
+                              field.onChange(newHoras * 60 + minutos);
+                            }}
+                          />
+                        </FormGroup>
                       );
                     }}
                   />
@@ -524,25 +527,26 @@ function ServicioFormDrawer({ isOpen, onClose, mode = 'create', servicio = null 
                       const minutos = field.value % 60;
 
                       return (
-                        <Input
-                          type="number"
-                          label="Minutos"
-                          placeholder="0"
-                          min="0"
-                          max="59"
-                          value={minutos === 0 ? '' : minutos}
-                          onKeyDown={(e) => {
-                            if (['-', '+', 'e', 'E', '.'].includes(e.key)) {
-                              e.preventDefault();
-                            }
-                          }}
-                          onChange={(e) => {
-                            const value = e.target.value;
-                            const newMinutos = value === '' ? 0 : Math.min(Math.max(parseInt(value), 0), 59);
-                            field.onChange(horas * 60 + newMinutos);
-                          }}
-                          error={errors.duracion_minutos?.message}
-                        />
+                        <FormGroup label="Minutos" error={errors.duracion_minutos?.message}>
+                          <Input
+                            type="number"
+                            placeholder="0"
+                            min="0"
+                            max="59"
+                            value={minutos === 0 ? '' : minutos}
+                            hasError={!!errors.duracion_minutos}
+                            onKeyDown={(e) => {
+                              if (['-', '+', 'e', 'E', '.'].includes(e.key)) {
+                                e.preventDefault();
+                              }
+                            }}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              const newMinutos = value === '' ? 0 : Math.min(Math.max(parseInt(value), 0), 59);
+                              field.onChange(horas * 60 + newMinutos);
+                            }}
+                          />
+                        </FormGroup>
                       );
                     }}
                   />
@@ -578,25 +582,26 @@ function ServicioFormDrawer({ isOpen, onClose, mode = 'create', servicio = null 
                     name="requiere_preparacion_minutos"
                     control={control}
                     render={({ field }) => (
-                      <Input
-                        type="number"
-                        label="Preparación (min)"
-                        placeholder="0"
-                        min="0"
-                        max="120"
-                        value={field.value === 0 ? '' : field.value}
-                        onKeyDown={(e) => {
-                          if (['-', '+', 'e', 'E', '.'].includes(e.key)) {
-                            e.preventDefault();
-                          }
-                        }}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          const newValue = value === '' ? 0 : Math.min(Math.max(parseInt(value) || 0, 0), 120);
-                          field.onChange(newValue);
-                        }}
-                        error={errors.requiere_preparacion_minutos?.message}
-                      />
+                      <FormGroup label="Preparación (min)" error={errors.requiere_preparacion_minutos?.message}>
+                        <Input
+                          type="number"
+                          placeholder="0"
+                          min="0"
+                          max="120"
+                          value={field.value === 0 ? '' : field.value}
+                          hasError={!!errors.requiere_preparacion_minutos}
+                          onKeyDown={(e) => {
+                            if (['-', '+', 'e', 'E', '.'].includes(e.key)) {
+                              e.preventDefault();
+                            }
+                          }}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            const newValue = value === '' ? 0 : Math.min(Math.max(parseInt(value) || 0, 0), 120);
+                            field.onChange(newValue);
+                          }}
+                        />
+                      </FormGroup>
                     )}
                   />
 
@@ -605,25 +610,26 @@ function ServicioFormDrawer({ isOpen, onClose, mode = 'create', servicio = null 
                     name="tiempo_limpieza_minutos"
                     control={control}
                     render={({ field }) => (
-                      <Input
-                        type="number"
-                        label="Limpieza (min)"
-                        placeholder="5"
-                        min="0"
-                        max="60"
-                        value={field.value === 0 ? '' : field.value}
-                        onKeyDown={(e) => {
-                          if (['-', '+', 'e', 'E', '.'].includes(e.key)) {
-                            e.preventDefault();
-                          }
-                        }}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          const newValue = value === '' ? 0 : Math.min(Math.max(parseInt(value) || 0, 0), 60);
-                          field.onChange(newValue);
-                        }}
-                        error={errors.tiempo_limpieza_minutos?.message}
-                      />
+                      <FormGroup label="Limpieza (min)" error={errors.tiempo_limpieza_minutos?.message}>
+                        <Input
+                          type="number"
+                          placeholder="5"
+                          min="0"
+                          max="60"
+                          value={field.value === 0 ? '' : field.value}
+                          hasError={!!errors.tiempo_limpieza_minutos}
+                          onKeyDown={(e) => {
+                            if (['-', '+', 'e', 'E', '.'].includes(e.key)) {
+                              e.preventDefault();
+                            }
+                          }}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            const newValue = value === '' ? 0 : Math.min(Math.max(parseInt(value) || 0, 0), 60);
+                            field.onChange(newValue);
+                          }}
+                        />
+                      </FormGroup>
                     )}
                   />
                 </div>
@@ -664,20 +670,18 @@ function ServicioFormDrawer({ isOpen, onClose, mode = 'create', servicio = null 
               </div>
 
               {/* Precio */}
-              <div>
-
-                <Controller
-                  name="precio"
-                  control={control}
-                  render={({ field }) => (
+              <Controller
+                name="precio"
+                control={control}
+                render={({ field }) => (
+                  <FormGroup label="Precio" error={errors.precio?.message} required={!isEditMode}>
                     <Input
                       {...field}
                       type="number"
-                      label="Precio"
                       placeholder="Ej: 50000"
-                      required={!isEditMode}
                       min="0"
                       step="1"
+                      hasError={!!errors.precio}
                       onKeyDown={(e) => {
                         // Prevenir entrada de caracteres no permitidos en números positivos
                         if (['-', '+', 'e', 'E', '.'].includes(e.key)) {
@@ -695,11 +699,10 @@ function ServicioFormDrawer({ isOpen, onClose, mode = 'create', servicio = null 
                           field.onChange(Math.abs(num)); // Math.abs asegura valor positivo
                         }
                       }}
-                      error={errors.precio?.message}
                     />
-                  )}
-                />
-              </div>
+                  </FormGroup>
+                )}
+              />
 
               {/* Precios en otras monedas - Colapsable */}
               {monedasDisponibles.length > 0 && (
@@ -756,34 +759,36 @@ function ServicioFormDrawer({ isOpen, onClose, mode = 'create', servicio = null 
                             </div>
 
                             <div className="grid grid-cols-3 gap-3">
-                              <Input
-                                type="number"
-                                label="Precio"
-                                value={precio.precio}
-                                onChange={(e) => actualizarPrecioMoneda(index, 'precio', e.target.value)}
-                                step="0.01"
-                                placeholder="0.00"
-                                prefix={monedaInfo?.simbolo || '$'}
-                                required
-                              />
-                              <Input
-                                type="number"
-                                label="P. Mínimo"
-                                value={precio.precio_minimo}
-                                onChange={(e) => actualizarPrecioMoneda(index, 'precio_minimo', e.target.value)}
-                                step="0.01"
-                                placeholder="0.00"
-                                prefix={monedaInfo?.simbolo || '$'}
-                              />
-                              <Input
-                                type="number"
-                                label="P. Máximo"
-                                value={precio.precio_maximo}
-                                onChange={(e) => actualizarPrecioMoneda(index, 'precio_maximo', e.target.value)}
-                                step="0.01"
-                                placeholder="0.00"
-                                prefix={monedaInfo?.simbolo || '$'}
-                              />
+                              <FormGroup label="Precio" required>
+                                <Input
+                                  type="number"
+                                  value={precio.precio}
+                                  onChange={(e) => actualizarPrecioMoneda(index, 'precio', e.target.value)}
+                                  step="0.01"
+                                  placeholder="0.00"
+                                  prefix={monedaInfo?.simbolo || '$'}
+                                />
+                              </FormGroup>
+                              <FormGroup label="P. Mínimo">
+                                <Input
+                                  type="number"
+                                  value={precio.precio_minimo}
+                                  onChange={(e) => actualizarPrecioMoneda(index, 'precio_minimo', e.target.value)}
+                                  step="0.01"
+                                  placeholder="0.00"
+                                  prefix={monedaInfo?.simbolo || '$'}
+                                />
+                              </FormGroup>
+                              <FormGroup label="P. Máximo">
+                                <Input
+                                  type="number"
+                                  value={precio.precio_maximo}
+                                  onChange={(e) => actualizarPrecioMoneda(index, 'precio_maximo', e.target.value)}
+                                  step="0.01"
+                                  placeholder="0.00"
+                                  prefix={monedaInfo?.simbolo || '$'}
+                                />
+                              </FormGroup>
                             </div>
                           </div>
                         );

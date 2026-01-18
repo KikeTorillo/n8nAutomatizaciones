@@ -11,6 +11,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { STALE_TIMES } from '@/app/queryClient';
 import { posApi } from '@/services/api/endpoints';
 import { useToast } from '@/hooks/utils';
 
@@ -181,7 +182,7 @@ export function useComboStock(productoId, cantidad = 1, options = {}) {
         queryKey: [QUERY_KEYS.comboStock, productoId, cantidad],
         queryFn: () => posApi.verificarStockCombo(productoId, cantidad),
         enabled: !!productoId && options.enabled !== false,
-        staleTime: 30 * 1000, // 30 segundos - stock cambia frecuentemente
+        staleTime: STALE_TIMES.REAL_TIME, // 30 segundos - stock cambia frecuentemente
         gcTime: GC_TIME,
         select: (response) => response.data?.data || response.data,
         ...options,

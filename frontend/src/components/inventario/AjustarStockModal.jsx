@@ -3,8 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { TrendingUp, TrendingDown, AlertCircle } from 'lucide-react';
-import { Button, Drawer, Textarea } from '@/components/ui';
-import FieldWrapper from '@/components/forms/FieldWrapper';
+import { Button, Drawer, FormGroup, Input, Textarea } from '@/components/ui';
 import { useAjustarStock } from '@/hooks/inventario';
 import { useToast } from '@/hooks/utils';
 
@@ -141,7 +140,7 @@ function AjustarStockModal({ isOpen, onClose, producto }) {
         </div>
 
         {/* Tipo de Movimiento */}
-        <FieldWrapper
+        <FormGroup
           label="Tipo de Ajuste"
           error={errors.tipo_movimiento?.message}
           required
@@ -203,26 +202,26 @@ function AjustarStockModal({ isOpen, onClose, producto }) {
               <span className="text-xs text-gray-500 dark:text-gray-400 mt-1">Reducir stock</span>
             </label>
           </div>
-        </FieldWrapper>
+        </FormGroup>
 
         {/* Cantidad a Ajustar */}
-        <FieldWrapper
+        <FormGroup
           label="Cantidad a Ajustar"
           error={errors.cantidad_ajuste?.message}
           required
-          helperText={`${tipoMovimiento === 'entrada_ajuste' ? '+' : '-'}${cantidadAjuste || 0} ${
+          helper={`${tipoMovimiento === 'entrada_ajuste' ? '+' : '-'}${cantidadAjuste || 0} ${
             producto.unidad_medida || 'unid'
           }`}
         >
-          <input
+          <Input
             type="number"
             min="1"
             step="1"
             {...register('cantidad_ajuste')}
-            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
             placeholder="Ej: 10"
+            hasError={!!errors.cantidad_ajuste}
           />
-        </FieldWrapper>
+        </FormGroup>
 
         {/* Stock Proyectado */}
         <div
@@ -290,15 +289,19 @@ function AjustarStockModal({ isOpen, onClose, producto }) {
         </div>
 
         {/* Motivo del Ajuste */}
-        <Textarea
+        <FormGroup
           label="Motivo del Ajuste"
-          {...register('motivo')}
-          rows={3}
-          placeholder="Ej: Conteo físico de inventario mensual - diferencia encontrada en almacén"
           error={errors.motivo?.message}
           required
           helper="Describe la razón de este ajuste (conteo físico, corrección, merma, etc.)"
-        />
+        >
+          <Textarea
+            {...register('motivo')}
+            rows={3}
+            placeholder="Ej: Conteo físico de inventario mensual - diferencia encontrada en almacén"
+            hasError={!!errors.motivo}
+          />
+        </FormGroup>
 
         {/* Botones */}
         <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">

@@ -98,7 +98,7 @@ export default function AperturaCajaModal({
             type="number"
             label="Monto inicial"
             prefix="$"
-            inputSize="lg"
+            size="lg"
             value={montoInicial}
             onChange={(e) => setMontoInicial(e.target.value)}
             step="0.01"

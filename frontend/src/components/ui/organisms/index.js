@@ -11,11 +11,11 @@ export { FilterPanel } from './FilterPanel';
 export { default as StatCardGrid } from './StatCardGrid';
 export { default as ExpandableCrudSection } from './ExpandableCrudSection';
 export { default as GenericNavTabs } from './GenericNavTabs';
-export { default as SmartButtons } from './SmartButtons';
 export { TreeView, useTreeExpansion } from './TreeNode';
 export { default as MobileNavSelector } from './MobileNavSelector';
 export { default as BarcodeScanner } from './BarcodeScanner';
 export { default as ToastContainer } from './ToastContainer';
+export { default as StateNavTabs } from './StateNavTabs';
 
 // Filters
 export { AdvancedFilterPanel, FilterChip, SavedSearchModal, SavedSearchList, FilterSection } from './filters';

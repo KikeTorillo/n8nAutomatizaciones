@@ -19,6 +19,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { STALE_TIMES } from '@/app/queryClient';
 import { recordatoriosApi } from '@/services/api/endpoints';
 import { useToast } from '../utils/useToast';
 
@@ -47,7 +48,7 @@ export function useConfiguracionRecordatorios() {
       const response = await recordatoriosApi.obtenerConfiguracion();
       return response.data?.data || response.data;
     },
-    staleTime: 5 * 60 * 1000, // 5 minutos (configuración cambia poco)
+    staleTime: STALE_TIMES.SEMI_STATIC, // 5 minutos (configuración cambia poco)
   });
 }
 
@@ -69,7 +70,7 @@ export function useEstadisticasRecordatorios(filtros = {}) {
       const response = await recordatoriosApi.obtenerEstadisticas(filtros);
       return response.data?.data || response.data;
     },
-    staleTime: 2 * 60 * 1000, // 2 minutos
+    staleTime: STALE_TIMES.DYNAMIC, // 2 minutos
   });
 }
 
@@ -89,7 +90,7 @@ export function useHistorialRecordatorios(citaId) {
       return response.data?.data || response.data;
     },
     enabled: !!citaId,
-    staleTime: 1 * 60 * 1000, // 1 minuto
+    staleTime: STALE_TIMES.FREQUENT, // 1 minuto
   });
 }
 

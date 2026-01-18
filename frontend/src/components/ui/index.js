@@ -18,12 +18,12 @@ export { default as Input } from './atoms/Input';
 export { default as Select } from './atoms/Select';
 export { default as Textarea } from './atoms/Textarea';
 export { default as Checkbox } from './atoms/Checkbox';
-export { default as Alert } from './atoms/Alert';
 export { default as Badge } from './atoms/Badge';
 export { default as LoadingSpinner } from './atoms/LoadingSpinner';
 export { default as Label } from './atoms/Label';
 
 // ========== MOLECULES ==========
+export { default as Alert } from './molecules/Alert';
 export { default as SearchInput } from './molecules/SearchInput';
 export { Pagination } from './molecules/Pagination';
 export { default as StatCard } from './molecules/StatCard';
@@ -42,6 +42,9 @@ export { ProgressBar, LimitProgressBar } from './molecules/ProgressBar';
 export { default as IconPicker } from './molecules/IconPicker';
 // Nuevos (Ene 2026) - Fase 2 mejoras UI
 export { default as FormGroup } from './molecules/FormGroup';
+// Nuevos (Ene 2026) - Optimización arquitectónica
+export { default as SearchFilterBar } from './molecules/SearchFilterBar';
+export { default as CheckboxGroup } from './molecules/CheckboxGroup';
 
 // ========== ORGANISMS ==========
 export { default as Modal } from './organisms/Modal';
@@ -53,10 +56,11 @@ export { FilterPanel, FilterChips } from './organisms/FilterPanel';
 export { default as StatCardGrid } from './organisms/StatCardGrid';
 export { default as ExpandableCrudSection } from './organisms/ExpandableCrudSection';
 export { default as GenericNavTabs } from './organisms/GenericNavTabs';
-export { default as SmartButtons } from './organisms/SmartButtons';
+export { default as SmartButtons } from './molecules/SmartButtons';
 export { TreeView, useTreeExpansion } from './organisms/TreeNode';
 export { default as MobileNavSelector } from './organisms/MobileNavSelector';
 export { default as ToastContainer } from './organisms/ToastContainer';
+export { default as StateNavTabs } from './organisms/StateNavTabs';
 
 // Filters (organisms)
 export {
@@ -78,6 +82,8 @@ export {
 // ========== TEMPLATES ==========
 export { default as BasePageLayout } from './templates/BasePageLayout';
 export { default as ModuleGuard } from './templates/ModuleGuard';
+export { default as ListadoCRUDPage } from './templates/ListadoCRUDPage';
 
 // ========== EXTERNOS ==========
 export { default as ChunkErrorBoundary } from '../common/ChunkErrorBoundary';
+export { default as GlobalErrorBoundary } from '../common/GlobalErrorBoundary';

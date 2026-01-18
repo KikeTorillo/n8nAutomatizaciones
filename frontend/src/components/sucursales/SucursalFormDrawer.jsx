@@ -9,6 +9,7 @@ import {
   Button,
   Checkbox,
   Drawer,
+  FormGroup,
   Input,
   Select,
   Textarea
@@ -244,30 +245,25 @@ function SucursalFormDrawer({ isOpen, onClose, sucursal = null, mode = 'create' 
             Información Básica
           </h3>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Nombre <span className="text-red-500">*</span>
-            </label>
+          <FormGroup label="Nombre" error={errors.nombre?.message} required>
             <Input
               {...register('nombre')}
               placeholder="Ej: Sucursal Centro"
-              error={errors.nombre?.message}
+              hasError={!!errors.nombre}
             />
-          </div>
+          </FormGroup>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Código
-            </label>
+          <FormGroup
+            label="Codigo"
+            error={errors.codigo?.message}
+            helper="Codigo unico para identificar la sucursal (ej: SUC-001)"
+          >
             <Input
               {...register('codigo')}
-              placeholder="Se genera automáticamente si se deja vacío"
-              error={errors.codigo?.message}
+              placeholder="Se genera automaticamente si se deja vacio"
+              hasError={!!errors.codigo}
             />
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              Código único para identificar la sucursal (ej: SUC-001)
-            </p>
-          </div>
+          </FormGroup>
         </div>
 
         {/* ===== UBICACIÓN ===== */}
@@ -276,17 +272,14 @@ function SucursalFormDrawer({ isOpen, onClose, sucursal = null, mode = 'create' 
             Ubicación
           </h3>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Dirección
-            </label>
+          <FormGroup label="Direccion" error={errors.direccion?.message}>
             <Textarea
               {...register('direccion')}
-              placeholder="Calle, número, colonia..."
+              placeholder="Calle, numero, colonia..."
               rows={2}
-              error={errors.direccion?.message}
+              hasError={!!errors.direccion}
             />
-          </div>
+          </FormGroup>
 
           <SelectorUbicacion
             control={control}
@@ -297,16 +290,13 @@ function SucursalFormDrawer({ isOpen, onClose, sucursal = null, mode = 'create' 
             horizontal={true}
           />
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Código Postal
-            </label>
+          <FormGroup label="Codigo Postal" error={errors.codigo_postal?.message}>
             <Input
               {...register('codigo_postal')}
               placeholder="Ej: 06600"
-              error={errors.codigo_postal?.message}
+              hasError={!!errors.codigo_postal}
             />
-          </div>
+          </FormGroup>
         </div>
 
         {/* ===== CONTACTO ===== */}
@@ -316,40 +306,31 @@ function SucursalFormDrawer({ isOpen, onClose, sucursal = null, mode = 'create' 
           </h3>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Teléfono
-              </label>
+            <FormGroup label="Telefono" error={errors.telefono?.message}>
               <Input
                 {...register('telefono')}
                 placeholder="Ej: 55 1234 5678"
-                error={errors.telefono?.message}
+                hasError={!!errors.telefono}
               />
-            </div>
+            </FormGroup>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                WhatsApp
-              </label>
+            <FormGroup label="WhatsApp" error={errors.whatsapp?.message}>
               <Input
                 {...register('whatsapp')}
                 placeholder="Ej: 521234567890"
-                error={errors.whatsapp?.message}
+                hasError={!!errors.whatsapp}
               />
-            </div>
+            </FormGroup>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Email
-            </label>
+          <FormGroup label="Email" error={errors.email?.message}>
             <Input
               type="email"
               {...register('email')}
               placeholder="sucursal@ejemplo.com"
-              error={errors.email?.message}
+              hasError={!!errors.email}
             />
-          </div>
+          </FormGroup>
         </div>
 
         {/* ===== HORARIOS ===== */}
@@ -362,37 +343,32 @@ function SucursalFormDrawer({ isOpen, onClose, sucursal = null, mode = 'create' 
             name="zona_horaria"
             control={control}
             render={({ field }) => (
-              <Select
-                {...field}
-                label="Zona Horaria"
-                options={ZONAS_HORARIAS}
-                error={errors.zona_horaria?.message}
-              />
+              <FormGroup label="Zona Horaria" error={errors.zona_horaria?.message}>
+                <Select
+                  {...field}
+                  options={ZONAS_HORARIAS}
+                  hasError={!!errors.zona_horaria}
+                />
+              </FormGroup>
             )}
           />
 
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Hora Apertura
-              </label>
+            <FormGroup label="Hora Apertura" error={errors.horario_apertura?.message}>
               <Input
                 type="time"
                 {...register('horario_apertura')}
-                error={errors.horario_apertura?.message}
+                hasError={!!errors.horario_apertura}
               />
-            </div>
+            </FormGroup>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Hora Cierre
-              </label>
+            <FormGroup label="Hora Cierre" error={errors.horario_cierre?.message}>
               <Input
                 type="time"
                 {...register('horario_cierre')}
-                error={errors.horario_cierre?.message}
+                hasError={!!errors.horario_cierre}
               />
-            </div>
+            </FormGroup>
           </div>
 
           <div>

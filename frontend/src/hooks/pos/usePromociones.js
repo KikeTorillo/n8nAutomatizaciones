@@ -13,6 +13,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { STALE_TIMES } from '@/app/queryClient';
 import { posApi } from '@/services/api/endpoints';
 import { sanitizeParams } from '@/lib/params';
 
@@ -32,7 +33,7 @@ export function usePromocionesVigentes(params = {}) {
       const response = await posApi.listarPromocionesVigentes(params);
       return response.data.data;
     },
-    staleTime: 1000 * 60 * 5, // 5 minutos
+    staleTime: STALE_TIMES.SEMI_STATIC, // 5 minutos
   });
 }
 
@@ -69,7 +70,7 @@ export function useEvaluarPromociones(data, options = {}) {
       return response.data.data;
     },
     enabled: enabled && items.length > 0,
-    staleTime: 1000 * 30, // 30 segundos - evaluar frecuentemente
+    staleTime: STALE_TIMES.REAL_TIME, // 30 segundos - evaluar frecuentemente
     refetchOnWindowFocus: false,
   });
 }
@@ -120,8 +121,8 @@ export function useAplicarPromocion() {
     },
     onSuccess: (data, variables) => {
       // Invalidar venta para refrescar totales
-      queryClient.invalidateQueries(['venta', variables.ventaPosId]);
-      queryClient.invalidateQueries(['promociones-vigentes']);
+      queryClient.invalidateQueries({ queryKey: ['venta', variables.ventaPosId] });
+      queryClient.invalidateQueries({ queryKey: ['promociones-vigentes'] });
     },
   });
 }
@@ -145,7 +146,7 @@ export function usePromociones(params = {}) {
         paginacion: response.data.pagination,
       };
     },
-    staleTime: 1000 * 60 * 2, // 2 minutos
+    staleTime: STALE_TIMES.DYNAMIC, // 2 minutos
     keepPreviousData: true,
   });
 }
@@ -162,7 +163,7 @@ export function usePromocion(id) {
       return response.data.data;
     },
     enabled: !!id,
-    staleTime: 1000 * 60 * 2,
+    staleTime: STALE_TIMES.DYNAMIC,
   });
 }
 
@@ -179,8 +180,8 @@ export function useCrearPromocion() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['promociones']);
-      queryClient.invalidateQueries(['promociones-vigentes']);
+      queryClient.invalidateQueries({ queryKey: ['promociones'] });
+      queryClient.invalidateQueries({ queryKey: ['promociones-vigentes'] });
     },
   });
 }
@@ -198,9 +199,9 @@ export function useActualizarPromocion() {
       return response.data.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries(['promociones']);
-      queryClient.invalidateQueries(['promocion', variables.id]);
-      queryClient.invalidateQueries(['promociones-vigentes']);
+      queryClient.invalidateQueries({ queryKey: ['promociones'] });
+      queryClient.invalidateQueries({ queryKey: ['promocion', variables.id] });
+      queryClient.invalidateQueries({ queryKey: ['promociones-vigentes'] });
     },
   });
 }
@@ -218,8 +219,8 @@ export function useEliminarPromocion() {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['promociones']);
-      queryClient.invalidateQueries(['promociones-vigentes']);
+      queryClient.invalidateQueries({ queryKey: ['promociones'] });
+      queryClient.invalidateQueries({ queryKey: ['promociones-vigentes'] });
     },
   });
 }
@@ -236,7 +237,7 @@ export function useHistorialPromocion(promocionId, params = {}) {
       return response.data.data;
     },
     enabled: !!promocionId,
-    staleTime: 1000 * 30, // 30 segundos
+    staleTime: STALE_TIMES.REAL_TIME, // 30 segundos
   });
 }
 
@@ -252,7 +253,7 @@ export function useEstadisticasPromocion(promocionId) {
       return response.data.data;
     },
     enabled: !!promocionId,
-    staleTime: 1000 * 60, // 1 minuto
+    staleTime: STALE_TIMES.FREQUENT, // 1 minuto
   });
 }
 
@@ -269,9 +270,9 @@ export function useCambiarEstadoPromocion() {
       return response.data.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries(['promociones']);
-      queryClient.invalidateQueries(['promocion', variables.id]);
-      queryClient.invalidateQueries(['promociones-vigentes']);
+      queryClient.invalidateQueries({ queryKey: ['promociones'] });
+      queryClient.invalidateQueries({ queryKey: ['promocion', variables.id] });
+      queryClient.invalidateQueries({ queryKey: ['promociones-vigentes'] });
     },
   });
 }
@@ -289,7 +290,7 @@ export function useDuplicarPromocion() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['promociones']);
+      queryClient.invalidateQueries({ queryKey: ['promociones'] });
     },
   });
 }

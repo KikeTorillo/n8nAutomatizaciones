@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { STALE_TIMES } from '@/app/queryClient';
 import { workflowDesignerApi, workflowsApi } from '@/services/api/endpoints';
 
 // ==================== QUERIES ====================
@@ -21,7 +22,7 @@ export function useWorkflowDefiniciones(params = {}) {
       const response = await workflowsApi.listarDefiniciones(sanitizedParams);
       return response.data.data || [];
     },
-    staleTime: 1000 * 60 * 5, // 5 minutos
+    staleTime: STALE_TIMES.SEMI_STATIC, // 5 minutos
   });
 }
 
@@ -37,7 +38,7 @@ export function useWorkflowDefinicion(id) {
       return response.data.data || null;
     },
     enabled: !!id,
-    staleTime: 1000 * 60 * 2, // 2 minutos
+    staleTime: STALE_TIMES.DYNAMIC, // 2 minutos
   });
 }
 
@@ -51,7 +52,7 @@ export function useEntidadesDisponibles() {
       const response = await workflowDesignerApi.listarEntidades();
       return response.data.data || [];
     },
-    staleTime: 1000 * 60 * 60, // 1 hora (no cambia frecuentemente)
+    staleTime: STALE_TIMES.VERY_STATIC, // 1 hora (no cambia frecuentemente)
   });
 }
 
@@ -65,7 +66,7 @@ export function useRolesDisponibles() {
       const response = await workflowDesignerApi.listarRoles();
       return response.data.data || [];
     },
-    staleTime: 1000 * 60 * 60, // 1 hora
+    staleTime: STALE_TIMES.VERY_STATIC, // 1 hora
   });
 }
 
@@ -79,7 +80,7 @@ export function usePermisosDisponibles() {
       const response = await workflowDesignerApi.listarPermisos();
       return response.data.data || [];
     },
-    staleTime: 1000 * 60 * 60, // 1 hora
+    staleTime: STALE_TIMES.VERY_STATIC, // 1 hora
   });
 }
 
@@ -96,7 +97,7 @@ export function useValidarWorkflow(id, enabled = false) {
       return response.data.data || { valido: false, errores: [] };
     },
     enabled: !!id && enabled,
-    staleTime: 1000 * 30, // 30 segundos
+    staleTime: STALE_TIMES.REAL_TIME, // 30 segundos
   });
 }
 

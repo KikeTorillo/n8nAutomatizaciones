@@ -9,6 +9,12 @@
  * Enero 2026
  */
 import { z } from 'zod';
+import {
+  optionalString,
+  requiredString,
+  optionalDate,
+  requiredDate,
+} from '@/lib/validations';
 
 // ==================== ENUMS REUTILIZABLES ====================
 
@@ -82,55 +88,18 @@ export const TIPOS_DOCUMENTO_VALUES = [
   'otro',
 ];
 
-// ==================== HELPERS ====================
-
-/**
- * Campo string opcional que acepta string vacio
- */
-const optionalString = (max = 500) =>
-  z
-    .string()
-    .max(max, `Maximo ${max} caracteres`)
-    .optional()
-    .or(z.literal(''))
-    .transform((val) => (val?.trim() ? val.trim() : null));
-
-/**
- * Campo string requerido con trim
- */
-const requiredString = (field, min = 2, max = 200) =>
-  z
-    .string()
-    .min(min, `${field} debe tener al menos ${min} caracteres`)
-    .max(max, `${field} no puede superar ${max} caracteres`)
-    .transform((val) => val.trim());
-
-/**
- * Campo fecha opcional (string vacio → null)
- */
-const optionalDate = z
-  .string()
-  .optional()
-  .or(z.literal(''))
-  .transform((val) => (val ? val : null));
-
-/**
- * Campo fecha requerida
- */
-const requiredDate = (field) => z.string().min(1, `${field} es requerida`);
-
 // ==================== 1. EDUCACION FORMAL ====================
 
 export const educacionSchema = z
   .object({
-    institucion: requiredString('La institucion', 2, 200),
-    titulo: requiredString('El titulo', 2, 200),
+    institucion: requiredString('La institución', 2, 200),
+    titulo: requiredString('El título', 2, 200),
     nivel: z.enum(NIVELES_EDUCACION_VALUES, {
-      errorMap: () => ({ message: 'Selecciona un nivel de educacion' }),
+      errorMap: () => ({ message: 'Selecciona un nivel de educación' }),
     }),
-    campo_estudio: optionalString(150),
-    fecha_inicio: requiredDate('La fecha de inicio'),
-    fecha_fin: optionalDate,
+    campo_estudio: optionalString('Campo de estudio', 0, 150),
+    fecha_inicio: requiredDate('Fecha de inicio'),
+    fecha_fin: optionalDate(),
     en_curso: z.boolean().default(false),
     promedio: z
       .string()
@@ -145,15 +114,15 @@ export const educacionSchema = z
         { message: 'El promedio debe estar entre 0 y 10' }
       )
       .transform((val) => (val?.trim() ? val.trim() : null)),
-    descripcion: optionalString(1000),
-    ubicacion: optionalString(200),
+    descripcion: optionalString('Descripción', 0, 1000),
+    ubicacion: optionalString('Ubicación', 0, 200),
   })
   .superRefine((data, ctx) => {
     // Validacion condicional: si en_curso, fecha_fin debe ser null/vacio
     if (data.en_curso && data.fecha_fin) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: 'No se puede especificar fecha de fin si esta en curso',
+        message: 'No se puede especificar fecha de fin si está en curso',
         path: ['fecha_fin'],
       });
     }
@@ -176,12 +145,12 @@ export const experienciaSchema = z
     empresa: requiredString('La empresa', 2, 200),
     puesto: requiredString('El puesto', 2, 150),
     tipo_empleo: z.enum(TIPOS_EMPLEO_VALUES).default('tiempo_completo'),
-    fecha_inicio: requiredDate('La fecha de inicio'),
-    fecha_fin: optionalDate,
+    fecha_inicio: requiredDate('Fecha de inicio'),
+    fecha_fin: optionalDate(),
     empleo_actual: z.boolean().default(false),
-    descripcion: optionalString(2000),
-    ubicacion: optionalString(200),
-    sector_industria: optionalString(100),
+    descripcion: optionalString('Descripción', 0, 2000),
+    ubicacion: optionalString('Ubicación', 0, 200),
+    sector_industria: optionalString('Sector/Industria', 0, 100),
   })
   .superRefine((data, ctx) => {
     // Validacion: si NO es empleo_actual, fecha_fin es requerida
@@ -221,25 +190,25 @@ export const experienciaSchema = z
 export const habilidadEmpleadoSchema = z.object({
   habilidad_id: z
     .number({
-      required_error: 'Selecciona una habilidad del catalogo',
-      invalid_type_error: 'Selecciona una habilidad del catalogo',
+      required_error: 'Selecciona una habilidad del catálogo',
+      invalid_type_error: 'Selecciona una habilidad del catálogo',
     })
     .positive('Selecciona una habilidad')
     .nullable()
     .optional(),
   nivel: z.enum(NIVELES_HABILIDAD_VALUES).default('basico'),
   anios_experiencia: z.coerce.number().min(0).max(70).default(0),
-  notas: optionalString(500),
-  certificaciones: optionalString(1000),
+  notas: optionalString('Notas', 0, 500),
+  certificaciones: optionalString('Certificaciones', 0, 1000),
 });
 
 /**
  * Schema para crear habilidad en el catalogo (formulario secundario)
  */
 export const nuevaHabilidadCatalogoSchema = z.object({
-  nombre: requiredString('El nombre', 2, 100),
+  nombre: requiredString('Nombre', 2, 100),
   categoria: z.enum(CATEGORIAS_HABILIDAD_VALUES).default('tecnica'),
-  descripcion: optionalString(500),
+  descripcion: optionalString('Descripción', 0, 500),
 });
 
 // ==================== 4. CUENTA BANCARIA ====================
@@ -248,8 +217,8 @@ export const cuentaBancariaSchema = z.object({
   banco: requiredString('El banco', 2, 100),
   numero_cuenta: z
     .string()
-    .min(4, 'El numero de cuenta debe tener al menos 4 caracteres')
-    .max(50, 'El numero de cuenta no puede superar 50 caracteres')
+    .min(4, 'El número de cuenta debe tener al menos 4 caracteres')
+    .max(50, 'El número de cuenta no puede superar 50 caracteres')
     .transform((val) => val.trim()),
   clabe: z
     .string()
@@ -260,14 +229,14 @@ export const cuentaBancariaSchema = z.object({
         if (!val || val === '') return true;
         return /^[0-9]{18}$/.test(val);
       },
-      { message: 'La CLABE debe tener exactamente 18 digitos numericos' }
+      { message: 'La CLABE debe tener exactamente 18 dígitos numéricos' }
     )
     .transform((val) => (val?.trim() ? val.trim() : null)),
   tipo_cuenta: z.enum(TIPOS_CUENTA_BANCARIA_VALUES).default('debito'),
   moneda: z.enum(MONEDAS_VALUES).default('MXN'),
   uso: z.enum(USOS_CUENTA_VALUES).default('nomina'),
-  titular_nombre: optionalString(150),
-  titular_documento: optionalString(30),
+  titular_nombre: optionalString('Nombre del titular', 0, 150),
+  titular_documento: optionalString('Documento del titular', 0, 30),
   es_principal: z.boolean().default(false),
 });
 
@@ -301,10 +270,10 @@ export const documentoMetadataSchema = z
       .min(3, 'El nombre debe tener al menos 3 caracteres')
       .max(150, 'El nombre no puede superar 150 caracteres')
       .transform((val) => val.trim()),
-    descripcion: optionalString(500),
-    numero_documento: optionalString(100),
-    fecha_emision: optionalDate,
-    fecha_vencimiento: optionalDate,
+    descripcion: optionalString('Descripción', 0, 500),
+    numero_documento: optionalString('Número de documento', 0, 100),
+    fecha_emision: optionalDate(),
+    fecha_vencimiento: optionalDate(),
   })
   .superRefine((data, ctx) => {
     // Validacion: fecha_vencimiento > fecha_emision
@@ -312,7 +281,7 @@ export const documentoMetadataSchema = z
       if (new Date(data.fecha_vencimiento) < new Date(data.fecha_emision)) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: 'La fecha de vencimiento debe ser posterior a la emision',
+          message: 'La fecha de vencimiento debe ser posterior a la emisión',
           path: ['fecha_vencimiento'],
         });
       }
@@ -332,7 +301,7 @@ export function validateFile(file) {
   }
 
   if (file.size > MAX_FILE_SIZE) {
-    errors.push('El archivo excede el tamano maximo (25MB)');
+    errors.push('El archivo excede el tamaño máximo (25MB)');
   }
 
   if (!ACCEPTED_MIME_TYPES.includes(file.type)) {

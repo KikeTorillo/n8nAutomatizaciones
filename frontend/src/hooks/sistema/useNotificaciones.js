@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { STALE_TIMES } from '@/app/queryClient';
 import { notificacionesApi } from '@/services/api/endpoints';
 
 // ==================== FEED DE NOTIFICACIONES ====================
@@ -21,7 +22,7 @@ export function useNotificaciones(params = {}) {
       const response = await notificacionesApi.listar(sanitizedParams);
       return response.data.data || [];
     },
-    staleTime: 1000 * 30, // 30 segundos - notificaciones cambian frecuentemente
+    staleTime: STALE_TIMES.REAL_TIME, // 30 segundos - notificaciones cambian frecuentemente
   });
 }
 
@@ -36,7 +37,7 @@ export function useNotificacionesCount() {
       const response = await notificacionesApi.contarNoLeidas();
       return response.data.data?.no_leidas || 0;
     },
-    staleTime: 1000 * 30, // 30 segundos
+    staleTime: STALE_TIMES.REAL_TIME, // 30 segundos
     refetchInterval: 1000 * 60, // Refetch cada minuto
   });
 }
@@ -53,8 +54,8 @@ export function useMarcarNotificacionLeida() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['notificaciones']);
-      queryClient.invalidateQueries(['notificaciones-count']);
+      queryClient.invalidateQueries({ queryKey: ['notificaciones'] });
+      queryClient.invalidateQueries({ queryKey: ['notificaciones-count'] });
     },
     onError: (error) => {
       const backendMessage = error.response?.data?.message || error.response?.data?.error;
@@ -75,8 +76,8 @@ export function useMarcarTodasNotificacionesLeidas() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['notificaciones']);
-      queryClient.invalidateQueries(['notificaciones-count']);
+      queryClient.invalidateQueries({ queryKey: ['notificaciones'] });
+      queryClient.invalidateQueries({ queryKey: ['notificaciones-count'] });
     },
     onError: (error) => {
       const backendMessage = error.response?.data?.message || error.response?.data?.error;
@@ -97,8 +98,8 @@ export function useArchivarNotificacion() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['notificaciones']);
-      queryClient.invalidateQueries(['notificaciones-count']);
+      queryClient.invalidateQueries({ queryKey: ['notificaciones'] });
+      queryClient.invalidateQueries({ queryKey: ['notificaciones-count'] });
     },
     onError: (error) => {
       const backendMessage = error.response?.data?.message || error.response?.data?.error;
@@ -119,8 +120,8 @@ export function useEliminarNotificacion() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['notificaciones']);
-      queryClient.invalidateQueries(['notificaciones-count']);
+      queryClient.invalidateQueries({ queryKey: ['notificaciones'] });
+      queryClient.invalidateQueries({ queryKey: ['notificaciones-count'] });
     },
     onError: (error) => {
       const backendMessage = error.response?.data?.message || error.response?.data?.error;
@@ -148,7 +149,7 @@ export function useCrearNotificacion() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['notificaciones']);
+      queryClient.invalidateQueries({ queryKey: ['notificaciones'] });
     },
     onError: (error) => {
       const backendMessage = error.response?.data?.message || error.response?.data?.error;
@@ -169,7 +170,7 @@ export function useNotificacionesPreferencias() {
       const response = await notificacionesApi.obtenerPreferencias();
       return response.data.data || {};
     },
-    staleTime: 1000 * 60 * 5, // 5 minutos
+    staleTime: STALE_TIMES.SEMI_STATIC, // 5 minutos
   });
 }
 
@@ -185,7 +186,7 @@ export function useActualizarNotificacionesPreferencias() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['notificaciones-preferencias']);
+      queryClient.invalidateQueries({ queryKey: ['notificaciones-preferencias'] });
     },
     onError: (error) => {
       const backendMessage = error.response?.data?.message || error.response?.data?.error;
@@ -204,7 +205,7 @@ export function useNotificacionesTipos() {
       const response = await notificacionesApi.obtenerTipos();
       return response.data.data || {};
     },
-    staleTime: 1000 * 60 * 10, // 10 minutos
+    staleTime: STALE_TIMES.STATIC_DATA, // 10 minutos
   });
 }
 
@@ -220,7 +221,7 @@ export function useNotificacionesPlantillas() {
       const response = await notificacionesApi.listarPlantillas();
       return response.data.data || [];
     },
-    staleTime: 1000 * 60 * 5, // 5 minutos
+    staleTime: STALE_TIMES.SEMI_STATIC, // 5 minutos
   });
 }
 
@@ -243,7 +244,7 @@ export function useCrearNotificacionPlantilla() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['notificaciones-plantillas']);
+      queryClient.invalidateQueries({ queryKey: ['notificaciones-plantillas'] });
     },
     onError: (error) => {
       const backendMessage = error.response?.data?.message || error.response?.data?.error;
@@ -271,7 +272,7 @@ export function useActualizarNotificacionPlantilla() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['notificaciones-plantillas']);
+      queryClient.invalidateQueries({ queryKey: ['notificaciones-plantillas'] });
     },
     onError: (error) => {
       const backendMessage = error.response?.data?.message || error.response?.data?.error;
@@ -292,7 +293,7 @@ export function useEliminarNotificacionPlantilla() {
       return id;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['notificaciones-plantillas']);
+      queryClient.invalidateQueries({ queryKey: ['notificaciones-plantillas'] });
     },
     onError: (error) => {
       const backendMessage = error.response?.data?.message || error.response?.data?.error;

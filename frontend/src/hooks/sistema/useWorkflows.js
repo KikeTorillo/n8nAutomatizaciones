@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { STALE_TIMES } from '@/app/queryClient';
 import { workflowsApi } from '@/services/api/endpoints';
 
 // ==================== QUERIES ====================
@@ -21,7 +22,7 @@ export function useAprobacionesPendientes(params = {}) {
       const response = await workflowsApi.listarPendientes(sanitizedParams);
       return response.data.data || { instancias: [], total: 0 };
     },
-    staleTime: 1000 * 30, // 30 segundos - se refresca frecuentemente
+    staleTime: STALE_TIMES.REAL_TIME, // 30 segundos - se refresca frecuentemente
   });
 }
 
@@ -36,7 +37,7 @@ export function useContadorAprobaciones() {
       const response = await workflowsApi.contarPendientes();
       return response.data.data?.total || 0;
     },
-    staleTime: 1000 * 30, // 30 segundos
+    staleTime: STALE_TIMES.REAL_TIME, // 30 segundos
     refetchInterval: 1000 * 30, // Polling cada 30 segundos
   });
 }
@@ -53,7 +54,7 @@ export function useInstanciaWorkflow(id) {
       return response.data.data || null;
     },
     enabled: !!id,
-    staleTime: 1000 * 60 * 2,
+    staleTime: STALE_TIMES.DYNAMIC,
   });
 }
 
@@ -75,7 +76,7 @@ export function useHistorialAprobaciones(params = {}) {
       const response = await workflowsApi.listarHistorial(sanitizedParams);
       return response.data.data || { instancias: [], total: 0 };
     },
-    staleTime: 1000 * 60 * 2,
+    staleTime: STALE_TIMES.DYNAMIC,
   });
 }
 
@@ -90,7 +91,7 @@ export function useDelegaciones(params = {}) {
       const response = await workflowsApi.listarDelegaciones(params);
       return response.data.data || [];
     },
-    staleTime: 1000 * 60 * 5,
+    staleTime: STALE_TIMES.SEMI_STATIC,
   });
 }
 
@@ -105,7 +106,7 @@ export function useDefinicionesWorkflow(params = {}) {
       const response = await workflowsApi.listarDefiniciones(params);
       return response.data.data || [];
     },
-    staleTime: 1000 * 60 * 10,
+    staleTime: STALE_TIMES.STATIC_DATA,
   });
 }
 
@@ -121,7 +122,7 @@ export function useDefinicionWorkflow(id) {
       return response.data.data || null;
     },
     enabled: !!id,
-    staleTime: 1000 * 60 * 10,
+    staleTime: STALE_TIMES.STATIC_DATA,
   });
 }
 
@@ -142,13 +143,13 @@ export function useAprobarSolicitud() {
     },
     onSuccess: (_, variables) => {
       // Invalidar queries relacionadas
-      queryClient.invalidateQueries(['aprobaciones-pendientes']);
-      queryClient.invalidateQueries(['aprobaciones-count']);
-      queryClient.invalidateQueries(['instancia-workflow', variables.id]);
-      queryClient.invalidateQueries(['historial-aprobaciones']);
+      queryClient.invalidateQueries({ queryKey: ['aprobaciones-pendientes'] });
+      queryClient.invalidateQueries({ queryKey: ['aprobaciones-count'] });
+      queryClient.invalidateQueries({ queryKey: ['instancia-workflow', variables.id] });
+      queryClient.invalidateQueries({ queryKey: ['historial-aprobaciones'] });
       // Invalidar ordenes de compra si aplica
-      queryClient.invalidateQueries(['ordenes-compra']);
-      queryClient.invalidateQueries(['ordenes-compra-pendientes']);
+      queryClient.invalidateQueries({ queryKey: ['ordenes-compra'] });
+      queryClient.invalidateQueries({ queryKey: ['ordenes-compra-pendientes'] });
     },
   });
 }
@@ -165,11 +166,11 @@ export function useRechazarSolicitud() {
       return response.data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries(['aprobaciones-pendientes']);
-      queryClient.invalidateQueries(['aprobaciones-count']);
-      queryClient.invalidateQueries(['instancia-workflow', variables.id]);
-      queryClient.invalidateQueries(['historial-aprobaciones']);
-      queryClient.invalidateQueries(['ordenes-compra']);
+      queryClient.invalidateQueries({ queryKey: ['aprobaciones-pendientes'] });
+      queryClient.invalidateQueries({ queryKey: ['aprobaciones-count'] });
+      queryClient.invalidateQueries({ queryKey: ['instancia-workflow', variables.id] });
+      queryClient.invalidateQueries({ queryKey: ['historial-aprobaciones'] });
+      queryClient.invalidateQueries({ queryKey: ['ordenes-compra'] });
     },
   });
 }
@@ -194,7 +195,7 @@ export function useCrearDelegacion() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['delegaciones']);
+      queryClient.invalidateQueries({ queryKey: ['delegaciones'] });
     },
   });
 }
@@ -222,7 +223,7 @@ export function useActualizarDelegacion() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['delegaciones']);
+      queryClient.invalidateQueries({ queryKey: ['delegaciones'] });
     },
   });
 }
@@ -239,7 +240,7 @@ export function useEliminarDelegacion() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['delegaciones']);
+      queryClient.invalidateQueries({ queryKey: ['delegaciones'] });
     },
   });
 }

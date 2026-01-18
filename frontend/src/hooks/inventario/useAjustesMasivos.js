@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ajustesMasivosApi } from '@/services/api/endpoints';
+import { STALE_TIMES } from '@/app/queryClient';
 
 /**
  * Hooks para gestión de Ajustes Masivos de Inventario (CSV)
@@ -32,7 +33,7 @@ export function useAjustesMasivos(params = {}) {
             const response = await ajustesMasivosApi.listar(sanitizedParams);
             return response.data.data || { ajustes: [], totales: {} };
         },
-        staleTime: 1000 * 60 * 2, // 2 minutos
+        staleTime: STALE_TIMES.DYNAMIC, // 2 minutos
     });
 }
 
@@ -48,7 +49,7 @@ export function useAjusteMasivo(id) {
             return response.data.data;
         },
         enabled: !!id,
-        staleTime: 1000 * 30, // 30 segundos
+        staleTime: STALE_TIMES.REAL_TIME, // 30 segundos
     });
 }
 
@@ -75,7 +76,7 @@ export function useCrearAjusteMasivo() {
             return response.data.data;
         },
         onSuccess: () => {
-            queryClient.invalidateQueries(['ajustes-masivos']);
+            queryClient.invalidateQueries({ queryKey: ['ajustes-masivos'] });
         },
         onError: (error) => {
             const backendMessage = error.response?.data?.message;
@@ -107,8 +108,8 @@ export function useValidarAjusteMasivo() {
             return response.data.data;
         },
         onSuccess: (_, id) => {
-            queryClient.invalidateQueries(['ajuste-masivo', id]);
-            queryClient.invalidateQueries(['ajustes-masivos']);
+            queryClient.invalidateQueries({ queryKey: ['ajuste-masivo', id] });
+            queryClient.invalidateQueries({ queryKey: ['ajustes-masivos'] });
         },
         onError: (error) => {
             const backendMessage = error.response?.data?.message;
@@ -132,14 +133,14 @@ export function useAplicarAjusteMasivo() {
             return response.data.data;
         },
         onSuccess: (_, id) => {
-            queryClient.invalidateQueries(['ajuste-masivo', id]);
-            queryClient.invalidateQueries(['ajustes-masivos']);
+            queryClient.invalidateQueries({ queryKey: ['ajuste-masivo', id] });
+            queryClient.invalidateQueries({ queryKey: ['ajustes-masivos'] });
             // Invalidar datos de inventario afectados
-            queryClient.invalidateQueries(['productos']);
-            queryClient.invalidateQueries(['movimientos']);
-            queryClient.invalidateQueries(['kardex']);
-            queryClient.invalidateQueries(['stock-critico']);
-            queryClient.invalidateQueries(['valor-inventario']);
+            queryClient.invalidateQueries({ queryKey: ['productos'] });
+            queryClient.invalidateQueries({ queryKey: ['movimientos'] });
+            queryClient.invalidateQueries({ queryKey: ['kardex'] });
+            queryClient.invalidateQueries({ queryKey: ['stock-critico'] });
+            queryClient.invalidateQueries({ queryKey: ['valor-inventario'] });
         },
         onError: (error) => {
             const backendMessage = error.response?.data?.message;
@@ -163,8 +164,8 @@ export function useCancelarAjusteMasivo() {
             return response.data.data;
         },
         onSuccess: (_, id) => {
-            queryClient.invalidateQueries(['ajuste-masivo', id]);
-            queryClient.invalidateQueries(['ajustes-masivos']);
+            queryClient.invalidateQueries({ queryKey: ['ajuste-masivo', id] });
+            queryClient.invalidateQueries({ queryKey: ['ajustes-masivos'] });
         },
         onError: (error) => {
             const backendMessage = error.response?.data?.message;

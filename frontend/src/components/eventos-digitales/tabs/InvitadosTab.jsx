@@ -17,6 +17,7 @@ import {
 import { Button, Input, LoadingSpinner } from '@/components/ui';
 import { useModalManager } from '@/hooks/utils';
 import { useToast } from '@/hooks/utils';
+import { eventosDigitalesApi } from '@/services/api/modules';
 
 /**
  * Tab de invitados del evento
@@ -25,7 +26,6 @@ import { useToast } from '@/hooks/utils';
  * @param {boolean} props.isLoading - Estado de carga
  * @param {Object} props.evento - Datos del evento (slug)
  * @param {boolean} props.mostrarQR - Si mostrar opciones de QR
- * @param {string} props.accessToken - Token de autenticacion
  * @param {Object} props.crearInvitado - Mutation para crear
  * @param {Object} props.actualizarInvitado - Mutation para actualizar
  * @param {Object} props.eliminarInvitado - Mutation para eliminar
@@ -38,7 +38,6 @@ export default function InvitadosTab({
   isLoading,
   evento,
   mostrarQR,
-  accessToken,
   crearInvitado,
   actualizarInvitado,
   eliminarInvitado,
@@ -114,15 +113,9 @@ export default function InvitadosTab({
     setLoadingQR(true);
     openModal('qr', null);
     try {
-      const response = await fetch(
-        `/api/v1/eventos-digitales/eventos/${eventoId}/invitados/${invitado.id}/qr?formato=base64`,
-        {
-          headers: { 'Authorization': `Bearer ${accessToken}` }
-        }
-      );
-      const data = await response.json();
-      if (data.success) {
-        openModal('qr', { ...data.data, invitado });
+      const response = await eventosDigitalesApi.obtenerQRInvitado(eventoId, invitado.id, 'base64');
+      if (response.data?.success) {
+        openModal('qr', { ...response.data.data, invitado });
       } else {
         toast.error('Error al obtener QR');
         closeModal('qr');
@@ -149,26 +142,17 @@ export default function InvitadosTab({
   const handleDescargarQRMasivo = async () => {
     toast.info('Generando ZIP con todos los QR...');
     try {
-      const response = await fetch(
-        `/api/v1/eventos-digitales/eventos/${eventoId}/qr-masivo`,
-        {
-          headers: { 'Authorization': `Bearer ${accessToken}` }
-        }
-      );
-      if (response.ok) {
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `qr-${evento.slug}.zip`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
-        toast.success('QR descargados exitosamente');
-      } else {
-        toast.error('Error al descargar QR');
-      }
+      const response = await eventosDigitalesApi.descargarQRMasivo(eventoId);
+      const blob = response.data;
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `qr-${evento.slug}.zip`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      toast.success('QR descargados exitosamente');
     } catch (error) {
       toast.error('Error al descargar QR');
     }

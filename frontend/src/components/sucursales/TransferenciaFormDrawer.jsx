@@ -12,8 +12,10 @@ import {
 import {
   Button,
   Drawer,
+  FormGroup,
   Input,
-  Select
+  Select,
+  Textarea
 } from '@/components/ui';
 import { useToast } from '@/hooks/utils';
 import {
@@ -175,37 +177,35 @@ function TransferenciaFormDrawer({ isOpen, onClose }) {
         <div className="flex-1 overflow-y-auto p-4 space-y-6">
           {/* Sucursales */}
           <div className="grid grid-cols-1 gap-4">
-            <Select
-              label="Sucursal Origen *"
-              {...register('sucursal_origen_id', { valueAsNumber: true })}
-              options={sucursalesOptions}
-              error={errors.sucursal_origen_id?.message}
-            />
+            <FormGroup label="Sucursal Origen" error={errors.sucursal_origen_id?.message} required>
+              <Select
+                {...register('sucursal_origen_id', { valueAsNumber: true })}
+                options={sucursalesOptions}
+                hasError={!!errors.sucursal_origen_id}
+              />
+            </FormGroup>
 
             <div className="flex items-center justify-center">
               <ArrowRightLeft className="w-5 h-5 text-gray-400" />
             </div>
 
-            <Select
-              label="Sucursal Destino *"
-              {...register('sucursal_destino_id', { valueAsNumber: true })}
-              options={sucursalesDestinoOptions}
-              error={errors.sucursal_destino_id?.message}
-            />
+            <FormGroup label="Sucursal Destino" error={errors.sucursal_destino_id?.message} required>
+              <Select
+                {...register('sucursal_destino_id', { valueAsNumber: true })}
+                options={sucursalesDestinoOptions}
+                hasError={!!errors.sucursal_destino_id}
+              />
+            </FormGroup>
           </div>
 
           {/* Notas */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Notas (opcional)
-            </label>
-            <textarea
+          <FormGroup label="Notas (opcional)">
+            <Textarea
               {...register('notas')}
               rows={2}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               placeholder="Notas adicionales..."
             />
-          </div>
+          </FormGroup>
 
           {/* Productos */}
           <div>

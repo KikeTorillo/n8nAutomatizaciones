@@ -13,6 +13,7 @@ import { useDropzone } from 'react-dropzone';
 import {
   Button,
   Drawer,
+  FormGroup,
   Input,
   Select,
   Textarea
@@ -232,54 +233,60 @@ export default function DocumentoUploadDrawer({
         </div>
 
         {/* Tipo de documento */}
-        <Select
-          label="Tipo de documento *"
-          placeholder="Seleccione tipo..."
-          options={tipoOptions}
-          error={errors.tipo_documento?.message}
-          {...register('tipo_documento')}
-        />
+        <FormGroup label="Tipo de documento" required error={errors.tipo_documento?.message}>
+          <Select
+            placeholder="Seleccione tipo..."
+            options={tipoOptions}
+            hasError={!!errors.tipo_documento}
+            {...register('tipo_documento')}
+          />
+        </FormGroup>
 
         {/* Nombre */}
-        <Input
-          label="Nombre del documento *"
-          placeholder="Ej: INE Juan Perez 2025"
-          error={errors.nombre?.message}
-          {...register('nombre')}
-        />
+        <FormGroup label="Nombre del documento" required error={errors.nombre?.message}>
+          <Input
+            placeholder="Ej: INE Juan Perez 2025"
+            hasError={!!errors.nombre}
+            {...register('nombre')}
+          />
+        </FormGroup>
 
         {/* Numero de documento */}
-        <Input
-          label="Numero/Folio (opcional)"
-          placeholder="Ej: ABC123456789"
-          error={errors.numero_documento?.message}
-          {...register('numero_documento')}
-        />
+        <FormGroup label="Numero/Folio (opcional)" error={errors.numero_documento?.message}>
+          <Input
+            placeholder="Ej: ABC123456789"
+            hasError={!!errors.numero_documento}
+            {...register('numero_documento')}
+          />
+        </FormGroup>
 
         {/* Fechas en grid */}
         <div className="grid grid-cols-2 gap-4">
-          <Input
-            label="Fecha de emision"
-            type="date"
-            error={errors.fecha_emision?.message}
-            {...register('fecha_emision')}
-          />
-          <Input
-            label="Fecha de vencimiento"
-            type="date"
-            error={errors.fecha_vencimiento?.message}
-            {...register('fecha_vencimiento')}
-          />
+          <FormGroup label="Fecha de emision" error={errors.fecha_emision?.message}>
+            <Input
+              type="date"
+              hasError={!!errors.fecha_emision}
+              {...register('fecha_emision')}
+            />
+          </FormGroup>
+          <FormGroup label="Fecha de vencimiento" error={errors.fecha_vencimiento?.message}>
+            <Input
+              type="date"
+              hasError={!!errors.fecha_vencimiento}
+              {...register('fecha_vencimiento')}
+            />
+          </FormGroup>
         </div>
 
         {/* Descripcion */}
-        <Textarea
-          label="Descripcion (opcional)"
-          placeholder="Notas adicionales sobre el documento..."
-          rows={2}
-          error={errors.descripcion?.message}
-          {...register('descripcion')}
-        />
+        <FormGroup label="Descripcion (opcional)" error={errors.descripcion?.message}>
+          <Textarea
+            placeholder="Notas adicionales sobre el documento..."
+            rows={2}
+            hasError={!!errors.descripcion}
+            {...register('descripcion')}
+          />
+        </FormGroup>
 
         {/* Footer con botones */}
         <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700 mt-6">

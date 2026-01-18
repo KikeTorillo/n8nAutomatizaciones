@@ -5,6 +5,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { STALE_TIMES } from '@/app/queryClient';
 import { eventosDigitalesApi } from '@/services/api/endpoints';
 import { sanitizeParams } from '@/lib/params';
 
@@ -29,7 +30,7 @@ export function useInvitados(eventoId, params = {}) {
       };
     },
     enabled: !!eventoId,
-    staleTime: 1000 * 60,
+    staleTime: STALE_TIMES.FREQUENT,
     keepPreviousData: true,
   });
 }
@@ -216,7 +217,7 @@ export function useUbicacionesEvento(eventoId) {
       return response.data.data.ubicaciones || [];
     },
     enabled: !!eventoId,
-    staleTime: 1000 * 60 * 5,
+    staleTime: STALE_TIMES.SEMI_STATIC,
   });
 }
 

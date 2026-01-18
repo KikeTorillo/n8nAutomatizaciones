@@ -10,6 +10,7 @@ import {
 import {
   Button,
   Checkbox,
+  FormGroup,
   Input,
   Modal,
   Select,
@@ -198,70 +199,55 @@ export default function PlantillaFormModal({
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Datos basicos */}
         <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Nombre <span className="text-red-500">*</span>
-            </label>
+          <FormGroup label="Nombre" error={errors.nombre} required>
             <Input
               value={formData.nombre}
               onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
               placeholder="Ej: Onboarding General"
-              error={errors.nombre}
+              hasError={!!errors.nombre}
             />
-          </div>
+          </FormGroup>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Descripcion
-            </label>
+          <FormGroup label="Descripcion">
             <Textarea
               value={formData.descripcion}
               onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })}
               placeholder="Descripcion opcional de la plantilla..."
               rows={2}
             />
-          </div>
+          </FormGroup>
 
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Departamento (opcional)
-              </label>
+            <FormGroup label="Departamento (opcional)">
               <DepartamentoSelect
                 value={formData.departamento_id}
                 onChange={(val) => setFormData({ ...formData, departamento_id: val })}
                 placeholder="Cualquier departamento"
                 allowNull
               />
-            </div>
+            </FormGroup>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Puesto (opcional)
-              </label>
+            <FormGroup label="Puesto (opcional)">
               <PuestoSelect
                 value={formData.puesto_id}
                 onChange={(val) => setFormData({ ...formData, puesto_id: val })}
                 placeholder="Cualquier puesto"
                 allowNull
               />
-            </div>
+            </FormGroup>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Duracion (dias)
-              </label>
+            <FormGroup label="Duracion (dias)" error={errors.duracion_dias}>
               <Input
                 type="number"
                 value={formData.duracion_dias}
                 onChange={(e) => setFormData({ ...formData, duracion_dias: parseInt(e.target.value) || 30 })}
                 min={1}
                 max={365}
-                error={errors.duracion_dias}
+                hasError={!!errors.duracion_dias}
               />
-            </div>
+            </FormGroup>
 
             <div className="flex items-end">
               <Checkbox

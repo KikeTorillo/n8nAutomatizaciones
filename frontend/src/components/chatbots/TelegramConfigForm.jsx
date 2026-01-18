@@ -3,7 +3,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import FormField from '@/components/forms/FormField';
-import { Button, Input, LoadingSpinner } from '@/components/ui';
+import { Button, FormGroup, Input, LoadingSpinner } from '@/components/ui';
 import { AlertCircle, CheckCircle2, ExternalLink } from 'lucide-react';
 
 // Schema de validación para bot token de Telegram
@@ -132,15 +132,19 @@ function TelegramConfigForm({
           name="bot_token"
           control={control}
           render={({ field }) => (
-            <Input
-              {...field}
-              type="text"
+            <FormGroup
               label="Bot Token"
-              placeholder="123456789:ABCdefGHIjklMNOpqrsTUVwxyz1234567890"
-              required
               error={errors.bot_token?.message}
               helperText="Token proporcionado por @BotFather"
-            />
+              required
+            >
+              <Input
+                {...field}
+                type="text"
+                placeholder="123456789:ABCdefGHIjklMNOpqrsTUVwxyz1234567890"
+                hasError={!!errors.bot_token}
+              />
+            </FormGroup>
           )}
         />
 

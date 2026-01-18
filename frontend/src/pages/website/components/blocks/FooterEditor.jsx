@@ -163,14 +163,14 @@ function FooterEditor({ contenido, onGuardar, tema, isSaving }) {
                 value={link.texto}
                 onChange={(e) => handleLinkChange(index, 'texto', e.target.value)}
                 placeholder="Texto"
-                inputSize="sm"
+                size="sm"
                 className="dark:bg-gray-600 dark:border-gray-500 dark:text-gray-100"
               />
               <Input
                 value={link.url}
                 onChange={(e) => handleLinkChange(index, 'url', e.target.value)}
                 placeholder="/url"
-                inputSize="sm"
+                size="sm"
                 className="dark:bg-gray-600 dark:border-gray-500 dark:text-gray-100"
               />
               <Button
@@ -216,7 +216,7 @@ function FooterEditor({ contenido, onGuardar, tema, isSaving }) {
                 value={red.url}
                 onChange={(e) => handleRedChange(index, 'url', e.target.value)}
                 placeholder="URL del perfil"
-                inputSize="sm"
+                size="sm"
                 className="dark:bg-gray-600 dark:border-gray-500 dark:text-gray-100"
               />
               <Button

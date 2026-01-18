@@ -27,3 +27,5 @@ export { default as FormGroup } from './FormGroup';
 // Nuevos (Ene 2026) - Optimización arquitectónica
 export { default as FilterChip } from './FilterChip';
 export { default as SearchFilterBar } from './SearchFilterBar';
+export { default as SmartButtons } from './SmartButtons';
+export { default as CheckboxGroup } from './CheckboxGroup';

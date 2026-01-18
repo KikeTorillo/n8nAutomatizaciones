@@ -222,7 +222,7 @@ export default function CierreCajaModal({
                 type="number"
                 label="Monto contado en caja"
                 prefix="$"
-                inputSize="lg"
+                size="lg"
                 value={montoContado}
                 onChange={(e) => setMontoContado(e.target.value)}
                 step="0.01"

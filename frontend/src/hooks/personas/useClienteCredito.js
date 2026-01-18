@@ -16,6 +16,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { STALE_TIMES } from '@/app/queryClient';
 import { clientesApi } from '@/services/api/endpoints';
 
 /**
@@ -32,7 +33,7 @@ export function useEstadoCredito(clienteId, options = {}) {
       return response.data.data;
     },
     enabled: !!clienteId && (options.enabled !== false),
-    staleTime: 1000 * 60 * 5, // 5 minutos - Ene 2026: aumentado para reducir requests POS
+    staleTime: STALE_TIMES.SEMI_STATIC, // 5 minutos - Ene 2026: aumentado para reducir requests POS
   });
 }
 
@@ -49,9 +50,9 @@ export function useActualizarCredito() {
       return response.data.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries(['cliente-credito', variables.clienteId]);
-      queryClient.invalidateQueries(['cliente', variables.clienteId]);
-      queryClient.invalidateQueries(['clientes']);
+      queryClient.invalidateQueries({ queryKey: ['cliente-credito', variables.clienteId] });
+      queryClient.invalidateQueries({ queryKey: ['cliente', variables.clienteId] });
+      queryClient.invalidateQueries({ queryKey: ['clientes'] });
     },
   });
 }
@@ -69,8 +70,8 @@ export function useSuspenderCredito() {
       return response.data.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries(['cliente-credito', variables.clienteId]);
-      queryClient.invalidateQueries(['cliente', variables.clienteId]);
+      queryClient.invalidateQueries({ queryKey: ['cliente-credito', variables.clienteId] });
+      queryClient.invalidateQueries({ queryKey: ['cliente', variables.clienteId] });
     },
   });
 }
@@ -89,8 +90,8 @@ export function useReactivarCredito() {
     },
     onSuccess: (data, variables) => {
       // variables es clienteId directamente
-      queryClient.invalidateQueries(['cliente-credito', variables]);
-      queryClient.invalidateQueries(['cliente', variables]);
+      queryClient.invalidateQueries({ queryKey: ['cliente-credito', variables] });
+      queryClient.invalidateQueries({ queryKey: ['cliente', variables] });
     },
   });
 }
@@ -108,9 +109,9 @@ export function useRegistrarAbono() {
       return response.data.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries(['cliente-credito', variables.clienteId]);
-      queryClient.invalidateQueries(['cliente-credito-movimientos', variables.clienteId]);
-      queryClient.invalidateQueries(['clientes-con-saldo']);
+      queryClient.invalidateQueries({ queryKey: ['cliente-credito', variables.clienteId] });
+      queryClient.invalidateQueries({ queryKey: ['cliente-credito-movimientos', variables.clienteId] });
+      queryClient.invalidateQueries({ queryKey: ['clientes-con-saldo'] });
     },
   });
 }
@@ -129,7 +130,7 @@ export function useMovimientosCredito(clienteId, params = {}) {
       return response.data.data;
     },
     enabled: !!clienteId,
-    staleTime: 1000 * 60 * 2, // 2 minutos - Ene 2026: aumentado para reducir requests POS
+    staleTime: STALE_TIMES.DYNAMIC, // 2 minutos - Ene 2026: aumentado para reducir requests POS
     keepPreviousData: true,
   });
 }
@@ -146,7 +147,7 @@ export function useClientesConSaldo(params = {}) {
       const response = await clientesApi.listarClientesConSaldo(params);
       return response.data.data;
     },
-    staleTime: 1000 * 60 * 2, // 2 minutos
+    staleTime: STALE_TIMES.DYNAMIC, // 2 minutos
   });
 }
 

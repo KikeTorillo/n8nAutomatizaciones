@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { Loader2, Award, Star, Crown, Gem } from 'lucide-react';
 
-import { Button, Drawer, Input } from '@/components/ui';
+import { Button, Drawer, Input, FormGroup } from '@/components/ui';
 import { useToast } from '@/hooks/utils';
 import { useCrearNivelLealtad, useActualizarNivelLealtad } from '@/hooks/pos';
 
@@ -185,22 +185,24 @@ export default function NivelLealtadDrawer({ isOpen, onClose, nivel, onSuccess }
 
         {/* Nombre y código */}
         <div className="grid grid-cols-2 gap-4">
-          <Input
-            label="Nombre"
-            placeholder="Ej: Bronce"
-            {...register('nombre', {
-              required: 'Nombre requerido',
-              onChange: handleNombreChange
-            })}
-            error={errors.nombre?.message}
-          />
-          <Input
-            label="Código"
-            placeholder="Ej: BRONCE"
-            {...register('codigo', { required: 'Código requerido' })}
-            error={errors.codigo?.message}
-            className="uppercase"
-          />
+          <FormGroup label="Nombre" error={errors.nombre?.message}>
+            <Input
+              placeholder="Ej: Bronce"
+              {...register('nombre', {
+                required: 'Nombre requerido',
+                onChange: handleNombreChange
+              })}
+              hasError={!!errors.nombre}
+            />
+          </FormGroup>
+          <FormGroup label="Código" error={errors.codigo?.message}>
+            <Input
+              placeholder="Ej: BRONCE"
+              {...register('codigo', { required: 'Código requerido' })}
+              hasError={!!errors.codigo}
+              className="uppercase"
+            />
+          </FormGroup>
         </div>
 
         {/* Selector de color */}
@@ -259,42 +261,46 @@ export default function NivelLealtadDrawer({ isOpen, onClose, nivel, onSuccess }
 
         {/* Puntos */}
         <div className="grid grid-cols-2 gap-4">
-          <Input
-            label="Puntos mínimos"
-            type="number"
-            min="0"
-            placeholder="0"
-            {...register('puntos_minimos', { required: 'Requerido' })}
-            error={errors.puntos_minimos?.message}
-          />
-          <Input
-            label="Puntos máximos (opcional)"
-            type="number"
-            min="0"
-            placeholder="Sin límite"
-            {...register('puntos_maximos')}
-          />
+          <FormGroup label="Puntos mínimos" error={errors.puntos_minimos?.message}>
+            <Input
+              type="number"
+              min="0"
+              placeholder="0"
+              {...register('puntos_minimos', { required: 'Requerido' })}
+              hasError={!!errors.puntos_minimos}
+            />
+          </FormGroup>
+          <FormGroup label="Puntos máximos (opcional)">
+            <Input
+              type="number"
+              min="0"
+              placeholder="Sin límite"
+              {...register('puntos_maximos')}
+            />
+          </FormGroup>
         </div>
 
         {/* Multiplicador y orden */}
         <div className="grid grid-cols-2 gap-4">
-          <Input
-            label="Multiplicador de puntos"
-            type="number"
-            step="0.1"
-            min="1"
-            max="10"
-            placeholder="1.0"
-            {...register('multiplicador_puntos')}
-            suffix="x"
-          />
-          <Input
-            label="Orden"
-            type="number"
-            min="0"
-            placeholder="0"
-            {...register('orden')}
-          />
+          <FormGroup label="Multiplicador de puntos">
+            <Input
+              type="number"
+              step="0.1"
+              min="1"
+              max="10"
+              placeholder="1.0"
+              {...register('multiplicador_puntos')}
+              suffix="x"
+            />
+          </FormGroup>
+          <FormGroup label="Orden">
+            <Input
+              type="number"
+              min="0"
+              placeholder="0"
+              {...register('orden')}
+            />
+          </FormGroup>
         </div>
 
         {/* Explicación del multiplicador */}

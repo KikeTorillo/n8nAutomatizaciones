@@ -1,13 +1,15 @@
 /**
  * Hooks de Otros Módulos
- * Re-exports centralizados para módulos específicos
+ * Re-exports centralizados desde subcarpetas
+ *
+ * Ene 2026: Reorganizado en subcarpetas para mejor mantenibilidad
  */
 
-export * from './useEstadisticas';
-export * from './useUbicaciones';
-export * from './useContabilidad';
-export * from './useWebsite';
-export * from './useEventosDigitales';
-export * from './useChatbots';
-export * from './useMarketplace';
-export * from './useComisiones';
+export * from './estadisticas';
+export * from './ubicaciones';
+export * from './contabilidad';
+export * from './website';
+export * from './eventos-digitales';
+export * from './chatbots';
+export * from './marketplace';
+export * from './comisiones';

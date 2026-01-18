@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { STALE_TIMES } from '@/app/queryClient';
 import { chatbotsApi } from '@/services/api/endpoints';
 
 /**
@@ -12,7 +13,7 @@ export function useChatbots(params = {}) {
       // El backend devuelve: { chatbots: [...], paginacion: {...}, filtros_aplicados: {...} }
       return response.data.data;
     },
-    staleTime: 1000 * 60 * 5, // 5 minutos
+    staleTime: STALE_TIMES.SEMI_STATIC, // 5 minutos
   });
 }
 
@@ -27,7 +28,7 @@ export function useChatbot(id) {
       return response.data.data;
     },
     enabled: !!id,
-    staleTime: 1000 * 60 * 5,
+    staleTime: STALE_TIMES.SEMI_STATIC,
   });
 }
 
@@ -252,6 +253,6 @@ export function useEstadisticasChatbot(id, params = {}) {
       return response.data.data;
     },
     enabled: !!id,
-    staleTime: 1000 * 60, // 1 minuto
+    staleTime: STALE_TIMES.FREQUENT, // 1 minuto
   });
 }

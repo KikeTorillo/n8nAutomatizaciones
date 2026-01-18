@@ -12,7 +12,7 @@
  * ====================================================================
  */
 
-import { useState, useMemo } from 'react';
+import { useMemo, lazy, Suspense } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
   Edit,
@@ -24,24 +24,33 @@ import {
   User,
   Clock,
   FileText,
-  ChevronDown,
-  Check,
   TrendingUp,
   Calendar,
   ShoppingCart,
   DollarSign,
 } from 'lucide-react';
-import { BackButton, Button, LoadingSpinner, StatCardGrid } from '@/components/ui';
+import { BackButton, Button, LoadingSpinner, StatCardGrid, StateNavTabs } from '@/components/ui';
 import ClienteEtiquetasEditor from '@/components/clientes/ClienteEtiquetasEditor';
 import { useCliente, useEstadisticasCliente } from '@/hooks/personas';
 import { useUsuarios } from '@/hooks/personas';
-import { cn, formatCurrency } from '@/lib/utils';
+import { formatCurrency } from '@/lib/utils';
 
-// Tabs components
+// Tab principal (carga eager)
 import ClienteGeneralTab from './tabs/ClienteGeneralTab';
-import ClienteTimelineTab from './tabs/ClienteTimelineTab';
-import ClienteDocumentosTab from './tabs/ClienteDocumentosTab';
-import ClienteOportunidadesTab from './tabs/ClienteOportunidadesTab';
+
+// Tabs secundarios (carga lazy para mejor performance)
+const ClienteTimelineTab = lazy(() => import('./tabs/ClienteTimelineTab'));
+const ClienteDocumentosTab = lazy(() => import('./tabs/ClienteDocumentosTab'));
+const ClienteOportunidadesTab = lazy(() => import('./tabs/ClienteOportunidadesTab'));
+
+// Fallback para tabs lazy
+function TabLoadingFallback() {
+  return (
+    <div className="flex items-center justify-center py-12">
+      <LoadingSpinner />
+    </div>
+  );
+}
 
 // Configuración de tabs
 const CLIENTE_TABS = [
@@ -50,90 +59,6 @@ const CLIENTE_TABS = [
   { id: 'documentos', label: 'Documentos', icon: FileText },
   { id: 'oportunidades', label: 'Oportunidades', icon: TrendingUp },
 ];
-
-/**
- * Navegación de tabs para cliente
- * Desktop: Tabs horizontales
- * Mobile: Dropdown selector
- */
-function ClienteTabs({ activeTab, onTabChange }) {
-  const [mobileOpen, setMobileOpen] = useState(false);
-
-  const activeTabData = CLIENTE_TABS.find(t => t.id === activeTab) || CLIENTE_TABS[0];
-  const ActiveIcon = activeTabData.icon;
-
-  return (
-    <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-10">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Desktop: Tabs horizontales */}
-        <nav className="hidden md:flex items-center -mb-px" aria-label="Tabs">
-          {CLIENTE_TABS.map((tab) => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => onTabChange(tab.id)}
-                className={cn(
-                  'flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors',
-                  isActive
-                    ? 'text-primary-700 dark:text-primary-400 border-primary-700 dark:border-primary-400'
-                    : 'text-gray-500 dark:text-gray-400 border-transparent hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
-                )}
-              >
-                <Icon className="h-4 w-4 flex-shrink-0" />
-                <span>{tab.label}</span>
-              </button>
-            );
-          })}
-        </nav>
-
-        {/* Mobile: Dropdown selector */}
-        <div className="md:hidden py-2 relative">
-          <button
-            type="button"
-            onClick={() => setMobileOpen(!mobileOpen)}
-            className="w-full flex items-center justify-between gap-2 px-4 py-3 text-sm font-medium rounded-lg bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100"
-          >
-            <div className="flex items-center gap-2">
-              <ActiveIcon className="h-4 w-4 text-primary-600 dark:text-primary-400" />
-              <span>{activeTabData.label}</span>
-            </div>
-            <ChevronDown className={cn('h-5 w-5 text-gray-400 transition-transform', mobileOpen && 'rotate-180')} />
-          </button>
-
-          {mobileOpen && (
-            <div className="absolute left-0 right-0 mt-1 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50">
-              {CLIENTE_TABS.map((tab) => {
-                const Icon = tab.icon;
-                const isActive = activeTab === tab.id;
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => {
-                      onTabChange(tab.id);
-                      setMobileOpen(false);
-                    }}
-                    className={cn(
-                      'w-full flex items-center gap-3 px-4 py-2.5 text-sm text-left transition-colors',
-                      isActive
-                        ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400'
-                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-                    )}
-                  >
-                    <Icon className={cn('h-4 w-4', isActive ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400')} />
-                    <span className="flex-1">{tab.label}</span>
-                    {isActive && <Check className="h-4 w-4 text-primary-600 dark:text-primary-400" />}
-                  </button>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
 
 /**
  * Header del cliente con información resumida y estadísticas
@@ -328,28 +253,42 @@ function ClienteDetailPage() {
 
   // Renderizar tab activo
   const renderTabContent = () => {
+    // Tab general carga sin Suspense (eager)
+    if (activeTab === 'general') {
+      return (
+        <ClienteGeneralTab
+          cliente={cliente}
+          estadisticas={estadisticas}
+        />
+      );
+    }
+
+    // Tabs secundarios con Suspense (lazy)
+    let content;
     switch (activeTab) {
       case 'historial':
-        return (
+        content = (
           <ClienteTimelineTab
             clienteId={parseInt(id)}
             usuarios={usuarios}
           />
         );
+        break;
       case 'documentos':
-        return (
+        content = (
           <ClienteDocumentosTab
             clienteId={parseInt(id)}
           />
         );
+        break;
       case 'oportunidades':
-        return (
+        content = (
           <ClienteOportunidadesTab
             clienteId={parseInt(id)}
             usuarios={usuarios}
           />
         );
-      case 'general':
+        break;
       default:
         return (
           <ClienteGeneralTab
@@ -358,6 +297,12 @@ function ClienteDetailPage() {
           />
         );
     }
+
+    return (
+      <Suspense fallback={<TabLoadingFallback />}>
+        {content}
+      </Suspense>
+    );
   };
 
   return (
@@ -370,7 +315,8 @@ function ClienteDetailPage() {
       />
 
       {/* Navegación de tabs */}
-      <ClienteTabs
+      <StateNavTabs
+        tabs={CLIENTE_TABS}
         activeTab={activeTab}
         onTabChange={handleTabChange}
       />

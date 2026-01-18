@@ -1,3 +1,4 @@
+import axios from 'axios';
 import apiClient from '../client';
 
 /**
@@ -111,6 +112,66 @@ export const eventosDigitalesApi = {
    * @returns {Promise<Object>} { whatsapp_url, mensaje }
    */
   obtenerWhatsAppLink: (id) => apiClient.get(`/eventos-digitales/invitados/${id}/whatsapp`),
+
+  // ========== Check-In ==========
+
+  /**
+   * Obtener estadísticas de check-in del evento
+   * @param {number} eventoId
+   * @returns {Promise<Object>} { total_invitados, total_confirmados, total_checkin, porcentaje }
+   */
+  obtenerCheckinStats: (eventoId) => apiClient.get(`/eventos-digitales/eventos/${eventoId}/checkin/stats`),
+
+  /**
+   * Listar check-ins recientes del evento
+   * @param {number} eventoId
+   * @param {Object} params - { limit?, offset? }
+   * @returns {Promise<Object>} { checkins[] }
+   */
+  listarCheckinsRecientes: (eventoId, params = {}) => apiClient.get(`/eventos-digitales/eventos/${eventoId}/checkin/lista`, { params }),
+
+  /**
+   * Registrar check-in de invitado
+   * @param {number} eventoId
+   * @param {Object} data - { token, num_acompanantes? }
+   * @returns {Promise<Object>}
+   */
+  registrarCheckin: (eventoId, data) => apiClient.post(`/eventos-digitales/eventos/${eventoId}/checkin`, data),
+
+  // ========== QR Invitados ==========
+
+  /**
+   * Obtener QR de un invitado
+   * @param {number} eventoId
+   * @param {number} invitadoId
+   * @param {string} formato - 'base64' | 'png' | 'svg'
+   * @returns {Promise<Object>} { qr_code, url_invitacion }
+   */
+  obtenerQRInvitado: (eventoId, invitadoId, formato = 'base64') =>
+    apiClient.get(`/eventos-digitales/eventos/${eventoId}/invitados/${invitadoId}/qr`, { params: { formato } }),
+
+  /**
+   * Descargar QRs de todos los invitados en ZIP
+   * @param {number} eventoId
+   * @returns {Promise<Blob>}
+   */
+  descargarQRMasivo: (eventoId) =>
+    apiClient.get(`/eventos-digitales/eventos/${eventoId}/qr-masivo`, { responseType: 'blob' }),
+
+  /**
+   * Obtener QR público de invitado (sin auth)
+   * @param {string} slug
+   * @param {string} token
+   * @param {string} formato - 'base64' | 'png' | 'svg'
+   * @returns {Promise<Object>}
+   */
+  obtenerQRPublico: (slug, token, formato = 'base64') => {
+    const publicAxios = axios.create({
+      baseURL: '/api/v1',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    return publicAxios.get(`/public/evento/${slug}/${token}/qr`, { params: { formato } });
+  },
 
   // ========== Ubicaciones ==========
 

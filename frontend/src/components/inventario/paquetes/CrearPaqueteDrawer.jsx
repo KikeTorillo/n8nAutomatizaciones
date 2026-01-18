@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Package, Plus, Trash2, Scale, Ruler, Save, X } from 'lucide-react';
-import { Button, Drawer, Input } from '@/components/ui';
+import { Button, Drawer, Input, FormGroup } from '@/components/ui';
 import { useToast } from '@/hooks/utils';
 import {
   useCrearPaquete,
@@ -357,67 +357,74 @@ function CrearPaqueteDrawer({ isOpen, onClose, operacionId, paqueteId = null }) 
 
               <form onSubmit={handleSubmit(onSubmitDimensiones)} className="space-y-4">
                 <div className="grid grid-cols-2 gap-3">
-                  <Input
-                    label="Peso (kg)"
-                    type="number"
-                    step="0.001"
-                    placeholder="0.000"
-                    {...register('peso_kg')}
-                    error={errors.peso_kg?.message}
-                    disabled={!paqueteAbierto}
-                  />
+                  <FormGroup label="Peso (kg)" error={errors.peso_kg?.message}>
+                    <Input
+                      type="number"
+                      step="0.001"
+                      placeholder="0.000"
+                      {...register('peso_kg')}
+                      hasError={!!errors.peso_kg}
+                      disabled={!paqueteAbierto}
+                    />
+                  </FormGroup>
                   <div></div>
-                  <Input
-                    label="Largo (cm)"
-                    type="number"
-                    step="0.01"
-                    placeholder="0.00"
-                    {...register('largo_cm')}
-                    error={errors.largo_cm?.message}
-                    disabled={!paqueteAbierto}
-                  />
-                  <Input
-                    label="Ancho (cm)"
-                    type="number"
-                    step="0.01"
-                    placeholder="0.00"
-                    {...register('ancho_cm')}
-                    error={errors.ancho_cm?.message}
-                    disabled={!paqueteAbierto}
-                  />
-                  <Input
-                    label="Alto (cm)"
-                    type="number"
-                    step="0.01"
-                    placeholder="0.00"
-                    {...register('alto_cm')}
-                    error={errors.alto_cm?.message}
-                    disabled={!paqueteAbierto}
-                  />
+                  <FormGroup label="Largo (cm)" error={errors.largo_cm?.message}>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      placeholder="0.00"
+                      {...register('largo_cm')}
+                      hasError={!!errors.largo_cm}
+                      disabled={!paqueteAbierto}
+                    />
+                  </FormGroup>
+                  <FormGroup label="Ancho (cm)" error={errors.ancho_cm?.message}>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      placeholder="0.00"
+                      {...register('ancho_cm')}
+                      hasError={!!errors.ancho_cm}
+                      disabled={!paqueteAbierto}
+                    />
+                  </FormGroup>
+                  <FormGroup label="Alto (cm)" error={errors.alto_cm?.message}>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      placeholder="0.00"
+                      {...register('alto_cm')}
+                      hasError={!!errors.alto_cm}
+                      disabled={!paqueteAbierto}
+                    />
+                  </FormGroup>
                 </div>
 
-                <Input
-                  label="Carrier"
-                  placeholder="DHL, FedEx, Estafeta..."
-                  {...register('carrier')}
-                  disabled={!paqueteAbierto}
-                />
+                <FormGroup label="Carrier">
+                  <Input
+                    placeholder="DHL, FedEx, Estafeta..."
+                    {...register('carrier')}
+                    disabled={!paqueteAbierto}
+                  />
+                </FormGroup>
 
-                <Input
-                  label="Numero de tracking"
-                  placeholder="Numero de guia"
-                  {...register('tracking_carrier')}
-                  disabled={!paqueteAbierto}
-                />
+                <FormGroup label="Numero de tracking">
+                  <Input
+                    placeholder="Numero de guia"
+                    {...register('tracking_carrier')}
+                    disabled={!paqueteAbierto}
+                  />
+                </FormGroup>
 
-                <Input
-                  label="Notas"
-                  as="textarea"
-                  rows={2}
-                  placeholder="Notas adicionales..."
-                  {...register('notas')}
-                  disabled={!paqueteAbierto}
-                />
+                <FormGroup label="Notas">
+                  <Input
+                    as="textarea"
+                    rows={2}
+                    placeholder="Notas adicionales..."
+                    {...register('notas')}
+                    disabled={!paqueteAbierto}
+                  />
+                </FormGroup>
 
                 {paqueteAbierto && isDirty && (
                   <Button

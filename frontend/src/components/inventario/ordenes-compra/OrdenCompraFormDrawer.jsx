@@ -14,10 +14,11 @@ import {
 import {
   Button,
   Drawer,
+  FormGroup,
+  Input,
   Select,
   Textarea
 } from '@/components/ui';
-import FieldWrapper from '@/components/forms/FieldWrapper';
 import { useToast } from '@/hooks/utils';
 import { useCrearOrdenCompra, useActualizarOrdenCompra, useAgregarItemsOrdenCompra } from '@/hooks/inventario';
 import { useProveedores } from '@/hooks/inventario';
@@ -252,66 +253,67 @@ export default function OrdenCompraFormDrawer({ isOpen, onClose, orden = null, m
           </h3>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <Select
-              label="Proveedor"
-              {...register('proveedor_id')}
-              placeholder="Selecciona un proveedor"
-              options={proveedores.map((prov) => ({
-                value: prov.id.toString(),
-                label: prov.nombre,
-              }))}
-              disabled={esEdicion}
-              error={errors.proveedor_id?.message}
-              required
-            />
+            <FormGroup label="Proveedor" error={errors.proveedor_id?.message} required>
+              <Select
+                {...register('proveedor_id')}
+                placeholder="Selecciona un proveedor"
+                options={proveedores.map((prov) => ({
+                  value: prov.id.toString(),
+                  label: prov.nombre,
+                }))}
+                disabled={esEdicion}
+                hasError={!!errors.proveedor_id}
+              />
+            </FormGroup>
 
-            <FieldWrapper label="Fecha de Entrega Esperada" error={errors.fecha_entrega_esperada?.message}>
-              <input
+            <FormGroup label="Fecha de Entrega Esperada" error={errors.fecha_entrega_esperada?.message}>
+              <Input
                 type="date"
                 {...register('fecha_entrega_esperada')}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                hasError={!!errors.fecha_entrega_esperada}
               />
-            </FieldWrapper>
+            </FormGroup>
 
-            <FieldWrapper label="Días de Crédito" error={errors.dias_credito?.message}>
-              <input
+            <FormGroup label="Días de Crédito" error={errors.dias_credito?.message}>
+              <Input
                 type="number"
                 min="0"
                 {...register('dias_credito')}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                hasError={!!errors.dias_credito}
               />
-            </FieldWrapper>
+            </FormGroup>
 
-            <FieldWrapper label="Descuento (%)" error={errors.descuento_porcentaje?.message}>
-              <input
+            <FormGroup label="Descuento (%)" error={errors.descuento_porcentaje?.message}>
+              <Input
                 type="number"
                 min="0"
                 max="100"
                 step="0.01"
                 {...register('descuento_porcentaje')}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                 placeholder="0"
+                hasError={!!errors.descuento_porcentaje}
               />
-            </FieldWrapper>
+            </FormGroup>
 
-            <FieldWrapper label="Referencia del Proveedor" error={errors.referencia_proveedor?.message}>
-              <input
+            <FormGroup label="Referencia del Proveedor" error={errors.referencia_proveedor?.message}>
+              <Input
                 type="text"
                 {...register('referencia_proveedor')}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                 placeholder="# Cotización o referencia"
+                hasError={!!errors.referencia_proveedor}
               />
-            </FieldWrapper>
+            </FormGroup>
           </div>
 
           <div className="mt-4">
-            <Textarea
-              label="Notas"
-              {...register('notas')}
-              rows={2}
-              placeholder="Notas adicionales para la orden"
-              error={errors.notas?.message}
-            />
+            <FormGroup label="Notas" error={errors.notas?.message}>
+              <Textarea
+                {...register('notas')}
+                rows={2}
+                placeholder="Notas adicionales para la orden"
+                hasError={!!errors.notas}
+              />
+            </FormGroup>
           </div>
         </div>
 

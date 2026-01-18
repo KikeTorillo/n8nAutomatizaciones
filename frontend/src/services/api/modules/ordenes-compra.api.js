@@ -1,4 +1,6 @@
 import apiClient from '../client';
+import { ubicacionesAlmacenApi } from './ubicaciones-almacen.api';
+
 /**
  * API de Órdenes de Compra
  */
@@ -147,102 +149,21 @@ export const ordenesCompraApi = {
    */
   autoGenerarOCs: () => apiClient.post('/inventario/ordenes-compra/auto-generar'),
 
-  // ========== Ubicaciones de Almacén - WMS (Dic 2025 - Fase 3 Gaps) ==========
-
-  /**
-   * Crear nueva ubicación de almacén
-   * @param {Object} data - { sucursal_id, codigo, nombre?, tipo, parent_id?, capacidad_maxima?, es_picking?, es_recepcion?, ... }
-   * @returns {Promise<Object>} Ubicación creada
-   */
-  crearUbicacion: (data) => apiClient.post('/inventario/ubicaciones', data),
-
-  /**
-   * Obtener ubicación por ID
-   * @param {number} id
-   * @returns {Promise<Object>}
-   */
-  obtenerUbicacion: (id) => apiClient.get(`/inventario/ubicaciones/${id}`),
-
-  /**
-   * Listar ubicaciones con filtros
-   * @param {Object} params - { sucursal_id?, tipo?, parent_id?, es_picking?, es_recepcion?, activo?, bloqueada?, busqueda?, limit?, offset? }
-   * @returns {Promise<Object>} { ubicaciones, total }
-   */
-  listarUbicaciones: (params = {}) => apiClient.get('/inventario/ubicaciones', { params }),
-
-  /**
-   * Obtener árbol jerárquico de ubicaciones de una sucursal
-   * @param {number} sucursalId
-   * @returns {Promise<Array>} Árbol de ubicaciones
-   */
-  obtenerArbolUbicaciones: (sucursalId) => apiClient.get(`/inventario/ubicaciones/arbol/${sucursalId}`),
-
-  /**
-   * Actualizar ubicación
-   * @param {number} id
-   * @param {Object} data
-   * @returns {Promise<Object>}
-   */
-  actualizarUbicacion: (id, data) => apiClient.put(`/inventario/ubicaciones/${id}`, data),
-
-  /**
-   * Eliminar ubicación (solo si no tiene stock ni sub-ubicaciones)
-   * @param {number} id
-   * @returns {Promise<Object>}
-   */
-  eliminarUbicacion: (id) => apiClient.delete(`/inventario/ubicaciones/${id}`),
-
-  /**
-   * Bloquear/Desbloquear ubicación
-   * @param {number} id
-   * @param {Object} data - { bloqueada: boolean, motivo_bloqueo?: string }
-   * @returns {Promise<Object>}
-   */
-  toggleBloqueoUbicacion: (id, data) => apiClient.patch(`/inventario/ubicaciones/${id}/bloquear`, data),
-
-  /**
-   * Obtener stock de una ubicación
-   * @param {number} id
-   * @returns {Promise<Array>} Productos en la ubicación
-   */
-  obtenerStockUbicacion: (id) => apiClient.get(`/inventario/ubicaciones/${id}/stock`),
-
-  /**
-   * Agregar stock a una ubicación
-   * @param {number} ubicacionId
-   * @param {Object} data - { producto_id, cantidad, lote?, fecha_vencimiento? }
-   * @returns {Promise<Object>}
-   */
-  agregarStockUbicacion: (ubicacionId, data) => apiClient.post(`/inventario/ubicaciones/${ubicacionId}/stock`, data),
-
-  /**
-   * Mover stock entre ubicaciones
-   * @param {Object} data - { producto_id, ubicacion_origen_id, ubicacion_destino_id, cantidad, lote? }
-   * @returns {Promise<Object>}
-   */
-  moverStockUbicacion: (data) => apiClient.post('/inventario/ubicaciones/mover-stock', data),
-
-  /**
-   * Obtener ubicaciones disponibles para almacenar
-   * @param {number} sucursalId
-   * @param {Object} params - { cantidad? }
-   * @returns {Promise<Array>}
-   */
-  obtenerUbicacionesDisponibles: (sucursalId, params = {}) => apiClient.get(`/inventario/ubicaciones/disponibles/${sucursalId}`, { params }),
-
-  /**
-   * Obtener estadísticas de ubicaciones de una sucursal
-   * @param {number} sucursalId
-   * @returns {Promise<Object>}
-   */
-  obtenerEstadisticasUbicaciones: (sucursalId) => apiClient.get(`/inventario/ubicaciones/estadisticas/${sucursalId}`),
-
-  /**
-   * Obtener ubicaciones donde está un producto
-   * @param {number} productoId
-   * @returns {Promise<Array>}
-   */
-  obtenerUbicacionesProducto: (productoId) => apiClient.get(`/inventario/productos/${productoId}/ubicaciones`),
+  // ========== Ubicaciones de Almacén WMS (delegado a ubicacionesAlmacenApi) ==========
+  // Re-exportación para compatibilidad retroactiva
+  crearUbicacion: ubicacionesAlmacenApi.crear,
+  obtenerUbicacion: ubicacionesAlmacenApi.obtener,
+  listarUbicaciones: ubicacionesAlmacenApi.listar,
+  obtenerArbolUbicaciones: ubicacionesAlmacenApi.obtenerArbol,
+  actualizarUbicacion: ubicacionesAlmacenApi.actualizar,
+  eliminarUbicacion: ubicacionesAlmacenApi.eliminar,
+  toggleBloqueoUbicacion: ubicacionesAlmacenApi.toggleBloqueo,
+  obtenerStockUbicacion: ubicacionesAlmacenApi.obtenerStock,
+  agregarStockUbicacion: ubicacionesAlmacenApi.agregarStock,
+  moverStockUbicacion: ubicacionesAlmacenApi.moverStock,
+  obtenerUbicacionesDisponibles: ubicacionesAlmacenApi.obtenerDisponibles,
+  obtenerEstadisticasUbicaciones: ubicacionesAlmacenApi.obtenerEstadisticas,
+  obtenerUbicacionesProducto: ubicacionesAlmacenApi.obtenerPorProducto,
 };
 
 // ==================== PUNTO DE VENTA (POS) ====================

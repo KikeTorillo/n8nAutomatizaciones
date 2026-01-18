@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { Loader2, Percent, DollarSign } from 'lucide-react';
 
-import { Button, Drawer, Input } from '@/components/ui';
+import { Button, Drawer, FormGroup, Input, Textarea } from '@/components/ui';
 import { useToast } from '@/hooks/utils';
 import { useCrearCupon, useActualizarCupon } from '@/hooks/pos';
 
@@ -141,33 +141,31 @@ export default function CuponFormDrawer({ isOpen, onClose, cupon, onSuccess }) {
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 p-4">
         {/* Codigo y nombre */}
         <div className="grid grid-cols-2 gap-4">
-          <Input
-            label="Codigo"
-            placeholder="Ej: VERANO2026"
-            {...register('codigo', { required: 'Codigo requerido' })}
-            error={errors.codigo?.message}
-            className="uppercase"
-          />
-          <Input
-            label="Nombre"
-            placeholder="Ej: Descuento de verano"
-            {...register('nombre', { required: 'Nombre requerido' })}
-            error={errors.nombre?.message}
-          />
+          <FormGroup label="Código" error={errors.codigo?.message} required>
+            <Input
+              placeholder="Ej: VERANO2026"
+              {...register('codigo', { required: 'Código requerido' })}
+              hasError={!!errors.codigo}
+              className="uppercase"
+            />
+          </FormGroup>
+          <FormGroup label="Nombre" error={errors.nombre?.message} required>
+            <Input
+              placeholder="Ej: Descuento de verano"
+              {...register('nombre', { required: 'Nombre requerido' })}
+              hasError={!!errors.nombre}
+            />
+          </FormGroup>
         </div>
 
         {/* Descripcion */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Descripcion (opcional)
-          </label>
-          <textarea
+        <FormGroup label="Descripción (opcional)">
+          <Textarea
             {...register('descripcion')}
             rows={2}
-            placeholder="Descripcion del cupon..."
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500"
+            placeholder="Descripción del cupón..."
           />
-        </div>
+        </FormGroup>
 
         {/* Tipo de descuento */}
         <div>
@@ -203,53 +201,57 @@ export default function CuponFormDrawer({ isOpen, onClose, cupon, onSuccess }) {
         </div>
 
         {/* Valor del descuento */}
-        <Input
+        <FormGroup
           label={tipoSeleccionado === 'porcentaje' ? 'Porcentaje de descuento' : 'Monto de descuento'}
-          type="number"
-          step={tipoSeleccionado === 'porcentaje' ? '1' : '0.01'}
-          placeholder={tipoSeleccionado === 'porcentaje' ? '20' : '50.00'}
-          {...register('valor', { required: 'Valor requerido' })}
           error={errors.valor?.message}
-          suffix={tipoSeleccionado === 'porcentaje' ? '%' : '$'}
-        />
+          required
+        >
+          <Input
+            type="number"
+            step={tipoSeleccionado === 'porcentaje' ? '1' : '0.01'}
+            placeholder={tipoSeleccionado === 'porcentaje' ? '20' : '50.00'}
+            {...register('valor', { required: 'Valor requerido' })}
+            hasError={!!errors.valor}
+            suffix={tipoSeleccionado === 'porcentaje' ? '%' : '$'}
+          />
+        </FormGroup>
 
         {/* Monto minimo */}
-        <Input
-          label="Monto minimo de compra (opcional)"
-          type="number"
-          step="0.01"
-          placeholder="100.00"
-          {...register('monto_minimo')}
-        />
+        <FormGroup label="Monto mínimo de compra (opcional)">
+          <Input
+            type="number"
+            step="0.01"
+            placeholder="100.00"
+            {...register('monto_minimo')}
+          />
+        </FormGroup>
 
         {/* Fechas */}
         <div className="grid grid-cols-2 gap-4">
-          <Input
-            label="Fecha inicio (opcional)"
-            type="date"
-            {...register('fecha_inicio')}
-          />
-          <Input
-            label="Fecha fin (opcional)"
-            type="date"
-            {...register('fecha_fin')}
-          />
+          <FormGroup label="Fecha inicio (opcional)">
+            <Input type="date" {...register('fecha_inicio')} />
+          </FormGroup>
+          <FormGroup label="Fecha fin (opcional)">
+            <Input type="date" {...register('fecha_fin')} />
+          </FormGroup>
         </div>
 
         {/* Limites de uso */}
         <div className="grid grid-cols-2 gap-4">
-          <Input
-            label="Uso maximo total (opcional)"
-            type="number"
-            placeholder="Sin limite"
-            {...register('uso_maximo')}
-          />
-          <Input
-            label="Uso maximo por cliente (opcional)"
-            type="number"
-            placeholder="Sin limite"
-            {...register('uso_por_cliente')}
-          />
+          <FormGroup label="Uso máximo total (opcional)">
+            <Input
+              type="number"
+              placeholder="Sin límite"
+              {...register('uso_maximo')}
+            />
+          </FormGroup>
+          <FormGroup label="Uso máximo por cliente (opcional)">
+            <Input
+              type="number"
+              placeholder="Sin límite"
+              {...register('uso_por_cliente')}
+            />
+          </FormGroup>
         </div>
 
         {/* Estado activo */}

@@ -1,0 +1,153 @@
+import { useState, useCallback, useMemo } from 'react';
+import { ConfirmDialog } from '@/components/ui';
+import { useToast } from './useToast';
+
+/**
+ * Hook para manejar confirmación de eliminación con patrón estandarizado.
+ * Encapsula el estado del modal, la mutación y los mensajes toast.
+ *
+ * @param {Object} options - Opciones de configuración
+ * @param {Object} options.deleteMutation - Mutación de TanStack Query (useEliminar*)
+ * @param {string} options.entityName - Nombre de la entidad (ej: 'producto', 'categoría')
+ * @param {Function} [options.getName] - Función para obtener el nombre del item (item => item.nombre)
+ * @param {string} [options.successMessage] - Mensaje personalizado de éxito
+ * @param {string} [options.errorMessage] - Mensaje personalizado de error
+ * @param {string} [options.confirmTitle] - Título del modal (default: "Eliminar {entityName}")
+ * @param {string} [options.confirmMessage] - Mensaje del modal (puede usar {name} como placeholder)
+ * @param {string} [options.confirmText] - Texto del botón confirmar (default: "Eliminar")
+ * @param {Function} [options.onSuccess] - Callback adicional tras éxito
+ * @param {Function} [options.onError] - Callback adicional tras error
+ * @param {Function} [options.renderChildren] - Función para renderizar contenido adicional en el modal
+ *
+ * @returns {Object} { confirmDelete, DeleteConfirmModal, isDeleting, itemToDelete }
+ *
+ * @example
+ * const { confirmDelete, DeleteConfirmModal } = useDeleteConfirmation({
+ *   deleteMutation: useEliminarProducto(),
+ *   entityName: 'producto',
+ *   getName: (p) => p.nombre,
+ * });
+ *
+ * // En el handler: onClick={() => confirmDelete(item)}
+ * // En el JSX: <DeleteConfirmModal />
+ */
+export function useDeleteConfirmation({
+  deleteMutation,
+  entityName,
+  getName = (item) => item?.nombre || item?.name || 'este elemento',
+  successMessage,
+  errorMessage,
+  confirmTitle,
+  confirmMessage,
+  confirmText = 'Eliminar',
+  onSuccess,
+  onError,
+  renderChildren,
+}) {
+  const { success: showSuccess, error: showError } = useToast();
+  const [itemToDelete, setItemToDelete] = useState(null);
+  const [isOpen, setIsOpen] = useState(false);
+
+  // Capitalizar primera letra del nombre de entidad
+  const capitalizedEntity = useMemo(() => {
+    return entityName.charAt(0).toUpperCase() + entityName.slice(1);
+  }, [entityName]);
+
+  // Abrir modal de confirmación
+  const confirmDelete = useCallback((item) => {
+    setItemToDelete(item);
+    setIsOpen(true);
+  }, []);
+
+  // Cerrar modal
+  const closeModal = useCallback(() => {
+    setIsOpen(false);
+    // Delay para permitir animación de cierre
+    setTimeout(() => setItemToDelete(null), 200);
+  }, []);
+
+  // Ejecutar eliminación
+  const handleConfirm = useCallback(() => {
+    if (!itemToDelete) return;
+
+    const itemId = itemToDelete.id;
+    const itemName = getName(itemToDelete);
+
+    deleteMutation.mutate(itemId, {
+      onSuccess: () => {
+        showSuccess(successMessage || `${capitalizedEntity} eliminado correctamente`);
+        closeModal();
+        onSuccess?.(itemToDelete);
+      },
+      onError: (err) => {
+        const mensaje = err.response?.data?.mensaje || err.message || errorMessage || `Error al eliminar ${entityName}`;
+        showError(mensaje);
+        onError?.(err, itemToDelete);
+      },
+    });
+  }, [
+    itemToDelete,
+    deleteMutation,
+    getName,
+    successMessage,
+    errorMessage,
+    capitalizedEntity,
+    entityName,
+    showSuccess,
+    showError,
+    closeModal,
+    onSuccess,
+    onError,
+  ]);
+
+  // Mensaje por defecto con placeholder {name}
+  const defaultMessage = `¿Estás seguro de que deseas eliminar ${entityName === 'el' || entityName.startsWith('el ') ? '' : (entityName.match(/^[aeiou]/i) ? 'la ' : 'el ')}${entityName} "{name}"? Esta acción no se puede deshacer.`;
+
+  const finalMessage = useMemo(() => {
+    const template = confirmMessage || defaultMessage;
+    const name = itemToDelete ? getName(itemToDelete) : '';
+    return template.replace('{name}', name);
+  }, [confirmMessage, defaultMessage, itemToDelete, getName]);
+
+  // Componente del modal (para renderizar en el JSX)
+  const DeleteConfirmModal = useCallback(() => {
+    const children = renderChildren ? renderChildren(itemToDelete) : null;
+
+    return (
+      <ConfirmDialog
+        isOpen={isOpen}
+        onClose={closeModal}
+        onConfirm={handleConfirm}
+        title={confirmTitle || `Eliminar ${capitalizedEntity}`}
+        message={finalMessage}
+        confirmText={confirmText}
+        variant="danger"
+        isLoading={deleteMutation.isPending}
+      >
+        {children}
+      </ConfirmDialog>
+    );
+  }, [
+    isOpen,
+    closeModal,
+    handleConfirm,
+    confirmTitle,
+    capitalizedEntity,
+    finalMessage,
+    confirmText,
+    deleteMutation.isPending,
+    renderChildren,
+    itemToDelete,
+  ]);
+
+  return {
+    confirmDelete,
+    DeleteConfirmModal,
+    isDeleting: deleteMutation.isPending,
+    itemToDelete,
+    isOpen,
+    closeModal,
+  };
+}
+
+export default useDeleteConfirmation;

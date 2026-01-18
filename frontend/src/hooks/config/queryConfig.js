@@ -3,21 +3,22 @@
  *
  * Ene 2026: Estandariza tiempos de cache y opciones de query
  * para mantener consistencia en todo el frontend.
+ *
+ * NOTA: Los tiempos de cache (STALE_TIMES) están definidos en @/app/queryClient
  */
 
+// Re-exportar STALE_TIMES para mantener compatibilidad con imports existentes
+export { STALE_TIMES } from '@/app/queryClient';
+
 /**
- * Duraciones de cache predefinidas
- * Usar según el tipo de datos:
- * - SHORT: Datos que cambian frecuentemente (notificaciones, estados en tiempo real)
- * - MEDIUM: Datos normales (listas, detalles) - DEFAULT
- * - LONG: Datos que cambian poco (configuraciones, catálogos)
- * - STATIC: Datos casi inmutables (países, monedas)
+ * Alias de compatibilidad (deprecated - usar STALE_TIMES)
+ * @deprecated Usar STALE_TIMES desde @/app/queryClient
  */
 export const CACHE_DURATIONS = {
-  SHORT: 30 * 1000,           // 30 segundos
-  MEDIUM: 5 * 60 * 1000,      // 5 minutos (default)
-  LONG: 10 * 60 * 1000,       // 10 minutos
-  STATIC: 60 * 60 * 1000,     // 1 hora
+  SHORT: 30 * 1000,           // 30 segundos -> STALE_TIMES.REAL_TIME
+  MEDIUM: 5 * 60 * 1000,      // 5 minutos -> STALE_TIMES.SEMI_STATIC
+  LONG: 10 * 60 * 1000,       // 10 minutos -> STALE_TIMES.STATIC_DATA
+  STATIC: 60 * 60 * 1000,     // 1 hora (no usado frecuentemente)
 };
 
 /**
@@ -25,7 +26,7 @@ export const CACHE_DURATIONS = {
  * Aplicar en queries que no necesiten configuración especial
  */
 export const DEFAULT_QUERY_OPTIONS = {
-  staleTime: CACHE_DURATIONS.MEDIUM,
+  staleTime: 5 * 60 * 1000, // STALE_TIMES.SEMI_STATIC
   refetchOnWindowFocus: false,
 };
 
@@ -33,7 +34,7 @@ export const DEFAULT_QUERY_OPTIONS = {
  * Opciones para datos estáticos (catálogos, configuración)
  */
 export const STATIC_QUERY_OPTIONS = {
-  staleTime: CACHE_DURATIONS.STATIC,
+  staleTime: 60 * 60 * 1000,
   refetchOnWindowFocus: false,
   refetchOnMount: false,
 };
@@ -42,7 +43,7 @@ export const STATIC_QUERY_OPTIONS = {
  * Opciones para datos en tiempo real (notificaciones, estados)
  */
 export const REALTIME_QUERY_OPTIONS = {
-  staleTime: CACHE_DURATIONS.SHORT,
+  staleTime: 30 * 1000, // STALE_TIMES.REAL_TIME
   refetchOnWindowFocus: true,
   refetchInterval: 30 * 1000, // Polling cada 30 seg
 };
@@ -51,7 +52,7 @@ export const REALTIME_QUERY_OPTIONS = {
  * Opciones para listas paginadas
  */
 export const LIST_QUERY_OPTIONS = {
-  staleTime: CACHE_DURATIONS.MEDIUM,
+  staleTime: 5 * 60 * 1000, // STALE_TIMES.SEMI_STATIC
   refetchOnWindowFocus: false,
   keepPreviousData: true, // Mantener datos anteriores mientras carga
 };

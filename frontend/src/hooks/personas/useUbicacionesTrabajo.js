@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { STALE_TIMES } from '@/app/queryClient';
 import { ubicacionesTrabajoApi } from '@/services/api/endpoints';
 import { useToast } from '@/hooks/utils';
 
@@ -29,7 +30,7 @@ export const useUbicacionesTrabajo = (filtros = {}) => {
       const response = await ubicacionesTrabajoApi.listar(filtros);
       return response.data.data;
     },
-    staleTime: 5 * 60 * 1000, // 5 minutos
+    staleTime: STALE_TIMES.SEMI_STATIC, // 5 minutos
   });
 };
 
@@ -44,7 +45,7 @@ export const useUbicacionesTrabajoEstadisticas = () => {
       const response = await ubicacionesTrabajoApi.estadisticas();
       return response.data.data;
     },
-    staleTime: 5 * 60 * 1000,
+    staleTime: STALE_TIMES.SEMI_STATIC,
   });
 };
 

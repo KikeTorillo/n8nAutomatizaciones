@@ -95,7 +95,7 @@ function ContactoEditor({ contenido, onGuardar, tema, isSaving }) {
             value={form.direccion}
             onChange={(e) => setForm({ ...form, direccion: e.target.value })}
             placeholder="Calle 123, Ciudad"
-            inputSize="sm"
+            size="sm"
             className="dark:bg-gray-600 dark:border-gray-500 dark:text-gray-100"
           />
           <Input
@@ -108,7 +108,7 @@ function ContactoEditor({ contenido, onGuardar, tema, isSaving }) {
             value={form.telefono}
             onChange={(e) => setForm({ ...form, telefono: e.target.value })}
             placeholder="+52 123 456 7890"
-            inputSize="sm"
+            size="sm"
             className="dark:bg-gray-600 dark:border-gray-500 dark:text-gray-100"
           />
           <Input
@@ -122,7 +122,7 @@ function ContactoEditor({ contenido, onGuardar, tema, isSaving }) {
             value={form.email}
             onChange={(e) => setForm({ ...form, email: e.target.value })}
             placeholder="contacto@negocio.com"
-            inputSize="sm"
+            size="sm"
             className="dark:bg-gray-600 dark:border-gray-500 dark:text-gray-100"
           />
           <Input
@@ -135,7 +135,7 @@ function ContactoEditor({ contenido, onGuardar, tema, isSaving }) {
             value={form.horario}
             onChange={(e) => setForm({ ...form, horario: e.target.value })}
             placeholder="Lun-Vie 9:00-18:00"
-            inputSize="sm"
+            size="sm"
             className="dark:bg-gray-600 dark:border-gray-500 dark:text-gray-100"
           />
         </div>
@@ -190,7 +190,7 @@ function ContactoEditor({ contenido, onGuardar, tema, isSaving }) {
             value={form.mapa_url}
             onChange={(e) => setForm({ ...form, mapa_url: e.target.value })}
             placeholder="URL del embed de Google Maps"
-            inputSize="sm"
+            size="sm"
             className="dark:bg-gray-600 dark:border-gray-500 dark:text-gray-100"
           />
         )}

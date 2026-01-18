@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { STALE_TIMES } from '@/app/queryClient';
 import { customFieldsApi } from '@/services/api/endpoints';
 
 // ==================== DEFINICIONES ====================
@@ -22,7 +23,7 @@ export function useCustomFieldsDefiniciones(params = {}) {
       const response = await customFieldsApi.listarDefiniciones(sanitizedParams);
       return response.data.data || [];
     },
-    staleTime: 1000 * 60 * 5, // 5 minutos
+    staleTime: STALE_TIMES.SEMI_STATIC, // 5 minutos
   });
 }
 
@@ -37,7 +38,7 @@ export function useCustomFieldDefinicion(id) {
       return response.data.data;
     },
     enabled: !!id,
-    staleTime: 1000 * 60 * 5,
+    staleTime: STALE_TIMES.SEMI_STATIC,
   });
 }
 
@@ -61,9 +62,9 @@ export function useCrearCustomFieldDefinicion() {
       return response.data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries(['custom-fields-definiciones']);
+      queryClient.invalidateQueries({ queryKey: ['custom-fields-definiciones'] });
       if (variables.entidad_tipo) {
-        queryClient.invalidateQueries(['custom-fields-definiciones', { entidad_tipo: variables.entidad_tipo }]);
+        queryClient.invalidateQueries({ queryKey: ['custom-fields-definiciones', { entidad_tipo: variables.entidad_tipo }] });
       }
     },
     onError: (error) => {
@@ -93,8 +94,8 @@ export function useActualizarCustomFieldDefinicion() {
       return response.data.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries(['custom-field-definicion', data.id]);
-      queryClient.invalidateQueries(['custom-fields-definiciones']);
+      queryClient.invalidateQueries({ queryKey: ['custom-field-definicion', data.id] });
+      queryClient.invalidateQueries({ queryKey: ['custom-fields-definiciones'] });
     },
     onError: (error) => {
       const backendMessage = error.response?.data?.message || error.response?.data?.error;
@@ -115,7 +116,7 @@ export function useEliminarCustomFieldDefinicion() {
       return id;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['custom-fields-definiciones']);
+      queryClient.invalidateQueries({ queryKey: ['custom-fields-definiciones'] });
     },
     onError: (error) => {
       const backendMessage = error.response?.data?.message || error.response?.data?.error;
@@ -139,7 +140,7 @@ export function useReordenarCustomFieldDefiniciones() {
       return response.data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries(['custom-fields-definiciones', { entidad_tipo: variables.entidadTipo }]);
+      queryClient.invalidateQueries({ queryKey: ['custom-fields-definiciones', { entidad_tipo: variables.entidadTipo }] });
     },
     onError: (error) => {
       const backendMessage = error.response?.data?.message || error.response?.data?.error;
@@ -163,7 +164,7 @@ export function useCustomFieldsValores(entidadTipo, entidadId) {
       return response.data.data || [];
     },
     enabled: !!entidadTipo && !!entidadId,
-    staleTime: 1000 * 60 * 2, // 2 minutos
+    staleTime: STALE_TIMES.DYNAMIC, // 2 minutos
   });
 }
 
@@ -179,7 +180,7 @@ export function useGuardarCustomFieldsValores() {
       return response.data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries(['custom-fields-valores', variables.entidadTipo, variables.entidadId]);
+      queryClient.invalidateQueries({ queryKey: ['custom-fields-valores', variables.entidadTipo, variables.entidadId] });
     },
     onError: (error) => {
       // Si hay errores de validación, retornarlos
@@ -220,7 +221,7 @@ export function useCustomFieldsSecciones(entidadTipo) {
       return response.data.data || [];
     },
     enabled: !!entidadTipo,
-    staleTime: 1000 * 60 * 10, // 10 minutos
+    staleTime: STALE_TIMES.STATIC_DATA, // 10 minutos
   });
 }
 

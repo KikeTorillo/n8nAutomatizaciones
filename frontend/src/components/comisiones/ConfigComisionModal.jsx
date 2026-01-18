@@ -7,6 +7,7 @@ import {
   Button,
   Checkbox,
   Drawer,
+  FormGroup,
   Input,
   Select,
   Textarea
@@ -215,18 +216,18 @@ function ConfigComisionModal({
           name="profesional_id"
           control={control}
           render={({ field }) => (
-            <Select
-              {...field}
-              label="Profesional"
-              required
-              disabled={loadingProfesionales || !!profesionalIdPredefinido}
-              placeholder="Seleccionar profesional"
-              options={profesionales?.map((prof) => ({
-                value: String(prof.id),
-                label: prof.nombre_completo || `${prof.nombre} ${prof.apellidos || ''}`.trim(),
-              })) || []}
-              error={errors.profesional_id?.message}
-            />
+            <FormGroup label="Profesional" error={errors.profesional_id?.message} required>
+              <Select
+                {...field}
+                disabled={loadingProfesionales || !!profesionalIdPredefinido}
+                placeholder="Seleccionar profesional"
+                options={profesionales?.map((prof) => ({
+                  value: String(prof.id),
+                  label: prof.nombre_completo || `${prof.nombre} ${prof.apellidos || ''}`.trim(),
+                })) || []}
+                hasError={!!errors.profesional_id}
+              />
+            </FormGroup>
           )}
         />
 
@@ -237,18 +238,22 @@ function ConfigComisionModal({
             name="servicio_id"
             control={control}
             render={({ field }) => (
-              <Select
-                {...field}
+              <FormGroup
                 label="Servicio Específico"
-                disabled={loadingServicios}
-                placeholder="Todos los servicios (global)"
-                options={servicios?.map((servicio) => ({
-                  value: String(servicio.id),
-                  label: servicio.nombre,
-                })) || []}
-                helper="Dejar en blanco para configuración global (aplica a todos los servicios)"
                 error={errors.servicio_id?.message}
-              />
+                helper="Dejar en blanco para configuración global (aplica a todos los servicios)"
+              >
+                <Select
+                  {...field}
+                  disabled={loadingServicios}
+                  placeholder="Todos los servicios (global)"
+                  options={servicios?.map((servicio) => ({
+                    value: String(servicio.id),
+                    label: servicio.nombre,
+                  })) || []}
+                  hasError={!!errors.servicio_id}
+                />
+              </FormGroup>
             )}
           />
         ) : (
@@ -259,18 +264,22 @@ function ConfigComisionModal({
               name="producto_id"
               control={control}
               render={({ field }) => (
-                <Select
-                  {...field}
+                <FormGroup
                   label="Producto Específico"
-                  disabled={loadingProductos}
-                  placeholder="Sin producto específico"
-                  options={productos?.map((producto) => ({
-                    value: String(producto.id),
-                    label: `${producto.nombre} - $${parseFloat(producto.precio_venta || 0).toFixed(2)}`,
-                  })) || []}
-                  helper="Configuración con máxima prioridad"
                   error={errors.producto_id?.message}
-                />
+                  helper="Configuración con máxima prioridad"
+                >
+                  <Select
+                    {...field}
+                    disabled={loadingProductos}
+                    placeholder="Sin producto específico"
+                    options={productos?.map((producto) => ({
+                      value: String(producto.id),
+                      label: `${producto.nombre} - $${parseFloat(producto.precio_venta || 0).toFixed(2)}`,
+                    })) || []}
+                    hasError={!!errors.producto_id}
+                  />
+                </FormGroup>
               )}
             />
 
@@ -280,18 +289,22 @@ function ConfigComisionModal({
                 name="categoria_producto_id"
                 control={control}
                 render={({ field }) => (
-                  <Select
-                    {...field}
+                  <FormGroup
                     label="Categoría de Productos"
-                    disabled={loadingCategorias}
-                    placeholder="Todas las categorías (global)"
-                    options={categorias?.map((cat) => ({
-                      value: String(cat.id),
-                      label: cat.nombre,
-                    })) || []}
-                    helper="Aplica a todos los productos de esta categoría"
                     error={errors.categoria_producto_id?.message}
-                  />
+                    helper="Aplica a todos los productos de esta categoría"
+                  >
+                    <Select
+                      {...field}
+                      disabled={loadingCategorias}
+                      placeholder="Todas las categorías (global)"
+                      options={categorias?.map((cat) => ({
+                        value: String(cat.id),
+                        label: cat.nombre,
+                      })) || []}
+                      hasError={!!errors.categoria_producto_id}
+                    />
+                  </FormGroup>
                 )}
               />
             )}
@@ -303,16 +316,16 @@ function ConfigComisionModal({
           name="tipo_comision"
           control={control}
           render={({ field }) => (
-            <Select
-              {...field}
-              label="Tipo de Comisión"
-              required
-              options={[
-                { value: 'porcentaje', label: 'Porcentaje (%)' },
-                { value: 'monto_fijo', label: 'Monto Fijo ($)' },
-              ]}
-              error={errors.tipo_comision?.message}
-            />
+            <FormGroup label="Tipo de Comisión" error={errors.tipo_comision?.message} required>
+              <Select
+                {...field}
+                options={[
+                  { value: 'porcentaje', label: 'Porcentaje (%)' },
+                  { value: 'monto_fijo', label: 'Monto Fijo ($)' },
+                ]}
+                hasError={!!errors.tipo_comision}
+              />
+            </FormGroup>
           )}
         />
 
@@ -321,18 +334,22 @@ function ConfigComisionModal({
           name="valor_comision"
           control={control}
           render={({ field }) => (
-            <Input
-              {...field}
+            <FormGroup
               label={tipoComision === 'porcentaje' ? 'Porcentaje' : 'Monto Fijo'}
-              required
-              type="number"
-              step="0.01"
-              min="0"
-              max={tipoComision === 'porcentaje' ? '100' : '100000'}
-              placeholder={tipoComision === 'porcentaje' ? '15' : '500'}
-              helper={tipoComision === 'porcentaje' ? 'Valor entre 0 y 100' : 'Monto en pesos'}
               error={errors.valor_comision?.message}
-            />
+              helper={tipoComision === 'porcentaje' ? 'Valor entre 0 y 100' : 'Monto en pesos'}
+              required
+            >
+              <Input
+                {...field}
+                type="number"
+                step="0.01"
+                min="0"
+                max={tipoComision === 'porcentaje' ? '100' : '100000'}
+                placeholder={tipoComision === 'porcentaje' ? '15' : '500'}
+                hasError={!!errors.valor_comision}
+              />
+            </FormGroup>
           )}
         />
 
@@ -358,15 +375,19 @@ function ConfigComisionModal({
           name="notas"
           control={control}
           render={({ field }) => (
-            <Textarea
-              {...field}
+            <FormGroup
               label="Notas"
-              rows={3}
-              maxLength={500}
-              placeholder="Notas adicionales sobre esta configuración..."
-              helper="Opcional - Máximo 500 caracteres"
               error={errors.notas?.message}
-            />
+              helper="Opcional - Maximo 500 caracteres"
+            >
+              <Textarea
+                {...field}
+                rows={3}
+                maxLength={500}
+                placeholder="Notas adicionales sobre esta configuracion..."
+                hasError={!!errors.notas}
+              />
+            </FormGroup>
           )}
         />
 

@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { STALE_TIMES } from '@/app/queryClient';
 import { marketplaceApi } from '@/services/api/endpoints';
 
 /**
@@ -50,7 +51,7 @@ export function usePerfilesAdmin(params = {}) {
         paginacion: response.data.data.paginacion || null,
       };
     },
-    staleTime: 1000 * 60, // 1 minuto (datos administrativos cambian poco)
+    staleTime: STALE_TIMES.FREQUENT, // 1 minuto (datos administrativos cambian poco)
     keepPreviousData: true, // Evita flash durante paginación
   });
 }

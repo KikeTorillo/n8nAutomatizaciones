@@ -110,13 +110,14 @@ function OnboardingPage() {
   });
 
   const onSubmit = (data) => {
-    console.log('[Onboarding] Enviando datos:', data);
     onboardingMutation.mutate(data);
   };
 
-  // Debug: mostrar errores de validación en consola
   const onError = (errors) => {
-    console.error('[Onboarding] Errores de validación:', errors);
+    // Validation errors are shown inline in the form
+    if (import.meta.env.DEV) {
+      console.error('[Onboarding] Errores de validación:', errors);
+    }
   };
 
   return (

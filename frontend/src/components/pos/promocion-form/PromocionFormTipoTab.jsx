@@ -1,5 +1,5 @@
 import { Package, Percent, DollarSign, Gift, Tag } from 'lucide-react';
-import { Input } from '@/components/ui';
+import { Input, FormGroup } from '@/components/ui';
 import { TIPOS_PROMOCION } from './schemas';
 
 /**
@@ -67,64 +67,68 @@ export default function PromocionFormTipoTab({ register, watch, errors }) {
       {/* Campos segun tipo */}
       {tipoSeleccionado === 'cantidad' && (
         <div className="grid grid-cols-2 gap-4 p-3 bg-primary-50 dark:bg-primary-900/20 rounded-lg border border-primary-200 dark:border-primary-800">
-          <Input
-            label="Cantidad requerida"
-            type="number"
-            placeholder="2"
-            {...register('reglas.cantidad_requerida')}
-            error={errors.reglas?.cantidad_requerida?.message}
-            helpText="Ej: Compra 2"
-          />
-          <Input
-            label="Cantidad gratis"
-            type="number"
-            placeholder="1"
-            {...register('reglas.cantidad_gratis')}
-            error={errors.reglas?.cantidad_gratis?.message}
-            helpText="Ej: Lleva 1 gratis"
-          />
+          <FormGroup label="Cantidad requerida" error={errors.reglas?.cantidad_requerida?.message} helper="Ej: Compra 2">
+            <Input
+              type="number"
+              placeholder="2"
+              {...register('reglas.cantidad_requerida')}
+              hasError={!!errors.reglas?.cantidad_requerida}
+            />
+          </FormGroup>
+          <FormGroup label="Cantidad gratis" error={errors.reglas?.cantidad_gratis?.message} helper="Ej: Lleva 1 gratis">
+            <Input
+              type="number"
+              placeholder="1"
+              {...register('reglas.cantidad_gratis')}
+              hasError={!!errors.reglas?.cantidad_gratis}
+            />
+          </FormGroup>
         </div>
       )}
 
       {(tipoSeleccionado === 'porcentaje' || tipoSeleccionado === 'monto_fijo') && (
-        <Input
+        <FormGroup
           label={tipoSeleccionado === 'porcentaje' ? 'Porcentaje de descuento' : 'Monto de descuento'}
-          type="number"
-          step={tipoSeleccionado === 'porcentaje' ? '1' : '0.01'}
-          placeholder={tipoSeleccionado === 'porcentaje' ? '10' : '50.00'}
-          {...register('valor_descuento', {
-            required: 'Valor requerido'
-          })}
           error={errors.valor_descuento?.message}
-          suffix={tipoSeleccionado === 'porcentaje' ? '%' : '$'}
-        />
+        >
+          <Input
+            type="number"
+            step={tipoSeleccionado === 'porcentaje' ? '1' : '0.01'}
+            placeholder={tipoSeleccionado === 'porcentaje' ? '10' : '50.00'}
+            {...register('valor_descuento', {
+              required: 'Valor requerido'
+            })}
+            hasError={!!errors.valor_descuento}
+            suffix={tipoSeleccionado === 'porcentaje' ? '%' : '$'}
+          />
+        </FormGroup>
       )}
 
       {tipoSeleccionado === 'precio_especial' && (
-        <Input
-          label="Precio especial"
-          type="number"
-          step="0.01"
-          placeholder="99.00"
-          {...register('valor_descuento', {
-            required: 'Precio especial requerido'
-          })}
-          error={errors.valor_descuento?.message}
-          prefix="$"
-          helpText="Precio fijo que se aplicará al producto"
-        />
+        <FormGroup label="Precio especial" error={errors.valor_descuento?.message} helper="Precio fijo que se aplicará al producto">
+          <Input
+            type="number"
+            step="0.01"
+            placeholder="99.00"
+            {...register('valor_descuento', {
+              required: 'Precio especial requerido'
+            })}
+            hasError={!!errors.valor_descuento}
+            prefix="$"
+          />
+        </FormGroup>
       )}
 
       {/* Monto mínimo de compra - aplica a todos */}
-      <Input
-        label="Monto mínimo de compra (opcional)"
-        type="number"
-        step="0.01"
-        placeholder="100.00"
-        {...register('reglas.monto_minimo')}
-        prefix="$"
-        helpText="La promoción solo aplica si el subtotal es mayor a este monto"
-      />
+      <FormGroup label="Monto mínimo de compra (opcional)" helper="La promoción solo aplica si el subtotal es mayor a este monto">
+        <Input
+          type="number"
+          step="0.01"
+          placeholder="100.00"
+          {...register('reglas.monto_minimo')}
+          prefix="$"
+        />
+      </FormGroup>
     </div>
   );
 }

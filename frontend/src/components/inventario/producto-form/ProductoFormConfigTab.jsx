@@ -1,6 +1,7 @@
 import { Tag, Layers, Truck, Plus } from 'lucide-react';
 import {
   Checkbox,
+  FormGroup,
   Input,
   Select,
   Textarea
@@ -41,13 +42,14 @@ function ProductoFormConfigTab({
           />
 
           {esPerecedero && (
-            <Input
-              type="number"
-              label="Días de Vida Útil"
-              {...register('dias_vida_util')}
-              placeholder="Ej: 30"
-              error={errors.dias_vida_util?.message}
-            />
+            <FormGroup label="Días de Vida Útil" error={errors.dias_vida_util?.message}>
+              <Input
+                type="number"
+                {...register('dias_vida_util')}
+                placeholder="Ej: 30"
+                hasError={!!errors.dias_vida_util}
+              />
+            </FormGroup>
           )}
 
           <Checkbox
@@ -119,14 +121,15 @@ function ProductoFormConfigTab({
             />
             {autoGenerarOC && (
               <div className="mt-2 ml-6">
-                <Input
-                  type="number"
-                  label="Cantidad sugerida para OC"
-                  {...register('cantidad_oc_sugerida')}
-                  placeholder="50"
-                  error={errors.cantidad_oc_sugerida?.message}
-                  className="max-w-xs"
-                />
+                <FormGroup label="Cantidad sugerida para OC" error={errors.cantidad_oc_sugerida?.message}>
+                  <Input
+                    type="number"
+                    {...register('cantidad_oc_sugerida')}
+                    placeholder="50"
+                    hasError={!!errors.cantidad_oc_sugerida}
+                    className="max-w-xs"
+                  />
+                </FormGroup>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                   Cantidad que se agregará automáticamente al crear la OC
                 </p>
@@ -142,28 +145,31 @@ function ProductoFormConfigTab({
                 Ruta de Abastecimiento
               </span>
             </div>
-            <Select
-              {...register('ruta_preferida')}
-              options={[
-                { value: 'normal', label: 'Normal - Stock en almacén' },
-                { value: 'dropship', label: 'Dropship - Proveedor envía directo al cliente' },
-                { value: 'fabricar', label: 'Fabricar bajo pedido' },
-              ]}
-              error={errors.ruta_preferida?.message}
-            />
+            <FormGroup error={errors.ruta_preferida?.message}>
+              <Select
+                {...register('ruta_preferida')}
+                options={[
+                  { value: 'normal', label: 'Normal - Stock en almacén' },
+                  { value: 'dropship', label: 'Dropship - Proveedor envía directo al cliente' },
+                  { value: 'fabricar', label: 'Fabricar bajo pedido' },
+                ]}
+                hasError={!!errors.ruta_preferida}
+              />
+            </FormGroup>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
               Dropship: Al vender este producto, se genera automáticamente una OC para que el proveedor envíe directamente al cliente final
             </p>
           </div>
         </div>
 
-        <Textarea
-          label="Notas"
-          {...register('notas')}
-          rows={3}
-          placeholder="Notas adicionales sobre el producto"
-          error={errors.notas?.message}
-        />
+        <FormGroup label="Notas" error={errors.notas?.message}>
+          <Textarea
+            {...register('notas')}
+            rows={3}
+            placeholder="Notas adicionales sobre el producto"
+            hasError={!!errors.notas}
+          />
+        </FormGroup>
       </div>
     </>
   );
