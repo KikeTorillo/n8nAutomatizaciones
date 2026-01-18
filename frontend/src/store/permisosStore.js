@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { devtools, persist } from 'zustand/middleware';
 
 /**
  * Store para cache de permisos del usuario
@@ -15,8 +15,9 @@ import { persist } from 'zustand/middleware';
 const CACHE_EXPIRY_MS = 5 * 60 * 1000; // 5 minutos
 
 const usePermisosStore = create(
-  persist(
-    (set, get) => ({
+  devtools(
+    persist(
+      (set, get) => ({
       // ========== STATE ==========
 
       /**
@@ -183,15 +184,17 @@ const usePermisosStore = create(
         });
       },
     }),
-    {
-      name: 'permisos-storage',
-      partialize: (state) => ({
-        // Persistir cache para evitar re-verificaciones al recargar
-        permisos: state.permisos,
-        permisosVerificados: state.permisosVerificados,
-        ultimaSincronizacion: state.ultimaSincronizacion,
-      }),
-    }
+      {
+        name: 'permisos-storage',
+        partialize: (state) => ({
+          // Persistir cache para evitar re-verificaciones al recargar
+          permisos: state.permisos,
+          permisosVerificados: state.permisosVerificados,
+          ultimaSincronizacion: state.ultimaSincronizacion,
+        }),
+      }
+    ),
+    { name: 'PermisosStore', enabled: import.meta.env.DEV }
   )
 );
 

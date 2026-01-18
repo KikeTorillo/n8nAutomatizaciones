@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { notificacionesApi } from '@/services/api/endpoints';
+import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 
 // ==================== FEED DE NOTIFICACIONES ====================
 
@@ -57,10 +58,7 @@ export function useMarcarNotificacionLeida() {
       queryClient.invalidateQueries({ queryKey: ['notificaciones'] });
       queryClient.invalidateQueries({ queryKey: ['notificaciones-count'] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message || error.response?.data?.error;
-      throw new Error(backendMessage || 'Error al marcar notificacion como leida');
-    },
+    onError: createCRUDErrorHandler('update', 'Notificacion'),
   });
 }
 
@@ -79,10 +77,7 @@ export function useMarcarTodasNotificacionesLeidas() {
       queryClient.invalidateQueries({ queryKey: ['notificaciones'] });
       queryClient.invalidateQueries({ queryKey: ['notificaciones-count'] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message || error.response?.data?.error;
-      throw new Error(backendMessage || 'Error al marcar notificaciones como leidas');
-    },
+    onError: createCRUDErrorHandler('update', 'Notificaciones'),
   });
 }
 
@@ -101,10 +96,7 @@ export function useArchivarNotificacion() {
       queryClient.invalidateQueries({ queryKey: ['notificaciones'] });
       queryClient.invalidateQueries({ queryKey: ['notificaciones-count'] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message || error.response?.data?.error;
-      throw new Error(backendMessage || 'Error al archivar notificacion');
-    },
+    onError: createCRUDErrorHandler('update', 'Notificacion'),
   });
 }
 
@@ -123,10 +115,7 @@ export function useEliminarNotificacion() {
       queryClient.invalidateQueries({ queryKey: ['notificaciones'] });
       queryClient.invalidateQueries({ queryKey: ['notificaciones-count'] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message || error.response?.data?.error;
-      throw new Error(backendMessage || 'Error al eliminar notificacion');
-    },
+    onError: createCRUDErrorHandler('delete', 'Notificacion'),
   });
 }
 
@@ -151,10 +140,7 @@ export function useCrearNotificacion() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notificaciones'] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message || error.response?.data?.error;
-      throw new Error(backendMessage || 'Error al crear notificacion');
-    },
+    onError: createCRUDErrorHandler('create', 'Notificacion'),
   });
 }
 
@@ -188,10 +174,7 @@ export function useActualizarNotificacionesPreferencias() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notificaciones-preferencias'] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message || error.response?.data?.error;
-      throw new Error(backendMessage || 'Error al actualizar preferencias');
-    },
+    onError: createCRUDErrorHandler('update', 'Preferencias'),
   });
 }
 
@@ -246,10 +229,7 @@ export function useCrearNotificacionPlantilla() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notificaciones-plantillas'] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message || error.response?.data?.error;
-      throw new Error(backendMessage || 'Error al crear plantilla');
-    },
+    onError: createCRUDErrorHandler('create', 'Plantilla'),
   });
 }
 
@@ -274,10 +254,7 @@ export function useActualizarNotificacionPlantilla() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notificaciones-plantillas'] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message || error.response?.data?.error;
-      throw new Error(backendMessage || 'Error al actualizar plantilla');
-    },
+    onError: createCRUDErrorHandler('update', 'Plantilla'),
   });
 }
 
@@ -295,10 +272,7 @@ export function useEliminarNotificacionPlantilla() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notificaciones-plantillas'] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message || error.response?.data?.error;
-      throw new Error(backendMessage || 'Error al eliminar plantilla');
-    },
+    onError: createCRUDErrorHandler('delete', 'Plantilla'),
   });
 }
 

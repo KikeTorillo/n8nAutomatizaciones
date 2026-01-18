@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { modulosApi } from '@/services/api/endpoints';
 import useAuthStore, { selectIsAuthenticated, selectUser } from '@/store/authStore';
+import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 
 /**
  * QUERY KEYS para módulos
@@ -98,13 +99,7 @@ export function useActivarModulo() {
         queryClient.invalidateQueries({ queryKey: [key] });
       });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) {
-        throw new Error(backendMessage);
-      }
-      throw new Error('Error al activar módulo');
-    },
+    onError: createCRUDErrorHandler('update', 'Modulo'),
   });
 }
 
@@ -123,13 +118,7 @@ export function useDesactivarModulo() {
       // Invalidar queries de módulos
       queryClient.invalidateQueries({ queryKey: MODULOS_KEYS.all });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) {
-        throw new Error(backendMessage);
-      }
-      throw new Error('Error al desactivar módulo');
-    },
+    onError: createCRUDErrorHandler('update', 'Modulo'),
   });
 }
 

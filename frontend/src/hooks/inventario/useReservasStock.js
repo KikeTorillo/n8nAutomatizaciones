@@ -3,6 +3,7 @@ import { inventarioApi } from '@/services/api/endpoints';
 import useSucursalStore, { selectGetSucursalId } from '@/store/sucursalStore';
 import { sanitizeParams } from '@/lib/params';
 import { STALE_TIMES } from '@/app/queryClient';
+import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 
 /**
  * Hook para obtener stock disponible de un producto
@@ -101,10 +102,7 @@ export function useCrearReserva() {
       queryClient.invalidateQueries({ queryKey: ['stock-disponible-multiple'] });
       queryClient.invalidateQueries({ queryKey: ['reservas'] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      throw new Error(backendMessage || 'Error al crear reserva');
-    },
+    onError: createCRUDErrorHandler('create', 'Reserva'),
   });
 }
 
@@ -134,10 +132,7 @@ export function useCrearReservasMultiple() {
       queryClient.invalidateQueries({ queryKey: ['stock-disponible-multiple'] });
       queryClient.invalidateQueries({ queryKey: ['reservas'] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      throw new Error(backendMessage || 'Error al crear reservas');
-    },
+    onError: createCRUDErrorHandler('create', 'Reservas'),
   });
 }
 

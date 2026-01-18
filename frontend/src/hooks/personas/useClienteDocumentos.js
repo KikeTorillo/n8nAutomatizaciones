@@ -12,6 +12,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { clientesApi } from '@/services/api/endpoints';
+import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 
 // ====================================================================
 // CONSTANTES
@@ -153,14 +154,7 @@ export function useCrearDocumento() {
       queryClient.invalidateQueries({ queryKey: ['cliente-documentos', variables.clienteId] });
       queryClient.invalidateQueries({ queryKey: ['cliente-documentos-conteo', variables.clienteId] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) {
-        throw new Error(backendMessage);
-      }
-
-      throw new Error('Error al crear documento');
-    },
+    onError: createCRUDErrorHandler('create', 'Documento'),
   });
 }
 
@@ -179,14 +173,7 @@ export function useActualizarDocumento() {
       queryClient.invalidateQueries({ queryKey: ['cliente-documento', variables.clienteId, variables.documentoId] });
       queryClient.invalidateQueries({ queryKey: ['cliente-documentos', variables.clienteId] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) {
-        throw new Error(backendMessage);
-      }
-
-      throw new Error('Error al actualizar documento');
-    },
+    onError: createCRUDErrorHandler('update', 'Documento'),
   });
 }
 
@@ -205,14 +192,7 @@ export function useEliminarDocumento() {
       queryClient.invalidateQueries({ queryKey: ['cliente-documentos', variables.clienteId] });
       queryClient.invalidateQueries({ queryKey: ['cliente-documentos-conteo', variables.clienteId] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) {
-        throw new Error(backendMessage);
-      }
-
-      throw new Error('Error al eliminar documento');
-    },
+    onError: createCRUDErrorHandler('delete', 'Documento'),
   });
 }
 
@@ -232,14 +212,7 @@ export function useVerificarDocumento() {
       queryClient.invalidateQueries({ queryKey: ['cliente-documentos', variables.clienteId] });
       queryClient.invalidateQueries({ queryKey: ['cliente-documentos-conteo', variables.clienteId] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) {
-        throw new Error(backendMessage);
-      }
-
-      throw new Error('Error al verificar documento');
-    },
+    onError: createCRUDErrorHandler('update', 'Documento'),
   });
 }
 
@@ -261,14 +234,7 @@ export function useSubirArchivoDocumento() {
       queryClient.invalidateQueries({ queryKey: ['cliente-documento', variables.clienteId, variables.documentoId] });
       queryClient.invalidateQueries({ queryKey: ['cliente-documentos', variables.clienteId] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) {
-        throw new Error(backendMessage);
-      }
-
-      throw new Error('Error al subir archivo');
-    },
+    onError: createCRUDErrorHandler('update', 'Archivo'),
   });
 }
 
@@ -281,14 +247,7 @@ export function useObtenerPresigned() {
       const response = await clientesApi.obtenerDocumentoPresigned(clienteId, documentoId, { expiry });
       return response.data.data;
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) {
-        throw new Error(backendMessage);
-      }
-
-      throw new Error('Error al obtener URL de descarga');
-    },
+    onError: createCRUDErrorHandler('fetch', 'URL de descarga'),
   });
 }
 

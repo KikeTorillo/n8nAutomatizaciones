@@ -8,6 +8,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { eventosDigitalesApi } from '@/services/api/endpoints';
 import { sanitizeParams } from '@/lib/params';
+import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 
 // ==================== QUERIES EVENTOS ====================
 
@@ -89,20 +90,10 @@ export function useCrearEvento() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['eventos-digitales'] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) throw new Error(backendMessage);
-
-      const errorMessages = {
-        400: 'Datos inválidos. Revisa los campos',
-        403: 'No tienes permisos para crear eventos',
-        409: 'Ya existe un evento con ese nombre',
-        429: 'Has alcanzado el límite de eventos de tu plan',
-      };
-
-      const statusCode = error.response?.status;
-      throw new Error(errorMessages[statusCode] || 'Error al crear evento');
-    },
+    onError: createCRUDErrorHandler('create', 'Evento', {
+      409: 'Ya existe un evento con ese nombre',
+      429: 'Has alcanzado el limite de eventos de tu plan',
+    }),
   });
 }
 
@@ -131,19 +122,7 @@ export function useActualizarEvento() {
         queryClient.invalidateQueries({ queryKey: ['evento-publico', data.slug] });
       }
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) throw new Error(backendMessage);
-
-      const errorMessages = {
-        404: 'Evento no encontrado',
-        400: 'Datos inválidos',
-        403: 'No tienes permisos',
-      };
-
-      const statusCode = error.response?.status;
-      throw new Error(errorMessages[statusCode] || 'Error al actualizar evento');
-    },
+    onError: createCRUDErrorHandler('update', 'Evento'),
   });
 }
 
@@ -162,18 +141,7 @@ export function useEliminarEvento() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['eventos-digitales'] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) throw new Error(backendMessage);
-
-      const errorMessages = {
-        404: 'Evento no encontrado',
-        403: 'No tienes permisos',
-      };
-
-      const statusCode = error.response?.status;
-      throw new Error(errorMessages[statusCode] || 'Error al eliminar evento');
-    },
+    onError: createCRUDErrorHandler('delete', 'Evento'),
   });
 }
 
@@ -193,19 +161,9 @@ export function usePublicarEvento() {
       queryClient.invalidateQueries({ queryKey: ['eventos-digitales'] });
       queryClient.invalidateQueries({ queryKey: ['evento-digital', data.id] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) throw new Error(backendMessage);
-
-      const errorMessages = {
-        404: 'Evento no encontrado',
-        400: 'El evento ya está publicado',
-        403: 'No tienes permisos',
-      };
-
-      const statusCode = error.response?.status;
-      throw new Error(errorMessages[statusCode] || 'Error al publicar evento');
-    },
+    onError: createCRUDErrorHandler('update', 'Evento', {
+      400: 'El evento ya esta publicado',
+    }),
   });
 }
 

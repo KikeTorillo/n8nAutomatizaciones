@@ -3,6 +3,7 @@ import { STALE_TIMES } from '@/app/queryClient';
 import { posApi } from '@/services/api/endpoints';
 import useSucursalStore, { selectGetSucursalId } from '@/store/sucursalStore';
 import { sanitizeParams } from '@/lib/params';
+import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 
 /**
  * Hook para obtener sesión de caja activa del usuario
@@ -108,19 +109,9 @@ export function useAbrirSesionCaja() {
       queryClient.invalidateQueries({ queryKey: ['sesion-caja-activa'] });
       queryClient.invalidateQueries({ queryKey: ['sesiones-caja'] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) throw new Error(backendMessage);
-
-      const errorMessages = {
-        400: 'Datos inválidos para abrir caja',
-        403: 'No tienes permisos para abrir caja',
-        409: 'Ya existe una sesión de caja abierta',
-      };
-
-      const statusCode = error.response?.status;
-      throw new Error(errorMessages[statusCode] || 'Error al abrir sesión de caja');
-    },
+    onError: createCRUDErrorHandler('create', 'Sesión de caja', {
+      409: 'Ya existe una sesión de caja abierta',
+    }),
   });
 }
 
@@ -147,19 +138,7 @@ export function useCerrarSesionCaja() {
       queryClient.invalidateQueries({ queryKey: ['sesiones-caja'] });
       queryClient.invalidateQueries({ queryKey: ['resumen-sesion-caja'] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) throw new Error(backendMessage);
-
-      const errorMessages = {
-        400: 'Datos inválidos para cerrar caja',
-        403: 'No tienes permisos para cerrar caja',
-        404: 'Sesión de caja no encontrada',
-      };
-
-      const statusCode = error.response?.status;
-      throw new Error(errorMessages[statusCode] || 'Error al cerrar sesión de caja');
-    },
+    onError: createCRUDErrorHandler('update', 'Sesión de caja'),
   });
 }
 
@@ -185,18 +164,8 @@ export function useRegistrarMovimientoCaja() {
       queryClient.invalidateQueries({ queryKey: ['movimientos-caja', variables.sesionId] });
       queryClient.invalidateQueries({ queryKey: ['resumen-sesion-caja', variables.sesionId] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) throw new Error(backendMessage);
-
-      const errorMessages = {
-        400: 'Datos inválidos para el movimiento',
-        403: 'No tienes permisos para registrar movimientos de caja',
-        404: 'Sesión de caja no encontrada o ya está cerrada',
-      };
-
-      const statusCode = error.response?.status;
-      throw new Error(errorMessages[statusCode] || 'Error al registrar movimiento de caja');
-    },
+    onError: createCRUDErrorHandler('create', 'Movimiento de caja', {
+      404: 'Sesión de caja no encontrada o ya está cerrada',
+    }),
   });
 }

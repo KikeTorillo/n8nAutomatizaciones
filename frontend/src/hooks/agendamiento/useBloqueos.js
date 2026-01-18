@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { bloqueosApi } from '@/services/api/endpoints';
 import { useToast } from '../utils/useToast';
+import { createCRUDErrorHandler, getErrorMessage } from '@/hooks/config/errorHandlerFactory';
 
 /**
  * Hook para listar bloqueos con filtros
@@ -173,8 +174,11 @@ export const useCrearBloqueo = () => {
       return data;
     },
     onError: (error) => {
-      const mensaje = error.response?.data?.message || error.response?.data?.mensaje || 'Error al crear el bloqueo';
-      toast.error(mensaje);
+      try {
+        createCRUDErrorHandler('create', 'Bloqueo')(error);
+      } catch (e) {
+        toast.error(getErrorMessage(e));
+      }
     },
   });
 };
@@ -216,8 +220,11 @@ export const useActualizarBloqueo = () => {
       return data;
     },
     onError: (error) => {
-      const mensaje = error.response?.data?.message || error.response?.data?.mensaje || 'Error al actualizar el bloqueo';
-      toast.error(mensaje);
+      try {
+        createCRUDErrorHandler('update', 'Bloqueo')(error);
+      } catch (e) {
+        toast.error(getErrorMessage(e));
+      }
     },
   });
 };
@@ -244,8 +251,11 @@ export const useEliminarBloqueo = () => {
       toast.success('Bloqueo eliminado exitosamente');
     },
     onError: (error) => {
-      const mensaje = error.response?.data?.message || error.response?.data?.mensaje || 'Error al eliminar el bloqueo';
-      toast.error(mensaje);
+      try {
+        createCRUDErrorHandler('delete', 'Bloqueo')(error);
+      } catch (e) {
+        toast.error(getErrorMessage(e));
+      }
     },
   });
 };
@@ -310,8 +320,12 @@ export const useBatchCrearBloqueos = () => {
       }
       return data;
     },
-    onError: () => {
-      toast.error('Error al crear los bloqueos en batch');
+    onError: (error) => {
+      try {
+        createCRUDErrorHandler('create', 'Bloqueos en batch')(error);
+      } catch (e) {
+        toast.error(getErrorMessage(e));
+      }
     },
   });
 };

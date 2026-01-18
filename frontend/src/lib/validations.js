@@ -623,3 +623,200 @@ export const percentageField = (label = 'Porcentaje', required = true) => {
     ? schema.refine(val => val !== undefined && val !== null, { message: `${label} es requerido` })
     : schema.optional();
 };
+
+// ==================== NUEVOS HELPERS (Ene 2026) ====================
+
+/**
+ * Hora en formato HH:mm (para inputs type="time")
+ *
+ * @param {string} label - Etiqueta del campo
+ * @param {boolean} required - Si es requerido
+ * @returns {z.ZodString}
+ *
+ * @example
+ * const schema = z.object({
+ *   hora_inicio: timeField('Hora de inicio'),
+ *   hora_fin: timeField('Hora de fin', false),
+ * });
+ */
+export const timeField = (label = 'Hora', required = true) => {
+  const schema = z.string()
+    .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, `${label} debe tener formato HH:mm`);
+  return required ? schema.min(1, `${label} es requerida`) : schema.optional().or(z.literal(''));
+};
+
+/**
+ * Duración en minutos con rango configurable
+ *
+ * @param {string} label - Etiqueta del campo
+ * @param {number} min - Mínimo de minutos (default: 5)
+ * @param {number} max - Máximo de minutos (default: 480 = 8 horas)
+ * @returns {z.ZodNumber}
+ *
+ * @example
+ * const schema = z.object({
+ *   duracion_cita: durationMinutesField('Duración', 10, 240),
+ * });
+ */
+export const durationMinutesField = (label = 'Duración', min = 5, max = 480) =>
+  z.coerce.number()
+    .min(min, `${label} mínima: ${min} minutos`)
+    .max(max, `${label} máxima: ${max} minutos`);
+
+/**
+ * Teléfono (10 dígitos numéricos - formato México)
+ *
+ * @param {string} label - Etiqueta del campo
+ * @param {boolean} required - Si es requerido
+ * @returns {z.ZodString}
+ *
+ * @example
+ * const schema = z.object({
+ *   telefono: phoneField('Teléfono'),
+ *   celular: phoneField('Celular', false),
+ * });
+ */
+export const phoneField = (label = 'Teléfono', required = true) => {
+  const schema = z.string()
+    .regex(/^\d{10}$/, `${label} debe tener 10 dígitos`);
+  return required ? schema : schema.optional().or(z.literal(''));
+};
+
+/**
+ * RFC mexicano (persona física o moral)
+ * - Persona física: 4 letras + 6 dígitos fecha + 3 homoclave (13 chars)
+ * - Persona moral: 3 letras + 6 dígitos fecha + 3 homoclave (12 chars)
+ *
+ * @param {string} label - Etiqueta del campo
+ * @param {boolean} required - Si es requerido
+ * @returns {z.ZodString}
+ *
+ * @example
+ * const schema = z.object({
+ *   rfc: rfcField('RFC', true),
+ * });
+ */
+export const rfcField = (label = 'RFC', required = false) => {
+  const schema = z.string()
+    .regex(/^[A-ZÑ&]{3,4}\d{6}[A-Z0-9]{3}$/i, `${label} inválido`);
+  return required ? schema : schema.optional().or(z.literal(''));
+};
+
+/**
+ * URL opcional (valida formato si se proporciona)
+ *
+ * @param {string} label - Etiqueta del campo
+ * @returns {z.ZodOptional}
+ *
+ * @example
+ * const schema = z.object({
+ *   sitio_web: optionalUrl('Sitio web'),
+ * });
+ */
+export const optionalUrl = (label = 'URL') =>
+  z.string()
+    .url(`${label} inválida`)
+    .optional()
+    .or(z.literal(''))
+    .transform(val => val?.trim() || undefined);
+
+/**
+ * Campo de categoría/nombre corto con trim
+ *
+ * @param {string} label - Etiqueta del campo
+ * @param {number} min - Mínimo de caracteres (default: 2)
+ * @param {number} max - Máximo de caracteres (default: 50)
+ * @returns {z.ZodString}
+ *
+ * @example
+ * const schema = z.object({
+ *   categoria: categoryField('Categoría'),
+ * });
+ */
+export const categoryField = (label = 'Categoría', min = 2, max = 50) =>
+  z.string()
+    .min(min, `${label} debe tener al menos ${min} caracteres`)
+    .max(max, `${label} no puede exceder ${max} caracteres`)
+    .transform(val => val.trim());
+
+/**
+ * Descripción larga opcional con límite alto
+ *
+ * @param {string} label - Etiqueta del campo
+ * @param {number} max - Máximo de caracteres (default: 1000)
+ * @returns {z.ZodOptional}
+ *
+ * @example
+ * const schema = z.object({
+ *   descripcion: longDescriptionField('Descripción'),
+ *   notas: longDescriptionField('Notas', 2000),
+ * });
+ */
+export const longDescriptionField = (label = 'Descripción', max = 1000) =>
+  z.string()
+    .max(max, `${label} no puede exceder ${max} caracteres`)
+    .optional()
+    .or(z.literal(''))
+    .transform(val => val?.trim() || undefined);
+
+/**
+ * Color hexadecimal
+ *
+ * @param {string} label - Etiqueta del campo
+ * @param {string} defaultColor - Color por defecto (default: '#3B82F6')
+ * @returns {z.ZodString}
+ *
+ * @example
+ * const schema = z.object({
+ *   color: colorField('Color del calendario'),
+ * });
+ */
+export const colorField = (label = 'Color', defaultColor = '#3B82F6') =>
+  z.string()
+    .regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/, `${label} debe ser un código hexadecimal válido`)
+    .default(defaultColor);
+
+/**
+ * Cantidad en stock (entero no negativo)
+ *
+ * @param {string} label - Etiqueta del campo
+ * @returns {z.ZodNumber}
+ *
+ * @example
+ * const schema = z.object({
+ *   stock_inicial: stockQuantityField('Stock inicial'),
+ * });
+ */
+export const stockQuantityField = (label = 'Cantidad') =>
+  z.coerce.number()
+    .int(`${label} debe ser un número entero`)
+    .min(0, `${label} no puede ser negativo`);
+
+// ==================== SCHEMAS DE CITAS (Ene 2026) ====================
+
+/**
+ * Schema para crear una cita
+ */
+export const citaCreateSchema = z.object({
+  cliente_id: requiredId('Cliente'),
+  profesional_id: optionalId(),
+  servicios_ids: z.array(z.string()).min(1, 'Selecciona al menos un servicio').max(10, 'Máximo 10 servicios'),
+  fecha_cita: requiredDate('Fecha'),
+  hora_inicio: timeField('Hora de inicio'),
+  duracion_minutos: durationMinutesField('Duración', 10, 480),
+  precio_servicio: priceField('Precio'),
+  descuento: priceField('Descuento', false),
+  notas_cliente: longDescriptionField('Notas cliente', 500),
+  notas_internas: longDescriptionField('Notas internas', 500),
+}).refine(data => (data.descuento || 0) <= (data.precio_servicio || 0), {
+  message: 'El descuento no puede ser mayor al precio',
+  path: ['descuento'],
+});
+
+/**
+ * Schema para editar una cita (todos los campos opcionales excepto validación cruzada)
+ */
+export const citaEditSchema = citaCreateSchema.partial().refine(
+  data => Object.values(data).some(v => v !== undefined && v !== ''),
+  { message: 'Modifica al menos un campo' }
+);

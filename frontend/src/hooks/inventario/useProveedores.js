@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { inventarioApi } from '@/services/api/endpoints';
 import { STALE_TIMES } from '@/app/queryClient';
 import { sanitizeParams } from '@/lib/params';
+import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 
 /**
  * Hook para listar proveedores con filtros
@@ -65,23 +66,9 @@ export function useCrearProveedor() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['proveedores'] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) {
-        throw new Error(backendMessage);
-      }
-
-      const errorMessages = {
-        409: 'Ya existe un proveedor con ese RFC o nombre',
-        400: 'Datos inválidos. Revisa los campos',
-        403: 'No tienes permisos para crear proveedores o alcanzaste el límite de tu plan',
-        500: 'Error del servidor. Intenta nuevamente',
-      };
-
-      const statusCode = error.response?.status;
-      const message = errorMessages[statusCode] || 'Error al crear proveedor';
-      throw new Error(message);
-    },
+    onError: createCRUDErrorHandler('create', 'Proveedor', {
+      409: 'Ya existe un proveedor con ese RFC o nombre',
+    }),
   });
 }
 
@@ -118,23 +105,9 @@ export function useActualizarProveedor() {
       queryClient.invalidateQueries({ queryKey: ['proveedores'] });
       queryClient.invalidateQueries({ queryKey: ['proveedor', variables.id] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) {
-        throw new Error(backendMessage);
-      }
-
-      const errorMessages = {
-        404: 'Proveedor no encontrado',
-        409: 'Ya existe otro proveedor con ese RFC',
-        400: 'Datos inválidos. Revisa los campos',
-        403: 'No tienes permisos para actualizar proveedores',
-      };
-
-      const statusCode = error.response?.status;
-      const message = errorMessages[statusCode] || 'Error al actualizar proveedor';
-      throw new Error(message);
-    },
+    onError: createCRUDErrorHandler('update', 'Proveedor', {
+      409: 'Ya existe otro proveedor con ese RFC',
+    }),
   });
 }
 
@@ -152,21 +125,8 @@ export function useEliminarProveedor() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['proveedores'] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) {
-        throw new Error(backendMessage);
-      }
-
-      const errorMessages = {
-        404: 'Proveedor no encontrado',
-        403: 'No tienes permisos para eliminar proveedores',
-        409: 'No se puede eliminar el proveedor porque tiene productos asociados',
-      };
-
-      const statusCode = error.response?.status;
-      const message = errorMessages[statusCode] || 'Error al eliminar proveedor';
-      throw new Error(message);
-    },
+    onError: createCRUDErrorHandler('delete', 'Proveedor', {
+      409: 'No se puede eliminar el proveedor porque tiene productos asociados',
+    }),
   });
 }

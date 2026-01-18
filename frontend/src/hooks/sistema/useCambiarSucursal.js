@@ -3,6 +3,7 @@ import { authApi } from '@/services/api/modules/auth.api';
 import useAuthStore, { selectSetTokens } from '@/store/authStore';
 import useSucursalStore, { selectSetSucursalActiva } from '@/store/sucursalStore';
 import { toast } from 'sonner';
+import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 
 /**
  * Hook para cambiar sucursal con regeneracion de tokens
@@ -39,10 +40,14 @@ export function useCambiarSucursal() {
       toast.success(`Cambiaste a ${data.sucursal.nombre}`);
     },
     onError: (error) => {
-      const message = error.response?.data?.message
-        || error.response?.data?.error
-        || 'Error al cambiar de sucursal';
-      toast.error(message);
+      const handler = createCRUDErrorHandler('update', 'Sucursal', {
+        403: 'No tienes acceso a esta sucursal',
+      });
+      try {
+        handler(error);
+      } catch (e) {
+        toast.error(e.message);
+      }
     },
   });
 }

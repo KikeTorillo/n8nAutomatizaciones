@@ -1,8 +1,9 @@
 -- ====================================================================
--- TEMPLATE: SCHEDULING SAAS - ENUMS DE DOMINIO
+-- MÓDULO AGENDAMIENTO: ENUMS DE DOMINIO
 -- ====================================================================
 --
 -- Descripción: ENUMs ESPECÍFICOS para sistemas de agendamiento
+-- Ubicación: sql/agendamiento/templates/
 -- Dependencias: sql/core/fundamentos/02-tipos-enums-core.sql
 -- Orden: 01 (primero después de core)
 --

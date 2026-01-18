@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { devtools, persist } from 'zustand/middleware';
 
 /**
  * Store de Onboarding con Zustand
@@ -15,8 +15,9 @@ import { persist } from 'zustand/middleware';
  * Este store ahora solo guarda datos temporales durante el proceso de registro.
  */
 const useOnboardingStore = create(
-  persist(
-    (set, get) => ({
+  devtools(
+    persist(
+      (set, get) => ({
       // ========== STATE ==========
 
       // Datos del formulario de registro
@@ -93,9 +94,11 @@ const useOnboardingStore = create(
         });
       }
     }),
-    {
-      name: 'onboarding-storage', // Nombre en localStorage
-    }
+      {
+        name: 'onboarding-storage', // Nombre en localStorage
+      }
+    ),
+    { name: 'OnboardingStore', enabled: import.meta.env.DEV }
   )
 );
 

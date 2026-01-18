@@ -8,6 +8,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { dropshipApi } from '@/services/api/endpoints';
 import { useToast } from '@/hooks/utils';
+import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 
 // ==================== QUERIES ====================
 
@@ -98,10 +99,7 @@ export function useActualizarConfigDropship() {
       queryClient.invalidateQueries({ queryKey: ['dropship', 'configuracion'] });
       toast.success('Configuración de dropship actualizada');
     },
-    onError: (error) => {
-      const msg = error.response?.data?.message || 'Error al actualizar configuración';
-      toast.error(msg);
-    },
+    onError: createCRUDErrorHandler('update', 'Configuración'),
   });
 }
 
@@ -119,10 +117,7 @@ export function useCrearOCDesdeVenta() {
       queryClient.invalidateQueries({ queryKey: ['ordenes-compra'] });
       toast.success('Orden de compra dropship creada');
     },
-    onError: (error) => {
-      const msg = error.response?.data?.message || 'Error al crear orden de compra';
-      toast.error(msg);
-    },
+    onError: createCRUDErrorHandler('create', 'Orden de compra'),
   });
 }
 
@@ -140,10 +135,7 @@ export function useConfirmarEntregaDropship() {
       queryClient.invalidateQueries({ queryKey: ['dropship', 'ordenes', id] });
       toast.success('Entrega confirmada exitosamente');
     },
-    onError: (error) => {
-      const msg = error.response?.data?.message || 'Error al confirmar entrega';
-      toast.error(msg);
-    },
+    onError: createCRUDErrorHandler('update', 'Entrega'),
   });
 }
 
@@ -161,9 +153,6 @@ export function useCancelarDropship() {
       queryClient.invalidateQueries({ queryKey: ['dropship', 'ordenes', id] });
       toast.success('Orden dropship cancelada');
     },
-    onError: (error) => {
-      const msg = error.response?.data?.message || 'Error al cancelar orden';
-      toast.error(msg);
-    },
+    onError: createCRUDErrorHandler('delete', 'Orden'),
   });
 }

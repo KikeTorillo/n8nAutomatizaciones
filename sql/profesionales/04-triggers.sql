@@ -2,7 +2,7 @@
 -- MÓDULO PROFESIONALES: TRIGGERS AUTOMÁTICOS
 -- ====================================================================
 -- Triggers de mantenimiento para la tabla profesionales.
--- Extraído de sql/negocio/ para modularización (Dic 2025)
+-- Extraído de sql/servicios/ para modularización (Dic 2025)
 -- ====================================================================
 
 -- ====================================================================

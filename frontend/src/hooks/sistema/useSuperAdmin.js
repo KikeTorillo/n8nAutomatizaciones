@@ -6,6 +6,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { api } from '@/services/api/client';
+import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 
 export const useSuperAdmin = () => {
     const queryClient = useQueryClient();
@@ -98,25 +99,7 @@ export const useSuperAdmin = () => {
             queryClient.invalidateQueries({ queryKey: ['superadmin', 'organizaciones'] });
             queryClient.invalidateQueries({ queryKey: ['superadmin', 'dashboard'] });
         },
-        onError: (error) => {
-            // Priorizar mensaje del backend si existe
-            const backendMessage = error.response?.data?.message;
-            if (backendMessage) {
-                throw new Error(backendMessage);
-            }
-
-            // Fallback a mensajes genéricos por código de error
-            const errorMessages = {
-                404: 'Plan no encontrado',
-                400: 'Datos inválidos. Revisa los campos',
-                500: 'Error del servidor. Intenta nuevamente',
-            };
-
-            const statusCode = error.response?.status;
-            const message = errorMessages[statusCode] || error.response?.data?.error || 'Error al actualizar plan';
-
-            throw new Error(message);
-        }
+        onError: createCRUDErrorHandler('update', 'Plan'),
     });
 
     /**
@@ -141,23 +124,9 @@ export const useSuperAdmin = () => {
             queryClient.invalidateQueries({ queryKey: ['superadmin', 'organizaciones'] });
             queryClient.invalidateQueries({ queryKey: ['superadmin', 'dashboard'] });
         },
-        onError: (error) => {
-            const backendMessage = error.response?.data?.message;
-            if (backendMessage) {
-                throw new Error(backendMessage);
-            }
-
-            const errorMessages = {
-                404: 'Organización no encontrada',
-                400: 'Plan inválido',
-                500: 'Error del servidor',
-            };
-
-            const statusCode = error.response?.status;
-            const message = errorMessages[statusCode] || error.response?.data?.error || 'Error al cambiar plan';
-
-            throw new Error(message);
-        }
+        onError: createCRUDErrorHandler('update', 'Organizacion', {
+            400: 'Plan inválido',
+        }),
     });
 
     /**
@@ -176,23 +145,9 @@ export const useSuperAdmin = () => {
             queryClient.invalidateQueries({ queryKey: ['superadmin', 'organizaciones'] });
             queryClient.invalidateQueries({ queryKey: ['superadmin', 'dashboard'] });
         },
-        onError: (error) => {
-            const backendMessage = error.response?.data?.message;
-            if (backendMessage) {
-                throw new Error(backendMessage);
-            }
-
-            const errorMessages = {
-                404: 'Organización no encontrada',
-                400: 'No se puede suspender la organización',
-                500: 'Error del servidor',
-            };
-
-            const statusCode = error.response?.status;
-            const message = errorMessages[statusCode] || error.response?.data?.error || 'Error al suspender organización';
-
-            throw new Error(message);
-        }
+        onError: createCRUDErrorHandler('update', 'Organizacion', {
+            400: 'No se puede suspender la organizacion',
+        }),
     });
 
     /**
@@ -210,23 +165,9 @@ export const useSuperAdmin = () => {
             queryClient.invalidateQueries({ queryKey: ['superadmin', 'organizaciones'] });
             queryClient.invalidateQueries({ queryKey: ['superadmin', 'dashboard'] });
         },
-        onError: (error) => {
-            const backendMessage = error.response?.data?.message;
-            if (backendMessage) {
-                throw new Error(backendMessage);
-            }
-
-            const errorMessages = {
-                404: 'Organización no encontrada',
-                400: 'No se puede reactivar la organización',
-                500: 'Error del servidor',
-            };
-
-            const statusCode = error.response?.status;
-            const message = errorMessages[statusCode] || error.response?.data?.error || 'Error al reactivar organización';
-
-            throw new Error(message);
-        }
+        onError: createCRUDErrorHandler('update', 'Organizacion', {
+            400: 'No se puede reactivar la organizacion',
+        }),
     });
 
     return {

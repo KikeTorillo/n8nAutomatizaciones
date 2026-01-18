@@ -12,6 +12,7 @@ import { STALE_TIMES } from '@/app/queryClient';
 import { configuracionAlmacenApi } from '@/services/api/endpoints';
 import useSucursalStore, { selectGetSucursalId } from '@/store/sucursalStore';
 import { useToast } from '@/hooks/utils';
+import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 
 /**
  * QUERY KEYS para configuración de almacén
@@ -121,10 +122,7 @@ export function useActualizarConfiguracion() {
       queryClient.invalidateQueries(CONFIGURACION_ALMACEN_KEYS.detail(variables.sucursalId));
       toast.success('Configuración de almacén actualizada');
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message || 'Error al actualizar configuración';
-      toast.error(backendMessage);
-    },
+    onError: createCRUDErrorHandler('update', 'Configuración'),
   });
 }
 
@@ -165,10 +163,7 @@ export function useCrearUbicacionesDefault() {
       queryClient.invalidateQueries(CONFIGURACION_ALMACEN_KEYS.detail(sucursalId));
       toast.success('Ubicaciones por defecto creadas');
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message || 'Error al crear ubicaciones por defecto';
-      toast.error(backendMessage);
-    },
+    onError: createCRUDErrorHandler('create', 'Ubicaciones'),
   });
 }
 

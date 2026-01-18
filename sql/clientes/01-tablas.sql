@@ -2,7 +2,7 @@
 -- MÓDULO CLIENTES: TABLA PRINCIPAL
 -- ====================================================================
 -- Base de datos de clientes con soporte multi-canal.
--- Extraído de sql/negocio/ para modularización (Dic 2025)
+-- Extraído de sql/servicios/ para modularización (Dic 2025)
 --
 -- CONTENIDO:
 -- • clientes - Base de datos de clientes

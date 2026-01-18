@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { devtools, persist } from 'zustand/middleware';
 
 /**
  * Store para la sucursal activa
@@ -10,8 +10,9 @@ import { persist } from 'zustand/middleware';
  * - Filtros por defecto en otros módulos
  */
 const useSucursalStore = create(
-  persist(
-    (set, get) => ({
+  devtools(
+    persist(
+      (set, get) => ({
       // ========== STATE ==========
 
       /**
@@ -97,13 +98,15 @@ const useSucursalStore = create(
         });
       },
     }),
-    {
-      name: 'sucursal-storage',
-      partialize: (state) => ({
-        // Solo persistir la sucursal activa, no la lista completa
-        sucursalActiva: state.sucursalActiva,
-      }),
-    }
+      {
+        name: 'sucursal-storage',
+        partialize: (state) => ({
+          // Solo persistir la sucursal activa, no la lista completa
+          sucursalActiva: state.sucursalActiva,
+        }),
+      }
+    ),
+    { name: 'SucursalStore', enabled: import.meta.env.DEV }
   )
 );
 

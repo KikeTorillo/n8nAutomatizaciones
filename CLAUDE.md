@@ -507,9 +507,17 @@ frontend/src/
 └── services/api/   # 58 APIs modulares
 
 sql/
-├── 35 directorios  # 199 archivos SQL
-├── Particionadas   # citas, movimientos_inventario, eventos_sistema, asientos_contables
-└── Tablas          # 183 tablas con RLS (328 políticas)
+├── setup/                  # Configuración inicial (3 archivos)
+├── core/                   # Fundamentos universales (extensiones, ENUMs, funciones)
+├── catalogos/              # Catálogos organizados (3 subdirectorios)
+│   ├── tipos-bloqueo/         # 6 archivos
+│   ├── ubicaciones-geograficas/ # 2 archivos (México 32 estados)
+│   └── ubicaciones-trabajo/   # 1 archivo (trabajo híbrido)
+├── servicios/              # Antes "negocio" (6 archivos)
+├── agendamiento/           # Citas y horarios
+│   └── templates/             # ENUMs y seeds de dominio
+├── [otros 28 módulos]/     # Inventario, POS, profesionales, clientes, etc.
+└── tests/                  # 7 archivos de validación
 ```
 
 ---

@@ -7,6 +7,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { eventosDigitalesApi } from '@/services/api/endpoints';
+import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 
 // ==================== QUERIES PÚBLICOS ====================
 
@@ -69,19 +70,9 @@ export function useConfirmarRSVP() {
       queryClient.invalidateQueries({ queryKey: ['invitacion-publica', data.slug, data.token] });
       queryClient.invalidateQueries({ queryKey: ['evento-publico', data.slug] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) throw new Error(backendMessage);
-
-      const errorMessages = {
-        400: 'Datos inválidos',
-        404: 'Invitación no encontrada',
-        410: 'La fecha límite para confirmar ha pasado',
-      };
-
-      const statusCode = error.response?.status;
-      throw new Error(errorMessages[statusCode] || 'Error al confirmar asistencia');
-    },
+    onError: createCRUDErrorHandler('update', 'RSVP', {
+      410: 'La fecha limite para confirmar ha pasado',
+    }),
   });
 }
 
@@ -147,11 +138,7 @@ export function useCrearMesa() {
       queryClient.invalidateQueries({ queryKey: ['mesas-evento', data.eventoId] });
       queryClient.invalidateQueries({ queryKey: ['mesas-estadisticas', data.eventoId] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) throw new Error(backendMessage);
-      throw new Error('Error al crear mesa');
-    },
+    onError: createCRUDErrorHandler('create', 'Mesa'),
   });
 }
 

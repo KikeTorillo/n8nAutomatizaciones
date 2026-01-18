@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { profesionalesApi } from '@/services/api/endpoints';
 import { sanitizeParams } from '@/lib/params';
+import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 
 /**
  * Hook para listar profesionales con filtros y paginación
@@ -64,29 +65,9 @@ export function useCrearProfesional() {
       queryClient.invalidateQueries({ queryKey: ['profesionales-dashboard'] });
       queryClient.invalidateQueries({ queryKey: ['estadisticas'] });
     },
-    onError: (error) => {
-      // Priorizar mensaje del backend si existe
-      const backendMessage = error.response?.data?.message;
-
-      // Si el backend envió un mensaje específico (ej: límite de plan), usarlo
-      if (backendMessage) {
-        throw new Error(backendMessage);
-      }
-
-      // Fallback a mensajes genéricos por código de error
-      const errorMessages = {
-        409: 'Ya existe un profesional con ese email o teléfono',
-        400: 'Datos inválidos. Revisa los campos',
-        403: 'No tienes permisos para crear profesionales',
-        500: 'Error del servidor. Intenta nuevamente',
-      };
-
-      const statusCode = error.response?.status;
-      const message = errorMessages[statusCode] || error.response?.data?.error || 'Error inesperado';
-
-      // Re-throw con mensaje amigable
-      throw new Error(message);
-    },
+    onError: createCRUDErrorHandler('create', 'Profesional', {
+      409: 'Ya existe un profesional con ese email o teléfono',
+    }),
   });
 }
 
@@ -113,25 +94,9 @@ export function useActualizarProfesional() {
       queryClient.invalidateQueries({ queryKey: ['profesionales'] });
       queryClient.invalidateQueries({ queryKey: ['profesionales-dashboard'] });
     },
-    onError: (error) => {
-      // Priorizar mensaje del backend si existe
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) {
-        throw new Error(backendMessage);
-      }
-
-      const errorMessages = {
-        404: 'Profesional no encontrado',
-        400: 'Datos inválidos',
-        409: 'Ya existe un profesional con ese email o teléfono',
-        500: 'Error del servidor',
-      };
-
-      const statusCode = error.response?.status;
-      const message = errorMessages[statusCode] || error.response?.data?.error || 'Error al actualizar';
-
-      throw new Error(message);
-    },
+    onError: createCRUDErrorHandler('update', 'Profesional', {
+      409: 'Ya existe un profesional con ese email o teléfono',
+    }),
   });
 }
 
@@ -151,24 +116,9 @@ export function useEliminarProfesional() {
       queryClient.invalidateQueries({ queryKey: ['profesionales-dashboard'] });
       queryClient.invalidateQueries({ queryKey: ['estadisticas'] });
     },
-    onError: (error) => {
-      // Priorizar mensaje del backend si existe
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) {
-        throw new Error(backendMessage);
-      }
-
-      const errorMessages = {
-        404: 'Profesional no encontrado',
-        400: 'No se puede eliminar el profesional (puede tener citas asociadas)',
-        500: 'Error del servidor',
-      };
-
-      const statusCode = error.response?.status;
-      const message = errorMessages[statusCode] || 'Error al eliminar profesional';
-
-      throw new Error(message);
-    },
+    onError: createCRUDErrorHandler('delete', 'Profesional', {
+      400: 'No se puede eliminar el profesional (puede tener citas asociadas)',
+    }),
   });
 }
 
@@ -231,15 +181,9 @@ export function useVincularUsuario() {
       queryClient.invalidateQueries({ queryKey: ['usuarios-disponibles'] });
       queryClient.invalidateQueries({ queryKey: ['profesional-usuario'] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) {
-        throw new Error(backendMessage);
-      }
-      throw new Error(error.response?.status === 409
-        ? 'El usuario ya está vinculado a otro profesional'
-        : 'Error al vincular usuario');
-    },
+    onError: createCRUDErrorHandler('update', 'Profesional', {
+      409: 'El usuario ya está vinculado a otro profesional',
+    }),
   });
 }
 
@@ -260,10 +204,7 @@ export function useActualizarModulos() {
       queryClient.invalidateQueries({ queryKey: ['profesionales-modulo'] });
       queryClient.invalidateQueries({ queryKey: ['profesional-usuario'] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      throw new Error(backendMessage || 'Error al actualizar módulos');
-    },
+    onError: createCRUDErrorHandler('update', 'Módulos'),
   });
 }
 
@@ -378,13 +319,9 @@ export function useAsignarCategoria() {
       queryClient.invalidateQueries({ queryKey: ['profesional', variables.profesionalId] });
       queryClient.invalidateQueries({ queryKey: ['categoria-profesionales'] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) throw new Error(backendMessage);
-      throw new Error(error.response?.status === 409
-        ? 'El profesional ya tiene asignada esta categoría'
-        : 'Error al asignar categoría');
-    },
+    onError: createCRUDErrorHandler('create', 'Categoría', {
+      409: 'El profesional ya tiene asignada esta categoría',
+    }),
   });
 }
 
@@ -404,10 +341,7 @@ export function useEliminarCategoriaDeProf() {
       queryClient.invalidateQueries({ queryKey: ['profesional', variables.profesionalId] });
       queryClient.invalidateQueries({ queryKey: ['categoria-profesionales'] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      throw new Error(backendMessage || 'Error al eliminar categoría');
-    },
+    onError: createCRUDErrorHandler('delete', 'Categoría'),
   });
 }
 
@@ -428,10 +362,7 @@ export function useSincronizarCategorias() {
       queryClient.invalidateQueries({ queryKey: ['categoria-profesionales'] });
       queryClient.invalidateQueries({ queryKey: ['categorias-profesional'] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      throw new Error(backendMessage || 'Error al sincronizar categorías');
-    },
+    onError: createCRUDErrorHandler('update', 'Categorías'),
   });
 }
 

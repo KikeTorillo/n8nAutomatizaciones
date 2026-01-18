@@ -7,6 +7,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { profesionalesApi } from '@/services/api/endpoints';
 import { useToast } from '@/hooks/utils';
+import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 
 // ==================== CONSTANTES ====================
 
@@ -109,8 +110,11 @@ export function useCrearEducacion() {
       toast.success('Educación agregada');
     },
     onError: (error) => {
-      const mensaje = error.response?.data?.error || 'Error al agregar educación';
-      toast.error(mensaje);
+      try {
+        createCRUDErrorHandler('create', 'Educación')(error);
+      } catch (e) {
+        toast.error(e.message);
+      }
     },
   });
 }
@@ -136,8 +140,11 @@ export function useActualizarEducacion() {
       toast.success('Educación actualizada');
     },
     onError: (error) => {
-      const mensaje = error.response?.data?.error || 'Error al actualizar educación';
-      toast.error(mensaje);
+      try {
+        createCRUDErrorHandler('update', 'Educación')(error);
+      } catch (e) {
+        toast.error(e.message);
+      }
     },
   });
 }
@@ -160,8 +167,11 @@ export function useEliminarEducacion() {
       toast.success('Educación eliminada');
     },
     onError: (error) => {
-      const mensaje = error.response?.data?.error || 'Error al eliminar educación';
-      toast.error(mensaje);
+      try {
+        createCRUDErrorHandler('delete', 'Educación')(error);
+      } catch (e) {
+        toast.error(e.message);
+      }
     },
   });
 }
@@ -183,8 +193,11 @@ export function useReordenarEducacion() {
       toast.success('Orden actualizado');
     },
     onError: (error) => {
-      const mensaje = error.response?.data?.error || 'Error al reordenar';
-      toast.error(mensaje);
+      try {
+        createCRUDErrorHandler('update', 'Educación')(error);
+      } catch (e) {
+        toast.error(e.message);
+      }
     },
   });
 }

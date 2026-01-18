@@ -10,6 +10,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ordenesCompraApi } from '@/services/api/endpoints';
 import useSucursalStore, { selectGetSucursalId } from '@/store/sucursalStore';
 import { STALE_TIMES } from '@/app/queryClient';
+import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 
 /**
  * QUERY KEYS para ubicaciones de almacén
@@ -191,10 +192,7 @@ export function useCrearUbicacion() {
       queryClient.invalidateQueries(UBICACIONES_ALMACEN_KEYS.arbol(sucursalId));
       queryClient.invalidateQueries(UBICACIONES_ALMACEN_KEYS.estadisticas(sucursalId));
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      throw new Error(backendMessage || 'Error al crear ubicación');
-    },
+    onError: createCRUDErrorHandler('create', 'Ubicación'),
   });
 }
 
@@ -222,10 +220,7 @@ export function useActualizarUbicacion() {
       queryClient.invalidateQueries(UBICACIONES_ALMACEN_KEYS.detail(result.id));
       queryClient.invalidateQueries(UBICACIONES_ALMACEN_KEYS.arbol(result.sucursal_id));
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      throw new Error(backendMessage || 'Error al actualizar ubicación');
-    },
+    onError: createCRUDErrorHandler('update', 'Ubicación'),
   });
 }
 
@@ -243,10 +238,7 @@ export function useEliminarUbicacion() {
     onSuccess: () => {
       queryClient.invalidateQueries(UBICACIONES_ALMACEN_KEYS.all);
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      throw new Error(backendMessage || 'Error al eliminar ubicación');
-    },
+    onError: createCRUDErrorHandler('delete', 'Ubicación'),
   });
 }
 
@@ -268,10 +260,7 @@ export function useToggleBloqueoUbicacion() {
       queryClient.invalidateQueries(UBICACIONES_ALMACEN_KEYS.all);
       queryClient.invalidateQueries(UBICACIONES_ALMACEN_KEYS.detail(result.id));
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      throw new Error(backendMessage || 'Error al cambiar estado de bloqueo');
-    },
+    onError: createCRUDErrorHandler('update', 'Bloqueo ubicación'),
   });
 }
 
@@ -297,10 +286,7 @@ export function useAgregarStockUbicacion() {
       queryClient.invalidateQueries(UBICACIONES_ALMACEN_KEYS.all);
       queryClient.invalidateQueries({ queryKey: ['productos'] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      throw new Error(backendMessage || 'Error al agregar stock a ubicación');
-    },
+    onError: createCRUDErrorHandler('create', 'Stock en ubicación'),
   });
 }
 
@@ -325,10 +311,7 @@ export function useMoverStockUbicacion() {
       queryClient.invalidateQueries(UBICACIONES_ALMACEN_KEYS.stock(variables.ubicacion_destino_id));
       queryClient.invalidateQueries(UBICACIONES_ALMACEN_KEYS.all);
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      throw new Error(backendMessage || 'Error al mover stock entre ubicaciones');
-    },
+    onError: createCRUDErrorHandler('update', 'Movimiento de stock'),
   });
 }
 

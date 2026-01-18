@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { chatbotsApi } from '@/services/api/endpoints';
+import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 
 /**
  * Hook para listar chatbots configurados
@@ -60,25 +61,9 @@ export function useConfigurarTelegram() {
       // Invalidar lista de chatbots
       queryClient.invalidateQueries({ queryKey: ['chatbots'] });
     },
-    onError: (error) => {
-      // Priorizar mensaje del backend si existe
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) {
-        throw new Error(backendMessage);
-      }
-
-      // Fallback a mensajes genéricos por código de error
-      const errorMessages = {
-        400: 'Datos inválidos. Revisa los campos',
-        409: 'Ya existe un chatbot configurado para esta plataforma',
-        500: 'Error del servidor. Intenta nuevamente',
-      };
-
-      const statusCode = error.response?.status;
-      const message = errorMessages[statusCode] || error.response?.data?.error || 'Error al configurar chatbot';
-
-      throw new Error(message);
-    },
+    onError: createCRUDErrorHandler('create', 'Chatbot', {
+      409: 'Ya existe un chatbot configurado para esta plataforma',
+    }),
   });
 }
 
@@ -112,25 +97,9 @@ export function useConfigurarWhatsApp() {
       // Invalidar lista de chatbots
       queryClient.invalidateQueries({ queryKey: ['chatbots'] });
     },
-    onError: (error) => {
-      // Priorizar mensaje del backend si existe
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) {
-        throw new Error(backendMessage);
-      }
-
-      // Fallback a mensajes genéricos por código de error
-      const errorMessages = {
-        400: 'Datos inválidos. Revisa los campos y credenciales',
-        409: 'Ya existe un chatbot configurado para esta plataforma',
-        500: 'Error del servidor. Intenta nuevamente',
-      };
-
-      const statusCode = error.response?.status;
-      const message = errorMessages[statusCode] || error.response?.data?.error || 'Error al configurar chatbot de WhatsApp';
-
-      throw new Error(message);
-    },
+    onError: createCRUDErrorHandler('create', 'Chatbot', {
+      409: 'Ya existe un chatbot configurado para esta plataforma',
+    }),
   });
 }
 
@@ -150,24 +119,7 @@ export function useActualizarChatbot() {
       queryClient.invalidateQueries({ queryKey: ['chatbot', data.id] });
       queryClient.invalidateQueries({ queryKey: ['chatbots'] });
     },
-    onError: (error) => {
-      // Priorizar mensaje del backend si existe
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) {
-        throw new Error(backendMessage);
-      }
-
-      const errorMessages = {
-        404: 'Chatbot no encontrado',
-        400: 'Datos inválidos',
-        500: 'Error del servidor',
-      };
-
-      const statusCode = error.response?.status;
-      const message = errorMessages[statusCode] || error.response?.data?.error || 'Error al actualizar chatbot';
-
-      throw new Error(message);
-    },
+    onError: createCRUDErrorHandler('update', 'Chatbot'),
   });
 }
 
@@ -185,24 +137,7 @@ export function useEliminarChatbot() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['chatbots'] });
     },
-    onError: (error) => {
-      // Priorizar mensaje del backend si existe
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) {
-        throw new Error(backendMessage);
-      }
-
-      const errorMessages = {
-        404: 'Chatbot no encontrado',
-        400: 'No se puede eliminar el chatbot',
-        500: 'Error del servidor',
-      };
-
-      const statusCode = error.response?.status;
-      const message = errorMessages[statusCode] || 'Error al eliminar chatbot';
-
-      throw new Error(message);
-    },
+    onError: createCRUDErrorHandler('delete', 'Chatbot'),
   });
 }
 
@@ -221,24 +156,7 @@ export function useCambiarEstadoChatbot() {
       queryClient.invalidateQueries({ queryKey: ['chatbot', data.id] });
       queryClient.invalidateQueries({ queryKey: ['chatbots'] });
     },
-    onError: (error) => {
-      // Priorizar mensaje del backend si existe
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) {
-        throw new Error(backendMessage);
-      }
-
-      const errorMessages = {
-        404: 'Chatbot no encontrado',
-        400: 'No se puede cambiar el estado del chatbot',
-        500: 'Error del servidor',
-      };
-
-      const statusCode = error.response?.status;
-      const message = errorMessages[statusCode] || 'Error al cambiar estado del chatbot';
-
-      throw new Error(message);
-    },
+    onError: createCRUDErrorHandler('update', 'Chatbot'),
   });
 }
 

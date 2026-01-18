@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { marketplaceApi } from '@/services/api/endpoints';
+import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 
 /**
  * Hooks personalizados para Super Admin - Gestión de Marketplace
@@ -81,26 +82,12 @@ export function useActivarPerfil() {
       return response.data.data;
     },
     onSuccess: () => {
-      // ✅ Invalidar lista de perfiles admin
+      // Invalidar lista de perfiles admin
       queryClient.invalidateQueries({ queryKey: ['perfiles-admin'] });
-      // ✅ Invalidar lista pública de perfiles (por si el super admin está viendo el directorio)
+      // Invalidar lista pública de perfiles (por si el super admin está viendo el directorio)
       queryClient.invalidateQueries({ queryKey: ['perfiles-marketplace'] });
     },
-    onError: (error) => {
-      // ⚠️ PRIORIZAR mensaje del backend
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) {
-        throw new Error(backendMessage);
-      }
-
-      const errorMessages = {
-        404: 'Perfil no encontrado',
-        403: 'No tienes permisos para esta acción',
-      };
-
-      const statusCode = error.response?.status;
-      throw new Error(errorMessages[statusCode] || 'Error al cambiar estado del perfil');
-    },
+    onError: createCRUDErrorHandler('update', 'Perfil'),
   });
 }
 
@@ -126,24 +113,12 @@ export function useLimpiarAnalytics() {
       return response.data.data;
     },
     onSuccess: () => {
-      // ✅ Invalidar estadísticas de perfiles
+      // Invalidar estadísticas de perfiles
       queryClient.invalidateQueries({ queryKey: ['estadisticas-perfil'] });
     },
-    onError: (error) => {
-      // ⚠️ PRIORIZAR mensaje del backend
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) {
-        throw new Error(backendMessage);
-      }
-
-      const errorMessages = {
-        400: 'Parámetros inválidos. Los días de antigüedad deben ser mínimo 90',
-        403: 'No tienes permisos para esta acción',
-      };
-
-      const statusCode = error.response?.status;
-      throw new Error(errorMessages[statusCode] || 'Error al limpiar analytics');
-    },
+    onError: createCRUDErrorHandler('delete', 'Analytics', {
+      400: 'Los dias de antiguedad deben ser minimo 90',
+    }),
   });
 }
 

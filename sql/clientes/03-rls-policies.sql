@@ -3,7 +3,7 @@
 -- ====================================================================
 -- Implementa aislamiento multi-tenant para la tabla clientes
 -- mediante Row Level Security de PostgreSQL.
--- Extraído de sql/negocio/ para modularización (Dic 2025)
+-- Extraído de sql/servicios/ para modularización (Dic 2025)
 -- ====================================================================
 
 -- ====================================================================

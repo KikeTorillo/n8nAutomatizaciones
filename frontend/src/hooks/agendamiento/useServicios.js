@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { serviciosApi } from '@/services/api/endpoints';
 import { sanitizeParams } from '@/lib/params';
+import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 
 /**
  * Hook para listar servicios con filtros y paginación
@@ -90,30 +91,10 @@ export function useCrearServicio() {
       queryClient.invalidateQueries({ queryKey: ['servicios-dashboard'] }); // Dashboard
       queryClient.invalidateQueries({ queryKey: ['estadisticas'] }); // Stats
     },
-    onError: (error) => {
-      // Priorizar mensaje del backend si existe
-      const backendMessage = error.response?.data?.message;
-
-      // Si el backend envió un mensaje específico (ej: límite de plan), usarlo
-      if (backendMessage) {
-        throw new Error(backendMessage);
-      }
-
-      // Fallback a mensajes genéricos por código de error
-      const errorMessages = {
-        409: 'Ya existe un servicio con ese nombre',
-        400: 'Datos inválidos. Revisa los campos',
-        403: 'No tienes permisos para crear servicios',
-        422: 'Uno o más profesionales no existen',
-        500: 'Error del servidor. Intenta nuevamente',
-      };
-
-      const statusCode = error.response?.status;
-      const message = errorMessages[statusCode] || error.response?.data?.error || 'Error inesperado';
-
-      // Re-throw con mensaje amigable
-      throw new Error(message);
-    },
+    onError: createCRUDErrorHandler('create', 'Servicio', {
+      409: 'Ya existe un servicio con ese nombre',
+      422: 'Uno o más profesionales no existen',
+    }),
   });
 }
 
@@ -140,25 +121,9 @@ export function useActualizarServicio() {
       queryClient.invalidateQueries({ queryKey: ['servicios'] });
       queryClient.invalidateQueries({ queryKey: ['servicios-dashboard'] });
     },
-    onError: (error) => {
-      // Priorizar mensaje del backend si existe
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) {
-        throw new Error(backendMessage);
-      }
-
-      const errorMessages = {
-        404: 'Servicio no encontrado',
-        400: 'Datos inválidos',
-        409: 'Ya existe un servicio con ese nombre',
-        500: 'Error del servidor',
-      };
-
-      const statusCode = error.response?.status;
-      const message = errorMessages[statusCode] || error.response?.data?.error || 'Error al actualizar';
-
-      throw new Error(message);
-    },
+    onError: createCRUDErrorHandler('update', 'Servicio', {
+      409: 'Ya existe un servicio con ese nombre',
+    }),
   });
 }
 
@@ -178,24 +143,9 @@ export function useEliminarServicio() {
       queryClient.invalidateQueries({ queryKey: ['servicios-dashboard'] });
       queryClient.invalidateQueries({ queryKey: ['estadisticas'] });
     },
-    onError: (error) => {
-      // Priorizar mensaje del backend si existe
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) {
-        throw new Error(backendMessage);
-      }
-
-      const errorMessages = {
-        404: 'Servicio no encontrado',
-        400: 'No se puede eliminar el servicio (puede tener citas asociadas)',
-        500: 'Error del servidor',
-      };
-
-      const statusCode = error.response?.status;
-      const message = errorMessages[statusCode] || 'Error al eliminar servicio';
-
-      throw new Error(message);
-    },
+    onError: createCRUDErrorHandler('delete', 'Servicio', {
+      400: 'No se puede eliminar el servicio (puede tener citas asociadas)',
+    }),
   });
 }
 
@@ -260,10 +210,7 @@ export function useAsignarProfesional() {
         exact: true
       });
     },
-    onError: (error) => {
-      const message = error.response?.data?.error || 'Error al asignar profesional';
-      throw new Error(message);
-    },
+    onError: createCRUDErrorHandler('create', 'Asignacion de profesional'),
   });
 }
 
@@ -309,9 +256,6 @@ export function useDesasignarProfesional() {
         exact: true
       });
     },
-    onError: (error) => {
-      const message = error.response?.data?.error || 'Error al desasignar profesional';
-      throw new Error(message);
-    },
+    onError: createCRUDErrorHandler('delete', 'Asignacion de profesional'),
   });
 }

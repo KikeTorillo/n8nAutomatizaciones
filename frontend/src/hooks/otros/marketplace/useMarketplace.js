@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { marketplaceApi } from '@/services/api/endpoints';
 import { sanitizeParams } from '@/lib/params';
+import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 
 /**
  * Hooks personalizados para el marketplace de clientes
@@ -301,30 +302,16 @@ export function useCrearPerfil() {
       return response.data.data;
     },
     onSuccess: () => {
-      // ✅ Invalidar queries relacionadas (sin exact para capturar todas las variantes)
+      // Invalidar queries relacionadas (sin exact para capturar todas las variantes)
       queryClient.invalidateQueries({ queryKey: ['perfiles-marketplace'] });
-      // ✅ Invalidar mi perfil (con exact porque es específico)
+      // Invalidar mi perfil (con exact porque es específico)
       queryClient.invalidateQueries({ queryKey: ['mi-perfil-marketplace'], exact: true });
-      // ✅ Invalidar setup progress del dashboard
+      // Invalidar setup progress del dashboard
       queryClient.invalidateQueries({ queryKey: ['organizacion-setup-progress'], exact: true });
     },
-    onError: (error) => {
-      // ⚠️ PRIORIZAR mensaje del backend
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) {
-        throw new Error(backendMessage);
-      }
-
-      // Fallback a mensajes por código
-      const errorMessages = {
-        409: 'Ya existe un perfil para esta organización',
-        400: 'Datos inválidos. Revisa los campos',
-        403: 'No tienes permisos para crear perfiles',
-      };
-
-      const statusCode = error.response?.status;
-      throw new Error(errorMessages[statusCode] || 'Error al crear perfil');
-    },
+    onError: createCRUDErrorHandler('create', 'Perfil', {
+      409: 'Ya existe un perfil para esta organizacion',
+    }),
   });
 }
 
@@ -360,26 +347,12 @@ export function useActualizarPerfil() {
       return response.data.data;
     },
     onSuccess: (data) => {
-      // ✅ Invalidar queries relacionadas
+      // Invalidar queries relacionadas
       queryClient.invalidateQueries({ queryKey: ['perfiles-marketplace'] });
       queryClient.invalidateQueries({ queryKey: ['mi-perfil-marketplace'], exact: true });
       queryClient.invalidateQueries({ queryKey: ['perfil-publico', data.slug], exact: true });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) {
-        throw new Error(backendMessage);
-      }
-
-      const errorMessages = {
-        404: 'Perfil no encontrado',
-        400: 'Datos inválidos',
-        403: 'No tienes permisos',
-      };
-
-      const statusCode = error.response?.status;
-      throw new Error(errorMessages[statusCode] || 'Error al actualizar perfil');
-    },
+    onError: createCRUDErrorHandler('update', 'Perfil'),
   });
 }
 
@@ -411,26 +384,15 @@ export function useCrearReseña() {
       return response.data.data;
     },
     onSuccess: () => {
-      // ✅ Invalidar reseñas del negocio
+      // Invalidar reseñas del negocio
       queryClient.invalidateQueries({ queryKey: ['resenas-negocio'] });
-      // ✅ Invalidar perfil público (para actualizar rating promedio)
+      // Invalidar perfil público (para actualizar rating promedio)
       queryClient.invalidateQueries({ queryKey: ['perfil-publico'] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) {
-        throw new Error(backendMessage);
-      }
-
-      const errorMessages = {
-        404: 'Cita no encontrada',
-        400: 'No puedes crear reseña para esta cita',
-        409: 'Ya creaste una reseña para esta cita',
-      };
-
-      const statusCode = error.response?.status;
-      throw new Error(errorMessages[statusCode] || 'Error al crear reseña');
-    },
+    onError: createCRUDErrorHandler('create', 'Resena', {
+      400: 'No puedes crear resena para esta cita',
+      409: 'Ya creaste una resena para esta cita',
+    }),
   });
 }
 
@@ -459,24 +421,11 @@ export function useResponderReseña() {
       return response.data.data;
     },
     onSuccess: () => {
-      // ✅ Invalidar reseñas
+      // Invalidar reseñas
       queryClient.invalidateQueries({ queryKey: ['resenas-negocio'] });
       queryClient.invalidateQueries({ queryKey: ['mi-perfil-marketplace'], exact: true });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) {
-        throw new Error(backendMessage);
-      }
-
-      const errorMessages = {
-        404: 'Reseña no encontrada',
-        403: 'No tienes permisos',
-      };
-
-      const statusCode = error.response?.status;
-      throw new Error(errorMessages[statusCode] || 'Error al responder reseña');
-    },
+    onError: createCRUDErrorHandler('update', 'Resena'),
   });
 }
 
@@ -507,24 +456,11 @@ export function useModerarReseña() {
       return response.data.data;
     },
     onSuccess: () => {
-      // ✅ Invalidar reseñas
+      // Invalidar reseñas
       queryClient.invalidateQueries({ queryKey: ['resenas-negocio'] });
       queryClient.invalidateQueries({ queryKey: ['mi-perfil-marketplace'], exact: true });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) {
-        throw new Error(backendMessage);
-      }
-
-      const errorMessages = {
-        404: 'Reseña no encontrada',
-        403: 'No tienes permisos',
-      };
-
-      const statusCode = error.response?.status;
-      throw new Error(errorMessages[statusCode] || 'Error al moderar reseña');
-    },
+    onError: createCRUDErrorHandler('update', 'Resena'),
   });
 }
 
@@ -567,25 +503,11 @@ export function useCrearCitaPublica() {
       const response = await marketplaceApi.crearCitaPublica(sanitized);
       return response.data.data;
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) {
-        throw new Error(backendMessage);
-      }
-
-      // Mensajes de error por código de estado
-      const errorMessages = {
-        400: 'Datos inválidos. Por favor revisa los campos ingresados',
-        401: 'No autorizado. Por favor intenta nuevamente',
-        403: 'El negocio no está disponible en este momento',
-        404: 'Los servicios seleccionados no están disponibles',
-        409: 'El horario seleccionado ya no está disponible. Por favor elige otro',
-        500: 'Error del servidor. Por favor intenta más tarde',
-      };
-
-      const statusCode = error.response?.status;
-      throw new Error(errorMessages[statusCode] || 'Error al crear la cita. Por favor intenta nuevamente');
-    },
+    onError: createCRUDErrorHandler('create', 'Cita', {
+      403: 'El negocio no esta disponible en este momento',
+      404: 'Los servicios seleccionados no estan disponibles',
+      409: 'El horario seleccionado ya no esta disponible',
+    }),
   });
 }
 

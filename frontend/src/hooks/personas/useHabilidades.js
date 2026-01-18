@@ -7,6 +7,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { profesionalesApi, habilidadesApi } from '@/services/api/endpoints';
 import { useToast } from '@/hooks/utils';
+import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 
 // ==================== CONSTANTES ====================
 
@@ -120,8 +121,11 @@ export function useCrearHabilidadCatalogo() {
       toast.success('Habilidad creada en catálogo');
     },
     onError: (error) => {
-      const mensaje = error.response?.data?.error || 'Error al crear habilidad';
-      toast.error(mensaje);
+      try {
+        createCRUDErrorHandler('create', 'Habilidad')(error);
+      } catch (e) {
+        toast.error(e.message);
+      }
     },
   });
 }
@@ -144,8 +148,11 @@ export function useActualizarHabilidadCatalogo() {
       toast.success('Habilidad actualizada');
     },
     onError: (error) => {
-      const mensaje = error.response?.data?.error || 'Error al actualizar habilidad';
-      toast.error(mensaje);
+      try {
+        createCRUDErrorHandler('update', 'Habilidad')(error);
+      } catch (e) {
+        toast.error(e.message);
+      }
     },
   });
 }
@@ -167,8 +174,11 @@ export function useEliminarHabilidadCatalogo() {
       toast.success('Habilidad eliminada del catálogo');
     },
     onError: (error) => {
-      const mensaje = error.response?.data?.error || 'Error al eliminar habilidad';
-      toast.error(mensaje);
+      try {
+        createCRUDErrorHandler('delete', 'Habilidad')(error);
+      } catch (e) {
+        toast.error(e.message);
+      }
     },
   });
 }
@@ -231,8 +241,11 @@ export function useAsignarHabilidad() {
       toast.success('Habilidad asignada');
     },
     onError: (error) => {
-      const mensaje = error.response?.data?.error || 'Error al asignar habilidad';
-      toast.error(mensaje);
+      try {
+        createCRUDErrorHandler('create', 'Habilidad')(error);
+      } catch (e) {
+        toast.error(e.message);
+      }
     },
   });
 }
@@ -254,8 +267,11 @@ export function useAsignarHabilidadesBatch() {
       toast.success(`${data.asignadas || 'Varias'} habilidades asignadas`);
     },
     onError: (error) => {
-      const mensaje = error.response?.data?.error || 'Error al asignar habilidades';
-      toast.error(mensaje);
+      try {
+        createCRUDErrorHandler('create', 'Habilidades')(error);
+      } catch (e) {
+        toast.error(e.message);
+      }
     },
   });
 }
@@ -280,8 +296,11 @@ export function useActualizarHabilidadEmpleado() {
       toast.success('Habilidad actualizada');
     },
     onError: (error) => {
-      const mensaje = error.response?.data?.error || 'Error al actualizar habilidad';
-      toast.error(mensaje);
+      try {
+        createCRUDErrorHandler('update', 'Habilidad')(error);
+      } catch (e) {
+        toast.error(e.message);
+      }
     },
   });
 }
@@ -303,8 +322,11 @@ export function useEliminarHabilidadEmpleado() {
       toast.success('Habilidad eliminada');
     },
     onError: (error) => {
-      const mensaje = error.response?.data?.error || 'Error al eliminar habilidad';
-      toast.error(mensaje);
+      try {
+        createCRUDErrorHandler('delete', 'Habilidad')(error);
+      } catch (e) {
+        toast.error(e.message);
+      }
     },
   });
 }
@@ -330,8 +352,11 @@ export function useVerificarHabilidadEmpleado() {
       toast.success(`Habilidad ${accion}`);
     },
     onError: (error) => {
-      const mensaje = error.response?.data?.error || 'Error al verificar habilidad';
-      toast.error(mensaje);
+      try {
+        createCRUDErrorHandler('update', 'Habilidad')(error);
+      } catch (e) {
+        toast.error(e.message);
+      }
     },
   });
 }

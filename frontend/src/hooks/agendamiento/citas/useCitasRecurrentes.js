@@ -3,6 +3,7 @@ import { STALE_TIMES } from '@/app/queryClient';
 import { citasApi } from '@/services/api/endpoints';
 import { useToast } from '../../utils/useToast';
 import useSucursalStore, { selectGetSucursalId } from '@/store/sucursalStore';
+import { createCRUDErrorHandler, getErrorMessage } from '@/hooks/config/errorHandlerFactory';
 
 /**
  * Hook para crear una serie de citas recurrentes
@@ -29,8 +30,11 @@ export function useCrearCitaRecurrente() {
       success(`Serie creada: ${data.citas_creadas?.length || 0} citas`);
     },
     onError: (error) => {
-      const mensaje = error.response?.data?.message || error.response?.data?.error || 'Error al crear serie recurrente';
-      showError(mensaje);
+      try {
+        createCRUDErrorHandler('create', 'Serie recurrente')(error);
+      } catch (e) {
+        showError(getErrorMessage(e));
+      }
     },
   });
 }
@@ -69,8 +73,11 @@ export function useCancelarSerie() {
       success(`${data.citas_canceladas || 0} citas canceladas`);
     },
     onError: (error) => {
-      const mensaje = error.response?.data?.message || error.response?.data?.error || 'Error al cancelar serie';
-      showError(mensaje);
+      try {
+        createCRUDErrorHandler('delete', 'Serie de citas')(error);
+      } catch (e) {
+        showError(getErrorMessage(e));
+      }
     },
   });
 }

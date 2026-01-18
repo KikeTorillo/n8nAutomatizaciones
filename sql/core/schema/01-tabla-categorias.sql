@@ -61,13 +61,13 @@ CREATE INDEX idx_categorias_sector
 -- Los datos (categorías) se insertan según el template usado:
 --
 -- • SaaS de Agendamiento:
---   → sql/templates/scheduling-saas/seeds/categorias-agendamiento.sql
+--   → sql/agendamiento/templates/seeds/categorias-agendamiento.sql
 --
 -- • SaaS de Invitaciones:
---   → sql/templates/invitations-saas/seeds/categorias-invitaciones.sql
+--   → (crear seed específico según necesidad)
 --
 -- • SaaS de E-commerce:
---   → sql/templates/ecommerce-saas/seeds/categorias-ecommerce.sql
+--   → (crear seed específico según necesidad)
 --
 -- • Personalizado:
 --   → Crear tu propio seed con las categorías que necesites

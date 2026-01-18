@@ -3,6 +3,7 @@ import { STALE_TIMES } from '@/app/queryClient';
 import { citasApi } from '@/services/api/endpoints';
 import { useToast } from '../../utils/useToast';
 import useSucursalStore, { selectGetSucursalId } from '@/store/sucursalStore';
+import { createCRUDErrorHandler, getErrorMessage } from '@/hooks/config/errorHandlerFactory';
 
 /**
  * Hook para crear una cita walk-in (cliente sin cita previa)
@@ -26,8 +27,11 @@ export function useCrearCitaWalkIn() {
       success('Cita walk-in creada exitosamente');
     },
     onError: (error) => {
-      const mensaje = error.response?.data?.message || error.response?.data?.error || 'Error al crear cita walk-in';
-      showError(mensaje);
+      try {
+        createCRUDErrorHandler('create', 'Cita walk-in')(error);
+      } catch (e) {
+        showError(getErrorMessage(e));
+      }
     },
   });
 }

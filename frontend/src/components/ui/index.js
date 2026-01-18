@@ -39,7 +39,6 @@ export { default as ThemeToggle } from './molecules/ThemeToggle';
 // Componentes con lógica compleja (movidos desde atoms/ Ene 2026)
 export { default as MultiSelect } from './molecules/MultiSelect';
 export { ProgressBar, LimitProgressBar } from './molecules/ProgressBar';
-export { default as IconPicker } from './molecules/IconPicker';
 // Nuevos (Ene 2026) - Fase 2 mejoras UI
 export { default as FormGroup } from './molecules/FormGroup';
 // Nuevos (Ene 2026) - Optimización arquitectónica
@@ -49,6 +48,7 @@ export { default as CheckboxGroup } from './molecules/CheckboxGroup';
 // ========== ORGANISMS ==========
 export { default as Modal } from './organisms/Modal';
 export { default as Drawer } from './organisms/Drawer';
+export { default as IconPicker } from './organisms/IconPicker'; // Ene 2026: Movido desde molecules
 export { default as BarcodeScanner } from './organisms/BarcodeScanner';
 export { default as ConfirmDialog } from './organisms/ConfirmDialog';
 export { DataTable, DataTableActions, DataTableActionButton } from './organisms/DataTable';

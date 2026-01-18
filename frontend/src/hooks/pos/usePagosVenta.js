@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { posApi } from '@/services/api/endpoints';
+import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 
 /**
  * Hook para registrar pago en venta
@@ -23,19 +24,10 @@ export function useRegistrarPago() {
       queryClient.invalidateQueries({ queryKey: ['corte-caja'] });
       queryClient.invalidateQueries({ queryKey: ['ventas-diarias'] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) throw new Error(backendMessage);
-
-      const errorMessages = {
-        404: 'Venta no encontrada',
-        400: 'Monto de pago inválido',
-        409: 'El pago excede el monto pendiente',
-      };
-
-      const statusCode = error.response?.status;
-      throw new Error(errorMessages[statusCode] || 'Error al registrar pago');
-    },
+    onError: createCRUDErrorHandler('create', 'Pago', {
+      400: 'Monto de pago inválido',
+      409: 'El pago excede el monto pendiente',
+    }),
   });
 }
 
@@ -66,20 +58,10 @@ export function useRegistrarPagosSplit() {
         queryClient.invalidateQueries({ queryKey: ['cliente-credito', variables.clienteId] });
       }
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) throw new Error(backendMessage);
-
-      const errorMessages = {
-        400: 'Datos de pago inválidos',
-        404: 'Venta no encontrada',
-        403: 'No tienes permisos para registrar pagos',
-        409: 'El monto de pagos excede el total de la venta',
-      };
-
-      const statusCode = error.response?.status;
-      throw new Error(errorMessages[statusCode] || 'Error al registrar pagos');
-    },
+    onError: createCRUDErrorHandler('create', 'Pagos', {
+      400: 'Datos de pago inválidos',
+      409: 'El monto de pagos excede el total de la venta',
+    }),
   });
 }
 

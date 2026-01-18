@@ -2,7 +2,7 @@
 -- MÓDULO PROFESIONALES: TABLA PRINCIPAL
 -- ====================================================================
 -- Tabla unificada de empleados/profesionales que brinda servicios.
--- Extraído de sql/negocio/ para modularización (Dic 2025)
+-- Extraído de sql/servicios/ para modularización (Dic 2025)
 --
 -- CONTENIDO:
 -- • profesionales - Personal que brinda servicios

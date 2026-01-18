@@ -2,6 +2,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { citasApi } from '@/services/api/endpoints';
 import { useToast } from '../../utils/useToast';
+import { createCRUDErrorHandler, getErrorMessage } from '@/hooks/config/errorHandlerFactory';
 
 /**
  * Hook para enviar recordatorio de cita
@@ -18,8 +19,11 @@ export function useEnviarRecordatorio() {
       success('Recordatorio enviado por WhatsApp');
     },
     onError: (error) => {
-      const mensaje = error.response?.data?.message || error.response?.data?.error || 'Error al enviar recordatorio';
-      showError(mensaje);
+      try {
+        createCRUDErrorHandler('create', 'Recordatorio')(error);
+      } catch (e) {
+        showError(getErrorMessage(e));
+      }
     },
   });
 }

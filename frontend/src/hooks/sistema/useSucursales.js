@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { sucursalesApi } from '@/services/api/endpoints';
+import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 
 // ==================== HOOKS CRUD SUCURSALES ====================
 
@@ -98,11 +99,7 @@ export function useCrearSucursal() {
       queryClient.invalidateQueries({ queryKey: ['sucursales'] });
       queryClient.invalidateQueries({ queryKey: ['sucursal-matriz'] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) throw new Error(backendMessage);
-      throw new Error('Error al crear sucursal');
-    },
+    onError: createCRUDErrorHandler('create', 'Sucursal'),
   });
 }
 
@@ -131,11 +128,7 @@ export function useActualizarSucursal() {
       queryClient.invalidateQueries({ queryKey: ['sucursal', data.id] });
       queryClient.invalidateQueries({ queryKey: ['sucursales'] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) throw new Error(backendMessage);
-      throw new Error('Error al actualizar sucursal');
-    },
+    onError: createCRUDErrorHandler('update', 'Sucursal'),
   });
 }
 
@@ -153,16 +146,9 @@ export function useEliminarSucursal() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sucursales'] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) throw new Error(backendMessage);
-
-      // Mensaje específico para error de matriz
-      if (error.response?.data?.error?.includes('matriz')) {
-        throw new Error('No se puede eliminar la sucursal matriz');
-      }
-      throw new Error('Error al eliminar sucursal');
-    },
+    onError: createCRUDErrorHandler('delete', 'Sucursal', {
+      400: 'No se puede eliminar la sucursal matriz',
+    }),
   });
 }
 
@@ -200,11 +186,7 @@ export function useAsignarUsuarioSucursal() {
       queryClient.invalidateQueries({ queryKey: ['sucursales'] });
       queryClient.invalidateQueries({ queryKey: ['sucursales-usuario'] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) throw new Error(backendMessage);
-      throw new Error('Error al asignar usuario');
-    },
+    onError: createCRUDErrorHandler('create', 'Usuario'),
   });
 }
 
@@ -241,11 +223,7 @@ export function useAsignarProfesionalSucursal() {
       queryClient.invalidateQueries({ queryKey: ['sucursal-profesionales', variables.sucursalId] });
       queryClient.invalidateQueries({ queryKey: ['sucursales'] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) throw new Error(backendMessage);
-      throw new Error('Error al asignar profesional');
-    },
+    onError: createCRUDErrorHandler('create', 'Profesional'),
   });
 }
 
@@ -334,11 +312,7 @@ export function useCrearTransferencia() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transferencias'] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) throw new Error(backendMessage);
-      throw new Error('Error al crear transferencia');
-    },
+    onError: createCRUDErrorHandler('create', 'Transferencia'),
   });
 }
 
@@ -357,11 +331,7 @@ export function useEnviarTransferencia() {
       queryClient.invalidateQueries({ queryKey: ['transferencia', data.id] });
       queryClient.invalidateQueries({ queryKey: ['transferencias'] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) throw new Error(backendMessage);
-      throw new Error('Error al enviar transferencia');
-    },
+    onError: createCRUDErrorHandler('update', 'Transferencia'),
   });
 }
 
@@ -380,11 +350,7 @@ export function useRecibirTransferencia() {
       queryClient.invalidateQueries({ queryKey: ['transferencia', data.id] });
       queryClient.invalidateQueries({ queryKey: ['transferencias'] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) throw new Error(backendMessage);
-      throw new Error('Error al recibir transferencia');
-    },
+    onError: createCRUDErrorHandler('update', 'Transferencia'),
   });
 }
 
@@ -403,10 +369,6 @@ export function useCancelarTransferencia() {
       queryClient.invalidateQueries({ queryKey: ['transferencia', data.id] });
       queryClient.invalidateQueries({ queryKey: ['transferencias'] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) throw new Error(backendMessage);
-      throw new Error('Error al cancelar transferencia');
-    },
+    onError: createCRUDErrorHandler('update', 'Transferencia'),
   });
 }

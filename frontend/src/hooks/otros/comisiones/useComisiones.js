@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { comisionesApi } from '@/services/api/endpoints';
 import { useToast } from '../../utils/useToast';
+import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 
 /**
  * Hooks personalizados para gestión de comisiones
@@ -138,14 +139,15 @@ export function useEliminarConfiguracionComision() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['comisiones', 'configuracion'] });
       queryClient.invalidateQueries({ queryKey: ['comisiones', 'historial-configuracion'] });
-      success('Configuración eliminada exitosamente');
+      success('Configuracion eliminada exitosamente');
     },
     onError: (error) => {
-      const mensaje =
-        error.response?.data?.message ||
-        error.response?.data?.error ||
-        'Error al eliminar la configuración';
-      showError(mensaje);
+      const handler = createCRUDErrorHandler('delete', 'Configuracion');
+      try {
+        handler(error);
+      } catch (e) {
+        showError(e.message);
+      }
     },
   });
 }
@@ -295,14 +297,15 @@ export function useMarcarComoPagada() {
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['comisiones'] });
       queryClient.invalidateQueries({ queryKey: ['comisiones', variables.id] });
-      success('Comisión marcada como pagada');
+      success('Comision marcada como pagada');
     },
     onError: (error) => {
-      const mensaje =
-        error.response?.data?.message ||
-        error.response?.data?.error ||
-        'Error al marcar la comisión como pagada';
-      showError(mensaje);
+      const handler = createCRUDErrorHandler('update', 'Comision');
+      try {
+        handler(error);
+      } catch (e) {
+        showError(e.message);
+      }
     },
   });
 }

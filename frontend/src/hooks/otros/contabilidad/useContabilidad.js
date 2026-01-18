@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { contabilidadApi } from '@/services/api/endpoints';
 import { useToast } from '../../utils/useToast';
+import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 
 /**
  * ====================================================================
@@ -141,8 +142,12 @@ export function useCrearCuenta() {
       success('Cuenta creada exitosamente');
     },
     onError: (error) => {
-      const mensaje = error.response?.data?.message || error.response?.data?.error || 'Error al crear la cuenta';
-      showError(mensaje);
+      const handler = createCRUDErrorHandler('create', 'Cuenta');
+      try {
+        handler(error);
+      } catch (e) {
+        showError(e.message);
+      }
     },
   });
 }
@@ -171,8 +176,12 @@ export function useActualizarCuenta() {
       success('Cuenta actualizada exitosamente');
     },
     onError: (error) => {
-      const mensaje = error.response?.data?.message || error.response?.data?.error || 'Error al actualizar la cuenta';
-      showError(mensaje);
+      const handler = createCRUDErrorHandler('update', 'Cuenta');
+      try {
+        handler(error);
+      } catch (e) {
+        showError(e.message);
+      }
     },
   });
 }
@@ -196,8 +205,12 @@ export function useEliminarCuenta() {
       success('Cuenta eliminada exitosamente');
     },
     onError: (error) => {
-      const mensaje = error.response?.data?.message || error.response?.data?.error || 'Error al eliminar la cuenta';
-      showError(mensaje);
+      const handler = createCRUDErrorHandler('delete', 'Cuenta');
+      try {
+        handler(error);
+      } catch (e) {
+        showError(e.message);
+      }
     },
   });
 }
@@ -218,11 +231,15 @@ export function useInicializarCatalogoSAT() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['contabilidad', 'cuentas'] });
       queryClient.invalidateQueries({ queryKey: ['contabilidad', 'dashboard'] });
-      success(`Catálogo SAT inicializado: ${data?.data?.cuentas_creadas || 0} cuentas creadas`);
+      success(`Catalogo SAT inicializado: ${data?.data?.cuentas_creadas || 0} cuentas creadas`);
     },
     onError: (error) => {
-      const mensaje = error.response?.data?.message || error.response?.data?.error || 'Error al inicializar catálogo SAT';
-      showError(mensaje);
+      const handler = createCRUDErrorHandler('create', 'Catalogo SAT');
+      try {
+        handler(error);
+      } catch (e) {
+        showError(e.message);
+      }
     },
   });
 }
@@ -308,8 +325,12 @@ export function useCrearAsiento() {
       success('Asiento creado exitosamente');
     },
     onError: (error) => {
-      const mensaje = error.response?.data?.message || error.response?.data?.error || 'Error al crear el asiento';
-      showError(mensaje);
+      const handler = createCRUDErrorHandler('create', 'Asiento');
+      try {
+        handler(error);
+      } catch (e) {
+        showError(e.message);
+      }
     },
   });
 }
@@ -344,8 +365,12 @@ export function useActualizarAsiento() {
       success('Asiento actualizado exitosamente');
     },
     onError: (error) => {
-      const mensaje = error.response?.data?.message || error.response?.data?.error || 'Error al actualizar el asiento';
-      showError(mensaje);
+      const handler = createCRUDErrorHandler('update', 'Asiento');
+      try {
+        handler(error);
+      } catch (e) {
+        showError(e.message);
+      }
     },
   });
 }
@@ -369,8 +394,12 @@ export function usePublicarAsiento() {
       success('Asiento publicado exitosamente');
     },
     onError: (error) => {
-      const mensaje = error.response?.data?.message || error.response?.data?.error || 'Error al publicar el asiento';
-      showError(mensaje);
+      const handler = createCRUDErrorHandler('update', 'Asiento');
+      try {
+        handler(error);
+      } catch (e) {
+        showError(e.message);
+      }
     },
   });
 }
@@ -394,8 +423,12 @@ export function useAnularAsiento() {
       success('Asiento anulado exitosamente');
     },
     onError: (error) => {
-      const mensaje = error.response?.data?.message || error.response?.data?.error || 'Error al anular el asiento';
-      showError(mensaje);
+      const handler = createCRUDErrorHandler('update', 'Asiento');
+      try {
+        handler(error);
+      } catch (e) {
+        showError(e.message);
+      }
     },
   });
 }
@@ -419,8 +452,12 @@ export function useEliminarAsiento() {
       success('Asiento eliminado exitosamente');
     },
     onError: (error) => {
-      const mensaje = error.response?.data?.message || error.response?.data?.error || 'Error al eliminar el asiento';
-      showError(mensaje);
+      const handler = createCRUDErrorHandler('delete', 'Asiento');
+      try {
+        handler(error);
+      } catch (e) {
+        showError(e.message);
+      }
     },
   });
 }
@@ -469,11 +506,15 @@ export function useCerrarPeriodo() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['contabilidad', 'periodos'] });
       queryClient.invalidateQueries({ queryKey: ['contabilidad', 'dashboard'] });
-      success('Período cerrado exitosamente');
+      success('Periodo cerrado exitosamente');
     },
     onError: (error) => {
-      const mensaje = error.response?.data?.message || error.response?.data?.error || 'Error al cerrar el período';
-      showError(mensaje);
+      const handler = createCRUDErrorHandler('update', 'Periodo');
+      try {
+        handler(error);
+      } catch (e) {
+        showError(e.message);
+      }
     },
   });
 }
@@ -588,11 +629,15 @@ export function useActualizarConfiguracion() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['contabilidad', 'configuracion'] });
       queryClient.invalidateQueries({ queryKey: ['contabilidad', 'dashboard'] });
-      success('Configuración actualizada exitosamente');
+      success('Configuracion actualizada exitosamente');
     },
     onError: (error) => {
-      const mensaje = error.response?.data?.message || error.response?.data?.error || 'Error al actualizar la configuración';
-      showError(mensaje);
+      const handler = createCRUDErrorHandler('update', 'Configuracion');
+      try {
+        handler(error);
+      } catch (e) {
+        showError(e.message);
+      }
     },
   });
 }

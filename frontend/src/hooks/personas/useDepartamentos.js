@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { departamentosApi } from '@/services/api/endpoints';
 import { sanitizeParams } from '@/lib/params';
+import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 
 // ==================== HOOKS CRUD DEPARTAMENTOS ====================
 
@@ -96,19 +97,9 @@ export function useCrearDepartamento() {
       queryClient.invalidateQueries({ queryKey: ['departamentos'] });
       queryClient.invalidateQueries({ queryKey: ['departamentos-arbol'] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) throw new Error(backendMessage);
-
-      const errorMessages = {
-        409: 'Ya existe un departamento con ese código',
-        400: 'Datos inválidos. Revisa los campos',
-        500: 'Error del servidor',
-      };
-
-      const statusCode = error.response?.status;
-      throw new Error(errorMessages[statusCode] || 'Error al crear departamento');
-    },
+    onError: createCRUDErrorHandler('create', 'Departamento', {
+      409: 'Ya existe un departamento con ese código',
+    }),
   });
 }
 
@@ -136,11 +127,7 @@ export function useActualizarDepartamento() {
       queryClient.invalidateQueries({ queryKey: ['departamentos'] });
       queryClient.invalidateQueries({ queryKey: ['departamentos-arbol'] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) throw new Error(backendMessage);
-      throw new Error('Error al actualizar departamento');
-    },
+    onError: createCRUDErrorHandler('update', 'Departamento'),
   });
 }
 
@@ -159,16 +146,7 @@ export function useEliminarDepartamento() {
       queryClient.invalidateQueries({ queryKey: ['departamentos'] });
       queryClient.invalidateQueries({ queryKey: ['departamentos-arbol'] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) throw new Error(backendMessage);
-
-      // Mensaje específico si tiene subdepartamentos
-      if (error.response?.data?.error?.includes('subdepartamentos')) {
-        throw new Error('No se puede eliminar: tiene subdepartamentos asignados');
-      }
-      throw new Error('Error al eliminar departamento');
-    },
+    onError: createCRUDErrorHandler('delete', 'Departamento'),
   });
 }
 

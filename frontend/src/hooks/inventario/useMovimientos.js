@@ -3,6 +3,7 @@ import { inventarioApi } from '@/services/api/endpoints';
 import useSucursalStore, { selectGetSucursalId } from '@/store/sucursalStore';
 import { sanitizeParams } from '@/lib/params';
 import { STALE_TIMES } from '@/app/queryClient';
+import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 
 /**
  * Hook para listar movimientos con filtros
@@ -86,22 +87,8 @@ export function useRegistrarMovimiento() {
       queryClient.invalidateQueries({ queryKey: ['stock-critico'] });
       queryClient.invalidateQueries({ queryKey: ['valor-inventario'] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) {
-        throw new Error(backendMessage);
-      }
-
-      const errorMessages = {
-        404: 'Producto no encontrado',
-        400: 'Datos inválidos. Revisa cantidad y tipo de movimiento',
-        403: 'No tienes permisos para registrar movimientos',
-        409: 'Stock insuficiente para realizar la salida',
-      };
-
-      const statusCode = error.response?.status;
-      const message = errorMessages[statusCode] || 'Error al registrar movimiento';
-      throw new Error(message);
-    },
+    onError: createCRUDErrorHandler('create', 'Movimiento', {
+      409: 'Stock insuficiente para realizar la salida',
+    }),
   });
 }

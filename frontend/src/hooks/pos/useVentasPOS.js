@@ -3,6 +3,7 @@ import { STALE_TIMES } from '@/app/queryClient';
 import { posApi } from '@/services/api/endpoints';
 import useSucursalStore, { selectGetSucursalId } from '@/store/sucursalStore';
 import { sanitizeParams } from '@/lib/params';
+import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 
 /**
  * Hook para listar ventas con filtros
@@ -64,21 +65,12 @@ export function useCrearVenta() {
       queryClient.invalidateQueries({ queryKey: ['corte-caja'] });
       queryClient.invalidateQueries({ queryKey: ['ventas-diarias'] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) throw new Error(backendMessage);
-
-      const errorMessages = {
-        400: 'Datos inválidos. Revisa items y cantidades',
-        403: 'No tienes permisos para crear ventas o alcanzaste el límite de tu plan',
-        404: 'Uno o más productos no fueron encontrados',
-        409: 'Stock insuficiente para completar la venta',
-        500: 'Error del servidor. Intenta nuevamente',
-      };
-
-      const statusCode = error.response?.status;
-      throw new Error(errorMessages[statusCode] || 'Error al crear venta');
-    },
+    onError: createCRUDErrorHandler('create', 'Venta', {
+      400: 'Datos inválidos. Revisa items y cantidades',
+      403: 'No tienes permisos para crear ventas o alcanzaste el límite de tu plan',
+      404: 'Uno o más productos no fueron encontrados',
+      409: 'Stock insuficiente para completar la venta',
+    }),
   });
 }
 
@@ -106,19 +98,7 @@ export function useActualizarVenta() {
       queryClient.invalidateQueries({ queryKey: ['ventas-pos'] });
       queryClient.invalidateQueries({ queryKey: ['venta-pos', variables.id] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) throw new Error(backendMessage);
-
-      const errorMessages = {
-        404: 'Venta no encontrada',
-        400: 'Datos inválidos',
-        403: 'No tienes permisos para actualizar ventas',
-      };
-
-      const statusCode = error.response?.status;
-      throw new Error(errorMessages[statusCode] || 'Error al actualizar venta');
-    },
+    onError: createCRUDErrorHandler('update', 'Venta'),
   });
 }
 
@@ -141,10 +121,7 @@ export function useActualizarEstadoVenta() {
         queryClient.invalidateQueries({ queryKey: ['movimientos'] });
       }
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      throw new Error(backendMessage || 'Error al actualizar estado de venta');
-    },
+    onError: createCRUDErrorHandler('update', 'Estado de venta'),
   });
 }
 
@@ -169,19 +146,9 @@ export function useCancelarVenta() {
       queryClient.invalidateQueries({ queryKey: ['movimientos'] });
       queryClient.invalidateQueries({ queryKey: ['corte-caja'] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) throw new Error(backendMessage);
-
-      const errorMessages = {
-        404: 'Venta no encontrada',
-        400: 'No se puede cancelar una venta ya cancelada',
-        403: 'No tienes permisos para cancelar ventas',
-      };
-
-      const statusCode = error.response?.status;
-      throw new Error(errorMessages[statusCode] || 'Error al cancelar venta');
-    },
+    onError: createCRUDErrorHandler('delete', 'Venta', {
+      400: 'No se puede cancelar una venta ya cancelada',
+    }),
   });
 }
 
@@ -207,19 +174,10 @@ export function useDevolverItems() {
       queryClient.invalidateQueries({ queryKey: ['movimientos'] });
       queryClient.invalidateQueries({ queryKey: ['corte-caja'] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) throw new Error(backendMessage);
-
-      const errorMessages = {
-        404: 'Venta o items no encontrados',
-        400: 'Cantidad a devolver inválida',
-        403: 'No tienes permisos para procesar devoluciones',
-      };
-
-      const statusCode = error.response?.status;
-      throw new Error(errorMessages[statusCode] || 'Error al procesar devolución');
-    },
+    onError: createCRUDErrorHandler('update', 'Devolución', {
+      404: 'Venta o items no encontrados',
+      400: 'Cantidad a devolver inválida',
+    }),
   });
 }
 
@@ -240,19 +198,11 @@ export function useAgregarItems() {
       queryClient.invalidateQueries({ queryKey: ['productos'] });
       queryClient.invalidateQueries({ queryKey: ['movimientos'] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) throw new Error(backendMessage);
-
-      const errorMessages = {
-        404: 'Venta o productos no encontrados',
-        400: 'Datos de items inválidos',
-        409: 'Stock insuficiente para agregar items',
-      };
-
-      const statusCode = error.response?.status;
-      throw new Error(errorMessages[statusCode] || 'Error al agregar items');
-    },
+    onError: createCRUDErrorHandler('update', 'Items', {
+      404: 'Venta o productos no encontrados',
+      400: 'Datos de items inválidos',
+      409: 'Stock insuficiente para agregar items',
+    }),
   });
 }
 
@@ -273,17 +223,6 @@ export function useEliminarVenta() {
       queryClient.invalidateQueries({ queryKey: ['movimientos'] });
       queryClient.invalidateQueries({ queryKey: ['corte-caja'] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) throw new Error(backendMessage);
-
-      const errorMessages = {
-        404: 'Venta no encontrada',
-        403: 'No tienes permisos para eliminar ventas',
-      };
-
-      const statusCode = error.response?.status;
-      throw new Error(errorMessages[statusCode] || 'Error al eliminar venta');
-    },
+    onError: createCRUDErrorHandler('delete', 'Venta'),
   });
 }

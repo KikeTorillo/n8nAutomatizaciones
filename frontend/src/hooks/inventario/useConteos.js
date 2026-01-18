@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { conteosApi } from '@/services/api/endpoints';
 import useSucursalStore, { selectGetSucursalId } from '@/store/sucursalStore';
 import { STALE_TIMES } from '@/app/queryClient';
+import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 
 /**
  * Hooks para gestión de Conteos de Inventario (Conteo Físico)
@@ -119,21 +120,9 @@ export function useCrearConteo() {
             queryClient.invalidateQueries({ queryKey: ['conteos'] });
             queryClient.invalidateQueries({ queryKey: ['estadisticas-conteos'] });
         },
-        onError: (error) => {
-            const backendMessage = error.response?.data?.message;
-            if (backendMessage) {
-                throw new Error(backendMessage);
-            }
-
-            const errorMessages = {
-                400: 'Datos inválidos. Revisa el tipo de conteo y filtros',
-                403: 'No tienes permisos para crear conteos',
-                409: 'Ya existe un conteo en proceso',
-            };
-
-            const statusCode = error.response?.status;
-            throw new Error(errorMessages[statusCode] || 'Error al crear conteo');
-        },
+        onError: createCRUDErrorHandler('create', 'Conteo', {
+            409: 'Ya existe un conteo en proceso',
+        }),
     });
 }
 
@@ -152,13 +141,7 @@ export function useIniciarConteo() {
             queryClient.invalidateQueries({ queryKey: ['conteo', id] });
             queryClient.invalidateQueries({ queryKey: ['conteos'] });
         },
-        onError: (error) => {
-            const backendMessage = error.response?.data?.message;
-            if (backendMessage) {
-                throw new Error(backendMessage);
-            }
-            throw new Error('Error al iniciar conteo');
-        },
+        onError: createCRUDErrorHandler('update', 'Conteo'),
     });
 }
 
@@ -180,13 +163,7 @@ export function useRegistrarConteoItem() {
             // Invalidar el conteo padre para actualizar resumen
             queryClient.invalidateQueries({ queryKey: ['conteo'] });
         },
-        onError: (error) => {
-            const backendMessage = error.response?.data?.message;
-            if (backendMessage) {
-                throw new Error(backendMessage);
-            }
-            throw new Error('Error al registrar conteo');
-        },
+        onError: createCRUDErrorHandler('update', 'Item conteo'),
     });
 }
 
@@ -206,13 +183,7 @@ export function useCompletarConteo() {
             queryClient.invalidateQueries({ queryKey: ['conteos'] });
             queryClient.invalidateQueries({ queryKey: ['estadisticas-conteos'] });
         },
-        onError: (error) => {
-            const backendMessage = error.response?.data?.message;
-            if (backendMessage) {
-                throw new Error(backendMessage);
-            }
-            throw new Error('Error al completar conteo');
-        },
+        onError: createCRUDErrorHandler('update', 'Conteo'),
     });
 }
 
@@ -238,13 +209,7 @@ export function useAplicarAjustesConteo() {
             queryClient.invalidateQueries({ queryKey: ['stock-critico'] });
             queryClient.invalidateQueries({ queryKey: ['valor-inventario'] });
         },
-        onError: (error) => {
-            const backendMessage = error.response?.data?.message;
-            if (backendMessage) {
-                throw new Error(backendMessage);
-            }
-            throw new Error('Error al aplicar ajustes');
-        },
+        onError: createCRUDErrorHandler('update', 'Ajustes conteo'),
     });
 }
 
@@ -264,13 +229,7 @@ export function useCancelarConteo() {
             queryClient.invalidateQueries({ queryKey: ['conteos'] });
             queryClient.invalidateQueries({ queryKey: ['estadisticas-conteos'] });
         },
-        onError: (error) => {
-            const backendMessage = error.response?.data?.message;
-            if (backendMessage) {
-                throw new Error(backendMessage);
-            }
-            throw new Error('Error al cancelar conteo');
-        },
+        onError: createCRUDErrorHandler('delete', 'Conteo'),
     });
 }
 
@@ -285,18 +244,9 @@ export function useBuscarItemConteo() {
             const response = await conteosApi.buscarItem(conteoId, codigo);
             return response.data.data;
         },
-        onError: (error) => {
-            const backendMessage = error.response?.data?.message;
-            if (backendMessage) {
-                throw new Error(backendMessage);
-            }
-
-            if (error.response?.status === 404) {
-                throw new Error('Producto no encontrado en este conteo');
-            }
-
-            throw new Error('Error al buscar producto');
-        },
+        onError: createCRUDErrorHandler('fetch', 'Producto en conteo', {
+            404: 'Producto no encontrado en este conteo',
+        }),
     });
 }
 

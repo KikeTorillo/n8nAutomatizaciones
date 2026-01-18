@@ -7,7 +7,7 @@
 -- ORDEN DE EJECUCIÓN:
 -- Este archivo debe ejecutarse DESPUÉS de:
 -- - sql/organizacion/01-tablas.sql
--- - sql/negocio/01-tablas-negocio.sql
+-- - sql/servicios/01-tablas.sql
 --
 -- Fecha: Diciembre 2025
 -- ====================================================================

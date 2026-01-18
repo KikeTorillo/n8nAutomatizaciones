@@ -6,7 +6,7 @@ import useSucursalStore, {
   selectSetSucursalActiva,
   selectSetSucursalesDisponibles,
 } from '@/store/sucursalStore';
-import { useSucursalesUsuario, useCambiarSucursal } from '@/hooks/sistema';
+import { useSucursalesUsuario, useCambiarSucursal, useInvalidarPermisosAlCambiarSucursal } from '@/hooks/sistema';
 import useAuthStore, { selectUser } from '@/store/authStore';
 
 /**
@@ -24,6 +24,9 @@ function SucursalSelector() {
   const sucursalesDisponibles = useSucursalStore(selectSucursalesDisponibles);
   const setSucursalActiva = useSucursalStore(selectSetSucursalActiva);
   const setSucursalesDisponibles = useSucursalStore(selectSetSucursalesDisponibles);
+
+  // Ene 2026: Invalidar cache de permisos al cambiar sucursal
+  useInvalidarPermisosAlCambiarSucursal(sucursalActiva?.id);
 
   // Ene 2026: Hook para cambiar sucursal con regeneracion de tokens
   const { mutate: cambiarSucursal, isPending } = useCambiarSucursal();

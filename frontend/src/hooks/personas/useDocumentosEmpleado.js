@@ -7,6 +7,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { profesionalesApi } from '@/services/api/endpoints';
 import { useToast } from '@/hooks/utils';
+import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 
 // ==================== CONSTANTES ====================
 
@@ -104,8 +105,11 @@ export function useSubirDocumento() {
       toast.success('Documento subido exitosamente');
     },
     onError: (error) => {
-      const mensaje = error.response?.data?.error || 'Error al subir documento';
-      toast.error(mensaje);
+      try {
+        createCRUDErrorHandler('create', 'Documento')(error);
+      } catch (e) {
+        toast.error(e.message);
+      }
     },
   });
 }
@@ -130,8 +134,11 @@ export function useActualizarDocumento() {
       toast.success('Documento actualizado');
     },
     onError: (error) => {
-      const mensaje = error.response?.data?.error || 'Error al actualizar documento';
-      toast.error(mensaje);
+      try {
+        createCRUDErrorHandler('update', 'Documento')(error);
+      } catch (e) {
+        toast.error(e.message);
+      }
     },
   });
 }
@@ -153,8 +160,11 @@ export function useEliminarDocumento() {
       toast.success('Documento eliminado');
     },
     onError: (error) => {
-      const mensaje = error.response?.data?.error || 'Error al eliminar documento';
-      toast.error(mensaje);
+      try {
+        createCRUDErrorHandler('delete', 'Documento')(error);
+      } catch (e) {
+        toast.error(e.message);
+      }
     },
   });
 }
@@ -183,8 +193,11 @@ export function useVerificarDocumento() {
       toast.success(`Documento ${accion}`);
     },
     onError: (error) => {
-      const mensaje = error.response?.data?.error || 'Error al verificar documento';
-      toast.error(mensaje);
+      try {
+        createCRUDErrorHandler('update', 'Documento')(error);
+      } catch (e) {
+        toast.error(e.message);
+      }
     },
   });
 }
@@ -201,8 +214,11 @@ export function useObtenerUrlDocumento() {
       return response.data?.data || response.data;
     },
     onError: (error) => {
-      const mensaje = error.response?.data?.error || 'Error al obtener URL de descarga';
-      toast.error(mensaje);
+      try {
+        createCRUDErrorHandler('fetch', 'URL de descarga')(error);
+      } catch (e) {
+        toast.error(e.message);
+      }
     },
   });
 }
@@ -227,8 +243,11 @@ export function useReemplazarArchivo() {
       toast.success('Archivo reemplazado exitosamente');
     },
     onError: (error) => {
-      const mensaje = error.response?.data?.error || 'Error al reemplazar archivo';
-      toast.error(mensaje);
+      try {
+        createCRUDErrorHandler('update', 'Archivo')(error);
+      } catch (e) {
+        toast.error(e.message);
+      }
     },
   });
 }

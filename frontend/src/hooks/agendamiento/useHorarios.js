@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { horariosApi } from '@/services/api/endpoints';
+import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 
 /**
  * Hook para listar horarios de un profesional
@@ -75,26 +76,9 @@ export function useCrearHorarioSemanal() {
       queryClient.invalidateQueries({ queryKey: ['horarios', variables.profesional_id] });
       queryClient.invalidateQueries({ queryKey: ['horarios'] });
     },
-    onError: (error) => {
-      // Priorizar mensaje del backend si existe
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) {
-        throw new Error(backendMessage);
-      }
-
-      const status = error.response?.status;
-      let message = 'Error al crear horarios semanales';
-
-      if (status === 400) {
-        message = error.response?.data?.mensaje || 'Datos inválidos. Verifica los campos.';
-      } else if (status === 404) {
-        message = 'Profesional no encontrado';
-      } else if (status === 409) {
-        message = 'Ya existen horarios configurados para estos días';
-      }
-
-      throw new Error(message);
-    },
+    onError: createCRUDErrorHandler('create', 'Horarios semanales', {
+      409: 'Ya existen horarios configurados para estos dias',
+    }),
   });
 }
 
@@ -113,26 +97,9 @@ export function useCrearHorario() {
       queryClient.invalidateQueries({ queryKey: ['horarios', variables.profesional_id] });
       queryClient.invalidateQueries({ queryKey: ['horarios'] });
     },
-    onError: (error) => {
-      // Priorizar mensaje del backend si existe
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) {
-        throw new Error(backendMessage);
-      }
-
-      const status = error.response?.status;
-      let message = 'Error al crear horario';
-
-      if (status === 400) {
-        message = error.response?.data?.mensaje || 'Datos inválidos. Verifica los campos.';
-      } else if (status === 404) {
-        message = 'Profesional no encontrado';
-      } else if (status === 409) {
-        message = 'Ya existe un horario para este día';
-      }
-
-      throw new Error(message);
-    },
+    onError: createCRUDErrorHandler('create', 'Horario', {
+      409: 'Ya existe un horario para este dia',
+    }),
   });
 }
 
@@ -151,24 +118,7 @@ export function useActualizarHorario() {
       queryClient.invalidateQueries({ queryKey: ['horarios', data.profesional_id] });
       queryClient.invalidateQueries({ queryKey: ['horarios'] });
     },
-    onError: (error) => {
-      // Priorizar mensaje del backend si existe
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) {
-        throw new Error(backendMessage);
-      }
-
-      const status = error.response?.status;
-      let message = 'Error al actualizar horario';
-
-      if (status === 400) {
-        message = error.response?.data?.mensaje || 'Datos inválidos. Verifica los campos.';
-      } else if (status === 404) {
-        message = 'Horario no encontrado';
-      }
-
-      throw new Error(message);
-    },
+    onError: createCRUDErrorHandler('update', 'Horario'),
   });
 }
 
@@ -186,24 +136,9 @@ export function useEliminarHorario() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['horarios'] });
     },
-    onError: (error) => {
-      // Priorizar mensaje del backend si existe
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) {
-        throw new Error(backendMessage);
-      }
-
-      const status = error.response?.status;
-      let message = 'Error al eliminar horario';
-
-      if (status === 404) {
-        message = 'Horario no encontrado';
-      } else if (status === 409) {
-        message = 'No se puede eliminar. El horario tiene citas asociadas.';
-      }
-
-      throw new Error(message);
-    },
+    onError: createCRUDErrorHandler('delete', 'Horario', {
+      409: 'No se puede eliminar. El horario tiene citas asociadas.',
+    }),
   });
 }
 

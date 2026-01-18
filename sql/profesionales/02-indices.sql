@@ -2,7 +2,7 @@
 -- MÓDULO PROFESIONALES: ÍNDICES ESPECIALIZADOS
 -- ====================================================================
 -- Índices optimizados para la tabla profesionales.
--- Extraído de sql/negocio/ para modularización (Dic 2025)
+-- Extraído de sql/servicios/ para modularización (Dic 2025)
 --
 -- 🗑️ PATRÓN SOFT DELETE (Dic 2025):
 -- Todos los índices parciales usan `eliminado_en IS NULL` como filtro

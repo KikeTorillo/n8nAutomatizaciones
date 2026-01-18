@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { citasApi } from '@/services/api/endpoints';
 import { useToast } from '../../utils/useToast';
 import useSucursalStore, { selectGetSucursalId } from '@/store/sucursalStore';
+import { createCRUDErrorHandler, getErrorMessage } from '@/hooks/config/errorHandlerFactory';
 
 /**
  * Hook para crear una nueva cita
@@ -72,8 +73,11 @@ export function useCancelarCita() {
       success('Cita cancelada exitosamente');
     },
     onError: (error) => {
-      const mensaje = error.response?.data?.message || error.response?.data?.error || 'Error al cancelar la cita';
-      showError(mensaje);
+      try {
+        createCRUDErrorHandler('delete', 'Cita')(error);
+      } catch (e) {
+        showError(getErrorMessage(e));
+      }
     },
   });
 }
@@ -96,8 +100,11 @@ export function useConfirmarCita() {
       success('Cita confirmada exitosamente');
     },
     onError: (error) => {
-      const mensaje = error.response?.data?.message || error.response?.data?.error || 'Error al confirmar la cita';
-      showError(mensaje);
+      try {
+        createCRUDErrorHandler('update', 'Cita')(error);
+      } catch (e) {
+        showError(getErrorMessage(e));
+      }
     },
   });
 }
@@ -120,8 +127,11 @@ export function useIniciarCita() {
       success('Cita iniciada');
     },
     onError: (error) => {
-      const mensaje = error.response?.data?.message || error.response?.data?.error || 'Error al iniciar la cita';
-      showError(mensaje);
+      try {
+        createCRUDErrorHandler('update', 'Cita')(error);
+      } catch (e) {
+        showError(getErrorMessage(e));
+      }
     },
   });
 }
@@ -150,8 +160,11 @@ export function useCompletarCita() {
       success('Cita completada exitosamente');
     },
     onError: (error) => {
-      const mensaje = error.response?.data?.message || error.response?.data?.error || 'Error al completar la cita';
-      showError(mensaje);
+      try {
+        createCRUDErrorHandler('update', 'Cita')(error);
+      } catch (e) {
+        showError(getErrorMessage(e));
+      }
     },
   });
 }
@@ -174,8 +187,11 @@ export function useNoShowCita() {
       warning('Cita marcada como No Show');
     },
     onError: (error) => {
-      const mensaje = error.response?.data?.message || error.response?.data?.error || 'Error al marcar como No Show';
-      showError(mensaje);
+      try {
+        createCRUDErrorHandler('update', 'Cita')(error);
+      } catch (e) {
+        showError(getErrorMessage(e));
+      }
     },
   });
 }

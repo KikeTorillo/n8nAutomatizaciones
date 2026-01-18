@@ -12,6 +12,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { clientesApi } from '@/services/api/endpoints';
+import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 
 // ====================================================================
 // CONSTANTES
@@ -132,24 +133,7 @@ export function useCrearActividad() {
       queryClient.invalidateQueries({ queryKey: ['cliente-timeline', variables.clienteId] });
       queryClient.invalidateQueries({ queryKey: ['cliente-actividades-conteo', variables.clienteId] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) {
-        throw new Error(backendMessage);
-      }
-
-      const errorMessages = {
-        400: 'Datos inválidos. Revisa los campos',
-        404: 'Cliente no encontrado',
-        403: 'No tienes permisos para crear actividades',
-        500: 'Error del servidor. Intenta nuevamente',
-      };
-
-      const statusCode = error.response?.status;
-      const message = errorMessages[statusCode] || 'Error al crear actividad';
-
-      throw new Error(message);
-    },
+    onError: createCRUDErrorHandler('create', 'Actividad'),
   });
 }
 
@@ -170,14 +154,7 @@ export function useActualizarActividad() {
       queryClient.invalidateQueries({ queryKey: ['cliente-timeline', variables.clienteId] });
       queryClient.invalidateQueries({ queryKey: ['cliente-actividades-conteo', variables.clienteId] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) {
-        throw new Error(backendMessage);
-      }
-
-      throw new Error('Error al actualizar actividad');
-    },
+    onError: createCRUDErrorHandler('update', 'Actividad'),
   });
 }
 
@@ -197,14 +174,7 @@ export function useEliminarActividad() {
       queryClient.invalidateQueries({ queryKey: ['cliente-timeline', variables.clienteId] });
       queryClient.invalidateQueries({ queryKey: ['cliente-actividades-conteo', variables.clienteId] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) {
-        throw new Error(backendMessage);
-      }
-
-      throw new Error('Error al eliminar actividad');
-    },
+    onError: createCRUDErrorHandler('delete', 'Actividad'),
   });
 }
 
@@ -225,14 +195,7 @@ export function useCompletarTarea() {
       queryClient.invalidateQueries({ queryKey: ['cliente-timeline', variables.clienteId] });
       queryClient.invalidateQueries({ queryKey: ['cliente-actividades-conteo', variables.clienteId] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) {
-        throw new Error(backendMessage);
-      }
-
-      throw new Error('Error al completar tarea');
-    },
+    onError: createCRUDErrorHandler('update', 'Tarea'),
   });
 }
 

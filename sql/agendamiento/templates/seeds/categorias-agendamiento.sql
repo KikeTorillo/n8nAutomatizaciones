@@ -1,8 +1,9 @@
 -- ====================================================================
--- TEMPLATE SCHEDULING SAAS - SEEDS: CATEGORÍAS DE AGENDAMIENTO
+-- MÓDULO AGENDAMIENTO: SEEDS - CATEGORÍAS
 -- ====================================================================
 --
 -- Descripción: Categorías específicas para sistemas de agendamiento
+-- Ubicación: sql/agendamiento/templates/seeds/
 -- Ejecutar: DESPUÉS de sql/core/schema/01-tabla-categorias.sql
 --
 -- Contenido: 11 categorías de servicios profesionales

@@ -22,6 +22,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { recordatoriosApi } from '@/services/api/endpoints';
 import { useToast } from '../utils/useToast';
+import { createCRUDErrorHandler, getErrorMessage } from '@/hooks/config/errorHandlerFactory';
 
 // ==================== QUERY KEYS ====================
 
@@ -118,16 +119,17 @@ export function useActualizarConfiguracion() {
       const response = await recordatoriosApi.actualizarConfiguracion(datos);
       return response.data?.data || response.data;
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       // Invalidar query de configuración
       queryClient.invalidateQueries({ queryKey: recordatoriosKeys.configuracion() });
-      success('Configuración de recordatorios actualizada');
+      success('Configuracion de recordatorios actualizada');
     },
     onError: (error) => {
-      const mensaje = error.response?.data?.message ||
-                      error.response?.data?.error ||
-                      'Error al actualizar configuración';
-      showError(mensaje);
+      try {
+        createCRUDErrorHandler('update', 'Configuracion de recordatorios')(error);
+      } catch (e) {
+        showError(getErrorMessage(e));
+      }
     },
   });
 }
@@ -156,10 +158,11 @@ export function useEnviarPrueba() {
       success(`Mensaje de prueba enviado via ${data.plataforma}`);
     },
     onError: (error) => {
-      const mensaje = error.response?.data?.message ||
-                      error.response?.data?.error ||
-                      'Error al enviar mensaje de prueba';
-      showError(mensaje);
+      try {
+        createCRUDErrorHandler('create', 'Mensaje de prueba')(error);
+      } catch (e) {
+        showError(getErrorMessage(e));
+      }
     },
   });
 }

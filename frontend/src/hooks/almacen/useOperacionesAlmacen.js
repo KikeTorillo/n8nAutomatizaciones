@@ -12,6 +12,7 @@ import { STALE_TIMES } from '@/app/queryClient';
 import { operacionesAlmacenApi } from '@/services/api/endpoints';
 import useSucursalStore, { selectGetSucursalId } from '@/store/sucursalStore';
 import { useToast } from '@/hooks/utils';
+import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 
 /**
  * QUERY KEYS para operaciones de almacén
@@ -164,10 +165,7 @@ export function useCrearOperacion() {
       queryClient.invalidateQueries(OPERACIONES_ALMACEN_KEYS.all);
       toast.success('Operación creada exitosamente');
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message || 'Error al crear operación';
-      toast.error(backendMessage);
-    },
+    onError: createCRUDErrorHandler('create', 'Operación'),
   });
 }
 
@@ -188,10 +186,7 @@ export function useActualizarOperacion() {
       queryClient.invalidateQueries(OPERACIONES_ALMACEN_KEYS.detail(result.id));
       toast.success('Operación actualizada');
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message || 'Error al actualizar operación';
-      toast.error(backendMessage);
-    },
+    onError: createCRUDErrorHandler('update', 'Operación'),
   });
 }
 
@@ -212,10 +207,7 @@ export function useAsignarOperacion() {
       queryClient.invalidateQueries(OPERACIONES_ALMACEN_KEYS.detail(result.id));
       toast.success('Operación asignada');
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message || 'Error al asignar operación';
-      toast.error(backendMessage);
-    },
+    onError: createCRUDErrorHandler('update', 'Operación'),
   });
 }
 
@@ -236,10 +228,7 @@ export function useIniciarOperacion() {
       queryClient.invalidateQueries(OPERACIONES_ALMACEN_KEYS.detail(result.id));
       toast.success('Operación iniciada');
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message || 'Error al iniciar operación';
-      toast.error(backendMessage);
-    },
+    onError: createCRUDErrorHandler('update', 'Operación'),
   });
 }
 
@@ -265,10 +254,7 @@ export function useCompletarOperacion() {
       queryClient.invalidateQueries({ queryKey: ['movimientos-inventario'] });
       toast.success('Operación completada');
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message || 'Error al completar operación';
-      toast.error(backendMessage);
-    },
+    onError: createCRUDErrorHandler('update', 'Operación'),
   });
 }
 
@@ -289,10 +275,7 @@ export function useCancelarOperacion() {
       queryClient.invalidateQueries(OPERACIONES_ALMACEN_KEYS.detail(result.id));
       toast.success('Operación cancelada');
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message || 'Error al cancelar operación';
-      toast.error(backendMessage);
-    },
+    onError: createCRUDErrorHandler('delete', 'Operación'),
   });
 }
 
@@ -315,10 +298,7 @@ export function useProcesarItem() {
       queryClient.invalidateQueries(OPERACIONES_ALMACEN_KEYS.all);
       toast.success('Item procesado');
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message || 'Error al procesar item';
-      toast.error(backendMessage);
-    },
+    onError: createCRUDErrorHandler('update', 'Item'),
   });
 }
 
@@ -338,10 +318,7 @@ export function useCancelarItem() {
       queryClient.invalidateQueries(OPERACIONES_ALMACEN_KEYS.all);
       toast.success('Item cancelado');
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message || 'Error al cancelar item';
-      toast.error(backendMessage);
-    },
+    onError: createCRUDErrorHandler('delete', 'Item'),
   });
 }
 

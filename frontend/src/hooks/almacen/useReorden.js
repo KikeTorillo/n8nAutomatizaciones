@@ -7,6 +7,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { reordenApi, inventarioApi } from '@/services/api/endpoints';
 import { useToast } from '@/hooks/utils';
+import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 
 // ==================== DASHBOARD ====================
 
@@ -101,10 +102,7 @@ export function useCrearReglaReorden() {
       queryClient.invalidateQueries({ queryKey: ['reorden', 'dashboard'] });
       toast.success('Regla de reorden creada');
     },
-    onError: (error) => {
-      const msg = error.response?.data?.message || 'Error al crear regla';
-      toast.error(msg);
-    },
+    onError: createCRUDErrorHandler('create', 'Regla'),
   });
 }
 
@@ -123,10 +121,7 @@ export function useActualizarReglaReorden() {
       queryClient.invalidateQueries({ queryKey: ['reorden', 'dashboard'] });
       toast.success('Regla de reorden actualizada');
     },
-    onError: (error) => {
-      const msg = error.response?.data?.message || 'Error al actualizar regla';
-      toast.error(msg);
-    },
+    onError: createCRUDErrorHandler('update', 'Regla'),
   });
 }
 
@@ -144,10 +139,7 @@ export function useEliminarReglaReorden() {
       queryClient.invalidateQueries({ queryKey: ['reorden', 'dashboard'] });
       toast.success('Regla de reorden eliminada');
     },
-    onError: (error) => {
-      const msg = error.response?.data?.message || 'Error al eliminar regla';
-      toast.error(msg);
-    },
+    onError: createCRUDErrorHandler('delete', 'Regla'),
   });
 }
 
@@ -167,10 +159,7 @@ export function useEjecutarReordenManual() {
       queryClient.invalidateQueries({ queryKey: ['ordenes-compra'] });
       toast.success('Reorden ejecutado exitosamente');
     },
-    onError: (error) => {
-      const msg = error.response?.data?.message || 'Error al ejecutar reorden';
-      toast.error(msg);
-    },
+    onError: createCRUDErrorHandler('create', 'Reorden'),
   });
 }
 

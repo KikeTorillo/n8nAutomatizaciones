@@ -14,6 +14,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { posApi } from '@/services/api/endpoints';
 import { useToast } from '@/hooks/utils';
+import { createCRUDErrorHandler, getErrorMessage } from '@/hooks/config/errorHandlerFactory';
 
 // ========================================================================
 // CONSTANTES
@@ -106,7 +107,7 @@ export function useCrearCombo() {
             toast.success('Combo creado exitosamente');
         },
         onError: (error) => {
-            toast.error(error.response?.data?.message || 'Error al crear combo');
+            toast.error(getErrorMessage(error, 'Error al crear combo'));
         },
     });
 }
@@ -127,7 +128,7 @@ export function useActualizarCombo() {
             toast.success('Combo actualizado exitosamente');
         },
         onError: (error) => {
-            toast.error(error.response?.data?.message || 'Error al actualizar combo');
+            toast.error(getErrorMessage(error, 'Error al actualizar combo'));
         },
     });
 }
@@ -147,7 +148,7 @@ export function useEliminarCombo() {
             toast.success('Combo eliminado exitosamente');
         },
         onError: (error) => {
-            toast.error(error.response?.data?.message || 'Error al eliminar combo');
+            toast.error(getErrorMessage(error, 'Error al eliminar combo'));
         },
     });
 }
@@ -231,7 +232,7 @@ export function useCrearGrupoModificadores() {
         onError: (error) => {
             toast({
                 title: 'Error al crear grupo',
-                description: error.response?.data?.message || error.message,
+                description: getErrorMessage(error, 'Error inesperado'),
                 variant: 'error',
             });
         },
@@ -259,7 +260,7 @@ export function useActualizarGrupoModificadores() {
         onError: (error) => {
             toast({
                 title: 'Error al actualizar grupo',
-                description: error.response?.data?.message || error.message,
+                description: getErrorMessage(error, 'Error inesperado'),
                 variant: 'error',
             });
         },
@@ -287,7 +288,7 @@ export function useEliminarGrupoModificadores() {
         onError: (error) => {
             toast({
                 title: 'Error al eliminar grupo',
-                description: error.response?.data?.message || error.message,
+                description: getErrorMessage(error, 'Error inesperado'),
                 variant: 'error',
             });
         },
@@ -319,7 +320,7 @@ export function useCrearModificador() {
         onError: (error) => {
             toast({
                 title: 'Error al crear modificador',
-                description: error.response?.data?.message || error.message,
+                description: getErrorMessage(error, 'Error inesperado'),
                 variant: 'error',
             });
         },
@@ -347,7 +348,7 @@ export function useActualizarModificador() {
         onError: (error) => {
             toast({
                 title: 'Error al actualizar modificador',
-                description: error.response?.data?.message || error.message,
+                description: getErrorMessage(error, 'Error inesperado'),
                 variant: 'error',
             });
         },
@@ -375,7 +376,7 @@ export function useEliminarModificador() {
         onError: (error) => {
             toast({
                 title: 'Error al eliminar modificador',
-                description: error.response?.data?.message || error.message,
+                description: getErrorMessage(error, 'Error inesperado'),
                 variant: 'error',
             });
         },
@@ -467,7 +468,7 @@ export function useAsignarGrupoAProducto() {
         onError: (error) => {
             toast({
                 title: 'Error al asignar grupo',
-                description: error.response?.data?.message || error.message,
+                description: getErrorMessage(error, 'Error inesperado'),
                 variant: 'error',
             });
         },
@@ -497,7 +498,7 @@ export function useAsignarGrupoACategoria() {
         onError: (error) => {
             toast({
                 title: 'Error al asignar grupo',
-                description: error.response?.data?.message || error.message,
+                description: getErrorMessage(error, 'Error inesperado'),
                 variant: 'error',
             });
         },
@@ -527,7 +528,7 @@ export function useEliminarAsignacionProducto() {
         onError: (error) => {
             toast({
                 title: 'Error al eliminar asignación',
-                description: error.response?.data?.message || error.message,
+                description: getErrorMessage(error, 'Error inesperado'),
                 variant: 'error',
             });
         },

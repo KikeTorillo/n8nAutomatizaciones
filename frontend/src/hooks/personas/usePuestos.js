@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { puestosApi } from '@/services/api/endpoints';
 import { sanitizeParams } from '@/lib/params';
+import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 
 // ==================== HOOKS CRUD PUESTOS ====================
 
@@ -60,19 +61,9 @@ export function useCrearPuesto() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['puestos'] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) throw new Error(backendMessage);
-
-      const errorMessages = {
-        409: 'Ya existe un puesto con ese código',
-        400: 'Datos inválidos. Revisa los campos',
-        500: 'Error del servidor',
-      };
-
-      const statusCode = error.response?.status;
-      throw new Error(errorMessages[statusCode] || 'Error al crear puesto');
-    },
+    onError: createCRUDErrorHandler('create', 'Puesto', {
+      409: 'Ya existe un puesto con ese código',
+    }),
   });
 }
 
@@ -100,11 +91,7 @@ export function useActualizarPuesto() {
       queryClient.invalidateQueries({ queryKey: ['puesto', data.id] });
       queryClient.invalidateQueries({ queryKey: ['puestos'] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) throw new Error(backendMessage);
-      throw new Error('Error al actualizar puesto');
-    },
+    onError: createCRUDErrorHandler('update', 'Puesto'),
   });
 }
 
@@ -122,15 +109,7 @@ export function useEliminarPuesto() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['puestos'] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) throw new Error(backendMessage);
-
-      if (error.response?.data?.error?.includes('profesionales')) {
-        throw new Error('No se puede eliminar: hay profesionales con este puesto');
-      }
-      throw new Error('Error al eliminar puesto');
-    },
+    onError: createCRUDErrorHandler('delete', 'Puesto'),
   });
 }
 

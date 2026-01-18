@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { inventarioApi } from '@/services/api/endpoints';
 import { sanitizeParams } from '@/lib/params';
 import { STALE_TIMES } from '@/app/queryClient';
+import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 
 /**
  * Hook para listar productos con filtros
@@ -93,24 +94,10 @@ export function useCrearProducto() {
       queryClient.invalidateQueries({ queryKey: ['stock-critico'] });
       queryClient.invalidateQueries({ queryKey: ['valor-inventario'] });
     },
-    onError: (error) => {
-      // Priorizar mensaje del backend
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) {
-        throw new Error(backendMessage);
-      }
-
-      const errorMessages = {
-        409: 'Ya existe un producto con ese SKU o código de barras',
-        400: 'Datos inválidos. Revisa los campos',
-        403: 'No tienes permisos para crear productos o alcanzaste el límite de tu plan',
-        500: 'Error del servidor. Intenta nuevamente',
-      };
-
-      const statusCode = error.response?.status;
-      const message = errorMessages[statusCode] || error.response?.data?.error || 'Error inesperado';
-      throw new Error(message);
-    },
+    onError: createCRUDErrorHandler('create', 'Producto', {
+      409: 'Ya existe un producto con ese SKU o código de barras',
+      403: 'No tienes permisos para crear productos o alcanzaste el límite de tu plan',
+    }),
   });
 }
 
@@ -130,22 +117,10 @@ export function useBulkCrearProductos() {
       queryClient.invalidateQueries({ queryKey: ['stock-critico'] });
       queryClient.invalidateQueries({ queryKey: ['valor-inventario'] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) {
-        throw new Error(backendMessage);
-      }
-
-      const errorMessages = {
-        403: 'Alcanzaste el límite de productos de tu plan',
-        400: 'Algunos productos tienen datos inválidos',
-        500: 'Error del servidor. Intenta nuevamente',
-      };
-
-      const statusCode = error.response?.status;
-      const message = errorMessages[statusCode] || 'Error al crear productos en lote';
-      throw new Error(message);
-    },
+    onError: createCRUDErrorHandler('create', 'Productos', {
+      403: 'Alcanzaste el límite de productos de tu plan',
+      400: 'Algunos productos tienen datos inválidos',
+    }),
   });
 }
 
@@ -176,23 +151,9 @@ export function useActualizarProducto() {
       queryClient.invalidateQueries({ queryKey: ['producto', variables.id] });
       queryClient.invalidateQueries({ queryKey: ['stock-critico'] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) {
-        throw new Error(backendMessage);
-      }
-
-      const errorMessages = {
-        404: 'Producto no encontrado',
-        409: 'Ya existe otro producto con ese SKU o código de barras',
-        400: 'Datos inválidos. Revisa los campos',
-        403: 'No tienes permisos para actualizar este producto',
-      };
-
-      const statusCode = error.response?.status;
-      const message = errorMessages[statusCode] || 'Error al actualizar producto';
-      throw new Error(message);
-    },
+    onError: createCRUDErrorHandler('update', 'Producto', {
+      409: 'Ya existe otro producto con ese SKU o código de barras',
+    }),
   });
 }
 
@@ -218,22 +179,9 @@ export function useAjustarStock() {
       queryClient.invalidateQueries({ queryKey: ['movimientos'] });
       queryClient.invalidateQueries({ queryKey: ['kardex', variables.id] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) {
-        throw new Error(backendMessage);
-      }
-
-      const errorMessages = {
-        404: 'Producto no encontrado',
-        400: 'Datos inválidos. Revisa cantidad y tipo de movimiento',
-        403: 'No tienes permisos para ajustar el stock',
-      };
-
-      const statusCode = error.response?.status;
-      const message = errorMessages[statusCode] || 'Error al ajustar stock';
-      throw new Error(message);
-    },
+    onError: createCRUDErrorHandler('update', 'Stock', {
+      400: 'Datos inválidos. Revisa cantidad y tipo de movimiento',
+    }),
   });
 }
 
@@ -252,21 +200,8 @@ export function useEliminarProducto() {
       queryClient.invalidateQueries({ queryKey: ['productos'] });
       queryClient.invalidateQueries({ queryKey: ['stock-critico'] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) {
-        throw new Error(backendMessage);
-      }
-
-      const errorMessages = {
-        404: 'Producto no encontrado',
-        403: 'No tienes permisos para eliminar productos',
-        409: 'No se puede eliminar el producto porque tiene movimientos o ventas asociadas',
-      };
-
-      const statusCode = error.response?.status;
-      const message = errorMessages[statusCode] || 'Error al eliminar producto';
-      throw new Error(message);
-    },
+    onError: createCRUDErrorHandler('delete', 'Producto', {
+      409: 'No se puede eliminar el producto porque tiene movimientos o ventas asociadas',
+    }),
   });
 }

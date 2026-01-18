@@ -2,7 +2,7 @@
 -- MÓDULO CLIENTES: ÍNDICES ESPECIALIZADOS
 -- ====================================================================
 -- Índices optimizados para la tabla clientes.
--- Extraído de sql/negocio/ para modularización (Dic 2025)
+-- Extraído de sql/servicios/ para modularización (Dic 2025)
 --
 -- CARACTERÍSTICAS:
 -- • Índices multi-tenant para aislamiento por organización

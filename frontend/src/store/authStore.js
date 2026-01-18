@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { devtools, persist } from 'zustand/middleware';
 import {
   setAccessToken,
   clearAccessToken,
@@ -15,8 +15,9 @@ import {
  * - user + isAuthenticated: Persisten en localStorage
  */
 const useAuthStore = create(
-  persist(
-    (set, get) => ({
+  devtools(
+    persist(
+      (set, get) => ({
       // ========== STATE ==========
       // Ene 2026: Tokens removidos del store - ahora en memoria/cookie
       user: null,
@@ -102,14 +103,16 @@ const useAuthStore = create(
         return user?.organizacion_id || null;
       },
     }),
-    {
-      name: 'auth-storage', // Nombre en localStorage
-      // Ene 2026: Solo persistir user e isAuthenticated (NO tokens)
-      partialize: (state) => ({
-        user: state.user,
-        isAuthenticated: state.isAuthenticated,
-      }),
-    }
+      {
+        name: 'auth-storage', // Nombre en localStorage
+        // Ene 2026: Solo persistir user e isAuthenticated (NO tokens)
+        partialize: (state) => ({
+          user: state.user,
+          isAuthenticated: state.isAuthenticated,
+        }),
+      }
+    ),
+    { name: 'AuthStore', enabled: import.meta.env.DEV }
   )
 );
 

@@ -12,6 +12,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { clientesApi } from '@/services/api/endpoints';
+import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 
 // Colores predefinidos para el selector
 export const COLORES_ETIQUETAS = [
@@ -68,24 +69,9 @@ export function useCrearEtiqueta() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['etiquetas-clientes'] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) {
-        throw new Error(backendMessage);
-      }
-
-      const errorMessages = {
-        409: 'Ya existe una etiqueta con ese nombre',
-        400: 'Datos inválidos. Revisa los campos',
-        403: 'No tienes permisos para crear etiquetas',
-        500: 'Error del servidor. Intenta nuevamente',
-      };
-
-      const statusCode = error.response?.status;
-      const message = errorMessages[statusCode] || error.response?.data?.error || 'Error inesperado';
-
-      throw new Error(message);
-    },
+    onError: createCRUDErrorHandler('create', 'Etiqueta', {
+      409: 'Ya existe una etiqueta con ese nombre',
+    }),
   });
 }
 
@@ -104,24 +90,9 @@ export function useActualizarEtiqueta() {
       queryClient.invalidateQueries({ queryKey: ['etiqueta-cliente', data.id] });
       queryClient.invalidateQueries({ queryKey: ['etiquetas-clientes'] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) {
-        throw new Error(backendMessage);
-      }
-
-      const errorMessages = {
-        404: 'Etiqueta no encontrada',
-        409: 'Ya existe una etiqueta con ese nombre',
-        400: 'Datos inválidos',
-        500: 'Error del servidor',
-      };
-
-      const statusCode = error.response?.status;
-      const message = errorMessages[statusCode] || error.response?.data?.error || 'Error al actualizar';
-
-      throw new Error(message);
-    },
+    onError: createCRUDErrorHandler('update', 'Etiqueta', {
+      409: 'Ya existe una etiqueta con ese nombre',
+    }),
   });
 }
 
@@ -139,23 +110,9 @@ export function useEliminarEtiqueta() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['etiquetas-clientes'] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) {
-        throw new Error(backendMessage);
-      }
-
-      const errorMessages = {
-        404: 'Etiqueta no encontrada',
-        400: 'No se puede eliminar la etiqueta (tiene clientes asignados)',
-        500: 'Error del servidor',
-      };
-
-      const statusCode = error.response?.status;
-      const message = errorMessages[statusCode] || 'Error al eliminar etiqueta';
-
-      throw new Error(message);
-    },
+    onError: createCRUDErrorHandler('delete', 'Etiqueta', {
+      400: 'No se puede eliminar la etiqueta (tiene clientes asignados)',
+    }),
   });
 }
 
@@ -199,14 +156,7 @@ export function useAsignarEtiquetasCliente() {
       // Invalidar contadores de etiquetas
       queryClient.invalidateQueries({ queryKey: ['etiquetas-clientes'] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) {
-        throw new Error(backendMessage);
-      }
-
-      throw new Error('Error al asignar etiquetas');
-    },
+    onError: createCRUDErrorHandler('update', 'Etiquetas'),
   });
 }
 

@@ -1,4 +1,5 @@
 import axios from 'axios';
+import axiosRetry from 'axios-retry';
 import useAuthStore from '@/store/authStore';
 import {
   getAccessToken,
@@ -20,6 +21,26 @@ const apiClient = axios.create({
   },
   // Ene 2026: Enviar cookies automáticamente (refreshToken httpOnly)
   withCredentials: true,
+});
+
+// ========== RETRY CON EXPONENTIAL BACKOFF (Ene 2026) ==========
+// Reintentar automáticamente en errores de red o servidor (5xx)
+axiosRetry(apiClient, {
+  retries: 3,
+  retryDelay: axiosRetry.exponentialDelay, // 1s, 2s, 4s
+  retryCondition: (error) => {
+    // Reintentar en errores de red o errores 5xx del servidor
+    return (
+      axiosRetry.isNetworkOrIdempotentRequestError(error) ||
+      (error.response?.status >= 500 && error.response?.status < 600)
+    );
+  },
+  onRetry: (retryCount, error, requestConfig) => {
+    console.log(
+      `🔄 Reintento ${retryCount}/3 para ${requestConfig.method?.toUpperCase()} ${requestConfig.url}`,
+      error.message
+    );
+  },
 });
 
 // ========== INTERCEPTOR DE REQUEST ==========

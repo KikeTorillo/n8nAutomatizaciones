@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { devtools, persist } from 'zustand/middleware';
 
 // Ene 2026: Variable de control para evitar memory leaks
 // Almacena la función de cleanup del listener del sistema
@@ -10,8 +10,9 @@ let systemListenerCleanup = null;
  * Maneja el tema de la aplicación (light/dark/system)
  */
 const useThemeStore = create(
-  persist(
-    (set, get) => ({
+  devtools(
+    persist(
+      (set, get) => ({
       // ========== STATE ==========
       theme: 'dark', // 'light' | 'dark' | 'system'
       resolvedTheme: 'dark', // El tema actual resuelto (siempre 'light' o 'dark')
@@ -108,12 +109,14 @@ const useThemeStore = create(
         return get().resolvedTheme === 'dark';
       },
     }),
-    {
-      name: 'theme-storage',
-      partialize: (state) => ({
-        theme: state.theme,
-      }),
-    }
+      {
+        name: 'theme-storage',
+        partialize: (state) => ({
+          theme: state.theme,
+        }),
+      }
+    ),
+    { name: 'ThemeStore', enabled: import.meta.env.DEV }
   )
 );
 

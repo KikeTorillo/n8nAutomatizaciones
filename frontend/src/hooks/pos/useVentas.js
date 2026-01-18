@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { posApi } from '@/services/api/endpoints';
 import useSucursalStore, { selectGetSucursalId } from '@/store/sucursalStore';
+import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 
 // ==================== VENTAS POS ====================
 // ✅ FEATURE: Multi-sucursal - Los hooks inyectan sucursal_id automáticamente
@@ -89,9 +90,9 @@ export function useCrearVenta() {
       queryClient.invalidateQueries({ queryKey: ['stock-critico'] });
       queryClient.invalidateQueries({ queryKey: ['movimientos'] }); // Se generó movimiento
     },
-    onError: (error) => {
-      console.error('Error al crear venta:', error);
-    },
+    onError: createCRUDErrorHandler('create', 'Venta', {
+      409: 'Stock insuficiente para completar la venta',
+    }),
   });
 }
 
@@ -123,9 +124,7 @@ export function useActualizarVenta() {
       queryClient.invalidateQueries({ queryKey: ['ventas'] });
       queryClient.invalidateQueries({ queryKey: ['venta', variables.id] });
     },
-    onError: (error) => {
-      console.error('Error al actualizar venta:', error);
-    },
+    onError: createCRUDErrorHandler('update', 'Venta'),
   });
 }
 
@@ -144,9 +143,7 @@ export function useActualizarEstadoVenta() {
       queryClient.invalidateQueries({ queryKey: ['ventas'] });
       queryClient.invalidateQueries({ queryKey: ['venta', variables.id] });
     },
-    onError: (error) => {
-      console.error('Error al actualizar estado de venta:', error);
-    },
+    onError: createCRUDErrorHandler('update', 'Estado de venta'),
   });
 }
 
@@ -171,9 +168,9 @@ export function useRegistrarPago() {
       queryClient.invalidateQueries({ queryKey: ['ventas'] });
       queryClient.invalidateQueries({ queryKey: ['venta', variables.id] });
     },
-    onError: (error) => {
-      console.error('Error al registrar pago:', error);
-    },
+    onError: createCRUDErrorHandler('create', 'Pago', {
+      409: 'El pago excede el monto pendiente',
+    }),
   });
 }
 
@@ -197,9 +194,9 @@ export function useCancelarVenta() {
       queryClient.invalidateQueries({ queryKey: ['productos'] }); // Stock revertido
       queryClient.invalidateQueries({ queryKey: ['movimientos'] }); // Movimiento de reversión
     },
-    onError: (error) => {
-      console.error('Error al cancelar venta:', error);
-    },
+    onError: createCRUDErrorHandler('delete', 'Venta', {
+      400: 'No se puede cancelar una venta ya cancelada',
+    }),
   });
 }
 
@@ -224,9 +221,9 @@ export function useDevolverItems() {
       queryClient.invalidateQueries({ queryKey: ['productos'] }); // Stock ajustado
       queryClient.invalidateQueries({ queryKey: ['movimientos'] }); // Movimiento de devolución
     },
-    onError: (error) => {
-      console.error('Error al devolver items:', error);
-    },
+    onError: createCRUDErrorHandler('update', 'Devolución', {
+      400: 'Cantidad a devolver inválida',
+    }),
   });
 }
 
@@ -246,9 +243,9 @@ export function useAgregarItems() {
       queryClient.invalidateQueries({ queryKey: ['venta', variables.id] });
       queryClient.invalidateQueries({ queryKey: ['productos'] }); // Stock actualizado
     },
-    onError: (error) => {
-      console.error('Error al agregar items:', error);
-    },
+    onError: createCRUDErrorHandler('update', 'Items', {
+      409: 'Stock insuficiente para agregar items',
+    }),
   });
 }
 
@@ -268,9 +265,7 @@ export function useEliminarVenta() {
       queryClient.invalidateQueries({ queryKey: ['productos'] }); // Stock revertido
       queryClient.invalidateQueries({ queryKey: ['movimientos'] }); // Movimiento de reversión
     },
-    onError: (error) => {
-      console.error('Error al eliminar venta:', error);
-    },
+    onError: createCRUDErrorHandler('delete', 'Venta'),
   });
 }
 

@@ -10,6 +10,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { paquetesApi } from '@/services/api/endpoints';
 import { useToast } from '@/hooks/utils';
+import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 
 /**
  * QUERY KEYS para paquetes
@@ -122,9 +123,7 @@ export function useCrearPaquete() {
       queryClient.invalidateQueries({ queryKey: PAQUETES_KEYS.resumen(operacionId) });
       toast.success('Paquete creado');
     },
-    onError: (error) => {
-      toast.error(error.response?.data?.message || 'Error al crear paquete');
-    },
+    onError: createCRUDErrorHandler('create', 'Paquete'),
   });
 }
 
@@ -145,9 +144,7 @@ export function useActualizarPaquete() {
       }
       toast.success('Paquete actualizado');
     },
-    onError: (error) => {
-      toast.error(error.response?.data?.message || 'Error al actualizar paquete');
-    },
+    onError: createCRUDErrorHandler('update', 'Paquete'),
   });
 }
 
@@ -169,9 +166,7 @@ export function useAgregarItemPaquete() {
       }
       toast.success('Item agregado al paquete');
     },
-    onError: (error) => {
-      toast.error(error.response?.data?.message || 'Error al agregar item');
-    },
+    onError: createCRUDErrorHandler('create', 'Item'),
   });
 }
 
@@ -193,9 +188,7 @@ export function useRemoverItemPaquete() {
       }
       toast.success('Item removido del paquete');
     },
-    onError: (error) => {
-      toast.error(error.response?.data?.message || 'Error al remover item');
-    },
+    onError: createCRUDErrorHandler('delete', 'Item'),
   });
 }
 
@@ -213,9 +206,7 @@ export function useCerrarPaquete() {
       queryClient.invalidateQueries({ queryKey: PAQUETES_KEYS.all });
       toast.success('Paquete cerrado');
     },
-    onError: (error) => {
-      toast.error(error.response?.data?.message || 'Error al cerrar paquete');
-    },
+    onError: createCRUDErrorHandler('update', 'Paquete'),
   });
 }
 
@@ -237,9 +228,7 @@ export function useCancelarPaquete() {
       }
       toast.success('Paquete cancelado');
     },
-    onError: (error) => {
-      toast.error(error.response?.data?.message || 'Error al cancelar paquete');
-    },
+    onError: createCRUDErrorHandler('delete', 'Paquete'),
   });
 }
 
@@ -258,9 +247,7 @@ export function useEtiquetarPaquete() {
       queryClient.invalidateQueries({ queryKey: PAQUETES_KEYS.all });
       toast.success('Paquete etiquetado');
     },
-    onError: (error) => {
-      toast.error(error.response?.data?.message || 'Error al etiquetar paquete');
-    },
+    onError: createCRUDErrorHandler('update', 'Paquete'),
   });
 }
 
@@ -278,8 +265,6 @@ export function useEnviarPaquete() {
       queryClient.invalidateQueries({ queryKey: PAQUETES_KEYS.all });
       toast.success('Paquete marcado como enviado');
     },
-    onError: (error) => {
-      toast.error(error.response?.data?.message || 'Error al marcar como enviado');
-    },
+    onError: createCRUDErrorHandler('update', 'Paquete'),
   });
 }

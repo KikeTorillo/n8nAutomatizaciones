@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ajustesMasivosApi } from '@/services/api/endpoints';
 import { STALE_TIMES } from '@/app/queryClient';
+import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 
 /**
  * Hooks para gestión de Ajustes Masivos de Inventario (CSV)
@@ -78,21 +79,9 @@ export function useCrearAjusteMasivo() {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['ajustes-masivos'] });
         },
-        onError: (error) => {
-            const backendMessage = error.response?.data?.message;
-            if (backendMessage) {
-                throw new Error(backendMessage);
-            }
-
-            const errorMessages = {
-                400: 'Datos inválidos. Revisa el formato del archivo',
-                403: 'No tienes permisos para crear ajustes masivos',
-                413: 'El archivo es demasiado grande (máximo 500 filas)',
-            };
-
-            const statusCode = error.response?.status;
-            throw new Error(errorMessages[statusCode] || 'Error al crear ajuste masivo');
-        },
+        onError: createCRUDErrorHandler('create', 'Ajuste masivo', {
+            413: 'El archivo es demasiado grande (máximo 500 filas)',
+        }),
     });
 }
 
@@ -111,13 +100,7 @@ export function useValidarAjusteMasivo() {
             queryClient.invalidateQueries({ queryKey: ['ajuste-masivo', id] });
             queryClient.invalidateQueries({ queryKey: ['ajustes-masivos'] });
         },
-        onError: (error) => {
-            const backendMessage = error.response?.data?.message;
-            if (backendMessage) {
-                throw new Error(backendMessage);
-            }
-            throw new Error('Error al validar ajuste masivo');
-        },
+        onError: createCRUDErrorHandler('update', 'Ajuste masivo'),
     });
 }
 
@@ -142,13 +125,7 @@ export function useAplicarAjusteMasivo() {
             queryClient.invalidateQueries({ queryKey: ['stock-critico'] });
             queryClient.invalidateQueries({ queryKey: ['valor-inventario'] });
         },
-        onError: (error) => {
-            const backendMessage = error.response?.data?.message;
-            if (backendMessage) {
-                throw new Error(backendMessage);
-            }
-            throw new Error('Error al aplicar ajustes');
-        },
+        onError: createCRUDErrorHandler('update', 'Ajuste masivo'),
     });
 }
 
@@ -167,13 +144,7 @@ export function useCancelarAjusteMasivo() {
             queryClient.invalidateQueries({ queryKey: ['ajuste-masivo', id] });
             queryClient.invalidateQueries({ queryKey: ['ajustes-masivos'] });
         },
-        onError: (error) => {
-            const backendMessage = error.response?.data?.message;
-            if (backendMessage) {
-                throw new Error(backendMessage);
-            }
-            throw new Error('Error al cancelar ajuste masivo');
-        },
+        onError: createCRUDErrorHandler('delete', 'Ajuste masivo'),
     });
 }
 
@@ -198,9 +169,7 @@ export function useDescargarPlantillaAjustes() {
 
             return true;
         },
-        onError: (error) => {
-            throw new Error('Error al descargar plantilla');
-        },
+        onError: createCRUDErrorHandler('fetch', 'Plantilla'),
     });
 }
 

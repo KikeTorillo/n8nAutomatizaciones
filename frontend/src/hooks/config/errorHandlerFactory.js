@@ -89,3 +89,57 @@ export function getErrorMessage(error, fallback = 'Ocurrió un error') {
   }
   return fallback;
 }
+
+/**
+ * Crea un manejador de errores especializado para operaciones CRUD
+ *
+ * Ene 2026: Factory simplificado para eliminar duplicación en hooks.
+ * Genera mensajes contextuales basados en la operación y entidad.
+ *
+ * @param {'create'|'update'|'delete'|'fetch'} operacion - Tipo de operación
+ * @param {string} entidad - Nombre de la entidad (ej: 'Producto', 'Cliente')
+ * @param {Object} customMessages - Mensajes personalizados por código HTTP
+ * @returns {Function} Handler de error para useMutation
+ *
+ * @example
+ * // En useProductos.js
+ * useMutation({
+ *   mutationFn: api.crearProducto,
+ *   onError: createCRUDErrorHandler('create', 'Producto', { 409: 'Ya existe un producto con ese SKU' })
+ * });
+ */
+export function createCRUDErrorHandler(operacion, entidad, customMessages = {}) {
+  const operationLabels = {
+    create: 'crear',
+    update: 'actualizar',
+    delete: 'eliminar',
+    fetch: 'obtener',
+  };
+
+  const label = operationLabels[operacion] || operacion;
+
+  const defaultMessages = {
+    404: `${entidad} no encontrado`,
+    409: `Ya existe un ${entidad.toLowerCase()} con esos datos`,
+    400: 'Datos inválidos',
+    403: `No tienes permisos para ${label} ${entidad.toLowerCase()}`,
+    422: 'Error de validación',
+    500: 'Error del servidor',
+  };
+
+  return createErrorHandler(
+    { ...defaultMessages, ...customMessages },
+    `Error al ${label} ${entidad.toLowerCase()}`
+  );
+}
+
+/**
+ * Presets de error handlers para operaciones comunes
+ * Usar cuando no se necesita personalización
+ */
+export const ErrorHandlers = {
+  crear: (entidad, custom = {}) => createCRUDErrorHandler('create', entidad, custom),
+  actualizar: (entidad, custom = {}) => createCRUDErrorHandler('update', entidad, custom),
+  eliminar: (entidad, custom = {}) => createCRUDErrorHandler('delete', entidad, custom),
+  obtener: (entidad, custom = {}) => createCRUDErrorHandler('fetch', entidad, custom),
+};

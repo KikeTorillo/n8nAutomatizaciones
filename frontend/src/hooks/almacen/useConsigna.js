@@ -11,6 +11,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { consignaApi } from '@/services/api/endpoints';
 import { useToast } from '@/hooks/utils';
+import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 
 /**
  * QUERY KEYS para consigna
@@ -197,9 +198,7 @@ export function useCrearAcuerdoConsigna() {
       queryClient.invalidateQueries({ queryKey: CONSIGNA_KEYS.acuerdos() });
       toast.success('Acuerdo de consignacion creado');
     },
-    onError: (error) => {
-      toast.error(error.response?.data?.message || 'Error al crear acuerdo');
-    },
+    onError: createCRUDErrorHandler('create', 'Acuerdo'),
   });
 }
 
@@ -217,9 +216,7 @@ export function useActualizarAcuerdoConsigna() {
       queryClient.invalidateQueries({ queryKey: CONSIGNA_KEYS.acuerdos() });
       toast.success('Acuerdo actualizado');
     },
-    onError: (error) => {
-      toast.error(error.response?.data?.message || 'Error al actualizar acuerdo');
-    },
+    onError: createCRUDErrorHandler('update', 'Acuerdo'),
   });
 }
 
@@ -237,9 +234,7 @@ export function useActivarAcuerdoConsigna() {
       queryClient.invalidateQueries({ queryKey: CONSIGNA_KEYS.acuerdos() });
       toast.success('Acuerdo activado');
     },
-    onError: (error) => {
-      toast.error(error.response?.data?.message || 'Error al activar acuerdo');
-    },
+    onError: createCRUDErrorHandler('update', 'Acuerdo'),
   });
 }
 
@@ -257,9 +252,7 @@ export function usePausarAcuerdoConsigna() {
       queryClient.invalidateQueries({ queryKey: CONSIGNA_KEYS.acuerdos() });
       toast.success('Acuerdo pausado');
     },
-    onError: (error) => {
-      toast.error(error.response?.data?.message || 'Error al pausar acuerdo');
-    },
+    onError: createCRUDErrorHandler('update', 'Acuerdo'),
   });
 }
 
@@ -277,9 +270,7 @@ export function useTerminarAcuerdoConsigna() {
       queryClient.invalidateQueries({ queryKey: CONSIGNA_KEYS.acuerdos() });
       toast.success('Acuerdo terminado');
     },
-    onError: (error) => {
-      toast.error(error.response?.data?.message || 'Error al terminar acuerdo');
-    },
+    onError: createCRUDErrorHandler('update', 'Acuerdo'),
   });
 }
 
@@ -299,9 +290,7 @@ export function useAgregarProductoConsigna() {
       queryClient.invalidateQueries({ queryKey: CONSIGNA_KEYS.acuerdoDetail(acuerdoId) });
       toast.success('Producto agregado al acuerdo');
     },
-    onError: (error) => {
-      toast.error(error.response?.data?.message || 'Error al agregar producto');
-    },
+    onError: createCRUDErrorHandler('create', 'Producto'),
   });
 }
 
@@ -319,9 +308,7 @@ export function useActualizarProductoConsigna() {
       queryClient.invalidateQueries({ queryKey: CONSIGNA_KEYS.acuerdoProductos(acuerdoId) });
       toast.success('Producto actualizado');
     },
-    onError: (error) => {
-      toast.error(error.response?.data?.message || 'Error al actualizar producto');
-    },
+    onError: createCRUDErrorHandler('update', 'Producto'),
   });
 }
 
@@ -340,9 +327,7 @@ export function useRemoverProductoConsigna() {
       queryClient.invalidateQueries({ queryKey: CONSIGNA_KEYS.acuerdoDetail(acuerdoId) });
       toast.success('Producto removido del acuerdo');
     },
-    onError: (error) => {
-      toast.error(error.response?.data?.message || 'Error al remover producto');
-    },
+    onError: createCRUDErrorHandler('delete', 'Producto'),
   });
 }
 
@@ -363,9 +348,7 @@ export function useRecibirMercanciaConsigna() {
       queryClient.invalidateQueries({ queryKey: CONSIGNA_KEYS.reportes() });
       toast.success('Mercancia recibida en consignacion');
     },
-    onError: (error) => {
-      toast.error(error.response?.data?.message || 'Error al recibir mercancia');
-    },
+    onError: createCRUDErrorHandler('create', 'Mercancía'),
   });
 }
 
@@ -383,9 +366,7 @@ export function useAjustarStockConsigna() {
       queryClient.invalidateQueries({ queryKey: CONSIGNA_KEYS.reportes() });
       toast.success('Stock ajustado');
     },
-    onError: (error) => {
-      toast.error(error.response?.data?.message || 'Error al ajustar stock');
-    },
+    onError: createCRUDErrorHandler('update', 'Stock'),
   });
 }
 
@@ -404,9 +385,7 @@ export function useDevolverMercanciaConsigna() {
       queryClient.invalidateQueries({ queryKey: CONSIGNA_KEYS.reportes() });
       toast.success('Devolucion registrada');
     },
-    onError: (error) => {
-      toast.error(error.response?.data?.message || 'Error al registrar devolucion');
-    },
+    onError: createCRUDErrorHandler('create', 'Devolución'),
   });
 }
 
@@ -426,9 +405,7 @@ export function useGenerarLiquidacion() {
       queryClient.invalidateQueries({ queryKey: CONSIGNA_KEYS.reportePendiente() });
       toast.success('Liquidacion generada');
     },
-    onError: (error) => {
-      toast.error(error.response?.data?.message || 'Error al generar liquidacion');
-    },
+    onError: createCRUDErrorHandler('create', 'Liquidación'),
   });
 }
 
@@ -447,9 +424,7 @@ export function useConfirmarLiquidacion() {
       queryClient.invalidateQueries({ queryKey: CONSIGNA_KEYS.reportePendiente() });
       toast.success('Liquidacion confirmada');
     },
-    onError: (error) => {
-      toast.error(error.response?.data?.message || 'Error al confirmar liquidacion');
-    },
+    onError: createCRUDErrorHandler('update', 'Liquidación'),
   });
 }
 
@@ -467,9 +442,7 @@ export function usePagarLiquidacion() {
       queryClient.invalidateQueries({ queryKey: CONSIGNA_KEYS.liquidaciones() });
       toast.success('Pago registrado');
     },
-    onError: (error) => {
-      toast.error(error.response?.data?.message || 'Error al registrar pago');
-    },
+    onError: createCRUDErrorHandler('create', 'Pago'),
   });
 }
 
@@ -488,8 +461,6 @@ export function useCancelarLiquidacion() {
       queryClient.invalidateQueries({ queryKey: CONSIGNA_KEYS.reportePendiente() });
       toast.success('Liquidacion cancelada');
     },
-    onError: (error) => {
-      toast.error(error.response?.data?.message || 'Error al cancelar liquidacion');
-    },
+    onError: createCRUDErrorHandler('delete', 'Liquidación'),
   });
 }

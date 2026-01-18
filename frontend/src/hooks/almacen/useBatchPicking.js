@@ -13,6 +13,7 @@ import { batchPickingApi } from '@/services/api/endpoints';
 import useSucursalStore, { selectGetSucursalId } from '@/store/sucursalStore';
 import { OPERACIONES_ALMACEN_KEYS } from './useOperacionesAlmacen';
 import { useToast } from '@/hooks/utils';
+import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 
 /**
  * QUERY KEYS para batch picking
@@ -167,10 +168,7 @@ export function useCrearBatch() {
       queryClient.invalidateQueries(OPERACIONES_ALMACEN_KEYS.all);
       toast.success('Batch creado exitosamente');
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message || 'Error al crear batch';
-      toast.error(backendMessage);
-    },
+    onError: createCRUDErrorHandler('create', 'Batch'),
   });
 }
 
@@ -191,10 +189,7 @@ export function useActualizarBatch() {
       queryClient.invalidateQueries(BATCH_PICKING_KEYS.detail(result.id));
       toast.success('Batch actualizado');
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message || 'Error al actualizar batch';
-      toast.error(backendMessage);
-    },
+    onError: createCRUDErrorHandler('update', 'Batch'),
   });
 }
 
@@ -215,10 +210,7 @@ export function useEliminarBatch() {
       queryClient.invalidateQueries(OPERACIONES_ALMACEN_KEYS.all);
       toast.success('Batch eliminado');
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message || 'Error al eliminar batch';
-      toast.error(backendMessage);
-    },
+    onError: createCRUDErrorHandler('delete', 'Batch'),
   });
 }
 
@@ -242,10 +234,7 @@ export function useAgregarOperacionBatch() {
       queryClient.invalidateQueries(OPERACIONES_ALMACEN_KEYS.all);
       toast.success('Operación agregada al batch');
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message || 'Error al agregar operación al batch';
-      toast.error(backendMessage);
-    },
+    onError: createCRUDErrorHandler('create', 'Operación'),
   });
 }
 
@@ -267,10 +256,7 @@ export function useQuitarOperacionBatch() {
       queryClient.invalidateQueries(OPERACIONES_ALMACEN_KEYS.all);
       toast.success('Operación quitada del batch');
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message || 'Error al quitar operación del batch';
-      toast.error(backendMessage);
-    },
+    onError: createCRUDErrorHandler('delete', 'Operación'),
   });
 }
 
@@ -292,10 +278,7 @@ export function useIniciarBatch() {
       queryClient.invalidateQueries(OPERACIONES_ALMACEN_KEYS.all);
       toast.success('Batch iniciado');
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message || 'Error al iniciar batch';
-      toast.error(backendMessage);
-    },
+    onError: createCRUDErrorHandler('update', 'Batch'),
   });
 }
 
@@ -322,10 +305,7 @@ export function useProcesarItemBatch() {
       queryClient.invalidateQueries(BATCH_PICKING_KEYS.estadisticas(variables.batchId));
       toast.success('Item procesado');
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message || 'Error al procesar item';
-      toast.error(backendMessage);
-    },
+    onError: createCRUDErrorHandler('update', 'Item'),
   });
 }
 
@@ -349,10 +329,7 @@ export function useCompletarBatch() {
       queryClient.invalidateQueries({ queryKey: ['movimientos-inventario'] });
       toast.success('Batch completado');
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message || 'Error al completar batch';
-      toast.error(backendMessage);
-    },
+    onError: createCRUDErrorHandler('update', 'Batch'),
   });
 }
 
@@ -373,10 +350,7 @@ export function useCancelarBatch() {
       queryClient.invalidateQueries(OPERACIONES_ALMACEN_KEYS.all);
       toast.success('Batch cancelado');
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message || 'Error al cancelar batch';
-      toast.error(backendMessage);
-    },
+    onError: createCRUDErrorHandler('delete', 'Batch'),
   });
 }
 

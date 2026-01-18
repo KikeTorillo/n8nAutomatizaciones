@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { customFieldsApi } from '@/services/api/endpoints';
+import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 
 // ==================== DEFINICIONES ====================
 
@@ -67,10 +68,7 @@ export function useCrearCustomFieldDefinicion() {
         queryClient.invalidateQueries({ queryKey: ['custom-fields-definiciones', { entidad_tipo: variables.entidad_tipo }] });
       }
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message || error.response?.data?.error;
-      throw new Error(backendMessage || 'Error al crear campo personalizado');
-    },
+    onError: createCRUDErrorHandler('create', 'Campo personalizado'),
   });
 }
 
@@ -97,10 +95,7 @@ export function useActualizarCustomFieldDefinicion() {
       queryClient.invalidateQueries({ queryKey: ['custom-field-definicion', data.id] });
       queryClient.invalidateQueries({ queryKey: ['custom-fields-definiciones'] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message || error.response?.data?.error;
-      throw new Error(backendMessage || 'Error al actualizar campo personalizado');
-    },
+    onError: createCRUDErrorHandler('update', 'Campo personalizado'),
   });
 }
 
@@ -118,10 +113,7 @@ export function useEliminarCustomFieldDefinicion() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['custom-fields-definiciones'] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message || error.response?.data?.error;
-      throw new Error(backendMessage || 'Error al eliminar campo personalizado');
-    },
+    onError: createCRUDErrorHandler('delete', 'Campo personalizado'),
   });
 }
 
@@ -142,10 +134,7 @@ export function useReordenarCustomFieldDefiniciones() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['custom-fields-definiciones', { entidad_tipo: variables.entidadTipo }] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message || error.response?.data?.error;
-      throw new Error(backendMessage || 'Error al reordenar campos');
-    },
+    onError: createCRUDErrorHandler('update', 'Campos'),
   });
 }
 
@@ -190,8 +179,9 @@ export function useGuardarCustomFieldsValores() {
         throw new Error(errorMessages);
       }
 
-      const backendMessage = error.response?.data?.message || error.response?.data?.error;
-      throw new Error(backendMessage || 'Error al guardar campos personalizados');
+      // Usar el handler estándar para otros errores
+      const handler = createCRUDErrorHandler('update', 'Campos personalizados');
+      handler(error);
     },
   });
 }

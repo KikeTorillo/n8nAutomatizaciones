@@ -49,6 +49,17 @@ export { configuracionAgendamientoApi } from './configuracion-agendamiento.api';
 
 // Inventario
 export { inventarioApi } from './inventario.api';
+// Sub-módulos granulares de inventario
+export {
+  catalogoApi,
+  variantesApi,
+  stockApi,
+  reservasApi,
+  valoracionApi,
+  trazabilidadApi,
+  operacionesApi,
+  inteligenciaApi,
+} from './inventario.api';
 export { ordenesCompraApi } from './ordenes-compra.api';
 export { conteosApi } from './conteos.api';
 export { ajustesMasivosApi } from './ajustes-masivos.api';

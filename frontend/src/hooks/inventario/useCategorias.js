@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { inventarioApi } from '@/services/api/endpoints';
 import { STALE_TIMES } from '@/app/queryClient';
 import { sanitizeParams } from '@/lib/params';
+import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 
 /**
  * Hook para listar categorías con filtros
@@ -71,23 +72,9 @@ export function useCrearCategoria() {
       queryClient.invalidateQueries({ queryKey: ['categorias'] });
       queryClient.invalidateQueries({ queryKey: ['categorias-arbol'] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) {
-        throw new Error(backendMessage);
-      }
-
-      const errorMessages = {
-        409: 'Ya existe una categoría con ese nombre',
-        400: 'Datos inválidos. Revisa los campos',
-        403: 'No tienes permisos para crear categorías o alcanzaste el límite de tu plan',
-        500: 'Error del servidor. Intenta nuevamente',
-      };
-
-      const statusCode = error.response?.status;
-      const message = errorMessages[statusCode] || 'Error al crear categoría';
-      throw new Error(message);
-    },
+    onError: createCRUDErrorHandler('create', 'Categoría', {
+      409: 'Ya existe una categoría con ese nombre',
+    }),
   });
 }
 
@@ -115,23 +102,10 @@ export function useActualizarCategoria() {
       queryClient.invalidateQueries({ queryKey: ['categorias-arbol'] });
       queryClient.invalidateQueries({ queryKey: ['categoria', variables.id] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) {
-        throw new Error(backendMessage);
-      }
-
-      const errorMessages = {
-        404: 'Categoría no encontrada',
-        409: 'Ya existe otra categoría con ese nombre',
-        400: 'Datos inválidos o crearía un ciclo en la jerarquía',
-        403: 'No tienes permisos para actualizar categorías',
-      };
-
-      const statusCode = error.response?.status;
-      const message = errorMessages[statusCode] || 'Error al actualizar categoría';
-      throw new Error(message);
-    },
+    onError: createCRUDErrorHandler('update', 'Categoría', {
+      409: 'Ya existe otra categoría con ese nombre',
+      400: 'Datos inválidos o crearía un ciclo en la jerarquía',
+    }),
   });
 }
 
@@ -150,21 +124,8 @@ export function useEliminarCategoria() {
       queryClient.invalidateQueries({ queryKey: ['categorias'] });
       queryClient.invalidateQueries({ queryKey: ['categorias-arbol'] });
     },
-    onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) {
-        throw new Error(backendMessage);
-      }
-
-      const errorMessages = {
-        404: 'Categoría no encontrada',
-        403: 'No tienes permisos para eliminar categorías',
-        409: 'No se puede eliminar la categoría porque tiene productos o subcategorías asociadas',
-      };
-
-      const statusCode = error.response?.status;
-      const message = errorMessages[statusCode] || 'Error al eliminar categoría';
-      throw new Error(message);
-    },
+    onError: createCRUDErrorHandler('delete', 'Categoría', {
+      409: 'No se puede eliminar la categoría porque tiene productos o subcategorías asociadas',
+    }),
   });
 }
