@@ -27,10 +27,10 @@ export function useAuth() {
       return response.data.data;
     },
     onSuccess: (data) => {
+      // Ene 2026: refreshToken viene por cookie httpOnly, no se guarda en frontend
       setAuth({
         user: data.user,
         accessToken: data.accessToken,
-        refreshToken: data.refreshToken,
       });
 
       // Redirección basada en el rol del usuario

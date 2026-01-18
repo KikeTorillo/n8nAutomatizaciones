@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { AlertCircle } from 'lucide-react';
-import { Button, Modal, Textarea } from '@/components/ui';
+import { Button, Drawer, Textarea } from '@/components/ui';
 import { useNoShowCita } from '@/hooks/agendamiento';
 import { useToast } from '@/hooks/utils';
 import { formatearFecha, formatearHora } from '@/utils/dateHelpers';
@@ -43,7 +43,7 @@ function NoShowModal({ isOpen, onClose, cita }) {
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title="Marcar como No Show">
+    <Drawer isOpen={isOpen} onClose={handleClose} title="Marcar como No Show">
       <div className="space-y-6">
         {/* Header con ícono */}
         <div className="flex items-center gap-3 pb-4 border-b border-gray-200 dark:border-gray-700">
@@ -165,7 +165,7 @@ function NoShowModal({ isOpen, onClose, cita }) {
           </Button>
         </div>
       </div>
-    </Modal>
+    </Drawer>
   );
 }
 

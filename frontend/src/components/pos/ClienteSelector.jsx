@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { UserCircle, Search, X, Plus, Check } from 'lucide-react';
 import { useBuscarClientes, useCrearCliente } from '@/hooks/personas';
+import { useDebounce } from '@/hooks/utils/useDebounce';
 import { Button, Input } from '@/components/ui';
 
 /**
@@ -30,8 +31,11 @@ export default function ClienteSelector({
   const [newCliente, setNewCliente] = useState({ nombre: '', telefono: '' });
   const dropdownRef = useRef(null);
 
+  // Debounce del término de búsqueda para evitar requests excesivos
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
+
   // Búsqueda de clientes
-  const { data: clientes, isLoading: searching } = useBuscarClientes(searchTerm, {
+  const { data: clientes, isLoading: searching } = useBuscarClientes(debouncedSearchTerm, {
     tipo: 'nombre',
     limit: 5,
   });

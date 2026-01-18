@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { CheckCircle2, Star } from 'lucide-react';
-import { Button, Modal, Textarea } from '@/components/ui';
+import { Button, Drawer, Textarea } from '@/components/ui';
 import { useCompletarCita } from '@/hooks/agendamiento';
 import { useToast } from '@/hooks/utils';
 import { formatearFecha, formatearHora } from '@/utils/dateHelpers';
@@ -53,7 +53,7 @@ function CompletarCitaModal({ isOpen, onClose, cita }) {
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title="Completar Cita" size="large">
+    <Drawer isOpen={isOpen} onClose={handleClose} title="Completar Cita">
       <div className="space-y-6">
         {/* Header con ícono */}
         <div className="flex items-center gap-3 pb-4 border-b border-gray-200 dark:border-gray-700">
@@ -200,7 +200,7 @@ function CompletarCitaModal({ isOpen, onClose, cita }) {
           </Button>
         </div>
       </div>
-    </Modal>
+    </Drawer>
   );
 }
 

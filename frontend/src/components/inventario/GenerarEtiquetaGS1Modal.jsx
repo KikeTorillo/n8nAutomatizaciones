@@ -20,7 +20,7 @@ import {
   Copy,
 } from 'lucide-react';
 import JsBarcode from 'jsbarcode';
-import { Button, Modal } from '@/components/ui';
+import { Button, Drawer } from '@/components/ui';
 import {
   generateGS1Code,
   validateGS1Params,
@@ -235,13 +235,12 @@ export default function GenerarEtiquetaGS1Modal({
   if (!producto) return null;
 
   return (
-    <Modal
+    <Drawer
       isOpen={isOpen}
       onClose={onClose}
       title="Generar Etiqueta GS1"
-      size="xl"
     >
-      <div className="p-4 space-y-6">
+      <div className="space-y-6">
         {/* Información del producto */}
         <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
           <h4 className="font-medium text-gray-900 dark:text-white mb-2">
@@ -548,6 +547,6 @@ export default function GenerarEtiquetaGS1Modal({
           </Button>
         </div>
       </div>
-    </Modal>
+    </Drawer>
   );
 }

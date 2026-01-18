@@ -1,43 +1,55 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import {
+  setAccessToken,
+  clearAccessToken,
+  resetTokenManager,
+} from '@/services/auth/tokenManager';
 
 /**
  * Store de autenticación con Zustand
- * Maneja el estado del usuario, tokens y sesión
+ * Ene 2026: Tokens migrados a memoria para prevenir XSS
+ *
+ * - accessToken: Solo en memoria (tokenManager.js)
+ * - refreshToken: Solo en cookie httpOnly (backend)
+ * - user + isAuthenticated: Persisten en localStorage
  */
 const useAuthStore = create(
   persist(
     (set, get) => ({
       // ========== STATE ==========
+      // Ene 2026: Tokens removidos del store - ahora en memoria/cookie
       user: null,
-      accessToken: null,
-      refreshToken: null,
       isAuthenticated: false,
 
       // ========== ACTIONS ==========
 
       /**
-       * Establecer tokens y usuario después de login/registro
-       * @param {Object} data - { user, accessToken, refreshToken }
+       * Establecer autenticación después de login/registro
+       * Ene 2026: accessToken va a memoria, refreshToken ignorado (viene por cookie)
+       * @param {Object} data - { user, accessToken }
        */
       setAuth: (data) => {
+        // Guardar accessToken en memoria
+        if (data.accessToken) {
+          setAccessToken(data.accessToken);
+        }
+
         set({
           user: data.user,
-          accessToken: data.accessToken,
-          refreshToken: data.refreshToken,
           isAuthenticated: true,
         });
       },
 
       /**
-       * Actualizar solo los tokens (usado en refresh)
-       * @param {Object} tokens - { accessToken, refreshToken }
+       * Actualizar solo el accessToken (usado en refresh)
+       * Ene 2026: Solo actualiza memoria, refreshToken viene por cookie
+       * @param {Object} tokens - { accessToken }
        */
       setTokens: (tokens) => {
-        set({
-          accessToken: tokens.accessToken,
-          refreshToken: tokens.refreshToken,
-        });
+        if (tokens.accessToken) {
+          setAccessToken(tokens.accessToken);
+        }
       },
 
       /**
@@ -50,12 +62,14 @@ const useAuthStore = create(
 
       /**
        * Logout - Limpiar todo el estado
+       * Ene 2026: También limpia tokenManager
        */
       logout: () => {
+        // Limpiar token de memoria
+        resetTokenManager();
+
         set({
           user: null,
-          accessToken: null,
-          refreshToken: null,
           isAuthenticated: false,
         });
       },
@@ -90,10 +104,9 @@ const useAuthStore = create(
     }),
     {
       name: 'auth-storage', // Nombre en localStorage
+      // Ene 2026: Solo persistir user e isAuthenticated (NO tokens)
       partialize: (state) => ({
         user: state.user,
-        accessToken: state.accessToken,
-        refreshToken: state.refreshToken,
         isAuthenticated: state.isAuthenticated,
       }),
     }
@@ -107,8 +120,6 @@ const useAuthStore = create(
 
 // State
 export const selectUser = (state) => state.user;
-export const selectAccessToken = (state) => state.accessToken;
-export const selectRefreshToken = (state) => state.refreshToken;
 export const selectIsAuthenticated = (state) => state.isAuthenticated;
 
 // Actions

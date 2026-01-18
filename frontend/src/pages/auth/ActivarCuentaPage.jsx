@@ -88,13 +88,12 @@ export default function ActivarCuentaPage() {
         password_confirm: data.password_confirm
       });
 
-      const { usuario, accessToken, refreshToken, requiere_onboarding } = response.data.data;
+      const { usuario, accessToken, requiere_onboarding } = response.data.data;
 
-      // Login automático
+      // Ene 2026: Login automático (refreshToken viene por cookie httpOnly)
       setAuth({
         user: usuario,
         accessToken,
-        refreshToken
       });
 
       toast.success('¡Cuenta activada exitosamente!');

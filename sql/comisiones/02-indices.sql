@@ -234,9 +234,21 @@ Permite queries analíticas por producto específico.
 Solo indexa registros con origen = venta (detalle_productos NOT NULL).';
 
 -- ====================================================================
+-- ÍNDICE: historial_configuracion_comisiones (Auditoría Ene 2026)
+-- ====================================================================
+
+CREATE INDEX IF NOT EXISTS idx_historial_config_comisiones_org
+    ON historial_configuracion_comisiones(organizacion_id);
+
+COMMENT ON INDEX idx_historial_config_comisiones_org IS
+'Índice para filtrar historial de configuraciones por organización.
+Usado por RLS en todas las queries.
+Agregado en auditoría Ene 2026.';
+
+-- ====================================================================
 -- 📊 RESUMEN DE ÍNDICES
 -- ====================================================================
--- TOTAL: 16 índices especializados
+-- TOTAL: 17 índices especializados
 --
 -- configuracion_comisiones (7):
 -- ├── idx_config_comisiones_org         → RLS multi-tenant
@@ -257,5 +269,8 @@ Solo indexa registros con origen = venta (detalle_productos NOT NULL).';
 -- ├── idx_comisiones_origen             → Filtrar por tipo (cita/venta)
 -- ├── idx_comisiones_venta              → Anti-duplicados (trigger ventas)
 -- └── idx_comisiones_detalle_productos  → Búsquedas analíticas JSONB (productos)
+--
+-- historial_configuracion_comisiones (1):
+-- └── idx_historial_config_comisiones_org → RLS multi-tenant (Auditoría Ene 2026)
 --
 -- ====================================================================

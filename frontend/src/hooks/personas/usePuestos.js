@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { puestosApi } from '@/services/api/endpoints';
+import { sanitizeParams } from '@/lib/params';
 
 // ==================== HOOKS CRUD PUESTOS ====================
 
@@ -12,15 +13,7 @@ export function usePuestos(params = {}) {
   return useQuery({
     queryKey: ['puestos', params],
     queryFn: async () => {
-      // Sanitizar params - eliminar valores vacíos
-      const sanitizedParams = Object.entries(params).reduce((acc, [key, value]) => {
-        if (value !== '' && value !== null && value !== undefined) {
-          acc[key] = value;
-        }
-        return acc;
-      }, {});
-
-      const response = await puestosApi.listar(sanitizedParams);
+      const response = await puestosApi.listar(sanitizeParams(params));
       // La API retorna { data: [...], meta: {...} } sin wrapper 'puestos'
       return response.data.data || [];
     },

@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { serviciosApi } from '@/services/api/endpoints';
+import { sanitizeParams } from '@/lib/params';
 
 /**
  * Hook para listar servicios con filtros y paginación
@@ -10,22 +11,18 @@ export function useServicios(params = {}) {
   return useQuery({
     queryKey: ['servicios', params],
     queryFn: async () => {
-      // ⚠️ CRÍTICO: Sanitizar params - eliminar valores vacíos
-      const sanitizedParams = Object.entries(params).reduce((acc, [key, value]) => {
-        // Excluir: "", null, undefined
-        if (value !== '' && value !== null && value !== undefined) {
-          // Validar números (precio_min, precio_max)
-          if (key === 'precio_min' || key === 'precio_max') {
-            const num = parseFloat(value);
-            if (!isNaN(num) && num >= 0) acc[key] = num;
-          } else {
-            acc[key] = value;
-          }
-        }
-        return acc;
-      }, {});
+      // Sanitizar y validar números específicos para precios
+      const cleanParams = sanitizeParams(params);
+      if (cleanParams.precio_min !== undefined) {
+        const num = parseFloat(cleanParams.precio_min);
+        cleanParams.precio_min = (!isNaN(num) && num >= 0) ? num : undefined;
+      }
+      if (cleanParams.precio_max !== undefined) {
+        const num = parseFloat(cleanParams.precio_max);
+        cleanParams.precio_max = (!isNaN(num) && num >= 0) ? num : undefined;
+      }
 
-      const response = await serviciosApi.listar(sanitizedParams);
+      const response = await serviciosApi.listar(sanitizeParams(cleanParams));
 
       // Backend retorna: { success, data: { servicios, paginacion, filtros_aplicados } }
       return {

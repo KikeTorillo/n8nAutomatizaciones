@@ -76,10 +76,10 @@ function Login() {
     },
     onSuccess: (data) => {
       queryClient.clear();
+      // Ene 2026: refreshToken viene por cookie httpOnly, no se guarda en frontend
       setAuth({
         user: data.usuario,
         accessToken: data.accessToken,
-        refreshToken: data.refreshToken,
       });
 
       // Dic 2025 - Flujo unificado: redirigir a onboarding si es necesario

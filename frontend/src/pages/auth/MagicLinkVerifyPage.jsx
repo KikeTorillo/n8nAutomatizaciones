@@ -34,11 +34,10 @@ function MagicLinkVerifyPage() {
     onSuccess: (data) => {
       setStatus('exito');
 
-      // Guardar auth en store
+      // Ene 2026: Guardar auth en store (refreshToken viene por cookie httpOnly)
       setAuth({
         user: data.usuario,
         accessToken: data.accessToken,
-        refreshToken: data.refreshToken,
       });
 
       toast.success('Sesión iniciada correctamente');

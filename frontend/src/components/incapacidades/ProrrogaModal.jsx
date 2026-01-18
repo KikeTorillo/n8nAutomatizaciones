@@ -12,7 +12,7 @@ import {
   FileText,
   Info,
 } from 'lucide-react';
-import { Button, FormGroup, Input, Modal } from '@/components/ui';
+import { Button, Drawer, FormGroup, Input } from '@/components/ui';
 import {
   useCrearProrroga,
   getTipoIncapacidadConfig,
@@ -145,11 +145,10 @@ function ProrrogaModal({ isOpen, onClose, incapacidadOrigen }) {
   const tipoConfig = getTipoIncapacidadConfig(incapacidadOrigen.tipo_incapacidad);
 
   return (
-    <Modal
+    <Drawer
       isOpen={isOpen}
       onClose={handleClose}
       title="Crear Prórroga"
-      size="md"
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Info de la incapacidad origen */}
@@ -285,7 +284,7 @@ function ProrrogaModal({ isOpen, onClose, incapacidadOrigen }) {
           </Button>
         </div>
       </form>
-    </Modal>
+    </Drawer>
   );
 }
 

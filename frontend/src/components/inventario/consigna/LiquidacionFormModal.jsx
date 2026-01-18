@@ -4,7 +4,7 @@
 
 import { useState } from 'react';
 import { Calculator, Calendar } from 'lucide-react';
-import { Button, Modal } from '@/components/ui';
+import { Button, Drawer } from '@/components/ui';
 import { useGenerarLiquidacion, usePendienteLiquidar } from '@/hooks/almacen';
 import { formatCurrency } from '@/lib/utils';
 import { format, subDays, startOfMonth, endOfMonth } from 'date-fns';
@@ -62,7 +62,7 @@ export default function LiquidacionFormModal({ isOpen, onClose, acuerdos = [] })
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Generar Liquidacion" size="md">
+    <Drawer isOpen={isOpen} onClose={onClose} title="Generar Liquidación">
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Seleccionar acuerdo */}
         <div>
@@ -202,6 +202,6 @@ export default function LiquidacionFormModal({ isOpen, onClose, acuerdos = [] })
           </Button>
         </div>
       </form>
-    </Modal>
+    </Drawer>
   );
 }

@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { DollarSign, Lock, FileText, TrendingUp, TrendingDown, AlertTriangle, CheckCircle, Calculator, ChevronDown, ChevronUp } from 'lucide-react';
-import { Button, Input, Modal } from '@/components/ui';
+import { Button, Input, Drawer } from '@/components/ui';
 import { useResumenSesionCaja, useCerrarSesionCaja } from '@/hooks/pos';
 import { useToast } from '@/hooks/utils';
 
@@ -154,14 +154,11 @@ export default function CierreCajaModal({
   );
 
   return (
-    <Modal
+    <Drawer
       isOpen={isOpen}
       onClose={onClose}
       title="Cerrar Caja"
       subtitle="Revisa el resumen y cuenta el efectivo"
-      size="lg"
-      footer={footerContent}
-      disableClose={cerrarSesionMutation.isPending}
     >
       <div className="space-y-6">
         {isLoadingResumen ? (
@@ -403,7 +400,12 @@ export default function CierreCajaModal({
             </div>
           </>
         )}
+
+        {/* Footer con botones */}
+        <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+          {footerContent}
+        </div>
       </div>
-    </Modal>
+    </Drawer>
   );
 }

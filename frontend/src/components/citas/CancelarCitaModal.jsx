@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import PropTypes from 'prop-types';
 import { AlertCircle, XCircle } from 'lucide-react';
-import { Button, Modal, Textarea } from '@/components/ui';
+import { Button, Drawer, Textarea } from '@/components/ui';
 import { useCancelarCita } from '@/hooks/agendamiento';
 import { formatearFecha, formatearHora } from '@/utils/dateHelpers';
 import { useToast } from '@/hooks/utils';
@@ -43,7 +43,7 @@ function CancelarCitaModal({ isOpen, onClose, cita = null }) {
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title="Cancelar Cita">
+    <Drawer isOpen={isOpen} onClose={handleClose} title="Cancelar Cita">
       <div className="space-y-6">
         {/* Header con ícono */}
         <div className="flex items-center gap-3 pb-4 border-b border-gray-200 dark:border-gray-700">
@@ -160,7 +160,7 @@ function CancelarCitaModal({ isOpen, onClose, cita = null }) {
           </Button>
         </div>
       </div>
-    </Modal>
+    </Drawer>
   );
 }
 

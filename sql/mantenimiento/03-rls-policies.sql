@@ -40,3 +40,23 @@ CREATE POLICY configuracion_sistema_access ON configuracion_sistema
 COMMENT ON POLICY configuracion_sistema_access ON configuracion_sistema IS
 'Solo super_admin o bypass_rls pueden acceder a configuración del sistema.
 Crítico para seguridad: N8N_API_KEY, SMTP credentials, etc.';
+
+-- ====================================================================
+-- POLÍTICAS: eventos_sistema_archivo (Auditoría Ene 2026)
+-- ====================================================================
+
+ALTER TABLE eventos_sistema_archivo ENABLE ROW LEVEL SECURITY;
+ALTER TABLE eventos_sistema_archivo FORCE ROW LEVEL SECURITY;
+
+CREATE POLICY eventos_sistema_archivo_tenant_access ON eventos_sistema_archivo
+    FOR ALL
+    TO saas_app
+    USING (
+        current_setting('app.current_user_role', true) = 'super_admin'
+        OR current_setting('app.bypass_rls', true) = 'true'
+        OR organizacion_id::TEXT = current_setting('app.current_tenant_id', true)
+    );
+
+COMMENT ON POLICY eventos_sistema_archivo_tenant_access ON eventos_sistema_archivo IS
+'Acceso multi-tenant a eventos archivados. super_admin o tenant propio.
+Agregado en auditoría Ene 2026.';

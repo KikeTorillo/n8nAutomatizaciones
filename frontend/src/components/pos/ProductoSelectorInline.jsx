@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Search, Package, X, Check } from 'lucide-react';
 import { useBuscarProductos } from '@/hooks/inventario';
+import { useDebounce } from '@/hooks/utils/useDebounce';
 
 /**
  * Selector de producto inline con búsqueda
@@ -27,13 +28,16 @@ export default function ProductoSelectorInline({
   const inputRef = useRef(null);
   const resultadosRef = useRef(null);
 
+  // Debounce del query para evitar requests excesivos
+  const debouncedQuery = useDebounce(query, 300);
+
   // Búsqueda de productos
   const { data: productos, isLoading } = useBuscarProductos({
-    q: query,
+    q: debouncedQuery,
     solo_activos: true,
     limit: 10
   }, {
-    enabled: query.length >= 2
+    enabled: debouncedQuery.length >= 2
   });
 
   // Normalizar productos (la API de búsqueda devuelve producto_id, no id)

@@ -89,7 +89,7 @@ function OnboardingPage() {
       // Limpiar cache
       queryClient.clear();
 
-      // Actualizar auth con nuevo token y datos
+      // Ene 2026: Actualizar auth (refreshToken viene por cookie httpOnly)
       setAuth({
         user: {
           ...user,
@@ -97,7 +97,6 @@ function OnboardingPage() {
           organizacion_id: data.organizacion.id
         },
         accessToken: data.accessToken,
-        refreshToken: data.refreshToken,
       });
 
       toast.success('¡Tu negocio está listo! Bienvenido a Nexo.');

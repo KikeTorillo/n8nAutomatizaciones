@@ -594,6 +594,7 @@ sql/
 |-----------|---------|-------|
 | **Alta** | 2FA/MFA | Seguridad crítica para producción |
 | **Alta** | Integraciones Carriers | DHL, FedEx, Estafeta - tracking automático |
+| **Alta** | Tokens en localStorage | Riesgo XSS - Migrar accessToken a memoria en futuro |
 | **Media** | Kitting/BOM | Lista de materiales para productos compuestos |
 | **Media** | Facturación CFDI | Timbrado fiscal México |
 | **Baja** | API Keys por usuario | Acceso programático externo |

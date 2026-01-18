@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Button, Modal, Textarea } from '@/components/ui';
+import { Button, Drawer, Textarea } from '@/components/ui';
 import { ClipboardList, Calendar, User, Info } from 'lucide-react';
 import { useCategorias } from '@/hooks/inventario';
 import { useUsuarios } from '@/hooks/personas';
@@ -101,7 +101,7 @@ export default function ConteoFormModal({ isOpen, onClose, onSubmit, isLoading }
     };
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title="Nuevo Conteo de Inventario" size="lg">
+        <Drawer isOpen={isOpen} onClose={onClose} title="Nuevo Conteo de Inventario">
             <form onSubmit={handleSubmit} className="p-4 space-y-6">
                 {/* Tipo de conteo */}
                 <div>
@@ -265,6 +265,6 @@ export default function ConteoFormModal({ isOpen, onClose, onSubmit, isLoading }
                     </Button>
                 </div>
             </form>
-        </Modal>
+        </Drawer>
     );
 }

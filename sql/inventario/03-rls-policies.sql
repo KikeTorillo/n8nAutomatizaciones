@@ -221,6 +221,41 @@ BEGIN
 END $$;
 
 -- ============================================================================
+-- POLÍTICAS: configuracion_inventario (Auditoría Ene 2026)
+-- ============================================================================
+
+ALTER TABLE configuracion_inventario ENABLE ROW LEVEL SECURITY;
+ALTER TABLE configuracion_inventario FORCE ROW LEVEL SECURITY;
+
+CREATE POLICY configuracion_inventario_select_policy ON configuracion_inventario
+    FOR SELECT
+    USING (
+        organizacion_id::text = current_setting('app.current_tenant_id', true)
+        OR current_setting('app.bypass_rls', true) = 'true'
+    );
+
+CREATE POLICY configuracion_inventario_insert_policy ON configuracion_inventario
+    FOR INSERT
+    WITH CHECK (
+        organizacion_id::text = current_setting('app.current_tenant_id', true)
+        OR current_setting('app.bypass_rls', true) = 'true'
+    );
+
+CREATE POLICY configuracion_inventario_update_policy ON configuracion_inventario
+    FOR UPDATE
+    USING (
+        organizacion_id::text = current_setting('app.current_tenant_id', true)
+        OR current_setting('app.bypass_rls', true) = 'true'
+    );
+
+CREATE POLICY configuracion_inventario_delete_policy ON configuracion_inventario
+    FOR DELETE
+    USING (
+        organizacion_id::text = current_setting('app.current_tenant_id', true)
+        OR current_setting('app.bypass_rls', true) = 'true'
+    );
+
+-- ============================================================================
 -- FIN: POLÍTICAS RLS DE INVENTARIO
 -- ============================================================================
 

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Search, Package, ShoppingCart, X, ScanBarcode } from 'lucide-react';
 import { useBuscarProductos } from '@/hooks/inventario';
+import { useDebounce } from '@/hooks/utils/useDebounce';
 import { BarcodeScanner } from '@/components/ui';
 import { extractProductCode } from '@/utils/gs1Parser';
 
@@ -17,9 +18,12 @@ export default function BuscadorProductosPOS({ onProductoSeleccionado }) {
   const inputRef = useRef(null);
   const resultadosRef = useRef(null);
 
+  // Debounce del query para evitar requests excesivos
+  const debouncedQuery = useDebounce(query, 300);
+
   // Búsqueda de productos (solo productos activos con stock)
   const { data: productos, isLoading } = useBuscarProductos({
-    q: query,
+    q: debouncedQuery,
     solo_activos: true,
     solo_con_stock: true,
     limit: 10

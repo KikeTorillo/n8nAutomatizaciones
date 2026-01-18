@@ -10,7 +10,7 @@ import {
   Wallet,
   AlertCircle
 } from 'lucide-react';
-import { Button, Input, Modal } from '@/components/ui';
+import { Button, Input, Drawer } from '@/components/ui';
 import TecladoBilletes from './TecladoBilletes';
 
 /**
@@ -263,14 +263,11 @@ export default function MetodoPagoModal({
   );
 
   return (
-    <Modal
+    <Drawer
       isOpen={isOpen}
       onClose={onClose}
       title="Método de Pago"
       subtitle={pagos.length > 0 ? "Pago dividido activo" : "Selecciona cómo recibirás el pago"}
-      size="md"
-      footer={footerContent}
-      disableClose={isLoading}
     >
       <div className="space-y-5">
         {/* Total y resumen */}
@@ -518,7 +515,12 @@ export default function MetodoPagoModal({
             )}
           </>
         )}
+
+        {/* Footer con botones */}
+        <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+          {footerContent}
+        </div>
       </div>
-    </Modal>
+    </Drawer>
   );
 }

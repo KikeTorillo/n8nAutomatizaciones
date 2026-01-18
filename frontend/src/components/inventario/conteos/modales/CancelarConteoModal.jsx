@@ -1,5 +1,5 @@
 import { XCircle } from 'lucide-react';
-import { Button, Modal, Textarea } from '@/components/ui';
+import { Button, Drawer, Textarea } from '@/components/ui';
 
 /**
  * Modal para confirmar cancelación de conteo
@@ -14,9 +14,9 @@ export default function CancelarConteoModal({
   onMotivoChange,
 }) {
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Cancelar Conteo">
-      <div className="p-4">
-        <p className="text-gray-600 dark:text-gray-300 mb-4">
+    <Drawer isOpen={isOpen} onClose={onClose} title="Cancelar Conteo">
+      <div className="space-y-4">
+        <p className="text-gray-600 dark:text-gray-300">
           ¿Deseas cancelar el conteo <strong>{conteo?.folio}</strong>?
         </p>
         <Textarea
@@ -26,7 +26,7 @@ export default function CancelarConteoModal({
           placeholder="Ingresa el motivo..."
           rows={3}
         />
-        <div className="flex justify-end gap-2 mt-4">
+        <div className="flex justify-end gap-2 pt-4 border-t border-gray-200 dark:border-gray-700">
           <Button variant="outline" onClick={onClose}>
             Volver
           </Button>
@@ -36,6 +36,6 @@ export default function CancelarConteoModal({
           </Button>
         </div>
       </div>
-    </Modal>
+    </Drawer>
   );
 }

@@ -5,6 +5,7 @@
 
 // Autenticación y permisos
 export * from './useAuth';
+export * from './useAuthInit';
 export * from './useModulos';
 export * from './useAccesoModulo';
 

@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { inventarioApi } from '@/services/api/endpoints';
 import { STALE_TIMES } from '@/app/queryClient';
+import { sanitizeParams } from '@/lib/params';
 
 /**
  * Hook para listar proveedores con filtros
@@ -10,14 +11,7 @@ export function useProveedores(params = {}) {
   return useQuery({
     queryKey: ['proveedores', params],
     queryFn: async () => {
-      const sanitizedParams = Object.entries(params).reduce((acc, [key, value]) => {
-        if (value !== '' && value !== null && value !== undefined) {
-          acc[key] = value;
-        }
-        return acc;
-      }, {});
-
-      const response = await inventarioApi.listarProveedores(sanitizedParams);
+      const response = await inventarioApi.listarProveedores(sanitizeParams(params));
       return response.data.data || { proveedores: [], total: 0 };
     },
     staleTime: STALE_TIMES.SEMI_STATIC, // 5 minutos

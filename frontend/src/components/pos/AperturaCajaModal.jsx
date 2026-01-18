@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { DollarSign, Lock, FileText } from 'lucide-react';
-import { Button, Input, Modal } from '@/components/ui';
+import { Button, Input, Drawer } from '@/components/ui';
 import { useAbrirSesionCaja } from '@/hooks/pos';
 import { useToast } from '@/hooks/utils';
 
@@ -65,14 +65,11 @@ export default function AperturaCajaModal({
   );
 
   return (
-    <Modal
+    <Drawer
       isOpen={isOpen}
       onClose={onClose}
       title="Abrir Caja"
       subtitle="Inicia tu sesión de caja para comenzar a vender"
-      size="sm"
-      footer={footerContent}
-      disableClose={abrirSesionMutation.isPending}
     >
       <div className="space-y-6">
         {/* Info */}
@@ -154,7 +151,12 @@ export default function AperturaCajaModal({
             className="w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm"
           />
         </div>
+
+        {/* Footer con botones */}
+        <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+          {footerContent}
+        </div>
       </div>
-    </Modal>
+    </Drawer>
   );
 }

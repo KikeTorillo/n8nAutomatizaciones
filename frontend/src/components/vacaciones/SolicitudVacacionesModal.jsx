@@ -7,7 +7,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { X, Calendar, Clock, Send, AlertCircle } from 'lucide-react';
-import { Alert, Button, Modal } from '@/components/ui';
+import { Alert, Button, Drawer } from '@/components/ui';
 import { useCrearSolicitudVacaciones, TURNOS_MEDIO_DIA } from '@/hooks/personas';
 
 // Schema de validación
@@ -124,11 +124,10 @@ function SolicitudVacacionesModal({
   const saldoInsuficiente = diasCalculados > diasDisponibles;
 
   return (
-    <Modal
+    <Drawer
       isOpen={isOpen}
       onClose={handleClose}
       title="Solicitar Vacaciones"
-      size="md"
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Alerta de saldo */}
@@ -285,7 +284,7 @@ function SolicitudVacacionesModal({
           </Button>
         </div>
       </form>
-    </Modal>
+    </Drawer>
   );
 }
 

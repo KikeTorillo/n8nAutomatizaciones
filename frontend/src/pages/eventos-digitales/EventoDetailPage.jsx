@@ -17,7 +17,7 @@ import {
 import { BackButton, Button, LoadingSpinner } from '@/components/ui';
 import { useToast } from '@/hooks/utils';
 import { SeatingChartEditor } from '@/components/eventos-digitales';
-import useAuthStore, { selectAccessToken } from '@/store/authStore';
+import { hasToken } from '@/services/auth/tokenManager';
 import {
   useEvento,
   useEventoEstadisticas,
@@ -56,7 +56,6 @@ function EventoDetailPage() {
   const navigate = useNavigate();
   const { id } = useParams();
   const toast = useToast();
-  const accessToken = useAuthStore(selectAccessToken);
   const [activeTab, setActiveTab] = useState('invitados');
   const [checkinStats, setCheckinStats] = useState(null);
 
@@ -85,11 +84,12 @@ function EventoDetailPage() {
   const exportarInvitados = useExportarInvitados();
 
   // Cargar stats de check-in iniciales
+  // Ene 2026: Usar hasToken() de tokenManager
   useEffect(() => {
-    if (id && accessToken) {
+    if (id && hasToken()) {
       fetchCheckinStats();
     }
-  }, [id, accessToken]);
+  }, [id]);
 
   const fetchCheckinStats = async () => {
     try {

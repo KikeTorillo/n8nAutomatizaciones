@@ -587,5 +587,15 @@ CREATE TRIGGER trg_stock_consigna_updated_at
     EXECUTE FUNCTION update_consigna_updated_at();
 
 -- =====================================================
+-- ÍNDICES ADICIONALES (Auditoría Ene 2026)
+-- =====================================================
+
+CREATE INDEX IF NOT EXISTS idx_movimientos_consigna_organizacion_id
+    ON movimientos_consigna(organizacion_id);
+
+CREATE INDEX IF NOT EXISTS idx_stock_consigna_organizacion_id
+    ON stock_consigna(organizacion_id);
+
+-- =====================================================
 -- FIN DEL SCRIPT
 -- =====================================================
