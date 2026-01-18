@@ -24,7 +24,7 @@ class ReservasController {
         const organizacionId = req.tenant.organizacionId;
         const usuarioId = req.user?.id || null;
 
-        const reserva = await ReservasModel.crear(req.body, organizacionId, usuarioId);
+        const reserva = await ReservasModel.crear(organizacionId, req.body, usuarioId);
 
         return ResponseHelper.success(
             res,
@@ -72,7 +72,7 @@ class ReservasController {
         const { id } = req.params;
         const organizacionId = req.tenant.organizacionId;
 
-        const reserva = await ReservasModel.obtenerPorId(parseInt(id), organizacionId);
+        const reserva = await ReservasModel.buscarPorId(organizacionId, parseInt(id));
 
         if (!reserva) {
             return ResponseHelper.error(res, 'Reserva no encontrada', 404);
@@ -101,7 +101,7 @@ class ReservasController {
             offset: req.query.offset ? parseInt(req.query.offset) : 0
         };
 
-        const reservas = await ReservasModel.listar(filtros, organizacionId);
+        const reservas = await ReservasModel.listar(organizacionId, filtros);
 
         return ResponseHelper.success(res, reservas, 'Reservas obtenidas exitosamente');
     });

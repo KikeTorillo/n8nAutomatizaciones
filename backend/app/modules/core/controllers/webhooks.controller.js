@@ -58,7 +58,7 @@ class WebhooksController {
     const esValido = mercadopagoService.validarWebhook(signature, requestId, data?.id);
 
     if (!esValido) {
-      logger.warn('⚠️  Webhook con firma inválida', { signature, requestId });
+      logger.warn('[Webhook] Firma inválida', { signature, requestId });
       return res.status(401).json({ error: 'Invalid signature' });
     }
 
@@ -74,10 +74,10 @@ class WebhooksController {
       } else if (type === 'subscription_authorized_payment') {
         await WebhooksController.procesarPagoAutorizado(data.id, action);
       } else {
-        logger.info(`ℹ️  Tipo de webhook no manejado: ${type}`);
+        logger.info(`[Webhook] Tipo no manejado: ${type}`);
       }
     } catch (error) {
-      logger.error('❌ Error procesando webhook:', error);
+      logger.error('[Webhook] Error procesando:', error);
       // No lanzar error (ya respondimos 200)
     }
   }
@@ -176,7 +176,7 @@ class WebhooksController {
         ]);
       });
 
-      logger.info('✅ Pago registrado en BD', { paymentId, orgId });
+      logger.info('[Webhook.procesarPago] Pago registrado en BD', { paymentId, orgId });
 
       // 5. Actualizar estado de subscripción según resultado del pago
       if (pago.status === 'approved') {
@@ -201,7 +201,7 @@ class WebhooksController {
    * @param {string} action - Acción del evento
    */
   static async procesarSuscripcion(subscriptionId, action) {
-    logger.info('📋 Procesando suscripción', { subscriptionId, action });
+    logger.info('[Webhook.procesarSuscripcion] Procesando', { subscriptionId, action });
 
     try {
       // Obtener suscripción de Mercado Pago
@@ -241,7 +241,7 @@ class WebhooksController {
         `, [estadoLocal, subscriptionId, orgId]);
       });
 
-      logger.info('✅ Estado de suscripción actualizado', { orgId, estadoLocal });
+      logger.info('[Webhook.procesarSuscripcion] Estado actualizado', { orgId, estadoLocal });
 
     } catch (error) {
       logger.error('Error procesando suscripción:', error);
@@ -256,7 +256,7 @@ class WebhooksController {
    */
   static async procesarPagoAutorizado(paymentId, action) {
     // Similar a procesarPago
-    logger.info('💳 Procesando pago autorizado', { paymentId, action });
+    logger.info('[Webhook.procesarPagoAutorizado] Procesando', { paymentId, action });
     await WebhooksController.procesarPago(paymentId, action);
   }
 
@@ -269,7 +269,7 @@ class WebhooksController {
    * @param {Object} pago - Datos del pago de MP
    */
   static async pagoExitoso(orgId, pago) {
-    logger.info('✅ Procesando pago exitoso', {
+    logger.info('[Webhook.pagoExitoso] Procesando', {
       orgId,
       amount: pago.transaction_amount
     });
@@ -334,7 +334,7 @@ class WebhooksController {
    * @param {Object} pago - Datos del pago de MP
    */
   static async pagoFallido(orgId, pago) {
-    logger.warn('⚠️  Procesando pago fallido', {
+    logger.warn('[Webhook.pagoFallido] Procesando', {
       orgId,
       reason: pago.status_detail
     });

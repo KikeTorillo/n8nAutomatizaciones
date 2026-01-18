@@ -64,7 +64,7 @@ class OnboardingController {
             plantilla.id
         );
 
-        logger.info(`📋 Plantilla onboarding creada: "${plantilla.nombre}" (ID: ${plantilla.id})`);
+        logger.info(`[Onboarding.crearPlantilla] Plantilla creada: "${plantilla.nombre}" (ID: ${plantilla.id})`);
 
         return ResponseHelper.success(res, plantillaCompleta, 'Plantilla creada exitosamente', 201);
     });
@@ -112,7 +112,7 @@ class OnboardingController {
             plantillaId
         );
 
-        logger.info(`📝 Plantilla onboarding actualizada: "${plantillaActualizada.nombre}" (ID: ${plantillaId})`);
+        logger.info(`[Onboarding.actualizarPlantilla] Plantilla actualizada: "${plantillaActualizada.nombre}" (ID: ${plantillaId})`);
 
         return ResponseHelper.success(res, plantillaActualizada, 'Plantilla actualizada exitosamente');
     });
@@ -141,7 +141,7 @@ class OnboardingController {
             return ResponseHelper.error(res, 'No se pudo eliminar la plantilla', 400);
         }
 
-        logger.info(`🗑️ Plantilla onboarding eliminada: "${plantilla.nombre}" (ID: ${plantillaId})`);
+        logger.info(`[Onboarding.eliminarPlantilla] Plantilla eliminada: "${plantilla.nombre}" (ID: ${plantillaId})`);
 
         return ResponseHelper.success(res, { id: plantillaId }, 'Plantilla eliminada exitosamente');
     });
@@ -201,7 +201,7 @@ class OnboardingController {
 
         const tareaCompleta = await OnboardingModel.obtenerTareaPorId(organizacionId, tarea.id);
 
-        logger.info(`✅ Tarea onboarding creada: "${tarea.titulo}" en plantilla ${plantillaId}`);
+        logger.info(`[Onboarding.crearTarea] Tarea creada: "${tarea.titulo}" en plantilla ${plantillaId}`);
 
         return ResponseHelper.success(res, tareaCompleta, 'Tarea creada exitosamente', 201);
     });
@@ -229,7 +229,7 @@ class OnboardingController {
 
         const tareaActualizada = await OnboardingModel.obtenerTareaPorId(organizacionId, tareaId);
 
-        logger.info(`📝 Tarea onboarding actualizada: "${tareaActualizada.titulo}" (ID: ${tareaId})`);
+        logger.info(`[Onboarding.actualizarTarea] Tarea actualizada: "${tareaActualizada.titulo}" (ID: ${tareaId})`);
 
         return ResponseHelper.success(res, tareaActualizada, 'Tarea actualizada exitosamente');
     });
@@ -258,7 +258,7 @@ class OnboardingController {
             return ResponseHelper.error(res, 'No se pudo eliminar la tarea', 400);
         }
 
-        logger.info(`🗑️ Tarea onboarding eliminada: "${tarea.titulo}" (ID: ${tareaId})`);
+        logger.info(`[Onboarding.eliminarTarea] Tarea eliminada: "${tarea.titulo}" (ID: ${tareaId})`);
 
         return ResponseHelper.success(res, { id: tareaId }, 'Tarea eliminada exitosamente');
     });
@@ -286,7 +286,7 @@ class OnboardingController {
             return ResponseHelper.error(res, 'No se pudo reordenar', 400);
         }
 
-        logger.info(`🔄 Tareas reordenadas en plantilla ${plantillaId}`);
+        logger.info(`[Onboarding.reordenarTareas] Tareas reordenadas en plantilla ${plantillaId}`);
 
         return ResponseHelper.success(res, { success: true }, 'Tareas reordenadas exitosamente');
     });
@@ -310,7 +310,7 @@ class OnboardingController {
             plantilla_id
         );
 
-        logger.info(`📋 Plantilla "${resultado.plantilla.nombre}" aplicada a ${resultado.profesional.nombre_completo} (${resultado.tareas_creadas} tareas)`);
+        logger.info(`[Onboarding.aplicarPlantilla] Plantilla "${resultado.plantilla.nombre}" aplicada a ${resultado.profesional.nombre_completo} (${resultado.tareas_creadas} tareas)`);
 
         return ResponseHelper.success(res, resultado, 'Plantilla aplicada exitosamente', 201);
     });
@@ -360,7 +360,7 @@ class OnboardingController {
         );
 
         const estado = datos.completado ? 'completada' : 'pendiente';
-        logger.info(`✅ Tarea onboarding marcada como ${estado} (profesional: ${profesionalId}, tarea: ${tareaId})`);
+        logger.info(`[Onboarding.marcarTarea] Tarea marcada como ${estado} (profesional: ${profesionalId}, tarea: ${tareaId})`);
 
         return ResponseHelper.success(res, progreso, `Tarea marcada como ${estado} exitosamente`);
     });
@@ -378,7 +378,7 @@ class OnboardingController {
             profesionalId
         );
 
-        logger.info(`🗑️ Progreso onboarding eliminado para profesional ${profesionalId} (${eliminados} registros)`);
+        logger.info(`[Onboarding.eliminarProgreso] Progreso eliminado para profesional ${profesionalId} (${eliminados} registros)`);
 
         return ResponseHelper.success(res, {
             profesional_id: profesionalId,

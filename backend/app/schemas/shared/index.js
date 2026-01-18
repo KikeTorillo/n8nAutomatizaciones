@@ -30,6 +30,7 @@ const pagination = require('./pagination.schema');
 const ids = require('./ids.schema');
 const states = require('./states.schema');
 const commonFields = require('./common-fields.schema');
+const passwords = require('./passwords.schema');
 
 module.exports = {
   // Paginación
@@ -42,5 +43,8 @@ module.exports = {
   ...states,
 
   // Campos comunes
-  ...commonFields
+  ...commonFields,
+
+  // Contraseñas (Ene 2026)
+  ...passwords
 };

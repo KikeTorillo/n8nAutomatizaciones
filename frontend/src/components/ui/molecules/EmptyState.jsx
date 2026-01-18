@@ -94,4 +94,6 @@ export function EmptyState({
   );
 }
 
+EmptyState.displayName = 'EmptyState';
+
 export default EmptyState;

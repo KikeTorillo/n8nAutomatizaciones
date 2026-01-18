@@ -1,40 +1,75 @@
+/**
+ * ====================================================================
+ * HOOKS DE ORDENES DE COMPRA
+ * ====================================================================
+ *
+ * Ene 2026 - Migrado a createCRUDHooks
+ * ====================================================================
+ */
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ordenesCompraApi } from '@/services/api/endpoints';
 import { sanitizeParams } from '@/lib/params';
 import { STALE_TIMES } from '@/app/queryClient';
+import { createCRUDHooks, createSanitizer } from '@/hooks/factories';
 
-// ==================== QUERIES ====================
+// =========================================================================
+// HOOKS CRUD VIA FACTORY
+// =========================================================================
 
-/**
- * Hook para listar ordenes de compra con filtros
- * @param {Object} params - { proveedor_id?, estado?, estado_pago?, fecha_desde?, fecha_hasta?, folio?, limit?, offset? }
- */
-export function useOrdenesCompra(params = {}) {
-  return useQuery({
-    queryKey: ['ordenes-compra', params],
-    queryFn: async () => {
-      const response = await ordenesCompraApi.listar(sanitizeParams(params));
-      return response.data.data || { ordenes: [], totales: {} };
-    },
-    staleTime: STALE_TIMES.DYNAMIC, // 2 minutos
-  });
-}
+// Sanitizador para datos de orden de compra
+const sanitizeOrdenCompra = createSanitizer([
+  'notas',
+  'referencia_proveedor',
+  { name: 'proveedor_id', type: 'id' },
+  { name: 'fecha_entrega_esperada', type: 'string' },
+  { name: 'descuento_porcentaje', type: 'number' },
+  { name: 'descuento_monto', type: 'number' },
+  { name: 'impuestos', type: 'number' },
+  { name: 'dias_credito', type: 'number' },
+]);
 
-/**
- * Hook para obtener una orden de compra por ID
- * @param {number} id - ID de la orden
- */
-export function useOrdenCompra(id) {
-  return useQuery({
-    queryKey: ['orden-compra', id],
-    queryFn: async () => {
-      const response = await ordenesCompraApi.obtenerPorId(id);
-      return response.data.data || null;
-    },
-    enabled: !!id,
-    staleTime: STALE_TIMES.DYNAMIC,
-  });
-}
+const hooks = createCRUDHooks({
+  name: 'ordenCompra',
+  namePlural: 'ordenesCompra',
+  api: ordenesCompraApi,
+  baseKey: 'ordenes-compra',
+  apiMethods: {
+    list: 'listar',
+    get: 'obtenerPorId',
+    create: 'crear',
+    update: 'actualizar',
+    delete: 'eliminar',
+  },
+  sanitize: (data) => {
+    // Sanitizar campos base
+    const sanitized = sanitizeOrdenCompra(data);
+    // Mantener items si existen (para crear orden con items)
+    if (data.items) {
+      sanitized.items = data.items;
+    }
+    return sanitized;
+  },
+  invalidateOnCreate: ['ordenes-compra', 'ordenes-compra-pendientes'],
+  invalidateOnUpdate: ['ordenes-compra'],
+  invalidateOnDelete: ['ordenes-compra', 'ordenes-compra-pendientes'],
+  errorMessages: {
+    delete: { 409: 'Solo se pueden eliminar órdenes en estado borrador' },
+  },
+  staleTime: STALE_TIMES.DYNAMIC,
+  responseKey: 'ordenes',
+});
+
+// Exportar hooks CRUD
+export const useOrdenesCompra = hooks.useList;
+export const useOrdenCompra = hooks.useDetail;
+export const useCrearOrdenCompra = hooks.useCreate;
+export const useActualizarOrdenCompra = hooks.useUpdate;
+export const useEliminarOrdenCompra = hooks.useDelete;
+
+// =========================================================================
+// QUERIES ESPECIALIZADAS
+// =========================================================================
 
 /**
  * Hook para obtener ordenes pendientes de recibir
@@ -79,89 +114,9 @@ export function useEstadisticasComprasPorProveedor(params = {}) {
   });
 }
 
-// ==================== MUTATIONS ====================
-
-/**
- * Hook para crear orden de compra
- */
-export function useCrearOrdenCompra() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (data) => {
-      const sanitized = {
-        proveedor_id: data.proveedor_id,
-        fecha_entrega_esperada: data.fecha_entrega_esperada || undefined,
-        descuento_porcentaje: data.descuento_porcentaje || undefined,
-        descuento_monto: data.descuento_monto || undefined,
-        impuestos: data.impuestos || undefined,
-        dias_credito: data.dias_credito !== undefined ? data.dias_credito : undefined,
-        notas: data.notas?.trim() || undefined,
-        referencia_proveedor: data.referencia_proveedor?.trim() || undefined,
-        items: data.items || undefined,
-      };
-
-      const response = await ordenesCompraApi.crear(sanitized);
-      return response.data.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['ordenes-compra'] });
-      queryClient.invalidateQueries({ queryKey: ['ordenes-compra-pendientes'] });
-    },
-  });
-}
-
-/**
- * Hook para actualizar orden de compra
- */
-export function useActualizarOrdenCompra() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ id, data }) => {
-      const sanitized = {
-        proveedor_id: data.proveedor_id || undefined,
-        fecha_entrega_esperada: data.fecha_entrega_esperada || undefined,
-        descuento_porcentaje: data.descuento_porcentaje !== undefined ? data.descuento_porcentaje : undefined,
-        descuento_monto: data.descuento_monto !== undefined ? data.descuento_monto : undefined,
-        impuestos: data.impuestos !== undefined ? data.impuestos : undefined,
-        dias_credito: data.dias_credito !== undefined ? data.dias_credito : undefined,
-        notas: data.notas?.trim() || undefined,
-        referencia_proveedor: data.referencia_proveedor?.trim() || undefined,
-      };
-
-      // Eliminar campos undefined
-      Object.keys(sanitized).forEach(key => {
-        if (sanitized[key] === undefined) delete sanitized[key];
-      });
-
-      const response = await ordenesCompraApi.actualizar(id, sanitized);
-      return response.data.data;
-    },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['ordenes-compra'] });
-      queryClient.invalidateQueries({ queryKey: ['orden-compra', variables.id] });
-    },
-  });
-}
-
-/**
- * Hook para eliminar orden de compra (solo borradores)
- */
-export function useEliminarOrdenCompra() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (id) => {
-      const response = await ordenesCompraApi.eliminar(id);
-      return response.data.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['ordenes-compra'] });
-      queryClient.invalidateQueries({ queryKey: ['ordenes-compra-pendientes'] });
-    },
-  });
-}
+// =========================================================================
+// MUTATIONS PARA ITEMS
+// =========================================================================
 
 /**
  * Hook para agregar items a orden
@@ -235,6 +190,10 @@ export function useEliminarItemOrdenCompra() {
     },
   });
 }
+
+// =========================================================================
+// MUTATIONS DE WORKFLOW
+// =========================================================================
 
 /**
  * Hook para enviar orden al proveedor

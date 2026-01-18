@@ -12,7 +12,7 @@ class BatchPickingModel {
     /**
      * Crear batch de picking
      */
-    static async crear(data, organizacionId, usuarioId) {
+    static async crear(organizacionId, data, usuarioId) {
         return await RLSContextManager.query(organizacionId, async (client) => {
             const result = await client.query(
                 `SELECT crear_batch_picking($1, $2, $3, $4, $5) as batch_id`,
@@ -84,7 +84,7 @@ class BatchPickingModel {
     /**
      * Obtener batch por ID con operaciones
      */
-    static async obtenerPorId(id, organizacionId) {
+    static async buscarPorId(organizacionId, id) {
         return await RLSContextManager.query(organizacionId, async (client) => {
             const batchResult = await client.query(
                 `SELECT
@@ -129,7 +129,7 @@ class BatchPickingModel {
     /**
      * Actualizar batch
      */
-    static async actualizar(id, data, organizacionId) {
+    static async actualizar(organizacionId, id, data) {
         return await RLSContextManager.query(organizacionId, async (client) => {
             const result = await client.query(
                 `UPDATE batch_pickings SET
@@ -160,7 +160,7 @@ class BatchPickingModel {
     /**
      * Eliminar batch (solo si esta en borrador)
      */
-    static async eliminar(id, organizacionId) {
+    static async eliminar(organizacionId, id) {
         return await RLSContextManager.query(organizacionId, async (client) => {
             const result = await client.query(
                 `DELETE FROM batch_pickings

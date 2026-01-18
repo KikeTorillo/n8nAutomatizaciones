@@ -21,6 +21,7 @@
 const Joi = require('joi');
 const logger = require('../utils/logger');
 const { ResponseHelper } = require('../utils/helpers');
+const { passwordSchemas } = require('../schemas/shared');
 
 /**
  * Factory para crear middleware de validación Joi comprehensivo
@@ -209,13 +210,11 @@ const commonSchemas = {
   email: Joi.string().email().lowercase(),
   emailRequired: Joi.string().email().lowercase().required(),
 
-  // Contraseñas (política homologada con passwordHelper.js y auth.schemas.js)
+  // Contraseñas (Ene 2026: usar schemas compartidos de passwords.schema.js)
   // Requisitos obligatorios: mayúscula, minúscula, número
   // Caracteres especiales: OPCIONALES (mejoran score pero no son requeridos)
-  password: Joi.string().min(8).pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/).messages({
-    'string.min': 'La contraseña debe tener al menos 8 caracteres',
-    'string.pattern.base': 'La contraseña debe contener al menos: una mayúscula, una minúscula y un número'
-  }),
+  password: passwordSchemas.strong,
+  passwordRequired: passwordSchemas.strongRequired,
 
   // Texto básico
   text: Joi.string().trim(),

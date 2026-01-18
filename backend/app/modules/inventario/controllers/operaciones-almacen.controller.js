@@ -41,7 +41,7 @@ class OperacionesAlmacenController {
         const organizacionId = req.tenant.organizacionId;
         const { id } = req.params;
 
-        const operacion = await OperacionesAlmacenModel.obtenerPorId(parseInt(id), organizacionId);
+        const operacion = await OperacionesAlmacenModel.buscarPorId(organizacionId, parseInt(id));
 
         if (!operacion) {
             return ResponseHelper.notFound(res, 'Operacion no encontrada');
@@ -58,7 +58,7 @@ class OperacionesAlmacenController {
         const organizacionId = req.tenant.organizacionId;
         const usuarioId = req.user.id;
 
-        const operacion = await OperacionesAlmacenModel.crear(req.body, organizacionId, usuarioId);
+        const operacion = await OperacionesAlmacenModel.crear(organizacionId, req.body, usuarioId);
 
         return ResponseHelper.created(res, operacion, 'Operacion creada');
     });
@@ -71,7 +71,7 @@ class OperacionesAlmacenController {
         const organizacionId = req.tenant.organizacionId;
         const { id } = req.params;
 
-        const operacion = await OperacionesAlmacenModel.actualizar(parseInt(id), req.body, organizacionId);
+        const operacion = await OperacionesAlmacenModel.actualizar(organizacionId, parseInt(id), req.body);
 
         if (!operacion) {
             return ResponseHelper.notFound(res, 'Operacion no encontrada');

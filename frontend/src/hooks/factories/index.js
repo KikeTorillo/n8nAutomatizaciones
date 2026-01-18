@@ -15,3 +15,9 @@ export {
   createInvalidator,
   default,
 } from './createCRUDHooks';
+
+export {
+  useSucursalContext,
+  createSucursalContextHook,
+  createSucursalQueryOptions,
+} from './createSucursalContextHook';

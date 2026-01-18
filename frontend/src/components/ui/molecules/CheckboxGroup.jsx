@@ -87,4 +87,6 @@ export function CheckboxGroup({
   );
 }
 
+CheckboxGroup.displayName = 'CheckboxGroup';
+
 export default CheckboxGroup;

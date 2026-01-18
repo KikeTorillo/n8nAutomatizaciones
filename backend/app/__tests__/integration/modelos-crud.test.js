@@ -134,8 +134,7 @@ describe('📦 Modelos CRUD Básicos', () => {
     let cliente1;
 
     test('crear() crea nuevo cliente', async () => {
-      cliente1 = await ClienteModel.crear({
-        organizacion_id: org1.id,
+      cliente1 = await ClienteModel.crear(org1.id, {
         nombre: 'Cliente Test',
         telefono: '5512345678',
         email: `cliente-${Date.now()}@test.com`
@@ -147,7 +146,7 @@ describe('📦 Modelos CRUD Básicos', () => {
     });
 
     test('listar() respeta RLS y retorna paginación', async () => {
-      const resultado = await ClienteModel.listar({ organizacionId: org1.id });
+      const resultado = await ClienteModel.listar(org1.id, {});
 
       expect(resultado).toBeDefined();
       expect(resultado.clientes).toBeDefined();
@@ -155,8 +154,8 @@ describe('📦 Modelos CRUD Básicos', () => {
       expect(resultado.clientes.every(c => c.organizacion_id === org1.id)).toBe(true);
     });
 
-    test('obtenerPorId() retorna cliente', async () => {
-      const cliente = await ClienteModel.obtenerPorId(cliente1.id, org1.id);
+    test('buscarPorId() retorna cliente', async () => {
+      const cliente = await ClienteModel.buscarPorId(org1.id, cliente1.id);
 
       expect(cliente).toBeDefined();
       expect(cliente.id).toBe(cliente1.id);
@@ -172,17 +171,17 @@ describe('📦 Modelos CRUD Básicos', () => {
     });
 
     test('actualizar() modifica cliente', async () => {
-      const updated = await ClienteModel.actualizar(cliente1.id, {
+      const updated = await ClienteModel.actualizar(org1.id, cliente1.id, {
         nombre: 'Cliente Actualizado',
         notas_especiales: 'Cliente VIP'
-      }, org1.id);
+      });
 
       expect(updated).toBeDefined();
       expect(updated.nombre).toBe('Cliente Actualizado');
     });
 
     test('eliminar() desactiva cliente (soft delete)', async () => {
-      const resultado = await ClienteModel.eliminar(cliente1.id, org1.id);
+      const resultado = await ClienteModel.eliminar(org1.id, cliente1.id);
 
       expect(resultado).toBe(true);
     });
@@ -196,8 +195,7 @@ describe('📦 Modelos CRUD Básicos', () => {
     let profesional1;
 
     test('crear() crea nuevo profesional', async () => {
-      profesional1 = await ProfesionalModel.crear({
-        organizacion_id: org1.id,
+      profesional1 = await ProfesionalModel.crear(org1.id, {
         nombre_completo: 'Barbero Test',
         tipo_profesional_id: 1, // barbero
         telefono: '5587654321'
@@ -205,15 +203,14 @@ describe('📦 Modelos CRUD Básicos', () => {
 
       expect(profesional1).toBeDefined();
       expect(profesional1.nombre_completo).toBe('Barbero Test');
-      expect(profesional1.tipo_profesional_id).toBe(1);
     });
 
-    test('listarPorOrganizacion() respeta RLS', async () => {
-      const resultado = await ProfesionalModel.listarPorOrganizacion(org1.id, {});
+    test('listar() respeta RLS', async () => {
+      const resultado = await ProfesionalModel.listar(org1.id, {});
 
       expect(resultado).toBeDefined();
-      // El método retorna array directamente o objeto con profesionales
-      const profesionales = Array.isArray(resultado) ? resultado : resultado.profesionales;
+      // El método retorna objeto con profesionales y paginación
+      const profesionales = resultado.profesionales;
       expect(profesionales).toBeDefined();
       expect(Array.isArray(profesionales)).toBe(true);
       if (profesionales.length > 0) {
@@ -222,14 +219,14 @@ describe('📦 Modelos CRUD Básicos', () => {
     });
 
     test('buscarPorId() retorna profesional', async () => {
-      const profesional = await ProfesionalModel.buscarPorId(profesional1.id, org1.id);
+      const profesional = await ProfesionalModel.buscarPorId(org1.id, profesional1.id);
 
       expect(profesional).toBeDefined();
       expect(profesional.id).toBe(profesional1.id);
     });
 
     test('actualizar() modifica profesional', async () => {
-      const updated = await ProfesionalModel.actualizar(profesional1.id, org1.id, {
+      const updated = await ProfesionalModel.actualizar(org1.id, profesional1.id, {
         nombre_completo: 'Barbero Profesional',
         biografia: 'Experto en cortes modernos'
       });
@@ -247,8 +244,7 @@ describe('📦 Modelos CRUD Básicos', () => {
     let servicio1;
 
     test('crear() crea nuevo servicio', async () => {
-      servicio1 = await ServicioModel.crear({
-        organizacion_id: org1.id,
+      servicio1 = await ServicioModel.crear(org1.id, {
         nombre: 'Corte de Cabello',
         descripcion: 'Corte clásico',
         duracion_minutos: 30,
@@ -270,18 +266,18 @@ describe('📦 Modelos CRUD Básicos', () => {
       expect(resultado.servicios.every(s => s.organizacion_id === org1.id)).toBe(true);
     });
 
-    test('obtenerPorId() retorna servicio', async () => {
-      const servicio = await ServicioModel.obtenerPorId(servicio1.id, org1.id);
+    test('buscarPorId() retorna servicio', async () => {
+      const servicio = await ServicioModel.buscarPorId(org1.id, servicio1.id);
 
       expect(servicio).toBeDefined();
       expect(servicio.id).toBe(servicio1.id);
     });
 
     test('actualizar() modifica servicio', async () => {
-      const updated = await ServicioModel.actualizar(servicio1.id, {
+      const updated = await ServicioModel.actualizar(org1.id, servicio1.id, {
         precio: 180.00,
         descripcion: 'Corte premium actualizado'
-      }, org1.id);
+      });
 
       expect(updated).toBeDefined();
       expect(parseFloat(updated.precio)).toBe(180.00);

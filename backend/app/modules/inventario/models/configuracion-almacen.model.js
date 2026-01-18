@@ -85,7 +85,7 @@ class ConfiguracionAlmacenModel {
     /**
      * Actualizar configuracion
      */
-    static async actualizar(sucursalId, data, organizacionId, usuarioId) {
+    static async actualizar(organizacionId, sucursalId, data, usuarioId) {
         return await RLSContextManager.query(organizacionId, async (client) => {
             const result = await client.query(
                 `INSERT INTO configuracion_almacen_sucursal (

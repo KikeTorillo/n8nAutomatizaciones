@@ -22,10 +22,10 @@ class UbicacionesAlmacenController {
     static crear = asyncHandler(async (req, res) => {
         const organizacionId = req.tenant.organizacionId;
 
-        const ubicacion = await UbicacionesAlmacenModel.crear({
+        const ubicacion = await UbicacionesAlmacenModel.crear(organizacionId, {
             ...req.body,
             creado_por: req.user.id
-        }, organizacionId);
+        });
 
         return ResponseHelper.success(
             res,
@@ -43,7 +43,7 @@ class UbicacionesAlmacenController {
         const { id } = req.params;
         const organizacionId = req.tenant.organizacionId;
 
-        const ubicacion = await UbicacionesAlmacenModel.obtenerPorId(parseInt(id), organizacionId);
+        const ubicacion = await UbicacionesAlmacenModel.buscarPorId(organizacionId, parseInt(id));
 
         if (!ubicacion) {
             return ResponseHelper.error(res, 'Ubicación no encontrada', 404);
@@ -74,7 +74,7 @@ class UbicacionesAlmacenController {
             offset: req.query.offset ? parseInt(req.query.offset) : 0
         };
 
-        const resultado = await UbicacionesAlmacenModel.listar(filtros, organizacionId);
+        const resultado = await UbicacionesAlmacenModel.listar(organizacionId, filtros);
 
         return ResponseHelper.success(res, resultado, 'Ubicaciones obtenidas exitosamente');
     });
@@ -100,7 +100,7 @@ class UbicacionesAlmacenController {
         const { id } = req.params;
         const organizacionId = req.tenant.organizacionId;
 
-        const ubicacion = await UbicacionesAlmacenModel.actualizar(parseInt(id), req.body, organizacionId);
+        const ubicacion = await UbicacionesAlmacenModel.actualizar(organizacionId, parseInt(id), req.body);
 
         return ResponseHelper.success(res, ubicacion, 'Ubicación actualizada exitosamente');
     });
@@ -113,7 +113,7 @@ class UbicacionesAlmacenController {
         const { id } = req.params;
         const organizacionId = req.tenant.organizacionId;
 
-        const ubicacion = await UbicacionesAlmacenModel.eliminar(parseInt(id), organizacionId);
+        const ubicacion = await UbicacionesAlmacenModel.eliminar(organizacionId, parseInt(id));
 
         return ResponseHelper.success(res, ubicacion, 'Ubicación eliminada exitosamente');
     });
@@ -128,9 +128,9 @@ class UbicacionesAlmacenController {
         const organizacionId = req.tenant.organizacionId;
 
         const ubicacion = await UbicacionesAlmacenModel.actualizar(
+            organizacionId,
             parseInt(id),
-            { bloqueada, motivo_bloqueo: bloqueada ? motivo_bloqueo : null },
-            organizacionId
+            { bloqueada, motivo_bloqueo: bloqueada ? motivo_bloqueo : null }
         );
 
         const mensaje = bloqueada ? 'Ubicación bloqueada' : 'Ubicación desbloqueada';

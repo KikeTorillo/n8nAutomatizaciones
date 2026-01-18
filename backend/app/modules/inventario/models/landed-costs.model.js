@@ -41,10 +41,10 @@ class LandedCostsModel {
 
     /**
      * Obtener un costo adicional por ID
-     * @param {number} id
      * @param {number} organizacionId
+     * @param {number} id
      */
-    static async obtenerPorId(id, organizacionId) {
+    static async buscarPorId(organizacionId, id) {
         return await RLSContextManager.query(organizacionId, async (db) => {
             const result = await db.query(`
                 SELECT
@@ -63,11 +63,11 @@ class LandedCostsModel {
 
     /**
      * Crear costo adicional
-     * @param {Object} data - Datos del costo
      * @param {number} organizacionId
+     * @param {Object} data - Datos del costo
      * @param {number} usuarioId
      */
-    static async crear(data, organizacionId, usuarioId) {
+    static async crear(organizacionId, data, usuarioId) {
         return await RLSContextManager.transaction(organizacionId, async (db) => {
             const {
                 orden_compra_id,
@@ -141,7 +141,7 @@ class LandedCostsModel {
     /**
      * Actualizar costo adicional (solo si no esta distribuido)
      */
-    static async actualizar(id, data, organizacionId) {
+    static async actualizar(organizacionId, id, data) {
         return await RLSContextManager.transaction(organizacionId, async (db) => {
             // Verificar que existe y no esta distribuido
             const existing = await db.query(
@@ -205,7 +205,7 @@ class LandedCostsModel {
     /**
      * Eliminar costo adicional (solo si no esta distribuido)
      */
-    static async eliminar(id, organizacionId) {
+    static async eliminar(organizacionId, id) {
         return await RLSContextManager.transaction(organizacionId, async (db) => {
             // Verificar que existe y no esta distribuido
             const existing = await db.query(

@@ -95,7 +95,13 @@ const useOnboardingStore = create(
       }
     }),
       {
-        name: 'onboarding-storage', // Nombre en localStorage
+        name: 'onboarding-storage',
+        partialize: (state) => ({
+          formData: state.formData,
+          registroEnviado: state.registroEnviado,
+          emailEnviado: state.emailEnviado,
+          // organizacion_id EXCLUIDO: solo para debugging en sesión
+        }),
       }
     ),
     { name: 'OnboardingStore', enabled: import.meta.env.DEV }

@@ -139,11 +139,11 @@ class ReservasModel {
     /**
      * Crear una nueva reserva de stock (producto o variante)
      * Usa función atómica con SKIP LOCKED para concurrencia segura
-     * @param {Object} data - Datos de la reserva
      * @param {number} organizacionId - ID de la organización
+     * @param {Object} data - Datos de la reserva
      * @param {number|null} usuarioId - ID del usuario que crea la reserva
      */
-    static async crear(data, organizacionId, usuarioId = null) {
+    static async crear(organizacionId, data, usuarioId = null) {
         return await RLSContextManager.transaction(organizacionId, async (db) => {
             logger.info('[ReservasModel.crear] Iniciando reserva atómica', {
                 organizacion_id: organizacionId,
@@ -446,10 +446,10 @@ class ReservasModel {
 
     /**
      * Listar reservas con filtros
-     * @param {Object} filtros - Filtros de búsqueda
      * @param {number} organizacionId - ID de la organización
+     * @param {Object} filtros - Filtros de búsqueda
      */
-    static async listar(filtros, organizacionId) {
+    static async listar(organizacionId, filtros) {
         return await RLSContextManager.query(organizacionId, async (db) => {
             let query = `
                 SELECT
@@ -523,9 +523,9 @@ class ReservasModel {
     }
 
     /**
-     * Obtener reserva por ID
+     * Buscar reserva por ID
      */
-    static async obtenerPorId(reservaId, organizacionId) {
+    static async buscarPorId(organizacionId, reservaId) {
         return await RLSContextManager.query(organizacionId, async (db) => {
             return await this.obtenerPorIdInterno(reservaId, db);
         });

@@ -234,4 +234,6 @@ export function Pagination({
   );
 }
 
+Pagination.displayName = 'Pagination';
+
 export default Pagination;

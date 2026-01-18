@@ -12,12 +12,12 @@ class PaquetesModel {
 
     /**
      * Crear un nuevo paquete para una operacion de empaque
+     * @param {number} organizacionId
      * @param {number} operacionId
      * @param {Object} data - { notas }
-     * @param {number} organizacionId
      * @param {number} usuarioId
      */
-    static async crear(operacionId, data, organizacionId, usuarioId) {
+    static async crear(organizacionId, operacionId, data, usuarioId) {
         return await RLSContextManager.transaction(organizacionId, async (db) => {
             const result = await db.query(
                 'SELECT crear_paquete($1, $2, $3) as resultado',
@@ -37,16 +37,16 @@ class PaquetesModel {
             });
 
             // Retornar paquete completo
-            return this.obtenerPorId(resultado.paquete_id, organizacionId);
+            return this.buscarPorId(organizacionId, resultado.paquete_id);
         });
     }
 
     /**
      * Obtener paquete por ID con sus items
-     * @param {number} id
      * @param {number} organizacionId
+     * @param {number} id
      */
-    static async obtenerPorId(id, organizacionId) {
+    static async buscarPorId(organizacionId, id) {
         return await RLSContextManager.query(organizacionId, async (db) => {
             // Obtener paquete
             const paqueteResult = await db.query(`
@@ -220,11 +220,11 @@ class PaquetesModel {
 
     /**
      * Actualizar dimensiones y peso del paquete
+     * @param {number} organizacionId
      * @param {number} id
      * @param {Object} data - { peso_kg, largo_cm, ancho_cm, alto_cm, notas, carrier, tracking_carrier }
-     * @param {number} organizacionId
      */
-    static async actualizar(id, data, organizacionId) {
+    static async actualizar(organizacionId, id, data) {
         return await RLSContextManager.transaction(organizacionId, async (db) => {
             // Verificar que existe y pertenece a la organizacion
             const checkResult = await db.query(
@@ -296,7 +296,7 @@ class PaquetesModel {
 
             logger.info('[PaquetesModel.actualizar] Paquete actualizado', { id });
 
-            return this.obtenerPorId(id, organizacionId);
+            return this.buscarPorId(organizacionId, id);
         });
     }
 
@@ -384,7 +384,7 @@ class PaquetesModel {
 
             logger.info('[PaquetesModel.marcarEtiquetado] Paquete etiquetado', { id });
 
-            return this.obtenerPorId(id, organizacionId);
+            return this.buscarPorId(organizacionId, id);
         });
     }
 
@@ -419,7 +419,7 @@ class PaquetesModel {
 
             logger.info('[PaquetesModel.marcarEnviado] Paquete enviado', { id });
 
-            return this.obtenerPorId(id, organizacionId);
+            return this.buscarPorId(organizacionId, id);
         });
     }
 
@@ -429,7 +429,7 @@ class PaquetesModel {
      * @param {number} organizacionId
      */
     static async generarEtiqueta(id, organizacionId) {
-        const paquete = await this.obtenerPorId(id, organizacionId);
+        const paquete = await this.buscarPorId(organizacionId, id);
 
         if (!paquete) {
             throw new Error('Paquete no encontrado');

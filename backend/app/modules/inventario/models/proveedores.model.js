@@ -1,5 +1,6 @@
 const RLSContextManager = require('../../../utils/rlsContextManager');
 const logger = require('../../../utils/logger');
+const { DuplicateResourceError } = require('../../../utils/errors');
 
 /**
  * Model para CRUD de proveedores
@@ -9,8 +10,11 @@ class ProveedoresModel {
 
     /**
      * Crear nuevo proveedor
+     * @param {number} organizacionId
+     * @param {Object} data
+     * @returns {Object}
      */
-    static async crear(data, organizacionId) {
+    static async crear(organizacionId, data) {
         return await RLSContextManager.transaction(organizacionId, async (db) => {
             logger.info('[ProveedoresModel.crear] Iniciando', {
                 organizacion_id: organizacionId,
@@ -19,61 +23,55 @@ class ProveedoresModel {
 
             const query = `
                 INSERT INTO proveedores (
-                    organizacion_id,
-                    nombre,
-                    razon_social,
-                    rfc,
-                    telefono,
-                    email,
-                    sitio_web,
-                    direccion,
-                    ciudad_id,
-                    estado_id,
-                    pais_id,
-                    codigo_postal,
-                    dias_credito,
-                    dias_entrega_estimados,
-                    monto_minimo_compra,
-                    notas,
-                    activo
+                    organizacion_id, nombre, razon_social, rfc, telefono, email,
+                    sitio_web, direccion, ciudad_id, estado_id, pais_id,
+                    codigo_postal, dias_credito, dias_entrega_estimados,
+                    monto_minimo_compra, notas, activo
                 ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
                 RETURNING *
             `;
 
             const values = [
-                organizacionId,
-                data.nombre,
-                data.razon_social || null,
-                data.rfc || null,
-                data.telefono || null,
-                data.email || null,
-                data.sitio_web || null,
-                data.direccion || null,
-                data.ciudad_id || null,
-                data.estado_id || null,
-                data.pais_id || null,
-                data.codigo_postal || null,
+                organizacionId, data.nombre, data.razon_social || null,
+                data.rfc || null, data.telefono || null, data.email || null,
+                data.sitio_web || null, data.direccion || null, data.ciudad_id || null,
+                data.estado_id || null, data.pais_id || null, data.codigo_postal || null,
                 data.dias_credito !== undefined ? data.dias_credito : 0,
-                data.dias_entrega_estimados || null,
-                data.monto_minimo_compra || null,
-                data.notas || null,
-                data.activo !== undefined ? data.activo : true
+                data.dias_entrega_estimados || null, data.monto_minimo_compra || null,
+                data.notas || null, data.activo !== undefined ? data.activo : true
             ];
 
-            const result = await db.query(query, values);
+            try {
+                const result = await db.query(query, values);
 
-            logger.info('[ProveedoresModel.crear] Proveedor creado', {
-                proveedor_id: result.rows[0].id
-            });
+                logger.info('[ProveedoresModel.crear] Proveedor creado', {
+                    proveedor_id: result.rows[0].id
+                });
 
-            return result.rows[0];
+                return result.rows[0];
+            } catch (error) {
+                // Manejar errores de constraint único
+                if (error.code === '23505') {
+                    if (error.constraint?.includes('nombre')) {
+                        throw new DuplicateResourceError('Proveedor', 'nombre', data.nombre);
+                    }
+                    if (error.constraint?.includes('rfc')) {
+                        throw new DuplicateResourceError('Proveedor', 'RFC', data.rfc);
+                    }
+                    throw new DuplicateResourceError('Proveedor', 'datos únicos');
+                }
+                throw error;
+            }
         });
     }
 
     /**
      * Obtener proveedor por ID
+     * @param {number} organizacionId
+     * @param {number} id
+     * @returns {Object|null}
      */
-    static async obtenerPorId(id, organizacionId) {
+    static async buscarPorId(organizacionId, id) {
         return await RLSContextManager.query(organizacionId, async (db) => {
             const query = `
                 SELECT
@@ -97,8 +95,11 @@ class ProveedoresModel {
 
     /**
      * Listar proveedores con filtros opcionales
+     * @param {number} organizacionId
+     * @param {Object} filtros
+     * @returns {Object}
      */
-    static async listar(filtros, organizacionId) {
+    static async listar(organizacionId, filtros = {}) {
         return await RLSContextManager.query(organizacionId, async (db) => {
             let whereConditions = ['p.organizacion_id = $1'];
             let values = [organizacionId];
@@ -166,18 +167,20 @@ class ProveedoresModel {
             const countResult = await db.query(countQuery, values.slice(0, values.length - 2));
 
             return {
-                proveedores: result.rows,
-                total: parseInt(countResult.rows[0].total),
-                limit: filtros.limit || 50,
-                offset: filtros.offset || 0
+                data: result.rows,
+                total: parseInt(countResult.rows[0].total)
             };
         });
     }
 
     /**
      * Actualizar proveedor
+     * @param {number} organizacionId
+     * @param {number} id
+     * @param {Object} data
+     * @returns {Object}
      */
-    static async actualizar(id, data, organizacionId) {
+    static async actualizar(organizacionId, id, data) {
         return await RLSContextManager.transaction(organizacionId, async (db) => {
             logger.info('[ProveedoresModel.actualizar] Iniciando', {
                 organizacion_id: organizacionId,
@@ -240,8 +243,11 @@ class ProveedoresModel {
 
     /**
      * Eliminar proveedor (soft delete)
+     * @param {number} organizacionId
+     * @param {number} id
+     * @returns {Object}
      */
-    static async eliminar(id, organizacionId) {
+    static async eliminar(organizacionId, id) {
         return await RLSContextManager.transaction(organizacionId, async (db) => {
             logger.info('[ProveedoresModel.eliminar] Iniciando', {
                 organizacion_id: organizacionId,

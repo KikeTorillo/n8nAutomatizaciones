@@ -12,7 +12,7 @@ class OperacionesAlmacenModel {
     /**
      * Crear operacion manualmente
      */
-    static async crear(data, organizacionId, usuarioId) {
+    static async crear(organizacionId, data, usuarioId) {
         return await RLSContextManager.transaction(organizacionId, async (client) => {
             // Generar folio
             const folioResult = await client.query(
@@ -155,7 +155,7 @@ class OperacionesAlmacenModel {
     /**
      * Obtener operacion por ID con items
      */
-    static async obtenerPorId(id, organizacionId) {
+    static async buscarPorId(organizacionId, id) {
         return await RLSContextManager.query(organizacionId, async (client) => {
             const opResult = await client.query(
                 `SELECT
@@ -211,7 +211,7 @@ class OperacionesAlmacenModel {
     /**
      * Actualizar operacion
      */
-    static async actualizar(id, data, organizacionId) {
+    static async actualizar(organizacionId, id, data) {
         return await RLSContextManager.query(organizacionId, async (client) => {
             const result = await client.query(
                 `UPDATE operaciones_almacen SET

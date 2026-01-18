@@ -9,10 +9,10 @@ class ServicioController {
     static crear = asyncHandler(async (req, res) => {
         const { precios_moneda, ...servicioData } = req.body;
 
-        const nuevoServicio = await ServicioModel.crear({
-            ...servicioData,
-            organizacion_id: req.tenant.organizacionId
-        });
+        const nuevoServicio = await ServicioModel.crear(
+            req.tenant.organizacionId,
+            servicioData
+        );
 
         // Guardar precios multi-moneda si se proporcionan
         if (precios_moneda && Array.isArray(precios_moneda) && precios_moneda.length > 0) {
@@ -37,54 +37,33 @@ class ServicioController {
      * @returns 409 - Nombres duplicados
      * @returns 400 - Validación fallida
      */
+    /**
+     * Crear múltiples servicios en una transacción
+     * POST /servicios/bulk-create
+     *
+     * Errores manejados automáticamente por asyncHandler:
+     * - PlanLimitExceededError → 403 (límite del plan)
+     * - DuplicateResourceError → 409 (nombres duplicados)
+     * - InvalidProfessionalsError → 400 (profesionales inválidos)
+     */
     static bulkCrear = asyncHandler(async (req, res) => {
         const { servicios } = req.body;
         const organizacionId = req.tenant.organizacionId;
 
-        try {
-            const serviciosCreados = await ServicioModel.crearBulk(
-                organizacionId,
-                servicios
-            );
+        const serviciosCreados = await ServicioModel.crearBulk(
+            organizacionId,
+            servicios
+        );
 
-            return ResponseHelper.success(res, {
-                servicios: serviciosCreados,
-                total_creados: serviciosCreados.length
-            }, `${serviciosCreados.length} servicios creados exitosamente`, 201);
-
-        } catch (error) {
-            const errorMsg = error.message.toLowerCase();
-
-            // Error de límite del plan
-            if (errorMsg.includes('límite') || errorMsg.includes('upgrade tu plan')) {
-                return ResponseHelper.error(res, error.message, 403, {
-                    codigo_error: 'PLAN_LIMIT_REACHED',
-                    accion_requerida: 'upgrade_plan'
-                });
-            }
-
-            // Error de nombres duplicados
-            if (errorMsg.includes('ya existen servicios') || errorMsg.includes('nombres duplicados')) {
-                return ResponseHelper.error(res, error.message, 409, {
-                    codigo_error: 'DUPLICATE_SERVICES'
-                });
-            }
-
-            // Error de validación de profesionales
-            if (errorMsg.includes('profesionales no existen')) {
-                return ResponseHelper.error(res, error.message, 400, {
-                    codigo_error: 'INVALID_PROFESSIONALS'
-                });
-            }
-
-            // Otros errores se propagan para manejo global
-            throw error;
-        }
+        return ResponseHelper.success(res, {
+            servicios: serviciosCreados,
+            total_creados: serviciosCreados.length
+        }, `${serviciosCreados.length} servicios creados exitosamente`, 201);
     });
 
     static obtenerPorId = asyncHandler(async (req, res) => {
         const { id } = req.params;
-        const servicio = await ServicioModel.obtenerPorId(parseInt(id), req.tenant.organizacionId);
+        const servicio = await ServicioModel.buscarPorId(req.tenant.organizacionId, parseInt(id));
 
         if (!servicio) {
             return ResponseHelper.error(res, 'Servicio no encontrado', 404);
@@ -147,9 +126,9 @@ class ServicioController {
         delete servicioData.organizacion_id;
 
         const servicioActualizado = await ServicioModel.actualizar(
+            req.tenant.organizacionId,
             parseInt(id),
-            servicioData,
-            req.tenant.organizacionId
+            servicioData
         );
 
         if (!servicioActualizado) {
@@ -170,7 +149,7 @@ class ServicioController {
 
     static eliminar = asyncHandler(async (req, res) => {
         const { id } = req.params;
-        const eliminado = await ServicioModel.eliminar(parseInt(id), req.tenant.organizacionId);
+        const eliminado = await ServicioModel.eliminar(req.tenant.organizacionId, parseInt(id));
 
         if (!eliminado) {
             return ResponseHelper.error(res, 'Servicio no encontrado', 404);
@@ -184,10 +163,10 @@ class ServicioController {
         const { profesional_id, configuracion = {} } = req.body;
 
         const asignacion = await ServicioModel.asignarProfesional(
+            req.tenant.organizacionId,
             parseInt(id),
             parseInt(profesional_id),
-            configuracion,
-            req.tenant.organizacionId
+            configuracion
         );
 
         return ResponseHelper.success(res, asignacion, 'Profesional asignado al servicio exitosamente', 201);
@@ -197,9 +176,9 @@ class ServicioController {
         const { id, profesional_id } = req.params;
 
         const desasignado = await ServicioModel.desasignarProfesional(
+            req.tenant.organizacionId,
             parseInt(id),
-            parseInt(profesional_id),
-            req.tenant.organizacionId
+            parseInt(profesional_id)
         );
 
         if (!desasignado) {
@@ -214,8 +193,8 @@ class ServicioController {
         const solo_activos = req.query.solo_activos !== 'false';
 
         const profesionales = await ServicioModel.obtenerProfesionales(
-            parseInt(id),
             req.tenant.organizacionId,
+            parseInt(id),
             solo_activos
         );
 
@@ -227,8 +206,8 @@ class ServicioController {
         const solo_activos = req.query.solo_activos !== 'false';
 
         const servicios = await ServicioModel.obtenerServiciosPorProfesional(
-            parseInt(profesional_id),
             req.tenant.organizacionId,
+            parseInt(profesional_id),
             solo_activos
         );
 
@@ -272,7 +251,7 @@ class ServicioController {
 
     static eliminarPermanente = asyncHandler(async (req, res) => {
         const { id } = req.params;
-        const eliminado = await ServicioModel.eliminarPermanente(parseInt(id), req.tenant.organizacionId);
+        const eliminado = await ServicioModel.eliminarPermanente(req.tenant.organizacionId, parseInt(id));
 
         if (!eliminado) {
             return ResponseHelper.error(res, 'Servicio no encontrado', 404);

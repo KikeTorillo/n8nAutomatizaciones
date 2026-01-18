@@ -103,7 +103,7 @@ class VariantesController {
         const { id } = req.params;
         const organizacionId = req.tenant.organizacionId;
 
-        const variante = await VariantesModel.obtenerPorId(parseInt(id), organizacionId);
+        const variante = await VariantesModel.buscarPorId(organizacionId, parseInt(id));
 
         if (!variante) {
             return ResponseHelper.error(res, 'Variante no encontrada', 404);
@@ -181,7 +181,7 @@ class VariantesController {
         const { id } = req.params;
         const organizacionId = req.tenant.organizacionId;
 
-        const resultado = await VariantesModel.eliminar(parseInt(id), organizacionId);
+        const resultado = await VariantesModel.eliminar(organizacionId, parseInt(id));
 
         if (!resultado) {
             return ResponseHelper.error(res, 'Variante no encontrada', 404);

@@ -678,7 +678,7 @@ export const durationMinutesField = (label = 'Duración', min = 5, max = 480) =>
  */
 export const phoneField = (label = 'Teléfono', required = true) => {
   const schema = z.string()
-    .regex(/^\d{10}$/, `${label} debe tener 10 dígitos`);
+    .regex(/^[1-9]\d{9}$/, `${label} debe tener 10 dígitos y no empezar con 0`);
   return required ? schema : schema.optional().or(z.literal(''));
 };
 

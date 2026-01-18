@@ -127,25 +127,21 @@ class PromocionesController {
     /**
      * Eliminar promocion
      * DELETE /api/v1/pos/promociones/:id
+     *
+     * Errores manejados por asyncHandler:
+     * - ResourceInUseError → 409 (tiene usos registrados)
      */
     static eliminar = asyncHandler(async (req, res) => {
         const { id } = req.params;
         const organizacionId = req.tenant.organizacionId;
 
-        try {
-            const eliminado = await PromocionesModel.eliminar(parseInt(id), organizacionId);
+        const eliminado = await PromocionesModel.eliminar(parseInt(id), organizacionId);
 
-            if (!eliminado) {
-                return ResponseHelper.notFound(res, 'Promocion no encontrada');
-            }
-
-            return ResponseHelper.success(res, null, 'Promocion eliminada exitosamente');
-        } catch (error) {
-            if (error.message.includes('ya ha sido utilizada')) {
-                return ResponseHelper.badRequest(res, error.message);
-            }
-            throw error;
+        if (!eliminado) {
+            return ResponseHelper.notFound(res, 'Promocion no encontrada');
         }
+
+        return ResponseHelper.success(res, null, 'Promocion eliminada exitosamente');
     });
 
     /**

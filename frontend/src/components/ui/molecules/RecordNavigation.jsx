@@ -95,4 +95,6 @@ export function RecordNavigation({
   );
 }
 
+RecordNavigation.displayName = 'RecordNavigation';
+
 export default RecordNavigation;

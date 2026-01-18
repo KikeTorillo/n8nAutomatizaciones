@@ -34,4 +34,6 @@ function BackButton({ to, label = 'Volver', className = '' }) {
   );
 }
 
+BackButton.displayName = 'BackButton';
+
 export default BackButton;

@@ -211,4 +211,6 @@ export function LimitProgressBar({ label, usado, limite, porcentaje }) {
   );
 }
 
+ProgressBar.displayName = 'ProgressBar';
+
 export default ProgressBar;

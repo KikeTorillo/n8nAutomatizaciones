@@ -28,4 +28,6 @@ function Label({ label, required = false, htmlFor, className }) {
   );
 }
 
+Label.displayName = 'Label';
+
 export default Label;

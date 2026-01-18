@@ -47,6 +47,7 @@ router.get('/sin-profesional',
     auth.authenticateToken,
     tenant.setTenantContext,
     rateLimiting.apiRateLimit,
+    validation.validate(usuarioSchemas.obtenerUsuariosSinProfesional),
     UsuarioController.obtenerUsuariosSinProfesional
 );
 

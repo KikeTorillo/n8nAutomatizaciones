@@ -21,11 +21,11 @@ class ConteosModel {
 
     /**
      * Crear nuevo conteo de inventario (estado: borrador)
-     * @param {Object} data - Datos del conteo
      * @param {number} organizacionId - ID de la organización
+     * @param {Object} data - Datos del conteo
      * @returns {Object} Conteo creado con items
      */
-    static async crear(data, organizacionId) {
+    static async crear(organizacionId, data) {
         return await RLSContextManager.transaction(organizacionId, async (db) => {
             logger.info('[ConteosModel.crear] Iniciando', {
                 organizacion_id: organizacionId,
@@ -76,11 +76,11 @@ class ConteosModel {
 
     /**
      * Obtener conteo por ID con items
-     * @param {number} id - ID del conteo
      * @param {number} organizacionId - ID de la organización
+     * @param {number} id - ID del conteo
      * @returns {Object} Conteo con items y usuarios relacionados
      */
-    static async obtenerPorId(id, organizacionId) {
+    static async buscarPorId(organizacionId, id) {
         return await RLSContextManager.withBypass(async (db) => {
             // Obtener conteo con datos de usuarios
             const conteoQuery = `
@@ -148,11 +148,11 @@ class ConteosModel {
 
     /**
      * Listar conteos con filtros
-     * @param {Object} filtros - Filtros de búsqueda
      * @param {number} organizacionId - ID de la organización
+     * @param {Object} filtros - Filtros de búsqueda
      * @returns {Object} Lista de conteos con totales
      */
-    static async listar(filtros, organizacionId) {
+    static async listar(organizacionId, filtros = {}) {
         return await RLSContextManager.query(organizacionId, async (db) => {
             let whereConditions = ['c.organizacion_id = $1'];
             let values = [organizacionId];

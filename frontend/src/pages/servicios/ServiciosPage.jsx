@@ -1,302 +1,304 @@
-import { useState, useMemo } from 'react';
-import { Plus, Search, Filter, AlertTriangle, Briefcase, CheckCircle, DollarSign, List, XCircle } from 'lucide-react';
+import { useMemo } from 'react';
 import {
-  BackButton,
-  Button,
-  Input,
-  StatCardGrid,
-  ViewTabs
+  Briefcase,
+  Edit,
+  Trash2,
+  AlertTriangle,
+  CheckCircle,
+  DollarSign,
+  Users,
+} from 'lucide-react';
+import {
+  Badge,
+  DataTableActions,
+  DataTableActionButton,
+  ListadoCRUDPage,
 } from '@/components/ui';
-import ServiciosList from '@/components/servicios/ServiciosList';
+import AgendamientoPageLayout from '@/components/agendamiento/AgendamientoPageLayout';
 import ServicioFormDrawer from '@/components/servicios/ServicioFormDrawer';
 import ProfesionalesServicioModal from '@/components/servicios/ProfesionalesServicioModal';
-import ServiciosFilters from '@/components/servicios/ServiciosFilters';
 import ServiciosSinProfesionalesAlert from '@/components/servicios/ServiciosSinProfesionalesAlert';
 import { useServicios, useEliminarServicio } from '@/hooks/agendamiento';
-import { useToast, useModalManager, usePagination, useDeleteConfirmation } from '@/hooks/utils';
 import { formatCurrency } from '@/lib/utils';
+import { formatDuration, parseProfessionalsCount, parsePrice } from '@/utils/formatters';
 
 /**
- * Página principal de gestión de servicios
- * Implementa CRUD completo con búsqueda, filtros y paginación
+ * Configuracion de columnas para la tabla de servicios
  */
-function ServiciosPage() {
-  const toast = useToast();
-  const { page, handlePageChange, resetPage, queryParams } = usePagination({ limit: 20 });
-  const [busqueda, setBusqueda] = useState('');
-  const [showFilters, setShowFilters] = useState(false);
-
-  // Gestión centralizada de modales
-  const { openModal, closeModal, isOpen, getModalData, getModalProps } = useModalManager({
-    formulario: { isOpen: false, data: null, mode: 'create' },
-    profesionales: { isOpen: false, data: null },
-  });
-
-  // Filtros
-  const [filtros, setFiltros] = useState({
-    activo: '',
-    categoria: '',
-    precio_min: '',
-    precio_max: '',
-  });
-
-  // Estado de vista activa (tabs)
-  const [vistaActiva, setVistaActiva] = useState('todos'); // 'todos', 'activos', 'inactivos'
-
-  // Determinar filtro de activo basado en vista y filtros
-  const getActivoFilter = () => {
-    // Si hay un filtro específico en el panel, usarlo
-    if (filtros.activo !== '') {
-      return filtros.activo === 'true';
-    }
-    // Si no, usar el tab activo
-    if (vistaActiva === 'activos') return true;
-    if (vistaActiva === 'inactivos') return false;
-    return undefined; // 'todos' - sin filtro
-  };
-
-  // Fetch servicios con filtros
-  // React Query maneja el debouncing automáticamente con keepPreviousData
-  const { data, isLoading } = useServicios({
-    ...queryParams,
-    busqueda,
-    activo: getActivoFilter(),
-    categoria: filtros.categoria || undefined,
-    precio_min: filtros.precio_min || undefined,
-    precio_max: filtros.precio_max || undefined,
-  });
-
-  // Hook de eliminación
-  const eliminarMutation = useEliminarServicio();
-
-  // Hook de confirmación de eliminación (desactivación)
-  const { confirmDelete, DeleteConfirmModal } = useDeleteConfirmation({
-    deleteMutation: eliminarMutation,
-    entityName: 'servicio',
-    getName: (s) => s.nombre,
-    confirmTitle: 'Desactivar servicio',
-    confirmMessage: '¿Estás seguro de desactivar el servicio "{name}"? Las citas existentes se mantendrán, pero no se podrán crear nuevas.',
-    confirmText: 'Sí, Desactivar',
-    successMessage: 'Servicio desactivado correctamente',
-    renderChildren: (servicio) => servicio && (
-      <div className="space-y-3 mt-4">
-        <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3">
-          <div className="space-y-1 text-sm">
-            <div>
-              <span className="font-medium text-gray-700 dark:text-gray-300">Servicio: </span>
-              <span className="text-gray-900 dark:text-gray-100">{servicio.nombre}</span>
-            </div>
-            {servicio.categoria && (
-              <div>
-                <span className="font-medium text-gray-700 dark:text-gray-300">Categoría: </span>
-                <span className="text-gray-900 dark:text-gray-100">{servicio.categoria}</span>
-              </div>
-            )}
+const COLUMNS = [
+  {
+    key: 'nombre',
+    header: 'Servicio',
+    width: 'lg',
+    render: (row) => (
+      <div className="flex items-center">
+        {row.imagen_url ? (
+          <img
+            src={row.imagen_url}
+            alt={row.nombre}
+            className="flex-shrink-0 h-10 w-10 rounded-lg object-cover border border-gray-200 dark:border-gray-600"
+          />
+        ) : (
+          <div className="flex-shrink-0 h-10 w-10 bg-primary-100 dark:bg-primary-900/40 rounded-lg flex items-center justify-center">
+            <Briefcase className="w-5 h-5 text-primary-600 dark:text-primary-400" />
           </div>
-        </div>
-        <div className="bg-primary-50 dark:bg-primary-900/30 border border-primary-200 dark:border-primary-800 rounded-lg p-3">
-          <p className="text-sm text-primary-900 dark:text-primary-300">
-            💡 Puedes reactivar el servicio editándolo y marcándolo como activo nuevamente.
-          </p>
+        )}
+        <div className="ml-4">
+          <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+            {row.nombre}
+          </div>
+          {row.descripcion && (
+            <div className="text-sm text-gray-500 dark:text-gray-400 max-w-xs truncate">
+              {row.descripcion}
+            </div>
+          )}
         </div>
       </div>
     ),
-  });
+  },
+  {
+    key: 'categoria',
+    header: 'Categoria',
+    hideOnMobile: true,
+    render: (row) => (
+      row.categoria ? (
+        <Badge variant="primary" size="sm">{row.categoria}</Badge>
+      ) : (
+        <span className="text-sm text-gray-400 dark:text-gray-500">-</span>
+      )
+    ),
+  },
+  {
+    key: 'duracion',
+    header: 'Duracion',
+    hideOnMobile: true,
+    render: (row) => (
+      <Badge variant="info" size="sm">
+        {formatDuration(row.duracion_minutos)}
+      </Badge>
+    ),
+  },
+  {
+    key: 'precio',
+    header: 'Precio',
+    render: (row) => (
+      <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+        {formatCurrency(parsePrice(row.precio))}
+      </div>
+    ),
+  },
+  {
+    key: 'profesionales',
+    header: 'Profesionales',
+    hideOnMobile: true,
+    render: (row) => {
+      const totalProfs = parseProfessionalsCount(row.total_profesionales_asignados);
+      if (totalProfs === 0) {
+        return (
+          <div className="inline-flex items-center gap-1 px-2 py-1 bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-400 rounded-md text-xs font-medium">
+            <AlertTriangle className="w-3 h-3" />
+            Sin asignar
+          </div>
+        );
+      }
+      return (
+        <div className="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-full bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-400">
+          <CheckCircle className="w-3 h-3" />
+          {totalProfs} profesional{totalProfs !== 1 ? 'es' : ''}
+        </div>
+      );
+    },
+  },
+  {
+    key: 'activo',
+    header: 'Estado',
+    align: 'center',
+    render: (row) => (
+      <Badge variant={row.activo ? 'success' : 'default'} size="sm">
+        {row.activo ? 'Activo' : 'Inactivo'}
+      </Badge>
+    ),
+  },
+];
 
-  // Configuración de estadísticas
-  const statsConfig = useMemo(() => {
-    const servicios = data?.servicios || [];
-    const total = data?.paginacion?.total || servicios.length;
+/**
+ * Filtros iniciales
+ */
+const INITIAL_FILTERS = {
+  busqueda: '',
+  activo: true,
+};
+
+/**
+ * Mapper para transformar data del template a props del FormDrawer
+ */
+const mapFormData = (data) => ({
+  servicio: data,
+  mode: data ? 'edit' : 'create',
+});
+
+/**
+ * Acciones por fila de servicio
+ */
+function ServicioRowActions({ row, onEdit, onDelete, openModal }) {
+  const totalProfs = parseProfessionalsCount(row.total_profesionales_asignados);
+
+  return (
+    <DataTableActions>
+      {/* Accion prioritaria: Gestionar profesionales */}
+      <DataTableActionButton
+        icon={totalProfs === 0 ? AlertTriangle : Users}
+        label={totalProfs === 0 ? 'Asignar' : 'Profesionales'}
+        onClick={() => openModal('profesionales', row)}
+        variant={totalProfs === 0 ? 'warning' : 'secondary'}
+      />
+      <DataTableActionButton
+        icon={Edit}
+        label="Editar"
+        onClick={() => onEdit(row)}
+        variant="primary"
+      />
+      <DataTableActionButton
+        icon={Trash2}
+        label="Desactivar"
+        onClick={() => onDelete(row)}
+        variant="danger"
+      />
+    </DataTableActions>
+  );
+}
+
+/**
+ * Pagina principal de Gestion de Servicios
+ * Migrado a ListadoCRUDPage - reduccion de ~60% del codigo
+ */
+function ServiciosPage() {
+  return (
+    <ListadoCRUDPage
+      // Layout
+      title="Servicios"
+      subtitle="Gestiona los servicios de tu negocio"
+      icon={Briefcase}
+      PageLayout={AgendamientoPageLayout}
+
+      // Data
+      useListQuery={useServicios}
+      dataKey="servicios"
+
+      // Mutations
+      useDeleteMutation={useEliminarServicio}
+      deleteMutationOptions={{
+        entityName: 'servicio',
+        getName: (s) => s.nombre,
+        confirmTitle: 'Desactivar servicio',
+        confirmMessage: 'Estas seguro de desactivar el servicio "{name}"? Las citas existentes se mantendran, pero no se podran crear nuevas.',
+        confirmText: 'Si, Desactivar',
+        successMessage: 'Servicio desactivado correctamente',
+      }}
+
+      // Table
+      columns={COLUMNS}
+      rowActions={(row, handlers) => (
+        <ServicioRowActions row={row} {...handlers} />
+      )}
+      emptyState={{
+        icon: Briefcase,
+        title: 'No hay servicios',
+        description: 'Comienza agregando tu primer servicio',
+        actionLabel: 'Nuevo Servicio',
+      }}
+
+      // Filters
+      initialFilters={INITIAL_FILTERS}
+      filterPersistId="agendamiento.servicios"
+      limit={20}
+
+      // Stats - Calculadas desde los datos
+      statsConfig={null} // Se implementan en renderBeforeTable
+
+      // Modals
+      FormDrawer={ServicioFormDrawer}
+      mapFormData={mapFormData}
+
+      // Extra Modals
+      extraModals={{
+        profesionales: {
+          component: ProfesionalesServicioModal,
+          mapData: (data) => ({ servicio: data }),
+        },
+      }}
+
+      // Custom slots
+      renderBeforeTable={({ items }) => (
+        <>
+          {/* Estadisticas calculadas */}
+          <ServiciosStats servicios={items} />
+          {/* Alerta de servicios sin profesionales */}
+          <ServiciosSinProfesionalesAlert servicios={items} />
+        </>
+      )}
+
+      // Actions
+      newButtonLabel="Nuevo Servicio"
+    />
+  );
+}
+
+/**
+ * Componente de estadisticas de servicios
+ */
+function ServiciosStats({ servicios = [] }) {
+  const stats = useMemo(() => {
+    const total = servicios.length;
     const activos = servicios.filter(s => s.activo).length;
-    const sinProfesionales = servicios.filter(s => s.total_profesionales_asignados === 0 && s.activo).length;
-    const precioPromedio = servicios.length > 0
-      ? servicios.reduce((sum, s) => sum + parseFloat(s.precio || 0), 0) / servicios.length
+    const sinProfesionales = servicios.filter(
+      s => parseProfessionalsCount(s.total_profesionales_asignados) === 0 && s.activo
+    ).length;
+    const precioPromedio = total > 0
+      ? servicios.reduce((sum, s) => sum + parsePrice(s.precio), 0) / total
       : 0;
 
     return [
-      { key: 'total', icon: Briefcase, label: 'Total Servicios', value: total, color: 'primary' },
+      { key: 'total', icon: Briefcase, label: 'Total', value: total, color: 'primary' },
       { key: 'activos', icon: CheckCircle, label: 'Activos', value: activos, color: 'green' },
-      { key: 'sinProf', icon: AlertTriangle, label: 'Sin Profesionales', value: sinProfesionales, color: 'yellow' },
-      { key: 'precio', icon: DollarSign, label: 'Precio Promedio', value: formatCurrency(precioPromedio), color: 'primary' },
+      { key: 'sinProf', icon: AlertTriangle, label: 'Sin Prof.', value: sinProfesionales, color: 'yellow' },
+      { key: 'precio', icon: DollarSign, label: 'Precio Prom.', value: formatCurrency(precioPromedio), color: 'primary' },
     ];
-  }, [data?.servicios, data?.paginacion?.total]);
+  }, [servicios]);
 
-  // Configuración de ViewTabs
-  const viewTabsConfig = useMemo(() => [
-    { id: 'todos', label: 'Todos', icon: List },
-    { id: 'activos', label: 'Activos', icon: CheckCircle },
-    { id: 'inactivos', label: 'Inactivos', icon: XCircle },
-  ], []);
-
-  // Handler para crear nuevo servicio
-  const handleNuevoServicio = () => {
-    openModal('formulario', null, { mode: 'create' });
-  };
-
-  // Handler para editar servicio
-  const handleEdit = (servicio) => {
-    openModal('formulario', servicio, { mode: 'edit' });
-  };
-
-  // Handler para gestionar profesionales
-  const handleGestionarProfesionales = (servicio) => {
-    openModal('profesionales', servicio);
-  };
-
-  // Handler para eliminar (desactivar) servicio
-  const handleDelete = (servicio) => confirmDelete(servicio);
-
-  // Handler para limpiar filtros
-  const handleLimpiarFiltros = () => {
-    setFiltros({
-      activo: '',
-      categoria: '',
-      precio_min: '',
-      precio_max: '',
-    });
-    setBusqueda('');
-    resetPage();
-  };
-
-  // Verificar si hay filtros activos
-  const hasFiltrosActivos =
-    filtros.activo !== '' ||
-    filtros.categoria !== '' ||
-    filtros.precio_min !== '' ||
-    filtros.precio_max !== '' ||
-    busqueda !== '';
+  if (servicios.length === 0) return null;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Header */}
-      <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          {/* Breadcrumb */}
-          <div className="mb-4">
-            <BackButton to="/home" label="Volver al Inicio" />
-          </div>
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+      {stats.map((stat) => {
+        const Icon = stat.icon;
+        const colorClasses = {
+          primary: 'bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400',
+          green: 'bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400',
+          yellow: 'bg-yellow-50 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400',
+        };
 
-          {/* Header - Mobile First */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">Servicios</h1>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 hidden sm:block">
-                Gestiona los servicios de tu negocio
-              </p>
-            </div>
-
-            <Button onClick={handleNuevoServicio} className="w-full sm:w-auto">
-              <Plus className="w-4 h-4 mr-2" />
-              Nuevo Servicio
-            </Button>
-          </div>
-
-          {/* Search Bar y Filtros */}
-          <div className="mt-6 space-y-4">
-            <div className="flex gap-3">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
-                <Input
-                  type="text"
-                  placeholder="Buscar por nombre o categoría..."
-                  value={busqueda}
-                  onChange={(e) => {
-                    setBusqueda(e.target.value);
-                    resetPage(); // Resetear a página 1 al buscar
-                  }}
-                  className="pl-10"
-                />
+        return (
+          <div
+            key={stat.key}
+            className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-3 sm:p-4"
+          >
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className={`p-2 rounded-lg ${colorClasses[stat.color] || colorClasses.primary}`}>
+                <Icon className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
-              <Button
-                variant="outline"
-                onClick={() => setShowFilters(!showFilters)}
-                className={showFilters ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400' : ''}
-              >
-                <Filter className="w-4 h-4 mr-2" />
-                Filtros
-                {hasFiltrosActivos && (
-                  <span className="ml-2 px-2 py-0.5 text-xs bg-primary-600 text-white rounded-full">
-                    {Object.values(filtros).filter(v => v !== '').length + (busqueda ? 1 : 0)}
-                  </span>
-                )}
-              </Button>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 truncate">
+                  {stat.label}
+                </p>
+                <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  {stat.value}
+                </p>
+              </div>
             </div>
-
-            {/* Panel de Filtros */}
-            {showFilters && (
-              <ServiciosFilters
-                filtros={filtros}
-                onFiltrosChange={(nuevosFiltros) => {
-                  setFiltros(nuevosFiltros);
-                  resetPage();
-                }}
-                onLimpiarFiltros={handleLimpiarFiltros}
-                hasFiltrosActivos={hasFiltrosActivos}
-              />
-            )}
           </div>
-        </div>
-      </div>
-
-      {/* Estadísticas y Tabs */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* Estadísticas */}
-        <StatCardGrid stats={statsConfig} columns={4} />
-
-        {/* Tabs de Vista */}
-        <div className="mt-6 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-          <ViewTabs
-            tabs={viewTabsConfig}
-            activeTab={vistaActiva}
-            onChange={(tab) => {
-              setVistaActiva(tab);
-              resetPage(); // Resetear a página 1 al cambiar vista
-              // Limpiar filtro de estado cuando se usa tab
-              if (filtros.activo !== '') {
-                setFiltros({ ...filtros, activo: '' });
-              }
-            }}
-          />
-        </div>
-      </div>
-
-      {/* Alerta Global: Servicios sin Profesionales */}
-      <ServiciosSinProfesionalesAlert
-        servicios={data?.servicios}
-        onAsignarProfesionales={handleGestionarProfesionales}
-      />
-
-      {/* Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <ServiciosList
-          servicios={data?.servicios}
-          paginacion={data?.paginacion}
-          isLoading={isLoading}
-          onPageChange={handlePageChange}
-          onEdit={handleEdit}
-          onGestionarProfesionales={handleGestionarProfesionales}
-          onDelete={handleDelete}
-        />
-      </div>
-
-      {/* Modal de Crear/Editar Servicio */}
-      <ServicioFormDrawer
-        key={`${getModalProps('formulario').mode}-${getModalData('formulario')?.id || 'new'}`}
-        isOpen={isOpen('formulario')}
-        onClose={() => closeModal('formulario')}
-        mode={getModalProps('formulario').mode || 'create'}
-        servicio={getModalData('formulario')}
-      />
-
-      {/* Modal de Gestión de Profesionales */}
-      <ProfesionalesServicioModal
-        isOpen={isOpen('profesionales')}
-        onClose={() => closeModal('profesionales')}
-        servicio={getModalData('profesionales')}
-      />
-
-      {/* Modal de Confirmación de Desactivación */}
-      <DeleteConfirmModal />
+        );
+      })}
     </div>
   );
 }

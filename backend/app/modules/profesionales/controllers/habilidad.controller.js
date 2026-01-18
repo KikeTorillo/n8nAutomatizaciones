@@ -59,7 +59,7 @@ class CatalogoHabilidadesController {
 
         const habilidad = await CatalogoHabilidadesModel.crear(habilidadData);
 
-        logger.info(`📚 Habilidad creada en catálogo: ${habilidad.nombre} (ID: ${habilidad.id})`);
+        logger.info(`[CatalogoHabilidades.crear] Habilidad creada: ${habilidad.nombre} (ID: ${habilidad.id})`);
 
         return ResponseHelper.success(res, habilidad, 'Habilidad creada exitosamente', 201);
     });
@@ -100,7 +100,7 @@ class CatalogoHabilidadesController {
             req.body
         );
 
-        logger.info(`📝 Habilidad actualizada: ${habilidad.nombre} (ID: ${habilidadId})`);
+        logger.info(`[CatalogoHabilidades.actualizar] Habilidad actualizada: ${habilidad.nombre} (ID: ${habilidadId})`);
 
         return ResponseHelper.success(res, habilidad, 'Habilidad actualizada exitosamente');
     });
@@ -129,7 +129,7 @@ class CatalogoHabilidadesController {
             return ResponseHelper.error(res, 'No se pudo eliminar la habilidad', 400);
         }
 
-        logger.info(`🗑️ Habilidad eliminada del catálogo: ${habilidad.nombre} (ID: ${habilidadId})`);
+        logger.info(`[CatalogoHabilidades.eliminar] Habilidad eliminada: ${habilidad.nombre} (ID: ${habilidadId})`);
 
         return ResponseHelper.success(res, { id: habilidadId }, 'Habilidad eliminada exitosamente');
     });
@@ -233,7 +233,7 @@ class HabilidadEmpleadoController {
             habilidadEmpleado.id
         );
 
-        logger.info(`🏅 Habilidad asignada a profesional ${profesionalId}: ID ${habilidadEmpleado.habilidad_id}`);
+        logger.info(`[HabilidadEmpleado.asignar] Habilidad asignada a profesional ${profesionalId}: ID ${habilidadEmpleado.habilidad_id}`);
 
         return ResponseHelper.success(res, habilidadCompleta, 'Habilidad asignada exitosamente', 201);
     });
@@ -259,7 +259,7 @@ class HabilidadEmpleadoController {
             usuarioId
         );
 
-        logger.info(`🏅 ${resultados.length} habilidades asignadas a profesional ${profesionalId}`);
+        logger.info(`[HabilidadEmpleado.asignarBatch] ${resultados.length} habilidades asignadas a profesional ${profesionalId}`);
 
         return ResponseHelper.success(res, {
             asignadas: resultados.length,
@@ -310,7 +310,7 @@ class HabilidadEmpleadoController {
             habilidad.id
         );
 
-        logger.info(`📝 Habilidad de empleado actualizada: ID ${habilidadEmpleadoId}`);
+        logger.info(`[HabilidadEmpleado.actualizar] Habilidad actualizada: ID ${habilidadEmpleadoId}`);
 
         return ResponseHelper.success(res, habilidadCompleta, 'Habilidad actualizada exitosamente');
     });
@@ -339,7 +339,7 @@ class HabilidadEmpleadoController {
             return ResponseHelper.error(res, 'No se pudo eliminar la habilidad', 400);
         }
 
-        logger.info(`🗑️ Habilidad eliminada de empleado: ID ${habilidadEmpleadoId}`);
+        logger.info(`[HabilidadEmpleado.eliminar] Habilidad eliminada: ID ${habilidadEmpleadoId}`);
 
         return ResponseHelper.success(res, { id: habilidadEmpleadoId }, 'Habilidad eliminada exitosamente');
     });
@@ -372,7 +372,7 @@ class HabilidadEmpleadoController {
         );
 
         const accion = verificado ? 'verificada' : 'desverificada';
-        logger.info(`✅ Habilidad ${accion}: ID ${habilidadEmpleadoId} por usuario ${usuarioId}`);
+        logger.info(`[HabilidadEmpleado.verificar] Habilidad ${accion}: ID ${habilidadEmpleadoId} por usuario ${usuarioId}`);
 
         return ResponseHelper.success(res, habilidadCompleta, `Habilidad ${accion} exitosamente`);
     });

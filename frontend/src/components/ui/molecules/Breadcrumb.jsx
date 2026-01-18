@@ -70,4 +70,6 @@ export function Breadcrumb({ items = [], className, homeLink = false }) {
   );
 }
 
+Breadcrumb.displayName = 'Breadcrumb';
+
 export default Breadcrumb;

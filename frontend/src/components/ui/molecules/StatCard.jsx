@@ -164,4 +164,6 @@ export function StatCard({
   );
 }
 
+StatCard.displayName = 'StatCard';
+
 export default StatCard;

@@ -114,12 +114,12 @@ class MotivoSalidaModel {
     }
 
     /**
-     * Obtener motivo por ID
+     * Buscar motivo por ID
      * @param {number} organizacionId - ID de la organización
      * @param {number} motivoId - ID del motivo
      * @returns {Promise<Object|null>} Motivo encontrado o null
      */
-    static async obtenerPorId(organizacionId, motivoId) {
+    static async buscarPorId(organizacionId, motivoId) {
         return await RLSContextManager.withBypass(async (db) => {
             const query = `
                 SELECT *

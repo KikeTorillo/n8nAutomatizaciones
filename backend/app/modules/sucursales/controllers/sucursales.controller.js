@@ -32,7 +32,7 @@ class SucursalesController {
                 ciudad_id: req.query.ciudad_id ? parseInt(req.query.ciudad_id) : undefined
             };
 
-            const sucursales = await SucursalesModel.listar(filtros, organizacion_id);
+            const sucursales = await SucursalesModel.listar(organizacion_id, filtros);
 
             res.json({
                 success: true,
@@ -57,7 +57,7 @@ class SucursalesController {
             const { id } = req.params;
             const { organizacion_id } = req.user;
 
-            const sucursal = await SucursalesModel.obtenerPorId(parseInt(id), organizacion_id);
+            const sucursal = await SucursalesModel.buscarPorId(organizacion_id, parseInt(id));
 
             if (!sucursal) {
                 return res.status(404).json({
@@ -98,7 +98,7 @@ class SucursalesController {
                 });
             }
 
-            const sucursal = await SucursalesModel.crear(value, organizacion_id);
+            const sucursal = await SucursalesModel.crear(organizacion_id, value);
 
             res.status(201).json({
                 success: true,
@@ -134,7 +134,7 @@ class SucursalesController {
                 });
             }
 
-            const sucursal = await SucursalesModel.actualizar(parseInt(id), value, organizacion_id);
+            const sucursal = await SucursalesModel.actualizar(organizacion_id, parseInt(id), value);
 
             res.json({
                 success: true,
@@ -160,7 +160,7 @@ class SucursalesController {
             const { id } = req.params;
             const { organizacion_id } = req.user;
 
-            await SucursalesModel.eliminar(parseInt(id), organizacion_id);
+            await SucursalesModel.eliminar(organizacion_id, parseInt(id));
 
             res.json({
                 success: true,

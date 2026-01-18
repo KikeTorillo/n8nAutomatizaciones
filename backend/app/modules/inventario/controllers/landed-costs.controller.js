@@ -32,7 +32,7 @@ class LandedCostsController {
         const organizacionId = req.tenant.organizacionId;
         const { costoId } = req.params;
 
-        const costo = await LandedCostsModel.obtenerPorId(parseInt(costoId), organizacionId);
+        const costo = await LandedCostsModel.buscarPorId(organizacionId, parseInt(costoId));
 
         if (!costo) {
             return ResponseHelper.notFound(res, 'Costo adicional no encontrado');
@@ -55,7 +55,7 @@ class LandedCostsController {
             orden_compra_id: parseInt(ordenCompraId)
         };
 
-        const costo = await LandedCostsModel.crear(data, organizacionId, usuarioId);
+        const costo = await LandedCostsModel.crear(organizacionId, data, usuarioId);
 
         return ResponseHelper.created(res, costo, 'Costo adicional creado');
     });
@@ -69,9 +69,9 @@ class LandedCostsController {
         const { costoId } = req.params;
 
         const costo = await LandedCostsModel.actualizar(
+            organizacionId,
             parseInt(costoId),
-            req.body,
-            organizacionId
+            req.body
         );
 
         if (!costo) {
@@ -89,7 +89,7 @@ class LandedCostsController {
         const organizacionId = req.tenant.organizacionId;
         const { costoId } = req.params;
 
-        const eliminado = await LandedCostsModel.eliminar(parseInt(costoId), organizacionId);
+        const eliminado = await LandedCostsModel.eliminar(organizacionId, parseInt(costoId));
 
         if (!eliminado) {
             return ResponseHelper.notFound(res, 'Costo adicional no encontrado');

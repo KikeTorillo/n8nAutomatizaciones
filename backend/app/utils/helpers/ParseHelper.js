@@ -60,6 +60,24 @@ class ParseHelper {
   }
 
   /**
+   * Parseo de entero nullable (soporta 'null' como valor literal)
+   * @param {string|number|undefined} value - Valor a parsear
+   * @returns {number|null|undefined}
+   *
+   * @example
+   * ParseHelper.parseIntNullable('42')     // 42
+   * ParseHelper.parseIntNullable('null')   // null (valor explícito)
+   * ParseHelper.parseIntNullable(undefined) // undefined (no enviado)
+   */
+  static parseIntNullable(value) {
+    if (value === undefined || value === '') return undefined;
+    if (value === null || value === 'null') return null;
+    if (typeof value === 'number' && Number.isInteger(value)) return value;
+    const parsed = Number.parseInt(value, 10);
+    return Number.isNaN(parsed) ? undefined : parsed;
+  }
+
+  /**
    * Parseo seguro de floats
    * @param {string|number|undefined} value - Valor a parsear
    * @param {number|null} defaultValue - Valor por defecto si es inválido
@@ -215,6 +233,9 @@ class ParseHelper {
           break;
         case 'int':
           result[field] = this.parseInt(value);
+          break;
+        case 'int_nullable':
+          result[field] = this.parseIntNullable(value);
           break;
         case 'float':
           result[field] = this.parseFloat(value);

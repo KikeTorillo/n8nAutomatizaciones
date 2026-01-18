@@ -11,7 +11,7 @@ class SucursalesModel {
      * Crear nueva sucursal
      * Valida límite según plan de suscripción
      */
-    static async crear(data, organizacionId) {
+    static async crear(organizacionId, data) {
         return await RLSContextManager.transaction(organizacionId, async (db) => {
             logger.info('[SucursalesModel.crear] Iniciando', {
                 organizacion_id: organizacionId,
@@ -110,7 +110,7 @@ class SucursalesModel {
     /**
      * Obtener sucursal por ID
      */
-    static async obtenerPorId(id, organizacionId) {
+    static async buscarPorId(organizacionId, id) {
         return await RLSContextManager.query(organizacionId, async (db) => {
             const query = `
                 SELECT
@@ -131,7 +131,7 @@ class SucursalesModel {
     /**
      * Listar sucursales con filtros opcionales
      */
-    static async listar(filtros, organizacionId) {
+    static async listar(organizacionId, filtros = {}) {
         return await RLSContextManager.query(organizacionId, async (db) => {
             let whereConditions = ['s.organizacion_id = $1'];
             let values = [organizacionId];
@@ -180,7 +180,7 @@ class SucursalesModel {
     /**
      * Actualizar sucursal
      */
-    static async actualizar(id, data, organizacionId) {
+    static async actualizar(organizacionId, id, data) {
         return await RLSContextManager.transaction(organizacionId, async (db) => {
             logger.info('[SucursalesModel.actualizar] Iniciando', {
                 sucursal_id: id,
@@ -249,7 +249,7 @@ class SucursalesModel {
     /**
      * Eliminar sucursal (soft delete)
      */
-    static async eliminar(id, organizacionId) {
+    static async eliminar(organizacionId, id) {
         return await RLSContextManager.transaction(organizacionId, async (db) => {
             logger.info('[SucursalesModel.eliminar] Iniciando', {
                 sucursal_id: id,

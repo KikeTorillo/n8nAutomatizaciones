@@ -16,7 +16,7 @@ class VentasPOSModel {
      * Crear nueva venta con items
      * CRÍTICO: Transaction con lock optimista
      */
-    static async crear(data, organizacionId) {
+    static async crear(organizacionId, data) {
         return await RLSContextManager.transaction(organizacionId, async (db) => {
             logger.info('[VentasPOSModel.crear] Iniciando venta', {
                 organizacion_id: organizacionId,
@@ -683,12 +683,12 @@ class VentasPOSModel {
 
     /**
      * Obtener venta por ID con sus items
-     * @param {number} id - ID de la venta
      * @param {number} organizacionId - ID de la organización
+     * @param {number} id - ID de la venta
      * @param {Object} options - Opciones de query
      * @param {boolean} options.incluirAgendamiento - Si incluir JOINs a clientes/profesionales (default: true)
      */
-    static async obtenerPorId(id, organizacionId, options = {}) {
+    static async buscarPorId(organizacionId, id, options = {}) {
         const { incluirAgendamiento = true } = options;
 
         // ⚠️ CRÍTICO: Usar withBypass para JOINs multi-tabla
@@ -750,12 +750,12 @@ class VentasPOSModel {
 
     /**
      * Listar ventas con filtros
-     * @param {Object} filtros - Filtros de búsqueda
      * @param {number} organizacionId - ID de la organización
+     * @param {Object} filtros - Filtros de búsqueda
      * @param {Object} options - Opciones de query
      * @param {boolean} options.incluirAgendamiento - Si incluir JOINs a clientes/profesionales (default: true)
      */
-    static async listar(filtros, organizacionId, options = {}) {
+    static async listar(organizacionId, filtros = {}, options = {}) {
         const { incluirAgendamiento = true } = options;
 
         return await RLSContextManager.query(organizacionId, async (db) => {
@@ -892,7 +892,7 @@ class VentasPOSModel {
     /**
      * Actualizar estado de venta
      */
-    static async actualizarEstado(id, nuevoEstado, organizacionId) {
+    static async actualizarEstado(organizacionId, id, nuevoEstado) {
         return await RLSContextManager.transaction(organizacionId, async (db) => {
             logger.info('[VentasPOSModel.actualizarEstado] Actualizando estado', {
                 venta_id: id,
@@ -1545,7 +1545,7 @@ class VentasPOSModel {
      * Actualizar venta completa
      * PUT /api/v1/pos/ventas/:id
      */
-    static async actualizar(id, data, organizacionId) {
+    static async actualizar(organizacionId, id, data) {
         return await RLSContextManager.transaction(organizacionId, async (db) => {
             // Verificar que la venta existe
             const checkQuery = `
@@ -1647,7 +1647,7 @@ class VentasPOSModel {
      * Eliminar venta (marca como eliminada, revierte stock)
      * DELETE /api/v1/pos/ventas/:id
      */
-    static async eliminar(id, data, organizacionId) {
+    static async eliminar(organizacionId, id, data) {
         return await RLSContextManager.transaction(organizacionId, async (db) => {
             // Verificar que la venta existe
             const checkQuery = `
@@ -1899,11 +1899,11 @@ class VentasPOSModel {
     /**
      * Crear venta con reservas pre-existentes
      * Flujo optimizado: reservas ya creadas, solo confirmar
+     * @param {number} organizacionId - ID de la organización
      * @param {Object} data - Datos de la venta (igual que crear)
      * @param {Array<number>} reservaIds - IDs de reservas a confirmar
-     * @param {number} organizacionId - ID de la organización
      */
-    static async crearConReservas(data, reservaIds, organizacionId) {
+    static async crearConReservas(organizacionId, data, reservaIds) {
         return await RLSContextManager.transaction(organizacionId, async (db) => {
             logger.info('[VentasPOSModel.crearConReservas] Iniciando venta con reservas', {
                 organizacion_id: organizacionId,
@@ -1929,7 +1929,7 @@ class VentasPOSModel {
 
             // Ahora crear la venta normal (sin validar stock, ya fue descontado)
             // NOTA: Usamos una versión simplificada que no valida stock
-            const venta = await this.crearSinValidarStock(data, organizacionId, db);
+            const venta = await this.crearSinValidarStock(organizacionId, data, db);
 
             return venta;
         });
@@ -1940,7 +1940,7 @@ class VentasPOSModel {
      * SOLO USAR INTERNAMENTE después de confirmar reservas
      * @private
      */
-    static async crearSinValidarStock(data, organizacionId, db) {
+    static async crearSinValidarStock(organizacionId, data, db) {
         // Validar que hay items
         if (!data.items || data.items.length === 0) {
             throw new Error('La venta debe tener al menos un item');

@@ -85,4 +85,6 @@ const TabButton = memo(function TabButton({ tab, isActive, onChange }) {
   );
 });
 
+ViewTabs.displayName = 'ViewTabs';
+
 export default ViewTabs;

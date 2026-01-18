@@ -9,13 +9,49 @@
  * - CRUD de promociones (administracion)
  *
  * Ene 2026 - Fase 3 POS
+ * Ene 2026 - Migrado a createCRUDHooks
  * ====================================================================
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { posApi } from '@/services/api/endpoints';
-import { sanitizeParams } from '@/lib/params';
+import { createCRUDHooks } from '@/hooks/factories';
+
+// =========================================================================
+// HOOKS CRUD VIA FACTORY
+// =========================================================================
+
+const hooks = createCRUDHooks({
+  name: 'promocion',
+  namePlural: 'promociones',
+  api: posApi,
+  baseKey: 'promociones',
+  apiMethods: {
+    list: 'listarPromociones',
+    get: 'obtenerPromocion',
+    create: 'crearPromocion',
+    update: 'actualizarPromocion',
+    delete: 'eliminarPromocion',
+  },
+  invalidateOnCreate: ['promociones', 'promociones-vigentes'],
+  invalidateOnUpdate: ['promociones', 'promociones-vigentes'],
+  invalidateOnDelete: ['promociones', 'promociones-vigentes'],
+  staleTime: STALE_TIMES.DYNAMIC,
+  responseKey: 'promociones',
+  keepPreviousData: true,
+  transformList: (data) => ({
+    promociones: data,
+    paginacion: data.pagination,
+  }),
+});
+
+// Exportar hooks CRUD
+export const usePromociones = hooks.useList;
+export const usePromocion = hooks.useDetail;
+export const useCrearPromocion = hooks.useCreate;
+export const useActualizarPromocion = hooks.useUpdate;
+export const useEliminarPromocion = hooks.useDelete;
 
 // =========================================================================
 // HOOKS PARA POS (Uso en ventas)
@@ -128,102 +164,8 @@ export function useAplicarPromocion() {
 }
 
 // =========================================================================
-// HOOKS PARA ADMINISTRACION DE PROMOCIONES
+// HOOKS ESPECIALIZADOS DE ADMINISTRACION
 // =========================================================================
-
-/**
- * Hook para listar promociones con paginacion (admin)
- * GET /pos/promociones
- * @param {Object} params - { page, limit, busqueda, activo, vigente, tipo, ordenPor, orden }
- */
-export function usePromociones(params = {}) {
-  return useQuery({
-    queryKey: ['promociones', params],
-    queryFn: async () => {
-      const response = await posApi.listarPromociones(sanitizeParams(params));
-      return {
-        promociones: response.data.data,
-        paginacion: response.data.pagination,
-      };
-    },
-    staleTime: STALE_TIMES.DYNAMIC, // 2 minutos
-    keepPreviousData: true,
-  });
-}
-
-/**
- * Hook para obtener promocion por ID
- * GET /pos/promociones/:id
- */
-export function usePromocion(id) {
-  return useQuery({
-    queryKey: ['promocion', id],
-    queryFn: async () => {
-      const response = await posApi.obtenerPromocion(id);
-      return response.data.data;
-    },
-    enabled: !!id,
-    staleTime: STALE_TIMES.DYNAMIC,
-  });
-}
-
-/**
- * Hook para crear promocion
- * POST /pos/promociones
- */
-export function useCrearPromocion() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (data) => {
-      const response = await posApi.crearPromocion(data);
-      return response.data.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['promociones'] });
-      queryClient.invalidateQueries({ queryKey: ['promociones-vigentes'] });
-    },
-  });
-}
-
-/**
- * Hook para actualizar promocion
- * PUT /pos/promociones/:id
- */
-export function useActualizarPromocion() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ id, data }) => {
-      const response = await posApi.actualizarPromocion(id, data);
-      return response.data.data;
-    },
-    onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['promociones'] });
-      queryClient.invalidateQueries({ queryKey: ['promocion', variables.id] });
-      queryClient.invalidateQueries({ queryKey: ['promociones-vigentes'] });
-    },
-  });
-}
-
-/**
- * Hook para eliminar promocion
- * DELETE /pos/promociones/:id
- */
-export function useEliminarPromocion() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (id) => {
-      const response = await posApi.eliminarPromocion(id);
-      return response.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['promociones'] });
-      queryClient.invalidateQueries({ queryKey: ['promociones-vigentes'] });
-    },
-  });
-}
 
 /**
  * Hook para obtener historial de uso de una promocion

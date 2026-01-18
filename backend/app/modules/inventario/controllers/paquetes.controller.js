@@ -27,9 +27,9 @@ class PaquetesController {
         });
 
         const paquete = await PaquetesModel.crear(
+            organizacionId,
             parseInt(operacionId),
             req.body,
-            organizacionId,
             usuarioId
         );
 
@@ -92,9 +92,9 @@ class PaquetesController {
         const organizacionId = req.tenant.organizacionId;
         const { id } = req.params;
 
-        const paquete = await PaquetesModel.obtenerPorId(
-            parseInt(id),
-            organizacionId
+        const paquete = await PaquetesModel.buscarPorId(
+            organizacionId,
+            parseInt(id)
         );
 
         if (!paquete) {
@@ -113,9 +113,9 @@ class PaquetesController {
         const { id } = req.params;
 
         const paquete = await PaquetesModel.actualizar(
+            organizacionId,
             parseInt(id),
-            req.body,
-            organizacionId
+            req.body
         );
 
         return ResponseHelper.success(res, paquete, 'Paquete actualizado');

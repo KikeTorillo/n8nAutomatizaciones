@@ -10,7 +10,7 @@ class AlertasInventarioModel {
     /**
      * Listar alertas con filtros
      */
-    static async listar(filtros, organizacionId) {
+    static async listar(organizacionId, filtros) {
         return await RLSContextManager.query(organizacionId, async (db) => {
             let whereConditions = ['a.organizacion_id = $1'];
             let values = [organizacionId];
@@ -114,7 +114,7 @@ class AlertasInventarioModel {
     /**
      * Obtener alerta por ID
      */
-    static async obtenerPorId(id, organizacionId) {
+    static async buscarPorId(organizacionId, id) {
         return await RLSContextManager.query(organizacionId, async (db) => {
             const query = `
                 SELECT
@@ -200,7 +200,7 @@ class AlertasInventarioModel {
      * Listar alertas con información de stock proyectado
      * Permite filtrar solo las que necesitan acción (no tienen OC pendiente)
      */
-    static async listarConProyeccion(filtros, organizacionId) {
+    static async listarConProyeccion(organizacionId, filtros) {
         return await RLSContextManager.query(organizacionId, async (db) => {
             let whereConditions = ['v.organizacion_id = $1'];
             let values = [organizacionId];

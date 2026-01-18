@@ -27,4 +27,6 @@ function LoadingSpinner({ size = 'md', className, text }) {
   );
 }
 
+LoadingSpinner.displayName = 'LoadingSpinner';
+
 export default LoadingSpinner;

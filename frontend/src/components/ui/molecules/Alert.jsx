@@ -141,4 +141,6 @@ function Alert({
   );
 }
 
+Alert.displayName = 'Alert';
+
 export default Alert;

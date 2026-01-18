@@ -7,6 +7,7 @@ const RLSContextManager = require('../../../utils/rlsContextManager');
 const emailService = require('../../../services/emailService');
 const RutasOperacionModel = require('../../inventario/models/rutas-operacion.model');
 const SecureRandom = require('../../../utils/helpers/SecureRandom');
+const tokenBlacklistService = require('../../../services/tokenBlacklistService');
 
 const AUTH_CONFIG = {
     BCRYPT_SALT_ROUNDS: 12,
@@ -738,6 +739,26 @@ class UsuarioModel {
 
             const updateResult = await db.query(updateQuery, [nuevoRol, userId, orgId]);
 
+            // SECURITY FIX (Ene 2026): Invalidar tokens del usuario al cambiar rol
+            // Esto fuerza al usuario a re-autenticarse con el nuevo rol
+            try {
+                await tokenBlacklistService.invalidateUserTokens(
+                    userId,
+                    `cambio_rol_${rolAnterior}_a_${nuevoRol}`
+                );
+                logger.info('[UsuarioModel.cambiarRol] Tokens invalidados por cambio de rol', {
+                    usuario_id: userId,
+                    rol_anterior: rolAnterior,
+                    rol_nuevo: nuevoRol
+                });
+            } catch (tokenError) {
+                // No fallar la operación si la invalidación falla
+                logger.error('[UsuarioModel.cambiarRol] Error invalidando tokens', {
+                    error: tokenError.message,
+                    usuario_id: userId
+                });
+            }
+
             await RLSHelper.registrarEvento(db, {
                 organizacion_id: orgId,
                 tipo_evento: 'usuario_rol_cambiado',
@@ -746,7 +767,8 @@ class UsuarioModel {
                     usuario_email: usuario.email,
                     rol_anterior: rolAnterior,
                     rol_nuevo: nuevoRol,
-                    admin_id: adminId
+                    admin_id: adminId,
+                    tokens_invalidados: true
                 },
                 usuario_id: adminId
             });
@@ -757,7 +779,8 @@ class UsuarioModel {
                     rol_anterior: rolAnterior,
                     rol_nuevo: nuevoRol,
                     realizado_por: adminId,
-                    timestamp: new Date().toISOString()
+                    timestamp: new Date().toISOString(),
+                    tokens_invalidados: true
                 }
             };
         }); // Sin useTransaction - auto-commit cada query
@@ -808,12 +831,12 @@ class UsuarioModel {
                     expirationHours: AUTH_CONFIG.TOKEN_RESET_EXPIRATION_HOURS
                 });
 
-                logger.info(`📧 Email de recuperación enviado a: ${email}`);
+                logger.info(`[Usuario.solicitarRecuperacion] Email de recuperación enviado a: ${email}`);
             } catch (emailError) {
-                // ⚠️ NO fallar la operación si el email falla
+                // NO fallar la operación si el email falla
                 // El token ya está guardado y es funcional
-                logger.error(`❌ Error enviando email de recuperación: ${emailError.message}`);
-                logger.warn('⚠️ Token generado correctamente pero email NO enviado');
+                logger.error(`[Usuario.solicitarRecuperacion] Error enviando email: ${emailError.message}`);
+                logger.warn('[Usuario.solicitarRecuperacion] Token generado pero email NO enviado');
             }
 
             return {

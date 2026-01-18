@@ -30,9 +30,8 @@ export const clienteSchema = z
     nombre_completo: requiredString('El nombre', 2, 150),
     telefono: z
       .string()
-      .min(10, 'El teléfono debe tener 10 dígitos')
-      .max(10, 'El teléfono debe tener 10 dígitos')
-      .regex(/^[0-9]+$/, 'Solo dígitos numéricos')
+      .length(10, 'El teléfono debe tener exactamente 10 dígitos')
+      .regex(/^[1-9]\d{9}$/, 'El teléfono no puede empezar con 0')
       .transform((val) => val.trim()),
     email: z
       .string()

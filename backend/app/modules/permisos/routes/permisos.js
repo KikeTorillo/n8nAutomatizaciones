@@ -9,6 +9,7 @@ const permisosSchemas = require('../schemas/permisos.schema');
  * Base: /api/v1/permisos
  *
  * Todas las rutas requieren autenticación
+ * Actualizado Ene 2026: Validación Joi en TODOS los endpoints
  */
 
 // ========================================
@@ -23,6 +24,7 @@ const permisosSchemas = require('../schemas/permisos.schema');
  */
 router.get('/catalogo',
     auth.authenticateToken,
+    validation.validate(permisosSchemas.listarCatalogoSchema),
     PermisosController.listarCatalogo
 );
 
@@ -46,6 +48,7 @@ router.get('/modulos',
  */
 router.get('/mis-permisos',
     auth.authenticateToken,
+    validation.validate(permisosSchemas.misPermisosSchema),
     PermisosController.obtenerMisPermisos
 );
 
@@ -56,6 +59,7 @@ router.get('/mis-permisos',
  */
 router.get('/resumen',
     auth.authenticateToken,
+    validation.validate(permisosSchemas.resumenSchema),
     PermisosController.obtenerResumen
 );
 
@@ -66,6 +70,7 @@ router.get('/resumen',
  */
 router.get('/verificar/:codigo',
     auth.authenticateToken,
+    validation.validate(permisosSchemas.verificarPermisoSchema),
     PermisosController.verificarPermiso
 );
 
@@ -76,6 +81,7 @@ router.get('/verificar/:codigo',
  */
 router.get('/valor/:codigo',
     auth.authenticateToken,
+    validation.validate(permisosSchemas.valorPermisoSchema),
     PermisosController.obtenerValorPermiso
 );
 
@@ -86,6 +92,7 @@ router.get('/valor/:codigo',
  */
 router.get('/modulos/:modulo',
     auth.authenticateToken,
+    validation.validate(permisosSchemas.permisosModuloSchema),
     PermisosController.obtenerPermisosModulo
 );
 
@@ -99,6 +106,7 @@ router.get('/modulos/:modulo',
  */
 router.get('/roles/:rol',
     auth.authenticateToken,
+    validation.validate(permisosSchemas.listarPermisosPorRolSchema),
     PermisosController.listarPermisosPorRol
 );
 
@@ -130,6 +138,7 @@ router.post('/roles/:rol/permisos',
  */
 router.delete('/roles/:rol/permisos/:permisoId',
     auth.authenticateToken,
+    validation.validate(permisosSchemas.eliminarPermisoRolSchema),
     PermisosController.eliminarPermisoRol
 );
 
@@ -143,6 +152,7 @@ router.delete('/roles/:rol/permisos/:permisoId',
  */
 router.get('/usuarios/:usuarioId/sucursales/:sucursalId',
     auth.authenticateToken,
+    validation.validate(permisosSchemas.listarPermisosUsuarioSucursalSchema),
     PermisosController.listarPermisosUsuarioSucursal
 );
 
@@ -163,6 +173,7 @@ router.post('/usuarios/:usuarioId/sucursales/:sucursalId',
  */
 router.delete('/usuarios/:usuarioId/sucursales/:sucursalId/permisos/:permisoId',
     auth.authenticateToken,
+    validation.validate(permisosSchemas.eliminarPermisoUsuarioSucursalSchema),
     PermisosController.eliminarPermisoUsuarioSucursal
 );
 

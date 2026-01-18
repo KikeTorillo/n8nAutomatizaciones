@@ -79,6 +79,7 @@ router.get('/:id/profesionales/orden',
     rateLimiting.apiRateLimit,
     auth.authenticateToken,
     tenant.setTenantContext,
+    validation.validate(servicioSchemas.obtenerProfesionalesConOrden),
     ServicioController.obtenerProfesionalesConOrden
 );
 
@@ -89,6 +90,7 @@ router.put('/:id/profesionales/orden',
     tenant.setTenantContext,
     tenant.verifyTenantActive,
     auth.requireAdminRole,
+    validation.validate(servicioSchemas.actualizarOrdenProfesionales),
     ServicioController.actualizarOrdenProfesionales
 );
 

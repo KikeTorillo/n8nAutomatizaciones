@@ -1,5 +1,6 @@
 const Joi = require('joi');
 const { commonSchemas } = require('../../../middleware/validation');
+const { fields } = require('../../../schemas/shared');
 const {
     FORMAS_PAGO,
     ROLES_SUPERVISORES,
@@ -34,9 +35,7 @@ const crear = {
             .max(LIMITES.NOMBRE_MAX)
             .required()
             .trim(),
-        email: Joi.string()
-            .email()
-            .max(LIMITES.NOMBRE_MAX)
+        email: fields.email
             .optional()
             .allow(null),
         telefono: commonSchemas.mexicanPhone
@@ -104,9 +103,7 @@ const crear = {
             .optional()
             .allow(null)
             .trim(),
-        email_privado: Joi.string()
-            .email()
-            .max(150)
+        email_privado: fields.email
             .optional()
             .allow(null),
         telefono_privado: commonSchemas.mexicanPhone
@@ -225,9 +222,7 @@ const crear = {
             .trim(),
 
         // === LEGACY ===
-        activo: Joi.boolean()
-            .optional()
-            .default(true),
+        activo: fields.activo,
 
         // === VINCULACIÓN A USUARIO EXISTENTE (Dic 2025) ===
         usuario_id: commonSchemas.id
@@ -247,9 +242,7 @@ const bulkCrear = {
                         .max(LIMITES.NOMBRE_MAX)
                         .required()
                         .trim(),
-                    email: Joi.string()
-                        .email()
-                        .max(LIMITES.NOMBRE_MAX)
+                    email: fields.email
                         .optional()
                         .allow(null, ''),
                     telefono: commonSchemas.mexicanPhone
@@ -316,7 +309,7 @@ const actualizar = {
         // === IDENTIFICACIÓN ===
         codigo: Joi.string().max(LIMITES.CODIGO_MAX).trim().allow(null),
         nombre_completo: Joi.string().min(LIMITES.NOMBRE_MIN).max(LIMITES.NOMBRE_MAX).trim(),
-        email: Joi.string().email().max(LIMITES.NOMBRE_MAX).allow(null),
+        email: fields.email.allow(null),
         telefono: commonSchemas.mexicanPhone.allow(null),
         foto_url: Joi.string().uri().allow(null),
 
@@ -335,7 +328,7 @@ const actualizar = {
         nacionalidad: Joi.string().max(50).trim().allow(null),
         lugar_nacimiento_ciudad: Joi.string().max(100).trim().allow(null),
         lugar_nacimiento_pais: Joi.string().max(50).trim().allow(null),
-        email_privado: Joi.string().email().max(150).allow(null),
+        email_privado: fields.email.allow(null),
         telefono_privado: commonSchemas.mexicanPhone.allow(null),
         distancia_casa_trabajo_km: Joi.number().min(0).max(9999.99).precision(2).allow(null),
         hijos_dependientes: Joi.number().integer().min(0).max(50),
@@ -395,7 +388,7 @@ const actualizar = {
 const listar = {
     query: Joi.object({
         organizacion_id: commonSchemas.id.optional(), // Solo super_admin
-        activo: Joi.string().valid('true', 'false').optional(),
+        activo: fields.activoQuery,
         disponible_online: Joi.string().valid('true', 'false').optional(),
         busqueda: Joi.string().min(2).max(100).trim().optional(),
 
@@ -839,7 +832,7 @@ const listarCuentasBancarias = {
     query: Joi.object({
         organizacion_id: commonSchemas.id.optional(),
         uso: Joi.string().valid(...USOS_CUENTA_BANCARIA).optional(),
-        activo: Joi.string().valid('true', 'false').optional(),
+        activo: fields.activoQuery,
         limit: Joi.number().integer().min(1).max(50).default(20),
         offset: Joi.number().integer().min(0).default(0)
     })
@@ -1325,7 +1318,7 @@ const listarCatalogoHabilidades = {
         organizacion_id: commonSchemas.id.optional(),
         categoria: Joi.string().valid(...CATEGORIAS_HABILIDAD_VALORES).optional(),
         busqueda: Joi.string().min(2).max(100).trim().optional(),
-        activo: Joi.string().valid('true', 'false').optional(),
+        activo: fields.activoQuery,
         limit: Joi.number().integer().min(1).max(100).default(50),
         offset: Joi.number().integer().min(0).default(0)
     })

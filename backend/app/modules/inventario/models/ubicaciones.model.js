@@ -16,11 +16,11 @@ class UbicacionesAlmacenModel {
 
     /**
      * Crear nueva ubicacion
-     * @param {Object} data - Datos de la ubicacion
      * @param {number} organizacionId
+     * @param {Object} data - Datos de la ubicacion
      * @returns {Object} Ubicacion creada
      */
-    static async crear(data, organizacionId) {
+    static async crear(organizacionId, data) {
         return await RLSContextManager.query(organizacionId, async (db) => {
             const {
                 sucursal_id,
@@ -78,11 +78,11 @@ class UbicacionesAlmacenModel {
 
     /**
      * Obtener ubicacion por ID
-     * @param {number} id
      * @param {number} organizacionId
+     * @param {number} id
      * @returns {Object|null}
      */
-    static async obtenerPorId(id, organizacionId) {
+    static async buscarPorId(organizacionId, id) {
         return await RLSContextManager.query(organizacionId, async (db) => {
             const query = `
                 SELECT
@@ -113,11 +113,11 @@ class UbicacionesAlmacenModel {
 
     /**
      * Listar ubicaciones con filtros
-     * @param {Object} filtros
      * @param {number} organizacionId
+     * @param {Object} filtros
      * @returns {Object} { ubicaciones, total }
      */
-    static async listar(filtros, organizacionId) {
+    static async listar(organizacionId, filtros = {}) {
         return await RLSContextManager.query(organizacionId, async (db) => {
             const {
                 sucursal_id,
@@ -274,12 +274,12 @@ class UbicacionesAlmacenModel {
 
     /**
      * Actualizar ubicacion
+     * @param {number} organizacionId
      * @param {number} id
      * @param {Object} data
-     * @param {number} organizacionId
      * @returns {Object}
      */
-    static async actualizar(id, data, organizacionId) {
+    static async actualizar(organizacionId, id, data) {
         return await RLSContextManager.query(organizacionId, async (db) => {
             const campos = [];
             const valores = [];
@@ -326,11 +326,11 @@ class UbicacionesAlmacenModel {
 
     /**
      * Eliminar ubicacion (solo si no tiene hijos ni stock)
-     * @param {number} id
      * @param {number} organizacionId
+     * @param {number} id
      * @returns {Object}
      */
-    static async eliminar(id, organizacionId) {
+    static async eliminar(organizacionId, id) {
         return await RLSContextManager.query(organizacionId, async (db) => {
             // Verificar que no tenga hijos
             const hijosResult = await db.query(

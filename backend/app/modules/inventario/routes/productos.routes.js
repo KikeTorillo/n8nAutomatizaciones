@@ -65,6 +65,7 @@ router.get('/productos/stock-critico',
     auth.authenticateToken,
     tenant.setTenantContext,
     rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.obtenerStockCritico),
     InventarioController.obtenerStockCritico
 );
 

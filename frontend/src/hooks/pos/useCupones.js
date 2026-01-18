@@ -9,6 +9,7 @@
  * - CRUD de cupones (administración)
  *
  * Ene 2026 - Fase 2 POS
+ * Ene 2026 - Migrado a createCRUDHooks
  * ====================================================================
  */
 
@@ -17,6 +18,72 @@ import { STALE_TIMES } from '@/app/queryClient';
 import { posApi } from '@/services/api/endpoints';
 import useSucursalStore, { selectSucursalActiva } from '@/store/sucursalStore';
 import { sanitizeParams } from '@/lib/params';
+import { createCRUDHooks } from '@/hooks/factories';
+
+// =========================================================================
+// HOOKS CRUD VIA FACTORY (base)
+// =========================================================================
+
+const baseHooks = createCRUDHooks({
+  name: 'cupon',
+  namePlural: 'cupones',
+  api: posApi,
+  baseKey: 'cupones',
+  apiMethods: {
+    list: 'listarCupones',
+    get: 'obtenerCupon',
+    create: 'crearCupon',
+    update: 'actualizarCupon',
+    delete: 'eliminarCupon',
+  },
+  invalidateOnCreate: ['cupones', 'cupones-vigentes'],
+  invalidateOnUpdate: ['cupones', 'cupones-vigentes'],
+  invalidateOnDelete: ['cupones', 'cupones-vigentes'],
+  staleTime: STALE_TIMES.DYNAMIC,
+  responseKey: 'cupones',
+  keepPreviousData: true,
+});
+
+// =========================================================================
+// WRAPPER useCupones (agrega sucursalId del store)
+// =========================================================================
+
+/**
+ * Hook para listar cupones con paginación (admin)
+ * GET /pos/cupones
+ * @param {Object} params - { page, limit, busqueda, activo, vigente, ordenPor, orden }
+ */
+export function useCupones(params = {}) {
+  const sucursalActiva = useSucursalStore(selectSucursalActiva);
+  const sucursalId = sucursalActiva?.id;
+
+  return useQuery({
+    queryKey: ['cupones', params, sucursalId],
+    queryFn: async () => {
+      const sanitizedParams = sanitizeParams(params);
+
+      // Agregar sucursalId para verificación de permisos
+      if (sucursalId) {
+        sanitizedParams.sucursalId = sucursalId;
+      }
+
+      const response = await posApi.listarCupones(sanitizedParams);
+      return {
+        cupones: response.data.data,
+        paginacion: response.data.pagination,
+      };
+    },
+    staleTime: STALE_TIMES.DYNAMIC,
+    keepPreviousData: true,
+    enabled: !!sucursalId,
+  });
+}
+
+// Exportar hooks CRUD (mutations no requieren sucursalId)
+export const useCupon = baseHooks.useDetail;
+export const useCrearCupon = baseHooks.useCreate;
+export const useActualizarCupon = baseHooks.useUpdate;
+export const useEliminarCupon = baseHooks.useDelete;
 
 // =========================================================================
 // HOOKS PARA POS (Uso en ventas)
@@ -82,113 +149,8 @@ export function useAplicarCupon() {
 }
 
 // =========================================================================
-// HOOKS PARA ADMINISTRACIÓN DE CUPONES
+// HOOKS ESPECIALIZADOS DE ADMINISTRACION
 // =========================================================================
-
-/**
- * Hook para listar cupones con paginación (admin)
- * GET /pos/cupones
- * @param {Object} params - { page, limit, busqueda, activo, vigente, ordenPor, orden }
- */
-export function useCupones(params = {}) {
-  const sucursalActiva = useSucursalStore(selectSucursalActiva);
-  const sucursalId = sucursalActiva?.id;
-
-  return useQuery({
-    queryKey: ['cupones', params, sucursalId],
-    queryFn: async () => {
-      const sanitizedParams = sanitizeParams(params);
-
-      // Agregar sucursalId para verificación de permisos
-      if (sucursalId) {
-        sanitizedParams.sucursalId = sucursalId;
-      }
-
-      const response = await posApi.listarCupones(sanitizedParams);
-      return {
-        cupones: response.data.data,
-        paginacion: response.data.pagination,
-      };
-    },
-    staleTime: STALE_TIMES.DYNAMIC, // 2 minutos
-    keepPreviousData: true,
-    enabled: !!sucursalId, // Solo ejecutar si hay sucursal
-  });
-}
-
-/**
- * Hook para obtener cupón por ID
- * GET /pos/cupones/:id
- */
-export function useCupon(id) {
-  return useQuery({
-    queryKey: ['cupon', id],
-    queryFn: async () => {
-      const response = await posApi.obtenerCupon(id);
-      return response.data.data;
-    },
-    enabled: !!id,
-    staleTime: STALE_TIMES.DYNAMIC,
-  });
-}
-
-/**
- * Hook para crear cupón
- * POST /pos/cupones
- */
-export function useCrearCupon() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (data) => {
-      const response = await posApi.crearCupon(data);
-      return response.data.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['cupones'] });
-      queryClient.invalidateQueries({ queryKey: ['cupones-vigentes'] });
-    },
-  });
-}
-
-/**
- * Hook para actualizar cupón
- * PUT /pos/cupones/:id
- */
-export function useActualizarCupon() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ id, data }) => {
-      const response = await posApi.actualizarCupon(id, data);
-      return response.data.data;
-    },
-    onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['cupones'] });
-      queryClient.invalidateQueries({ queryKey: ['cupon', variables.id] });
-      queryClient.invalidateQueries({ queryKey: ['cupones-vigentes'] });
-    },
-  });
-}
-
-/**
- * Hook para eliminar cupón
- * DELETE /pos/cupones/:id
- */
-export function useEliminarCupon() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (id) => {
-      const response = await posApi.eliminarCupon(id);
-      return response.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['cupones'] });
-      queryClient.invalidateQueries({ queryKey: ['cupones-vigentes'] });
-    },
-  });
-}
 
 /**
  * Hook para obtener historial de uso de un cupón

@@ -53,7 +53,7 @@ class VentasPOSController {
             }
         }
 
-        const venta = await VentasPOSModel.crear(ventaData, organizacionId);
+        const venta = await VentasPOSModel.crear(organizacionId, ventaData);
 
         // Dic 2025: Auto-generar OC dropship si la venta contiene productos dropship
         let dropshipResult = null;
@@ -92,15 +92,6 @@ class VentasPOSController {
         // NOTA: VentasPOSModel.crear() retorna {...venta, items, reservas} (spread)
         let canjeResult = null;
         const clienteIdVenta = venta?.cliente_id;
-        logger.info('[VentasPOSController.crear] DEBUG CANJE - Verificando condiciones', {
-            cliente_id_venta: clienteIdVenta,
-            cliente_id_ventaData: ventaData.cliente_id,
-            puntos_canjeados: ventaData.puntos_canjeados,
-            descuento_puntos: ventaData.descuento_puntos,
-            condicion1: !!clienteIdVenta,
-            condicion2: ventaData.puntos_canjeados > 0,
-            condicion3: ventaData.descuento_puntos > 0
-        });
         if (clienteIdVenta && ventaData.puntos_canjeados > 0 && ventaData.descuento_puntos > 0) {
             try {
                 canjeResult = await LealtadModel.canjearPuntos({
@@ -209,7 +200,7 @@ class VentasPOSController {
         const modulosActivos = await ModulesCache.get(organizacionId);
         const incluirAgendamiento = modulosActivos?.agendamiento === true;
 
-        const venta = await VentasPOSModel.obtenerPorId(parseInt(id), organizacionId, {
+        const venta = await VentasPOSModel.buscarPorId(organizacionId, parseInt(id), {
             incluirAgendamiento
         });
 
@@ -245,7 +236,7 @@ class VentasPOSController {
             offset: req.query.offset ? parseInt(req.query.offset) : 0
         };
 
-        const ventas = await VentasPOSModel.listar(filtros, organizacionId, {
+        const ventas = await VentasPOSModel.listar(organizacionId, filtros, {
             incluirAgendamiento
         });
 
@@ -261,7 +252,7 @@ class VentasPOSController {
         const { estado } = req.body;
         const organizacionId = req.tenant.organizacionId;
 
-        const venta = await VentasPOSModel.actualizarEstado(parseInt(id), estado, organizacionId);
+        const venta = await VentasPOSModel.actualizarEstado(organizacionId, parseInt(id), estado);
 
         return ResponseHelper.success(res, venta, 'Estado de venta actualizado exitosamente');
     });
@@ -373,9 +364,9 @@ class VentasPOSController {
         const organizacionId = req.tenant.organizacionId;
 
         const venta = await VentasPOSModel.actualizar(
+            organizacionId,
             parseInt(id),
-            req.body,
-            organizacionId
+            req.body
         );
 
         return ResponseHelper.success(res, venta, 'Venta actualizada exitosamente');
@@ -390,9 +381,9 @@ class VentasPOSController {
         const organizacionId = req.tenant.organizacionId;
 
         const resultado = await VentasPOSModel.eliminar(
+            organizacionId,
             parseInt(id),
-            req.body,
-            organizacionId
+            req.body
         );
 
         return ResponseHelper.success(res, resultado, resultado.mensaje);
@@ -412,7 +403,7 @@ class VentasPOSController {
         const download = req.query.download !== 'false';
 
         // Obtener datos de la venta
-        const ventaData = await VentasPOSModel.obtenerPorId(parseInt(id), organizacionId, {
+        const ventaData = await VentasPOSModel.buscarPorId(organizacionId, parseInt(id), {
             incluirAgendamiento: true
         });
 

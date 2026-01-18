@@ -56,7 +56,7 @@ const obtenerPorId = asyncHandler(async (req, res) => {
     const { id } = req.params;
     const organizacionId = req.tenant.organizacionId;
 
-    const ajuste = await AjustesMasivosModel.obtenerPorId(parseInt(id), organizacionId);
+    const ajuste = await AjustesMasivosModel.buscarPorId(organizacionId, parseInt(id));
 
     ResponseHelper.success(res, ajuste);
 });

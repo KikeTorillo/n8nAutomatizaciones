@@ -17,19 +17,17 @@ const asyncHandler = require('../../../middleware/asyncHandler');
 class ClienteController {
 
     static crear = asyncHandler(async (req, res) => {
-        const clienteData = {
-            ...req.body,
-            organizacion_id: req.tenant.organizacionId
-        };
-
-        const nuevoCliente = await ClienteModel.crear(clienteData);
+        const nuevoCliente = await ClienteModel.crear(
+            req.tenant.organizacionId,
+            req.body
+        );
 
         return ResponseHelper.success(res, nuevoCliente, 'Cliente creado exitosamente', 201);
     });
 
     static obtenerPorId = asyncHandler(async (req, res) => {
         const { id } = req.params;
-        const cliente = await ClienteModel.obtenerPorId(parseInt(id), req.tenant.organizacionId);
+        const cliente = await ClienteModel.buscarPorId(req.tenant.organizacionId, parseInt(id));
 
         if (!cliente) {
             return ResponseHelper.notFound(res, 'Cliente no encontrado');
@@ -61,8 +59,7 @@ class ClienteController {
             }
         }
 
-        const options = {
-            organizacionId: req.tenant.organizacionId,
+        const filtros = {
             page: parseInt(page),
             limit: Math.min(parseInt(limit), 100),
             busqueda,
@@ -74,7 +71,7 @@ class ClienteController {
             orden
         };
 
-        const resultado = await ClienteModel.listar(options);
+        const resultado = await ClienteModel.listar(req.tenant.organizacionId, filtros);
 
         return ResponseHelper.paginated(
             res,
@@ -86,12 +83,11 @@ class ClienteController {
 
     static actualizar = asyncHandler(async (req, res) => {
         const { id } = req.params;
-        const clienteData = req.body;
 
         const clienteActualizado = await ClienteModel.actualizar(
+            req.tenant.organizacionId,
             parseInt(id),
-            clienteData,
-            req.tenant.organizacionId
+            req.body
         );
 
         if (!clienteActualizado) {
@@ -103,7 +99,7 @@ class ClienteController {
 
     static eliminar = asyncHandler(async (req, res) => {
         const { id } = req.params;
-        const eliminado = await ClienteModel.eliminar(parseInt(id), req.tenant.organizacionId);
+        const eliminado = await ClienteModel.eliminar(req.tenant.organizacionId, parseInt(id));
 
         if (!eliminado) {
             return ResponseHelper.notFound(res, 'Cliente no encontrado');
@@ -138,7 +134,7 @@ class ClienteController {
         const { id } = req.params;
 
         // Verificar que el cliente existe
-        const cliente = await ClienteModel.obtenerPorId(parseInt(id), req.tenant.organizacionId);
+        const cliente = await ClienteModel.buscarPorId(req.tenant.organizacionId, parseInt(id));
         if (!cliente) {
             return ResponseHelper.notFound(res, 'Cliente no encontrado');
         }
@@ -159,9 +155,9 @@ class ClienteController {
         const { activo } = req.body;
 
         const clienteActualizado = await ClienteModel.actualizar(
+            req.tenant.organizacionId,
             parseInt(id),
-            { activo },
-            req.tenant.organizacionId
+            { activo }
         );
 
         if (!clienteActualizado) {
@@ -204,10 +200,13 @@ class ClienteController {
     });
 
     /**
-     * Importar clientes desde CSV
+     * Importar clientes desde CSV (transaccional)
      * POST /api/v1/clientes/importar-csv
      *
-     * Body: { clientes: Array<{ nombre, email?, telefono?, direccion?, notas? }> }
+     * Body: { clientes: Array<{ nombre, email?, telefono?, notas?, marketing_permitido? }> }
+     *
+     * Usa importarMasivo que es transaccional: todos los clientes se importan
+     * dentro de una misma transacción para garantizar atomicidad.
      */
     static importarCSV = asyncHandler(async (req, res) => {
         const { clientes = [] } = req.body;
@@ -222,67 +221,19 @@ class ClienteController {
             return ResponseHelper.badRequest(res, 'Maximo 500 clientes por importacion');
         }
 
-        const resultados = {
-            creados: 0,
-            errores: [],
-            duplicados: 0
-        };
+        // Usar método transaccional del modelo
+        const resultado = await ClienteModel.importarMasivo(organizacionId, clientes, {
+            ignorarDuplicados: true // Salta duplicados sin hacer rollback
+        });
 
-        for (let i = 0; i < clientes.length; i++) {
-            const clienteData = clientes[i];
-            const fila = i + 1;
+        const mensaje = `Importacion completada: ${resultado.creados} creados, ${resultado.duplicados} duplicados, ${resultado.errores} errores`;
 
-            try {
-                // Validar campo requerido
-                if (!clienteData.nombre || clienteData.nombre.trim() === '') {
-                    resultados.errores.push({
-                        fila,
-                        error: 'El nombre es requerido'
-                    });
-                    continue;
-                }
-
-                // Verificar duplicado por email si existe
-                if (clienteData.email) {
-                    const existente = await ClienteModel.buscarPorEmail(
-                        clienteData.email,
-                        organizacionId
-                    );
-                    if (existente) {
-                        resultados.duplicados++;
-                        resultados.errores.push({
-                            fila,
-                            error: `Email ${clienteData.email} ya existe`
-                        });
-                        continue;
-                    }
-                }
-
-                // Crear cliente
-                await ClienteModel.crear({
-                    organizacion_id: organizacionId,
-                    nombre: clienteData.nombre.trim(),
-                    email: clienteData.email?.trim() || null,
-                    telefono: clienteData.telefono?.trim() || null,
-                    direccion: clienteData.direccion?.trim() || null,
-                    notas: clienteData.notas?.trim() || null,
-                    activo: true,
-                    marketing_permitido: clienteData.marketing_permitido ?? true
-                });
-
-                resultados.creados++;
-
-            } catch (error) {
-                resultados.errores.push({
-                    fila,
-                    error: error.message || 'Error desconocido'
-                });
-            }
-        }
-
-        const mensaje = `Importacion completada: ${resultados.creados} creados, ${resultados.duplicados} duplicados, ${resultados.errores.length} errores`;
-
-        return ResponseHelper.success(res, resultados, mensaje);
+        return ResponseHelper.success(res, {
+            creados: resultado.creados,
+            duplicados: resultado.duplicados,
+            errores: resultado.detalles.errores,
+            clientesCreados: resultado.detalles.creados.map(c => c.cliente)
+        }, mensaje);
     });
 
     // =========================================================================
@@ -319,13 +270,13 @@ class ClienteController {
         const organizacionId = req.tenant.organizacionId;
 
         const clienteActualizado = await ClienteModel.actualizar(
+            organizacionId,
             parseInt(id),
             {
                 permite_credito,
                 limite_credito: limite_credito || 0,
                 dias_credito: dias_credito || 30
-            },
-            organizacionId
+            }
         );
 
         if (!clienteActualizado) {
@@ -349,13 +300,13 @@ class ClienteController {
         const organizacionId = req.tenant.organizacionId;
 
         const clienteActualizado = await ClienteModel.actualizar(
+            organizacionId,
             parseInt(id),
             {
                 credito_suspendido: true,
                 credito_suspendido_en: new Date().toISOString(),
                 credito_suspendido_motivo: motivo || 'Suspendido manualmente'
-            },
-            organizacionId
+            }
         );
 
         if (!clienteActualizado) {
@@ -374,13 +325,13 @@ class ClienteController {
         const organizacionId = req.tenant.organizacionId;
 
         const clienteActualizado = await ClienteModel.actualizar(
+            organizacionId,
             parseInt(id),
             {
                 credito_suspendido: false,
                 credito_suspendido_en: null,
                 credito_suspendido_motivo: null
-            },
-            organizacionId
+            }
         );
 
         if (!clienteActualizado) {

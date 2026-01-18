@@ -1,5 +1,6 @@
 const RLSContextManager = require('../../../utils/rlsContextManager');
 const logger = require('../../../utils/logger');
+const { ResourceInUseError } = require('../../../utils/errors');
 
 /**
  * Model para CRUD de atributos de producto
@@ -14,7 +15,7 @@ class AtributosModel {
     /**
      * Crear un nuevo atributo
      */
-    static async crear(datos, organizacionId) {
+    static async crear(organizacionId, datos) {
         return await RLSContextManager.transaction(organizacionId, async (db) => {
             const query = `
                 INSERT INTO atributos_producto (
@@ -39,9 +40,12 @@ class AtributosModel {
 
     /**
      * Listar atributos de la organizacion con sus valores
+     * Compatible con BaseCrudController: retorna { data, total }
      */
-    static async listar(organizacionId, incluirInactivos = false) {
+    static async listar(organizacionId, filtros = {}) {
         return await RLSContextManager.query(organizacionId, async (db) => {
+            const { incluir_inactivos = false } = filtros;
+
             const query = `
                 SELECT
                     a.*,
@@ -60,20 +64,23 @@ class AtributosModel {
                 FROM atributos_producto a
                 LEFT JOIN valores_atributo v ON v.atributo_id = a.id AND v.activo = true
                 WHERE a.organizacion_id = $1
-                ${incluirInactivos ? '' : 'AND a.activo = true'}
+                ${incluir_inactivos ? '' : 'AND a.activo = true'}
                 GROUP BY a.id
                 ORDER BY a.orden, a.nombre
             `;
 
             const result = await db.query(query, [organizacionId]);
-            return result.rows;
+            return {
+                data: result.rows,
+                total: result.rows.length
+            };
         });
     }
 
     /**
-     * Obtener atributo por ID con sus valores
+     * Buscar atributo por ID con sus valores
      */
-    static async obtenerPorId(id, organizacionId) {
+    static async buscarPorId(organizacionId, id) {
         return await RLSContextManager.query(organizacionId, async (db) => {
             // Obtener atributo
             const atributoQuery = `
@@ -104,7 +111,7 @@ class AtributosModel {
     /**
      * Actualizar atributo
      */
-    static async actualizar(id, datos, organizacionId) {
+    static async actualizar(organizacionId, id, datos) {
         return await RLSContextManager.transaction(organizacionId, async (db) => {
             const campos = [];
             const values = [];
@@ -132,7 +139,7 @@ class AtributosModel {
             }
 
             if (campos.length === 0) {
-                return await this.obtenerPorId(id, organizacionId);
+                return await this.buscarPorId(organizacionId, id);
             }
 
             values.push(id, organizacionId);
@@ -152,7 +159,7 @@ class AtributosModel {
     /**
      * Eliminar atributo (soft delete)
      */
-    static async eliminar(id, organizacionId) {
+    static async eliminar(organizacionId, id) {
         return await RLSContextManager.transaction(organizacionId, async (db) => {
             // Verificar que no tenga variantes asociadas
             const checkQuery = `
@@ -164,7 +171,7 @@ class AtributosModel {
             const checkResult = await db.query(checkQuery, [id]);
 
             if (parseInt(checkResult.rows[0].total) > 0) {
-                throw new Error('No se puede eliminar: el atributo tiene variantes asociadas');
+                throw new ResourceInUseError('Atributo', 'variantes', parseInt(checkResult.rows[0].total));
             }
 
             // Soft delete del atributo y sus valores
@@ -192,7 +199,7 @@ class AtributosModel {
     /**
      * Agregar valor a un atributo
      */
-    static async agregarValor(atributoId, datos, organizacionId) {
+    static async agregarValor(organizacionId, atributoId, datos) {
         return await RLSContextManager.transaction(organizacionId, async (db) => {
             const query = `
                 INSERT INTO valores_atributo (
@@ -219,7 +226,7 @@ class AtributosModel {
     /**
      * Actualizar valor de atributo
      */
-    static async actualizarValor(valorId, datos, organizacionId) {
+    static async actualizarValor(organizacionId, valorId, datos) {
         return await RLSContextManager.transaction(organizacionId, async (db) => {
             const campos = [];
             const values = [];
@@ -271,7 +278,7 @@ class AtributosModel {
     /**
      * Eliminar valor de atributo (soft delete)
      */
-    static async eliminarValor(valorId, organizacionId) {
+    static async eliminarValor(organizacionId, valorId) {
         return await RLSContextManager.transaction(organizacionId, async (db) => {
             // Verificar que no tenga variantes asociadas
             const checkQuery = `
@@ -283,7 +290,7 @@ class AtributosModel {
             const checkResult = await db.query(checkQuery, [valorId]);
 
             if (parseInt(checkResult.rows[0].total) > 0) {
-                throw new Error('No se puede eliminar: el valor tiene variantes asociadas');
+                throw new ResourceInUseError('Valor de atributo', 'variantes', parseInt(checkResult.rows[0].total));
             }
 
             const query = `
@@ -301,7 +308,7 @@ class AtributosModel {
     /**
      * Obtener valores de un atributo
      */
-    static async obtenerValores(atributoId, organizacionId, incluirInactivos = false) {
+    static async obtenerValores(organizacionId, atributoId, incluirInactivos = false) {
         return await RLSContextManager.query(organizacionId, async (db) => {
             const query = `
                 SELECT * FROM valores_atributo

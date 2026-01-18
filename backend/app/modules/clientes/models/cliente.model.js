@@ -18,8 +18,8 @@ const RLSContextManager = require('../../../utils/rlsContextManager');
 
 class ClienteModel {
 
-    static async crear(clienteData) {
-        return await RLSContextManager.query(clienteData.organizacion_id, async (db) => {
+    static async crear(organizacionId, data) {
+        return await RLSContextManager.query(organizacionId, async (db) => {
             const query = `
                 INSERT INTO clientes (
                     organizacion_id, nombre, email, telefono, telegram_chat_id, whatsapp_phone,
@@ -36,31 +36,31 @@ class ClienteModel {
             `;
 
             const values = [
-                clienteData.organizacion_id,
-                clienteData.nombre,
-                clienteData.email || null,
-                clienteData.telefono || null,
-                clienteData.telegram_chat_id || null,
-                clienteData.whatsapp_phone || null,
-                clienteData.fecha_nacimiento || null,
-                clienteData.profesional_preferido_id || null,
-                clienteData.notas_especiales || null,
-                clienteData.alergias || null,
-                clienteData.como_conocio || null,
-                clienteData.activo !== undefined ? clienteData.activo : true,
-                clienteData.marketing_permitido !== undefined ? clienteData.marketing_permitido : true,
-                clienteData.foto_url || null,
-                clienteData.lista_precios_id || null,
+                organizacionId,
+                data.nombre,
+                data.email || null,
+                data.telefono || null,
+                data.telegram_chat_id || null,
+                data.whatsapp_phone || null,
+                data.fecha_nacimiento || null,
+                data.profesional_preferido_id || null,
+                data.notas_especiales || null,
+                data.alergias || null,
+                data.como_conocio || null,
+                data.activo !== undefined ? data.activo : true,
+                data.marketing_permitido !== undefined ? data.marketing_permitido : true,
+                data.foto_url || null,
+                data.lista_precios_id || null,
                 // Nuevos campos Ene 2026
-                clienteData.tipo || 'persona',
-                clienteData.rfc || null,
-                clienteData.razon_social || null,
-                clienteData.calle || null,
-                clienteData.colonia || null,
-                clienteData.ciudad || null,
-                clienteData.estado_id || null,
-                clienteData.codigo_postal || null,
-                clienteData.pais_id || 1  // Default: México
+                data.tipo || 'persona',
+                data.rfc || null,
+                data.razon_social || null,
+                data.calle || null,
+                data.colonia || null,
+                data.ciudad || null,
+                data.estado_id || null,
+                data.codigo_postal || null,
+                data.pais_id || 1  // Default: México
             ];
 
             try {
@@ -69,19 +69,19 @@ class ClienteModel {
             } catch (error) {
                 if (error.code === '23505') {
                     if (error.constraint === 'unique_email_por_org') {
-                        throw new Error(`El email ${clienteData.email} ya está registrado en esta organización`);
+                        throw new Error(`El email ${data.email} ya está registrado en esta organización`);
                     }
                     if (error.constraint === 'unique_telefono_por_org') {
-                        throw new Error(`El teléfono ${clienteData.telefono} ya está registrado en esta organización`);
+                        throw new Error(`El teléfono ${data.telefono} ya está registrado en esta organización`);
                     }
                     if (error.constraint === 'unique_telegram_por_org') {
-                        throw new Error(`El Telegram chat ID ${clienteData.telegram_chat_id} ya está registrado en esta organización`);
+                        throw new Error(`El Telegram chat ID ${data.telegram_chat_id} ya está registrado en esta organización`);
                     }
                     if (error.constraint === 'unique_whatsapp_por_org') {
-                        throw new Error(`El número de WhatsApp ${clienteData.whatsapp_phone} ya está registrado en esta organización`);
+                        throw new Error(`El número de WhatsApp ${data.whatsapp_phone} ya está registrado en esta organización`);
                     }
                     if (error.constraint === 'unique_rfc_por_org') {
-                        throw new Error(`El RFC ${clienteData.rfc} ya está registrado en esta organización`);
+                        throw new Error(`El RFC ${data.rfc} ya está registrado en esta organización`);
                     }
                 }
 
@@ -108,7 +108,7 @@ class ClienteModel {
         });
     }
 
-    static async obtenerPorId(id, organizacionId) {
+    static async buscarPorId(organizacionId, id) {
         return await RLSContextManager.query(organizacionId, async (db) => {
             const query = `
                 SELECT
@@ -137,9 +137,8 @@ class ClienteModel {
         });
     }
 
-    static async listar(options = {}) {
+    static async listar(organizacionId, filtros = {}) {
         const {
-            organizacionId,
             page = 1,
             limit = 20,
             busqueda,
@@ -149,7 +148,7 @@ class ClienteModel {
             etiqueta_ids,  // Filtro por etiquetas (Ene 2026)
             ordenPor = 'nombre',
             orden = 'ASC'
-        } = options;
+        } = filtros;
 
         return await RLSContextManager.query(organizacionId, async (db) => {
             const camposValidos = ['nombre', 'email', 'telefono', 'tipo', 'creado_en', 'actualizado_en'];
@@ -259,7 +258,7 @@ class ClienteModel {
         });
     }
 
-    static async actualizar(id, clienteData, organizacionId) {
+    static async actualizar(organizacionId, id, data) {
         return await RLSContextManager.query(organizacionId, async (db) => {
             const camposActualizables = [
                 'nombre', 'email', 'telefono', 'fecha_nacimiento',
@@ -268,7 +267,10 @@ class ClienteModel {
                 'lista_precios_id',
                 // Nuevos campos Ene 2026
                 'tipo', 'rfc', 'razon_social',
-                'calle', 'colonia', 'ciudad', 'estado_id', 'codigo_postal', 'pais_id'
+                'calle', 'colonia', 'ciudad', 'estado_id', 'codigo_postal', 'pais_id',
+                // Campos de crédito
+                'permite_credito', 'limite_credito', 'dias_credito',
+                'credito_suspendido', 'credito_suspendido_en', 'credito_suspendido_motivo'
             ];
 
             const setClauses = [];
@@ -276,9 +278,9 @@ class ClienteModel {
             let paramIndex = 2;
 
             for (const campo of camposActualizables) {
-                if (clienteData.hasOwnProperty(campo)) {
+                if (data.hasOwnProperty(campo)) {
                     setClauses.push(`${campo} = $${paramIndex}`);
-                    queryParams.push(clienteData[campo]);
+                    queryParams.push(data[campo]);
                     paramIndex++;
                 }
             }
@@ -308,13 +310,13 @@ class ClienteModel {
             } catch (error) {
                 if (error.code === '23505') {
                     if (error.constraint === 'unique_email_por_org') {
-                        throw new Error(`El email ${clienteData.email} ya está registrado en esta organización`);
+                        throw new Error(`El email ${data.email} ya está registrado en esta organización`);
                     }
                     if (error.constraint === 'unique_telefono_por_org') {
-                        throw new Error(`El teléfono ${clienteData.telefono} ya está registrado en esta organización`);
+                        throw new Error(`El teléfono ${data.telefono} ya está registrado en esta organización`);
                     }
                     if (error.constraint === 'unique_rfc_por_org') {
-                        throw new Error(`El RFC ${clienteData.rfc} ya está registrado en esta organización`);
+                        throw new Error(`El RFC ${data.rfc} ya está registrado en esta organización`);
                     }
                 }
 
@@ -332,7 +334,7 @@ class ClienteModel {
         });
     }
 
-    static async eliminar(id, organizacionId) {
+    static async eliminar(organizacionId, id) {
         return await RLSContextManager.query(organizacionId, async (db) => {
             const query = `
                 UPDATE clientes
@@ -592,8 +594,7 @@ class ClienteModel {
 
             } else if (crear_si_no_existe) {
                 try {
-                    const clienteNuevo = await this.crear({
-                        organizacion_id: organizacionId,
+                    const clienteNuevo = await this.crear(organizacionId, {
                         nombre: `Cliente ${telefonoNormalizado}`,
                         telefono: telefono,
                         email: null,
@@ -781,6 +782,178 @@ class ClienteModel {
 
             const result = await db.query(query, [organizacionId, soloVencidos]);
             return result.rows;
+        });
+    }
+
+    /**
+     * Importar clientes masivamente (transaccional)
+     * Si algún cliente falla, se hace rollback de TODA la importación
+     *
+     * @param {number} organizacionId - ID de la organización
+     * @param {Array} clientes - Array de datos de clientes a importar
+     * @param {Object} opciones - Opciones de importación
+     * @param {boolean} opciones.ignorarDuplicados - Si true, salta duplicados sin error
+     * @returns {Object} Resultado con clientes creados y estadísticas
+     */
+    static async importarMasivo(organizacionId, clientes, opciones = {}) {
+        const { ignorarDuplicados = true } = opciones;
+
+        return await RLSContextManager.transaction(organizacionId, async (db) => {
+            const resultados = {
+                creados: [],
+                duplicados: [],
+                errores: []
+            };
+
+            // Validar emails únicos en el lote antes de insertar
+            const emailsEnLote = new Set();
+            const telefonosEnLote = new Set();
+
+            for (let i = 0; i < clientes.length; i++) {
+                const cliente = clientes[i];
+                const fila = i + 1;
+
+                // Validar nombre requerido
+                if (!cliente.nombre || cliente.nombre.trim() === '') {
+                    resultados.errores.push({
+                        fila,
+                        campo: 'nombre',
+                        error: 'El nombre es requerido'
+                    });
+                    continue;
+                }
+
+                // Validar email único en el lote
+                if (cliente.email) {
+                    const emailNorm = cliente.email.trim().toLowerCase();
+                    if (emailsEnLote.has(emailNorm)) {
+                        resultados.errores.push({
+                            fila,
+                            campo: 'email',
+                            error: `Email duplicado en el archivo: ${cliente.email}`
+                        });
+                        continue;
+                    }
+                    emailsEnLote.add(emailNorm);
+                }
+
+                // Validar teléfono único en el lote
+                if (cliente.telefono) {
+                    const telNorm = cliente.telefono.trim().replace(/\D/g, '');
+                    if (telefonosEnLote.has(telNorm)) {
+                        resultados.errores.push({
+                            fila,
+                            campo: 'telefono',
+                            error: `Teléfono duplicado en el archivo: ${cliente.telefono}`
+                        });
+                        continue;
+                    }
+                    telefonosEnLote.add(telNorm);
+                }
+
+                try {
+                    // Verificar duplicado por email en BD
+                    if (cliente.email) {
+                        const existeEmail = await db.query(
+                            `SELECT id FROM clientes
+                             WHERE organizacion_id = $1 AND LOWER(email) = LOWER($2) AND eliminado_en IS NULL`,
+                            [organizacionId, cliente.email.trim()]
+                        );
+
+                        if (existeEmail.rows.length > 0) {
+                            if (ignorarDuplicados) {
+                                resultados.duplicados.push({
+                                    fila,
+                                    campo: 'email',
+                                    valor: cliente.email,
+                                    clienteExistenteId: existeEmail.rows[0].id
+                                });
+                                continue;
+                            } else {
+                                throw new Error(`Email ${cliente.email} ya existe`);
+                            }
+                        }
+                    }
+
+                    // Verificar duplicado por teléfono en BD
+                    if (cliente.telefono) {
+                        const existeTel = await db.query(
+                            `SELECT id FROM clientes
+                             WHERE organizacion_id = $1 AND telefono = $2 AND eliminado_en IS NULL`,
+                            [organizacionId, cliente.telefono.trim()]
+                        );
+
+                        if (existeTel.rows.length > 0) {
+                            if (ignorarDuplicados) {
+                                resultados.duplicados.push({
+                                    fila,
+                                    campo: 'telefono',
+                                    valor: cliente.telefono,
+                                    clienteExistenteId: existeTel.rows[0].id
+                                });
+                                continue;
+                            } else {
+                                throw new Error(`Teléfono ${cliente.telefono} ya existe`);
+                            }
+                        }
+                    }
+
+                    // Insertar cliente
+                    const insertResult = await db.query(
+                        `INSERT INTO clientes (
+                            organizacion_id, nombre, email, telefono,
+                            notas_especiales, activo, marketing_permitido
+                        ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+                        RETURNING id, nombre, email, telefono`,
+                        [
+                            organizacionId,
+                            cliente.nombre.trim(),
+                            cliente.email?.trim()?.toLowerCase() || null,
+                            cliente.telefono?.trim() || null,
+                            cliente.notas?.trim() || null,
+                            true,
+                            cliente.marketing_permitido ?? true
+                        ]
+                    );
+
+                    resultados.creados.push({
+                        fila,
+                        cliente: insertResult.rows[0]
+                    });
+
+                } catch (error) {
+                    // Si no ignoramos duplicados, el error hace rollback
+                    if (!ignorarDuplicados) {
+                        throw error;
+                    }
+
+                    // Manejar errores de constraint
+                    if (error.code === '23505') {
+                        resultados.duplicados.push({
+                            fila,
+                            error: error.message
+                        });
+                    } else {
+                        resultados.errores.push({
+                            fila,
+                            error: error.message
+                        });
+                    }
+                }
+            }
+
+            // Si hay errores críticos y no ignoramos duplicados, hacer rollback
+            if (!ignorarDuplicados && resultados.errores.length > 0) {
+                throw new Error(`Importación fallida: ${resultados.errores.length} errores encontrados`);
+            }
+
+            return {
+                totalProcesados: clientes.length,
+                creados: resultados.creados.length,
+                duplicados: resultados.duplicados.length,
+                errores: resultados.errores.length,
+                detalles: resultados
+            };
         });
     }
 }

@@ -1,11 +1,12 @@
 /**
  * @fileoverview Middleware AsyncHandler para manejo automático de errores
  * @description Elimina la necesidad de try/catch en cada controller
- * @version 1.0.0
+ * @version 2.0.0
  */
 
 const logger = require('../utils/logger');
 const { ResponseHelper } = require('../utils/helpers');
+const { BusinessError } = require('../utils/errors');
 
 /**
  * Wrapper para funciones async que maneja automáticamente errores
@@ -19,13 +20,19 @@ const asyncHandler = (fn) => {
                 // Log del error
                 logger.error('Error en controller', {
                     error: error.message,
+                    code: error.code,
                     stack: error.stack,
                     method: req.method,
                     path: req.path,
                     userId: req.user?.id
                 });
 
-                // Determinar código de estado
+                // 1. Errores de negocio tipados (prioridad máxima)
+                if (error instanceof BusinessError) {
+                    return ResponseHelper.error(res, error.message, error.statusCode, error.details);
+                }
+
+                // 2. Determinar código de estado para errores legacy
                 let statusCode = 500;
                 let message = error.message || 'Error interno del servidor';
 

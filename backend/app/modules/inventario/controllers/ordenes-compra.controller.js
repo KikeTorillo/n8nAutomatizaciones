@@ -20,10 +20,10 @@ class OrdenesCompraController {
     static crear = asyncHandler(async (req, res) => {
         const organizacionId = req.tenant.organizacionId;
 
-        const orden = await OrdenesCompraModel.crear({
+        const orden = await OrdenesCompraModel.crear(organizacionId, {
             ...req.body,
             usuario_id: req.user.id
-        }, organizacionId);
+        });
 
         return ResponseHelper.success(
             res,
@@ -41,7 +41,7 @@ class OrdenesCompraController {
         const { id } = req.params;
         const organizacionId = req.tenant.organizacionId;
 
-        const orden = await OrdenesCompraModel.obtenerPorId(parseInt(id), organizacionId);
+        const orden = await OrdenesCompraModel.buscarPorId(organizacionId, parseInt(id));
 
         if (!orden) {
             return ResponseHelper.error(res, 'Orden de compra no encontrada', 404);
@@ -68,7 +68,7 @@ class OrdenesCompraController {
             offset: req.query.offset ? parseInt(req.query.offset) : 0
         };
 
-        const resultado = await OrdenesCompraModel.listar(filtros, organizacionId);
+        const resultado = await OrdenesCompraModel.listar(organizacionId, filtros);
 
         return ResponseHelper.success(res, resultado, 'Órdenes obtenidas exitosamente');
     });
@@ -81,7 +81,7 @@ class OrdenesCompraController {
         const { id } = req.params;
         const organizacionId = req.tenant.organizacionId;
 
-        const orden = await OrdenesCompraModel.actualizar(parseInt(id), req.body, organizacionId);
+        const orden = await OrdenesCompraModel.actualizar(organizacionId, parseInt(id), req.body);
 
         return ResponseHelper.success(res, orden, 'Orden actualizada exitosamente');
     });
@@ -94,7 +94,7 @@ class OrdenesCompraController {
         const { id } = req.params;
         const organizacionId = req.tenant.organizacionId;
 
-        const orden = await OrdenesCompraModel.eliminar(parseInt(id), organizacionId);
+        const orden = await OrdenesCompraModel.eliminar(organizacionId, parseInt(id));
 
         return ResponseHelper.success(res, orden, 'Orden eliminada exitosamente');
     });
@@ -134,10 +134,10 @@ class OrdenesCompraController {
         const organizacionId = req.tenant.organizacionId;
 
         const item = await OrdenesCompraModel.actualizarItem(
+            organizacionId,
             parseInt(id),
             parseInt(itemId),
-            req.body,
-            organizacionId
+            req.body
         );
 
         return ResponseHelper.success(res, item, 'Item actualizado exitosamente');
@@ -152,9 +152,9 @@ class OrdenesCompraController {
         const organizacionId = req.tenant.organizacionId;
 
         const item = await OrdenesCompraModel.eliminarItem(
+            organizacionId,
             parseInt(id),
-            parseInt(itemId),
-            organizacionId
+            parseInt(itemId)
         );
 
         return ResponseHelper.success(res, item, 'Item eliminado exitosamente');

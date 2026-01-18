@@ -15,7 +15,7 @@ class ProductosController {
     static crear = asyncHandler(async (req, res) => {
         const organizacionId = req.tenant.organizacionId;
 
-        const producto = await ProductosModel.crear(req.body, organizacionId);
+        const producto = await ProductosModel.crear(organizacionId, req.body);
 
         return ResponseHelper.success(
             res,
@@ -33,7 +33,7 @@ class ProductosController {
         const { id } = req.params;
         const organizacionId = req.tenant.organizacionId;
 
-        const producto = await ProductosModel.obtenerPorId(parseInt(id), organizacionId);
+        const producto = await ProductosModel.buscarPorId(organizacionId, parseInt(id));
 
         if (!producto) {
             return ResponseHelper.error(res, 'Producto no encontrado', 404);
@@ -65,7 +65,7 @@ class ProductosController {
             offset: req.query.offset ? parseInt(req.query.offset) : 0
         };
 
-        const productos = await ProductosModel.listar(filtros, organizacionId);
+        const productos = await ProductosModel.listar(organizacionId, filtros);
 
         return ResponseHelper.success(res, productos, 'Productos obtenidos exitosamente');
     });
@@ -78,7 +78,7 @@ class ProductosController {
         const { id } = req.params;
         const organizacionId = req.tenant.organizacionId;
 
-        const producto = await ProductosModel.actualizar(parseInt(id), req.body, organizacionId);
+        const producto = await ProductosModel.actualizar(organizacionId, parseInt(id), req.body);
 
         return ResponseHelper.success(res, producto, 'Producto actualizado exitosamente');
     });
@@ -91,7 +91,7 @@ class ProductosController {
         const { id } = req.params;
         const organizacionId = req.tenant.organizacionId;
 
-        const resultado = await ProductosModel.eliminar(parseInt(id), organizacionId);
+        const resultado = await ProductosModel.eliminar(organizacionId, parseInt(id));
 
         return ResponseHelper.success(res, resultado, 'Producto eliminado exitosamente');
     });

@@ -78,7 +78,7 @@ class EducacionController {
             educacion.id
         );
 
-        logger.info(`🎓 Educación creada: ${educacion.titulo} en ${educacion.institucion} (ID: ${educacion.id})`);
+        logger.info(`[Educacion.crear] Educación creada: ${educacion.titulo} en ${educacion.institucion} (ID: ${educacion.id})`);
 
         return ResponseHelper.success(res, educacionCompleta, 'Educación creada exitosamente', 201);
     });
@@ -126,7 +126,7 @@ class EducacionController {
             educacion.id
         );
 
-        logger.info(`📝 Educación actualizada: ${educacion.titulo} (ID: ${educacionId})`);
+        logger.info(`[Educacion.actualizar] Educación actualizada: ${educacion.titulo} (ID: ${educacionId})`);
 
         return ResponseHelper.success(res, educacionCompleta, 'Educación actualizada exitosamente');
     });
@@ -155,7 +155,7 @@ class EducacionController {
             return ResponseHelper.error(res, 'No se pudo eliminar la educación', 400);
         }
 
-        logger.info(`🗑️ Educación eliminada: ${educacion.titulo} (ID: ${educacionId})`);
+        logger.info(`[Educacion.eliminar] Educación eliminada: ${educacion.titulo} (ID: ${educacionId})`);
 
         return ResponseHelper.success(res, { id: educacionId }, 'Educación eliminada exitosamente');
     });
@@ -183,7 +183,7 @@ class EducacionController {
             return ResponseHelper.error(res, 'No se pudo reordenar', 400);
         }
 
-        logger.info(`🔄 Educación reordenada para profesional ${profesionalId}`);
+        logger.info(`[Educacion.reordenar] Educación reordenada para profesional ${profesionalId}`);
 
         return ResponseHelper.success(res, { success: true }, 'Educación reordenada exitosamente');
     });

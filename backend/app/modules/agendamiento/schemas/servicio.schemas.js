@@ -203,6 +203,40 @@ const obtenerServiciosPorProfesional = {
     })
 };
 
+// ========== Schemas Round-Robin (Ene 2026) ==========
+
+/**
+ * GET /api/v1/servicios/:id/profesionales/orden
+ * Obtener profesionales con orden de rotación
+ */
+const obtenerProfesionalesConOrden = {
+    params: Joi.object({
+        id: commonSchemas.id
+    })
+};
+
+/**
+ * PUT /api/v1/servicios/:id/profesionales/orden
+ * Actualizar orden de rotación de profesionales
+ */
+const actualizarOrdenProfesionales = {
+    params: Joi.object({
+        id: commonSchemas.id
+    }),
+    body: Joi.object({
+        profesionales: Joi.array().items(
+            Joi.object({
+                profesional_id: commonSchemas.id.required(),
+                orden_rotacion: Joi.number().integer().min(0).required()
+            })
+        ).min(1).required()
+            .messages({
+                'array.min': 'Debe incluir al menos un profesional',
+                'any.required': 'El array de profesionales es requerido'
+            })
+    })
+};
+
 // POST /servicios/bulk-create
 const bulkCrear = {
     body: Joi.object({
@@ -323,5 +357,8 @@ module.exports = {
     asignarProfesional,
     desasignarProfesional,
     obtenerProfesionales,
-    obtenerServiciosPorProfesional
+    obtenerServiciosPorProfesional,
+    // Round-Robin (Ene 2026)
+    obtenerProfesionalesConOrden,
+    actualizarOrdenProfesionales
 };

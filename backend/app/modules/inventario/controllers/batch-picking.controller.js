@@ -39,7 +39,7 @@ class BatchPickingController {
         const organizacionId = req.tenant.organizacionId;
         const { id } = req.params;
 
-        const batch = await BatchPickingModel.obtenerPorId(parseInt(id), organizacionId);
+        const batch = await BatchPickingModel.buscarPorId(organizacionId, parseInt(id));
 
         if (!batch) {
             return ResponseHelper.notFound(res, 'Batch no encontrado');
@@ -63,12 +63,12 @@ class BatchPickingController {
 
         try {
             const batchId = await BatchPickingModel.crear(
-                { sucursal_id, operacion_ids, nombre },
                 organizacionId,
+                { sucursal_id, operacion_ids, nombre },
                 usuarioId
             );
 
-            const batch = await BatchPickingModel.obtenerPorId(batchId, organizacionId);
+            const batch = await BatchPickingModel.buscarPorId(organizacionId, batchId);
 
             return ResponseHelper.created(res, batch, 'Batch creado');
         } catch (error) {
@@ -84,7 +84,7 @@ class BatchPickingController {
         const organizacionId = req.tenant.organizacionId;
         const { id } = req.params;
 
-        const batch = await BatchPickingModel.actualizar(parseInt(id), req.body, organizacionId);
+        const batch = await BatchPickingModel.actualizar(organizacionId, parseInt(id), req.body);
 
         if (!batch) {
             return ResponseHelper.notFound(res, 'Batch no encontrado');
@@ -101,7 +101,7 @@ class BatchPickingController {
         const organizacionId = req.tenant.organizacionId;
         const { id } = req.params;
 
-        const eliminado = await BatchPickingModel.eliminar(parseInt(id), organizacionId);
+        const eliminado = await BatchPickingModel.eliminar(organizacionId, parseInt(id));
 
         if (!eliminado) {
             return ResponseHelper.error(res, 'No se puede eliminar. Batch no encontrado o no esta en borrador', 400);

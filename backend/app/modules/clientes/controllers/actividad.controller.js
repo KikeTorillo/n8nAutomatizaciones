@@ -29,7 +29,7 @@ class ActividadClienteController {
         const organizacionId = req.tenant.organizacionId;
 
         // Verificar que el cliente existe
-        const cliente = await ClienteModel.obtenerPorId(parseInt(clienteId), organizacionId);
+        const cliente = await ClienteModel.buscarPorId(organizacionId, parseInt(clienteId));
         if (!cliente) {
             return ResponseHelper.notFound(res, 'Cliente no encontrado');
         }
@@ -89,9 +89,9 @@ class ActividadClienteController {
         const { limit = 20, offset = 0 } = req.query;
 
         // Verificar que el cliente existe
-        const cliente = await ClienteModel.obtenerPorId(
-            parseInt(clienteId),
-            req.tenant.organizacionId
+        const cliente = await ClienteModel.buscarPorId(
+            req.tenant.organizacionId,
+            parseInt(clienteId)
         );
         if (!cliente) {
             return ResponseHelper.notFound(res, 'Cliente no encontrado');

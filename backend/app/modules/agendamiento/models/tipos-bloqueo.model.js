@@ -44,12 +44,12 @@ class TipoBloqueoModel {
   }
 
   /**
-   * Obtener tipo por ID
+   * Buscar tipo por ID
    * @param {number} orgId
    * @param {number} tipoId
    * @returns {Promise<Object>}
    */
-  static async obtenerPorId(orgId, tipoId) {
+  static async buscarPorId(orgId, tipoId) {
     return await RLSContextManager.query(orgId, async (db) => {
       const query = `
         SELECT *

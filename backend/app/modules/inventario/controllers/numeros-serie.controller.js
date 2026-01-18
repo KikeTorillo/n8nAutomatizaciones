@@ -84,14 +84,14 @@ exports.crear = async (req, res, next) => {
         }
 
         const id = await NumerosSerieModel.crear(
-            value,
             req.tenant.organizacionId,
+            value,
             req.user.id
         );
 
-        const numeroSerie = await NumerosSerieModel.obtenerPorId(
-            id,
-            req.tenant.organizacionId
+        const numeroSerie = await NumerosSerieModel.buscarPorId(
+            req.tenant.organizacionId,
+            id
         );
 
         res.status(201).json({
@@ -119,8 +119,8 @@ exports.crearMultiple = async (req, res, next) => {
         }
 
         const creados = await NumerosSerieModel.crearMultiple(
-            value.items,
             req.tenant.organizacionId,
+            value.items,
             req.user.id
         );
 
@@ -149,8 +149,8 @@ exports.listar = async (req, res, next) => {
         }
 
         const resultado = await NumerosSerieModel.listar(
-            value,
-            req.tenant.organizacionId
+            req.tenant.organizacionId,
+            value
         );
 
         res.json({
@@ -176,9 +176,9 @@ exports.obtenerPorId = async (req, res, next) => {
     try {
         const { id } = req.params;
 
-        const numeroSerie = await NumerosSerieModel.obtenerPorId(
-            parseInt(id),
-            req.tenant.organizacionId
+        const numeroSerie = await NumerosSerieModel.buscarPorId(
+            req.tenant.organizacionId,
+            parseInt(id)
         );
 
         if (!numeroSerie) {

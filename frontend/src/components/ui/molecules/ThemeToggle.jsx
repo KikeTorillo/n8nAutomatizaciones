@@ -46,4 +46,6 @@ function ThemeToggle({ className, size = 'md' }) {
   );
 }
 
+ThemeToggle.displayName = 'ThemeToggle';
+
 export default ThemeToggle;

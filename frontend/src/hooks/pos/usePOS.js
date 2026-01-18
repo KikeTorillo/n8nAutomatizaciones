@@ -5,9 +5,8 @@
  * Los hooks están organizados en archivos separados por funcionalidad.
  *
  * Archivos modulares:
- * - useVentasPOS.js - CRUD de ventas, items, devoluciones
+ * - useVentas.js - CRUD de ventas, items, devoluciones, reportes
  * - usePagosVenta.js - Pagos simples, split y desglose
- * - useCorteCaja.js - Reportes de corte y ventas diarias
  * - useSesionesCaja.js - Apertura, cierre y movimientos de caja
  * - useCategoriasPOS.js - Grid visual de categorías y productos
  */
@@ -23,7 +22,10 @@ export {
   useDevolverItems,
   useAgregarItems,
   useEliminarVenta,
-} from './useVentasPOS';
+  // Reportes (consolidados en useVentas.js)
+  useCorteCaja,
+  useVentasDiarias,
+} from './useVentas';
 
 // ==================== PAGOS ====================
 export {
@@ -31,12 +33,6 @@ export {
   useRegistrarPagosSplit,
   usePagosVenta,
 } from './usePagosVenta';
-
-// ==================== REPORTES ====================
-export {
-  useCorteCaja,
-  useVentasDiarias,
-} from './useCorteCaja';
 
 // ==================== SESIONES DE CAJA ====================
 export {

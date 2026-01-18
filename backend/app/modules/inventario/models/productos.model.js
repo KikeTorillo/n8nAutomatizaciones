@@ -111,8 +111,11 @@ class ProductosModel {
 
     /**
      * Crear nuevo producto
+     * @param {number} organizacionId
+     * @param {Object} data
+     * @returns {Object}
      */
-    static async crear(data, organizacionId) {
+    static async crear(organizacionId, data) {
         return await RLSContextManager.transaction(organizacionId, async (db) => {
             logger.info('[ProductosModel.crear] Iniciando', {
                 organizacion_id: organizacionId,
@@ -255,8 +258,11 @@ class ProductosModel {
 
     /**
      * Obtener producto por ID (incluye precios multi-moneda)
+     * @param {number} organizacionId
+     * @param {number} id
+     * @returns {Object|null}
      */
-    static async obtenerPorId(id, organizacionId) {
+    static async buscarPorId(organizacionId, id) {
         return await RLSContextManager.query(organizacionId, async (db) => {
             const query = `
                 SELECT
@@ -304,8 +310,11 @@ class ProductosModel {
 
     /**
      * Listar productos con filtros opcionales
+     * @param {number} organizacionId
+     * @param {Object} filtros
+     * @returns {Object}
      */
-    static async listar(filtros, organizacionId) {
+    static async listar(organizacionId, filtros = {}) {
         return await RLSContextManager.query(organizacionId, async (db) => {
             let whereConditions = ['p.organizacion_id = $1'];
             let values = [organizacionId];
@@ -429,8 +438,12 @@ class ProductosModel {
 
     /**
      * Actualizar producto
+     * @param {number} organizacionId
+     * @param {number} id
+     * @param {Object} data
+     * @returns {Object}
      */
-    static async actualizar(id, data, organizacionId) {
+    static async actualizar(organizacionId, id, data) {
         return await RLSContextManager.transaction(organizacionId, async (db) => {
             logger.info('[ProductosModel.actualizar] Iniciando', {
                 organizacion_id: organizacionId,
@@ -573,8 +586,11 @@ class ProductosModel {
 
     /**
      * Eliminar producto (soft delete)
+     * @param {number} organizacionId
+     * @param {number} id
+     * @returns {Object}
      */
-    static async eliminar(id, organizacionId) {
+    static async eliminar(organizacionId, id) {
         return await RLSContextManager.transaction(organizacionId, async (db) => {
             logger.info('[ProductosModel.eliminar] Iniciando', {
                 organizacion_id: organizacionId,
@@ -765,10 +781,38 @@ class ProductosModel {
      * Búsqueda avanzada de productos (full-text search + código de barras)
      * Dic 2025: Incluye requiere_numero_serie para integración POS
      * Dic 2025: Busca también en variantes_producto (variantes primero)
+     * Ene 2026: Corregido SQL injection - usar parámetros preparados
      */
     static async buscar(filtros, organizacionId) {
         return await RLSContextManager.query(organizacionId, async (db) => {
             const { q, tipo_busqueda, categoria_id, proveedor_id, solo_activos, solo_con_stock, limit } = filtros;
+
+            // Construir condiciones dinámicas con parámetros preparados
+            // Parámetros base: $1=orgId, $2=q (exacto), $3=q (ILIKE), $4=limit
+            let paramIndex = 5;
+            const extraConditions = [];
+            const values = [
+                organizacionId,
+                q,              // Para coincidencia exacta SKU/barcode
+                `%${q}%`,       // Para ILIKE
+                limit || 20
+            ];
+
+            // Agregar filtro de categoría si existe
+            let categoriaCondition = '';
+            if (categoria_id) {
+                categoriaCondition = `AND p.categoria_id = $${paramIndex}`;
+                values.push(parseInt(categoria_id));
+                paramIndex++;
+            }
+
+            // Agregar filtro de proveedor si existe
+            let proveedorCondition = '';
+            if (proveedor_id) {
+                proveedorCondition = `AND p.proveedor_id = $${paramIndex}`;
+                values.push(parseInt(proveedor_id));
+                paramIndex++;
+            }
 
             // Búsqueda unificada: Variantes + Productos sin variantes
             // Las variantes aparecen primero si coinciden exactamente por SKU/barcode
@@ -815,8 +859,8 @@ class ProductosModel {
                             OR v.codigo_barras = $2
                         )
                         ${solo_con_stock ? "AND (v.stock_actual > 0 OR p.ruta_preferida = 'dropship')" : ''}
-                        ${categoria_id ? `AND p.categoria_id = ${parseInt(categoria_id)}` : ''}
-                        ${proveedor_id ? `AND p.proveedor_id = ${parseInt(proveedor_id)}` : ''}
+                        ${categoriaCondition}
+                        ${proveedorCondition}
 
                     UNION ALL
 
@@ -860,20 +904,13 @@ class ProductosModel {
                             OR p.codigo_barras = $2
                         )
                         ${solo_con_stock ? "AND (p.stock_actual > 0 OR p.ruta_preferida = 'dropship')" : ''}
-                        ${categoria_id ? `AND p.categoria_id = ${parseInt(categoria_id)}` : ''}
-                        ${proveedor_id ? `AND p.proveedor_id = ${parseInt(proveedor_id)}` : ''}
+                        ${categoriaCondition}
+                        ${proveedorCondition}
                 )
                 SELECT * FROM busqueda
                 ORDER BY orden_relevancia, nombre
                 LIMIT $4
             `;
-
-            const values = [
-                organizacionId,
-                q,              // Para coincidencia exacta SKU/barcode
-                `%${q}%`,       // Para ILIKE
-                limit || 20
-            ];
 
             const result = await db.query(query, values);
             return result.rows;

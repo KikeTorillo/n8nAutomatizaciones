@@ -98,12 +98,12 @@ class CategoriaPagoModel {
     }
 
     /**
-     * Obtener categoría por ID
+     * Buscar categoría por ID
      * @param {number} organizacionId - ID de la organización
      * @param {number} categoriaId - ID de la categoría
      * @returns {Promise<Object|null>} Categoría encontrada o null
      */
-    static async obtenerPorId(organizacionId, categoriaId) {
+    static async buscarPorId(organizacionId, categoriaId) {
         return await RLSContextManager.query(organizacionId, async (db) => {
             const query = `
                 SELECT *

@@ -1,11 +1,23 @@
 // Modelo de Servicios - CRUD multi-tenant con RLS
 
 const RLSContextManager = require('../../../utils/rlsContextManager');
+const {
+    PlanLimitExceededError,
+    DuplicateResourceError,
+    InvalidProfessionalsError,
+    ResourceInUseError
+} = require('../../../utils/errors');
 
 class ServicioModel {
 
-    static async crear(servicioData) {
-        return await RLSContextManager.transaction(servicioData.organizacion_id, async (db) => {
+    /**
+     * Crear nuevo servicio
+     * @param {number} organizacionId
+     * @param {Object} data
+     * @returns {Object}
+     */
+    static async crear(organizacionId, data) {
+        return await RLSContextManager.transaction(organizacionId, async (db) => {
             // 1. Crear el servicio
             const query = `
                 INSERT INTO servicios (
@@ -22,23 +34,23 @@ class ServicioModel {
             `;
 
             const values = [
-                servicioData.organizacion_id,
-                servicioData.nombre,
-                servicioData.descripcion || null,
-                servicioData.categoria || null,
-                servicioData.subcategoria || null,
-                servicioData.duracion_minutos,
-                servicioData.precio,
-                servicioData.precio_minimo || null,
-                servicioData.precio_maximo || null,
-                servicioData.requiere_preparacion_minutos || 0,
-                servicioData.tiempo_limpieza_minutos || 5,
-                servicioData.max_clientes_simultaneos || 1,
-                servicioData.color_servicio || '#e74c3c',
-                servicioData.configuracion_especifica || {},
-                servicioData.tags || [],
-                servicioData.activo !== undefined ? servicioData.activo : true,
-                servicioData.imagen_url || null
+                organizacionId,
+                data.nombre,
+                data.descripcion || null,
+                data.categoria || null,
+                data.subcategoria || null,
+                data.duracion_minutos,
+                data.precio,
+                data.precio_minimo || null,
+                data.precio_maximo || null,
+                data.requiere_preparacion_minutos || 0,
+                data.tiempo_limpieza_minutos || 5,
+                data.max_clientes_simultaneos || 1,
+                data.color_servicio || '#e74c3c',
+                data.configuracion_especifica || {},
+                data.tags || [],
+                data.activo !== undefined ? data.activo : true,
+                data.imagen_url || null
             ];
 
             try {
@@ -46,7 +58,7 @@ class ServicioModel {
                 const servicio = result.rows[0];
 
                 // 2. Asociar profesionales si se proporcionan
-                if (servicioData.profesionales_ids && Array.isArray(servicioData.profesionales_ids) && servicioData.profesionales_ids.length > 0) {
+                if (data.profesionales_ids && Array.isArray(data.profesionales_ids) && data.profesionales_ids.length > 0) {
                     // Validar que los profesionales existen y pertenecen a la organización
                     const validarProfesionalesQuery = `
                         SELECT id FROM profesionales
@@ -55,11 +67,11 @@ class ServicioModel {
                           AND activo = true
                     `;
                     const profesionalesValidos = await db.query(validarProfesionalesQuery, [
-                        servicioData.profesionales_ids,
-                        servicioData.organizacion_id
+                        data.profesionales_ids,
+                        organizacionId
                     ]);
 
-                    if (profesionalesValidos.rows.length !== servicioData.profesionales_ids.length) {
+                    if (profesionalesValidos.rows.length !== data.profesionales_ids.length) {
                         throw new Error('Uno o más profesionales no existen o no pertenecen a esta organización');
                     }
 
@@ -69,7 +81,7 @@ class ServicioModel {
                         VALUES ($1, $2, true)
                     `;
 
-                    for (const profesionalId of servicioData.profesionales_ids) {
+                    for (const profesionalId of data.profesionales_ids) {
                         await db.query(asociarQuery, [servicio.id, profesionalId]);
                     }
 
@@ -89,13 +101,13 @@ class ServicioModel {
 
             } catch (error) {
                 if (error.code === '23505') {
-                    throw new Error('Ya existe un servicio con ese nombre en la organización');
+                    throw new DuplicateResourceError('Servicio', 'nombre');
                 }
                 if (error.code === '23514') {
                     throw new Error('Error de validación en los datos del servicio');
                 }
                 if (error.code === '23503') {
-                    if (error.detail.includes('organizacion_id')) {
+                    if (error.detail?.includes('organizacion_id')) {
                         throw new Error('La organización especificada no existe');
                     }
                 }
@@ -141,9 +153,11 @@ class ServicioModel {
                 const detalles = await db.query(detallesQuery, [organizacionId]);
                 const { limite, uso_actual, nombre_plan } = detalles.rows[0] || {};
 
-                throw new Error(
-                    `No se pueden crear ${cantidadACrear} servicios. ` +
-                    `Límite del plan ${nombre_plan}: ${limite} (uso actual: ${uso_actual || 0})`
+                throw new PlanLimitExceededError(
+                    'servicios',
+                    limite || 0,
+                    uso_actual || 0,
+                    nombre_plan || 'actual'
                 );
             }
 
@@ -154,8 +168,10 @@ class ServicioModel {
             );
 
             if (nombresDuplicadosEnBatch.length > 0) {
-                throw new Error(
-                    `Nombres duplicados en el lote: ${[...new Set(nombresDuplicadosEnBatch)].join(', ')}`
+                throw new DuplicateResourceError(
+                    'Servicio',
+                    'nombre',
+                    [...new Set(nombresDuplicadosEnBatch)].join(', ')
                 );
             }
 
@@ -172,8 +188,10 @@ class ServicioModel {
 
             if (nombresExistentes.rows.length > 0) {
                 const duplicados = nombresExistentes.rows.map(r => r.nombre);
-                throw new Error(
-                    `Ya existen servicios con estos nombres: ${duplicados.join(', ')}`
+                throw new DuplicateResourceError(
+                    'Servicio',
+                    'nombre',
+                    duplicados.join(', ')
                 );
             }
 
@@ -284,8 +302,14 @@ class ServicioModel {
         });
     }
 
-    static async obtenerPorId(id, organizacion_id) {
-        return await RLSContextManager.query(organizacion_id, async (db) => {
+    /**
+     * Obtener servicio por ID
+     * @param {number} organizacionId
+     * @param {number} id
+     * @returns {Object|null}
+     */
+    static async buscarPorId(organizacionId, id) {
+        return await RLSContextManager.query(organizacionId, async (db) => {
             const query = `
                 SELECT s.*,
                        COUNT(sp.profesional_id) as total_profesionales_asignados
@@ -401,8 +425,15 @@ class ServicioModel {
         });
     }
 
-    static async actualizar(id, servicioData, organizacion_id) {
-        return await RLSContextManager.query(organizacion_id, async (db) => {
+    /**
+     * Actualizar servicio
+     * @param {number} organizacionId
+     * @param {number} id
+     * @param {Object} data
+     * @returns {Object|null}
+     */
+    static async actualizar(organizacionId, id, data) {
+        return await RLSContextManager.query(organizacionId, async (db) => {
             const camposPermitidos = [
                 'nombre', 'descripcion', 'categoria', 'subcategoria',
                 'duracion_minutos', 'precio', 'precio_minimo', 'precio_maximo',
@@ -414,7 +445,7 @@ class ServicioModel {
             const valores = [id];
             let parametroIndex = 2;
 
-            for (const [campo, valor] of Object.entries(servicioData)) {
+            for (const [campo, valor] of Object.entries(data)) {
                 if (camposPermitidos.includes(campo) && valor !== undefined) {
                     setClauses.push(`${campo} = $${parametroIndex}`);
                     valores.push(valor);
@@ -455,8 +486,14 @@ class ServicioModel {
         });
     }
 
-    static async eliminar(id, organizacion_id) {
-        return await RLSContextManager.query(organizacion_id, async (db) => {
+    /**
+     * Eliminar servicio (soft delete)
+     * @param {number} organizacionId
+     * @param {number} id
+     * @returns {boolean}
+     */
+    static async eliminar(organizacionId, id) {
+        return await RLSContextManager.query(organizacionId, async (db) => {
             const query = `
                 UPDATE servicios
                 SET activo = false, actualizado_en = NOW()
@@ -468,8 +505,14 @@ class ServicioModel {
         });
     }
 
-    static async eliminarPermanente(id, organizacion_id) {
-        return await RLSContextManager.query(organizacion_id, async (db) => {
+    /**
+     * Eliminar servicio permanentemente
+     * @param {number} organizacionId
+     * @param {number} id
+     * @returns {boolean}
+     */
+    static async eliminarPermanente(organizacionId, id) {
+        return await RLSContextManager.query(organizacionId, async (db) => {
             const query = `DELETE FROM servicios WHERE id = $1`;
 
             try {
@@ -477,15 +520,23 @@ class ServicioModel {
                 return result.rowCount > 0;
             } catch (error) {
                 if (error.code === '23503') {
-                    throw new Error('No se puede eliminar el servicio porque tiene citas asociadas');
+                    throw new ResourceInUseError('Servicio', 'citas');
                 }
                 throw error;
             }
         });
     }
 
-    static async asignarProfesional(servicio_id, profesional_id, configuracion = {}, organizacion_id) {
-        return await RLSContextManager.query(organizacion_id, async (db) => {
+    /**
+     * Asignar profesional a servicio
+     * @param {number} organizacionId
+     * @param {number} servicioId
+     * @param {number} profesionalId
+     * @param {Object} configuracion
+     * @returns {Object}
+     */
+    static async asignarProfesional(organizacionId, servicioId, profesionalId, configuracion = {}) {
+        return await RLSContextManager.query(organizacionId, async (db) => {
             const query = `
                 INSERT INTO servicios_profesionales (
                     servicio_id, profesional_id, precio_personalizado,
@@ -503,8 +554,8 @@ class ServicioModel {
             `;
 
             const values = [
-                servicio_id,
-                profesional_id,
+                servicioId,
+                profesionalId,
                 configuracion.precio_personalizado || null,
                 configuracion.duracion_personalizada || null,
                 configuracion.notas_especiales || null,
@@ -528,22 +579,36 @@ class ServicioModel {
         });
     }
 
-    static async desasignarProfesional(servicio_id, profesional_id, organizacion_id) {
-        return await RLSContextManager.query(organizacion_id, async (db) => {
+    /**
+     * Desasignar profesional de servicio
+     * @param {number} organizacionId
+     * @param {number} servicioId
+     * @param {number} profesionalId
+     * @returns {boolean}
+     */
+    static async desasignarProfesional(organizacionId, servicioId, profesionalId) {
+        return await RLSContextManager.query(organizacionId, async (db) => {
             const query = `
                 UPDATE servicios_profesionales
                 SET activo = false, actualizado_en = NOW()
                 WHERE servicio_id = $1 AND profesional_id = $2
             `;
 
-            const result = await db.query(query, [servicio_id, profesional_id]);
+            const result = await db.query(query, [servicioId, profesionalId]);
             return result.rowCount > 0;
         });
     }
 
-    static async obtenerProfesionales(servicio_id, organizacion_id, solo_activos = true) {
-        return await RLSContextManager.query(organizacion_id, async (db) => {
-            const condicionActivo = solo_activos ? 'AND sp.activo = true AND p.activo = true' : '';
+    /**
+     * Obtener profesionales de un servicio
+     * @param {number} organizacionId
+     * @param {number} servicioId
+     * @param {boolean} soloActivos
+     * @returns {Array}
+     */
+    static async obtenerProfesionales(organizacionId, servicioId, soloActivos = true) {
+        return await RLSContextManager.query(organizacionId, async (db) => {
+            const condicionActivo = soloActivos ? 'AND sp.activo = true AND p.activo = true' : '';
 
             const query = `
                 SELECT p.*,
@@ -559,14 +624,21 @@ class ServicioModel {
                 ORDER BY p.nombre_completo
             `;
 
-            const result = await db.query(query, [servicio_id]);
+            const result = await db.query(query, [servicioId]);
             return result.rows;
         });
     }
 
-    static async obtenerServiciosPorProfesional(profesional_id, organizacion_id, solo_activos = true) {
-        return await RLSContextManager.query(organizacion_id, async (db) => {
-            const condicionActivo = solo_activos ? 'AND sp.activo = true AND s.activo = true' : '';
+    /**
+     * Obtener servicios de un profesional
+     * @param {number} organizacionId
+     * @param {number} profesionalId
+     * @param {boolean} soloActivos
+     * @returns {Array}
+     */
+    static async obtenerServiciosPorProfesional(organizacionId, profesionalId, soloActivos = true) {
+        return await RLSContextManager.query(organizacionId, async (db) => {
+            const condicionActivo = soloActivos ? 'AND sp.activo = true AND s.activo = true' : '';
 
             const query = `
                 SELECT s.*,
@@ -582,7 +654,7 @@ class ServicioModel {
                 ORDER BY s.categoria, s.nombre
             `;
 
-            const result = await db.query(query, [profesional_id]);
+            const result = await db.query(query, [profesionalId]);
             return result.rows;
         });
     }

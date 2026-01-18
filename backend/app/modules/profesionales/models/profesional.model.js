@@ -1,13 +1,14 @@
 const RLSContextManager = require('../../../utils/rlsContextManager');
+const { PlanLimitExceededError, DuplicateResourceError } = require('../../../utils/errors');
 
 class ProfesionalModel {
 
-    static async crear(profesionalData) {
-        return await RLSContextManager.query(profesionalData.organizacion_id, async (db) => {
-            if (profesionalData.email) {
+    static async crear(organizacionId, data) {
+        return await RLSContextManager.query(organizacionId, async (db) => {
+            if (data.email) {
                 const emailDisponible = await this.validarEmailDisponible(
-                    profesionalData.email,
-                    profesionalData.organizacion_id,
+                    data.email,
+                    organizacionId,
                     null,
                     db
                 );
@@ -51,62 +52,62 @@ class ProfesionalModel {
             `;
 
             const values = [
-                profesionalData.organizacion_id,
-                profesionalData.codigo || null,
-                profesionalData.nombre_completo,
-                profesionalData.email || null,
-                profesionalData.telefono || null,
-                profesionalData.foto_url || null,
-                profesionalData.fecha_nacimiento || null,
-                profesionalData.documento_identidad || null,
-                profesionalData.genero || 'no_especificado',
-                profesionalData.direccion || null,
-                profesionalData.estado_civil || null,
-                profesionalData.contacto_emergencia_nombre || null,
-                profesionalData.contacto_emergencia_telefono || null,
-                profesionalData.estado || 'activo',
-                profesionalData.tipo_contratacion || 'tiempo_completo',
-                profesionalData.supervisor_id || null,
-                profesionalData.departamento_id || null,
-                profesionalData.puesto_id || null,
-                profesionalData.fecha_ingreso || null,
-                profesionalData.licencias_profesionales || {},
-                profesionalData.años_experiencia || 0,
-                profesionalData.idiomas || ['es'],
-                profesionalData.disponible_online !== undefined ? profesionalData.disponible_online : false,
-                profesionalData.color_calendario || '#753572',
-                profesionalData.biografia || null,
-                profesionalData.configuracion_horarios || {},
-                profesionalData.configuracion_servicios || {},
-                profesionalData.salario_base || null,
-                profesionalData.forma_pago || 'comision',
-                profesionalData.usuario_id || null,
-                profesionalData.activo !== undefined ? profesionalData.activo : true,
+                organizacionId,
+                data.codigo || null,
+                data.nombre_completo,
+                data.email || null,
+                data.telefono || null,
+                data.foto_url || null,
+                data.fecha_nacimiento || null,
+                data.documento_identidad || null,
+                data.genero || 'no_especificado',
+                data.direccion || null,
+                data.estado_civil || null,
+                data.contacto_emergencia_nombre || null,
+                data.contacto_emergencia_telefono || null,
+                data.estado || 'activo',
+                data.tipo_contratacion || 'tiempo_completo',
+                data.supervisor_id || null,
+                data.departamento_id || null,
+                data.puesto_id || null,
+                data.fecha_ingreso || null,
+                data.licencias_profesionales || {},
+                data.años_experiencia || 0,
+                data.idiomas || ['es'],
+                data.disponible_online !== undefined ? data.disponible_online : false,
+                data.color_calendario || '#753572',
+                data.biografia || null,
+                data.configuracion_horarios || {},
+                data.configuracion_servicios || {},
+                data.salario_base || null,
+                data.forma_pago || 'comision',
+                data.usuario_id || null,
+                data.activo !== undefined ? data.activo : true,
                 // Fase 1: Campos adicionales
-                profesionalData.numero_pasaporte || null,
-                profesionalData.numero_seguro_social || null,
-                profesionalData.nacionalidad || null,
-                profesionalData.lugar_nacimiento_ciudad || null,
-                profesionalData.lugar_nacimiento_pais || null,
-                profesionalData.email_privado || null,
-                profesionalData.telefono_privado || null,
-                profesionalData.distancia_casa_trabajo_km || null,
-                profesionalData.hijos_dependientes || 0,
-                profesionalData.zona_horaria || 'America/Mexico_City',
-                profesionalData.responsable_rrhh_id || null,
-                profesionalData.codigo_nip || null,
-                profesionalData.id_credencial || null,
+                data.numero_pasaporte || null,
+                data.numero_seguro_social || null,
+                data.nacionalidad || null,
+                data.lugar_nacimiento_ciudad || null,
+                data.lugar_nacimiento_pais || null,
+                data.email_privado || null,
+                data.telefono_privado || null,
+                data.distancia_casa_trabajo_km || null,
+                data.hijos_dependientes || 0,
+                data.zona_horaria || 'America/Mexico_City',
+                data.responsable_rrhh_id || null,
+                data.codigo_nip || null,
+                data.id_credencial || null,
                 // GAP vs Odoo 19: Nuevos campos (Ene 2026)
-                profesionalData.categoria_pago_id || null,
-                profesionalData.motivo_salida_id || null,
-                profesionalData.fecha_baja || null,
-                profesionalData.ubicacion_lunes_id || null,
-                profesionalData.ubicacion_martes_id || null,
-                profesionalData.ubicacion_miercoles_id || null,
-                profesionalData.ubicacion_jueves_id || null,
-                profesionalData.ubicacion_viernes_id || null,
-                profesionalData.ubicacion_sabado_id || null,
-                profesionalData.ubicacion_domingo_id || null
+                data.categoria_pago_id || null,
+                data.motivo_salida_id || null,
+                data.fecha_baja || null,
+                data.ubicacion_lunes_id || null,
+                data.ubicacion_martes_id || null,
+                data.ubicacion_miercoles_id || null,
+                data.ubicacion_jueves_id || null,
+                data.ubicacion_viernes_id || null,
+                data.ubicacion_sabado_id || null,
+                data.ubicacion_domingo_id || null
             ];
 
             try {
@@ -180,9 +181,11 @@ class ProfesionalModel {
                 const detalles = await db.query(detallesQuery, [organizacionId]);
                 const { limite, uso_actual, nombre_plan } = detalles.rows[0] || {};
 
-                throw new Error(
-                    `No se pueden crear ${cantidadACrear} profesionales. ` +
-                    `Límite del plan ${nombre_plan}: ${limite} (uso actual: ${uso_actual || 0})`
+                throw new PlanLimitExceededError(
+                    'profesionales',
+                    limite || 0,
+                    uso_actual || 0,
+                    nombre_plan || 'actual'
                 );
             }
 
@@ -298,7 +301,7 @@ class ProfesionalModel {
         });
     }
 
-    static async buscarPorId(id, organizacionId) {
+    static async buscarPorId(organizacionId, id) {
         return await RLSContextManager.query(organizacionId, async (db) => {
             const query = `
                 SELECT p.id, p.organizacion_id, p.nombre_completo, p.email, p.telefono,
@@ -360,7 +363,7 @@ class ProfesionalModel {
         });
     }
 
-    static async listarPorOrganizacion(organizacionId, filtros = {}) {
+    static async listar(organizacionId, filtros = {}) {
         return await RLSContextManager.query(organizacionId, async (db) => {
             const {
                 activo = null,
@@ -533,11 +536,11 @@ class ProfesionalModel {
         });
     }
 
-    static async actualizar(id, organizacionId, datos) {
+    static async actualizar(organizacionId, id, data) {
         return await RLSContextManager.query(organizacionId, async (db) => {
-            if (datos.email) {
+            if (data.email) {
                 const emailDisponible = await this.validarEmailDisponible(
-                    datos.email,
+                    data.email,
                     organizacionId,
                     id,
                     db
@@ -589,7 +592,7 @@ class ProfesionalModel {
             const valores = [];
             let contador = 1;
 
-            for (const [campo, valor] of Object.entries(datos)) {
+            for (const [campo, valor] of Object.entries(data)) {
                 if (camposPermitidos.includes(campo) && valor !== undefined) {
                     campos.push(`${campo} = $${contador}`);
                     valores.push(valor);
@@ -642,7 +645,7 @@ class ProfesionalModel {
         });
     }
 
-    static async cambiarEstado(id, organizacionId, activo, motivoInactividad = null) {
+    static async cambiarEstado(organizacionId, id, activo, motivoInactividad = null) {
         return await RLSContextManager.query(organizacionId, async (db) => {
             const query = `
                 UPDATE profesionales
@@ -729,7 +732,7 @@ class ProfesionalModel {
         });
     }
 
-    static async eliminar(id, organizacionId, motivo = 'Eliminado por administrador') {
+    static async eliminar(organizacionId, id, motivo = 'Eliminado por administrador') {
         return await RLSContextManager.query(organizacionId, async (db) => {
             const query = `
                 UPDATE profesionales

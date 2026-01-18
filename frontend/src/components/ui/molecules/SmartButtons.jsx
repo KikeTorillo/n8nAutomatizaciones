@@ -72,4 +72,6 @@ export function SmartButtons({ buttons = [], className }) {
   );
 }
 
+SmartButtons.displayName = 'SmartButtons';
+
 export default SmartButtons;

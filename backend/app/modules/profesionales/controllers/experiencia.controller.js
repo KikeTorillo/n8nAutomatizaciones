@@ -78,7 +78,7 @@ class ExperienciaController {
             experiencia.id
         );
 
-        logger.info(`💼 Experiencia creada: ${experiencia.empresa} - ${experiencia.puesto} (ID: ${experiencia.id})`);
+        logger.info(`[Experiencia.crear] Experiencia creada: ${experiencia.empresa} - ${experiencia.puesto} (ID: ${experiencia.id})`);
 
         return ResponseHelper.success(res, experienciaCompleta, 'Experiencia creada exitosamente', 201);
     });
@@ -126,7 +126,7 @@ class ExperienciaController {
             experiencia.id
         );
 
-        logger.info(`📝 Experiencia actualizada: ${experiencia.empresa} (ID: ${experienciaId})`);
+        logger.info(`[Experiencia.actualizar] Experiencia actualizada: ${experiencia.empresa} (ID: ${experienciaId})`);
 
         return ResponseHelper.success(res, experienciaCompleta, 'Experiencia actualizada exitosamente');
     });
@@ -155,7 +155,7 @@ class ExperienciaController {
             return ResponseHelper.error(res, 'No se pudo eliminar la experiencia', 400);
         }
 
-        logger.info(`🗑️ Experiencia eliminada: ${experiencia.empresa} (ID: ${experienciaId})`);
+        logger.info(`[Experiencia.eliminar] Experiencia eliminada: ${experiencia.empresa} (ID: ${experienciaId})`);
 
         return ResponseHelper.success(res, { id: experienciaId }, 'Experiencia eliminada exitosamente');
     });
@@ -183,7 +183,7 @@ class ExperienciaController {
             return ResponseHelper.error(res, 'No se pudo reordenar', 400);
         }
 
-        logger.info(`🔄 Experiencias reordenadas para profesional ${profesionalId}`);
+        logger.info(`[Experiencia.reordenar] Experiencias reordenadas para profesional ${profesionalId}`);
 
         return ResponseHelper.success(res, { success: true }, 'Experiencias reordenadas exitosamente');
     });

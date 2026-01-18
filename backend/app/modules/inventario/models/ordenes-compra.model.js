@@ -19,7 +19,7 @@ class OrdenesCompraModel {
     /**
      * Crear nueva orden de compra (estado: borrador)
      */
-    static async crear(data, organizacionId) {
+    static async crear(organizacionId, data) {
         return await RLSContextManager.transaction(organizacionId, async (db) => {
             logger.info('[OrdenesCompraModel.crear] Iniciando', {
                 organizacion_id: organizacionId,
@@ -96,7 +96,7 @@ class OrdenesCompraModel {
     /**
      * Obtener orden por ID con items
      */
-    static async obtenerPorId(id, organizacionId) {
+    static async buscarPorId(organizacionId, id) {
         return await RLSContextManager.withBypass(async (db) => {
             // Obtener orden con datos del proveedor
             const ordenQuery = `
@@ -162,7 +162,7 @@ class OrdenesCompraModel {
     /**
      * Listar órdenes con filtros
      */
-    static async listar(filtros, organizacionId) {
+    static async listar(organizacionId, filtros = {}) {
         return await RLSContextManager.query(organizacionId, async (db) => {
             let whereConditions = ['oc.organizacion_id = $1'];
             let values = [organizacionId];
@@ -262,7 +262,7 @@ class OrdenesCompraModel {
     /**
      * Actualizar orden (solo borradores)
      */
-    static async actualizar(id, data, organizacionId) {
+    static async actualizar(organizacionId, id, data) {
         return await RLSContextManager.transaction(organizacionId, async (db) => {
             logger.info('[OrdenesCompraModel.actualizar] Iniciando', {
                 orden_id: id
@@ -326,7 +326,7 @@ class OrdenesCompraModel {
     /**
      * Eliminar orden (solo borradores)
      */
-    static async eliminar(id, organizacionId) {
+    static async eliminar(organizacionId, id) {
         return await RLSContextManager.transaction(organizacionId, async (db) => {
             logger.info('[OrdenesCompraModel.eliminar] Iniciando', {
                 orden_id: id
@@ -464,7 +464,7 @@ class OrdenesCompraModel {
     /**
      * Actualizar item de orden
      */
-    static async actualizarItem(ordenId, itemId, data, organizacionId) {
+    static async actualizarItem(organizacionId, ordenId, itemId, data) {
         return await RLSContextManager.transaction(organizacionId, async (db) => {
             // Verificar que la orden está en borrador
             const ordenQuery = await db.query(
@@ -522,7 +522,7 @@ class OrdenesCompraModel {
     /**
      * Eliminar item de orden
      */
-    static async eliminarItem(ordenId, itemId, organizacionId) {
+    static async eliminarItem(organizacionId, ordenId, itemId) {
         return await RLSContextManager.transaction(organizacionId, async (db) => {
             // Verificar que la orden está en borrador
             const ordenQuery = await db.query(

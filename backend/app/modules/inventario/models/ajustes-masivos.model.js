@@ -74,7 +74,7 @@ class AjustesMasivosModel {
 
             // 3. Obtener ajuste actualizado (con totales recalculados por trigger)
             // Pasamos db para reusar la misma conexión de la transacción
-            return await this.obtenerPorId(ajuste.id, organizacionId, db);
+            return await this.buscarPorId(organizacionId, ajuste.id, db);
         });
     }
 
@@ -180,12 +180,12 @@ class AjustesMasivosModel {
 
     /**
      * Obtener ajuste masivo por ID con todos sus items
-     * @param {number} id - ID del ajuste
      * @param {number} organizacionId - ID de la organización
+     * @param {number} id - ID del ajuste
      * @param {Object} [existingDb] - Conexión existente (para reusar en transacciones)
      * @returns {Promise<Object>} Ajuste con items
      */
-    static async obtenerPorId(id, organizacionId, existingDb = null) {
+    static async buscarPorId(organizacionId, id, existingDb = null) {
         const queryFn = async (db) => {
             // Cabecera con usuario
             const cabeceraQuery = `
@@ -371,7 +371,7 @@ class AjustesMasivosModel {
                 nuevo_estado: nuevoEstado
             });
 
-            return await this.obtenerPorId(id, organizacionId, db);
+            return await this.buscarPorId(organizacionId, id, db);
         });
     }
 
@@ -556,7 +556,7 @@ class AjustesMasivosModel {
             });
 
             return {
-                ajuste: await this.obtenerPorId(id, organizacionId, db),
+                ajuste: await this.buscarPorId(organizacionId, id, db),
                 aplicados,
                 errores
             };

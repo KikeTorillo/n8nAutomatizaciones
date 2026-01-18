@@ -82,4 +82,6 @@ function Toast({ id, message, type = 'info', duration = 5000, onClose }) {
   );
 }
 
+Toast.displayName = 'Toast';
+
 export default Toast;

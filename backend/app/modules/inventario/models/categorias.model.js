@@ -9,8 +9,11 @@ class CategoriasProductosModel {
 
     /**
      * Crear nueva categoría de producto
+     * @param {number} organizacionId
+     * @param {Object} data
+     * @returns {Object}
      */
-    static async crear(data, organizacionId) {
+    static async crear(organizacionId, data) {
         return await RLSContextManager.transaction(organizacionId, async (db) => {
             logger.info('[CategoriasProductosModel.crear] Iniciando', {
                 organizacion_id: organizacionId,
@@ -67,8 +70,11 @@ class CategoriasProductosModel {
 
     /**
      * Obtener categoría por ID
+     * @param {number} organizacionId
+     * @param {number} id
+     * @returns {Object|null}
      */
-    static async obtenerPorId(id, organizacionId) {
+    static async buscarPorId(organizacionId, id) {
         return await RLSContextManager.query(organizacionId, async (db) => {
             const query = `
                 SELECT
@@ -86,8 +92,11 @@ class CategoriasProductosModel {
 
     /**
      * Listar categorías con filtros opcionales
+     * @param {number} organizacionId
+     * @param {Object} filtros
+     * @returns {Object}
      */
-    static async listar(filtros, organizacionId) {
+    static async listar(organizacionId, filtros = {}) {
         return await RLSContextManager.query(organizacionId, async (db) => {
             let whereConditions = ['c.organizacion_id = $1'];
             let values = [organizacionId];
@@ -134,7 +143,7 @@ class CategoriasProductosModel {
             const result = await db.query(query, values);
 
             return {
-                categorias: result.rows,
+                data: result.rows,
                 total: result.rows.length
             };
         });
@@ -193,8 +202,12 @@ class CategoriasProductosModel {
 
     /**
      * Actualizar categoría
+     * @param {number} organizacionId
+     * @param {number} id
+     * @param {Object} data
+     * @returns {Object}
      */
-    static async actualizar(id, data, organizacionId) {
+    static async actualizar(organizacionId, id, data) {
         return await RLSContextManager.transaction(organizacionId, async (db) => {
             logger.info('[CategoriasProductosModel.actualizar] Iniciando', {
                 organizacion_id: organizacionId,
@@ -294,8 +307,11 @@ class CategoriasProductosModel {
 
     /**
      * Eliminar categoría (soft delete)
+     * @param {number} organizacionId
+     * @param {number} id
+     * @returns {Object}
      */
-    static async eliminar(id, organizacionId) {
+    static async eliminar(organizacionId, id) {
         return await RLSContextManager.transaction(organizacionId, async (db) => {
             logger.info('[CategoriasProductosModel.eliminar] Iniciando', {
                 organizacion_id: organizacionId,

@@ -136,4 +136,6 @@ export function SkeletonList({ count = 3, className }) {
   );
 }
 
+SkeletonTable.displayName = 'SkeletonTable';
+
 export default SkeletonTable;

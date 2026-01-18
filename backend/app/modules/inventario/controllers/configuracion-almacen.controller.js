@@ -66,9 +66,9 @@ class ConfiguracionAlmacenController {
         }
 
         const config = await ConfiguracionAlmacenModel.actualizar(
+            organizacionId,
             parseInt(sucursalId),
             req.body,
-            organizacionId,
             usuarioId
         );
 

@@ -223,7 +223,7 @@ class MovimientosInventarioModel {
      * Listar movimientos con filtros
      * IMPORTANTE: Query optimizada para tabla particionada
      */
-    static async listar(filtros, organizacionId) {
+    static async listar(organizacionId, filtros) {
         return await RLSContextManager.query(organizacionId, async (db) => {
             let whereConditions = ['m.organizacion_id = $1'];
             let values = [organizacionId];

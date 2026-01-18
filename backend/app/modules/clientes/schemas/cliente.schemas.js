@@ -12,7 +12,7 @@
 
 const Joi = require('joi');
 const { commonSchemas } = require('../../../middleware/validation');
-const { withPagination } = require('../../../schemas/shared');
+const { withPagination, fields } = require('../../../schemas/shared');
 
 const LIMITES = {
     NOMBRE_MIN: 2,
@@ -49,12 +49,9 @@ const crear = {
                 'string.max': `Nombre no puede exceder ${LIMITES.NOMBRE_MAX} caracteres`,
                 'any.required': 'Nombre es requerido'
             }),
-        email: Joi.string()
-            .email()
-            .max(LIMITES.NOMBRE_MAX)
+        email: fields.email
             .optional()
             .allow(null)
-            .lowercase()
             .messages({
                 'string.email': 'Email no válido'
             }),
@@ -233,9 +230,7 @@ const crear = {
             .messages({
                 'number.base': 'ID de lista de precios debe ser un número'
             }),
-        activo: Joi.boolean()
-            .optional()
-            .default(true),
+        activo: fields.activo,
         foto_url: Joi.string()
             .uri()
             .max(500)
@@ -253,10 +248,7 @@ const actualizar = {
             .min(LIMITES.NOMBRE_MIN)
             .max(LIMITES.NOMBRE_MAX)
             .trim(),
-        email: Joi.string()
-            .email()
-            .max(LIMITES.NOMBRE_MAX)
-            .lowercase()
+        email: fields.email
             .allow(null),
         telefono: commonSchemas.mexicanPhone
             .allow(null),
@@ -372,9 +364,7 @@ const actualizar = {
 const listar = {
     query: withPagination({
         organizacion_id: commonSchemas.id.optional(), // Solo super_admin
-        activo: Joi.string()
-            .valid('true', 'false')
-            .optional(),
+        activo: fields.activoQuery,
         marketing_permitido: Joi.string()
             .valid('true', 'false')
             .optional(),
@@ -528,12 +518,9 @@ const importarCSV = {
                         .max(LIMITES.NOMBRE_MAX)
                         .required()
                         .trim(),
-                    email: Joi.string()
-                        .email()
-                        .max(LIMITES.NOMBRE_MAX)
+                    email: fields.email
                         .optional()
-                        .allow(null, '')
-                        .lowercase(),
+                        .allow(null, ''),
                     telefono: Joi.string()
                         .min(LIMITES.TELEFONO_MIN)
                         .max(LIMITES.TELEFONO_MAX)

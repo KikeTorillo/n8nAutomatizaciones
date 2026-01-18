@@ -13,7 +13,7 @@
  */
 
 const RLSContextManager = require('../../../utils/rlsContextManager');
-const logger = require('../../../utils/logger');
+const { ResourceInUseError } = require('../../../utils/errors');
 
 class PromocionesModel {
 
@@ -299,6 +299,9 @@ class PromocionesModel {
      * Eliminar promocion (solo si no tiene usos)
      * @param {number} id - ID de la promocion
      * @param {number} organizacionId - ID de la organizacion
+     *
+     * Errores manejados por asyncHandler:
+     * - ResourceInUseError → 409 (tiene usos registrados)
      */
     static async eliminar(id, organizacionId) {
         return await RLSContextManager.query(organizacionId, async (db) => {
@@ -306,8 +309,9 @@ class PromocionesModel {
             const usosQuery = `SELECT COUNT(*) as usos FROM uso_promociones WHERE promocion_id = $1`;
             const usosResult = await db.query(usosQuery, [id]);
 
-            if (parseInt(usosResult.rows[0].usos) > 0) {
-                throw new Error('No se puede eliminar una promocion que ya ha sido utilizada');
+            const totalUsos = parseInt(usosResult.rows[0].usos);
+            if (totalUsos > 0) {
+                throw new ResourceInUseError('Promoción', 'ventas', totalUsos);
             }
 
             const query = `DELETE FROM promociones WHERE id = $1 RETURNING id`;

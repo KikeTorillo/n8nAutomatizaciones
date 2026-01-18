@@ -1,20 +1,13 @@
 const Joi = require('joi');
 const { commonSchemas } = require('../../../middleware/validation');
+const { passwordSchemas } = require('../../../schemas/shared');
 
 const crear = {
     body: Joi.object({
         organizacion_id: commonSchemas.id.optional(), // Solo super_admin lo envía
         email: commonSchemas.emailRequired,
-        password: Joi.string()
-            .min(8)
-            .max(128)
-            .pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
-            .required()
-            .messages({
-                'string.min': 'Password debe tener al menos 8 caracteres',
-                'string.max': 'Password no puede exceder 128 caracteres',
-                'string.pattern.base': 'Password debe contener al menos una minúscula, una mayúscula y un número'
-            }),
+        // Ene 2026: Usar schema compartido de contraseñas
+        password: passwordSchemas.strongRequired,
         nombre: Joi.string()
             .min(2)
             .max(150)
@@ -225,6 +218,26 @@ const obtenerProfesionalesDisponibles = {
     query: Joi.object({})
 };
 
+/**
+ * Schema para obtener usuarios sin profesional vinculado
+ * GET /usuarios/sin-profesional
+ * Ene 2026: Agregado validación Joi
+ */
+const obtenerUsuariosSinProfesional = {
+    query: Joi.object({
+        buscar: Joi.string()
+            .min(2)
+            .max(100)
+            .trim()
+            .optional(),
+        limit: Joi.number()
+            .integer()
+            .min(1)
+            .max(100)
+            .default(50)
+    })
+};
+
 module.exports = {
     crear,
     listar,
@@ -238,5 +251,7 @@ module.exports = {
     crearDirecto,
     cambiarEstado,
     vincularProfesional,
-    obtenerProfesionalesDisponibles
+    obtenerProfesionalesDisponibles,
+    // Ene 2026
+    obtenerUsuariosSinProfesional
 };

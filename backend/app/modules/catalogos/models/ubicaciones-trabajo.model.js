@@ -75,12 +75,12 @@ class UbicacionTrabajoModel {
   }
 
   /**
-   * Obtener ubicación por ID
+   * Buscar ubicación por ID
    * @param {number} orgId
    * @param {number} ubicacionId
    * @returns {Promise<Object>}
    */
-  static async obtenerPorId(orgId, ubicacionId) {
+  static async buscarPorId(orgId, ubicacionId) {
     return await RLSContextManager.query(orgId, async (db) => {
       const query = `
         SELECT u.*, s.nombre as sucursal_nombre

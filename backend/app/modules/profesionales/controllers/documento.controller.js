@@ -82,10 +82,10 @@ class DocumentoEmpleadoController {
                 });
 
                 archivoStorageId = uploadResult.id;
-                logger.info(`📁 Archivo subido: ${uploadResult.ruta} (ID: ${archivoStorageId})`);
+                logger.info(`[Documento.crear] Archivo subido: ${uploadResult.ruta} (ID: ${archivoStorageId})`);
 
             } catch (uploadError) {
-                logger.error('❌ Error subiendo archivo:', uploadError);
+                logger.error('[Documento.crear] Error subiendo archivo:', uploadError);
                 return ResponseHelper.error(res, 'Error al subir el archivo', 500, {
                     detalle: uploadError.message
                 });
@@ -115,14 +115,14 @@ class DocumentoEmpleadoController {
                 documento.id
             );
 
-            logger.info(`📄 Documento creado: ${documento.nombre} (ID: ${documento.id}) para profesional ${profesionalId}`);
+            logger.info(`[Documento.crear] Documento creado: ${documento.nombre} (ID: ${documento.id}) para profesional ${profesionalId}`);
 
             return ResponseHelper.success(res, documentoCompleto, 'Documento creado exitosamente', 201);
 
         } catch (error) {
             // Si falla la creación del documento, eliminar archivo subido
             if (archivoStorageId) {
-                logger.warn(`🗑️ Rollback: eliminando archivo ${archivoStorageId} por error en documento`);
+                logger.warn(`[Documento.crear] Rollback: eliminando archivo ${archivoStorageId} por error en documento`);
                 // El StorageService maneja esto internamente en transacciones
             }
             throw error;
@@ -172,7 +172,7 @@ class DocumentoEmpleadoController {
             documento.id
         );
 
-        logger.info(`📝 Documento actualizado: ${documento.nombre} (ID: ${documentoId})`);
+        logger.info(`[Documento.actualizar] Documento actualizado: ${documento.nombre} (ID: ${documentoId})`);
 
         return ResponseHelper.success(res, documentoCompleto, 'Documento actualizado exitosamente');
     });
@@ -202,7 +202,7 @@ class DocumentoEmpleadoController {
             return ResponseHelper.error(res, 'No se pudo eliminar el documento', 400);
         }
 
-        logger.info(`🗑️ Documento eliminado: ${documento.nombre} (ID: ${documentoId}) por usuario ${usuarioId}`);
+        logger.info(`[Documento.eliminar] Documento eliminado: ${documento.nombre} (ID: ${documentoId}) por usuario ${usuarioId}`);
 
         return ResponseHelper.success(res, { id: documentoId }, 'Documento eliminado exitosamente');
     });
@@ -238,7 +238,7 @@ class DocumentoEmpleadoController {
         );
 
         const accion = verificado ? 'verificado' : 'desverificado';
-        logger.info(`✅ Documento ${accion}: ${documento.nombre} (ID: ${documentoId}) por usuario ${usuarioId}`);
+        logger.info(`[Documento.verificar] Documento ${accion}: ${documento.nombre} (ID: ${documentoId}) por usuario ${usuarioId}`);
 
         return ResponseHelper.success(res, documentoCompleto, `Documento ${accion} exitosamente`);
     });
@@ -271,7 +271,7 @@ class DocumentoEmpleadoController {
                 expiry
             );
 
-            logger.info(`🔗 URL presigned generada para documento ${documentoId} (expira en ${expiry}s)`);
+            logger.info(`[Documento.obtenerUrlPresigned] URL generada para documento ${documentoId} (expira en ${expiry}s)`);
 
             return ResponseHelper.success(res, {
                 url: presignedUrl,
@@ -282,7 +282,7 @@ class DocumentoEmpleadoController {
             }, 'URL de descarga generada exitosamente');
 
         } catch (error) {
-            logger.error('❌ Error generando URL presigned:', error);
+            logger.error('[Documento.obtenerUrlPresigned] Error generando URL:', error);
             return ResponseHelper.error(res, 'Error al generar URL de descarga', 500);
         }
     });
@@ -357,12 +357,12 @@ class DocumentoEmpleadoController {
                 documento.id
             );
 
-            logger.info(`📁 Archivo reemplazado para documento ${documentoId}`);
+            logger.info(`[Documento.reemplazarArchivo] Archivo reemplazado para documento ${documentoId}`);
 
             return ResponseHelper.success(res, documentoCompleto, 'Archivo reemplazado exitosamente');
 
         } catch (error) {
-            logger.error('❌ Error reemplazando archivo:', error);
+            logger.error('[Documento.reemplazarArchivo] Error:', error);
             return ResponseHelper.error(res, 'Error al reemplazar archivo', 500, {
                 detalle: error.message
             });

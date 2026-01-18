@@ -20,10 +20,10 @@ class ConteosController {
     static crear = asyncHandler(async (req, res) => {
         const organizacionId = req.tenant.organizacionId;
 
-        const conteo = await ConteosModel.crear({
+        const conteo = await ConteosModel.crear(organizacionId, {
             ...req.body,
             usuario_creador_id: req.user.id
-        }, organizacionId);
+        });
 
         return ResponseHelper.success(
             res,
@@ -41,7 +41,7 @@ class ConteosController {
         const { id } = req.params;
         const organizacionId = req.tenant.organizacionId;
 
-        const conteo = await ConteosModel.obtenerPorId(parseInt(id), organizacionId);
+        const conteo = await ConteosModel.buscarPorId(organizacionId, parseInt(id));
 
         if (!conteo) {
             return ResponseHelper.error(res, 'Conteo no encontrado', 404);
@@ -68,7 +68,7 @@ class ConteosController {
             offset: req.query.offset ? parseInt(req.query.offset) : 0
         };
 
-        const resultado = await ConteosModel.listar(filtros, organizacionId);
+        const resultado = await ConteosModel.listar(organizacionId, filtros);
 
         return ResponseHelper.success(res, resultado, 'Conteos obtenidos exitosamente');
     });

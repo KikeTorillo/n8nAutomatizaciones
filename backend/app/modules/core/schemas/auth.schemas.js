@@ -1,10 +1,13 @@
 /**
  * Schemas de Validación Joi para Autenticación
  * Valida todos los endpoints del módulo de autenticación
+ *
+ * Ene 2026: Migrado a usar schemas compartidos de contraseñas
  */
 
 const Joi = require('joi');
 const { commonSchemas } = require('../../../middleware/validation');
+const { passwordSchemas, PASSWORD_POLICY } = require('../../../schemas/shared');
 
 // ============================================================
 // CONSTANTES DE VALIDACIÓN
@@ -14,58 +17,12 @@ const VALIDATION_CONSTANTS = {
     NOMBRE_MAX_LENGTH: 150,
     APELLIDOS_MAX_LENGTH: 150,
     BUSQUEDA_MAX_LENGTH: 100,
-    PASSWORD_MIN: 8,
-    PASSWORD_MAX: 128,
-
-    /**
-     * POLÍTICA DE CONTRASEÑAS DEL SISTEMA
-     *
-     * Requisitos:
-     * - Mínimo 8 caracteres
-     * - Al menos 1 mayúscula (A-Z)
-     * - Al menos 1 minúscula (a-z)
-     * - Al menos 1 número (0-9)
-     * - Caracteres especiales: OPCIONALES (no requeridos)
-     *
-     * Nota: Este regex NO requiere caracteres especiales, solo verifica
-     * que haya minúscula, mayúscula y número. Los caracteres especiales
-     * son permitidos pero opcionales.
-     *
-     * Usado en:
-     * - Registro de usuarios
-     * - Reset de contraseña
-     * - Cambio de contraseña
-     */
-    PASSWORD_STRONG_PATTERN: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-
+    // Usar constantes centralizadas para passwords
+    PASSWORD_MIN: PASSWORD_POLICY.MIN_LENGTH,
+    PASSWORD_MAX: PASSWORD_POLICY.MAX_LENGTH,
     TOKEN_RESET_LENGTH: 64,
     ZONA_HORARIA_MAX: 50,
     IDIOMA_MAX: 5
-};
-
-// ============================================================
-// SCHEMAS REUTILIZABLES DE CONTRASEÑA
-// ============================================================
-const passwordSchemas = {
-    // Validación básica para login (solo mínimo requerido)
-    basic: Joi.string()
-        .min(VALIDATION_CONSTANTS.PASSWORD_MIN)
-        .messages({
-            'string.min': 'Contraseña debe tener al menos 8 caracteres',
-            'any.required': 'Contraseña es requerida'
-        }),
-
-    // Validación fuerte para registro/cambio (incluye requisitos de complejidad)
-    strong: Joi.string()
-        .min(VALIDATION_CONSTANTS.PASSWORD_MIN)
-        .max(VALIDATION_CONSTANTS.PASSWORD_MAX)
-        .pattern(VALIDATION_CONSTANTS.PASSWORD_STRONG_PATTERN)
-        .messages({
-            'string.min': 'Contraseña debe tener al menos 8 caracteres',
-            'string.max': 'Contraseña no puede exceder 128 caracteres',
-            'string.pattern.base': 'Contraseña debe contener al menos una mayúscula, una minúscula y un número',
-            'any.required': 'Contraseña es requerida'
-        })
 };
 
 // ============================================================

@@ -76,7 +76,7 @@ class CuentaBancariaController {
             cuenta.id
         );
 
-        logger.info(`🏦 Cuenta bancaria creada: ${cuenta.banco} (ID: ${cuenta.id}) para profesional ${profesionalId}`);
+        logger.info(`[CuentaBancaria.crear] Cuenta creada: ${cuenta.banco} (ID: ${cuenta.id}) para profesional ${profesionalId}`);
 
         return ResponseHelper.success(res, cuentaCompleta, 'Cuenta bancaria creada exitosamente', 201);
     });
@@ -124,7 +124,7 @@ class CuentaBancariaController {
             cuenta.id
         );
 
-        logger.info(`📝 Cuenta bancaria actualizada: ${cuenta.banco} (ID: ${cuentaId})`);
+        logger.info(`[CuentaBancaria.actualizar] Cuenta actualizada: ${cuenta.banco} (ID: ${cuentaId})`);
 
         return ResponseHelper.success(res, cuentaCompleta, 'Cuenta bancaria actualizada exitosamente');
     });
@@ -146,7 +146,7 @@ class CuentaBancariaController {
 
         // Advertencia si es la cuenta principal
         if (cuenta.es_principal) {
-            logger.warn(`⚠️ Eliminando cuenta principal del profesional ${cuenta.profesional_id}`);
+            logger.warn(`[CuentaBancaria.eliminar] Eliminando cuenta principal del profesional ${cuenta.profesional_id}`);
         }
 
         const eliminado = await CuentaBancariaModel.eliminar(
@@ -159,7 +159,7 @@ class CuentaBancariaController {
             return ResponseHelper.error(res, 'No se pudo eliminar la cuenta bancaria', 400);
         }
 
-        logger.info(`🗑️ Cuenta bancaria eliminada: ${cuenta.banco} (ID: ${cuentaId}) por usuario ${usuarioId}`);
+        logger.info(`[CuentaBancaria.eliminar] Cuenta eliminada: ${cuenta.banco} (ID: ${cuentaId}) por usuario ${usuarioId}`);
 
         return ResponseHelper.success(res, { id: cuentaId }, 'Cuenta bancaria eliminada exitosamente');
     });
@@ -190,7 +190,7 @@ class CuentaBancariaController {
             cuenta.id
         );
 
-        logger.info(`⭐ Cuenta bancaria establecida como principal: ${cuenta.banco} (ID: ${cuentaId})`);
+        logger.info(`[CuentaBancaria.establecerPrincipal] Cuenta establecida como principal: ${cuenta.banco} (ID: ${cuentaId})`);
 
         return ResponseHelper.success(res, cuentaCompleta, 'Cuenta establecida como principal exitosamente');
     });

@@ -179,9 +179,14 @@ class TokenBlacklistService {
     /**
      * Verifica si un token está en la blacklist
      *
+     * SECURITY FIX (Ene 2026): Fail-Closed
+     * Si Redis falla y no hay fallback disponible, lanzar error
+     * para rechazar el request (seguridad > disponibilidad)
+     *
      * @async
      * @param {string} token - Token JWT a verificar
      * @returns {Promise<boolean>} true si está blacklisted, false si no
+     * @throws {Error} Si no se puede verificar blacklist (fail-closed)
      * @example
      * const isBlacklisted = await tokenBlacklistService.check('eyJhbGciOi...');
      * if (isBlacklisted) {
@@ -189,27 +194,40 @@ class TokenBlacklistService {
      * }
      */
     async check(token) {
-        try {
-            // Si Redis está disponible, usarlo
-            if (this.redisClient && this.redisClient.isReady) {
+        // Si Redis está disponible, usarlo
+        if (this.redisClient && this.redisClient.isReady) {
+            try {
                 const key = `blacklist:${token}`;
                 const exists = await this.redisClient.exists(key);
-
-                return exists === 1; // exists retorna 1 si existe, 0 si no
-            } else {
-                // Fallback: Usar Set en memoria
-                return this.fallbackStore.has(token);
+                return exists === 1;
+            } catch (error) {
+                logger.error('Error CRÍTICO verificando blacklist en Redis - Fail-closed', {
+                    error: error.message,
+                    token: token.substring(0, 20) + '...'
+                });
+                // SECURITY: Fail-closed - lanzar error si Redis falla
+                const blacklistError = new Error('Servicio de blacklist no disponible');
+                blacklistError.statusCode = 503;
+                blacklistError.code = 'BLACKLIST_SERVICE_UNAVAILABLE';
+                throw blacklistError;
             }
-        } catch (error) {
-            logger.error('Error verificando blacklist', {
-                error: error.message,
-                token: token.substring(0, 20) + '...'
-            });
+        }
 
-            // Fail-open: En caso de error, consultar fallback
-            // Si tampoco está en fallback, permitir el token (disponibilidad > seguridad en este caso)
+        // Si Redis no está configurado, usar fallback en memoria
+        // (Este es un caso válido para desarrollo/testing)
+        if (!process.env.REDIS_HOST) {
             return this.fallbackStore.has(token);
         }
+
+        // Si Redis estaba configurado pero no está listo, fail-closed
+        logger.error('Redis configurado pero no disponible - Fail-closed', {
+            redisHost: process.env.REDIS_HOST,
+            isReady: this.redisClient?.isReady
+        });
+        const blacklistError = new Error('Servicio de blacklist no disponible');
+        blacklistError.statusCode = 503;
+        blacklistError.code = 'BLACKLIST_SERVICE_UNAVAILABLE';
+        throw blacklistError;
     }
 
     /**
@@ -291,6 +309,120 @@ class TokenBlacklistService {
             return true;
         } catch (error) {
             logger.error('Error limpiando blacklist', { error: error.message });
+            return false;
+        }
+    }
+
+    // ========================================
+    // SECURITY FIX (Ene 2026): Invalidación de tokens por usuario
+    // Cuando cambian permisos/rol, invalida todos los tokens del usuario
+    // ========================================
+
+    /**
+     * Invalida todos los tokens de un usuario
+     * Los tokens emitidos antes de este timestamp serán rechazados
+     *
+     * @async
+     * @param {number} userId - ID del usuario
+     * @param {string} motivo - Razón de la invalidación (para logging)
+     * @returns {Promise<boolean>} true si se registró la invalidación
+     * @example
+     * await tokenBlacklistService.invalidateUserTokens(123, 'cambio_rol_empleado_a_admin');
+     */
+    async invalidateUserTokens(userId, motivo = 'cambio_permisos') {
+        const key = `invalidated_user:${userId}`;
+        const timestamp = Math.floor(Date.now() / 1000);
+
+        try {
+            if (this.redisClient && this.redisClient.isReady) {
+                // TTL de 24 horas - tokens tienen max 7 días pero refresh regenera
+                await this.redisClient.set(key, timestamp.toString(), { EX: 86400 });
+
+                logger.info('[TokenBlacklist] Tokens de usuario invalidados (Redis)', {
+                    usuario_id: userId,
+                    motivo,
+                    invalidated_at: timestamp
+                });
+            } else {
+                // Fallback en memoria
+                this.invalidatedUsers = this.invalidatedUsers || new Map();
+                this.invalidatedUsers.set(userId, timestamp);
+
+                // Auto-limpieza después de 24 horas
+                setTimeout(() => {
+                    this.invalidatedUsers?.delete(userId);
+                }, 86400000);
+
+                logger.info('[TokenBlacklist] Tokens de usuario invalidados (memoria)', {
+                    usuario_id: userId,
+                    motivo,
+                    invalidated_at: timestamp
+                });
+            }
+
+            return true;
+        } catch (error) {
+            logger.error('[TokenBlacklist] Error invalidando tokens de usuario', {
+                error: error.message,
+                usuario_id: userId,
+                motivo
+            });
+            // En caso de error, aún intentar fallback en memoria
+            this.invalidatedUsers = this.invalidatedUsers || new Map();
+            this.invalidatedUsers.set(userId, timestamp);
+            return true;
+        }
+    }
+
+    /**
+     * Verifica si los tokens del usuario fueron invalidados
+     *
+     * @async
+     * @param {number} userId - ID del usuario
+     * @param {number} tokenIat - Timestamp de emisión del token (iat claim)
+     * @returns {Promise<boolean>} true si el token fue invalidado (emitido antes de invalidación)
+     * @example
+     * const invalidated = await tokenBlacklistService.isUserTokenInvalidated(123, decoded.iat);
+     * if (invalidated) {
+     *   return res.status(401).json({ error: 'Sesión invalidada' });
+     * }
+     */
+    async isUserTokenInvalidated(userId, tokenIat) {
+        const key = `invalidated_user:${userId}`;
+
+        try {
+            if (this.redisClient && this.redisClient.isReady) {
+                const invalidatedAt = await this.redisClient.get(key);
+
+                if (invalidatedAt) {
+                    const isInvalidated = tokenIat < parseInt(invalidatedAt);
+
+                    if (isInvalidated) {
+                        logger.debug('[TokenBlacklist] Token invalidado por cambio de permisos', {
+                            usuario_id: userId,
+                            token_iat: tokenIat,
+                            invalidated_at: parseInt(invalidatedAt)
+                        });
+                    }
+
+                    return isInvalidated;
+                }
+            } else if (this.invalidatedUsers?.has(userId)) {
+                // Fallback en memoria
+                const invalidatedAt = this.invalidatedUsers.get(userId);
+                return tokenIat < invalidatedAt;
+            }
+
+            return false;
+        } catch (error) {
+            logger.error('[TokenBlacklist] Error verificando invalidación de usuario', {
+                error: error.message,
+                usuario_id: userId
+            });
+            // En error, verificar fallback
+            if (this.invalidatedUsers?.has(userId)) {
+                return tokenIat < this.invalidatedUsers.get(userId);
+            }
             return false;
         }
     }

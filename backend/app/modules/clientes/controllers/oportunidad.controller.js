@@ -130,7 +130,7 @@ class OportunidadController {
         }
 
         // Verificar que el cliente existe
-        const cliente = await ClienteModel.obtenerPorId(parseInt(clienteId), organizacionId);
+        const cliente = await ClienteModel.buscarPorId(organizacionId, parseInt(clienteId));
         if (!cliente) {
             return ResponseHelper.notFound(res, 'Cliente no encontrado');
         }

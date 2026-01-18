@@ -12,7 +12,7 @@ class NumerosSerieModel {
     /**
      * Crear un numero de serie usando la funcion SQL
      */
-    static async crear(data, organizacionId, usuarioId) {
+    static async crear(organizacionId, data, usuarioId) {
         return await RLSContextManager.query(organizacionId, async (client) => {
             const result = await client.query(
                 `SELECT registrar_numero_serie(
@@ -40,7 +40,7 @@ class NumerosSerieModel {
     /**
      * Crear multiples numeros de serie (para recepcion masiva de OC)
      */
-    static async crearMultiple(items, organizacionId, usuarioId) {
+    static async crearMultiple(organizacionId, items, usuarioId) {
         return await RLSContextManager.transaction(organizacionId, async (client) => {
             const creados = [];
 
@@ -77,7 +77,7 @@ class NumerosSerieModel {
     /**
      * Obtener un numero de serie por ID
      */
-    static async obtenerPorId(id, organizacionId) {
+    static async buscarPorId(organizacionId, id) {
         return await RLSContextManager.query(organizacionId, async (client) => {
             const result = await client.query(
                 `SELECT
@@ -108,7 +108,7 @@ class NumerosSerieModel {
     /**
      * Listar numeros de serie con filtros y paginacion
      */
-    static async listar(filtros, organizacionId) {
+    static async listar(organizacionId, filtros = {}) {
         const {
             producto_id,
             sucursal_id,

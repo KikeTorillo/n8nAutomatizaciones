@@ -30,7 +30,7 @@ class AlertasInventarioController {
         };
 
         // Usar la nueva versión con stock proyectado
-        const alertas = await AlertasInventarioModel.listarConProyeccion(filtros, organizacionId);
+        const alertas = await AlertasInventarioModel.listarConProyeccion(organizacionId, filtros);
 
         return ResponseHelper.success(res, alertas, 'Alertas obtenidas exitosamente');
     });
@@ -43,7 +43,7 @@ class AlertasInventarioController {
         const { id } = req.params;
         const organizacionId = req.tenant.organizacionId;
 
-        const alerta = await AlertasInventarioModel.obtenerPorId(parseInt(id), organizacionId);
+        const alerta = await AlertasInventarioModel.buscarPorId(organizacionId, parseInt(id));
 
         if (!alerta) {
             return ResponseHelper.error(res, 'Alerta no encontrada', 404);

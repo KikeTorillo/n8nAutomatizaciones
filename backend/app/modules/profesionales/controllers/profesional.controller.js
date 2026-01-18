@@ -5,14 +5,9 @@ const logger = require('../../../utils/logger');
 
 class ProfesionalController {
     static crear = asyncHandler(async (req, res) => {
-        const profesionalData = {
-            ...req.body,
-            organizacion_id: req.tenant.organizacionId
-        };
-
-        if (profesionalData.email) {
+        if (req.body.email) {
             const emailDisponible = await ProfesionalModel.validarEmailDisponible(
-                profesionalData.email,
+                req.body.email,
                 req.tenant.organizacionId
             );
             if (!emailDisponible) {
@@ -20,64 +15,49 @@ class ProfesionalController {
             }
         }
 
-        const nuevoProfesional = await ProfesionalModel.crear(profesionalData);
+        const nuevoProfesional = await ProfesionalModel.crear(
+            req.tenant.organizacionId,
+            req.body
+        );
         return ResponseHelper.success(res, nuevoProfesional, 'Profesional creado exitosamente', 201);
     });
 
     /**
      * Crear múltiples profesionales en una transacción
      * POST /profesionales/bulk-create
+     *
+     * Errores manejados automáticamente por asyncHandler:
+     * - PlanLimitExceededError → 403
+     * - DuplicateResourceError → 409
+     * - ValidationError → 400
      */
     static bulkCrear = asyncHandler(async (req, res) => {
         const { profesionales } = req.body;
         const organizacionId = req.tenant.organizacionId;
 
-        logger.info(`📦 Creación bulk de ${profesionales.length} profesionales para org ${organizacionId}`);
+        logger.info(`Creación bulk de ${profesionales.length} profesionales para org ${organizacionId}`);
 
-        try {
-            const profesionalesCreados = await ProfesionalModel.crearBulk(
-                organizacionId,
-                profesionales
-            );
+        const profesionalesCreados = await ProfesionalModel.crearBulk(
+            organizacionId,
+            profesionales
+        );
 
-            logger.info(`✅ ${profesionalesCreados.length} profesionales creados exitosamente`);
+        logger.info(`${profesionalesCreados.length} profesionales creados exitosamente`);
 
-            return ResponseHelper.success(
-                res,
-                {
-                    profesionales: profesionalesCreados,
-                    total_creados: profesionalesCreados.length
-                },
-                `${profesionalesCreados.length} profesionales creados exitosamente`,
-                201
-            );
-
-        } catch (error) {
-            logger.error('❌ Error en creación bulk de profesionales:', error);
-
-            // Distinguir errores de límite de plan vs otros errores
-            if (error.message.includes('límite') || error.message.includes('Límite')) {
-                return ResponseHelper.error(res, error.message, 403, {
-                    codigo_error: 'PLAN_LIMIT_REACHED',
-                    accion_requerida: 'upgrade_plan'
-                });
-            }
-
-            if (error.message.includes('email')) {
-                return ResponseHelper.error(res, error.message, 409);
-            }
-
-            if (error.message.includes('incompatible')) {
-                return ResponseHelper.error(res, error.message, 400);
-            }
-
-            throw error; // asyncHandler maneja otros errores
-        }
+        return ResponseHelper.success(
+            res,
+            {
+                profesionales: profesionalesCreados,
+                total_creados: profesionalesCreados.length
+            },
+            `${profesionalesCreados.length} profesionales creados exitosamente`,
+            201
+        );
     });
 
     static obtenerPorId = asyncHandler(async (req, res) => {
         const { id } = req.params;
-        const profesional = await ProfesionalModel.buscarPorId(parseInt(id), req.tenant.organizacionId);
+        const profesional = await ProfesionalModel.buscarPorId(req.tenant.organizacionId, parseInt(id));
 
         if (!profesional) {
             return ResponseHelper.notFound(res, 'Profesional no encontrado');
@@ -109,7 +89,7 @@ class ProfesionalController {
             limite: limit
         };
 
-        const resultado = await ProfesionalModel.listarPorOrganizacion(req.tenant.organizacionId, filtros);
+        const resultado = await ProfesionalModel.listar(req.tenant.organizacionId, filtros);
 
         return ResponseHelper.success(res, {
             profesionales: resultado.profesionales,
@@ -160,8 +140,8 @@ class ProfesionalController {
         }
 
         const profesionalActualizado = await ProfesionalModel.actualizar(
-            profesionalId,
             req.tenant.organizacionId,
+            profesionalId,
             req.body
         );
 
@@ -173,8 +153,8 @@ class ProfesionalController {
         const { activo, motivo_inactividad } = req.body;
 
         const profesionalActualizado = await ProfesionalModel.cambiarEstado(
-            parseInt(id),
             req.tenant.organizacionId,
+            parseInt(id),
             activo,
             motivo_inactividad
         );
@@ -188,8 +168,8 @@ class ProfesionalController {
         const { motivo } = req.body;
 
         const eliminado = await ProfesionalModel.eliminar(
-            parseInt(id),
             req.tenant.organizacionId,
+            parseInt(id),
             motivo || 'Eliminado por administrador'
         );
 
@@ -318,19 +298,6 @@ class ProfesionalController {
             'Consultar permisos via /api/permisos/verificar o función SQL tiene_permiso().',
             410 // 410 Gone
         );
-
-        const profesionales = await ProfesionalModel.listarPorModulo(
-            req.tenant.organizacionId,
-            modulo,
-            soloActivos
-        );
-
-        return ResponseHelper.success(res, {
-            modulo,
-            solo_activos: soloActivos,
-            profesionales,
-            total: profesionales.length
-        }, `Profesionales con acceso a ${modulo} obtenidos`);
     });
 
     /**

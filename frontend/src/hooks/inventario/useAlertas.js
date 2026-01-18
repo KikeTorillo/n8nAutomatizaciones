@@ -1,3 +1,15 @@
+/**
+ * ====================================================================
+ * HOOKS ALERTAS DE INVENTARIO
+ * ====================================================================
+ *
+ * Optimizado Ene 2026:
+ * - exact:true en invalidaciones específicas
+ * - keepPreviousData en listados
+ * - Optimistic update en marcar leída
+ * ====================================================================
+ */
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { inventarioApi } from '@/services/api/endpoints';
 import { sanitizeParams } from '@/lib/params';
@@ -14,7 +26,8 @@ export function useAlertas(params = {}) {
       const response = await inventarioApi.listarAlertas(sanitizeParams(params));
       return response.data.data || { alertas: [], total: 0 };
     },
-    staleTime: STALE_TIMES.FREQUENT, // 1 minuto (alertas requieren actualización frecuente)
+    staleTime: STALE_TIMES.FREQUENT,
+    keepPreviousData: true,
   });
 }
 
@@ -28,7 +41,7 @@ export function useDashboardAlertas() {
       const response = await inventarioApi.obtenerDashboardAlertas();
       return response.data.data || { resumen: {}, alertas_recientes: [] };
     },
-    staleTime: STALE_TIMES.FREQUENT, // 1 minuto
+    staleTime: STALE_TIMES.FREQUENT,
   });
 }
 
@@ -49,6 +62,7 @@ export function useAlerta(id) {
 
 /**
  * Hook para marcar alerta como leída
+ * Incluye optimistic update para feedback instantáneo
  */
 export function useMarcarAlertaLeida() {
   const queryClient = useQueryClient();
@@ -58,9 +72,60 @@ export function useMarcarAlertaLeida() {
       const response = await inventarioApi.marcarAlertaLeida(id);
       return response.data.data;
     },
-    onSuccess: () => {
+    onMutate: async (alertaId) => {
+      // Cancelar queries en vuelo
+      await queryClient.cancelQueries({ queryKey: ['alertas'] });
+      await queryClient.cancelQueries({ queryKey: ['dashboard-alertas'], exact: true });
+
+      // Snapshot del estado anterior
+      const previousAlertas = queryClient.getQueriesData({ queryKey: ['alertas'] });
+      const previousDashboard = queryClient.getQueryData(['dashboard-alertas']);
+
+      // Optimistic update: marcar como leída en cache
+      queryClient.setQueriesData({ queryKey: ['alertas'] }, (old) => {
+        if (!old?.alertas) return old;
+        return {
+          ...old,
+          alertas: old.alertas.map((a) =>
+            a.id === alertaId ? { ...a, leida: true, fecha_leida: new Date().toISOString() } : a
+          ),
+        };
+      });
+
+      // Optimistic update en dashboard
+      if (previousDashboard) {
+        queryClient.setQueryData(['dashboard-alertas'], (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            resumen: {
+              ...old.resumen,
+              no_leidas: Math.max(0, (old.resumen?.no_leidas || 0) - 1),
+            },
+            alertas_recientes: old.alertas_recientes?.map((a) =>
+              a.id === alertaId ? { ...a, leida: true } : a
+            ),
+          };
+        });
+      }
+
+      return { previousAlertas, previousDashboard };
+    },
+    onError: (err, alertaId, context) => {
+      // Rollback en caso de error
+      if (context?.previousAlertas) {
+        context.previousAlertas.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data);
+        });
+      }
+      if (context?.previousDashboard) {
+        queryClient.setQueryData(['dashboard-alertas'], context.previousDashboard);
+      }
+    },
+    onSettled: () => {
+      // Refetch para asegurar consistencia
       queryClient.invalidateQueries({ queryKey: ['alertas'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard-alertas'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-alertas'], exact: true });
     },
   });
 }
@@ -76,9 +141,34 @@ export function useMarcarVariasAlertasLeidas() {
       const response = await inventarioApi.marcarVariasAlertasLeidas({ alerta_ids });
       return response.data.data;
     },
-    onSuccess: () => {
+    onMutate: async (alertaIds) => {
+      await queryClient.cancelQueries({ queryKey: ['alertas'] });
+
+      const previousAlertas = queryClient.getQueriesData({ queryKey: ['alertas'] });
+
+      // Optimistic update
+      queryClient.setQueriesData({ queryKey: ['alertas'] }, (old) => {
+        if (!old?.alertas) return old;
+        return {
+          ...old,
+          alertas: old.alertas.map((a) =>
+            alertaIds.includes(a.id) ? { ...a, leida: true, fecha_leida: new Date().toISOString() } : a
+          ),
+        };
+      });
+
+      return { previousAlertas };
+    },
+    onError: (err, alertaIds, context) => {
+      if (context?.previousAlertas) {
+        context.previousAlertas.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data);
+        });
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['alertas'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard-alertas'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-alertas'], exact: true });
     },
   });
 }

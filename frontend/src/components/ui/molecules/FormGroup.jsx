@@ -41,4 +41,6 @@ function FormGroup({
   );
 }
 
+FormGroup.displayName = 'FormGroup';
+
 export default FormGroup;

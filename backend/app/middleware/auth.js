@@ -46,16 +46,17 @@ async function addToTokenBlacklist(token, expiration = null) {
  * ✅ FIX v2.0: Migrado de Set en memoria a Redis (DB 3)
  * Verifica en Redis (persistente) en lugar de Set en memoria
  *
+ * SECURITY FIX (Ene 2026): Fail-Closed
+ * Si no se puede verificar blacklist, el error se propaga
+ * y el middleware rechaza el request con 503
+ *
  * @param {string} token - Token JWT a verificar
  * @returns {Promise<boolean>} - true si está en blacklist, false si no
+ * @throws {Error} - Si no se puede verificar blacklist (fail-closed)
  */
 async function checkTokenBlacklist(token) {
-    try {
-        return await tokenBlacklistService.check(token);
-    } catch (error) {
-        logger.error('Error verificando blacklist', { error: error.message });
-        return false; // Fail-open: si hay error, permitir el token
-    }
+    // SECURITY: Ya no hay try/catch - error se propaga para fail-closed
+    return await tokenBlacklistService.check(token);
 }
 
 /**
@@ -160,6 +161,7 @@ const authenticateToken = async (req, res, next) => {
         }
 
         // 3.5. Verificar si el token está en la blacklist (invalidado por logout)
+        // SECURITY FIX (Ene 2026): Fail-Closed - si no podemos verificar, rechazamos
         try {
             const tokenBlacklisted = await checkTokenBlacklist(token);
             if (tokenBlacklisted) {
@@ -172,11 +174,46 @@ const authenticateToken = async (req, res, next) => {
                 return ResponseHelper.error(res, 'Token invalidado', 401, { code: 'TOKEN_BLACKLISTED' });
             }
         } catch (blacklistError) {
-            logger.error('Error verificando blacklist de tokens', {
+            // SECURITY: Fail-closed - si no podemos verificar blacklist, rechazamos
+            logger.error('Error verificando blacklist - Fail-closed', {
                 error: blacklistError.message,
-                userId: decoded.userId
+                code: blacklistError.code,
+                userId: decoded.userId,
+                ip: req.ip
             });
-            // En caso de error con blacklist, continuamos (fail-open para disponibilidad)
+            return ResponseHelper.error(res, 'Servicio temporalmente no disponible', 503, {
+                code: 'BLACKLIST_SERVICE_UNAVAILABLE'
+            });
+        }
+
+        // 3.6. SECURITY FIX (Ene 2026): Verificar si tokens del usuario fueron invalidados
+        // (por cambio de rol o permisos)
+        if (decoded.iat) {
+            try {
+                const userTokensInvalidated = await tokenBlacklistService.isUserTokenInvalidated(
+                    decoded.userId,
+                    decoded.iat
+                );
+
+                if (userTokensInvalidated) {
+                    logger.warn('Token invalidado por cambio de permisos', {
+                        userId: decoded.userId,
+                        tokenIat: decoded.iat,
+                        ip: req.ip,
+                        path: req.path
+                    });
+                    return ResponseHelper.error(res, 'Sesión invalidada. Inicia sesión nuevamente.', 401, {
+                        code: 'SESSION_INVALIDATED'
+                    });
+                }
+            } catch (invalidationError) {
+                logger.error('Error verificando invalidación de usuario', {
+                    error: invalidationError.message,
+                    userId: decoded.userId
+                });
+                // Este check es secundario, si falla continuamos
+                // (el check de blacklist principal ya pasó)
+            }
         }
 
         // 4. Obtener información básica del usuario desde la base de datos
@@ -259,6 +296,43 @@ const authenticateToken = async (req, res, next) => {
             creado_en: usuario.creado_en,
             actualizado_en: usuario.actualizado_en
         };
+
+        // 6.5. SECURITY FIX (Ene 2026): Validar que usuario aún tiene acceso a la sucursal del token
+        if (decoded.sucursalId) {
+            const dbSucursal = await getDb();
+            try {
+                await dbSucursal.query("SELECT set_config('app.bypass_rls', 'true', false)");
+
+                const sucursalValida = await dbSucursal.query(`
+                    SELECT 1 FROM usuarios_sucursales
+                    WHERE usuario_id = $1 AND sucursal_id = $2 AND activo = true
+                `, [usuario.id, decoded.sucursalId]);
+
+                if (sucursalValida.rows.length === 0) {
+                    logger.warn('Token con sucursal revocada', {
+                        userId: usuario.id,
+                        sucursalId: decoded.sucursalId,
+                        ip: req.ip,
+                        path: req.path
+                    });
+                    return ResponseHelper.error(res, 'Acceso a sucursal revocado', 401, {
+                        code: 'SUCURSAL_ACCESS_REVOKED'
+                    });
+                }
+            } catch (sucursalError) {
+                logger.error('Error verificando acceso a sucursal', {
+                    error: sucursalError.message,
+                    userId: usuario.id,
+                    sucursalId: decoded.sucursalId
+                });
+                // Si no podemos verificar, continuamos (la sucursal puede no existir aún en nueva org)
+            } finally {
+                try {
+                    await dbSucursal.query("SELECT set_config('app.bypass_rls', 'false', false)");
+                } catch (e) { /* ignore */ }
+                dbSucursal.release();
+            }
+        }
 
         // 7. Log exitoso
         logger.debug('Usuario autenticado exitosamente', {

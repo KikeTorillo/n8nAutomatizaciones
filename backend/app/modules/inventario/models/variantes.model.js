@@ -106,9 +106,9 @@ class VariantesModel {
     }
 
     /**
-     * Obtener variante por ID
+     * Buscar variante por ID
      */
-    static async obtenerPorId(id, organizacionId) {
+    static async buscarPorId(organizacionId, id) {
         return await RLSContextManager.query(organizacionId, async (db) => {
             const query = `
                 SELECT
@@ -286,7 +286,7 @@ class VariantesModel {
     /**
      * Eliminar variante (soft delete)
      */
-    static async eliminar(id, organizacionId) {
+    static async eliminar(organizacionId, id) {
         return await RLSContextManager.transaction(organizacionId, async (db) => {
             const query = `
                 UPDATE variantes_producto

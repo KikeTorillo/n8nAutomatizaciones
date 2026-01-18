@@ -1,48 +1,68 @@
+/**
+ * ====================================================================
+ * HOOKS SUCURSALES
+ * ====================================================================
+ *
+ * Migrado parcialmente a factory - Ene 2026
+ * - CRUD sucursales básico: via createCRUDHooks
+ * - Queries especiales, relaciones, métricas: manuales
+ * - CRUD transferencias: manual
+ *
+ * Reducción: 375 → ~250 LOC
+ * ====================================================================
+ */
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { sucursalesApi } from '@/services/api/endpoints';
+import { createCRUDHooks, createSanitizer } from '@/hooks/factories';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 
-// ==================== HOOKS CRUD SUCURSALES ====================
+// ==================== CRUD SUCURSALES (via factory) ====================
 
-/**
- * Hook para listar sucursales con filtros
- * @param {Object} params - { activo, es_matriz, ciudad_id }
- */
-export function useSucursales(params = {}) {
-  return useQuery({
-    queryKey: ['sucursales', params],
-    queryFn: async () => {
-      // Sanitizar params - eliminar valores vacíos
-      const sanitizedParams = Object.entries(params).reduce((acc, [key, value]) => {
-        if (value !== '' && value !== null && value !== undefined) {
-          acc[key] = value;
-        }
-        return acc;
-      }, {});
+const sanitizeSucursal = createSanitizer([
+  'nombre',
+  'codigo',
+  'direccion',
+  'codigo_postal',
+  'telefono',
+  'email',
+  'whatsapp',
+  { name: 'pais_id', type: 'id' },
+  { name: 'estado_id', type: 'id' },
+  { name: 'ciudad_id', type: 'id' },
+]);
 
-      const response = await sucursalesApi.listar(sanitizedParams);
-      return response.data.data || [];
-    },
-    staleTime: STALE_TIMES.SEMI_STATIC, // 5 minutos
-  });
-}
+const hooks = createCRUDHooks({
+  name: 'sucursal',
+  namePlural: 'sucursales',
+  api: sucursalesApi,
+  baseKey: 'sucursales',
+  apiMethods: {
+    list: 'listar',
+    get: 'obtener',
+    create: 'crear',
+    update: 'actualizar',
+    delete: 'eliminar',
+  },
+  sanitize: sanitizeSucursal,
+  invalidateOnCreate: ['sucursales', 'sucursal-matriz'],
+  invalidateOnUpdate: ['sucursales'],
+  invalidateOnDelete: ['sucursales'],
+  errorMessages: {
+    delete: { 400: 'No se puede eliminar la sucursal matriz' },
+  },
+  staleTime: STALE_TIMES.SEMI_STATIC,
+  keepPreviousData: true,
+});
 
-/**
- * Hook para obtener sucursal por ID
- * @param {number} id
- */
-export function useSucursal(id) {
-  return useQuery({
-    queryKey: ['sucursal', id],
-    queryFn: async () => {
-      const response = await sucursalesApi.obtener(id);
-      return response.data.data;
-    },
-    enabled: !!id,
-    staleTime: STALE_TIMES.SEMI_STATIC,
-  });
-}
+export const useSucursales = hooks.useList;
+export const useSucursal = hooks.useDetail;
+export const useCrearSucursal = hooks.useCreate;
+export const useActualizarSucursal = hooks.useUpdate;
+export const useEliminarSucursal = hooks.useDelete;
+
+// ==================== QUERIES ESPECIALES ====================
 
 /**
  * Hook para obtener sucursal matriz de la organización
@@ -54,13 +74,12 @@ export function useSucursalMatriz() {
       const response = await sucursalesApi.obtenerMatriz();
       return response.data.data;
     },
-    staleTime: STALE_TIMES.STATIC_DATA, // 10 minutos (cambia poco)
+    staleTime: STALE_TIMES.STATIC_DATA,
   });
 }
 
 /**
  * Hook para obtener sucursales del usuario
- * @param {number} usuarioId
  */
 export function useSucursalesUsuario(usuarioId) {
   return useQuery({
@@ -74,89 +93,10 @@ export function useSucursalesUsuario(usuarioId) {
   });
 }
 
-/**
- * Hook para crear sucursal
- */
-export function useCrearSucursal() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (data) => {
-      // Sanitizar campos opcionales vacíos
-      const sanitized = {
-        ...data,
-        codigo: data.codigo?.trim() || undefined,
-        direccion: data.direccion?.trim() || undefined,
-        codigo_postal: data.codigo_postal?.trim() || undefined,
-        telefono: data.telefono?.trim() || undefined,
-        email: data.email?.trim() || undefined,
-        whatsapp: data.whatsapp?.trim() || undefined,
-      };
-      const response = await sucursalesApi.crear(sanitized);
-      return response.data.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['sucursales'] });
-      queryClient.invalidateQueries({ queryKey: ['sucursal-matriz'] });
-    },
-    onError: createCRUDErrorHandler('create', 'Sucursal'),
-  });
-}
-
-/**
- * Hook para actualizar sucursal
- */
-export function useActualizarSucursal() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ id, data }) => {
-      // Sanitizar campos opcionales vacíos
-      const sanitized = {
-        ...data,
-        codigo: data.codigo?.trim() || undefined,
-        direccion: data.direccion?.trim() || undefined,
-        codigo_postal: data.codigo_postal?.trim() || undefined,
-        telefono: data.telefono?.trim() || undefined,
-        email: data.email?.trim() || undefined,
-        whatsapp: data.whatsapp?.trim() || undefined,
-      };
-      const response = await sucursalesApi.actualizar(id, sanitized);
-      return response.data.data;
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['sucursal', data.id] });
-      queryClient.invalidateQueries({ queryKey: ['sucursales'] });
-    },
-    onError: createCRUDErrorHandler('update', 'Sucursal'),
-  });
-}
-
-/**
- * Hook para eliminar sucursal (soft delete)
- */
-export function useEliminarSucursal() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (id) => {
-      await sucursalesApi.eliminar(id);
-      return id;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['sucursales'] });
-    },
-    onError: createCRUDErrorHandler('delete', 'Sucursal', {
-      400: 'No se puede eliminar la sucursal matriz',
-    }),
-  });
-}
-
-// ==================== HOOKS USUARIOS DE SUCURSAL ====================
+// ==================== USUARIOS DE SUCURSAL ====================
 
 /**
  * Hook para obtener usuarios de una sucursal
- * @param {number} sucursalId
  */
 export function useUsuariosSucursal(sucursalId) {
   return useQuery({
@@ -182,7 +122,7 @@ export function useAsignarUsuarioSucursal() {
       return response.data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['sucursal-usuarios', variables.sucursalId] });
+      queryClient.invalidateQueries({ queryKey: ['sucursal-usuarios', variables.sucursalId], exact: true });
       queryClient.invalidateQueries({ queryKey: ['sucursales'] });
       queryClient.invalidateQueries({ queryKey: ['sucursales-usuario'] });
     },
@@ -190,11 +130,10 @@ export function useAsignarUsuarioSucursal() {
   });
 }
 
-// ==================== HOOKS PROFESIONALES DE SUCURSAL ====================
+// ==================== PROFESIONALES DE SUCURSAL ====================
 
 /**
  * Hook para obtener profesionales de una sucursal
- * @param {number} sucursalId
  */
 export function useProfesionalesSucursal(sucursalId) {
   return useQuery({
@@ -220,20 +159,17 @@ export function useAsignarProfesionalSucursal() {
       return response.data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['sucursal-profesionales', variables.sucursalId] });
+      queryClient.invalidateQueries({ queryKey: ['sucursal-profesionales', variables.sucursalId], exact: true });
       queryClient.invalidateQueries({ queryKey: ['sucursales'] });
     },
     onError: createCRUDErrorHandler('create', 'Profesional'),
   });
 }
 
-// ==================== HOOKS MÉTRICAS DASHBOARD ====================
+// ==================== MÉTRICAS DASHBOARD ====================
 
 /**
  * Hook para obtener métricas consolidadas del dashboard multi-sucursal
- * @param {Object} params - { sucursal_id?, fecha_desde?, fecha_hasta? }
- * - sucursal_id = null/undefined: Métricas consolidadas de todas las sucursales
- * - sucursal_id = number: Métricas de sucursal específica
  */
 export function useMetricasSucursales(params = {}) {
   return useQuery({
@@ -249,16 +185,15 @@ export function useMetricasSucursales(params = {}) {
       const response = await sucursalesApi.obtenerMetricas(sanitizedParams);
       return response.data.data;
     },
-    staleTime: STALE_TIMES.DYNAMIC, // 2 minutos - datos de dashboard
-    refetchInterval: 1000 * 60 * 5, // Refetch cada 5 minutos
+    staleTime: STALE_TIMES.DYNAMIC,
+    refetchInterval: 1000 * 60 * 5,
   });
 }
 
-// ==================== HOOKS TRANSFERENCIAS DE STOCK ====================
+// ==================== TRANSFERENCIAS DE STOCK ====================
 
 /**
  * Hook para listar transferencias de stock
- * @param {Object} params - { estado?, sucursal_origen_id?, sucursal_destino_id?, fecha_desde?, fecha_hasta? }
  */
 export function useTransferencias(params = {}) {
   return useQuery({
@@ -274,13 +209,13 @@ export function useTransferencias(params = {}) {
       const response = await sucursalesApi.listarTransferencias(sanitizedParams);
       return response.data.data || [];
     },
-    staleTime: STALE_TIMES.DYNAMIC, // 2 minutos (datos más dinámicos)
+    staleTime: STALE_TIMES.DYNAMIC,
+    keepPreviousData: true,
   });
 }
 
 /**
  * Hook para obtener transferencia por ID
- * @param {number} id
  */
 export function useTransferencia(id) {
   return useQuery({
@@ -328,7 +263,7 @@ export function useEnviarTransferencia() {
       return response.data.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['transferencia', data.id] });
+      queryClient.invalidateQueries({ queryKey: ['transferencia', data.id], exact: true });
       queryClient.invalidateQueries({ queryKey: ['transferencias'] });
     },
     onError: createCRUDErrorHandler('update', 'Transferencia'),
@@ -347,7 +282,7 @@ export function useRecibirTransferencia() {
       return response.data.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['transferencia', data.id] });
+      queryClient.invalidateQueries({ queryKey: ['transferencia', data.id], exact: true });
       queryClient.invalidateQueries({ queryKey: ['transferencias'] });
     },
     onError: createCRUDErrorHandler('update', 'Transferencia'),
@@ -366,7 +301,7 @@ export function useCancelarTransferencia() {
       return response.data.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['transferencia', data.id] });
+      queryClient.invalidateQueries({ queryKey: ['transferencia', data.id], exact: true });
       queryClient.invalidateQueries({ queryKey: ['transferencias'] });
     },
     onError: createCRUDErrorHandler('update', 'Transferencia'),

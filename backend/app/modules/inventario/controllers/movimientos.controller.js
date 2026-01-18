@@ -69,7 +69,7 @@ class MovimientosInventarioController {
             offset: req.query.offset ? parseInt(req.query.offset) : 0
         };
 
-        const movimientos = await MovimientosInventarioModel.listar(filtros, organizacionId);
+        const movimientos = await MovimientosInventarioModel.listar(organizacionId, filtros);
 
         return ResponseHelper.success(res, movimientos, 'Movimientos obtenidos exitosamente');
     });

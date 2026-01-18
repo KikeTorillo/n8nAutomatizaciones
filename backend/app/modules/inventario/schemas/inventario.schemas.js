@@ -7,6 +7,7 @@
  */
 
 const Joi = require('joi');
+const { fields } = require('../../../schemas/shared');
 
 // Schema reutilizable para precios en múltiples monedas
 const precioMonedaSchema = Joi.object({
@@ -55,7 +56,7 @@ const inventarioSchemas = {
 
             orden: Joi.number().integer().min(0).optional().default(0),
 
-            activo: Joi.boolean().optional().default(true)
+            activo: fields.activo
         })
     },
 
@@ -85,7 +86,7 @@ const inventarioSchemas = {
      */
     listarCategorias: {
         query: Joi.object({
-            activo: Joi.boolean().optional(),
+            activo: fields.activoQuery,
             categoria_padre_id: Joi.number().integer().optional().allow(null),
             busqueda: Joi.string().max(100).optional()
         })
@@ -128,7 +129,7 @@ const inventarioSchemas = {
             monto_minimo_compra: Joi.number().min(0).optional().allow(null),
 
             notas: Joi.string().max(500).optional().allow(null, ''),
-            activo: Joi.boolean().optional().default(true)
+            activo: fields.activo
         })
     },
 
@@ -168,7 +169,7 @@ const inventarioSchemas = {
      */
     listarProveedores: {
         query: Joi.object({
-            activo: Joi.boolean().optional(),
+            activo: fields.activoQuery,
             busqueda: Joi.string().max(100).optional(),
             ciudad: Joi.string().max(100).optional(),
             rfc: Joi.string().max(13).optional(),
@@ -225,7 +226,7 @@ const inventarioSchemas = {
 
             notas: Joi.string().max(500).optional().allow(null, ''),
             imagen_url: Joi.string().uri().max(500).optional().allow(null, ''),
-            activo: Joi.boolean().optional().default(true),
+            activo: fields.activo,
 
             // Dic 2025: Números de serie / Lotes
             requiere_numero_serie: Joi.boolean().optional().default(false),
@@ -418,7 +419,7 @@ const inventarioSchemas = {
      */
     listarProductos: {
         query: Joi.object({
-            activo: Joi.boolean().optional(),
+            activo: fields.activoQuery,
             categoria_id: Joi.number().integer().positive().optional(),
             proveedor_id: Joi.number().integer().positive().optional(),
             busqueda: Joi.string().max(100).optional(),
@@ -429,6 +430,20 @@ const inventarioSchemas = {
             permite_venta: Joi.boolean().optional(),
             orden_por: Joi.string().valid('nombre', 'precio', 'stock', 'creado').optional(),
             orden_dir: Joi.string().valid('asc', 'desc').optional().default('asc'),
+            limit: Joi.number().integer().min(1).max(100).optional().default(50),
+            offset: Joi.number().integer().min(0).optional().default(0)
+        })
+    },
+
+    /**
+     * Schema para obtener productos con stock crítico
+     * GET /api/v1/inventario/productos/stock-critico
+     * Ene 2026: Agregado validación Joi
+     */
+    obtenerStockCritico: {
+        query: Joi.object({
+            incluir_agotados: Joi.boolean().optional().default(true),
+            categoria_id: Joi.number().integer().positive().optional(),
             limit: Joi.number().integer().min(1).max(100).optional().default(50),
             offset: Joi.number().integer().min(0).optional().default(0)
         })
@@ -1195,7 +1210,7 @@ const inventarioSchemas = {
             ).optional(),
             es_picking: Joi.boolean().optional(),
             es_recepcion: Joi.boolean().optional(),
-            activo: Joi.boolean().optional(),
+            activo: fields.activoQuery,
             bloqueada: Joi.boolean().optional(),
             busqueda: Joi.string().max(100).optional(),
             limit: Joi.number().integer().min(1).max(500).optional().default(100),
@@ -1626,7 +1641,7 @@ const inventarioSchemas = {
                 .default('08:00:00'),
             frecuencia_horas: Joi.number().integer().min(1).max(168).optional().default(24),
 
-            activo: Joi.boolean().optional().default(true),
+            activo: fields.activo,
             prioridad: Joi.number().integer().min(0).optional().default(0)
         }).custom((value, helpers) => {
             // Validar que no tenga producto_id Y categoria_id a la vez
@@ -1672,7 +1687,7 @@ const inventarioSchemas = {
      */
     listarReglasReorden: {
         query: Joi.object({
-            activo: Joi.boolean().optional(),
+            activo: fields.activoQuery,
             producto_id: Joi.number().integer().positive().optional()
         })
     },

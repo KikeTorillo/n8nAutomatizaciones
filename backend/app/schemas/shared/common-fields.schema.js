@@ -31,6 +31,21 @@ const Joi = require('joi');
 const nombre = Joi.string().trim().min(2).max(150);
 
 /**
+ * Campo nombre corto (1-100 caracteres)
+ */
+const nombreCorto = Joi.string().trim().min(1).max(100);
+
+/**
+ * Campo nombre medio (2-150 caracteres)
+ */
+const nombreMedio = Joi.string().trim().min(2).max(150);
+
+/**
+ * Campo nombre largo (2-200 caracteres)
+ */
+const nombreLargo = Joi.string().trim().min(2).max(200);
+
+/**
  * Campo descripción opcional (hasta 1000 caracteres)
  */
 const descripcion = Joi.string().trim().max(1000).allow(null, '');
@@ -55,9 +70,9 @@ const notas = Joi.string().trim().max(2000).allow(null, '');
 // ======================
 
 /**
- * Email con validación
+ * Email con validación (max 255 para compatibilidad con estándares RFC)
  */
-const email = Joi.string().email().lowercase().trim().max(150);
+const email = Joi.string().email().lowercase().trim().max(255);
 
 /**
  * Teléfono (10 dígitos, formato LATAM)
@@ -72,6 +87,11 @@ const telefono = Joi.string().pattern(/^[1-9]\d{9}$/).messages({
 const telefonoConLada = Joi.string().pattern(/^\+?\d{10,15}$/).messages({
   'string.pattern.base': 'Formato de teléfono inválido'
 });
+
+/**
+ * Teléfono genérico (hasta 20 caracteres, permite formatos varios)
+ */
+const telefonoGenerico = Joi.string().trim().max(20).allow(null, '');
 
 /**
  * URL válida
@@ -145,6 +165,14 @@ const hora = Joi.string().pattern(/^([01]\d|2[0-3]):([0-5]\d)(:[0-5]\d)?$/).mess
  * Campo activo (default: true)
  */
 const activo = Joi.boolean().default(true);
+
+/**
+ * Campo activo para query params (acepta string 'true'/'false' o boolean)
+ */
+const activoQuery = Joi.alternatives().try(
+  Joi.boolean(),
+  Joi.string().valid('true', 'false')
+);
 
 /**
  * Campo booleano genérico
@@ -264,6 +292,9 @@ const createBaseSchema = (customFields) => {
 const fields = {
   // Texto
   nombre,
+  nombreCorto,
+  nombreMedio,
+  nombreLargo,
   descripcion,
   codigo,
   referencia,
@@ -273,6 +304,7 @@ const fields = {
   email,
   telefono,
   telefonoConLada,
+  telefonoGenerico,
   url,
   rfc,
 
@@ -289,6 +321,7 @@ const fields = {
 
   // Booleanos
   activo,
+  activoQuery,
   booleano,
 
   // IDs

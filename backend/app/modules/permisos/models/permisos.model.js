@@ -1,6 +1,7 @@
 const RLSContextManager = require('../../../utils/rlsContextManager');
 const { getDb } = require('../../../config/database');
 const logger = require('../../../utils/logger');
+const tokenBlacklistService = require('../../../services/tokenBlacklistService');
 
 /**
  * Modelo de Permisos Normalizados
@@ -306,6 +307,26 @@ class PermisosModel {
                 permiso_id: data.permisoId,
                 otorgado_por: otorgadoPor
             });
+
+            // SECURITY FIX (Ene 2026): Invalidar tokens del usuario afectado
+            // Esto fuerza al usuario a re-autenticarse para obtener nuevos permisos
+            try {
+                await tokenBlacklistService.invalidateUserTokens(
+                    data.usuarioId,
+                    `cambio_permiso_${data.permisoId}_sucursal_${data.sucursalId}`
+                );
+                logger.info('[PermisosModel] Tokens invalidados por cambio de permiso', {
+                    usuario_id: data.usuarioId,
+                    permiso_id: data.permisoId,
+                    sucursal_id: data.sucursalId
+                });
+            } catch (tokenError) {
+                // No fallar la operación si la invalidación falla
+                logger.error('[PermisosModel] Error invalidando tokens', {
+                    error: tokenError.message,
+                    usuario_id: data.usuarioId
+                });
+            }
 
             return result.rows[0];
         });
