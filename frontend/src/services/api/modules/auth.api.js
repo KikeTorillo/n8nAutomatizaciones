@@ -128,6 +128,16 @@ export const authApi = {
    * @returns {Promise<Object>} { usuario, organizacion, accessToken }
    */
   completarOnboarding: (data) => apiClient.post('/auth/onboarding/complete', data),
+
+  // ===== Cambio de Sucursal - Ene 2026 =====
+
+  /**
+   * Cambiar sucursal activa (regenera tokens)
+   * Invalida token anterior y genera nuevo con sucursalId actualizado
+   * @param {Object} data - { sucursal_id }
+   * @returns {Promise<Object>} { sucursal, accessToken, expiresIn }
+   */
+  cambiarSucursal: (data) => apiClient.post('/auth/cambiar-sucursal', data),
 };
 
 // ==================== ORGANIZACIONES ====================

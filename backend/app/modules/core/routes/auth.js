@@ -75,4 +75,13 @@ router.get('/me', auth.authenticateToken, tenant.setTenantContext, rateLimiting.
 router.put('/profile', auth.authenticateToken, tenant.setTenantContext, rateLimiting.apiRateLimit, validation.validate(authSchemas.updateProfile), AuthController.actualizarPerfil);
 router.post('/change-password', auth.authenticateToken, tenant.setTenantContext, rateLimiting.heavyOperationRateLimit, validation.validate(authSchemas.changePassword), AuthController.cambiarPassword);
 
+// ========== Cambio de Sucursal - Ene 2026 ==========
+router.post('/cambiar-sucursal',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    validation.validate(authSchemas.cambiarSucursal),
+    AuthController.cambiarSucursal
+);
+
 module.exports = router;

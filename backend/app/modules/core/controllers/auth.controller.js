@@ -744,6 +744,70 @@ class AuthController {
 
         return ResponseHelper.success(res, responseData, 'Onboarding completado exitosamente', 201);
     });
+
+    // ====================================================================
+    // CAMBIO DE SUCURSAL - Ene 2026
+    // ====================================================================
+
+    /**
+     * POST /api/v1/auth/cambiar-sucursal
+     * Cambia sucursal activa y regenera tokens
+     * Invalida token anterior y genera nuevo con sucursalId actualizado
+     */
+    static cambiarSucursal = asyncHandler(async (req, res) => {
+        const { sucursal_id } = req.body;
+        const userId = req.user.id;
+
+        // 1. Validar y obtener usuario con nueva sucursal
+        const usuarioActualizado = await UsuarioModel.buscarPorIdConSucursal(userId, sucursal_id);
+
+        // 2. Invalidar token actual (blacklist Redis)
+        const authHeader = req.headers.authorization;
+        if (authHeader?.startsWith('Bearer ')) {
+            const tokenActual = authHeader.substring(7);
+            const decoded = jwt.decode(tokenActual);
+            if (decoded?.exp) {
+                const ttl = decoded.exp - Math.floor(Date.now() / 1000);
+                if (ttl > 0) {
+                    await addToTokenBlacklist(tokenActual, ttl);
+                }
+            }
+        }
+
+        // 3. Invalidar cache de permisos
+        const { invalidarCacheUsuario } = require('../../../middleware/permisos');
+        invalidarCacheUsuario(userId);
+
+        // 4. Generar nuevos tokens
+        const { accessToken, refreshToken } = UsuarioModel.generarTokens(usuarioActualizado);
+
+        // 5. Actualizar cookie
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: 7 * 24 * 60 * 60 * 1000
+        });
+
+        // 6. Obtener datos de sucursal
+        const SucursalesModel = require('../../sucursales/models/sucursales.model');
+        const sucursal = await SucursalesModel.obtenerPorId(
+            sucursal_id,
+            usuarioActualizado.organizacion_id
+        );
+
+        // 7. Respuesta
+        return ResponseHelper.success(res, {
+            sucursal: {
+                id: sucursal?.id || sucursal_id,
+                nombre: sucursal?.nombre,
+                codigo: sucursal?.codigo,
+                es_matriz: sucursal?.es_matriz || false
+            },
+            accessToken,
+            expiresIn: 3600
+        }, 'Sucursal cambiada exitosamente');
+    });
 }
 
 module.exports = AuthController;

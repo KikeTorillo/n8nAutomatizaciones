@@ -341,6 +341,19 @@ const evaluarFortalezaPassword = {
     })
 };
 
+// ============================================================
+// CAMBIO DE SUCURSAL - Ene 2026
+// ============================================================
+const cambiarSucursal = {
+    body: Joi.object({
+        sucursal_id: commonSchemas.id.required()
+            .messages({
+                'any.required': 'sucursal_id es requerido',
+                'number.base': 'sucursal_id debe ser un número'
+            })
+    })
+};
+
 module.exports = {
     login,
     register,
@@ -361,5 +374,7 @@ module.exports = {
     recuperarPassword,
     confirmarResetPassword,
     validarTokenReset,
-    evaluarFortalezaPassword
+    evaluarFortalezaPassword,
+    // Cambio de sucursal - Ene 2026
+    cambiarSucursal
 };

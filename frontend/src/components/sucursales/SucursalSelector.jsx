@@ -6,7 +6,7 @@ import useSucursalStore, {
   selectSetSucursalActiva,
   selectSetSucursalesDisponibles,
 } from '@/store/sucursalStore';
-import { useSucursalesUsuario } from '@/hooks/sistema';
+import { useSucursalesUsuario, useCambiarSucursal } from '@/hooks/sistema';
 import useAuthStore, { selectUser } from '@/store/authStore';
 
 /**
@@ -24,6 +24,9 @@ function SucursalSelector() {
   const sucursalesDisponibles = useSucursalStore(selectSucursalesDisponibles);
   const setSucursalActiva = useSucursalStore(selectSetSucursalActiva);
   const setSucursalesDisponibles = useSucursalStore(selectSetSucursalesDisponibles);
+
+  // Ene 2026: Hook para cambiar sucursal con regeneracion de tokens
+  const { mutate: cambiarSucursal, isPending } = useCambiarSucursal();
 
   // Fetch sucursales del usuario
   const { data: sucursales = [] } = useSucursalesUsuario(user?.id);
@@ -53,8 +56,13 @@ function SucursalSelector() {
   }
 
   // Handler para seleccionar sucursal
+  // Ene 2026: Usa cambiarSucursal para regenerar tokens con nueva sucursalId
   const handleSelect = (sucursal) => {
-    setSucursalActiva(sucursal);
+    if (sucursalActiva?.id === sucursal.id) {
+      setIsOpen(false);
+      return;
+    }
+    cambiarSucursal(sucursal.id);
     setIsOpen(false);
   };
 
@@ -64,7 +72,8 @@ function SucursalSelector() {
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+        disabled={isPending}
+        className={`flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors ${isPending ? 'opacity-50 cursor-wait' : ''}`}
       >
         <Building2 className="w-4 h-4 text-gray-600 dark:text-gray-400" />
         <span className="text-sm font-medium text-gray-700 dark:text-gray-300 max-w-[120px] truncate">

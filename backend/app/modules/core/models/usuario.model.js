@@ -270,6 +270,56 @@ class UsuarioModel {
         });
     }
 
+    /**
+     * Buscar usuario con sucursal específica para cambio de contexto
+     * Valida pertenencia y retorna usuario con sucursal_id actualizada
+     * Ene 2026 - Sucursal dinámica en JWT
+     *
+     * @param {number} userId - ID del usuario
+     * @param {number} sucursalId - ID de la sucursal a la que cambiar
+     * @returns {Promise<Object>} Usuario con sucursal actualizada
+     * @throws {Error} Si el usuario no tiene acceso a la sucursal
+     */
+    static async buscarPorIdConSucursal(userId, sucursalId) {
+        return await RLSContextManager.withBypass(async (db) => {
+            // 1. Verificar pertenencia a la sucursal
+            const pertenencia = await db.query(
+                `SELECT 1 FROM usuarios_sucursales
+                 WHERE usuario_id = $1 AND sucursal_id = $2 AND activo = true`,
+                [userId, sucursalId]
+            );
+
+            if (pertenencia.rows.length === 0) {
+                const error = new Error('No tienes acceso a esta sucursal');
+                error.statusCode = 403;
+                throw error;
+            }
+
+            // 2. Obtener usuario con sucursal especificada
+            const query = `
+                SELECT
+                    u.id, u.email, u.nombre, u.apellidos, u.telefono,
+                    u.rol, u.organizacion_id, u.profesional_id, u.activo,
+                    u.email_verificado, u.onboarding_completado,
+                    $2::integer as sucursal_id,
+                    COALESCE(s.moneda, o.moneda) as moneda,
+                    o.zona_horaria
+                FROM usuarios u
+                LEFT JOIN organizaciones o ON u.organizacion_id = o.id
+                LEFT JOIN sucursales s ON s.id = $2
+                WHERE u.id = $1 AND u.activo = TRUE
+            `;
+
+            const result = await db.query(query, [userId, sucursalId]);
+
+            if (!result.rows[0]) {
+                throw new Error('Usuario no encontrado');
+            }
+
+            return result.rows[0];
+        });
+    }
+
     static async registrarIntentoLogin(email, exitoso, ipAddress = null) {
         const db = await getDb();
 
