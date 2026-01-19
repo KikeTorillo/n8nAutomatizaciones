@@ -20,9 +20,10 @@ import {
   Alert,
   Button,
   ConfirmDialog,
-  EmptyState,
+  DataTable,
+  DataTableActions,
+  DataTableActionButton,
   Pagination,
-  SkeletonTable,
   StatCardGrid
 } from '@/components/ui';
 import { useModalManager } from '@/hooks/utils';
@@ -38,6 +39,144 @@ import {
     ESTADOS_AJUSTE_MASIVO_CONFIG,
 } from '@/hooks/inventario';
 import AjusteMasivoModal from '@/components/inventario/ajustes-masivos/AjusteMasivoModal';
+
+// Formatear fecha
+const formatFecha = (fecha) => {
+  if (!fecha) return '-';
+  return new Date(fecha).toLocaleDateString('es-MX', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  });
+};
+
+// Formatear moneda
+const formatMoneda = (valor) => {
+  if (valor === null || valor === undefined) return '$0.00';
+  return new Intl.NumberFormat('es-MX', {
+    style: 'currency',
+    currency: 'MXN',
+  }).format(valor);
+};
+
+// Columnas para DataTable
+const COLUMNS = [
+  {
+    key: 'folio',
+    header: 'Folio',
+    render: (row) => (
+      <span className="font-mono text-sm font-medium text-primary-600 dark:text-primary-400">
+        {row.folio}
+      </span>
+    ),
+  },
+  {
+    key: 'archivo',
+    header: 'Archivo',
+    hideOnMobile: true,
+    render: (row) => (
+      <span className="text-sm text-gray-900 dark:text-white truncate max-w-[200px] block">
+        {row.archivo_nombre}
+      </span>
+    ),
+  },
+  {
+    key: 'estado',
+    header: 'Estado',
+    render: (row) => {
+      const config = ESTADOS_AJUSTE_MASIVO_CONFIG[row.estado] || ESTADOS_AJUSTE_MASIVO_CONFIG.pendiente;
+      return (
+        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${config.badgeClass}`}>
+          {config.label}
+        </span>
+      );
+    },
+  },
+  {
+    key: 'items',
+    header: 'Items',
+    render: (row) => (
+      <div className="text-sm text-gray-900 dark:text-white">
+        <span className="text-green-600 dark:text-green-400">{row.filas_validas || 0}</span>
+        <span className="text-gray-400 mx-1">/</span>
+        <span>{row.total_filas || 0}</span>
+        {row.filas_error > 0 && (
+          <span className="text-red-600 dark:text-red-400 ml-2">
+            ({row.filas_error} err)
+          </span>
+        )}
+      </div>
+    ),
+  },
+  {
+    key: 'valor',
+    header: 'Valor',
+    hideOnMobile: true,
+    render: (row) => (
+      <span className="text-sm text-gray-900 dark:text-white">
+        {formatMoneda(row.valor_total_ajuste)}
+      </span>
+    ),
+  },
+  {
+    key: 'fecha',
+    header: 'Fecha',
+    hideOnMobile: true,
+    render: (row) => (
+      <span className="text-sm text-gray-500 dark:text-gray-400">
+        {formatFecha(row.creado_en)}
+      </span>
+    ),
+  },
+];
+
+/**
+ * Acciones por fila de ajuste masivo
+ */
+function AjusteRowActions({ row, onVerDetalle, onValidar, onAplicar, onCancelar }) {
+  return (
+    <DataTableActions>
+      <DataTableActionButton
+        icon={Eye}
+        label="Ver detalle"
+        onClick={() => onVerDetalle(row.id)}
+        variant="primary"
+      />
+      {row.estado === 'pendiente' && (
+        <>
+          <DataTableActionButton
+            icon={FileCheck}
+            label="Validar"
+            onClick={() => onValidar(row)}
+            variant="ghost"
+          />
+          <DataTableActionButton
+            icon={XCircle}
+            label="Cancelar"
+            onClick={() => onCancelar(row)}
+            variant="danger"
+          />
+        </>
+      )}
+      {row.estado === 'validado' && (
+        <>
+          <DataTableActionButton
+            icon={Play}
+            label="Aplicar"
+            onClick={() => onAplicar(row)}
+            variant="ghost"
+          />
+          <DataTableActionButton
+            icon={XCircle}
+            label="Cancelar"
+            onClick={() => onCancelar(row)}
+            variant="danger"
+          />
+        </>
+      )}
+    </DataTableActions>
+  );
+}
 
 /**
  * Pagina principal de Ajustes Masivos de Inventario
@@ -182,82 +321,6 @@ export default function AjustesMasivosPage() {
                 showError(error.message || 'Error al cancelar ajuste');
             },
         });
-    };
-
-    // Formatear fecha
-    const formatFecha = (fecha) => {
-        if (!fecha) return '-';
-        return new Date(fecha).toLocaleDateString('es-MX', {
-            day: '2-digit',
-            month: 'short',
-            year: 'numeric',
-        });
-    };
-
-    // Formatear moneda
-    const formatMoneda = (valor) => {
-        if (valor === null || valor === undefined) return '$0.00';
-        return new Intl.NumberFormat('es-MX', {
-            style: 'currency',
-            currency: 'MXN',
-        }).format(valor);
-    };
-
-    // Renderizar estado
-    const renderEstado = (estado) => {
-        const config = ESTADOS_AJUSTE_MASIVO_CONFIG[estado] || ESTADOS_AJUSTE_MASIVO_CONFIG.pendiente;
-        return (
-            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${config.badgeClass}`}>
-                {config.label}
-            </span>
-        );
-    };
-
-    // Acciones disponibles por estado
-    const getAcciones = (ajuste) => {
-        const acciones = [];
-
-        // Ver siempre disponible
-        acciones.push({
-            icon: Eye,
-            label: 'Ver detalle',
-            onClick: () => handleVerDetalle(ajuste.id),
-            className: 'text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200',
-        });
-
-        switch (ajuste.estado) {
-            case 'pendiente':
-                acciones.push({
-                    icon: FileCheck,
-                    label: 'Validar',
-                    onClick: () => handleAbrirModalValidar(ajuste),
-                    className: 'text-primary-600 hover:text-primary-800',
-                });
-                acciones.push({
-                    icon: XCircle,
-                    label: 'Cancelar',
-                    onClick: () => handleAbrirModalCancelar(ajuste),
-                    className: 'text-red-600 hover:text-red-800',
-                });
-                break;
-
-            case 'validado':
-                acciones.push({
-                    icon: Play,
-                    label: 'Aplicar',
-                    onClick: () => handleAbrirModalAplicar(ajuste),
-                    className: 'text-green-600 hover:text-green-800',
-                });
-                acciones.push({
-                    icon: XCircle,
-                    label: 'Cancelar',
-                    onClick: () => handleAbrirModalCancelar(ajuste),
-                    className: 'text-red-600 hover:text-red-800',
-                });
-                break;
-        }
-
-        return acciones;
     };
 
     return (
@@ -406,112 +469,36 @@ export default function AjustesMasivosPage() {
                 />
 
                 {/* Tabla de ajustes */}
-                <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-                    {isLoading ? (
-                        <SkeletonTable rows={5} columns={7} />
-                    ) : ajustes.length === 0 ? (
-                        <EmptyState
-                            icon={FileSpreadsheet}
-                            title="No hay ajustes masivos"
-                            description="Importa tu primer archivo CSV para ajustar inventario"
-                            action={
-                                <Button onClick={handleNuevoAjuste}>
-                                    <Plus className="h-4 w-4 mr-1" />
-                                    Crear primer ajuste
-                                </Button>
-                            }
-                        />
-                    ) : (
-                        <div className="overflow-x-auto">
-                            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                                <thead className="bg-gray-50 dark:bg-gray-900">
-                                    <tr>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                            Folio
-                                        </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                            Archivo
-                                        </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                            Estado
-                                        </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                            Items
-                                        </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                            Valor
-                                        </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                            Fecha
-                                        </th>
-                                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                            Acciones
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                                    {ajustes.map((ajuste) => (
-                                        <tr
-                                            key={ajuste.id}
-                                            className="hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"
-                                            onClick={() => handleVerDetalle(ajuste.id)}
-                                        >
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <span className="font-mono text-sm font-medium text-primary-600 dark:text-primary-400">
-                                                    {ajuste.folio}
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <span className="text-sm text-gray-900 dark:text-white truncate max-w-[200px] block">
-                                                    {ajuste.archivo_nombre}
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                {renderEstado(ajuste.estado)}
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="text-sm text-gray-900 dark:text-white">
-                                                    <span className="text-green-600 dark:text-green-400">{ajuste.filas_validas || 0}</span>
-                                                    <span className="text-gray-400 mx-1">/</span>
-                                                    <span>{ajuste.total_filas || 0}</span>
-                                                    {ajuste.filas_error > 0 && (
-                                                        <span className="text-red-600 dark:text-red-400 ml-2">
-                                                            ({ajuste.filas_error} err)
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                                                {formatMoneda(ajuste.valor_total_ajuste)}
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                                {formatFecha(ajuste.creado_en)}
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-right">
-                                                <div
-                                                    className="flex items-center justify-end gap-2"
-                                                    onClick={(e) => e.stopPropagation()}
-                                                >
-                                                    {getAcciones(ajuste).map((accion, idx) => (
-                                                        <button
-                                                            key={idx}
-                                                            onClick={accion.onClick}
-                                                            className={`p-2.5 min-w-[44px] min-h-[44px] rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center ${accion.className}`}
-                                                            title={accion.label}
-                                                            aria-label={accion.label}
-                                                        >
-                                                            <accion.icon className="h-5 w-5" />
-                                                        </button>
-                                                    ))}
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    )}
-                </div>
+                <DataTable
+                    columns={[
+                        ...COLUMNS,
+                        {
+                            key: 'actions',
+                            header: '',
+                            align: 'right',
+                            render: (row) => (
+                                <AjusteRowActions
+                                    row={row}
+                                    onVerDetalle={handleVerDetalle}
+                                    onValidar={handleAbrirModalValidar}
+                                    onAplicar={handleAbrirModalAplicar}
+                                    onCancelar={handleAbrirModalCancelar}
+                                />
+                            ),
+                        },
+                    ]}
+                    data={ajustes}
+                    isLoading={isLoading}
+                    onRowClick={(ajuste) => handleVerDetalle(ajuste.id)}
+                    emptyState={{
+                        icon: FileSpreadsheet,
+                        title: 'No hay ajustes masivos',
+                        description: 'Importa tu primer archivo CSV para ajustar inventario',
+                        actionLabel: 'Crear primer ajuste',
+                        onAction: handleNuevoAjuste,
+                    }}
+                    skeletonRows={5}
+                />
 
                 {/* Paginacion */}
                 {ajustes.length > 0 && total > filtros.limit && (

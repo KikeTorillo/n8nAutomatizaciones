@@ -5,7 +5,7 @@
 
 const Joi = require('joi');
 const { commonSchemas } = require('../../../middleware/validation');
-const { withPagination, idOptional } = require('../../../schemas/shared');
+const { withPagination, idOptional, fields } = require('../../../schemas/shared');
 
 /**
  * Schema para crear bloqueo
@@ -73,12 +73,7 @@ const crear = {
             .pattern(/^\d{4}-\d{2}-\d{2}$/)
             .optional()
             .allow(null),
-        color_display: Joi.string()
-            .pattern(/^#[0-9A-Fa-f]{6}$/)
-            .default('#FF6B6B')
-            .messages({
-                'string.pattern.base': 'color_display debe ser un código hexadecimal válido (#RRGGBB)'
-            }),
+        color_display: fields.colorHex.default('#FF6B6B'),
         icono: Joi.string().max(50).default('calendar-x'),
         activo: Joi.boolean().default(true),
         auto_generado: Joi.boolean().default(false),
@@ -110,7 +105,7 @@ const actualizar = {
         hora_fin: commonSchemas.time.allow(null),
         zona_horaria: Joi.string().max(50),
         tipo_bloqueo_id: commonSchemas.id.optional(),
-        color_display: Joi.string().pattern(/^#[0-9A-Fa-f]{6}$/),
+        color_display: fields.colorHex,
         icono: Joi.string().max(50),
         notificar_afectados: Joi.boolean(),
         dias_aviso_previo: Joi.number().integer().min(0).max(365),

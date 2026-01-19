@@ -20,10 +20,11 @@ import {
 import { useModalManager } from '@/hooks/utils';
 import {
   Button,
-  EmptyState,
-  Modal,
+  ConfirmDialog,
+  DataTable,
+  DataTableActions,
+  DataTableActionButton,
   Select,
-  SkeletonTable
 } from '@/components/ui';
 import TransferenciaFormDrawer from '@/components/sucursales/TransferenciaFormDrawer';
 import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
@@ -58,6 +59,135 @@ const estadoConfig = {
     label: 'Cancelado',
   },
 };
+
+// Formatear fecha
+const formatFecha = (fecha) => {
+  if (!fecha) return '-';
+  return new Date(fecha).toLocaleDateString('es-MX', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+};
+
+// Columnas para DataTable
+const COLUMNS = [
+  {
+    key: 'codigo',
+    header: 'Código',
+    render: (row) => (
+      <span className="font-mono text-sm font-medium text-gray-900 dark:text-white">
+        {row.codigo}
+      </span>
+    ),
+  },
+  {
+    key: 'origen',
+    header: 'Origen',
+    render: (row) => (
+      <div className="flex items-center gap-2">
+        <Building2 className="w-4 h-4 text-gray-400" />
+        <span className="text-sm text-gray-900 dark:text-white">
+          {row.sucursal_origen_nombre}
+        </span>
+      </div>
+    ),
+  },
+  {
+    key: 'destino',
+    header: 'Destino',
+    render: (row) => (
+      <div className="flex items-center gap-2">
+        <Building2 className="w-4 h-4 text-gray-400" />
+        <span className="text-sm text-gray-900 dark:text-white">
+          {row.sucursal_destino_nombre}
+        </span>
+      </div>
+    ),
+  },
+  {
+    key: 'items',
+    header: 'Items',
+    render: (row) => (
+      <div className="flex items-center gap-2">
+        <Package className="w-4 h-4 text-gray-400" />
+        <span className="text-sm text-gray-600 dark:text-gray-300">
+          {row.total_items || 0} productos
+        </span>
+        <span className="text-xs text-gray-400">
+          ({row.total_unidades || 0} uds)
+        </span>
+      </div>
+    ),
+  },
+  {
+    key: 'estado',
+    header: 'Estado',
+    render: (row) => {
+      const config = estadoConfig[row.estado] || estadoConfig.borrador;
+      const IconEstado = config.icon;
+      return (
+        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${config.color}`}>
+          <IconEstado className="w-3.5 h-3.5" />
+          {config.label}
+        </span>
+      );
+    },
+  },
+  {
+    key: 'fecha',
+    header: 'Fecha',
+    hideOnMobile: true,
+    render: (row) => (
+      <span className="text-sm text-gray-500 dark:text-gray-400">
+        {formatFecha(row.creado_en)}
+      </span>
+    ),
+  },
+];
+
+/**
+ * Acciones por fila de transferencia
+ */
+function TransferenciaRowActions({ row, onVerDetalle, onEnviar, onCancelar, isEnviando }) {
+  return (
+    <DataTableActions>
+      <DataTableActionButton
+        icon={Eye}
+        label="Ver detalle"
+        onClick={() => onVerDetalle(row)}
+        variant="primary"
+      />
+      {row.estado === 'borrador' && (
+        <>
+          <DataTableActionButton
+            icon={Send}
+            label="Enviar"
+            onClick={() => onEnviar(row)}
+            variant="ghost"
+            disabled={isEnviando}
+          />
+          <DataTableActionButton
+            icon={Trash2}
+            label="Cancelar"
+            onClick={() => onCancelar(row)}
+            variant="danger"
+          />
+        </>
+      )}
+      {row.estado === 'enviado' && (
+        <DataTableActionButton
+          icon={XCircle}
+          label="Cancelar"
+          onClick={() => onCancelar(row)}
+          variant="danger"
+        />
+      )}
+    </DataTableActions>
+  );
+}
 
 /**
  * Página de gestión de transferencias de stock entre sucursales
@@ -169,18 +299,6 @@ function TransferenciasPage() {
     { value: 'cancelado', label: 'Cancelado' },
   ];
 
-  // Formatear fecha
-  const formatFecha = (fecha) => {
-    if (!fecha) return '-';
-    return new Date(fecha).toLocaleDateString('es-MX', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
-
   // Calcular filtros activos
   const filtrosActivos = [filtros.estado, filtros.sucursal_origen_id, filtros.sucursal_destino_id, busqueda].filter(Boolean).length;
 
@@ -287,163 +405,37 @@ function TransferenciasPage() {
         </div>
 
         {/* Lista de transferencias */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-          {isLoading ? (
-            <SkeletonTable rows={5} columns={7} />
-          ) : transferenciasFiltradas?.length === 0 ? (
-            <EmptyState
-              icon={ArrowRightLeft}
-              title="No hay transferencias"
-              description={
-                busqueda || filtros.estado
-                  ? 'No se encontraron transferencias con los filtros aplicados'
-                  : 'Crea tu primera transferencia para mover stock entre sucursales'
-              }
-              action={
-                !busqueda && !filtros.estado && (
-                  <Button onClick={handleNuevaTransferencia} variant="primary" icon={Plus}>
-                    Nueva Transferencia
-                  </Button>
-                )
-              }
-            />
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead className="bg-gray-50 dark:bg-gray-900">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Código
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Origen
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Destino
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Items
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Estado
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Fecha
-                    </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Acciones
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                  {transferenciasFiltradas?.map((transferencia) => {
-                    const config = estadoConfig[transferencia.estado] || estadoConfig.borrador;
-                    const IconEstado = config.icon;
-
-                    return (
-                      <tr
-                        key={transferencia.id}
-                        className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-                      >
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="font-mono text-sm font-medium text-gray-900 dark:text-white">
-                            {transferencia.codigo}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center gap-2">
-                            <Building2 className="w-4 h-4 text-gray-400" />
-                            <span className="text-sm text-gray-900 dark:text-white">
-                              {transferencia.sucursal_origen_nombre}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center gap-2">
-                            <Building2 className="w-4 h-4 text-gray-400" />
-                            <span className="text-sm text-gray-900 dark:text-white">
-                              {transferencia.sucursal_destino_nombre}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center gap-2">
-                            <Package className="w-4 h-4 text-gray-400" />
-                            <span className="text-sm text-gray-600 dark:text-gray-300">
-                              {transferencia.total_items || 0} productos
-                            </span>
-                            <span className="text-xs text-gray-400">
-                              ({transferencia.total_unidades || 0} uds)
-                            </span>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span
-                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${config.color}`}
-                          >
-                            <IconEstado className="w-3.5 h-3.5" />
-                            {config.label}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                          {formatFecha(transferencia.creado_en)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleVerDetalle(transferencia)}
-                              title="Ver detalle"
-                            >
-                              <Eye className="w-4 h-4" />
-                            </Button>
-
-                            {transferencia.estado === 'borrador' && (
-                              <>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleEnviar(transferencia)}
-                                  title="Enviar"
-                                  disabled={enviarMutation.isPending}
-                                  className="text-primary-600 hover:text-primary-700"
-                                >
-                                  <Send className="w-4 h-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleCancelar(transferencia)}
-                                  title="Cancelar"
-                                  className="text-red-600 hover:text-red-700"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
-                              </>
-                            )}
-
-                            {transferencia.estado === 'enviado' && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleCancelar(transferencia)}
-                                title="Cancelar"
-                                className="text-red-600 hover:text-red-700"
-                              >
-                                <XCircle className="w-4 h-4" />
-                              </Button>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
+        <DataTable
+          columns={[
+            ...COLUMNS,
+            {
+              key: 'actions',
+              header: '',
+              align: 'right',
+              render: (row) => (
+                <TransferenciaRowActions
+                  row={row}
+                  onVerDetalle={handleVerDetalle}
+                  onEnviar={handleEnviar}
+                  onCancelar={handleCancelar}
+                  isEnviando={enviarMutation.isPending}
+                />
+              ),
+            },
+          ]}
+          data={transferenciasFiltradas || []}
+          isLoading={isLoading}
+          emptyState={{
+            icon: ArrowRightLeft,
+            title: 'No hay transferencias',
+            description: busqueda || filtros.estado
+              ? 'No se encontraron transferencias con los filtros aplicados'
+              : 'Crea tu primera transferencia para mover stock entre sucursales',
+            actionLabel: !busqueda && !filtros.estado ? 'Nueva Transferencia' : undefined,
+            onAction: !busqueda && !filtros.estado ? handleNuevaTransferencia : undefined,
+          }}
+          skeletonRows={5}
+        />
 
       {/* Modal crear transferencia */}
       <TransferenciaFormDrawer
@@ -451,39 +443,22 @@ function TransferenciasPage() {
         onClose={() => closeModal('form')}
       />
 
-      {/* Modal confirmar cancelación */}
-      <Modal
+      {/* Confirmar cancelación */}
+      <ConfirmDialog
         isOpen={isOpen('cancel')}
         onClose={() => closeModal('cancel')}
+        onConfirm={confirmarCancelacion}
         title="Cancelar Transferencia"
-      >
-        <div className="p-4">
-          <p className="text-gray-600 dark:text-gray-300 mb-4">
-            ¿Estás seguro de cancelar la transferencia{' '}
-            <strong>{getModalData('cancel')?.codigo}</strong>?
-          </p>
-          {getModalData('cancel')?.estado === 'enviado' && (
-            <p className="text-yellow-600 dark:text-yellow-400 text-sm mb-4">
-              El stock será devuelto a la sucursal de origen.
-            </p>
-          )}
-          <div className="flex justify-end gap-3">
-            <Button
-              variant="secondary"
-              onClick={() => closeModal('cancel')}
-            >
-              No, mantener
-            </Button>
-            <Button
-              variant="danger"
-              onClick={confirmarCancelacion}
-              disabled={cancelarMutation.isPending}
-            >
-              {cancelarMutation.isPending ? 'Cancelando...' : 'Sí, cancelar'}
-            </Button>
-          </div>
-        </div>
-      </Modal>
+        message={
+          getModalData('cancel')?.estado === 'enviado'
+            ? `¿Estás seguro de cancelar la transferencia ${getModalData('cancel')?.codigo}? El stock será devuelto a la sucursal de origen.`
+            : `¿Estás seguro de cancelar la transferencia ${getModalData('cancel')?.codigo}?`
+        }
+        confirmText="Sí, cancelar"
+        cancelText="No, mantener"
+        variant="danger"
+        isLoading={cancelarMutation.isPending}
+      />
     </InventarioPageLayout>
   );
 }

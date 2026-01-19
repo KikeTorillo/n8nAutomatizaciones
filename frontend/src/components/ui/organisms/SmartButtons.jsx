@@ -4,6 +4,8 @@ import { cn } from '@/lib/utils';
  * SmartButtons - Botones de métricas/acciones contextuales en header
  * Similar a los "smart buttons" de Odoo (Documentos, Comprado, Vendido, etc.)
  *
+ * Ene 2026: Movido de molecules a organisms (coordina múltiples botones interactivos)
+ *
  * @param {Object} props
  * @param {Array} props.buttons - Configuración de botones
  * @param {Object} props.buttons[].icon - Componente de icono (lucide-react)

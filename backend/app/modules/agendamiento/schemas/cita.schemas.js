@@ -1,5 +1,6 @@
 const Joi = require('joi');
 const { commonSchemas } = require('../../../middleware/validation');
+const { fields } = require('../../../schemas/shared');
 
 // ===================================================================
 // CRUD
@@ -395,7 +396,7 @@ const crearWalkIn = {
         // Cliente: PUEDE ser existente (cliente_id) O nuevo (nombre_cliente, telefono opcional)
         cliente_id: commonSchemas.id.optional(),
         nombre_cliente: Joi.string().min(2).max(150).trim().optional(),
-        telefono: commonSchemas.mexicanPhone.optional().allow(null, ''),
+        telefono: fields.telefono.optional().allow(null, ''),
 
         // Profesional: OPCIONAL (se auto-asigna si no se especifica)
         profesional_id: commonSchemas.id.optional().allow(null),

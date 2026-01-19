@@ -33,9 +33,6 @@ const LIMITES = {
     RAZON_SOCIAL_MAX: 200
 };
 
-// Patrón RFC mexicano: 3-4 letras + 6 números + 3 caracteres alfanuméricos
-const RFC_PATTERN = /^[A-ZÑ&]{3,4}[0-9]{6}[A-Z0-9]{3}$/i;
-
 const crear = {
     body: Joi.object({
         organizacion_id: commonSchemas.id.optional(), // Solo super_admin lo envía
@@ -55,7 +52,7 @@ const crear = {
             .messages({
                 'string.email': 'Email no válido'
             }),
-        telefono: commonSchemas.mexicanPhone
+        telefono: fields.telefono
             .optional()
             .allow(null)
             .messages({
@@ -112,21 +109,13 @@ const crear = {
             .messages({
                 'any.only': 'Tipo debe ser "persona" o "empresa"'
             }),
-        rfc: Joi.string()
-            .max(LIMITES.RFC_MAX)
-            .pattern(RFC_PATTERN)
-            .uppercase()
+        rfc: fields.rfc
             .optional()
-            .allow(null, '')
             .when('tipo', {
                 is: 'persona',
                 then: Joi.forbidden().messages({
                     'any.unknown': 'RFC solo aplica para clientes tipo empresa'
                 })
-            })
-            .messages({
-                'string.pattern.base': 'RFC no válido (formato: XXXX000000XXX)',
-                'string.max': `RFC no puede exceder ${LIMITES.RFC_MAX} caracteres`
             }),
         razon_social: Joi.string()
             .max(LIMITES.RAZON_SOCIAL_MAX)
@@ -250,7 +239,7 @@ const actualizar = {
             .trim(),
         email: fields.email
             .allow(null),
-        telefono: commonSchemas.mexicanPhone
+        telefono: fields.telefono
             .allow(null),
         telegram_chat_id: Joi.string()
             .min(5)
@@ -286,15 +275,7 @@ const actualizar = {
             .messages({
                 'any.only': 'Tipo debe ser "persona" o "empresa"'
             }),
-        rfc: Joi.string()
-            .max(LIMITES.RFC_MAX)
-            .pattern(RFC_PATTERN)
-            .uppercase()
-            .allow(null, '')
-            .messages({
-                'string.pattern.base': 'RFC no válido (formato: XXXX000000XXX)',
-                'string.max': `RFC no puede exceder ${LIMITES.RFC_MAX} caracteres`
-            }),
+        rfc: fields.rfc,
         razon_social: Joi.string()
             .max(LIMITES.RAZON_SOCIAL_MAX)
             .trim()

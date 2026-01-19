@@ -273,23 +273,4 @@ export function FilterChips({
   );
 }
 
-/**
- * FilterChip individual - Componente standalone para un chip de filtro
- */
-export const FilterChip = memo(function FilterChip({ label, value, onRemove }) {
-  return (
-    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300">
-      <span className="font-medium">{label}</span>
-      {value && <span>: {value}</span>}
-      <button
-        type="button"
-        onClick={onRemove}
-        className="ml-1 hover:text-primary-900 dark:hover:text-primary-100"
-      >
-        <X className="w-3 h-3" />
-      </button>
-    </span>
-  );
-});
-
 export default FilterPanel;

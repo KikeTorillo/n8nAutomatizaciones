@@ -1,5 +1,6 @@
 const Joi = require('joi');
 const { commonSchemas } = require('../../../middleware/validation');
+const { fields } = require('../../../schemas/shared');
 const { PLANES } = require('../../../constants/organizacion.constants');
 // ⚠️ Nov 2025: TIPOS_INDUSTRIA removido - ahora se usa tabla dinámica categorias_industria
 
@@ -37,7 +38,7 @@ const crear = {
             .email()
             .optional()
             .allow(null),
-        telefono: commonSchemas.mexicanPhone
+        telefono: fields.telefono
             .optional()
             .allow(null),
         sitio_web: Joi.string()
@@ -123,7 +124,7 @@ const actualizar = {
             .allow(null),
         configuracion_categoria: Joi.object(),
         email_admin: commonSchemas.email,
-        telefono: commonSchemas.mexicanPhone
+        telefono: fields.telefono
             .allow(null),
         sitio_web: Joi.string()
             .uri()
@@ -203,7 +204,7 @@ const onboarding = {
                 .optional()
                 .allow(null)
                 .trim(),
-            telefono_principal: commonSchemas.mexicanPhone
+            telefono_principal: fields.telefono
                 .optional()
                 .allow(null),
             email_contacto: commonSchemas.email
@@ -242,7 +243,7 @@ const onboarding = {
             password: Joi.string()
                 .min(8)
                 .required(),
-            telefono: commonSchemas.mexicanPhone
+            telefono: fields.telefono
                 .optional()
                 .allow(null)
         }).required(),

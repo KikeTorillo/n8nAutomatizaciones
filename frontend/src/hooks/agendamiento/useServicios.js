@@ -50,7 +50,7 @@ const hooks = createCRUDHooks({
     delete: { 400: 'No se puede eliminar el servicio (puede tener citas asociadas)' },
   },
   staleTime: STALE_TIMES.SEMI_STATIC,
-  keepPreviousData: true,
+  usePreviousData: true, // Evita flash de loading durante paginación
   responseKey: 'servicios',
 });
 

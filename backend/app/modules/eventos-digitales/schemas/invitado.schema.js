@@ -8,6 +8,7 @@
  */
 
 const Joi = require('joi');
+const { fields } = require('../../../schemas/shared');
 
 const invitadosSchemas = {
     // ========================================================================
@@ -28,7 +29,7 @@ const invitadosSchemas = {
                 'string.min': 'El nombre debe tener al menos 2 caracteres'
             }),
 
-            email: Joi.string().email().max(255).optional().allow(null, '').messages({
+            email: fields.email.optional().allow(null, '').messages({
                 'string.email': 'Email inválido'
             }),
 
@@ -56,7 +57,7 @@ const invitadosSchemas = {
             invitados: Joi.array().items(
                 Joi.object({
                     nombre: Joi.string().min(2).max(200).required(),
-                    email: Joi.string().email().max(255).optional().allow(null, ''),
+                    email: fields.email.optional().allow(null, ''),
                     telefono: Joi.string().max(20).optional().allow(null, ''),
                     grupo_familiar: Joi.string().max(100).optional().allow(null, ''),
                     etiquetas: Joi.array().items(Joi.string().max(50)).optional(),
@@ -79,7 +80,7 @@ const invitadosSchemas = {
         }),
         body: Joi.object({
             nombre: Joi.string().min(2).max(200).optional(),
-            email: Joi.string().email().max(255).optional().allow(null, ''),
+            email: fields.email.optional().allow(null, ''),
             telefono: Joi.string().max(20).optional().allow(null, ''),
             grupo_familiar: Joi.string().max(100).optional().allow(null, ''),
             etiquetas: Joi.array().items(Joi.string().max(50)).max(10).optional(),

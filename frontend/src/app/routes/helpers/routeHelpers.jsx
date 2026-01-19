@@ -6,6 +6,7 @@
 import { Suspense } from 'react';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import ChunkErrorBoundary from '@/components/common/ChunkErrorBoundary';
+import ModuleGuard from '@/components/ui/templates/ModuleGuard';
 
 /**
  * Fallback de carga mientras se carga el componente lazy
@@ -33,20 +34,43 @@ export const withSuspense = (Component) => (
  * Crea una ruta protegida con las opciones especificadas
  * @param {string} path - Ruta del path
  * @param {React.LazyExoticComponent} Component - Componente lazy
- * @param {Object} options - Opciones de ProtectedRoute
+ * @param {Object} options - Opciones de ProtectedRoute y ModuleGuard
  * @param {string|string[]} [options.requiredRole] - Roles permitidos
  * @param {string|string[]} [options.excludeRoles] - Roles excluidos
  * @param {string} [options.redirectTo] - Redirección si no tiene acceso
+ * @param {string|string[]} [options.requiredModule] - Módulo(s) requerido(s)
+ * @param {string|string[]} [options.requiredModules] - Alias de requiredModule
+ * @param {boolean} [options.requireAllModules] - Si true, requiere TODOS los módulos (default: false)
  * @returns {Object} Objeto de configuración de ruta
  */
-export const protectedRoute = (path, Component, options = {}) => ({
-  path,
-  element: (
-    <ProtectedRoute {...options}>
-      {withSuspense(Component)}
-    </ProtectedRoute>
-  ),
-});
+export const protectedRoute = (path, Component, options = {}) => {
+  const { requiredModule, requiredModules, requireAllModules, ...protectedOptions } = options;
+
+  // Determinar si necesita ModuleGuard
+  const moduleToRequire = requiredModules || requiredModule;
+  const needsModuleGuard = !!moduleToRequire;
+
+  // Props para ModuleGuard
+  const moduleProps = {
+    requiere: moduleToRequire,
+    requiereTodos: requireAllModules || false,
+  };
+
+  return {
+    path,
+    element: (
+      <ProtectedRoute {...protectedOptions}>
+        {needsModuleGuard ? (
+          <ModuleGuard {...moduleProps}>
+            {withSuspense(Component)}
+          </ModuleGuard>
+        ) : (
+          withSuspense(Component)
+        )}
+      </ProtectedRoute>
+    ),
+  };
+};
 
 /**
  * Crea una ruta pública sin protección

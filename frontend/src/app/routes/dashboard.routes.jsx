@@ -59,26 +59,26 @@ export const dashboardRoutes = [
   // Dashboard
   protectedRoute('dashboard', Dashboard, { requiredRole: ROLES.ALL_AUTHENTICATED }),
 
-  // Servicios y Citas
-  protectedRoute('servicios', ServiciosPage, { requiredRole: ROLES.ALL_AUTHENTICATED }),
-  protectedRoute('citas', CitasPage, { requiredRole: ROLES.ALL_AUTHENTICATED }),
+  // Servicios y Citas (requieren módulo agendamiento)
+  protectedRoute('servicios', ServiciosPage, { requiredRole: ROLES.ALL_AUTHENTICATED, requiredModule: 'agendamiento' }),
+  protectedRoute('citas', CitasPage, { requiredRole: ROLES.ALL_AUTHENTICATED, requiredModule: 'agendamiento' }),
 
-  // Chatbots (solo admin)
-  protectedRoute('chatbots', ChatbotsPage, { requiredRole: ROLES.ADMIN_ONLY }),
+  // Chatbots (solo admin, requiere módulo chatbots)
+  protectedRoute('chatbots', ChatbotsPage, { requiredRole: ROLES.ADMIN_ONLY, requiredModule: 'chatbots' }),
 
-  // Comisiones (solo admin)
-  protectedRoute('comisiones', ComisionesPage, { requiredRole: ROLES.ADMIN_ONLY }),
-  protectedRoute('comisiones/configuracion', ConfiguracionComisionesPage, { requiredRole: ROLES.ADMIN_ONLY }),
-  protectedRoute('comisiones/reportes', ReportesComisionesPage, { requiredRole: ROLES.ADMIN_ONLY }),
+  // Comisiones (solo admin, requiere módulo comisiones)
+  protectedRoute('comisiones', ComisionesPage, { requiredRole: ROLES.ADMIN_ONLY, requiredModule: 'comisiones' }),
+  protectedRoute('comisiones/configuracion', ConfiguracionComisionesPage, { requiredRole: ROLES.ADMIN_ONLY, requiredModule: 'comisiones' }),
+  protectedRoute('comisiones/reportes', ReportesComisionesPage, { requiredRole: ROLES.ADMIN_ONLY, requiredModule: 'comisiones' }),
 
-  // Marketplace (privado, solo admin)
-  protectedRoute('mi-marketplace', MiMarketplacePage, { requiredRole: ROLES.ADMIN_ONLY }),
+  // Marketplace (privado, solo admin, requiere módulo marketplace)
+  protectedRoute('mi-marketplace', MiMarketplacePage, { requiredRole: ROLES.ADMIN_ONLY, requiredModule: 'marketplace' }),
 
-  // Eventos Digitales (protegidos, solo admin)
-  protectedRoute('eventos-digitales', EventosPage, { requiredRole: ROLES.ADMIN_ONLY }),
-  protectedRoute('eventos-digitales/nuevo', EventoFormPage, { requiredRole: ROLES.ADMIN_ONLY }),
-  protectedRoute('eventos-digitales/:id', EventoDetailPage, { requiredRole: ROLES.ADMIN_ONLY }),
-  protectedRoute('eventos-digitales/:id/editar', EventoFormPage, { requiredRole: ROLES.ADMIN_ONLY }),
+  // Eventos Digitales (protegidos, solo admin, requiere módulo eventos-digitales)
+  protectedRoute('eventos-digitales', EventosPage, { requiredRole: ROLES.ADMIN_ONLY, requiredModule: 'eventos-digitales' }),
+  protectedRoute('eventos-digitales/nuevo', EventoFormPage, { requiredRole: ROLES.ADMIN_ONLY, requiredModule: 'eventos-digitales' }),
+  protectedRoute('eventos-digitales/:id', EventoDetailPage, { requiredRole: ROLES.ADMIN_ONLY, requiredModule: 'eventos-digitales' }),
+  protectedRoute('eventos-digitales/:id/editar', EventoFormPage, { requiredRole: ROLES.ADMIN_ONLY, requiredModule: 'eventos-digitales' }),
 
   // Website
   protectedRoute('website', WebsiteEditorPage, { requiredRole: ROLES.ADMIN_ONLY }),

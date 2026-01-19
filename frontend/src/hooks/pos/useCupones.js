@@ -41,7 +41,7 @@ const baseHooks = createCRUDHooks({
   invalidateOnDelete: ['cupones', 'cupones-vigentes'],
   staleTime: STALE_TIMES.DYNAMIC,
   responseKey: 'cupones',
-  keepPreviousData: true,
+  usePreviousData: true, // Evita flash de loading durante paginación
 });
 
 // =========================================================================

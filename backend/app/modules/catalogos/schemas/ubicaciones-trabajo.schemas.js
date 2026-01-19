@@ -9,6 +9,7 @@
 
 const Joi = require('joi');
 const { commonSchemas } = require('../../../middleware/validation');
+const { fields } = require('../../../schemas/shared');
 
 /**
  * Schema para listar ubicaciones de trabajo
@@ -73,7 +74,7 @@ const crear = {
 
     // Contacto
     telefono: Joi.string().max(20).optional().allow(null, ''),
-    email: Joi.string().email().max(150).optional().allow(null, ''),
+    email: fields.email.optional().allow(null, ''),
     responsable: Joi.string().max(100).optional().allow(null, ''),
 
     // Horario
@@ -97,12 +98,7 @@ const crear = {
       .allow(null),
 
     // UI
-    color: Joi.string()
-      .pattern(/^#[0-9A-Fa-f]{6}$/)
-      .default('#753572')
-      .messages({
-        'string.pattern.base': 'color debe ser un color hexadecimal válido (#RRGGBB)'
-      }),
+    color: fields.colorHex.default('#753572'),
     icono: Joi.string().max(50).default('building-2'),
     orden: Joi.number().integer().min(0).default(0),
     metadata: Joi.object().optional().allow(null)
@@ -138,14 +134,14 @@ const actualizar = {
     sucursal_id: Joi.number().integer().positive().allow(null),
 
     telefono: Joi.string().max(20).allow(null, ''),
-    email: Joi.string().email().max(150).allow(null, ''),
+    email: fields.email.allow(null, ''),
     responsable: Joi.string().max(100).allow(null, ''),
 
     horario_apertura: Joi.string().pattern(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$/).allow(null, ''),
     horario_cierre: Joi.string().pattern(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$/).allow(null, ''),
     dias_operacion: Joi.array().items(Joi.string().valid('lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo')).allow(null),
 
-    color: Joi.string().pattern(/^#[0-9A-Fa-f]{6}$/),
+    color: fields.colorHex,
     icono: Joi.string().max(50),
     orden: Joi.number().integer().min(0),
     metadata: Joi.object().allow(null),

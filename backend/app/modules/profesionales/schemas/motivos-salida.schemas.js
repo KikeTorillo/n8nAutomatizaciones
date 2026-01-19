@@ -9,6 +9,7 @@
 
 const Joi = require('joi');
 const { commonSchemas } = require('../../../middleware/validation');
+const { fields } = require('../../../schemas/shared');
 
 /**
  * Schema para listar motivos de salida
@@ -69,12 +70,7 @@ const crear = {
     requiere_documentacion: Joi.boolean().default(false),
     requiere_aprobacion: Joi.boolean().default(false),
     afecta_finiquito: Joi.boolean().default(true),
-    color: Joi.string()
-      .pattern(/^#[0-9A-Fa-f]{6}$/)
-      .default('#6B7280')
-      .messages({
-        'string.pattern.base': 'color debe ser un color hexadecimal válido (#RRGGBB)'
-      }),
+    color: fields.colorHex.default('#6B7280'),
     icono: Joi.string().max(50).default('log-out'),
     orden_display: Joi.number().integer().min(0).default(0),
     metadata: Joi.object().optional().allow(null)
@@ -95,7 +91,7 @@ const actualizar = {
     requiere_documentacion: Joi.boolean(),
     requiere_aprobacion: Joi.boolean(),
     afecta_finiquito: Joi.boolean(),
-    color: Joi.string().pattern(/^#[0-9A-Fa-f]{6}$/),
+    color: fields.colorHex,
     icono: Joi.string().max(50),
     orden_display: Joi.number().integer().min(0),
     metadata: Joi.object().allow(null),

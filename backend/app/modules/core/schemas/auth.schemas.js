@@ -7,7 +7,7 @@
 
 const Joi = require('joi');
 const { commonSchemas } = require('../../../middleware/validation');
-const { passwordSchemas, PASSWORD_POLICY } = require('../../../schemas/shared');
+const { passwordSchemas, PASSWORD_POLICY, fields } = require('../../../schemas/shared');
 
 // ============================================================
 // CONSTANTES DE VALIDACIÓN
@@ -39,7 +39,7 @@ const personSchemas = {
         .allow('')
         .trim(),
 
-    telefono: commonSchemas.mexicanPhone
+    telefono: fields.telefono
 };
 
 // ============================================================

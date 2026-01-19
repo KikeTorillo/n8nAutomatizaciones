@@ -42,6 +42,7 @@ const hooks = createCRUDHooks({
     create: { 409: 'Ya existe un puesto con ese código' },
   },
   staleTime: STALE_TIMES.SEMI_STATIC,
+  usePreviousData: true, // Evita flash de loading durante paginación
 });
 
 // Exportar hooks con nombres descriptivos

@@ -147,8 +147,13 @@ export default function ListadoCRUDPage({
     ...extraQueryParams,
   });
 
-  const items = data?.[dataKey] || data?.items || [];
-  const paginacion = {
+  // Memoizar items derivados para evitar re-renders innecesarios
+  const items = useMemo(() =>
+    data?.[dataKey] || data?.items || [],
+    [data, dataKey]
+  );
+
+  const paginacion = useMemo(() => ({
     page,
     limit: queryParams.limite,
     total: 0,
@@ -156,7 +161,7 @@ export default function ListadoCRUDPage({
     hasNext: false,
     hasPrev: false,
     ...data?.paginacion,
-  };
+  }), [page, queryParams.limite, data?.paginacion]);
 
   // Export CSV
   const { exportar, isExporting } = useExportCSV();

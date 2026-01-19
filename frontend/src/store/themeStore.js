@@ -1,13 +1,11 @@
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
 
-// Ene 2026: Variable de control para evitar memory leaks
-// Almacena la función de cleanup del listener del sistema
-let systemListenerCleanup = null;
-
 /**
  * Store de tema con Zustand
  * Maneja el tema de la aplicación (light/dark/system)
+ *
+ * Ene 2026: Mejorado manejo de cleanup para evitar memory leaks en HMR
  */
 const useThemeStore = create(
   devtools(
@@ -16,6 +14,7 @@ const useThemeStore = create(
       // ========== STATE ==========
       theme: 'dark', // 'light' | 'dark' | 'system'
       resolvedTheme: 'dark', // El tema actual resuelto (siempre 'light' o 'dark')
+      _cleanupFn: null, // Función de cleanup interna (no persistida)
 
       // ========== ACTIONS ==========
 
@@ -70,12 +69,13 @@ const useThemeStore = create(
 
       /**
        * Inicializar listener para cambios en preferencia del sistema
-       * Ene 2026: Previene múltiples listeners (memory leak)
+       * Ene 2026: Previene múltiples listeners (memory leak) usando estado interno
        */
       initSystemListener: () => {
         // Limpiar listener anterior si existe
-        if (systemListenerCleanup) {
-          systemListenerCleanup();
+        const currentCleanup = get()._cleanupFn;
+        if (currentCleanup) {
+          currentCleanup();
         }
 
         const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
@@ -92,13 +92,15 @@ const useThemeStore = create(
         // Aplicar tema inicial
         get().applyTheme();
 
-        // Guardar función de cleanup
-        systemListenerCleanup = () => {
+        // Guardar función de cleanup en estado interno
+        const cleanup = () => {
           mediaQuery.removeEventListener('change', handleChange);
-          systemListenerCleanup = null;
+          set({ _cleanupFn: null });
         };
 
-        return systemListenerCleanup;
+        set({ _cleanupFn: cleanup });
+
+        return cleanup;
       },
 
       /**
@@ -111,6 +113,7 @@ const useThemeStore = create(
     }),
       {
         name: 'theme-storage',
+        // Solo persistir theme, excluir _cleanupFn y resolvedTheme
         partialize: (state) => ({
           theme: state.theme,
         }),

@@ -14,9 +14,9 @@ const ReportesContablesPage = lazy(() => import('@/pages/contabilidad/ReportesCo
 const ConfiguracionContablePage = lazy(() => import('@/pages/contabilidad/ConfiguracionContablePage'));
 
 export const contabilidadRoutes = [
-  protectedRoute('contabilidad', ContabilidadPage, { requiredRole: ROLES.ADMIN_ONLY }),
-  protectedRoute('contabilidad/cuentas', CuentasContablesPage, { requiredRole: ROLES.ADMIN_ONLY }),
-  protectedRoute('contabilidad/asientos', AsientosContablesPage, { requiredRole: ROLES.ADMIN_ONLY }),
-  protectedRoute('contabilidad/reportes', ReportesContablesPage, { requiredRole: ROLES.ADMIN_ONLY }),
-  protectedRoute('contabilidad/configuracion', ConfiguracionContablePage, { requiredRole: ROLES.ADMIN_ONLY }),
+  protectedRoute('contabilidad', ContabilidadPage, { requiredRole: ROLES.ADMIN_ONLY, requiredModule: 'contabilidad' }),
+  protectedRoute('contabilidad/cuentas', CuentasContablesPage, { requiredRole: ROLES.ADMIN_ONLY, requiredModule: 'contabilidad' }),
+  protectedRoute('contabilidad/asientos', AsientosContablesPage, { requiredRole: ROLES.ADMIN_ONLY, requiredModule: 'contabilidad' }),
+  protectedRoute('contabilidad/reportes', ReportesContablesPage, { requiredRole: ROLES.ADMIN_ONLY, requiredModule: 'contabilidad' }),
+  protectedRoute('contabilidad/configuracion', ConfiguracionContablePage, { requiredRole: ROLES.ADMIN_ONLY, requiredModule: 'contabilidad' }),
 ];

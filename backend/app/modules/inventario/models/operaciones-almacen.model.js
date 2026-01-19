@@ -52,29 +52,38 @@ class OperacionesAlmacenModel {
             );
             const operacion = result.rows[0];
 
-            // Crear items si se proporcionan
+            // Crear items en 1 query (optimización N+1)
             if (data.items && data.items.length > 0) {
-                for (const item of data.items) {
-                    await client.query(
-                        `INSERT INTO operaciones_almacen_items (
-                            operacion_id, producto_id, variante_id, numero_serie_id,
-                            cantidad_demandada, ubicacion_origen_id, ubicacion_destino_id,
-                            lote, fecha_vencimiento, notas
-                        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
-                        [
-                            operacion.id,
-                            item.producto_id,
-                            item.variante_id || null,
-                            item.numero_serie_id || null,
-                            item.cantidad,
-                            item.ubicacion_origen_id || null,
-                            item.ubicacion_destino_id || null,
-                            item.lote || null,
-                            item.fecha_vencimiento || null,
-                            item.notas || null
-                        ]
-                    );
-                }
+                const items = data.items;
+                await client.query(`
+                    INSERT INTO operaciones_almacen_items (
+                        operacion_id, producto_id, variante_id, numero_serie_id,
+                        cantidad_demandada, ubicacion_origen_id, ubicacion_destino_id,
+                        lote, fecha_vencimiento, notas
+                    )
+                    SELECT
+                        $1,
+                        unnest($2::int[]),
+                        unnest($3::int[]),
+                        unnest($4::int[]),
+                        unnest($5::numeric[]),
+                        unnest($6::int[]),
+                        unnest($7::int[]),
+                        unnest($8::text[]),
+                        unnest($9::date[]),
+                        unnest($10::text[])
+                `, [
+                    operacion.id,
+                    items.map(i => i.producto_id),
+                    items.map(i => i.variante_id ?? null),
+                    items.map(i => i.numero_serie_id ?? null),
+                    items.map(i => i.cantidad),
+                    items.map(i => i.ubicacion_origen_id ?? null),
+                    items.map(i => i.ubicacion_destino_id ?? null),
+                    items.map(i => i.lote ?? null),
+                    items.map(i => i.fecha_vencimiento ?? null),
+                    items.map(i => i.notas ?? null)
+                ]);
             }
 
             return operacion;

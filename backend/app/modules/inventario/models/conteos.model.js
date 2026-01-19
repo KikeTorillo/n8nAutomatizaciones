@@ -379,7 +379,10 @@ class ConteosModel {
 
         if (conteo.tipo_conteo === 'aleatorio') {
             orderBy = 'ORDER BY RANDOM()';
-            limit = `LIMIT ${filtros.cantidad_muestra || 50}`;
+            // Parametrización segura para LIMIT - evitar SQL injection
+            const cantidadMuestra = Math.min(Math.max(1, parseInt(filtros.cantidad_muestra, 10) || 50), 500);
+            values.push(cantidadMuestra);
+            limit = `LIMIT $${values.length}`;
         }
 
         const productosQuery = `

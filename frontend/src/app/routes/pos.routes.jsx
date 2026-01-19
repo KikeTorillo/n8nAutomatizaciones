@@ -23,13 +23,13 @@ export const posRoutes = [
     element: <Navigate to="/pos/venta" replace />,
   },
   // Venta (acceso para todo el equipo)
-  protectedRoute('pos/venta', VentaPOSPage, { requiredRole: ROLES.TEAM }),
-  protectedRoute('pos/ventas', VentasListPage, { requiredRole: ROLES.TEAM }),
+  protectedRoute('pos/venta', VentaPOSPage, { requiredRole: ROLES.TEAM, requiredModule: 'pos' }),
+  protectedRoute('pos/ventas', VentasListPage, { requiredRole: ROLES.TEAM, requiredModule: 'pos' }),
 
   // Administración (solo admin)
-  protectedRoute('pos/corte-caja', CorteCajaPage, { requiredRole: ROLES.ADMIN_ONLY }),
-  protectedRoute('pos/reportes', ReporteVentasDiariasPage, { requiredRole: ROLES.ADMIN_ONLY }),
-  protectedRoute('pos/promociones', PromocionesPage, { requiredRole: ROLES.ADMIN_ONLY }),
-  protectedRoute('pos/cupones', CuponesPage, { requiredRole: ROLES.ADMIN_ONLY }),
-  protectedRoute('pos/lealtad', LealtadPage, { requiredRole: ROLES.ADMIN_ONLY }),
+  protectedRoute('pos/corte-caja', CorteCajaPage, { requiredRole: ROLES.ADMIN_ONLY, requiredModule: 'pos' }),
+  protectedRoute('pos/reportes', ReporteVentasDiariasPage, { requiredRole: ROLES.ADMIN_ONLY, requiredModule: 'pos' }),
+  protectedRoute('pos/promociones', PromocionesPage, { requiredRole: ROLES.ADMIN_ONLY, requiredModule: 'pos' }),
+  protectedRoute('pos/cupones', CuponesPage, { requiredRole: ROLES.ADMIN_ONLY, requiredModule: 'pos' }),
+  protectedRoute('pos/lealtad', LealtadPage, { requiredRole: ROLES.ADMIN_ONLY, requiredModule: 'pos' }),
 ];

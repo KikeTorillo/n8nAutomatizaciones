@@ -4,163 +4,137 @@
  * ====================================================================
  * Gestión de ubicaciones/lugares del evento.
  *
+ * NOTA: No migrado a BaseCrudController porque depende de evento_id
+ * en la ruta (/eventos/:eventoId/ubicaciones) y tiene lógica de
+ * verificación de evento que no encaja en el patrón CRUD simple.
+ *
  * Fecha creación: 4 Diciembre 2025
+ * Actualizado: Ene 2026 - asyncHandler + ErrorHelper
  */
 
 const UbicacionModel = require('../models/ubicacion.model');
 const EventoModel = require('../models/evento.model');
-const { ResponseHelper } = require('../../../utils/helpers');
+const asyncHandler = require('../../../middleware/asyncHandler');
+const { ResponseHelper, ErrorHelper } = require('../../../utils/helpers');
+const logger = require('../../../utils/logger');
 
-class UbicacionesController {
+/**
+ * Helper para verificar que el evento existe
+ */
+const verificarEvento = async (eventoId, organizacionId) => {
+    const evento = await EventoModel.obtenerPorId(eventoId, organizacionId);
+    ErrorHelper.throwIfNotFound(evento, 'Evento');
+    return evento;
+};
+
+const UbicacionesController = {
     /**
      * POST /eventos/:eventoId/ubicaciones
      * Crear ubicación
      */
-    static async crear(req, res) {
-        try {
-            const { eventoId } = req.params;
-            const organizacionId = req.user.organizacion_id;
+    crear: asyncHandler(async (req, res) => {
+        const { eventoId } = req.params;
+        const organizacionId = req.user.organizacion_id;
 
-            // Verificar que el evento existe y pertenece a la organización
-            const evento = await EventoModel.obtenerPorId(eventoId, organizacionId);
-            if (!evento) {
-                return ResponseHelper.error(res, 'Evento no encontrado', 404);
-            }
+        await verificarEvento(eventoId, organizacionId);
 
-            const ubicacion = await UbicacionModel.crear({
-                ...req.body,
-                evento_id: parseInt(eventoId),
-                organizacion_id: organizacionId
-            });
+        const ubicacion = await UbicacionModel.crear({
+            ...req.body,
+            evento_id: parseInt(eventoId),
+            organizacion_id: organizacionId
+        });
 
-            return ResponseHelper.success(res, ubicacion, 'Ubicación creada exitosamente', 201);
-        } catch (error) {
-            console.error('Error al crear ubicación:', error);
-            return ResponseHelper.error(res, 'Error al crear ubicación', 500);
-        }
-    }
+        logger.info('[UbicacionesController] Ubicación creada', {
+            ubicacion_id: ubicacion.id,
+            evento_id: eventoId
+        });
+
+        return ResponseHelper.success(res, ubicacion, 'Ubicación creada exitosamente', 201);
+    }),
 
     /**
      * GET /eventos/:eventoId/ubicaciones
      * Listar ubicaciones del evento
      */
-    static async listar(req, res) {
-        try {
-            const { eventoId } = req.params;
-            const organizacionId = req.user.organizacion_id;
+    listar: asyncHandler(async (req, res) => {
+        const { eventoId } = req.params;
+        const organizacionId = req.user.organizacion_id;
 
-            // Verificar que el evento existe
-            const evento = await EventoModel.obtenerPorId(eventoId, organizacionId);
-            if (!evento) {
-                return ResponseHelper.error(res, 'Evento no encontrado', 404);
-            }
+        await verificarEvento(eventoId, organizacionId);
 
-            const ubicaciones = await UbicacionModel.listarPorEvento(eventoId, organizacionId);
+        const ubicaciones = await UbicacionModel.listarPorEvento(eventoId, organizacionId);
 
-            return ResponseHelper.success(res, {
-                ubicaciones,
-                total: ubicaciones.length
-            });
-        } catch (error) {
-            console.error('Error al listar ubicaciones:', error);
-            return ResponseHelper.error(res, 'Error al listar ubicaciones', 500);
-        }
-    }
+        return ResponseHelper.success(res, {
+            ubicaciones,
+            total: ubicaciones.length
+        });
+    }),
 
     /**
      * GET /ubicaciones/:id
      * Obtener ubicación por ID
      */
-    static async obtenerPorId(req, res) {
-        try {
-            const { id } = req.params;
-            const organizacionId = req.user.organizacion_id;
+    obtenerPorId: asyncHandler(async (req, res) => {
+        const { id } = req.params;
+        const organizacionId = req.user.organizacion_id;
 
-            const ubicacion = await UbicacionModel.obtenerPorId(id, organizacionId);
+        const ubicacion = await UbicacionModel.obtenerPorId(id, organizacionId);
+        ErrorHelper.throwIfNotFound(ubicacion, 'Ubicación');
 
-            if (!ubicacion) {
-                return ResponseHelper.error(res, 'Ubicación no encontrada', 404);
-            }
-
-            return ResponseHelper.success(res, ubicacion);
-        } catch (error) {
-            console.error('Error al obtener ubicación:', error);
-            return ResponseHelper.error(res, 'Error al obtener ubicación', 500);
-        }
-    }
+        return ResponseHelper.success(res, ubicacion);
+    }),
 
     /**
      * PUT /ubicaciones/:id
      * Actualizar ubicación
      */
-    static async actualizar(req, res) {
-        try {
-            const { id } = req.params;
-            const organizacionId = req.user.organizacion_id;
+    actualizar: asyncHandler(async (req, res) => {
+        const { id } = req.params;
+        const organizacionId = req.user.organizacion_id;
 
-            // Verificar que existe
-            const ubicacionExistente = await UbicacionModel.obtenerPorId(id, organizacionId);
-            if (!ubicacionExistente) {
-                return ResponseHelper.error(res, 'Ubicación no encontrada', 404);
-            }
+        const ubicacionExistente = await UbicacionModel.obtenerPorId(id, organizacionId);
+        ErrorHelper.throwIfNotFound(ubicacionExistente, 'Ubicación');
 
-            const ubicacion = await UbicacionModel.actualizar(id, req.body, organizacionId);
+        const ubicacion = await UbicacionModel.actualizar(id, req.body, organizacionId);
 
-            return ResponseHelper.success(res, ubicacion, 'Ubicación actualizada exitosamente');
-        } catch (error) {
-            console.error('Error al actualizar ubicación:', error);
-            return ResponseHelper.error(res, 'Error al actualizar ubicación', 500);
-        }
-    }
+        logger.info('[UbicacionesController] Ubicación actualizada', { ubicacion_id: id });
+
+        return ResponseHelper.success(res, ubicacion, 'Ubicación actualizada exitosamente');
+    }),
 
     /**
      * DELETE /ubicaciones/:id
      * Eliminar ubicación
      */
-    static async eliminar(req, res) {
-        try {
-            const { id } = req.params;
-            const organizacionId = req.user.organizacion_id;
+    eliminar: asyncHandler(async (req, res) => {
+        const { id } = req.params;
+        const organizacionId = req.user.organizacion_id;
 
-            // Verificar que existe
-            const ubicacion = await UbicacionModel.obtenerPorId(id, organizacionId);
-            if (!ubicacion) {
-                return ResponseHelper.error(res, 'Ubicación no encontrada', 404);
-            }
+        const ubicacion = await UbicacionModel.obtenerPorId(id, organizacionId);
+        ErrorHelper.throwIfNotFound(ubicacion, 'Ubicación');
 
-            await UbicacionModel.eliminar(id, organizacionId);
+        await UbicacionModel.eliminar(id, organizacionId);
 
-            return ResponseHelper.success(res, { id: parseInt(id) }, 'Ubicación eliminada exitosamente');
-        } catch (error) {
-            console.error('Error al eliminar ubicación:', error);
-            return ResponseHelper.error(res, 'Error al eliminar ubicación', 500);
-        }
-    }
+        logger.info('[UbicacionesController] Ubicación eliminada', { ubicacion_id: id });
+
+        return ResponseHelper.success(res, { id: parseInt(id) }, 'Ubicación eliminada exitosamente');
+    }),
 
     /**
      * PUT /eventos/:eventoId/ubicaciones/reordenar
      * Reordenar ubicaciones
      */
-    static async reordenar(req, res) {
-        try {
-            const { eventoId } = req.params;
-            const { orden } = req.body; // Array de IDs en el nuevo orden
-            const organizacionId = req.user.organizacion_id;
+    reordenar: asyncHandler(async (req, res) => {
+        const { eventoId } = req.params;
+        const { orden } = req.body;
+        const organizacionId = req.user.organizacion_id;
 
-            // Verificar que el evento existe
-            const evento = await EventoModel.obtenerPorId(eventoId, organizacionId);
-            if (!evento) {
-                return ResponseHelper.error(res, 'Evento no encontrado', 404);
-            }
+        await verificarEvento(eventoId, organizacionId);
 
-            await UbicacionModel.reordenar(eventoId, orden, organizacionId);
+        await UbicacionModel.reordenar(eventoId, orden, organizacionId);
 
-            return ResponseHelper.success(res, null, 'Ubicaciones reordenadas exitosamente');
-        } catch (error) {
-            console.error('Error al reordenar ubicaciones:', error);
-            return ResponseHelper.error(res, 'Error al reordenar ubicaciones', 500);
-        }
-    }
-}
+        return ResponseHelper.success(res, null, 'Ubicaciones reordenadas exitosamente');
+    })
+};
 
 module.exports = UbicacionesController;

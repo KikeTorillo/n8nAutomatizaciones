@@ -1,4 +1,5 @@
 const Joi = require('joi');
+const { fields } = require('../../../schemas/shared');
 
 /**
  * Schemas de validacion para atributos y variantes de producto
@@ -49,21 +50,14 @@ const crearValor = Joi.object({
             'string.max': 'El codigo no puede exceder 30 caracteres',
             'any.required': 'El codigo es requerido'
         }),
-    color_hex: Joi.string()
-        .pattern(/^#[0-9A-Fa-f]{6}$/)
-        .allow(null)
-        .messages({
-            'string.pattern.base': 'El color debe ser un codigo hexadecimal valido (ej: #FF0000)'
-        }),
+    color_hex: fields.colorHex.allow(null),
     orden: Joi.number().integer().min(0).default(0)
 });
 
 const actualizarValor = Joi.object({
     valor: Joi.string().max(50),
     codigo: Joi.string().max(30),
-    color_hex: Joi.string()
-        .pattern(/^#[0-9A-Fa-f]{6}$/)
-        .allow(null),
+    color_hex: fields.colorHex.allow(null),
     orden: Joi.number().integer().min(0),
     activo: Joi.boolean()
 });

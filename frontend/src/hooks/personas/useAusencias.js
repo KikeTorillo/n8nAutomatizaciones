@@ -120,7 +120,8 @@ export function useDashboardAusencias(anio = null) {
   const dashboard = useMemo(() => {
     if (!vacacionesData && !incapacidadesData) return null;
 
-    const incapacidades = incapacidadesData?.data || [];
+    const rawIncapacidades = incapacidadesData?.data;
+    const incapacidades = Array.isArray(rawIncapacidades) ? rawIncapacidades : [];
     const incapacidadesActivas = incapacidades.filter((i) => i.estado === 'activa');
 
     return {
@@ -188,7 +189,8 @@ export function useMisAusencias(filtros = {}) {
 
     // Agregar vacaciones
     if (tipo !== 'incapacidad') {
-      const solicitudes = vacacionesData?.data || [];
+      const rawSolicitudes = vacacionesData?.data;
+      const solicitudes = Array.isArray(rawSolicitudes) ? rawSolicitudes : [];
       solicitudes.forEach((s) => {
         items.push({
           id: s.id,
@@ -210,7 +212,8 @@ export function useMisAusencias(filtros = {}) {
 
     // Agregar incapacidades
     if (tipo !== 'vacaciones') {
-      const incapacidades = incapacidadesData?.data || [];
+      const rawIncapacidades = incapacidadesData?.data;
+      const incapacidades = Array.isArray(rawIncapacidades) ? rawIncapacidades : [];
       incapacidades.forEach((i) => {
         items.push({
           id: i.id,
@@ -390,7 +393,8 @@ export function useSolicitudesPendientesAusencias(filtros = {}) {
   const { data, isLoading, error } = useSolicitudesPendientes(filtros);
 
   const solicitudes = useMemo(() => {
-    const items = data?.data || [];
+    const rawItems = data?.data;
+    const items = Array.isArray(rawItems) ? rawItems : [];
     return items.map((s) => ({
       id: s.id,
       tipo: 'vacaciones',

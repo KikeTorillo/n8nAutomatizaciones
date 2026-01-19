@@ -1,6 +1,6 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import NavDropdown from '../molecules/NavDropdown';
+import NavDropdown from './NavDropdown';
 import MobileNavSelector from './MobileNavSelector';
 
 /**

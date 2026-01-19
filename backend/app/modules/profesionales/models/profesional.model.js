@@ -222,66 +222,114 @@ class ProfesionalModel {
                 }
             }
 
-            // 3. Crear todos los profesionales
-            const profesionalesCreados = [];
+            // 3. Crear todos los profesionales usando batch INSERT con UNNEST
+            // Preparar arrays paralelos para inserción masiva
+            const nombres = [];
+            const emails = [];
+            const telefonos = [];
+            const colores = [];
+            const fechasNacimiento = [];
+            const documentos = [];
+            const licencias = [];
+            const experiencias = [];
+            const idiomasArr = [];
+            const biografias = [];
+            const fotos = [];
+            const serviciosPorIndice = []; // Para mapear después con profesionales creados
 
             for (const prof of profesionales) {
-                const insertQuery = `
-                    INSERT INTO profesionales (
-                        organizacion_id, nombre_completo, email, telefono,
-                        color_calendario,
-                        activo, disponible_online, fecha_nacimiento, documento_identidad,
-                        licencias_profesionales, años_experiencia, idiomas, biografia, foto_url
-                    ) VALUES ($1, $2, $3, $4, $5, TRUE, TRUE, $6, $7, $8, $9, $10, $11, $12)
-                    RETURNING id, organizacion_id, nombre_completo, email, telefono, fecha_nacimiento,
-                             documento_identidad, color_calendario,
-                             activo, disponible_online, creado_en, actualizado_en
-                `;
+                nombres.push(prof.nombre_completo);
+                emails.push(prof.email || null);
+                telefonos.push(prof.telefono || null);
+                colores.push(prof.color_calendario || '#753572');
+                fechasNacimiento.push(prof.fecha_nacimiento || null);
+                documentos.push(prof.documento_identidad || null);
+                licencias.push(JSON.stringify(prof.licencias_profesionales || {}));
+                experiencias.push(prof.años_experiencia || 0);
+                idiomasArr.push(prof.idiomas || ['es']);
+                biografias.push(prof.biografia || null);
+                fotos.push(prof.foto_url || null);
+                serviciosPorIndice.push(prof.servicios_asignados || []);
+            }
 
-                const values = [
+            // Batch INSERT con UNNEST - de N queries a 1 query
+            const batchInsertQuery = `
+                INSERT INTO profesionales (
+                    organizacion_id, nombre_completo, email, telefono,
+                    color_calendario, activo, disponible_online,
+                    fecha_nacimiento, documento_identidad,
+                    licencias_profesionales, años_experiencia, idiomas, biografia, foto_url
+                )
+                SELECT
+                    $1,
+                    unnest($2::text[]),
+                    unnest($3::text[]),
+                    unnest($4::text[]),
+                    unnest($5::text[]),
+                    TRUE,
+                    TRUE,
+                    unnest($6::date[]),
+                    unnest($7::text[]),
+                    unnest($8::jsonb[]),
+                    unnest($9::integer[]),
+                    unnest($10::text[][]),
+                    unnest($11::text[]),
+                    unnest($12::text[])
+                RETURNING id, organizacion_id, nombre_completo, email, telefono, fecha_nacimiento,
+                         documento_identidad, color_calendario,
+                         activo, disponible_online, creado_en, actualizado_en
+            `;
+
+            let profesionalesCreados;
+            try {
+                const result = await db.query(batchInsertQuery, [
                     organizacionId,
-                    prof.nombre_completo,
-                    prof.email || null,
-                    prof.telefono || null,
-                    prof.color_calendario || '#753572',
-                    prof.fecha_nacimiento || null,
-                    prof.documento_identidad || null,
-                    prof.licencias_profesionales || {},
-                    prof.años_experiencia || 0,
-                    prof.idiomas || ['es'],
-                    prof.biografia || null,
-                    prof.foto_url || null
-                ];
-
-                try {
-                    const result = await db.query(insertQuery, values);
-                    const profesionalCreado = result.rows[0];
-
-                    // 4. Asignar servicios si se proporcionan
-                    if (prof.servicios_asignados && prof.servicios_asignados.length > 0) {
-                        for (const servicioId of prof.servicios_asignados) {
-                            const servicioQuery = `
-                                INSERT INTO servicios_profesionales (
-                                    profesional_id, servicio_id, activo
-                                ) VALUES ($1, $2, TRUE)
-                                ON CONFLICT (profesional_id, servicio_id) DO NOTHING
-                            `;
-                            await db.query(servicioQuery, [profesionalCreado.id, servicioId]);
-                        }
-                    }
-
-                    profesionalesCreados.push(profesionalCreado);
-
-                } catch (error) {
-                    // Manejar errores de constraint específicos
-                    if (error.code === '23514') {
-                        throw new Error(`Los datos del profesional "${prof.nombre_completo}" no cumplen las validaciones requeridas`);
-                    }
-                    if (error.code === '23503') {
-                        throw new Error(`Error de referencia en los datos del profesional "${prof.nombre_completo}"`);
-                    }
-                    throw error;
+                    nombres,
+                    emails,
+                    telefonos,
+                    colores,
+                    fechasNacimiento,
+                    documentos,
+                    licencias,
+                    experiencias,
+                    idiomasArr,
+                    biografias,
+                    fotos
+                ]);
+                profesionalesCreados = result.rows;
+            } catch (error) {
+                // Manejar errores de constraint específicos
+                if (error.code === '23514') {
+                    throw new Error('Los datos de uno o más profesionales no cumplen las validaciones requeridas');
                 }
+                if (error.code === '23503') {
+                    throw new Error('Error de referencia en los datos de profesionales');
+                }
+                throw error;
+            }
+
+            // 4. Asignar servicios en batch si hay alguno
+            const serviciosAInsertar = [];
+            profesionalesCreados.forEach((prof, index) => {
+                const servicios = serviciosPorIndice[index];
+                if (servicios && servicios.length > 0) {
+                    servicios.forEach(servicioId => {
+                        serviciosAInsertar.push({ profesionalId: prof.id, servicioId });
+                    });
+                }
+            });
+
+            if (serviciosAInsertar.length > 0) {
+                const profesionalIds = serviciosAInsertar.map(s => s.profesionalId);
+                const servicioIds = serviciosAInsertar.map(s => s.servicioId);
+
+                // Batch INSERT de servicios - de N*M queries a 1 query
+                const serviciosBatchQuery = `
+                    INSERT INTO servicios_profesionales (profesional_id, servicio_id, activo)
+                    SELECT unnest($1::integer[]), unnest($2::integer[]), TRUE
+                    ON CONFLICT (profesional_id, servicio_id) DO NOTHING
+                `;
+                await db.query(serviciosBatchQuery, [profesionalIds, servicioIds]);
             }
 
             // 5. Retornar con conteo de servicios

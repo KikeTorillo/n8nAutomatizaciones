@@ -52,6 +52,7 @@ const hooks = createCRUDHooks({
     delete: { 409: 'No se puede eliminar el proveedor porque tiene productos asociados' },
   },
   staleTime: STALE_TIMES.SEMI_STATIC,
+  usePreviousData: true, // Evita flash de loading durante paginación
   responseKey: 'proveedores',
 });
 

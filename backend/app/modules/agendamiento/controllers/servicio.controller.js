@@ -2,7 +2,7 @@
 
 const ServicioModel = require('../models/servicio.model');
 const { asyncHandler } = require('../../../middleware');
-const { ResponseHelper } = require('../../../utils/helpers');
+const { ResponseHelper, ParseHelper } = require('../../../utils/helpers');
 const logger = require('../../../utils/logger');
 
 class ServicioController {
@@ -79,40 +79,30 @@ class ServicioController {
     });
 
     static listar = asyncHandler(async (req, res) => {
-        const filtros = {};
+        // Parseo con ParseHelper - centralizado y consistente
+        const filtros = ParseHelper.parseFilters(req.query, {
+            activo: 'boolean',
+            categoria: 'string',
+            busqueda: 'string',
+            tags: 'array',
+            precio_min: 'float',
+            precio_max: 'float'
+        });
 
-        // ⚠️ IMPORTANTE: Joi schema convierte query params a boolean
-        // req.query.activo puede llegar como boolean true/false (post-validación Joi)
-        // o como string "true"/"false" (si no pasa por validación)
-        if (req.query.activo !== undefined) {
-            filtros.activo = req.query.activo === 'true' || req.query.activo === true;
-        }
-
-        if (req.query.categoria) {
-            filtros.categoria = req.query.categoria;
-        }
-
-        if (req.query.busqueda) {
-            filtros.busqueda = req.query.busqueda;
-        }
-
-        if (req.query.tags) {
-            filtros.tags = Array.isArray(req.query.tags) ? req.query.tags : [req.query.tags];
-        }
-
-        if (req.query.precio_min !== undefined) {
-            filtros.precio_min = parseFloat(req.query.precio_min);
-        }
-
-        if (req.query.precio_max !== undefined) {
-            filtros.precio_max = parseFloat(req.query.precio_max);
-        }
+        const { pagination, ordering } = ParseHelper.parseListParams(
+            req.query,
+            {},
+            {
+                allowedOrderFields: ['nombre', 'precio', 'duracion', 'creado_en'],
+                defaultOrderField: 'nombre'
+            }
+        );
 
         const paginacion = {
-            pagina: parseInt(req.query.pagina) || 1,
-            limite: parseInt(req.query.limite) || 20,
-            orden: req.query.orden || 'nombre',
-            direccion: req.query.direccion || 'ASC'
+            pagina: pagination.page,
+            limite: pagination.limit,
+            orden: ordering.orderBy,
+            direccion: ordering.orderDirection
         };
 
         const resultado = await ServicioModel.listar(req.tenant.organizacionId, filtros, paginacion);

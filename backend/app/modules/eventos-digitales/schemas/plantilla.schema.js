@@ -9,6 +9,7 @@
  */
 
 const Joi = require('joi');
+const { fields } = require('../../../schemas/shared');
 
 const tiposEvento = ['boda', 'xv_anos', 'bautizo', 'cumpleanos', 'corporativo', 'universal', 'otro'];
 
@@ -39,11 +40,11 @@ const marcosFotos = ['none', 'polaroid', 'comic', 'vintage', 'neon', 'rounded', 
 // Schema para el tema visual (ampliado)
 const temaSchema = Joi.object({
     // Colores
-    color_primario: Joi.string().pattern(/^#[0-9A-Fa-f]{6}$/).default('#ec4899'),
-    color_secundario: Joi.string().pattern(/^#[0-9A-Fa-f]{6}$/).default('#fce7f3'),
-    color_fondo: Joi.string().pattern(/^#[0-9A-Fa-f]{6}$/).default('#fdf2f8'),
-    color_texto: Joi.string().pattern(/^#[0-9A-Fa-f]{6}$/).default('#1f2937'),
-    color_texto_claro: Joi.string().pattern(/^#[0-9A-Fa-f]{6}$/).default('#6b7280'),
+    color_primario: fields.colorHex.default('#ec4899'),
+    color_secundario: fields.colorHex.default('#fce7f3'),
+    color_fondo: fields.colorHex.default('#fdf2f8'),
+    color_texto: fields.colorHex.default('#1f2937'),
+    color_texto_claro: fields.colorHex.default('#6b7280'),
 
     // Fuentes
     fuente_titulo: Joi.string().max(100).default('Playfair Display'),

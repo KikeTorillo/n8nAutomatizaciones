@@ -10,7 +10,7 @@
  */
 
 const Joi = require('joi');
-const { withPagination, idOptional, prioridad } = require('../../../schemas/shared');
+const { withPagination, idOptional, prioridad, fields } = require('../../../schemas/shared');
 
 // ====================================================================
 // SCHEMAS DE ETAPAS
@@ -24,10 +24,7 @@ const etapaSchema = Joi.object({
         }),
     descripcion: Joi.string().max(200).allow('', null),
     probabilidad_default: Joi.number().integer().min(0).max(100).default(10),
-    color: Joi.string().pattern(/^#[0-9A-Fa-f]{6}$/).default('#6366F1')
-        .messages({
-            'string.pattern.base': 'El color debe ser un código hexadecimal válido (ej: #6366F1)'
-        }),
+    color: fields.colorHex.default('#6366F1'),
     orden: Joi.number().integer().min(0),
     es_ganada: Joi.boolean().default(false),
     es_perdida: Joi.boolean().default(false)
@@ -43,7 +40,7 @@ const actualizarEtapaSchema = Joi.object({
     nombre: Joi.string().min(1).max(50),
     descripcion: Joi.string().max(200).allow('', null),
     probabilidad_default: Joi.number().integer().min(0).max(100),
-    color: Joi.string().pattern(/^#[0-9A-Fa-f]{6}$/),
+    color: fields.colorHex,
     orden: Joi.number().integer().min(0),
     es_ganada: Joi.boolean(),
     es_perdida: Joi.boolean(),

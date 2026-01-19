@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { citasApi, inventarioApi, posApi, workflowsApi } from '@/services/api/endpoints';
 import { useModulos } from './useModulos';
+import useSucursalStore, { selectGetSucursalId } from '@/store/sucursalStore';
 
 /**
  * Hook para obtener notificaciones/badges por aplicación
@@ -13,6 +14,10 @@ export function useAppNotifications() {
     tieneInventario,
     tienePOS,
   } = useModulos();
+
+  // Obtener sucursalId para queries que lo requieren
+  const getSucursalId = useSucursalStore(selectGetSucursalId);
+  const sucursalId = getSucursalId();
 
   // Citas del día (solo pendientes/programadas)
   const { data: citasData } = useQuery({
@@ -42,16 +47,17 @@ export function useAppNotifications() {
 
   // Ventas del día
   const { data: ventasData } = useQuery({
-    queryKey: ['app-notifications', 'ventas-hoy'],
+    queryKey: ['app-notifications', 'ventas-hoy', sucursalId],
     queryFn: async () => {
       const today = new Date().toISOString().split('T')[0];
       const response = await posApi.obtenerVentas({
         fecha_inicio: today,
         fecha_fin: today,
+        sucursalId, // Requerido para verificar permisos
       });
       return response.data.data?.ventas || [];
     },
-    enabled: tienePOS,
+    enabled: tienePOS && !!sucursalId,
     staleTime: STALE_TIMES.DYNAMIC,
     refetchInterval: 5 * 60 * 1000,
   });

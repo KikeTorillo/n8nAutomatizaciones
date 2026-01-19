@@ -5,6 +5,7 @@
  */
 
 const Joi = require('joi');
+const { fields } = require('../../../schemas/shared');
 
 // Tipos de datos soportados
 const TIPOS_DATO = [
@@ -76,7 +77,7 @@ const createDefinicionSchema = {
         .items(Joi.object({
           value: Joi.string().required(),
           label: Joi.string().required(),
-          color: Joi.string().pattern(/^#[0-9A-Fa-f]{6}$/).optional()
+          color: fields.colorHex.optional()
         }))
         .min(1)
         .required()
@@ -135,7 +136,7 @@ const updateDefinicionSchema = {
       .items(Joi.object({
         value: Joi.string().required(),
         label: Joi.string().required(),
-        color: Joi.string().pattern(/^#[0-9A-Fa-f]{6}$/).optional()
+        color: fields.colorHex.optional()
       }))
       .optional(),
     valor_defecto: Joi.any().optional(),

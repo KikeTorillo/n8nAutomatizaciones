@@ -7,6 +7,7 @@
  */
 
 const Joi = require('joi');
+const { fields } = require('../../../schemas/shared');
 
 const posSchemas = {
     // ========================================================================
@@ -1226,13 +1227,7 @@ const posSchemas = {
                     'string.pattern.base': 'codigo solo puede contener letras, numeros y guion bajo'
                 }),
 
-            color: Joi.string()
-                .pattern(/^#[0-9A-Fa-f]{6}$/)
-                .optional()
-                .default('#6B7280')
-                .messages({
-                    'string.pattern.base': 'color debe ser un color hexadecimal válido (#RRGGBB)'
-                }),
+            color: fields.colorHex.optional().default('#6B7280'),
 
             icono: Joi.string().max(50).optional().allow(null, ''),
 
@@ -1278,7 +1273,7 @@ const posSchemas = {
         body: Joi.object({
             nombre: Joi.string().min(2).max(50).optional(),
             codigo: Joi.string().min(2).max(20).pattern(/^[A-Z0-9_]+$/i).optional(),
-            color: Joi.string().pattern(/^#[0-9A-Fa-f]{6}$/).optional(),
+            color: fields.colorHex.optional(),
             icono: Joi.string().max(50).optional().allow(null, ''),
             puntos_minimos: Joi.number().integer().min(0).optional(),
             puntos_maximos: Joi.number().integer().min(0).optional().allow(null),

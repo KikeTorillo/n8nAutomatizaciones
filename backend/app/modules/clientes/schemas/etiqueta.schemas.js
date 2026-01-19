@@ -11,12 +11,12 @@
 
 const Joi = require('joi');
 const { commonSchemas } = require('../../../middleware/validation');
+const { fields } = require('../../../schemas/shared');
 
 const LIMITES = {
     NOMBRE_MIN: 2,
     NOMBRE_MAX: 50,
-    DESCRIPCION_MAX: 200,
-    COLOR_PATTERN: /^#[0-9A-Fa-f]{6}$/
+    DESCRIPCION_MAX: 200
 };
 
 // Colores predefinidos (para referencia y validación opcional)
@@ -47,12 +47,7 @@ const crear = {
                 'string.max': `Nombre no puede exceder ${LIMITES.NOMBRE_MAX} caracteres`,
                 'any.required': 'Nombre es requerido'
             }),
-        color: Joi.string()
-            .pattern(LIMITES.COLOR_PATTERN)
-            .default('#6366F1')
-            .messages({
-                'string.pattern.base': 'Color debe ser un código hexadecimal válido (ej: #EF4444)'
-            }),
+        color: fields.colorHex.default('#6366F1'),
         descripcion: Joi.string()
             .max(LIMITES.DESCRIPCION_MAX)
             .trim()
@@ -83,11 +78,7 @@ const actualizar = {
                 'string.min': `Nombre debe tener al menos ${LIMITES.NOMBRE_MIN} caracteres`,
                 'string.max': `Nombre no puede exceder ${LIMITES.NOMBRE_MAX} caracteres`
             }),
-        color: Joi.string()
-            .pattern(LIMITES.COLOR_PATTERN)
-            .messages({
-                'string.pattern.base': 'Color debe ser un código hexadecimal válido (ej: #EF4444)'
-            }),
+        color: fields.colorHex,
         descripcion: Joi.string()
             .max(LIMITES.DESCRIPCION_MAX)
             .trim()

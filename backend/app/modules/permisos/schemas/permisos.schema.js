@@ -165,6 +165,14 @@ const listarCatalogoSchema = {
 };
 
 /**
+ * Schema para GET /modulos (listar módulos)
+ * No acepta parámetros para evitar inyección
+ */
+const listarModulosSchema = {
+  query: Joi.object({}).unknown(false)
+};
+
+/**
  * Schema para GET /mis-permisos
  */
 const misPermisosSchema = {
@@ -323,6 +331,7 @@ const asignarPermisoUsuarioSucursalSchema = {
 module.exports = {
     // Schemas combinados para rutas (nuevos Ene 2026)
     listarCatalogoSchema,
+    listarModulosSchema,
     misPermisosSchema,
     resumenSchema,
     verificarPermisoSchema,

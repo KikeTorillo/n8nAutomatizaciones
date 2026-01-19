@@ -95,32 +95,33 @@ class CitaBaseModel {
             // Validar que todos los servicios existen y están activos
             await CitaServicioModel.validarServiciosOrganizacion(serviciosIds, citaData.organizacion_id);
 
-            // Obtener información completa de cada servicio
-            const serviciosData = await Promise.all(
-                serviciosIds.map(async (servicioId, index) => {
-                    const servicio = await CitaHelpersModel.obtenerServicioCompleto(
-                        servicioId,
-                        citaData.organizacion_id,
-                        db
-                    );
-
-                    if (!servicio) {
-                        throw new Error(`Servicio con ID ${servicioId} no encontrado`);
-                    }
-
-                    // Usar datos proporcionados o defaults del servicio
-                    const servicioData = citaData.servicios_data?.[index] || {};
-
-                    return {
-                        servicio_id: servicioId,
-                        orden_ejecucion: index + 1,
-                        precio_aplicado: servicioData.precio_aplicado || servicio.precio || 0.00,
-                        duracion_minutos: servicioData.duracion_minutos || servicio.duracion_minutos || 0,
-                        descuento: servicioData.descuento || 0.00,
-                        notas: servicioData.notas || null
-                    };
-                })
+            // Obtener información completa de TODOS los servicios en 1 query (optimización N+1)
+            const serviciosMap = await CitaHelpersModel.obtenerServiciosCompletos(
+                serviciosIds,
+                citaData.organizacion_id,
+                db
             );
+
+            // Procesar servicios y validar que todos existen
+            const serviciosData = serviciosIds.map((servicioId, index) => {
+                const servicio = serviciosMap.get(servicioId);
+
+                if (!servicio) {
+                    throw new Error(`Servicio con ID ${servicioId} no encontrado`);
+                }
+
+                // Usar datos proporcionados o defaults del servicio
+                const servicioData = citaData.servicios_data?.[index] || {};
+
+                return {
+                    servicio_id: servicioId,
+                    orden_ejecucion: index + 1,
+                    precio_aplicado: servicioData.precio_aplicado || servicio.precio || 0.00,
+                    duracion_minutos: servicioData.duracion_minutos || servicio.duracion_minutos || 0,
+                    descuento: servicioData.descuento || 0.00,
+                    notas: servicioData.notas || null
+                };
+            });
 
             // Calcular totales (precio_total + duracion_total_minutos)
             const { precio_total, duracion_total_minutos } = CitaServicioModel.calcularTotales(serviciosData);

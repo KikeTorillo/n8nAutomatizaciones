@@ -155,21 +155,24 @@ class CombosModel {
 
             const combo = comboResult.rows[0];
 
-            // Agregar componentes
-            for (let i = 0; i < componentes.length; i++) {
-                const comp = componentes[i];
+            // Agregar componentes en 1 query (optimización N+1)
+            if (componentes.length > 0) {
+                const ids = componentes.map(c => c.producto_id);
+                const cantidades = componentes.map(c => c.cantidad || 1);
+                const precios = componentes.map(c => c.precio_unitario ?? null);
+                const ordenes = componentes.map((_, i) => i);
+
                 await db.query(`
                     INSERT INTO productos_combo_items
                         (combo_id, producto_id, organizacion_id, cantidad, precio_unitario, orden)
-                    VALUES ($1, $2, $3, $4, $5, $6)
-                `, [
-                    combo.id,
-                    comp.producto_id,
-                    organizacionId,
-                    comp.cantidad || 1,
-                    comp.precio_unitario || null,
-                    i
-                ]);
+                    SELECT
+                        $1,
+                        unnest($2::int[]),
+                        $3,
+                        unnest($4::int[]),
+                        unnest($5::numeric[]),
+                        unnest($6::int[])
+                `, [combo.id, ids, organizacionId, cantidades, precios, ordenes]);
             }
 
             return this.obtenerCombo(producto_id, organizacionId);
@@ -249,21 +252,24 @@ class CombosModel {
                     [comboId]
                 );
 
-                // Insertar nuevos
-                for (let i = 0; i < componentes.length; i++) {
-                    const comp = componentes[i];
+                // Insertar nuevos en 1 query (optimización N+1)
+                if (componentes.length > 0) {
+                    const ids = componentes.map(c => c.producto_id);
+                    const cantidades = componentes.map(c => c.cantidad || 1);
+                    const precios = componentes.map(c => c.precio_unitario ?? null);
+                    const ordenes = componentes.map((_, i) => i);
+
                     await db.query(`
                         INSERT INTO productos_combo_items
                             (combo_id, producto_id, organizacion_id, cantidad, precio_unitario, orden)
-                        VALUES ($1, $2, $3, $4, $5, $6)
-                    `, [
-                        comboId,
-                        comp.producto_id,
-                        organizacionId,
-                        comp.cantidad || 1,
-                        comp.precio_unitario || null,
-                        i
-                    ]);
+                        SELECT
+                            $1,
+                            unnest($2::int[]),
+                            $3,
+                            unnest($4::int[]),
+                            unnest($5::numeric[]),
+                            unnest($6::int[])
+                    `, [comboId, ids, organizacionId, cantidades, precios, ordenes]);
                 }
             }
 
@@ -348,31 +354,24 @@ class CombosModel {
                 params.push(activo);
             }
 
+            // Optimización: incluir modificadores con json_agg en la misma query
             const result = await db.query(`
                 SELECT
                     gm.*,
                     (SELECT COUNT(*) FROM modificadores WHERE grupo_id = gm.id AND activo = true) AS total_modificadores
+                    ${incluirModificadores ? `,
+                    COALESCE(
+                        (SELECT json_agg(m ORDER BY m.orden, m.nombre)
+                         FROM modificadores m
+                         WHERE m.grupo_id = gm.id AND m.activo = true),
+                        '[]'::json
+                    ) AS modificadores` : ''}
                 FROM grupos_modificadores gm
                 ${whereClause}
                 ORDER BY gm.orden, gm.nombre
             `, params);
 
-            const grupos = result.rows;
-
-            // Obtener modificadores si se solicita
-            if (incluirModificadores) {
-                for (const grupo of grupos) {
-                    const modsResult = await db.query(`
-                        SELECT *
-                        FROM modificadores
-                        WHERE grupo_id = $1 AND activo = true
-                        ORDER BY orden, nombre
-                    `, [grupo.id]);
-                    grupo.modificadores = modsResult.rows;
-                }
-            }
-
-            return grupos;
+            return result.rows;
         });
     }
 

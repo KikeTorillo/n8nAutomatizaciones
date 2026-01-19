@@ -33,7 +33,8 @@ const {
   actualizarConfiguracionSchema,
   enviarPruebaSchema,
   estadisticasFiltrosSchema,
-  procesarBatchSchema
+  procesarBatchSchema,
+  historialFiltrosSchema
 } = require('../schemas/recordatorios.schemas');
 
 // ====================================================================
@@ -104,6 +105,7 @@ router.get(
 router.get(
   '/historial',
   auth.requireRole(['super_admin', 'admin', 'propietario', 'empleado']),
+  validate(historialFiltrosSchema, 'query'),
   RecordatoriosController.obtenerHistorial
 );
 

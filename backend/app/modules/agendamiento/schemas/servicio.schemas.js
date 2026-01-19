@@ -2,7 +2,7 @@
 
 const Joi = require('joi');
 const { commonSchemas } = require('../../../middleware/validation');
-const { withPagination } = require('../../../schemas/shared');
+const { withPagination, fields } = require('../../../schemas/shared');
 
 // ========== Schemas CRUD Estándar ==========
 
@@ -37,8 +37,7 @@ const crear = {
         requiere_preparacion_minutos: Joi.number().integer().min(0).max(120).optional().default(0),
         tiempo_limpieza_minutos: Joi.number().integer().min(0).max(60).optional().default(5),
         max_clientes_simultaneos: Joi.number().integer().min(1).max(20).optional().default(1),
-        color_servicio: Joi.string().pattern(/^#[0-9A-Fa-f]{6}$/).optional()
-            .messages({'string.pattern.base': 'Color debe ser hexadecimal válido (ej: #e74c3c)'}),
+        color_servicio: fields.colorHex.optional(),
         tags: Joi.array().items(
             Joi.string().trim().min(1).max(30)
         ).optional().allow(null),
@@ -95,7 +94,7 @@ const actualizar = {
         requiere_preparacion_minutos: Joi.number().integer().min(0).max(120).optional(),
         tiempo_limpieza_minutos: Joi.number().integer().min(0).max(60).optional(),
         max_clientes_simultaneos: Joi.number().integer().min(1).max(20).optional(),
-        color_servicio: Joi.string().pattern(/^#[0-9A-Fa-f]{6}$/).optional(),
+        color_servicio: fields.colorHex.optional(),
         tags: Joi.array().items(Joi.string().trim().min(1).max(30)).optional().allow(null),
         configuracion_especifica: Joi.object().optional().allow(null),
         activo: Joi.boolean().optional(),
@@ -304,10 +303,7 @@ const bulkCrear = {
                         .max(20)
                         .optional()
                         .default(1),
-                    color_servicio: Joi.string()
-                        .pattern(/^#[0-9A-Fa-f]{6}$/)
-                        .optional()
-                        .messages({'string.pattern.base': 'Color debe ser hexadecimal válido (ej: #e74c3c)'}),
+                    color_servicio: fields.colorHex.optional(),
                     tags: Joi.array()
                         .items(Joi.string().trim().min(1).max(30))
                         .optional()

@@ -20,7 +20,7 @@ export const useBloqueos = (params = {}) => {
       // El API devuelve { success, data: { bloqueos, paginacion, filtros_aplicados } }
       return response.data.data?.bloqueos || [];
     },
-    staleTime: STALE_TIMES.SEMI_STATIC, // 5 minutos
+    staleTime: STALE_TIMES.DYNAMIC, // 2 min - Ene 2026: bloqueos afectan disponibilidad en tiempo real
     enabled: true,
   });
 };

@@ -4,7 +4,7 @@
  */
 
 const Joi = require('joi');
-const { withPagination, idOptional } = require('../../../schemas/shared');
+const { withPagination, idOptional, fields } = require('../../../schemas/shared');
 
 const ubicacionesSchemas = {
     /**
@@ -47,7 +47,7 @@ const ubicacionesSchemas = {
             humedad_controlada: Joi.boolean().optional().default(false),
 
             orden: Joi.number().integer().min(0).optional().default(0),
-            color: Joi.string().regex(/^#[0-9A-Fa-f]{6}$/).optional().allow(null, ''),
+            color: fields.colorHex.optional().allow(null, ''),
             icono: Joi.string().max(50).optional().allow(null, '')
         })
     },
@@ -78,7 +78,7 @@ const ubicacionesSchemas = {
             temperatura_max: Joi.number().optional().allow(null),
             humedad_controlada: Joi.boolean().optional(),
             orden: Joi.number().integer().min(0).optional(),
-            color: Joi.string().regex(/^#[0-9A-Fa-f]{6}$/).optional().allow(null, ''),
+            color: fields.colorHex.optional().allow(null, ''),
             icono: Joi.string().max(50).optional().allow(null, ''),
             activo: Joi.boolean().optional()
         }).min(1)

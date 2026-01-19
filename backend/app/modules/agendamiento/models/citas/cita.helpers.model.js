@@ -64,6 +64,29 @@ class CitaHelpersModel {
         };
     }
 
+    /**
+     * Obtiene múltiples servicios en UNA sola query (optimización N+1)
+     * @param {number[]} serviciosIds - Array de IDs de servicios
+     * @param {number} organizacionId - ID de la organización
+     * @param {Object} db - Conexión de base de datos
+     * @returns {Promise<Map<number, Object>>} Map con servicio_id como key
+     */
+    static async obtenerServiciosCompletos(serviciosIds, organizacionId, db) {
+        if (!serviciosIds?.length) return new Map();
+
+        const result = await db.query(`
+            SELECT *
+            FROM servicios
+            WHERE id = ANY($1::int[]) AND organizacion_id = $2 AND activo = true
+        `, [serviciosIds, organizacionId]);
+
+        return new Map(result.rows.map(s => [s.id, {
+            ...s,
+            duracion_minutos: s.duracion_minutos || DEFAULTS.DURACION_SLOT_DEFAULT,
+            precio: s.precio || 0
+        }]));
+    }
+
 
     static async generarCodigoCita(organizacionId, db) {
         logger.error('[CitaHelpersModel.generarCodigoCita] DEPRECATED: Esta función NO debe usarse', {

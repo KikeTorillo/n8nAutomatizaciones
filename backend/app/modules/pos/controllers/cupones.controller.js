@@ -14,7 +14,7 @@
  */
 
 const CuponesModel = require('../models/cupones.model');
-const { ResponseHelper } = require('../../../utils/helpers');
+const { ResponseHelper, ParseHelper } = require('../../../utils/helpers');
 const asyncHandler = require('../../../middleware/asyncHandler');
 
 class CuponesController {
@@ -54,25 +54,28 @@ class CuponesController {
      * GET /api/v1/pos/cupones
      */
     static listar = asyncHandler(async (req, res) => {
-        const {
-            page = 1,
-            limit = 20,
-            busqueda,
-            activo,
-            vigente,
-            ordenPor,
-            orden
-        } = req.query;
+        const { pagination, filters, ordering } = ParseHelper.parseListParams(
+            req.query,
+            {
+                busqueda: 'string',
+                activo: 'boolean',
+                vigente: 'boolean'
+            },
+            {
+                allowedOrderFields: ['codigo', 'tipo_descuento', 'fecha_inicio', 'fecha_fin', 'creado_en'],
+                defaultOrderField: 'creado_en'
+            }
+        );
 
         const options = {
             organizacionId: req.tenant.organizacionId,
-            page: parseInt(page),
-            limit: Math.min(parseInt(limit), 100),
-            busqueda,
-            activo: activo !== undefined ? activo === 'true' : undefined,
-            vigente: vigente !== undefined ? vigente === 'true' : undefined,
-            ordenPor,
-            orden
+            page: pagination.page,
+            limit: pagination.limit,
+            busqueda: filters.busqueda,
+            activo: filters.activo,
+            vigente: filters.vigente,
+            ordenPor: ordering.orderBy,
+            orden: ordering.orderDirection
         };
 
         const resultado = await CuponesModel.listar(options);
@@ -198,7 +201,7 @@ class CuponesController {
      */
     static obtenerHistorial = asyncHandler(async (req, res) => {
         const { id } = req.params;
-        const { limit = 50, offset = 0 } = req.query;
+        const { pagination } = ParseHelper.parseListParams(req.query, {}, { defaultLimit: 50 });
         const organizacionId = req.tenant.organizacionId;
 
         // Verificar que el cupón existe
@@ -210,7 +213,7 @@ class CuponesController {
         const historial = await CuponesModel.obtenerHistorialUso(
             parseInt(id),
             organizacionId,
-            { limit: parseInt(limit), offset: parseInt(offset) }
+            { limit: pagination.limit, offset: pagination.offset }
         );
 
         return ResponseHelper.success(res, historial, 'Historial de uso obtenido');

@@ -39,7 +39,7 @@ const hooks = createCRUDHooks({
   invalidateOnDelete: ['promociones', 'promociones-vigentes'],
   staleTime: STALE_TIMES.DYNAMIC,
   responseKey: 'promociones',
-  keepPreviousData: true,
+  usePreviousData: true, // Evita flash de loading durante paginación
   transformList: (data) => ({
     promociones: data,
     paginacion: data.pagination,

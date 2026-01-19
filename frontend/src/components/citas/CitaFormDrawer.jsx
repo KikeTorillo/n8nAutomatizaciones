@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import { User, Briefcase, Package, Clock } from 'lucide-react';
 import {
   Button,
@@ -17,6 +16,9 @@ import { useToast } from '@/hooks/utils';
 import { useQuery } from '@tanstack/react-query';
 import { aFormatoISO } from '@/utils/dateHelpers';
 
+// Schemas centralizados (Ene 2026)
+import { citaCreateSchema, citaEditSchema } from '@/schemas';
+
 // Hooks y componentes refactorizados (Ene 2026)
 import {
   useRecurrenceState,
@@ -28,81 +30,6 @@ import {
   ServicesPriceSection,
   NotesSection,
 } from './cita-form';
-
-// ===============================
-// SCHEMAS DE VALIDACIÓN ZOD
-// ===============================
-
-/**
- * Schema de validación Zod para CREAR cita
- * NOTA: profesional_id es opcional cuando Round-Robin está habilitado
- */
-const citaCreateSchema = z
-  .object({
-    cliente_id: z.string().min(1, 'Debes seleccionar un cliente'),
-    profesional_id: z.string().optional(),
-    servicios_ids: z.array(z.string()).min(1, 'Debes seleccionar al menos un servicio').max(10, 'Máximo 10 servicios por cita'),
-    fecha_cita: z.string().min(1, 'La fecha es requerida'),
-    hora_inicio: z
-      .string()
-      .min(1, 'La hora de inicio es requerida')
-      .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Formato de hora inválido (HH:mm)'),
-    duracion_minutos: z.coerce.number().min(10, 'Duración mínima: 10 minutos').max(480, 'Duración máxima: 8 horas'),
-    precio_servicio: z.coerce.number().min(0, 'El precio no puede ser negativo'),
-    descuento: z.coerce.number().min(0, 'El descuento no puede ser negativo').default(0),
-    notas_cliente: z.string().max(500, 'Máximo 500 caracteres').optional(),
-    notas_internas: z.string().max(500, 'Máximo 500 caracteres').optional(),
-  })
-  .refine((data) => data.descuento <= data.precio_servicio, {
-    message: 'El descuento no puede ser mayor al precio del servicio',
-    path: ['descuento'],
-  })
-  .refine((data) => {
-    const fechaSeleccionada = data.fecha_cita;
-    const hoyStr = aFormatoISO(new Date());
-    return fechaSeleccionada >= hoyStr;
-  }, {
-    message: 'La fecha no puede ser en el pasado',
-    path: ['fecha_cita'],
-  })
-  .refine((data) => {
-    if (!data.hora_inicio || !data.duracion_minutos) return true;
-    const [horas, minutos] = data.hora_inicio.split(':').map(Number);
-    const minutosTotal = horas * 60 + minutos + data.duracion_minutos;
-    return minutosTotal <= 24 * 60;
-  }, {
-    message: 'La cita no puede terminar después de las 23:59',
-    path: ['duracion_minutos'],
-  });
-
-/**
- * Schema de validación Zod para EDITAR cita
- */
-const citaEditSchema = z
-  .object({
-    cliente_id: z.string().optional(),
-    profesional_id: z.string().optional(),
-    servicios_ids: z.array(z.string()).min(1, 'Debes seleccionar al menos un servicio').max(10, 'Máximo 10 servicios por cita').optional(),
-    fecha_cita: z.string().optional(),
-    hora_inicio: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Formato de hora inválido (HH:mm)').optional(),
-    duracion_minutos: z.coerce.number().min(10, 'Duración mínima: 10 minutos').max(480, 'Duración máxima: 8 horas').optional(),
-    precio_servicio: z.coerce.number().min(0, 'El precio no puede ser negativo').optional(),
-    descuento: z.coerce.number().min(0, 'El descuento no puede ser negativo').optional(),
-    notas_cliente: z.string().max(500, 'Máximo 500 caracteres').optional(),
-    notas_internas: z.string().max(500, 'Máximo 500 caracteres').optional(),
-  })
-  .refine((data) => Object.keys(data).some((key) => data[key] !== undefined && data[key] !== ''), {
-    message: 'Debes modificar al menos un campo',
-  })
-  .refine((data) => {
-    if (!data.hora_inicio || !data.duracion_minutos) return true;
-    const [horas, minutos] = data.hora_inicio.split(':').map(Number);
-    const minutosTotal = horas * 60 + minutos + data.duracion_minutos;
-    return minutosTotal <= 24 * 60;
-  }, {
-    message: 'La cita no puede terminar después de las 23:59',
-    path: ['duracion_minutos'],
-  });
 
 // ===============================
 // COMPONENTE PRINCIPAL

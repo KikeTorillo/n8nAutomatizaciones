@@ -1,4 +1,5 @@
 const Joi = require('joi');
+const { fields } = require('../../../schemas/shared');
 
 /**
  * Schema para crear sucursal
@@ -14,7 +15,7 @@ const crearSucursalSchema = Joi.object({
     latitud: Joi.number().min(-90).max(90).optional().allow(null),
     longitud: Joi.number().min(-180).max(180).optional().allow(null),
     telefono: Joi.string().max(20).optional().allow('', null),
-    email: Joi.string().email().max(150).optional().allow('', null),
+    email: fields.email.optional().allow('', null),
     whatsapp: Joi.string().max(20).optional().allow('', null),
     zona_horaria: Joi.string().max(50).optional().default('America/Mexico_City'),
     horario_apertura: Joi.string().pattern(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/).optional().default('09:00'),
@@ -40,7 +41,7 @@ const actualizarSucursalSchema = Joi.object({
     latitud: Joi.number().min(-90).max(90).optional().allow(null),
     longitud: Joi.number().min(-180).max(180).optional().allow(null),
     telefono: Joi.string().max(20).optional().allow('', null),
-    email: Joi.string().email().max(150).optional().allow('', null),
+    email: fields.email.optional().allow('', null),
     whatsapp: Joi.string().max(20).optional().allow('', null),
     zona_horaria: Joi.string().max(50).optional(),
     horario_apertura: Joi.string().pattern(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/).optional(),

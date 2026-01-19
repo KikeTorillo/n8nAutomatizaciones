@@ -43,6 +43,12 @@ class TokenBlacklistService {
         /** @type {boolean} Indica si el servicio está inicializado */
         this.isInitialized = false;
 
+        /** @type {Map<string, NodeJS.Timeout>} Tracking de timeouts para cleanup */
+        this.timeoutIds = new Map();
+
+        /** @type {Map<number, number>} Usuarios invalidados (fallback en memoria) */
+        this.invalidatedUsers = new Map();
+
         // Inicializar conexión Redis de forma asíncrona
         this.initRedis();
     }
@@ -145,14 +151,21 @@ class TokenBlacklistService {
                 // Fallback: Usar Set en memoria
                 this.fallbackStore.add(token);
 
-                // Auto-limpieza si hay TTL
+                // Auto-limpieza si hay TTL (con tracking para cleanup)
                 if (expirationSeconds) {
-                    setTimeout(() => {
+                    const timeoutKey = `token:${token}`;
+                    // Limpiar timeout anterior si existe
+                    if (this.timeoutIds.has(timeoutKey)) {
+                        clearTimeout(this.timeoutIds.get(timeoutKey));
+                    }
+                    const timeoutId = setTimeout(() => {
                         this.fallbackStore.delete(token);
+                        this.timeoutIds.delete(timeoutKey);
                         logger.debug('Token removido automáticamente de blacklist (memoria)', {
                             token: token.substring(0, 20) + '...'
                         });
                     }, expirationSeconds * 1000);
+                    this.timeoutIds.set(timeoutKey, timeoutId);
                 }
 
                 logger.debug('Token agregado a blacklist (memoria fallback)', {
@@ -345,13 +358,19 @@ class TokenBlacklistService {
                 });
             } else {
                 // Fallback en memoria
-                this.invalidatedUsers = this.invalidatedUsers || new Map();
                 this.invalidatedUsers.set(userId, timestamp);
 
-                // Auto-limpieza después de 24 horas
-                setTimeout(() => {
-                    this.invalidatedUsers?.delete(userId);
+                // Auto-limpieza después de 24 horas (con tracking para cleanup)
+                const timeoutKey = `user:${userId}`;
+                // Limpiar timeout anterior si existe
+                if (this.timeoutIds.has(timeoutKey)) {
+                    clearTimeout(this.timeoutIds.get(timeoutKey));
+                }
+                const timeoutId = setTimeout(() => {
+                    this.invalidatedUsers.delete(userId);
+                    this.timeoutIds.delete(timeoutKey);
                 }, 86400000);
+                this.timeoutIds.set(timeoutKey, timeoutId);
 
                 logger.info('[TokenBlacklist] Tokens de usuario invalidados (memoria)', {
                     usuario_id: userId,
@@ -367,8 +386,7 @@ class TokenBlacklistService {
                 usuario_id: userId,
                 motivo
             });
-            // En caso de error, aún intentar fallback en memoria
-            this.invalidatedUsers = this.invalidatedUsers || new Map();
+            // En caso de error, aún intentar fallback en memoria (sin timeout tracking para simplificar)
             this.invalidatedUsers.set(userId, timestamp);
             return true;
         }
@@ -439,10 +457,23 @@ class TokenBlacklistService {
      */
     async close() {
         try {
+            // Limpiar todos los timeouts rastreados
+            for (const [key, timeoutId] of this.timeoutIds.entries()) {
+                clearTimeout(timeoutId);
+            }
+            this.timeoutIds.clear();
+
+            // Limpiar estructuras de datos en memoria
+            this.fallbackStore.clear();
+            this.invalidatedUsers.clear();
+
             if (this.redisClient && this.redisClient.isOpen) {
+                this.redisClient.removeAllListeners();
                 await this.redisClient.quit();
                 logger.info('✅ Cliente Redis de token blacklist cerrado');
             }
+
+            this.isInitialized = false;
         } catch (error) {
             logger.error('Error cerrando cliente Redis de blacklist', {
                 error: error.message

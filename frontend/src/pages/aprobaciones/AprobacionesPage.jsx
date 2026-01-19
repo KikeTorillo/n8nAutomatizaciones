@@ -17,6 +17,9 @@ import { useModalManager } from '@/hooks/utils';
 import {
   BackButton,
   Button,
+  DataTable,
+  DataTableActions,
+  DataTableActionButton,
   Modal,
   Textarea
 } from '@/components/ui';
@@ -28,6 +31,102 @@ import {
   useRechazarSolicitud,
   useInstanciaWorkflow,
 } from '@/hooks/sistema';
+
+// Formatters
+const formatMoney = (amount) => {
+  return new Intl.NumberFormat('es-MX', {
+    style: 'currency',
+    currency: 'MXN',
+  }).format(amount || 0);
+};
+
+const formatDate = (dateStr) => {
+  if (!dateStr) return '-';
+  return new Date(dateStr).toLocaleDateString('es-MX', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+};
+
+const getTipoEntidadLabel = (tipo) => {
+  const labels = {
+    orden_compra: 'Orden de Compra',
+    venta_pos: 'Venta POS',
+  };
+  return labels[tipo] || tipo;
+};
+
+// Estados badge config
+const ESTADO_ESTILOS = {
+  en_progreso: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
+  aprobado: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
+  rechazado: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
+  cancelado: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400',
+  expirado: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400',
+};
+
+const ESTADO_TEXTOS = {
+  en_progreso: 'Pendiente',
+  aprobado: 'Aprobado',
+  rechazado: 'Rechazado',
+  cancelado: 'Cancelado',
+  expirado: 'Expirado',
+};
+
+// Columnas para historial
+const HISTORIAL_COLUMNS = [
+  {
+    key: 'solicitud',
+    header: 'Solicitud',
+    render: (row) => (
+      <span className="font-medium text-gray-900 dark:text-white">
+        {row.entidad_resumen?.folio || `#${row.entidad_id}`}
+      </span>
+    ),
+  },
+  {
+    key: 'tipo',
+    header: 'Tipo',
+    hideOnMobile: true,
+    render: (row) => (
+      <span className="text-sm text-gray-500 dark:text-gray-400">
+        {getTipoEntidadLabel(row.entidad_tipo)}
+      </span>
+    ),
+  },
+  {
+    key: 'estado',
+    header: 'Estado',
+    render: (row) => (
+      <span className={`px-2 py-1 text-xs font-medium rounded-full ${ESTADO_ESTILOS[row.estado] || ESTADO_ESTILOS.cancelado}`}>
+        {ESTADO_TEXTOS[row.estado] || row.estado}
+      </span>
+    ),
+  },
+  {
+    key: 'procesado_por',
+    header: 'Procesado por',
+    hideOnMobile: true,
+    render: (row) => (
+      <span className="text-sm text-gray-500 dark:text-gray-400">
+        {row.aprobador_nombre || '-'}
+      </span>
+    ),
+  },
+  {
+    key: 'fecha',
+    header: 'Fecha',
+    hideOnMobile: true,
+    render: (row) => (
+      <span className="text-sm text-gray-500 dark:text-gray-400">
+        {formatDate(row.completado_en)}
+      </span>
+    ),
+  },
+];
 
 /**
  * Página de Aprobaciones
@@ -127,56 +226,12 @@ export default function AprobacionesPage() {
     );
   };
 
-  // Formatters
-  const formatMoney = (amount) => {
-    return new Intl.NumberFormat('es-MX', {
-      style: 'currency',
-      currency: 'MXN',
-    }).format(amount || 0);
-  };
-
-  const formatDate = (dateStr) => {
-    if (!dateStr) return '-';
-    return new Date(dateStr).toLocaleDateString('es-MX', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
-
-  const getEstadoBadge = (estado) => {
-    const estilos = {
-      en_progreso: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
-      aprobado: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
-      rechazado: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
-      cancelado: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400',
-      expirado: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400',
-    };
-
-    const textos = {
-      en_progreso: 'Pendiente',
-      aprobado: 'Aprobado',
-      rechazado: 'Rechazado',
-      cancelado: 'Cancelado',
-      expirado: 'Expirado',
-    };
-
-    return (
-      <span className={`px-2 py-1 text-xs font-medium rounded-full ${estilos[estado] || estilos.cancelado}`}>
-        {textos[estado] || estado}
-      </span>
-    );
-  };
-
-  const getTipoEntidadLabel = (tipo) => {
-    const labels = {
-      orden_compra: 'Orden de Compra',
-      venta_pos: 'Venta POS',
-    };
-    return labels[tipo] || tipo;
-  };
+  // getEstadoBadge helper for modal
+  const getEstadoBadge = (estado) => (
+    <span className={`px-2 py-1 text-xs font-medium rounded-full ${ESTADO_ESTILOS[estado] || ESTADO_ESTILOS.cancelado}`}>
+      {ESTADO_TEXTOS[estado] || estado}
+    </span>
+  );
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
@@ -375,78 +430,34 @@ export default function AprobacionesPage() {
             </select>
           </div>
 
-          {loadingHistorial ? (
-            <div className="flex justify-center items-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-            </div>
-          ) : historial.length === 0 ? (
-            <div className="text-center py-12">
-              <History className="mx-auto h-12 w-12 text-gray-400" />
-              <h3 className="mt-4 text-lg font-medium text-gray-900 dark:text-white">
-                Sin historial
-              </h3>
-              <p className="mt-2 text-gray-500 dark:text-gray-400">
-                No hay solicitudes procesadas que coincidan con los filtros
-              </p>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead className="bg-gray-50 dark:bg-gray-900">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Solicitud
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Tipo
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Estado
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Procesado por
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Fecha
-                    </th>
-                    <th className="px-4 py-3"></th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                  {historial.map((instancia) => (
-                    <tr key={instancia.id} className="hover:bg-gray-50 dark:hover:bg-gray-750">
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        <span className="font-medium text-gray-900 dark:text-white">
-                          {instancia.entidad_resumen?.folio || `#${instancia.entidad_id}`}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                        {getTipoEntidadLabel(instancia.entidad_tipo)}
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        {getEstadoBadge(instancia.estado)}
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                        {instancia.aprobador_nombre || '-'}
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                        {formatDate(instancia.completado_en)}
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-right">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleVerDetalle(instancia.id)}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+          <DataTable
+            columns={[
+              ...HISTORIAL_COLUMNS,
+              {
+                key: 'actions',
+                header: '',
+                align: 'right',
+                render: (row) => (
+                  <DataTableActions>
+                    <DataTableActionButton
+                      icon={Eye}
+                      label="Ver detalle"
+                      onClick={() => handleVerDetalle(row.id)}
+                      variant="primary"
+                    />
+                  </DataTableActions>
+                ),
+              },
+            ]}
+            data={historial}
+            isLoading={loadingHistorial}
+            emptyState={{
+              icon: History,
+              title: 'Sin historial',
+              description: 'No hay solicitudes procesadas que coincidan con los filtros',
+            }}
+            skeletonRows={5}
+          />
         </div>
       )}
 

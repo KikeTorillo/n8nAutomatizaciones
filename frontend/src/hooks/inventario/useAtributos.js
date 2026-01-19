@@ -30,6 +30,7 @@ const hooks = createCRUDHooks({
   invalidateOnUpdate: ['atributos'],
   invalidateOnDelete: ['atributos'],
   staleTime: STALE_TIMES.STATIC_DATA,
+  usePreviousData: true, // Evita flash de loading durante paginación
 });
 
 // Exportar hooks CRUD

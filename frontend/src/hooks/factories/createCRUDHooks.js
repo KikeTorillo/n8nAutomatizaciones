@@ -89,7 +89,7 @@ export function createCRUDHooks(config) {
     errorMessages = {},
     staleTime = STALE_TIMES.SEMI_STATIC,
     responseKey,
-    usePreviousData = false,
+    usePreviousData = true,
     transformList,
     transformDetail,
   } = config;

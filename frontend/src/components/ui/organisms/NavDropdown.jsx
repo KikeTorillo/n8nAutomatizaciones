@@ -7,6 +7,8 @@ import { cn } from '@/lib/utils';
  * NavDropdown - Dropdown de navegación con items agrupados
  * Usado para agrupar múltiples rutas bajo un mismo menú desplegable
  *
+ * Ene 2026: Movido de molecules a organisms (maneja estado complejo y coordina navegación)
+ *
  * @param {string} label - Texto del botón dropdown
  * @param {React.ComponentType} icon - Icono lucide-react del grupo
  * @param {Array} items - Array de items: { id, label, icon, path }

@@ -53,7 +53,7 @@ const hooks = createCRUDHooks({
     delete: { 400: 'No se puede eliminar la sucursal matriz' },
   },
   staleTime: STALE_TIMES.SEMI_STATIC,
-  keepPreviousData: true,
+  usePreviousData: true, // Evita flash de loading durante paginación
 });
 
 export const useSucursales = hooks.useList;

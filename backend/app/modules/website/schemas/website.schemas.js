@@ -15,6 +15,7 @@
  */
 
 const Joi = require('joi');
+const { fields } = require('../../../schemas/shared');
 
 // Tipos de bloques válidos
 const TIPOS_BLOQUE = [
@@ -62,13 +63,11 @@ const websiteSchemas = {
             logo_alt: Joi.string().max(100).optional().allow(null, ''),
 
             // Colores (formato hex #RRGGBB)
-            color_primario: Joi.string().pattern(/^#[0-9A-Fa-f]{6}$/).optional().messages({
-                'string.pattern.base': 'El color debe estar en formato hexadecimal (#RRGGBB)'
-            }),
-            color_secundario: Joi.string().pattern(/^#[0-9A-Fa-f]{6}$/).optional(),
-            color_acento: Joi.string().pattern(/^#[0-9A-Fa-f]{6}$/).optional(),
-            color_texto: Joi.string().pattern(/^#[0-9A-Fa-f]{6}$/).optional(),
-            color_fondo: Joi.string().pattern(/^#[0-9A-Fa-f]{6}$/).optional(),
+            color_primario: fields.colorHex.optional(),
+            color_secundario: fields.colorHex.optional(),
+            color_acento: fields.colorHex.optional(),
+            color_texto: fields.colorHex.optional(),
+            color_fondo: fields.colorHex.optional(),
 
             // Fuentes
             fuente_titulos: Joi.string().max(100).optional().allow(null, ''),
@@ -106,11 +105,11 @@ const websiteSchemas = {
             favicon_url: Joi.string().uri().max(500).optional().allow(null, ''),
             logo_url: Joi.string().uri().max(500).optional().allow(null, ''),
             logo_alt: Joi.string().max(100).optional().allow(null, ''),
-            color_primario: Joi.string().pattern(/^#[0-9A-Fa-f]{6}$/).optional(),
-            color_secundario: Joi.string().pattern(/^#[0-9A-Fa-f]{6}$/).optional(),
-            color_acento: Joi.string().pattern(/^#[0-9A-Fa-f]{6}$/).optional(),
-            color_texto: Joi.string().pattern(/^#[0-9A-Fa-f]{6}$/).optional(),
-            color_fondo: Joi.string().pattern(/^#[0-9A-Fa-f]{6}$/).optional(),
+            color_primario: fields.colorHex.optional(),
+            color_secundario: fields.colorHex.optional(),
+            color_acento: fields.colorHex.optional(),
+            color_texto: fields.colorHex.optional(),
+            color_fondo: fields.colorHex.optional(),
             fuente_titulos: Joi.string().max(100).optional().allow(null, ''),
             fuente_cuerpo: Joi.string().max(100).optional().allow(null, ''),
             redes_sociales: Joi.object().optional().allow(null)

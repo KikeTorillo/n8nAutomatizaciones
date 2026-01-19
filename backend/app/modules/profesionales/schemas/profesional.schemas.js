@@ -38,7 +38,7 @@ const crear = {
         email: fields.email
             .optional()
             .allow(null),
-        telefono: commonSchemas.mexicanPhone
+        telefono: fields.telefono
             .optional()
             .allow(null),
         foto_url: Joi.string()
@@ -73,7 +73,7 @@ const crear = {
             .max(100)
             .optional()
             .allow(null),
-        contacto_emergencia_telefono: commonSchemas.mexicanPhone
+        contacto_emergencia_telefono: fields.telefono
             .optional()
             .allow(null),
 
@@ -106,7 +106,7 @@ const crear = {
         email_privado: fields.email
             .optional()
             .allow(null),
-        telefono_privado: commonSchemas.mexicanPhone
+        telefono_privado: fields.telefono
             .optional()
             .allow(null),
         distancia_casa_trabajo_km: Joi.number()
@@ -170,11 +170,9 @@ const crear = {
         disponible_online: Joi.boolean()
             .optional()
             .default(false),
-        color_calendario: Joi.string()
-            .pattern(/^#[0-9A-Fa-f]{6}$/)
+        color_calendario: fields.colorHex
             .optional()
-            .default('#753572')
-            .messages({ 'string.pattern.base': 'Color debe ser hexadecimal válido (ej: #753572)' }),
+            .default('#753572'),
         biografia: Joi.string()
             .optional()
             .allow(null),
@@ -245,14 +243,12 @@ const bulkCrear = {
                     email: fields.email
                         .optional()
                         .allow(null, ''),
-                    telefono: commonSchemas.mexicanPhone
+                    telefono: fields.telefono
                         .optional()
                         .allow(null, ''),
-                    color_calendario: Joi.string()
-                        .pattern(/^#[0-9A-Fa-f]{6}$/)
+                    color_calendario: fields.colorHex
                         .optional()
-                        .default('#3B82F6')
-                        .messages({ 'string.pattern.base': 'Color debe ser hexadecimal válido (ej: #3B82F6)' }),
+                        .default('#3B82F6'),
                     servicios_asignados: Joi.array()
                         .items(Joi.number().integer().positive())
                         .optional()
@@ -310,7 +306,7 @@ const actualizar = {
         codigo: Joi.string().max(LIMITES.CODIGO_MAX).trim().allow(null),
         nombre_completo: Joi.string().min(LIMITES.NOMBRE_MIN).max(LIMITES.NOMBRE_MAX).trim(),
         email: fields.email.allow(null),
-        telefono: commonSchemas.mexicanPhone.allow(null),
+        telefono: fields.telefono.allow(null),
         foto_url: Joi.string().uri().allow(null),
 
         // === INFORMACIÓN PERSONAL ===
@@ -320,7 +316,7 @@ const actualizar = {
         direccion: Joi.string().max(LIMITES.DIRECCION_MAX).allow(null),
         estado_civil: Joi.string().valid(...ESTADOS_CIVILES).allow(null),
         contacto_emergencia_nombre: Joi.string().max(100).allow(null),
-        contacto_emergencia_telefono: commonSchemas.mexicanPhone.allow(null),
+        contacto_emergencia_telefono: fields.telefono.allow(null),
 
         // === INFORMACIÓN PERSONAL ADICIONAL (Fase 1 - Enero 2026) ===
         numero_pasaporte: Joi.string().max(50).trim().allow(null),
@@ -329,7 +325,7 @@ const actualizar = {
         lugar_nacimiento_ciudad: Joi.string().max(100).trim().allow(null),
         lugar_nacimiento_pais: Joi.string().max(50).trim().allow(null),
         email_privado: fields.email.allow(null),
-        telefono_privado: commonSchemas.mexicanPhone.allow(null),
+        telefono_privado: fields.telefono.allow(null),
         distancia_casa_trabajo_km: Joi.number().min(0).max(9999.99).precision(2).allow(null),
         hijos_dependientes: Joi.number().integer().min(0).max(50),
 
@@ -354,7 +350,7 @@ const actualizar = {
 
         // === CONFIGURACIÓN DE AGENDAMIENTO ===
         disponible_online: Joi.boolean(),
-        color_calendario: Joi.string().pattern(/^#[0-9A-Fa-f]{6}$/),
+        color_calendario: fields.colorHex,
         biografia: Joi.string().allow(null),
         configuracion_horarios: Joi.object(),
         configuracion_servicios: Joi.object(),

@@ -9,6 +9,7 @@
 
 const Joi = require('joi');
 const { commonSchemas } = require('../../../middleware/validation');
+const { fields } = require('../../../schemas/shared');
 
 /**
  * Schema para listar categorías de pago
@@ -74,12 +75,7 @@ const crear = {
     fondo_ahorro: Joi.number().precision(2).min(0).max(100).default(0),
 
     // UI
-    color: Joi.string()
-      .pattern(/^#[0-9A-Fa-f]{6}$/)
-      .default('#753572')
-      .messages({
-        'string.pattern.base': 'color debe ser un color hexadecimal válido (#RRGGBB)'
-      }),
+    color: fields.colorHex.default('#753572'),
     icono: Joi.string().max(50).default('wallet'),
     orden: Joi.number().integer().min(0).default(0),
     metadata: Joi.object().optional().allow(null)
@@ -120,7 +116,7 @@ const actualizar = {
     porcentaje_aguinaldo: Joi.number().precision(2).min(0).max(100),
     fondo_ahorro: Joi.number().precision(2).min(0).max(100),
 
-    color: Joi.string().pattern(/^#[0-9A-Fa-f]{6}$/),
+    color: fields.colorHex,
     icono: Joi.string().max(50),
     orden: Joi.number().integer().min(0),
     metadata: Joi.object().allow(null),

@@ -1,5 +1,6 @@
 const Joi = require('joi');
 const { commonSchemas } = require('../../../middleware/validation');
+const { fields } = require('../../../schemas/shared');
 
 // ====================================================================
 // TIPOS DE CATEGORÍA
@@ -93,7 +94,7 @@ const categoriaCrear = {
         nombre: Joi.string().min(2).max(100).required().trim(),
         descripcion: Joi.string().max(500).optional().allow(null),
         tipo_categoria: Joi.string().valid(...TIPOS_CATEGORIA).optional().default('general'),
-        color: Joi.string().pattern(/^#[0-9A-Fa-f]{6}$/).optional().default('#753572'),
+        color: fields.colorHex.optional().default('#753572'),
         icono: Joi.string().max(50).optional().allow(null),
         orden: Joi.number().integer().min(0).optional().default(0),
         activo: Joi.boolean().optional().default(true)
@@ -108,7 +109,7 @@ const categoriaActualizar = {
         nombre: Joi.string().min(2).max(100).trim().optional(),
         descripcion: Joi.string().max(500).allow(null).optional(),
         tipo_categoria: Joi.string().valid(...TIPOS_CATEGORIA).optional(),
-        color: Joi.string().pattern(/^#[0-9A-Fa-f]{6}$/).optional(),
+        color: fields.colorHex.optional(),
         icono: Joi.string().max(50).allow(null).optional(),
         orden: Joi.number().integer().min(0).optional(),
         activo: Joi.boolean().optional()

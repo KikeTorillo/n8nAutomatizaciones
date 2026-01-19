@@ -44,7 +44,6 @@ npm run clean:data       # Reset completo (DESTRUCTIVO)
 ## Base de Datos
 
 ```bash
-# Conexión (SIEMPRE usar este)
 docker exec -it postgres_db psql -U admin -d postgres
 ```
 
@@ -84,22 +83,20 @@ await RLSContextManager.withBypass(async (db) => { ... });
 ## Reglas de Desarrollo
 
 ### Backend
+
 - **RLS SIEMPRE**: `RLSContextManager.query()` o `.transaction()`
-- **asyncHandler**: Obligatorio en routes
-- **Validación**: Joi schemas en cada endpoint
-- **Contraseñas**: Usar `passwordSchemas` de `schemas/shared/passwords.schema.js`
+- **asyncHandler**: Obligatorio en routes y controllers
+- **Validación**: Joi schemas con `fields` compartidos
 - **SQL seguro**: NUNCA interpolar variables, siempre `$1`, `$2`
-- **ParseHelper**: Usar para parseo de query params (ver patrón abajo)
-- **BaseCrudController**: Usar para controllers CRUD simples (ver patrón abajo)
+- **ORDER BY**: Whitelist obligatoria (ver patrón abajo)
 
 ### Frontend
+
 - **Sanitizar opcionales**: Joi rechaza `""`, usar `undefined`
 - **Invalidar queries**: `queryClient.invalidateQueries()` tras mutaciones
 - **Dark mode**: Siempre variantes `dark:` en Tailwind
 - **Colores**: Solo `primary-*` (primario: `#753572`)
 - **Formularios**: React Hook Form + Zod
-- **Teléfono México**: Regex `/^[1-9]\d{9}$/` (10 dígitos, no empieza con 0)
-- **Hooks CRUD**: Usar `createCRUDHooks` de `@/hooks/factories` (ver patrón abajo)
 
 ### Componentes UI (Atomic Design)
 
@@ -111,280 +108,164 @@ components/ui/
 └── templates/  # BasePageLayout, ModuleGuard, ListadoCRUDPage
 ```
 
-### Patrón ListadoCRUDPage
+---
 
-Para páginas CRUD estándar (reduce ~60% código):
+## Patrones Backend
 
-```jsx
-import { ListadoCRUDPage } from '@/components/ui';
+### Fields Compartidos (Joi)
 
-const COLUMNS = [...];
-const INITIAL_FILTERS = { busqueda: '' };
-const mapFormData = (data) => ({ entidad: data, mode: data ? 'edit' : 'create' });
-
-export default function MiEntidadPage() {
-  return (
-    <ListadoCRUDPage
-      title="Mi Entidad"
-      icon={IconComponent}
-      PageLayout={MiPageLayout}
-      useListQuery={useMiEntidad}
-      useDeleteMutation={useEliminarMiEntidad}
-      dataKey="entidades"
-      columns={COLUMNS}
-      FormDrawer={MiFormDrawer}
-      mapFormData={mapFormData}
-      initialFilters={INITIAL_FILTERS}
-      rowActions={(row, handlers) => <RowActions row={row} {...handlers} />}
-      extraModals={{ modal1: { component: Modal1, mapData: (d) => ({ data: d }) }}}
-      renderBeforeTable={({ items }) => <CustomComponent items={items} />}
-    />
-  );
-}
-```
-
-**NO usar para**: TreeViews jerárquicos (Categorías, Departamentos)
-
-### Patrón createCRUDHooks
-
-Para hooks CRUD estandarizados (reduce ~70% código por archivo):
+Usar `fields` de `schemas/shared/common-fields.schema.js` para validaciones repetidas:
 
 ```javascript
-import { createCRUDHooks, createSanitizer } from '@/hooks/factories';
+const { fields } = require('../../../schemas/shared');
 
-const sanitize = createSanitizer([
-  'campo_texto',
-  { name: 'foreign_key_id', type: 'id' },
-  { name: 'campo_numerico', type: 'number' },
-]);
-
-const hooks = createCRUDHooks({
-  name: 'entidad',
-  namePlural: 'entidades',
-  api: miApi,
-  baseKey: 'entidades',
-  apiMethods: { list: 'listar', get: 'obtener', create: 'crear', update: 'actualizar', delete: 'eliminar' },
-  sanitize,
-  invalidateOnCreate: ['entidades', 'otras-queries'],
-  errorMessages: { create: { 409: 'Ya existe' }, delete: { 409: 'Tiene dependencias' } },
-  staleTime: STALE_TIMES.SEMI_STATIC,
-  responseKey: 'entidades',
-});
-
-export const useEntidades = hooks.useList;
-export const useEntidad = hooks.useDetail;
-export const useCrearEntidad = hooks.useCreate;
-export const useActualizarEntidad = hooks.useUpdate;
-export const useEliminarEntidad = hooks.useDelete;
-```
-
-**Referencia**: `hooks/inventario/useProveedores.js`
-
-### Patrón useSucursalContext
-
-Para hooks que dependen de sucursal_id (obtiene automáticamente de store si no se pasa):
-
-```javascript
-import { useSucursalContext } from '@/hooks/factories';
-
-// Uso simple - resuelve sucursalId automáticamente
-const sucursalId = useSucursalContext(paramSucursalId);
-
-// En queries
-export function useMisItems(sucursalIdParam) {
-  const sucursalId = useSucursalContext(sucursalIdParam);
-  return useQuery({
-    queryKey: ['mis-items', sucursalId],
-    queryFn: () => api.listar(sucursalId),
-    enabled: !!sucursalId,
-  });
-}
-```
-
-**Referencia**: `hooks/factories/createSucursalContextHook.js`
-
-### Patrón Fragmentación de Hooks (>400 LOC)
-
-Para hooks grandes, fragmentar en estructura modular:
-
-```
-hooks/almacen/operaciones-almacen/
-├── constants.js   # Query keys, tipos, estados, labels
-├── queries.js     # useQuery hooks (lectura)
-├── mutations.js   # useMutation hooks (escritura)
-├── manager.js     # Hook combinado que orquesta todo
-└── index.js       # Barrel exports
-```
-
-```javascript
-// constants.js
-export const ENTIDAD_KEYS = {
-  all: ['entidad'],
-  list: (params) => ['entidad', 'list', params],
-  detail: (id) => ['entidad', 'detail', id],
-};
-
-// index.js (barrel)
-export { ENTIDAD_KEYS } from './constants';
-export { useEntidades, useEntidad } from './queries';
-export { useCrearEntidad, useActualizarEntidad } from './mutations';
-export { useEntidadManager } from './manager';
-```
-
-**Referencia**: `hooks/almacen/operaciones-almacen/`
-
-### TanStack Query - Optimizaciones
-
-```javascript
-// 1. exact:true en invalidaciones específicas
-queryClient.invalidateQueries({
-  queryKey: ['sucursal-matriz'],
-  exact: true  // Solo invalida esta key exacta
-});
-
-// 2. keepPreviousData en listados (evita flash de loading)
-useQuery({
-  queryKey: ['items', params],
-  queryFn: () => api.listar(params),
-  placeholderData: keepPreviousData,  // TanStack Query v5
-});
-
-// 3. Optimistic updates en mutations
-useMutation({
-  mutationFn: api.marcarLeida,
-  onMutate: async (id) => {
-    await queryClient.cancelQueries({ queryKey: ['alertas'] });
-    const previous = queryClient.getQueryData(['alertas']);
-    queryClient.setQueryData(['alertas'], (old) =>
-      old?.map(a => a.id === id ? { ...a, leida: true } : a)
-    );
-    return { previous };
-  },
-  onError: (err, id, context) => {
-    queryClient.setQueryData(['alertas'], context.previous);
-  },
-  onSettled: () => {
-    queryClient.invalidateQueries({ queryKey: ['alertas'] });
-  },
+const schema = Joi.object({
+  nombre: fields.nombre.required(),      // 2-150 chars, trim
+  email: fields.email,                   // email válido, lowercase
+  telefono: fields.telefono,             // 10 dígitos México
+  rfc: fields.rfc,                       // RFC mexicano
+  color: fields.colorHex,                // #RRGGBB
+  precio: fields.precio,                 // >= 0, 2 decimales
+  activo: fields.activo,                 // boolean, default true
 });
 ```
 
-### Patrón ParseHelper (Backend)
+**Campos disponibles**: `nombre`, `descripcion`, `codigo`, `email`, `telefono`, `rfc`, `url`, `precio`, `porcentaje`, `cantidad`, `fecha`, `hora`, `activo`, `colorHex`, `icono`, `orden`, `metadata`, `tags`
 
-Para parseo seguro y consistente de query params en controllers:
+### ParseHelper
 
 ```javascript
 const { ParseHelper } = require('../../../utils/helpers');
 
-// Parseo individual
-const activo = ParseHelper.parseBoolean(req.query.activo);      // 'true' → true, undefined → null
-const id = ParseHelper.parseInt(req.query.id);                   // '42' → 42, 'abc' → null
-const ids = ParseHelper.parseIntArray(req.query.ids);            // '1,2,3' → [1, 2, 3]
-
-// Paginación estandarizada
-const { page, limit, offset } = ParseHelper.parsePagination(req.query, { maxLimit: 100 });
-
-// Parseo completo con schema
+const activo = ParseHelper.parseBoolean(req.query.activo);
+const { page, limit, offset } = ParseHelper.parsePagination(req.query);
 const filtros = ParseHelper.parseFilters(req.query, {
   activo: 'boolean',
-  categoria_id: 'int',
-  busqueda: 'string'
+  categoria_id: 'int'
 });
 ```
 
-**Referencia**: `utils/helpers/ParseHelper.js`
+### BaseCrudController
 
-### Patrón BaseCrudController (Backend)
-
-Para controllers CRUD simples (~20 líneas vs ~150):
+Para controllers CRUD simples (~20 líneas):
 
 ```javascript
 const { createCrudController } = require('../../../utils/BaseCrudController');
-const MiModel = require('../models/mi.model');
 
 module.exports = createCrudController({
   Model: MiModel,
   resourceName: 'MiEntidad',
-  resourceNamePlural: 'mis entidades',
-  filterSchema: { activo: 'boolean', tipo: 'string' },
+  filterSchema: { activo: 'boolean' },
   allowedOrderFields: ['nombre', 'creado_en']
 });
 ```
 
-**Extender con métodos adicionales**:
+### ErrorHelper
+
 ```javascript
-const base = createCrudController({...});
-module.exports = {
-  ...base,
-  miMetodoCustom: asyncHandler(async (req, res) => { ... })
-};
+const { ErrorHelper } = require('../../../utils/helpers');
+
+const recurso = await Model.buscarPorId(id);
+ErrorHelper.throwIfNotFound(recurso, 'Producto');  // 404 automático
+ErrorHelper.throwValidation('Campo requerido');    // 400
+ErrorHelper.throwConflict('SKU duplicado');        // 409
 ```
 
-**Referencia**: `utils/BaseCrudController.js`, `catalogos/controllers/ubicaciones-trabajo.controller.js`
-
-### Patrón ORDER BY Seguro (Backend)
-
-**SIEMPRE** usar whitelist para ORDER BY dinámico:
+### ORDER BY Seguro
 
 ```javascript
 // ✅ CORRECTO - whitelist
-const CAMPOS_PERMITIDOS = ['nombre', 'creado_en', 'precio'];
-const ordenSeguro = CAMPOS_PERMITIDOS.includes(filtros.orden) ? filtros.orden : 'creado_en';
-const direccionSegura = filtros.direccion?.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
-const query = `SELECT * FROM tabla ORDER BY ${ordenSeguro} ${direccionSegura}`;
+const CAMPOS_PERMITIDOS = ['nombre', 'creado_en'];
+const ordenSeguro = CAMPOS_PERMITIDOS.includes(orden) ? orden : 'creado_en';
 
-// ❌ INCORRECTO - SQL injection vulnerable
-const query = `SELECT * FROM tabla ORDER BY ${req.query.orden}`;
+// ❌ INCORRECTO - SQL injection
+const query = `ORDER BY ${req.query.orden}`;
 ```
 
----
+### Optimización N+1 con unnest
 
-## Stores Zustand (5)
-
-| Store | Estado Principal | Notas |
-|-------|-----------------|-------|
-| **authStore** | user, accessToken, isAuthenticated | localStorage |
-| **sucursalStore** | sucursalActiva, sucursalesDisponibles | localStorage |
-| **themeStore** | theme, resolvedTheme | localStorage |
-| **onboardingStore** | formData, registroEnviado, emailEnviado | Usa `partialize` (excluye organizacion_id) |
-| **permisosStore** | permisos[], cache 5min | localStorage |
-
-### Selectores Zustand (OBLIGATORIO)
-
-**SIEMPRE** usar selectores exportados para evitar re-renders innecesarios:
+Para INSERT múltiple en 1 query:
 
 ```javascript
-// sucursalStore - selectores disponibles
-import { useSucursalStore, selectSucursalActiva, selectGetSucursalId } from '@/store/sucursalStore';
-
-// CORRECTO - usa selector
-const sucursalActiva = useSucursalStore(selectSucursalActiva);
-const getSucursalId = useSucursalStore(selectGetSucursalId);
-
-// INCORRECTO - causa re-renders en cualquier cambio del store
-const sucursalActiva = useSucursalStore((state) => state.sucursalActiva);
+// En lugar de loop con N queries
+await db.query(`
+  INSERT INTO items (combo_id, producto_id, cantidad)
+  SELECT $1, unnest($2::int[]), unnest($3::int[])
+`, [comboId, productosIds, cantidades]);
 ```
-
-**Selectores disponibles por store**:
-- `sucursalStore`: `selectSucursalActiva`, `selectSucursalesDisponibles`, `selectGetSucursalId`
-- `authStore`: `selectUser`, `selectIsAuthenticated`, `selectAccessToken`
-- `themeStore`: `selectTheme`, `selectResolvedTheme`
 
 ---
 
-## Módulos Principales
+## Patrones Frontend
 
-| Módulo | Descripción |
-|--------|-------------|
-| **Agendamiento** | Citas, horarios, servicios, bloqueos |
-| **Inventario** | Productos, variantes, NS/Lotes, OC, WMS, valoración |
-| **POS** | Ventas, cupones, promociones, sesiones caja |
-| **Clientes** | CRM, etiquetas, crédito |
-| **Profesionales** | Vista detalle con 7 tabs, edición inline |
-| **Vacaciones** | Solicitudes, políticas, saldos |
-| **Workflows** | Motor aprobaciones multi-nivel |
+### createCRUDHooks
 
-**Totales**: 24 módulos backend, 94 controllers, 92 hooks frontend
+```javascript
+import { createCRUDHooks, createSanitizer } from '@/hooks/factories';
+
+const sanitize = createSanitizer(['campo_texto', { name: 'id', type: 'id' }]);
+
+const hooks = createCRUDHooks({
+  name: 'entidad',
+  api: miApi,
+  baseKey: 'entidades',
+  sanitize,
+  usePreviousData: true, // Evita flash de loading en paginación
+});
+
+export const useEntidades = hooks.useList;
+export const useCrearEntidad = hooks.useCreate;
+```
+
+### Queries con sucursalId
+
+Queries que verifican permisos requieren `sucursalId`:
+
+```javascript
+const getSucursalId = useSucursalStore(selectGetSucursalId);
+const sucursalId = getSucursalId();
+
+useQuery({
+  queryKey: ['entidades', sucursalId],
+  queryFn: () => api.listar({ sucursalId }),
+  enabled: !!sucursalId, // No ejecutar sin sucursal
+});
+```
+
+### ListadoCRUDPage
+
+Para páginas CRUD estándar (reduce ~60% código):
+
+```jsx
+<ListadoCRUDPage
+  title="Entidades"
+  useListQuery={useEntidades}
+  useDeleteMutation={useEliminarEntidad}
+  columns={COLUMNS}
+  FormDrawer={FormDrawer}
+/>
+```
+
+### Selectores Zustand
+
+```javascript
+// ✅ CORRECTO - usa selector exportado
+const sucursalActiva = useSucursalStore(selectSucursalActiva);
+
+// ❌ INCORRECTO - causa re-renders
+const sucursalActiva = useSucursalStore(state => state.sucursalActiva);
+```
+
+---
+
+## Stores Zustand
+
+| Store | Estado Principal |
+|-------|-----------------|
+| **authStore** | user, accessToken, isAuthenticated |
+| **sucursalStore** | sucursalActiva, sucursalesDisponibles |
+| **themeStore** | theme, resolvedTheme |
+| **permisosStore** | permisos[], cache 5min |
 
 ---
 
@@ -396,7 +277,6 @@ const sucursalActiva = useSucursalStore((state) => state.sucursalActiva);
 | "field not allowed to be empty" | Sanitizar `""` a `undefined` |
 | Cambios no se reflejan | `docker restart <contenedor>` + Ctrl+Shift+R |
 | "Rendered fewer hooks" | Mover returns condicionales DESPUÉS de hooks |
-| Error 400 con `verificarPermiso` | Enviar `sucursal_id` en body |
 
 ---
 
@@ -411,4 +291,4 @@ const sucursalActiva = useSucursalStore((state) => state.sucursalActiva);
 
 ---
 
-**Actualizado**: 18 Enero 2026 - Patrones backend (ParseHelper, BaseCrudController, ORDER BY seguro)
+**Actualizado**: 19 Enero 2026 - usePreviousData en hooks, sucursalId en queries

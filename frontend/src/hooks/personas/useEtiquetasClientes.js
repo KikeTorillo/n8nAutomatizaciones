@@ -48,6 +48,7 @@ const hooks = createCRUDHooks({
     delete: { 400: 'No se puede eliminar la etiqueta (tiene clientes asignados)' },
   },
   staleTime: STALE_TIMES.SEMI_STATIC,
+  usePreviousData: true, // Evita flash de loading durante paginación
 });
 
 // Exportar hooks CRUD

@@ -55,6 +55,7 @@ const hooks = createCRUDHooks({
   },
   staleTime: STALE_TIMES.SEMI_STATIC,
   responseKey: 'productos',
+  usePreviousData: true, // Evita flash de loading durante paginación
 });
 
 // Exportar hooks CRUD
@@ -86,6 +87,7 @@ export function useBuscarProductos(params) {
 
 /**
  * Hook para obtener productos con stock crítico
+ * Ene 2026: Cambiado a REAL_TIME (30s) - datos críticos para reabastecimiento
  */
 export function useStockCritico() {
   return useQuery({
@@ -94,7 +96,7 @@ export function useStockCritico() {
       const response = await inventarioApi.obtenerStockCritico();
       return response.data.data.productos || [];
     },
-    staleTime: STALE_TIMES.DYNAMIC, // 2 minutos (stock crítico requiere actualización frecuente)
+    staleTime: STALE_TIMES.REAL_TIME, // 30 seg - stock crítico requiere actualización frecuente
   });
 }
 

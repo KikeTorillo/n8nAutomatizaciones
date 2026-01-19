@@ -1,6 +1,6 @@
 const Joi = require('joi');
 const { commonSchemas } = require('../../../middleware/validation');
-const { passwordSchemas } = require('../../../schemas/shared');
+const { passwordSchemas, fields } = require('../../../schemas/shared');
 
 const crear = {
     body: Joi.object({
@@ -17,7 +17,7 @@ const crear = {
             .max(150)
             .optional()
             .trim(),
-        telefono: commonSchemas.mexicanPhone.optional(),
+        telefono: fields.telefono.optional(),
         rol: Joi.string()
             .valid('admin', 'propietario', 'empleado', 'cliente')
             .optional()
@@ -102,7 +102,7 @@ const actualizar = {
             .max(150)
             .trim()
             .optional(),
-        telefono: commonSchemas.mexicanPhone.optional(),
+        telefono: fields.telefono.optional(),
         zona_horaria: Joi.string()
             .min(3)
             .max(50)

@@ -10,7 +10,7 @@
  */
 
 const EtiquetaClienteModel = require('../models/etiqueta.model');
-const { ResponseHelper } = require('../../../utils/helpers');
+const { ResponseHelper, ParseHelper } = require('../../../utils/helpers');
 const asyncHandler = require('../../../middleware/asyncHandler');
 
 class EtiquetaClienteController {
@@ -39,11 +39,9 @@ class EtiquetaClienteController {
      * GET /api/v1/clientes/etiquetas
      */
     static listar = asyncHandler(async (req, res) => {
-        const { soloActivas } = req.query;
+        const soloActivas = ParseHelper.parseBoolean(req.query.soloActivas, true);
 
-        const opciones = {
-            soloActivas: soloActivas !== 'false'
-        };
+        const opciones = { soloActivas };
 
         const etiquetas = await EtiquetaClienteModel.listar(req.tenant.organizacionId, opciones);
 

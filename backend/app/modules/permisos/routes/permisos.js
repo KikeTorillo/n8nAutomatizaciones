@@ -34,6 +34,7 @@ router.get('/catalogo',
  */
 router.get('/modulos',
     auth.authenticateToken,
+    validation.validate(permisosSchemas.listarModulosSchema),
     PermisosController.listarModulos
 );
 

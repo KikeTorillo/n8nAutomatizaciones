@@ -68,6 +68,9 @@ class PermisosCacheService {
         /** @type {boolean} Indica si Redis está disponible */
         this.redisAvailable = false;
 
+        /** @type {boolean} Indica si los event listeners ya fueron registrados */
+        this.listenersRegistered = false;
+
         // Inicializar conexión Redis de forma asíncrona
         this.initRedis();
 
@@ -104,19 +107,24 @@ class PermisosCacheService {
             // Cliente principal para operaciones de cache
             this.redisClient = redis.createClient(redisConfig);
 
-            this.redisClient.on('error', (err) => {
-                logger.error('[PermisosCacheService] Redis error', { error: err.message });
-                this.redisAvailable = false;
-            });
+            // Protección contra duplicación de event listeners
+            if (!this.listenersRegistered) {
+                this.redisClient.on('error', (err) => {
+                    logger.error('[PermisosCacheService] Redis error', { error: err.message });
+                    this.redisAvailable = false;
+                });
 
-            this.redisClient.on('ready', () => {
-                logger.info('[PermisosCacheService] Redis conectado (DB 4)');
-                this.redisAvailable = true;
-            });
+                this.redisClient.on('ready', () => {
+                    logger.info('[PermisosCacheService] Redis conectado (DB 4)');
+                    this.redisAvailable = true;
+                });
 
-            this.redisClient.on('reconnecting', () => {
-                logger.debug('[PermisosCacheService] Reconectando a Redis...');
-            });
+                this.redisClient.on('reconnecting', () => {
+                    logger.debug('[PermisosCacheService] Reconectando a Redis...');
+                });
+
+                this.listenersRegistered = true;
+            }
 
             await this.redisClient.connect();
 
@@ -490,16 +498,24 @@ class PermisosCacheService {
         try {
             if (this.cleanupInterval) {
                 clearInterval(this.cleanupInterval);
+                this.cleanupInterval = null;
             }
 
             if (this.subscriberClient && this.subscriberClient.isOpen) {
                 await this.subscriberClient.unsubscribe(CHANNEL_INVALIDACION);
+                this.subscriberClient.removeAllListeners();
                 await this.subscriberClient.quit();
             }
 
             if (this.redisClient && this.redisClient.isOpen) {
+                this.redisClient.removeAllListeners();
                 await this.redisClient.quit();
             }
+
+            // Reset de estado para permitir re-inicialización limpia
+            this.listenersRegistered = false;
+            this.redisAvailable = false;
+            this.isInitialized = false;
 
             logger.info('[PermisosCacheService] Conexiones cerradas');
         } catch (error) {

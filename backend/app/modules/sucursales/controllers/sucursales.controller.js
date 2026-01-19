@@ -8,6 +8,7 @@ const {
     itemTransferenciaSchema,
     recibirTransferenciaSchema
 } = require('../schemas/sucursales.schemas');
+const { ParseHelper } = require('../../../utils/helpers');
 const logger = require('../../../utils/logger');
 
 /**
@@ -26,11 +27,11 @@ class SucursalesController {
     static async listar(req, res) {
         try {
             const { organizacion_id } = req.user;
-            const filtros = {
-                activo: req.query.activo !== undefined ? req.query.activo === 'true' : undefined,
-                es_matriz: req.query.es_matriz !== undefined ? req.query.es_matriz === 'true' : undefined,
-                ciudad_id: req.query.ciudad_id ? parseInt(req.query.ciudad_id) : undefined
-            };
+            const filtros = ParseHelper.parseFilters(req.query, {
+                activo: 'boolean',
+                es_matriz: 'boolean',
+                ciudad_id: 'int'
+            });
 
             const sucursales = await SucursalesModel.listar(organizacion_id, filtros);
 
@@ -386,13 +387,13 @@ class SucursalesController {
     static async listarTransferencias(req, res) {
         try {
             const { organizacion_id } = req.user;
-            const filtros = {
-                estado: req.query.estado,
-                sucursal_origen_id: req.query.sucursal_origen_id ? parseInt(req.query.sucursal_origen_id) : undefined,
-                sucursal_destino_id: req.query.sucursal_destino_id ? parseInt(req.query.sucursal_destino_id) : undefined,
-                fecha_desde: req.query.fecha_desde,
-                fecha_hasta: req.query.fecha_hasta
-            };
+            const filtros = ParseHelper.parseFilters(req.query, {
+                estado: 'string',
+                sucursal_origen_id: 'int',
+                sucursal_destino_id: 'int',
+                fecha_desde: 'string',
+                fecha_hasta: 'string'
+            });
 
             const transferencias = await TransferenciasStockModel.listar(filtros, organizacion_id);
 
@@ -642,11 +643,11 @@ class SucursalesController {
     static async obtenerMetricas(req, res) {
         try {
             const { organizacion_id } = req.user;
-            const filtros = {
-                sucursal_id: req.query.sucursal_id ? parseInt(req.query.sucursal_id) : undefined,
-                fecha_desde: req.query.fecha_desde || undefined,
-                fecha_hasta: req.query.fecha_hasta || undefined
-            };
+            const filtros = ParseHelper.parseFilters(req.query, {
+                sucursal_id: 'int',
+                fecha_desde: 'string',
+                fecha_hasta: 'string'
+            });
 
             const metricas = await SucursalesModel.obtenerMetricas(organizacion_id, filtros);
 

@@ -1,5 +1,5 @@
 const { AlertasInventarioModel } = require('../models');
-const { ResponseHelper } = require('../../../utils/helpers');
+const { ResponseHelper, ParseHelper } = require('../../../utils/helpers');
 const { asyncHandler } = require('../../../middleware');
 
 /**
@@ -17,16 +17,24 @@ class AlertasInventarioController {
     static listar = asyncHandler(async (req, res) => {
         const organizacionId = req.tenant.organizacionId;
 
+        const { pagination, filters } = ParseHelper.parseListParams(
+            req.query,
+            {
+                tipo_alerta: 'string',
+                nivel: 'string',
+                leida: 'boolean',
+                producto_id: 'int',
+                fecha_desde: 'string',
+                fecha_hasta: 'string',
+                solo_necesitan_accion: 'boolean'
+            },
+            { defaultLimit: 50 }
+        );
+
         const filtros = {
-            tipo_alerta: req.query.tipo_alerta || undefined,
-            nivel: req.query.nivel || undefined,
-            leida: req.query.leida !== undefined ? req.query.leida === 'true' : undefined,
-            producto_id: req.query.producto_id ? parseInt(req.query.producto_id) : undefined,
-            fecha_desde: req.query.fecha_desde || undefined,
-            fecha_hasta: req.query.fecha_hasta || undefined,
-            solo_necesitan_accion: req.query.solo_necesitan_accion === 'true',
-            limit: req.query.limit ? parseInt(req.query.limit) : 50,
-            offset: req.query.offset ? parseInt(req.query.offset) : 0
+            ...filters,
+            limit: pagination.limit,
+            offset: pagination.offset
         };
 
         // Usar la nueva versión con stock proyectado

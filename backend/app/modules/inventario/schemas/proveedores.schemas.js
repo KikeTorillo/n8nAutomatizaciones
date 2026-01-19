@@ -25,7 +25,7 @@ const proveedoresSchemas = {
 
             // Usa validación teléfono compartida
             telefono: fields.telefonoConLada.optional().allow(null, ''),
-            email: Joi.string().email().max(255).optional().allow(null, ''),
+            email: fields.email.optional().allow(null, ''),
             sitio_web: Joi.string().uri().max(255).optional().allow(null, ''),
 
             direccion: Joi.string().max(500).optional().allow(null, ''),
@@ -58,7 +58,7 @@ const proveedoresSchemas = {
             razon_social: Joi.string().max(200).optional().allow(null, ''),
             rfc: fields.rfc.optional(),
             telefono: fields.telefonoConLada.optional().allow(null, ''),
-            email: Joi.string().email().max(255).optional().allow(null, ''),
+            email: fields.email.optional().allow(null, ''),
             sitio_web: Joi.string().uri().max(255).optional().allow(null, ''),
             direccion: Joi.string().max(500).optional().allow(null, ''),
             codigo_postal: Joi.string().max(10).optional().allow(null, ''),

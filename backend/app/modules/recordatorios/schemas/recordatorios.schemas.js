@@ -151,9 +151,27 @@ const procesarBatchSchema = Joi.object({
     })
 });
 
+/**
+ * Schema para filtros de historial de recordatorios
+ * GET /api/v1/recordatorios/historial
+ */
+const historialFiltrosSchema = Joi.object({
+  cita_id: Joi.number()
+    .integer()
+    .positive()
+    .required()
+    .messages({
+      'number.base': 'cita_id debe ser un número',
+      'number.integer': 'cita_id debe ser un número entero',
+      'number.positive': 'cita_id debe ser un número positivo',
+      'any.required': 'cita_id es requerido'
+    })
+});
+
 module.exports = {
   actualizarConfiguracionSchema,
   enviarPruebaSchema,
   estadisticasFiltrosSchema,
-  procesarBatchSchema
+  procesarBatchSchema,
+  historialFiltrosSchema
 };

@@ -47,6 +47,7 @@ const hooks = createCRUDHooks({
     delete: { 409: 'No se puede eliminar la categoría porque tiene productos o subcategorías asociadas' },
   },
   staleTime: STALE_TIMES.STATIC_DATA,
+  usePreviousData: true, // Evita flash de loading durante paginación
   responseKey: 'categorias',
 });
 
