@@ -7,7 +7,7 @@
  */
 
 const Joi = require('joi');
-const { fields } = require('../../../schemas/shared');
+const { fields, withPagination } = require('../../../schemas/shared');
 
 const posSchemas = {
     // ========================================================================
@@ -800,9 +800,7 @@ const posSchemas = {
      * GET /api/v1/pos/cupones
      */
     listarCupones: {
-        query: Joi.object({
-            page: Joi.number().integer().min(1).optional().default(1),
-            limit: Joi.number().integer().min(1).max(100).optional().default(20),
+        query: withPagination({
             busqueda: Joi.string().min(2).max(100).optional(),
             activo: Joi.string().valid('true', 'false').optional(),
             vigente: Joi.string().valid('true', 'false').optional(),

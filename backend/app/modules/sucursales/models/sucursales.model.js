@@ -1,5 +1,6 @@
 const RLSContextManager = require('../../../utils/rlsContextManager');
 const logger = require('../../../utils/logger');
+const { ErrorHelper } = require('../../../utils/helpers');
 
 /**
  * Model para CRUD de sucursales
@@ -193,9 +194,7 @@ class SucursalesModel {
                 [id]
             );
 
-            if (existeQuery.rows.length === 0) {
-                throw new Error('Sucursal no encontrada');
-            }
+            ErrorHelper.throwIfNotFound(existeQuery.rows[0], 'Sucursal');
 
             // Construir query dinámico
             const campos = [];
@@ -223,7 +222,7 @@ class SucursalesModel {
             }
 
             if (campos.length === 0) {
-                throw new Error('No hay campos para actualizar');
+                ErrorHelper.throwValidation('No hay campos para actualizar');
             }
 
             campos.push(`actualizado_en = NOW()`);
@@ -262,12 +261,10 @@ class SucursalesModel {
                 [id]
             );
 
-            if (sucursalQuery.rows.length === 0) {
-                throw new Error('Sucursal no encontrada');
-            }
+            ErrorHelper.throwIfNotFound(sucursalQuery.rows[0], 'Sucursal');
 
             if (sucursalQuery.rows[0].es_matriz) {
-                throw new Error('No se puede eliminar la sucursal matriz');
+                ErrorHelper.throwConflict('No se puede eliminar la sucursal matriz');
             }
 
             // Soft delete

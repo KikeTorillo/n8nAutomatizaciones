@@ -1,5 +1,6 @@
 const RLSContextManager = require('../../../utils/rlsContextManager');
 const logger = require('../../../utils/logger');
+const { ErrorHelper } = require('../../../utils/helpers');
 
 /**
  * Model para CRUD de variantes de producto
@@ -229,9 +230,7 @@ class VariantesModel {
             `;
             const varianteResult = await db.query(varianteQuery, [id, organizacionId]);
 
-            if (varianteResult.rows.length === 0) {
-                throw new Error('Variante no encontrada');
-            }
+            ErrorHelper.throwIfNotFound(varianteResult.rows[0], 'Variante');
 
             const variante = varianteResult.rows[0];
             const stockAntes = variante.stock_actual;
@@ -239,7 +238,7 @@ class VariantesModel {
             const stockDespues = stockAntes + cantidadAjuste;
 
             if (stockDespues < 0) {
-                throw new Error('Stock insuficiente');
+                ErrorHelper.throwConflict('Stock insuficiente');
             }
 
             // Actualizar stock de la variante
@@ -337,9 +336,7 @@ class VariantesModel {
             `;
             const productoResult = await db.query(productoQuery, [productoId]);
 
-            if (productoResult.rows.length === 0) {
-                throw new Error('Producto no encontrado');
-            }
+            ErrorHelper.throwIfNotFound(productoResult.rows[0], 'Producto');
 
             const producto = productoResult.rows[0];
             const skuBase = opciones.sku_base || producto.sku || 'PROD';

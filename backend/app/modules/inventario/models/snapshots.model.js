@@ -1,5 +1,6 @@
 const RLSContextManager = require('../../../utils/rlsContextManager');
 const logger = require('../../../utils/logger');
+const { ErrorHelper } = require('../../../utils/helpers');
 
 /**
  * Model para Inventory at Date (Snapshots de Inventario)
@@ -216,9 +217,7 @@ class SnapshotsModel {
                 WHERE p.id = $1 AND p.organizacion_id = $2
             `, [productoId, organizacionId]);
 
-            if (!productoResult.rows[0]) {
-                throw new Error('Producto no encontrado');
-            }
+            ErrorHelper.throwIfNotFound(productoResult.rows[0], 'Producto');
 
             // 3. Obtener OC pendientes para este producto
             const ocPendientesResult = await db.query(`

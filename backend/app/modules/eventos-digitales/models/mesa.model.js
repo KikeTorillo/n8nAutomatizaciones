@@ -21,6 +21,7 @@
  */
 
 const RLSContextManager = require('../../../utils/rlsContextManager');
+const { ErrorHelper } = require('../../../utils/helpers');
 const logger = require('../../../utils/logger');
 
 class MesaModel {
@@ -187,7 +188,7 @@ class MesaModel {
             }
 
             if (campos.length === 0) {
-                throw new Error('No hay campos para actualizar');
+                ErrorHelper.throwValidation('No hay campos para actualizar');
             }
 
             campos.push(`actualizado_en = NOW()`);
@@ -300,9 +301,7 @@ class MesaModel {
             `;
             const capacidadResult = await db.query(capacidadQuery, [mesaId]);
 
-            if (capacidadResult.rows.length === 0) {
-                throw new Error('Mesa no encontrada');
-            }
+            ErrorHelper.throwIfNotFound(capacidadResult.rows[0], 'Mesa');
 
             const mesa = capacidadResult.rows[0];
 
@@ -314,9 +313,7 @@ class MesaModel {
             `;
             const invitadoResult = await db.query(invitadoQuery, [invitadoId]);
 
-            if (invitadoResult.rows.length === 0) {
-                throw new Error('Invitado no encontrado');
-            }
+            ErrorHelper.throwIfNotFound(invitadoResult.rows[0], 'Invitado');
 
             const invitado = invitadoResult.rows[0];
             const personasInvitado = invitado.num_asistentes || 1;
@@ -329,7 +326,7 @@ class MesaModel {
             // Calcular disponibilidad
             const disponible = mesa.capacidad - mesa.ocupado;
             if (personasInvitado > disponible) {
-                throw new Error(`Capacidad insuficiente en ${mesa.nombre}. Disponible: ${disponible}, Requerido: ${personasInvitado}`);
+                ErrorHelper.throwValidation(`Capacidad insuficiente en ${mesa.nombre}. Disponible: ${disponible}, Requerido: ${personasInvitado}`);
             }
 
             // Asignar invitado a la mesa
@@ -366,9 +363,7 @@ class MesaModel {
                 RETURNING *
             `, [invitadoId]);
 
-            if (result.rows.length === 0) {
-                throw new Error('Invitado no encontrado');
-            }
+            ErrorHelper.throwIfNotFound(result.rows[0], 'Invitado');
 
             logger.info('[MesaModel.desasignarInvitado] Invitado removido de mesa', {
                 invitado_id: invitadoId

@@ -1,6 +1,6 @@
 const RLSContextManager = require('../../../utils/rlsContextManager');
 const logger = require('../../../utils/logger');
-const PaginationHelper = require('../../../utils/helpers').PaginationHelper;
+const { PaginationHelper, ErrorHelper } = require('../../../utils/helpers');
 
 /**
  * Model para gestión de asientos contables (libro diario)
@@ -161,7 +161,7 @@ class AsientosModel {
         return await RLSContextManager.transaction(organizacionId, async (db) => {
             // Validar que hay movimientos
             if (!datos.movimientos || datos.movimientos.length < 2) {
-                throw new Error('Un asiento debe tener al menos 2 movimientos');
+                ErrorHelper.throwValidation('Un asiento debe tener al menos 2 movimientos');
             }
 
             // Calcular totales
@@ -175,7 +175,7 @@ class AsientosModel {
 
             // Validar cuadre si se quiere publicar directamente
             if (datos.estado === 'publicado' && Math.abs(totalDebe - totalHaber) > 0.01) {
-                throw new Error(`El asiento no cuadra. Debe: ${totalDebe}, Haber: ${totalHaber}`);
+                ErrorHelper.throwValidation(`El asiento no cuadra. Debe: ${totalDebe}, Haber: ${totalHaber}`);
             }
 
             // Crear o verificar período contable para la fecha
@@ -253,12 +253,10 @@ class AsientosModel {
                 [asientoId, fecha, organizacionId]
             );
 
-            if (asiento.rows.length === 0) {
-                throw new Error('Asiento no encontrado');
-            }
+            ErrorHelper.throwIfNotFound(asiento.rows[0], 'Asiento');
 
             if (asiento.rows[0].estado !== 'borrador') {
-                throw new Error('Solo se pueden modificar asientos en estado borrador');
+                ErrorHelper.throwConflict('Solo se pueden modificar asientos en estado borrador');
             }
 
             // Si hay nuevos movimientos, recalcular totales
@@ -338,17 +336,15 @@ class AsientosModel {
                 [asientoId, fecha, organizacionId]
             );
 
-            if (asiento.rows.length === 0) {
-                throw new Error('Asiento no encontrado');
-            }
+            ErrorHelper.throwIfNotFound(asiento.rows[0], 'Asiento');
 
             if (asiento.rows[0].estado !== 'borrador') {
-                throw new Error('Solo se pueden publicar asientos en estado borrador');
+                ErrorHelper.throwConflict('Solo se pueden publicar asientos en estado borrador');
             }
 
             // Validar cuadre
             if (Math.abs(asiento.rows[0].total_debe - asiento.rows[0].total_haber) > 0.01) {
-                throw new Error('El asiento no cuadra. No se puede publicar.');
+                ErrorHelper.throwValidation('El asiento no cuadra. No se puede publicar.');
             }
 
             // Verificar que el período esté abierto
@@ -359,7 +355,7 @@ class AsientosModel {
             );
 
             if (periodo.rows.length > 0 && periodo.rows[0].estado === 'cerrado') {
-                throw new Error('No se puede publicar en un período cerrado');
+                ErrorHelper.throwConflict('No se puede publicar en un período cerrado');
             }
 
             // Publicar
@@ -389,16 +385,14 @@ class AsientosModel {
                 [asientoId, fecha, organizacionId]
             );
 
-            if (asiento.rows.length === 0) {
-                throw new Error('Asiento no encontrado');
-            }
+            ErrorHelper.throwIfNotFound(asiento.rows[0], 'Asiento');
 
             if (asiento.rows[0].estado === 'anulado') {
-                throw new Error('El asiento ya está anulado');
+                ErrorHelper.throwConflict('El asiento ya está anulado');
             }
 
             if (asiento.rows[0].estado === 'borrador') {
-                throw new Error('Los asientos en borrador deben eliminarse, no anularse');
+                ErrorHelper.throwConflict('Los asientos en borrador deben eliminarse, no anularse');
             }
 
             // Anular
@@ -428,12 +422,10 @@ class AsientosModel {
                 [asientoId, fecha, organizacionId]
             );
 
-            if (asiento.rows.length === 0) {
-                throw new Error('Asiento no encontrado');
-            }
+            ErrorHelper.throwIfNotFound(asiento.rows[0], 'Asiento');
 
             if (asiento.rows[0].estado !== 'borrador') {
-                throw new Error('Solo se pueden eliminar asientos en estado borrador');
+                ErrorHelper.throwConflict('Solo se pueden eliminar asientos en estado borrador');
             }
 
             // Eliminar movimientos

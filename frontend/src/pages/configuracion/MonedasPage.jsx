@@ -16,11 +16,11 @@ import {
 } from 'lucide-react';
 
 import {
-  BackButton,
   Button,
   Input,
   Modal
 } from '@/components/ui';
+import { ConfigPageHeader } from '@/components/configuracion';
 import { useToast } from '@/hooks/utils';
 import { monedasApi } from '@/services/api/endpoints';
 import { useCurrency } from '@/hooks/utils';
@@ -162,37 +162,21 @@ function MonedasPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Header */}
-      <div className="bg-white dark:bg-gray-800 shadow-sm">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-4">
-              <BackButton to="/configuracion" label="Configuración" />
-              <div>
-                <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-                  Monedas y Tasas de Cambio
-                </h1>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  Gestiona las tasas de conversión
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => refetchTasas()}
-                disabled={isLoading}
-              >
-                <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
-              </Button>
-              <div className="p-3 bg-primary-100 dark:bg-primary-900/40 rounded-lg">
-                <Coins className="w-6 h-6 text-primary-600 dark:text-primary-400" />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <ConfigPageHeader
+        title="Monedas y Tasas de Cambio"
+        subtitle="Gestiona las tasas de conversión"
+        icon={Coins}
+        actions={
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => refetchTasas()}
+            disabled={isLoading}
+          >
+            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+          </Button>
+        }
+      />
 
       {/* Content */}
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">

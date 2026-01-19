@@ -1,5 +1,6 @@
 const { getDb } = require('../../../../config/database');
 const logger = require('../../../../utils/logger');
+const { ErrorHelper } = require('../../../../utils/helpers');
 const { DEFAULTS, CitaHelpersModel } = require('./cita.helpers.model');
 const RLSContextManager = require('../../../../utils/rlsContextManager');
 // ✅ FIX GAP #5: Importar CitaServicioQueries para evitar N+1 en listarConFiltros
@@ -32,12 +33,12 @@ class CitaBaseModel {
                     servicio_id: citaData.servicio_id
                 });
             } else {
-                throw new Error('Se requiere servicios_ids (array) o servicio_id (deprecated)');
+                ErrorHelper.throwValidation('Se requiere servicios_ids (array) o servicio_id (deprecated)');
             }
 
             // Validar que haya al menos un servicio
             if (serviciosIds.length === 0) {
-                throw new Error('Se requiere al menos un servicio');
+                ErrorHelper.throwValidation('Se requiere al menos un servicio');
             }
 
             // Validar entidades relacionadas (cliente y profesional)
@@ -79,7 +80,7 @@ class CitaBaseModel {
                     horario: `${citaData.hora_inicio}-${citaData.hora_fin}`,
                     errores: validacion.errores
                 });
-                throw new Error(`No se puede crear la cita: ${mensajesError}`);
+                ErrorHelper.throwConflict(`No se puede crear la cita: ${mensajesError}`);
             }
 
             // Log de advertencias si las hay
@@ -106,9 +107,7 @@ class CitaBaseModel {
             const serviciosData = serviciosIds.map((servicioId, index) => {
                 const servicio = serviciosMap.get(servicioId);
 
-                if (!servicio) {
-                    throw new Error(`Servicio con ID ${servicioId} no encontrado`);
-                }
+                ErrorHelper.throwIfNotFound(servicio, `Servicio con ID ${servicioId}`);
 
                 // Usar datos proporcionados o defaults del servicio
                 const servicioData = citaData.servicios_data?.[index] || {};
@@ -387,13 +386,11 @@ class CitaBaseModel {
                 organizacion_id_encontrado: citaExistente?.organizacion_id
             });
 
-            if (!citaExistente) {
-                throw new Error('Cita no encontrada');
-            }
+            ErrorHelper.throwIfNotFound(citaExistente, 'Cita');
 
             // Validar que se puede modificar
             if (['completada', 'cancelada'].includes(citaExistente.estado)) {
-                throw new Error('Transición de estado inválida: no se puede modificar una cita completada o cancelada');
+                ErrorHelper.throwConflict('Transición de estado inválida: no se puede modificar una cita completada o cancelada');
             }
 
             // Validar horario permitido si se cambian fechas/horas o profesional
@@ -430,7 +427,7 @@ class CitaBaseModel {
                         horario: `${nuevaHoraInicio}-${nuevaHoraFin}`,
                         errores: validacion.errores
                     });
-                    throw new Error(`No se puede actualizar la cita: ${mensajesError}`);
+                    ErrorHelper.throwConflict(`No se puede actualizar la cita: ${mensajesError}`);
                 }
 
                 // Log de advertencias si las hay
@@ -561,7 +558,7 @@ class CitaBaseModel {
                             horario: `${horaInicioFinal}-${datosActualizacion.hora_fin}`,
                             errores: validacion.errores
                         });
-                        throw new Error(`No se puede actualizar los servicios: ${mensajesError}`);
+                        ErrorHelper.throwConflict(`No se puede actualizar los servicios: ${mensajesError}`);
                     }
 
                     if (validacion.advertencias.length > 0) {
@@ -657,7 +654,7 @@ class CitaBaseModel {
             }
 
             if (updates.length === 0) {
-                throw new Error('No se proporcionaron campos para actualizar');
+                ErrorHelper.throwValidation('No se proporcionaron campos para actualizar');
             }
 
             // Agregar campos de auditoría
@@ -673,9 +670,7 @@ class CitaBaseModel {
 
             const resultado = await db.query(query, valores);
 
-            if (resultado.rows.length === 0) {
-                throw new Error('No se pudo actualizar la cita');
-            }
+            ErrorHelper.throwIfNotFound(resultado.rows[0], 'Cita');
 
             // Registrar evento de auditoría
             await CitaHelpersModel.registrarEventoAuditoria({
@@ -704,7 +699,7 @@ class CitaBaseModel {
             }
 
             if (['completada', 'cancelada', 'en_curso'].includes(citaExistente.estado)) {
-                throw new Error(`No se puede cancelar una cita ${citaExistente.estado}`);
+                ErrorHelper.throwConflict(`No se puede cancelar una cita ${citaExistente.estado}`);
             }
 
             // Marcar como cancelada (soft delete)
@@ -963,7 +958,7 @@ class CitaBaseModel {
         // Validar patrón de recurrencia
         const validacionPatron = RecurrenciaUtil.validarPatronRecurrencia(citaData.patron_recurrencia);
         if (!validacionPatron.valido) {
-            throw new Error(`Patrón de recurrencia inválido: ${validacionPatron.errores.join(', ')}`);
+            ErrorHelper.throwValidation(`Patrón de recurrencia inválido: ${validacionPatron.errores.join(', ')}`);
         }
 
         // Normalizar fecha de inicio
@@ -1025,9 +1020,7 @@ class CitaBaseModel {
                         db
                     );
 
-                    if (!servicio) {
-                        throw new Error(`Servicio con ID ${servicioId} no encontrado`);
-                    }
+                    ErrorHelper.throwIfNotFound(servicio, `Servicio con ID ${servicioId}`);
 
                     const servicioData = citaData.servicios_data?.[index] || {};
 
@@ -1181,7 +1174,7 @@ class CitaBaseModel {
 
             // Verificar que se creó al menos una cita
             if (resultado.citas_creadas.length === 0) {
-                throw new Error('No se pudo crear ninguna cita de la serie. Todas las fechas tienen conflictos.');
+                ErrorHelper.throwConflict('No se pudo crear ninguna cita de la serie. Todas las fechas tienen conflictos.');
             }
 
             // Actualizar total_en_serie en todas las citas creadas (por si algunas fueron omitidas)
@@ -1345,7 +1338,7 @@ class CitaBaseModel {
             `, [organizacionId, serieId]);
 
             if (parseInt(verificacion.rows[0].total) === 0) {
-                throw new Error('Serie de citas no encontrada');
+                ErrorHelper.throwNotFound('Serie de citas no encontrada');
             }
 
             // Construir condiciones de cancelación
@@ -1433,7 +1426,7 @@ class CitaBaseModel {
         // Validar patrón
         const validacionPatron = RecurrenciaUtil.validarPatronRecurrencia(datos.patron_recurrencia);
         if (!validacionPatron.valido) {
-            throw new Error(`Patrón inválido: ${validacionPatron.errores.join(', ')}`);
+            ErrorHelper.throwValidation(`Patrón inválido: ${validacionPatron.errores.join(', ')}`);
         }
 
         // Normalizar fecha

@@ -5,6 +5,7 @@
  */
 
 const Joi = require('joi');
+const { fields } = require('../../../schemas/shared');
 
 const subscripcionesSchemas = {
   /**
@@ -19,7 +20,8 @@ const subscripcionesSchemas = {
         'any.required': 'El ID del plan es requerido'
       }),
 
-    email: Joi.string().email().required()
+    // ✅ FIX v2.1: Usar fields.email con lowercase
+    email: fields.email.required()
       .messages({
         'string.email': 'El email no es válido',
         'any.required': 'El email es requerido'

@@ -13,6 +13,7 @@
  */
 
 const RLSContextManager = require('../../../utils/rlsContextManager');
+const { ErrorHelper } = require('../../../utils/helpers');
 const logger = require('../../../utils/logger');
 
 class ListasPreciosModel {
@@ -181,7 +182,7 @@ class ListasPreciosModel {
             );
 
             if (lista.rows[0]?.es_default) {
-                throw new Error('No se puede eliminar la lista de precios por defecto');
+                ErrorHelper.throwConflict('No se puede eliminar la lista de precios por defecto');
             }
 
             // Quitar asignación de clientes

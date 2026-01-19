@@ -4,6 +4,11 @@ const { asyncHandler } = require('../../../middleware');
 
 /**
  * Controller para reportes contables
+ *
+ * NO MIGRADO a BaseCrudController - Ene 2026
+ * Razones:
+ * - 100% métodos custom (9 métodos), sin operaciones CRUD estándar
+ * - Es un controller de reportes/consultas, no de entidades CRUD
  */
 class ReportesController {
 

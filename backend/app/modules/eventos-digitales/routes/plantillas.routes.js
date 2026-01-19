@@ -24,7 +24,7 @@ const router = express.Router();
 const PlantillasController = require('../controllers/plantillas.controller');
 
 // Schemas
-const plantillasSchemas = require('../schemas/plantilla.schema');
+const plantillasSchemas = require('../schemas/plantilla.schemas');
 
 // Middlewares
 const {

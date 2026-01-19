@@ -9,6 +9,7 @@
 
 const { getDb } = require('../../../config/database');
 const logger = require('../../../utils/logger');
+const { ErrorHelper } = require('../../../utils/helpers');
 
 class MonedasModel {
     // ========================================================================
@@ -209,7 +210,7 @@ class MonedasModel {
         const tasa = await this.obtenerTasa(origen, destino, fecha);
 
         if (!tasa) {
-            throw new Error(`No hay tasa de cambio disponible de ${origen} a ${destino}`);
+            ErrorHelper.throwValidation(`No hay tasa de cambio disponible de ${origen} a ${destino}`);
         }
 
         const montoConvertido = Math.round(monto * tasa.tasa * 100) / 100;

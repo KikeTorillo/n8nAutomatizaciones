@@ -13,6 +13,7 @@
  */
 
 const RLSContextManager = require('../../../utils/rlsContextManager');
+const { ErrorHelper } = require('../../../utils/helpers');
 
 class CombosModel {
 
@@ -415,24 +416,29 @@ class CombosModel {
 
             const grupo = grupoResult.rows[0];
 
-            // Crear modificadores iniciales
-            for (let i = 0; i < modificadores.length; i++) {
-                const mod = modificadores[i];
+            // ✅ FIX v2.1: Crear modificadores en 1 query (evitar N+1)
+            if (modificadores.length > 0) {
+                const nombres = modificadores.map(m => m.nombre);
+                const codigos = modificadores.map(m => m.codigo || null);
+                const prefijos = modificadores.map(m => m.prefijo || null);
+                const precios = modificadores.map(m => m.precio_adicional || 0);
+                const defaults = modificadores.map(m => m.es_default || false);
+                const ordenes = modificadores.map((_, i) => i);
+
                 await db.query(`
                     INSERT INTO modificadores
                         (grupo_id, organizacion_id, nombre, codigo, prefijo,
                          precio_adicional, es_default, orden)
-                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-                `, [
-                    grupo.id,
-                    organizacionId,
-                    mod.nombre,
-                    mod.codigo,
-                    mod.prefijo,
-                    mod.precio_adicional || 0,
-                    mod.es_default || false,
-                    i
-                ]);
+                    SELECT
+                        $1,
+                        $2,
+                        unnest($3::text[]),
+                        unnest($4::text[]),
+                        unnest($5::text[]),
+                        unnest($6::numeric[]),
+                        unnest($7::boolean[]),
+                        unnest($8::int[])
+                `, [grupo.id, organizacionId, nombres, codigos, prefijos, precios, defaults, ordenes]);
             }
 
             // Retornar con modificadores
@@ -502,7 +508,7 @@ class CombosModel {
             `, [grupoId]);
 
             if (parseInt(asignaciones.rows[0]?.total) > 0) {
-                throw new Error('El grupo tiene asignaciones a productos. Elimine las asignaciones primero.');
+                ErrorHelper.throwConflict('El grupo tiene asignaciones a productos. Elimine las asignaciones primero.');
             }
 
             const result = await db.query(`

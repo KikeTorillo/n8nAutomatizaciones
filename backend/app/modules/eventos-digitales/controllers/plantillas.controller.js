@@ -5,6 +5,18 @@
  * Gestión de plantillas de diseño.
  * Lectura pública, escritura solo super_admin.
  *
+ * ENDPOINTS (6):
+ * - GET    /plantillas              - Listar plantillas (público)
+ * - GET    /plantillas/:id          - Obtener plantilla (público)
+ * - POST   /plantillas              - Crear plantilla (super_admin)
+ * - PUT    /plantillas/:id          - Actualizar plantilla (super_admin)
+ * - DELETE /plantillas/:id          - Eliminar plantilla (super_admin)
+ * - GET    /plantillas/tipo/:tipo   - Listar por tipo de evento
+ *
+ * NO MIGRADO A BaseCrudController - Ene 2026
+ * Razón: Verificación de rol super_admin inline en cada método,
+ * no usa organizacionId (entidad global), listarPorTipo custom.
+ *
  * Fecha creación: 4 Diciembre 2025
  */
 

@@ -4,6 +4,7 @@
  * Fase 4 del Plan de Empleados Competitivo
  */
 const RLSContextManager = require('../../../utils/rlsContextManager');
+const { ErrorHelper } = require('../../../utils/helpers');
 
 class EducacionFormalModel {
 
@@ -58,22 +59,22 @@ class EducacionFormalModel {
             } catch (error) {
                 if (error.code === '23503') {
                     if (error.constraint?.includes('profesional')) {
-                        throw new Error('El profesional especificado no existe');
+                        ErrorHelper.throwValidation('El profesional especificado no existe');
                     }
                 }
                 if (error.code === '23514') {
                     if (error.constraint?.includes('fechas')) {
-                        throw new Error('La fecha de fin debe ser posterior a la fecha de inicio');
+                        ErrorHelper.throwValidation('La fecha de fin debe ser posterior a la fecha de inicio');
                     }
                     if (error.constraint?.includes('institucion')) {
-                        throw new Error('El nombre de la institución debe tener al menos 2 caracteres');
+                        ErrorHelper.throwValidation('El nombre de la institución debe tener al menos 2 caracteres');
                     }
                     if (error.constraint?.includes('titulo')) {
-                        throw new Error('El título debe tener al menos 2 caracteres');
+                        ErrorHelper.throwValidation('El título debe tener al menos 2 caracteres');
                     }
                 }
                 if (error.code === '22P02') {
-                    throw new Error('El nivel de educación especificado no es válido');
+                    ErrorHelper.throwValidation('El nivel de educación especificado no es válido');
                 }
                 throw error;
             }
@@ -204,7 +205,7 @@ class EducacionFormalModel {
             }
 
             if (campos.length === 0) {
-                throw new Error('No hay campos válidos para actualizar');
+                ErrorHelper.throwValidation('No hay campos válidos para actualizar');
             }
 
             // Agregar actualizado_por si se proporciona
@@ -227,19 +228,16 @@ class EducacionFormalModel {
             try {
                 const result = await db.query(query, valores);
 
-                if (result.rows.length === 0) {
-                    throw new Error('Registro de educación no encontrado');
-                }
-
+                ErrorHelper.throwIfNotFound(result.rows[0], 'Registro de educación');
                 return result.rows[0];
             } catch (error) {
                 if (error.code === '23514') {
                     if (error.constraint?.includes('fechas')) {
-                        throw new Error('La fecha de fin debe ser posterior a la fecha de inicio');
+                        ErrorHelper.throwValidation('La fecha de fin debe ser posterior a la fecha de inicio');
                     }
                 }
                 if (error.code === '22P02') {
-                    throw new Error('El nivel de educación especificado no es válido');
+                    ErrorHelper.throwValidation('El nivel de educación especificado no es válido');
                 }
                 throw error;
             }

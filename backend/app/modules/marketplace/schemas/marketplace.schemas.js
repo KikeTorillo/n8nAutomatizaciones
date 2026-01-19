@@ -14,6 +14,7 @@
  */
 
 const Joi = require('joi');
+const { fields } = require('../../../schemas/shared');
 
 const marketplaceSchemas = {
     // ========================================================================
@@ -57,14 +58,16 @@ const marketplaceSchemas = {
             descripcion_larga: Joi.string().optional().allow(null, ''),
 
             // Ubicación adicional
-            codigo_postal: Joi.string().max(10).optional().allow(null, ''),
+            // ✅ FIX v2.1: Usar fields.codigoPostal con validación
+            codigo_postal: fields.codigoPostal.optional().allow(null, ''),
             direccion_completa: Joi.string().optional().allow(null, ''),
             latitud: Joi.number().min(-90).max(90).optional().allow(null),
             longitud: Joi.number().min(-180).max(180).optional().allow(null),
 
             // Contacto público
-            telefono_publico: Joi.string().max(20).optional().allow(null, ''),
-            email_publico: Joi.string().email().max(150).optional().allow(null, '').messages({
+            telefono_publico: fields.telefonoGenerico.optional(),
+            // ✅ FIX v2.1: Usar fields.email con lowercase
+            email_publico: fields.email.optional().allow(null, '').messages({
                 'string.email': 'El email público debe ser válido'
             }),
             sitio_web: Joi.string().uri().max(255).optional().allow(null, '').messages({
@@ -111,12 +114,13 @@ const marketplaceSchemas = {
             meta_titulo: Joi.string().max(70).optional().allow(null, ''),
             meta_descripcion: Joi.string().max(160).optional().allow(null, ''),
             descripcion_larga: Joi.string().optional().allow(null, ''),
-            codigo_postal: Joi.string().max(10).optional().allow(null, ''),
+            // ✅ FIX v2.1: Usar fields estandarizados
+            codigo_postal: fields.codigoPostal.optional().allow(null, ''),
             direccion_completa: Joi.string().optional().allow(null, ''),
             latitud: Joi.number().min(-90).max(90).optional().allow(null),
             longitud: Joi.number().min(-180).max(180).optional().allow(null),
-            telefono_publico: Joi.string().max(20).optional().allow(null, ''),
-            email_publico: Joi.string().email().max(150).optional().allow(null, ''),
+            telefono_publico: fields.telefonoGenerico.optional(),
+            email_publico: fields.email.optional().allow(null, ''),
             sitio_web: Joi.string().uri().max(255).optional().allow(null, ''),
             instagram: Joi.string().max(100).optional().allow(null, ''),
             facebook: Joi.string().max(255).optional().allow(null, ''),

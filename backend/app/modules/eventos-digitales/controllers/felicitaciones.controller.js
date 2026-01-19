@@ -4,6 +4,18 @@
  * ====================================================================
  * Gestión de felicitaciones/mensajes del evento.
  *
+ * ENDPOINTS (6):
+ * - POST   /eventos/:eventoId/felicitaciones - Crear felicitación
+ * - GET    /eventos/:eventoId/felicitaciones - Listar felicitaciones
+ * - GET    /felicitaciones/:id               - Obtener felicitación
+ * - PUT    /felicitaciones/:id/aprobar       - Aprobar felicitación
+ * - PUT    /felicitaciones/:id/rechazar      - Rechazar felicitación
+ * - DELETE /felicitaciones/:id               - Eliminar felicitación
+ *
+ * NO MIGRADO A BaseCrudController - Ene 2026
+ * Razón: Depende de eventoId, métodos de moderación aprobar/rechazar,
+ * verificación de evento padre, conteo por estado.
+ *
  * Fecha creación: 4 Diciembre 2025
  */
 

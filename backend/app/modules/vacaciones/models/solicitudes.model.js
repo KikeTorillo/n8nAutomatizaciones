@@ -4,6 +4,7 @@
  * Fase 3 del Plan de Empleados Competitivo
  */
 const RLSContextManager = require('../../../utils/rlsContextManager');
+const { ErrorHelper } = require('../../../utils/helpers');
 const SaldosVacacionesModel = require('./saldos.model');
 const PoliticasVacacionesModel = require('./politicas.model');
 const { ESTADOS_SOLICITUD, ERRORES_VACACIONES } = require('../constants/vacaciones.constants');
@@ -29,11 +30,11 @@ class SolicitudesVacacionesModel {
             hoy.setHours(0, 0, 0, 0);
 
             if (fechaInicio < hoy) {
-                throw new Error(ERRORES_VACACIONES.FECHA_PASADA);
+                ErrorHelper.throwValidation(ERRORES_VACACIONES.FECHA_PASADA);
             }
 
             if (fechaInicio > fechaFin) {
-                throw new Error(ERRORES_VACACIONES.FECHAS_INVALIDAS);
+                ErrorHelper.throwValidation(ERRORES_VACACIONES.FECHAS_INVALIDAS);
             }
 
             // Obtener política
@@ -42,7 +43,7 @@ class SolicitudesVacacionesModel {
             // Validar anticipación mínima
             const diasAnticipacion = Math.ceil((fechaInicio - hoy) / (1000 * 60 * 60 * 24));
             if (diasAnticipacion < politica.dias_anticipacion_minimos) {
-                throw new Error(
+                ErrorHelper.throwValidation(
                     ERRORES_VACACIONES.ANTICIPACION_INSUFICIENTE.replace('{dias}', politica.dias_anticipacion_minimos)
                 );
             }
@@ -62,7 +63,7 @@ class SolicitudesVacacionesModel {
 
             // Validar días consecutivos máximos
             if (politica.dias_maximos_consecutivos && diasSolicitados > politica.dias_maximos_consecutivos) {
-                throw new Error(
+                ErrorHelper.throwValidation(
                     ERRORES_VACACIONES.DIAS_CONSECUTIVOS_EXCEDIDOS.replace('{max}', politica.dias_maximos_consecutivos)
                 );
             }
@@ -74,7 +75,7 @@ class SolicitudesVacacionesModel {
             );
 
             if (!verificacionSaldo.disponible) {
-                throw new Error(verificacionSaldo.mensaje);
+                ErrorHelper.throwValidation(verificacionSaldo.mensaje);
             }
 
             // Verificar solapamiento con otras solicitudes
@@ -93,7 +94,7 @@ class SolicitudesVacacionesModel {
             );
 
             if (solapamientoQuery.rows.length > 0) {
-                throw new Error(ERRORES_VACACIONES.SOLAPAMIENTO);
+                ErrorHelper.throwConflict(ERRORES_VACACIONES.SOLAPAMIENTO);
             }
 
             // Crear solicitud
@@ -356,12 +357,10 @@ class SolicitudesVacacionesModel {
             // Obtener solicitud
             const solicitud = await this.obtenerPorId(organizacionId, solicitudId);
 
-            if (!solicitud) {
-                throw new Error(ERRORES_VACACIONES.SOLICITUD_NO_ENCONTRADA);
-            }
+            ErrorHelper.throwIfNotFound(solicitud, 'Solicitud');
 
             if (solicitud.estado !== ESTADOS_SOLICITUD.PENDIENTE) {
-                throw new Error(ERRORES_VACACIONES.SOLICITUD_YA_PROCESADA);
+                ErrorHelper.throwConflict(ERRORES_VACACIONES.SOLICITUD_YA_PROCESADA);
             }
 
             // Obtener tipo de bloqueo 'vacaciones'
@@ -457,12 +456,10 @@ class SolicitudesVacacionesModel {
             // Obtener solicitud
             const solicitud = await this.obtenerPorId(organizacionId, solicitudId);
 
-            if (!solicitud) {
-                throw new Error(ERRORES_VACACIONES.SOLICITUD_NO_ENCONTRADA);
-            }
+            ErrorHelper.throwIfNotFound(solicitud, 'Solicitud');
 
             if (solicitud.estado !== ESTADOS_SOLICITUD.PENDIENTE) {
-                throw new Error(ERRORES_VACACIONES.SOLICITUD_YA_PROCESADA);
+                ErrorHelper.throwConflict(ERRORES_VACACIONES.SOLICITUD_YA_PROCESADA);
             }
 
             // Actualizar solicitud
@@ -504,13 +501,11 @@ class SolicitudesVacacionesModel {
             // Obtener solicitud
             const solicitud = await this.obtenerPorId(organizacionId, solicitudId);
 
-            if (!solicitud) {
-                throw new Error(ERRORES_VACACIONES.SOLICITUD_NO_ENCONTRADA);
-            }
+            ErrorHelper.throwIfNotFound(solicitud, 'Solicitud');
 
             // Solo se pueden cancelar solicitudes pendientes o aprobadas
             if (![ESTADOS_SOLICITUD.PENDIENTE, ESTADOS_SOLICITUD.APROBADA].includes(solicitud.estado)) {
-                throw new Error('Solo se pueden cancelar solicitudes pendientes o aprobadas');
+                ErrorHelper.throwConflict('Solo se pueden cancelar solicitudes pendientes o aprobadas');
             }
 
             const anio = new Date(solicitud.fecha_inicio).getFullYear();

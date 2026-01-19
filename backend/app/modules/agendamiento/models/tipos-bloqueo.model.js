@@ -1,5 +1,6 @@
 const RLSContextManager = require('../../../utils/rlsContextManager');
 const logger = require('../../../utils/logger');
+const { ErrorHelper } = require('../../../utils/helpers');
 
 class TipoBloqueoModel {
   /**
@@ -79,7 +80,7 @@ class TipoBloqueoModel {
         );
 
         if (tipoSistema.rows.length > 0) {
-          throw new Error(`El código "${data.codigo}" está reservado por un tipo del sistema`);
+          ErrorHelper.throwConflict(`El código "${data.codigo}" está reservado por un tipo del sistema`);
         }
 
         const query = `
@@ -127,12 +128,10 @@ class TipoBloqueoModel {
         [tipoId, orgId]
       );
 
-      if (tipoExistente.rows.length === 0) {
-        throw new Error('Tipo de bloqueo no encontrado');
-      }
+      ErrorHelper.throwIfNotFound(tipoExistente.rows[0], 'Tipo de bloqueo');
 
       if (tipoExistente.rows[0].es_sistema) {
-        throw new Error('No se pueden modificar tipos del sistema');
+        ErrorHelper.throwForbidden('No se pueden modificar tipos del sistema');
       }
 
       const camposActualizar = [];
@@ -154,7 +153,7 @@ class TipoBloqueoModel {
       });
 
       if (camposActualizar.length === 0) {
-        throw new Error('No hay campos válidos para actualizar');
+        ErrorHelper.throwValidation('No hay campos válidos para actualizar');
       }
 
       const query = `
@@ -183,12 +182,10 @@ class TipoBloqueoModel {
         [tipoId, orgId]
       );
 
-      if (tipo.rows.length === 0) {
-        throw new Error('Tipo de bloqueo no encontrado');
-      }
+      ErrorHelper.throwIfNotFound(tipo.rows[0], 'Tipo de bloqueo');
 
       if (tipo.rows[0].es_sistema) {
-        throw new Error('No se pueden eliminar tipos del sistema');
+        ErrorHelper.throwForbidden('No se pueden eliminar tipos del sistema');
       }
 
       // Verificar que no esté en uso
@@ -198,7 +195,7 @@ class TipoBloqueoModel {
       );
 
       if (parseInt(enUso.rows[0].total) > 0) {
-        throw new Error(`No se puede eliminar. Hay ${enUso.rows[0].total} bloqueos activos usando este tipo`);
+        ErrorHelper.throwConflict(`No se puede eliminar. Hay ${enUso.rows[0].total} bloqueos activos usando este tipo`);
       }
 
       // Soft delete

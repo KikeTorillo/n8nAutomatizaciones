@@ -7,7 +7,8 @@ import {
   useDesactivarModulo,
 } from '@/hooks/sistema';
 import useAuthStore, { selectIsAdmin } from '@/store/authStore';
-import { BackButton, ConfirmDialog } from '@/components/ui';
+import { ConfirmDialog } from '@/components/ui';
+import { ConfigPageHeader } from '@/components/configuracion';
 import { useToast } from '@/hooks/utils';
 import { useModalManager } from '@/hooks/utils';
 import {
@@ -236,18 +237,12 @@ function ModulosPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Header */}
-      <div className="bg-white dark:bg-gray-800 shadow-sm">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <BackButton to="/configuracion" label="Configuración" className="mb-3" />
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-            Gestión de Módulos
-          </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            Activa o desactiva módulos según tus necesidades
-          </p>
-        </div>
-      </div>
+      <ConfigPageHeader
+        title="Gestión de Módulos"
+        subtitle="Activa o desactiva módulos según tus necesidades"
+        icon={Settings}
+        maxWidth="max-w-5xl"
+      />
 
       {/* Content */}
       <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

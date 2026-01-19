@@ -14,6 +14,7 @@ import useSucursalStore, { selectGetSucursalId } from '@/store/sucursalStore';
 import { OPERACIONES_ALMACEN_KEYS } from './operaciones-almacen';
 import { useToast } from '@/hooks/utils';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
+import { queryKeys } from '@/hooks/config';
 
 /**
  * QUERY KEYS para batch picking
@@ -324,9 +325,15 @@ export function useCompletarBatch() {
     onSuccess: () => {
       queryClient.invalidateQueries(BATCH_PICKING_KEYS.all);
       queryClient.invalidateQueries(OPERACIONES_ALMACEN_KEYS.all);
-      // Invalidar inventario ya que puede haber movimientos de stock
-      queryClient.invalidateQueries({ queryKey: ['productos'] });
-      queryClient.invalidateQueries({ queryKey: ['movimientos-inventario'] });
+      // Invalidar solo queries activas de inventario
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.inventario.movimientos.all,
+        refetchType: 'active'
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.inventario.productos.stockCritico,
+        refetchType: 'active'
+      });
       toast.success('Batch completado');
     },
     onError: createCRUDErrorHandler('update', 'Batch'),

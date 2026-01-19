@@ -1,6 +1,7 @@
 const RLSContextManager = require('../../../utils/rlsContextManager');
 const logger = require('../../../utils/logger');
 const MovimientosInventarioModel = require('./movimientos.model');
+const { ErrorHelper } = require('../../../utils/helpers');
 
 /**
  * Model para gestión de Conteos de Inventario (Conteo Físico)
@@ -268,14 +269,12 @@ class ConteosModel {
                 [id]
             );
 
-            if (conteoQuery.rows.length === 0) {
-                throw new Error('Conteo no encontrado');
-            }
+            ErrorHelper.throwIfNotFound(conteoQuery.rows[0], 'Conteo');
 
             const conteo = conteoQuery.rows[0];
 
             if (conteo.estado !== 'borrador') {
-                throw new Error(`Solo se pueden iniciar conteos en estado borrador. Estado actual: ${conteo.estado}`);
+                ErrorHelper.throwConflict(`Solo se pueden iniciar conteos en estado borrador. Estado actual: ${conteo.estado}`);
             }
 
             // Generar items según tipo de conteo
@@ -354,7 +353,7 @@ class ConteosModel {
                     values.push(filtros.producto_ids);
                     paramCounter++;
                 } else {
-                    throw new Error('Para conteo cíclico debe seleccionar productos');
+                    ErrorHelper.throwValidation('Para conteo cíclico debe seleccionar productos');
                 }
                 break;
 
@@ -401,7 +400,7 @@ class ConteosModel {
         const productosResult = await db.query(productosQuery, values);
 
         if (productosResult.rows.length === 0) {
-            throw new Error('No se encontraron productos para el conteo con los filtros especificados');
+            ErrorHelper.throwValidation('No se encontraron productos para el conteo con los filtros especificados');
         }
 
         // Insertar items
@@ -496,14 +495,12 @@ class ConteosModel {
                 [itemId]
             );
 
-            if (itemQuery.rows.length === 0) {
-                throw new Error('Item no encontrado');
-            }
+            ErrorHelper.throwIfNotFound(itemQuery.rows[0], 'Item');
 
             const item = itemQuery.rows[0];
 
             if (item.conteo_estado !== 'en_proceso') {
-                throw new Error('Solo se puede registrar conteos cuando el conteo está en proceso');
+                ErrorHelper.throwConflict('Solo se puede registrar conteos cuando el conteo está en proceso');
             }
 
             // Actualizar item
@@ -560,18 +557,16 @@ class ConteosModel {
                 [id]
             );
 
-            if (conteoQuery.rows.length === 0) {
-                throw new Error('Conteo no encontrado');
-            }
+            ErrorHelper.throwIfNotFound(conteoQuery.rows[0], 'Conteo');
 
             const conteo = conteoQuery.rows[0];
 
             if (conteo.estado !== 'en_proceso') {
-                throw new Error(`Solo se pueden completar conteos en proceso. Estado actual: ${conteo.estado}`);
+                ErrorHelper.throwConflict(`Solo se pueden completar conteos en proceso. Estado actual: ${conteo.estado}`);
             }
 
             if (parseInt(conteo.pendientes) > 0) {
-                throw new Error(`Hay ${conteo.pendientes} items pendientes de contar`);
+                ErrorHelper.throwValidation(`Hay ${conteo.pendientes} items pendientes de contar`);
             }
 
             // Actualizar estado
@@ -616,14 +611,12 @@ class ConteosModel {
                 [id]
             );
 
-            if (conteoQuery.rows.length === 0) {
-                throw new Error('Conteo no encontrado');
-            }
+            ErrorHelper.throwIfNotFound(conteoQuery.rows[0], 'Conteo');
 
             const conteo = conteoQuery.rows[0];
 
             if (conteo.estado !== 'completado') {
-                throw new Error(`Solo se pueden aplicar ajustes a conteos completados. Estado actual: ${conteo.estado}`);
+                ErrorHelper.throwConflict(`Solo se pueden aplicar ajustes a conteos completados. Estado actual: ${conteo.estado}`);
             }
 
             // Obtener items con diferencia
@@ -754,18 +747,16 @@ class ConteosModel {
                 [id]
             );
 
-            if (conteoQuery.rows.length === 0) {
-                throw new Error('Conteo no encontrado');
-            }
+            ErrorHelper.throwIfNotFound(conteoQuery.rows[0], 'Conteo');
 
             const conteo = conteoQuery.rows[0];
 
             if (conteo.estado === 'ajustado') {
-                throw new Error('No se puede cancelar un conteo que ya fue ajustado');
+                ErrorHelper.throwConflict('No se puede cancelar un conteo que ya fue ajustado');
             }
 
             if (conteo.estado === 'cancelado') {
-                throw new Error('El conteo ya está cancelado');
+                ErrorHelper.throwConflict('El conteo ya está cancelado');
             }
 
             // Cancelar conteo

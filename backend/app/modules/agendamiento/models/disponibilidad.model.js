@@ -17,6 +17,7 @@ const RLSContextManager = require('../../../utils/rlsContextManager');
 const { DateTime } = require('luxon');
 const logger = require('../../../utils/logger');
 const CitaValidacionUtil = require('../utils/cita-validacion.util');
+const { ErrorHelper } = require('../../../utils/helpers');
 
 const DEFAULTS = {
   ZONA_HORARIA: 'America/Mexico_City',
@@ -77,9 +78,7 @@ class DisponibilidadModel {
 
       // ========== 2. Obtener servicio ==========
       const servicio = await this._obtenerServicio(servicioId, organizacionId, db);
-      if (!servicio) {
-        throw new Error('Servicio no encontrado o inactivo');
-      }
+      ErrorHelper.throwIfNotFound(servicio, 'Servicio');
 
       // Calcular duración total incluyendo buffer time (preparación + servicio + limpieza)
       const duracionServicio = duracion || servicio.duracion_minutos || DEFAULTS.INTERVALO_MINUTOS;

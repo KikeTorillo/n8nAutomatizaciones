@@ -15,6 +15,7 @@
 const RLSContextManager = require('../../../utils/rlsContextManager');
 const TokenManager = require('../../../utils/tokenManager');
 const logger = require('../../../utils/logger');
+const { ErrorHelper } = require('../../../utils/helpers');
 
 class ActivacionModel {
 
@@ -51,7 +52,7 @@ class ActivacionModel {
             `, [email]);
 
             if (existenteResult.rows[0]) {
-                throw new Error('Ya existe una activación pendiente para este email');
+                ErrorHelper.throwConflict('Ya existe una activación pendiente para este email');
             }
 
             // Verificar que el email no esté registrado como usuario
@@ -60,7 +61,7 @@ class ActivacionModel {
             `, [email]);
 
             if (emailUsuarioResult.rows[0]) {
-                throw new Error('Este email ya está registrado en el sistema');
+                ErrorHelper.throwConflict('Este email ya está registrado en el sistema');
             }
 
             // Crear activación (organizacion_id puede ser null)
@@ -355,7 +356,7 @@ class ActivacionModel {
             const activacion = activacionResult.rows[0];
 
             if (!activacion) {
-                throw new Error('Enlace de activación no válido o ya utilizado');
+                ErrorHelper.throwValidation('Enlace de activación no válido o ya utilizado');
             }
 
             // Verificar expiración
@@ -365,7 +366,7 @@ class ActivacionModel {
                     SET estado = 'expirada'
                     WHERE id = $1
                 `, [activacion.id]);
-                throw new Error('El enlace de activación ha expirado');
+                ErrorHelper.throwValidation('El enlace de activación ha expirado');
             }
 
             // Separar nombre y apellidos
@@ -455,12 +456,12 @@ class ActivacionModel {
             const anterior = anteriorResult.rows[0];
 
             if (!anterior) {
-                throw new Error('No hay activación pendiente para este email');
+                ErrorHelper.throwIfNotFound(anterior, 'Activación pendiente');
             }
 
             // Limitar reenvíos (máximo 5)
             if (anterior.reenvios >= 5) {
-                throw new Error('Se ha excedido el límite de reenvíos. Contacta soporte.');
+                ErrorHelper.throwValidation('Se ha excedido el límite de reenvíos. Contacta soporte.');
             }
 
             // Actualizar con nuevo token y extender expiración

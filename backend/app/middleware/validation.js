@@ -329,44 +329,6 @@ const validateFile = (options = {}) => {
 };
 
 /**
- * Middleware para sanitizar entrada SQL básica
- * Previene inyecciones SQL obvias en campos de texto
- */
-const sanitizeInput = (req, _res, next) => {
-  const sanitizeValue = (value) => {
-    if (typeof value === 'string') {
-      // Remover patrones sospechosos de SQL injection
-      return value
-        .replace(/['";\\]/g, '') // Remover comillas y escapes
-        .replace(/\b(SELECT|INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|EXEC|UNION|SCRIPT)\b/gi, '') // Remover keywords SQL
-        .trim();
-    }
-    return value;
-  };
-
-  const sanitizeObject = (obj) => {
-    if (obj && typeof obj === 'object') {
-      for (let key in obj) {
-        if (obj.hasOwnProperty(key)) {
-          if (typeof obj[key] === 'object') {
-            sanitizeObject(obj[key]);
-          } else {
-            obj[key] = sanitizeValue(obj[key]);
-          }
-        }
-      }
-    }
-  };
-
-  // Sanitizar body, params y query
-  sanitizeObject(req.body);
-  sanitizeObject(req.params);
-  sanitizeObject(req.query);
-
-  next();
-};
-
-/**
  * Middleware para procesar validaciones de express-validator
  * Compatible con validaciones de rutas existentes
  */
@@ -388,7 +350,6 @@ module.exports = {
   validateParams,
   validateQuery,
   validateFile,
-  sanitizeInput,
   handleValidation,
   commonSchemas,
   validateOrganizacionId

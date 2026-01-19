@@ -26,7 +26,8 @@ import { organizacionesApi, monedasApi } from '@/services/api/endpoints';
 import { useToast } from '@/hooks/utils';
 import { useUploadArchivo } from '@/hooks/utils';
 import { useCategoriasMarketplace } from '@/hooks/otros';
-import { BackButton, Button, Input } from '@/components/ui';
+import { Button, Input } from '@/components/ui';
+import { ConfigPageHeader } from '@/components/configuracion';
 
 /**
  * Página de configuración del negocio
@@ -223,25 +224,12 @@ function NegocioPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Header */}
-      <div className="bg-white dark:bg-gray-800 shadow-sm">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <BackButton to="/configuracion" label="Configuración" className="mb-3" />
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                Mi Negocio
-              </h1>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                Información de tu organización
-              </p>
-            </div>
-            <div className="p-3 bg-primary-100 dark:bg-primary-900/40 rounded-lg">
-              <Building2 className="w-6 h-6 text-primary-600 dark:text-primary-400" />
-            </div>
-          </div>
-        </div>
-      </div>
+      <ConfigPageHeader
+        title="Mi Negocio"
+        subtitle="Información de tu organización"
+        icon={Building2}
+        maxWidth="max-w-3xl"
+      />
 
       {/* Content */}
       <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

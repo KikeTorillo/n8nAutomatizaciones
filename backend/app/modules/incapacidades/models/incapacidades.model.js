@@ -4,6 +4,7 @@
  * Módulo de Profesionales - Gap vs Odoo 19
  */
 const RLSContextManager = require('../../../utils/rlsContextManager');
+const { ErrorHelper } = require('../../../utils/helpers');
 const {
     TIPOS_INCAPACIDAD_CONFIG,
     ESTADOS_INCAPACIDAD,
@@ -48,7 +49,7 @@ class IncapacidadesModel {
             );
 
             if (profesionalQuery.rows.length === 0) {
-                throw new Error(ERRORES_INCAPACIDAD.PROFESIONAL_NO_ENCONTRADO);
+                ErrorHelper.throwIfNotFound(null, 'Profesional');
             }
 
             const profesional = profesionalQuery.rows[0];
@@ -61,7 +62,7 @@ class IncapacidadesModel {
             );
 
             if (folioQuery.rows.length > 0) {
-                throw new Error(ERRORES_INCAPACIDAD.FOLIO_DUPLICADO);
+                ErrorHelper.throwConflict(ERRORES_INCAPACIDAD.FOLIO_DUPLICADO);
             }
 
             // 3. Verificar solapamiento con otra incapacidad activa
@@ -71,7 +72,7 @@ class IncapacidadesModel {
             );
 
             if (solapamientoQuery.rows[0].hay_solapamiento) {
-                throw new Error(ERRORES_INCAPACIDAD.SOLAPAMIENTO);
+                ErrorHelper.throwConflict(ERRORES_INCAPACIDAD.SOLAPAMIENTO);
             }
 
             // 4. Si es prórroga, validar incapacidad origen
@@ -83,7 +84,7 @@ class IncapacidadesModel {
                 );
 
                 if (origenQuery.rows.length === 0) {
-                    throw new Error(ERRORES_INCAPACIDAD.PRORROGA_SIN_ORIGEN);
+                    ErrorHelper.throwValidation(ERRORES_INCAPACIDAD.PRORROGA_SIN_ORIGEN);
                 }
 
                 // La incapacidad origen puede estar activa o finalizada
@@ -131,7 +132,7 @@ class IncapacidadesModel {
                 }
 
                 if (!tipoBloqueoId) {
-                    throw new Error(ERRORES_INCAPACIDAD.TIPO_BLOQUEO_NO_ENCONTRADO);
+                    ErrorHelper.throwIfNotFound(null, 'Tipo de bloqueo');
                 }
             }
 
@@ -423,7 +424,7 @@ class IncapacidadesModel {
             }
 
             if (campos.length === 0) {
-                throw new Error('No hay campos válidos para actualizar');
+                ErrorHelper.throwValidation('No hay campos válidos para actualizar');
             }
 
             campos.push(`actualizado_en = NOW()`);
@@ -442,9 +443,7 @@ class IncapacidadesModel {
 
             const result = await db.query(query, valores);
 
-            if (result.rows.length === 0) {
-                throw new Error(ERRORES_INCAPACIDAD.NO_ENCONTRADA);
-            }
+            ErrorHelper.throwIfNotFound(result.rows[0], 'Incapacidad');
 
             return result.rows[0];
         });
@@ -458,12 +457,10 @@ class IncapacidadesModel {
             // Obtener incapacidad
             const incapacidad = await this.obtenerPorId(organizacionId, incapacidadId);
 
-            if (!incapacidad) {
-                throw new Error(ERRORES_INCAPACIDAD.NO_ENCONTRADA);
-            }
+            ErrorHelper.throwIfNotFound(incapacidad, 'Incapacidad');
 
             if (incapacidad.estado !== ESTADOS_INCAPACIDAD.ACTIVA) {
-                throw new Error(ERRORES_INCAPACIDAD.YA_FINALIZADA);
+                ErrorHelper.throwConflict(ERRORES_INCAPACIDAD.YA_FINALIZADA);
             }
 
             // Actualizar incapacidad
@@ -514,12 +511,10 @@ class IncapacidadesModel {
             // Obtener incapacidad
             const incapacidad = await this.obtenerPorId(organizacionId, incapacidadId);
 
-            if (!incapacidad) {
-                throw new Error(ERRORES_INCAPACIDAD.NO_ENCONTRADA);
-            }
+            ErrorHelper.throwIfNotFound(incapacidad, 'Incapacidad');
 
             if (incapacidad.estado === ESTADOS_INCAPACIDAD.CANCELADA) {
-                throw new Error(ERRORES_INCAPACIDAD.YA_CANCELADA);
+                ErrorHelper.throwConflict(ERRORES_INCAPACIDAD.YA_CANCELADA);
             }
 
             // Eliminar bloqueo asociado
@@ -577,9 +572,7 @@ class IncapacidadesModel {
         // Obtener incapacidad origen
         const incapacidadOrigen = await this.obtenerPorId(organizacionId, incapacidadOrigenId);
 
-        if (!incapacidadOrigen) {
-            throw new Error(ERRORES_INCAPACIDAD.PRORROGA_SIN_ORIGEN);
-        }
+        ErrorHelper.throwIfNotFound(incapacidadOrigen, 'Incapacidad origen');
 
         // Crear nueva incapacidad como prórroga
         return await this.crear(organizacionId, incapacidadOrigen.profesional_id, {

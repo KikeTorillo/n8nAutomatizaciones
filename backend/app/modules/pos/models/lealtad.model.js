@@ -15,6 +15,7 @@
 
 const RLSContextManager = require('../../../utils/rlsContextManager');
 const logger = require('../../../utils/logger');
+const { ErrorHelper } = require('../../../utils/helpers');
 
 class LealtadModel {
 
@@ -206,7 +207,7 @@ class LealtadModel {
             }
 
             if (campos.length === 0) {
-                throw new Error('No hay campos para actualizar');
+                ErrorHelper.throwValidation('No hay campos para actualizar');
             }
 
             valores.push(id);
@@ -236,7 +237,7 @@ class LealtadModel {
             const checkResult = await db.query(checkQuery, [id]);
 
             if (parseInt(checkResult.rows[0].total) > 0) {
-                throw new Error('No se puede eliminar un nivel con clientes asignados');
+                ErrorHelper.throwConflict('No se puede eliminar un nivel con clientes asignados');
             }
 
             const query = `
@@ -443,7 +444,7 @@ class LealtadModel {
             const saldoDespues = saldoAntes + puntos;
 
             if (saldoDespues < 0) {
-                throw new Error('El ajuste resultaría en saldo negativo');
+                ErrorHelper.throwValidation('El ajuste resultaría en saldo negativo');
             }
 
             // Registrar transacción

@@ -6,6 +6,7 @@
 
 const RLSContextManager = require('../../../utils/rlsContextManager');
 const logger = require('../../../utils/logger');
+const { ErrorHelper } = require('../../../utils/helpers');
 
 class ConsignaModel {
     // ==================== ACUERDOS ====================
@@ -32,9 +33,7 @@ class ConsignaModel {
                 'SELECT id FROM proveedores WHERE id = $1 AND organizacion_id = $2',
                 [proveedor_id, organizacionId]
             );
-            if (!provCheck.rows[0]) {
-                throw new Error('Proveedor no encontrado');
-            }
+            ErrorHelper.throwIfNotFound(provCheck.rows[0], 'Proveedor');
 
             // Generar folio
             const folioResult = await db.query(
@@ -177,7 +176,7 @@ class ConsignaModel {
             }
 
             if (existing.rows[0].estado === 'terminado') {
-                throw new Error('No se puede modificar un acuerdo terminado');
+                ErrorHelper.throwConflict('No se puede modificar un acuerdo terminado');
             }
 
             const {
@@ -227,7 +226,7 @@ class ConsignaModel {
             }
 
             if (!['borrador', 'pausado'].includes(existing.rows[0].estado)) {
-                throw new Error(`No se puede activar un acuerdo en estado ${existing.rows[0].estado}`);
+                ErrorHelper.throwConflict(`No se puede activar un acuerdo en estado ${existing.rows[0].estado}`);
             }
 
             const result = await db.query(`
@@ -275,7 +274,7 @@ class ConsignaModel {
             `, [id]);
 
             if (parseInt(stockCheck.rows[0].stock_pendiente) > 0) {
-                throw new Error('No se puede terminar el acuerdo con stock pendiente. Devuelva la mercancía primero.');
+                ErrorHelper.throwConflict('No se puede terminar el acuerdo con stock pendiente. Devuelva la mercancía primero.');
             }
 
             // Verificar que no hay ventas sin liquidar
@@ -286,7 +285,7 @@ class ConsignaModel {
             `, [id]);
 
             if (parseInt(ventasCheck.rows[0].pendientes) > 0) {
-                throw new Error('No se puede terminar el acuerdo con ventas pendientes de liquidar.');
+                ErrorHelper.throwConflict('No se puede terminar el acuerdo con ventas pendientes de liquidar.');
             }
 
             const result = await db.query(`
@@ -315,12 +314,10 @@ class ConsignaModel {
                 [acuerdoId, organizacionId]
             );
 
-            if (!acuerdo.rows[0]) {
-                throw new Error('Acuerdo no encontrado');
-            }
+            ErrorHelper.throwIfNotFound(acuerdo.rows[0], 'Acuerdo');
 
             if (acuerdo.rows[0].estado === 'terminado') {
-                throw new Error('No se pueden agregar productos a un acuerdo terminado');
+                ErrorHelper.throwConflict('No se pueden agregar productos a un acuerdo terminado');
             }
 
             const {
@@ -337,9 +334,7 @@ class ConsignaModel {
                 'SELECT id FROM productos WHERE id = $1 AND organizacion_id = $2',
                 [producto_id, organizacionId]
             );
-            if (!prodCheck.rows[0]) {
-                throw new Error('Producto no encontrado');
-            }
+            ErrorHelper.throwIfNotFound(prodCheck.rows[0], 'Producto');
 
             // Verificar que producto no esté en otro acuerdo activo
             const duplicateCheck = await db.query(`
@@ -355,7 +350,7 @@ class ConsignaModel {
             `, [producto_id, variante_id, organizacionId, acuerdoId]);
 
             if (duplicateCheck.rows[0]) {
-                throw new Error(`Este producto ya está en el acuerdo activo ${duplicateCheck.rows[0].folio}`);
+                ErrorHelper.throwConflict(`Este producto ya está en el acuerdo activo ${duplicateCheck.rows[0].folio}`);
             }
 
             const result = await db.query(`
@@ -469,7 +464,7 @@ class ConsignaModel {
             `, [acuerdoId, productoId, varianteId, organizacionId]);
 
             if (parseInt(stockCheck.rows[0].stock) > 0) {
-                throw new Error('No se puede remover producto con stock. Devuelva la mercancía primero.');
+                ErrorHelper.throwConflict('No se puede remover producto con stock. Devuelva la mercancía primero.');
             }
 
             const result = await db.query(`
@@ -502,16 +497,14 @@ class ConsignaModel {
                 WHERE id = $1 AND organizacion_id = $2 AND estado = 'activo'
             `, [acuerdoId, organizacionId]);
 
-            if (!acuerdo.rows[0]) {
-                throw new Error('Acuerdo no encontrado o no está activo');
-            }
+            ErrorHelper.throwIfNotFound(acuerdo.rows[0], 'Acuerdo activo');
 
             const sucursalId = acuerdo.rows[0].sucursal_id;
             const ubicacionId = acuerdo.rows[0].ubicacion_consigna_id;
             const proveedorId = acuerdo.rows[0].proveedor_id;
 
             if (!sucursalId) {
-                throw new Error('El acuerdo no tiene sucursal asignada');
+                ErrorHelper.throwValidation('El acuerdo no tiene sucursal asignada');
             }
 
             const movimientos = [];
@@ -529,7 +522,7 @@ class ConsignaModel {
                 `, [acuerdoId, item.producto_id, item.variante_id]);
 
                 if (!prodAcuerdo.rows[0]) {
-                    throw new Error(`Producto ${item.producto_id} no está incluido en el acuerdo`);
+                    ErrorHelper.throwValidation(`Producto ${item.producto_id} no está incluido en el acuerdo`);
                 }
 
                 const precioConsigna = prodAcuerdo.rows[0].precio_consigna;
@@ -541,12 +534,12 @@ class ConsignaModel {
                 if (requiereNs && item.numeros_serie && item.numeros_serie.length > 0) {
                     // Validar que la cantidad de NS coincide con la cantidad
                     if (item.numeros_serie.length !== item.cantidad) {
-                        throw new Error(`Producto ${item.producto_id} requiere ${item.cantidad} números de serie, pero se proporcionaron ${item.numeros_serie.length}`);
+                        ErrorHelper.throwValidation(`Producto ${item.producto_id} requiere ${item.cantidad} números de serie, pero se proporcionaron ${item.numeros_serie.length}`);
                     }
 
                     for (const ns of item.numeros_serie) {
                         if (!ns.numero_serie?.trim()) {
-                            throw new Error('Número de serie vacío no permitido');
+                            ErrorHelper.throwValidation('Número de serie vacío no permitido');
                         }
 
                         // Usar la nueva función con soporte para consigna (13 params)
@@ -578,7 +571,7 @@ class ConsignaModel {
                         cantidad_ns: numerosSerieIds.length
                     });
                 } else if (requiereNs && (!item.numeros_serie || item.numeros_serie.length === 0)) {
-                    throw new Error(`Producto ${item.producto_id} requiere números de serie pero no se proporcionaron`);
+                    ErrorHelper.throwValidation(`Producto ${item.producto_id} requiere números de serie pero no se proporcionaron`);
                 }
 
                 // Registrar movimiento usando función SQL
@@ -728,15 +721,13 @@ class ConsignaModel {
                 WHERE sc.id = $1 AND sc.organizacion_id = $2
             `, [stockConsignaId, organizacionId]);
 
-            if (!stock.rows[0]) {
-                throw new Error('Stock no encontrado');
-            }
+            ErrorHelper.throwIfNotFound(stock.rows[0], 'Stock');
 
             const s = stock.rows[0];
 
             // Verificar que el ajuste no deje stock negativo
             if (s.cantidad_disponible + cantidad < 0) {
-                throw new Error('El ajuste dejaría el stock en negativo');
+                ErrorHelper.throwConflict('El ajuste dejaría el stock en negativo');
             }
 
             const movResult = await db.query(`
@@ -768,9 +759,7 @@ class ConsignaModel {
                 WHERE id = $1 AND organizacion_id = $2 AND estado IN ('activo', 'pausado')
             `, [acuerdoId, organizacionId]);
 
-            if (!acuerdo.rows[0]) {
-                throw new Error('Acuerdo no encontrado o terminado');
-            }
+            ErrorHelper.throwIfNotFound(acuerdo.rows[0], 'Acuerdo activo');
 
             const movimientos = [];
 
@@ -790,7 +779,7 @@ class ConsignaModel {
                 `, [acuerdoId, item.producto_id, item.variante_id, item.sucursal_id || acuerdo.rows[0].sucursal_id]);
 
                 if (!stock.rows[0] || stock.rows[0].cantidad_disponible < item.cantidad) {
-                    throw new Error(`Stock insuficiente para producto ${item.producto_id}`);
+                    ErrorHelper.throwConflict(`Stock insuficiente para producto ${item.producto_id}`);
                 }
 
                 const s = stock.rows[0];
@@ -853,14 +842,12 @@ class ConsignaModel {
                 WHERE sc.id = $1 AND sc.organizacion_id = $2
             `, [stockConsignaId, organizacionId]);
 
-            if (!stock.rows[0]) {
-                throw new Error('Stock consigna no encontrado');
-            }
+            ErrorHelper.throwIfNotFound(stock.rows[0], 'Stock consigna');
 
             const s = stock.rows[0];
 
             if (s.cantidad_disponible < cantidad) {
-                throw new Error('Stock insuficiente');
+                ErrorHelper.throwConflict('Stock insuficiente');
             }
 
             const movResult = await db.query(`
@@ -896,9 +883,7 @@ class ConsignaModel {
                 WHERE id = $1 AND organizacion_id = $2
             `, [acuerdoId, organizacionId]);
 
-            if (!acuerdo.rows[0]) {
-                throw new Error('Acuerdo no encontrado');
-            }
+            ErrorHelper.throwIfNotFound(acuerdo.rows[0], 'Acuerdo');
 
             const a = acuerdo.rows[0];
 
@@ -914,7 +899,7 @@ class ConsignaModel {
             const totalPagar = subtotalVentas - comision;
 
             if (totalUnidades === 0) {
-                throw new Error('No hay ventas pendientes de liquidar en el período seleccionado');
+                ErrorHelper.throwValidation('No hay ventas pendientes de liquidar en el período seleccionado');
             }
 
             // Generar folio
@@ -1053,9 +1038,7 @@ class ConsignaModel {
                 [id, organizacionId, 'borrador']
             );
 
-            if (!liq.rows[0]) {
-                throw new Error('Liquidación no encontrada o no está en borrador');
-            }
+            ErrorHelper.throwIfNotFound(liq.rows[0], 'Liquidación en borrador');
 
             // Marcar movimientos como liquidados
             await db.query(`
@@ -1107,9 +1090,7 @@ class ConsignaModel {
                 RETURNING *
             `, [id, organizacionId, fecha_pago || new Date(), metodo_pago, referencia_pago, usuarioId]);
 
-            if (!result.rows[0]) {
-                throw new Error('Liquidación no encontrada o no está confirmada');
-            }
+            ErrorHelper.throwIfNotFound(result.rows[0], 'Liquidación confirmada');
 
             logger.info('[ConsignaModel.pagarLiquidacion] Liquidación pagada', { id });
 
@@ -1132,7 +1113,7 @@ class ConsignaModel {
             }
 
             if (liq.rows[0].estado === 'pagada') {
-                throw new Error('No se puede cancelar una liquidación ya pagada');
+                ErrorHelper.throwConflict('No se puede cancelar una liquidación ya pagada');
             }
 
             // Desmarcar movimientos

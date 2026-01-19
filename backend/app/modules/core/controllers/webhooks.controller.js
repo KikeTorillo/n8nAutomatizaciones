@@ -275,45 +275,36 @@ class WebhooksController {
     });
 
     try {
-      // Usar transacción para garantizar atomicidad
-      await RLSContextManager.withBypass(async (db) => {
-        // Iniciar transacción manual (porque estamos usando bypass)
-        await db.query('BEGIN');
+      // ✅ FIX v2.1: Usar transactionWithBypass en lugar de BEGIN/COMMIT manual
+      await RLSContextManager.transactionWithBypass(async (db) => {
+        // 1. Actualizar estado de subscripción
+        await db.query(`
+          UPDATE subscripciones
+          SET estado = 'activa',
+              intentos_pago_fallidos = 0,
+              ultimo_intento_pago = NOW(),
+              fecha_proximo_pago = NOW() + INTERVAL '1 month',
+              valor_total_pagado = COALESCE(valor_total_pagado, 0) + $1,
+              updated_at = NOW()
+          WHERE organizacion_id = $2
+        `, [pago.transaction_amount, orgId]);
 
-        try {
-          // 1. Actualizar estado de subscripción
-          await db.query(`
-            UPDATE subscripciones
-            SET estado = 'activa',
-                intentos_pago_fallidos = 0,
-                ultimo_intento_pago = NOW(),
-                fecha_proximo_pago = NOW() + INTERVAL '1 month',
-                valor_total_pagado = COALESCE(valor_total_pagado, 0) + $1,
-                updated_at = NOW()
-            WHERE organizacion_id = $2
-          `, [pago.transaction_amount, orgId]);
-
-          // 2. Registrar en historial
-          await db.query(`
-            INSERT INTO historial_subscripciones (
-              organizacion_id, tipo_evento, motivo, metadata
-            ) VALUES ($1, $2, $3, $4)
-          `, [
-            orgId,
-            'pago_exitoso',
-            `Pago procesado exitosamente: $${pago.transaction_amount} ${pago.currency_id}`,
-            JSON.stringify({
-              payment_id: pago.id,
-              amount: pago.transaction_amount,
-              payment_method: pago.payment_method_id
-            })
-          ]);
-
-          await db.query('COMMIT');
-        } catch (error) {
-          await db.query('ROLLBACK');
-          throw error;
-        }
+        // 2. Registrar en historial
+        await db.query(`
+          INSERT INTO historial_subscripciones (
+            organizacion_id, tipo_evento, motivo, metadata
+          ) VALUES ($1, $2, $3, $4)
+        `, [
+          orgId,
+          'pago_exitoso',
+          `Pago procesado exitosamente: $${pago.transaction_amount} ${pago.currency_id}`,
+          JSON.stringify({
+            payment_id: pago.id,
+            amount: pago.transaction_amount,
+            payment_method: pago.payment_method_id
+          })
+        ]);
+        // COMMIT automático al finalizar, ROLLBACK automático si hay error
       });
 
       // 3. TODO: Enviar email de confirmación
@@ -340,49 +331,42 @@ class WebhooksController {
     });
 
     try {
-      await RLSContextManager.withBypass(async (db) => {
-        await db.query('BEGIN');
+      // ✅ FIX v2.1: Usar transactionWithBypass en lugar de BEGIN/COMMIT manual
+      await RLSContextManager.transactionWithBypass(async (db) => {
+        // Incrementar contador de intentos fallidos
+        const result = await db.query(`
+          UPDATE subscripciones
+          SET intentos_pago_fallidos = intentos_pago_fallidos + 1,
+              ultimo_intento_pago = NOW(),
+              estado = CASE
+                WHEN intentos_pago_fallidos >= 2 THEN 'morosa'
+                ELSE estado
+              END,
+              updated_at = NOW()
+          WHERE organizacion_id = $1
+          RETURNING intentos_pago_fallidos
+        `, [orgId]);
 
-        try {
-          // Incrementar contador de intentos fallidos
-          const result = await db.query(`
-            UPDATE subscripciones
-            SET intentos_pago_fallidos = intentos_pago_fallidos + 1,
-                ultimo_intento_pago = NOW(),
-                estado = CASE
-                  WHEN intentos_pago_fallidos >= 2 THEN 'morosa'
-                  ELSE estado
-                END,
-                updated_at = NOW()
-            WHERE organizacion_id = $1
-            RETURNING intentos_pago_fallidos
-          `, [orgId]);
+        const intentos = result.rows[0]?.intentos_pago_fallidos || 0;
 
-          const intentos = result.rows[0]?.intentos_pago_fallidos || 0;
+        // Registrar en historial
+        await db.query(`
+          INSERT INTO historial_subscripciones (
+            organizacion_id, tipo_evento, motivo, metadata
+          ) VALUES ($1, $2, $3, $4)
+        `, [
+          orgId,
+          'pago_fallido',
+          `Pago rechazado (intento ${intentos}): ${pago.status_detail}`,
+          JSON.stringify({
+            payment_id: pago.id,
+            status_detail: pago.status_detail,
+            intentos
+          })
+        ]);
 
-          // Registrar en historial
-          await db.query(`
-            INSERT INTO historial_subscripciones (
-              organizacion_id, tipo_evento, motivo, metadata
-            ) VALUES ($1, $2, $3, $4)
-          `, [
-            orgId,
-            'pago_fallido',
-            `Pago rechazado (intento ${intentos}): ${pago.status_detail}`,
-            JSON.stringify({
-              payment_id: pago.id,
-              status_detail: pago.status_detail,
-              intentos
-            })
-          ]);
-
-          await db.query('COMMIT');
-
-          logger.info('Pago fallido registrado', { orgId, intentos });
-        } catch (error) {
-          await db.query('ROLLBACK');
-          throw error;
-        }
+        logger.info('Pago fallido registrado', { orgId, intentos });
+        // COMMIT automático al finalizar, ROLLBACK automático si hay error
       });
 
       // TODO: Notificar admin de la organización

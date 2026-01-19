@@ -23,6 +23,28 @@ const logger = require('../utils/logger');
 const { ResponseHelper } = require('../utils/helpers');
 
 /**
+ * Sanitiza una direcci\u00f3n IP para uso seguro en keys de Redis
+ *
+ * Previene bypass de rate limiting mediante inyecci\u00f3n de caracteres
+ * especiales en headers como X-Forwarded-For.
+ *
+ * @param {string} ip - IP cruda desde req.ip o headers
+ * @returns {string} IP sanitizada (solo caracteres v\u00e1lidos de IPv4/IPv6)
+ */
+function sanitizeIP(ip) {
+    if (!ip || typeof ip !== 'string') {
+        return '0.0.0.0';
+    }
+
+    // Solo permitir caracteres v\u00e1lidos de IPv4 (0-9, .) e IPv6 (0-9, a-f, A-F, :)
+    // Limitar a 45 caracteres (m\u00e1ximo para IPv6 con zona)
+    const sanitized = ip.replace(/[^0-9a-fA-F:.]/g, '').substring(0, 45);
+
+    // Si queda vac\u00edo despu\u00e9s de sanitizar, usar IP por defecto
+    return sanitized || '0.0.0.0';
+}
+
+/**
  * Servicio principal de Rate Limiting
  *
  * Maneja la conexión a Redis y proporciona métodos para incrementar contadores,
@@ -242,12 +264,12 @@ const rateLimitService = new RateLimitingService();
  * });
  */
 const createRateLimit = (options = {}) => {
-  // Configuración por defecto del rate limiting
+  // Configuraci\u00f3n por defecto del rate limiting
   const config = {
     windowMs: 15 * 60 * 1000,                              // 15 minutos por defecto
     max: 100,                                               // 100 requests por defecto
-    message: 'Demasiadas solicitudes, intenta más tarde',   // Mensaje de error estándar
-    keyGenerator: (req) => req.ip,                          // Usar IP por defecto
+    message: 'Demasiadas solicitudes, intenta más tarde',   // Mensaje de error est\u00e1ndar
+    keyGenerator: (req) => sanitizeIP(req.ip),              // Usar IP sanitizada por defecto
     skip: () => process.env.NODE_ENV === 'test',            // Saltar en entorno de test
     onLimitReached: null,                                   // Sin callback por defecto
     ...options                                              // Sobreescribir con opciones del usuario
@@ -332,7 +354,7 @@ const ipRateLimit = createRateLimit({
   windowMs: 15 * 60 * 1000,                                              // 15 minutos
   max: 100,                                                            // 100 requests
   message: 'Demasiadas solicitudes desde esta IP, intenta en 15 minutos',
-  keyGenerator: (req) => `ip:${req.ip}`                                 // Key por IP
+  keyGenerator: (req) => `ip:${sanitizeIP(req.ip)}`                     // Key por IP sanitizada
 });
 
 /**
@@ -354,7 +376,7 @@ const userRateLimit = createRateLimit({
   windowMs: 15 * 60 * 1000,                                      // 15 minutos
   max: 1000,                                                   // 1000 requests (POS necesita muchas)
   message: 'Demasiadas solicitudes, intenta en 15 minutos',
-  keyGenerator: (req) => req.user ? `user:${req.user.id}` : `ip:${req.ip}`, // Usuario o IP
+  keyGenerator: (req) => req.user ? `user:${req.user.id}` : `ip:${sanitizeIP(req.ip)}`, // Usuario o IP sanitizada
   skip: (req) => process.env.NODE_ENV === 'test' || !req.user  // Saltar en test o sin usuario
 });
 
@@ -377,7 +399,7 @@ const organizationRateLimit = createRateLimit({
   windowMs: 60 * 60 * 1000,                                              // 1 hora
   max: 1000,                                                           // 1000 requests por org
   message: 'Límite de solicitudes de la organización excedido',
-  keyGenerator: (req) => req.user ? `org:${req.user.organizacion_id}` : `ip:${req.ip}`,
+  keyGenerator: (req) => req.user ? `org:${req.user.organizacion_id}` : `ip:${sanitizeIP(req.ip)}`,
   skip: (req) => process.env.NODE_ENV === 'test' || !req.user          // Saltar en test o sin usuario
 });
 
@@ -401,11 +423,11 @@ const authRateLimit = createRateLimit({
   windowMs: 15 * 60 * 1000,                                        // 15 minutos
   max: 10,                                                       // Solo 10 intentos
   message: 'Demasiados intentos de inicio de sesión, intenta en 15 minutos',
-  keyGenerator: (req) => `auth:${req.ip}`,                        // Key específica para auth
+  keyGenerator: (req) => `auth:${sanitizeIP(req.ip)}`,            // Key espec\u00edfica para auth con IP sanitizada
   onLimitReached: (req, res) => {
     // Log detallado de eventos de seguridad
     logger.warn('Rate limit de autenticación excedido', {
-      ip: req.ip,
+      ip: sanitizeIP(req.ip),
       userAgent: req.get('User-Agent'),
       path: req.path,
       timestamp: new Date().toISOString()
@@ -431,12 +453,12 @@ const authRateLimit = createRateLimit({
  */
 const apiRateLimit = createRateLimit({
   windowMs: 60 * 1000,                                           // 1 minuto
-  max: 60,                                                      // 60 requests por minuto (producción)
+  max: 60,                                                      // 60 requests por minuto (producci\u00f3n)
   message: 'Límite de API excedido, máximo 60 requests por minuto',
   keyGenerator: (req) => {
-    // Priorizar API key si está disponible, sino usar IP
+    // Priorizar API key si est\u00e1 disponible, sino usar IP sanitizada
     const apiKey = req.headers['x-api-key'];
-    return apiKey ? `api:${apiKey}` : `ip:${req.ip}`;
+    return apiKey ? `api:${apiKey}` : `ip:${sanitizeIP(req.ip)}`;
   },
   skip: (req) => {
     // Saltar en ambiente de test o desarrollo (Docker usa IPs 172.x.x.x)
@@ -472,7 +494,7 @@ const heavyOperationRateLimit = createRateLimit({
   windowMs: 60 * 60 * 1000,                                      // 1 hora
   max: 20,                                                     // 20 operaciones pesadas
   message: 'Límite de operaciones pesadas excedido, máximo 20 por hora',
-  keyGenerator: (req) => req.user ? `heavy:${req.user.id}` : `heavy:${req.ip}` // Por usuario
+  keyGenerator: (req) => req.user ? `heavy:${req.user.id}` : `heavy:${sanitizeIP(req.ip)}` // Por usuario o IP sanitizada
 });
 
 /**

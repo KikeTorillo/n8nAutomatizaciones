@@ -5,6 +5,7 @@ const RLSHelper = require('../../../utils/rlsHelper');
 const RLSContextManager = require('../../../utils/rlsContextManager');
 const { SELECT_FIELDS, CAMPOS_ACTUALIZABLES } = require('../../../constants/organizacion.constants');
 const SecureRandom = require('../../../utils/helpers/SecureRandom');
+const { ErrorHelper } = require('../../../utils/helpers');
 
 
 class OrganizacionModel {
@@ -184,7 +185,7 @@ class OrganizacionModel {
             }
 
             if (updateFields.length === 0) {
-                throw new Error('No hay campos válidos para actualizar');
+                ErrorHelper.throwValidation('No hay campos válidos para actualizar');
             }
 
             updateFields.push(`actualizado_en = NOW()`);
@@ -244,10 +245,7 @@ class OrganizacionModel {
             `;
 
             const result = await db.query(query, [organizacionId]);
-
-            if (result.rows.length === 0) {
-                throw new Error('Organización no encontrada');
-            }
+            ErrorHelper.throwIfNotFound(result.rows[0], 'Organización');
 
             const limites = result.rows[0];
 
@@ -345,10 +343,7 @@ class OrganizacionModel {
             `;
 
             const result = await db.query(metricsQuery, [organizacionId]);
-
-            if (result.rows.length === 0) {
-                throw new Error('Organización no encontrada');
-            }
+            ErrorHelper.throwIfNotFound(result.rows[0], 'Organización');
 
             const data = result.rows[0];
 
@@ -410,10 +405,7 @@ class OrganizacionModel {
     static async obtenerEstadisticas(organizacionId) {
         const limites = await this.verificarLimites(organizacionId);
         const organizacion = await this.obtenerPorId(organizacionId);
-
-        if (!organizacion) {
-            throw new Error('Organización no encontrada');
-        }
+        ErrorHelper.throwIfNotFound(organizacion, 'Organización');
 
         return {
             organizacion: {
@@ -511,9 +503,7 @@ class OrganizacionModel {
                 `;
                 const orgResult = await db.query(orgQuery, [organizacionId]);
 
-                if (orgResult.rows.length === 0) {
-                    throw new Error('Organización no encontrada');
-                }
+                ErrorHelper.throwIfNotFound(orgResult.rows[0], 'Organización');
 
                 const organizacion = orgResult.rows[0];
                 const planAnterior = organizacion.plan_actual;
@@ -525,10 +515,7 @@ class OrganizacionModel {
                     WHERE codigo_plan = $1 AND activo = TRUE
                 `;
                 const planResult = await db.query(planQuery, [codigoPlan]);
-
-                if (planResult.rows.length === 0) {
-                    throw new Error(`Plan no encontrado: ${codigoPlan}`);
-                }
+                ErrorHelper.throwIfNotFound(planResult.rows[0], `Plan ${codigoPlan}`);
 
                 const nuevoPlan = planResult.rows[0];
 
@@ -628,10 +615,7 @@ class OrganizacionModel {
             `;
 
             const planResult = await db.query(planQuery, [codigoPlan]);
-
-            if (planResult.rows.length === 0) {
-                throw new Error(`Plan ${codigoPlan} no encontrado`);
-            }
+            ErrorHelper.throwIfNotFound(planResult.rows[0], `Plan ${codigoPlan}`);
 
             const plan = planResult.rows[0];
 

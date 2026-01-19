@@ -11,10 +11,14 @@ const RLSContextManager = require('../../../utils/rlsContextManager');
  * Endpoints públicos para renderizar el sitio web sin autenticación.
  * Accesible via nexo.com/sitio/{slug}
  *
- * ENDPOINTS (3):
- * • GET    /sitio/:slug              - Obtener sitio completo con menú
- * • GET    /sitio/:slug/:pagina      - Obtener página con bloques
- * • POST   /sitio/:slug/contacto     - Enviar formulario de contacto
+ * ENDPOINTS (4):
+ * - GET  /sitio/:slug           - Obtener sitio completo con menú
+ * - GET  /sitio/:slug/:pagina   - Obtener página con bloques
+ * - POST /sitio/:slug/contacto  - Enviar formulario de contacto
+ * - GET  /sitio/:slug/servicios - Obtener servicios públicos
+ *
+ * NO MIGRADO A BaseCrudController - Ene 2026
+ * Razón: Endpoints públicos sin autenticación, no es CRUD de entidades.
  *
  * Fecha creación: 6 Diciembre 2025
  */

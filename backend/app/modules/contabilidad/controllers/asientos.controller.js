@@ -4,6 +4,12 @@ const { asyncHandler } = require('../../../middleware');
 
 /**
  * Controller para gestión de asientos contables (libro diario)
+ *
+ * NO MIGRADO a BaseCrudController - Ene 2026
+ * Razones:
+ * - Tabla particionada por fecha: requiere param `fecha` en obtenerPorId, actualizar, eliminar
+ * - Métodos custom esenciales: publicar(), anular()
+ * - Firma del modelo incompatible: listar(filtros, orgId) vs listar(orgId, filtros)
  */
 class AsientosController {
 

@@ -23,7 +23,7 @@ const multer = require('multer');
 const PublicController = require('../controllers/public.controller');
 
 // Schemas
-const publicSchemas = require('../schemas/public.schema');
+const publicSchemas = require('../schemas/public.schemas');
 
 // Middlewares
 const {

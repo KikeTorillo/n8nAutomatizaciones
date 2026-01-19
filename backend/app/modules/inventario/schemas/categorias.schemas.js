@@ -4,6 +4,7 @@
  */
 
 const Joi = require('joi');
+const { fields } = require('../../../schemas/shared');
 
 const categoriasSchemas = {
     /**
@@ -28,9 +29,8 @@ const categoriasSchemas = {
 
             icono: Joi.string().max(50).optional().allow(null, ''),
 
-            color: Joi.string().regex(/^#[0-9A-F]{6}$/i).optional().allow(null, '').messages({
-                'string.pattern.base': 'El color debe tener formato hexadecimal (#RRGGBB)'
-            }),
+            // ✅ FIX v2.1: Usar fields.colorHex
+            color: fields.colorHex.optional().allow(null, ''),
 
             orden: Joi.number().integer().min(0).optional().default(0),
 
@@ -52,7 +52,8 @@ const categoriasSchemas = {
             descripcion: Joi.string().max(500).optional().allow(null, ''),
             categoria_padre_id: Joi.number().integer().positive().optional().allow(null),
             icono: Joi.string().max(50).optional().allow(null, ''),
-            color: Joi.string().regex(/^#[0-9A-F]{6}$/i).optional().allow(null, ''),
+            // ✅ FIX v2.1: Usar fields.colorHex
+            color: fields.colorHex.optional().allow(null, ''),
             orden: Joi.number().integer().min(0).optional(),
             activo: Joi.boolean().optional()
         }).min(1)

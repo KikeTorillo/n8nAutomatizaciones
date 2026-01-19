@@ -1,4 +1,5 @@
 const RLSContextManager = require('../../../../utils/rlsContextManager');
+const { ErrorHelper } = require('../../../../utils/helpers');
 
 class CitaRecordatoriosModel {
 
@@ -46,9 +47,7 @@ class CitaRecordatoriosModel {
                 organizacionId
             ]);
 
-            if (resultado.rows.length === 0) {
-                throw new Error('Cita no encontrada o no se puede calificar');
-            }
+            ErrorHelper.throwIfNotFound(resultado.rows[0], 'Cita');
 
             return {
                 exito: true,

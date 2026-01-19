@@ -16,6 +16,7 @@ const ErrorHelper = require('./ErrorHelper');
 const OrganizacionHelper = require('./OrganizacionHelper');
 const SecureRandom = require('./SecureRandom');
 const ParseHelper = require('./ParseHelper');
+const JSONHelper = require('./JSONHelper');
 
 // Helpers de dominio
 const InventarioHelper = require('./InventarioHelper');
@@ -33,6 +34,7 @@ module.exports = {
   OrganizacionHelper,
   SecureRandom,
   ParseHelper,
+  JSONHelper,
   // Helpers de dominio
   InventarioHelper,
   POSHelper

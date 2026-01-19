@@ -1,6 +1,6 @@
 const RLSContextManager = require('../../../utils/rlsContextManager');
 const logger = require('../../../utils/logger');
-const PaginationHelper = require('../../../utils/helpers').PaginationHelper;
+const { PaginationHelper, ErrorHelper } = require('../../../utils/helpers');
 const db = require('../../../config/database');
 
 /**
@@ -170,7 +170,7 @@ class PerfilesMarketplaceModel {
             }
 
             if (campos.length === 0) {
-                throw new Error('No hay campos para actualizar');
+                ErrorHelper.throwValidation('No hay campos para actualizar');
             }
 
             const query = `

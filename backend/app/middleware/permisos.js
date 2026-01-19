@@ -14,6 +14,87 @@ const { getDb } = require('../config/database');
 const logger = require('../utils/logger');
 const { ResponseHelper } = require('../utils/helpers');
 const permisosCacheService = require('../services/permisosCacheService');
+const sucursalCacheService = require('../services/sucursalCacheService');
+
+/**
+ * Obtiene sucursalId de la request con prioridad expl\u00edcita
+ *
+ * PRIORIDAD (de mayor a menor):
+ * 1. params.sucursalId o params.sucursal_id (ruta con :sucursalId)
+ * 2. query.sucursalId o query.sucursal_id (query string)
+ * 3. body.sucursalId o body.sucursal_id (body del request)
+ * 4. user.sucursal_id (sucursal por defecto del usuario)
+ *
+ * @param {import('express').Request} req - Request de Express
+ * @param {Object} options - Opciones adicionales
+ * @param {boolean} options.usarSucursalDeParams - Forzar uso de params
+ * @param {boolean} options.usarSucursalDeQuery - Forzar uso de query
+ * @returns {{ sucursalId: number|null, source: string }} Objeto con sucursalId y fuente
+ */
+function obtenerSucursalId(req, options = {}) {
+    let sucursalId = null;
+    let source = 'none';
+
+    // 1. Params (prioridad m\u00e1s alta si est\u00e1 habilitado o siempre presente)
+    if (options.usarSucursalDeParams || req.params.sucursalId || req.params.sucursal_id) {
+        const paramValue = req.params.sucursalId || req.params.sucursal_id;
+        if (paramValue) {
+            sucursalId = parseInt(paramValue);
+            source = 'params';
+        }
+    }
+
+    // 2. Query (si no se encontr\u00f3 en params)
+    if (!sucursalId && (options.usarSucursalDeQuery || req.query.sucursalId || req.query.sucursal_id)) {
+        const queryValue = req.query.sucursalId || req.query.sucursal_id;
+        if (queryValue) {
+            sucursalId = parseInt(queryValue);
+            source = 'query';
+        }
+    }
+
+    // 3. Body (si no se encontr\u00f3 antes)
+    if (!sucursalId && req.body) {
+        const bodyValue = req.body.sucursalId || req.body.sucursal_id;
+        if (bodyValue) {
+            sucursalId = parseInt(bodyValue);
+            source = 'body';
+        }
+    }
+
+    // 4. User default (fallback)
+    if (!sucursalId && req.user?.sucursal_id) {
+        sucursalId = parseInt(req.user.sucursal_id);
+        source = 'user_default';
+    }
+
+    // Validar que sea un n\u00famero positivo
+    if (sucursalId && (isNaN(sucursalId) || sucursalId <= 0)) {
+        logger.warn('[Permisos] sucursalId inv\u00e1lido', {
+            rawValue: req.params.sucursalId || req.query.sucursalId || req.body?.sucursalId,
+            source,
+            parsed: sucursalId
+        });
+        sucursalId = null;
+        source = 'invalid';
+    }
+
+    return { sucursalId, source };
+}
+
+/**
+ * Valida que una sucursal pertenezca a la organización del usuario
+ * ✅ SECURITY FIX v2.1: Previene acceso a sucursales de otras organizaciones
+ * ✅ PERFORMANCE v2.2: Cache en memoria con TTL de 5 minutos
+ *
+ * @param {number} sucursalId - ID de la sucursal a validar
+ * @param {number} organizacionId - ID de la organización del usuario
+ * @returns {Promise<boolean>} true si la sucursal pertenece a la organización
+ */
+async function validarSucursalPerteneceAOrganizacion(sucursalId, organizacionId) {
+    // Usa cache service con TTL de 5 minutos
+    return await sucursalCacheService.validarSucursalPerteneceAOrg(sucursalId, organizacionId);
+}
 
 /**
  * Verificar si usuario tiene un permiso (con cache Redis + fallback local)
@@ -81,6 +162,78 @@ async function obtenerValorNumerico(usuarioId, sucursalId, codigoPermiso) {
 }
 
 /**
+ * Valida y adjunta sucursal al request
+ * Función interna que consolida la lógica de validación de sucursal
+ * usada en todos los middlewares de permisos
+ *
+ * @param {import('express').Request} req - Request de Express
+ * @param {import('express').Response} res - Response de Express
+ * @param {Object} options - Opciones de obtención de sucursal
+ * @param {string} contextName - Nombre del contexto para logging
+ * @param {string|string[]} permisoInfo - Permiso(s) para auditoría de super_admin
+ * @returns {Promise<{success: boolean, sucursalId?: number, isSuperAdmin?: boolean}>}
+ */
+async function validarYAdjuntarSucursal(req, res, options, contextName, permisoInfo) {
+    const usuarioId = req.user?.id;
+
+    if (!usuarioId) {
+        ResponseHelper.error(res, 'Usuario no autenticado', 401);
+        return { success: false };
+    }
+
+    // Obtener sucursalId usando helper consolidado
+    const { sucursalId, source } = obtenerSucursalId(req, options);
+
+    if (!sucursalId) {
+        logger.debug(`[Permisos] sucursalId no encontrado (${contextName})`, {
+            source,
+            options,
+            path: req.originalUrl
+        });
+        ResponseHelper.error(res, 'Se requiere una sucursal para verificar permisos', 400);
+        return { success: false };
+    }
+
+    // Adjuntar info de sucursal al request
+    req.sucursalId = sucursalId;
+    req.sucursalSource = source;
+
+    // Super admin: bypass con auditoría
+    if (req.user.rol === 'super_admin') {
+        logger.warn(`[Permisos] Super admin bypass - ${contextName}`, {
+            usuario_id: usuarioId,
+            email: req.user.email,
+            sucursal_id: sucursalId,
+            permiso: permisoInfo,
+            ruta: req.originalUrl,
+            ip: req.ip
+        });
+        return { success: true, sucursalId, isSuperAdmin: true };
+    }
+
+    // Validar que sucursal pertenece a la organización del usuario
+    const sucursalValida = await validarSucursalPerteneceAOrganizacion(
+        sucursalId,
+        req.user.organizacion_id
+    );
+
+    if (!sucursalValida) {
+        logger.warn('[Permisos] Intento de acceso a sucursal de otra organización', {
+            usuario_id: usuarioId,
+            organizacion_id: req.user.organizacion_id,
+            sucursal_id: sucursalId,
+            source,
+            ruta: req.originalUrl,
+            ip: req.ip
+        });
+        ResponseHelper.error(res, 'Sucursal no válida para esta organización', 403);
+        return { success: false };
+    }
+
+    return { success: true, sucursalId, isSuperAdmin: false };
+}
+
+/**
  * Limpiar cache de un usuario específico (con Pub/Sub para sincronizar instancias)
  * Llamar después de modificar permisos
  * @param {number} usuarioId
@@ -142,32 +295,16 @@ async function getCacheStats() {
 function verificarPermiso(codigoPermiso, options = {}) {
     return async (req, res, next) => {
         try {
-            const usuarioId = req.user?.id;
+            // Validar y adjuntar sucursal (incluye bypass super_admin con auditoría)
+            const validacion = await validarYAdjuntarSucursal(
+                req, res, options, 'verificarPermiso', codigoPermiso
+            );
 
-            if (!usuarioId) {
-                return ResponseHelper.error(res, 'Usuario no autenticado', 401);
-            }
+            if (!validacion.success) return; // Response ya enviada
+            if (validacion.isSuperAdmin) return next();
 
-            // Determinar sucursal (acepta camelCase y snake_case)
-            let sucursalId;
-            if (options.usarSucursalDeParams && req.params.sucursalId) {
-                sucursalId = parseInt(req.params.sucursalId);
-            } else if (options.usarSucursalDeQuery && req.query.sucursalId) {
-                sucursalId = parseInt(req.query.sucursalId);
-            } else if (req.body?.sucursalId || req.body?.sucursal_id) {
-                sucursalId = parseInt(req.body.sucursalId || req.body.sucursal_id);
-            } else {
-                sucursalId = req.user.sucursal_id;
-            }
-
-            if (!sucursalId) {
-                return ResponseHelper.error(res, 'Se requiere una sucursal para verificar permisos', 400);
-            }
-
-            // Super admin siempre tiene acceso
-            if (req.user.rol === 'super_admin') {
-                return next();
-            }
+            const { sucursalId } = validacion;
+            const usuarioId = req.user.id;
 
             // Verificar permiso
             const tiene = await tienePermiso(usuarioId, sucursalId, codigoPermiso);
@@ -187,7 +324,6 @@ function verificarPermiso(codigoPermiso, options = {}) {
                 );
             }
 
-            // Adjuntar info de permiso al request (útil para logging)
             req.permisoVerificado = codigoPermiso;
             next();
         } catch (error) {
@@ -217,22 +353,16 @@ function verificarPermiso(codigoPermiso, options = {}) {
 function verificarAlgunPermiso(codigosPermisos, options = {}) {
     return async (req, res, next) => {
         try {
-            const usuarioId = req.user?.id;
+            // Validar y adjuntar sucursal (incluye bypass super_admin con auditoría)
+            const validacion = await validarYAdjuntarSucursal(
+                req, res, options, 'verificarAlgunPermiso', codigosPermisos
+            );
 
-            if (!usuarioId) {
-                return ResponseHelper.error(res, 'Usuario no autenticado', 401);
-            }
+            if (!validacion.success) return;
+            if (validacion.isSuperAdmin) return next();
 
-            let sucursalId = options.sucursalId || req.params.sucursalId || req.query.sucursalId || req.user.sucursal_id;
-            sucursalId = parseInt(sucursalId);
-
-            if (!sucursalId) {
-                return ResponseHelper.error(res, 'Se requiere una sucursal', 400);
-            }
-
-            if (req.user.rol === 'super_admin') {
-                return next();
-            }
+            const { sucursalId } = validacion;
+            const usuarioId = req.user.id;
 
             // Verificar cada permiso hasta encontrar uno válido
             for (const codigo of codigosPermisos) {
@@ -272,22 +402,16 @@ function verificarAlgunPermiso(codigosPermisos, options = {}) {
 function verificarTodosPermisos(codigosPermisos, options = {}) {
     return async (req, res, next) => {
         try {
-            const usuarioId = req.user?.id;
+            // Validar y adjuntar sucursal (incluye bypass super_admin con auditoría)
+            const validacion = await validarYAdjuntarSucursal(
+                req, res, options, 'verificarTodosPermisos', codigosPermisos
+            );
 
-            if (!usuarioId) {
-                return ResponseHelper.error(res, 'Usuario no autenticado', 401);
-            }
+            if (!validacion.success) return;
+            if (validacion.isSuperAdmin) return next();
 
-            let sucursalId = options.sucursalId || req.params.sucursalId || req.query.sucursalId || req.user.sucursal_id;
-            sucursalId = parseInt(sucursalId);
-
-            if (!sucursalId) {
-                return ResponseHelper.error(res, 'Se requiere una sucursal', 400);
-            }
-
-            if (req.user.rol === 'super_admin') {
-                return next();
-            }
+            const { sucursalId } = validacion;
+            const usuarioId = req.user.id;
 
             // Verificar todos los permisos
             const permisosFaltantes = [];
@@ -337,21 +461,21 @@ function verificarTodosPermisos(codigosPermisos, options = {}) {
  *     VentasController.aplicarDescuento
  * );
  */
-function verificarLimiteNumerico(codigoPermiso, obtenerValor) {
+function verificarLimiteNumerico(codigoPermiso, obtenerValor, options = {}) {
     return async (req, res, next) => {
         try {
-            const usuarioId = req.user?.id;
-            const sucursalId = req.params.sucursalId || req.query.sucursalId || req.user.sucursal_id;
+            // Validar y adjuntar sucursal (incluye bypass super_admin con auditoría)
+            const validacion = await validarYAdjuntarSucursal(
+                req, res, options, 'verificarLimiteNumerico', codigoPermiso
+            );
 
-            if (!usuarioId || !sucursalId) {
-                return ResponseHelper.error(res, 'Usuario o sucursal no identificados', 400);
-            }
+            if (!validacion.success) return;
+            if (validacion.isSuperAdmin) return next();
 
-            if (req.user.rol === 'super_admin') {
-                return next();
-            }
+            const { sucursalId } = validacion;
+            const usuarioId = req.user.id;
 
-            const limite = await obtenerValorNumerico(usuarioId, parseInt(sucursalId), codigoPermiso);
+            const limite = await obtenerValorNumerico(usuarioId, sucursalId, codigoPermiso);
             const valorSolicitado = obtenerValor(req);
 
             if (valorSolicitado > limite) {
@@ -378,6 +502,26 @@ function verificarLimiteNumerico(codigoPermiso, obtenerValor) {
     };
 }
 
+/**
+ * Invalida cache de validación sucursal-organización
+ * Llamar cuando se modifique una sucursal
+ * @param {number} orgId - ID de la organización
+ */
+function invalidarCacheSucursalOrganizacion(orgId) {
+    sucursalCacheService.invalidarOrganizacion(orgId);
+}
+
+/**
+ * Obtener estadísticas de todos los caches (permisos + sucursales)
+ * @returns {Promise<Object>}
+ */
+async function getAllCacheStats() {
+    return {
+        permisos: await permisosCacheService.getStats(),
+        sucursales: sucursalCacheService.getStats()
+    };
+}
+
 module.exports = {
     verificarPermiso,
     verificarAlgunPermiso,
@@ -388,5 +532,7 @@ module.exports = {
     invalidarCacheUsuario,
     invalidarCacheSucursal,
     invalidarTodoCache,
-    getCacheStats
+    invalidarCacheSucursalOrganizacion,
+    getCacheStats,
+    getAllCacheStats
 };

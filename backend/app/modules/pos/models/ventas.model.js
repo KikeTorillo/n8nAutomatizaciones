@@ -1,6 +1,7 @@
 const RLSContextManager = require('../../../utils/rlsContextManager');
 const ReservasModel = require('../../inventario/models/reservas.model');
 const logger = require('../../../utils/logger');
+const { ErrorHelper } = require('../../../utils/helpers');
 
 /**
  * Model para ventas POS (Punto de Venta)
@@ -27,11 +28,11 @@ class VentasPOSModel {
 
             // Validar que hay items
             if (!data.items || data.items.length === 0) {
-                throw new Error('La venta debe tener al menos un item');
+                ErrorHelper.throwValidation('La venta debe tener al menos un item');
             }
 
             if (data.items.length > 100) {
-                throw new Error('No se pueden agregar más de 100 items en una venta');
+                ErrorHelper.throwValidation('No se pueden agregar más de 100 items en una venta');
             }
 
             // Validar cliente si se proporciona
@@ -43,7 +44,7 @@ class VentasPOSModel {
                 );
 
                 if (clienteQuery.rows.length === 0) {
-                    throw new Error('Cliente no encontrado o no pertenece a esta organización');
+                    ErrorHelper.throwIfNotFound(null, 'Cliente');
                 }
             }
 
@@ -56,7 +57,7 @@ class VentasPOSModel {
                 );
 
                 if (profesionalQuery.rows.length === 0) {
-                    throw new Error('Profesional no encontrado o no pertenece a esta organización');
+                    ErrorHelper.throwIfNotFound(null, 'Profesional');
                 }
             }
 
@@ -68,7 +69,7 @@ class VentasPOSModel {
                 );
 
                 if (citaQuery.rows.length === 0) {
-                    throw new Error('Cita no encontrada');
+                    ErrorHelper.throwIfNotFound(null, 'Cita');
                 }
             }
 
@@ -93,17 +94,17 @@ class VentasPOSModel {
                     );
 
                     if (productoQuery.rows.length === 0) {
-                        throw new Error(`Producto con ID ${item.producto_id} no encontrado`);
+                        ErrorHelper.throwIfNotFound(null, `Producto con ID ${item.producto_id}`);
                     }
 
                     const producto = productoQuery.rows[0];
 
                     if (!producto.activo) {
-                        throw new Error(`Producto "${producto.nombre}" está inactivo`);
+                        ErrorHelper.throwConflict(`Producto "${producto.nombre}" está inactivo`);
                     }
 
                     if (!producto.permite_venta) {
-                        throw new Error(`Producto "${producto.nombre}" no está disponible para venta`);
+                        ErrorHelper.throwConflict(`Producto "${producto.nombre}" no está disponible para venta`);
                     }
 
                     // Para cotizaciones no necesitamos reservar stock
@@ -131,13 +132,13 @@ class VentasPOSModel {
                         );
 
                         if (varianteQuery.rows.length === 0) {
-                            throw new Error(`Variante con ID ${item.variante_id} no encontrada`);
+                            ErrorHelper.throwIfNotFound(null, `Variante con ID ${item.variante_id}`);
                         }
 
                         const variante = varianteQuery.rows[0];
 
                         if (!variante.activo) {
-                            throw new Error(`Variante "${variante.nombre_variante}" está inactiva`);
+                            ErrorHelper.throwConflict(`Variante "${variante.nombre_variante}" está inactiva`);
                         }
 
                         // Crear reserva atómica para VARIANTE
@@ -160,7 +161,7 @@ class VentasPOSModel {
                         const reserva = reservaResult.rows[0];
 
                         if (!reserva.exito) {
-                            throw new Error(
+                            ErrorHelper.throwConflict(
                                 `${reserva.mensaje} para variante "${variante.nombre_variante}"`
                             );
                         }
@@ -195,7 +196,7 @@ class VentasPOSModel {
                         const reserva = reservaResult.rows[0];
 
                         if (!reserva.exito) {
-                            throw new Error(
+                            ErrorHelper.throwConflict(
                                 `${reserva.mensaje} para producto "${producto.nombre}"`
                             );
                         }
@@ -908,9 +909,7 @@ class VentasPOSModel {
 
             const result = await db.query(query, [nuevoEstado, id]);
 
-            if (result.rows.length === 0) {
-                throw new Error('Venta no encontrada');
-            }
+            ErrorHelper.throwIfNotFound(result.rows[0], 'Venta');
 
             return result.rows[0];
         });
@@ -933,9 +932,7 @@ class VentasPOSModel {
                 [id]
             );
 
-            if (ventaQuery.rows.length === 0) {
-                throw new Error('Venta no encontrada');
-            }
+            ErrorHelper.throwIfNotFound(ventaQuery.rows[0], 'Venta');
 
             const venta = ventaQuery.rows[0];
             const nuevoMontoPagado = parseFloat(venta.monto_pagado) + parseFloat(montoPago);
@@ -998,15 +995,13 @@ class VentasPOSModel {
                 [id]
             );
 
-            if (ventaQuery.rows.length === 0) {
-                throw new Error('Venta no encontrada');
-            }
+            ErrorHelper.throwIfNotFound(ventaQuery.rows[0], 'Venta');
 
             const venta = ventaQuery.rows[0];
 
             // Validar que no esté ya cancelada
             if (venta.estado === 'cancelada') {
-                throw new Error('La venta ya está cancelada');
+                ErrorHelper.throwConflict('La venta ya está cancelada');
             }
 
             // Obtener items de la venta
@@ -1111,7 +1106,7 @@ class VentasPOSModel {
 
             // Validar que itemsDevueltos no esté vacío
             if (!itemsDevueltos || itemsDevueltos.length === 0) {
-                throw new Error('Debe especificar al menos un item para devolver');
+                ErrorHelper.throwValidation('Debe especificar al menos un item para devolver');
             }
 
             // Obtener venta (incluir cliente_id para reversión de puntos)
@@ -1120,9 +1115,7 @@ class VentasPOSModel {
                 [id]
             );
 
-            if (ventaQuery.rows.length === 0) {
-                throw new Error('Venta no encontrada');
-            }
+            ErrorHelper.throwIfNotFound(ventaQuery.rows[0], 'Venta');
 
             const venta = ventaQuery.rows[0];
 
@@ -1130,7 +1123,7 @@ class VentasPOSModel {
             // Ene 2026: Permitir devoluciones adicionales en ventas con devolucion_parcial
             const estadosPermitidos = ['completada', 'devolucion_parcial'];
             if (!estadosPermitidos.includes(venta.estado)) {
-                throw new Error('Solo se pueden hacer devoluciones de ventas completadas o con devolución parcial');
+                ErrorHelper.throwConflict('Solo se pueden hacer devoluciones de ventas completadas o con devolución parcial');
             }
 
             let totalDevuelto = 0;
@@ -1147,14 +1140,14 @@ class VentasPOSModel {
                 );
 
                 if (itemQuery.rows.length === 0) {
-                    throw new Error(`Item ${itemDevuelto.item_id} no pertenece a esta venta`);
+                    ErrorHelper.throwValidation(`Item ${itemDevuelto.item_id} no pertenece a esta venta`);
                 }
 
                 const item = itemQuery.rows[0];
 
                 // Validar cantidad a devolver
                 if (itemDevuelto.cantidad_devolver > item.cantidad) {
-                    throw new Error(
+                    ErrorHelper.throwValidation(
                         `No se puede devolver ${itemDevuelto.cantidad_devolver} unidades. ` +
                         `Cantidad original: ${item.cantidad}`
                     );
@@ -1443,14 +1436,12 @@ class VentasPOSModel {
             `;
             const ventaResult = await db.query(ventaQuery, [ventaId, organizacionId]);
 
-            if (ventaResult.rows.length === 0) {
-                throw new Error('Venta no encontrada');
-            }
+            ErrorHelper.throwIfNotFound(ventaResult.rows[0], 'Venta');
 
             const venta = ventaResult.rows[0];
 
             if (venta.estado === 'cancelada') {
-                throw new Error('No se pueden agregar items a una venta cancelada');
+                ErrorHelper.throwConflict('No se pueden agregar items a una venta cancelada');
             }
 
             const itemsCreados = [];
@@ -1466,7 +1457,7 @@ class VentasPOSModel {
                     const productoResult = await db.query(productoQuery, [item.producto_id, organizacionId]);
 
                     if (productoResult.rows.length === 0) {
-                        throw new Error(`Producto con ID ${item.producto_id} no encontrado`);
+                        ErrorHelper.throwIfNotFound(null, `Producto con ID ${item.producto_id}`);
                     }
 
                     precioUnitario = productoResult.rows[0].precio_venta;
@@ -1554,14 +1545,12 @@ class VentasPOSModel {
             `;
             const checkResult = await db.query(checkQuery, [id, organizacionId]);
 
-            if (checkResult.rows.length === 0) {
-                throw new Error('Venta no encontrada');
-            }
+            ErrorHelper.throwIfNotFound(checkResult.rows[0], 'Venta');
 
             const venta = checkResult.rows[0];
 
             if (venta.estado === 'cancelada') {
-                throw new Error('No se puede actualizar una venta cancelada');
+                ErrorHelper.throwConflict('No se puede actualizar una venta cancelada');
             }
 
             // Construir query de actualización dinámico
@@ -1620,7 +1609,7 @@ class VentasPOSModel {
             }
 
             if (fields.length === 0) {
-                throw new Error('No se proporcionaron campos para actualizar');
+                ErrorHelper.throwValidation('No se proporcionaron campos para actualizar');
             }
 
             fields.push(`actualizado_en = NOW()`);
@@ -1656,14 +1645,12 @@ class VentasPOSModel {
             `;
             const checkResult = await db.query(checkQuery, [id, organizacionId]);
 
-            if (checkResult.rows.length === 0) {
-                throw new Error('Venta no encontrada');
-            }
+            ErrorHelper.throwIfNotFound(checkResult.rows[0], 'Venta');
 
             const venta = checkResult.rows[0];
 
             if (venta.estado === 'cancelada') {
-                throw new Error('La venta ya está cancelada');
+                ErrorHelper.throwConflict('La venta ya está cancelada');
             }
 
             // 1. Obtener items de la venta
@@ -1918,7 +1905,7 @@ class VentasPOSModel {
                     const result = await db.query(query, [reservaId]);
 
                     if (!result.rows[0].resultado) {
-                        throw new Error(`No se pudo confirmar la reserva ${reservaId}`);
+                        ErrorHelper.throwConflict(`No se pudo confirmar la reserva ${reservaId}`);
                     }
                 }
 
@@ -1943,7 +1930,7 @@ class VentasPOSModel {
     static async crearSinValidarStock(organizacionId, data, db) {
         // Validar que hay items
         if (!data.items || data.items.length === 0) {
-            throw new Error('La venta debe tener al menos un item');
+            ErrorHelper.throwValidation('La venta debe tener al menos un item');
         }
 
         // Generar folio
@@ -2096,14 +2083,12 @@ class VentasPOSModel {
                 [ventaId, organizacionId]
             );
 
-            if (ventaQuery.rows.length === 0) {
-                throw new Error('Venta no encontrada');
-            }
+            ErrorHelper.throwIfNotFound(ventaQuery.rows[0], 'Venta');
 
             const venta = ventaQuery.rows[0];
 
             if (venta.estado === 'cancelada') {
-                throw new Error('No se pueden registrar pagos en una venta cancelada');
+                ErrorHelper.throwConflict('No se pueden registrar pagos en una venta cancelada');
             }
 
             // Calcular total de pagos a registrar
@@ -2116,7 +2101,7 @@ class VentasPOSModel {
             const totalNoEfectivo = pagosNoEfectivo.reduce((sum, p) => sum + parseFloat(p.monto), 0);
 
             if (totalNoEfectivo > totalEsperado) {
-                throw new Error(`Los pagos no pueden exceder el monto pendiente ($${totalEsperado.toFixed(2)})`);
+                ErrorHelper.throwValidation(`Los pagos no pueden exceder el monto pendiente ($${totalEsperado.toFixed(2)})`);
             }
 
             const pagosRegistrados = [];
@@ -2126,7 +2111,7 @@ class VentasPOSModel {
                 // Validar método cuenta_cliente
                 if (pago.metodo_pago === 'cuenta_cliente') {
                     if (!clienteId) {
-                        throw new Error('Se requiere cliente_id para pagos a cuenta');
+                        ErrorHelper.throwValidation('Se requiere cliente_id para pagos a cuenta');
                     }
 
                     // Registrar cargo de crédito
@@ -2221,9 +2206,7 @@ class VentasPOSModel {
                 [ventaId]
             );
 
-            if (ventaQuery.rows.length === 0) {
-                throw new Error('Venta no encontrada');
-            }
+            ErrorHelper.throwIfNotFound(ventaQuery.rows[0], 'Venta');
 
             // Obtener pagos
             const pagosQuery = await db.query(

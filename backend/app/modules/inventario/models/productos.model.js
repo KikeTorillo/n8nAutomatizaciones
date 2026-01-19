@@ -1,5 +1,6 @@
 const RLSContextManager = require('../../../utils/rlsContextManager');
 const logger = require('../../../utils/logger');
+const { ErrorHelper } = require('../../../utils/helpers');
 
 /**
  * Model para CRUD de productos
@@ -131,7 +132,7 @@ class ProductosModel {
                 );
 
                 if (categoriaQuery.rows.length === 0) {
-                    throw new Error('Categoría no encontrada o no pertenece a esta organización');
+                    ErrorHelper.throwValidation('Categoría no encontrada o no pertenece a esta organización');
                 }
             }
 
@@ -144,7 +145,7 @@ class ProductosModel {
                 );
 
                 if (proveedorQuery.rows.length === 0) {
-                    throw new Error('Proveedor no encontrado o no pertenece a esta organización');
+                    ErrorHelper.throwValidation('Proveedor no encontrado o no pertenece a esta organización');
                 }
             }
 
@@ -157,7 +158,7 @@ class ProductosModel {
                 );
 
                 if (skuQuery.rows.length > 0) {
-                    throw new Error(`Ya existe un producto con el SKU: ${data.sku}`);
+                    ErrorHelper.throwConflict(`Ya existe un producto con el SKU: ${data.sku}`);
                 }
             }
 
@@ -170,7 +171,7 @@ class ProductosModel {
                 );
 
                 if (codigoQuery.rows.length > 0) {
-                    throw new Error(`Ya existe un producto con el código de barras: ${data.codigo_barras}`);
+                    ErrorHelper.throwConflict(`Ya existe un producto con el código de barras: ${data.codigo_barras}`);
                 }
             }
 
@@ -456,9 +457,7 @@ class ProductosModel {
                 [id]
             );
 
-            if (existeQuery.rows.length === 0) {
-                throw new Error('Producto no encontrado');
-            }
+            ErrorHelper.throwIfNotFound(existeQuery.rows[0], 'Producto');
 
             // Validar categoría si se está actualizando
             if (data.categoria_id !== undefined && data.categoria_id) {
@@ -469,7 +468,7 @@ class ProductosModel {
                 );
 
                 if (categoriaQuery.rows.length === 0) {
-                    throw new Error('Categoría no encontrada o no pertenece a esta organización');
+                    ErrorHelper.throwValidation('Categoría no encontrada o no pertenece a esta organización');
                 }
             }
 
@@ -482,7 +481,7 @@ class ProductosModel {
                 );
 
                 if (proveedorQuery.rows.length === 0) {
-                    throw new Error('Proveedor no encontrado o no pertenece a esta organización');
+                    ErrorHelper.throwValidation('Proveedor no encontrado o no pertenece a esta organización');
                 }
             }
 
@@ -495,7 +494,7 @@ class ProductosModel {
                 );
 
                 if (skuQuery.rows.length > 0) {
-                    throw new Error(`Ya existe otro producto con el SKU: ${data.sku}`);
+                    ErrorHelper.throwConflict(`Ya existe otro producto con el SKU: ${data.sku}`);
                 }
             }
 
@@ -508,7 +507,7 @@ class ProductosModel {
                 );
 
                 if (codigoQuery.rows.length > 0) {
-                    throw new Error(`Ya existe otro producto con el código de barras: ${data.codigo_barras}`);
+                    ErrorHelper.throwConflict(`Ya existe otro producto con el código de barras: ${data.codigo_barras}`);
                 }
             }
 
@@ -539,7 +538,7 @@ class ProductosModel {
             const tienePrecios = data.precios_moneda && Array.isArray(data.precios_moneda);
 
             if (updates.length === 0 && !tienePrecios) {
-                throw new Error('No hay campos para actualizar');
+                ErrorHelper.throwValidation('No hay campos para actualizar');
             }
 
             let producto;
@@ -610,7 +609,7 @@ class ProductosModel {
                     producto_id: id,
                     movimientos: movimientosQuery.rows[0].total
                 });
-                throw new Error('No se puede eliminar un producto con movimientos recientes (últimos 30 días)');
+                ErrorHelper.throwConflict('No se puede eliminar un producto con movimientos recientes (últimos 30 días)');
             }
 
             // Soft delete
@@ -729,15 +728,13 @@ class ProductosModel {
             `;
             const checkResult = await db.query(checkQuery, [id, organizacionId]);
 
-            if (checkResult.rows.length === 0) {
-                throw new Error('Producto no encontrado');
-            }
+            ErrorHelper.throwIfNotFound(checkResult.rows[0], 'Producto');
 
             const producto = checkResult.rows[0];
             const nuevoStock = producto.stock_actual + ajuste.cantidad_ajuste;
 
             if (nuevoStock < 0) {
-                throw new Error(`Stock insuficiente. Stock actual: ${producto.stock_actual}, ajuste: ${ajuste.cantidad_ajuste}`);
+                ErrorHelper.throwConflict(`Stock insuficiente. Stock actual: ${producto.stock_actual}, ajuste: ${ajuste.cantidad_ajuste}`);
             }
 
             // 2. Actualizar stock del producto

@@ -6,6 +6,7 @@
 
 const RLSContextManager = require('../../../utils/rlsContextManager');
 const logger = require('../../../utils/logger');
+const { ErrorHelper } = require('../../../utils/helpers');
 
 class LandedCostsModel {
     // ==================== COSTOS ADICIONALES ====================
@@ -88,12 +89,10 @@ class LandedCostsModel {
                 [orden_compra_id, organizacionId]
             );
 
-            if (!ocCheck.rows[0]) {
-                throw new Error('Orden de compra no encontrada');
-            }
+            ErrorHelper.throwIfNotFound(ocCheck.rows[0], 'Orden de compra');
 
             if (ocCheck.rows[0].estado === 'cancelada') {
-                throw new Error('No se pueden agregar costos a una OC cancelada');
+                ErrorHelper.throwConflict('No se pueden agregar costos a una OC cancelada');
             }
 
             const result = await db.query(`
@@ -154,7 +153,7 @@ class LandedCostsModel {
             }
 
             if (existing.rows[0].distribuido) {
-                throw new Error('No se puede modificar un costo ya distribuido');
+                ErrorHelper.throwConflict('No se puede modificar un costo ya distribuido');
             }
 
             const {
@@ -218,7 +217,7 @@ class LandedCostsModel {
             }
 
             if (existing.rows[0].distribuido) {
-                throw new Error('No se puede eliminar un costo ya distribuido');
+                ErrorHelper.throwConflict('No se puede eliminar un costo ya distribuido');
             }
 
             await db.query(
@@ -247,7 +246,7 @@ class LandedCostsModel {
             const resultado = result.rows[0].distribuir_costo_adicional;
 
             if (!resultado.exito) {
-                throw new Error(resultado.mensaje);
+                ErrorHelper.throwConflict(resultado.mensaje);
             }
 
             logger.info('[LandedCostsModel.distribuir] Costo distribuido', {

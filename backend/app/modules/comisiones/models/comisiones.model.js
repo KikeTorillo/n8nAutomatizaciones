@@ -1,6 +1,6 @@
 const RLSContextManager = require('../../../utils/rlsContextManager');
 const logger = require('../../../utils/logger');
-const PaginationHelper = require('../../../utils/helpers').PaginationHelper;
+const { PaginationHelper, ErrorHelper } = require('../../../utils/helpers');
 
 /**
  * Model para consultas de comisiones profesionales
@@ -171,7 +171,7 @@ class ComisionesModel {
 
             // Filtros obligatorios de fecha
             if (!filtros.fecha_desde || !filtros.fecha_hasta) {
-                throw new Error('Se requieren fecha_desde y fecha_hasta');
+                ErrorHelper.throwValidation('Se requieren fecha_desde y fecha_hasta');
             }
 
             // Usa COALESCE para soportar ambos orígenes (cita usa fecha_cita, venta usa creado_en)
@@ -267,18 +267,16 @@ class ComisionesModel {
                 [comisionId, organizacionId]
             );
 
-            if (comisionQuery.rows.length === 0) {
-                throw new Error('Comisión no encontrada');
-            }
+            ErrorHelper.throwIfNotFound(comisionQuery.rows[0], 'Comisión');
 
             const comision = comisionQuery.rows[0];
 
             if (comision.estado_pago === 'pagada') {
-                throw new Error('Esta comisión ya fue marcada como pagada');
+                ErrorHelper.throwConflict('Esta comisión ya fue marcada como pagada');
             }
 
             if (comision.estado_pago === 'cancelada') {
-                throw new Error('No se puede pagar una comisión cancelada');
+                ErrorHelper.throwConflict('No se puede pagar una comisión cancelada');
             }
 
             // Actualizar estado a pagada

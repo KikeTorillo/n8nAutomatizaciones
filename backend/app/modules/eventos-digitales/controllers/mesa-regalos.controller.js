@@ -4,6 +4,19 @@
  * ====================================================================
  * Gestión de mesa de regalos del evento.
  *
+ * ENDPOINTS (7):
+ * - POST   /eventos/:eventoId/mesa-regalos       - Crear regalo
+ * - GET    /eventos/:eventoId/mesa-regalos       - Listar regalos
+ * - GET    /mesa-regalos/:id                     - Obtener regalo
+ * - PUT    /mesa-regalos/:id                     - Actualizar regalo
+ * - PUT    /mesa-regalos/:id/comprar             - Marcar como comprado
+ * - DELETE /mesa-regalos/:id                     - Eliminar regalo
+ * - GET    /eventos/:eventoId/mesa-regalos/estadisticas - Estadísticas
+ *
+ * NO MIGRADO A BaseCrudController - Ene 2026
+ * Razón: Depende de eventoId, método custom marcarComprado(),
+ * verificación de evento padre, estadísticas custom.
+ *
  * Fecha creación: 4 Diciembre 2025
  */
 

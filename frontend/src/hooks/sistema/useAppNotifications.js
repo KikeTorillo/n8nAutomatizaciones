@@ -30,7 +30,8 @@ export function useAppNotifications() {
     },
     enabled: tieneAgendamiento,
     staleTime: STALE_TIMES.DYNAMIC, // 2 minutos
-    refetchInterval: 5 * 60 * 1000, // Refetch cada 5 minutos
+    refetchInterval: 2 * 60 * 1000, // Alineado con staleTime
+    refetchIntervalInBackground: false, // No refetch en tabs inactivas
   });
 
   // Alertas de inventario (stock bajo)
@@ -42,7 +43,8 @@ export function useAppNotifications() {
     },
     enabled: tieneInventario,
     staleTime: STALE_TIMES.SEMI_STATIC, // 5 minutos
-    refetchInterval: 10 * 60 * 1000, // Refetch cada 10 minutos
+    refetchInterval: 5 * 60 * 1000, // Alineado con staleTime
+    refetchIntervalInBackground: false, // No refetch en tabs inactivas
   });
 
   // Ventas del día
@@ -58,8 +60,9 @@ export function useAppNotifications() {
       return response.data.data?.ventas || [];
     },
     enabled: tienePOS && !!sucursalId,
-    staleTime: STALE_TIMES.DYNAMIC,
-    refetchInterval: 5 * 60 * 1000,
+    staleTime: STALE_TIMES.DYNAMIC, // 2 minutos
+    refetchInterval: 2 * 60 * 1000, // Alineado con staleTime
+    refetchIntervalInBackground: false, // No refetch en tabs inactivas
   });
 
   // Aprobaciones pendientes (workflows)
@@ -69,8 +72,9 @@ export function useAppNotifications() {
       const response = await workflowsApi.contarPendientes();
       return response.data.data?.total || 0;
     },
-    staleTime: STALE_TIMES.REAL_TIME, // 30 segundos
-    refetchInterval: 60 * 1000, // Refetch cada minuto
+    staleTime: STALE_TIMES.FREQUENT, // 1 minuto
+    refetchInterval: 60 * 1000, // Alineado con staleTime
+    refetchIntervalInBackground: false, // No refetch en tabs inactivas
   });
 
   // Calcular badges

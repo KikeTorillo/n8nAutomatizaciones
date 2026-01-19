@@ -1,5 +1,6 @@
 const RLSContextManager = require('../../../utils/rlsContextManager');
 const logger = require('../../../utils/logger');
+const { ErrorHelper } = require('../../../utils/helpers');
 
 /**
  * Model para CRUD de categorías de productos
@@ -28,9 +29,7 @@ class CategoriasProductosModel {
                     [data.categoria_padre_id, organizacionId]
                 );
 
-                if (padreQuery.rows.length === 0) {
-                    throw new Error('Categoría padre no encontrada o no pertenece a esta organización');
-                }
+                ErrorHelper.throwIfNotFound(padreQuery.rows[0], 'Categoría padre');
             }
 
             const query = `
@@ -220,15 +219,13 @@ class CategoriasProductosModel {
                 [id]
             );
 
-            if (existeQuery.rows.length === 0) {
-                throw new Error('Categoría no encontrada');
-            }
+            ErrorHelper.throwIfNotFound(existeQuery.rows[0], 'Categoría');
 
             // Si se está cambiando categoria_padre_id, validar
             if (data.categoria_padre_id !== undefined) {
                 // No puede ser su propio padre
                 if (data.categoria_padre_id === id) {
-                    throw new Error('Una categoría no puede ser su propia categoría padre');
+                    ErrorHelper.throwValidation('Una categoría no puede ser su propia categoría padre');
                 }
 
                 // Si tiene padre, validar que existe
@@ -239,9 +236,7 @@ class CategoriasProductosModel {
                         [data.categoria_padre_id, organizacionId]
                     );
 
-                    if (padreQuery.rows.length === 0) {
-                        throw new Error('Categoría padre no encontrada o no pertenece a esta organización');
-                    }
+                    ErrorHelper.throwIfNotFound(padreQuery.rows[0], 'Categoría padre');
 
                     // Validar que no se crea un ciclo (padre no puede ser hijo de esta categoría)
                     const cicloQuery = await db.query(
@@ -261,7 +256,7 @@ class CategoriasProductosModel {
                     );
 
                     if (cicloQuery.rows.length > 0) {
-                        throw new Error('No se puede crear un ciclo en la jerarquía de categorías');
+                        ErrorHelper.throwValidation('No se puede crear un ciclo en la jerarquía de categorías');
                     }
                 }
             }
@@ -281,7 +276,7 @@ class CategoriasProductosModel {
             });
 
             if (updates.length === 0) {
-                throw new Error('No hay campos para actualizar');
+                ErrorHelper.throwValidation('No hay campos para actualizar');
             }
 
             // Agregar ID al final
@@ -326,7 +321,7 @@ class CategoriasProductosModel {
             );
 
             if (parseInt(productosQuery.rows[0].total) > 0) {
-                throw new Error('No se puede eliminar una categoría que tiene productos activos asociados');
+                ErrorHelper.throwConflict('No se puede eliminar una categoría que tiene productos activos asociados');
             }
 
             // Verificar si tiene subcategorías
@@ -337,7 +332,7 @@ class CategoriasProductosModel {
             );
 
             if (parseInt(subcategoriasQuery.rows[0].total) > 0) {
-                throw new Error('No se puede eliminar una categoría que tiene subcategorías activas');
+                ErrorHelper.throwConflict('No se puede eliminar una categoría que tiene subcategorías activas');
             }
 
             // Soft delete

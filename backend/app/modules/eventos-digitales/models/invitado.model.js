@@ -21,7 +21,7 @@
 
 const RLSContextManager = require('../../../utils/rlsContextManager');
 const logger = require('../../../utils/logger');
-const { PaginationHelper } = require('../../../utils/helpers');
+const { PaginationHelper, ErrorHelper } = require('../../../utils/helpers');
 
 class InvitadoModel {
 
@@ -167,7 +167,7 @@ class InvitadoModel {
             }
 
             if (campos.length === 0) {
-                throw new Error('No hay campos para actualizar');
+                ErrorHelper.throwValidation('No hay campos para actualizar');
             }
 
             const query = `
@@ -363,24 +363,24 @@ class InvitadoModel {
             const verificar = await db.query(verificarQuery, [token]);
 
             if (verificar.rows.length === 0) {
-                throw new Error('Invitación no encontrada o inválida');
+                ErrorHelper.throwIfNotFound(null, 'Invitación');
             }
 
             const invitado = verificar.rows[0];
 
             // Verificar que el evento esté publicado
             if (invitado.evento_estado !== 'publicado') {
-                throw new Error('El evento no está disponible para confirmaciones');
+                ErrorHelper.throwConflict('El evento no está disponible para confirmaciones');
             }
 
             // Verificar fecha límite de RSVP
             if (invitado.fecha_limite_rsvp && new Date(invitado.fecha_limite_rsvp) < new Date()) {
-                throw new Error('La fecha límite para confirmar ha pasado');
+                ErrorHelper.throwValidation('La fecha límite para confirmar ha pasado');
             }
 
             // Verificar número de asistentes
             if (datos.num_asistentes > invitado.max_acompanantes + 1) {
-                throw new Error(`Máximo ${invitado.max_acompanantes + 1} asistentes permitidos`);
+                ErrorHelper.throwValidation(`Máximo ${invitado.max_acompanantes + 1} asistentes permitidos`);
             }
 
             const query = `

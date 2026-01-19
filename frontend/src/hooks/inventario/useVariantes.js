@@ -1,19 +1,44 @@
+/**
+ * ====================================================================
+ * HOOKS: Variantes de Productos
+ * ====================================================================
+ * Ene 2026 - Refactorizado con query keys centralizadas
+ *
+ * Nota: Este hook no usa createCRUDHooks porque tiene una API diferente
+ * (las variantes pertenecen a un producto, no son entidades independientes)
+ */
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { inventarioApi } from '@/services/api/endpoints';
 import { STALE_TIMES } from '@/app/queryClient';
+import { queryKeys } from '@/hooks/config';
+import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
+
+// ==================== HELPERS ====================
+
+/**
+ * Invalida queries relacionadas con variantes de un producto
+ */
+function invalidarVariantesProducto(queryClient, productoId) {
+  queryClient.invalidateQueries({ queryKey: queryKeys.inventario.variantes.list(productoId) });
+  queryClient.invalidateQueries({ queryKey: ['variantes-resumen', productoId] });
+  queryClient.invalidateQueries({ queryKey: queryKeys.inventario.productos.detail(productoId) });
+}
+
+// ==================== QUERIES ====================
 
 /**
  * Hook para listar variantes de un producto
  */
 export function useVariantes(productoId) {
   return useQuery({
-    queryKey: ['variantes', productoId],
+    queryKey: queryKeys.inventario.variantes.list(productoId),
     queryFn: async () => {
       const response = await inventarioApi.listarVariantes(productoId);
       return response.data.data || [];
     },
     enabled: !!productoId,
-    staleTime: STALE_TIMES.DYNAMIC, // 2 minutos
+    staleTime: STALE_TIMES.DYNAMIC,
   });
 }
 
@@ -22,7 +47,7 @@ export function useVariantes(productoId) {
  */
 export function useVariante(id) {
   return useQuery({
-    queryKey: ['variante', id],
+    queryKey: queryKeys.inventario.variantes.detail(id),
     queryFn: async () => {
       const response = await inventarioApi.obtenerVariante(id);
       return response.data.data;
@@ -33,7 +58,7 @@ export function useVariante(id) {
 }
 
 /**
- * Hook para buscar variante por SKU o codigo de barras
+ * Hook para buscar variante por SKU o código de barras
  */
 export function useBuscarVariante(termino) {
   return useQuery({
@@ -43,7 +68,7 @@ export function useBuscarVariante(termino) {
       return response.data.data;
     },
     enabled: !!termino && termino.length >= 2,
-    staleTime: STALE_TIMES.REAL_TIME, // 30 segundos
+    staleTime: STALE_TIMES.REAL_TIME,
   });
 }
 
@@ -58,9 +83,11 @@ export function useResumenVariantes(productoId) {
       return response.data.data;
     },
     enabled: !!productoId,
-    staleTime: STALE_TIMES.FREQUENT, // 1 minuto
+    staleTime: STALE_TIMES.FREQUENT,
   });
 }
+
+// ==================== MUTATIONS ====================
 
 /**
  * Hook para crear variante individual
@@ -74,15 +101,14 @@ export function useCrearVariante() {
       return response.data.data;
     },
     onSuccess: (_, { productoId }) => {
-      queryClient.invalidateQueries({ queryKey: ['variantes', productoId] });
-      queryClient.invalidateQueries({ queryKey: ['variantes-resumen', productoId] });
-      queryClient.invalidateQueries({ queryKey: ['producto', productoId] });
+      invalidarVariantesProducto(queryClient, productoId);
     },
+    onError: createCRUDErrorHandler('create', 'Variante'),
   });
 }
 
 /**
- * Hook para generar variantes automaticamente
+ * Hook para generar variantes automáticamente
  */
 export function useGenerarVariantes() {
   const queryClient = useQueryClient();
@@ -93,11 +119,14 @@ export function useGenerarVariantes() {
       return response.data.data;
     },
     onSuccess: (_, { productoId }) => {
-      queryClient.invalidateQueries({ queryKey: ['variantes', productoId] });
-      queryClient.invalidateQueries({ queryKey: ['variantes-resumen', productoId] });
-      queryClient.invalidateQueries({ queryKey: ['producto', productoId] });
-      queryClient.invalidateQueries({ queryKey: ['productos'] });
+      invalidarVariantesProducto(queryClient, productoId);
+      // También invalidar lista de productos por si cambia el conteo de variantes
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.inventario.productos.all,
+        refetchType: 'active'
+      });
     },
+    onError: createCRUDErrorHandler('create', 'Variantes'),
   });
 }
 
@@ -113,10 +142,12 @@ export function useActualizarVariante() {
       return response.data.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['variante', data.id] });
-      queryClient.invalidateQueries({ queryKey: ['variantes', data.producto_id] });
-      queryClient.invalidateQueries({ queryKey: ['variantes-resumen', data.producto_id] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.variantes.detail(data.id) });
+      if (data.producto_id) {
+        invalidarVariantesProducto(queryClient, data.producto_id);
+      }
     },
+    onError: createCRUDErrorHandler('update', 'Variante'),
   });
 }
 
@@ -132,10 +163,17 @@ export function useAjustarStockVariante() {
       return response.data.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['variantes'] });
+      // Invalidar variante específica
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.variantes.detail(data.variante_id) });
+      // Invalidar queries de variantes (refetch solo activas)
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.inventario.variantes.all,
+        refetchType: 'active'
+      });
+      // Invalidar resumen de variantes
       queryClient.invalidateQueries({ queryKey: ['variantes-resumen'] });
-      queryClient.invalidateQueries({ queryKey: ['variante', data.variante_id] });
     },
+    onError: createCRUDErrorHandler('update', 'Stock variante'),
   });
 }
 
@@ -150,10 +188,19 @@ export function useEliminarVariante() {
       const response = await inventarioApi.eliminarVariante(id);
       return response.data.data;
     },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['variantes'] });
+    onSuccess: () => {
+      // Invalidar queries de variantes (refetch solo activas)
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.inventario.variantes.all,
+        refetchType: 'active'
+      });
       queryClient.invalidateQueries({ queryKey: ['variantes-resumen'] });
-      queryClient.invalidateQueries({ queryKey: ['productos'] });
+      // Invalidar lista de productos (puede cambiar estado de producto)
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.inventario.productos.all,
+        refetchType: 'active'
+      });
     },
+    onError: createCRUDErrorHandler('delete', 'Variante'),
   });
 }

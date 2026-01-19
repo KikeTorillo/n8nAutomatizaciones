@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { cn } from '@/lib/utils';
 import { StatCard } from '../molecules/StatCard';
 
@@ -15,7 +16,7 @@ import { StatCard } from '../molecules/StatCard';
  * @param {2|3|4} [props.columns] - Número de columnas en desktop (default: 4)
  * @param {string} [props.className] - Clases adicionales para el grid
  */
-export function StatCardGrid({ stats, columns = 4, className }) {
+export const StatCardGrid = memo(function StatCardGrid({ stats, columns = 4, className }) {
   const columnClasses = {
     2: 'grid-cols-2',
     3: 'grid-cols-1 sm:grid-cols-3',
@@ -43,6 +44,8 @@ export function StatCardGrid({ stats, columns = 4, className }) {
       ))}
     </div>
   );
-}
+});
+
+StatCardGrid.displayName = 'StatCardGrid';
 
 export default StatCardGrid;

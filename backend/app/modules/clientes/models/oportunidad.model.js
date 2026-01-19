@@ -10,6 +10,7 @@
  */
 
 const RLSContextManager = require('../../../utils/rlsContextManager');
+const { ErrorHelper } = require('../../../utils/helpers');
 
 class OportunidadModel {
 
@@ -107,7 +108,7 @@ class OportunidadModel {
             }
 
             if (campos.length === 0) {
-                throw new Error('No hay campos para actualizar');
+                ErrorHelper.throwValidation('No hay campos para actualizar');
             }
 
             values.push(etapaId);
@@ -137,7 +138,7 @@ class OportunidadModel {
             const checkResult = await db.query(checkQuery, [etapaId]);
 
             if (parseInt(checkResult.rows[0].count) > 0) {
-                throw new Error('No se puede eliminar una etapa con oportunidades activas');
+                ErrorHelper.throwConflict('No se puede eliminar una etapa con oportunidades activas');
             }
 
             const query = `
@@ -402,7 +403,7 @@ class OportunidadModel {
             }
 
             if (campos.length === 0) {
-                throw new Error('No hay campos para actualizar');
+                ErrorHelper.throwValidation('No hay campos para actualizar');
             }
 
             values.push(oportunidadId);
@@ -475,7 +476,7 @@ class OportunidadModel {
             const etapaResult = await db.query(etapaQuery, [organizacionId]);
 
             if (etapaResult.rows.length === 0) {
-                throw new Error('No existe una etapa de cierre configurada');
+                ErrorHelper.throwNotFound('No existe una etapa de cierre configurada');
             }
 
             const etapaGanadaId = etapaResult.rows[0].id;
@@ -509,7 +510,7 @@ class OportunidadModel {
             const etapaResult = await db.query(etapaQuery, [organizacionId]);
 
             if (etapaResult.rows.length === 0) {
-                throw new Error('No existe una etapa de pérdida configurada');
+                ErrorHelper.throwNotFound('No existe una etapa de pérdida configurada');
             }
 
             const etapaPerdidaId = etapaResult.rows[0].id;

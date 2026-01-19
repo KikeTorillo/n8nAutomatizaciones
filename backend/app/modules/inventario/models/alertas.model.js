@@ -1,5 +1,6 @@
 const RLSContextManager = require('../../../utils/rlsContextManager');
 const logger = require('../../../utils/logger');
+const { ErrorHelper } = require('../../../utils/helpers');
 
 /**
  * Model para consultar alertas de inventario
@@ -159,9 +160,7 @@ class AlertasInventarioModel {
 
             const result = await db.query(query, [usuarioId, id]);
 
-            if (result.rows.length === 0) {
-                throw new Error('Alerta no encontrada');
-            }
+            ErrorHelper.throwIfNotFound(result.rows[0], 'Alerta');
 
             return result.rows[0];
         });

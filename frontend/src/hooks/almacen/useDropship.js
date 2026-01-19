@@ -9,6 +9,7 @@ import { STALE_TIMES } from '@/app/queryClient';
 import { dropshipApi } from '@/services/api/endpoints';
 import { useToast } from '@/hooks/utils';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
+import { queryKeys } from '@/hooks/config';
 
 // ==================== QUERIES ====================
 
@@ -17,7 +18,7 @@ import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
  */
 export function useDropshipEstadisticas() {
   return useQuery({
-    queryKey: ['dropship', 'estadisticas'],
+    queryKey: queryKeys.almacen.dropship.estadisticas,
     queryFn: async () => {
       const response = await dropshipApi.obtenerEstadisticas();
       return response.data.data;
@@ -31,7 +32,7 @@ export function useDropshipEstadisticas() {
  */
 export function useDropshipConfiguracion() {
   return useQuery({
-    queryKey: ['dropship', 'configuracion'],
+    queryKey: queryKeys.almacen.dropship.configuracion,
     queryFn: async () => {
       const response = await dropshipApi.obtenerConfiguracion();
       return response.data.data;
@@ -45,7 +46,7 @@ export function useDropshipConfiguracion() {
  */
 export function useVentasPendientesDropship() {
   return useQuery({
-    queryKey: ['dropship', 'pendientes'],
+    queryKey: queryKeys.almacen.dropship.pendientes,
     queryFn: async () => {
       const response = await dropshipApi.obtenerVentasPendientes();
       return response.data.data;
@@ -60,7 +61,7 @@ export function useVentasPendientesDropship() {
  */
 export function useOrdenesDropship(filtros = {}) {
   return useQuery({
-    queryKey: ['dropship', 'ordenes', filtros],
+    queryKey: queryKeys.almacen.dropship.ordenes.list(filtros),
     queryFn: async () => {
       const response = await dropshipApi.listarOrdenes(filtros);
       return response.data.data;
@@ -75,7 +76,7 @@ export function useOrdenesDropship(filtros = {}) {
  */
 export function useOrdenDropship(id) {
   return useQuery({
-    queryKey: ['dropship', 'ordenes', id],
+    queryKey: queryKeys.almacen.dropship.ordenes.detail(id),
     queryFn: async () => {
       const response = await dropshipApi.obtenerOrden(id);
       return response.data.data;
@@ -96,7 +97,7 @@ export function useActualizarConfigDropship() {
   return useMutation({
     mutationFn: (data) => dropshipApi.actualizarConfiguracion(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['dropship', 'configuracion'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.almacen.dropship.configuracion });
       toast.success('Configuración de dropship actualizada');
     },
     onError: createCRUDErrorHandler('update', 'Configuración'),
@@ -113,8 +114,8 @@ export function useCrearOCDesdeVenta() {
   return useMutation({
     mutationFn: (ventaId) => dropshipApi.crearDesdeVenta(ventaId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['dropship'] });
-      queryClient.invalidateQueries({ queryKey: ['ordenes-compra'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.almacen.dropship.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.ordenesCompra.all });
       toast.success('Orden de compra dropship creada');
     },
     onError: createCRUDErrorHandler('create', 'Orden de compra'),
@@ -131,8 +132,8 @@ export function useConfirmarEntregaDropship() {
   return useMutation({
     mutationFn: ({ id, notas }) => dropshipApi.confirmarEntrega(id, { notas }),
     onSuccess: (_, { id }) => {
-      queryClient.invalidateQueries({ queryKey: ['dropship'] });
-      queryClient.invalidateQueries({ queryKey: ['dropship', 'ordenes', id] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.almacen.dropship.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.almacen.dropship.ordenes.detail(id) });
       toast.success('Entrega confirmada exitosamente');
     },
     onError: createCRUDErrorHandler('update', 'Entrega'),
@@ -149,8 +150,8 @@ export function useCancelarDropship() {
   return useMutation({
     mutationFn: ({ id, motivo }) => dropshipApi.cancelar(id, { motivo }),
     onSuccess: (_, { id }) => {
-      queryClient.invalidateQueries({ queryKey: ['dropship'] });
-      queryClient.invalidateQueries({ queryKey: ['dropship', 'ordenes', id] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.almacen.dropship.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.almacen.dropship.ordenes.detail(id) });
       toast.success('Orden dropship cancelada');
     },
     onError: createCRUDErrorHandler('delete', 'Orden'),

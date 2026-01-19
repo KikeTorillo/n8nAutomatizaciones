@@ -1,4 +1,4 @@
-import { forwardRef, useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { forwardRef, useState, useEffect, useCallback, useRef, useMemo, memo } from 'react';
 import { Search, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -57,7 +57,7 @@ const SIZE_STYLES = {
  *   debounceMs={500}
  * />
  */
-const SearchInput = forwardRef(
+const SearchInput = memo(forwardRef(
   (
     {
       value = '',
@@ -179,7 +179,7 @@ const SearchInput = forwardRef(
       </div>
     );
   }
-);
+));
 
 SearchInput.displayName = 'SearchInput';
 

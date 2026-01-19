@@ -1,5 +1,6 @@
 const RLSContextManager = require('../../../utils/rlsContextManager');
 const logger = require('../../../utils/logger');
+const { ErrorHelper } = require('../../../utils/helpers');
 
 /**
  * Model para reportes contables
@@ -19,9 +20,7 @@ class ReportesModel {
                 [periodoId, organizacionId]
             );
 
-            if (periodoResult.rows.length === 0) {
-                throw new Error('Período no encontrado');
-            }
+            ErrorHelper.throwIfNotFound(periodoResult.rows[0], 'Período');
 
             const { fecha_inicio, fecha_fin } = periodoResult.rows[0];
 
@@ -95,9 +94,7 @@ class ReportesModel {
                 [cuentaId, organizacionId]
             );
 
-            if (cuentaInfo.rows.length === 0) {
-                throw new Error('Cuenta no encontrada');
-            }
+            ErrorHelper.throwIfNotFound(cuentaInfo.rows[0], 'Cuenta');
 
             const movimientos = result.rows.map(row => ({
                 fecha: row.fecha,
@@ -338,12 +335,10 @@ class ReportesModel {
                 [periodoId, organizacionId]
             );
 
-            if (periodo.rows.length === 0) {
-                throw new Error('Período no encontrado');
-            }
+            ErrorHelper.throwIfNotFound(periodo.rows[0], 'Período');
 
             if (periodo.rows[0].estado === 'cerrado') {
-                throw new Error('El período ya está cerrado');
+                ErrorHelper.throwConflict('El período ya está cerrado');
             }
 
             // Verificar que no haya asientos en borrador
@@ -353,7 +348,7 @@ class ReportesModel {
             );
 
             if (parseInt(borradores.rows[0].total) > 0) {
-                throw new Error('No se puede cerrar un período con asientos en borrador');
+                ErrorHelper.throwConflict('No se puede cerrar un período con asientos en borrador');
             }
 
             // Cerrar período
@@ -475,9 +470,7 @@ class ReportesModel {
                 [organizacionId]
             );
 
-            if (existe.rows.length === 0) {
-                throw new Error('No existe configuración contable. Inicialice primero el catálogo SAT.');
-            }
+            ErrorHelper.throwIfNotFound(existe.rows[0], 'Configuración contable');
 
             // Construir query de actualización dinámica
             const campos = [];
@@ -511,7 +504,7 @@ class ReportesModel {
             }
 
             if (campos.length === 0) {
-                throw new Error('No hay campos para actualizar');
+                ErrorHelper.throwValidation('No hay campos para actualizar');
             }
 
             // Agregar timestamp y usuario

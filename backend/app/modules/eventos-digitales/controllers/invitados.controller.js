@@ -4,6 +4,25 @@
  * ====================================================================
  * Controlador para gestión de invitados y RSVP.
  *
+ * ENDPOINTS (13):
+ * - POST   /eventos/:eventoId/invitados           - Crear invitado
+ * - POST   /eventos/:eventoId/invitados/importar  - Importar masivo
+ * - GET    /eventos/:eventoId/invitados           - Listar invitados
+ * - PUT    /invitados/:id                         - Actualizar invitado
+ * - DELETE /invitados/:id                         - Eliminar invitado
+ * - GET    /eventos/:eventoId/invitados/exportar  - Exportar CSV
+ * - GET    /eventos/:eventoId/grupos              - Grupos familiares
+ * - GET    /eventos/:eventoId/etiquetas           - Etiquetas
+ * - GET    /eventos/:eventoId/invitados/:id/qr    - Generar QR individual
+ * - GET    /eventos/:eventoId/qr-masivo           - Generar ZIP de QRs
+ * - POST   /eventos/:eventoId/checkin             - Registrar check-in
+ * - GET    /eventos/:eventoId/checkin/stats       - Estadísticas check-in
+ * - GET    /eventos/:eventoId/checkin/lista       - Lista de check-ins
+ *
+ * NO MIGRADO A BaseCrudController - Ene 2026
+ * Razón: 8+ métodos custom (importar, exportar, QR, check-in, grupos),
+ * depende de eventoId, lógica compleja de RSVP y check-in.
+ *
  * Fecha creación: 4 Diciembre 2025
  */
 

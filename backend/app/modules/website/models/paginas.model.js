@@ -1,4 +1,5 @@
 const RLSContextManager = require('../../../utils/rlsContextManager');
+const { ErrorHelper } = require('../../../utils/helpers');
 const logger = require('../../../utils/logger');
 
 /**
@@ -260,7 +261,7 @@ class WebsitePaginasModel {
             }
 
             if (campos.length === 0) {
-                throw new Error('No hay campos para actualizar');
+                ErrorHelper.throwValidation('No hay campos para actualizar');
             }
 
             const query = `

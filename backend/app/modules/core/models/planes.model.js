@@ -1,4 +1,5 @@
 const { getDb } = require('../../../config/database');
+const { ErrorHelper } = require('../../../utils/helpers');
 
 /**
  * Modelo de Planes de Subscripción
@@ -69,10 +70,7 @@ class PlanModel {
       `;
 
       const result = await db.query(query, [id]);
-
-      if (result.rows.length === 0) {
-        throw new Error('Plan no encontrado');
-      }
+      ErrorHelper.throwIfNotFound(result.rows[0], 'Plan');
 
       return result.rows[0];
     } finally {
@@ -108,10 +106,7 @@ class PlanModel {
       `;
 
       const result = await db.query(query, [codigo]);
-
-      if (result.rows.length === 0) {
-        throw new Error('Plan no encontrado');
-      }
+      ErrorHelper.throwIfNotFound(result.rows[0], 'Plan');
 
       return result.rows[0];
     } finally {

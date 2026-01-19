@@ -130,8 +130,48 @@ export const selectSetAuth = (state) => state.setAuth;
 export const selectSetTokens = (state) => state.setTokens;
 export const selectSetUser = (state) => state.setUser;
 export const selectLogout = (state) => state.logout;
+
+// Funciones del store (causan re-renders - usar con precaución)
+/** @deprecated Use createSelectHasRole(rol) para mejor rendimiento */
 export const selectHasRole = (state) => state.hasRole;
+/** @deprecated Use selectIsAdminValue para mejor rendimiento */
 export const selectIsAdmin = (state) => state.isAdmin;
+/** @deprecated Use selectOrganizacionId para mejor rendimiento */
 export const selectGetOrganizacionId = (state) => state.getOrganizacionId;
+
+// ====================================================================
+// SELECTORES OPTIMIZADOS - Retornan valores derivados, no funciones
+// ====================================================================
+
+/**
+ * Selector que retorna si el usuario es admin/propietario (valor boolean directo)
+ */
+export const selectIsAdminValue = (state) =>
+  ['super_admin', 'propietario', 'admin'].includes(state.user?.rol);
+
+/**
+ * Factory para crear selector de rol específico
+ * @example
+ * const selectEsEmpleado = createSelectHasRole('empleado');
+ * const esEmpleado = useAuthStore(selectEsEmpleado);
+ */
+export const createSelectHasRole = (rol) => (state) =>
+  state.user?.rol === rol;
+
+/**
+ * Selector que retorna el ID de organización directamente
+ */
+export const selectOrganizacionId = (state) =>
+  state.user?.organizacion_id || null;
+
+/**
+ * Selector que retorna el rol del usuario directamente
+ */
+export const selectUserRol = (state) => state.user?.rol || null;
+
+/**
+ * Selector que retorna el ID del usuario directamente
+ */
+export const selectUserId = (state) => state.user?.id || null;
 
 export default useAuthStore;

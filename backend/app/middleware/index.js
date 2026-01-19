@@ -55,7 +55,6 @@ module.exports = {
     validateParams: validation.validateParams,
     validateQuery: validation.validateQuery,
     validateFile: validation.validateFile,
-    sanitizeInput: validation.sanitizeInput,
     handleValidation: validation.handleValidation,
     commonSchemas: validation.commonSchemas
   },
@@ -152,20 +151,18 @@ const requireOwnerAuth = [
 
 /**
  * Middleware compuesto para APIs públicas
- * Incluye: rate limiting + validación de entrada
+ * Incluye: rate limiting
  */
 const publicAPI = [
-  rateLimiting.apiRateLimit,
-  validation.sanitizeInput
+  rateLimiting.apiRateLimit
 ];
 
 /**
  * Middleware compuesto para endpoints de autenticación
- * Incluye: rate limiting estricto + validación
+ * Incluye: rate limiting estricto
  */
 const authEndpoint = [
-  rateLimiting.authRateLimit,
-  validation.sanitizeInput
+  rateLimiting.authRateLimit
 ];
 
 module.exports.composed = {

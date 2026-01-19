@@ -1,5 +1,6 @@
 const RLSContextManager = require('../../../utils/rlsContextManager');
 const logger = require('../../../utils/logger');
+const { ErrorHelper } = require('../../../utils/helpers');
 
 /**
  * Model para reportes y métricas avanzadas de comisiones
@@ -31,7 +32,7 @@ class ReportesComisionesModel {
 
             // Filtros de fecha (obligatorios para reportes)
             if (!filtros.fecha_desde || !filtros.fecha_hasta) {
-                throw new Error('Se requieren fecha_desde y fecha_hasta para generar el reporte');
+                ErrorHelper.throwValidation('Se requieren fecha_desde y fecha_hasta para generar el reporte');
             }
 
             // Usa COALESCE para soportar ambos orígenes
@@ -280,7 +281,7 @@ class ReportesComisionesModel {
     static async comisionesPorDia(filtros, organizacionId) {
         return await RLSContextManager.query(organizacionId, async (db) => {
             if (!filtros.fecha_desde || !filtros.fecha_hasta) {
-                throw new Error('Se requieren fecha_desde y fecha_hasta');
+                ErrorHelper.throwValidation('Se requieren fecha_desde y fecha_hasta');
             }
 
             let whereConditions = [
@@ -352,7 +353,7 @@ class ReportesComisionesModel {
     static async detalleParaExportacion(filtros, organizacionId) {
         return await RLSContextManager.query(organizacionId, async (db) => {
             if (!filtros.fecha_desde || !filtros.fecha_hasta) {
-                throw new Error('Se requieren fecha_desde y fecha_hasta para exportación');
+                ErrorHelper.throwValidation('Se requieren fecha_desde y fecha_hasta para exportación');
             }
 
             let whereConditions = [
@@ -441,7 +442,7 @@ class ReportesComisionesModel {
     static async reportePorOrigen(filtros, organizacionId) {
         return await RLSContextManager.query(organizacionId, async (db) => {
             if (!filtros.fecha_desde || !filtros.fecha_hasta) {
-                throw new Error('Se requieren fecha_desde y fecha_hasta para generar el reporte');
+                ErrorHelper.throwValidation('Se requieren fecha_desde y fecha_hasta para generar el reporte');
             }
 
             let whereConditions = [

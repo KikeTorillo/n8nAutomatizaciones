@@ -65,6 +65,37 @@ const referencia = Joi.string().trim().max(100).allow(null, '');
  */
 const notas = Joi.string().trim().max(2000).allow(null, '');
 
+/**
+ * Descripci\u00f3n larga para textos extensos (hasta 2000 caracteres)
+ * Ideal para descripciones detalladas de productos, servicios, etc.
+ */
+const descripcionLarga = Joi.string().trim().max(2000).allow(null, '');
+
+/**
+ * SKU (Stock Keeping Unit) - C\u00f3digo de producto
+ * Alfanum\u00e9rico con guiones bajos y medios, hasta 50 caracteres
+ */
+const sku = Joi.string().trim().max(50).pattern(/^[A-Za-z0-9_-]+$/).messages({
+  'string.pattern.base': 'SKU debe ser alfanum\u00e9rico (letras, n\u00fameros, guiones)'
+});
+
+/**
+ * C\u00f3digo de barras (EAN-8, EAN-13, UPC-A)
+ * Entre 8 y 14 d\u00edgitos
+ */
+const codigoBarras = Joi.string().trim().max(20).pattern(/^[0-9]{8,14}$/).allow(null, '').messages({
+  'string.pattern.base': 'C\u00f3digo de barras debe tener entre 8 y 14 d\u00edgitos'
+});
+
+/**
+ * Slug URL-friendly (para URLs amigables)
+ * Solo min\u00fasculas, n\u00fameros y guiones
+ * Ejemplo: mi-producto-2024
+ */
+const slug = Joi.string().trim().max(200).pattern(/^[a-z0-9]+(?:-[a-z0-9]+)*$/).lowercase().messages({
+  'string.pattern.base': 'Slug debe ser URL-friendly (min\u00fasculas, n\u00fameros, guiones)'
+});
+
 // ======================
 // CAMPOS DE CONTACTO
 // ======================
@@ -110,6 +141,27 @@ const rfc = Joi.string()
   .allow(null, '')
   .messages({
     'string.pattern.base': 'RFC no válido (formato: XXXX000000XXX)'
+  });
+
+/**
+ * ✅ FIX v2.1: Código de moneda ISO 4217 (3 letras mayúsculas)
+ * Ejemplos: MXN, USD, EUR
+ */
+const codigoMoneda = Joi.string()
+  .length(3)
+  .uppercase()
+  .pattern(/^[A-Z]{3}$/)
+  .messages({
+    'string.pattern.base': 'Código de moneda debe ser 3 letras mayúsculas (ISO 4217)'
+  });
+
+/**
+ * ✅ FIX v2.1: Código postal (5 dígitos para México)
+ */
+const codigoPostal = Joi.string()
+  .pattern(/^[0-9]{5}$/)
+  .messages({
+    'string.pattern.base': 'Código postal debe tener 5 dígitos'
   });
 
 // ======================
@@ -238,6 +290,121 @@ const metadata = Joi.object().allow(null);
 const tags = Joi.array().items(Joi.string().trim().max(50)).max(20);
 
 // ======================
+// CAMPOS DE DIRECCIÓN
+// ======================
+
+/**
+ * Calle/dirección principal (hasta 200 caracteres)
+ */
+const calle = Joi.string().trim().max(200).allow(null, '');
+
+/**
+ * Número exterior
+ */
+const numeroExterior = Joi.string().trim().max(20).allow(null, '');
+
+/**
+ * Número interior
+ */
+const numeroInterior = Joi.string().trim().max(20).allow(null, '');
+
+/**
+ * Colonia/barrio (hasta 100 caracteres)
+ */
+const colonia = Joi.string().trim().max(100).allow(null, '');
+
+/**
+ * Ciudad (hasta 100 caracteres)
+ */
+const ciudad = Joi.string().trim().max(100).allow(null, '');
+
+/**
+ * Estado/provincia (hasta 100 caracteres)
+ */
+const estado = Joi.string().trim().max(100).allow(null, '');
+
+/**
+ * Objeto dirección completa
+ * Uso: ...fields.direccion en el schema
+ */
+const direccion = {
+  calle,
+  numero_exterior: numeroExterior,
+  numero_interior: numeroInterior,
+  colonia,
+  ciudad,
+  estado_id: id.optional().allow(null),
+  codigo_postal: codigoPostal.allow(null, ''),
+  pais_id: id.optional().allow(null).default(1)
+};
+
+// ======================
+// PRECIO MULTI-MONEDA
+// ======================
+
+/**
+ * Schema para precio en una moneda específica
+ * Uso en productos con precios multi-moneda
+ */
+const precioMoneda = Joi.object({
+  moneda: codigoMoneda.required(),
+  precio: precio.required(),
+  precio_compra: precio.optional().allow(null),
+  precio_venta: precio.optional(),
+  precio_minimo: precio.optional().allow(null),
+  precio_maximo: precio.optional().allow(null)
+});
+
+/**
+ * Array de precios multi-moneda (máximo 10 monedas)
+ */
+const preciosMultiMoneda = Joi.array()
+  .items(precioMoneda)
+  .max(10);
+
+// ======================
+// VARIANTES PRECIO (v2.2)
+// ======================
+
+/**
+ * Precio para inventario (compra/venta)
+ * Usado en productos, órdenes de compra, etc.
+ */
+const precioMonedaInventario = Joi.object({
+  moneda: codigoMoneda.required(),
+  precio_venta: precio.required().messages({
+    'any.required': 'El precio de venta es requerido',
+    'number.min': 'El precio de venta debe ser mayor o igual a 0'
+  }),
+  precio_compra: precio.optional().allow(null)
+});
+
+/**
+ * Array de precios para inventario (máximo 10 monedas)
+ */
+const preciosInventario = Joi.array()
+  .items(precioMonedaInventario)
+  .max(10);
+
+/**
+ * Precio para servicios (rango negociable)
+ * Usado en servicios con precios flexibles
+ */
+const precioMonedaRango = Joi.object({
+  moneda: codigoMoneda.required(),
+  precio: precio.required(),
+  precio_minimo: precio.optional().allow(null),
+  precio_maximo: precio.optional().allow(null)
+});
+
+/**
+ * Array de precios con rango (máximo 10 monedas)
+ */
+const preciosRango = Joi.array()
+  .items(precioMonedaRango)
+  .max(10);
+
+// ======================
 // HELPERS
 // ======================
 
@@ -296,9 +463,13 @@ const fields = {
   nombreMedio,
   nombreLargo,
   descripcion,
+  descripcionLarga,
   codigo,
   referencia,
   notas,
+  sku,
+  codigoBarras,
+  slug,
 
   // Contacto
   email,
@@ -307,6 +478,8 @@ const fields = {
   telefonoGenerico,
   url,
   rfc,
+  codigoPostal,
+  codigoMoneda,
 
   // Monetarios
   precio,
@@ -336,7 +509,26 @@ const fields = {
 
   // Metadata
   metadata,
-  tags
+  tags,
+
+  // Dirección (v2.1)
+  calle,
+  numeroExterior,
+  numeroInterior,
+  colonia,
+  ciudad,
+  estado,
+  direccion,  // Objeto completo para spread
+
+  // Precio multi-moneda (v2.1)
+  precioMoneda,
+  preciosMultiMoneda,
+
+  // Variantes especializadas de precio (v2.2)
+  precioMonedaInventario,
+  preciosInventario,
+  precioMonedaRango,
+  preciosRango
 };
 
 module.exports = {

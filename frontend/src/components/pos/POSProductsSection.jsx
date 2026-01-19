@@ -1,3 +1,4 @@
+import { memo, useCallback } from 'react';
 import { ShoppingCart, Grid3X3, Search } from 'lucide-react';
 import BuscadorProductosPOS from '@/components/pos/BuscadorProductosPOS';
 import CategoriasPOS from '@/components/pos/CategoriasPOS';
@@ -6,8 +7,9 @@ import ProductosGridPOS from '@/components/pos/ProductosGridPOS';
 /**
  * Sección de productos del POS (grid/búsqueda)
  * Ene 2026: Extraído de VentaPOSPage para mejorar organización
+ * Ene 2026: Memoizado para evitar re-renders innecesarios
  */
-export default function POSProductsSection({
+function POSProductsSection({
   // Vista
   vistaProductos,
   onVistaChange,
@@ -26,6 +28,16 @@ export default function POSProductsSection({
   subtotal,
   total,
 }) {
+  // Ene 2026: Memoizar callback para evitar re-renders de ProductosGridPOS
+  const handleAddToCart = useCallback((producto) => {
+    onProductoSeleccionado({
+      ...producto,
+      producto_id: producto.id,
+      es_variante: false,
+      requiere_numero_serie: producto.requiere_numero_serie || false
+    });
+  }, [onProductoSeleccionado]);
+
   return (
     <div className="lg:col-span-2 space-y-3 sm:space-y-4">
       {/* Toggle Grid / Búsqueda */}
@@ -75,14 +87,7 @@ export default function POSProductsSection({
           <div className="max-h-[calc(100vh-24rem)] overflow-y-auto">
             <ProductosGridPOS
               productos={productosGrid}
-              onAddToCart={(producto) => {
-                onProductoSeleccionado({
-                  ...producto,
-                  producto_id: producto.id,
-                  es_variante: false,
-                  requiere_numero_serie: producto.requiere_numero_serie || false
-                });
-              }}
+              onAddToCart={handleAddToCart}
               cartItems={cartItems}
               isLoading={isLoadingProductos}
             />
@@ -139,3 +144,5 @@ export default function POSProductsSection({
     </div>
   );
 }
+
+export default memo(POSProductsSection);

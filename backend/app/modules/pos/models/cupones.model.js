@@ -14,6 +14,7 @@
 
 const RLSContextManager = require('../../../utils/rlsContextManager');
 const logger = require('../../../utils/logger');
+const { ErrorHelper } = require('../../../utils/helpers');
 
 class CuponesModel {
 
@@ -282,7 +283,7 @@ class CuponesModel {
             const usosResult = await db.query(usosQuery, [id]);
 
             if (parseInt(usosResult.rows[0].usos) > 0) {
-                throw new Error('No se puede eliminar un cupón que ya ha sido utilizado');
+                ErrorHelper.throwConflict('No se puede eliminar un cupón que ya ha sido utilizado');
             }
 
             const query = `DELETE FROM cupones WHERE id = $1 RETURNING id`;

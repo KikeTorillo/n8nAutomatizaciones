@@ -1,5 +1,6 @@
 const RLSContextManager = require('../../../utils/rlsContextManager');
 const logger = require('../../../utils/logger');
+const { ErrorHelper } = require('../../../utils/helpers');
 
 /**
  * Model para Dropshipping
@@ -35,14 +36,12 @@ class DropshipModel {
                 [ventaId, organizacionId]
             );
 
-            if (ventaCheck.rows.length === 0) {
-                throw new Error('Venta no encontrada');
-            }
+            ErrorHelper.throwIfNotFound(ventaCheck.rows[0], 'Venta');
 
             const venta = ventaCheck.rows[0];
 
             if (venta.estado !== 'completada') {
-                throw new Error('Solo se pueden procesar ventas completadas');
+                ErrorHelper.throwConflict('Solo se pueden procesar ventas completadas');
             }
 
             // Llamar a la funcion SQL
@@ -54,7 +53,7 @@ class DropshipModel {
             const resultado = result.rows[0].resultado;
 
             if (!resultado.exito) {
-                throw new Error(resultado.mensaje);
+                ErrorHelper.throwConflict(resultado.mensaje);
             }
 
             logger.info('[DropshipModel.crearOCDesdeVenta] OC(s) creadas', {
@@ -217,22 +216,20 @@ class DropshipModel {
                 WHERE id = $1 AND organizacion_id = $2
             `, [ocId, organizacionId]);
 
-            if (ocCheck.rows.length === 0) {
-                throw new Error('Orden de compra no encontrada');
-            }
+            ErrorHelper.throwIfNotFound(ocCheck.rows[0], 'Orden de compra');
 
             const oc = ocCheck.rows[0];
 
             if (!oc.es_dropship) {
-                throw new Error('Esta orden no es de tipo dropship');
+                ErrorHelper.throwConflict('Esta orden no es de tipo dropship');
             }
 
             if (oc.estado === 'recibida') {
-                throw new Error('Esta orden ya fue marcada como entregada');
+                ErrorHelper.throwConflict('Esta orden ya fue marcada como entregada');
             }
 
             if (oc.estado === 'cancelada') {
-                throw new Error('No se puede confirmar una orden cancelada');
+                ErrorHelper.throwConflict('No se puede confirmar una orden cancelada');
             }
 
             // Actualizar estado a recibida (sin mover stock)
@@ -284,22 +281,20 @@ class DropshipModel {
                 WHERE id = $1 AND organizacion_id = $2
             `, [ocId, organizacionId]);
 
-            if (ocCheck.rows.length === 0) {
-                throw new Error('Orden de compra no encontrada');
-            }
+            ErrorHelper.throwIfNotFound(ocCheck.rows[0], 'Orden de compra');
 
             const oc = ocCheck.rows[0];
 
             if (!oc.es_dropship) {
-                throw new Error('Esta orden no es de tipo dropship');
+                ErrorHelper.throwConflict('Esta orden no es de tipo dropship');
             }
 
             if (oc.estado === 'recibida') {
-                throw new Error('No se puede cancelar una orden ya entregada');
+                ErrorHelper.throwConflict('No se puede cancelar una orden ya entregada');
             }
 
             if (oc.estado === 'cancelada') {
-                throw new Error('Esta orden ya esta cancelada');
+                ErrorHelper.throwConflict('Esta orden ya esta cancelada');
             }
 
             // Cancelar OC

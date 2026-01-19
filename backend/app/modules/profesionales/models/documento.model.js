@@ -4,6 +4,7 @@
  * Fase 2 del Plan de Empleados Competitivo
  */
 const RLSContextManager = require('../../../utils/rlsContextManager');
+const { ErrorHelper } = require('../../../utils/helpers');
 
 class DocumentoEmpleadoModel {
 
@@ -43,18 +44,18 @@ class DocumentoEmpleadoModel {
             } catch (error) {
                 if (error.code === '23503') {
                     if (error.constraint?.includes('profesional')) {
-                        throw new Error('El profesional especificado no existe');
+                        ErrorHelper.throwValidation('El profesional especificado no existe');
                     }
                     if (error.constraint?.includes('archivo_storage')) {
-                        throw new Error('El archivo de storage especificado no existe');
+                        ErrorHelper.throwValidation('El archivo de storage especificado no existe');
                     }
                 }
                 if (error.code === '23514') {
                     if (error.constraint?.includes('fechas_documento')) {
-                        throw new Error('La fecha de vencimiento debe ser posterior a la fecha de emisión');
+                        ErrorHelper.throwValidation('La fecha de vencimiento debe ser posterior a la fecha de emisión');
                     }
                     if (error.constraint?.includes('nombre_documento')) {
-                        throw new Error('El nombre del documento debe tener al menos 3 caracteres');
+                        ErrorHelper.throwValidation('El nombre del documento debe tener al menos 3 caracteres');
                     }
                 }
                 throw error;
@@ -223,7 +224,7 @@ class DocumentoEmpleadoModel {
             }
 
             if (campos.length === 0) {
-                throw new Error('No hay campos válidos para actualizar');
+                ErrorHelper.throwValidation('No hay campos válidos para actualizar');
             }
 
             const query = `
@@ -238,10 +239,7 @@ class DocumentoEmpleadoModel {
 
             const result = await db.query(query, valores);
 
-            if (result.rows.length === 0) {
-                throw new Error('Documento no encontrado');
-            }
-
+            ErrorHelper.throwIfNotFound(result.rows[0], 'Documento');
             return result.rows[0];
         });
     }
@@ -295,10 +293,7 @@ class DocumentoEmpleadoModel {
                 documentoId, organizacionId, verificado, usuarioId, notas
             ]);
 
-            if (result.rows.length === 0) {
-                throw new Error('Documento no encontrado');
-            }
-
+            ErrorHelper.throwIfNotFound(result.rows[0], 'Documento');
             return result.rows[0];
         });
     }
@@ -402,10 +397,7 @@ class DocumentoEmpleadoModel {
 
             const result = await db.query(query, [documentoId, organizacionId, archivoStorageId]);
 
-            if (result.rows.length === 0) {
-                throw new Error('Documento no encontrado');
-            }
-
+            ErrorHelper.throwIfNotFound(result.rows[0], 'Documento');
             return result.rows[0];
         });
     }

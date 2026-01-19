@@ -7,6 +7,7 @@
 
 const RLSContextManager = require('../../../utils/rlsContextManager');
 const crypto = require('crypto');
+const { ErrorHelper } = require('../../../utils/helpers');
 
 class InvitacionModel {
 
@@ -44,7 +45,7 @@ class InvitacionModel {
         // Validar rol permitido
         const rolesPermitidos = ['empleado', 'propietario', 'admin'];
         if (!rolesPermitidos.includes(rol)) {
-            throw new Error(`Rol inválido: ${rol}. Roles permitidos: ${rolesPermitidos.join(', ')}`);
+            ErrorHelper.throwValidation(`Rol inválido: ${rol}. Roles permitidos: ${rolesPermitidos.join(', ')}`);
         }
 
         const token = this.generarToken();
@@ -60,7 +61,7 @@ class InvitacionModel {
             `, [profesional_id, email]);
 
             if (existenteResult.rows[0]) {
-                throw new Error('Ya existe una invitación pendiente para este email');
+                ErrorHelper.throwConflict('Ya existe una invitación pendiente para este email');
             }
 
             // Verificar que el profesional no tenga ya un usuario vinculado
@@ -71,13 +72,10 @@ class InvitacionModel {
             `, [profesional_id]);
 
             const profesional = profesionalResult.rows[0];
-
-            if (!profesional) {
-                throw new Error('Profesional no encontrado');
-            }
+            ErrorHelper.throwIfNotFound(profesional, 'Profesional');
 
             if (profesional.usuario_id) {
-                throw new Error('Este profesional ya tiene un usuario vinculado');
+                ErrorHelper.throwConflict('Este profesional ya tiene un usuario vinculado');
             }
 
             // Verificar que el email no esté registrado como usuario
@@ -86,7 +84,7 @@ class InvitacionModel {
             `, [email]);
 
             if (emailExistenteResult.rows[0]) {
-                throw new Error('Este email ya está registrado en el sistema');
+                ErrorHelper.throwConflict('Este email ya está registrado en el sistema');
             }
 
             // Crear invitación (Dic 2025: incluye rol)
@@ -145,7 +143,7 @@ class InvitacionModel {
         // Validar rol permitido
         const rolesPermitidos = ['empleado', 'propietario', 'admin'];
         if (!rolesPermitidos.includes(rol)) {
-            throw new Error(`Rol inválido: ${rol}. Roles permitidos: ${rolesPermitidos.join(', ')}`);
+            ErrorHelper.throwValidation(`Rol inválido: ${rol}. Roles permitidos: ${rolesPermitidos.join(', ')}`);
         }
 
         const token = this.generarToken();
@@ -161,7 +159,7 @@ class InvitacionModel {
             `, [email]);
 
             if (existenteResult.rows[0]) {
-                throw new Error('Ya existe una invitación pendiente para este email');
+                ErrorHelper.throwConflict('Ya existe una invitación pendiente para este email');
             }
 
             // Verificar que el email no esté registrado como usuario
@@ -170,7 +168,7 @@ class InvitacionModel {
             `, [email]);
 
             if (emailExistenteResult.rows[0]) {
-                throw new Error('Este email ya está registrado en el sistema');
+                ErrorHelper.throwConflict('Este email ya está registrado en el sistema');
             }
 
             // Crear invitación para usuario directo (nombre y apellidos separados)
@@ -287,7 +285,7 @@ class InvitacionModel {
             const invitacion = invitacionResult.rows[0];
 
             if (!invitacion) {
-                throw new Error('Invitación no válida o ya utilizada');
+                ErrorHelper.throwValidation('Invitación no válida o ya utilizada');
             }
 
             // Verificar expiración
@@ -297,7 +295,7 @@ class InvitacionModel {
                     SET estado = 'expirada'
                     WHERE id = $1
                 `, [invitacion.id]);
-                throw new Error('La invitación ha expirado');
+                ErrorHelper.throwValidation('La invitación ha expirado');
             }
 
             // Crear usuario con rol de la invitación (Dic 2025: rol configurable)
@@ -384,10 +382,7 @@ class InvitacionModel {
             `, [invitacionId]);
 
             const anterior = anteriorResult.rows[0];
-
-            if (!anterior) {
-                throw new Error('Invitación no encontrada o no se puede reenviar');
-            }
+            ErrorHelper.throwIfNotFound(anterior, 'Invitación');
 
             // Crear nueva invitación
             const nuevaResult = await db.query(`
@@ -437,10 +432,7 @@ class InvitacionModel {
             `, [invitacionId]);
 
             const invitacion = invitacionResult.rows[0];
-
-            if (!invitacion) {
-                throw new Error('Invitación no encontrada o no se puede cancelar');
-            }
+            ErrorHelper.throwIfNotFound(invitacion, 'Invitación');
 
             return invitacion;
         });

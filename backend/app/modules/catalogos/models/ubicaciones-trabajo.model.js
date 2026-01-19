@@ -10,6 +10,7 @@
 
 const RLSContextManager = require('../../../utils/rlsContextManager');
 const logger = require('../../../utils/logger');
+const { ErrorHelper } = require('../../../utils/helpers');
 
 class UbicacionTrabajoModel {
   /**
@@ -112,7 +113,7 @@ class UbicacionTrabajoModel {
           );
 
           if (existeCodigo.rows.length > 0) {
-            throw new Error(`El código "${data.codigo}" ya existe`);
+            ErrorHelper.throwConflict(`El código "${data.codigo}" ya existe`);
           }
         }
 
@@ -123,7 +124,7 @@ class UbicacionTrabajoModel {
         );
 
         if (existeNombre.rows.length > 0) {
-          throw new Error(`El nombre "${data.nombre}" ya existe`);
+          ErrorHelper.throwConflict(`El nombre "${data.nombre}" ya existe`);
         }
 
         const query = `
@@ -204,9 +205,7 @@ class UbicacionTrabajoModel {
         [ubicacionId, orgId]
       );
 
-      if (ubicacionExistente.rows.length === 0) {
-        throw new Error('Ubicación de trabajo no encontrada');
-      }
+      ErrorHelper.throwIfNotFound(ubicacionExistente.rows[0], 'Ubicación de trabajo');
 
       // Validar nombre único si se actualiza
       if (data.nombre) {
@@ -216,7 +215,7 @@ class UbicacionTrabajoModel {
         );
 
         if (existeNombre.rows.length > 0) {
-          throw new Error(`El nombre "${data.nombre}" ya existe`);
+          ErrorHelper.throwConflict(`El nombre "${data.nombre}" ya existe`);
         }
       }
 
@@ -249,7 +248,7 @@ class UbicacionTrabajoModel {
       }
 
       if (camposActualizar.length === 0) {
-        throw new Error('No hay campos válidos para actualizar');
+        ErrorHelper.throwValidation('No hay campos válidos para actualizar');
       }
 
       const query = `
@@ -278,9 +277,7 @@ class UbicacionTrabajoModel {
         [ubicacionId, orgId]
       );
 
-      if (ubicacion.rows.length === 0) {
-        throw new Error('Ubicación de trabajo no encontrada');
-      }
+      ErrorHelper.throwIfNotFound(ubicacion.rows[0], 'Ubicación de trabajo');
 
       // Verificar que no esté en uso (revisar los 7 campos de día)
       const enUso = await db.query(`
@@ -297,7 +294,7 @@ class UbicacionTrabajoModel {
       `, [ubicacionId]);
 
       if (parseInt(enUso.rows[0].total) > 0) {
-        throw new Error(`No se puede eliminar. Hay ${enUso.rows[0].total} profesionales usando esta ubicación`);
+        ErrorHelper.throwConflict(`No se puede eliminar. Hay ${enUso.rows[0].total} profesionales usando esta ubicación`);
       }
 
       // Soft delete

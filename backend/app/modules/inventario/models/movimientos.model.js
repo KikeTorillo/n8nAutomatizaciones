@@ -1,5 +1,6 @@
 const RLSContextManager = require('../../../utils/rlsContextManager');
 const logger = require('../../../utils/logger');
+const { ErrorHelper } = require('../../../utils/helpers');
 
 /**
  * Model para movimientos de inventario (tabla particionada)
@@ -28,9 +29,7 @@ class MovimientosInventarioModel {
                 [data.producto_id, organizacionId]
             );
 
-            if (productoQuery.rows.length === 0) {
-                throw new Error('Producto no encontrado o no pertenece a esta organización');
-            }
+            ErrorHelper.throwIfNotFound(productoQuery.rows[0], 'Producto');
 
             const producto = productoQuery.rows[0];
             const stockAntes = producto.stock_actual;
@@ -38,7 +37,7 @@ class MovimientosInventarioModel {
 
             // Validar que el stock no quede negativo
             if (stockDespues < 0) {
-                throw new Error(`Stock insuficiente. Stock actual: ${stockAntes}, intentando restar: ${Math.abs(data.cantidad)}`);
+                ErrorHelper.throwConflict(`Stock insuficiente. Stock actual: ${stockAntes}, intentando restar: ${Math.abs(data.cantidad)}`);
             }
 
             // Validar proveedor si es entrada de compra
@@ -49,9 +48,7 @@ class MovimientosInventarioModel {
                     [data.proveedor_id, organizacionId]
                 );
 
-                if (proveedorQuery.rows.length === 0) {
-                    throw new Error('Proveedor no encontrado o no pertenece a esta organización');
-                }
+                ErrorHelper.throwIfNotFound(proveedorQuery.rows[0], 'Proveedor');
             }
 
             // Calcular valor_total

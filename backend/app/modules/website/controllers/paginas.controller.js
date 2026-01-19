@@ -10,12 +10,16 @@ const { asyncHandler } = require('../../../middleware');
  * Gestiona las páginas del sitio web de cada organización.
  *
  * ENDPOINTS (6):
- * • POST   /paginas           - Crear página
- * • GET    /paginas           - Listar páginas del sitio
- * • GET    /paginas/:id       - Obtener página por ID
- * • PUT    /paginas/:id       - Actualizar página
- * • PUT    /paginas/orden     - Reordenar páginas
- * • DELETE /paginas/:id       - Eliminar página
+ * - POST   /paginas       - Crear página
+ * - GET    /paginas       - Listar páginas del sitio
+ * - GET    /paginas/:id   - Obtener página por ID
+ * - PUT    /paginas/:id   - Actualizar página
+ * - PUT    /paginas/orden - Reordenar páginas
+ * - DELETE /paginas/:id   - Eliminar página
+ *
+ * NO MIGRADO A BaseCrudController - Ene 2026
+ * Razón: Depende de website_id (verificación de config), slug único por sitio,
+ * método reordenar(), lógica de negocio no estándar.
  *
  * Fecha creación: 6 Diciembre 2025
  */

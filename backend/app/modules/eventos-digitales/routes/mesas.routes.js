@@ -25,7 +25,7 @@ const router = express.Router();
 const MesasController = require('../controllers/mesas.controller');
 
 // Schemas
-const mesasSchemas = require('../schemas/mesa.schema');
+const mesasSchemas = require('../schemas/mesa.schemas');
 
 // Middlewares
 const {

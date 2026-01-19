@@ -1,5 +1,6 @@
 const logger = require('../../../../utils/logger');
 const CitaValidacionUtil = require('../../utils/cita-validacion.util');
+const { ErrorHelper } = require('../../../../utils/helpers');
 
 const DEFAULTS = {
     ZONA_HORARIA: 'America/Mexico_City',
@@ -43,7 +44,7 @@ class CitaHelpersModel {
             };
         }
 
-        throw new Error('Cliente no encontrado y creación automática deshabilitada');
+        ErrorHelper.throwIfNotFound(null, 'Cliente');
     }
 
     static async obtenerServicioCompleto(servicioId, organizacionId, db) {
@@ -207,18 +208,14 @@ class CitaHelpersModel {
             'SELECT id FROM clientes WHERE id = $1 AND organizacion_id = $2 AND activo = true',
             [clienteId, organizacionId]
         );
-        if (cliente.rows.length === 0) {
-            throw new Error('Cliente no encontrado o inactivo');
-        }
+        ErrorHelper.throwIfNotFound(cliente.rows[0], 'Cliente');
 
         // 2. Validar profesional
         const profesional = await db.query(
             'SELECT id, nombre_completo FROM profesionales WHERE id = $1 AND organizacion_id = $2 AND activo = true',
             [profesionalId, organizacionId]
         );
-        if (profesional.rows.length === 0) {
-            throw new Error('Profesional no encontrado o inactivo');
-        }
+        ErrorHelper.throwIfNotFound(profesional.rows[0], 'Profesional');
 
         const nombreProfesional = profesional.rows[0].nombre_completo;
 
@@ -231,7 +228,7 @@ class CitaHelpersModel {
         if (servicios.rows.length !== serviciosIds.length) {
             const encontrados = servicios.rows.map(s => s.id);
             const faltantes = serviciosIds.filter(id => !encontrados.includes(id));
-            throw new Error(`Los siguientes servicios no existen o están inactivos: ${faltantes.join(', ')}`);
+            ErrorHelper.throwValidation(`Los siguientes servicios no existen o están inactivos: ${faltantes.join(', ')}`);
         }
 
         // 4. Validar que el profesional tiene TODOS los servicios asignados
@@ -256,7 +253,7 @@ class CitaHelpersModel {
 
             // Mensaje genérico que funciona para singular y plural
             const servicioTexto = nombresSinAsignar.length === 1 ? 'el servicio' : 'los servicios';
-            throw new Error(
+            ErrorHelper.throwValidation(
                 `El profesional "${nombreProfesional}" no tiene asignado ${servicioTexto}: ${nombresSinAsignar.join(', ')}. ` +
                 `Por favor asigna ${servicioTexto} al profesional desde la página de Servicios antes de crear la cita.`
             );
@@ -269,7 +266,7 @@ class CitaHelpersModel {
             const estaEstanTexto = nombresInactivos.length === 1 ? 'está inactiva' : 'están inactivas';
             const reactivalaTexto = nombresInactivos.length === 1 ? 'reactívala' : 'reactívalas';
 
-            throw new Error(
+            ErrorHelper.throwValidation(
                 `La asignación ${estaEstanTexto} para "${nombreProfesional}": ${nombresInactivos.join(', ')}. ` +
                 `Por favor ${reactivalaTexto} desde la página de Servicios antes de crear la cita.`
             );
@@ -379,7 +376,7 @@ class CitaHelpersModel {
                     bufferInfo = ` (incluye ${buffers.join(' + ')}, bloquea ${horaEfectiva})`;
                 }
 
-                throw new Error(
+                ErrorHelper.throwConflict(
                     `Conflicto de horario: El profesional ya tiene la cita ${cita.codigo_cita} programada el ${fechaFormateada} de ${horaOriginal}${bufferInfo}. ` +
                     `Por favor, selecciona otro horario disponible.`
                 );
@@ -402,17 +399,16 @@ class CitaHelpersModel {
      */
     static validarNoMidnightCrossing(horaInicio, horaFin) {
         if (horaFin <= horaInicio) {
-            const error = new Error(
-                `Horario inválido: ${horaInicio}-${horaFin}. ` +
-                `La cita no puede cruzar medianoche. ` +
-                `hora_fin debe ser mayor que hora_inicio.`
-            );
             logger.error('[CitaHelpersModel.validarNoMidnightCrossing] Validación FALLIDA', {
                 hora_inicio: horaInicio,
                 hora_fin: horaFin,
                 mensaje: 'La cita cruza medianoche'
             });
-            throw error;
+            ErrorHelper.throwValidation(
+                `Horario inválido: ${horaInicio}-${horaFin}. ` +
+                `La cita no puede cruzar medianoche. ` +
+                `hora_fin debe ser mayor que hora_inicio.`
+            );
         }
 
         logger.debug('[CitaHelpersModel.validarNoMidnightCrossing] Validación EXITOSA', {

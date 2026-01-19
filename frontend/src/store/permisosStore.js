@@ -210,10 +210,50 @@ export const selectPermisos = (state) => state.permisos;
 export const selectPermisosVerificados = (state) => state.permisosVerificados;
 export const selectUltimaSincronizacion = (state) => state.ultimaSincronizacion;
 
-// Getters
+// Getters (funciones del store - causan re-renders, usar con precaución)
+/** @deprecated Use createSelectTienePermiso(codigo, sucursalId) para mejor rendimiento */
 export const selectTienePermiso = (state) => state.tienePermiso;
+/** @deprecated Use selectNecesitaSincronizarValue para mejor rendimiento */
 export const selectNecesitaSincronizar = (state) => state.necesitaSincronizar;
 export const selectEstaEnCache = (state) => state.estaEnCache;
+
+// ====================================================================
+// SELECTORES OPTIMIZADOS - Retornan valores derivados, no funciones
+// ====================================================================
+
+/**
+ * Factory para crear selector de permiso específico
+ * Retorna boolean | null (null = no en cache o cache expirado)
+ *
+ * @example
+ * const selectMiPermiso = useMemo(() => createSelectTienePermiso('pos.acceso', sucursalId), [sucursalId]);
+ * const tienePermiso = usePermisosStore(selectMiPermiso);
+ */
+export const createSelectTienePermiso = (codigo, sucursalId) => (state) => {
+  if (!state.ultimaSincronizacion ||
+      Date.now() - state.ultimaSincronizacion > CACHE_EXPIRY_MS) {
+    return null; // Cache expirado
+  }
+  const key = `${codigo}:${sucursalId}`;
+  const cached = state.permisosVerificados[key];
+  return cached !== undefined ? cached : null;
+};
+
+/**
+ * Selector que retorna si el cache necesita sincronización (valor boolean directo)
+ */
+export const selectNecesitaSincronizarValue = (state) => {
+  if (!state.ultimaSincronizacion) return true;
+  return Date.now() - state.ultimaSincronizacion > CACHE_EXPIRY_MS;
+};
+
+/**
+ * Factory para crear selector de si está en cache
+ */
+export const createSelectEstaEnCache = (codigo, sucursalId) => (state) => {
+  const key = `${codigo}:${sucursalId}`;
+  return state.permisosVerificados[key] !== undefined;
+};
 
 // Actions
 export const selectSetPermisoVerificado = (state) => state.setPermisoVerificado;

@@ -23,7 +23,7 @@ const router = express.Router();
 const MesaRegalosController = require('../controllers/mesa-regalos.controller');
 
 // Schemas
-const mesaRegalosSchemas = require('../schemas/mesa-regalos.schema');
+const mesaRegalosSchemas = require('../schemas/mesa-regalos.schemas');
 
 // Middlewares
 const {

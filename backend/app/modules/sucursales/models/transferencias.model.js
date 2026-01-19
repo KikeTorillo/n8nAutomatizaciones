@@ -1,5 +1,6 @@
 const RLSContextManager = require('../../../utils/rlsContextManager');
 const logger = require('../../../utils/logger');
+const { ErrorHelper } = require('../../../utils/helpers');
 
 /**
  * Model para transferencias de stock entre sucursales
@@ -194,12 +195,10 @@ class TransferenciasStockModel {
                 [transferenciaId]
             );
 
-            if (transferenciaQuery.rows.length === 0) {
-                throw new Error('Transferencia no encontrada');
-            }
+            ErrorHelper.throwIfNotFound(transferenciaQuery.rows[0], 'Transferencia');
 
             if (transferenciaQuery.rows[0].estado !== 'borrador') {
-                throw new Error('Solo se pueden modificar transferencias en borrador');
+                ErrorHelper.throwConflict('Solo se pueden modificar transferencias en borrador');
             }
 
             const query = `
@@ -235,12 +234,10 @@ class TransferenciasStockModel {
                 [transferenciaId]
             );
 
-            if (transferenciaQuery.rows.length === 0) {
-                throw new Error('Transferencia no encontrada');
-            }
+            ErrorHelper.throwIfNotFound(transferenciaQuery.rows[0], 'Transferencia');
 
             if (transferenciaQuery.rows[0].estado !== 'borrador') {
-                throw new Error('Solo se pueden modificar transferencias en borrador');
+                ErrorHelper.throwConflict('Solo se pueden modificar transferencias en borrador');
             }
 
             await db.query(
@@ -268,12 +265,10 @@ class TransferenciasStockModel {
                 [id]
             );
 
-            if (transferenciaQuery.rows.length === 0) {
-                throw new Error('Transferencia no encontrada');
-            }
+            ErrorHelper.throwIfNotFound(transferenciaQuery.rows[0], 'Transferencia');
 
             if (transferenciaQuery.rows[0].estado !== 'borrador') {
-                throw new Error('Solo se pueden enviar transferencias en borrador');
+                ErrorHelper.throwConflict('Solo se pueden enviar transferencias en borrador');
             }
 
             // Verificar que tiene items
@@ -283,7 +278,7 @@ class TransferenciasStockModel {
             );
 
             if (parseInt(itemsQuery.rows[0].total) === 0) {
-                throw new Error('La transferencia no tiene productos');
+                ErrorHelper.throwValidation('La transferencia no tiene productos');
             }
 
             // Actualizar estado (el trigger procesará el stock)
@@ -324,14 +319,12 @@ class TransferenciasStockModel {
                 [id]
             );
 
-            if (transferenciaQuery.rows.length === 0) {
-                throw new Error('Transferencia no encontrada');
-            }
+            ErrorHelper.throwIfNotFound(transferenciaQuery.rows[0], 'Transferencia');
 
             const { estado, sucursal_destino_id } = transferenciaQuery.rows[0];
 
             if (estado !== 'enviado') {
-                throw new Error('Solo se pueden recibir transferencias en estado enviado');
+                ErrorHelper.throwConflict('Solo se pueden recibir transferencias en estado enviado');
             }
 
             // Verificar que el usuario pertenece a la sucursal destino
@@ -342,7 +335,7 @@ class TransferenciasStockModel {
             );
 
             if (usuarioSucursalQuery.rows.length === 0) {
-                throw new Error('No tienes permisos para recibir en esta sucursal');
+                ErrorHelper.throwForbidden('No tienes permisos para recibir en esta sucursal');
             }
 
             // Si hay cantidades recibidas diferentes, actualizar items
@@ -399,18 +392,16 @@ class TransferenciasStockModel {
                 [id]
             );
 
-            if (transferenciaQuery.rows.length === 0) {
-                throw new Error('Transferencia no encontrada');
-            }
+            ErrorHelper.throwIfNotFound(transferenciaQuery.rows[0], 'Transferencia');
 
             const estadoActual = transferenciaQuery.rows[0].estado;
 
             if (estadoActual === 'recibido') {
-                throw new Error('No se puede cancelar una transferencia ya recibida');
+                ErrorHelper.throwConflict('No se puede cancelar una transferencia ya recibida');
             }
 
             if (estadoActual === 'cancelado') {
-                throw new Error('La transferencia ya está cancelada');
+                ErrorHelper.throwConflict('La transferencia ya está cancelada');
             }
 
             // Si estaba en enviado, devolver stock a origen

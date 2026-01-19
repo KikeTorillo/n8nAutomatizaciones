@@ -7,6 +7,7 @@ const {
     InvalidProfessionalsError,
     ResourceInUseError
 } = require('../../../utils/errors');
+const { ErrorHelper } = require('../../../utils/helpers');
 
 class ServicioModel {
 
@@ -72,7 +73,7 @@ class ServicioModel {
                     ]);
 
                     if (profesionalesValidos.rows.length !== data.profesionales_ids.length) {
-                        throw new Error('Uno o más profesionales no existen o no pertenecen a esta organización');
+                        ErrorHelper.throwValidation('Uno o más profesionales no existen o no pertenecen a esta organización');
                     }
 
                     // Asociar cada profesional al servicio
@@ -104,11 +105,11 @@ class ServicioModel {
                     throw new DuplicateResourceError('Servicio', 'nombre');
                 }
                 if (error.code === '23514') {
-                    throw new Error('Error de validación en los datos del servicio');
+                    ErrorHelper.throwValidation('Error de validación en los datos del servicio');
                 }
                 if (error.code === '23503') {
                     if (error.detail?.includes('organizacion_id')) {
-                        throw new Error('La organización especificada no existe');
+                        ErrorHelper.throwIfNotFound(null, 'Organización');
                     }
                 }
                 throw error;
@@ -256,7 +257,7 @@ class ServicioModel {
                     ]);
 
                     if (profesionalesValidos.rows.length !== profesionalesAsignados.length) {
-                        throw new Error(
+                        ErrorHelper.throwValidation(
                             `Servicio "${servicio.nombre}": Uno o más profesionales no existen o están inactivos`
                         );
                     }
@@ -457,7 +458,7 @@ class ServicioModel {
             }
 
             if (setClauses.length === 0) {
-                throw new Error('No hay campos válidos para actualizar');
+                ErrorHelper.throwValidation('No hay campos válidos para actualizar');
             }
 
             const query = `
@@ -476,10 +477,10 @@ class ServicioModel {
                 return result.rows[0] || null;
             } catch (error) {
                 if (error.code === '23505') {
-                    throw new Error('Ya existe un servicio con ese nombre en la organización');
+                    ErrorHelper.throwConflict('Ya existe un servicio con ese nombre en la organización');
                 }
                 if (error.code === '23514') {
-                    throw new Error('Error de validación en los datos del servicio');
+                    ErrorHelper.throwValidation('Error de validación en los datos del servicio');
                 }
                 if (error.code === '23503') {
                     // Foreign key violation
@@ -571,10 +572,10 @@ class ServicioModel {
             } catch (error) {
                 if (error.code === '23503') {
                     if (error.detail.includes('servicio_id')) {
-                        throw new Error('El servicio especificado no existe');
+                        ErrorHelper.throwIfNotFound(null, 'Servicio');
                     }
                     if (error.detail.includes('profesional_id')) {
-                        throw new Error('El profesional especificado no existe');
+                        ErrorHelper.throwIfNotFound(null, 'Profesional');
                     }
                 }
                 throw error;
@@ -866,9 +867,7 @@ class ServicioModel {
                 [servicioId, organizacionId]
             );
 
-            if (servicioCheck.rows.length === 0) {
-                throw new Error('Servicio no encontrado');
-            }
+            ErrorHelper.throwIfNotFound(servicioCheck.rows[0], 'Servicio');
 
             // Validar que todos los profesionales están asignados al servicio
             const profesionalesIds = ordenArray.map(item => item.profesional_id);
@@ -881,7 +880,7 @@ class ServicioModel {
             if (profesionalesValidos.rows.length !== profesionalesIds.length) {
                 const idsValidos = profesionalesValidos.rows.map(r => r.profesional_id);
                 const idsInvalidos = profesionalesIds.filter(id => !idsValidos.includes(id));
-                throw new Error(`Profesionales no asignados al servicio: ${idsInvalidos.join(', ')}`);
+                ErrorHelper.throwValidation(`Profesionales no asignados al servicio: ${idsInvalidos.join(', ')}`);
             }
 
             // Actualizar orden para cada profesional

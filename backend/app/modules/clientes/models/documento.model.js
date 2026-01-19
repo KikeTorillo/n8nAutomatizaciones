@@ -11,6 +11,7 @@
  */
 
 const RLSContextManager = require('../../../utils/rlsContextManager');
+const { ErrorHelper } = require('../../../utils/helpers');
 
 class DocumentoClienteModel {
 
@@ -51,14 +52,14 @@ class DocumentoClienteModel {
             } catch (error) {
                 if (error.code === '23503') {
                     if (error.constraint?.includes('cliente')) {
-                        throw new Error('El cliente especificado no existe');
+                        ErrorHelper.throwNotFound('El cliente especificado no existe');
                     }
                     if (error.constraint?.includes('archivo_storage')) {
-                        throw new Error('El archivo de storage especificado no existe');
+                        ErrorHelper.throwNotFound('El archivo de storage especificado no existe');
                     }
                 }
                 if (error.code === '23514') {
-                    throw new Error('Tipo de documento no válido');
+                    ErrorHelper.throwValidation('Tipo de documento no válido');
                 }
                 throw error;
             }
@@ -215,7 +216,7 @@ class DocumentoClienteModel {
             }
 
             if (campos.length === 0) {
-                throw new Error('No hay campos válidos para actualizar');
+                ErrorHelper.throwValidation('No hay campos válidos para actualizar');
             }
 
             const query = `
@@ -229,11 +230,7 @@ class DocumentoClienteModel {
             valores.push(documentoId, organizacionId);
 
             const result = await db.query(query, valores);
-
-            if (result.rows.length === 0) {
-                throw new Error('Documento no encontrado');
-            }
-
+            ErrorHelper.throwIfNotFound(result.rows[0], 'Documento');
             return result.rows[0];
         });
     }
@@ -275,11 +272,7 @@ class DocumentoClienteModel {
             const result = await db.query(query, [
                 documentoId, organizacionId, verificado, usuarioId
             ]);
-
-            if (result.rows.length === 0) {
-                throw new Error('Documento no encontrado');
-            }
-
+            ErrorHelper.throwIfNotFound(result.rows[0], 'Documento');
             return result.rows[0];
         });
     }
@@ -343,11 +336,7 @@ class DocumentoClienteModel {
                 metadatos.mime_type || null,
                 metadatos.tamano_bytes || null
             ]);
-
-            if (result.rows.length === 0) {
-                throw new Error('Documento no encontrado');
-            }
-
+            ErrorHelper.throwIfNotFound(result.rows[0], 'Documento');
             return result.rows[0];
         });
     }

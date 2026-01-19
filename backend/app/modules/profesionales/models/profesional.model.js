@@ -1,5 +1,6 @@
 const RLSContextManager = require('../../../utils/rlsContextManager');
 const { PlanLimitExceededError, DuplicateResourceError } = require('../../../utils/errors');
+const { ErrorHelper } = require('../../../utils/helpers');
 
 class ProfesionalModel {
 
@@ -13,7 +14,7 @@ class ProfesionalModel {
                     db
                 );
                 if (!emailDisponible) {
-                    throw new Error('Ya existe un profesional con ese email en la organización');
+                    ErrorHelper.throwConflict('Ya existe un profesional con ese email en la organización');
                 }
             }
 
@@ -116,33 +117,33 @@ class ProfesionalModel {
             } catch (error) {
                 if (error.code === '23505') {
                     if (error.constraint && error.constraint.includes('email')) {
-                        throw new Error('Ya existe un profesional con ese email en la organización');
+                        ErrorHelper.throwConflict('Ya existe un profesional con ese email en la organización');
                     }
                     if (error.constraint && error.constraint.includes('telefono')) {
-                        throw new Error('Ya existe un profesional con ese teléfono en la organización');
+                        ErrorHelper.throwConflict('Ya existe un profesional con ese teléfono en la organización');
                     }
-                    throw new Error('El profesional ya existe con esos datos únicos');
+                    ErrorHelper.throwConflict('El profesional ya existe con esos datos únicos');
                 }
                 if (error.code === '23514') {
                     if (error.constraint && error.constraint.includes('fecha_nacimiento')) {
-                        throw new Error('El profesional debe ser mayor de 18 años');
+                        ErrorHelper.throwValidation('El profesional debe ser mayor de 18 años');
                     }
                     if (error.constraint && error.constraint.includes('años_experiencia')) {
-                        throw new Error('Los años de experiencia deben estar entre 0 y 70');
+                        ErrorHelper.throwValidation('Los años de experiencia deben estar entre 0 y 70');
                     }
                     if (error.constraint && error.constraint.includes('calificacion_promedio')) {
-                        throw new Error('La calificación debe estar entre 1.00 y 5.00');
+                        ErrorHelper.throwValidation('La calificación debe estar entre 1.00 y 5.00');
                     }
                     if (error.constraint && error.constraint.includes('color_calendario')) {
-                        throw new Error('El color debe ser un código hexadecimal válido');
+                        ErrorHelper.throwValidation('El color debe ser un código hexadecimal válido');
                     }
-                    throw new Error('Los datos del profesional no cumplen las validaciones requeridas');
+                    ErrorHelper.throwValidation('Los datos del profesional no cumplen las validaciones requeridas');
                 }
                 if (error.code === '23503') {
                     if (error.constraint && error.constraint.includes('organizacion')) {
-                        throw new Error('La organización especificada no existe');
+                        ErrorHelper.throwValidation('La organización especificada no existe');
                     }
-                    throw new Error('Error de referencia en los datos del profesional');
+                    ErrorHelper.throwValidation('Error de referencia en los datos del profesional');
                 }
                 throw error;
             }
@@ -200,7 +201,7 @@ class ProfesionalModel {
                     emailsAValidar.indexOf(email) !== index
                 );
                 if (emailsDuplicados.length > 0) {
-                    throw new Error(`Emails duplicados en la solicitud: ${emailsDuplicados.join(', ')}`);
+                    ErrorHelper.throwValidation(`Emails duplicados en la solicitud: ${emailsDuplicados.join(', ')}`);
                 }
 
                 // Verificar emails existentes en BD
@@ -218,7 +219,7 @@ class ProfesionalModel {
 
                 if (emailsExistentes.rows.length > 0) {
                     const emails = emailsExistentes.rows.map(r => r.email).join(', ');
-                    throw new Error(`Los siguientes emails ya están en uso: ${emails}`);
+                    ErrorHelper.throwConflict(`Los siguientes emails ya están en uso: ${emails}`);
                 }
             }
 
@@ -300,10 +301,10 @@ class ProfesionalModel {
             } catch (error) {
                 // Manejar errores de constraint específicos
                 if (error.code === '23514') {
-                    throw new Error('Los datos de uno o más profesionales no cumplen las validaciones requeridas');
+                    ErrorHelper.throwValidation('Los datos de uno o más profesionales no cumplen las validaciones requeridas');
                 }
                 if (error.code === '23503') {
-                    throw new Error('Error de referencia en los datos de profesionales');
+                    ErrorHelper.throwValidation('Error de referencia en los datos de profesionales');
                 }
                 throw error;
             }
@@ -594,7 +595,7 @@ class ProfesionalModel {
                     db
                 );
                 if (!emailDisponible) {
-                    throw new Error('Ya existe un profesional con ese email en la organización');
+                    ErrorHelper.throwConflict('Ya existe un profesional con ese email en la organización');
                 }
             }
 
@@ -649,7 +650,7 @@ class ProfesionalModel {
             }
 
             if (campos.length === 0) {
-                throw new Error('No hay campos válidos para actualizar');
+                ErrorHelper.throwValidation('No hay campos válidos para actualizar');
             }
 
             const query = `
@@ -685,10 +686,7 @@ class ProfesionalModel {
 
             const result = await db.query(query, valores);
 
-            if (result.rows.length === 0) {
-                throw new Error('Profesional no encontrado en la organización');
-            }
-
+            ErrorHelper.throwIfNotFound(result.rows[0], 'Profesional');
             return result.rows[0];
         });
     }
@@ -708,10 +706,7 @@ class ProfesionalModel {
 
             const result = await db.query(query, [activo, motivoInactividad, id, organizacionId]);
 
-            if (result.rows.length === 0) {
-                throw new Error('Profesional no encontrado en la organización');
-            }
-
+            ErrorHelper.throwIfNotFound(result.rows[0], 'Profesional');
             return result.rows[0];
         });
     }
@@ -752,10 +747,7 @@ class ProfesionalModel {
 
             const result = await db.query(query, values);
 
-            if (result.rows.length === 0) {
-                throw new Error('Profesional no encontrado en la organización');
-            }
-
+            ErrorHelper.throwIfNotFound(result.rows[0], 'Profesional');
             return result.rows[0];
         });
     }
@@ -882,7 +874,7 @@ class ProfesionalModel {
                 const checkResult = await db.query(checkQuery, [usuarioId, organizacionId, profesionalId]);
 
                 if (checkResult.rows.length > 0) {
-                    throw new Error(`El usuario ya está vinculado al profesional "${checkResult.rows[0].nombre_completo}"`);
+                    ErrorHelper.throwConflict(`El usuario ya está vinculado al profesional "${checkResult.rows[0].nombre_completo}"`);
                 }
             }
 
@@ -895,10 +887,7 @@ class ProfesionalModel {
 
             const result = await db.query(query, [usuarioId, profesionalId, organizacionId]);
 
-            if (result.rows.length === 0) {
-                throw new Error('Profesional no encontrado en la organización');
-            }
-
+            ErrorHelper.throwIfNotFound(result.rows[0], 'Profesional');
             return result.rows[0];
         });
     }

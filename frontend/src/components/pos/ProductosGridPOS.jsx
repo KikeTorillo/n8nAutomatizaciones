@@ -1,20 +1,32 @@
+import { memo, useMemo, useCallback } from 'react';
 import { Package, Plus, AlertTriangle } from 'lucide-react';
 
 /**
  * Grid visual de productos para POS
  * Muestra productos con imagen, nombre, precio y badge de stock
+ * Ene 2026: Memoizado con Map para lookups O(1) en lugar de O(n)
  */
-export default function ProductosGridPOS({
+function ProductosGridPOS({
   productos = [],
   onAddToCart,
   cartItems = [],
   isLoading = false
 }) {
-  // Obtener cantidad en carrito para cada producto
-  const getCartQuantity = (productoId) => {
-    const item = cartItems.find(i => i.producto_id === productoId || i.id === productoId);
-    return item?.cantidad || 0;
-  };
+  // Ene 2026: Map para lookup O(1) en lugar de find() O(n)
+  const cartQuantityMap = useMemo(() => {
+    const map = new Map();
+    cartItems.forEach(item => {
+      if (item.producto_id) map.set(item.producto_id, item.cantidad || 0);
+      if (item.id && item.id !== item.producto_id) map.set(item.id, item.cantidad || 0);
+    });
+    return map;
+  }, [cartItems]);
+
+  // Ene 2026: Memoizar callback para evitar recreación
+  const getCartQuantity = useCallback(
+    (productoId) => cartQuantityMap.get(productoId) || 0,
+    [cartQuantityMap]
+  );
 
   if (isLoading) {
     return (
@@ -144,3 +156,5 @@ export default function ProductosGridPOS({
     </div>
   );
 }
+
+export default memo(ProductosGridPOS);

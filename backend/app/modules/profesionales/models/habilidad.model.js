@@ -4,6 +4,7 @@
  * Fase 4 del Plan de Empleados Competitivo
  */
 const RLSContextManager = require('../../../utils/rlsContextManager');
+const { ErrorHelper } = require('../../../utils/helpers');
 
 // ====================================================================
 // CATÁLOGO DE HABILIDADES (tabla maestra por organización)
@@ -41,15 +42,15 @@ class CatalogoHabilidadesModel {
                 return result.rows[0];
             } catch (error) {
                 if (error.code === '23505') {
-                    throw new Error('Ya existe una habilidad con este nombre en la organización');
+                    ErrorHelper.throwConflict('Ya existe una habilidad con este nombre en la organización');
                 }
                 if (error.code === '23514') {
                     if (error.constraint?.includes('nombre')) {
-                        throw new Error('El nombre de la habilidad debe tener al menos 2 caracteres');
+                        ErrorHelper.throwValidation('El nombre de la habilidad debe tener al menos 2 caracteres');
                     }
                 }
                 if (error.code === '22P02') {
-                    throw new Error('La categoría especificada no es válida');
+                    ErrorHelper.throwValidation('La categoría especificada no es válida');
                 }
                 throw error;
             }
@@ -158,7 +159,7 @@ class CatalogoHabilidadesModel {
             }
 
             if (campos.length === 0) {
-                throw new Error('No hay campos válidos para actualizar');
+                ErrorHelper.throwValidation('No hay campos válidos para actualizar');
             }
 
             const query = `
@@ -174,14 +175,11 @@ class CatalogoHabilidadesModel {
             try {
                 const result = await db.query(query, valores);
 
-                if (result.rows.length === 0) {
-                    throw new Error('Habilidad no encontrada');
-                }
-
+                ErrorHelper.throwIfNotFound(result.rows[0], 'Habilidad');
                 return result.rows[0];
             } catch (error) {
                 if (error.code === '23505') {
-                    throw new Error('Ya existe una habilidad con este nombre');
+                    ErrorHelper.throwConflict('Ya existe una habilidad con este nombre');
                 }
                 throw error;
             }
@@ -206,7 +204,7 @@ class CatalogoHabilidadesModel {
             const checkResult = await db.query(checkQuery, [habilidadId, organizacionId]);
 
             if (parseInt(checkResult.rows[0].count) > 0) {
-                throw new Error('No se puede eliminar: hay empleados con esta habilidad asignada');
+                ErrorHelper.throwConflict('No se puede eliminar: hay empleados con esta habilidad asignada');
             }
 
             const query = `
@@ -286,18 +284,18 @@ class HabilidadEmpleadoModel {
                 return result.rows[0];
             } catch (error) {
                 if (error.code === '23505') {
-                    throw new Error('El empleado ya tiene asignada esta habilidad');
+                    ErrorHelper.throwConflict('El empleado ya tiene asignada esta habilidad');
                 }
                 if (error.code === '23503') {
                     if (error.constraint?.includes('profesional')) {
-                        throw new Error('El profesional especificado no existe');
+                        ErrorHelper.throwValidation('El profesional especificado no existe');
                     }
                     if (error.constraint?.includes('habilidad')) {
-                        throw new Error('La habilidad especificada no existe en el catálogo');
+                        ErrorHelper.throwValidation('La habilidad especificada no existe en el catálogo');
                     }
                 }
                 if (error.code === '22P02') {
-                    throw new Error('El nivel de habilidad especificado no es válido');
+                    ErrorHelper.throwValidation('El nivel de habilidad especificado no es válido');
                 }
                 throw error;
             }
@@ -438,7 +436,7 @@ class HabilidadEmpleadoModel {
             }
 
             if (campos.length === 0) {
-                throw new Error('No hay campos válidos para actualizar');
+                ErrorHelper.throwValidation('No hay campos válidos para actualizar');
             }
 
             if (usuarioId) {
@@ -460,14 +458,11 @@ class HabilidadEmpleadoModel {
             try {
                 const result = await db.query(query, valores);
 
-                if (result.rows.length === 0) {
-                    throw new Error('Habilidad de empleado no encontrada');
-                }
-
+                ErrorHelper.throwIfNotFound(result.rows[0], 'Habilidad de empleado');
                 return result.rows[0];
             } catch (error) {
                 if (error.code === '22P02') {
-                    throw new Error('El nivel de habilidad especificado no es válido');
+                    ErrorHelper.throwValidation('El nivel de habilidad especificado no es válido');
                 }
                 throw error;
             }
@@ -521,10 +516,7 @@ class HabilidadEmpleadoModel {
                 habilidadEmpleadoId, organizacionId, verificado, usuarioId
             ]);
 
-            if (result.rows.length === 0) {
-                throw new Error('Habilidad de empleado no encontrada');
-            }
-
+            ErrorHelper.throwIfNotFound(result.rows[0], 'Habilidad de empleado');
             return result.rows[0];
         });
     }

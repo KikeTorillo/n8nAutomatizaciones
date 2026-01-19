@@ -8,6 +8,7 @@
  */
 
 const RLSContextManager = require('../../../utils/rlsContextManager');
+const { ErrorHelper } = require('../../../utils/helpers');
 const logger = require('../../../utils/logger');
 
 class WorkflowInstanciasModel {
@@ -333,13 +334,11 @@ class WorkflowInstanciasModel {
                 [data.usuario_delegado_id, organizacionId]
             );
 
-            if (delegadoQuery.rows.length === 0) {
-                throw new Error('Usuario delegado no encontrado o inactivo');
-            }
+            ErrorHelper.throwIfNotFound(delegadoQuery.rows[0], 'Usuario delegado');
 
             // Verificar que no se delega a sí mismo
             if (data.usuario_delegado_id === usuarioId) {
-                throw new Error('No puedes delegarte a ti mismo');
+                ErrorHelper.throwValidation('No puedes delegarte a ti mismo');
             }
 
             // Verificar que no haya delegación activa que se traslape
@@ -358,7 +357,7 @@ class WorkflowInstanciasModel {
             );
 
             if (existeQuery.rows.length > 0) {
-                throw new Error('Ya existe una delegación activa en ese período');
+                ErrorHelper.throwConflict('Ya existe una delegación activa en ese período');
             }
 
             // Crear delegación
@@ -463,9 +462,7 @@ class WorkflowInstanciasModel {
                 [id, usuarioId]
             );
 
-            if (checkQuery.rows.length === 0) {
-                throw new Error('Delegación no encontrada');
-            }
+            ErrorHelper.throwIfNotFound(checkQuery.rows[0], 'Delegación');
 
             const updates = [];
             const values = [];
@@ -490,7 +487,7 @@ class WorkflowInstanciasModel {
             }
 
             if (updates.length === 0) {
-                throw new Error('No hay campos para actualizar');
+                ErrorHelper.throwValidation('No hay campos para actualizar');
             }
 
             values.push(id);
@@ -520,9 +517,7 @@ class WorkflowInstanciasModel {
 
             const result = await db.query(query, [id, usuarioId]);
 
-            if (result.rows.length === 0) {
-                throw new Error('Delegación no encontrada');
-            }
+            ErrorHelper.throwIfNotFound(result.rows[0], 'Delegación');
 
             return result.rows[0];
         });

@@ -5,6 +5,7 @@
  */
 
 const Joi = require('joi');
+const { withPagination } = require('../../../schemas/shared');
 const { ESTADOS_SOLICITUD, TIPOS_APROBADOR, TURNOS_MEDIO_DIA } = require('../constants/vacaciones.constants');
 
 // ==================== POLÍTICAS ====================
@@ -96,12 +97,10 @@ const obtenerMiSaldo = {
 
 const listarSaldos = {
   params: Joi.object({}),
-  query: Joi.object({
+  query: withPagination({
     anio: Joi.number().integer().min(2000).max(2100),
     profesional_id: Joi.number().integer().positive(),
     con_pendientes: Joi.boolean(),
-    page: Joi.number().integer().min(1).default(1),
-    limit: Joi.number().integer().min(1).max(100).default(20),
   }),
 };
 
@@ -140,33 +139,26 @@ const crearSolicitud = {
 
 const listarMisSolicitudes = {
   params: Joi.object({}),
-  query: Joi.object({
+  query: withPagination({
     estado: Joi.string().valid(...Object.values(ESTADOS_SOLICITUD)),
     anio: Joi.number().integer().min(2000).max(2100),
-    page: Joi.number().integer().min(1).default(1),
-    limit: Joi.number().integer().min(1).max(100).default(20),
   }),
 };
 
 const listarSolicitudes = {
   params: Joi.object({}),
-  query: Joi.object({
+  query: withPagination({
     estado: Joi.string().valid(...Object.values(ESTADOS_SOLICITUD)),
     profesional_id: Joi.number().integer().positive(),
     fecha_inicio: Joi.date().iso(),
     fecha_fin: Joi.date().iso(),
     anio: Joi.number().integer().min(2000).max(2100),
-    page: Joi.number().integer().min(1).default(1),
-    limit: Joi.number().integer().min(1).max(100).default(20),
   }),
 };
 
 const listarPendientes = {
   params: Joi.object({}),
-  query: Joi.object({
-    page: Joi.number().integer().min(1).default(1),
-    limit: Joi.number().integer().min(1).max(100).default(20),
-  }),
+  query: withPagination({}),
 };
 
 const obtenerSolicitud = {

@@ -24,7 +24,7 @@ const router = express.Router();
 const InvitadosController = require('../controllers/invitados.controller');
 
 // Schemas
-const invitadosSchemas = require('../schemas/invitado.schema');
+const invitadosSchemas = require('../schemas/invitado.schemas');
 
 // Middlewares
 const {

@@ -3,6 +3,7 @@ const logger = require('../../../../utils/logger');
 const { DEFAULTS, CitaHelpersModel } = require('./cita.helpers.model');
 const RLSContextManager = require('../../../../utils/rlsContextManager');
 const { DateTime } = require('luxon');
+const { ErrorHelper } = require('../../../../utils/helpers');
 
 class CitaOperacionalModel {
 
@@ -90,9 +91,7 @@ class CitaOperacionalModel {
     static async reagendar(citaId, datosReagenda, organizacionId) {
         return await RLSContextManager.transaction(organizacionId, async (db) => {
             const citaActual = await db.query('SELECT profesional_id FROM citas WHERE id = $1', [citaId]);
-            if (citaActual.rows.length === 0) {
-                throw new Error('Cita no encontrada');
-            }
+            ErrorHelper.throwIfNotFound(citaActual.rows[0], 'Cita');
 
             // Validar horario permitido (horarios_profesionales, bloqueos, conflictos)
             const validacion = await CitaHelpersModel.validarHorarioPermitido(
@@ -115,7 +114,7 @@ class CitaOperacionalModel {
                     horario: `${datosReagenda.nueva_hora_inicio}-${datosReagenda.nueva_hora_fin}`,
                     errores: validacion.errores
                 });
-                throw new Error(`No se puede reagendar la cita: ${mensajesError}`);
+                ErrorHelper.throwConflict(`No se puede reagendar la cita: ${mensajesError}`);
             }
 
             // Log de advertencias si las hay
@@ -335,7 +334,7 @@ class CitaOperacionalModel {
             } else if (datosWalkIn.servicio_id) {
                 serviciosIds = [datosWalkIn.servicio_id]; // Backward compatibility
             } else {
-                throw new Error('Se requiere servicio_id o servicios_ids');
+                ErrorHelper.throwValidation('Se requiere servicio_id o servicios_ids');
             }
 
             // 1. Validar servicios
@@ -346,9 +345,7 @@ class CitaOperacionalModel {
             const serviciosInfo = await Promise.all(
                 serviciosIds.map(async (servicioId) => {
                     const servicio = await CitaHelpersModel.obtenerServicioCompleto(servicioId, organizacionId, db);
-                    if (!servicio) {
-                        throw new Error(`Servicio ${servicioId} no encontrado o inactivo`);
-                    }
+                    ErrorHelper.throwIfNotFound(servicio, `Servicio ${servicioId}`);
                     return servicio;
                 })
             );
@@ -401,7 +398,7 @@ class CitaOperacionalModel {
             }
 
             if (!clienteId) {
-                throw new Error('No se pudo resolver cliente_id');
+                ErrorHelper.throwValidation('No se pudo resolver cliente_id');
             }
 
             // 3. Resolver profesional (existente o auto-asignar)
@@ -417,7 +414,7 @@ class CitaOperacionalModel {
 
                 if (!disponibilidad.profesionales_disponibles ||
                     disponibilidad.profesionales_disponibles.length === 0) {
-                    throw new Error('No hay profesionales disponibles para el servicio seleccionado');
+                    ErrorHelper.throwConflict('No hay profesionales disponibles para el servicio seleccionado');
                 }
 
                 // Tomar el primer profesional disponible (ya vienen ordenados por disponibilidad)
@@ -492,7 +489,7 @@ class CitaOperacionalModel {
             if (citaActual.rows.length === 0 && horariosActivos.rows.length === 0) {
                 const diasSemana = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
                 logger.warn(`[crearWalkIn] Walk-in rechazado: Profesional ${profesionalId} no disponible. Día: ${diasSemana[diaSemanaActual]}, Hora local (${zonaHoraria}): ${horaActual.substring(0, 5)}`);
-                throw new Error(
+                ErrorHelper.throwConflict(
                     `No se puede atender el walk-in: El profesional no está disponible en este horario. ` +
                     `(Hoy es ${diasSemana[diaSemanaActual]}, hora actual: ${horaActual.substring(0, 5)}, zona: ${zonaHoraria})`
                 );
@@ -577,7 +574,7 @@ class CitaOperacionalModel {
                     horario: `${horaInicio}-${horaFin}`,
                     errores: validacion.errores
                 });
-                throw new Error(`No se puede crear el walk-in: ${mensajesError}`);
+                ErrorHelper.throwConflict(`No se puede crear el walk-in: ${mensajesError}`);
             }
 
             // Log de advertencias si las hay
@@ -705,9 +702,7 @@ class CitaOperacionalModel {
     static async consultarDisponibilidadInmediata(servicioId, profesionalId, organizacionId) {
         return await RLSContextManager.query(organizacionId, async (db) => {
             const servicio = await CitaHelpersModel.obtenerServicioCompleto(servicioId, organizacionId, db);
-            if (!servicio) {
-                throw new Error('Servicio no encontrado');
-            }
+            ErrorHelper.throwIfNotFound(servicio, 'Servicio');
 
             let whereClause = `
                 WHERE p.organizacion_id = $1

@@ -16,6 +16,10 @@
  * - POST /procesar           - Procesar batch de recordatorios
  * - POST /test               - Enviar recordatorio de prueba
  *
+ * NO MIGRADO A BaseCrudController - Ene 2026
+ * Razón: No es CRUD de entidades, es configuración singleton y
+ * procesamiento de sistema (pg_cron), lógica de envío de mensajes.
+ *
  * @module modules/recordatorios/controllers/recordatorios.controller
  */
 

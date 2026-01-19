@@ -22,7 +22,7 @@ const router = express.Router();
 const GaleriaController = require('../controllers/galeria.controller');
 
 // Schemas
-const galeriaSchemas = require('../schemas/galeria.schema');
+const galeriaSchemas = require('../schemas/galeria.schemas');
 
 // Middlewares
 const {

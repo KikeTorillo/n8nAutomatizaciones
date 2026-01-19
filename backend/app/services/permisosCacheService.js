@@ -15,11 +15,11 @@
  * - permisos:invalidacion - Mensajes de invalidación de cache
  *
  * @author Backend Team
- * @version 1.0.0
+ * @version 1.1.0 (Ene 2026: Refactorizado para usar RedisClientFactory)
  * @since 2026-01-17
  */
 
-const redis = require('redis');
+const RedisClientFactory = require('./RedisClientFactory');
 const logger = require('../utils/logger');
 
 /**
@@ -68,9 +68,6 @@ class PermisosCacheService {
         /** @type {boolean} Indica si Redis está disponible */
         this.redisAvailable = false;
 
-        /** @type {boolean} Indica si los event listeners ya fueron registrados */
-        this.listenersRegistered = false;
-
         // Inicializar conexión Redis de forma asíncrona
         this.initRedis();
 
@@ -81,68 +78,40 @@ class PermisosCacheService {
     /**
      * Inicializa la conexión a Redis para cache de permisos
      *
-     * Se conecta a la base de datos 4 de Redis, dedicada exclusivamente
-     * para cache de permisos. Configura también el suscriptor Pub/Sub.
+     * Usa RedisClientFactory para obtener cliente de DB 4.
+     * Configura también el suscriptor Pub/Sub para invalidación distribuida.
      *
      * @async
      * @private
      */
     async initRedis() {
         try {
-            if (!process.env.REDIS_HOST) {
-                logger.info('[PermisosCacheService] Redis no configurado, usando cache local');
+            // Usar RedisClientFactory para obtener cliente
+            this.redisClient = await RedisClientFactory.getClient(4, 'PermisosCacheService');
+
+            if (!this.redisClient) {
+                logger.info('[PermisosCacheService] Redis no disponible, usando cache local');
                 this.isInitialized = true;
                 return;
             }
 
-            const redisConfig = {
-                socket: {
-                    host: process.env.REDIS_HOST || 'localhost',
-                    port: parseInt(process.env.REDIS_PORT) || 6379
-                },
-                password: process.env.REDIS_PASSWORD || undefined,
-                database: 4 // DB 4: Dedicada para cache de permisos
-            };
-
-            // Cliente principal para operaciones de cache
-            this.redisClient = redis.createClient(redisConfig);
-
-            // Protección contra duplicación de event listeners
-            if (!this.listenersRegistered) {
-                this.redisClient.on('error', (err) => {
-                    logger.error('[PermisosCacheService] Redis error', { error: err.message });
-                    this.redisAvailable = false;
-                });
-
-                this.redisClient.on('ready', () => {
-                    logger.info('[PermisosCacheService] Redis conectado (DB 4)');
-                    this.redisAvailable = true;
-                });
-
-                this.redisClient.on('reconnecting', () => {
-                    logger.debug('[PermisosCacheService] Reconectando a Redis...');
-                });
-
-                this.listenersRegistered = true;
-            }
-
-            await this.redisClient.connect();
+            this.redisAvailable = true;
 
             // Cliente separado para suscripción Pub/Sub
-            this.subscriberClient = this.redisClient.duplicate();
-            await this.subscriberClient.connect();
+            this.subscriberClient = await RedisClientFactory.createSubscriber(4, 'PermisosPubSub');
 
-            // Suscribirse al canal de invalidación
-            await this.subscriberClient.subscribe(CHANNEL_INVALIDACION, (message) => {
-                this.handleInvalidacionMessage(message);
-            });
+            if (this.subscriberClient) {
+                // Suscribirse al canal de invalidación
+                await this.subscriberClient.subscribe(CHANNEL_INVALIDACION, (message) => {
+                    this.handleInvalidacionMessage(message);
+                });
 
-            logger.info('[PermisosCacheService] Suscrito a canal de invalidación', {
-                channel: CHANNEL_INVALIDACION
-            });
+                logger.info('[PermisosCacheService] Suscrito a canal de invalidación', {
+                    channel: CHANNEL_INVALIDACION
+                });
+            }
 
             this.isInitialized = true;
-            this.redisAvailable = true;
 
         } catch (error) {
             logger.warn('[PermisosCacheService] Redis no disponible, usando cache local', {
@@ -237,51 +206,79 @@ class PermisosCacheService {
     }
 
     /**
-     * Invalida el cache de un usuario específico
+     * Invalida el cache de un usuario espec\u00edfico
      *
-     * Publica mensaje de invalidación para sincronizar todas las instancias.
+     * Publica mensaje de invalidaci\u00f3n para sincronizar todas las instancias.
+     *
+     * ORDEN CR\u00cdTICO para evitar race conditions:
+     * 1. Invalidar local PRIMERO (esta instancia deja de usar cache viejo)
+     * 2. Invalidar Redis SEGUNDO (otras instancias leen el nuevo estado)
+     * 3. Publicar mensaje \u00daLTIMO (notificar a otras instancias)
      *
      * @async
      * @param {number} usuarioId
      */
     async invalidarUsuario(usuarioId) {
-        logger.debug('[PermisosCacheService] Invalidando cache de usuario', { usuarioId });
+        const version = Date.now();
+        logger.debug('[PermisosCacheService] Invalidando cache de usuario', { usuarioId, version });
 
-        // Publicar mensaje de invalidación
-        await this.publicarInvalidacion({ tipo: 'usuario', usuarioId });
-
-        // Invalidar localmente
+        // 1. Invalidar local PRIMERO
         this.invalidarUsuarioLocal(usuarioId);
 
-        // Invalidar en Redis
+        // 2. Invalidar en Redis SEGUNDO
         await this.invalidarUsuarioRedis(usuarioId);
+
+        // 3. Publicar mensaje de invalidaci\u00f3n \u00daLTIMO
+        await this.publicarInvalidacion({ tipo: 'usuario', usuarioId, version });
     }
 
     /**
-     * Invalida el cache de una sucursal específica
+     * Invalida el cache de una sucursal espec\u00edfica
+     *
+     * ORDEN CR\u00cdTICO para evitar race conditions:
+     * 1. Invalidar local PRIMERO
+     * 2. Invalidar Redis SEGUNDO
+     * 3. Publicar mensaje \u00daLTIMO
      *
      * @async
      * @param {number} sucursalId
      */
     async invalidarSucursal(sucursalId) {
-        logger.debug('[PermisosCacheService] Invalidando cache de sucursal', { sucursalId });
+        const version = Date.now();
+        logger.debug('[PermisosCacheService] Invalidando cache de sucursal', { sucursalId, version });
 
-        await this.publicarInvalidacion({ tipo: 'sucursal', sucursalId });
+        // 1. Invalidar local PRIMERO
         this.invalidarSucursalLocal(sucursalId);
+
+        // 2. Invalidar en Redis SEGUNDO
         await this.invalidarSucursalRedis(sucursalId);
+
+        // 3. Publicar mensaje de invalidaci\u00f3n \u00daLTIMO
+        await this.publicarInvalidacion({ tipo: 'sucursal', sucursalId, version });
     }
 
     /**
      * Invalida todo el cache de permisos
      *
+     * ORDEN CR\u00cdTICO para evitar race conditions:
+     * 1. Invalidar local PRIMERO
+     * 2. Invalidar Redis SEGUNDO
+     * 3. Publicar mensaje \u00daLTIMO
+     *
      * @async
      */
     async invalidarTodo() {
-        logger.debug('[PermisosCacheService] Invalidando todo el cache');
+        const version = Date.now();
+        logger.debug('[PermisosCacheService] Invalidando todo el cache', { version });
 
-        await this.publicarInvalidacion({ tipo: 'global' });
+        // 1. Invalidar local PRIMERO
         this.localCache.clear();
+
+        // 2. Invalidar en Redis SEGUNDO
         await this.invalidarTodoRedis();
+
+        // 3. Publicar mensaje de invalidaci\u00f3n \u00daLTIMO
+        await this.publicarInvalidacion({ tipo: 'global', version });
     }
 
     /**
@@ -501,21 +498,21 @@ class PermisosCacheService {
                 this.cleanupInterval = null;
             }
 
+            // Cerrar subscriber propio (no gestionado por Factory)
             if (this.subscriberClient && this.subscriberClient.isOpen) {
                 await this.subscriberClient.unsubscribe(CHANNEL_INVALIDACION);
                 this.subscriberClient.removeAllListeners();
                 await this.subscriberClient.quit();
             }
 
-            if (this.redisClient && this.redisClient.isOpen) {
-                this.redisClient.removeAllListeners();
-                await this.redisClient.quit();
-            }
+            // El cliente principal es gestionado por RedisClientFactory
+            // No cerrarlo aquí para permitir reutilización
 
             // Reset de estado para permitir re-inicialización limpia
-            this.listenersRegistered = false;
             this.redisAvailable = false;
             this.isInitialized = false;
+            this.redisClient = null;
+            this.subscriberClient = null;
 
             logger.info('[PermisosCacheService] Conexiones cerradas');
         } catch (error) {

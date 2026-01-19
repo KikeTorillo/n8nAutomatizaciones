@@ -1,5 +1,6 @@
 const RLSContextManager = require('../../../utils/rlsContextManager');
 const logger = require('../../../utils/logger');
+const { ErrorHelper } = require('../../../utils/helpers');
 
 /**
  * Model para Sesiones de Caja POS
@@ -39,7 +40,7 @@ class SesionesCajaModel {
 
             if (sesionActivaQuery.rows.length > 0) {
                 const sesionActiva = sesionActivaQuery.rows[0];
-                throw new Error(
+                ErrorHelper.throwConflict(
                     `Ya existe una sesión de caja abierta desde ${new Date(sesionActiva.fecha_apertura).toLocaleString()}`
                 );
             }
@@ -140,9 +141,7 @@ class SesionesCajaModel {
                 [sesionId, organizacionId]
             );
 
-            if (sesionQuery.rows.length === 0) {
-                throw new Error('Sesión no encontrada');
-            }
+            ErrorHelper.throwIfNotFound(sesionQuery.rows[0], 'Sesión');
 
             const sesion = sesionQuery.rows[0];
 
@@ -252,7 +251,7 @@ class SesionesCajaModel {
             );
 
             if (sesionQuery.rows.length === 0) {
-                throw new Error('Sesión no encontrada o ya está cerrada');
+                ErrorHelper.throwConflict('Sesión no encontrada o ya está cerrada');
             }
 
             const sesion = sesionQuery.rows[0];
@@ -357,22 +356,22 @@ class SesionesCajaModel {
             );
 
             if (sesionQuery.rows.length === 0) {
-                throw new Error('Sesión no encontrada o ya está cerrada');
+                ErrorHelper.throwConflict('Sesión no encontrada o ya está cerrada');
             }
 
             // Validar tipo
             if (!['entrada', 'salida'].includes(data.tipo)) {
-                throw new Error('Tipo de movimiento inválido. Debe ser "entrada" o "salida"');
+                ErrorHelper.throwValidation('Tipo de movimiento inválido. Debe ser "entrada" o "salida"');
             }
 
             // Validar monto
             if (!data.monto || data.monto <= 0) {
-                throw new Error('El monto debe ser mayor a 0');
+                ErrorHelper.throwValidation('El monto debe ser mayor a 0');
             }
 
             // Validar motivo
             if (!data.motivo || data.motivo.trim() === '') {
-                throw new Error('Debe especificar un motivo para el movimiento');
+                ErrorHelper.throwValidation('Debe especificar un motivo para el movimiento');
             }
 
             // Insertar movimiento
@@ -513,9 +512,7 @@ class SesionesCajaModel {
             // Obtener sesión
             const sesion = await this.obtenerPorId(sesionId, organizacionId);
 
-            if (!sesion) {
-                throw new Error('Sesión no encontrada');
-            }
+            ErrorHelper.throwIfNotFound(sesion, 'Sesión');
 
             // Calcular totales
             const totales = await this.calcularTotalesSesion(sesionId, organizacionId);

@@ -9,6 +9,7 @@
  */
 
 const Joi = require('joi');
+const { fields } = require('../../../schemas/shared');
 
 module.exports = {
   /**
@@ -25,8 +26,8 @@ module.exports = {
           'any.only': 'El plan debe ser: basico, profesional o custom'
         }),
 
-      payer_email: Joi.string()
-        .email()
+      // ✅ FIX v2.1: Usar fields.email con lowercase
+      payer_email: fields.email
         .optional()
         .messages({
           'string.email': 'El email del pagador debe ser válido'

@@ -22,7 +22,7 @@ const router = express.Router();
 const UbicacionesController = require('../controllers/ubicaciones.controller');
 
 // Schemas
-const ubicacionesSchemas = require('../schemas/ubicacion.schema');
+const ubicacionesSchemas = require('../schemas/ubicacion.schemas');
 
 // Middlewares
 const {

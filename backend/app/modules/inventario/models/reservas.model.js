@@ -1,5 +1,6 @@
 const RLSContextManager = require('../../../utils/rlsContextManager');
 const logger = require('../../../utils/logger');
+const { ErrorHelper } = require('../../../utils/helpers');
 
 /**
  * Model para gestión de reservas de stock - Arquitectura Superior
@@ -84,6 +85,7 @@ class ReservasModel {
 
     /**
      * Obtener stock disponible para múltiples productos/variantes
+     * ✅ FIX v2.1: Refactorizado para evitar N+1 - usa una sola query con unnest()
      * @param {Array<Object>} items - Array de { producto_id, variante_id }
      * @param {number} organizacionId - ID de la organización
      * @param {number|null} sucursalId - ID de sucursal (opcional)
@@ -94,38 +96,40 @@ class ReservasModel {
         }
 
         return await RLSContextManager.query(organizacionId, async (db) => {
-            const resultMap = {};
+            // Preparar arrays para unnest
+            const productoIds = items.map(i => i.variante_id ? null : i.producto_id);
+            const varianteIds = items.map(i => i.variante_id || null);
 
-            for (const item of items) {
-                const key = item.variante_id
-                    ? `variante_${item.variante_id}`
-                    : `producto_${item.producto_id}`;
-
-                // Query con información adicional del producto (nombre, ruta_preferida)
-                // para dropshipping y mensajes de error
-                const query = `
+            // Una sola query para todos los items
+            const query = `
+                WITH items AS (
                     SELECT
-                        $1::INTEGER as producto_id,
-                        $2::INTEGER as variante_id,
-                        stock_disponible($1, $2, $3) as stock_disponible,
-                        stock_reservado($1, $2, $3) as stock_reservado,
-                        COALESCE(
-                            (SELECT nombre FROM productos WHERE id = COALESCE($1, (SELECT producto_id FROM producto_variantes WHERE id = $2))),
-                            'Producto'
-                        ) as nombre,
-                        COALESCE(
-                            (SELECT ruta_preferida FROM productos WHERE id = COALESCE($1, (SELECT producto_id FROM producto_variantes WHERE id = $2))),
-                            'normal'
-                        ) as ruta_preferida
-                `;
+                        unnest($1::int[]) as producto_id,
+                        unnest($2::int[]) as variante_id
+                )
+                SELECT
+                    i.producto_id,
+                    i.variante_id,
+                    stock_disponible(i.producto_id, i.variante_id, $3) as stock_disponible,
+                    stock_reservado(i.producto_id, i.variante_id, $3) as stock_reservado,
+                    COALESCE(p.nombre, 'Producto') as nombre,
+                    COALESCE(p.ruta_preferida, 'normal') as ruta_preferida
+                FROM items i
+                LEFT JOIN productos p ON p.id = COALESCE(
+                    i.producto_id,
+                    (SELECT producto_id FROM producto_variantes WHERE id = i.variante_id)
+                )
+            `;
 
-                const result = await db.query(query, [
-                    item.variante_id ? null : item.producto_id,
-                    item.variante_id || null,
-                    sucursalId
-                ]);
+            const result = await db.query(query, [productoIds, varianteIds, sucursalId]);
 
-                resultMap[key] = result.rows[0];
+            // Construir mapa de resultados
+            const resultMap = {};
+            for (const row of result.rows) {
+                const key = row.variante_id
+                    ? `variante_${row.variante_id}`
+                    : `producto_${row.producto_id}`;
+                resultMap[key] = row;
             }
 
             return resultMap;
@@ -191,7 +195,7 @@ class ReservasModel {
                     mensaje: response.mensaje,
                     stock_disponible: response.stock_disponible_antes
                 });
-                throw new Error(response.mensaje);
+                ErrorHelper.throwConflict(response.mensaje);
             }
 
             logger.info('[ReservasModel.crear] Reserva creada exitosamente', {
@@ -233,6 +237,16 @@ class ReservasModel {
 
     /**
      * Crear múltiples reservas en una transacción atómica
+     *
+     * NOTA DE RENDIMIENTO (v2.1):
+     * Este método usa un loop para llamar a crear_reserva_atomica por cada item.
+     * La función SQL usa SKIP LOCKED para evitar race conditions en stock.
+     * Optimización con unnest() requeriría crear_reservas_batch() en PostgreSQL
+     * que maneje arrays con validación atómica de stock.
+     * El overhead actual es aceptable ya que:
+     * - Todas las queries van a la misma conexión (dentro de transacción)
+     * - El SKIP LOCKED garantiza concurrencia segura
+     *
      * @param {Array} items - Array de { producto_id, variante_id, cantidad }
      * @param {string} tipoOrigen - Tipo de origen (venta_pos, etc.)
      * @param {number} organizacionId - ID de la organización
@@ -297,7 +311,7 @@ class ReservasModel {
             // Si hay errores, hacer rollback de todo
             if (errores.length > 0) {
                 logger.error('[ReservasModel.crearMultiple] Errores en reservas', { errores });
-                throw new Error(`Error en ${errores.length} reservas: ${errores.map(e => e.error).join(', ')}`);
+                ErrorHelper.throwConflict(`Error en ${errores.length} reservas: ${errores.map(e => e.error).join(', ')}`);
             }
 
             logger.info('[ReservasModel.crearMultiple] Reservas creadas', {
@@ -336,7 +350,7 @@ class ReservasModel {
                 return await this.obtenerPorIdInterno(reservaId, db);
             }
 
-            throw new Error('No se pudo confirmar la reserva');
+            ErrorHelper.throwConflict('No se pudo confirmar la reserva');
         });
     }
 

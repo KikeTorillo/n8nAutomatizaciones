@@ -23,7 +23,7 @@ const router = express.Router();
 const EventosController = require('../controllers/eventos.controller');
 
 // Schemas
-const eventosSchemas = require('../schemas/evento.schema');
+const eventosSchemas = require('../schemas/evento.schemas');
 
 // Middlewares
 const {

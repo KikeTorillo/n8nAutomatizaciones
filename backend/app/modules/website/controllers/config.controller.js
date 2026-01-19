@@ -9,12 +9,17 @@ const { asyncHandler } = require('../../../middleware');
  *
  * Gestiona la configuración del sitio web de cada organización.
  *
- * ENDPOINTS (5):
- * • POST   /config           - Crear configuración del sitio
- * • GET    /config           - Obtener configuración actual
- * • PUT    /config/:id       - Actualizar configuración
- * • POST   /config/:id/publicar - Publicar/despublicar sitio
- * • GET    /config/slug/:slug/disponible - Verificar disponibilidad slug
+ * ENDPOINTS (6):
+ * - POST   /config                       - Crear configuración del sitio
+ * - GET    /config                       - Obtener configuración actual
+ * - PUT    /config/:id                   - Actualizar configuración
+ * - POST   /config/:id/publicar          - Publicar/despublicar sitio
+ * - GET    /config/slug/:slug/disponible - Verificar disponibilidad slug
+ * - DELETE /config/:id                   - Eliminar sitio web
+ *
+ * NO MIGRADO A BaseCrudController - Ene 2026
+ * Razón: Singleton por organización, verificación de slug único,
+ * método custom publicar(), no sigue patrón CRUD estándar.
  *
  * Fecha creación: 6 Diciembre 2025
  */

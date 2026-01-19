@@ -15,6 +15,7 @@
  */
 
 const RLSContextManager = require('../../../utils/rlsContextManager');
+const { ErrorHelper } = require('../../../utils/helpers');
 
 class ClienteModel {
 
@@ -69,37 +70,37 @@ class ClienteModel {
             } catch (error) {
                 if (error.code === '23505') {
                     if (error.constraint === 'unique_email_por_org') {
-                        throw new Error(`El email ${data.email} ya está registrado en esta organización`);
+                        ErrorHelper.throwConflict(`El email ${data.email} ya está registrado en esta organización`);
                     }
                     if (error.constraint === 'unique_telefono_por_org') {
-                        throw new Error(`El teléfono ${data.telefono} ya está registrado en esta organización`);
+                        ErrorHelper.throwConflict(`El teléfono ${data.telefono} ya está registrado en esta organización`);
                     }
                     if (error.constraint === 'unique_telegram_por_org') {
-                        throw new Error(`El Telegram chat ID ${data.telegram_chat_id} ya está registrado en esta organización`);
+                        ErrorHelper.throwConflict(`El Telegram chat ID ${data.telegram_chat_id} ya está registrado en esta organización`);
                     }
                     if (error.constraint === 'unique_whatsapp_por_org') {
-                        throw new Error(`El número de WhatsApp ${data.whatsapp_phone} ya está registrado en esta organización`);
+                        ErrorHelper.throwConflict(`El número de WhatsApp ${data.whatsapp_phone} ya está registrado en esta organización`);
                     }
                     if (error.constraint === 'unique_rfc_por_org') {
-                        throw new Error(`El RFC ${data.rfc} ya está registrado en esta organización`);
+                        ErrorHelper.throwConflict(`El RFC ${data.rfc} ya está registrado en esta organización`);
                     }
                 }
 
                 if (error.code === '23514') {
                     if (error.constraint === 'valid_email') {
-                        throw new Error('El formato del email no es válido');
+                        ErrorHelper.throwValidation('El formato del email no es válido');
                     }
                     if (error.constraint === 'valid_telefono') {
-                        throw new Error('El formato del teléfono no es válido');
+                        ErrorHelper.throwValidation('El formato del teléfono no es válido');
                     }
                     if (error.constraint === 'valid_fecha_nacimiento') {
-                        throw new Error('La fecha de nacimiento no es válida (debe ser mayor a 5 años)');
+                        ErrorHelper.throwValidation('La fecha de nacimiento no es válida (debe ser mayor a 5 años)');
                     }
                     if (error.constraint === 'valid_tipo') {
-                        throw new Error('El tipo de cliente debe ser "persona" o "empresa"');
+                        ErrorHelper.throwValidation('El tipo de cliente debe ser "persona" o "empresa"');
                     }
                     if (error.constraint === 'valid_rfc') {
-                        throw new Error('El formato del RFC no es válido (debe ser RFC mexicano válido)');
+                        ErrorHelper.throwValidation('El formato del RFC no es válido (debe ser RFC mexicano válido)');
                     }
                 }
 
@@ -159,13 +160,15 @@ class ClienteModel {
             let queryParams = [];
             let paramIndex = 1;
 
-            if (activos !== undefined) {
+            // Solo filtrar por activo si se especifica explícitamente (no null/undefined)
+            if (activos !== undefined && activos !== null) {
                 whereConditions.push(`c.activo = $${paramIndex}`);
                 queryParams.push(activos);
                 paramIndex++;
             }
 
-            if (marketing !== undefined) {
+            // Solo filtrar por marketing si se especifica explícitamente
+            if (marketing !== undefined && marketing !== null) {
                 whereConditions.push(`c.marketing_permitido = $${paramIndex}`);
                 queryParams.push(marketing);
                 paramIndex++;
@@ -286,7 +289,7 @@ class ClienteModel {
             }
 
             if (setClauses.length === 0) {
-                throw new Error('No hay campos para actualizar');
+                ErrorHelper.throwValidation('No hay campos para actualizar');
             }
 
             setClauses.push(`actualizado_en = CURRENT_TIMESTAMP`);
@@ -310,22 +313,22 @@ class ClienteModel {
             } catch (error) {
                 if (error.code === '23505') {
                     if (error.constraint === 'unique_email_por_org') {
-                        throw new Error(`El email ${data.email} ya está registrado en esta organización`);
+                        ErrorHelper.throwConflict(`El email ${data.email} ya está registrado en esta organización`);
                     }
                     if (error.constraint === 'unique_telefono_por_org') {
-                        throw new Error(`El teléfono ${data.telefono} ya está registrado en esta organización`);
+                        ErrorHelper.throwConflict(`El teléfono ${data.telefono} ya está registrado en esta organización`);
                     }
                     if (error.constraint === 'unique_rfc_por_org') {
-                        throw new Error(`El RFC ${data.rfc} ya está registrado en esta organización`);
+                        ErrorHelper.throwConflict(`El RFC ${data.rfc} ya está registrado en esta organización`);
                     }
                 }
 
                 if (error.code === '23514') {
                     if (error.constraint === 'valid_tipo') {
-                        throw new Error('El tipo de cliente debe ser "persona" o "empresa"');
+                        ErrorHelper.throwValidation('El tipo de cliente debe ser "persona" o "empresa"');
                     }
                     if (error.constraint === 'valid_rfc') {
-                        throw new Error('El formato del RFC no es válido (debe ser RFC mexicano válido)');
+                        ErrorHelper.throwValidation('El formato del RFC no es válido (debe ser RFC mexicano válido)');
                     }
                 }
 
@@ -870,7 +873,7 @@ class ClienteModel {
                                 });
                                 continue;
                             } else {
-                                throw new Error(`Email ${cliente.email} ya existe`);
+                                ErrorHelper.throwConflict(`Email ${cliente.email} ya existe`);
                             }
                         }
                     }
@@ -893,7 +896,7 @@ class ClienteModel {
                                 });
                                 continue;
                             } else {
-                                throw new Error(`Teléfono ${cliente.telefono} ya existe`);
+                                ErrorHelper.throwConflict(`Teléfono ${cliente.telefono} ya existe`);
                             }
                         }
                     }
@@ -944,7 +947,7 @@ class ClienteModel {
 
             // Si hay errores críticos y no ignoramos duplicados, hacer rollback
             if (!ignorarDuplicados && resultados.errores.length > 0) {
-                throw new Error(`Importación fallida: ${resultados.errores.length} errores encontrados`);
+                ErrorHelper.throwValidation(`Importación fallida: ${resultados.errores.length} errores encontrados`);
             }
 
             return {

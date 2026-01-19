@@ -9,7 +9,7 @@ const router = express.Router();
 
 const subscripcionesController = require('../controllers/subscripciones.controller');
 const { auth, tenant, validation, rateLimiting } = require('../../../middleware');
-const subscripcionesSchemas = require('../schemas/subscripciones.schema');
+const subscripcionesSchemas = require('../schemas/subscripciones.schemas');
 
 const validate = validation.validate;
 

@@ -15,9 +15,16 @@ export {
   selectSetTokens,
   selectSetUser,
   selectLogout,
+  // Selectores legacy (deprecated - causan re-renders)
   selectHasRole,
   selectIsAdmin,
   selectGetOrganizacionId,
+  // Selectores optimizados (retornan valores, no funciones)
+  selectIsAdminValue,
+  createSelectHasRole,
+  selectOrganizacionId,
+  selectUserRol,
+  selectUserId,
 } from './authStore';
 
 // ========== SUCURSAL STORE ==========
@@ -51,9 +58,15 @@ export {
   selectPermisos,
   selectPermisosVerificados,
   selectUltimaSincronizacion,
+  // Selectores legacy (deprecated - causan re-renders)
   selectTienePermiso,
   selectNecesitaSincronizar,
   selectEstaEnCache,
+  // Selectores optimizados (retornan valores, no funciones)
+  createSelectTienePermiso,
+  selectNecesitaSincronizarValue,
+  createSelectEstaEnCache,
+  // Actions
   selectSetPermisoVerificado,
   selectSetMultiplesPermisos,
   selectSetPermisos,

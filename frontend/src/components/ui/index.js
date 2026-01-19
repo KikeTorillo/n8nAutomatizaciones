@@ -47,7 +47,7 @@ export { default as CheckboxField } from './molecules/CheckboxField';
 // ========== ORGANISMS ==========
 export { default as Modal } from './organisms/Modal';
 export { default as Drawer } from './organisms/Drawer';
-export { default as IconPicker } from './organisms/IconPicker'; // Ene 2026: Movido desde molecules
+export { default as IconPicker, ICONOS_MAP, CATEGORIAS_ICONOS, IconButton } from './organisms/icon-picker';
 export { default as MultiSelect } from './organisms/MultiSelect'; // Ene 2026: Movido desde molecules
 export { default as BarcodeScanner } from './organisms/BarcodeScanner';
 export { default as ConfirmDialog } from './organisms/ConfirmDialog';
@@ -61,7 +61,7 @@ export { default as SmartButtons } from './organisms/SmartButtons';
 export { TreeView, useTreeExpansion } from './organisms/TreeNode';
 export { default as MobileNavSelector } from './organisms/MobileNavSelector';
 export { default as ToastContainer } from './organisms/ToastContainer';
-export { default as StateNavTabs } from './organisms/StateNavTabs';
+export { default as StateNavTabs, TabDropdown, MobileTabSelector } from './organisms/state-nav-tabs';
 
 // Filters (organisms)
 export {

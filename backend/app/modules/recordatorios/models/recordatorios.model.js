@@ -14,6 +14,7 @@
  */
 
 const RLSContextManager = require('../../../utils/rlsContextManager');
+const { ErrorHelper } = require('../../../utils/helpers');
 
 class RecordatoriosModel {
 
@@ -88,7 +89,7 @@ class RecordatoriosModel {
       }
 
       if (campos.length === 0) {
-        throw new Error('No hay campos válidos para actualizar');
+        ErrorHelper.throwValidation('No hay campos válidos para actualizar');
       }
 
       valores.push(organizacionId);
@@ -202,7 +203,7 @@ class RecordatoriosModel {
       }
 
       if (campos.length === 0) {
-        throw new Error('No hay campos válidos para actualizar');
+        ErrorHelper.throwValidation('No hay campos válidos para actualizar');
       }
 
       valores.push(recordatorioId);

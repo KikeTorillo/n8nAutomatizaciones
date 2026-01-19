@@ -6,6 +6,7 @@
 
 const RLSContextManager = require('../../../utils/rlsContextManager');
 const logger = require('../../../utils/logger');
+const { ErrorHelper } = require('../../../utils/helpers');
 
 class PaquetesModel {
     // ==================== PAQUETES ====================
@@ -27,7 +28,7 @@ class PaquetesModel {
             const resultado = result.rows[0].resultado;
 
             if (!resultado.exito) {
-                throw new Error(resultado.mensaje);
+                ErrorHelper.throwConflict(resultado.mensaje);
             }
 
             logger.info('[PaquetesModel.crear] Paquete creado', {
@@ -175,7 +176,7 @@ class PaquetesModel {
             const resultado = result.rows[0].resultado;
 
             if (!resultado.exito) {
-                throw new Error(resultado.mensaje);
+                ErrorHelper.throwConflict(resultado.mensaje);
             }
 
             logger.info('[PaquetesModel.agregarItem] Item agregado', {
@@ -204,7 +205,7 @@ class PaquetesModel {
             const resultado = result.rows[0].resultado;
 
             if (!resultado.exito) {
-                throw new Error(resultado.mensaje);
+                ErrorHelper.throwConflict(resultado.mensaje);
             }
 
             logger.info('[PaquetesModel.removerItem] Item removido', {
@@ -232,18 +233,16 @@ class PaquetesModel {
                 [id, organizacionId]
             );
 
-            if (!checkResult.rows[0]) {
-                throw new Error('Paquete no encontrado');
-            }
+            ErrorHelper.throwIfNotFound(checkResult.rows[0], 'Paquete');
 
             const paquete = checkResult.rows[0];
 
             if (paquete.estado === 'enviado') {
-                throw new Error('No se puede modificar un paquete enviado');
+                ErrorHelper.throwConflict('No se puede modificar un paquete enviado');
             }
 
             if (paquete.estado === 'cancelado') {
-                throw new Error('No se puede modificar un paquete cancelado');
+                ErrorHelper.throwConflict('No se puede modificar un paquete cancelado');
             }
 
             // Construir query dinamica
@@ -281,7 +280,7 @@ class PaquetesModel {
             }
 
             if (campos.length === 0) {
-                throw new Error('No hay campos para actualizar');
+                ErrorHelper.throwValidation('No hay campos para actualizar');
             }
 
             campos.push(`actualizado_en = NOW()`);
@@ -316,7 +315,7 @@ class PaquetesModel {
             const resultado = result.rows[0].resultado;
 
             if (!resultado.exito) {
-                throw new Error(resultado.mensaje);
+                ErrorHelper.throwConflict(resultado.mensaje);
             }
 
             logger.info('[PaquetesModel.cerrar] Paquete cerrado', { id });
@@ -341,7 +340,7 @@ class PaquetesModel {
             const resultado = result.rows[0].resultado;
 
             if (!resultado.exito) {
-                throw new Error(resultado.mensaje);
+                ErrorHelper.throwConflict(resultado.mensaje);
             }
 
             logger.info('[PaquetesModel.cancelar] Paquete cancelado', { id, motivo });
@@ -363,14 +362,12 @@ class PaquetesModel {
                 [id, organizacionId]
             );
 
-            if (!checkResult.rows[0]) {
-                throw new Error('Paquete no encontrado');
-            }
+            ErrorHelper.throwIfNotFound(checkResult.rows[0], 'Paquete');
 
             const paquete = checkResult.rows[0];
 
             if (paquete.estado !== 'cerrado') {
-                throw new Error('El paquete debe estar cerrado para etiquetar');
+                ErrorHelper.throwConflict('El paquete debe estar cerrado para etiquetar');
             }
 
             await db.query(`
@@ -400,14 +397,12 @@ class PaquetesModel {
                 [id, organizacionId]
             );
 
-            if (!checkResult.rows[0]) {
-                throw new Error('Paquete no encontrado');
-            }
+            ErrorHelper.throwIfNotFound(checkResult.rows[0], 'Paquete');
 
             const paquete = checkResult.rows[0];
 
             if (!['cerrado', 'etiquetado'].includes(paquete.estado)) {
-                throw new Error('El paquete debe estar cerrado o etiquetado');
+                ErrorHelper.throwConflict('El paquete debe estar cerrado o etiquetado');
             }
 
             await db.query(`
@@ -431,9 +426,7 @@ class PaquetesModel {
     static async generarEtiqueta(id, organizacionId) {
         const paquete = await this.buscarPorId(organizacionId, id);
 
-        if (!paquete) {
-            throw new Error('Paquete no encontrado');
-        }
+        ErrorHelper.throwIfNotFound(paquete, 'Paquete');
 
         // Retornar datos para la etiqueta
         return {

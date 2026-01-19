@@ -8,6 +8,7 @@
 
 const { getDb } = require('../../../config/database');
 const RLSContextManager = require('../../../utils/rlsContextManager');
+const { ErrorHelper } = require('../../../utils/helpers');
 
 class SubscripcionModel {
   /**
@@ -150,9 +151,7 @@ class SubscripcionModel {
         mpCustomerId
       ]);
 
-      if (result.rows.length === 0) {
-        throw new Error('No se encontró suscripción activa para actualizar');
-      }
+      ErrorHelper.throwIfNotFound(result.rows[0], 'Suscripción activa');
 
       return result.rows[0];
     });
@@ -204,10 +203,7 @@ class SubscripcionModel {
       `;
 
       const result = await db.query(query, [organizacionId]);
-
-      if (result.rows.length === 0) {
-        throw new Error('No se encontró suscripción suspendida para reactivar');
-      }
+      ErrorHelper.throwIfNotFound(result.rows[0], 'Suscripción suspendida');
 
       return result.rows[0];
     });

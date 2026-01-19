@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const PermisosController = require('../controllers/permisos.controller');
 const { auth, validation } = require('../../../middleware');
-const permisosSchemas = require('../schemas/permisos.schema');
+const permisosSchemas = require('../schemas/permisos.schemas');
 
 /**
  * Rutas de Permisos

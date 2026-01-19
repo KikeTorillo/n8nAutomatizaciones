@@ -4,6 +4,18 @@
  * ====================================================================
  * Gestión de fotos del evento subidas por organizadores e invitados.
  *
+ * ENDPOINTS (6):
+ * - POST   /eventos/:eventoId/galeria     - Subir foto
+ * - GET    /eventos/:eventoId/galeria     - Listar fotos
+ * - GET    /galeria/:id                   - Obtener foto
+ * - PUT    /galeria/:id/estado            - Cambiar estado (visible/oculta)
+ * - DELETE /galeria/:id                   - Eliminar foto (soft)
+ * - DELETE /galeria/:id/permanente        - Eliminar permanente
+ *
+ * NO MIGRADO A BaseCrudController - Ene 2026
+ * Razón: Depende de eventoId, métodos custom cambiarEstado() y
+ * eliminarPermanente(), conteo por estado, integración storage.
+ *
  * Fecha creación: 14 Diciembre 2025
  */
 

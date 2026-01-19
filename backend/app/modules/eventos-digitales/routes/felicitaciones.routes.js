@@ -22,7 +22,7 @@ const router = express.Router();
 const FelicitacionesController = require('../controllers/felicitaciones.controller');
 
 // Schemas
-const felicitacionesSchemas = require('../schemas/felicitacion.schema');
+const felicitacionesSchemas = require('../schemas/felicitacion.schemas');
 
 // Middlewares
 const {

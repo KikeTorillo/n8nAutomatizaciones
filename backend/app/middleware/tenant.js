@@ -21,6 +21,16 @@
 const database = require('../config/database');
 const logger = require('../utils/logger');
 const { ResponseHelper } = require('../utils/helpers');
+const { rateLimitService } = require('./rateLimiting');
+
+/**
+ * Configuraci\u00f3n de rate limit para enumeraci\u00f3n de tenants
+ * Previene ataques de enumeraci\u00f3n de organizaciones en endpoints p\u00fablicos
+ */
+const TENANT_ENUM_CONFIG = {
+  maxRequestsPerOrg: 30,     // M\u00e1ximo 30 requests por org por minuto
+  windowSeconds: 60           // Ventana de 1 minuto
+};
 
 /**
  * Middleware para configurar el contexto del tenant en todas las consultas
@@ -358,6 +368,21 @@ const setTenantContextFromBody = async (req, res, next) => {
       return ResponseHelper.error(res, 'organizacion_id requerido y debe ser numérico positivo', 400);
     }
 
+    // Rate limit por organizaci\u00f3n para prevenir enumeraci\u00f3n
+    const tenantKey = `tenant_enum:org:${organizacionId}`;
+    const requestCount = await rateLimitService.getCount(tenantKey);
+
+    if (requestCount > TENANT_ENUM_CONFIG.maxRequestsPerOrg) {
+      logger.warn('setTenantContextFromBody: Rate limit excedido para organizaci\u00f3n', {
+        organizacionId,
+        requestCount,
+        ip: req.ip,
+        path: req.path
+      });
+      return ResponseHelper.error(res, 'Demasiadas solicitudes, intenta m\u00e1s tarde', 429);
+    }
+    await rateLimitService.incrementCount(tenantKey, TENANT_ENUM_CONFIG.windowSeconds);
+
     // Obtener conexión del pool principal para bypass RLS
     client = await database.getPool('saas').connect();
 
@@ -449,6 +474,21 @@ const setTenantContextFromQuery = async (req, res, next) => {
       });
       return ResponseHelper.error(res, 'organizacion_id requerido y debe ser numérico positivo', 400);
     }
+
+    // Rate limit por organizaci\u00f3n para prevenir enumeraci\u00f3n
+    const tenantKey = `tenant_enum:org:${organizacionId}`;
+    const requestCount = await rateLimitService.getCount(tenantKey);
+
+    if (requestCount > TENANT_ENUM_CONFIG.maxRequestsPerOrg) {
+      logger.warn('setTenantContextFromQuery: Rate limit excedido para organizaci\u00f3n', {
+        organizacionId,
+        requestCount,
+        ip: req.ip,
+        path: req.path
+      });
+      return ResponseHelper.error(res, 'Demasiadas solicitudes, intenta m\u00e1s tarde', 429);
+    }
+    await rateLimitService.incrementCount(tenantKey, TENANT_ENUM_CONFIG.windowSeconds);
 
     // Obtener conexión del pool principal para bypass RLS
     client = await database.getPool('saas').connect();

@@ -37,6 +37,7 @@ export const queryKeys = {
       search: (params) => ['buscar-productos', params],
       stockCritico: ['stock-critico'],
       kardex: (id) => ['kardex', id],
+      historicoStock: (productoId, dias) => ['inventario', 'historico-stock', productoId, dias],
     },
     categorias: {
       all: ['categorias'],
@@ -79,6 +80,7 @@ export const queryKeys = {
       all: ['conteos'],
       list: (params) => ['conteos', params],
       detail: (id) => ['conteo', id],
+      estadisticas: (params) => ['estadisticas-conteos', params],
     },
     ubicaciones: {
       all: ['ubicaciones-almacen'],
@@ -125,6 +127,30 @@ export const queryKeys = {
     dropship: {
       all: ['dropship'],
       list: (params) => ['dropship', params],
+      estadisticas: ['dropship', 'estadisticas'],
+      configuracion: ['dropship', 'configuracion'],
+      pendientes: ['dropship', 'pendientes'],
+      ordenes: {
+        all: ['dropship', 'ordenes'],
+        list: (filtros) => ['dropship', 'ordenes', filtros],
+        detail: (id) => ['dropship', 'ordenes', id],
+      },
+    },
+    reorden: {
+      all: ['reorden'],
+      dashboard: ['reorden', 'dashboard'],
+      productosBajoMinimo: (filtros) => ['reorden', 'productos-bajo-minimo', filtros],
+      rutas: (filtros) => ['reorden', 'rutas', filtros],
+      reglas: {
+        all: ['reorden', 'reglas'],
+        list: (filtros) => ['reorden', 'reglas', filtros],
+        detail: (id) => ['reorden', 'regla', id],
+      },
+      logs: {
+        all: ['reorden', 'logs'],
+        list: (filtros) => ['reorden', 'logs', filtros],
+        detail: (id) => ['reorden', 'log', id],
+      },
     },
   },
 

@@ -57,14 +57,28 @@ const INITIAL_FILTERS = {
  * Configuración de ViewModes
  */
 const VIEW_MODES = [
-  { id: 'tabla', label: 'Tabla', icon: List },
+  { id: 'table', label: 'Tabla', icon: List },
   { id: 'tarjetas', label: 'Tarjetas', icon: LayoutGrid },
 ];
 
 /**
+ * Vista de tabla para clientes
+ */
+function ClientesTableView({ items, isLoading, pagination, onPageChange }) {
+  return (
+    <ClientesList
+      clientes={items}
+      pagination={pagination}
+      isLoading={isLoading}
+      onPageChange={onPageChange}
+    />
+  );
+}
+
+/**
  * Vista de tarjetas para clientes
  */
-function ClientesCardsView({ items, isLoading, pagination, onPageChange, onItemClick }) {
+function ClientesCardsView({ items, isLoading, pagination, onPageChange }) {
   const navigate = useNavigate();
   return (
     <ClientesCardsGrid
@@ -134,9 +148,12 @@ function ClientesPage() {
     navigate('/clientes/nuevo');
   }, [navigate]);
 
-  // ViewModes con componente de tarjetas
+  // ViewModes con componentes custom
   const viewModes = useMemo(() => [
-    ...VIEW_MODES.slice(0, 1), // tabla es default de ListadoCRUDPage
+    {
+      ...VIEW_MODES[0],
+      component: ClientesTableView,
+    },
     {
       ...VIEW_MODES[1],
       component: ClientesCardsView,
@@ -173,7 +190,7 @@ function ClientesPage() {
 
       // ViewModes
       viewModes={viewModes}
-      defaultViewMode="tabla"
+      defaultViewMode="table"
 
       // Extra Modals
       extraModals={{

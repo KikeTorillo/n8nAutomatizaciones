@@ -8,6 +8,7 @@ const emailService = require('../../../services/emailService');
 const RutasOperacionModel = require('../../inventario/models/rutas-operacion.model');
 const SecureRandom = require('../../../utils/helpers/SecureRandom');
 const tokenBlacklistService = require('../../../services/tokenBlacklistService');
+const { ErrorHelper } = require('../../../utils/helpers');
 
 const AUTH_CONFIG = {
     BCRYPT_SALT_ROUNDS: 12,
@@ -54,7 +55,7 @@ class UsuarioModel {
             });
         } catch (error) {
             if (error.code === '23505') { // Duplicate key
-                throw new Error('El email ya está registrado en el sistema');
+                ErrorHelper.throwConflict('El email ya está registrado en el sistema');
             }
             throw error;
         }
@@ -114,13 +115,13 @@ class UsuarioModel {
         if (!usuario) {
             // Registrar intento de login fallido para email no existente
             await this.registrarIntentoLogin(email, false, ipAddress);
-            throw new Error('Credenciales inválidas');
+            ErrorHelper.throwUnauthorized('Credenciales inválidas');
         }
 
         // Verificar si el usuario está bloqueado
         if (usuario.bloqueado_hasta && new Date(usuario.bloqueado_hasta) > new Date()) {
             const tiempoBloqueo = Math.ceil((new Date(usuario.bloqueado_hasta) - new Date()) / 60000);
-            throw new Error(`Usuario bloqueado. Intente nuevamente en ${tiempoBloqueo} minutos`);
+            ErrorHelper.throwUnauthorized(`Usuario bloqueado. Intente nuevamente en ${tiempoBloqueo} minutos`);
         }
 
         // Verificar contraseña
@@ -129,7 +130,7 @@ class UsuarioModel {
         if (!passwordValida) {
             // Registrar intento fallido
             await this.registrarIntentoLogin(email, false, ipAddress);
-            throw new Error('Credenciales inválidas');
+            ErrorHelper.throwUnauthorized('Credenciales inválidas');
         }
 
         // Login exitoso - registrar y limpiar intentos fallidos
@@ -214,7 +215,7 @@ class UsuarioModel {
             const usuario = await this.buscarPorId(decoded.userId);
 
             if (!usuario || !usuario.activo) {
-                throw new Error('Usuario no válido');
+                ErrorHelper.throwUnauthorized('Usuario no válido');
             }
 
             const { accessToken } = this.generarTokens(usuario);
@@ -225,7 +226,7 @@ class UsuarioModel {
             };
 
         } catch (error) {
-            throw new Error('Token de refresco inválido');
+            ErrorHelper.throwUnauthorized('Token de refresco inválido');
         }
     }
 
@@ -314,9 +315,7 @@ class UsuarioModel {
 
             const result = await db.query(query, [userId, sucursalId]);
 
-            if (!result.rows[0]) {
-                throw new Error('Usuario no encontrado');
-            }
+            ErrorHelper.throwIfNotFound(result.rows[0], 'Usuario');
 
             return result.rows[0];
         });
@@ -348,16 +347,14 @@ class UsuarioModel {
         const usuario = await RLSContextManager.withBypass(async (db) => {
             const query = `SELECT id, password_hash, organizacion_id FROM usuarios WHERE id = $1 AND activo = TRUE`;
             const result = await db.query(query, [userId]);
-            if (!result.rows[0]) {
-                throw new Error('Usuario no encontrado');
-            }
+            ErrorHelper.throwIfNotFound(result.rows[0], 'Usuario');
             return result.rows[0];
         });
 
         // Verificar contraseña anterior
         const passwordValida = await this.verificarPassword(passwordAnterior, usuario.password_hash);
         if (!passwordValida) {
-            throw new Error('Contraseña anterior incorrecta');
+            ErrorHelper.throwValidation('Contraseña anterior incorrecta');
         }
 
         // Actualizar contraseña con contexto RLS
@@ -393,7 +390,7 @@ class UsuarioModel {
             }
 
             if (campos.length === 0) {
-                throw new Error('No hay campos válidos para actualizar');
+                ErrorHelper.throwValidation('No hay campos válidos para actualizar');
             }
 
             // ✅ Sin filtro manual de organizacion_id - RLS lo maneja automáticamente
@@ -424,9 +421,7 @@ class UsuarioModel {
             `;
             const validacion = await db.query(validacionQuery, [userId, organizacionId]);
 
-            if (validacion.rows.length === 0) {
-                throw new Error('Usuario no encontrado en la organización especificada');
-            }
+            ErrorHelper.throwIfNotFound(validacion.rows[0], 'Usuario en la organización');
 
             const query = `
                 UPDATE usuarios
@@ -497,11 +492,8 @@ class UsuarioModel {
     }
 
     static async crearUsuarioOrganizacion(orgId, userData, rol, opciones = {}) {
-        // ✅ Usar RLSContextManager.withBypass() para gestión automática completa
-        return await RLSContextManager.withBypass(async (db) => {
-            await db.query('BEGIN');
-
-            try {
+        // ✅ FIX v2.1: Usar transactionWithBypass en lugar de BEGIN/COMMIT manual
+        return await RLSContextManager.transactionWithBypass(async (db) => {
                 // Validar que la organización existe
                 const orgQuery = `
                     SELECT id, nombre_comercial, email_admin, categoria_id, activo
@@ -510,9 +502,7 @@ class UsuarioModel {
                 `;
                 const orgResult = await db.query(orgQuery, [orgId]);
 
-                if (orgResult.rows.length === 0) {
-                    throw new Error('Organización no encontrada o inactiva');
-                }
+                ErrorHelper.throwIfNotFound(orgResult.rows[0], 'Organización');
 
                 const organizacion = orgResult.rows[0];
 
@@ -554,23 +544,16 @@ class UsuarioModel {
                     };
                 }
 
-                const resultado = {
-                    usuario: nuevoUsuario,
-                    organizacion: {
-                        id: organizacion.id,
-                        nombre_comercial: organizacion.nombre_comercial
-                    },
-                    configuracion_rls: true,
-                    email_bienvenida: emailResult
-                };
-
-                await db.query('COMMIT');
-                return resultado;
-
-            } catch (error) {
-                await db.query('ROLLBACK');
-                throw error;
-            }
+            return {
+                usuario: nuevoUsuario,
+                organizacion: {
+                    id: organizacion.id,
+                    nombre_comercial: organizacion.nombre_comercial
+                },
+                configuracion_rls: true,
+                email_bienvenida: emailResult
+            };
+            // COMMIT automático al finalizar, ROLLBACK automático si hay error
         });
     }
 
@@ -708,9 +691,7 @@ class UsuarioModel {
             `;
             const usuarioResult = await db.query(usuarioQuery, [userId, orgId]);
 
-            if (usuarioResult.rows.length === 0) {
-                throw new Error('Usuario no encontrado en la organización especificada');
-            }
+            ErrorHelper.throwIfNotFound(usuarioResult.rows[0], 'Usuario en la organización');
 
             const usuario = usuarioResult.rows[0];
             const rolAnterior = usuario.rol;
@@ -718,12 +699,12 @@ class UsuarioModel {
             // Validar que el nuevo rol es válido
             const rolesValidos = ['admin', 'propietario', 'empleado', 'cliente'];
             if (!rolesValidos.includes(nuevoRol)) {
-                throw new Error(`Rol no válido. Opciones: ${rolesValidos.join(', ')}`);
+                ErrorHelper.throwValidation(`Rol no válido. Opciones: ${rolesValidos.join(', ')}`);
             }
 
             // Validar que no sea el mismo rol
             if (rolAnterior === nuevoRol) {
-                throw new Error('El usuario ya tiene este rol asignado');
+                ErrorHelper.throwConflict('El usuario ya tiene este rol asignado');
             }
 
             // Actualizar rol del usuario
@@ -1016,7 +997,7 @@ class UsuarioModel {
                 const tokenUsadoResult = await db.query(tokenUsadoQuery, [token]);
 
                 if (tokenUsadoResult.rows.length > 0) {
-                    throw new Error('Este token de recuperación ya fue utilizado');
+                    ErrorHelper.throwValidation('Este token de recuperación ya fue utilizado');
                 }
 
                 // Validar token inline (usar misma conexión de transacción)
@@ -1035,13 +1016,13 @@ class UsuarioModel {
                 const validacionResult = await db.query(validacionQuery, [token]);
 
                 if (validacionResult.rows.length === 0) {
-                    throw new Error('Código de recuperación inválido o usuario no encontrado');
+                    ErrorHelper.throwValidation('Código de recuperación inválido o usuario no encontrado');
                 }
 
                 const usuarioValidacion = validacionResult.rows[0];
 
                 if (!usuarioValidacion.token_valido) {
-                    throw new Error('Código de recuperación expirado');
+                    ErrorHelper.throwValidation('Código de recuperación expirado');
                 }
 
                 const nuevoHash = await bcrypt.hash(passwordNueva, AUTH_CONFIG.BCRYPT_SALT_ROUNDS);
@@ -1061,7 +1042,7 @@ class UsuarioModel {
                 const result = await db.query(updateQuery, [nuevoHash, token]);
 
                 if (result.rows.length === 0) {
-                    throw new Error('No se pudo actualizar la contraseña');
+                    ErrorHelper.throwValidation('No se pudo actualizar la contraseña');
                 }
 
                 const usuario = result.rows[0];
@@ -1160,7 +1141,7 @@ class UsuarioModel {
             );
 
             if (existeEmail.rows[0]) {
-                throw new Error('Este email ya está registrado. Intenta iniciar sesión.');
+                ErrorHelper.throwConflict('Este email ya está registrado. Intenta iniciar sesión.');
             }
 
             // Crear usuario sin organización (requiere onboarding)
@@ -1212,7 +1193,7 @@ class UsuarioModel {
             );
 
             if (existeGoogle.rows[0]) {
-                throw new Error('Esta cuenta de Google ya está vinculada a otro usuario');
+                ErrorHelper.throwConflict('Esta cuenta de Google ya está vinculada a otro usuario');
             }
 
             // Vincular Google al usuario
@@ -1227,10 +1208,7 @@ class UsuarioModel {
             `;
 
             const result = await db.query(query, [googleId, avatar_url, userId]);
-
-            if (!result.rows[0]) {
-                throw new Error('Usuario no encontrado');
-            }
+            ErrorHelper.throwIfNotFound(result.rows[0], 'Usuario');
 
             logger.info('[UsuarioModel.vincularGoogle] Google vinculado a usuario existente', {
                 usuario_id: userId,
@@ -1277,7 +1255,7 @@ class UsuarioModel {
                 );
 
                 if (existeEmail.rows[0]) {
-                    throw new Error('Este email ya está registrado en el sistema');
+                    ErrorHelper.throwConflict('Este email ya está registrado en el sistema');
                 }
 
                 // Si se especifica profesional_id, verificar que exista y no tenga usuario
@@ -1288,12 +1266,10 @@ class UsuarioModel {
                         WHERE id = $1 AND organizacion_id = $2
                     `, [profesional_id, organizacionId]);
 
-                    if (!profesional.rows[0]) {
-                        throw new Error('Profesional no encontrado');
-                    }
+                    ErrorHelper.throwIfNotFound(profesional.rows[0], 'Profesional');
 
                     if (profesional.rows[0].usuario_id) {
-                        throw new Error('Este profesional ya tiene un usuario vinculado');
+                        ErrorHelper.throwConflict('Este profesional ya tiene un usuario vinculado');
                     }
                 }
 
@@ -1364,15 +1340,13 @@ class UsuarioModel {
                 WHERE u.id = $1 AND u.organizacion_id = $2
             `, [userId, organizacionId]);
 
-            if (!usuarioResult.rows[0]) {
-                throw new Error('Usuario no encontrado en la organización');
-            }
+            ErrorHelper.throwIfNotFound(usuarioResult.rows[0], 'Usuario en la organización');
 
             const usuario = usuarioResult.rows[0];
 
             // No permitir desactivar al propio usuario
             if (userId === adminId && !activo) {
-                throw new Error('No puedes desactivar tu propia cuenta');
+                ErrorHelper.throwValidation('No puedes desactivar tu propia cuenta');
             }
 
             // Actualizar usuario
@@ -1458,9 +1432,7 @@ class UsuarioModel {
                 WHERE id = $1 AND organizacion_id = $2
             `, [userId, organizacionId]);
 
-            if (!usuarioResult.rows[0]) {
-                throw new Error('Usuario no encontrado en la organización');
-            }
+            ErrorHelper.throwIfNotFound(usuarioResult.rows[0], 'Usuario en la organización');
 
             const usuario = usuarioResult.rows[0];
 
@@ -1482,12 +1454,10 @@ class UsuarioModel {
                     WHERE id = $1 AND organizacion_id = $2
                 `, [profesionalId, organizacionId]);
 
-                if (!profesionalResult.rows[0]) {
-                    throw new Error('Profesional no encontrado');
-                }
+                ErrorHelper.throwIfNotFound(profesionalResult.rows[0], 'Profesional');
 
                 if (profesionalResult.rows[0].usuario_id && profesionalResult.rows[0].usuario_id !== userId) {
-                    throw new Error('Este profesional ya tiene un usuario vinculado');
+                    ErrorHelper.throwConflict('Este profesional ya tiene un usuario vinculado');
                 }
             }
 
@@ -1637,24 +1607,20 @@ class UsuarioModel {
             modulosActivos.agendamiento = true;
         }
 
-        return await RLSContextManager.withBypass(async (db) => {
-            await db.query('BEGIN');
-
-            try {
-                // 1. Obtener usuario
+        // ✅ FIX v2.1: Usar transactionWithBypass en lugar de BEGIN/COMMIT manual
+        return await RLSContextManager.transactionWithBypass(async (db) => {
+            // 1. Obtener usuario
                 const usuarioResult = await db.query(
                     'SELECT id, email, nombre, apellidos, onboarding_completado FROM usuarios WHERE id = $1',
                     [userId]
                 );
 
-                if (!usuarioResult.rows[0]) {
-                    throw new Error('Usuario no encontrado');
-                }
+                ErrorHelper.throwIfNotFound(usuarioResult.rows[0], 'Usuario');
 
                 const usuario = usuarioResult.rows[0];
 
                 if (usuario.onboarding_completado) {
-                    throw new Error('El onboarding ya fue completado');
+                    ErrorHelper.throwConflict('El onboarding ya fue completado');
                 }
 
                 // 2. Resolver categoria_id desde código de industria (opcional - Ene 2026)
@@ -1760,29 +1726,23 @@ class UsuarioModel {
                     });
                 }
 
-                await db.query('COMMIT');
+            logger.info('[UsuarioModel.completarOnboarding] Onboarding completado', {
+                usuario_id: userId,
+                organizacion_id: organizacion.id
+            });
 
-                logger.info('[UsuarioModel.completarOnboarding] Onboarding completado', {
-                    usuario_id: userId,
-                    organizacion_id: organizacion.id
-                });
-
-                return {
-                    usuario: {
-                        id: userId,
-                        email: usuario.email,
-                        nombre: usuario.nombre,
-                        apellidos: usuario.apellidos,
-                        organizacion_id: organizacion.id,
-                        onboarding_completado: true
-                    },
-                    organizacion
-                };
-
-            } catch (error) {
-                await db.query('ROLLBACK');
-                throw error;
-            }
+            return {
+                usuario: {
+                    id: userId,
+                    email: usuario.email,
+                    nombre: usuario.nombre,
+                    apellidos: usuario.apellidos,
+                    organizacion_id: organizacion.id,
+                    onboarding_completado: true
+                },
+                organizacion
+            };
+            // COMMIT automático al finalizar, ROLLBACK automático si hay error
         });
     }
 }

@@ -8,6 +8,7 @@
  */
 
 const RLSContextManager = require('../../../utils/rlsContextManager');
+const { ErrorHelper } = require('../../../utils/helpers');
 const logger = require('../../../utils/logger');
 
 class WorkflowDefinicionesModel {
@@ -36,7 +37,7 @@ class WorkflowDefinicionesModel {
             );
 
             if (existeQuery.rows.length > 0) {
-                throw new Error(`Ya existe un workflow con el código "${data.codigo}"`);
+                ErrorHelper.throwConflict(`Ya existe un workflow con el código "${data.codigo}"`);
             }
 
             // 1. Crear definición
@@ -114,7 +115,7 @@ class WorkflowDefinicionesModel {
                 const destinoId = pasoIdsPorCodigo[trans.paso_destino_codigo];
 
                 if (!origenId || !destinoId) {
-                    throw new Error(
+                    ErrorHelper.throwValidation(
                         `Transición inválida: paso origen "${trans.paso_origen_codigo}" o destino "${trans.paso_destino_codigo}" no existe`
                     );
                 }
@@ -170,12 +171,10 @@ class WorkflowDefinicionesModel {
                 [id, organizacionId]
             );
 
-            if (checkQuery.rows.length === 0) {
-                throw new Error('Workflow no encontrado');
-            }
+            ErrorHelper.throwIfNotFound(checkQuery.rows[0], 'Workflow');
 
             if (checkQuery.rows[0].activo) {
-                throw new Error('No se puede editar un workflow publicado. Despublícalo primero.');
+                ErrorHelper.throwConflict('No se puede editar un workflow publicado. Despublícalo primero.');
             }
 
             // Actualizar campos básicos de la definición
@@ -279,7 +278,7 @@ class WorkflowDefinicionesModel {
                     const destinoId = pasoIdsPorCodigo[trans.paso_destino_codigo];
 
                     if (!origenId || !destinoId) {
-                        throw new Error(
+                        ErrorHelper.throwValidation(
                             `Transición inválida: paso "${trans.paso_origen_codigo}" → "${trans.paso_destino_codigo}"`
                         );
                     }
@@ -328,9 +327,7 @@ class WorkflowDefinicionesModel {
                 [id, organizacionId]
             );
 
-            if (checkQuery.rows.length === 0) {
-                throw new Error('Workflow no encontrado');
-            }
+            ErrorHelper.throwIfNotFound(checkQuery.rows[0], 'Workflow');
 
             const workflow = checkQuery.rows[0];
 
@@ -342,7 +339,7 @@ class WorkflowDefinicionesModel {
             );
 
             if (parseInt(instanciasQuery.rows[0].total) > 0) {
-                throw new Error('No se puede eliminar: hay instancias en progreso');
+                ErrorHelper.throwConflict('No se puede eliminar: hay instancias en progreso');
             }
 
             // Eliminar en cascada: transiciones → pasos → definición
@@ -373,9 +370,7 @@ class WorkflowDefinicionesModel {
             // Obtener workflow original
             const original = await this.obtenerPorId(id, organizacionId);
 
-            if (!original) {
-                throw new Error('Workflow no encontrado');
-            }
+            ErrorHelper.throwIfNotFound(original, 'Workflow');
 
             // Generar código y nombre si no se proporcionan
             const codigo = nuevoCodigo || `${original.codigo}_copia`;
@@ -389,7 +384,7 @@ class WorkflowDefinicionesModel {
             );
 
             if (existeQuery.rows.length > 0) {
-                throw new Error(`Ya existe un workflow con el código "${codigo}"`);
+                ErrorHelper.throwConflict(`Ya existe un workflow con el código "${codigo}"`);
             }
 
             // Preparar datos para crear
@@ -451,21 +446,19 @@ class WorkflowDefinicionesModel {
                 [id, organizacionId]
             );
 
-            if (checkQuery.rows.length === 0) {
-                throw new Error('Workflow no encontrado');
-            }
+            ErrorHelper.throwIfNotFound(checkQuery.rows[0], 'Workflow');
 
             const workflow = checkQuery.rows[0];
 
             if (workflow.activo === activo) {
-                throw new Error(`El workflow ya está ${activo ? 'publicado' : 'despublicado'}`);
+                ErrorHelper.throwConflict(`El workflow ya está ${activo ? 'publicado' : 'despublicado'}`);
             }
 
             // Si se va a publicar, validar que tenga estructura correcta
             if (activo) {
                 const validacion = await this.validarEstructura(id, organizacionId);
                 if (!validacion.valido) {
-                    throw new Error(`No se puede publicar: ${validacion.errores.join(', ')}`);
+                    ErrorHelper.throwValidation(`No se puede publicar: ${validacion.errores.join(', ')}`);
                 }
             }
 

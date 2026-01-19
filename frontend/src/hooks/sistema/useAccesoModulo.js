@@ -1,10 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { STALE_TIMES } from '@/app/queryClient';
 import { profesionalesApi, permisosApi } from '@/services/api/endpoints';
-import useAuthStore, { selectUser, selectIsAuthenticated } from '@/store/authStore';
+import useAuthStore, { selectUser, selectIsAuthenticated, selectIsAdminValue } from '@/store/authStore';
 import usePermisosStore, {
-  selectTienePermiso,
+  createSelectTienePermiso,
   selectSetPermisoVerificado,
   selectSetMultiplesPermisos,
   selectInvalidarCache,
@@ -22,11 +22,24 @@ import usePermisosStore, {
  * @returns {Object} { tieneAcceso, profesional, isLoading, error }
  */
 export function useAccesoModulo(modulo) {
-  // Ene 2026: Usar selectores para evitar re-renders
+  // Ene 2026: Usar selectores optimizados para evitar re-renders
   const user = useAuthStore(selectUser);
   const isAuthenticated = useAuthStore(selectIsAuthenticated);
-  const tienePermisoCache = usePermisosStore(selectTienePermiso);
+  const isAdmin = useAuthStore(selectIsAdminValue);
   const setPermisoVerificado = usePermisosStore(selectSetPermisoVerificado);
+
+  // Obtener sucursal del usuario (primera sucursal disponible o la actual)
+  const sucursalId = user?.sucursal_id || user?.sucursales?.[0]?.id;
+
+  // Verificar permiso de acceso al módulo
+  const codigoPermiso = `${modulo}.acceso`;
+
+  // Ene 2026: Usar factory selector con useMemo para evitar re-renders
+  const selectPermiso = useMemo(
+    () => createSelectTienePermiso(codigoPermiso, sucursalId),
+    [codigoPermiso, sucursalId]
+  );
+  const permisoCacheado = usePermisosStore(selectPermiso);
 
   // Obtener profesional vinculado
   const {
@@ -46,15 +59,6 @@ export function useAccesoModulo(modulo) {
     staleTime: STALE_TIMES.STATIC_DATA, // 10 minutos
     refetchOnWindowFocus: false,
   });
-
-  // Obtener sucursal del usuario (primera sucursal disponible o la actual)
-  const sucursalId = user?.sucursal_id || user?.sucursales?.[0]?.id;
-
-  // Verificar permiso de acceso al módulo
-  const codigoPermiso = `${modulo}.acceso`;
-
-  // Consultar cache del store primero
-  const permisoCacheado = tienePermisoCache(codigoPermiso, sucursalId);
 
   const {
     data: permisoData,
@@ -87,9 +91,6 @@ export function useAccesoModulo(modulo) {
 
   // Calcular acceso
   // Prioridad: 1) Cache local, 2) Respuesta de API, 3) Fallback por rol
-  const rolesConAccesoCompleto = ['admin', 'propietario', 'super_admin'];
-  const tieneAccesoPorRol = rolesConAccesoCompleto.includes(user?.rol);
-
   let tieneAcceso = false;
 
   if (permisoCacheado !== null) {
@@ -101,7 +102,7 @@ export function useAccesoModulo(modulo) {
   } else {
     // Fallback: admin/propietario tienen acceso completo
     // Empleados tienen acceso si tienen profesional vinculado
-    tieneAcceso = tieneAccesoPorRol || (profesional?.id && user?.rol === 'empleado');
+    tieneAcceso = isAdmin || (profesional?.id && user?.rol === 'empleado');
   }
 
   // Si usamos cache, no estamos cargando el permiso
@@ -134,14 +135,16 @@ export function useAccesoModulo(modulo) {
 export function usePermiso(codigoPermiso, sucursalIdParam) {
   const user = useAuthStore(selectUser);
   const isAuthenticated = useAuthStore(selectIsAuthenticated);
+  const isAdmin = useAuthStore(selectIsAdminValue);
   const sucursalId = sucursalIdParam || user?.sucursal_id || user?.sucursales?.[0]?.id;
 
-  // Ene 2026: Usar selectores para evitar re-renders
-  const tienePermisoCache = usePermisosStore(selectTienePermiso);
+  // Ene 2026: Usar factory selector con useMemo para evitar re-renders
   const setPermisoVerificado = usePermisosStore(selectSetPermisoVerificado);
-
-  // Consultar cache del store primero
-  const permisoCacheado = tienePermisoCache(codigoPermiso, sucursalId);
+  const selectPermiso = useMemo(
+    () => createSelectTienePermiso(codigoPermiso, sucursalId),
+    [codigoPermiso, sucursalId]
+  );
+  const permisoCacheado = usePermisosStore(selectPermiso);
 
   const { data, isLoading, error, isError } = useQuery({
     queryKey: ['permiso', codigoPermiso, sucursalId],
@@ -162,13 +165,9 @@ export function usePermiso(codigoPermiso, sucursalIdParam) {
     refetchOnWindowFocus: false,
   });
 
-  // Roles con acceso completo
-  const rolesConAccesoCompleto = ['admin', 'propietario', 'super_admin'];
-  const tieneAccesoPorRol = rolesConAccesoCompleto.includes(user?.rol);
-
   // Determinar si tiene el permiso
   let tiene = false;
-  if (tieneAccesoPorRol) {
+  if (isAdmin) {
     tiene = true;
   } else if (permisoCacheado !== null) {
     tiene = permisoCacheado;

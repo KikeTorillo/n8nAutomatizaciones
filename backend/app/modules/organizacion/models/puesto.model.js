@@ -1,4 +1,5 @@
 const RLSContextManager = require('../../../utils/rlsContextManager');
+const { ErrorHelper } = require('../../../utils/helpers');
 
 class PuestoModel {
 
@@ -112,7 +113,7 @@ class PuestoModel {
             }
 
             if (campos.length === 0) {
-                throw new Error('No hay campos válidos para actualizar');
+                ErrorHelper.throwValidation('No hay campos válidos para actualizar');
             }
 
             const query = `
@@ -125,9 +126,7 @@ class PuestoModel {
             valores.push(id, organizacionId);
             const result = await db.query(query, valores);
 
-            if (result.rows.length === 0) {
-                throw new Error('Puesto no encontrado');
-            }
+            ErrorHelper.throwIfNotFound(result.rows[0], 'Puesto');
 
             return result.rows[0];
         });

@@ -4,16 +4,21 @@
  * ====================================================================
  * Controlador para gestión de mesas y asignación de invitados.
  *
- * Endpoints:
- * POST   /eventos/:eventoId/mesas                  - Crear mesa
- * GET    /eventos/:eventoId/mesas                  - Listar mesas
- * GET    /mesas/:mesaId                            - Obtener mesa
- * PUT    /eventos/:eventoId/mesas/:mesaId          - Actualizar mesa
- * DELETE /mesas/:mesaId                            - Eliminar mesa
- * PATCH  /eventos/:eventoId/mesas/posiciones       - Batch update posiciones
- * POST   /eventos/:eventoId/mesas/:mesaId/asignar  - Asignar invitado
- * DELETE /invitados/:invitadoId/mesa               - Desasignar invitado
- * GET    /eventos/:eventoId/mesas/estadisticas     - Estadísticas
+ * ENDPOINTS (9):
+ * - POST   /eventos/:eventoId/mesas                  - Crear mesa
+ * - GET    /eventos/:eventoId/mesas                  - Listar mesas
+ * - GET    /mesas/:mesaId                            - Obtener mesa
+ * - PUT    /eventos/:eventoId/mesas/:mesaId          - Actualizar mesa
+ * - DELETE /mesas/:mesaId                            - Eliminar mesa
+ * - PATCH  /eventos/:eventoId/mesas/posiciones       - Batch update posiciones
+ * - POST   /eventos/:eventoId/mesas/:mesaId/asignar  - Asignar invitado
+ * - DELETE /invitados/:invitadoId/mesa               - Desasignar invitado
+ * - GET    /eventos/:eventoId/mesas/estadisticas     - Estadísticas
+ *
+ * NO MIGRADO A BaseCrudController - Ene 2026
+ * Razón: Depende de eventoId, 4 métodos custom (actualizarPosiciones,
+ * asignarInvitado, desasignarInvitado, estadísticas), lógica de
+ * seating chart con capacidad y validaciones.
  *
  * Fecha creación: 8 Diciembre 2025
  */

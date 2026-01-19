@@ -254,13 +254,21 @@ const authenticateToken = async (req, res, next) => {
             return ResponseHelper.error(res, 'Error interno del servidor', 500);
         } finally {
             // Restaurar RLS y liberar conexión
-            // ✅ FIX: Usar set_config en lugar de SET (aunque ya no es necesario porque set_config es local)
+            // ✅ FIX v2.1: Si cleanup falla, destruir conexión para evitar pool contamination
+            let cleanupSuccess = false;
             try {
                 await db.query('SELECT set_config($1, $2, false)', ['app.bypass_rls', 'false']);
+                cleanupSuccess = true;
             } catch (e) {
-                logger.warn('Error restaurando RLS', { error: e.message });
+                logger.error('Error CRÍTICO restaurando RLS - destruyendo conexión', { error: e.message });
             }
-            db.release();
+
+            if (cleanupSuccess) {
+                db.release();
+            } else {
+                // SECURITY: Destruir conexión contaminada, NO devolverla al pool
+                db.release(new Error('RLS cleanup failed - connection contaminated'));
+            }
         }
 
         // 5. Verificar consistencia entre token y base de datos
@@ -327,10 +335,20 @@ const authenticateToken = async (req, res, next) => {
                 });
                 // Si no podemos verificar, continuamos (la sucursal puede no existir aún en nueva org)
             } finally {
+                // ✅ FIX v2.1: Si cleanup falla, destruir conexión para evitar pool contamination
+                let cleanupSuccess = false;
                 try {
                     await dbSucursal.query("SELECT set_config('app.bypass_rls', 'false', false)");
-                } catch (e) { /* ignore */ }
-                dbSucursal.release();
+                    cleanupSuccess = true;
+                } catch (e) {
+                    logger.error('Error CRÍTICO restaurando RLS (sucursal) - destruyendo conexión', { error: e.message });
+                }
+
+                if (cleanupSuccess) {
+                    dbSucursal.release();
+                } else {
+                    dbSucursal.release(new Error('RLS cleanup failed - connection contaminated'));
+                }
             }
         }
 

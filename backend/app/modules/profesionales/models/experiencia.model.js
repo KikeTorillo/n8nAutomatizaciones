@@ -4,6 +4,7 @@
  * Fase 4 del Plan de Empleados Competitivo
  */
 const RLSContextManager = require('../../../utils/rlsContextManager');
+const { ErrorHelper } = require('../../../utils/helpers');
 
 class ExperienciaModel {
 
@@ -60,18 +61,18 @@ class ExperienciaModel {
             } catch (error) {
                 if (error.code === '23503') {
                     if (error.constraint?.includes('profesional')) {
-                        throw new Error('El profesional especificado no existe');
+                        ErrorHelper.throwValidation('El profesional especificado no existe');
                     }
                 }
                 if (error.code === '23514') {
                     if (error.constraint?.includes('fechas')) {
-                        throw new Error('La fecha de fin debe ser posterior a la fecha de inicio');
+                        ErrorHelper.throwValidation('La fecha de fin debe ser posterior a la fecha de inicio');
                     }
                     if (error.constraint?.includes('empresa')) {
-                        throw new Error('El nombre de la empresa debe tener al menos 2 caracteres');
+                        ErrorHelper.throwValidation('El nombre de la empresa debe tener al menos 2 caracteres');
                     }
                     if (error.constraint?.includes('puesto')) {
-                        throw new Error('El puesto debe tener al menos 2 caracteres');
+                        ErrorHelper.throwValidation('El puesto debe tener al menos 2 caracteres');
                     }
                 }
                 throw error;
@@ -186,7 +187,7 @@ class ExperienciaModel {
             }
 
             if (campos.length === 0) {
-                throw new Error('No hay campos válidos para actualizar');
+                ErrorHelper.throwValidation('No hay campos válidos para actualizar');
             }
 
             // Agregar actualizado_por si se proporciona
@@ -209,15 +210,12 @@ class ExperienciaModel {
             try {
                 const result = await db.query(query, valores);
 
-                if (result.rows.length === 0) {
-                    throw new Error('Experiencia no encontrada');
-                }
-
+                ErrorHelper.throwIfNotFound(result.rows[0], 'Experiencia');
                 return result.rows[0];
             } catch (error) {
                 if (error.code === '23514') {
                     if (error.constraint?.includes('fechas')) {
-                        throw new Error('La fecha de fin debe ser posterior a la fecha de inicio');
+                        ErrorHelper.throwValidation('La fecha de fin debe ser posterior a la fecha de inicio');
                     }
                 }
                 throw error;

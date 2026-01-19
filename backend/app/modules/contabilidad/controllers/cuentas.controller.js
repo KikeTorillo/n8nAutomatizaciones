@@ -5,6 +5,12 @@ const { asyncHandler } = require('../../../middleware');
 /**
  * Controller para gestión de cuentas contables
  * Basado en el Código Agrupador SAT México (Anexo 24)
+ *
+ * NO MIGRADO a BaseCrudController - Ene 2026
+ * Razones:
+ * - 3+ métodos custom: obtenerArbol(), listarAfectables(), inicializarCatalogoSAT()
+ * - Firma del modelo incompatible: listar(filtros, orgId) vs listar(orgId, filtros)
+ * - obtenerPorId(id, orgId) vs buscarPorId(orgId, id)
  */
 class CuentasController {
 

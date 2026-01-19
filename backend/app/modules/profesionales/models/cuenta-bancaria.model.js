@@ -4,6 +4,7 @@
  * Fase 1 del Plan de Empleados Competitivo
  */
 const RLSContextManager = require('../../../utils/rlsContextManager');
+const { ErrorHelper } = require('../../../utils/helpers');
 
 class CuentaBancariaModel {
 
@@ -46,15 +47,15 @@ class CuentaBancariaModel {
             } catch (error) {
                 if (error.code === '23503') {
                     if (error.constraint?.includes('profesional')) {
-                        throw new Error('El profesional especificado no existe');
+                        ErrorHelper.throwValidation('El profesional especificado no existe');
                     }
                 }
                 if (error.code === '23514') {
                     if (error.constraint?.includes('clabe')) {
-                        throw new Error('La CLABE debe tener exactamente 18 dígitos');
+                        ErrorHelper.throwValidation('La CLABE debe tener exactamente 18 dígitos');
                     }
                     if (error.constraint?.includes('banco')) {
-                        throw new Error('El nombre del banco debe tener al menos 2 caracteres');
+                        ErrorHelper.throwValidation('El nombre del banco debe tener al menos 2 caracteres');
                     }
                 }
                 throw error;
@@ -168,7 +169,7 @@ class CuentaBancariaModel {
             }
 
             if (campos.length === 0) {
-                throw new Error('No hay campos válidos para actualizar');
+                ErrorHelper.throwValidation('No hay campos válidos para actualizar');
             }
 
             const query = `
@@ -184,15 +185,12 @@ class CuentaBancariaModel {
             try {
                 const result = await db.query(query, valores);
 
-                if (result.rows.length === 0) {
-                    throw new Error('Cuenta bancaria no encontrada');
-                }
-
+                ErrorHelper.throwIfNotFound(result.rows[0], 'Cuenta bancaria');
                 return result.rows[0];
             } catch (error) {
                 if (error.code === '23514') {
                     if (error.constraint?.includes('clabe')) {
-                        throw new Error('La CLABE debe tener exactamente 18 dígitos');
+                        ErrorHelper.throwValidation('La CLABE debe tener exactamente 18 dígitos');
                     }
                 }
                 throw error;
@@ -263,10 +261,7 @@ class CuentaBancariaModel {
 
             const result = await db.query(query, [cuentaId, organizacionId]);
 
-            if (result.rows.length === 0) {
-                throw new Error('Cuenta bancaria no encontrada');
-            }
-
+            ErrorHelper.throwIfNotFound(result.rows[0], 'Cuenta bancaria');
             return result.rows[0];
         });
     }

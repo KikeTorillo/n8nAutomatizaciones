@@ -1,6 +1,6 @@
 const RLSContextManager = require('../../../utils/rlsContextManager');
 const logger = require('../../../utils/logger');
-const PaginationHelper = require('../../../utils/helpers').PaginationHelper;
+const { PaginationHelper, ErrorHelper } = require('../../../utils/helpers');
 
 /**
  * Model para gestión de cuentas contables
@@ -195,7 +195,7 @@ class CuentasModel {
             );
 
             if (existente.rows.length > 0) {
-                throw new Error(`Ya existe una cuenta con el código ${datos.codigo}`);
+                ErrorHelper.throwConflict(`Ya existe una cuenta con el código ${datos.codigo}`);
             }
 
             // Si tiene cuenta padre, validar que exista y determinar nivel
@@ -206,12 +206,10 @@ class CuentasModel {
                     [datos.cuenta_padre_id, organizacionId]
                 );
 
-                if (padre.rows.length === 0) {
-                    throw new Error('La cuenta padre no existe');
-                }
+                ErrorHelper.throwIfNotFound(padre.rows[0], 'Cuenta padre');
 
                 if (padre.rows[0].afectable) {
-                    throw new Error('No se pueden crear subcuentas de una cuenta afectable');
+                    ErrorHelper.throwConflict('No se pueden crear subcuentas de una cuenta afectable');
                 }
 
                 nivel = padre.rows[0].nivel + 1;
@@ -259,13 +257,11 @@ class CuentasModel {
                 [cuentaId, organizacionId]
             );
 
-            if (cuenta.rows.length === 0) {
-                throw new Error('Cuenta no encontrada');
-            }
+            ErrorHelper.throwIfNotFound(cuenta.rows[0], 'Cuenta');
 
             // Si es cuenta de sistema, solo permitir cambiar nombre
             if (cuenta.rows[0].es_cuenta_sistema && (datos.codigo || datos.tipo || datos.naturaleza)) {
-                throw new Error('No se puede modificar el código, tipo o naturaleza de una cuenta del sistema');
+                ErrorHelper.throwConflict('No se puede modificar el código, tipo o naturaleza de una cuenta del sistema');
             }
 
             // Si cambia el código, validar unicidad
@@ -275,7 +271,7 @@ class CuentasModel {
                     [datos.codigo, organizacionId, cuentaId]
                 );
                 if (existente.rows.length > 0) {
-                    throw new Error(`Ya existe una cuenta con el código ${datos.codigo}`);
+                    ErrorHelper.throwConflict(`Ya existe una cuenta con el código ${datos.codigo}`);
                 }
             }
 
@@ -326,12 +322,10 @@ class CuentasModel {
                 [cuentaId, organizacionId]
             );
 
-            if (cuenta.rows.length === 0) {
-                throw new Error('Cuenta no encontrada');
-            }
+            ErrorHelper.throwIfNotFound(cuenta.rows[0], 'Cuenta');
 
             if (cuenta.rows[0].es_cuenta_sistema) {
-                throw new Error('No se puede eliminar una cuenta del sistema');
+                ErrorHelper.throwConflict('No se puede eliminar una cuenta del sistema');
             }
 
             // Verificar que no tenga movimientos
@@ -341,7 +335,7 @@ class CuentasModel {
             );
 
             if (parseInt(movimientos.rows[0].total) > 0) {
-                throw new Error('No se puede eliminar una cuenta con movimientos. Desactívela en su lugar.');
+                ErrorHelper.throwConflict('No se puede eliminar una cuenta con movimientos. Desactívela en su lugar.');
             }
 
             // Verificar que no tenga subcuentas activas
@@ -351,7 +345,7 @@ class CuentasModel {
             );
 
             if (parseInt(subcuentas.rows[0].total) > 0) {
-                throw new Error('No se puede eliminar una cuenta con subcuentas activas');
+                ErrorHelper.throwConflict('No se puede eliminar una cuenta con subcuentas activas');
             }
 
             // Soft delete
@@ -403,7 +397,7 @@ class CuentasModel {
             );
 
             if (parseInt(cuentasExistentes.rows[0].total) > 0) {
-                throw new Error('La organización ya tiene cuentas contables. No se puede reinicializar.');
+                ErrorHelper.throwConflict('La organización ya tiene cuentas contables. No se puede reinicializar.');
             }
 
             // Llamar a la función SQL que crea el catálogo

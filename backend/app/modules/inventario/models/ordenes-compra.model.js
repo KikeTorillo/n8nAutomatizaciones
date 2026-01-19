@@ -1,5 +1,6 @@
 const RLSContextManager = require('../../../utils/rlsContextManager');
 const logger = require('../../../utils/logger');
+const { ErrorHelper } = require('../../../utils/helpers');
 const workflowAdapter = require('../../../services/workflowAdapter');
 const RutasOperacionModel = require('./rutas-operacion.model');
 const LandedCostsModel = require('./landed-costs.model');
@@ -33,9 +34,7 @@ class OrdenesCompraModel {
                 [data.proveedor_id]
             );
 
-            if (proveedorQuery.rows.length === 0) {
-                throw new Error('Proveedor no encontrado o está inactivo');
-            }
+            ErrorHelper.throwIfNotFound(proveedorQuery.rows[0], 'Proveedor activo');
 
             const proveedor = proveedorQuery.rows[0];
 
@@ -274,12 +273,10 @@ class OrdenesCompraModel {
                 [id]
             );
 
-            if (checkQuery.rows.length === 0) {
-                throw new Error('Orden de compra no encontrada');
-            }
+            ErrorHelper.throwIfNotFound(checkQuery.rows[0], 'Orden de compra');
 
             if (checkQuery.rows[0].estado !== 'borrador') {
-                throw new Error('Solo se pueden editar órdenes en estado borrador');
+                ErrorHelper.throwConflict('Solo se pueden editar órdenes en estado borrador');
             }
 
             // Construir query dinámico
@@ -301,7 +298,7 @@ class OrdenesCompraModel {
             });
 
             if (updates.length === 0) {
-                throw new Error('No hay campos para actualizar');
+                ErrorHelper.throwValidation('No hay campos para actualizar');
             }
 
             values.push(id);
@@ -341,9 +338,7 @@ class OrdenesCompraModel {
 
             const result = await db.query(query, [id]);
 
-            if (result.rows.length === 0) {
-                throw new Error('Orden de compra no encontrada');
-            }
+            ErrorHelper.throwIfNotFound(result.rows[0], 'Orden de compra');
 
             logger.info('[OrdenesCompraModel.eliminar] Orden eliminada', {
                 orden_id: id,
@@ -374,12 +369,10 @@ class OrdenesCompraModel {
                 [ordenId]
             );
 
-            if (ordenQuery.rows.length === 0) {
-                throw new Error('Orden de compra no encontrada');
-            }
+            ErrorHelper.throwIfNotFound(ordenQuery.rows[0], 'Orden de compra');
 
             if (ordenQuery.rows[0].estado !== 'borrador') {
-                throw new Error('Solo se pueden agregar items a órdenes en estado borrador');
+                ErrorHelper.throwConflict('Solo se pueden agregar items a órdenes en estado borrador');
             }
 
             const itemsCreados = await this._agregarItemsInterno(db, ordenId, items, organizacionId);
@@ -409,7 +402,7 @@ class OrdenesCompraModel {
             );
 
             if (productoQuery.rows.length === 0) {
-                throw new Error(`Producto con ID ${item.producto_id} no encontrado o inactivo`);
+                ErrorHelper.throwValidation(`Producto con ID ${item.producto_id} no encontrado o inactivo`);
             }
 
             const producto = productoQuery.rows[0];
@@ -422,7 +415,7 @@ class OrdenesCompraModel {
             );
 
             if (existeQuery.rows.length > 0) {
-                throw new Error(`El producto "${producto.nombre}" ya está en esta orden`);
+                ErrorHelper.throwConflict(`El producto "${producto.nombre}" ya está en esta orden`);
             }
 
             const insertQuery = `
@@ -472,12 +465,10 @@ class OrdenesCompraModel {
                 [ordenId]
             );
 
-            if (ordenQuery.rows.length === 0) {
-                throw new Error('Orden de compra no encontrada');
-            }
+            ErrorHelper.throwIfNotFound(ordenQuery.rows[0], 'Orden de compra');
 
             if (ordenQuery.rows[0].estado !== 'borrador') {
-                throw new Error('Solo se pueden editar items de órdenes en estado borrador');
+                ErrorHelper.throwConflict('Solo se pueden editar items de órdenes en estado borrador');
             }
 
             const camposActualizables = [
@@ -496,7 +487,7 @@ class OrdenesCompraModel {
             });
 
             if (updates.length === 0) {
-                throw new Error('No hay campos para actualizar');
+                ErrorHelper.throwValidation('No hay campos para actualizar');
             }
 
             values.push(itemId);
@@ -511,9 +502,7 @@ class OrdenesCompraModel {
 
             const result = await db.query(query, values);
 
-            if (result.rows.length === 0) {
-                throw new Error('Item no encontrado en esta orden');
-            }
+            ErrorHelper.throwIfNotFound(result.rows[0], 'Item de orden');
 
             return result.rows[0];
         });
@@ -530,12 +519,10 @@ class OrdenesCompraModel {
                 [ordenId]
             );
 
-            if (ordenQuery.rows.length === 0) {
-                throw new Error('Orden de compra no encontrada');
-            }
+            ErrorHelper.throwIfNotFound(ordenQuery.rows[0], 'Orden de compra');
 
             if (ordenQuery.rows[0].estado !== 'borrador') {
-                throw new Error('Solo se pueden eliminar items de órdenes en estado borrador');
+                ErrorHelper.throwConflict('Solo se pueden eliminar items de órdenes en estado borrador');
             }
 
             const query = `
@@ -546,9 +533,7 @@ class OrdenesCompraModel {
 
             const result = await db.query(query, [itemId, ordenId]);
 
-            if (result.rows.length === 0) {
-                throw new Error('Item no encontrado en esta orden');
-            }
+            ErrorHelper.throwIfNotFound(result.rows[0], 'Item de orden');
 
             return result.rows[0];
         });
@@ -579,18 +564,16 @@ class OrdenesCompraModel {
             return await db.query(query, [id, organizacionId]);
         });
 
-        if (ordenPrevia.rows.length === 0) {
-            throw new Error('Orden de compra no encontrada');
-        }
+        ErrorHelper.throwIfNotFound(ordenPrevia.rows[0], 'Orden de compra');
 
         const orden = ordenPrevia.rows[0];
 
         if (orden.estado !== 'borrador') {
-            throw new Error('Solo se pueden enviar órdenes en estado borrador');
+            ErrorHelper.throwConflict('Solo se pueden enviar órdenes en estado borrador');
         }
 
         if (parseInt(orden.total_items) === 0) {
-            throw new Error('No se puede enviar una orden sin items');
+            ErrorHelper.throwValidation('No se puede enviar una orden sin items');
         }
 
         logger.info('[OrdenesCompraModel.enviar] Iniciando', {
@@ -691,18 +674,16 @@ class OrdenesCompraModel {
                 [id]
             );
 
-            if (ordenQuery.rows.length === 0) {
-                throw new Error('Orden de compra no encontrada');
-            }
+            ErrorHelper.throwIfNotFound(ordenQuery.rows[0], 'Orden de compra');
 
             const orden = ordenQuery.rows[0];
 
             if (orden.estado === 'recibida') {
-                throw new Error('No se puede cancelar una orden ya recibida completamente');
+                ErrorHelper.throwConflict('No se puede cancelar una orden ya recibida completamente');
             }
 
             if (orden.estado === 'cancelada') {
-                throw new Error('La orden ya está cancelada');
+                ErrorHelper.throwConflict('La orden ya está cancelada');
             }
 
             // Cancelar orden
@@ -762,14 +743,12 @@ class OrdenesCompraModel {
                 [ordenId]
             );
 
-            if (ordenQuery.rows.length === 0) {
-                throw new Error('Orden de compra no encontrada');
-            }
+            ErrorHelper.throwIfNotFound(ordenQuery.rows[0], 'Orden de compra');
 
             const orden = ordenQuery.rows[0];
 
             if (!['enviada', 'parcial'].includes(orden.estado)) {
-                throw new Error('Solo se puede recibir mercancía de órdenes enviadas o con recepción parcial');
+                ErrorHelper.throwConflict('Solo se puede recibir mercancía de órdenes enviadas o con recepción parcial');
             }
 
             // ═══════════════════════════════════════════════════════════════════
@@ -799,23 +778,23 @@ class OrdenesCompraModel {
                 );
 
                 if (itemQuery.rows.length === 0) {
-                    throw new Error(`Item ${recepcion.item_id} no encontrado en esta orden`);
+                    ErrorHelper.throwValidation(`Item ${recepcion.item_id} no encontrado en esta orden`);
                 }
 
                 const item = itemQuery.rows[0];
 
                 if (item.estado === 'completo') {
-                    throw new Error(`El item "${item.nombre_producto}" ya fue recibido completamente`);
+                    ErrorHelper.throwConflict(`El item "${item.nombre_producto}" ya fue recibido completamente`);
                 }
 
                 if (item.estado === 'cancelado') {
-                    throw new Error(`El item "${item.nombre_producto}" está cancelado`);
+                    ErrorHelper.throwConflict(`El item "${item.nombre_producto}" está cancelado`);
                 }
 
                 // Validar cantidad
                 const cantidadPendiente = item.cantidad_ordenada - item.cantidad_recibida;
                 if (recepcion.cantidad > cantidadPendiente) {
-                    throw new Error(
+                    ErrorHelper.throwValidation(
                         `No se puede recibir ${recepcion.cantidad} unidades de "${item.nombre_producto}". ` +
                         `Pendientes: ${cantidadPendiente}`
                     );
@@ -1170,14 +1149,12 @@ class OrdenesCompraModel {
                 [id]
             );
 
-            if (ordenQuery.rows.length === 0) {
-                throw new Error('Orden no encontrada');
-            }
+            ErrorHelper.throwIfNotFound(ordenQuery.rows[0], 'Orden');
 
             const orden = ordenQuery.rows[0];
 
             if (orden.estado !== 'recibida') {
-                throw new Error('Solo se pueden registrar pagos de órdenes recibidas');
+                ErrorHelper.throwConflict('Solo se pueden registrar pagos de órdenes recibidas');
             }
 
             const nuevoMontoPagado = parseFloat(orden.monto_pagado) + parseFloat(montoPago);
@@ -1283,14 +1260,12 @@ class OrdenesCompraModel {
                 [productoId, organizacionId]
             );
 
-            if (productoQuery.rows.length === 0) {
-                throw new Error('Producto no encontrado');
-            }
+            ErrorHelper.throwIfNotFound(productoQuery.rows[0], 'Producto');
 
             const producto = productoQuery.rows[0];
 
             if (!producto.proveedor_id) {
-                throw new Error(`El producto "${producto.nombre}" no tiene proveedor asignado`);
+                ErrorHelper.throwValidation(`El producto "${producto.nombre}" no tiene proveedor asignado`);
             }
 
             // Calcular cantidad sugerida

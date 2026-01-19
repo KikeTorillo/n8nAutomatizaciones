@@ -11,11 +11,11 @@
  * - Fallback en memoria si Redis falla
  *
  * @author Backend Team
- * @version 1.0.0
+ * @version 1.1.0 (Ene 2026: Refactorizado para usar RedisClientFactory)
  * @since 2025-11-06
  */
 
-const redis = require('redis');
+const RedisClientFactory = require('./RedisClientFactory');
 const logger = require('../utils/logger');
 
 /**
@@ -56,52 +56,26 @@ class TokenBlacklistService {
     /**
      * Inicializa la conexión a Redis para blacklist
      *
-     * Se conecta a la base de datos 3 de Redis, dedicada exclusivamente
-     * para almacenar tokens blacklisted. Si falla, usa fallback en memoria.
+     * Usa RedisClientFactory para obtener cliente de DB 3.
+     * Si falla, usa fallback en memoria.
      *
      * @async
      * @private
-     * @throws {Error} Si hay problemas de conexión (manejado con fallback)
      */
     async initRedis() {
         try {
-            // Solo intentar conectar Redis si está configurado
-            if (process.env.REDIS_HOST) {
-                this.redisClient = redis.createClient({
-                    socket: {
-                        host: process.env.REDIS_HOST || 'localhost',
-                        port: parseInt(process.env.REDIS_PORT) || 6379
-                    },
-                    password: process.env.REDIS_PASSWORD || undefined,
-                    database: 3 // DB 3: Dedicada exclusivamente para token blacklist
-                });
+            // Usar RedisClientFactory para obtener cliente
+            this.redisClient = await RedisClientFactory.getClient(3, 'TokenBlacklist');
 
-                // Event listeners para debugging
-                this.redisClient.on('error', (err) => {
-                    logger.error('Redis Token Blacklist error', { error: err.message });
-                });
-
-                this.redisClient.on('connect', () => {
-                    logger.debug('Redis Token Blacklist conectando...');
-                });
-
-                this.redisClient.on('ready', () => {
-                    logger.info('Redis Token Blacklist listo');
-                    this.isInitialized = true;
-                });
-
-                await this.redisClient.connect();
-                logger.info('✅ Cliente Redis de token blacklist conectado (DB 3)', {
-                    host: process.env.REDIS_HOST,
-                    port: process.env.REDIS_PORT,
-                    database: 3
-                });
+            if (this.redisClient) {
+                logger.info('[TokenBlacklist] Redis conectado (DB 3)');
             } else {
-                logger.warn('⚠️ Redis no configurado, usando almacenamiento en memoria para token blacklist');
-                this.isInitialized = true;
+                logger.warn('[TokenBlacklist] Redis no disponible, usando fallback en memoria');
             }
+
+            this.isInitialized = true;
         } catch (error) {
-            logger.warn('Redis no disponible para token blacklist, usando fallback en memoria', {
+            logger.warn('[TokenBlacklist] Redis no disponible, usando fallback en memoria', {
                 error: error.message
             });
             this.redisClient = null;
@@ -134,8 +108,9 @@ class TokenBlacklistService {
             if (this.redisClient && this.redisClient.isReady) {
                 const key = `blacklist:${token}`;
 
-                // Si tenemos TTL, configurarlo; sino, usar default de 7 días
-                const ttl = expirationSeconds || 604800; // 7 días por defecto
+                // ✅ SECURITY FIX v2.1: Reducir TTL de 7 días a 2 días
+                // Tokens con TTL más largo son un riesgo de seguridad
+                const ttl = expirationSeconds || 172800; // 2 días por defecto
 
                 await this.redisClient.set(key, '1', {
                     EX: ttl // Expire automáticamente cuando el token expiraría
@@ -446,9 +421,10 @@ class TokenBlacklistService {
     }
 
     /**
-     * Cierra la conexión a Redis
+     * Cierra el servicio de blacklist
      *
      * Debe llamarse durante el graceful shutdown del servidor.
+     * El cliente Redis es gestionado por RedisClientFactory.
      *
      * @async
      * @returns {Promise<void>}
@@ -467,15 +443,14 @@ class TokenBlacklistService {
             this.fallbackStore.clear();
             this.invalidatedUsers.clear();
 
-            if (this.redisClient && this.redisClient.isOpen) {
-                this.redisClient.removeAllListeners();
-                await this.redisClient.quit();
-                logger.info('✅ Cliente Redis de token blacklist cerrado');
-            }
-
+            // El cliente Redis es gestionado por RedisClientFactory
+            // No cerrarlo aquí para permitir reutilización
+            this.redisClient = null;
             this.isInitialized = false;
+
+            logger.info('[TokenBlacklist] Servicio cerrado');
         } catch (error) {
-            logger.error('Error cerrando cliente Redis de blacklist', {
+            logger.error('[TokenBlacklist] Error cerrando servicio', {
                 error: error.message
             });
         }

@@ -38,9 +38,9 @@ const hooks = createCRUDHooks({
   staleTime: STALE_TIMES.SEMI_STATIC,
   usePreviousData: true, // Evita flash de loading durante paginación
   responseKey: 'clientes',
-  transformList: (data) => ({
-    clientes: data.clientes || data,
-    pagination: data.pagination,
+  transformList: (data, pagination) => ({
+    clientes: Array.isArray(data) ? data : (data.clientes || []),
+    paginacion: pagination,
   }),
 });
 

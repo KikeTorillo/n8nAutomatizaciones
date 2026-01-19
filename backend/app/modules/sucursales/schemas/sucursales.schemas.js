@@ -11,7 +11,8 @@ const crearSucursalSchema = Joi.object({
     direccion: Joi.string().max(500).optional().allow('', null),
     estado_id: Joi.number().integer().positive().optional().allow(null),
     ciudad_id: Joi.number().integer().positive().optional().allow(null),
-    codigo_postal: Joi.string().max(10).optional().allow('', null),
+    // ✅ FIX v2.1: Usar fields.codigoPostal con validación
+    codigo_postal: fields.codigoPostal.optional().allow('', null),
     latitud: Joi.number().min(-90).max(90).optional().allow(null),
     longitud: Joi.number().min(-180).max(180).optional().allow(null),
     telefono: Joi.string().max(20).optional().allow('', null),
@@ -37,7 +38,8 @@ const actualizarSucursalSchema = Joi.object({
     direccion: Joi.string().max(500).optional().allow('', null),
     estado_id: Joi.number().integer().positive().optional().allow(null),
     ciudad_id: Joi.number().integer().positive().optional().allow(null),
-    codigo_postal: Joi.string().max(10).optional().allow('', null),
+    // ✅ FIX v2.1: Usar fields.codigoPostal con validación
+    codigo_postal: fields.codigoPostal.optional().allow('', null),
     latitud: Joi.number().min(-90).max(90).optional().allow(null),
     longitud: Joi.number().min(-180).max(180).optional().allow(null),
     telefono: Joi.string().max(20).optional().allow('', null),

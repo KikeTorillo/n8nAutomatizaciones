@@ -106,22 +106,23 @@ export function createCRUDHooks(config) {
       queryFn: async () => {
         const response = await api[apiMethods.list](sanitizeParams(params));
         const data = response.data.data;
+        const pagination = response.data.pagination;
 
-        // Si hay transformList, usarlo
+        // Si hay transformList, usarlo (pasar data y pagination)
         if (transformList) {
-          return transformList(data);
+          return transformList(data, pagination);
         }
 
         // Si responseKey está definido, extraer de ahí
         if (responseKey) {
           return {
             [responseKey]: data[responseKey] || data,
-            total: data.total || (data[responseKey]?.length ?? 0),
-            pagination: data.pagination,
+            total: data.total || pagination?.total || (data[responseKey]?.length ?? 0),
+            paginacion: pagination,
           };
         }
 
-        // Por defecto retornar data directamente
+        // Por defecto retornar data directamente (backwards compatible)
         return data;
       },
       staleTime,

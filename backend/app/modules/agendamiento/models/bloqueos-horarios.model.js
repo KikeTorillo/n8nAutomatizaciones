@@ -1,6 +1,7 @@
 const RLSContextManager = require('../../../utils/rlsContextManager');
 const logger = require('../../../utils/logger');
 const CitaValidacionUtil = require('../utils/cita-validacion.util');
+const { ErrorHelper } = require('../../../utils/helpers');
 
 class BloqueosHorariosModel {
 
@@ -14,9 +15,7 @@ class BloqueosHorariosModel {
                         WHERE id = $1 AND organizacion_id = $2 AND activo = true
                     `, [datosBloqueo.profesional_id, datosBloqueo.organizacion_id]);
 
-                    if (validarProfesional.rows.length === 0) {
-                        throw new Error('El profesional no existe o no pertenece a esta organización');
-                    }
+                    ErrorHelper.throwIfNotFound(validarProfesional.rows[0], 'Profesional');
                 }
 
                 // Validar que el tipo_bloqueo_id sea válido y accesible
@@ -28,9 +27,7 @@ class BloqueosHorariosModel {
                         AND activo = true
                     `, [datosBloqueo.tipo_bloqueo_id, datosBloqueo.organizacion_id]);
 
-                    if (tipoValido.rows.length === 0) {
-                        throw new Error('Tipo de bloqueo inválido o no disponible para esta organización');
-                    }
+                    ErrorHelper.throwIfNotFound(tipoValido.rows[0], 'Tipo de bloqueo');
                 }
 
                 // ====================================================================
@@ -363,9 +360,7 @@ class BloqueosHorariosModel {
                     FOR UPDATE
                 `, [bloqueoId, organizacionId]);
 
-                if (bloqueoExistente.rows.length === 0) {
-                    throw new Error('Bloqueo no encontrado o sin permisos para actualizar');
-                }
+                ErrorHelper.throwIfNotFound(bloqueoExistente.rows[0], 'Bloqueo');
 
                 const bloqueoActual = bloqueoExistente.rows[0];
 
@@ -549,7 +544,7 @@ class BloqueosHorariosModel {
                 });
 
                 if (camposActualizar.length === 0) {
-                    throw new Error('No hay campos válidos para actualizar');
+                    ErrorHelper.throwValidation('No hay campos válidos para actualizar');
                 }
 
                 camposActualizar.push(
@@ -597,9 +592,7 @@ class BloqueosHorariosModel {
                     FOR UPDATE
                 `, [bloqueoId, organizacionId]);
 
-                if (bloqueoExistente.rows.length === 0) {
-                    throw new Error('Bloqueo no encontrado o sin permisos para eliminar');
-                }
+                ErrorHelper.throwIfNotFound(bloqueoExistente.rows[0], 'Bloqueo');
 
                 const bloqueo = bloqueoExistente.rows[0];
 

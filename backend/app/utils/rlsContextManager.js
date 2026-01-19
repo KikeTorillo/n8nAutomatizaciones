@@ -165,22 +165,24 @@ class RLSContextManager {
         } finally {
             // 8. Liberar conexión SIEMPRE (incluso si hay error)
             if (db) {
-                // Si NO usamos transacción y NO hay bypass, limpiar tenant_id de sesión
-                // para evitar contaminación del pool
-                if (!useTransaction && !bypass) {
-                    try {
-                        await db.query('SELECT set_config($1, $2, false)',
-                            ['app.current_tenant_id', '']);
+                // FIX v2.1: Limpiar TODAS las variables RLS antes de liberar
+                // CRÍTICO: Previene contaminación del pool, especialmente con bypass
+                try {
+                    await db.query(`SELECT
+                        set_config('app.current_tenant_id', '', false),
+                        set_config('app.bypass_rls', 'false', false),
+                        set_config('app.current_user_id', '', false),
+                        set_config('app.current_user_role', '', false)
+                    `);
 
-                        logger.debug('[RLSContextManager] RLS limpiado de sesión', {
-                            processId: db.processID
-                        });
-                    } catch (cleanError) {
-                        logger.warn('[RLSContextManager] Error limpiando RLS', {
-                            processId: db.processID,
-                            error: cleanError.message
-                        });
-                    }
+                    logger.debug('[RLSContextManager] Variables RLS limpiadas', {
+                        processId: db.processID
+                    });
+                } catch (cleanError) {
+                    logger.warn('[RLSContextManager] Error limpiando RLS', {
+                        processId: db.processID,
+                        error: cleanError.message
+                    });
                 }
 
                 db.release();
@@ -241,6 +243,24 @@ class RLSContextManager {
      */
     static async withBypass(callback, options = {}) {
         return await this.withRLS(null, callback, { ...options, bypass: true });
+    }
+
+    /**
+     * Ejecutar transacción con bypass de RLS
+     * ✅ FIX v2.1: Nuevo método para evitar BEGIN/COMMIT manual dentro de withBypass
+     *
+     * @param {Function} callback - Función que recibe (db)
+     * @returns {Promise<any>}
+     *
+     * @example
+     * await RLSContextManager.transactionWithBypass(async (db) => {
+     *     await db.query('UPDATE subscripciones SET estado = $1 WHERE org_id = $2', ['activa', orgId]);
+     *     await db.query('INSERT INTO historial ...');
+     *     // COMMIT automático al final, ROLLBACK automático si hay error
+     * });
+     */
+    static async transactionWithBypass(callback) {
+        return await this.withBypass(callback, { useTransaction: true });
     }
 
     /**

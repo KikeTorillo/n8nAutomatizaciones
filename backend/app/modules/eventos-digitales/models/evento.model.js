@@ -20,7 +20,7 @@
 
 const RLSContextManager = require('../../../utils/rlsContextManager');
 const logger = require('../../../utils/logger');
-const { PaginationHelper } = require('../../../utils/helpers');
+const { PaginationHelper, ErrorHelper } = require('../../../utils/helpers');
 
 class EventoModel {
 
@@ -129,7 +129,7 @@ class EventoModel {
             }
 
             if (campos.length === 0) {
-                throw new Error('No hay campos para actualizar');
+                ErrorHelper.throwValidation('No hay campos para actualizar');
             }
 
             const query = `
@@ -313,7 +313,7 @@ class EventoModel {
             const result = await db.query(query, [id]);
 
             if (result.rows.length === 0) {
-                throw new Error('Evento no encontrado o no está en estado borrador');
+                ErrorHelper.throwConflict('Evento no encontrado o no está en estado borrador');
             }
 
             return result.rows[0];

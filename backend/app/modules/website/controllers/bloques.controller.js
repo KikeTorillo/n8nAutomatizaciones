@@ -9,14 +9,20 @@ const { asyncHandler } = require('../../../middleware');
  *
  * Gestiona los bloques de contenido de cada página.
  *
- * ENDPOINTS (7):
- * • POST   /bloques                  - Crear bloque
- * • GET    /paginas/:paginaId/bloques - Listar bloques de una página
- * • GET    /bloques/:id              - Obtener bloque por ID
- * • PUT    /bloques/:id              - Actualizar bloque
- * • PUT    /paginas/:paginaId/bloques/orden - Reordenar bloques
- * • POST   /bloques/:id/duplicar     - Duplicar bloque
- * • DELETE /bloques/:id              - Eliminar bloque
+ * ENDPOINTS (9):
+ * - POST   /bloques                       - Crear bloque
+ * - GET    /paginas/:paginaId/bloques     - Listar bloques de una página
+ * - GET    /bloques/:id                   - Obtener bloque por ID
+ * - PUT    /bloques/:id                   - Actualizar bloque
+ * - PUT    /paginas/:paginaId/bloques/orden - Reordenar bloques
+ * - POST   /bloques/:id/duplicar          - Duplicar bloque
+ * - DELETE /bloques/:id                   - Eliminar bloque
+ * - GET    /bloques/tipos/:tipo/default   - Contenido default por tipo
+ * - GET    /bloques/tipos                 - Listar tipos disponibles
+ *
+ * NO MIGRADO A BaseCrudController - Ene 2026
+ * Razón: 5+ métodos custom (duplicar, reordenar, obtenerDefault, listarTipos),
+ * depende de paginaId, validación de tipos de bloque.
  *
  * Fecha creación: 6 Diciembre 2025
  */

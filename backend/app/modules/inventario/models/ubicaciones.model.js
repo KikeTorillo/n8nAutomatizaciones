@@ -7,6 +7,7 @@
  */
 
 const RLSContextManager = require('../../../utils/rlsContextManager');
+const { ErrorHelper } = require('../../../utils/helpers');
 
 class UbicacionesAlmacenModel {
 
@@ -301,7 +302,7 @@ class UbicacionesAlmacenModel {
             }
 
             if (campos.length === 0) {
-                throw new Error('No hay campos para actualizar');
+                ErrorHelper.throwValidation('No hay campos para actualizar');
             }
 
             campos.push(`actualizado_en = NOW()`);
@@ -316,9 +317,7 @@ class UbicacionesAlmacenModel {
 
             const result = await db.query(query, valores);
 
-            if (result.rows.length === 0) {
-                throw new Error('Ubicacion no encontrada');
-            }
+            ErrorHelper.throwIfNotFound(result.rows[0], 'Ubicacion');
 
             return result.rows[0];
         });
@@ -339,7 +338,7 @@ class UbicacionesAlmacenModel {
             );
 
             if (parseInt(hijosResult.rows[0]?.cantidad) > 0) {
-                throw new Error('No se puede eliminar: la ubicacion tiene sub-ubicaciones');
+                ErrorHelper.throwConflict('No se puede eliminar: la ubicacion tiene sub-ubicaciones');
             }
 
             // Verificar que no tenga stock
@@ -349,7 +348,7 @@ class UbicacionesAlmacenModel {
             );
 
             if (parseInt(stockResult.rows[0]?.stock) > 0) {
-                throw new Error('No se puede eliminar: la ubicacion tiene productos almacenados');
+                ErrorHelper.throwConflict('No se puede eliminar: la ubicacion tiene productos almacenados');
             }
 
             // Eliminar
@@ -358,9 +357,7 @@ class UbicacionesAlmacenModel {
                 [id]
             );
 
-            if (result.rows.length === 0) {
-                throw new Error('Ubicacion no encontrada');
-            }
+            ErrorHelper.throwIfNotFound(result.rows[0], 'Ubicacion');
 
             return result.rows[0];
         });

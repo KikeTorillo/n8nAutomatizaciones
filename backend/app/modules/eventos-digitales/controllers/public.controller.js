@@ -5,6 +5,23 @@
  * Controlador para rutas públicas sin autenticación.
  * Maneja vista de invitación y confirmación RSVP.
  *
+ * ENDPOINTS (14):
+ * - GET  /evento/:slug                    - Obtener evento público
+ * - GET  /evento/:slug/:token             - Obtener invitación personalizada
+ * - POST /evento/:slug/:token/rsvp        - Confirmar RSVP
+ * - GET  /evento/:slug/ubicaciones        - Obtener ubicaciones
+ * - GET  /evento/:slug/regalos            - Obtener mesa de regalos
+ * - GET  /evento/:slug/calendario         - Generar .ics
+ * - GET  /evento/:slug/:token/whatsapp    - Mensaje WhatsApp
+ * - GET  /evento/:slug/:token/qr          - QR de invitación
+ * - GET  /evento/:slug/galeria            - Galería pública
+ * - POST /evento/:slug/:token/galeria     - Subir foto (invitado)
+ * - POST /galeria/:id/reportar            - Reportar foto
+ *
+ * NO MIGRADO A BaseCrudController - Ene 2026
+ * Razón: Endpoints públicos sin autenticación, no es CRUD,
+ * múltiples funcionalidades especializadas (RSVP, QR, calendario).
+ *
  * Fecha creación: 4 Diciembre 2025
  */
 

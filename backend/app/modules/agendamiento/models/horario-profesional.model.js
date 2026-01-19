@@ -1,5 +1,6 @@
 const RLSContextManager = require('../../../utils/rlsContextManager');
 const logger = require('../../../utils/logger');
+const { ErrorHelper } = require('../../../utils/helpers');
 
 class HorarioProfesionalModel {
 
@@ -20,13 +21,11 @@ class HorarioProfesionalModel {
                     WHERE id = $1 AND organizacion_id = $2
                 `, [datosHorario.profesional_id, datosHorario.organizacion_id]);
 
-                if (validarProfesional.rows.length === 0) {
-                    throw new Error('El profesional no existe o no pertenece a esta organización');
-                }
+                ErrorHelper.throwIfNotFound(validarProfesional.rows[0], 'Profesional');
 
                 // Validar tipo_horario y permite_citas sean consistentes
                 if (['break', 'almuerzo'].includes(datosHorario.tipo_horario) && datosHorario.permite_citas === true) {
-                    throw new Error('Los horarios de tipo "break" o "almuerzo" no pueden permitir citas');
+                    ErrorHelper.throwValidation('Los horarios de tipo "break" o "almuerzo" no pueden permitir citas');
                 }
 
                 const insertQuery = `
@@ -89,25 +88,25 @@ class HorarioProfesionalModel {
                 // Manejar errores específicos de constraints
                 if (error.code === '23514') { // Check constraint violation
                     if (error.message.includes('valid_horario_base')) {
-                        throw new Error('La hora de fin debe ser mayor que la hora de inicio');
+                        ErrorHelper.throwValidation('La hora de fin debe ser mayor que la hora de inicio');
                     }
                     if (error.message.includes('valid_duracion_minima_horario')) {
-                        throw new Error('El horario debe tener al menos 15 minutos de duración');
+                        ErrorHelper.throwValidation('El horario debe tener al menos 15 minutos de duración');
                     }
                     if (error.message.includes('valid_vigencia_temporal')) {
-                        throw new Error('La fecha de fin debe ser mayor o igual a la fecha de inicio');
+                        ErrorHelper.throwValidation('La fecha de fin debe ser mayor o igual a la fecha de inicio');
                     }
                     if (error.message.includes('valid_tipo_horario')) {
-                        throw new Error('Tipo de horario inválido. Valores permitidos: regular, break, almuerzo, premium');
+                        ErrorHelper.throwValidation('Tipo de horario inválido. Valores permitidos: regular, break, almuerzo, premium');
                     }
                     if (error.message.includes('valid_configuracion_permite_citas')) {
-                        throw new Error('Los horarios de tipo "break" o "almuerzo" no pueden permitir citas');
+                        ErrorHelper.throwValidation('Los horarios de tipo "break" o "almuerzo" no pueden permitir citas');
                     }
                 }
 
                 // Error de solapamiento (del trigger)
                 if (error.message.includes('se solapa con otro horario')) {
-                    throw new Error('El horario se solapa con otro horario existente del profesional en el mismo día');
+                    ErrorHelper.throwConflict('El horario se solapa con otro horario existente del profesional en el mismo día');
                 }
 
                 logger.error('[HorarioProfesionalModel.crear] Error creando horario:', {
@@ -316,14 +315,12 @@ class HorarioProfesionalModel {
                     FOR UPDATE
                 `, [horarioId, organizacionId]);
 
-                if (horarioExistente.rows.length === 0) {
-                    throw new Error('Horario no encontrado o sin permisos para actualizar');
-                }
+                ErrorHelper.throwIfNotFound(horarioExistente.rows[0], 'Horario');
 
                 // Validar tipo_horario y permite_citas sean consistentes
                 if (datosActualizacion.tipo_horario && ['break', 'almuerzo'].includes(datosActualizacion.tipo_horario)) {
                     if (datosActualizacion.permite_citas === true) {
-                        throw new Error('Los horarios de tipo "break" o "almuerzo" no pueden permitir citas');
+                        ErrorHelper.throwValidation('Los horarios de tipo "break" o "almuerzo" no pueden permitir citas');
                     }
                     datosActualizacion.permite_citas = false;
                 }
@@ -352,7 +349,7 @@ class HorarioProfesionalModel {
                 });
 
                 if (camposActualizar.length === 0) {
-                    throw new Error('No hay campos válidos para actualizar');
+                    ErrorHelper.throwValidation('No hay campos válidos para actualizar');
                 }
 
                 camposActualizar.push(
@@ -386,18 +383,18 @@ class HorarioProfesionalModel {
                 // Manejar errores de constraints igual que en crear()
                 if (error.code === '23514') {
                     if (error.message.includes('valid_horario_base')) {
-                        throw new Error('La hora de fin debe ser mayor que la hora de inicio');
+                        ErrorHelper.throwValidation('La hora de fin debe ser mayor que la hora de inicio');
                     }
                     if (error.message.includes('valid_duracion_minima_horario')) {
-                        throw new Error('El horario debe tener al menos 15 minutos de duración');
+                        ErrorHelper.throwValidation('El horario debe tener al menos 15 minutos de duración');
                     }
                     if (error.message.includes('valid_vigencia_temporal')) {
-                        throw new Error('La fecha de fin debe ser mayor o igual a la fecha de inicio');
+                        ErrorHelper.throwValidation('La fecha de fin debe ser mayor o igual a la fecha de inicio');
                     }
                 }
 
                 if (error.message.includes('se solapa con otro horario')) {
-                    throw new Error('El horario actualizado se solapa con otro horario existente del profesional');
+                    ErrorHelper.throwConflict('El horario actualizado se solapa con otro horario existente del profesional');
                 }
 
                 logger.error('[HorarioProfesionalModel.actualizar] Error actualizando horario:', {
@@ -428,9 +425,7 @@ class HorarioProfesionalModel {
                     WHERE id = $1 AND organizacion_id = $2 AND activo = true
                 `, [horarioId, organizacionId]);
 
-                if (horarioExistente.rows.length === 0) {
-                    throw new Error('Horario no encontrado o ya está inactivo');
-                }
+                ErrorHelper.throwIfNotFound(horarioExistente.rows[0], 'Horario');
 
                 // Verificar que el profesional tenga al menos otro horario activo que permita citas
                 const horariosActivosRestantes = await db.query(`

@@ -1,5 +1,6 @@
 const RLSContextManager = require('../../../utils/rlsContextManager');
 const logger = require('../../../utils/logger');
+const { ErrorHelper } = require('../../../utils/helpers');
 
 /**
  * Model para CRUD de configuración de comisiones
@@ -52,9 +53,7 @@ class ConfiguracionComisionesModel {
                 [data.profesional_id, organizacionId]
             );
 
-            if (profesionalQuery.rows.length === 0) {
-                throw new Error('Profesional no encontrado o no pertenece a esta organización');
-            }
+            ErrorHelper.throwIfNotFound(profesionalQuery.rows[0], 'Profesional');
 
             // Validar servicio si aplica_a = 'servicio' y servicio_id está definido
             if (aplicaA === 'servicio' && data.servicio_id) {
@@ -63,9 +62,7 @@ class ConfiguracionComisionesModel {
                     [data.servicio_id, organizacionId]
                 );
 
-                if (servicioQuery.rows.length === 0) {
-                    throw new Error('Servicio no encontrado o no pertenece a esta organización');
-                }
+                ErrorHelper.throwIfNotFound(servicioQuery.rows[0], 'Servicio');
             }
 
             // Validar producto si aplica_a = 'producto' y producto_id está definido
@@ -76,9 +73,7 @@ class ConfiguracionComisionesModel {
                     [data.producto_id, organizacionId]
                 );
 
-                if (productoQuery.rows.length === 0) {
-                    throw new Error('Producto no encontrado o no pertenece a esta organización');
-                }
+                ErrorHelper.throwIfNotFound(productoQuery.rows[0], 'Producto');
             }
 
             // Validar categoría de producto si aplica_a = 'producto' y categoria_producto_id está definido
@@ -88,9 +83,7 @@ class ConfiguracionComisionesModel {
                     [data.categoria_producto_id, organizacionId]
                 );
 
-                if (categoriaQuery.rows.length === 0) {
-                    throw new Error('Categoría de producto no encontrada o no pertenece a esta organización');
-                }
+                ErrorHelper.throwIfNotFound(categoriaQuery.rows[0], 'Categoría de producto');
             }
 
             // Verificar si ya existe una configuración con el mismo scope
@@ -326,9 +319,7 @@ class ConfiguracionComisionesModel {
                 [configId, organizacionId]
             );
 
-            if (existeQuery.rows.length === 0) {
-                throw new Error('Configuración no encontrada');
-            }
+            ErrorHelper.throwIfNotFound(existeQuery.rows[0], 'Configuración');
 
             // Eliminar (el trigger de auditoría registrará automáticamente)
             await db.query(

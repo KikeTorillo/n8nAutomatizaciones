@@ -50,15 +50,8 @@ const crear = {
             }),
         activo: Joi.boolean().optional().default(true),
         imagen_url: Joi.string().uri().max(500).optional().allow(null, ''),
-        // Precios multi-moneda (Fase 4)
-        precios_moneda: Joi.array().items(
-            Joi.object({
-                moneda: Joi.string().length(3).required(),
-                precio: Joi.number().positive().required(),
-                precio_minimo: Joi.number().positive().optional().allow(null),
-                precio_maximo: Joi.number().positive().optional().allow(null)
-            })
-        ).optional()
+        // Precios multi-moneda (v2.2 - usa campo compartido)
+        precios_moneda: fields.preciosRango.optional()
     })
 };
 
@@ -99,15 +92,8 @@ const actualizar = {
         configuracion_especifica: Joi.object().optional().allow(null),
         activo: Joi.boolean().optional(),
         imagen_url: Joi.string().uri().max(500).optional().allow(null, ''),
-        // Precios multi-moneda (Fase 4)
-        precios_moneda: Joi.array().items(
-            Joi.object({
-                moneda: Joi.string().length(3).required(),
-                precio: Joi.number().positive().required(),
-                precio_minimo: Joi.number().positive().optional().allow(null),
-                precio_maximo: Joi.number().positive().optional().allow(null)
-            })
-        ).optional()
+        // Precios multi-moneda (v2.2 - usa campo compartido)
+        precios_moneda: fields.preciosRango.optional()
     }).min(1)
 };
 

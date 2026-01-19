@@ -4,6 +4,7 @@
  * Fase 5 del Plan de Empleados Competitivo
  */
 const RLSContextManager = require('../../../utils/rlsContextManager');
+const { ErrorHelper } = require('../../../utils/helpers');
 
 class OnboardingModel {
 
@@ -44,15 +45,15 @@ class OnboardingModel {
             } catch (error) {
                 if (error.code === '23505') {
                     if (error.constraint?.includes('uk_plantilla_nombre')) {
-                        throw new Error('Ya existe una plantilla con ese nombre en esta organización');
+                        ErrorHelper.throwConflict('Ya existe una plantilla con ese nombre en esta organización');
                     }
                 }
                 if (error.code === '23503') {
                     if (error.constraint?.includes('departamento')) {
-                        throw new Error('El departamento especificado no existe');
+                        ErrorHelper.throwValidation('El departamento especificado no existe');
                     }
                     if (error.constraint?.includes('puesto')) {
-                        throw new Error('El puesto especificado no existe');
+                        ErrorHelper.throwValidation('El puesto especificado no existe');
                     }
                 }
                 throw error;
@@ -202,7 +203,7 @@ class OnboardingModel {
             }
 
             if (campos.length === 0) {
-                throw new Error('No hay campos válidos para actualizar');
+                ErrorHelper.throwValidation('No hay campos válidos para actualizar');
             }
 
             const query = `
@@ -218,15 +219,12 @@ class OnboardingModel {
             try {
                 const result = await db.query(query, valores);
 
-                if (result.rows.length === 0) {
-                    throw new Error('Plantilla no encontrada');
-                }
-
+                ErrorHelper.throwIfNotFound(result.rows[0], 'Plantilla');
                 return result.rows[0];
             } catch (error) {
                 if (error.code === '23505') {
                     if (error.constraint?.includes('uk_plantilla_nombre')) {
-                        throw new Error('Ya existe una plantilla con ese nombre');
+                        ErrorHelper.throwConflict('Ya existe una plantilla con ese nombre');
                     }
                 }
                 throw error;
@@ -303,9 +301,7 @@ class OnboardingModel {
             `;
             const profResult = await db.query(profQuery, [profesionalId, organizacionId]);
 
-            if (profResult.rows.length === 0) {
-                throw new Error('Profesional no encontrado');
-            }
+            ErrorHelper.throwIfNotFound(profResult.rows[0], 'Profesional');
 
             const { departamento_id, puesto_id } = profResult.rows[0];
 
@@ -392,11 +388,11 @@ class OnboardingModel {
             } catch (error) {
                 if (error.code === '23503') {
                     if (error.constraint?.includes('plantilla')) {
-                        throw new Error('La plantilla especificada no existe');
+                        ErrorHelper.throwValidation('La plantilla especificada no existe');
                     }
                 }
                 if (error.code === '22P02') {
-                    throw new Error('El tipo de responsable especificado no es válido');
+                    ErrorHelper.throwValidation('El tipo de responsable especificado no es válido');
                 }
                 throw error;
             }
@@ -482,7 +478,7 @@ class OnboardingModel {
             }
 
             if (campos.length === 0) {
-                throw new Error('No hay campos válidos para actualizar');
+                ErrorHelper.throwValidation('No hay campos válidos para actualizar');
             }
 
             const query = `
@@ -498,14 +494,11 @@ class OnboardingModel {
             try {
                 const result = await db.query(query, valores);
 
-                if (result.rows.length === 0) {
-                    throw new Error('Tarea no encontrada');
-                }
-
+                ErrorHelper.throwIfNotFound(result.rows[0], 'Tarea');
                 return result.rows[0];
             } catch (error) {
                 if (error.code === '22P02') {
-                    throw new Error('El tipo de responsable especificado no es válido');
+                    ErrorHelper.throwValidation('El tipo de responsable especificado no es válido');
                 }
                 throw error;
             }
@@ -576,9 +569,7 @@ class OnboardingModel {
             `;
             const profResult = await db.query(profQuery, [profesionalId, organizacionId]);
 
-            if (profResult.rows.length === 0) {
-                throw new Error('Profesional no encontrado');
-            }
+            ErrorHelper.throwIfNotFound(profResult.rows[0], 'Profesional');
 
             // Verificar que la plantilla existe
             const plantQuery = `
@@ -588,7 +579,7 @@ class OnboardingModel {
             const plantResult = await db.query(plantQuery, [plantillaId, organizacionId]);
 
             if (plantResult.rows.length === 0) {
-                throw new Error('Plantilla no encontrada o inactiva');
+                ErrorHelper.throwIfNotFound(null, 'Plantilla');
             }
 
             // Llamar a la función SQL
@@ -717,10 +708,7 @@ class OnboardingModel {
                 notas
             ]);
 
-            if (result.rows.length === 0) {
-                throw new Error('Tarea de onboarding no encontrada para este profesional');
-            }
-
+            ErrorHelper.throwIfNotFound(result.rows[0], 'Tarea de onboarding');
             return result.rows[0];
         });
     }

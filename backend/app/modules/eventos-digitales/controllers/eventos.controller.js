@@ -4,6 +4,19 @@
  * ====================================================================
  * Controlador para gestión de eventos con invitaciones digitales.
  *
+ * ENDPOINTS (7):
+ * - POST   /eventos              - Crear evento
+ * - GET    /eventos              - Listar eventos
+ * - GET    /eventos/:id          - Obtener evento por ID
+ * - PUT    /eventos/:id          - Actualizar evento
+ * - POST   /eventos/:id/publicar - Publicar evento
+ * - GET    /eventos/:id/estadisticas - Estadísticas del evento
+ * - DELETE /eventos/:id          - Eliminar evento
+ *
+ * NO MIGRADO A BaseCrudController - Ene 2026
+ * Razón: Métodos custom publicar() y estadisticas(), lógica de
+ * estados de evento, no sigue firma estándar del Model.
+ *
  * Fecha creación: 4 Diciembre 2025
  */
 

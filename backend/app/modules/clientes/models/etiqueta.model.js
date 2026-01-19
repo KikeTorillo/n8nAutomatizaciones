@@ -10,14 +10,17 @@
  */
 
 const RLSContextManager = require('../../../utils/rlsContextManager');
+const { ErrorHelper } = require('../../../utils/helpers');
 
 class EtiquetaClienteModel {
 
     /**
      * Crear una nueva etiqueta
+     * @param {number} organizacionId - ID de la organización
+     * @param {Object} etiquetaData - Datos de la etiqueta
      */
-    static async crear(etiquetaData) {
-        return await RLSContextManager.query(etiquetaData.organizacion_id, async (db) => {
+    static async crear(organizacionId, etiquetaData) {
+        return await RLSContextManager.query(organizacionId, async (db) => {
             const query = `
                 INSERT INTO etiquetas_clientes (
                     organizacion_id, nombre, color, descripcion, orden, activo
@@ -26,7 +29,7 @@ class EtiquetaClienteModel {
             `;
 
             const values = [
-                etiquetaData.organizacion_id,
+                organizacionId,
                 etiquetaData.nombre,
                 etiquetaData.color || '#6366F1',
                 etiquetaData.descripcion || null,
@@ -39,10 +42,10 @@ class EtiquetaClienteModel {
                 return result.rows[0];
             } catch (error) {
                 if (error.code === '23505') {
-                    throw new Error(`Ya existe una etiqueta con el nombre "${etiquetaData.nombre}"`);
+                    ErrorHelper.throwConflict(`Ya existe una etiqueta con el nombre "${etiquetaData.nombre}"`);
                 }
                 if (error.code === '23514' && error.constraint === 'etiquetas_clientes_color_check') {
-                    throw new Error('El color debe ser un código hexadecimal válido (ej: #EF4444)');
+                    ErrorHelper.throwValidation('El color debe ser un código hexadecimal válido (ej: #EF4444)');
                 }
                 throw error;
             }
@@ -95,6 +98,7 @@ class EtiquetaClienteModel {
 
     /**
      * Obtener etiqueta por ID
+     * Alias: buscarPorId (para compatibilidad con BaseCrudController)
      */
     static async obtenerPorId(organizacionId, etiquetaId) {
         return await RLSContextManager.query(organizacionId, async (db) => {
@@ -156,7 +160,7 @@ class EtiquetaClienteModel {
             }
 
             if (campos.length === 0) {
-                throw new Error('No hay campos para actualizar');
+                ErrorHelper.throwValidation('No hay campos para actualizar');
             }
 
             values.push(etiquetaId);
@@ -170,18 +174,14 @@ class EtiquetaClienteModel {
 
             try {
                 const result = await db.query(query, values);
-
-                if (result.rows.length === 0) {
-                    throw new Error('Etiqueta no encontrada');
-                }
-
+                ErrorHelper.throwIfNotFound(result.rows[0], 'Etiqueta');
                 return result.rows[0];
             } catch (error) {
                 if (error.code === '23505') {
-                    throw new Error(`Ya existe una etiqueta con el nombre "${etiquetaData.nombre}"`);
+                    ErrorHelper.throwConflict(`Ya existe una etiqueta con el nombre "${etiquetaData.nombre}"`);
                 }
                 if (error.code === '23514' && error.constraint === 'etiquetas_clientes_color_check') {
-                    throw new Error('El color debe ser un código hexadecimal válido (ej: #EF4444)');
+                    ErrorHelper.throwValidation('El color debe ser un código hexadecimal válido (ej: #EF4444)');
                 }
                 throw error;
             }
@@ -202,7 +202,7 @@ class EtiquetaClienteModel {
             const checkResult = await db.query(checkQuery, [etiquetaId]);
 
             if (parseInt(checkResult.rows[0].total) > 0) {
-                throw new Error(`No se puede eliminar la etiqueta porque tiene ${checkResult.rows[0].total} cliente(s) asignado(s)`);
+                ErrorHelper.throwConflict(`No se puede eliminar la etiqueta porque tiene ${checkResult.rows[0].total} cliente(s) asignado(s)`);
             }
 
             const query = `
@@ -212,11 +212,7 @@ class EtiquetaClienteModel {
             `;
 
             const result = await db.query(query, [etiquetaId]);
-
-            if (result.rows.length === 0) {
-                throw new Error('Etiqueta no encontrada');
-            }
-
+            ErrorHelper.throwIfNotFound(result.rows[0], 'Etiqueta');
             return { eliminado: true, id: etiquetaId };
         });
     }
@@ -255,10 +251,7 @@ class EtiquetaClienteModel {
             // Verificar que el cliente existe
             const clienteQuery = 'SELECT id FROM clientes WHERE id = $1';
             const clienteResult = await db.query(clienteQuery, [clienteId]);
-
-            if (clienteResult.rows.length === 0) {
-                throw new Error('Cliente no encontrado');
-            }
+            ErrorHelper.throwIfNotFound(clienteResult.rows[0], 'Cliente');
 
             // Eliminar etiquetas existentes
             await db.query('DELETE FROM cliente_etiquetas WHERE cliente_id = $1', [clienteId]);
@@ -276,7 +269,7 @@ class EtiquetaClienteModel {
             const verificarResult = await db.query(verificarQuery, [etiquetaIds]);
 
             if (verificarResult.rows.length !== etiquetaIds.length) {
-                throw new Error('Una o más etiquetas no son válidas');
+                ErrorHelper.throwValidation('Una o más etiquetas no son válidas');
             }
 
             // Insertar nuevas asignaciones
@@ -309,7 +302,7 @@ class EtiquetaClienteModel {
                 return result.rows[0] || { cliente_id: clienteId, etiqueta_id: etiquetaId };
             } catch (error) {
                 if (error.code === '23503') {
-                    throw new Error('Cliente o etiqueta no encontrados');
+                    ErrorHelper.throwNotFound('Cliente o etiqueta no encontrados');
                 }
                 throw error;
             }
@@ -331,6 +324,15 @@ class EtiquetaClienteModel {
             return { eliminado: result.rows.length > 0 };
         });
     }
+
+    // ====================================================================
+    // ALIASES PARA BASECRUDCONTROLLER
+    // ====================================================================
+
+    /**
+     * Alias de obtenerPorId para BaseCrudController
+     */
+    static buscarPorId = this.obtenerPorId;
 }
 
 module.exports = EtiquetaClienteModel;

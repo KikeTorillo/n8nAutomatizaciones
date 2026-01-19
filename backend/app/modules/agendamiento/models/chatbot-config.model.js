@@ -8,6 +8,7 @@
  */
 
 const RLSContextManager = require('../../../utils/rlsContextManager');
+const { ErrorHelper } = require('../../../utils/helpers');
 
 class ChatbotConfigModel {
 
@@ -71,24 +72,24 @@ class ChatbotConfigModel {
                 // Constraint unique: organizacion_id + plataforma
                 if (error.code === '23505') {
                     if (error.constraint === 'uq_chatbot_org_plataforma') {
-                        throw new Error(`Ya existe un chatbot de ${chatbotData.plataforma} para esta organización`);
+                        ErrorHelper.throwConflict(`Ya existe un chatbot de ${chatbotData.plataforma} para esta organización`);
                     }
                     if (error.constraint === 'chatbot_config_n8n_workflow_id_key') {
-                        throw new Error(`El workflow ID ${chatbotData.n8n_workflow_id} ya está en uso`);
+                        ErrorHelper.throwConflict(`El workflow ID ${chatbotData.n8n_workflow_id} ya está en uso`);
                     }
                 }
 
                 // Check constraint (temperatura 0.0-2.0)
                 if (error.code === '23514') {
                     if (error.constraint === 'chatbot_config_ai_temperature_check') {
-                        throw new Error('La temperatura del modelo debe estar entre 0.0 y 2.0');
+                        ErrorHelper.throwValidation('La temperatura del modelo debe estar entre 0.0 y 2.0');
                     }
                 }
 
                 // Foreign key (organización no existe)
                 if (error.code === '23503') {
                     if (error.constraint === 'chatbot_config_organizacion_id_fkey') {
-                        throw new Error('La organización especificada no existe');
+                        ErrorHelper.throwIfNotFound(null, 'Organización');
                     }
                 }
 
@@ -265,7 +266,7 @@ class ChatbotConfigModel {
             }
 
             if (setClauses.length === 0) {
-                throw new Error('No hay campos de workflow para actualizar');
+                ErrorHelper.throwValidation('No hay campos de workflow para actualizar');
             }
 
             setClauses.push(`actualizado_en = NOW()`);
@@ -289,7 +290,7 @@ class ChatbotConfigModel {
             } catch (error) {
                 if (error.code === '23505') {
                     if (error.constraint === 'chatbot_config_n8n_workflow_id_key') {
-                        throw new Error(`El workflow ID ${workflowData.n8n_workflow_id} ya está en uso`);
+                        ErrorHelper.throwConflict(`El workflow ID ${workflowData.n8n_workflow_id} ya está en uso`);
                     }
                 }
                 throw error;
@@ -374,7 +375,7 @@ class ChatbotConfigModel {
             }
 
             if (setClauses.length === 0) {
-                throw new Error('No hay campos para actualizar');
+                ErrorHelper.throwValidation('No hay campos para actualizar');
             }
 
             setClauses.push(`actualizado_en = NOW()`);
@@ -398,7 +399,7 @@ class ChatbotConfigModel {
             } catch (error) {
                 if (error.code === '23514') {
                     if (error.constraint === 'chatbot_config_ai_temperature_check') {
-                        throw new Error('La temperatura del modelo debe estar entre 0.0 y 2.0');
+                        ErrorHelper.throwValidation('La temperatura del modelo debe estar entre 0.0 y 2.0');
                     }
                 }
                 throw error;
@@ -476,7 +477,7 @@ class ChatbotConfigModel {
             } catch (error) {
                 // Si hay foreign key constraints (ej: chatbot_credentials)
                 if (error.code === '23503') {
-                    throw new Error('No se puede eliminar el chatbot porque tiene dependencias asociadas');
+                    ErrorHelper.throwConflict('No se puede eliminar el chatbot porque tiene dependencias asociadas');
                 }
                 throw error;
             }

@@ -11,6 +11,7 @@ import { operacionesAlmacenApi } from '@/services/api/endpoints';
 import { useToast } from '@/hooks/utils';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 import { OPERACIONES_ALMACEN_KEYS } from './constants';
+import { queryKeys } from '@/hooks/config';
 
 /**
  * Hook para crear operación manual
@@ -112,8 +113,15 @@ export function useCompletarOperacion() {
       if (result.operacion_siguiente_id) {
         queryClient.invalidateQueries(OPERACIONES_ALMACEN_KEYS.detail(result.operacion_siguiente_id));
       }
-      queryClient.invalidateQueries({ queryKey: ['productos'] });
-      queryClient.invalidateQueries({ queryKey: ['movimientos-inventario'] });
+      // Invalidar solo queries activas de inventario
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.inventario.movimientos.all,
+        refetchType: 'active'
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.inventario.productos.stockCritico,
+        refetchType: 'active'
+      });
       toast.success('Operación completada');
     },
     onError: createCRUDErrorHandler('update', 'Operación'),

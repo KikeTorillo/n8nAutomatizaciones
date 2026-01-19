@@ -1,6 +1,7 @@
 const RLSContextManager = require('../../../utils/rlsContextManager');
 const logger = require('../../../utils/logger');
 const { DuplicateResourceError } = require('../../../utils/errors');
+const { ErrorHelper } = require('../../../utils/helpers');
 
 /**
  * Model para CRUD de proveedores
@@ -193,9 +194,7 @@ class ProveedoresModel {
                 [id]
             );
 
-            if (existeQuery.rows.length === 0) {
-                throw new Error('Proveedor no encontrado');
-            }
+            ErrorHelper.throwIfNotFound(existeQuery.rows[0], 'Proveedor');
 
             // Construir query de actualización dinámica
             const camposActualizables = [
@@ -217,7 +216,7 @@ class ProveedoresModel {
             });
 
             if (updates.length === 0) {
-                throw new Error('No hay campos para actualizar');
+                ErrorHelper.throwValidation('No hay campos para actualizar');
             }
 
             // Agregar ID al final
@@ -262,7 +261,7 @@ class ProveedoresModel {
             );
 
             if (parseInt(productosQuery.rows[0].total) > 0) {
-                throw new Error('No se puede eliminar un proveedor que tiene productos activos asociados');
+                ErrorHelper.throwConflict('No se puede eliminar un proveedor que tiene productos activos asociados');
             }
 
             // Soft delete

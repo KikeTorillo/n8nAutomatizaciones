@@ -5,6 +5,7 @@
  */
 
 const RLSContextManager = require('../../../utils/rlsContextManager');
+const { ErrorHelper } = require('../../../utils/helpers');
 
 class NumerosSerieModel {
     // ==================== CRUD BASICO ====================
@@ -299,12 +300,10 @@ class NumerosSerieModel {
                 [numeroSerieId, organizacionId]
             );
 
-            if (!check.rows[0]) {
-                throw new Error('Número de serie no encontrado');
-            }
+            ErrorHelper.throwIfNotFound(check.rows[0], 'Número de serie');
 
             if (check.rows[0].estado !== 'disponible') {
-                throw new Error(`No se puede reservar. Estado actual: ${check.rows[0].estado}`);
+                ErrorHelper.throwConflict(`No se puede reservar. Estado actual: ${check.rows[0].estado}`);
             }
 
             // Actualizar estado
@@ -337,12 +336,10 @@ class NumerosSerieModel {
                 [numeroSerieId, organizacionId]
             );
 
-            if (!check.rows[0]) {
-                throw new Error('Número de serie no encontrado');
-            }
+            ErrorHelper.throwIfNotFound(check.rows[0], 'Número de serie');
 
             if (check.rows[0].estado !== 'reservado') {
-                throw new Error(`No se puede liberar. Estado actual: ${check.rows[0].estado}`);
+                ErrorHelper.throwConflict(`No se puede liberar. Estado actual: ${check.rows[0].estado}`);
             }
 
             await client.query(
@@ -632,11 +629,11 @@ class NumerosSerieModel {
                 );
 
                 if (check.rows.length === 0) {
-                    throw new Error(`Número de serie ${nsId} no encontrado`);
+                    ErrorHelper.throwIfNotFound(null, `Número de serie ${nsId}`);
                 }
 
                 if (check.rows[0].estado !== 'disponible') {
-                    throw new Error(`Número de serie ${nsId} no está disponible (estado: ${check.rows[0].estado})`);
+                    ErrorHelper.throwConflict(`Número de serie ${nsId} no está disponible (estado: ${check.rows[0].estado})`);
                 }
 
                 // Marcar como reservado

@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, memo } from 'react';
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Button from '../atoms/Button';
@@ -42,7 +42,7 @@ const SIZE_CLASSES = {
  * @param {'sm'|'md'|'lg'} [props.size] - Tamaño de los botones (default: 'md')
  * @param {string} [props.className] - Clases adicionales
  */
-export function Pagination({
+export const Pagination = memo(function Pagination({
   pagination,
   onPageChange,
   showInfo = true,
@@ -232,7 +232,7 @@ export function Pagination({
       )}
     </div>
   );
-}
+});
 
 Pagination.displayName = 'Pagination';
 

@@ -4,6 +4,7 @@
  * Fase 3 del Plan de Empleados Competitivo
  */
 const RLSContextManager = require('../../../utils/rlsContextManager');
+const { ErrorHelper } = require('../../../utils/helpers');
 const NivelesVacacionesModel = require('./niveles.model');
 const PoliticasVacacionesModel = require('./politicas.model');
 
@@ -207,9 +208,7 @@ class SaldosVacacionesModel {
                 [saldoId, organizacionId]
             );
 
-            if (saldoQuery.rows.length === 0) {
-                throw new Error('Saldo no encontrado');
-            }
+            ErrorHelper.throwIfNotFound(saldoQuery.rows[0], 'Saldo');
 
             const saldoActual = saldoQuery.rows[0];
             const nuevoAjuste = parseFloat(saldoActual.dias_ajuste_manual || 0) + diasAjuste;

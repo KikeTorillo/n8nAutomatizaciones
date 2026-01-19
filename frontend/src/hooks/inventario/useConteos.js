@@ -3,6 +3,7 @@ import { conteosApi } from '@/services/api/endpoints';
 import useSucursalStore, { selectGetSucursalId } from '@/store/sucursalStore';
 import { STALE_TIMES } from '@/app/queryClient';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
+import { queryKeys } from '@/hooks/config';
 
 /**
  * Hooks para gestión de Conteos de Inventario (Conteo Físico)
@@ -27,7 +28,7 @@ export function useConteos(params = {}) {
     const getSucursalId = useSucursalStore(selectGetSucursalId);
 
     return useQuery({
-        queryKey: ['conteos', params],
+        queryKey: queryKeys.inventario.conteos.list(params),
         queryFn: async () => {
             const sanitizedParams = Object.entries({
                 ...params,
@@ -52,7 +53,7 @@ export function useConteos(params = {}) {
  */
 export function useConteo(id) {
     return useQuery({
-        queryKey: ['conteo', id],
+        queryKey: queryKeys.inventario.conteos.detail(id),
         queryFn: async () => {
             const response = await conteosApi.obtenerPorId(id);
             return response.data.data;
@@ -76,7 +77,7 @@ export function useConteo(id) {
  */
 export function useEstadisticasConteos(params = {}) {
     return useQuery({
-        queryKey: ['estadisticas-conteos', params],
+        queryKey: queryKeys.inventario.conteos.estadisticas(params),
         queryFn: async () => {
             const sanitizedParams = Object.entries(params).reduce((acc, [key, value]) => {
                 if (value !== '' && value !== null && value !== undefined) {
@@ -117,8 +118,8 @@ export function useCrearConteo() {
             return response.data.data;
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['conteos'] });
-            queryClient.invalidateQueries({ queryKey: ['estadisticas-conteos'] });
+            queryClient.invalidateQueries({ queryKey: queryKeys.inventario.conteos.all });
+            queryClient.invalidateQueries({ queryKey: queryKeys.inventario.conteos.estadisticas({}) });
         },
         onError: createCRUDErrorHandler('create', 'Conteo', {
             409: 'Ya existe un conteo en proceso',
@@ -138,8 +139,8 @@ export function useIniciarConteo() {
             return response.data.data;
         },
         onSuccess: (_, id) => {
-            queryClient.invalidateQueries({ queryKey: ['conteo', id] });
-            queryClient.invalidateQueries({ queryKey: ['conteos'] });
+            queryClient.invalidateQueries({ queryKey: queryKeys.inventario.conteos.detail(id) });
+            queryClient.invalidateQueries({ queryKey: queryKeys.inventario.conteos.all });
         },
         onError: createCRUDErrorHandler('update', 'Conteo'),
     });
@@ -161,7 +162,11 @@ export function useRegistrarConteoItem() {
         },
         onSuccess: (data) => {
             // Invalidar el conteo padre para actualizar resumen
-            queryClient.invalidateQueries({ queryKey: ['conteo'] });
+            if (data?.conteo_id) {
+                queryClient.invalidateQueries({ queryKey: queryKeys.inventario.conteos.detail(data.conteo_id) });
+            } else {
+                queryClient.invalidateQueries({ queryKey: queryKeys.inventario.conteos.all });
+            }
         },
         onError: createCRUDErrorHandler('update', 'Item conteo'),
     });
@@ -179,9 +184,9 @@ export function useCompletarConteo() {
             return response.data.data;
         },
         onSuccess: (_, id) => {
-            queryClient.invalidateQueries({ queryKey: ['conteo', id] });
-            queryClient.invalidateQueries({ queryKey: ['conteos'] });
-            queryClient.invalidateQueries({ queryKey: ['estadisticas-conteos'] });
+            queryClient.invalidateQueries({ queryKey: queryKeys.inventario.conteos.detail(id) });
+            queryClient.invalidateQueries({ queryKey: queryKeys.inventario.conteos.all });
+            queryClient.invalidateQueries({ queryKey: queryKeys.inventario.conteos.estadisticas({}) });
         },
         onError: createCRUDErrorHandler('update', 'Conteo'),
     });
@@ -199,15 +204,23 @@ export function useAplicarAjustesConteo() {
             return response.data.data;
         },
         onSuccess: (_, id) => {
-            queryClient.invalidateQueries({ queryKey: ['conteo', id] });
-            queryClient.invalidateQueries({ queryKey: ['conteos'] });
-            queryClient.invalidateQueries({ queryKey: ['estadisticas-conteos'] });
-            // Invalidar datos de inventario afectados
-            queryClient.invalidateQueries({ queryKey: ['productos'] });
-            queryClient.invalidateQueries({ queryKey: ['movimientos'] });
-            queryClient.invalidateQueries({ queryKey: ['kardex'] });
-            queryClient.invalidateQueries({ queryKey: ['stock-critico'] });
-            queryClient.invalidateQueries({ queryKey: ['valor-inventario'] });
+            // Invalidar conteos
+            queryClient.invalidateQueries({ queryKey: queryKeys.inventario.conteos.detail(id) });
+            queryClient.invalidateQueries({ queryKey: queryKeys.inventario.conteos.all });
+            queryClient.invalidateQueries({ queryKey: queryKeys.inventario.conteos.estadisticas({}) });
+            // Invalidar datos de inventario afectados (solo queries activas)
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.inventario.movimientos.all,
+                refetchType: 'active'
+            });
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.inventario.productos.stockCritico,
+                refetchType: 'active'
+            });
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.inventario.valoracion.resumen,
+                refetchType: 'active'
+            });
         },
         onError: createCRUDErrorHandler('update', 'Ajustes conteo'),
     });
@@ -225,9 +238,9 @@ export function useCancelarConteo() {
             return response.data.data;
         },
         onSuccess: (_, { id }) => {
-            queryClient.invalidateQueries({ queryKey: ['conteo', id] });
-            queryClient.invalidateQueries({ queryKey: ['conteos'] });
-            queryClient.invalidateQueries({ queryKey: ['estadisticas-conteos'] });
+            queryClient.invalidateQueries({ queryKey: queryKeys.inventario.conteos.detail(id) });
+            queryClient.invalidateQueries({ queryKey: queryKeys.inventario.conteos.all });
+            queryClient.invalidateQueries({ queryKey: queryKeys.inventario.conteos.estadisticas({}) });
         },
         onError: createCRUDErrorHandler('delete', 'Conteo'),
     });

@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { cn } from '@/lib/utils';
 import { ICON_BG_COLORS, SEMANTIC_COLORS, LOADING_STATES } from '@/lib/uiConstants';
 
@@ -54,7 +55,7 @@ function StatCardSkeleton({ variant = 'compact' }) {
  * @param {function} [props.onClick] - Callback al hacer clic (hace la card clickeable)
  * @param {string} [props.className] - Clases adicionales
  */
-export function StatCard({
+export const StatCard = memo(function StatCard({
   icon: Icon,
   label,
   title,
@@ -162,7 +163,7 @@ export function StatCard({
       </div>
     </div>
   );
-}
+});
 
 StatCard.displayName = 'StatCard';
 

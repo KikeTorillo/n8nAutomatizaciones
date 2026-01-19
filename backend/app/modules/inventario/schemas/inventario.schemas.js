@@ -50,9 +50,8 @@ const inventarioSchemas = {
 
             icono: Joi.string().max(50).optional().allow(null, ''),
 
-            color: Joi.string().regex(/^#[0-9A-F]{6}$/i).optional().allow(null, '').messages({
-                'string.pattern.base': 'El color debe tener formato hexadecimal (#RRGGBB)'
-            }),
+            // ✅ FIX v2.1: Usar fields.colorHex
+            color: fields.colorHex.optional().allow(null, ''),
 
             orden: Joi.number().integer().min(0).optional().default(0),
 
@@ -74,7 +73,8 @@ const inventarioSchemas = {
             descripcion: Joi.string().max(500).optional().allow(null, ''),
             categoria_padre_id: Joi.number().integer().positive().optional().allow(null),
             icono: Joi.string().max(50).optional().allow(null, ''),
-            color: Joi.string().regex(/^#[0-9A-F]{6}$/i).optional().allow(null, ''),
+            // ✅ FIX v2.1: Usar fields.colorHex
+            color: fields.colorHex.optional().allow(null, ''),
             orden: Joi.number().integer().min(0).optional(),
             activo: Joi.boolean().optional()
         }).min(1)
@@ -109,16 +109,17 @@ const inventarioSchemas = {
 
             razon_social: Joi.string().max(200).optional().allow(null, ''),
 
-            rfc: Joi.string().max(13).optional().allow(null, '').regex(/^[A-Z0-9]+$/i).messages({
-                'string.pattern.base': 'El RFC solo puede contener letras y números'
-            }),
+            // ✅ FIX v2.1: Usar fields.rfc con validación completa
+            rfc: fields.rfc.optional(),
 
-            telefono: Joi.string().max(20).optional().allow(null, ''),
-            email: Joi.string().email().max(255).optional().allow(null, ''),
+            telefono: fields.telefonoGenerico.optional(),
+            // ✅ FIX v2.1: Usar fields.email con lowercase
+            email: fields.email.optional().allow(null, ''),
             sitio_web: Joi.string().uri().max(255).optional().allow(null, ''),
 
             direccion: Joi.string().max(500).optional().allow(null, ''),
-            codigo_postal: Joi.string().max(10).optional().allow(null, ''),
+            // ✅ FIX v2.1: Usar fields.codigoPostal con validación
+            codigo_postal: fields.codigoPostal.optional().allow(null, ''),
             // IDs de ubicación normalizados (Nov 2025)
             pais_id: Joi.number().integer().positive().optional().allow(null),
             estado_id: Joi.number().integer().positive().optional().allow(null),
@@ -145,12 +146,13 @@ const inventarioSchemas = {
         body: Joi.object({
             nombre: Joi.string().max(200).optional(),
             razon_social: Joi.string().max(200).optional().allow(null, ''),
-            rfc: Joi.string().max(13).optional().allow(null, ''),
-            telefono: Joi.string().max(20).optional().allow(null, ''),
-            email: Joi.string().email().max(255).optional().allow(null, ''),
+            // ✅ FIX v2.1: Usar fields estandarizados
+            rfc: fields.rfc.optional(),
+            telefono: fields.telefonoGenerico.optional(),
+            email: fields.email.optional().allow(null, ''),
             sitio_web: Joi.string().uri().max(255).optional().allow(null, ''),
             direccion: Joi.string().max(500).optional().allow(null, ''),
-            codigo_postal: Joi.string().max(10).optional().allow(null, ''),
+            codigo_postal: fields.codigoPostal.optional().allow(null, ''),
             // IDs de ubicación normalizados (Nov 2025)
             pais_id: Joi.number().integer().positive().optional().allow(null),
             estado_id: Joi.number().integer().positive().optional().allow(null),

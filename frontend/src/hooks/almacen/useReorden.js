@@ -8,6 +8,7 @@ import { STALE_TIMES } from '@/app/queryClient';
 import { reordenApi, inventarioApi } from '@/services/api/endpoints';
 import { useToast } from '@/hooks/utils';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
+import { queryKeys } from '@/hooks/config';
 
 // ==================== DASHBOARD ====================
 
@@ -16,13 +17,13 @@ import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
  */
 export function useDashboardReorden() {
   return useQuery({
-    queryKey: ['reorden', 'dashboard'],
+    queryKey: queryKeys.almacen.reorden.dashboard,
     queryFn: async () => {
       const response = await reordenApi.obtenerDashboard();
       return response.data.data;
     },
     staleTime: STALE_TIMES.DYNAMIC, // 2 minutos
-    refetchInterval: 1000 * 60 * 5, // Refrescar cada 5 minutos
+    refetchInterval: 1000 * 60 * 2, // Refrescar cada 2 minutos (alineado con staleTime)
   });
 }
 
@@ -33,7 +34,7 @@ export function useDashboardReorden() {
  */
 export function useProductosBajoMinimo(filtros = {}) {
   return useQuery({
-    queryKey: ['reorden', 'productos-bajo-minimo', filtros],
+    queryKey: queryKeys.almacen.reorden.productosBajoMinimo(filtros),
     queryFn: async () => {
       const response = await reordenApi.productosBajoMinimo(filtros);
       return response.data.data;
@@ -49,7 +50,7 @@ export function useProductosBajoMinimo(filtros = {}) {
  */
 export function useRutasOperacion(filtros = {}) {
   return useQuery({
-    queryKey: ['reorden', 'rutas', filtros],
+    queryKey: queryKeys.almacen.reorden.rutas(filtros),
     queryFn: async () => {
       const response = await reordenApi.listarRutas(filtros);
       return response.data.data;
@@ -65,7 +66,7 @@ export function useRutasOperacion(filtros = {}) {
  */
 export function useReglasReorden(filtros = {}) {
   return useQuery({
-    queryKey: ['reorden', 'reglas', filtros],
+    queryKey: queryKeys.almacen.reorden.reglas.list(filtros),
     queryFn: async () => {
       const response = await reordenApi.listarReglas(filtros);
       return response.data.data;
@@ -79,7 +80,7 @@ export function useReglasReorden(filtros = {}) {
  */
 export function useReglaReorden(id) {
   return useQuery({
-    queryKey: ['reorden', 'regla', id],
+    queryKey: queryKeys.almacen.reorden.reglas.detail(id),
     queryFn: async () => {
       const response = await reordenApi.obtenerRegla(id);
       return response.data.data;
@@ -98,8 +99,8 @@ export function useCrearReglaReorden() {
   return useMutation({
     mutationFn: (data) => reordenApi.crearRegla(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['reorden', 'reglas'] });
-      queryClient.invalidateQueries({ queryKey: ['reorden', 'dashboard'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.almacen.reorden.reglas.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.almacen.reorden.dashboard });
       toast.success('Regla de reorden creada');
     },
     onError: createCRUDErrorHandler('create', 'Regla'),
@@ -116,9 +117,9 @@ export function useActualizarReglaReorden() {
   return useMutation({
     mutationFn: ({ id, data }) => reordenApi.actualizarRegla(id, data),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['reorden', 'reglas'] });
-      queryClient.invalidateQueries({ queryKey: ['reorden', 'regla', variables.id] });
-      queryClient.invalidateQueries({ queryKey: ['reorden', 'dashboard'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.almacen.reorden.reglas.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.almacen.reorden.reglas.detail(variables.id) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.almacen.reorden.dashboard });
       toast.success('Regla de reorden actualizada');
     },
     onError: createCRUDErrorHandler('update', 'Regla'),
@@ -135,8 +136,8 @@ export function useEliminarReglaReorden() {
   return useMutation({
     mutationFn: (id) => reordenApi.eliminarRegla(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['reorden', 'reglas'] });
-      queryClient.invalidateQueries({ queryKey: ['reorden', 'dashboard'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.almacen.reorden.reglas.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.almacen.reorden.dashboard });
       toast.success('Regla de reorden eliminada');
     },
     onError: createCRUDErrorHandler('delete', 'Regla'),
@@ -155,8 +156,8 @@ export function useEjecutarReordenManual() {
   return useMutation({
     mutationFn: () => reordenApi.ejecutarManual(),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['reorden'] });
-      queryClient.invalidateQueries({ queryKey: ['ordenes-compra'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.almacen.reorden.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.ordenesCompra.all });
       toast.success('Reorden ejecutado exitosamente');
     },
     onError: createCRUDErrorHandler('create', 'Reorden'),
@@ -170,7 +171,7 @@ export function useEjecutarReordenManual() {
  */
 export function useLogsReorden(filtros = {}) {
   return useQuery({
-    queryKey: ['reorden', 'logs', filtros],
+    queryKey: queryKeys.almacen.reorden.logs.list(filtros),
     queryFn: async () => {
       const response = await reordenApi.listarLogs(filtros);
       return response.data.data;
@@ -184,7 +185,7 @@ export function useLogsReorden(filtros = {}) {
  */
 export function useLogReorden(id) {
   return useQuery({
-    queryKey: ['reorden', 'log', id],
+    queryKey: queryKeys.almacen.reorden.logs.detail(id),
     queryFn: async () => {
       const response = await reordenApi.obtenerLog(id);
       return response.data.data;
@@ -202,7 +203,7 @@ export function useLogReorden(id) {
  */
 export function useHistoricoStock(productoId, dias = 30) {
   return useQuery({
-    queryKey: ['inventario', 'historico-stock', productoId, dias],
+    queryKey: queryKeys.inventario.productos.historicoStock(productoId, dias),
     queryFn: async () => {
       const response = await inventarioApi.obtenerHistoricoProducto(productoId, { dias });
       return response.data.data;

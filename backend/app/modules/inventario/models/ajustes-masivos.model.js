@@ -10,6 +10,7 @@
 const RLSContextManager = require('../../../utils/rlsContextManager');
 const MovimientosInventarioModel = require('./movimientos.model');
 const logger = require('../../../utils/logger');
+const { ErrorHelper } = require('../../../utils/helpers');
 
 class AjustesMasivosModel {
     // ==================== CREAR ====================
@@ -199,9 +200,7 @@ class AjustesMasivosModel {
 
             const cabeceraResult = await db.query(cabeceraQuery, [id, organizacionId]);
 
-            if (cabeceraResult.rows.length === 0) {
-                throw new Error('Ajuste masivo no encontrado');
-            }
+            ErrorHelper.throwIfNotFound(cabeceraResult.rows[0], 'Ajuste masivo');
 
             const ajuste = cabeceraResult.rows[0];
 
@@ -253,14 +252,12 @@ class AjustesMasivosModel {
                 [id, organizacionId]
             );
 
-            if (ajusteQuery.rows.length === 0) {
-                throw new Error('Ajuste masivo no encontrado');
-            }
+            ErrorHelper.throwIfNotFound(ajusteQuery.rows[0], 'Ajuste masivo');
 
             const ajuste = ajusteQuery.rows[0];
 
             if (ajuste.estado !== 'pendiente') {
-                throw new Error(`Solo se pueden validar ajustes en estado pendiente. Estado actual: ${ajuste.estado}`);
+                ErrorHelper.throwConflict(`Solo se pueden validar ajustes en estado pendiente. Estado actual: ${ajuste.estado}`);
             }
 
             // 2. Obtener items pendientes
@@ -405,14 +402,12 @@ class AjustesMasivosModel {
                 [id, organizacionId]
             );
 
-            if (ajusteQuery.rows.length === 0) {
-                throw new Error('Ajuste masivo no encontrado');
-            }
+            ErrorHelper.throwIfNotFound(ajusteQuery.rows[0], 'Ajuste masivo');
 
             const ajuste = ajusteQuery.rows[0];
 
             if (ajuste.estado !== 'validado') {
-                throw new Error(`Solo se pueden aplicar ajustes en estado validado. Estado actual: ${ajuste.estado}`);
+                ErrorHelper.throwConflict(`Solo se pueden aplicar ajustes en estado validado. Estado actual: ${ajuste.estado}`);
             }
 
             // 2. Obtener items válidos
@@ -453,7 +448,7 @@ class AjustesMasivosModel {
 
                     // Validar stock no negativo
                     if (stockDespues < 0) {
-                        throw new Error(`Stock insuficiente. Actual: ${stockActual}, ajuste: ${item.cantidad_ajuste}`);
+                        ErrorHelper.throwConflict(`Stock insuficiente. Actual: ${stockActual}, ajuste: ${item.cantidad_ajuste}`);
                     }
 
                     // Insertar movimiento
@@ -599,14 +594,12 @@ class AjustesMasivosModel {
                 [id, organizacionId]
             );
 
-            if (ajusteQuery.rows.length === 0) {
-                throw new Error('Ajuste masivo no encontrado');
-            }
+            ErrorHelper.throwIfNotFound(ajusteQuery.rows[0], 'Ajuste masivo');
 
             const ajuste = ajusteQuery.rows[0];
 
             if (ajuste.estado === 'aplicado' || ajuste.estado === 'con_errores') {
-                throw new Error(`No se puede cancelar un ajuste que ya fue aplicado. Estado actual: ${ajuste.estado}`);
+                ErrorHelper.throwConflict(`No se puede cancelar un ajuste que ya fue aplicado. Estado actual: ${ajuste.estado}`);
             }
 
             // Eliminar (CASCADE elimina items)

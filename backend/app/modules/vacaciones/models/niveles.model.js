@@ -5,6 +5,7 @@
  * Ventaja competitiva: Escalas configurables según LFT México
  */
 const RLSContextManager = require('../../../utils/rlsContextManager');
+const { ErrorHelper } = require('../../../utils/helpers');
 const { NIVELES_LFT_MEXICO } = require('../constants/vacaciones.constants');
 
 class NivelesVacacionesModel {
@@ -153,7 +154,7 @@ class NivelesVacacionesModel {
                 return result.rows[0];
             } catch (error) {
                 if (error.code === '23505') {
-                    throw new Error(`Ya existe un nivel con el nombre "${data.nombre}"`);
+                    ErrorHelper.throwConflict(`Ya existe un nivel con el nombre "${data.nombre}"`);
                 }
                 throw error;
             }
@@ -209,7 +210,7 @@ class NivelesVacacionesModel {
                 return result.rows[0] || null;
             } catch (error) {
                 if (error.code === '23505') {
-                    throw new Error(`Ya existe un nivel con el nombre "${data.nombre}"`);
+                    ErrorHelper.throwConflict(`Ya existe un nivel con el nombre "${data.nombre}"`);
                 }
                 throw error;
             }
@@ -259,7 +260,7 @@ class NivelesVacacionesModel {
                     [organizacionId]
                 );
                 if (parseInt(existentes.rows[0].count) > 0) {
-                    throw new Error('Ya existen niveles configurados. Use sobrescribir=true para reemplazarlos.');
+                    ErrorHelper.throwConflict('Ya existen niveles configurados. Use sobrescribir=true para reemplazarlos.');
                 }
             }
 
@@ -269,7 +270,7 @@ class NivelesVacacionesModel {
             } else if (pais === 'colombia') {
                 await db.query(`SELECT crear_niveles_colombia($1)`, [organizacionId]);
             } else {
-                throw new Error('País no soportado. Use "mexico" o "colombia".');
+                ErrorHelper.throwValidation('País no soportado. Use "mexico" o "colombia".');
             }
 
             // Retornar niveles creados

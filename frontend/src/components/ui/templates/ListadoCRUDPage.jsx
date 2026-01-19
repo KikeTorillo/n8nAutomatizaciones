@@ -284,46 +284,45 @@ export default function ListadoCRUDPage({
       {renderBeforeTable?.({ items, isLoading, paginacion, openModal })}
 
       {/* Table o Vista Custom */}
-      {viewModes && activeView !== 'table' ? (
-        // Renderizar componente de vista custom
-        (() => {
-          const viewConfig = viewModes.find(v => v.id === activeView);
-          if (viewConfig?.component) {
-            const ViewComponent = viewConfig.component;
-            return (
-              <ViewComponent
-                items={items}
-                isLoading={isLoading}
-                onItemClick={onRowClick || handleEditar}
-                handlers={handlers}
-                pagination={paginacion}
-                onPageChange={handlePageChange}
-              />
-            );
-          }
-          return null;
-        })()
-      ) : (
-        <DataTable
-          columns={columns}
-          data={items}
-          isLoading={isLoading}
-          keyField={keyField}
-          onRowClick={onRowClick || handleEditar}
-          pagination={paginacion}
-          onPageChange={handlePageChange}
-          emptyState={{
-            icon: Icon,
-            title: `No hay ${title?.toLowerCase() || 'elementos'}`,
-            description: filtrosActivos > 0
-              ? 'No se encontraron resultados con esos filtros'
-              : `Crea tu primer ${title?.toLowerCase() || 'elemento'}`,
-            actionLabel: filtrosActivos === 0 && showNewButton ? newButtonLabel : undefined,
-            onAction: filtrosActivos === 0 && showNewButton ? handleNuevo : undefined,
-            ...emptyState,
-          }}
-        />
-      )}
+      {(() => {
+        // Buscar componente custom para el activeView actual
+        const viewConfig = viewModes?.find(v => v.id === activeView);
+        if (viewConfig?.component) {
+          const ViewComponent = viewConfig.component;
+          return (
+            <ViewComponent
+              items={items}
+              isLoading={isLoading}
+              onItemClick={onRowClick || handleEditar}
+              handlers={handlers}
+              pagination={paginacion}
+              onPageChange={handlePageChange}
+            />
+          );
+        }
+        // Fallback a DataTable si no hay componente custom
+        return (
+          <DataTable
+            columns={columns}
+            data={items}
+            isLoading={isLoading}
+            keyField={keyField}
+            onRowClick={onRowClick || handleEditar}
+            pagination={paginacion}
+            onPageChange={handlePageChange}
+            emptyState={{
+              icon: Icon,
+              title: `No hay ${title?.toLowerCase() || 'elementos'}`,
+              description: filtrosActivos > 0
+                ? 'No se encontraron resultados con esos filtros'
+                : `Crea tu primer ${title?.toLowerCase() || 'elemento'}`,
+              actionLabel: filtrosActivos === 0 && showNewButton ? newButtonLabel : undefined,
+              onAction: filtrosActivos === 0 && showNewButton ? handleNuevo : undefined,
+              ...emptyState,
+            }}
+          />
+        );
+      })()}
 
       {/* After table slot */}
       {renderAfterTable?.({ items, isLoading })}

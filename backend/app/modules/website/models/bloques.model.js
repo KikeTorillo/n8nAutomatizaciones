@@ -1,4 +1,5 @@
 const RLSContextManager = require('../../../utils/rlsContextManager');
+const { ErrorHelper } = require('../../../utils/helpers');
 const logger = require('../../../utils/logger');
 
 /**
@@ -201,7 +202,7 @@ class WebsiteBloquesModel {
             }
 
             if (campos.length === 0) {
-                throw new Error('No hay campos para actualizar');
+                ErrorHelper.throwValidation('No hay campos para actualizar');
             }
 
             const query = `
@@ -265,9 +266,7 @@ class WebsiteBloquesModel {
                 [id]
             );
 
-            if (bloqueResult.rows.length === 0) {
-                throw new Error('Bloque no encontrado');
-            }
+            ErrorHelper.throwIfNotFound(bloqueResult.rows[0], 'Bloque');
 
             const original = bloqueResult.rows[0];
 
