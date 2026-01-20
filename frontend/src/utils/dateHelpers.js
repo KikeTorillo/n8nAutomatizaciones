@@ -96,7 +96,15 @@ export function formatearFechaHora(fecha, hora, formato = 'dd/MM/yyyy HH:mm') {
   if (!fecha || !hora) return '';
 
   try {
-    const fechaObj = typeof fecha === 'string' ? parseISO(fecha) : fecha;
+    // Si viene con timestamp UTC (2025-10-16T00:00:00.000Z), extraer solo la fecha
+    // para evitar problemas de zona horaria
+    let fechaObj;
+    if (typeof fecha === 'string') {
+      const fechaSolo = fecha.includes('T') ? fecha.split('T')[0] : fecha;
+      fechaObj = parseISO(fechaSolo);
+    } else {
+      fechaObj = fecha;
+    }
     const [horas, minutos] = hora.split(':').map(Number);
     const fechaConHora = setMinutes(setHours(fechaObj, horas), minutos);
 

@@ -96,7 +96,9 @@ function CompletarCitaModal({ isOpen, onClose, cita }) {
             <div>
               <p className="text-xs text-gray-600 dark:text-gray-400">Servicio</p>
               <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                {cita.servicio_nombre || 'Sin servicio'}
+                {cita.servicios && Array.isArray(cita.servicios) && cita.servicios.length > 0
+                  ? cita.servicios.map(s => s.servicio_nombre).join(', ')
+                  : cita.servicio_nombre || 'Sin servicio'}
               </p>
             </div>
             <div>

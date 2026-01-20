@@ -17,9 +17,9 @@ import { cn } from '@/lib/utils';
  * @param {string} className - Clases adicionales
  */
 const SIZE_CLASSES = {
-  sm: 'py-2 text-sm',
-  md: 'py-3 text-base',
-  lg: 'py-4 text-lg font-semibold',
+  sm: 'h-9 text-sm',
+  md: 'h-10 text-base',
+  lg: 'h-12 text-lg font-semibold',
 };
 
 const Input = forwardRef(

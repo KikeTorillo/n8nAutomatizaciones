@@ -1,11 +1,11 @@
-import { Search, X, Filter, Building2 } from 'lucide-react';
 import { useState } from 'react';
-import { Button, Select } from '@/components/ui';
-import useSucursalStore, { selectSucursalesDisponibles, selectSucursalActiva } from '@/store/sucursalStore';
+import { X, Filter, Building2 } from 'lucide-react';
+import { Button, Select, SearchInput, FormGroup } from '@/components/ui';
+import useSucursalStore, { selectSucursalesDisponibles } from '@/store/sucursalStore';
 
 /**
  * Componente de filtros para el módulo de citas
- * ✅ FEATURE: Filtro por sucursal (solo visible si hay múltiples sucursales)
+ * Refactorizado para usar componentes reutilizables (SearchInput, FormGroup, Select)
  */
 function CitaFilters({
   filtros,
@@ -14,9 +14,8 @@ function CitaFilters({
   servicios = [],
   onLimpiarFiltros,
 }) {
-  // ✅ Multi-sucursal: Obtener sucursales disponibles
+  // Multi-sucursal: Obtener sucursales disponibles
   const sucursalesDisponibles = useSucursalStore(selectSucursalesDisponibles);
-  const sucursalActiva = useSucursalStore(selectSucursalActiva);
   const [mostrarFiltrosAvanzados, setMostrarFiltrosAvanzados] = useState(false);
 
   // Estados disponibles
@@ -48,7 +47,7 @@ function CitaFilters({
     })),
   ];
 
-  // ✅ Multi-sucursal: Opciones de sucursales
+  // Multi-sucursal: Opciones de sucursales
   const tieneMultiplesSucursales = sucursalesDisponibles.length > 1;
   const sucursalesOpciones = [
     { value: '', label: 'Todas las sucursales' },
@@ -82,87 +81,82 @@ function CitaFilters({
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 mb-6">
       {/* Fila Principal - Siempre visible */}
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
         {/* Búsqueda */}
         <div className="md:col-span-5">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Buscar cita
-          </label>
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Search className="h-5 w-5 text-gray-400 dark:text-gray-500" />
-            </div>
-            <input
-              type="text"
-              placeholder="Buscar por código o nombre de cliente..."
+          <FormGroup label="Buscar cita">
+            <SearchInput
               value={filtros.busqueda || ''}
               onChange={(e) => handleInputChange('busqueda', e.target.value)}
-              className="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+              placeholder="Buscar por código o nombre de cliente..."
+              size="md"
             />
-            {filtros.busqueda && (
-              <button
-                onClick={() => handleInputChange('busqueda', '')}
-                className="absolute inset-y-0 right-0 pr-3 flex items-center"
-              >
-                <X className="h-4 w-4 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300" />
-              </button>
-            )}
-          </div>
+          </FormGroup>
         </div>
 
         {/* Estado */}
         <div className={tieneMultiplesSucursales ? 'md:col-span-2' : 'md:col-span-3'}>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Estado</label>
-          <Select
-            value={filtros.estado || ''}
-            onChange={(e) => handleInputChange('estado', e.target.value)}
-            options={estadosDisponibles}
-          />
+          <FormGroup label="Estado">
+            <Select
+              value={filtros.estado || ''}
+              onChange={(e) => handleInputChange('estado', e.target.value)}
+              options={estadosDisponibles}
+            />
+          </FormGroup>
         </div>
 
-        {/* ✅ Multi-sucursal: Selector de sucursal (solo si hay múltiples) */}
+        {/* Multi-sucursal: Selector de sucursal (solo si hay múltiples) */}
         {tieneMultiplesSucursales && (
           <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              <Building2 className="w-3.5 h-3.5 inline mr-1" />
-              Sucursal
-            </label>
-            <Select
-              value={filtros.sucursal_id || ''}
-              onChange={(e) => handleInputChange('sucursal_id', e.target.value)}
-              options={sucursalesOpciones}
-            />
+            <FormGroup
+              label={
+                <span className="flex items-center gap-1">
+                  <Building2 className="w-3.5 h-3.5" />
+                  Sucursal
+                </span>
+              }
+            >
+              <Select
+                value={filtros.sucursal_id || ''}
+                onChange={(e) => handleInputChange('sucursal_id', e.target.value)}
+                options={sucursalesOpciones}
+              />
+            </FormGroup>
           </div>
         )}
 
         {/* Botón Filtros Avanzados */}
-        <div className="md:col-span-2 flex items-end">
-          <Button
-            variant={mostrarFiltrosAvanzados ? 'primary' : 'secondary'}
-            onClick={() => setMostrarFiltrosAvanzados(!mostrarFiltrosAvanzados)}
-            className="w-full relative"
-          >
-            <Filter className="w-4 h-4 mr-2" />
-            Filtros
-            {filtrosActivos > 0 && (
-              <span className="absolute -top-2 -right-2 bg-primary-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
-                {filtrosActivos}
-              </span>
-            )}
-          </Button>
+        <div className="md:col-span-2">
+          <FormGroup label={<span className="invisible">Acciones</span>}>
+            <Button
+              variant={mostrarFiltrosAvanzados ? 'primary' : 'secondary'}
+              onClick={() => setMostrarFiltrosAvanzados(!mostrarFiltrosAvanzados)}
+              className="w-full relative"
+            >
+              <Filter className="w-4 h-4 mr-2" />
+              Filtros
+              {filtrosActivos > 0 && (
+                <span className="absolute -top-2 -right-2 bg-primary-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                  {filtrosActivos}
+                </span>
+              )}
+            </Button>
+          </FormGroup>
         </div>
 
         {/* Botón Limpiar */}
-        <div className="md:col-span-2 flex items-end">
-          <Button
-            variant="ghost"
-            onClick={onLimpiarFiltros}
-            disabled={filtrosActivos === 0}
-            className="w-full"
-          >
-            <X className="w-4 h-4 mr-2" />
-            Limpiar
-          </Button>
+        <div className="md:col-span-2">
+          <FormGroup label={<span className="invisible">Limpiar</span>}>
+            <Button
+              variant="ghost"
+              onClick={onLimpiarFiltros}
+              disabled={filtrosActivos === 0}
+              className="w-full"
+            >
+              <X className="w-4 h-4 mr-2" />
+              Limpiar
+            </Button>
+          </FormGroup>
         </div>
       </div>
 
@@ -171,54 +165,42 @@ function CitaFilters({
         <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Fecha Desde */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Fecha desde
-              </label>
+            <FormGroup label="Fecha desde">
               <input
                 type="date"
                 value={filtros.fecha_desde || ''}
                 onChange={(e) => handleInputChange('fecha_desde', e.target.value)}
-                className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                className="w-full px-4 h-10 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-base bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               />
-            </div>
+            </FormGroup>
 
             {/* Fecha Hasta */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Fecha hasta
-              </label>
+            <FormGroup label="Fecha hasta">
               <input
                 type="date"
                 value={filtros.fecha_hasta || ''}
                 onChange={(e) => handleInputChange('fecha_hasta', e.target.value)}
-                className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                className="w-full px-4 h-10 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-base bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               />
-            </div>
+            </FormGroup>
 
             {/* Profesional */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Profesional
-              </label>
+            <FormGroup label="Profesional">
               <Select
                 value={filtros.profesional_id || ''}
                 onChange={(e) => handleInputChange('profesional_id', e.target.value)}
                 options={profesionalesOpciones}
               />
-            </div>
+            </FormGroup>
 
             {/* Servicio */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Servicio
-              </label>
+            <FormGroup label="Servicio">
               <Select
                 value={filtros.servicio_id || ''}
                 onChange={(e) => handleInputChange('servicio_id', e.target.value)}
                 options={serviciosOpciones}
               />
-            </div>
+            </FormGroup>
           </div>
 
           {/* Info de filtros activos */}

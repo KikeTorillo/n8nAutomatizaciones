@@ -178,7 +178,8 @@ export function useNoShowCita() {
 
   return useMutation({
     mutationFn: async ({ id, motivo }) => {
-      const response = await citasApi.noShow(id, { motivo });
+      // El backend espera motivo_no_show
+      const response = await citasApi.noShow(id, { motivo_no_show: motivo });
       return response.data;
     },
     onSuccess: (data, variables) => {

@@ -114,6 +114,7 @@ components/ui/
 **Optimizaciones aplicadas (Ene 2026):**
 - `React.memo` en: StatCard, StatCardGrid, SearchInput, Pagination
 - Componentes modulares en subcarpetas con barrel exports directos
+- **Alturas estandarizadas**: Todos los elementos de formulario usan `FORM_ELEMENT_HEIGHTS` (h-10 = 40px para size md)
 
 ---
 
@@ -391,12 +392,19 @@ Documento completo en `/docs/PLAN_PRUEBAS_INTEGRAL.md`
 | Módulo | Estado |
 |--------|--------|
 | Clientes (CRM) | ✅ Probado y corregido |
-| Agendamiento/Citas | ⏳ Siguiente |
+| Agendamiento/Citas | ⏳ En progreso (UI homologada) |
 | POS, Inventario, etc. | 📋 Pendiente |
 
 ---
 
 ## Changelog
+
+### 19 Ene 2026 - Estandarización UI Componentes
+
+**FORM_ELEMENT_HEIGHTS centralizado:**
+- Nueva constante en `sizes.js`: sm=36px, md=40px, lg=48px, xl=56px
+- Componentes actualizados: Button, Input, Select, SearchInput, MultiSelect
+- Fix anchos en CitaFormDrawer: Controllers envueltos en `<div className="flex-1">`
 
 ### 19 Ene 2026 - Pruebas Módulo Clientes
 
@@ -421,4 +429,4 @@ Documento completo en `/docs/PLAN_PRUEBAS_INTEGRAL.md`
 
 ---
 
-**Actualizado**: 19 Enero 2026
+**Actualizado**: 19 Enero 2026 (Sesión 22.6)

@@ -24,7 +24,7 @@ import {
 /**
  * Modal de detalles de una cita (readonly)
  */
-function CitaDetailModal({ isOpen, onClose, cita, onCambiarEstado, onEditar, onCancelar }) {
+function CitaDetailModal({ isOpen, onClose, cita, onCambiarEstado, onEditar, onCancelar, onCobrar }) {
   if (!cita) return null;
 
   // Calcular precio total
@@ -56,6 +56,13 @@ function CitaDetailModal({ isOpen, onClose, cita, onCambiarEstado, onEditar, onC
       case 'editar':
         onEditar(cita);
         onClose();
+        break;
+      case 'cobrar':
+        // Navegar al POS con la cita
+        if (onCobrar) {
+          onCobrar(cita);
+          onClose();
+        }
         break;
       default:
         break;
@@ -110,7 +117,7 @@ function CitaDetailModal({ isOpen, onClose, cita, onCambiarEstado, onEditar, onC
               <div className="flex justify-between text-sm pt-2 border-t border-gray-200 dark:border-gray-600">
                 <span className="text-gray-600 dark:text-gray-400">Duración:</span>
                 <span className="font-semibold text-primary-600 dark:text-primary-400">
-                  {cita.duracion_minutos} minutos
+                  {cita.duracion_total_minutos || 0} minutos
                 </span>
               </div>
             </div>
@@ -366,6 +373,7 @@ function CitaDetailModal({ isOpen, onClose, cita, onCambiarEstado, onEditar, onC
                 CheckCircle2: CheckCircle,
                 XCircle: XCircle,
                 AlertCircle: AlertCircle,
+                DollarSign: DollarSign,
               };
 
               const Icon = iconMap[acc.icono] || CheckCircle;

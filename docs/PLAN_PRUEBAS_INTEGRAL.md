@@ -506,26 +506,29 @@ Comisión al profesional → Registro contable
 
 ## 7. Módulo: Agendamiento/Citas
 
+**Estado:** ✅ Probado - 19 Enero 2026
+**Resultado:** 5 bugs encontrados y corregidos
+
 ### 7.1 Flujos a Probar
 
 #### 7.1.1 Crear Cita Completa
 ```
-[ ] Seleccionar cliente existente
+[x] Seleccionar cliente existente
 [ ] Crear cliente nuevo durante agendamiento
-[ ] Seleccionar servicio(s) - múltiples
-[ ] Seleccionar profesional disponible
-[ ] Seleccionar fecha y hora disponible
-[ ] Ver duración calculada automáticamente
-[ ] Agregar notas/observaciones
-[ ] Confirmar y ver código de cita generado
+[x] Seleccionar servicio(s) - múltiples
+[x] Seleccionar profesional disponible
+[x] Seleccionar fecha y hora disponible
+[x] Ver duración calculada automáticamente
+[x] Agregar notas/observaciones
+[x] Confirmar y ver código de cita generado
 ```
 
 #### 7.1.2 Vista de Calendario
 ```
-[ ] Vista día con slots de tiempo
-[ ] Vista semana con todos los profesionales
-[ ] Vista mes con resumen de citas
-[ ] Filtrar por profesional
+[x] Vista día con slots de tiempo
+[x] Vista semana con todos los profesionales
+[x] Vista mes con resumen de citas
+[x] Filtrar por profesional
 [ ] Filtrar por servicio
 [ ] Drag & drop para reagendar (si aplica)
 [ ] Click en slot vacío para crear cita
@@ -533,22 +536,60 @@ Comisión al profesional → Registro contable
 
 #### 7.1.3 Gestión de Citas
 ```
-[ ] Confirmar cita pendiente
-[ ] Marcar cliente como "llegó"
-[ ] Iniciar atención (timer)
-[ ] Finalizar atención
-[ ] Cancelar cita con motivo
-[ ] Reagendar cita
-[ ] No-show: marcar como inasistencia
+[x] Confirmar cita pendiente
+[x] Iniciar atención (Confirmada → En curso)
+[x] Finalizar atención con notas y calificación (En curso → Completada)
+[x] Cancelar cita con motivo
+[x] Reagendar cita (Editar)
+[x] No-show: marcar como inasistencia
+```
+**Nota:** El flujo omite el estado "En Espera" (cliente llegó). Va directo de Confirmada a En curso.
+
+#### 7.1.4 Bloqueos de Horario (Otros Bloqueos)
+```
+[x] Crear bloqueo para profesional específico
+[x] Crear bloqueo para toda la sucursal (organizacional)
+[ ] Bloqueo recurrente (vacaciones)
+[x] Verificar que slots bloqueados no aparecen disponibles
 ```
 
-#### 7.1.4 Bloqueos de Horario
-```
-[ ] Crear bloqueo para profesional específico
-[ ] Crear bloqueo para toda la sucursal
-[ ] Bloqueo recurrente (vacaciones)
-[ ] Verificar que slots bloqueados no aparecen disponibles
-```
+### 7.2 Bugs UX Identificados y Corregidos
+
+| ID | Descripción | Severidad | Estado | Fecha |
+|----|-------------|-----------|--------|-------|
+| CITA-001 | **limpiarServicios no memoizado:** Causaba re-renders infinitos en CitaFormDrawer | Alta | ✅ Corregido | 19-Ene-2026 |
+| CITA-002 | **Duración sin valor numérico:** Modal detalle mostraba "minutos" sin el número | Media | ✅ Corregido | 19-Ene-2026 |
+| CITA-003 | **Fecha incorrecta en header:** Mostraba día anterior por problema de timezone UTC | Alta | ✅ Corregido | 19-Ene-2026 |
+| CITA-004 | **Modal completar muestra "Sin servicio":** Debería mostrar el servicio de la cita | Media | ✅ Corregido | 19-Ene-2026 |
+| CITA-005 | **Botón "Ver Detalles" sin función:** En cita completada, el botón no navega a ningún lado | Baja | ✅ Corregido | 19-Ene-2026 |
+| UI-007 | **SearchInput altura inconsistente:** En CitaFilters, SearchInput (42px) no alinea con Select/Button (50px) | Baja | ✅ Corregido | 20-Ene-2026 |
+| AUS-003 | **Tab "Configuración de Ausencias" con error:** `nivelesArray.map is not a function` - estructura de respuesta incorrecta | Media | ✅ Corregido | 19-Ene-2026 |
+| AUS-001 | **diasDisponibles no pasado al modal:** Solicitud vacaciones siempre mostraba 0 disponibles | Alta | ✅ Corregido | 19-Ene-2026 |
+| AUS-002 | **Tipos de bloqueo no aparecían:** Selector vacío por estructura de respuesta API incorrecta | Alta | ✅ Corregido | 19-Ene-2026 |
+| CITA-006 | **Endpoints no-show y cancelar no existían (404):** Backend faltaba schema, model, controller y route | Crítica | ✅ Corregido | 19-Ene-2026 |
+| CITA-007 | **Frontend usaba PUT en lugar de POST:** Frontend enviaba PUT a cancelar/no-show, backend esperaba POST | Alta | ✅ Corregido | 19-Ene-2026 |
+
+### 7.3 Correcciones Aplicadas
+
+**CITA-001 - limpiarServicios no memoizado:**
+- Archivo: `frontend/src/hooks/agendamiento/citas/useProfesionalServices.js`
+- Cambio: Envuelto `limpiarServicios` en `useCallback` para evitar re-renders
+
+**CITA-002 - Duración sin valor numérico:**
+- Archivo: `frontend/src/components/citas/CitaDetailModal.jsx`
+- Cambio: `cita.duracion_minutos` → `cita.duracion_total_minutos || 0`
+
+**CITA-003 - Fecha incorrecta por timezone:**
+- Archivo: `frontend/src/utils/dateHelpers.js`
+- Cambio: En `formatearFechaHora`, extraer parte de fecha antes de `parseISO` para evitar shift de zona horaria
+
+**AUS-001 - diasDisponibles no pasado:**
+- Archivo: `frontend/src/pages/ausencias/tabs/MisAusenciasTab.jsx`
+- Cambio: Agregado prop `diasDisponibles={dashboard?.diasVacacionesDisponibles || 0}` a SolicitudVacacionesModal
+
+**AUS-002 - Tipos de bloqueo vacíos:**
+- Archivo: `frontend/src/hooks/agendamiento/useTiposBloqueo.js`
+- Cambio: Hook ahora devuelve `{ tipos: response.data.data, total, filtros_aplicados }` en lugar de solo el array
 
 #### 7.1.5 Recordatorios
 ```
@@ -965,6 +1006,14 @@ Comisión al profesional → Registro contable
 | BUG-002 | Clientes | Stats duplicados en vista detalle (CRM-001) | UX | ✅ Corregido (19-Ene-2026) |
 | BUG-003 | Clientes | Nomenclatura inconsistente (CRM-002) | UX | ✅ Corregido (19-Ene-2026) |
 | BUG-004 | Clientes | Etiquetas no actualizan UI sin refresh (CRM-003) | UX | ✅ Corregido (19-Ene-2026) |
+| BUG-005 | Citas | limpiarServicios no memoizado causaba re-renders (CITA-001) | Bloqueante | ✅ Corregido (19-Ene-2026) |
+| BUG-006 | Citas | Duración mostraba "minutos" sin valor numérico (CITA-002) | UX | ✅ Corregido (19-Ene-2026) |
+| BUG-007 | Citas | Fecha incorrecta por timezone UTC (CITA-003) | Alto | ✅ Corregido (19-Ene-2026) |
+| BUG-008 | Ausencias | diasDisponibles=0 en solicitud vacaciones (AUS-001) | Alto | ✅ Corregido (19-Ene-2026) |
+| BUG-009 | Ausencias | Tipos de bloqueo no aparecían en selector (AUS-002) | Bloqueante | ✅ Corregido (19-Ene-2026) |
+| BUG-010 | Citas | Endpoints no-show y cancelar 404 (CITA-006) | Bloqueante | ✅ Corregido (19-Ene-2026) |
+| BUG-011 | Citas | Frontend PUT vs Backend POST en cancelar/no-show (CITA-007) | Alto | ✅ Corregido (19-Ene-2026) |
+| BUG-012 | Ausencias | Tab Configuración crashea: nivelesArray.map (AUS-003) | Bloqueante | ✅ Corregido (19-Ene-2026) |
 
 ### 17.2 Mejoras UX Prioritarias
 
@@ -975,6 +1024,8 @@ Comisión al profesional → Registro contable
 | UX-003 | General | Agregar breadcrumbs en todas las páginas | Media | Pendiente |
 | UX-004 | General | Shortcuts de teclado (N=nuevo, E=editar, ESC=cerrar) | Media | Pendiente |
 | UX-005 | POS | Modo pantalla completa para tablets | Media | Pendiente |
+| UX-006 | Citas | Botón "Ir a Cobrar" tras completar cita para flujo continuo a POS | Alta | ✅ Implementado |
+| UX-007 | UI Base | Estandarizar alturas de componentes (Input, Select, Button, SearchInput) para alineación automática | Alta | Pendiente |
 
 ### 17.3 Features Faltantes vs Odoo
 
@@ -1014,7 +1065,7 @@ BAJO (Nice to have):
 
 | Semana | Módulos | Estado |
 |--------|---------|--------|
-| **Semana 1** | Clientes + Agendamiento/Citas (flujo core) | 🔄 En progreso (Clientes ✅) |
+| **Semana 1** | Clientes + Agendamiento/Citas (flujo core) | ✅ Completado |
 | **Semana 2** | Servicios + Profesionales + POS | Pendiente |
 | **Semana 3** | Inventario + Comisiones | Pendiente |
 | **Semana 4** | Contabilidad + Sucursales + Ausencias | Pendiente |
@@ -1900,15 +1951,177 @@ erDiagram
 
 ---
 
-**Próximos pasos:**
-1. ~~Ejecutar pruebas del módulo Clientes con checklist completo~~ ✅ Completado
-2. ~~Corregir bugs UX identificados (stats duplicados)~~ ✅ Completado
-3. **Probar flujo completo de cita (Agendamiento)** ← Siguiente
-4. Probar módulo POS con integración de citas
-5. Documentar resultados de cada módulo
+### 22.2 Sesión 19 Enero 2026 (Continuación)
+
+**Módulos probados:** Agendamiento/Citas, Ausencias (Otros Bloqueos)
+
+**Pruebas ejecutadas:**
+- Creación de cita completa con cliente, servicio y profesional
+- Vista de calendario (día, semana, mes)
+- Transiciones de estado de cita (Pendiente → Confirmada)
+- Modal de detalle de cita
+- Solicitud de vacaciones (Mis Ausencias)
+- Creación de bloqueo organizacional (Otros Bloqueos)
+
+**Bugs encontrados y corregidos:**
+1. CITA-001: limpiarServicios no memoizado → Agregado useCallback
+2. CITA-002: Duración sin valor numérico → Cambio a duracion_total_minutos
+3. CITA-003: Fecha incorrecta por timezone → Extraer fecha antes de parseISO
+4. AUS-001: diasDisponibles no pasado → Agregado prop al modal
+5. AUS-002: Tipos de bloqueo vacíos → Fix estructura de respuesta del hook
+
+**Archivos modificados:**
+- `frontend/src/hooks/agendamiento/citas/useProfesionalServices.js`
+- `frontend/src/components/citas/CitaDetailModal.jsx`
+- `frontend/src/utils/dateHelpers.js`
+- `frontend/src/pages/ausencias/tabs/MisAusenciasTab.jsx`
+- `frontend/src/hooks/agendamiento/useTiposBloqueo.js`
+
+**Datos de prueba insertados:**
+- Horarios para profesional "enrique" (Lunes-Viernes 9:00-18:00)
+- Cita de prueba: ORG001-20260120-001 (Ana Martínez, Tratamiento Hidratante)
+- Solicitud vacaciones: 23-25 Enero 2026 (pendiente aprobación)
+- Bloqueo: Mantenimiento preventivo consultorio (25 Enero 2026)
 
 ---
 
-*Documento vivo - actualizar conforme se ejecutan las pruebas*
-*Diagramas creados con Mermaid - se renderizan en GitHub/GitLab/VSCode*
-*Última actualización: 19 Enero 2026*
+---
+
+### 22.3 Sesión 19 Enero 2026 (Noche)
+
+**Módulos probados:** Agendamiento/Citas (UX), Filtros UI
+
+**Pruebas ejecutadas:**
+- Modal de completar cita
+- Botón "Ver Detalles" en citas completadas
+- Alineación visual de filtros en CitaFilters
+- Refactorización a componentes reutilizables
+
+**Bugs encontrados y corregidos:**
+1. CITA-004: Modal completar mostraba "Sin servicio" → Fix: usar datos del array servicios de cita
+2. CITA-005: Botón "Ver Detalles" sin función → Fix: agregar acción onCobrar para ir a POS
+
+**Refactorización realizada:**
+- `CitaFilters.jsx` refactorizado para usar componentes reutilizables:
+  - `SearchInput` en lugar de `<input type="search">`
+  - `FormGroup` para todas las etiquetas
+  - `Select` (ya estaba)
+  - `Button` con altura fija `h-[50px]` para alinear con Select
+
+**Archivos modificados:**
+- `frontend/src/components/citas/CitaFilters.jsx` (refactorizado completo)
+- `frontend/src/pages/citas/CitasPage.jsx` (agregado handleCobrar)
+- `frontend/src/utils/citaValidators.js` (acción "cobrar" para citas completadas)
+
+**Pendientes para próxima sesión:**
+1. **Integración Cita → POS:** Flujo de cobro desde cita completada - análisis detallado pendiente
+2. Continuar pruebas de módulo Ausencias con datos reales
+
+**Deuda técnica identificada:**
+- **UI-008: ✅ RESUELTO** - Alturas de componentes UI estandarizadas en sesión 22.6
+
+---
+
+### 22.4 Sesión 19 Enero 2026 (Continuación - Endpoints)
+
+**Módulos probados:** Agendamiento/Citas (flujo Cancelar y No-Show)
+
+**Pruebas ejecutadas:**
+- Crear cita de prueba (ORG001-20260123-001)
+- Confirmar cita
+- Probar flujo No-Show desde UI
+- Probar flujo Cancelar desde UI
+
+**Bugs encontrados y corregidos:**
+
+1. **CITA-006: Endpoints no-show y cancelar no existían (404)**
+   - **Error:** `Ruta /api/v1/citas/2/no-show no encontrada`
+   - **Causa raíz:** Backend no tenía implementados los endpoints para las acciones operacionales de cancelar y no-show
+   - **Archivos creados/modificados:**
+     - `backend/app/modules/agendamiento/schemas/cita.schemas.js` - Agregados schemas `noShow` y `cancelar`
+     - `backend/app/modules/agendamiento/models/citas/cita.operacional.model.js` - Agregados métodos `noShow()` y `cancelar()`
+     - `backend/app/modules/agendamiento/controllers/citas/cita.operacional.controller.js` - Agregados controllers con validación de estado
+     - `backend/app/modules/agendamiento/controllers/citas/index.js` - Agregados métodos proxy
+     - `backend/app/modules/agendamiento/routes/citas.js` - Agregadas rutas `POST /:id/no-show` y `POST /:id/cancelar`
+     - `backend/app/modules/agendamiento/models/citas/index.js` - Agregados métodos proxy al modelo principal
+
+2. **CITA-007: Frontend usaba PUT en lugar de POST**
+   - **Error:** Tras corregir backend, frontend seguía fallando
+   - **Causa raíz:** Frontend enviaba PUT a `/citas/:id/cancelar` y `/citas/:id/no-show`, backend esperaba POST. También el campo se llamaba `motivo` en frontend y `motivo_no_show` en backend.
+   - **Archivos modificados:**
+     - `frontend/src/services/api/modules/citas.api.js` - Cambiado de `apiClient.put` a `apiClient.post`
+     - `frontend/src/hooks/agendamiento/citas/useMutacionesCitas.js` - Mapeo `motivo` → `motivo_no_show`
+
+**Verificación:**
+- ✅ Endpoints probados con curl exitosamente
+- ✅ Flujo No-Show verificado desde UI del navegador
+- ✅ Estado de cita cambió correctamente a "no_asistio"
+
+**Datos de prueba creados:**
+- Cita: ORG001-20260123-001 (Ana Martínez, 23 Ene 2026, 10:00, Tratamiento Hidratante)
+- Estado final: no_asistio (tras prueba exitosa)
+
+---
+
+### 22.5 Sesión 19 Enero 2026 (Continuación - Reagendar y AUS-003)
+
+**Módulos probados:** Agendamiento/Citas (Reagendar), Ausencias (Configuración)
+
+**Pruebas ejecutadas:**
+- Crear nueva cita para prueba de reagendar
+- Validación correcta de días no laborables (sábado rechazado)
+- Reagendar cita: cambio de fecha y hora
+- Verificar tab "Configuración de Ausencias"
+
+**Bugs encontrados y corregidos:**
+
+1. **AUS-003: Tab Configuración crashea con `nivelesArray.map is not a function`**
+   - **Error:** TypeError al cargar la pestaña de Configuración de Ausencias
+   - **Causa raíz:** El hook `useNivelesVacaciones` retorna `{data: [...], total}` pero el componente esperaba un array directo
+   - **Archivo modificado:** `frontend/src/pages/ausencias/tabs/ConfiguracionAusenciasTab.jsx`
+   - **Fix:** Cambiar `const nivelesArray = niveles || []` a `const nivelesArray = niveles?.data || niveles || []`
+
+**Funcionalidades verificadas OK:**
+- ✅ Reagendar cita (cambiar fecha y hora)
+- ✅ Validación de días laborables del profesional
+- ✅ Tab Configuración de Ausencias (tras fix)
+- ✅ Política de Vacaciones visible
+- ✅ EmptyState de Niveles por Antigüedad
+
+**Datos de prueba:**
+- Cita ORG001-20260127-001 reagendada de 27/01 11:00 → 28/01 14:00
+
+---
+
+### 22.6 Sesión 20 Enero 2026 (Homologación UI: Alturas y Anchos)
+
+**Módulos afectados:** Sistema de diseño UI, Formulario de Citas
+
+**Cambios realizados:**
+
+1. **Estandarización de alturas** - Constante `FORM_ELEMENT_HEIGHTS` en `sizes.js`:
+   - `sm: h-9 (36px)`, `md: h-10 (40px)`, `lg: h-12 (48px)`, `xl: h-14 (56px)`
+   - Aplicado a: Button, Input, Select, SearchInput, MultiSelect
+
+2. **Corrección de anchos en CitaFormDrawer** - Select/MultiSelect no expandían:
+   - Causa: Controller de React Hook Form no propaga `flex-1`
+   - Fix: Envolver cada Controller en `<div className="flex-1">`
+
+**Archivos modificados:**
+- `frontend/src/lib/uiConstants/sizes.js` - `FORM_ELEMENT_HEIGHTS`, `BUTTON_SIZES`, `INPUT_SIZES`
+- `frontend/src/components/ui/atoms/{Input,Select}.jsx` - Altura `h-10`
+- `frontend/src/components/ui/molecules/SearchInput.jsx` - Altura `h-10`
+- `frontend/src/components/ui/organisms/MultiSelect.jsx` - `min-h-10`
+- `frontend/src/components/citas/CitaFormDrawer.jsx` - Layout flex con `flex-1`
+- `frontend/src/components/citas/CitaFilters.jsx` - Removidos overrides `h-[50px]`
+- `frontend/src/components/citas/cita-form/ServicesPriceSection.jsx` - Altura `h-10`
+
+---
+
+**Próximos pasos:**
+1. Probar módulo POS con integración de citas
+2. Probar flujo completo: Cita → POS → Comisión
+
+---
+
+*Última actualización: 20 Enero 2026*

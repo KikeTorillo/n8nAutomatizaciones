@@ -351,6 +351,51 @@ const reagendar = {
     })
 };
 
+const noShow = {
+    params: Joi.object({
+        id: commonSchemas.id
+    }),
+    body: Joi.object({
+        motivo_no_show: Joi.string().min(3).max(500).required()
+            .messages({
+                'any.required': 'Debe proporcionar un motivo de no-show',
+                'string.min': 'Motivo debe tener al menos 3 caracteres',
+                'string.max': 'Motivo no puede exceder 500 caracteres'
+            }),
+        notas_adicionales: Joi.string().max(1000).optional()
+    }),
+    query: Joi.object({
+        organizacion_id: Joi.when('$userRole', {
+            is: 'super_admin',
+            then: commonSchemas.id.optional(),
+            otherwise: Joi.forbidden()
+        })
+    })
+};
+
+const cancelar = {
+    params: Joi.object({
+        id: commonSchemas.id
+    }),
+    body: Joi.object({
+        motivo_cancelacion: Joi.string().min(3).max(500).required()
+            .messages({
+                'any.required': 'Debe proporcionar un motivo de cancelación',
+                'string.min': 'Motivo debe tener al menos 3 caracteres',
+                'string.max': 'Motivo no puede exceder 500 caracteres'
+            }),
+        cancelado_por: Joi.string().valid('cliente', 'profesional', 'sistema', 'admin').default('admin'),
+        notas_adicionales: Joi.string().max(1000).optional()
+    }),
+    query: Joi.object({
+        organizacion_id: Joi.when('$userRole', {
+            is: 'super_admin',
+            then: commonSchemas.id.optional(),
+            otherwise: Joi.forbidden()
+        })
+    })
+};
+
 // ===================================================================
 // DASHBOARD Y MÉTRICAS
 // ===================================================================
@@ -606,6 +651,8 @@ module.exports = {
     startService,
     complete,
     reagendar,
+    noShow,
+    cancelar,
 
     // Dashboard
     dashboardToday,

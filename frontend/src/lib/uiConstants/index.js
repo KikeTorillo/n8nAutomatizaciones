@@ -25,6 +25,7 @@ export {
 
 // Tamaños
 export {
+  FORM_ELEMENT_HEIGHTS,
   BUTTON_SIZES,
   ICON_SIZES,
   SPINNER_SIZES,

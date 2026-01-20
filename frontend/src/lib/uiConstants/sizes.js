@@ -10,13 +10,24 @@
  */
 
 /**
+ * Alturas estandarizadas para elementos de formulario
+ * Garantiza consistencia entre Button, Input, Select, SearchInput
+ */
+export const FORM_ELEMENT_HEIGHTS = {
+  sm: 'h-9',   // 36px
+  md: 'h-10',  // 40px
+  lg: 'h-12',  // 48px
+  xl: 'h-14',  // 56px
+};
+
+/**
  * Tamaños para botones
  */
 export const BUTTON_SIZES = {
-  sm: 'px-3 py-1.5 text-sm',
-  md: 'px-4 py-2 text-base',
-  lg: 'px-6 py-3 text-lg',
-  xl: 'px-8 py-4 text-xl',
+  sm: 'px-3 text-sm h-9',
+  md: 'px-4 text-base h-10',
+  lg: 'px-6 text-lg h-12',
+  xl: 'px-8 text-xl h-14',
 };
 
 /**
@@ -52,12 +63,12 @@ export const BADGE_SIZES = {
 };
 
 /**
- * Tamaños para inputs
+ * Tamaños para inputs (altura estandarizada)
  */
 export const INPUT_SIZES = {
-  sm: 'px-3 py-1.5 text-sm',
-  md: 'px-4 py-2 text-base',
-  lg: 'px-5 py-2.5 text-lg',
+  sm: 'px-3 text-sm h-9',
+  md: 'px-4 text-base h-10',
+  lg: 'px-5 text-lg h-12',
 };
 
 /**
@@ -118,6 +129,7 @@ export const ICON_CONTAINER_SIZES = {
 };
 
 export default {
+  FORM_ELEMENT_HEIGHTS,
   BUTTON_SIZES,
   ICON_SIZES,
   SPINNER_SIZES,

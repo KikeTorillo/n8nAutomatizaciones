@@ -167,6 +167,17 @@ function CitasPage() {
     openModal('cancelar', cita);
   };
 
+  // Handler para ir al POS a cobrar una cita completada
+  const handleCobrar = (cita) => {
+    // Navegar al POS con la información de la cita
+    navigate('/pos/venta', {
+      state: {
+        cita,
+        fromCitas: true
+      }
+    });
+  };
+
   const handleNuevaCita = (fechaDesdeCalendario) => {
     openModal('formulario', null, {
       mode: 'create',
@@ -338,6 +349,7 @@ function CitasPage() {
         onCambiarEstado={handleCambiarEstado}
         onEditar={handleEditar}
         onCancelar={handleAbrirModalCancelar}
+        onCobrar={handleCobrar}
       />
 
       {/* Modal de Formulario Crear/Editar */}

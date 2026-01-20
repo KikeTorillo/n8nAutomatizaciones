@@ -88,6 +88,68 @@ class CitaOperacionalModel {
         });
     }
 
+    static async noShow(citaId, datosNoShow, organizacionId) {
+        return await RLSContextManager.transaction(organizacionId, async (db) => {
+            const resultado = await db.query(`
+                UPDATE citas
+                SET estado = 'no_asistio',
+                    motivo_cancelacion = $1,
+                    notas_internas = COALESCE(notas_internas, '') || $2,
+                    actualizado_por = $3,
+                    actualizado_en = NOW()
+                WHERE id = $4 AND organizacion_id = $5
+                RETURNING *
+            `, [
+                datosNoShow.motivo_no_show,
+                datosNoShow.notas_adicionales ? `\nNo-Show: ${datosNoShow.notas_adicionales}` : `\nNo-Show: ${datosNoShow.motivo_no_show}`,
+                datosNoShow.usuario_id,
+                citaId,
+                organizacionId
+            ]);
+
+            await CitaHelpersModel.registrarEventoAuditoria({
+                organizacion_id: organizacionId,
+                tipo_evento: 'cita_no_show',
+                descripcion: `Cita marcada como no-show: ${datosNoShow.motivo_no_show}`,
+                cita_id: citaId,
+                usuario_id: datosNoShow.usuario_id
+            }, db);
+
+            return resultado.rows[0];
+        });
+    }
+
+    static async cancelar(citaId, datosCancelacion, organizacionId) {
+        return await RLSContextManager.transaction(organizacionId, async (db) => {
+            const resultado = await db.query(`
+                UPDATE citas
+                SET estado = 'cancelada',
+                    motivo_cancelacion = $1,
+                    notas_internas = COALESCE(notas_internas, '') || $2,
+                    actualizado_por = $3,
+                    actualizado_en = NOW()
+                WHERE id = $4 AND organizacion_id = $5
+                RETURNING *
+            `, [
+                datosCancelacion.motivo_cancelacion,
+                `\nCancelada por ${datosCancelacion.cancelado_por || 'admin'}: ${datosCancelacion.motivo_cancelacion}${datosCancelacion.notas_adicionales ? '. ' + datosCancelacion.notas_adicionales : ''}`,
+                datosCancelacion.usuario_id,
+                citaId,
+                organizacionId
+            ]);
+
+            await CitaHelpersModel.registrarEventoAuditoria({
+                organizacion_id: organizacionId,
+                tipo_evento: 'cita_cancelada',
+                descripcion: `Cita cancelada por ${datosCancelacion.cancelado_por || 'admin'}: ${datosCancelacion.motivo_cancelacion}`,
+                cita_id: citaId,
+                usuario_id: datosCancelacion.usuario_id
+            }, db);
+
+            return resultado.rows[0];
+        });
+    }
+
     static async reagendar(citaId, datosReagenda, organizacionId) {
         return await RLSContextManager.transaction(organizacionId, async (db) => {
             const citaActual = await db.query('SELECT profesional_id FROM citas WHERE id = $1', [citaId]);

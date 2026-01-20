@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { serviciosApi } from '@/services/api/endpoints';
 import { useToast } from '@/hooks/utils';
 
@@ -65,9 +65,10 @@ export function useProfesionalServices(profesionalId, serviciosCatalogo, roundRo
   }, [serviciosCatalogo, serviciosDisponibles, profesionalId]);
 
   // Limpiar servicios disponibles (para usar al abrir modal en modo creación)
-  const limpiarServicios = () => {
+  // IMPORTANTE: Memoizado para evitar re-ejecución del useEffect en CitaFormDrawer
+  const limpiarServicios = useCallback(() => {
     setServiciosDisponibles([]);
-  };
+  }, []);
 
   // Verificar si el usuario puede seleccionar servicios
   const puedeSeleccionarServicios = useMemo(() => {

@@ -279,9 +279,9 @@ export function obtenerAccionesDisponibles(estado) {
       { accion: 'completar', label: 'Completar', icono: 'CheckCircle2', color: 'green' },
       { accion: 'cancelar', label: 'Cancelar', icono: 'XCircle', color: 'red' },
     ],
-    completada: [{ accion: 'ver', label: 'Ver Detalles', icono: 'Eye', color: 'gray' }],
-    cancelada: [{ accion: 'ver', label: 'Ver Detalles', icono: 'Eye', color: 'gray' }],
-    no_show: [{ accion: 'ver', label: 'Ver Detalles', icono: 'Eye', color: 'gray' }],
+    completada: [{ accion: 'cobrar', label: 'Ir a Cobrar', icono: 'DollarSign', color: 'green' }],
+    cancelada: [], // Sin acciones - solo ver detalles
+    no_show: [], // Sin acciones - solo ver detalles
   };
 
   return acciones[estado] || [];

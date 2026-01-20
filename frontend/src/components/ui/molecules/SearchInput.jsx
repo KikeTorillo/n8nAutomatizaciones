@@ -3,23 +3,24 @@ import { Search, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 // Constantes externas para evitar recreación en cada render
+// Alturas alineadas con FORM_ELEMENT_HEIGHTS: sm=h-9 (36px), md=h-10 (40px), lg=h-12 (48px)
 const SIZE_STYLES = {
   sm: {
-    input: 'py-1.5 text-sm',
+    input: 'h-9 text-sm',
     icon: 'w-4 h-4',
     paddingLeft: 'pl-8',
     paddingRightWithClear: 'pr-8',
     paddingRightNormal: 'pr-3',
   },
   md: {
-    input: 'py-2 text-base',
+    input: 'h-10 text-base',
     icon: 'w-5 h-5',
     paddingLeft: 'pl-10',
     paddingRightWithClear: 'pr-10',
     paddingRightNormal: 'pr-4',
   },
   lg: {
-    input: 'py-3 text-lg',
+    input: 'h-12 text-lg',
     icon: 'w-6 h-6',
     paddingLeft: 'pl-12',
     paddingRightWithClear: 'pr-12',

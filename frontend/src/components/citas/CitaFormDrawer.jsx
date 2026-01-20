@@ -323,21 +323,22 @@ function CitaFormDrawer({ isOpen, onClose, mode = 'create', cita = null, fechaPr
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Cliente {!isEditMode && <span className="text-red-500">*</span>}
             </label>
-            <div className="flex items-center gap-2">
-              <User className="w-5 h-5 text-gray-400 dark:text-gray-500" />
-              <Controller
-                name="cliente_id"
-                control={control}
-                render={({ field }) => (
-                  <Select
-                    {...field}
-                    options={clientesOpciones}
-                    placeholder="Selecciona un cliente"
-                    className="flex-1"
-                    disabled={isEditMode}
-                  />
-                )}
-              />
+            <div className="flex items-center gap-2 w-full">
+              <User className="w-5 h-5 text-gray-400 dark:text-gray-500 flex-shrink-0" />
+              <div className="flex-1">
+                <Controller
+                  name="cliente_id"
+                  control={control}
+                  render={({ field }) => (
+                    <Select
+                      {...field}
+                      options={clientesOpciones}
+                      placeholder="Selecciona un cliente"
+                      disabled={isEditMode}
+                    />
+                  )}
+                />
+              </div>
             </div>
             {errors.cliente_id && (
               <p className="mt-1 text-sm text-red-600">{errors.cliente_id.message}</p>
@@ -351,20 +352,21 @@ function CitaFormDrawer({ isOpen, onClose, mode = 'create', cita = null, fechaPr
               {!isEditMode && !roundRobinHabilitado && <span className="text-red-500">*</span>}
               {roundRobinHabilitado && <span className="text-gray-400 text-xs font-normal">(opcional)</span>}
             </label>
-            <div className="flex items-center gap-2">
-              <Briefcase className="w-5 h-5 text-gray-400 dark:text-gray-500" />
-              <Controller
-                name="profesional_id"
-                control={control}
-                render={({ field }) => (
-                  <Select
-                    {...field}
-                    options={profesionalesOpciones}
-                    placeholder={roundRobinHabilitado ? 'Auto-asignar (Round-Robin)' : 'Selecciona un profesional'}
-                    className="flex-1"
-                  />
-                )}
-              />
+            <div className="flex items-center gap-2 w-full">
+              <Briefcase className="w-5 h-5 text-gray-400 dark:text-gray-500 flex-shrink-0" />
+              <div className="flex-1">
+                <Controller
+                  name="profesional_id"
+                  control={control}
+                  render={({ field }) => (
+                    <Select
+                      {...field}
+                      options={profesionalesOpciones}
+                      placeholder={roundRobinHabilitado ? 'Auto-asignar (Round-Robin)' : 'Selecciona un profesional'}
+                    />
+                  )}
+                />
+              </div>
             </div>
             {errors.profesional_id && (
               <p className="mt-1 text-sm text-red-600">{errors.profesional_id.message}</p>
@@ -383,23 +385,24 @@ function CitaFormDrawer({ isOpen, onClose, mode = 'create', cita = null, fechaPr
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Servicios {!isEditMode && <span className="text-red-500">*</span>}
             </label>
-            <div className="flex items-start gap-2">
-              <Package className="w-5 h-5 text-gray-400 dark:text-gray-500 mt-3" />
-              <Controller
-                name="servicios_ids"
-                control={control}
-                render={({ field }) => (
-                  <MultiSelect
-                    {...field}
-                    options={serviciosOpciones}
-                    placeholder={cargandoServicios ? 'Cargando servicios...' : 'Selecciona uno o más servicios'}
-                    className="flex-1"
-                    disabled={!puedeSeleccionarServicios || cargandoServicios}
-                    max={10}
-                    helper={!errors.servicios_ids && watchServicios?.length > 0 && `${watchServicios.length} servicio(s) seleccionado(s)`}
-                  />
-                )}
-              />
+            <div className="flex items-start gap-2 w-full">
+              <Package className="w-5 h-5 text-gray-400 dark:text-gray-500 mt-2.5 flex-shrink-0" />
+              <div className="flex-1">
+                <Controller
+                  name="servicios_ids"
+                  control={control}
+                  render={({ field }) => (
+                    <MultiSelect
+                      {...field}
+                      options={serviciosOpciones}
+                      placeholder={cargandoServicios ? 'Cargando servicios...' : 'Selecciona uno o más servicios'}
+                      disabled={!puedeSeleccionarServicios || cargandoServicios}
+                      max={10}
+                      helper={!errors.servicios_ids && watchServicios?.length > 0 && `${watchServicios.length} servicio(s) seleccionado(s)`}
+                    />
+                  )}
+                />
+              </div>
             </div>
             {mensajeAyudaServicios?.tipo === 'seleccionar-profesional' && (
               <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
@@ -425,7 +428,7 @@ function CitaFormDrawer({ isOpen, onClose, mode = 'create', cita = null, fechaPr
               <input
                 {...register('fecha_cita')}
                 type="date"
-                className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                className="block w-full px-3 h-10 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
               />
               {errors.fecha_cita && (
                 <p className="mt-1 text-sm text-red-600">{errors.fecha_cita.message}</p>
@@ -436,12 +439,12 @@ function CitaFormDrawer({ isOpen, onClose, mode = 'create', cita = null, fechaPr
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Hora de Inicio {!isEditMode && <span className="text-red-500">*</span>}
               </label>
-              <div className="flex items-center gap-2">
-                <Clock className="w-5 h-5 text-gray-400 dark:text-gray-500" />
+              <div className="flex items-center gap-2 w-full">
+                <Clock className="w-5 h-5 text-gray-400 dark:text-gray-500 flex-shrink-0" />
                 <input
                   {...register('hora_inicio')}
                   type="time"
-                  className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                  className="flex-1 px-3 h-10 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                 />
               </div>
               {errors.hora_inicio && (

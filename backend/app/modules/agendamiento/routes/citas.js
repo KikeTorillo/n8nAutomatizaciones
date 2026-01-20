@@ -272,6 +272,24 @@ router.post('/:id/reagendar',
     CitaController.reagendar
 );
 
+router.post('/:id/no-show',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    validate(citaSchemas.noShow),
+    CitaController.noShow
+);
+
+router.post('/:id/cancelar',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    validate(citaSchemas.cancelar),
+    CitaController.cancelar
+);
+
 router.patch('/:codigo/recordatorio-enviado',
     auth.authenticateToken,
     tenant.setTenantContext,

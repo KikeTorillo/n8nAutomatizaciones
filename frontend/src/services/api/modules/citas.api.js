@@ -35,10 +35,10 @@ export const citasApi = {
   /**
    * Cancelar cita
    * @param {number} id
-   * @param {Object} data - { motivo_cancelacion }
+   * @param {Object} data - { motivo_cancelacion, cancelado_por }
    * @returns {Promise<Object>}
    */
-  cancelar: (id, data = {}) => apiClient.put(`/citas/${id}/cancelar`, data),
+  cancelar: (id, data = {}) => apiClient.post(`/citas/${id}/cancelar`, data),
 
   /**
    * Confirmar asistencia de cita
@@ -67,10 +67,10 @@ export const citasApi = {
   /**
    * Marcar cita como no show (cliente no llegó)
    * @param {number} id
-   * @param {Object} data - { motivo }
+   * @param {Object} data - { motivo_no_show, notas_adicionales }
    * @returns {Promise<Object>}
    */
-  noShow: (id, data = {}) => apiClient.put(`/citas/${id}/no-show`, data),
+  noShow: (id, data = {}) => apiClient.post(`/citas/${id}/no-show`, data),
 
   /**
    * Enviar recordatorio de cita por WhatsApp

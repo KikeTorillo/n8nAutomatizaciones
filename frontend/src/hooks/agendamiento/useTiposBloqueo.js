@@ -26,7 +26,13 @@ export const useTiposBloqueo = (filtros = {}) => {
     queryKey: tiposBloqueoKeys.list(filtros),
     queryFn: async () => {
       const response = await tiposBloqueoApi.listar(filtros);
-      return response.data.data; // Extraer el objeto data interno que contiene tipos, total, filtros_aplicados
+      // BaseCrudController devuelve { success, data: [...], meta: {...} }
+      // Los componentes esperan { tipos: [...], total, ... }
+      return {
+        tipos: response.data.data,
+        total: response.data.meta?.total || response.data.data?.length || 0,
+        filtros_aplicados: filtros
+      };
     },
     staleTime: STALE_TIMES.SEMI_STATIC, // 5 minutos (los tipos de bloqueo no cambian frecuentemente)
   });

@@ -61,6 +61,14 @@ class CitaController {
         return CitaOperacionalController.reagendar(req, res);
     }
 
+    static async noShow(req, res) {
+        return CitaOperacionalController.noShow(req, res);
+    }
+
+    static async cancelar(req, res) {
+        return CitaOperacionalController.cancelar(req, res);
+    }
+
     // ===================================================================
     // 📊 ENDPOINTS DASHBOARD Y MÉTRICAS
     // ===================================================================

@@ -106,6 +106,63 @@ class CitaOperacionalController {
         return ResponseHelper.success(res, resultado, 'Servicio completado exitosamente');
     });
 
+    static noShow = asyncHandler(async (req, res) => {
+        const citaId = parseInt(req.params.id);
+        const { motivo_no_show, notas_adicionales } = req.body;
+        const organizacionId = req.tenant.organizacionId;
+
+        const citaExistente = await CitaModel.obtenerPorId(citaId, organizacionId);
+        if (!citaExistente) {
+            return ResponseHelper.error(res, 'Cita no encontrada', 404);
+        }
+
+        // Solo se puede marcar no-show en estados: confirmada, pendiente
+        if (!['confirmada', 'pendiente'].includes(citaExistente.estado)) {
+            return ResponseHelper.error(res,
+                `No se puede marcar no-show. Estado actual: ${citaExistente.estado}`,
+                400
+            );
+        }
+
+        const resultado = await CitaModel.noShow(citaId, {
+            motivo_no_show,
+            notas_adicionales,
+            usuario_id: req.user.id,
+            ip_origen: req.ip
+        }, organizacionId);
+
+        return ResponseHelper.success(res, resultado, 'Cita marcada como no-show exitosamente');
+    });
+
+    static cancelar = asyncHandler(async (req, res) => {
+        const citaId = parseInt(req.params.id);
+        const { motivo_cancelacion, cancelado_por, notas_adicionales } = req.body;
+        const organizacionId = req.tenant.organizacionId;
+
+        const citaExistente = await CitaModel.obtenerPorId(citaId, organizacionId);
+        if (!citaExistente) {
+            return ResponseHelper.error(res, 'Cita no encontrada', 404);
+        }
+
+        // Solo se puede cancelar en estados: pendiente, confirmada
+        if (!['pendiente', 'confirmada'].includes(citaExistente.estado)) {
+            return ResponseHelper.error(res,
+                `No se puede cancelar. Estado actual: ${citaExistente.estado}`,
+                400
+            );
+        }
+
+        const resultado = await CitaModel.cancelar(citaId, {
+            motivo_cancelacion,
+            cancelado_por: cancelado_por || 'admin',
+            notas_adicionales,
+            usuario_id: req.user.id,
+            ip_origen: req.ip
+        }, organizacionId);
+
+        return ResponseHelper.success(res, resultado, 'Cita cancelada exitosamente');
+    });
+
     static reagendar = asyncHandler(async (req, res) => {
         const citaId = parseInt(req.params.id);
         const { nueva_fecha, nueva_hora_inicio, nueva_hora_fin, motivo_reagenda } = req.body;

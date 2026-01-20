@@ -62,6 +62,14 @@ class CitaModel {
         return CitaOperacionalModel.reagendar(citaId, datosReagenda, organizacionId);
     }
 
+    static async noShow(citaId, datosNoShow, organizacionId) {
+        return CitaOperacionalModel.noShow(citaId, datosNoShow, organizacionId);
+    }
+
+    static async cancelar(citaId, datosCancelacion, organizacionId) {
+        return CitaOperacionalModel.cancelar(citaId, datosCancelacion, organizacionId);
+    }
+
     // ===================================================================
     // 📊 MÉTODOS DASHBOARD Y MÉTRICAS
     // ===================================================================

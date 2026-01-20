@@ -342,6 +342,7 @@ function MisAusenciasTab() {
       <SolicitudVacacionesModal
         isOpen={isOpen('vacaciones')}
         onClose={() => closeModal('vacaciones')}
+        diasDisponibles={dashboard?.diasVacacionesDisponibles || 0}
       />
     </div>
   );
