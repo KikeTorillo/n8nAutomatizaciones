@@ -28,7 +28,8 @@ export default function EtiquetasSelector({
   className = '',
   showBadges = true,
 }) {
-  const { data: etiquetas = [], isLoading } = useEtiquetas();
+  const { data, isLoading } = useEtiquetas();
+  const etiquetas = data?.etiquetas ?? [];
 
   // Convertir etiquetas a formato de opciones para MultiSelect
   const options = useMemo(() => {

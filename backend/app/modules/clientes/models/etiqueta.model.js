@@ -57,7 +57,10 @@ class EtiquetaClienteModel {
      */
     static async listar(organizacionId, opciones = {}) {
         return await RLSContextManager.query(organizacionId, async (db) => {
-            const { soloActivas = true } = opciones;
+            // Parsear soloActivas correctamente (puede venir como string 'false')
+            const soloActivasRaw = opciones.soloActivas;
+            const soloActivas = soloActivasRaw === undefined ? true :
+                soloActivasRaw === true || soloActivasRaw === 'true';
 
             let query = `
                 SELECT

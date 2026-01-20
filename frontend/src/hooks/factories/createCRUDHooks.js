@@ -106,7 +106,11 @@ export function createCRUDHooks(config) {
       queryFn: async () => {
         const response = await api[apiMethods.list](sanitizeParams(params));
         const data = response.data.data;
-        const pagination = response.data.pagination;
+        // Soportar múltiples ubicaciones de paginación:
+        // - response.data.pagination (legacy)
+        // - response.data.meta (BaseCrudController)
+        // - data.paginacion (modelos que retornan { items: [], paginacion: {} })
+        const pagination = response.data.pagination || response.data.meta || data?.paginacion || data?.pagination;
 
         // Si hay transformList, usarlo (pasar data y pagination)
         if (transformList) {

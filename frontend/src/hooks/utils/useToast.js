@@ -42,55 +42,51 @@ export function useToast() {
   const { toasts, addToast, removeToast, clearAll } = useToastStore();
 
   /**
-   * Mostrar toast genérico
-   * @param {string} message - Mensaje a mostrar
-   * @param {Object} options - Opciones del toast
-   * @param {('success'|'error'|'info'|'warning')} options.type - Tipo de toast
-   * @param {number} options.duration - Duración en ms (0 = sin auto-cerrar)
+   * Mostrar toast de éxito
+   */
+  const success = (message, options = {}) => {
+    return addToast({ message, type: 'success', duration: options.duration ?? 5000 });
+  };
+
+  /**
+   * Mostrar toast de error
+   */
+  const error = (message, options = {}) => {
+    return addToast({ message, type: 'error', duration: options.duration ?? 5000 });
+  };
+
+  /**
+   * Mostrar toast de advertencia
+   */
+  const warning = (message, options = {}) => {
+    return addToast({ message, type: 'warning', duration: options.duration ?? 5000 });
+  };
+
+  /**
+   * Mostrar toast de información
+   */
+  const info = (message, options = {}) => {
+    return addToast({ message, type: 'info', duration: options.duration ?? 5000 });
+  };
+
+  /**
+   * Toast genérico - soporta ambos patrones:
+   * - toast('mensaje', { type: 'success' })
+   * - toast.success('mensaje')
    */
   const toast = (message, options = {}) => {
     return addToast({
       message,
       type: options.type || 'info',
-      duration: options.duration !== undefined ? options.duration : 5000,
+      duration: options.duration ?? 5000,
     });
   };
 
-  /**
-   * Mostrar toast de éxito
-   * @param {string} message - Mensaje a mostrar
-   * @param {Object} options - Opciones del toast
-   */
-  const success = (message, options = {}) => {
-    return toast(message, { ...options, type: 'success' });
-  };
-
-  /**
-   * Mostrar toast de error
-   * @param {string} message - Mensaje a mostrar
-   * @param {Object} options - Opciones del toast
-   */
-  const error = (message, options = {}) => {
-    return toast(message, { ...options, type: 'error' });
-  };
-
-  /**
-   * Mostrar toast de advertencia
-   * @param {string} message - Mensaje a mostrar
-   * @param {Object} options - Opciones del toast
-   */
-  const warning = (message, options = {}) => {
-    return toast(message, { ...options, type: 'warning' });
-  };
-
-  /**
-   * Mostrar toast de información
-   * @param {string} message - Mensaje a mostrar
-   * @param {Object} options - Opciones del toast
-   */
-  const info = (message, options = {}) => {
-    return toast(message, { ...options, type: 'info' });
-  };
+  // Agregar métodos al objeto toast para soportar toast.success(), toast.error(), etc.
+  toast.success = success;
+  toast.error = error;
+  toast.warning = warning;
+  toast.info = info;
 
   return {
     toasts,

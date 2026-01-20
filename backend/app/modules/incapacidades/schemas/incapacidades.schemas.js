@@ -4,10 +4,10 @@
  */
 
 const Joi = require('joi');
+const { withPagination } = require('../../../schemas/shared');
 const {
     TIPOS_INCAPACIDAD,
     ESTADOS_INCAPACIDAD,
-    PAGINACION,
 } = require('../constants/incapacidades.constants');
 
 // ==================== CREAR INCAPACIDAD ====================
@@ -66,21 +66,13 @@ const crear = {
 
 const listar = {
     params: Joi.object({}),
-    query: Joi.object({
+    query: withPagination({
         profesional_id: Joi.number().integer().positive(),
         estado: Joi.string().valid(...Object.values(ESTADOS_INCAPACIDAD)),
         tipo_incapacidad: Joi.string().valid(...Object.values(TIPOS_INCAPACIDAD)),
         fecha_inicio: Joi.date().iso(),
         fecha_fin: Joi.date().iso(),
         es_prorroga: Joi.boolean(),
-
-        // Paginación
-        page: Joi.number().integer().min(1).default(1),
-        limite: Joi.number().integer().min(1).max(PAGINACION.LIMITE_MAXIMO).default(PAGINACION.LIMITE_DEFAULT),
-
-        // Ordenamiento
-        orden: Joi.string().valid('fecha_inicio', 'fecha_fin', 'creado_en').default('creado_en'),
-        direccion: Joi.string().valid('asc', 'desc').default('desc'),
     }),
 };
 
@@ -88,13 +80,9 @@ const listar = {
 
 const listarMis = {
     params: Joi.object({}),
-    query: Joi.object({
+    query: withPagination({
         estado: Joi.string().valid(...Object.values(ESTADOS_INCAPACIDAD)),
         anio: Joi.number().integer().min(2000).max(2100),
-
-        // Paginación
-        page: Joi.number().integer().min(1).default(1),
-        limite: Joi.number().integer().min(1).max(PAGINACION.LIMITE_MAXIMO).default(PAGINACION.LIMITE_DEFAULT),
     }),
 };
 

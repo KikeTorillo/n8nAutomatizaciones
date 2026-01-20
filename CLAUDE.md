@@ -383,35 +383,42 @@ const sucursalActiva = useSucursalStore(state => state.sucursalActiva);
 
 ---
 
-## Changelog Reciente
+## Plan de Pruebas
 
-### 20 Ene 2026 - Fix Filtros Booleanos y Paginación
+Documento completo en `/docs/PLAN_PRUEBAS_INTEGRAL.md`
 
-**Bug crítico corregido:** Queries retornaban 0 registros cuando filtros booleanos recibían `null`.
-
-- ✅ Cambio `!== undefined` → `!= null` en filtros de 9 modelos:
-  - `productos.model.js` (activo, permite_venta)
-  - `categorias.model.js`, `proveedores.model.js`, `combos.model.js` (activo)
-  - `cupones.model.js`, `promociones.model.js` (activo)
-  - `sucursales.model.js` (activo, es_matriz)
-  - `cuentas.model.js` (activo, afectable)
-  - `servicio.model.js` (activo)
-- ✅ `ListadoCRUDPage`: Soporte para `data.total` directo cuando no hay objeto paginación anidado
-
-**Causa:** `filtros.activo !== undefined` incluía `null`, generando `WHERE activo = NULL` (siempre vacío en SQL).
-
-### Ene 2026 - Auditoría Backend v2.1
-
-- ✅ Eliminado `sanitizeInput()` middleware inseguro
-- ✅ Corregido RLSContextManager cleanup (limpia `bypass_rls`)
-- ✅ Creado `RedisClientFactory` centralizado
-- ✅ Agregados campos Joi: dirección y precio multi-moneda
-
-### Ene 2026 - Frontend v2.2
-
-- `React.memo` en componentes de paginación y stats
-- Migraciones a `ConfigPageHeader` y `ListadoCRUDPage`
+**Estado actual:**
+| Módulo | Estado |
+|--------|--------|
+| Clientes (CRM) | ✅ Probado y corregido |
+| Agendamiento/Citas | ⏳ Siguiente |
+| POS, Inventario, etc. | 📋 Pendiente |
 
 ---
 
-**Actualizado**: 20 Enero 2026
+## Changelog
+
+### 19 Ene 2026 - Pruebas Módulo Clientes
+
+**3 bugs UX corregidos:**
+- `ClienteDetailPage.jsx`: Eliminado stats duplicados del header (solo quedan en SmartButtons)
+- `useEtiquetasClientes.js`: Fix invalidación cache con tipos string/number para clienteId
+
+### 20 Ene 2026 - Auditoría Integral
+
+**Bugs críticos corregidos:**
+- `etiquetas.map is not a function`: Hooks con `transformList` retornan `{items, paginacion}`, no array
+- Filtros booleanos `null`: Cambio `!== undefined` → `!= null` en 9 modelos
+
+**Módulos validados:** Clientes, Inventario, Servicios, Contabilidad, Sucursales
+
+### Ene 2026 - Backend v2.1 / Frontend v2.2
+
+- Eliminado `sanitizeInput()` middleware inseguro
+- `RedisClientFactory` centralizado
+- `React.memo` en componentes de paginación
+- Migraciones a `ListadoCRUDPage`
+
+---
+
+**Actualizado**: 19 Enero 2026

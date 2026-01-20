@@ -48,7 +48,17 @@ const hooks = createCRUDHooks({
     delete: { 400: 'No se puede eliminar la etiqueta (tiene clientes asignados)' },
   },
   staleTime: STALE_TIMES.SEMI_STATIC,
-  usePreviousData: true, // Evita flash de loading durante paginación
+  usePreviousData: true,
+  // Transformar respuesta para ListadoCRUDPage (espera { etiquetas, paginacion })
+  transformList: (data, pagination) => ({
+    etiquetas: Array.isArray(data) ? data : [],
+    paginacion: pagination || {
+      page: 1,
+      limit: 20,
+      total: Array.isArray(data) ? data.length : 0,
+      totalPages: 1,
+    },
+  }),
 });
 
 // Exportar hooks CRUD
@@ -89,8 +99,11 @@ export function useAsignarEtiquetasCliente() {
       return response.data.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['cliente-etiquetas', variables.clienteId] });
-      queryClient.invalidateQueries({ queryKey: ['cliente', variables.clienteId] });
+      // Invalidar con ambos tipos (string y number) para asegurar coincidencia
+      const clienteIdStr = String(variables.clienteId);
+      const clienteIdNum = Number(variables.clienteId);
+      queryClient.invalidateQueries({ queryKey: ['cliente-etiquetas', clienteIdNum] });
+      queryClient.invalidateQueries({ queryKey: ['cliente', clienteIdStr] });
       queryClient.invalidateQueries({ queryKey: ['clientes'] });
       queryClient.invalidateQueries({ queryKey: ['etiquetas-clientes'] });
     },
@@ -110,8 +123,11 @@ export function useAgregarEtiquetaCliente() {
       return response.data.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['cliente-etiquetas', variables.clienteId] });
-      queryClient.invalidateQueries({ queryKey: ['cliente', variables.clienteId] });
+      // Invalidar con ambos tipos (string y number) para asegurar coincidencia
+      const clienteIdStr = String(variables.clienteId);
+      const clienteIdNum = Number(variables.clienteId);
+      queryClient.invalidateQueries({ queryKey: ['cliente-etiquetas', clienteIdNum] });
+      queryClient.invalidateQueries({ queryKey: ['cliente', clienteIdStr] });
       queryClient.invalidateQueries({ queryKey: ['clientes'] });
       queryClient.invalidateQueries({ queryKey: ['etiquetas-clientes'] });
     },
@@ -130,8 +146,11 @@ export function useQuitarEtiquetaCliente() {
       return response.data.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['cliente-etiquetas', variables.clienteId] });
-      queryClient.invalidateQueries({ queryKey: ['cliente', variables.clienteId] });
+      // Invalidar con ambos tipos (string y number) para asegurar coincidencia
+      const clienteIdStr = String(variables.clienteId);
+      const clienteIdNum = Number(variables.clienteId);
+      queryClient.invalidateQueries({ queryKey: ['cliente-etiquetas', clienteIdNum] });
+      queryClient.invalidateQueries({ queryKey: ['cliente', clienteIdStr] });
       queryClient.invalidateQueries({ queryKey: ['clientes'] });
       queryClient.invalidateQueries({ queryKey: ['etiquetas-clientes'] });
     },

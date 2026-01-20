@@ -109,8 +109,9 @@ function ClientesPage() {
     limpiarFiltros: resetFiltros,
   } = useFilters(INITIAL_FILTERS, { moduloId: 'clientes.lista' });
 
-  // Etiquetas disponibles
-  const { data: etiquetasDisponibles = [] } = useEtiquetas();
+  // Etiquetas disponibles (useEtiquetas retorna { etiquetas: [], paginacion: {} })
+  const { data: etiquetasData } = useEtiquetas();
+  const etiquetasDisponibles = etiquetasData?.etiquetas || [];
 
   // Handler para exportar CSV
   const handleExportarCSV = useCallback((clientes) => {

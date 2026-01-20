@@ -88,11 +88,11 @@ export function usePagination({
 
   /**
    * Parámetros para pasar al query hook
-   * Formato esperado por el backend: { pagina, limite }
+   * Formato estándar: { page, limit }
    */
   const queryParams = {
-    pagina: page,
-    limite: limit,
+    page,
+    limit,
   };
 
   return {
@@ -136,14 +136,16 @@ export function normalizePagination(backendPagination) {
     };
   }
 
-  const {
-    page = backendPagination.pagina || 1,
-    limit = backendPagination.limite || 20,
-    total = backendPagination.total || 0,
-    totalPages = backendPagination.totalPaginas || Math.ceil(total / limit),
-    hasNext = backendPagination.hasNext ?? page < totalPages,
-    hasPrev = backendPagination.hasPrev ?? page > 1,
-  } = backendPagination;
+  // Soportar múltiples formatos de paginación:
+  // - page/limit (nuevo estándar)
+  // - pagina/limite (legacy)
+  // - pagina_actual/elementos_por_pagina (ServicioModel, etc.)
+  const page = backendPagination.page ?? backendPagination.pagina ?? backendPagination.pagina_actual ?? 1;
+  const limit = backendPagination.limit ?? backendPagination.limite ?? backendPagination.elementos_por_pagina ?? 20;
+  const total = backendPagination.total ?? backendPagination.total_elementos ?? 0;
+  const totalPages = backendPagination.totalPages ?? backendPagination.pages ?? backendPagination.totalPaginas ?? backendPagination.total_paginas ?? Math.ceil(total / limit);
+  const hasNext = backendPagination.hasNext ?? backendPagination.tiene_siguiente ?? page < totalPages;
+  const hasPrev = backendPagination.hasPrev ?? backendPagination.tiene_anterior ?? page > 1;
 
   return {
     page,

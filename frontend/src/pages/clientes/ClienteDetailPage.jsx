@@ -12,7 +12,7 @@
  * ====================================================================
  */
 
-import { useMemo, lazy, Suspense } from 'react';
+import { lazy, Suspense } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
   Edit,
@@ -25,15 +25,11 @@ import {
   Clock,
   FileText,
   TrendingUp,
-  Calendar,
-  ShoppingCart,
-  DollarSign,
 } from 'lucide-react';
-import { BackButton, Button, LoadingSpinner, StatCardGrid, StateNavTabs } from '@/components/ui';
+import { BackButton, Button, LoadingSpinner, StateNavTabs } from '@/components/ui';
 import ClienteEtiquetasEditor from '@/components/clientes/ClienteEtiquetasEditor';
 import { useCliente, useEstadisticasCliente } from '@/hooks/personas';
 import { useUsuarios } from '@/hooks/personas';
-import { formatCurrency } from '@/lib/utils';
 
 // Tab principal (carga eager)
 import ClienteGeneralTab from './tabs/ClienteGeneralTab';
@@ -61,44 +57,10 @@ const CLIENTE_TABS = [
 ];
 
 /**
- * Header del cliente con información resumida y estadísticas
+ * Header del cliente con información resumida
+ * Las estadísticas se muestran en los Smart Buttons del tab General
  */
-function ClienteHeader({ cliente, estadisticas, onEdit }) {
-  // Configuracion de StatCards con estadisticas del cliente
-  const statsConfig = useMemo(
-    () => [
-      {
-        key: 'citas',
-        icon: Calendar,
-        label: 'Total Citas',
-        value: estadisticas?.total_citas || 0,
-        color: 'primary',
-      },
-      {
-        key: 'compras',
-        icon: ShoppingCart,
-        label: 'Compras',
-        value: estadisticas?.total_compras || 0,
-        color: 'green',
-      },
-      {
-        key: 'invertido',
-        icon: DollarSign,
-        label: 'Total Invertido',
-        value: formatCurrency(estadisticas?.total_invertido || 0),
-        color: 'primary',
-      },
-      {
-        key: 'ultima_visita',
-        icon: Clock,
-        label: 'Dias desde ultima visita',
-        value: estadisticas?.dias_sin_visita ?? '-',
-        color: 'yellow',
-      },
-    ],
-    [estadisticas]
-  );
-
+function ClienteHeader({ cliente, onEdit }) {
   return (
     <div className="bg-white dark:bg-gray-800 shadow-sm border-b dark:border-gray-700">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -196,9 +158,6 @@ function ClienteHeader({ cliente, estadisticas, onEdit }) {
             Editar
           </Button>
         </div>
-
-        {/* Estadisticas del cliente */}
-        <StatCardGrid stats={statsConfig} columns={4} />
       </div>
     </div>
   );
@@ -307,10 +266,9 @@ function ClienteDetailPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Header con info resumida y estadisticas */}
+      {/* Header con info resumida */}
       <ClienteHeader
         cliente={cliente}
-        estadisticas={estadisticas}
         onEdit={() => navigate(`/clientes/${id}/editar`)}
       />
 

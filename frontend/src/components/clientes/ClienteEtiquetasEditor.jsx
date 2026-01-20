@@ -35,7 +35,8 @@ export default function ClienteEtiquetasEditor({
   const buttonRef = useRef(null);
 
   // Query de todas las etiquetas disponibles
-  const { data: etiquetasDisponibles = [] } = useEtiquetas();
+  const { data } = useEtiquetas();
+  const etiquetasDisponibles = data?.etiquetas ?? [];
 
   // Mutations
   const agregarMutation = useAgregarEtiquetaCliente();
