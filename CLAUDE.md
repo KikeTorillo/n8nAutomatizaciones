@@ -367,6 +367,8 @@ const sucursalActiva = useSucursalStore(state => state.sucursalActiva);
 | "field not allowed to be empty" | Sanitizar `""` a `undefined` |
 | Cambios no se reflejan | `docker restart <contenedor>` + Ctrl+Shift+R |
 | "Rendered fewer hooks" | Mover returns condicionales DESPUÉS de hooks |
+| Query retorna vacío con filtros `null` | En modelos, usar `!= null` en vez de `!== undefined` para filtros opcionales |
+| `X.map is not a function` en hooks | Verificar estructura: hooks con `transformList` retornan `{items, paginacion}`, no array |
 
 ---
 
@@ -383,33 +385,33 @@ const sucursalActiva = useSucursalStore(state => state.sucursalActiva);
 
 ## Changelog Reciente
 
+### 20 Ene 2026 - Fix Filtros Booleanos y Paginación
+
+**Bug crítico corregido:** Queries retornaban 0 registros cuando filtros booleanos recibían `null`.
+
+- ✅ Cambio `!== undefined` → `!= null` en filtros de 9 modelos:
+  - `productos.model.js` (activo, permite_venta)
+  - `categorias.model.js`, `proveedores.model.js`, `combos.model.js` (activo)
+  - `cupones.model.js`, `promociones.model.js` (activo)
+  - `sucursales.model.js` (activo, es_matriz)
+  - `cuentas.model.js` (activo, afectable)
+  - `servicio.model.js` (activo)
+- ✅ `ListadoCRUDPage`: Soporte para `data.total` directo cuando no hay objeto paginación anidado
+
+**Causa:** `filtros.activo !== undefined` incluía `null`, generando `WHERE activo = NULL` (siempre vacío en SQL).
+
 ### Ene 2026 - Auditoría Backend v2.1
 
-**Correcciones de seguridad:**
-- ✅ Eliminado `sanitizeInput()` - middleware inseguro que daba falsa protección
-- ✅ Corregido RLSContextManager cleanup - ahora limpia TODAS las variables RLS (incluyendo `bypass_rls`)
+- ✅ Eliminado `sanitizeInput()` middleware inseguro
+- ✅ Corregido RLSContextManager cleanup (limpia `bypass_rls`)
+- ✅ Creado `RedisClientFactory` centralizado
+- ✅ Agregados campos Joi: dirección y precio multi-moneda
 
-**Infraestructura:**
-- ✅ Creado `RedisClientFactory` - centraliza conexiones Redis, evita duplicación ~120 líneas
-- Refactorizados `permisosCacheService` y `tokenBlacklistService` para usar factory
+### Ene 2026 - Frontend v2.2
 
-**Schemas Joi:**
-- ✅ Agregados campos de dirección: `calle`, `colonia`, `ciudad`, `estado`, `direccion`
-- ✅ Agregados campos multi-moneda: `precioMoneda`, `preciosMultiMoneda`
-
-### Ene 2026 - Mejoras Frontend v2.2
-
-**Optimizaciones de rendimiento:**
-- `React.memo` agregado a: StatCard, StatCardGrid, SearchInput, Pagination
-- Memoización de columnas con `useMemo` en páginas de listado
-
-**Migraciones ConfigPageHeader:**
-- ModulosPage, MonedasPage, NegocioPage, PermisosPage
-
-**Limpieza Atomic Design:**
-- Eliminados re-exports innecesarios (IconPicker.jsx, StateNavTabs.jsx en raíz)
-- Barrel exports actualizados para importar directo desde subcarpetas modulares
+- `React.memo` en componentes de paginación y stats
+- Migraciones a `ConfigPageHeader` y `ListadoCRUDPage`
 
 ---
 
-**Actualizado**: 18 Enero 2026 - Auditoría Backend v2.1
+**Actualizado**: 20 Enero 2026

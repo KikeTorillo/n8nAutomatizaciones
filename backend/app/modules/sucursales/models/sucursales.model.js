@@ -138,15 +138,15 @@ class SucursalesModel {
             let values = [organizacionId];
             let paramCounter = 2;
 
-            // Filtro por activo
-            if (filtros.activo !== undefined) {
+            // Filtro por activo (usar != null para descartar tanto null como undefined)
+            if (filtros.activo != null) {
                 whereConditions.push(`s.activo = $${paramCounter}`);
                 values.push(filtros.activo);
                 paramCounter++;
             }
 
-            // Filtro por es_matriz
-            if (filtros.es_matriz !== undefined) {
+            // Filtro por es_matriz (usar != null para descartar tanto null como undefined)
+            if (filtros.es_matriz != null) {
                 whereConditions.push(`s.es_matriz = $${paramCounter}`);
                 values.push(filtros.es_matriz);
                 paramCounter++;

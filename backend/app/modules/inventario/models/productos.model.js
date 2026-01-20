@@ -321,8 +321,8 @@ class ProductosModel {
             let values = [organizacionId];
             let paramCounter = 2;
 
-            // Filtro por activo
-            if (filtros.activo !== undefined) {
+            // Filtro por activo (usar != null para descartar tanto null como undefined)
+            if (filtros.activo != null) {
                 whereConditions.push(`p.activo = $${paramCounter}`);
                 values.push(filtros.activo);
                 paramCounter++;
@@ -376,8 +376,8 @@ class ProductosModel {
             }
             // Nota: stock_agotado=false o undefined no agrega filtro (muestra todos)
 
-            // Filtro por permite venta
-            if (filtros.permite_venta !== undefined) {
+            // Filtro por permite venta (usar != null para descartar tanto null como undefined)
+            if (filtros.permite_venta != null) {
                 whereConditions.push(`p.permite_venta = $${paramCounter}`);
                 values.push(filtros.permite_venta);
                 paramCounter++;

@@ -145,8 +145,8 @@ class CuponesModel {
                 paramIndex++;
             }
 
-            // Filtro por estado
-            if (activo !== undefined) {
+            // Filtro por estado (usar != null para descartar tanto null como undefined)
+            if (activo != null) {
                 whereConditions.push(`c.activo = $${paramIndex}`);
                 values.push(activo);
                 paramIndex++;

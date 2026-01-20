@@ -85,7 +85,7 @@ class CombosModel {
             const params = [organizacionId];
             let paramIndex = 2;
 
-            if (activo !== undefined) {
+            if (activo != null) {
                 whereClause += ` AND pc.activo = $${paramIndex}`;
                 params.push(activo);
                 paramIndex++;

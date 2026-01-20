@@ -5,7 +5,7 @@ import SearchInput from '../molecules/SearchInput';
 import Button from '../atoms/Button';
 import StatCardGrid from '../organisms/StatCardGrid';
 import ViewTabs from '../molecules/ViewTabs';
-import { useFilters, usePagination, useModalManager, useDeleteConfirmation, useExportCSV } from '@/hooks/utils';
+import { useFilters, usePagination, normalizePagination, useModalManager, useDeleteConfirmation, useExportCSV } from '@/hooks/utils';
 import { Plus, Search, Download } from 'lucide-react';
 
 /**
@@ -153,15 +153,27 @@ export default function ListadoCRUDPage({
     [data, dataKey]
   );
 
-  const paginacion = useMemo(() => ({
-    page,
-    limit: queryParams.limite,
-    total: 0,
-    totalPages: 1,
-    hasNext: false,
-    hasPrev: false,
-    ...data?.paginacion,
-  }), [page, queryParams.limite, data?.paginacion]);
+  // Normalizar paginación del backend (soporta nombres en español e inglés)
+  const paginacion = useMemo(() => {
+    const backendPagination = data?.paginacion || data?.pagination;
+    const normalized = normalizePagination(backendPagination);
+
+    // Si no hay objeto de paginación anidado, usar total/limit directos de data
+    const total = normalized.total || data?.total || items.length;
+    const limit = normalized.limit || data?.limit || queryParams.limit;
+    const totalPages = Math.ceil(total / limit) || 1;
+
+    return {
+      ...normalized,
+      total,
+      totalPages,
+      // Usar el page del hook local si el backend no lo devuelve
+      page: normalized.page || page,
+      limit,
+      hasNext: page < totalPages,
+      hasPrev: page > 1,
+    };
+  }, [page, queryParams.limit, data?.paginacion, data?.pagination, data?.total, data?.limit, items.length]);
 
   // Export CSV
   const { exportar, isExporting } = useExportCSV();

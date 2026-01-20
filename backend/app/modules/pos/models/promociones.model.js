@@ -157,8 +157,8 @@ class PromocionesModel {
                 paramIndex++;
             }
 
-            // Filtro por estado
-            if (activo !== undefined) {
+            // Filtro por estado (usar != null para descartar tanto null como undefined)
+            if (activo != null) {
                 whereConditions.push(`p.activo = $${paramIndex}`);
                 values.push(activo);
                 paramIndex++;

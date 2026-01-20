@@ -341,7 +341,8 @@ class ServicioModel {
             const valores = [organizacion_id];
             let parametroIndex = 2;
 
-            if (filtros.activo !== undefined) {
+            // Usar != null para descartar tanto null como undefined
+            if (filtros.activo != null) {
                 condiciones.push(`s.activo = $${parametroIndex}`);
                 valores.push(filtros.activo);
                 parametroIndex++;
@@ -370,13 +371,14 @@ class ServicioModel {
                 parametroIndex++;
             }
 
-            if (filtros.precio_min !== undefined) {
+            // FIX: Usar != null para verificar tanto null como undefined
+            if (filtros.precio_min != null) {
                 condiciones.push(`s.precio >= $${parametroIndex}`);
                 valores.push(filtros.precio_min);
                 parametroIndex++;
             }
 
-            if (filtros.precio_max !== undefined) {
+            if (filtros.precio_max != null) {
                 condiciones.push(`s.precio <= $${parametroIndex}`);
                 valores.push(filtros.precio_max);
                 parametroIndex++;

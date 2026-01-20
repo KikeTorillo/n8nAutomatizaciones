@@ -45,15 +45,15 @@ class CuentasModel {
                 paramIndex++;
             }
 
-            // Filtro por activo
-            if (filtros.activo !== undefined) {
+            // Filtro por activo (usar != null para descartar tanto null como undefined)
+            if (filtros.activo != null) {
                 whereConditions.push(`c.activo = $${paramIndex}`);
                 queryParams.push(filtros.activo);
                 paramIndex++;
             }
 
-            // Filtro por afectable (solo cuentas de detalle)
-            if (filtros.afectable !== undefined) {
+            // Filtro por afectable (usar != null para descartar tanto null como undefined)
+            if (filtros.afectable != null) {
                 whereConditions.push(`c.afectable = $${paramIndex}`);
                 queryParams.push(filtros.afectable);
                 paramIndex++;

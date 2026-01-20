@@ -106,8 +106,8 @@ class ProveedoresModel {
             let values = [organizacionId];
             let paramCounter = 2;
 
-            // Filtro por activo
-            if (filtros.activo !== undefined) {
+            // Filtro por activo (usar != null para descartar tanto null como undefined)
+            if (filtros.activo != null) {
                 whereConditions.push(`p.activo = $${paramCounter}`);
                 values.push(filtros.activo);
                 paramCounter++;
