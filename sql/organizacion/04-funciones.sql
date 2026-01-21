@@ -134,12 +134,18 @@ Ejemplo: SELECT * FROM get_cadena_supervisores(12) -- Jefes del profesional 12';
 -- PARÁMETROS:
 -- - p_organizacion_id: ID de la organización
 --
--- RETORNA: TABLE(id, nombre, parent_id, nivel, path)
+-- RETORNA: TABLE(id, nombre, codigo, descripcion, activo, parent_id, nivel, path)
+--
+-- NOTA: Incluye todos los departamentos (activos e inactivos) para que
+-- el frontend pueda mostrar el badge "Inactivo" cuando corresponda.
 -- ====================================================================
 CREATE OR REPLACE FUNCTION get_arbol_departamentos(p_organizacion_id INTEGER)
 RETURNS TABLE(
     id INTEGER,
     nombre VARCHAR(100),
+    codigo VARCHAR(50),
+    descripcion TEXT,
+    activo BOOLEAN,
     parent_id INTEGER,
     nivel INTEGER,
     path TEXT
@@ -152,13 +158,15 @@ AS $$
         SELECT
             d.id,
             d.nombre,
+            d.codigo,
+            d.descripcion,
+            d.activo,
             d.parent_id,
             1 as nivel,
             d.nombre::TEXT as path
         FROM departamentos d
         WHERE d.organizacion_id = p_organizacion_id
           AND d.parent_id IS NULL
-          AND d.activo = true
 
         UNION ALL
 
@@ -166,13 +174,15 @@ AS $$
         SELECT
             d.id,
             d.nombre,
+            d.codigo,
+            d.descripcion,
+            d.activo,
             d.parent_id,
             a.nivel + 1,
             a.path || ' > ' || d.nombre
         FROM departamentos d
         JOIN arbol a ON d.parent_id = a.id
-        WHERE d.activo = true
-          AND a.nivel < 10
+        WHERE a.nivel < 10
     )
     SELECT * FROM arbol ORDER BY path;
 $$;

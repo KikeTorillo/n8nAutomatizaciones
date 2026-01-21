@@ -218,7 +218,7 @@ class CuentasModel {
             const query = `
                 INSERT INTO cuentas_contables (
                     organizacion_id, codigo, nombre, tipo, naturaleza, nivel,
-                    cuenta_padre_id, codigo_sat, afectable, activo
+                    cuenta_padre_id, codigo_agrupador, afectable, activo
                 ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
                 RETURNING *
             `;
@@ -231,7 +231,7 @@ class CuentasModel {
                 datos.naturaleza,
                 nivel,
                 datos.cuenta_padre_id || null,
-                datos.codigo_sat || null,
+                datos.codigo_agrupador || datos.codigo_sat || null,
                 datos.afectable !== false, // Por defecto true
                 datos.activo !== false     // Por defecto true
             ]);
@@ -282,7 +282,7 @@ class CuentasModel {
                     nombre = COALESCE($2, nombre),
                     tipo = COALESCE($3, tipo),
                     naturaleza = COALESCE($4, naturaleza),
-                    codigo_sat = COALESCE($5, codigo_sat),
+                    codigo_agrupador = COALESCE($5, codigo_agrupador),
                     afectable = COALESCE($6, afectable),
                     activo = COALESCE($7, activo),
                     actualizado_en = NOW()
@@ -295,7 +295,7 @@ class CuentasModel {
                 datos.nombre,
                 datos.tipo,
                 datos.naturaleza,
-                datos.codigo_sat,
+                datos.codigo_agrupador || datos.codigo_sat,
                 datos.afectable,
                 datos.activo,
                 cuentaId,

@@ -189,7 +189,8 @@ export function useMisAusencias(filtros = {}) {
 
     // Agregar vacaciones
     if (tipo !== 'incapacidad') {
-      const rawSolicitudes = vacacionesData?.data;
+      // La respuesta tiene estructura { data: { data: [...], total, ... } }
+      const rawSolicitudes = vacacionesData?.data?.data || vacacionesData?.data;
       const solicitudes = Array.isArray(rawSolicitudes) ? rawSolicitudes : [];
       solicitudes.forEach((s) => {
         items.push({
@@ -212,7 +213,8 @@ export function useMisAusencias(filtros = {}) {
 
     // Agregar incapacidades
     if (tipo !== 'vacaciones') {
-      const rawIncapacidades = incapacidadesData?.data;
+      // La respuesta tiene estructura { data: { data: [...], total, ... } }
+      const rawIncapacidades = incapacidadesData?.data?.data || incapacidadesData?.data;
       const incapacidades = Array.isArray(rawIncapacidades) ? rawIncapacidades : [];
       incapacidades.forEach((i) => {
         items.push({

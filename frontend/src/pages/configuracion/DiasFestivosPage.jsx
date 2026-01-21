@@ -67,7 +67,8 @@ function DiasFestivosPage() {
     enabled: !!tipoFeriado?.id,
   });
 
-  const feriados = bloqueosData?.bloqueos || [];
+  // useBloqueos retorna array directamente, no objeto con .bloqueos
+  const feriados = bloqueosData || [];
 
   // Filtrar por búsqueda
   const feriadosFiltrados = useMemo(() => {
@@ -124,7 +125,7 @@ function DiasFestivosPage() {
       }
     }
 
-    queryClient.invalidateQueries(['bloqueos']);
+    queryClient.invalidateQueries({ queryKey: ['bloqueos'] });
 
     if (importados > 0) {
       toast.success(`Se importaron ${importados} feriados de ${paisInfo.nombre}`);

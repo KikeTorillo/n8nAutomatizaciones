@@ -90,10 +90,10 @@ function DepartamentosPage() {
     },
     preparePayload: (data) => ({
       nombre: data.nombre.trim(),
-      codigo: data.codigo?.trim() || undefined,
-      descripcion: data.descripcion?.trim() || undefined,
+      codigo: data.codigo?.trim() || null,
+      descripcion: data.descripcion?.trim() || null,
       parent_id: data.parent_id ? parseInt(data.parent_id) : null,
-      activo: data.activo,
+      activo: Boolean(data.activo),
     }),
     prepareEditValues: (item) => ({
       nombre: item.nombre || '',

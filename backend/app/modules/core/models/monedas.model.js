@@ -220,7 +220,7 @@ class MonedasModel {
             moneda_origen: origen.toUpperCase(),
             monto_convertido: montoConvertido,
             moneda_destino: destino.toUpperCase(),
-            tasa_utilizada: tasa.tasa,
+            tasa_utilizada: parseFloat(tasa.tasa),
             fecha_tasa: tasa.fecha,
             fuente_tasa: tasa.fuente
         };

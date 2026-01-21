@@ -389,7 +389,7 @@ const sucursalActiva = useSucursalStore(state => state.sucursalActiva);
 
 Documento completo en `/docs/PLAN_PRUEBAS_INTEGRAL.md`
 
-**Estado actual (Semana 3 completada):**
+**Estado actual (Semana 6 completada):**
 | Módulo | Estado |
 |--------|--------|
 | Clientes (CRM) | ✅ Probado y corregido |
@@ -398,11 +398,82 @@ Documento completo en `/docs/PLAN_PRUEBAS_INTEGRAL.md`
 | Inventario | ✅ Probado y corregido |
 | Comisiones | ✅ Probado y corregido |
 | POS | ✅ Probado y corregido |
-| Contabilidad, Sucursales | 📋 Pendiente (Semana 4) |
+| Contabilidad, Sucursales, Ausencias | ✅ Probado y corregido |
+| Chatbots IA | ⏳ CRUD OK (conversación pendiente final) |
+| Configuración + Workflows | ✅ Probado y corregido (CFG-001/002/003) |
+| **RBAC (Permisos)** | ✅ Corregido (SEC-001) |
 
 ---
 
 ## Changelog
+
+### 21 Ene 2026 - Bug Seguridad RBAC (SEC-001) ✅ CORREGIDO
+
+**SEC-001 - Sistema RBAC inefectivo (CRÍTICO) - CORREGIDO:**
+- **Problema:** 18 permisos tenían `valor_default = true` en tabla `permisos_catalogo`
+- **Solución:** Cambiado `valor_default` a `false` en todos los permisos de escritura/operación
+- **Archivos:** `sql/nucleo/13-datos-permisos.sql`
+- **Estado:** ✅ CORREGIDO
+
+**Permisos corregidos (18):**
+- POS: `pos.crear_ventas`, `pos.abrir_caja`, `pos.cerrar_caja`, `pos.gestionar_caja`, `pos.ver_historial`, `pos.reimprimir_tickets`, `pos.canjear_puntos`, `pos.ver_puntos_cliente`
+- Agendamiento: `agendamiento.crear_citas`, `agendamiento.editar_citas`, `agendamiento.completar_citas`
+- Clientes: `clientes.crear`, `clientes.editar`, `clientes.ver_historial`
+- Otros: `inventario.ver_productos`, `contabilidad.ver_cuentas`, `profesionales.ver`, `reportes.exportar`
+
+**Permisos que mantienen `valor_default = true` (solo lectura):**
+- `acceso.agendamiento`, `acceso.clientes` - Acceso básico a módulos
+- `clientes.ver` - Solo ver listado
+- `reportes.ver_ventas`, `reportes.ver_citas` - Solo lectura reportes
+
+### 21 Ene 2026 - Bugs Semana 6 Corregidos (CFG-001, CFG-002, CFG-003)
+
+**CFG-001 - Departamentos corregido:**
+- Función SQL `get_arbol_departamentos` no retornaba columnas `codigo`, `descripcion`, `activo`
+- Actualizada función en `sql/organizacion/04-funciones.sql` para incluir campos faltantes
+- Frontend: `preparePayload` cambiado `|| undefined` a `|| null` para código/descripción
+- **Archivos:** `sql/organizacion/04-funciones.sql`, `DepartamentosPage.jsx:93-96`
+
+**CFG-002 - Monedas calculadora corregido:**
+- PostgreSQL retorna `tasa` como string (tipo numeric)
+- Agregado `parseFloat(tasa.tasa)` en la respuesta de conversión
+- **Archivo:** `monedas.model.js:223`
+
+**CFG-003 - Días Festivos corregido:**
+- Faltaba `fecha_fin_recurrencia` para feriados con `es_recurrente: true`
+- Constraint SQL requiere: `es_recurrente = true AND fecha_fin_recurrencia IS NOT NULL`
+- Agregado `fecha_fin_recurrencia: feriado.fijo ? \`${anio + 10}-12-31\` : null`
+- Invalidación de queries usaba formato viejo: cambiado a `{ queryKey: ['bloqueos'] }`
+- **Archivos:** `feriados-latam.js:186`, `DiasFestivosPage.jsx:127`
+
+### 21 Ene 2026 - Semana 6 Configuración + RBAC (UI Explorada)
+
+**Módulos probados:**
+- **Configuración General (Mi Negocio):** Logo, info general, tipo negocio, contacto, regional, POS config
+- **Usuarios:** CRUD funcional, vincular con profesional
+- **Permisos RBAC:** 95+ permisos organizados por categorías, UI de toggles funcional
+- **Workflows:** Editor visual BPMN con drag-drop, 1 workflow de aprobación OC
+- **Módulos:** 10 módulos con dependencias, toggles funcionales
+- **Departamentos, Puestos, Categorías:** CRUD funcional con jerarquías
+
+**Pendiente:** Validación funcional RBAC (probar con usuario limitado que permisos realmente bloqueen)
+
+### 21 Ene 2026 - Fix Historial/Calendario Ausencias (Semana 5)
+
+**Bug AUS-004 (BUG-021) corregido:**
+- Historial "Mis Ausencias" y Calendario mostraban 0 ausencias aunque había 6 días en trámite
+- **Causa:** Hooks accedían a `data.data` esperando array, pero estructura real era `data.data.data` (triple anidación por wrapper API)
+- **Archivos:** `useAusencias.js`, `vacaciones/queries.js`
+
+### 21 Ene 2026 - Semana 4 Pruebas Completadas
+
+**Módulo Contabilidad - 2 bugs corregidos:**
+- **CTB-001**: `cuentas.model.js` usaba columna `codigo_sat` inexistente → Cambiado a `codigo_agrupador`
+- **CTB-002**: Políticas RLS de `cuentas_contables` verificaban `app.current_role` que RLSContextManager no configura → Simplificadas a solo verificar `app.current_tenant_id`
+
+**Módulo Sucursales:** Probado CRUD, detalle, transferencias (límite Trial funciona correctamente)
+
+**Módulo Ausencias:** Probado solicitud vacaciones, calendario, dashboard
 
 ### 21 Ene 2026 - Fix Filtros Comisiones
 
@@ -441,4 +512,4 @@ Documento completo en `/docs/PLAN_PRUEBAS_INTEGRAL.md`
 
 ---
 
-**Actualizado**: 21 Enero 2026 (Sesión 22.9)
+**Actualizado**: 21 Enero 2026 (Sesión 24.2 - Bugs CFG-001/002/003 corregidos)

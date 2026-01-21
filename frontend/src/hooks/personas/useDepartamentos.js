@@ -14,9 +14,9 @@ import { STALE_TIMES } from '@/app/queryClient';
 import { createCRUDHooks, createSanitizer } from '@/hooks/factories';
 
 // Sanitizador para datos de departamento
+// NOTA: codigo/descripcion NO se incluyen aquí porque preparePayload ya los maneja
+// y el sanitizer genérico convierte null a undefined, causando que no se actualicen
 const sanitizeDepartamento = createSanitizer([
-  'codigo',
-  'descripcion',
   { name: 'parent_id', type: 'id' },
   { name: 'gerente_id', type: 'id' },
 ]);

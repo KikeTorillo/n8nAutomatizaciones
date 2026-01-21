@@ -116,7 +116,9 @@ export function useSolicitudesCalendario(filtros = {}) {
         limit: 100, // Máximo permitido por el backend
       };
       const response = await vacacionesApi.listarSolicitudes(params);
-      return response.data.data || [];
+      // La respuesta tiene estructura { data: { data: [...], total, ... } }
+      const paginatedData = response.data.data;
+      return paginatedData?.data || paginatedData || [];
     },
     enabled: !!filtros.fecha_inicio && !!filtros.fecha_fin,
     staleTime: STALE_TIMES.REAL_TIME,

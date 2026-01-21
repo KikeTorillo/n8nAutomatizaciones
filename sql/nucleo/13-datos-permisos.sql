@@ -46,35 +46,35 @@ INSERT INTO permisos_catalogo (codigo, modulo, categoria, nombre, descripcion, t
 -- ========================================
 -- MÓDULO: AGENDAMIENTO
 -- ========================================
-('agendamiento.crear_citas', 'agendamiento', 'operacion', 'Crear citas', 'Permite crear nuevas citas', 'booleano', 'true', 110),
-('agendamiento.editar_citas', 'agendamiento', 'operacion', 'Editar citas', 'Permite modificar citas existentes', 'booleano', 'true', 120),
+('agendamiento.crear_citas', 'agendamiento', 'operacion', 'Crear citas', 'Permite crear nuevas citas', 'booleano', 'false', 110),
+('agendamiento.editar_citas', 'agendamiento', 'operacion', 'Editar citas', 'Permite modificar citas existentes', 'booleano', 'false', 120),
 ('agendamiento.cancelar_citas', 'agendamiento', 'operacion', 'Cancelar citas', 'Permite cancelar citas', 'booleano', 'false', 130),
 ('agendamiento.ver_todas_citas', 'agendamiento', 'operacion', 'Ver todas las citas', 'Permite ver citas de todos los profesionales', 'booleano', 'false', 140),
 ('agendamiento.reagendar_sin_restriccion', 'agendamiento', 'operacion', 'Reagendar sin restricción', 'Permite reagendar sin límite de tiempo', 'booleano', 'false', 150),
-('agendamiento.completar_citas', 'agendamiento', 'operacion', 'Completar citas', 'Permite marcar citas como completadas', 'booleano', 'true', 160),
+('agendamiento.completar_citas', 'agendamiento', 'operacion', 'Completar citas', 'Permite marcar citas como completadas', 'booleano', 'false', 160),
 ('agendamiento.gestionar_bloqueos', 'agendamiento', 'operacion', 'Gestionar bloqueos', 'Permite crear/editar bloqueos de horario', 'booleano', 'false', 170),
 
 -- ========================================
 -- MÓDULO: POS (Punto de Venta)
 -- ========================================
-('pos.crear_ventas', 'pos', 'operacion', 'Crear ventas', 'Permite registrar ventas en POS', 'booleano', 'true', 200),
+('pos.crear_ventas', 'pos', 'operacion', 'Crear ventas', 'Permite registrar ventas en POS', 'booleano', 'false', 200),
 ('pos.aplicar_descuentos', 'pos', 'operacion', 'Aplicar descuentos', 'Permite aplicar descuentos a ventas', 'booleano', 'false', 210),
 ('pos.max_descuento', 'pos', 'operacion', 'Descuento máximo (%)', 'Porcentaje máximo de descuento permitido', 'numerico', '0', 220),
 ('pos.anular_ventas', 'pos', 'operacion', 'Anular ventas', 'Permite anular ventas completadas', 'booleano', 'false', 230),
 ('pos.devolver_productos', 'pos', 'operacion', 'Procesar devoluciones', 'Permite procesar devoluciones de productos', 'booleano', 'false', 240),
-('pos.ver_historial', 'pos', 'operacion', 'Ver historial de ventas', 'Permite ver historial de ventas', 'booleano', 'true', 250),
-('pos.abrir_caja', 'pos', 'operacion', 'Abrir caja', 'Permite abrir turno de caja', 'booleano', 'true', 260),
-('pos.cerrar_caja', 'pos', 'operacion', 'Cerrar caja', 'Permite cerrar turno de caja', 'booleano', 'true', 270),
+('pos.ver_historial', 'pos', 'operacion', 'Ver historial de ventas', 'Permite ver historial de ventas', 'booleano', 'false', 250),
+('pos.abrir_caja', 'pos', 'operacion', 'Abrir caja', 'Permite abrir turno de caja', 'booleano', 'false', 260),
+('pos.cerrar_caja', 'pos', 'operacion', 'Cerrar caja', 'Permite cerrar turno de caja', 'booleano', 'false', 270),
 ('pos.corte_caja', 'pos', 'operacion', 'Realizar corte de caja', 'Permite realizar corte/arqueo de caja', 'booleano', 'false', 280),
-('pos.reimprimir_tickets', 'pos', 'operacion', 'Reimprimir tickets', 'Permite reimprimir tickets de venta', 'booleano', 'true', 290),
-('pos.gestionar_caja', 'pos', 'operacion', 'Gestionar caja', 'Permite abrir, cerrar y gestionar sesiones de caja', 'booleano', 'true', 295),
+('pos.reimprimir_tickets', 'pos', 'operacion', 'Reimprimir tickets', 'Permite reimprimir tickets de venta', 'booleano', 'false', 290),
+('pos.gestionar_caja', 'pos', 'operacion', 'Gestionar caja', 'Permite abrir, cerrar y gestionar sesiones de caja', 'booleano', 'false', 295),
 ('pos.gestionar_cupones', 'pos', 'operacion', 'Gestionar cupones', 'Permite crear y administrar cupones de descuento', 'booleano', 'false', 296),
 ('pos.gestionar_promociones', 'pos', 'operacion', 'Gestionar promociones', 'Permite crear y administrar promociones automaticas', 'booleano', 'false', 297),
 
 -- ========================================
 -- MÓDULO: INVENTARIO
 -- ========================================
-('inventario.ver_productos', 'inventario', 'operacion', 'Ver productos', 'Permite ver catálogo de productos', 'booleano', 'true', 300),
+('inventario.ver_productos', 'inventario', 'operacion', 'Ver productos', 'Permite ver catálogo de productos', 'booleano', 'false', 300),
 ('inventario.crear_productos', 'inventario', 'operacion', 'Crear productos', 'Permite crear nuevos productos', 'booleano', 'false', 310),
 ('inventario.editar_productos', 'inventario', 'operacion', 'Editar productos', 'Permite modificar productos existentes', 'booleano', 'false', 320),
 ('inventario.eliminar_productos', 'inventario', 'operacion', 'Eliminar productos', 'Permite eliminar productos', 'booleano', 'false', 330),
@@ -90,16 +90,16 @@ INSERT INTO permisos_catalogo (codigo, modulo, categoria, nombre, descripcion, t
 -- MÓDULO: CLIENTES
 -- ========================================
 ('clientes.ver', 'clientes', 'operacion', 'Ver clientes', 'Permite ver lista de clientes', 'booleano', 'true', 500),
-('clientes.crear', 'clientes', 'operacion', 'Crear clientes', 'Permite registrar nuevos clientes', 'booleano', 'true', 510),
-('clientes.editar', 'clientes', 'operacion', 'Editar clientes', 'Permite modificar datos de clientes', 'booleano', 'true', 520),
+('clientes.crear', 'clientes', 'operacion', 'Crear clientes', 'Permite registrar nuevos clientes', 'booleano', 'false', 510),
+('clientes.editar', 'clientes', 'operacion', 'Editar clientes', 'Permite modificar datos de clientes', 'booleano', 'false', 520),
 ('clientes.eliminar', 'clientes', 'operacion', 'Eliminar clientes', 'Permite eliminar clientes', 'booleano', 'false', 530),
-('clientes.ver_historial', 'clientes', 'operacion', 'Ver historial de cliente', 'Permite ver historial completo del cliente', 'booleano', 'true', 540),
+('clientes.ver_historial', 'clientes', 'operacion', 'Ver historial de cliente', 'Permite ver historial completo del cliente', 'booleano', 'false', 540),
 ('clientes.exportar', 'clientes', 'operacion', 'Exportar clientes', 'Permite exportar lista de clientes', 'booleano', 'false', 550),
 
 -- ========================================
 -- MÓDULO: PROFESIONALES
 -- ========================================
-('profesionales.ver', 'profesionales', 'operacion', 'Ver profesionales', 'Permite ver lista de profesionales', 'booleano', 'true', 600),
+('profesionales.ver', 'profesionales', 'operacion', 'Ver profesionales', 'Permite ver lista de profesionales', 'booleano', 'false', 600),
 ('profesionales.crear', 'profesionales', 'operacion', 'Crear profesionales', 'Permite registrar nuevos profesionales', 'booleano', 'false', 610),
 ('profesionales.editar', 'profesionales', 'operacion', 'Editar profesionales', 'Permite modificar datos de profesionales', 'booleano', 'false', 620),
 ('profesionales.eliminar', 'profesionales', 'operacion', 'Eliminar profesionales', 'Permite dar de baja profesionales', 'booleano', 'false', 630),
@@ -109,7 +109,7 @@ INSERT INTO permisos_catalogo (codigo, modulo, categoria, nombre, descripcion, t
 -- ========================================
 -- MÓDULO: CONTABILIDAD
 -- ========================================
-('contabilidad.ver_cuentas', 'contabilidad', 'operacion', 'Ver catálogo de cuentas', 'Permite ver catálogo de cuentas contables', 'booleano', 'true', 700),
+('contabilidad.ver_cuentas', 'contabilidad', 'operacion', 'Ver catálogo de cuentas', 'Permite ver catálogo de cuentas contables', 'booleano', 'false', 700),
 ('contabilidad.crear_asientos', 'contabilidad', 'operacion', 'Crear asientos', 'Permite crear asientos contables manuales', 'booleano', 'false', 710),
 ('contabilidad.publicar_asientos', 'contabilidad', 'operacion', 'Publicar asientos', 'Permite publicar asientos (contabilizar)', 'booleano', 'false', 720),
 ('contabilidad.anular_asientos', 'contabilidad', 'operacion', 'Anular asientos', 'Permite anular asientos publicados', 'booleano', 'false', 730),
@@ -125,7 +125,7 @@ INSERT INTO permisos_catalogo (codigo, modulo, categoria, nombre, descripcion, t
 ('reportes.ver_inventario', 'reportes', 'operacion', 'Ver reportes de inventario', 'Acceso a reportes de inventario', 'booleano', 'false', 820),
 ('reportes.ver_financieros', 'reportes', 'operacion', 'Ver reportes financieros', 'Acceso a reportes contables', 'booleano', 'false', 830),
 ('reportes.ver_consolidados', 'reportes', 'operacion', 'Ver reportes consolidados', 'Acceso a reportes multi-sucursal', 'booleano', 'false', 840),
-('reportes.exportar', 'reportes', 'operacion', 'Exportar reportes', 'Permite exportar reportes a Excel/PDF', 'booleano', 'true', 850),
+('reportes.exportar', 'reportes', 'operacion', 'Exportar reportes', 'Permite exportar reportes a Excel/PDF', 'booleano', 'false', 850),
 
 -- ========================================
 -- MÓDULO: CONFIGURACIÓN
@@ -303,11 +303,11 @@ VALUES
 
     ('pos.ver_puntos_cliente', 'pos', 'operacion', 'Ver puntos de cliente',
      'Permite ver saldo de puntos de clientes',
-     'booleano', 'true', 299),
+     'booleano', 'false', 299),
 
     ('pos.canjear_puntos', 'pos', 'operacion', 'Canjear puntos',
      'Permite canjear puntos por descuento en ventas',
-     'booleano', 'true', 300),
+     'booleano', 'false', 300),
 
     ('pos.ajustar_puntos', 'pos', 'operacion', 'Ajustar puntos manualmente',
      'Permite hacer ajustes manuales de puntos a clientes',
