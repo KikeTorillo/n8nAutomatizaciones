@@ -83,11 +83,13 @@ function ConfigComisionModal({
   const crearMutation = useCrearConfiguracionComision();
 
   // Fetch profesionales, servicios, productos y categorías
-  const { data: profesionales, isLoading: loadingProfesionales } = useProfesionales();
+  const { data: profesionalesData, isLoading: loadingProfesionales } = useProfesionales();
   const { data: serviciosData, isLoading: loadingServicios } = useServicios();
   const { data: productosData, isLoading: loadingProductos } = useProductos({ activo: true });
   const { data: categoriasData, isLoading: loadingCategorias } = useCategorias();
 
+  // Extraer arrays de las respuestas (hooks con transformList retornan {items, paginacion})
+  const profesionales = profesionalesData?.items || profesionalesData?.profesionales || [];
   const servicios = serviciosData?.servicios || [];
   const productos = productosData?.productos || [];
   const categorias = categoriasData?.categorias || [];

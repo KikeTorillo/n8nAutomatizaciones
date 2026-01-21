@@ -492,8 +492,9 @@ function ServicioFormDrawer({ isOpen, onClose, mode = 'create', servicio = null 
                     name="duracion_minutos"
                     control={control}
                     render={({ field }) => {
-                      const horas = Math.floor(field.value / 60);
-                      const minutos = field.value % 60;
+                      const totalMinutos = field.value || 0;
+                      const horas = Math.floor(totalMinutos / 60);
+                      const minutos = totalMinutos % 60;
 
                       return (
                         <FormGroup label="Horas">
@@ -523,8 +524,9 @@ function ServicioFormDrawer({ isOpen, onClose, mode = 'create', servicio = null 
                     name="duracion_minutos"
                     control={control}
                     render={({ field }) => {
-                      const horas = Math.floor(field.value / 60);
-                      const minutos = field.value % 60;
+                      const totalMinutos = field.value || 0;
+                      const horas = Math.floor(totalMinutos / 60);
+                      const minutos = totalMinutos % 60;
 
                       return (
                         <FormGroup label="Minutos" error={errors.duracion_minutos?.message}>
@@ -581,56 +583,62 @@ function ServicioFormDrawer({ isOpen, onClose, mode = 'create', servicio = null 
                   <Controller
                     name="requiere_preparacion_minutos"
                     control={control}
-                    render={({ field }) => (
-                      <FormGroup label="Preparación (min)" error={errors.requiere_preparacion_minutos?.message}>
-                        <Input
-                          type="number"
-                          placeholder="0"
-                          min="0"
-                          max="120"
-                          value={field.value === 0 ? '' : field.value}
-                          hasError={!!errors.requiere_preparacion_minutos}
-                          onKeyDown={(e) => {
-                            if (['-', '+', 'e', 'E', '.'].includes(e.key)) {
-                              e.preventDefault();
-                            }
-                          }}
-                          onChange={(e) => {
-                            const value = e.target.value;
-                            const newValue = value === '' ? 0 : Math.min(Math.max(parseInt(value) || 0, 0), 120);
-                            field.onChange(newValue);
-                          }}
-                        />
-                      </FormGroup>
-                    )}
+                    render={({ field }) => {
+                      const currentValue = field.value ?? 0;
+                      return (
+                        <FormGroup label="Preparación (min)" error={errors.requiere_preparacion_minutos?.message}>
+                          <Input
+                            type="number"
+                            placeholder="0"
+                            min="0"
+                            max="120"
+                            value={currentValue === 0 ? '' : currentValue}
+                            hasError={!!errors.requiere_preparacion_minutos}
+                            onKeyDown={(e) => {
+                              if (['-', '+', 'e', 'E', '.'].includes(e.key)) {
+                                e.preventDefault();
+                              }
+                            }}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              const newValue = value === '' ? 0 : Math.min(Math.max(parseInt(value) || 0, 0), 120);
+                              field.onChange(newValue);
+                            }}
+                          />
+                        </FormGroup>
+                      );
+                    }}
                   />
 
                   {/* Tiempo de limpieza */}
                   <Controller
                     name="tiempo_limpieza_minutos"
                     control={control}
-                    render={({ field }) => (
-                      <FormGroup label="Limpieza (min)" error={errors.tiempo_limpieza_minutos?.message}>
-                        <Input
-                          type="number"
-                          placeholder="5"
-                          min="0"
-                          max="60"
-                          value={field.value === 0 ? '' : field.value}
-                          hasError={!!errors.tiempo_limpieza_minutos}
-                          onKeyDown={(e) => {
-                            if (['-', '+', 'e', 'E', '.'].includes(e.key)) {
-                              e.preventDefault();
-                            }
-                          }}
-                          onChange={(e) => {
-                            const value = e.target.value;
-                            const newValue = value === '' ? 0 : Math.min(Math.max(parseInt(value) || 0, 0), 60);
-                            field.onChange(newValue);
-                          }}
-                        />
-                      </FormGroup>
-                    )}
+                    render={({ field }) => {
+                      const currentValue = field.value ?? 0;
+                      return (
+                        <FormGroup label="Limpieza (min)" error={errors.tiempo_limpieza_minutos?.message}>
+                          <Input
+                            type="number"
+                            placeholder="5"
+                            min="0"
+                            max="60"
+                            value={currentValue === 0 ? '' : currentValue}
+                            hasError={!!errors.tiempo_limpieza_minutos}
+                            onKeyDown={(e) => {
+                              if (['-', '+', 'e', 'E', '.'].includes(e.key)) {
+                                e.preventDefault();
+                              }
+                            }}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              const newValue = value === '' ? 0 : Math.min(Math.max(parseInt(value) || 0, 0), 60);
+                              field.onChange(newValue);
+                            }}
+                          />
+                        </FormGroup>
+                      );
+                    }}
                   />
                 </div>
 

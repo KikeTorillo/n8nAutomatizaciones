@@ -3,7 +3,7 @@
 **Objetivo:** Validar cada módulo a profundidad con flujos de negocio reales, evaluar UX contra estándares de ERPs como Odoo, e identificar mejoras críticas.
 
 **Fecha:** 20 Enero 2026
-**Versión:** 1.1 - Actualizado tras pruebas módulo Clientes
+**Versión:** 1.3 - Semana 3 completada (Inventario, Comisiones)
 
 ### Credenciales de Prueba
 
@@ -910,32 +910,49 @@ Comisión al profesional → Registro contable
 
 ## 13. Módulo: Comisiones
 
-### 13.1 Flujos a Probar
+**Estado:** ✅ Probado (20-Ene-2026)
+
+### 13.1 Flujos Probados
 
 #### 13.1.1 Configuración
 ```
-[ ] Comisión por servicio (% del precio)
-[ ] Comisión por producto (% del precio)
-[ ] Comisión fija por servicio
-[ ] Comisión diferenciada por profesional
-[ ] Comisión por meta alcanzada (bonus)
+[x] Comisión por servicio (% del precio) ✅ enrique + Corte de Cabello 15%
+[x] Comisión por producto (% del precio) ✅ enrique + Shampoo Premium 10%
+[ ] Comisión fija por servicio (pendiente)
+[x] Comisión diferenciada por profesional ✅ Validado
+[ ] Comisión por meta alcanzada (bonus) - No implementado
 ```
 
-#### 13.1.2 Cálculo
+#### 13.1.2 Cálculo Automático
 ```
-[ ] Ver comisiones acumuladas del período
-[ ] Desglose por venta
-[ ] Desglose por servicio vs producto
-[ ] Ajustar comisión manualmente
+[x] Ver comisiones acumuladas del período ✅ Dashboard $37.50
+[x] Comisión generada al completar venta POS ✅ $15.00 (10% de $150)
+[x] Comisión generada al completar cita ✅ $22.50 (15% de $150)
+[x] Filtros por período, profesional, origen ✅ Funcionales
+[ ] Ajustar comisión manualmente (pendiente)
 ```
 
 #### 13.1.3 Pago
 ```
-[ ] Generar recibo de comisiones
-[ ] Marcar como pagado
-[ ] Historial de pagos
-[ ] Integración con nómina (si aplica)
+[ ] Generar recibo de comisiones (pendiente)
+[ ] Marcar como pagado (pendiente)
+[ ] Historial de pagos (pendiente)
 ```
+
+### 13.2 Verificación End-to-End
+
+| Acción | Monto | Comisión | Resultado |
+|--------|-------|----------|-----------|
+| Venta POS Shampoo Premium | $150 | 10% = $15.00 | ✅ |
+| Cita Corte de Cabello completada | $150 | 15% = $22.50 | ✅ |
+| **Total Dashboard** | - | **$37.50** | ✅ |
+
+### 13.3 Bugs Corregidos
+
+| ID | Bug | Causa | Fix |
+|----|-----|-------|-----|
+| COM-001 | `profesionales?.map is not a function` | Hook retorna `{items}` no array | Extracción correcta en ConfigComisionModal |
+| COM-002 | Filtro "Origen" no actualiza totales | Schema Joi no incluía campo `origen` | Agregado campo en `comisiones.schemas.js` |
 
 ---
 
@@ -1014,6 +1031,12 @@ Comisión al profesional → Registro contable
 | BUG-010 | Citas | Endpoints no-show y cancelar 404 (CITA-006) | Bloqueante | ✅ Corregido (19-Ene-2026) |
 | BUG-011 | Citas | Frontend PUT vs Backend POST en cancelar/no-show (CITA-007) | Alto | ✅ Corregido (19-Ene-2026) |
 | BUG-012 | Ausencias | Tab Configuración crashea: nivelesArray.map (AUS-003) | Bloqueante | ✅ Corregido (19-Ene-2026) |
+| BUG-013 | Servicios | Search crashea app: "Converting circular structure to JSON" (SRV-003) | Crítico | ✅ Corregido (20-Ene-2026) |
+| BUG-014 | Servicios | NaN en spinbutton al editar servicio (SRV-001) | Media | ✅ Corregido (20-Ene-2026) |
+| BUG-015 | UI/DataTable | Click en acciones abre drawer de edición detrás (SRV-002) | Baja | ✅ Corregido (20-Ene-2026) |
+| BUG-016 | POS | Nombre cliente no aparece en historial ventas (POS-001) | Media | ✅ Corregido (20-Ene-2026) |
+| BUG-017 | Comisiones | `profesionales?.map is not a function` al crear configuración (COM-001) | Crítico | ✅ Corregido (20-Ene-2026) |
+| BUG-018 | Comisiones | Filtro "Origen" en dashboard no filtra datos (COM-002) | Alto | ✅ Corregido (20-Ene-2026) |
 
 ### 17.2 Mejoras UX Prioritarias
 
@@ -1066,8 +1089,8 @@ BAJO (Nice to have):
 | Semana | Módulos | Estado |
 |--------|---------|--------|
 | **Semana 1** | Clientes + Agendamiento/Citas (flujo core) | ✅ Completado |
-| **Semana 2** | Servicios + Profesionales + POS | Pendiente |
-| **Semana 3** | Inventario + Comisiones | Pendiente |
+| **Semana 2** | Servicios + Profesionales + POS | ✅ Completado |
+| **Semana 3** | Inventario + Comisiones | ✅ Completado |
 | **Semana 4** | Contabilidad + Sucursales + Ausencias | Pendiente |
 | **Semana 5** | Chatbots IA + Integraciones end-to-end | Pendiente |
 | **Semana 6** | Configuración + Permisos (RBAC) + Aprobaciones/Workflows | Pendiente |
@@ -2118,9 +2141,169 @@ erDiagram
 
 ---
 
-**Próximos pasos:**
-1. Probar módulo POS con integración de citas
-2. Probar flujo completo: Cita → POS → Comisión
+### 22.7 Sesión 20 Enero 2026 (Semana 2: Servicios, Profesionales, POS)
+
+**Módulos probados:** Servicios, Profesionales, POS (Ventas)
+
+**Pruebas ejecutadas:**
+- CRUD de servicios (crear, editar, listar)
+- Búsqueda y filtros en listado de servicios
+- Asignación de profesionales a servicios
+- Modal de gestión de profesionales por servicio
+- Listado de ventas POS con historial
+- Verificación de datos de cliente en ventas
+
+**Bugs encontrados y corregidos:**
+
+1. **SRV-003: CRÍTICO - Search crashea app**
+   - **Error:** `Converting circular structure to JSON` al escribir en búsqueda
+   - **Causa raíz:** `SearchInput` pasa el evento DOM completo a `onChange`, pero `ListadoCRUDPage` lo usaba directamente en el queryKey de React Query. Los eventos DOM tienen referencias circulares que no se pueden serializar.
+   - **Archivo modificado:** `frontend/src/components/ui/templates/ListadoCRUDPage.jsx`
+   - **Fix:** Cambiar `onChange={(value) => setFiltro('busqueda', value)}` por `onChange={(e) => setFiltro('busqueda', e.target.value)}`
+
+2. **SRV-001: NaN en spinbutton al editar servicio**
+   - **Error:** Console muestra `NaN` en campos de duración y tiempos buffer
+   - **Causa raíz:** `field.value` puede ser `undefined` al cargar el formulario, causando `Math.floor(undefined / 60) = NaN`
+   - **Archivo modificado:** `frontend/src/components/servicios/ServicioFormDrawer.jsx`
+   - **Fix:**
+     - Duración: `const totalMinutos = field.value || 0` antes de calcular horas/minutos
+     - Buffers: `const currentValue = field.value ?? 0` para manejar valores undefined
+
+3. **SRV-002: Click en acciones abre drawer de edición detrás**
+   - **Error:** Al hacer click en "Profesionales" se abría el modal correcto pero también el drawer de edición detrás
+   - **Causa raíz:** El evento de click en `DataTableActionButton` propagaba hacia el `onRowClick` de la fila
+   - **Archivo modificado:** `frontend/src/components/ui/organisms/DataTable.jsx`
+   - **Fix:** Agregar `e.stopPropagation()` en el handler del botón de acción
+
+4. **POS-001: Nombre cliente no aparece en historial**
+   - **Error:** Historial de ventas mostraba "Venta directa" en lugar del nombre del cliente
+   - **Causa raíz:** Backend retorna `nombre_cliente` pero frontend buscaba `cliente_nombre`
+   - **Archivo modificado:** `frontend/src/pages/pos/VentasListPage.jsx`
+   - **Fix:** Cambiar todas las referencias de `cliente_nombre` a `nombre_cliente`
+
+**Verificación:**
+- ✅ Búsqueda en servicios funciona sin errores
+- ✅ Edición de servicio abre formulario sin NaN en consola
+- ✅ Click en "Profesionales" solo abre modal de profesionales
+- ✅ Historial de ventas muestra nombre del cliente correctamente (ej: "Ana Martínez Rodríguez")
+
+**Archivos modificados en esta sesión:**
+- `frontend/src/components/ui/templates/ListadoCRUDPage.jsx` (SRV-003)
+- `frontend/src/components/servicios/ServicioFormDrawer.jsx` (SRV-001)
+- `frontend/src/components/ui/organisms/DataTable.jsx` (SRV-002)
+- `frontend/src/pages/pos/VentasListPage.jsx` (POS-001)
+
+---
+
+### 22.8 Sesión 20 Enero 2026 (Semana 3: Inventario, Comisiones)
+
+**Módulos probados:** Inventario (completo), Comisiones
+
+**Pruebas ejecutadas - Inventario:**
+- CRUD de productos (crear, editar, listar, filtros)
+- Categorías de productos (crear con icono)
+- Proveedores con datos fiscales completos (RFC, dirección, Jalisco/Guadalajara)
+- Selector dinámico Estado → Ciudad
+- Ajuste de stock (entrada +5 unidades)
+- Kardex (3 movimientos: 1 ajuste, 2 salidas por venta)
+- Combos/Kits (crear, agregar componentes, editar con descuento)
+
+**Pruebas ejecutadas - Comisiones:**
+- Dashboard de comisiones con filtros (período, profesional, origen)
+- Configuración comisión servicio: enrique + Corte de Cabello 15%
+- Configuración comisión producto: enrique + Shampoo Premium 10%
+- **Flujo end-to-end validado:**
+  - Venta POS $150 (Shampoo) → Comisión $15.00 generada ✅
+  - Cita completada $150 (Corte) → Comisión $22.50 generada ✅
+  - Dashboard total: $37.50 correcto ✅
+
+**Bugs encontrados y corregidos:**
+
+1. **COM-001: CRÍTICO - Modal Nueva Configuración crashea**
+   - **Error:** `TypeError: profesionales?.map is not a function`
+   - **Causa raíz:** Hook `useProfesionales()` retorna `{items: [], paginacion: {...}}` pero el componente asignaba el resultado directamente a `profesionales` y luego hacía `.map()`
+   - **Archivo modificado:** `frontend/src/components/comisiones/ConfigComisionModal.jsx`
+   - **Fix:** Cambiar extracción de datos:
+     ```javascript
+     // Antes:
+     const { data: profesionales } = useProfesionales();
+     // Después:
+     const { data: profesionalesData } = useProfesionales();
+     const profesionales = profesionalesData?.items || profesionalesData?.profesionales || [];
+     ```
+
+**Warnings menores identificados (no bloqueantes):**
+- React warning: "Encountered two children with the same key" en IconPicker de categorías (INV-W01)
+- Accessibility warning: Missing `aria-describedby` en DialogContent de modales
+
+**Datos de prueba creados:**
+- Producto: Acondicionador Revitalizante 300ml (SKU: ACOND-300, $120)
+- Producto: Mascarilla Capilar Nutritiva 250g (SKU: MASK-250, $180)
+- Categoría: Equipos y Herramientas
+- Proveedor: Distribuidora Belleza Total (RFC: DBT123456ABC, Guadalajara, JAL)
+- Combo: Kit Cuidado Capilar (Shampoo + Acondicionador, 10% descuento, $243)
+- Comisión servicio: enrique + Corte de Cabello 15%
+- Comisión producto: enrique + Shampoo Premium 10%
+- Venta POS: POS-2026-0003 ($150 Shampoo) → Comisión $15
+- Cita: ORG001-20260120-002 (Corte Cabello $150) → Comisión $22.50
+
+**Verificación:**
+- ✅ Inventario CRUD completo (productos, categorías, proveedores)
+- ✅ Combos con descuentos funcionando
+- ✅ Ajuste de stock actualiza Kardex
+- ✅ Modal configuración comisiones funciona tras fix
+- ✅ **Comisión POS generada automáticamente** ($15 de venta $150)
+- ✅ **Comisión Cita generada al completar** ($22.50 de cita $150)
+- ✅ **Dashboard comisiones total correcto** ($37.50)
+
+**Archivos modificados en esta sesión:**
+- `frontend/src/components/comisiones/ConfigComisionModal.jsx` (COM-001)
+
+---
+
+### 22.9 Sesión 20 Enero 2026 (Continuación - Bug Filtros)
+
+**Módulo probado:** Comisiones (Dashboard - Filtros)
+
+**Bug reportado por usuario:**
+- "Los filtros en comisiones me parece que no funcionan si cambias origen"
+
+**Prueba de reproducción:**
+1. Dashboard mostraba Total: $37.50, Pendientes: $37.50
+2. Cambiar filtro "Origen" a "Citas (Servicios)" → Total seguía en $37.50 (debería ser $22.50)
+3. Cambiar filtro "Origen" a "Ventas POS (Productos)" → Total seguía en $37.50 (debería ser $15.00)
+
+**Bug encontrado y corregido:**
+
+1. **COM-002: ALTO - Filtro "Origen" no actualiza totales**
+   - **Error:** El filtro de origen cambiaba en la UI pero los datos no se filtraban
+   - **Causa raíz:** El schema Joi `metricasDashboard` en `comisiones.schemas.js` NO incluía el campo `origen`, por lo que Joi lo eliminaba de `req.query` antes de llegar al controller
+   - **Aprendizaje:** Joi elimina campos no definidos en el schema. Siempre verificar que todos los query params estén declarados.
+   - **Archivos modificados:**
+     - `backend/app/modules/comisiones/schemas/comisiones.schemas.js`
+       - Agregado campo `origen` al schema `metricasDashboard`
+       - Creado nuevo schema `graficaPorDia` con campo `origen`
+     - `backend/app/modules/comisiones/routes/comisiones.js`
+       - Actualizada ruta `/grafica/por-dia` para usar schema `graficaPorDia`
+     - `backend/app/modules/comisiones/controllers/estadisticas.controller.js`
+       - Agregado parseo de `req.query.origen` en `metricasDashboard` y `graficaPorDia`
+     - `backend/app/modules/comisiones/models/reportes.model.js`
+       - Agregado filtro SQL `cp.origen = $N` en método `metricasDashboard`
+   - **Fix:** Declarar campo `origen` en schemas Joi para que no sea eliminado
+
+**Verificación:**
+- ✅ Filtro "Citas" muestra solo comisiones de citas
+- ✅ Filtro "Ventas POS" muestra solo comisiones de ventas
+- ✅ Filtro "Todos" muestra el total combinado
+- ✅ Gráfica por día también filtra correctamente por origen
+
+---
+
+**Próximos pasos (Semana 4):**
+1. Probar módulo Contabilidad
+2. Probar módulo Sucursales
+3. Probar módulo Ausencias (configuración avanzada)
+4. Probar flujo completo end-to-end: Cita → POS → Comisión → Contabilidad
 
 ---
 

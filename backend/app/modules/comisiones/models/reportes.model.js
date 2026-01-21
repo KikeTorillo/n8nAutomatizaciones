@@ -178,7 +178,16 @@ class ReportesComisionesModel {
                 paramIndex++;
             }
 
+            // Filtro por origen (cita o venta)
+            logger.info('[metricasDashboard] DEBUG filtros.origen:', { origen: filtros.origen, filtros });
+            if (filtros.origen) {
+                whereConditions.push(`cp.origen = $${paramIndex}`);
+                queryParams.push(filtros.origen);
+                paramIndex++;
+            }
+
             const whereClause = whereConditions.join(' AND ');
+            logger.info('[metricasDashboard] DEBUG whereClause:', { whereClause, queryParams });
 
             // Query principal de métricas con desglose por origen
             const metricsQuery = `

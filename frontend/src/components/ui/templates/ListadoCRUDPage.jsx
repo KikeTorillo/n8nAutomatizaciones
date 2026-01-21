@@ -261,8 +261,8 @@ export default function ListadoCRUDPage({
             <div className="flex-1">
               <SearchInput
                 value={filtros.busqueda || ''}
-                onChange={(value) => {
-                  setFiltro('busqueda', value);
+                onChange={(e) => {
+                  setFiltro('busqueda', e.target.value);
                   resetPage();
                 }}
                 placeholder="Buscar..."

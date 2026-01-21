@@ -63,7 +63,7 @@ router.get('/grafica/por-dia',
     auth.authenticateToken,
     tenant.setTenantContext,
     rateLimiting.apiRateLimit,
-    validate(comisionesSchemas.generarReporte),
+    validate(comisionesSchemas.graficaPorDia),
     ComisionesController.graficaPorDia
 );
 

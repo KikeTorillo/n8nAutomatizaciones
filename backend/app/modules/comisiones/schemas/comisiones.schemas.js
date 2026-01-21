@@ -393,7 +393,44 @@ const comisionesSchemas = {
             profesional_id: Joi.number().integer().positive().optional().messages({
                 'number.base': 'profesional_id debe ser un número',
                 'number.positive': 'profesional_id debe ser positivo'
-            })
+            }),
+
+            origen: Joi.string()
+                .valid('cita', 'venta')
+                .optional()
+                .messages({
+                    'any.only': 'origen debe ser "cita" o "venta"'
+                })
+        })
+    },
+
+    /**
+     * Schema para gráfica de comisiones por día
+     * GET /api/v1/comisiones/grafica/por-dia
+     */
+    graficaPorDia: {
+        query: Joi.object({
+            fecha_desde: Joi.string().isoDate().required().messages({
+                'any.required': 'fecha_desde es requerida',
+                'string.isoDate': 'fecha_desde debe tener formato YYYY-MM-DD'
+            }),
+
+            fecha_hasta: Joi.string().isoDate().required().messages({
+                'any.required': 'fecha_hasta es requerida',
+                'string.isoDate': 'fecha_hasta debe tener formato YYYY-MM-DD'
+            }),
+
+            profesional_id: Joi.number().integer().positive().optional().messages({
+                'number.base': 'profesional_id debe ser un número',
+                'number.positive': 'profesional_id debe ser positivo'
+            }),
+
+            origen: Joi.string()
+                .valid('cita', 'venta')
+                .optional()
+                .messages({
+                    'any.only': 'origen debe ser "cita" o "venta"'
+                })
         })
     }
 };

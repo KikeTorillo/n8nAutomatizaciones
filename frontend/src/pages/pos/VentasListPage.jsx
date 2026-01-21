@@ -98,7 +98,7 @@ export default function VentasListPage() {
     const datosExportar = ventas.map((v) => ({
       folio: v.folio || '',
       fecha: v.fecha_venta ? format(new Date(v.fecha_venta), 'dd/MM/yyyy HH:mm') : '',
-      cliente: v.cliente_nombre || 'Venta directa',
+      cliente: v.nombre_cliente || 'Venta directa',
       total: `$${parseFloat(v.total || 0).toFixed(2)}`,
       metodo_pago: formatearMetodoPago(v.metodo_pago),
       estado: v.estado || '',
@@ -207,10 +207,10 @@ export default function VentasListPage() {
       ),
     },
     {
-      key: 'cliente_nombre',
+      key: 'nombre_cliente',
       header: 'Cliente',
       hideOnMobile: true,
-      render: (row) => row.cliente_nombre || 'Venta directa',
+      render: (row) => row.nombre_cliente || 'Venta directa',
     },
     {
       key: 'total',

@@ -19,10 +19,15 @@ class EstadisticasComisionesController {
             ? parseInt(req.query.profesional_id)
             : undefined;
 
+        const origen = req.query.origen && req.query.origen !== ''
+            ? req.query.origen
+            : undefined;
+
         const filtros = {
             fecha_desde: req.query.fecha_desde || undefined,
             fecha_hasta: req.query.fecha_hasta || undefined,
-            profesional_id: profesionalId
+            profesional_id: profesionalId,
+            origen
         };
 
         const metricas = await ReportesComisionesModel.metricasDashboard(filtros, organizacionId);
@@ -71,10 +76,15 @@ class EstadisticasComisionesController {
             ? parseInt(req.query.profesional_id)
             : undefined;
 
+        const origen = req.query.origen && req.query.origen !== ''
+            ? req.query.origen
+            : undefined;
+
         const filtros = {
             fecha_desde: req.query.fecha_desde,
             fecha_hasta: req.query.fecha_hasta,
-            profesional_id: profesionalId
+            profesional_id: profesionalId,
+            origen
         };
 
         // Validar que se proporcionen las fechas

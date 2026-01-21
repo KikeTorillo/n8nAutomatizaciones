@@ -227,10 +227,15 @@ export function DataTableActionButton({
     primary: 'text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 hover:bg-primary-50 dark:hover:bg-primary-900/20',
   };
 
+  const handleClick = (e) => {
+    e.stopPropagation(); // Evitar que el clic propague al onRowClick de la fila
+    onClick?.(e);
+  };
+
   return (
     <button
       type="button"
-      onClick={onClick}
+      onClick={handleClick}
       disabled={disabled}
       title={label}
       className={cn(

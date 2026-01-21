@@ -370,6 +370,7 @@ const sucursalActiva = useSucursalStore(state => state.sucursalActiva);
 | "Rendered fewer hooks" | Mover returns condicionales DESPUÉS de hooks |
 | Query retorna vacío con filtros `null` | En modelos, usar `!= null` en vez de `!== undefined` para filtros opcionales |
 | `X.map is not a function` en hooks | Verificar estructura: hooks con `transformList` retornan `{items, paginacion}`, no array |
+| Query param no llega al controller | Joi elimina campos no declarados en schema. Verificar que todos los params estén en el schema |
 
 ---
 
@@ -388,16 +389,27 @@ const sucursalActiva = useSucursalStore(state => state.sucursalActiva);
 
 Documento completo en `/docs/PLAN_PRUEBAS_INTEGRAL.md`
 
-**Estado actual:**
+**Estado actual (Semana 3 completada):**
 | Módulo | Estado |
 |--------|--------|
 | Clientes (CRM) | ✅ Probado y corregido |
-| Agendamiento/Citas | ⏳ En progreso (UI homologada) |
-| POS, Inventario, etc. | 📋 Pendiente |
+| Agendamiento/Citas | ✅ Probado (UI homologada) |
+| Servicios/Profesionales | ✅ Probado y corregido |
+| Inventario | ✅ Probado y corregido |
+| Comisiones | ✅ Probado y corregido |
+| POS | ✅ Probado y corregido |
+| Contabilidad, Sucursales | 📋 Pendiente (Semana 4) |
 
 ---
 
 ## Changelog
+
+### 21 Ene 2026 - Fix Filtros Comisiones
+
+**Bug COM-002 corregido:**
+- Schema Joi `metricasDashboard` no incluía campo `origen` → Joi lo eliminaba de `req.query`
+- Agregado campo `origen` a schemas `metricasDashboard` y nuevo `graficaPorDia`
+- Archivos: `comisiones.schemas.js`, `comisiones.js` (routes), `estadisticas.controller.js`, `reportes.model.js`
 
 ### 19 Ene 2026 - Estandarización UI Componentes
 
@@ -429,4 +441,4 @@ Documento completo en `/docs/PLAN_PRUEBAS_INTEGRAL.md`
 
 ---
 
-**Actualizado**: 19 Enero 2026 (Sesión 22.6)
+**Actualizado**: 21 Enero 2026 (Sesión 22.9)
