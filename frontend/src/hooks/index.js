@@ -41,5 +41,8 @@ export * from './utils';
 // Otros módulos
 export * from './otros';
 
+// Suscripciones Negocio
+export * from './suscripciones-negocio';
+
 // Factories (para crear hooks CRUD personalizados)
 export * from './factories';

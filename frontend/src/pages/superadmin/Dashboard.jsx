@@ -62,50 +62,30 @@ export default function SuperAdminDashboard() {
                 />
                 <MetricCard
                     title="Citas Este Mes"
-                    value={parseInt(metricas.citas_mes_actual).toLocaleString()}
+                    value={parseInt(metricas.citas_mes_actual || 0).toLocaleString()}
                     subtitle="Citas agendadas"
                     icon="📅"
                     color="purple"
                 />
                 <MetricCard
-                    title="Revenue Mensual"
-                    value={`$${parseFloat(metricas.revenue_mensual).toLocaleString('es-MX', { minimumFractionDigits: 2 })}`}
-                    subtitle="MXN"
-                    icon="💰"
+                    title="Clientes Totales"
+                    value={parseInt(metricas.clientes_totales || 0).toLocaleString()}
+                    subtitle={`${metricas.profesionales_totales || 0} profesionales`}
+                    icon="👤"
                     color="yellow"
                 />
             </div>
 
             {/* Alertas */}
-            {(metricas.organizaciones_morosas > 0 ||
-                metricas.organizaciones_suspendidas > 0 ||
-                metricas.organizaciones_trial > 0) && (
+            {parseInt(metricas.organizaciones_suspendidas || 0) > 0 && (
                 <div className="space-y-3">
                     <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Alertas del Sistema</h2>
 
-                    {parseInt(metricas.organizaciones_morosas) > 0 && (
-                        <div className="bg-red-50 dark:bg-red-900/30 border-l-4 border-red-500 rounded-r-lg p-4">
-                            <p className="text-red-800 dark:text-red-300 font-medium">
-                                ⚠️ {metricas.organizaciones_morosas} organizaciones en estado moroso
-                            </p>
-                        </div>
-                    )}
-
-                    {parseInt(metricas.organizaciones_suspendidas) > 0 && (
-                        <div className="bg-orange-50 dark:bg-orange-900/30 border-l-4 border-orange-500 rounded-r-lg p-4">
-                            <p className="text-orange-800 dark:text-orange-300 font-medium">
-                                🔒 {metricas.organizaciones_suspendidas} organizaciones suspendidas
-                            </p>
-                        </div>
-                    )}
-
-                    {parseInt(metricas.organizaciones_trial) > 0 && (
-                        <div className="bg-primary-50 dark:bg-primary-900/30 border-l-4 border-primary-500 rounded-r-lg p-4">
-                            <p className="text-primary-800 dark:text-primary-300 font-medium">
-                                🆓 {metricas.organizaciones_trial} organizaciones en periodo de prueba
-                            </p>
-                        </div>
-                    )}
+                    <div className="bg-orange-50 dark:bg-orange-900/30 border-l-4 border-orange-500 rounded-r-lg p-4">
+                        <p className="text-orange-800 dark:text-orange-300 font-medium">
+                            🔒 {metricas.organizaciones_suspendidas} organizaciones suspendidas
+                        </p>
+                    </div>
                 </div>
             )}
 
@@ -131,15 +111,15 @@ export default function SuperAdminDashboard() {
                                             {org.nombre_comercial}
                                         </h3>
                                         <p className="text-sm text-gray-600 dark:text-gray-400">
-                                            Plan {org.nombre_plan || org.plan_actual}
-                                            {org.estado_subscripcion && (
-                                                <span className={`ml-2 px-2 py-0.5 rounded text-xs font-medium ${
-                                                    org.estado_subscripcion === 'activa' ? 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300' :
-                                                    org.estado_subscripcion === 'trial' ? 'bg-primary-100 dark:bg-primary-900/40 text-primary-800 dark:text-primary-300' :
-                                                    org.estado_subscripcion === 'morosa' ? 'bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300' :
-                                                    'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
-                                                }`}>
-                                                    {org.estado_subscripcion}
+                                            Plan {org.plan_actual || 'pro'}
+                                            {org.suspendido && (
+                                                <span className="ml-2 px-2 py-0.5 rounded text-xs font-medium bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300">
+                                                    suspendida
+                                                </span>
+                                            )}
+                                            {!org.activo && !org.suspendido && (
+                                                <span className="ml-2 px-2 py-0.5 rounded text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300">
+                                                    inactiva
                                                 </span>
                                             )}
                                         </p>
@@ -147,10 +127,10 @@ export default function SuperAdminDashboard() {
                                 </div>
                                 <div className="text-right">
                                     <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                                        {org.uso_citas_mes_actual || 0} citas
+                                        {org.citas_mes || 0} citas
                                     </p>
                                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                                        {org.uso_profesionales || 0} profesionales • {org.uso_clientes || 0} clientes
+                                        {org.total_profesionales || 0} profesionales • {org.total_clientes || 0} clientes
                                     </p>
                                 </div>
                             </div>

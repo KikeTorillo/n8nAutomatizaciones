@@ -43,43 +43,39 @@ class SuperAdminController {
     static async dashboard(req, res) {
         try {
             const metricas = await RLSContextManager.withBypass(async (db) => {
-                // Query para métricas globales
+                // Query para métricas globales (sin tablas de suscripciones viejas)
                 const metricasQuery = `
                     SELECT
                         (SELECT COUNT(*) FROM organizaciones WHERE activo = true) as organizaciones_activas,
                         (SELECT COUNT(*) FROM organizaciones) as organizaciones_total,
                         (SELECT COUNT(*) FROM usuarios WHERE rol != 'super_admin') as usuarios_totales,
                         (SELECT COUNT(*) FROM citas WHERE fecha_cita >= DATE_TRUNC('month', CURRENT_DATE)) as citas_mes_actual,
-                        (SELECT COALESCE(SUM(precio_actual), 0) FROM subscripciones WHERE activa = true) as revenue_mensual,
-                        (SELECT COUNT(*) FROM subscripciones WHERE estado = 'trial' AND activa = true) as organizaciones_trial,
-                        (SELECT COUNT(*) FROM subscripciones WHERE estado = 'morosa' AND activa = true) as organizaciones_morosas,
-                        (SELECT COUNT(*) FROM subscripciones WHERE estado = 'suspendida') as organizaciones_suspendidas
+                        (SELECT COUNT(*) FROM profesionales WHERE activo = true) as profesionales_totales,
+                        (SELECT COUNT(*) FROM clientes) as clientes_totales,
+                        (SELECT COUNT(*) FROM organizaciones WHERE suspendido = true) as organizaciones_suspendidas
                 `;
 
                 const result = await db.query(metricasQuery);
                 return result.rows[0];
             });
 
-            // Top 10 organizaciones por uso
+            // Top 10 organizaciones por actividad (usuarios + citas recientes)
             const topOrganizaciones = await RLSContextManager.withBypass(async (db) => {
                 const topOrgsQuery = `
                     SELECT
                         o.id,
                         o.nombre_comercial,
                         o.plan_actual,
-                        ps.nombre_plan,
-                        m.uso_citas_mes_actual,
-                        m.uso_profesionales,
-                        m.uso_clientes,
+                        o.activo,
+                        o.suspendido,
                         o.fecha_registro,
-                        s.estado as estado_subscripcion,
-                        s.precio_actual
+                        (SELECT COUNT(*) FROM usuarios u WHERE u.organizacion_id = o.id AND u.activo = true) as total_usuarios,
+                        (SELECT COUNT(*) FROM profesionales p WHERE p.organizacion_id = o.id AND p.activo = true) as total_profesionales,
+                        (SELECT COUNT(*) FROM clientes c WHERE c.organizacion_id = o.id) as total_clientes,
+                        (SELECT COUNT(*) FROM citas ct WHERE ct.organizacion_id = o.id AND ct.fecha_cita >= DATE_TRUNC('month', CURRENT_DATE)) as citas_mes
                     FROM organizaciones o
-                    LEFT JOIN subscripciones s ON o.id = s.organizacion_id AND s.activa = true
-                    LEFT JOIN planes_subscripcion ps ON s.plan_id = ps.id
-                    LEFT JOIN metricas_uso_organizacion m ON o.id = m.organizacion_id
                     WHERE o.activo = true
-                    ORDER BY m.uso_citas_mes_actual DESC NULLS LAST
+                    ORDER BY citas_mes DESC NULLS LAST, total_usuarios DESC
                     LIMIT 10
                 `;
 
@@ -133,7 +129,7 @@ class SuperAdminController {
                 limit = 20,
                 busqueda,
                 plan,
-                estado,
+                activo,
                 orden = 'fecha_registro',
                 direccion = 'DESC'
             } = req.query;
@@ -143,7 +139,7 @@ class SuperAdminController {
             const offset = (parseInt(page) - 1) * limitSafe;
 
             // Validar orden y dirección
-            const ordenesPermitidos = ['fecha_registro', 'nombre_comercial', 'uso_citas_mes_actual'];
+            const ordenesPermitidos = ['fecha_registro', 'nombre_comercial'];
             const ordenSafe = ordenesPermitidos.includes(orden) ? orden : 'fecha_registro';
             const direccionSafe = direccion.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
 
@@ -166,50 +162,34 @@ class SuperAdminController {
                     paramCounter++;
                 }
 
-                // Filtro por estado
-                if (estado) {
-                    whereConditions.push(`s.estado = $${paramCounter}`);
-                    params.push(estado);
+                // Filtro por activo
+                if (activo !== undefined) {
+                    whereConditions.push(`o.activo = $${paramCounter}`);
+                    params.push(activo === 'true' || activo === true);
                     paramCounter++;
                 }
 
                 const whereClause = whereConditions.join(' AND ');
 
-                // Query principal
+                // Query principal (sin tablas viejas)
                 const query = `
                     SELECT
                         o.id,
                         o.nombre_comercial,
                         o.email_admin,
                         o.plan_actual,
-                        ps.nombre_plan,
                         o.activo,
                         o.suspendido,
                         o.fecha_registro,
                         o.fecha_activacion,
-                        s.estado as estado_subscripcion,
-                        s.fecha_fin as fecha_fin_trial,
-                        s.precio_actual,
-                        CASE
-                            WHEN s.fecha_fin IS NOT NULL AND s.estado = 'trial' THEN
-                                (s.fecha_fin - CURRENT_DATE)::INTEGER
-                            ELSE NULL
-                        END as dias_restantes_trial,
-                        m.uso_profesionales,
-                        m.uso_clientes,
-                        m.uso_servicios,
-                        m.uso_usuarios,
-                        m.uso_citas_mes_actual,
-                        ps.limite_profesionales,
-                        ps.limite_clientes,
-                        ps.limite_citas_mes,
-                        (SELECT COUNT(*) FROM usuarios WHERE organizacion_id = o.id AND activo = true) as total_usuarios
+                        o.modulos_activos,
+                        (SELECT COUNT(*) FROM usuarios u WHERE u.organizacion_id = o.id AND u.activo = true) as total_usuarios,
+                        (SELECT COUNT(*) FROM profesionales p WHERE p.organizacion_id = o.id AND p.activo = true) as total_profesionales,
+                        (SELECT COUNT(*) FROM clientes c WHERE c.organizacion_id = o.id) as total_clientes,
+                        (SELECT COUNT(*) FROM citas ct WHERE ct.organizacion_id = o.id AND ct.fecha_cita >= DATE_TRUNC('month', CURRENT_DATE)) as citas_mes
                     FROM organizaciones o
-                    LEFT JOIN subscripciones s ON o.id = s.organizacion_id AND s.activa = true
-                    LEFT JOIN planes_subscripcion ps ON s.plan_id = ps.id
-                    LEFT JOIN metricas_uso_organizacion m ON o.id = m.organizacion_id
                     WHERE ${whereClause}
-                    ORDER BY ${ordenSafe === 'uso_citas_mes_actual' ? 'm.uso_citas_mes_actual' : 'o.' + ordenSafe} ${direccionSafe} NULLS LAST
+                    ORDER BY o.${ordenSafe} ${direccionSafe} NULLS LAST
                     LIMIT $${paramCounter} OFFSET $${paramCounter + 1}
                 `;
 
@@ -219,7 +199,6 @@ class SuperAdminController {
                 // Contar total
                 const countQuery = `
                     SELECT COUNT(*) FROM organizaciones o
-                    LEFT JOIN subscripciones s ON o.id = s.organizacion_id AND s.activa = true
                     WHERE ${whereClause}
                 `;
 
@@ -267,39 +246,42 @@ class SuperAdminController {
      *   ]
      * }
      */
+    /**
+     * Nota: El sistema de planes viejo fue eliminado en Fase 0.
+     * Este endpoint ahora retorna el modelo de pricing actual (cobro por usuario).
+     * Para gestión de planes de suscripciones SaaS, usar el módulo suscripciones-negocio.
+     */
     static async listarPlanes(req, res) {
         try {
-            const planes = await RLSContextManager.withBypass(async (db) => {
-                const query = `
-                    SELECT
-                        id,
-                        codigo_plan,
-                        nombre_plan,
-                        descripcion,
-                        precio_mensual,
-                        precio_anual,
-                        moneda,
-                        mp_plan_id,
-                        limite_profesionales,
-                        limite_clientes,
-                        limite_servicios,
-                        limite_usuarios,
-                        limite_citas_mes,
-                        funciones_habilitadas,
-                        activo,
-                        orden_display,
-                        (SELECT COUNT(*) FROM subscripciones WHERE plan_id = planes_subscripcion.id AND activa = true) as organizaciones_activas,
-                        creado_en,
-                        actualizado_en
-                    FROM planes_subscripcion
-                    ORDER BY orden_display ASC, precio_mensual ASC
-                `;
+            // Modelo actual: $249/usuario/mes (Pro), Trial 14 días, sin límites de recursos
+            const planesActuales = [
+                {
+                    id: 1,
+                    codigo: 'trial',
+                    nombre: 'Trial',
+                    descripcion: '14 días de prueba sin restricciones',
+                    precio_mensual: 0,
+                    precio_por_usuario: 0,
+                    dias_trial: 14,
+                    limite_usuarios: null, // Ilimitado
+                    funciones: ['todas'],
+                    activo: true
+                },
+                {
+                    id: 2,
+                    codigo: 'pro',
+                    nombre: 'Pro',
+                    descripcion: 'Plan completo por usuario',
+                    precio_mensual: null, // Depende de usuarios
+                    precio_por_usuario: 249,
+                    dias_trial: 0,
+                    limite_usuarios: null, // Ilimitado
+                    funciones: ['todas'],
+                    activo: true
+                }
+            ];
 
-                const result = await db.query(query);
-                return result.rows;
-            });
-
-            ResponseHelper.success(res, planes, 'Planes obtenidos exitosamente');
+            ResponseHelper.success(res, planesActuales, 'Planes obtenidos exitosamente');
 
         } catch (error) {
             console.error('Error listando planes:', error);
@@ -340,87 +322,16 @@ class SuperAdminController {
      * - 404: Plan no encontrado
      * - 500: Error interno
      */
+    /**
+     * Nota: El sistema de planes viejo fue eliminado en Fase 0.
+     * Para gestión de planes de suscripciones SaaS, usar el módulo suscripciones-negocio.
+     */
     static async actualizarPlan(req, res) {
-        try {
-            const { id } = req.params;
-            const {
-                nombre_plan,
-                descripcion,
-                precio_mensual,
-                precio_anual,
-                limite_profesionales,
-                limite_clientes,
-                limite_servicios,
-                limite_usuarios,
-                limite_citas_mes,
-                funciones_habilitadas,
-                activo
-            } = req.body;
-
-            // Validar que al menos un campo esté presente
-            const hasUpdates = nombre_plan || descripcion || precio_mensual !== undefined ||
-                precio_anual !== undefined || limite_profesionales !== undefined ||
-                limite_clientes !== undefined || limite_servicios !== undefined ||
-                limite_usuarios !== undefined || limite_citas_mes !== undefined ||
-                funciones_habilitadas || activo !== undefined;
-
-            if (!hasUpdates) {
-                return ResponseHelper.error(res, 'No se proporcionaron campos para actualizar', 400);
-            }
-
-            const planActualizado = await RLSContextManager.withBypass(async (db) => {
-                const query = `
-                    UPDATE planes_subscripcion
-                    SET
-                        nombre_plan = COALESCE($1, nombre_plan),
-                        descripcion = COALESCE($2, descripcion),
-                        precio_mensual = COALESCE($3, precio_mensual),
-                        precio_anual = COALESCE($4, precio_anual),
-                        limite_profesionales = COALESCE($5, limite_profesionales),
-                        limite_clientes = COALESCE($6, limite_clientes),
-                        limite_servicios = COALESCE($7, limite_servicios),
-                        limite_usuarios = COALESCE($8, limite_usuarios),
-                        limite_citas_mes = COALESCE($9, limite_citas_mes),
-                        funciones_habilitadas = COALESCE($10, funciones_habilitadas),
-                        activo = COALESCE($11, activo),
-                        actualizado_en = NOW()
-                    WHERE id = $12
-                    RETURNING *
-                `;
-
-                const result = await db.query(query, [
-                    nombre_plan,
-                    descripcion,
-                    precio_mensual,
-                    precio_anual,
-                    limite_profesionales,
-                    limite_clientes,
-                    limite_servicios,
-                    limite_usuarios,
-                    limite_citas_mes,
-                    funciones_habilitadas ? JSON.stringify(funciones_habilitadas) : null,
-                    activo,
-                    id
-                ]);
-
-                if (result.rows.length === 0) {
-                    throw new Error('PLAN_NOT_FOUND');
-                }
-
-                return result.rows[0];
-            });
-
-            ResponseHelper.success(res, planActualizado, 'Plan actualizado exitosamente');
-
-        } catch (error) {
-            console.error('Error actualizando plan:', error);
-
-            if (error.message === 'PLAN_NOT_FOUND') {
-                return ResponseHelper.notFound(res, 'Plan no encontrado');
-            }
-
-            ResponseHelper.error(res, 'Error al actualizar plan', 500);
-        }
+        return ResponseHelper.error(
+            res,
+            'El sistema de planes legacy fue deprecado. Usa el módulo suscripciones-negocio para gestionar planes.',
+            410 // Gone
+        );
     }
 }
 

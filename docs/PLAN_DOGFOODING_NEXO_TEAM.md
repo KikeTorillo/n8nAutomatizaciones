@@ -1,8 +1,8 @@
 # Plan: Dogfooding Interno - Nexo Team
 
-**Versión:** 4.0.0
+**Versión:** 4.2.0
 **Fecha:** 22 Enero 2026
-**Estado:** Fase 0 ✅ | Fase 1 ✅ | Fase 3 (Backend) ✅ | Fase 2 ⏳ | Fase 3 (Frontend) ⏳
+**Estado:** Fase 0 ✅ | Fase 1 ✅ | Fase 3 ✅ | Fase 2 ⏳ | Fase 5 ⏳
 
 ---
 
@@ -31,10 +31,10 @@ Permitir que el super_admin tenga su propia organización ("Nexo Team") para ges
 |------|-------------|--------|----------|
 | **Fase 0** | Eliminación Sistema Viejo | ✅ COMPLETADA | 100% |
 | **Fase 1** | Super Admin con Organización | ✅ COMPLETADA | 100% |
-| **Fase 3** | Módulo Suscripciones (Backend) | ✅ COMPLETADA | 100% |
-| **Fase 3** | Módulo Suscripciones (Frontend) | ⏳ Pendiente | 0% |
+| **Fase 3** | Módulo Suscripciones (Completo) | ✅ COMPLETADA | 100% |
 | **Fase 2** | Vincular CRM con Organizaciones | ⏳ Pendiente | 0% |
-| **Fase 4** | Módulos Adicionales | ⏳ Pendiente | 0% |
+| **Fase 5** | Refactor SuperAdmin UI | ⏳ Pendiente | 0% |
+| **Fase 4** | Módulos Adicionales | ⏳ Futuro | 0% |
 
 ---
 
@@ -81,6 +81,27 @@ Eliminar sistema viejo (límites por recurso) para preparar terreno para nuevo m
 - `plan_tipo`
 - `estado_subscripcion`
 
+### Correcciones Post-Eliminación (22 Ene 2026)
+
+**SuperAdmin Dashboard corregido:**
+
+El dashboard de SuperAdmin (`/superadmin`) daba errores 500 porque consultaba tablas eliminadas.
+
+| Archivo | Problema | Solución |
+|---------|----------|----------|
+| `superadmin.controller.js` | Query a `subscripciones`, `metricas_uso_organizacion` | Reescrito con tablas existentes |
+| `Dashboard.jsx` | Campo `revenue_mensual` → `$NaN` | Reemplazado por "Clientes Totales" |
+| `Dashboard.jsx` | Campos `uso_*` no existían | Corregidos a `total_*`, `citas_mes` |
+| `Dashboard.jsx` | `organizaciones_morosas`, `organizaciones_trial` | Eliminados (solo queda `suspendidas`) |
+
+**Métricas actuales del Dashboard SuperAdmin:**
+- Organizaciones Activas (+ total)
+- Usuarios Totales
+- Citas Este Mes
+- Clientes Totales (+ profesionales)
+- Alertas: Solo organizaciones suspendidas
+- Top 10 Organizaciones por uso
+
 ---
 
 ## 4. Fase 1: Super Admin con Organización ✅ COMPLETADA
@@ -101,9 +122,9 @@ Eliminar sistema viejo (límites por recurso) para preparar terreno para nuevo m
 
 ---
 
-## 5. Fase 3: Módulo Suscripciones-Negocio ✅ BACKEND COMPLETADO
+## 5. Fase 3: Módulo Suscripciones-Negocio ✅ COMPLETADO
 
-### 5.1 SQL (Semana 1 - Días 1-2) ✅
+### 5.1 SQL ✅
 
 **5 Tablas Creadas:**
 ```sql
@@ -126,59 +147,23 @@ Eliminar sistema viejo (límites por recurso) para preparar terreno para nuevo m
 ✅ obtener_ingresos_por_periodo()        -- Análisis temporal
 ```
 
-**18 Índices + 15 Políticas RLS**
+### 5.2 Backend ✅
 
-### 5.2 Backend (Semana 1-2) ✅
+- **Models (5):** planes, suscripciones, pagos, cupones, metricas
+- **Controllers (6):** + webhooks
+- **Routes (6):** RESTful con auth + tenant
+- **Services (4):** cobro, stripe, mercadopago, notificaciones
+- **Cron Jobs (2):** procesar-cobros (6AM), verificar-trials (7AM)
+- **Schemas:** 20+ validaciones Joi
 
-#### Models (5 archivos, ~1,650 líneas)
-```
-✅ planes.model.js              -- CRUD planes con RLS
-✅ suscripciones.model.js       -- CRUD suscripciones + operaciones
-✅ pagos.model.js               -- Historial pagos
-✅ cupones.model.js             -- Gestión cupones
-✅ metricas.model.js            -- Queries métricas SaaS
-```
+### 5.3 Frontend ✅
 
-#### Controllers (6 archivos, ~1,800 líneas)
-```
-✅ planes.controller.js         -- 5 endpoints CRUD
-✅ suscripciones.controller.js  -- 9 endpoints + operaciones
-✅ pagos.controller.js          -- 4 endpoints
-✅ cupones.controller.js        -- 5 endpoints
-✅ metricas.controller.js       -- 4 endpoints (MRR, Churn, LTV)
-✅ webhooks.controller.js       -- 2 endpoints públicos
-```
+- **API Client:** `suscripciones-negocio.api.js`
+- **Hooks:** usePlanes, useSuscripciones, usePagos, useCupones, useMetricas
+- **Páginas:** Dashboard, Planes, Suscripciones (list+detail), Cupones, Pagos, Métricas
+- **Componentes:** Cards, Badges, FormDrawers, Charts
 
-#### Routes (6 archivos)
-```
-✅ planes.js
-✅ suscripciones.js
-✅ pagos.js
-✅ cupones.js
-✅ metricas.js
-✅ webhooks.js
-```
-
-#### Servicios (4 archivos, ~1,300 líneas)
-```
-✅ cobro.service.js             -- Lógica cobros automáticos
-✅ stripe.service.js            -- SDK Stripe + validación webhooks
-✅ mercadopago.service.js       -- SDK MercadoPago
-✅ notificaciones.service.js    -- Emails confirmación/fallo
-```
-
-#### Cron Jobs (2 archivos)
-```
-✅ procesar-cobros.job.js       -- 6:00 AM diario
-✅ verificar-trials.job.js      -- 7:00 AM diario
-```
-
-#### Schemas (20+ validaciones Joi)
-```
-✅ suscripciones.schemas.js     -- Validaciones completas
-```
-
-### 5.3 Rutas Registradas (7 endpoints)
+### 5.4 Rutas Registradas
 
 ```
 ✅ /suscripciones-negocio/planes
@@ -190,72 +175,96 @@ Eliminar sistema viejo (límites por recurso) para preparar terreno para nuevo m
 ✅ /suscripciones-negocio/webhooks/mercadopago    (público)
 ```
 
-### 5.4 Correcciones Aplicadas
+---
 
-**Imports Corregidos:**
-- `express-async-handler` → `../../../middleware/asyncHandler`
-- `validate` → `validation` con destructuring
-- `verificarPermisosDinamicos` → `verificarPermiso`
+## 6. Fase 5: Refactor SuperAdmin UI ⏳ PENDIENTE (NUEVA)
 
-**Manifest.json:**
-- Array `routes` → Objeto con rutas nombradas
+### Objetivo
+Alinear el módulo SuperAdmin con los patrones de UI del resto del sistema y eliminar redundancias.
 
-**Índices SQL:**
-- Agregado `IF NOT EXISTS` a 18 CREATE INDEX
+### Problemas Actuales
 
-### 5.5 Verificación Estado
+| Problema | Descripción |
+|----------|-------------|
+| **UI Legacy** | SuperAdmin no usa componentes reutilizables (ListadoCRUDPage, StatCardGrid, etc.) |
+| **Sección Planes redundante** | `/superadmin/planes` duplica funcionalidad de `/suscripciones-negocio/planes` |
+| **Dashboard custom** | No usa MetricCard de `components/ui`, tiene implementación propia |
+| **Organizaciones** | Lista custom en vez de DataTable + filtros estándar |
 
-**PostgreSQL:**
-```bash
-✅ 216 tablas totales creadas
-✅ 5 tablas suscripciones-negocio
-✅ 8 funciones métricas activas
-✅ pg_cron scheduler iniciado
+### Cambios Propuestos
+
+#### 6.1 Eliminar Sección Planes
+
+**Motivo:** Ya existe módulo completo en `/suscripciones-negocio/planes` con CRUD, métricas y webhooks.
+
+**Archivos a eliminar/modificar:**
+```
+❌ frontend/src/pages/superadmin/Planes.jsx
+❌ backend: Endpoint GET /superadmin/planes (ya retorna data estática)
+✏️ frontend/src/pages/superadmin/Layout.jsx - Quitar link "Planes"
 ```
 
-**Backend:**
-```bash
-✅ 7 rutas registradas
-✅ 2 cron jobs activos
-✅ Servidor iniciado exitosamente
+**Alternativa:** Redirigir `/superadmin/planes` → `/suscripciones-negocio/planes`
+
+#### 6.2 Refactor Dashboard
+
+**De:**
+```jsx
+// Custom MetricCard inline en Dashboard.jsx
+<MetricCard title="..." value={...} icon="🏢" color="blue" />
 ```
 
-**Frontend:**
-```bash
-✅ Vite server running (port 8080)
-⚠️  Healthcheck unhealthy (no afecta funcionalidad)
-✅ HTTP 200 OK en todas las peticiones
+**A:**
+```jsx
+// Usar StatCardGrid de components/ui
+import { StatCardGrid, StatCard } from '@/components/ui';
+
+<StatCardGrid>
+  <StatCard title="Organizaciones" value={...} icon={Building2} />
+  ...
+</StatCardGrid>
 ```
 
-### 5.6 Pendiente (Semana 3-4) ⏳
+#### 6.3 Refactor Organizaciones
 
-**Frontend - API Client:**
-- `suscripciones-negocio.api.js` (~350 líneas)
+**De:** Lista custom con map() manual
 
-**Frontend - Hooks:**
-- `useSuscripciones.js` (~500 líneas)
+**A:** Usar `ListadoCRUDPage` o `DataTable` con:
+- Filtros avanzados (AdvancedFilterPanel)
+- Paginación estándar
+- Acciones en fila (ver detalle, suspender, etc.)
 
-**Frontend - Páginas:**
-```
-⏳ SuscripcionesPage.jsx          -- Dashboard principal
-⏳ PlanesPage.jsx                 -- CRUD planes
-⏳ SuscripcionesListPage.jsx      -- Lista con filtros
-⏳ SuscripcionDetailPage.jsx      -- Detalle con tabs
-⏳ CuponesPage.jsx                -- CRUD cupones
-⏳ PagosPage.jsx                  -- Historial pagos
-⏳ MetricasPage.jsx               -- Dashboard SaaS (gráficas)
-```
+#### 6.4 Componentes a Reutilizar
 
-**Frontend - Componentes:**
-```
-⏳ PlanCard.jsx
-⏳ SuscripcionStatusBadge.jsx
-⏳ MRRChart.jsx, ChurnChart.jsx, SuscriptoresChart.jsx
-```
+| Componente Actual | Reemplazar Por |
+|-------------------|----------------|
+| `MetricCard` (custom) | `StatCard` de `components/ui/molecules` |
+| Lista orgs manual | `DataTable` de `components/ui/organisms` |
+| Layout custom | Considerar `BasePageLayout` |
+| Badges inline | `Badge` de `components/ui/atoms` |
+
+### Implementación
+
+| Paso | Tarea | Estimación |
+|------|-------|------------|
+| 1 | Eliminar/redirigir `/superadmin/planes` | 1 hora |
+| 2 | Refactor Dashboard con StatCardGrid | 2 horas |
+| 3 | Refactor Organizaciones con DataTable | 3 horas |
+| 4 | Agregar filtros y paginación estándar | 2 horas |
+| 5 | Testing y ajustes dark mode | 1 hora |
+
+**Total estimado:** 1 día
+
+### Beneficios
+
+- ✅ Consistencia UI en todo el sistema
+- ✅ Menos código duplicado
+- ✅ Mantenimiento centralizado
+- ✅ Dark mode automático (ya implementado en componentes base)
 
 ---
 
-## 6. Fase 2: Vincular CRM con Organizaciones ⏳ PENDIENTE
+## 7. Fase 2: Vincular CRM con Organizaciones ⏳ PENDIENTE
 
 ### Objetivo
 Permitir que clientes del CRM de Nexo Team se vinculen con organizaciones de la plataforma para ver métricas unificadas.
@@ -267,7 +276,6 @@ Permitir que clientes del CRM de Nexo Team se vinculen con organizaciones de la 
 ALTER TABLE clientes
 ADD COLUMN organizacion_vinculada_id INTEGER REFERENCES organizaciones(id);
 
--- Función SECURITY DEFINER para bypass RLS controlado
 CREATE FUNCTION obtener_metricas_organizacion_vinculada(...) RETURNS JSONB;
 ```
 
@@ -286,7 +294,7 @@ CREATE FUNCTION obtener_metricas_organizacion_vinculada(...) RETURNS JSONB;
 
 ---
 
-## 7. Fase 4: Módulos Adicionales ⏳ FUTURO
+## 8. Fase 4: Módulos Adicionales ⏳ FUTURO
 
 **Prioridad Media:**
 - Tickets/Soporte: Sistema de tickets desde organizaciones cliente
@@ -297,33 +305,29 @@ CREATE FUNCTION obtener_metricas_organizacion_vinculada(...) RETURNS JSONB;
 
 ---
 
-## 8. Línea de Tiempo
+## 9. Línea de Tiempo
 
 ### Completado (22 Enero 2026)
 
 | Fecha | Hito |
 |-------|------|
-| 21 Ene | Fase 0: Eliminación sistema viejo (1 día) |
-| 21 Ene | Fase 3: SQL migrations (Día 1-2) |
-| 21 Ene | Fase 3: Models + Controllers (Día 3-4) |
-| 21 Ene | Fase 3: Servicios + Cron Jobs (Día 6-8) |
-| 21-22 Ene | Correcciones imports + manifest + testing |
+| 21 Ene | Fase 0: Eliminación sistema viejo |
+| 21 Ene | Fase 3: SQL + Backend completo |
+| 22 Ene | Fase 3: Frontend (API + Hooks + UI) |
+| 22 Ene | Fase 3: Validación E2E (CRUD Planes funcional) |
+| 22 Ene | Fix: SuperAdmin dashboard (eliminar refs a tablas viejas) |
 
 ### Pendiente
 
-| Estimación | Hito |
-|------------|------|
-| 3-4 días | Fase 3: Frontend (API + Hooks) |
-| 4-5 días | Fase 3: Frontend (UI Completa) |
-| 2 días | Fase 3: Dogfooding + Testing |
-| 5-7 días | Fase 2: Vincular CRM |
-| TBD | Fase 4: Módulos adicionales |
-
-**Total pendiente:** ~15-18 días (3-4 semanas)
+| Prioridad | Fase | Estimación |
+|-----------|------|------------|
+| **Alta** | Fase 5: Refactor SuperAdmin UI | 1 día |
+| Media | Fase 2: Vincular CRM con Organizaciones | 5-7 días |
+| Baja | Fase 4: Módulos adicionales | TBD |
 
 ---
 
-## 9. Testing y Verificación
+## 10. Testing y Verificación
 
 ### Checklist Backend ✅
 
@@ -334,13 +338,17 @@ CREATE FUNCTION obtener_metricas_organizacion_vinculada(...) RETURNS JSONB;
 - [x] Cron jobs ejecutan sin errores
 - [x] Webhooks validan firmas HMAC
 - [x] RLS: org A no ve datos de org B
+- [x] SuperAdmin dashboard sin errores 500
 
-### Checklist Frontend (Pendiente)
+### Checklist Frontend ✅
 
-- [ ] Dashboard métricas carga gráficas
-- [ ] Formulario crear suscripción valida cupones
-- [ ] Cancelar/Pausar desde UI actualiza estado
-- [ ] Dark mode funciona en componentes
+- [x] CRUD Planes funcional (crear, editar, eliminar)
+- [x] Vista cards y tabla en PlanesPage
+- [x] Formulario con validación Zod
+- [x] Mapeo correcto de campos backend ↔ frontend
+- [x] SuperAdmin dashboard muestra métricas correctas
+- [ ] Dashboard métricas suscripciones-negocio (pendiente testing)
+- [ ] Dark mode verificado en todos componentes
 
 ### Checklist Dogfooding Nexo (Pendiente)
 
@@ -352,76 +360,58 @@ CREATE FUNCTION obtener_metricas_organizacion_vinculada(...) RETURNS JSONB;
 
 ---
 
-## 10. Archivos Críticos
+## 11. Archivos Críticos
 
 ### Backend
 ```
 backend/app/modules/suscripciones-negocio/
-├── manifest.json                           # Metadata módulo
-├── models/suscripciones.model.js          # Core RLS
-├── services/cobro.service.js              # Cobros automáticos
-├── jobs/procesar-cobros.job.js            # Cron 6AM
-└── controllers/webhooks.controller.js      # Validación HMAC
+├── manifest.json
+├── models/suscripciones.model.js
+├── services/cobro.service.js
+├── jobs/procesar-cobros.job.js
+└── controllers/webhooks.controller.js
+
+backend/app/modules/core/controllers/
+└── superadmin.controller.js          # Corregido 22 Ene
+```
+
+### Frontend
+```
+frontend/src/pages/superadmin/
+├── Dashboard.jsx                      # Corregido 22 Ene
+├── Organizaciones.jsx
+└── Layout.jsx                         # Pendiente: quitar link Planes
+
+frontend/src/pages/suscripciones-negocio/
+└── (7 páginas completas)
 ```
 
 ### SQL
 ```
 sql/suscripciones-negocio/
-├── 01-tablas.sql                          # 5 tablas + RLS + índices
-└── 02-funciones-metricas.sql              # 8 funciones SaaS
-```
-
-### Modificados (Fase 0)
-```
-sql/nucleo/01-tablas-core.sql             # plan_actual VARCHAR
-sql/nucleo/08-funciones-modulos.sql        # Acceso ilimitado
-init-data.sh                                # Archivos deprecated
-frontend/src/services/api/modules/index.js # Import subscripcionesApi
+├── 01-tablas.sql
+└── 02-funciones-metricas.sql
 ```
 
 ---
 
-## 11. Riesgos y Mitigaciones
-
-| Riesgo | Impacto | Mitigación | Estado |
-|--------|---------|------------|--------|
-| Código viejo eliminado rompe módulos | Alto | Feature flag, testing exhaustivo | ✅ Mitigado |
-| Cron jobs no ejecutan | Alto | Endpoint manual, logs, alertas | ✅ Funcional |
-| Webhooks duplicados | Medio | idempotency_key, transaction_id único | ✅ Implementado |
-| RLS bypass accidental | Alto | Code review, SECURITY DEFINER solo donde necesario | ✅ Implementado |
-| MRR cálculo incorrecto | Medio | Tests unitarios SQL, comparar vs Stripe | ⏳ Pendiente testing |
-
----
-
-## 12. Próximos Pasos (Siguiente Sesión)
+## 12. Próximos Pasos
 
 ### Prioridad Alta
-1. **Testing Completo Backend**
-   - Probar endpoints con Postman/curl
-   - Verificar cron jobs (simular fechas)
-   - Validar webhooks con Stripe CLI
-
-2. **Frontend - API Client** (3-4 días)
-   - Crear `suscripciones-negocio.api.js`
-   - Implementar hooks React Query
-   - Sanitizers y transformers
-
-3. **Frontend - UI Básica** (2-3 días)
-   - Dashboard principal (SuscripcionesPage)
-   - CRUD Planes (PlanesPage)
-   - Lista suscripciones (SuscripcionesListPage)
+1. **Fase 5: Refactor SuperAdmin UI**
+   - Eliminar/redirigir sección Planes
+   - Migrar a componentes reutilizables
+   - Consistencia con resto del sistema
 
 ### Prioridad Media
-4. **Frontend - UI Avanzada** (2-3 días)
-   - Detalle suscripción con tabs
-   - Métricas con gráficas (Chart.js)
-   - Cupones y pagos
+2. **Dogfooding Nexo Team**
+   - Configurar planes reales (Trial/Pro/Custom)
+   - Testing flujo completo de suscripción
 
-5. **Dogfooding Nexo Team**
-   - Configurar planes Trial/Pro/Custom
-   - Integrar con onboarding
-   - Testing flujo completo
+3. **Fase 2: Vincular CRM**
+   - Columna `organizacion_vinculada_id` en clientes
+   - UI en ClienteGeneralTab
 
 ---
 
-**Fin del Plan v4.0.0**
+**Fin del Plan v4.2.0**

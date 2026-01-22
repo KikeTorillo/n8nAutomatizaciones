@@ -150,13 +150,14 @@ export function useModulos() {
     'eventos-digitales': true,
     website: true,
     workflows: true,
+    'suscripciones-negocio': true,  // Agregado Ene 2026
   };
 
   // Extraer módulos activos como objeto simple { inventario: true, pos: false, ... }
-  // Super Admin: todos los módulos activos
-  const modulosActivos = esSuperAdmin
-    ? TODOS_LOS_MODULOS
-    : (modulosData?.modulos_activos || { core: true });
+  // Super Admin: usa la config real de su org (puede desactivar módulos si quiere)
+  // Solo usa TODOS_LOS_MODULOS como fallback si no hay data aún
+  const modulosActivos = modulosData?.modulos_activos
+    || (esSuperAdmin ? TODOS_LOS_MODULOS : { core: true });
 
   // Información del plan (Modelo Free/Pro Nov 2025)
   const plan = modulosData?.plan || null;
@@ -252,6 +253,7 @@ export function useModulos() {
     tieneEventosDigitales: tieneModulo('eventos-digitales'),
     tieneWebsite: tieneModulo('website'),
     tieneWorkflows: tieneModulo('workflows'),
+    tieneSuscripcionesNegocio: tieneModulo('suscripciones-negocio'),
   };
 }
 

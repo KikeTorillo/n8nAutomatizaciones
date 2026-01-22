@@ -43,6 +43,7 @@ export { default as FormGroup } from './molecules/FormGroup';
 export { default as SearchFilterBar } from './molecules/SearchFilterBar';
 export { default as CheckboxGroup } from './molecules/CheckboxGroup';
 export { default as CheckboxField } from './molecules/CheckboxField';
+export { default as DropdownMenu } from './molecules/DropdownMenu';
 
 // ========== ORGANISMS ==========
 export { default as Modal } from './organisms/Modal';

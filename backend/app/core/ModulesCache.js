@@ -371,6 +371,9 @@ class ModulesCache {
    * Consulta módulos activos desde la base de datos
    * @param {number} organizacionId - ID de la organización
    * @returns {Promise<Object>} Módulos activos
+   *
+   * ACTUALIZADO Ene 2026: Ahora lee de organizaciones.modulos_activos
+   * (tabla subscripciones eliminada en Fase 0)
    */
   static async queryActiveModules(organizacionId) {
     try {
@@ -378,12 +381,12 @@ class ModulesCache {
         organizacion_id: organizacionId
       });
 
-      // Query con bypass RLS (JOIN multi-tabla)
+      // Query con bypass RLS
       const result = await RLSContextManager.withBypass(async (db) => {
         const query = `
-          SELECT s.modulos_activos
-          FROM subscripciones s
-          WHERE s.organizacion_id = $1 AND s.activa = true
+          SELECT modulos_activos
+          FROM organizaciones
+          WHERE id = $1 AND activo = true
           LIMIT 1
         `;
 
@@ -391,7 +394,7 @@ class ModulesCache {
       });
 
       if (result.rows.length === 0) {
-        logger.warn('[ModulesCache] ⚠️ No se encontró subscripción activa', {
+        logger.warn('[ModulesCache] ⚠️ No se encontró organización activa', {
           organizacion_id: organizacionId
         });
 

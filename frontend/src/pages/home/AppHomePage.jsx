@@ -22,6 +22,7 @@ import {
   Building2,
   ClipboardCheck,
   CalendarOff,
+  CreditCard,
 } from 'lucide-react';
 
 import useAuthStore, { selectLogout, selectUser } from '@/store/authStore';
@@ -70,6 +71,7 @@ function AppHomePage() {
     tieneEventosDigitales,
     tieneWebsite,
     tieneWorkflows,
+    tieneSuscripcionesNegocio,
     esPlanFree,
   } = useModulos();
 
@@ -269,6 +271,18 @@ function AppHomePage() {
       color: 'text-primary-600 dark:text-primary-400',
       bgColor: 'bg-primary-100 dark:bg-primary-900/40',
       enabled: tieneWebsite,
+      badge: 0,
+      adminOnly: true, // Solo admin/propietario
+    },
+    {
+      id: 'suscripciones-negocio',
+      name: 'Suscripciones',
+      description: 'Planes, cobros y métricas SaaS',
+      icon: CreditCard,
+      path: '/suscripciones-negocio',
+      color: 'text-primary-600 dark:text-primary-400',
+      bgColor: 'bg-primary-100 dark:bg-primary-900/40',
+      enabled: tieneSuscripcionesNegocio,
       badge: 0,
       adminOnly: true, // Solo admin/propietario
     },

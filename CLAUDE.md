@@ -426,269 +426,73 @@ Documento completo en `/docs/PLAN_PRUEBAS_INTEGRAL.md`
 | Chatbots IA | ⏳ CRUD OK (conversación pendiente final) |
 | Configuración + Workflows | ✅ Probado y corregido (CFG-001/002/003) |
 | **RBAC (Permisos)** | ✅ Corregido (SEC-001) |
+| **Suscripciones-Negocio** | ✅ Backend + Frontend completo |
 
 ---
 
 ## Changelog
 
-### 22 Ene 2026 - Fase 0: Eliminación Sistema Suscripciones V1 ✅ COMPLETADO
+### 22 Ene 2026 - Módulo Suscripciones-Negocio ✅ COMPLETADO
 
-**Objetivo:**
-Eliminar sistema antiguo basado en límites (profesionales, clientes, etc.) para implementar modelo simple: $249/usuario/mes (Pro), trial 14 días, sin límites de recursos.
+**Módulo completo de gestión de suscripciones SaaS.**
 
-**Archivos SQL modificados (7 archivos):**
-- `sql/nucleo/01-tablas-core.sql` - `plan_actual` ENUM → VARCHAR(20)
-- `sql/nucleo/03-indices.sql` - Eliminados 18 índices deprecated (líneas 102-183)
-- `sql/nucleo/04-rls-policies.sql` - Eliminadas políticas RLS + fix sintaxis (líneas 165-270)
-- `sql/nucleo/06-triggers.sql` - Eliminados triggers viejos
-- `sql/nucleo/08-funciones-modulos.sql` - Funciones actualizadas (acceso ilimitado)
-- `sql/setup/03-grant-permissions.sql` - Eliminado ALTER TABLE metricas_uso_organizacion
-- `init-data.sh` - Comentados 5 archivos deprecated en ejecución
+Ver detalles completos en: `/docs/PLAN_DOGFOODING_NEXO_TEAM.md`
 
-**Frontend:**
-- `frontend/src/services/api/modules/index.js` - Eliminado import subscripcionesApi
+**Resumen:**
+- Eliminación sistema viejo (Fase 0)
+- Backend: 5 tablas, 8 funciones métricas, 7 rutas, 2 cron jobs
+- Frontend: 7 páginas, hooks CRUD, componentes Chart.js
+- Validación E2E: CRUD Planes funcional
 
-**Sistema eliminado:**
-- **4 Tablas:** `planes_subscripcion`, `subscripciones`, `metricas_uso_organizacion`, `historial_subscripciones`
-- **4 Funciones:** `verificar_limite_plan()`, `tiene_caracteristica_habilitada()`, `actualizar_metricas_uso()`, `registrar_cambio_subscripcion()`
-- **2 ENUMs:** `plan_tipo`, `estado_subscripcion`
-
-**Impacto:**
-- ✅ Sistema sin límites de recursos (todo ilimitado)
-- ✅ Funciones `tiene_modulo_activo()` y `obtener_modulos_activos()` retornan TRUE/todos los módulos
-- ✅ Código comentado deprecated completamente eliminado
-
-**Estado:** ✅ FASE 0 completada
+**Mapeo campos críticos:**
+| Frontend | Backend |
+|----------|---------|
+| `precio` | `precio_mensual` |
+| `dias_prueba` | `dias_trial` |
+| `caracteristicas[]` | `features[]` |
 
 ---
 
-### 22 Ene 2026 - Fase 3: Módulo Suscripciones-Negocio (Backend) ✅ COMPLETADO
+### 21 Ene 2026 - Sistema de Roles Dinámicos (ROLES-001) ✅
 
-**Objetivo:**
-Crear módulo completo de gestión de suscripciones SaaS que Nexo Team usa internamente y ofrece a clientes.
-
-**SQL (2 archivos, ~1,500 líneas):**
-- `sql/suscripciones-negocio/01-tablas.sql` - 5 tablas + 18 índices + 15 políticas RLS
-- `sql/suscripciones-negocio/02-funciones-metricas.sql` - 8 funciones SaaS
-
-**Tablas creadas:**
-```sql
-✅ planes_suscripcion_org      -- Planes por organización
-✅ suscripciones_org           -- Suscripciones de clientes
-✅ pagos_suscripcion           -- Historial de pagos
-✅ cupones_suscripcion         -- Cupones de descuento
-✅ webhooks_suscripcion        -- Webhooks recibidos
-```
-
-**Funciones métricas SaaS:**
-```sql
-✅ calcular_mrr(org_id, fecha)           -- Monthly Recurring Revenue
-✅ calcular_arr(org_id, fecha)           -- Annual Recurring Revenue
-✅ calcular_churn_rate(org_id, mes)      -- Tasa de cancelación
-✅ calcular_ltv(org_id)                  -- Lifetime Value
-✅ calcular_tasa_crecimiento_mrr()       -- Crecimiento MRR
-✅ obtener_suscriptores_por_estado()     -- Distribución por estado
-✅ obtener_top_planes()                  -- Planes más vendidos
-✅ obtener_ingresos_por_periodo()        -- Análisis temporal
-```
-
-**Backend (23 archivos, ~5,200 líneas):**
-- **Models (5 archivos):** `planes.model.js`, `suscripciones.model.js`, `pagos.model.js`, `cupones.model.js`, `metricas.model.js`
-- **Controllers (6 archivos):** `planes`, `suscripciones`, `pagos`, `cupones`, `metricas`, `webhooks`
-- **Routes (6 archivos):** Rutas RESTful con auth + tenant + validation
-- **Services (4 archivos):** `cobro.service.js`, `stripe.service.js`, `mercadopago.service.js`, `notificaciones.service.js`
-- **Cron Jobs (2 archivos):** `procesar-cobros.job.js` (6AM), `verificar-trials.job.js` (7AM)
-- **Schemas:** `suscripciones.schemas.js` con 20+ validaciones Joi
-- **Manifest:** `manifest.json` con metadata, pricing, features
-
-**Endpoints registrados (7 rutas):**
-```
-✅ /api/v1/suscripciones-negocio/planes
-✅ /api/v1/suscripciones-negocio/suscripciones
-✅ /api/v1/suscripciones-negocio/pagos
-✅ /api/v1/suscripciones-negocio/cupones
-✅ /api/v1/suscripciones-negocio/metricas
-✅ /api/v1/suscripciones-negocio/webhooks/stripe
-✅ /api/v1/suscripciones-negocio/webhooks/mercadopago
-```
-
-**Correcciones aplicadas:**
-- Imports corregidos: `express-async-handler` → `asyncHandler` del middleware
-- Validation: `validate` → destructuring de `validation`
-- Permisos: `verificarPermisosDinamicos` → `verificarPermiso`
-- Manifest: Array routes → Objeto con rutas nombradas
-- Índices SQL: Agregado `IF NOT EXISTS` a 18 CREATE INDEX
-
-**Verificación:**
-- ✅ PostgreSQL: 216 tablas (5 de suscripciones-negocio)
-- ✅ Backend: 7 rutas registradas, 2 cron jobs activos
-- ✅ Frontend: Vite server running (port 8080)
-
-**Pendiente (Semana 3-4):**
-- ⏳ Frontend - API Client (~350 líneas)
-- ⏳ Frontend - Hooks (~500 líneas)
-- ⏳ Frontend - UI Completa (7 páginas + componentes)
-
-**Estado:** ✅ BACKEND COMPLETADO | ⏳ FRONTEND PENDIENTE
-
----
-
-### 21 Ene 2026 - Sistema de Roles Dinámicos (ROLES-001) ✅ IMPLEMENTADO
-
-**Migración de ENUM a Tabla Dinámica:**
-Permite que cada organización cree roles personalizados (ej: "Recepcionista", "Gerente de Turno").
-
-**Archivos SQL creados:**
-- `sql/nucleo/16-tabla-roles.sql` - Tabla roles, triggers, migración de datos
-- `sql/nucleo/17-funciones-permisos-v2.sql` - Funciones actualizadas para usar rol_id
-
-**Backend creado:**
-- `backend/app/utils/helpers/RolHelper.js` - Helper centralizado para verificaciones de rol
-- `backend/app/modules/core/models/roles.model.js` - Modelo CRUD completo
-- `backend/app/modules/core/controllers/roles.controller.js` - Controller con endpoints
-- `backend/app/modules/core/routes/roles.js` - Rutas RESTful
-- `backend/app/modules/core/schemas/roles.schemas.js` - Validaciones Joi
-
-**Backend modificado:**
-- `backend/app/middleware/auth.js` - Carga rol_id, rol_codigo, nivel_jerarquia, bypass_permisos en req.user
-- `backend/app/middleware/permisos.js` - Usa bypass_permisos para saltar verificación
-
-**Frontend creado:**
-- `frontend/src/services/api/modules/roles.api.js` - Cliente API
-- `frontend/src/hooks/sistema/useRoles.js` - React Query hooks
-- `frontend/src/pages/configuracion/RolesPage.jsx` - UI CRUD completa
-
-**Campos clave de tabla roles:**
-| Campo | Descripción |
-|-------|-------------|
-| `codigo` | Identificador único ('admin', 'recepcionista') |
-| `organizacion_id` | NULL = rol de sistema |
-| `nivel_jerarquia` | 1-100 para comparaciones jerárquicas |
-| `bypass_permisos` | TRUE = salta verificación de permisos |
-| `puede_crear_usuarios` | Permite gestionar usuarios |
-| `puede_modificar_permisos` | Permite editar permisos |
+Sistema de roles dinámicos por organización. Ver sección "Roles" arriba para uso.
 
 **Endpoints API:**
-- `GET /api/v1/roles` - Listar roles de la organización
-- `POST /api/v1/roles` - Crear rol personalizado
-- `PUT /api/v1/roles/:id` - Editar rol
-- `DELETE /api/v1/roles/:id` - Eliminar rol (si no tiene usuarios)
-- `GET /api/v1/roles/:id/permisos` - Obtener permisos del rol
-- `PUT /api/v1/roles/:id/permisos` - Actualizar permisos (batch)
-- `POST /api/v1/roles/:id/copiar-permisos` - Copiar permisos de otro rol
+- `GET/POST/PUT/DELETE /api/v1/roles` - CRUD roles
+- `GET/PUT /api/v1/roles/:id/permisos` - Gestión permisos
+- `POST /api/v1/roles/:id/copiar-permisos` - Copiar de otro rol
 
-**Compatibilidad backward:**
-- Columnas `rol` (ENUM) y `rol_id` (FK) coexisten durante transición
-- `auth.js` prioriza `rol_id` si existe, fallback a ENUM
-- FASE 7 (pendiente): DROP de columna `rol` y tipo ENUM cuando migración completa
-
-**Estado:** ✅ FASES 1-6 completadas, FASE 7 (cleanup) pendiente de ejecutar en producción
+**Pendiente:** FASE 7 (DROP columna `rol` ENUM) en producción.
 
 ---
 
-### 21 Ene 2026 - Bug Seguridad RBAC (SEC-001) ✅ CORREGIDO
+### 21 Ene 2026 - Bug Seguridad RBAC (SEC-001) ✅
 
-**SEC-001 - Sistema RBAC inefectivo (CRÍTICO) - CORREGIDO:**
-- **Problema:** 18 permisos tenían `valor_default = true` en tabla `permisos_catalogo`
-- **Solución:** Cambiado `valor_default` a `false` en todos los permisos de escritura/operación
-- **Archivos:** `sql/nucleo/13-datos-permisos.sql`
-- **Estado:** ✅ CORREGIDO
+18 permisos de escritura tenían `valor_default = true`. Corregido a `false`.
 
-**Permisos corregidos (18):**
-- POS: `pos.crear_ventas`, `pos.abrir_caja`, `pos.cerrar_caja`, `pos.gestionar_caja`, `pos.ver_historial`, `pos.reimprimir_tickets`, `pos.canjear_puntos`, `pos.ver_puntos_cliente`
-- Agendamiento: `agendamiento.crear_citas`, `agendamiento.editar_citas`, `agendamiento.completar_citas`
-- Clientes: `clientes.crear`, `clientes.editar`, `clientes.ver_historial`
-- Otros: `inventario.ver_productos`, `contabilidad.ver_cuentas`, `profesionales.ver`, `reportes.exportar`
+---
 
-**Permisos que mantienen `valor_default = true` (solo lectura):**
-- `acceso.agendamiento`, `acceso.clientes` - Acceso básico a módulos
-- `clientes.ver` - Solo ver listado
-- `reportes.ver_ventas`, `reportes.ver_citas` - Solo lectura reportes
+### Semana 4-6 (19-21 Ene 2026) - Bugs Corregidos
 
-### 21 Ene 2026 - Bugs Semana 6 Corregidos (CFG-001, CFG-002, CFG-003)
+| Bug ID | Módulo | Problema | Archivo |
+|--------|--------|----------|---------|
+| CFG-001 | Departamentos | Función SQL sin columnas | `sql/organizacion/04-funciones.sql` |
+| CFG-002 | Monedas | Tasa como string | `monedas.model.js:223` |
+| CFG-003 | Festivos | Falta fecha_fin_recurrencia | `feriados-latam.js:186` |
+| AUS-004 | Ausencias | Triple anidación data | `useAusencias.js` |
+| CTB-001 | Contabilidad | Columna codigo_sat | `cuentas.model.js` |
+| CTB-002 | Contabilidad | RLS policies | Políticas simplificadas |
+| COM-002 | Comisiones | Filtro origen | `comisiones.schemas.js` |
 
-**CFG-001 - Departamentos corregido:**
-- Función SQL `get_arbol_departamentos` no retornaba columnas `codigo`, `descripcion`, `activo`
-- Actualizada función en `sql/organizacion/04-funciones.sql` para incluir campos faltantes
-- Frontend: `preparePayload` cambiado `|| undefined` a `|| null` para código/descripción
-- **Archivos:** `sql/organizacion/04-funciones.sql`, `DepartamentosPage.jsx:93-96`
-
-**CFG-002 - Monedas calculadora corregido:**
-- PostgreSQL retorna `tasa` como string (tipo numeric)
-- Agregado `parseFloat(tasa.tasa)` en la respuesta de conversión
-- **Archivo:** `monedas.model.js:223`
-
-**CFG-003 - Días Festivos corregido:**
-- Faltaba `fecha_fin_recurrencia` para feriados con `es_recurrente: true`
-- Constraint SQL requiere: `es_recurrente = true AND fecha_fin_recurrencia IS NOT NULL`
-- Agregado `fecha_fin_recurrencia: feriado.fijo ? \`${anio + 10}-12-31\` : null`
-- Invalidación de queries usaba formato viejo: cambiado a `{ queryKey: ['bloqueos'] }`
-- **Archivos:** `feriados-latam.js:186`, `DiasFestivosPage.jsx:127`
-
-### 21 Ene 2026 - Semana 6 Configuración + RBAC (UI Explorada)
-
-**Módulos probados:**
-- **Configuración General (Mi Negocio):** Logo, info general, tipo negocio, contacto, regional, POS config
-- **Usuarios:** CRUD funcional, vincular con profesional
-- **Permisos RBAC:** 95+ permisos organizados por categorías, UI de toggles funcional
-- **Workflows:** Editor visual BPMN con drag-drop, 1 workflow de aprobación OC
-- **Módulos:** 10 módulos con dependencias, toggles funcionales
-- **Departamentos, Puestos, Categorías:** CRUD funcional con jerarquías
-
-**Pendiente:** Validación funcional RBAC (probar con usuario limitado que permisos realmente bloqueen)
-
-### 21 Ene 2026 - Fix Historial/Calendario Ausencias (Semana 5)
-
-**Bug AUS-004 (BUG-021) corregido:**
-- Historial "Mis Ausencias" y Calendario mostraban 0 ausencias aunque había 6 días en trámite
-- **Causa:** Hooks accedían a `data.data` esperando array, pero estructura real era `data.data.data` (triple anidación por wrapper API)
-- **Archivos:** `useAusencias.js`, `vacaciones/queries.js`
-
-### 21 Ene 2026 - Semana 4 Pruebas Completadas
-
-**Módulo Contabilidad - 2 bugs corregidos:**
-- **CTB-001**: `cuentas.model.js` usaba columna `codigo_sat` inexistente → Cambiado a `codigo_agrupador`
-- **CTB-002**: Políticas RLS de `cuentas_contables` verificaban `app.current_role` que RLSContextManager no configura → Simplificadas a solo verificar `app.current_tenant_id`
-
-**Módulo Sucursales:** Probado CRUD, detalle, transferencias (límite Trial funciona correctamente)
-
-**Módulo Ausencias:** Probado solicitud vacaciones, calendario, dashboard
-
-### 21 Ene 2026 - Fix Filtros Comisiones
-
-**Bug COM-002 corregido:**
-- Schema Joi `metricasDashboard` no incluía campo `origen` → Joi lo eliminaba de `req.query`
-- Agregado campo `origen` a schemas `metricasDashboard` y nuevo `graficaPorDia`
-- Archivos: `comisiones.schemas.js`, `comisiones.js` (routes), `estadisticas.controller.js`, `reportes.model.js`
-
-### 19 Ene 2026 - Estandarización UI Componentes
-
-**FORM_ELEMENT_HEIGHTS centralizado:**
-- Nueva constante en `sizes.js`: sm=36px, md=40px, lg=48px, xl=56px
-- Componentes actualizados: Button, Input, Select, SearchInput, MultiSelect
-- Fix anchos en CitaFormDrawer: Controllers envueltos en `<div className="flex-1">`
-
-### 19 Ene 2026 - Pruebas Módulo Clientes
-
-**3 bugs UX corregidos:**
-- `ClienteDetailPage.jsx`: Eliminado stats duplicados del header (solo quedan en SmartButtons)
-- `useEtiquetasClientes.js`: Fix invalidación cache con tipos string/number para clienteId
-
-### 20 Ene 2026 - Auditoría Integral
-
-**Bugs críticos corregidos:**
-- `etiquetas.map is not a function`: Hooks con `transformList` retornan `{items, paginacion}`, no array
-- Filtros booleanos `null`: Cambio `!== undefined` → `!= null` en 9 modelos
-
-**Módulos validados:** Clientes, Inventario, Servicios, Contabilidad, Sucursales
+---
 
 ### Ene 2026 - Backend v2.1 / Frontend v2.2
 
-- Eliminado `sanitizeInput()` middleware inseguro
 - `RedisClientFactory` centralizado
 - `React.memo` en componentes de paginación
+- `FORM_ELEMENT_HEIGHTS` estandarizado (h-10 = 40px)
 - Migraciones a `ListadoCRUDPage`
 
 ---
 
-**Actualizado**: 22 Enero 2026 (Sesión 24.4 - Módulo Suscripciones-Negocio Backend + Fase 0 Completada)
+**Actualizado**: 22 Enero 2026 (Módulo Suscripciones-Negocio Completo)

@@ -27,6 +27,8 @@ import {
   ChevronUp,
   RefreshCw,
   Info,
+  BookOpen,
+  CreditCard,
 } from 'lucide-react';
 import { configuracionAgendamientoApi } from '@/services/api/endpoints';
 
@@ -39,11 +41,13 @@ const ICONOS = {
   inventario: Package,
   pos: ShoppingCart,
   comisiones: DollarSign,
+  contabilidad: BookOpen,
   marketplace: Globe,
   chatbots: Bot,
   'eventos-digitales': PartyPopper,
   website: Globe,
   workflows: ClipboardCheck,
+  'suscripciones-negocio': CreditCard,
 };
 
 /**
@@ -55,11 +59,13 @@ const COLORES = {
   inventario: 'bg-primary-100 dark:bg-primary-900/40 text-primary-800 dark:text-primary-300',
   pos: 'bg-primary-50 dark:bg-primary-900/30 text-primary-500 dark:text-primary-400',
   comisiones: 'bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300',
+  contabilidad: 'bg-primary-100 dark:bg-primary-900/40 text-primary-600 dark:text-primary-400',
   marketplace: 'bg-primary-50 dark:bg-primary-900/30 text-primary-500 dark:text-primary-400',
   chatbots: 'bg-primary-50 dark:bg-primary-900/30 text-primary-400 dark:text-primary-300',
   'eventos-digitales': 'bg-primary-50 dark:bg-primary-900/30 text-primary-400 dark:text-primary-300',
   website: 'bg-primary-100 dark:bg-primary-900/40 text-primary-600 dark:text-primary-400',
   workflows: 'bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300',
+  'suscripciones-negocio': 'bg-primary-100 dark:bg-primary-900/40 text-primary-600 dark:text-primary-400',
 };
 
 /**

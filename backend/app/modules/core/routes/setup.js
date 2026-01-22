@@ -485,30 +485,9 @@ router.post('/unified-setup',
                 // Actualizar superAdminData con la organización
                 superAdminData.organizacion_id = nexoTeamOrgId;
 
-                // 4.1.3 Crear suscripción pro para Nexo Team (precio 0 porque es interno)
-                await db.query(`
-                    INSERT INTO subscripciones (
-                        organizacion_id,
-                        plan_id,
-                        precio_actual,
-                        fecha_inicio,
-                        fecha_proximo_pago,
-                        estado,
-                        activa,
-                        modulos_activos
-                    )
-                    SELECT
-                        $1,
-                        p.id,
-                        0.00,
-                        CURRENT_DATE,
-                        CURRENT_DATE + INTERVAL '1 year',
-                        'activa',
-                        TRUE,
-                        '{"core": true, "crm": true, "agendamiento": true, "inventario": true, "pos": true, "contabilidad": true, "comisiones": true, "ausencias": true}'::jsonb
-                    FROM planes_subscripcion p
-                    WHERE p.codigo_plan = 'pro'
-                `, [nexoTeamOrgId]);
+                // NOTA: Sistema de suscripciones v1 eliminado en Fase 0 (22 Ene 2026)
+                // Nuevo modelo: todos los módulos activos sin límites
+                // Ver: sql/nucleo/08-funciones-modulos.sql - tiene_modulo_activo() retorna TRUE siempre
 
                 // 4.1.4 Crear roles default para la organización
                 await db.query(`SELECT crear_roles_default_organizacion($1)`, [nexoTeamOrgId]);

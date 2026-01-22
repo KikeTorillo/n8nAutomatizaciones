@@ -16,10 +16,6 @@
     "auth": "/api/v1/auth",
     "organizaciones": "/api/v1/organizaciones",
     "usuarios": "/api/v1/usuarios",
-    "planes": "/api/v1/planes",
-    "subscripciones": "/api/v1/subscripciones",
-    "pagos": "/api/v1/pagos",
-    "webhooks": "/api/v1/webhooks",
     "superadmin": "/api/v1/superadmin",
     "monedas": "/api/v1/monedas",
     "roles": "/api/v1/roles"

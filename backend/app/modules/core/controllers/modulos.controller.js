@@ -122,6 +122,17 @@ const MODULOS_DISPONIBLES = {
     dependencias: ['inventario'],
     icono: 'ClipboardCheck',
     orden: 15
+  },
+  'suscripciones-negocio': {
+    nombre: 'suscripciones-negocio',
+    display_name: 'Suscripciones de Negocio',
+    descripcion: 'Gestiona suscripciones SaaS para tus clientes: planes, cobros, cupones y métricas',
+    incluido_en_todos: false,
+    puede_desactivar: true,
+    dependencias: [],
+    icono: 'CreditCard',
+    orden: 70,
+    requiere_rol: 'admin'  // Solo admins pueden acceder
   }
 };
 
@@ -182,19 +193,16 @@ class ModulosController {
         logger.info(`[ModulosController] Empleado ${userId}: acceso a módulos de suscripción (permisos granulares pendiente)`);
       }
 
-      // Obtener información del plan y app_seleccionada (Modelo Free/Pro Nov 2025)
+      // ACTUALIZADO Ene 2026: Sistema subscripciones v1 eliminado
+      // Ahora todos los módulos están disponibles sin límites
+      // plan_actual está en organizaciones directamente
       let planInfo = null;
       try {
         const result = await RLSContextManager.withBypass(async (db) => {
           const query = `
-            SELECT
-              p.codigo_plan,
-              p.nombre_plan,
-              o.app_seleccionada
-            FROM subscripciones s
-            JOIN planes_subscripcion p ON s.plan_id = p.id
-            JOIN organizaciones o ON s.organizacion_id = o.id
-            WHERE s.organizacion_id = $1 AND s.activa = true
+            SELECT plan_actual
+            FROM organizaciones
+            WHERE id = $1
             LIMIT 1
           `;
           return await db.query(query, [organizacionId]);
@@ -202,16 +210,15 @@ class ModulosController {
 
         if (result.rows.length > 0) {
           const row = result.rows[0];
-          const tipo = row.codigo_plan; // codigo_plan es el tipo (trial, pro, custom)
+          const tipo = row.plan_actual || 'pro';
           planInfo = {
-            codigo: row.codigo_plan,
-            nombre: row.nombre_plan,
+            codigo: tipo,
+            nombre: tipo === 'trial' ? 'Trial' : 'Pro',
             tipo: tipo,
-            app_seleccionada: row.app_seleccionada,
-            es_free: tipo === 'free',
+            es_free: false,
             es_pro: tipo === 'pro',
             es_trial: tipo === 'trial',
-            todas_las_apps: ['pro', 'trial', 'custom'].includes(tipo)
+            todas_las_apps: true  // Todos los módulos disponibles
           };
         }
       } catch (planError) {
@@ -287,17 +294,16 @@ class ModulosController {
         }
       }
 
-      // Actualizar en BD
+      // Actualizar en BD (organizaciones.modulos_activos - Ene 2026)
       await RLSContextManager.withBypass(async (db) => {
         const nuevoModulos = { ...modulosActuales, [modulo]: true };
 
         await db.query(`
-          UPDATE subscripciones
+          UPDATE organizaciones
           SET modulos_activos = $1::jsonb,
-              actualizado_en = NOW(),
-              actualizado_por = $3
-          WHERE organizacion_id = $2 AND activa = true
-        `, [JSON.stringify(nuevoModulos), organizacionId, req.user.id]);
+              actualizado_en = NOW()
+          WHERE id = $2
+        `, [JSON.stringify(nuevoModulos), organizacionId]);
       });
 
       // Invalidar cache
@@ -365,17 +371,16 @@ class ModulosController {
         }
       }
 
-      // Actualizar en BD
+      // Actualizar en BD (organizaciones.modulos_activos - Ene 2026)
       await RLSContextManager.withBypass(async (db) => {
         const nuevoModulos = { ...modulosActuales, [modulo]: false };
 
         await db.query(`
-          UPDATE subscripciones
+          UPDATE organizaciones
           SET modulos_activos = $1::jsonb,
-              actualizado_en = NOW(),
-              actualizado_por = $3
-          WHERE organizacion_id = $2 AND activa = true
-        `, [JSON.stringify(nuevoModulos), organizacionId, req.user.id]);
+              actualizado_en = NOW()
+          WHERE id = $2
+        `, [JSON.stringify(nuevoModulos), organizacionId]);
       });
 
       // Invalidar cache

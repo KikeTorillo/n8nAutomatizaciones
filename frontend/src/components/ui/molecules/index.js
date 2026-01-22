@@ -29,3 +29,4 @@ export { default as SearchFilterBar } from './SearchFilterBar';
 export { default as SmartButtons } from './SmartButtons';
 export { default as CheckboxGroup } from './CheckboxGroup';
 export { default as CheckboxField } from './CheckboxField';
+export { default as DropdownMenu } from './DropdownMenu';

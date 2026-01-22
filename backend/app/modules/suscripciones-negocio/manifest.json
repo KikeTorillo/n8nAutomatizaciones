@@ -31,13 +31,7 @@
     "webhooks_suscripcion"
   ],
   "routes": {
-    "planes": "/api/v1/suscripciones-negocio/planes",
-    "suscripciones": "/api/v1/suscripciones-negocio/suscripciones",
-    "pagos": "/api/v1/suscripciones-negocio/pagos",
-    "cupones": "/api/v1/suscripciones-negocio/cupones",
-    "metricas": "/api/v1/suscripciones-negocio/metricas",
-    "webhooks-stripe": "/api/v1/suscripciones-negocio/webhooks/stripe",
-    "webhooks-mercadopago": "/api/v1/suscripciones-negocio/webhooks/mercadopago"
+    "suscripciones-negocio": "/api/v1/suscripciones-negocio"
   },
   "permissions": [
     {

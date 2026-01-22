@@ -1,0 +1,28 @@
+/**
+ * ====================================================================
+ * COMPONENTS INDEX - SUSCRIPCIONES NEGOCIO
+ * ====================================================================
+ * Re-exporta todos los componentes del módulo.
+ */
+
+// Badges y Cards
+export { default as SuscripcionStatusBadge } from './SuscripcionStatusBadge';
+export { default as CuponBadge } from './CuponBadge';
+export { default as PlanCard } from './PlanCard';
+
+// Form Drawers
+export { default as PlanFormDrawer } from './PlanFormDrawer';
+export { default as CuponFormDrawer } from './CuponFormDrawer';
+export { default as SuscripcionFormDrawer } from './SuscripcionFormDrawer';
+
+// Charts
+export { default as MRRChart } from './charts/MRRChart';
+export { default as ChurnChart } from './charts/ChurnChart';
+export { default as SuscriptoresChart } from './charts/SuscriptoresChart';
+export { default as DistribucionEstadoChart } from './charts/DistribucionEstadoChart';
+export { default as TopPlanesChart } from './charts/TopPlanesChart';
+
+// Tabs
+export { default as SuscripcionGeneralTab } from './tabs/SuscripcionGeneralTab';
+export { default as SuscripcionPagosTab } from './tabs/SuscripcionPagosTab';
+export { default as SuscripcionHistorialTab } from './tabs/SuscripcionHistorialTab';

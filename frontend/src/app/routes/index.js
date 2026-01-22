@@ -14,6 +14,7 @@ export { configuracionRoutes } from './configuracion.routes';
 export { sucursalesRoutes } from './sucursales.routes';
 export { contabilidadRoutes } from './contabilidad.routes';
 export { superadminRoutes } from './superadmin.routes';
+export { suscripcionesNegocioRoutes } from './suscripciones-negocio.routes';
 
 // Exportar helpers
 export * from './helpers/routeHelpers';
@@ -29,6 +30,7 @@ import { configuracionRoutes } from './configuracion.routes';
 import { sucursalesRoutes } from './sucursales.routes';
 import { contabilidadRoutes } from './contabilidad.routes';
 import { superadminRoutes } from './superadmin.routes';
+import { suscripcionesNegocioRoutes } from './suscripciones-negocio.routes';
 
 /**
  * Todas las rutas combinadas en el orden correcto
@@ -61,6 +63,9 @@ export const allRoutes = [
 
   // Contabilidad
   ...contabilidadRoutes,
+
+  // Suscripciones Negocio
+  ...suscripcionesNegocioRoutes,
 
   // Super Admin (rutas anidadas)
   ...superadminRoutes,

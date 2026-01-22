@@ -181,6 +181,21 @@ async function validarYAdjuntarSucursal(req, res, options, contextName, permisoI
         return { success: false };
     }
 
+    // Bypass de permisos ANTES de validar sucursal: super_admin no necesita sucursal
+    // Usa propiedad bypass_permisos del nuevo sistema de roles
+    if (req.user.bypass_permisos || req.user.rol === 'super_admin') {
+        logger.warn(`[Permisos] Bypass de permisos (pre-sucursal) - ${contextName}`, {
+            usuario_id: usuarioId,
+            email: req.user.email,
+            rol_codigo: req.user.rol_codigo,
+            nivel_jerarquia: req.user.nivel_jerarquia,
+            permiso: permisoInfo,
+            ruta: req.originalUrl,
+            ip: req.ip
+        });
+        return { success: true, sucursalId: null, isSuperAdmin: true };
+    }
+
     // Obtener sucursalId usando helper consolidado
     const { sucursalId, source } = obtenerSucursalId(req, options);
 
@@ -198,9 +213,8 @@ async function validarYAdjuntarSucursal(req, res, options, contextName, permisoI
     req.sucursalId = sucursalId;
     req.sucursalSource = source;
 
-    // Bypass de permisos: super_admin, admin, propietario (según nivel jerárquico)
-    // Usa propiedad bypass_permisos del nuevo sistema de roles
-    if (req.user.bypass_permisos || req.user.rol === 'super_admin') {
+    // Bypass adicional para roles con bypass_permisos que SÍ tienen sucursal
+    if (req.user.bypass_permisos) {
         logger.warn(`[Permisos] Bypass de permisos - ${contextName}`, {
             usuario_id: usuarioId,
             email: req.user.email,

@@ -115,3 +115,6 @@ export { websiteApi } from './website.api';
 
 // Marketplace
 export { marketplaceApi } from './marketplace.api';
+
+// Suscripciones para Negocios
+export { suscripcionesNegocioApi } from './suscripciones-negocio.api';
