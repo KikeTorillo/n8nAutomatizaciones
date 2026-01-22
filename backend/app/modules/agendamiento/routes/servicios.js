@@ -101,7 +101,6 @@ router.post('/bulk-create',
     auth.authenticateToken,
     tenant.setTenantContext,
     tenant.verifyTenantActive,
-    subscription.checkActiveSubscription,  // ✅ Verificar suscripción activa
     // NO agregar checkResourceLimit aquí - se valida dentro del método bulkCrear
     auth.requireAdminRole,
     validation.validate(servicioSchemas.bulkCrear),
@@ -114,8 +113,6 @@ router.post('/',
     auth.authenticateToken,
     tenant.setTenantContext,
     tenant.verifyTenantActive,
-    subscription.checkActiveSubscription,         // ✅ Verificar suscripción activa
-    subscription.checkResourceLimit('servicios'), // ✅ Verificar límite de servicios
     validation.validate(servicioSchemas.crear),
     ServicioController.crear
 );

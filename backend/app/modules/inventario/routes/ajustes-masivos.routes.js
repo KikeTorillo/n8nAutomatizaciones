@@ -31,7 +31,6 @@ router.post('/ajustes-masivos',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    subscription.checkActiveSubscription,
     rateLimiting.apiRateLimit,
     validate(inventarioSchemas.crearAjusteMasivo),
     AjustesMasivosController.crear

@@ -44,8 +44,8 @@ CREATE TABLE organizaciones (
     colores_marca JSONB,
     configuracion_ui JSONB DEFAULT '{}',
 
-    -- Plan y subscripción
-    plan_actual plan_tipo NOT NULL DEFAULT 'trial',
+    -- Plan y subscripción (DEPRECATED - Ene 2026: migrar a suscripciones-negocio)
+    plan_actual VARCHAR(20) NOT NULL DEFAULT 'trial',
     fecha_registro TIMESTAMPTZ DEFAULT NOW(),
     fecha_activacion TIMESTAMPTZ,
 

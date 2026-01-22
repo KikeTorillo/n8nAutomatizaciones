@@ -1,0 +1,132 @@
+{
+  "id": "suscripciones-negocio",
+  "version": "1.0.0",
+  "name": "Suscripciones de Negocio",
+  "description": "Módulo completo de gestión de suscripciones SaaS para negocios. Incluye planes, suscripciones, pagos, cupones y métricas (MRR, Churn, LTV).",
+  "category": "financiero",
+  "icon": "repeat",
+  "color": "#8B5CF6",
+  "enabled": true,
+  "dependencies": [],
+  "pricing": {
+    "free": false,
+    "trial": true,
+    "plans": ["pro", "custom"]
+  },
+  "features": [
+    "Gestión de planes personalizados (mensual, trimestral, anual)",
+    "Suscripciones con trials y renovación automática",
+    "Pagos con Stripe y MercadoPago",
+    "Cupones de descuento (porcentaje, monto fijo, duración limitada)",
+    "Métricas SaaS: MRR, ARR, Churn Rate, LTV",
+    "Webhooks para sincronización con gateways",
+    "Recordatorios automáticos de cobros",
+    "Historial completo de pagos y cambios"
+  ],
+  "tables": [
+    "planes_suscripcion_org",
+    "suscripciones_org",
+    "pagos_suscripcion",
+    "cupones_suscripcion",
+    "webhooks_suscripcion"
+  ],
+  "routes": {
+    "planes": "/api/v1/suscripciones-negocio/planes",
+    "suscripciones": "/api/v1/suscripciones-negocio/suscripciones",
+    "pagos": "/api/v1/suscripciones-negocio/pagos",
+    "cupones": "/api/v1/suscripciones-negocio/cupones",
+    "metricas": "/api/v1/suscripciones-negocio/metricas",
+    "webhooks-stripe": "/api/v1/suscripciones-negocio/webhooks/stripe",
+    "webhooks-mercadopago": "/api/v1/suscripciones-negocio/webhooks/mercadopago"
+  },
+  "permissions": [
+    {
+      "codigo": "suscripciones_negocio.ver",
+      "nombre": "Ver suscripciones",
+      "descripcion": "Permite ver listado de suscripciones y métricas",
+      "categoria": "suscripciones_negocio",
+      "valor_default": true
+    },
+    {
+      "codigo": "suscripciones_negocio.crear_planes",
+      "nombre": "Crear planes",
+      "descripcion": "Permite crear nuevos planes de suscripción",
+      "categoria": "suscripciones_negocio",
+      "valor_default": false
+    },
+    {
+      "codigo": "suscripciones_negocio.editar_planes",
+      "nombre": "Editar planes",
+      "descripcion": "Permite modificar planes existentes",
+      "categoria": "suscripciones_negocio",
+      "valor_default": false
+    },
+    {
+      "codigo": "suscripciones_negocio.crear_suscripciones",
+      "nombre": "Crear suscripciones",
+      "descripcion": "Permite crear suscripciones de clientes",
+      "categoria": "suscripciones_negocio",
+      "valor_default": false
+    },
+    {
+      "codigo": "suscripciones_negocio.cambiar_plan",
+      "nombre": "Cambiar plan de suscripción",
+      "descripcion": "Permite upgrades/downgrades de planes",
+      "categoria": "suscripciones_negocio",
+      "valor_default": false
+    },
+    {
+      "codigo": "suscripciones_negocio.cancelar",
+      "nombre": "Cancelar suscripciones",
+      "descripcion": "Permite cancelar suscripciones activas",
+      "categoria": "suscripciones_negocio",
+      "valor_default": false
+    },
+    {
+      "codigo": "suscripciones_negocio.ver_pagos",
+      "nombre": "Ver historial de pagos",
+      "descripcion": "Permite ver pagos realizados",
+      "categoria": "suscripciones_negocio",
+      "valor_default": true
+    },
+    {
+      "codigo": "suscripciones_negocio.reembolsar",
+      "nombre": "Procesar reembolsos",
+      "descripcion": "Permite realizar reembolsos de pagos",
+      "categoria": "suscripciones_negocio",
+      "valor_default": false
+    },
+    {
+      "codigo": "suscripciones_negocio.gestionar_cupones",
+      "nombre": "Gestionar cupones",
+      "descripcion": "Permite crear/editar/eliminar cupones",
+      "categoria": "suscripciones_negocio",
+      "valor_default": false
+    },
+    {
+      "codigo": "suscripciones_negocio.ver_metricas",
+      "nombre": "Ver métricas SaaS",
+      "descripcion": "Permite ver MRR, Churn, LTV y otras métricas",
+      "categoria": "suscripciones_negocio",
+      "valor_default": false
+    }
+  ],
+  "cron_jobs": [
+    {
+      "name": "procesar_cobros_diarios",
+      "schedule": "0 6 * * *",
+      "description": "Procesa cobros programados para el día (6:00 AM)",
+      "file": "jobs/procesar-cobros.job.js"
+    },
+    {
+      "name": "verificar_trials_expirados",
+      "schedule": "0 7 * * *",
+      "description": "Verifica y convierte trials expirados (7:00 AM)",
+      "file": "jobs/verificar-trials.job.js"
+    }
+  ],
+  "setup_order": 85,
+  "author": "Nexo Team",
+  "created_at": "2026-01-21",
+  "tags": ["saas", "subscripciones", "pagos", "facturación", "metricas"]
+}

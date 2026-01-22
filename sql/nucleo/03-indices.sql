@@ -100,74 +100,6 @@ CREATE INDEX idx_organizaciones_marketplace
     WHERE tiene_perfil_marketplace = TRUE AND eliminado_en IS NULL;
 
 -- ====================================================================
--- ÍNDICES PARA PLANES_SUBSCRIPCION
--- ====================================================================
-
--- Propósito: Búsqueda de planes por código
--- Índice parcial solo para planes activos
-CREATE INDEX idx_planes_subscripcion_codigo ON planes_subscripcion(codigo_plan) WHERE activo = true;
-
--- Propósito: Filtrado y ordenamiento por precio
--- Para comparativas de planes en UI
-CREATE INDEX idx_planes_subscripcion_precio ON planes_subscripcion(precio_mensual, precio_anual);
-
--- Propósito: Integración con Mercado Pago
--- Lookup por ID de plan en MP
-CREATE INDEX idx_planes_mp_plan_id ON planes_subscripcion(mp_plan_id) WHERE mp_plan_id IS NOT NULL;
-
--- ====================================================================
--- ÍNDICES PARA METRICAS_USO_ORGANIZACION
--- ====================================================================
-
--- Propósito: Lookup directo por organización (FK index)
-CREATE INDEX idx_metricas_uso_organizacion ON metricas_uso_organizacion(organizacion_id);
-
--- Propósito: Queries de métricas mensuales
--- Para reseteo automático mensual
-CREATE INDEX idx_metricas_uso_mes_actual ON metricas_uso_organizacion(mes_actual);
-
--- ====================================================================
--- ÍNDICES PARA SUBSCRIPCIONES
--- ====================================================================
-
--- Propósito: Lookup de subscripción activa por organización
--- Índice parcial solo para subscripciones activas
-CREATE INDEX idx_subscripciones_organizacion_activa ON subscripciones(organizacion_id) WHERE activa = true;
-
--- Propósito: Job automático de facturación (próximos pagos)
--- Índice parcial solo para subscripciones activas con auto-renovación
-CREATE INDEX idx_subscripciones_proximo_pago ON subscripciones(fecha_proximo_pago) WHERE activa = true AND auto_renovacion = true;
-
--- Propósito: Análisis de churn (subscripciones canceladas)
--- Índice parcial solo para subscripciones inactivas
-CREATE INDEX idx_subscripciones_canceladas ON subscripciones(fecha_cancelacion, motivo_cancelacion) WHERE NOT activa;
-
--- Propósito: Reportes por plan (cuántas subscripciones tiene cada plan)
-CREATE INDEX idx_subscripciones_plan ON subscripciones(plan_id);
-
--- Propósito: Integración con gateway de pago
--- Lookup por customer_id para webhooks
-CREATE INDEX idx_subscripciones_gateway ON subscripciones(gateway_pago, customer_id_gateway) WHERE gateway_pago IS NOT NULL;
-
--- Propósito: Consultas combinadas de planes y estado
--- Covering index para evitar table lookups (AGREGADO: auditoría 2025-10-02)
-CREATE INDEX idx_subscripciones_org_plan_estado ON subscripciones(organizacion_id, plan_id, estado, activa) WHERE activa = true;
-
--- ====================================================================
--- ÍNDICES PARA HISTORIAL_SUBSCRIPCIONES
--- ====================================================================
-
--- Propósito: Timeline de eventos por organización
--- Ordenado DESC para mostrar eventos recientes primero
-CREATE INDEX idx_historial_subscripciones_org_fecha ON historial_subscripciones(organizacion_id, ocurrido_en DESC);
-
--- Propósito: Análisis por tipo de evento (upgrades, downgrades, cancelaciones)
-CREATE INDEX idx_historial_subscripciones_tipo_evento ON historial_subscripciones(tipo_evento, ocurrido_en DESC);
-
--- Propósito: Historial completo de una subscripción específica
-CREATE INDEX idx_historial_subscripciones_sub ON historial_subscripciones(subscripcion_id, ocurrido_en DESC);
-
--- ====================================================================
 -- 🎯 COMENTARIOS PARA DOCUMENTACIÓN
 -- ====================================================================
 COMMENT ON INDEX idx_usuarios_email_unique IS
@@ -187,10 +119,6 @@ COMMENT ON INDEX idx_organizaciones_codigo_tenant IS
 'Índice único para lookup de tenant por código.
 CRÍTICO para performance de RLS (set app.current_tenant_id).';
 
-COMMENT ON INDEX idx_subscripciones_proximo_pago IS
-'Índice para job automático de facturación (pg_cron).
-Solo indexa subscripciones activas con auto-renovación habilitada.';
-
 -- ====================================================================
 -- 🔗 ÍNDICES PARA FOREIGN KEYS DE AUDITORÍA
 -- ====================================================================
@@ -202,14 +130,4 @@ Solo indexa subscripciones activas con auto-renovación habilitada.';
 -- Propósito: JOINs eficientes para auditoría de eliminaciones
 CREATE INDEX idx_usuarios_eliminado_por
     ON usuarios(eliminado_por) WHERE eliminado_por IS NOT NULL;
-
--- ✏️ ÍNDICE: SUBSCRIPCIONES ACTUALIZADAS POR
--- Propósito: Auditoría de cambios en subscripciones
-CREATE INDEX idx_subscripciones_actualizado_por
-    ON subscripciones(actualizado_por) WHERE actualizado_por IS NOT NULL;
-
--- 👤 ÍNDICE: HISTORIAL SUBSCRIPCIONES - USUARIO RESPONSABLE
--- Propósito: Tracking de quién realizó cambios en subscripciones
-CREATE INDEX idx_historial_sub_usuario_resp
-    ON historial_subscripciones(usuario_responsable) WHERE usuario_responsable IS NOT NULL;
 

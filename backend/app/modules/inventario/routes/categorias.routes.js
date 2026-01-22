@@ -21,8 +21,6 @@ router.post('/categorias',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    subscription.checkActiveSubscription,
-    subscription.checkResourceLimit('categorias_productos'),
     rateLimiting.apiRateLimit,
     validate(inventarioSchemas.crearCategoria),
     InventarioController.crearCategoria

@@ -58,7 +58,6 @@ router.post('/perfiles',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('marketplace'),
-    subscription.checkActiveSubscription,
     rateLimiting.apiRateLimit,
     validate(marketplaceSchemas.crearPerfil),
     PerfilesMarketplaceController.crear

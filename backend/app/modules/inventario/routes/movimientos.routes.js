@@ -22,7 +22,6 @@ router.post('/movimientos',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    subscription.checkActiveSubscription,
     rateLimiting.apiRateLimit,
     validate(inventarioSchemas.registrarMovimiento),
     InventarioController.registrarMovimiento

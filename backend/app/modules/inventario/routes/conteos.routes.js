@@ -34,7 +34,6 @@ router.post('/conteos',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    subscription.checkActiveSubscription,
     rateLimiting.apiRateLimit,
     validate(inventarioSchemas.crearConteo),
     ConteosController.crear

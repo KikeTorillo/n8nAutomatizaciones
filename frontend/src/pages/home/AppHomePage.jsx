@@ -36,8 +36,6 @@ import { authApi } from '@/services/api/endpoints';
 import AppCard from '@/components/home/AppCard';
 import QuickActions from '@/components/home/QuickActions';
 import { Button, ConfirmDialog, ThemeToggle, StatCard } from '@/components/ui';
-import TrialStatusWidget from '@/components/dashboard/TrialStatusWidget';
-import PlanStatusBanner from '@/components/dashboard/PlanStatusBanner';
 import SucursalSelector from '@/components/sucursales/SucursalSelector';
 import { NotificacionesBell } from '@/components/notificaciones';
 
@@ -414,9 +412,6 @@ function AppHomePage() {
         {/* Widgets de estado - Solo para admin/propietario */}
         {!esEmpleado && (
           <>
-            <TrialStatusWidget />
-            <PlanStatusBanner />
-
             {/* Widget Multi-Sucursal - Solo si tiene 2+ sucursales */}
             {tieneMultiplesSucursales && metricasSucursales && (
               <div className="mt-4 p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">

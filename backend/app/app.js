@@ -481,6 +481,17 @@ class SaaSApplication {
         logger.warn('Error inicializando MinIO Storage', { error: minioError.message });
       }
 
+      // INICIALIZACIÓN DE CRON JOBS - SUSCRIPCIONES-NEGOCIO
+      // Inicia procesamiento automático de cobros y verificación de trials
+      try {
+        const SuscripcionesJobs = require('./modules/suscripciones-negocio/jobs');
+        SuscripcionesJobs.init();
+        logger.info('Cron jobs de suscripciones-negocio inicializados');
+      } catch (jobsError) {
+        // Los cron jobs son opcionales si el módulo no está disponible
+        logger.warn('Cron jobs de suscripciones-negocio no disponibles', { error: jobsError.message });
+      }
+
       // INICIAR SERVIDOR HTTP: Escucha en el puerto configurado
       this.server = this.app.listen(this.port, () => {
         // Log de inicio exitoso con métricas del sistema

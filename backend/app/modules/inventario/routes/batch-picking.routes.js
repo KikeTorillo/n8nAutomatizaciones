@@ -92,7 +92,6 @@ router.post('/batch-picking',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    subscription.checkActiveSubscription,
     rateLimiting.apiRateLimit,
     BatchPickingController.crear
 );

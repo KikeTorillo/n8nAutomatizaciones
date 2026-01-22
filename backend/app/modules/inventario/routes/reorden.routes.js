@@ -84,7 +84,6 @@ router.post('/reorden/reglas',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    subscription.checkActiveSubscription,
     rateLimiting.apiRateLimit,
     validate(inventarioSchemas.crearReglaReorden),
     ReordenController.crearRegla

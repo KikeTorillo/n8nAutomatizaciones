@@ -431,6 +431,108 @@ Documento completo en `/docs/PLAN_PRUEBAS_INTEGRAL.md`
 
 ## Changelog
 
+### 22 Ene 2026 - Fase 0: Eliminación Sistema Suscripciones V1 ✅ COMPLETADO
+
+**Objetivo:**
+Eliminar sistema antiguo basado en límites (profesionales, clientes, etc.) para implementar modelo simple: $249/usuario/mes (Pro), trial 14 días, sin límites de recursos.
+
+**Archivos SQL modificados (7 archivos):**
+- `sql/nucleo/01-tablas-core.sql` - `plan_actual` ENUM → VARCHAR(20)
+- `sql/nucleo/03-indices.sql` - Eliminados 18 índices deprecated (líneas 102-183)
+- `sql/nucleo/04-rls-policies.sql` - Eliminadas políticas RLS + fix sintaxis (líneas 165-270)
+- `sql/nucleo/06-triggers.sql` - Eliminados triggers viejos
+- `sql/nucleo/08-funciones-modulos.sql` - Funciones actualizadas (acceso ilimitado)
+- `sql/setup/03-grant-permissions.sql` - Eliminado ALTER TABLE metricas_uso_organizacion
+- `init-data.sh` - Comentados 5 archivos deprecated en ejecución
+
+**Frontend:**
+- `frontend/src/services/api/modules/index.js` - Eliminado import subscripcionesApi
+
+**Sistema eliminado:**
+- **4 Tablas:** `planes_subscripcion`, `subscripciones`, `metricas_uso_organizacion`, `historial_subscripciones`
+- **4 Funciones:** `verificar_limite_plan()`, `tiene_caracteristica_habilitada()`, `actualizar_metricas_uso()`, `registrar_cambio_subscripcion()`
+- **2 ENUMs:** `plan_tipo`, `estado_subscripcion`
+
+**Impacto:**
+- ✅ Sistema sin límites de recursos (todo ilimitado)
+- ✅ Funciones `tiene_modulo_activo()` y `obtener_modulos_activos()` retornan TRUE/todos los módulos
+- ✅ Código comentado deprecated completamente eliminado
+
+**Estado:** ✅ FASE 0 completada
+
+---
+
+### 22 Ene 2026 - Fase 3: Módulo Suscripciones-Negocio (Backend) ✅ COMPLETADO
+
+**Objetivo:**
+Crear módulo completo de gestión de suscripciones SaaS que Nexo Team usa internamente y ofrece a clientes.
+
+**SQL (2 archivos, ~1,500 líneas):**
+- `sql/suscripciones-negocio/01-tablas.sql` - 5 tablas + 18 índices + 15 políticas RLS
+- `sql/suscripciones-negocio/02-funciones-metricas.sql` - 8 funciones SaaS
+
+**Tablas creadas:**
+```sql
+✅ planes_suscripcion_org      -- Planes por organización
+✅ suscripciones_org           -- Suscripciones de clientes
+✅ pagos_suscripcion           -- Historial de pagos
+✅ cupones_suscripcion         -- Cupones de descuento
+✅ webhooks_suscripcion        -- Webhooks recibidos
+```
+
+**Funciones métricas SaaS:**
+```sql
+✅ calcular_mrr(org_id, fecha)           -- Monthly Recurring Revenue
+✅ calcular_arr(org_id, fecha)           -- Annual Recurring Revenue
+✅ calcular_churn_rate(org_id, mes)      -- Tasa de cancelación
+✅ calcular_ltv(org_id)                  -- Lifetime Value
+✅ calcular_tasa_crecimiento_mrr()       -- Crecimiento MRR
+✅ obtener_suscriptores_por_estado()     -- Distribución por estado
+✅ obtener_top_planes()                  -- Planes más vendidos
+✅ obtener_ingresos_por_periodo()        -- Análisis temporal
+```
+
+**Backend (23 archivos, ~5,200 líneas):**
+- **Models (5 archivos):** `planes.model.js`, `suscripciones.model.js`, `pagos.model.js`, `cupones.model.js`, `metricas.model.js`
+- **Controllers (6 archivos):** `planes`, `suscripciones`, `pagos`, `cupones`, `metricas`, `webhooks`
+- **Routes (6 archivos):** Rutas RESTful con auth + tenant + validation
+- **Services (4 archivos):** `cobro.service.js`, `stripe.service.js`, `mercadopago.service.js`, `notificaciones.service.js`
+- **Cron Jobs (2 archivos):** `procesar-cobros.job.js` (6AM), `verificar-trials.job.js` (7AM)
+- **Schemas:** `suscripciones.schemas.js` con 20+ validaciones Joi
+- **Manifest:** `manifest.json` con metadata, pricing, features
+
+**Endpoints registrados (7 rutas):**
+```
+✅ /api/v1/suscripciones-negocio/planes
+✅ /api/v1/suscripciones-negocio/suscripciones
+✅ /api/v1/suscripciones-negocio/pagos
+✅ /api/v1/suscripciones-negocio/cupones
+✅ /api/v1/suscripciones-negocio/metricas
+✅ /api/v1/suscripciones-negocio/webhooks/stripe
+✅ /api/v1/suscripciones-negocio/webhooks/mercadopago
+```
+
+**Correcciones aplicadas:**
+- Imports corregidos: `express-async-handler` → `asyncHandler` del middleware
+- Validation: `validate` → destructuring de `validation`
+- Permisos: `verificarPermisosDinamicos` → `verificarPermiso`
+- Manifest: Array routes → Objeto con rutas nombradas
+- Índices SQL: Agregado `IF NOT EXISTS` a 18 CREATE INDEX
+
+**Verificación:**
+- ✅ PostgreSQL: 216 tablas (5 de suscripciones-negocio)
+- ✅ Backend: 7 rutas registradas, 2 cron jobs activos
+- ✅ Frontend: Vite server running (port 8080)
+
+**Pendiente (Semana 3-4):**
+- ⏳ Frontend - API Client (~350 líneas)
+- ⏳ Frontend - Hooks (~500 líneas)
+- ⏳ Frontend - UI Completa (7 páginas + componentes)
+
+**Estado:** ✅ BACKEND COMPLETADO | ⏳ FRONTEND PENDIENTE
+
+---
+
 ### 21 Ene 2026 - Sistema de Roles Dinámicos (ROLES-001) ✅ IMPLEMENTADO
 
 **Migración de ENUM a Tabla Dinámica:**
@@ -589,4 +691,4 @@ Permite que cada organización cree roles personalizados (ej: "Recepcionista", "
 
 ---
 
-**Actualizado**: 21 Enero 2026 (Sesión 24.3 - Sistema de Roles Dinámicos ROLES-001)
+**Actualizado**: 22 Enero 2026 (Sesión 24.4 - Módulo Suscripciones-Negocio Backend + Fase 0 Completada)

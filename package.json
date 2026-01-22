@@ -62,5 +62,9 @@
   "engines": {
     "node": ">=18.0.0",
     "docker": ">=20.0.0"
+  },
+  "dependencies": {
+    "node-cron": "^4.2.1",
+    "stripe": "^20.2.0"
   }
 }

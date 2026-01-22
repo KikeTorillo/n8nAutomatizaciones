@@ -9,8 +9,6 @@ const router = express.Router();
 router.post('/',
     auth.authenticateToken,
     tenant.setTenantContext,
-    subscription.checkActiveSubscription,        // ✅ Verificar suscripción activa
-    subscription.checkResourceLimit('usuarios'), // ✅ Verificar límite de usuarios
     auth.requireAdminRole,
     rateLimiting.heavyOperationRateLimit,
     validation.validate(usuarioSchemas.crear),
@@ -97,8 +95,6 @@ router.patch('/:id/desbloquear',
 router.post('/directo',
     auth.authenticateToken,
     tenant.setTenantContext,
-    subscription.checkActiveSubscription,
-    subscription.checkResourceLimit('usuarios'),
     auth.requireAdminRole,
     rateLimiting.heavyOperationRateLimit,
     validation.validate(usuarioSchemas.crearDirecto),

@@ -17,10 +17,6 @@ const MagicLinkVerifyPage = lazy(() => import('@/pages/auth/MagicLinkVerifyPage'
 const OnboardingPage = lazy(() => import('@/pages/auth/OnboardingPage'));
 const InitialSetup = lazy(() => import('@/pages/setup/InitialSetup'));
 
-// Suscripción
-const ActivarSuscripcion = lazy(() => import('@/pages/subscripcion/ActivarSuscripcion'));
-const SubscripcionResultado = lazy(() => import('@/pages/subscripcion/SubscripcionResultado'));
-
 export const authRoutes = [
   // Rutas de autenticación con prefijo /auth/
   publicRoute('auth/login', LoginPage),
@@ -41,8 +37,4 @@ export const authRoutes = [
 
   // Setup inicial
   publicRoute('setup', InitialSetup),
-
-  // Suscripción
-  protectedRoute('suscripcion', ActivarSuscripcion, { requiredRole: ROLES.ALL_AUTHENTICATED }),
-  publicRoute('subscripcion/resultado', SubscripcionResultado),
 ];

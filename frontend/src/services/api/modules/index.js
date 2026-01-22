@@ -19,7 +19,6 @@ export { permisosApi } from './permisos.api';
 export { rolesApi } from './roles.api';
 export { notificacionesApi } from './notificaciones.api';
 export { planesApi } from './planes.api';
-export { subscripcionesApi } from './subscripciones.api';
 export { mercadopagoApi } from './mercadopago.api';
 
 // Profesionales y RRHH

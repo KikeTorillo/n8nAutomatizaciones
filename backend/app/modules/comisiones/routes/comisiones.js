@@ -124,7 +124,6 @@ router.post('/configuracion',
     tenant.setTenantContext,
     modules.requireModule('comisiones'),
     tenant.verifyTenantActive,
-    subscription.checkActiveSubscription,
     rateLimiting.apiRateLimit,
     validate(comisionesSchemas.crearConfiguracion),
     ComisionesController.crearOActualizarConfiguracion

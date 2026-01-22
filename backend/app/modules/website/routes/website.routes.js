@@ -42,7 +42,6 @@ router.post('/config',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('website'),
-    subscription.checkActiveSubscription,
     rateLimiting.apiRateLimit,
     validate(websiteSchemas.crearConfig),
     WebsiteConfigController.crear

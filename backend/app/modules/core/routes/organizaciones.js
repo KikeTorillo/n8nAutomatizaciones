@@ -109,12 +109,13 @@ router.put('/:id/reactivar',
     (req, res, next) => OrganizacionController.reactivar(req, res, next)
 );
 
-router.put('/:id/plan',
-    auth.authenticateToken,
-    auth.requireRole(['super_admin']),
-    rateLimiting.heavyOperationRateLimit,
-    validation.validate(organizacionSchemas.cambiarPlan),
-    OrganizacionController.cambiarPlan
-);
+// DEPRECATED (Ene 2026): Endpoint cambiarPlan eliminado - Sistema de suscripciones v2
+// router.put('/:id/plan',
+//     auth.authenticateToken,
+//     auth.requireRole(['super_admin']),
+//     rateLimiting.heavyOperationRateLimit,
+//     validation.validate(organizacionSchemas.cambiarPlan),
+//     OrganizacionController.cambiarPlan
+// );
 
 module.exports = router;

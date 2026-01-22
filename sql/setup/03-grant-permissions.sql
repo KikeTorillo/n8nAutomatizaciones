@@ -25,7 +25,6 @@ GRANT TRIGGER ON ALL TABLES IN SCHEMA public TO saas_app;
 -- Esto es necesario para limpieza de tests sin conflictos de triggers
 ALTER TABLE usuarios OWNER TO saas_app;
 ALTER TABLE organizaciones OWNER TO saas_app;
-ALTER TABLE metricas_uso_organizacion OWNER TO saas_app;
 
 -- Permisos por defecto para nuevos objetos
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO saas_app;

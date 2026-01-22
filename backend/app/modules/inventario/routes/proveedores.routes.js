@@ -21,8 +21,6 @@ router.post('/proveedores',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    subscription.checkActiveSubscription,
-    subscription.checkResourceLimit('proveedores'),
     rateLimiting.apiRateLimit,
     validate(inventarioSchemas.crearProveedor),
     InventarioController.crearProveedor

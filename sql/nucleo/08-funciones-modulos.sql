@@ -41,33 +41,23 @@ RETURNS BOOLEAN
 LANGUAGE plpgsql
 STABLE  -- Puede ser cacheada (no modifica datos)
 AS $$
-DECLARE
-    v_modulos_activos JSONB;
-    v_modulo_activo BOOLEAN;
 BEGIN
+    -- ====================================================================
+    -- MODIFICADO (Ene 2026): ACCESO ILIMITADO A TODOS LOS MÓDULOS
+    -- ====================================================================
+    -- El nuevo modelo de negocio (suscripciones-negocio) no tiene límites
+    -- por módulo. Todas las organizaciones tienen acceso a todos los módulos.
+    -- Esta función temporal retorna TRUE para mantener compatibilidad con
+    -- el código del backend mientras se migra completamente al nuevo sistema.
+    -- ====================================================================
+
     -- Validar parámetros
     IF p_organizacion_id IS NULL OR p_modulo_nombre IS NULL THEN
         RETURN FALSE;
     END IF;
 
-    -- Obtener módulos activos de la organización
-    SELECT s.modulos_activos
-    INTO v_modulos_activos
-    FROM subscripciones s
-    WHERE s.organizacion_id = p_organizacion_id
-      AND s.activa = TRUE
-    LIMIT 1;
-
-    -- Si no hay subscripción activa, solo tiene acceso a 'core'
-    IF v_modulos_activos IS NULL THEN
-        RETURN (p_modulo_nombre = 'core');
-    END IF;
-
-    -- Verificar si el módulo está en el JSONB y es true
-    -- Operador ->> extrae valor como text, convertir a boolean
-    v_modulo_activo := COALESCE((v_modulos_activos->>p_modulo_nombre)::BOOLEAN, FALSE);
-
-    RETURN v_modulo_activo;
+    -- ACCESO ILIMITADO: Todas las organizaciones tienen todos los módulos
+    RETURN TRUE;
 END;
 $$;
 
@@ -178,20 +168,6 @@ COMMENT ON FUNCTION validar_dependencias_modulos() IS
 'Trigger que valida dependencias HARD entre módulos. Asegura que core esté siempre activo y que módulos dependientes no se activen sin sus requisitos';
 
 -- ====================================================================
--- TRIGGER: validar_modulos_antes_insert_update
--- ====================================================================
--- Aplica validaciones de dependencias antes de insertar o actualizar subscripciones
--- ====================================================================
-CREATE TRIGGER validar_modulos_antes_insert_update
-    BEFORE INSERT OR UPDATE OF modulos_activos
-    ON subscripciones
-    FOR EACH ROW
-    EXECUTE FUNCTION validar_dependencias_modulos();
-
-COMMENT ON TRIGGER validar_modulos_antes_insert_update ON subscripciones IS
-'Valida dependencias de módulos antes de INSERT/UPDATE. Bloquea operaciones que violen reglas de dependencias HARD';
-
--- ====================================================================
 -- FUNCIÓN: auditar_cambio_modulos
 -- ====================================================================
 -- Registra en historial_subscripciones los cambios en módulos activos
@@ -284,55 +260,47 @@ COMMENT ON FUNCTION auditar_cambio_modulos() IS
 'Registra en historial_subscripciones los cambios en módulos activos (activaciones/desactivaciones)';
 
 -- ====================================================================
--- TRIGGER: auditar_modulos_despues_update
--- ====================================================================
--- Registra auditoría de cambios en módulos DESPUÉS del update exitoso
--- ====================================================================
-CREATE TRIGGER auditar_modulos_despues_update
-    AFTER UPDATE OF modulos_activos
-    ON subscripciones
-    FOR EACH ROW
-    EXECUTE FUNCTION auditar_cambio_modulos();
-
-COMMENT ON TRIGGER auditar_modulos_despues_update ON subscripciones IS
-'Audita cambios en módulos activos en la tabla historial_subscripciones. Se ejecuta DESPUÉS del update exitoso';
-
--- ====================================================================
 -- FUNCIÓN: obtener_modulos_activos
 -- ====================================================================
 -- Función optimizada para obtener módulos activos de una organización
 -- Usada por ModulesCache en el backend
 --
--- PERFORMANCE:
---   • Usa índice UNIQUE en organizacion_id
---   • Usa índice GIN en modulos_activos si se filtra por módulo específico
---   • Query típica: ~5-15ms
+-- MODIFICADO (Ene 2026): ACCESO ILIMITADO A TODOS LOS MÓDULOS
+-- El nuevo modelo de negocio (suscripciones-negocio) no tiene límites
+-- por módulo. Todas las organizaciones tienen acceso a todos los módulos.
 --
 -- RETORNA:
---   JSONB con módulos activos, o '{"core": true}' si no hay subscripción
+--   JSONB con todos los módulos activos
 -- ====================================================================
 CREATE OR REPLACE FUNCTION obtener_modulos_activos(p_organizacion_id INTEGER)
 RETURNS JSONB
 LANGUAGE plpgsql
 STABLE
 AS $$
-DECLARE
-    v_modulos JSONB;
 BEGIN
-    SELECT s.modulos_activos
-    INTO v_modulos
-    FROM subscripciones s
-    WHERE s.organizacion_id = p_organizacion_id
-      AND s.activa = TRUE
-    LIMIT 1;
+    -- Validar parámetros
+    IF p_organizacion_id IS NULL THEN
+        RETURN '{"core": true}'::jsonb;
+    END IF;
 
-    -- Si no hay subscripción activa, solo acceso a core
-    RETURN COALESCE(v_modulos, '{"core": true}'::jsonb);
+    -- ACCESO ILIMITADO: Retornar todos los módulos activos
+    RETURN '{
+        "core": true,
+        "agendamiento": true,
+        "clientes": true,
+        "inventario": true,
+        "pos": true,
+        "comisiones": true,
+        "marketplace": true,
+        "chatbots": true,
+        "contabilidad": true,
+        "reportes": true
+    }'::jsonb;
 END;
 $$;
 
 COMMENT ON FUNCTION obtener_modulos_activos(INTEGER) IS
-'Obtiene el JSONB de módulos activos para una organización. Retorna solo core si no hay subscripción activa. Optimizada para cache';
+'Obtiene el JSONB de módulos activos para una organización. MODIFICADO Ene 2026: Retorna todos los módulos activos (acceso ilimitado)';
 
 -- ====================================================================
 -- PERMISOS

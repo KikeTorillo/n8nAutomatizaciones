@@ -42,8 +42,6 @@ router.post('/walk-in',
     auth.authenticateToken,
     tenant.setTenantContext,
     tenant.verifyTenantActive,
-    subscription.checkActiveSubscription,        // ✅ Verificar suscripción activa
-    subscription.checkResourceLimit('citas_mes'), // ✅ Verificar límite de citas/mes
     rateLimiting.apiRateLimit,
     validate(citaSchemas.crearWalkIn),
     CitaController.crearWalkIn
@@ -93,8 +91,6 @@ router.post('/recurrente',
     auth.authenticateToken,
     tenant.setTenantContext,
     tenant.verifyTenantActive,
-    subscription.checkActiveSubscription,
-    subscription.checkResourceLimit('citas_mes'),
     rateLimiting.apiRateLimit,
     validate(citaSchemas.crear),  // Usa el schema crear que incluye patron_recurrencia
     CitaController.crearRecurrente
@@ -165,7 +161,6 @@ router.post('/',
     (req, res, next) => {
         if (req.user) {
             // Usuario autenticado: verificar suscripción activa
-            return subscription.checkActiveSubscription(req, res, next);
         } else {
             // Request público: NO validar suscripción (marketplace público)
             return next();
@@ -175,7 +170,6 @@ router.post('/',
     (req, res, next) => {
         if (req.user) {
             // Usuario autenticado: verificar límite de citas/mes
-            return subscription.checkResourceLimit('citas_mes')(req, res, next);
         } else {
             // Request público: NO validar límite (marketplace público)
             return next();

@@ -72,7 +72,6 @@ router.post('/dropship/desde-venta/:ventaId',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    subscription.checkActiveSubscription,
     rateLimiting.apiRateLimit,
     DropshipController.crearDesdeVenta
 );
