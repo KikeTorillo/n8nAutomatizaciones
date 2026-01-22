@@ -225,11 +225,22 @@ const authenticateToken = async (req, res, next) => {
             // ✅ FIX: Usar set_config en lugar de SET para que sea local a la transacción
             await db.query('SELECT set_config($1, $2, false)', ['app.bypass_rls', 'true']);
 
+            // Incluir información del rol dinámico (nuevo sistema)
             const result = await db.query(
-                `SELECT id, email, nombre, apellidos, telefono, rol, organizacion_id,
-                        activo, email_verificado, creado_en, actualizado_en
-                 FROM usuarios
-                 WHERE id = $1 AND activo = TRUE`,
+                `SELECT
+                    u.id, u.email, u.nombre, u.apellidos, u.telefono,
+                    u.rol, u.rol_id, u.organizacion_id,
+                    u.activo, u.email_verificado, u.creado_en, u.actualizado_en,
+                    r.codigo AS rol_codigo,
+                    r.nombre AS rol_nombre,
+                    r.nivel_jerarquia,
+                    r.bypass_permisos,
+                    r.es_rol_sistema,
+                    r.puede_crear_usuarios,
+                    r.puede_modificar_permisos
+                 FROM usuarios u
+                 LEFT JOIN roles r ON r.id = u.rol_id
+                 WHERE u.id = $1 AND u.activo = TRUE`,
                 [decoded.userId]
             );
 
@@ -290,15 +301,27 @@ const authenticateToken = async (req, res, next) => {
         }
 
         // 6. Configurar información del usuario en el request
+        // Incluye información del rol dinámico (nuevo sistema) con fallback a ENUM (legacy)
         req.user = {
             id: usuario.id,
             email: usuario.email,
             nombre: usuario.nombre,
             apellidos: usuario.apellidos,
             telefono: usuario.telefono,
-            rol: usuario.rol,
+            // Sistema de roles
+            rol: usuario.rol,                                      // ENUM legacy
+            rol_id: usuario.rol_id,                                // FK al nuevo sistema
+            rol_codigo: usuario.rol_codigo || usuario.rol,         // Código del rol (nuevo o fallback ENUM)
+            rol_nombre: usuario.rol_nombre,                        // Nombre legible
+            nivel_jerarquia: usuario.nivel_jerarquia || 10,        // Nivel jerárquico (default: empleado)
+            bypass_permisos: usuario.bypass_permisos || false,     // Si tiene bypass de RBAC
+            es_rol_sistema: usuario.es_rol_sistema || false,       // Si es super_admin o bot
+            puede_crear_usuarios: usuario.puede_crear_usuarios || false,
+            puede_modificar_permisos: usuario.puede_modificar_permisos || false,
+            // Contexto
             organizacion_id: usuario.organizacion_id,
-            sucursal_id: decoded.sucursalId || null, // Sucursal del JWT
+            sucursal_id: decoded.sucursalId || null,
+            // Estado
             activo: usuario.activo,
             email_verificado: usuario.email_verificado,
             creado_en: usuario.creado_en,
@@ -377,7 +400,8 @@ const authenticateToken = async (req, res, next) => {
 
 /**
  * Middleware para requerir roles específicos
- * @param {Array|string} allowedRoles - Roles permitidos
+ * Soporta nuevo sistema (rol_codigo) y legacy (rol ENUM)
+ * @param {Array|string} allowedRoles - Roles permitidos (códigos)
  */
 const requireRole = (allowedRoles) => {
     return (req, res, next) => {
@@ -388,17 +412,24 @@ const requireRole = (allowedRoles) => {
 
         const roles = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles];
 
-        if (!roles.includes(req.user.rol)) {
+        // Verificar usando rol_codigo (nuevo) o rol (legacy)
+        const userRolCodigo = req.user.rol_codigo || req.user.rol;
+
+        // Ene 2026: super_admin siempre tiene acceso (bypass para dogfooding)
+        const isSuperAdmin = userRolCodigo === 'super_admin' || req.user.rol === 'super_admin';
+
+        if (!isSuperAdmin && !roles.includes(userRolCodigo)) {
             logger.warn('Acceso denegado por rol insuficiente', {
                 userId: req.user.id,
-                userRol: req.user.rol,
+                userRol: userRolCodigo,
+                nivel_jerarquia: req.user.nivel_jerarquia,
                 rolesRequeridos: roles,
                 path: req.path,
                 ip: req.ip
             });
             return ResponseHelper.error(res, 'Acceso denegado', 403, {
                 code: 'INSUFFICIENT_ROLE',
-                userRole: req.user.rol,
+                userRole: userRolCodigo,
                 requiredRoles: roles
             });
         }
@@ -466,19 +497,27 @@ const optionalAuth = async (req, res, next) => {
 
 /**
  * Middleware para requerir rol de administrador
- * Verifica que el usuario tenga rol super_admin, admin, propietario u organizacion_admin
+ * Usa nivel jerárquico >= 80 (propietario/admin) o bypass_permisos
+ * Soporta nuevo sistema y legacy
  */
 const requireAdminRole = (req, res, next) => {
     if (!req.user) {
         return ResponseHelper.error(res, 'Autenticación requerida', 401);
     }
 
-    const rolesAdmin = ['super_admin', 'admin', 'propietario', 'organizacion_admin'];
+    // Nuevo sistema: verificar bypass_permisos o nivel jerárquico
+    const tieneAccesoNuevo = req.user.bypass_permisos || (req.user.nivel_jerarquia >= 80);
 
-    if (!rolesAdmin.includes(req.user.rol)) {
+    // Legacy: verificar roles específicos
+    const rolesAdmin = ['super_admin', 'admin', 'propietario', 'organizacion_admin'];
+    const tieneAccesoLegacy = rolesAdmin.includes(req.user.rol);
+
+    if (!tieneAccesoNuevo && !tieneAccesoLegacy) {
         logger.warn('Intento de acceso con rol insuficiente', {
             userId: req.user.id,
-            userRol: req.user.rol,
+            userRol: req.user.rol_codigo || req.user.rol,
+            nivel_jerarquia: req.user.nivel_jerarquia,
+            bypass_permisos: req.user.bypass_permisos,
             path: req.path,
             ip: req.ip
         });
@@ -492,10 +531,11 @@ const requireAdminRole = (req, res, next) => {
 
 /**
  * Middleware para requerir rol de propietario o admin
- * Verifica que el usuario tenga rol super_admin, admin o propietario
+ * Usa nivel jerárquico >= 80 o bypass_permisos (igual que requireAdminRole)
  */
 const requireOwnerOrAdmin = (req, res, next) => {
-    return requireRole(['super_admin', 'admin', 'propietario'])(req, res, next);
+    // Usa la misma lógica que requireAdminRole
+    return requireAdminRole(req, res, next);
 };
 
 module.exports = {

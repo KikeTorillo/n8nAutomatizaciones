@@ -21,7 +21,8 @@
     "pagos": "/api/v1/pagos",
     "webhooks": "/api/v1/webhooks",
     "superadmin": "/api/v1/superadmin",
-    "monedas": "/api/v1/monedas"
+    "monedas": "/api/v1/monedas",
+    "roles": "/api/v1/roles"
   },
   "resources": {
     "organizaciones": {

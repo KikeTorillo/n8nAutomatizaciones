@@ -115,6 +115,15 @@ export default function SuperAdminLayout() {
                         >
                             <span className="hidden sm:inline">🎨 </span>Plantillas
                         </Link>
+
+                        {/* Separador y link a Mi Organización */}
+                        <div className="border-l border-gray-300 dark:border-gray-600 mx-2 sm:mx-4 h-6 self-center" />
+                        <Link
+                            to="/home"
+                            className="py-3 px-3 sm:py-4 sm:px-4 border-b-2 border-transparent hover:border-green-500 text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 text-sm sm:text-base font-medium transition-colors whitespace-nowrap"
+                        >
+                            <span className="hidden sm:inline">🏢 </span>Mi Org
+                        </Link>
                     </div>
                 </div>
             </nav>

@@ -14,6 +14,7 @@ const pagosRouter = require('./pagos');
 const webhooksRouter = require('./webhooks');
 const superadminRouter = require('./superadmin');
 const monedasRouter = require('./monedas.routes');
+const rolesRouter = require('./roles');
 
 module.exports = {
   auth: authRouter,
@@ -24,5 +25,6 @@ module.exports = {
   pagos: pagosRouter,
   webhooks: webhooksRouter,
   superadmin: superadminRouter,
-  monedas: monedasRouter
+  monedas: monedasRouter,
+  roles: rolesRouter
 };

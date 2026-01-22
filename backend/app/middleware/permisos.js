@@ -198,11 +198,14 @@ async function validarYAdjuntarSucursal(req, res, options, contextName, permisoI
     req.sucursalId = sucursalId;
     req.sucursalSource = source;
 
-    // Super admin: bypass con auditoría
-    if (req.user.rol === 'super_admin') {
-        logger.warn(`[Permisos] Super admin bypass - ${contextName}`, {
+    // Bypass de permisos: super_admin, admin, propietario (según nivel jerárquico)
+    // Usa propiedad bypass_permisos del nuevo sistema de roles
+    if (req.user.bypass_permisos || req.user.rol === 'super_admin') {
+        logger.warn(`[Permisos] Bypass de permisos - ${contextName}`, {
             usuario_id: usuarioId,
             email: req.user.email,
+            rol_codigo: req.user.rol_codigo,
+            nivel_jerarquia: req.user.nivel_jerarquia,
             sucursal_id: sucursalId,
             permiso: permisoInfo,
             ruta: req.originalUrl,

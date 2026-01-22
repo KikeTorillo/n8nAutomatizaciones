@@ -18,7 +18,8 @@ const PuestosPage = lazy(() => import('@/pages/configuracion/PuestosPage'));
 const CategoriasConfigPage = lazy(() => import('@/pages/configuracion/CategoriasPage'));
 const DiasFestivosPage = lazy(() => import('@/pages/configuracion/DiasFestivosPage'));
 
-// Usuarios y Permisos
+// Usuarios, Roles y Permisos
+const RolesPage = lazy(() => import('@/pages/configuracion/RolesPage'));
 const PermisosPage = lazy(() => import('@/pages/configuracion/PermisosPage'));
 const UsuariosPage = lazy(() => import('@/pages/configuracion/UsuariosPage'));
 
@@ -42,7 +43,8 @@ export const configuracionRoutes = [
   protectedRoute('configuracion/categorias', CategoriasConfigPage, { requiredRole: ROLES.ADMIN_ONLY }),
   protectedRoute('configuracion/dias-festivos', DiasFestivosPage, { requiredRole: ROLES.ADMIN_ONLY }),
 
-  // Usuarios y Permisos (solo admin)
+  // Usuarios, Roles y Permisos (solo admin)
+  protectedRoute('configuracion/roles', RolesPage, { requiredRole: ROLES.ADMIN_ONLY }),
   protectedRoute('configuracion/permisos', PermisosPage, { requiredRole: ROLES.ADMIN_ONLY }),
   protectedRoute('configuracion/usuarios', UsuariosPage, { requiredRole: ROLES.ADMIN_ONLY }),
 

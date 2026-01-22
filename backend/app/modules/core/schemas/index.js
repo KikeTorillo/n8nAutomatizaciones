@@ -8,5 +8,6 @@ module.exports = {
   organizacionSchemas: require('./organizacion.schemas'),
   pagosSchemas: require('./pagos.schemas'),
   subscripcionesSchemas: require('./subscripciones.schemas'),
-  usuarioSchemas: require('./usuario.schemas')
+  usuarioSchemas: require('./usuario.schemas'),
+  rolesSchemas: require('./roles.schemas')
 };

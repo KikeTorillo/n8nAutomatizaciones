@@ -16,6 +16,7 @@ export { organizacionesApi } from './organizaciones.api';
 export { usuariosApi } from './usuarios.api';
 export { modulosApi } from './modulos.api';
 export { permisosApi } from './permisos.api';
+export { rolesApi } from './roles.api';
 export { notificacionesApi } from './notificaciones.api';
 export { planesApi } from './planes.api';
 export { subscripcionesApi } from './subscripciones.api';

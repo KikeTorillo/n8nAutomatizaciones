@@ -62,12 +62,36 @@ docker exec -it postgres_db psql -U admin -d postgres
 auth.authenticateToken → tenant.setTenantContext → [permisos] → controller
 ```
 
-### Roles
-| Rol | Descripción |
-|-----|-------------|
-| `super_admin` | Bypass RLS, acceso total |
-| `propietario/admin` | CRUD completo en su organización |
-| `empleado` | Permisos vía `permisos_usuario_sucursal` |
+### Roles (Sistema Dinámico v2.0)
+
+Sistema de roles dinámicos por organización. Cada org puede crear roles personalizados.
+
+| Campo | Descripción |
+|-------|-------------|
+| `nivel_jerarquia` | 1-100 (100=super, 80=admin, 50=gerente, 10=empleado) |
+| `bypass_permisos` | TRUE = no verifica permisos granulares |
+| `es_rol_sistema` | TRUE = rol global (super_admin, bot) |
+
+**Roles de sistema (organizacion_id = NULL):**
+- `super_admin` (nivel 100): Bypass RLS, acceso total
+- `bot` (nivel 5): Acceso automatizado limitado
+
+**Roles por defecto (creados en cada organización):**
+- `propietario` (nivel 90): Dueño de la organización
+- `admin` (nivel 80): Administrador con bypass_permisos
+- `gerente` (nivel 50): Gestión de equipos
+- `empleado` (nivel 10): Permisos vía RBAC
+
+**Backend - RolHelper.js:**
+```javascript
+const { RolHelper } = require('../utils/helpers');
+
+// Verificaciones
+RolHelper.esSuperAdmin(user);           // nivel_jerarquia === 100
+RolHelper.tieneBypassPermisos(user);    // bypass_permisos === true
+RolHelper.esRolAdministrativo(user);    // nivel_jerarquia >= 80
+RolHelper.puedeGestionarUsuario(gestor, objetivo);  // Por jerarquía
+```
 
 ### RLS (Row Level Security)
 ```javascript
@@ -407,6 +431,59 @@ Documento completo en `/docs/PLAN_PRUEBAS_INTEGRAL.md`
 
 ## Changelog
 
+### 21 Ene 2026 - Sistema de Roles Dinámicos (ROLES-001) ✅ IMPLEMENTADO
+
+**Migración de ENUM a Tabla Dinámica:**
+Permite que cada organización cree roles personalizados (ej: "Recepcionista", "Gerente de Turno").
+
+**Archivos SQL creados:**
+- `sql/nucleo/16-tabla-roles.sql` - Tabla roles, triggers, migración de datos
+- `sql/nucleo/17-funciones-permisos-v2.sql` - Funciones actualizadas para usar rol_id
+
+**Backend creado:**
+- `backend/app/utils/helpers/RolHelper.js` - Helper centralizado para verificaciones de rol
+- `backend/app/modules/core/models/roles.model.js` - Modelo CRUD completo
+- `backend/app/modules/core/controllers/roles.controller.js` - Controller con endpoints
+- `backend/app/modules/core/routes/roles.js` - Rutas RESTful
+- `backend/app/modules/core/schemas/roles.schemas.js` - Validaciones Joi
+
+**Backend modificado:**
+- `backend/app/middleware/auth.js` - Carga rol_id, rol_codigo, nivel_jerarquia, bypass_permisos en req.user
+- `backend/app/middleware/permisos.js` - Usa bypass_permisos para saltar verificación
+
+**Frontend creado:**
+- `frontend/src/services/api/modules/roles.api.js` - Cliente API
+- `frontend/src/hooks/sistema/useRoles.js` - React Query hooks
+- `frontend/src/pages/configuracion/RolesPage.jsx` - UI CRUD completa
+
+**Campos clave de tabla roles:**
+| Campo | Descripción |
+|-------|-------------|
+| `codigo` | Identificador único ('admin', 'recepcionista') |
+| `organizacion_id` | NULL = rol de sistema |
+| `nivel_jerarquia` | 1-100 para comparaciones jerárquicas |
+| `bypass_permisos` | TRUE = salta verificación de permisos |
+| `puede_crear_usuarios` | Permite gestionar usuarios |
+| `puede_modificar_permisos` | Permite editar permisos |
+
+**Endpoints API:**
+- `GET /api/v1/roles` - Listar roles de la organización
+- `POST /api/v1/roles` - Crear rol personalizado
+- `PUT /api/v1/roles/:id` - Editar rol
+- `DELETE /api/v1/roles/:id` - Eliminar rol (si no tiene usuarios)
+- `GET /api/v1/roles/:id/permisos` - Obtener permisos del rol
+- `PUT /api/v1/roles/:id/permisos` - Actualizar permisos (batch)
+- `POST /api/v1/roles/:id/copiar-permisos` - Copiar permisos de otro rol
+
+**Compatibilidad backward:**
+- Columnas `rol` (ENUM) y `rol_id` (FK) coexisten durante transición
+- `auth.js` prioriza `rol_id` si existe, fallback a ENUM
+- FASE 7 (pendiente): DROP de columna `rol` y tipo ENUM cuando migración completa
+
+**Estado:** ✅ FASES 1-6 completadas, FASE 7 (cleanup) pendiente de ejecutar en producción
+
+---
+
 ### 21 Ene 2026 - Bug Seguridad RBAC (SEC-001) ✅ CORREGIDO
 
 **SEC-001 - Sistema RBAC inefectivo (CRÍTICO) - CORREGIDO:**
@@ -512,4 +589,4 @@ Documento completo en `/docs/PLAN_PRUEBAS_INTEGRAL.md`
 
 ---
 
-**Actualizado**: 21 Enero 2026 (Sesión 24.2 - Bugs CFG-001/002/003 corregidos)
+**Actualizado**: 21 Enero 2026 (Sesión 24.3 - Sistema de Roles Dinámicos ROLES-001)

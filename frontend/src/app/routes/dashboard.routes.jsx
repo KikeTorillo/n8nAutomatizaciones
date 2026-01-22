@@ -46,15 +46,8 @@ const AprobacionesPage = lazyLoadWithRetry(
 );
 
 export const dashboardRoutes = [
-  // Home (super_admin NO tiene acceso - es usuario de plataforma sin organización)
-  {
-    path: 'home',
-    element: (
-      <ProtectedRoute excludeRoles="super_admin" redirectTo="/superadmin">
-        {withSuspense(AppHomePage)}
-      </ProtectedRoute>
-    ),
-  },
+  // Home - Ene 2026: super_admin ahora tiene organización (Nexo Team)
+  protectedRoute('home', AppHomePage, { requiredRole: ROLES.ALL_AUTHENTICATED }),
 
   // Dashboard
   protectedRoute('dashboard', Dashboard, { requiredRole: ROLES.ALL_AUTHENTICATED }),

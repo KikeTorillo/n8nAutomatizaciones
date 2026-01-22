@@ -165,7 +165,10 @@ class UsuarioModel {
         };
 
         // Determinar si requiere onboarding (Dic 2025)
-        const requiereOnboarding = !usuario.organizacion_id && usuario.onboarding_completado === false;
+        // Ene 2026: super_admin NUNCA requiere onboarding (es usuario de plataforma sin organización)
+        const requiereOnboarding = usuario.rol !== 'super_admin' &&
+                                   !usuario.organizacion_id &&
+                                   usuario.onboarding_completado === false;
 
         return {
             usuario: usuarioSeguro,

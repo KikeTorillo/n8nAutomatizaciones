@@ -9,6 +9,7 @@ export * from './useAuthInit';
 export * from './useCambiarSucursal';
 export * from './useModulos';
 export * from './useAccesoModulo';
+export * from './useRoles';
 
 // Notificaciones
 export * from './useNotificaciones';

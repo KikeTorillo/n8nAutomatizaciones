@@ -8,5 +8,6 @@ module.exports = {
   OrganizacionModel: require('./organizacion.model'),
   PlanesModel: require('./planes.model'),
   SubscripcionModel: require('./subscripcion.model'),
-  UsuarioModel: require('./usuario.model')
+  UsuarioModel: require('./usuario.model'),
+  RolesModel: require('./roles.model')
 };

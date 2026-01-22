@@ -32,14 +32,14 @@ function Login() {
   const [magicLinkEmail, setMagicLinkEmail] = useState('');
 
   // Redirigir si ya tiene sesión activa
+  // Ene 2026: super_admin ahora tiene organización, todos van a /home
   useEffect(() => {
     if (isAuthenticated && user) {
-      // Dic 2025 - Flujo unificado: verificar si necesita onboarding
+      // Verificar si necesita onboarding (super_admin nunca necesita)
       if (user.rol !== 'super_admin' && !user.organizacion_id && user.onboarding_completado === false) {
         navigate('/onboarding', { replace: true });
       } else {
-        const redirectTo = user.rol === 'super_admin' ? '/superadmin' : '/home';
-        navigate(redirectTo, { replace: true });
+        navigate('/home', { replace: true });
       }
     }
   }, [isAuthenticated, user, navigate]);
@@ -83,10 +83,9 @@ function Login() {
       });
 
       // Dic 2025 - Flujo unificado: redirigir a onboarding si es necesario
+      // Ene 2026: super_admin ahora tiene organización, va a /home (puede acceder a /superadmin desde menú)
       if (data.requiere_onboarding) {
         navigate('/onboarding');
-      } else if (data.usuario.rol === 'super_admin') {
-        navigate('/superadmin');
       } else {
         navigate('/home');
       }

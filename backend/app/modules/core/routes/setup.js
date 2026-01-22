@@ -212,11 +212,12 @@ router.post('/create-superadmin',
             // ====================================================================
             // El super_admin NO tiene organización (best practice SaaS multi-tenant)
             // Es un usuario de plataforma que administra todas las organizaciones
+            // Ene 2026: super_admin tiene onboarding_completado = TRUE (no pasa por wizard)
             const query = `
                 INSERT INTO usuarios (
                     email, password_hash, nombre, apellidos,
-                    rol, email_verificado, activo, organizacion_id
-                ) VALUES ($1, $2, $3, $4, $5, true, true, NULL)
+                    rol, email_verificado, activo, organizacion_id, onboarding_completado
+                ) VALUES ($1, $2, $3, $4, $5, true, true, NULL, true)
                 RETURNING id, email, nombre, apellidos, rol, creado_en
             `;
 
@@ -425,13 +426,14 @@ router.post('/unified-setup',
             const resultado = await RLSContextManager.withBypass(async (db) => {
                 // 4.1 Crear super admin en BD (sin organización - usuario de plataforma)
                 // El super_admin NO tiene organización (best practice SaaS multi-tenant)
+                // Ene 2026: super_admin tiene onboarding_completado = TRUE (no pasa por wizard)
                 const passwordHash = await bcrypt.hash(superAdmin.password, 10);
 
                 const superAdminCreado = await db.query(`
                     INSERT INTO usuarios (
                         email, password_hash, nombre, apellidos,
-                        rol, email_verificado, activo, organizacion_id
-                    ) VALUES ($1, $2, $3, $4, $5, true, true, NULL)
+                        rol, email_verificado, activo, organizacion_id, onboarding_completado
+                    ) VALUES ($1, $2, $3, $4, $5, true, true, NULL, true)
                     RETURNING id, email, nombre, apellidos, rol, creado_en
                 `, [
                     superAdmin.email,
@@ -442,6 +444,91 @@ router.post('/unified-setup',
                 ]);
 
                 const superAdminData = superAdminCreado.rows[0];
+
+                // ================================================================
+                // 4.1.1 NUEVO: Crear organización "Nexo Team" para dogfooding
+                // ================================================================
+                const orgCreada = await db.query(`
+                    INSERT INTO organizaciones (
+                        codigo_tenant,
+                        slug,
+                        nombre_comercial,
+                        razon_social,
+                        email_admin,
+                        plan_actual,
+                        moneda,
+                        zona_horaria,
+                        activo
+                    ) VALUES (
+                        'nexo-team',
+                        'nexo-team',
+                        'Nexo Team',
+                        'Nexo Platform S.A. de C.V.',
+                        $1,
+                        'pro',
+                        'MXN',
+                        'America/Mexico_City',
+                        TRUE
+                    )
+                    RETURNING id
+                `, [superAdmin.email]);
+
+                const nexoTeamOrgId = orgCreada.rows[0].id;
+
+                // 4.1.2 Asignar organización al super_admin
+                await db.query(`
+                    UPDATE usuarios
+                    SET organizacion_id = $1
+                    WHERE id = $2
+                `, [nexoTeamOrgId, superAdminData.id]);
+
+                // Actualizar superAdminData con la organización
+                superAdminData.organizacion_id = nexoTeamOrgId;
+
+                // 4.1.3 Crear suscripción pro para Nexo Team (precio 0 porque es interno)
+                await db.query(`
+                    INSERT INTO subscripciones (
+                        organizacion_id,
+                        plan_id,
+                        precio_actual,
+                        fecha_inicio,
+                        fecha_proximo_pago,
+                        estado,
+                        activa,
+                        modulos_activos
+                    )
+                    SELECT
+                        $1,
+                        p.id,
+                        0.00,
+                        CURRENT_DATE,
+                        CURRENT_DATE + INTERVAL '1 year',
+                        'activa',
+                        TRUE,
+                        '{"core": true, "crm": true, "agendamiento": true, "inventario": true, "pos": true, "contabilidad": true, "comisiones": true, "ausencias": true}'::jsonb
+                    FROM planes_subscripcion p
+                    WHERE p.codigo_plan = 'pro'
+                `, [nexoTeamOrgId]);
+
+                // 4.1.4 Crear roles default para la organización
+                await db.query(`SELECT crear_roles_default_organizacion($1)`, [nexoTeamOrgId]);
+
+                // 4.1.5 Asignar rol admin al super_admin en su organización
+                const rolAdmin = await db.query(`
+                    SELECT id FROM roles
+                    WHERE codigo = 'admin' AND organizacion_id = $1
+                `, [nexoTeamOrgId]);
+
+                if (rolAdmin.rows.length > 0) {
+                    await db.query(`
+                        UPDATE usuarios SET rol_id = $1 WHERE id = $2
+                    `, [rolAdmin.rows[0].id, superAdminData.id]);
+                }
+
+                console.log('✅ Organización Nexo Team creada:', {
+                    orgId: nexoTeamOrgId,
+                    superAdminId: superAdminData.id
+                });
 
                 // 4.2 Crear owner de n8n (con reintentos automáticos)
                 const n8nOwnerData = await crearN8nOwner({
@@ -508,7 +595,12 @@ router.post('/unified-setup',
                         email: resultado.superAdmin.email,
                         nombre: resultado.superAdmin.nombre,
                         apellidos: resultado.superAdmin.apellidos,
-                        rol: resultado.superAdmin.rol
+                        rol: resultado.superAdmin.rol,
+                        organizacion_id: resultado.superAdmin.organizacion_id
+                    },
+                    organizacion: {
+                        id: resultado.superAdmin.organizacion_id,
+                        nombre: 'Nexo Team'
                     },
                     n8n: {
                         owner: {
