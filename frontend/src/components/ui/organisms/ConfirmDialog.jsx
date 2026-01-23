@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { AlertTriangle, CheckCircle, Info, XCircle } from 'lucide-react';
 import Modal from './Modal';
 import Button from '../atoms/Button';
@@ -17,7 +18,7 @@ import Button from '../atoms/Button';
  * @param {React.ReactNode} children - Contenido adicional (ej: alertas, textarea)
  * @param {string} size - Tamaño del modal: 'sm', 'md' (default: 'sm')
  */
-function ConfirmDialog({
+const ConfirmDialog = memo(function ConfirmDialog({
   isOpen,
   onClose,
   onConfirm,
@@ -67,7 +68,7 @@ function ConfirmDialog({
   const Icon = config.icon;
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size={size} showCloseButton={false}>
+    <Modal isOpen={isOpen} onClose={onClose} size={size} showCloseButton={false} disableClose={isLoading}>
       <div className={children ? '' : 'text-center'}>
         {/* Ícono */}
         <div className={`${children ? '' : 'mx-auto'} flex items-center justify-center h-12 w-12 rounded-full ${config.iconBg} mb-4`}>
@@ -113,6 +114,8 @@ function ConfirmDialog({
       </div>
     </Modal>
   );
-}
+});
+
+ConfirmDialog.displayName = 'ConfirmDialog';
 
 export default ConfirmDialog;

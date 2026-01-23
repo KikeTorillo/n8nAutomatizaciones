@@ -85,8 +85,9 @@ function AppHomePage() {
 
 
   // Detectar rol para adaptar la UI
-  const esEmpleado = user?.rol === 'empleado';
-  const esSuperAdmin = user?.rol === 'super_admin';
+  // FASE 7: Usa rol_codigo en vez de rol ENUM
+  const esEmpleado = user?.rol_codigo === 'empleado';
+  const esSuperAdmin = user?.rol_codigo === 'super_admin';
 
   // Mutation de logout - Ene 2026: Limpieza completa de todos los stores
   const logoutMutation = useMutation({

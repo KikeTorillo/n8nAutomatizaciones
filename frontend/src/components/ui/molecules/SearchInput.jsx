@@ -1,32 +1,7 @@
 import { forwardRef, useState, useEffect, useCallback, useRef, useMemo, memo } from 'react';
 import { Search, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-// Constantes externas para evitar recreación en cada render
-// Alturas alineadas con FORM_ELEMENT_HEIGHTS: sm=h-9 (36px), md=h-10 (40px), lg=h-12 (48px)
-const SIZE_STYLES = {
-  sm: {
-    input: 'h-9 text-sm',
-    icon: 'w-4 h-4',
-    paddingLeft: 'pl-8',
-    paddingRightWithClear: 'pr-8',
-    paddingRightNormal: 'pr-3',
-  },
-  md: {
-    input: 'h-10 text-base',
-    icon: 'w-5 h-5',
-    paddingLeft: 'pl-10',
-    paddingRightWithClear: 'pr-10',
-    paddingRightNormal: 'pr-4',
-  },
-  lg: {
-    input: 'h-12 text-lg',
-    icon: 'w-6 h-6',
-    paddingLeft: 'pl-12',
-    paddingRightWithClear: 'pr-12',
-    paddingRightNormal: 'pr-4',
-  },
-};
+import { SEARCH_INPUT_SIZES } from '@/lib/uiConstants';
 
 /**
  * SearchInput - Componente de búsqueda reutilizable con debounce
@@ -117,7 +92,7 @@ const SearchInput = memo(forwardRef(
 
     // Memoizar estilos de tamaño con padding dinámico
     const currentSize = useMemo(() => {
-      const baseSize = SIZE_STYLES[size] || SIZE_STYLES.md;
+      const baseSize = SEARCH_INPUT_SIZES[size] || SEARCH_INPUT_SIZES.md;
       return {
         ...baseSize,
         paddingRight: showClear && internalValue

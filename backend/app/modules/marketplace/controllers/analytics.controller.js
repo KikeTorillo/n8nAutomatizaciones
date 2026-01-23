@@ -158,7 +158,7 @@ class AnalyticsMarketplaceController {
      */
     static limpiar = asyncHandler(async (req, res) => {
         // Validar que el usuario sea super_admin
-        if (req.user.rol !== 'super_admin') {
+        if (req.user.rol_codigo !== 'super_admin') {
             return ResponseHelper.error(
                 res,
                 'Solo super administradores pueden limpiar datos de analytics',

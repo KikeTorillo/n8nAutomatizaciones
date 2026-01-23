@@ -25,56 +25,12 @@
 -- ====================================================================
 
 -- ====================================================================
--- 👥 ENUM ROL_USUARIO - JERARQUÍA DE PERMISOS
+-- 👥 ENUM ROL_USUARIO - ELIMINADO (FASE 7 - Ene 2026)
 -- ====================================================================
--- Define los 6 niveles de acceso del sistema SaaS con jerarquía clara.
--- Cada rol tiene permisos específicos y restricciones definidas.
---
--- 🔑 JERARQUÍA DE ROLES (de mayor a menor privilegio):
--- ────────────────────────────────────────────────────────────────────
-CREATE TYPE rol_usuario AS ENUM (
-    -- 🔴 NIVEL 1: SUPER ADMINISTRADOR
-    'super_admin',    -- • Acceso total al sistema y todas las organizaciones
-                      -- • Puede gestionar configuraciones globales
-                      -- • No requiere organizacion_id (único rol global)
-                      -- • Acceso a métricas y configuraciones del sistema
-                      -- • Puede crear, modificar y eliminar organizaciones
-
-    -- 🟠 NIVEL 2: ADMINISTRADOR DE ORGANIZACIÓN
-    'admin',          -- • Acceso completo a SU organización únicamente
-                      -- • Puede gestionar usuarios, configuraciones
-                      -- • Acceso a reportes y métricas de la organización
-                      -- • Puede modificar configuración de marca y planes
-
-    -- 🟡 NIVEL 3: PROPIETARIO DEL NEGOCIO
-    'propietario',    -- • Dueño del negocio con permisos operativos completos
-                      -- • Puede gestionar empleados
-                      -- • Acceso a reportes básicos
-                      -- • Configuración operativa
-
-    -- 🟢 NIVEL 4: EMPLEADO
-    'empleado',       -- • Acceso limitado a funciones operativas
-                      -- • Puede gestionar sus propias tareas
-                      -- • Acceso de lectura limitado
-                      -- • Sin acceso a configuraciones administrativas
-
-    -- 🔵 NIVEL 5: CLIENTE FINAL
-    'cliente',        -- • Acceso muy limitado, principalmente lectura
-                      -- • Puede ver sus propios datos
-                      -- • Sin acceso a datos de otros clientes
-                      -- • Interfaz simplificada para autoservicio
-
-    -- 🤖 NIVEL 6: USUARIO BOT (SISTEMA)
-    'bot'             -- • Usuario automático para integraciones
-                      -- • Creado automáticamente según necesidad
-                      -- • Acceso limitado a endpoints específicos
-                      -- • Solo operaciones definidas por el sistema
-                      -- • No puede acceder a configuraciones administrativas
-);
-
-COMMENT ON TYPE rol_usuario IS 
-'Roles de usuario del sistema con jerarquía de permisos definida. 
-Usado en RLS y validación de acceso en toda la aplicación.';
+-- El tipo ENUM rol_usuario fue eliminado como parte de la FASE 7 de limpieza.
+-- El sistema ahora usa exclusivamente la tabla `roles` con `rol_id`.
+-- Ver: sql/nucleo/16-tabla-roles.sql
+-- ====================================================================
 
 -- ====================================================================
 -- DEPRECATED (Ene 2026): -- 💰 ENUM PLAN_TIPO - PLANES DE SUBSCRIPCIÓN SAAS

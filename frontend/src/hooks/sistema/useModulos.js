@@ -135,7 +135,8 @@ export function useModulos() {
   const user = useAuthStore(selectUser);
 
   // Super Admin bypass: tiene acceso a TODOS los módulos
-  const esSuperAdmin = user?.rol === 'super_admin';
+  // FASE 7: Usa rol_codigo en vez de rol ENUM
+  const esSuperAdmin = user?.rol_codigo === 'super_admin';
 
   // Módulos completos para super_admin
   const TODOS_LOS_MODULOS = {

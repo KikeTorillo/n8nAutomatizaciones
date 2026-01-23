@@ -51,7 +51,7 @@ function MagicLinkVerifyPage() {
         }
 
         // Redirigir según rol
-        if (data.usuario.rol === 'super_admin') {
+        if (data.usuario.rol_codigo === 'super_admin') {
           navigate('/superadmin');
         } else {
           navigate('/home');

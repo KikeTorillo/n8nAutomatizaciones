@@ -1,4 +1,4 @@
-import { forwardRef } from 'react';
+import { forwardRef, memo } from 'react';
 import { cn } from '@/lib/utils';
 
 /**
@@ -22,8 +22,7 @@ const SIZE_CLASSES = {
   lg: 'h-12 text-lg font-semibold',
 };
 
-const Input = forwardRef(
-  (
+const Input = memo(forwardRef(function Input(
     {
       type = 'text',
       size = 'md',
@@ -34,7 +33,7 @@ const Input = forwardRef(
       ...props
     },
     ref
-  ) => {
+  ) {
     const baseStyles = cn(
       'w-full border rounded-lg transition-colors',
       'focus:outline-none focus:ring-2 focus:ring-offset-0',
@@ -69,6 +68,7 @@ const Input = forwardRef(
           <input
             ref={ref}
             type={type}
+            aria-invalid={hasError || undefined}
             className={cn(baseStyles, stateStyles, paddingStyles, className)}
             {...props}
           />
@@ -86,12 +86,13 @@ const Input = forwardRef(
       <input
         ref={ref}
         type={type}
+        aria-invalid={hasError || undefined}
         className={cn(baseStyles, stateStyles, paddingStyles, className)}
         {...props}
       />
     );
   }
-);
+));
 
 Input.displayName = 'Input';
 

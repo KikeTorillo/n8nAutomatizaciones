@@ -342,9 +342,11 @@ class SucursalesModel {
                     u.nombre,
                     u.apellidos AS apellido,
                     u.email,
-                    u.rol
+                    r.codigo AS rol_codigo,
+                    r.nombre AS rol_nombre
                 FROM usuarios_sucursales us
                 JOIN usuarios u ON us.usuario_id = u.id
+                LEFT JOIN roles r ON r.id = u.rol_id
                 WHERE us.sucursal_id = $1 AND us.activo = true
                 ORDER BY us.es_gerente DESC, u.nombre ASC
             `;

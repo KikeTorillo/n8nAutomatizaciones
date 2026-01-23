@@ -11,7 +11,8 @@ function CurriculumTab({ profesional }) {
   const user = useAuthStore(selectUser);
 
   // Verificar si puede verificar habilidades (admin/propietario)
-  const puedeVerificar = ['admin', 'propietario', 'super_admin'].includes(user?.rol);
+  // FASE 7: Usa nivel_jerarquia >= 80 para admin/propietario
+  const puedeVerificar = user?.nivel_jerarquia >= 80;
 
   return (
     <div className="space-y-6">

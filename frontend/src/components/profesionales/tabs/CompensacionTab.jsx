@@ -22,7 +22,8 @@ function CompensacionTab({ profesional }) {
   const { data: categoriasPago = [] } = useCategoriasPagoOptions();
 
   // Verificar si puede ver compensación
-  const puedeVerCompensacion = ['admin', 'propietario', 'super_admin'].includes(user?.rol);
+  // FASE 7: Usa nivel_jerarquia >= 80 para admin/propietario
+  const puedeVerCompensacion = user?.nivel_jerarquia >= 80;
 
   // Si no tiene permisos, mostrar mensaje
   if (!puedeVerCompensacion) {

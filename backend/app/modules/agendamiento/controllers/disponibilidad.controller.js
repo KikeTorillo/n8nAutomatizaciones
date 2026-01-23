@@ -33,7 +33,7 @@ class DisponibilidadController {
 
     // Determinar si es request público o autenticado
     const esPublico = !req.user;
-    const rol = esPublico ? 'cliente' : req.user.rol; // Requests públicos se tratan como cliente
+    const rol = esPublico ? 'cliente' : req.user.rol_codigo; // Requests públicos se tratan como cliente
 
     logger.info('[DisponibilidadController.consultar] Request recibido', {
       usuario_id: req.user?.id,

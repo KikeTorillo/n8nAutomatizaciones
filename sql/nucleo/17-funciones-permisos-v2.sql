@@ -112,7 +112,6 @@ CREATE OR REPLACE FUNCTION obtener_permiso(
 ) RETURNS JSONB AS $$
 DECLARE
     v_valor JSONB;
-    v_rol rol_usuario;
     v_rol_id INTEGER;
     v_permiso_id INTEGER;
     v_bypass BOOLEAN;
@@ -126,9 +125,9 @@ BEGIN
         RETURN NULL;
     END IF;
 
-    -- Obtener rol_id, rol ENUM y bypass del usuario
-    SELECT u.rol_id, u.rol, COALESCE(r.bypass_permisos, FALSE)
-    INTO v_rol_id, v_rol, v_bypass
+    -- Obtener rol_id y bypass del usuario (FASE 7: solo usa rol_id)
+    SELECT u.rol_id, COALESCE(r.bypass_permisos, FALSE)
+    INTO v_rol_id, v_bypass
     FROM usuarios u
     LEFT JOIN roles r ON r.id = u.rol_id
     WHERE u.id = p_usuario_id;
@@ -151,26 +150,12 @@ BEGIN
         RETURN v_valor;
     END IF;
 
-    -- 2. Buscar permiso del rol
-    -- PRIORIDAD: rol_id (nuevo) > rol ENUM (legacy)
+    -- 2. Buscar permiso del rol (FASE 7: solo rol_id)
     IF v_rol_id IS NOT NULL THEN
         SELECT pr.valor INTO v_valor
         FROM permisos_rol pr
         WHERE pr.rol_id = v_rol_id
           AND pr.permiso_id = v_permiso_id;
-
-        IF FOUND THEN
-            RETURN v_valor;
-        END IF;
-    END IF;
-
-    -- Fallback al sistema ENUM (legacy - para transición)
-    IF v_rol IS NOT NULL THEN
-        SELECT pr.valor INTO v_valor
-        FROM permisos_rol pr
-        WHERE pr.rol = v_rol
-          AND pr.permiso_id = v_permiso_id
-          AND pr.rol_id IS NULL;  -- Solo permisos legacy
 
         IF FOUND THEN
             RETURN v_valor;
@@ -295,22 +280,14 @@ BEGIN
                       AND (pus.fecha_inicio IS NULL OR pus.fecha_inicio <= CURRENT_DATE)
                       AND (pus.fecha_fin IS NULL OR pus.fecha_fin >= CURRENT_DATE)
                 ),
-                -- 2. Permiso del rol (nuevo sistema con rol_id)
+                -- 2. Permiso del rol (FASE 7: solo rol_id)
                 (
                     SELECT pr.valor
                     FROM permisos_rol pr
                     WHERE pr.rol_id = v_rol_id
                       AND pr.permiso_id = pc.id
                 ),
-                -- 3. Permiso del rol (legacy con ENUM) - fallback
-                (
-                    SELECT pr.valor
-                    FROM permisos_rol pr
-                    JOIN usuarios u ON u.rol = pr.rol AND pr.rol_id IS NULL
-                    WHERE u.id = p_usuario_id
-                      AND pr.permiso_id = pc.id
-                ),
-                -- 4. Default del catálogo
+                -- 3. Default del catálogo
                 pc.valor_default
             ) AS valor_efectivo,
             -- Determinar origen
@@ -328,12 +305,6 @@ BEGIN
                     WHERE pr.rol_id = v_rol_id
                       AND pr.permiso_id = pc.id
                 ) THEN 'rol'::VARCHAR(20)
-                WHEN EXISTS (
-                    SELECT 1 FROM permisos_rol pr
-                    JOIN usuarios u ON u.rol = pr.rol AND pr.rol_id IS NULL
-                    WHERE u.id = p_usuario_id
-                      AND pr.permiso_id = pc.id
-                ) THEN 'rol_legacy'::VARCHAR(20)
                 ELSE 'default'::VARCHAR(20)
             END AS origen_valor
         FROM permisos_catalogo pc

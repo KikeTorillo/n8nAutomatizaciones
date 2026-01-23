@@ -165,8 +165,10 @@ BEGIN
     -- (verificamos si el original puede aprobar)
 
     -- Obtener rol del usuario
-    SELECT u.rol::TEXT INTO v_usuario_rol
+    -- FASE 7: Cambiado de u.rol ENUM a JOIN con tabla roles
+    SELECT r.codigo INTO v_usuario_rol
     FROM usuarios u
+    JOIN roles r ON r.id = u.rol_id
     WHERE u.id = p_usuario_id;
 
     -- Super admin siempre puede aprobar
@@ -289,6 +291,7 @@ BEGIN
 
     CASE v_aprobadores_tipo
         WHEN 'rol' THEN
+            -- FASE 7: Cambiado de u.rol ENUM a JOIN con tabla roles
             RETURN QUERY
             SELECT
                 u.id,
@@ -296,9 +299,10 @@ BEGIN
                 u.email::TEXT,
                 FALSE AS es_delegado
             FROM usuarios u
+            JOIN roles r ON r.id = u.rol_id
             WHERE u.organizacion_id = p_organizacion_id
               AND u.activo = true
-              AND u.rol::TEXT = ANY(SELECT jsonb_array_elements_text(v_aprobadores));
+              AND r.codigo = ANY(SELECT jsonb_array_elements_text(v_aprobadores));
 
         WHEN 'usuario' THEN
             RETURN QUERY

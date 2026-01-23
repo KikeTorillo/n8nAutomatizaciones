@@ -16,15 +16,14 @@
 -- • Nivel jerárquico para determinar permisos
 -- • Soporte para bypass de permisos (admin/propietario)
 --
--- MIGRACIÓN:
--- 1. Crear tabla roles
--- 2. Insertar roles de sistema
--- 3. Agregar columna rol_id a usuarios (nullable)
--- 4. Crear trigger para nuevas organizaciones
--- 5. Poblar roles para organizaciones existentes
--- 6. Migrar usuarios al nuevo sistema
---
--- FASE 7 (POSTERIOR): Eliminar columna rol ENUM y tipo rol_usuario
+-- MIGRACIÓN COMPLETADA (FASE 7 - Ene 2026):
+-- ✅ Tabla roles creada
+-- ✅ Roles de sistema insertados
+-- ✅ Columna rol_id como única fuente de verdad
+-- ✅ Trigger para nuevas organizaciones
+-- ✅ Roles default creados para todas las organizaciones
+-- ✅ ENUM rol_usuario eliminado
+-- ✅ Columna rol ENUM eliminada de usuarios
 --
 -- ====================================================================
 
@@ -136,61 +135,26 @@ ON CONFLICT (codigo, organizacion_id) DO UPDATE SET
 
 
 -- ====================================================================
--- AGREGAR COLUMNA rol_id A USUARIOS
+-- AGREGAR FK A TABLAS QUE USAN rol_id
 -- ====================================================================
--- Nueva columna nullable durante la transición
--- Se hará NOT NULL en FASE 7 (limpieza)
+-- Las FKs conectan usuarios y permisos_rol con la tabla roles
 -- ====================================================================
 
--- Agregar columna si no existe
-DO $$
-BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM information_schema.columns
-        WHERE table_name = 'usuarios' AND column_name = 'rol_id'
-    ) THEN
-        ALTER TABLE usuarios ADD COLUMN rol_id INTEGER REFERENCES roles(id) ON DELETE RESTRICT;
-    END IF;
-END $$;
+-- FK usuarios.rol_id -> roles.id
+ALTER TABLE usuarios
+    ADD CONSTRAINT fk_usuarios_rol_id
+    FOREIGN KEY (rol_id) REFERENCES roles(id) ON DELETE RESTRICT;
 
--- Índice para búsquedas por rol
+-- FK permisos_rol.rol_id -> roles.id
+ALTER TABLE permisos_rol
+    ADD CONSTRAINT fk_permisos_rol_rol_id
+    FOREIGN KEY (rol_id) REFERENCES roles(id) ON DELETE CASCADE;
+
+-- Índices para búsquedas
 CREATE INDEX IF NOT EXISTS idx_usuarios_rol_id ON usuarios(rol_id);
 
 COMMENT ON COLUMN usuarios.rol_id IS
-'Referencia al rol del usuario. Durante transición coexiste con columna "rol" (ENUM).
-En FASE 7 se eliminará columna "rol" y esta será NOT NULL.';
-
-
--- ====================================================================
--- AGREGAR COLUMNA rol_id A PERMISOS_ROL
--- ====================================================================
--- Nueva columna para asociar permisos a roles dinámicos
--- ====================================================================
-
-DO $$
-BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM information_schema.columns
-        WHERE table_name = 'permisos_rol' AND column_name = 'rol_id'
-    ) THEN
-        ALTER TABLE permisos_rol ADD COLUMN rol_id INTEGER REFERENCES roles(id) ON DELETE CASCADE;
-    END IF;
-END $$;
-
--- Índice para búsquedas
-CREATE INDEX IF NOT EXISTS idx_permisos_rol_rol_id ON permisos_rol(rol_id);
-
--- Constraint único para evitar duplicados
-DO $$
-BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_constraint WHERE conname = 'uq_permisos_rol_new'
-    ) THEN
-        -- Temporalmente permitimos duplicados hasta migración completa
-        -- ALTER TABLE permisos_rol ADD CONSTRAINT uq_permisos_rol_new UNIQUE(rol_id, permiso_id);
-        NULL;
-    END IF;
-END $$;
+'Referencia al rol del usuario (FASE 7: sistema de roles dinámicos).';
 
 
 -- ====================================================================
@@ -271,55 +235,11 @@ END $$;
 
 
 -- ====================================================================
--- MIGRAR: Usuarios al nuevo sistema de roles
+-- SISTEMA DE ROLES COMPLETAMENTE DINÁMICO
 -- ====================================================================
--- Asignar rol_id basado en la columna rol (ENUM) existente
+-- Las tablas usan rol_id directamente (sin columna rol ENUM).
+-- Los usuarios y permisos se crean con rol_id desde el inicio.
 -- ====================================================================
-
--- Migrar usuarios con rol de sistema (super_admin, bot)
-UPDATE usuarios u
-SET rol_id = r.id
-FROM roles r
-WHERE r.codigo = u.rol::TEXT
-  AND r.es_rol_sistema = TRUE
-  AND u.rol_id IS NULL
-  AND u.rol IN ('super_admin', 'bot');
-
--- Migrar usuarios de organizaciones (admin, propietario, empleado, cliente)
-UPDATE usuarios u
-SET rol_id = r.id
-FROM roles r
-WHERE r.codigo = u.rol::TEXT
-  AND r.organizacion_id = u.organizacion_id
-  AND u.rol_id IS NULL
-  AND u.rol NOT IN ('super_admin', 'bot')
-  AND u.organizacion_id IS NOT NULL;
-
-
--- ====================================================================
--- MIGRAR: Permisos de rol al nuevo sistema
--- ====================================================================
--- ACTUALIZAR permisos existentes para agregar rol_id (NO insertar nuevos)
--- ====================================================================
-
--- Para roles de sistema (super_admin, bot), actualizar rol_id
-UPDATE permisos_rol pr
-SET rol_id = r.id
-FROM roles r
-WHERE r.codigo = pr.rol::TEXT
-  AND r.es_rol_sistema = TRUE
-  AND pr.rol IN ('super_admin', 'bot')
-  AND pr.rol_id IS NULL;
-
--- NOTA: Para roles de organización (admin, propietario, empleado, cliente)
--- Los permisos en permisos_rol son PLANTILLAS por ENUM de rol.
--- El sistema de permisos usa obtener_permiso(rol::TEXT, permiso_codigo) que funciona
--- con el código de rol. No necesitamos duplicar permisos por organización.
---
--- Durante la transición:
--- - obtener_permiso() busca por rol (ENUM) o rol_codigo (del rol_id del usuario)
--- - Los permisos existentes siguen funcionando
--- - En FASE 7 final se puede migrar completamente a rol_id
 
 
 -- ====================================================================
@@ -342,7 +262,7 @@ SELECT
     u.ultimo_login,
     u.creado_en,
     u.actualizado_en,
-    -- Información del rol (nueva)
+    -- Información del rol dinámico
     u.rol_id,
     r.codigo AS rol_codigo,
     r.nombre AS rol_nombre,
@@ -352,14 +272,12 @@ SELECT
     r.puede_crear_usuarios,
     r.puede_modificar_permisos,
     r.color AS rol_color,
-    r.icono AS rol_icono,
-    -- Compatibilidad con sistema anterior
-    u.rol AS rol_enum  -- DEPRECATED: usar rol_codigo
+    r.icono AS rol_icono
 FROM usuarios u
 LEFT JOIN roles r ON r.id = u.rol_id;
 
 COMMENT ON VIEW v_usuarios_con_rol IS
-'Vista de usuarios con información completa del rol. Usar rol_codigo en lugar de rol_enum (deprecated).';
+'Vista de usuarios con información completa del rol dinámico. Usar rol_codigo para lógica de negocio.';
 
 
 -- ====================================================================
@@ -414,10 +332,13 @@ ALTER TABLE roles ENABLE ROW LEVEL SECURITY;
 
 -- Roles de sistema son visibles para todos (es_rol_sistema = TRUE)
 -- Roles de organización solo visibles para su organización
+-- FASE 7 (Ene 2026): Agregar bypass RLS para operaciones de login
 CREATE POLICY roles_isolation ON roles
     FOR ALL TO saas_app
     USING (
-        es_rol_sistema = TRUE
+        -- Bypass RLS para operaciones de autenticación
+        current_setting('app.bypass_rls', true) = 'true'
+        OR es_rol_sistema = TRUE
         OR organizacion_id = COALESCE(
             NULLIF(current_setting('app.current_tenant_id', true), '')::INTEGER,
             0
@@ -443,6 +364,57 @@ CREATE TRIGGER trg_roles_updated
     BEFORE UPDATE ON roles
     FOR EACH ROW
     EXECUTE FUNCTION trigger_roles_actualizado_en();
+
+
+-- ====================================================================
+-- TRIGGER: Asignar permisos cuando se crea un nuevo rol
+-- ====================================================================
+-- La función asignar_permisos_default_a_rol() se define en 13-datos-permisos.sql
+-- Este trigger la llama automáticamente al crear roles de organización.
+-- ====================================================================
+
+CREATE OR REPLACE FUNCTION trigger_asignar_permisos_nuevo_rol()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- Solo para roles de organización (no roles de sistema)
+    -- Los roles de sistema (super_admin) tienen bypass_permisos = TRUE
+    IF NEW.organizacion_id IS NOT NULL AND NOT COALESCE(NEW.bypass_permisos, FALSE) THEN
+        PERFORM asignar_permisos_default_a_rol(NEW.id, NEW.nivel_jerarquia, NEW.codigo);
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Crear trigger
+DROP TRIGGER IF EXISTS trg_asignar_permisos_nuevo_rol ON roles;
+CREATE TRIGGER trg_asignar_permisos_nuevo_rol
+    AFTER INSERT ON roles
+    FOR EACH ROW
+    EXECUTE FUNCTION trigger_asignar_permisos_nuevo_rol();
+
+
+-- ====================================================================
+-- ASIGNAR PERMISOS A ROLES EXISTENTES
+-- ====================================================================
+-- Para roles que ya existen (roles de sistema bot), asignar permisos.
+-- Los roles de organización se crean después vía trigger de organizaciones.
+-- ====================================================================
+
+DO $$
+DECLARE
+    v_rol RECORD;
+BEGIN
+    -- Asignar permisos al rol 'bot' de sistema
+    FOR v_rol IN
+        SELECT id, nivel_jerarquia, codigo
+        FROM roles
+        WHERE codigo = 'bot' AND es_rol_sistema = TRUE
+    LOOP
+        PERFORM asignar_permisos_default_a_rol(v_rol.id, v_rol.nivel_jerarquia, v_rol.codigo);
+    END LOOP;
+
+    RAISE NOTICE 'Permisos asignados a roles de sistema';
+END $$;
 
 
 -- ====================================================================

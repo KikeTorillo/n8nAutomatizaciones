@@ -1,4 +1,4 @@
-import { forwardRef } from 'react';
+import { forwardRef, memo } from 'react';
 import { cn } from '@/lib/utils';
 
 /**
@@ -10,8 +10,7 @@ import { cn } from '@/lib/utils';
  * @param {boolean} disabled - Estado deshabilitado
  * @param {boolean} error - Indica estado de error (borde rojo)
  */
-const Checkbox = forwardRef(
-  (
+const Checkbox = memo(forwardRef(function Checkbox(
     {
       className,
       disabled = false,
@@ -19,7 +18,7 @@ const Checkbox = forwardRef(
       ...props
     },
     ref
-  ) => {
+  ) {
     return (
       <input
         ref={ref}
@@ -38,7 +37,7 @@ const Checkbox = forwardRef(
       />
     );
   }
-);
+));
 
 Checkbox.displayName = 'Checkbox';
 

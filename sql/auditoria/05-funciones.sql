@@ -163,7 +163,11 @@ BEGIN
         END IF;
 
         -- Permitir que super_admin tenga eventos en cualquier organización
-        SELECT rol INTO evento_descripcion FROM usuarios WHERE id = NEW.usuario_id;
+        -- FASE 7: Cambiado de u.rol ENUM a JOIN con tabla roles
+        SELECT r.codigo INTO evento_descripcion
+        FROM usuarios u
+        JOIN roles r ON r.id = u.rol_id
+        WHERE u.id = NEW.usuario_id;
 
         IF evento_descripcion != 'super_admin' AND usuario_org != NEW.organizacion_id THEN
             RAISE EXCEPTION 'Evento: Usuario % (org:%) no pertenece a organización %',

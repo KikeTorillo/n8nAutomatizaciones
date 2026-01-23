@@ -100,12 +100,13 @@ class InvitacionController {
         });
 
         // Construir respuesta (profesional puede ser null para usuario_directo)
+        // FASE 7: Usar rol_id del sistema dinámico
         const respuesta = {
             usuario: {
                 id: resultado.usuario.id,
                 email: resultado.usuario.email,
                 nombre: resultado.usuario.nombre,
-                rol: resultado.usuario.rol
+                rol_id: resultado.usuario.rol_id
             },
             tipo_invitacion: resultado.tipo_invitacion,
             mensaje: 'Cuenta creada exitosamente. Ya puedes iniciar sesión.'

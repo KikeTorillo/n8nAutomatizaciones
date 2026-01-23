@@ -368,6 +368,7 @@ BEGIN
                     accion_url,
                     accion_datos
                 )
+                -- FASE 7: Cambiado de u.rol ENUM a JOIN con tabla roles
                 SELECT
                     org.id,
                     u.id,
@@ -384,8 +385,9 @@ BEGIN
                         'detalles', v_detalles
                     )
                 FROM usuarios u
+                JOIN roles r ON r.id = u.rol_id
                 WHERE u.organizacion_id = org.id
-                  AND u.rol IN ('admin', 'propietario', 'super_admin')
+                  AND r.codigo IN ('admin', 'propietario', 'super_admin')
                   AND u.activo = true;
             END IF;
         END IF;

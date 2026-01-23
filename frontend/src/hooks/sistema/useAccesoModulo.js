@@ -102,7 +102,7 @@ export function useAccesoModulo(modulo) {
   } else {
     // Fallback: admin/propietario tienen acceso completo
     // Empleados tienen acceso si tienen profesional vinculado
-    tieneAcceso = isAdmin || (profesional?.id && user?.rol === 'empleado');
+    tieneAcceso = isAdmin || (profesional?.id && user?.rol_codigo === 'empleado');
   }
 
   // Si usamos cache, no estamos cargando el permiso

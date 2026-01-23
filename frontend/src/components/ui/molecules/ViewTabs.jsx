@@ -14,7 +14,7 @@ import { cn } from '@/lib/utils';
  * @param {string} [props.className] - Clases adicionales
  * @param {string} [props.ariaLabel] - Etiqueta ARIA para el tablist
  */
-export function ViewTabs({ tabs, activeTab, onChange, className, ariaLabel = 'Cambiar vista' }) {
+export const ViewTabs = memo(function ViewTabs({ tabs, activeTab, onChange, className, ariaLabel = 'Cambiar vista' }) {
   return (
     <div
       className={cn(
@@ -38,7 +38,7 @@ export function ViewTabs({ tabs, activeTab, onChange, className, ariaLabel = 'Ca
       </nav>
     </div>
   );
-}
+});
 
 /**
  * TabButton - Botón de tab memoizado

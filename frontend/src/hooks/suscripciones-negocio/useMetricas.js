@@ -14,17 +14,33 @@ import { QUERY_KEYS } from './constants';
 /**
  * Hook para obtener dashboard completo de métricas
  * @param {Object} params - { anio, mes }
+ *
+ * NOTA: Maneja errores 403 silenciosamente (retorna datos vacíos si no tiene permiso).
+ * Esto permite que organizaciones sin permisos de métricas vean la página sin errores.
  */
 export function useMetricasDashboard(params = {}) {
   return useQuery({
     queryKey: [QUERY_KEYS.METRICAS_DASHBOARD, params],
     queryFn: async () => {
-      const sanitized = sanitizeParams(params);
-      const response = await suscripcionesNegocioApi.obtenerDashboardMetricas(sanitized);
-      return response.data?.data || {};
+      try {
+        const sanitized = sanitizeParams(params);
+        const response = await suscripcionesNegocioApi.obtenerDashboardMetricas(sanitized);
+        return response.data?.data || {};
+      } catch (error) {
+        // Si es 403 (sin permiso), retornar datos vacíos silenciosamente
+        if (error.response?.status === 403) {
+          return { sinPermiso: true };
+        }
+        throw error;
+      }
     },
     staleTime: STALE_TIMES.FREQUENT, // 1 minuto - dashboard debe estar actualizado
     refetchInterval: 5 * 60 * 1000, // Refetch cada 5 minutos
+    retry: (failureCount, error) => {
+      // No reintentar si es 403
+      if (error.response?.status === 403) return false;
+      return failureCount < 3;
+    },
   });
 }
 

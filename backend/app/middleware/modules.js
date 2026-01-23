@@ -48,7 +48,7 @@ class ModulesMiddleware {
         }
 
         // 2. Super admin SIEMPRE tiene bypass (usuario de plataforma sin organización)
-        if (req.user.rol === 'super_admin') {
+        if (req.user.rol_codigo === 'super_admin') {
           logger.debug('[ModulesMiddleware] Super admin bypassing module check', {
             module: moduleName,
             user_id: req.user.id
@@ -140,7 +140,7 @@ class ModulesMiddleware {
     return async (req, res, next) => {
       try {
         // Super admin tiene acceso a todo (usuario de plataforma)
-        if (req.user?.rol === 'super_admin') {
+        if (req.user?.rol_codigo === 'super_admin') {
           return next();
         }
 
@@ -201,7 +201,7 @@ class ModulesMiddleware {
     return async (req, res, next) => {
       try {
         // Super admin tiene acceso a todo (usuario de plataforma)
-        if (req.user?.rol === 'super_admin') {
+        if (req.user?.rol_codigo === 'super_admin') {
           return next();
         }
 
@@ -281,7 +281,7 @@ class ModulesMiddleware {
   static async injectActiveModules(req, res, next) {
     try {
       // Super admin tiene todos los módulos activos
-      if (req.user?.rol === 'super_admin') {
+      if (req.user?.rol_codigo === 'super_admin') {
         req.modulosActivos = {
           core: true,
           agendamiento: true,

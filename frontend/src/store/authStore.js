@@ -77,21 +77,23 @@ const useAuthStore = create(
 
       /**
        * Verificar si el usuario tiene un rol específico
-       * @param {string} rol
+       * FASE 7: Usa rol_codigo en vez de rol ENUM
+       * @param {string} rol - Código del rol
        * @returns {boolean}
        */
       hasRole: (rol) => {
         const { user } = get();
-        return user?.rol === rol;
+        return user?.rol_codigo === rol;
       },
 
       /**
        * Verificar si el usuario es admin o propietario
+       * FASE 7: Usa nivel_jerarquia >= 80
        * @returns {boolean}
        */
       isAdmin: () => {
         const { user } = get();
-        return ['super_admin', 'propietario', 'admin'].includes(user?.rol);
+        return user?.nivel_jerarquia >= 80;
       },
 
       /**
@@ -141,22 +143,24 @@ export const selectGetOrganizacionId = (state) => state.getOrganizacionId;
 
 // ====================================================================
 // SELECTORES OPTIMIZADOS - Retornan valores derivados, no funciones
+// FASE 7 COMPLETADA: Usar rol_codigo y nivel_jerarquia en vez de rol ENUM
 // ====================================================================
 
 /**
- * Selector que retorna si el usuario es admin/propietario (valor boolean directo)
+ * Selector que retorna si el usuario es admin/propietario (nivel_jerarquia >= 80)
  */
 export const selectIsAdminValue = (state) =>
-  ['super_admin', 'propietario', 'admin'].includes(state.user?.rol);
+  state.user?.nivel_jerarquia >= 80;
 
 /**
  * Factory para crear selector de rol específico
+ * FASE 7: Usa rol_codigo
  * @example
  * const selectEsEmpleado = createSelectHasRole('empleado');
  * const esEmpleado = useAuthStore(selectEsEmpleado);
  */
-export const createSelectHasRole = (rol) => (state) =>
-  state.user?.rol === rol;
+export const createSelectHasRole = (rolCodigo) => (state) =>
+  state.user?.rol_codigo === rolCodigo;
 
 /**
  * Selector que retorna el ID de organización directamente
@@ -165,13 +169,30 @@ export const selectOrganizacionId = (state) =>
   state.user?.organizacion_id || null;
 
 /**
- * Selector que retorna el rol del usuario directamente
+ * Selector que retorna el código de rol del usuario
+ * FASE 7: Reemplaza selectUserRol que usaba ENUM
  */
-export const selectUserRol = (state) => state.user?.rol || null;
+export const selectRolCodigo = (state) => state.user?.rol_codigo || null;
+
+/**
+ * Selector que retorna el nivel jerárquico del usuario
+ * Valores: 100 (super_admin), 80 (admin/propietario), 50 (gerente), 10 (empleado), 5 (bot)
+ */
+export const selectNivelJerarquia = (state) => state.user?.nivel_jerarquia || 10;
+
+/**
+ * Selector que retorna el nombre legible del rol
+ */
+export const selectRolNombre = (state) => state.user?.rol_nombre || null;
 
 /**
  * Selector que retorna el ID del usuario directamente
  */
 export const selectUserId = (state) => state.user?.id || null;
+
+/**
+ * @deprecated Use selectRolCodigo en vez de selectUserRol
+ */
+export const selectUserRol = (state) => state.user?.rol_codigo || null;
 
 export default useAuthStore;

@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { cn } from '@/lib/utils';
 import { BADGE_VARIANTS, BADGE_SIZES } from '@/lib/uiConstants';
 
@@ -9,14 +10,16 @@ import { BADGE_VARIANTS, BADGE_SIZES } from '@/lib/uiConstants';
  * @param {ReactNode} children - Content
  * @param {string} className - Additional classes
  */
-function Badge({
+const Badge = memo(function Badge({
   variant = 'default',
   size = 'md',
   children,
   className = '',
+  'aria-label': ariaLabel,
 }) {
   return (
     <span
+      aria-label={ariaLabel}
       className={cn(
         'inline-flex items-center gap-1 font-medium rounded-full',
         BADGE_VARIANTS[variant] || BADGE_VARIANTS.default,
@@ -27,7 +30,7 @@ function Badge({
       {children}
     </span>
   );
-}
+});
 
 Badge.displayName = 'Badge';
 

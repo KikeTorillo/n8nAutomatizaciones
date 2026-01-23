@@ -142,7 +142,7 @@ class PerfilesMarketplaceController {
         const { activo } = req.body;
 
         // Validar que el usuario sea super_admin (middleware ya lo valida)
-        if (req.user.rol !== 'super_admin') {
+        if (req.user.rol_codigo !== 'super_admin') {
             return ResponseHelper.error(
                 res,
                 'Solo super administradores pueden activar/desactivar perfiles',
@@ -333,7 +333,7 @@ class PerfilesMarketplaceController {
      */
     static listarParaAdmin = asyncHandler(async (req, res) => {
         // Validar que el usuario sea super_admin (middleware ya lo valida)
-        if (req.user.rol !== 'super_admin') {
+        if (req.user.rol_codigo !== 'super_admin') {
             return ResponseHelper.error(
                 res,
                 'Solo super administradores pueden listar todos los perfiles',

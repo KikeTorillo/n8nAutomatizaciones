@@ -1,4 +1,4 @@
-import { forwardRef } from 'react';
+import { forwardRef, memo } from 'react';
 import { cn } from '@/lib/utils';
 
 /**
@@ -15,8 +15,7 @@ import { cn } from '@/lib/utils';
  * @param {React.ReactNode} children - Opciones como children (alternativa a options)
  * @param {string} className - Clases adicionales
  */
-const Select = forwardRef(
-  (
+const Select = memo(forwardRef(function Select(
     {
       options = [],
       placeholder = 'Selecciona una opción',
@@ -26,7 +25,7 @@ const Select = forwardRef(
       ...props
     },
     ref
-  ) => {
+  ) {
     const baseStyles = cn(
       'w-full px-4 h-10 border rounded-lg transition-colors',
       'focus:outline-none focus:ring-2 focus:ring-offset-0',
@@ -44,6 +43,7 @@ const Select = forwardRef(
       <div className="relative">
         <select
           ref={ref}
+          aria-invalid={hasError || undefined}
           className={cn(baseStyles, stateStyles, className)}
           {...props}
         >
@@ -74,7 +74,7 @@ const Select = forwardRef(
       </div>
     );
   }
-);
+));
 
 Select.displayName = 'Select';
 

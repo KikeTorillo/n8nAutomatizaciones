@@ -36,6 +36,9 @@ export {
   GAP_SIZES,
   TEXT_SIZES,
   ICON_CONTAINER_SIZES,
+  MODAL_SIZES,
+  SEARCH_INPUT_SIZES,
+  PAGINATION_SIZES,
 } from './sizes';
 
 // Variantes

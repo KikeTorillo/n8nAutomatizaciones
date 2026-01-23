@@ -36,6 +36,27 @@ export const useSuperAdmin = () => {
 
     /**
      * ====================================================================
+     * MÉTRICAS SAAS (Nexo Team - Dogfooding)
+     * ====================================================================
+     * Obtiene métricas SaaS reales del módulo suscripciones-negocio:
+     * - MRR, ARR, Churn Rate, Suscriptores activos
+     * - Distribución por estado
+     * - Top planes
+     */
+    const useMetricasSaaS = () => {
+        return useQuery({
+            queryKey: ['superadmin', 'metricas-saas'],
+            queryFn: async () => {
+                const { data } = await api.get('/superadmin/metricas-saas');
+                return data.data;
+            },
+            refetchInterval: 60000, // Refetch cada minuto
+            staleTime: 30000 // Considerar datos stale después de 30s
+        });
+    };
+
+    /**
+     * ====================================================================
      * ORGANIZACIONES
      * ====================================================================
      */
@@ -173,6 +194,7 @@ export const useSuperAdmin = () => {
     return {
         // Queries
         useDashboard,
+        useMetricasSaaS,
         useOrganizaciones,
         usePlanes,
 

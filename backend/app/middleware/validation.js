@@ -71,7 +71,7 @@ const validate = (schemas, options = {}) => {
 
     // Contexto para validaciones condicionales (ej: validar según rol de usuario)
     const context = {
-      userRole: req.user?.rol,
+      userRole: req.user?.rol_codigo,
       userId: req.user?.id,
       organizacionId: req.user?.organizacion_id
     };

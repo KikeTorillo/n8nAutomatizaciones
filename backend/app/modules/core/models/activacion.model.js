@@ -211,10 +211,12 @@ class ActivacionModel {
 
             // Buscar usuario
             const usuarioResult = await db.query(`
-                SELECT u.id, u.email, u.nombre, u.apellidos, u.rol, u.organizacion_id,
-                       u.activo, u.email_verificado, u.onboarding_completado,
+                SELECT u.id, u.email, u.nombre, u.apellidos, u.rol_id,
+                       r.codigo as rol_codigo, r.nombre as rol_nombre, r.nivel_jerarquia,
+                       u.organizacion_id, u.activo, u.email_verificado, u.onboarding_completado,
                        o.nombre_comercial
                 FROM usuarios u
+                LEFT JOIN roles r ON r.id = u.rol_id
                 LEFT JOIN organizaciones o ON u.organizacion_id = o.id
                 WHERE u.email = LOWER($1) AND u.activo = TRUE
             `, [magicLink.email]);
@@ -246,6 +248,7 @@ class ActivacionModel {
                 email: usuario.email
             });
 
+            // FASE 7: Retornar sistema de roles dinámicos
             return {
                 valido: true,
                 usuario: {
@@ -253,7 +256,9 @@ class ActivacionModel {
                     email: usuario.email,
                     nombre: usuario.nombre,
                     apellidos: usuario.apellidos,
-                    rol: usuario.rol,
+                    rol_id: usuario.rol_id,
+                    rol_codigo: usuario.rol_codigo,
+                    nivel_jerarquia: usuario.nivel_jerarquia || 10,
                     organizacion_id: usuario.organizacion_id,
                     email_verificado: usuario.email_verificado,
                     onboarding_completado: usuario.onboarding_completado
@@ -377,9 +382,39 @@ class ActivacionModel {
             // Determinar si tiene organización (flujo legacy vs unificado)
             const tieneOrganizacion = !!activacion.organizacion_id;
 
+            // FASE 7: Obtener rol_id
+            // - Con org: usuario es propietario de esa org
+            // - Sin org (flujo unificado): rol 'pendiente' hasta completar onboarding
+            let rolId = null;
+            if (tieneOrganizacion) {
+                const rolResult = await db.query(
+                    `SELECT id FROM roles WHERE codigo = 'propietario' AND organizacion_id = $1 LIMIT 1`,
+                    [activacion.organizacion_id]
+                );
+                rolId = rolResult.rows[0]?.id || null;
+
+                if (!rolId) {
+                    logger.warn('[ActivacionModel.activar] No se encontró rol propietario para org', {
+                        organizacion_id: activacion.organizacion_id
+                    });
+                }
+            } else {
+                // Flujo unificado: asignar rol de sistema 'pendiente'
+                const rolResult = await db.query(
+                    `SELECT id FROM roles WHERE codigo = 'pendiente' AND es_rol_sistema = TRUE LIMIT 1`
+                );
+                rolId = rolResult.rows[0]?.id || null;
+
+                if (!rolId) {
+                    logger.error('[ActivacionModel.activar] No se encontró rol de sistema "pendiente"');
+                    ErrorHelper.throwValidation('Error de configuración: rol pendiente no existe');
+                }
+            }
+
             // Crear usuario
-            // - Con org: rol='admin', onboarding_completado implícito
-            // - Sin org: rol='admin' (temporal), onboarding_completado=false
+            // FASE 7: Solo usar rol_id (sin columna rol ENUM)
+            // - Con org: onboarding_completado implícito
+            // - Sin org: onboarding_completado=false
             const usuarioResult = await db.query(`
                 INSERT INTO usuarios (
                     organizacion_id,
@@ -387,14 +422,14 @@ class ActivacionModel {
                     password_hash,
                     nombre,
                     apellidos,
-                    rol,
+                    rol_id,
                     activo,
                     email_verificado,
                     onboarding_completado
                 ) VALUES (
-                    $1, LOWER($2), $3, $4, $5, 'admin', TRUE, TRUE, $6
+                    $1, LOWER($2), $3, $4, $5, $6, TRUE, TRUE, $7
                 )
-                RETURNING id, email, nombre, apellidos, rol, organizacion_id, activo,
+                RETURNING id, email, nombre, apellidos, rol_id, organizacion_id, activo,
                           email_verificado, onboarding_completado, creado_en
             `, [
                 activacion.organizacion_id,  // null si flujo unificado
@@ -402,6 +437,7 @@ class ActivacionModel {
                 password_hash,
                 nombre,
                 apellidos,
+                rolId,  // FASE 7: rol_id
                 tieneOrganizacion  // onboarding_completado = true solo si ya tiene org
             ]);
 

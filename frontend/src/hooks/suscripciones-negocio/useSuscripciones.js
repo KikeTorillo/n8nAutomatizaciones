@@ -26,11 +26,11 @@ export function useSuscripciones(params = {}) {
       const sanitized = sanitizeParams(params);
       const response = await suscripcionesNegocioApi.listarSuscripciones(sanitized);
       const data = response.data?.data;
-      const pagination = response.data?.pagination || response.data?.meta || data?.paginacion;
+      const pagination = data?.paginacion || response.data?.pagination || response.data?.meta;
 
       return {
-        items: data?.suscripciones || data || [],
-        total: data?.total || pagination?.total || 0,
+        items: data?.items || data?.suscripciones || [],
+        total: pagination?.total || data?.total || 0,
         paginacion: pagination,
       };
     },

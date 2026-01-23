@@ -104,8 +104,8 @@ CREATE TABLE permisos_rol (
     -- 🔑 IDENTIFICACIÓN
     id SERIAL PRIMARY KEY,
 
-    -- 🔗 RELACIONES
-    rol rol_usuario NOT NULL,                    -- admin, propietario, empleado, bot, cliente
+    -- 🔗 RELACIONES (FASE 7: Solo rol_id, sin ENUM legacy)
+    rol_id INTEGER NOT NULL,                     -- FK a tabla roles (se agrega después de crear tabla roles)
     permiso_id INTEGER NOT NULL REFERENCES permisos_catalogo(id) ON DELETE CASCADE,
 
     -- 🔢 VALOR DEL PERMISO
@@ -116,15 +116,18 @@ CREATE TABLE permisos_rol (
     actualizado_en TIMESTAMPTZ DEFAULT NOW(),
 
     -- ✅ CONSTRAINTS
-    CONSTRAINT uq_permisos_rol UNIQUE(rol, permiso_id)
+    CONSTRAINT uq_permisos_rol_id UNIQUE(rol_id, permiso_id)
 );
 
 -- Índices
-CREATE INDEX idx_permisos_rol_rol ON permisos_rol(rol);
+CREATE INDEX idx_permisos_rol_rol_id ON permisos_rol(rol_id);
 
 -- Comentarios
 COMMENT ON TABLE permisos_rol IS
-'Permisos por rol. Actúa como plantilla base para usuarios con ese rol.';
+'Permisos por rol (FASE 7: usa rol_id en lugar de ENUM). Actúa como plantilla base para usuarios con ese rol.';
+
+COMMENT ON COLUMN permisos_rol.rol_id IS
+'FK a tabla roles. Permite roles dinámicos por organización.';
 
 COMMENT ON COLUMN permisos_rol.valor IS
 'Valor del permiso para este rol. Sobreescribe el valor_default del catálogo.';

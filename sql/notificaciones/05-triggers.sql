@@ -185,11 +185,13 @@ BEGIN
         WHERE p.id = NEW.id;
 
         -- Notificar a admins y propietarios de la organizacion
+        -- FASE 7: Cambiado de u.rol ENUM a JOIN con tabla roles
         FOR v_usuarios IN
             SELECT u.id
             FROM usuarios u
+            JOIN roles r ON r.id = u.rol_id
             WHERE u.organizacion_id = v_producto.organizacion_id
-              AND u.rol IN ('admin', 'propietario')
+              AND r.codigo IN ('admin', 'propietario')
               AND u.activo = TRUE
         LOOP
             PERFORM crear_notificacion(
@@ -248,11 +250,13 @@ BEGIN
     END IF;
 
     -- Notificar a admins y propietarios
+    -- FASE 7: Cambiado de u.rol ENUM a JOIN con tabla roles
     FOR v_usuarios IN
         SELECT u.id
         FROM usuarios u
+        JOIN roles r ON r.id = u.rol_id
         WHERE u.organizacion_id = NEW.organizacion_id
-          AND u.rol IN ('admin', 'propietario')
+          AND r.codigo IN ('admin', 'propietario')
           AND u.activo = TRUE
     LOOP
         PERFORM crear_notificacion(

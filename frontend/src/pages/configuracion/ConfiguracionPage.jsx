@@ -24,7 +24,8 @@ import useAuthStore, { selectUser } from '@/store/authStore';
 function ConfiguracionPage() {
   const navigate = useNavigate();
   const user = useAuthStore(selectUser);
-  const esAdmin = ['admin', 'propietario', 'super_admin'].includes(user?.rol);
+  // FASE 7: Usa nivel_jerarquia >= 80 para admin/propietario
+  const esAdmin = user?.nivel_jerarquia >= 80;
 
   // Secciones de configuración - Dic 2025: Nuevo orden con Usuarios después de Mi Negocio
   const secciones = [

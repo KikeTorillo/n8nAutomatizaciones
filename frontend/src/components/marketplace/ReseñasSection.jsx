@@ -30,7 +30,7 @@ import EstrellaRating from './EstrellaRating';
  *   ratingPromedio={perfil.rating_promedio}
  *   totalResenas={perfil.total_resenas}
  *   isLoading={isLoading}
- *   canResponder={user?.rol === 'admin'}
+ *   canResponder={user?.nivel_jerarquia >= 80}
  *   onResponder={(id) => setSelectedResena(id)}
  *   onPageChange={(page) => setPage(page)}
  *   onOrdenChange={(orden) => setOrden(orden)}

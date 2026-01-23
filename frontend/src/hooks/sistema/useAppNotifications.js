@@ -13,6 +13,7 @@ export function useAppNotifications() {
     tieneAgendamiento,
     tieneInventario,
     tienePOS,
+    tieneWorkflows,
   } = useModulos();
 
   // Obtener sucursalId para queries que lo requieren
@@ -72,6 +73,7 @@ export function useAppNotifications() {
       const response = await workflowsApi.contarPendientes();
       return response.data.data?.total || 0;
     },
+    enabled: tieneWorkflows, // Solo si tiene módulo workflows activo
     staleTime: STALE_TIMES.FREQUENT, // 1 minuto
     refetchInterval: 60 * 1000, // Alineado con staleTime
     refetchIntervalInBackground: false, // No refetch en tabs inactivas

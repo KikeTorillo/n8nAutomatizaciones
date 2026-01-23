@@ -19,6 +19,7 @@ import {
   AlertTriangle,
   Sparkles,
   ClipboardCheck,
+  CreditCard,
 } from 'lucide-react';
 
 /**
@@ -85,7 +86,7 @@ const MODULOS_ONBOARDING = [
   {
     nombre: 'eventos-digitales',
     display_name: 'Eventos',
-    descripcion: 'Invitaciones digitales',
+    descripcion: 'Invitaciones y acomodo de mesas',
     icono: PartyPopper,
     dependencias: [],
   },
@@ -95,6 +96,13 @@ const MODULOS_ONBOARDING = [
     descripcion: 'Página web pública',
     icono: Globe,
     dependencias: [],
+  },
+  {
+    nombre: 'suscripciones-negocio',
+    display_name: 'Suscripciones',
+    descripcion: 'Membresías y cobros recurrentes',
+    icono: CreditCard,
+    dependencias: [], // clientes siempre activo (can_disable: false)
   },
 ];
 
@@ -112,6 +120,7 @@ const COLORES = {
   chatbots: 'bg-primary-50 dark:bg-primary-900/30 text-primary-400 dark:text-primary-300',
   'eventos-digitales': 'bg-primary-50 dark:bg-primary-900/30 text-primary-400 dark:text-primary-300',
   website: 'bg-primary-100 dark:bg-primary-900/40 text-primary-600 dark:text-primary-400',
+  'suscripciones-negocio': 'bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300',
 };
 
 /**

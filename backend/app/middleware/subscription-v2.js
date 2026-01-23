@@ -43,7 +43,7 @@ class SubscriptionV2Middleware {
    */
   static async checkActiveSubscription(req, res, next) {
     // Super admin siempre pasa (usuario de plataforma)
-    if (req.user?.rol === 'super_admin') {
+    if (req.user?.rol_codigo === 'super_admin') {
       return next();
     }
 

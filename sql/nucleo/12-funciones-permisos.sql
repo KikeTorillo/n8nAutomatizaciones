@@ -36,7 +36,7 @@ CREATE OR REPLACE FUNCTION obtener_permiso(
 ) RETURNS JSONB AS $$
 DECLARE
     v_valor JSONB;
-    v_rol rol_usuario;
+    v_rol_id INTEGER;
     v_permiso_id INTEGER;
 BEGIN
     -- Obtener ID del permiso (cache en variable para evitar múltiples lookups)
@@ -62,15 +62,15 @@ BEGIN
         RETURN v_valor;
     END IF;
 
-    -- 2. Buscar permiso del rol del usuario
-    SELECT u.rol INTO v_rol
+    -- 2. Buscar permiso del rol del usuario (FASE 7: usa rol_id)
+    SELECT u.rol_id INTO v_rol_id
     FROM usuarios u
     WHERE u.id = p_usuario_id;
 
-    IF v_rol IS NOT NULL THEN
+    IF v_rol_id IS NOT NULL THEN
         SELECT pr.valor INTO v_valor
         FROM permisos_rol pr
-        WHERE pr.rol = v_rol
+        WHERE pr.rol_id = v_rol_id
           AND pr.permiso_id = v_permiso_id;
 
         IF FOUND THEN
@@ -213,11 +213,11 @@ BEGIN
                       AND (pus.fecha_inicio IS NULL OR pus.fecha_inicio <= CURRENT_DATE)
                       AND (pus.fecha_fin IS NULL OR pus.fecha_fin >= CURRENT_DATE)
                 ),
-                -- 2. Permiso del rol
+                -- 2. Permiso del rol (FASE 7: usa rol_id)
                 (
                     SELECT pr.valor
                     FROM permisos_rol pr
-                    JOIN usuarios u ON u.rol = pr.rol
+                    JOIN usuarios u ON u.rol_id = pr.rol_id
                     WHERE u.id = p_usuario_id
                       AND pr.permiso_id = pc.id
                 ),
@@ -236,7 +236,7 @@ BEGIN
                 ) THEN 'usuario'::VARCHAR(20)
                 WHEN EXISTS (
                     SELECT 1 FROM permisos_rol pr
-                    JOIN usuarios u ON u.rol = pr.rol
+                    JOIN usuarios u ON u.rol_id = pr.rol_id
                     WHERE u.id = p_usuario_id
                       AND pr.permiso_id = pc.id
                 ) THEN 'rol'::VARCHAR(20)

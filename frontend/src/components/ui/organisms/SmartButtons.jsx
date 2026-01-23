@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { cn } from '@/lib/utils';
 
 /**
@@ -27,7 +28,7 @@ const colorClasses = {
   gray: 'bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300',
 };
 
-export function SmartButtons({ buttons = [], className }) {
+export const SmartButtons = memo(function SmartButtons({ buttons = [], className }) {
   if (!buttons.length) return null;
 
   return (
@@ -72,7 +73,7 @@ export function SmartButtons({ buttons = [], className }) {
       })}
     </div>
   );
-}
+});
 
 SmartButtons.displayName = 'SmartButtons';
 

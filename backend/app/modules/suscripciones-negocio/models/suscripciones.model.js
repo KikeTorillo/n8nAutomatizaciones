@@ -11,6 +11,7 @@
 const RLSContextManager = require('../../../utils/rlsContextManager');
 const { ErrorHelper, ParseHelper } = require('../../../utils/helpers');
 const logger = require('../../../utils/logger');
+const { NEXO_TEAM_ORG_ID, FEATURE_TO_MODULO, MODULOS_BASE } = require('../../../config/constants');
 
 class SuscripcionesModel {
 
@@ -316,7 +317,7 @@ class SuscripcionesModel {
             const suscripcion = await this.buscarPorId(id, organizacionId);
             ErrorHelper.throwIfNotFound(suscripcion, 'Suscripción');
 
-            const estadosValidos = ['trial', 'activa', 'pausada', 'cancelada', 'vencida', 'suspendida'];
+            const estadosValidos = ['trial', 'pendiente_pago', 'activa', 'pausada', 'cancelada', 'vencida', 'suspendida'];
             if (!estadosValidos.includes(nuevoEstado)) {
                 ErrorHelper.throwValidation(`Estado inválido: ${nuevoEstado}`);
             }
@@ -489,8 +490,95 @@ class SuscripcionesModel {
 
             logger.info(`Cobro exitoso procesado para suscripción ${id}`);
 
+            // Si era trial, activar módulos en organización vinculada (dogfooding)
+            if (suscripcion.es_trial) {
+                await this.actualizarOrgVinculadaAlActivar(id, organizacionId);
+            }
+
             return result.rows[0];
         });
+    }
+
+    /**
+     * Actualizar la organización vinculada cuando se activa una suscripción
+     * (Fase 6 del plan Dogfooding)
+     *
+     * Esta función se llama cuando una suscripción trial se convierte en activa.
+     * Mapea los features del plan a módulos y los activa en la organización vinculada.
+     *
+     * @param {number} suscripcionId - ID de la suscripción
+     * @param {number} organizacionId - ID de la organización dueña (Nexo Team)
+     * @returns {Promise<number|null>} - ID de la org vinculada actualizada o null
+     */
+    static async actualizarOrgVinculadaAlActivar(suscripcionId, organizacionId) {
+        try {
+            // Solo aplica para suscripciones de Nexo Team (org que gestiona la plataforma)
+            if (organizacionId !== NEXO_TEAM_ORG_ID) {
+                return null;
+            }
+
+            return await RLSContextManager.withBypass(async (db) => {
+                // 1. Obtener suscripción con cliente y plan
+                const suscQuery = `
+                    SELECT s.id, s.cliente_id, s.plan_id,
+                           c.organizacion_vinculada_id,
+                           p.codigo, p.features
+                    FROM suscripciones_org s
+                    LEFT JOIN clientes c ON s.cliente_id = c.id AND c.organizacion_id = $2
+                    INNER JOIN planes_suscripcion_org p ON s.plan_id = p.id
+                    WHERE s.id = $1 AND s.organizacion_id = $2
+                `;
+                const suscResult = await db.query(suscQuery, [suscripcionId, organizacionId]);
+                const suscripcion = suscResult.rows[0];
+
+                if (!suscripcion?.organizacion_vinculada_id) {
+                    // Cliente externo (sin org vinculada) - no aplica
+                    logger.info(`Suscripción ${suscripcionId}: Cliente sin organización vinculada, saltando actualización`);
+                    return null;
+                }
+
+                const orgVinculadaId = suscripcion.organizacion_vinculada_id;
+                const planCodigo = suscripcion.codigo || 'pro';
+                const features = suscripcion.features || [];
+
+                // 2. Mapear features → módulos
+                const modulosActivos = { ...MODULOS_BASE }; // Siempre incluye core: true
+
+                features.forEach(feature => {
+                    const modulo = FEATURE_TO_MODULO[feature];
+                    if (modulo) {
+                        modulosActivos[modulo] = true;
+                    }
+                });
+
+                // 3. Actualizar organización vinculada
+                const updateQuery = `
+                    UPDATE organizaciones
+                    SET plan_actual = $2,
+                        modulos_activos = $3,
+                        actualizado_en = NOW()
+                    WHERE id = $1
+                    RETURNING id, plan_actual, modulos_activos
+                `;
+
+                const updateResult = await db.query(updateQuery, [
+                    orgVinculadaId,
+                    planCodigo,
+                    JSON.stringify(modulosActivos)
+                ]);
+
+                if (updateResult.rows[0]) {
+                    logger.info(`Dogfooding: Org ${orgVinculadaId} actualizada a plan '${planCodigo}' con módulos: ${Object.keys(modulosActivos).join(', ')}`);
+                }
+
+                return orgVinculadaId;
+            });
+
+        } catch (error) {
+            logger.error(`Error actualizando org vinculada para suscripción ${suscripcionId}:`, error);
+            // No lanzar error para no interrumpir el flujo de cobro
+            return null;
+        }
     }
 
     /**
@@ -542,6 +630,165 @@ class SuscripcionesModel {
         }
 
         return fecha;
+    }
+
+    /**
+     * Crear suscripción en estado pendiente_pago (para checkout)
+     *
+     * @param {Object} suscripcionData - Datos de la suscripción
+     * @param {number} organizacionId - ID de la organización
+     * @param {number} creadoPorId - ID del usuario que crea
+     * @returns {Promise<Object>} - Suscripción creada
+     */
+    static async crearPendiente(suscripcionData, organizacionId, creadoPorId) {
+        return await RLSContextManager.query(organizacionId, async (db) => {
+            const {
+                plan_id,
+                cliente_id,
+                suscriptor_externo,
+                periodo = 'mensual',
+                precio_actual,
+                gateway,
+                cupon_aplicado_id,
+                descuento_porcentaje,
+                descuento_monto
+            } = suscripcionData;
+
+            // Validar que tenga cliente_id O suscriptor_externo
+            if (!cliente_id && !suscriptor_externo) {
+                ErrorHelper.throwValidation('Debe proporcionar cliente_id o suscriptor_externo');
+            }
+
+            // Obtener plan para moneda
+            const planQuery = `SELECT * FROM planes_suscripcion_org WHERE id = $1`;
+            const planResult = await db.query(planQuery, [plan_id]);
+            const plan = planResult.rows[0];
+
+            ErrorHelper.throwIfNotFound(plan, 'Plan de suscripción');
+
+            // Crear suscripción en estado pendiente_pago
+            const insertQuery = `
+                INSERT INTO suscripciones_org (
+                    organizacion_id, plan_id, cliente_id, suscriptor_externo,
+                    periodo, estado,
+                    fecha_inicio, fecha_proximo_cobro,
+                    es_trial, gateway,
+                    precio_actual, moneda,
+                    cupon_aplicado_id, descuento_porcentaje, descuento_monto,
+                    auto_cobro, creado_por
+                ) VALUES (
+                    $1, $2, $3, $4, $5, 'pendiente_pago', NOW(), NULL,
+                    FALSE, $6, $7, $8, $9, $10, $11, TRUE, $12
+                )
+                RETURNING *
+            `;
+
+            const values = [
+                organizacionId,
+                plan_id,
+                cliente_id,
+                suscriptor_externo ? JSON.stringify(suscriptor_externo) : null,
+                periodo,
+                gateway,
+                precio_actual,
+                plan.moneda || 'MXN',
+                cupon_aplicado_id,
+                descuento_porcentaje,
+                descuento_monto,
+                creadoPorId
+            ];
+
+            const result = await db.query(insertQuery, values);
+
+            logger.info(`Suscripción pendiente creada: ID ${result.rows[0].id} en org ${organizacionId}`);
+
+            return result.rows[0];
+        });
+    }
+
+    /**
+     * Actualizar IDs del gateway de pago
+     *
+     * @param {number} id - ID de la suscripción
+     * @param {Object} gatewayIds - { subscription_id_gateway, customer_id_gateway, payment_method_id }
+     * @param {number} organizacionId - ID de la organización
+     * @returns {Promise<Object>} - Suscripción actualizada
+     */
+    static async actualizarGatewayIds(id, gatewayIds, organizacionId) {
+        return await RLSContextManager.query(organizacionId, async (db) => {
+            const {
+                subscription_id_gateway,
+                customer_id_gateway,
+                payment_method_id
+            } = gatewayIds;
+
+            const updates = [];
+            const values = [];
+            let paramCount = 1;
+
+            if (subscription_id_gateway !== undefined) {
+                updates.push(`subscription_id_gateway = $${paramCount++}`);
+                values.push(subscription_id_gateway);
+            }
+            if (customer_id_gateway !== undefined) {
+                updates.push(`customer_id_gateway = $${paramCount++}`);
+                values.push(customer_id_gateway);
+            }
+            if (payment_method_id !== undefined) {
+                updates.push(`payment_method_id = $${paramCount++}`);
+                values.push(payment_method_id);
+            }
+
+            if (updates.length === 0) {
+                return await this.buscarPorId(id, organizacionId);
+            }
+
+            updates.push(`actualizado_en = NOW()`);
+            values.push(id);
+
+            const query = `
+                UPDATE suscripciones_org
+                SET ${updates.join(', ')}
+                WHERE id = $${paramCount}
+                RETURNING *
+            `;
+
+            const result = await db.query(query, values);
+            return result.rows[0];
+        });
+    }
+
+    /**
+     * Buscar suscripción por ID del gateway
+     *
+     * @param {string} subscriptionIdGateway - ID de suscripción en el gateway
+     * @param {number} organizacionId - ID de la organización (opcional para búsqueda global)
+     * @returns {Promise<Object|null>} - Suscripción encontrada o null
+     */
+    static async buscarPorGatewayId(subscriptionIdGateway, organizacionId = null) {
+        const queryFn = async (db) => {
+            const query = `
+                SELECT
+                    s.*,
+                    p.nombre as plan_nombre,
+                    p.codigo as plan_codigo,
+                    c.nombre as cliente_nombre,
+                    c.email as cliente_email
+                FROM suscripciones_org s
+                INNER JOIN planes_suscripcion_org p ON s.plan_id = p.id
+                LEFT JOIN clientes c ON s.cliente_id = c.id
+                WHERE s.subscription_id_gateway = $1
+            `;
+
+            const result = await db.query(query, [subscriptionIdGateway]);
+            return result.rows[0] || null;
+        };
+
+        if (organizacionId) {
+            return await RLSContextManager.query(organizacionId, queryFn);
+        } else {
+            return await RLSContextManager.withBypass(queryFn);
+        }
     }
 
     /**

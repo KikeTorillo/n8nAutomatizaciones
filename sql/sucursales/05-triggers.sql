@@ -174,6 +174,7 @@ BEGIN
     v_sucursal_matriz_id := obtener_sucursal_matriz(NEW.organizacion_id);
 
     -- Si existe sucursal matriz, asignar usuario
+    -- FASE 7: Cambiado de NEW.rol ENUM a lookup en tabla roles
     IF v_sucursal_matriz_id IS NOT NULL THEN
         INSERT INTO usuarios_sucursales (
             usuario_id,
@@ -182,7 +183,7 @@ BEGIN
         ) VALUES (
             NEW.id,
             v_sucursal_matriz_id,
-            NEW.rol IN ('admin', 'propietario')
+            EXISTS (SELECT 1 FROM roles r WHERE r.id = NEW.rol_id AND r.codigo IN ('admin', 'propietario'))
         )
         ON CONFLICT (usuario_id, sucursal_id) DO NOTHING;
     END IF;

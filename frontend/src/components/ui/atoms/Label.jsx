@@ -2,6 +2,7 @@
  * Label - Atom para etiquetas de formulario
  * Fase 2 del Plan de Mejoras Frontend - Enero 2026
  */
+import { memo } from 'react';
 import { cn } from '@/lib/utils';
 
 /**
@@ -11,7 +12,7 @@ import { cn } from '@/lib/utils';
  * @param {string} htmlFor - ID del elemento asociado
  * @param {string} className - Clases adicionales
  */
-function Label({ label, required = false, htmlFor, className }) {
+const Label = memo(function Label({ label, required = false, htmlFor, className }) {
   if (!label) return null;
 
   return (
@@ -26,7 +27,7 @@ function Label({ label, required = false, htmlFor, className }) {
       {required && <span className="text-red-500 ml-1">*</span>}
     </label>
   );
-}
+});
 
 Label.displayName = 'Label';
 

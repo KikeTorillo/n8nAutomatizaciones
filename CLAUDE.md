@@ -62,9 +62,10 @@ docker exec -it postgres_db psql -U admin -d postgres
 auth.authenticateToken → tenant.setTenantContext → [permisos] → controller
 ```
 
-### Roles (Sistema Dinámico v2.0)
+### Roles (Sistema Dinámico v2.1 - FASE 7 Completada)
 
 Sistema de roles dinámicos por organización. Cada org puede crear roles personalizados.
+**IMPORTANTE:** El tipo ENUM `rol_usuario` fue eliminado. Solo usar `rol_id` y `rol_codigo`.
 
 | Campo | Descripción |
 |-------|-------------|
@@ -432,6 +433,126 @@ Documento completo en `/docs/PLAN_PRUEBAS_INTEGRAL.md`
 
 ## Changelog
 
+### 23 Ene 2026 - FASE 7: Limpieza Sistema de Roles ✅ COMPLETADO
+
+**Eliminación completa del sistema legacy de roles ENUM.**
+
+**Cambios SQL:**
+- `sql/core/fundamentos/02-tipos-enums-core.sql` - Tipo `rol_usuario` ENUM eliminado
+- `sql/nucleo/01-tablas-core.sql` - Columna `rol` eliminada, `rol_id NOT NULL`
+- `sql/nucleo/16-tabla-roles.sql` - Vista `v_usuarios_con_rol` sin `rol_enum`
+
+**Cambios Backend:**
+- `backend/app/modules/core/models/usuario.model.js`:
+  - `crear()`: Solo inserta `rol_id`, no `rol`
+  - `cambiarRol()`: Actualiza `rol_id` por código de rol
+  - `autenticar()`: `usuarioSeguro` sin campos `rol` y `bypass_permisos`
+  - `generarTokens()`: JWT solo tiene `rolId`, no `rol`
+  - Todas las queries usan JOIN con `roles` para obtener `rol_codigo`
+- `backend/app/middleware/auth.js`:
+  - Solo verifica `decoded.rolId` en tokens
+  - `req.user` sin campo `rol` legacy
+  - `requireRole()` y `requireAdminRole()` usan solo sistema dinámico
+- `backend/app/middleware/permisos.js`:
+  - Bypass solo por `bypass_permisos`, no por `rol === 'super_admin'`
+
+**Cambios Frontend:**
+- `frontend/src/store/authStore.js`:
+  - Selectores nuevos: `selectRolCodigo`, `selectNivelJerarquia`, `selectRolNombre`
+  - `selectIsAdminValue` usa `nivel_jerarquia >= 80`
+  - `createSelectHasRole()` usa `rol_codigo`
+- `frontend/src/components/auth/ProtectedRoute.jsx`:
+  - `NIVEL_MINIMO_POR_ROL` reemplaza `ROLE_HIERARCHY`
+  - `hasRoleAccess()` usa `user.nivel_jerarquia` del backend
+- Todos los componentes: `user?.rol` → `user?.rol_codigo` o `user?.nivel_jerarquia`
+
+**Respuesta de login FINAL:**
+```javascript
+{
+  rol_id: 12,
+  rol_codigo: 'propietario',    // Para lógica de negocio
+  rol_nombre: 'Propietario',    // Para mostrar en UI
+  nivel_jerarquia: 80           // Para guards de rutas
+  // SIN: rol (ENUM), bypass_permisos
+}
+```
+
+**IMPORTANTE:** Ejecutar `npm run clean:data` para levantar BD desde cero.
+
+---
+
+### 22 Ene 2026 - Flujo Checkout MercadoPago ✅ COMPLETO
+
+**Flujo completo de checkout implementado para suscripciones con MercadoPago.**
+
+**Archivos creados:**
+- `backend/app/modules/suscripciones-negocio/schemas/checkout.schemas.js` - Validación Joi
+- `backend/app/modules/suscripciones-negocio/controllers/checkout.controller.js` - 3 métodos
+- `backend/app/modules/suscripciones-negocio/routes/checkout.js` - Rutas de checkout
+- `frontend/src/components/checkout/CheckoutModal.jsx` - Modal con cupón
+- `frontend/src/components/checkout/index.js` - Barrel export
+- `frontend/src/components/trial/TrialBanner.jsx` - Banner para trial
+- `frontend/src/components/trial/index.js` - Barrel export
+- `frontend/src/pages/payment/PaymentCallbackPage.jsx` - Callback de MP
+- `frontend/src/pages/planes/PlanesPublicPage.jsx` - Página pública de planes
+
+**Archivos modificados:**
+- `backend/app/modules/suscripciones-negocio/routes/index.js` - Agregado `checkoutRoutes`
+- `backend/app/modules/suscripciones-negocio/models/suscripciones.model.js` - Métodos `crearPendiente()`, `actualizarGatewayIds()`, `buscarPorGatewayId()`
+- `backend/app/config/constants.js` - Estado `pendiente_pago`
+- `frontend/src/services/api/modules/suscripciones-negocio.api.js` - Endpoints checkout
+- `frontend/src/app/routes/public.routes.jsx` - Rutas `/planes`, `/payment/callback`
+- `sql/suscripciones-negocio/01-tablas.sql` - Constraint actualizado
+
+**Endpoints API:**
+```
+POST /api/v1/suscripciones-negocio/checkout/iniciar
+POST /api/v1/suscripciones-negocio/checkout/validar-cupon
+GET  /api/v1/suscripciones-negocio/checkout/resultado
+```
+
+**Flujo:**
+1. Usuario en `/planes` selecciona plan
+2. Abre `CheckoutModal` con opción de cupón
+3. Click "Pagar" → Backend crea suscripción `pendiente_pago`
+4. Backend crea preferencia en MercadoPago → Retorna `init_point`
+5. Redirect a MercadoPago
+6. Después de pagar → Callback a `/payment/callback`
+7. Webhook de MP procesa pago → Activa suscripción
+
+---
+
+### 22 Ene 2026 - Dogfooding COMPLETO ✅ (Fases 2, 5, 6)
+
+**Todas las fases de dogfooding completadas:**
+- Fase 2: Auto-vincular orgs como clientes (optimizado INSERT directo)
+- Fase 5: SuperAdmin Dashboard + Métricas SaaS
+- Fase 6: Pago suscripción → Actualizar plan org
+
+**Archivos modificados:**
+- `backend/app/config/constants.js` (NUEVO) - Constantes centralizadas
+- `backend/app/modules/clientes/models/cliente.model.js` - INSERT incluye `organizacion_vinculada_id`
+- `backend/app/services/dogfoodingService.js` - Eliminado UPDATE extra (vinculación directa)
+- `backend/app/services/dogfoodingService.js` - Usa `NEXO_TEAM_ORG_ID` importada
+- `backend/app/modules/core/controllers/superadmin.controller.js` - Usa constante importada
+- `backend/app/modules/core/models/organizacion.model.js` - Usa constante importada
+- `backend/app/modules/suscripciones-negocio/models/suscripciones.model.js` - Método `actualizarOrgVinculadaAlActivar()`
+- `backend/app/constants/organizacion.constants.js` - Agregados `plan_actual`, `modulos_activos`
+
+**Constantes disponibles:**
+```javascript
+const { NEXO_TEAM_ORG_ID, FEATURE_TO_MODULO, MODULOS_BASE } = require('../config/constants');
+// NEXO_TEAM_ORG_ID = process.env.NEXO_TEAM_ORG_ID || 1
+```
+
+**Flujo activación suscripción:**
+Cuando una suscripción trial se convierte en activa (cobro exitoso), automáticamente:
+1. Obtiene `organizacion_vinculada_id` del cliente
+2. Mapea `features[]` del plan → `modulos_activos`
+3. Actualiza `plan_actual` y `modulos_activos` de la org vinculada
+
+---
+
 ### 22 Ene 2026 - Módulo Suscripciones-Negocio ✅ COMPLETADO
 
 **Módulo completo de gestión de suscripciones SaaS.**
@@ -462,7 +583,7 @@ Sistema de roles dinámicos por organización. Ver sección "Roles" arriba para 
 - `GET/PUT /api/v1/roles/:id/permisos` - Gestión permisos
 - `POST /api/v1/roles/:id/copiar-permisos` - Copiar de otro rol
 
-**Pendiente:** FASE 7 (DROP columna `rol` ENUM) en producción.
+**FASE 7 COMPLETADA** (23 Ene 2026): Columna `rol` ENUM eliminada.
 
 ---
 

@@ -72,7 +72,7 @@ function GoogleSignInButton({
       // Login exitoso, redirigir según rol
       toast.success(data.es_nuevo ? '¡Cuenta creada exitosamente!' : '¡Bienvenido de nuevo!');
 
-      if (data.usuario.rol === 'super_admin') {
+      if (data.usuario.rol_codigo === 'super_admin') {
         navigate('/superadmin');
       } else {
         navigate('/home');

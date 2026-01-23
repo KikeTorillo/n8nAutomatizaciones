@@ -1,4 +1,4 @@
-import { forwardRef } from 'react';
+import { forwardRef, memo } from 'react';
 import { cn } from '@/lib/utils';
 import { Loader2 } from 'lucide-react';
 import { BUTTON_VARIANTS, BUTTON_SIZES, FOCUS_STATES } from '@/lib/uiConstants';
@@ -7,8 +7,7 @@ import { BUTTON_VARIANTS, BUTTON_SIZES, FOCUS_STATES } from '@/lib/uiConstants';
  * Componente Button reutilizable
  * Soporta variantes, tamaños, estados de carga y disabled
  */
-const Button = forwardRef(
-  (
+const Button = memo(forwardRef(function Button(
     {
       className,
       variant = 'primary',
@@ -20,7 +19,7 @@ const Button = forwardRef(
       ...props
     },
     ref
-  ) => {
+  ) {
     const baseStyles = cn(
       'inline-flex items-center justify-center font-semibold rounded-lg transition-colors',
       FOCUS_STATES.ring,
@@ -47,7 +46,7 @@ const Button = forwardRef(
       </button>
     );
   }
-);
+));
 
 Button.displayName = 'Button';
 

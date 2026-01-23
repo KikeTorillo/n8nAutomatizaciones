@@ -2,13 +2,14 @@
 -- SISTEMA DE PERMISOS NORMALIZADOS - DATOS INICIALES
 -- ====================================================================
 --
--- Versión: 1.0.0
--- Fecha: Diciembre 2025
+-- Versión: 2.0.0 (FASE 7 - Roles Dinámicos)
+-- Fecha: Enero 2026
 -- Módulo: nucleo/permisos
 --
 -- DESCRIPCIÓN:
--- Datos iniciales del catálogo de permisos y permisos por rol.
--- Define todos los permisos disponibles en el sistema.
+-- Datos iniciales del catálogo de permisos.
+-- FASE 7: Los permisos por rol se asignan dinámicamente cuando se crean
+--         roles de organización, no con INSERTs estáticos.
 --
 -- MÓDULOS CUBIERTOS:
 -- • acceso: Acceso general a módulos
@@ -20,6 +21,7 @@
 -- • configuracion: Configuración del sistema
 -- • clientes: Gestión de clientes
 -- • profesionales: Gestión de profesionales
+-- • workflows: Aprobaciones
 --
 -- ====================================================================
 
@@ -70,75 +72,88 @@ INSERT INTO permisos_catalogo (codigo, modulo, categoria, nombre, descripcion, t
 ('pos.gestionar_caja', 'pos', 'operacion', 'Gestionar caja', 'Permite abrir, cerrar y gestionar sesiones de caja', 'booleano', 'false', 295),
 ('pos.gestionar_cupones', 'pos', 'operacion', 'Gestionar cupones', 'Permite crear y administrar cupones de descuento', 'booleano', 'false', 296),
 ('pos.gestionar_promociones', 'pos', 'operacion', 'Gestionar promociones', 'Permite crear y administrar promociones automaticas', 'booleano', 'false', 297),
+('pos.configurar_lealtad', 'pos', 'configuracion', 'Configurar programa de lealtad', 'Permite configurar programa de lealtad, niveles y reglas', 'booleano', 'false', 298),
+('pos.ver_puntos_cliente', 'pos', 'operacion', 'Ver puntos de cliente', 'Permite ver saldo de puntos de clientes', 'booleano', 'false', 299),
+('pos.canjear_puntos', 'pos', 'operacion', 'Canjear puntos', 'Permite canjear puntos por descuento en ventas', 'booleano', 'false', 300),
+('pos.ajustar_puntos', 'pos', 'operacion', 'Ajustar puntos manualmente', 'Permite hacer ajustes manuales de puntos a clientes', 'booleano', 'false', 301),
+('pos.gestionar_combos', 'pos', 'operacion', 'Gestionar combos', 'Permite crear, editar y eliminar combos/paquetes de productos', 'booleano', 'false', 302),
+('pos.gestionar_modificadores', 'pos', 'operacion', 'Gestionar modificadores', 'Permite crear, editar grupos de modificadores y asignarlos a productos', 'booleano', 'false', 303),
 
 -- ========================================
 -- MÓDULO: INVENTARIO
 -- ========================================
-('inventario.ver_productos', 'inventario', 'operacion', 'Ver productos', 'Permite ver catálogo de productos', 'booleano', 'false', 300),
-('inventario.crear_productos', 'inventario', 'operacion', 'Crear productos', 'Permite crear nuevos productos', 'booleano', 'false', 310),
-('inventario.editar_productos', 'inventario', 'operacion', 'Editar productos', 'Permite modificar productos existentes', 'booleano', 'false', 320),
-('inventario.eliminar_productos', 'inventario', 'operacion', 'Eliminar productos', 'Permite eliminar productos', 'booleano', 'false', 330),
-('inventario.ajustar_stock', 'inventario', 'operacion', 'Ajustar stock', 'Permite realizar ajustes de inventario', 'booleano', 'false', 340),
-('inventario.ver_costos', 'inventario', 'operacion', 'Ver costos', 'Permite ver costos de productos', 'booleano', 'false', 350),
-('inventario.crear_ordenes_compra', 'inventario', 'operacion', 'Crear órdenes de compra', 'Permite crear órdenes de compra a proveedores', 'booleano', 'false', 360),
-('inventario.aprobar_ordenes_compra', 'inventario', 'operacion', 'Aprobar órdenes de compra', 'Permite aprobar órdenes de compra', 'booleano', 'false', 370),
-('inventario.limite_aprobacion', 'inventario', 'operacion', 'Límite de aprobación ($)', 'Monto máximo que puede aprobar en órdenes', 'numerico', '0', 380),
-('inventario.recibir_mercancia', 'inventario', 'operacion', 'Recibir mercancía', 'Permite registrar recepción de mercancía', 'booleano', 'false', 390),
-('inventario.transferir_stock', 'inventario', 'operacion', 'Transferir stock', 'Permite transferir stock entre sucursales', 'booleano', 'false', 400),
+('inventario.ver_productos', 'inventario', 'operacion', 'Ver productos', 'Permite ver catálogo de productos', 'booleano', 'false', 400),
+('inventario.crear_productos', 'inventario', 'operacion', 'Crear productos', 'Permite crear nuevos productos', 'booleano', 'false', 410),
+('inventario.editar_productos', 'inventario', 'operacion', 'Editar productos', 'Permite modificar productos existentes', 'booleano', 'false', 420),
+('inventario.eliminar_productos', 'inventario', 'operacion', 'Eliminar productos', 'Permite eliminar productos', 'booleano', 'false', 430),
+('inventario.ajustar_stock', 'inventario', 'operacion', 'Ajustar stock', 'Permite realizar ajustes de inventario', 'booleano', 'false', 440),
+('inventario.ver_costos', 'inventario', 'operacion', 'Ver costos', 'Permite ver costos de productos', 'booleano', 'false', 450),
+('inventario.crear_ordenes_compra', 'inventario', 'operacion', 'Crear órdenes de compra', 'Permite crear órdenes de compra a proveedores', 'booleano', 'false', 460),
+('inventario.aprobar_ordenes_compra', 'inventario', 'operacion', 'Aprobar órdenes de compra', 'Permite aprobar órdenes de compra', 'booleano', 'false', 470),
+('inventario.limite_aprobacion', 'inventario', 'operacion', 'Límite de aprobación ($)', 'Monto máximo que puede aprobar en órdenes', 'numerico', '0', 480),
+('inventario.recibir_mercancia', 'inventario', 'operacion', 'Recibir mercancía', 'Permite registrar recepción de mercancía', 'booleano', 'false', 490),
+('inventario.transferir_stock', 'inventario', 'operacion', 'Transferir stock', 'Permite transferir stock entre sucursales', 'booleano', 'false', 500),
 
 -- ========================================
 -- MÓDULO: CLIENTES
 -- ========================================
-('clientes.ver', 'clientes', 'operacion', 'Ver clientes', 'Permite ver lista de clientes', 'booleano', 'true', 500),
-('clientes.crear', 'clientes', 'operacion', 'Crear clientes', 'Permite registrar nuevos clientes', 'booleano', 'false', 510),
-('clientes.editar', 'clientes', 'operacion', 'Editar clientes', 'Permite modificar datos de clientes', 'booleano', 'false', 520),
-('clientes.eliminar', 'clientes', 'operacion', 'Eliminar clientes', 'Permite eliminar clientes', 'booleano', 'false', 530),
-('clientes.ver_historial', 'clientes', 'operacion', 'Ver historial de cliente', 'Permite ver historial completo del cliente', 'booleano', 'false', 540),
-('clientes.exportar', 'clientes', 'operacion', 'Exportar clientes', 'Permite exportar lista de clientes', 'booleano', 'false', 550),
+('clientes.ver', 'clientes', 'operacion', 'Ver clientes', 'Permite ver lista de clientes', 'booleano', 'true', 600),
+('clientes.crear', 'clientes', 'operacion', 'Crear clientes', 'Permite registrar nuevos clientes', 'booleano', 'false', 610),
+('clientes.editar', 'clientes', 'operacion', 'Editar clientes', 'Permite modificar datos de clientes', 'booleano', 'false', 620),
+('clientes.eliminar', 'clientes', 'operacion', 'Eliminar clientes', 'Permite eliminar clientes', 'booleano', 'false', 630),
+('clientes.ver_historial', 'clientes', 'operacion', 'Ver historial de cliente', 'Permite ver historial completo del cliente', 'booleano', 'false', 640),
+('clientes.exportar', 'clientes', 'operacion', 'Exportar clientes', 'Permite exportar lista de clientes', 'booleano', 'false', 650),
 
 -- ========================================
 -- MÓDULO: PROFESIONALES
 -- ========================================
-('profesionales.ver', 'profesionales', 'operacion', 'Ver profesionales', 'Permite ver lista de profesionales', 'booleano', 'false', 600),
-('profesionales.crear', 'profesionales', 'operacion', 'Crear profesionales', 'Permite registrar nuevos profesionales', 'booleano', 'false', 610),
-('profesionales.editar', 'profesionales', 'operacion', 'Editar profesionales', 'Permite modificar datos de profesionales', 'booleano', 'false', 620),
-('profesionales.eliminar', 'profesionales', 'operacion', 'Eliminar profesionales', 'Permite dar de baja profesionales', 'booleano', 'false', 630),
-('profesionales.gestionar_horarios', 'profesionales', 'operacion', 'Gestionar horarios', 'Permite configurar horarios de profesionales', 'booleano', 'false', 640),
-('profesionales.ver_comisiones', 'profesionales', 'operacion', 'Ver comisiones', 'Permite ver comisiones de profesionales', 'booleano', 'false', 650),
+('profesionales.ver', 'profesionales', 'operacion', 'Ver profesionales', 'Permite ver lista de profesionales', 'booleano', 'false', 700),
+('profesionales.crear', 'profesionales', 'operacion', 'Crear profesionales', 'Permite registrar nuevos profesionales', 'booleano', 'false', 710),
+('profesionales.editar', 'profesionales', 'operacion', 'Editar profesionales', 'Permite modificar datos de profesionales', 'booleano', 'false', 720),
+('profesionales.eliminar', 'profesionales', 'operacion', 'Eliminar profesionales', 'Permite dar de baja profesionales', 'booleano', 'false', 730),
+('profesionales.gestionar_horarios', 'profesionales', 'operacion', 'Gestionar horarios', 'Permite configurar horarios de profesionales', 'booleano', 'false', 740),
+('profesionales.ver_comisiones', 'profesionales', 'operacion', 'Ver comisiones', 'Permite ver comisiones de profesionales', 'booleano', 'false', 750),
 
 -- ========================================
 -- MÓDULO: CONTABILIDAD
 -- ========================================
-('contabilidad.ver_cuentas', 'contabilidad', 'operacion', 'Ver catálogo de cuentas', 'Permite ver catálogo de cuentas contables', 'booleano', 'false', 700),
-('contabilidad.crear_asientos', 'contabilidad', 'operacion', 'Crear asientos', 'Permite crear asientos contables manuales', 'booleano', 'false', 710),
-('contabilidad.publicar_asientos', 'contabilidad', 'operacion', 'Publicar asientos', 'Permite publicar asientos (contabilizar)', 'booleano', 'false', 720),
-('contabilidad.anular_asientos', 'contabilidad', 'operacion', 'Anular asientos', 'Permite anular asientos publicados', 'booleano', 'false', 730),
-('contabilidad.cerrar_periodo', 'contabilidad', 'operacion', 'Cerrar periodo', 'Permite cerrar periodos contables', 'booleano', 'false', 740),
-('contabilidad.reabrir_periodo', 'contabilidad', 'operacion', 'Reabrir periodo', 'Permite reabrir periodos cerrados', 'booleano', 'false', 750),
-('contabilidad.configurar_cuentas', 'contabilidad', 'configuracion', 'Configurar cuentas', 'Permite configurar catálogo de cuentas', 'booleano', 'false', 760),
+('contabilidad.ver_cuentas', 'contabilidad', 'operacion', 'Ver catálogo de cuentas', 'Permite ver catálogo de cuentas contables', 'booleano', 'false', 800),
+('contabilidad.crear_asientos', 'contabilidad', 'operacion', 'Crear asientos', 'Permite crear asientos contables manuales', 'booleano', 'false', 810),
+('contabilidad.publicar_asientos', 'contabilidad', 'operacion', 'Publicar asientos', 'Permite publicar asientos (contabilizar)', 'booleano', 'false', 820),
+('contabilidad.anular_asientos', 'contabilidad', 'operacion', 'Anular asientos', 'Permite anular asientos publicados', 'booleano', 'false', 830),
+('contabilidad.cerrar_periodo', 'contabilidad', 'operacion', 'Cerrar periodo', 'Permite cerrar periodos contables', 'booleano', 'false', 840),
+('contabilidad.reabrir_periodo', 'contabilidad', 'operacion', 'Reabrir periodo', 'Permite reabrir periodos cerrados', 'booleano', 'false', 850),
+('contabilidad.configurar_cuentas', 'contabilidad', 'configuracion', 'Configurar cuentas', 'Permite configurar catálogo de cuentas', 'booleano', 'false', 860),
 
 -- ========================================
 -- MÓDULO: REPORTES
 -- ========================================
-('reportes.ver_ventas', 'reportes', 'operacion', 'Ver reportes de ventas', 'Acceso a reportes de ventas', 'booleano', 'true', 800),
-('reportes.ver_citas', 'reportes', 'operacion', 'Ver reportes de citas', 'Acceso a reportes de agendamiento', 'booleano', 'true', 810),
-('reportes.ver_inventario', 'reportes', 'operacion', 'Ver reportes de inventario', 'Acceso a reportes de inventario', 'booleano', 'false', 820),
-('reportes.ver_financieros', 'reportes', 'operacion', 'Ver reportes financieros', 'Acceso a reportes contables', 'booleano', 'false', 830),
-('reportes.ver_consolidados', 'reportes', 'operacion', 'Ver reportes consolidados', 'Acceso a reportes multi-sucursal', 'booleano', 'false', 840),
-('reportes.exportar', 'reportes', 'operacion', 'Exportar reportes', 'Permite exportar reportes a Excel/PDF', 'booleano', 'false', 850),
+('reportes.ver_ventas', 'reportes', 'operacion', 'Ver reportes de ventas', 'Acceso a reportes de ventas', 'booleano', 'true', 900),
+('reportes.ver_citas', 'reportes', 'operacion', 'Ver reportes de citas', 'Acceso a reportes de agendamiento', 'booleano', 'true', 910),
+('reportes.ver_inventario', 'reportes', 'operacion', 'Ver reportes de inventario', 'Acceso a reportes de inventario', 'booleano', 'false', 920),
+('reportes.ver_financieros', 'reportes', 'operacion', 'Ver reportes financieros', 'Acceso a reportes contables', 'booleano', 'false', 930),
+('reportes.ver_consolidados', 'reportes', 'operacion', 'Ver reportes consolidados', 'Acceso a reportes multi-sucursal', 'booleano', 'false', 940),
+('reportes.exportar', 'reportes', 'operacion', 'Exportar reportes', 'Permite exportar reportes a Excel/PDF', 'booleano', 'false', 950),
 
 -- ========================================
 -- MÓDULO: CONFIGURACIÓN
 -- ========================================
-('configuracion.general', 'configuracion', 'configuracion', 'Configuración general', 'Acceso a configuración general de la org', 'booleano', 'false', 900),
-('configuracion.sucursales', 'configuracion', 'configuracion', 'Gestionar sucursales', 'Permite crear/editar sucursales', 'booleano', 'false', 910),
-('configuracion.usuarios', 'configuracion', 'configuracion', 'Gestionar usuarios', 'Permite crear/editar usuarios', 'booleano', 'false', 920),
-('configuracion.roles', 'configuracion', 'configuracion', 'Gestionar roles', 'Permite modificar permisos por rol', 'booleano', 'false', 930),
-('configuracion.servicios', 'configuracion', 'configuracion', 'Gestionar servicios', 'Permite crear/editar servicios', 'booleano', 'false', 940),
-('configuracion.categorias', 'configuracion', 'configuracion', 'Gestionar categorías', 'Permite crear/editar categorías', 'booleano', 'false', 950),
-('configuracion.notificaciones', 'configuracion', 'configuracion', 'Configurar notificaciones', 'Permite configurar plantillas de notificación', 'booleano', 'false', 960),
-('configuracion.integraciones', 'configuracion', 'configuracion', 'Gestionar integraciones', 'Permite configurar integraciones externas', 'booleano', 'false', 970),
-('configuracion.facturacion', 'configuracion', 'configuracion', 'Configurar facturación', 'Permite configurar datos fiscales', 'booleano', 'false', 980)
+('configuracion.general', 'configuracion', 'configuracion', 'Configuración general', 'Acceso a configuración general de la org', 'booleano', 'false', 1000),
+('configuracion.sucursales', 'configuracion', 'configuracion', 'Gestionar sucursales', 'Permite crear/editar sucursales', 'booleano', 'false', 1010),
+('configuracion.usuarios', 'configuracion', 'configuracion', 'Gestionar usuarios', 'Permite crear/editar usuarios', 'booleano', 'false', 1020),
+('configuracion.roles', 'configuracion', 'configuracion', 'Gestionar roles', 'Permite modificar permisos por rol', 'booleano', 'false', 1030),
+('configuracion.servicios', 'configuracion', 'configuracion', 'Gestionar servicios', 'Permite crear/editar servicios', 'booleano', 'false', 1040),
+('configuracion.categorias', 'configuracion', 'configuracion', 'Gestionar categorías', 'Permite crear/editar categorías', 'booleano', 'false', 1050),
+('configuracion.notificaciones', 'configuracion', 'configuracion', 'Configurar notificaciones', 'Permite configurar plantillas de notificación', 'booleano', 'false', 1060),
+('configuracion.integraciones', 'configuracion', 'configuracion', 'Gestionar integraciones', 'Permite configurar integraciones externas', 'booleano', 'false', 1070),
+('configuracion.facturacion', 'configuracion', 'configuracion', 'Configurar facturación', 'Permite configurar datos fiscales', 'booleano', 'false', 1080),
+
+-- ========================================
+-- MÓDULO: WORKFLOWS
+-- ========================================
+('workflows.aprobar', 'workflows', 'operacion', 'Aprobar solicitudes', 'Permite aprobar solicitudes de workflow asignadas', 'booleano', 'false', 1100),
+('workflows.ver_todas', 'workflows', 'operacion', 'Ver todas las aprobaciones', 'Permite ver todas las aprobaciones de la organización', 'booleano', 'false', 1110),
+('workflows.gestionar', 'workflows', 'configuracion', 'Gestionar workflows', 'Permite crear y modificar definiciones de workflows', 'booleano', 'false', 1120)
 
 ON CONFLICT (codigo) DO UPDATE SET
     nombre = EXCLUDED.nombre,
@@ -148,226 +163,123 @@ ON CONFLICT (codigo) DO UPDATE SET
 
 
 -- ====================================================================
--- PERMISOS POR ROL
+-- FUNCIÓN: Asignar permisos default a un rol según su nivel jerárquico
 -- ====================================================================
--- Define los permisos base para cada rol del sistema.
--- admin/propietario: Acceso completo
--- empleado: Acceso operativo básico
--- bot: Solo lectura y operaciones de citas
--- cliente: Sin acceso al sistema de gestión
+-- Esta función se llama automáticamente cuando se crea un nuevo rol.
+-- Asigna permisos basándose en el nivel jerárquico:
+-- - nivel >= 80 (admin/propietario): todos los permisos
+-- - nivel >= 50 (gerente): lectura + operaciones básicas
+-- - nivel >= 10 (empleado): solo operaciones básicas
+-- - nivel < 10 (cliente/bot): permisos específicos
+--
+-- NOTA: El trigger que usa esta función se crea en 16-tabla-roles.sql
+--       después de crear la tabla roles.
 -- ====================================================================
 
--- Limpiar permisos de rol existentes para recarga
--- TRUNCATE permisos_rol;
+CREATE OR REPLACE FUNCTION asignar_permisos_default_a_rol(
+    p_rol_id INTEGER,
+    p_nivel_jerarquia INTEGER,
+    p_codigo_rol VARCHAR(50) DEFAULT NULL
+)
+RETURNS VOID AS $$
+DECLARE
+    v_permiso RECORD;
+    v_valor BOOLEAN;
+BEGIN
+    -- Iterar sobre todos los permisos del catálogo
+    FOR v_permiso IN
+        SELECT id, codigo, tipo_valor, valor_default
+        FROM permisos_catalogo
+        WHERE activo = TRUE
+    LOOP
+        -- Determinar valor según nivel jerárquico
+        IF p_nivel_jerarquia >= 80 THEN
+            -- Admin/Propietario: todos los permisos booleanos = true
+            IF v_permiso.tipo_valor = 'booleano' THEN
+                v_valor := TRUE;
+            END IF;
+        ELSIF p_nivel_jerarquia >= 50 THEN
+            -- Gerente: permisos de lectura + algunos de escritura
+            v_valor := v_permiso.codigo IN (
+                -- Accesos
+                'acceso.agendamiento', 'acceso.clientes', 'acceso.pos',
+                'acceso.inventario', 'acceso.reportes',
+                -- Agendamiento
+                'agendamiento.crear_citas', 'agendamiento.editar_citas',
+                'agendamiento.cancelar_citas', 'agendamiento.completar_citas',
+                'agendamiento.ver_todas_citas',
+                -- Clientes
+                'clientes.ver', 'clientes.crear', 'clientes.editar', 'clientes.ver_historial',
+                -- POS
+                'pos.crear_ventas', 'pos.aplicar_descuentos', 'pos.ver_historial',
+                'pos.abrir_caja', 'pos.cerrar_caja', 'pos.ver_puntos_cliente', 'pos.canjear_puntos',
+                -- Inventario
+                'inventario.ver_productos', 'inventario.crear_ordenes_compra',
+                -- Reportes
+                'reportes.ver_ventas', 'reportes.ver_citas', 'reportes.exportar',
+                -- Profesionales
+                'profesionales.ver', 'profesionales.ver_comisiones'
+            );
+        ELSIF p_nivel_jerarquia >= 10 THEN
+            -- Empleado: solo operaciones básicas
+            v_valor := v_permiso.codigo IN (
+                'acceso.agendamiento', 'acceso.clientes',
+                'agendamiento.crear_citas', 'agendamiento.editar_citas', 'agendamiento.completar_citas',
+                'clientes.ver', 'clientes.crear', 'clientes.editar', 'clientes.ver_historial',
+                'reportes.ver_ventas', 'reportes.ver_citas', 'reportes.exportar'
+            );
+        ELSIF p_codigo_rol = 'bot' THEN
+            -- Bot: permisos específicos de automatización
+            v_valor := v_permiso.codigo IN (
+                'acceso.agendamiento', 'acceso.clientes',
+                'agendamiento.crear_citas', 'agendamiento.editar_citas',
+                'clientes.ver', 'clientes.crear'
+            );
+        ELSE
+            -- Cliente u otros: sin permisos (usan defaults del catálogo)
+            v_valor := FALSE;
+        END IF;
 
--- ========================================
--- ROL: super_admin (bypass - no necesita permisos, tiene acceso total)
--- ========================================
--- No se insertan permisos para super_admin porque tiene bypass RLS
+        -- Insertar permiso si es booleano y tiene valor TRUE
+        IF v_permiso.tipo_valor = 'booleano' AND v_valor THEN
+            INSERT INTO permisos_rol (rol_id, permiso_id, valor)
+            VALUES (p_rol_id, v_permiso.id, to_jsonb(v_valor))
+            ON CONFLICT (rol_id, permiso_id) DO UPDATE SET valor = to_jsonb(v_valor);
+        END IF;
 
--- ========================================
--- ROL: admin / propietario
--- ========================================
-INSERT INTO permisos_rol (rol, permiso_id, valor)
-SELECT 'admin', id, 'true'::JSONB
-FROM permisos_catalogo
-WHERE tipo_valor = 'booleano' AND activo = TRUE
-ON CONFLICT (rol, permiso_id) DO UPDATE SET valor = EXCLUDED.valor;
+        -- Permisos numéricos para admin/propietario
+        IF p_nivel_jerarquia >= 80 THEN
+            IF v_permiso.codigo = 'pos.max_descuento' THEN
+                INSERT INTO permisos_rol (rol_id, permiso_id, valor)
+                VALUES (p_rol_id, v_permiso.id, '100'::JSONB)
+                ON CONFLICT (rol_id, permiso_id) DO UPDATE SET valor = '100'::JSONB;
+            ELSIF v_permiso.codigo = 'inventario.limite_aprobacion' THEN
+                INSERT INTO permisos_rol (rol_id, permiso_id, valor)
+                VALUES (p_rol_id, v_permiso.id, '999999'::JSONB)
+                ON CONFLICT (rol_id, permiso_id) DO UPDATE SET valor = '999999'::JSONB;
+            END IF;
+        END IF;
+    END LOOP;
+END;
+$$ LANGUAGE plpgsql;
 
--- Permisos numéricos para admin
-INSERT INTO permisos_rol (rol, permiso_id, valor)
-SELECT 'admin', id, '100'::JSONB
-FROM permisos_catalogo
-WHERE codigo = 'pos.max_descuento'
-ON CONFLICT (rol, permiso_id) DO UPDATE SET valor = EXCLUDED.valor;
-
-INSERT INTO permisos_rol (rol, permiso_id, valor)
-SELECT 'admin', id, '999999'::JSONB
-FROM permisos_catalogo
-WHERE codigo = 'inventario.limite_aprobacion'
-ON CONFLICT (rol, permiso_id) DO UPDATE SET valor = EXCLUDED.valor;
-
--- Propietario = mismo que admin
-INSERT INTO permisos_rol (rol, permiso_id, valor)
-SELECT 'propietario', id, 'true'::JSONB
-FROM permisos_catalogo
-WHERE tipo_valor = 'booleano' AND activo = TRUE
-ON CONFLICT (rol, permiso_id) DO UPDATE SET valor = EXCLUDED.valor;
-
-INSERT INTO permisos_rol (rol, permiso_id, valor)
-SELECT 'propietario', id, '100'::JSONB
-FROM permisos_catalogo
-WHERE codigo = 'pos.max_descuento'
-ON CONFLICT (rol, permiso_id) DO UPDATE SET valor = EXCLUDED.valor;
-
-INSERT INTO permisos_rol (rol, permiso_id, valor)
-SELECT 'propietario', id, '999999'::JSONB
-FROM permisos_catalogo
-WHERE codigo = 'inventario.limite_aprobacion'
-ON CONFLICT (rol, permiso_id) DO UPDATE SET valor = EXCLUDED.valor;
-
--- ========================================
--- ROL: empleado (acceso operativo limitado)
--- ========================================
-INSERT INTO permisos_rol (rol, permiso_id, valor)
-SELECT 'empleado', id, 'true'::JSONB FROM permisos_catalogo WHERE codigo = 'acceso.agendamiento';
-INSERT INTO permisos_rol (rol, permiso_id, valor)
-SELECT 'empleado', id, 'true'::JSONB FROM permisos_catalogo WHERE codigo = 'acceso.clientes';
-INSERT INTO permisos_rol (rol, permiso_id, valor)
-SELECT 'empleado', id, 'true'::JSONB FROM permisos_catalogo WHERE codigo = 'agendamiento.crear_citas';
-INSERT INTO permisos_rol (rol, permiso_id, valor)
-SELECT 'empleado', id, 'true'::JSONB FROM permisos_catalogo WHERE codigo = 'agendamiento.editar_citas';
-INSERT INTO permisos_rol (rol, permiso_id, valor)
-SELECT 'empleado', id, 'true'::JSONB FROM permisos_catalogo WHERE codigo = 'agendamiento.completar_citas';
-INSERT INTO permisos_rol (rol, permiso_id, valor)
-SELECT 'empleado', id, 'true'::JSONB FROM permisos_catalogo WHERE codigo = 'clientes.ver';
-INSERT INTO permisos_rol (rol, permiso_id, valor)
-SELECT 'empleado', id, 'true'::JSONB FROM permisos_catalogo WHERE codigo = 'clientes.crear';
-INSERT INTO permisos_rol (rol, permiso_id, valor)
-SELECT 'empleado', id, 'true'::JSONB FROM permisos_catalogo WHERE codigo = 'clientes.editar';
-INSERT INTO permisos_rol (rol, permiso_id, valor)
-SELECT 'empleado', id, 'true'::JSONB FROM permisos_catalogo WHERE codigo = 'clientes.ver_historial';
-INSERT INTO permisos_rol (rol, permiso_id, valor)
-SELECT 'empleado', id, 'true'::JSONB FROM permisos_catalogo WHERE codigo = 'reportes.ver_ventas';
-INSERT INTO permisos_rol (rol, permiso_id, valor)
-SELECT 'empleado', id, 'true'::JSONB FROM permisos_catalogo WHERE codigo = 'reportes.ver_citas';
-INSERT INTO permisos_rol (rol, permiso_id, valor)
-SELECT 'empleado', id, 'true'::JSONB FROM permisos_catalogo WHERE codigo = 'reportes.exportar';
-
--- ========================================
--- ROL: bot (operaciones automatizadas de citas)
--- ========================================
-INSERT INTO permisos_rol (rol, permiso_id, valor)
-SELECT 'bot', id, 'true'::JSONB FROM permisos_catalogo WHERE codigo = 'acceso.agendamiento';
-INSERT INTO permisos_rol (rol, permiso_id, valor)
-SELECT 'bot', id, 'true'::JSONB FROM permisos_catalogo WHERE codigo = 'acceso.clientes';
-INSERT INTO permisos_rol (rol, permiso_id, valor)
-SELECT 'bot', id, 'true'::JSONB FROM permisos_catalogo WHERE codigo = 'agendamiento.crear_citas';
-INSERT INTO permisos_rol (rol, permiso_id, valor)
-SELECT 'bot', id, 'true'::JSONB FROM permisos_catalogo WHERE codigo = 'agendamiento.editar_citas';
-INSERT INTO permisos_rol (rol, permiso_id, valor)
-SELECT 'bot', id, 'true'::JSONB FROM permisos_catalogo WHERE codigo = 'clientes.ver';
-INSERT INTO permisos_rol (rol, permiso_id, valor)
-SELECT 'bot', id, 'true'::JSONB FROM permisos_catalogo WHERE codigo = 'clientes.crear';
-
--- ========================================
--- ROL: cliente (sin acceso a sistema de gestión)
--- ========================================
--- No se insertan permisos para cliente - todos quedan en default (false)
+COMMENT ON FUNCTION asignar_permisos_default_a_rol(INTEGER, INTEGER, VARCHAR) IS
+'Asigna permisos default a un rol basándose en su nivel jerárquico.
+Llamada automáticamente por trigger en 16-tabla-roles.sql al crear roles de organización.';
 
 
 -- ====================================================================
--- PERMISOS DE WORKFLOWS DE APROBACIÓN (Dic 2025)
+-- VERIFICACIÓN (solo catálogo, los roles se verifican en 16-tabla-roles.sql)
 -- ====================================================================
-
-INSERT INTO permisos_catalogo (codigo, modulo, categoria, nombre, descripcion, tipo_valor, valor_default, orden_display)
-VALUES
-    ('workflows.aprobar', 'workflows', 'operacion', 'Aprobar solicitudes',
-     'Permite aprobar solicitudes de workflow asignadas',
-     'booleano', 'false', 850),
-
-    ('workflows.ver_todas', 'workflows', 'operacion', 'Ver todas las aprobaciones',
-     'Permite ver todas las aprobaciones de la organización',
-     'booleano', 'false', 851),
-
-    ('workflows.gestionar', 'workflows', 'configuracion', 'Gestionar workflows',
-     'Permite crear y modificar definiciones de workflows',
-     'booleano', 'false', 852)
-
-ON CONFLICT (codigo) DO NOTHING;
-
--- Asignar permisos de workflows a admin
-INSERT INTO permisos_rol (rol, permiso_id, valor)
-SELECT 'admin', id, 'true'::JSONB
-FROM permisos_catalogo
-WHERE codigo IN ('workflows.aprobar', 'workflows.ver_todas', 'workflows.gestionar')
-ON CONFLICT (rol, permiso_id) DO UPDATE SET valor = EXCLUDED.valor;
-
--- Asignar permisos de workflows a propietario
-INSERT INTO permisos_rol (rol, permiso_id, valor)
-SELECT 'propietario', id, 'true'::JSONB
-FROM permisos_catalogo
-WHERE codigo IN ('workflows.aprobar', 'workflows.ver_todas', 'workflows.gestionar')
-ON CONFLICT (rol, permiso_id) DO UPDATE SET valor = EXCLUDED.valor;
+DO $$
+DECLARE
+    v_count INT;
+BEGIN
+    SELECT COUNT(*) INTO v_count FROM permisos_catalogo WHERE activo = TRUE;
+    RAISE NOTICE 'Total de permisos en catálogo: %', v_count;
+END $$;
 
 
 -- ====================================================================
--- PERMISOS DE PROGRAMA DE LEALTAD (Ene 2026)
--- ====================================================================
-
-INSERT INTO permisos_catalogo (codigo, modulo, categoria, nombre, descripcion, tipo_valor, valor_default, orden_display)
-VALUES
-    ('pos.configurar_lealtad', 'pos', 'configuracion', 'Configurar programa de lealtad',
-     'Permite configurar programa de lealtad, niveles y reglas',
-     'booleano', 'false', 298),
-
-    ('pos.ver_puntos_cliente', 'pos', 'operacion', 'Ver puntos de cliente',
-     'Permite ver saldo de puntos de clientes',
-     'booleano', 'false', 299),
-
-    ('pos.canjear_puntos', 'pos', 'operacion', 'Canjear puntos',
-     'Permite canjear puntos por descuento en ventas',
-     'booleano', 'false', 300),
-
-    ('pos.ajustar_puntos', 'pos', 'operacion', 'Ajustar puntos manualmente',
-     'Permite hacer ajustes manuales de puntos a clientes',
-     'booleano', 'false', 301)
-
-ON CONFLICT (codigo) DO NOTHING;
-
--- Asignar permisos de lealtad a admin
-INSERT INTO permisos_rol (rol, permiso_id, valor)
-SELECT 'admin', id, 'true'::JSONB
-FROM permisos_catalogo
-WHERE codigo IN ('pos.configurar_lealtad', 'pos.ver_puntos_cliente', 'pos.canjear_puntos', 'pos.ajustar_puntos')
-ON CONFLICT (rol, permiso_id) DO UPDATE SET valor = EXCLUDED.valor;
-
--- Asignar permisos de lealtad a propietario
-INSERT INTO permisos_rol (rol, permiso_id, valor)
-SELECT 'propietario', id, 'true'::JSONB
-FROM permisos_catalogo
-WHERE codigo IN ('pos.configurar_lealtad', 'pos.ver_puntos_cliente', 'pos.canjear_puntos', 'pos.ajustar_puntos')
-ON CONFLICT (rol, permiso_id) DO UPDATE SET valor = EXCLUDED.valor;
-
--- Empleado puede ver y canjear puntos (no ajustar ni configurar)
-INSERT INTO permisos_rol (rol, permiso_id, valor)
-SELECT 'empleado', id, 'true'::JSONB
-FROM permisos_catalogo
-WHERE codigo IN ('pos.ver_puntos_cliente', 'pos.canjear_puntos')
-ON CONFLICT (rol, permiso_id) DO UPDATE SET valor = EXCLUDED.valor;
-
-
--- ====================================================================
--- PERMISOS DE COMBOS Y MODIFICADORES (Ene 2026)
--- ====================================================================
-
-INSERT INTO permisos_catalogo (codigo, modulo, categoria, nombre, descripcion, tipo_valor, valor_default, orden_display)
-VALUES
-    ('pos.gestionar_combos', 'pos', 'operacion', 'Gestionar combos',
-     'Permite crear, editar y eliminar combos/paquetes de productos',
-     'booleano', 'false', 302),
-
-    ('pos.gestionar_modificadores', 'pos', 'operacion', 'Gestionar modificadores',
-     'Permite crear, editar grupos de modificadores y asignarlos a productos',
-     'booleano', 'false', 303)
-
-ON CONFLICT (codigo) DO NOTHING;
-
--- Asignar permisos de combos/modificadores a admin
-INSERT INTO permisos_rol (rol, permiso_id, valor)
-SELECT 'admin', id, 'true'::JSONB
-FROM permisos_catalogo
-WHERE codigo IN ('pos.gestionar_combos', 'pos.gestionar_modificadores')
-ON CONFLICT (rol, permiso_id) DO UPDATE SET valor = EXCLUDED.valor;
-
--- Asignar permisos de combos/modificadores a propietario
-INSERT INTO permisos_rol (rol, permiso_id, valor)
-SELECT 'propietario', id, 'true'::JSONB
-FROM permisos_catalogo
-WHERE codigo IN ('pos.gestionar_combos', 'pos.gestionar_modificadores')
-ON CONFLICT (rol, permiso_id) DO UPDATE SET valor = EXCLUDED.valor;
-
-
--- ====================================================================
--- FIN: DATOS INICIALES DE PERMISOS
+-- FIN: DATOS INICIALES DE PERMISOS (FASE 7)
 -- ====================================================================

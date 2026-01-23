@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -28,7 +29,7 @@ const sizeClasses = {
   },
 };
 
-export function RecordNavigation({
+export const RecordNavigation = memo(function RecordNavigation({
   currentIndex = 0,
   totalRecords = 0,
   onPrevious,
@@ -93,7 +94,7 @@ export function RecordNavigation({
       </button>
     </div>
   );
-}
+});
 
 RecordNavigation.displayName = 'RecordNavigation';
 

@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { cn } from '@/lib/utils';
 
 /**
@@ -72,7 +73,7 @@ function getColorByThreshold(percentage, thresholds, colors) {
  * @param {string[]} [props.colors] - Colores para cada rango ['color1', 'color2', 'color3']
  * @param {string} [props.className] - Clases adicionales
  */
-export function ProgressBar({
+export const ProgressBar = memo(function ProgressBar({
   value = 0,
   max = 100,
   percentage: percentageProp,
@@ -190,7 +191,7 @@ export function ProgressBar({
       )}
     </div>
   );
-}
+});
 
 /**
  * LimitProgressBar - Wrapper para mostrar uso de límites del plan

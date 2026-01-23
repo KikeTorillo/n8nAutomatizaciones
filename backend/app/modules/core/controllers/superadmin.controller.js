@@ -7,6 +7,7 @@
 
 const RLSContextManager = require('../../../utils/rlsContextManager');
 const { ResponseHelper } = require('../../../utils/helpers');
+const { NEXO_TEAM_ORG_ID } = require('../../../config/constants');
 
 /**
  * ====================================================================
@@ -40,15 +41,68 @@ class SuperAdminController {
      *   }
      * }
      */
+    /**
+     * ====================================================================
+     * GET /api/v1/superadmin/metricas-saas
+     * ====================================================================
+     * Métricas SaaS reales (MRR, ARR, Churn, Suscriptores) de Nexo Team
+     * Consume del módulo suscripciones-negocio (org_id = 4)
+     *
+     * ✅ RESPONSE 200:
+     * {
+     *   "success": true,
+     *   "data": {
+     *     "mrr": 12500,
+     *     "arr": 150000,
+     *     "churn_rate": 2.5,
+     *     "suscriptores_activos": 50,
+     *     "distribucion_por_estado": [...],
+     *     "organizaciones": {...},
+     *     "fecha_consulta": "2026-01-22T..."
+     *   }
+     * }
+     */
+    static async metricasSaaS(req, res) {
+        try {
+            const MetricasModel = require('../../suscripciones-negocio/models/metricas.model');
+            const metricasSaaS = await MetricasModel.obtenerDashboard(NEXO_TEAM_ORG_ID);
+
+            // Métricas de organizaciones
+            const metricasOrgs = await RLSContextManager.withBypass(async (db) => {
+                const result = await db.query(`
+                    SELECT
+                        COUNT(*) FILTER (WHERE activo = true AND suspendido = false) as orgs_activas,
+                        COUNT(*) as orgs_total,
+                        COUNT(*) FILTER (WHERE suspendido = true) as orgs_suspendidas
+                    FROM organizaciones
+                `);
+                return result.rows[0];
+            });
+
+            ResponseHelper.success(res, {
+                ...metricasSaaS,
+                organizaciones: metricasOrgs,
+                fecha_consulta: new Date().toISOString()
+            }, 'Métricas SaaS obtenidas');
+
+        } catch (error) {
+            console.error('Error en métricas SaaS:', error);
+            ResponseHelper.error(res, 'Error al obtener métricas SaaS', 500);
+        }
+    }
+
     static async dashboard(req, res) {
         try {
             const metricas = await RLSContextManager.withBypass(async (db) => {
                 // Query para métricas globales (sin tablas de suscripciones viejas)
+                // FASE 7: Usar JOIN con roles para excluir super_admin en vez de columna rol ENUM
                 const metricasQuery = `
                     SELECT
                         (SELECT COUNT(*) FROM organizaciones WHERE activo = true) as organizaciones_activas,
                         (SELECT COUNT(*) FROM organizaciones) as organizaciones_total,
-                        (SELECT COUNT(*) FROM usuarios WHERE rol != 'super_admin') as usuarios_totales,
+                        (SELECT COUNT(*) FROM usuarios u
+                         JOIN roles r ON r.id = u.rol_id
+                         WHERE r.codigo != 'super_admin') as usuarios_totales,
                         (SELECT COUNT(*) FROM citas WHERE fecha_cita >= DATE_TRUNC('month', CURRENT_DATE)) as citas_mes_actual,
                         (SELECT COUNT(*) FROM profesionales WHERE activo = true) as profesionales_totales,
                         (SELECT COUNT(*) FROM clientes) as clientes_totales,
@@ -129,7 +183,7 @@ class SuperAdminController {
                 limit = 20,
                 busqueda,
                 plan,
-                activo,
+                estado,
                 orden = 'fecha_registro',
                 direccion = 'DESC'
             } = req.query;
@@ -162,11 +216,19 @@ class SuperAdminController {
                     paramCounter++;
                 }
 
-                // Filtro por activo
-                if (activo !== undefined) {
-                    whereConditions.push(`o.activo = $${paramCounter}`);
-                    params.push(activo === 'true' || activo === true);
-                    paramCounter++;
+                // Filtro por estado (activo, inactivo, suspendido)
+                if (estado) {
+                    switch (estado) {
+                        case 'activo':
+                            whereConditions.push('o.activo = true AND o.suspendido = false');
+                            break;
+                        case 'inactivo':
+                            whereConditions.push('o.activo = false AND o.suspendido = false');
+                            break;
+                        case 'suspendido':
+                            whereConditions.push('o.suspendido = true');
+                            break;
+                    }
                 }
 
                 const whereClause = whereConditions.join(' AND ');
@@ -182,7 +244,6 @@ class SuperAdminController {
                         o.suspendido,
                         o.fecha_registro,
                         o.fecha_activacion,
-                        o.modulos_activos,
                         (SELECT COUNT(*) FROM usuarios u WHERE u.organizacion_id = o.id AND u.activo = true) as total_usuarios,
                         (SELECT COUNT(*) FROM profesionales p WHERE p.organizacion_id = o.id AND p.activo = true) as total_profesionales,
                         (SELECT COUNT(*) FROM clientes c WHERE c.organizacion_id = o.id) as total_clientes,

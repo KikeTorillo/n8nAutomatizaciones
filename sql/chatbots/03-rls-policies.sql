@@ -34,19 +34,12 @@ ALTER TABLE chatbot_credentials ENABLE ROW LEVEL SECURITY;
 
 -- POLÍTICA 1: AISLAMIENTO MULTI-TENANT ESTÁNDAR
 -- Permite acceso solo a chatbots de la organización del usuario
+-- Super admin usa bypass_rls para acceso global
 CREATE POLICY chatbot_config_tenant_isolation ON chatbot_config
     USING (
         CASE
-            -- 🔓 BYPASS: Funciones de sistema pueden ver todo
+            -- 🔓 BYPASS: Funciones de sistema y super admin
             WHEN current_setting('app.bypass_rls', TRUE) = 'true' THEN
-                TRUE
-
-            -- 👑 SUPER ADMIN: Acceso global para soporte
-            WHEN EXISTS (
-                SELECT 1 FROM usuarios
-                WHERE id = NULLIF(current_setting('app.current_user_id', TRUE), '')::INTEGER
-                AND rol = 'super_admin'
-            ) THEN
                 TRUE
 
             -- 🏢 TENANT ISOLATION: Solo org del usuario
@@ -67,19 +60,12 @@ CREATE POLICY chatbot_config_system_bypass ON chatbot_config
 
 -- POLÍTICA 1: AISLAMIENTO INDIRECTO VÍA CHATBOT_CONFIG
 -- Verifica que el chatbot asociado pertenezca a la organización del usuario
+-- Super admin usa bypass_rls para acceso global
 CREATE POLICY chatbot_credentials_tenant_isolation ON chatbot_credentials
     USING (
         CASE
-            -- 🔓 BYPASS: Funciones de sistema
+            -- 🔓 BYPASS: Funciones de sistema y super admin
             WHEN current_setting('app.bypass_rls', TRUE) = 'true' THEN
-                TRUE
-
-            -- 👑 SUPER ADMIN: Acceso global
-            WHEN EXISTS (
-                SELECT 1 FROM usuarios
-                WHERE id = NULLIF(current_setting('app.current_user_id', TRUE), '')::INTEGER
-                AND rol = 'super_admin'
-            ) THEN
                 TRUE
 
             -- 🔗 TENANT ISOLATION INDIRECTO: Via JOIN con chatbot_config

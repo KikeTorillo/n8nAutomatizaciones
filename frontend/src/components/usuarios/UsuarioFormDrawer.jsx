@@ -80,7 +80,7 @@ function UsuarioFormDrawer({ isOpen, onClose, mode = 'create', usuario = null })
           email: usuario.email || '',
           nombre: usuario.nombre || '',
           apellidos: usuario.apellidos || '',
-          rol: usuario.rol || 'empleado',
+          rol: usuario.rol_codigo || 'empleado',
         });
       } else {
         reset({

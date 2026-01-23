@@ -26,14 +26,15 @@ class ClienteModel {
                     organizacion_id, nombre, email, telefono, telegram_chat_id, whatsapp_phone,
                     fecha_nacimiento, profesional_preferido_id, notas_especiales, alergias,
                     como_conocio, activo, marketing_permitido, foto_url, lista_precios_id,
-                    tipo, rfc, razon_social, calle, colonia, ciudad, estado_id, codigo_postal, pais_id
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24)
+                    tipo, rfc, razon_social, calle, colonia, ciudad, estado_id, codigo_postal, pais_id,
+                    organizacion_vinculada_id
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25)
                 RETURNING
                     id, organizacion_id, nombre, email, telefono, telegram_chat_id, whatsapp_phone,
                     fecha_nacimiento, profesional_preferido_id, notas_especiales, alergias,
                     como_conocio, activo, marketing_permitido, foto_url, lista_precios_id,
                     tipo, rfc, razon_social, calle, colonia, ciudad, estado_id, codigo_postal, pais_id,
-                    creado_en, actualizado_en
+                    organizacion_vinculada_id, creado_en, actualizado_en
             `;
 
             const values = [
@@ -61,7 +62,9 @@ class ClienteModel {
                 data.ciudad || null,
                 data.estado_id || null,
                 data.codigo_postal || null,
-                data.pais_id || 1  // Default: México
+                data.pais_id || 1,  // Default: México
+                // Dogfooding: vinculación con organización de la plataforma
+                data.organizacion_vinculada_id || null
             ];
 
             try {
@@ -118,6 +121,7 @@ class ClienteModel {
                     c.como_conocio, c.activo, c.marketing_permitido, c.foto_url, c.lista_precios_id,
                     c.tipo, c.rfc, c.razon_social,
                     c.calle, c.colonia, c.ciudad, c.estado_id, c.codigo_postal, c.pais_id,
+                    c.organizacion_vinculada_id,
                     c.creado_en, c.actualizado_en,
                     lp.codigo as lista_precios_codigo,
                     lp.nombre as lista_precios_nombre,
@@ -273,7 +277,9 @@ class ClienteModel {
                 'calle', 'colonia', 'ciudad', 'estado_id', 'codigo_postal', 'pais_id',
                 // Campos de crédito
                 'permite_credito', 'limite_credito', 'dias_credito',
-                'credito_suspendido', 'credito_suspendido_en', 'credito_suspendido_motivo'
+                'credito_suspendido', 'credito_suspendido_en', 'credito_suspendido_motivo',
+                // Vinculación dogfooding (Ene 2026)
+                'organizacion_vinculada_id'
             ];
 
             const setClauses = [];

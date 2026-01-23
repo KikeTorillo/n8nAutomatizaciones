@@ -75,7 +75,7 @@ class PlantillasController {
     static async crear(req, res) {
         try {
             // Verificar que es super_admin
-            if (req.user.rol !== 'super_admin') {
+            if (req.user.rol_codigo !== 'super_admin') {
                 return ResponseHelper.error(res, 'Solo super_admin puede crear plantillas', 403);
             }
 
@@ -100,7 +100,7 @@ class PlantillasController {
     static async actualizar(req, res) {
         try {
             // Verificar que es super_admin
-            if (req.user.rol !== 'super_admin') {
+            if (req.user.rol_codigo !== 'super_admin') {
                 return ResponseHelper.error(res, 'Solo super_admin puede actualizar plantillas', 403);
             }
 
@@ -128,7 +128,7 @@ class PlantillasController {
     static async eliminar(req, res) {
         try {
             // Verificar que es super_admin
-            if (req.user.rol !== 'super_admin') {
+            if (req.user.rol_codigo !== 'super_admin') {
                 return ResponseHelper.error(res, 'Solo super_admin puede eliminar plantillas', 403);
             }
 

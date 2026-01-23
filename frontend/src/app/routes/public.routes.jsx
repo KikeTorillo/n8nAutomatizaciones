@@ -1,6 +1,6 @@
 /**
  * Rutas Públicas
- * Incluye marketplace, eventos públicos, sitios web, etc.
+ * Incluye marketplace, eventos públicos, sitios web, planes y pagos.
  */
 
 import { lazy } from 'react';
@@ -23,6 +23,10 @@ const SitioPublicoPage = lazy(() => import('@/pages/public/SitioPublicoPage'));
 // POS Display (pantalla cliente)
 const CustomerDisplayPage = lazy(() => import('@/pages/pos/CustomerDisplayPage'));
 
+// Planes y Pagos
+const PlanesPublicPage = lazy(() => import('@/pages/planes/PlanesPublicPage'));
+const PaymentCallbackPage = lazy(() => import('@/pages/payment/PaymentCallbackPage'));
+
 export const publicRoutes = [
   // Landing page (index)
   indexRoute(LandingPage),
@@ -40,6 +44,13 @@ export const publicRoutes = [
 
   // POS Display (pantalla secundaria para cliente)
   publicRoute('pos/display', CustomerDisplayPage),
+
+  // Planes de suscripción (público)
+  publicRoute('planes', PlanesPublicPage),
+  publicRoute('elegir-plan', PlanesPublicPage),
+
+  // Callback de pago (MercadoPago)
+  publicRoute('payment/callback', PaymentCallbackPage),
 
   // Agendar público (marketplace)
   publicRoute('agendar/:slug', AgendarPublicoPage),

@@ -53,7 +53,7 @@ class UsuarioController {
 
     static actualizar = asyncHandler(async (req, res) => {
         const { id } = req.params;
-        const esAdmin = ['super_admin', 'admin', 'propietario'].includes(req.user.rol);
+        const esAdmin = req.user.nivel_jerarquia >= 80;
         const esPropioUsuario = parseInt(id) === req.user.userId;
 
         if (!esAdmin && !esPropioUsuario) {
@@ -78,7 +78,7 @@ class UsuarioController {
         const { id } = req.params;
         const { rol } = req.body;
 
-        if (!['admin', 'propietario', 'super_admin'].includes(req.user.rol)) {
+        if (!req.user.nivel_jerarquia >= 80) {
             return ResponseHelper.error(res, 'No tienes permisos para cambiar roles', 403);
         }
 
@@ -95,7 +95,7 @@ class UsuarioController {
     static desbloquear = asyncHandler(async (req, res) => {
         const { id } = req.params;
 
-        if (!['admin', 'propietario', 'super_admin'].includes(req.user.rol)) {
+        if (!req.user.nivel_jerarquia >= 80) {
             return ResponseHelper.error(res, 'No tienes permisos para desbloquear usuarios', 403);
         }
 
@@ -109,7 +109,7 @@ class UsuarioController {
     });
 
     static obtenerBloqueados = asyncHandler(async (req, res) => {
-        if (!['admin', 'propietario', 'super_admin'].includes(req.user.rol)) {
+        if (!req.user.nivel_jerarquia >= 80) {
             return ResponseHelper.error(res, 'No tienes permisos para ver usuarios bloqueados', 403);
         }
 
@@ -121,11 +121,11 @@ class UsuarioController {
     static verificarBloqueo = asyncHandler(async (req, res) => {
         const { id } = req.params;
 
-        if (req.user.rol === 'super_admin') {
+        if (req.user.rol_codigo === 'super_admin') {
             // Super admin puede verificar cualquier usuario
         } else if (parseInt(id) === req.user.userId) {
             // Usuario puede verificar su propio estado
-        } else if (['admin', 'propietario'].includes(req.user.rol)) {
+        } else if (req.user.nivel_jerarquia >= 80) {
             // Admins pueden verificar usuarios de su organización
         } else {
             return ResponseHelper.error(res, 'No tienes permisos para verificar este usuario', 403);
@@ -133,7 +133,7 @@ class UsuarioController {
 
         const estadoBloqueo = await UsuarioModel.verificarBloqueo(
             parseInt(id),
-            req.user.rol
+            req.user.rol_codigo
         );
 
         if (!estadoBloqueo) {
@@ -154,7 +154,7 @@ class UsuarioController {
      */
     static crearDirecto = asyncHandler(async (req, res) => {
         // Solo admin/propietario pueden crear usuarios
-        if (!['admin', 'propietario', 'super_admin'].includes(req.user.rol)) {
+        if (!req.user.nivel_jerarquia >= 80) {
             return ResponseHelper.error(res, 'No tienes permisos para crear usuarios', 403);
         }
 
@@ -207,7 +207,7 @@ class UsuarioController {
         const { activo } = req.body;
 
         // Solo admin/propietario pueden cambiar estado
-        if (!['admin', 'propietario', 'super_admin'].includes(req.user.rol)) {
+        if (!req.user.nivel_jerarquia >= 80) {
             return ResponseHelper.error(res, 'No tienes permisos para cambiar el estado de usuarios', 403);
         }
 
@@ -234,7 +234,7 @@ class UsuarioController {
         const { profesional_id } = req.body;
 
         // Solo admin/propietario pueden vincular profesionales
-        if (!['admin', 'propietario', 'super_admin'].includes(req.user.rol)) {
+        if (!req.user.nivel_jerarquia >= 80) {
             return ResponseHelper.error(res, 'No tienes permisos para vincular profesionales', 403);
         }
 

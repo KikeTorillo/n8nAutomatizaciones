@@ -128,6 +128,65 @@ export const ICON_CONTAINER_SIZES = {
   xl: 'p-4 rounded-xl',
 };
 
+/**
+ * Tamaños para modales (max-width)
+ */
+export const MODAL_SIZES = {
+  sm: 'max-w-md',      // 448px
+  md: 'max-w-2xl',     // 672px
+  lg: 'max-w-4xl',     // 896px
+  xl: 'max-w-6xl',     // 1152px
+  full: 'max-w-full',
+};
+
+/**
+ * Tamaños para SearchInput
+ */
+export const SEARCH_INPUT_SIZES = {
+  sm: {
+    input: 'h-9 text-sm',
+    icon: 'w-4 h-4',
+    paddingLeft: 'pl-8',
+    paddingRightWithClear: 'pr-8',
+    paddingRightNormal: 'pr-3',
+  },
+  md: {
+    input: 'h-10 text-base',
+    icon: 'w-5 h-5',
+    paddingLeft: 'pl-10',
+    paddingRightWithClear: 'pr-10',
+    paddingRightNormal: 'pr-4',
+  },
+  lg: {
+    input: 'h-12 text-lg',
+    icon: 'w-6 h-6',
+    paddingLeft: 'pl-12',
+    paddingRightWithClear: 'pr-12',
+    paddingRightNormal: 'pr-4',
+  },
+};
+
+/**
+ * Tamaños para Pagination
+ */
+export const PAGINATION_SIZES = {
+  sm: {
+    button: 'px-2 py-1 text-xs',
+    icon: 'w-3 h-3',
+    page: 'w-7 h-7 text-xs',
+  },
+  md: {
+    button: 'px-3 py-2 text-sm',
+    icon: 'w-4 h-4',
+    page: 'w-8 h-8 text-sm',
+  },
+  lg: {
+    button: 'px-4 py-2 text-base',
+    icon: 'w-5 h-5',
+    page: 'w-10 h-10 text-base',
+  },
+};
+
 export default {
   FORM_ELEMENT_HEIGHTS,
   BUTTON_SIZES,
@@ -140,4 +199,7 @@ export default {
   GAP_SIZES,
   TEXT_SIZES,
   ICON_CONTAINER_SIZES,
+  MODAL_SIZES,
+  SEARCH_INPUT_SIZES,
+  PAGINATION_SIZES,
 };

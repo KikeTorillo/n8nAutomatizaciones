@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, memo } from 'react';
 import { X, CheckCircle, AlertCircle, Info, AlertTriangle } from 'lucide-react';
 
 /**
@@ -10,7 +10,7 @@ import { X, CheckCircle, AlertCircle, Info, AlertTriangle } from 'lucide-react';
  * @param {number} props.duration - Duración en ms antes de auto-cerrar
  * @param {Function} props.onClose - Callback al cerrar
  */
-function Toast({ id, message, type = 'info', duration = 5000, onClose }) {
+const Toast = memo(function Toast({ id, message, type = 'info', duration = 5000, onClose }) {
   useEffect(() => {
     if (duration && duration > 0) {
       const timer = setTimeout(() => {
@@ -57,6 +57,8 @@ function Toast({ id, message, type = 'info', duration = 5000, onClose }) {
 
   return (
     <div
+      role="alert"
+      aria-live={type === 'error' ? 'assertive' : 'polite'}
       className={`
         ${variant.bg} ${variant.border} ${variant.textColor}
         border rounded-lg p-4 shadow-lg
@@ -80,7 +82,7 @@ function Toast({ id, message, type = 'info', duration = 5000, onClose }) {
       </button>
     </div>
   );
-}
+});
 
 Toast.displayName = 'Toast';
 

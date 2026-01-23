@@ -3,6 +3,10 @@
 -- ====================================================================
 -- Permisos para gestión de monedas, tasas y listas de precios.
 --
+-- FASE 7 (Ene 2026): Actualizado para roles dinámicos.
+-- Los permisos se asignan automáticamente por el trigger en 13-datos-permisos.sql
+-- cuando se crean roles de organización.
+--
 -- Fase 5 - Diciembre 2025
 -- ====================================================================
 
@@ -34,30 +38,61 @@ ON CONFLICT (codigo) DO UPDATE SET
     descripcion = EXCLUDED.descripcion,
     orden_display = EXCLUDED.orden_display;
 
--- ====================================================================
--- PERMISOS POR ROL
--- ====================================================================
-
--- Admin y Propietario: todos los permisos de precios
-INSERT INTO permisos_rol (rol, permiso_id, valor)
-SELECT 'admin', id, 'true'::jsonb
-FROM permisos_catalogo
-WHERE modulo IN ('monedas', 'tasas', 'listas_precios')
-ON CONFLICT (rol, permiso_id) DO UPDATE SET valor = 'true';
-
-INSERT INTO permisos_rol (rol, permiso_id, valor)
-SELECT 'propietario', id, 'true'::jsonb
-FROM permisos_catalogo
-WHERE modulo IN ('monedas', 'tasas', 'listas_precios')
-ON CONFLICT (rol, permiso_id) DO UPDATE SET valor = 'true';
-
--- Empleado: solo ver
-INSERT INTO permisos_rol (rol, permiso_id, valor)
-SELECT 'empleado', id, 'true'::jsonb
-FROM permisos_catalogo
-WHERE codigo IN ('monedas.ver', 'tasas.ver', 'listas_precios.ver')
-ON CONFLICT (rol, permiso_id) DO UPDATE SET valor = 'true';
 
 -- ====================================================================
--- FIN: PERMISOS DE PRECIOS
+-- ASIGNAR PERMISOS A ROLES EXISTENTES (FASE 7)
+-- ====================================================================
+-- Los permisos de precios se agregan a la función asignar_permisos_default_a_rol.
+-- Para roles que ya existen, usamos el mismo patrón del trigger.
+-- ====================================================================
+
+-- Actualizar la función para incluir permisos de precios
+-- Esto se hace actualizando la lista en 13-datos-permisos.sql
+-- Por ahora, asignamos manualmente a roles existentes
+
+DO $$
+DECLARE
+    v_rol RECORD;
+    v_permiso RECORD;
+BEGIN
+    -- Para roles de organización con nivel >= 80 (admin/propietario): todos los permisos de precios
+    FOR v_rol IN
+        SELECT id FROM roles
+        WHERE organizacion_id IS NOT NULL
+          AND nivel_jerarquia >= 80
+          AND activo = TRUE
+    LOOP
+        FOR v_permiso IN
+            SELECT id FROM permisos_catalogo
+            WHERE modulo IN ('monedas', 'tasas', 'listas_precios') AND activo = TRUE
+        LOOP
+            INSERT INTO permisos_rol (rol_id, permiso_id, valor)
+            VALUES (v_rol.id, v_permiso.id, 'true'::jsonb)
+            ON CONFLICT (rol_id, permiso_id) DO UPDATE SET valor = 'true'::jsonb;
+        END LOOP;
+    END LOOP;
+
+    -- Para empleados (nivel 10): solo permisos de ver
+    FOR v_rol IN
+        SELECT id FROM roles
+        WHERE organizacion_id IS NOT NULL
+          AND nivel_jerarquia >= 10 AND nivel_jerarquia < 50
+          AND activo = TRUE
+    LOOP
+        FOR v_permiso IN
+            SELECT id FROM permisos_catalogo
+            WHERE codigo IN ('monedas.ver', 'tasas.ver', 'listas_precios.ver') AND activo = TRUE
+        LOOP
+            INSERT INTO permisos_rol (rol_id, permiso_id, valor)
+            VALUES (v_rol.id, v_permiso.id, 'true'::jsonb)
+            ON CONFLICT (rol_id, permiso_id) DO UPDATE SET valor = 'true'::jsonb;
+        END LOOP;
+    END LOOP;
+
+    RAISE NOTICE 'Permisos de precios asignados a roles existentes';
+END $$;
+
+
+-- ====================================================================
+-- FIN: PERMISOS DE PRECIOS (FASE 7)
 -- ====================================================================

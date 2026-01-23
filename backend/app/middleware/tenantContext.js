@@ -46,7 +46,7 @@ function ensureTenantContext(options = {}) {
 
   return (req, res, next) => {
     // Super admin puede bypasear si se permite
-    if (allowSuperAdmin && req.user?.rol === 'super_admin') {
+    if (allowSuperAdmin && req.user?.rol_codigo === 'super_admin') {
       // Intentar adjuntar organizacionId si existe, pero no es requerido
       req.organizacionId = req.tenant?.organizacionId || req.user?.organizacion_id || null;
       return next();
@@ -58,7 +58,7 @@ function ensureTenantContext(options = {}) {
     if (!organizacionId) {
       logger.warn('[ensureTenantContext] organizacionId no encontrado', {
         user_id: req.user?.id,
-        user_rol: req.user?.rol,
+        user_rol: req.user?.rol_codigo,
         tenant: req.tenant ? 'exists' : 'missing',
         path: req.path
       });
@@ -99,7 +99,7 @@ function extractOrganizacionId(req) {
  * @returns {boolean}
  */
 function isSuperAdmin(req) {
-  return req.user?.rol === 'super_admin';
+  return req.user?.rol_codigo === 'super_admin';
 }
 
 module.exports = {

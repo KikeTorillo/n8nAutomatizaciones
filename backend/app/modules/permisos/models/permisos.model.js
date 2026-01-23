@@ -113,13 +113,14 @@ class PermisosModel {
      * @param {string} rol
      * @returns {Promise<Array>}
      */
-    static async listarPermisosPorRol(rol) {
+    static async listarPermisosPorRol(rolCodigo) {
         const db = await getDb();
         try {
+            // FASE 7: Usar rol_id con JOIN a tabla roles
             const query = `
                 SELECT
                     pr.id,
-                    pr.rol,
+                    r.codigo AS rol,
                     pr.permiso_id,
                     pr.valor,
                     pc.codigo,
@@ -128,11 +129,12 @@ class PermisosModel {
                     pc.tipo_valor,
                     pc.valor_default
                 FROM permisos_rol pr
+                JOIN roles r ON r.id = pr.rol_id
                 JOIN permisos_catalogo pc ON pr.permiso_id = pc.id
-                WHERE pr.rol = $1 AND pc.activo = true
+                WHERE r.codigo = $1 AND pc.activo = true
                 ORDER BY pc.modulo, pc.orden_display
             `;
-            const result = await db.query(query, [rol]);
+            const result = await db.query(query, [rolCodigo]);
             return result.rows;
         } finally {
             db.release();
@@ -146,17 +148,20 @@ class PermisosModel {
      * @param {any} valor
      * @returns {Promise<Object>}
      */
-    static async asignarPermisoRol(rol, permisoId, valor) {
+    static async asignarPermisoRol(rolCodigo, permisoId, valor) {
         const db = await getDb();
         try {
+            // FASE 7: Resolver rol_id desde código del rol
             const query = `
-                INSERT INTO permisos_rol (rol, permiso_id, valor)
-                VALUES ($1, $2, $3)
-                ON CONFLICT (rol, permiso_id)
+                INSERT INTO permisos_rol (rol_id, permiso_id, valor)
+                SELECT r.id, $2, $3
+                FROM roles r
+                WHERE r.codigo = $1
+                ON CONFLICT (rol_id, permiso_id)
                 DO UPDATE SET valor = $3, actualizado_en = NOW()
                 RETURNING *
             `;
-            const result = await db.query(query, [rol, permisoId, JSON.stringify(valor)]);
+            const result = await db.query(query, [rolCodigo, permisoId, JSON.stringify(valor)]);
             return result.rows[0];
         } finally {
             db.release();
@@ -169,14 +174,16 @@ class PermisosModel {
      * @param {number} permisoId
      * @returns {Promise<boolean>}
      */
-    static async eliminarPermisoRol(rol, permisoId) {
+    static async eliminarPermisoRol(rolCodigo, permisoId) {
         const db = await getDb();
         try {
+            // FASE 7: Resolver rol_id desde código del rol
             const query = `
                 DELETE FROM permisos_rol
-                WHERE rol = $1 AND permiso_id = $2
+                WHERE rol_id = (SELECT id FROM roles WHERE codigo = $1)
+                  AND permiso_id = $2
             `;
-            const result = await db.query(query, [rol, permisoId]);
+            const result = await db.query(query, [rolCodigo, permisoId]);
             return result.rowCount > 0;
         } finally {
             db.release();
@@ -189,20 +196,23 @@ class PermisosModel {
      * @param {Array} permisos - [{permisoId, valor}]
      * @returns {Promise<number>} - Cantidad de permisos actualizados
      */
-    static async actualizarPermisosRol(rol, permisos) {
+    static async actualizarPermisosRol(rolCodigo, permisos) {
         const db = await getDb();
         try {
             await db.query('BEGIN');
 
+            // FASE 7: Resolver rol_id desde código del rol
             let count = 0;
             for (const p of permisos) {
                 const query = `
-                    INSERT INTO permisos_rol (rol, permiso_id, valor)
-                    VALUES ($1, $2, $3)
-                    ON CONFLICT (rol, permiso_id)
+                    INSERT INTO permisos_rol (rol_id, permiso_id, valor)
+                    SELECT r.id, $2, $3
+                    FROM roles r
+                    WHERE r.codigo = $1
+                    ON CONFLICT (rol_id, permiso_id)
                     DO UPDATE SET valor = $3, actualizado_en = NOW()
                 `;
-                await db.query(query, [rol, p.permisoId, JSON.stringify(p.valor)]);
+                await db.query(query, [rolCodigo, p.permisoId, JSON.stringify(p.valor)]);
                 count++;
             }
 

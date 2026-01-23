@@ -1,4 +1,4 @@
-import { forwardRef } from 'react';
+import { forwardRef, memo } from 'react';
 import { cn } from '@/lib/utils';
 
 /**
@@ -13,8 +13,7 @@ import { cn } from '@/lib/utils';
  * @param {boolean} hasError - Si tiene error (para styling del borde)
  * @param {string} className - Clases adicionales
  */
-const Textarea = forwardRef(
-  (
+const Textarea = memo(forwardRef(function Textarea(
     {
       rows = 3,
       hasError = false,
@@ -22,7 +21,7 @@ const Textarea = forwardRef(
       ...props
     },
     ref
-  ) => {
+  ) {
     const baseStyles = cn(
       'w-full px-4 py-3 border rounded-lg transition-colors',
       'focus:outline-none focus:ring-2 focus:ring-offset-0',
@@ -46,7 +45,7 @@ const Textarea = forwardRef(
       />
     );
   }
-);
+));
 
 Textarea.displayName = 'Textarea';
 

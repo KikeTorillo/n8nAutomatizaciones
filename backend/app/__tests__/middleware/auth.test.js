@@ -37,11 +37,11 @@ describe('Middleware Auth - authenticateToken', () => {
       email_verificado: true
     });
 
-    // Generar token JWT válido
+    // Generar token JWT válido (FASE 7: solo rolId, sin rol ENUM)
     validToken = authConfig.generateToken({
       userId: testUsuario.id,
       email: testUsuario.email,
-      rol: testUsuario.rol,
+      rolId: testUsuario.rol_id,
       organizacionId: testOrg.id
     });
 
@@ -82,7 +82,7 @@ describe('Middleware Auth - authenticateToken', () => {
     expect(req.user).toBeDefined();
     expect(req.user.id).toBe(testUsuario.id);
     expect(req.user.email).toBe(testUsuario.email);
-    expect(req.user.rol).toBe(testUsuario.rol);
+    expect(req.user.rol_codigo).toBeDefined(); // FASE 7: usa rol_codigo en vez de rol
     expect(req.user.organizacion_id).toBe(testOrg.id);
   });
 
@@ -126,7 +126,7 @@ describe('Middleware Auth - authenticateToken', () => {
       {
         userId: testUsuario.id,
         email: testUsuario.email,
-        rol: testUsuario.rol,
+        rolId: testUsuario.rol_id,
         organizacionId: testOrg.id
       },
       '0s' // Expira inmediatamente
@@ -206,7 +206,7 @@ describe('Middleware Auth - authenticateToken', () => {
     const tokenToBlacklist = authConfig.generateToken({
       userId: testUsuario.id,
       email: testUsuario.email,
-      rol: testUsuario.rol,
+      rolId: testUsuario.rol_id,
       organizacionId: testOrg.id
     });
 
@@ -267,7 +267,7 @@ describe('Middleware Auth - authenticateToken', () => {
     const inactiveToken = authConfig.generateToken({
       userId: usuarioInactivo.id,
       email: usuarioInactivo.email,
-      rol: usuarioInactivo.rol,
+      rolId: usuarioInactivo.rol_id,
       organizacionId: testOrg.id
     });
 

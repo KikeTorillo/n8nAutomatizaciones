@@ -113,7 +113,7 @@ class ReseñasMarketplaceController {
         const userId = req.user.id;
 
         // Validar que el usuario sea admin o propietario
-        if (!['admin', 'propietario'].includes(req.user.rol)) {
+        if (req.user.nivel_jerarquia < 80) {
             return ResponseHelper.error(
                 res,
                 'Solo administradores pueden responder reseñas',
@@ -174,7 +174,7 @@ class ReseñasMarketplaceController {
         const userId = req.user.id;
 
         // Validar que el usuario sea admin o propietario
-        if (!['admin', 'propietario'].includes(req.user.rol)) {
+        if (req.user.nivel_jerarquia < 80) {
             return ResponseHelper.error(
                 res,
                 'Solo administradores pueden moderar reseñas',

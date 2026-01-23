@@ -1,14 +1,7 @@
-import { useEffect, useCallback } from 'react';
+import { memo, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
-
-// Constante externa para evitar recreación en cada render
-const SIZE_CLASSES = {
-  sm: 'max-w-md',
-  md: 'max-w-2xl',
-  lg: 'max-w-4xl',
-  xl: 'max-w-6xl',
-};
+import { MODAL_SIZES } from '@/lib/uiConstants';
 
 /**
  * Componente Modal reutilizable
@@ -25,7 +18,7 @@ const SIZE_CLASSES = {
  * @param {boolean} showCloseButton - Mostrar botón de cierre (default: true)
  * @param {boolean} disableClose - Deshabilitar cierre del modal (para estados de carga)
  */
-function Modal({
+const Modal = memo(function Modal({
   isOpen,
   onClose,
   title,
@@ -85,7 +78,7 @@ function Modal({
               transition={{ duration: 0.2 }}
               onClick={(e) => e.stopPropagation()}
               className={`
-                bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full ${SIZE_CLASSES[size]}
+                bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full ${MODAL_SIZES[size]}
                 max-h-[90vh] overflow-hidden flex flex-col
               `}
             >
@@ -131,6 +124,8 @@ function Modal({
       )}
     </AnimatePresence>
   );
-}
+});
+
+Modal.displayName = 'Modal';
 
 export default Modal;

@@ -176,7 +176,7 @@ class ModulosController {
   static async obtenerActivos(req, res) {
     try {
       const organizacionId = req.user.organizacion_id;
-      const userRole = req.user.rol;
+      const userRole = req.user.rol_codigo;
       const userId = req.user.id;
 
       if (!organizacionId) {

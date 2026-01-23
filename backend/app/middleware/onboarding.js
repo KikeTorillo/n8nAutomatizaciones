@@ -24,7 +24,7 @@ const requireOnboarding = (req, res, next) => {
     }
 
     // Super admin no requiere onboarding (es usuario de plataforma)
-    if (req.user.rol === 'super_admin') {
+    if (req.user.rol_codigo === 'super_admin') {
         return next();
     }
 
@@ -64,7 +64,7 @@ const checkOnboarding = async (req, res, next) => {
     }
 
     // Super admin siempre tiene onboarding "completado"
-    if (req.user.rol === 'super_admin') {
+    if (req.user.rol_codigo === 'super_admin') {
         req.onboardingCompleted = true;
         return next();
     }

@@ -1,4 +1,4 @@
-import { forwardRef, useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import { memo, forwardRef, useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import { Check, ChevronDown, X } from 'lucide-react';
 
@@ -12,7 +12,7 @@ import { Check, ChevronDown, X } from 'lucide-react';
  * @param {string} placeholder - Texto placeholder
  * @param {number} max - Máximo de opciones seleccionables (default: sin límite)
  */
-const MultiSelect = forwardRef(
+const MultiSelect = memo(forwardRef(
   (
     {
       className,
@@ -215,7 +215,7 @@ const MultiSelect = forwardRef(
       </div>
     );
   }
-);
+));
 
 MultiSelect.displayName = 'MultiSelect';
 

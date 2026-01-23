@@ -35,8 +35,9 @@ function Login() {
   // Ene 2026: super_admin ahora tiene organización, todos van a /home
   useEffect(() => {
     if (isAuthenticated && user) {
-      // Verificar si necesita onboarding (super_admin nunca necesita)
-      if (user.rol !== 'super_admin' && !user.organizacion_id && user.onboarding_completado === false) {
+      // Verificar si necesita onboarding (roles de sistema nunca necesitan)
+      // FASE 7: Usa nivel_jerarquia >= 100 para super_admin
+      if (user.nivel_jerarquia < 100 && !user.organizacion_id && user.onboarding_completado === false) {
         navigate('/onboarding', { replace: true });
       } else {
         navigate('/home', { replace: true });

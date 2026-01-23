@@ -60,7 +60,8 @@ function AusenciasPage() {
   const { exportCSV } = useExportCSV();
 
   const user = useAuthStore(selectUser);
-  const esAdmin = ['admin', 'propietario', 'super_admin'].includes(user?.rol);
+  // FASE 7: Usa nivel_jerarquia >= 80 para admin/propietario
+  const esAdmin = user?.nivel_jerarquia >= 80;
 
   // Verificar si es supervisor (tiene solicitudes pendientes de su equipo)
   const { data: pendientes, esSupervisor, isLoading: isLoadingSupervisor } =

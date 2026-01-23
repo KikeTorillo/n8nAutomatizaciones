@@ -57,13 +57,14 @@ class AuthController {
     static register = asyncHandler(async (req, res) => {
         const usuario = await UsuarioModel.crear(req.body);
 
+        // FASE 7: Retornar rol_id del sistema dinámico
         const usuarioData = {
             usuario: {
                 id: usuario.id,
                 email: usuario.email,
                 nombre: usuario.nombre,
                 apellidos: usuario.apellidos,
-                rol: usuario.rol,
+                rol_id: usuario.rol_id,
                 organizacion_id: usuario.organizacion_id,
                 activo: usuario.activo,
                 creado_en: usuario.creado_en
@@ -118,6 +119,7 @@ class AuthController {
             return ResponseHelper.notFound(res, 'Usuario no encontrado');
         }
 
+        // FASE 7 COMPLETADA (Ene 2026): Solo sistema de roles dinámicos
         const usuarioData = {
             usuario: {
                 id: usuario.id,
@@ -125,7 +127,11 @@ class AuthController {
                 nombre: usuario.nombre,
                 apellidos: usuario.apellidos,
                 telefono: usuario.telefono,
-                rol: usuario.rol,
+                // Sistema de roles dinámicos (solo rol_id como fuente de verdad)
+                rol_id: usuario.rol_id,
+                rol_codigo: usuario.rol_codigo,
+                rol_nombre: usuario.rol_nombre,
+                nivel_jerarquia: usuario.nivel_jerarquia || 10,
                 organizacion_id: usuario.organizacion_id,
                 profesional_id: usuario.profesional_id || null,
                 email_verificado: usuario.email_verificado,
@@ -200,7 +206,8 @@ class AuthController {
             return ResponseHelper.error(res, 'Ya existen usuarios en el sistema. No se puede crear el primer admin.', 400);
         }
 
-        const userData = { ...req.body, rol: 'super_admin' };
+        // FASE 7: Usar rol_codigo para sistema dinámico
+        const userData = { ...req.body, rol_codigo: 'super_admin' };
         const usuario = await UsuarioModel.crear(userData);
 
         return ResponseHelper.success(res, {
@@ -209,7 +216,8 @@ class AuthController {
                 email: usuario.email,
                 nombre: usuario.nombre,
                 apellidos: usuario.apellidos,
-                rol: usuario.rol,
+                rol_id: usuario.rol_id,
+                rol_codigo: 'super_admin',
                 activo: usuario.activo,
                 creado_en: usuario.creado_en
             }
@@ -387,6 +395,7 @@ class AuthController {
         }
 
         // 3. Generar tokens JWT para login automático
+        // FASE 7: Usar rol_id en JWT (sistema dinámico)
         const crypto = require('crypto');
         const jti = crypto.randomBytes(16).toString('hex');
 
@@ -394,7 +403,7 @@ class AuthController {
             {
                 userId: resultado.usuario.id,
                 email: resultado.usuario.email,
-                rol: resultado.usuario.rol,
+                rolId: resultado.usuario.rol_id,
                 organizacionId: resultado.usuario.organizacion_id,  // null si flujo unificado
                 jti: jti
             },
@@ -493,6 +502,7 @@ class AuthController {
         }
 
         // 2. Generar tokens JWT
+        // FASE 7: Usar rol_id en JWT (sistema dinámico)
         const crypto = require('crypto');
         const jti = crypto.randomBytes(16).toString('hex');
 
@@ -500,7 +510,7 @@ class AuthController {
             {
                 userId: resultado.usuario.id,
                 email: resultado.usuario.email,
-                rol: resultado.usuario.rol,
+                rolId: resultado.usuario.rol_id,
                 organizacionId: resultado.usuario.organizacion_id,
                 jti: jti
             },
@@ -610,6 +620,7 @@ class AuthController {
         }
 
         // 5. Generar tokens JWT
+        // FASE 7: Usar rol_id en JWT (sistema dinámico)
         const crypto = require('crypto');
         const jti = crypto.randomBytes(16).toString('hex');
 
@@ -617,7 +628,7 @@ class AuthController {
             {
                 userId: usuario.id,
                 email: usuario.email,
-                rol: usuario.rol,
+                rolId: usuario.rol_id,
                 organizacionId: usuario.organizacion_id,
                 jti: jti
             },
@@ -634,14 +645,16 @@ class AuthController {
         // 6. Establecer cookie de refresh
         res.cookie('refreshToken', refreshToken, REFRESH_TOKEN_COOKIE_OPTIONS);
 
-        // 7. Responder
+        // 7. Responder (FASE 7: usar sistema de roles dinámicos)
         const responseData = {
             usuario: {
                 id: usuario.id,
                 email: usuario.email,
                 nombre: usuario.nombre,
                 apellidos: usuario.apellidos,
-                rol: usuario.rol,
+                rol_id: usuario.rol_id,
+                rol_codigo: usuario.rol_codigo,
+                nivel_jerarquia: usuario.nivel_jerarquia || 10,
                 organizacion_id: usuario.organizacion_id,
                 avatar_url: usuario.avatar_url,
                 onboarding_completado: usuario.onboarding_completado

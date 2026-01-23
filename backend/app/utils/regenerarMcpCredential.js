@@ -50,11 +50,12 @@ async function regenerarCredential() {
         if (!decoded.userId) {
             throw new Error('❌ Token no contiene userId');
         }
-        if (!decoded.rol) {
-            throw new Error('❌ Token no contiene rol');
+        // FASE 7: Usar rolId del sistema dinámico
+        if (!decoded.rolId) {
+            throw new Error('❌ Token no contiene rolId');
         }
 
-        console.log('\n✅ Token contiene todos los campos requeridos (userId, email, rol)');
+        console.log('\n✅ Token contiene todos los campos requeridos (userId, email, rolId)');
 
         // 2. Actualizar credential en n8n (usando API Key dinámica)
         const n8nClient = await createN8nClient();

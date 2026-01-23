@@ -1,4 +1,4 @@
-import { forwardRef, useId } from 'react';
+import { forwardRef, useId, memo } from 'react';
 import { cn } from '@/lib/utils';
 import Checkbox from '../atoms/Checkbox';
 import Label from '../atoms/Label';
@@ -14,8 +14,7 @@ import Label from '../atoms/Label';
  * @param {boolean} disabled - Estado deshabilitado
  * @param {string} error - Mensaje de error
  */
-const CheckboxField = forwardRef(
-  (
+const CheckboxField = memo(forwardRef(function CheckboxField(
     {
       className,
       label,
@@ -26,7 +25,7 @@ const CheckboxField = forwardRef(
       ...props
     },
     ref
-  ) => {
+  ) {
     const generatedId = useId();
     const checkboxId = id || generatedId;
 
@@ -71,7 +70,7 @@ const CheckboxField = forwardRef(
       </div>
     );
   }
-);
+));
 
 CheckboxField.displayName = 'CheckboxField';
 

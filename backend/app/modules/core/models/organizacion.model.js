@@ -4,8 +4,10 @@ const { getDb } = require('../../../config/database');
 const RLSHelper = require('../../../utils/rlsHelper');
 const RLSContextManager = require('../../../utils/rlsContextManager');
 const { SELECT_FIELDS, CAMPOS_ACTUALIZABLES } = require('../../../constants/organizacion.constants');
+const { NEXO_TEAM_ORG_ID } = require('../../../config/constants');
 const SecureRandom = require('../../../utils/helpers/SecureRandom');
 const { ErrorHelper } = require('../../../utils/helpers');
+const logger = require('../../../utils/logger');
 
 
 class OrganizacionModel {
@@ -67,7 +69,22 @@ class OrganizacionModel {
             ];
 
             const result = await db.query(query, values);
-            return result.rows[0];
+            const orgCreada = result.rows[0];
+
+            // Hook: Vincular con Nexo Team CRM (dogfooding)
+            // Se ejecuta de forma asíncrona para no bloquear la creación
+            if (orgCreada && orgCreada.id !== NEXO_TEAM_ORG_ID) { // No vincular Nexo Team consigo misma
+                setImmediate(async () => {
+                    try {
+                        const DogfoodingService = require('../../../services/dogfoodingService');
+                        await DogfoodingService.vincularOrganizacionComoCliente(orgCreada);
+                    } catch (err) {
+                        console.error('Error en dogfooding hook:', err);
+                    }
+                });
+            }
+
+            return orgCreada;
         });
     }
 
@@ -220,53 +237,105 @@ class OrganizacionModel {
     }
 
     // Verificar límites de la organización (bypass RLS - operación de consulta)
+    // ACTUALIZADO Ene 2026: Usa tablas suscripciones_org y planes_suscripcion_org
+    // SIMPLIFICADO: Queries separadas para evitar problemas con JOINs complejos
     static async verificarLimites(organizacionId) {
         // ✅ Usar RLSContextManager.withBypass() para gestión automática completa
         return await RLSContextManager.withBypass(async (db) => {
-            const query = `
-                SELECT
-                    COALESCE(ps.limite_citas_mes, 50) as limite_citas_mes,
-                    COALESCE(ps.limite_profesionales, 2) as limite_profesionales,
-                    COALESCE(ps.limite_servicios, 10) as limite_servicios,
-                    COUNT(DISTINCT c.id) FILTER (
-                        WHERE c.fecha_cita >= date_trunc('month', CURRENT_DATE)
-                        AND c.fecha_cita < date_trunc('month', CURRENT_DATE) + interval '1 month'
-                    ) as citas_mes_actual,
-                    COUNT(DISTINCT p.id) as profesionales_activos,
-                    COUNT(DISTINCT s.id) as servicios_activos
-                FROM organizaciones o
-                LEFT JOIN subscripciones sub ON o.id = sub.organizacion_id AND sub.activa = TRUE
-                LEFT JOIN planes_subscripcion ps ON sub.plan_id = ps.id
-                LEFT JOIN citas c ON o.id = c.organizacion_id AND c.estado != 'cancelada'
-                LEFT JOIN profesionales p ON o.id = p.organizacion_id AND p.activo = TRUE
-                LEFT JOIN servicios s ON o.id = s.organizacion_id AND s.activo = TRUE
-                WHERE o.id = $1 AND o.activo = TRUE
-                GROUP BY o.id, ps.limite_citas_mes, ps.limite_profesionales, ps.limite_servicios
-            `;
+            // 1. Verificar que la organización existe
+            const orgCheck = await db.query(
+                'SELECT id FROM organizaciones WHERE id = $1 AND activo = TRUE',
+                [organizacionId]
+            );
+            ErrorHelper.throwIfNotFound(orgCheck.rows[0], 'Organización');
 
-            const result = await db.query(query, [organizacionId]);
-            ErrorHelper.throwIfNotFound(result.rows[0], 'Organización');
+            // 2. Obtener límites del plan (si existe suscripción activa o trial)
+            // FIX: Evitar cast a int de valores vacíos, usar CASE WHEN para manejar valores nulos
+            let limites = {
+                limite_citas: 50,
+                limite_profesionales: 2,
+                limite_servicios: 10
+            };
 
-            const limites = result.rows[0];
+            try {
+                const limitesQuery = await db.query(`
+                    SELECT
+                        CASE
+                            WHEN ps.limites->>'citas' IS NOT NULL AND ps.limites->>'citas' != ''
+                            THEN (ps.limites->>'citas')::int
+                            ELSE 50
+                        END as limite_citas,
+                        CASE
+                            WHEN ps.limites->>'profesionales' IS NOT NULL AND ps.limites->>'profesionales' != ''
+                            THEN (ps.limites->>'profesionales')::int
+                            ELSE 2
+                        END as limite_profesionales,
+                        CASE
+                            WHEN ps.limites->>'servicios' IS NOT NULL AND ps.limites->>'servicios' != ''
+                            THEN (ps.limites->>'servicios')::int
+                            ELSE 10
+                        END as limite_servicios
+                    FROM suscripciones_org sub
+                    JOIN planes_suscripcion_org ps ON sub.plan_id = ps.id
+                    WHERE sub.organizacion_id = $1 AND sub.estado IN ('activa', 'trial')
+                    LIMIT 1
+                `, [organizacionId]);
+
+                if (limitesQuery.rows[0]) {
+                    limites = limitesQuery.rows[0];
+                }
+            } catch (limitesError) {
+                // Si hay error obteniendo límites, usar valores por defecto
+                logger.warn('[OrganizacionModel] Error obteniendo límites, usando defaults', {
+                    organizacionId,
+                    error: limitesError.message
+                });
+            }
+
+            // 3. Contar uso actual (queries simples separadas)
+            const citasResult = await db.query(`
+                SELECT COUNT(*)::int as total
+                FROM citas
+                WHERE organizacion_id = $1
+                AND estado != 'cancelada'
+                AND fecha_cita >= date_trunc('month', CURRENT_DATE)
+                AND fecha_cita < date_trunc('month', CURRENT_DATE) + interval '1 month'
+            `, [organizacionId]);
+
+            const profesionalesResult = await db.query(`
+                SELECT COUNT(*)::int as total
+                FROM profesionales
+                WHERE organizacion_id = $1 AND activo = TRUE
+            `, [organizacionId]);
+
+            const serviciosResult = await db.query(`
+                SELECT COUNT(*)::int as total
+                FROM servicios
+                WHERE organizacion_id = $1 AND activo = TRUE
+            `, [organizacionId]);
+
+            const citasUsadas = citasResult.rows[0]?.total || 0;
+            const profesionalesUsados = profesionalesResult.rows[0]?.total || 0;
+            const serviciosUsados = serviciosResult.rows[0]?.total || 0;
 
             return {
                 citas: {
-                    limite: limites.limite_citas_mes,
-                    usado: parseInt(limites.citas_mes_actual),
-                    disponible: limites.limite_citas_mes - parseInt(limites.citas_mes_actual),
-                    porcentaje_uso: Math.round((parseInt(limites.citas_mes_actual) / limites.limite_citas_mes) * 100)
+                    limite: limites.limite_citas,
+                    usado: citasUsadas,
+                    disponible: limites.limite_citas - citasUsadas,
+                    porcentaje_uso: Math.round((citasUsadas / limites.limite_citas) * 100)
                 },
                 profesionales: {
                     limite: limites.limite_profesionales,
-                    usado: parseInt(limites.profesionales_activos),
-                    disponible: limites.limite_profesionales - parseInt(limites.profesionales_activos),
-                    porcentaje_uso: Math.round((parseInt(limites.profesionales_activos) / limites.limite_profesionales) * 100)
+                    usado: profesionalesUsados,
+                    disponible: limites.limite_profesionales - profesionalesUsados,
+                    porcentaje_uso: Math.round((profesionalesUsados / limites.limite_profesionales) * 100)
                 },
                 servicios: {
                     limite: limites.limite_servicios,
-                    usado: parseInt(limites.servicios_activos),
-                    disponible: limites.limite_servicios - parseInt(limites.servicios_activos),
-                    porcentaje_uso: Math.round((parseInt(limites.servicios_activos) / limites.limite_servicios) * 100)
+                    usado: serviciosUsados,
+                    disponible: limites.limite_servicios - serviciosUsados,
+                    porcentaje_uso: Math.round((serviciosUsados / limites.limite_servicios) * 100)
                 }
             };
         });
@@ -294,12 +363,13 @@ class OrganizacionModel {
             }
 
             // Query para métricas de uso de recursos y operacionales
+            // ACTUALIZADO Ene 2026: Usa tablas suscripciones_org y planes_suscripcion_org
             const metricsQuery = `
                 SELECT
-                    -- Límites del plan
-                    COALESCE(ps.limite_profesionales, 2) as limite_profesionales,
-                    COALESCE(ps.limite_servicios, 10) as limite_servicios,
-                    COALESCE(ps.limite_citas_mes, 50) as limite_citas_mes,
+                    -- Límites del plan (desde JSONB, NULLIF para manejar cadenas vacías)
+                    COALESCE(NULLIF(ps.limites->>'profesionales', '')::int, 2) as limite_profesionales,
+                    COALESCE(NULLIF(ps.limites->>'servicios', '')::int, 10) as limite_servicios,
+                    COALESCE(NULLIF(ps.limites->>'citas', '')::int, 50) as limite_citas_mes,
 
                     -- Uso actual
                     COUNT(DISTINCT p.id) FILTER (WHERE p.activo = true) as profesionales_usados,
@@ -332,14 +402,14 @@ class OrganizacionModel {
                     o.suspendido as org_suspendida
 
                 FROM organizaciones o
-                LEFT JOIN subscripciones sub ON o.id = sub.organizacion_id AND sub.activa = TRUE
-                LEFT JOIN planes_subscripcion ps ON sub.plan_id = ps.id
+                LEFT JOIN suscripciones_org sub ON o.id = sub.organizacion_id AND sub.estado = 'activa'
+                LEFT JOIN planes_suscripcion_org ps ON sub.plan_id = ps.id
                 LEFT JOIN profesionales p ON o.id = p.organizacion_id
                 LEFT JOIN servicios s ON o.id = s.organizacion_id
                 LEFT JOIN usuarios u ON o.id = u.organizacion_id
                 LEFT JOIN citas c ON o.id = c.organizacion_id
                 WHERE o.id = $1
-                GROUP BY o.id, o.activo, o.suspendido, ps.limite_profesionales, ps.limite_servicios, ps.limite_citas_mes
+                GROUP BY o.id, o.activo, o.suspendido, ps.limites
             `;
 
             const result = await db.query(metricsQuery, [organizacionId]);

@@ -151,7 +151,8 @@ const authenticateToken = async (req, res, next) => {
         }
 
         // 3. Verificar que el token contiene la información necesaria
-        if (!decoded.userId || !decoded.email || !decoded.rol) {
+        // FASE 7 COMPLETADA: Solo rolId (sistema dinámico)
+        if (!decoded.userId || !decoded.email || !decoded.rolId) {
             logger.error('Token JWT válido pero incompleto', {
                 decoded: decoded,
                 ip: req.ip,
@@ -225,11 +226,11 @@ const authenticateToken = async (req, res, next) => {
             // ✅ FIX: Usar set_config en lugar de SET para que sea local a la transacción
             await db.query('SELECT set_config($1, $2, false)', ['app.bypass_rls', 'true']);
 
-            // Incluir información del rol dinámico (nuevo sistema)
+            // Incluir información del rol dinámico
             const result = await db.query(
                 `SELECT
                     u.id, u.email, u.nombre, u.apellidos, u.telefono,
-                    u.rol, u.rol_id, u.organizacion_id,
+                    u.rol_id, u.organizacion_id,
                     u.activo, u.email_verificado, u.creado_en, u.actualizado_en,
                     r.codigo AS rol_codigo,
                     r.nombre AS rol_nombre,
@@ -284,16 +285,17 @@ const authenticateToken = async (req, res, next) => {
 
         // 5. Verificar consistencia entre token y base de datos
         // ✅ SECURITY FIX: Usar comparación de tiempo constante para prevenir timing attacks
-        // Un atacante no debe poder deducir información sobre email/rol mediante análisis de tiempos
         const emailMatch = timingSafeStringCompare(usuario.email, decoded.email);
-        const rolMatch = timingSafeStringCompare(usuario.rol, decoded.rol);
+
+        // FASE 7 COMPLETADA: Solo verificar rol_id
+        const rolMatch = String(usuario.rol_id) === String(decoded.rolId);
 
         if (!emailMatch || !rolMatch) {
             logger.warn('Inconsistencia entre token y base de datos', {
                 tokenEmail: decoded.email,
                 dbEmail: usuario.email,
-                tokenRol: decoded.rol,
-                dbRol: usuario.rol,
+                tokenRolId: decoded.rolId,
+                dbRolId: usuario.rol_id,
                 userId: usuario.id,
                 ip: req.ip
             });
@@ -301,17 +303,16 @@ const authenticateToken = async (req, res, next) => {
         }
 
         // 6. Configurar información del usuario en el request
-        // Incluye información del rol dinámico (nuevo sistema) con fallback a ENUM (legacy)
+        // FASE 7 COMPLETADA: Solo sistema de roles dinámicos
         req.user = {
             id: usuario.id,
             email: usuario.email,
             nombre: usuario.nombre,
             apellidos: usuario.apellidos,
             telefono: usuario.telefono,
-            // Sistema de roles
-            rol: usuario.rol,                                      // ENUM legacy
-            rol_id: usuario.rol_id,                                // FK al nuevo sistema
-            rol_codigo: usuario.rol_codigo || usuario.rol,         // Código del rol (nuevo o fallback ENUM)
+            // Sistema de roles dinámicos
+            rol_id: usuario.rol_id,                                // FK a tabla roles
+            rol_codigo: usuario.rol_codigo,                        // Código del rol para lógica
             rol_nombre: usuario.rol_nombre,                        // Nombre legible
             nivel_jerarquia: usuario.nivel_jerarquia || 10,        // Nivel jerárquico (default: empleado)
             bypass_permisos: usuario.bypass_permisos || false,     // Si tiene bypass de RBAC
@@ -379,7 +380,7 @@ const authenticateToken = async (req, res, next) => {
         logger.debug('Usuario autenticado exitosamente', {
             userId: usuario.id,
             email: usuario.email,
-            rol: usuario.rol,
+            rol_codigo: usuario.rol_codigo,
             organizacionId: usuario.organizacion_id,
             path: req.path,
             ip: req.ip
@@ -400,7 +401,7 @@ const authenticateToken = async (req, res, next) => {
 
 /**
  * Middleware para requerir roles específicos
- * Soporta nuevo sistema (rol_codigo) y legacy (rol ENUM)
+ * FASE 7 COMPLETADA: Solo usa rol_codigo del sistema dinámico
  * @param {Array|string} allowedRoles - Roles permitidos (códigos)
  */
 const requireRole = (allowedRoles) => {
@@ -411,12 +412,10 @@ const requireRole = (allowedRoles) => {
         }
 
         const roles = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles];
+        const userRolCodigo = req.user.rol_codigo;
 
-        // Verificar usando rol_codigo (nuevo) o rol (legacy)
-        const userRolCodigo = req.user.rol_codigo || req.user.rol;
-
-        // Ene 2026: super_admin siempre tiene acceso (bypass para dogfooding)
-        const isSuperAdmin = userRolCodigo === 'super_admin' || req.user.rol === 'super_admin';
+        // super_admin siempre tiene acceso (bypass)
+        const isSuperAdmin = userRolCodigo === 'super_admin';
 
         if (!isSuperAdmin && !roles.includes(userRolCodigo)) {
             logger.warn('Acceso denegado por rol insuficiente', {
@@ -466,7 +465,7 @@ const verifyOrganizationAccess = (organizacionId) => {
         if (req.user.organizacion_id !== organizacionId) {
             logger.warn('Intento de acceso a organización no autorizada', {
                 userId: req.user.id,
-                userRol: req.user.rol,
+                userRol: req.user.rol_codigo,
                 userOrgId: req.user.organizacion_id,
                 requestedOrgId: organizacionId,
                 path: req.path,
@@ -497,25 +496,20 @@ const optionalAuth = async (req, res, next) => {
 
 /**
  * Middleware para requerir rol de administrador
- * Usa nivel jerárquico >= 80 (propietario/admin) o bypass_permisos
- * Soporta nuevo sistema y legacy
+ * FASE 7 COMPLETADA: Usa bypass_permisos o nivel_jerarquia >= 80
  */
 const requireAdminRole = (req, res, next) => {
     if (!req.user) {
         return ResponseHelper.error(res, 'Autenticación requerida', 401);
     }
 
-    // Nuevo sistema: verificar bypass_permisos o nivel jerárquico
-    const tieneAccesoNuevo = req.user.bypass_permisos || (req.user.nivel_jerarquia >= 80);
+    // Verificar bypass_permisos o nivel jerárquico >= 80 (admin/propietario)
+    const tieneAcceso = req.user.bypass_permisos || (req.user.nivel_jerarquia >= 80);
 
-    // Legacy: verificar roles específicos
-    const rolesAdmin = ['super_admin', 'admin', 'propietario', 'organizacion_admin'];
-    const tieneAccesoLegacy = rolesAdmin.includes(req.user.rol);
-
-    if (!tieneAccesoNuevo && !tieneAccesoLegacy) {
+    if (!tieneAcceso) {
         logger.warn('Intento de acceso con rol insuficiente', {
             userId: req.user.id,
-            userRol: req.user.rol_codigo || req.user.rol,
+            userRol: req.user.rol_codigo,
             nivel_jerarquia: req.user.nivel_jerarquia,
             bypass_permisos: req.user.bypass_permisos,
             path: req.path,

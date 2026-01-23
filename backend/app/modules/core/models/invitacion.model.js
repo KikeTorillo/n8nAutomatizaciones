@@ -300,6 +300,15 @@ class InvitacionModel {
 
             // Crear usuario con rol de la invitación (Dic 2025: rol configurable)
             const rolAsignado = invitacion.rol || 'empleado';
+
+            // FASE 7: Obtener rol_id basado en código de rol
+            const rolResult = await db.query(
+                `SELECT id FROM roles WHERE codigo = $1 AND organizacion_id = $2 LIMIT 1`,
+                [rolAsignado, invitacion.organizacion_id]
+            );
+            const rolId = rolResult.rows[0]?.id || null;
+
+            // FASE 7: Solo usar rol_id (sin columna rol ENUM)
             const usuarioResult = await db.query(`
                 INSERT INTO usuarios (
                     organizacion_id,
@@ -307,20 +316,20 @@ class InvitacionModel {
                     password_hash,
                     nombre,
                     apellidos,
-                    rol,
+                    rol_id,
                     activo,
                     email_verificado
                 ) VALUES (
                     $1, LOWER($2), $3, $4, $5, $6, TRUE, TRUE
                 )
-                RETURNING id, email, nombre, apellidos, rol, organizacion_id, activo, creado_en
+                RETURNING id, email, nombre, apellidos, rol_id, organizacion_id, activo, creado_en
             `, [
                 invitacion.organizacion_id,
                 invitacion.email,
                 datosUsuario.password_hash,
                 datosUsuario.nombre,
                 datosUsuario.apellidos || null,
-                rolAsignado
+                rolId
             ]);
 
             const usuario = usuarioResult.rows[0];

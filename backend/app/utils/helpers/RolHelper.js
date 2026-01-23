@@ -1,16 +1,14 @@
 /**
  * @fileoverview Helper centralizado para gestión de roles
  * @description Proporciona métodos para verificar roles, niveles jerárquicos y bypass de permisos.
- *              Reemplaza las comparaciones hardcodeadas con ENUM en todo el codebase.
- * @version 1.0.0
- * @date Enero 2026
+ *              Sistema de roles dinámicos por organización.
+ * @version 2.0.0
+ * @date Enero 2026 (FASE 7 - Sistema dinámico completo)
  *
- * MIGRACIÓN:
- * - Antes: req.user.rol === 'super_admin'
- * - Ahora: RolHelper.esSuperAdmin(req.user) o req.user.bypass_permisos
- *
- * - Antes: ['admin', 'propietario'].includes(req.user.rol)
- * - Ahora: RolHelper.tieneBypassPermisos(req.user) o req.user.bypass_permisos
+ * USO:
+ * - Verificar super_admin: RolHelper.esSuperAdmin(req.user) o req.user.rol_codigo === 'super_admin'
+ * - Verificar admin/propietario: RolHelper.tieneBypassPermisos(req.user) o req.user.nivel_jerarquia >= 80
+ * - Verificar rol específico: RolHelper.tieneRol(req.user, 'empleado')
  */
 
 const { getDb } = require('../../config/database');
@@ -112,11 +110,8 @@ async function obtenerInfoRol(userId) {
 function esSuperAdmin(user) {
   if (!user) return false;
 
-  // Primero verificar por rol_codigo (nuevo sistema)
+  // Verificar por rol_codigo
   if (user.rol_codigo === ROLES_SISTEMA.SUPER_ADMIN) return true;
-
-  // Fallback a rol ENUM (legacy)
-  if (user.rol === ROLES_SISTEMA.SUPER_ADMIN) return true;
 
   // Verificar por nivel jerárquico
   if (user.nivel_jerarquia >= NIVELES.SUPER_ADMIN) return true;
@@ -131,7 +126,7 @@ function esSuperAdmin(user) {
  */
 function esBot(user) {
   if (!user) return false;
-  return user.rol_codigo === ROLES_SISTEMA.BOT || user.rol === ROLES_SISTEMA.BOT;
+  return user.rol_codigo === ROLES_SISTEMA.BOT;
 }
 
 /**
@@ -158,14 +153,6 @@ function tieneBypassPermisos(user) {
   // Fallback: verificar por nivel jerárquico (admin/propietario = nivel >= 80)
   if (user.nivel_jerarquia >= NIVELES.PROPIETARIO) return true;
 
-  // Fallback legacy: verificar por rol ENUM
-  const rolesConBypass = [
-    ROLES_SISTEMA.SUPER_ADMIN,
-    ROLES_DEFAULT.ADMIN,
-    ROLES_DEFAULT.PROPIETARIO
-  ];
-  if (rolesConBypass.includes(user.rol)) return true;
-
   return false;
 }
 
@@ -180,13 +167,13 @@ function esRolAdministrativo(user) {
   // Verificar por nivel jerárquico
   if (user.nivel_jerarquia >= NIVELES.PROPIETARIO) return true;
 
-  // Fallback legacy
+  // Verificar por rol_codigo
   const rolesAdmin = [
     ROLES_SISTEMA.SUPER_ADMIN,
     ROLES_DEFAULT.ADMIN,
     ROLES_DEFAULT.PROPIETARIO
   ];
-  return rolesAdmin.includes(user.rol) || rolesAdmin.includes(user.rol_codigo);
+  return rolesAdmin.includes(user.rol_codigo);
 }
 
 /**
@@ -228,8 +215,8 @@ function puedeModificarPermisos(user) {
 function puedeGestionarUsuario(gestor, objetivo) {
   if (!gestor || !objetivo) return false;
 
-  const nivelGestor = gestor.nivel_jerarquia || getNivelPorRol(gestor.rol || gestor.rol_codigo);
-  const nivelObjetivo = objetivo.nivel_jerarquia || getNivelPorRol(objetivo.rol || objetivo.rol_codigo);
+  const nivelGestor = gestor.nivel_jerarquia || getNivelPorRol(gestor.rol_codigo);
+  const nivelObjetivo = objetivo.nivel_jerarquia || getNivelPorRol(objetivo.rol_codigo);
 
   // Gestor debe tener nivel mayor que objetivo
   return nivelGestor > nivelObjetivo;
@@ -260,7 +247,7 @@ function getNivelPorRol(rolCodigo) {
  */
 function getCodigoRol(user) {
   if (!user) return null;
-  return user.rol_codigo || user.rol || null;
+  return user.rol_codigo || null;
 }
 
 /**
@@ -303,13 +290,13 @@ async function enriquecerConInfoRol(user) {
   const rolInfo = await obtenerInfoRol(user.id);
 
   if (!rolInfo) {
-    // Fallback: usar información del rol ENUM si existe
+    // Fallback: usar información del rol_codigo si existe
     return {
       ...user,
-      rol_codigo: user.rol,
-      nivel_jerarquia: getNivelPorRol(user.rol),
+      rol_codigo: user.rol_codigo || 'empleado',
+      nivel_jerarquia: user.nivel_jerarquia || getNivelPorRol(user.rol_codigo),
       bypass_permisos: tieneBypassPermisos(user),
-      es_rol_sistema: user.rol === ROLES_SISTEMA.SUPER_ADMIN || user.rol === ROLES_SISTEMA.BOT,
+      es_rol_sistema: user.rol_codigo === ROLES_SISTEMA.SUPER_ADMIN || user.rol_codigo === ROLES_SISTEMA.BOT,
       puede_crear_usuarios: esRolAdministrativo(user),
       puede_modificar_permisos: esRolAdministrativo(user)
     };

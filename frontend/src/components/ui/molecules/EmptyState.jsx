@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { cn } from '@/lib/utils';
 import { Inbox } from 'lucide-react';
 import Button from '../atoms/Button';
@@ -16,7 +17,7 @@ import Button from '../atoms/Button';
  * @param {'sm'|'md'|'lg'} [props.size] - Tamaño del componente
  * @param {string} [props.className] - Clases adicionales
  */
-export function EmptyState({
+export const EmptyState = memo(function EmptyState({
   icon: Icon = Inbox,
   title,
   description,
@@ -92,7 +93,7 @@ export function EmptyState({
       {children}
     </div>
   );
-}
+});
 
 EmptyState.displayName = 'EmptyState';
 

@@ -47,7 +47,7 @@ class CitaOperacionalController {
             );
         }
 
-        if (req.user.rol === 'empleado' && citaExistente.profesional_id !== req.user.profesional_id) {
+        if (req.user.rol_codigo === 'empleado' && citaExistente.profesional_id !== req.user.profesional_id) {
             return ResponseHelper.error(res, 'No autorizado para esta cita', 403);
         }
 
@@ -85,7 +85,7 @@ class CitaOperacionalController {
             );
         }
 
-        if (req.user.rol === 'empleado' && citaExistente.profesional_id !== req.user.profesional_id) {
+        if (req.user.rol_codigo === 'empleado' && citaExistente.profesional_id !== req.user.profesional_id) {
             return ResponseHelper.error(res, 'No autorizado para esta cita', 403);
         }
 
@@ -180,7 +180,7 @@ class CitaOperacionalController {
             );
         }
 
-        if (req.user.rol === 'cliente' && citaExistente.cliente_id !== req.user.cliente_id) {
+        if (req.user.rol_codigo === 'cliente' && citaExistente.cliente_id !== req.user.cliente_id) {
             return ResponseHelper.error(res, 'No autorizado para reagendar esta cita', 403);
         }
 

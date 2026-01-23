@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { cn } from '@/lib/utils';
 import CheckboxField from './CheckboxField';
 
@@ -19,7 +20,7 @@ import CheckboxField from './CheckboxField';
  * @param {number} [props.columns] - Columnas para layout grid (default: 2)
  * @param {string} [props.className] - Clases adicionales
  */
-export function CheckboxGroup({
+export const CheckboxGroup = memo(function CheckboxGroup({
   options = [],
   values = {},
   onChange,
@@ -85,7 +86,7 @@ export function CheckboxGroup({
       </div>
     </div>
   );
-}
+});
 
 CheckboxGroup.displayName = 'CheckboxGroup';
 

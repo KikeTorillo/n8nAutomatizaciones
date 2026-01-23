@@ -93,6 +93,9 @@ CREATE TABLE clientes (
     eliminado_en TIMESTAMPTZ DEFAULT NULL,     -- NULL = activo, con valor = eliminado
     eliminado_por INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
 
+    -- 🔗 Vinculación con Organizaciones (Dogfooding Ene 2026)
+    organizacion_vinculada_id INTEGER REFERENCES organizaciones(id) ON DELETE SET NULL,
+
     -- 🕒 Timestamps de auditoría
     creado_en TIMESTAMPTZ DEFAULT NOW(),
     actualizado_en TIMESTAMPTZ DEFAULT NOW(),
@@ -249,3 +252,18 @@ CREATE INDEX idx_clientes_saldo_credito
 CREATE INDEX idx_clientes_permite_credito
     ON clientes(permite_credito)
     WHERE permite_credito = TRUE AND eliminado_en IS NULL;
+
+-- ====================================================================
+-- 🔗 VINCULACIÓN DOGFOODING (Ene 2026)
+-- ====================================================================
+-- Para el modelo dogfooding de Nexo Team: cada organización de la
+-- plataforma es un cliente en el CRM de Nexo Team (org_id = 4)
+-- ====================================================================
+
+-- Índice único parcial: solo un cliente puede vincular a una org
+CREATE UNIQUE INDEX idx_clientes_org_vinculada
+ON clientes(organizacion_vinculada_id)
+WHERE organizacion_vinculada_id IS NOT NULL;
+
+COMMENT ON COLUMN clientes.organizacion_vinculada_id IS
+'ID de la organización de la plataforma vinculada (para dogfooding Nexo Team). NULL para clientes normales.';

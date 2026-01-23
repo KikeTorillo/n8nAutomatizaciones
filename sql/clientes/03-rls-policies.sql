@@ -38,19 +38,7 @@ CREATE POLICY clientes_isolation ON clientes
         )
     );
 
--- POLÍTICA 2: ACCESO SUPER ADMIN
-CREATE POLICY clientes_super_admin ON clientes
-    FOR ALL
-    TO PUBLIC
-    USING (
-        EXISTS (
-            SELECT 1 FROM usuarios
-            WHERE email = current_user
-            AND rol = 'super_admin'
-        )
-    );
-
--- POLÍTICA 3: BYPASS PARA FUNCIONES DE SISTEMA
+-- POLÍTICA 2: BYPASS PARA FUNCIONES DE SISTEMA Y SUPER ADMIN
 -- Necesario para jobs como recordatorios que cruzan organizaciones
 CREATE POLICY clientes_system_bypass ON clientes
     FOR ALL
@@ -71,16 +59,7 @@ COMMENT ON POLICY clientes_isolation ON clientes IS
 - Bypass para funciones de sistema
 
 Datos sensibles protegidos: teléfono, email, historial de citas.
-Ver también: clientes_super_admin para acceso global.';
-
--- Política de clientes (super admin)
-COMMENT ON POLICY clientes_super_admin ON clientes IS
-'Acceso global para super_admin:
-- Permite operaciones cross-tenant para soporte
-- Usado en: Admin panel, reportes globales, migrations
-- Auditoría completa en eventos_sistema
-
-Permite gestión centralizada de datos para soporte y administración.';
+Super admin usa bypass_rls para acceso global.';
 
 -- Política de bypass
 COMMENT ON POLICY clientes_system_bypass ON clientes IS

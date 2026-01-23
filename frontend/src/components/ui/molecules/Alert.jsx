@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { X, AlertTriangle, Info, CheckCircle, XCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -67,7 +68,7 @@ const variantStyles = {
   },
 };
 
-function Alert({
+const Alert = memo(function Alert({
   variant = 'info',
   icon: Icon,
   title,
@@ -82,6 +83,8 @@ function Alert({
 
   return (
     <div
+      role="alert"
+      aria-live={variant === 'error' ? 'assertive' : 'polite'}
       className={cn(
         styles.bg,
         styles.border,
@@ -139,7 +142,7 @@ function Alert({
       </div>
     </div>
   );
-}
+});
 
 Alert.displayName = 'Alert';
 

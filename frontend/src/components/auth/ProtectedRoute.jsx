@@ -2,36 +2,38 @@ import { Navigate } from 'react-router-dom';
 import useAuthStore, { selectIsAuthenticated, selectUser } from '@/store/authStore';
 
 /**
- * Jerarquía de roles del sistema
- * Mayor número = mayor nivel de acceso
- * Un rol superior puede acceder a todo lo que accede un rol inferior
+ * Mapeo de códigos de rol a nivel jerárquico mínimo requerido
+ * FASE 7: El nivel real viene del backend (user.nivel_jerarquia)
+ * Este mapeo es solo para determinar el nivel mínimo requerido por un rol
  */
-const ROLE_HIERARCHY = {
-  super_admin: 100,  // Acceso total a la plataforma
-  admin: 50,         // Administrador de organización
-  propietario: 50,   // Dueño del negocio (mismo nivel que admin)
-  empleado: 10,      // Staff con acceso limitado
-  bot: 5,            // Acceso programático (MCP)
+const NIVEL_MINIMO_POR_ROL = {
+  super_admin: 100,  // Solo super_admin
+  admin: 80,         // Admin o superior
+  propietario: 80,   // Propietario o superior
+  gerente: 50,       // Gerente o superior
+  empleado: 10,      // Empleado o superior
+  bot: 5,            // Cualquiera
 };
 
 /**
- * Verifica si un rol tiene acceso basándose en la jerarquía
- * @param {string} userRole - Rol del usuario actual
+ * Verifica si el usuario tiene acceso basándose en nivel_jerarquia del backend
+ * FASE 7 COMPLETADA: Usa nivel_jerarquia en vez de mapeo hardcodeado
+ * @param {Object} user - Usuario con nivel_jerarquia y rol_codigo
  * @param {string|string[]} requiredRoles - Rol(es) requerido(s)
  * @returns {boolean}
  */
-function hasRoleAccess(userRole, requiredRoles) {
-  if (!userRole) return false;
+function hasRoleAccess(user, requiredRoles) {
+  if (!user?.rol_codigo) return false;
 
   const roles = Array.isArray(requiredRoles) ? requiredRoles : [requiredRoles];
-  const userLevel = ROLE_HIERARCHY[userRole] ?? 0;
+  const userLevel = user.nivel_jerarquia || 10;
 
   // Usuario tiene acceso si:
-  // 1. Su rol está explícitamente en la lista, O
-  // 2. Su nivel jerárquico es >= al nivel más alto requerido
-  if (roles.includes(userRole)) return true;
+  // 1. Su rol_codigo está explícitamente en la lista, O
+  // 2. Su nivel jerárquico es >= al nivel mínimo requerido
+  if (roles.includes(user.rol_codigo)) return true;
 
-  const maxRequiredLevel = Math.max(...roles.map(r => ROLE_HIERARCHY[r] ?? 0));
+  const maxRequiredLevel = Math.max(...roles.map(r => NIVEL_MINIMO_POR_ROL[r] ?? 0));
   return userLevel >= maxRequiredLevel;
 }
 
@@ -73,9 +75,9 @@ function ProtectedRoute({ children, requiredRole = null, excludeRoles = null, re
 
   // Verificación 2: Onboarding pendiente (Dic 2025 - OAuth flow)
   // Usuarios OAuth sin organización deben completar onboarding primero
-  // super_admin está exento (es usuario de plataforma sin organización)
+  // Roles de sistema (super_admin, bot) están exentos
   if (
-    user?.rol !== 'super_admin' &&
+    user?.nivel_jerarquia < 100 && // No es super_admin
     !user?.organizacion_id &&
     user?.onboarding_completado === false
   ) {
@@ -84,20 +86,22 @@ function ProtectedRoute({ children, requiredRole = null, excludeRoles = null, re
   }
 
   // Verificación 3: Exclusión de roles (ej: super_admin no va a /home)
+  // FASE 7: Usa rol_codigo
   if (excludeRoles) {
     const rolesToExclude = Array.isArray(excludeRoles) ? excludeRoles : [excludeRoles];
-    if (rolesToExclude.includes(user?.rol)) {
+    if (rolesToExclude.includes(user?.rol_codigo)) {
       console.warn(
-        `[ProtectedRoute] Rol excluido. Rol: ${user?.rol}, Excluidos: ${JSON.stringify(excludeRoles)}`
+        `[ProtectedRoute] Rol excluido. Rol: ${user?.rol_codigo}, Excluidos: ${JSON.stringify(excludeRoles)}`
       );
       return <Navigate to={redirectTo} replace />;
     }
   }
 
   // Verificación 4: Autorización por rol (si se requiere)
-  if (requiredRole && !hasRoleAccess(user?.rol, requiredRole)) {
+  // FASE 7: hasRoleAccess ahora recibe el objeto user completo
+  if (requiredRole && !hasRoleAccess(user, requiredRole)) {
     console.warn(
-      `[ProtectedRoute] Acceso denegado. Rol: ${user?.rol}, Requerido: ${JSON.stringify(requiredRole)}`
+      `[ProtectedRoute] Acceso denegado. Rol: ${user?.rol_codigo}, Requerido: ${JSON.stringify(requiredRole)}`
     );
     return <Navigate to={redirectTo} replace />;
   }
@@ -106,5 +110,6 @@ function ProtectedRoute({ children, requiredRole = null, excludeRoles = null, re
 }
 
 // Exportar utilidades para uso externo
-export { ROLE_HIERARCHY, hasRoleAccess };
+// FASE 7: NIVEL_MINIMO_POR_ROL reemplaza ROLE_HIERARCHY (niveles vienen del backend)
+export { NIVEL_MINIMO_POR_ROL, hasRoleAccess };
 export default ProtectedRoute;

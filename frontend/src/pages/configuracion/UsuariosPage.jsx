@@ -110,7 +110,7 @@ function UsuariosPage() {
   };
 
   const handleCambiarRol = async (usuario, nuevoRol) => {
-    if (nuevoRol === usuario.rol) return;
+    if (nuevoRol === usuario.rol_codigo) return;
     try {
       await cambiarRolMutation.mutateAsync({ id: usuario.id, rol: nuevoRol });
       toast.success(`Rol cambiado a ${ROLES_USUARIO[nuevoRol]?.label}`);
@@ -306,13 +306,13 @@ function UsuarioRow({ usuario, onEdit, onToggleActivo }) {
             </span>
 
             <select
-              value={usuario.rol}
+              value={usuario.rol_codigo}
               onChange={(e) => onCambiarRol(usuario, e.target.value)}
               disabled={cambiarRolMutation.isPending}
               className={`
                 appearance-none cursor-pointer text-xs font-medium px-2 py-1 rounded-full
-                bg-${getRolBadgeColor(usuario.rol)}-100 text-${getRolBadgeColor(usuario.rol)}-700
-                dark:bg-${getRolBadgeColor(usuario.rol)}-900/40 dark:text-${getRolBadgeColor(usuario.rol)}-400
+                bg-${getRolBadgeColor(usuario.rol_codigo)}-100 text-${getRolBadgeColor(usuario.rol_codigo)}-700
+                dark:bg-${getRolBadgeColor(usuario.rol_codigo)}-900/40 dark:text-${getRolBadgeColor(usuario.rol_codigo)}-400
                 border-0 focus:ring-2 focus:ring-primary-500
               `}
             >

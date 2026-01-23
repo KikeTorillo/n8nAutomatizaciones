@@ -23,7 +23,7 @@ import EstrellaRating from './EstrellaRating';
  * @example
  * <ReseñaCard
  *   resena={resena}
- *   canResponder={user.rol === 'admin'}
+ *   canResponder={user.nivel_jerarquia >= 80}
  *   onResponder={(id) => setSelectedResena(id)}
  * />
  */

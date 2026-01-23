@@ -57,10 +57,11 @@ router.get('/check',
             // Bypass RLS para consulta global
             await db.query('SELECT set_config($1, $2, false)', ['app.bypass_rls', 'true']);
 
-            const result = await db.query(
-                'SELECT COUNT(*) FROM usuarios WHERE rol = $1',
-                ['super_admin']
-            );
+            const result = await db.query(`
+                SELECT COUNT(*) FROM usuarios u
+                JOIN roles r ON r.id = u.rol_id
+                WHERE r.codigo = $1 AND r.es_rol_sistema = TRUE
+            `, ['super_admin']);
 
             const hasSuperAdmin = parseInt(result.rows[0].count) > 0;
 
@@ -165,10 +166,11 @@ router.post('/create-superadmin',
             // Bypass RLS para esta consulta global
             await db.query('SELECT set_config($1, $2, false)', ['app.bypass_rls', 'true']);
 
-            const existingCheck = await db.query(
-                'SELECT COUNT(*) FROM usuarios WHERE rol = $1',
-                ['super_admin']
-            );
+            const existingCheck = await db.query(`
+                SELECT COUNT(*) FROM usuarios u
+                JOIN roles r ON r.id = u.rol_id
+                WHERE r.codigo = $1 AND r.es_rol_sistema = TRUE
+            `, ['super_admin']);
 
             const hasSuperAdmin = parseInt(existingCheck.rows[0].count) > 0;
 
@@ -213,12 +215,20 @@ router.post('/create-superadmin',
             // El super_admin NO tiene organización (best practice SaaS multi-tenant)
             // Es un usuario de plataforma que administra todas las organizaciones
             // Ene 2026: super_admin tiene onboarding_completado = TRUE (no pasa por wizard)
+            // FASE 7: Obtener rol_id del super_admin de sistema
+            const rolSuperAdmin = await db.query(`
+                SELECT id FROM roles
+                WHERE codigo = 'super_admin' AND es_rol_sistema = TRUE
+            `);
+            const rolSuperAdminId = rolSuperAdmin.rows[0]?.id || null;
+
+            // FASE 7: Solo usar rol_id, sin columna rol ENUM
             const query = `
                 INSERT INTO usuarios (
                     email, password_hash, nombre, apellidos,
-                    rol, email_verificado, activo, organizacion_id, onboarding_completado
+                    rol_id, email_verificado, activo, organizacion_id, onboarding_completado
                 ) VALUES ($1, $2, $3, $4, $5, true, true, NULL, true)
-                RETURNING id, email, nombre, apellidos, rol, creado_en
+                RETURNING id, email, nombre, apellidos, rol_id, creado_en
             `;
 
             const result = await db.query(query, [
@@ -226,7 +236,7 @@ router.post('/create-superadmin',
                 passwordHash,
                 nombre || 'Super',          // Usar nombre del form o default
                 apellidos || 'Admin',       // Usar apellidos del form o default
-                'super_admin'
+                rolSuperAdminId
             ]);
 
             const superAdmin = result.rows[0];
@@ -244,6 +254,7 @@ router.post('/create-superadmin',
             // ====================================================================
             // 9. RESPUESTA EXITOSA
             // ====================================================================
+            // FASE 7: Retornar rol_codigo en vez de rol ENUM
             ResponseHelper.success(
                 res,
                 {
@@ -251,7 +262,7 @@ router.post('/create-superadmin',
                     email: superAdmin.email,
                     nombre: superAdmin.nombre,
                     apellidos: superAdmin.apellidos,
-                    rol: superAdmin.rol,
+                    rol_codigo: 'super_admin',
                     creado_en: superAdmin.creado_en
                 },
                 'Super administrador creado exitosamente. Por favor inicie sesión.',
@@ -386,10 +397,11 @@ router.post('/unified-setup',
             // 2. VERIFICAR QUE NO EXISTA SUPER ADMIN
             // ====================================================================
             const hasSuperAdmin = await RLSContextManager.withBypass(async (db) => {
-                const result = await db.query(
-                    'SELECT COUNT(*) FROM usuarios WHERE rol = $1',
-                    ['super_admin']
-                );
+                const result = await db.query(`
+                    SELECT COUNT(*) FROM usuarios u
+                    JOIN roles r ON r.id = u.rol_id
+                    WHERE r.codigo = $1 AND r.es_rol_sistema = TRUE
+                `, ['super_admin']);
                 return parseInt(result.rows[0].count) > 0;
             });
 
@@ -427,20 +439,28 @@ router.post('/unified-setup',
                 // 4.1 Crear super admin en BD (sin organización - usuario de plataforma)
                 // El super_admin NO tiene organización (best practice SaaS multi-tenant)
                 // Ene 2026: super_admin tiene onboarding_completado = TRUE (no pasa por wizard)
+                // FASE 7: Obtener rol_id del super_admin de sistema
                 const passwordHash = await bcrypt.hash(superAdmin.password, 10);
 
+                const rolSuperAdmin = await db.query(`
+                    SELECT id FROM roles
+                    WHERE codigo = 'super_admin' AND es_rol_sistema = TRUE
+                `);
+                const rolSuperAdminId = rolSuperAdmin.rows[0]?.id || null;
+
+                // FASE 7: Solo usar rol_id, sin columna rol ENUM
                 const superAdminCreado = await db.query(`
                     INSERT INTO usuarios (
                         email, password_hash, nombre, apellidos,
-                        rol, email_verificado, activo, organizacion_id, onboarding_completado
+                        rol_id, email_verificado, activo, organizacion_id, onboarding_completado
                     ) VALUES ($1, $2, $3, $4, $5, true, true, NULL, true)
-                    RETURNING id, email, nombre, apellidos, rol, creado_en
+                    RETURNING id, email, nombre, apellidos, rol_id, creado_en
                 `, [
                     superAdmin.email,
                     passwordHash,
                     superAdmin.nombre || 'Super',
                     superAdmin.apellidos || 'Admin',
-                    'super_admin'
+                    rolSuperAdminId
                 ]);
 
                 const superAdminData = superAdminCreado.rows[0];
@@ -492,17 +512,8 @@ router.post('/unified-setup',
                 // 4.1.4 Crear roles default para la organización
                 await db.query(`SELECT crear_roles_default_organizacion($1)`, [nexoTeamOrgId]);
 
-                // 4.1.5 Asignar rol admin al super_admin en su organización
-                const rolAdmin = await db.query(`
-                    SELECT id FROM roles
-                    WHERE codigo = 'admin' AND organizacion_id = $1
-                `, [nexoTeamOrgId]);
-
-                if (rolAdmin.rows.length > 0) {
-                    await db.query(`
-                        UPDATE usuarios SET rol_id = $1 WHERE id = $2
-                    `, [rolAdmin.rows[0].id, superAdminData.id]);
-                }
+                // FASE 7: El super_admin ya tiene rol_id = super_admin de sistema (asignado en INSERT)
+                // NO sobrescribir con rol admin de organización
 
                 console.log('✅ Organización Nexo Team creada:', {
                     orgId: nexoTeamOrgId,
@@ -574,7 +585,7 @@ router.post('/unified-setup',
                         email: resultado.superAdmin.email,
                         nombre: resultado.superAdmin.nombre,
                         apellidos: resultado.superAdmin.apellidos,
-                        rol: resultado.superAdmin.rol,
+                        rol_codigo: 'super_admin',
                         organizacion_id: resultado.superAdmin.organizacion_id
                     },
                     organizacion: {

@@ -92,6 +92,12 @@ CREATE TABLE organizaciones (
     -- Si TRUE, solo usuarios con profesional vinculado pueden crear ventas
     pos_requiere_profesional BOOLEAN DEFAULT FALSE,
 
+    -- 📦 Módulos Activos (Ene 2026)
+    -- JSONB con los módulos habilitados para la organización
+    -- Formato: {"core": true, "agendamiento": true, "inventario": false, ...}
+    -- Migrado de tabla subscripciones (eliminada en Fase 0)
+    modulos_activos JSONB DEFAULT '{"core": true}'::jsonb,
+
     -- Timestamps
     creado_en TIMESTAMPTZ DEFAULT NOW(),
     actualizado_en TIMESTAMPTZ DEFAULT NOW(),
@@ -119,7 +125,7 @@ CREATE TABLE usuarios (
     -- Autenticación
     email VARCHAR(150) UNIQUE NOT NULL,
     password_hash VARCHAR(255),                    -- Nullable: usuarios OAuth no tienen password
-    rol rol_usuario NOT NULL DEFAULT 'empleado',
+    rol_id INTEGER NOT NULL,                       -- FK a tabla roles (sistema dinámico activo)
 
     -- OAuth Google (Dic 2025)
     google_id VARCHAR(255) UNIQUE,                 -- ID único del usuario en Google
@@ -172,12 +178,10 @@ CREATE TABLE usuarios (
     -- Constraints
     CHECK (char_length(email) >= 5),
     CHECK (char_length(nombre) >= 2),
-    CHECK (intentos_fallidos >= 0 AND intentos_fallidos <= 10),
-    -- Super_admin es usuario de plataforma (sin organización)
-    -- Usuarios OAuth nuevos no tienen organización hasta completar onboarding
-    -- Resto de roles REQUIEREN organización obligatoriamente
-    -- Cambio: Dic 2025 - Permitir usuarios en onboarding sin organización
-    CHECK (organizacion_id IS NOT NULL OR rol = 'super_admin' OR onboarding_completado = FALSE)
+    CHECK (intentos_fallidos >= 0 AND intentos_fallidos <= 10)
+    -- La validación de organización se hace via rol_id + tabla roles
+    -- Roles de sistema (super_admin, bot) tienen es_rol_sistema=TRUE y no requieren organizacion_id
+    -- Ver: sql/nucleo/16-tabla-roles.sql y backend/app/utils/helpers/RolHelper.js
 );
 
 -- ====================================================================
@@ -193,7 +197,7 @@ COMMENT ON COLUMN organizaciones.tiene_perfil_marketplace IS 'True si la organiz
 COMMENT ON COLUMN organizaciones.fecha_activacion_marketplace IS 'Timestamp de primera publicación en marketplace';
 COMMENT ON COLUMN organizaciones.app_seleccionada IS 'App elegida en Plan Free (1 app gratis). NULL si plan Pro (todas las apps). Valores: agendamiento, inventario, pos';
 COMMENT ON COLUMN usuarios.profesional_id IS 'Relación con tabla profesionales. FK se agrega después de crear la tabla';
-COMMENT ON COLUMN usuarios.rol IS 'Rol RBAC: super_admin (org plataforma, acceso admin global), admin/propietario (org), empleado (limitado), cliente (externo), bot (automatización)';
+COMMENT ON COLUMN usuarios.rol_id IS 'FK a tabla roles. Sistema dinámico de roles por organización. Ver sql/nucleo/16-tabla-roles.sql';
 COMMENT ON COLUMN usuarios.google_id IS 'ID único del usuario en Google OAuth. NULL si no se registró con Google';
 COMMENT ON COLUMN usuarios.avatar_url IS 'URL del avatar del usuario (de Google OAuth o subido manualmente)';
 COMMENT ON COLUMN usuarios.onboarding_completado IS 'TRUE después de completar el wizard de onboarding inicial. Usuarios legacy se marcan TRUE automáticamente';

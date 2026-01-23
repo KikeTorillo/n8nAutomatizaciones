@@ -28,18 +28,20 @@ export function useAuth() {
     },
     onSuccess: (data) => {
       // Ene 2026: refreshToken viene por cookie httpOnly, no se guarda en frontend
+      // FASE 7: Backend devuelve 'usuario', no 'user'
       setAuth({
-        user: data.user,
+        user: data.usuario,
         accessToken: data.accessToken,
       });
 
       // Redirección basada en el rol del usuario
-      const userRole = data.user?.rol || data.usuario?.rol;
+      // FASE 7: Usa rol_codigo en vez de rol ENUM
+      const rolCodigo = data.usuario?.rol_codigo;
       let redirectPath = '/home'; // Default: App Home (Nov 2025)
 
-      if (userRole === 'super_admin') {
+      if (rolCodigo === 'super_admin') {
         redirectPath = '/superadmin';
-      } else if (userRole === 'empleado') {
+      } else if (rolCodigo === 'empleado') {
         redirectPath = '/citas';
       }
 

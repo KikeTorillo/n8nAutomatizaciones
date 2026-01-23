@@ -94,7 +94,10 @@ const CAMPOS_ACTUALIZABLES = [
     'suspendido',
     'motivo_suspension',
     // Configuración POS (Dic 2025)
-    'pos_requiere_profesional'
+    'pos_requiere_profesional',
+    // Dogfooding - Actualización automática desde suscripciones (Ene 2026)
+    'plan_actual',
+    'modulos_activos'
 ];
 
 module.exports = {

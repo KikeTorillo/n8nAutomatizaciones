@@ -27,12 +27,34 @@ class UsuarioModel {
             return await RLSContextManager.withBypass(async (db) => {
                 const password_hash = await bcrypt.hash(userData.password, AUTH_CONFIG.BCRYPT_SALT_ROUNDS);
 
+                // Obtener rol_id basado en código de rol
+                const rolCodigo = userData.rol_codigo || userData.rol || 'empleado';
+                let rolId = userData.rol_id || null;
+
+                if (!rolId) {
+                    // Buscar rol_id: primero en la organización, luego rol de sistema
+                    const rolQuery = userData.organizacion_id
+                        ? `SELECT id FROM roles WHERE codigo = $1 AND (organizacion_id = $2 OR es_rol_sistema = TRUE) LIMIT 1`
+                        : `SELECT id FROM roles WHERE codigo = $1 AND es_rol_sistema = TRUE LIMIT 1`;
+
+                    const rolParams = userData.organizacion_id
+                        ? [rolCodigo, userData.organizacion_id]
+                        : [rolCodigo];
+
+                    const rolResult = await db.query(rolQuery, rolParams);
+                    rolId = rolResult.rows[0]?.id || null;
+
+                    if (!rolId) {
+                        ErrorHelper.throwValidation(`Rol '${rolCodigo}' no encontrado`);
+                    }
+                }
+
                 const query = `
                     INSERT INTO usuarios (
-                        email, password_hash, nombre, apellidos, telefono, rol,
+                        email, password_hash, nombre, apellidos, telefono, rol_id,
                         organizacion_id, profesional_id, activo, email_verificado
                     ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-                    RETURNING id, email, nombre, apellidos, telefono, rol,
+                    RETURNING id, email, nombre, apellidos, telefono, rol_id,
                              organizacion_id, profesional_id, activo, email_verificado,
                              creado_en, actualizado_en
                 `;
@@ -43,7 +65,7 @@ class UsuarioModel {
                     userData.nombre,
                     userData.apellidos || null,
                     userData.telefono || null,
-                    userData.rol || 'empleado',
+                    rolId,
                     userData.organizacion_id || null,
                     userData.profesional_id || null,
                     userData.activo !== undefined ? userData.activo : true,
@@ -75,11 +97,18 @@ class UsuarioModel {
         try {
             // Usar bypass para acceder a usuarios_sucursales durante login
             return await RLSHelper.withContext(db, { loginEmail: email, bypass: true }, async (db) => {
+                // Incluir rol_id y datos del rol dinámico
                 const query = `
                     SELECT u.id, u.email, u.password_hash, u.nombre, u.apellidos, u.telefono,
-                           u.rol, u.organizacion_id, u.profesional_id, u.activo, u.email_verificado,
+                           u.rol_id, u.organizacion_id, u.profesional_id, u.activo, u.email_verificado,
                            u.ultimo_login, u.intentos_fallidos, u.bloqueado_hasta,
                            u.onboarding_completado,
+                           -- Datos del rol dinámico
+                           r.codigo AS rol_codigo,
+                           r.nombre AS rol_nombre,
+                           r.nivel_jerarquia,
+                           r.bypass_permisos,
+                           r.es_rol_sistema,
                            (SELECT us.sucursal_id FROM usuarios_sucursales us
                             WHERE us.usuario_id = u.id AND us.activo = TRUE LIMIT 1) as sucursal_id,
                            -- Moneda: sucursal override > organización (Dic 2025)
@@ -93,6 +122,10 @@ class UsuarioModel {
                            o.zona_horaria
                     FROM usuarios u
                     LEFT JOIN organizaciones o ON o.id = u.organizacion_id
+                    -- JOIN con condición para satisfacer RLS de roles
+                    -- (roles pueden ser de sistema o de la misma organización del usuario)
+                    LEFT JOIN roles r ON r.id = u.rol_id
+                        AND (r.organizacion_id = u.organizacion_id OR r.es_rol_sistema = true)
                     WHERE u.email = $1 AND u.activo = TRUE
                 `;
 
@@ -137,9 +170,10 @@ class UsuarioModel {
         await this.registrarIntentoLogin(email, true, ipAddress);
 
         // Configurar contexto RLS para futuras operaciones
+        // FASE 7: Usar rol_codigo del sistema dinámico
         const db = await getDb();
         try {
-            await RLSHelper.configurarContexto(db, usuario.id, usuario.rol, usuario.organizacion_id);
+            await RLSHelper.configurarContexto(db, usuario.id, usuario.rol_codigo, usuario.organizacion_id);
         } finally {
             db.release();
         }
@@ -148,25 +182,31 @@ class UsuarioModel {
         const { accessToken, refreshToken } = this.generarTokens(usuario);
 
         // Preparar datos del usuario (sin información sensible)
+        // FASE 7 COMPLETADA (Ene 2026): Solo sistema de roles dinámicos
         const usuarioSeguro = {
             id: usuario.id,
             email: usuario.email,
             nombre: usuario.nombre,
             apellidos: usuario.apellidos,
             telefono: usuario.telefono,
-            rol: usuario.rol,
+            // Sistema de roles dinámicos (solo rol_id como fuente de verdad)
+            rol_id: usuario.rol_id,                              // FK al sistema de roles dinámicos
+            rol_codigo: usuario.rol_codigo,                      // Código del rol (para lógica de negocio)
+            rol_nombre: usuario.rol_nombre,                      // Nombre legible del rol (para UI)
+            nivel_jerarquia: usuario.nivel_jerarquia || 10,      // Nivel jerárquico para guards de rutas
+            // Contexto organizacional
             organizacion_id: usuario.organizacion_id,
             profesional_id: usuario.profesional_id,
             email_verificado: usuario.email_verificado,
-            onboarding_completado: usuario.onboarding_completado,  // Dic 2025 - Flujo unificado
-            // Multi-moneda (Fase 4 - Dic 2025)
+            onboarding_completado: usuario.onboarding_completado,
+            // Multi-moneda
             moneda: usuario.moneda || 'MXN',
             zona_horaria: usuario.zona_horaria || 'America/Mexico_City'
         };
 
         // Determinar si requiere onboarding (Dic 2025)
-        // Ene 2026: super_admin NUNCA requiere onboarding (es usuario de plataforma sin organización)
-        const requiereOnboarding = usuario.rol !== 'super_admin' &&
+        // Ene 2026: Roles de sistema (super_admin, bot) NUNCA requieren onboarding
+        const requiereOnboarding = !usuario.es_rol_sistema &&
                                    !usuario.organizacion_id &&
                                    usuario.onboarding_completado === false;
 
@@ -185,10 +225,11 @@ class UsuarioModel {
         // Generar JTI único para garantizar que cada token sea único
         const jti = crypto.randomBytes(16).toString('hex');
 
+        // FASE 7 COMPLETADA (Ene 2026): Solo rol_id en JWT (sistema dinámico)
         const payload = {
             userId: usuario.id,
             email: usuario.email,
-            rol: usuario.rol,
+            rolId: usuario.rol_id,                   // FK al sistema de roles dinámicos
             organizacionId: usuario.organizacion_id,
             sucursalId: usuario.sucursal_id || null, // Sucursal principal del usuario
             jti: jti // JWT ID único
@@ -240,15 +281,20 @@ class UsuarioModel {
             const query = `
                 SELECT
                     u.id, u.email, u.nombre, u.apellidos, u.telefono,
-                    u.rol, u.organizacion_id, u.profesional_id, u.activo, u.email_verificado,
+                    u.rol_id, r.codigo as rol_codigo, r.nombre as rol_nombre,
+                    r.nivel_jerarquia, r.bypass_permisos, r.es_rol_sistema,
+                    u.organizacion_id, u.profesional_id, u.activo, u.email_verificado,
                     u.onboarding_completado,
                     o.categoria_id,
                     ci.codigo as categoria_codigo,
                     o.nombre_comercial,
                     o.plan_actual,
                     o.moneda,
-                    o.zona_horaria
+                    o.zona_horaria,
+                    (SELECT us.sucursal_id FROM usuarios_sucursales us
+                     WHERE us.usuario_id = u.id AND us.activo = TRUE LIMIT 1) as sucursal_id
                 FROM usuarios u
+                LEFT JOIN roles r ON r.id = u.rol_id
                 LEFT JOIN organizaciones o ON u.organizacion_id = o.id
                 LEFT JOIN categorias ci ON o.categoria_id = ci.id
                 WHERE u.id = $1 AND u.activo = TRUE
@@ -264,11 +310,13 @@ class UsuarioModel {
         // Las políticas PostgreSQL filtran automáticamente por organizacion_id
         return await RLSContextManager.query(organizacionId, async (db) => {
             const query = `
-                SELECT id, email, nombre, apellidos, telefono,
-                       rol, organizacion_id, profesional_id, activo, email_verificado,
-                       ultimo_login, zona_horaria, idioma, creado_en, actualizado_en
-                FROM usuarios
-                WHERE id = $1 AND activo = TRUE
+                SELECT u.id, u.email, u.nombre, u.apellidos, u.telefono,
+                       u.rol_id, r.codigo as rol_codigo, r.nombre as rol_nombre,
+                       u.organizacion_id, u.profesional_id, u.activo, u.email_verificado,
+                       u.ultimo_login, u.zona_horaria, u.idioma, u.creado_en, u.actualizado_en
+                FROM usuarios u
+                LEFT JOIN roles r ON r.id = u.rol_id
+                WHERE u.id = $1 AND u.activo = TRUE
             `;
 
             const result = await db.query(query, [id]);
@@ -305,12 +353,15 @@ class UsuarioModel {
             const query = `
                 SELECT
                     u.id, u.email, u.nombre, u.apellidos, u.telefono,
-                    u.rol, u.organizacion_id, u.profesional_id, u.activo,
+                    u.rol_id, r.codigo as rol_codigo, r.nombre as rol_nombre,
+                    r.nivel_jerarquia, r.bypass_permisos, r.es_rol_sistema,
+                    u.organizacion_id, u.profesional_id, u.activo,
                     u.email_verificado, u.onboarding_completado,
                     $2::integer as sucursal_id,
                     COALESCE(s.moneda, o.moneda) as moneda,
                     o.zona_horaria
                 FROM usuarios u
+                LEFT JOIN roles r ON r.id = u.rol_id
                 LEFT JOIN organizaciones o ON u.organizacion_id = o.id
                 LEFT JOIN sucursales s ON s.id = $2
                 WHERE u.id = $1 AND u.activo = TRUE
@@ -401,7 +452,7 @@ class UsuarioModel {
                 UPDATE usuarios
                 SET ${campos.join(', ')}, actualizado_en = NOW()
                 WHERE id = $${contador}
-                RETURNING id, email, nombre, apellidos, telefono, rol, organizacion_id,
+                RETURNING id, email, nombre, apellidos, telefono, organizacion_id,
                          profesional_id, activo, email_verificado, zona_horaria, idioma,
                          creado_en, actualizado_en
             `;
@@ -418,9 +469,11 @@ class UsuarioModel {
         return await RLSContextManager.withBypass(async (db) => {
             // Validar que el usuario existe y pertenece a la organización
             const validacionQuery = `
-                SELECT id, email, nombre, apellidos, rol, organizacion_id, activo
-                FROM usuarios
-                WHERE id = $1 AND organizacion_id = $2 AND activo = TRUE
+                SELECT u.id, u.email, u.nombre, u.apellidos, u.rol_id,
+                       r.codigo as rol_codigo, u.organizacion_id, u.activo
+                FROM usuarios u
+                LEFT JOIN roles r ON r.id = u.rol_id
+                WHERE u.id = $1 AND u.organizacion_id = $2 AND u.activo = TRUE
             `;
             const validacion = await db.query(validacionQuery, [userId, organizacionId]);
 
@@ -433,7 +486,7 @@ class UsuarioModel {
                     bloqueado_hasta = NULL,
                     actualizado_en = NOW()
                 WHERE id = $1 AND organizacion_id = $2 AND activo = TRUE
-                RETURNING id, email, nombre, apellidos, rol, organizacion_id,
+                RETURNING id, email, nombre, apellidos, rol_id, organizacion_id,
                          intentos_fallidos, bloqueado_hasta, activo
             `;
 
@@ -446,14 +499,16 @@ class UsuarioModel {
         // ✅ Usar RLSContextManager.withBypass() para gestión automática completa
         return await RLSContextManager.withBypass(async (db) => {
             const query = `
-                SELECT id, email, nombre, apellidos, rol, intentos_fallidos,
-                       bloqueado_hasta, ultimo_login, creado_en
-                FROM usuarios
-                WHERE organizacion_id = $1
-                  AND bloqueado_hasta IS NOT NULL
-                  AND bloqueado_hasta > NOW()
-                  AND activo = TRUE
-                ORDER BY bloqueado_hasta DESC
+                SELECT u.id, u.email, u.nombre, u.apellidos, u.rol_id,
+                       r.codigo as rol_codigo, r.nombre as rol_nombre,
+                       u.intentos_fallidos, u.bloqueado_hasta, u.ultimo_login, u.creado_en
+                FROM usuarios u
+                LEFT JOIN roles r ON r.id = u.rol_id
+                WHERE u.organizacion_id = $1
+                  AND u.bloqueado_hasta IS NOT NULL
+                  AND u.bloqueado_hasta > NOW()
+                  AND u.activo = TRUE
+                ORDER BY u.bloqueado_hasta DESC
             `;
 
             const result = await db.query(query, [organizacionId]);
@@ -585,8 +640,9 @@ class UsuarioModel {
             let queryParams = [];
             let paramCounter = 1;
 
+            // Filtrar por código de rol (usando JOIN con tabla roles)
             if (rol) {
-                whereConditions.push(`u.rol = $${paramCounter}`);
+                whereConditions.push(`r.codigo = $${paramCounter}`);
                 queryParams.push(rol);
                 paramCounter++;
             }
@@ -627,13 +683,16 @@ class UsuarioModel {
             const countQuery = `
                 SELECT COUNT(*) as total
                 FROM usuarios u
+                LEFT JOIN roles r ON r.id = u.rol_id
                 WHERE ${whereClause}
             `;
 
-            // Query principal con joins a profesionales
+            // Query principal con joins a profesionales y roles
             const dataQuery = `
                 SELECT
-                    u.id, u.organizacion_id, u.email, u.nombre, u.apellidos, u.telefono, u.rol,
+                    u.id, u.organizacion_id, u.email, u.nombre, u.apellidos, u.telefono,
+                    u.rol_id, r.codigo as rol_codigo, r.nombre as rol_nombre,
+                    r.nivel_jerarquia, r.bypass_permisos,
                     u.activo, u.email_verificado, u.ultimo_login, u.intentos_fallidos,
                     u.bloqueado_hasta, u.creado_en, u.actualizado_en,
                     p.id as profesional_id,
@@ -649,6 +708,7 @@ class UsuarioModel {
                         ELSE 0
                     END as minutos_restantes_bloqueo
                 FROM usuarios u
+                LEFT JOIN roles r ON r.id = u.rol_id
                 LEFT JOIN profesionales p ON p.usuario_id = u.id
                 WHERE ${whereClause}
                 ORDER BY u.${orderBySeguro} ${orderDirSeguro}
@@ -684,56 +744,65 @@ class UsuarioModel {
         });
     }
 
-    static async cambiarRol(userId, nuevoRol, orgId, adminId) {
+    static async cambiarRol(userId, nuevoRolCodigo, orgId, adminId) {
         return await RLSContextManager.withBypass(async (db) => {
             // Validar que el usuario existe y pertenece a la organización
             const usuarioQuery = `
-                SELECT id, email, nombre, apellidos, rol, organizacion_id, activo
-                FROM usuarios
-                WHERE id = $1 AND organizacion_id = $2 AND activo = true
+                SELECT u.id, u.email, u.nombre, u.apellidos, u.rol_id, u.organizacion_id, u.activo,
+                       r.codigo as rol_codigo
+                FROM usuarios u
+                LEFT JOIN roles r ON r.id = u.rol_id
+                WHERE u.id = $1 AND u.organizacion_id = $2 AND u.activo = true
             `;
             const usuarioResult = await db.query(usuarioQuery, [userId, orgId]);
 
             ErrorHelper.throwIfNotFound(usuarioResult.rows[0], 'Usuario en la organización');
 
             const usuario = usuarioResult.rows[0];
-            const rolAnterior = usuario.rol;
+            const rolCodigoAnterior = usuario.rol_codigo;
 
-            // Validar que el nuevo rol es válido
-            const rolesValidos = ['admin', 'propietario', 'empleado', 'cliente'];
-            if (!rolesValidos.includes(nuevoRol)) {
-                ErrorHelper.throwValidation(`Rol no válido. Opciones: ${rolesValidos.join(', ')}`);
+            // Buscar el nuevo rol_id basado en el código
+            const nuevoRolQuery = `
+                SELECT id, codigo, nombre FROM roles
+                WHERE codigo = $1 AND organizacion_id = $2
+            `;
+            const nuevoRolResult = await db.query(nuevoRolQuery, [nuevoRolCodigo, orgId]);
+
+            if (!nuevoRolResult.rows[0]) {
+                ErrorHelper.throwValidation(`Rol '${nuevoRolCodigo}' no encontrado en la organización`);
             }
 
+            const nuevoRol = nuevoRolResult.rows[0];
+
             // Validar que no sea el mismo rol
-            if (rolAnterior === nuevoRol) {
+            if (usuario.rol_id === nuevoRol.id) {
                 ErrorHelper.throwConflict('El usuario ya tiene este rol asignado');
             }
 
-            // Actualizar rol del usuario
+            // Actualizar rol_id del usuario
             const updateQuery = `
                 UPDATE usuarios
                 SET
-                    rol = $1,
+                    rol_id = $1,
                     actualizado_en = NOW()
                 WHERE id = $2 AND organizacion_id = $3
-                RETURNING id, email, nombre, apellidos, rol, organizacion_id,
+                RETURNING id, email, nombre, apellidos, rol_id, organizacion_id,
                          activo, email_verificado, creado_en, actualizado_en
             `;
 
-            const updateResult = await db.query(updateQuery, [nuevoRol, userId, orgId]);
+            const updateResult = await db.query(updateQuery, [nuevoRol.id, userId, orgId]);
 
             // SECURITY FIX (Ene 2026): Invalidar tokens del usuario al cambiar rol
             // Esto fuerza al usuario a re-autenticarse con el nuevo rol
             try {
                 await tokenBlacklistService.invalidateUserTokens(
                     userId,
-                    `cambio_rol_${rolAnterior}_a_${nuevoRol}`
+                    `cambio_rol_${rolCodigoAnterior}_a_${nuevoRolCodigo}`
                 );
                 logger.info('[UsuarioModel.cambiarRol] Tokens invalidados por cambio de rol', {
                     usuario_id: userId,
-                    rol_anterior: rolAnterior,
-                    rol_nuevo: nuevoRol
+                    rol_anterior: rolCodigoAnterior,
+                    rol_nuevo: nuevoRolCodigo
                 });
             } catch (tokenError) {
                 // No fallar la operación si la invalidación falla
@@ -746,11 +815,11 @@ class UsuarioModel {
             await RLSHelper.registrarEvento(db, {
                 organizacion_id: orgId,
                 tipo_evento: 'usuario_rol_cambiado',
-                descripcion: `Rol de usuario cambiado de ${rolAnterior} a ${nuevoRol}`,
+                descripcion: `Rol de usuario cambiado de ${rolCodigoAnterior} a ${nuevoRolCodigo}`,
                 metadata: {
                     usuario_email: usuario.email,
-                    rol_anterior: rolAnterior,
-                    rol_nuevo: nuevoRol,
+                    rol_anterior: rolCodigoAnterior,
+                    rol_nuevo: nuevoRolCodigo,
                     admin_id: adminId,
                     tokens_invalidados: true
                 },
@@ -760,8 +829,8 @@ class UsuarioModel {
             return {
                 usuario: updateResult.rows[0],
                 cambio: {
-                    rol_anterior: rolAnterior,
-                    rol_nuevo: nuevoRol,
+                    rol_anterior: rolCodigoAnterior,
+                    rol_nuevo: nuevoRolCodigo,
                     realizado_por: adminId,
                     timestamp: new Date().toISOString(),
                     tokens_invalidados: true
@@ -857,11 +926,13 @@ class UsuarioModel {
 
             // Buscar token válido y no expirado
             const usuarioQuery = `
-                SELECT id, email, nombre, apellidos, rol, organizacion_id, email_verificado
-                FROM usuarios
-                WHERE token_verificacion_email = $1
-                  AND token_verificacion_expira > NOW()
-                  AND activo = true
+                SELECT u.id, u.email, u.nombre, u.apellidos, u.rol_id,
+                       r.codigo as rol_codigo, u.organizacion_id, u.email_verificado
+                FROM usuarios u
+                LEFT JOIN roles r ON r.id = u.rol_id
+                WHERE u.token_verificacion_email = $1
+                  AND u.token_verificacion_expira > NOW()
+                  AND u.activo = true
             `;
             const usuarioResult = await db.query(usuarioQuery, [token]);
 
@@ -1108,10 +1179,13 @@ class UsuarioModel {
         return await RLSContextManager.withBypass(async (db) => {
             const query = `
                 SELECT u.id, u.email, u.nombre, u.apellidos, u.telefono,
-                       u.rol, u.organizacion_id, u.activo, u.email_verificado,
+                       u.rol_id, r.codigo as rol_codigo, r.nombre as rol_nombre,
+                       r.nivel_jerarquia, r.bypass_permisos, r.es_rol_sistema,
+                       u.organizacion_id, u.activo, u.email_verificado,
                        u.google_id, u.avatar_url, u.onboarding_completado,
                        o.nombre_comercial
                 FROM usuarios u
+                LEFT JOIN roles r ON r.id = u.rol_id
                 LEFT JOIN organizaciones o ON u.organizacion_id = o.id
                 WHERE u.google_id = $1 AND u.activo = TRUE
             `;
@@ -1148,16 +1222,19 @@ class UsuarioModel {
             }
 
             // Crear usuario sin organización (requiere onboarding)
-            // Rol temporal hasta que complete onboarding y se asigne organización
+            // El rol_id se asignará cuando complete onboarding y se cree su organización
+            // Por ahora usamos un rol_id temporal del rol de sistema 'bot' que será actualizado
+            // Nota: Usuarios OAuth sin org no pueden hacer nada hasta completar onboarding
             const query = `
                 INSERT INTO usuarios (
                     email, nombre, apellidos, google_id, avatar_url,
-                    rol, activo, email_verificado, onboarding_completado
+                    rol_id, activo, email_verificado, onboarding_completado
                 ) VALUES (
                     LOWER($1), $2, $3, $4, $5,
-                    'admin', TRUE, TRUE, FALSE
+                    (SELECT id FROM roles WHERE codigo = 'bot' AND es_rol_sistema = TRUE LIMIT 1),
+                    TRUE, TRUE, FALSE
                 )
-                RETURNING id, email, nombre, apellidos, rol, organizacion_id,
+                RETURNING id, email, nombre, apellidos, rol_id, organizacion_id,
                           google_id, avatar_url, activo, email_verificado,
                           onboarding_completado, creado_en
             `;
@@ -1206,7 +1283,7 @@ class UsuarioModel {
                     avatar_url = COALESCE(avatar_url, $2),
                     actualizado_en = NOW()
                 WHERE id = $3
-                RETURNING id, email, nombre, apellidos, rol, organizacion_id,
+                RETURNING id, email, nombre, apellidos, rol_id, organizacion_id,
                           google_id, avatar_url, onboarding_completado
             `;
 
@@ -1279,17 +1356,28 @@ class UsuarioModel {
                 // Hashear password
                 const password_hash = await bcrypt.hash(password, AUTH_CONFIG.BCRYPT_SALT_ROUNDS);
 
+                // Obtener rol_id basado en código de rol
+                const rolResult = await db.query(
+                    `SELECT id FROM roles WHERE codigo = $1 AND (organizacion_id = $2 OR es_rol_sistema = TRUE) LIMIT 1`,
+                    [rol, organizacionId]
+                );
+                const rolId = rolResult.rows[0]?.id;
+
+                if (!rolId) {
+                    ErrorHelper.throwValidation(`Rol '${rol}' no encontrado en la organización`);
+                }
+
                 // Crear usuario
                 const usuarioResult = await db.query(`
                     INSERT INTO usuarios (
                         organizacion_id, email, password_hash, nombre, apellidos,
-                        telefono, rol, profesional_id, activo, email_verificado
+                        telefono, rol_id, profesional_id, activo, email_verificado
                     ) VALUES ($1, LOWER($2), $3, $4, $5, $6, $7, $8, $9, TRUE)
                     RETURNING id, organizacion_id, email, nombre, apellidos, telefono,
-                              rol, profesional_id, activo, email_verificado, creado_en
+                              rol_id, profesional_id, activo, email_verificado, creado_en
                 `, [
                     organizacionId, email, password_hash, nombre, apellidos || null,
-                    telefono || null, rol, profesional_id, activo
+                    telefono || null, rolId, profesional_id, activo
                 ]);
 
                 const usuario = usuarioResult.rows[0];
@@ -1555,12 +1643,13 @@ class UsuarioModel {
     static async obtenerUsuariosSinProfesional(organizacionId) {
         return await RLSContextManager.query(organizacionId, async (db) => {
             const result = await db.query(`
-                SELECT u.id, u.nombre, u.apellidos, u.email, u.rol
+                SELECT u.id, u.nombre, u.apellidos, u.email, r.codigo as rol_codigo
                 FROM usuarios u
+                LEFT JOIN roles r ON r.id = u.rol_id
                 LEFT JOIN profesionales p ON p.usuario_id = u.id
                 WHERE p.id IS NULL
                   AND u.activo = true
-                  AND u.rol != 'bot'
+                  AND r.codigo != 'bot'
                 ORDER BY u.nombre, u.apellidos
             `);
 
@@ -1611,7 +1700,7 @@ class UsuarioModel {
         }
 
         // ✅ FIX v2.1: Usar transactionWithBypass en lugar de BEGIN/COMMIT manual
-        return await RLSContextManager.transactionWithBypass(async (db) => {
+        const result = await RLSContextManager.transactionWithBypass(async (db) => {
             // 1. Obtener usuario
                 const usuarioResult = await db.query(
                     'SELECT id, email, nombre, apellidos, onboarding_completado FROM usuarios WHERE id = $1',
@@ -1649,50 +1738,50 @@ class UsuarioModel {
                     .replace(/^-|-$/g, '')
                     .substring(0, 50) + '-' + SecureRandom.slugSuffix(4);
 
-                // 4. Crear organización
+                // 4. Crear organización (con módulos activos seleccionados)
                 const orgResult = await db.query(`
                     INSERT INTO organizaciones (
                         codigo_tenant, slug, nombre_comercial, razon_social,
                         email_admin, categoria_id, estado_id, ciudad_id,
-                        plan_actual, activo
-                    ) VALUES ($1, $2, $3, $3, $4, $5, $6, $7, 'trial', TRUE)
+                        plan_actual, activo, modulos_activos
+                    ) VALUES ($1, $2, $3, $3, $4, $5, $6, $7, 'trial', TRUE, $8)
                     RETURNING id, codigo_tenant, slug, nombre_comercial
-                `, [codigoTenant, slug, nombre_negocio, usuario.email, categoria_id, estado_id, ciudad_id]);
+                `, [codigoTenant, slug, nombre_negocio, usuario.email, categoria_id, estado_id, ciudad_id, modulosActivos]);
 
                 const organizacion = orgResult.rows[0];
 
-                // 5. Crear suscripción trial con módulos seleccionados
-                await db.query(`
-                    INSERT INTO subscripciones (
-                        organizacion_id, plan_id, precio_actual, estado,
-                        fecha_inicio, fecha_proximo_pago,
-                        fecha_inicio_trial, fecha_fin_trial, dias_trial,
-                        modulos_activos
-                    )
-                    SELECT
-                        $1,
-                        id,
-                        0.00,
-                        'trial',
-                        CURRENT_DATE,
-                        CURRENT_DATE + INTERVAL '14 days',
-                        NOW(),
-                        NOW() + INTERVAL '14 days',
-                        14,
-                        $2::jsonb
-                    FROM planes_subscripcion
-                    WHERE codigo_plan = 'trial'
-                    LIMIT 1
-                `, [organizacion.id, JSON.stringify(modulosActivos)]);
+                // 5. Módulos activos - ya no se usa tabla legacy subscripciones (Fase 0 - Ene 2026)
+                // Los módulos se guardan en la org o se omiten si la columna no existe
+                // La suscripción se maneja ahora por el módulo suscripciones-negocio via dogfooding hook
+                logger.info('[completarOnboarding] Módulos seleccionados:', { modulosActivos });
 
-                // 6. Actualizar usuario con organización
+                // 5.1 Asegurar que los roles default existan (el trigger puede no ser visible en la transacción)
+                // Llamamos explícitamente a la función SQL para garantizar que existan antes de buscarlos
+                await db.query(`SELECT crear_roles_default_organizacion($1)`, [organizacion.id]);
+
+                // 6. Actualizar usuario con organización y rol_id
+                // Obtener rol_id del rol 'propietario' de la nueva organización
+                // El usuario que crea la org es el dueño/propietario (nivel 80, bypass_permisos=true)
+                const rolResult = await db.query(
+                    `SELECT id FROM roles WHERE codigo = 'propietario' AND organizacion_id = $1 LIMIT 1`,
+                    [organizacion.id]
+                );
+                const rolId = rolResult.rows[0]?.id || null;
+
+                if (!rolId) {
+                    logger.error('[completarOnboarding] CRÍTICO: No se encontró rol propietario para org', {
+                        organizacion_id: organizacion.id
+                    });
+                }
+
                 await db.query(`
                     UPDATE usuarios
                     SET organizacion_id = $1,
+                        rol_id = $2,
                         onboarding_completado = TRUE,
                         actualizado_en = NOW()
-                    WHERE id = $2
-                `, [organizacion.id, userId]);
+                    WHERE id = $3
+                `, [organizacion.id, rolId, userId]);
 
                 // 7. Si soy_profesional, crear profesional vinculado
                 if (soy_profesional) {
@@ -1747,6 +1836,32 @@ class UsuarioModel {
             };
             // COMMIT automático al finalizar, ROLLBACK automático si hay error
         });
+
+        // ═══════════════════════════════════════════════════════════════════
+        // 🔗 HOOK DOGFOODING (Ene 2026)
+        // Vincular nueva org como cliente en Nexo Team (org_id = 1 en dev)
+        // ═══════════════════════════════════════════════════════════════════
+        if (result && result.organizacion) {
+            setImmediate(async () => {
+                try {
+                    const DogfoodingService = require('../../../services/dogfoodingService');
+                    await DogfoodingService.vincularOrganizacionComoCliente({
+                        id: result.organizacion.id,
+                        nombre_comercial: result.organizacion.nombre_comercial,
+                        email_admin: result.usuario.email,
+                        telefono: null,
+                        razon_social: result.organizacion.nombre_comercial
+                    });
+                    logger.info('[completarOnboarding] Dogfooding hook ejecutado', {
+                        organizacion_id: result.organizacion.id
+                    });
+                } catch (err) {
+                    logger.error('[completarOnboarding] Error en dogfooding hook:', err);
+                }
+            });
+        }
+
+        return result;
     }
 }
 

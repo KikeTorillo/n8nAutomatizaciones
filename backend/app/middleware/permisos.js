@@ -182,8 +182,8 @@ async function validarYAdjuntarSucursal(req, res, options, contextName, permisoI
     }
 
     // Bypass de permisos ANTES de validar sucursal: super_admin no necesita sucursal
-    // Usa propiedad bypass_permisos del nuevo sistema de roles
-    if (req.user.bypass_permisos || req.user.rol === 'super_admin') {
+    // FASE 7 COMPLETADA: Solo usa bypass_permisos del sistema dinámico
+    if (req.user.bypass_permisos) {
         logger.warn(`[Permisos] Bypass de permisos (pre-sucursal) - ${contextName}`, {
             usuario_id: usuarioId,
             email: req.user.email,

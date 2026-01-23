@@ -43,6 +43,24 @@ router.get('/dashboard',
     SuperAdminController.dashboard
 );
 
+/**
+ * GET /api/v1/superadmin/metricas-saas
+ *
+ * Métricas SaaS reales de Nexo Team (org_id = 4):
+ * - MRR (Monthly Recurring Revenue)
+ * - ARR (Annual Recurring Revenue)
+ * - Churn Rate
+ * - Suscriptores activos
+ * - Distribución por estado
+ *
+ * @requires rol: super_admin
+ * @returns {Object} Métricas SaaS del módulo suscripciones-negocio
+ */
+router.get('/metricas-saas',
+    rateLimiting.apiRateLimit,
+    SuperAdminController.metricasSaaS
+);
+
 // ====================================================================
 // GESTIÓN DE ORGANIZACIONES
 // ====================================================================

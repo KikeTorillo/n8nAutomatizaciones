@@ -3,7 +3,7 @@
 # Modo: Desarrollo con Hot Module Replacement (HMR)
 # =========================================
 
-FROM node:22-alpine
+FROM node:22-alpine3.20
 
 # Establecer directorio de trabajo
 WORKDIR /app

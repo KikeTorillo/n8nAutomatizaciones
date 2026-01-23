@@ -10,7 +10,7 @@ class OrganizacionController {
     // Helper para validar acceso a organización
     static validarAccesoOrganizacion(req, organizacionId) {
         // super_admin puede acceder a cualquier organización
-        if (req.user.rol === 'super_admin') {
+        if (req.user.rol_codigo === 'super_admin') {
             return true;
         }
 
@@ -49,7 +49,7 @@ class OrganizacionController {
         };
 
         // Si NO es super_admin, solo puede listar su propia organización
-        if (req.user.rol !== 'super_admin') {
+        if (req.user.rol_codigo !== 'super_admin') {
             options.organizacion_id = req.user.organizacion_id;
         }
 
@@ -195,10 +195,11 @@ class OrganizacionController {
         const nuevoAdmin = await UsuarioModel.crear(adminData);
 
         // Generar token JWT para el admin
+        // FASE 7: Usar rol_id del sistema dinámico
         const token = authConfig.generateToken({
             userId: nuevoAdmin.id,
             email: nuevoAdmin.email,
-            rol: nuevoAdmin.rol,
+            rolId: nuevoAdmin.rol_id,
             organizacionId: nuevaOrganizacion.id
         });
 
@@ -210,7 +211,7 @@ class OrganizacionController {
                 nombre: nuevoAdmin.nombre,
                 apellidos: nuevoAdmin.apellidos,
                 email: nuevoAdmin.email,
-                rol: nuevoAdmin.rol,
+                rol_id: nuevoAdmin.rol_id,
                 token
             }
         };

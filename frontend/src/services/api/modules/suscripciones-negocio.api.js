@@ -415,4 +415,33 @@ export const suscripcionesNegocioApi = {
    */
   obtenerEvolucionSuscriptores: (params = {}) =>
     apiClient.get(`${BASE_URL}/metricas/evolucion-suscriptores`, { params }),
+
+  // ========================================================================
+  // CHECKOUT
+  // ========================================================================
+
+  /**
+   * Iniciar proceso de checkout
+   * Crea suscripción pendiente y retorna init_point de MercadoPago
+   * @param {Object} data - { plan_id, periodo?, cupon_codigo?, suscriptor_externo? }
+   * @returns {Promise<Object>} { init_point, suscripcion_id, pago_id, precio }
+   */
+  iniciarCheckout: (data) =>
+    apiClient.post(`${BASE_URL}/checkout/iniciar`, data),
+
+  /**
+   * Validar cupón de descuento
+   * @param {Object} data - { codigo, plan_id, precio_base? }
+   * @returns {Promise<Object>} { valido, cupon?, descuento_calculado?, precio_final? }
+   */
+  validarCupon: (data) =>
+    apiClient.post(`${BASE_URL}/checkout/validar-cupon`, data),
+
+  /**
+   * Obtener resultado del checkout (después del callback de MercadoPago)
+   * @param {Object} params - { suscripcion_id?, external_reference?, collection_status? }
+   * @returns {Promise<Object>} { suscripcion, resultado_pago }
+   */
+  obtenerResultadoCheckout: (params = {}) =>
+    apiClient.get(`${BASE_URL}/checkout/resultado`, { params }),
 };

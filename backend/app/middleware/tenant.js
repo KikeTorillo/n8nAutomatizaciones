@@ -53,7 +53,7 @@ const setTenantContext = async (req, res, next) => {
     const tenantId = req.user.organizacion_id;
 
     logger.debug('Determinando tenant context', {
-      userRol: req.user.rol,
+      userRol: req.user.rol_codigo,
       organizacionId: tenantId,
       path: req.path
     });
@@ -62,7 +62,7 @@ const setTenantContext = async (req, res, next) => {
     if (!tenantId) {
       logger.error('Usuario sin organizacion_id', {
         userId: req.user.id,
-        userRol: req.user.rol
+        userRol: req.user.rol_codigo
       });
       return ResponseHelper.error(res, 'Usuario sin organización asignada', 500);
     }
@@ -92,7 +92,7 @@ const setTenantContext = async (req, res, next) => {
     logger.debug('Contexto de tenant configurado', {
       tenantId: tenantId,
       userId: req.user.id,
-      userRol: req.user.rol,
+      userRol: req.user.rol_codigo,
       path: req.path
     });
 
@@ -118,7 +118,7 @@ const validateTenantParams = (req, res, next) => {
     }
 
     // Super admin tiene acceso a todas las organizaciones (usuario de plataforma)
-    if (req.user.rol === 'super_admin') {
+    if (req.user.rol_codigo === 'super_admin') {
       return next();
     }
 
@@ -211,7 +211,7 @@ const verifyTenantActive = async (req, res, next) => {
   let client;
   try {
     // Super admin no tiene organización - bypass completo
-    if (req.user?.rol === 'super_admin') {
+    if (req.user?.rol_codigo === 'super_admin') {
       return next();
     }
 

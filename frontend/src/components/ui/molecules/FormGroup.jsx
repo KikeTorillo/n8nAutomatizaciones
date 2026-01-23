@@ -5,6 +5,7 @@
  * Combina Label + children + helper/error text
  * Compatible con los atoms existentes (Input, Select, Textarea)
  */
+import { memo, useId, cloneElement, isValidElement } from 'react';
 import { cn } from '@/lib/utils';
 import Label from '../atoms/Label';
 
@@ -18,7 +19,7 @@ import Label from '../atoms/Label';
  * @param {React.ReactNode} children - Contenido (Input, Select, etc.)
  * @param {string} className - Clases adicionales para el contenedor
  */
-function FormGroup({
+const FormGroup = memo(function FormGroup({
   label,
   required = false,
   error,
@@ -27,19 +28,29 @@ function FormGroup({
   children,
   className,
 }) {
+  const generatedId = useId();
+  const errorId = error ? `${generatedId}-error` : undefined;
+  const helperId = helper && !error ? `${generatedId}-helper` : undefined;
+  const describedBy = errorId || helperId;
+
+  // Clonar children para agregar aria-describedby si es un elemento válido
+  const enhancedChildren = isValidElement(children) && describedBy
+    ? cloneElement(children, { 'aria-describedby': describedBy })
+    : children;
+
   return (
     <div className={cn('w-full', className)}>
       <Label label={label} required={required} htmlFor={htmlFor} />
-      {children}
+      {enhancedChildren}
       {helper && !error && (
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{helper}</p>
+        <p id={helperId} className="mt-1 text-sm text-gray-500 dark:text-gray-400">{helper}</p>
       )}
       {error && (
-        <p className="mt-1 text-sm text-red-600 dark:text-red-400">{error}</p>
+        <p id={errorId} className="mt-1 text-sm text-red-600 dark:text-red-400">{error}</p>
       )}
     </div>
   );
-}
+});
 
 FormGroup.displayName = 'FormGroup';
 

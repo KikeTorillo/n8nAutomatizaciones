@@ -24,8 +24,9 @@ CREATE UNIQUE INDEX idx_usuarios_email_unique
 
 -- Propósito: Listar usuarios por organización y filtrar por rol
 -- Covering index para evitar table lookups
+-- FASE 7: Cambiado de rol (ENUM) a rol_id (FK)
 CREATE INDEX idx_usuarios_org_rol_activo
-    ON usuarios (organizacion_id, rol, activo) WHERE eliminado_en IS NULL;
+    ON usuarios (organizacion_id, rol_id, activo) WHERE eliminado_en IS NULL;
 
 -- Propósito: Vincular usuarios con sus perfiles profesionales
 -- Índice parcial solo para usuarios que SÍ tienen profesional_id
@@ -68,11 +69,12 @@ CREATE INDEX IF NOT EXISTS idx_usuarios_organizacion_activos
     ON usuarios(organizacion_id)
     WHERE eliminado_en IS NULL;
 
--- Propósito: Búsqueda eficiente de usuarios bot
--- Índice parcial para usuarios con rol=bot activos (1 por organización)
+-- Propósito: Búsqueda eficiente de usuarios por rol
+-- FASE 7: Cambiado de rol (ENUM) a rol_id (FK)
+-- El filtro específico para 'bot' se hace vía JOIN con tabla roles
 CREATE INDEX IF NOT EXISTS idx_usuarios_rol_org
-    ON usuarios(rol, organizacion_id)
-    WHERE rol = 'bot' AND eliminado_en IS NULL;
+    ON usuarios(rol_id, organizacion_id)
+    WHERE eliminado_en IS NULL;
 
 -- ====================================================================
 -- ÍNDICES PARA ORGANIZACIONES
@@ -111,8 +113,8 @@ COMMENT ON INDEX idx_usuarios_reset_token IS
 Solo indexa tokens válidos (no usados, no expirados).';
 
 COMMENT ON INDEX idx_usuarios_rol_org IS
-'Índice parcial para búsqueda eficiente de usuarios bot.
-Solo indexa usuarios con rol=bot activos (1 por organización).
+'Índice para búsqueda eficiente de usuarios por rol_id.
+FASE 7: Cambiado de rol ENUM a rol_id FK.
 Usado por: MCP server, chatbot authentication.';
 
 COMMENT ON INDEX idx_organizaciones_codigo_tenant IS

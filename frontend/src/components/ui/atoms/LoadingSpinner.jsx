@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SPINNER_SIZES, SEMANTIC_COLORS } from '@/lib/uiConstants';
@@ -9,7 +10,7 @@ import { SPINNER_SIZES, SEMANTIC_COLORS } from '@/lib/uiConstants';
  * @param {string} props.className
  * @param {string} props.text - Texto opcional
  */
-function LoadingSpinner({ size = 'md', className, text }) {
+const LoadingSpinner = memo(function LoadingSpinner({ size = 'md', className, text }) {
   return (
     <div className="flex flex-col items-center justify-center gap-3">
       <Loader2
@@ -25,7 +26,7 @@ function LoadingSpinner({ size = 'md', className, text }) {
       )}
     </div>
   );
-}
+});
 
 LoadingSpinner.displayName = 'LoadingSpinner';
 

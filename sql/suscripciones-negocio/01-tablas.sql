@@ -101,7 +101,7 @@ CREATE TABLE IF NOT EXISTS suscripciones_org (
 
     -- Fechas importantes
     fecha_inicio DATE NOT NULL DEFAULT CURRENT_DATE,
-    fecha_proximo_cobro DATE NOT NULL,
+    fecha_proximo_cobro DATE,                       -- NULL para estado pendiente_pago
     fecha_fin DATE,                                 -- NULL = renovación automática, NOT NULL = fecha de cancelación
 
     -- Trial
@@ -138,13 +138,13 @@ CREATE TABLE IF NOT EXISTS suscripciones_org (
 
     -- Constraints
     CONSTRAINT chk_estado_valido CHECK (
-        estado IN ('trial', 'activa', 'pausada', 'cancelada', 'vencida', 'suspendida')
+        estado IN ('trial', 'pendiente_pago', 'activa', 'pausada', 'cancelada', 'vencida', 'suspendida')
     ),
     CONSTRAINT chk_periodo_valido CHECK (
         periodo IN ('mensual', 'trimestral', 'semestral', 'anual')
     ),
     CONSTRAINT chk_gateway_valido CHECK (
-        gateway IS NULL OR gateway IN ('stripe', 'mercadopago', 'paypal', 'manual')
+        gateway IS NULL OR gateway IN ('stripe', 'mercadopago', 'paypal', 'manual', 'cupon_100')
     ),
     CONSTRAINT chk_precio_actual CHECK (precio_actual >= 0),
     CONSTRAINT chk_cliente_o_externo CHECK (
@@ -160,7 +160,7 @@ COMMENT ON COLUMN suscripciones_org.suscriptor_externo IS
 'Datos de suscriptor externo en JSONB: {nombre, email, empresa, telefono}';
 
 COMMENT ON COLUMN suscripciones_org.estado IS
-'Estados: trial (prueba), activa (pagando), pausada (temporal), cancelada (fin), vencida (no pago), suspendida (bloqueada)';
+'Estados: trial (prueba), pendiente_pago (checkout iniciado), activa (pagando), pausada (temporal), cancelada (fin), vencida (no pago), suspendida (bloqueada)';
 
 -- ============================================================================
 -- 3. TABLA: pagos_suscripcion
@@ -189,9 +189,9 @@ CREATE TABLE IF NOT EXISTS pagos_suscripcion (
     metodo_pago VARCHAR(50),                         -- card, bank_transfer, oxxo, spei
     ultimos_digitos VARCHAR(4),                      -- Últimos 4 dígitos de tarjeta
 
-    -- Período cubierto
-    fecha_inicio_periodo DATE NOT NULL,
-    fecha_fin_periodo DATE NOT NULL,
+    -- Período cubierto (NULL para pagos pendientes de checkout)
+    fecha_inicio_periodo DATE,
+    fecha_fin_periodo DATE,
 
     -- Control de reintentos (para pagos fallidos)
     intentos_cobro INTEGER DEFAULT 1,

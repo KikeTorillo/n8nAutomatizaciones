@@ -278,6 +278,7 @@ DECLARE
     bot_email VARCHAR(150);
     bot_nombre VARCHAR(255);
     random_password TEXT;
+    v_rol_bot_id INTEGER;
 BEGIN
     -- ═══════════════════════════════════════════════════════════════════
     -- FASE 1: GENERAR EMAIL Y NOMBRE DEL BOT
@@ -297,13 +298,19 @@ BEGIN
     random_password := encode(gen_random_bytes(32), 'hex');
 
     -- ═══════════════════════════════════════════════════════════════════
+    -- FASE 2.5: OBTENER ROL_ID DEL BOT (FASE 7)
+    -- ═══════════════════════════════════════════════════════════════════
+    SELECT id INTO v_rol_bot_id FROM roles WHERE codigo = 'bot' AND es_rol_sistema = TRUE;
+
+    -- ═══════════════════════════════════════════════════════════════════
     -- FASE 3: CREAR USUARIO BOT
     -- ═══════════════════════════════════════════════════════════════════
+    -- FASE 7: Solo usar rol_id, sin columna rol ENUM
     INSERT INTO usuarios (
         email,
         password_hash,
         nombre,
-        rol,
+        rol_id,
         organizacion_id,
         activo,
         email_verificado,
@@ -313,7 +320,7 @@ BEGIN
         bot_email,
         crypt(random_password, gen_salt('bf')),  -- bcrypt hash
         bot_nombre,
-        'bot',
+        v_rol_bot_id,
         NEW.id,
         true,   -- Auto-activado (listo para usar)
         true,   -- Email pre-verificado (usuario de sistema)
@@ -368,13 +375,15 @@ BEGIN
     -- ═══════════════════════════════════════════════════════════════════
     -- Performance: Usa índice idx_usuarios_rol_org (parcial)
     -- Expectativa: Exactamente 1 registro por organización
+    -- FASE 7: Cambiado de u.rol ENUM a JOIN con tabla roles
     RETURN QUERY
     SELECT
         u.id,
         u.email,
         u.nombre
     FROM usuarios u
-    WHERE u.rol = 'bot'
+    JOIN roles r ON r.id = u.rol_id
+    WHERE r.codigo = 'bot'
       AND u.organizacion_id = p_organizacion_id
       AND u.activo = true
     LIMIT 1;

@@ -381,7 +381,7 @@ class ProfesionalModel {
                        p.ubicacion_jueves_id, p.ubicacion_viernes_id, p.ubicacion_sabado_id,
                        p.ubicacion_domingo_id,
                        o.nombre_comercial as organizacion_nombre, o.categoria_id,
-                       u.nombre as usuario_nombre, u.email as usuario_email, u.rol as usuario_rol,
+                       u.nombre as usuario_nombre, u.email as usuario_email, rol.codigo as usuario_rol,
                        -- Dic 2025: JOINs para nombres de relaciones
                        sup.nombre_completo as supervisor_nombre,
                        d.nombre as departamento_nombre,
@@ -391,13 +391,14 @@ class ProfesionalModel {
                 FROM profesionales p
                 JOIN organizaciones o ON p.organizacion_id = o.id
                 LEFT JOIN usuarios u ON p.usuario_id = u.id
+                LEFT JOIN roles rol ON rol.id = u.rol_id
                 LEFT JOIN profesionales sup ON p.supervisor_id = sup.id
                 LEFT JOIN departamentos d ON p.departamento_id = d.id
                 LEFT JOIN puestos pu ON p.puesto_id = pu.id
                 LEFT JOIN usuarios rrhh ON p.responsable_rrhh_id = rrhh.id
                 LEFT JOIN servicios_profesionales sp ON p.id = sp.profesional_id AND sp.activo = true
                 WHERE p.id = $1 AND p.organizacion_id = $2
-                GROUP BY p.id, o.id, u.id, sup.id, d.id, pu.id, rrhh.id
+                GROUP BY p.id, o.id, u.id, rol.id, sup.id, d.id, pu.id, rrhh.id
             `;
 
             const result = await db.query(query, [id, organizacionId]);
@@ -474,12 +475,13 @@ class ProfesionalModel {
             }
 
             // Dic 2025: Filtro por rol del usuario vinculado (para supervisores)
+            // FASE 7: Usa rol.codigo en vez de u.rol
             if (rol_usuario) {
                 if (Array.isArray(rol_usuario)) {
-                    whereClause += ` AND u.rol::text = ANY($${contador}::text[])`;
+                    whereClause += ` AND rol.codigo = ANY($${contador}::text[])`;
                     values.push(rol_usuario);
                 } else {
-                    whereClause += ` AND u.rol = $${contador}`;
+                    whereClause += ` AND rol.codigo = $${contador}`;
                     values.push(rol_usuario);
                 }
                 contador++;
@@ -542,18 +544,19 @@ class ProfesionalModel {
                        p.codigo, p.estado, p.tipo_contratacion,
                        p.supervisor_id, p.departamento_id, p.puesto_id,
                        p.creado_en, p.actualizado_en,
-                       u.nombre as usuario_nombre, u.email as usuario_email, u.rol as usuario_rol,
+                       u.nombre as usuario_nombre, u.email as usuario_email, rol.codigo as usuario_rol,
                        -- Dic 2025: JOINs para nombres de relaciones
                        d.nombre as departamento_nombre,
                        pu.nombre as puesto_nombre,
                        COUNT(sp.servicio_id) as total_servicios_asignados
                 FROM profesionales p
                 LEFT JOIN usuarios u ON p.usuario_id = u.id
+                LEFT JOIN roles rol ON rol.id = u.rol_id
                 LEFT JOIN departamentos d ON p.departamento_id = d.id
                 LEFT JOIN puestos pu ON p.puesto_id = pu.id
                 LEFT JOIN servicios_profesionales sp ON p.id = sp.profesional_id AND sp.activo = true
                 ${whereClause}
-                GROUP BY p.id, u.id, d.id, pu.id
+                GROUP BY p.id, u.id, rol.id, d.id, pu.id
                 ORDER BY p.nombre_completo ASC
                 LIMIT $${contador} OFFSET $${contador + 1}
             `;
@@ -920,14 +923,16 @@ class ProfesionalModel {
      */
     static async obtenerUsuariosDisponibles(organizacionId) {
         return await RLSContextManager.query(organizacionId, async (db) => {
+            // FASE 7: Usa rol.codigo en vez de u.rol
             const query = `
-                SELECT u.id, u.nombre, u.email, u.rol
+                SELECT u.id, u.nombre, u.email, rol.codigo as rol_codigo
                 FROM usuarios u
+                LEFT JOIN roles rol ON rol.id = u.rol_id
                 LEFT JOIN profesionales p ON u.id = p.usuario_id AND p.activo = TRUE
                 WHERE u.organizacion_id = $1
                     AND u.activo = TRUE
                     AND p.id IS NULL
-                    AND u.rol IN ('empleado', 'admin', 'propietario')
+                    AND rol.codigo IN ('empleado', 'admin', 'propietario', 'gerente')
                 ORDER BY u.nombre ASC
             `;
 

@@ -2,25 +2,7 @@ import { useMemo, memo } from 'react';
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Button from '../atoms/Button';
-
-// Constante externa para evitar recreación en cada render
-const SIZE_CLASSES = {
-  sm: {
-    button: 'px-2 py-1 text-xs',
-    icon: 'w-3 h-3',
-    page: 'w-7 h-7 text-xs',
-  },
-  md: {
-    button: 'px-3 py-2 text-sm',
-    icon: 'w-4 h-4',
-    page: 'w-8 h-8 text-sm',
-  },
-  lg: {
-    button: 'px-4 py-2 text-base',
-    icon: 'w-5 h-5',
-    page: 'w-10 h-10 text-base',
-  },
-};
+import { PAGINATION_SIZES } from '@/lib/uiConstants';
 
 /**
  * Pagination - Componente de paginación reutilizable
@@ -94,7 +76,7 @@ export const Pagination = memo(function Pagination({
     return pages;
   }, [page, totalPages, maxVisiblePages]);
 
-  const sizes = SIZE_CLASSES[size] || SIZE_CLASSES.md;
+  const sizes = PAGINATION_SIZES[size] || PAGINATION_SIZES.md;
 
   // No mostrar si solo hay una página
   if (totalPages <= 1 && !showInfo) return null;
