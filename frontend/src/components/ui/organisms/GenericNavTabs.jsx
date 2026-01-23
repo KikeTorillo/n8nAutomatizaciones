@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import NavDropdown from './NavDropdown';
@@ -57,7 +58,7 @@ function getActiveInfo(pathname, groups) {
  * @param {React.ComponentType} [props.fallbackIcon] - Icono para mobile si no hay item activo
  * @param {string} [props.className] - Clases adicionales
  */
-export default function GenericNavTabs({
+const GenericNavTabs = memo(function GenericNavTabs({
   items,
   groups,
   defaultPath,
@@ -129,4 +130,8 @@ export default function GenericNavTabs({
       </div>
     </nav>
   );
-}
+});
+
+GenericNavTabs.displayName = 'GenericNavTabs';
+
+export default GenericNavTabs;

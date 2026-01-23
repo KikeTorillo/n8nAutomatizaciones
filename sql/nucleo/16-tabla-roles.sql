@@ -121,7 +121,10 @@ INSERT INTO roles (codigo, nombre, descripcion, organizacion_id, nivel_jerarquia
 ('super_admin', 'Super Administrador', 'Acceso total al sistema y todas las organizaciones. Solo para equipo de plataforma.', NULL, 100, TRUE, TRUE, '#EF4444', 'shield', TRUE, TRUE),
 
 -- Bot: Usuario de sistema para automatizaciones
-('bot', 'Bot de Sistema', 'Usuario automático para integraciones y workflows n8n.', NULL, 1, TRUE, FALSE, '#6366F1', 'bot', FALSE, FALSE)
+('bot', 'Bot de Sistema', 'Usuario automático para integraciones y workflows n8n.', NULL, 1, TRUE, FALSE, '#6366F1', 'bot', FALSE, FALSE),
+
+-- Pendiente: Usuario pendiente de activar su cuenta
+('pendiente', 'Pendiente de Activación', 'Usuario que aún no ha activado su cuenta mediante el enlace de invitación.', NULL, 1, TRUE, FALSE, '#9CA3AF', 'user-x', FALSE, FALSE)
 
 ON CONFLICT (codigo, organizacion_id) DO UPDATE SET
     nombre = EXCLUDED.nombre,

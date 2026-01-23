@@ -18,18 +18,21 @@ function PlanesPublicPage() {
   const [planSeleccionado, setPlanSeleccionado] = useState(null);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
 
-  // Obtener planes activos
+  // Obtener planes públicos de Nexo Team (sin autenticación)
   const {
     data: planesData,
     isLoading,
     isError,
   } = useQuery({
-    queryKey: ['planes-activos'],
-    queryFn: () => suscripcionesNegocioApi.listarPlanesActivos(),
+    queryKey: ['planes-publicos'],
+    queryFn: () => suscripcionesNegocioApi.listarPlanesPublicos(),
     staleTime: 5 * 60 * 1000, // 5 minutos
   });
 
-  const planes = planesData?.data?.items || planesData?.data?.planes || [];
+  // planesData.data = respuesta del API { success, data: [...planes...] }
+  const planes = Array.isArray(planesData?.data?.data)
+    ? planesData.data.data
+    : planesData?.data?.items || planesData?.data?.planes || [];
 
   // Calcular precio según período
   const calcularPrecio = (plan, periodo) => {

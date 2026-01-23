@@ -16,7 +16,7 @@ import { cn } from '@/lib/utils';
  * @param {string} activeItemId - ID del item activo dentro del grupo
  * @param {string} className - Clases adicionales
  */
-export function NavDropdown({
+export const NavDropdown = memo(function NavDropdown({
   label,
   icon: Icon,
   items = [],
@@ -109,7 +109,7 @@ export function NavDropdown({
       )}
     </div>
   );
-}
+});
 
 NavDropdown.displayName = 'NavDropdown';
 

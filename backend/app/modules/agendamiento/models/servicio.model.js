@@ -7,7 +7,7 @@ const {
     InvalidProfessionalsError,
     ResourceInUseError
 } = require('../../../utils/errors');
-const { ErrorHelper } = require('../../../utils/helpers');
+const { ErrorHelper, LimitesHelper } = require('../../../utils/helpers');
 
 class ServicioModel {
 
@@ -132,35 +132,9 @@ class ServicioModel {
     static async crearBulk(organizacionId, servicios) {
         return await RLSContextManager.transaction(organizacionId, async (db) => {
             // ========== 1. PRE-VALIDAR LÍMITE DEL PLAN (ANTES DE CREAR) ==========
+            // Usa tablas nuevas: suscripciones_org, planes_suscripcion_org
             const cantidadACrear = servicios.length;
-
-            const verificarResult = await db.query(
-                `SELECT verificar_limite_plan($1, $2, $3) as puede_crear`,
-                [organizacionId, 'servicios', cantidadACrear]
-            );
-
-            if (!verificarResult.rows[0]?.puede_crear) {
-                // Obtener detalles del plan para mensaje de error
-                const detallesQuery = `
-                    SELECT
-                        ps.limite_servicios as limite,
-                        m.uso_servicios as uso_actual,
-                        ps.nombre_plan
-                    FROM subscripciones s
-                    JOIN planes_subscripcion ps ON s.plan_id = ps.id
-                    LEFT JOIN metricas_uso_organizacion m ON m.organizacion_id = s.organizacion_id
-                    WHERE s.organizacion_id = $1 AND s.activa = true
-                `;
-                const detalles = await db.query(detallesQuery, [organizacionId]);
-                const { limite, uso_actual, nombre_plan } = detalles.rows[0] || {};
-
-                throw new PlanLimitExceededError(
-                    'servicios',
-                    limite || 0,
-                    uso_actual || 0,
-                    nombre_plan || 'actual'
-                );
-            }
+            await LimitesHelper.verificarLimiteOLanzar(organizacionId, 'servicios', cantidadACrear, db);
 
             // ========== 2. VALIDAR NOMBRES ÚNICOS DENTRO DEL BATCH ==========
             const nombresEnBatch = servicios.map(s => s.nombre.toLowerCase().trim());

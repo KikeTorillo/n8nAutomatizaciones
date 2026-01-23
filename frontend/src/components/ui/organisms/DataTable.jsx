@@ -88,7 +88,7 @@ const WIDTH_CLASSES = {
  *   }}
  * />
  */
-export function DataTable({
+export const DataTable = memo(function DataTable({
   columns,
   data = [],
   keyField = 'id',
@@ -196,24 +196,26 @@ export function DataTable({
       )}
     </div>
   );
-}
+});
 
 /**
  * DataTableActions - Contenedor para acciones de fila
  * Helper para agrupar botones de acción en una celda
  */
-export function DataTableActions({ children, className }) {
+export const DataTableActions = memo(function DataTableActions({ children, className }) {
   return (
     <div className={cn('flex items-center justify-end gap-1 sm:gap-2', className)}>
       {children}
     </div>
   );
-}
+});
+
+DataTableActions.displayName = 'DataTableActions';
 
 /**
  * DataTableActionButton - Botón de acción compacto para tablas
  */
-export function DataTableActionButton({
+export const DataTableActionButton = memo(function DataTableActionButton({
   icon: Icon,
   label,
   onClick,
@@ -248,7 +250,10 @@ export function DataTableActionButton({
       {Icon && <Icon className="w-4 h-4 sm:w-5 sm:h-5" />}
     </button>
   );
-}
+});
+
+DataTableActionButton.displayName = 'DataTableActionButton';
+DataTable.displayName = 'DataTable';
 
 /**
  * DataTableRow - Fila memoizada para evitar re-renders innecesarios

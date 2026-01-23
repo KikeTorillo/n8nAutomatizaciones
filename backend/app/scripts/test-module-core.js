@@ -34,17 +34,9 @@ try {
   const usuariosRouter = require('../modules/core/routes/usuarios');
   console.log('  ✅ usuarios.js cargado');
 
-  const planesRouter = require('../modules/core/routes/planes');
-  console.log('  ✅ planes.js cargado');
-
-  const pagosRouter = require('../modules/core/routes/pagos');
-  console.log('  ✅ pagos.js cargado');
-
-  const webhooksRouter = require('../modules/core/routes/webhooks');
-  console.log('  ✅ webhooks.js cargado');
-
-  const subscripcionesRouter = require('../modules/core/routes/subscripciones');
-  console.log('  ✅ subscripciones.js cargado');
+  // NOTA: Sistema suscripciones v1 eliminado en Fase 0 (22 Ene 2026)
+  // Ver nuevo módulo: suscripciones-negocio
+  // Los archivos planes.js, pagos.js, webhooks.js, subscripciones.js fueron eliminados
 
   console.log('\n📦 Cargando controllers del módulo CORE...');
   const controllers = require('../modules/core/controllers');
@@ -64,9 +56,9 @@ try {
 
   console.log('\n✅ ¡ÉXITO! Todos los archivos del módulo CORE cargan correctamente');
   console.log('\n📊 Resumen:');
-  console.log('  • 9 routes cargadas');
+  console.log('  • 5 routes cargadas (legacy suscripciones v1 eliminado)');
   console.log('  • Controllers, Models y Schemas cargados');
-  console.log('  • index.js principal actualizado');
+  console.log('  • Ver módulo suscripciones-negocio para pagos/suscripciones');
   console.log('\n🎉 El módulo CORE está listo para funcionar!\n');
 
   process.exit(0);

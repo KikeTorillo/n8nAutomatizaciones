@@ -19,6 +19,7 @@ const PagosModel = require('../models/pagos.model');
 const MercadoPagoService = require('../../../services/mercadopago.service');
 const { ErrorHelper } = require('../../../utils/helpers');
 const logger = require('../../../utils/logger');
+const { NEXO_TEAM_ORG_ID } = require('../../../config/constants');
 
 // URL del frontend (con fallback)
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
@@ -42,7 +43,8 @@ class CheckoutController {
         const usuarioId = req.user.id;
 
         // 1. Validar que el plan existe y está activo
-        const plan = await PlanesModel.buscarPorId(plan_id, organizacionId);
+        // NOTA: Los planes públicos pertenecen a Nexo Team, no a la org del usuario
+        const plan = await PlanesModel.buscarPorId(plan_id, NEXO_TEAM_ORG_ID);
         ErrorHelper.throwIfNotFound(plan, 'Plan de suscripción');
 
         if (!plan.activo) {
@@ -73,7 +75,8 @@ class CheckoutController {
         let cuponAplicado = null;
 
         if (cupon_codigo) {
-            const validacion = await CuponesModel.validar(cupon_codigo, organizacionId, { plan_id });
+            // Los cupones también son de Nexo Team
+            const validacion = await CuponesModel.validar(cupon_codigo, NEXO_TEAM_ORG_ID, { plan_id });
 
             if (validacion.valido) {
                 cuponAplicado = validacion.cupon;
@@ -92,12 +95,19 @@ class CheckoutController {
         // 4. Calcular precio final
         const precioFinal = Math.max(0, precioBase - descuento);
 
+        // Determinar suscriptor: cliente_id O suscriptor_externo O datos del usuario
+        const suscriptorExternoFinal = suscriptor_externo || (!req.user.cliente_id ? {
+            nombre: req.user.nombre || req.user.email.split('@')[0],
+            email: req.user.email,
+            organizacion_id: organizacionId
+        } : null);
+
         // Si el precio es 0 (cupón 100%), activar directamente
         if (precioFinal === 0) {
             const suscripcion = await SuscripcionesModel.crear({
                 plan_id,
                 cliente_id: req.user.cliente_id || null,
-                suscriptor_externo: suscriptor_externo || null,
+                suscriptor_externo: suscriptorExternoFinal,
                 periodo,
                 es_trial: false,
                 gateway: 'cupon_100',
@@ -107,9 +117,9 @@ class CheckoutController {
             // Cambiar a activa directamente
             await SuscripcionesModel.cambiarEstado(suscripcion.id, 'activa', organizacionId);
 
-            // Incrementar uso del cupón
+            // Incrementar uso del cupón (de Nexo Team)
             if (cuponAplicado) {
-                await CuponesModel.incrementarUso(cuponAplicado.id, organizacionId);
+                await CuponesModel.incrementarUso(cuponAplicado.id, NEXO_TEAM_ORG_ID);
             }
 
             return res.json({
@@ -127,9 +137,10 @@ class CheckoutController {
         const suscripcion = await SuscripcionesModel.crearPendiente({
             plan_id,
             cliente_id: req.user.cliente_id || null,
-            suscriptor_externo: suscriptor_externo || null,
+            suscriptor_externo: suscriptorExternoFinal,
             periodo,
             precio_actual: precioFinal,
+            moneda: plan.moneda || 'MXN', // Pasar moneda directamente del plan ya obtenido
             gateway: 'mercadopago',
             cupon_aplicado_id: cuponAplicado?.id || null,
             descuento_porcentaje: cuponAplicado?.tipo_descuento === 'porcentaje' ? cuponAplicado.porcentaje_descuento : null,
@@ -145,14 +156,25 @@ class CheckoutController {
             gateway: 'mercadopago'
         }, organizacionId);
 
-        // 7. Crear preferencia en MercadoPago
+        // 7. Crear preferencia en MercadoPago (usar instancia global de Nexo Team)
         const externalReference = `sus_${suscripcion.id}_pago_${pago.id}`;
+        const mpService = MercadoPagoService.getGlobalInstance();
 
-        const mpResponse = await MercadoPagoService.crearSuscripcionConInitPoint({
+        // Determinar email del pagador
+        // En sandbox con test users, MP requiere email de test user
+        let emailPagador;
+        if (process.env.MERCADOPAGO_ENVIRONMENT === 'sandbox') {
+            emailPagador = process.env.MERCADOPAGO_TEST_PAYER_EMAIL;
+            logger.info(`[Checkout] Sandbox activo, usando email: ${emailPagador}`);
+        } else {
+            emailPagador = suscriptorExternoFinal?.email || req.user.email;
+        }
+
+        const mpResponse = await mpService.crearSuscripcionConInitPoint({
             nombre: `Suscripción ${plan.nombre} - ${periodo}`,
             precio: precioFinal,
             moneda: plan.moneda || 'MXN',
-            email: suscriptor_externo?.email || req.user.email,
+            email: emailPagador,
             returnUrl: `${FRONTEND_URL}/payment/callback`,
             externalReference
         });
@@ -200,10 +222,9 @@ class CheckoutController {
      */
     async validarCupon(req, res) {
         const { codigo, plan_id, precio_base } = req.body;
-        const organizacionId = req.user.organizacion_id;
 
-        // Validar cupón
-        const validacion = await CuponesModel.validar(codigo, organizacionId, { plan_id });
+        // Validar cupón (los cupones son de Nexo Team)
+        const validacion = await CuponesModel.validar(codigo, NEXO_TEAM_ORG_ID, { plan_id });
 
         if (!validacion.valido) {
             return res.json({

@@ -1,0 +1,271 @@
+/**
+ * ====================================================================
+ * HELPER DE LÍMITES DE PLAN
+ * ====================================================================
+ *
+ * Verifica límites de recursos según el plan de suscripción.
+ * Usa las tablas nuevas: suscripciones_org y planes_suscripcion_org
+ *
+ * NOTA: Reemplaza el sistema legacy que usaba:
+ * - subscripciones (sin guión bajo)
+ * - planes_subscripcion (sin guión bajo)
+ * - función verificar_limite_plan() que no existe
+ *
+ * @module utils/helpers/LimitesHelper
+ * @version 1.0.0
+ * @date Enero 2026
+ */
+
+const RLSContextManager = require('../rlsContextManager');
+const { PlanLimitExceededError } = require('../errors');
+const logger = require('../logger');
+
+/**
+ * Límites por defecto cuando no hay suscripción activa
+ */
+const LIMITES_DEFAULT = {
+    sucursales: 1,
+    profesionales: 2,
+    servicios: 10,
+    citas: 50,
+    usuarios: 3
+};
+
+class LimitesHelper {
+
+    /**
+     * Obtiene los límites del plan activo de una organización
+     *
+     * @param {number} organizacionId - ID de la organización
+     * @returns {Promise<Object>} Límites del plan
+     */
+    static async obtenerLimitesPlan(organizacionId) {
+        return await RLSContextManager.withBypass(async (db) => {
+            const query = `
+                SELECT
+                    COALESCE(NULLIF(ps.limites->>'sucursales', '')::int, $2) as limite_sucursales,
+                    COALESCE(NULLIF(ps.limites->>'profesionales', '')::int, $3) as limite_profesionales,
+                    COALESCE(NULLIF(ps.limites->>'servicios', '')::int, $4) as limite_servicios,
+                    COALESCE(NULLIF(ps.limites->>'citas', '')::int, $5) as limite_citas,
+                    COALESCE(NULLIF(ps.limites->>'usuarios', '')::int, $6) as limite_usuarios,
+                    ps.nombre as nombre_plan,
+                    ps.codigo as codigo_plan
+                FROM suscripciones_org sub
+                JOIN planes_suscripcion_org ps ON sub.plan_id = ps.id
+                WHERE sub.organizacion_id = $1
+                  AND sub.estado IN ('activa', 'trial')
+                LIMIT 1
+            `;
+
+            const result = await db.query(query, [
+                organizacionId,
+                LIMITES_DEFAULT.sucursales,
+                LIMITES_DEFAULT.profesionales,
+                LIMITES_DEFAULT.servicios,
+                LIMITES_DEFAULT.citas,
+                LIMITES_DEFAULT.usuarios
+            ]);
+
+            if (result.rows.length === 0) {
+                logger.warn('[LimitesHelper] No hay suscripción activa, usando límites default', {
+                    organizacionId
+                });
+                return {
+                    limite_sucursales: LIMITES_DEFAULT.sucursales,
+                    limite_profesionales: LIMITES_DEFAULT.profesionales,
+                    limite_servicios: LIMITES_DEFAULT.servicios,
+                    limite_citas: LIMITES_DEFAULT.citas,
+                    limite_usuarios: LIMITES_DEFAULT.usuarios,
+                    nombre_plan: 'Sin plan',
+                    codigo_plan: null
+                };
+            }
+
+            return result.rows[0];
+        });
+    }
+
+    /**
+     * Cuenta el uso actual de un recurso específico
+     *
+     * @param {number} organizacionId - ID de la organización
+     * @param {string} recurso - Tipo de recurso: 'sucursales', 'profesionales', 'servicios', 'citas', 'usuarios'
+     * @param {Object} db - Conexión de base de datos (opcional, para usar dentro de transacciones)
+     * @returns {Promise<number>} Cantidad actual de recursos usados
+     */
+    static async contarUsoActual(organizacionId, recurso, db = null) {
+        const ejecutarQuery = async (conexion) => {
+            let query;
+
+            switch (recurso) {
+                case 'sucursales':
+                    query = `
+                        SELECT COUNT(*)::int as total
+                        FROM sucursales
+                        WHERE organizacion_id = $1 AND activo = true
+                    `;
+                    break;
+
+                case 'profesionales':
+                    query = `
+                        SELECT COUNT(*)::int as total
+                        FROM profesionales
+                        WHERE organizacion_id = $1 AND activo = true
+                    `;
+                    break;
+
+                case 'servicios':
+                    query = `
+                        SELECT COUNT(*)::int as total
+                        FROM servicios
+                        WHERE organizacion_id = $1 AND activo = true
+                    `;
+                    break;
+
+                case 'citas':
+                    // Citas del mes actual (no canceladas)
+                    query = `
+                        SELECT COUNT(*)::int as total
+                        FROM citas
+                        WHERE organizacion_id = $1
+                          AND estado != 'cancelada'
+                          AND fecha_cita >= date_trunc('month', CURRENT_DATE)
+                          AND fecha_cita < date_trunc('month', CURRENT_DATE) + interval '1 month'
+                    `;
+                    break;
+
+                case 'usuarios':
+                    query = `
+                        SELECT COUNT(*)::int as total
+                        FROM usuarios
+                        WHERE organizacion_id = $1 AND activo = true
+                    `;
+                    break;
+
+                default:
+                    throw new Error(`Recurso desconocido: ${recurso}`);
+            }
+
+            const result = await conexion.query(query, [organizacionId]);
+            return result.rows[0]?.total || 0;
+        };
+
+        // Si se pasa conexión, usarla directamente (para transacciones)
+        if (db) {
+            return await ejecutarQuery(db);
+        }
+
+        // Si no, usar RLS bypass
+        return await RLSContextManager.withBypass(ejecutarQuery);
+    }
+
+    /**
+     * Verifica si se puede crear X cantidad de un recurso sin exceder el límite
+     *
+     * @param {number} organizacionId - ID de la organización
+     * @param {string} recurso - Tipo de recurso
+     * @param {number} cantidadACrear - Cantidad que se quiere crear
+     * @param {Object} db - Conexión de base de datos (opcional)
+     * @returns {Promise<{puedeCrear: boolean, limite: number, usoActual: number, nombrePlan: string}>}
+     */
+    static async verificarLimite(organizacionId, recurso, cantidadACrear = 1, db = null) {
+        const limites = await this.obtenerLimitesPlan(organizacionId);
+        const usoActual = await this.contarUsoActual(organizacionId, recurso, db);
+
+        // Mapear recurso a campo de límite
+        const campoLimite = `limite_${recurso}`;
+        const limite = limites[campoLimite];
+
+        // NULL o -1 significa ilimitado
+        if (limite === null || limite === -1) {
+            return {
+                puedeCrear: true,
+                limite: -1,
+                usoActual,
+                nombrePlan: limites.nombre_plan,
+                disponible: Infinity
+            };
+        }
+
+        const disponible = limite - usoActual;
+        const puedeCrear = cantidadACrear <= disponible;
+
+        return {
+            puedeCrear,
+            limite,
+            usoActual,
+            nombrePlan: limites.nombre_plan,
+            disponible
+        };
+    }
+
+    /**
+     * Verifica límite y lanza error si se excede
+     * Útil para usar directamente en controllers/models
+     *
+     * @param {number} organizacionId - ID de la organización
+     * @param {string} recurso - Tipo de recurso
+     * @param {number} cantidadACrear - Cantidad que se quiere crear
+     * @param {Object} db - Conexión de base de datos (opcional)
+     * @throws {PlanLimitExceededError} Si se excede el límite
+     */
+    static async verificarLimiteOLanzar(organizacionId, recurso, cantidadACrear = 1, db = null) {
+        const resultado = await this.verificarLimite(organizacionId, recurso, cantidadACrear, db);
+
+        if (!resultado.puedeCrear) {
+            logger.warn('[LimitesHelper] Límite de plan excedido', {
+                organizacionId,
+                recurso,
+                cantidadACrear,
+                limite: resultado.limite,
+                usoActual: resultado.usoActual,
+                nombrePlan: resultado.nombrePlan
+            });
+
+            throw new PlanLimitExceededError(
+                recurso,
+                resultado.limite,
+                resultado.usoActual,
+                resultado.nombrePlan
+            );
+        }
+
+        return resultado;
+    }
+
+    /**
+     * Obtiene resumen de uso de todos los recursos
+     *
+     * @param {number} organizacionId - ID de la organización
+     * @returns {Promise<Object>} Resumen de uso de recursos
+     */
+    static async obtenerResumenUso(organizacionId) {
+        const limites = await this.obtenerLimitesPlan(organizacionId);
+
+        const recursos = ['sucursales', 'profesionales', 'servicios', 'citas', 'usuarios'];
+        const resumen = {};
+
+        for (const recurso of recursos) {
+            const usoActual = await this.contarUsoActual(organizacionId, recurso);
+            const campoLimite = `limite_${recurso}`;
+            const limite = limites[campoLimite];
+
+            resumen[recurso] = {
+                usado: usoActual,
+                limite: limite === -1 ? 'Ilimitado' : limite,
+                disponible: limite === -1 ? 'Ilimitado' : Math.max(0, limite - usoActual),
+                porcentaje_uso: limite === -1 ? 0 : Math.round((usoActual / limite) * 100)
+            };
+        }
+
+        return {
+            plan: {
+                nombre: limites.nombre_plan,
+                codigo: limites.codigo_plan
+            },
+            uso: resumen
+        };
+    }
+}
+
+module.exports = LimitesHelper;

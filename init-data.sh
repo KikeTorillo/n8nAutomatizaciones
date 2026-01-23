@@ -552,6 +552,8 @@ echo "       📋 Datos iniciales Nexo Team (4 planes: trial, basico, pro, enter
 psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" -f "$SQL_DIR/suscripciones-negocio/03-datos-nexo-team.sql"
 echo "       🔐 Permisos del módulo suscripciones-negocio..."
 psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" -f "$SQL_DIR/suscripciones-negocio/04-datos-permisos.sql"
+echo "       🔌 Conectores de pago multi-tenant (Stripe, MercadoPago)..."
+psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" -f "$SQL_DIR/suscripciones-negocio/05-conectores-pago.sql"
 echo ""
 echo "✅ Migración completa a arquitectura modular finalizada (23 módulos independientes)"
 echo ""

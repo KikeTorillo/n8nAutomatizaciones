@@ -262,6 +262,61 @@ class PagosModel {
     }
 
     /**
+     * Actualizar campos de un pago (para guardar IDs del gateway)
+     *
+     * @param {number} id - ID del pago
+     * @param {Object} datos - Datos a actualizar
+     * @param {number} organizacionId - ID de la organización
+     * @returns {Promise<Object>} - Pago actualizado
+     */
+    static async actualizar(id, datos, organizacionId) {
+        return await RLSContextManager.query(organizacionId, async (db) => {
+            const pago = await this.buscarPorId(id, organizacionId);
+            ErrorHelper.throwIfNotFound(pago, 'Pago');
+
+            const camposPermitidos = [
+                'payment_intent_id', 'charge_id', 'transaction_id',
+                'metodo_pago', 'ultimos_digitos', 'metadata'
+            ];
+
+            const updates = [];
+            const values = [];
+            let paramCount = 1;
+
+            for (const campo of camposPermitidos) {
+                if (datos[campo] !== undefined) {
+                    if (campo === 'metadata') {
+                        updates.push(`metadata = COALESCE(metadata, '{}'::jsonb) || $${paramCount++}::jsonb`);
+                        values.push(JSON.stringify(datos[campo]));
+                    } else {
+                        updates.push(`${campo} = $${paramCount++}`);
+                        values.push(datos[campo]);
+                    }
+                }
+            }
+
+            if (updates.length === 0) {
+                return pago;
+            }
+
+            values.push(id);
+
+            const query = `
+                UPDATE pagos_suscripcion
+                SET ${updates.join(', ')}, actualizado_en = NOW()
+                WHERE id = $${paramCount}
+                RETURNING *
+            `;
+
+            const result = await db.query(query, values);
+
+            logger.info(`Pago ${id} actualizado: ${Object.keys(datos).join(', ')}`);
+
+            return result.rows[0];
+        });
+    }
+
+    /**
      * Procesar reembolso
      *
      * @param {number} id - ID del pago

@@ -7,6 +7,10 @@
 
 // Query Keys base
 export const QUERY_KEYS = {
+  // Conectores
+  CONECTORES: 'suscripciones-negocio-conectores',
+  CONECTOR: 'suscripciones-negocio-conector',
+
   // Planes
   PLANES: 'suscripciones-negocio-planes',
   PLAN: 'suscripciones-negocio-plan',

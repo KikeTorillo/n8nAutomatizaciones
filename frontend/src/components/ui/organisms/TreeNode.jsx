@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import { ChevronRight, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -19,7 +19,7 @@ import { cn } from '@/lib/utils';
  * @param {string} [props.nodeClassName] - Clases adicionales para cada nodo (puede ser función)
  * @param {boolean} [props.showToggleOnEmpty=false] - Mostrar espacio para toggle aunque no tenga hijos
  */
-export function TreeNode({
+export const TreeNode = memo(function TreeNode({
   node,
   level = 0,
   childrenKey = 'children',
@@ -107,7 +107,9 @@ export function TreeNode({
       )}
     </div>
   );
-}
+});
+
+TreeNode.displayName = 'TreeNode';
 
 /**
  * TreeView - Wrapper para renderizar un árbol completo con controles de expansión
@@ -127,7 +129,7 @@ export function TreeNode({
  * @param {boolean} [props.isLoading] - Mostrar estado de carga
  * @param {React.ReactNode} [props.loadingState] - Contenido de carga personalizado
  */
-export function TreeView({
+export const TreeView = memo(function TreeView({
   data,
   childrenKey = 'children',
   expandedState,
@@ -176,7 +178,9 @@ export function TreeView({
       ))}
     </div>
   );
-}
+});
+
+TreeView.displayName = 'TreeView';
 
 /**
  * Hook para manejar el estado de expansión del árbol

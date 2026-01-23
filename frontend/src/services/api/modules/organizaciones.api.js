@@ -45,6 +45,13 @@ export const organizacionesApi = {
    * @returns {Promise<Object>} { completed, profesionales, horarios_configurados, servicios, asignaciones, progress }
    */
   getSetupProgress: (id) => apiClient.get(`/organizaciones/${id}/setup-progress`),
+
+  /**
+   * Obtener estado de suscripción de la organización
+   * @param {number} id
+   * @returns {Promise<Object>} { plan_actual, es_trial, dias_restantes_trial, fecha_fin_trial, trial_expirado }
+   */
+  getEstadoSuscripcion: (id) => apiClient.get(`/organizaciones/${id}/estado-suscripcion`),
 };
 
 // ==================== USUARIOS ====================

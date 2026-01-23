@@ -17,6 +17,24 @@ const authChain = [
     tenant.setTenantContext
 ];
 
+// ====================================================================
+// RUTAS PÚBLICAS (sin autenticación)
+// ====================================================================
+
+/**
+ * GET /api/v1/suscripciones-negocio/planes/publicos
+ * Listar planes públicos de Nexo Team (para página de checkout)
+ * NO requiere autenticación
+ */
+router.get(
+    '/publicos',
+    PlanesController.listarPublicos
+);
+
+// ====================================================================
+// RUTAS PROTEGIDAS (requieren autenticación)
+// ====================================================================
+
 /**
  * GET /api/v1/suscripciones-negocio/planes
  * Listar planes con paginación y filtros

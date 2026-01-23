@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, memo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronDown, Check, Menu } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -19,7 +19,7 @@ import { cn } from '@/lib/utils';
  * @param {string} [props.fallbackLabel] - Label si no hay item activo
  * @param {React.ComponentType} [props.fallbackIcon] - Icono si no hay item activo
  */
-export default function MobileNavSelector({
+const MobileNavSelector = memo(function MobileNavSelector({
   items,
   groups,
   activeItem,
@@ -64,10 +64,10 @@ export default function MobileNavSelector({
     }
   }, [isOpen]);
 
-  const handleItemClick = (path) => {
+  const handleItemClick = useCallback((path) => {
     navigate(path);
     setIsOpen(false);
-  };
+  }, [navigate]);
 
   // Determinar icono y label del botón
   const ActiveIcon = isGrouped
@@ -175,4 +175,8 @@ export default function MobileNavSelector({
       )}
     </div>
   );
-}
+});
+
+MobileNavSelector.displayName = 'MobileNavSelector';
+
+export default MobileNavSelector;

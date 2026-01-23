@@ -10,6 +10,7 @@ import {
   ArrowRight,
   DollarSign,
   Percent,
+  Plug,
 } from 'lucide-react';
 import { StatCard, Button } from '@/components/ui';
 import { useMetricasDashboard } from '@/hooks/suscripciones-negocio';
@@ -57,6 +58,13 @@ function SuscripcionesNegocioPage() {
       title: 'Métricas',
       description: 'Análisis detallado',
       color: 'text-primary-600 bg-primary-100 dark:bg-primary-900/30',
+    },
+    {
+      to: '/suscripciones-negocio/conectores',
+      icon: Plug,
+      title: 'Conectores de Pago',
+      description: 'Configura Stripe/MercadoPago',
+      color: 'text-orange-600 bg-orange-100 dark:bg-orange-900/30',
     },
   ];
 

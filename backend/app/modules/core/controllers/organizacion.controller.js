@@ -235,6 +235,53 @@ class OrganizacionController {
         return ResponseHelper.success(res, metricas);
     });
 
+    /**
+     * Obtener estado de suscripción de la organización
+     * Usado para mostrar el TrialBanner en el frontend
+     */
+    static obtenerEstadoSuscripcion = asyncHandler(async (req, res) => {
+        const organizacionId = parseInt(req.params.id);
+
+        // Validar acceso
+        if (!this.validarAccesoOrganizacion(req, organizacionId)) {
+            return ResponseHelper.error(res, 'No tienes permisos para acceder a esta información', 403);
+        }
+
+        const organizacion = await OrganizacionModel.obtenerPorId(organizacionId);
+
+        if (!organizacion) {
+            return ResponseHelper.notFound(res, 'Organización no encontrada');
+        }
+
+        const planActual = organizacion.plan_actual || 'trial';
+        const esTrial = planActual === 'trial';
+
+        // Calcular días restantes del trial (14 días desde creación)
+        const DIAS_TRIAL = 14;
+        let diasRestantesTrial = 0;
+        let fechaFinTrial = null;
+
+        if (esTrial && organizacion.creado_en) {
+            const fechaCreacion = new Date(organizacion.creado_en);
+            fechaFinTrial = new Date(fechaCreacion);
+            fechaFinTrial.setDate(fechaFinTrial.getDate() + DIAS_TRIAL);
+
+            const hoy = new Date();
+            const diffTime = fechaFinTrial.getTime() - hoy.getTime();
+            diasRestantesTrial = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+        }
+
+        return ResponseHelper.success(res, {
+            plan_actual: planActual,
+            plan_nombre: planActual === 'trial' ? 'Plan Trial' : planActual === 'pro' ? 'Plan Pro' : planActual,
+            es_trial: esTrial,
+            dias_restantes_trial: diasRestantesTrial,
+            fecha_fin_trial: fechaFinTrial,
+            trial_expirado: esTrial && diasRestantesTrial === 0,
+            modulos_activos: organizacion.modulos_activos || {}
+        });
+    });
+
     static cambiarPlan = asyncHandler(async (req, res) => {
         const { nuevo_plan, configuracion_plan = {} } = req.body;
 

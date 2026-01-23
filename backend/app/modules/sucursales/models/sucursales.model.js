@@ -1,6 +1,6 @@
 const RLSContextManager = require('../../../utils/rlsContextManager');
 const logger = require('../../../utils/logger');
-const { ErrorHelper } = require('../../../utils/helpers');
+const { ErrorHelper, LimitesHelper } = require('../../../utils/helpers');
 
 /**
  * Model para CRUD de sucursales
@@ -19,35 +19,8 @@ class SucursalesModel {
                 nombre: data.nombre
             });
 
-            // Verificar límite de sucursales según plan
-            const limiteQuery = `
-                SELECT
-                    p.limite_sucursales,
-                    p.nombre_plan,
-                    (SELECT COUNT(*) FROM sucursales WHERE organizacion_id = $1 AND activo = true) as sucursales_actuales
-                FROM subscripciones s
-                JOIN planes_subscripcion p ON s.plan_id = p.id
-                WHERE s.organizacion_id = $1
-            `;
-            const limiteResult = await db.query(limiteQuery, [organizacionId]);
-
-            if (limiteResult.rows.length > 0) {
-                const { limite_sucursales, nombre_plan, sucursales_actuales } = limiteResult.rows[0];
-
-                // NULL = ilimitado
-                if (limite_sucursales !== null && sucursales_actuales >= limite_sucursales) {
-                    logger.warn('[SucursalesModel.crear] Límite de sucursales alcanzado', {
-                        organizacion_id: organizacionId,
-                        plan: nombre_plan,
-                        limite: limite_sucursales,
-                        actuales: sucursales_actuales
-                    });
-                    const error = new Error(`Has alcanzado el límite de ${limite_sucursales} sucursal(es) de tu plan ${nombre_plan}. Actualiza tu plan para agregar más sucursales.`);
-                    error.statusCode = 403;
-                    error.code = 'LIMITE_SUCURSALES_ALCANZADO';
-                    throw error;
-                }
-            }
+            // Verificar límite de sucursales según plan (usa tablas nuevas: suscripciones_org, planes_suscripcion_org)
+            await LimitesHelper.verificarLimiteOLanzar(organizacionId, 'sucursales', 1, db);
 
             const query = `
                 INSERT INTO sucursales (

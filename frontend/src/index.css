@@ -111,6 +111,11 @@ input[type="datetime-local"]::-webkit-date-and-time-value {
   min-height: 1.5em; /* Altura mínima para texto */
 }
 
+/* Modal scroll lock */
+body.modal-open {
+  overflow: hidden;
+}
+
 /* BarcodeScanner - Estilos para el video del escáner */
 [id^="scanner-"] video {
   object-fit: cover !important;

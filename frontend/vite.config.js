@@ -119,6 +119,7 @@ export default defineConfig({
   server: {
     port: 8080,
     host: '0.0.0.0', // Escuchar en todas las interfaces (necesario para Docker)
+    allowedHosts: ['.trycloudflare.com'], // Permitir túneles Cloudflare
     watch: {
       usePolling: true, // Necesario para hot reload en Docker en algunos sistemas
       interval: 300, // Intervalo optimizado (300ms = balance performance/responsividad)

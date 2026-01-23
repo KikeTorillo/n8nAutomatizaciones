@@ -433,6 +433,178 @@ Documento completo en `/docs/PLAN_PRUEBAS_INTEGRAL.md`
 
 ## Changelog
 
+### 23 Ene 2026 - MercadoPago Test Users ✅ COMPLETADO
+
+**Configuración correcta de MercadoPago para pruebas con Test Users.**
+
+**Problema:** El checkout fallaba con "Una de las partes es de prueba" porque credenciales `TEST-xxx` son sandbox de cuenta REAL, incompatibles con test user comprador.
+
+**Solución:** Usar credenciales de Test User Vendedor (`APP_USR-xxx`).
+
+**Variables de entorno:**
+```env
+MERCADOPAGO_ENVIRONMENT=sandbox
+MERCADOPAGO_SANDBOX_ACCESS_TOKEN=APP_USR-xxx  # Test User Vendedor
+MERCADOPAGO_PUBLIC_KEY=APP_USR-xxx
+MERCADOPAGO_TEST_PAYER_EMAIL=test_user_xxx@testuser.com  # Test User Comprador
+```
+
+**Lógica en checkout.controller.js:**
+```javascript
+if (process.env.MERCADOPAGO_ENVIRONMENT === 'sandbox') {
+    emailPagador = process.env.MERCADOPAGO_TEST_PAYER_EMAIL;
+} else {
+    emailPagador = suscriptorExternoFinal?.email || req.user.email;
+}
+```
+
+**Test Users México:**
+| Rol | Contraseña |
+|-----|------------|
+| Comprador (TESTUSER2716725750605322996) | `UCgyF4L44D` |
+
+**Documentación:** `/docs/PLAN_DOGFOODING_NEXO_TEAM.md`
+
+---
+
+### 23 Ene 2026 - FASE 12: Auditoría UI Components ✅ COMPLETADO
+
+**Optimización de componentes UI para preparación como librería reutilizable.**
+
+**FASE 1 - React.memo agregado a 21 componentes:**
+| Carpeta | Componentes |
+|---------|-------------|
+| `organisms/` | DataTable, DataTableActions, DataTableActionButton, NavDropdown, FilterPanel, FilterChips, MobileNavSelector, GenericNavTabs, TreeNode, TreeView |
+| `organisms/filters/` | AdvancedFilterPanel, FilterSection, FilterCheckbox, FilterSelect, SavedSearchList, SavedSearchModal, FilterInput, FilterSelectInput, FilterDateInput, FilterCheckboxInput, FilterPanelBase |
+
+**FASE 2 - Nuevas constantes UI:**
+- `uiConstants/inputs.js` - Estilos centralizados para inputs
+- `uiConstants/spacing.js` - Escalas de espaciado (GAP, PADDING, MARGIN, SPACE_X, SPACE_Y)
+
+```javascript
+import { getInputBaseStyles, GAP, PADDING } from '@/lib/uiConstants';
+
+// Estilos de input con/sin error
+const inputStyles = getInputBaseStyles(hasError);
+
+// Espaciado consistente
+<div className={GAP.md}>...</div>  // gap-3 (12px)
+```
+
+**FASE 3 - Modal scroll lock mejorado:**
+- Usa CSS class `.modal-open` en lugar de `style.overflow`
+- Más robusto para nested modals y scroll restoration
+
+**Archivos nuevos:**
+- `frontend/src/lib/uiConstants/inputs.js`
+- `frontend/src/lib/uiConstants/spacing.js`
+
+**Archivos modificados (15):**
+- Todos los organisms listados arriba
+- `frontend/src/lib/uiConstants/index.js`
+- `frontend/src/index.css`
+
+---
+
+### 23 Ene 2026 - FASE 11: Limpieza Legacy + Conectores Multi-Tenant ✅ COMPLETADO
+
+**Eliminación código legacy y sistema de conectores de pago multi-tenant.**
+
+**Archivos Eliminados:**
+- `core/controllers/pagos.controller.js` - Usaba tablas legacy
+- `core/routes/pagos.js` - Rutas legacy
+- `core/schemas/pagos.schemas.js` - Schemas legacy
+
+**Nuevo Helper - LimitesHelper.js:**
+```javascript
+const { LimitesHelper } = require('../../../utils/helpers');
+
+// Verificar si se puede crear recurso
+await LimitesHelper.verificarLimiteOLanzar(organizacionId, 'sucursales', 1);
+
+// Obtener resumen de uso
+const resumen = await LimitesHelper.obtenerResumenUso(organizacionId);
+```
+
+**Tabla Conectores Multi-Tenant:**
+```sql
+-- sql/suscripciones-negocio/05-conectores-pago.sql
+CREATE TABLE conectores_pago_org (
+    organizacion_id INTEGER NOT NULL,
+    gateway VARCHAR(30),              -- 'stripe', 'mercadopago'
+    credenciales_encrypted BYTEA,     -- AES-256-GCM
+    es_principal BOOLEAN,
+    verificado BOOLEAN
+);
+```
+
+**MercadoPagoService Multi-Tenant:**
+```javascript
+// Obtener servicio para organización específica
+const mpService = await MercadoPagoService.getForOrganization(organizacionId);
+await mpService.crearSuscripcionConInitPoint(params);
+
+// Usar instancia global (env vars)
+const mpGlobal = MercadoPagoService.getGlobalInstance();
+```
+
+**API Endpoints Nuevos:**
+```
+GET/POST/PUT/DELETE /api/v1/suscripciones-negocio/conectores
+POST /api/v1/suscripciones-negocio/conectores/:id/verificar
+```
+
+**Variable de Entorno Nueva:**
+```env
+# Generar con: openssl rand -hex 32
+CREDENTIAL_ENCRYPTION_KEY=<64_chars_hex>
+```
+
+---
+
+### 22 Ene 2026 - Validación Dogfooding: Fixes Críticos ✅ COMPLETADO
+
+**Auditoría y fixes críticos del sistema de cobros automáticos.**
+
+**FASE 0 - Limpieza de Planes:**
+- Eliminados planes legacy `basico` y `enterprise` de la BD
+- Solo quedan 2 planes en producción: `trial` y `pro`
+
+**FASE 1 - Bug Crítico Corregido:**
+- `backend/.../models/pagos.model.js` - Agregado método `actualizar()` faltante
+- Este método es requerido por `cobro.service.js` para guardar IDs del gateway (Stripe/MercadoPago)
+- Sin este método, los cobros automáticos fallaban al intentar guardar `payment_intent_id`, `charge_id`, etc.
+
+**FASE 2 - Mejoras de Robustez:**
+
+1. **Matriz de transiciones de estado** (`suscripciones.model.js`):
+   ```javascript
+   SuscripcionesModel.TRANSICIONES_VALIDAS = {
+       'trial': ['activa', 'cancelada', 'vencida', 'pendiente_pago'],
+       'pendiente_pago': ['activa', 'cancelada', 'vencida'],
+       'activa': ['pausada', 'cancelada', 'vencida', 'suspendida'],
+       'pausada': ['activa', 'cancelada'],
+       'cancelada': [], // Estado final
+       'vencida': ['activa', 'suspendida'],
+       'suspendida': ['activa', 'cancelada']
+   };
+   ```
+   - `cambiarEstado()` ahora valida transiciones antes de aplicar
+   - Intentar transición inválida retorna error 400
+
+2. **Descuentos recurrentes** (`cobro.service.js`):
+   - `_calcularMontoCobro()` ahora considera `duracion_descuento`:
+     - `'siempre'`: Descuento permanente en todos los cobros
+     - `'meses'`: Descuento por X meses (verifica `meses_activo < meses_duracion`)
+     - `'una_vez'`: Solo primer pago (no aplica en cobros recurrentes)
+
+**Archivos modificados:**
+- `backend/app/modules/suscripciones-negocio/models/pagos.model.js` (+55 líneas)
+- `backend/app/modules/suscripciones-negocio/models/suscripciones.model.js` (+25 líneas)
+- `backend/app/modules/suscripciones-negocio/services/cobro.service.js` (refactor método)
+
+---
+
 ### 23 Ene 2026 - FASE 7: Limpieza Sistema de Roles ✅ COMPLETADO
 
 **Eliminación completa del sistema legacy de roles ENUM.**
@@ -616,4 +788,4 @@ Sistema de roles dinámicos por organización. Ver sección "Roles" arriba para 
 
 ---
 
-**Actualizado**: 22 Enero 2026 (Módulo Suscripciones-Negocio Completo)
+**Actualizado**: 23 Enero 2026 (FASE 12: Auditoría UI Components)

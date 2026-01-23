@@ -10,6 +10,7 @@
 const asyncHandler = require('../../../middleware/asyncHandler');
 const { PlanesModel } = require('../models');
 const { ResponseHelper, ErrorHelper, ParseHelper } = require('../../../utils/helpers');
+const { NEXO_TEAM_ORG_ID } = require('../../../config/constants');
 
 class PlanesController {
 
@@ -40,6 +41,20 @@ class PlanesController {
         const organizacionId = req.tenant.organizacionId;
 
         const planes = await PlanesModel.listarActivos(organizacionId);
+
+        return ResponseHelper.success(res, planes);
+    });
+
+    /**
+     * Listar planes públicos de Nexo Team (para página de checkout)
+     * GET /api/v1/suscripciones-negocio/planes/publicos
+     *
+     * NO requiere autenticación. Retorna los planes activos de Nexo Team
+     * para que cualquier visitante pueda ver las opciones de suscripción.
+     */
+    static listarPublicos = asyncHandler(async (req, res) => {
+        // Siempre usar la organización Nexo Team para planes públicos
+        const planes = await PlanesModel.listarActivos(NEXO_TEAM_ORG_ID);
 
         return ResponseHelper.success(res, planes);
     });

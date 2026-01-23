@@ -14,6 +14,7 @@ const SuscripcionDetailPage = lazy(() => import('@/pages/suscripciones-negocio/S
 const CuponesPage = lazy(() => import('@/pages/suscripciones-negocio/CuponesPage'));
 const PagosPage = lazy(() => import('@/pages/suscripciones-negocio/PagosPage'));
 const MetricasPage = lazy(() => import('@/pages/suscripciones-negocio/MetricasPage'));
+const ConectoresPage = lazy(() => import('@/pages/suscripciones-negocio/ConectoresPage'));
 
 export const suscripcionesNegocioRoutes = [
   // Dashboard principal
@@ -54,6 +55,12 @@ export const suscripcionesNegocioRoutes = [
 
   // Métricas y análisis
   protectedRoute('suscripciones-negocio/metricas', MetricasPage, {
+    requiredRole: ROLES.ADMIN_ONLY,
+    requiredModule: 'suscripciones-negocio',
+  }),
+
+  // Conectores de pago
+  protectedRoute('suscripciones-negocio/conectores', ConectoresPage, {
     requiredRole: ROLES.ADMIN_ONLY,
     requiredModule: 'suscripciones-negocio',
   }),

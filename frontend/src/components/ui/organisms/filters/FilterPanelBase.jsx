@@ -8,7 +8,7 @@
  * - Cálculo de filtros activos
  * - Layout de grid responsivo
  */
-import { useMemo, useCallback } from 'react';
+import { useMemo, useCallback, memo } from 'react';
 import { cn } from '@/lib/utils';
 
 // ============================================
@@ -88,7 +88,7 @@ export function useActiveFilters(filters, filterConfig, searchKey = 'busqueda') 
 /**
  * FilterInput - Input de texto para filtros
  */
-export function FilterInput({ value, onChange, placeholder, className }) {
+export const FilterInput = memo(function FilterInput({ value, onChange, placeholder, className }) {
   return (
     <input
       type="text"
@@ -98,12 +98,14 @@ export function FilterInput({ value, onChange, placeholder, className }) {
       className={cn(filterInputStyles, className)}
     />
   );
-}
+});
+
+FilterInput.displayName = 'FilterInput';
 
 /**
  * FilterSelect - Select para filtros
  */
-export function FilterSelectInput({ value, onChange, options = [], className }) {
+export const FilterSelectInput = memo(function FilterSelectInput({ value, onChange, options = [], className }) {
   return (
     <select
       value={value ?? ''}
@@ -117,12 +119,14 @@ export function FilterSelectInput({ value, onChange, options = [], className }) 
       ))}
     </select>
   );
-}
+});
+
+FilterSelectInput.displayName = 'FilterSelectInput';
 
 /**
  * FilterDate - Input de fecha para filtros
  */
-export function FilterDateInput({ value, onChange, className }) {
+export const FilterDateInput = memo(function FilterDateInput({ value, onChange, className }) {
   return (
     <input
       type="date"
@@ -131,12 +135,14 @@ export function FilterDateInput({ value, onChange, className }) {
       className={cn(filterInputStyles, className)}
     />
   );
-}
+});
+
+FilterDateInput.displayName = 'FilterDateInput';
 
 /**
  * FilterCheckboxInput - Checkbox para filtros
  */
-export function FilterCheckboxInput({ checked, onChange, label, className }) {
+export const FilterCheckboxInput = memo(function FilterCheckboxInput({ checked, onChange, label, className }) {
   return (
     <label className={cn('flex items-center gap-2 cursor-pointer', className)}>
       <input
@@ -150,7 +156,9 @@ export function FilterCheckboxInput({ checked, onChange, label, className }) {
       </span>
     </label>
   );
-}
+});
+
+FilterCheckboxInput.displayName = 'FilterCheckboxInput';
 
 // ============================================
 // COMPONENTE PRINCIPAL
@@ -165,7 +173,7 @@ export function FilterCheckboxInput({ checked, onChange, label, className }) {
  * @param {React.ReactNode} children - Contenido adicional
  * @param {string} className - Clases adicionales
  */
-export function FilterPanelBase({
+export const FilterPanelBase = memo(function FilterPanelBase({
   filters = {},
   onFilterChange,
   filterConfig = [],
@@ -238,6 +246,8 @@ export function FilterPanelBase({
       {children}
     </div>
   );
-}
+});
+
+FilterPanelBase.displayName = 'FilterPanelBase';
 
 export default FilterPanelBase;

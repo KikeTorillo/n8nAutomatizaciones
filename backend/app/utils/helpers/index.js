@@ -18,6 +18,7 @@ const SecureRandom = require('./SecureRandom');
 const ParseHelper = require('./ParseHelper');
 const JSONHelper = require('./JSONHelper');
 const RolHelper = require('./RolHelper');
+const LimitesHelper = require('./LimitesHelper');
 
 // Helpers de dominio
 const InventarioHelper = require('./InventarioHelper');
@@ -37,6 +38,7 @@ module.exports = {
   ParseHelper,
   JSONHelper,
   RolHelper,
+  LimitesHelper,
   // Helpers de dominio
   InventarioHelper,
   POSHelper

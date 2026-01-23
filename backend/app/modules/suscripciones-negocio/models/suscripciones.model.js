@@ -16,6 +16,29 @@ const { NEXO_TEAM_ORG_ID, FEATURE_TO_MODULO, MODULOS_BASE } = require('../../../
 class SuscripcionesModel {
 
     /**
+     * Matriz de transiciones de estado válidas
+     */
+    static TRANSICIONES_VALIDAS = {
+        'trial': ['activa', 'cancelada', 'vencida', 'pendiente_pago'],
+        'pendiente_pago': ['activa', 'cancelada', 'vencida'],
+        'activa': ['pausada', 'cancelada', 'vencida', 'suspendida'],
+        'pausada': ['activa', 'cancelada'],
+        'cancelada': [], // Estado final
+        'vencida': ['activa', 'suspendida'],
+        'suspendida': ['activa', 'cancelada']
+    };
+
+    /**
+     * Verificar si una transición de estado es válida
+     * @private
+     */
+    static _esTransicionValida(estadoActual, nuevoEstado) {
+        if (estadoActual === nuevoEstado) return true;
+        const permitidas = this.TRANSICIONES_VALIDAS[estadoActual] || [];
+        return permitidas.includes(nuevoEstado);
+    }
+
+    /**
      * Listar suscripciones con paginación y filtros
      *
      * @param {Object} options - Opciones de filtrado y paginación
@@ -320,6 +343,13 @@ class SuscripcionesModel {
             const estadosValidos = ['trial', 'pendiente_pago', 'activa', 'pausada', 'cancelada', 'vencida', 'suspendida'];
             if (!estadosValidos.includes(nuevoEstado)) {
                 ErrorHelper.throwValidation(`Estado inválido: ${nuevoEstado}`);
+            }
+
+            // Validar transición permitida
+            if (!this._esTransicionValida(suscripcion.estado, nuevoEstado)) {
+                ErrorHelper.throwValidation(
+                    `Transición no permitida: ${suscripcion.estado} → ${nuevoEstado}`
+                );
             }
 
             const updates = ['estado = $1', 'actualizado_en = NOW()'];
@@ -648,6 +678,7 @@ class SuscripcionesModel {
                 suscriptor_externo,
                 periodo = 'mensual',
                 precio_actual,
+                moneda = 'MXN', // Aceptar moneda directamente para evitar buscar plan de nuevo
                 gateway,
                 cupon_aplicado_id,
                 descuento_porcentaje,
@@ -659,12 +690,8 @@ class SuscripcionesModel {
                 ErrorHelper.throwValidation('Debe proporcionar cliente_id o suscriptor_externo');
             }
 
-            // Obtener plan para moneda
-            const planQuery = `SELECT * FROM planes_suscripcion_org WHERE id = $1`;
-            const planResult = await db.query(planQuery, [plan_id]);
-            const plan = planResult.rows[0];
-
-            ErrorHelper.throwIfNotFound(plan, 'Plan de suscripción');
+            // Usar moneda proporcionada o default
+            const monedaFinal = moneda || 'MXN';
 
             // Crear suscripción en estado pendiente_pago
             const insertQuery = `
@@ -691,7 +718,7 @@ class SuscripcionesModel {
                 periodo,
                 gateway,
                 precio_actual,
-                plan.moneda || 'MXN',
+                monedaFinal,
                 cupon_aplicado_id,
                 descuento_porcentaje,
                 descuento_monto,

@@ -118,3 +118,4 @@ export { marketplaceApi } from './marketplace.api';
 
 // Suscripciones para Negocios
 export { suscripcionesNegocioApi } from './suscripciones-negocio.api';
+export { conectoresApi } from './conectores.api';

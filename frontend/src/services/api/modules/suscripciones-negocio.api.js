@@ -33,6 +33,14 @@ export const suscripcionesNegocioApi = {
     apiClient.get(`${BASE_URL}/planes/activos`),
 
   /**
+   * Listar planes públicos de Nexo Team (para página de checkout)
+   * NO requiere autenticación
+   * @returns {Promise<Object>} { planes }
+   */
+  listarPlanesPublicos: () =>
+    apiClient.get(`${BASE_URL}/planes/publicos`),
+
+  /**
    * Obtener plan por ID
    * @param {number} id - ID del plan
    * @returns {Promise<Object>}

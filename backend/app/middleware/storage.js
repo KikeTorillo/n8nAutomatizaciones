@@ -95,15 +95,17 @@ async function checkStorageLimit(req, res, next) {
     }
 
     // Obtener límite del plan y uso actual
-    // Nota: aceptamos 'activa' y 'trial' como estados válidos (enum estado_subscripcion)
+    // Nota: usamos suscripciones_org (tabla del módulo suscripciones-negocio)
     // Usamos bypass_rls porque esta query cruza varias tablas y necesita ver todos los datos
     const query = `
       SELECT
         p.limite_almacenamiento_mb,
         COALESCE(SUM(a.tamano_bytes), 0) as uso_actual_bytes
       FROM organizaciones o
-      JOIN subscripciones s ON s.organizacion_id = o.id AND s.estado IN ('activa', 'trial')
-      JOIN planes_subscripcion p ON p.id = s.plan_id
+      JOIN suscripciones_org s ON s.cliente_id IN (
+        SELECT id FROM clientes WHERE organizacion_vinculada_id = o.id
+      ) AND s.estado IN ('activa', 'trial')
+      JOIN planes_suscripcion_org p ON p.id = s.plan_id
       LEFT JOIN archivos_storage a ON a.organizacion_id = o.id AND a.activo = true
       WHERE o.id = $1
       GROUP BY p.limite_almacenamiento_mb

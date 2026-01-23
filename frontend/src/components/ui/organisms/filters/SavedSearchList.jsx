@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Star, Trash2, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -11,7 +12,7 @@ import { cn } from '@/lib/utils';
  * @param {string} currentSearchId - ID de búsqueda actualmente aplicada
  * @param {boolean} compact - Modo compacto para panel de filtros
  */
-export function SavedSearchList({
+export const SavedSearchList = memo(function SavedSearchList({
   busquedas = [],
   onSelect,
   onDelete,
@@ -110,6 +111,8 @@ export function SavedSearchList({
       })}
     </div>
   );
-}
+});
+
+SavedSearchList.displayName = 'SavedSearchList';
 
 export default SavedSearchList;

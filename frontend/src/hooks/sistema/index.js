@@ -28,3 +28,6 @@ export * from './useWorkflowValidation';
 // Super Admin
 export * from './useSuperAdmin';
 export * from './useSuperAdminMarketplace';
+
+// Suscripciones
+export * from './useEstadoSuscripcion';

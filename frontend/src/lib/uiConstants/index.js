@@ -63,3 +63,24 @@ export {
   SELECTION_STATES,
   EXPAND_STATES,
 } from './states';
+
+// Estilos de Inputs (Ene 2026)
+export {
+  INPUT_BASE_CLASSES,
+  INPUT_BORDER_STATES,
+  INPUT_STYLES,
+  getInputBaseStyles,
+} from './inputs';
+
+// Espaciado (Ene 2026)
+export {
+  GAP,
+  PADDING,
+  PADDING_X,
+  PADDING_Y,
+  MARGIN,
+  MARGIN_X,
+  MARGIN_Y,
+  SPACE_X,
+  SPACE_Y,
+} from './spacing';

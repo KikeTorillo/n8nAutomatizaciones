@@ -99,11 +99,14 @@ class RLSContextManager {
             await db.query("SELECT set_config('app.current_user_id', '', false)");
             await db.query("SELECT set_config('app.current_user_role', '', false)");
             await db.query("SELECT set_config('app.bypass_rls', 'false', false)");
-            await db.query("SELECT set_config('app.current_tenant_id', '', false)");
+            await db.query("SELECT set_config('app.current_tenant_id', '0', false)");
 
             // 4. Configurar contexto RLS específico
             if (bypass) {
                 // Bypass RLS para operaciones administrativas
+                // IMPORTANTE: Establecer tenant_id a '0' para que cast a integer no falle
+                await db.query('SELECT set_config($1, $2, $3)',
+                    ['app.current_tenant_id', '0', useTransaction]);
                 await db.query('SELECT set_config($1, $2, $3)',
                     ['app.bypass_rls', 'true', useTransaction]);
 
@@ -169,7 +172,7 @@ class RLSContextManager {
                 // CRÍTICO: Previene contaminación del pool, especialmente con bypass
                 try {
                     await db.query(`SELECT
-                        set_config('app.current_tenant_id', '', false),
+                        set_config('app.current_tenant_id', '0', false),
                         set_config('app.bypass_rls', 'false', false),
                         set_config('app.current_user_id', '', false),
                         set_config('app.current_user_role', '', false)

@@ -65,6 +65,16 @@ router.get('/:id/metricas',
     (req, res, next) => OrganizacionController.obtenerMetricas(req, res, next)
 );
 
+/**
+ * GET /:id/estado-suscripcion
+ * Obtiene el estado de suscripción de la organización (para TrialBanner)
+ */
+router.get('/:id/estado-suscripcion',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    (req, res, next) => OrganizacionController.obtenerEstadoSuscripcion(req, res, next)
+);
+
 // ========== Rutas CRUD Básicas con /:id ==========
 
 router.get('/:id',

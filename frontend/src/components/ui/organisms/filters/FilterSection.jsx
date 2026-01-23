@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { cn } from '@/lib/utils';
 
 /**
@@ -9,7 +10,7 @@ import { cn } from '@/lib/utils';
  * @param {React.ComponentType} icon - Icono del título (opcional)
  * @param {string} className - Clases adicionales
  */
-export function FilterSection({ title, children, icon: Icon, className }) {
+export const FilterSection = memo(function FilterSection({ title, children, icon: Icon, className }) {
   return (
     <div className={cn('space-y-3', className)}>
       {title && (
@@ -26,12 +27,14 @@ export function FilterSection({ title, children, icon: Icon, className }) {
       <div className="space-y-2">{children}</div>
     </div>
   );
-}
+});
+
+FilterSection.displayName = 'FilterSection';
 
 /**
  * FilterCheckbox - Checkbox individual para filtros
  */
-export function FilterCheckbox({
+export const FilterCheckbox = memo(function FilterCheckbox({
   id,
   label,
   checked,
@@ -81,12 +84,14 @@ export function FilterCheckbox({
       </span>
     </label>
   );
-}
+});
+
+FilterCheckbox.displayName = 'FilterCheckbox';
 
 /**
  * FilterSelect - Select para filtros con múltiples opciones
  */
-export function FilterSelect({
+export const FilterSelect = memo(function FilterSelect({
   id,
   label,
   value,
@@ -131,6 +136,8 @@ export function FilterSelect({
       </select>
     </div>
   );
-}
+});
+
+FilterSelect.displayName = 'FilterSelect';
 
 export default FilterSection;

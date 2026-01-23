@@ -7,6 +7,7 @@
 
 // Badges y Cards
 export { default as SuscripcionStatusBadge } from './SuscripcionStatusBadge';
+export { default as ConectorStatusBadge } from './ConectorStatusBadge';
 export { default as CuponBadge } from './CuponBadge';
 export { default as PlanCard } from './PlanCard';
 
@@ -14,6 +15,7 @@ export { default as PlanCard } from './PlanCard';
 export { default as PlanFormDrawer } from './PlanFormDrawer';
 export { default as CuponFormDrawer } from './CuponFormDrawer';
 export { default as SuscripcionFormDrawer } from './SuscripcionFormDrawer';
+export { default as ConectorFormDrawer } from './ConectorFormDrawer';
 
 // Charts
 export { default as MRRChart } from './charts/MRRChart';

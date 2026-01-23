@@ -95,7 +95,7 @@ const FilterCheckbox = memo(function FilterCheckbox({ checked, label, onChange }
  *   searchPlaceholder="Buscar por nombre..."
  * />
  */
-export function FilterPanel({
+export const FilterPanel = memo(function FilterPanel({
   filters = {},
   onFilterChange,
   onClearFilters,
@@ -210,12 +210,14 @@ export function FilterPanel({
       )}
     </div>
   );
-}
+});
+
+FilterPanel.displayName = 'FilterPanel';
 
 /**
  * FilterChips - Muestra los filtros activos como chips removibles
  */
-export function FilterChips({
+export const FilterChips = memo(function FilterChips({
   filters,
   filterConfig,
   onRemoveFilter,
@@ -271,6 +273,8 @@ export function FilterChips({
       ))}
     </div>
   );
-}
+});
+
+FilterChips.displayName = 'FilterChips';
 
 export default FilterPanel;

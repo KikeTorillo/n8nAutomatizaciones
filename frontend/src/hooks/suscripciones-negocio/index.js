@@ -8,6 +8,17 @@
 // Constantes
 export * from './constants';
 
+// Conectores
+export {
+  useConectores,
+  useConector,
+  useCrearConector,
+  useActualizarConector,
+  useEliminarConector,
+  useGatewaysSoportados,
+  useVerificarConector,
+} from './useConectores';
+
 // Planes
 export {
   usePlanes,

@@ -274,6 +274,7 @@ services:
       MERCADOPAGO_PUBLIC_KEY: ${MERCADOPAGO_PUBLIC_KEY}
       MERCADOPAGO_ACCESS_TOKEN: ${MERCADOPAGO_ACCESS_TOKEN}
       MERCADOPAGO_WEBHOOK_SECRET: ${MERCADOPAGO_WEBHOOK_SECRET}
+      MERCADOPAGO_TEST_PAYER_EMAIL: ${MERCADOPAGO_TEST_PAYER_EMAIL}
       FRONTEND_URL: ${FRONTEND_URL}
 
       SMTP_HOST: ${SMTP_HOST}
@@ -292,6 +293,9 @@ services:
       MINIO_BUCKET_PRIVATE: ${MINIO_BUCKET_PRIVATE:-nexo-private}
       MINIO_BUCKET_TEMP: ${MINIO_BUCKET_TEMP:-nexo-temp}
       MINIO_PUBLIC_URL: ${MINIO_PUBLIC_URL:-http://localhost:9000}
+
+      # Credential Encryption (for payment connectors)
+      CREDENTIAL_ENCRYPTION_KEY: ${CREDENTIAL_ENCRYPTION_KEY}
     volumes:
       - ./backend/app:/app
       - /app/node_modules

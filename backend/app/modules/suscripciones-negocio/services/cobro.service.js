@@ -243,6 +243,7 @@ class CobroService {
      */
     static async _procesarCobroMercadoPago(suscripcion, pago, monto) {
         try {
+            // Multi-tenant: pasar organizacionId para usar credenciales de la org
             const pagoMP = await MercadoPagoService.crearPago({
                 transaction_amount: monto,
                 token: suscripcion.payment_method_id, // Tarjeta tokenizada
@@ -257,7 +258,7 @@ class CobroService {
                     pago_id: pago.id,
                     organizacion_id: suscripcion.organizacion_id
                 }
-            });
+            }, suscripcion.organizacion_id);
 
             if (pagoMP.status === 'approved') {
                 // Actualizar pago con datos de MercadoPago
@@ -292,14 +293,32 @@ class CobroService {
     }
 
     /**
-     * Calcular monto a cobrar considerando descuentos
+     * Calcular monto a cobrar considerando descuentos recurrentes
      *
      * @param {Object} suscripcion - Suscripción
      * @returns {number} - Monto final
      */
     static _calcularMontoCobro(suscripcion) {
-        const precioBase = suscripcion.precio_actual;
-        const descuento = suscripcion.descuento_monto || 0;
+        const precioBase = parseFloat(suscripcion.precio_actual) || 0;
+        let descuento = 0;
+
+        // Verificar si hay descuento y si sigue vigente
+        if (suscripcion.descuento_monto && suscripcion.descuento_monto > 0) {
+            const duracion = suscripcion.duracion_descuento || 'una_vez';
+            const mesesActivo = suscripcion.meses_activo || 0;
+            const mesesDuracion = suscripcion.meses_duracion || 0;
+
+            if (duracion === 'siempre') {
+                // Descuento permanente
+                descuento = parseFloat(suscripcion.descuento_monto);
+            } else if (duracion === 'meses' && mesesDuracion > 0) {
+                // Descuento por X meses
+                if (mesesActivo < mesesDuracion) {
+                    descuento = parseFloat(suscripcion.descuento_monto);
+                }
+            }
+            // 'una_vez' no aplica en cobros recurrentes (solo primer pago)
+        }
 
         return Math.max(precioBase - descuento, 0);
     }

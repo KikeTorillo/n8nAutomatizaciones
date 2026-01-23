@@ -32,6 +32,7 @@ import usePermisosStore, { selectClear as selectClearPermisos } from '@/store/pe
 import { useModulos } from '@/hooks/sistema';
 import { useAppNotifications } from '@/hooks/sistema';
 import { useSucursales, useMetricasSucursales } from '@/hooks/sistema';
+import { useEstadoSuscripcion } from '@/hooks/sistema';
 import { authApi } from '@/services/api/endpoints';
 
 import AppCard from '@/components/home/AppCard';
@@ -39,6 +40,7 @@ import QuickActions from '@/components/home/QuickActions';
 import { Button, ConfirmDialog, ThemeToggle, StatCard } from '@/components/ui';
 import SucursalSelector from '@/components/sucursales/SucursalSelector';
 import { NotificacionesBell } from '@/components/notificaciones';
+import { TrialBanner } from '@/components/trial';
 
 /**
  * AppHomePage - Página principal con App Launcher estilo Odoo
@@ -82,6 +84,9 @@ function AppHomePage() {
   const { data: sucursales = [] } = useSucursales({ activo: true });
   const tieneMultiplesSucursales = sucursales.length > 1;
   const { data: metricasSucursales } = useMetricasSucursales({});
+
+  // Estado de suscripción (para TrialBanner)
+  const { data: estadoSuscripcion } = useEstadoSuscripcion();
 
 
   // Detectar rol para adaptar la UI
@@ -424,6 +429,15 @@ function AppHomePage() {
 
       {/* Content */}
       <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Trial Banner - Mostrar si la org está en trial */}
+        {!esEmpleado && estadoSuscripcion?.es_trial && (
+          <TrialBanner
+            diasRestantes={estadoSuscripcion.dias_restantes_trial}
+            planNombre={estadoSuscripcion.plan_nombre}
+            className="mb-6"
+          />
+        )}
+
         {/* Widgets de estado - Solo para admin/propietario */}
         {!esEmpleado && (
           <>
@@ -532,13 +546,13 @@ function AppHomePage() {
         {/* Accesos Rápidos - Solo para admin/propietario */}
         {!esEmpleado && <QuickActions />}
 
-        {/* Mensaje para plan Free - Solo para admin/propietario */}
-        {!esEmpleado && esPlanFree && (
+        {/* Mensaje para plan Free - Solo si NO está en trial y NO tiene el TrialBanner */}
+        {!esEmpleado && esPlanFree && !estadoSuscripcion?.es_trial && (
           <div className="mt-10 text-center">
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-full text-amber-700 dark:text-amber-300 text-sm">
               <span>Algunas apps requieren</span>
               <button
-                onClick={() => navigate('/suscripcion')}
+                onClick={() => navigate('/planes')}
                 className="font-semibold hover:underline"
               >
                 Plan Pro

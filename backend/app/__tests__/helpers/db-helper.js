@@ -73,7 +73,9 @@ async function cleanAllTables(client) {
   // ⚠️ CRÍTICO: metricas_uso_organizacion debe ir AL FINAL
   //             Los triggers de usuarios/organizaciones intentarán actualizarla,
   //             fallarán silenciosamente, y luego la limpiamos manualmente
-  // ⚠️ NO incluir tablas de datos maestros: planes_subscripcion, plantillas_servicios
+  // ⚠️ NO incluir tablas de datos maestros: planes_suscripcion_org, plantillas_servicios
+  // NOTA (Ene 2026): Tablas legacy eliminadas: subscripciones, historial_subscripciones
+  // Ahora usar: suscripciones_org, pagos_org (módulo suscripciones-negocio)
   const tables = [
     'citas_servicios',            // ✅ NUEVO - Depende de: citas, servicios
     'citas',                      // Depende de: clientes, profesionales (servicio_id eliminado)
@@ -84,11 +86,11 @@ async function cleanAllTables(client) {
     'profesionales',              // Depende de: organizaciones
     'clientes',                   // Depende de: organizaciones
     'usuarios',                   // Depende de: organizaciones (trigger actualiza métricas - ignorar errores)
-    'historial_subscripciones',   // Depende de: subscripciones
-    'subscripciones',             // Depende de: organizaciones, planes_subscripcion
+    'pagos_org',                  // Suscripciones-negocio: Depende de suscripciones_org
+    'suscripciones_org',          // Suscripciones-negocio: Depende de organizaciones, planes_suscripcion_org
     'organizaciones',             // Depende de: nada (trigger inserta en métricas - ignorar errores)
     'metricas_uso_organizacion'   // ⚠️ AL FINAL - limpiar residuos de triggers
-    // ⚠️ NO limpiar: planes_subscripcion, plantillas_servicios (datos maestros)
+    // ⚠️ NO limpiar: planes_suscripcion_org, plantillas_servicios (datos maestros)
   ];
 
   // ESTRATEGIA DE LIMPIEZA SEGURA (sin requerir superuser):
@@ -179,12 +181,12 @@ async function createTestOrganizacion(client, data = {}) {
 
   const organizacion = result.rows[0];
 
-  // Crear subscripción activa para la organización
-  const planCodigo = data.plan_actual || data.plan || 'basico';
+  // Crear suscripción activa para la organización (tablas nuevas: suscripciones_org, planes_suscripcion_org)
+  const planCodigo = data.plan_actual || data.plan || 'trial';
 
-  // Obtener plan ID
+  // Obtener plan ID de tabla nueva
   const planResult = await client.query(
-    `SELECT id, precio_mensual FROM planes_subscripcion WHERE codigo_plan = $1`,
+    `SELECT id, precio_mensual FROM planes_suscripcion_org WHERE codigo = $1 AND activo = true`,
     [planCodigo]
   );
 
@@ -192,11 +194,11 @@ async function createTestOrganizacion(client, data = {}) {
     const plan = planResult.rows[0];
 
     await client.query(
-      `INSERT INTO subscripciones (
-        organizacion_id, plan_id, precio_actual, fecha_inicio,
-        fecha_proximo_pago, estado, activa, metadata
-      ) VALUES ($1, $2, $3, CURRENT_DATE, CURRENT_DATE + INTERVAL '1 month', 'activa', true, '{}'::jsonb)`,
-      [organizacion.id, plan.id, plan.precio_mensual]
+      `INSERT INTO suscripciones_org (
+        organizacion_id, cliente_id, plan_id, precio_actual, fecha_inicio,
+        fecha_proximo_cobro, estado
+      ) VALUES ($1, NULL, $2, $3, CURRENT_DATE, CURRENT_DATE + INTERVAL '1 month', $4)`,
+      [organizacion.id, plan.id, plan.precio_mensual, planCodigo === 'trial' ? 'trial' : 'activa']
     );
   }
 

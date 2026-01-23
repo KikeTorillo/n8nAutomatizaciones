@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import { Star, X, Save } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -11,7 +11,7 @@ import { cn } from '@/lib/utils';
  * @param {Function} onSave - Callback tras guardar exitosamente
  * @param {Function} existeNombre - Función para verificar si existe el nombre
  */
-export function SavedSearchModal({
+export const SavedSearchModal = memo(function SavedSearchModal({
   isOpen,
   onClose,
   filtrosActuales,
@@ -234,6 +234,8 @@ export function SavedSearchModal({
       </div>
     </>
   );
-}
+});
+
+SavedSearchModal.displayName = 'SavedSearchModal';
 
 export default SavedSearchModal;

@@ -1,6 +1,6 @@
 const RLSContextManager = require('../../../utils/rlsContextManager');
 const { PlanLimitExceededError, DuplicateResourceError } = require('../../../utils/errors');
-const { ErrorHelper } = require('../../../utils/helpers');
+const { ErrorHelper, LimitesHelper } = require('../../../utils/helpers');
 
 class ProfesionalModel {
 
@@ -159,36 +159,9 @@ class ProfesionalModel {
     static async crearBulk(organizacionId, profesionales) {
         return await RLSContextManager.transaction(organizacionId, async (db) => {
             // 1. Pre-validación: Verificar límite del plan ANTES de crear
+            // Usa tablas nuevas: suscripciones_org, planes_suscripcion_org
             const cantidadACrear = profesionales.length;
-            const verificarQuery = `SELECT verificar_limite_plan($1, $2, $3) as puede_crear`;
-            const verificarResult = await db.query(verificarQuery, [
-                organizacionId,
-                'profesionales',
-                cantidadACrear
-            ]);
-
-            if (!verificarResult.rows[0]?.puede_crear) {
-                // Obtener detalles del límite para mensaje de error
-                const detallesQuery = `
-                    SELECT
-                        ps.limite_profesionales as limite,
-                        m.uso_profesionales as uso_actual,
-                        ps.nombre_plan
-                    FROM subscripciones s
-                    JOIN planes_subscripcion ps ON s.plan_id = ps.id
-                    LEFT JOIN metricas_uso_organizacion m ON m.organizacion_id = s.organizacion_id
-                    WHERE s.organizacion_id = $1 AND s.activa = true
-                `;
-                const detalles = await db.query(detallesQuery, [organizacionId]);
-                const { limite, uso_actual, nombre_plan } = detalles.rows[0] || {};
-
-                throw new PlanLimitExceededError(
-                    'profesionales',
-                    limite || 0,
-                    uso_actual || 0,
-                    nombre_plan || 'actual'
-                );
-            }
+            await LimitesHelper.verificarLimiteOLanzar(organizacionId, 'profesionales', cantidadACrear, db);
 
             // 2. Pre-validación: Verificar emails únicos (si se proporcionan)
             const emailsAValidar = profesionales

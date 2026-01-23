@@ -16,6 +16,7 @@ const cuponesRoutes = require('./cupones');
 const metricasRoutes = require('./metricas');
 const webhooksRoutes = require('./webhooks');
 const checkoutRoutes = require('./checkout');
+const conectoresRoutes = require('./conectores');
 
 // Montar rutas
 router.use('/planes', planesRoutes);
@@ -25,5 +26,6 @@ router.use('/cupones', cuponesRoutes);
 router.use('/metricas', metricasRoutes);
 router.use('/webhooks', webhooksRoutes);
 router.use('/checkout', checkoutRoutes);
+router.use('/conectores', conectoresRoutes);
 
 module.exports = router;

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import { ChevronDown, Filter, Star, X, RotateCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import FilterSection, { FilterCheckbox, FilterSelect } from './FilterSection';
@@ -21,7 +21,7 @@ import SavedSearchList from './SavedSearchList';
  * @param {Function} onGuardarBusqueda - Callback para abrir modal de guardar
  * @param {number} filtrosActivos - Número de filtros activos
  */
-export function AdvancedFilterPanel({
+export const AdvancedFilterPanel = memo(function AdvancedFilterPanel({
   filtros,
   onFiltrosChange,
   onLimpiarFiltros,
@@ -239,6 +239,8 @@ export function AdvancedFilterPanel({
       )}
     </div>
   );
-}
+});
+
+AdvancedFilterPanel.displayName = 'AdvancedFilterPanel';
 
 export default AdvancedFilterPanel;
