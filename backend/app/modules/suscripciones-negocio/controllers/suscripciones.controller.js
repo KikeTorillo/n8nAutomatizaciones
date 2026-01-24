@@ -4,12 +4,20 @@
  * ====================================================================
  * Gestión de suscripciones de clientes con operaciones de estado.
  *
+ * Incluye Customer Billing (Admin crea suscripción para cliente):
+ * - POST /suscripciones/cliente - Genera link de checkout
+ * - GET /suscripciones/tokens - Lista tokens generados
+ *
  * @module controllers/suscripciones
  */
 
 const asyncHandler = require('../../../middleware/asyncHandler');
-const { SuscripcionesModel } = require('../models');
+const { SuscripcionesModel, PlanesModel, CuponesModel, CheckoutTokensModel } = require('../models');
 const { ResponseHelper, ErrorHelper, ParseHelper } = require('../../../utils/helpers');
+const logger = require('../../../utils/logger');
+
+// URL del frontend
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
 
 class SuscripcionesController {
 
@@ -131,6 +139,36 @@ class SuscripcionesController {
     });
 
     /**
+     * Cambiar plan de mi propia suscripción
+     * PATCH /api/v1/suscripciones-negocio/suscripciones/mi-suscripcion/cambiar-plan
+     * Disponible para cualquier usuario autenticado
+     */
+    static cambiarMiPlan = asyncHandler(async (req, res) => {
+        const { nuevo_plan_id, periodo, cambio_inmediato = false } = req.body;
+        const organizacionId = req.user.organizacion_id;
+
+        // Buscar la suscripción activa del usuario
+        const miSuscripcion = await SuscripcionesModel.buscarActivaPorOrganizacion(organizacionId);
+
+        if (!miSuscripcion) {
+            return ResponseHelper.error(res, 'No tienes una suscripción activa', 404);
+        }
+
+        // Cambiar el plan usando el método existente
+        // Nota: usamos NEXO_TEAM_ORG_ID porque las suscripciones pertenecen a Nexo Team
+        const { NEXO_TEAM_ORG_ID } = require('../../../config/constants');
+
+        const suscripcionActualizada = await SuscripcionesModel.cambiarPlan(
+            miSuscripcion.id,
+            nuevo_plan_id,
+            NEXO_TEAM_ORG_ID,
+            { periodo, cambio_inmediato }
+        );
+
+        return ResponseHelper.success(res, suscripcionActualizada, 'Plan cambiado exitosamente');
+    });
+
+    /**
      * Cancelar suscripción
      * POST /api/v1/suscripciones-negocio/suscripciones/:id/cancelar
      */
@@ -224,6 +262,218 @@ class SuscripcionesController {
         );
 
         return ResponseHelper.success(res, suscripciones);
+    });
+
+    // ========================================================================
+    // CUSTOMER BILLING: Admin crea suscripción para cliente
+    // ========================================================================
+
+    /**
+     * Crear suscripción para un cliente (Customer Billing)
+     * POST /api/v1/suscripciones-negocio/suscripciones/cliente
+     *
+     * Genera un token/link de checkout para que el cliente pague sin login.
+     *
+     * Flujo:
+     * 1. Validar que cliente pertenece a la org
+     * 2. Validar que org tiene MercadoPago configurado
+     * 3. Calcular precio con cupón si aplica
+     * 4. Crear token de checkout
+     * 5. Retornar URL para enviar al cliente
+     */
+    static crearParaCliente = asyncHandler(async (req, res) => {
+        const { cliente_id, plan_id, periodo, cupon_codigo, notificar_cliente, dias_expiracion } = req.body;
+        const organizacionId = req.tenant.organizacionId;
+        const usuarioId = req.user.id;
+
+        logger.info(`[CustomerBilling] Admin ${usuarioId} creando suscripción para cliente ${cliente_id}`);
+
+        // 1. Validar que cliente existe en la org
+        const ClienteModel = require('../../clientes/models/cliente.model');
+        const cliente = await ClienteModel.buscarPorId(cliente_id, organizacionId);
+        ErrorHelper.throwIfNotFound(cliente, 'Cliente');
+
+        // 2. Validar que org tiene conector MercadoPago
+        const ConectoresModel = require('../models/conectores.model');
+        const conector = await ConectoresModel.obtenerCredenciales(organizacionId, 'mercadopago');
+
+        if (!conector) {
+            ErrorHelper.throwValidation(
+                'Para vender suscripciones necesitas configurar MercadoPago. ' +
+                'Ve a Configuración > Conectores de Pago.'
+            );
+        }
+
+        // 3. Obtener plan y validar
+        const plan = await PlanesModel.buscarPorId(plan_id, organizacionId);
+        ErrorHelper.throwIfNotFound(plan, 'Plan de suscripción');
+
+        if (!plan.activo) {
+            ErrorHelper.throwValidation('El plan seleccionado no está disponible');
+        }
+
+        // 4. Calcular precio según período
+        let precioBase;
+        switch (periodo) {
+            case 'mensual':
+                precioBase = parseFloat(plan.precio_mensual);
+                break;
+            case 'trimestral':
+                precioBase = parseFloat(plan.precio_trimestral) || parseFloat(plan.precio_mensual) * 3;
+                break;
+            case 'semestral':
+                precioBase = parseFloat(plan.precio_mensual) * 6;
+                break;
+            case 'anual':
+                precioBase = parseFloat(plan.precio_anual) || parseFloat(plan.precio_mensual) * 12;
+                break;
+            default:
+                precioBase = parseFloat(plan.precio_mensual);
+        }
+
+        // 5. Aplicar cupón si existe
+        let descuento = 0;
+        let cuponValidado = null;
+
+        if (cupon_codigo) {
+            const validacion = await CuponesModel.validar(cupon_codigo, organizacionId, { plan_id });
+
+            if (validacion.valido) {
+                cuponValidado = validacion.cupon;
+
+                if (cuponValidado.tipo_descuento === 'porcentaje') {
+                    descuento = (precioBase * cuponValidado.porcentaje_descuento) / 100;
+                } else {
+                    descuento = parseFloat(cuponValidado.monto_descuento) || 0;
+                }
+
+                descuento = Math.min(descuento, precioBase);
+            }
+        }
+
+        const precioFinal = Math.max(0, precioBase - descuento);
+
+        // 6. Crear token de checkout
+        const checkoutToken = await CheckoutTokensModel.crear({
+            cliente_id,
+            plan_id,
+            periodo,
+            cupon_codigo: cuponValidado ? cupon_codigo : null,
+            precio_calculado: precioFinal,
+            moneda: plan.moneda || 'MXN',
+            dias_expiracion: dias_expiracion || 7
+        }, organizacionId, usuarioId);
+
+        // 7. Generar URL
+        const checkoutUrl = `${FRONTEND_URL}/checkout/${checkoutToken.token}`;
+
+        // 8. Notificar cliente (TODO: implementar servicio de notificaciones)
+        if (notificar_cliente) {
+            logger.info(`[CustomerBilling] TODO: Enviar email a ${cliente.email} con link ${checkoutUrl}`);
+            // await NotificacionesService.enviarLinkPago(cliente, checkoutUrl, plan);
+        }
+
+        logger.info(`[CustomerBilling] Token creado para cliente ${cliente_id}, plan ${plan.nombre}, precio ${precioFinal}`);
+
+        return ResponseHelper.success(res, {
+            checkout_url: checkoutUrl,
+            token: checkoutToken.token,
+            expira_en: checkoutToken.expira_en,
+            cliente: {
+                id: cliente.id,
+                nombre: cliente.nombre,
+                email: cliente.email
+            },
+            plan: {
+                id: plan.id,
+                nombre: plan.nombre,
+                codigo: plan.codigo
+            },
+            precio: {
+                base: precioBase,
+                descuento: descuento,
+                final: precioFinal,
+                moneda: plan.moneda || 'MXN'
+            },
+            cupon_aplicado: cuponValidado ? {
+                codigo: cuponValidado.codigo,
+                tipo: cuponValidado.tipo_descuento,
+                valor: cuponValidado.tipo_descuento === 'porcentaje'
+                    ? `${cuponValidado.porcentaje_descuento}%`
+                    : `$${cuponValidado.monto_descuento}`
+            } : null
+        }, 'Link de checkout generado exitosamente', 201);
+    });
+
+    /**
+     * Listar tokens de checkout generados
+     * GET /api/v1/suscripciones-negocio/suscripciones/tokens
+     */
+    static listarCheckoutTokens = asyncHandler(async (req, res) => {
+        const organizacionId = req.tenant.organizacionId;
+
+        const options = {
+            page: parseInt(req.query.page) || 1,
+            limit: parseInt(req.query.limit) || 20,
+            estado: req.query.estado,
+            cliente_id: req.query.cliente_id ? parseInt(req.query.cliente_id) : undefined
+        };
+
+        const resultado = await CheckoutTokensModel.listar(options, organizacionId);
+
+        return ResponseHelper.success(res, resultado);
+    });
+
+    /**
+     * Cancelar token de checkout
+     * DELETE /api/v1/suscripciones-negocio/suscripciones/tokens/:tokenId
+     */
+    static cancelarCheckoutToken = asyncHandler(async (req, res) => {
+        const { tokenId } = req.params;
+        const organizacionId = req.tenant.organizacionId;
+
+        const tokenCancelado = await CheckoutTokensModel.cancelar(tokenId, organizacionId);
+
+        if (!tokenCancelado) {
+            return ResponseHelper.error(res, 'Token no encontrado o ya no está pendiente', 404);
+        }
+
+        return ResponseHelper.success(res, tokenCancelado, 'Token cancelado exitosamente');
+    });
+
+    // ========================================================================
+    // SUSCRIPCIONES PROPIAS (MiPlan)
+    // ========================================================================
+
+    /**
+     * Obtener mi suscripción activa (para página MiPlan)
+     * GET /api/v1/suscripciones-negocio/suscripciones/mi-suscripcion
+     *
+     * Busca la suscripción activa donde el cliente está vinculado
+     * a la organización del usuario que hace la petición.
+     */
+    static obtenerMiSuscripcion = asyncHandler(async (req, res) => {
+        const organizacionId = req.user.organizacion_id;
+
+        const suscripcion = await SuscripcionesModel.buscarActivaPorOrganizacion(organizacionId);
+
+        if (!suscripcion) {
+            return ResponseHelper.success(res, null, 'No tienes una suscripción activa');
+        }
+
+        // Calcular días restantes de trial si aplica
+        let diasTrialRestantes = null;
+        if (suscripcion.es_trial && suscripcion.fecha_fin_trial) {
+            const hoy = new Date();
+            const finTrial = new Date(suscripcion.fecha_fin_trial);
+            const diffTime = finTrial - hoy;
+            diasTrialRestantes = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+        }
+
+        return ResponseHelper.success(res, {
+            ...suscripcion,
+            dias_trial_restantes: diasTrialRestantes
+        });
     });
 }
 

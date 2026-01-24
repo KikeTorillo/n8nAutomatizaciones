@@ -1,7 +1,8 @@
 import { memo } from 'react';
 import { cn } from '@/lib/utils';
 import { Inbox } from 'lucide-react';
-import Button from '../atoms/Button';
+import { Button } from '../atoms/Button';
+import { EMPTY_STATE_SIZES, EMPTY_STATE_BASE } from '@/lib/uiConstants';
 
 /**
  * EmptyState - Estado vacío reutilizable para listas y tablas
@@ -28,48 +29,25 @@ export const EmptyState = memo(function EmptyState({
   size = 'md',
   className,
 }) {
-  const sizeClasses = {
-    sm: {
-      container: 'p-6',
-      icon: 'w-10 h-10',
-      title: 'text-base',
-      description: 'text-sm',
-    },
-    md: {
-      container: 'p-8 sm:p-12',
-      icon: 'w-12 h-12 sm:w-16 sm:h-16',
-      title: 'text-lg',
-      description: 'text-sm',
-    },
-    lg: {
-      container: 'p-12 sm:p-16',
-      icon: 'w-16 h-16 sm:w-20 sm:h-20',
-      title: 'text-xl',
-      description: 'text-base',
-    },
-  };
-
-  const sizes = sizeClasses[size] || sizeClasses.md;
+  const sizes = EMPTY_STATE_SIZES[size] || EMPTY_STATE_SIZES.md;
 
   return (
     <div
       className={cn(
-        'bg-white dark:bg-gray-800 rounded-lg shadow-sm',
-        'border border-gray-200 dark:border-gray-700',
-        'text-center',
+        EMPTY_STATE_BASE.container,
         sizes.container,
         className
       )}
     >
       <Icon
         className={cn(
-          'mx-auto mb-4 text-gray-400 dark:text-gray-500',
+          EMPTY_STATE_BASE.icon,
           sizes.icon
         )}
       />
       <h3
         className={cn(
-          'font-semibold text-gray-900 dark:text-gray-100 mb-2',
+          EMPTY_STATE_BASE.title,
           sizes.title
         )}
       >
@@ -78,7 +56,7 @@ export const EmptyState = memo(function EmptyState({
       {description && (
         <p
           className={cn(
-            'text-gray-600 dark:text-gray-400 mb-6',
+            EMPTY_STATE_BASE.description,
             sizes.description
           )}
         >
@@ -96,5 +74,3 @@ export const EmptyState = memo(function EmptyState({
 });
 
 EmptyState.displayName = 'EmptyState';
-
-export default EmptyState;

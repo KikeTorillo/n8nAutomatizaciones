@@ -1,50 +1,58 @@
 import { forwardRef, memo } from 'react';
 import { cn } from '@/lib/utils';
+import { getSelectStyles, SELECT_ARROW, getAriaDescribedBy } from '@/lib/uiConstants';
 
 /**
- * Componente Select puro - Compatible con React Hook Form
+ * Select - Componente select puro accesible compatible con React Hook Form
  *
  * DEBE usarse con FormGroup para label/error/helper:
  * <FormGroup label="País" error={errors.pais?.message}>
  *   <Select hasError={!!errors.pais} options={paises} {...field} />
  * </FormGroup>
  *
- * @param {Array} options - Array de {value, label} para las opciones
- * @param {string} placeholder - Texto de placeholder
- * @param {boolean} hasError - Si tiene error (para styling del borde)
- * @param {React.ReactNode} children - Opciones como children (alternativa a options)
- * @param {string} className - Clases adicionales
+ * @component
+ * @example
+ * <Select
+ *   options={[{ value: '1', label: 'Opción 1' }]}
+ *   hasError={!!errors.campo}
+ *   {...register('campo')}
+ * />
+ *
+ * @param {Object} props
+ * @param {Array<{value: string, label: string}>} [props.options=[]] - Opciones del select
+ * @param {string} [props.placeholder='Selecciona una opción'] - Texto de placeholder
+ * @param {boolean} [props.hasError=false] - Si tiene error (borde rojo)
+ * @param {boolean} [props.required=false] - Si es campo requerido
+ * @param {boolean} [props.hasHelper=false] - Si tiene texto de ayuda asociado
+ * @param {React.ReactNode} [props.children] - Opciones como children (alternativa a options)
+ * @param {string} [props.id] - ID del elemento
+ * @param {string} [props.className] - Clases adicionales
+ * @param {React.Ref} ref - Forward ref
+ * @returns {React.ReactElement}
  */
 const Select = memo(forwardRef(function Select(
     {
       options = [],
       placeholder = 'Selecciona una opción',
       hasError = false,
+      required = false,
+      hasHelper = false,
       children,
       className,
+      id,
       ...props
     },
     ref
   ) {
-    const baseStyles = cn(
-      'w-full px-4 h-10 border rounded-lg transition-colors',
-      'focus:outline-none focus:ring-2 focus:ring-offset-0',
-      'disabled:opacity-50 disabled:cursor-not-allowed',
-      'appearance-none',
-      'bg-white dark:bg-gray-800',
-      'text-gray-900 dark:text-gray-100'
-    );
-
-    const stateStyles = hasError
-      ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
-      : 'border-gray-300 dark:border-gray-600 focus:border-primary-500 focus:ring-primary-500';
-
     return (
       <div className="relative">
         <select
           ref={ref}
+          id={id}
           aria-invalid={hasError || undefined}
-          className={cn(baseStyles, stateStyles, className)}
+          aria-required={required || undefined}
+          aria-describedby={id ? getAriaDescribedBy(id, { hasError, hasHelper }) : undefined}
+          className={cn(getSelectStyles(hasError), className)}
           {...props}
         >
           {children ? (
@@ -62,8 +70,8 @@ const Select = memo(forwardRef(function Select(
         </select>
 
         {/* Flecha personalizada */}
-        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-700 dark:text-gray-300">
-          <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+        <div className={SELECT_ARROW.container} aria-hidden="true">
+          <svg className={SELECT_ARROW.icon} viewBox="0 0 20 20" fill="currentColor">
             <path
               fillRule="evenodd"
               d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"

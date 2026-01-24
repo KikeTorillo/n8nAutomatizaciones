@@ -14,11 +14,16 @@ export const QUERY_KEYS = {
   // Planes
   PLANES: 'suscripciones-negocio-planes',
   PLAN: 'suscripciones-negocio-plan',
+  PLANES_PUBLICOS: 'suscripciones-negocio-planes-publicos',
 
   // Suscripciones
   SUSCRIPCIONES: 'suscripciones-negocio-suscripciones',
   SUSCRIPCION: 'suscripciones-negocio-suscripcion',
   SUSCRIPCION_HISTORIAL: 'suscripciones-negocio-suscripcion-historial',
+  MI_SUSCRIPCION: 'suscripciones-negocio-mi-suscripcion',
+
+  // Customer Billing (Tokens de checkout)
+  CHECKOUT_TOKENS: 'suscripciones-negocio-checkout-tokens',
 
   // Cupones
   CUPONES: 'suscripciones-negocio-cupones',
@@ -145,4 +150,32 @@ export const METODO_PAGO_LABELS = {
   [METODOS_PAGO.TRANSFERENCIA]: 'Transferencia',
   [METODOS_PAGO.EFECTIVO]: 'Efectivo',
   [METODOS_PAGO.OTRO]: 'Otro',
+};
+
+// ====================================================================
+// CUSTOMER BILLING (Tokens de checkout)
+// ====================================================================
+
+// Estados de token de checkout
+export const ESTADOS_TOKEN = {
+  PENDIENTE: 'pendiente',
+  USADO: 'usado',
+  EXPIRADO: 'expirado',
+  CANCELADO: 'cancelado',
+};
+
+// Labels para estados de token
+export const ESTADO_TOKEN_LABELS = {
+  [ESTADOS_TOKEN.PENDIENTE]: 'Pendiente',
+  [ESTADOS_TOKEN.USADO]: 'Usado',
+  [ESTADOS_TOKEN.EXPIRADO]: 'Expirado',
+  [ESTADOS_TOKEN.CANCELADO]: 'Cancelado',
+};
+
+// Colores para estados de token
+export const ESTADO_TOKEN_COLORS = {
+  [ESTADOS_TOKEN.PENDIENTE]: 'blue',
+  [ESTADOS_TOKEN.USADO]: 'green',
+  [ESTADOS_TOKEN.EXPIRADO]: 'gray',
+  [ESTADOS_TOKEN.CANCELADO]: 'red',
 };

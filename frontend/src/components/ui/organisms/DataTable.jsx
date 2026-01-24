@@ -1,26 +1,18 @@
 import { useMemo, memo, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import { SkeletonTable } from '../molecules/SkeletonTable';
-import EmptyState from '../molecules/EmptyState';
-import Pagination from '../molecules/Pagination';
+import { EmptyState } from '../molecules/EmptyState';
+import { Pagination } from '../molecules/Pagination';
 import { Inbox } from 'lucide-react';
-
-// Constantes externas para evitar recreación en cada render
-const WIDTH_MAP = { sm: 'sm', md: 'md', lg: 'lg', xl: 'xl', auto: 'md' };
-
-const ALIGN_CLASSES = {
-  left: 'text-left',
-  center: 'text-center',
-  right: 'text-right',
-};
-
-const WIDTH_CLASSES = {
-  sm: 'w-20',
-  md: 'w-32',
-  lg: 'w-48',
-  xl: 'w-64',
-  auto: '',
-};
+import {
+  TABLE_ALIGN_CLASSES,
+  TABLE_WIDTH_CLASSES,
+  TABLE_WIDTH_MAP,
+  TABLE_BASE_STYLES,
+  TABLE_HEADER_CELL,
+  TABLE_BODY_CELL,
+  TABLE_ROW_STYLES,
+} from '@/lib/uiConstants';
 
 /**
  * DataTable - Tabla de datos genérica reutilizable
@@ -105,7 +97,7 @@ export const DataTable = memo(function DataTable({
 }) {
   // Calcular anchos de columna para skeleton
   const columnWidths = useMemo(() => {
-    return columns.map(col => WIDTH_MAP[col.width] || 'md');
+    return columns.map(col => TABLE_WIDTH_MAP[col.width] || 'md');
   }, [columns]);
 
   // Handler memoizado para click en fila (DEBE estar antes de returns condicionales)
@@ -145,20 +137,21 @@ export const DataTable = memo(function DataTable({
   return (
     <div className={cn('space-y-4', className)}>
       {/* Tabla */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className={cn('min-w-full divide-y divide-gray-200 dark:divide-gray-700', tableClassName)}>
+      <div className={TABLE_BASE_STYLES.container}>
+        <div className={TABLE_BASE_STYLES.wrapper}>
+          <table role="table" className={cn(TABLE_BASE_STYLES.table, tableClassName)}>
             {/* Header */}
-            <thead className="bg-gray-50 dark:bg-gray-900/50">
-              <tr>
+            <thead role="rowgroup" className={TABLE_BASE_STYLES.thead}>
+              <tr role="row">
                 {columns.map((column, index) => (
                   <th
                     key={column.key || index}
+                    scope="col"
+                    role="columnheader"
                     className={cn(
-                      'px-4 sm:px-6 py-3',
-                      'text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider',
-                      ALIGN_CLASSES[column.align] || 'text-left',
-                      WIDTH_CLASSES[column.width],
+                      TABLE_HEADER_CELL,
+                      TABLE_ALIGN_CLASSES[column.align] || 'text-left',
+                      TABLE_WIDTH_CLASSES[column.width],
                       column.hideOnMobile && 'hidden md:table-cell',
                       column.headerClassName
                     )}
@@ -170,7 +163,7 @@ export const DataTable = memo(function DataTable({
             </thead>
 
             {/* Body */}
-            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+            <tbody role="rowgroup" className={TABLE_BASE_STYLES.tbody}>
               {data.map((row, rowIndex) => (
                 <DataTableRow
                   key={row[keyField] || rowIndex}
@@ -272,12 +265,13 @@ const DataTableRow = memo(function DataTableRow({
 
   return (
     <tr
+      role="row"
       onClick={onRowClick ? handleClick : undefined}
       className={cn(
-        'transition-colors',
-        hoverable && 'hover:bg-gray-50 dark:hover:bg-gray-700/50',
-        onRowClick && 'cursor-pointer',
-        striped && rowIndex % 2 === 1 && 'bg-gray-50/50 dark:bg-gray-800/50'
+        TABLE_ROW_STYLES.base,
+        hoverable && TABLE_ROW_STYLES.hoverable,
+        onRowClick && TABLE_ROW_STYLES.clickable,
+        striped && rowIndex % 2 === 1 && TABLE_ROW_STYLES.striped
       )}
     >
       {columns.map((column, colIndex) => {
@@ -289,10 +283,10 @@ const DataTableRow = memo(function DataTableRow({
         return (
           <td
             key={column.key || colIndex}
+            role="cell"
             className={cn(
-              'px-4 sm:px-6 py-4',
-              'text-sm text-gray-900 dark:text-gray-100',
-              ALIGN_CLASSES[column.align] || 'text-left',
+              TABLE_BODY_CELL,
+              TABLE_ALIGN_CLASSES[column.align] || 'text-left',
               column.hideOnMobile && 'hidden md:table-cell',
               column.className
             )}
@@ -304,5 +298,3 @@ const DataTableRow = memo(function DataTableRow({
     </tr>
   );
 });
-
-export default DataTable;

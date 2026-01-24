@@ -87,6 +87,21 @@ export function useHistorialSuscripcion(suscripcionId) {
   });
 }
 
+/**
+ * Hook para obtener mi suscripción activa (página MiPlan)
+ * Busca la suscripción activa vinculada a la organización del usuario
+ */
+export function useMiSuscripcion() {
+  return useQuery({
+    queryKey: [QUERY_KEYS.MI_SUSCRIPCION],
+    queryFn: async () => {
+      const response = await suscripcionesNegocioApi.obtenerMiSuscripcion();
+      return response.data?.data;
+    },
+    staleTime: STALE_TIMES.DYNAMIC,
+  });
+}
+
 // ==================== MUTATION HOOKS ====================
 
 /**
@@ -183,6 +198,32 @@ export function useCambiarPlanSuscripcion() {
       success('Plan cambiado exitosamente');
     },
     onError: createCRUDErrorHandler('update', 'Suscripcion'),
+  });
+}
+
+/**
+ * Hook para cambiar MI plan de suscripción (para usuarios, no admins)
+ * Usa el endpoint /mi-suscripcion/cambiar-plan que no requiere permisos de admin
+ */
+export function useCambiarMiPlan() {
+  const queryClient = useQueryClient();
+  const { success } = useToast();
+
+  return useMutation({
+    mutationFn: async ({ nuevo_plan_id, periodo, cambio_inmediato }) => {
+      const response = await suscripcionesNegocioApi.cambiarMiPlan({
+        nuevo_plan_id,
+        periodo,
+        cambio_inmediato,
+      });
+      return response.data?.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.MI_SUSCRIPCION] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.SUSCRIPCIONES] });
+      success('Plan cambiado exitosamente');
+    },
+    onError: createCRUDErrorHandler('update', 'Plan'),
   });
 }
 

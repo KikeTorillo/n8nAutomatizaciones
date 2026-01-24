@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Drawer as VaulDrawer } from 'vaul';
 
 /**
@@ -11,7 +12,7 @@ import { Drawer as VaulDrawer } from 'vaul';
  * @param {ReactNode} children - Contenido del drawer
  * @param {string} snapPoints - Puntos de snap (default: ['85%'])
  */
-function Drawer({
+const Drawer = memo(function Drawer({
   isOpen,
   onClose,
   title,
@@ -65,7 +66,9 @@ function Drawer({
       </VaulDrawer.Portal>
     </VaulDrawer.Root>
   );
-}
+});
+
+Drawer.displayName = 'Drawer';
 
 // Exportar también los subcomponentes de Vaul por si se necesita más control
 Drawer.Root = VaulDrawer.Root;
@@ -77,4 +80,4 @@ Drawer.Title = VaulDrawer.Title;
 Drawer.Description = VaulDrawer.Description;
 Drawer.Close = VaulDrawer.Close;
 
-export default Drawer;
+export { Drawer };

@@ -39,9 +39,9 @@ const cuponesHooks = createCRUDHooks({
   responseKey: 'cupones',
   usePreviousData: true,
   transformList: (data, pagination) => ({
-    items: data?.cupones || data || [],
-    total: data?.total || pagination?.total || 0,
-    paginacion: pagination,
+    items: data?.items || data?.cupones || [],
+    total: data?.paginacion?.total || pagination?.total || 0,
+    paginacion: data?.paginacion || pagination,
   }),
   errorMessages: {
     create: { 409: 'Ya existe un cupón con ese código' },

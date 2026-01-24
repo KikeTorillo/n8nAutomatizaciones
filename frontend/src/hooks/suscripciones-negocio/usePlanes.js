@@ -84,6 +84,23 @@ export function useSuscripcionesActivasPlan(planId) {
   });
 }
 
+/**
+ * Hook para listar planes públicos de Nexo Team
+ * Usado para la página de cambio de plan
+ */
+export function usePlanesPublicos() {
+  return useQuery({
+    queryKey: [QUERY_KEYS.PLANES_PUBLICOS],
+    queryFn: async () => {
+      const response = await suscripcionesNegocioApi.listarPlanesPublicos();
+      // El API retorna data como array directamente, no data.planes
+      const data = response.data?.data;
+      return Array.isArray(data) ? data : data?.planes || [];
+    },
+    staleTime: STALE_TIMES.SEMI_STATIC,
+  });
+}
+
 export default {
   usePlanes,
   usePlan,
@@ -92,4 +109,5 @@ export default {
   useEliminarPlan,
   usePlanesActivos,
   useSuscripcionesActivasPlan,
+  usePlanesPublicos,
 };

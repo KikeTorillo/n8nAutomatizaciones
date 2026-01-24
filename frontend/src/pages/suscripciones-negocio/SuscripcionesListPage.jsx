@@ -198,6 +198,7 @@ function SuscripcionesListPage() {
         onRowClick={(row) => navigate(`/suscripciones-negocio/suscripciones/${row.id}`)}
         pagination={{
           page,
+          limit: queryParams.limit,
           totalPages,
           total,
           hasNext: page < totalPages,

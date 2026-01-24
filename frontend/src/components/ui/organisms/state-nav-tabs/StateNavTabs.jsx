@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { memo, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { TAB_STYLES, COUNT_STYLES } from './constants';
 import TabDropdown from './TabDropdown';
@@ -6,23 +6,32 @@ import MobileTabSelector from './MobileTabSelector';
 
 /**
  * StateNavTabs - Componente principal de navegación por tabs
- * Fragmentado en Ene 2026 para mejor mantenibilidad
  *
+ * Fragmentado en Ene 2026 para mejor mantenibilidad.
  * Soporta dos modos:
  * 1. Simple: tabs horizontales + dropdown mobile
  * 2. Agrupado: tabs con dropdowns para grupos + dropdown mobile
  *
+ * @component
+ * @example
+ * <StateNavTabs
+ *   tabs={[{ id: 'all', label: 'Todos' }, { id: 'active', label: 'Activos', count: 5 }]}
+ *   activeTab="all"
+ *   onTabChange={(tabId) => setActiveTab(tabId)}
+ * />
+ *
  * @param {Object} props
- * @param {Array} props.tabs - Array de tabs { id, label, icon?, count?, disabled? }
+ * @param {Array<{id: string, label: string, icon?: React.ComponentType, count?: number, disabled?: boolean}>} props.tabs - Array de tabs
  * @param {string} props.activeTab - ID del tab activo
- * @param {Function} props.onTabChange - Callback al cambiar tab (tabId) => void
- * @param {Array} [props.groups] - Grupos opcionales para desktop { icon, label, tabIds: string[] }
- * @param {Object} [props.iconMap] - Mapeo de tabId => Icon component (alternativa a icon en tabs)
- * @param {boolean} [props.sticky] - Si el nav debe ser sticky (default: true)
- * @param {string} [props.stickyTop] - Posición top para sticky (default: 'top-0')
+ * @param {function} props.onTabChange - Callback al cambiar tab (tabId) => void
+ * @param {Array<{icon?: React.ComponentType, label: string, tabIds: string[]}>} [props.groups] - Grupos para desktop
+ * @param {Object<string, React.ComponentType>} [props.iconMap] - Mapeo de tabId => Icon component
+ * @param {boolean} [props.sticky=true] - Si el nav debe ser sticky
+ * @param {string} [props.stickyTop='top-0'] - Posición top para sticky
  * @param {string} [props.className] - Clases adicionales
+ * @returns {React.ReactElement}
  */
-function StateNavTabs({
+const StateNavTabs = memo(function StateNavTabs({
   tabs,
   activeTab,
   onTabChange,
@@ -137,6 +146,8 @@ function StateNavTabs({
       </div>
     </div>
   );
-}
+});
+
+StateNavTabs.displayName = 'StateNavTabs';
 
 export default StateNavTabs;

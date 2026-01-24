@@ -1,35 +1,44 @@
 import { forwardRef, memo } from 'react';
 import { cn } from '@/lib/utils';
+import { INPUT_SIZE_CLASSES, INPUT_AFFIX, getInputPaddingStyles, getAriaDescribedBy } from '@/lib/uiConstants';
 
 /**
- * Componente Input puro - Compatible con React Hook Form
+ * Input - Componente input puro accesible compatible con React Hook Form
  *
  * DEBE usarse con FormGroup para label/error/helper:
  * <FormGroup label="Nombre" error={errors.nombre?.message}>
  *   <Input hasError={!!errors.nombre} {...field} />
  * </FormGroup>
  *
- * @param {string} type - Tipo de input (text, email, number, etc.)
- * @param {string} size - Tamaño del input ('sm', 'md', 'lg')
- * @param {boolean} hasError - Si tiene error (para styling del borde)
- * @param {string} prefix - Texto o símbolo antes del input (ej: "$")
- * @param {string} suffix - Texto o símbolo después del input (ej: "%")
- * @param {string} className - Clases adicionales
+ * @component
+ * @example
+ * <Input type="email" hasError={!!errors.email} {...register('email')} />
+ * <Input prefix="$" suffix="MXN" type="number" {...register('precio')} />
+ *
+ * @param {Object} props
+ * @param {string} [props.type='text'] - Tipo de input (text, email, number, etc.)
+ * @param {'sm'|'md'|'lg'} [props.size='md'] - Tamaño del input
+ * @param {boolean} [props.hasError=false] - Si tiene error (borde rojo)
+ * @param {boolean} [props.required=false] - Si es campo requerido
+ * @param {boolean} [props.hasHelper=false] - Si tiene texto de ayuda asociado
+ * @param {string|React.ReactNode} [props.prefix] - Texto o símbolo antes del input (ej: "$")
+ * @param {string|React.ReactNode} [props.suffix] - Texto o símbolo después del input (ej: "%")
+ * @param {string} [props.id] - ID del elemento
+ * @param {string} [props.className] - Clases adicionales
+ * @param {React.Ref} ref - Forward ref
+ * @returns {React.ReactElement}
  */
-const SIZE_CLASSES = {
-  sm: 'h-9 text-sm',
-  md: 'h-10 text-base',
-  lg: 'h-12 text-lg font-semibold',
-};
-
 const Input = memo(forwardRef(function Input(
     {
       type = 'text',
       size = 'md',
       hasError = false,
+      required = false,
+      hasHelper = false,
       prefix,
       suffix,
       className,
+      id,
       ...props
     },
     ref
@@ -41,41 +50,48 @@ const Input = memo(forwardRef(function Input(
       'bg-white dark:bg-gray-800',
       'text-gray-900 dark:text-gray-100',
       'placeholder:text-gray-400 dark:placeholder:text-gray-500',
-      SIZE_CLASSES[size]
+      INPUT_SIZE_CLASSES[size]
     );
 
     const stateStyles = hasError
       ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
       : 'border-gray-300 dark:border-gray-600 focus:border-primary-500 focus:ring-primary-500';
 
-    const paddingStyles = prefix && suffix
-      ? 'px-8'
-      : prefix
-        ? 'pl-8 pr-4'
-        : suffix
-          ? 'pl-4 pr-8'
-          : 'px-4';
+    const paddingStyles = getInputPaddingStyles(!!prefix, !!suffix);
+
+    const ariaProps = {
+      'aria-invalid': hasError || undefined,
+      'aria-required': required || undefined,
+      'aria-describedby': id ? getAriaDescribedBy(id, { hasError, hasHelper }) : undefined,
+    };
 
     if (prefix || suffix) {
       return (
         <div className="relative">
           {prefix && (
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <span className="text-gray-500 dark:text-gray-400">{prefix}</span>
+            <div
+              className={cn(INPUT_AFFIX.container, INPUT_AFFIX.left)}
+              aria-hidden="true"
+            >
+              <span className={INPUT_AFFIX.text}>{prefix}</span>
             </div>
           )}
 
           <input
             ref={ref}
+            id={id}
             type={type}
-            aria-invalid={hasError || undefined}
             className={cn(baseStyles, stateStyles, paddingStyles, className)}
+            {...ariaProps}
             {...props}
           />
 
           {suffix && (
-            <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-              <span className="text-gray-500 dark:text-gray-400">{suffix}</span>
+            <div
+              className={cn(INPUT_AFFIX.container, INPUT_AFFIX.right)}
+              aria-hidden="true"
+            >
+              <span className={INPUT_AFFIX.text}>{suffix}</span>
             </div>
           )}
         </div>
@@ -85,9 +101,10 @@ const Input = memo(forwardRef(function Input(
     return (
       <input
         ref={ref}
+        id={id}
         type={type}
-        aria-invalid={hasError || undefined}
         className={cn(baseStyles, stateStyles, paddingStyles, className)}
+        {...ariaProps}
         {...props}
       />
     );
@@ -96,4 +113,4 @@ const Input = memo(forwardRef(function Input(
 
 Input.displayName = 'Input';
 
-export default Input;
+export { Input };

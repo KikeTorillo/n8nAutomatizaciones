@@ -10,11 +10,13 @@ const SuscripcionesModel = require('./suscripciones.model');
 const PagosModel = require('./pagos.model');
 const CuponesModel = require('./cupones.model');
 const MetricasModel = require('./metricas.model');
+const CheckoutTokensModel = require('./checkout-tokens.model');
 
 module.exports = {
     PlanesModel,
     SuscripcionesModel,
     PagosModel,
     CuponesModel,
-    MetricasModel
+    MetricasModel,
+    CheckoutTokensModel
 };

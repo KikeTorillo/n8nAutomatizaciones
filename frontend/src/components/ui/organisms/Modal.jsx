@@ -125,4 +125,4 @@ const Modal = memo(function Modal({
 
 Modal.displayName = 'Modal';
 
-export default Modal;
+export { Modal };

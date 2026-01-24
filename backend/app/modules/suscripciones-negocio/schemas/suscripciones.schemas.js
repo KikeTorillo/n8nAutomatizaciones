@@ -128,6 +128,77 @@ const listarSuscripciones = Joi.object({
 });
 
 // ====================================================================
+// SCHEMAS: CUSTOMER BILLING (Admin crea suscripción para cliente)
+// ====================================================================
+
+/**
+ * Crear suscripción para un cliente (Customer Billing)
+ * Genera un token/link de checkout para que el cliente pague
+ */
+const crearParaCliente = Joi.object({
+    cliente_id: Joi.number()
+        .integer()
+        .positive()
+        .required()
+        .messages({
+            'number.base': 'El ID del cliente debe ser un número',
+            'any.required': 'El cliente es requerido'
+        }),
+
+    plan_id: Joi.number()
+        .integer()
+        .positive()
+        .required()
+        .messages({
+            'number.base': 'El ID del plan debe ser un número',
+            'any.required': 'El plan es requerido'
+        }),
+
+    periodo: Joi.string()
+        .valid('mensual', 'trimestral', 'semestral', 'anual')
+        .default('mensual')
+        .messages({
+            'any.only': 'El período debe ser: mensual, trimestral, semestral o anual'
+        }),
+
+    cupon_codigo: Joi.string()
+        .trim()
+        .uppercase()
+        .max(50)
+        .optional()
+        .allow(null, '')
+        .messages({
+            'string.max': 'El código del cupón no puede exceder 50 caracteres'
+        }),
+
+    notificar_cliente: Joi.boolean()
+        .default(true)
+        .messages({
+            'boolean.base': 'notificar_cliente debe ser booleano'
+        }),
+
+    dias_expiracion: Joi.number()
+        .integer()
+        .min(1)
+        .max(30)
+        .default(7)
+        .messages({
+            'number.min': 'El link debe ser válido por al menos 1 día',
+            'number.max': 'El link no puede ser válido por más de 30 días'
+        })
+});
+
+/**
+ * Listar tokens de checkout generados
+ */
+const listarCheckoutTokens = Joi.object({
+    page: Joi.number().integer().min(1).default(1),
+    limit: Joi.number().integer().min(1).max(100).default(20),
+    estado: Joi.string().valid('pendiente', 'usado', 'expirado', 'cancelado'),
+    cliente_id: Joi.number().integer().positive()
+});
+
+// ====================================================================
 // SCHEMAS: PAGOS
 // ====================================================================
 
@@ -279,6 +350,10 @@ module.exports = {
     pausarSuscripcion,
     actualizarProximoCobro,
     listarSuscripciones,
+
+    // Customer Billing (Admin → Cliente)
+    crearParaCliente,
+    listarCheckoutTokens,
 
     // Pagos
     crearPago,

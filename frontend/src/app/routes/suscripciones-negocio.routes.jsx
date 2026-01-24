@@ -15,8 +15,16 @@ const CuponesPage = lazy(() => import('@/pages/suscripciones-negocio/CuponesPage
 const PagosPage = lazy(() => import('@/pages/suscripciones-negocio/PagosPage'));
 const MetricasPage = lazy(() => import('@/pages/suscripciones-negocio/MetricasPage'));
 const ConectoresPage = lazy(() => import('@/pages/suscripciones-negocio/ConectoresPage'));
+const MiPlanPage = lazy(() => import('@/pages/suscripciones-negocio/MiPlanPage'));
+const ClienteSuscripcionesPage = lazy(() => import('@/pages/suscripciones-negocio/ClienteSuscripcionesPage'));
 
 export const suscripcionesNegocioRoutes = [
+  // Mi Plan - Página para usuarios (sin requerir módulo ni rol admin)
+  protectedRoute('mi-plan', MiPlanPage, {
+    requiredRole: ROLES.ALL_AUTHENTICATED,
+    // Sin requiredModule - cualquier usuario autenticado puede ver su plan
+  }),
+
   // Dashboard principal
   protectedRoute('suscripciones-negocio', SuscripcionesNegocioPage, {
     requiredRole: ROLES.ADMIN_ONLY,
@@ -61,6 +69,12 @@ export const suscripcionesNegocioRoutes = [
 
   // Conectores de pago
   protectedRoute('suscripciones-negocio/conectores', ConectoresPage, {
+    requiredRole: ROLES.ADMIN_ONLY,
+    requiredModule: 'suscripciones-negocio',
+  }),
+
+  // Customer Billing - Suscripciones de clientes propios
+  protectedRoute('suscripciones-negocio/mis-clientes', ClienteSuscripcionesPage, {
     requiredRole: ROLES.ADMIN_ONLY,
     requiredModule: 'suscripciones-negocio',
   }),

@@ -49,6 +49,7 @@ import {
   SuscripcionGeneralTab,
   SuscripcionPagosTab,
   SuscripcionHistorialTab,
+  CambiarPlanDrawer,
 } from '@/components/suscripciones-negocio';
 import { useToast } from '@/hooks/utils';
 import { formatCurrency, formatDate } from '@/lib/utils';
@@ -65,7 +66,7 @@ const TABS = [
 /**
  * Header de la suscripción con información resumida
  */
-function SuscripcionHeader({ suscripcion, onPausar, onReactivar, onCancelar, isPending }) {
+function SuscripcionHeader({ suscripcion, onPausar, onReactivar, onCancelar, onCambiarPlan, isPending }) {
   const isPausable = suscripcion.estado === ESTADOS_SUSCRIPCION.ACTIVA;
   const isReactivable = suscripcion.estado === ESTADOS_SUSCRIPCION.PAUSADA;
   const isCancelable =
@@ -164,7 +165,7 @@ function SuscripcionHeader({ suscripcion, onPausar, onReactivar, onCancelar, isP
                   {
                     label: 'Cambiar Plan',
                     icon: Package,
-                    onClick: () => {}, // TODO: Implementar
+                    onClick: onCambiarPlan,
                   },
                   {
                     label: 'Cancelar Suscripción',
@@ -197,6 +198,7 @@ function SuscripcionDetailPage() {
 
   // State
   const [confirmAction, setConfirmAction] = useState(null);
+  const [showCambiarPlan, setShowCambiarPlan] = useState(false);
 
   // Queries
   const { data: suscripcion, isLoading, refetch } = useSuscripcion(id);
@@ -261,6 +263,12 @@ function SuscripcionDetailPage() {
     });
   };
 
+  const handleCambiarPlanSuccess = () => {
+    setShowCambiarPlan(false);
+    refetch();
+    success('Plan cambiado exitosamente');
+  };
+
   // Loading state
   if (isLoading) {
     return (
@@ -305,6 +313,7 @@ function SuscripcionDetailPage() {
         onPausar={handlePausar}
         onReactivar={handleReactivar}
         onCancelar={handleCancelar}
+        onCambiarPlan={() => setShowCambiarPlan(true)}
         isPending={isPending}
       />
 
@@ -319,6 +328,14 @@ function SuscripcionDetailPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {renderTabContent()}
       </div>
+
+      {/* Cambiar Plan Drawer */}
+      <CambiarPlanDrawer
+        isOpen={showCambiarPlan}
+        onClose={() => setShowCambiarPlan(false)}
+        suscripcion={suscripcion}
+        onSuccess={handleCambiarPlanSuccess}
+      />
 
       {/* Confirm Dialog */}
       {confirmAction && (

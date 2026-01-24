@@ -205,6 +205,69 @@ class PagosModel {
     }
 
     /**
+     * Crear registro de pago usando bypass RLS
+     * Usado por checkout público donde no hay contexto de usuario autenticado
+     *
+     * @param {Object} pagoData - Datos del pago
+     * @param {number} organizacionId - ID de la organización
+     * @returns {Promise<Object>} - Pago creado
+     */
+    static async crearBypass(pagoData, organizacionId) {
+        return await RLSContextManager.withBypass(async (db) => {
+            const {
+                suscripcion_id,
+                monto,
+                moneda = 'MXN',
+                estado = 'pendiente',
+                gateway,
+                transaction_id,
+                payment_intent_id,
+                charge_id,
+                metodo_pago,
+                ultimos_digitos,
+                fecha_inicio_periodo,
+                fecha_fin_periodo,
+                metadata = {}
+            } = pagoData;
+
+            const query = `
+                INSERT INTO pagos_suscripcion (
+                    organizacion_id, suscripcion_id,
+                    monto, moneda, estado,
+                    gateway, transaction_id, payment_intent_id, charge_id,
+                    metodo_pago, ultimos_digitos,
+                    fecha_inicio_periodo, fecha_fin_periodo,
+                    metadata
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+                RETURNING *
+            `;
+
+            const values = [
+                organizacionId,
+                suscripcion_id,
+                monto,
+                moneda,
+                estado,
+                gateway,
+                transaction_id,
+                payment_intent_id,
+                charge_id,
+                metodo_pago,
+                ultimos_digitos,
+                fecha_inicio_periodo,
+                fecha_fin_periodo,
+                JSON.stringify(metadata)
+            ];
+
+            const result = await db.query(query, values);
+
+            logger.info(`[Bypass] Pago registrado: ID ${result.rows[0].id} - Monto: ${monto} ${moneda}`);
+
+            return result.rows[0];
+        });
+    }
+
+    /**
      * Actualizar estado del pago
      *
      * @param {number} id - ID del pago

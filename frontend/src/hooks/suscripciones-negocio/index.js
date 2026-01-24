@@ -28,6 +28,7 @@ export {
   useEliminarPlan,
   usePlanesActivos,
   useSuscripcionesActivasPlan,
+  usePlanesPublicos,
 } from './usePlanes';
 
 // Suscripciones
@@ -36,10 +37,12 @@ export {
   useSuscripcion,
   useSuscripcionesCliente,
   useHistorialSuscripcion,
+  useMiSuscripcion,
   useCrearSuscripcion,
   useActualizarSuscripcion,
   useCambiarEstadoSuscripcion,
   useCambiarPlanSuscripcion,
+  useCambiarMiPlan,
   useCancelarSuscripcion,
   usePausarSuscripcion,
   useReactivarSuscripcion,
@@ -85,3 +88,12 @@ export {
   useEvolucionChurn,
   useEvolucionSuscriptores,
 } from './useMetricas';
+
+// Customer Billing (Suscripciones de Clientes)
+export {
+  useCheckoutTokens,
+  useCrearSuscripcionCliente,
+  useCancelarCheckoutToken,
+  useCheckoutPublico,
+  useIniciarPagoPublico,
+} from './useClienteSuscripciones';

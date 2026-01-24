@@ -27,6 +27,9 @@ const CustomerDisplayPage = lazy(() => import('@/pages/pos/CustomerDisplayPage')
 const PlanesPublicPage = lazy(() => import('@/pages/planes/PlanesPublicPage'));
 const PaymentCallbackPage = lazy(() => import('@/pages/payment/PaymentCallbackPage'));
 
+// Checkout Público (Customer Billing)
+const CheckoutPublicoPage = lazy(() => import('@/pages/checkout/CheckoutPublicoPage'));
+
 export const publicRoutes = [
   // Landing page (index)
   indexRoute(LandingPage),
@@ -51,6 +54,9 @@ export const publicRoutes = [
 
   // Callback de pago (MercadoPago)
   publicRoute('payment/callback', PaymentCallbackPage),
+
+  // Checkout público para clientes de organizaciones (Customer Billing)
+  publicRoute('checkout/:token', CheckoutPublicoPage),
 
   // Agendar público (marketplace)
   publicRoute('agendar/:slug', AgendarPublicoPage),

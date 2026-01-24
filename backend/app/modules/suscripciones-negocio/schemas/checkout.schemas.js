@@ -12,6 +12,10 @@ const { PERIODOS_FACTURACION } = require('../../../config/constants');
 
 /**
  * Schema para iniciar checkout
+ *
+ * Soporta dos modos de billing:
+ * - Platform Billing (default): Nexo Team vende a organizaciones
+ * - Customer Billing: Organizaciones venden a sus clientes (es_venta_propia=true)
  */
 const iniciarCheckout = Joi.object({
     plan_id: Joi.number()
@@ -46,7 +50,38 @@ const iniciarCheckout = Joi.object({
         email: Joi.string().email().lowercase().required(),
         telefono: Joi.string().trim().max(20).optional(),
         empresa: Joi.string().trim().max(200).optional()
-    }).optional()
+    }).optional(),
+
+    // ═══════════════════════════════════════════════════════════════
+    // CUSTOMER BILLING: Organizaciones venden a sus clientes
+    // ═══════════════════════════════════════════════════════════════
+
+    /**
+     * Si true, la org del usuario es el vendor (venta propia)
+     * Si false (default), usa Platform Billing (Nexo Team es vendor)
+     */
+    es_venta_propia: Joi.boolean()
+        .default(false)
+        .messages({
+            'boolean.base': 'es_venta_propia debe ser booleano'
+        }),
+
+    /**
+     * ID del cliente al que se vende la suscripción
+     * Requerido cuando es_venta_propia=true
+     */
+    cliente_id: Joi.number()
+        .integer()
+        .positive()
+        .when('es_venta_propia', {
+            is: true,
+            then: Joi.required(),
+            otherwise: Joi.optional()
+        })
+        .messages({
+            'number.base': 'El ID del cliente debe ser un número',
+            'any.required': 'cliente_id es requerido para Customer Billing (venta propia)'
+        })
 });
 
 /**

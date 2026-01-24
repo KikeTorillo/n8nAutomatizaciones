@@ -70,9 +70,9 @@ function TrialBanner({
         <Button
           variant={buttonVariant}
           size="sm"
-          onClick={() => navigate('/planes')}
+          onClick={() => navigate('/mi-plan')}
         >
-          Ver planes
+          Gestionar plan
           <ArrowRight className="w-4 h-4 ml-1" />
         </Button>
 

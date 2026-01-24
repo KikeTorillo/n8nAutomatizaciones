@@ -10,11 +10,37 @@
  * />
  */
 
-import React, { useEffect, useId } from 'react';
-import { X, Camera, CameraOff, RotateCcw, Volume2, VolumeX } from 'lucide-react';
+import { memo, useEffect, useId } from 'react';
+import { X, Camera, CameraOff, RotateCcw } from 'lucide-react';
 import { useBarcodeScanner, FORMAT_PRESETS } from '@/hooks/pos';
 
-const BarcodeScanner = ({
+/**
+ * BarcodeScanner - Componente para escaneo de códigos de barras y QR
+ *
+ * @component
+ * @example
+ * <BarcodeScanner
+ *   onScan={(code) => buscarProducto(code)}
+ *   onClose={() => setShowScanner(false)}
+ *   title="Escanear Producto"
+ *   formats="PRODUCTOS"
+ * />
+ *
+ * @param {Object} props
+ * @param {function} props.onScan - Callback al escanear código (code, data) => void
+ * @param {function} [props.onClose] - Callback al cerrar el scanner
+ * @param {function} [props.onError] - Callback en caso de error
+ * @param {string} [props.title='Escanear Código'] - Título del scanner
+ * @param {string} [props.subtitle] - Subtítulo descriptivo
+ * @param {string|Array} [props.formats='INVENTARIO'] - Preset o array de formatos
+ * @param {boolean} [props.showLastScan=true] - Mostrar último código escaneado
+ * @param {boolean} [props.showCameraSwitch=true] - Mostrar selector de cámara
+ * @param {boolean} [props.autoStart=true] - Iniciar automáticamente
+ * @param {string} [props.className] - Clases adicionales
+ * @param {boolean} [props.fullScreen=false] - Modo pantalla completa
+ * @returns {React.ReactElement}
+ */
+const BarcodeScanner = memo(function BarcodeScanner({
     onScan,
     onClose,
     onError,
@@ -26,7 +52,7 @@ const BarcodeScanner = ({
     autoStart = true,
     className = '',
     fullScreen = false
-}) => {
+}) {
     const scannerId = useId().replace(/:/g, '-');
     const elementId = `scanner-${scannerId}`;
 
@@ -205,7 +231,7 @@ const BarcodeScanner = ({
             </div>
         </div>
     );
-};
+});
 
 BarcodeScanner.displayName = 'BarcodeScanner';
 

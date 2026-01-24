@@ -1,4 +1,4 @@
-import apiClient from '../client';
+import apiClient, { publicApiClient } from '../client';
 
 /**
  * ====================================================================
@@ -8,6 +8,10 @@ import apiClient from '../client';
  * Permite a organizaciones vender planes de suscripción a sus clientes.
  *
  * Base URL: /api/v1/suscripciones-negocio
+ *
+ * Incluye:
+ * - APIs protegidas (requieren auth)
+ * - APIs públicas (checkout sin login)
  */
 
 const BASE_URL = '/suscripciones-negocio';
@@ -92,6 +96,22 @@ export const suscripcionesNegocioApi = {
    */
   listarSuscripciones: (params = {}) =>
     apiClient.get(`${BASE_URL}/suscripciones`, { params }),
+
+  /**
+   * Obtener mi suscripción activa (para página MiPlan)
+   * Busca la suscripción activa vinculada a la organización del usuario
+   * @returns {Promise<Object>} { suscripcion, dias_trial_restantes }
+   */
+  obtenerMiSuscripcion: () =>
+    apiClient.get(`${BASE_URL}/suscripciones/mi-suscripcion`),
+
+  /**
+   * Cambiar plan de mi propia suscripción
+   * @param {Object} data - { nuevo_plan_id, periodo, cambio_inmediato }
+   * @returns {Promise<Object>}
+   */
+  cambiarMiPlan: (data) =>
+    apiClient.patch(`${BASE_URL}/suscripciones/mi-suscripcion/cambiar-plan`, data),
 
   /**
    * Buscar suscripciones de un cliente específico
@@ -425,6 +445,34 @@ export const suscripcionesNegocioApi = {
     apiClient.get(`${BASE_URL}/metricas/evolucion-suscriptores`, { params }),
 
   // ========================================================================
+  // CUSTOMER BILLING - Admin crea suscripciones para clientes
+  // ========================================================================
+
+  /**
+   * Crear suscripción para un cliente (genera link de checkout)
+   * @param {Object} data - { cliente_id, plan_id, periodo?, cupon_codigo?, notificar_cliente?, dias_expiracion? }
+   * @returns {Promise<Object>} { checkout_url, token, expira_en, cliente, plan, precio }
+   */
+  crearSuscripcionParaCliente: (data) =>
+    apiClient.post(`${BASE_URL}/suscripciones/cliente`, data),
+
+  /**
+   * Listar tokens de checkout generados
+   * @param {Object} params - { page, limit, estado, cliente_id }
+   * @returns {Promise<Object>} { items, paginacion }
+   */
+  listarCheckoutTokens: (params = {}) =>
+    apiClient.get(`${BASE_URL}/suscripciones/tokens`, { params }),
+
+  /**
+   * Cancelar token de checkout
+   * @param {number} tokenId - ID del token
+   * @returns {Promise<Object>}
+   */
+  cancelarCheckoutToken: (tokenId) =>
+    apiClient.delete(`${BASE_URL}/suscripciones/tokens/${tokenId}`),
+
+  // ========================================================================
   // CHECKOUT
   // ========================================================================
 
@@ -452,4 +500,26 @@ export const suscripcionesNegocioApi = {
    */
   obtenerResultadoCheckout: (params = {}) =>
     apiClient.get(`${BASE_URL}/checkout/resultado`, { params }),
+
+  // ========================================================================
+  // CHECKOUT PÚBLICO (Sin autenticación)
+  // ========================================================================
+  // Estas APIs son accedidas por clientes que reciben un link de pago
+  // No requieren login - el token en la URL valida la operación
+
+  /**
+   * Obtener datos del checkout público (sin auth)
+   * @param {string} token - Token de checkout (64 caracteres)
+   * @returns {Promise<Object>} { plan, cliente, organizacion, periodo, precio, expira_en }
+   */
+  obtenerCheckoutPublico: (token) =>
+    publicApiClient.get(`${BASE_URL}/checkout/link/${token}`),
+
+  /**
+   * Iniciar pago desde checkout público (sin auth)
+   * @param {string} token - Token de checkout
+   * @returns {Promise<Object>} { init_point, suscripcion_id, pago_id }
+   */
+  iniciarPagoPublico: (token) =>
+    publicApiClient.post(`${BASE_URL}/checkout/link/${token}/pagar`),
 };

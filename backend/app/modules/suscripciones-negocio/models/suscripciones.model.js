@@ -399,12 +399,41 @@ class SuscripcionesModel {
             const suscripcion = await this.buscarPorId(id, organizacionId);
             ErrorHelper.throwIfNotFound(suscripcion, 'Suscripción');
 
+            // Validar que no sea el mismo plan
+            if (suscripcion.plan_id === nuevoPlanId) {
+                ErrorHelper.throwValidation('Ya tienes este plan activo');
+            }
+
             // Obtener nuevo plan
             const planQuery = `SELECT * FROM planes_suscripcion_org WHERE id = $1`;
             const planResult = await db.query(planQuery, [nuevoPlanId]);
             const nuevoPlan = planResult.rows[0];
 
             ErrorHelper.throwIfNotFound(nuevoPlan, 'Plan de suscripción');
+
+            // ═══════════════════════════════════════════════════════════════
+            // Cancelar suscripciones existentes del plan destino
+            // (para evitar conflicto con índice único)
+            // ═══════════════════════════════════════════════════════════════
+            const cancelarQuery = `
+                UPDATE suscripciones_org
+                SET estado = 'cancelada',
+                    fecha_fin = CURRENT_DATE,
+                    actualizado_en = NOW()
+                WHERE cliente_id = $1
+                  AND plan_id = $2
+                  AND id != $3
+                  AND estado IN ('trial', 'pendiente_pago', 'pausada')
+            `;
+            const cancelResult = await db.query(cancelarQuery, [
+                suscripcion.cliente_id,
+                nuevoPlanId,
+                id
+            ]);
+
+            if (cancelResult.rowCount > 0) {
+                logger.info(`Canceladas ${cancelResult.rowCount} suscripciones anteriores del plan ${nuevoPlanId} para cliente ${suscripcion.cliente_id}`);
+            }
 
             // Calcular nuevo precio según período actual
             let nuevoPrecio;
@@ -1031,6 +1060,311 @@ class SuscripcionesModel {
             }
 
             return result.rows[0];
+        });
+    }
+
+    /**
+     * Buscar suscripción activa de una organización (para página MiPlan)
+     *
+     * Busca la suscripción activa donde el cliente está vinculado a esta organización.
+     * Usado por usuarios para ver su plan actual.
+     *
+     * @param {number} organizacionId - ID de la organización del usuario
+     * @returns {Promise<Object|null>} - Suscripción activa con info del plan
+     */
+    static async buscarActivaPorOrganizacion(organizacionId) {
+        // Necesitamos bypass porque:
+        // - Los planes pertenecen a Nexo Team (org 1)
+        // - Los clientes pertenecen a Nexo Team pero tienen organizacion_vinculada_id = org del usuario
+        return await RLSContextManager.withBypass(async (db) => {
+            const query = `
+                SELECT
+                    s.id, s.plan_id, s.cliente_id,
+                    s.periodo, s.estado,
+                    s.fecha_inicio, s.fecha_proximo_cobro, s.fecha_fin,
+                    s.es_trial, s.fecha_fin_trial,
+                    s.gateway, s.precio_actual, s.moneda,
+                    s.meses_activo, s.total_pagado,
+                    s.descuento_porcentaje, s.descuento_monto,
+                    s.creado_en, s.actualizado_en,
+                    p.nombre as plan_nombre,
+                    p.codigo as plan_codigo,
+                    p.features as plan_features,
+                    p.limites as plan_limites,
+                    c.nombre as cliente_nombre,
+                    c.email as cliente_email
+                FROM suscripciones_org s
+                INNER JOIN planes_suscripcion_org p ON s.plan_id = p.id
+                LEFT JOIN clientes c ON s.cliente_id = c.id
+                WHERE c.organizacion_vinculada_id = $1
+                  AND s.estado IN ('activa', 'trial', 'pendiente_pago')
+                ORDER BY
+                    CASE s.estado
+                        WHEN 'activa' THEN 1
+                        WHEN 'trial' THEN 2
+                        WHEN 'pendiente_pago' THEN 3
+                    END,
+                    s.creado_en DESC
+                LIMIT 1
+            `;
+
+            const result = await db.query(query, [organizacionId]);
+            return result.rows[0] || null;
+        });
+    }
+
+    /**
+     * Crear suscripción pendiente con bypass RLS
+     * Usado por checkout público donde no hay contexto de usuario autenticado
+     *
+     * @param {Object} suscripcionData - Datos de la suscripción
+     * @param {number} organizacionId - ID de la organización vendor
+     * @returns {Promise<Object>} - Suscripción creada
+     */
+    static async crearPendienteBypass(suscripcionData, organizacionId) {
+        return await RLSContextManager.withBypass(async (db) => {
+            const {
+                plan_id,
+                cliente_id,
+                suscriptor_externo,
+                periodo = 'mensual',
+                precio_actual,
+                moneda = 'MXN',
+                gateway,
+                cupon_codigo
+            } = suscripcionData;
+
+            // Validar que tenga cliente_id O suscriptor_externo
+            if (!cliente_id && !suscriptor_externo) {
+                ErrorHelper.throwValidation('Debe proporcionar cliente_id o suscriptor_externo');
+            }
+
+            // Buscar cupón si se proporciona código
+            let cuponAplicadoId = null;
+            if (cupon_codigo) {
+                const cuponQuery = `
+                    SELECT id FROM cupones_suscripcion
+                    WHERE codigo = $1 AND organizacion_id = $2 AND activo = TRUE
+                `;
+                const cuponResult = await db.query(cuponQuery, [cupon_codigo, organizacionId]);
+                if (cuponResult.rows[0]) {
+                    cuponAplicadoId = cuponResult.rows[0].id;
+                }
+            }
+
+            const insertQuery = `
+                INSERT INTO suscripciones_org (
+                    organizacion_id, plan_id, cliente_id, suscriptor_externo,
+                    periodo, estado,
+                    fecha_inicio, fecha_proximo_cobro,
+                    es_trial, gateway,
+                    precio_actual, moneda,
+                    cupon_aplicado_id, auto_cobro
+                ) VALUES (
+                    $1, $2, $3, $4, $5, 'pendiente_pago', NOW(), NULL,
+                    FALSE, $6, $7, $8, $9, TRUE
+                )
+                RETURNING *
+            `;
+
+            const values = [
+                organizacionId,
+                plan_id,
+                cliente_id,
+                suscriptor_externo ? JSON.stringify(suscriptor_externo) : null,
+                periodo,
+                gateway,
+                precio_actual,
+                moneda,
+                cuponAplicadoId
+            ];
+
+            const result = await db.query(insertQuery, values);
+
+            logger.info(`[Bypass] Suscripción pendiente creada: ID ${result.rows[0].id} en org ${organizacionId}`);
+
+            return result.rows[0];
+        });
+    }
+
+    /**
+     * Actualizar IDs del gateway usando bypass RLS
+     * Usado por checkout público
+     *
+     * @param {number} id - ID de la suscripción
+     * @param {Object} gatewayIds - { subscription_id_gateway, customer_id_gateway, payment_method_id }
+     * @returns {Promise<Object>} - Suscripción actualizada
+     */
+    static async actualizarGatewayIdsBypass(id, gatewayIds) {
+        return await RLSContextManager.withBypass(async (db) => {
+            const {
+                subscription_id_gateway,
+                customer_id_gateway,
+                payment_method_id
+            } = gatewayIds;
+
+            const updates = [];
+            const values = [];
+            let paramCount = 1;
+
+            if (subscription_id_gateway !== undefined) {
+                updates.push(`subscription_id_gateway = $${paramCount++}`);
+                values.push(subscription_id_gateway);
+            }
+            if (customer_id_gateway !== undefined) {
+                updates.push(`customer_id_gateway = $${paramCount++}`);
+                values.push(customer_id_gateway);
+            }
+            if (payment_method_id !== undefined) {
+                updates.push(`payment_method_id = $${paramCount++}`);
+                values.push(payment_method_id);
+            }
+
+            if (updates.length === 0) {
+                const result = await db.query(`SELECT * FROM suscripciones_org WHERE id = $1`, [id]);
+                return result.rows[0];
+            }
+
+            updates.push(`actualizado_en = NOW()`);
+            values.push(id);
+
+            const query = `
+                UPDATE suscripciones_org
+                SET ${updates.join(', ')}
+                WHERE id = $${paramCount}
+                RETURNING *
+            `;
+
+            const result = await db.query(query, values);
+            return result.rows[0];
+        });
+    }
+
+    /**
+     * Buscar suscripción activa/pendiente para un cliente y plan específicos
+     * Usado para prevenir duplicados en checkout
+     *
+     * @param {number} clienteId - ID del cliente (puede ser null si es externo)
+     * @param {number} planId - ID del plan
+     * @param {number} organizacionId - ID de la organización
+     * @param {string} emailExterno - Email del suscriptor externo (si no tiene cliente_id)
+     * @returns {Promise<Object|null>} - Suscripción existente o null
+     */
+    static async buscarActivaPorClienteYPlan(clienteId, planId, organizacionId, emailExterno = null) {
+        return await RLSContextManager.query(organizacionId, async (db) => {
+            const estadosActivos = ['activa', 'trial', 'pendiente_pago', 'pausada'];
+
+            let query;
+            let params;
+
+            if (clienteId) {
+                // Buscar por cliente_id
+                query = `
+                    SELECT s.*, p.nombre as plan_nombre, p.codigo as plan_codigo
+                    FROM suscripciones_org s
+                    INNER JOIN planes_suscripcion_org p ON s.plan_id = p.id
+                    WHERE s.cliente_id = $1
+                      AND s.plan_id = $2
+                      AND s.estado = ANY($3::text[])
+                    ORDER BY s.creado_en DESC
+                    LIMIT 1
+                `;
+                params = [clienteId, planId, estadosActivos];
+            } else if (emailExterno) {
+                // Buscar por email del suscriptor externo
+                query = `
+                    SELECT s.*, p.nombre as plan_nombre, p.codigo as plan_codigo
+                    FROM suscripciones_org s
+                    INNER JOIN planes_suscripcion_org p ON s.plan_id = p.id
+                    WHERE s.cliente_id IS NULL
+                      AND s.suscriptor_externo->>'email' = $1
+                      AND s.plan_id = $2
+                      AND s.estado = ANY($3::text[])
+                    ORDER BY s.creado_en DESC
+                    LIMIT 1
+                `;
+                params = [emailExterno, planId, estadosActivos];
+            } else {
+                return null; // Sin cliente_id ni email, no se puede buscar
+            }
+
+            const result = await db.query(query, params);
+            return result.rows[0] || null;
+        });
+    }
+
+    /**
+     * Obtener historial de cambios de una suscripción
+     * Incluye webhooks recibidos y cambios de estado
+     *
+     * @param {number} id - ID de la suscripción
+     * @param {number} organizacionId - ID de la organización
+     * @returns {Promise<Array>} - Array de eventos del historial
+     */
+    static async obtenerHistorial(id, organizacionId) {
+        return await RLSContextManager.query(organizacionId, async (db) => {
+            // Verificar que la suscripción existe
+            const suscripcion = await db.query(
+                'SELECT id, estado, creado_en, fecha_inicio FROM suscripciones_org WHERE id = $1',
+                [id]
+            );
+
+            if (!suscripcion.rows[0]) {
+                return [];
+            }
+
+            // Obtener webhooks como historial de eventos
+            const webhooksQuery = `
+                SELECT
+                    id,
+                    evento_tipo,
+                    gateway,
+                    procesado,
+                    fecha_procesado,
+                    mensaje_error,
+                    recibido_en
+                FROM webhooks_suscripcion
+                WHERE suscripcion_id = $1
+                ORDER BY recibido_en DESC
+                LIMIT 50
+            `;
+
+            const webhooks = await db.query(webhooksQuery, [id]);
+
+            // Construir historial combinando creación + webhooks
+            const historial = [];
+
+            // Evento de creación
+            historial.push({
+                id: 0,
+                tipo: 'creacion',
+                descripcion: 'Suscripción creada',
+                fecha: suscripcion.rows[0].creado_en,
+                detalles: {
+                    estado_inicial: suscripcion.rows[0].estado,
+                    fecha_inicio: suscripcion.rows[0].fecha_inicio
+                }
+            });
+
+            // Agregar webhooks como eventos
+            webhooks.rows.forEach(w => {
+                historial.push({
+                    id: w.id,
+                    tipo: 'webhook',
+                    descripcion: `Webhook: ${w.evento_tipo}`,
+                    fecha: w.fecha_procesado || w.recibido_en,
+                    detalles: {
+                        gateway: w.gateway,
+                        procesado: w.procesado,
+                        error: w.mensaje_error
+                    }
+                });
+            });
+
+            // Ordenar por fecha descendente
+            historial.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+
+            return historial;
         });
     }
 }

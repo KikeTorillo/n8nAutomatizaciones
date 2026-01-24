@@ -18,6 +18,74 @@ const authChain = [
 ];
 
 /**
+ * GET /api/v1/suscripciones-negocio/suscripciones/mi-suscripcion
+ * Obtener mi suscripción activa (para página MiPlan)
+ * Disponible para cualquier usuario autenticado
+ */
+router.get(
+    '/mi-suscripcion',
+    ...authChain,
+    // Sin verificación de permisos - cualquier usuario puede ver su propio plan
+    SuscripcionesController.obtenerMiSuscripcion
+);
+
+/**
+ * PATCH /api/v1/suscripciones-negocio/suscripciones/mi-suscripcion/cambiar-plan
+ * Cambiar plan de mi propia suscripción
+ * Disponible para cualquier usuario autenticado (solo puede cambiar su propio plan)
+ */
+router.patch(
+    '/mi-suscripcion/cambiar-plan',
+    ...authChain,
+    // Sin verificación de permisos - el controller valida que sea su propia suscripción
+    validate(schemas.cambiarPlan),
+    SuscripcionesController.cambiarMiPlan
+);
+
+// ============================================================================
+// CUSTOMER BILLING: Admin crea suscripciones para clientes
+// ============================================================================
+
+/**
+ * POST /api/v1/suscripciones-negocio/suscripciones/cliente
+ * Crear suscripción para un cliente (genera link de checkout)
+ */
+router.post(
+    '/cliente',
+    ...authChain,
+    permisos.verificarPermiso('suscripciones_negocio.crear_suscripciones'),
+    validate(schemas.crearParaCliente),
+    SuscripcionesController.crearParaCliente
+);
+
+/**
+ * GET /api/v1/suscripciones-negocio/suscripciones/tokens
+ * Listar tokens de checkout generados
+ */
+router.get(
+    '/tokens',
+    ...authChain,
+    permisos.verificarPermiso('suscripciones_negocio.ver_suscripciones'),
+    validate(schemas.listarCheckoutTokens, 'query'),
+    SuscripcionesController.listarCheckoutTokens
+);
+
+/**
+ * DELETE /api/v1/suscripciones-negocio/suscripciones/tokens/:tokenId
+ * Cancelar token de checkout
+ */
+router.delete(
+    '/tokens/:tokenId',
+    ...authChain,
+    permisos.verificarPermiso('suscripciones_negocio.editar_suscripciones'),
+    SuscripcionesController.cancelarCheckoutToken
+);
+
+// ============================================================================
+// CRUD SUSCRIPCIONES
+// ============================================================================
+
+/**
  * GET /api/v1/suscripciones-negocio/suscripciones
  * Listar suscripciones con paginación y filtros
  */

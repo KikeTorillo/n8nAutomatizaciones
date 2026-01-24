@@ -1,7 +1,7 @@
 import { useMemo, memo } from 'react';
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import Button from '../atoms/Button';
+import { Button } from '../atoms/Button';
 import { PAGINATION_SIZES } from '@/lib/uiConstants';
 
 /**
@@ -156,6 +156,8 @@ export const Pagination = memo(function Pagination({
                   key={pageNum}
                   type="button"
                   onClick={() => onPageChange(pageNum)}
+                  aria-current={pageNum === page ? 'page' : undefined}
+                  aria-label={`Ir a página ${pageNum}`}
                   className={cn(
                     sizes.page,
                     'rounded-lg font-medium transition-colors flex items-center justify-center',
@@ -217,5 +219,3 @@ export const Pagination = memo(function Pagination({
 });
 
 Pagination.displayName = 'Pagination';
-
-export default Pagination;

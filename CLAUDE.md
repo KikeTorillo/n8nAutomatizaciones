@@ -433,6 +433,162 @@ Documento completo en `/docs/PLAN_PRUEBAS_INTEGRAL.md`
 
 ## Changelog
 
+### 24 Ene 2026 - Strategy Pattern Checkout (Billing Modes) ✅ COMPLETADO
+
+**Refactor del checkout con Strategy Pattern para soportar múltiples modos de billing.**
+
+**Problema resuelto:**
+- El checkout creaba suscripciones con `organizacion_id` del usuario en lugar de Nexo Team
+- `cliente_id` siempre era NULL porque `req.user.cliente_id` no existe
+- Las suscripciones creadas no eran encontradas por `buscarActivaPorOrganizacion()`
+
+**Solución - Strategy Pattern:**
+```
+backend/app/modules/suscripciones-negocio/
+└── strategies/
+    ├── index.js                      # Factory + exports
+    ├── BillingStrategy.js            # Interface base
+    ├── PlatformBillingStrategy.js    # Nexo Team → Orgs (dogfooding)
+    └── CustomerBillingStrategy.js    # Org → Clientes (futuro)
+```
+
+**Modos de billing:**
+
+| Modo | Vendor | Cliente | Uso |
+|------|--------|---------|-----|
+| Platform Billing | Nexo Team (org 1) | Cliente vía `organizacion_vinculada_id` | Dogfooding (activo) |
+| Customer Billing | Org del usuario | `cliente_id` del request | SaaS B2B (futuro) |
+
+**Uso en código:**
+```javascript
+const { createBillingStrategy } = require('../strategies');
+
+const strategy = createBillingStrategy({
+    organizacionId: req.user.organizacion_id,
+    esVentaPropia: false,  // true para Customer Billing
+    clienteId: null        // requerido para Customer Billing
+});
+
+const vendorId = strategy.getVendorId();
+const clienteId = await strategy.getClienteId(context);
+await strategy.validateSubscriber(context);
+```
+
+**Archivos creados (4):**
+- `strategies/BillingStrategy.js`
+- `strategies/PlatformBillingStrategy.js`
+- `strategies/CustomerBillingStrategy.js`
+- `strategies/index.js`
+
+**Archivos modificados (1):**
+- `checkout.controller.js` - Refactorizado para usar estrategias (v2.0.0)
+
+**Logs mejorados:**
+```
+[Checkout platform] Iniciando checkout para org 5
+[Checkout platform] Vendor: 1, Cliente: 12
+[Checkout platform] Suscripción 45 creada - Plan: Pro, Precio: 499, Cliente: 12
+```
+
+**IMPORTANTE:** No requiere `npm run clean:data` - es refactor de código.
+
+---
+
+### 24 Ene 2026 - FASE 15: Correcciones Frontend UI Library ✅ COMPLETADO
+
+**Preparación de componentes UI como librería reutilizable.**
+
+**FASE 1 - React.memo:**
+- `Drawer.jsx` - Agregado `memo` wrapper y `displayName`
+
+**FASE 2 - Nuevas Constantes UI:**
+
+| Archivo | Exports |
+|---------|---------|
+| `uiConstants/tables.js` | `TABLE_ALIGN_CLASSES`, `TABLE_WIDTH_CLASSES`, `TABLE_WIDTH_MAP`, `TABLE_BASE_STYLES`, `TABLE_HEADER_CELL`, `TABLE_BODY_CELL`, `TABLE_ROW_STYLES` |
+| `uiConstants/emptyState.js` | `EMPTY_STATE_SIZES`, `EMPTY_STATE_BASE`, `getEmptyStateSize()` |
+| `uiConstants/surfaces.js` | `CARD_BASE`, `CARD_ELEVATED`, `CARD_FLAT`, `CARD_OUTLINE`, `SURFACE_HOVER`, `OVERLAY_BACKDROP`, etc. |
+
+**FASE 3 - Accesibilidad:**
+- `Pagination.jsx` - Agregado `aria-current` y `aria-label` en botones de página
+- `SearchInput.jsx` - Agregado `role="search"` al contenedor
+- `DataTable.jsx` - Agregado `role="table"`, `role="rowgroup"`, `role="row"`, `role="columnheader"`, `role="cell"`, `scope="col"`
+- `StatCard.jsx` - Agregado `aria-label` descriptivo
+
+**FASE 4 - Estandarización de Exports:**
+- Cambiados a named exports: `Button`, `Input`, `Modal`, `Drawer`, `SearchInput`
+- Removidos default exports redundantes: `StatCard`, `Pagination`, `EmptyState`, `DataTable`
+- Actualizados barrel exports en `atoms/index.js`, `molecules/index.js`, `organisms/index.js`, `components/ui/index.js`
+- Actualizados 12 archivos con imports internos
+
+**FASE 5 - Nomenclatura Unificada (error → danger):**
+- `BADGE_VARIANTS.danger` (canónico) + `.error` (alias)
+- `ALERT_VARIANTS.danger` (canónico) + `.error` (alias)
+- `TOAST_VARIANTS.danger` (canónico) + `.error` (alias)
+- `TOAST_EXTENDED_VARIANTS.danger` (canónico) + `.error` (alias)
+- `BADGE_COLORS.danger` (canónico) + `.error` (alias)
+
+**Componentes actualizados para usar constantes:**
+- `DataTable.jsx` - Usa `TABLE_*` de uiConstants
+- `EmptyState.jsx` - Usa `EMPTY_STATE_*` de uiConstants
+
+**Archivos modificados (total 22):**
+- 3 nuevos: `tables.js`, `emptyState.js`, `surfaces.js`
+- 19 modificados: componentes, barrel exports, constantes
+
+---
+
+### 24 Ene 2026 - Módulo Suscripciones Completado ✅
+
+**Funcionalidades pendientes del módulo suscripciones-negocio implementadas.**
+
+**FASE 1 - Prevención de Duplicados:**
+- Índice único parcial en SQL para prevenir suscripciones duplicadas por cliente+plan
+- Método `buscarActivaPorClienteYPlan()` en modelo
+- Validación en checkout: retorna init_point existente si hay pendiente_pago
+
+**FASE 2 - Página MiPlanPage:**
+- Endpoint `GET /suscripciones/mi-suscripcion` (sin permisos, cualquier usuario)
+- Método `buscarActivaPorOrganizacion()` con bypass RLS
+- Hook `useMiSuscripcion()`
+- Página `MiPlanPage.jsx` con:
+  - Estado del plan y precio
+  - Features incluidos
+  - Días trial restantes
+  - Botones: Cambiar Plan, Pausar, Cancelar
+- Ruta `/mi-plan` accesible para todos los usuarios autenticados
+
+**FASE 3 - CambiarPlanDrawer:**
+- Hook `usePlanesPublicos()` para listar planes disponibles
+- Componente `CambiarPlanDrawer.jsx` con:
+  - Lista de planes con selección visual
+  - Resumen de cambio (upgrade/downgrade)
+  - Confirmación antes de aplicar
+
+**FASE 4 - SuscripcionDetailPage:**
+- Conectado dropdown "Cambiar Plan" con el drawer
+- Handler de éxito con refetch
+
+**Archivos creados:**
+- `frontend/src/pages/suscripciones-negocio/MiPlanPage.jsx`
+- `frontend/src/components/suscripciones-negocio/CambiarPlanDrawer.jsx`
+
+**Archivos modificados:**
+- `sql/suscripciones-negocio/01-tablas.sql` - Índices únicos
+- `backend/.../models/suscripciones.model.js` - Métodos nuevos
+- `backend/.../controllers/checkout.controller.js` - Validación duplicados
+- `backend/.../controllers/suscripciones.controller.js` - Endpoint mi-suscripcion
+- `backend/.../routes/suscripciones.js` - Ruta mi-suscripcion
+- `frontend/.../hooks/suscripciones-negocio/*` - Hooks y constantes
+- `frontend/.../services/api/.../suscripciones-negocio.api.js` - API method
+- `frontend/.../app/routes/suscripciones-negocio.routes.jsx` - Ruta /mi-plan
+- `frontend/.../components/suscripciones-negocio/index.js` - Export drawer
+- `frontend/.../pages/.../SuscripcionDetailPage.jsx` - Conectar drawer
+
+**IMPORTANTE:** Ejecutar `npm run clean:data` para aplicar índices SQL.
+
+---
+
 ### 24 Ene 2026 - MercadoPago E2E Validado + Limpieza Legacy ✅
 
 **Flujo completo de pago con MercadoPago funcionando.**

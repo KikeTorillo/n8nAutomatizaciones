@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { CreditCard, Tag, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
-import Modal from '@/components/ui/organisms/Modal';
+import { Modal } from '@/components/ui/organisms/Modal';
 import { Button, Input, Badge } from '@/components/ui';
 import { suscripcionesNegocioApi } from '@/services/api/modules/suscripciones-negocio.api';
 import { formatCurrency, cn } from '@/lib/utils';

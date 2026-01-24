@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { memo, useState, useRef } from 'react';
 import { ChevronDown, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useClickOutside, useEscapeKey } from '@/hooks/utils';
@@ -6,8 +6,18 @@ import { TAB_STYLES, DROPDOWN_ITEM_STYLES } from './constants';
 
 /**
  * TabDropdown - Dropdown para agrupar tabs en desktop
+ *
+ * @component
+ * @param {Object} props
+ * @param {React.ComponentType} [props.icon] - Icono del grupo
+ * @param {string} props.label - Label del grupo
+ * @param {Array} props.items - Items del dropdown
+ * @param {string} props.activeTab - Tab activo actual
+ * @param {function} props.onTabChange - Callback al cambiar tab
+ * @param {function} props.getTabIcon - Función para obtener icono de tab
+ * @returns {React.ReactElement}
  */
-function TabDropdown({ icon: Icon, label, items, activeTab, onTabChange, getTabIcon }) {
+const TabDropdown = memo(function TabDropdown({ icon: Icon, label, items, activeTab, onTabChange, getTabIcon }) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -92,6 +102,8 @@ function TabDropdown({ icon: Icon, label, items, activeTab, onTabChange, getTabI
       )}
     </div>
   );
-}
+});
+
+TabDropdown.displayName = 'TabDropdown';
 
 export default TabDropdown;

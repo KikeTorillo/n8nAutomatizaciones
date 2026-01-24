@@ -4,12 +4,17 @@
  * ====================================================================
  * Controlador para el flujo de checkout con MercadoPago.
  *
+ * Soporta dos modos de billing vía Strategy Pattern:
+ * - Platform Billing: Nexo Team vende a organizaciones (dogfooding)
+ * - Customer Billing: Organizaciones venden a sus clientes (futuro)
+ *
  * Endpoints:
  * - POST /checkout/iniciar - Inicia proceso de pago
  * - POST /checkout/validar-cupon - Valida cupón de descuento
  * - GET /checkout/resultado - Obtiene resultado del pago
  *
  * @module controllers/checkout
+ * @version 2.0.0 - Strategy Pattern Refactor (Enero 2026)
  */
 
 const PlanesModel = require('../models/planes.model');
@@ -20,6 +25,7 @@ const MercadoPagoService = require('../../../services/mercadopago.service');
 const { ErrorHelper } = require('../../../utils/helpers');
 const logger = require('../../../utils/logger');
 const { NEXO_TEAM_ORG_ID } = require('../../../config/constants');
+const { createBillingStrategy } = require('../strategies');
 
 // URL del frontend (con fallback)
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
@@ -30,38 +36,110 @@ class CheckoutController {
      * POST /checkout/iniciar
      *
      * Inicia el proceso de checkout:
-     * 1. Valida el plan
-     * 2. Valida cupón (si hay)
-     * 3. Crea suscripción en estado pendiente_pago
-     * 4. Crea registro de pago pendiente
-     * 5. Crea preferencia en MercadoPago
-     * 6. Retorna init_point para redirección
+     * 1. Determina estrategia de billing (Platform vs Customer)
+     * 2. Valida el plan del vendor
+     * 3. Verifica que no exista suscripción duplicada
+     * 4. Valida cupón (si hay)
+     * 5. Crea suscripción en estado pendiente_pago
+     * 6. Crea registro de pago pendiente
+     * 7. Crea preferencia en MercadoPago
+     * 8. Retorna init_point para redirección
      */
     async iniciarCheckout(req, res) {
-        const { plan_id, periodo, cupon_codigo, suscriptor_externo } = req.body;
+        const { plan_id, periodo, cupon_codigo, es_venta_propia, cliente_id: clienteIdBody } = req.body;
         const organizacionId = req.user.organizacion_id;
         const usuarioId = req.user.id;
 
         // ═══════════════════════════════════════════════════════════════
-        // VALIDACIÓN: Nexo Team no puede suscribirse a sí misma
+        // PASO 1: Determinar estrategia de billing
         // ═══════════════════════════════════════════════════════════════
-        if (organizacionId === NEXO_TEAM_ORG_ID) {
-            ErrorHelper.throwValidation(
-                'Nexo Team es la organización vendedora y no puede suscribirse a sus propios planes. ' +
-                'Este flujo es para organizaciones clientes.'
-            );
-        }
+        const billingContext = {
+            organizacionId,
+            esVentaPropia: es_venta_propia || false,
+            clienteId: clienteIdBody || null,
+            user: req.user
+        };
 
-        // 1. Validar que el plan existe y está activo
-        // NOTA: Los planes públicos pertenecen a Nexo Team, no a la org del usuario
-        const plan = await PlanesModel.buscarPorId(plan_id, NEXO_TEAM_ORG_ID);
+        const billingStrategy = createBillingStrategy(billingContext);
+        const billingType = billingStrategy.getBillingType();
+
+        logger.info(`[Checkout ${billingType}] Iniciando checkout para org ${organizacionId}`);
+
+        // ═══════════════════════════════════════════════════════════════
+        // PASO 2: Validar suscriptor según estrategia
+        // ═══════════════════════════════════════════════════════════════
+        await billingStrategy.validateSubscriber(billingContext);
+
+        // ═══════════════════════════════════════════════════════════════
+        // PASO 3: Obtener IDs correctos según estrategia
+        // ═══════════════════════════════════════════════════════════════
+        const vendorId = billingStrategy.getVendorId(billingContext);
+        const clienteId = await billingStrategy.getClienteId(billingContext);
+
+        logger.debug(`[Checkout ${billingType}] Vendor: ${vendorId}, Cliente: ${clienteId}`);
+
+        // ═══════════════════════════════════════════════════════════════
+        // PASO 4: Validar que el plan existe y está activo
+        // ═══════════════════════════════════════════════════════════════
+        const plan = await PlanesModel.buscarPorId(plan_id, vendorId);
         ErrorHelper.throwIfNotFound(plan, 'Plan de suscripción');
 
         if (!plan.activo) {
             ErrorHelper.throwValidation('El plan seleccionado no está disponible');
         }
 
-        // 2. Calcular precio según período
+        // ═══════════════════════════════════════════════════════════════
+        // PASO 5: Validación de duplicados
+        // ═══════════════════════════════════════════════════════════════
+        const suscripcionExistente = await SuscripcionesModel.buscarActivaPorClienteYPlan(
+            clienteId,
+            plan_id,
+            vendorId,
+            req.user.email
+        );
+
+        if (suscripcionExistente) {
+            // Si está pendiente_pago y tiene gateway_id, retornar init_point existente
+            if (suscripcionExistente.estado === 'pendiente_pago' && suscripcionExistente.subscription_id_gateway) {
+                logger.info(`[Checkout ${billingType}] Retornando init_point existente para suscripción ${suscripcionExistente.id}`);
+
+                const mpService = await MercadoPagoService.getForOrganization(vendorId);
+                try {
+                    const mpSuscripcion = await mpService.obtenerSuscripcion(suscripcionExistente.subscription_id_gateway);
+
+                    return res.json({
+                        success: true,
+                        message: 'Checkout pendiente existente. Use el mismo link para completar el pago.',
+                        data: {
+                            init_point: mpSuscripcion.init_point,
+                            suscripcion_id: suscripcionExistente.id,
+                            plan: {
+                                id: plan.id,
+                                nombre: plan.nombre,
+                                codigo: plan.codigo
+                            },
+                            existente: true
+                        }
+                    });
+                } catch (mpError) {
+                    logger.warn(`[Checkout ${billingType}] No se pudo obtener suscripción de MP: ${mpError.message}. Creando nueva.`);
+                }
+            }
+
+            // Si está activa, trial o pausada → Error 409
+            if (['activa', 'trial', 'pausada'].includes(suscripcionExistente.estado)) {
+                ErrorHelper.throwConflict(
+                    `Ya tienes una suscripción ${suscripcionExistente.estado === 'activa' ? 'activa' :
+                        suscripcionExistente.estado === 'trial' ? 'en período de prueba' : 'pausada'
+                    } para el plan "${plan.nombre}". ` +
+                    `Puedes cambiar de plan desde tu página de Mi Plan.`
+                );
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // PASO 6: Calcular precio según período
+        // ═══════════════════════════════════════════════════════════════
         let precioBase;
         switch (periodo) {
             case 'mensual':
@@ -80,13 +158,14 @@ class CheckoutController {
                 precioBase = parseFloat(plan.precio_mensual);
         }
 
-        // 3. Validar y aplicar cupón (si existe)
+        // ═══════════════════════════════════════════════════════════════
+        // PASO 7: Validar y aplicar cupón (si existe)
+        // ═══════════════════════════════════════════════════════════════
         let descuento = 0;
         let cuponAplicado = null;
 
         if (cupon_codigo) {
-            // Los cupones también son de Nexo Team
-            const validacion = await CuponesModel.validar(cupon_codigo, NEXO_TEAM_ORG_ID, { plan_id });
+            const validacion = await CuponesModel.validar(cupon_codigo, vendorId, { plan_id });
 
             if (validacion.valido) {
                 cuponAplicado = validacion.cupon;
@@ -102,35 +181,37 @@ class CheckoutController {
             }
         }
 
-        // 4. Calcular precio final
+        // ═══════════════════════════════════════════════════════════════
+        // PASO 8: Calcular precio final
+        // ═══════════════════════════════════════════════════════════════
         const precioFinal = Math.max(0, precioBase - descuento);
 
-        // Determinar suscriptor: cliente_id O suscriptor_externo O datos del usuario
-        const suscriptorExternoFinal = suscriptor_externo || (!req.user.cliente_id ? {
-            nombre: req.user.nombre || req.user.email.split('@')[0],
-            email: req.user.email,
-            organizacion_id: organizacionId
-        } : null);
+        // Suscriptor externo según estrategia (normalmente null cuando hay cliente_id)
+        const suscriptorExternoFinal = billingStrategy.buildSuscriptorExterno(billingContext);
 
-        // Si el precio es 0 (cupón 100%), activar directamente
+        // ═══════════════════════════════════════════════════════════════
+        // PASO 9: Si precio es 0 (cupón 100%), activar directamente
+        // ═══════════════════════════════════════════════════════════════
         if (precioFinal === 0) {
             const suscripcion = await SuscripcionesModel.crear({
                 plan_id,
-                cliente_id: req.user.cliente_id || null,
+                cliente_id: clienteId,
                 suscriptor_externo: suscriptorExternoFinal,
                 periodo,
                 es_trial: false,
                 gateway: 'cupon_100',
                 cupon_codigo: cupon_codigo
-            }, organizacionId, usuarioId);
+            }, vendorId, usuarioId);
 
             // Cambiar a activa directamente
-            await SuscripcionesModel.cambiarEstado(suscripcion.id, 'activa', organizacionId);
+            await SuscripcionesModel.cambiarEstado(suscripcion.id, 'activa', vendorId);
 
-            // Incrementar uso del cupón (de Nexo Team)
+            // Incrementar uso del cupón
             if (cuponAplicado) {
-                await CuponesModel.incrementarUso(cuponAplicado.id, NEXO_TEAM_ORG_ID);
+                await CuponesModel.incrementarUso(cuponAplicado.id, vendorId);
             }
+
+            logger.info(`[Checkout ${billingType}] Suscripción ${suscripcion.id} activada con cupón 100%`);
 
             return res.json({
                 success: true,
@@ -143,48 +224,48 @@ class CheckoutController {
             });
         }
 
-        // 5. Crear suscripción en estado pendiente_pago
+        // ═══════════════════════════════════════════════════════════════
+        // PASO 10: Crear suscripción en estado pendiente_pago
+        // ═══════════════════════════════════════════════════════════════
         const suscripcion = await SuscripcionesModel.crearPendiente({
             plan_id,
-            cliente_id: req.user.cliente_id || null,
+            cliente_id: clienteId,
             suscriptor_externo: suscriptorExternoFinal,
             periodo,
             precio_actual: precioFinal,
-            moneda: plan.moneda || 'MXN', // Pasar moneda directamente del plan ya obtenido
+            moneda: plan.moneda || 'MXN',
             gateway: 'mercadopago',
             cupon_aplicado_id: cuponAplicado?.id || null,
             descuento_porcentaje: cuponAplicado?.tipo_descuento === 'porcentaje' ? cuponAplicado.porcentaje_descuento : null,
             descuento_monto: descuento > 0 ? descuento : null
-        }, organizacionId, usuarioId);
+        }, vendorId, usuarioId);
 
-        // 6. Crear registro de pago pendiente
+        // ═══════════════════════════════════════════════════════════════
+        // PASO 11: Crear registro de pago pendiente
+        // ═══════════════════════════════════════════════════════════════
         const pago = await PagosModel.crear({
             suscripcion_id: suscripcion.id,
             monto: precioFinal,
             moneda: plan.moneda || 'MXN',
             estado: 'pendiente',
             gateway: 'mercadopago'
-        }, organizacionId);
+        }, vendorId);
 
-        // 7. Crear preferencia en MercadoPago (usar conector de Nexo Team)
-        // Formato: org_{nexoTeamId}_sus_{suscripcionId}_pago_{pagoId}_cliente_{orgCliente}
-        // El org_id del cliente va al final para debugging/trazabilidad
-        const externalReference = `org_${NEXO_TEAM_ORG_ID}_sus_${suscripcion.id}_pago_${pago.id}_cliente_${organizacionId}`;
-        const mpService = await MercadoPagoService.getForOrganization(NEXO_TEAM_ORG_ID);
+        // ═══════════════════════════════════════════════════════════════
+        // PASO 12: Crear preferencia en MercadoPago
+        // ═══════════════════════════════════════════════════════════════
+        // Formato: org_{vendorId}_sus_{suscripcionId}_pago_{pagoId}_cliente_{orgCliente}
+        const externalReference = `org_${vendorId}_sus_${suscripcion.id}_pago_${pago.id}_cliente_${organizacionId}`;
+        const mpService = await MercadoPagoService.getForOrganization(vendorId);
 
         // Determinar email del pagador
-        // En sandbox con test users, MP requiere email de test user
         let emailPagador;
         if (process.env.MERCADOPAGO_ENVIRONMENT === 'sandbox') {
             emailPagador = process.env.MERCADOPAGO_TEST_PAYER_EMAIL;
-            logger.info(`[Checkout] Sandbox activo, usando email: ${emailPagador}`);
+            logger.info(`[Checkout ${billingType}] Sandbox activo, usando email: ${emailPagador}`);
         } else {
-            emailPagador = suscriptorExternoFinal?.email || req.user.email;
+            emailPagador = req.user.email;
         }
-
-        // NOTA: Los webhooks de suscripciones se configuran en el panel de MercadoPago,
-        // NO en la API. El parámetro notification_url no es soportado por preapproval.
-        // Ver: https://www.mercadopago.com.mx/developers/en/reference/subscriptions/_preapproval/post
 
         const mpResponse = await mpService.crearSuscripcionConInitPoint({
             nombre: `Suscripción ${plan.nombre} - ${periodo}`,
@@ -195,12 +276,14 @@ class CheckoutController {
             externalReference
         });
 
-        // 8. Actualizar suscripción con ID de MercadoPago
+        // ═══════════════════════════════════════════════════════════════
+        // PASO 13: Actualizar suscripción con ID de MercadoPago
+        // ═══════════════════════════════════════════════════════════════
         await SuscripcionesModel.actualizarGatewayIds(suscripcion.id, {
             subscription_id_gateway: mpResponse.id
-        }, organizacionId);
+        }, vendorId);
 
-        logger.info(`Checkout iniciado: Suscripción ${suscripcion.id}, Plan ${plan.nombre}, Precio ${precioFinal}`);
+        logger.info(`[Checkout ${billingType}] Suscripción ${suscripcion.id} creada - Plan: ${plan.nombre}, Precio: ${precioFinal}, Cliente: ${clienteId}`);
 
         res.json({
             success: true,
@@ -239,7 +322,8 @@ class CheckoutController {
     async validarCupon(req, res) {
         const { codigo, plan_id, precio_base } = req.body;
 
-        // Validar cupón (los cupones son de Nexo Team)
+        // Validar cupón (los cupones son de Nexo Team en Platform Billing)
+        // TODO: En Customer Billing, obtener vendorId de la estrategia
         const validacion = await CuponesModel.validar(codigo, NEXO_TEAM_ORG_ID, { plan_id });
 
         if (!validacion.valido) {
@@ -298,8 +382,8 @@ class CheckoutController {
      *
      * Parámetros aceptados:
      * - suscripcion_id: ID interno de la suscripción
-     * - external_reference: Referencia externa (formato: sus_123_pago_456)
-     * - preapproval_id: ID de la suscripción en MercadoPago (para suscripciones recurrentes)
+     * - external_reference: Referencia externa (formato: org_X_sus_123_pago_456)
+     * - preapproval_id: ID de la suscripción en MercadoPago
      */
     async obtenerResultado(req, res) {
         const { suscripcion_id, external_reference, preapproval_id, collection_status } = req.query;
@@ -307,22 +391,39 @@ class CheckoutController {
 
         let suscripcion = null;
 
+        // En Platform Billing, las suscripciones están en Nexo Team
+        // pero el usuario puede ser de otra org
+        const vendorId = NEXO_TEAM_ORG_ID;
+
         // 1. Buscar por suscripcion_id directamente
         if (suscripcion_id) {
-            suscripcion = await SuscripcionesModel.buscarPorId(suscripcion_id, organizacionId);
+            // Primero intentar en el vendor (Nexo Team)
+            suscripcion = await SuscripcionesModel.buscarPorId(suscripcion_id, vendorId);
+
+            // Si no está en vendor, buscar en la org del usuario (fallback)
+            if (!suscripcion) {
+                suscripcion = await SuscripcionesModel.buscarPorId(suscripcion_id, organizacionId);
+            }
         }
 
-        // 2. Parsear external_reference si viene (formato: sus_123_pago_456)
+        // 2. Parsear external_reference si viene (formato: org_X_sus_123_pago_456)
         if (!suscripcion && external_reference) {
             const match = external_reference.match(/sus_(\d+)/);
             if (match) {
-                suscripcion = await SuscripcionesModel.buscarPorId(parseInt(match[1]), organizacionId);
+                const susId = parseInt(match[1]);
+                suscripcion = await SuscripcionesModel.buscarPorId(susId, vendorId);
+                if (!suscripcion) {
+                    suscripcion = await SuscripcionesModel.buscarPorId(susId, organizacionId);
+                }
             }
         }
 
         // 3. Buscar por preapproval_id (subscription_id_gateway de MercadoPago)
         if (!suscripcion && preapproval_id) {
-            suscripcion = await SuscripcionesModel.buscarPorGatewayId(preapproval_id, organizacionId);
+            suscripcion = await SuscripcionesModel.buscarPorGatewayId(preapproval_id, vendorId);
+            if (!suscripcion) {
+                suscripcion = await SuscripcionesModel.buscarPorGatewayId(preapproval_id, organizacionId);
+            }
         }
 
         if (!suscripcion) {
@@ -344,7 +445,6 @@ class CheckoutController {
                 estadoResultado = 'rechazado';
                 break;
             default:
-                // Determinar por el estado de la suscripción
                 estadoResultado = suscripcion.estado === 'activa' ? 'aprobado' :
                     suscripcion.estado === 'pendiente_pago' ? 'pendiente' : 'desconocido';
         }

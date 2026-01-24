@@ -464,9 +464,29 @@ CREATE POLICY webhooks_insert_own ON webhooks_suscripcion
     FOR INSERT WITH CHECK (organizacion_id IS NULL OR organizacion_id = current_setting('app.current_tenant_id')::INTEGER);
 
 -- ============================================================================
+-- 8. ÍNDICES ÚNICOS PARA PREVENCIÓN DE DUPLICADOS
+-- ============================================================================
+-- Prevenir que un cliente tenga múltiples suscripciones activas al mismo plan.
+-- Solo permite 1 suscripción activa/trial/pendiente_pago/pausada por cliente+plan.
+-- ----------------------------------------------------------------------------
+
+-- Para clientes internos (con cliente_id)
+CREATE UNIQUE INDEX IF NOT EXISTS idx_suscripciones_cliente_plan_activa
+    ON suscripciones_org (organizacion_id, cliente_id, plan_id)
+    WHERE cliente_id IS NOT NULL
+      AND estado IN ('activa', 'trial', 'pendiente_pago', 'pausada');
+
+-- Para suscriptores externos (sin cliente_id, usa email del JSONB)
+CREATE UNIQUE INDEX IF NOT EXISTS idx_suscripciones_externo_plan_activa
+    ON suscripciones_org (organizacion_id, plan_id, (suscriptor_externo->>'email'))
+    WHERE cliente_id IS NULL
+      AND suscriptor_externo->>'email' IS NOT NULL
+      AND estado IN ('activa', 'trial', 'pendiente_pago', 'pausada');
+
+-- ============================================================================
 -- MIGRACIÓN COMPLETADA
 -- ============================================================================
 -- Tablas creadas: 5
--- Índices creados: 18
+-- Índices creados: 20 (incluyendo índices únicos de duplicados)
 -- Políticas RLS: 15
 -- ============================================================================

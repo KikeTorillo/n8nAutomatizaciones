@@ -1,8 +1,8 @@
 import { useState, useMemo, useCallback, memo } from 'react';
 import { Filter, X, ChevronDown, ChevronUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import Button from '../atoms/Button';
-import SearchInput from '../molecules/SearchInput';
+import { Button } from '../atoms/Button';
+import { SearchInput } from '../molecules/SearchInput';
 
 /**
  * Estilos compartidos para inputs de filtros

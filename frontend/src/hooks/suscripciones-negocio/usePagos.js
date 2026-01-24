@@ -29,9 +29,9 @@ export function usePagos(params = {}) {
       const pagination = response.data?.pagination || response.data?.meta || data?.paginacion;
 
       return {
-        items: data?.pagos || data || [],
-        total: data?.total || pagination?.total || 0,
-        paginacion: pagination,
+        items: data?.items || data?.pagos || [],
+        total: data?.paginacion?.total || pagination?.total || 0,
+        paginacion: data?.paginacion || pagination,
       };
     },
     staleTime: STALE_TIMES.DYNAMIC,

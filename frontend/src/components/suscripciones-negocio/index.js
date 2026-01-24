@@ -16,6 +16,8 @@ export { default as PlanFormDrawer } from './PlanFormDrawer';
 export { default as CuponFormDrawer } from './CuponFormDrawer';
 export { default as SuscripcionFormDrawer } from './SuscripcionFormDrawer';
 export { default as ConectorFormDrawer } from './ConectorFormDrawer';
+export { default as CambiarPlanDrawer } from './CambiarPlanDrawer';
+export { default as CrearSuscripcionClienteDrawer } from './CrearSuscripcionClienteDrawer';
 
 // Charts
 export { default as MRRChart } from './charts/MRRChart';

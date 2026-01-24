@@ -50,4 +50,4 @@ const Button = memo(forwardRef(function Button(
 
 Button.displayName = 'Button';
 
-export default Button;
+export { Button };

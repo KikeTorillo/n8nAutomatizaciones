@@ -429,13 +429,44 @@ function AppHomePage() {
 
       {/* Content */}
       <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Trial Banner - Mostrar si la org está en trial */}
-        {!esEmpleado && estadoSuscripcion?.es_trial && (
-          <TrialBanner
-            diasRestantes={estadoSuscripcion.dias_restantes_trial}
-            planNombre={estadoSuscripcion.plan_nombre}
-            className="mb-6"
-          />
+        {/* Banner de Plan - Mostrar Trial o Plan Activo */}
+        {!esEmpleado && (
+          <>
+            {/* Trial Banner */}
+            {estadoSuscripcion?.es_trial && (
+              <TrialBanner
+                diasRestantes={estadoSuscripcion.dias_restantes_trial}
+                planNombre={estadoSuscripcion.plan_nombre}
+                className="mb-6"
+              />
+            )}
+
+            {/* Plan Activo Banner - Compacto y elegante */}
+            {!estadoSuscripcion?.es_trial && estadoSuscripcion?.plan_actual && (
+              <button
+                onClick={() => navigate('/mi-plan')}
+                className="w-full mb-6 flex items-center justify-between gap-4 px-4 py-3 bg-gradient-to-r from-primary-50 to-primary-100/50 dark:from-primary-900/30 dark:to-primary-800/20 border border-primary-200 dark:border-primary-800 rounded-lg hover:border-primary-300 dark:hover:border-primary-700 transition-colors text-left group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-primary-500 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <CreditCard className="w-4 h-4 text-white" />
+                  </div>
+                  <div>
+                    <span className="font-medium text-primary-900 dark:text-primary-100">
+                      Plan {estadoSuscripcion.plan_actual.charAt(0).toUpperCase() + estadoSuscripcion.plan_actual.slice(1)}
+                    </span>
+                    <span className="mx-2 text-primary-300 dark:text-primary-600">•</span>
+                    <span className="text-sm text-primary-600 dark:text-primary-400">
+                      Suscripción activa
+                    </span>
+                  </div>
+                </div>
+                <span className="text-sm text-primary-600 dark:text-primary-400 font-medium group-hover:translate-x-0.5 transition-transform">
+                  Gestionar →
+                </span>
+              </button>
+            )}
+          </>
         )}
 
         {/* Widgets de estado - Solo para admin/propietario */}
@@ -546,13 +577,13 @@ function AppHomePage() {
         {/* Accesos Rápidos - Solo para admin/propietario */}
         {!esEmpleado && <QuickActions />}
 
-        {/* Mensaje para plan Free - Solo si NO está en trial y NO tiene el TrialBanner */}
-        {!esEmpleado && esPlanFree && !estadoSuscripcion?.es_trial && (
+        {/* Mensaje para plan Free - Solo si NO está en trial y NO tiene plan activo */}
+        {!esEmpleado && esPlanFree && !estadoSuscripcion?.es_trial && !estadoSuscripcion?.plan_actual && (
           <div className="mt-10 text-center">
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-full text-amber-700 dark:text-amber-300 text-sm">
               <span>Algunas apps requieren</span>
               <button
-                onClick={() => navigate('/planes')}
+                onClick={() => navigate('/mi-plan')}
                 className="font-semibold hover:underline"
               >
                 Plan Pro

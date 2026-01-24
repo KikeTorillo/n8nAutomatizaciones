@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { memo, useState, useRef } from 'react';
 import { ChevronDown, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useClickOutside, useEscapeKey } from '@/hooks/utils';
@@ -6,8 +6,16 @@ import { DROPDOWN_ITEM_STYLES, COUNT_STYLES } from './constants';
 
 /**
  * MobileTabSelector - Dropdown para seleccionar tabs en móvil
+ *
+ * @component
+ * @param {Object} props
+ * @param {Array} props.tabs - Array de tabs disponibles
+ * @param {string} props.activeTab - ID del tab activo
+ * @param {function} props.onTabChange - Callback al cambiar tab
+ * @param {function} props.getTabIcon - Función para obtener icono de tab
+ * @returns {React.ReactElement}
  */
-function MobileTabSelector({ tabs, activeTab, onTabChange, getTabIcon }) {
+const MobileTabSelector = memo(function MobileTabSelector({ tabs, activeTab, onTabChange, getTabIcon }) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -93,6 +101,8 @@ function MobileTabSelector({ tabs, activeTab, onTabChange, getTabIcon }) {
       )}
     </div>
   );
-}
+});
+
+MobileTabSelector.displayName = 'MobileTabSelector';
 
 export default MobileTabSelector;

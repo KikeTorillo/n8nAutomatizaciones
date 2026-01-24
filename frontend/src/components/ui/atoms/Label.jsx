@@ -1,16 +1,24 @@
 /**
- * Label - Atom para etiquetas de formulario
- * Fase 2 del Plan de Mejoras Frontend - Enero 2026
+ * Label - Atom para etiquetas de formulario accesible
+ * Ene 2026 - Preparación Librería UI
  */
 import { memo } from 'react';
 import { cn } from '@/lib/utils';
+import { LABEL_BASE, LABEL_REQUIRED, ARIA_LABELS } from '@/lib/uiConstants';
 
 /**
- * Componente Label reutilizable
- * @param {string|React.ReactNode} label - Texto o nodo React para la etiqueta
- * @param {boolean} required - Si el campo es obligatorio
- * @param {string} htmlFor - ID del elemento asociado
- * @param {string} className - Clases adicionales
+ * Label - Componente label reutilizable y accesible
+ *
+ * @component
+ * @example
+ * <Label label="Email" required htmlFor="email-input" />
+ *
+ * @param {Object} props
+ * @param {string|React.ReactNode} props.label - Texto o nodo React para la etiqueta
+ * @param {boolean} [props.required=false] - Si el campo es obligatorio (muestra asterisco)
+ * @param {string} [props.htmlFor] - ID del elemento asociado
+ * @param {string} [props.className] - Clases adicionales
+ * @returns {React.ReactElement|null}
  */
 const Label = memo(function Label({ label, required = false, htmlFor, className }) {
   if (!label) return null;
@@ -18,13 +26,15 @@ const Label = memo(function Label({ label, required = false, htmlFor, className 
   return (
     <label
       htmlFor={htmlFor}
-      className={cn(
-        'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1',
-        className
-      )}
+      className={cn(LABEL_BASE, className)}
     >
       {label}
-      {required && <span className="text-red-500 ml-1">*</span>}
+      {required && (
+        <>
+          <span className={LABEL_REQUIRED.asterisk} aria-hidden="true">*</span>
+          <span className={LABEL_REQUIRED.srOnly}>{ARIA_LABELS.required}</span>
+        </>
+      )}
     </label>
   );
 });

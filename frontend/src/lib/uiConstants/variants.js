@@ -25,18 +25,22 @@ export const BUTTON_VARIANTS = {
 
 /**
  * Variantes para badges
+ * NOTA: Usar 'danger' como nombre canónico, 'error' es alias para retrocompatibilidad
  */
 export const BADGE_VARIANTS = {
   default: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
   primary: 'bg-primary-100 text-primary-800 dark:bg-primary-900/40 dark:text-primary-300',
   success: 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300',
   warning: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300',
-  error: 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300',
+  danger: 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300',
   info: 'bg-primary-100 text-primary-800 dark:bg-primary-900/40 dark:text-primary-300',
 };
+// Alias para retrocompatibilidad
+BADGE_VARIANTS.error = BADGE_VARIANTS.danger;
 
 /**
  * Variantes para alerts/notificaciones
+ * NOTA: Usar 'danger' como nombre canónico, 'error' es alias para retrocompatibilidad
  */
 export const ALERT_VARIANTS = {
   info: {
@@ -57,23 +61,26 @@ export const ALERT_VARIANTS = {
     title: 'text-yellow-800 dark:text-yellow-200',
     text: 'text-yellow-700 dark:text-yellow-300',
   },
-  error: {
+  danger: {
     container: 'bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-800',
     icon: 'text-red-600 dark:text-red-400',
     title: 'text-red-800 dark:text-red-200',
     text: 'text-red-700 dark:text-red-300',
   },
 };
+// Alias para retrocompatibilidad
+ALERT_VARIANTS.error = ALERT_VARIANTS.danger;
 
 /**
  * Variantes para toast notifications
+ * NOTA: Usar 'danger' como nombre canónico, 'error' es alias para retrocompatibilidad
  */
 export const TOAST_VARIANTS = {
   success: {
     icon: 'text-green-500 dark:text-green-400',
     progress: 'bg-green-500 dark:bg-green-400',
   },
-  error: {
+  danger: {
     icon: 'text-red-500 dark:text-red-400',
     progress: 'bg-red-500 dark:bg-red-400',
   },
@@ -86,6 +93,8 @@ export const TOAST_VARIANTS = {
     progress: 'bg-primary-500 dark:bg-primary-400',
   },
 };
+// Alias para retrocompatibilidad
+TOAST_VARIANTS.error = TOAST_VARIANTS.danger;
 
 /**
  * Variantes para cards
@@ -109,6 +118,7 @@ export const INPUT_VARIANTS = {
 
 /**
  * Variantes extendidas para toast (incluye iconos y contenedor)
+ * NOTA: Usar 'danger' como nombre canónico, 'error' es alias para retrocompatibilidad
  */
 export const TOAST_EXTENDED_VARIANTS = {
   success: {
@@ -117,7 +127,7 @@ export const TOAST_EXTENDED_VARIANTS = {
     iconColor: 'text-green-600 dark:text-green-400',
     textColor: 'text-green-800 dark:text-green-200',
   },
-  error: {
+  danger: {
     bg: 'bg-red-50 dark:bg-red-900/30',
     border: 'border-red-200 dark:border-red-800',
     iconColor: 'text-red-600 dark:text-red-400',
@@ -136,6 +146,8 @@ export const TOAST_EXTENDED_VARIANTS = {
     textColor: 'text-primary-800 dark:text-primary-200',
   },
 };
+// Alias para retrocompatibilidad
+TOAST_EXTENDED_VARIANTS.error = TOAST_EXTENDED_VARIANTS.danger;
 
 /**
  * Estilos del contenedor de toast

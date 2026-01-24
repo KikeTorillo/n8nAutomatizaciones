@@ -93,6 +93,7 @@ export const StatCard = memo(function StatCard({
         role={onClick ? 'button' : undefined}
         tabIndex={onClick ? 0 : undefined}
         onKeyDown={onClick ? (e) => e.key === 'Enter' && onClick() : undefined}
+        aria-label={`${displayLabel}: ${value}${displaySubtext ? `, ${displaySubtext}` : ''}`}
       >
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
@@ -128,6 +129,7 @@ export const StatCard = memo(function StatCard({
       role={onClick ? 'button' : undefined}
       tabIndex={onClick ? 0 : undefined}
       onKeyDown={onClick ? (e) => e.key === 'Enter' && onClick() : undefined}
+      aria-label={`${displayLabel}: ${value}${displaySubtext ? `, ${displaySubtext}` : ''}`}
     >
       <div className="flex items-center gap-2 sm:gap-3">
         <div className={cn('p-2 rounded-lg', colors.bg)}>
@@ -166,5 +168,3 @@ export const StatCard = memo(function StatCard({
 });
 
 StatCard.displayName = 'StatCard';
-
-export default StatCard;

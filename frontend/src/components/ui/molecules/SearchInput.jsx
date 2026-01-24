@@ -102,7 +102,7 @@ const SearchInput = memo(forwardRef(
     }, [size, showClear, internalValue]);
 
     return (
-      <div className={cn('relative', className)}>
+      <div className={cn('relative', className)} role="search">
         {/* Icono de búsqueda */}
         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
           <Search className={cn(
@@ -159,4 +159,4 @@ const SearchInput = memo(forwardRef(
 
 SearchInput.displayName = 'SearchInput';
 
-export default SearchInput;
+export { SearchInput };
