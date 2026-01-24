@@ -146,4 +146,5 @@ const Alert = memo(function Alert({
 
 Alert.displayName = 'Alert';
 
+export { Alert };
 export default Alert;

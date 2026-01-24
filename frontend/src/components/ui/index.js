@@ -13,55 +13,55 @@
  */
 
 // ========== ATOMS ==========
-export { default as Button } from './atoms/Button';
-export { default as Input } from './atoms/Input';
-export { default as Select } from './atoms/Select';
-export { default as Textarea } from './atoms/Textarea';
-export { default as Checkbox } from './atoms/Checkbox';
-export { default as Badge } from './atoms/Badge';
-export { default as LoadingSpinner } from './atoms/LoadingSpinner';
-export { default as Label } from './atoms/Label';
+export { Button } from './atoms/Button';
+export { Input } from './atoms/Input';
+export { Select } from './atoms/Select';
+export { Textarea } from './atoms/Textarea';
+export { Checkbox } from './atoms/Checkbox';
+export { Badge } from './atoms/Badge';
+export { LoadingSpinner } from './atoms/LoadingSpinner';
+export { Label } from './atoms/Label';
 
 // ========== MOLECULES ==========
-export { default as Alert } from './molecules/Alert';
-export { default as SearchInput } from './molecules/SearchInput';
+export { Alert } from './molecules/Alert';
+export { SearchInput } from './molecules/SearchInput';
 export { Pagination } from './molecules/Pagination';
-export { default as StatCard } from './molecules/StatCard';
+export { StatCard } from './molecules/StatCard';
 export { EmptyState } from './molecules/EmptyState';
 export { ViewTabs } from './molecules/ViewTabs';
-export { default as Breadcrumb } from './molecules/Breadcrumb';
-export { default as RecordNavigation } from './molecules/RecordNavigation';
+export { Breadcrumb } from './molecules/Breadcrumb';
+export { RecordNavigation } from './molecules/RecordNavigation';
 export { SkeletonTable, SkeletonCard, SkeletonList } from './molecules/SkeletonTable';
-export { default as Toast } from './molecules/Toast';
-export { default as BackButton } from './molecules/BackButton';
-export { default as ThemeToggle } from './molecules/ThemeToggle';
+export { Toast } from './molecules/Toast';
+export { BackButton } from './molecules/BackButton';
+export { ThemeToggle } from './molecules/ThemeToggle';
 // Componentes con lógica compleja (movidos desde atoms/ Ene 2026)
 export { ProgressBar, LimitProgressBar } from './molecules/ProgressBar';
 // Nuevos (Ene 2026) - Fase 2 mejoras UI
-export { default as FormGroup } from './molecules/FormGroup';
+export { FormGroup } from './molecules/FormGroup';
 // Nuevos (Ene 2026) - Optimización arquitectónica
-export { default as SearchFilterBar } from './molecules/SearchFilterBar';
+export { SearchFilterBar } from './molecules/SearchFilterBar';
 export { default as CheckboxGroup } from './molecules/CheckboxGroup';
-export { default as CheckboxField } from './molecules/CheckboxField';
-export { default as DropdownMenu } from './molecules/DropdownMenu';
+export { CheckboxField } from './molecules/CheckboxField';
+export { DropdownMenu } from './molecules/DropdownMenu';
 
 // ========== ORGANISMS ==========
-export { default as Modal } from './organisms/Modal';
-export { default as Drawer } from './organisms/Drawer';
+export { Modal } from './organisms/Modal';
+export { Drawer } from './organisms/Drawer';
 export { default as IconPicker, ICONOS_MAP, CATEGORIAS_ICONOS, IconButton } from './organisms/icon-picker';
-export { default as MultiSelect } from './organisms/MultiSelect'; // Ene 2026: Movido desde molecules
-export { default as BarcodeScanner } from './organisms/BarcodeScanner';
-export { default as ConfirmDialog } from './organisms/ConfirmDialog';
+export { MultiSelect } from './organisms/MultiSelect';
+export { BarcodeScanner } from './organisms/BarcodeScanner';
+export { ConfirmDialog } from './organisms/ConfirmDialog';
 export { DataTable, DataTableActions, DataTableActionButton } from './organisms/DataTable';
 export { FilterPanel, FilterChips } from './organisms/FilterPanel';
-export { default as StatCardGrid } from './organisms/StatCardGrid';
-export { default as ExpandableCrudSection } from './organisms/ExpandableCrudSection';
-export { default as GenericNavTabs } from './organisms/GenericNavTabs';
+export { StatCardGrid } from './organisms/StatCardGrid';
+export { ExpandableCrudSection } from './organisms/ExpandableCrudSection';
+export { GenericNavTabs } from './organisms/GenericNavTabs';
 export { default as NavDropdown } from './organisms/NavDropdown';
 export { default as SmartButtons } from './organisms/SmartButtons';
 export { TreeView, useTreeExpansion } from './organisms/TreeNode';
-export { default as MobileNavSelector } from './organisms/MobileNavSelector';
-export { default as ToastContainer } from './organisms/ToastContainer';
+export { MobileNavSelector } from './organisms/MobileNavSelector';
+export { ToastContainer } from './organisms/ToastContainer';
 export { default as StateNavTabs, TabDropdown, MobileTabSelector } from './organisms/state-nav-tabs';
 
 // Filters (organisms)
@@ -82,9 +82,9 @@ export {
 } from './organisms/filters';
 
 // ========== TEMPLATES ==========
-export { default as BasePageLayout } from './templates/BasePageLayout';
-export { default as ModuleGuard } from './templates/ModuleGuard';
-export { default as ListadoCRUDPage } from './templates/ListadoCRUDPage';
+export { BasePageLayout } from './templates/BasePageLayout';
+export { ModuleGuard, ModuleVisible, ModuleHidden } from './templates/ModuleGuard';
+export { ListadoCRUDPage } from './templates/ListadoCRUDPage';
 
 // ========== EXTERNOS ==========
 export { default as ChunkErrorBoundary } from '../common/ChunkErrorBoundary';

@@ -1,7 +1,8 @@
+import { memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useModulos } from '@/hooks/sistema';
 import { Lock, Package, ShoppingCart, DollarSign, Globe, Bot, Calendar, ArrowLeft } from 'lucide-react';
-import Button from '../atoms/Button';
+import { Button } from '../atoms/Button';
 
 /**
  * Mapeo de iconos por módulo
@@ -65,7 +66,7 @@ const NOMBRES_MODULOS = {
  *   <ComisionesPage />
  * </ModuleGuard>
  */
-function ModuleGuard({
+const ModuleGuard = memo(function ModuleGuard({
   requiere,
   requiereTodos = false,
   children,
@@ -169,7 +170,9 @@ function ModuleGuard({
       </div>
     </div>
   );
-}
+});
+
+ModuleGuard.displayName = 'ModuleGuard';
 
 /**
  * Componente para mostrar/ocultar elementos basado en módulos
@@ -180,14 +183,16 @@ function ModuleGuard({
  *   <AlertasInventarioWidget />
  * </ModuleVisible>
  */
-export function ModuleVisible({ modulo, children }) {
+const ModuleVisible = memo(function ModuleVisible({ modulo, children }) {
   const { tieneModulo, isLoading } = useModulos();
 
   if (isLoading) return null;
   if (!tieneModulo(modulo)) return null;
 
   return children;
-}
+});
+
+ModuleVisible.displayName = 'ModuleVisible';
 
 /**
  * Componente para mostrar contenido solo si NO tiene el módulo
@@ -198,13 +203,16 @@ export function ModuleVisible({ modulo, children }) {
  *   <UpgradeInventarioCard />
  * </ModuleHidden>
  */
-export function ModuleHidden({ modulo, children }) {
+const ModuleHidden = memo(function ModuleHidden({ modulo, children }) {
   const { tieneModulo, isLoading } = useModulos();
 
   if (isLoading) return null;
   if (tieneModulo(modulo)) return null;
 
   return children;
-}
+});
 
+ModuleHidden.displayName = 'ModuleHidden';
+
+export { ModuleGuard, ModuleVisible, ModuleHidden };
 export default ModuleGuard;

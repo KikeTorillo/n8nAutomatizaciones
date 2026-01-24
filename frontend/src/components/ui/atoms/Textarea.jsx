@@ -49,4 +49,5 @@ const Textarea = memo(forwardRef(function Textarea(
 
 Textarea.displayName = 'Textarea';
 
+export { Textarea };
 export default Textarea;

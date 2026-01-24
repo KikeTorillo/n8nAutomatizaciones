@@ -3,6 +3,6 @@
  * Layouts de página y componentes de alto nivel
  */
 
-export { default as BasePageLayout } from './BasePageLayout';
-export { default as ModuleGuard } from './ModuleGuard';
-export { default as ListadoCRUDPage } from './ListadoCRUDPage';
+export { BasePageLayout } from './BasePageLayout';
+export { ModuleGuard, ModuleVisible, ModuleHidden } from './ModuleGuard';
+export { ListadoCRUDPage } from './ListadoCRUDPage';

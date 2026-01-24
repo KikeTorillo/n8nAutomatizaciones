@@ -78,4 +78,5 @@ const Select = memo(forwardRef(function Select(
 
 Select.displayName = 'Select';
 
+export { Select };
 export default Select;

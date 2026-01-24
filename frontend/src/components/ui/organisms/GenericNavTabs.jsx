@@ -134,4 +134,5 @@ const GenericNavTabs = memo(function GenericNavTabs({
 
 GenericNavTabs.displayName = 'GenericNavTabs';
 
+export { GenericNavTabs };
 export default GenericNavTabs;

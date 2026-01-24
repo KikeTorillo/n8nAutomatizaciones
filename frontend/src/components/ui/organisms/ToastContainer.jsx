@@ -32,4 +32,7 @@ const ToastContainer = memo(function ToastContainer() {
   );
 });
 
+ToastContainer.displayName = 'ToastContainer';
+
+export { ToastContainer };
 export default ToastContainer;

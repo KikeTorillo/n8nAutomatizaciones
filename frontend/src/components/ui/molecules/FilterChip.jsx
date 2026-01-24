@@ -78,4 +78,6 @@ function FilterChip({
 
 FilterChip.displayName = 'FilterChip';
 
-export default memo(FilterChip);
+const MemoizedFilterChip = memo(FilterChip);
+export { MemoizedFilterChip as FilterChip };
+export default MemoizedFilterChip;

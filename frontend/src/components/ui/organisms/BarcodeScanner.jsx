@@ -207,4 +207,7 @@ const BarcodeScanner = ({
     );
 };
 
+BarcodeScanner.displayName = 'BarcodeScanner';
+
+export { BarcodeScanner };
 export default BarcodeScanner;

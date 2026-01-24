@@ -31,4 +31,5 @@ const Label = memo(function Label({ label, required = false, htmlFor, className 
 
 Label.displayName = 'Label';
 
+export { Label };
 export default Label;

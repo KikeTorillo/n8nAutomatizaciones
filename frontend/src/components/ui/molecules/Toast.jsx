@@ -64,4 +64,5 @@ const Toast = memo(function Toast({ id, message, type = 'info', duration = 5000,
 
 Toast.displayName = 'Toast';
 
+export { Toast };
 export default Toast;

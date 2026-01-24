@@ -1,6 +1,7 @@
+import { memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
-import Button from '../atoms/Button';
+import { Button } from '../atoms/Button';
 
 /**
  * Componente BackButton reutilizable
@@ -10,7 +11,7 @@ import Button from '../atoms/Button';
  * @param {string} label - Texto del botón (default: "Volver")
  * @param {string} className - Clases adicionales
  */
-function BackButton({ to, label = 'Volver', className = '' }) {
+const BackButton = memo(function BackButton({ to, label = 'Volver', className = '' }) {
   const navigate = useNavigate();
 
   const handleClick = () => {
@@ -32,8 +33,9 @@ function BackButton({ to, label = 'Volver', className = '' }) {
       {label}
     </Button>
   );
-}
+});
 
 BackButton.displayName = 'BackButton';
 
+export { BackButton };
 export default BackButton;

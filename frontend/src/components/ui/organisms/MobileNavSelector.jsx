@@ -179,4 +179,5 @@ const MobileNavSelector = memo(function MobileNavSelector({
 
 MobileNavSelector.displayName = 'MobileNavSelector';
 
+export { MobileNavSelector };
 export default MobileNavSelector;

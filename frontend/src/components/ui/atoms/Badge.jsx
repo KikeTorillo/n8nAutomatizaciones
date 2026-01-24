@@ -34,4 +34,5 @@ const Badge = memo(function Badge({
 
 Badge.displayName = 'Badge';
 
+export { Badge };
 export default Badge;

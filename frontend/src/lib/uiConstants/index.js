@@ -119,3 +119,68 @@ export {
   FILTER_GRID_LAYOUTS,
   getFilterToggleStyles,
 } from './filters';
+
+// Tables (Ene 2026)
+export {
+  TABLE_ALIGN_CLASSES,
+  TABLE_WIDTH_CLASSES,
+  TABLE_WIDTH_MAP,
+  TABLE_BASE_STYLES,
+  TABLE_HEADER_CELL,
+  TABLE_BODY_CELL,
+  TABLE_ROW_STYLES,
+} from './tables';
+
+// Empty State (Ene 2026)
+export {
+  EMPTY_STATE_SIZES,
+  EMPTY_STATE_BASE,
+  getEmptyStateSize,
+} from './emptyState';
+
+// Surfaces (Ene 2026)
+export {
+  CARD_BASE,
+  CARD_ELEVATED,
+  CARD_FLAT,
+  CARD_OUTLINE,
+  SURFACE_HOVER,
+  SURFACE_HOVER_SUBTLE,
+  OVERLAY_BACKDROP,
+  OVERLAY_SIMPLE,
+  SCROLLABLE_CONTAINER,
+  SECTION_HEADER,
+  SECTION_FOOTER,
+} from './surfaces';
+
+// Z-Index (Ene 2026)
+export {
+  Z_INDEX,
+  Z_LAYER,
+  Z_FIXED_POSITIONS,
+} from './zIndex';
+
+// Shadows (Ene 2026)
+export {
+  SHADOW,
+  SHADOW_DARK,
+  SHADOW_CONTEXT,
+  ELEVATION,
+} from './shadows';
+
+// Border Radius (Ene 2026)
+export {
+  RADIUS,
+  RADIUS_DIRECTIONAL,
+  RADIUS_CONTEXT,
+} from './radius';
+
+// Animations (Ene 2026)
+export {
+  ANIMATE,
+  TRANSITION,
+  DURATION,
+  EASE,
+  TRANSITION_PRESET,
+  TRANSFORM,
+} from './animations';

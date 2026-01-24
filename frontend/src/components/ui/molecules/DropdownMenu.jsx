@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, memo } from 'react';
 import { MoreVertical } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import Button from '../atoms/Button';
+import { Button } from '../atoms/Button';
 
 /**
  * DropdownMenu - Menú desplegable para acciones
@@ -139,4 +139,6 @@ function DropdownMenu({
 
 DropdownMenu.displayName = 'DropdownMenu';
 
-export default memo(DropdownMenu);
+const MemoizedDropdownMenu = memo(DropdownMenu);
+export { MemoizedDropdownMenu as DropdownMenu };
+export default MemoizedDropdownMenu;

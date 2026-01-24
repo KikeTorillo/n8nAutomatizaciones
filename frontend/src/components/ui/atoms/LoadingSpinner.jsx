@@ -30,4 +30,5 @@ const LoadingSpinner = memo(function LoadingSpinner({ size = 'md', className, te
 
 LoadingSpinner.displayName = 'LoadingSpinner';
 
+export { LoadingSpinner };
 export default LoadingSpinner;

@@ -41,4 +41,5 @@ const Checkbox = memo(forwardRef(function Checkbox(
 
 Checkbox.displayName = 'Checkbox';
 
+export { Checkbox };
 export default Checkbox;

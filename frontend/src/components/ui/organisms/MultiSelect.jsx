@@ -219,4 +219,5 @@ const MultiSelect = memo(forwardRef(
 
 MultiSelect.displayName = 'MultiSelect';
 
+export { MultiSelect };
 export default MultiSelect;

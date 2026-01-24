@@ -1,7 +1,7 @@
 import { memo } from 'react';
 import { AlertTriangle, CheckCircle, Info, XCircle } from 'lucide-react';
-import Modal from './Modal';
-import Button from '../atoms/Button';
+import { Modal } from './Modal';
+import { Button } from '../atoms/Button';
 
 /**
  * Componente de diálogo de confirmación
@@ -118,4 +118,5 @@ const ConfirmDialog = memo(function ConfirmDialog({
 
 ConfirmDialog.displayName = 'ConfirmDialog';
 
+export { ConfirmDialog };
 export default ConfirmDialog;

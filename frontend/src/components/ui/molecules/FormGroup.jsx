@@ -54,4 +54,5 @@ const FormGroup = memo(function FormGroup({
 
 FormGroup.displayName = 'FormGroup';
 
+export { FormGroup };
 export default FormGroup;

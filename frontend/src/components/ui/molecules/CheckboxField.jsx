@@ -74,4 +74,5 @@ const CheckboxField = memo(forwardRef(function CheckboxField(
 
 CheckboxField.displayName = 'CheckboxField';
 
+export { CheckboxField };
 export default CheckboxField;

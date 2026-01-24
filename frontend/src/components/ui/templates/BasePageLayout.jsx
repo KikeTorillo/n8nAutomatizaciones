@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { cn } from '@/lib/utils';
 import BackButton from '../molecules/BackButton';
 
@@ -21,7 +22,7 @@ import BackButton from '../molecules/BackButton';
  * @param {string} [props.className] - Clases adicionales para el container
  * @param {boolean} [props.hideSectionHeader=false] - Ocultar header de sección (útil para páginas custom)
  */
-export default function BasePageLayout({
+const BasePageLayout = memo(function BasePageLayout({
   moduleTitle,
   moduleDescription,
   backTo = '/home',
@@ -76,4 +77,9 @@ export default function BasePageLayout({
       </div>
     </div>
   );
-}
+});
+
+BasePageLayout.displayName = 'BasePageLayout';
+
+export { BasePageLayout };
+export default BasePageLayout;

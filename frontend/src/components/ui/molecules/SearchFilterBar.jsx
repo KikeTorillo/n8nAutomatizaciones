@@ -1,8 +1,8 @@
 import { memo, useMemo } from 'react';
 import { Filter, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import SearchInput from './SearchInput';
-import Button from '../atoms/Button';
+import { SearchInput } from './SearchInput';
+import { Button } from '../atoms/Button';
 import Badge from '../atoms/Badge';
 
 /**
@@ -113,4 +113,6 @@ function SearchFilterBar({
 
 SearchFilterBar.displayName = 'SearchFilterBar';
 
-export default memo(SearchFilterBar);
+const MemoizedSearchFilterBar = memo(SearchFilterBar);
+export { MemoizedSearchFilterBar as SearchFilterBar };
+export default MemoizedSearchFilterBar;
