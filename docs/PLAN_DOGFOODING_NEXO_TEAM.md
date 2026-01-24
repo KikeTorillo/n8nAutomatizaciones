@@ -1,7 +1,7 @@
 # Plan: Dogfooding Interno - Nexo Team
 
-**Fecha:** 23 Enero 2026
-**Estado:** Checkout MercadoPago funcional con Test Users
+**Fecha:** 24 Enero 2026
+**Estado:** Flujo E2E MercadoPago validado - Webhooks funcionando
 
 ---
 
@@ -18,64 +18,57 @@ Nexo Team (org_id=1)
 
 ---
 
-## FASE 12: Configuración Test Users MercadoPago ✅ COMPLETADO
+## Configuración MercadoPago (CRÍTICO)
 
-### Problema Original
+### 1. Conectores de Pago (Multi-Tenant)
 
-El checkout fallaba con error: **"Una de las partes con la que intentas hacer el pago es de prueba"**
+Las credenciales se almacenan encriptadas en `conectores_pago_org`, NO en variables de entorno.
 
-**Causa:** Las credenciales `TEST-xxx` son sandbox de cuenta REAL. Al pagar con test user comprador, MP rechazaba por incompatibilidad (vendedor real ↔ comprador test).
+**Configurar desde:** Configuración > Conectores de Pago
 
-### Solución Implementada
+| Campo | Valor |
+|-------|-------|
+| Gateway | `mercadopago` |
+| Access Token | `APP_USR-xxx` (del Test User Vendedor) |
+| Public Key | `APP_USR-xxx` |
+| Webhook Secret | (generado por MP al configurar webhooks) |
 
-Usar credenciales de **Test User Vendedor** (ambos test users = compatibles).
-
-### Test Users Configurados (México)
-
-| Rol | User ID | Email |
-|-----|---------|-------|
-| **Vendedor** | 2959473295 | `test_user_8490440797252778890@testuser.com` |
-| **Comprador** | TESTUSER2716725750605322996 | `test_user_2716725750605322996@testuser.com` |
-
-**Contraseña comprador:** `UCgyF4L44D`
-
-### Variables de Entorno
+### 2. Variables de Entorno (.env)
 
 ```env
-# Credenciales Test User Vendedor
+# Solo estas variables son necesarias
 MERCADOPAGO_ENVIRONMENT=sandbox
-MERCADOPAGO_SANDBOX_ACCESS_TOKEN=APP_USR-4508472379774132-012314-...
-MERCADOPAGO_PUBLIC_KEY=APP_USR-bedf3faf-...
-
-# Email Test User Comprador (requerido en sandbox)
 MERCADOPAGO_TEST_PAYER_EMAIL=test_user_2716725750605322996@testuser.com
+
+# Clave para encriptar credenciales en BD
+CREDENTIAL_ENCRYPTION_KEY=<64_chars_hex>
 ```
 
-### Lógica en checkout.controller.js
+### 3. Configuración Webhooks en Panel MercadoPago
 
-```javascript
-let emailPagador;
-if (process.env.MERCADOPAGO_ENVIRONMENT === 'sandbox') {
-    // Test users requieren email de test user
-    emailPagador = process.env.MERCADOPAGO_TEST_PAYER_EMAIL;
-} else {
-    // Producción: email del usuario
-    emailPagador = suscriptorExternoFinal?.email || req.user.email;
-}
-```
+**IMPORTANTE:** Configurar en cuenta del **Test User Vendedor**, NO en cuenta principal.
 
-### Restricciones de MercadoPago con Test Users
+1. Ir a https://www.mercadopago.com.mx/developers/panel
+2. Seleccionar la aplicación
+3. Ir a **Webhooks > Modo productivo** (NO Modo de prueba)
+4. URL de producción: `https://<tu-tunnel>/api/v1/suscripciones-negocio/webhooks/mercadopago/1`
+5. Eventos a habilitar:
+   - **Pagos** (payments)
+   - **Planes y suscripciones** (subscription_preapproval)
+6. Guardar y copiar el `webhook_secret`
 
-| Restricción | Descripción |
-|-------------|-------------|
-| `payer_email` obligatorio | Sí |
-| Debe ser test user | Si vendedor es test user, comprador también |
-| Mismo país | Ambos deben ser de México |
-| No auto-pago | Vendedor ≠ Comprador |
+### 4. Test Users México
+
+| Rol | User ID | Contraseña |
+|-----|---------|------------|
+| **Vendedor** | TESTUSER8490440797252778890 | `GBpO6sgCkn` |
+| **Comprador** | TESTUSER2716725750605322996 | `UCgyF4L44D` |
+
+**Regla:** Si vendedor es test user, comprador también debe serlo.
 
 ---
 
-## Flujo de Checkout Validado ✅
+## Flujo E2E Validado
 
 ```
 Frontend (/planes)
@@ -86,69 +79,76 @@ Seleccionar Plan Pro → Click "Pagar $249"
     ▼
 Backend: POST /checkout/iniciar
     ├── Crea suscripción (estado: pendiente_pago)
-    ├── Crea preferencia en MP (con MERCADOPAGO_TEST_PAYER_EMAIL)
+    ├── Crea preapproval en MP
     └── Retorna init_point
     │
     ▼
 Redirect a MercadoPago
     ├── Login con Test User Comprador
-    ├── Pagar con "Dinero disponible"
+    ├── Seleccionar tarjeta guardada
     └── Confirmar
     │
     ▼
 MercadoPago: ¡Listo! Ya te suscribiste
     ├── status=approved
-    └── Próximo pago en 1 mes
+    └── Webhook enviado automáticamente
+    │
+    ▼
+Backend recibe webhook
+    ├── Valida firma HMAC
+    ├── Cambia estado: pendiente_pago → activa
+    └── Actualiza org vinculada (plan_actual, modulos_activos)
+    │
+    ▼
+Frontend: Callback /payment/callback
+    └── Muestra "Pago Exitoso"
 ```
 
----
-
-## Próximo Paso: Prueba E2E Completa
-
-### Validar
-
-| Paso | Verificar |
-|------|-----------|
-| 1. Checkout | ✅ Funciona |
-| 2. Webhook MP | Que active la suscripción |
-| 3. Estado en BD | `pendiente_pago` → `activa` |
-| 4. Org vinculada | `plan_actual` y `modulos_activos` actualizados |
-
-### Pendiente: Configurar Webhook en MercadoPago
-
-Para que MP notifique al backend cuando se procese el pago:
-
-1. Ir a [MercadoPago Developers](https://www.mercadopago.com.mx/developers/panel)
-2. Crear aplicación o usar existente
-3. Configurar Webhook URL: `https://<tunnel>/api/v1/mercadopago/webhook`
-4. Seleccionar eventos: `payment`, `subscription_preapproval`
-
----
-
-## Arquitectura Futura: Dos Páginas de Checkout
-
-### Página Pública: `/planes`
-- Para visitantes sin autenticar
-- Muestra todos los planes (Trial y Pro)
-
-### Página Privada: `/mi-plan`
-- Para usuarios autenticados
-- Muestra plan actual + opciones upgrade
-- Acceso desde TrialBanner
-
-| Componente | Estado |
-|------------|--------|
-| `PlanesPublicPage.jsx` | ✅ Existe |
-| `MiPlanPage.jsx` | Pendiente |
+**Resultado verificado (24 Ene 2026):**
+- Suscripción ID: 3
+- Estado: `activa`
+- Gateway ID: `585e9984a96745d9b012f69bd84e9915`
+- Webhooks recibidos: `subscription_preapproval` + `payment`
 
 ---
 
 ## Planes Activos
 
-| Plan | Precio | Límites |
-|------|--------|---------|
-| **Trial** | $0 (14 días) | 50 citas, 2 profesionales, 10 servicios |
-| **Pro** | $249/mes | Ilimitado |
+| Plan | Precio | Características |
+|------|--------|-----------------|
+| **Trial** | $0 (14 días) | agendamiento, inventario, pos |
+| **Pro** | $249/mes | Todos los módulos |
+
+---
+
+## Próximos Pasos
+
+### 1. Validar Módulo Completo
+
+| Área | Verificar |
+|------|-----------|
+| Duplicados | Que no se creen suscripciones duplicadas al reintentar pago |
+| Asociación correcta | Cliente ↔ Suscripción ↔ Organización vinculada |
+| Cancelación | Flujo de cancelación desde MP y desde Nexo |
+| Renovación | Cobro automático al vencer período |
+
+### 2. Comparar con Odoo
+
+| Feature Odoo | Estado Nexo |
+|--------------|-------------|
+| Planes con precios múltiples | ✅ Implementado |
+| Cupones de descuento | ✅ Implementado |
+| Período de prueba | ✅ Implementado |
+| Métricas MRR/Churn | ✅ Implementado |
+| Upgrade/Downgrade | Pendiente |
+| Proration (prorrateo) | Pendiente |
+
+### 3. Página Mi Plan
+
+| Componente | Estado |
+|------------|--------|
+| `PlanesPublicPage.jsx` | ✅ Existe |
+| `MiPlanPage.jsx` (upgrade desde trial) | Pendiente |
 
 ---
 
@@ -156,12 +156,12 @@ Para que MP notifique al backend cuando se procese el pago:
 
 | Archivo | Propósito |
 |---------|-----------|
-| `checkout.controller.js` | Flujo de checkout con MP |
+| `checkout.controller.js` | Flujo checkout + creación preapproval |
+| `webhooks.controller.js` | Recibe y procesa webhooks MP |
 | `mercadopago.service.js` | Cliente MP multi-tenant |
-| `config/constants.js` | `NEXO_TEAM_ORG_ID` |
-| `PlanesPublicPage.jsx` | Página pública de planes |
-| `CheckoutModal.jsx` | Modal de confirmación |
+| `conectores.controller.js` | CRUD conectores de pago |
+| `suscripciones.model.js` | Estados, transiciones, bypass RLS |
 
 ---
 
-**Última Actualización:** 23 Enero 2026
+**Última Actualización:** 24 Enero 2026

@@ -6,11 +6,12 @@
  * Adapta las funcionalidades del servicio principal para cobros automáticos.
  *
  * MULTI-TENANT:
- * - Cada organización puede tener sus propias credenciales de MercadoPago
- * - Si no tiene, usa las credenciales globales (env vars)
+ * - Cada organización DEBE tener sus propias credenciales configuradas
+ * - Se requiere conector en conectores_pago_org
+ * - Sin conector = Error (no hay fallback)
  *
  * @module suscripciones-negocio/services/mercadopago
- * @version 2.0.0 - Multi-tenant support
+ * @version 2.1.0 - Conector obligatorio
  * @date Enero 2026
  */
 
@@ -23,15 +24,17 @@ class MercadoPagoSuscripcionesService {
      * Crear pago recurrente con card token
      *
      * @param {Object} data - Datos del pago
-     * @param {number} organizacionId - ID de la organización (para multi-tenant)
+     * @param {number} organizacionId - ID de la organización (REQUERIDO)
      * @returns {Promise<Object>} - Pago de MercadoPago
      */
-    async crearPago(data, organizacionId = null) {
+    async crearPago(data, organizacionId) {
+        if (!organizacionId) {
+            throw new Error('crearPago: organizacionId es requerido');
+        }
+
         try {
-            // Obtener instancia multi-tenant
-            const mpService = organizacionId
-                ? await MercadoPagoService.getForOrganization(organizacionId)
-                : MercadoPagoService.getGlobalInstance();
+            // Obtener instancia multi-tenant (requiere conector configurado)
+            const mpService = await MercadoPagoService.getForOrganization(organizacionId);
 
             mpService._ensureInitialized();
 
@@ -80,45 +83,31 @@ class MercadoPagoSuscripcionesService {
      * Obtener información de un pago
      *
      * @param {string} paymentId - ID del pago
-     * @param {number} organizacionId - ID de la organización (para multi-tenant)
+     * @param {number} organizacionId - ID de la organización (REQUERIDO)
      * @returns {Promise<Object>} - Datos del pago
      */
-    async obtenerPago(paymentId, organizacionId = null) {
-        const mpService = organizacionId
-            ? await MercadoPagoService.getForOrganization(organizacionId)
-            : MercadoPagoService.getGlobalInstance();
+    async obtenerPago(paymentId, organizacionId) {
+        if (!organizacionId) {
+            throw new Error('obtenerPago: organizacionId es requerido');
+        }
 
+        const mpService = await MercadoPagoService.getForOrganization(organizacionId);
         return await mpService.obtenerPago(paymentId);
-    }
-
-    /**
-     * Validar webhook de MercadoPago
-     *
-     * @param {string} signature - Header x-signature
-     * @param {string} requestId - Header x-request-id
-     * @param {string} dataId - ID del recurso notificado
-     * @param {number} organizacionId - ID de la organización (para multi-tenant)
-     * @returns {boolean} - true si es válido
-     */
-    validarWebhook(signature, requestId, dataId, organizacionId = null) {
-        // Para webhooks, usamos la instancia global por defecto
-        // ya que MercadoPago no envía el organizacionId en el webhook
-        const mpService = MercadoPagoService.getGlobalInstance();
-        return mpService.validarWebhook(signature, requestId, dataId);
     }
 
     /**
      * Crear suscripción recurrente con init_point
      *
      * @param {Object} params - Parámetros de la suscripción
-     * @param {number} organizacionId - ID de la organización (para multi-tenant)
+     * @param {number} organizacionId - ID de la organización (REQUERIDO)
      * @returns {Promise<Object>} - {id, status, init_point}
      */
-    async crearSuscripcionRecurrente(params, organizacionId = null) {
-        const mpService = organizacionId
-            ? await MercadoPagoService.getForOrganization(organizacionId)
-            : MercadoPagoService.getGlobalInstance();
+    async crearSuscripcionRecurrente(params, organizacionId) {
+        if (!organizacionId) {
+            throw new Error('crearSuscripcionRecurrente: organizacionId es requerido');
+        }
 
+        const mpService = await MercadoPagoService.getForOrganization(organizacionId);
         return await mpService.crearSuscripcionConInitPoint(params);
     }
 
@@ -126,14 +115,15 @@ class MercadoPagoSuscripcionesService {
      * Obtener suscripción por ID
      *
      * @param {string} subscriptionId - ID de la suscripción
-     * @param {number} organizacionId - ID de la organización (para multi-tenant)
+     * @param {number} organizacionId - ID de la organización (REQUERIDO)
      * @returns {Promise<Object>} - Datos de la suscripción
      */
-    async obtenerSuscripcion(subscriptionId, organizacionId = null) {
-        const mpService = organizacionId
-            ? await MercadoPagoService.getForOrganization(organizacionId)
-            : MercadoPagoService.getGlobalInstance();
+    async obtenerSuscripcion(subscriptionId, organizacionId) {
+        if (!organizacionId) {
+            throw new Error('obtenerSuscripcion: organizacionId es requerido');
+        }
 
+        const mpService = await MercadoPagoService.getForOrganization(organizacionId);
         return await mpService.obtenerSuscripcion(subscriptionId);
     }
 
@@ -141,14 +131,15 @@ class MercadoPagoSuscripcionesService {
      * Cancelar suscripción
      *
      * @param {string} subscriptionId - ID de la suscripción
-     * @param {number} organizacionId - ID de la organización (para multi-tenant)
+     * @param {number} organizacionId - ID de la organización (REQUERIDO)
      * @returns {Promise<Object>} - Suscripción cancelada
      */
-    async cancelarSuscripcion(subscriptionId, organizacionId = null) {
-        const mpService = organizacionId
-            ? await MercadoPagoService.getForOrganization(organizacionId)
-            : MercadoPagoService.getGlobalInstance();
+    async cancelarSuscripcion(subscriptionId, organizacionId) {
+        if (!organizacionId) {
+            throw new Error('cancelarSuscripcion: organizacionId es requerido');
+        }
 
+        const mpService = await MercadoPagoService.getForOrganization(organizacionId);
         return await mpService.cancelarSuscripcion(subscriptionId);
     }
 
@@ -156,14 +147,15 @@ class MercadoPagoSuscripcionesService {
      * Pausar suscripción
      *
      * @param {string} subscriptionId - ID de la suscripción
-     * @param {number} organizacionId - ID de la organización (para multi-tenant)
+     * @param {number} organizacionId - ID de la organización (REQUERIDO)
      * @returns {Promise<Object>} - Suscripción pausada
      */
-    async pausarSuscripcion(subscriptionId, organizacionId = null) {
-        const mpService = organizacionId
-            ? await MercadoPagoService.getForOrganization(organizacionId)
-            : MercadoPagoService.getGlobalInstance();
+    async pausarSuscripcion(subscriptionId, organizacionId) {
+        if (!organizacionId) {
+            throw new Error('pausarSuscripcion: organizacionId es requerido');
+        }
 
+        const mpService = await MercadoPagoService.getForOrganization(organizacionId);
         return await mpService.pausarSuscripcion(subscriptionId);
     }
 

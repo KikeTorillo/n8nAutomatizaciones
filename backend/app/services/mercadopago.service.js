@@ -28,7 +28,6 @@
 
 const { MercadoPagoConfig, PreApproval, Payment } = require('mercadopago');
 const crypto = require('crypto');
-const config = require('../config/mercadopago');
 const logger = require('../utils/logger');
 
 // Cache de instancias por organización (evita recrear en cada request)
@@ -38,37 +37,42 @@ const CACHE_TTL = 5 * 60 * 1000; // 5 minutos
 class MercadoPagoService {
 
     /**
-     * @param {Object} [credentials] - Credenciales personalizadas
+     * @param {Object} credentials - Credenciales (REQUERIDO)
      * @param {string} credentials.accessToken - Access token de MP
      * @param {string} [credentials.webhookSecret] - Secret para validar webhooks
      * @param {string} [credentials.environment] - 'sandbox' o 'production'
      * @param {number} [organizacionId] - ID de la organización (para logging)
      */
-    constructor(credentials = null, organizacionId = null) {
+    constructor(credentials, organizacionId = null) {
+        if (!credentials || !credentials.accessToken) {
+            throw new Error(
+                'MercadoPagoService requiere credenciales. ' +
+                'Use getForOrganization() para obtener credenciales del conector.'
+            );
+        }
+
         this._initialized = false;
         this.client = null;
         this.subscriptionClient = null;
         this.paymentClient = null;
-
-        // Credenciales: personalizadas o globales
-        this.credentials = credentials || {
-            accessToken: config.accessToken,
-            webhookSecret: config.webhookSecret,
-            environment: config.environment
-        };
-
+        this.credentials = credentials;
         this.organizacionId = organizacionId;
     }
 
     /**
      * Factory: Obtener instancia para una organización específica
-     * Busca credenciales en conectores_pago_org, con fallback a env vars
+     * Busca credenciales en conectores_pago_org. REQUIERE conector configurado.
      *
      * @param {number} organizacionId - ID de la organización
      * @param {string} [entorno] - 'sandbox' o 'production' (default: según NODE_ENV)
      * @returns {Promise<MercadoPagoService>} Instancia configurada
+     * @throws {Error} Si no hay conector configurado para la organización
      */
     static async getForOrganization(organizacionId, entorno = null) {
+        if (!organizacionId) {
+            throw new Error('MercadoPago: organizacionId es requerido');
+        }
+
         const env = entorno || (process.env.NODE_ENV === 'production' ? 'production' : 'sandbox');
         const cacheKey = `${organizacionId}:mercadopago:${env}`;
 
@@ -82,33 +86,30 @@ class MercadoPagoService {
             return cached.instance;
         }
 
-        // Buscar credenciales en BD
-        let credentials = null;
-        try {
-            const ConectoresModel = require('../modules/suscripciones-negocio/models/conectores.model');
-            const conector = await ConectoresModel.obtenerCredenciales(organizacionId, 'mercadopago', env);
+        // Buscar credenciales en BD (REQUERIDO)
+        const ConectoresModel = require('../modules/suscripciones-negocio/models/conectores.model');
+        const conector = await ConectoresModel.obtenerCredenciales(organizacionId, 'mercadopago', env);
 
-            if (conector) {
-                credentials = {
-                    accessToken: conector.credenciales.access_token,
-                    webhookSecret: conector.webhookSecret,
-                    environment: conector.entorno
-                };
-
-                logger.info('[MercadoPagoService] Usando credenciales de organización', {
-                    organizacionId,
-                    entorno: env,
-                    verificado: conector.verificado
-                });
-            }
-        } catch (error) {
-            logger.warn('[MercadoPagoService] Error obteniendo credenciales de org, usando globales', {
-                organizacionId,
-                error: error.message
-            });
+        if (!conector) {
+            throw new Error(
+                `MercadoPago: No hay conector configurado para la organización ${organizacionId}. ` +
+                `Configure las credenciales en Configuración > Conectores de Pago.`
+            );
         }
 
-        // Crear instancia (con credenciales de org o globales)
+        const credentials = {
+            accessToken: conector.credenciales.access_token,
+            webhookSecret: conector.webhookSecret,
+            environment: conector.entorno
+        };
+
+        logger.info('[MercadoPagoService] Usando credenciales de organización', {
+            organizacionId,
+            entorno: env,
+            verificado: conector.verificado
+        });
+
+        // Crear instancia con credenciales de BD
         const instance = new MercadoPagoService(credentials, organizacionId);
 
         // Guardar en cache
@@ -120,29 +121,8 @@ class MercadoPagoService {
         return instance;
     }
 
-    /**
-     * Obtener instancia global (credenciales de env vars)
-     * Útil para operaciones del sistema (Nexo Team)
-     *
-     * @returns {MercadoPagoService}
-     */
-    static getGlobalInstance() {
-        const cacheKey = 'global:mercadopago';
-
-        const cached = instanceCache.get(cacheKey);
-        if (cached) {
-            return cached.instance;
-        }
-
-        const instance = new MercadoPagoService();
-
-        instanceCache.set(cacheKey, {
-            instance,
-            timestamp: Date.now()
-        });
-
-        return instance;
-    }
+    // getGlobalInstance() ELIMINADO - Enero 2026
+    // Todas las operaciones deben usar getForOrganization() con credenciales de conectores_pago_org
 
     /**
      * Limpiar cache de instancias (útil cuando se actualizan credenciales)
@@ -183,7 +163,7 @@ class MercadoPagoService {
         this.client = new MercadoPagoConfig({
             accessToken: this.credentials.accessToken,
             options: {
-                timeout: config.timeout || 5000,
+                timeout: 5000,
                 idempotencyKey: this._generateIdempotencyKey()
             }
         });
@@ -211,6 +191,10 @@ class MercadoPagoService {
      * Este método crea una suscripción definiendo auto_recurring directamente,
      * en lugar de usar preapproval_plan_id. Esto permite generar un init_point
      * sin requerir card_token_id.
+     *
+     * NOTA: notification_url NO es un parámetro soportado por preapproval.
+     * Los webhooks se configuran en el panel de MercadoPago Developers.
+     * Ver: https://www.mercadopago.com.mx/developers/en/reference/subscriptions/_preapproval/post
      *
      * @param {Object} params - Parámetros de la suscripción
      * @param {string} params.nombre - Nombre/razón de la suscripción
@@ -249,6 +233,9 @@ class MercadoPagoService {
                 }
             };
 
+            // NOTA: notification_url NO es un parámetro oficial de preapproval.
+            // Los webhooks de suscripciones se configuran en el panel de MercadoPago.
+
             const response = await axios.post(
                 'https://api.mercadopago.com/preapproval',
                 subscriptionData,
@@ -258,7 +245,7 @@ class MercadoPagoService {
                         'Content-Type': 'application/json',
                         'X-Idempotency-Key': this._generateIdempotencyKey()
                     },
-                    timeout: config.timeout || 5000
+                    timeout: 5000
                 }
             );
 
@@ -413,6 +400,41 @@ class MercadoPagoService {
         }
     }
 
+    /**
+     * Obtener información de un pago autorizado de suscripción
+     * Endpoint: /authorized_payments/{id}
+     *
+     * @param {string} authorizedPaymentId - ID del pago autorizado
+     * @returns {Promise<Object>} Datos del pago autorizado incluyendo preapproval_id
+     */
+    async obtenerPagoAutorizado(authorizedPaymentId) {
+        this._ensureInitialized();
+        try {
+            const axios = require('axios');
+            const response = await axios.get(
+                `https://api.mercadopago.com/authorized_payments/${authorizedPaymentId}`,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${this.credentials.accessToken}`
+                    },
+                    timeout: 5000
+                }
+            );
+            return response.data;
+        } catch (error) {
+            logger.error('Error obteniendo pago autorizado:', {
+                authorizedPaymentId,
+                error: error.message,
+                status: error.response?.status
+            });
+            // Si es 404, retornar null en vez de lanzar error
+            if (error.response?.status === 404) {
+                return null;
+            }
+            throw new Error(`Error obteniendo pago autorizado: ${error.message}`);
+        }
+    }
+
     // ====================================================================
     // VALIDACIÓN DE WEBHOOKS (CRÍTICO PARA SEGURIDAD)
     // ====================================================================
@@ -439,7 +461,7 @@ class MercadoPagoService {
             return false;
         }
 
-        const secret = this.credentials.webhookSecret || config.webhookSecret;
+        const secret = this.credentials.webhookSecret;
         if (!secret) {
             logger.error('❌ webhookSecret no configurado');
             return false;
@@ -559,10 +581,6 @@ class MercadoPagoService {
     }
 }
 
-// Exportar clase (no singleton) para permitir multi-tenant
-// Mantener compatibilidad: exportar también instancia global
+// Exportar clase para multi-tenant
+// Usar: MercadoPagoService.getForOrganization(orgId)
 module.exports = MercadoPagoService;
-
-// Para backward compatibility con código que usa require('./mercadopago.service')
-// y espera una instancia
-module.exports.default = MercadoPagoService.getGlobalInstance();

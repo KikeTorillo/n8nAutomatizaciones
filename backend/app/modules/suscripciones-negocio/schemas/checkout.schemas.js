@@ -94,6 +94,12 @@ const obtenerResultado = Joi.object({
         .max(100)
         .optional(),
 
+    // Para suscripciones recurrentes, MercadoPago retorna preapproval_id
+    preapproval_id: Joi.string()
+        .trim()
+        .max(100)
+        .optional(),
+
     collection_status: Joi.string()
         .valid('approved', 'pending', 'rejected', 'cancelled', 'refunded', 'charged_back')
         .optional(),

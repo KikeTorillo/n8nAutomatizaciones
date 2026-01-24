@@ -9,7 +9,6 @@ export { default as StatCard } from './StatCard';
 export { EmptyState } from './EmptyState';
 export { ViewTabs } from './ViewTabs';
 export { default as Breadcrumb } from './Breadcrumb';
-export { default as NavDropdown } from './NavDropdown';
 export { default as RecordNavigation } from './RecordNavigation';
 export { SkeletonTable, SkeletonCard, SkeletonList } from './SkeletonTable';
 export { default as Toast } from './Toast';
@@ -26,7 +25,7 @@ export { default as FormGroup } from './FormGroup';
 // Nuevos (Ene 2026) - Optimización arquitectónica
 export { default as FilterChip } from './FilterChip';
 export { default as SearchFilterBar } from './SearchFilterBar';
-export { default as SmartButtons } from './SmartButtons';
 export { default as CheckboxGroup } from './CheckboxGroup';
 export { default as CheckboxField } from './CheckboxField';
 export { default as DropdownMenu } from './DropdownMenu';
+// NOTA: SmartButtons movido a organisms/ (Ene 2026)

@@ -31,10 +31,15 @@ function PaymentCallbackPage() {
   const externalReference = searchParams.get('external_reference');
   const paymentId = searchParams.get('payment_id');
   const suscripcionIdParam = searchParams.get('suscripcion_id');
+  // Para suscripciones (preapproval), MP retorna preapproval_id en lugar de external_reference
+  const preapprovalId = searchParams.get('preapproval_id');
 
-  // Parsear external_reference: "sus_123_pago_456"
+  // Parsear external_reference: "sus_123_pago_456" o usar preapproval_id
   const suscripcionId = suscripcionIdParam ||
     (externalReference?.match(/sus_(\d+)/)?.[1]);
+
+  // Si no hay suscripcionId pero hay preapprovalId, usamos ese para buscar
+  const buscarPorPreapproval = !suscripcionId && !!preapprovalId;
 
   // Query para obtener estado actualizado de la suscripción
   const {
@@ -43,14 +48,15 @@ function PaymentCallbackPage() {
     isError,
     refetch,
   } = useQuery({
-    queryKey: ['checkout-resultado', suscripcionId, collectionStatus],
+    queryKey: ['checkout-resultado', suscripcionId || preapprovalId, collectionStatus],
     queryFn: () =>
       suscripcionesNegocioApi.obtenerResultadoCheckout({
         suscripcion_id: suscripcionId,
         external_reference: externalReference,
+        preapproval_id: preapprovalId,
         collection_status: collectionStatus,
       }),
-    enabled: !!suscripcionId,
+    enabled: !!(suscripcionId || preapprovalId),
     staleTime: 0,
     refetchOnWindowFocus: false,
   });
@@ -103,8 +109,8 @@ function PaymentCallbackPage() {
   const config = estadoConfig[estadoFinal] || estadoConfig.desconocido;
   const IconComponent = config.icon;
 
-  // Si no hay suscripcion_id, mostrar error
-  if (!suscripcionId && !isLoading) {
+  // Si no hay suscripcion_id ni preapproval_id, mostrar error
+  if (!suscripcionId && !preapprovalId && !isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50 dark:bg-gray-900">
         <div className="max-w-md w-full text-center">
@@ -254,10 +260,10 @@ function PaymentCallbackPage() {
           </div>
 
           {/* ID de referencia */}
-          {(paymentId || externalReference) && (
+          {(paymentId || externalReference || preapprovalId) && (
             <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
               <p className="text-xs text-gray-400 dark:text-gray-500">
-                Referencia: {paymentId || externalReference}
+                Referencia: {paymentId || externalReference || preapprovalId}
               </p>
             </div>
           )}

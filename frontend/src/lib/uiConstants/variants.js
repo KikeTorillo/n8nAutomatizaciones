@@ -107,6 +107,41 @@ export const INPUT_VARIANTS = {
   disabled: 'bg-gray-100 dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed',
 };
 
+/**
+ * Variantes extendidas para toast (incluye iconos y contenedor)
+ */
+export const TOAST_EXTENDED_VARIANTS = {
+  success: {
+    bg: 'bg-green-50 dark:bg-green-900/30',
+    border: 'border-green-200 dark:border-green-800',
+    iconColor: 'text-green-600 dark:text-green-400',
+    textColor: 'text-green-800 dark:text-green-200',
+  },
+  error: {
+    bg: 'bg-red-50 dark:bg-red-900/30',
+    border: 'border-red-200 dark:border-red-800',
+    iconColor: 'text-red-600 dark:text-red-400',
+    textColor: 'text-red-800 dark:text-red-200',
+  },
+  warning: {
+    bg: 'bg-yellow-50 dark:bg-yellow-900/30',
+    border: 'border-yellow-200 dark:border-yellow-800',
+    iconColor: 'text-yellow-600 dark:text-yellow-400',
+    textColor: 'text-yellow-800 dark:text-yellow-200',
+  },
+  info: {
+    bg: 'bg-primary-50 dark:bg-primary-900/30',
+    border: 'border-primary-200 dark:border-primary-800',
+    iconColor: 'text-primary-700 dark:text-primary-400',
+    textColor: 'text-primary-800 dark:text-primary-200',
+  },
+};
+
+/**
+ * Estilos del contenedor de toast
+ */
+export const TOAST_CONTAINER_STYLES = 'border rounded-lg p-4 shadow-lg flex items-start gap-3 min-w-[320px] max-w-md animate-slide-in-right';
+
 export default {
   BUTTON_VARIANTS,
   BADGE_VARIANTS,
@@ -114,4 +149,6 @@ export default {
   TOAST_VARIANTS,
   CARD_VARIANTS,
   INPUT_VARIANTS,
+  TOAST_EXTENDED_VARIANTS,
+  TOAST_CONTAINER_STYLES,
 };

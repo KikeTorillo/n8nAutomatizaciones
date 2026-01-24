@@ -1,5 +1,11 @@
 import { memo, useCallback } from 'react';
 import { cn } from '@/lib/utils';
+import {
+  TAB_CONTAINER_STYLES,
+  TAB_NAV_STYLES,
+  getTabButtonStyles,
+  getTabIconStyles,
+} from '@/lib/uiConstants';
 
 /**
  * ViewTabs - Tabs para cambiar entre vistas (Lista, Calendario, etc.)
@@ -16,14 +22,9 @@ import { cn } from '@/lib/utils';
  */
 export const ViewTabs = memo(function ViewTabs({ tabs, activeTab, onChange, className, ariaLabel = 'Cambiar vista' }) {
   return (
-    <div
-      className={cn(
-        'border-b border-gray-200 dark:border-gray-700 mb-4',
-        className
-      )}
-    >
+    <div className={cn(TAB_CONTAINER_STYLES, className)}>
       <nav
-        className="flex space-x-4 sm:space-x-8 overflow-x-auto scrollbar-hide"
+        className={TAB_NAV_STYLES}
         role="tablist"
         aria-label={ariaLabel}
       >
@@ -57,22 +58,11 @@ const TabButton = memo(function TabButton({ tab, isActive, onChange }) {
       aria-controls={`tabpanel-${tab.id}`}
       tabIndex={isActive ? 0 : -1}
       onClick={handleClick}
-      className={cn(
-        'flex items-center gap-2 px-1 py-3 text-sm font-medium',
-        'border-b-2 transition-colors duration-200 whitespace-nowrap',
-        isActive
-          ? 'border-primary-600 text-primary-600 dark:border-primary-400 dark:text-primary-400'
-          : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
-      )}
+      className={getTabButtonStyles(isActive)}
     >
       {Icon && (
         <Icon
-          className={cn(
-            'w-4 h-4 sm:w-5 sm:h-5',
-            isActive
-              ? 'text-primary-600 dark:text-primary-400'
-              : 'text-gray-400 dark:text-gray-500'
-          )}
+          className={getTabIconStyles(isActive)}
           aria-hidden="true"
         />
       )}

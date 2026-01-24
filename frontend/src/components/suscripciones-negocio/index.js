@@ -28,3 +28,7 @@ export { default as TopPlanesChart } from './charts/TopPlanesChart';
 export { default as SuscripcionGeneralTab } from './tabs/SuscripcionGeneralTab';
 export { default as SuscripcionPagosTab } from './tabs/SuscripcionPagosTab';
 export { default as SuscripcionHistorialTab } from './tabs/SuscripcionHistorialTab';
+
+// Layout
+export { default as SuscripcionesNegocioNavTabs } from './SuscripcionesNegocioNavTabs';
+export { default as SuscripcionesNegocioPageLayout } from './SuscripcionesNegocioPageLayout';

@@ -27,11 +27,16 @@ router.post(
 );
 
 /**
- * POST /api/v1/suscripciones-negocio/webhooks/mercadopago
- * Webhook de MercadoPago (público)
+ * POST /api/v1/suscripciones-negocio/webhooks/mercadopago/:organizacionId
+ * Webhook de MercadoPago (público, multi-tenant)
+ *
+ * Cada organización configura su webhook en MercadoPago apuntando a su URL específica:
+ * https://tudominio.com/api/v1/suscripciones-negocio/webhooks/mercadopago/5
+ *
+ * Esto permite usar las credenciales correctas de cada organización para validar.
  */
 router.post(
-    '/mercadopago',
+    '/mercadopago/:organizacionId',
     WebhooksController.webhookMercadoPago
 );
 

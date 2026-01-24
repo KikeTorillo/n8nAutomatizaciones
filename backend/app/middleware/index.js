@@ -10,13 +10,7 @@ const validation = require('./validation');
 const rateLimiting = require('./rateLimiting');
 const asyncHandler = require('./asyncHandler');
 
-// Feature flag para sistema de suscripciones
-// true = Sistema antiguo (límites por recurso)
-// false = Sistema v2 simplificado (sin límites)
-const useOldSubscriptionSystem = process.env.USE_OLD_SUBSCRIPTION_SYSTEM === 'true';
-const subscription = useOldSubscriptionSystem
-  ? require('./subscription')
-  : require('./subscription-v2');
+const subscription = require('./subscription-v2');
 
 const modules = require('./modules');
 const storage = require('./storage');

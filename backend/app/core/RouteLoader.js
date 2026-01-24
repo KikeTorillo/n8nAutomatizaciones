@@ -54,10 +54,7 @@ class RouteLoader {
       path: '/invitaciones',
       file: '../routes/api/v1/invitaciones'
     },
-    mercadopago: {
-      path: '/mercadopago',
-      file: '../routes/api/v1/mercadopago'
-    },
+    // mercadopago: eliminado - ahora todo va por conectores_pago_org
     setup: {
       path: '/setup',
       file: '../modules/core/routes/setup'

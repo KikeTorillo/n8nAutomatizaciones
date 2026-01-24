@@ -1,5 +1,7 @@
 import { useEffect, memo } from 'react';
 import { X, CheckCircle, AlertCircle, Info, AlertTriangle } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { TOAST_EXTENDED_VARIANTS, TOAST_CONTAINER_STYLES } from '@/lib/uiConstants';
 
 /**
  * Componente Toast para notificaciones
@@ -21,53 +23,29 @@ const Toast = memo(function Toast({ id, message, type = 'info', duration = 5000,
     }
   }, [id, duration, onClose]);
 
-  const variants = {
-    success: {
-      bg: 'bg-green-50 dark:bg-green-900/30',
-      border: 'border-green-200 dark:border-green-800',
-      icon: CheckCircle,
-      iconColor: 'text-green-600 dark:text-green-400',
-      textColor: 'text-green-800 dark:text-green-200',
-    },
-    error: {
-      bg: 'bg-red-50 dark:bg-red-900/30',
-      border: 'border-red-200 dark:border-red-800',
-      icon: AlertCircle,
-      iconColor: 'text-red-600 dark:text-red-400',
-      textColor: 'text-red-800 dark:text-red-200',
-    },
-    warning: {
-      bg: 'bg-yellow-50 dark:bg-yellow-900/30',
-      border: 'border-yellow-200 dark:border-yellow-800',
-      icon: AlertTriangle,
-      iconColor: 'text-yellow-600 dark:text-yellow-400',
-      textColor: 'text-yellow-800 dark:text-yellow-200',
-    },
-    info: {
-      bg: 'bg-primary-50 dark:bg-primary-900/30',
-      border: 'border-primary-200 dark:border-primary-800',
-      icon: Info,
-      iconColor: 'text-primary-700 dark:text-primary-400',
-      textColor: 'text-primary-800 dark:text-primary-200',
-    },
+  // Mapeo de iconos por tipo
+  const icons = {
+    success: CheckCircle,
+    error: AlertCircle,
+    warning: AlertTriangle,
+    info: Info,
   };
 
-  const variant = variants[type] || variants.info;
-  const Icon = variant.icon;
+  const variant = TOAST_EXTENDED_VARIANTS[type] || TOAST_EXTENDED_VARIANTS.info;
+  const Icon = icons[type] || icons.info;
 
   return (
     <div
       role="alert"
       aria-live={type === 'error' ? 'assertive' : 'polite'}
-      className={`
-        ${variant.bg} ${variant.border} ${variant.textColor}
-        border rounded-lg p-4 shadow-lg
-        flex items-start gap-3
-        min-w-[320px] max-w-md
-        animate-slide-in-right
-      `}
+      className={cn(
+        variant.bg,
+        variant.border,
+        variant.textColor,
+        TOAST_CONTAINER_STYLES
+      )}
     >
-      <Icon className={`w-5 h-5 ${variant.iconColor} flex-shrink-0 mt-0.5`} />
+      <Icon className={cn('w-5 h-5 flex-shrink-0 mt-0.5', variant.iconColor)} />
 
       <div className="flex-1">
         <p className="text-sm font-medium">{message}</p>
@@ -75,7 +53,7 @@ const Toast = memo(function Toast({ id, message, type = 'info', duration = 5000,
 
       <button
         onClick={() => onClose(id)}
-        className={`${variant.iconColor} hover:opacity-70 transition-opacity flex-shrink-0`}
+        className={cn(variant.iconColor, 'hover:opacity-70 transition-opacity flex-shrink-0')}
         aria-label="Cerrar notificación"
       >
         <X className="w-4 h-4" />

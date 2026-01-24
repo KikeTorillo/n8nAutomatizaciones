@@ -49,6 +49,8 @@ export {
   TOAST_VARIANTS,
   CARD_VARIANTS,
   INPUT_VARIANTS,
+  TOAST_EXTENDED_VARIANTS,
+  TOAST_CONTAINER_STYLES,
 } from './variants';
 
 // Estados
@@ -84,3 +86,36 @@ export {
   SPACE_X,
   SPACE_Y,
 } from './spacing';
+
+// Progress Bar (Ene 2026)
+export {
+  PROGRESS_BAR_COLORS,
+  PROGRESS_TEXT_COLORS,
+  PROGRESS_BAR_SIZES,
+  PROGRESS_THRESHOLD_PRESETS,
+  getProgressColorByThreshold,
+} from './progress';
+
+// Tabs (Ene 2026)
+export {
+  TAB_CONTAINER_STYLES,
+  TAB_NAV_STYLES,
+  TAB_BUTTON_STYLES,
+  TAB_ICON_STYLES,
+  getTabButtonStyles,
+  getTabIconStyles,
+} from './tabs';
+
+// Filters (Ene 2026)
+export {
+  FILTER_PANEL_CONTAINER,
+  FILTER_PANEL_HEADER,
+  FILTER_PANEL_CONTENT,
+  FILTER_TOGGLE_BUTTON_STYLES,
+  FILTER_COUNT_BADGE,
+  FILTER_CHECKBOX_STYLES,
+  FILTER_SELECT_STYLES,
+  FILTER_SECTION_TITLE,
+  FILTER_GRID_LAYOUTS,
+  getFilterToggleStyles,
+} from './filters';

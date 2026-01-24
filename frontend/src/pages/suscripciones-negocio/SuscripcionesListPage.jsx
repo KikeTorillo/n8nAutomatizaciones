@@ -1,11 +1,15 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Users, Plus, Eye, MoreVertical, Pause, Play, X } from 'lucide-react';
-import { Button, Badge, DropdownMenu, EmptyState } from '@/components/ui';
+import { Button, DropdownMenu, SearchInput } from '@/components/ui';
 import { StateNavTabs } from '@/components/ui/organisms';
 import { DataTable } from '@/components/ui/organisms/DataTable';
-import { useSuscripciones, ESTADOS_SUSCRIPCION, ESTADO_LABELS, ESTADO_COLORS } from '@/hooks/suscripciones-negocio';
-import { SuscripcionFormDrawer, SuscripcionStatusBadge } from '@/components/suscripciones-negocio';
+import { useSuscripciones, ESTADOS_SUSCRIPCION, ESTADO_LABELS } from '@/hooks/suscripciones-negocio';
+import {
+  SuscripcionFormDrawer,
+  SuscripcionStatusBadge,
+  SuscripcionesNegocioPageLayout,
+} from '@/components/suscripciones-negocio';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { usePagination, useFilters, normalizePagination, useModalManager } from '@/hooks/utils';
 
@@ -119,6 +123,7 @@ function RowActions({ row }) {
  * Página de listado de suscripciones con filtros por estado
  */
 function SuscripcionesListPage() {
+  const navigate = useNavigate();
   const [estadoFiltro, setEstadoFiltro] = useState('todas');
 
   // Paginación y filtros
@@ -142,50 +147,39 @@ function SuscripcionesListPage() {
   const total = data?.total || items.length;
   const totalPages = Math.ceil(total / queryParams.limit) || 1;
 
-  // Actualizar conteos en tabs (simplificado - normalmente vendría del backend)
+  // Actualizar conteos en tabs
   const tabsConConteo = STATE_TABS.map((tab) => ({
     ...tab,
     count: tab.id === 'todas' ? total : undefined,
   }));
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <Users className="h-7 w-7 text-primary-600" />
-          <div>
-            <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">
-              Suscripciones
-            </h1>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              {total} suscripciones
-            </p>
-          </div>
-        </div>
+    <SuscripcionesNegocioPageLayout
+      icon={Users}
+      title="Lista de Suscripciones"
+      subtitle={`${total} suscripciones`}
+      actions={
         <Button onClick={() => openModal('form', null)} className="flex items-center gap-2">
           <Plus className="h-4 w-4" />
           Nueva Suscripción
         </Button>
-      </div>
-
-      {/* State Tabs */}
+      }
+    >
+      {/* State Tabs para filtrar por estado */}
       <StateNavTabs
         tabs={tabsConConteo}
         activeTab={estadoFiltro}
         onTabChange={setEstadoFiltro}
+        className="mb-4"
       />
 
       {/* Búsqueda */}
-      <div className="flex gap-3">
-        <input
-          type="text"
-          value={filtros.busqueda || ''}
-          onChange={(e) => setFiltro('busqueda', e.target.value)}
-          placeholder="Buscar por cliente..."
-          className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-        />
-      </div>
+      <SearchInput
+        value={filtros.busqueda || ''}
+        onChange={(e) => setFiltro('busqueda', e.target.value)}
+        placeholder="Buscar por cliente..."
+        className="max-w-md mb-6"
+      />
 
       {/* Tabla */}
       <DataTable
@@ -201,9 +195,7 @@ function SuscripcionesListPage() {
         data={items}
         isLoading={isLoading}
         keyField="id"
-        onRowClick={(row) => {
-          window.location.href = `/suscripciones-negocio/suscripciones/${row.id}`;
-        }}
+        onRowClick={(row) => navigate(`/suscripciones-negocio/suscripciones/${row.id}`)}
         pagination={{
           page,
           totalPages,
@@ -232,7 +224,7 @@ function SuscripcionesListPage() {
           mode="create"
         />
       )}
-    </div>
+    </SuscripcionesNegocioPageLayout>
   );
 }
 

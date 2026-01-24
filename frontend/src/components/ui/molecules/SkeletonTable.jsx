@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { cn } from '@/lib/utils';
 
 /**
@@ -10,7 +11,7 @@ import { cn } from '@/lib/utils';
  * @param {Array<'sm'|'md'|'lg'>} [props.columnWidths] - Anchos de columnas
  * @param {string} [props.className] - Clases adicionales
  */
-export function SkeletonTable({
+export const SkeletonTable = memo(function SkeletonTable({
   rows = 5,
   columns = 4,
   showHeader = true,
@@ -90,12 +91,12 @@ export function SkeletonTable({
       </div>
     </div>
   );
-}
+});
 
 /**
  * SkeletonCard - Skeleton loading para cards
  */
-export function SkeletonCard({ className }) {
+export const SkeletonCard = memo(function SkeletonCard({ className }) {
   return (
     <div
       className={cn(
@@ -118,12 +119,12 @@ export function SkeletonCard({ className }) {
       </div>
     </div>
   );
-}
+});
 
 /**
  * SkeletonList - Skeleton loading para listas de cards
  */
-export function SkeletonList({ count = 3, className }) {
+export const SkeletonList = memo(function SkeletonList({ count = 3, className }) {
   return (
     <div className={cn('space-y-3', className)}>
       {Array.from({ length: count }).map((_, index) => (
@@ -134,8 +135,10 @@ export function SkeletonList({ count = 3, className }) {
       ))}
     </div>
   );
-}
+});
 
 SkeletonTable.displayName = 'SkeletonTable';
+SkeletonCard.displayName = 'SkeletonCard';
+SkeletonList.displayName = 'SkeletonList';
 
 export default SkeletonTable;

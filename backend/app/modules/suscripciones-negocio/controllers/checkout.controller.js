@@ -42,6 +42,16 @@ class CheckoutController {
         const organizacionId = req.user.organizacion_id;
         const usuarioId = req.user.id;
 
+        // ═══════════════════════════════════════════════════════════════
+        // VALIDACIÓN: Nexo Team no puede suscribirse a sí misma
+        // ═══════════════════════════════════════════════════════════════
+        if (organizacionId === NEXO_TEAM_ORG_ID) {
+            ErrorHelper.throwValidation(
+                'Nexo Team es la organización vendedora y no puede suscribirse a sus propios planes. ' +
+                'Este flujo es para organizaciones clientes.'
+            );
+        }
+
         // 1. Validar que el plan existe y está activo
         // NOTA: Los planes públicos pertenecen a Nexo Team, no a la org del usuario
         const plan = await PlanesModel.buscarPorId(plan_id, NEXO_TEAM_ORG_ID);
@@ -156,9 +166,11 @@ class CheckoutController {
             gateway: 'mercadopago'
         }, organizacionId);
 
-        // 7. Crear preferencia en MercadoPago (usar instancia global de Nexo Team)
-        const externalReference = `sus_${suscripcion.id}_pago_${pago.id}`;
-        const mpService = MercadoPagoService.getGlobalInstance();
+        // 7. Crear preferencia en MercadoPago (usar conector de Nexo Team)
+        // Formato: org_{nexoTeamId}_sus_{suscripcionId}_pago_{pagoId}_cliente_{orgCliente}
+        // El org_id del cliente va al final para debugging/trazabilidad
+        const externalReference = `org_${NEXO_TEAM_ORG_ID}_sus_${suscripcion.id}_pago_${pago.id}_cliente_${organizacionId}`;
+        const mpService = await MercadoPagoService.getForOrganization(NEXO_TEAM_ORG_ID);
 
         // Determinar email del pagador
         // En sandbox con test users, MP requiere email de test user
@@ -169,6 +181,10 @@ class CheckoutController {
         } else {
             emailPagador = suscriptorExternoFinal?.email || req.user.email;
         }
+
+        // NOTA: Los webhooks de suscripciones se configuran en el panel de MercadoPago,
+        // NO en la API. El parámetro notification_url no es soportado por preapproval.
+        // Ver: https://www.mercadopago.com.mx/developers/en/reference/subscriptions/_preapproval/post
 
         const mpResponse = await mpService.crearSuscripcionConInitPoint({
             nombre: `Suscripción ${plan.nombre} - ${periodo}`,
@@ -279,28 +295,39 @@ class CheckoutController {
      * GET /checkout/resultado
      *
      * Obtiene el resultado de un pago (usado por el frontend después del callback)
+     *
+     * Parámetros aceptados:
+     * - suscripcion_id: ID interno de la suscripción
+     * - external_reference: Referencia externa (formato: sus_123_pago_456)
+     * - preapproval_id: ID de la suscripción en MercadoPago (para suscripciones recurrentes)
      */
     async obtenerResultado(req, res) {
-        const { suscripcion_id, external_reference, collection_status } = req.query;
+        const { suscripcion_id, external_reference, preapproval_id, collection_status } = req.query;
         const organizacionId = req.user.organizacion_id;
 
-        let suscripcionIdFinal = suscripcion_id;
+        let suscripcion = null;
 
-        // Parsear external_reference si viene (formato: sus_123_pago_456)
-        if (!suscripcionIdFinal && external_reference) {
+        // 1. Buscar por suscripcion_id directamente
+        if (suscripcion_id) {
+            suscripcion = await SuscripcionesModel.buscarPorId(suscripcion_id, organizacionId);
+        }
+
+        // 2. Parsear external_reference si viene (formato: sus_123_pago_456)
+        if (!suscripcion && external_reference) {
             const match = external_reference.match(/sus_(\d+)/);
             if (match) {
-                suscripcionIdFinal = parseInt(match[1]);
+                suscripcion = await SuscripcionesModel.buscarPorId(parseInt(match[1]), organizacionId);
             }
         }
 
-        if (!suscripcionIdFinal) {
-            ErrorHelper.throwValidation('Se requiere suscripcion_id o external_reference');
+        // 3. Buscar por preapproval_id (subscription_id_gateway de MercadoPago)
+        if (!suscripcion && preapproval_id) {
+            suscripcion = await SuscripcionesModel.buscarPorGatewayId(preapproval_id, organizacionId);
         }
 
-        // Obtener suscripción
-        const suscripcion = await SuscripcionesModel.buscarPorId(suscripcionIdFinal, organizacionId);
-        ErrorHelper.throwIfNotFound(suscripcion, 'Suscripción');
+        if (!suscripcion) {
+            ErrorHelper.throwValidation('Se requiere suscripcion_id, external_reference o preapproval_id válido');
+        }
 
         // Determinar estado del resultado
         let estadoResultado;

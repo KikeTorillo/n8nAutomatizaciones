@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronRight, Home } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -10,7 +11,7 @@ import { cn } from '@/lib/utils';
  * @param {string} className - Clases adicionales
  * @param {boolean} homeLink - Mostrar enlace a Home al inicio
  */
-export function Breadcrumb({ items = [], className, homeLink = false }) {
+export const Breadcrumb = memo(function Breadcrumb({ items = [], className, homeLink = false }) {
   if (!items.length && !homeLink) return null;
 
   return (
@@ -68,7 +69,7 @@ export function Breadcrumb({ items = [], className, homeLink = false }) {
       </ol>
     </nav>
   );
-}
+});
 
 Breadcrumb.displayName = 'Breadcrumb';
 

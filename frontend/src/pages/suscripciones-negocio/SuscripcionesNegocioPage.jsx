@@ -13,6 +13,7 @@ import {
   Plug,
 } from 'lucide-react';
 import { StatCard, Button } from '@/components/ui';
+import { SuscripcionesNegocioPageLayout } from '@/components/suscripciones-negocio';
 import { useMetricasDashboard } from '@/hooks/suscripciones-negocio';
 import { formatCurrency } from '@/lib/utils';
 
@@ -69,116 +70,103 @@ function SuscripcionesNegocioPage() {
   ];
 
   return (
-    <div className="p-6 space-y-8">
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="p-3 rounded-xl bg-primary-100 dark:bg-primary-900/30">
-          <CreditCard className="h-8 w-8 text-primary-600" />
+    <SuscripcionesNegocioPageLayout hideSectionHeader>
+      <div className="space-y-8">
+        {/* KPIs - Solo mostrar si tiene permiso */}
+        {!metricas?.sinPermiso && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <StatCard
+              title="MRR"
+              value={formatCurrency(metricas?.mrr || 0)}
+              subtitle="Ingresos Mensuales Recurrentes"
+              icon={DollarSign}
+              color="success"
+              variant="expanded"
+              isLoading={isLoading}
+            />
+
+            <StatCard
+              title="Suscriptores Activos"
+              value={metricas?.suscriptores_activos || 0}
+              subtitle="Con suscripción vigente"
+              icon={Users}
+              color="primary"
+              variant="expanded"
+              isLoading={isLoading}
+            />
+
+            <StatCard
+              title="Churn Rate"
+              value={`${(metricas?.churn_rate || 0).toFixed(1)}%`}
+              subtitle="Tasa de cancelación mensual"
+              icon={Percent}
+              color={parseFloat(metricas?.churn_rate || 0) > 5 ? 'error' : 'warning'}
+              variant="expanded"
+              isLoading={isLoading}
+            />
+
+            <StatCard
+              title="LTV Promedio"
+              value={formatCurrency(metricas?.ltv || 0)}
+              subtitle="Valor de vida del cliente"
+              icon={TrendingUp}
+              color="info"
+              variant="expanded"
+              isLoading={isLoading}
+            />
+          </div>
+        )}
+
+        {/* Navigation Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {navLinks.map((link) => (
+            <Link
+              key={link.to}
+              to={link.to}
+              className="group flex items-center gap-4 p-5 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-primary-300 dark:hover:border-primary-600 hover:shadow-md transition-all"
+            >
+              <div className={`p-3 rounded-lg ${link.color}`}>
+                <link.icon className="h-6 w-6" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-gray-900 dark:text-gray-100 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+                  {link.title}
+                </h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  {link.description}
+                </p>
+              </div>
+              <ArrowRight className="h-5 w-5 text-gray-400 group-hover:text-primary-600 group-hover:translate-x-1 transition-all" />
+            </Link>
+          ))}
         </div>
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-            Suscripciones
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            Gestión de planes y suscripciones de clientes
-          </p>
-        </div>
-      </div>
 
-      {/* KPIs - Solo mostrar si tiene permiso */}
-      {!metricas?.sinPermiso && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <StatCard
-            title="MRR"
-            value={formatCurrency(metricas?.mrr || 0)}
-            subtitle="Ingresos Mensuales Recurrentes"
-            icon={DollarSign}
-            color="success"
-            variant="expanded"
-            isLoading={isLoading}
-          />
-
-          <StatCard
-            title="Suscriptores Activos"
-            value={metricas?.suscriptores_activos || 0}
-            subtitle="Con suscripción vigente"
-            icon={Users}
-            color="primary"
-            variant="expanded"
-            isLoading={isLoading}
-          />
-
-          <StatCard
-            title="Churn Rate"
-            value={`${(metricas?.churn_rate || 0).toFixed(1)}%`}
-            subtitle="Tasa de cancelación mensual"
-            icon={Percent}
-            color={parseFloat(metricas?.churn_rate || 0) > 5 ? 'error' : 'warning'}
-            variant="expanded"
-            isLoading={isLoading}
-          />
-
-          <StatCard
-            title="LTV Promedio"
-            value={formatCurrency(metricas?.ltv || 0)}
-            subtitle="Valor de vida del cliente"
-            icon={TrendingUp}
-            color="info"
-            variant="expanded"
-            isLoading={isLoading}
-          />
-        </div>
-      )}
-
-      {/* Navigation Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {navLinks.map((link) => (
-          <Link
-            key={link.to}
-            to={link.to}
-            className="group flex items-center gap-4 p-5 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-primary-300 dark:hover:border-primary-600 hover:shadow-md transition-all"
-          >
-            <div className={`p-3 rounded-lg ${link.color}`}>
-              <link.icon className="h-6 w-6" />
-            </div>
-            <div className="flex-1">
-              <h3 className="font-semibold text-gray-900 dark:text-gray-100 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
-                {link.title}
-              </h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                {link.description}
-              </p>
-            </div>
-            <ArrowRight className="h-5 w-5 text-gray-400 group-hover:text-primary-600 group-hover:translate-x-1 transition-all" />
-          </Link>
-        ))}
-      </div>
-
-      {/* Quick Actions */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-          Acciones Rápidas
-        </h2>
-        <div className="flex flex-wrap gap-3">
-          <Button as={Link} to="/suscripciones-negocio/planes" variant="outline">
-            <Package className="h-4 w-4 mr-2" />
-            Crear Plan
-          </Button>
-          <Button as={Link} to="/suscripciones-negocio/suscripciones" variant="outline">
-            <Users className="h-4 w-4 mr-2" />
-            Nueva Suscripción
-          </Button>
-          <Button as={Link} to="/suscripciones-negocio/cupones" variant="outline">
-            <Tag className="h-4 w-4 mr-2" />
-            Crear Cupón
-          </Button>
-          <Button as={Link} to="/suscripciones-negocio/metricas" variant="primary">
-            <BarChart3 className="h-4 w-4 mr-2" />
-            Ver Métricas Completas
-          </Button>
+        {/* Quick Actions */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+            Acciones Rápidas
+          </h2>
+          <div className="flex flex-wrap gap-3">
+            <Button as={Link} to="/suscripciones-negocio/planes" variant="outline">
+              <Package className="h-4 w-4 mr-2" />
+              Crear Plan
+            </Button>
+            <Button as={Link} to="/suscripciones-negocio/suscripciones" variant="outline">
+              <Users className="h-4 w-4 mr-2" />
+              Nueva Suscripción
+            </Button>
+            <Button as={Link} to="/suscripciones-negocio/cupones" variant="outline">
+              <Tag className="h-4 w-4 mr-2" />
+              Crear Cupón
+            </Button>
+            <Button as={Link} to="/suscripciones-negocio/metricas" variant="primary">
+              <BarChart3 className="h-4 w-4 mr-2" />
+              Ver Métricas Completas
+            </Button>
+          </div>
         </div>
       </div>
-    </div>
+    </SuscripcionesNegocioPageLayout>
   );
 }
 

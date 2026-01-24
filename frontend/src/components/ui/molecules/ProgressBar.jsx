@@ -1,59 +1,12 @@
 import { memo } from 'react';
 import { cn } from '@/lib/utils';
-
-/**
- * Umbrales predefinidos para colores según el caso de uso
- */
-const THRESHOLD_PRESETS = {
-  // Para completitud (más alto = mejor): perfil, tareas completadas
-  completion: {
-    thresholds: [50, 80],
-    colors: ['warning', 'warning', 'success'], // <50: warning, 50-80: warning, >80: success
-  },
-  // Para uso de recursos (más alto = peor): límites, cuotas
-  usage: {
-    thresholds: [70, 90],
-    colors: ['success', 'warning', 'danger'], // <70: success, 70-90: warning, >90: danger
-  },
-  // Neutral (sin indicador de estado)
-  neutral: {
-    thresholds: [],
-    colors: ['primary'],
-  },
-};
-
-/**
- * Colores disponibles para la barra
- */
-const colorClasses = {
-  primary: 'bg-primary-500 dark:bg-primary-400',
-  success: 'bg-green-500 dark:bg-green-400',
-  warning: 'bg-yellow-500 dark:bg-yellow-400',
-  danger: 'bg-red-500 dark:bg-red-400',
-  info: 'bg-primary-500 dark:bg-primary-400',
-};
-
-const textColorClasses = {
-  primary: 'text-primary-600 dark:text-primary-400',
-  success: 'text-green-600 dark:text-green-400',
-  warning: 'text-yellow-600 dark:text-yellow-400',
-  danger: 'text-red-600 dark:text-red-400',
-  info: 'text-primary-600 dark:text-primary-400',
-};
-
-/**
- * Obtener el color según el porcentaje y los umbrales
- */
-function getColorByThreshold(percentage, thresholds, colors) {
-  if (!thresholds?.length) return colors[0] || 'primary';
-
-  for (let i = 0; i < thresholds.length; i++) {
-    if (percentage < thresholds[i]) {
-      return colors[i] || 'primary';
-    }
-  }
-  return colors[colors.length - 1] || 'primary';
-}
+import {
+  PROGRESS_BAR_COLORS,
+  PROGRESS_TEXT_COLORS,
+  PROGRESS_BAR_SIZES,
+  PROGRESS_THRESHOLD_PRESETS,
+  getProgressColorByThreshold,
+} from '@/lib/uiConstants';
 
 /**
  * ProgressBar - Barra de progreso genérica
@@ -95,22 +48,15 @@ export const ProgressBar = memo(function ProgressBar({
   // Determinar color
   let barColor = colorProp;
   if (!barColor) {
-    if (preset && THRESHOLD_PRESETS[preset]) {
-      const { thresholds, colors } = THRESHOLD_PRESETS[preset];
-      barColor = getColorByThreshold(percentage, thresholds, colors);
+    if (preset && PROGRESS_THRESHOLD_PRESETS[preset]) {
+      const { thresholds, colors } = PROGRESS_THRESHOLD_PRESETS[preset];
+      barColor = getProgressColorByThreshold(percentage, thresholds, colors);
     } else if (thresholdsProp && colorsProp) {
-      barColor = getColorByThreshold(percentage, thresholdsProp, colorsProp);
+      barColor = getProgressColorByThreshold(percentage, thresholdsProp, colorsProp);
     } else {
       barColor = 'primary';
     }
   }
-
-  // Tamaños
-  const sizeClasses = {
-    sm: 'h-1.5',
-    md: 'h-2.5',
-    lg: 'h-4',
-  };
 
   // Layout vertical (estilo LimitProgressBar)
   if (layout === 'vertical') {
@@ -124,7 +70,7 @@ export const ProgressBar = memo(function ProgressBar({
               </span>
             )}
             {showValue && (
-              <span className={cn('text-sm font-semibold', textColorClasses[barColor])}>
+              <span className={cn('text-sm font-semibold', PROGRESS_TEXT_COLORS[barColor])}>
                 {value} / {max}
               </span>
             )}
@@ -132,12 +78,12 @@ export const ProgressBar = memo(function ProgressBar({
         )}
         <div className={cn(
           'w-full bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden',
-          sizeClasses[size]
+          PROGRESS_BAR_SIZES[size]
         )}>
           <div
             className={cn(
               'h-full rounded-full transition-all duration-300',
-              colorClasses[barColor]
+              PROGRESS_BAR_COLORS[barColor]
             )}
             style={{ width: `${clampedPercentage}%` }}
             role="progressbar"
@@ -159,7 +105,7 @@ export const ProgressBar = memo(function ProgressBar({
   return (
     <div className={cn('flex items-center gap-3', className)}>
       {label && (
-        <span className={cn('text-sm font-medium flex-shrink-0', textColorClasses[barColor])}>
+        <span className={cn('text-sm font-medium flex-shrink-0', PROGRESS_TEXT_COLORS[barColor])}>
           {label}
         </span>
       )}
@@ -170,12 +116,12 @@ export const ProgressBar = memo(function ProgressBar({
       )}
       <div className={cn(
         'flex-1 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden max-w-xs',
-        sizeClasses[size]
+        PROGRESS_BAR_SIZES[size]
       )}>
         <div
           className={cn(
             'h-full rounded-full transition-all duration-300',
-            colorClasses[barColor]
+            PROGRESS_BAR_COLORS[barColor]
           )}
           style={{ width: `${clampedPercentage}%` }}
           role="progressbar"
@@ -185,7 +131,7 @@ export const ProgressBar = memo(function ProgressBar({
         />
       </div>
       {showPercentage && (
-        <span className={cn('text-sm font-medium flex-shrink-0', textColorClasses[barColor])}>
+        <span className={cn('text-sm font-medium flex-shrink-0', PROGRESS_TEXT_COLORS[barColor])}>
           {percentage}%
         </span>
       )}

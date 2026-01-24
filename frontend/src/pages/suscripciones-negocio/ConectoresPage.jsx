@@ -18,6 +18,7 @@ import {
 import {
   ConectorFormDrawer,
   ConectorStatusBadge,
+  SuscripcionesNegocioPageLayout,
 } from '@/components/suscripciones-negocio';
 
 /**
@@ -258,6 +259,7 @@ function ConectoresPage() {
       title="Conectores de Pago"
       subtitle="Configura Stripe, MercadoPago y otros gateways"
       icon={Plug}
+      PageLayout={SuscripcionesNegocioPageLayout}
       useListQuery={useConectores}
       useDeleteMutation={useEliminarConector}
       columns={columns}

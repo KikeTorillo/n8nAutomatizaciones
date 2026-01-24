@@ -1,5 +1,10 @@
 import { memo } from 'react';
 import { cn } from '@/lib/utils';
+import {
+  FILTER_SECTION_TITLE,
+  FILTER_CHECKBOX_STYLES,
+  FILTER_SELECT_STYLES,
+} from '@/lib/uiConstants';
 
 /**
  * FilterSection - Sección de filtros con título y contenido
@@ -14,12 +19,7 @@ export const FilterSection = memo(function FilterSection({ title, children, icon
   return (
     <div className={cn('space-y-3', className)}>
       {title && (
-        <h4
-          className={cn(
-            'flex items-center gap-2 text-xs font-semibold uppercase tracking-wider',
-            'text-gray-500 dark:text-gray-400'
-          )}
-        >
+        <h4 className={FILTER_SECTION_TITLE}>
           {Icon && <Icon className="h-4 w-4" />}
           {title}
         </h4>
@@ -45,9 +45,8 @@ export const FilterCheckbox = memo(function FilterCheckbox({
   return (
     <label
       className={cn(
-        'flex items-center gap-2.5 py-1.5 px-2 rounded-md cursor-pointer transition-colors',
-        'hover:bg-gray-100 dark:hover:bg-gray-700',
-        disabled && 'opacity-50 cursor-not-allowed'
+        FILTER_CHECKBOX_STYLES.container,
+        disabled && FILTER_CHECKBOX_STYLES.containerDisabled
       )}
     >
       <input
@@ -56,11 +55,7 @@ export const FilterCheckbox = memo(function FilterCheckbox({
         checked={checked}
         onChange={(e) => onChange?.(e.target.checked)}
         disabled={disabled}
-        className={cn(
-          'h-4 w-4 rounded border-gray-300 dark:border-gray-600',
-          'text-primary-600 focus:ring-primary-500 dark:focus:ring-primary-400',
-          'dark:bg-gray-700'
-        )}
+        className={FILTER_CHECKBOX_STYLES.input}
       />
       {Icon && (
         <Icon
@@ -76,8 +71,8 @@ export const FilterCheckbox = memo(function FilterCheckbox({
         className={cn(
           'text-sm',
           checked
-            ? 'text-gray-900 dark:text-gray-100 font-medium'
-            : 'text-gray-600 dark:text-gray-400'
+            ? FILTER_CHECKBOX_STYLES.labelActive
+            : FILTER_CHECKBOX_STYLES.labelInactive
         )}
       >
         {label}
@@ -103,13 +98,7 @@ export const FilterSelect = memo(function FilterSelect({
   return (
     <div className="space-y-1.5">
       {label && (
-        <label
-          htmlFor={id}
-          className={cn(
-            'flex items-center gap-2 text-sm font-medium',
-            'text-gray-700 dark:text-gray-300'
-          )}
-        >
+        <label htmlFor={id} className={FILTER_SELECT_STYLES.label}>
           {Icon && <Icon className="h-4 w-4 text-gray-400" />}
           {label}
         </label>
@@ -118,14 +107,7 @@ export const FilterSelect = memo(function FilterSelect({
         id={id}
         value={value || ''}
         onChange={(e) => onChange?.(e.target.value)}
-        className={cn(
-          'w-full px-3 py-2 text-sm rounded-lg border',
-          'bg-white dark:bg-gray-700',
-          'border-gray-300 dark:border-gray-600',
-          'text-gray-900 dark:text-gray-100',
-          'focus:ring-2 focus:ring-primary-500 focus:border-primary-500',
-          'dark:focus:ring-primary-400 dark:focus:border-primary-400'
-        )}
+        className={FILTER_SELECT_STYLES.select}
       >
         <option value="">{placeholder}</option>
         {options.map((opt) => (

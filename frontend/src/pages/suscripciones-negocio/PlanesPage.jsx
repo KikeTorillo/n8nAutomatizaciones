@@ -3,7 +3,7 @@ import { Package, Plus, Pencil, Trash2, MoreVertical } from 'lucide-react';
 import { Button, DropdownMenu } from '@/components/ui';
 import { ListadoCRUDPage } from '@/components/ui/templates';
 import { usePlanes, useEliminarPlan } from '@/hooks/suscripciones-negocio';
-import { PlanFormDrawer, PlanCard } from '@/components/suscripciones-negocio';
+import { PlanFormDrawer, PlanCard, SuscripcionesNegocioPageLayout } from '@/components/suscripciones-negocio';
 import { formatCurrency } from '@/lib/utils';
 
 /**
@@ -140,6 +140,7 @@ function PlanesPage() {
     <ListadoCRUDPage
       title="Planes de Suscripción"
       icon={Package}
+      PageLayout={SuscripcionesNegocioPageLayout}
       useListQuery={usePlanes}
       useDeleteMutation={useEliminarPlan}
       columns={columns}

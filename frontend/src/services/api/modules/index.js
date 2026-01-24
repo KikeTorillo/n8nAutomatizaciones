@@ -19,7 +19,7 @@ export { permisosApi } from './permisos.api';
 export { rolesApi } from './roles.api';
 export { notificacionesApi } from './notificaciones.api';
 export { planesApi } from './planes.api';
-export { mercadopagoApi } from './mercadopago.api';
+// mercadopagoApi eliminado - tokenización legacy, ahora todo va por conectores
 
 // Profesionales y RRHH
 export { profesionalesApi } from './profesionales.api';

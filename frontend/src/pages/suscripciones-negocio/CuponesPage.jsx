@@ -2,7 +2,7 @@ import { Tag, Pencil, Trash2, MoreVertical, Ban } from 'lucide-react';
 import { Button, Badge, DropdownMenu } from '@/components/ui';
 import { ListadoCRUDPage } from '@/components/ui/templates';
 import { useCupones, useEliminarCupon, useDesactivarCupon, TIPOS_DESCUENTO, TIPO_DESCUENTO_LABELS } from '@/hooks/suscripciones-negocio';
-import { CuponFormDrawer, CuponBadge } from '@/components/suscripciones-negocio';
+import { CuponFormDrawer, CuponBadge, SuscripcionesNegocioPageLayout } from '@/components/suscripciones-negocio';
 import { formatCurrency, formatDate } from '@/lib/utils';
 
 /**
@@ -143,6 +143,7 @@ function CuponesPage() {
     <ListadoCRUDPage
       title="Cupones de Descuento"
       icon={Tag}
+      PageLayout={SuscripcionesNegocioPageLayout}
       useListQuery={useCupones}
       useDeleteMutation={useEliminarCupon}
       columns={columns}

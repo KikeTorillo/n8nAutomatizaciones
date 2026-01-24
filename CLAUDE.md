@@ -427,47 +427,144 @@ Documento completo en `/docs/PLAN_PRUEBAS_INTEGRAL.md`
 | Chatbots IA | ⏳ CRUD OK (conversación pendiente final) |
 | Configuración + Workflows | ✅ Probado y corregido (CFG-001/002/003) |
 | **RBAC (Permisos)** | ✅ Corregido (SEC-001) |
-| **Suscripciones-Negocio** | ✅ Backend + Frontend completo |
+| **Suscripciones-Negocio** | ✅ E2E Validado (Checkout + Webhooks MP) |
 
 ---
 
 ## Changelog
 
-### 23 Ene 2026 - MercadoPago Test Users ✅ COMPLETADO
+### 24 Ene 2026 - MercadoPago E2E Validado + Limpieza Legacy ✅
 
-**Configuración correcta de MercadoPago para pruebas con Test Users.**
+**Flujo completo de pago con MercadoPago funcionando.**
 
-**Problema:** El checkout fallaba con "Una de las partes es de prueba" porque credenciales `TEST-xxx` son sandbox de cuenta REAL, incompatibles con test user comprador.
+**Limpieza realizada:**
+- Eliminadas variables de entorno legacy (`MERCADOPAGO_ACCESS_TOKEN`, `MERCADOPAGO_SANDBOX_ACCESS_TOKEN`, etc.)
+- Eliminados archivos legacy: `config/mercadopago.js`, `routes/api/v1/mercadopago.js`, `mercadopago.api.js`
+- Credenciales ahora solo en `conectores_pago_org` (encriptadas AES-256-GCM)
 
-**Solución:** Usar credenciales de Test User Vendedor (`APP_USR-xxx`).
-
-**Variables de entorno:**
+**Configuración MercadoPago:**
 ```env
+# Solo estas variables necesarias
 MERCADOPAGO_ENVIRONMENT=sandbox
-MERCADOPAGO_SANDBOX_ACCESS_TOKEN=APP_USR-xxx  # Test User Vendedor
-MERCADOPAGO_PUBLIC_KEY=APP_USR-xxx
-MERCADOPAGO_TEST_PAYER_EMAIL=test_user_xxx@testuser.com  # Test User Comprador
+MERCADOPAGO_TEST_PAYER_EMAIL=test_user_xxx@testuser.com
+CREDENTIAL_ENCRYPTION_KEY=<64_chars_hex>
 ```
 
-**Lógica en checkout.controller.js:**
-```javascript
-if (process.env.MERCADOPAGO_ENVIRONMENT === 'sandbox') {
-    emailPagador = process.env.MERCADOPAGO_TEST_PAYER_EMAIL;
-} else {
-    emailPagador = suscriptorExternoFinal?.email || req.user.email;
-}
-```
+**Webhooks:** Configurar en panel MP del Test User Vendedor (Modo productivo, NO Modo de prueba).
 
-**Test Users México:**
-| Rol | Contraseña |
-|-----|------------|
-| Comprador (TESTUSER2716725750605322996) | `UCgyF4L44D` |
-
-**Documentación:** `/docs/PLAN_DOGFOODING_NEXO_TEAM.md`
+**Documentación completa:** `/docs/PLAN_DOGFOODING_NEXO_TEAM.md`
 
 ---
 
-### 23 Ene 2026 - FASE 12: Auditoría UI Components ✅ COMPLETADO
+### 24 Ene 2026 - FASE 14: Homologación Módulo Suscripciones ✅
+
+**Homologación del módulo suscripciones-negocio con convenciones del proyecto.**
+
+**Cambios en SuscripcionDetailPage:**
+- ✅ Usa `BackButton` en lugar de botón manual con ArrowLeft
+- ✅ Usa `ViewTabs` en lugar de tabs manuales
+- ✅ Usa `LoadingSpinner` en lugar de spinner manual
+- ✅ Tab activo en URL con `useSearchParams` (antes en estado local)
+- ✅ Tabs con iconos (`User`, `Receipt`, `Clock`)
+
+**Cambios en SuscripcionesListPage:**
+- ✅ Usa `SearchInput` en lugar de input manual
+- ✅ Usa `navigate()` en lugar de `window.location.href`
+
+**Cambios en PagosPage:**
+- ✅ Usa `SearchInput` en `renderFilters`
+
+**Fixes adicionales:**
+- `molecules/index.js`: Removido export incorrecto de `SmartButtons` (está en organisms/)
+
+**Páginas ya homologadas (usan `ListadoCRUDPage`):**
+- `PlanesPage` ✅
+- `CuponesPage` ✅
+- `ConectoresPage` ✅
+
+---
+
+### 24 Ene 2026 - FASE 13: Auditoría UI Frontend ✅ COMPLETADO
+
+**Optimización de componentes UI - Fixes críticos y centralización de estilos.**
+
+**FASE 1 - Fixes Críticos:**
+
+| Archivo | Cambio |
+|---------|--------|
+| `molecules/index.js` | Eliminado export incorrecto de NavDropdown |
+| `molecules/ThemeToggle.jsx` | Agregado `React.memo` |
+| `molecules/SkeletonTable.jsx` | Agregado `React.memo` a 3 componentes |
+| `molecules/Breadcrumb.jsx` | Agregado `React.memo` |
+
+**FASE 2 - Nuevas Constantes UI:**
+
+| Archivo | Exports |
+|---------|---------|
+| `uiConstants/progress.js` | `PROGRESS_BAR_COLORS`, `PROGRESS_TEXT_COLORS`, `PROGRESS_BAR_SIZES`, `PROGRESS_THRESHOLD_PRESETS`, `getProgressColorByThreshold()` |
+| `uiConstants/tabs.js` | `TAB_CONTAINER_STYLES`, `TAB_NAV_STYLES`, `TAB_BUTTON_STYLES`, `TAB_ICON_STYLES`, `getTabButtonStyles()`, `getTabIconStyles()` |
+| `uiConstants/filters.js` | `FILTER_PANEL_*`, `FILTER_TOGGLE_BUTTON_STYLES`, `FILTER_COUNT_BADGE`, `FILTER_CHECKBOX_STYLES`, `FILTER_SELECT_STYLES`, `FILTER_SECTION_TITLE`, `FILTER_GRID_LAYOUTS`, `getFilterToggleStyles()` |
+| `uiConstants/variants.js` | `TOAST_EXTENDED_VARIANTS`, `TOAST_CONTAINER_STYLES` |
+
+**Uso de constantes:**
+```javascript
+import {
+  PROGRESS_BAR_COLORS,
+  getProgressColorByThreshold,
+  getTabButtonStyles,
+  getFilterToggleStyles,
+  TOAST_EXTENDED_VARIANTS,
+} from '@/lib/uiConstants';
+
+// Progress bar
+const color = getProgressColorByThreshold(percentage, thresholds, colors);
+<div className={PROGRESS_BAR_COLORS[color]} />
+
+// Tabs
+<button className={getTabButtonStyles(isActive)} />
+
+// Filtros
+<button className={getFilterToggleStyles(isOpen)} />
+
+// Toast
+const variant = TOAST_EXTENDED_VARIANTS[type];
+<div className={cn(variant.bg, variant.border)} />
+```
+
+**Componentes actualizados para usar constantes:**
+- `molecules/ProgressBar.jsx`
+- `molecules/ViewTabs.jsx`
+- `molecules/Toast.jsx`
+- `organisms/filters/FilterSection.jsx`
+- `organisms/filters/AdvancedFilterPanel.jsx`
+
+---
+
+### 24 Ene 2026 - Fix Polling MercadoPago + RLS Bypass ✅ COMPLETADO
+
+**Problema:** El polling de suscripciones encontraba las pendientes pero no podía activarlas.
+
+**Causa raíz:**
+1. Los planes pertenecen a Nexo Team (org 1)
+2. Las suscripciones pertenecen a clientes (org N)
+3. La policy RLS de UPDATE no tenía bypass, bloqueando actualizaciones cross-org
+
+**Solución:**
+1. Agregado bypass a policy `suscripciones_update_own`
+2. Nuevos métodos en modelo: `cambiarEstadoBypass()`, `procesarCobroExitosoBypass()`
+3. Polling y webhooks ahora usan métodos bypass
+
+**Archivos modificados:**
+- `sql/suscripciones-negocio/01-tablas.sql` - Policy UPDATE con bypass
+- `backend/.../models/suscripciones.model.js` - Métodos bypass
+- `backend/.../jobs/polling-suscripciones.job.js` - Usa métodos bypass
+- `backend/.../controllers/webhooks.controller.js` - Usa métodos bypass
+
+**Resultado:** 10 suscripciones activadas automáticamente vía polling.
+
+---
+
+### 23 Ene 2026 - FASE 12: Auditoría UI Components ✅
 
 **Optimización de componentes UI para preparación como librería reutilizable.**
 
@@ -506,59 +603,20 @@ const inputStyles = getInputBaseStyles(hasError);
 
 ---
 
-### 23 Ene 2026 - FASE 11: Limpieza Legacy + Conectores Multi-Tenant ✅ COMPLETADO
+### 23 Ene 2026 - Conectores Multi-Tenant + LimitesHelper ✅
 
-**Eliminación código legacy y sistema de conectores de pago multi-tenant.**
+**Sistema de conectores de pago multi-tenant.**
 
-**Archivos Eliminados:**
-- `core/controllers/pagos.controller.js` - Usaba tablas legacy
-- `core/routes/pagos.js` - Rutas legacy
-- `core/schemas/pagos.schemas.js` - Schemas legacy
-
-**Nuevo Helper - LimitesHelper.js:**
 ```javascript
-const { LimitesHelper } = require('../../../utils/helpers');
-
-// Verificar si se puede crear recurso
-await LimitesHelper.verificarLimiteOLanzar(organizacionId, 'sucursales', 1);
-
-// Obtener resumen de uso
-const resumen = await LimitesHelper.obtenerResumenUso(organizacionId);
-```
-
-**Tabla Conectores Multi-Tenant:**
-```sql
--- sql/suscripciones-negocio/05-conectores-pago.sql
-CREATE TABLE conectores_pago_org (
-    organizacion_id INTEGER NOT NULL,
-    gateway VARCHAR(30),              -- 'stripe', 'mercadopago'
-    credenciales_encrypted BYTEA,     -- AES-256-GCM
-    es_principal BOOLEAN,
-    verificado BOOLEAN
-);
-```
-
-**MercadoPagoService Multi-Tenant:**
-```javascript
-// Obtener servicio para organización específica
+// Obtener servicio MP para organización
 const mpService = await MercadoPagoService.getForOrganization(organizacionId);
-await mpService.crearSuscripcionConInitPoint(params);
 
-// Usar instancia global (env vars)
-const mpGlobal = MercadoPagoService.getGlobalInstance();
-```
-
-**API Endpoints Nuevos:**
-```
-GET/POST/PUT/DELETE /api/v1/suscripciones-negocio/conectores
-POST /api/v1/suscripciones-negocio/conectores/:id/verificar
+// Verificar límites de plan
+const { LimitesHelper } = require('../../../utils/helpers');
+await LimitesHelper.verificarLimiteOLanzar(organizacionId, 'sucursales', 1);
 ```
 
-**Variable de Entorno Nueva:**
-```env
-# Generar con: openssl rand -hex 32
-CREDENTIAL_ENCRYPTION_KEY=<64_chars_hex>
-```
+**Tabla:** `conectores_pago_org` (credenciales encriptadas AES-256-GCM)
 
 ---
 
@@ -650,47 +708,6 @@ CREDENTIAL_ENCRYPTION_KEY=<64_chars_hex>
 ```
 
 **IMPORTANTE:** Ejecutar `npm run clean:data` para levantar BD desde cero.
-
----
-
-### 22 Ene 2026 - Flujo Checkout MercadoPago ✅ COMPLETO
-
-**Flujo completo de checkout implementado para suscripciones con MercadoPago.**
-
-**Archivos creados:**
-- `backend/app/modules/suscripciones-negocio/schemas/checkout.schemas.js` - Validación Joi
-- `backend/app/modules/suscripciones-negocio/controllers/checkout.controller.js` - 3 métodos
-- `backend/app/modules/suscripciones-negocio/routes/checkout.js` - Rutas de checkout
-- `frontend/src/components/checkout/CheckoutModal.jsx` - Modal con cupón
-- `frontend/src/components/checkout/index.js` - Barrel export
-- `frontend/src/components/trial/TrialBanner.jsx` - Banner para trial
-- `frontend/src/components/trial/index.js` - Barrel export
-- `frontend/src/pages/payment/PaymentCallbackPage.jsx` - Callback de MP
-- `frontend/src/pages/planes/PlanesPublicPage.jsx` - Página pública de planes
-
-**Archivos modificados:**
-- `backend/app/modules/suscripciones-negocio/routes/index.js` - Agregado `checkoutRoutes`
-- `backend/app/modules/suscripciones-negocio/models/suscripciones.model.js` - Métodos `crearPendiente()`, `actualizarGatewayIds()`, `buscarPorGatewayId()`
-- `backend/app/config/constants.js` - Estado `pendiente_pago`
-- `frontend/src/services/api/modules/suscripciones-negocio.api.js` - Endpoints checkout
-- `frontend/src/app/routes/public.routes.jsx` - Rutas `/planes`, `/payment/callback`
-- `sql/suscripciones-negocio/01-tablas.sql` - Constraint actualizado
-
-**Endpoints API:**
-```
-POST /api/v1/suscripciones-negocio/checkout/iniciar
-POST /api/v1/suscripciones-negocio/checkout/validar-cupon
-GET  /api/v1/suscripciones-negocio/checkout/resultado
-```
-
-**Flujo:**
-1. Usuario en `/planes` selecciona plan
-2. Abre `CheckoutModal` con opción de cupón
-3. Click "Pagar" → Backend crea suscripción `pendiente_pago`
-4. Backend crea preferencia en MercadoPago → Retorna `init_point`
-5. Redirect a MercadoPago
-6. Después de pagar → Callback a `/payment/callback`
-7. Webhook de MP procesa pago → Activa suscripción
 
 ---
 
@@ -788,4 +805,4 @@ Sistema de roles dinámicos por organización. Ver sección "Roles" arriba para 
 
 ---
 
-**Actualizado**: 23 Enero 2026 (FASE 12: Auditoría UI Components)
+**Actualizado**: 24 Enero 2026 (MercadoPago E2E validado + Limpieza legacy)

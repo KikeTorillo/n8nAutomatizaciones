@@ -393,8 +393,12 @@ ALTER TABLE cupones_suscripcion ENABLE ROW LEVEL SECURITY;
 ALTER TABLE webhooks_suscripcion ENABLE ROW LEVEL SECURITY;
 
 -- Políticas para planes_suscripcion_org
+-- NOTA: Incluye bypass para permitir JOINs cross-org (suscripciones de clientes con planes de Nexo Team)
 CREATE POLICY planes_select_own ON planes_suscripcion_org
-    FOR SELECT USING (organizacion_id = current_setting('app.current_tenant_id')::INTEGER);
+    FOR SELECT USING (
+        organizacion_id = current_setting('app.current_tenant_id', true)::INTEGER
+        OR current_setting('app.bypass_rls', true) = 'true'
+    );
 
 CREATE POLICY planes_insert_own ON planes_suscripcion_org
     FOR INSERT WITH CHECK (organizacion_id = current_setting('app.current_tenant_id')::INTEGER);
@@ -406,14 +410,25 @@ CREATE POLICY planes_delete_own ON planes_suscripcion_org
     FOR DELETE USING (organizacion_id = current_setting('app.current_tenant_id')::INTEGER);
 
 -- Políticas para suscripciones_org
+-- NOTA: Incluye bypass para permitir operaciones desde webhooks, polling y búsquedas cross-org
+-- El bypass es necesario porque:
+-- - Los planes pertenecen a Nexo Team (org 1)
+-- - Las suscripciones pertenecen a clientes (org N)
+-- - El polling y webhooks necesitan actualizar suscripciones de cualquier org
 CREATE POLICY suscripciones_select_own ON suscripciones_org
-    FOR SELECT USING (organizacion_id = current_setting('app.current_tenant_id')::INTEGER);
+    FOR SELECT USING (
+        organizacion_id = current_setting('app.current_tenant_id', true)::INTEGER
+        OR current_setting('app.bypass_rls', true) = 'true'
+    );
 
 CREATE POLICY suscripciones_insert_own ON suscripciones_org
     FOR INSERT WITH CHECK (organizacion_id = current_setting('app.current_tenant_id')::INTEGER);
 
 CREATE POLICY suscripciones_update_own ON suscripciones_org
-    FOR UPDATE USING (organizacion_id = current_setting('app.current_tenant_id')::INTEGER);
+    FOR UPDATE USING (
+        organizacion_id = current_setting('app.current_tenant_id', true)::INTEGER
+        OR current_setting('app.bypass_rls', true) = 'true'
+    );
 
 CREATE POLICY suscripciones_delete_own ON suscripciones_org
     FOR DELETE USING (organizacion_id = current_setting('app.current_tenant_id')::INTEGER);

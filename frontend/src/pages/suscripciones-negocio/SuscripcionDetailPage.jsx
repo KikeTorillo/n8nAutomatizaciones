@@ -1,16 +1,42 @@
+/**
+ * ====================================================================
+ * SUSCRIPCION DETAIL PAGE - VISTA DE DETALLE CON TABS
+ * ====================================================================
+ *
+ * Página de detalle de suscripción con navegación por tabs:
+ * - General: Información de la suscripción
+ * - Pagos: Historial de pagos
+ * - Historial: Cambios de estado y eventos
+ *
+ * ====================================================================
+ */
+
 import { useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import {
-  ArrowLeft,
   CreditCard,
   Pause,
   Play,
   X,
-  RefreshCw,
   Package,
   MoreVertical,
+  User,
+  Receipt,
+  Clock,
+  Edit,
+  Mail,
+  Calendar,
+  DollarSign,
 } from 'lucide-react';
-import { Button, Badge, DropdownMenu, ConfirmDialog } from '@/components/ui';
+import {
+  Button,
+  Badge,
+  DropdownMenu,
+  ConfirmDialog,
+  BackButton,
+  LoadingSpinner,
+  StateNavTabs,
+} from '@/components/ui';
 import {
   useSuscripcion,
   useCancelarSuscripcion,
@@ -25,16 +51,136 @@ import {
   SuscripcionHistorialTab,
 } from '@/components/suscripciones-negocio';
 import { useToast } from '@/hooks/utils';
-import { cn } from '@/lib/utils';
+import { formatCurrency, formatDate } from '@/lib/utils';
 
 /**
  * Tabs de la página
  */
 const TABS = [
-  { id: 'general', label: 'General' },
-  { id: 'pagos', label: 'Pagos' },
-  { id: 'historial', label: 'Historial' },
+  { id: 'general', label: 'General', icon: User },
+  { id: 'pagos', label: 'Pagos', icon: Receipt },
+  { id: 'historial', label: 'Historial', icon: Clock },
 ];
+
+/**
+ * Header de la suscripción con información resumida
+ */
+function SuscripcionHeader({ suscripcion, onPausar, onReactivar, onCancelar, isPending }) {
+  const isPausable = suscripcion.estado === ESTADOS_SUSCRIPCION.ACTIVA;
+  const isReactivable = suscripcion.estado === ESTADOS_SUSCRIPCION.PAUSADA;
+  const isCancelable =
+    suscripcion.estado !== ESTADOS_SUSCRIPCION.CANCELADA &&
+    suscripcion.estado !== ESTADOS_SUSCRIPCION.VENCIDA;
+
+  return (
+    <div className="bg-white dark:bg-gray-800 shadow-sm border-b dark:border-gray-700">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* BackButton en línea separada */}
+        <div className="flex items-center gap-4 mb-4">
+          <BackButton to="/suscripciones-negocio/suscripciones" label="Volver a Suscripciones" />
+        </div>
+
+        {/* Header principal */}
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+          <div className="flex items-center gap-4">
+            {/* Avatar/Icono */}
+            <div className="flex-shrink-0 h-16 w-16 bg-primary-100 dark:bg-primary-900/40 rounded-full flex items-center justify-center">
+              <CreditCard className="h-8 w-8 text-primary-600 dark:text-primary-400" />
+            </div>
+
+            <div>
+              {/* Título y badge */}
+              <div className="flex items-center gap-3 flex-wrap">
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  Suscripción #{suscripcion.id}
+                </h1>
+                <SuscripcionStatusBadge estado={suscripcion.estado} />
+              </div>
+
+              {/* Info del cliente y plan */}
+              <div className="flex items-center gap-4 mt-1 text-sm text-gray-500 dark:text-gray-400">
+                <span className="flex items-center gap-1">
+                  <User className="w-4 h-4" />
+                  {suscripcion.cliente_nombre || `Cliente #${suscripcion.cliente_id}`}
+                </span>
+                <span className="flex items-center gap-1">
+                  <Package className="w-4 h-4" />
+                  {suscripcion.plan_nombre}
+                </span>
+              </div>
+
+              {/* Detalles adicionales */}
+              <div className="flex items-center gap-4 mt-2 text-sm text-gray-500 dark:text-gray-400">
+                {suscripcion.cliente_email && (
+                  <span className="flex items-center gap-1">
+                    <Mail className="w-4 h-4" />
+                    {suscripcion.cliente_email}
+                  </span>
+                )}
+                <span className="flex items-center gap-1">
+                  <DollarSign className="w-4 h-4" />
+                  {formatCurrency(suscripcion.precio)}/mes
+                </span>
+                {suscripcion.proxima_fecha_cobro && (
+                  <span className="flex items-center gap-1">
+                    <Calendar className="w-4 h-4" />
+                    Próximo cobro: {formatDate(suscripcion.proxima_fecha_cobro)}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Acciones */}
+          <div className="flex gap-2">
+            {isPausable && (
+              <Button
+                variant="outline"
+                onClick={onPausar}
+                disabled={isPending}
+              >
+                <Pause className="h-4 w-4 mr-2" />
+                Pausar
+              </Button>
+            )}
+            {isReactivable && (
+              <Button
+                variant="primary"
+                onClick={onReactivar}
+                disabled={isPending}
+              >
+                <Play className="h-4 w-4 mr-2" />
+                Reactivar
+              </Button>
+            )}
+            {isCancelable && (
+              <DropdownMenu
+                trigger={
+                  <Button variant="ghost" size="icon">
+                    <MoreVertical className="h-5 w-5" />
+                  </Button>
+                }
+                items={[
+                  {
+                    label: 'Cambiar Plan',
+                    icon: Package,
+                    onClick: () => {}, // TODO: Implementar
+                  },
+                  {
+                    label: 'Cancelar Suscripción',
+                    icon: X,
+                    onClick: onCancelar,
+                    variant: 'danger',
+                  },
+                ]}
+              />
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 /**
  * Página de detalle de suscripción
@@ -42,10 +188,14 @@ const TABS = [
 function SuscripcionDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { success, error: showError } = useToast();
 
+  // Tab activo desde URL o default 'general'
+  const activeTab = searchParams.get('tab') || 'general';
+  const handleTabChange = (tabId) => setSearchParams({ tab: tabId });
+
   // State
-  const [activeTab, setActiveTab] = useState('general');
   const [confirmAction, setConfirmAction] = useState(null);
 
   // Queries
@@ -55,6 +205,8 @@ function SuscripcionDetailPage() {
   const cancelarMutation = useCancelarSuscripcion();
   const pausarMutation = usePausarSuscripcion();
   const reactivarMutation = useReactivarSuscripcion();
+
+  const isPending = cancelarMutation.isPending || pausarMutation.isPending || reactivarMutation.isPending;
 
   // Handlers
   const handleCancelar = () => {
@@ -109,140 +261,63 @@ function SuscripcionDetailPage() {
     });
   };
 
+  // Loading state
   if (isLoading) {
     return (
-      <div className="p-6 flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary-600"></div>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <LoadingSpinner size="lg" />
       </div>
     );
   }
 
+  // Not found state
   if (!suscripcion) {
     return (
-      <div className="p-6 text-center">
-        <p className="text-gray-500">Suscripción no encontrada</p>
-        <Button
-          as={Link}
-          to="/suscripciones-negocio/suscripciones"
-          variant="outline"
-          className="mt-4"
-        >
-          Volver al listado
-        </Button>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600 dark:text-gray-400">Suscripción no encontrada</p>
+          <Button onClick={() => navigate('/suscripciones-negocio/suscripciones')} className="mt-4">
+            Volver a Suscripciones
+          </Button>
+        </div>
       </div>
     );
   }
 
-  const isPausable = suscripcion.estado === ESTADOS_SUSCRIPCION.ACTIVA;
-  const isReactivable = suscripcion.estado === ESTADOS_SUSCRIPCION.PAUSADA;
-  const isCancelable =
-    suscripcion.estado !== ESTADOS_SUSCRIPCION.CANCELADA &&
-    suscripcion.estado !== ESTADOS_SUSCRIPCION.VENCIDA;
+  // Renderizar tab activo
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'pagos':
+        return <SuscripcionPagosTab suscripcionId={parseInt(id)} />;
+      case 'historial':
+        return <SuscripcionHistorialTab suscripcionId={parseInt(id)} />;
+      case 'general':
+      default:
+        return <SuscripcionGeneralTab suscripcion={suscripcion} />;
+    }
+  };
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate('/suscripciones-negocio/suscripciones')}
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">
-                Suscripción #{suscripcion.id}
-              </h1>
-              <SuscripcionStatusBadge estado={suscripcion.estado} />
-            </div>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              {suscripcion.cliente_nombre || `Cliente #${suscripcion.cliente_id}`}
-              {' • '}
-              {suscripcion.plan_nombre}
-            </p>
-          </div>
-        </div>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      {/* Header con info resumida */}
+      <SuscripcionHeader
+        suscripcion={suscripcion}
+        onPausar={handlePausar}
+        onReactivar={handleReactivar}
+        onCancelar={handleCancelar}
+        isPending={isPending}
+      />
 
-        <div className="flex gap-2">
-          {isPausable && (
-            <Button
-              variant="outline"
-              onClick={handlePausar}
-              disabled={pausarMutation.isPending}
-            >
-              <Pause className="h-4 w-4 mr-2" />
-              Pausar
-            </Button>
-          )}
-          {isReactivable && (
-            <Button
-              variant="primary"
-              onClick={handleReactivar}
-              disabled={reactivarMutation.isPending}
-            >
-              <Play className="h-4 w-4 mr-2" />
-              Reactivar
-            </Button>
-          )}
-          {isCancelable && (
-            <DropdownMenu
-              trigger={
-                <Button variant="ghost" size="icon">
-                  <MoreVertical className="h-5 w-5" />
-                </Button>
-              }
-              items={[
-                {
-                  label: 'Cambiar Plan',
-                  icon: Package,
-                  onClick: () => {}, // TODO: Implementar
-                },
-                {
-                  label: 'Cancelar Suscripción',
-                  icon: X,
-                  onClick: handleCancelar,
-                  variant: 'danger',
-                },
-              ]}
-            />
-          )}
-        </div>
-      </div>
+      {/* Navegación de tabs */}
+      <StateNavTabs
+        tabs={TABS}
+        activeTab={activeTab}
+        onTabChange={handleTabChange}
+      />
 
-      {/* Tabs */}
-      <div className="border-b border-gray-200 dark:border-gray-700">
-        <nav className="flex gap-4">
-          {TABS.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={cn(
-                'py-3 px-1 text-sm font-medium border-b-2 transition-colors',
-                activeTab === tab.id
-                  ? 'border-primary-500 text-primary-600 dark:text-primary-400'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
-              )}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </nav>
-      </div>
-
-      {/* Tab Content */}
-      <div>
-        {activeTab === 'general' && (
-          <SuscripcionGeneralTab suscripcion={suscripcion} />
-        )}
-        {activeTab === 'pagos' && (
-          <SuscripcionPagosTab suscripcionId={parseInt(id)} />
-        )}
-        {activeTab === 'historial' && (
-          <SuscripcionHistorialTab suscripcionId={parseInt(id)} />
-        )}
+      {/* Contenido del tab activo */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {renderTabContent()}
       </div>
 
       {/* Confirm Dialog */}

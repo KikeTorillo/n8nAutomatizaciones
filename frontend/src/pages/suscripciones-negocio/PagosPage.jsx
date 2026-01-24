@@ -1,7 +1,8 @@
 import { Receipt, Eye, MoreVertical, RefreshCw } from 'lucide-react';
-import { Button, Badge, DropdownMenu } from '@/components/ui';
+import { Button, Badge, DropdownMenu, SearchInput } from '@/components/ui';
 import { ListadoCRUDPage } from '@/components/ui/templates';
 import { usePagos, ESTADO_PAGO_LABELS, ESTADO_PAGO_COLORS, METODO_PAGO_LABELS } from '@/hooks/suscripciones-negocio';
+import { SuscripcionesNegocioPageLayout } from '@/components/suscripciones-negocio';
 import { formatCurrency, formatDate } from '@/lib/utils';
 
 /**
@@ -116,6 +117,7 @@ function PagosPage() {
     <ListadoCRUDPage
       title="Historial de Pagos"
       icon={Receipt}
+      PageLayout={SuscripcionesNegocioPageLayout}
       useListQuery={usePagos}
       columns={columns}
       showNewButton={false}
@@ -127,18 +129,15 @@ function PagosPage() {
       initialFilters={{ busqueda: '', estado: '' }}
       renderFilters={({ filtros, setFiltro, limpiarFiltros, resetPage }) => (
         <div className="flex flex-col sm:flex-row gap-3">
-          <div className="flex-1">
-            <input
-              type="text"
-              value={filtros.busqueda || ''}
-              onChange={(e) => {
-                setFiltro('busqueda', e.target.value);
-                resetPage();
-              }}
-              placeholder="Buscar por cliente o referencia..."
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-            />
-          </div>
+          <SearchInput
+            value={filtros.busqueda || ''}
+            onChange={(e) => {
+              setFiltro('busqueda', e.target.value);
+              resetPage();
+            }}
+            placeholder="Buscar por cliente o referencia..."
+            className="flex-1 max-w-md"
+          />
           <select
             value={filtros.estado || ''}
             onChange={(e) => {

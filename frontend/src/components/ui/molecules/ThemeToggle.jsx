@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Moon, Sun } from 'lucide-react';
 import { useTheme } from '@/hooks/sistema';
 import { cn } from '@/lib/utils';
@@ -7,7 +8,7 @@ import { cn } from '@/lib/utils';
  * @param {string} className - Clases adicionales
  * @param {string} size - Tamaño del botón ('sm', 'md', 'lg')
  */
-function ThemeToggle({ className, size = 'md' }) {
+const ThemeToggle = memo(function ThemeToggle({ className, size = 'md' }) {
   const { isDark, toggleTheme } = useTheme();
 
   const sizes = {
@@ -44,7 +45,7 @@ function ThemeToggle({ className, size = 'md' }) {
       )}
     </button>
   );
-}
+});
 
 ThemeToggle.displayName = 'ThemeToggle';
 

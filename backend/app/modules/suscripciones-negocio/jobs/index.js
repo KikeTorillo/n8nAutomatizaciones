@@ -7,6 +7,7 @@
 
 const ProcesarCobrosJob = require('./procesar-cobros.job');
 const VerificarTrialsJob = require('./verificar-trials.job');
+const PollingSuscripcionesJob = require('./polling-suscripciones.job');
 const logger = require('../../../utils/logger');
 
 class SuscripcionesJobs {
@@ -18,6 +19,7 @@ class SuscripcionesJobs {
 
         ProcesarCobrosJob.init();
         VerificarTrialsJob.init();
+        PollingSuscripcionesJob.init();
 
         logger.info('✅ Todos los cron jobs de suscripciones-negocio inicializados');
     }

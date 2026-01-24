@@ -793,8 +793,12 @@ class SuscripcionesModel {
      * @returns {Promise<Object|null>} - Suscripción encontrada o null
      */
     static async buscarPorGatewayId(subscriptionIdGateway, organizacionId = null) {
+        // NOTA: Usamos withBypass porque:
+        // 1. El subscription_id_gateway es único globalmente
+        // 2. Los planes pertenecen a Nexo Team (org 1) pero las suscripciones a clientes (org N)
+        // 3. Con RLS, el JOIN con planes falla si la org del usuario != org del plan
         const queryFn = async (db) => {
-            const query = `
+            let query = `
                 SELECT
                     s.*,
                     p.nombre as plan_nombre,
@@ -806,16 +810,20 @@ class SuscripcionesModel {
                 LEFT JOIN clientes c ON s.cliente_id = c.id
                 WHERE s.subscription_id_gateway = $1
             `;
+            const params = [subscriptionIdGateway];
 
-            const result = await db.query(query, [subscriptionIdGateway]);
+            // Si se proporciona organizacionId, filtramos por la org de la suscripción
+            if (organizacionId) {
+                query += ` AND s.organizacion_id = $2`;
+                params.push(organizacionId);
+            }
+
+            const result = await db.query(query, params);
             return result.rows[0] || null;
         };
 
-        if (organizacionId) {
-            return await RLSContextManager.query(organizacionId, queryFn);
-        } else {
-            return await RLSContextManager.withBypass(queryFn);
-        }
+        // Siempre usar bypass porque los planes están en org diferente
+        return await RLSContextManager.withBypass(queryFn);
     }
 
     /**
@@ -851,6 +859,179 @@ class SuscripcionesModel {
      */
     static async reactivar(id, organizacionId) {
         return this.cambiarEstado(id, 'activa', organizacionId);
+    }
+
+    /**
+     * Buscar suscripciones pendientes que tengan gateway ID (para polling)
+     *
+     * Usado por el job de polling para verificar estado de suscripciones
+     * que están en pendiente_pago pero ya tienen subscription_id_gateway.
+     *
+     * @param {number} organizacionId - ID de la organización (Nexo Team)
+     * @returns {Promise<Array>} - Lista de suscripciones pendientes con gateway
+     */
+    /**
+     * Buscar suscripciones pendientes con gateway ID (para polling)
+     * NOTA: Usa withBypass porque las suscripciones pueden pertenecer a diferentes organizaciones
+     * pero el polling debe poder verlas todas para sincronizar estados con MercadoPago.
+     *
+     * @returns {Promise<Array>} - Suscripciones pendientes
+     */
+    static async buscarPendientesConGateway() {
+        return await RLSContextManager.withBypass(async (db) => {
+            const result = await db.query(`
+                SELECT
+                    s.id,
+                    s.organizacion_id,
+                    s.subscription_id_gateway,
+                    s.creado_en,
+                    s.plan_id,
+                    s.estado,
+                    s.periodo,
+                    s.fecha_proximo_cobro,
+                    s.es_trial,
+                    s.cliente_id,
+                    p.nombre as plan_nombre,
+                    p.codigo as plan_codigo,
+                    p.features
+                FROM suscripciones_org s
+                INNER JOIN planes_suscripcion_org p ON s.plan_id = p.id
+                WHERE s.estado = 'pendiente_pago'
+                  AND s.subscription_id_gateway IS NOT NULL
+                  AND s.creado_en > NOW() - INTERVAL '24 hours'
+                ORDER BY s.creado_en ASC
+                LIMIT 50
+            `);
+            return result.rows;
+        });
+    }
+
+    /**
+     * Cambiar estado de suscripción usando bypass RLS
+     * SOLO para uso interno del polling/webhooks donde los planes están en org diferente
+     *
+     * @param {number} id - ID de la suscripción
+     * @param {string} nuevoEstado - Nuevo estado
+     * @param {Object} options - { razon, usuario_id }
+     * @returns {Promise<Object>} - Suscripción actualizada
+     */
+    static async cambiarEstadoBypass(id, nuevoEstado, options = {}) {
+        return await RLSContextManager.withBypass(async (db) => {
+            // Obtener estado actual sin JOIN a planes (evita problemas RLS cross-org)
+            const suscResult = await db.query(
+                `SELECT id, estado, organizacion_id FROM suscripciones_org WHERE id = $1`,
+                [id]
+            );
+            const suscripcion = suscResult.rows[0];
+
+            if (!suscripcion) {
+                ErrorHelper.throwNotFound('Suscripción');
+            }
+
+            const estadosValidos = ['trial', 'pendiente_pago', 'activa', 'pausada', 'cancelada', 'vencida', 'suspendida'];
+            if (!estadosValidos.includes(nuevoEstado)) {
+                ErrorHelper.throwValidation(`Estado inválido: ${nuevoEstado}`);
+            }
+
+            // Validar transición permitida
+            if (!this._esTransicionValida(suscripcion.estado, nuevoEstado)) {
+                ErrorHelper.throwValidation(
+                    `Transición no permitida: ${suscripcion.estado} → ${nuevoEstado}`
+                );
+            }
+
+            const updates = ['estado = $1', 'actualizado_en = NOW()'];
+            const values = [nuevoEstado];
+            let paramCount = 2;
+
+            // Si se cancela, guardar fecha_fin y razón
+            if (nuevoEstado === 'cancelada') {
+                updates.push(`fecha_fin = CURRENT_DATE`);
+                if (options.razon) {
+                    updates.push(`razon_cancelacion = $${paramCount++}`);
+                    values.push(options.razon);
+                }
+                if (options.usuario_id) {
+                    updates.push(`cancelado_por = $${paramCount++}`);
+                    values.push(options.usuario_id);
+                }
+            }
+
+            values.push(id);
+
+            const query = `
+                UPDATE suscripciones_org
+                SET ${updates.join(', ')}
+                WHERE id = $${paramCount}
+                RETURNING *
+            `;
+
+            const result = await db.query(query, values);
+
+            logger.info(`[Bypass] Suscripción ${id} cambió a estado: ${nuevoEstado}`);
+
+            return result.rows[0];
+        });
+    }
+
+    /**
+     * Procesar cobro exitoso usando bypass RLS
+     * SOLO para uso interno del polling/webhooks
+     *
+     * @param {number} id - ID de la suscripción
+     * @param {Object} suscripcionData - Datos de la suscripción (evita query adicional)
+     * @returns {Promise<Object>} - Suscripción actualizada
+     */
+    static async procesarCobroExitosoBypass(id, suscripcionData = null) {
+        return await RLSContextManager.withBypass(async (db) => {
+            // Si no se pasaron datos, obtenerlos
+            let suscripcion = suscripcionData;
+            if (!suscripcion) {
+                const result = await db.query(
+                    `SELECT id, estado, periodo, fecha_proximo_cobro, es_trial, organizacion_id, cliente_id, plan_id
+                     FROM suscripciones_org WHERE id = $1`,
+                    [id]
+                );
+                suscripcion = result.rows[0];
+            }
+
+            if (!suscripcion) {
+                ErrorHelper.throwNotFound('Suscripción');
+            }
+
+            const nuevaFechaProximoCobro = this._calcularProximoCobro(
+                suscripcion.fecha_proximo_cobro ? new Date(suscripcion.fecha_proximo_cobro) : new Date(),
+                suscripcion.periodo
+            );
+
+            // Si era trial o pendiente_pago, cambiar a activa
+            const nuevoEstado = (suscripcion.es_trial || suscripcion.estado === 'pendiente_pago')
+                ? 'activa'
+                : suscripcion.estado;
+
+            const query = `
+                UPDATE suscripciones_org
+                SET fecha_proximo_cobro = $1,
+                    fecha_inicio = COALESCE(fecha_inicio, NOW()),
+                    estado = $2,
+                    es_trial = FALSE,
+                    meses_activo = meses_activo + 1,
+                    actualizado_en = NOW()
+                WHERE id = $3
+                RETURNING *
+            `;
+
+            const result = await db.query(query, [nuevaFechaProximoCobro, nuevoEstado, id]);
+
+            logger.info(`[Bypass] Cobro exitoso procesado para suscripción ${id}`);
+
+            // Si era trial o pendiente_pago, activar módulos en organización vinculada (dogfooding)
+            if (suscripcion.es_trial || suscripcion.estado === 'pendiente_pago') {
+                await this.actualizarOrgVinculadaAlActivar(id, suscripcion.organizacion_id);
+            }
+
+            return result.rows[0];
+        });
     }
 }
 

@@ -1,6 +1,14 @@
 import { useState, memo } from 'react';
 import { ChevronDown, Filter, Star, X, RotateCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import {
+  FILTER_PANEL_CONTAINER,
+  FILTER_PANEL_HEADER,
+  FILTER_PANEL_CONTENT,
+  FILTER_COUNT_BADGE,
+  FILTER_GRID_LAYOUTS,
+  getFilterToggleStyles,
+} from '@/lib/uiConstants';
 import FilterSection, { FilterCheckbox, FilterSelect } from './FilterSection';
 import SavedSearchList from './SavedSearchList';
 
@@ -110,15 +118,9 @@ export const AdvancedFilterPanel = memo(function AdvancedFilterPanel({
   );
 
   return (
-    <div
-      className={cn(
-        'bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700',
-        'shadow-sm',
-        className
-      )}
-    >
+    <div className={cn(FILTER_PANEL_CONTAINER, className)}>
       {/* Header con barra de búsqueda y botón expandir */}
-      <div className="p-4 flex flex-col sm:flex-row sm:items-center gap-3">
+      <div className={FILTER_PANEL_HEADER}>
         {/* Barra de búsqueda personalizada */}
         {searchBar && <div className="flex-1">{searchBar}</div>}
 
@@ -128,25 +130,14 @@ export const AdvancedFilterPanel = memo(function AdvancedFilterPanel({
           <button
             type="button"
             onClick={() => setIsOpen(!isOpen)}
-            className={cn(
-              'flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-colors min-h-[40px]',
-              isOpen
-                ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/40 dark:text-primary-400'
-                : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300',
-              'hover:bg-gray-200 dark:hover:bg-gray-600'
-            )}
+            className={getFilterToggleStyles(isOpen)}
             aria-expanded={isOpen}
             aria-controls="filter-panel-content"
           >
             <Filter className="h-4 w-4" />
             <span>Filtros</span>
             {filtrosActivos > 0 && (
-              <span
-                className={cn(
-                  'inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs font-bold rounded-full',
-                  'bg-primary-600 text-white'
-                )}
-              >
+              <span className={FILTER_COUNT_BADGE}>
                 {filtrosActivos}
               </span>
             )}
@@ -181,12 +172,9 @@ export const AdvancedFilterPanel = memo(function AdvancedFilterPanel({
       {isOpen && (
         <div
           id="filter-panel-content"
-          className={cn(
-            'border-t border-gray-200 dark:border-gray-700',
-            'p-4'
-          )}
+          className={FILTER_PANEL_CONTENT}
         >
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className={FILTER_GRID_LAYOUTS.default}>
             {/* Columna 1: Checkboxes y checkbox-groups */}
             <div className="space-y-4">
               <FilterSection title="Filtros" icon={Filter}>
