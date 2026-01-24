@@ -1,5 +1,18 @@
+import { memo, useState, useCallback } from 'react';
 import { Sparkles, ChevronDown, ChevronUp, Tag, Clock, Percent, Gift, Package } from 'lucide-react';
-import { useState } from 'react';
+
+// Iconos por tipo de promocion (FUERA del componente)
+const ICONO_POR_TIPO = {
+  cantidad: Package,
+  porcentaje: Percent,
+  regalo: Gift,
+  default: Tag,
+};
+
+const getIconoTipo = (tipo) => {
+  const IconComponent = ICONO_POR_TIPO[tipo] || ICONO_POR_TIPO.default;
+  return <IconComponent className="h-3.5 w-3.5" />;
+};
 
 /**
  * Componente indicador de promociones disponibles/aplicadas en el carrito
@@ -11,7 +24,7 @@ import { useState } from 'react';
  * - loading: boolean - Estado de carga
  * - onClick: () => void - Callback al hacer click (mostrar detalles)
  */
-export default function PromocionesIndicador({
+export const PromocionesIndicador = memo(function PromocionesIndicador({
   promocionesAplicadas = [],
   descuentoTotal = 0,
   hayExclusiva = false,
@@ -22,32 +35,19 @@ export default function PromocionesIndicador({
 
   const cantidadPromociones = promocionesAplicadas.length;
 
+  // Handler memoizado
+  const handleToggle = useCallback(() => {
+    if (onClick) {
+      onClick();
+    } else {
+      setExpanded(prev => !prev);
+    }
+  }, [onClick]);
+
   // No mostrar nada si no hay promociones
   if (!loading && cantidadPromociones === 0) {
     return null;
   }
-
-  // Iconos por tipo de promocion
-  const getIconoTipo = (tipo) => {
-    switch (tipo) {
-      case 'cantidad':
-        return <Package className="h-3.5 w-3.5" />;
-      case 'porcentaje':
-        return <Percent className="h-3.5 w-3.5" />;
-      case 'regalo':
-        return <Gift className="h-3.5 w-3.5" />;
-      default:
-        return <Tag className="h-3.5 w-3.5" />;
-    }
-  };
-
-  const handleToggle = () => {
-    if (onClick) {
-      onClick();
-    } else {
-      setExpanded(!expanded);
-    }
-  };
 
   return (
     <div className="space-y-2">
@@ -158,4 +158,8 @@ export default function PromocionesIndicador({
       )}
     </div>
   );
-}
+});
+
+PromocionesIndicador.displayName = 'PromocionesIndicador';
+
+export default PromocionesIndicador;

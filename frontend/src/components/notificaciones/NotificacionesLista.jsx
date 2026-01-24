@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { memo, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Bell,
@@ -85,9 +85,114 @@ function formatearFecha(fecha) {
 }
 
 /**
+ * NotificacionListItem - Ítem individual memoizado
+ */
+const NotificacionListItem = memo(function NotificacionListItem({
+  notif,
+  onMarcarLeida,
+  onArchivar,
+  onEliminar,
+  onClick,
+  marcarLeidaPending,
+  archivarPending,
+  eliminarPending,
+}) {
+  const IconNivel = NIVEL_ICONS[notif.nivel] || Info;
+  const nivelConfig = NOTIFICACION_NIVELES[notif.nivel] || NOTIFICACION_NIVELES.info;
+
+  const handleClick = useCallback(() => onClick(notif), [onClick, notif]);
+  const handleMarcarLeida = useCallback(() => onMarcarLeida(notif.id), [onMarcarLeida, notif.id]);
+  const handleArchivar = useCallback(() => onArchivar(notif.id), [onArchivar, notif.id]);
+  const handleEliminar = useCallback(() => onEliminar(notif.id), [onEliminar, notif.id]);
+
+  return (
+    <div
+      className={`relative p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors ${
+        !notif.leida ? 'bg-primary-50/50 dark:bg-primary-900/10' : ''
+      }`}
+    >
+      <div className="flex gap-4">
+        {/* Icono */}
+        <div className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center ${nivelConfig.bg}`}>
+          <IconNivel className={`w-6 h-6 ${nivelConfig.color}`} />
+        </div>
+
+        {/* Contenido */}
+        <div
+          className="flex-1 min-w-0 cursor-pointer"
+          onClick={handleClick}
+        >
+          <div className="flex items-start justify-between gap-2 mb-1">
+            <div>
+              <p className={`font-medium ${!notif.leida ? 'text-gray-900 dark:text-gray-100' : 'text-gray-600 dark:text-gray-400'}`}>
+                {notif.titulo}
+              </p>
+              <span className="text-xs text-gray-400 dark:text-gray-500 capitalize">
+                {notif.categoria}
+              </span>
+            </div>
+            <span className="text-sm text-gray-400 dark:text-gray-500 whitespace-nowrap">
+              {formatearFecha(notif.creado_en)}
+            </span>
+          </div>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            {notif.mensaje}
+          </p>
+
+          {/* Accion */}
+          {notif.accion_texto && (
+            <button className="inline-flex items-center gap-1 text-sm text-primary-600 dark:text-primary-400 hover:underline mt-2">
+              {notif.accion_texto}
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+
+        {/* Acciones */}
+        <div className="flex-shrink-0 flex items-start gap-1">
+          {!notif.leida && (
+            <button
+              onClick={handleMarcarLeida}
+              disabled={marcarLeidaPending}
+              className="p-2 text-gray-400 hover:text-green-600 dark:hover:text-green-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              title="Marcar como leida"
+            >
+              <Check className="w-4 h-4" />
+            </button>
+          )}
+          <button
+            onClick={handleArchivar}
+            disabled={archivarPending}
+            className="p-2 text-gray-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            title="Archivar"
+          >
+            <Archive className="w-4 h-4" />
+          </button>
+          <button
+            onClick={handleEliminar}
+            disabled={eliminarPending}
+            className="p-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            title="Eliminar"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+
+      {/* Indicador de no leida */}
+      {!notif.leida && (
+        <div className="absolute left-1.5 top-1/2 -translate-y-1/2 w-2 h-2 bg-primary-500 rounded-full" />
+      )}
+    </div>
+  );
+});
+
+NotificacionListItem.displayName = 'NotificacionListItem';
+
+/**
  * NotificacionesLista - Lista completa de notificaciones con filtros
  */
-function NotificacionesLista() {
+export const NotificacionesLista = memo(function NotificacionesLista() {
   const navigate = useNavigate();
   const [filtros, setFiltros] = useState({
     solo_no_leidas: false,
@@ -110,35 +215,40 @@ function NotificacionesLista() {
   const archivar = useArchivarNotificacion();
   const eliminar = useEliminarNotificacion();
 
-  const handleMarcarLeida = (id) => {
+  // Handlers memoizados
+  const handleMarcarLeida = useCallback((id) => {
     marcarLeida.mutate(id);
-  };
+  }, [marcarLeida]);
 
-  const handleArchivar = (id) => {
+  const handleArchivar = useCallback((id) => {
     archivar.mutate(id);
-  };
+  }, [archivar]);
 
-  const handleEliminar = (id) => {
+  const handleEliminar = useCallback((id) => {
     eliminar.mutate(id);
-  };
+  }, [eliminar]);
 
-  const handleMarcarTodasLeidas = () => {
+  const handleMarcarTodasLeidas = useCallback(() => {
     marcarTodasLeidas.mutate();
-  };
+  }, [marcarTodasLeidas]);
 
-  const handleClickNotificacion = (notif) => {
+  const handleClickNotificacion = useCallback((notif) => {
     if (!notif.leida) {
       marcarLeida.mutate(notif.id);
     }
     if (notif.accion_url) {
       navigate(notif.accion_url);
     }
-  };
+  }, [marcarLeida, navigate]);
 
-  const handleCambiarFiltro = (key, value) => {
+  const handleCambiarFiltro = useCallback((key, value) => {
     setFiltros(prev => ({ ...prev, [key]: value }));
     setOffset(0);
-  };
+  }, []);
+
+  const handleLoadMore = useCallback(() => {
+    setOffset(prev => prev + limit);
+  }, [limit]);
 
   return (
     <div className="space-y-4">
@@ -216,93 +326,19 @@ function NotificacionesLista() {
           </div>
         ) : (
           <div className="divide-y divide-gray-100 dark:divide-gray-700">
-            {notificaciones.map((notif) => {
-              const IconCategoria = CATEGORIA_ICONS[notif.categoria] || Bell;
-              const IconNivel = NIVEL_ICONS[notif.nivel] || Info;
-              const nivelConfig = NOTIFICACION_NIVELES[notif.nivel] || NOTIFICACION_NIVELES.info;
-
-              return (
-                <div
-                  key={notif.id}
-                  className={`relative p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors ${
-                    !notif.leida ? 'bg-primary-50/50 dark:bg-primary-900/10' : ''
-                  }`}
-                >
-                  <div className="flex gap-4">
-                    {/* Icono */}
-                    <div className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center ${nivelConfig.bg}`}>
-                      <IconNivel className={`w-6 h-6 ${nivelConfig.color}`} />
-                    </div>
-
-                    {/* Contenido */}
-                    <div
-                      className="flex-1 min-w-0 cursor-pointer"
-                      onClick={() => handleClickNotificacion(notif)}
-                    >
-                      <div className="flex items-start justify-between gap-2 mb-1">
-                        <div>
-                          <p className={`font-medium ${!notif.leida ? 'text-gray-900 dark:text-gray-100' : 'text-gray-600 dark:text-gray-400'}`}>
-                            {notif.titulo}
-                          </p>
-                          <span className="text-xs text-gray-400 dark:text-gray-500 capitalize">
-                            {notif.categoria}
-                          </span>
-                        </div>
-                        <span className="text-sm text-gray-400 dark:text-gray-500 whitespace-nowrap">
-                          {formatearFecha(notif.creado_en)}
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        {notif.mensaje}
-                      </p>
-
-                      {/* Accion */}
-                      {notif.accion_texto && (
-                        <button className="inline-flex items-center gap-1 text-sm text-primary-600 dark:text-primary-400 hover:underline mt-2">
-                          {notif.accion_texto}
-                          <ChevronRight className="w-4 h-4" />
-                        </button>
-                      )}
-                    </div>
-
-                    {/* Acciones */}
-                    <div className="flex-shrink-0 flex items-start gap-1">
-                      {!notif.leida && (
-                        <button
-                          onClick={() => handleMarcarLeida(notif.id)}
-                          disabled={marcarLeida.isPending}
-                          className="p-2 text-gray-400 hover:text-green-600 dark:hover:text-green-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                          title="Marcar como leida"
-                        >
-                          <Check className="w-4 h-4" />
-                        </button>
-                      )}
-                      <button
-                        onClick={() => handleArchivar(notif.id)}
-                        disabled={archivar.isPending}
-                        className="p-2 text-gray-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                        title="Archivar"
-                      >
-                        <Archive className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleEliminar(notif.id)}
-                        disabled={eliminar.isPending}
-                        className="p-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                        title="Eliminar"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Indicador de no leida */}
-                  {!notif.leida && (
-                    <div className="absolute left-1.5 top-1/2 -translate-y-1/2 w-2 h-2 bg-primary-500 rounded-full" />
-                  )}
-                </div>
-              );
-            })}
+            {notificaciones.map((notif) => (
+              <NotificacionListItem
+                key={notif.id}
+                notif={notif}
+                onMarcarLeida={handleMarcarLeida}
+                onArchivar={handleArchivar}
+                onEliminar={handleEliminar}
+                onClick={handleClickNotificacion}
+                marcarLeidaPending={marcarLeida.isPending}
+                archivarPending={archivar.isPending}
+                eliminarPending={eliminar.isPending}
+              />
+            ))}
           </div>
         )}
 
@@ -319,7 +355,7 @@ function NotificacionesLista() {
         <div className="flex justify-center">
           <Button
             variant="outline"
-            onClick={() => setOffset(prev => prev + limit)}
+            onClick={handleLoadMore}
           >
             Cargar mas
           </Button>
@@ -327,6 +363,8 @@ function NotificacionesLista() {
       )}
     </div>
   );
-}
+});
+
+NotificacionesLista.displayName = 'NotificacionesLista';
 
 export default NotificacionesLista;

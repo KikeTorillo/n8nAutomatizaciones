@@ -1,4 +1,5 @@
 import { forwardRef, memo } from 'react';
+import PropTypes from 'prop-types';
 import { cn } from '@/lib/utils';
 import { getTextareaStyles, getAriaDescribedBy } from '@/lib/uiConstants';
 
@@ -57,6 +58,27 @@ const Textarea = memo(forwardRef(function Textarea(
 ));
 
 Textarea.displayName = 'Textarea';
+
+Textarea.propTypes = {
+  /** Número de filas visibles */
+  rows: PropTypes.number,
+  /** Si el textarea tiene error (borde rojo) */
+  hasError: PropTypes.bool,
+  /** Si el campo es requerido */
+  required: PropTypes.bool,
+  /** Si tiene texto de ayuda asociado */
+  hasHelper: PropTypes.bool,
+  /** ID del elemento */
+  id: PropTypes.string,
+  /** Clases CSS adicionales */
+  className: PropTypes.string,
+  /** Placeholder del textarea */
+  placeholder: PropTypes.string,
+  /** Handler de cambio */
+  onChange: PropTypes.func,
+  /** Valor actual */
+  value: PropTypes.string,
+};
 
 export { Textarea };
 export default Textarea;

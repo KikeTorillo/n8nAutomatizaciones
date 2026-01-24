@@ -1,3 +1,4 @@
+import { memo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Lock } from 'lucide-react';
 
@@ -16,7 +17,7 @@ import { Lock } from 'lucide-react';
  * - badge: Número para mostrar en badge (notificaciones)
  * - badgeColor: Color del badge
  */
-function AppCard({
+export const AppCard = memo(function AppCard({
   id,
   name,
   description,
@@ -30,11 +31,11 @@ function AppCard({
 }) {
   const navigate = useNavigate();
 
-  const handleClick = () => {
+  const handleClick = useCallback(() => {
     if (enabled && path) {
       navigate(path);
     }
-  };
+  }, [enabled, path, navigate]);
 
   return (
     <button
@@ -103,6 +104,8 @@ function AppCard({
       </div>
     </button>
   );
-}
+});
+
+AppCard.displayName = 'AppCard';
 
 export default AppCard;

@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { memo, useState, useMemo, useCallback } from 'react';
 import { Search, X } from 'lucide-react';
 import { ICONOS_MAP, CATEGORIAS_ICONOS } from './constants';
 import IconButton from './IconButton';
@@ -7,7 +7,7 @@ import IconButton from './IconButton';
  * IconPicker - Componente selector visual de iconos Lucide
  * Fragmentado en Ene 2026 para mejor mantenibilidad
  */
-function IconPicker({ value, onChange, error }) {
+export const IconPicker = memo(function IconPicker({ value, onChange, error }) {
   const [busqueda, setBusqueda] = useState('');
   const [categoriaActiva, setCategoriaActiva] = useState(null);
 
@@ -144,6 +144,8 @@ function IconPicker({ value, onChange, error }) {
       )}
     </div>
   );
-}
+});
+
+IconPicker.displayName = 'IconPicker';
 
 export default IconPicker;

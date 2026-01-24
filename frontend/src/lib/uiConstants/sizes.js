@@ -140,6 +140,17 @@ export const MODAL_SIZES = {
 };
 
 /**
+ * Tamaños para Drawer (max-height)
+ */
+export const DRAWER_SIZES = {
+  sm: 'max-h-[50%]',
+  md: 'max-h-[75%]',
+  lg: 'max-h-[85%]',
+  xl: 'max-h-[96%]',
+  full: 'max-h-full',
+};
+
+/**
  * Tamaños para SearchInput
  */
 export const SEARCH_INPUT_SIZES = {
@@ -200,6 +211,7 @@ export default {
   TEXT_SIZES,
   ICON_CONTAINER_SIZES,
   MODAL_SIZES,
+  DRAWER_SIZES,
   SEARCH_INPUT_SIZES,
   PAGINATION_SIZES,
 };

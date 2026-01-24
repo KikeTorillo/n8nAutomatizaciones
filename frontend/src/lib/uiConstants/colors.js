@@ -193,4 +193,86 @@ export const ICON_BG_COLORS = {
   },
 };
 
+/**
+ * Colores por estado de registro/entidad
+ * Mapeo de estados comunes a colores de badge
+ */
+export const STATUS_COLORS = {
+  activo: BADGE_COLORS.success,
+  inactivo: BADGE_COLORS.default,
+  pendiente: BADGE_COLORS.warning,
+  cancelado: BADGE_COLORS.danger,
+  completado: BADGE_COLORS.success,
+  pagado: BADGE_COLORS.success,
+  parcial: BADGE_COLORS.warning,
+  vencido: BADGE_COLORS.danger,
+  disponible: BADGE_COLORS.success,
+  agotado: BADGE_COLORS.danger,
+  bajo: BADGE_COLORS.warning,
+  trial: BADGE_COLORS.info,
+  suspendida: BADGE_COLORS.danger,
+  grace_period: BADGE_COLORS.warning,
+};
+
+/**
+ * Helper para obtener color de estado con fallback
+ * @param {string} status - Estado del registro
+ * @returns {string} Clases de color para badge
+ */
+export const getStatusColor = (status) => STATUS_COLORS[status] || BADGE_COLORS.default;
+
+/**
+ * Colores temáticos para cards/secciones
+ * Usados en dashboards, estadísticas, etc.
+ */
+export const CARD_THEME_COLORS = {
+  blue: {
+    bg: SEMANTIC_COLORS.primary.bg,
+    text: SEMANTIC_COLORS.primary.text,
+    border: 'border-primary-500',
+  },
+  green: {
+    bg: SEMANTIC_COLORS.success.bg,
+    text: SEMANTIC_COLORS.success.text,
+    border: 'border-green-500',
+  },
+  pink: {
+    bg: 'bg-pink-100 dark:bg-pink-900/40',
+    text: 'text-pink-600 dark:text-pink-400',
+    border: 'border-pink-500',
+  },
+  purple: {
+    bg: 'bg-purple-100 dark:bg-purple-900/40',
+    text: 'text-purple-600 dark:text-purple-400',
+    border: 'border-purple-500',
+  },
+  yellow: {
+    bg: SEMANTIC_COLORS.warning.bg,
+    text: SEMANTIC_COLORS.warning.text,
+    border: 'border-yellow-500',
+  },
+  red: {
+    bg: SEMANTIC_COLORS.danger.bg,
+    text: SEMANTIC_COLORS.danger.text,
+    border: 'border-red-500',
+  },
+  orange: {
+    bg: 'bg-orange-100 dark:bg-orange-900/40',
+    text: 'text-orange-600 dark:text-orange-400',
+    border: 'border-orange-500',
+  },
+  cyan: {
+    bg: 'bg-cyan-100 dark:bg-cyan-900/40',
+    text: 'text-cyan-600 dark:text-cyan-400',
+    border: 'border-cyan-500',
+  },
+};
+
+/**
+ * Helper para obtener color temático de card con fallback
+ * @param {string} color - Nombre del color
+ * @returns {Object} Objeto con clases bg, text, border
+ */
+export const getCardThemeColor = (color) => CARD_THEME_COLORS[color] || CARD_THEME_COLORS.blue;
+
 export default SEMANTIC_COLORS;

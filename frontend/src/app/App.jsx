@@ -8,6 +8,7 @@ import { queryClient } from './queryClient';
 import { ToastContainer } from '@/components/ui';
 import GlobalErrorBoundary from '@/components/common/GlobalErrorBoundary';
 import SetupGuard from '@/components/auth/SetupGuard';
+import { SubscriptionGuard } from '@/components/suscripciones-negocio';
 import useAuthStore, { selectIsAuthenticated, selectSetUser } from '@/store/authStore';
 import useThemeStore, { selectApplyTheme, selectInitSystemListener } from '@/store/themeStore';
 import { useAuthInit } from '@/hooks/sistema/useAuthInit';
@@ -65,11 +66,13 @@ function App() {
       <QueryClientProvider client={queryClient}>
         <GlobalErrorBoundary>
           <SetupGuard>
-            <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors">
-              <Outlet />
-              <ToastContainer />
-              <Toaster position="top-center" richColors closeButton theme="system" />
-            </div>
+            <SubscriptionGuard>
+              <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors">
+                <Outlet />
+                <ToastContainer />
+                <Toaster position="top-center" richColors closeButton theme="system" />
+              </div>
+            </SubscriptionGuard>
           </SetupGuard>
         </GlobalErrorBoundary>
       </QueryClientProvider>

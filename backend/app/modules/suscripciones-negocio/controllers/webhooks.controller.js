@@ -482,9 +482,12 @@ class WebhooksController {
             });
 
             // Buscar suscripción en nuestra BD por preapproval_id
+            // NOTA: Pasamos null para buscar globalmente, ya que:
+            // - El webhook viene con org del VENDEDOR (Nexo Team = 1)
+            // - Pero las suscripciones pertenecen al CLIENTE (org 2, 3, etc.)
             const suscripcion = await SuscripcionesModel.buscarPorGatewayId(
                 preapprovalId,
-                organizacionId
+                null  // Buscar sin filtro de organización
             );
 
             if (!suscripcion) {
@@ -495,29 +498,69 @@ class WebhooksController {
                 return;
             }
 
-            // Si el pago está aprobado, activar la suscripción
+            logger.info('Suscripción encontrada para pago autorizado', {
+                suscripcion_id: suscripcion.id,
+                organizacion_id_suscripcion: suscripcion.organizacion_id,
+                estado_actual: suscripcion.estado
+            });
+
+            // Si el pago está aprobado o procesado, activar la suscripción
+            // NOTA: MercadoPago usa "processed" para pagos de suscripción exitosos
             // NOTA: Usamos Bypass porque planes y suscripciones están en orgs diferentes
-            if (status === 'approved') {
-                await SuscripcionesModel.cambiarEstadoBypass(
+            if (status === 'approved' || status === 'processed') {
+                // Solo cambiar estado si no está ya activa
+                if (suscripcion.estado !== 'activa') {
+                    await SuscripcionesModel.cambiarEstadoBypass(
+                        suscripcion.id,
+                        'activa',
+                        { razon: 'Pago autorizado en MercadoPago (subscription_authorized_payment)' }
+                    );
+                }
+
+                // Buscar pago pendiente existente para esta suscripción y actualizarlo
+                const pagoExistente = await PagosModel.buscarPendientePorSuscripcion(suscripcion.id);
+
+                if (pagoExistente) {
+                    // Actualizar el pago existente
+                    await PagosModel.actualizarEstadoBypass(
+                        pagoExistente.id,
+                        'completado',
+                        {
+                            transaction_id: authorizedPaymentId,
+                            fecha_pago: new Date()
+                        }
+                    );
+                    logger.info('✅ Pago existente actualizado a completado', {
+                        pago_id: pagoExistente.id,
+                        transaction_id: authorizedPaymentId
+                    });
+                } else {
+                    // Si no hay pago pendiente, crear uno nuevo
+                    await PagosModel.crear({
+                        suscripcion_id: suscripcion.id,
+                        monto: pagoAutorizado.transaction_amount,
+                        moneda: pagoAutorizado.currency_id || 'MXN',
+                        estado: 'completado',
+                        gateway: 'mercadopago',
+                        transaction_id: authorizedPaymentId,
+                        fecha_pago: new Date()
+                    }, suscripcion.organizacion_id);
+                    logger.info('✅ Nuevo pago creado como completado', {
+                        suscripcion_id: suscripcion.id,
+                        transaction_id: authorizedPaymentId
+                    });
+                }
+
+                // Procesar como cobro exitoso (actualiza fecha próximo cobro)
+                await SuscripcionesModel.procesarCobroExitosoBypass(
                     suscripcion.id,
-                    'activa',
-                    { razon: 'Pago autorizado en MercadoPago' }
+                    suscripcion
                 );
 
-                // Registrar el pago en nuestra BD
-                await PagosModel.crear({
-                    suscripcion_id: suscripcion.id,
-                    monto: pagoAutorizado.transaction_amount,
-                    moneda: pagoAutorizado.currency_id || 'MXN',
-                    estado: 'completado',
-                    gateway: 'mercadopago',
-                    transaction_id: authorizedPaymentId
-                }, organizacionId);
-
-                logger.info('✅ Suscripción activada por pago autorizado', {
+                logger.info('✅ Suscripción procesada por pago autorizado', {
                     suscripcion_id: suscripcion.id,
                     preapproval_id: preapprovalId,
-                    organizacionId
+                    status
                 });
             } else if (status === 'rejected' || status === 'cancelled') {
                 logger.warn('Pago de suscripción rechazado/cancelado', {

@@ -1,4 +1,5 @@
 import { memo, useEffect, useCallback } from 'react';
+import PropTypes from 'prop-types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import { MODAL_SIZES } from '@/lib/uiConstants';
@@ -124,5 +125,26 @@ const Modal = memo(function Modal({
 });
 
 Modal.displayName = 'Modal';
+
+Modal.propTypes = {
+  /** Estado del modal (abierto/cerrado) */
+  isOpen: PropTypes.bool.isRequired,
+  /** Callback para cerrar el modal */
+  onClose: PropTypes.func.isRequired,
+  /** Título del modal */
+  title: PropTypes.string,
+  /** Subtítulo opcional */
+  subtitle: PropTypes.string,
+  /** Contenido del modal */
+  children: PropTypes.node,
+  /** Contenido del footer (botones de acción) */
+  footer: PropTypes.node,
+  /** Tamaño del modal */
+  size: PropTypes.oneOf(['sm', 'md', 'lg', 'xl']),
+  /** Mostrar botón de cierre en el header */
+  showCloseButton: PropTypes.bool,
+  /** Deshabilitar cierre del modal (para estados de carga) */
+  disableClose: PropTypes.bool,
+};
 
 export { Modal };

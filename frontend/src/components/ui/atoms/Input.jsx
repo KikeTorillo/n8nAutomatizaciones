@@ -1,4 +1,5 @@
 import { forwardRef, memo } from 'react';
+import PropTypes from 'prop-types';
 import { cn } from '@/lib/utils';
 import { INPUT_SIZE_CLASSES, INPUT_AFFIX, getInputPaddingStyles, getAriaDescribedBy } from '@/lib/uiConstants';
 
@@ -112,5 +113,30 @@ const Input = memo(forwardRef(function Input(
 ));
 
 Input.displayName = 'Input';
+
+Input.propTypes = {
+  /** Tipo de input HTML */
+  type: PropTypes.string,
+  /** Tamaño del input */
+  size: PropTypes.oneOf(['sm', 'md', 'lg']),
+  /** Si el input tiene error (borde rojo) */
+  hasError: PropTypes.bool,
+  /** Si el campo es requerido */
+  required: PropTypes.bool,
+  /** Si tiene texto de ayuda asociado */
+  hasHelper: PropTypes.bool,
+  /** Texto o elemento antes del input */
+  prefix: PropTypes.node,
+  /** Texto o elemento después del input */
+  suffix: PropTypes.node,
+  /** ID del elemento */
+  id: PropTypes.string,
+  /** Clases CSS adicionales */
+  className: PropTypes.string,
+  /** Placeholder del input */
+  placeholder: PropTypes.string,
+  /** Handler de cambio */
+  onChange: PropTypes.func,
+};
 
 export { Input };

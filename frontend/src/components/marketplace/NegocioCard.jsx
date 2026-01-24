@@ -1,3 +1,4 @@
+import { memo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MapPin, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -24,12 +25,17 @@ import EstrellaRating from './EstrellaRating';
  * @example
  * <NegocioCard perfil={negocio} />
  */
-function NegocioCard({ perfil, className }) {
+export const NegocioCard = memo(function NegocioCard({ perfil, className }) {
   const navigate = useNavigate();
 
-  const handleClick = () => {
+  const handleClick = useCallback(() => {
     navigate(`/${perfil.slug}`);
-  };
+  }, [navigate, perfil.slug]);
+
+  const handleButtonClick = useCallback((e) => {
+    e.stopPropagation();
+    navigate(`/${perfil.slug}`);
+  }, [navigate, perfil.slug]);
 
   // Imagen: priorizar foto_portada, luego logo, luego placeholder
   const imagenUrl = perfil.foto_portada || perfil.logo_url;
@@ -106,16 +112,15 @@ function NegocioCard({ perfil, className }) {
       <div className="px-4 pb-4 pt-2 border-t border-gray-100 dark:border-gray-700">
         <button
           className="w-full text-center text-sm font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 py-2 rounded-md hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors"
-          onClick={(e) => {
-            e.stopPropagation();
-            handleClick();
-          }}
+          onClick={handleButtonClick}
         >
           Ver perfil →
         </button>
       </div>
     </div>
   );
-}
+});
+
+NegocioCard.displayName = 'NegocioCard';
 
 export default NegocioCard;

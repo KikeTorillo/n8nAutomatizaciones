@@ -1,4 +1,5 @@
 import { forwardRef, memo } from 'react';
+import PropTypes from 'prop-types';
 import { cn } from '@/lib/utils';
 import { getCheckboxStyles, getAriaDescribedBy } from '@/lib/uiConstants';
 
@@ -37,6 +38,11 @@ const Checkbox = memo(forwardRef(function Checkbox(
     },
     ref
   ) {
+    // Warning de deprecación para prop error (usar hasError en su lugar)
+    if (process.env.NODE_ENV === 'development' && error !== false && hasError === undefined) {
+      console.warn('[Checkbox] La prop "error" está deprecada. Usar "hasError" en su lugar.');
+    }
+
     // hasError toma precedencia sobre error para consistencia con otros inputs
     const isError = hasError ?? error;
 
@@ -61,6 +67,27 @@ const Checkbox = memo(forwardRef(function Checkbox(
 ));
 
 Checkbox.displayName = 'Checkbox';
+
+Checkbox.propTypes = {
+  /** Estado del checkbox */
+  checked: PropTypes.bool,
+  /** Handler de cambio */
+  onChange: PropTypes.func,
+  /** Estado deshabilitado */
+  disabled: PropTypes.bool,
+  /** @deprecated Usar hasError en su lugar */
+  error: PropTypes.bool,
+  /** Si el checkbox tiene error (borde rojo) */
+  hasError: PropTypes.bool,
+  /** Si tiene texto de ayuda asociado */
+  hasHelper: PropTypes.bool,
+  /** ID del elemento */
+  id: PropTypes.string,
+  /** Label para accesibilidad (requerido si no hay label visible) */
+  'aria-label': PropTypes.string,
+  /** Clases CSS adicionales */
+  className: PropTypes.string,
+};
 
 export { Checkbox };
 export default Checkbox;

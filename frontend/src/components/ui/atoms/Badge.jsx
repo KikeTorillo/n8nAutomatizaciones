@@ -1,4 +1,5 @@
 import { memo } from 'react';
+import PropTypes from 'prop-types';
 import { cn } from '@/lib/utils';
 import { BADGE_VARIANTS, BADGE_SIZES } from '@/lib/uiConstants';
 
@@ -33,6 +34,19 @@ const Badge = memo(function Badge({
 });
 
 Badge.displayName = 'Badge';
+
+Badge.propTypes = {
+  /** Variante de color del badge */
+  variant: PropTypes.oneOf(['default', 'primary', 'success', 'warning', 'danger', 'error', 'info']),
+  /** Tamaño del badge */
+  size: PropTypes.oneOf(['sm', 'md', 'lg']),
+  /** Contenido del badge */
+  children: PropTypes.node.isRequired,
+  /** Clases CSS adicionales */
+  className: PropTypes.string,
+  /** Label para accesibilidad */
+  'aria-label': PropTypes.string,
+};
 
 export { Badge };
 export default Badge;

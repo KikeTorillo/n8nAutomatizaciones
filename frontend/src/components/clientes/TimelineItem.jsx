@@ -9,7 +9,7 @@
  * ====================================================================
  */
 
-import { useState } from 'react';
+import { memo, useState, useCallback, useMemo } from 'react';
 import {
   FileText,
   Phone,
@@ -49,7 +49,7 @@ const COLORES_TIPO = {
   venta: 'bg-emerald-500',
 };
 
-export default function TimelineItem({
+export const TimelineItem = memo(function TimelineItem({
   item,
   onComplete,
   onDelete,
@@ -62,8 +62,20 @@ export default function TimelineItem({
   const esTarea = item.tipo === 'tarea';
   const esPendiente = item.estado === 'pendiente';
 
-  // Formatear metadata específica por tipo
-  const renderMetadata = () => {
+  // Handlers memoizados
+  const handleComplete = useCallback(() => {
+    if (onComplete) onComplete(item);
+  }, [onComplete, item]);
+
+  const handleDelete = useCallback(() => {
+    if (onDelete) onDelete(item);
+  }, [onDelete, item]);
+
+  const handleMouseEnter = useCallback(() => setShowActions(true), []);
+  const handleMouseLeave = useCallback(() => setShowActions(false), []);
+
+  // Formatear metadata específica por tipo (memoizado)
+  const metadataContent = useMemo(() => {
     if (!item.metadata) return null;
 
     switch (item.tipo) {
@@ -113,13 +125,13 @@ export default function TimelineItem({
       default:
         return null;
     }
-  };
+  }, [item.tipo, item.metadata, item.prioridad]);
 
   return (
     <div
       className="relative pl-10 pb-6 group"
-      onMouseEnter={() => setShowActions(true)}
-      onMouseLeave={() => setShowActions(false)}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
     >
       {/* Línea vertical */}
       <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-200 dark:bg-gray-700" />
@@ -160,7 +172,7 @@ export default function TimelineItem({
             )}
 
             {/* Metadata específica */}
-            {renderMetadata()}
+            {metadataContent}
           </div>
 
           {/* Acciones (hover) */}
@@ -168,7 +180,7 @@ export default function TimelineItem({
             <div className={`flex items-center gap-1 transition-opacity ${showActions ? 'opacity-100' : 'opacity-0'}`}>
               {esTarea && esPendiente && onComplete && (
                 <button
-                  onClick={() => onComplete(item)}
+                  onClick={handleComplete}
                   disabled={isLoading}
                   className="p-1.5 rounded-md hover:bg-green-100 dark:hover:bg-green-900/30 text-green-600 dark:text-green-400 transition-colors"
                   title="Marcar como completada"
@@ -179,7 +191,7 @@ export default function TimelineItem({
 
               {onDelete && item.fuente === 'manual' && (
                 <button
-                  onClick={() => onDelete(item)}
+                  onClick={handleDelete}
                   disabled={isLoading}
                   className="p-1.5 rounded-md hover:bg-red-100 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 transition-colors"
                   title="Eliminar"
@@ -207,4 +219,8 @@ export default function TimelineItem({
       </div>
     </div>
   );
-}
+});
+
+TimelineItem.displayName = 'TimelineItem';
+
+export default TimelineItem;

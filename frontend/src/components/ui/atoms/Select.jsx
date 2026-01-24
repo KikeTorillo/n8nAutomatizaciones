@@ -1,4 +1,5 @@
 import { forwardRef, memo } from 'react';
+import PropTypes from 'prop-types';
 import { cn } from '@/lib/utils';
 import { getSelectStyles, SELECT_ARROW, getAriaDescribedBy } from '@/lib/uiConstants';
 
@@ -85,6 +86,32 @@ const Select = memo(forwardRef(function Select(
 ));
 
 Select.displayName = 'Select';
+
+Select.propTypes = {
+  /** Array de opciones {value, label} */
+  options: PropTypes.arrayOf(PropTypes.shape({
+    value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    label: PropTypes.string.isRequired,
+  })),
+  /** Texto de placeholder */
+  placeholder: PropTypes.string,
+  /** Si el select tiene error (borde rojo) */
+  hasError: PropTypes.bool,
+  /** Si el campo es requerido */
+  required: PropTypes.bool,
+  /** Si tiene texto de ayuda asociado */
+  hasHelper: PropTypes.bool,
+  /** Opciones como children (alternativa a options) */
+  children: PropTypes.node,
+  /** ID del elemento */
+  id: PropTypes.string,
+  /** Clases CSS adicionales */
+  className: PropTypes.string,
+  /** Handler de cambio */
+  onChange: PropTypes.func,
+  /** Valor actual */
+  value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+};
 
 export { Select };
 export default Select;

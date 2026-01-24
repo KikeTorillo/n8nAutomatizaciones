@@ -59,7 +59,8 @@ const ESTADOS_SUSCRIPCION = [
     'pausada',        // Temporalmente pausada
     'cancelada',      // Cancelada por el usuario
     'vencida',        // Fallo en el cobro
-    'suspendida'      // Suspendida por admin
+    'suspendida',     // Suspendida por admin
+    'grace_period'    // Período de gracia (solo lectura)
 ];
 
 /**
@@ -72,10 +73,64 @@ const PERIODOS_FACTURACION = [
     'anual'
 ];
 
+/**
+ * Configuración de Grace Period
+ * Tiempo que tiene el usuario para pagar después de un cobro fallido
+ */
+const GRACE_PERIOD_DAYS = 7;
+
+/**
+ * Días después de grace_period antes de suspensión total
+ */
+const SUSPENSION_DAYS = 14;
+
+/**
+ * Secuencia de dunning (recordatorios de pago)
+ * Define cuándo enviar notificaciones y cambiar estados
+ */
+const DUNNING_SEQUENCE = [
+    { dias: 0, tipo: 'vencimiento', accion: 'email' },
+    { dias: 3, tipo: 'recordatorio', accion: 'email' },
+    { dias: 7, tipo: 'grace_period', accion: 'cambiar_estado' },
+    { dias: 10, tipo: 'urgente', accion: 'email' },
+    { dias: 14, tipo: 'suspension', accion: 'cambiar_estado' },
+];
+
+/**
+ * Estados agrupados por nivel de acceso
+ * - COMPLETO: Acceso total a la plataforma
+ * - LIMITADO: Solo lectura (grace_period, vencida)
+ * - BLOQUEADOS: Sin acceso, redirect a /planes
+ */
+const ESTADOS_ACCESO_COMPLETO = ['trial', 'activa', 'pendiente_pago'];
+const ESTADOS_ACCESO_LIMITADO = ['grace_period', 'vencida'];
+const ESTADOS_BLOQUEADOS = ['suspendida', 'cancelada'];
+
+/**
+ * Rutas exentas de verificación de suscripción
+ * Estas rutas siempre son accesibles independiente del estado de suscripción
+ */
+const RUTAS_EXENTAS_SUSCRIPCION = [
+    '/api/v1/auth',
+    '/api/v1/suscripciones-negocio/suscripciones/mi-suscripcion',
+    '/api/v1/suscripciones-negocio/planes/publicos',
+    '/api/v1/suscripciones-negocio/checkout',
+    '/api/v1/health',
+    '/api/v1/webhooks'
+];
+
 module.exports = {
     NEXO_TEAM_ORG_ID,
     FEATURE_TO_MODULO,
     MODULOS_BASE,
     ESTADOS_SUSCRIPCION,
-    PERIODOS_FACTURACION
+    PERIODOS_FACTURACION,
+    // Grace Period (Ene 2026)
+    GRACE_PERIOD_DAYS,
+    SUSPENSION_DAYS,
+    DUNNING_SEQUENCE,
+    ESTADOS_ACCESO_COMPLETO,
+    ESTADOS_ACCESO_LIMITADO,
+    ESTADOS_BLOQUEADOS,
+    RUTAS_EXENTAS_SUSCRIPCION
 };

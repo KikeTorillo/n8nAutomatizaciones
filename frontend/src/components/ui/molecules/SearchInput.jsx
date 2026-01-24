@@ -1,4 +1,5 @@
 import { forwardRef, useState, useEffect, useCallback, useRef, useMemo, memo } from 'react';
+import PropTypes from 'prop-types';
 import { Search, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SEARCH_INPUT_SIZES } from '@/lib/uiConstants';
@@ -158,5 +159,28 @@ const SearchInput = memo(forwardRef(
 ));
 
 SearchInput.displayName = 'SearchInput';
+
+SearchInput.propTypes = {
+  /** Valor controlado del input */
+  value: PropTypes.string,
+  /** Callback cuando cambia el valor */
+  onChange: PropTypes.func,
+  /** Callback con valor debounced */
+  onSearch: PropTypes.func,
+  /** Tiempo de debounce en ms */
+  debounceMs: PropTypes.number,
+  /** Placeholder del input */
+  placeholder: PropTypes.string,
+  /** Tamaño del input */
+  size: PropTypes.oneOf(['sm', 'md', 'lg']),
+  /** Mostrar botón de limpiar */
+  showClear: PropTypes.bool,
+  /** Auto focus al montar */
+  autoFocus: PropTypes.bool,
+  /** Estado deshabilitado */
+  disabled: PropTypes.bool,
+  /** Clases CSS adicionales */
+  className: PropTypes.string,
+};
 
 export { SearchInput };

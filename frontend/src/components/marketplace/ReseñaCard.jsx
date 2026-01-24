@@ -1,8 +1,11 @@
-import { useState } from 'react';
+import { memo, useState, useCallback, useMemo } from 'react';
 import { formatDate } from '@/lib/utils';
 import { MessageSquare, User } from 'lucide-react';
 import { Button } from '@/components/ui';
 import EstrellaRating from './EstrellaRating';
+
+// Constante FUERA del componente
+const COMENTARIO_LIMIT = 200;
 
 /**
  * Tarjeta de reseña individual
@@ -27,15 +30,26 @@ import EstrellaRating from './EstrellaRating';
  *   onResponder={(id) => setSelectedResena(id)}
  * />
  */
-function ReseñaCard({ resena, canResponder = false, onResponder, className }) {
+export const ReseñaCard = memo(function ReseñaCard({ resena, canResponder = false, onResponder, className }) {
   const [expanded, setExpanded] = useState(false);
 
-  // Límite de caracteres para mostrar truncado
-  const LIMIT = 200;
-  const shouldTruncate = resena.comentario && resena.comentario.length > LIMIT;
-  const comentarioMostrado = expanded || !shouldTruncate
-    ? resena.comentario
-    : `${resena.comentario.substring(0, LIMIT)}...`;
+  // Handlers memoizados
+  const handleToggleExpanded = useCallback(() => {
+    setExpanded(prev => !prev);
+  }, []);
+
+  const handleResponder = useCallback(() => {
+    onResponder?.(resena.id);
+  }, [onResponder, resena.id]);
+
+  // Valores computados memoizados
+  const { shouldTruncate, comentarioMostrado } = useMemo(() => {
+    const _shouldTruncate = resena.comentario && resena.comentario.length > COMENTARIO_LIMIT;
+    const _comentarioMostrado = expanded || !_shouldTruncate
+      ? resena.comentario
+      : `${resena.comentario.substring(0, COMENTARIO_LIMIT)}...`;
+    return { shouldTruncate: _shouldTruncate, comentarioMostrado: _comentarioMostrado };
+  }, [resena.comentario, expanded]);
 
   return (
     <div className={`bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 ${className}`}>
@@ -74,7 +88,7 @@ function ReseñaCard({ resena, canResponder = false, onResponder, className }) {
           {/* Botón "ver más" */}
           {shouldTruncate && (
             <button
-              onClick={() => setExpanded(!expanded)}
+              onClick={handleToggleExpanded}
               className="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium mt-2"
             >
               {expanded ? 'Ver menos' : 'Ver más'}
@@ -111,7 +125,7 @@ function ReseñaCard({ resena, canResponder = false, onResponder, className }) {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => onResponder?.(resena.id)}
+            onClick={handleResponder}
             className="text-primary-600 hover:text-primary-700"
           >
             <MessageSquare className="w-4 h-4 mr-2" />
@@ -121,6 +135,8 @@ function ReseñaCard({ resena, canResponder = false, onResponder, className }) {
       )}
     </div>
   );
-}
+});
+
+ReseñaCard.displayName = 'ReseñaCard';
 
 export default ReseñaCard;

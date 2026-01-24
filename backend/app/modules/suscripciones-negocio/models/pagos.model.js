@@ -480,6 +480,99 @@ class PagosModel {
             return result.rows[0];
         });
     }
+
+    /**
+     * Buscar pago pendiente de una suscripción usando bypass RLS
+     * Usado por webhooks donde no hay contexto de usuario autenticado
+     *
+     * @param {number} suscripcionId - ID de la suscripción
+     * @returns {Promise<Object|null>} - Pago pendiente o null
+     */
+    static async buscarPendientePorSuscripcion(suscripcionId) {
+        return await RLSContextManager.withBypass(async (db) => {
+            const query = `
+                SELECT * FROM pagos_suscripcion
+                WHERE suscripcion_id = $1 AND estado = 'pendiente'
+                ORDER BY creado_en DESC
+                LIMIT 1
+            `;
+
+            const result = await db.query(query, [suscripcionId]);
+            return result.rows[0] || null;
+        });
+    }
+
+    /**
+     * Actualizar estado del pago usando bypass RLS
+     * Usado por webhooks donde planes y suscripciones están en orgs diferentes
+     *
+     * @param {number} id - ID del pago
+     * @param {string} nuevoEstado - Nuevo estado (pendiente, completado, fallido, reembolsado)
+     * @param {Object} datosExtra - Datos adicionales a actualizar (transaction_id, fecha_pago, etc.)
+     * @returns {Promise<Object>} - Pago actualizado
+     */
+    static async actualizarEstadoBypass(id, nuevoEstado, datosExtra = {}) {
+        return await RLSContextManager.withBypass(async (db) => {
+            const estadosValidos = ['pendiente', 'completado', 'fallido', 'reembolsado'];
+            if (!estadosValidos.includes(nuevoEstado)) {
+                ErrorHelper.throwValidation(`Estado inválido: ${nuevoEstado}`);
+            }
+
+            // Construir campos de actualización dinámicamente
+            const updates = ['estado = $1'];
+            const values = [nuevoEstado];
+            let paramCount = 2;
+
+            if (nuevoEstado === 'completado') {
+                updates.push(`fecha_pago = COALESCE($${paramCount++}, NOW())`);
+                values.push(datosExtra.fecha_pago || null);
+            }
+
+            if (datosExtra.transaction_id) {
+                updates.push(`transaction_id = $${paramCount++}`);
+                values.push(datosExtra.transaction_id);
+            }
+
+            if (datosExtra.charge_id) {
+                updates.push(`charge_id = $${paramCount++}`);
+                values.push(datosExtra.charge_id);
+            }
+
+            if (datosExtra.metodo_pago) {
+                updates.push(`metodo_pago = $${paramCount++}`);
+                values.push(datosExtra.metodo_pago);
+            }
+
+            values.push(id);
+
+            const query = `
+                UPDATE pagos_suscripcion
+                SET ${updates.join(', ')}
+                WHERE id = $${paramCount}
+                RETURNING *
+            `;
+
+            const result = await db.query(query, values);
+
+            if (!result.rows[0]) {
+                ErrorHelper.throwNotFound('Pago');
+            }
+
+            // Si el pago se completó, actualizar total_pagado en suscripción
+            if (nuevoEstado === 'completado') {
+                await db.query(
+                    `UPDATE suscripciones_org
+                     SET total_pagado = total_pagado + $1
+                     WHERE id = $2`,
+                    [result.rows[0].monto, result.rows[0].suscripcion_id]
+                );
+            }
+
+            logger.info(`[Bypass] Pago ${id} cambió a estado: ${nuevoEstado}`);
+
+            return result.rows[0];
+        });
+    }
 }
 
 module.exports = PagosModel;

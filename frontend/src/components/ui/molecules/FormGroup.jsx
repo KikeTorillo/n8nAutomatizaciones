@@ -6,6 +6,7 @@
  * Compatible con los atoms existentes (Input, Select, Textarea)
  */
 import { memo, useId, cloneElement, isValidElement } from 'react';
+import PropTypes from 'prop-types';
 import { cn } from '@/lib/utils';
 import Label from '../atoms/Label';
 
@@ -53,6 +54,23 @@ const FormGroup = memo(function FormGroup({
 });
 
 FormGroup.displayName = 'FormGroup';
+
+FormGroup.propTypes = {
+  /** Etiqueta del campo */
+  label: PropTypes.string,
+  /** Si el campo es obligatorio (muestra asterisco) */
+  required: PropTypes.bool,
+  /** Mensaje de error a mostrar */
+  error: PropTypes.string,
+  /** Texto de ayuda */
+  helper: PropTypes.string,
+  /** ID del elemento asociado (para htmlFor del label) */
+  htmlFor: PropTypes.string,
+  /** Contenido del FormGroup (Input, Select, etc.) */
+  children: PropTypes.node.isRequired,
+  /** Clases CSS adicionales para el contenedor */
+  className: PropTypes.string,
+};
 
 export { FormGroup };
 export default FormGroup;

@@ -34,3 +34,7 @@ export { default as SuscripcionHistorialTab } from './tabs/SuscripcionHistorialT
 // Layout
 export { default as SuscripcionesNegocioNavTabs } from './SuscripcionesNegocioNavTabs';
 export { default as SuscripcionesNegocioPageLayout } from './SuscripcionesNegocioPageLayout';
+
+// Guards & Banners (Ene 2026)
+export { default as SuscripcionBanner } from './SuscripcionBanner';
+export { default as SubscriptionGuard } from './SubscriptionGuard';

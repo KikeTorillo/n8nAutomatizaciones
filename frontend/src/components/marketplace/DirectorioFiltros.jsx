@@ -1,7 +1,29 @@
+import { memo, useMemo, useCallback } from 'react';
 import { X, Loader2 } from 'lucide-react';
 import { Button, Select } from '@/components/ui';
 import EstrellaRating from './EstrellaRating';
 import { useCategoriasMarketplace } from '@/hooks/otros';
+
+// Constantes FUERA del componente (estáticas)
+const CIUDADES_OPCIONES = [
+  { value: '', label: 'Todas las ciudades' },
+  { value: 'CDMX', label: 'Ciudad de México' },
+  { value: 'Guadalajara', label: 'Guadalajara' },
+  { value: 'Monterrey', label: 'Monterrey' },
+  { value: 'Puebla', label: 'Puebla' },
+  { value: 'Querétaro', label: 'Querétaro' },
+  { value: 'Cancún', label: 'Cancún' },
+  { value: 'Mérida', label: 'Mérida' },
+  { value: 'Tijuana', label: 'Tijuana' },
+];
+
+const RATINGS_OPCIONES = [
+  { value: '', label: 'Cualquier rating' },
+  { value: '4', label: '4+ estrellas' },
+  { value: '3', label: '3+ estrellas' },
+  { value: '2', label: '2+ estrellas' },
+  { value: '1', label: '1+ estrellas' },
+];
 
 /**
  * Componente de filtros para el directorio de marketplace
@@ -22,43 +44,29 @@ import { useCategoriasMarketplace } from '@/hooks/otros';
  *   onLimpiar={() => setFiltros({ ciudad: '', categoria_id: '', rating_min: '' })}
  * />
  */
-function DirectorioFiltros({ filtros, onChange, onLimpiar, className }) {
+export const DirectorioFiltros = memo(function DirectorioFiltros({ filtros, onChange, onLimpiar, className }) {
   // Cargar categorías dinámicamente desde el backend
   const { data: categorias, isLoading: isLoadingCategorias } = useCategoriasMarketplace();
 
-  // Opciones de ciudades (TODO: Obtener dinámicamente del backend)
-  const ciudadesOpciones = [
-    { value: '', label: 'Todas las ciudades' },
-    { value: 'CDMX', label: 'Ciudad de México' },
-    { value: 'Guadalajara', label: 'Guadalajara' },
-    { value: 'Monterrey', label: 'Monterrey' },
-    { value: 'Puebla', label: 'Puebla' },
-    { value: 'Querétaro', label: 'Querétaro' },
-    { value: 'Cancún', label: 'Cancún' },
-    { value: 'Mérida', label: 'Mérida' },
-    { value: 'Tijuana', label: 'Tijuana' },
-  ];
-
-  // Opciones de categorías (cargadas dinámicamente desde tabla categorias)
-  const categoriasOpciones = [
+  // Opciones de categorías (memoizado porque depende de datos del backend)
+  const categoriasOpciones = useMemo(() => [
     { value: '', label: 'Todas las categorías' },
     ...(categorias?.map((cat) => ({
       value: cat.id.toString(),
       label: cat.nombre,
     })) || []),
-  ];
+  ], [categorias]);
 
-  // Opciones de rating mínimo
-  const ratingsOpciones = [
-    { value: '', label: 'Cualquier rating' },
-    { value: '4', label: '4+ estrellas' },
-    { value: '3', label: '3+ estrellas' },
-    { value: '2', label: '2+ estrellas' },
-    { value: '1', label: '1+ estrellas' },
-  ];
+  // Contar filtros activos (memoizado)
+  const filtrosActivos = useMemo(() =>
+    Object.values(filtros).filter((v) => v !== '' && v !== null && v !== undefined).length,
+    [filtros]
+  );
 
-  // Contar filtros activos
-  const filtrosActivos = Object.values(filtros).filter((v) => v !== '' && v !== null && v !== undefined).length;
+  // Handlers memoizados
+  const handleCiudadChange = useCallback((e) => onChange('ciudad', e.target.value), [onChange]);
+  const handleCategoriaChange = useCallback((e) => onChange('categoria_id', e.target.value), [onChange]);
+  const handleRatingChange = useCallback((e) => onChange('rating_min', e.target.value), [onChange]);
 
   return (
     <div className={className}>
@@ -82,8 +90,8 @@ function DirectorioFiltros({ filtros, onChange, onLimpiar, className }) {
             </label>
             <Select
               value={filtros.ciudad || ''}
-              onChange={(e) => onChange('ciudad', e.target.value)}
-              options={ciudadesOpciones}
+              onChange={handleCiudadChange}
+              options={CIUDADES_OPCIONES}
             />
           </div>
 
@@ -97,7 +105,7 @@ function DirectorioFiltros({ filtros, onChange, onLimpiar, className }) {
             </label>
             <Select
               value={filtros.categoria_id || ''}
-              onChange={(e) => onChange('categoria_id', e.target.value)}
+              onChange={handleCategoriaChange}
               options={categoriasOpciones}
               disabled={isLoadingCategorias}
             />
@@ -110,8 +118,8 @@ function DirectorioFiltros({ filtros, onChange, onLimpiar, className }) {
             </label>
             <Select
               value={filtros.rating_min || ''}
-              onChange={(e) => onChange('rating_min', e.target.value)}
-              options={ratingsOpciones}
+              onChange={handleRatingChange}
+              options={RATINGS_OPCIONES}
             />
 
             {/* Vista visual del rating seleccionado */}
@@ -148,6 +156,8 @@ function DirectorioFiltros({ filtros, onChange, onLimpiar, className }) {
       </div>
     </div>
   );
-}
+});
+
+DirectorioFiltros.displayName = 'DirectorioFiltros';
 
 export default DirectorioFiltros;

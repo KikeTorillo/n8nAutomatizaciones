@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { memo, useMemo, useCallback } from 'react';
 import {
   Users,
   Eye,
@@ -22,11 +22,58 @@ import ProfesionalStatsCard from './ProfesionalStatsCard';
 import { ESTADOS_LABORALES } from '@/hooks/personas';
 
 /**
+ * EstrellaDisplay - Componente memoizado para mostrar estrellas
+ */
+const EstrellaDisplay = memo(function EstrellaDisplay({ calificacion }) {
+  const cal = parseFloat(calificacion || 0);
+  const estrellasLlenas = Math.floor(cal);
+  const tieneMedia = cal % 1 >= 0.5;
+
+  return (
+    <div className="flex items-center gap-1">
+      {[1, 2, 3, 4, 5].map((i) => (
+        <Star
+          key={i}
+          className={`w-4 h-4 ${
+            i <= estrellasLlenas
+              ? 'text-yellow-400 fill-yellow-400'
+              : i === estrellasLlenas + 1 && tieneMedia
+              ? 'text-yellow-400 fill-yellow-400/50'
+              : 'text-gray-300 dark:text-gray-600'
+          }`}
+        />
+      ))}
+      <span className="ml-1 text-sm text-gray-600 dark:text-gray-400">
+        {cal > 0 ? cal.toFixed(1) : '-'}
+      </span>
+    </div>
+  );
+});
+
+EstrellaDisplay.displayName = 'EstrellaDisplay';
+
+// Función helper FUERA del componente
+const getEstadoBadgeVariant = (estado) => {
+  const config = ESTADOS_LABORALES[estado];
+  if (!config) return 'default';
+
+  const variantMap = {
+    green: 'success',
+    blue: 'info',
+    yellow: 'warning',
+    red: 'error',
+    gray: 'default',
+  };
+
+  return variantMap[config.color] || 'default';
+};
+
+/**
  * Componente de lista de profesionales con cards/tabla responsivos
  * Muestra información detallada y acciones por profesional
  * Ene 2026: Agregado soporte para vista tabla y paginación server-side
  */
-function ProfesionalesList({
+export const ProfesionalesList = memo(function ProfesionalesList({
   profesionales,
   pagination,
   viewMode = 'cards',
@@ -67,49 +114,6 @@ function ProfesionalesList({
       </div>
     );
   }
-
-  // Renderizar estrellas de calificacion
-  const renderEstrellas = (calificacion) => {
-    const cal = parseFloat(calificacion || 0);
-    const estrellasLlenas = Math.floor(cal);
-    const tieneMedia = cal % 1 >= 0.5;
-
-    return (
-      <div className="flex items-center gap-1">
-        {[1, 2, 3, 4, 5].map((i) => (
-          <Star
-            key={i}
-            className={`w-4 h-4 ${
-              i <= estrellasLlenas
-                ? 'text-yellow-400 fill-yellow-400'
-                : i === estrellasLlenas + 1 && tieneMedia
-                ? 'text-yellow-400 fill-yellow-400/50'
-                : 'text-gray-300 dark:text-gray-600'
-            }`}
-          />
-        ))}
-        <span className="ml-1 text-sm text-gray-600 dark:text-gray-400">
-          {cal > 0 ? cal.toFixed(1) : '-'}
-        </span>
-      </div>
-    );
-  };
-
-  // Mapear color de estado laboral a variante de Badge
-  const getEstadoBadgeVariant = (estado) => {
-    const config = ESTADOS_LABORALES[estado];
-    if (!config) return 'default';
-
-    const variantMap = {
-      green: 'success',
-      blue: 'info',
-      yellow: 'warning',
-      red: 'error',
-      gray: 'default',
-    };
-
-    return variantMap[config.color] || 'default';
-  };
 
   // Columnas para DataTable
   const columns = useMemo(() => [
@@ -208,7 +212,7 @@ function ProfesionalesList({
       key: 'calificacion',
       header: 'Calificación',
       hideOnMobile: true,
-      render: (row) => renderEstrellas(row.calificacion_promedio),
+      render: (row) => <EstrellaDisplay calificacion={row.calificacion_promedio} />,
     },
     {
       key: 'actions',
@@ -428,6 +432,8 @@ function ProfesionalesList({
       )}
     </div>
   );
-}
+});
+
+ProfesionalesList.displayName = 'ProfesionalesList';
 
 export default ProfesionalesList;

@@ -11,6 +11,7 @@ const rateLimiting = require('./rateLimiting');
 const asyncHandler = require('./asyncHandler');
 
 const subscription = require('./subscription-v2');
+const suscripcionActiva = require('./suscripcionActiva');
 
 const modules = require('./modules');
 const storage = require('./storage');
@@ -79,7 +80,10 @@ module.exports = {
     checkActiveSubscription: subscription.checkActiveSubscription,
     checkResourceLimit: subscription.checkResourceLimit,
     checkResourceWarning: subscription.checkResourceWarning,
-    checkAppAccess: subscription.checkAppAccess  // Modelo Free/Pro
+    checkAppAccess: subscription.checkAppAccess,  // Modelo Free/Pro
+    // Verificación de estado de suscripción por organización (Ene 2026)
+    verificarSuscripcionActiva: suscripcionActiva.verificarSuscripcionActiva,
+    adjuntarInfoSuscripcion: suscripcionActiva.adjuntarInfoSuscripcion
   },
 
   // Middleware de módulos (PoC - Fase 0)
@@ -122,15 +126,20 @@ module.exports = {
 
 /**
  * Middleware compuesto para rutas que requieren autenticación completa
- * Incluye: autenticación, tenant context, verificación de organización activa
+ * Incluye: autenticación, tenant context, verificación de organización activa,
+ * y verificación de suscripción activa
  *
  * NOTA: releaseTenantConnection fue removido (deprecated) - las conexiones
  * ahora se liberan automáticamente por RLSContextManager
+ *
+ * NOTA (Ene 2026): verificarSuscripcionActiva verifica el estado de suscripción
+ * y bloquea/limita acceso según corresponda (grace_period → solo lectura)
  */
 const requireFullAuth = [
   auth.authenticateToken,
   tenant.setTenantContext,
-  tenant.verifyTenantActive
+  tenant.verifyTenantActive,
+  suscripcionActiva.verificarSuscripcionActiva
 ];
 
 /**

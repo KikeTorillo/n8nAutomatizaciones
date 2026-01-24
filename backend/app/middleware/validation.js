@@ -255,8 +255,8 @@ const commonSchemas = {
   // Roles del sistema
   userRole: Joi.string().valid('super_admin', 'admin', 'propietario', 'empleado', 'cliente'),
 
-  // Planes de suscripción
-  plan: Joi.string().valid('basico', 'profesional', 'premium', 'enterprise'),
+  // Planes de suscripción (Ene 2026: planes dinámicos en BD, solo trial/pro por defecto)
+  plan: Joi.string().valid('trial', 'pro'),
 
   // Tipos de industria válidos para organizaciones
   tipoIndustria: Joi.string().valid(

@@ -150,4 +150,5 @@ const StateNavTabs = memo(function StateNavTabs({
 
 StateNavTabs.displayName = 'StateNavTabs';
 
+export { StateNavTabs };
 export default StateNavTabs;

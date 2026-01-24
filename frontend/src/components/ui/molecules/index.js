@@ -26,7 +26,7 @@ export { Alert } from './Alert';
 // Nuevos (Ene 2026) - Optimización arquitectónica
 export { FilterChip } from './FilterChip';
 export { SearchFilterBar } from './SearchFilterBar';
-export { default as CheckboxGroup } from './CheckboxGroup';
+export { CheckboxGroup } from './CheckboxGroup';
 export { CheckboxField } from './CheckboxField';
 export { DropdownMenu } from './DropdownMenu';
 // NOTA: SmartButtons movido a organisms/ (Ene 2026)

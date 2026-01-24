@@ -17,14 +17,16 @@ class SuscripcionesModel {
 
     /**
      * Matriz de transiciones de estado válidas
+     * Incluye grace_period (Ene 2026)
      */
     static TRANSICIONES_VALIDAS = {
         'trial': ['activa', 'cancelada', 'vencida', 'pendiente_pago'],
-        'pendiente_pago': ['activa', 'cancelada', 'vencida'],
-        'activa': ['pausada', 'cancelada', 'vencida', 'suspendida'],
+        'pendiente_pago': ['activa', 'cancelada', 'vencida', 'grace_period'],
+        'activa': ['pausada', 'cancelada', 'vencida', 'grace_period', 'suspendida'],
         'pausada': ['activa', 'cancelada'],
         'cancelada': [], // Estado final
-        'vencida': ['activa', 'suspendida'],
+        'vencida': ['activa', 'grace_period', 'suspendida'],
+        'grace_period': ['activa', 'suspendida', 'cancelada'], // Nuevo estado
         'suspendida': ['activa', 'cancelada']
     };
 
@@ -119,7 +121,7 @@ class SuscripcionesModel {
                     s.periodo, s.estado,
                     s.fecha_inicio, s.fecha_proximo_cobro, s.fecha_fin,
                     s.es_trial, s.fecha_fin_trial,
-                    s.gateway, s.precio_actual, s.moneda,
+                    s.gateway, s.precio_actual, s.precio_actual as precio, s.moneda,
                     s.auto_cobro, s.meses_activo, s.total_pagado,
                     s.creado_en, s.actualizado_en,
                     p.nombre as plan_nombre,
@@ -162,6 +164,7 @@ class SuscripcionesModel {
             const query = `
                 SELECT
                     s.*,
+                    s.precio_actual as precio,
                     p.nombre as plan_nombre,
                     p.codigo as plan_codigo,
                     c.nombre as cliente_nombre,
@@ -340,7 +343,7 @@ class SuscripcionesModel {
             const suscripcion = await this.buscarPorId(id, organizacionId);
             ErrorHelper.throwIfNotFound(suscripcion, 'Suscripción');
 
-            const estadosValidos = ['trial', 'pendiente_pago', 'activa', 'pausada', 'cancelada', 'vencida', 'suspendida'];
+            const estadosValidos = ['trial', 'pendiente_pago', 'activa', 'pausada', 'cancelada', 'vencida', 'suspendida', 'grace_period'];
             if (!estadosValidos.includes(nuevoEstado)) {
                 ErrorHelper.throwValidation(`Estado inválido: ${nuevoEstado}`);
             }
@@ -367,6 +370,12 @@ class SuscripcionesModel {
                     updates.push(`cancelado_por = $${paramCount++}`);
                     values.push(options.usuario_id);
                 }
+            }
+
+            // Si entra en grace_period, establecer fecha límite
+            if (nuevoEstado === 'grace_period') {
+                const { GRACE_PERIOD_DAYS } = require('../../../config/constants');
+                updates.push(`fecha_gracia = CURRENT_DATE + ${GRACE_PERIOD_DAYS}`);
             }
 
             values.push(id);
@@ -957,7 +966,7 @@ class SuscripcionesModel {
                 ErrorHelper.throwNotFound('Suscripción');
             }
 
-            const estadosValidos = ['trial', 'pendiente_pago', 'activa', 'pausada', 'cancelada', 'vencida', 'suspendida'];
+            const estadosValidos = ['trial', 'pendiente_pago', 'activa', 'pausada', 'cancelada', 'vencida', 'suspendida', 'grace_period'];
             if (!estadosValidos.includes(nuevoEstado)) {
                 ErrorHelper.throwValidation(`Estado inválido: ${nuevoEstado}`);
             }
@@ -984,6 +993,12 @@ class SuscripcionesModel {
                     updates.push(`cancelado_por = $${paramCount++}`);
                     values.push(options.usuario_id);
                 }
+            }
+
+            // Si entra en grace_period, establecer fecha límite
+            if (nuevoEstado === 'grace_period') {
+                const { GRACE_PERIOD_DAYS } = require('../../../config/constants');
+                updates.push(`fecha_gracia = CURRENT_DATE + ${GRACE_PERIOD_DAYS}`);
             }
 
             values.push(id);
@@ -1083,7 +1098,7 @@ class SuscripcionesModel {
                     s.periodo, s.estado,
                     s.fecha_inicio, s.fecha_proximo_cobro, s.fecha_fin,
                     s.es_trial, s.fecha_fin_trial,
-                    s.gateway, s.precio_actual, s.moneda,
+                    s.gateway, s.precio_actual, s.precio_actual as precio, s.moneda,
                     s.meses_activo, s.total_pagado,
                     s.descuento_porcentaje, s.descuento_monto,
                     s.creado_en, s.actualizado_en,
@@ -1365,6 +1380,132 @@ class SuscripcionesModel {
             historial.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
 
             return historial;
+        });
+    }
+
+    /**
+     * Verificar estado de suscripción de una organización
+     * Usado por middleware para determinar nivel de acceso
+     *
+     * @param {number} organizacionId - ID de la organización
+     * @returns {Promise<Object>} - Estado con flags de acceso
+     */
+    static async verificarEstadoOrg(organizacionId) {
+        const {
+            ESTADOS_ACCESO_COMPLETO,
+            ESTADOS_ACCESO_LIMITADO,
+            ESTADOS_BLOQUEADOS,
+            GRACE_PERIOD_DAYS
+        } = require('../../../config/constants');
+
+        return await RLSContextManager.withBypass(async (db) => {
+            const query = `
+                SELECT s.id, s.estado, s.es_trial, s.fecha_fin_trial,
+                       s.fecha_proximo_cobro, s.fecha_gracia,
+                       p.codigo as plan_codigo, c.organizacion_vinculada_id
+                FROM suscripciones_org s
+                INNER JOIN planes_suscripcion_org p ON s.plan_id = p.id
+                LEFT JOIN clientes c ON s.cliente_id = c.id
+                WHERE c.organizacion_vinculada_id = $1
+                  AND s.estado NOT IN ('cancelada')
+                ORDER BY CASE s.estado
+                    WHEN 'activa' THEN 1 WHEN 'trial' THEN 2
+                    WHEN 'grace_period' THEN 3 WHEN 'pendiente_pago' THEN 4
+                    WHEN 'vencida' THEN 5 WHEN 'suspendida' THEN 6
+                END, s.creado_en DESC
+                LIMIT 1
+            `;
+            const result = await db.query(query, [organizacionId]);
+            const suscripcion = result.rows[0];
+
+            // Sin suscripción encontrada
+            if (!suscripcion) {
+                return {
+                    tieneSuscripcion: false,
+                    estado: null,
+                    puedeContinuar: false,
+                    accesoLimitado: false,
+                    mensaje: 'No tienes una suscripción activa',
+                    diasRestantesTrial: 0,
+                    diasRestantesGracia: 0
+                };
+            }
+
+            const estado = suscripcion.estado;
+            const ahora = new Date();
+
+            // Calcular días restantes de trial
+            let diasRestantesTrial = 0;
+            if (suscripcion.es_trial && suscripcion.fecha_fin_trial) {
+                const finTrial = new Date(suscripcion.fecha_fin_trial);
+                diasRestantesTrial = Math.max(0, Math.ceil((finTrial - ahora) / (1000 * 60 * 60 * 24)));
+            }
+
+            // Calcular días restantes de gracia
+            let diasRestantesGracia = 0;
+            if (suscripcion.fecha_gracia) {
+                const finGracia = new Date(suscripcion.fecha_gracia);
+                diasRestantesGracia = Math.max(0, Math.ceil((finGracia - ahora) / (1000 * 60 * 60 * 24)));
+            }
+
+            // Determinar nivel de acceso
+            const accesoCompleto = ESTADOS_ACCESO_COMPLETO.includes(estado);
+            const accesoLimitado = ESTADOS_ACCESO_LIMITADO.includes(estado);
+            const bloqueado = ESTADOS_BLOQUEADOS.includes(estado);
+
+            // Trial expirado
+            if (estado === 'trial' && diasRestantesTrial <= 0) {
+                return {
+                    tieneSuscripcion: true,
+                    estado: 'trial_expirado',
+                    puedeContinuar: false,
+                    accesoLimitado: false,
+                    mensaje: 'Tu período de prueba ha terminado',
+                    diasRestantesTrial: 0,
+                    diasRestantesGracia: 0
+                };
+            }
+
+            // Grace period expirado
+            if (estado === 'grace_period' && diasRestantesGracia <= 0) {
+                return {
+                    tieneSuscripcion: true,
+                    estado: 'grace_period_expirado',
+                    puedeContinuar: false,
+                    accesoLimitado: false,
+                    mensaje: 'Tu período de gracia ha terminado',
+                    diasRestantesTrial: 0,
+                    diasRestantesGracia: 0
+                };
+            }
+
+            // Construir mensaje según estado
+            let mensaje = '';
+            if (estado === 'trial') {
+                mensaje = diasRestantesTrial <= 5
+                    ? `Te quedan ${diasRestantesTrial} días de prueba`
+                    : '';
+            } else if (estado === 'grace_period') {
+                mensaje = `Tu cuenta está en período de gracia. ${diasRestantesGracia} días para renovar.`;
+            } else if (estado === 'vencida') {
+                mensaje = 'Tu suscripción está vencida';
+            } else if (estado === 'suspendida') {
+                mensaje = 'Tu cuenta está suspendida';
+            } else if (estado === 'pendiente_pago') {
+                mensaje = 'Tienes un pago pendiente';
+            }
+
+            return {
+                tieneSuscripcion: true,
+                estado,
+                puedeContinuar: accesoCompleto || accesoLimitado,
+                accesoLimitado,
+                mensaje,
+                diasRestantesTrial,
+                diasRestantesGracia,
+                planCodigo: suscripcion.plan_codigo,
+                suscripcionId: suscripcion.id
+            };
         });
     }
 }

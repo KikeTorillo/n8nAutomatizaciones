@@ -1,7 +1,7 @@
 # Plan: Dogfooding Interno - Nexo Team
 
 **Última Actualización:** 24 Enero 2026
-**Estado:** ✅ E2E Completo - Checkout, Webhooks, Upgrade/Downgrade validados
+**Estado:** ✅ Sistema de Suscripciones Completo - Falta validación de cancelación y comparativa Odoo
 
 ---
 
@@ -18,6 +18,25 @@ Nexo Team (org_id=1) ─── VENDOR
 ```
 
 **Strategy Pattern:** `PlatformBillingStrategy` (Nexo→Orgs) vs `CustomerBillingStrategy` (Org→Clientes)
+
+---
+
+## Cuentas de Prueba Actuales
+
+### Sistema Nexo
+
+| Rol | Email | Password | Organización |
+|-----|-------|----------|--------------|
+| SuperAdmin | arellanestorillo@yahoo.com | Enrique23 | Nexo Team (org 1) |
+| Cliente Test | arellanestorillo@gmail.com | Enrique23 | Test Org (org 2) - Plan Pro activo |
+
+### Test Users MercadoPago México
+
+| Rol | User ID | Password | Uso |
+|-----|---------|----------|-----|
+| Vendedor | TESTUSER8490440797252778890 | `GBpO6sgCkn` | Credenciales en Nexo Team |
+| Comprador 1 | TESTUSER2716725750605322996 | `UCgyF4L44D` | Usado por org 2 |
+| Comprador 2 | **PENDIENTE CREAR** | - | Para nueva org de prueba |
 
 ---
 
@@ -39,27 +58,46 @@ CREDENTIAL_ENCRYPTION_KEY=<64_chars_hex>
 
 Configurar en **Test User Vendedor** > Webhooks > **Modo productivo**:
 - URL: `https://<tunnel>/api/v1/suscripciones-negocio/webhooks/mercadopago/1`
-- Eventos: `payments`, `subscription_preapproval`
-
-### Test Users México
-
-| Rol | User ID | Password |
-|-----|---------|----------|
-| Vendedor | TESTUSER8490440797252778890 | `GBpO6sgCkn` |
-| Comprador | TESTUSER2716725750605322996 | `UCgyF4L44D` |
+- Eventos: `payments`, `subscription_preapproval`, `subscription_authorized_payment`
 
 ---
 
-## Estado Actual Validado
+## Estado Actual Validado ✅
 
-| Flujo | Estado | Notas |
-|-------|--------|-------|
-| Checkout → MercadoPago | ✅ | Preapproval creado correctamente |
-| Webhooks (payment + subscription) | ✅ | HMAC validado, estados actualizados |
-| Upgrade Trial → Pro | ✅ | Pago exitoso, org actualizada |
-| Downgrade Pro → Trial | ✅ | Cambio inmediato sin pago |
-| Prevención duplicados | ✅ | Índice único + Error 409 |
-| Cambio de plan bidireccional | ✅ | Fix aplicado en `cambiarPlan()` |
+### Flujos Completados
+
+| Flujo | Estado | Fecha | Notas |
+|-------|--------|-------|-------|
+| Checkout → MercadoPago | ✅ | 24 Ene | Preapproval creado correctamente |
+| Webhooks (payment + subscription) | ✅ | 24 Ene | HMAC validado, estados actualizados |
+| Webhook subscription_authorized_payment | ✅ | 24 Ene | Fix: maneja status `processed` |
+| Upgrade Trial → Pro | ✅ | 24 Ene | Pago exitoso, org actualizada |
+| Downgrade Pro → Trial | ✅ | 24 Ene | Cambio inmediato sin pago |
+| Prevención duplicados | ✅ | 24 Ene | Índice único + Error 409 |
+| Cambio de plan bidireccional | ✅ | 24 Ene | Fix aplicado en `cambiarPlan()` |
+| **Sistema Grace Period** | ✅ | 24 Ene | Middleware + Banner + Jobs pg_cron |
+| **Restricción por Suscripción** | ✅ | 24 Ene | Solo lectura en grace_period, bloqueo en suspendida |
+
+### Sistema de Restricción de Acceso (Implementado)
+
+| Estado Suscripción | Nivel de Acceso | Comportamiento |
+|--------------------|-----------------|----------------|
+| `trial`, `activa`, `pendiente_pago` | Completo | Todas las operaciones |
+| `grace_period`, `vencida` | Limitado | Solo lectura (GET), banner naranja |
+| `suspendida`, `cancelada`, `trial_expirado` | Bloqueado | Redirect a /planes |
+
+**Bypasses:**
+- Nexo Team (org_id=1): Siempre acceso completo
+- SuperAdmin (nivel_jerarquia >= 100): Siempre acceso completo
+- Rutas exentas: `/login`, `/planes`, `/checkout`, `/mi-plan`, `/setup`
+
+### Jobs pg_cron (Automáticos)
+
+| Job | Horario | Función |
+|-----|---------|---------|
+| `suscripciones-grace-period` | 01:00 diario | Mover a grace_period después de 7 días sin pago |
+| `suscripciones-suspender` | 02:00 diario | Suspender suscripciones con grace_period vencido |
+| `suscripciones-trials-expirados` | 03:00 diario | Procesar trials expirados |
 
 ---
 
@@ -72,133 +110,126 @@ Configurar en **Test User Vendedor** > Webhooks > **Modo productivo**:
 
 ---
 
-## PRÓXIMO: Restricción de Acceso por Suscripción
+## PRÓXIMOS PASOS
 
-### Problema
+### Fase 1: Validación de Cancelación (PENDIENTE)
 
-Actualmente no hay restricción cuando:
-- Trial expira (14 días)
-- Suscripción no pagada (pendiente_pago > X días)
-- Suscripción cancelada/vencida
+**Objetivo:** Probar flujo completo de cancelación de suscripción
 
-### Requerimientos
+#### Pruebas a Realizar
 
-| Caso | Comportamiento Esperado |
-|------|------------------------|
-| Trial expirado | Mostrar banner "Trial terminado" + bloquear acceso a módulos |
-| Pago pendiente >7 días | Mostrar banner "Pago pendiente" + acceso limitado |
-| Suscripción cancelada | Solo lectura, sin crear/editar |
-| Sin suscripción | Redirect a página de planes |
+| # | Escenario | Pasos | Resultado Esperado |
+|---|-----------|-------|-------------------|
+| 1 | Cancelar desde MiPlan | Usuario cancela su suscripción | Estado → `cancelada`, acceso bloqueado |
+| 2 | Cancelar desde Admin | SuperAdmin cancela suscripción de cliente | Estado → `cancelada`, webhooks actualizados |
+| 3 | Cancelación con razón | Verificar que se guarde el motivo | Datos en BD para análisis de churn |
+| 4 | Reactivar suscripción cancelada | Intentar reactivar después de cancelar | Debe crear nueva suscripción o reactivar existente |
+| 5 | Cancelación en MercadoPago | Cancelar preapproval directamente en MP | Webhook debe actualizar estado en Nexo |
 
-### Análisis: Mejores Prácticas de la Industria
+#### Criterios de Aceptación
 
-#### Odoo Subscriptions (v18/v19)
+- [ ] Usuario puede cancelar desde `/mi-plan`
+- [ ] Se muestra modal de confirmación con razón obligatoria
+- [ ] Estado cambia a `cancelada` en BD
+- [ ] Webhook de MP sincroniza cancelación
+- [ ] Usuario pierde acceso al siguiente intento de navegación
+- [ ] Métricas de churn se actualizan
 
-| Feature | Odoo | Nexo Actual | Prioridad |
-|---------|------|-------------|-----------|
-| Auto-renewals con cargo automático | ✅ | ✅ MP Preapproval | - |
-| Customer self-service portal | ✅ | ✅ MiPlanPage | - |
-| Customer-initiated closure | ✅ Con razón obligatoria | ⚠️ Sin razón | Media |
-| Automatic closing (días sin pago) | ✅ Configurable | ❌ | **Alta** |
-| Grace period | ✅ Configurable | ❌ | **Alta** |
-| Flexible billing periods | ✅ Semanal/Mensual/Anual | ✅ | - |
-| Proration (prorrateo) | ✅ | ❌ | Media |
-| Cohort analysis (retención) | ✅ | ❌ | Baja |
+---
 
-**Key insight Odoo:** El cliente puede cerrar su propia suscripción y debe dar una razón - esto reduce tickets de soporte y mejora datos de churn.
+### Fase 2: Crear Segunda Organización de Prueba (PENDIENTE)
 
-#### Stripe Billing Patterns
+**Objetivo:** Validar flujo completo con usuario nuevo
 
-| Pattern | Descripción | Implementación Nexo |
-|---------|-------------|---------------------|
-| **Dunning sequence** | Reintentos: día 1, 3, 7. Emails automáticos | MP maneja reintentos, agregar emails |
-| **Grace period** | 7-14 días acceso mientras se reintenta | Implementar con `fecha_gracia` |
-| **past_due status** | Estado intermedio antes de cancelar | Agregar estado `vencida_gracia` |
-| **Pause collection** | Pausar cobros sin cancelar | Ya existe `pausada` |
-| **Smart retry** | Reintentar en horarios óptimos | MP lo hace automáticamente |
+#### Pasos
 
-**Key insight Stripe:** Usar período de gracia (5-14 días) + reintentos antes de bloquear. Un pago fallido hoy puede funcionar mañana por: saldo disponible, tarjeta actualizada, o error de red temporal.
+1. **Crear Test User Comprador 2 en MercadoPago**
+   - Ir a: https://www.mercadopago.com.mx/developers/panel/app/{app_id}/test-users
+   - Crear nuevo usuario de prueba
+   - Documentar credenciales aquí
 
-### Implementación Propuesta
+2. **Registrar nueva organización en Nexo**
+   - URL: `https://<tunnel>/registro`
+   - Email: `testorg2@example.com`
+   - Verificar auto-vinculación como cliente de Nexo Team
 
-#### Fase 1: Middleware de Verificación (Solo Nexo Team)
+3. **Completar checkout con Plan Pro**
+   - Usar credenciales del Test User Comprador 2
+   - Verificar webhook de activación
 
-```javascript
-// middleware/suscripcionActiva.js
-const verificarSuscripcion = async (req, res, next) => {
-    // Solo aplica para organizaciones (no Nexo Team ni SuperAdmin)
-    if (req.user.organizacion_id === NEXO_TEAM_ORG_ID) return next();
-    if (req.user.nivel_jerarquia >= 100) return next();
+4. **Validar acceso y restricciones**
+   - Probar todos los módulos
+   - Verificar banner de suscripción
 
-    const org = await OrganizacionModel.buscarPorId(req.user.organizacion_id);
+#### Datos de Segunda Organización (A COMPLETAR)
 
-    // Verificar estado de suscripción
-    const estado = await SuscripcionesModel.verificarEstadoOrg(org.id);
+| Campo | Valor |
+|-------|-------|
+| Email | PENDIENTE |
+| Password | PENDIENTE |
+| Org ID | PENDIENTE |
+| Test User MP | PENDIENTE |
 
-    if (estado.bloqueado) {
-        return res.status(402).json({
-            error: 'subscription_required',
-            message: estado.mensaje,
-            redirect: '/planes'
-        });
-    }
+---
 
-    if (estado.limitado) {
-        req.suscripcionLimitada = true;
-        req.mensajeSuscripcion = estado.mensaje;
-    }
+### Fase 3: Comparativa Detallada con Odoo (INVESTIGACIÓN)
 
-    next();
-};
-```
+**Objetivo:** Auditar nuestro módulo de suscripciones vs Odoo Subscriptions para identificar gaps
 
-#### Fase 2: Estados de Suscripción Expandidos
+#### Matriz de Comparación
 
-```sql
--- Agregar columnas para grace period
-ALTER TABLE suscripciones_org ADD COLUMN fecha_gracia DATE;
-ALTER TABLE suscripciones_org ADD COLUMN intentos_cobro INTEGER DEFAULT 0;
-ALTER TABLE suscripciones_org ADD COLUMN ultimo_intento_cobro TIMESTAMP;
-```
+| Feature | Odoo v18 | Nexo Actual | Gap | Prioridad |
+|---------|----------|-------------|-----|-----------|
+| **Gestión de Planes** |
+| Crear/editar planes | ✅ | ✅ | - | - |
+| Planes con features/límites | ✅ | ✅ | - | - |
+| Pricing por periodo (mensual/anual) | ✅ | ✅ | - | - |
+| Tiers/niveles de plan | ✅ | ✅ | - | - |
+| **Ciclo de Vida** |
+| Trial automático | ✅ | ✅ | - | - |
+| Auto-renewal | ✅ | ✅ MP Preapproval | - | - |
+| Grace period configurable | ✅ 1-30 días | ✅ 7 días fijo | Hacer configurable | Baja |
+| Automatic closing | ✅ Configurable | ✅ Jobs pg_cron | - | - |
+| **Pagos** |
+| Múltiples gateways | ✅ | ⚠️ Solo MP | Agregar Stripe | Media |
+| Dunning emails | ✅ Automáticos | ❌ | Implementar | **Alta** |
+| Reintentos automáticos | ✅ | ✅ MP lo maneja | - | - |
+| Prorrateo en cambios | ✅ | ❌ | Implementar | Media |
+| **Self-Service** |
+| Portal de cliente | ✅ | ✅ MiPlanPage | - | - |
+| Cambiar plan | ✅ | ✅ CambiarPlanDrawer | - | - |
+| Cancelar con razón | ✅ Obligatoria | ⚠️ Sin razón | Agregar | **Alta** |
+| Ver historial pagos | ✅ | ⚠️ Solo admin | Agregar a MiPlan | Media |
+| Descargar facturas | ✅ PDF | ❌ | Implementar | Media |
+| **Analytics** |
+| MRR/ARR | ✅ | ✅ | - | - |
+| Churn rate | ✅ | ✅ | - | - |
+| LTV | ✅ | ✅ | - | - |
+| Cohort analysis | ✅ | ❌ | Implementar | Baja |
+| Razones de cancelación | ✅ Dashboard | ❌ | Implementar | Media |
+| Conversion rate trial→paid | ✅ | ❌ | Implementar | Media |
+| **Comunicación** |
+| Email bienvenida | ✅ | ❌ | Implementar | Media |
+| Email renovación próxima | ✅ | ❌ | Implementar | Media |
+| Email pago fallido | ✅ Secuencia | ❌ | Implementar | **Alta** |
+| Email cancelación | ✅ | ❌ | Implementar | Media |
+| **Integraciones** |
+| Contabilidad | ✅ Nativo | ❌ | Implementar | Baja |
+| CRM | ✅ Nativo | ✅ Clientes vinculados | - | - |
+| Inventario (módulos) | ✅ | ✅ modulos_activos | - | - |
 
-#### Fase 3: Cron Job de Verificación
+#### Gaps Críticos Identificados (Prioridad Alta)
 
-```javascript
-// Ejecutar diariamente
-const verificarSuscripcionesVencidas = async () => {
-    // 1. Marcar trials expirados
-    await marcarTrialsExpirados();
+1. **Dunning emails** - Secuencia de recordatorios de pago
+2. **Razón de cancelación** - Obligatoria para análisis de churn
+3. **Emails transaccionales** - Pago fallido, renovación próxima
 
-    // 2. Enviar recordatorios de pago (dunning)
-    await enviarRecordatoriosPago();
+#### Investigación Adicional Requerida
 
-    // 3. Bloquear después de grace period
-    await bloquearSuscripcionesVencidas();
-};
-```
-
-#### Fase 4: Frontend - Componentes de Restricción
-
-| Componente | Propósito |
-|------------|-----------|
-| `<SuscripcionBanner />` | Muestra estado (trial expirando, pago pendiente) |
-| `<FeatureGate feature="inventario" />` | Wrapper que verifica acceso a módulo |
-| `<SubscriptionGuard />` | HOC para rutas que requieren suscripción activa |
-
-### Consideraciones de Dogfooding
-
-**NO romper el dogfooding actual:**
-- Nexo Team (org_id=1) SIEMPRE tiene acceso completo
-- SuperAdmin SIEMPRE tiene acceso completo
-- Las restricciones solo aplican a organizaciones cliente
-
-**Constante centralizada:**
-```javascript
-// config/constants.js
-const NEXO_TEAM_ORG_ID = process.env.NEXO_TEAM_ORG_ID || 1;
-const GRACE_PERIOD_DAYS = 7;
-const DUNNING_SEQUENCE = [1, 3, 7]; // Días para enviar recordatorios
-```
+- [ ] Revisar UI/UX de Odoo Subscriptions en demo
+- [ ] Documentar flujo de dunning en Odoo
+- [ ] Analizar reportes de churn en Odoo
+- [ ] Comparar con Chargebee/Recurly como referencia adicional
 
 ---
 
@@ -211,41 +242,41 @@ const DUNNING_SEQUENCE = [1, 3, 7]; // Días para enviar recordatorios
 | `webhooks.controller.js` | Procesa webhooks MP |
 | `suscripciones.model.js` | Estados, transiciones, bypass RLS |
 | `mercadopago.service.js` | Cliente MP multi-tenant |
+| `suscripcionActiva.js` | Middleware restricción acceso |
+| `SubscriptionGuard.jsx` | Guard frontend + banner |
+| `07-jobs-grace-period.sql` | Jobs pg_cron automáticos |
 
 ---
 
-## Métricas a Implementar
+## Bugs Corregidos (24 Ene 2026)
 
-| Métrica | SQL/Query |
-|---------|-----------|
-| **Conversion Trial→Paid** | Trials que se convierten en activas |
-| **Churn Rate** | Suscripciones canceladas / activas |
-| **Failed Payment Rate** | Cobros fallidos / intentos |
-| **Days to Convert** | Promedio días trial antes de pagar |
+| Bug | Causa | Solución |
+|-----|-------|----------|
+| Webhook `subscription_authorized_payment` no procesaba | Status `processed` no manejado (solo `approved`) | Agregar condición `status === 'processed'` |
+| Pago quedaba `pendiente` aunque suscripción `activa` | Búsqueda usaba org vendedor, no global | Pasar `null` a `buscarPorGatewayId()` |
+| Precio mostraba $0.00/mes en frontend | Campo `precio` vs `precio_actual` | Agregar alias SQL |
 
 ---
 
-## Próximos Pasos (Priorizado)
+## Métricas Implementadas
 
-### Fase 1: Restricción de Acceso (Sprint actual)
-1. **Middleware `verificarSuscripcion`** - Verificar estado antes de cada request
-2. **Estado `vencida`** - Marcar trials expirados vía cron
-3. **`<SuscripcionBanner />`** - Mostrar estado en header del frontend
-4. **Grace period (7 días)** - Columna `fecha_gracia` + lógica
-
-### Fase 2: Comunicación (Siguiente sprint)
-5. **Dunning emails** - Secuencia: día 1, 3, 7 de pago pendiente
-6. **Razón de cancelación** - Obligatoria al cancelar (datos para reducir churn)
-
-### Fase 3: Optimización (Backlog)
-7. **Proration** - Calcular diferencia al cambiar plan mid-cycle
-8. **Métricas churn** - Conversion rate, days to convert, reasons
+| Métrica | Endpoint | Estado |
+|---------|----------|--------|
+| MRR | `/metricas/dashboard` | ✅ |
+| Suscriptores Activos | `/metricas/dashboard` | ✅ |
+| Churn Rate | `/metricas/dashboard` | ✅ |
+| LTV Promedio | `/metricas/dashboard` | ✅ |
+| Distribución por Estado | `/metricas/distribucion-estado` | ✅ |
+| Top Planes | `/metricas/top-planes` | ✅ |
+| Evolución MRR | `/metricas/evolucion-mrr` | ✅ |
+| Evolución Churn | `/metricas/evolucion-churn` | ✅ |
 
 ---
 
 ## Referencias
 
 - [Odoo Subscriptions Features](https://www.odoo.com/app/subscriptions-features)
+- [Odoo Subscriptions Demo](https://demo.odoo.com/)
 - [Stripe: How subscriptions work](https://docs.stripe.com/billing/subscriptions/overview)
-- [Stripe: Pause payment collection](https://docs.stripe.com/billing/subscriptions/pause-payment)
 - [Stripe: Handle failed payments](https://benfoster.io/blog/stripe-failed-payments-how-to/)
+- [Chargebee: Dunning Management](https://www.chargebee.com/docs/2.0/dunning.html)

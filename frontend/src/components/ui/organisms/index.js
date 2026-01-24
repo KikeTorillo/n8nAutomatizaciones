@@ -15,11 +15,13 @@ export { TreeView, useTreeExpansion } from './TreeNode';
 export { MobileNavSelector } from './MobileNavSelector';
 export { BarcodeScanner } from './BarcodeScanner';
 export { ToastContainer } from './ToastContainer';
-export { default as StateNavTabs, TabDropdown, MobileTabSelector } from './state-nav-tabs';
+export { StateNavTabs, TabDropdown, MobileTabSelector } from './state-nav-tabs';
 
 // Filters
 export { AdvancedFilterPanel, FilterChip, SavedSearchModal, SavedSearchList, FilterSection } from './filters';
 
 // Movidos desde molecules/ (Ene 2026) - demasiado complejos para molecule
 export { MultiSelect } from './MultiSelect';
-export { default as IconPicker, ICONOS_MAP, CATEGORIAS_ICONOS, IconButton } from './icon-picker';
+export { IconPicker, ICONOS_MAP, CATEGORIAS_ICONOS, IconButton } from './icon-picker';
+export { SmartButtons } from './SmartButtons';
+export { NavDropdown } from './NavDropdown';

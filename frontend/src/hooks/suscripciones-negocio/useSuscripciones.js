@@ -90,8 +90,13 @@ export function useHistorialSuscripcion(suscripcionId) {
 /**
  * Hook para obtener mi suscripción activa (página MiPlan)
  * Busca la suscripción activa vinculada a la organización del usuario
+ *
+ * @param {Object} options - Opciones adicionales para useQuery
+ * @param {boolean} options.enabled - Si debe ejecutarse la query (default: true)
  */
-export function useMiSuscripcion() {
+export function useMiSuscripcion(options = {}) {
+  const { enabled = true, ...restOptions } = options;
+
   return useQuery({
     queryKey: [QUERY_KEYS.MI_SUSCRIPCION],
     queryFn: async () => {
@@ -99,6 +104,8 @@ export function useMiSuscripcion() {
       return response.data?.data;
     },
     staleTime: STALE_TIMES.DYNAMIC,
+    enabled,
+    ...restOptions,
   });
 }
 

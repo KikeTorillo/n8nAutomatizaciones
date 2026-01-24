@@ -21,6 +21,10 @@ export {
   getSemanticColor,
   BADGE_COLORS,
   ICON_BG_COLORS,
+  STATUS_COLORS,
+  getStatusColor,
+  CARD_THEME_COLORS,
+  getCardThemeColor,
 } from './colors';
 
 // Tamaños
@@ -37,6 +41,7 @@ export {
   TEXT_SIZES,
   ICON_CONTAINER_SIZES,
   MODAL_SIZES,
+  DRAWER_SIZES,
   SEARCH_INPUT_SIZES,
   PAGINATION_SIZES,
 } from './sizes';

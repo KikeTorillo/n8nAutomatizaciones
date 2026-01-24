@@ -1,8 +1,8 @@
 import { useEffect } from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Button, Drawer } from '@/components/ui';
+import { Button, Drawer, FormGroup, Input, Select, Textarea, CheckboxField } from '@/components/ui';
 import { useToast } from '@/hooks/utils';
 import {
   useCrearUbicacion,
@@ -34,18 +34,40 @@ const ubicacionSchema = z.object({
   activo: z.boolean().default(true),
 });
 
-const tiposUbicacion = [
-  { value: 'zona', label: 'Zona', description: 'Área principal del almacén' },
-  { value: 'pasillo', label: 'Pasillo', description: 'Corredor entre zonas' },
-  { value: 'estante', label: 'Estante', description: 'Estantería o rack' },
-  { value: 'bin', label: 'Bin', description: 'Ubicación específica de almacenaje' },
+const TIPOS_UBICACION = [
+  { value: 'zona', label: 'Zona - Área principal del almacén' },
+  { value: 'pasillo', label: 'Pasillo - Corredor entre zonas' },
+  { value: 'estante', label: 'Estante - Estantería o rack' },
+  { value: 'bin', label: 'Bin - Ubicación específica de almacenaje' },
 ];
 
-const tipoHijo = {
+const TIPO_HIJO = {
   zona: 'pasillo',
   pasillo: 'estante',
   estante: 'bin',
   bin: null,
+};
+
+const DEFAULT_VALUES = {
+  codigo: '',
+  nombre: '',
+  descripcion: '',
+  tipo: 'zona',
+  capacidad_maxima: null,
+  peso_maximo_kg: null,
+  volumen_m3: null,
+  es_picking: false,
+  es_recepcion: false,
+  es_despacho: false,
+  es_cuarentena: false,
+  es_devolucion: false,
+  temperatura_min: null,
+  temperatura_max: null,
+  humedad_controlada: false,
+  orden: 0,
+  color: '',
+  icono: '',
+  activo: true,
 };
 
 /**
@@ -61,37 +83,12 @@ function UbicacionFormDrawer({ isOpen, onClose, ubicacion, parent, sucursalId })
   const {
     register,
     handleSubmit,
-    control,
     reset,
-    watch,
-    setValue,
     formState: { errors, isSubmitting },
   } = useForm({
     resolver: zodResolver(ubicacionSchema),
-    defaultValues: {
-      codigo: '',
-      nombre: '',
-      descripcion: '',
-      tipo: 'zona',
-      capacidad_maxima: null,
-      peso_maximo_kg: null,
-      volumen_m3: null,
-      es_picking: false,
-      es_recepcion: false,
-      es_despacho: false,
-      es_cuarentena: false,
-      es_devolucion: false,
-      temperatura_min: null,
-      temperatura_max: null,
-      humedad_controlada: false,
-      orden: 0,
-      color: '',
-      icono: '',
-      activo: true,
-    },
+    defaultValues: DEFAULT_VALUES,
   });
-
-  const tipoSeleccionado = watch('tipo');
 
   // Cargar datos al editar o crear hijo
   useEffect(() => {
@@ -118,57 +115,15 @@ function UbicacionFormDrawer({ isOpen, onClose, ubicacion, parent, sucursalId })
         activo: ubicacion.activo !== false,
       });
     } else if (parent) {
-      // Crear sub-ubicación: precargar tipo hijo
-      const nuevoTipo = tipoHijo[parent.tipo] || 'bin';
+      const nuevoTipo = TIPO_HIJO[parent.tipo] || 'bin';
       const prefijoCodigo = parent.codigo ? `${parent.codigo}-` : '';
-      reset({
-        codigo: prefijoCodigo,
-        nombre: '',
-        descripcion: '',
-        tipo: nuevoTipo,
-        capacidad_maxima: null,
-        peso_maximo_kg: null,
-        volumen_m3: null,
-        es_picking: false,
-        es_recepcion: false,
-        es_despacho: false,
-        es_cuarentena: false,
-        es_devolucion: false,
-        temperatura_min: null,
-        temperatura_max: null,
-        humedad_controlada: false,
-        orden: 0,
-        color: '',
-        icono: '',
-        activo: true,
-      });
+      reset({ ...DEFAULT_VALUES, codigo: prefijoCodigo, tipo: nuevoTipo });
     } else {
-      reset({
-        codigo: '',
-        nombre: '',
-        descripcion: '',
-        tipo: 'zona',
-        capacidad_maxima: null,
-        peso_maximo_kg: null,
-        volumen_m3: null,
-        es_picking: false,
-        es_recepcion: false,
-        es_despacho: false,
-        es_cuarentena: false,
-        es_devolucion: false,
-        temperatura_min: null,
-        temperatura_max: null,
-        humedad_controlada: false,
-        orden: 0,
-        color: '',
-        icono: '',
-        activo: true,
-      });
+      reset(DEFAULT_VALUES);
     }
   }, [isEditing, ubicacion, parent, reset]);
 
   const onSubmit = async (data) => {
-    // Sanitizar campos opcionales vacíos
     const sanitized = {
       ...data,
       nombre: data.nombre || undefined,
@@ -198,248 +153,140 @@ function UbicacionFormDrawer({ isOpen, onClose, ubicacion, parent, sucursalId })
     }
   };
 
+  const footerContent = (
+    <div className="flex justify-end space-x-3">
+      <Button variant="secondary" onClick={onClose} type="button">
+        Cancelar
+      </Button>
+      <Button
+        variant="primary"
+        type="submit"
+        form="ubicacion-form"
+        isLoading={isSubmitting || crearMutation.isPending || actualizarMutation.isPending}
+      >
+        {isEditing ? 'Guardar Cambios' : 'Crear Ubicación'}
+      </Button>
+    </div>
+  );
+
   return (
     <Drawer
       isOpen={isOpen}
       onClose={onClose}
       title={isEditing ? 'Editar Ubicación' : parent ? `Nueva Sub-ubicación de ${parent.codigo}` : 'Nueva Ubicación'}
       size="lg"
+      footer={footerContent}
     >
-      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col h-full">
-        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-6">
-          {/* Información Básica */}
-          <div className="space-y-4">
-            <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 border-b pb-2 dark:border-gray-700">
-              Información Básica
-            </h3>
+      <form id="ubicacion-form" onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        {/* Información Básica */}
+        <section className="space-y-4">
+          <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 border-b pb-2 dark:border-gray-700">
+            Información Básica
+          </h3>
 
-            {/* Código */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Código *
-              </label>
-              <input
-                type="text"
-                {...register('codigo')}
-                placeholder="Ej: A-01-03-02"
-                className="w-full px-3 py-2 border rounded-lg text-sm bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500"
-              />
-              {errors.codigo && (
-                <p className="mt-1 text-xs text-red-600 dark:text-red-400">{errors.codigo.message}</p>
-              )}
-            </div>
+          <FormGroup label="Código" required error={errors.codigo?.message}>
+            <Input
+              {...register('codigo')}
+              placeholder="Ej: A-01-03-02"
+              hasError={!!errors.codigo}
+            />
+          </FormGroup>
 
-            {/* Nombre */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Nombre
-              </label>
-              <input
-                type="text"
-                {...register('nombre')}
-                placeholder="Nombre descriptivo (opcional)"
-                className="w-full px-3 py-2 border rounded-lg text-sm bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500"
-              />
-            </div>
+          <FormGroup label="Nombre" error={errors.nombre?.message}>
+            <Input
+              {...register('nombre')}
+              placeholder="Nombre descriptivo (opcional)"
+              hasError={!!errors.nombre}
+            />
+          </FormGroup>
 
-            {/* Tipo */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Tipo *
-              </label>
-              <select
-                {...register('tipo')}
-                disabled={parent}
-                className="w-full px-3 py-2 border rounded-lg text-sm bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 disabled:opacity-50"
-              >
-                {tiposUbicacion.map((tipo) => (
-                  <option key={tipo.value} value={tipo.value}>
-                    {tipo.label} - {tipo.description}
-                  </option>
-                ))}
-              </select>
-              {errors.tipo && (
-                <p className="mt-1 text-xs text-red-600 dark:text-red-400">{errors.tipo.message}</p>
-              )}
-            </div>
+          <FormGroup label="Tipo" required error={errors.tipo?.message}>
+            <Select
+              {...register('tipo')}
+              options={TIPOS_UBICACION}
+              disabled={!!parent}
+              hasError={!!errors.tipo}
+            />
+          </FormGroup>
 
-            {/* Descripción */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Descripción
-              </label>
-              <textarea
-                {...register('descripcion')}
-                rows={2}
-                placeholder="Descripción opcional"
-                className="w-full px-3 py-2 border rounded-lg text-sm bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500"
-              />
-            </div>
+          <FormGroup label="Descripción" error={errors.descripcion?.message}>
+            <Textarea
+              {...register('descripcion')}
+              rows={2}
+              placeholder="Descripción opcional"
+              hasError={!!errors.descripcion}
+            />
+          </FormGroup>
+        </section>
+
+        {/* Capacidad */}
+        <section className="space-y-4">
+          <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 border-b pb-2 dark:border-gray-700">
+            Capacidad
+          </h3>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <FormGroup label="Capacidad Máx (unidades)">
+              <Input type="number" {...register('capacidad_maxima')} min="0" />
+            </FormGroup>
+            <FormGroup label="Peso Máx (kg)">
+              <Input type="number" step="0.01" {...register('peso_maximo_kg')} min="0" />
+            </FormGroup>
+            <FormGroup label="Volumen (m³)">
+              <Input type="number" step="0.01" {...register('volumen_m3')} min="0" />
+            </FormGroup>
+          </div>
+        </section>
+
+        {/* Características */}
+        <section className="space-y-4">
+          <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 border-b pb-2 dark:border-gray-700">
+            Características
+          </h3>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            <CheckboxField label="Es Picking" {...register('es_picking')} />
+            <CheckboxField label="Es Recepción" {...register('es_recepcion')} />
+            <CheckboxField label="Es Despacho" {...register('es_despacho')} />
+            <CheckboxField label="Es Cuarentena" {...register('es_cuarentena')} />
+            <CheckboxField label="Es Devolución" {...register('es_devolucion')} />
+            <CheckboxField label="Humedad Controlada" {...register('humedad_controlada')} />
+          </div>
+        </section>
+
+        {/* Control de Temperatura */}
+        <section className="space-y-4">
+          <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 border-b pb-2 dark:border-gray-700">
+            Control de Temperatura
+          </h3>
+
+          <div className="grid grid-cols-2 gap-4">
+            <FormGroup label="Temperatura Mín (°C)">
+              <Input type="number" step="0.1" {...register('temperatura_min')} />
+            </FormGroup>
+            <FormGroup label="Temperatura Máx (°C)">
+              <Input type="number" step="0.1" {...register('temperatura_max')} />
+            </FormGroup>
+          </div>
+        </section>
+
+        {/* Apariencia */}
+        <section className="space-y-4">
+          <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 border-b pb-2 dark:border-gray-700">
+            Apariencia
+          </h3>
+
+          <div className="grid grid-cols-2 gap-4">
+            <FormGroup label="Color">
+              <Input type="color" {...register('color')} className="h-10" />
+            </FormGroup>
+            <FormGroup label="Orden">
+              <Input type="number" {...register('orden')} min="0" />
+            </FormGroup>
           </div>
 
-          {/* Capacidad */}
-          <div className="space-y-4">
-            <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 border-b pb-2 dark:border-gray-700">
-              Capacidad
-            </h3>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Capacidad Máx (unidades)
-                </label>
-                <input
-                  type="number"
-                  {...register('capacidad_maxima')}
-                  min="0"
-                  className="w-full px-3 py-2 border rounded-lg text-sm bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Peso Máx (kg)
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  {...register('peso_maximo_kg')}
-                  min="0"
-                  className="w-full px-3 py-2 border rounded-lg text-sm bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Volumen (m³)
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  {...register('volumen_m3')}
-                  min="0"
-                  className="w-full px-3 py-2 border rounded-lg text-sm bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Características */}
-          <div className="space-y-4">
-            <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 border-b pb-2 dark:border-gray-700">
-              Características
-            </h3>
-
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-              <label className="flex items-center space-x-2 cursor-pointer">
-                <input type="checkbox" {...register('es_picking')} className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500" />
-                <span className="text-sm text-gray-700 dark:text-gray-300">Es Picking</span>
-              </label>
-              <label className="flex items-center space-x-2 cursor-pointer">
-                <input type="checkbox" {...register('es_recepcion')} className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500" />
-                <span className="text-sm text-gray-700 dark:text-gray-300">Es Recepción</span>
-              </label>
-              <label className="flex items-center space-x-2 cursor-pointer">
-                <input type="checkbox" {...register('es_despacho')} className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500" />
-                <span className="text-sm text-gray-700 dark:text-gray-300">Es Despacho</span>
-              </label>
-              <label className="flex items-center space-x-2 cursor-pointer">
-                <input type="checkbox" {...register('es_cuarentena')} className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500" />
-                <span className="text-sm text-gray-700 dark:text-gray-300">Es Cuarentena</span>
-              </label>
-              <label className="flex items-center space-x-2 cursor-pointer">
-                <input type="checkbox" {...register('es_devolucion')} className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500" />
-                <span className="text-sm text-gray-700 dark:text-gray-300">Es Devolución</span>
-              </label>
-              <label className="flex items-center space-x-2 cursor-pointer">
-                <input type="checkbox" {...register('humedad_controlada')} className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500" />
-                <span className="text-sm text-gray-700 dark:text-gray-300">Humedad Controlada</span>
-              </label>
-            </div>
-          </div>
-
-          {/* Temperatura (si aplica) */}
-          <div className="space-y-4">
-            <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 border-b pb-2 dark:border-gray-700">
-              Control de Temperatura
-            </h3>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Temperatura Mín (°C)
-                </label>
-                <input
-                  type="number"
-                  step="0.1"
-                  {...register('temperatura_min')}
-                  className="w-full px-3 py-2 border rounded-lg text-sm bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Temperatura Máx (°C)
-                </label>
-                <input
-                  type="number"
-                  step="0.1"
-                  {...register('temperatura_max')}
-                  className="w-full px-3 py-2 border rounded-lg text-sm bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Visual */}
-          <div className="space-y-4">
-            <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 border-b pb-2 dark:border-gray-700">
-              Apariencia
-            </h3>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Color
-                </label>
-                <input
-                  type="color"
-                  {...register('color')}
-                  className="w-full h-10 border rounded-lg bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Orden
-                </label>
-                <input
-                  type="number"
-                  {...register('orden')}
-                  min="0"
-                  className="w-full px-3 py-2 border rounded-lg text-sm bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500"
-                />
-              </div>
-            </div>
-
-            <label className="flex items-center space-x-2 cursor-pointer">
-              <input type="checkbox" {...register('activo')} className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500" />
-              <span className="text-sm text-gray-700 dark:text-gray-300">Ubicación activa</span>
-            </label>
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div className="flex-shrink-0 px-6 py-4 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
-          <div className="flex justify-end space-x-3">
-            <Button variant="secondary" onClick={onClose} type="button">
-              Cancelar
-            </Button>
-            <Button
-              variant="primary"
-              type="submit"
-              isLoading={isSubmitting || crearMutation.isPending || actualizarMutation.isPending}
-            >
-              {isEditing ? 'Guardar Cambios' : 'Crear Ubicación'}
-            </Button>
-          </div>
-        </div>
+          <CheckboxField label="Ubicación activa" {...register('activo')} />
+        </section>
       </form>
     </Drawer>
   );

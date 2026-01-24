@@ -108,6 +108,11 @@ CREATE TABLE IF NOT EXISTS suscripciones_org (
     es_trial BOOLEAN DEFAULT FALSE,
     fecha_fin_trial DATE,
 
+    -- Grace Period (Ene 2026)
+    fecha_gracia DATE,                        -- Fecha límite de grace period
+    ultimo_intento_cobro TIMESTAMP,           -- Último intento de cobro automático
+    intentos_cobro_fallidos INTEGER DEFAULT 0,-- Contador de intentos fallidos consecutivos
+
     -- Gateway de pago
     gateway VARCHAR(30),                            -- stripe, mercadopago, paypal, manual
     customer_id_gateway VARCHAR(100),               -- ID del cliente en el gateway
@@ -138,7 +143,7 @@ CREATE TABLE IF NOT EXISTS suscripciones_org (
 
     -- Constraints
     CONSTRAINT chk_estado_valido CHECK (
-        estado IN ('trial', 'pendiente_pago', 'activa', 'pausada', 'cancelada', 'vencida', 'suspendida')
+        estado IN ('trial', 'pendiente_pago', 'activa', 'pausada', 'cancelada', 'vencida', 'suspendida', 'grace_period')
     ),
     CONSTRAINT chk_periodo_valido CHECK (
         periodo IN ('mensual', 'trimestral', 'semestral', 'anual')
@@ -160,7 +165,7 @@ COMMENT ON COLUMN suscripciones_org.suscriptor_externo IS
 'Datos de suscriptor externo en JSONB: {nombre, email, empresa, telefono}';
 
 COMMENT ON COLUMN suscripciones_org.estado IS
-'Estados: trial (prueba), pendiente_pago (checkout iniciado), activa (pagando), pausada (temporal), cancelada (fin), vencida (no pago), suspendida (bloqueada)';
+'Estados: trial (prueba), pendiente_pago (checkout iniciado), activa (pagando), pausada (temporal), cancelada (fin), vencida (no pago), suspendida (bloqueada), grace_period (período de gracia, solo lectura)';
 
 -- ============================================================================
 -- 3. TABLA: pagos_suscripcion
@@ -362,6 +367,11 @@ CREATE INDEX IF NOT EXISTS idx_suscripciones_proximo_cobro
     WHERE estado IN ('activa', 'trial') AND auto_cobro = TRUE;
 
 CREATE INDEX IF NOT EXISTS idx_suscripciones_gateway ON suscripciones_org(gateway, subscription_id_gateway);
+
+-- Índice para jobs de grace period
+CREATE INDEX IF NOT EXISTS idx_suscripciones_grace_period
+    ON suscripciones_org(estado, fecha_gracia)
+    WHERE estado = 'grace_period';
 
 -- Índices para pagos_suscripcion
 CREATE INDEX IF NOT EXISTS idx_pagos_organizacion ON pagos_suscripcion(organizacion_id);

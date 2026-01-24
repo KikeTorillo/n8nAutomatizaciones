@@ -1,4 +1,5 @@
 import { forwardRef, memo } from 'react';
+import PropTypes from 'prop-types';
 import { cn } from '@/lib/utils';
 import { Loader2 } from 'lucide-react';
 import { BUTTON_VARIANTS, BUTTON_SIZES, FOCUS_STATES } from '@/lib/uiConstants';
@@ -49,5 +50,24 @@ const Button = memo(forwardRef(function Button(
 ));
 
 Button.displayName = 'Button';
+
+Button.propTypes = {
+  /** Variante visual del botón */
+  variant: PropTypes.oneOf(['primary', 'secondary', 'outline', 'danger', 'ghost', 'warning', 'success', 'link']),
+  /** Tamaño del botón */
+  size: PropTypes.oneOf(['sm', 'md', 'lg', 'xl']),
+  /** Mostrar estado de carga con spinner */
+  isLoading: PropTypes.bool,
+  /** Deshabilitar el botón */
+  disabled: PropTypes.bool,
+  /** Tipo del botón HTML */
+  type: PropTypes.oneOf(['button', 'submit', 'reset']),
+  /** Contenido del botón */
+  children: PropTypes.node.isRequired,
+  /** Clases CSS adicionales */
+  className: PropTypes.string,
+  /** Handler de click */
+  onClick: PropTypes.func,
+};
 
 export { Button };
