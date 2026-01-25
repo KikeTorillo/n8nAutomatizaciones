@@ -4,7 +4,7 @@ import { Filter, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SearchInput } from '../molecules/SearchInput';
 import { Button } from '../atoms/Button';
-import Badge from '../atoms/Badge';
+import { Badge } from '../atoms/Badge';
 
 /**
  * SearchFilterBar - Barra combinada de búsqueda y filtros

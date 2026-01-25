@@ -31,11 +31,11 @@ const WorkflowsListPage = lazy(() => import('@/pages/configuracion/workflows/Wor
 const WorkflowDesignerPage = lazy(() => import('@/pages/configuracion/workflows/WorkflowDesignerPage'));
 
 export const configuracionRoutes = [
-  // Configuración General
-  protectedRoute('configuracion', ConfiguracionPage, { requiredRole: ROLES.ALL_AUTHENTICATED }),
-  protectedRoute('configuracion/negocio', NegocioPage, { requiredRole: ROLES.ALL_AUTHENTICATED }),
-  protectedRoute('configuracion/modulos', ModulosPage, { requiredRole: ROLES.ALL_AUTHENTICATED }),
-  protectedRoute('recordatorios', RecordatoriosPage, { requiredRole: ROLES.ALL_AUTHENTICATED }),
+  // Configuración General (solo admin - FIX RBAC Ene 2026)
+  protectedRoute('configuracion', ConfiguracionPage, { requiredRole: ROLES.ADMIN_ONLY }),
+  protectedRoute('configuracion/negocio', NegocioPage, { requiredRole: ROLES.ADMIN_ONLY }),
+  protectedRoute('configuracion/modulos', ModulosPage, { requiredRole: ROLES.ADMIN_ONLY }),
+  protectedRoute('recordatorios', RecordatoriosPage, { requiredRole: ROLES.ADMIN_ONLY }),
 
   // Organización (solo admin)
   protectedRoute('configuracion/departamentos', DepartamentosPage, { requiredRole: ROLES.ADMIN_ONLY }),

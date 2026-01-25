@@ -162,7 +162,6 @@ class EmailService {
             // Mapear rol a texto legible
             const rolTexto = {
                 'admin': 'Administrador',
-                'propietario': 'Propietario',
                 'empleado': 'Empleado'
             }[rol] || 'Usuario';
 

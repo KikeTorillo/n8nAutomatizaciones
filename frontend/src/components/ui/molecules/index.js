@@ -3,6 +3,9 @@
  * Componentes que combinan átomos para formar unidades funcionales
  */
 
+// Movido desde atoms/ (Ene 2026) - componente con lógica compleja
+export { ToggleSwitch } from './ToggleSwitch';
+
 export { SearchInput } from './SearchInput';
 export { StatCard } from './StatCard';
 export { EmptyState } from './EmptyState';
@@ -34,3 +37,11 @@ export { DropdownMenu } from './DropdownMenu';
 export { FilterSelectField } from './FilterSelectField';
 export { FilterDateField } from './FilterDateField';
 export { FilterTextField } from './FilterTextField';
+export { FilterField } from './FilterField';
+
+// Headers extraídos (Ene 2026)
+export { ModalHeader } from './ModalHeader';
+export { DrawerHeader } from './DrawerHeader';
+
+// Permisos granulares (Ene 2026) - FIX RBAC
+export { ConPermiso } from './ConPermiso';

@@ -11,8 +11,6 @@ import {
   CheckCircle,
   XCircle,
   Send,
-  Eye,
-  Trash2,
   ChevronDown,
   ChevronUp,
   RotateCcw,
@@ -22,9 +20,8 @@ import {
   Button,
   ConfirmDialog,
   DataTable,
-  DataTableActions,
-  DataTableActionButton,
   Select,
+  StandardRowActions,
 } from '@/components/ui';
 import TransferenciaFormDrawer from '@/components/sucursales/TransferenciaFormDrawer';
 import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
@@ -147,47 +144,6 @@ const COLUMNS = [
     ),
   },
 ];
-
-/**
- * Acciones por fila de transferencia
- */
-function TransferenciaRowActions({ row, onVerDetalle, onEnviar, onCancelar, isEnviando }) {
-  return (
-    <DataTableActions>
-      <DataTableActionButton
-        icon={Eye}
-        label="Ver detalle"
-        onClick={() => onVerDetalle(row)}
-        variant="primary"
-      />
-      {row.estado === 'borrador' && (
-        <>
-          <DataTableActionButton
-            icon={Send}
-            label="Enviar"
-            onClick={() => onEnviar(row)}
-            variant="ghost"
-            disabled={isEnviando}
-          />
-          <DataTableActionButton
-            icon={Trash2}
-            label="Cancelar"
-            onClick={() => onCancelar(row)}
-            variant="danger"
-          />
-        </>
-      )}
-      {row.estado === 'enviado' && (
-        <DataTableActionButton
-          icon={XCircle}
-          label="Cancelar"
-          onClick={() => onCancelar(row)}
-          variant="danger"
-        />
-      )}
-    </DataTableActions>
-  );
-}
 
 /**
  * Página de gestión de transferencias de stock entre sucursales
@@ -413,12 +369,21 @@ function TransferenciasPage() {
               header: '',
               align: 'right',
               render: (row) => (
-                <TransferenciaRowActions
+                <StandardRowActions
                   row={row}
-                  onVerDetalle={handleVerDetalle}
-                  onEnviar={handleEnviar}
-                  onCancelar={handleCancelar}
-                  isEnviando={enviarMutation.isPending}
+                  onView={() => handleVerDetalle(row)}
+                  onDelete={() => handleCancelar(row)}
+                  canDelete={['borrador', 'enviado'].includes(row.estado)}
+                  extraActions={[
+                    {
+                      icon: Send,
+                      label: 'Enviar',
+                      onClick: () => handleEnviar(row),
+                      show: row.estado === 'borrador' && !enviarMutation.isPending,
+                    },
+                  ]}
+                  entityName="transferencia"
+                  confirmDelete={false}
                 />
               ),
             },

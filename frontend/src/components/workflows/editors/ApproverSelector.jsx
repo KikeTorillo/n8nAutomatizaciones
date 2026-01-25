@@ -36,7 +36,6 @@ const TIPO_APROBADOR = {
 // Roles disponibles
 const ROLES_DISPONIBLES = [
   { value: 'admin', label: 'Administrador', description: 'Acceso total' },
-  { value: 'propietario', label: 'Propietario', description: 'Dueño de la organización' },
   { value: 'empleado', label: 'Empleado', description: 'Permisos limitados' },
 ];
 
@@ -428,7 +427,6 @@ function SupervisorSelector({ value = {}, onChange }) {
         >
           <option value="">Bloquear solicitud (requiere supervisor)</option>
           <option value="admin">Escalar a Administrador</option>
-          <option value="propietario">Escalar a Propietario</option>
         </select>
         <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
           Define qué sucede si el usuario no tiene un supervisor configurado en su perfil

@@ -82,9 +82,55 @@ export {
   selectFormData,
   selectRegistroEnviado,
   selectEmailEnviado,
-  selectOrganizacionId,
+  selectOrganizacionId as selectOnboardingOrganizacionId,
   selectUpdateFormData,
   selectSetRegistroEnviado,
-  selectSetOrganizacionId,
+  selectSetOrganizacionId as selectSetOnboardingOrganizacionId,
   selectResetOnboarding,
 } from './onboardingStore';
+
+// ========== WEBSITE EDITOR STORE ==========
+export { default as useWebsiteEditorStore } from './websiteEditorStore';
+export {
+  // Selectores de estado
+  selectBloques,
+  selectBloqueSeleccionado,
+  selectBloqueEditandoInline,
+  selectBloqueSeleccionadoCompleto,
+  selectModoEdicion,
+  selectBreakpoint,
+  selectZoom,
+  selectEstadoGuardado,
+  selectUltimoGuardado,
+  selectTieneCambiosLocales,
+  selectPuedeUndo,
+  selectPuedeRedo,
+  selectPaginaActivaId,
+  // Acciones de bloques
+  selectSetBloques,
+  selectActualizarBloqueLocal,
+  selectActualizarEstilosLocal,
+  selectReordenarBloquesLocal,
+  selectAgregarBloqueLocal,
+  selectEliminarBloqueLocal,
+  selectDuplicarBloqueLocal,
+  // Acciones de selección
+  selectSeleccionarBloque,
+  selectDeseleccionarBloque,
+  selectActivarInlineEditing,
+  selectDesactivarInlineEditing,
+  // Acciones de UI
+  selectSetModoEdicion,
+  selectSetBreakpoint,
+  selectSetZoom,
+  // Acciones de guardado
+  selectSetGuardando,
+  selectSetGuardado,
+  selectSetErrorGuardado,
+  selectReset as selectWebsiteEditorReset,
+  // Temporal store hooks
+  useTemporalStore,
+  useUndo,
+  useRedo,
+  useCanUndoRedo,
+} from './websiteEditorStore';

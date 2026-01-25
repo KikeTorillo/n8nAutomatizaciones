@@ -41,7 +41,7 @@ router.get('/usuario/:usuarioId', asyncHandler(SucursalesController.obtenerSucur
  * Acceso: Admin y Propietario
  */
 router.get('/metricas',
-    requireRole(['admin', 'propietario']),
+    requireRole(['admin']),
     asyncHandler(SucursalesController.obtenerMetricas)
 );
 
@@ -58,7 +58,7 @@ router.get('/:id', asyncHandler(SucursalesController.obtenerPorId));
  * Acceso: Admin y Propietario
  */
 router.post('/',
-    requireRole(['admin', 'propietario']),
+    requireRole(['admin']),
     asyncHandler(SucursalesController.crear)
 );
 
@@ -68,7 +68,7 @@ router.post('/',
  * Acceso: Admin y Propietario
  */
 router.put('/:id',
-    requireRole(['admin', 'propietario']),
+    requireRole(['admin']),
     asyncHandler(SucursalesController.actualizar)
 );
 
@@ -78,7 +78,7 @@ router.put('/:id',
  * Acceso: Admin y Propietario
  */
 router.delete('/:id',
-    requireRole(['admin', 'propietario']),
+    requireRole(['admin']),
     asyncHandler(SucursalesController.eliminar)
 );
 
@@ -92,7 +92,7 @@ router.delete('/:id',
  * Acceso: Admin y Propietario
  */
 router.get('/:id/usuarios',
-    requireRole(['admin', 'propietario']),
+    requireRole(['admin']),
     asyncHandler(SucursalesController.obtenerUsuarios)
 );
 
@@ -102,7 +102,7 @@ router.get('/:id/usuarios',
  * Acceso: Admin y Propietario
  */
 router.post('/:id/usuarios',
-    requireRole(['admin', 'propietario']),
+    requireRole(['admin']),
     asyncHandler(SucursalesController.asignarUsuario)
 );
 
@@ -123,7 +123,7 @@ router.get('/:id/profesionales', asyncHandler(SucursalesController.obtenerProfes
  * Acceso: Admin y Propietario
  */
 router.post('/:id/profesionales',
-    requireRole(['admin', 'propietario']),
+    requireRole(['admin']),
     asyncHandler(SucursalesController.asignarProfesional)
 );
 
@@ -151,7 +151,7 @@ router.get('/transferencias/:id', asyncHandler(SucursalesController.obtenerTrans
  * Acceso: Admin y Propietario
  */
 router.post('/transferencias',
-    requireRole(['admin', 'propietario']),
+    requireRole(['admin']),
     asyncHandler(SucursalesController.crearTransferencia)
 );
 
@@ -161,7 +161,7 @@ router.post('/transferencias',
  * Acceso: Admin y Propietario
  */
 router.post('/transferencias/:id/items',
-    requireRole(['admin', 'propietario']),
+    requireRole(['admin']),
     asyncHandler(SucursalesController.agregarItemTransferencia)
 );
 
@@ -171,7 +171,7 @@ router.post('/transferencias/:id/items',
  * Acceso: Admin y Propietario
  */
 router.delete('/transferencias/:id/items/:itemId',
-    requireRole(['admin', 'propietario']),
+    requireRole(['admin']),
     asyncHandler(SucursalesController.eliminarItemTransferencia)
 );
 
@@ -181,7 +181,7 @@ router.delete('/transferencias/:id/items/:itemId',
  * Acceso: Admin y Propietario
  */
 router.post('/transferencias/:id/enviar',
-    requireRole(['admin', 'propietario']),
+    requireRole(['admin']),
     asyncHandler(SucursalesController.enviarTransferencia)
 );
 
@@ -200,7 +200,7 @@ router.post('/transferencias/:id/recibir',
  * Acceso: Admin y Propietario
  */
 router.post('/transferencias/:id/cancelar',
-    requireRole(['admin', 'propietario']),
+    requireRole(['admin']),
     asyncHandler(SucursalesController.cancelarTransferencia)
 );
 

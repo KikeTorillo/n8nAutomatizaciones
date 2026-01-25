@@ -117,12 +117,13 @@ class NotificacionesService {
     icono = null,
     accionUrl = null
   }) {
-    // Obtener IDs de admins y propietarios
+    // Obtener IDs de admins (Ene 2026: JOIN con tabla roles)
     const adminsQuery = `
-      SELECT id FROM usuarios
-      WHERE organizacion_id = $1
-        AND rol IN ('admin', 'propietario')
-        AND activo = TRUE
+      SELECT u.id FROM usuarios u
+      JOIN roles r ON u.rol_id = r.id
+      WHERE u.organizacion_id = $1
+        AND r.codigo = 'admin'
+        AND u.activo = TRUE
     `;
 
     const adminsResult = await RLSContextManager.withBypass(async () => {

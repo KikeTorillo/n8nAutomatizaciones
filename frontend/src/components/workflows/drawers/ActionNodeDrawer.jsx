@@ -97,7 +97,6 @@ const DESTINOS_NOTIFICACION = [
   { value: 'creador', label: 'Creador de la solicitud' },
   { value: 'ultimo_aprobador', label: 'Último aprobador' },
   { value: 'rol_admin', label: 'Administradores' },
-  { value: 'rol_propietario', label: 'Propietarios' },
   { value: 'todos_aprobadores', label: 'Todos los aprobadores del flujo' },
 ];
 

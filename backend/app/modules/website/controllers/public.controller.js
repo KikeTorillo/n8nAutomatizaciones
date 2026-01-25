@@ -1,7 +1,13 @@
-const { WebsiteConfigModel, WebsitePaginasModel, WebsiteBloquesModel } = require('../models');
+const {
+    WebsiteConfigModel,
+    WebsitePaginasModel,
+    WebsiteBloquesModel,
+    WebsiteContactosModel,
+} = require('../models');
 const { ResponseHelper } = require('../../../utils/helpers');
 const { asyncHandler } = require('../../../middleware');
 const RLSContextManager = require('../../../utils/rlsContextManager');
+const NotificacionesService = require('../../notificaciones/services/notificaciones.service');
 
 /**
  * ====================================================================
@@ -133,12 +139,29 @@ class WebsitePublicController {
      * POST /api/v1/public/sitio/:slug/contacto
      *
      * @public Sin autenticación requerida
-     * @body {nombre, email, telefono, mensaje}
-     * @todo Implementar creación de lead/notificación
+     * @body {nombre, email, telefono, mensaje, pagina_origen}
+     * @returns Confirmación del mensaje recibido
      */
     static enviarContacto = asyncHandler(async (req, res) => {
         const { slug } = req.params;
-        const { nombre, email, telefono, mensaje } = req.body;
+        const { nombre, email, telefono, mensaje, pagina_origen } = req.body;
+
+        // Validación básica
+        if (!nombre || nombre.trim().length < 2) {
+            return ResponseHelper.error(
+                res,
+                'El nombre es requerido (mínimo 2 caracteres)',
+                400
+            );
+        }
+
+        if (!email && !telefono) {
+            return ResponseHelper.error(
+                res,
+                'Se requiere al menos un medio de contacto (email o teléfono)',
+                400
+            );
+        }
 
         // Verificar que el sitio existe
         const config = await WebsiteConfigModel.obtenerPorSlug(slug);
@@ -150,26 +173,59 @@ class WebsitePublicController {
             );
         }
 
-        // TODO: Implementar en Fase 4
-        // - Crear registro en tabla de leads/contactos
-        // - Enviar notificación al propietario (email, push, etc.)
-        // - Integrar con n8n para automatizaciones
+        // Obtener metadatos del request
+        const ip_origen = req.ip || req.headers['x-forwarded-for'] || req.connection?.remoteAddress;
+        const user_agent = req.headers['user-agent'];
 
-        // Por ahora, solo logueamos y confirmamos
-        console.log('[WebsitePublicController.enviarContacto] Contacto recibido', {
+        // Crear contacto en la base de datos
+        const contacto = await WebsiteContactosModel.crear({
+            website_id: config.id,
+            organizacion_id: config.organizacion_id,
+            nombre: nombre.trim(),
+            email: email?.trim() || null,
+            telefono: telefono?.trim() || null,
+            mensaje: mensaje?.trim() || null,
+            pagina_origen: pagina_origen || null,
+            ip_origen,
+            user_agent,
+        });
+
+        console.log('[WebsitePublicController.enviarContacto] Contacto guardado', {
+            contacto_id: contacto.id,
             sitio_slug: slug,
             organizacion_id: config.organizacion_id,
             nombre,
-            email,
-            telefono,
-            mensaje: mensaje?.substring(0, 100)
         });
+
+        // Enviar notificación al propietario
+        try {
+            await NotificacionesService.enviarNotificacion({
+                organizacionId: config.organizacion_id,
+                tipo: 'website_contacto',
+                titulo: `Nuevo contacto desde ${config.nombre_sitio || 'tu sitio web'}`,
+                mensaje: `${nombre} te ha enviado un mensaje${email ? ` (${email})` : ''}${telefono ? ` - Tel: ${telefono}` : ''}`,
+                datos: {
+                    contacto_id: contacto.id,
+                    nombre,
+                    email,
+                    telefono,
+                    mensaje: mensaje?.substring(0, 200),
+                },
+                // Enviar a admins de la organización
+                canales: ['app', 'email'],
+                destinatarios: 'admins',
+            });
+        } catch (notifError) {
+            // No fallar si la notificación falla
+            console.warn('[WebsitePublicController.enviarContacto] Error enviando notificación:', notifError.message);
+        }
 
         return ResponseHelper.success(
             res,
             {
                 recibido: true,
-                fecha: new Date().toISOString()
+                contacto_id: contacto.id,
+                fecha: contacto.creado_en,
             },
             'Mensaje enviado exitosamente. Te contactaremos pronto.'
         );

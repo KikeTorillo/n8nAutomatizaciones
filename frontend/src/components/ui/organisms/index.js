@@ -29,3 +29,7 @@ export { SmartButtons } from './SmartButtons';
 export { NavDropdown } from './NavDropdown';
 export { ThemeToggle } from './ThemeToggle';
 export { SearchFilterBar } from './SearchFilterBar';
+
+// Componentes estándar (Ene 2026) - Reducen código duplicado
+export { StandardRowActions } from './StandardRowActions';
+export { StandardFilterGrid } from './StandardFilterGrid';

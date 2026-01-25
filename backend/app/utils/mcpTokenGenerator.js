@@ -35,11 +35,12 @@ async function obtenerOCrearUsuarioBot(organizacionId) {
     try {
         // Usar RLSContextManager para ejecutar queries con RLS
         const result = await RLSContextManager.query(organizacionId, async (db) => {
-            // Intentar obtener usuario bot existente
+            // Intentar obtener usuario bot existente (Ene 2026: JOIN con tabla roles)
             const querySelect = `
-                SELECT id, email, rol
-                FROM usuarios
-                WHERE organizacion_id = $1 AND rol = 'bot'
+                SELECT u.id, u.email, r.codigo as rol
+                FROM usuarios u
+                JOIN roles r ON u.rol_id = r.id
+                WHERE u.organizacion_id = $1 AND r.codigo = 'bot'
                 LIMIT 1
             `;
 
@@ -51,8 +52,19 @@ async function obtenerOCrearUsuarioBot(organizacionId) {
                 return result.rows[0];
             }
 
-            // Si no existe, crearlo
+            // Si no existe, crearlo (Ene 2026: usar rol_id en lugar de columna rol)
             logger.info(`Creando usuario bot para organización ${organizacionId}...`);
+
+            const email = `mcp-bot@org${organizacionId}.internal`;
+
+            // Obtener rol_id del rol 'bot' de sistema
+            const rolBotQuery = await db.query(
+                `SELECT id FROM roles WHERE codigo = 'bot' AND es_rol_sistema = TRUE LIMIT 1`
+            );
+            const rolBotId = rolBotQuery.rows[0]?.id;
+            if (!rolBotId) {
+                throw new Error('Rol "bot" de sistema no encontrado en la base de datos');
+            }
 
             const queryInsert = `
                 INSERT INTO usuarios (
@@ -61,7 +73,7 @@ async function obtenerOCrearUsuarioBot(organizacionId) {
                     apellidos,
                     email,
                     password_hash,
-                    rol,
+                    rol_id,
                     activo
                 ) VALUES (
                     $1,
@@ -69,15 +81,13 @@ async function obtenerOCrearUsuarioBot(organizacionId) {
                     'Service Account',
                     $2,
                     'bot-service-account-no-password',
-                    'bot',
+                    $3,
                     true
                 )
-                RETURNING id, email, rol
+                RETURNING id, email, (SELECT codigo FROM roles WHERE id = rol_id) as rol
             `;
 
-            const email = `mcp-bot@org${organizacionId}.internal`;
-
-            result = await db.query(queryInsert, [organizacionId, email]);
+            result = await db.query(queryInsert, [organizacionId, email, rolBotId]);
 
             logger.info(`Usuario bot creado exitosamente: ${result.rows[0].id}`);
 

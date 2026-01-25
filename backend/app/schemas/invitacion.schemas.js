@@ -42,7 +42,7 @@ const invitacionSchemas = {
 
             // Dic 2025: Rol a asignar al usuario
             rol: Joi.string()
-                .valid('empleado', 'propietario', 'admin')
+                .valid('empleado', 'admin')
                 .default('empleado')
                 .optional()
                 .messages({

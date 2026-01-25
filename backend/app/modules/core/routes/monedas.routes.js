@@ -68,7 +68,7 @@ router.get('/tasas/historial',
 router.post('/tasas',
     auth.authenticateToken,
     tenant.setTenantContext,
-    auth.requireRole(['admin', 'propietario', 'super_admin']),
+    auth.requireRole(['admin', 'super_admin']),
     rateLimiting.apiRateLimit,
     MonedasController.guardarTasa
 );

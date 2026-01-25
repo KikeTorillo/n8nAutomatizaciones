@@ -1,8 +1,7 @@
-import { Building2, Phone, Mail, Globe, MapPin, Edit, Trash2 } from 'lucide-react';
+import { Building2, Phone, Mail, Globe, MapPin } from 'lucide-react';
 import {
   Badge,
-  DataTableActions,
-  DataTableActionButton,
+  StandardRowActions,
   ListadoCRUDPage
 } from '@/components/ui';
 import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
@@ -134,27 +133,6 @@ const INITIAL_FILTERS = {
   ciudad: '',
 };
 
-/**
- * Acciones por fila de proveedor
- */
-function ProveedorRowActions({ row, onEdit, onDelete }) {
-  return (
-    <DataTableActions>
-      <DataTableActionButton
-        icon={Edit}
-        label="Editar"
-        onClick={() => onEdit(row)}
-        variant="primary"
-      />
-      <DataTableActionButton
-        icon={Trash2}
-        label="Eliminar"
-        onClick={() => onDelete(row)}
-        variant="danger"
-      />
-    </DataTableActions>
-  );
-}
 
 /**
  * Mapper para transformar data del template a props del FormDrawer
@@ -190,7 +168,13 @@ function ProveedoresPage() {
       // Table
       columns={COLUMNS}
       rowActions={(row, handlers) => (
-        <ProveedorRowActions row={row} {...handlers} />
+        <StandardRowActions
+          row={row}
+          onEdit={() => handlers.onEdit(row)}
+          onDelete={() => handlers.onDelete(row)}
+          entityName="proveedor"
+          confirmDelete
+        />
       )}
       emptyState={{
         icon: Building2,

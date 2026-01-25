@@ -38,17 +38,17 @@ export const personasRoutes = [
   protectedRoute('clientes/etiquetas', EtiquetasPage, { requiredRole: ROLES.ALL_AUTHENTICATED }),
   protectedRoute('clientes/oportunidades', OportunidadesPage, { requiredRole: ROLES.ALL_AUTHENTICATED }),
 
-  // Profesionales (rutas específicas ANTES de rutas dinámicas :id)
-  protectedRoute('profesionales', ProfesionalesPage, { requiredRole: ROLES.ALL_AUTHENTICATED }),
-  protectedRoute('profesionales/nuevo', NuevoProfesionalWizard, { requiredRole: ROLES.ALL_AUTHENTICATED }),
-  protectedRoute('profesionales/organigrama', OrganigramaPage, { requiredRole: ROLES.ALL_AUTHENTICATED }),
+  // Profesionales (solo admin - FIX RBAC Ene 2026)
+  protectedRoute('profesionales', ProfesionalesPage, { requiredRole: ROLES.ADMIN_ONLY }),
+  protectedRoute('profesionales/nuevo', NuevoProfesionalWizard, { requiredRole: ROLES.ADMIN_ONLY }),
+  protectedRoute('profesionales/organigrama', OrganigramaPage, { requiredRole: ROLES.ADMIN_ONLY }),
   // Redirect: Incapacidades ahora está en /ausencias
   {
     path: 'profesionales/incapacidades',
     element: <Navigate to="/ausencias?tab=incapacidades" replace />,
   },
-  protectedRoute('profesionales/:id', ProfesionalDetailPage, { requiredRole: ROLES.ALL_AUTHENTICATED }),
-  protectedRoute('profesionales/:id/:tab', ProfesionalDetailPage, { requiredRole: ROLES.ALL_AUTHENTICATED }),
+  protectedRoute('profesionales/:id', ProfesionalDetailPage, { requiredRole: ROLES.ADMIN_ONLY }),
+  protectedRoute('profesionales/:id/:tab', ProfesionalDetailPage, { requiredRole: ROLES.ADMIN_ONLY }),
 
   // Ausencias (módulo unificado vacaciones + incapacidades)
   protectedRoute('ausencias', AusenciasPage, { requiredRole: ROLES.ALL_AUTHENTICATED }),

@@ -1,16 +1,17 @@
-import { useState, useEffect } from 'react';
-import { Save, Plus, Trash2, Star } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { Save, Plus, Trash2, Star, Sparkles } from 'lucide-react';
 import {
   Button,
   Input,
   Select,
   Textarea
 } from '@/components/ui';
+import { AIGenerateButton, AISuggestionBanner } from '../AIGenerator';
 
 /**
  * TestimoniosEditor - Editor del bloque Testimonios
  */
-function TestimoniosEditor({ contenido, onGuardar, tema, isSaving }) {
+function TestimoniosEditor({ contenido, onGuardar, tema, isSaving, industria = 'default' }) {
   const [form, setForm] = useState({
     titulo: contenido.titulo || 'Lo que dicen nuestros clientes',
     subtitulo: contenido.subtitulo || '',
@@ -21,6 +22,10 @@ function TestimoniosEditor({ contenido, onGuardar, tema, isSaving }) {
   });
 
   const [cambios, setCambios] = useState(false);
+
+  // Verificar si el contenido está esencialmente vacío
+  const testimoniosVacios = !contenido.testimonios || contenido.testimonios.length === 0 ||
+    (contenido.testimonios.length === 1 && !contenido.testimonios[0]?.texto);
 
   useEffect(() => {
     setCambios(JSON.stringify(form) !== JSON.stringify({
@@ -38,6 +43,21 @@ function TestimoniosEditor({ contenido, onGuardar, tema, isSaving }) {
     onGuardar(form);
     setCambios(false);
   };
+
+  // Callback para generación de IA de bloque completo
+  const handleAIGenerate = useCallback((generatedContent) => {
+    setForm(prev => ({
+      ...prev,
+      titulo: generatedContent.titulo || prev.titulo,
+      testimonios: generatedContent.items ? generatedContent.items.map(item => ({
+        texto: item.texto || '',
+        autor: item.autor || '',
+        cargo: item.cargo || '',
+        estrellas: 5,
+        foto: '',
+      })) : prev.testimonios,
+    }));
+  }, []);
 
   const handleAgregar = () => {
     setForm({
@@ -67,9 +87,29 @@ function TestimoniosEditor({ contenido, onGuardar, tema, isSaving }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {/* Banner de sugerencia IA para contenido vacío */}
+      {testimoniosVacios && (
+        <AISuggestionBanner
+          tipo="testimonios"
+          industria={industria}
+          onGenerate={handleAIGenerate}
+        />
+      )}
+
       <div className="grid grid-cols-2 gap-4">
         <Input
-          label="Título de sección"
+          label={
+            <span className="flex items-center gap-2">
+              Título de sección
+              <AIGenerateButton
+                tipo="testimonios"
+                campo="titulo"
+                industria={industria}
+                onGenerate={(text) => setForm({ ...form, titulo: text })}
+                size="sm"
+              />
+            </span>
+          }
           value={form.titulo}
           onChange={(e) => setForm({ ...form, titulo: e.target.value })}
           placeholder="Lo que dicen nuestros clientes"

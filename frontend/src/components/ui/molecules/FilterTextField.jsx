@@ -1,17 +1,12 @@
 import { memo, useId } from 'react';
 import { cn } from '@/lib/utils';
 import { Label } from '../atoms/Label';
-
-/**
- * Estilos compartidos para inputs de filtros
- */
-const FILTER_INPUT_STYLES = cn(
-  'w-full px-3 py-2 rounded-lg border transition-colors text-sm',
-  'bg-white dark:bg-gray-800',
-  'text-gray-900 dark:text-gray-100',
-  'border-gray-300 dark:border-gray-600',
-  'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500'
-);
+import {
+  FILTER_INPUT_STYLES,
+  FILTER_LABEL_STYLES,
+  FILTER_CONTAINER_STYLES,
+  FILTER_ICON_STYLES,
+} from '@/lib/uiConstants';
 
 /**
  * FilterTextField - Campo de texto unificado para paneles de filtros
@@ -36,13 +31,10 @@ const FilterTextField = memo(function FilterTextField({
   const inputId = id || generatedId;
 
   return (
-    <div className={cn('space-y-1', className)}>
+    <div className={cn(FILTER_CONTAINER_STYLES, className)}>
       {label && (
-        <Label
-          htmlFor={inputId}
-          className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300"
-        >
-          {Icon && <Icon className="h-4 w-4 text-gray-400" />}
+        <Label htmlFor={inputId} className={FILTER_LABEL_STYLES}>
+          {Icon && <Icon className={FILTER_ICON_STYLES} />}
           {label}
         </Label>
       )}

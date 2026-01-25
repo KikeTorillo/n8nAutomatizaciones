@@ -178,13 +178,9 @@ BEGIN
     -- Esto permite auditoría y configuración granular
 
     -- Admin de organización (bypass_permisos = FALSE, permisos explícitos)
+    -- El primer usuario de la organización será asignado a este rol
     INSERT INTO roles (codigo, nombre, descripcion, organizacion_id, nivel_jerarquia, bypass_permisos, color, icono, puede_crear_usuarios, puede_modificar_permisos)
     VALUES ('admin', 'Administrador', 'Acceso completo a la organización. Puede gestionar usuarios y configuraciones.', p_organizacion_id, 90, FALSE, '#F97316', 'user-cog', TRUE, TRUE)
-    ON CONFLICT (codigo, organizacion_id) DO NOTHING;
-
-    -- Propietario (bypass_permisos = FALSE, permisos explícitos)
-    INSERT INTO roles (codigo, nombre, descripcion, organizacion_id, nivel_jerarquia, bypass_permisos, color, icono, puede_crear_usuarios, puede_modificar_permisos)
-    VALUES ('propietario', 'Propietario', 'Dueño del negocio con permisos operativos completos.', p_organizacion_id, 80, FALSE, '#EAB308', 'crown', TRUE, TRUE)
     ON CONFLICT (codigo, organizacion_id) DO NOTHING;
 
     -- Empleado (default)
@@ -201,7 +197,7 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 COMMENT ON FUNCTION crear_roles_default_organizacion(INTEGER) IS
-'Crea los 4 roles por defecto (admin, propietario, empleado, cliente) para una nueva organización.
+'Crea los 3 roles por defecto (admin, empleado, cliente) para una nueva organización.
 SECURITY DEFINER permite bypass de RLS durante la creación.';
 
 

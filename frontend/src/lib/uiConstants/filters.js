@@ -9,6 +9,45 @@
  * ====================================================================
  */
 
+import { cn } from '@/lib/utils';
+
+// ============================================================
+// ESTILOS DE CAMPOS DE FILTRO (Filter*Field components)
+// ============================================================
+
+/**
+ * Estilos base para inputs de filtros (text, select, date)
+ */
+export const FILTER_INPUT_STYLES = cn(
+  'w-full px-3 py-2 rounded-lg border transition-colors text-sm',
+  'bg-white dark:bg-gray-800',
+  'text-gray-900 dark:text-gray-100',
+  'border-gray-300 dark:border-gray-600',
+  'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500'
+);
+
+/**
+ * Estilos para labels de campos de filtro
+ */
+export const FILTER_LABEL_STYLES = cn(
+  'flex items-center gap-1.5 text-sm font-medium',
+  'text-gray-700 dark:text-gray-300'
+);
+
+/**
+ * Estilos del contenedor de cada campo de filtro
+ */
+export const FILTER_CONTAINER_STYLES = 'space-y-1';
+
+/**
+ * Estilos de iconos en campos de filtro
+ */
+export const FILTER_ICON_STYLES = 'h-4 w-4 text-gray-400';
+
+// ============================================================
+// ESTILOS DE PANELES DE FILTRO
+// ============================================================
+
 /**
  * Estilos del contenedor del panel de filtros
  */

@@ -189,6 +189,89 @@ export const websiteApi = {
    */
   enviarContacto: (slug, data) =>
     publicApiClient.post(`/public/sitio/${slug}/contacto`, data),
+
+  // ========== Templates ==========
+
+  /**
+   * Listar templates disponibles
+   * @param {Object} filtros - { industria?, destacados? }
+   * @returns {Promise<Array>}
+   */
+  listarTemplates: (filtros = {}) =>
+    apiClient.get('/website/templates', { params: filtros }).then((res) => res.data?.data || res.data || []),
+
+  /**
+   * Listar industrias disponibles
+   * @returns {Promise<Array>}
+   */
+  listarIndustrias: () =>
+    apiClient.get('/website/templates/industrias').then((res) => res.data?.data || res.data || []),
+
+  /**
+   * Obtener template por ID
+   * @param {string} id - UUID
+   * @returns {Promise<Object>}
+   */
+  obtenerTemplate: (id) =>
+    apiClient.get(`/website/templates/${id}`).then((res) => res.data?.data || res.data),
+
+  /**
+   * Obtener estructura de un template
+   * @param {string} id - UUID
+   * @returns {Promise<Object>}
+   */
+  obtenerEstructuraTemplate: (id) =>
+    apiClient.get(`/website/templates/${id}/estructura`).then((res) => res.data?.data || res.data),
+
+  /**
+   * Aplicar template
+   * @param {string} id - UUID del template
+   * @param {Object} datos - { nombre_sitio?, slug?, descripcion? }
+   * @returns {Promise<Object>}
+   */
+  aplicarTemplate: (id, datos = {}) =>
+    apiClient.post(`/website/templates/${id}/aplicar`, datos).then((res) => res.data?.data || res.data),
+
+  /**
+   * Guardar sitio actual como template personalizado
+   * @param {Object} datos - { nombre, descripcion?, industria? }
+   * @returns {Promise<Object>}
+   */
+  guardarComoTemplate: (datos) =>
+    apiClient.post('/website/templates', datos).then((res) => res.data?.data || res.data),
+
+  /**
+   * Eliminar template personalizado
+   * @param {string} id - UUID
+   * @returns {Promise<Object>}
+   */
+  eliminarTemplate: (id) =>
+    apiClient.delete(`/website/templates/${id}`),
+
+  // ========== IA ==========
+
+  /**
+   * Verificar disponibilidad del servicio de IA
+   * @returns {Promise<Object>}
+   */
+  obtenerStatusIA: () =>
+    apiClient.get('/website/ai/status').then((res) => res.data?.data || res.data),
+
+  /**
+   * Generar contenido para un campo específico
+   * @param {Object} datos - { tipo, campo, industria?, contexto? }
+   * @returns {Promise<Object>}
+   */
+  generarContenidoIA: (datos) =>
+    apiClient.post('/website/ai/generar', datos).then((res) => res.data?.data || res.data),
+
+  /**
+   * Generar contenido completo para un bloque
+   * @param {Object} datos - { tipo, industria?, contexto? }
+   * @returns {Promise<Object>}
+   */
+  generarBloqueIA: (datos) =>
+    apiClient.post('/website/ai/generar-bloque', datos).then((res) => res.data?.data || res.data),
 };
 
 // ==================== CONTABILIDAD ====================

@@ -37,7 +37,7 @@ const usuarioSchema = z.object({
     .min(2, 'Mínimo 2 caracteres')
     .max(150, 'Máximo 150 caracteres'),
   apellidos: z.string().max(150, 'Máximo 150 caracteres').optional(),
-  rol: z.enum(['admin', 'propietario', 'empleado']),
+  rol: z.enum(['admin', 'empleado']),
 });
 
 // ====================================================================

@@ -1760,16 +1760,16 @@ class UsuarioModel {
                 await db.query(`SELECT crear_roles_default_organizacion($1)`, [organizacion.id]);
 
                 // 6. Actualizar usuario con organización y rol_id
-                // Obtener rol_id del rol 'propietario' de la nueva organización
-                // El usuario que crea la org es el dueño/propietario (nivel 80, bypass_permisos=true)
+                // Obtener rol_id del rol 'admin' de la nueva organización
+                // El usuario que crea la org es el administrador (nivel 90)
                 const rolResult = await db.query(
-                    `SELECT id FROM roles WHERE codigo = 'propietario' AND organizacion_id = $1 LIMIT 1`,
+                    `SELECT id FROM roles WHERE codigo = 'admin' AND organizacion_id = $1 LIMIT 1`,
                     [organizacion.id]
                 );
                 const rolId = rolResult.rows[0]?.id || null;
 
                 if (!rolId) {
-                    logger.error('[completarOnboarding] CRÍTICO: No se encontró rol propietario para org', {
+                    logger.error('[completarOnboarding] CRÍTICO: No se encontró rol admin para org', {
                         organizacion_id: organizacion.id
                     });
                 }

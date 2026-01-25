@@ -1,10 +1,9 @@
 // Roles
 export const ROLES = {
   SUPER_ADMIN: 'super_admin',
-  PROPIETARIO: 'propietario',
   ADMIN: 'admin',
-  USUARIO: 'usuario',
-  SOLO_LECTURA: 'solo_lectura',
+  EMPLEADO: 'empleado',
+  CLIENTE: 'cliente',
 };
 
 // Estados de Citas

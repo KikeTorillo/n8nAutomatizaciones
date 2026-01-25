@@ -253,7 +253,7 @@ const commonSchemas = {
   hexColor: Joi.string().pattern(/^#[0-9A-Fa-f]{6}$/),
 
   // Roles del sistema
-  userRole: Joi.string().valid('super_admin', 'admin', 'propietario', 'empleado', 'cliente'),
+  userRole: Joi.string().valid('super_admin', 'admin', 'empleado', 'cliente'),
 
   // Planes de suscripción (Ene 2026: planes dinámicos en BD, solo trial/pro por defecto)
   plan: Joi.string().valid('trial', 'pro'),

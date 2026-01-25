@@ -53,7 +53,7 @@ router.get('/verificar/:modulo',
 router.put('/activar',
   authenticateToken,
   setTenantContext,
-  requireRole(['super_admin', 'propietario', 'admin']),
+  requireRole(['super_admin', 'admin']),
   validate(modulosSchemas.cambiarEstadoModulo),
   asyncHandler(ModulosController.activarModulo)
 );
@@ -66,7 +66,7 @@ router.put('/activar',
 router.put('/desactivar',
   authenticateToken,
   setTenantContext,
-  requireRole(['super_admin', 'propietario', 'admin']),
+  requireRole(['super_admin', 'admin']),
   validate(modulosSchemas.cambiarEstadoModulo),
   asyncHandler(ModulosController.desactivarModulo)
 );

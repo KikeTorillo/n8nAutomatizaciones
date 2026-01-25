@@ -38,22 +38,43 @@ const Textarea = memo(forwardRef(function Textarea(
       hasHelper = false,
       className,
       id,
+      label,
       ...props
     },
     ref
   ) {
-    return (
+    // Generar ID único si hay label pero no ID
+    const textareaId = id || (label ? `textarea-${Math.random().toString(36).substr(2, 9)}` : undefined);
+
+    const textareaElement = (
       <textarea
         ref={ref}
-        id={id}
+        id={textareaId}
         rows={rows}
         aria-invalid={hasError || undefined}
         aria-required={required || undefined}
-        aria-describedby={id ? getAriaDescribedBy(id, { hasError, hasHelper }) : undefined}
+        aria-describedby={textareaId ? getAriaDescribedBy(textareaId, { hasError, hasHelper }) : undefined}
         className={cn(getTextareaStyles(hasError), className)}
         {...props}
       />
     );
+
+    // Si hay label, envolver con label
+    if (label) {
+      return (
+        <div className="space-y-1">
+          <label
+            htmlFor={textareaId}
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            {label}
+          </label>
+          {textareaElement}
+        </div>
+      );
+    }
+
+    return textareaElement;
   }
 ));
 
@@ -78,6 +99,8 @@ Textarea.propTypes = {
   onChange: PropTypes.func,
   /** Valor actual */
   value: PropTypes.string,
+  /** Label del campo (texto o ReactNode para botones de IA) */
+  label: PropTypes.node,
 };
 
 export { Textarea };

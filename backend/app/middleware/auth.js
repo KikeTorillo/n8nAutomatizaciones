@@ -550,15 +550,17 @@ const requireManager = () => requireMinLevel(50);
 
 /**
  * Middleware para requerir rol de administrador
- * FASE 7 COMPLETADA: Usa bypass_permisos o nivel_jerarquia >= 80
+ * Ene 2026: Usa bypass_permisos o RolHelper.esRolAdministrativo()
  */
 const requireAdminRole = (req, res, next) => {
+    const { RolHelper } = require('../utils/helpers');
+
     if (!req.user) {
         return ResponseHelper.error(res, 'Autenticación requerida', 401);
     }
 
-    // Verificar bypass_permisos o nivel jerárquico >= 80 (admin/propietario)
-    const tieneAcceso = req.user.bypass_permisos || (req.user.nivel_jerarquia >= 80);
+    // Verificar bypass_permisos o rol administrativo (nivel >= 90 o codigo admin/super_admin)
+    const tieneAcceso = req.user.bypass_permisos || RolHelper.esRolAdministrativo(req.user);
 
     if (!tieneAcceso) {
         logger.warn('Intento de acceso con rol insuficiente', {

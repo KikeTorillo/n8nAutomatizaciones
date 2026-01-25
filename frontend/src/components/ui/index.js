@@ -87,11 +87,27 @@ export { FilterChip } from './molecules/FilterChip';
 export { FilterSelectField } from './molecules/FilterSelectField';
 export { FilterDateField } from './molecules/FilterDateField';
 export { FilterTextField } from './molecules/FilterTextField';
+export { FilterField } from './molecules/FilterField';
+
+// Headers extraídos (Ene 2026)
+export { ModalHeader } from './molecules/ModalHeader';
+export { DrawerHeader } from './molecules/DrawerHeader';
+
+// Permisos granulares (Ene 2026) - FIX RBAC
+export { ConPermiso } from './molecules/ConPermiso';
+
+// Componentes estándar (Ene 2026)
+export { StandardRowActions } from './organisms/StandardRowActions';
+export { StandardFilterGrid } from './organisms/StandardFilterGrid';
 
 // ========== TEMPLATES ==========
 export { BasePageLayout } from './templates/BasePageLayout';
 export { ModuleGuard, ModuleVisible, ModuleHidden } from './templates/ModuleGuard';
 export { ListadoCRUDPage } from './templates/ListadoCRUDPage';
+
+// Nuevos templates (Ene 2026)
+export { BaseDetailLayout, DetailHeader, DetailLoadingState, DetailNotFoundState } from './templates/BaseDetailLayout';
+export { BaseFormLayout, FormHeader, FormWizardStepper, FormFooter } from './templates/BaseFormLayout';
 
 // ========== EXTERNOS ==========
 export { default as ChunkErrorBoundary } from '../common/ChunkErrorBoundary';

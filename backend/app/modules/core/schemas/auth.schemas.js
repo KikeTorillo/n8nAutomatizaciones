@@ -64,7 +64,7 @@ const register = {
         apellidos: personSchemas.apellidos.optional(),
         telefono: personSchemas.telefono.optional(),
         rol: Joi.string()
-            .valid('super_admin', 'admin', 'propietario', 'empleado', 'cliente')
+            .valid('super_admin', 'admin', 'empleado', 'cliente')
             .optional()
             .default('empleado'),
         organizacion_id: Joi.when('rol', {
@@ -156,11 +156,11 @@ const registrarUsuarioOrg = {
                 'any.required': 'organizacion_id es requerido'
             }),
         rol: Joi.string()
-            .valid('admin', 'propietario', 'empleado', 'cliente')
+            .valid('admin', 'empleado', 'cliente')
             .required()
             .messages({
                 'any.required': 'rol es requerido',
-                'any.only': 'Rol debe ser: admin, propietario, empleado o cliente'
+                'any.only': 'Rol debe ser: admin, empleado o cliente'
             }),
         usuario_data: Joi.object({
             email: commonSchemas.emailRequired,
@@ -193,11 +193,11 @@ const cambiarRol = {
                 'any.required': 'usuario_id es requerido'
             }),
         nuevo_rol: Joi.string()
-            .valid('admin', 'propietario', 'empleado', 'cliente')
+            .valid('admin', 'empleado', 'cliente')
             .required()
             .messages({
                 'any.required': 'nuevo_rol es requerido',
-                'any.only': 'Rol debe ser: admin, propietario, empleado o cliente'
+                'any.only': 'Rol debe ser: admin, empleado o cliente'
             }),
         organizacion_id: commonSchemas.id.optional()
     })
@@ -206,7 +206,7 @@ const cambiarRol = {
 const listarUsuariosOrg = {
     query: Joi.object({
         rol: Joi.string()
-            .valid('admin', 'propietario', 'empleado', 'cliente')
+            .valid('admin', 'empleado', 'cliente')
             .optional(),
         activo: Joi.string()
             .valid('true', 'false')

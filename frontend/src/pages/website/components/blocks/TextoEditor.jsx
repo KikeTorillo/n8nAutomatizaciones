@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Save, Bold, Italic, List, AlignLeft, AlignCenter, AlignRight } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { Save, Bold, Italic, List, AlignLeft, AlignCenter, AlignRight, Sparkles } from 'lucide-react';
 import {
   Button,
   Input,
@@ -7,11 +7,12 @@ import {
   Textarea
 } from '@/components/ui';
 import { sanitizeHTML } from '@/lib/sanitize';
+import { AIGenerateButton, AISuggestionBanner } from '../AIGenerator';
 
 /**
  * TextoEditor - Editor del bloque de texto enriquecido
  */
-function TextoEditor({ contenido, onGuardar, tema, isSaving }) {
+function TextoEditor({ contenido, onGuardar, tema, isSaving, industria = 'default' }) {
   const [form, setForm] = useState({
     titulo: contenido.titulo || '',
     html: contenido.html || '',
@@ -21,6 +22,9 @@ function TextoEditor({ contenido, onGuardar, tema, isSaving }) {
   });
 
   const [cambios, setCambios] = useState(false);
+
+  // Verificar si el contenido está esencialmente vacío
+  const contenidoVacio = !contenido.html || contenido.html.trim() === '';
 
   useEffect(() => {
     setCambios(JSON.stringify(form) !== JSON.stringify({
@@ -37,6 +41,17 @@ function TextoEditor({ contenido, onGuardar, tema, isSaving }) {
     onGuardar(form);
     setCambios(false);
   };
+
+  // Callback para generación de IA de contenido de texto
+  const handleAIGenerate = useCallback((generatedContent) => {
+    const content = generatedContent.contenido || generatedContent;
+    // Envolver en párrafos si no tiene HTML
+    const htmlContent = content.includes('<') ? content : `<p>${content}</p>`;
+    setForm(prev => ({
+      ...prev,
+      html: htmlContent,
+    }));
+  }, []);
 
   const insertTag = (openTag, closeTag) => {
     const textarea = document.getElementById('texto-html');
@@ -63,6 +78,15 @@ function TextoEditor({ contenido, onGuardar, tema, isSaving }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {/* Banner de sugerencia IA para contenido vacío */}
+      {contenidoVacio && (
+        <AISuggestionBanner
+          tipo="texto"
+          industria={industria}
+          onGenerate={handleAIGenerate}
+        />
+      )}
+
       <Input
         label="Título (opcional)"
         value={form.titulo}
@@ -140,7 +164,19 @@ function TextoEditor({ contenido, onGuardar, tema, isSaving }) {
       <div>
         <Textarea
           id="texto-html"
-          label="Contenido (HTML)"
+          label={
+            <span className="flex items-center gap-2">
+              Contenido (HTML)
+              <AIGenerateButton
+                tipo="texto"
+                campo="contenido"
+                industria={industria}
+                contexto={{ tema: 'información general del negocio' }}
+                onGenerate={(text) => setForm({ ...form, html: text.includes('<') ? text : `<p>${text}</p>` })}
+                size="sm"
+              />
+            </span>
+          }
           value={form.html}
           onChange={(e) => setForm({ ...form, html: e.target.value })}
           placeholder="<p>Escribe tu contenido aquí...</p>"

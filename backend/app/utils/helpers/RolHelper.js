@@ -7,7 +7,7 @@
  *
  * USO:
  * - Verificar super_admin: RolHelper.esSuperAdmin(req.user) o req.user.rol_codigo === 'super_admin'
- * - Verificar admin/propietario: RolHelper.tieneBypassPermisos(req.user) o req.user.nivel_jerarquia >= 80
+ * - Verificar admin: RolHelper.esRolAdministrativo(req.user) o req.user.nivel_jerarquia >= 90
  * - Verificar rol específico: RolHelper.tieneRol(req.user, 'empleado')
  */
 
@@ -27,7 +27,6 @@ const ROLES_SISTEMA = {
  */
 const ROLES_DEFAULT = {
   ADMIN: 'admin',
-  PROPIETARIO: 'propietario',
   EMPLEADO: 'empleado',
   CLIENTE: 'cliente'
 };
@@ -38,7 +37,6 @@ const ROLES_DEFAULT = {
 const NIVELES = {
   SUPER_ADMIN: 100,
   ADMIN: 90,
-  PROPIETARIO: 80,
   EMPLEADO_SENIOR: 50,
   EMPLEADO: 10,
   CLIENTE: 5,
@@ -109,14 +107,8 @@ async function obtenerInfoRol(userId) {
  */
 function esSuperAdmin(user) {
   if (!user) return false;
-
-  // Verificar por rol_codigo
-  if (user.rol_codigo === ROLES_SISTEMA.SUPER_ADMIN) return true;
-
-  // Verificar por nivel jerárquico
-  if (user.nivel_jerarquia >= NIVELES.SUPER_ADMIN) return true;
-
-  return false;
+  // Solo verificar por rol_codigo (Ene 2026: eliminado bypass por nivel)
+  return user.rol_codigo === ROLES_SISTEMA.SUPER_ADMIN;
 }
 
 /**
@@ -140,24 +132,19 @@ function esRolSistema(user) {
 }
 
 /**
- * Verifica si el usuario tiene bypass de permisos (admin/propietario)
+ * Verifica si el usuario tiene bypass de permisos
+ * Ene 2026: Solo la propiedad bypass_permisos otorga bypass (asignada solo a super_admin)
  * @param {Object} user - Objeto user de req.user
  * @returns {boolean}
  */
 function tieneBypassPermisos(user) {
   if (!user) return false;
-
-  // Verificar propiedad directa (nuevo sistema)
-  if (user.bypass_permisos === true) return true;
-
-  // Fallback: verificar por nivel jerárquico (admin/propietario = nivel >= 80)
-  if (user.nivel_jerarquia >= NIVELES.PROPIETARIO) return true;
-
-  return false;
+  // Solo verificar propiedad directa (Ene 2026: eliminado fallback por nivel)
+  return user.bypass_permisos === true;
 }
 
 /**
- * Verifica si el usuario tiene rol administrativo (nivel >= 80)
+ * Verifica si el usuario tiene rol administrativo (nivel >= 90)
  * @param {Object} user - Objeto user de req.user
  * @returns {boolean}
  */
@@ -165,13 +152,12 @@ function esRolAdministrativo(user) {
   if (!user) return false;
 
   // Verificar por nivel jerárquico
-  if (user.nivel_jerarquia >= NIVELES.PROPIETARIO) return true;
+  if (user.nivel_jerarquia >= NIVELES.ADMIN) return true;
 
   // Verificar por rol_codigo
   const rolesAdmin = [
     ROLES_SISTEMA.SUPER_ADMIN,
-    ROLES_DEFAULT.ADMIN,
-    ROLES_DEFAULT.PROPIETARIO
+    ROLES_DEFAULT.ADMIN
   ];
   return rolesAdmin.includes(user.rol_codigo);
 }
@@ -193,17 +179,14 @@ function puedeCrearUsuarios(user) {
 
 /**
  * Verifica si el usuario puede modificar permisos
+ * Ene 2026: Solo usa la propiedad directa, sin fallback
  * @param {Object} user - Objeto user de req.user
  * @returns {boolean}
  */
 function puedeModificarPermisos(user) {
   if (!user) return false;
-
-  // Verificar propiedad directa (nuevo sistema)
-  if (user.puede_modificar_permisos === true) return true;
-
-  // Fallback: roles administrativos pueden modificar permisos
-  return esRolAdministrativo(user);
+  // Solo verificar propiedad directa (Ene 2026: eliminado fallback)
+  return user.puede_modificar_permisos === true;
 }
 
 /**
@@ -231,7 +214,6 @@ function getNivelPorRol(rolCodigo) {
   const nivelesPorRol = {
     [ROLES_SISTEMA.SUPER_ADMIN]: NIVELES.SUPER_ADMIN,
     [ROLES_DEFAULT.ADMIN]: NIVELES.ADMIN,
-    [ROLES_DEFAULT.PROPIETARIO]: NIVELES.PROPIETARIO,
     [ROLES_DEFAULT.EMPLEADO]: NIVELES.EMPLEADO,
     [ROLES_DEFAULT.CLIENTE]: NIVELES.CLIENTE,
     [ROLES_SISTEMA.BOT]: NIVELES.BOT

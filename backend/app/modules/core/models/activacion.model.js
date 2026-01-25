@@ -383,18 +383,18 @@ class ActivacionModel {
             const tieneOrganizacion = !!activacion.organizacion_id;
 
             // FASE 7: Obtener rol_id
-            // - Con org: usuario es propietario de esa org
+            // - Con org: usuario es admin de esa org
             // - Sin org (flujo unificado): rol 'pendiente' hasta completar onboarding
             let rolId = null;
             if (tieneOrganizacion) {
                 const rolResult = await db.query(
-                    `SELECT id FROM roles WHERE codigo = 'propietario' AND organizacion_id = $1 LIMIT 1`,
+                    `SELECT id FROM roles WHERE codigo = 'admin' AND organizacion_id = $1 LIMIT 1`,
                     [activacion.organizacion_id]
                 );
                 rolId = rolResult.rows[0]?.id || null;
 
                 if (!rolId) {
-                    logger.warn('[ActivacionModel.activar] No se encontró rol propietario para org', {
+                    logger.warn('[ActivacionModel.activar] No se encontró rol admin para org', {
                         organizacion_id: activacion.organizacion_id
                     });
                 }

@@ -481,13 +481,14 @@ class WorkflowEngine {
                         fallback_rol: fallbackRol
                     });
 
-                    // Obtener usuarios con el rol de fallback
+                    // Obtener usuarios con el rol de fallback (Ene 2026: JOIN con tabla roles)
                     const fallbackQuery = await db.query(
-                        `SELECT id as usuario_id, COALESCE(nombre, email) as nombre, email, FALSE as es_delegado
-                         FROM usuarios
-                         WHERE organizacion_id = $1
-                           AND activo = true
-                           AND rol = $2`,
+                        `SELECT u.id as usuario_id, COALESCE(u.nombre, u.email) as nombre, u.email, FALSE as es_delegado
+                         FROM usuarios u
+                         JOIN roles r ON u.rol_id = r.id
+                         WHERE u.organizacion_id = $1
+                           AND u.activo = true
+                           AND r.codigo = $2`,
                         [organizacionId, fallbackRol]
                     );
                     aprobadores = fallbackQuery.rows;

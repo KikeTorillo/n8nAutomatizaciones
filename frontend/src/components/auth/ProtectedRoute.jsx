@@ -8,8 +8,7 @@ import useAuthStore, { selectIsAuthenticated, selectUser } from '@/store/authSto
  */
 const NIVEL_MINIMO_POR_ROL = {
   super_admin: 100,  // Solo super_admin
-  admin: 80,         // Admin o superior
-  propietario: 80,   // Propietario o superior
+  admin: 90,         // Admin o superior
   gerente: 50,       // Gerente o superior
   empleado: 10,      // Empleado o superior
   bot: 5,            // Cualquiera

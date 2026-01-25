@@ -39,7 +39,7 @@ const SupervisorSelect = forwardRef(
       if (departamentoId) p.departamento_id = departamentoId;
       // Solo profesionales con usuario vinculado y rol que permite supervisar
       p.con_usuario = true;
-      p.rol_usuario = ['admin', 'propietario'];
+      p.rol_usuario = ['admin'];
       return p;
     }, [soloActivos, departamentoId]);
 

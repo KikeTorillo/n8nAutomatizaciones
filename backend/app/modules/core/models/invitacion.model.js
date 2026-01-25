@@ -43,7 +43,7 @@ class InvitacionModel {
         } = data;
 
         // Validar rol permitido
-        const rolesPermitidos = ['empleado', 'propietario', 'admin'];
+        const rolesPermitidos = ['empleado', 'admin'];
         if (!rolesPermitidos.includes(rol)) {
             ErrorHelper.throwValidation(`Rol inválido: ${rol}. Roles permitidos: ${rolesPermitidos.join(', ')}`);
         }
@@ -141,7 +141,7 @@ class InvitacionModel {
         } = data;
 
         // Validar rol permitido
-        const rolesPermitidos = ['empleado', 'propietario', 'admin'];
+        const rolesPermitidos = ['empleado', 'admin'];
         if (!rolesPermitidos.includes(rol)) {
             ErrorHelper.throwValidation(`Rol inválido: ${rol}. Roles permitidos: ${rolesPermitidos.join(', ')}`);
         }

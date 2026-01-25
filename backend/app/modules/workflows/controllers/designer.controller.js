@@ -238,7 +238,6 @@ class DesignerController {
      */
     static listarRoles = asyncHandler(async (req, res) => {
         const roles = [
-            { codigo: 'propietario', nombre: 'Propietario', descripcion: 'Dueño de la organización' },
             { codigo: 'admin', nombre: 'Administrador', descripcion: 'Administrador con acceso completo' },
             { codigo: 'empleado', nombre: 'Empleado', descripcion: 'Usuario estándar' }
         ];

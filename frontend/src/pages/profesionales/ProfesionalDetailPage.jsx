@@ -2,7 +2,6 @@ import { lazy, Suspense } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   User,
-  ArrowLeft,
   Briefcase,
   Heart,
   GraduationCap,
@@ -13,7 +12,12 @@ import {
   UserCircle,
   Shield,
 } from 'lucide-react';
-import { Button, LoadingSpinner, StateNavTabs } from '@/components/ui';
+import {
+  LoadingSpinner,
+  StateNavTabs,
+  DetailLoadingState,
+  DetailNotFoundState,
+} from '@/components/ui';
 import ProfesionalHeader from '@/components/profesionales/ProfesionalHeader';
 import ProfesionalProgressBar from '@/components/profesionales/ProfesionalProgressBar';
 import { useProfesional } from '@/hooks/personas';
@@ -81,7 +85,7 @@ function ProfesionalDetailPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <LoadingSpinner />
+        <DetailLoadingState />
       </div>
     );
   }
@@ -89,18 +93,15 @@ function ProfesionalDetailPage() {
   // Error o no encontrado
   if (error || !profesional) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col items-center justify-center">
-        <User className="w-16 h-16 text-gray-400 dark:text-gray-600 mb-4" />
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
-          Profesional no encontrado
-        </h2>
-        <p className="text-gray-600 dark:text-gray-400 mb-6">
-          El profesional que buscas no existe o fue eliminado
-        </p>
-        <Button onClick={() => navigate('/profesionales')}>
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Volver a Profesionales
-        </Button>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <DetailNotFoundState
+          config={{
+            title: 'Profesional no encontrado',
+            description: 'El profesional que buscas no existe o fue eliminado',
+            backTo: '/profesionales',
+            backLabel: 'Volver a Profesionales',
+          }}
+        />
       </div>
     );
   }

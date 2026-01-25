@@ -117,6 +117,12 @@ export {
 
 // Filters (Ene 2026)
 export {
+  // Estilos de campos de filtro
+  FILTER_INPUT_STYLES,
+  FILTER_LABEL_STYLES,
+  FILTER_CONTAINER_STYLES,
+  FILTER_ICON_STYLES,
+  // Estilos de paneles de filtro
   FILTER_PANEL_CONTAINER,
   FILTER_PANEL_HEADER,
   FILTER_PANEL_CONTENT,

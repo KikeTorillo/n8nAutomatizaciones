@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Save, Image } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { Save, Image, Sparkles } from 'lucide-react';
 import {
   Button,
   Checkbox,
@@ -7,11 +7,12 @@ import {
   Select,
   Textarea
 } from '@/components/ui';
+import { AIGenerateButton, AISuggestionBanner } from '../AIGenerator';
 
 /**
  * HeroEditor - Editor del bloque Hero
  */
-function HeroEditor({ contenido, onGuardar, tema, isSaving }) {
+function HeroEditor({ contenido, onGuardar, tema, isSaving, industria = 'default' }) {
   const [form, setForm] = useState({
     titulo: contenido.titulo || '',
     subtitulo: contenido.subtitulo || '',
@@ -23,6 +24,9 @@ function HeroEditor({ contenido, onGuardar, tema, isSaving }) {
   });
 
   const [cambios, setCambios] = useState(false);
+
+  // Verificar si el contenido está esencialmente vacío
+  const contenidoVacio = !contenido.titulo && !contenido.subtitulo;
 
   useEffect(() => {
     setCambios(JSON.stringify(form) !== JSON.stringify({
@@ -42,6 +46,16 @@ function HeroEditor({ contenido, onGuardar, tema, isSaving }) {
     setCambios(false);
   };
 
+  // Callback para generación de IA de bloque completo
+  const handleAIGenerate = useCallback((generatedContent) => {
+    setForm(prev => ({
+      ...prev,
+      titulo: generatedContent.titulo || prev.titulo,
+      subtitulo: generatedContent.subtitulo || prev.subtitulo,
+      cta_texto: generatedContent.boton_texto || generatedContent.boton || prev.cta_texto,
+    }));
+  }, []);
+
   const alineacionOptions = [
     { value: 'left', label: 'Izquierda' },
     { value: 'center', label: 'Centro' },
@@ -50,26 +64,75 @@ function HeroEditor({ contenido, onGuardar, tema, isSaving }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <Input
-        label="Título principal"
-        value={form.titulo}
-        onChange={(e) => setForm({ ...form, titulo: e.target.value })}
-        placeholder="Bienvenido a nuestro negocio"
-        className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
-      />
+      {/* Banner de sugerencia IA para contenido vacío */}
+      {contenidoVacio && (
+        <AISuggestionBanner
+          tipo="hero"
+          industria={industria}
+          onGenerate={handleAIGenerate}
+        />
+      )}
 
-      <Textarea
-        label="Subtítulo"
-        value={form.subtitulo}
-        onChange={(e) => setForm({ ...form, subtitulo: e.target.value })}
-        placeholder="Una descripción breve de lo que hacemos"
-        rows={2}
-        className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
-      />
+      {/* Título con botón IA */}
+      <div className="relative">
+        <Input
+          label={
+            <span className="flex items-center gap-2">
+              Título principal
+              <AIGenerateButton
+                tipo="hero"
+                campo="titulo"
+                industria={industria}
+                onGenerate={(text) => setForm({ ...form, titulo: text })}
+                size="sm"
+              />
+            </span>
+          }
+          value={form.titulo}
+          onChange={(e) => setForm({ ...form, titulo: e.target.value })}
+          placeholder="Bienvenido a nuestro negocio"
+          className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
+        />
+      </div>
+
+      {/* Subtítulo con botón IA */}
+      <div className="relative">
+        <Textarea
+          label={
+            <span className="flex items-center gap-2">
+              Subtítulo
+              <AIGenerateButton
+                tipo="hero"
+                campo="subtitulo"
+                industria={industria}
+                contexto={{ titulo: form.titulo }}
+                onGenerate={(text) => setForm({ ...form, subtitulo: text })}
+                size="sm"
+              />
+            </span>
+          }
+          value={form.subtitulo}
+          onChange={(e) => setForm({ ...form, subtitulo: e.target.value })}
+          placeholder="Una descripción breve de lo que hacemos"
+          rows={2}
+          className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
+        />
+      </div>
 
       <div className="grid grid-cols-2 gap-4">
         <Input
-          label="Texto del botón"
+          label={
+            <span className="flex items-center gap-2">
+              Texto del botón
+              <AIGenerateButton
+                tipo="hero"
+                campo="boton"
+                industria={industria}
+                onGenerate={(text) => setForm({ ...form, cta_texto: text })}
+                size="sm"
+              />
+            </span>
+          }
           value={form.cta_texto}
           onChange={(e) => setForm({ ...form, cta_texto: e.target.value })}
           placeholder="Contactar"

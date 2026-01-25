@@ -905,7 +905,7 @@ class ProfesionalModel {
                 WHERE u.organizacion_id = $1
                     AND u.activo = TRUE
                     AND p.id IS NULL
-                    AND rol.codigo IN ('empleado', 'admin', 'propietario', 'gerente')
+                    AND rol.codigo IN ('empleado', 'admin', 'gerente')
                 ORDER BY u.nombre ASC
             `;
 

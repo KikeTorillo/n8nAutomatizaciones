@@ -1,11 +1,12 @@
-import { useState, useEffect } from 'react';
-import { Save, MapPin, Phone, Mail, Clock } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { Save, MapPin, Phone, Mail, Clock, Sparkles } from 'lucide-react';
 import { Button, CheckboxField, Input } from '@/components/ui';
+import { AIGenerateButton, AISuggestionBanner } from '../AIGenerator';
 
 /**
  * ContactoEditor - Editor del bloque Contacto
  */
-function ContactoEditor({ contenido, onGuardar, tema, isSaving }) {
+function ContactoEditor({ contenido, onGuardar, tema, isSaving, industria = 'default' }) {
   const [form, setForm] = useState({
     titulo: contenido.titulo || 'Contáctanos',
     subtitulo: contenido.subtitulo || '',
@@ -20,6 +21,9 @@ function ContactoEditor({ contenido, onGuardar, tema, isSaving }) {
   });
 
   const [cambios, setCambios] = useState(false);
+
+  // Verificar si el contenido está esencialmente vacío
+  const contenidoVacio = contenido.titulo === 'Contáctanos' || !contenido.titulo;
 
   useEffect(() => {
     setCambios(JSON.stringify(form) !== JSON.stringify({
@@ -42,6 +46,15 @@ function ContactoEditor({ contenido, onGuardar, tema, isSaving }) {
     setCambios(false);
   };
 
+  // Callback para generación de IA de bloque completo
+  const handleAIGenerate = useCallback((generatedContent) => {
+    setForm(prev => ({
+      ...prev,
+      titulo: generatedContent.titulo || prev.titulo,
+      subtitulo: generatedContent.subtitulo || prev.subtitulo,
+    }));
+  }, []);
+
   const camposDisponibles = [
     { id: 'nombre', label: 'Nombre' },
     { id: 'email', label: 'Email' },
@@ -63,16 +76,47 @@ function ContactoEditor({ contenido, onGuardar, tema, isSaving }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {/* Banner de sugerencia IA para contenido vacío */}
+      {contenidoVacio && (
+        <AISuggestionBanner
+          tipo="contacto"
+          industria={industria}
+          onGenerate={handleAIGenerate}
+        />
+      )}
+
       <div className="grid grid-cols-2 gap-4">
         <Input
-          label="Título"
+          label={
+            <span className="flex items-center gap-2">
+              Título
+              <AIGenerateButton
+                tipo="contacto"
+                campo="titulo"
+                industria={industria}
+                onGenerate={(text) => setForm({ ...form, titulo: text })}
+                size="sm"
+              />
+            </span>
+          }
           value={form.titulo}
           onChange={(e) => setForm({ ...form, titulo: e.target.value })}
           placeholder="Contáctanos"
           className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
         <Input
-          label="Subtítulo"
+          label={
+            <span className="flex items-center gap-2">
+              Subtítulo
+              <AIGenerateButton
+                tipo="contacto"
+                campo="subtitulo"
+                industria={industria}
+                onGenerate={(text) => setForm({ ...form, subtitulo: text })}
+                size="sm"
+              />
+            </span>
+          }
           value={form.subtitulo}
           onChange={(e) => setForm({ ...form, subtitulo: e.target.value })}
           placeholder="Estamos aquí para ayudarte"

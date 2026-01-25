@@ -15,7 +15,7 @@ const FORMAS_PAGO = ['comision', 'salario', 'mixto'];
  * Roles que pueden supervisar - Dic 2025
  * La capacidad de supervisar se determina por el ROL del usuario vinculado
  */
-const ROLES_SUPERVISORES = ['admin', 'propietario'];
+const ROLES_SUPERVISORES = ['admin'];
 
 /**
  * Estados laborales - Dic 2025

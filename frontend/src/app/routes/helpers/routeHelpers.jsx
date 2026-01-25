@@ -104,8 +104,8 @@ export const indexRoute = (Component, options = null) => ({
  * Constantes de roles comunes para reutilizar
  */
 export const ROLES = {
-  ADMIN_ONLY: ['admin', 'propietario'],
-  TEAM: ['admin', 'propietario', 'empleado'],
+  ADMIN_ONLY: ['admin'],
+  TEAM: ['admin', 'empleado'],
   SUPER_ADMIN: ['super_admin'],
   ALL_AUTHENTICATED: undefined, // Sin restricción de rol, solo autenticado
 };

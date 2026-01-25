@@ -9,6 +9,7 @@ import usePermisosStore, {
   selectSetMultiplesPermisos,
   selectInvalidarCache,
 } from '@/store/permisosStore';
+import useSucursalStore, { selectSucursalActiva } from '@/store/sucursalStore';
 
 /**
  * Hook para validar acceso a módulos y obtener profesional vinculado
@@ -136,7 +137,9 @@ export function usePermiso(codigoPermiso, sucursalIdParam) {
   const user = useAuthStore(selectUser);
   const isAuthenticated = useAuthStore(selectIsAuthenticated);
   const isAdmin = useAuthStore(selectIsAdminValue);
-  const sucursalId = sucursalIdParam || user?.sucursal_id || user?.sucursales?.[0]?.id;
+  // FIX RBAC Ene 2026: Obtener sucursal del store si no está en el usuario
+  const sucursalActiva = useSucursalStore(selectSucursalActiva);
+  const sucursalId = sucursalIdParam || user?.sucursal_id || user?.sucursales?.[0]?.id || sucursalActiva?.id;
 
   // Ene 2026: Usar factory selector con useMemo para evitar re-renders
   const setPermisoVerificado = usePermisosStore(selectSetPermisoVerificado);

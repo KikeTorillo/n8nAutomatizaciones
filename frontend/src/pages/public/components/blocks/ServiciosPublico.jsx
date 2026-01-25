@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
+import * as LucideIcons from 'lucide-react';
 
 /**
  * ServiciosPublico - Renderiza bloque de servicios en sitio público
@@ -71,12 +72,17 @@ export default function ServiciosPublico({ contenido, tema, slug }) {
                   />
                 </div>
               ) : servicio.icono ? (
-                <div
-                  className="h-48 flex items-center justify-center text-6xl"
-                  style={{ backgroundColor: `var(--color-primario)15` }}
-                >
-                  {servicio.icono}
-                </div>
+                (() => {
+                  const IconComponent = LucideIcons[servicio.icono] || LucideIcons.Star;
+                  return (
+                    <div
+                      className="h-48 flex items-center justify-center"
+                      style={{ backgroundColor: `var(--color-primario)15`, color: 'var(--color-primario)' }}
+                    >
+                      <IconComponent size={64} />
+                    </div>
+                  );
+                })()
               ) : (
                 <div
                   className="h-48 flex items-center justify-center"

@@ -111,7 +111,6 @@ function ConfiguracionTab({ profesional }) {
                 renderValue={(rol) => {
                   const roles = {
                     admin: 'Administrador',
-                    propietario: 'Propietario',
                     empleado: 'Empleado',
                   };
                   return roles[rol] || rol;

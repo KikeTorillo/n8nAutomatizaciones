@@ -1,6 +1,6 @@
 const PermisosModel = require('../models/permisos.model');
 const asyncHandler = require('../../../middleware/asyncHandler');
-const { ResponseHelper } = require('../../../utils/helpers');
+const { ResponseHelper, RolHelper } = require('../../../utils/helpers');
 const logger = require('../../../utils/logger');
 
 /**
@@ -54,7 +54,7 @@ class PermisosController {
         const { rol } = req.params;
 
         // Validar rol
-        const rolesValidos = ['admin', 'propietario', 'empleado', 'bot', 'cliente'];
+        const rolesValidos = ['admin', 'empleado', 'bot', 'cliente'];
         if (!rolesValidos.includes(rol)) {
             return ResponseHelper.error(res, 'Rol no válido', 400);
         }
@@ -72,8 +72,8 @@ class PermisosController {
         const { rol } = req.params;
         const { permisos } = req.body;
 
-        // Solo admin/propietario puede modificar permisos de rol
-        if (!req.user.nivel_jerarquia >= 80) {
+        // Solo usuarios con puede_modificar_permisos pueden modificar permisos de rol
+        if (!RolHelper.puedeModificarPermisos(req.user)) {
             return ResponseHelper.error(res, 'No tienes permiso para modificar roles', 403);
         }
 
@@ -102,7 +102,7 @@ class PermisosController {
         const { rol } = req.params;
         const { permisoId, valor } = req.body;
 
-        if (!req.user.nivel_jerarquia >= 80) {
+        if (!RolHelper.puedeModificarPermisos(req.user)) {
             return ResponseHelper.error(res, 'No tienes permiso para modificar roles', 403);
         }
 
@@ -121,7 +121,7 @@ class PermisosController {
     static eliminarPermisoRol = asyncHandler(async (req, res) => {
         const { rol, permisoId } = req.params;
 
-        if (!req.user.nivel_jerarquia >= 80) {
+        if (!RolHelper.puedeModificarPermisos(req.user)) {
             return ResponseHelper.error(res, 'No tienes permiso para modificar roles', 403);
         }
 
@@ -176,8 +176,8 @@ class PermisosController {
             'configuracion.roles'
         );
 
-        // Admin siempre puede
-        if (!puedeAsignar && !req.user.nivel_jerarquia >= 80) {
+        // Admin o usuarios con puede_modificar_permisos pueden asignar
+        if (!puedeAsignar && !RolHelper.puedeModificarPermisos(req.user)) {
             return ResponseHelper.error(res, 'No tienes permiso para asignar permisos', 403);
         }
 
@@ -202,8 +202,8 @@ class PermisosController {
         const { usuarioId, sucursalId, permisoId } = req.params;
         const organizacionId = req.user.organizacion_id;
 
-        // Verificar permiso
-        if (!req.user.nivel_jerarquia >= 80) {
+        // Verificar permiso - usuarios con puede_modificar_permisos o permiso específico
+        if (!RolHelper.puedeModificarPermisos(req.user)) {
             const puedeEliminar = await PermisosModel.tienePermiso(
                 req.user.id,
                 parseInt(sucursalId),

@@ -23,3 +23,7 @@ export {
 } from './createSucursalContextHook';
 
 export { createSearchHook } from './createSearchHook';
+
+// Nuevas factories (Ene 2026)
+export { createStatsHook } from './createStatsHook';
+export { createBulkOperationHook } from './createBulkOperationHook';

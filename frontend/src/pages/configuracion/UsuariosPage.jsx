@@ -38,7 +38,6 @@ const useUsuariosContext = () => useContext(UsuariosContext);
 // Opciones de filtros
 const FILTROS_ROL = [
   { value: 'admin', label: 'Administrador' },
-  { value: 'propietario', label: 'Propietario' },
   { value: 'empleado', label: 'Empleado' },
 ];
 
@@ -169,7 +168,7 @@ function UsuariosPage() {
   ], [resumen, usuarios]);
 
   const getRolBadgeColor = (rol) => {
-    const colors = { admin: 'purple', propietario: 'blue', empleado: 'green' };
+    const colors = { admin: 'purple', empleado: 'green' };
     return colors[rol] || 'gray';
   };
 

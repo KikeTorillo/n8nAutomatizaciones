@@ -22,6 +22,8 @@ const {
     WebsitePaginasController,
     WebsiteBloquesController
 } = require('../controllers');
+const WebsiteTemplatesController = require('../controllers/templates.controller');
+const WebsiteAIController = require('../controllers/ai.controller');
 const { auth, tenant, rateLimiting, validation, subscription, modules } = require('../../../middleware');
 const websiteSchemas = require('../schemas/website.schemas');
 
@@ -71,7 +73,7 @@ router.put('/config/:id',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('website'),
-    auth.requireRole(['admin', 'propietario']),
+    auth.requireRole(['admin']),
     rateLimiting.apiRateLimit,
     validate(websiteSchemas.actualizarConfig),
     WebsiteConfigController.actualizar
@@ -87,7 +89,7 @@ router.post('/config/:id/publicar',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('website'),
-    auth.requireRole(['admin', 'propietario']),
+    auth.requireRole(['admin']),
     rateLimiting.apiRateLimit,
     validate(websiteSchemas.publicarConfig),
     WebsiteConfigController.publicar
@@ -115,7 +117,7 @@ router.delete('/config/:id',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('website'),
-    auth.requireRole(['admin', 'propietario']),
+    auth.requireRole(['admin']),
     rateLimiting.apiRateLimit,
     validate(websiteSchemas.eliminarConfig),
     WebsiteConfigController.eliminar
@@ -135,7 +137,7 @@ router.post('/paginas',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('website'),
-    auth.requireRole(['admin', 'propietario']),
+    auth.requireRole(['admin']),
     rateLimiting.apiRateLimit,
     validate(websiteSchemas.crearPagina),
     WebsitePaginasController.crear
@@ -165,7 +167,7 @@ router.put('/paginas/orden',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('website'),
-    auth.requireRole(['admin', 'propietario']),
+    auth.requireRole(['admin']),
     rateLimiting.apiRateLimit,
     validate(websiteSchemas.reordenarPaginas),
     WebsitePaginasController.reordenar
@@ -196,7 +198,7 @@ router.put('/paginas/:id',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('website'),
-    auth.requireRole(['admin', 'propietario']),
+    auth.requireRole(['admin']),
     rateLimiting.apiRateLimit,
     validate(websiteSchemas.actualizarPagina),
     WebsitePaginasController.actualizar
@@ -212,7 +214,7 @@ router.delete('/paginas/:id',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('website'),
-    auth.requireRole(['admin', 'propietario']),
+    auth.requireRole(['admin']),
     rateLimiting.apiRateLimit,
     validate(websiteSchemas.eliminarPagina),
     WebsitePaginasController.eliminar
@@ -255,7 +257,7 @@ router.post('/bloques',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('website'),
-    auth.requireRole(['admin', 'propietario']),
+    auth.requireRole(['admin']),
     rateLimiting.apiRateLimit,
     validate(websiteSchemas.crearBloque),
     WebsiteBloquesController.crear
@@ -286,7 +288,7 @@ router.put('/paginas/:paginaId/bloques/orden',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('website'),
-    auth.requireRole(['admin', 'propietario']),
+    auth.requireRole(['admin']),
     rateLimiting.apiRateLimit,
     validate(websiteSchemas.reordenarBloques),
     WebsiteBloquesController.reordenar
@@ -317,7 +319,7 @@ router.put('/bloques/:id',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('website'),
-    auth.requireRole(['admin', 'propietario']),
+    auth.requireRole(['admin']),
     rateLimiting.apiRateLimit,
     validate(websiteSchemas.actualizarBloque),
     WebsiteBloquesController.actualizar
@@ -333,7 +335,7 @@ router.post('/bloques/:id/duplicar',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('website'),
-    auth.requireRole(['admin', 'propietario']),
+    auth.requireRole(['admin']),
     rateLimiting.apiRateLimit,
     validate(websiteSchemas.duplicarBloque),
     WebsiteBloquesController.duplicar
@@ -349,10 +351,152 @@ router.delete('/bloques/:id',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('website'),
-    auth.requireRole(['admin', 'propietario']),
+    auth.requireRole(['admin']),
     rateLimiting.apiRateLimit,
     validate(websiteSchemas.eliminarBloque),
     WebsiteBloquesController.eliminar
+);
+
+// ===================================================================
+// TEMPLATES
+// ===================================================================
+
+/**
+ * GET /api/v1/website/templates/industrias
+ * Listar industrias disponibles
+ * @requires auth - cualquier rol
+ */
+router.get('/templates/industrias',
+    auth.authenticateToken,
+    rateLimiting.apiRateLimit,
+    WebsiteTemplatesController.listarIndustrias
+);
+
+/**
+ * GET /api/v1/website/templates
+ * Listar templates disponibles
+ * @requires auth - cualquier rol
+ * @requires tenant
+ */
+router.get('/templates',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    WebsiteTemplatesController.listar
+);
+
+/**
+ * GET /api/v1/website/templates/:id
+ * Obtener template por ID
+ * @requires auth - cualquier rol
+ * @requires tenant
+ */
+router.get('/templates/:id',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    WebsiteTemplatesController.obtener
+);
+
+/**
+ * GET /api/v1/website/templates/:id/estructura
+ * Obtener estructura del template (previsualización)
+ * @requires auth - cualquier rol
+ * @requires tenant
+ */
+router.get('/templates/:id/estructura',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    WebsiteTemplatesController.obtenerEstructura
+);
+
+/**
+ * POST /api/v1/website/templates/:id/aplicar
+ * Aplicar template a sitio nuevo o existente
+ * @requires auth - admin
+ * @requires tenant
+ */
+router.post('/templates/:id/aplicar',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('website'),
+    auth.requireRole(['admin']),
+    rateLimiting.apiRateLimit,
+    WebsiteTemplatesController.aplicar
+);
+
+/**
+ * POST /api/v1/website/templates
+ * Guardar sitio actual como template personalizado
+ * @requires auth - admin
+ * @requires tenant
+ */
+router.post('/templates',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('website'),
+    auth.requireRole(['admin']),
+    rateLimiting.apiRateLimit,
+    WebsiteTemplatesController.crear
+);
+
+/**
+ * DELETE /api/v1/website/templates/:id
+ * Eliminar template personalizado
+ * @requires auth - admin
+ * @requires tenant
+ */
+router.delete('/templates/:id',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('website'),
+    auth.requireRole(['admin']),
+    rateLimiting.apiRateLimit,
+    WebsiteTemplatesController.eliminar
+);
+
+// ===================================================================
+// IA - GENERACIÓN DE CONTENIDO
+// ===================================================================
+
+/**
+ * GET /api/v1/website/ai/status
+ * Verificar disponibilidad del servicio de IA
+ * @requires auth - cualquier rol
+ */
+router.get('/ai/status',
+    auth.authenticateToken,
+    rateLimiting.apiRateLimit,
+    WebsiteAIController.obtenerStatus
+);
+
+/**
+ * POST /api/v1/website/ai/generar
+ * Generar contenido para un campo específico
+ * @requires auth - admin
+ * @requires tenant
+ */
+router.post('/ai/generar',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('website'),
+    rateLimiting.aiRateLimit || rateLimiting.apiRateLimit,
+    WebsiteAIController.generarContenido
+);
+
+/**
+ * POST /api/v1/website/ai/generar-bloque
+ * Generar contenido completo para un bloque
+ * @requires auth - admin
+ * @requires tenant
+ */
+router.post('/ai/generar-bloque',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('website'),
+    rateLimiting.aiRateLimit || rateLimiting.apiRateLimit,
+    WebsiteAIController.generarBloque
 );
 
 module.exports = router;

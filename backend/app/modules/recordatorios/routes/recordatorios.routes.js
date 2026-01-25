@@ -58,7 +58,7 @@ router.use(rateLimiting.apiRateLimit);
  */
 router.get(
   '/configuracion',
-  auth.requireRole(['super_admin', 'admin', 'propietario']),
+  auth.requireRole(['super_admin', 'admin']),
   RecordatoriosController.obtenerConfiguracion
 );
 
@@ -71,7 +71,7 @@ router.get(
  */
 router.put(
   '/configuracion',
-  auth.requireRole(['super_admin', 'admin', 'propietario']),
+  auth.requireRole(['super_admin', 'admin']),
   validate(actualizarConfiguracionSchema),
   RecordatoriosController.actualizarConfiguracion
 );
@@ -90,7 +90,7 @@ router.put(
  */
 router.get(
   '/estadisticas',
-  auth.requireRole(['super_admin', 'admin', 'propietario']),
+  auth.requireRole(['super_admin', 'admin']),
   validate(estadisticasFiltrosSchema, 'query'),
   RecordatoriosController.obtenerEstadisticas
 );
@@ -104,7 +104,7 @@ router.get(
  */
 router.get(
   '/historial',
-  auth.requireRole(['super_admin', 'admin', 'propietario', 'empleado']),
+  auth.requireRole(['super_admin', 'admin', 'empleado']),
   validate(historialFiltrosSchema, 'query'),
   RecordatoriosController.obtenerHistorial
 );
@@ -123,7 +123,7 @@ router.get(
  */
 router.post(
   '/test',
-  auth.requireRole(['super_admin', 'admin', 'propietario']),
+  auth.requireRole(['super_admin', 'admin']),
   validate(enviarPruebaSchema),
   RecordatoriosController.enviarPrueba
 );

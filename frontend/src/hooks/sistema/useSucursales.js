@@ -170,8 +170,12 @@ export function useAsignarProfesionalSucursal() {
 
 /**
  * Hook para obtener métricas consolidadas del dashboard multi-sucursal
+ *
+ * @param {Object} params - Parámetros de filtrado
+ * @param {Object} options - Opciones del hook
+ * @param {boolean} options.enabled - Si debe ejecutar la query (default: true)
  */
-export function useMetricasSucursales(params = {}) {
+export function useMetricasSucursales(params = {}, { enabled = true } = {}) {
   return useQuery({
     queryKey: ['metricas-sucursales', params],
     queryFn: async () => {
@@ -185,6 +189,7 @@ export function useMetricasSucursales(params = {}) {
       const response = await sucursalesApi.obtenerMetricas(sanitizedParams);
       return response.data.data;
     },
+    enabled, // FIX RBAC Ene 2026: Solo ejecutar si está habilitado
     staleTime: STALE_TIMES.DYNAMIC,
     refetchInterval: 1000 * 60 * 5,
   });

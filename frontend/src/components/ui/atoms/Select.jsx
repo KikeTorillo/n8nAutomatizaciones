@@ -114,4 +114,3 @@ Select.propTypes = {
 };
 
 export { Select };
-export default Select;

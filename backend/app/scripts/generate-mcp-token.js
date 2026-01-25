@@ -18,13 +18,14 @@ const pool = require('../config/database');
 const logger = require('../utils/logger');
 
 /**
- * Obtiene el usuario bot de una organización
+ * Obtiene el usuario bot de una organización (Ene 2026: JOIN con tabla roles)
  */
 async function obtenerUsuarioBot(organizacionId) {
   const query = `
-    SELECT id, email, rol
-    FROM usuarios
-    WHERE organizacion_id = $1 AND rol = 'bot'
+    SELECT u.id, u.email, r.codigo as rol
+    FROM usuarios u
+    JOIN roles r ON u.rol_id = r.id
+    WHERE u.organizacion_id = $1 AND r.codigo = 'bot'
     LIMIT 1
   `;
 

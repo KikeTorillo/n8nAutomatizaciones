@@ -19,7 +19,7 @@ const crear = {
             .trim(),
         telefono: fields.telefono.optional(),
         rol: Joi.string()
-            .valid('admin', 'propietario', 'empleado', 'cliente')
+            .valid('admin', 'empleado', 'cliente')
             .optional()
             .default('empleado'),
         profesional_id: commonSchemas.id.optional(),
@@ -36,7 +36,7 @@ const listar = {
     query: Joi.object({
         organizacion_id: commonSchemas.id.optional(), // Solo super_admin
         rol: Joi.string()
-            .valid('admin', 'propietario', 'empleado', 'cliente')
+            .valid('admin', 'empleado', 'cliente')
             .optional(),
         activo: Joi.string()
             .valid('true', 'false')
@@ -124,7 +124,7 @@ const cambiarRol = {
     }),
     body: Joi.object({
         rol: Joi.string()
-            .valid('admin', 'propietario', 'empleado', 'cliente')
+            .valid('admin', 'empleado', 'cliente')
             .required()
     }),
     query: Joi.object({
@@ -165,7 +165,7 @@ const crearDirecto = {
             .trim()
             .allow(''),
         rol: Joi.string()
-            .valid('admin', 'propietario', 'empleado')
+            .valid('admin', 'empleado')
             .optional()
             .default('empleado')
     })

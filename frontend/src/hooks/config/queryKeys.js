@@ -182,10 +182,24 @@ export const queryKeys = {
     },
     sesionCaja: {
       actual: ['sesion-caja'],
+      activa: (params) => ['sesion-caja-activa', params],
       historial: (params) => ['sesiones-caja', params],
+      detail: (id) => ['sesion-caja', id],
     },
     stockDisponible: (productoId) => ['stock-disponible', productoId],
     categoriasPOS: ['categorias-pos'],
+    // Lealtad (Ene 2026)
+    lealtad: {
+      configuracion: ['lealtad-configuracion'],
+      estadisticas: (sucursalId) => ['lealtad-estadisticas', sucursalId],
+      puntos: (clienteId) => ['lealtad-puntos', clienteId],
+      historial: (clienteId, params) => ['lealtad-historial', clienteId, params],
+    },
+    // Turnos/Colas (Ene 2026)
+    turnos: {
+      activos: (sucursalId) => ['turnos-activos', sucursalId],
+      historial: (params) => ['turnos-historial', params],
+    },
   },
 
   // ============================================================
@@ -260,6 +274,21 @@ export const queryKeys = {
     habilidades: (profesionalId) => ['habilidades', profesionalId],
     cuentasBancarias: (profesionalId) => ['cuentas-bancarias', profesionalId],
     documentosEmpleado: (profesionalId) => ['documentos-empleado', profesionalId],
+    // Incapacidades (Ene 2026)
+    incapacidades: {
+      all: ['incapacidades'],
+      list: (filtros) => ['incapacidades', filtros],
+      detail: (id) => ['incapacidades', id],
+      estadisticas: (filtros) => ['incapacidades', 'estadisticas', filtros],
+    },
+    // Oportunidades/CRM (Ene 2026)
+    oportunidades: {
+      all: ['oportunidades'],
+      list: (params) => ['oportunidades', params],
+      detail: (id) => ['oportunidad', id],
+      pipeline: (vendedorId) => ['pipeline', vendedorId],
+      estadisticas: (vendedorId) => ['pipeline-estadisticas', vendedorId],
+    },
   },
 
   // ============================================================
@@ -289,7 +318,36 @@ export const queryKeys = {
       list: (params) => ['workflows', params],
       detail: (id) => ['workflow', id],
     },
-    customFields: (entidad) => ['custom-fields', entidad],
+    customFields: {
+      byEntity: (entidad) => ['custom-fields', entidad],
+      definiciones: (params) => ['custom-fields-definiciones', params],
+      valores: (tipo, id) => ['custom-fields-valores', tipo, id],
+    },
+    // Suscripciones (Ene 2026)
+    suscripcion: {
+      estado: (orgId) => ['estado-suscripcion', orgId],
+      planes: ['planes-disponibles'],
+      historial: (orgId) => ['suscripcion-historial', orgId],
+    },
+    // Roles (Ene 2026)
+    roles: {
+      all: ['roles'],
+      list: (params) => ['roles', params],
+      detail: (id) => ['rol', id],
+      permisos: (rolId) => ['rol-permisos', rolId],
+    },
+    // Superadmin (Ene 2026)
+    superadmin: {
+      dashboard: ['superadmin', 'dashboard'],
+      organizaciones: (filtros) => ['superadmin', 'organizaciones', filtros],
+      organizacionDetail: (id) => ['superadmin', 'organizacion', id],
+      metricas: (params) => ['superadmin', 'metricas', params],
+    },
+    // Auditoría (Ene 2026)
+    auditoria: {
+      logs: (params) => ['auditoria-logs', params],
+      detail: (id) => ['auditoria-log', id],
+    },
   },
 
   // ============================================================

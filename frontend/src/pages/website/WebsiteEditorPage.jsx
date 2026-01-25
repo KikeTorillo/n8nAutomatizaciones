@@ -1,43 +1,89 @@
-import { useState, useEffect } from 'react';
+/**
+ * ====================================================================
+ * WEBSITE EDITOR PAGE - v2.0 WYSIWYG
+ * ====================================================================
+ * Editor visual WYSIWYG del sitio web con inline editing,
+ * undo/redo, autosave y templates.
+ */
+
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Globe2,
   Plus,
   Eye,
-  Save,
-  Settings,
   Loader2,
   FileText,
   Palette,
   ExternalLink,
   Check,
   X,
+  Layout,
+  Settings,
+  Sparkles,
 } from 'lucide-react';
 import { toast } from 'sonner';
+
+// Store
+import {
+  useWebsiteEditorStore,
+  selectBloques,
+  selectBloqueSeleccionado,
+  selectSetBloques,
+  selectSeleccionarBloque,
+  selectDeseleccionarBloque,
+  selectActualizarBloqueLocal,
+  selectReordenarBloquesLocal,
+} from '@/store';
+
+// Hooks existentes
 import { useWebsiteEditor, useWebsiteBloques } from '@/hooks/otros';
-import { BackButton } from '@/components/ui';
+
+// Hooks nuevos del editor
+import { useAutosave, useEstadoGuardado, useEditorShortcuts } from './hooks';
 
 // Componentes del editor
 import PageManager from './components/PageManager';
 import BlockPalette from './components/BlockPalette';
 import BlockEditor from './components/BlockEditor';
 import ThemeEditor from './components/ThemeEditor';
-import PreviewPanel from './components/PreviewPanel';
+import EditorCanvas from './components/EditorCanvas';
+import PropertiesPanel from './components/PropertiesPanel';
+import TemplateGallery from './components/TemplateGallery';
+import SlashMenu from './components/SlashMenu';
+
+// UI
+import { BackButton } from '@/components/ui';
 
 /**
- * WebsiteEditorPage - Editor visual del sitio web
- * Permite crear y editar páginas con bloques arrastrables
+ * WebsiteEditorPage - Editor visual WYSIWYG del sitio web
  */
 function WebsiteEditorPage() {
   const navigate = useNavigate();
 
-  // Estado del editor
+  // ========== ESTADO LOCAL ==========
   const [paginaActiva, setPaginaActiva] = useState(null);
-  const [bloqueSeleccionado, setBloqueSeleccionado] = useState(null);
-  const [panelActivo, setPanelActivo] = useState('bloques'); // 'bloques' | 'paginas' | 'tema' | 'preview'
+  const [panelActivo, setPanelActivo] = useState('bloques');
   const [mostrarCrearSitio, setMostrarCrearSitio] = useState(false);
+  const [mostrarTemplates, setMostrarTemplates] = useState(false);
+  const [modoEditor, setModoEditor] = useState('canvas'); // 'canvas' | 'bloques'
+  const [mostrarPropiedades, setMostrarPropiedades] = useState(true);
+  const [slashMenu, setSlashMenu] = useState({
+    isOpen: false,
+    position: { x: 0, y: 0 },
+    query: '',
+  });
 
-  // Hook del editor
+  // ========== STORE STATE ==========
+  const bloques = useWebsiteEditorStore(selectBloques);
+  const bloqueSeleccionado = useWebsiteEditorStore(selectBloqueSeleccionado);
+  const setBloques = useWebsiteEditorStore(selectSetBloques);
+  const seleccionarBloque = useWebsiteEditorStore(selectSeleccionarBloque);
+  const deseleccionarBloque = useWebsiteEditorStore(selectDeseleccionarBloque);
+  const actualizarBloqueLocal = useWebsiteEditorStore(selectActualizarBloqueLocal);
+  const reordenarBloquesLocal = useWebsiteEditorStore(selectReordenarBloquesLocal);
+
+  // ========== HOOK DEL EDITOR ==========
   const {
     config,
     paginas,
@@ -58,19 +104,64 @@ function WebsiteEditorPage() {
     eliminarBloque,
   } = useWebsiteEditor();
 
-  // Bloques de la página activa
-  const { data: bloquesData, isLoading: bloquesLoading } = useWebsiteBloques(paginaActiva?.id);
-  const bloques = bloquesData || [];
+  // Bloques de la página activa (desde servidor)
+  const { data: bloquesData, isLoading: bloquesLoading } = useWebsiteBloques(
+    paginaActiva?.id
+  );
+
+  // ========== SINCRONIZAR BLOQUES CON STORE ==========
+  useEffect(() => {
+    if (bloquesData && paginaActiva?.id) {
+      setBloques(bloquesData, paginaActiva.id);
+    }
+  }, [bloquesData, paginaActiva?.id, setBloques]);
 
   // Seleccionar primera página al cargar
   useEffect(() => {
     if (paginas.length > 0 && !paginaActiva) {
-      const paginaInicio = paginas.find(p => p.es_inicio) || paginas[0];
+      const paginaInicio = paginas.find((p) => p.es_inicio) || paginas[0];
       setPaginaActiva(paginaInicio);
     }
   }, [paginas, paginaActiva]);
 
-  // Handlers
+  // ========== AUTOSAVE ==========
+  const handleSaveAll = useCallback(
+    async (bloquesToSave) => {
+      // Guardar cada bloque modificado
+      for (const bloque of bloquesToSave) {
+        await actualizarBloque.mutateAsync({
+          id: bloque.id,
+          data: { contenido: bloque.contenido },
+        });
+      }
+    },
+    [actualizarBloque]
+  );
+
+  const { guardarAhora, estaGuardando } = useAutosave({
+    onSave: handleSaveAll,
+    enabled: true,
+    debounceMs: 3000,
+  });
+
+  // ========== KEYBOARD SHORTCUTS ==========
+  useEditorShortcuts({
+    onSave: guardarAhora,
+    onDuplicate: (id) => {
+      if (id) {
+        duplicarBloque.mutateAsync(id);
+      }
+    },
+    onDelete: (id) => {
+      if (id && paginaActiva) {
+        eliminarBloque.mutateAsync({ id, paginaId: paginaActiva.id });
+      }
+    },
+    enabled: true,
+  });
+
+  // ========== HANDLERS ==========
+
   const handleCrearSitio = async (datosIniciales) => {
     try {
       await crearConfig.mutateAsync(datosIniciales);
@@ -85,9 +176,11 @@ function WebsiteEditorPage() {
     try {
       await publicarSitio.mutateAsync({
         id: config.id,
-        publicar: !estaPublicado
+        publicar: !estaPublicado,
       });
-      toast.success(estaPublicado ? 'Sitio despublicado' : 'Sitio publicado exitosamente');
+      toast.success(
+        estaPublicado ? 'Sitio despublicado' : 'Sitio publicado exitosamente'
+      );
     } catch (error) {
       toast.error(error.response?.data?.message || 'Error al publicar');
     }
@@ -100,11 +193,12 @@ function WebsiteEditorPage() {
     }
 
     try {
-      await crearBloque.mutateAsync({
+      const nuevoBloque = await crearBloque.mutateAsync({
         pagina_id: paginaActiva.id,
         tipo: tipo,
         orden: bloques.length,
       });
+      seleccionarBloque(nuevoBloque.id);
       toast.success('Bloque agregado');
     } catch (error) {
       toast.error(error.response?.data?.message || 'Error al agregar bloque');
@@ -112,31 +206,125 @@ function WebsiteEditorPage() {
   };
 
   const handleActualizarBloque = async (bloqueId, contenido) => {
-    try {
-      await actualizarBloque.mutateAsync({
-        id: bloqueId,
-        data: { contenido }
-      });
-      toast.success('Bloque actualizado');
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Error al actualizar');
-    }
+    // Actualizar localmente primero (para UX inmediata)
+    actualizarBloqueLocal(bloqueId, contenido);
+    // El autosave se encargará de persistir
   };
 
   const handleEliminarBloque = async (bloqueId) => {
     try {
       await eliminarBloque.mutateAsync({
         id: bloqueId,
-        paginaId: paginaActiva.id
+        paginaId: paginaActiva.id,
       });
-      setBloqueSeleccionado(null);
+      deseleccionarBloque();
       toast.success('Bloque eliminado');
     } catch (error) {
       toast.error(error.response?.data?.message || 'Error al eliminar');
     }
   };
 
-  // Loading state
+  const handleDuplicarBloque = async (bloqueId) => {
+    try {
+      const duplicado = await duplicarBloque.mutateAsync(bloqueId);
+      seleccionarBloque(duplicado.id);
+      toast.success('Bloque duplicado');
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Error al duplicar');
+    }
+  };
+
+  const handleReordenarBloques = async (nuevoOrden) => {
+    // Actualizar localmente primero
+    reordenarBloquesLocal(nuevoOrden);
+
+    // Persistir en servidor
+    try {
+      await reordenarBloques.mutateAsync({
+        paginaId: paginaActiva.id,
+        ordenamiento: nuevoOrden.map((id, index) => ({ id, orden: index })),
+      });
+    } catch (error) {
+      toast.error('Error al reordenar');
+    }
+  };
+
+  // ========== SLASH MENU HANDLERS ==========
+
+  const handleSlashSelect = useCallback(
+    (tipoBloque) => {
+      setSlashMenu({ isOpen: false, position: { x: 0, y: 0 }, query: '' });
+      handleAgregarBloque(tipoBloque);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [paginaActiva, bloques.length]
+  );
+
+  const handleSlashClose = useCallback(() => {
+    setSlashMenu({ isOpen: false, position: { x: 0, y: 0 }, query: '' });
+  }, []);
+
+  // Slash menu keyboard handler
+  useEffect(() => {
+    if (!tieneSitio) return;
+
+    const handleSlashKey = (e) => {
+      // Ignorar si está en un input/textarea o contentEditable
+      const target = e.target;
+      const isEditable =
+        target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.isContentEditable ||
+        target.closest('[contenteditable="true"]');
+
+      if (e.key === '/' && !slashMenu.isOpen && !isEditable) {
+        e.preventDefault();
+        // Abrir el slash menu en el centro de la pantalla
+        setSlashMenu({
+          isOpen: true,
+          position: {
+            x: window.innerWidth / 2 - 150,
+            y: window.innerHeight / 3,
+          },
+          query: '',
+        });
+      } else if (slashMenu.isOpen) {
+        if (e.key === 'Escape') {
+          setSlashMenu((prev) => ({ ...prev, isOpen: false, query: '' }));
+        } else if (e.key === 'Backspace') {
+          if (slashMenu.query === '') {
+            setSlashMenu((prev) => ({ ...prev, isOpen: false }));
+          } else {
+            setSlashMenu((prev) => ({
+              ...prev,
+              query: prev.query.slice(0, -1),
+            }));
+          }
+        } else if (
+          e.key.length === 1 &&
+          !e.metaKey &&
+          !e.ctrlKey &&
+          !['ArrowUp', 'ArrowDown', 'Enter'].includes(e.key)
+        ) {
+          setSlashMenu((prev) => ({
+            ...prev,
+            query: prev.query + e.key,
+          }));
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleSlashKey);
+    return () => window.removeEventListener('keydown', handleSlashKey);
+  }, [tieneSitio, slashMenu.isOpen, slashMenu.query]);
+
+  // Obtener bloque seleccionado completo
+  const bloqueSeleccionadoCompleto = useMemo(
+    () => bloques.find((b) => b.id === bloqueSeleccionado),
+    [bloques, bloqueSeleccionado]
+  );
+
+  // ========== RENDER: LOADING ==========
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
@@ -148,15 +336,19 @@ function WebsiteEditorPage() {
     );
   }
 
-  // No tiene sitio creado
+  // ========== RENDER: NO TIENE SITIO ==========
   if (!tieneSitio && !mostrarCrearSitio) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         {/* Header */}
         <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
           <BackButton to="/home" label="Volver al Inicio" className="mb-3" />
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Mi Sitio Web</h1>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Crea tu página web pública</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+            Mi Sitio Web
+          </h1>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            Crea tu página web pública
+          </p>
         </div>
 
         {/* Empty state */}
@@ -169,16 +361,27 @@ function WebsiteEditorPage() {
               Crea tu sitio web
             </h2>
             <p className="text-gray-600 dark:text-gray-400 mb-8 max-w-md mx-auto">
-              Diseña una página web profesional para tu negocio con nuestro editor visual.
-              Arrastra y suelta bloques para crear tu sitio en minutos.
+              Diseña una página web profesional para tu negocio con nuestro
+              editor visual. Arrastra y suelta bloques para crear tu sitio en
+              minutos.
             </p>
-            <button
-              onClick={() => setMostrarCrearSitio(true)}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium"
-            >
-              <Plus className="w-5 h-5" />
-              Crear mi sitio web
-            </button>
+
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <button
+                onClick={() => setMostrarTemplates(true)}
+                className="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium"
+              >
+                <Sparkles className="w-5 h-5" />
+                Elegir template
+              </button>
+              <button
+                onClick={() => setMostrarCrearSitio(true)}
+                className="inline-flex items-center gap-2 px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-medium"
+              >
+                <Plus className="w-5 h-5" />
+                Empezar de cero
+              </button>
+            </div>
           </div>
 
           {/* Features */}
@@ -187,30 +390,51 @@ function WebsiteEditorPage() {
               <div className="w-12 h-12 bg-primary-100 dark:bg-primary-900/30 rounded-lg flex items-center justify-center mx-auto mb-3">
                 <FileText className="w-6 h-6 text-primary-700 dark:text-primary-400" />
               </div>
-              <h3 className="font-medium text-gray-900 dark:text-gray-100">11 tipos de bloques</h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Hero, servicios, equipo, contacto y más</p>
+              <h3 className="font-medium text-gray-900 dark:text-gray-100">
+                11 tipos de bloques
+              </h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                Hero, servicios, equipo, contacto y más
+              </p>
             </div>
             <div className="text-center">
               <div className="w-12 h-12 bg-primary-50 dark:bg-primary-900/30 rounded-lg flex items-center justify-center mx-auto mb-3">
                 <Palette className="w-6 h-6 text-primary-500 dark:text-primary-400" />
               </div>
-              <h3 className="font-medium text-gray-900 dark:text-gray-100">Personalizable</h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Colores, fuentes y estilos a tu gusto</p>
+              <h3 className="font-medium text-gray-900 dark:text-gray-100">
+                Personalizable
+              </h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                Colores, fuentes y estilos a tu gusto
+              </p>
             </div>
             <div className="text-center">
               <div className="w-12 h-12 bg-primary-100 dark:bg-primary-900/30 rounded-lg flex items-center justify-center mx-auto mb-3">
                 <Globe2 className="w-6 h-6 text-primary-600 dark:text-primary-400" />
               </div>
-              <h3 className="font-medium text-gray-900 dark:text-gray-100">SEO optimizado</h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Meta tags y Open Graph incluidos</p>
+              <h3 className="font-medium text-gray-900 dark:text-gray-100">
+                SEO optimizado
+              </h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                Meta tags y Open Graph incluidos
+              </p>
             </div>
           </div>
         </div>
+
+        {/* Template Gallery Modal */}
+        <TemplateGallery
+          isOpen={mostrarTemplates}
+          onClose={() => setMostrarTemplates(false)}
+          onTemplateApplied={() => {
+            setMostrarTemplates(false);
+          }}
+        />
       </div>
     );
   }
 
-  // Modal crear sitio
+  // ========== RENDER: MODAL CREAR SITIO ==========
   if (mostrarCrearSitio) {
     return (
       <CrearSitioModal
@@ -221,7 +445,7 @@ function WebsiteEditorPage() {
     );
   }
 
-  // Editor principal
+  // ========== RENDER: EDITOR PRINCIPAL ==========
   return (
     <div className="h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
       {/* Header del editor */}
@@ -230,31 +454,48 @@ function WebsiteEditorPage() {
           <BackButton to="/home" label="Volver" />
           <div className="flex items-center gap-2">
             <Globe2 className="w-5 h-5 text-primary-600 dark:text-primary-400" />
-            <span className="font-semibold text-gray-900 dark:text-gray-100">{config?.nombre_sitio || 'Mi Sitio'}</span>
+            <span className="font-semibold text-gray-900 dark:text-gray-100">
+              {config?.nombre_sitio || 'Mi Sitio'}
+            </span>
           </div>
           {/* Status badge */}
-          <span className={`px-2 py-1 text-xs rounded-full ${
-            estaPublicado
-              ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
-              : 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'
-          }`}>
+          <span
+            className={`px-2 py-1 text-xs rounded-full ${
+              estaPublicado
+                ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+                : 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'
+            }`}
+          >
             {estaPublicado ? 'Publicado' : 'Borrador'}
           </span>
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Preview */}
-          <button
-            onClick={() => setPanelActivo('preview')}
-            className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
-              panelActivo === 'preview'
-                ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400'
-                : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400'
-            }`}
-          >
-            <Eye className="w-4 h-4" />
-            <span className="hidden sm:inline">Vista previa</span>
-          </button>
+          {/* Editor Mode Toggle */}
+          <div className="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+            <button
+              onClick={() => setModoEditor('canvas')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm transition-colors ${
+                modoEditor === 'canvas'
+                  ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
+                  : 'text-gray-600 dark:text-gray-400'
+              }`}
+            >
+              <Layout className="w-4 h-4" />
+              Visual
+            </button>
+            <button
+              onClick={() => setModoEditor('bloques')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm transition-colors ${
+                modoEditor === 'bloques'
+                  ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
+                  : 'text-gray-600 dark:text-gray-400'
+              }`}
+            >
+              <FileText className="w-4 h-4" />
+              Bloques
+            </button>
+          </div>
 
           {/* Ver sitio publicado */}
           {estaPublicado && config?.slug && (
@@ -330,6 +571,13 @@ function WebsiteEditorPage() {
           >
             <Palette className="w-5 h-5" />
           </button>
+          <button
+            onClick={() => setMostrarTemplates(true)}
+            className="p-3 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-600 dark:text-gray-400 transition-colors"
+            title="Templates"
+          >
+            <Sparkles className="w-5 h-5" />
+          </button>
           <div className="flex-1" />
           <button
             onClick={() => navigate('/configuracion')}
@@ -362,47 +610,85 @@ function WebsiteEditorPage() {
           {panelActivo === 'tema' && (
             <ThemeEditor
               config={config}
-              onActualizar={(tema) => actualizarConfig.mutateAsync({
-                id: config.id,
-                data: { tema }
-              })}
-            />
-          )}
-          {panelActivo === 'preview' && (
-            <PreviewPanel
-              config={config}
-              pagina={paginaActiva}
-              bloques={bloques}
+              onActualizar={(tema) =>
+                actualizarConfig.mutateAsync({
+                  id: config.id,
+                  data: tema,
+                })
+              }
             />
           )}
         </aside>
 
-        {/* Area principal - Editor de bloques */}
-        <main className="flex-1 overflow-y-auto p-6 bg-gray-50 dark:bg-gray-900">
-          <BlockEditor
-            pagina={paginaActiva}
-            bloques={bloques}
-            bloqueSeleccionado={bloqueSeleccionado}
-            onSeleccionar={setBloqueSeleccionado}
-            onActualizar={handleActualizarBloque}
-            onEliminar={handleEliminarBloque}
-            onDuplicar={(id) => duplicarBloque.mutateAsync(id)}
-            onReordenar={(ordenamiento) => reordenarBloques.mutateAsync({
-              paginaId: paginaActiva.id,
-              ordenamiento
-            })}
-            isLoading={bloquesLoading}
-            tema={config?.tema}
-          />
+        {/* Area principal */}
+        <main className="flex-1 overflow-hidden">
+          {modoEditor === 'canvas' ? (
+            <EditorCanvas
+              bloques={bloques}
+              tema={config}
+              onReordenar={handleReordenarBloques}
+              onActualizarBloque={handleActualizarBloque}
+              isLoading={bloquesLoading}
+            />
+          ) : (
+            <div className="h-full overflow-y-auto p-6 bg-gray-50 dark:bg-gray-900">
+              <BlockEditor
+                pagina={paginaActiva}
+                bloques={bloques}
+                bloqueSeleccionado={bloqueSeleccionado}
+                onSeleccionar={seleccionarBloque}
+                onActualizar={handleActualizarBloque}
+                onEliminar={handleEliminarBloque}
+                onDuplicar={handleDuplicarBloque}
+                onReordenar={handleReordenarBloques}
+                isLoading={bloquesLoading}
+                tema={config}
+                industria={config?.industria || 'default'}
+              />
+            </div>
+          )}
         </main>
+
+        {/* Panel derecho - Propiedades (solo en modo canvas con bloque seleccionado) */}
+        {modoEditor === 'canvas' && bloqueSeleccionado && mostrarPropiedades && (
+          <aside className="w-80 flex-shrink-0">
+            <PropertiesPanel
+              bloque={bloqueSeleccionadoCompleto}
+              onUpdate={(contenido) =>
+                handleActualizarBloque(bloqueSeleccionado, contenido)
+              }
+              onDuplicate={handleDuplicarBloque}
+              onDelete={handleEliminarBloque}
+              onClose={() => setMostrarPropiedades(false)}
+              isLoading={estaGuardando}
+            />
+          </aside>
+        )}
       </div>
+
+      {/* Template Gallery Modal */}
+      <TemplateGallery
+        isOpen={mostrarTemplates}
+        onClose={() => setMostrarTemplates(false)}
+        onTemplateApplied={() => {
+          setMostrarTemplates(false);
+        }}
+      />
+
+      {/* Slash Menu */}
+      <SlashMenu
+        isOpen={slashMenu.isOpen}
+        position={slashMenu.position}
+        query={slashMenu.query}
+        onSelect={handleSlashSelect}
+        onClose={handleSlashClose}
+      />
     </div>
   );
 }
 
-/**
- * Modal para crear sitio inicial
- */
+// ========== MODAL CREAR SITIO ==========
+
 function CrearSitioModal({ onCrear, onCancelar, isLoading }) {
   const [form, setForm] = useState({
     nombre_sitio: '',
@@ -421,7 +707,7 @@ function CrearSitioModal({ onCrear, onCancelar, isLoading }) {
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/^-|-$/g, '')
         .slice(0, 50);
-      setForm(prev => ({ ...prev, slug }));
+      setForm((prev) => ({ ...prev, slug }));
     }
   }, [form.nombre_sitio, slugManual]);
 
@@ -441,8 +727,12 @@ function CrearSitioModal({ onCrear, onCancelar, isLoading }) {
           <div className="w-16 h-16 bg-primary-100 dark:bg-primary-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
             <Globe2 className="w-8 h-8 text-primary-600 dark:text-primary-400" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Crear tu sitio web</h2>
-          <p className="text-gray-600 dark:text-gray-400 mt-2">Configura los datos básicos de tu sitio</p>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+            Crear tu sitio web
+          </h2>
+          <p className="text-gray-600 dark:text-gray-400 mt-2">
+            Configura los datos básicos de tu sitio
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
@@ -453,7 +743,9 @@ function CrearSitioModal({ onCrear, onCancelar, isLoading }) {
             <input
               type="text"
               value={form.nombre_sitio}
-              onChange={(e) => setForm({ ...form, nombre_sitio: e.target.value })}
+              onChange={(e) =>
+                setForm({ ...form, nombre_sitio: e.target.value })
+              }
               placeholder="Mi Negocio"
               className="w-full px-4 py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
               required
@@ -473,14 +765,19 @@ function CrearSitioModal({ onCrear, onCancelar, isLoading }) {
                 value={form.slug}
                 onChange={(e) => {
                   setSlugManual(true);
-                  setForm({ ...form, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') });
+                  setForm({
+                    ...form,
+                    slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''),
+                  });
                 }}
                 placeholder="mi-negocio"
                 className="flex-1 px-4 py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-r-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                 required
               />
             </div>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Solo letras, números y guiones</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              Solo letras, números y guiones
+            </p>
           </div>
 
           <div>

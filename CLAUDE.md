@@ -62,13 +62,14 @@ await RLSContextManager.withBypass(async (db) => { ... });
 ├─────────┼────────────────────┼───────────────────────────────────────┤
 │ 100     │ super_admin        │ Acceso TOTAL, bypass RLS, cross-org   │
 │ 90      │ admin              │ Gestión completa de la organización   │
-│ 80      │ propietario        │ Operaciones completas del negocio     │
 │ 50-79   │ (personalizado)    │ Gerentes, supervisores                │
 │ 10      │ empleado           │ Operaciones básicas                   │
 │ 5       │ cliente            │ Autoservicio (ver sus datos)          │
 │ 1       │ bot                │ Automatizaciones con permisos mínimos │
 └─────────┴────────────────────┴───────────────────────────────────────┘
 ```
+
+**Nota**: El primer usuario de una organización se crea con rol `admin` (nivel 90).
 
 ### Reglas Fundamentales
 
@@ -85,7 +86,7 @@ const { RolHelper } = require('../utils/helpers');
 
 // Verificaciones principales
 RolHelper.esSuperAdmin(user);           // nivel_jerarquia === 100
-RolHelper.esRolAdministrativo(user);    // nivel_jerarquia >= 80
+RolHelper.esRolAdministrativo(user);    // nivel_jerarquia >= 90
 RolHelper.tieneBypassPermisos(user);    // bypass_permisos === true
 RolHelper.puedeGestionarUsuario(gestor, objetivo);  // gestor.nivel > objetivo.nivel
 

@@ -2225,7 +2225,7 @@ router.post('/snapshots',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    auth.requireRole(['super_admin', 'admin', 'propietario']),
+    auth.requireRole(['super_admin', 'admin']),
     rateLimiting.apiRateLimit,
     asyncHandler(SnapshotsController.generar)
 );

@@ -56,6 +56,12 @@ function AppHomePage() {
   const clearSucursal = useSucursalStore(selectClearSucursal);
   const clearPermisos = usePermisosStore(selectClearPermisos);
 
+  // Detectar rol ANTES de los hooks para pasar enabled correctamente
+  // FIX RBAC Ene 2026: Evitar queries innecesarias para empleados
+  const esEmpleado = user?.rol_codigo === 'empleado';
+  const esSuperAdmin = user?.rol_codigo === 'super_admin';
+  const esAdmin = !esEmpleado; // Admin, propietario o super_admin
+
   // Modales centralizados
   const { openModal, closeModal, isOpen } = useModalManager({
     logout: { isOpen: false },
@@ -77,22 +83,17 @@ function AppHomePage() {
     esPlanFree,
   } = useModulos();
 
-  // Notificaciones por app
-  const notifications = useAppNotifications();
+  // Notificaciones por app - FIX RBAC Ene 2026: Solo para admin
+  const notifications = useAppNotifications({ enabled: esAdmin });
 
   // Multi-sucursal: verificar si tiene múltiples sucursales activas
   const { data: sucursales = [] } = useSucursales({ activo: true });
   const tieneMultiplesSucursales = sucursales.length > 1;
-  const { data: metricasSucursales } = useMetricasSucursales({});
+  // FIX RBAC Ene 2026: Solo admin puede ver métricas
+  const { data: metricasSucursales } = useMetricasSucursales({}, { enabled: esAdmin });
 
-  // Estado de suscripción (para TrialBanner)
-  const { data: estadoSuscripcion } = useEstadoSuscripcion();
-
-
-  // Detectar rol para adaptar la UI
-  // FASE 7: Usa rol_codigo en vez de rol ENUM
-  const esEmpleado = user?.rol_codigo === 'empleado';
-  const esSuperAdmin = user?.rol_codigo === 'super_admin';
+  // Estado de suscripción (para TrialBanner) - FIX RBAC Ene 2026: Solo admin
+  const { data: estadoSuscripcion } = useEstadoSuscripcion({ enabled: esAdmin });
 
   // Mutation de logout - Ene 2026: Limpieza completa de todos los stores
   const logoutMutation = useMutation({

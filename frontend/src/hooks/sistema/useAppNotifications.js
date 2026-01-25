@@ -7,8 +7,11 @@ import useSucursalStore, { selectGetSucursalId } from '@/store/sucursalStore';
 /**
  * Hook para obtener notificaciones/badges por aplicación
  * Usado en el App Home para mostrar indicadores visuales
+ *
+ * @param {Object} options - Opciones del hook
+ * @param {boolean} options.enabled - Si debe ejecutar las queries (default: true)
  */
-export function useAppNotifications() {
+export function useAppNotifications({ enabled = true } = {}) {
   const {
     tieneAgendamiento,
     tieneInventario,
@@ -29,7 +32,7 @@ export function useAppNotifications() {
       // Ene 2026: API devuelve { citas: [...], meta: {...} }
       return response.data.data?.citas || [];
     },
-    enabled: tieneAgendamiento,
+    enabled: enabled && tieneAgendamiento,
     staleTime: STALE_TIMES.DYNAMIC, // 2 minutos
     refetchInterval: 2 * 60 * 1000, // Alineado con staleTime
     refetchIntervalInBackground: false, // No refetch en tabs inactivas
@@ -42,13 +45,13 @@ export function useAppNotifications() {
       const response = await inventarioApi.obtenerAlertas({ estado: 'activa' });
       return response.data.data?.alertas || [];
     },
-    enabled: tieneInventario,
+    enabled: enabled && tieneInventario,
     staleTime: STALE_TIMES.SEMI_STATIC, // 5 minutos
     refetchInterval: 5 * 60 * 1000, // Alineado con staleTime
     refetchIntervalInBackground: false, // No refetch en tabs inactivas
   });
 
-  // Ventas del día
+  // Ventas del día - FIX RBAC Ene 2026: Solo para admin con permiso
   const { data: ventasData } = useQuery({
     queryKey: ['app-notifications', 'ventas-hoy', sucursalId],
     queryFn: async () => {
@@ -60,7 +63,7 @@ export function useAppNotifications() {
       });
       return response.data.data?.ventas || [];
     },
-    enabled: tienePOS && !!sucursalId,
+    enabled: enabled && tienePOS && !!sucursalId,
     staleTime: STALE_TIMES.DYNAMIC, // 2 minutos
     refetchInterval: 2 * 60 * 1000, // Alineado con staleTime
     refetchIntervalInBackground: false, // No refetch en tabs inactivas
@@ -73,7 +76,7 @@ export function useAppNotifications() {
       const response = await workflowsApi.contarPendientes();
       return response.data.data?.total || 0;
     },
-    enabled: tieneWorkflows, // Solo si tiene módulo workflows activo
+    enabled: enabled && tieneWorkflows, // Solo si tiene módulo workflows activo
     staleTime: STALE_TIMES.FREQUENT, // 1 minuto
     refetchInterval: 60 * 1000, // Alineado con staleTime
     refetchIntervalInBackground: false, // No refetch en tabs inactivas

@@ -225,11 +225,6 @@ export const ROLES_USUARIO = {
     description: 'Acceso total a la organización',
     color: 'purple',
   },
-  propietario: {
-    label: 'Propietario',
-    description: 'Acceso operativo completo',
-    color: 'blue',
-  },
   empleado: {
     label: 'Empleado',
     description: 'Acceso limitado según permisos',

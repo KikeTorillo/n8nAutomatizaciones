@@ -6,7 +6,8 @@ import {
   Button,
   Pagination,
   StatCardGrid,
-  ViewTabs
+  ViewTabs,
+  ConPermiso
 } from '@/components/ui';
 import CitasList from '@/components/citas/CitasList';
 import CitaFilters from '@/components/citas/CitaFilters';
@@ -265,16 +266,19 @@ function CitasPage() {
             <FileSpreadsheet className="w-4 h-4 sm:mr-2" />
             <span className="hidden sm:inline">Exportar CSV</span>
           </Button>
-          <Button
-            variant="primary"
-            onClick={() => handleNuevaCita()}
-            aria-label="Crear nueva cita"
-            className="flex-1 sm:flex-none"
-          >
-            <Plus className="w-5 h-5 sm:mr-2" />
-            <span className="hidden sm:inline">Nueva Cita</span>
-            <span className="sm:hidden">Nueva</span>
-          </Button>
+          {/* FIX RBAC Ene 2026: Ocultar si no tiene permiso */}
+          <ConPermiso codigo="agendamiento.crear_citas">
+            <Button
+              variant="primary"
+              onClick={() => handleNuevaCita()}
+              aria-label="Crear nueva cita"
+              className="flex-1 sm:flex-none"
+            >
+              <Plus className="w-5 h-5 sm:mr-2" />
+              <span className="hidden sm:inline">Nueva Cita</span>
+              <span className="sm:hidden">Nueva</span>
+            </Button>
+          </ConPermiso>
         </div>
       }
     >

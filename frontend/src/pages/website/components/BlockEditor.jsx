@@ -99,6 +99,7 @@ function BlockEditor({
   onReordenar,
   isLoading,
   tema,
+  industria = 'default',
 }) {
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -203,6 +204,7 @@ function BlockEditor({
                 onEliminar={() => onEliminar(bloque.id)}
                 onDuplicar={() => onDuplicar(bloque.id)}
                 tema={tema}
+                industria={industria}
               />
             ))}
           </div>
@@ -225,6 +227,7 @@ function BloqueItem({
   onEliminar,
   onDuplicar,
   tema,
+  industria = 'default',
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -365,6 +368,7 @@ function BloqueItem({
             onGuardar={handleGuardar}
             tema={tema}
             isSaving={isSaving}
+            industria={industria}
           />
         </div>
       )}

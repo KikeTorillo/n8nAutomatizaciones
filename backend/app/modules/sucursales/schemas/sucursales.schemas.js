@@ -62,7 +62,7 @@ const actualizarSucursalSchema = Joi.object({
 const asignarUsuarioSchema = Joi.object({
     usuario_id: Joi.number().integer().positive().required(),
     es_gerente: Joi.boolean().optional().default(false),
-    rol_sucursal: Joi.string().valid('admin', 'propietario', 'empleado', 'bot').optional().allow(null),
+    rol_sucursal: Joi.string().valid('admin', 'empleado', 'bot').optional().allow(null),
     permisos_override: Joi.object().optional().default({}),
     activo: Joi.boolean().optional().default(true)
 });

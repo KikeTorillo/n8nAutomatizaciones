@@ -17,7 +17,7 @@ const { idRequired, idOptional } = require('../../../schemas/shared');
 // CONSTANTES DE VALIDACIÓN
 // ========================================
 
-const ROLES_VALIDOS = ['admin', 'propietario', 'empleado', 'bot', 'recepcionista', 'cliente'];
+const ROLES_VALIDOS = ['admin', 'empleado', 'bot', 'recepcionista', 'cliente'];
 
 // Patrón para código de permiso: letras minúsculas, números, guión bajo y punto
 // Ejemplos válidos: pos.ventas.crear, inventario.productos.ver

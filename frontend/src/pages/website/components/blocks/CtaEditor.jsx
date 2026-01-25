@@ -1,16 +1,17 @@
-import { useState, useEffect } from 'react';
-import { Save } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { Save, Sparkles } from 'lucide-react';
 import {
   Button,
   Input,
   Select,
   Textarea
 } from '@/components/ui';
+import { AIGenerateButton, AISuggestionBanner } from '../AIGenerator';
 
 /**
  * CtaEditor - Editor del bloque Call To Action
  */
-function CtaEditor({ contenido, onGuardar, tema, isSaving }) {
+function CtaEditor({ contenido, onGuardar, tema, isSaving, industria = 'default' }) {
   const [form, setForm] = useState({
     titulo: contenido.titulo || '¿Listo para empezar?',
     subtitulo: contenido.subtitulo || '',
@@ -23,6 +24,9 @@ function CtaEditor({ contenido, onGuardar, tema, isSaving }) {
   });
 
   const [cambios, setCambios] = useState(false);
+
+  // Verificar si el contenido está esencialmente vacío (usa valores por defecto)
+  const contenidoVacio = contenido.titulo === '¿Listo para empezar?' || !contenido.titulo;
 
   useEffect(() => {
     setCambios(JSON.stringify(form) !== JSON.stringify({
@@ -43,6 +47,16 @@ function CtaEditor({ contenido, onGuardar, tema, isSaving }) {
     setCambios(false);
   };
 
+  // Callback para generación de IA de bloque completo
+  const handleAIGenerate = useCallback((generatedContent) => {
+    setForm(prev => ({
+      ...prev,
+      titulo: generatedContent.titulo || prev.titulo,
+      subtitulo: generatedContent.subtitulo || prev.subtitulo,
+      boton_texto: generatedContent.boton_texto || generatedContent.boton || prev.boton_texto,
+    }));
+  }, []);
+
   const estiloOptions = [
     { value: 'primario', label: 'Color primario' },
     { value: 'secundario', label: 'Color secundario' },
@@ -58,8 +72,28 @@ function CtaEditor({ contenido, onGuardar, tema, isSaving }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {/* Banner de sugerencia IA para contenido vacío */}
+      {contenidoVacio && (
+        <AISuggestionBanner
+          tipo="cta"
+          industria={industria}
+          onGenerate={handleAIGenerate}
+        />
+      )}
+
       <Input
-        label="Título"
+        label={
+          <span className="flex items-center gap-2">
+            Título
+            <AIGenerateButton
+              tipo="cta"
+              campo="titulo"
+              industria={industria}
+              onGenerate={(text) => setForm({ ...form, titulo: text })}
+              size="sm"
+            />
+          </span>
+        }
         value={form.titulo}
         onChange={(e) => setForm({ ...form, titulo: e.target.value })}
         placeholder="¿Listo para empezar?"
@@ -67,7 +101,19 @@ function CtaEditor({ contenido, onGuardar, tema, isSaving }) {
       />
 
       <Textarea
-        label="Subtítulo (opcional)"
+        label={
+          <span className="flex items-center gap-2">
+            Subtítulo (opcional)
+            <AIGenerateButton
+              tipo="cta"
+              campo="subtitulo"
+              industria={industria}
+              contexto={{ titulo: form.titulo }}
+              onGenerate={(text) => setForm({ ...form, subtitulo: text })}
+              size="sm"
+            />
+          </span>
+        }
         value={form.subtitulo}
         onChange={(e) => setForm({ ...form, subtitulo: e.target.value })}
         placeholder="Contáctanos hoy y recibe una consulta gratuita"
@@ -77,7 +123,18 @@ function CtaEditor({ contenido, onGuardar, tema, isSaving }) {
 
       <div className="grid grid-cols-2 gap-4">
         <Input
-          label="Texto del botón principal"
+          label={
+            <span className="flex items-center gap-2">
+              Texto del botón
+              <AIGenerateButton
+                tipo="cta"
+                campo="boton"
+                industria={industria}
+                onGenerate={(text) => setForm({ ...form, boton_texto: text })}
+                size="sm"
+              />
+            </span>
+          }
           value={form.boton_texto}
           onChange={(e) => setForm({ ...form, boton_texto: e.target.value })}
           placeholder="Contactar"

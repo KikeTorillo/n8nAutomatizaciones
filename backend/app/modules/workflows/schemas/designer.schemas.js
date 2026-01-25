@@ -43,7 +43,7 @@ const supervisorConfigSchema = Joi.object({
     permitir_auto_aprobacion: Joi.boolean()
         .default(false),
     fallback_rol: Joi.string()
-        .valid('admin', 'propietario')
+        .valid('admin')
         .allow(null)
         .optional()
 });
