@@ -114,6 +114,14 @@ export const suscripcionesNegocioApi = {
     apiClient.patch(`${BASE_URL}/suscripciones/mi-suscripcion/cambiar-plan`, data),
 
   /**
+   * Cancelar mi propia suscripción (dogfooding)
+   * @param {Object} data - { motivo_cancelacion }
+   * @returns {Promise<Object>}
+   */
+  cancelarMiSuscripcion: (data) =>
+    apiClient.post(`${BASE_URL}/suscripciones/mi-suscripcion/cancelar`, data),
+
+  /**
    * Buscar suscripciones de un cliente específico
    * @param {number} clienteId - ID del cliente
    * @returns {Promise<Object>} { suscripciones }

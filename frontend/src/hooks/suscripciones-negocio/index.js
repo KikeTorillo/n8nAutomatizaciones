@@ -31,23 +31,28 @@ export {
   usePlanesPublicos,
 } from './usePlanes';
 
-// Suscripciones
+// Suscripciones - Queries
 export {
   useSuscripciones,
   useSuscripcion,
   useSuscripcionesCliente,
   useHistorialSuscripcion,
   useMiSuscripcion,
+} from './queries';
+
+// Suscripciones - Mutations
+export {
   useCrearSuscripcion,
   useActualizarSuscripcion,
   useCambiarEstadoSuscripcion,
   useCambiarPlanSuscripcion,
   useCambiarMiPlan,
   useCancelarSuscripcion,
+  useCancelarMiSuscripcion,
   usePausarSuscripcion,
   useReactivarSuscripcion,
   useActualizarProximoCobro,
-} from './useSuscripciones';
+} from './mutations';
 
 // Cupones
 export {

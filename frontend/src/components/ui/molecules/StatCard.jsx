@@ -1,4 +1,5 @@
 import { memo } from 'react';
+import PropTypes from 'prop-types';
 import { cn } from '@/lib/utils';
 import { ICON_BG_COLORS, SEMANTIC_COLORS, LOADING_STATES } from '@/lib/uiConstants';
 
@@ -41,11 +42,11 @@ function StatCardSkeleton({ variant = 'compact' }) {
  *
  * @param {Object} props
  * @param {React.ComponentType} props.icon - Icono de lucide-react
- * @param {string} props.label - Etiqueta descriptiva (alias: title)
- * @param {string} [props.title] - Alias de label para compatibilidad
+ * @param {string} props.label - Etiqueta descriptiva
+ * @param {string} [props.title] - @deprecated Usar "label" en su lugar
  * @param {number|string} props.value - Valor a mostrar
- * @param {string} [props.subtext] - Texto secundario opcional (alias: subtitle)
- * @param {string} [props.subtitle] - Alias de subtext para compatibilidad
+ * @param {string} [props.subtext] - Texto secundario opcional
+ * @param {string} [props.subtitle] - @deprecated Usar "subtext" en su lugar
  * @param {string} [props.color='primary'] - Color del icono
  * @param {Object} [props.trend] - Tendencia opcional (solo variant=compact)
  * @param {number} props.trend.value - Valor de la tendencia
@@ -69,7 +70,13 @@ export const StatCard = memo(function StatCard({
   onClick,
   className,
 }) {
-  // Resolver aliases
+  // Deprecation warnings en desarrollo
+  if (process.env.NODE_ENV === 'development') {
+    if (title) console.warn('StatCard: prop "title" está deprecada, usar "label"');
+    if (subtitle) console.warn('StatCard: prop "subtitle" está deprecada, usar "subtext"');
+  }
+
+  // Resolver aliases (mantener retrocompatibilidad)
   const displayLabel = label || title;
   const displaySubtext = subtext || subtitle;
   const colors = ICON_BG_COLORS[color] || ICON_BG_COLORS.primary;
@@ -168,3 +175,23 @@ export const StatCard = memo(function StatCard({
 });
 
 StatCard.displayName = 'StatCard';
+
+StatCard.propTypes = {
+  icon: PropTypes.elementType.isRequired,
+  label: PropTypes.string,
+  /** @deprecated Usar "label" en su lugar */
+  title: PropTypes.string,
+  value: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
+  subtext: PropTypes.string,
+  /** @deprecated Usar "subtext" en su lugar */
+  subtitle: PropTypes.string,
+  color: PropTypes.string,
+  trend: PropTypes.shape({
+    value: PropTypes.number.isRequired,
+    isPositive: PropTypes.bool.isRequired,
+  }),
+  variant: PropTypes.oneOf(['compact', 'expanded']),
+  isLoading: PropTypes.bool,
+  onClick: PropTypes.func,
+  className: PropTypes.string,
+};

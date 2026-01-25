@@ -495,6 +495,60 @@ const optionalAuth = async (req, res, next) => {
 };
 
 /**
+ * Middleware para requerir nivel jerárquico mínimo (reemplaza requireRole)
+ *
+ * Niveles de referencia:
+ * - 100: super_admin
+ * - 90: admin
+ * - 80: propietario
+ * - 50: manager/empleado_senior
+ * - 10: empleado
+ * - 5: cliente
+ *
+ * @param {number} nivelMinimo - Nivel jerárquico mínimo requerido
+ */
+const requireMinLevel = (nivelMinimo) => {
+    const { RolHelper } = require('../utils/helpers');
+
+    return (req, res, next) => {
+        if (!req.user) {
+            logger.error('requireMinLevel usado sin autenticación previa');
+            return ResponseHelper.error(res, 'Error de configuración', 500);
+        }
+
+        // Bypass para super_admin o roles con bypass_permisos
+        if (req.user.bypass_permisos || RolHelper.esSuperAdmin(req.user)) {
+            return next();
+        }
+
+        if (!RolHelper.tieneNivelMinimo(req.user, nivelMinimo)) {
+            logger.warn('Acceso denegado por nivel insuficiente', {
+                userId: req.user.id,
+                userRol: req.user.rol_codigo,
+                nivel_usuario: req.user.nivel_jerarquia,
+                nivel_requerido: nivelMinimo,
+                path: req.path,
+                ip: req.ip
+            });
+            return ResponseHelper.error(res, 'Acceso denegado', 403, {
+                code: 'INSUFFICIENT_LEVEL',
+                userLevel: req.user.nivel_jerarquia,
+                requiredLevel: nivelMinimo
+            });
+        }
+        next();
+    };
+};
+
+/**
+ * Aliases para legibilidad común
+ * - requireOwner: nivel 80+ (propietario, admin, super_admin)
+ * - requireManager: nivel 50+ (manager, propietario, admin, super_admin)
+ */
+const requireOwner = () => requireMinLevel(80);
+const requireManager = () => requireMinLevel(50);
+
+/**
  * Middleware para requerir rol de administrador
  * FASE 7 COMPLETADA: Usa bypass_permisos o nivel_jerarquia >= 80
  */
@@ -535,6 +589,9 @@ const requireOwnerOrAdmin = (req, res, next) => {
 module.exports = {
     authenticateToken,
     requireRole,
+    requireMinLevel,
+    requireOwner,
+    requireManager,
     requireAdmin,
     requireAdminRole,
     requireOwnerOrAdmin,

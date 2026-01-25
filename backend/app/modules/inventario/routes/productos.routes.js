@@ -6,8 +6,9 @@
 
 const express = require('express');
 const InventarioController = require('../controllers');
-const { auth, tenant, rateLimiting, validation, subscription, modules } = require('../../../middleware');
+const { auth, tenant, rateLimiting, validation, subscription, modules, permisos } = require('../../../middleware');
 const inventarioSchemas = require('../schemas/inventario.schemas');
+const { verificarPermiso } = permisos;
 
 const router = express.Router();
 const validate = validation.validate;
@@ -21,6 +22,7 @@ router.post('/productos',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
+    verificarPermiso('inventario.crear_productos'),
     rateLimiting.apiRateLimit,
     validate(inventarioSchemas.crearProducto),
     InventarioController.crearProducto
@@ -36,6 +38,7 @@ router.post('/productos/bulk',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
+    verificarPermiso('inventario.crear_productos'),
     rateLimiting.apiRateLimit,
     validate(inventarioSchemas.bulkCrearProductos),
     InventarioController.bulkCrearProductos
@@ -111,6 +114,7 @@ router.put('/productos/:id',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
+    verificarPermiso('inventario.editar_productos'),
     rateLimiting.apiRateLimit,
     validate(inventarioSchemas.actualizarProducto),
     InventarioController.actualizarProducto
@@ -127,6 +131,7 @@ router.patch('/productos/:id/stock',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
+    verificarPermiso('inventario.ajustar_stock'),
     rateLimiting.apiRateLimit,
     validate(inventarioSchemas.ajustarStock),
     InventarioController.ajustarStockProducto
@@ -165,6 +170,7 @@ router.delete('/productos/:id',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
+    verificarPermiso('inventario.eliminar_productos'),
     rateLimiting.apiRateLimit,
     validate(inventarioSchemas.obtenerPorId),
     InventarioController.eliminarProducto

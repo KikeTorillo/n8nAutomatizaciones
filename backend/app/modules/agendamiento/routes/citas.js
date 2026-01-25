@@ -1,6 +1,7 @@
 const express = require('express');
 const CitaController = require('../controllers/citas');
 const { auth, tenant, rateLimiting, validation, subscription } = require('../../../middleware');
+const { verificarPermiso } = require('../../../middleware/permisos');
 const citaSchemas = require('../schemas/cita.schemas');
 
 const router = express.Router();
@@ -42,6 +43,7 @@ router.post('/walk-in',
     auth.authenticateToken,
     tenant.setTenantContext,
     tenant.verifyTenantActive,
+    verificarPermiso('agendamiento.crear_citas'),
     rateLimiting.apiRateLimit,
     validate(citaSchemas.crearWalkIn),
     CitaController.crearWalkIn
@@ -91,6 +93,7 @@ router.post('/recurrente',
     auth.authenticateToken,
     tenant.setTenantContext,
     tenant.verifyTenantActive,
+    verificarPermiso('agendamiento.crear_citas'),
     rateLimiting.apiRateLimit,
     validate(citaSchemas.crear),  // Usa el schema crear que incluye patron_recurrencia
     CitaController.crearRecurrente
@@ -116,6 +119,7 @@ router.post('/serie/:serieId/cancelar',
     auth.authenticateToken,
     tenant.setTenantContext,
     tenant.verifyTenantActive,
+    verificarPermiso('agendamiento.cancelar_citas'),
     rateLimiting.apiRateLimit,
     validate(citaSchemas.cancelarSerie),
     CitaController.cancelarSerie
@@ -204,6 +208,7 @@ router.put('/:id',
     auth.authenticateToken,
     tenant.setTenantContext,
     tenant.verifyTenantActive,
+    verificarPermiso('agendamiento.editar_citas'),
     rateLimiting.apiRateLimit,
     validate(citaSchemas.actualizar),
     CitaController.actualizar
@@ -213,6 +218,7 @@ router.delete('/:id',
     auth.authenticateToken,
     tenant.setTenantContext,
     tenant.verifyTenantActive,
+    verificarPermiso('agendamiento.cancelar_citas'),
     rateLimiting.apiRateLimit,
     validate(citaSchemas.eliminar),
     CitaController.eliminar
@@ -252,6 +258,7 @@ router.post('/:id/complete',
     auth.authenticateToken,
     tenant.setTenantContext,
     tenant.verifyTenantActive,
+    verificarPermiso('agendamiento.completar_citas'),
     rateLimiting.apiRateLimit,
     validate(citaSchemas.complete),
     CitaController.complete
@@ -261,6 +268,7 @@ router.post('/:id/reagendar',
     auth.authenticateToken,
     tenant.setTenantContext,
     tenant.verifyTenantActive,
+    verificarPermiso('agendamiento.editar_citas'),
     rateLimiting.apiRateLimit,
     validate(citaSchemas.reagendar),
     CitaController.reagendar
@@ -279,6 +287,7 @@ router.post('/:id/cancelar',
     auth.authenticateToken,
     tenant.setTenantContext,
     tenant.verifyTenantActive,
+    verificarPermiso('agendamiento.cancelar_citas'),
     rateLimiting.apiRateLimit,
     validate(citaSchemas.cancelar),
     CitaController.cancelar

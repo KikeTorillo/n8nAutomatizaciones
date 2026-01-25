@@ -1,4 +1,5 @@
 import { memo, useCallback } from 'react';
+import PropTypes from 'prop-types';
 import { cn } from '@/lib/utils';
 import {
   TAB_CONTAINER_STYLES,
@@ -76,5 +77,29 @@ const TabButton = memo(function TabButton({ tab, isActive, onChange }) {
 });
 
 ViewTabs.displayName = 'ViewTabs';
+
+ViewTabs.propTypes = {
+  tabs: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.string.isRequired,
+      label: PropTypes.string.isRequired,
+      icon: PropTypes.elementType,
+    })
+  ).isRequired,
+  activeTab: PropTypes.string.isRequired,
+  onChange: PropTypes.func.isRequired,
+  className: PropTypes.string,
+  ariaLabel: PropTypes.string,
+};
+
+TabButton.propTypes = {
+  tab: PropTypes.shape({
+    id: PropTypes.string.isRequired,
+    label: PropTypes.string.isRequired,
+    icon: PropTypes.elementType,
+  }).isRequired,
+  isActive: PropTypes.bool.isRequired,
+  onChange: PropTypes.func.isRequired,
+};
 
 export default ViewTabs;

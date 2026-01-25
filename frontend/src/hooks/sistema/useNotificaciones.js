@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { notificacionesApi } from '@/services/api/endpoints';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
+import { queryKeys } from '@/hooks/config';
 
 // ==================== FEED DE NOTIFICACIONES ====================
 
@@ -11,7 +12,7 @@ import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
  */
 export function useNotificaciones(params = {}) {
   return useQuery({
-    queryKey: ['notificaciones', params],
+    queryKey: queryKeys.sistema.notificaciones.list(params),
     queryFn: async () => {
       const sanitizedParams = Object.entries(params).reduce((acc, [key, value]) => {
         if (value !== '' && value !== null && value !== undefined) {
@@ -33,7 +34,7 @@ export function useNotificaciones(params = {}) {
  */
 export function useNotificacionesCount() {
   return useQuery({
-    queryKey: ['notificaciones-count'],
+    queryKey: queryKeys.sistema.notificaciones.count,
     queryFn: async () => {
       const response = await notificacionesApi.contarNoLeidas();
       return response.data.data?.no_leidas || 0;
@@ -55,8 +56,8 @@ export function useMarcarNotificacionLeida() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notificaciones'] });
-      queryClient.invalidateQueries({ queryKey: ['notificaciones-count'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.sistema.notificaciones.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.sistema.notificaciones.count });
     },
     onError: createCRUDErrorHandler('update', 'Notificacion'),
   });
@@ -74,8 +75,8 @@ export function useMarcarTodasNotificacionesLeidas() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notificaciones'] });
-      queryClient.invalidateQueries({ queryKey: ['notificaciones-count'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.sistema.notificaciones.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.sistema.notificaciones.count });
     },
     onError: createCRUDErrorHandler('update', 'Notificaciones'),
   });
@@ -93,8 +94,8 @@ export function useArchivarNotificacion() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notificaciones'] });
-      queryClient.invalidateQueries({ queryKey: ['notificaciones-count'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.sistema.notificaciones.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.sistema.notificaciones.count });
     },
     onError: createCRUDErrorHandler('update', 'Notificacion'),
   });
@@ -112,8 +113,8 @@ export function useEliminarNotificacion() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notificaciones'] });
-      queryClient.invalidateQueries({ queryKey: ['notificaciones-count'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.sistema.notificaciones.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.sistema.notificaciones.count });
     },
     onError: createCRUDErrorHandler('delete', 'Notificacion'),
   });
@@ -138,7 +139,7 @@ export function useCrearNotificacion() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notificaciones'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.sistema.notificaciones.all });
     },
     onError: createCRUDErrorHandler('create', 'Notificacion'),
   });
@@ -151,7 +152,7 @@ export function useCrearNotificacion() {
  */
 export function useNotificacionesPreferencias() {
   return useQuery({
-    queryKey: ['notificaciones-preferencias'],
+    queryKey: queryKeys.sistema.notificaciones.preferencias,
     queryFn: async () => {
       const response = await notificacionesApi.obtenerPreferencias();
       return response.data.data || {};
@@ -172,7 +173,7 @@ export function useActualizarNotificacionesPreferencias() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notificaciones-preferencias'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.sistema.notificaciones.preferencias });
     },
     onError: createCRUDErrorHandler('update', 'Preferencias'),
   });
@@ -183,7 +184,7 @@ export function useActualizarNotificacionesPreferencias() {
  */
 export function useNotificacionesTipos() {
   return useQuery({
-    queryKey: ['notificaciones-tipos'],
+    queryKey: queryKeys.sistema.notificaciones.tipos,
     queryFn: async () => {
       const response = await notificacionesApi.obtenerTipos();
       return response.data.data || {};
@@ -199,7 +200,7 @@ export function useNotificacionesTipos() {
  */
 export function useNotificacionesPlantillas() {
   return useQuery({
-    queryKey: ['notificaciones-plantillas'],
+    queryKey: queryKeys.sistema.notificaciones.plantillas,
     queryFn: async () => {
       const response = await notificacionesApi.listarPlantillas();
       return response.data.data || [];
@@ -227,7 +228,7 @@ export function useCrearNotificacionPlantilla() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notificaciones-plantillas'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.sistema.notificaciones.plantillas });
     },
     onError: createCRUDErrorHandler('create', 'Plantilla'),
   });
@@ -252,7 +253,7 @@ export function useActualizarNotificacionPlantilla() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notificaciones-plantillas'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.sistema.notificaciones.plantillas });
     },
     onError: createCRUDErrorHandler('update', 'Plantilla'),
   });
@@ -270,7 +271,7 @@ export function useEliminarNotificacionPlantilla() {
       return id;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notificaciones-plantillas'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.sistema.notificaciones.plantillas });
     },
     onError: createCRUDErrorHandler('delete', 'Plantilla'),
   });

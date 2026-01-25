@@ -1,7 +1,8 @@
 import { memo, useMemo } from 'react';
+import PropTypes from 'prop-types';
 import { Filter, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { SearchInput } from './SearchInput';
+import { SearchInput } from '../molecules/SearchInput';
 import { Button } from '../atoms/Button';
 import Badge from '../atoms/Badge';
 
@@ -10,6 +11,7 @@ import Badge from '../atoms/Badge';
  *
  * Ene 2026: Componente reutilizable que combina SearchInput con
  * toggle de filtros y chips de filtros activos.
+ * Movido a organisms/ por componer múltiples molecules y manejar lógica compleja.
  *
  * @param {string} searchValue - Valor actual de búsqueda
  * @param {function} onSearchChange - Callback cuando cambia búsqueda
@@ -112,6 +114,21 @@ function SearchFilterBar({
 }
 
 SearchFilterBar.displayName = 'SearchFilterBar';
+
+SearchFilterBar.propTypes = {
+  searchValue: PropTypes.string,
+  onSearchChange: PropTypes.func,
+  onFiltersToggle: PropTypes.func,
+  showFilters: PropTypes.bool,
+  filtrosActivos: PropTypes.number,
+  onClearFilters: PropTypes.func,
+  placeholder: PropTypes.string,
+  actions: PropTypes.node,
+  className: PropTypes.string,
+  debounceMs: PropTypes.number,
+  onSearch: PropTypes.func,
+  size: PropTypes.oneOf(['sm', 'md', 'lg']),
+};
 
 const MemoizedSearchFilterBar = memo(SearchFilterBar);
 export { MemoizedSearchFilterBar as SearchFilterBar };

@@ -1,4 +1,5 @@
 import { useState, memo } from 'react';
+import PropTypes from 'prop-types';
 import { ChevronRight, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -111,6 +112,21 @@ export const TreeNode = memo(function TreeNode({
 
 TreeNode.displayName = 'TreeNode';
 
+TreeNode.propTypes = {
+  node: PropTypes.object.isRequired,
+  level: PropTypes.number,
+  childrenKey: PropTypes.string,
+  expandedState: PropTypes.object.isRequired,
+  onToggleExpand: PropTypes.func.isRequired,
+  renderContent: PropTypes.func.isRequired,
+  renderActions: PropTypes.func,
+  getNodeId: PropTypes.func,
+  indentSize: PropTypes.number,
+  className: PropTypes.string,
+  nodeClassName: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
+  showToggleOnEmpty: PropTypes.bool,
+};
+
 /**
  * TreeView - Wrapper para renderizar un árbol completo con controles de expansión
  *
@@ -181,6 +197,22 @@ export const TreeView = memo(function TreeView({
 });
 
 TreeView.displayName = 'TreeView';
+
+TreeView.propTypes = {
+  data: PropTypes.array,
+  childrenKey: PropTypes.string,
+  expandedState: PropTypes.object.isRequired,
+  onToggleExpand: PropTypes.func.isRequired,
+  renderContent: PropTypes.func.isRequired,
+  renderActions: PropTypes.func,
+  getNodeId: PropTypes.func,
+  indentSize: PropTypes.number,
+  className: PropTypes.string,
+  nodeClassName: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
+  emptyState: PropTypes.node,
+  isLoading: PropTypes.bool,
+  loadingState: PropTypes.node,
+};
 
 /**
  * Hook para manejar el estado de expansión del árbol

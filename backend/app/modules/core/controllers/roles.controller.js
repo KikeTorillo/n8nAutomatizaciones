@@ -29,9 +29,7 @@ const listar = async (req, res) => {
 
   const resultado = await RolesModel.listar(filtros);
 
-  return ResponseHelper.success(res, resultado.items, 'Roles listados', {
-    paginacion: resultado.paginacion
-  });
+  return ResponseHelper.paginated(res, resultado.items, resultado.paginacion, 'Roles listados');
 };
 
 /**

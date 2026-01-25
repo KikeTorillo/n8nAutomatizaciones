@@ -11,7 +11,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { inventarioApi } from '@/services/api/endpoints';
 import { sanitizeParams } from '@/lib/params';
 import { STALE_TIMES } from '@/app/queryClient';
-import { createCRUDHooks, createSanitizer } from '@/hooks/factories';
+import { createCRUDHooks, createSanitizer, createSearchHook } from '@/hooks/factories';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 
 // =========================================================================
@@ -71,19 +71,15 @@ export const useEliminarProducto = hooks.useDelete;
 
 /**
  * Hook para buscar productos (full-text search + código de barras)
- * @param {Object} params - { q, tipo_busqueda?, categoria_id?, proveedor_id?, solo_activos?, solo_con_stock?, limit? }
+ * Refactorizado con createSearchHook - Ene 2026
+ * @param {string} termino - Término de búsqueda
+ * @param {Object} options - { tipo_busqueda?, categoria_id?, proveedor_id?, solo_activos?, solo_con_stock?, limit? }
  */
-export function useBuscarProductos(params) {
-  return useQuery({
-    queryKey: ['buscar-productos', params],
-    queryFn: async () => {
-      const response = await inventarioApi.buscarProductos(sanitizeParams(params));
-      return response.data.data || [];
-    },
-    enabled: !!params.q && params.q.length >= 2,
-    staleTime: STALE_TIMES.DYNAMIC, // 2 minutos - Ene 2026: aumentado para reducir requests POS
-  });
-}
+export const useBuscarProductos = createSearchHook({
+  key: 'productos',
+  searchFn: (params) => inventarioApi.buscarProductos(sanitizeParams(params)),
+  transformResponse: (data) => data || [],
+});
 
 /**
  * Hook para obtener productos con stock crítico

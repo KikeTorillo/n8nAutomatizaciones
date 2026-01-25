@@ -46,3 +46,6 @@ export * from './suscripciones-negocio';
 
 // Factories (para crear hooks CRUD personalizados)
 export * from './factories';
+
+// UI (Filtros, Context, etc.)
+export * from './ui';

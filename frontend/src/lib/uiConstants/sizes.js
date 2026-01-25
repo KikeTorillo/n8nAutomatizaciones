@@ -84,28 +84,6 @@ export const AVATAR_SIZES = {
 };
 
 /**
- * Tamaños para padding en cards/containers
- */
-export const PADDING_SIZES = {
-  sm: 'p-2',
-  md: 'p-4',
-  lg: 'p-6',
-  xl: 'p-8',
-};
-
-/**
- * Tamaños para gap/espaciado
- */
-export const GAP_SIZES = {
-  xs: 'gap-1',
-  sm: 'gap-2',
-  md: 'gap-3',
-  lg: 'gap-4',
-  xl: 'gap-6',
-  '2xl': 'gap-8',
-};
-
-/**
  * Tamaños para texto
  */
 export const TEXT_SIZES = {
@@ -198,6 +176,30 @@ export const PAGINATION_SIZES = {
   },
 };
 
+/**
+ * Tamaños para ToggleSwitch
+ */
+export const TOGGLE_SIZES = {
+  sm: {
+    track: 'h-5 w-9',
+    thumb: 'h-4 w-4',
+    translate: 'translate-x-4',
+    icon: 'h-3 w-3 m-0.5',
+  },
+  md: {
+    track: 'h-6 w-11',
+    thumb: 'h-5 w-5',
+    translate: 'translate-x-5',
+    icon: 'h-4 w-4 m-0.5',
+  },
+  lg: {
+    track: 'h-7 w-14',
+    thumb: 'h-6 w-6',
+    translate: 'translate-x-7',
+    icon: 'h-5 w-5 m-0.5',
+  },
+};
+
 export default {
   FORM_ELEMENT_HEIGHTS,
   BUTTON_SIZES,
@@ -206,12 +208,11 @@ export default {
   BADGE_SIZES,
   INPUT_SIZES,
   AVATAR_SIZES,
-  PADDING_SIZES,
-  GAP_SIZES,
   TEXT_SIZES,
   ICON_CONTAINER_SIZES,
   MODAL_SIZES,
   DRAWER_SIZES,
   SEARCH_INPUT_SIZES,
   PAGINATION_SIZES,
+  TOGGLE_SIZES,
 };

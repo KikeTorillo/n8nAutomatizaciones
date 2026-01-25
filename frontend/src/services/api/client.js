@@ -16,6 +16,7 @@ const apiClient = axios.create({
   // En desarrollo: /api/v1 → Vite proxy → http://back:3000/api/v1
   // En producción: /api/v1 → Nginx/Backend directo
   baseURL: '/api/v1',
+  timeout: 30000, // 30 segundos - Ene 2026
   headers: {
     'Content-Type': 'application/json',
   },
@@ -96,7 +97,7 @@ apiClient.interceptors.response.use(
         const response = await axios.post(
           `${apiClient.defaults.baseURL}/auth/refresh`,
           {}, // Body vacío - el refreshToken viene en la cookie
-          { withCredentials: true }
+          { withCredentials: true, timeout: 10000 } // 10s para refresh
         );
 
         const { accessToken: newAccessToken } = response.data.data;
@@ -136,6 +137,7 @@ apiClient.interceptors.response.use(
 // Cliente para rutas públicas sin autenticación (eventos-digitales, website, etc.)
 const publicApiClient = axios.create({
   baseURL: '/api/v1',
+  timeout: 30000, // 30 segundos - Ene 2026
   headers: {
     'Content-Type': 'application/json',
   },

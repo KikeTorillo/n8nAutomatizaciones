@@ -1,4 +1,5 @@
 import { memo } from 'react';
+import PropTypes from 'prop-types';
 import { cn } from '@/lib/utils';
 import { Inbox } from 'lucide-react';
 import { Button } from '../atoms/Button';
@@ -74,3 +75,15 @@ export const EmptyState = memo(function EmptyState({
 });
 
 EmptyState.displayName = 'EmptyState';
+
+EmptyState.propTypes = {
+  icon: PropTypes.elementType,
+  title: PropTypes.string.isRequired,
+  description: PropTypes.string,
+  actionLabel: PropTypes.string,
+  onAction: PropTypes.func,
+  actionVariant: PropTypes.oneOf(['primary', 'secondary', 'outline']),
+  children: PropTypes.node,
+  size: PropTypes.oneOf(['sm', 'md', 'lg']),
+  className: PropTypes.string,
+};

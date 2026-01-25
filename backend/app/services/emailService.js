@@ -330,6 +330,43 @@ class EmailService {
     }
 
     /**
+     * Envía un email genérico con contenido personalizado
+     * Ene 2026 - Método público para templates de suscripciones
+     *
+     * @param {Object} params - Parámetros del email
+     * @param {string} params.to - Email del destinatario
+     * @param {string} params.subject - Asunto del email
+     * @param {string} params.html - Contenido HTML del email
+     * @param {string} params.text - Contenido texto plano (fallback)
+     * @returns {Promise<Object>} Resultado del envío
+     */
+    async enviarEmail({ to, subject, html, text }) {
+        try {
+            const mailOptions = {
+                from: this.emailFrom,
+                to,
+                subject,
+                html,
+                text
+            };
+
+            const result = await this._sendEmail(mailOptions);
+
+            if (result.success) {
+                const logger = require('../utils/logger');
+                logger.info(`Email enviado exitosamente a: ${to} - Asunto: ${subject}`);
+            }
+
+            return result;
+
+        } catch (error) {
+            const logger = require('../utils/logger');
+            logger.error(`Error enviando email a ${to}: ${error.message}`);
+            throw error;
+        }
+    }
+
+    /**
      * Envía un email genérico (método interno)
      * @param {Object} mailOptions - Opciones del email (nodemailer format)
      * @returns {Promise<Object>} Resultado del envío

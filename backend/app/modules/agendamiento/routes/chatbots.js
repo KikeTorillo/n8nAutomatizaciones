@@ -46,6 +46,7 @@ router.post('/configurar',
     auth.authenticateToken,
     tenant.setTenantContext,
     tenant.verifyTenantActive,
+    auth.requireAdminRole, // Solo admin/propietario
     validation.validate(chatbotSchemas.configurar),
     ChatbotController.configurar
 );
@@ -83,6 +84,7 @@ router.put('/:id',
     auth.authenticateToken,
     tenant.setTenantContext,
     tenant.verifyTenantActive,
+    auth.requireAdminRole, // Solo admin/propietario
     validation.validate(chatbotSchemas.actualizar),
     ChatbotController.actualizar
 );

@@ -261,7 +261,7 @@ CREDENTIAL_ENCRYPTION_KEY=<64_chars_hex>
 | `suscripciones-suspender` | 02:00 | Suspender grace_period vencido |
 | `suscripciones-trials-expirados` | 03:00 | Procesar trials expirados |
 
-**Documentación completa:** `/docs/PLAN_DOGFOODING_NEXO_TEAM.md`
+**Documentación completa:** `/docs/PLAN_VALIDACION_SISTEMA.md`
 
 ---
 
@@ -289,11 +289,18 @@ CREDENTIAL_ENCRYPTION_KEY=<64_chars_hex>
 | **Suscripciones-Negocio** | ✅ E2E (Checkout, Webhooks, Upgrade/Downgrade) |
 | Chatbots IA | ⏳ CRUD OK (conversación pendiente) |
 
-**Próximo:** Validar cancelación de suscripción + crear segunda org de prueba
+**Próximo:** Pruebas de roles/permisos con usuario profesional
 
 ---
 
 ## Changelog Resumido
+
+### 25 Ene 2026 - Sistema Roles y Permisos Dinámicos
+
+- **PermisosPage migrado**: Usa `useRoles()` dinámico en lugar de lista hardcodeada
+- **Navegación Roles**: Agregado enlace en hub de Configuración
+- **APIs validadas**: `/api/v1/roles` y `/api/v1/roles/:id/permisos` funcionando
+- **Doc unificada**: `PLAN_VALIDACION_SISTEMA.md` (suscripciones + RBAC)
 
 ### 24 Ene 2026 - Sistema Suscripciones Completo
 
@@ -322,4 +329,4 @@ CREDENTIAL_ENCRYPTION_KEY=<64_chars_hex>
 
 ---
 
-**Actualizado**: 24 Enero 2026
+**Actualizado**: 25 Enero 2026

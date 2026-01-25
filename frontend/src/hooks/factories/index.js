@@ -21,3 +21,5 @@ export {
   createSucursalContextHook,
   createSucursalQueryOptions,
 } from './createSucursalContextHook';
+
+export { createSearchHook } from './createSearchHook';

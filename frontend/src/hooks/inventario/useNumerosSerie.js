@@ -1,6 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { inventarioApi } from '@/services/api/endpoints';
 import { STALE_TIMES } from '@/app/queryClient';
+import { createSearchHook } from '@/hooks/factories';
+import { queryKeys } from '@/hooks/config';
 
 /**
  * Hooks para Numeros de Serie / Lotes
@@ -11,10 +13,11 @@ import { STALE_TIMES } from '@/app/queryClient';
 
 /**
  * Hook para listar numeros de serie con filtros y paginacion
+ * Ene 2026: Migrado a queryKeys centralizados
  */
 export function useNumerosSerie(filtros = {}) {
     return useQuery({
-        queryKey: ['numeros-serie', filtros],
+        queryKey: queryKeys.inventario.numerosSerie.list(filtros),
         queryFn: async () => {
             const sanitizedParams = Object.entries(filtros).reduce((acc, [key, value]) => {
                 if (value !== '' && value !== null && value !== undefined) {
@@ -32,25 +35,20 @@ export function useNumerosSerie(filtros = {}) {
 
 /**
  * Hook para buscar numeros de serie
+ * Refactorizado con createSearchHook - Ene 2026
  */
-export function useBuscarNumeroSerie(termino) {
-    return useQuery({
-        queryKey: ['numeros-serie', 'buscar', termino],
-        queryFn: async () => {
-            const response = await inventarioApi.buscarNumeroSerie(termino);
-            return response.data.data;
-        },
-        enabled: termino?.length >= 2,
-        staleTime: STALE_TIMES.REAL_TIME,
-    });
-}
+export const useBuscarNumeroSerie = createSearchHook({
+    key: 'numeros-serie',
+    searchFn: (params) => inventarioApi.buscarNumeroSerie(params.q),
+    staleTime: STALE_TIMES.REAL_TIME,
+});
 
 /**
  * Hook para obtener numero de serie por ID
  */
 export function useNumeroSerie(id) {
     return useQuery({
-        queryKey: ['numeros-serie', id],
+        queryKey: queryKeys.inventario.numerosSerie.detail(id),
         queryFn: async () => {
             const response = await inventarioApi.obtenerNumeroSerie(id);
             return response.data.data;
@@ -65,7 +63,7 @@ export function useNumeroSerie(id) {
  */
 export function useHistorialNumeroSerie(id) {
     return useQuery({
-        queryKey: ['numeros-serie', id, 'historial'],
+        queryKey: queryKeys.inventario.numerosSerie.historial(id),
         queryFn: async () => {
             const response = await inventarioApi.obtenerHistorialNumeroSerie(id);
             return response.data.data;
@@ -88,7 +86,7 @@ export function useNumerosSerieDisponibles(productoId, options = {}) {
     const { sucursalId, enabled = true } = options;
 
     return useQuery({
-        queryKey: ['numeros-serie', 'disponibles', productoId, sucursalId],
+        queryKey: queryKeys.inventario.numerosSerie.disponibles(productoId, sucursalId),
         queryFn: async () => {
             const response = await inventarioApi.obtenerNumerosSerieDisponibles(
                 productoId,
@@ -106,7 +104,7 @@ export function useNumerosSerieDisponibles(productoId, options = {}) {
  */
 export function useResumenNumeroSerieProducto(productoId) {
     return useQuery({
-        queryKey: ['numeros-serie', 'resumen', productoId],
+        queryKey: queryKeys.inventario.numerosSerie.resumen(productoId),
         queryFn: async () => {
             const response = await inventarioApi.obtenerResumenNumeroSerieProducto(productoId);
             return response.data.data;
@@ -121,7 +119,7 @@ export function useResumenNumeroSerieProducto(productoId) {
  */
 export function useProductosConSerie() {
     return useQuery({
-        queryKey: ['numeros-serie', 'productos-con-serie'],
+        queryKey: queryKeys.inventario.numerosSerie.productosConSerie,
         queryFn: async () => {
             const response = await inventarioApi.obtenerProductosConSerie();
             return response.data.data;
@@ -137,7 +135,7 @@ export function useProductosConSerie() {
  */
 export function useEstadisticasNumerosSerie() {
     return useQuery({
-        queryKey: ['numeros-serie', 'estadisticas'],
+        queryKey: queryKeys.inventario.numerosSerie.estadisticas,
         queryFn: async () => {
             const response = await inventarioApi.obtenerEstadisticasNumerosSerie();
             return response.data.data;
@@ -151,7 +149,7 @@ export function useEstadisticasNumerosSerie() {
  */
 export function useProximosVencer(dias = 30) {
     return useQuery({
-        queryKey: ['numeros-serie', 'proximos-vencer', dias],
+        queryKey: queryKeys.inventario.numerosSerie.proximosVencer(dias),
         queryFn: async () => {
             const response = await inventarioApi.obtenerProximosVencer(dias);
             return response.data.data;
@@ -174,7 +172,7 @@ export function useCrearNumeroSerie() {
             return response.data;
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['numeros-serie'] });
+            queryClient.invalidateQueries({ queryKey: queryKeys.inventario.numerosSerie.all });
         },
     });
 }
@@ -191,7 +189,7 @@ export function useCrearNumerosSerieMultiple() {
             return response.data;
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['numeros-serie'] });
+            queryClient.invalidateQueries({ queryKey: queryKeys.inventario.numerosSerie.all });
         },
     });
 }
@@ -211,7 +209,7 @@ export function useVenderNumeroSerie() {
             return response.data;
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['numeros-serie'] });
+            queryClient.invalidateQueries({ queryKey: queryKeys.inventario.numerosSerie.all });
         },
     });
 }
@@ -232,7 +230,7 @@ export function useTransferirNumeroSerie() {
             return response.data;
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['numeros-serie'] });
+            queryClient.invalidateQueries({ queryKey: queryKeys.inventario.numerosSerie.all });
         },
     });
 }
@@ -253,7 +251,7 @@ export function useDevolverNumeroSerie() {
             return response.data;
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['numeros-serie'] });
+            queryClient.invalidateQueries({ queryKey: queryKeys.inventario.numerosSerie.all });
         },
     });
 }
@@ -270,7 +268,7 @@ export function useMarcarDefectuoso() {
             return response.data;
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['numeros-serie'] });
+            queryClient.invalidateQueries({ queryKey: queryKeys.inventario.numerosSerie.all });
         },
     });
 }
@@ -287,7 +285,7 @@ export function useReservarNumeroSerie() {
             return response.data;
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['numeros-serie'] });
+            queryClient.invalidateQueries({ queryKey: queryKeys.inventario.numerosSerie.all });
         },
     });
 }
@@ -304,7 +302,7 @@ export function useLiberarReservaNumeroSerie() {
             return response.data;
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['numeros-serie'] });
+            queryClient.invalidateQueries({ queryKey: queryKeys.inventario.numerosSerie.all });
         },
     });
 }
@@ -321,7 +319,7 @@ export function useActualizarGarantia() {
             return response.data;
         },
         onSuccess: (_, variables) => {
-            queryClient.invalidateQueries({ queryKey: ['numeros-serie', variables.id] });
+            queryClient.invalidateQueries({ queryKey: queryKeys.inventario.numerosSerie.detail(variables.id) });
         },
     });
 }
@@ -331,7 +329,7 @@ export function useActualizarGarantia() {
  */
 export function useVerificarExistencia(productoId, numeroSerie) {
     return useQuery({
-        queryKey: ['numeros-serie', 'existe', productoId, numeroSerie],
+        queryKey: queryKeys.inventario.numerosSerie.existe(productoId, numeroSerie),
         queryFn: async () => {
             const response = await inventarioApi.verificarExistenciaNumeroSerie(productoId, numeroSerie);
             return response.data.data.existe;

@@ -1,4 +1,5 @@
 import { forwardRef, useId, memo } from 'react';
+import PropTypes from 'prop-types';
 import { cn } from '@/lib/utils';
 import Checkbox from '../atoms/Checkbox';
 import Label from '../atoms/Label';
@@ -73,6 +74,17 @@ const CheckboxField = memo(forwardRef(function CheckboxField(
 ));
 
 CheckboxField.displayName = 'CheckboxField';
+
+CheckboxField.propTypes = {
+  className: PropTypes.string,
+  label: PropTypes.string,
+  description: PropTypes.string,
+  disabled: PropTypes.bool,
+  error: PropTypes.string,
+  id: PropTypes.string,
+  checked: PropTypes.bool,
+  onChange: PropTypes.func,
+};
 
 export { CheckboxField };
 export default CheckboxField;

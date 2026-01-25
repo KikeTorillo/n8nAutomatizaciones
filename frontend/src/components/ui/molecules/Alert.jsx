@@ -1,4 +1,5 @@
 import { memo } from 'react';
+import PropTypes from 'prop-types';
 import { X, AlertTriangle, Info, CheckCircle, XCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -145,6 +146,17 @@ const Alert = memo(function Alert({
 });
 
 Alert.displayName = 'Alert';
+
+Alert.propTypes = {
+  variant: PropTypes.oneOf(['info', 'success', 'warning', 'error', 'rose']),
+  icon: PropTypes.elementType,
+  title: PropTypes.string,
+  children: PropTypes.node,
+  action: PropTypes.node,
+  dismissible: PropTypes.bool,
+  onDismiss: PropTypes.func,
+  className: PropTypes.string,
+};
 
 export { Alert };
 export default Alert;

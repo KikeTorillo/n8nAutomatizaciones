@@ -4,7 +4,6 @@
  */
 
 export { SearchInput } from './SearchInput';
-export { Pagination } from './Pagination';
 export { StatCard } from './StatCard';
 export { EmptyState } from './EmptyState';
 export { ViewTabs } from './ViewTabs';
@@ -13,7 +12,7 @@ export { RecordNavigation } from './RecordNavigation';
 export { SkeletonTable, SkeletonCard, SkeletonList } from './SkeletonTable';
 export { Toast } from './Toast';
 export { BackButton } from './BackButton';
-export { ThemeToggle } from './ThemeToggle';
+// NOTA: ThemeToggle movido a organisms/ (Ene 2026) - accede a store global
 
 // Movidos desde atoms/ (Ene 2026) - componentes con lógica compleja
 // NOTA: MultiSelect e IconPicker movidos a organisms/ por complejidad (Ene 2026)
@@ -25,8 +24,13 @@ export { Alert } from './Alert';
 
 // Nuevos (Ene 2026) - Optimización arquitectónica
 export { FilterChip } from './FilterChip';
-export { SearchFilterBar } from './SearchFilterBar';
+// NOTA: SearchFilterBar movido a organisms/ (Ene 2026) - compone múltiples molecules
 export { CheckboxGroup } from './CheckboxGroup';
 export { CheckboxField } from './CheckboxField';
 export { DropdownMenu } from './DropdownMenu';
 // NOTA: SmartButtons movido a organisms/ (Ene 2026)
+
+// Componentes de filtro unificados (Ene 2026)
+export { FilterSelectField } from './FilterSelectField';
+export { FilterDateField } from './FilterDateField';
+export { FilterTextField } from './FilterTextField';

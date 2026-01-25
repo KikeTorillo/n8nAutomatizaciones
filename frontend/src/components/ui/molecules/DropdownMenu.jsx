@@ -1,7 +1,9 @@
 import { useState, useRef, useEffect, memo } from 'react';
+import PropTypes from 'prop-types';
 import { MoreVertical } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '../atoms/Button';
+import { useClickOutsideRef } from '@/hooks/utils/useClickOutside';
 
 /**
  * DropdownMenu - Menú desplegable para acciones
@@ -20,7 +22,7 @@ import { Button } from '../atoms/Button';
  *   ]}
  * />
  */
-function DropdownMenu({
+const DropdownMenu = memo(function DropdownMenu({
   trigger,
   items = [],
   align = 'right',
@@ -29,16 +31,8 @@ function DropdownMenu({
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
 
-  // Cerrar al hacer click fuera
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsOpen(false);
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  // Cerrar al hacer click fuera (usando hook centralizado)
+  useClickOutsideRef(dropdownRef, () => setIsOpen(false), isOpen);
 
   // Cerrar con Escape
   useEffect(() => {
@@ -135,10 +129,25 @@ function DropdownMenu({
       )}
     </div>
   );
-}
+});
 
 DropdownMenu.displayName = 'DropdownMenu';
 
-const MemoizedDropdownMenu = memo(DropdownMenu);
-export { MemoizedDropdownMenu as DropdownMenu };
-export default MemoizedDropdownMenu;
+DropdownMenu.propTypes = {
+  trigger: PropTypes.node,
+  items: PropTypes.arrayOf(
+    PropTypes.shape({
+      label: PropTypes.string,
+      icon: PropTypes.elementType,
+      onClick: PropTypes.func,
+      variant: PropTypes.oneOf(['default', 'danger']),
+      disabled: PropTypes.bool,
+      divider: PropTypes.bool,
+    })
+  ),
+  align: PropTypes.oneOf(['left', 'right']),
+  className: PropTypes.string,
+};
+
+export { DropdownMenu };
+export default DropdownMenu;

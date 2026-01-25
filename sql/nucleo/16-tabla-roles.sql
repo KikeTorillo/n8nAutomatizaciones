@@ -117,10 +117,10 @@ COMMENT ON COLUMN roles.es_rol_sistema IS
 
 INSERT INTO roles (codigo, nombre, descripcion, organizacion_id, nivel_jerarquia, es_rol_sistema, bypass_permisos, color, icono, puede_crear_usuarios, puede_modificar_permisos) VALUES
 
--- Super Admin: Acceso total al sistema
+-- Super Admin: Acceso total al sistema (ÚNICO rol con bypass_permisos = TRUE)
 ('super_admin', 'Super Administrador', 'Acceso total al sistema y todas las organizaciones. Solo para equipo de plataforma.', NULL, 100, TRUE, TRUE, '#EF4444', 'shield', TRUE, TRUE),
 
--- Bot: Usuario de sistema para automatizaciones
+-- Bot: Usuario de sistema para automatizaciones (bypass_permisos = FALSE, usa permisos explícitos)
 ('bot', 'Bot de Sistema', 'Usuario automático para integraciones y workflows n8n.', NULL, 1, TRUE, FALSE, '#6366F1', 'bot', FALSE, FALSE),
 
 -- Pendiente: Usuario pendiente de activar su cuenta
@@ -171,14 +171,20 @@ RETURNS VOID AS $$
 BEGIN
     -- SECURITY DEFINER permite que el trigger inserte en la tabla roles
     -- a pesar de las políticas RLS (se ejecuta con permisos del owner)
-    -- Admin de organización
+
+    -- ARQUITECTURA RBAC v2 (Ene 2026):
+    -- bypass_permisos = FALSE para TODOS los roles de organización
+    -- Los permisos se asignan explícitamente via asignar_permisos_default_a_rol()
+    -- Esto permite auditoría y configuración granular
+
+    -- Admin de organización (bypass_permisos = FALSE, permisos explícitos)
     INSERT INTO roles (codigo, nombre, descripcion, organizacion_id, nivel_jerarquia, bypass_permisos, color, icono, puede_crear_usuarios, puede_modificar_permisos)
-    VALUES ('admin', 'Administrador', 'Acceso completo a la organización. Puede gestionar usuarios y configuraciones.', p_organizacion_id, 90, TRUE, '#F97316', 'user-cog', TRUE, TRUE)
+    VALUES ('admin', 'Administrador', 'Acceso completo a la organización. Puede gestionar usuarios y configuraciones.', p_organizacion_id, 90, FALSE, '#F97316', 'user-cog', TRUE, TRUE)
     ON CONFLICT (codigo, organizacion_id) DO NOTHING;
 
-    -- Propietario
+    -- Propietario (bypass_permisos = FALSE, permisos explícitos)
     INSERT INTO roles (codigo, nombre, descripcion, organizacion_id, nivel_jerarquia, bypass_permisos, color, icono, puede_crear_usuarios, puede_modificar_permisos)
-    VALUES ('propietario', 'Propietario', 'Dueño del negocio con permisos operativos completos.', p_organizacion_id, 80, TRUE, '#EAB308', 'crown', TRUE, TRUE)
+    VALUES ('propietario', 'Propietario', 'Dueño del negocio con permisos operativos completos.', p_organizacion_id, 80, FALSE, '#EAB308', 'crown', TRUE, TRUE)
     ON CONFLICT (codigo, organizacion_id) DO NOTHING;
 
     -- Empleado (default)

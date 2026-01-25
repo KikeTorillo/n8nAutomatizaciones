@@ -11,6 +11,7 @@
  */
 
 import { memo, useEffect, useId } from 'react';
+import PropTypes from 'prop-types';
 import { X, Camera, CameraOff, RotateCcw } from 'lucide-react';
 import { useBarcodeScanner, FORMAT_PRESETS } from '@/hooks/pos';
 
@@ -234,6 +235,23 @@ const BarcodeScanner = memo(function BarcodeScanner({
 });
 
 BarcodeScanner.displayName = 'BarcodeScanner';
+
+BarcodeScanner.propTypes = {
+  onScan: PropTypes.func.isRequired,
+  onClose: PropTypes.func,
+  onError: PropTypes.func,
+  title: PropTypes.string,
+  subtitle: PropTypes.string,
+  formats: PropTypes.oneOfType([
+    PropTypes.string,
+    PropTypes.arrayOf(PropTypes.string),
+  ]),
+  showLastScan: PropTypes.bool,
+  showCameraSwitch: PropTypes.bool,
+  autoStart: PropTypes.bool,
+  className: PropTypes.string,
+  fullScreen: PropTypes.bool,
+};
 
 export { BarcodeScanner };
 export default BarcodeScanner;

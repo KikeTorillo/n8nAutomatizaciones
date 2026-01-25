@@ -11,7 +11,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { clientesApi, citasApi } from '@/services/api/endpoints';
-import { createCRUDHooks, createSanitizer } from '@/hooks/factories';
+import { createCRUDHooks, createSanitizer, createSearchHook } from '@/hooks/factories';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 
 // Crear hooks CRUD
@@ -57,18 +57,12 @@ export const useEliminarCliente = hooks.useDelete;
 
 /**
  * Hook para buscar clientes (búsqueda rápida)
+ * Refactorizado con createSearchHook - Ene 2026
  */
-export function useBuscarClientes(termino, options = {}) {
-  return useQuery({
-    queryKey: ['buscar-clientes', termino],
-    queryFn: async () => {
-      const response = await clientesApi.buscar({ q: termino, ...options });
-      return response.data.data;
-    },
-    enabled: termino.length >= 2,
-    staleTime: STALE_TIMES.DYNAMIC,
-  });
-}
+export const useBuscarClientes = createSearchHook({
+  key: 'clientes',
+  searchFn: clientesApi.buscar,
+});
 
 /**
  * Hook para buscar cliente por teléfono (útil para walk-in)

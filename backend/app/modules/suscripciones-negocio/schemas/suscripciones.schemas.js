@@ -100,7 +100,12 @@ const cambiarPlan = Joi.object({
 });
 
 const cancelarSuscripcion = Joi.object({
-    razon: Joi.string().max(500).trim(),
+    motivo_cancelacion: Joi.string().min(10).max(500).trim().required()
+        .messages({
+            'string.min': 'El motivo de cancelación debe tener al menos 10 caracteres',
+            'string.max': 'El motivo de cancelación no puede exceder 500 caracteres',
+            'any.required': 'El motivo de cancelación es obligatorio'
+        }),
     inmediato: Joi.boolean().default(false)
 });
 

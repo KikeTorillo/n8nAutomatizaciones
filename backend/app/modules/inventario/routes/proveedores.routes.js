@@ -6,8 +6,9 @@
 
 const express = require('express');
 const InventarioController = require('../controllers');
-const { auth, tenant, rateLimiting, validation, subscription, modules } = require('../../../middleware');
+const { auth, tenant, rateLimiting, validation, subscription, modules, permisos } = require('../../../middleware');
 const inventarioSchemas = require('../schemas/inventario.schemas');
+const { verificarPermiso } = permisos;
 
 const router = express.Router();
 const validate = validation.validate;
@@ -21,6 +22,7 @@ router.post('/proveedores',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
+    verificarPermiso('inventario.crear_proveedores'),
     rateLimiting.apiRateLimit,
     validate(inventarioSchemas.crearProveedor),
     InventarioController.crearProveedor
@@ -59,6 +61,7 @@ router.put('/proveedores/:id',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
+    verificarPermiso('inventario.editar_proveedores'),
     rateLimiting.apiRateLimit,
     validate(inventarioSchemas.actualizarProveedor),
     InventarioController.actualizarProveedor
@@ -73,6 +76,7 @@ router.delete('/proveedores/:id',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
+    verificarPermiso('inventario.eliminar_proveedores'),
     rateLimiting.apiRateLimit,
     validate(inventarioSchemas.obtenerPorId),
     InventarioController.eliminarProveedor

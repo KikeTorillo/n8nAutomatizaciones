@@ -1,4 +1,5 @@
 import { memo } from 'react';
+import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import { ChevronRight, Home } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -72,5 +73,17 @@ export const Breadcrumb = memo(function Breadcrumb({ items = [], className, home
 });
 
 Breadcrumb.displayName = 'Breadcrumb';
+
+Breadcrumb.propTypes = {
+  items: PropTypes.arrayOf(
+    PropTypes.shape({
+      label: PropTypes.string.isRequired,
+      href: PropTypes.string,
+      icon: PropTypes.elementType,
+    })
+  ),
+  className: PropTypes.string,
+  homeLink: PropTypes.bool,
+};
 
 export default Breadcrumb;

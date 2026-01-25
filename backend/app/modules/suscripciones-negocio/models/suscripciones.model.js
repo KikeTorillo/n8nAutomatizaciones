@@ -12,6 +12,7 @@ const RLSContextManager = require('../../../utils/rlsContextManager');
 const { ErrorHelper, ParseHelper } = require('../../../utils/helpers');
 const logger = require('../../../utils/logger');
 const { NEXO_TEAM_ORG_ID, FEATURE_TO_MODULO, MODULOS_BASE } = require('../../../config/constants');
+const NotificacionesService = require('../services/notificaciones.service');
 
 class SuscripcionesModel {
 
@@ -388,10 +389,112 @@ class SuscripcionesModel {
             `;
 
             const result = await db.query(query, values);
+            const suscripcionActualizada = result.rows[0];
 
             logger.info(`Suscripción ${id} cambió a estado: ${nuevoEstado}`);
 
-            return result.rows[0];
+            // Enviar notificaciones por email según el nuevo estado
+            // Ejecutar en background para no bloquear la respuesta
+            this._enviarNotificacionCambioEstado(suscripcionActualizada, nuevoEstado, options).catch(err => {
+                logger.error('Error enviando notificación de cambio de estado', {
+                    suscripcion_id: id,
+                    nuevo_estado: nuevoEstado,
+                    error: err.message
+                });
+            });
+
+            return suscripcionActualizada;
+        });
+    }
+
+    /**
+     * Enviar notificación por email según el cambio de estado
+     * @private
+     */
+    static async _enviarNotificacionCambioEstado(suscripcion, nuevoEstado, options = {}) {
+        // Mapeo de estados a métodos de notificación
+        const notificacionesPorEstado = {
+            'grace_period': () => NotificacionesService.enviarGracePeriod(suscripcion),
+            'suspendida': () => NotificacionesService.enviarSuspension(suscripcion),
+            'cancelada': () => NotificacionesService.enviarCancelacion(suscripcion, options.razon)
+        };
+
+        const enviarNotificacion = notificacionesPorEstado[nuevoEstado];
+
+        if (enviarNotificacion) {
+            await enviarNotificacion();
+        }
+    }
+
+    /**
+     * Cancelar suscripción usando bypass RLS (para dogfooding)
+     *
+     * Usado cuando el usuario cancela su propia suscripción desde /mi-plan.
+     * La suscripción pertenece al vendor (Nexo Team) pero el cliente está
+     * vinculado a la organización del usuario.
+     *
+     * @param {number} id - ID de la suscripción
+     * @param {string} motivoCancelacion - Motivo obligatorio de cancelación
+     * @param {number} usuarioId - ID del usuario que cancela
+     * @param {Object} usuarioInfo - Info del usuario para notificaciones { email, nombre }
+     * @returns {Promise<Object>} - Suscripción cancelada
+     */
+    static async cancelarBypass(id, motivoCancelacion, usuarioId, usuarioInfo = {}) {
+        return await RLSContextManager.withBypass(async (db) => {
+            // Verificar que la suscripción existe (con nombre del plan para notificaciones)
+            const checkQuery = `
+                SELECT s.*, p.nombre as plan_nombre
+                FROM suscripciones_org s
+                LEFT JOIN planes_suscripcion_org p ON s.plan_id = p.id
+                WHERE s.id = $1
+            `;
+            const checkResult = await db.query(checkQuery, [id]);
+            const suscripcion = checkResult.rows[0];
+
+            ErrorHelper.throwIfNotFound(suscripcion, 'Suscripción');
+
+            // Validar que se puede cancelar
+            const estadosNoCancelables = ['cancelada', 'suspendida'];
+            if (estadosNoCancelables.includes(suscripcion.estado)) {
+                ErrorHelper.throwValidation(`No se puede cancelar una suscripción en estado "${suscripcion.estado}"`);
+            }
+
+            // Actualizar a estado cancelada
+            // Nota: La tabla no tiene fecha_cancelacion, usamos actualizado_en
+            const updateQuery = `
+                UPDATE suscripciones_org
+                SET estado = 'cancelada',
+                    razon_cancelacion = $1,
+                    cancelado_por = $2,
+                    actualizado_en = NOW()
+                WHERE id = $3
+                RETURNING *
+            `;
+
+            const result = await db.query(updateQuery, [motivoCancelacion, usuarioId, id]);
+            const suscripcionCancelada = result.rows[0];
+
+            // Agregar info para notificaciones (dogfooding)
+            suscripcionCancelada.cliente_email = usuarioInfo.email;
+            suscripcionCancelada.cliente_nombre = usuarioInfo.nombre;
+            suscripcionCancelada.plan_nombre = suscripcion.plan_nombre;
+
+            logger.info(`[Bypass] Suscripción ${id} cancelada por usuario ${usuarioId}`, {
+                motivo: motivoCancelacion,
+                notificar_a: usuarioInfo.email
+            });
+
+            // Enviar notificación de cancelación en background
+            this._enviarNotificacionCambioEstado(suscripcionCancelada, 'cancelada', {
+                razon: motivoCancelacion
+            }).catch(err => {
+                logger.error('[Bypass] Error enviando notificación de cancelación', {
+                    suscripcion_id: id,
+                    error: err.message
+                });
+            });
+
+            return suscripcionCancelada;
         });
     }
 
@@ -1011,10 +1114,21 @@ class SuscripcionesModel {
             `;
 
             const result = await db.query(query, values);
+            const suscripcionActualizada = result.rows[0];
 
             logger.info(`[Bypass] Suscripción ${id} cambió a estado: ${nuevoEstado}`);
 
-            return result.rows[0];
+            // Enviar notificaciones por email según el nuevo estado
+            // Ejecutar en background para no bloquear la respuesta
+            this._enviarNotificacionCambioEstado(suscripcionActualizada, nuevoEstado, options).catch(err => {
+                logger.error('[Bypass] Error enviando notificación de cambio de estado', {
+                    suscripcion_id: id,
+                    nuevo_estado: nuevoEstado,
+                    error: err.message
+                });
+            });
+
+            return suscripcionActualizada;
         });
     }
 
@@ -1097,7 +1211,7 @@ class SuscripcionesModel {
                     s.id, s.plan_id, s.cliente_id,
                     s.periodo, s.estado,
                     s.fecha_inicio, s.fecha_proximo_cobro, s.fecha_fin,
-                    s.es_trial, s.fecha_fin_trial,
+                    s.es_trial, s.fecha_fin_trial, s.fecha_gracia,
                     s.gateway, s.precio_actual, s.precio_actual as precio, s.moneda,
                     s.meses_activo, s.total_pagado,
                     s.descuento_porcentaje, s.descuento_monto,
@@ -1112,12 +1226,14 @@ class SuscripcionesModel {
                 INNER JOIN planes_suscripcion_org p ON s.plan_id = p.id
                 LEFT JOIN clientes c ON s.cliente_id = c.id
                 WHERE c.organizacion_vinculada_id = $1
-                  AND s.estado IN ('activa', 'trial', 'pendiente_pago')
+                  AND s.estado IN ('activa', 'trial', 'pendiente_pago', 'grace_period', 'vencida')
                 ORDER BY
                     CASE s.estado
                         WHEN 'activa' THEN 1
                         WHEN 'trial' THEN 2
-                        WHEN 'pendiente_pago' THEN 3
+                        WHEN 'grace_period' THEN 3
+                        WHEN 'pendiente_pago' THEN 4
+                        WHEN 'vencida' THEN 5
                     END,
                     s.creado_en DESC
                 LIMIT 1

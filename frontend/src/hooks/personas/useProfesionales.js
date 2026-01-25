@@ -13,7 +13,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { profesionalesApi } from '@/services/api/endpoints';
-import { createCRUDHooks, createSanitizer } from '@/hooks/factories';
+import { createCRUDHooks, createSanitizer, createSearchHook } from '@/hooks/factories';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 
 // ====================================================================
@@ -72,23 +72,15 @@ export const useEliminarProfesional = hooks.useDelete;
 
 /**
  * Hook para buscar profesionales (búsqueda rápida)
+ * Refactorizado con createSearchHook - Ene 2026
  */
-export function useBuscarProfesionales(termino, options = {}) {
-  return useQuery({
-    queryKey: ['buscar-profesionales', termino, options],
-    queryFn: async () => {
-      const params = {
-        busqueda: termino,
-        limit: 50,
-        ...options,
-      };
-      const response = await profesionalesApi.listar(params);
-      return response.data.data?.profesionales || [];
-    },
-    enabled: termino.length >= 2,
-    staleTime: STALE_TIMES.REAL_TIME,
-  });
-}
+export const useBuscarProfesionales = createSearchHook({
+  key: 'profesionales',
+  searchFn: (params) => profesionalesApi.listar({ ...params, limit: 50 }),
+  searchParam: 'busqueda',
+  transformResponse: (data) => data?.profesionales || [],
+  staleTime: STALE_TIMES.REAL_TIME,
+});
 
 /**
  * Hook para listar profesionales por módulo habilitado

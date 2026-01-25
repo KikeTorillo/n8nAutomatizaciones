@@ -1,6 +1,7 @@
-import { memo, forwardRef, useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import { memo, forwardRef, useState, useRef, useMemo, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import { Check, ChevronDown, X } from 'lucide-react';
+import { useClickOutsideRef } from '@/hooks/utils/useClickOutside';
 
 /**
  * Componente MultiSelect con checkboxes
@@ -33,17 +34,8 @@ const MultiSelect = memo(forwardRef(
     const [isOpen, setIsOpen] = useState(false);
     const containerRef = useRef(null);
 
-    // Cerrar dropdown al hacer click fuera
-    useEffect(() => {
-      const handleClickOutside = (event) => {
-        if (containerRef.current && !containerRef.current.contains(event.target)) {
-          setIsOpen(false);
-        }
-      };
-
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
+    // Cerrar dropdown al hacer click fuera (usando hook centralizado)
+    useClickOutsideRef(containerRef, () => setIsOpen(false), isOpen);
 
     // Opciones seleccionadas (memoizado)
     const selectedOptions = useMemo(() =>

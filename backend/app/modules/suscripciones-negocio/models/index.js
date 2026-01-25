@@ -11,6 +11,7 @@ const PagosModel = require('./pagos.model');
 const CuponesModel = require('./cupones.model');
 const MetricasModel = require('./metricas.model');
 const CheckoutTokensModel = require('./checkout-tokens.model');
+const WebhooksProcesadosModel = require('./webhooks-procesados.model');
 
 module.exports = {
     PlanesModel,
@@ -18,5 +19,6 @@ module.exports = {
     PagosModel,
     CuponesModel,
     MetricasModel,
-    CheckoutTokensModel
+    CheckoutTokensModel,
+    WebhooksProcesadosModel
 };

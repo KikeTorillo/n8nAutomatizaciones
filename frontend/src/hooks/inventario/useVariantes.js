@@ -13,6 +13,7 @@ import { inventarioApi } from '@/services/api/endpoints';
 import { STALE_TIMES } from '@/app/queryClient';
 import { queryKeys } from '@/hooks/config';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
+import { createSearchHook } from '@/hooks/factories';
 
 // ==================== HELPERS ====================
 
@@ -59,18 +60,13 @@ export function useVariante(id) {
 
 /**
  * Hook para buscar variante por SKU o código de barras
+ * Refactorizado con createSearchHook - Ene 2026
  */
-export function useBuscarVariante(termino) {
-  return useQuery({
-    queryKey: ['buscar-variante', termino],
-    queryFn: async () => {
-      const response = await inventarioApi.buscarVariante(termino);
-      return response.data.data;
-    },
-    enabled: !!termino && termino.length >= 2,
-    staleTime: STALE_TIMES.REAL_TIME,
-  });
-}
+export const useBuscarVariante = createSearchHook({
+  key: 'variantes',
+  searchFn: (params) => inventarioApi.buscarVariante(params.q),
+  staleTime: STALE_TIMES.REAL_TIME,
+});
 
 /**
  * Hook para obtener resumen de stock por variantes

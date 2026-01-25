@@ -42,6 +42,19 @@ router.patch(
     SuscripcionesController.cambiarMiPlan
 );
 
+/**
+ * POST /api/v1/suscripciones-negocio/suscripciones/mi-suscripcion/cancelar
+ * Cancelar mi propia suscripción
+ * Disponible para cualquier usuario autenticado (solo puede cancelar su propio plan)
+ */
+router.post(
+    '/mi-suscripcion/cancelar',
+    ...authChain,
+    // Sin verificación de permisos - el controller valida que sea su propia suscripción
+    validate(schemas.cancelarSuscripcion),
+    SuscripcionesController.cancelarMiSuscripcion
+);
+
 // ============================================================================
 // CUSTOMER BILLING: Admin crea suscripciones para clientes
 // ============================================================================

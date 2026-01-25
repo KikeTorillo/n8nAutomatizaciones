@@ -1,9 +1,8 @@
-import { useState, useMemo } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useState, useMemo, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
   Shield,
   Users,
-  Building2,
   ChevronDown,
   ChevronRight,
   Check,
@@ -14,11 +13,14 @@ import {
   Settings,
   Lock,
   Unlock,
+  Crown,
+  AlertCircle,
 } from 'lucide-react';
 
-import { Button, Select } from '@/components/ui';
+import { Badge, Select, ToggleSwitch } from '@/components/ui';
 import { ConfigPageHeader } from '@/components/configuracion';
 import { useToast } from '@/hooks/utils';
+import { useRoles, usePermisosRol, useActualizarPermisoRol } from '@/hooks/sistema/useRoles';
 import { permisosApi } from '@/services/api/endpoints';
 
 /**
@@ -28,19 +30,38 @@ import { permisosApi } from '@/services/api/endpoints';
  */
 function PermisosPage() {
   const toast = useToast();
-  const queryClient = useQueryClient();
-  const [rolSeleccionado, setRolSeleccionado] = useState('empleado');
+  const [rolSeleccionadoId, setRolSeleccionadoId] = useState(null);
   const [modulosExpandidos, setModulosExpandidos] = useState(new Set(['pos', 'agendamiento', 'inventario']));
   const [searchTerm, setSearchTerm] = useState('');
   const [valoresEditando, setValoresEditando] = useState({});
 
-  // Roles disponibles
-  const roles = [
-    { value: 'admin', label: 'Administrador' },
-    { value: 'propietario', label: 'Propietario' },
-    { value: 'empleado', label: 'Empleado' },
-    { value: 'bot', label: 'Bot / Chatbot' },
-  ];
+  // Query: Roles dinámicos de la organización
+  const { data: rolesData = [], isLoading: loadingRoles } = useRoles({ activo: true });
+
+  // Transformar roles para el selector
+  const roles = useMemo(() => {
+    return rolesData.map(r => ({
+      value: r.id,
+      label: r.nombre,
+      codigo: r.codigo,
+      nivel: r.nivel_jerarquia,
+      esRolSistema: r.es_rol_sistema,
+      bypassPermisos: r.bypass_permisos,
+    }));
+  }, [rolesData]);
+
+  // Auto-seleccionar primer rol de organización (no sistema) cuando carguen
+  useEffect(() => {
+    if (roles.length > 0 && !rolSeleccionadoId) {
+      const primerRolOrg = roles.find(r => !r.esRolSistema);
+      setRolSeleccionadoId(primerRolOrg?.value || roles[0].value);
+    }
+  }, [roles, rolSeleccionadoId]);
+
+  // Obtener info del rol seleccionado
+  const rolSeleccionado = useMemo(() => {
+    return roles.find(r => r.value === rolSeleccionadoId);
+  }, [roles, rolSeleccionadoId]);
 
   // Query: Catálogo de permisos
   const { data: catalogo = [], isLoading: loadingCatalogo } = useQuery({
@@ -51,29 +72,12 @@ function PermisosPage() {
     },
   });
 
-  // Query: Permisos del rol seleccionado
-  const { data: permisosRol = [], isLoading: loadingPermisos, refetch: refetchPermisos } = useQuery({
-    queryKey: ['permisos-rol', rolSeleccionado],
-    queryFn: async () => {
-      const response = await permisosApi.listarPorRol(rolSeleccionado);
-      return response.data.data || [];
-    },
-    enabled: !!rolSeleccionado,
-  });
+  // Query: Permisos del rol seleccionado (usando hook de roles)
+  const { data: permisosRolData, isLoading: loadingPermisos } = usePermisosRol(rolSeleccionadoId);
+  const permisosRol = permisosRolData?.permisos || [];
 
-  // Mutation: Actualizar permiso de rol
-  const actualizarPermisoMutation = useMutation({
-    mutationFn: async ({ permisoId, valor }) => {
-      return permisosApi.asignarPermisoRol(rolSeleccionado, permisoId, valor);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['permisos-rol', rolSeleccionado] });
-      toast.success('Permiso actualizado');
-    },
-    onError: (error) => {
-      toast.error(error.response?.data?.message || 'Error al actualizar permiso');
-    },
-  });
+  // Mutation: Actualizar permiso de rol (usando hook de roles)
+  const actualizarPermisoMutation = useActualizarPermisoRol();
 
   // Agrupar permisos por módulo
   const permisosAgrupados = useMemo(() => {
@@ -142,7 +146,11 @@ function PermisosPage() {
   // Toggle permiso booleano
   const handleTogglePermiso = (permisoId, valorActual) => {
     const nuevoValor = valorActual === true ? false : true;
-    actualizarPermisoMutation.mutate({ permisoId, valor: nuevoValor });
+    actualizarPermisoMutation.mutate({
+      rolId: rolSeleccionadoId,
+      permisoId,
+      valor: nuevoValor
+    });
   };
 
   // Manejar cambio de valor numérico (mientras edita)
@@ -179,7 +187,7 @@ function PermisosPage() {
     }
 
     actualizarPermisoMutation.mutate(
-      { permisoId, valor: valorNumerico },
+      { rolId: rolSeleccionadoId, permisoId, valor: valorNumerico },
       {
         onSuccess: () => {
           setValoresEditando(prev => {
@@ -235,7 +243,9 @@ function PermisosPage() {
     general: '📋',
   };
 
-  const isLoading = loadingCatalogo || loadingPermisos;
+  const isLoading = loadingRoles || loadingCatalogo || loadingPermisos;
+  const esSuperAdmin = rolSeleccionado?.nivel === 100;
+  const tieneBypass = rolSeleccionado?.bypassPermisos;
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -258,9 +268,10 @@ function PermisosPage() {
               Rol
             </label>
             <Select
-              value={rolSeleccionado}
-              onChange={(e) => setRolSeleccionado(e.target.value)}
+              value={rolSeleccionadoId || ''}
+              onChange={(e) => setRolSeleccionadoId(Number(e.target.value))}
               options={roles}
+              disabled={loadingRoles}
             />
           </div>
 
@@ -286,25 +297,56 @@ function PermisosPage() {
         </div>
 
         {/* Info del rol */}
-        <div className="mt-4 p-3 bg-primary-50 dark:bg-primary-900/20 rounded-lg">
-          <div className="flex items-start gap-2">
-            <Info className="h-5 w-5 text-primary-600 dark:text-primary-400 flex-shrink-0 mt-0.5" />
-            <div className="text-sm text-primary-700 dark:text-primary-300">
-              {rolSeleccionado === 'admin' && (
-                <span>Los <strong>Administradores</strong> tienen acceso completo al sistema por defecto.</span>
+        {rolSeleccionado && (
+          <div className="mt-4 space-y-3">
+            {/* Badges del rol */}
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant="secondary" size="sm">
+                Nivel {rolSeleccionado.nivel}
+              </Badge>
+              {rolSeleccionado.esRolSistema && (
+                <Badge variant="info" size="sm">
+                  Rol de Sistema
+                </Badge>
               )}
-              {rolSeleccionado === 'propietario' && (
-                <span>Los <strong>Propietarios</strong> tienen acceso completo a su organización.</span>
-              )}
-              {rolSeleccionado === 'empleado' && (
-                <span>Los <strong>Empleados</strong> tienen permisos limitados. Configura qué módulos y acciones pueden realizar.</span>
-              )}
-              {rolSeleccionado === 'bot' && (
-                <span>Los <strong>Bots</strong> son usuarios de sistema para integraciones con chatbots y automatizaciones.</span>
+              {tieneBypass && (
+                <Badge variant="warning" size="sm">
+                  <Crown className="h-3 w-3 mr-1" />
+                  Bypass Permisos
+                </Badge>
               )}
             </div>
+
+            {/* Alerta para roles con bypass o super_admin */}
+            {(esSuperAdmin || tieneBypass) && (
+              <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+                  <div className="text-sm text-amber-700 dark:text-amber-300">
+                    {esSuperAdmin ? (
+                      <span>El rol <strong>Super Admin</strong> tiene acceso total al sistema. Los permisos no pueden ser modificados.</span>
+                    ) : (
+                      <span>Este rol tiene <strong>bypass de permisos</strong> activado, por lo que ignora las restricciones granulares.</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Info general */}
+            {!esSuperAdmin && !tieneBypass && (
+              <div className="p-3 bg-primary-50 dark:bg-primary-900/20 rounded-lg">
+                <div className="flex items-start gap-2">
+                  <Info className="h-5 w-5 text-primary-600 dark:text-primary-400 flex-shrink-0 mt-0.5" />
+                  <div className="text-sm text-primary-700 dark:text-primary-300">
+                    Configura los permisos granulares para el rol <strong>{rolSeleccionado.label}</strong>.
+                    Los cambios se aplican inmediatamente a todos los usuarios con este rol.
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
-        </div>
+        )}
       </div>
 
       {/* Lista de permisos por módulo */}
@@ -382,29 +424,16 @@ function PermisosPage() {
 
                         {/* Toggle para permisos booleanos */}
                         {esBooleano && (
-                          <button
-                            onClick={() => handleTogglePermiso(permiso.id, valorActual)}
-                            disabled={actualizarPermisoMutation.isPending}
-                            className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${
-                              habilitado
-                                ? 'bg-green-500'
-                                : 'bg-gray-300 dark:bg-gray-600'
-                            }`}
-                          >
-                            <span
-                              className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                                habilitado ? 'translate-x-5' : 'translate-x-0'
-                              }`}
-                            >
-                              {actualizarPermisoMutation.isPending ? (
-                                <Loader2 className="h-4 w-4 m-0.5 text-gray-400 animate-spin" />
-                              ) : habilitado ? (
-                                <Check className="h-4 w-4 m-0.5 text-green-500" />
-                              ) : (
-                                <X className="h-4 w-4 m-0.5 text-gray-400" />
-                              )}
-                            </span>
-                          </button>
+                          <ToggleSwitch
+                            enabled={habilitado}
+                            onChange={() => handleTogglePermiso(permiso.id, valorActual)}
+                            disabled={actualizarPermisoMutation.isPending || esSuperAdmin || tieneBypass}
+                            loading={actualizarPermisoMutation.isPending}
+                            size="md"
+                            label={`Toggle ${permiso.nombre}`}
+                            enabledIcon={<Check className="h-4 w-4 m-0.5 text-green-500" />}
+                            disabledIcon={<X className="h-4 w-4 m-0.5 text-gray-400" />}
+                          />
                         )}
 
                         {/* Para permisos numéricos - Input editable */}
@@ -420,7 +449,7 @@ function PermisosPage() {
                               onChange={(e) => handleNumericoChange(permiso.id, e.target.value)}
                               onBlur={() => handleNumericoGuardar(permiso.id, valorActual)}
                               onKeyDown={(e) => handleNumericoKeyDown(e, permiso.id, valorActual)}
-                              disabled={actualizarPermisoMutation.isPending}
+                              disabled={actualizarPermisoMutation.isPending || esSuperAdmin || tieneBypass}
                               className="w-24 px-2 py-1 text-right text-sm border border-gray-300 dark:border-gray-600 rounded-md
                                 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
                                 focus:ring-2 focus:ring-primary-500 focus:border-primary-500
@@ -453,7 +482,8 @@ function PermisosPage() {
               <li>Los permisos de rol se aplican a todos los usuarios con ese rol</li>
               <li>Puedes asignar overrides específicos por usuario desde la sección de empleados</li>
               <li>Los cambios se aplican inmediatamente sin necesidad de reiniciar sesión</li>
-              <li>Los roles <strong>admin</strong> y <strong>propietario</strong> tienen bypass de permisos por defecto</li>
+              <li>Los roles con <strong>bypass de permisos</strong> ignoran las restricciones granulares</li>
+              <li>Puedes crear roles personalizados desde <strong>Configuración → Roles</strong></li>
             </ul>
           </div>
         </div>

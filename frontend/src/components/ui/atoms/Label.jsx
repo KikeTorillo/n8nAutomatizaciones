@@ -3,6 +3,7 @@
  * Ene 2026 - Preparación Librería UI
  */
 import { memo } from 'react';
+import PropTypes from 'prop-types';
 import { cn } from '@/lib/utils';
 import { LABEL_BASE, LABEL_REQUIRED, ARIA_LABELS } from '@/lib/uiConstants';
 
@@ -40,6 +41,13 @@ const Label = memo(function Label({ label, required = false, htmlFor, className 
 });
 
 Label.displayName = 'Label';
+
+Label.propTypes = {
+  label: PropTypes.node,
+  required: PropTypes.bool,
+  htmlFor: PropTypes.string,
+  className: PropTypes.string,
+};
 
 export { Label };
 export default Label;

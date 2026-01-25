@@ -64,8 +64,14 @@ export const queryKeys = {
     numerosSerie: {
       all: ['numeros-serie'],
       list: (params) => ['numeros-serie', params],
-      detail: (id) => ['numero-serie', id],
-      disponibles: (productoId) => ['numeros-serie-disponibles', productoId],
+      detail: (id) => ['numeros-serie', id],
+      historial: (id) => ['numeros-serie', id, 'historial'],
+      disponibles: (productoId, sucursalId) => ['numeros-serie', 'disponibles', productoId, sucursalId],
+      resumen: (productoId) => ['numeros-serie', 'resumen', productoId],
+      productosConSerie: ['numeros-serie', 'productos-con-serie'],
+      estadisticas: ['numeros-serie', 'estadisticas'],
+      proximosVencer: (dias) => ['numeros-serie', 'proximos-vencer', dias],
+      existe: (productoId, numeroSerie) => ['numeros-serie', 'existe', productoId, numeroSerie],
     },
     variantes: {
       all: ['variantes'],
@@ -267,7 +273,12 @@ export const queryKeys = {
     modulos: ['modulos'],
     notificaciones: {
       all: ['notificaciones'],
+      list: (params) => ['notificaciones', params],
       noLeidas: ['notificaciones-no-leidas'],
+      count: ['notificaciones-count'],
+      preferencias: ['notificaciones-preferencias'],
+      plantillas: ['notificaciones-plantillas'],
+      tipos: ['notificaciones-tipos'],
     },
     sucursales: {
       all: ['sucursales'],

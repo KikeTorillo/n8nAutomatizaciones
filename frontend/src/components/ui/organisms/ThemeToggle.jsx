@@ -4,7 +4,11 @@ import { useTheme } from '@/hooks/sistema';
 import { cn } from '@/lib/utils';
 
 /**
- * Componente para alternar entre tema claro y oscuro
+ * ThemeToggle - Componente para alternar entre tema claro y oscuro
+ *
+ * Ene 2026: Movido de molecules/ a organisms/ porque accede a store global (useTheme)
+ * Los molecules no deberían conocer stores/contextos de aplicación.
+ *
  * @param {string} className - Clases adicionales
  * @param {string} size - Tamaño del botón ('sm', 'md', 'lg')
  */

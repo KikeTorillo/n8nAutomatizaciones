@@ -1,4 +1,5 @@
 import { memo } from 'react';
+import PropTypes from 'prop-types';
 import { cn } from '@/lib/utils';
 
 /**
@@ -140,5 +141,22 @@ export const SkeletonList = memo(function SkeletonList({ count = 3, className })
 SkeletonTable.displayName = 'SkeletonTable';
 SkeletonCard.displayName = 'SkeletonCard';
 SkeletonList.displayName = 'SkeletonList';
+
+SkeletonTable.propTypes = {
+  rows: PropTypes.number,
+  columns: PropTypes.number,
+  showHeader: PropTypes.bool,
+  columnWidths: PropTypes.arrayOf(PropTypes.oneOf(['sm', 'md', 'lg', 'xl'])),
+  className: PropTypes.string,
+};
+
+SkeletonCard.propTypes = {
+  className: PropTypes.string,
+};
+
+SkeletonList.propTypes = {
+  count: PropTypes.number,
+  className: PropTypes.string,
+};
 
 export default SkeletonTable;

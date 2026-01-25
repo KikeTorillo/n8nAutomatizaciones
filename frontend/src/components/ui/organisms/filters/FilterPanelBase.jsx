@@ -10,6 +10,10 @@
  */
 import { useMemo, useCallback, memo } from 'react';
 import { cn } from '@/lib/utils';
+import { FilterSelectField } from '../../molecules/FilterSelectField';
+import { FilterDateField } from '../../molecules/FilterDateField';
+import { FilterTextField } from '../../molecules/FilterTextField';
+import { CheckboxField } from '../../molecules/CheckboxField';
 
 // ============================================
 // ESTILOS COMPARTIDOS
@@ -82,83 +86,14 @@ export function useActiveFilters(filters, filterConfig, searchKey = 'busqueda') 
 }
 
 // ============================================
-// COMPONENTES DE FILTRO INDIVIDUALES
+// RE-EXPORT DE COMPONENTES UNIFICADOS
 // ============================================
 
-/**
- * FilterInput - Input de texto para filtros
- */
-export const FilterInput = memo(function FilterInput({ value, onChange, placeholder, className }) {
-  return (
-    <input
-      type="text"
-      value={value ?? ''}
-      onChange={(e) => onChange(e.target.value)}
-      placeholder={placeholder}
-      className={cn(filterInputStyles, className)}
-    />
-  );
-});
-
-FilterInput.displayName = 'FilterInput';
-
-/**
- * FilterSelect - Select para filtros
- */
-export const FilterSelectInput = memo(function FilterSelectInput({ value, onChange, options = [], className }) {
-  return (
-    <select
-      value={value ?? ''}
-      onChange={(e) => onChange(e.target.value)}
-      className={cn(filterInputStyles, className)}
-    >
-      {options.map((option) => (
-        <option key={option.value} value={option.value}>
-          {option.label}
-        </option>
-      ))}
-    </select>
-  );
-});
-
-FilterSelectInput.displayName = 'FilterSelectInput';
-
-/**
- * FilterDate - Input de fecha para filtros
- */
-export const FilterDateInput = memo(function FilterDateInput({ value, onChange, className }) {
-  return (
-    <input
-      type="date"
-      value={value ?? ''}
-      onChange={(e) => onChange(e.target.value)}
-      className={cn(filterInputStyles, className)}
-    />
-  );
-});
-
-FilterDateInput.displayName = 'FilterDateInput';
-
-/**
- * FilterCheckboxInput - Checkbox para filtros
- */
-export const FilterCheckboxInput = memo(function FilterCheckboxInput({ checked, onChange, label, className }) {
-  return (
-    <label className={cn('flex items-center gap-2 cursor-pointer', className)}>
-      <input
-        type="checkbox"
-        checked={!!checked}
-        onChange={(e) => onChange(e.target.checked)}
-        className={filterCheckboxStyles}
-      />
-      <span className="text-sm text-gray-700 dark:text-gray-300">
-        {label}
-      </span>
-    </label>
-  );
-});
-
-FilterCheckboxInput.displayName = 'FilterCheckboxInput';
+// Re-exportar desde molecules para compatibilidad con código existente
+export { FilterTextField as FilterInput } from '../../molecules/FilterTextField';
+export { FilterSelectField as FilterSelectInput } from '../../molecules/FilterSelectField';
+export { FilterDateField as FilterDateInput } from '../../molecules/FilterDateField';
+export { CheckboxField as FilterCheckboxInput } from '../../molecules/CheckboxField';
 
 // ============================================
 // COMPONENTE PRINCIPAL
@@ -192,8 +127,8 @@ export const FilterPanelBase = memo(function FilterPanelBase({
       case 'select':
         return (
           <div key={key}>
-            <label className={filterLabelStyles}>{config.label}</label>
-            <FilterSelectInput
+            <FilterSelectField
+              label={config.label}
               value={value}
               onChange={(v) => handleChange(key, v)}
               options={config.options}
@@ -204,8 +139,8 @@ export const FilterPanelBase = memo(function FilterPanelBase({
       case 'date':
         return (
           <div key={key}>
-            <label className={filterLabelStyles}>{config.label}</label>
-            <FilterDateInput
+            <FilterDateField
+              label={config.label}
               value={value}
               onChange={(v) => handleChange(key, v)}
             />
@@ -215,9 +150,9 @@ export const FilterPanelBase = memo(function FilterPanelBase({
       case 'checkbox':
         return (
           <div key={key}>
-            <FilterCheckboxInput
-              checked={value}
-              onChange={(v) => handleChange(key, v)}
+            <CheckboxField
+              checked={!!value}
+              onChange={(e) => handleChange(key, e.target?.checked ?? e)}
               label={config.checkboxLabel || config.label}
             />
           </div>
@@ -227,8 +162,8 @@ export const FilterPanelBase = memo(function FilterPanelBase({
       default:
         return (
           <div key={key}>
-            <label className={filterLabelStyles}>{config.label}</label>
-            <FilterInput
+            <FilterTextField
+              label={config.label}
               value={value}
               onChange={(v) => handleChange(key, v)}
               placeholder={config.placeholder}

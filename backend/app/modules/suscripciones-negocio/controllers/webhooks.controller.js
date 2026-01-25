@@ -9,7 +9,7 @@
  */
 
 const asyncHandler = require('../../../middleware/asyncHandler');
-const { PagosModel, SuscripcionesModel } = require('../models');
+const { PagosModel, SuscripcionesModel, WebhooksProcesadosModel } = require('../models');
 const StripeService = require('../services/stripe.service');
 // MercadoPagoService se importa dinámicamente en webhookMercadoPago
 // para obtener la instancia correcta según organizacionId
@@ -76,6 +76,7 @@ class WebhooksController {
      * POST /api/v1/suscripciones-negocio/webhooks/mercadopago/:organizacionId
      *
      * CRÍTICO: Endpoint público (sin auth), validación HMAC obligatoria
+     * IDEMPOTENCIA: Implementada via x-request-id + tabla webhooks_procesados
      *
      * Cada organización configura su webhook en MercadoPago con su URL específica:
      * https://api.nexo.com/api/v1/suscripciones-negocio/webhooks/mercadopago/1
@@ -96,15 +97,32 @@ class WebhooksController {
         const signature = req.headers['x-signature'];
         const requestId = req.headers['x-request-id'];
         const dataId = req.query['data.id'];
+        const ipOrigen = req.ip || req.headers['x-forwarded-for'] || null;
 
         logger.info('Webhook MercadoPago recibido', {
             organizacionId,
             action: req.body.action,
             type: req.body.type,
-            data_id: dataId
+            data_id: dataId,
+            request_id: requestId
         });
 
-        // 2. Obtener instancia de MercadoPago para ESTA organización
+        // 2. IDEMPOTENCIA: Verificar si ya fue procesado
+        if (requestId) {
+            const yaProcesado = await WebhooksProcesadosModel.yaFueProcesado('mercadopago', requestId);
+            if (yaProcesado) {
+                logger.info('Webhook duplicado ignorado (idempotencia)', {
+                    requestId,
+                    organizacionId
+                });
+                return ResponseHelper.success(res, {
+                    received: true,
+                    deduplicated: true
+                });
+            }
+        }
+
+        // 3. Obtener instancia de MercadoPago para ESTA organización
         let mpService;
         try {
             const MercadoPagoServiceMain = require('../../../services/mercadopago.service');
@@ -114,10 +132,25 @@ class WebhooksController {
                 organizacionId,
                 error: error.message
             });
+
+            // Registrar webhook con error
+            if (requestId) {
+                await WebhooksProcesadosModel.registrar({
+                    gateway: 'mercadopago',
+                    requestId,
+                    eventType: req.body.type || 'unknown',
+                    dataId,
+                    organizacionId,
+                    resultado: 'error',
+                    mensaje: `Conector no configurado: ${error.message}`,
+                    ipOrigen
+                });
+            }
+
             return ResponseHelper.error(res, 'Conector no configurado', 400);
         }
 
-        // 3. Validar HMAC con credenciales de ESTA organización
+        // 4. Validar HMAC con credenciales de ESTA organización
         const esValido = mpService.validarWebhook(signature, requestId, dataId);
 
         if (!esValido) {
@@ -126,13 +159,30 @@ class WebhooksController {
                 signature: signature?.substring(0, 20) + '...',
                 requestId
             });
+
+            // Registrar webhook con error de validación
+            if (requestId) {
+                await WebhooksProcesadosModel.registrar({
+                    gateway: 'mercadopago',
+                    requestId,
+                    eventType: req.body.type || 'unknown',
+                    dataId,
+                    organizacionId,
+                    resultado: 'error',
+                    mensaje: 'Validación HMAC fallida',
+                    ipOrigen
+                });
+            }
+
             return ResponseHelper.error(res, 'Invalid signature', 400);
         }
 
-        // 4. Procesar evento (ya validado)
-        try {
-            const { type, action, data } = req.body;
+        // 5. Procesar evento (ya validado)
+        const { type, action, data } = req.body;
+        let resultado = 'success';
+        let mensaje = null;
 
+        try {
             if (type === 'payment') {
                 await this._procesarPagoMercadoPago(data.id, organizacionId, mpService);
             } else if (type === 'subscription_preapproval') {
@@ -141,18 +191,36 @@ class WebhooksController {
                 // Pago de suscripción autorizado - procesar como pago
                 await this._procesarPagoSuscripcionMercadoPago(data.id, organizacionId, mpService);
             } else {
+                resultado = 'skipped';
+                mensaje = `Evento no manejado: ${type}`;
                 logger.debug(`Evento MercadoPago no manejado: ${type}`, { action });
             }
 
-            return ResponseHelper.success(res, { received: true });
-
         } catch (error) {
+            resultado = 'error';
+            mensaje = error.message;
             logger.error('Error procesando webhook MercadoPago', {
                 organizacionId,
                 error: error.message
             });
-            return ResponseHelper.error(res, 'Webhook processing failed', 500);
         }
+
+        // 6. Registrar webhook procesado (idempotencia)
+        if (requestId) {
+            await WebhooksProcesadosModel.registrar({
+                gateway: 'mercadopago',
+                requestId,
+                eventType: type || 'unknown',
+                dataId: data?.id?.toString(),
+                organizacionId,
+                resultado,
+                mensaje,
+                ipOrigen
+            });
+        }
+
+        // Siempre responder 200 para evitar reintentos innecesarios de MP
+        return ResponseHelper.success(res, { received: true, resultado });
     });
 
     // ====================================================================
@@ -295,10 +363,23 @@ class WebhooksController {
 
                 // Actualizar suscripción
                 if (pagoLocal.suscripcion_id) {
+                    const suscripcion = await SuscripcionesModel.buscarPorId(
+                        pagoLocal.suscripcion_id,
+                        pagoLocal.organizacion_id
+                    );
                     await SuscripcionesModel.procesarCobroExitoso(
                         pagoLocal.suscripcion_id,
                         pagoLocal.organizacion_id
                     );
+
+                    // Enviar email de confirmación de pago
+                    if (suscripcion) {
+                        await NotificacionesService.enviarConfirmacionPago(suscripcion, {
+                            ...pagoLocal,
+                            monto: pago.transaction_amount,
+                            transaction_id: paymentId.toString()
+                        });
+                    }
                 }
 
                 logger.info('✅ Pago MercadoPago procesado exitosamente', {
@@ -308,6 +389,18 @@ class WebhooksController {
                 });
             } else if (pago.status === 'rejected' || pago.status === 'cancelled') {
                 await PagosModel.actualizarEstado(pagoLocal.id, 'fallido', pagoLocal.organizacion_id);
+
+                // Enviar email de pago fallido
+                if (pagoLocal.suscripcion_id) {
+                    const suscripcion = await SuscripcionesModel.buscarPorId(
+                        pagoLocal.suscripcion_id,
+                        pagoLocal.organizacion_id
+                    );
+                    if (suscripcion) {
+                        const razonFallo = pago.status_detail || 'Pago rechazado por el procesador';
+                        await NotificacionesService.enviarFalloPago(suscripcion, pagoLocal, razonFallo);
+                    }
+                }
 
                 logger.info('⚠️ Pago MercadoPago rechazado/cancelado', {
                     payment_id: paymentId,
@@ -408,6 +501,9 @@ class WebhooksController {
                     'cancelada',
                     { razon: 'Cancelada en MercadoPago' }
                 );
+
+                // Enviar email de cancelación
+                await NotificacionesService.enviarCancelacion(suscripcion, 'Cancelada desde MercadoPago');
 
                 logger.info('⚠️ Suscripción cancelada vía webhook', {
                     suscripcion_id: suscripcion.id,
@@ -557,12 +653,27 @@ class WebhooksController {
                     suscripcion
                 );
 
+                // Enviar email de confirmación de pago
+                await NotificacionesService.enviarConfirmacionPago(suscripcion, {
+                    id: authorizedPaymentId,
+                    monto: pagoAutorizado.transaction_amount,
+                    moneda: pagoAutorizado.currency_id || 'MXN',
+                    transaction_id: authorizedPaymentId,
+                    creado_en: new Date()
+                });
+
                 logger.info('✅ Suscripción procesada por pago autorizado', {
                     suscripcion_id: suscripcion.id,
                     preapproval_id: preapprovalId,
                     status
                 });
             } else if (status === 'rejected' || status === 'cancelled') {
+                // Enviar email de pago fallido
+                const razonFallo = pagoAutorizado.rejection_code || 'Pago rechazado';
+                await NotificacionesService.enviarFalloPago(suscripcion, {
+                    monto: pagoAutorizado.transaction_amount
+                }, razonFallo);
+
                 logger.warn('Pago de suscripción rechazado/cancelado', {
                     suscripcion_id: suscripcion.id,
                     status,

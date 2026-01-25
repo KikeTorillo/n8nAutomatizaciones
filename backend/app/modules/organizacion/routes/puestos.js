@@ -13,6 +13,8 @@ router.post(
     '/',
     auth.authenticateToken,
     tenant.setTenantContext,
+    tenant.verifyTenantActive,
+    auth.requireAdminRole,
     validate(schemas.puestoCrear),
     asyncHandler(PuestoController.crear)
 );
@@ -40,6 +42,8 @@ router.put(
     '/:id',
     auth.authenticateToken,
     tenant.setTenantContext,
+    tenant.verifyTenantActive,
+    auth.requireAdminRole,
     validate(schemas.puestoActualizar),
     asyncHandler(PuestoController.actualizar)
 );
@@ -49,6 +53,8 @@ router.delete(
     '/:id',
     auth.authenticateToken,
     tenant.setTenantContext,
+    tenant.verifyTenantActive,
+    auth.requireAdminRole,
     validate(schemas.obtenerPorId),
     asyncHandler(PuestoController.eliminar)
 );

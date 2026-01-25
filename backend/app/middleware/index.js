@@ -26,6 +26,9 @@ module.exports = {
   auth: {
     authenticateToken: auth.authenticateToken,
     requireRole: auth.requireRole,
+    requireMinLevel: auth.requireMinLevel,
+    requireOwner: auth.requireOwner,
+    requireManager: auth.requireManager,
     requireAdmin: auth.requireAdmin,
     requireAdminRole: auth.requireAdminRole,
     requireOwnerOrAdmin: auth.requireOwnerOrAdmin,

@@ -3,79 +3,10 @@ import { Filter, X, ChevronDown, ChevronUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '../atoms/Button';
 import { SearchInput } from '../molecules/SearchInput';
-
-/**
- * Estilos compartidos para inputs de filtros
- * Ene 2026 - Refactorización FilterPanel
- */
-const FILTER_INPUT_STYLES = cn(
-  'w-full px-3 py-2 rounded-lg border transition-colors text-sm',
-  'bg-white dark:bg-gray-800',
-  'text-gray-900 dark:text-gray-100',
-  'border-gray-300 dark:border-gray-600',
-  'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500'
-);
-
-const CHECKBOX_STYLES = cn(
-  'w-4 h-4 rounded border-gray-300 dark:border-gray-600',
-  'text-primary-600 focus:ring-primary-500'
-);
-
-/**
- * Componentes internos memorizados
- */
-const FilterSelect = memo(function FilterSelect({ value, options, onChange }) {
-  return (
-    <select
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className={FILTER_INPUT_STYLES}
-    >
-      {options?.map((option) => (
-        <option key={option.value} value={option.value}>
-          {option.label}
-        </option>
-      ))}
-    </select>
-  );
-});
-
-const FilterDate = memo(function FilterDate({ value, onChange }) {
-  return (
-    <input
-      type="date"
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className={FILTER_INPUT_STYLES}
-    />
-  );
-});
-
-const FilterText = memo(function FilterText({ value, placeholder, onChange }) {
-  return (
-    <input
-      type="text"
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      placeholder={placeholder}
-      className={FILTER_INPUT_STYLES}
-    />
-  );
-});
-
-const FilterCheckbox = memo(function FilterCheckbox({ checked, label, onChange }) {
-  return (
-    <label className="flex items-center gap-2 cursor-pointer">
-      <input
-        type="checkbox"
-        checked={!!checked}
-        onChange={(e) => onChange(e.target.checked)}
-        className={CHECKBOX_STYLES}
-      />
-      <span className="text-sm text-gray-700 dark:text-gray-300">{label}</span>
-    </label>
-  );
-});
+import { FilterSelectField } from '../molecules/FilterSelectField';
+import { FilterDateField } from '../molecules/FilterDateField';
+import { FilterTextField } from '../molecules/FilterTextField';
+import { CheckboxField } from '../molecules/CheckboxField';
 
 /**
  * FilterPanel - Panel de filtros reutilizable con búsqueda y filtros expandibles
@@ -136,14 +67,40 @@ export const FilterPanel = memo(function FilterPanel({
 
     switch (config.type) {
       case 'select':
-        return <FilterSelect value={value} options={config.options} onChange={onChange} />;
+        return (
+          <FilterSelectField
+            label={config.label}
+            value={value}
+            options={config.options}
+            onChange={onChange}
+          />
+        );
       case 'date':
-        return <FilterDate value={value} onChange={onChange} />;
+        return (
+          <FilterDateField
+            label={config.label}
+            value={value}
+            onChange={onChange}
+          />
+        );
       case 'checkbox':
-        return <FilterCheckbox checked={value} label={config.checkboxLabel || config.label} onChange={onChange} />;
+        return (
+          <CheckboxField
+            checked={!!value}
+            label={config.checkboxLabel || config.label}
+            onChange={(e) => onChange(e.target?.checked ?? e)}
+          />
+        );
       case 'text':
       default:
-        return <FilterText value={value} placeholder={config.placeholder} onChange={onChange} />;
+        return (
+          <FilterTextField
+            label={config.label}
+            value={value}
+            placeholder={config.placeholder}
+            onChange={onChange}
+          />
+        );
     }
   }, [filters, handleFilterChange]);
 
@@ -197,11 +154,6 @@ export const FilterPanel = memo(function FilterPanel({
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {filterConfig.map((config) => (
               <div key={config.key}>
-                {config.type !== 'checkbox' && (
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    {config.label}
-                  </label>
-                )}
                 {renderFilterInput(config)}
               </div>
             ))}

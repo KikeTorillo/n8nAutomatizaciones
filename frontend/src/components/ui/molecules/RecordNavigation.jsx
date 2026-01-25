@@ -1,4 +1,5 @@
 import { memo } from 'react';
+import PropTypes from 'prop-types';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -97,5 +98,15 @@ export const RecordNavigation = memo(function RecordNavigation({
 });
 
 RecordNavigation.displayName = 'RecordNavigation';
+
+RecordNavigation.propTypes = {
+  currentIndex: PropTypes.number,
+  totalRecords: PropTypes.number,
+  onPrevious: PropTypes.func,
+  onNext: PropTypes.func,
+  showIndicator: PropTypes.bool,
+  size: PropTypes.oneOf(['sm', 'md']),
+  className: PropTypes.string,
+};
 
 export default RecordNavigation;

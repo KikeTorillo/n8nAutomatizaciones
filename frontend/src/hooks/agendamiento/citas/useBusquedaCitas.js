@@ -1,22 +1,19 @@
 import { useQuery } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { citasApi } from '@/services/api/endpoints';
+import { createSearchHook } from '@/hooks/factories';
 
 /**
  * Hook para buscar citas por código o cliente
- * @param {string} termino - Término de búsqueda
+ * Refactorizado con createSearchHook - Ene 2026
  */
-export function useBuscarCitas(termino) {
-  return useQuery({
-    queryKey: ['citas', 'buscar', termino],
-    queryFn: async () => {
-      const response = await citasApi.listar({ busqueda: termino });
-      return response.data?.data?.citas || [];
-    },
-    enabled: termino && termino.length >= 2,
-    staleTime: STALE_TIMES.FREQUENT,
-  });
-}
+export const useBuscarCitas = createSearchHook({
+  key: 'citas',
+  searchFn: citasApi.listar,
+  searchParam: 'busqueda',
+  transformResponse: (data) => data?.citas || [],
+  staleTime: STALE_TIMES.FREQUENT,
+});
 
 /**
  * Hook para obtener citas de un profesional en un rango de fechas

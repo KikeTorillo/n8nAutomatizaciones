@@ -14,7 +14,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { serviciosApi } from '@/services/api/endpoints';
-import { createCRUDHooks, createSanitizer } from '@/hooks/factories';
+import { createCRUDHooks, createSanitizer, createSearchHook } from '@/hooks/factories';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 
 // ==================== CRUD BÁSICO (via factory) ====================
@@ -64,19 +64,14 @@ export const useEliminarServicio = hooks.useDelete;
 
 /**
  * Hook para buscar servicios (búsqueda rápida)
- * Similar a useBuscarClientes
+ * Refactorizado con createSearchHook - Ene 2026
  */
-export function useBuscarServicios(termino, options = {}) {
-  return useQuery({
-    queryKey: ['buscar-servicios', termino],
-    queryFn: async () => {
-      const response = await serviciosApi.buscar({ termino, ...options });
-      return response.data.data;
-    },
-    enabled: termino.length >= 2,
-    staleTime: STALE_TIMES.REAL_TIME,
-  });
-}
+export const useBuscarServicios = createSearchHook({
+  key: 'servicios',
+  searchFn: serviciosApi.buscar,
+  searchParam: 'termino',
+  staleTime: STALE_TIMES.REAL_TIME,
+});
 
 // ==================== PROFESIONALES DEL SERVICIO ====================
 

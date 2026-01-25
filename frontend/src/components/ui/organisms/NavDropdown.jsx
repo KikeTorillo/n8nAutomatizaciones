@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronDown, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useClickOutsideRef } from '@/hooks/utils/useClickOutside';
 
 /**
  * NavDropdown - Dropdown de navegación con items agrupados
@@ -28,16 +29,8 @@ export const NavDropdown = memo(function NavDropdown({
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
 
-  // Cerrar al hacer click fuera
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsOpen(false);
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  // Cerrar al hacer click fuera (usando hook centralizado)
+  useClickOutsideRef(dropdownRef, () => setIsOpen(false), isOpen);
 
   // Cerrar con Escape
   useEffect(() => {

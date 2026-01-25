@@ -275,4 +275,13 @@ export const CARD_THEME_COLORS = {
  */
 export const getCardThemeColor = (color) => CARD_THEME_COLORS[color] || CARD_THEME_COLORS.blue;
 
+/**
+ * Colores para ToggleSwitch
+ * Track color cuando está enabled/disabled
+ */
+export const TOGGLE_COLORS = {
+  enabled: 'bg-green-500 dark:bg-green-600',
+  disabled: 'bg-gray-300 dark:bg-gray-600',
+};
+
 export default SEMANTIC_COLORS;

@@ -5,7 +5,7 @@
  * @date Enero 2026
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, memo } from 'react';
 import {
   Shield,
   Plus,
@@ -13,15 +13,11 @@ import {
   Trash2,
   Copy,
   Users,
-  ChevronDown,
-  ChevronRight,
   Crown,
   UserCog,
   User,
   Bot,
   Lock,
-  Check,
-  X,
   Search,
   Settings,
 } from 'lucide-react';
@@ -34,8 +30,6 @@ import {
   useCrearRol,
   useActualizarRol,
   useEliminarRol,
-  usePermisosRol,
-  useActualizarPermisoRol,
   useCopiarPermisosRol,
 } from '@/hooks/sistema/useRoles';
 
@@ -208,7 +202,7 @@ function RolFormModal({ isOpen, onClose, rol = null, onSave }) {
 /**
  * Tarjeta de rol
  */
-function RolCard({ rol, onEdit, onDelete, onCopyPermisos }) {
+const RolCard = memo(function RolCard({ rol, onEdit, onDelete, onCopyPermisos }) {
   const IconComponent = ICONOS_ROL[rol.codigo] || User;
   const cantidadUsuarios = rol.usuarios_count || 0;
 
@@ -295,7 +289,9 @@ function RolCard({ rol, onEdit, onDelete, onCopyPermisos }) {
       </div>
     </div>
   );
-}
+});
+
+RolCard.displayName = 'RolCard';
 
 /**
  * Página principal de Roles

@@ -16,7 +16,8 @@ const EtiquetaClienteController = require('../controllers/etiqueta.controller');
 const ActividadClienteController = require('../controllers/actividad.controller');
 const DocumentoClienteController = require('../controllers/documento.controller');
 const OportunidadController = require('../controllers/oportunidad.controller');
-const { auth, tenant, validation, rateLimiting, subscription, storage } = require('../../../middleware');
+const { auth, validation, rateLimiting, storage, composed } = require('../../../middleware');
+const { verificarPermiso } = require('../../../middleware/permisos');
 const clienteSchemas = require('../schemas/cliente.schemas');
 const etiquetaSchemas = require('../schemas/etiqueta.schemas');
 const actividadSchemas = require('../schemas/actividad.schemas');
@@ -34,8 +35,8 @@ const router = express.Router();
  * Crear nuevo cliente
  */
 router.post('/',
-    auth.authenticateToken,
-    tenant.setTenantContext,
+    ...composed.requireFullAuth,
+    verificarPermiso('clientes.crear'),
     rateLimiting.apiRateLimit,
     validation.validate(clienteSchemas.crear),
     ClienteController.crear
@@ -46,8 +47,7 @@ router.post('/',
  * Listar clientes con paginación y filtros
  */
 router.get('/',
-    auth.authenticateToken,
-    tenant.setTenantContext,
+    ...composed.requireFullAuth,
     rateLimiting.apiRateLimit,
     validation.validate(clienteSchemas.listar),
     ClienteController.listar
@@ -62,10 +62,9 @@ router.get('/',
  * Estadísticas generales de clientes de la organización
  */
 router.get('/estadisticas',
-    auth.authenticateToken,
-    tenant.setTenantContext,
+    ...composed.requireFullAuth,
+    verificarPermiso('clientes.ver_historial'),
     rateLimiting.apiRateLimit,
-    auth.requireRole(['super_admin', 'admin', 'organizacion_admin', 'manager']),
     validation.validate(clienteSchemas.obtenerEstadisticas),
     ClienteController.obtenerEstadisticas
 );
@@ -75,8 +74,7 @@ router.get('/estadisticas',
  * Búsqueda fuzzy por teléfono (para chatbots y walk-in)
  */
 router.get('/buscar-telefono',
-    auth.authenticateToken,
-    tenant.setTenantContext,
+    ...composed.requireFullAuth,
     rateLimiting.apiRateLimit,
     validation.validate(clienteSchemas.buscarPorTelefono),
     ClienteController.buscarPorTelefono
@@ -87,8 +85,7 @@ router.get('/buscar-telefono',
  * Búsqueda fuzzy por nombre (para chatbots)
  */
 router.get('/buscar-nombre',
-    auth.authenticateToken,
-    tenant.setTenantContext,
+    ...composed.requireFullAuth,
     rateLimiting.apiRateLimit,
     validation.validate(clienteSchemas.buscarPorNombre),
     ClienteController.buscarPorNombre
@@ -99,8 +96,7 @@ router.get('/buscar-nombre',
  * Búsqueda general (nombre, email, teléfono)
  */
 router.get('/buscar',
-    auth.authenticateToken,
-    tenant.setTenantContext,
+    ...composed.requireFullAuth,
     rateLimiting.apiRateLimit,
     validation.validate(clienteSchemas.buscar),
     ClienteController.buscar
@@ -111,10 +107,10 @@ router.get('/buscar',
  * Importar clientes desde CSV (masivo)
  */
 router.post('/importar-csv',
-    auth.authenticateToken,
-    tenant.setTenantContext,
+    ...composed.requireFullAuth,
+    verificarPermiso('clientes.crear'),
+    auth.requireMinLevel(80),  // Mantener nivel alto para operaciones masivas
     rateLimiting.apiRateLimit,
-    auth.requireRole(['super_admin', 'admin', 'organizacion_admin']),
     validation.validate(clienteSchemas.importarCSV),
     ClienteController.importarCSV
 );
@@ -129,8 +125,7 @@ router.post('/importar-csv',
  * Listar etiquetas de la organización
  */
 router.get('/etiquetas',
-    auth.authenticateToken,
-    tenant.setTenantContext,
+    ...composed.requireFullAuth,
     rateLimiting.apiRateLimit,
     validation.validate(etiquetaSchemas.listar),
     EtiquetaClienteController.listar
@@ -141,10 +136,9 @@ router.get('/etiquetas',
  * Crear nueva etiqueta
  */
 router.post('/etiquetas',
-    auth.authenticateToken,
-    tenant.setTenantContext,
+    ...composed.requireFullAuth,
+    verificarPermiso('clientes.editar'),
     rateLimiting.apiRateLimit,
-    auth.requireRole(['super_admin', 'admin', 'organizacion_admin', 'manager']),
     validation.validate(etiquetaSchemas.crear),
     EtiquetaClienteController.crear
 );
@@ -154,8 +148,7 @@ router.post('/etiquetas',
  * Obtener etiqueta por ID
  */
 router.get('/etiquetas/:etiquetaId',
-    auth.authenticateToken,
-    tenant.setTenantContext,
+    ...composed.requireFullAuth,
     rateLimiting.apiRateLimit,
     validation.validate(etiquetaSchemas.obtenerPorId),
     EtiquetaClienteController.obtenerPorId
@@ -166,10 +159,9 @@ router.get('/etiquetas/:etiquetaId',
  * Actualizar etiqueta
  */
 router.put('/etiquetas/:etiquetaId',
-    auth.authenticateToken,
-    tenant.setTenantContext,
+    ...composed.requireFullAuth,
+    verificarPermiso('clientes.editar'),
     rateLimiting.apiRateLimit,
-    auth.requireRole(['super_admin', 'admin', 'organizacion_admin', 'manager']),
     validation.validate(etiquetaSchemas.actualizar),
     EtiquetaClienteController.actualizar
 );
@@ -179,10 +171,9 @@ router.put('/etiquetas/:etiquetaId',
  * Eliminar etiqueta
  */
 router.delete('/etiquetas/:etiquetaId',
-    auth.authenticateToken,
-    tenant.setTenantContext,
+    ...composed.requireFullAuth,
+    verificarPermiso('clientes.eliminar'),
     rateLimiting.apiRateLimit,
-    auth.requireRole(['super_admin', 'admin', 'organizacion_admin']),
     validation.validate(etiquetaSchemas.eliminar),
     EtiquetaClienteController.eliminar
 );
@@ -196,8 +187,7 @@ router.delete('/etiquetas/:etiquetaId',
  * Obtener cliente por ID
  */
 router.get('/:id',
-    auth.authenticateToken,
-    tenant.setTenantContext,
+    ...composed.requireFullAuth,
     rateLimiting.apiRateLimit,
     validation.validate(clienteSchemas.obtenerPorId),
     ClienteController.obtenerPorId
@@ -208,8 +198,7 @@ router.get('/:id',
  * Vista 360° del cliente - Estadísticas detalladas (CRM)
  */
 router.get('/:id/estadisticas',
-    auth.authenticateToken,
-    tenant.setTenantContext,
+    ...composed.requireFullAuth,
     rateLimiting.apiRateLimit,
     validation.validate(clienteSchemas.obtenerEstadisticasCliente),
     ClienteController.obtenerEstadisticasCliente
@@ -220,8 +209,8 @@ router.get('/:id/estadisticas',
  * Actualizar cliente
  */
 router.put('/:id',
-    auth.authenticateToken,
-    tenant.setTenantContext,
+    ...composed.requireFullAuth,
+    verificarPermiso('clientes.editar'),
     rateLimiting.apiRateLimit,
     validation.validate(clienteSchemas.actualizar),
     ClienteController.actualizar
@@ -232,10 +221,9 @@ router.put('/:id',
  * Cambiar estado activo/inactivo
  */
 router.patch('/:id/estado',
-    auth.authenticateToken,
-    tenant.setTenantContext,
+    ...composed.requireFullAuth,
+    verificarPermiso('clientes.editar'),
     rateLimiting.apiRateLimit,
-    auth.requireRole(['super_admin', 'admin', 'organizacion_admin', 'manager']),
     validation.validate(clienteSchemas.cambiarEstado),
     ClienteController.cambiarEstado
 );
@@ -245,10 +233,9 @@ router.patch('/:id/estado',
  * Eliminar cliente (soft delete)
  */
 router.delete('/:id',
-    auth.authenticateToken,
-    tenant.setTenantContext,
+    ...composed.requireFullAuth,
+    verificarPermiso('clientes.eliminar'),
     rateLimiting.apiRateLimit,
-    auth.requireRole(['super_admin', 'admin', 'organizacion_admin']),
     validation.validate(clienteSchemas.eliminar),
     ClienteController.eliminar
 );
@@ -262,8 +249,7 @@ router.delete('/:id',
  * Obtener etiquetas de un cliente
  */
 router.get('/:clienteId/etiquetas',
-    auth.authenticateToken,
-    tenant.setTenantContext,
+    ...composed.requireFullAuth,
     rateLimiting.apiRateLimit,
     validation.validate(etiquetaSchemas.obtenerEtiquetasCliente),
     EtiquetaClienteController.obtenerEtiquetasCliente
@@ -274,8 +260,7 @@ router.get('/:clienteId/etiquetas',
  * Asignar etiquetas a un cliente (reemplaza existentes)
  */
 router.post('/:clienteId/etiquetas',
-    auth.authenticateToken,
-    tenant.setTenantContext,
+    ...composed.requireFullAuth,
     rateLimiting.apiRateLimit,
     validation.validate(etiquetaSchemas.asignarEtiquetas),
     EtiquetaClienteController.asignarEtiquetas
@@ -286,8 +271,7 @@ router.post('/:clienteId/etiquetas',
  * Agregar una etiqueta a un cliente
  */
 router.post('/:clienteId/etiquetas/:etiquetaId',
-    auth.authenticateToken,
-    tenant.setTenantContext,
+    ...composed.requireFullAuth,
     rateLimiting.apiRateLimit,
     validation.validate(etiquetaSchemas.agregarEtiqueta),
     EtiquetaClienteController.agregarEtiqueta
@@ -298,8 +282,7 @@ router.post('/:clienteId/etiquetas/:etiquetaId',
  * Quitar una etiqueta de un cliente
  */
 router.delete('/:clienteId/etiquetas/:etiquetaId',
-    auth.authenticateToken,
-    tenant.setTenantContext,
+    ...composed.requireFullAuth,
     rateLimiting.apiRateLimit,
     validation.validate(etiquetaSchemas.quitarEtiqueta),
     EtiquetaClienteController.quitarEtiqueta
@@ -314,8 +297,7 @@ router.delete('/:clienteId/etiquetas/:etiquetaId',
  * Listar actividades de un cliente
  */
 router.get('/:clienteId/actividades',
-    auth.authenticateToken,
-    tenant.setTenantContext,
+    ...composed.requireFullAuth,
     rateLimiting.apiRateLimit,
     validation.validate(actividadSchemas.listar),
     ActividadClienteController.listar
@@ -326,8 +308,7 @@ router.get('/:clienteId/actividades',
  * Obtener timeline unificado (actividades + citas + ventas)
  */
 router.get('/:clienteId/timeline',
-    auth.authenticateToken,
-    tenant.setTenantContext,
+    ...composed.requireFullAuth,
     rateLimiting.apiRateLimit,
     validation.validate(actividadSchemas.timeline),
     ActividadClienteController.obtenerTimeline
@@ -338,8 +319,7 @@ router.get('/:clienteId/timeline',
  * Contar actividades por tipo
  */
 router.get('/:clienteId/actividades/conteo',
-    auth.authenticateToken,
-    tenant.setTenantContext,
+    ...composed.requireFullAuth,
     rateLimiting.apiRateLimit,
     validation.validate(actividadSchemas.conteo),
     ActividadClienteController.contarActividades
@@ -350,8 +330,7 @@ router.get('/:clienteId/actividades/conteo',
  * Crear nueva actividad (nota, llamada, tarea, email)
  */
 router.post('/:clienteId/actividades',
-    auth.authenticateToken,
-    tenant.setTenantContext,
+    ...composed.requireFullAuth,
     rateLimiting.apiRateLimit,
     validation.validate(actividadSchemas.crear),
     ActividadClienteController.crear
@@ -362,8 +341,7 @@ router.post('/:clienteId/actividades',
  * Obtener actividad por ID
  */
 router.get('/:clienteId/actividades/:actividadId',
-    auth.authenticateToken,
-    tenant.setTenantContext,
+    ...composed.requireFullAuth,
     rateLimiting.apiRateLimit,
     validation.validate(actividadSchemas.obtenerPorId),
     ActividadClienteController.obtenerPorId
@@ -374,8 +352,7 @@ router.get('/:clienteId/actividades/:actividadId',
  * Actualizar actividad
  */
 router.put('/:clienteId/actividades/:actividadId',
-    auth.authenticateToken,
-    tenant.setTenantContext,
+    ...composed.requireFullAuth,
     rateLimiting.apiRateLimit,
     validation.validate(actividadSchemas.actualizar),
     ActividadClienteController.actualizar
@@ -386,8 +363,7 @@ router.put('/:clienteId/actividades/:actividadId',
  * Eliminar actividad
  */
 router.delete('/:clienteId/actividades/:actividadId',
-    auth.authenticateToken,
-    tenant.setTenantContext,
+    ...composed.requireFullAuth,
     rateLimiting.apiRateLimit,
     validation.validate(actividadSchemas.eliminar),
     ActividadClienteController.eliminar
@@ -398,8 +374,7 @@ router.delete('/:clienteId/actividades/:actividadId',
  * Marcar tarea como completada
  */
 router.patch('/:clienteId/actividades/:actividadId/completar',
-    auth.authenticateToken,
-    tenant.setTenantContext,
+    ...composed.requireFullAuth,
     rateLimiting.apiRateLimit,
     validation.validate(actividadSchemas.marcarCompletada),
     ActividadClienteController.marcarCompletada
@@ -415,8 +390,7 @@ router.patch('/:clienteId/actividades/:actividadId/completar',
  * NOTA: Esta ruta debe ir ANTES de /:clienteId para evitar conflictos
  */
 router.get('/documentos/tipos',
-    auth.authenticateToken,
-    tenant.setTenantContext,
+    ...composed.requireFullAuth,
     rateLimiting.apiRateLimit,
     DocumentoClienteController.obtenerTipos
 );
@@ -426,8 +400,7 @@ router.get('/documentos/tipos',
  * Listar documentos por vencer de la organización
  */
 router.get('/documentos/por-vencer',
-    auth.authenticateToken,
-    tenant.setTenantContext,
+    ...composed.requireFullAuth,
     rateLimiting.apiRateLimit,
     validation.validate(documentoSchemas.porVencer),
     DocumentoClienteController.listarPorVencer
@@ -438,8 +411,7 @@ router.get('/documentos/por-vencer',
  * Listar documentos de un cliente
  */
 router.get('/:clienteId/documentos',
-    auth.authenticateToken,
-    tenant.setTenantContext,
+    ...composed.requireFullAuth,
     rateLimiting.apiRateLimit,
     validation.validate(documentoSchemas.listar),
     DocumentoClienteController.listar
@@ -450,8 +422,7 @@ router.get('/:clienteId/documentos',
  * Contar documentos de un cliente
  */
 router.get('/:clienteId/documentos/conteo',
-    auth.authenticateToken,
-    tenant.setTenantContext,
+    ...composed.requireFullAuth,
     rateLimiting.apiRateLimit,
     validation.validate(documentoSchemas.conteo),
     DocumentoClienteController.contarDocumentos
@@ -462,8 +433,7 @@ router.get('/:clienteId/documentos/conteo',
  * Crear documento (con o sin archivo)
  */
 router.post('/:clienteId/documentos',
-    auth.authenticateToken,
-    tenant.setTenantContext,
+    ...composed.requireFullAuth,
     rateLimiting.apiRateLimit,
     storage.createUploadSingle('archivo'),
     validation.validate(documentoSchemas.crear),
@@ -475,8 +445,7 @@ router.post('/:clienteId/documentos',
  * Obtener documento por ID
  */
 router.get('/:clienteId/documentos/:documentoId',
-    auth.authenticateToken,
-    tenant.setTenantContext,
+    ...composed.requireFullAuth,
     rateLimiting.apiRateLimit,
     validation.validate(documentoSchemas.obtenerPorId),
     DocumentoClienteController.obtenerPorId
@@ -487,8 +456,7 @@ router.get('/:clienteId/documentos/:documentoId',
  * Obtener URL presigned para descargar
  */
 router.get('/:clienteId/documentos/:documentoId/presigned',
-    auth.authenticateToken,
-    tenant.setTenantContext,
+    ...composed.requireFullAuth,
     rateLimiting.apiRateLimit,
     validation.validate(documentoSchemas.presigned),
     DocumentoClienteController.obtenerPresigned
@@ -499,8 +467,7 @@ router.get('/:clienteId/documentos/:documentoId/presigned',
  * Actualizar documento
  */
 router.put('/:clienteId/documentos/:documentoId',
-    auth.authenticateToken,
-    tenant.setTenantContext,
+    ...composed.requireFullAuth,
     rateLimiting.apiRateLimit,
     validation.validate(documentoSchemas.actualizar),
     DocumentoClienteController.actualizar
@@ -511,8 +478,7 @@ router.put('/:clienteId/documentos/:documentoId',
  * Eliminar documento
  */
 router.delete('/:clienteId/documentos/:documentoId',
-    auth.authenticateToken,
-    tenant.setTenantContext,
+    ...composed.requireFullAuth,
     rateLimiting.apiRateLimit,
     validation.validate(documentoSchemas.eliminar),
     DocumentoClienteController.eliminar
@@ -523,10 +489,9 @@ router.delete('/:clienteId/documentos/:documentoId',
  * Verificar/desverificar documento
  */
 router.patch('/:clienteId/documentos/:documentoId/verificar',
-    auth.authenticateToken,
-    tenant.setTenantContext,
+    ...composed.requireFullAuth,
+    verificarPermiso('clientes.editar'),
     rateLimiting.apiRateLimit,
-    auth.requireRole(['super_admin', 'admin', 'organizacion_admin', 'manager']),
     validation.validate(documentoSchemas.verificar),
     DocumentoClienteController.verificar
 );
@@ -536,8 +501,7 @@ router.patch('/:clienteId/documentos/:documentoId/verificar',
  * Subir/reemplazar archivo de un documento existente
  */
 router.post('/:clienteId/documentos/:documentoId/archivo',
-    auth.authenticateToken,
-    tenant.setTenantContext,
+    ...composed.requireFullAuth,
     rateLimiting.apiRateLimit,
     storage.createUploadSingle('archivo'),
     validation.validate(documentoSchemas.subirArchivo),
@@ -554,10 +518,9 @@ router.post('/:clienteId/documentos/:documentoId/archivo',
  * NOTA: Esta ruta debe ir ANTES de /:id
  */
 router.get('/credito/con-saldo',
-    auth.authenticateToken,
-    tenant.setTenantContext,
+    ...composed.requireFullAuth,
+    verificarPermiso('clientes.ver_historial'),
     rateLimiting.apiRateLimit,
-    auth.requireRole(['super_admin', 'admin', 'organizacion_admin', 'manager']),
     ClienteController.listarClientesConSaldo
 );
 
@@ -566,8 +529,7 @@ router.get('/credito/con-saldo',
  * Obtener estado de crédito de un cliente
  */
 router.get('/:id/credito',
-    auth.authenticateToken,
-    tenant.setTenantContext,
+    ...composed.requireFullAuth,
     rateLimiting.apiRateLimit,
     validation.validate(clienteSchemas.obtenerPorId),
     ClienteController.obtenerEstadoCredito
@@ -578,10 +540,9 @@ router.get('/:id/credito',
  * Habilitar/deshabilitar crédito
  */
 router.patch('/:id/credito',
-    auth.authenticateToken,
-    tenant.setTenantContext,
+    ...composed.requireFullAuth,
+    verificarPermiso('clientes.editar'),
     rateLimiting.apiRateLimit,
-    auth.requireRole(['super_admin', 'admin', 'organizacion_admin', 'manager']),
     validation.validate(clienteSchemas.actualizarCredito),
     ClienteController.actualizarConfigCredito
 );
@@ -591,10 +552,9 @@ router.patch('/:id/credito',
  * Suspender crédito
  */
 router.post('/:id/credito/suspender',
-    auth.authenticateToken,
-    tenant.setTenantContext,
+    ...composed.requireFullAuth,
+    verificarPermiso('clientes.editar'),
     rateLimiting.apiRateLimit,
-    auth.requireRole(['super_admin', 'admin', 'organizacion_admin', 'manager']),
     validation.validate(clienteSchemas.suspenderCredito),
     ClienteController.suspenderCredito
 );
@@ -604,10 +564,9 @@ router.post('/:id/credito/suspender',
  * Reactivar crédito suspendido
  */
 router.post('/:id/credito/reactivar',
-    auth.authenticateToken,
-    tenant.setTenantContext,
+    ...composed.requireFullAuth,
+    verificarPermiso('clientes.editar'),
     rateLimiting.apiRateLimit,
-    auth.requireRole(['super_admin', 'admin', 'organizacion_admin', 'manager']),
     validation.validate(clienteSchemas.obtenerPorId),
     ClienteController.reactivarCredito
 );
@@ -617,10 +576,9 @@ router.post('/:id/credito/reactivar',
  * Registrar abono a la cuenta del cliente
  */
 router.post('/:id/credito/abono',
-    auth.authenticateToken,
-    tenant.setTenantContext,
+    ...composed.requireFullAuth,
+    verificarPermiso('clientes.editar'),
     rateLimiting.apiRateLimit,
-    auth.requireRole(['super_admin', 'admin', 'organizacion_admin', 'manager', 'empleado']),
     validation.validate(clienteSchemas.registrarAbono),
     ClienteController.registrarAbono
 );
@@ -630,8 +588,7 @@ router.post('/:id/credito/abono',
  * Listar movimientos de crédito
  */
 router.get('/:id/credito/movimientos',
-    auth.authenticateToken,
-    tenant.setTenantContext,
+    ...composed.requireFullAuth,
     rateLimiting.apiRateLimit,
     validation.validate(clienteSchemas.listarMovimientosCredito),
     ClienteController.listarMovimientosCredito
@@ -646,8 +603,7 @@ router.get('/:id/credito/movimientos',
  * Listar oportunidades de un cliente
  */
 router.get('/:clienteId/oportunidades',
-    auth.authenticateToken,
-    tenant.setTenantContext,
+    ...composed.requireFullAuth,
     rateLimiting.apiRateLimit,
     validation.validateQuery(oportunidadSchemas.listarOportunidadesQuerySchema),
     OportunidadController.listarPorCliente
@@ -658,8 +614,7 @@ router.get('/:clienteId/oportunidades',
  * Crear oportunidad para un cliente
  */
 router.post('/:clienteId/oportunidades',
-    auth.authenticateToken,
-    tenant.setTenantContext,
+    ...composed.requireFullAuth,
     rateLimiting.apiRateLimit,
     validation.validateBody(oportunidadSchemas.oportunidadSchema),
     OportunidadController.crear
@@ -670,8 +625,7 @@ router.post('/:clienteId/oportunidades',
  * Estadísticas de oportunidades del cliente
  */
 router.get('/:clienteId/oportunidades/estadisticas',
-    auth.authenticateToken,
-    tenant.setTenantContext,
+    ...composed.requireFullAuth,
     rateLimiting.apiRateLimit,
     OportunidadController.obtenerEstadisticasCliente
 );

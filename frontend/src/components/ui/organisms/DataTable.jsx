@@ -2,7 +2,7 @@ import { useMemo, memo, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import { SkeletonTable } from '../molecules/SkeletonTable';
 import { EmptyState } from '../molecules/EmptyState';
-import { Pagination } from '../molecules/Pagination';
+import { Pagination } from './Pagination';
 import { Inbox } from 'lucide-react';
 import {
   TABLE_ALIGN_CLASSES,

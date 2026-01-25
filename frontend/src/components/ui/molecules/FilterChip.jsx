@@ -1,4 +1,5 @@
 import { memo } from 'react';
+import PropTypes from 'prop-types';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -21,7 +22,7 @@ import { cn } from '@/lib/utils';
  *   onRemove={() => clearFilter('categoria')}
  * />
  */
-function FilterChip({
+const FilterChip = memo(function FilterChip({
   label,
   value,
   onRemove,
@@ -74,10 +75,17 @@ function FilterChip({
       )}
     </span>
   );
-}
+});
 
 FilterChip.displayName = 'FilterChip';
 
-const MemoizedFilterChip = memo(FilterChip);
-export { MemoizedFilterChip as FilterChip };
-export default MemoizedFilterChip;
+FilterChip.propTypes = {
+  label: PropTypes.string.isRequired,
+  value: PropTypes.string,
+  onRemove: PropTypes.func,
+  variant: PropTypes.oneOf(['primary', 'gray']),
+  className: PropTypes.string,
+};
+
+export { FilterChip };
+export default FilterChip;

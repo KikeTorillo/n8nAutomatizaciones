@@ -25,6 +25,7 @@ export {
   getStatusColor,
   CARD_THEME_COLORS,
   getCardThemeColor,
+  TOGGLE_COLORS,
 } from './colors';
 
 // Tamaños
@@ -36,15 +37,18 @@ export {
   BADGE_SIZES,
   INPUT_SIZES,
   AVATAR_SIZES,
-  PADDING_SIZES,
-  GAP_SIZES,
   TEXT_SIZES,
   ICON_CONTAINER_SIZES,
   MODAL_SIZES,
   DRAWER_SIZES,
   SEARCH_INPUT_SIZES,
   PAGINATION_SIZES,
+  TOGGLE_SIZES,
 } from './sizes';
+
+// Re-exports desde spacing para compatibilidad (fuente única de verdad)
+// Usar GAP y PADDING de spacing.js en vez de los eliminados *_SIZES
+export { GAP as GAP_SIZES, PADDING as PADDING_SIZES } from './spacing';
 
 // Variantes
 export {

@@ -93,6 +93,10 @@ INSERT INTO permisos_catalogo (codigo, modulo, categoria, nombre, descripcion, t
 ('inventario.limite_aprobacion', 'inventario', 'operacion', 'Límite de aprobación ($)', 'Monto máximo que puede aprobar en órdenes', 'numerico', '0', 480),
 ('inventario.recibir_mercancia', 'inventario', 'operacion', 'Recibir mercancía', 'Permite registrar recepción de mercancía', 'booleano', 'false', 490),
 ('inventario.transferir_stock', 'inventario', 'operacion', 'Transferir stock', 'Permite transferir stock entre sucursales', 'booleano', 'false', 500),
+('inventario.ver_proveedores', 'inventario', 'operacion', 'Ver proveedores', 'Permite ver catálogo de proveedores', 'booleano', 'false', 510),
+('inventario.crear_proveedores', 'inventario', 'operacion', 'Crear proveedores', 'Permite crear nuevos proveedores', 'booleano', 'false', 520),
+('inventario.editar_proveedores', 'inventario', 'operacion', 'Editar proveedores', 'Permite modificar proveedores existentes', 'booleano', 'false', 530),
+('inventario.eliminar_proveedores', 'inventario', 'operacion', 'Eliminar proveedores', 'Permite eliminar proveedores', 'booleano', 'false', 540),
 
 -- ========================================
 -- MÓDULO: CLIENTES
@@ -186,6 +190,16 @@ DECLARE
     v_permiso RECORD;
     v_valor BOOLEAN;
 BEGIN
+    -- ====================================================================
+    -- ARQUITECTURA RBAC v2 (Ene 2026)
+    -- ====================================================================
+    -- bypass_permisos = FALSE para TODOS los roles de organización
+    -- Los permisos se asignan explícitamente aquí, permitiendo:
+    -- 1. Auditoría: "¿Quién tiene acceso a X?" → Query directa
+    -- 2. Configurabilidad: Admin puede quitar permisos específicos
+    -- 3. Granularidad: Propietario puede tener ventas pero no contabilidad
+    -- ====================================================================
+
     -- Iterar sobre todos los permisos del catálogo
     FOR v_permiso IN
         SELECT id, codigo, tipo_valor, valor_default
@@ -194,31 +208,40 @@ BEGIN
     LOOP
         -- Determinar valor según nivel jerárquico
         IF p_nivel_jerarquia >= 80 THEN
-            -- Admin/Propietario: todos los permisos booleanos = true
+            -- Admin/Propietario: TODOS los permisos booleanos = true
+            -- IMPORTANTE: Ya no usan bypass_permisos, necesitan permisos explícitos
             IF v_permiso.tipo_valor = 'booleano' THEN
                 v_valor := TRUE;
             END IF;
         ELSIF p_nivel_jerarquia >= 50 THEN
-            -- Gerente: permisos de lectura + algunos de escritura
+            -- Gerente: permisos de lectura + operaciones de gestión
             v_valor := v_permiso.codigo IN (
                 -- Accesos
                 'acceso.agendamiento', 'acceso.clientes', 'acceso.pos',
-                'acceso.inventario', 'acceso.reportes',
+                'acceso.inventario', 'acceso.reportes', 'acceso.profesionales',
                 -- Agendamiento
                 'agendamiento.crear_citas', 'agendamiento.editar_citas',
                 'agendamiento.cancelar_citas', 'agendamiento.completar_citas',
-                'agendamiento.ver_todas_citas',
+                'agendamiento.ver_todas_citas', 'agendamiento.reagendar_sin_restriccion',
                 -- Clientes
                 'clientes.ver', 'clientes.crear', 'clientes.editar', 'clientes.ver_historial',
+                'clientes.exportar',
                 -- POS
                 'pos.crear_ventas', 'pos.aplicar_descuentos', 'pos.ver_historial',
-                'pos.abrir_caja', 'pos.cerrar_caja', 'pos.ver_puntos_cliente', 'pos.canjear_puntos',
+                'pos.abrir_caja', 'pos.cerrar_caja', 'pos.corte_caja',
+                'pos.ver_puntos_cliente', 'pos.canjear_puntos', 'pos.reimprimir_tickets',
                 -- Inventario
-                'inventario.ver_productos', 'inventario.crear_ordenes_compra',
+                'inventario.ver_productos', 'inventario.crear_productos',
+                'inventario.editar_productos', 'inventario.ver_costos',
+                'inventario.crear_ordenes_compra', 'inventario.recibir_mercancia',
+                'inventario.ver_proveedores', 'inventario.crear_proveedores',
+                'inventario.editar_proveedores',
                 -- Reportes
-                'reportes.ver_ventas', 'reportes.ver_citas', 'reportes.exportar',
+                'reportes.ver_ventas', 'reportes.ver_citas', 'reportes.ver_inventario',
+                'reportes.exportar',
                 -- Profesionales
-                'profesionales.ver', 'profesionales.ver_comisiones'
+                'profesionales.ver', 'profesionales.ver_comisiones',
+                'profesionales.gestionar_horarios'
             );
         ELSIF p_nivel_jerarquia >= 10 THEN
             -- Empleado: solo operaciones básicas
@@ -226,7 +249,7 @@ BEGIN
                 'acceso.agendamiento', 'acceso.clientes',
                 'agendamiento.crear_citas', 'agendamiento.editar_citas', 'agendamiento.completar_citas',
                 'clientes.ver', 'clientes.crear', 'clientes.editar', 'clientes.ver_historial',
-                'reportes.ver_ventas', 'reportes.ver_citas', 'reportes.exportar'
+                'reportes.ver_ventas', 'reportes.ver_citas'
             );
         ELSIF p_codigo_rol = 'bot' THEN
             -- Bot: permisos específicos de automatización
@@ -247,8 +270,9 @@ BEGIN
             ON CONFLICT (rol_id, permiso_id) DO UPDATE SET valor = to_jsonb(v_valor);
         END IF;
 
-        -- Permisos numéricos para admin/propietario
+        -- Permisos numéricos según nivel
         IF p_nivel_jerarquia >= 80 THEN
+            -- Admin/Propietario: límites máximos
             IF v_permiso.codigo = 'pos.max_descuento' THEN
                 INSERT INTO permisos_rol (rol_id, permiso_id, valor)
                 VALUES (p_rol_id, v_permiso.id, '100'::JSONB)
@@ -257,6 +281,17 @@ BEGIN
                 INSERT INTO permisos_rol (rol_id, permiso_id, valor)
                 VALUES (p_rol_id, v_permiso.id, '999999'::JSONB)
                 ON CONFLICT (rol_id, permiso_id) DO UPDATE SET valor = '999999'::JSONB;
+            END IF;
+        ELSIF p_nivel_jerarquia >= 50 THEN
+            -- Gerente: límites moderados
+            IF v_permiso.codigo = 'pos.max_descuento' THEN
+                INSERT INTO permisos_rol (rol_id, permiso_id, valor)
+                VALUES (p_rol_id, v_permiso.id, '30'::JSONB)
+                ON CONFLICT (rol_id, permiso_id) DO UPDATE SET valor = '30'::JSONB;
+            ELSIF v_permiso.codigo = 'inventario.limite_aprobacion' THEN
+                INSERT INTO permisos_rol (rol_id, permiso_id, valor)
+                VALUES (p_rol_id, v_permiso.id, '50000'::JSONB)
+                ON CONFLICT (rol_id, permiso_id) DO UPDATE SET valor = '50000'::JSONB;
             END IF;
         END IF;
     END LOOP;

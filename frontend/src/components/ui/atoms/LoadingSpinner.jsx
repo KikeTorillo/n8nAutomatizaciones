@@ -1,4 +1,5 @@
 import { memo } from 'react';
+import PropTypes from 'prop-types';
 import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SPINNER_SIZES, SEMANTIC_COLORS, ARIA_ROLES, ARIA_LIVE, getLoadingAriaLabel } from '@/lib/uiConstants';
@@ -49,6 +50,13 @@ const LoadingSpinner = memo(function LoadingSpinner({
 });
 
 LoadingSpinner.displayName = 'LoadingSpinner';
+
+LoadingSpinner.propTypes = {
+  size: PropTypes.oneOf(['sm', 'md', 'lg', 'xl']),
+  className: PropTypes.string,
+  text: PropTypes.string,
+  'aria-label': PropTypes.string,
+};
 
 export { LoadingSpinner };
 export default LoadingSpinner;

@@ -1,4 +1,5 @@
 import { memo } from 'react';
+import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '../atoms/Button';
@@ -36,6 +37,12 @@ const BackButton = memo(function BackButton({ to, label = 'Volver', className = 
 });
 
 BackButton.displayName = 'BackButton';
+
+BackButton.propTypes = {
+  to: PropTypes.string,
+  label: PropTypes.string,
+  className: PropTypes.string,
+};
 
 export { BackButton };
 export default BackButton;

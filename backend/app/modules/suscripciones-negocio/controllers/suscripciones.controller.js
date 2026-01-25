@@ -169,24 +169,64 @@ class SuscripcionesController {
     });
 
     /**
-     * Cancelar suscripción
+     * Cancelar suscripción (Customer Billing - admin cancela suscripción de cliente)
      * POST /api/v1/suscripciones-negocio/suscripciones/:id/cancelar
      */
     static cancelar = asyncHandler(async (req, res) => {
         const { id } = req.params;
-        const { razon, inmediato = false } = req.body;
+        const { motivo_cancelacion, inmediato = false } = req.body;
         const organizacionId = req.tenant.organizacionId;
+        const usuarioId = req.user?.id;
 
         const suscripcionCancelada = await SuscripcionesModel.cancelar(
             id,
+            motivo_cancelacion,
             organizacionId,
-            { razon, inmediato }
+            usuarioId
         );
 
         return ResponseHelper.success(
             res,
             suscripcionCancelada,
             inmediato ? 'Suscripción cancelada inmediatamente' : 'Suscripción programada para cancelar'
+        );
+    });
+
+    /**
+     * Cancelar mi propia suscripción (Dogfooding - usuario cancela su plan)
+     * POST /api/v1/suscripciones-negocio/suscripciones/mi-suscripcion/cancelar
+     *
+     * Este endpoint permite a usuarios cancelar la suscripción de su organización.
+     * Usa bypass porque la suscripción pertenece al vendor (Nexo Team org 1)
+     * pero el cliente está vinculado a la org del usuario.
+     */
+    static cancelarMiSuscripcion = asyncHandler(async (req, res) => {
+        const { motivo_cancelacion } = req.body;
+        const organizacionId = req.user.organizacion_id;
+        const usuarioId = req.user?.id;
+        const usuarioEmail = req.user?.email;
+        const usuarioNombre = req.user?.nombre;
+
+        // Buscar la suscripción activa del usuario usando el método que ya usa bypass
+        const miSuscripcion = await SuscripcionesModel.buscarActivaPorOrganizacion(organizacionId);
+
+        if (!miSuscripcion) {
+            return ResponseHelper.error(res, 'No tienes una suscripción activa', 404);
+        }
+
+        // Cancelar usando método bypass (la suscripción pertenece a Nexo Team, no a la org del usuario)
+        // Pasamos email y nombre del usuario para las notificaciones
+        const suscripcionCancelada = await SuscripcionesModel.cancelarBypass(
+            miSuscripcion.id,
+            motivo_cancelacion,
+            usuarioId,
+            { email: usuarioEmail, nombre: usuarioNombre }
+        );
+
+        return ResponseHelper.success(
+            res,
+            suscripcionCancelada,
+            'Suscripción cancelada. Mantendrás acceso hasta el final del período actual.'
         );
     });
 

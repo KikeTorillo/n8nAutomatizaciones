@@ -1,4 +1,5 @@
 import { memo } from 'react';
+import PropTypes from 'prop-types';
 import { cn } from '@/lib/utils';
 import {
   PROGRESS_BAR_COLORS,
@@ -159,5 +160,28 @@ export function LimitProgressBar({ label, usado, limite, porcentaje }) {
 }
 
 ProgressBar.displayName = 'ProgressBar';
+
+ProgressBar.propTypes = {
+  value: PropTypes.number,
+  max: PropTypes.number,
+  percentage: PropTypes.number,
+  label: PropTypes.string,
+  showPercentage: PropTypes.bool,
+  showValue: PropTypes.bool,
+  layout: PropTypes.oneOf(['horizontal', 'vertical']),
+  size: PropTypes.oneOf(['sm', 'md', 'lg']),
+  preset: PropTypes.oneOf(['completion', 'usage', 'neutral']),
+  color: PropTypes.string,
+  thresholds: PropTypes.arrayOf(PropTypes.number),
+  colors: PropTypes.arrayOf(PropTypes.string),
+  className: PropTypes.string,
+};
+
+LimitProgressBar.propTypes = {
+  label: PropTypes.string,
+  usado: PropTypes.number,
+  limite: PropTypes.number,
+  porcentaje: PropTypes.number,
+};
 
 export default ProgressBar;

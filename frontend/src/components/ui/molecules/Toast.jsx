@@ -1,4 +1,5 @@
 import { useEffect, memo } from 'react';
+import PropTypes from 'prop-types';
 import { X, CheckCircle, AlertCircle, Info, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { TOAST_EXTENDED_VARIANTS, TOAST_CONTAINER_STYLES } from '@/lib/uiConstants';
@@ -63,6 +64,14 @@ const Toast = memo(function Toast({ id, message, type = 'info', duration = 5000,
 });
 
 Toast.displayName = 'Toast';
+
+Toast.propTypes = {
+  id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+  message: PropTypes.string.isRequired,
+  type: PropTypes.oneOf(['success', 'error', 'info', 'warning']),
+  duration: PropTypes.number,
+  onClose: PropTypes.func.isRequired,
+};
 
 export { Toast };
 export default Toast;

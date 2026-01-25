@@ -1,4 +1,5 @@
 import { memo } from 'react';
+import PropTypes from 'prop-types';
 import { cn } from '@/lib/utils';
 import CheckboxField from './CheckboxField';
 
@@ -89,5 +90,23 @@ export const CheckboxGroup = memo(function CheckboxGroup({
 });
 
 CheckboxGroup.displayName = 'CheckboxGroup';
+
+CheckboxGroup.propTypes = {
+  options: PropTypes.arrayOf(
+    PropTypes.shape({
+      field: PropTypes.string.isRequired,
+      label: PropTypes.string.isRequired,
+      description: PropTypes.string,
+      icon: PropTypes.elementType,
+      disabled: PropTypes.bool,
+    })
+  ),
+  values: PropTypes.object,
+  onChange: PropTypes.func,
+  title: PropTypes.string,
+  layout: PropTypes.oneOf(['vertical', 'horizontal', 'grid']),
+  columns: PropTypes.number,
+  className: PropTypes.string,
+};
 
 export default CheckboxGroup;

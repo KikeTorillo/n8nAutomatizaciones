@@ -6,3 +6,4 @@
 export { BasePageLayout } from './BasePageLayout';
 export { ModuleGuard, ModuleVisible, ModuleHidden } from './ModuleGuard';
 export { ListadoCRUDPage } from './ListadoCRUDPage';
+export { createModuleLayout } from './createModuleLayout';

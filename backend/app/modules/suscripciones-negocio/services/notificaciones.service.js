@@ -1,49 +1,77 @@
 /**
  * ====================================================================
- * SERVICE: NOTIFICACIONES
+ * SERVICE: NOTIFICACIONES SUSCRIPCIONES
  * ====================================================================
  * Servicio de envío de notificaciones por email para suscripciones.
+ *
+ * Ene 2026 - Implementación completa de dunning emails
  *
  * @module services/notificaciones
  */
 
 const logger = require('../../../utils/logger');
+const emailService = require('../../../services/emailService');
+const templates = require('../../../services/email/templates/suscripciones');
 
-class NotificacionesService {
+// URL del frontend para links en emails
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
+
+class NotificacionesSuscripcionesService {
 
     /**
      * Enviar confirmación de pago exitoso
      *
      * @param {Object} suscripcion - Suscripción
      * @param {Object} pago - Pago procesado
-     * @returns {Promise<void>}
+     * @returns {Promise<Object>} Resultado del envío
      */
     static async enviarConfirmacionPago(suscripcion, pago) {
         try {
             const email = this._obtenerEmail(suscripcion);
             const nombre = this._obtenerNombre(suscripcion);
 
+            if (!email) {
+                logger.warn(`No se pudo enviar confirmación de pago: email no disponible para suscripción ${suscripcion.id}`);
+                return { success: false, reason: 'email_no_disponible' };
+            }
+
             logger.info(`Enviando confirmación de pago a ${email}`, {
                 suscripcion_id: suscripcion.id,
                 pago_id: pago.id
             });
 
-            // TODO: Integrar con servicio de emails (nodemailer, SendGrid, etc.)
-            // Por ahora solo logging
+            const htmlContent = templates.generatePagoExitosoEmail({
+                nombre,
+                planNombre: suscripcion.plan_nombre,
+                periodo: suscripcion.periodo,
+                monto: parseFloat(pago.monto),
+                moneda: pago.moneda || suscripcion.moneda || 'MXN',
+                fechaPago: pago.fecha_pago || pago.creado_en || new Date(),
+                fechaProximoCobro: suscripcion.fecha_proximo_cobro,
+                transaccionId: pago.transaction_id
+            });
 
-            const asunto = 'Confirmación de pago - Suscripción';
-            const mensaje = this._generarMensajeConfirmacionPago(nombre, suscripcion, pago);
+            const textContent = templates.generatePagoExitosoText({
+                nombre,
+                planNombre: suscripcion.plan_nombre,
+                periodo: suscripcion.periodo,
+                monto: parseFloat(pago.monto),
+                moneda: pago.moneda || suscripcion.moneda || 'MXN',
+                fechaPago: pago.fecha_pago || pago.creado_en || new Date(),
+                fechaProximoCobro: suscripcion.fecha_proximo_cobro,
+                transaccionId: pago.transaction_id
+            });
 
-            logger.debug('Email de confirmación', { email, asunto });
-
-            // await EmailService.send({
-            //   to: email,
-            //   subject: asunto,
-            //   html: mensaje
-            // });
+            return await emailService.enviarEmail({
+                to: email,
+                subject: `Pago confirmado - ${suscripcion.plan_nombre}`,
+                html: htmlContent,
+                text: textContent
+            });
 
         } catch (error) {
-            logger.error('Error enviando confirmación de pago', { error: error.message });
+            logger.error('Error enviando confirmación de pago', { error: error.message, suscripcion_id: suscripcion.id });
+            return { success: false, error: error.message };
         }
     }
 
@@ -53,84 +81,57 @@ class NotificacionesService {
      * @param {Object} suscripcion - Suscripción
      * @param {Object} pago - Pago fallido
      * @param {string} razonFallo - Razón del fallo
-     * @returns {Promise<void>}
+     * @param {number} intentosRestantes - Intentos de cobro restantes
+     * @returns {Promise<Object>} Resultado del envío
      */
-    static async enviarFalloPago(suscripcion, pago, razonFallo) {
+    static async enviarFalloPago(suscripcion, pago, razonFallo, intentosRestantes = 2) {
         try {
             const email = this._obtenerEmail(suscripcion);
             const nombre = this._obtenerNombre(suscripcion);
+
+            if (!email) {
+                logger.warn(`No se pudo enviar fallo de pago: email no disponible para suscripción ${suscripcion.id}`);
+                return { success: false, reason: 'email_no_disponible' };
+            }
 
             logger.info(`Enviando notificación de fallo de pago a ${email}`, {
                 suscripcion_id: suscripcion.id,
-                pago_id: pago.id,
+                pago_id: pago?.id,
                 razon: razonFallo
             });
 
-            const asunto = 'Pago fallido - Acción requerida';
-            const mensaje = this._generarMensajeFalloPago(nombre, suscripcion, pago, razonFallo);
+            const urlActualizar = `${FRONTEND_URL}/mi-plan`;
 
-            logger.debug('Email de fallo de pago', { email, asunto });
-
-            // TODO: await EmailService.send({ to: email, subject: asunto, html: mensaje });
-
-        } catch (error) {
-            logger.error('Error enviando notificación de fallo', { error: error.message });
-        }
-    }
-
-    /**
-     * Enviar solicitud de pago manual
-     *
-     * @param {Object} suscripcion - Suscripción
-     * @param {Object} pago - Pago pendiente
-     * @returns {Promise<void>}
-     */
-    static async enviarSolicitudPago(suscripcion, pago) {
-        try {
-            const email = this._obtenerEmail(suscripcion);
-            const nombre = this._obtenerNombre(suscripcion);
-
-            logger.info(`Enviando solicitud de pago manual a ${email}`, {
-                suscripcion_id: suscripcion.id,
-                pago_id: pago.id
+            const htmlContent = templates.generatePagoFallidoEmail({
+                nombre,
+                planNombre: suscripcion.plan_nombre,
+                monto: parseFloat(pago?.monto || suscripcion.precio_actual),
+                moneda: suscripcion.moneda || 'MXN',
+                razonFallo,
+                urlActualizar,
+                intentosRestantes
             });
 
-            const asunto = 'Pago pendiente - Suscripción';
-            const mensaje = this._generarMensajeSolicitudPago(nombre, suscripcion, pago);
-
-            logger.debug('Email solicitud de pago', { email, asunto });
-
-            // TODO: await EmailService.send({ to: email, subject: asunto, html: mensaje });
-
-        } catch (error) {
-            logger.error('Error enviando solicitud de pago', { error: error.message });
-        }
-    }
-
-    /**
-     * Enviar notificación de suspensión por fallo de cobro
-     *
-     * @param {Object} suscripcion - Suscripción suspendida
-     * @returns {Promise<void>}
-     */
-    static async enviarSuspensionPorFalloCobro(suscripcion) {
-        try {
-            const email = this._obtenerEmail(suscripcion);
-            const nombre = this._obtenerNombre(suscripcion);
-
-            logger.info(`Enviando notificación de suspensión a ${email}`, {
-                suscripcion_id: suscripcion.id
+            const textContent = templates.generatePagoFallidoText({
+                nombre,
+                planNombre: suscripcion.plan_nombre,
+                monto: parseFloat(pago?.monto || suscripcion.precio_actual),
+                moneda: suscripcion.moneda || 'MXN',
+                razonFallo,
+                urlActualizar,
+                intentosRestantes
             });
 
-            const asunto = 'Suscripción suspendida - Acción urgente';
-            const mensaje = this._generarMensajeSuspension(nombre, suscripcion);
-
-            logger.debug('Email de suspensión', { email, asunto });
-
-            // TODO: await EmailService.send({ to: email, subject: asunto, html: mensaje });
+            return await emailService.enviarEmail({
+                to: email,
+                subject: 'Pago fallido - Acción requerida',
+                html: htmlContent,
+                text: textContent
+            });
 
         } catch (error) {
-            logger.error('Error enviando notificación de suspensión', { error: error.message });
+            logger.error('Error enviando notificación de fallo', { error: error.message, suscripcion_id: suscripcion.id });
+            return { success: false, error: error.message };
         }
     }
 
@@ -138,55 +139,159 @@ class NotificacionesService {
      * Enviar recordatorio de próximo cobro (3 días antes)
      *
      * @param {Object} suscripcion - Suscripción
-     * @returns {Promise<void>}
+     * @param {number} diasRestantes - Días hasta el cobro
+     * @returns {Promise<Object>} Resultado del envío
      */
-    static async enviarRecordatorioCobro(suscripcion) {
+    static async enviarRecordatorioCobro(suscripcion, diasRestantes = 3) {
         try {
             const email = this._obtenerEmail(suscripcion);
             const nombre = this._obtenerNombre(suscripcion);
 
+            if (!email) {
+                logger.warn(`No se pudo enviar recordatorio: email no disponible para suscripción ${suscripcion.id}`);
+                return { success: false, reason: 'email_no_disponible' };
+            }
+
             logger.info(`Enviando recordatorio de cobro a ${email}`, {
                 suscripcion_id: suscripcion.id,
-                fecha_cobro: suscripcion.fecha_proximo_cobro
+                fecha_cobro: suscripcion.fecha_proximo_cobro,
+                dias_restantes: diasRestantes
             });
 
-            const asunto = 'Recordatorio - Próximo cobro de suscripción';
-            const mensaje = this._generarMensajeRecordatorio(nombre, suscripcion);
+            const htmlContent = templates.generateRecordatorioCobroEmail({
+                nombre,
+                planNombre: suscripcion.plan_nombre,
+                monto: parseFloat(suscripcion.precio_actual),
+                moneda: suscripcion.moneda || 'MXN',
+                fechaCobro: suscripcion.fecha_proximo_cobro,
+                diasRestantes
+            });
 
-            logger.debug('Email recordatorio', { email, asunto });
+            const textContent = templates.generateRecordatorioCobroText({
+                nombre,
+                planNombre: suscripcion.plan_nombre,
+                monto: parseFloat(suscripcion.precio_actual),
+                moneda: suscripcion.moneda || 'MXN',
+                fechaCobro: suscripcion.fecha_proximo_cobro,
+                diasRestantes
+            });
 
-            // TODO: await EmailService.send({ to: email, subject: asunto, html: mensaje });
+            return await emailService.enviarEmail({
+                to: email,
+                subject: `Recordatorio - Próximo cobro de suscripción`,
+                html: htmlContent,
+                text: textContent
+            });
 
         } catch (error) {
-            logger.error('Error enviando recordatorio', { error: error.message });
+            logger.error('Error enviando recordatorio', { error: error.message, suscripcion_id: suscripcion.id });
+            return { success: false, error: error.message };
         }
     }
 
     /**
-     * Enviar notificación de fin de trial
+     * Enviar notificación de entrada a grace period
      *
-     * @param {Object} suscripcion - Suscripción en trial
-     * @returns {Promise<void>}
+     * @param {Object} suscripcion - Suscripción en grace period
+     * @returns {Promise<Object>} Resultado del envío
      */
-    static async enviarFinTrial(suscripcion) {
+    static async enviarGracePeriod(suscripcion) {
         try {
             const email = this._obtenerEmail(suscripcion);
             const nombre = this._obtenerNombre(suscripcion);
 
-            logger.info(`Enviando notificación de fin de trial a ${email}`, {
-                suscripcion_id: suscripcion.id,
-                fecha_fin_trial: suscripcion.fecha_fin_trial
+            if (!email) {
+                logger.warn(`No se pudo enviar grace period: email no disponible para suscripción ${suscripcion.id}`);
+                return { success: false, reason: 'email_no_disponible' };
+            }
+
+            logger.info(`Enviando notificación de grace period a ${email}`, {
+                suscripcion_id: suscripcion.id
             });
 
-            const asunto = 'Tu período de prueba está por finalizar';
-            const mensaje = this._generarMensajeFinTrial(nombre, suscripcion);
+            // Calcular días de gracia desde la fecha_gracia
+            const { GRACE_PERIOD_DAYS } = require('../../../config/constants');
+            const fechaLimite = suscripcion.fecha_gracia || new Date(Date.now() + GRACE_PERIOD_DAYS * 24 * 60 * 60 * 1000);
 
-            logger.debug('Email fin de trial', { email, asunto });
+            const urlRenovar = `${FRONTEND_URL}/mi-plan`;
 
-            // TODO: await EmailService.send({ to: email, subject: asunto, html: mensaje });
+            const htmlContent = templates.generateGracePeriodEmail({
+                nombre,
+                planNombre: suscripcion.plan_nombre,
+                diasGracia: GRACE_PERIOD_DAYS,
+                fechaLimite,
+                urlRenovar
+            });
+
+            const textContent = templates.generateGracePeriodText({
+                nombre,
+                planNombre: suscripcion.plan_nombre,
+                diasGracia: GRACE_PERIOD_DAYS,
+                fechaLimite,
+                urlRenovar
+            });
+
+            return await emailService.enviarEmail({
+                to: email,
+                subject: 'Período de gracia - Acción urgente',
+                html: htmlContent,
+                text: textContent
+            });
 
         } catch (error) {
-            logger.error('Error enviando notificación de fin de trial', { error: error.message });
+            logger.error('Error enviando grace period', { error: error.message, suscripcion_id: suscripcion.id });
+            return { success: false, error: error.message };
+        }
+    }
+
+    /**
+     * Enviar notificación de suspensión
+     *
+     * @param {Object} suscripcion - Suscripción suspendida
+     * @returns {Promise<Object>} Resultado del envío
+     */
+    static async enviarSuspension(suscripcion) {
+        try {
+            const email = this._obtenerEmail(suscripcion);
+            const nombre = this._obtenerNombre(suscripcion);
+
+            if (!email) {
+                logger.warn(`No se pudo enviar suspensión: email no disponible para suscripción ${suscripcion.id}`);
+                return { success: false, reason: 'email_no_disponible' };
+            }
+
+            logger.info(`Enviando notificación de suspensión a ${email}`, {
+                suscripcion_id: suscripcion.id
+            });
+
+            const urlReactivar = `${FRONTEND_URL}/planes`;
+
+            const htmlContent = templates.generateSuspensionEmail({
+                nombre,
+                planNombre: suscripcion.plan_nombre,
+                fechaSuspension: new Date(),
+                diasConservacion: 30,
+                urlReactivar
+            });
+
+            const textContent = templates.generateSuspensionText({
+                nombre,
+                planNombre: suscripcion.plan_nombre,
+                fechaSuspension: new Date(),
+                diasConservacion: 30,
+                urlReactivar
+            });
+
+            return await emailService.enviarEmail({
+                to: email,
+                subject: 'Cuenta suspendida - Acción urgente',
+                html: htmlContent,
+                text: textContent
+            });
+
+        } catch (error) {
+            logger.error('Error enviando suspensión', { error: error.message, suscripcion_id: suscripcion.id });
+            return { success: false, error: error.message };
         }
     }
 
@@ -194,26 +299,110 @@ class NotificacionesService {
      * Enviar confirmación de cancelación
      *
      * @param {Object} suscripcion - Suscripción cancelada
-     * @returns {Promise<void>}
+     * @param {string} motivoCancelacion - Motivo proporcionado por el usuario
+     * @returns {Promise<Object>} Resultado del envío
      */
-    static async enviarConfirmacionCancelacion(suscripcion) {
+    static async enviarCancelacion(suscripcion, motivoCancelacion = null) {
         try {
             const email = this._obtenerEmail(suscripcion);
             const nombre = this._obtenerNombre(suscripcion);
+
+            if (!email) {
+                logger.warn(`No se pudo enviar cancelación: email no disponible para suscripción ${suscripcion.id}`);
+                return { success: false, reason: 'email_no_disponible' };
+            }
 
             logger.info(`Enviando confirmación de cancelación a ${email}`, {
                 suscripcion_id: suscripcion.id
             });
 
-            const asunto = 'Suscripción cancelada';
-            const mensaje = this._generarMensajeCancelacion(nombre, suscripcion);
+            const urlReactivar = `${FRONTEND_URL}/planes`;
 
-            logger.debug('Email cancelación', { email, asunto });
+            const htmlContent = templates.generateCancelacionEmail({
+                nombre,
+                planNombre: suscripcion.plan_nombre,
+                fechaCancelacion: new Date(),
+                fechaAccesoHasta: suscripcion.fecha_proximo_cobro || suscripcion.fecha_fin,
+                motivoCancelacion: motivoCancelacion || suscripcion.razon_cancelacion,
+                urlReactivar
+            });
 
-            // TODO: await EmailService.send({ to: email, subject: asunto, html: mensaje });
+            const textContent = templates.generateCancelacionText({
+                nombre,
+                planNombre: suscripcion.plan_nombre,
+                fechaCancelacion: new Date(),
+                fechaAccesoHasta: suscripcion.fecha_proximo_cobro || suscripcion.fecha_fin,
+                motivoCancelacion: motivoCancelacion || suscripcion.razon_cancelacion,
+                urlReactivar
+            });
+
+            return await emailService.enviarEmail({
+                to: email,
+                subject: 'Suscripción cancelada',
+                html: htmlContent,
+                text: textContent
+            });
 
         } catch (error) {
-            logger.error('Error enviando confirmación de cancelación', { error: error.message });
+            logger.error('Error enviando cancelación', { error: error.message, suscripcion_id: suscripcion.id });
+            return { success: false, error: error.message };
+        }
+    }
+
+    /**
+     * Enviar notificación de fin de trial
+     *
+     * @param {Object} suscripcion - Suscripción en trial
+     * @returns {Promise<Object>} Resultado del envío
+     */
+    static async enviarFinTrial(suscripcion) {
+        try {
+            const email = this._obtenerEmail(suscripcion);
+            const nombre = this._obtenerNombre(suscripcion);
+
+            if (!email) {
+                logger.warn(`No se pudo enviar fin de trial: email no disponible para suscripción ${suscripcion.id}`);
+                return { success: false, reason: 'email_no_disponible' };
+            }
+
+            logger.info(`Enviando notificación de fin de trial a ${email}`, {
+                suscripcion_id: suscripcion.id,
+                fecha_fin_trial: suscripcion.fecha_fin_trial
+            });
+
+            // Reutilizamos el template de recordatorio pero con mensaje adaptado
+            const diasRestantes = Math.max(0, Math.ceil(
+                (new Date(suscripcion.fecha_fin_trial) - new Date()) / (1000 * 60 * 60 * 24)
+            ));
+
+            const htmlContent = templates.generateRecordatorioCobroEmail({
+                nombre,
+                planNombre: suscripcion.plan_nombre + ' (Prueba)',
+                monto: parseFloat(suscripcion.precio_actual),
+                moneda: suscripcion.moneda || 'MXN',
+                fechaCobro: suscripcion.fecha_fin_trial,
+                diasRestantes
+            });
+
+            const textContent = templates.generateRecordatorioCobroText({
+                nombre,
+                planNombre: suscripcion.plan_nombre + ' (Prueba)',
+                monto: parseFloat(suscripcion.precio_actual),
+                moneda: suscripcion.moneda || 'MXN',
+                fechaCobro: suscripcion.fecha_fin_trial,
+                diasRestantes
+            });
+
+            return await emailService.enviarEmail({
+                to: email,
+                subject: 'Tu período de prueba está por finalizar',
+                html: htmlContent,
+                text: textContent
+            });
+
+        } catch (error) {
+            logger.error('Error enviando fin de trial', { error: error.message, suscripcion_id: suscripcion.id });
+            return { success: false, error: error.message };
         }
     }
 
@@ -223,119 +412,23 @@ class NotificacionesService {
 
     /**
      * Obtener email del suscriptor
-     *
-     * @param {Object} suscripcion - Suscripción
-     * @returns {string} - Email
+     * @private
      */
     static _obtenerEmail(suscripcion) {
-        return suscripcion.cliente_email || suscripcion.suscriptor_externo?.email || 'noreply@example.com';
+        return suscripcion.cliente_email ||
+               suscripcion.suscriptor_externo?.email ||
+               null;
     }
 
     /**
      * Obtener nombre del suscriptor
-     *
-     * @param {Object} suscripcion - Suscripción
-     * @returns {string} - Nombre
+     * @private
      */
     static _obtenerNombre(suscripcion) {
-        return suscripcion.cliente_nombre || suscripcion.suscriptor_externo?.nombre || 'Cliente';
-    }
-
-    /**
-     * Generar mensaje HTML de confirmación de pago
-     */
-    static _generarMensajeConfirmacionPago(nombre, suscripcion, pago) {
-        return `
-            <h2>¡Pago procesado exitosamente!</h2>
-            <p>Hola ${nombre},</p>
-            <p>Tu pago de <strong>${pago.moneda} $${pago.monto}</strong> ha sido procesado correctamente.</p>
-            <p><strong>Detalles:</strong></p>
-            <ul>
-                <li>Plan: ${suscripcion.plan_nombre}</li>
-                <li>Período: ${suscripcion.periodo}</li>
-                <li>Próximo cobro: ${suscripcion.fecha_proximo_cobro}</li>
-            </ul>
-            <p>¡Gracias por tu confianza!</p>
-        `;
-    }
-
-    /**
-     * Generar mensaje HTML de fallo de pago
-     */
-    static _generarMensajeFalloPago(nombre, suscripcion, pago, razonFallo) {
-        return `
-            <h2>Tu pago no pudo ser procesado</h2>
-            <p>Hola ${nombre},</p>
-            <p>No pudimos procesar tu pago de <strong>${pago.moneda} $${pago.monto}</strong>.</p>
-            <p><strong>Razón:</strong> ${razonFallo}</p>
-            <p>Por favor, actualiza tu método de pago para evitar la suspensión del servicio.</p>
-            <p><a href="/suscripciones/${suscripcion.id}">Actualizar método de pago</a></p>
-        `;
-    }
-
-    /**
-     * Generar mensaje HTML de solicitud de pago manual
-     */
-    static _generarMensajeSolicitudPago(nombre, suscripcion, pago) {
-        return `
-            <h2>Pago pendiente</h2>
-            <p>Hola ${nombre},</p>
-            <p>Tu pago de <strong>${pago.moneda} $${pago.monto}</strong> está pendiente.</p>
-            <p>Por favor, realiza el pago para continuar con tu suscripción.</p>
-            <p><a href="/pagos/${pago.id}">Realizar pago</a></p>
-        `;
-    }
-
-    /**
-     * Generar mensaje HTML de suspensión
-     */
-    static _generarMensajeSuspension(nombre, suscripcion) {
-        return `
-            <h2>Suscripción suspendida</h2>
-            <p>Hola ${nombre},</p>
-            <p>Tu suscripción ha sido suspendida debido a múltiples fallos de pago.</p>
-            <p>Para reactivar tu servicio, actualiza tu método de pago.</p>
-            <p><a href="/suscripciones/${suscripcion.id}">Reactivar suscripción</a></p>
-        `;
-    }
-
-    /**
-     * Generar mensaje HTML de recordatorio
-     */
-    static _generarMensajeRecordatorio(nombre, suscripcion) {
-        return `
-            <h2>Próximo cobro de suscripción</h2>
-            <p>Hola ${nombre},</p>
-            <p>Te recordamos que el próximo cobro de tu suscripción será el <strong>${suscripcion.fecha_proximo_cobro}</strong>.</p>
-            <p><strong>Monto:</strong> ${suscripcion.moneda} $${suscripcion.precio_actual}</p>
-            <p>Si tienes alguna pregunta, no dudes en contactarnos.</p>
-        `;
-    }
-
-    /**
-     * Generar mensaje HTML de fin de trial
-     */
-    static _generarMensajeFinTrial(nombre, suscripcion) {
-        return `
-            <h2>Tu período de prueba está por finalizar</h2>
-            <p>Hola ${nombre},</p>
-            <p>Tu período de prueba finaliza el <strong>${suscripcion.fecha_fin_trial}</strong>.</p>
-            <p>Para continuar con el servicio, asegúrate de tener un método de pago configurado.</p>
-            <p><a href="/suscripciones/${suscripcion.id}">Configurar método de pago</a></p>
-        `;
-    }
-
-    /**
-     * Generar mensaje HTML de cancelación
-     */
-    static _generarMensajeCancelacion(nombre, suscripcion) {
-        return `
-            <h2>Suscripción cancelada</h2>
-            <p>Hola ${nombre},</p>
-            <p>Tu suscripción ha sido cancelada exitosamente.</p>
-            <p>Esperamos verte pronto.</p>
-        `;
+        return suscripcion.cliente_nombre ||
+               suscripcion.suscriptor_externo?.nombre ||
+               'Cliente';
     }
 }
 
-module.exports = NotificacionesService;
+module.exports = NotificacionesSuscripcionesService;

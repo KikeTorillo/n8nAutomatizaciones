@@ -21,11 +21,12 @@ export { Checkbox } from './atoms/Checkbox';
 export { Badge } from './atoms/Badge';
 export { LoadingSpinner } from './atoms/LoadingSpinner';
 export { Label } from './atoms/Label';
+export { ToggleSwitch } from './atoms/ToggleSwitch';
 
 // ========== MOLECULES ==========
 export { Alert } from './molecules/Alert';
 export { SearchInput } from './molecules/SearchInput';
-export { Pagination } from './molecules/Pagination';
+export { Pagination } from './organisms/Pagination';
 export { StatCard } from './molecules/StatCard';
 export { EmptyState } from './molecules/EmptyState';
 export { ViewTabs } from './molecules/ViewTabs';
@@ -34,13 +35,12 @@ export { RecordNavigation } from './molecules/RecordNavigation';
 export { SkeletonTable, SkeletonCard, SkeletonList } from './molecules/SkeletonTable';
 export { Toast } from './molecules/Toast';
 export { BackButton } from './molecules/BackButton';
-export { ThemeToggle } from './molecules/ThemeToggle';
 // Componentes con lógica compleja (movidos desde atoms/ Ene 2026)
 export { ProgressBar, LimitProgressBar } from './molecules/ProgressBar';
 // Nuevos (Ene 2026) - Fase 2 mejoras UI
 export { FormGroup } from './molecules/FormGroup';
 // Nuevos (Ene 2026) - Optimización arquitectónica
-export { SearchFilterBar } from './molecules/SearchFilterBar';
+export { SearchFilterBar } from './organisms/SearchFilterBar';
 export { default as CheckboxGroup } from './molecules/CheckboxGroup';
 export { CheckboxField } from './molecules/CheckboxField';
 export { DropdownMenu } from './molecules/DropdownMenu';
@@ -59,6 +59,7 @@ export { ExpandableCrudSection } from './organisms/ExpandableCrudSection';
 export { GenericNavTabs } from './organisms/GenericNavTabs';
 export { default as NavDropdown } from './organisms/NavDropdown';
 export { default as SmartButtons } from './organisms/SmartButtons';
+export { ThemeToggle } from './organisms/ThemeToggle';
 export { TreeView, useTreeExpansion } from './organisms/TreeNode';
 export { MobileNavSelector } from './organisms/MobileNavSelector';
 export { ToastContainer } from './organisms/ToastContainer';
@@ -67,7 +68,6 @@ export { default as StateNavTabs, TabDropdown, MobileTabSelector } from './organ
 // Filters (organisms)
 export {
   AdvancedFilterPanel,
-  FilterChip,
   FilterSection,
   FilterCheckbox,
   FilterSelect,
@@ -80,6 +80,13 @@ export {
   countActiveFilters,
   useActiveFilters,
 } from './organisms/filters';
+// FilterChip está en molecules (Ene 2026)
+export { FilterChip } from './molecules/FilterChip';
+
+// Campos de filtro (Ene 2026)
+export { FilterSelectField } from './molecules/FilterSelectField';
+export { FilterDateField } from './molecules/FilterDateField';
+export { FilterTextField } from './molecules/FilterTextField';
 
 // ========== TEMPLATES ==========
 export { BasePageLayout } from './templates/BasePageLayout';

@@ -31,13 +31,14 @@ import {
 } from '@/components/ui';
 import {
   useMiSuscripcion,
-  useCancelarSuscripcion,
   usePausarSuscripcion,
   useReactivarSuscripcion,
   ESTADOS_SUSCRIPCION,
-  ESTADO_LABELS,
 } from '@/hooks/suscripciones-negocio';
-import { SuscripcionStatusBadge } from '@/components/suscripciones-negocio';
+import {
+  SuscripcionStatusBadge,
+  CancelarSuscripcionDrawer,
+} from '@/components/suscripciones-negocio';
 import { useToast } from '@/hooks/utils';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import CambiarPlanDrawer from '@/components/suscripciones-negocio/CambiarPlanDrawer';
@@ -259,37 +260,25 @@ function MiPlanPage() {
   // State
   const [confirmAction, setConfirmAction] = useState(null);
   const [showCambiarPlan, setShowCambiarPlan] = useState(false);
+  const [showCancelarDrawer, setShowCancelarDrawer] = useState(false);
 
   // Queries
   const { data: suscripcion, isLoading, refetch } = useMiSuscripcion();
 
   // Mutations
-  const cancelarMutation = useCancelarSuscripcion();
   const pausarMutation = usePausarSuscripcion();
   const reactivarMutation = useReactivarSuscripcion();
 
-  const isPending = cancelarMutation.isPending || pausarMutation.isPending || reactivarMutation.isPending;
+  const isPending = pausarMutation.isPending || reactivarMutation.isPending;
 
   // Handlers
   const handleCancelar = () => {
-    setConfirmAction({
-      title: 'Cancelar Suscripción',
-      message: '¿Estás seguro de cancelar tu suscripción? Perderás acceso a las funciones premium al final del período actual.',
-      variant: 'danger',
-      onConfirm: () => {
-        cancelarMutation.mutate(
-          { id: suscripcion.id, motivo_cancelacion: 'Cancelada por usuario' },
-          {
-            onSuccess: () => {
-              success('Suscripción cancelada. Tendrás acceso hasta el final del período pagado.');
-              refetch();
-            },
-            onError: (err) => showError(err.message),
-          }
-        );
-        setConfirmAction(null);
-      },
-    });
+    setShowCancelarDrawer(true);
+  };
+
+  const handleCancelarSuccess = () => {
+    setShowCancelarDrawer(false);
+    refetch();
   };
 
   const handlePausar = () => {
@@ -376,6 +365,16 @@ function MiPlanPage() {
           suscripcion={suscripcion}
           onSuccess={handleCambiarPlanSuccess}
           isUserPage={true}
+        />
+      )}
+
+      {/* Cancelar Suscripción Drawer */}
+      {suscripcion && (
+        <CancelarSuscripcionDrawer
+          isOpen={showCancelarDrawer}
+          onClose={() => setShowCancelarDrawer(false)}
+          suscripcion={suscripcion}
+          onSuccess={handleCancelarSuccess}
         />
       )}
 
