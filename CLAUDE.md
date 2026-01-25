@@ -24,17 +24,10 @@ Plataforma ERP SaaS Multi-Tenant para LATAM con IA Conversacional.
 ## Comandos Esenciales
 
 ```bash
-# Stack
 npm run dev              # Levantar todo
-npm run logs:all         # Logs backend + frontend + mcp
-
-# Desarrollo
 docker restart back      # Aplicar cambios backend
 docker restart front     # Aplicar cambios frontend
-
-# Base de datos
 npm run db:connect       # psql directo
-npm run clean:data       # Reset completo (DESTRUCTIVO)
 ```
 
 **Nota**: HMR NO funciona en Docker. Reiniciar contenedor + Ctrl+Shift+R.
@@ -48,34 +41,9 @@ npm run clean:data       # Reset completo (DESTRUCTIVO)
 auth.authenticateToken → tenant.setTenantContext → tenant.verifyTenantActive → suscripcionActiva.verificarSuscripcionActiva → [permisos] → controller
 ```
 
-### Sistema de Suscripciones (Ene 2026)
-
-| Estado | Acceso | Comportamiento |
-|--------|--------|----------------|
-| `trial`, `activa`, `pendiente_pago` | Completo | Todas las operaciones |
-| `grace_period`, `vencida` | Limitado | Solo lectura (GET) |
-| `suspendida`, `cancelada` | Bloqueado | Redirect a /planes |
-
-**Bypasses:** Nexo Team (org 1), SuperAdmin (nivel >= 100), rutas exentas (`/login`, `/planes`, `/checkout`, `/mi-plan`, `/setup`)
-
-### Roles (Sistema Dinámico)
-
-| Campo | Descripción |
-|-------|-------------|
-| `nivel_jerarquia` | 1-100 (100=super, 80=admin, 50=gerente, 10=empleado) |
-| `bypass_permisos` | TRUE = no verifica permisos granulares |
-
-**IMPORTANTE:** Solo usar `rol_id` y `rol_codigo` (ENUM eliminado).
-
-```javascript
-const { RolHelper } = require('../utils/helpers');
-RolHelper.esSuperAdmin(user);           // nivel_jerarquia === 100
-RolHelper.esRolAdministrativo(user);    // nivel_jerarquia >= 80
-```
-
 ### RLS (Row Level Security)
 ```javascript
-// 80% de casos
+// 80% de casos - aislamiento por organización
 await RLSContextManager.query(orgId, async (db) => { ... });
 
 // JOINs multi-tabla, super_admin, o webhooks cross-org
@@ -84,20 +52,114 @@ await RLSContextManager.withBypass(async (db) => { ... });
 
 ---
 
+## Sistema RBAC (Roles y Permisos)
+
+### Arquitectura de Jerarquías
+
+```
+┌─────────┬────────────────────┬───────────────────────────────────────┐
+│ Nivel   │ Rol Default        │ Capacidades                           │
+├─────────┼────────────────────┼───────────────────────────────────────┤
+│ 100     │ super_admin        │ Acceso TOTAL, bypass RLS, cross-org   │
+│ 90      │ admin              │ Gestión completa de la organización   │
+│ 80      │ propietario        │ Operaciones completas del negocio     │
+│ 50-79   │ (personalizado)    │ Gerentes, supervisores                │
+│ 10      │ empleado           │ Operaciones básicas                   │
+│ 5       │ cliente            │ Autoservicio (ver sus datos)          │
+│ 1       │ bot                │ Automatizaciones con permisos mínimos │
+└─────────┴────────────────────┴───────────────────────────────────────┘
+```
+
+### Reglas Fundamentales
+
+1. **Solo usar `rol_id` y `rol_codigo`** - ENUM eliminado, sistema 100% dinámico
+2. **Protección jerárquica**: Solo puedes gestionar usuarios con nivel inferior al tuyo
+3. **Bypass de permisos**: Solo `super_admin` (nivel 100) tiene `bypass_permisos = TRUE`
+4. **Roles por organización**: Cada org tiene sus propios roles (excepto `super_admin`, `bot`)
+5. **Permisos automáticos**: Al crear un rol, se asignan permisos default según nivel
+
+### Uso en Backend
+
+```javascript
+const { RolHelper } = require('../utils/helpers');
+
+// Verificaciones principales
+RolHelper.esSuperAdmin(user);           // nivel_jerarquia === 100
+RolHelper.esRolAdministrativo(user);    // nivel_jerarquia >= 80
+RolHelper.tieneBypassPermisos(user);    // bypass_permisos === true
+RolHelper.puedeGestionarUsuario(gestor, objetivo);  // gestor.nivel > objetivo.nivel
+
+// En middleware de permisos
+RolHelper.tieneNivelMinimo(user, 50);   // nivel >= 50
+RolHelper.puedeModificarPermisos(user); // puede_modificar_permisos === true
+```
+
+### Flujo de Verificación de Acceso
+
+```
+1. Usuario hace request
+2. auth.authenticateToken → extrae user del JWT
+3. Si user.bypass_permisos === true → PERMITIR (solo super_admin)
+4. Si no → verificar permiso específico en permisos_rol
+5. Si tiene override en permisos_usuario → usar override
+6. Retornar PERMITIR o DENEGAR
+```
+
+### Tablas Clave
+
+| Tabla | Propósito |
+|-------|-----------|
+| `roles` | Catálogo de roles (por org o sistema) |
+| `permisos_catalogo` | Definición de permisos disponibles |
+| `permisos_rol` | Permisos asignados a cada rol |
+| `permisos_usuario` | Overrides específicos por usuario |
+
+### APIs de Roles
+
+```
+GET    /api/v1/roles                    # Listar roles de la org
+POST   /api/v1/roles                    # Crear rol personalizado
+PUT    /api/v1/roles/:id                # Actualizar rol
+DELETE /api/v1/roles/:id                # Eliminar rol
+GET    /api/v1/roles/:id/permisos       # Ver permisos del rol
+PUT    /api/v1/roles/:id/permisos/:pid  # Actualizar un permiso
+POST   /api/v1/roles/:id/copiar-permisos # Copiar de otro rol
+```
+
+---
+
+## Sistema de Suscripciones
+
+### Estados y Acceso
+
+| Estado | Acceso | Comportamiento |
+|--------|--------|----------------|
+| `trial`, `activa`, `pendiente_pago` | Completo | Todas las operaciones |
+| `grace_period`, `vencida` | Limitado | Solo lectura (GET) |
+| `suspendida`, `cancelada` | Bloqueado | Redirect a /planes |
+
+**Bypasses:** Nexo Team (org 1), SuperAdmin (nivel >= 100), rutas exentas
+
+### Arquitectura Billing
+
+```
+Nexo Team (org 1) ─── VENDOR (PlatformBillingStrategy)
+    └── Organizaciones ←── Clientes CRM (organizacion_vinculada_id)
+            └── Suscripciones → Al activarse actualiza org.plan_actual
+```
+
+---
+
 ## Reglas de Desarrollo
 
 ### Backend
-
 - **RLS SIEMPRE**: `RLSContextManager.query()` o `.transaction()`
 - **asyncHandler**: Obligatorio en routes y controllers
 - **Validación**: Joi schemas con `fields` compartidos
 - **SQL seguro**: NUNCA interpolar variables, siempre `$1`, `$2`
-- **ORDER BY**: Whitelist obligatoria
 
 ### Frontend
-
 - **Sanitizar opcionales**: Joi rechaza `""`, usar `undefined`
-- **Invalidar queries**: `queryClient.invalidateQueries()` tras mutaciones
 - **Dark mode**: Siempre variantes `dark:` en Tailwind
 - **Colores**: Solo `primary-*` (primario: `#753572`)
 - **React.memo**: Usar en componentes de lista/tabla
@@ -106,48 +168,17 @@ await RLSContextManager.withBypass(async (db) => { ... });
 
 ```
 components/ui/
-├── atoms/      # Button, Input, Badge, Label, LoadingSpinner
-├── molecules/  # Pagination, StatCard, Toast, SearchInput, EmptyState
-├── organisms/  # Modal, Drawer, DataTable, ConfirmDialog, filters/
+├── atoms/      # Button, Input, Badge, ToggleSwitch
+├── molecules/  # StatCard, Toast, EmptyState, FilterFields
+├── organisms/  # Modal, Drawer, DataTable, Pagination, SearchFilterBar
 └── templates/  # BasePageLayout, ModuleGuard, ListadoCRUDPage
 ```
 
 ---
 
-## Patrones Backend
+## Patrones Principales
 
-### Fields Compartidos (Joi)
-
-```javascript
-const { fields } = require('../../../schemas/shared');
-
-const schema = Joi.object({
-  nombre: fields.nombre.required(),
-  email: fields.email,
-  telefono: fields.telefono,
-  precio: fields.precio,
-  activo: fields.activo,
-});
-```
-
-### Helpers Principales
-
-```javascript
-const { ParseHelper, ErrorHelper, RolHelper } = require('../../../utils/helpers');
-
-// Parsing
-const { page, limit, offset } = ParseHelper.parsePagination(req.query);
-const activo = ParseHelper.parseBoolean(req.query.activo);
-
-// Errores
-ErrorHelper.throwIfNotFound(recurso, 'Producto');  // 404
-ErrorHelper.throwValidation('Campo requerido');    // 400
-ErrorHelper.throwConflict('SKU duplicado');        // 409
-```
-
-### BaseCrudController
-
-Para controllers CRUD simples (~20 líneas):
+### Backend - BaseCrudController
 
 ```javascript
 const { createCrudController } = require('../../../utils/BaseCrudController');
@@ -160,60 +191,20 @@ module.exports = createCrudController({
 });
 ```
 
----
-
-## Patrones Frontend
-
-### createCRUDHooks
+### Frontend - createCRUDHooks
 
 ```javascript
-import { createCRUDHooks, createSanitizer } from '@/hooks/factories';
+import { createCRUDHooks } from '@/hooks/factories';
 
 const hooks = createCRUDHooks({
   name: 'entidad',
   api: miApi,
   baseKey: 'entidades',
-  usePreviousData: true,
 });
 
 export const useEntidades = hooks.useList;
 export const useCrearEntidad = hooks.useCreate;
 ```
-
-### ListadoCRUDPage
-
-Para páginas CRUD estándar (reduce ~60% código):
-
-```jsx
-<ListadoCRUDPage
-  title="Entidades"
-  useListQuery={useEntidades}
-  useDeleteMutation={useEliminarEntidad}
-  columns={COLUMNS}
-  FormDrawer={FormDrawer}
-/>
-```
-
-### Selectores Zustand
-
-```javascript
-// ✅ CORRECTO
-const sucursalActiva = useSucursalStore(selectSucursalActiva);
-
-// ❌ INCORRECTO - causa re-renders
-const sucursalActiva = useSucursalStore(state => state.sucursalActiva);
-```
-
----
-
-## Stores Zustand
-
-| Store | Estado Principal |
-|-------|-----------------|
-| **authStore** | user, accessToken, isAuthenticated |
-| **sucursalStore** | sucursalActiva, sucursalesDisponibles |
-| **themeStore** | theme, resolvedTheme |
-| **permisosStore** | permisos[], cache 5min |
 
 ---
 
@@ -224,44 +215,7 @@ const sucursalActiva = useSucursalStore(state => state.sucursalActiva);
 | "Organización no encontrada" | `RLSContextManager.withBypass()` |
 | "field not allowed to be empty" | Sanitizar `""` a `undefined` |
 | Cambios no se reflejan | `docker restart <contenedor>` + Ctrl+Shift+R |
-| "Rendered fewer hooks" | Mover returns condicionales DESPUÉS de hooks |
 | `X.map is not a function` | Verificar estructura: `{items, paginacion}` no array |
-
----
-
-## Módulo Suscripciones-Negocio
-
-### Arquitectura Billing
-
-```
-Nexo Team (org 1) ─── VENDOR
-    └── Clientes CRM ←── Organizaciones (organizacion_vinculada_id)
-            └── Suscripciones → Al activarse actualiza org.plan_actual
-```
-
-**Strategy Pattern:** `PlatformBillingStrategy` (Nexo→Orgs) vs `CustomerBillingStrategy` (Org→Clientes)
-
-### Configuración MercadoPago
-
-Credenciales en `conectores_pago_org` (encriptadas AES-256-GCM).
-
-```env
-MERCADOPAGO_ENVIRONMENT=sandbox
-CREDENTIAL_ENCRYPTION_KEY=<64_chars_hex>
-```
-
-**Webhooks:** Configurar en Test User Vendedor > Modo productivo:
-- Eventos: `payments`, `subscription_preapproval`, `subscription_authorized_payment`
-
-### Jobs pg_cron
-
-| Job | Horario | Función |
-|-----|---------|---------|
-| `suscripciones-grace-period` | 01:00 | Mover a grace_period (7 días sin pago) |
-| `suscripciones-suspender` | 02:00 | Suspender grace_period vencido |
-| `suscripciones-trials-expirados` | 03:00 | Procesar trials expirados |
-
-**Documentación completa:** `/docs/PLAN_VALIDACION_SISTEMA.md`
 
 ---
 
@@ -269,63 +223,17 @@ CREDENTIAL_ENCRYPTION_KEY=<64_chars_hex>
 
 | Prioridad | Feature |
 |-----------|---------|
-| **Alta** | Dunning emails (secuencia recordatorios pago) |
-| **Alta** | Razón de cancelación obligatoria |
-| **Alta** | 2FA/MFA |
+| **Alta** | Pruebas E2E de RBAC con usuario profesional |
+| **Alta** | Dunning emails (recordatorios de pago) |
+| **Media** | 2FA/MFA |
 | **Media** | Prorrateo en cambios de plan |
-| **Media** | Facturación CFDI |
-| **Media** | Integraciones Carriers (DHL, FedEx) |
 
 ---
 
-## Estado de Pruebas
+## Documentación Adicional
 
-| Módulo | Estado |
-|--------|--------|
-| Clientes, Agendamiento, Servicios | ✅ |
-| Inventario, Comisiones, POS | ✅ |
-| Contabilidad, Sucursales, Ausencias | ✅ |
-| RBAC, Configuración, Workflows | ✅ |
-| **Suscripciones-Negocio** | ✅ E2E (Checkout, Webhooks, Upgrade/Downgrade) |
-| Chatbots IA | ⏳ CRUD OK (conversación pendiente) |
-
-**Próximo:** Pruebas de roles/permisos con usuario profesional
-
----
-
-## Changelog Resumido
-
-### 25 Ene 2026 - Sistema Roles y Permisos Dinámicos
-
-- **PermisosPage migrado**: Usa `useRoles()` dinámico en lugar de lista hardcodeada
-- **Navegación Roles**: Agregado enlace en hub de Configuración
-- **APIs validadas**: `/api/v1/roles` y `/api/v1/roles/:id/permisos` funcionando
-- **Doc unificada**: `PLAN_VALIDACION_SISTEMA.md` (suscripciones + RBAC)
-
-### 24 Ene 2026 - Sistema Suscripciones Completo
-
-- **Grace Period + Restricción de Acceso**: Middleware `suscripcionActiva.js`, `SubscriptionGuard.jsx`, jobs pg_cron
-- **Fix Webhooks MP**: Maneja `status: "processed"`, búsqueda cross-org, actualiza pago existente
-- **Strategy Pattern Checkout**: `PlatformBillingStrategy` para dogfooding Nexo→Orgs
-- **UI Cleanup**: Eliminadas cards redundantes de navegación, solo KPIs en dashboard
-
-### 23 Ene 2026 - Conectores + Auditoría UI
-
-- **Conectores Multi-Tenant**: `conectores_pago_org` con credenciales encriptadas
-- **React.memo**: Agregado a 21+ componentes
-- **uiConstants**: Nuevos módulos (inputs, spacing, progress, tabs, filters)
-
-### 22 Ene 2026 - Dogfooding + Roles Dinámicos
-
-- **Sistema Roles v2.1**: ENUM eliminado, solo `rol_id`/`rol_codigo`
-- **Auto-vinculación**: Orgs como clientes de Nexo Team
-- **Activación suscripción**: Actualiza `plan_actual` y `modulos_activos` de org
-
-### 21 Ene 2026 - Módulo Suscripciones-Negocio
-
-- Backend: 5 tablas, métricas SQL, endpoints CRUD
-- Frontend: 7 páginas, hooks, componentes Chart.js
-- MercadoPago: Preapproval + Webhooks
+- **Plan de Validación**: `/docs/PLAN_VALIDACION_SISTEMA.md`
+- **Cuentas de Prueba**: Ver documento de validación
 
 ---
 
