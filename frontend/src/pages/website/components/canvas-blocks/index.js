@@ -16,3 +16,8 @@ export { default as TextoCanvasBlock } from './TextoCanvasBlock';
 export { default as GaleriaCanvasBlock } from './GaleriaCanvasBlock';
 export { default as VideoCanvasBlock } from './VideoCanvasBlock';
 export { default as SeparadorCanvasBlock } from './SeparadorCanvasBlock';
+export { default as PricingCanvasBlock } from './PricingCanvasBlock';
+export { default as FaqCanvasBlock } from './FaqCanvasBlock';
+export { default as CountdownCanvasBlock } from './CountdownCanvasBlock';
+export { default as StatsCanvasBlock } from './StatsCanvasBlock';
+export { default as TimelineCanvasBlock } from './TimelineCanvasBlock';

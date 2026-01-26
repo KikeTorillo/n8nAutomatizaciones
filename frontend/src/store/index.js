@@ -114,6 +114,7 @@ export {
   selectAgregarBloqueLocal,
   selectEliminarBloqueLocal,
   selectDuplicarBloqueLocal,
+  selectInsertarBloqueEnPosicion,
   // Acciones de selección
   selectSeleccionarBloque,
   selectDeseleccionarBloque,

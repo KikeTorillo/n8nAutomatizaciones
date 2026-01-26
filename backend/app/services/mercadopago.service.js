@@ -361,6 +361,7 @@ class MercadoPagoService {
 
     /**
      * Obtener suscripción por ID
+     * Usa axios directamente para mejor manejo de errores
      *
      * @param {string} subscriptionId - ID de suscripción en MP
      * @returns {Promise<Object>} Datos de la suscripción
@@ -368,14 +369,41 @@ class MercadoPagoService {
     async obtenerSuscripcion(subscriptionId) {
         this._ensureInitialized();
         try {
-            const response = await this.subscriptionClient.get({ id: subscriptionId });
-            return response;
+            const axios = require('axios');
+            const response = await axios.get(
+                `https://api.mercadopago.com/preapproval/${subscriptionId}`,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${this.credentials.accessToken}`
+                    },
+                    timeout: 10000
+                }
+            );
+
+            logger.debug('Suscripción obtenida de MercadoPago', {
+                subscriptionId,
+                status: response.data.status,
+                organizacionId: this.organizacionId
+            });
+
+            return response.data;
         } catch (error) {
             logger.error('Error obteniendo suscripción:', {
                 subscriptionId,
-                error: error.message
+                error: error.message,
+                status: error.response?.status,
+                data: error.response?.data,
+                organizacionId: this.organizacionId
             });
-            throw new Error(`Error obteniendo suscripción: ${error.message}`);
+
+            // Si es 404, la suscripción no existe
+            if (error.response?.status === 404) {
+                throw new Error(`Suscripción ${subscriptionId} no encontrada en MercadoPago`);
+            }
+
+            // Incluir más detalles del error
+            const errorDetail = error.response?.data?.message || error.response?.data?.error || error.message;
+            throw new Error(`Error obteniendo suscripción: ${errorDetail}`);
         }
     }
 

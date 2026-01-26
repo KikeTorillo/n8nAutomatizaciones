@@ -110,9 +110,14 @@ const verificarSuscripcionActiva = async (req, res, next) => {
     } catch (error) {
         logger.error('[Suscripción] Error verificando estado:', error);
 
-        // En caso de error, permitir acceso (fail-open para no bloquear la plataforma)
-        // En producción, considerar fail-closed si la verificación es crítica
-        next();
+        // FAIL-CLOSED: En caso de error, denegar acceso por seguridad
+        // Esto evita que usuarios sin suscripción válida accedan si el sistema falla
+        return res.status(503).json({
+            error: 'service_unavailable',
+            codigo: 'SUBSCRIPTION_CHECK_FAILED',
+            mensaje: 'No se pudo verificar el estado de tu suscripción. Intenta de nuevo en unos momentos.',
+            reintentable: true
+        });
     }
 };
 

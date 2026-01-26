@@ -11,10 +11,12 @@
 --
 -- CARACTERÍSTICAS:
 -- • Constructor drag-and-drop
--- • 7 tipos de bloques: hero, servicios, testimonios, equipo, cta, contacto, footer
+-- • 16 tipos de bloques: hero, servicios, testimonios, equipo, cta, contacto, footer,
+--   texto, galeria, video, separador, pricing, faq, countdown, stats, timeline
 -- • Integración con módulos: agendamiento, servicios, profesionales
--- • SEO básico (meta tags)
+-- • SEO avanzado (meta tags, Open Graph, schema markup)
 -- • Temas personalizables (colores, fuentes)
+-- • Soporte multi-idioma
 --
 -- DEPENDENCIAS:
 -- • organizaciones (FK) - Módulo núcleo
@@ -61,6 +63,15 @@ CREATE TABLE IF NOT EXISTS website_config (
     -- Redes sociales (para footer/compartir)
     redes_sociales JSONB DEFAULT '{}',  -- {"facebook": "url", "instagram": "@user", ...}
 
+    -- SEO Avanzado (Ene 2026)
+    og_image_url TEXT,  -- Imagen para Open Graph
+    schema_type VARCHAR(50) DEFAULT 'LocalBusiness',  -- Tipo de schema.org
+    schema_datos JSONB DEFAULT '{}',  -- Datos adicionales para schema markup
+
+    -- Multi-idioma (Ene 2026)
+    idiomas_activos VARCHAR[] DEFAULT ARRAY['es'],  -- Array de códigos de idioma
+    idioma_default VARCHAR(5) DEFAULT 'es',
+
     -- Estado
     publicado BOOLEAN DEFAULT false,
     fecha_publicacion TIMESTAMP WITH TIME ZONE,
@@ -96,6 +107,10 @@ CREATE TABLE IF NOT EXISTS website_paginas (
     slug VARCHAR(100) NOT NULL,  -- "servicios", "nosotros", "contacto" (vacío = inicio)
     titulo VARCHAR(255) NOT NULL,
     descripcion_seo VARCHAR(160),
+
+    -- SEO Avanzado (Ene 2026)
+    og_image_url TEXT,  -- Imagen específica de página para Open Graph
+    noindex BOOLEAN DEFAULT false,  -- Si true, no indexar en buscadores
 
     -- Navegación
     orden INTEGER DEFAULT 0,
@@ -143,7 +158,12 @@ CREATE TABLE IF NOT EXISTS website_bloques (
         'texto',
         'galeria',
         'video',
-        'separador'
+        'separador',
+        'pricing',
+        'faq',
+        'countdown',
+        'stats',
+        'timeline'
     )),
 
     -- Contenido (estructura depende del tipo)
@@ -306,5 +326,95 @@ SEPARADOR:
   "tipo": "linea",  -- linea, espacio, ondas
   "altura": 50,
   "color": "#E5E7EB"
+}
+
+PRICING:
+{
+  "titulo_seccion": "Nuestros Planes",
+  "subtitulo_seccion": "Elige el plan perfecto para ti",
+  "columnas": 3,
+  "mostrar_popular": true,
+  "moneda": "USD",
+  "mostrar_toggle_anual": false,
+  "descuento_anual": 20,
+  "planes": [
+    {
+      "nombre": "Básico",
+      "precio": 29,
+      "periodo": "mes",
+      "descripcion": "Ideal para empezar",
+      "caracteristicas": ["Feature 1", "Feature 2"],
+      "es_popular": false,
+      "boton_texto": "Comenzar",
+      "boton_url": "#contacto"
+    }
+  ]
+}
+
+FAQ:
+{
+  "titulo_seccion": "Preguntas Frecuentes",
+  "subtitulo_seccion": "Encuentra respuestas",
+  "layout": "accordion",
+  "permitir_multiple": false,
+  "items": [
+    {
+      "pregunta": "¿Cómo puedo agendar?",
+      "respuesta": "Puedes agendar fácilmente..."
+    }
+  ]
+}
+
+COUNTDOWN:
+{
+  "titulo": "Gran Inauguración",
+  "subtitulo": "No te lo pierdas",
+  "fecha_objetivo": "2026-02-01T00:00:00Z",
+  "mostrar_dias": true,
+  "mostrar_horas": true,
+  "mostrar_minutos": true,
+  "mostrar_segundos": true,
+  "texto_finalizado": "¡El evento ha comenzado!",
+  "accion_finalizado": "ocultar",  -- ocultar, mostrar_mensaje
+  "fondo_tipo": "color",
+  "fondo_valor": "#1F2937",
+  "color_texto": "#FFFFFF",
+  "boton_texto": "Registrarse",
+  "boton_url": "#contacto"
+}
+
+STATS:
+{
+  "titulo_seccion": "Nuestros Números",
+  "subtitulo_seccion": "Lo que hemos logrado",
+  "columnas": 4,
+  "animar": true,
+  "duracion_animacion": 2000,
+  "items": [
+    {
+      "numero": 500,
+      "sufijo": "+",
+      "prefijo": "",
+      "titulo": "Clientes Satisfechos",
+      "icono": "users"
+    }
+  ]
+}
+
+TIMELINE:
+{
+  "titulo_seccion": "Nuestra Historia",
+  "subtitulo_seccion": "Un recorrido por nuestros logros",
+  "layout": "alternado",  -- izquierda, derecha, alternado
+  "mostrar_linea": true,
+  "color_linea": "#3B82F6",
+  "items": [
+    {
+      "fecha": "2020",
+      "titulo": "Fundación",
+      "descripcion": "Comenzamos nuestra aventura",
+      "icono": "rocket"
+    }
+  ]
 }
 */

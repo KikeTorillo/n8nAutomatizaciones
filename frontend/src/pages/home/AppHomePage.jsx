@@ -57,10 +57,10 @@ function AppHomePage() {
   const clearPermisos = usePermisosStore(selectClearPermisos);
 
   // Detectar rol ANTES de los hooks para pasar enabled correctamente
-  // FIX RBAC Ene 2026: Evitar queries innecesarias para empleados
-  const esEmpleado = user?.rol_codigo === 'empleado';
+  // FIX RBAC Ene 2026: Evitar queries innecesarias para usuarios sin permisos
+  const esEmpleado = user?.nivel_jerarquia < 50; // Nivel bajo (empleado, cliente, bot)
   const esSuperAdmin = user?.rol_codigo === 'super_admin';
-  const esAdmin = !esEmpleado; // Admin, propietario o super_admin
+  const esAdmin = user?.nivel_jerarquia >= 90; // Solo admin real (nivel 90+)
 
   // Modales centralizados
   const { openModal, closeModal, isOpen } = useModalManager({

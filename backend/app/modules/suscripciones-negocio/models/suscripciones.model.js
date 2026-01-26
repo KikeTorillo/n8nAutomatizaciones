@@ -1500,6 +1500,53 @@ class SuscripcionesModel {
     }
 
     /**
+     * Buscar TODAS las suscripciones activas de un cliente (sin filtrar por plan)
+     * Usado para detectar suscripciones duplicadas en upgrades
+     *
+     * @param {number} clienteId - ID del cliente
+     * @returns {Promise<Array>} - Lista de suscripciones activas
+     */
+    static async buscarTodasActivasPorClienteBypass(clienteId) {
+        return await RLSContextManager.withBypass(async (db) => {
+            const result = await db.query(`
+                SELECT s.*, p.nombre as plan_nombre, p.codigo as plan_codigo
+                FROM suscripciones_org s
+                INNER JOIN planes_suscripcion_org p ON s.plan_id = p.id
+                WHERE s.cliente_id = $1
+                  AND s.estado IN ('trial', 'activa', 'pendiente_pago', 'grace_period')
+                ORDER BY s.creado_en DESC
+            `, [clienteId]);
+            return result.rows;
+        });
+    }
+
+    /**
+     * Cancelar suscripciones anteriores al activar una nueva
+     * Evita tener múltiples suscripciones activas del mismo cliente
+     *
+     * @param {number} clienteId - ID del cliente
+     * @param {number} nuevaSuscripcionId - ID de la suscripción que se está activando (excluir)
+     * @param {string} razon - Razón de cancelación
+     * @returns {Promise<Array<number>>} - IDs de suscripciones canceladas
+     */
+    static async cancelarSuscripcionesAnterioresBypass(clienteId, nuevaSuscripcionId, razon) {
+        return await RLSContextManager.withBypass(async (db) => {
+            const result = await db.query(`
+                UPDATE suscripciones_org
+                SET estado = 'cancelada',
+                    fecha_fin = CURRENT_DATE,
+                    razon_cancelacion = $1,
+                    actualizado_en = NOW()
+                WHERE cliente_id = $2
+                  AND id != $3
+                  AND estado IN ('trial', 'activa', 'pendiente_pago', 'grace_period')
+                RETURNING id, estado
+            `, [razon, clienteId, nuevaSuscripcionId]);
+            return result.rows.map(r => r.id);
+        });
+    }
+
+    /**
      * Verificar estado de suscripción de una organización
      * Usado por middleware para determinar nivel de acceso
      *

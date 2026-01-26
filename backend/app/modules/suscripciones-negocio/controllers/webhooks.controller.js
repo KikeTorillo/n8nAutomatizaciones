@@ -495,6 +495,18 @@ class WebhooksController {
                     organizacionId: suscripcion.organizacion_id
                 });
 
+                // Cancelar suscripciones anteriores (trial, otras activas) para evitar duplicados
+                if (suscripcion.cliente_id) {
+                    const canceladas = await SuscripcionesModel.cancelarSuscripcionesAnterioresBypass(
+                        suscripcion.cliente_id,
+                        suscripcion.id,
+                        `Upgrade a plan ${suscripcion.plan_nombre || 'nuevo'}`
+                    );
+                    if (canceladas.length > 0) {
+                        logger.info(`[Webhook MP] Suscripciones anteriores canceladas: ${canceladas.join(', ')}`);
+                    }
+                }
+
             } else if (mpSuscripcion.status === 'cancelled') {
                 await SuscripcionesModel.cambiarEstadoBypass(
                     suscripcion.id,
@@ -667,6 +679,18 @@ class WebhooksController {
                     preapproval_id: preapprovalId,
                     status
                 });
+
+                // Cancelar suscripciones anteriores (trial, otras activas) para evitar duplicados
+                if (suscripcion.cliente_id) {
+                    const canceladas = await SuscripcionesModel.cancelarSuscripcionesAnterioresBypass(
+                        suscripcion.cliente_id,
+                        suscripcion.id,
+                        `Upgrade a plan ${suscripcion.plan_nombre || 'nuevo'}`
+                    );
+                    if (canceladas.length > 0) {
+                        logger.info(`[Webhook MP] Suscripciones anteriores canceladas: ${canceladas.join(', ')}`);
+                    }
+                }
             } else if (status === 'rejected' || status === 'cancelled') {
                 // Enviar email de pago fallido
                 const razonFallo = pagoAutorizado.rejection_code || 'Pago rechazado';

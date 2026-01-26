@@ -8,7 +8,7 @@
  * @module models/webhooks-procesados
  */
 
-const RLSContextManager = require('../../../utils/RLSContextManager');
+const RLSContextManager = require('../../../utils/rlsContextManager');
 const logger = require('../../../utils/logger');
 
 class WebhooksProcesadosModel {

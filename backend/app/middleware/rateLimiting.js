@@ -498,6 +498,43 @@ const heavyOperationRateLimit = createRateLimit({
 });
 
 /**
+ * Rate limiting permisivo para tracking de analytics
+ *
+ * Específico para endpoints de tracking de sitios web públicos.
+ * Permite mayor volumen porque son requests ligeros (fire-and-forget).
+ *
+ * Configuración:
+ * - 200 requests por minuto por IP/session
+ * - Diseñado para alta frecuencia de eventos de tracking
+ * - Key format: 'rate_limit:tracking:192.168.1.1'
+ *
+ * @type {Function} Middleware Express
+ * @example
+ * router.post('/public/sitio/:slug/track', trackingRateLimit, trackingController);
+ */
+const trackingRateLimit = createRateLimit({
+  windowMs: 60 * 1000,                                           // 1 minuto
+  max: 200,                                                    // 200 requests por minuto
+  message: 'Límite de tracking excedido, intenta más tarde',
+  keyGenerator: (req) => {
+    // Usar session_id del body si existe, sino IP
+    const sessionId = req.body?.session_id;
+    return sessionId ? `tracking:${sessionId}` : `tracking:${sanitizeIP(req.ip)}`;
+  },
+  skip: (req) => {
+    // Saltar en ambiente de test o desarrollo
+    if (process.env.NODE_ENV === 'test') return true;
+    if (process.env.NODE_ENV === 'development') {
+      const ip = req.ip || '';
+      return ip === '127.0.0.1' || ip === '::1' ||
+             ip.startsWith('::ffff:127.') || ip.startsWith('::ffff:172.') ||
+             ip.startsWith('172.') || ip.startsWith('192.168.');
+    }
+    return false;
+  }
+});
+
+/**
  * Rate limiting dinámico basado en el plan de suscripción
  *
  * Ajusta automáticamente los límites según el plan de la organización.
@@ -582,6 +619,7 @@ module.exports = {
   apiRateLimit,                   // Rate limiting para APIs públicas
   heavyOperationRateLimit,        // Rate limiting para operaciones costosas
   planBasedRateLimit,             // Rate limiting dinámico por plan
+  trackingRateLimit,              // Rate limiting permisivo para analytics tracking
 
   // Utilidades
   createRateLimit,                // Factory para crear rate limits personalizados

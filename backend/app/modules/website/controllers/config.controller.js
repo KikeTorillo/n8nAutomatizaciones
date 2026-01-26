@@ -1,6 +1,8 @@
 const { WebsiteConfigModel } = require('../models');
 const { ResponseHelper } = require('../../../utils/helpers');
 const { asyncHandler } = require('../../../middleware');
+const websiteCacheService = require('../services/websiteCache.service');
+const WebsitePreviewService = require('../services/preview.service');
 
 /**
  * ====================================================================
@@ -102,6 +104,7 @@ class WebsiteConfigController {
     static actualizar = asyncHandler(async (req, res) => {
         const { id } = req.params;
         const organizacionId = req.tenant.organizacionId;
+        const slugAnterior = req.body._slugAnterior; // Para invalidar caché del slug viejo
 
         // Si se está cambiando el slug, verificar disponibilidad
         if (req.body.slug) {
@@ -130,6 +133,19 @@ class WebsiteConfigController {
                 'Configuración no encontrada',
                 404
             );
+        }
+
+        // Invalidar caché del sitio al actualizar (si está publicado)
+        if (configActualizada.publicado && configActualizada.slug) {
+            websiteCacheService.invalidarSitio(configActualizada.slug).catch(err => {
+                console.warn('[WebsiteConfigController] Error invalidando caché:', err.message);
+            });
+            // Si cambió el slug, invalidar también el slug anterior
+            if (slugAnterior && slugAnterior !== configActualizada.slug) {
+                websiteCacheService.invalidarSitio(slugAnterior).catch(err => {
+                    console.warn('[WebsiteConfigController] Error invalidando caché slug anterior:', err.message);
+                });
+            }
         }
 
         return ResponseHelper.success(
@@ -163,6 +179,13 @@ class WebsiteConfigController {
                 'Configuración no encontrada',
                 404
             );
+        }
+
+        // Invalidar caché del sitio al publicar/despublicar
+        if (configActualizada.slug) {
+            websiteCacheService.invalidarSitio(configActualizada.slug).catch(err => {
+                console.warn('[WebsiteConfigController] Error invalidando caché:', err.message);
+            });
         }
 
         const mensaje = publicar
@@ -220,6 +243,73 @@ class WebsiteConfigController {
             res,
             { id },
             'Sitio web eliminado exitosamente'
+        );
+    });
+
+    // ====================================================================
+    // PREVIEW
+    // ====================================================================
+
+    /**
+     * Generar token de preview
+     * POST /api/v1/website/config/:id/preview
+     *
+     * @requires auth - admin
+     * @requires tenant
+     */
+    static generarPreview = asyncHandler(async (req, res) => {
+        const { id } = req.params;
+        const { duracion_horas = 1 } = req.body;
+
+        const preview = await WebsitePreviewService.generarToken(id, duracion_horas);
+
+        return ResponseHelper.success(
+            res,
+            preview,
+            'Token de preview generado exitosamente'
+        );
+    });
+
+    /**
+     * Obtener info de preview activo
+     * GET /api/v1/website/config/:id/preview
+     *
+     * @requires auth - cualquier rol
+     * @requires tenant
+     */
+    static obtenerPreview = asyncHandler(async (req, res) => {
+        const { id } = req.params;
+        const organizacionId = req.tenant.organizacionId;
+
+        const preview = await WebsitePreviewService.obtenerInfoPreview(id, organizacionId);
+
+        if (!preview) {
+            return ResponseHelper.success(
+                res,
+                { activo: false },
+                'No hay preview activo'
+            );
+        }
+
+        return ResponseHelper.success(res, preview);
+    });
+
+    /**
+     * Revocar token de preview
+     * DELETE /api/v1/website/config/:id/preview
+     *
+     * @requires auth - admin
+     * @requires tenant
+     */
+    static revocarPreview = asyncHandler(async (req, res) => {
+        const { id } = req.params;
+
+        await WebsitePreviewService.revocarToken(id);
+
+        return ResponseHelper.success(
+            res,
+            { revocado: true },
+            'Token de preview revocado'
         );
     });
 }

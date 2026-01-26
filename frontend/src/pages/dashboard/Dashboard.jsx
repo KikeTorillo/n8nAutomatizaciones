@@ -24,12 +24,15 @@ function Dashboard() {
   const navigate = useNavigate();
   const user = useAuthStore(selectUser);
 
+  // FIX RBAC Ene 2026: Verificar nivel admin antes de cargar estadísticas
+  const esAdmin = user?.nivel_jerarquia >= 90;
+
   // Hook de módulos activos
   const { tieneInventario } = useModulos();
 
-  // Queries de datos
+  // Queries de datos - Solo cargar si es admin
   const { data: estadisticas, isLoading: loadingEstadisticas, error: errorEstadisticas } =
-    useEstadisticasOrganizacion();
+    useEstadisticasOrganizacion({ enabled: esAdmin });
   const { data: citasDelDia, isLoading: loadingCitas } = useCitasDelDia();
 
   // Estadísticas de asignaciones servicio-profesional

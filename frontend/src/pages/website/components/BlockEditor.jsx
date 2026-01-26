@@ -18,6 +18,11 @@ import {
   Image,
   Video,
   Minus,
+  DollarSign,
+  HelpCircle,
+  Clock,
+  TrendingUp,
+  GitBranch,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { ConfirmDialog } from '@/components/ui';
@@ -50,6 +55,11 @@ import TextoEditor from './blocks/TextoEditor';
 import GaleriaEditor from './blocks/GaleriaEditor';
 import VideoEditor from './blocks/VideoEditor';
 import SeparadorEditor from './blocks/SeparadorEditor';
+import PricingEditor from './blocks/PricingEditor';
+import FaqEditor from './blocks/FaqEditor';
+import CountdownEditor from './blocks/CountdownEditor';
+import StatsEditor from './blocks/StatsEditor';
+import TimelineEditor from './blocks/TimelineEditor';
 
 /**
  * Iconos y colores por tipo de bloque
@@ -66,6 +76,11 @@ const BLOQUES_CONFIG = {
   galeria: { icon: Image, color: 'pink', label: 'Galería' },
   video: { icon: Video, color: 'rose', label: 'Video' },
   separador: { icon: Minus, color: 'neutral', label: 'Separador' },
+  pricing: { icon: DollarSign, color: 'emerald', label: 'Precios' },
+  faq: { icon: HelpCircle, color: 'sky', label: 'FAQ' },
+  countdown: { icon: Clock, color: 'orange', label: 'Countdown' },
+  stats: { icon: TrendingUp, color: 'violet', label: 'Estadísticas' },
+  timeline: { icon: GitBranch, color: 'teal', label: 'Timeline' },
 };
 
 /**
@@ -83,6 +98,11 @@ const EDITORES_BLOQUE = {
   galeria: GaleriaEditor,
   video: VideoEditor,
   separador: SeparadorEditor,
+  pricing: PricingEditor,
+  faq: FaqEditor,
+  countdown: CountdownEditor,
+  stats: StatsEditor,
+  timeline: TimelineEditor,
 };
 
 /**

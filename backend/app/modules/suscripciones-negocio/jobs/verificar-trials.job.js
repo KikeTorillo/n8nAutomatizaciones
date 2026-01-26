@@ -90,8 +90,8 @@ class VerificarTrialsJob {
                             { razon: 'Trial expirado sin método de pago' }
                         );
 
-                        // Enviar notificación
-                        await NotificacionesService.enviarSuspensionPorFalloCobro(suscripcion);
+                        // Enviar notificación de trial expirado sin método de pago
+                        await NotificacionesService.enviarFinTrial(suscripcion);
 
                         resumen.marcados_vencida++;
                         logger.warn(`⚠️  Trial marcado como vencida (sin payment method): Suscripción ${suscripcion.id}`);

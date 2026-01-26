@@ -20,11 +20,50 @@ const { fields } = require('../../../schemas/shared');
 // Tipos de bloques válidos
 const TIPOS_BLOQUE = [
     'hero', 'servicios', 'testimonios', 'equipo', 'cta',
-    'contacto', 'footer', 'texto', 'galeria', 'video', 'separador'
+    'contacto', 'footer', 'texto', 'galeria', 'video', 'separador',
+    'pricing', 'faq', 'countdown', 'stats', 'timeline'
 ];
 
 // Regex para slug válido (letras, números, guiones)
 const slugRegex = /^[a-z0-9-]+$/;
+
+// ====================================================================
+// VALIDADOR CUSTOM: Tamaño máximo de JSONB
+// ====================================================================
+// Limita el tamaño de los objetos JSONB para evitar degradación de performance
+// y consumo excesivo de almacenamiento. Máximo 1MB por campo.
+
+const MAX_JSONB_SIZE_BYTES = 1024 * 1024; // 1MB
+
+/**
+ * Validador Joi custom para limitar tamaño de objetos JSONB
+ * @param {number} maxBytes - Tamaño máximo en bytes
+ * @returns {Joi.ObjectSchema}
+ */
+const jsonbWithMaxSize = (maxBytes = MAX_JSONB_SIZE_BYTES) => {
+    return Joi.object().custom((value, helpers) => {
+        if (value === null || value === undefined) {
+            return value;
+        }
+
+        // Calcular tamaño aproximado del JSON serializado
+        const jsonString = JSON.stringify(value);
+        const sizeBytes = Buffer.byteLength(jsonString, 'utf8');
+
+        if (sizeBytes > maxBytes) {
+            const sizeMB = (sizeBytes / (1024 * 1024)).toFixed(2);
+            const maxMB = (maxBytes / (1024 * 1024)).toFixed(2);
+            return helpers.error('object.maxSize', {
+                currentSize: sizeMB,
+                maxSize: maxMB
+            });
+        }
+
+        return value;
+    }).messages({
+        'object.maxSize': 'El contenido es demasiado grande ({{#currentSize}}MB). Máximo permitido: {{#maxSize}}MB'
+    });
+};
 
 const websiteSchemas = {
     // ========================================================================
@@ -267,8 +306,8 @@ const websiteSchemas = {
                 'any.required': 'El tipo de bloque es requerido',
                 'any.only': `El tipo debe ser uno de: ${TIPOS_BLOQUE.join(', ')}`
             }),
-            contenido: Joi.object().optional().allow(null),
-            estilos: Joi.object().optional().allow(null),
+            contenido: jsonbWithMaxSize().optional().allow(null),
+            estilos: jsonbWithMaxSize().optional().allow(null),
             orden: Joi.number().integer().min(0).optional(),
             visible: Joi.boolean().optional()
         })
@@ -304,8 +343,8 @@ const websiteSchemas = {
         }),
         body: Joi.object({
             tipo: Joi.string().valid(...TIPOS_BLOQUE).optional(),
-            contenido: Joi.object().optional().allow(null),
-            estilos: Joi.object().optional().allow(null),
+            contenido: jsonbWithMaxSize().optional().allow(null),
+            estilos: jsonbWithMaxSize().optional().allow(null),
             orden: Joi.number().integer().min(0).optional(),
             visible: Joi.boolean().optional()
         }).min(1)

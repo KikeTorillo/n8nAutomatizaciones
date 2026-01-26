@@ -8,6 +8,7 @@
 
 import { memo, useCallback } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
+import { useDroppable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, Copy, Trash2, Eye, EyeOff } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -25,6 +26,11 @@ import TextoCanvasBlock from './TextoCanvasBlock';
 import GaleriaCanvasBlock from './GaleriaCanvasBlock';
 import VideoCanvasBlock from './VideoCanvasBlock';
 import SeparadorCanvasBlock from './SeparadorCanvasBlock';
+import PricingCanvasBlock from './PricingCanvasBlock';
+import FaqCanvasBlock from './FaqCanvasBlock';
+import CountdownCanvasBlock from './CountdownCanvasBlock';
+import StatsCanvasBlock from './StatsCanvasBlock';
+import TimelineCanvasBlock from './TimelineCanvasBlock';
 
 // ========== BLOCK COMPONENT MAP ==========
 
@@ -40,6 +46,11 @@ const BLOCK_COMPONENTS = {
   galeria: GaleriaCanvasBlock,
   video: VideoCanvasBlock,
   separador: SeparadorCanvasBlock,
+  pricing: PricingCanvasBlock,
+  faq: FaqCanvasBlock,
+  countdown: CountdownCanvasBlock,
+  stats: StatsCanvasBlock,
+  timeline: TimelineCanvasBlock,
 };
 
 // ========== MAIN COMPONENT ==========
@@ -81,20 +92,41 @@ function CanvasBlock({
   onDelete,
   onToggleVisibility,
 }) {
-  // Sortable setup
+  // Sortable setup (for reordering within canvas)
   const {
     attributes,
     listeners,
-    setNodeRef,
+    setNodeRef: setSortableRef,
     transform,
     transition,
     isDragging: isSortableDragging,
   } = useSortable({ id: bloque.id });
 
+  // Droppable setup (for receiving drops from palette)
+  const { setNodeRef: setDroppableRef, isOver } = useDroppable({
+    id: `droppable-${bloque.id}`,
+    data: {
+      blockId: bloque.id,
+      accepts: 'palette',
+    },
+  });
+
+  // Combine refs for both sortable and droppable
+  const setNodeRef = useCallback(
+    (node) => {
+      setSortableRef(node);
+      setDroppableRef(node);
+    },
+    [setSortableRef, setDroppableRef]
+  );
+
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
   };
+
+  // Use isOver from droppable OR isDragOver from props
+  const isCurrentDragOver = isDragOver || isOver;
 
   // Get the correct block component
   const BlockComponent = BLOCK_COMPONENTS[bloque.tipo];
@@ -137,7 +169,7 @@ function CanvasBlock({
     >
       {/* Drop Indicator - Before */}
       <AnimatePresence>
-        {isDragOver && dropPosition === 'before' && (
+        {isCurrentDragOver && dropPosition === 'before' && (
           <DropIndicator position="before" />
         )}
       </AnimatePresence>
@@ -236,7 +268,7 @@ function CanvasBlock({
         className={cn(
           'transition-all cursor-pointer',
           !isSelected && !isSortableDragging && 'hover:shadow-md',
-          isDragOver && 'scale-[0.99]'
+          isCurrentDragOver && 'scale-[0.99]'
         )}
       >
         <BlockComponent
@@ -249,7 +281,7 @@ function CanvasBlock({
 
       {/* Drop Indicator - After */}
       <AnimatePresence>
-        {isDragOver && dropPosition === 'after' && (
+        {isCurrentDragOver && dropPosition === 'after' && (
           <DropIndicator position="after" />
         )}
       </AnimatePresence>

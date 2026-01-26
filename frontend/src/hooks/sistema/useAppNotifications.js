@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { citasApi, inventarioApi, posApi, workflowsApi } from '@/services/api/endpoints';
 import { useModulos } from './useModulos';
+import { usePermiso } from './useAccesoModulo';
 import useSucursalStore, { selectGetSucursalId } from '@/store/sucursalStore';
 
 /**
@@ -22,6 +23,9 @@ export function useAppNotifications({ enabled = true } = {}) {
   // Obtener sucursalId para queries que lo requieren
   const getSucursalId = useSucursalStore(selectGetSucursalId);
   const sucursalId = getSucursalId();
+
+  // FIX RBAC Ene 2026: Verificar permiso de POS antes de hacer query
+  const { tiene: tienePermisoVerHistorial, isLoading: loadingPermisoPOS } = usePermiso('pos.ver_historial', sucursalId);
 
   // Citas del día (solo pendientes/programadas)
   const { data: citasData } = useQuery({
@@ -51,7 +55,7 @@ export function useAppNotifications({ enabled = true } = {}) {
     refetchIntervalInBackground: false, // No refetch en tabs inactivas
   });
 
-  // Ventas del día - FIX RBAC Ene 2026: Solo para admin con permiso
+  // Ventas del día - FIX RBAC Ene 2026: Solo para usuarios con permiso pos.ver_historial
   const { data: ventasData } = useQuery({
     queryKey: ['app-notifications', 'ventas-hoy', sucursalId],
     queryFn: async () => {
@@ -63,7 +67,8 @@ export function useAppNotifications({ enabled = true } = {}) {
       });
       return response.data.data?.ventas || [];
     },
-    enabled: enabled && tienePOS && !!sucursalId,
+    // FIX RBAC Ene 2026: Verificar permiso antes de hacer la petición
+    enabled: enabled && tienePOS && !!sucursalId && !loadingPermisoPOS && tienePermisoVerHistorial,
     staleTime: STALE_TIMES.DYNAMIC, // 2 minutos
     refetchInterval: 2 * 60 * 1000, // Alineado con staleTime
     refetchIntervalInBackground: false, // No refetch en tabs inactivas

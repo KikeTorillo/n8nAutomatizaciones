@@ -272,6 +272,188 @@ export const websiteApi = {
    */
   generarBloqueIA: (datos) =>
     apiClient.post('/website/ai/generar-bloque', datos).then((res) => res.data?.data || res.data),
+
+  /**
+   * Generar sitio web completo con IA
+   * @param {Object} datos - { nombre, descripcion, industria?, estilo?, aplicar? }
+   * @returns {Promise<Object>}
+   */
+  generarSitioIA: (datos) =>
+    apiClient.post('/website/ai/generar-sitio', datos, {
+      timeout: 120000, // 2 minutos para generación con IA
+    }).then((res) => res.data?.data || res.data),
+
+  /**
+   * Detectar industria desde descripcion
+   * @param {string} descripcion
+   * @returns {Promise<Object>}
+   */
+  detectarIndustriaIA: (descripcion) =>
+    apiClient.post('/website/ai/detectar-industria', { descripcion }).then((res) => res.data?.data || res.data),
+
+  // ========== Preview ==========
+
+  /**
+   * Generar token de preview
+   * @param {string} id - UUID del sitio
+   * @param {number} duracionHoras - Duracion en horas (default 1)
+   * @returns {Promise<Object>}
+   */
+  generarPreview: (id, duracionHoras = 1) =>
+    apiClient.post(`/website/config/${id}/preview`, { duracion_horas: duracionHoras })
+      .then((res) => res.data?.data || res.data),
+
+  /**
+   * Obtener info de preview activo
+   * @param {string} id - UUID del sitio
+   * @returns {Promise<Object>}
+   */
+  obtenerPreviewInfo: (id) =>
+    apiClient.get(`/website/config/${id}/preview`).then((res) => res.data?.data || res.data),
+
+  /**
+   * Revocar token de preview
+   * @param {string} id - UUID del sitio
+   * @returns {Promise<Object>}
+   */
+  revocarPreview: (id) =>
+    apiClient.delete(`/website/config/${id}/preview`).then((res) => res.data?.data || res.data),
+
+  /**
+   * Obtener sitio via preview token (publico)
+   * @param {string} token - Token de preview
+   * @returns {Promise<Object>}
+   */
+  obtenerSitioPreview: (token) =>
+    publicApiClient.get(`/public/preview/${token}`).then((res) => res.data?.data || res.data),
+
+  // ========== Versiones (Historial/Rollback) ==========
+
+  /**
+   * Listar versiones del sitio
+   * @param {Object} params - { limite?, offset?, tipo? }
+   * @returns {Promise<Object>}
+   */
+  listarVersiones: (params = {}) =>
+    apiClient.get('/website/versiones', { params }).then((res) => res.data?.data || res.data),
+
+  /**
+   * Obtener version por ID
+   * @param {string} id - UUID de la version
+   * @returns {Promise<Object>}
+   */
+  obtenerVersion: (id) =>
+    apiClient.get(`/website/versiones/${id}`).then((res) => res.data?.data || res.data),
+
+  /**
+   * Crear version manual (snapshot)
+   * @param {Object} datos - { nombre?, descripcion? }
+   * @returns {Promise<Object>}
+   */
+  crearVersion: (datos = {}) =>
+    apiClient.post('/website/versiones', datos).then((res) => res.data?.data || res.data),
+
+  /**
+   * Restaurar sitio a una version
+   * @param {string} id - UUID de la version
+   * @param {boolean} crearBackup - Si crear backup antes
+   * @returns {Promise<Object>}
+   */
+  restaurarVersion: (id, crearBackup = true) =>
+    apiClient.post(`/website/versiones/${id}/restaurar`, { crear_backup: crearBackup })
+      .then((res) => res.data?.data || res.data),
+
+  /**
+   * Eliminar version
+   * @param {string} id - UUID de la version
+   * @returns {Promise<Object>}
+   */
+  eliminarVersion: (id) =>
+    apiClient.delete(`/website/versiones/${id}`).then((res) => res.data?.data || res.data),
+
+  /**
+   * Obtener preview de una version
+   * @param {string} id - UUID de la version
+   * @returns {Promise<Object>}
+   */
+  obtenerPreviewVersion: (id) =>
+    apiClient.get(`/website/versiones/${id}/preview`).then((res) => res.data?.data || res.data),
+
+  // ========== Analytics ==========
+
+  /**
+   * Registrar evento de analytics (publico)
+   * @param {string} slug - Slug del sitio
+   * @param {Object} datos - { evento_tipo, pagina_slug?, bloque_id?, fuente?, datos_extra? }
+   * @returns {Promise<void>}
+   */
+  registrarEvento: (slug, datos) =>
+    publicApiClient.post(`/public/sitio/${slug}/track`, datos).catch(() => {}), // Fire-and-forget
+
+  /**
+   * Listar eventos de analytics recientes
+   * @param {Object} params - { website_id?, evento_tipo?, limite?, offset? }
+   * @returns {Promise<Array>}
+   */
+  listarEventos: (params = {}) =>
+    apiClient.get('/website/analytics', { params }).then((res) => res.data?.data || res.data || []),
+
+  /**
+   * Obtener resumen de metricas
+   * @param {Object} params - { dias?, website_id? }
+   * @returns {Promise<Object>}
+   */
+  obtenerResumenAnalytics: (params = {}) =>
+    apiClient.get('/website/analytics/resumen', { params }).then((res) => res.data?.data || res.data),
+
+  /**
+   * Obtener paginas mas populares
+   * @param {Object} params - { dias?, website_id?, limite? }
+   * @returns {Promise<Array>}
+   */
+  obtenerPaginasPopulares: (params = {}) =>
+    apiClient.get('/website/analytics/paginas', { params }).then((res) => res.data?.data || res.data || []),
+
+  /**
+   * Obtener metricas en tiempo real
+   * @param {string} websiteId - UUID opcional
+   * @returns {Promise<Object>}
+   */
+  obtenerTiempoReal: (websiteId) =>
+    apiClient.get('/website/analytics/tiempo-real', { params: websiteId ? { website_id: websiteId } : {} })
+      .then((res) => res.data?.data || res.data),
+
+  // ========== SEO ==========
+
+  /**
+   * Obtener auditoria SEO
+   * @param {string} websiteId - UUID opcional
+   * @returns {Promise<Object>}
+   */
+  obtenerAuditoriaSEO: (websiteId) =>
+    apiClient.get('/website/seo/auditoria', { params: websiteId ? { website_id: websiteId } : {} })
+      .then((res) => res.data?.data || res.data),
+
+  /**
+   * Obtener preview de Google SERP
+   * @param {string} websiteId - UUID del sitio
+   * @returns {Promise<Object>}
+   */
+  obtenerPreviewGoogle: (websiteId) =>
+    apiClient.get('/website/seo/preview-google', { params: { website_id: websiteId } })
+      .then((res) => res.data?.data || res.data),
+
+  /**
+   * Obtener schema markup
+   * @param {string} websiteId - UUID del sitio
+   * @param {string} tipo - Tipo de schema (LocalBusiness, Organization)
+   * @returns {Promise<Object>}
+   */
+  obtenerSchemaSEO: (websiteId, tipo = 'LocalBusiness') =>
+    apiClient.get('/website/seo/schema', { params: { website_id: websiteId, tipo } })
+      .then((res) => res.data?.data || res.data),
 };
+
+export default websiteApi;
 
 // ==================== CONTABILIDAD ====================

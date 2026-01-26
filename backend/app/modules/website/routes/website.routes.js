@@ -24,6 +24,9 @@ const {
 } = require('../controllers');
 const WebsiteTemplatesController = require('../controllers/templates.controller');
 const WebsiteAIController = require('../controllers/ai.controller');
+const WebsiteAnalyticsController = require('../controllers/analytics.controller');
+const WebsiteSEOController = require('../controllers/seo.controller');
+const WebsiteVersionesController = require('../controllers/versiones.controller');
 const { auth, tenant, rateLimiting, validation, subscription, modules } = require('../../../middleware');
 const websiteSchemas = require('../schemas/website.schemas');
 
@@ -121,6 +124,50 @@ router.delete('/config/:id',
     rateLimiting.apiRateLimit,
     validate(websiteSchemas.eliminarConfig),
     WebsiteConfigController.eliminar
+);
+
+/**
+ * POST /api/v1/website/config/:id/preview
+ * Generar token de preview
+ * @requires auth - admin
+ * @requires tenant
+ */
+router.post('/config/:id/preview',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('website'),
+    auth.requireRole(['admin']),
+    rateLimiting.apiRateLimit,
+    WebsiteConfigController.generarPreview
+);
+
+/**
+ * GET /api/v1/website/config/:id/preview
+ * Obtener info de preview activo
+ * @requires auth - cualquier rol
+ * @requires tenant
+ */
+router.get('/config/:id/preview',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('website'),
+    rateLimiting.apiRateLimit,
+    WebsiteConfigController.obtenerPreview
+);
+
+/**
+ * DELETE /api/v1/website/config/:id/preview
+ * Revocar token de preview
+ * @requires auth - admin
+ * @requires tenant
+ */
+router.delete('/config/:id/preview',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('website'),
+    auth.requireRole(['admin']),
+    rateLimiting.apiRateLimit,
+    WebsiteConfigController.revocarPreview
 );
 
 // ===================================================================
@@ -497,6 +544,243 @@ router.post('/ai/generar-bloque',
     modules.requireModule('website'),
     rateLimiting.aiRateLimit || rateLimiting.apiRateLimit,
     WebsiteAIController.generarBloque
+);
+
+/**
+ * POST /api/v1/website/ai/generar-sitio
+ * Generar sitio web completo desde descripcion
+ * @requires auth - admin
+ * @requires tenant
+ */
+router.post('/ai/generar-sitio',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('website'),
+    auth.requireRole(['admin']),
+    rateLimiting.aiRateLimit || rateLimiting.apiRateLimit,
+    WebsiteAIController.generarSitio
+);
+
+/**
+ * POST /api/v1/website/ai/detectar-industria
+ * Detectar industria desde descripcion
+ * @requires auth - cualquier rol
+ */
+router.post('/ai/detectar-industria',
+    auth.authenticateToken,
+    rateLimiting.apiRateLimit,
+    WebsiteAIController.detectarIndustria
+);
+
+// ===================================================================
+// ANALYTICS
+// ===================================================================
+
+/**
+ * GET /api/v1/website/analytics
+ * Listar eventos de analytics recientes
+ * @requires auth - cualquier rol
+ * @requires tenant
+ */
+router.get('/analytics',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('website'),
+    rateLimiting.apiRateLimit,
+    WebsiteAnalyticsController.listarEventos
+);
+
+/**
+ * GET /api/v1/website/analytics/resumen
+ * Obtener resumen de metricas
+ * @requires auth - cualquier rol
+ * @requires tenant
+ */
+router.get('/analytics/resumen',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('website'),
+    rateLimiting.apiRateLimit,
+    WebsiteAnalyticsController.obtenerResumen
+);
+
+/**
+ * GET /api/v1/website/analytics/paginas
+ * Obtener paginas mas populares
+ * @requires auth - cualquier rol
+ * @requires tenant
+ */
+router.get('/analytics/paginas',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('website'),
+    rateLimiting.apiRateLimit,
+    WebsiteAnalyticsController.obtenerPaginasPopulares
+);
+
+/**
+ * GET /api/v1/website/analytics/tiempo-real
+ * Obtener metricas en tiempo real (ultimos 5 minutos)
+ * @requires auth - cualquier rol
+ * @requires tenant
+ */
+router.get('/analytics/tiempo-real',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('website'),
+    rateLimiting.apiRateLimit,
+    WebsiteAnalyticsController.obtenerTiempoReal
+);
+
+// ===================================================================
+// SEO
+// ===================================================================
+
+/**
+ * GET /api/v1/website/seo/auditoria
+ * Obtener auditoria SEO del sitio
+ * @requires auth - cualquier rol
+ * @requires tenant
+ */
+router.get('/seo/auditoria',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('website'),
+    rateLimiting.apiRateLimit,
+    WebsiteSEOController.obtenerAuditoria
+);
+
+/**
+ * GET /api/v1/website/seo/preview-google
+ * Obtener preview de SERP de Google
+ * @requires auth - cualquier rol
+ * @requires tenant
+ */
+router.get('/seo/preview-google',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('website'),
+    rateLimiting.apiRateLimit,
+    WebsiteSEOController.previewGoogle
+);
+
+/**
+ * GET /api/v1/website/seo/schema
+ * Obtener schema markup generado
+ * @requires auth - cualquier rol
+ * @requires tenant
+ */
+router.get('/seo/schema',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('website'),
+    rateLimiting.apiRateLimit,
+    WebsiteSEOController.obtenerSchema
+);
+
+// ===================================================================
+// VERSIONES (HISTORIAL/ROLLBACK)
+// ===================================================================
+
+/**
+ * GET /api/v1/website/versiones
+ * Listar versiones del sitio
+ * @requires auth - cualquier rol
+ * @requires tenant
+ */
+router.get('/versiones',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('website'),
+    rateLimiting.apiRateLimit,
+    WebsiteVersionesController.listar
+);
+
+/**
+ * GET /api/v1/website/versiones/comparar
+ * Comparar dos versiones
+ * @requires auth - cualquier rol
+ * @requires tenant
+ */
+router.get('/versiones/comparar',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('website'),
+    rateLimiting.apiRateLimit,
+    WebsiteVersionesController.comparar
+);
+
+/**
+ * GET /api/v1/website/versiones/:id
+ * Obtener version por ID
+ * @requires auth - cualquier rol
+ * @requires tenant
+ */
+router.get('/versiones/:id',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('website'),
+    rateLimiting.apiRateLimit,
+    WebsiteVersionesController.obtener
+);
+
+/**
+ * GET /api/v1/website/versiones/:id/preview
+ * Preview de una version sin restaurar
+ * @requires auth - cualquier rol
+ * @requires tenant
+ */
+router.get('/versiones/:id/preview',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('website'),
+    rateLimiting.apiRateLimit,
+    WebsiteVersionesController.obtenerPreview
+);
+
+/**
+ * POST /api/v1/website/versiones
+ * Crear version manual (snapshot)
+ * @requires auth - admin
+ * @requires tenant
+ */
+router.post('/versiones',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('website'),
+    auth.requireRole(['admin']),
+    rateLimiting.apiRateLimit,
+    WebsiteVersionesController.crear
+);
+
+/**
+ * POST /api/v1/website/versiones/:id/restaurar
+ * Restaurar sitio a una version
+ * @requires auth - admin
+ * @requires tenant
+ */
+router.post('/versiones/:id/restaurar',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('website'),
+    auth.requireRole(['admin']),
+    rateLimiting.apiRateLimit,
+    WebsiteVersionesController.restaurar
+);
+
+/**
+ * DELETE /api/v1/website/versiones/:id
+ * Eliminar version
+ * @requires auth - admin
+ * @requires tenant
+ */
+router.delete('/versiones/:id',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('website'),
+    auth.requireRole(['admin']),
+    rateLimiting.apiRateLimit,
+    WebsiteVersionesController.eliminar
 );
 
 module.exports = router;

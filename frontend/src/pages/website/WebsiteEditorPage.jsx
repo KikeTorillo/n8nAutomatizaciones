@@ -51,6 +51,8 @@ import EditorCanvas from './components/EditorCanvas';
 import PropertiesPanel from './components/PropertiesPanel';
 import TemplateGallery from './components/TemplateGallery';
 import SlashMenu from './components/SlashMenu';
+import { DndEditorProvider } from './components/DndEditorProvider';
+import AIWizardModal from './components/AIWizard/AIWizardModal';
 
 // UI
 import { BackButton } from '@/components/ui';
@@ -73,6 +75,7 @@ function WebsiteEditorPage() {
     position: { x: 0, y: 0 },
     query: '',
   });
+  const [mostrarAIWizard, setMostrarAIWizard] = useState(false);
 
   // ========== STORE STATE ==========
   const bloques = useWebsiteEditorStore(selectBloques);
@@ -249,6 +252,60 @@ function WebsiteEditorPage() {
     }
   };
 
+  // ========== DND HANDLERS (PALETA -> CANVAS) ==========
+
+  /**
+   * Handler para cuando se suelta un bloque desde la paleta al canvas
+   */
+  const handleDropFromPalette = useCallback(
+    async ({ tipo, targetId, position }) => {
+      if (!paginaActiva) {
+        toast.error('Selecciona una pagina primero');
+        return;
+      }
+
+      // Calcular el indice donde insertar
+      let indice = bloques.length; // Por defecto al final
+      if (targetId) {
+        const targetIndex = bloques.findIndex((b) => b.id === targetId);
+        if (targetIndex !== -1) {
+          indice = position === 'before' ? targetIndex : targetIndex + 1;
+        }
+      }
+
+      try {
+        const nuevoBloque = await crearBloque.mutateAsync({
+          pagina_id: paginaActiva.id,
+          tipo: tipo,
+          orden: indice,
+        });
+        seleccionarBloque(nuevoBloque.id);
+        toast.success('Bloque agregado');
+      } catch (error) {
+        toast.error(error.response?.data?.message || 'Error al agregar bloque');
+      }
+    },
+    [paginaActiva, bloques, crearBloque, seleccionarBloque]
+  );
+
+  /**
+   * Handler para reordenar bloques dentro del canvas via DnD
+   */
+  const handleDndReorder = useCallback(
+    ({ activeId, overId }) => {
+      const oldIndex = bloques.findIndex((b) => b.id === activeId);
+      const newIndex = bloques.findIndex((b) => b.id === overId);
+
+      if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
+        const nuevoOrden = [...bloques];
+        const [removed] = nuevoOrden.splice(oldIndex, 1);
+        nuevoOrden.splice(newIndex, 0, removed);
+        handleReordenarBloques(nuevoOrden.map((b) => b.id));
+      }
+    },
+    [bloques, handleReordenarBloques]
+  );
+
   // ========== SLASH MENU HANDLERS ==========
 
   const handleSlashSelect = useCallback(
@@ -368,10 +425,17 @@ function WebsiteEditorPage() {
 
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <button
+                onClick={() => setMostrarAIWizard(true)}
+                className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-primary-600 to-secondary-600 text-white rounded-lg hover:from-primary-700 hover:to-secondary-700 transition-all font-medium shadow-lg shadow-primary-500/25"
+              >
+                <Sparkles className="w-5 h-5" />
+                Crear con IA
+              </button>
+              <button
                 onClick={() => setMostrarTemplates(true)}
                 className="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium"
               >
-                <Sparkles className="w-5 h-5" />
+                <Layout className="w-5 h-5" />
                 Elegir template
               </button>
               <button
@@ -428,6 +492,16 @@ function WebsiteEditorPage() {
           onClose={() => setMostrarTemplates(false)}
           onTemplateApplied={() => {
             setMostrarTemplates(false);
+          }}
+        />
+
+        {/* AI Wizard Modal */}
+        <AIWizardModal
+          isOpen={mostrarAIWizard}
+          onClose={() => setMostrarAIWizard(false)}
+          onSitioCreado={() => {
+            setMostrarAIWizard(false);
+            // El hook useWebsiteEditor hara refetch automaticamente
           }}
         />
       </div>
@@ -534,9 +608,13 @@ function WebsiteEditorPage() {
         </div>
       </header>
 
-      {/* Cuerpo del editor */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* Panel izquierdo - Navegación */}
+      {/* Cuerpo del editor - Envuelto en DndEditorProvider para drag desde paleta */}
+      <DndEditorProvider
+        onDropFromPalette={handleDropFromPalette}
+        onReorder={handleDndReorder}
+      >
+        <div className="flex-1 flex overflow-hidden">
+          {/* Panel izquierdo - Navegacion */}
         <aside className="w-14 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col items-center py-4 gap-2">
           <button
             onClick={() => setPanelActivo('bloques')}
@@ -649,22 +727,23 @@ function WebsiteEditorPage() {
           )}
         </main>
 
-        {/* Panel derecho - Propiedades (solo en modo canvas con bloque seleccionado) */}
-        {modoEditor === 'canvas' && bloqueSeleccionado && mostrarPropiedades && (
-          <aside className="w-80 flex-shrink-0">
-            <PropertiesPanel
-              bloque={bloqueSeleccionadoCompleto}
-              onUpdate={(contenido) =>
-                handleActualizarBloque(bloqueSeleccionado, contenido)
-              }
-              onDuplicate={handleDuplicarBloque}
-              onDelete={handleEliminarBloque}
-              onClose={() => setMostrarPropiedades(false)}
-              isLoading={estaGuardando}
-            />
-          </aside>
-        )}
-      </div>
+          {/* Panel derecho - Propiedades (solo en modo canvas con bloque seleccionado) */}
+          {modoEditor === 'canvas' && bloqueSeleccionado && mostrarPropiedades && (
+            <aside className="w-80 flex-shrink-0">
+              <PropertiesPanel
+                bloque={bloqueSeleccionadoCompleto}
+                onUpdate={(contenido) =>
+                  handleActualizarBloque(bloqueSeleccionado, contenido)
+                }
+                onDuplicate={handleDuplicarBloque}
+                onDelete={handleEliminarBloque}
+                onClose={() => setMostrarPropiedades(false)}
+                isLoading={estaGuardando}
+              />
+            </aside>
+          )}
+        </div>
+      </DndEditorProvider>
 
       {/* Template Gallery Modal */}
       <TemplateGallery

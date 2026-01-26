@@ -3,19 +3,12 @@
  * EDITOR CANVAS
  * ====================================================================
  * Canvas WYSIWYG principal del editor de website.
- * Permite edición visual directa, drag-and-drop y responsive preview.
+ * Permite edicion visual directa, drag-and-drop y responsive preview.
+ * Soporta drops desde la paleta de bloques.
  */
 
 import { useCallback, useMemo, memo, useState } from 'react';
-import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  DragOverlay,
-} from '@dnd-kit/core';
+import { useDroppable } from '@dnd-kit/core';
 import {
   SortableContext,
   verticalListSortingStrategy,
@@ -29,11 +22,13 @@ import {
   Undo2,
   Redo2,
   Loader2,
+  Plus,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useWebsiteEditorStore, useTemporalStore } from '@/store';
 import { useEstadoGuardado } from '../hooks';
+import { useDndEditor } from './DndEditorProvider';
 
 // Canvas blocks
 import CanvasBlock from './canvas-blocks/CanvasBlock';
@@ -58,7 +53,7 @@ const ZOOM_LEVELS = [50, 75, 100, 125, 150, 200];
  * @param {Object} props.tema - Tema del sitio (colores, fuentes)
  * @param {Function} props.onReordenar - Callback para reordenar bloques
  * @param {Function} props.onActualizarBloque - Callback para actualizar bloque
- * @param {boolean} props.isLoading - Si está cargando
+ * @param {boolean} props.isLoading - Si esta cargando
  */
 function EditorCanvas({
   bloques = [],
@@ -101,95 +96,15 @@ function EditorCanvas({
   const canUndo = temporal?.pastStates?.length > 0;
   const canRedo = temporal?.futureStates?.length > 0;
 
-  // DnD sensors
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
-    }),
-    useSensor(KeyboardSensor)
-  );
+  // Contexto DnD compartido
+  const dndContext = useDndEditor();
+  const isDraggingFromPalette = dndContext?.isDraggingFromPalette || false;
+  const overInfo = dndContext?.overInfo;
 
-  // Active drag state
+  // Estado de drag interno para sortable
   const [activeDragId, setActiveDragId] = useState(null);
-  const [overId, setOverId] = useState(null);
-  const [dropPosition, setDropPosition] = useState(null); // 'before' | 'after'
 
   // ========== HANDLERS ==========
-
-  /**
-   * Manejar inicio de drag
-   */
-  const handleDragStart = useCallback((event) => {
-    setActiveDragId(event.active.id);
-    setOverId(null);
-    setDropPosition(null);
-  }, []);
-
-  /**
-   * Manejar drag over - calcular posición del indicator
-   */
-  const handleDragOver = useCallback((event) => {
-    const { over, active } = event;
-
-    if (!over || over.id === active.id) {
-      setOverId(null);
-      setDropPosition(null);
-      return;
-    }
-
-    setOverId(over.id);
-
-    // Calcular si el cursor está en la mitad superior o inferior del elemento
-    if (over.rect) {
-      const overRect = over.rect;
-      const activeRect = active.rect?.current?.translated;
-
-      if (activeRect) {
-        const activeCenterY = activeRect.top + activeRect.height / 2;
-        const overCenterY = overRect.top + overRect.height / 2;
-
-        setDropPosition(activeCenterY < overCenterY ? 'before' : 'after');
-      }
-    }
-  }, []);
-
-  /**
-   * Manejar cancelación de drag
-   */
-  const handleDragCancel = useCallback(() => {
-    setActiveDragId(null);
-    setOverId(null);
-    setDropPosition(null);
-  }, []);
-
-  /**
-   * Manejar fin de drag
-   */
-  const handleDragEnd = useCallback(
-    (event) => {
-      const { active, over } = event;
-      setActiveDragId(null);
-      setOverId(null);
-      setDropPosition(null);
-
-      if (active.id !== over?.id && over) {
-        const oldIndex = bloques.findIndex((b) => b.id === active.id);
-        const newIndex = bloques.findIndex((b) => b.id === over.id);
-
-        if (oldIndex !== -1 && newIndex !== -1) {
-          // Crear nuevo orden
-          const nuevoOrden = [...bloques];
-          const [removed] = nuevoOrden.splice(oldIndex, 1);
-          nuevoOrden.splice(newIndex, 0, removed);
-
-          onReordenar?.(nuevoOrden.map((b) => b.id));
-        }
-      }
-    },
-    [bloques, onReordenar]
-  );
 
   /**
    * Manejar click en canvas (deseleccionar)
@@ -205,7 +120,7 @@ function EditorCanvas({
   );
 
   /**
-   * Manejar selección de bloque
+   * Manejar seleccion de bloque
    */
   const handleBloqueClick = useCallback(
     (id) => {
@@ -225,7 +140,7 @@ function EditorCanvas({
   );
 
   /**
-   * Manejar actualización de contenido
+   * Manejar actualizacion de contenido
    */
   const handleContentChange = useCallback(
     (id, contenido) => {
@@ -298,7 +213,10 @@ function EditorCanvas({
             }}
           >
             <div
-              className="bg-white dark:bg-gray-800 shadow-xl rounded-lg overflow-hidden"
+              className={cn(
+                'bg-white dark:bg-gray-800 shadow-xl rounded-lg overflow-hidden',
+                isDraggingFromPalette && 'ring-2 ring-primary-500/50 ring-dashed'
+              )}
               style={{
                 width: canvasWidth,
                 ...temaStyles,
@@ -311,70 +229,40 @@ function EditorCanvas({
                 </div>
               )}
 
-              {/* Empty State */}
+              {/* Empty State - Droppable */}
               {!isLoading && bloques.length === 0 && (
-                <EmptyCanvasState />
+                <EmptyCanvasDropZone isDraggingFromPalette={isDraggingFromPalette} />
               )}
 
               {/* Blocks */}
               {!isLoading && bloques.length > 0 && (
-                <DndContext
-                  sensors={sensors}
-                  collisionDetection={closestCenter}
-                  onDragStart={handleDragStart}
-                  onDragOver={handleDragOver}
-                  onDragEnd={handleDragEnd}
-                  onDragCancel={handleDragCancel}
+                <SortableContext
+                  items={bloquesIds}
+                  strategy={verticalListSortingStrategy}
                 >
-                  <SortableContext
-                    items={bloquesIds}
-                    strategy={verticalListSortingStrategy}
-                  >
-                    <div className="relative">
-                      {bloques.map((bloque, index) => (
-                        <CanvasBlock
-                          key={bloque.id}
-                          bloque={bloque}
-                          tema={tema}
-                          isSelected={bloqueSeleccionado === bloque.id}
-                          isEditing={bloqueEditandoInline === bloque.id}
-                          onClick={() => handleBloqueClick(bloque.id)}
-                          onDoubleClick={() => handleBloqueDoubleClick(bloque.id)}
-                          onContentChange={(contenido) =>
-                            handleContentChange(bloque.id, contenido)
-                          }
-                          isDragOver={overId === bloque.id}
-                          dropPosition={overId === bloque.id ? dropPosition : null}
-                          isFirstBlock={index === 0}
-                          isLastBlock={index === bloques.length - 1}
-                        />
-                      ))}
-                    </div>
-                  </SortableContext>
-
-                  {/* Drag Overlay - Ghost del bloque */}
-                  <DragOverlay dropAnimation={{
-                    duration: 250,
-                    easing: 'cubic-bezier(0.18, 0.67, 0.6, 1.22)',
-                  }}>
-                    {activeBloque && (
-                      <motion.div
-                        initial={{ opacity: 0.8, scale: 1 }}
-                        animate={{ opacity: 0.85, scale: 1.02 }}
-                        className="shadow-2xl rounded-lg pointer-events-none ring-2 ring-primary-500/50"
-                        style={{ maxWidth: canvasWidth }}
-                      >
-                        <CanvasBlock
-                          bloque={activeBloque}
-                          tema={tema}
-                          isSelected={false}
-                          isEditing={false}
-                          isDragging
-                        />
-                      </motion.div>
-                    )}
-                  </DragOverlay>
-                </DndContext>
+                  <div className="relative">
+                    {bloques.map((bloque, index) => (
+                      <CanvasBlock
+                        key={bloque.id}
+                        bloque={bloque}
+                        tema={tema}
+                        isSelected={bloqueSeleccionado === bloque.id}
+                        isEditing={bloqueEditandoInline === bloque.id}
+                        onClick={() => handleBloqueClick(bloque.id)}
+                        onDoubleClick={() => handleBloqueDoubleClick(bloque.id)}
+                        onContentChange={(contenido) =>
+                          handleContentChange(bloque.id, contenido)
+                        }
+                        isDragOver={overInfo?.id === bloque.id && isDraggingFromPalette}
+                        dropPosition={overInfo?.id === bloque.id ? overInfo.position : null}
+                        isFirstBlock={index === 0}
+                        isLastBlock={index === bloques.length - 1}
+                      />
+                    ))}
+                    {/* Drop zone at end of blocks */}
+                    <EndDropZone isDraggingFromPalette={isDraggingFromPalette} />
+                  </div>
+                </SortableContext>
               )}
             </div>
           </motion.div>
@@ -522,20 +410,81 @@ const CanvasToolbar = memo(function CanvasToolbar({
   );
 });
 
-// ========== EMPTY STATE ==========
+// ========== EMPTY STATE WITH DROP ZONE ==========
 
-function EmptyCanvasState() {
+// ========== END DROP ZONE ==========
+
+/**
+ * Zona de drop al final de los bloques
+ */
+function EndDropZone({ isDraggingFromPalette }) {
+  const { setNodeRef, isOver } = useDroppable({
+    id: 'end-of-canvas',
+  });
+
+  if (!isDraggingFromPalette) return null;
+
   return (
-    <div className="flex flex-col items-center justify-center py-20 px-6 text-center">
-      <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mb-4">
-        <Monitor className="w-8 h-8 text-gray-400" />
-      </div>
+    <div
+      ref={setNodeRef}
+      className={cn(
+        'h-24 border-2 border-dashed rounded-lg transition-all flex items-center justify-center',
+        isOver
+          ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
+          : 'border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800/50'
+      )}
+    >
+      <p className={cn(
+        'text-sm',
+        isOver ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400'
+      )}>
+        {isOver ? 'Soltar aqui' : 'Arrastra aqui para agregar al final'}
+      </p>
+    </div>
+  );
+}
+
+// ========== EMPTY STATE WITH DROP ZONE ==========
+
+function EmptyCanvasDropZone({ isDraggingFromPalette }) {
+  const { setNodeRef, isOver } = useDroppable({
+    id: 'empty-canvas',
+  });
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={cn(
+        'flex flex-col items-center justify-center py-20 px-6 text-center transition-all',
+        isDraggingFromPalette && 'bg-primary-50/50 dark:bg-primary-900/20',
+        isOver && 'bg-primary-100 dark:bg-primary-900/40 scale-[1.02]'
+      )}
+    >
+      <motion.div
+        animate={{
+          scale: isDraggingFromPalette ? 1.1 : 1,
+          borderColor: isOver ? 'rgb(117, 53, 114)' : 'rgb(209, 213, 219)',
+        }}
+        className={cn(
+          'w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mb-4',
+          'border-2 border-dashed',
+          isDraggingFromPalette && 'border-primary-400 bg-primary-100 dark:bg-primary-900/30'
+        )}
+      >
+        {isDraggingFromPalette ? (
+          <Plus className="w-8 h-8 text-primary-600 dark:text-primary-400" />
+        ) : (
+          <Monitor className="w-8 h-8 text-gray-400" />
+        )}
+      </motion.div>
+
       <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-        Página vacía
+        {isDraggingFromPalette ? 'Suelta aqui' : 'Pagina vacia'}
       </h3>
       <p className="text-gray-500 dark:text-gray-400 max-w-sm">
-        Arrastra bloques desde el panel izquierdo o usa el botón + para
-        comenzar a diseñar tu página.
+        {isDraggingFromPalette
+          ? 'Suelta el bloque para agregarlo a la pagina'
+          : 'Arrastra bloques desde el panel izquierdo o usa el boton + para comenzar a disenar tu pagina.'}
       </p>
     </div>
   );

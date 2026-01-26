@@ -189,6 +189,35 @@ const useWebsiteEditorStore = create(
             };
           }),
 
+        /**
+         * Inserta un bloque en una posición específica (para drag desde paleta)
+         * @param {Object} bloque - Bloque a insertar
+         * @param {number} indice - Índice donde insertar (si no se especifica, al final)
+         */
+        insertarBloqueEnPosicion: (bloque, indice = null) =>
+          set((state) => {
+            const posicion = indice !== null ? indice : state.bloques.length;
+
+            // Reajustar órdenes de bloques existentes
+            const bloquesActualizados = state.bloques.map((b) =>
+              b.orden >= posicion ? { ...b, orden: b.orden + 1 } : b
+            );
+
+            const nuevoBloque = {
+              ...bloque,
+              orden: posicion,
+            };
+
+            return {
+              bloques: [...bloquesActualizados, nuevoBloque].sort(
+                (a, b) => a.orden - b.orden
+              ),
+              bloqueSeleccionado: bloque.id,
+              tieneClambiosLocales: true,
+              estadoGuardado: 'unsaved',
+            };
+          }),
+
         // ========== SELECCIÓN ACTIONS ==========
 
         /**
@@ -353,6 +382,7 @@ export const selectReordenarBloquesLocal = (state) => state.reordenarBloquesLoca
 export const selectAgregarBloqueLocal = (state) => state.agregarBloqueLocal;
 export const selectEliminarBloqueLocal = (state) => state.eliminarBloqueLocal;
 export const selectDuplicarBloqueLocal = (state) => state.duplicarBloqueLocal;
+export const selectInsertarBloqueEnPosicion = (state) => state.insertarBloqueEnPosicion;
 
 export const selectSeleccionarBloque = (state) => state.seleccionarBloque;
 export const selectDeseleccionarBloque = (state) => state.deseleccionarBloque;

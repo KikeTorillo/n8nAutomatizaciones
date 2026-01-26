@@ -476,27 +476,96 @@ CREATE POLICY webhooks_insert_own ON webhooks_suscripcion
 -- ============================================================================
 -- 8. ÍNDICES ÚNICOS PARA PREVENCIÓN DE DUPLICADOS
 -- ============================================================================
--- Prevenir que un cliente tenga múltiples suscripciones activas al mismo plan.
--- Solo permite 1 suscripción activa/trial/pendiente_pago/pausada por cliente+plan.
+-- Prevenir que un cliente tenga múltiples suscripciones activas.
+-- Solo permite 1 suscripción activa por cliente (sin importar el plan).
+-- Excluye 'pendiente_pago' para permitir checkout mientras hay trial activo.
 -- ----------------------------------------------------------------------------
 
 -- Para clientes internos (con cliente_id)
-CREATE UNIQUE INDEX IF NOT EXISTS idx_suscripciones_cliente_plan_activa
-    ON suscripciones_org (organizacion_id, cliente_id, plan_id)
+-- NOTA: Excluye pendiente_pago para permitir checkout de upgrade mientras hay trial
+CREATE UNIQUE INDEX IF NOT EXISTS idx_suscripciones_cliente_unica_activa
+    ON suscripciones_org (cliente_id)
     WHERE cliente_id IS NOT NULL
-      AND estado IN ('activa', 'trial', 'pendiente_pago', 'pausada');
+      AND estado IN ('activa', 'trial', 'pausada', 'grace_period');
 
 -- Para suscriptores externos (sin cliente_id, usa email del JSONB)
-CREATE UNIQUE INDEX IF NOT EXISTS idx_suscripciones_externo_plan_activa
-    ON suscripciones_org (organizacion_id, plan_id, (suscriptor_externo->>'email'))
+CREATE UNIQUE INDEX IF NOT EXISTS idx_suscripciones_externo_unica_activa
+    ON suscripciones_org ((suscriptor_externo->>'email'))
     WHERE cliente_id IS NULL
       AND suscriptor_externo->>'email' IS NOT NULL
-      AND estado IN ('activa', 'trial', 'pendiente_pago', 'pausada');
+      AND estado IN ('activa', 'trial', 'pausada', 'grace_period');
+
+-- ============================================================================
+-- 9. TRIGGER: CANCELAR SUSCRIPCIONES ANTERIORES AL ACTIVAR
+-- ============================================================================
+-- Cuando una suscripción cambia a estado 'activa', cancela automáticamente
+-- cualquier otra suscripción del mismo cliente (trial, pausada, etc.)
+-- ----------------------------------------------------------------------------
+
+CREATE OR REPLACE FUNCTION fn_cancelar_suscripciones_anteriores()
+RETURNS TRIGGER AS $$
+DECLARE
+    v_canceladas INTEGER;
+BEGIN
+    -- Solo actuar cuando el estado cambia a 'activa'
+    IF NEW.estado = 'activa' AND (OLD.estado IS NULL OR OLD.estado != 'activa') THEN
+        -- Cancelar suscripciones anteriores del mismo cliente
+        IF NEW.cliente_id IS NOT NULL THEN
+            UPDATE suscripciones_org
+            SET estado = 'cancelada',
+                fecha_fin = CURRENT_DATE,
+                razon_cancelacion = 'Cancelada automáticamente por upgrade a plan ' ||
+                    COALESCE((SELECT nombre FROM planes_suscripcion_org WHERE id = NEW.plan_id), 'nuevo'),
+                actualizado_en = NOW()
+            WHERE cliente_id = NEW.cliente_id
+              AND id != NEW.id
+              AND estado IN ('trial', 'activa', 'pausada', 'grace_period', 'pendiente_pago');
+
+            GET DIAGNOSTICS v_canceladas = ROW_COUNT;
+
+            IF v_canceladas > 0 THEN
+                RAISE NOTICE 'Suscripciones anteriores canceladas: % para cliente_id=%', v_canceladas, NEW.cliente_id;
+            END IF;
+        -- Para suscriptores externos, usar email
+        ELSIF NEW.suscriptor_externo->>'email' IS NOT NULL THEN
+            UPDATE suscripciones_org
+            SET estado = 'cancelada',
+                fecha_fin = CURRENT_DATE,
+                razon_cancelacion = 'Cancelada automáticamente por upgrade',
+                actualizado_en = NOW()
+            WHERE suscriptor_externo->>'email' = NEW.suscriptor_externo->>'email'
+              AND id != NEW.id
+              AND estado IN ('trial', 'activa', 'pausada', 'grace_period', 'pendiente_pago');
+        END IF;
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger AFTER UPDATE para no interferir con la transacción principal
+DROP TRIGGER IF EXISTS trg_cancelar_suscripciones_anteriores ON suscripciones_org;
+CREATE TRIGGER trg_cancelar_suscripciones_anteriores
+    AFTER UPDATE ON suscripciones_org
+    FOR EACH ROW
+    EXECUTE FUNCTION fn_cancelar_suscripciones_anteriores();
+
+-- También ejecutar en INSERT si se crea directamente como 'activa'
+DROP TRIGGER IF EXISTS trg_cancelar_suscripciones_anteriores_insert ON suscripciones_org;
+CREATE TRIGGER trg_cancelar_suscripciones_anteriores_insert
+    AFTER INSERT ON suscripciones_org
+    FOR EACH ROW
+    WHEN (NEW.estado = 'activa')
+    EXECUTE FUNCTION fn_cancelar_suscripciones_anteriores();
+
+COMMENT ON FUNCTION fn_cancelar_suscripciones_anteriores IS
+'Cancela automáticamente suscripciones anteriores cuando una nueva se activa. Evita duplicados.';
 
 -- ============================================================================
 -- MIGRACIÓN COMPLETADA
 -- ============================================================================
 -- Tablas creadas: 5
--- Índices creados: 20 (incluyendo índices únicos de duplicados)
+-- Índices creados: 19 (incluyendo índices únicos de duplicados)
 -- Políticas RLS: 15
+-- Triggers: 2 (cancelación automática de suscripciones duplicadas)
 -- ============================================================================

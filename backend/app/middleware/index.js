@@ -74,6 +74,7 @@ module.exports = {
     apiRateLimit: rateLimiting.apiRateLimit,
     heavyOperationRateLimit: rateLimiting.heavyOperationRateLimit,
     planBasedRateLimit: rateLimiting.planBasedRateLimit,
+    trackingRateLimit: rateLimiting.trackingRateLimit,
     createRateLimit: rateLimiting.createRateLimit,
     clearRateLimit: rateLimiting.clearRateLimit
   },

@@ -8,6 +8,8 @@ const { ResponseHelper } = require('../../../utils/helpers');
 const { asyncHandler } = require('../../../middleware');
 const RLSContextManager = require('../../../utils/rlsContextManager');
 const NotificacionesService = require('../../notificaciones/services/notificaciones.service');
+const websiteCacheService = require('../services/websiteCache.service');
+const WebsitePreviewService = require('../services/preview.service');
 
 /**
  * ====================================================================
@@ -40,6 +42,17 @@ class WebsitePublicController {
     static obtenerSitio = asyncHandler(async (req, res) => {
         const { slug } = req.params;
 
+        // 1. Intentar obtener del caché
+        const cached = await websiteCacheService.getSitio(slug);
+        if (cached.found) {
+            return ResponseHelper.success(
+                res,
+                cached.valor,
+                'Sitio obtenido exitosamente'
+            );
+        }
+
+        // 2. No está en caché, consultar BD
         const config = await WebsiteConfigModel.obtenerPorSlug(slug);
 
         if (!config) {
@@ -53,37 +66,45 @@ class WebsitePublicController {
         // Obtener página de inicio (primera página por orden)
         const paginaInicio = await WebsitePaginasModel.obtenerPaginaInicio(slug);
 
+        // 3. Construir respuesta
+        const respuesta = {
+            config: {
+                id: config.id,
+                slug: config.slug,
+                nombre_sitio: config.nombre_sitio,
+                nombre_organizacion: config.nombre_organizacion,
+                descripcion_seo: config.descripcion_seo,
+                keywords_seo: config.keywords_seo,
+                favicon_url: config.favicon_url,
+                logo_url: config.logo_url || config.organizacion_logo,
+                logo_alt: config.logo_alt,
+                // Tema
+                color_primario: config.color_primario,
+                color_secundario: config.color_secundario,
+                color_acento: config.color_acento,
+                color_texto: config.color_texto,
+                color_fondo: config.color_fondo,
+                fuente_titulos: config.fuente_titulos,
+                fuente_cuerpo: config.fuente_cuerpo,
+                // Redes sociales
+                redes_sociales: config.redes_sociales
+            },
+            menu: config.paginas_menu || [],
+            pagina_inicio: paginaInicio ? {
+                id: paginaInicio.id,
+                titulo: paginaInicio.titulo,
+                bloques: paginaInicio.bloques || []
+            } : null
+        };
+
+        // 4. Guardar en caché (async, no bloqueante)
+        websiteCacheService.setSitio(slug, respuesta).catch(err => {
+            console.warn('[WebsitePublicController] Error guardando en caché:', err.message);
+        });
+
         return ResponseHelper.success(
             res,
-            {
-                config: {
-                    id: config.id,
-                    slug: config.slug,
-                    nombre_sitio: config.nombre_sitio,
-                    nombre_organizacion: config.nombre_organizacion,
-                    descripcion_seo: config.descripcion_seo,
-                    keywords_seo: config.keywords_seo,
-                    favicon_url: config.favicon_url,
-                    logo_url: config.logo_url || config.organizacion_logo,
-                    logo_alt: config.logo_alt,
-                    // Tema
-                    color_primario: config.color_primario,
-                    color_secundario: config.color_secundario,
-                    color_acento: config.color_acento,
-                    color_texto: config.color_texto,
-                    color_fondo: config.color_fondo,
-                    fuente_titulos: config.fuente_titulos,
-                    fuente_cuerpo: config.fuente_cuerpo,
-                    // Redes sociales
-                    redes_sociales: config.redes_sociales
-                },
-                menu: config.paginas_menu || [],
-                pagina_inicio: paginaInicio ? {
-                    id: paginaInicio.id,
-                    titulo: paginaInicio.titulo,
-                    bloques: paginaInicio.bloques || []
-                } : null
-            },
+            respuesta,
             'Sitio obtenido exitosamente'
         );
     });
@@ -98,6 +119,17 @@ class WebsitePublicController {
     static obtenerPagina = asyncHandler(async (req, res) => {
         const { slug, pagina } = req.params;
 
+        // 1. Intentar obtener del caché
+        const cached = await websiteCacheService.getPagina(slug, pagina);
+        if (cached.found) {
+            return ResponseHelper.success(
+                res,
+                cached.valor,
+                'Página obtenida exitosamente'
+            );
+        }
+
+        // 2. No está en caché, consultar BD
         const paginaData = await WebsitePaginasModel.obtenerPorSlug(slug, pagina);
 
         if (!paginaData) {
@@ -108,28 +140,36 @@ class WebsitePublicController {
             );
         }
 
+        // 3. Construir respuesta
+        const respuesta = {
+            pagina: {
+                id: paginaData.id,
+                slug: paginaData.slug,
+                titulo: paginaData.titulo,
+                descripcion_seo: paginaData.descripcion_seo,
+                bloques: paginaData.bloques || []
+            },
+            tema: {
+                color_primario: paginaData.color_primario,
+                color_secundario: paginaData.color_secundario,
+                color_acento: paginaData.color_acento,
+                color_texto: paginaData.color_texto,
+                color_fondo: paginaData.color_fondo,
+                fuente_titulos: paginaData.fuente_titulos,
+                fuente_cuerpo: paginaData.fuente_cuerpo,
+                logo_url: paginaData.logo_url,
+                redes_sociales: paginaData.redes_sociales
+            }
+        };
+
+        // 4. Guardar en caché (async, no bloqueante)
+        websiteCacheService.setPagina(slug, pagina, respuesta).catch(err => {
+            console.warn('[WebsitePublicController] Error guardando página en caché:', err.message);
+        });
+
         return ResponseHelper.success(
             res,
-            {
-                pagina: {
-                    id: paginaData.id,
-                    slug: paginaData.slug,
-                    titulo: paginaData.titulo,
-                    descripcion_seo: paginaData.descripcion_seo,
-                    bloques: paginaData.bloques || []
-                },
-                tema: {
-                    color_primario: paginaData.color_primario,
-                    color_secundario: paginaData.color_secundario,
-                    color_acento: paginaData.color_acento,
-                    color_texto: paginaData.color_texto,
-                    color_fondo: paginaData.color_fondo,
-                    fuente_titulos: paginaData.fuente_titulos,
-                    fuente_cuerpo: paginaData.fuente_cuerpo,
-                    logo_url: paginaData.logo_url,
-                    redes_sociales: paginaData.redes_sociales
-                }
-            },
+            respuesta,
             'Página obtenida exitosamente'
         );
     });
@@ -270,6 +310,45 @@ class WebsitePublicController {
             res,
             { servicios },
             'Servicios obtenidos exitosamente'
+        );
+    });
+
+    /**
+     * Obtener sitio via token de preview
+     * GET /api/v1/public/preview/:token
+     *
+     * @public Sin autenticación, requiere token válido
+     * @returns Sitio completo (incluso si no está publicado)
+     */
+    static obtenerPreview = asyncHandler(async (req, res) => {
+        const { token } = req.params;
+
+        // Validar token
+        const websiteId = await WebsitePreviewService.validarToken(token);
+
+        if (!websiteId) {
+            return ResponseHelper.error(
+                res,
+                'Token de preview inválido o expirado',
+                404
+            );
+        }
+
+        // Obtener sitio completo
+        const sitio = await WebsitePreviewService.obtenerSitioParaPreview(websiteId);
+
+        if (!sitio) {
+            return ResponseHelper.error(
+                res,
+                'Sitio no encontrado',
+                404
+            );
+        }
+
+        return ResponseHelper.success(
+            res,
+            sitio,
+            'Preview obtenido exitosamente'
         );
     });
 }

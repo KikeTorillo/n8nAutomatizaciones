@@ -92,6 +92,18 @@ class PollingSuscripcionesJob {
                         // Pasamos los datos de la suscripción para evitar query adicional
                         await SuscripcionesModel.procesarCobroExitosoBypass(sus.id, sus);
 
+                        // Cancelar suscripciones anteriores (trial, otras activas) para evitar duplicados
+                        if (sus.cliente_id) {
+                            const canceladas = await SuscripcionesModel.cancelarSuscripcionesAnterioresBypass(
+                                sus.cliente_id,
+                                sus.id,
+                                `Upgrade a plan ${sus.plan_nombre || 'nuevo'}`
+                            );
+                            if (canceladas.length > 0) {
+                                logger.info(`[Polling] Suscripciones anteriores canceladas: ${canceladas.join(', ')}`);
+                            }
+                        }
+
                         resumen.activadas++;
                         logger.info(`[Polling] ✅ Suscripción ${sus.id} activada (MP status: authorized)`);
 

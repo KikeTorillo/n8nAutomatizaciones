@@ -22,17 +22,29 @@ const logger = require('../../../utils/logger');
  * • galeria - Galería de imágenes
  * • video - Video embebido
  * • separador - Separador visual
+ * • pricing - Tablas de precios comparativas
+ * • faq - Accordion de preguntas frecuentes
+ * • countdown - Contador regresivo
+ * • stats - Números/estadísticas animadas
+ * • timeline - Línea de tiempo
  *
  * Fecha creación: 6 Diciembre 2025
  */
 class WebsiteBloquesModel {
 
     /**
+     * Máximo de bloques permitidos por página
+     * Límite para evitar degradación de performance en el canvas
+     */
+    static MAX_BLOQUES_POR_PAGINA = 50;
+
+    /**
      * Tipos de bloques válidos
      */
     static TIPOS_VALIDOS = [
         'hero', 'servicios', 'testimonios', 'equipo', 'cta',
-        'contacto', 'footer', 'texto', 'galeria', 'video', 'separador'
+        'contacto', 'footer', 'texto', 'galeria', 'video', 'separador',
+        'pricing', 'faq', 'countdown', 'stats', 'timeline'
     ];
 
     /**
@@ -41,9 +53,24 @@ class WebsiteBloquesModel {
      * @param {Object} datos - Datos del bloque
      * @param {number} organizacionId - ID de la organización
      * @returns {Object} Bloque creado
+     * @throws {Error} Si se excede el límite de bloques por página
      */
     static async crear(datos, organizacionId) {
         return await RLSContextManager.query(organizacionId, async (db) => {
+            // Verificar límite de bloques por página
+            const countResult = await db.query(
+                'SELECT COUNT(*) as total FROM website_bloques WHERE pagina_id = $1',
+                [datos.pagina_id]
+            );
+            const totalBloques = parseInt(countResult.rows[0].total, 10);
+
+            if (totalBloques >= this.MAX_BLOQUES_POR_PAGINA) {
+                ErrorHelper.throwValidation(
+                    `Se ha alcanzado el límite máximo de ${this.MAX_BLOQUES_POR_PAGINA} bloques por página. ` +
+                    'Elimina algunos bloques antes de agregar más.'
+                );
+            }
+
             // Obtener el orden máximo actual
             const ordenResult = await db.query(
                 'SELECT COALESCE(MAX(orden), -1) + 1 as next_orden FROM website_bloques WHERE pagina_id = $1',
@@ -418,6 +445,153 @@ class WebsiteBloquesModel {
                 tipo: 'linea',
                 altura: 50,
                 color: '#E5E7EB'
+            },
+            pricing: {
+                titulo_seccion: 'Nuestros Planes',
+                subtitulo_seccion: 'Elige el plan perfecto para ti',
+                columnas: 3,
+                mostrar_popular: true,
+                planes: [
+                    {
+                        nombre: 'Básico',
+                        precio: 29,
+                        periodo: 'mes',
+                        descripcion: 'Ideal para empezar',
+                        caracteristicas: ['Característica 1', 'Característica 2', 'Característica 3'],
+                        es_popular: false,
+                        boton_texto: 'Comenzar',
+                        boton_url: '#contacto'
+                    },
+                    {
+                        nombre: 'Profesional',
+                        precio: 59,
+                        periodo: 'mes',
+                        descripcion: 'Para negocios en crecimiento',
+                        caracteristicas: ['Todo del Básico', 'Característica 4', 'Característica 5', 'Característica 6'],
+                        es_popular: true,
+                        boton_texto: 'Comenzar',
+                        boton_url: '#contacto'
+                    },
+                    {
+                        nombre: 'Empresarial',
+                        precio: 99,
+                        periodo: 'mes',
+                        descripcion: 'Para grandes equipos',
+                        caracteristicas: ['Todo del Profesional', 'Característica 7', 'Característica 8', 'Soporte prioritario'],
+                        es_popular: false,
+                        boton_texto: 'Contactar',
+                        boton_url: '#contacto'
+                    }
+                ],
+                moneda: 'USD',
+                mostrar_toggle_anual: false,
+                descuento_anual: 20
+            },
+            faq: {
+                titulo_seccion: 'Preguntas Frecuentes',
+                subtitulo_seccion: 'Encuentra respuestas a las preguntas más comunes',
+                layout: 'accordion',
+                permitir_multiple: false,
+                items: [
+                    {
+                        pregunta: '¿Cómo puedo agendar una cita?',
+                        respuesta: 'Puedes agendar una cita fácilmente a través de nuestro formulario de contacto o llamando a nuestro número de teléfono.'
+                    },
+                    {
+                        pregunta: '¿Cuáles son los métodos de pago aceptados?',
+                        respuesta: 'Aceptamos efectivo, tarjetas de crédito/débito y transferencias bancarias.'
+                    },
+                    {
+                        pregunta: '¿Tienen política de cancelación?',
+                        respuesta: 'Sí, puedes cancelar tu cita con al menos 24 horas de anticipación sin ningún cargo.'
+                    }
+                ]
+            },
+            countdown: {
+                titulo: 'Gran Inauguración',
+                subtitulo: 'No te pierdas este evento especial',
+                fecha_objetivo: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+                mostrar_dias: true,
+                mostrar_horas: true,
+                mostrar_minutos: true,
+                mostrar_segundos: true,
+                texto_finalizado: '¡El evento ha comenzado!',
+                accion_finalizado: 'ocultar',
+                fondo_tipo: 'color',
+                fondo_valor: '#1F2937',
+                color_texto: '#FFFFFF',
+                boton_texto: '',
+                boton_url: ''
+            },
+            stats: {
+                titulo_seccion: 'Nuestros Números',
+                subtitulo_seccion: 'Lo que hemos logrado',
+                columnas: 4,
+                animar: true,
+                duracion_animacion: 2000,
+                items: [
+                    {
+                        numero: 500,
+                        sufijo: '+',
+                        prefijo: '',
+                        titulo: 'Clientes Satisfechos',
+                        icono: 'users'
+                    },
+                    {
+                        numero: 10,
+                        sufijo: '',
+                        prefijo: '',
+                        titulo: 'Años de Experiencia',
+                        icono: 'calendar'
+                    },
+                    {
+                        numero: 1000,
+                        sufijo: '+',
+                        prefijo: '',
+                        titulo: 'Proyectos Completados',
+                        icono: 'briefcase'
+                    },
+                    {
+                        numero: 98,
+                        sufijo: '%',
+                        prefijo: '',
+                        titulo: 'Satisfacción',
+                        icono: 'star'
+                    }
+                ]
+            },
+            timeline: {
+                titulo_seccion: 'Nuestra Historia',
+                subtitulo_seccion: 'Un recorrido por nuestros logros',
+                layout: 'alternado',
+                mostrar_linea: true,
+                color_linea: '#3B82F6',
+                items: [
+                    {
+                        fecha: '2020',
+                        titulo: 'Fundación',
+                        descripcion: 'Comenzamos nuestra aventura con una visión clara.',
+                        icono: 'rocket'
+                    },
+                    {
+                        fecha: '2021',
+                        titulo: 'Primer Hito',
+                        descripcion: 'Alcanzamos nuestros primeros 100 clientes.',
+                        icono: 'flag'
+                    },
+                    {
+                        fecha: '2022',
+                        titulo: 'Expansión',
+                        descripcion: 'Abrimos nuestra segunda ubicación.',
+                        icono: 'map-pin'
+                    },
+                    {
+                        fecha: '2023',
+                        titulo: 'Reconocimiento',
+                        descripcion: 'Recibimos el premio a la excelencia en servicio.',
+                        icono: 'award'
+                    }
+                ]
             }
         };
 

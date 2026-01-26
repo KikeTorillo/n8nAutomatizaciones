@@ -17,9 +17,11 @@ import { aFormatoISO } from '@/utils/dateHelpers';
  * Hook para obtener estadísticas de la organización
  * Incluye: uso del plan, métricas de citas, profesionales, servicios
  *
+ * @param {Object} options - Opciones del hook
+ * @param {boolean} options.enabled - Si debe ejecutar la query (default: true)
  * @returns {Object} { data, isLoading, error }
  */
-export function useEstadisticasOrganizacion() {
+export function useEstadisticasOrganizacion({ enabled = true } = {}) {
   const user = useAuthStore(selectUser);
 
   return useQuery({
@@ -28,7 +30,8 @@ export function useEstadisticasOrganizacion() {
       const response = await organizacionesApi.obtenerEstadisticas(user.organizacion_id);
       return response.data.data;
     },
-    enabled: !!user?.organizacion_id,
+    // FIX RBAC Ene 2026: Respetar parámetro enabled para evitar peticiones sin permisos
+    enabled: enabled && !!user?.organizacion_id,
     staleTime: STALE_TIMES.FREQUENT, // 1 minuto de cache
   });
 }
