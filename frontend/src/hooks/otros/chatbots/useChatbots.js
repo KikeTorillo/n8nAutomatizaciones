@@ -59,7 +59,7 @@ export function useConfigurarTelegram() {
     },
     onSuccess: () => {
       // Invalidar lista de chatbots
-      queryClient.invalidateQueries({ queryKey: ['chatbots'] });
+      queryClient.invalidateQueries({ queryKey: ['chatbots'], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('create', 'Chatbot', {
       409: 'Ya existe un chatbot configurado para esta plataforma',
@@ -95,7 +95,7 @@ export function useConfigurarWhatsApp() {
     },
     onSuccess: () => {
       // Invalidar lista de chatbots
-      queryClient.invalidateQueries({ queryKey: ['chatbots'] });
+      queryClient.invalidateQueries({ queryKey: ['chatbots'], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('create', 'Chatbot', {
       409: 'Ya existe un chatbot configurado para esta plataforma',
@@ -116,8 +116,8 @@ export function useActualizarChatbot() {
     },
     onSuccess: (data) => {
       // Invalidar cache del chatbot específico y la lista
-      queryClient.invalidateQueries({ queryKey: ['chatbot', data.id] });
-      queryClient.invalidateQueries({ queryKey: ['chatbots'] });
+      queryClient.invalidateQueries({ queryKey: ['chatbot', data.id], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['chatbots'], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('update', 'Chatbot'),
   });
@@ -135,7 +135,7 @@ export function useEliminarChatbot() {
       return id;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['chatbots'] });
+      queryClient.invalidateQueries({ queryKey: ['chatbots'], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('delete', 'Chatbot'),
   });
@@ -153,8 +153,8 @@ export function useCambiarEstadoChatbot() {
       return response.data.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['chatbot', data.id] });
-      queryClient.invalidateQueries({ queryKey: ['chatbots'] });
+      queryClient.invalidateQueries({ queryKey: ['chatbot', data.id], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['chatbots'], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('update', 'Chatbot'),
   });

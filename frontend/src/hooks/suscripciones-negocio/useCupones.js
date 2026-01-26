@@ -113,8 +113,8 @@ export function useDesactivarCupon() {
       return response.data?.data;
     },
     onSuccess: (_, id) => {
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.CUPONES] });
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.CUPON, id] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.CUPONES], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.CUPON, id], refetchType: 'active' });
       success('Cupón desactivado');
     },
   });

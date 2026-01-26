@@ -85,7 +85,7 @@ export function useSubirDocumento() {
       return response.data?.data || response.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: documentosKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: documentosKeys.lists(), refetchType: 'active' });
       toast.success('Documento subido exitosamente');
     },
     onError: (error) => {
@@ -111,7 +111,7 @@ export function useActualizarDocumento() {
       return response.data?.data || response.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: documentosKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: documentosKeys.lists(), refetchType: 'active' });
       queryClient.invalidateQueries({
         queryKey: documentosKeys.detail(variables.profesionalId, variables.documentoId)
       });
@@ -140,7 +140,7 @@ export function useEliminarDocumento() {
       return response.data?.data || response.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: documentosKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: documentosKeys.lists(), refetchType: 'active' });
       toast.success('Documento eliminado');
     },
     onError: (error) => {
@@ -169,7 +169,7 @@ export function useVerificarDocumento() {
       return response.data?.data || response.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: documentosKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: documentosKeys.lists(), refetchType: 'active' });
       queryClient.invalidateQueries({
         queryKey: documentosKeys.detail(variables.profesionalId, variables.documentoId)
       });
@@ -220,7 +220,7 @@ export function useReemplazarArchivo() {
       return response.data?.data || response.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: documentosKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: documentosKeys.lists(), refetchType: 'active' });
       queryClient.invalidateQueries({
         queryKey: documentosKeys.detail(variables.profesionalId, variables.documentoId)
       });

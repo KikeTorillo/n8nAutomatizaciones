@@ -135,8 +135,8 @@ export function useCrearDocumento() {
       return response.data.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['cliente-documentos', variables.clienteId] });
-      queryClient.invalidateQueries({ queryKey: ['cliente-documentos-conteo', variables.clienteId] });
+      queryClient.invalidateQueries({ queryKey: ['cliente-documentos', variables.clienteId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['cliente-documentos-conteo', variables.clienteId], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('create', 'Documento'),
   });
@@ -154,8 +154,8 @@ export function useActualizarDocumento() {
       return response.data.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['cliente-documento', variables.clienteId, variables.documentoId] });
-      queryClient.invalidateQueries({ queryKey: ['cliente-documentos', variables.clienteId] });
+      queryClient.invalidateQueries({ queryKey: ['cliente-documento', variables.clienteId, variables.documentoId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['cliente-documentos', variables.clienteId], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('update', 'Documento'),
   });
@@ -173,8 +173,8 @@ export function useEliminarDocumento() {
       return { clienteId, documentoId };
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['cliente-documentos', variables.clienteId] });
-      queryClient.invalidateQueries({ queryKey: ['cliente-documentos-conteo', variables.clienteId] });
+      queryClient.invalidateQueries({ queryKey: ['cliente-documentos', variables.clienteId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['cliente-documentos-conteo', variables.clienteId], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('delete', 'Documento'),
   });
@@ -192,9 +192,9 @@ export function useVerificarDocumento() {
       return response.data.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['cliente-documento', variables.clienteId, variables.documentoId] });
-      queryClient.invalidateQueries({ queryKey: ['cliente-documentos', variables.clienteId] });
-      queryClient.invalidateQueries({ queryKey: ['cliente-documentos-conteo', variables.clienteId] });
+      queryClient.invalidateQueries({ queryKey: ['cliente-documento', variables.clienteId, variables.documentoId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['cliente-documentos', variables.clienteId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['cliente-documentos-conteo', variables.clienteId], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('update', 'Documento'),
   });
@@ -215,8 +215,8 @@ export function useSubirArchivoDocumento() {
       return response.data.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['cliente-documento', variables.clienteId, variables.documentoId] });
-      queryClient.invalidateQueries({ queryKey: ['cliente-documentos', variables.clienteId] });
+      queryClient.invalidateQueries({ queryKey: ['cliente-documento', variables.clienteId, variables.documentoId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['cliente-documentos', variables.clienteId], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('update', 'Archivo'),
   });

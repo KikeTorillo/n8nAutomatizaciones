@@ -26,7 +26,7 @@ export function useCrearCitaRecurrente() {
       return response.data?.data || response.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['citas'] });
+      queryClient.invalidateQueries({ queryKey: ['citas'], refetchType: 'active' });
       success(`Serie creada: ${data.citas_creadas?.length || 0} citas`);
     },
     onError: (error) => {
@@ -69,7 +69,7 @@ export function useCancelarSerie() {
       return response.data?.data || response.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['citas'] });
+      queryClient.invalidateQueries({ queryKey: ['citas'], refetchType: 'active' });
       success(`${data.citas_canceladas || 0} citas canceladas`);
     },
     onError: (error) => {

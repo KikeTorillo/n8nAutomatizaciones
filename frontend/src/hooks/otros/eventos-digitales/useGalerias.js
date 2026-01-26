@@ -50,7 +50,7 @@ export function useCrearRegalo() {
       return response.data.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['mesa-regalos-evento', variables.eventoId] });
+      queryClient.invalidateQueries({ queryKey: ['mesa-regalos-evento', variables.eventoId], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('create', 'Regalo'),
   });
@@ -74,7 +74,7 @@ export function useActualizarRegalo() {
       return { ...response.data.data, eventoId };
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['mesa-regalos-evento', data.eventoId] });
+      queryClient.invalidateQueries({ queryKey: ['mesa-regalos-evento', data.eventoId], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('update', 'Regalo'),
   });
@@ -92,7 +92,7 @@ export function useMarcarRegaloComprado() {
       return { ...response.data.data, eventoId };
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['mesa-regalos-evento', data.eventoId] });
+      queryClient.invalidateQueries({ queryKey: ['mesa-regalos-evento', data.eventoId], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('update', 'Regalo'),
   });
@@ -110,7 +110,7 @@ export function useEliminarRegalo() {
       return { ...response.data, eventoId };
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['mesa-regalos-evento', data.eventoId] });
+      queryClient.invalidateQueries({ queryKey: ['mesa-regalos-evento', data.eventoId], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('delete', 'Regalo'),
   });
@@ -158,7 +158,7 @@ export function useCrearFelicitacion() {
       return response.data.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['felicitaciones-evento', variables.eventoId] });
+      queryClient.invalidateQueries({ queryKey: ['felicitaciones-evento', variables.eventoId], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('create', 'Felicitacion'),
   });
@@ -176,7 +176,7 @@ export function useAprobarFelicitacion() {
       return { ...response.data.data, eventoId };
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['felicitaciones-evento', data.eventoId] });
+      queryClient.invalidateQueries({ queryKey: ['felicitaciones-evento', data.eventoId], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('update', 'Felicitacion'),
   });
@@ -194,7 +194,7 @@ export function useRechazarFelicitacion() {
       return { ...response.data.data, eventoId };
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['felicitaciones-evento', data.eventoId] });
+      queryClient.invalidateQueries({ queryKey: ['felicitaciones-evento', data.eventoId], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('update', 'Felicitacion'),
   });
@@ -212,7 +212,7 @@ export function useEliminarFelicitacion() {
       return { ...response.data, eventoId };
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['felicitaciones-evento', data.eventoId] });
+      queryClient.invalidateQueries({ queryKey: ['felicitaciones-evento', data.eventoId], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('delete', 'Felicitacion'),
   });
@@ -275,7 +275,7 @@ export function useSubirFoto() {
       return { ...response.data.data, eventoId };
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['galeria-evento', data.eventoId] });
+      queryClient.invalidateQueries({ queryKey: ['galeria-evento', data.eventoId], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('create', 'Foto'),
   });
@@ -293,7 +293,7 @@ export function useCambiarEstadoFoto() {
       return { ...response.data.data, eventoId };
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['galeria-evento', data.eventoId] });
+      queryClient.invalidateQueries({ queryKey: ['galeria-evento', data.eventoId], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('update', 'Foto'),
   });
@@ -311,7 +311,7 @@ export function useEliminarFoto() {
       return { ...response.data, eventoId };
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['galeria-evento', data.eventoId] });
+      queryClient.invalidateQueries({ queryKey: ['galeria-evento', data.eventoId], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('delete', 'Foto'),
   });
@@ -329,7 +329,7 @@ export function useEliminarFotoPermanente() {
       return { ...response.data, eventoId };
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['galeria-evento', data.eventoId] });
+      queryClient.invalidateQueries({ queryKey: ['galeria-evento', data.eventoId], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('delete', 'Foto'),
   });
@@ -347,7 +347,7 @@ export function useSubirFotoPublica() {
       return { ...response.data.data, slug };
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['galeria-publica', data.slug] });
+      queryClient.invalidateQueries({ queryKey: ['galeria-publica', data.slug], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('create', 'Foto', {
       400: 'No esta permitido subir fotos en este evento',

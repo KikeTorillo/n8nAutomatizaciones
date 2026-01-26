@@ -116,9 +116,9 @@ export const useSuperAdmin = () => {
         },
         onSuccess: () => {
             // Invalidar queries relacionadas
-            queryClient.invalidateQueries({ queryKey: ['superadmin', 'planes'] });
-            queryClient.invalidateQueries({ queryKey: ['superadmin', 'organizaciones'] });
-            queryClient.invalidateQueries({ queryKey: ['superadmin', 'dashboard'] });
+            queryClient.invalidateQueries({ queryKey: ['superadmin', 'planes'], refetchType: 'active' });
+            queryClient.invalidateQueries({ queryKey: ['superadmin', 'organizaciones'], refetchType: 'active' });
+            queryClient.invalidateQueries({ queryKey: ['superadmin', 'dashboard'], refetchType: 'active' });
         },
         onError: createCRUDErrorHandler('update', 'Plan'),
     });
@@ -142,8 +142,8 @@ export const useSuperAdmin = () => {
             return data.data;
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['superadmin', 'organizaciones'] });
-            queryClient.invalidateQueries({ queryKey: ['superadmin', 'dashboard'] });
+            queryClient.invalidateQueries({ queryKey: ['superadmin', 'organizaciones'], refetchType: 'active' });
+            queryClient.invalidateQueries({ queryKey: ['superadmin', 'dashboard'], refetchType: 'active' });
         },
         onError: createCRUDErrorHandler('update', 'Organizacion', {
             400: 'Plan inválido',
@@ -163,8 +163,8 @@ export const useSuperAdmin = () => {
             return data.data;
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['superadmin', 'organizaciones'] });
-            queryClient.invalidateQueries({ queryKey: ['superadmin', 'dashboard'] });
+            queryClient.invalidateQueries({ queryKey: ['superadmin', 'organizaciones'], refetchType: 'active' });
+            queryClient.invalidateQueries({ queryKey: ['superadmin', 'dashboard'], refetchType: 'active' });
         },
         onError: createCRUDErrorHandler('update', 'Organizacion', {
             400: 'No se puede suspender la organizacion',
@@ -183,8 +183,8 @@ export const useSuperAdmin = () => {
             return data.data;
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['superadmin', 'organizaciones'] });
-            queryClient.invalidateQueries({ queryKey: ['superadmin', 'dashboard'] });
+            queryClient.invalidateQueries({ queryKey: ['superadmin', 'organizaciones'], refetchType: 'active' });
+            queryClient.invalidateQueries({ queryKey: ['superadmin', 'dashboard'], refetchType: 'active' });
         },
         onError: createCRUDErrorHandler('update', 'Organizacion', {
             400: 'No se puede reactivar la organizacion',

@@ -63,9 +63,9 @@ export function useCrearCustomFieldDefinicion() {
       return response.data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['custom-fields-definiciones'] });
+      queryClient.invalidateQueries({ queryKey: ['custom-fields-definiciones'], refetchType: 'active' });
       if (variables.entidad_tipo) {
-        queryClient.invalidateQueries({ queryKey: ['custom-fields-definiciones', { entidad_tipo: variables.entidad_tipo }] });
+        queryClient.invalidateQueries({ queryKey: ['custom-fields-definiciones', { entidad_tipo: variables.entidad_tipo }], refetchType: 'active' });
       }
     },
     onError: createCRUDErrorHandler('create', 'Campo personalizado'),
@@ -92,8 +92,8 @@ export function useActualizarCustomFieldDefinicion() {
       return response.data.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['custom-field-definicion', data.id] });
-      queryClient.invalidateQueries({ queryKey: ['custom-fields-definiciones'] });
+      queryClient.invalidateQueries({ queryKey: ['custom-field-definicion', data.id], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['custom-fields-definiciones'], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('update', 'Campo personalizado'),
   });
@@ -111,7 +111,7 @@ export function useEliminarCustomFieldDefinicion() {
       return id;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['custom-fields-definiciones'] });
+      queryClient.invalidateQueries({ queryKey: ['custom-fields-definiciones'], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('delete', 'Campo personalizado'),
   });
@@ -132,7 +132,7 @@ export function useReordenarCustomFieldDefiniciones() {
       return response.data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['custom-fields-definiciones', { entidad_tipo: variables.entidadTipo }] });
+      queryClient.invalidateQueries({ queryKey: ['custom-fields-definiciones', { entidad_tipo: variables.entidadTipo }], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('update', 'Campos'),
   });
@@ -169,7 +169,7 @@ export function useGuardarCustomFieldsValores() {
       return response.data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['custom-fields-valores', variables.entidadTipo, variables.entidadId] });
+      queryClient.invalidateQueries({ queryKey: ['custom-fields-valores', variables.entidadTipo, variables.entidadId], refetchType: 'active' });
     },
     onError: (error) => {
       // Si hay errores de validación, retornarlos

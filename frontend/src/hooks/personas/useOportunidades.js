@@ -188,8 +188,8 @@ export function useCrearEtapa() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['etapas-pipeline'] });
-      queryClient.invalidateQueries({ queryKey: ['pipeline'] });
+      queryClient.invalidateQueries({ queryKey: ['etapas-pipeline'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['pipeline'], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('create', 'Etapa'),
   });
@@ -207,8 +207,8 @@ export function useActualizarEtapa() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['etapas-pipeline'] });
-      queryClient.invalidateQueries({ queryKey: ['pipeline'] });
+      queryClient.invalidateQueries({ queryKey: ['etapas-pipeline'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['pipeline'], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('update', 'Etapa'),
   });
@@ -226,8 +226,8 @@ export function useEliminarEtapa() {
       return etapaId;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['etapas-pipeline'] });
-      queryClient.invalidateQueries({ queryKey: ['pipeline'] });
+      queryClient.invalidateQueries({ queryKey: ['etapas-pipeline'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['pipeline'], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('delete', 'Etapa'),
   });
@@ -245,8 +245,8 @@ export function useReordenarEtapas() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['etapas-pipeline'] });
-      queryClient.invalidateQueries({ queryKey: ['pipeline'] });
+      queryClient.invalidateQueries({ queryKey: ['etapas-pipeline'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['pipeline'], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('update', 'Etapas'),
   });
@@ -268,12 +268,12 @@ export function useCrearOportunidad() {
       return response.data.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['oportunidades'] });
-      queryClient.invalidateQueries({ queryKey: ['pipeline'] });
-      queryClient.invalidateQueries({ queryKey: ['pipeline-estadisticas'] });
+      queryClient.invalidateQueries({ queryKey: ['oportunidades'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['pipeline'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['pipeline-estadisticas'], refetchType: 'active' });
       if (data.cliente_id) {
-        queryClient.invalidateQueries({ queryKey: ['oportunidades-cliente', data.cliente_id] });
-        queryClient.invalidateQueries({ queryKey: ['oportunidades-cliente-estadisticas', data.cliente_id] });
+        queryClient.invalidateQueries({ queryKey: ['oportunidades-cliente', data.cliente_id], refetchType: 'active' });
+        queryClient.invalidateQueries({ queryKey: ['oportunidades-cliente-estadisticas', data.cliente_id], refetchType: 'active' });
       }
     },
     onError: createCRUDErrorHandler('create', 'Oportunidad'),
@@ -292,10 +292,10 @@ export function useActualizarOportunidad() {
       return response.data.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['oportunidad', variables.oportunidadId] });
-      queryClient.invalidateQueries({ queryKey: ['oportunidades'] });
-      queryClient.invalidateQueries({ queryKey: ['pipeline'] });
-      queryClient.invalidateQueries({ queryKey: ['pipeline-estadisticas'] });
+      queryClient.invalidateQueries({ queryKey: ['oportunidad', variables.oportunidadId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['oportunidades'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['pipeline'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['pipeline-estadisticas'], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('update', 'Oportunidad'),
   });
@@ -313,9 +313,9 @@ export function useEliminarOportunidad() {
       return oportunidadId;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['oportunidades'] });
-      queryClient.invalidateQueries({ queryKey: ['pipeline'] });
-      queryClient.invalidateQueries({ queryKey: ['pipeline-estadisticas'] });
+      queryClient.invalidateQueries({ queryKey: ['oportunidades'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['pipeline'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['pipeline-estadisticas'], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('delete', 'Oportunidad'),
   });
@@ -346,9 +346,9 @@ export function useMoverOportunidad() {
       createCRUDErrorHandler('update', 'Oportunidad')(error);
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['pipeline'] });
-      queryClient.invalidateQueries({ queryKey: ['pipeline-estadisticas'] });
-      queryClient.invalidateQueries({ queryKey: ['oportunidades'] });
+      queryClient.invalidateQueries({ queryKey: ['pipeline'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['pipeline-estadisticas'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['oportunidades'], refetchType: 'active' });
     },
   });
 }
@@ -365,11 +365,11 @@ export function useMarcarGanada() {
       return response.data.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['oportunidad', data.id] });
-      queryClient.invalidateQueries({ queryKey: ['oportunidades'] });
-      queryClient.invalidateQueries({ queryKey: ['pipeline'] });
-      queryClient.invalidateQueries({ queryKey: ['pipeline-estadisticas'] });
-      queryClient.invalidateQueries({ queryKey: ['pronostico-ventas'] });
+      queryClient.invalidateQueries({ queryKey: ['oportunidad', data.id], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['oportunidades'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['pipeline'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['pipeline-estadisticas'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['pronostico-ventas'], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('update', 'Oportunidad'),
   });
@@ -387,11 +387,11 @@ export function useMarcarPerdida() {
       return response.data.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['oportunidad', data.id] });
-      queryClient.invalidateQueries({ queryKey: ['oportunidades'] });
-      queryClient.invalidateQueries({ queryKey: ['pipeline'] });
-      queryClient.invalidateQueries({ queryKey: ['pipeline-estadisticas'] });
-      queryClient.invalidateQueries({ queryKey: ['pronostico-ventas'] });
+      queryClient.invalidateQueries({ queryKey: ['oportunidad', data.id], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['oportunidades'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['pipeline'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['pipeline-estadisticas'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['pronostico-ventas'], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('update', 'Oportunidad'),
   });

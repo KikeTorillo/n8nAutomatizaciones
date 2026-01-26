@@ -36,8 +36,8 @@ export function useCrearAsiento() {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: CONTABILIDAD_KEYS.asientos.all() });
-      queryClient.invalidateQueries({ queryKey: CONTABILIDAD_KEYS.dashboard() });
+      queryClient.invalidateQueries({ queryKey: CONTABILIDAD_KEYS.asientos.all(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: CONTABILIDAD_KEYS.dashboard(), refetchType: 'active' });
       success('Asiento creado exitosamente');
     },
     onError: (error) => {
@@ -76,7 +76,7 @@ export function useActualizarAsiento() {
       return response.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: CONTABILIDAD_KEYS.asientos.all() });
+      queryClient.invalidateQueries({ queryKey: CONTABILIDAD_KEYS.asientos.all(), refetchType: 'active' });
       queryClient.invalidateQueries({
         queryKey: CONTABILIDAD_KEYS.asientos.detail(variables.id, variables.fecha),
       });
@@ -107,8 +107,8 @@ export function usePublicarAsiento() {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: CONTABILIDAD_KEYS.asientos.all() });
-      queryClient.invalidateQueries({ queryKey: CONTABILIDAD_KEYS.dashboard() });
+      queryClient.invalidateQueries({ queryKey: CONTABILIDAD_KEYS.asientos.all(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: CONTABILIDAD_KEYS.dashboard(), refetchType: 'active' });
       success('Asiento publicado exitosamente');
     },
     onError: (error) => {
@@ -136,8 +136,8 @@ export function useAnularAsiento() {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: CONTABILIDAD_KEYS.asientos.all() });
-      queryClient.invalidateQueries({ queryKey: CONTABILIDAD_KEYS.dashboard() });
+      queryClient.invalidateQueries({ queryKey: CONTABILIDAD_KEYS.asientos.all(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: CONTABILIDAD_KEYS.dashboard(), refetchType: 'active' });
       success('Asiento anulado exitosamente');
     },
     onError: (error) => {
@@ -165,8 +165,8 @@ export function useEliminarAsiento() {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: CONTABILIDAD_KEYS.asientos.all() });
-      queryClient.invalidateQueries({ queryKey: CONTABILIDAD_KEYS.dashboard() });
+      queryClient.invalidateQueries({ queryKey: CONTABILIDAD_KEYS.asientos.all(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: CONTABILIDAD_KEYS.dashboard(), refetchType: 'active' });
       success('Asiento eliminado exitosamente');
     },
     onError: (error) => {

@@ -1,12 +1,12 @@
 /**
  * Hooks para gestión de Roles
  * Sistema de roles dinámicos por organización
- * @version 1.0.0
- * @date Enero 2026
+ * Migrado parcialmente a createCRUDHooks - Ene 2026
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { rolesApi } from '@/services/api/endpoints';
+import { createCRUDHooks } from '@/hooks/factories';
 import { STALE_TIMES } from '@/app/queryClient';
 import { toast } from 'sonner';
 
@@ -20,45 +20,37 @@ export const rolesKeys = {
   permisos: (rolId) => ['roles', 'permisos', rolId],
 };
 
-/**
- * Hook para listar roles de la organización
- * @param {Object} params - Parámetros de filtrado
- * @param {Object} options - Opciones de useQuery
- */
-export function useRoles(params = {}, options = {}) {
-  return useQuery({
-    queryKey: rolesKeys.list(params),
-    queryFn: async () => {
-      const response = await rolesApi.listar(params);
-      return response.data.data;
-    },
-    staleTime: STALE_TIMES.SEMI_STATIC,
-    ...options,
-  });
-}
+// ============================================================
+// HOOKS CRUD BÁSICOS (via factory)
+// ============================================================
 
-/**
- * Hook para obtener un rol por ID
- * @param {number} id - ID del rol
- * @param {Object} options - Opciones de useQuery
- */
-export function useRol(id, options = {}) {
-  return useQuery({
-    queryKey: rolesKeys.detail(id),
-    queryFn: async () => {
-      const response = await rolesApi.obtenerPorId(id);
-      return response.data.data;
-    },
-    enabled: !!id,
-    staleTime: STALE_TIMES.SEMI_STATIC,
-    ...options,
-  });
-}
+const crudHooks = createCRUDHooks({
+  name: 'rol',
+  namePlural: 'roles',
+  api: rolesApi,
+  baseKey: 'roles',
+  apiMethods: {
+    list: 'listar',
+    get: 'obtenerPorId',
+    create: 'crear',
+    update: 'actualizar',
+    delete: 'eliminar',
+  },
+  staleTime: STALE_TIMES.SEMI_STATIC,
+});
+
+export const useRoles = crudHooks.useList;
+export const useRol = crudHooks.useDetail;
+export const useCrearRol = crudHooks.useCreate;
+export const useActualizarRol = crudHooks.useUpdate;
+export const useEliminarRol = crudHooks.useDelete;
+
+// ============================================================
+// HOOKS ESPECIALES (no migrables a factory)
+// ============================================================
 
 /**
  * Hook para obtener los permisos de un rol
- * @param {number} rolId - ID del rol
- * @param {Object} options - Opciones de useQuery
  */
 export function usePermisosRol(rolId, options = {}) {
   return useQuery({
@@ -74,64 +66,6 @@ export function usePermisosRol(rolId, options = {}) {
 }
 
 /**
- * Hook para crear un nuevo rol
- */
-export function useCrearRol() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (data) => rolesApi.crear(data),
-    onSuccess: (response) => {
-      queryClient.invalidateQueries({ queryKey: rolesKeys.all });
-      toast.success('Rol creado exitosamente');
-    },
-    onError: (error) => {
-      const message = error.response?.data?.message || 'Error al crear el rol';
-      toast.error(message);
-    },
-  });
-}
-
-/**
- * Hook para actualizar un rol
- */
-export function useActualizarRol() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({ id, data }) => rolesApi.actualizar(id, data),
-    onSuccess: (response, { id }) => {
-      queryClient.invalidateQueries({ queryKey: rolesKeys.all });
-      queryClient.invalidateQueries({ queryKey: rolesKeys.detail(id) });
-      toast.success('Rol actualizado exitosamente');
-    },
-    onError: (error) => {
-      const message = error.response?.data?.message || 'Error al actualizar el rol';
-      toast.error(message);
-    },
-  });
-}
-
-/**
- * Hook para eliminar un rol
- */
-export function useEliminarRol() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (id) => rolesApi.eliminar(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: rolesKeys.all });
-      toast.success('Rol eliminado exitosamente');
-    },
-    onError: (error) => {
-      const message = error.response?.data?.message || 'Error al eliminar el rol';
-      toast.error(message);
-    },
-  });
-}
-
-/**
  * Hook para actualizar un permiso de un rol
  */
 export function useActualizarPermisoRol() {
@@ -140,8 +74,7 @@ export function useActualizarPermisoRol() {
   return useMutation({
     mutationFn: ({ rolId, permisoId, valor }) => rolesApi.actualizarPermiso(rolId, permisoId, valor),
     onSuccess: (response, { rolId }) => {
-      queryClient.invalidateQueries({ queryKey: rolesKeys.permisos(rolId) });
-      // No mostrar toast para cada permiso (puede ser muy frecuente)
+      queryClient.invalidateQueries({ queryKey: rolesKeys.permisos(rolId), refetchType: 'active' });
     },
     onError: (error) => {
       const message = error.response?.data?.message || 'Error al actualizar el permiso';
@@ -159,7 +92,7 @@ export function useActualizarPermisosRolBatch() {
   return useMutation({
     mutationFn: ({ rolId, permisos }) => rolesApi.actualizarPermisosBatch(rolId, permisos),
     onSuccess: (response, { rolId }) => {
-      queryClient.invalidateQueries({ queryKey: rolesKeys.permisos(rolId) });
+      queryClient.invalidateQueries({ queryKey: rolesKeys.permisos(rolId), refetchType: 'active' });
       toast.success('Permisos actualizados exitosamente');
     },
     onError: (error) => {
@@ -178,7 +111,7 @@ export function useCopiarPermisosRol() {
   return useMutation({
     mutationFn: ({ rolDestinoId, rolOrigenId }) => rolesApi.copiarPermisos(rolDestinoId, rolOrigenId),
     onSuccess: (response, { rolDestinoId }) => {
-      queryClient.invalidateQueries({ queryKey: rolesKeys.permisos(rolDestinoId) });
+      queryClient.invalidateQueries({ queryKey: rolesKeys.permisos(rolDestinoId), refetchType: 'active' });
       toast.success('Permisos copiados exitosamente');
     },
     onError: (error) => {
@@ -197,7 +130,6 @@ export function useRolesSelect(options = {}) {
     queryFn: async () => {
       const response = await rolesApi.listar({ activo: 'true', limit: 100 });
       const roles = response.data.data || [];
-      // Transformar para usar en selects
       return roles.map(rol => ({
         value: rol.id,
         label: rol.nombre,

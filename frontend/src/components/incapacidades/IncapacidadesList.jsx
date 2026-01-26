@@ -2,7 +2,7 @@
  * IncapacidadesList - Lista de incapacidades con filtros
  * Módulo de Profesionales - Enero 2026
  */
-import { useState, useMemo } from 'react';
+import { useState, useMemo, memo, useCallback } from 'react';
 import {
   HeartPulse,
   Calendar,
@@ -52,19 +52,19 @@ function formatFecha(fecha) {
 /**
  * Badge de tipo de incapacidad
  */
-function TipoBadge({ tipo }) {
+const TipoBadge = memo(function TipoBadge({ tipo }) {
   const config = getTipoIncapacidadConfig(tipo);
   return (
     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${config.bgColor} ${config.textColor}`}>
       {config.label}
     </span>
   );
-}
+});
 
 /**
  * Badge de estado de incapacidad
  */
-function EstadoBadge({ estado }) {
+const EstadoBadge = memo(function EstadoBadge({ estado }) {
   const config = getEstadoIncapacidadConfig(estado);
   const variantMap = {
     green: 'success',
@@ -76,12 +76,12 @@ function EstadoBadge({ estado }) {
       {config.label}
     </Badge>
   );
-}
+});
 
 /**
  * Tarjeta de incapacidad individual
  */
-function IncapacidadCard({ incapacidad, onVerDetalle, onCancelar }) {
+const IncapacidadCard = memo(function IncapacidadCard({ incapacidad, onVerDetalle, onCancelar }) {
   const [showMenu, setShowMenu] = useState(false);
   const esActiva = incapacidad.estado === 'activa';
   const esProrroga = !!incapacidad.incapacidad_origen_id;
@@ -188,12 +188,12 @@ function IncapacidadCard({ incapacidad, onVerDetalle, onCancelar }) {
       </div>
     </div>
   );
-}
+});
 
 /**
  * Lista de incapacidades con filtros y paginación
  */
-function IncapacidadesList({ onRegistrar }) {
+const IncapacidadesList = memo(function IncapacidadesList({ onRegistrar }) {
   const [page, setPage] = useState(1);
   const [filtros, setFiltros] = useState({
     estado: '',
@@ -375,6 +375,6 @@ function IncapacidadesList({ onRegistrar }) {
       />
     </div>
   );
-}
+});
 
 export default IncapacidadesList;

@@ -121,7 +121,7 @@ export function useActualizarConfiguracion() {
     },
     onSuccess: () => {
       // Invalidar query de configuración
-      queryClient.invalidateQueries({ queryKey: recordatoriosKeys.configuracion() });
+      queryClient.invalidateQueries({ queryKey: recordatoriosKeys.configuracion(), refetchType: 'active' });
       success('Configuracion de recordatorios actualizada');
     },
     onError: (error) => {

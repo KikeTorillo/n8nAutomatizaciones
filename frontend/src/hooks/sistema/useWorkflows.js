@@ -143,13 +143,13 @@ export function useAprobarSolicitud() {
     },
     onSuccess: (_, variables) => {
       // Invalidar queries relacionadas
-      queryClient.invalidateQueries({ queryKey: ['aprobaciones-pendientes'] });
-      queryClient.invalidateQueries({ queryKey: ['aprobaciones-count'] });
-      queryClient.invalidateQueries({ queryKey: ['instancia-workflow', variables.id] });
-      queryClient.invalidateQueries({ queryKey: ['historial-aprobaciones'] });
+      queryClient.invalidateQueries({ queryKey: ['aprobaciones-pendientes'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['aprobaciones-count'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['instancia-workflow', variables.id], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['historial-aprobaciones'], refetchType: 'active' });
       // Invalidar ordenes de compra si aplica
-      queryClient.invalidateQueries({ queryKey: ['ordenes-compra'] });
-      queryClient.invalidateQueries({ queryKey: ['ordenes-compra-pendientes'] });
+      queryClient.invalidateQueries({ queryKey: ['ordenes-compra'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['ordenes-compra-pendientes'], refetchType: 'active' });
     },
   });
 }
@@ -166,11 +166,11 @@ export function useRechazarSolicitud() {
       return response.data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['aprobaciones-pendientes'] });
-      queryClient.invalidateQueries({ queryKey: ['aprobaciones-count'] });
-      queryClient.invalidateQueries({ queryKey: ['instancia-workflow', variables.id] });
-      queryClient.invalidateQueries({ queryKey: ['historial-aprobaciones'] });
-      queryClient.invalidateQueries({ queryKey: ['ordenes-compra'] });
+      queryClient.invalidateQueries({ queryKey: ['aprobaciones-pendientes'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['aprobaciones-count'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['instancia-workflow', variables.id], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['historial-aprobaciones'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['ordenes-compra'], refetchType: 'active' });
     },
   });
 }
@@ -195,7 +195,7 @@ export function useCrearDelegacion() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['delegaciones'] });
+      queryClient.invalidateQueries({ queryKey: ['delegaciones'], refetchType: 'active' });
     },
   });
 }
@@ -223,7 +223,7 @@ export function useActualizarDelegacion() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['delegaciones'] });
+      queryClient.invalidateQueries({ queryKey: ['delegaciones'], refetchType: 'active' });
     },
   });
 }
@@ -240,7 +240,7 @@ export function useEliminarDelegacion() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['delegaciones'] });
+      queryClient.invalidateQueries({ queryKey: ['delegaciones'], refetchType: 'active' });
     },
   });
 }

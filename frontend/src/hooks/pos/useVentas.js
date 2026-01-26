@@ -80,10 +80,10 @@ export function useCrearVenta() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['ventas'] });
-      queryClient.invalidateQueries({ queryKey: ['productos'] }); // Stock se actualizó
-      queryClient.invalidateQueries({ queryKey: ['stock-critico'] });
-      queryClient.invalidateQueries({ queryKey: ['movimientos'] }); // Se generó movimiento
+      queryClient.invalidateQueries({ queryKey: ['ventas'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['productos'], refetchType: 'active' }); // Stock se actualizó
+      queryClient.invalidateQueries({ queryKey: ['stock-critico'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['movimientos'], refetchType: 'active' }); // Se generó movimiento
     },
     onError: createCRUDErrorHandler('create', 'Venta', {
       409: 'Stock insuficiente para completar la venta',
@@ -116,8 +116,8 @@ export function useActualizarVenta() {
       return response.data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['ventas'] });
-      queryClient.invalidateQueries({ queryKey: ['venta', variables.id] });
+      queryClient.invalidateQueries({ queryKey: ['ventas'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['venta', variables.id], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('update', 'Venta'),
   });
@@ -135,8 +135,8 @@ export function useActualizarEstadoVenta() {
       return response.data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['ventas'] });
-      queryClient.invalidateQueries({ queryKey: ['venta', variables.id] });
+      queryClient.invalidateQueries({ queryKey: ['ventas'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['venta', variables.id], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('update', 'Estado de venta'),
   });
@@ -160,8 +160,8 @@ export function useRegistrarPago() {
       return response.data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['ventas'] });
-      queryClient.invalidateQueries({ queryKey: ['venta', variables.id] });
+      queryClient.invalidateQueries({ queryKey: ['ventas'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['venta', variables.id], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('create', 'Pago', {
       409: 'El pago excede el monto pendiente',
@@ -184,10 +184,10 @@ export function useCancelarVenta() {
       return response.data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['ventas'] });
-      queryClient.invalidateQueries({ queryKey: ['venta', variables.id] });
-      queryClient.invalidateQueries({ queryKey: ['productos'] }); // Stock revertido
-      queryClient.invalidateQueries({ queryKey: ['movimientos'] }); // Movimiento de reversión
+      queryClient.invalidateQueries({ queryKey: ['ventas'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['venta', variables.id], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['productos'], refetchType: 'active' }); // Stock revertido
+      queryClient.invalidateQueries({ queryKey: ['movimientos'], refetchType: 'active' }); // Movimiento de reversión
     },
     onError: createCRUDErrorHandler('delete', 'Venta', {
       400: 'No se puede cancelar una venta ya cancelada',
@@ -211,10 +211,10 @@ export function useDevolverItems() {
       return response.data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['ventas'] });
-      queryClient.invalidateQueries({ queryKey: ['venta', variables.id] });
-      queryClient.invalidateQueries({ queryKey: ['productos'] }); // Stock ajustado
-      queryClient.invalidateQueries({ queryKey: ['movimientos'] }); // Movimiento de devolución
+      queryClient.invalidateQueries({ queryKey: ['ventas'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['venta', variables.id], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['productos'], refetchType: 'active' }); // Stock ajustado
+      queryClient.invalidateQueries({ queryKey: ['movimientos'], refetchType: 'active' }); // Movimiento de devolución
     },
     onError: createCRUDErrorHandler('update', 'Devolución', {
       400: 'Cantidad a devolver inválida',
@@ -234,9 +234,9 @@ export function useAgregarItems() {
       return response.data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['ventas'] });
-      queryClient.invalidateQueries({ queryKey: ['venta', variables.id] });
-      queryClient.invalidateQueries({ queryKey: ['productos'] }); // Stock actualizado
+      queryClient.invalidateQueries({ queryKey: ['ventas'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['venta', variables.id], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['productos'], refetchType: 'active' }); // Stock actualizado
     },
     onError: createCRUDErrorHandler('update', 'Items', {
       409: 'Stock insuficiente para agregar items',
@@ -256,9 +256,9 @@ export function useEliminarVenta() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['ventas'] });
-      queryClient.invalidateQueries({ queryKey: ['productos'] }); // Stock revertido
-      queryClient.invalidateQueries({ queryKey: ['movimientos'] }); // Movimiento de reversión
+      queryClient.invalidateQueries({ queryKey: ['ventas'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['productos'], refetchType: 'active' }); // Stock revertido
+      queryClient.invalidateQueries({ queryKey: ['movimientos'], refetchType: 'active' }); // Movimiento de reversión
     },
     onError: createCRUDErrorHandler('delete', 'Venta'),
   });

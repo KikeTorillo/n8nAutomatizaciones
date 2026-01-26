@@ -118,8 +118,8 @@ export function useCrearConteo() {
             return response.data.data;
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: queryKeys.inventario.conteos.all });
-            queryClient.invalidateQueries({ queryKey: queryKeys.inventario.conteos.estadisticas({}) });
+            queryClient.invalidateQueries({ queryKey: queryKeys.inventario.conteos.all, refetchType: 'active' });
+            queryClient.invalidateQueries({ queryKey: queryKeys.inventario.conteos.estadisticas({}), refetchType: 'active' });
         },
         onError: createCRUDErrorHandler('create', 'Conteo', {
             409: 'Ya existe un conteo en proceso',
@@ -139,8 +139,8 @@ export function useIniciarConteo() {
             return response.data.data;
         },
         onSuccess: (_, id) => {
-            queryClient.invalidateQueries({ queryKey: queryKeys.inventario.conteos.detail(id) });
-            queryClient.invalidateQueries({ queryKey: queryKeys.inventario.conteos.all });
+            queryClient.invalidateQueries({ queryKey: queryKeys.inventario.conteos.detail(id), refetchType: 'active' });
+            queryClient.invalidateQueries({ queryKey: queryKeys.inventario.conteos.all, refetchType: 'active' });
         },
         onError: createCRUDErrorHandler('update', 'Conteo'),
     });
@@ -163,9 +163,9 @@ export function useRegistrarConteoItem() {
         onSuccess: (data) => {
             // Invalidar el conteo padre para actualizar resumen
             if (data?.conteo_id) {
-                queryClient.invalidateQueries({ queryKey: queryKeys.inventario.conteos.detail(data.conteo_id) });
+                queryClient.invalidateQueries({ queryKey: queryKeys.inventario.conteos.detail(data.conteo_id), refetchType: 'active' });
             } else {
-                queryClient.invalidateQueries({ queryKey: queryKeys.inventario.conteos.all });
+                queryClient.invalidateQueries({ queryKey: queryKeys.inventario.conteos.all, refetchType: 'active' });
             }
         },
         onError: createCRUDErrorHandler('update', 'Item conteo'),
@@ -184,9 +184,9 @@ export function useCompletarConteo() {
             return response.data.data;
         },
         onSuccess: (_, id) => {
-            queryClient.invalidateQueries({ queryKey: queryKeys.inventario.conteos.detail(id) });
-            queryClient.invalidateQueries({ queryKey: queryKeys.inventario.conteos.all });
-            queryClient.invalidateQueries({ queryKey: queryKeys.inventario.conteos.estadisticas({}) });
+            queryClient.invalidateQueries({ queryKey: queryKeys.inventario.conteos.detail(id), refetchType: 'active' });
+            queryClient.invalidateQueries({ queryKey: queryKeys.inventario.conteos.all, refetchType: 'active' });
+            queryClient.invalidateQueries({ queryKey: queryKeys.inventario.conteos.estadisticas({}), refetchType: 'active' });
         },
         onError: createCRUDErrorHandler('update', 'Conteo'),
     });
@@ -205,9 +205,9 @@ export function useAplicarAjustesConteo() {
         },
         onSuccess: (_, id) => {
             // Invalidar conteos
-            queryClient.invalidateQueries({ queryKey: queryKeys.inventario.conteos.detail(id) });
-            queryClient.invalidateQueries({ queryKey: queryKeys.inventario.conteos.all });
-            queryClient.invalidateQueries({ queryKey: queryKeys.inventario.conteos.estadisticas({}) });
+            queryClient.invalidateQueries({ queryKey: queryKeys.inventario.conteos.detail(id), refetchType: 'active' });
+            queryClient.invalidateQueries({ queryKey: queryKeys.inventario.conteos.all, refetchType: 'active' });
+            queryClient.invalidateQueries({ queryKey: queryKeys.inventario.conteos.estadisticas({}), refetchType: 'active' });
             // Invalidar datos de inventario afectados (solo queries activas)
             queryClient.invalidateQueries({
                 queryKey: queryKeys.inventario.movimientos.all,
@@ -238,9 +238,9 @@ export function useCancelarConteo() {
             return response.data.data;
         },
         onSuccess: (_, { id }) => {
-            queryClient.invalidateQueries({ queryKey: queryKeys.inventario.conteos.detail(id) });
-            queryClient.invalidateQueries({ queryKey: queryKeys.inventario.conteos.all });
-            queryClient.invalidateQueries({ queryKey: queryKeys.inventario.conteos.estadisticas({}) });
+            queryClient.invalidateQueries({ queryKey: queryKeys.inventario.conteos.detail(id), refetchType: 'active' });
+            queryClient.invalidateQueries({ queryKey: queryKeys.inventario.conteos.all, refetchType: 'active' });
+            queryClient.invalidateQueries({ queryKey: queryKeys.inventario.conteos.estadisticas({}), refetchType: 'active' });
         },
         onError: createCRUDErrorHandler('delete', 'Conteo'),
     });

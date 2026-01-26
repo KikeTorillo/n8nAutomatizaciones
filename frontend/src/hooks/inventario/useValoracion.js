@@ -35,7 +35,7 @@ export function useActualizarConfiguracionValoracion() {
             return response.data.data;
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['valoracion'] });
+            queryClient.invalidateQueries({ queryKey: ['valoracion'], refetchType: 'active' });
         },
     });
 }

@@ -22,8 +22,8 @@ export function useCerrarPeriodo() {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: CONTABILIDAD_KEYS.periodos.all() });
-      queryClient.invalidateQueries({ queryKey: CONTABILIDAD_KEYS.dashboard() });
+      queryClient.invalidateQueries({ queryKey: CONTABILIDAD_KEYS.periodos.all(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: CONTABILIDAD_KEYS.dashboard(), refetchType: 'active' });
       success('Periodo cerrado exitosamente');
     },
     onError: (error) => {

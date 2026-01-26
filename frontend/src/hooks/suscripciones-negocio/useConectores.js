@@ -86,8 +86,8 @@ export function useVerificarConector(options = {}) {
     },
     onSuccess: (data, id) => {
       // Invalidar queries para refrescar datos
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.CONECTORES] });
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.CONECTOR, id] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.CONECTORES], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.CONECTOR, id], refetchType: 'active' });
 
       if (data?.verificado) {
         showSuccess('Conexión verificada correctamente');

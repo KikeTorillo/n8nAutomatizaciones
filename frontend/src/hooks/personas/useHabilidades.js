@@ -117,7 +117,7 @@ export function useCrearHabilidadCatalogo() {
       return response.data?.data || response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: catalogoKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: catalogoKeys.lists(), refetchType: 'active' });
       toast.success('Habilidad creada en catálogo');
     },
     onError: (error) => {
@@ -143,8 +143,8 @@ export function useActualizarHabilidadCatalogo() {
       return response.data?.data || response.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: catalogoKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: catalogoKeys.detail(variables.habilidadId) });
+      queryClient.invalidateQueries({ queryKey: catalogoKeys.lists(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: catalogoKeys.detail(variables.habilidadId), refetchType: 'active' });
       toast.success('Habilidad actualizada');
     },
     onError: (error) => {
@@ -170,7 +170,7 @@ export function useEliminarHabilidadCatalogo() {
       return response.data?.data || response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: catalogoKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: catalogoKeys.lists(), refetchType: 'active' });
       toast.success('Habilidad eliminada del catálogo');
     },
     onError: (error) => {
@@ -237,7 +237,7 @@ export function useAsignarHabilidad() {
       return response.data?.data || response.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: habilidadesEmpleadoKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: habilidadesEmpleadoKeys.lists(), refetchType: 'active' });
       toast.success('Habilidad asignada');
     },
     onError: (error) => {
@@ -263,7 +263,7 @@ export function useAsignarHabilidadesBatch() {
       return response.data?.data || response.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: habilidadesEmpleadoKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: habilidadesEmpleadoKeys.lists(), refetchType: 'active' });
       toast.success(`${data.asignadas || 'Varias'} habilidades asignadas`);
     },
     onError: (error) => {
@@ -289,7 +289,7 @@ export function useActualizarHabilidadEmpleado() {
       return response.data?.data || response.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: habilidadesEmpleadoKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: habilidadesEmpleadoKeys.lists(), refetchType: 'active' });
       queryClient.invalidateQueries({
         queryKey: habilidadesEmpleadoKeys.detail(variables.profesionalId, variables.habilidadEmpleadoId)
       });
@@ -318,7 +318,7 @@ export function useEliminarHabilidadEmpleado() {
       return response.data?.data || response.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: habilidadesEmpleadoKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: habilidadesEmpleadoKeys.lists(), refetchType: 'active' });
       toast.success('Habilidad eliminada');
     },
     onError: (error) => {
@@ -344,7 +344,7 @@ export function useVerificarHabilidadEmpleado() {
       return response.data?.data || response.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: habilidadesEmpleadoKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: habilidadesEmpleadoKeys.lists(), refetchType: 'active' });
       queryClient.invalidateQueries({
         queryKey: habilidadesEmpleadoKeys.detail(variables.profesionalId, variables.habilidadEmpleadoId)
       });

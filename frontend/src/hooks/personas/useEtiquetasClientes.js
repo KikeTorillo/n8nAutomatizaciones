@@ -102,10 +102,10 @@ export function useAsignarEtiquetasCliente() {
       // Invalidar con ambos tipos (string y number) para asegurar coincidencia
       const clienteIdStr = String(variables.clienteId);
       const clienteIdNum = Number(variables.clienteId);
-      queryClient.invalidateQueries({ queryKey: ['cliente-etiquetas', clienteIdNum] });
-      queryClient.invalidateQueries({ queryKey: ['cliente', clienteIdStr] });
-      queryClient.invalidateQueries({ queryKey: ['clientes'] });
-      queryClient.invalidateQueries({ queryKey: ['etiquetas-clientes'] });
+      queryClient.invalidateQueries({ queryKey: ['cliente-etiquetas', clienteIdNum], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['cliente', clienteIdStr], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['clientes'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['etiquetas-clientes'], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('update', 'Etiquetas'),
   });
@@ -126,10 +126,10 @@ export function useAgregarEtiquetaCliente() {
       // Invalidar con ambos tipos (string y number) para asegurar coincidencia
       const clienteIdStr = String(variables.clienteId);
       const clienteIdNum = Number(variables.clienteId);
-      queryClient.invalidateQueries({ queryKey: ['cliente-etiquetas', clienteIdNum] });
-      queryClient.invalidateQueries({ queryKey: ['cliente', clienteIdStr] });
-      queryClient.invalidateQueries({ queryKey: ['clientes'] });
-      queryClient.invalidateQueries({ queryKey: ['etiquetas-clientes'] });
+      queryClient.invalidateQueries({ queryKey: ['cliente-etiquetas', clienteIdNum], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['cliente', clienteIdStr], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['clientes'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['etiquetas-clientes'], refetchType: 'active' });
     },
   });
 }
@@ -149,10 +149,10 @@ export function useQuitarEtiquetaCliente() {
       // Invalidar con ambos tipos (string y number) para asegurar coincidencia
       const clienteIdStr = String(variables.clienteId);
       const clienteIdNum = Number(variables.clienteId);
-      queryClient.invalidateQueries({ queryKey: ['cliente-etiquetas', clienteIdNum] });
-      queryClient.invalidateQueries({ queryKey: ['cliente', clienteIdStr] });
-      queryClient.invalidateQueries({ queryKey: ['clientes'] });
-      queryClient.invalidateQueries({ queryKey: ['etiquetas-clientes'] });
+      queryClient.invalidateQueries({ queryKey: ['cliente-etiquetas', clienteIdNum], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['cliente', clienteIdStr], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['clientes'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['etiquetas-clientes'], refetchType: 'active' });
     },
   });
 }

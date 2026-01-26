@@ -67,8 +67,8 @@ export function useConfirmarRSVP() {
       return { ...response.data.data, slug, token };
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['invitacion-publica', data.slug, data.token] });
-      queryClient.invalidateQueries({ queryKey: ['evento-publico', data.slug] });
+      queryClient.invalidateQueries({ queryKey: ['invitacion-publica', data.slug, data.token], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['evento-publico', data.slug], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('update', 'RSVP', {
       410: 'La fecha limite para confirmar ha pasado',
@@ -135,8 +135,8 @@ export function useCrearMesa() {
       return { ...response.data.data, eventoId };
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['mesas-evento', data.eventoId] });
-      queryClient.invalidateQueries({ queryKey: ['mesas-estadisticas', data.eventoId] });
+      queryClient.invalidateQueries({ queryKey: ['mesas-evento', data.eventoId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['mesas-estadisticas', data.eventoId], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('create', 'Mesa'),
   });
@@ -166,8 +166,8 @@ export function useActualizarMesa() {
       return { ...response.data.data, eventoId };
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['mesas-evento', data.eventoId] });
-      queryClient.invalidateQueries({ queryKey: ['mesas-estadisticas', data.eventoId] });
+      queryClient.invalidateQueries({ queryKey: ['mesas-evento', data.eventoId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['mesas-estadisticas', data.eventoId], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('update', 'Mesa'),
   });
@@ -185,9 +185,9 @@ export function useEliminarMesa() {
       return { ...response.data, eventoId };
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['mesas-evento', data.eventoId] });
-      queryClient.invalidateQueries({ queryKey: ['mesas-estadisticas', data.eventoId] });
-      queryClient.invalidateQueries({ queryKey: ['invitados-evento', data.eventoId] });
+      queryClient.invalidateQueries({ queryKey: ['mesas-evento', data.eventoId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['mesas-estadisticas', data.eventoId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['invitados-evento', data.eventoId], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('delete', 'Mesa'),
   });
@@ -205,7 +205,7 @@ export function useActualizarPosicionesMesas() {
       return { ...response.data.data, eventoId };
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['mesas-evento', data.eventoId] });
+      queryClient.invalidateQueries({ queryKey: ['mesas-evento', data.eventoId], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('update', 'Posiciones'),
   });
@@ -223,9 +223,9 @@ export function useAsignarInvitadoAMesa() {
       return { ...response.data.data, eventoId };
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['mesas-evento', data.eventoId] });
-      queryClient.invalidateQueries({ queryKey: ['mesas-estadisticas', data.eventoId] });
-      queryClient.invalidateQueries({ queryKey: ['invitados-evento', data.eventoId] });
+      queryClient.invalidateQueries({ queryKey: ['mesas-evento', data.eventoId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['mesas-estadisticas', data.eventoId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['invitados-evento', data.eventoId], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('update', 'Invitado', {
       400: 'La mesa esta llena o el invitado ya tiene mesa asignada',
@@ -245,9 +245,9 @@ export function useDesasignarInvitadoDeMesa() {
       return { ...response.data.data, eventoId };
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['mesas-evento', data.eventoId] });
-      queryClient.invalidateQueries({ queryKey: ['mesas-estadisticas', data.eventoId] });
-      queryClient.invalidateQueries({ queryKey: ['invitados-evento', data.eventoId] });
+      queryClient.invalidateQueries({ queryKey: ['mesas-evento', data.eventoId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['mesas-estadisticas', data.eventoId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['invitados-evento', data.eventoId], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('update', 'Invitado'),
   });

@@ -142,8 +142,8 @@ export function useAplicarCupon() {
     },
     onSuccess: (data, variables) => {
       // Invalidar venta para refrescar totales
-      queryClient.invalidateQueries({ queryKey: ['venta', variables.ventaPosId] });
-      queryClient.invalidateQueries({ queryKey: ['cupones-vigentes'] });
+      queryClient.invalidateQueries({ queryKey: ['venta', variables.ventaPosId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['cupones-vigentes'], refetchType: 'active' });
     },
   });
 }
@@ -208,9 +208,9 @@ export function useCambiarEstadoCupon() {
       return response.data.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['cupones'] });
-      queryClient.invalidateQueries({ queryKey: ['cupon', variables.id] });
-      queryClient.invalidateQueries({ queryKey: ['cupones-vigentes'] });
+      queryClient.invalidateQueries({ queryKey: ['cupones'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['cupon', variables.id], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['cupones-vigentes'], refetchType: 'active' });
     },
   });
 }

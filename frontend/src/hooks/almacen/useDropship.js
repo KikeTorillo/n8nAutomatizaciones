@@ -97,7 +97,7 @@ export function useActualizarConfigDropship() {
   return useMutation({
     mutationFn: (data) => dropshipApi.actualizarConfiguracion(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.almacen.dropship.configuracion });
+      queryClient.invalidateQueries({ queryKey: queryKeys.almacen.dropship.configuracion, refetchType: 'active' });
       toast.success('Configuración de dropship actualizada');
     },
     onError: createCRUDErrorHandler('update', 'Configuración'),
@@ -114,8 +114,8 @@ export function useCrearOCDesdeVenta() {
   return useMutation({
     mutationFn: (ventaId) => dropshipApi.crearDesdeVenta(ventaId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.almacen.dropship.all });
-      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.ordenesCompra.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.almacen.dropship.all, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.ordenesCompra.all, refetchType: 'active' });
       toast.success('Orden de compra dropship creada');
     },
     onError: createCRUDErrorHandler('create', 'Orden de compra'),
@@ -132,8 +132,8 @@ export function useConfirmarEntregaDropship() {
   return useMutation({
     mutationFn: ({ id, notas }) => dropshipApi.confirmarEntrega(id, { notas }),
     onSuccess: (_, { id }) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.almacen.dropship.all });
-      queryClient.invalidateQueries({ queryKey: queryKeys.almacen.dropship.ordenes.detail(id) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.almacen.dropship.all, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.almacen.dropship.ordenes.detail(id), refetchType: 'active' });
       toast.success('Entrega confirmada exitosamente');
     },
     onError: createCRUDErrorHandler('update', 'Entrega'),
@@ -150,8 +150,8 @@ export function useCancelarDropship() {
   return useMutation({
     mutationFn: ({ id, motivo }) => dropshipApi.cancelar(id, { motivo }),
     onSuccess: (_, { id }) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.almacen.dropship.all });
-      queryClient.invalidateQueries({ queryKey: queryKeys.almacen.dropship.ordenes.detail(id) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.almacen.dropship.all, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.almacen.dropship.ordenes.detail(id), refetchType: 'active' });
       toast.success('Orden dropship cancelada');
     },
     onError: createCRUDErrorHandler('delete', 'Orden'),

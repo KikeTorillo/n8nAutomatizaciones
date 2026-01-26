@@ -157,8 +157,8 @@ export function useAplicarPromocion() {
     },
     onSuccess: (data, variables) => {
       // Invalidar venta para refrescar totales
-      queryClient.invalidateQueries({ queryKey: ['venta', variables.ventaPosId] });
-      queryClient.invalidateQueries({ queryKey: ['promociones-vigentes'] });
+      queryClient.invalidateQueries({ queryKey: ['venta', variables.ventaPosId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['promociones-vigentes'], refetchType: 'active' });
     },
   });
 }
@@ -212,9 +212,9 @@ export function useCambiarEstadoPromocion() {
       return response.data.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['promociones'] });
-      queryClient.invalidateQueries({ queryKey: ['promocion', variables.id] });
-      queryClient.invalidateQueries({ queryKey: ['promociones-vigentes'] });
+      queryClient.invalidateQueries({ queryKey: ['promociones'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['promocion', variables.id], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['promociones-vigentes'], refetchType: 'active' });
     },
   });
 }
@@ -232,7 +232,7 @@ export function useDuplicarPromocion() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['promociones'] });
+      queryClient.invalidateQueries({ queryKey: ['promociones'], refetchType: 'active' });
     },
   });
 }

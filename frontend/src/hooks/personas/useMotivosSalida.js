@@ -81,7 +81,7 @@ export const useCrearMotivoSalida = () => {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: motivosSalidaKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: motivosSalidaKeys.lists(), refetchType: 'active' });
       success('Motivo de salida creado exitosamente');
     },
     onError: (err) => {
@@ -104,8 +104,8 @@ export const useActualizarMotivoSalida = () => {
       return response.data.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: motivosSalidaKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: motivosSalidaKeys.detail(variables.id) });
+      queryClient.invalidateQueries({ queryKey: motivosSalidaKeys.lists(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: motivosSalidaKeys.detail(variables.id), refetchType: 'active' });
       success('Motivo de salida actualizado exitosamente');
     },
     onError: (err) => {
@@ -128,7 +128,7 @@ export const useEliminarMotivoSalida = () => {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: motivosSalidaKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: motivosSalidaKeys.lists(), refetchType: 'active' });
       success('Motivo de salida eliminado exitosamente');
     },
     onError: (err) => {

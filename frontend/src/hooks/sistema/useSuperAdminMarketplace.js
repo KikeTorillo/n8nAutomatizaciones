@@ -83,9 +83,9 @@ export function useActivarPerfil() {
     },
     onSuccess: () => {
       // Invalidar lista de perfiles admin
-      queryClient.invalidateQueries({ queryKey: ['perfiles-admin'] });
+      queryClient.invalidateQueries({ queryKey: ['perfiles-admin'], refetchType: 'active' });
       // Invalidar lista pública de perfiles (por si el super admin está viendo el directorio)
-      queryClient.invalidateQueries({ queryKey: ['perfiles-marketplace'] });
+      queryClient.invalidateQueries({ queryKey: ['perfiles-marketplace'], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('update', 'Perfil'),
   });
@@ -114,7 +114,7 @@ export function useLimpiarAnalytics() {
     },
     onSuccess: () => {
       // Invalidar estadísticas de perfiles
-      queryClient.invalidateQueries({ queryKey: ['estadisticas-perfil'] });
+      queryClient.invalidateQueries({ queryKey: ['estadisticas-perfil'], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('delete', 'Analytics', {
       400: 'Los dias de antiguedad deben ser minimo 90',

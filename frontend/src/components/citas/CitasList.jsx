@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, memo } from 'react';
 import PropTypes from 'prop-types';
 import { Calendar, Clock, User, Package } from 'lucide-react';
 import { formatearFecha, formatearHora } from '@/utils/dateHelpers';
@@ -8,7 +8,7 @@ import { Button, DataTable, DataTableActions } from '@/components/ui';
 /**
  * Componente para listar citas usando DataTable genérico
  */
-function CitasList({
+const CitasList = memo(function CitasList({
   citas = [],
   isLoading = false,
   onVerDetalles,
@@ -189,7 +189,7 @@ function CitasList({
       skeletonRows={3}
     />
   );
-}
+});
 
 CitasList.propTypes = {
   citas: PropTypes.arrayOf(

@@ -75,8 +75,8 @@ export function useUploadArchivo() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['archivos'] });
-      queryClient.invalidateQueries({ queryKey: ['storage-usage'] });
+      queryClient.invalidateQueries({ queryKey: ['archivos'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['storage-usage'], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('create', 'Archivo', {
       413: 'El archivo excede el tamano maximo permitido',
@@ -97,8 +97,8 @@ export function useEliminarArchivo() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['archivos'] });
-      queryClient.invalidateQueries({ queryKey: ['storage-usage'] });
+      queryClient.invalidateQueries({ queryKey: ['archivos'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['storage-usage'], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('delete', 'Archivo'),
   });

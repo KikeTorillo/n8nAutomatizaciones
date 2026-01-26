@@ -422,7 +422,7 @@ export const queryKeys = {
  * @example
  * // Invalidar todo el inventario
  * getDomainKeys('inventario').forEach(key => {
- *   queryClient.invalidateQueries({ queryKey: [key] });
+ *   queryClient.invalidateQueries({ queryKey: [key], refetchType: 'active' });
  * });
  */
 export function getDomainKeys(dominio) {

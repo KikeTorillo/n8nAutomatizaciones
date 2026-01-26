@@ -31,8 +31,8 @@ export function useCrearSuscripcion() {
       return response.data?.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.SUSCRIPCIONES] });
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.METRICAS_DASHBOARD] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.SUSCRIPCIONES], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.METRICAS_DASHBOARD], refetchType: 'active' });
       success('Suscripción creada exitosamente');
     },
     onError: createCRUDErrorHandler('create', 'Suscripcion'),
@@ -52,8 +52,8 @@ export function useActualizarSuscripcion() {
       return response.data?.data;
     },
     onSuccess: (_, { id }) => {
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.SUSCRIPCIONES] });
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.SUSCRIPCION, id] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.SUSCRIPCIONES], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.SUSCRIPCION, id], refetchType: 'active' });
       success('Suscripción actualizada');
     },
     onError: createCRUDErrorHandler('update', 'Suscripcion'),
@@ -73,9 +73,9 @@ export function useCambiarEstadoSuscripcion() {
       return response.data?.data;
     },
     onSuccess: (_, { id }) => {
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.SUSCRIPCIONES] });
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.SUSCRIPCION, id] });
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.METRICAS_DASHBOARD] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.SUSCRIPCIONES], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.SUSCRIPCION, id], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.METRICAS_DASHBOARD], refetchType: 'active' });
       success('Estado actualizado');
     },
     onError: createCRUDErrorHandler('update', 'Suscripcion'),
@@ -99,9 +99,9 @@ export function useCambiarPlanSuscripcion() {
       return response.data?.data;
     },
     onSuccess: (_, { id }) => {
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.SUSCRIPCIONES] });
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.SUSCRIPCION, id] });
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.METRICAS_DASHBOARD] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.SUSCRIPCIONES], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.SUSCRIPCION, id], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.METRICAS_DASHBOARD], refetchType: 'active' });
       success('Plan cambiado exitosamente');
     },
     onError: createCRUDErrorHandler('update', 'Suscripcion'),
@@ -126,8 +126,8 @@ export function useCambiarMiPlan() {
       return response.data?.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.MI_SUSCRIPCION] });
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.SUSCRIPCIONES] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.MI_SUSCRIPCION], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.SUSCRIPCIONES], refetchType: 'active' });
       success('Plan cambiado exitosamente');
     },
     onError: createCRUDErrorHandler('update', 'Plan'),
@@ -151,10 +151,10 @@ export function useCancelarSuscripcion() {
       return response.data?.data;
     },
     onSuccess: (_, { id }) => {
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.SUSCRIPCIONES] });
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.SUSCRIPCION, id] });
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.METRICAS_DASHBOARD] });
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.METRICAS_CHURN] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.SUSCRIPCIONES], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.SUSCRIPCION, id], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.METRICAS_DASHBOARD], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.METRICAS_CHURN], refetchType: 'active' });
       success('Suscripción cancelada');
     },
     onError: createCRUDErrorHandler('delete', 'Suscripcion'),
@@ -175,9 +175,9 @@ export function useCancelarMiSuscripcion() {
       return response.data?.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.MI_SUSCRIPCION] });
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.SUSCRIPCIONES] });
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.METRICAS_DASHBOARD] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.MI_SUSCRIPCION], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.SUSCRIPCIONES], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.METRICAS_DASHBOARD], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('delete', 'Suscripcion'),
   });
@@ -199,9 +199,9 @@ export function usePausarSuscripcion() {
       return response.data?.data;
     },
     onSuccess: (_, { id }) => {
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.SUSCRIPCIONES] });
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.SUSCRIPCION, id] });
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.METRICAS_DASHBOARD] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.SUSCRIPCIONES], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.SUSCRIPCION, id], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.METRICAS_DASHBOARD], refetchType: 'active' });
       success('Suscripción pausada');
     },
     onError: createCRUDErrorHandler('update', 'Suscripcion'),
@@ -221,9 +221,9 @@ export function useReactivarSuscripcion() {
       return response.data?.data;
     },
     onSuccess: (_, id) => {
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.SUSCRIPCIONES] });
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.SUSCRIPCION, id] });
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.METRICAS_DASHBOARD] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.SUSCRIPCIONES], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.SUSCRIPCION, id], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.METRICAS_DASHBOARD], refetchType: 'active' });
       success('Suscripción reactivada');
     },
     onError: createCRUDErrorHandler('update', 'Suscripcion'),
@@ -243,7 +243,7 @@ export function useActualizarProximoCobro() {
       return response.data?.data;
     },
     onSuccess: (_, { id }) => {
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.SUSCRIPCION, id] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.SUSCRIPCION, id], refetchType: 'active' });
       success('Fecha de cobro actualizada');
     },
     onError: createCRUDErrorHandler('update', 'Suscripcion'),

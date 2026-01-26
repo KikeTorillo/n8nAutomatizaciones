@@ -28,8 +28,8 @@ export function useCrearCuenta() {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: CONTABILIDAD_KEYS.cuentas.all() });
-      queryClient.invalidateQueries({ queryKey: CONTABILIDAD_KEYS.dashboard() });
+      queryClient.invalidateQueries({ queryKey: CONTABILIDAD_KEYS.cuentas.all(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: CONTABILIDAD_KEYS.dashboard(), refetchType: 'active' });
       success('Cuenta creada exitosamente');
     },
     onError: (error) => {
@@ -62,8 +62,8 @@ export function useActualizarCuenta() {
       return response.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: CONTABILIDAD_KEYS.cuentas.all() });
-      queryClient.invalidateQueries({ queryKey: CONTABILIDAD_KEYS.cuentas.detail(variables.id) });
+      queryClient.invalidateQueries({ queryKey: CONTABILIDAD_KEYS.cuentas.all(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: CONTABILIDAD_KEYS.cuentas.detail(variables.id), refetchType: 'active' });
       success('Cuenta actualizada exitosamente');
     },
     onError: (error) => {
@@ -91,8 +91,8 @@ export function useEliminarCuenta() {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: CONTABILIDAD_KEYS.cuentas.all() });
-      queryClient.invalidateQueries({ queryKey: CONTABILIDAD_KEYS.dashboard() });
+      queryClient.invalidateQueries({ queryKey: CONTABILIDAD_KEYS.cuentas.all(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: CONTABILIDAD_KEYS.dashboard(), refetchType: 'active' });
       success('Cuenta eliminada exitosamente');
     },
     onError: (error) => {
@@ -120,8 +120,8 @@ export function useInicializarCatalogoSAT() {
       return response.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: CONTABILIDAD_KEYS.cuentas.all() });
-      queryClient.invalidateQueries({ queryKey: CONTABILIDAD_KEYS.dashboard() });
+      queryClient.invalidateQueries({ queryKey: CONTABILIDAD_KEYS.cuentas.all(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: CONTABILIDAD_KEYS.dashboard(), refetchType: 'active' });
       success(`Catalogo SAT inicializado: ${data?.data?.cuentas_creadas || 0} cuentas creadas`);
     },
     onError: (error) => {

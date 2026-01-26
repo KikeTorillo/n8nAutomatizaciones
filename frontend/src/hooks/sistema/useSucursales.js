@@ -122,9 +122,9 @@ export function useAsignarUsuarioSucursal() {
       return response.data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['sucursal-usuarios', variables.sucursalId], exact: true });
-      queryClient.invalidateQueries({ queryKey: ['sucursales'] });
-      queryClient.invalidateQueries({ queryKey: ['sucursales-usuario'] });
+      queryClient.invalidateQueries({ queryKey: ['sucursal-usuarios', variables.sucursalId], exact: true, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['sucursales'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['sucursales-usuario'], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('create', 'Usuario'),
   });
@@ -159,8 +159,8 @@ export function useAsignarProfesionalSucursal() {
       return response.data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['sucursal-profesionales', variables.sucursalId], exact: true });
-      queryClient.invalidateQueries({ queryKey: ['sucursales'] });
+      queryClient.invalidateQueries({ queryKey: ['sucursal-profesionales', variables.sucursalId], exact: true, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['sucursales'], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('create', 'Profesional'),
   });
@@ -250,7 +250,7 @@ export function useCrearTransferencia() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['transferencias'] });
+      queryClient.invalidateQueries({ queryKey: ['transferencias'], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('create', 'Transferencia'),
   });
@@ -268,8 +268,8 @@ export function useEnviarTransferencia() {
       return response.data.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['transferencia', data.id], exact: true });
-      queryClient.invalidateQueries({ queryKey: ['transferencias'] });
+      queryClient.invalidateQueries({ queryKey: ['transferencia', data.id], exact: true, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['transferencias'], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('update', 'Transferencia'),
   });
@@ -287,8 +287,8 @@ export function useRecibirTransferencia() {
       return response.data.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['transferencia', data.id], exact: true });
-      queryClient.invalidateQueries({ queryKey: ['transferencias'] });
+      queryClient.invalidateQueries({ queryKey: ['transferencia', data.id], exact: true, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['transferencias'], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('update', 'Transferencia'),
   });
@@ -306,8 +306,8 @@ export function useCancelarTransferencia() {
       return response.data.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['transferencia', data.id], exact: true });
-      queryClient.invalidateQueries({ queryKey: ['transferencias'] });
+      queryClient.invalidateQueries({ queryKey: ['transferencia', data.id], exact: true, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['transferencias'], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('update', 'Transferencia'),
   });

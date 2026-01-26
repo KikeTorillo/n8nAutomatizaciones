@@ -109,10 +109,10 @@ export function useVincularUsuario() {
       return response.data.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['profesional', data.id] });
-      queryClient.invalidateQueries({ queryKey: ['profesionales'] });
-      queryClient.invalidateQueries({ queryKey: ['usuarios-disponibles'] });
-      queryClient.invalidateQueries({ queryKey: ['profesional-usuario'] });
+      queryClient.invalidateQueries({ queryKey: ['profesional', data.id], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['profesionales'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['usuarios-disponibles'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['profesional-usuario'], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('update', 'Profesional', {
       409: 'El usuario ya está vinculado a otro profesional',
@@ -132,10 +132,10 @@ export function useActualizarModulos() {
       return response.data.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['profesional', data.id] });
-      queryClient.invalidateQueries({ queryKey: ['profesionales'] });
-      queryClient.invalidateQueries({ queryKey: ['profesionales-modulo'] });
-      queryClient.invalidateQueries({ queryKey: ['profesional-usuario'] });
+      queryClient.invalidateQueries({ queryKey: ['profesional', data.id], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['profesionales'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['profesionales-modulo'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['profesional-usuario'], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('update', 'Módulos'),
   });
@@ -228,9 +228,9 @@ export function useAsignarCategoria() {
       return response.data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['profesional-categorias', variables.profesionalId] });
-      queryClient.invalidateQueries({ queryKey: ['profesional', variables.profesionalId] });
-      queryClient.invalidateQueries({ queryKey: ['categoria-profesionales'] });
+      queryClient.invalidateQueries({ queryKey: ['profesional-categorias', variables.profesionalId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['profesional', variables.profesionalId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['categoria-profesionales'], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('create', 'Categoría', {
       409: 'El profesional ya tiene asignada esta categoría',
@@ -250,9 +250,9 @@ export function useEliminarCategoriaDeProf() {
       return { profesionalId, categoriaId };
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['profesional-categorias', variables.profesionalId] });
-      queryClient.invalidateQueries({ queryKey: ['profesional', variables.profesionalId] });
-      queryClient.invalidateQueries({ queryKey: ['categoria-profesionales'] });
+      queryClient.invalidateQueries({ queryKey: ['profesional-categorias', variables.profesionalId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['profesional', variables.profesionalId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['categoria-profesionales'], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('delete', 'Categoría'),
   });
@@ -270,10 +270,10 @@ export function useSincronizarCategorias() {
       return response.data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['profesional-categorias', variables.profesionalId] });
-      queryClient.invalidateQueries({ queryKey: ['profesional', variables.profesionalId] });
-      queryClient.invalidateQueries({ queryKey: ['categoria-profesionales'] });
-      queryClient.invalidateQueries({ queryKey: ['categorias-profesional'] });
+      queryClient.invalidateQueries({ queryKey: ['profesional-categorias', variables.profesionalId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['profesional', variables.profesionalId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['categoria-profesionales'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['categorias-profesional'], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('update', 'Categorías'),
   });

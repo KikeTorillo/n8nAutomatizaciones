@@ -169,7 +169,7 @@ export const useCrearBloqueo = () => {
       return response.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['bloqueos'] });
+      queryClient.invalidateQueries({ queryKey: ['bloqueos'], refetchType: 'active' });
       toast.success('Bloqueo creado exitosamente');
       return data;
     },
@@ -214,8 +214,8 @@ export const useActualizarBloqueo = () => {
       return response.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['bloqueos'] });
-      queryClient.invalidateQueries({ queryKey: ['bloqueo', variables.id] });
+      queryClient.invalidateQueries({ queryKey: ['bloqueos'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['bloqueo', variables.id], refetchType: 'active' });
       toast.success('Bloqueo actualizado exitosamente');
       return data;
     },
@@ -247,7 +247,7 @@ export const useEliminarBloqueo = () => {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['bloqueos'] });
+      queryClient.invalidateQueries({ queryKey: ['bloqueos'], refetchType: 'active' });
       toast.success('Bloqueo eliminado exitosamente');
     },
     onError: (error) => {
@@ -307,7 +307,7 @@ export const useBatchCrearBloqueos = () => {
       };
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['bloqueos'] });
+      queryClient.invalidateQueries({ queryKey: ['bloqueos'], refetchType: 'active' });
 
       if (data.fallidos === 0) {
         toast.success(`${data.exitosos} bloqueos creados exitosamente`);

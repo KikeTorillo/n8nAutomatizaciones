@@ -58,8 +58,8 @@ export function useCrearInvitado() {
       return response.data.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['invitados-evento', variables.eventoId] });
-      queryClient.invalidateQueries({ queryKey: ['evento-digital-estadisticas', variables.eventoId] });
+      queryClient.invalidateQueries({ queryKey: ['invitados-evento', variables.eventoId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['evento-digital-estadisticas', variables.eventoId], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('create', 'Invitado', {
       409: 'Ya existe un invitado con ese email o telefono',
@@ -88,8 +88,8 @@ export function useActualizarInvitado() {
       return { ...response.data.data, eventoId };
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['invitados-evento', data.eventoId] });
-      queryClient.invalidateQueries({ queryKey: ['evento-digital-estadisticas', data.eventoId] });
+      queryClient.invalidateQueries({ queryKey: ['invitados-evento', data.eventoId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['evento-digital-estadisticas', data.eventoId], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('update', 'Invitado'),
   });
@@ -108,8 +108,8 @@ export function useEliminarInvitado() {
       return { ...response.data, eventoId };
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['invitados-evento', data.eventoId] });
-      queryClient.invalidateQueries({ queryKey: ['evento-digital-estadisticas', data.eventoId] });
+      queryClient.invalidateQueries({ queryKey: ['invitados-evento', data.eventoId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['evento-digital-estadisticas', data.eventoId], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('delete', 'Invitado'),
   });
@@ -128,8 +128,8 @@ export function useImportarInvitados() {
       return { ...response.data.data, eventoId };
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['invitados-evento', data.eventoId] });
-      queryClient.invalidateQueries({ queryKey: ['evento-digital-estadisticas', data.eventoId] });
+      queryClient.invalidateQueries({ queryKey: ['invitados-evento', data.eventoId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['evento-digital-estadisticas', data.eventoId], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('create', 'Invitados'),
   });
@@ -211,7 +211,7 @@ export function useCrearUbicacion() {
       return response.data.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['ubicaciones-evento', variables.eventoId] });
+      queryClient.invalidateQueries({ queryKey: ['ubicaciones-evento', variables.eventoId], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('create', 'Ubicacion'),
   });
@@ -238,7 +238,7 @@ export function useActualizarUbicacion() {
       return { ...response.data.data, eventoId };
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['ubicaciones-evento', data.eventoId] });
+      queryClient.invalidateQueries({ queryKey: ['ubicaciones-evento', data.eventoId], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('update', 'Ubicacion'),
   });
@@ -257,7 +257,7 @@ export function useEliminarUbicacion() {
       return { ...response.data, eventoId };
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['ubicaciones-evento', data.eventoId] });
+      queryClient.invalidateQueries({ queryKey: ['ubicaciones-evento', data.eventoId], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('delete', 'Ubicacion'),
   });

@@ -303,11 +303,11 @@ export function useCrearPerfil() {
     },
     onSuccess: () => {
       // Invalidar queries relacionadas (sin exact para capturar todas las variantes)
-      queryClient.invalidateQueries({ queryKey: ['perfiles-marketplace'] });
+      queryClient.invalidateQueries({ queryKey: ['perfiles-marketplace'], refetchType: 'active' });
       // Invalidar mi perfil (con exact porque es específico)
-      queryClient.invalidateQueries({ queryKey: ['mi-perfil-marketplace'], exact: true });
+      queryClient.invalidateQueries({ queryKey: ['mi-perfil-marketplace'], exact: true, refetchType: 'active' });
       // Invalidar setup progress del dashboard
-      queryClient.invalidateQueries({ queryKey: ['organizacion-setup-progress'], exact: true });
+      queryClient.invalidateQueries({ queryKey: ['organizacion-setup-progress'], exact: true, refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('create', 'Perfil', {
       409: 'Ya existe un perfil para esta organizacion',
@@ -348,9 +348,9 @@ export function useActualizarPerfil() {
     },
     onSuccess: (data) => {
       // Invalidar queries relacionadas
-      queryClient.invalidateQueries({ queryKey: ['perfiles-marketplace'] });
-      queryClient.invalidateQueries({ queryKey: ['mi-perfil-marketplace'], exact: true });
-      queryClient.invalidateQueries({ queryKey: ['perfil-publico', data.slug], exact: true });
+      queryClient.invalidateQueries({ queryKey: ['perfiles-marketplace'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['mi-perfil-marketplace'], exact: true, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['perfil-publico', data.slug], exact: true, refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('update', 'Perfil'),
   });
@@ -385,9 +385,9 @@ export function useCrearReseña() {
     },
     onSuccess: () => {
       // Invalidar reseñas del negocio
-      queryClient.invalidateQueries({ queryKey: ['resenas-negocio'] });
+      queryClient.invalidateQueries({ queryKey: ['resenas-negocio'], refetchType: 'active' });
       // Invalidar perfil público (para actualizar rating promedio)
-      queryClient.invalidateQueries({ queryKey: ['perfil-publico'] });
+      queryClient.invalidateQueries({ queryKey: ['perfil-publico'], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('create', 'Resena', {
       400: 'No puedes crear resena para esta cita',
@@ -422,8 +422,8 @@ export function useResponderReseña() {
     },
     onSuccess: () => {
       // Invalidar reseñas
-      queryClient.invalidateQueries({ queryKey: ['resenas-negocio'] });
-      queryClient.invalidateQueries({ queryKey: ['mi-perfil-marketplace'], exact: true });
+      queryClient.invalidateQueries({ queryKey: ['resenas-negocio'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['mi-perfil-marketplace'], exact: true, refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('update', 'Resena'),
   });
@@ -457,8 +457,8 @@ export function useModerarReseña() {
     },
     onSuccess: () => {
       // Invalidar reseñas
-      queryClient.invalidateQueries({ queryKey: ['resenas-negocio'] });
-      queryClient.invalidateQueries({ queryKey: ['mi-perfil-marketplace'], exact: true });
+      queryClient.invalidateQueries({ queryKey: ['resenas-negocio'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['mi-perfil-marketplace'], exact: true, refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('update', 'Resena'),
   });

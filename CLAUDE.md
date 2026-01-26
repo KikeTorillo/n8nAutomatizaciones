@@ -55,8 +55,6 @@ await RLSContextManager.withBypass(async (db) => { ... });
 
 ## Sistema RBAC
 
-### Jerarquía de Niveles
-
 | Nivel | Rol | Capacidades |
 |-------|-----|-------------|
 | 100 | super_admin | Acceso TOTAL, bypass RLS, cross-org |
@@ -66,17 +64,8 @@ await RLSContextManager.withBypass(async (db) => { ... });
 | 5 | cliente | Autoservicio |
 | 1 | bot | Automatizaciones |
 
-### Reglas Clave
-
-- **Solo `rol_id` y `rol_codigo`** - ENUM eliminado, sistema dinámico
-- **Protección jerárquica**: Solo gestionar usuarios con nivel inferior
-- **Bypass**: Solo `super_admin` (nivel 100) tiene `bypass_permisos = TRUE`
-
-### Backend - RolHelper
-
 ```javascript
 const { RolHelper } = require('../utils/helpers');
-
 RolHelper.esSuperAdmin(user);           // nivel === 100
 RolHelper.esRolAdministrativo(user);    // nivel >= 90
 RolHelper.puedeGestionarUsuario(gestor, objetivo);  // gestor.nivel > objetivo.nivel
@@ -86,14 +75,6 @@ RolHelper.puedeGestionarUsuario(gestor, objetivo);  // gestor.nivel > objetivo.n
 
 ## Sistema de Suscripciones
 
-### Arquitectura Billing
-
-```
-Nexo Team (org 1) ─── VENDOR
-    └── Organizaciones ←── Clientes CRM (organizacion_vinculada_id)
-            └── Suscripciones → org.plan_actual
-```
-
 ### Estados y Acceso
 
 | Estado | Acceso | UX |
@@ -102,27 +83,10 @@ Nexo Team (org 1) ─── VENDOR
 | `grace_period` | ⚠️ Solo GET | Banner rojo urgente |
 | `pausada`, `suspendida`, `cancelada` | ❌ Bloqueado | Redirect a `/planes` |
 
-### Bypasses del Middleware
-
+### Bypasses
 - `organizacion_id === 1` (Nexo Team)
 - `nivel_jerarquia >= 100` (SuperAdmin)
 - Rutas exentas: `/auth/*`, `/planes/*`, `/health`
-
-### Cobros Recurrentes (MercadoPago Preapproval)
-
-**MercadoPago cobra automáticamente** cada período:
-
-```
-Checkout → Usuario acepta Preapproval → MP guarda tarjeta
-                                              ↓
-                                    MP cobra cada mes (automático)
-                                              ↓
-                                    Webhook "authorized_payment"
-                                              ↓
-                                    Tu sistema actualiza estado
-```
-
-**Nota:** Aplica tanto para Nexo Team como clientes con sus propias credenciales MP.
 
 ---
 
@@ -138,7 +102,16 @@ Checkout → Usuario acepta Preapproval → MP guarda tarjeta
 - **Sanitizar opcionales**: Joi rechaza `""`, usar `undefined`
 - **Dark mode**: Siempre variantes `dark:` en Tailwind
 - **Colores**: Solo `primary-*` (primario: `#753572`)
-- **React.memo**: Usar en componentes de lista/tabla
+- **React.memo**: Obligatorio en componentes de lista/tabla y sus items
+- **Cache invalidation**: Siempre usar `refetchType: 'active'`
+
+```javascript
+// ✅ Correcto
+queryClient.invalidateQueries({ queryKey: ['productos'], refetchType: 'active' });
+
+// ❌ Incorrecto (refetch innecesario de queries inactivas)
+queryClient.invalidateQueries({ queryKey: ['productos'] });
+```
 
 ### Componentes UI (Atomic Design)
 
@@ -172,14 +145,24 @@ module.exports = createCrudController({
 ```javascript
 import { createCRUDHooks } from '@/hooks/factories';
 
-const hooks = createCRUDHooks({
+const crudHooks = createCRUDHooks({
   name: 'entidad',
+  namePlural: 'entidades',
   api: miApi,
   baseKey: 'entidades',
+  apiMethods: {
+    list: 'listar',
+    get: 'obtenerPorId',
+    create: 'crear',
+    update: 'actualizar',
+    delete: 'eliminar',
+  },
+  staleTime: STALE_TIMES.SEMI_STATIC,
 });
 
-export const useEntidades = hooks.useList;
-export const useCrearEntidad = hooks.useCreate;
+export const useEntidades = crudHooks.useList;
+export const useEntidad = crudHooks.useDetail;
+export const useCrearEntidad = crudHooks.useCreate;
 ```
 
 ---
@@ -196,20 +179,13 @@ export const useCrearEntidad = hooks.useCreate;
 
 ---
 
-## Gaps Pendientes
+## Pendientes
 
 | Prioridad | Feature |
 |-----------|---------|
 | **Alta** | Definir UX de `/planes` (landing vs app) |
 | **Media** | Prorrateo en cambios de plan |
 | **Baja** | 2FA/MFA |
-
----
-
-## Documentación
-
-- **Plan de Validación**: `/docs/PLAN_VALIDACION_SISTEMA.md`
-- **Cuentas de Prueba**: Ver documento de validación
 
 ---
 

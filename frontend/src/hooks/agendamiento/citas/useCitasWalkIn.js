@@ -23,7 +23,7 @@ export function useCrearCitaWalkIn() {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['citas'] });
+      queryClient.invalidateQueries({ queryKey: ['citas'], refetchType: 'active' });
       success('Cita walk-in creada exitosamente');
     },
     onError: (error) => {

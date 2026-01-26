@@ -81,7 +81,7 @@ export const useCrearCategoriaPago = () => {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: categoriasPagoKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: categoriasPagoKeys.lists(), refetchType: 'active' });
       success('Categoría de pago creada exitosamente');
     },
     onError: (err) => {
@@ -104,8 +104,8 @@ export const useActualizarCategoriaPago = () => {
       return response.data.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: categoriasPagoKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: categoriasPagoKeys.detail(variables.id) });
+      queryClient.invalidateQueries({ queryKey: categoriasPagoKeys.lists(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: categoriasPagoKeys.detail(variables.id), refetchType: 'active' });
       success('Categoría de pago actualizada exitosamente');
     },
     onError: (err) => {
@@ -128,7 +128,7 @@ export const useEliminarCategoriaPago = () => {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: categoriasPagoKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: categoriasPagoKeys.lists(), refetchType: 'active' });
       success('Categoría de pago eliminada exitosamente');
     },
     onError: (err) => {

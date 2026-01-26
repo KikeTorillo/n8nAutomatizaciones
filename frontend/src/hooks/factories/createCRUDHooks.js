@@ -164,7 +164,7 @@ export function createCRUDHooks(config) {
       },
       onSuccess: () => {
         invalidateOnCreate.forEach((key) => {
-          queryClient.invalidateQueries({ queryKey: [key] });
+          queryClient.invalidateQueries({ queryKey: [key], refetchType: 'active' });
         });
       },
       onError: createCRUDErrorHandler('create', entityName, errorMessages.create || {}),
@@ -186,10 +186,10 @@ export function createCRUDHooks(config) {
       onSuccess: (_, variables) => {
         // Invalidar queries configuradas
         invalidateOnUpdate.forEach((key) => {
-          queryClient.invalidateQueries({ queryKey: [key] });
+          queryClient.invalidateQueries({ queryKey: [key], refetchType: 'active' });
         });
         // Siempre invalidar el detalle específico
-        queryClient.invalidateQueries({ queryKey: [name, variables.id] });
+        queryClient.invalidateQueries({ queryKey: [name, variables.id], refetchType: 'active' });
       },
       onError: createCRUDErrorHandler('update', entityName, errorMessages.update || {}),
     });
@@ -208,7 +208,7 @@ export function createCRUDHooks(config) {
       },
       onSuccess: () => {
         invalidateOnDelete.forEach((key) => {
-          queryClient.invalidateQueries({ queryKey: [key] });
+          queryClient.invalidateQueries({ queryKey: [key], refetchType: 'active' });
         });
       },
       onError: createCRUDErrorHandler('delete', entityName, errorMessages.delete || {}),

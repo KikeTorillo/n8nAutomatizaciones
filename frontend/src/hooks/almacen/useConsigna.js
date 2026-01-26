@@ -195,7 +195,7 @@ export function useCrearAcuerdoConsigna() {
   return useMutation({
     mutationFn: (data) => consignaApi.crearAcuerdo(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: CONSIGNA_KEYS.acuerdos() });
+      queryClient.invalidateQueries({ queryKey: CONSIGNA_KEYS.acuerdos(), refetchType: 'active' });
       toast.success('Acuerdo de consignacion creado');
     },
     onError: createCRUDErrorHandler('create', 'Acuerdo'),
@@ -212,8 +212,8 @@ export function useActualizarAcuerdoConsigna() {
   return useMutation({
     mutationFn: ({ id, data }) => consignaApi.actualizarAcuerdo(id, data),
     onSuccess: (response, { id }) => {
-      queryClient.invalidateQueries({ queryKey: CONSIGNA_KEYS.acuerdoDetail(id) });
-      queryClient.invalidateQueries({ queryKey: CONSIGNA_KEYS.acuerdos() });
+      queryClient.invalidateQueries({ queryKey: CONSIGNA_KEYS.acuerdoDetail(id), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: CONSIGNA_KEYS.acuerdos(), refetchType: 'active' });
       toast.success('Acuerdo actualizado');
     },
     onError: createCRUDErrorHandler('update', 'Acuerdo'),
@@ -230,8 +230,8 @@ export function useActivarAcuerdoConsigna() {
   return useMutation({
     mutationFn: (id) => consignaApi.activarAcuerdo(id),
     onSuccess: (response, id) => {
-      queryClient.invalidateQueries({ queryKey: CONSIGNA_KEYS.acuerdoDetail(id) });
-      queryClient.invalidateQueries({ queryKey: CONSIGNA_KEYS.acuerdos() });
+      queryClient.invalidateQueries({ queryKey: CONSIGNA_KEYS.acuerdoDetail(id), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: CONSIGNA_KEYS.acuerdos(), refetchType: 'active' });
       toast.success('Acuerdo activado');
     },
     onError: createCRUDErrorHandler('update', 'Acuerdo'),
@@ -248,8 +248,8 @@ export function usePausarAcuerdoConsigna() {
   return useMutation({
     mutationFn: (id) => consignaApi.pausarAcuerdo(id),
     onSuccess: (response, id) => {
-      queryClient.invalidateQueries({ queryKey: CONSIGNA_KEYS.acuerdoDetail(id) });
-      queryClient.invalidateQueries({ queryKey: CONSIGNA_KEYS.acuerdos() });
+      queryClient.invalidateQueries({ queryKey: CONSIGNA_KEYS.acuerdoDetail(id), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: CONSIGNA_KEYS.acuerdos(), refetchType: 'active' });
       toast.success('Acuerdo pausado');
     },
     onError: createCRUDErrorHandler('update', 'Acuerdo'),
@@ -266,8 +266,8 @@ export function useTerminarAcuerdoConsigna() {
   return useMutation({
     mutationFn: (id) => consignaApi.terminarAcuerdo(id),
     onSuccess: (response, id) => {
-      queryClient.invalidateQueries({ queryKey: CONSIGNA_KEYS.acuerdoDetail(id) });
-      queryClient.invalidateQueries({ queryKey: CONSIGNA_KEYS.acuerdos() });
+      queryClient.invalidateQueries({ queryKey: CONSIGNA_KEYS.acuerdoDetail(id), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: CONSIGNA_KEYS.acuerdos(), refetchType: 'active' });
       toast.success('Acuerdo terminado');
     },
     onError: createCRUDErrorHandler('update', 'Acuerdo'),
@@ -286,8 +286,8 @@ export function useAgregarProductoConsigna() {
   return useMutation({
     mutationFn: ({ acuerdoId, data }) => consignaApi.agregarProducto(acuerdoId, data),
     onSuccess: (response, { acuerdoId }) => {
-      queryClient.invalidateQueries({ queryKey: CONSIGNA_KEYS.acuerdoProductos(acuerdoId) });
-      queryClient.invalidateQueries({ queryKey: CONSIGNA_KEYS.acuerdoDetail(acuerdoId) });
+      queryClient.invalidateQueries({ queryKey: CONSIGNA_KEYS.acuerdoProductos(acuerdoId), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: CONSIGNA_KEYS.acuerdoDetail(acuerdoId), refetchType: 'active' });
       toast.success('Producto agregado al acuerdo');
     },
     onError: createCRUDErrorHandler('create', 'Producto'),
@@ -305,7 +305,7 @@ export function useActualizarProductoConsigna() {
     mutationFn: ({ acuerdoId, productoId, data, varianteId }) =>
       consignaApi.actualizarProducto(acuerdoId, productoId, data, varianteId),
     onSuccess: (response, { acuerdoId }) => {
-      queryClient.invalidateQueries({ queryKey: CONSIGNA_KEYS.acuerdoProductos(acuerdoId) });
+      queryClient.invalidateQueries({ queryKey: CONSIGNA_KEYS.acuerdoProductos(acuerdoId), refetchType: 'active' });
       toast.success('Producto actualizado');
     },
     onError: createCRUDErrorHandler('update', 'Producto'),
@@ -323,8 +323,8 @@ export function useRemoverProductoConsigna() {
     mutationFn: ({ acuerdoId, productoId, varianteId }) =>
       consignaApi.removerProducto(acuerdoId, productoId, varianteId),
     onSuccess: (response, { acuerdoId }) => {
-      queryClient.invalidateQueries({ queryKey: CONSIGNA_KEYS.acuerdoProductos(acuerdoId) });
-      queryClient.invalidateQueries({ queryKey: CONSIGNA_KEYS.acuerdoDetail(acuerdoId) });
+      queryClient.invalidateQueries({ queryKey: CONSIGNA_KEYS.acuerdoProductos(acuerdoId), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: CONSIGNA_KEYS.acuerdoDetail(acuerdoId), refetchType: 'active' });
       toast.success('Producto removido del acuerdo');
     },
     onError: createCRUDErrorHandler('delete', 'Producto'),
@@ -343,9 +343,9 @@ export function useRecibirMercanciaConsigna() {
   return useMutation({
     mutationFn: ({ acuerdoId, data }) => consignaApi.recibirMercancia(acuerdoId, data),
     onSuccess: (response, { acuerdoId }) => {
-      queryClient.invalidateQueries({ queryKey: CONSIGNA_KEYS.stock() });
-      queryClient.invalidateQueries({ queryKey: CONSIGNA_KEYS.acuerdoDetail(acuerdoId) });
-      queryClient.invalidateQueries({ queryKey: CONSIGNA_KEYS.reportes() });
+      queryClient.invalidateQueries({ queryKey: CONSIGNA_KEYS.stock(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: CONSIGNA_KEYS.acuerdoDetail(acuerdoId), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: CONSIGNA_KEYS.reportes(), refetchType: 'active' });
       toast.success('Mercancia recibida en consignacion');
     },
     onError: createCRUDErrorHandler('create', 'Mercancía'),
@@ -362,8 +362,8 @@ export function useAjustarStockConsigna() {
   return useMutation({
     mutationFn: ({ stockId, data }) => consignaApi.ajustarStock(stockId, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: CONSIGNA_KEYS.stock() });
-      queryClient.invalidateQueries({ queryKey: CONSIGNA_KEYS.reportes() });
+      queryClient.invalidateQueries({ queryKey: CONSIGNA_KEYS.stock(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: CONSIGNA_KEYS.reportes(), refetchType: 'active' });
       toast.success('Stock ajustado');
     },
     onError: createCRUDErrorHandler('update', 'Stock'),
@@ -380,9 +380,9 @@ export function useDevolverMercanciaConsigna() {
   return useMutation({
     mutationFn: ({ acuerdoId, data }) => consignaApi.devolverMercancia(acuerdoId, data),
     onSuccess: (response, { acuerdoId }) => {
-      queryClient.invalidateQueries({ queryKey: CONSIGNA_KEYS.stock() });
-      queryClient.invalidateQueries({ queryKey: CONSIGNA_KEYS.acuerdoDetail(acuerdoId) });
-      queryClient.invalidateQueries({ queryKey: CONSIGNA_KEYS.reportes() });
+      queryClient.invalidateQueries({ queryKey: CONSIGNA_KEYS.stock(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: CONSIGNA_KEYS.acuerdoDetail(acuerdoId), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: CONSIGNA_KEYS.reportes(), refetchType: 'active' });
       toast.success('Devolucion registrada');
     },
     onError: createCRUDErrorHandler('create', 'Devolución'),
@@ -401,8 +401,8 @@ export function useGenerarLiquidacion() {
   return useMutation({
     mutationFn: (data) => consignaApi.generarLiquidacion(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: CONSIGNA_KEYS.liquidaciones() });
-      queryClient.invalidateQueries({ queryKey: CONSIGNA_KEYS.reportePendiente() });
+      queryClient.invalidateQueries({ queryKey: CONSIGNA_KEYS.liquidaciones(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: CONSIGNA_KEYS.reportePendiente(), refetchType: 'active' });
       toast.success('Liquidacion generada');
     },
     onError: createCRUDErrorHandler('create', 'Liquidación'),
@@ -419,9 +419,9 @@ export function useConfirmarLiquidacion() {
   return useMutation({
     mutationFn: (id) => consignaApi.confirmarLiquidacion(id),
     onSuccess: (response, id) => {
-      queryClient.invalidateQueries({ queryKey: CONSIGNA_KEYS.liquidacionDetail(id) });
-      queryClient.invalidateQueries({ queryKey: CONSIGNA_KEYS.liquidaciones() });
-      queryClient.invalidateQueries({ queryKey: CONSIGNA_KEYS.reportePendiente() });
+      queryClient.invalidateQueries({ queryKey: CONSIGNA_KEYS.liquidacionDetail(id), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: CONSIGNA_KEYS.liquidaciones(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: CONSIGNA_KEYS.reportePendiente(), refetchType: 'active' });
       toast.success('Liquidacion confirmada');
     },
     onError: createCRUDErrorHandler('update', 'Liquidación'),
@@ -438,8 +438,8 @@ export function usePagarLiquidacion() {
   return useMutation({
     mutationFn: ({ id, data }) => consignaApi.pagarLiquidacion(id, data),
     onSuccess: (response, { id }) => {
-      queryClient.invalidateQueries({ queryKey: CONSIGNA_KEYS.liquidacionDetail(id) });
-      queryClient.invalidateQueries({ queryKey: CONSIGNA_KEYS.liquidaciones() });
+      queryClient.invalidateQueries({ queryKey: CONSIGNA_KEYS.liquidacionDetail(id), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: CONSIGNA_KEYS.liquidaciones(), refetchType: 'active' });
       toast.success('Pago registrado');
     },
     onError: createCRUDErrorHandler('create', 'Pago'),
@@ -456,9 +456,9 @@ export function useCancelarLiquidacion() {
   return useMutation({
     mutationFn: (id) => consignaApi.cancelarLiquidacion(id),
     onSuccess: (response, id) => {
-      queryClient.invalidateQueries({ queryKey: CONSIGNA_KEYS.liquidacionDetail(id) });
-      queryClient.invalidateQueries({ queryKey: CONSIGNA_KEYS.liquidaciones() });
-      queryClient.invalidateQueries({ queryKey: CONSIGNA_KEYS.reportePendiente() });
+      queryClient.invalidateQueries({ queryKey: CONSIGNA_KEYS.liquidacionDetail(id), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: CONSIGNA_KEYS.liquidaciones(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: CONSIGNA_KEYS.reportePendiente(), refetchType: 'active' });
       toast.success('Liquidacion cancelada');
     },
     onError: createCRUDErrorHandler('delete', 'Liquidación'),

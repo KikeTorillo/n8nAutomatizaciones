@@ -80,12 +80,12 @@ export function useRegistrarMovimiento() {
       return response.data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['movimientos'] });
-      queryClient.invalidateQueries({ queryKey: ['kardex', variables.producto_id] });
-      queryClient.invalidateQueries({ queryKey: ['productos'] });
-      queryClient.invalidateQueries({ queryKey: ['producto', variables.producto_id] });
-      queryClient.invalidateQueries({ queryKey: ['stock-critico'] });
-      queryClient.invalidateQueries({ queryKey: ['valor-inventario'] });
+      queryClient.invalidateQueries({ queryKey: ['movimientos'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['kardex', variables.producto_id], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['productos'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['producto', variables.producto_id], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['stock-critico'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['valor-inventario'], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('create', 'Movimiento', {
       409: 'Stock insuficiente para realizar la salida',

@@ -53,7 +53,7 @@ export function useMultiTenantMutation({
     onSuccess: (data, variables, context) => {
       // Invalidar queries especificadas
       invalidateKeys.forEach((key) => {
-        queryClient.invalidateQueries({ queryKey: [key] });
+        queryClient.invalidateQueries({ queryKey: [key], refetchType: 'active' });
       });
 
       // Ejecutar onSuccess original si existe

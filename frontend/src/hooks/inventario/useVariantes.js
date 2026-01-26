@@ -21,9 +21,9 @@ import { createSearchHook } from '@/hooks/factories';
  * Invalida queries relacionadas con variantes de un producto
  */
 function invalidarVariantesProducto(queryClient, productoId) {
-  queryClient.invalidateQueries({ queryKey: queryKeys.inventario.variantes.list(productoId) });
-  queryClient.invalidateQueries({ queryKey: ['variantes-resumen', productoId] });
-  queryClient.invalidateQueries({ queryKey: queryKeys.inventario.productos.detail(productoId) });
+  queryClient.invalidateQueries({ queryKey: queryKeys.inventario.variantes.list(productoId), refetchType: 'active' });
+  queryClient.invalidateQueries({ queryKey: ['variantes-resumen', productoId], refetchType: 'active' });
+  queryClient.invalidateQueries({ queryKey: queryKeys.inventario.productos.detail(productoId), refetchType: 'active' });
 }
 
 // ==================== QUERIES ====================
@@ -138,7 +138,7 @@ export function useActualizarVariante() {
       return response.data.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.variantes.detail(data.id) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.variantes.detail(data.id), refetchType: 'active' });
       if (data.producto_id) {
         invalidarVariantesProducto(queryClient, data.producto_id);
       }
@@ -160,14 +160,14 @@ export function useAjustarStockVariante() {
     },
     onSuccess: (data) => {
       // Invalidar variante específica
-      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.variantes.detail(data.variante_id) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.variantes.detail(data.variante_id), refetchType: 'active' });
       // Invalidar queries de variantes (refetch solo activas)
       queryClient.invalidateQueries({
         queryKey: queryKeys.inventario.variantes.all,
         refetchType: 'active'
       });
       // Invalidar resumen de variantes
-      queryClient.invalidateQueries({ queryKey: ['variantes-resumen'] });
+      queryClient.invalidateQueries({ queryKey: ['variantes-resumen'], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('update', 'Stock variante'),
   });
@@ -190,7 +190,7 @@ export function useEliminarVariante() {
         queryKey: queryKeys.inventario.variantes.all,
         refetchType: 'active'
       });
-      queryClient.invalidateQueries({ queryKey: ['variantes-resumen'] });
+      queryClient.invalidateQueries({ queryKey: ['variantes-resumen'], refetchType: 'active' });
       // Invalidar lista de productos (puede cambiar estado de producto)
       queryClient.invalidateQueries({
         queryKey: queryKeys.inventario.productos.all,

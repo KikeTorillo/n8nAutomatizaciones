@@ -79,7 +79,7 @@ export function useCrearCuentaBancaria() {
       return response.data.data;
     },
     onSuccess: (data, { profesionalId }) => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.cuentasBancarias(profesionalId) });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.cuentasBancarias(profesionalId), refetchType: 'active' });
     },
   });
 }
@@ -96,8 +96,8 @@ export function useActualizarCuentaBancaria() {
       return response.data.data;
     },
     onSuccess: (data, { profesionalId, cuentaId }) => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.cuentasBancarias(profesionalId) });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.cuentaBancaria(profesionalId, cuentaId) });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.cuentasBancarias(profesionalId), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.cuentaBancaria(profesionalId, cuentaId), refetchType: 'active' });
     },
   });
 }
@@ -114,7 +114,7 @@ export function useEliminarCuentaBancaria() {
       return response.data.data;
     },
     onSuccess: (data, { profesionalId }) => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.cuentasBancarias(profesionalId) });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.cuentasBancarias(profesionalId), refetchType: 'active' });
     },
   });
 }
@@ -131,7 +131,7 @@ export function useEstablecerCuentaPrincipal() {
       return response.data.data;
     },
     onSuccess: (data, { profesionalId }) => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.cuentasBancarias(profesionalId) });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.cuentasBancarias(profesionalId), refetchType: 'active' });
     },
   });
 }

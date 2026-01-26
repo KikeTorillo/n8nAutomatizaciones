@@ -76,9 +76,9 @@ export const useCrearSuscripcionCliente = () => {
     },
     onSuccess: () => {
       // Invalidar lista de tokens
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.CHECKOUT_TOKENS] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.CHECKOUT_TOKENS], refetchType: 'active' });
       // También invalidar suscripciones por si hay relación
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.SUSCRIPCIONES] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.SUSCRIPCIONES], refetchType: 'active' });
     },
   });
 };
@@ -97,7 +97,7 @@ export const useCancelarCheckoutToken = () => {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.CHECKOUT_TOKENS] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.CHECKOUT_TOKENS], refetchType: 'active' });
     },
   });
 };

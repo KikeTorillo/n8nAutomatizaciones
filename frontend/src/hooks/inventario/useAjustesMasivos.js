@@ -77,7 +77,7 @@ export function useCrearAjusteMasivo() {
             return response.data.data;
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['ajustes-masivos'] });
+            queryClient.invalidateQueries({ queryKey: ['ajustes-masivos'], refetchType: 'active' });
         },
         onError: createCRUDErrorHandler('create', 'Ajuste masivo', {
             413: 'El archivo es demasiado grande (máximo 500 filas)',
@@ -97,8 +97,8 @@ export function useValidarAjusteMasivo() {
             return response.data.data;
         },
         onSuccess: (_, id) => {
-            queryClient.invalidateQueries({ queryKey: ['ajuste-masivo', id] });
-            queryClient.invalidateQueries({ queryKey: ['ajustes-masivos'] });
+            queryClient.invalidateQueries({ queryKey: ['ajuste-masivo', id], refetchType: 'active' });
+            queryClient.invalidateQueries({ queryKey: ['ajustes-masivos'], refetchType: 'active' });
         },
         onError: createCRUDErrorHandler('update', 'Ajuste masivo'),
     });
@@ -116,14 +116,14 @@ export function useAplicarAjusteMasivo() {
             return response.data.data;
         },
         onSuccess: (_, id) => {
-            queryClient.invalidateQueries({ queryKey: ['ajuste-masivo', id] });
-            queryClient.invalidateQueries({ queryKey: ['ajustes-masivos'] });
+            queryClient.invalidateQueries({ queryKey: ['ajuste-masivo', id], refetchType: 'active' });
+            queryClient.invalidateQueries({ queryKey: ['ajustes-masivos'], refetchType: 'active' });
             // Invalidar datos de inventario afectados
-            queryClient.invalidateQueries({ queryKey: ['productos'] });
-            queryClient.invalidateQueries({ queryKey: ['movimientos'] });
-            queryClient.invalidateQueries({ queryKey: ['kardex'] });
-            queryClient.invalidateQueries({ queryKey: ['stock-critico'] });
-            queryClient.invalidateQueries({ queryKey: ['valor-inventario'] });
+            queryClient.invalidateQueries({ queryKey: ['productos'], refetchType: 'active' });
+            queryClient.invalidateQueries({ queryKey: ['movimientos'], refetchType: 'active' });
+            queryClient.invalidateQueries({ queryKey: ['kardex'], refetchType: 'active' });
+            queryClient.invalidateQueries({ queryKey: ['stock-critico'], refetchType: 'active' });
+            queryClient.invalidateQueries({ queryKey: ['valor-inventario'], refetchType: 'active' });
         },
         onError: createCRUDErrorHandler('update', 'Ajuste masivo'),
     });
@@ -141,8 +141,8 @@ export function useCancelarAjusteMasivo() {
             return response.data.data;
         },
         onSuccess: (_, id) => {
-            queryClient.invalidateQueries({ queryKey: ['ajuste-masivo', id] });
-            queryClient.invalidateQueries({ queryKey: ['ajustes-masivos'] });
+            queryClient.invalidateQueries({ queryKey: ['ajuste-masivo', id], refetchType: 'active' });
+            queryClient.invalidateQueries({ queryKey: ['ajustes-masivos'], refetchType: 'active' });
         },
         onError: createCRUDErrorHandler('delete', 'Ajuste masivo'),
     });

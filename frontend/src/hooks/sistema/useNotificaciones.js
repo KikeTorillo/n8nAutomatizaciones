@@ -56,8 +56,8 @@ export function useMarcarNotificacionLeida() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.sistema.notificaciones.all });
-      queryClient.invalidateQueries({ queryKey: queryKeys.sistema.notificaciones.count });
+      queryClient.invalidateQueries({ queryKey: queryKeys.sistema.notificaciones.all, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.sistema.notificaciones.count, refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('update', 'Notificacion'),
   });
@@ -75,8 +75,8 @@ export function useMarcarTodasNotificacionesLeidas() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.sistema.notificaciones.all });
-      queryClient.invalidateQueries({ queryKey: queryKeys.sistema.notificaciones.count });
+      queryClient.invalidateQueries({ queryKey: queryKeys.sistema.notificaciones.all, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.sistema.notificaciones.count, refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('update', 'Notificaciones'),
   });
@@ -94,8 +94,8 @@ export function useArchivarNotificacion() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.sistema.notificaciones.all });
-      queryClient.invalidateQueries({ queryKey: queryKeys.sistema.notificaciones.count });
+      queryClient.invalidateQueries({ queryKey: queryKeys.sistema.notificaciones.all, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.sistema.notificaciones.count, refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('update', 'Notificacion'),
   });
@@ -113,8 +113,8 @@ export function useEliminarNotificacion() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.sistema.notificaciones.all });
-      queryClient.invalidateQueries({ queryKey: queryKeys.sistema.notificaciones.count });
+      queryClient.invalidateQueries({ queryKey: queryKeys.sistema.notificaciones.all, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.sistema.notificaciones.count, refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('delete', 'Notificacion'),
   });
@@ -139,7 +139,7 @@ export function useCrearNotificacion() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.sistema.notificaciones.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.sistema.notificaciones.all, refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('create', 'Notificacion'),
   });
@@ -173,7 +173,7 @@ export function useActualizarNotificacionesPreferencias() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.sistema.notificaciones.preferencias });
+      queryClient.invalidateQueries({ queryKey: queryKeys.sistema.notificaciones.preferencias, refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('update', 'Preferencias'),
   });
@@ -228,7 +228,7 @@ export function useCrearNotificacionPlantilla() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.sistema.notificaciones.plantillas });
+      queryClient.invalidateQueries({ queryKey: queryKeys.sistema.notificaciones.plantillas, refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('create', 'Plantilla'),
   });
@@ -253,7 +253,7 @@ export function useActualizarNotificacionPlantilla() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.sistema.notificaciones.plantillas });
+      queryClient.invalidateQueries({ queryKey: queryKeys.sistema.notificaciones.plantillas, refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('update', 'Plantilla'),
   });
@@ -271,7 +271,7 @@ export function useEliminarNotificacionPlantilla() {
       return id;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.sistema.notificaciones.plantillas });
+      queryClient.invalidateQueries({ queryKey: queryKeys.sistema.notificaciones.plantillas, refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('delete', 'Plantilla'),
   });

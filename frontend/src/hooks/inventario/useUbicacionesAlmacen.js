@@ -281,7 +281,7 @@ export function useAgregarStockUbicacion() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries(UBICACIONES_ALMACEN_KEYS.stock(variables.ubicacionId));
       queryClient.invalidateQueries(UBICACIONES_ALMACEN_KEYS.all);
-      queryClient.invalidateQueries({ queryKey: ['productos'] });
+      queryClient.invalidateQueries({ queryKey: ['productos'], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('create', 'Stock en ubicación'),
   });

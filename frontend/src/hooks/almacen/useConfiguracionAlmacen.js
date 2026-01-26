@@ -139,7 +139,7 @@ export function useCrearUbicacionesDefault() {
     },
     onSuccess: (data, sucursalId) => {
       // Invalidar lista de ubicaciones para que aparezcan en selectores
-      queryClient.invalidateQueries({ queryKey: ['ubicaciones-almacen'] });
+      queryClient.invalidateQueries({ queryKey: ['ubicaciones-almacen'], refetchType: 'active' });
 
       // Actualizar cache de configuración con los nuevos IDs de ubicaciones
       if (data?.ubicaciones) {

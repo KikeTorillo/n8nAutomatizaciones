@@ -81,7 +81,7 @@ export const useCrearUbicacionTrabajo = () => {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ubicacionesTrabajoKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: ubicacionesTrabajoKeys.lists(), refetchType: 'active' });
       success('Ubicación de trabajo creada exitosamente');
     },
     onError: (err) => {
@@ -104,8 +104,8 @@ export const useActualizarUbicacionTrabajo = () => {
       return response.data.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ubicacionesTrabajoKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: ubicacionesTrabajoKeys.detail(variables.id) });
+      queryClient.invalidateQueries({ queryKey: ubicacionesTrabajoKeys.lists(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ubicacionesTrabajoKeys.detail(variables.id), refetchType: 'active' });
       success('Ubicación de trabajo actualizada exitosamente');
     },
     onError: (err) => {
@@ -128,7 +128,7 @@ export const useEliminarUbicacionTrabajo = () => {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ubicacionesTrabajoKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: ubicacionesTrabajoKeys.lists(), refetchType: 'active' });
       success('Ubicación de trabajo eliminada exitosamente');
     },
     onError: (err) => {

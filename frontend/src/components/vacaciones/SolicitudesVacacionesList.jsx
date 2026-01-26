@@ -2,7 +2,7 @@
  * SolicitudesVacacionesList - Lista de solicitudes de vacaciones
  * Fase 3 del Plan de Empleados Competitivo - Enero 2026
  */
-import { useState } from 'react';
+import { useState, memo, useCallback } from 'react';
 import {
   Calendar,
   Clock,
@@ -53,7 +53,7 @@ function formatRangoFechas(fechaInicio, fechaFin, esMedioDia, turno) {
 /**
  * Badge de estado de solicitud
  */
-function EstadoBadge({ estado }) {
+const EstadoBadge = memo(function EstadoBadge({ estado }) {
   const config = getEstadoSolicitud(estado);
 
   const colorMap = {
@@ -68,12 +68,12 @@ function EstadoBadge({ estado }) {
       {config.icon} {config.label}
     </Badge>
   );
-}
+});
 
 /**
  * Tarjeta de solicitud individual
  */
-function SolicitudCard({ solicitud, onVerDetalle, onCancelar }) {
+const SolicitudCard = memo(function SolicitudCard({ solicitud, onVerDetalle, onCancelar }) {
   const [showMenu, setShowMenu] = useState(false);
   const esPendiente = solicitud.estado === 'pendiente';
 
@@ -168,7 +168,7 @@ function SolicitudCard({ solicitud, onVerDetalle, onCancelar }) {
       </div>
     </div>
   );
-}
+});
 
 /**
  * Lista de solicitudes de vacaciones del usuario
@@ -176,7 +176,7 @@ function SolicitudCard({ solicitud, onVerDetalle, onCancelar }) {
  * @param {number} anio - Año a consultar
  * @param {Function} onVerDetalle - Callback al ver detalle
  */
-function SolicitudesVacacionesList({
+const SolicitudesVacacionesList = memo(function SolicitudesVacacionesList({
   filtroEstado = null,
   anio = null,
   onVerDetalle = () => {},
@@ -274,6 +274,6 @@ function SolicitudesVacacionesList({
       )}
     </div>
   );
-}
+});
 
 export default SolicitudesVacacionesList;

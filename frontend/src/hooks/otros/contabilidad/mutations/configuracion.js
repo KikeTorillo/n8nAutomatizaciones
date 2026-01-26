@@ -22,8 +22,8 @@ export function useActualizarConfiguracion() {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: CONTABILIDAD_KEYS.configuracion() });
-      queryClient.invalidateQueries({ queryKey: CONTABILIDAD_KEYS.dashboard() });
+      queryClient.invalidateQueries({ queryKey: CONTABILIDAD_KEYS.configuracion(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: CONTABILIDAD_KEYS.dashboard(), refetchType: 'active' });
       success('Configuracion actualizada exitosamente');
     },
     onError: (error) => {

@@ -88,8 +88,8 @@ export function useGenerarSnapshot() {
         },
         onSuccess: () => {
             // Invalidar queries relacionadas
-            queryClient.invalidateQueries({ queryKey: ['inventario-snapshots'] });
-            queryClient.invalidateQueries({ queryKey: ['inventario-snapshots-fechas'] });
+            queryClient.invalidateQueries({ queryKey: ['inventario-snapshots'], refetchType: 'active' });
+            queryClient.invalidateQueries({ queryKey: ['inventario-snapshots-fechas'], refetchType: 'active' });
         }
     });
 }

@@ -119,8 +119,8 @@ export function useCrearPaquete() {
     mutationFn: ({ operacionId, data }) => paquetesApi.crear(operacionId, data),
     onSuccess: (response, { operacionId }) => {
       // Invalidar queries relacionadas
-      queryClient.invalidateQueries({ queryKey: PAQUETES_KEYS.porOperacion(operacionId) });
-      queryClient.invalidateQueries({ queryKey: PAQUETES_KEYS.resumen(operacionId) });
+      queryClient.invalidateQueries({ queryKey: PAQUETES_KEYS.porOperacion(operacionId), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: PAQUETES_KEYS.resumen(operacionId), refetchType: 'active' });
       toast.success('Paquete creado');
     },
     onError: createCRUDErrorHandler('create', 'Paquete'),
@@ -138,9 +138,9 @@ export function useActualizarPaquete() {
     mutationFn: ({ id, data }) => paquetesApi.actualizar(id, data),
     onSuccess: (response, { id }) => {
       const paquete = response.data.data;
-      queryClient.invalidateQueries({ queryKey: PAQUETES_KEYS.detail(id) });
+      queryClient.invalidateQueries({ queryKey: PAQUETES_KEYS.detail(id), refetchType: 'active' });
       if (paquete?.operacion_id) {
-        queryClient.invalidateQueries({ queryKey: PAQUETES_KEYS.porOperacion(paquete.operacion_id) });
+        queryClient.invalidateQueries({ queryKey: PAQUETES_KEYS.porOperacion(paquete.operacion_id), refetchType: 'active' });
       }
       toast.success('Paquete actualizado');
     },
@@ -158,11 +158,11 @@ export function useAgregarItemPaquete() {
   return useMutation({
     mutationFn: ({ paqueteId, data }) => paquetesApi.agregarItem(paqueteId, data),
     onSuccess: (response, { paqueteId, operacionId }) => {
-      queryClient.invalidateQueries({ queryKey: PAQUETES_KEYS.detail(paqueteId) });
+      queryClient.invalidateQueries({ queryKey: PAQUETES_KEYS.detail(paqueteId), refetchType: 'active' });
       if (operacionId) {
-        queryClient.invalidateQueries({ queryKey: PAQUETES_KEYS.itemsDisponibles(operacionId) });
-        queryClient.invalidateQueries({ queryKey: PAQUETES_KEYS.resumen(operacionId) });
-        queryClient.invalidateQueries({ queryKey: PAQUETES_KEYS.porOperacion(operacionId) });
+        queryClient.invalidateQueries({ queryKey: PAQUETES_KEYS.itemsDisponibles(operacionId), refetchType: 'active' });
+        queryClient.invalidateQueries({ queryKey: PAQUETES_KEYS.resumen(operacionId), refetchType: 'active' });
+        queryClient.invalidateQueries({ queryKey: PAQUETES_KEYS.porOperacion(operacionId), refetchType: 'active' });
       }
       toast.success('Item agregado al paquete');
     },
@@ -180,11 +180,11 @@ export function useRemoverItemPaquete() {
   return useMutation({
     mutationFn: ({ paqueteId, itemId }) => paquetesApi.removerItem(paqueteId, itemId),
     onSuccess: (response, { paqueteId, operacionId }) => {
-      queryClient.invalidateQueries({ queryKey: PAQUETES_KEYS.detail(paqueteId) });
+      queryClient.invalidateQueries({ queryKey: PAQUETES_KEYS.detail(paqueteId), refetchType: 'active' });
       if (operacionId) {
-        queryClient.invalidateQueries({ queryKey: PAQUETES_KEYS.itemsDisponibles(operacionId) });
-        queryClient.invalidateQueries({ queryKey: PAQUETES_KEYS.resumen(operacionId) });
-        queryClient.invalidateQueries({ queryKey: PAQUETES_KEYS.porOperacion(operacionId) });
+        queryClient.invalidateQueries({ queryKey: PAQUETES_KEYS.itemsDisponibles(operacionId), refetchType: 'active' });
+        queryClient.invalidateQueries({ queryKey: PAQUETES_KEYS.resumen(operacionId), refetchType: 'active' });
+        queryClient.invalidateQueries({ queryKey: PAQUETES_KEYS.porOperacion(operacionId), refetchType: 'active' });
       }
       toast.success('Item removido del paquete');
     },
@@ -202,8 +202,8 @@ export function useCerrarPaquete() {
   return useMutation({
     mutationFn: (id) => paquetesApi.cerrar(id),
     onSuccess: (response, id) => {
-      queryClient.invalidateQueries({ queryKey: PAQUETES_KEYS.detail(id) });
-      queryClient.invalidateQueries({ queryKey: PAQUETES_KEYS.all });
+      queryClient.invalidateQueries({ queryKey: PAQUETES_KEYS.detail(id), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: PAQUETES_KEYS.all, refetchType: 'active' });
       toast.success('Paquete cerrado');
     },
     onError: createCRUDErrorHandler('update', 'Paquete'),
@@ -220,11 +220,11 @@ export function useCancelarPaquete() {
   return useMutation({
     mutationFn: ({ id, motivo }) => paquetesApi.cancelar(id, { motivo }),
     onSuccess: (response, { id, operacionId }) => {
-      queryClient.invalidateQueries({ queryKey: PAQUETES_KEYS.detail(id) });
+      queryClient.invalidateQueries({ queryKey: PAQUETES_KEYS.detail(id), refetchType: 'active' });
       if (operacionId) {
-        queryClient.invalidateQueries({ queryKey: PAQUETES_KEYS.itemsDisponibles(operacionId) });
-        queryClient.invalidateQueries({ queryKey: PAQUETES_KEYS.resumen(operacionId) });
-        queryClient.invalidateQueries({ queryKey: PAQUETES_KEYS.porOperacion(operacionId) });
+        queryClient.invalidateQueries({ queryKey: PAQUETES_KEYS.itemsDisponibles(operacionId), refetchType: 'active' });
+        queryClient.invalidateQueries({ queryKey: PAQUETES_KEYS.resumen(operacionId), refetchType: 'active' });
+        queryClient.invalidateQueries({ queryKey: PAQUETES_KEYS.porOperacion(operacionId), refetchType: 'active' });
       }
       toast.success('Paquete cancelado');
     },
@@ -242,9 +242,9 @@ export function useEtiquetarPaquete() {
   return useMutation({
     mutationFn: ({ id, data }) => paquetesApi.etiquetar(id, data),
     onSuccess: (response, { id }) => {
-      queryClient.invalidateQueries({ queryKey: PAQUETES_KEYS.detail(id) });
-      queryClient.invalidateQueries({ queryKey: PAQUETES_KEYS.etiqueta(id) });
-      queryClient.invalidateQueries({ queryKey: PAQUETES_KEYS.all });
+      queryClient.invalidateQueries({ queryKey: PAQUETES_KEYS.detail(id), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: PAQUETES_KEYS.etiqueta(id), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: PAQUETES_KEYS.all, refetchType: 'active' });
       toast.success('Paquete etiquetado');
     },
     onError: createCRUDErrorHandler('update', 'Paquete'),
@@ -261,8 +261,8 @@ export function useEnviarPaquete() {
   return useMutation({
     mutationFn: (id) => paquetesApi.enviar(id),
     onSuccess: (response, id) => {
-      queryClient.invalidateQueries({ queryKey: PAQUETES_KEYS.detail(id) });
-      queryClient.invalidateQueries({ queryKey: PAQUETES_KEYS.all });
+      queryClient.invalidateQueries({ queryKey: PAQUETES_KEYS.detail(id), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: PAQUETES_KEYS.all, refetchType: 'active' });
       toast.success('Paquete marcado como enviado');
     },
     onError: createCRUDErrorHandler('update', 'Paquete'),

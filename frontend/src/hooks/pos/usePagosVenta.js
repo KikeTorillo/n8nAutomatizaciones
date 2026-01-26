@@ -19,10 +19,10 @@ export function useRegistrarPago() {
       return response.data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['ventas-pos'] });
-      queryClient.invalidateQueries({ queryKey: ['venta-pos', variables.id] });
-      queryClient.invalidateQueries({ queryKey: ['corte-caja'] });
-      queryClient.invalidateQueries({ queryKey: ['ventas-diarias'] });
+      queryClient.invalidateQueries({ queryKey: ['ventas-pos'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['venta-pos', variables.id], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['corte-caja'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['ventas-diarias'], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('create', 'Pago', {
       400: 'Monto de pago inválido',
@@ -48,14 +48,14 @@ export function useRegistrarPagosSplit() {
       return response.data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['ventas-pos'] });
-      queryClient.invalidateQueries({ queryKey: ['venta-pos', variables.ventaId] });
-      queryClient.invalidateQueries({ queryKey: ['pagos-venta', variables.ventaId] });
-      queryClient.invalidateQueries({ queryKey: ['corte-caja'] });
-      queryClient.invalidateQueries({ queryKey: ['ventas-diarias'] });
-      queryClient.invalidateQueries({ queryKey: ['sesion-caja-activa'] });
+      queryClient.invalidateQueries({ queryKey: ['ventas-pos'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['venta-pos', variables.ventaId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['pagos-venta', variables.ventaId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['corte-caja'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['ventas-diarias'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['sesion-caja-activa'], refetchType: 'active' });
       if (variables.clienteId) {
-        queryClient.invalidateQueries({ queryKey: ['cliente-credito', variables.clienteId] });
+        queryClient.invalidateQueries({ queryKey: ['cliente-credito', variables.clienteId], refetchType: 'active' });
       }
     },
     onError: createCRUDErrorHandler('create', 'Pagos', {

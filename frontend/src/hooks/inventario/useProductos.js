@@ -108,9 +108,9 @@ export function useBulkCrearProductos() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['productos'] });
-      queryClient.invalidateQueries({ queryKey: ['stock-critico'] });
-      queryClient.invalidateQueries({ queryKey: ['valor-inventario'] });
+      queryClient.invalidateQueries({ queryKey: ['productos'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['stock-critico'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['valor-inventario'], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('create', 'Productos', {
       403: 'Alcanzaste el límite de productos de tu plan',
@@ -135,11 +135,11 @@ export function useAjustarStock() {
       return response.data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['productos'] });
-      queryClient.invalidateQueries({ queryKey: ['producto', variables.id] });
-      queryClient.invalidateQueries({ queryKey: ['stock-critico'] });
-      queryClient.invalidateQueries({ queryKey: ['movimientos'] });
-      queryClient.invalidateQueries({ queryKey: ['kardex', variables.id] });
+      queryClient.invalidateQueries({ queryKey: ['productos'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['producto', variables.id], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['stock-critico'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['movimientos'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['kardex', variables.id], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('update', 'Stock', {
       400: 'Datos inválidos. Revisa cantidad y tipo de movimiento',

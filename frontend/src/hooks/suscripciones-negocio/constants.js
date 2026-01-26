@@ -79,11 +79,10 @@ export const ESTADO_COLORS = {
   [ESTADOS_SUSCRIPCION.PENDIENTE_PAGO]: 'orange',
 };
 
-// Ciclos de facturación
+// Ciclos de facturación disponibles en el sistema
 export const CICLOS_FACTURACION = {
   MENSUAL: 'mensual',
   TRIMESTRAL: 'trimestral',
-  SEMESTRAL: 'semestral',
   ANUAL: 'anual',
 };
 
@@ -91,8 +90,14 @@ export const CICLOS_FACTURACION = {
 export const CICLO_LABELS = {
   [CICLOS_FACTURACION.MENSUAL]: 'Mensual',
   [CICLOS_FACTURACION.TRIMESTRAL]: 'Trimestral',
-  [CICLOS_FACTURACION.SEMESTRAL]: 'Semestral',
   [CICLOS_FACTURACION.ANUAL]: 'Anual',
+};
+
+// Mapeo de ciclo a campo de precio en el plan
+export const CICLO_PRECIO_FIELD = {
+  [CICLOS_FACTURACION.MENSUAL]: 'precio_mensual',
+  [CICLOS_FACTURACION.TRIMESTRAL]: 'precio_trimestral',
+  [CICLOS_FACTURACION.ANUAL]: 'precio_anual',
 };
 
 // Tipos de descuento

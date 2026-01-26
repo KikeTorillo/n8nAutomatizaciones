@@ -85,8 +85,8 @@ export function useCrearCostoAdicional() {
   return useMutation({
     mutationFn: ({ ordenCompraId, data }) => landedCostsApi.crear(ordenCompraId, data),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['landed-costs', variables.ordenCompraId] });
-      queryClient.invalidateQueries({ queryKey: ['ordenes-compra', variables.ordenCompraId] });
+      queryClient.invalidateQueries({ queryKey: ['landed-costs', variables.ordenCompraId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['ordenes-compra', variables.ordenCompraId], refetchType: 'active' });
     },
   });
 }
@@ -101,7 +101,7 @@ export function useActualizarCostoAdicional() {
     mutationFn: ({ ordenCompraId, costoId, data }) =>
       landedCostsApi.actualizar(ordenCompraId, costoId, data),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['landed-costs', variables.ordenCompraId] });
+      queryClient.invalidateQueries({ queryKey: ['landed-costs', variables.ordenCompraId], refetchType: 'active' });
     },
   });
 }
@@ -115,8 +115,8 @@ export function useEliminarCostoAdicional() {
   return useMutation({
     mutationFn: ({ ordenCompraId, costoId }) => landedCostsApi.eliminar(ordenCompraId, costoId),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['landed-costs', variables.ordenCompraId] });
-      queryClient.invalidateQueries({ queryKey: ['ordenes-compra', variables.ordenCompraId] });
+      queryClient.invalidateQueries({ queryKey: ['landed-costs', variables.ordenCompraId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['ordenes-compra', variables.ordenCompraId], refetchType: 'active' });
     },
   });
 }
@@ -130,8 +130,8 @@ export function useDistribuirCosto() {
   return useMutation({
     mutationFn: ({ ordenCompraId, costoId }) => landedCostsApi.distribuir(ordenCompraId, costoId),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['landed-costs', variables.ordenCompraId] });
-      queryClient.invalidateQueries({ queryKey: ['ordenes-compra', variables.ordenCompraId] });
+      queryClient.invalidateQueries({ queryKey: ['landed-costs', variables.ordenCompraId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['ordenes-compra', variables.ordenCompraId], refetchType: 'active' });
     },
   });
 }
@@ -145,8 +145,8 @@ export function useDistribuirTodosCostos() {
   return useMutation({
     mutationFn: (ordenCompraId) => landedCostsApi.distribuirTodos(ordenCompraId),
     onSuccess: (_, ordenCompraId) => {
-      queryClient.invalidateQueries({ queryKey: ['landed-costs', ordenCompraId] });
-      queryClient.invalidateQueries({ queryKey: ['ordenes-compra', ordenCompraId] });
+      queryClient.invalidateQueries({ queryKey: ['landed-costs', ordenCompraId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['ordenes-compra', ordenCompraId], refetchType: 'active' });
     },
   });
 }

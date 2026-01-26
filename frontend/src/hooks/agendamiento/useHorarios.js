@@ -73,8 +73,8 @@ export function useCrearHorarioSemanal() {
     },
     onSuccess: (_, variables) => {
       // Invalidar horarios del profesional
-      queryClient.invalidateQueries({ queryKey: ['horarios', variables.profesional_id] });
-      queryClient.invalidateQueries({ queryKey: ['horarios'] });
+      queryClient.invalidateQueries({ queryKey: ['horarios', variables.profesional_id], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['horarios'], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('create', 'Horarios semanales', {
       409: 'Ya existen horarios configurados para estos dias',
@@ -94,8 +94,8 @@ export function useCrearHorario() {
       return response.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['horarios', variables.profesional_id] });
-      queryClient.invalidateQueries({ queryKey: ['horarios'] });
+      queryClient.invalidateQueries({ queryKey: ['horarios', variables.profesional_id], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['horarios'], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('create', 'Horario', {
       409: 'Ya existe un horario para este dia',
@@ -115,8 +115,8 @@ export function useActualizarHorario() {
       return response.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['horarios', data.profesional_id] });
-      queryClient.invalidateQueries({ queryKey: ['horarios'] });
+      queryClient.invalidateQueries({ queryKey: ['horarios', data.profesional_id], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['horarios'], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('update', 'Horario'),
   });
@@ -134,7 +134,7 @@ export function useEliminarHorario() {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['horarios'] });
+      queryClient.invalidateQueries({ queryKey: ['horarios'], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('delete', 'Horario', {
       409: 'No se puede eliminar. El horario tiene citas asociadas.',

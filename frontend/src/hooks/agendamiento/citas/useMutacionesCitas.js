@@ -25,7 +25,7 @@ export function useCrearCita() {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['citas'] });
+      queryClient.invalidateQueries({ queryKey: ['citas'], refetchType: 'active' });
     },
   });
 }
@@ -49,8 +49,8 @@ export function useActualizarCita() {
       return response.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['citas'] });
-      queryClient.invalidateQueries({ queryKey: ['citas', variables.id] });
+      queryClient.invalidateQueries({ queryKey: ['citas'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['citas', variables.id], refetchType: 'active' });
     },
   });
 }
@@ -68,8 +68,8 @@ export function useCancelarCita() {
       return response.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['citas'] });
-      queryClient.invalidateQueries({ queryKey: ['citas', variables.id] });
+      queryClient.invalidateQueries({ queryKey: ['citas'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['citas', variables.id], refetchType: 'active' });
       success('Cita cancelada exitosamente');
     },
     onError: (error) => {
@@ -95,8 +95,8 @@ export function useConfirmarCita() {
       return response.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['citas'] });
-      queryClient.invalidateQueries({ queryKey: ['citas', variables.id] });
+      queryClient.invalidateQueries({ queryKey: ['citas'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['citas', variables.id], refetchType: 'active' });
       success('Cita confirmada exitosamente');
     },
     onError: (error) => {
@@ -122,8 +122,8 @@ export function useIniciarCita() {
       return response.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['citas'] });
-      queryClient.invalidateQueries({ queryKey: ['citas', variables.id] });
+      queryClient.invalidateQueries({ queryKey: ['citas'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['citas', variables.id], refetchType: 'active' });
       success('Cita iniciada');
     },
     onError: (error) => {
@@ -155,8 +155,8 @@ export function useCompletarCita() {
       return response.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['citas'] });
-      queryClient.invalidateQueries({ queryKey: ['citas', variables.id] });
+      queryClient.invalidateQueries({ queryKey: ['citas'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['citas', variables.id], refetchType: 'active' });
       success('Cita completada exitosamente');
     },
     onError: (error) => {
@@ -183,8 +183,8 @@ export function useNoShowCita() {
       return response.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['citas'] });
-      queryClient.invalidateQueries({ queryKey: ['citas', variables.id] });
+      queryClient.invalidateQueries({ queryKey: ['citas'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['citas', variables.id], refetchType: 'active' });
       warning('Cita marcada como No Show');
     },
     onError: (error) => {

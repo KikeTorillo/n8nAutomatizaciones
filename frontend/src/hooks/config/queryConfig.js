@@ -67,7 +67,7 @@ export function createMutationOptions(queryClient, queryKeys = []) {
   return {
     onSuccess: () => {
       queryKeys.forEach((key) => {
-        queryClient.invalidateQueries({ queryKey: [key] });
+        queryClient.invalidateQueries({ queryKey: [key], refetchType: 'active' });
       });
     },
   };

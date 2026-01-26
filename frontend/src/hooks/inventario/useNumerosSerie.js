@@ -172,7 +172,7 @@ export function useCrearNumeroSerie() {
             return response.data;
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: queryKeys.inventario.numerosSerie.all });
+            queryClient.invalidateQueries({ queryKey: queryKeys.inventario.numerosSerie.all, refetchType: 'active' });
         },
     });
 }
@@ -189,7 +189,7 @@ export function useCrearNumerosSerieMultiple() {
             return response.data;
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: queryKeys.inventario.numerosSerie.all });
+            queryClient.invalidateQueries({ queryKey: queryKeys.inventario.numerosSerie.all, refetchType: 'active' });
         },
     });
 }
@@ -209,7 +209,7 @@ export function useVenderNumeroSerie() {
             return response.data;
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: queryKeys.inventario.numerosSerie.all });
+            queryClient.invalidateQueries({ queryKey: queryKeys.inventario.numerosSerie.all, refetchType: 'active' });
         },
     });
 }
@@ -230,7 +230,7 @@ export function useTransferirNumeroSerie() {
             return response.data;
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: queryKeys.inventario.numerosSerie.all });
+            queryClient.invalidateQueries({ queryKey: queryKeys.inventario.numerosSerie.all, refetchType: 'active' });
         },
     });
 }
@@ -251,7 +251,7 @@ export function useDevolverNumeroSerie() {
             return response.data;
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: queryKeys.inventario.numerosSerie.all });
+            queryClient.invalidateQueries({ queryKey: queryKeys.inventario.numerosSerie.all, refetchType: 'active' });
         },
     });
 }
@@ -268,7 +268,7 @@ export function useMarcarDefectuoso() {
             return response.data;
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: queryKeys.inventario.numerosSerie.all });
+            queryClient.invalidateQueries({ queryKey: queryKeys.inventario.numerosSerie.all, refetchType: 'active' });
         },
     });
 }
@@ -285,7 +285,7 @@ export function useReservarNumeroSerie() {
             return response.data;
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: queryKeys.inventario.numerosSerie.all });
+            queryClient.invalidateQueries({ queryKey: queryKeys.inventario.numerosSerie.all, refetchType: 'active' });
         },
     });
 }
@@ -302,7 +302,7 @@ export function useLiberarReservaNumeroSerie() {
             return response.data;
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: queryKeys.inventario.numerosSerie.all });
+            queryClient.invalidateQueries({ queryKey: queryKeys.inventario.numerosSerie.all, refetchType: 'active' });
         },
     });
 }
@@ -319,7 +319,7 @@ export function useActualizarGarantia() {
             return response.data;
         },
         onSuccess: (_, variables) => {
-            queryClient.invalidateQueries({ queryKey: queryKeys.inventario.numerosSerie.detail(variables.id) });
+            queryClient.invalidateQueries({ queryKey: queryKeys.inventario.numerosSerie.detail(variables.id), refetchType: 'active' });
         },
     });
 }

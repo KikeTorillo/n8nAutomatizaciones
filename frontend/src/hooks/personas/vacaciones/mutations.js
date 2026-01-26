@@ -23,7 +23,7 @@ export function useActualizarPoliticaVacaciones() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: VACACIONES_KEYS.politica() });
+      queryClient.invalidateQueries({ queryKey: VACACIONES_KEYS.politica(), refetchType: 'active' });
       toast.success('Política de vacaciones actualizada');
     },
     onError: (error) => {
@@ -51,7 +51,7 @@ export function useCrearNivelVacaciones() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: VACACIONES_KEYS.all });
+      queryClient.invalidateQueries({ queryKey: VACACIONES_KEYS.all, refetchType: 'active' });
       toast.success('Nivel creado correctamente');
     },
     onError: (error) => {
@@ -77,7 +77,7 @@ export function useActualizarNivelVacaciones() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: VACACIONES_KEYS.all });
+      queryClient.invalidateQueries({ queryKey: VACACIONES_KEYS.all, refetchType: 'active' });
       toast.success('Nivel actualizado');
     },
     onError: (error) => {
@@ -103,7 +103,7 @@ export function useEliminarNivelVacaciones() {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: VACACIONES_KEYS.all });
+      queryClient.invalidateQueries({ queryKey: VACACIONES_KEYS.all, refetchType: 'active' });
       toast.success('Nivel eliminado');
     },
     onError: (error) => {
@@ -129,7 +129,7 @@ export function useCrearNivelesPreset() {
       return response.data.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: VACACIONES_KEYS.all });
+      queryClient.invalidateQueries({ queryKey: VACACIONES_KEYS.all, refetchType: 'active' });
       const pais = variables.pais === 'mexico' ? 'México (LFT)' : 'Colombia';
       toast.success(`Niveles de ${pais} creados correctamente`);
     },
@@ -158,7 +158,7 @@ export function useAjustarSaldo() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: VACACIONES_KEYS.all });
+      queryClient.invalidateQueries({ queryKey: VACACIONES_KEYS.all, refetchType: 'active' });
       toast.success('Saldo ajustado correctamente');
     },
     onError: (error) => {
@@ -184,7 +184,7 @@ export function useGenerarSaldosAnio() {
       return response.data.data;
     },
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: VACACIONES_KEYS.all });
+      queryClient.invalidateQueries({ queryKey: VACACIONES_KEYS.all, refetchType: 'active' });
       toast.success(`Saldos generados: ${result.creados} nuevos, ${result.actualizados} actualizados`);
     },
     onError: (error) => {
@@ -212,7 +212,7 @@ export function useCrearSolicitudVacaciones() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: VACACIONES_KEYS.all });
+      queryClient.invalidateQueries({ queryKey: VACACIONES_KEYS.all, refetchType: 'active' });
       toast.success('Solicitud de vacaciones enviada');
     },
     onError: (error) => {
@@ -238,7 +238,7 @@ export function useAprobarSolicitud() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: VACACIONES_KEYS.all });
+      queryClient.invalidateQueries({ queryKey: VACACIONES_KEYS.all, refetchType: 'active' });
       toast.success('Solicitud aprobada. Se ha creado el bloqueo en el calendario.');
     },
     onError: (error) => {
@@ -264,7 +264,7 @@ export function useRechazarSolicitud() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: VACACIONES_KEYS.all });
+      queryClient.invalidateQueries({ queryKey: VACACIONES_KEYS.all, refetchType: 'active' });
       toast.success('Solicitud rechazada');
     },
     onError: (error) => {
@@ -290,7 +290,7 @@ export function useCancelarSolicitud() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: VACACIONES_KEYS.all });
+      queryClient.invalidateQueries({ queryKey: VACACIONES_KEYS.all, refetchType: 'active' });
       toast.success('Solicitud cancelada');
     },
     onError: (error) => {

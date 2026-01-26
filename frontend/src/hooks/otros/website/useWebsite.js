@@ -149,7 +149,7 @@ export function useCrearWebsiteConfig() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: WEBSITE_KEYS.config() });
+      queryClient.invalidateQueries({ queryKey: WEBSITE_KEYS.config(), refetchType: 'active' });
     },
   });
 }
@@ -166,7 +166,7 @@ export function useActualizarWebsiteConfig() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: WEBSITE_KEYS.config() });
+      queryClient.invalidateQueries({ queryKey: WEBSITE_KEYS.config(), refetchType: 'active' });
     },
   });
 }
@@ -183,7 +183,7 @@ export function usePublicarWebsite() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: WEBSITE_KEYS.config() });
+      queryClient.invalidateQueries({ queryKey: WEBSITE_KEYS.config(), refetchType: 'active' });
     },
   });
 }
@@ -200,7 +200,7 @@ export function useEliminarWebsite() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: WEBSITE_KEYS.all });
+      queryClient.invalidateQueries({ queryKey: WEBSITE_KEYS.all, refetchType: 'active' });
     },
   });
 }
@@ -219,7 +219,7 @@ export function useCrearPagina() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: WEBSITE_KEYS.paginas() });
+      queryClient.invalidateQueries({ queryKey: WEBSITE_KEYS.paginas(), refetchType: 'active' });
     },
   });
 }
@@ -236,8 +236,8 @@ export function useActualizarPagina() {
       return response.data.data;
     },
     onSuccess: (_, { id }) => {
-      queryClient.invalidateQueries({ queryKey: WEBSITE_KEYS.paginas() });
-      queryClient.invalidateQueries({ queryKey: WEBSITE_KEYS.pagina(id) });
+      queryClient.invalidateQueries({ queryKey: WEBSITE_KEYS.paginas(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: WEBSITE_KEYS.pagina(id), refetchType: 'active' });
     },
   });
 }
@@ -254,7 +254,7 @@ export function useReordenarPaginas() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: WEBSITE_KEYS.paginas() });
+      queryClient.invalidateQueries({ queryKey: WEBSITE_KEYS.paginas(), refetchType: 'active' });
     },
   });
 }
@@ -271,7 +271,7 @@ export function useEliminarPagina() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: WEBSITE_KEYS.paginas() });
+      queryClient.invalidateQueries({ queryKey: WEBSITE_KEYS.paginas(), refetchType: 'active' });
     },
   });
 }
@@ -290,7 +290,7 @@ export function useCrearBloque() {
       return response.data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: WEBSITE_KEYS.bloques(variables.pagina_id) });
+      queryClient.invalidateQueries({ queryKey: WEBSITE_KEYS.bloques(variables.pagina_id), refetchType: 'active' });
     },
   });
 }
@@ -307,7 +307,7 @@ export function useActualizarBloque() {
       return response.data.data;
     },
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: WEBSITE_KEYS.bloques(result.pagina_id) });
+      queryClient.invalidateQueries({ queryKey: WEBSITE_KEYS.bloques(result.pagina_id), refetchType: 'active' });
     },
   });
 }
@@ -324,7 +324,7 @@ export function useReordenarBloques() {
       return response.data.data;
     },
     onSuccess: (_, { paginaId }) => {
-      queryClient.invalidateQueries({ queryKey: WEBSITE_KEYS.bloques(paginaId) });
+      queryClient.invalidateQueries({ queryKey: WEBSITE_KEYS.bloques(paginaId), refetchType: 'active' });
     },
   });
 }
@@ -341,7 +341,7 @@ export function useDuplicarBloque() {
       return response.data.data;
     },
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: WEBSITE_KEYS.bloques(result.pagina_id) });
+      queryClient.invalidateQueries({ queryKey: WEBSITE_KEYS.bloques(result.pagina_id), refetchType: 'active' });
     },
   });
 }
@@ -358,7 +358,7 @@ export function useEliminarBloque() {
       return { ...response.data.data, paginaId };
     },
     onSuccess: (_, { paginaId }) => {
-      queryClient.invalidateQueries({ queryKey: WEBSITE_KEYS.bloques(paginaId) });
+      queryClient.invalidateQueries({ queryKey: WEBSITE_KEYS.bloques(paginaId), refetchType: 'active' });
     },
   });
 }

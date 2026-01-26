@@ -56,8 +56,8 @@ export function useAgregarValor() {
       return response.data.data;
     },
     onSuccess: (_, { atributoId }) => {
-      queryClient.invalidateQueries({ queryKey: ['atributo', atributoId] });
-      queryClient.invalidateQueries({ queryKey: ['atributos'] });
+      queryClient.invalidateQueries({ queryKey: ['atributo', atributoId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['atributos'], refetchType: 'active' });
     },
   });
 }
@@ -74,8 +74,8 @@ export function useActualizarValor() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['atributos'] });
-      queryClient.invalidateQueries({ queryKey: ['atributo'] });
+      queryClient.invalidateQueries({ queryKey: ['atributos'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['atributo'], refetchType: 'active' });
     },
   });
 }
@@ -92,8 +92,8 @@ export function useEliminarValor() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['atributos'] });
-      queryClient.invalidateQueries({ queryKey: ['atributo'] });
+      queryClient.invalidateQueries({ queryKey: ['atributos'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['atributo'], refetchType: 'active' });
     },
   });
 }
@@ -110,7 +110,7 @@ export function useCrearAtributosDefecto() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['atributos'] });
+      queryClient.invalidateQueries({ queryKey: ['atributos'], refetchType: 'active' });
     },
   });
 }

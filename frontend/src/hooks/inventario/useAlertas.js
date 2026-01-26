@@ -124,8 +124,8 @@ export function useMarcarAlertaLeida() {
     },
     onSettled: () => {
       // Refetch para asegurar consistencia
-      queryClient.invalidateQueries({ queryKey: ['alertas'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard-alertas'], exact: true });
+      queryClient.invalidateQueries({ queryKey: ['alertas'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-alertas'], exact: true, refetchType: 'active' });
     },
   });
 }
@@ -167,8 +167,8 @@ export function useMarcarVariasAlertasLeidas() {
       }
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['alertas'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard-alertas'], exact: true });
+      queryClient.invalidateQueries({ queryKey: ['alertas'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-alertas'], exact: true, refetchType: 'active' });
     },
   });
 }

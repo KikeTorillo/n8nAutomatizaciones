@@ -139,8 +139,8 @@ export function useAgregarItemsOrdenCompra() {
       return response.data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['orden-compra', variables.ordenId] });
-      queryClient.invalidateQueries({ queryKey: ['ordenes-compra'] });
+      queryClient.invalidateQueries({ queryKey: ['orden-compra', variables.ordenId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['ordenes-compra'], refetchType: 'active' });
     },
   });
 }
@@ -168,8 +168,8 @@ export function useActualizarItemOrdenCompra() {
       return response.data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['orden-compra', variables.ordenId] });
-      queryClient.invalidateQueries({ queryKey: ['ordenes-compra'] });
+      queryClient.invalidateQueries({ queryKey: ['orden-compra', variables.ordenId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['ordenes-compra'], refetchType: 'active' });
     },
   });
 }
@@ -186,8 +186,8 @@ export function useEliminarItemOrdenCompra() {
       return response.data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['orden-compra', variables.ordenId] });
-      queryClient.invalidateQueries({ queryKey: ['ordenes-compra'] });
+      queryClient.invalidateQueries({ queryKey: ['orden-compra', variables.ordenId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['ordenes-compra'], refetchType: 'active' });
     },
   });
 }
@@ -208,9 +208,9 @@ export function useEnviarOrdenCompra() {
       return response.data.data;
     },
     onSuccess: (_, id) => {
-      queryClient.invalidateQueries({ queryKey: ['orden-compra', id] });
-      queryClient.invalidateQueries({ queryKey: ['ordenes-compra'] });
-      queryClient.invalidateQueries({ queryKey: ['ordenes-compra-pendientes'] });
+      queryClient.invalidateQueries({ queryKey: ['orden-compra', id], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['ordenes-compra'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['ordenes-compra-pendientes'], refetchType: 'active' });
     },
   });
 }
@@ -227,9 +227,9 @@ export function useCancelarOrdenCompra() {
       return response.data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['orden-compra', variables.id] });
-      queryClient.invalidateQueries({ queryKey: ['ordenes-compra'] });
-      queryClient.invalidateQueries({ queryKey: ['ordenes-compra-pendientes'] });
+      queryClient.invalidateQueries({ queryKey: ['orden-compra', variables.id], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['ordenes-compra'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['ordenes-compra-pendientes'], refetchType: 'active' });
     },
   });
 }
@@ -258,15 +258,15 @@ export function useRecibirMercancia() {
       return response.data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['orden-compra', variables.ordenId] });
-      queryClient.invalidateQueries({ queryKey: ['ordenes-compra'] });
-      queryClient.invalidateQueries({ queryKey: ['ordenes-compra-pendientes'] });
-      queryClient.invalidateQueries({ queryKey: ['ordenes-compra-pendientes-pago'] });
+      queryClient.invalidateQueries({ queryKey: ['orden-compra', variables.ordenId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['ordenes-compra'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['ordenes-compra-pendientes'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['ordenes-compra-pendientes-pago'], refetchType: 'active' });
       // Invalidar inventario porque se actualizó stock
-      queryClient.invalidateQueries({ queryKey: ['productos'] });
-      queryClient.invalidateQueries({ queryKey: ['stock-critico'] });
-      queryClient.invalidateQueries({ queryKey: ['movimientos'] });
-      queryClient.invalidateQueries({ queryKey: ['valor-inventario'] });
+      queryClient.invalidateQueries({ queryKey: ['productos'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['stock-critico'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['movimientos'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['valor-inventario'], refetchType: 'active' });
     },
   });
 }
@@ -283,9 +283,9 @@ export function useRegistrarPagoOrdenCompra() {
       return response.data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['orden-compra', variables.id] });
-      queryClient.invalidateQueries({ queryKey: ['ordenes-compra'] });
-      queryClient.invalidateQueries({ queryKey: ['ordenes-compra-pendientes-pago'] });
+      queryClient.invalidateQueries({ queryKey: ['orden-compra', variables.id], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['ordenes-compra'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['ordenes-compra-pendientes-pago'], refetchType: 'active' });
     },
   });
 }

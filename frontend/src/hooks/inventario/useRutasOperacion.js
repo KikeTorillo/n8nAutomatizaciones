@@ -42,7 +42,7 @@ export function useInicializarRutas() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['rutas-operacion'] });
+      queryClient.invalidateQueries({ queryKey: ['rutas-operacion'], refetchType: 'active' });
     },
   });
 }
@@ -59,7 +59,7 @@ export function useCrearRuta() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['rutas-operacion'] });
+      queryClient.invalidateQueries({ queryKey: ['rutas-operacion'], refetchType: 'active' });
     },
   });
 }
@@ -76,8 +76,8 @@ export function useActualizarRuta() {
       return response.data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['rutas-operacion'] });
-      queryClient.invalidateQueries({ queryKey: ['ruta-operacion', variables.id] });
+      queryClient.invalidateQueries({ queryKey: ['rutas-operacion'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['ruta-operacion', variables.id], refetchType: 'active' });
     },
   });
 }
@@ -94,7 +94,7 @@ export function useEliminarRuta() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['rutas-operacion'] });
+      queryClient.invalidateQueries({ queryKey: ['rutas-operacion'], refetchType: 'active' });
     },
   });
 }
@@ -125,7 +125,7 @@ export function useAsignarRutaProducto() {
       return response.data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['producto-rutas', variables.productoId] });
+      queryClient.invalidateQueries({ queryKey: ['producto-rutas', variables.productoId], refetchType: 'active' });
     },
   });
 }
@@ -142,7 +142,7 @@ export function useQuitarRutaProducto() {
       return response.data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['producto-rutas', variables.productoId] });
+      queryClient.invalidateQueries({ queryKey: ['producto-rutas', variables.productoId], refetchType: 'active' });
     },
   });
 }

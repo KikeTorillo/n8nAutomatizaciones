@@ -91,8 +91,8 @@ export function useCrearExperiencia() {
       return response.data?.data || response.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: experienciaKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: experienciaKeys.actual(variables.profesionalId) });
+      queryClient.invalidateQueries({ queryKey: experienciaKeys.lists(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: experienciaKeys.actual(variables.profesionalId), refetchType: 'active' });
       toast.success('Experiencia laboral agregada');
     },
     onError: (error) => {
@@ -118,11 +118,11 @@ export function useActualizarExperiencia() {
       return response.data?.data || response.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: experienciaKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: experienciaKeys.lists(), refetchType: 'active' });
       queryClient.invalidateQueries({
         queryKey: experienciaKeys.detail(variables.profesionalId, variables.experienciaId)
       });
-      queryClient.invalidateQueries({ queryKey: experienciaKeys.actual(variables.profesionalId) });
+      queryClient.invalidateQueries({ queryKey: experienciaKeys.actual(variables.profesionalId), refetchType: 'active' });
       toast.success('Experiencia actualizada');
     },
     onError: (error) => {
@@ -148,8 +148,8 @@ export function useEliminarExperiencia() {
       return response.data?.data || response.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: experienciaKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: experienciaKeys.actual(variables.profesionalId) });
+      queryClient.invalidateQueries({ queryKey: experienciaKeys.lists(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: experienciaKeys.actual(variables.profesionalId), refetchType: 'active' });
       toast.success('Experiencia eliminada');
     },
     onError: (error) => {
@@ -175,7 +175,7 @@ export function useReordenarExperiencia() {
       return response.data?.data || response.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: experienciaKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: experienciaKeys.lists(), refetchType: 'active' });
       toast.success('Orden actualizado');
     },
     onError: (error) => {

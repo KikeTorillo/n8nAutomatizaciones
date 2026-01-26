@@ -101,7 +101,7 @@ export function useCrearPlantilla() {
       return response.data?.data || response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: onboardingKeys.plantillas() });
+      queryClient.invalidateQueries({ queryKey: onboardingKeys.plantillas(), refetchType: 'active' });
       toast.success('Plantilla creada exitosamente');
     },
     onError: (error) => {
@@ -127,7 +127,7 @@ export function useActualizarPlantilla() {
       return response.data?.data || response.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: onboardingKeys.plantillas() });
+      queryClient.invalidateQueries({ queryKey: onboardingKeys.plantillas(), refetchType: 'active' });
       queryClient.invalidateQueries({
         queryKey: onboardingKeys.plantillaDetail(variables.plantillaId)
       });
@@ -156,7 +156,7 @@ export function useEliminarPlantilla() {
       return response.data?.data || response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: onboardingKeys.plantillas() });
+      queryClient.invalidateQueries({ queryKey: onboardingKeys.plantillas(), refetchType: 'active' });
       toast.success('Plantilla eliminada');
     },
     onError: (error) => {
@@ -217,7 +217,7 @@ export function useActualizarTarea() {
           queryKey: onboardingKeys.plantillaDetail(data.plantillaId)
         });
       }
-      queryClient.invalidateQueries({ queryKey: onboardingKeys.plantillas() });
+      queryClient.invalidateQueries({ queryKey: onboardingKeys.plantillas(), refetchType: 'active' });
       toast.success('Tarea actualizada');
     },
     onError: (error) => {
@@ -329,7 +329,7 @@ export function useAplicarPlantilla() {
       queryClient.invalidateQueries({
         queryKey: onboardingKeys.progresoByProfesional(variables.profesionalId)
       });
-      queryClient.invalidateQueries({ queryKey: onboardingKeys.dashboard() });
+      queryClient.invalidateQueries({ queryKey: onboardingKeys.dashboard(), refetchType: 'active' });
       toast.success(`Plantilla aplicada (${data.tareas_creadas} tareas creadas)`);
     },
     onError: (error) => {
@@ -361,8 +361,8 @@ export function useMarcarTareaOnboarding() {
       queryClient.invalidateQueries({
         queryKey: onboardingKeys.progresoByProfesional(data.profesionalId)
       });
-      queryClient.invalidateQueries({ queryKey: onboardingKeys.dashboard() });
-      queryClient.invalidateQueries({ queryKey: onboardingKeys.tareasVencidas({}) });
+      queryClient.invalidateQueries({ queryKey: onboardingKeys.dashboard(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: onboardingKeys.tareasVencidas({}), refetchType: 'active' });
       const mensaje = data.completado ? 'Tarea completada' : 'Tarea marcada como pendiente';
       toast.success(mensaje);
     },
@@ -392,7 +392,7 @@ export function useEliminarProgresoOnboarding() {
       queryClient.invalidateQueries({
         queryKey: onboardingKeys.progresoByProfesional(data.profesionalId)
       });
-      queryClient.invalidateQueries({ queryKey: onboardingKeys.dashboard() });
+      queryClient.invalidateQueries({ queryKey: onboardingKeys.dashboard(), refetchType: 'active' });
       toast.success('Progreso de onboarding eliminado');
     },
     onError: (error) => {

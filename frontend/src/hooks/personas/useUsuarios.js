@@ -107,8 +107,8 @@ export function useCrearUsuarioDirecto() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['usuarios'] });
-      queryClient.invalidateQueries({ queryKey: ['profesionales-sin-usuario'] });
+      queryClient.invalidateQueries({ queryKey: ['usuarios'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['profesionales-sin-usuario'], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('create', 'Usuario', {
       409: 'Ya existe un usuario con ese email',
@@ -129,12 +129,12 @@ export function useCambiarEstadoUsuario() {
       return response.data.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['usuarios'] });
-      queryClient.invalidateQueries({ queryKey: ['usuario', data.usuario?.id] });
+      queryClient.invalidateQueries({ queryKey: ['usuarios'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['usuario', data.usuario?.id], refetchType: 'active' });
       // Si afectó un profesional, invalidar también
       if (data.profesional) {
-        queryClient.invalidateQueries({ queryKey: ['profesionales'] });
-        queryClient.invalidateQueries({ queryKey: ['profesional', data.profesional.id] });
+        queryClient.invalidateQueries({ queryKey: ['profesionales'], refetchType: 'active' });
+        queryClient.invalidateQueries({ queryKey: ['profesional', data.profesional.id], refetchType: 'active' });
       }
     },
     onError: createCRUDErrorHandler('update', 'Usuario'),
@@ -153,8 +153,8 @@ export function useCambiarRolUsuario() {
       return response.data.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['usuarios'] });
-      queryClient.invalidateQueries({ queryKey: ['usuario', data.usuario?.id] });
+      queryClient.invalidateQueries({ queryKey: ['usuarios'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['usuario', data.usuario?.id], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('update', 'Usuario', {
       400: 'Rol no válido',
@@ -174,15 +174,15 @@ export function useVincularProfesionalAUsuario() {
       return response.data.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['usuarios'] });
-      queryClient.invalidateQueries({ queryKey: ['usuario', data.usuario?.id] });
-      queryClient.invalidateQueries({ queryKey: ['profesionales-sin-usuario'] });
-      queryClient.invalidateQueries({ queryKey: ['profesionales'] });
+      queryClient.invalidateQueries({ queryKey: ['usuarios'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['usuario', data.usuario?.id], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['profesionales-sin-usuario'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['profesionales'], refetchType: 'active' });
       if (data.profesional) {
-        queryClient.invalidateQueries({ queryKey: ['profesional', data.profesional.id] });
+        queryClient.invalidateQueries({ queryKey: ['profesional', data.profesional.id], refetchType: 'active' });
       }
       if (data.profesional_anterior) {
-        queryClient.invalidateQueries({ queryKey: ['profesional', data.profesional_anterior] });
+        queryClient.invalidateQueries({ queryKey: ['profesional', data.profesional_anterior], refetchType: 'active' });
       }
     },
     onError: createCRUDErrorHandler('update', 'Usuario', {
@@ -208,8 +208,8 @@ export function useActualizarUsuario() {
       return response.data.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['usuarios'] });
-      queryClient.invalidateQueries({ queryKey: ['usuario', data.id] });
+      queryClient.invalidateQueries({ queryKey: ['usuarios'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['usuario', data.id], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('update', 'Usuario'),
   });

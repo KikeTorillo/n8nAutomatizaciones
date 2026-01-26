@@ -97,7 +97,7 @@ export function useCrearCategoriaProfesional() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['categorias-profesional'] });
+      queryClient.invalidateQueries({ queryKey: ['categorias-profesional'], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('create', 'Categoría', {
       409: 'Ya existe una categoría con ese nombre en ese tipo',
@@ -125,8 +125,8 @@ export function useActualizarCategoriaProfesional() {
       return response.data.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['categoria-profesional', data.id] });
-      queryClient.invalidateQueries({ queryKey: ['categorias-profesional'] });
+      queryClient.invalidateQueries({ queryKey: ['categoria-profesional', data.id], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['categorias-profesional'], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('update', 'Categoría'),
   });
@@ -144,7 +144,7 @@ export function useEliminarCategoriaProfesional() {
       return id;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['categorias-profesional'] });
+      queryClient.invalidateQueries({ queryKey: ['categorias-profesional'], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('delete', 'Categoría', {
       400: 'No se puede eliminar: hay profesionales con esta categoría',

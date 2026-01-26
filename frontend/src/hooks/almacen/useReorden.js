@@ -99,8 +99,8 @@ export function useCrearReglaReorden() {
   return useMutation({
     mutationFn: (data) => reordenApi.crearRegla(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.almacen.reorden.reglas.all });
-      queryClient.invalidateQueries({ queryKey: queryKeys.almacen.reorden.dashboard });
+      queryClient.invalidateQueries({ queryKey: queryKeys.almacen.reorden.reglas.all, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.almacen.reorden.dashboard, refetchType: 'active' });
       toast.success('Regla de reorden creada');
     },
     onError: createCRUDErrorHandler('create', 'Regla'),
@@ -117,9 +117,9 @@ export function useActualizarReglaReorden() {
   return useMutation({
     mutationFn: ({ id, data }) => reordenApi.actualizarRegla(id, data),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.almacen.reorden.reglas.all });
-      queryClient.invalidateQueries({ queryKey: queryKeys.almacen.reorden.reglas.detail(variables.id) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.almacen.reorden.dashboard });
+      queryClient.invalidateQueries({ queryKey: queryKeys.almacen.reorden.reglas.all, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.almacen.reorden.reglas.detail(variables.id), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.almacen.reorden.dashboard, refetchType: 'active' });
       toast.success('Regla de reorden actualizada');
     },
     onError: createCRUDErrorHandler('update', 'Regla'),
@@ -136,8 +136,8 @@ export function useEliminarReglaReorden() {
   return useMutation({
     mutationFn: (id) => reordenApi.eliminarRegla(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.almacen.reorden.reglas.all });
-      queryClient.invalidateQueries({ queryKey: queryKeys.almacen.reorden.dashboard });
+      queryClient.invalidateQueries({ queryKey: queryKeys.almacen.reorden.reglas.all, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.almacen.reorden.dashboard, refetchType: 'active' });
       toast.success('Regla de reorden eliminada');
     },
     onError: createCRUDErrorHandler('delete', 'Regla'),
@@ -156,8 +156,8 @@ export function useEjecutarReordenManual() {
   return useMutation({
     mutationFn: () => reordenApi.ejecutarManual(),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.almacen.reorden.all });
-      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.ordenesCompra.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.almacen.reorden.all, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.ordenesCompra.all, refetchType: 'active' });
       toast.success('Reorden ejecutado exitosamente');
     },
     onError: createCRUDErrorHandler('create', 'Reorden'),

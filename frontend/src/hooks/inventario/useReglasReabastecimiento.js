@@ -27,7 +27,7 @@ export function useCrearReglaReabastecimiento() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['reglas-reabastecimiento'] });
+      queryClient.invalidateQueries({ queryKey: ['reglas-reabastecimiento'], refetchType: 'active' });
     },
   });
 }
@@ -44,7 +44,7 @@ export function useActualizarReglaReabastecimiento() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['reglas-reabastecimiento'] });
+      queryClient.invalidateQueries({ queryKey: ['reglas-reabastecimiento'], refetchType: 'active' });
     },
   });
 }
@@ -61,7 +61,7 @@ export function useEliminarReglaReabastecimiento() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['reglas-reabastecimiento'] });
+      queryClient.invalidateQueries({ queryKey: ['reglas-reabastecimiento'], refetchType: 'active' });
     },
   });
 }

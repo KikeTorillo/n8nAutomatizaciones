@@ -105,8 +105,8 @@ export function useCrearEducacion() {
       return response.data?.data || response.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: educacionKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: educacionKeys.enCurso(variables.profesionalId) });
+      queryClient.invalidateQueries({ queryKey: educacionKeys.lists(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: educacionKeys.enCurso(variables.profesionalId), refetchType: 'active' });
       toast.success('Educación agregada');
     },
     onError: (error) => {
@@ -132,11 +132,11 @@ export function useActualizarEducacion() {
       return response.data?.data || response.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: educacionKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: educacionKeys.lists(), refetchType: 'active' });
       queryClient.invalidateQueries({
         queryKey: educacionKeys.detail(variables.profesionalId, variables.educacionId)
       });
-      queryClient.invalidateQueries({ queryKey: educacionKeys.enCurso(variables.profesionalId) });
+      queryClient.invalidateQueries({ queryKey: educacionKeys.enCurso(variables.profesionalId), refetchType: 'active' });
       toast.success('Educación actualizada');
     },
     onError: (error) => {
@@ -162,8 +162,8 @@ export function useEliminarEducacion() {
       return response.data?.data || response.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: educacionKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: educacionKeys.enCurso(variables.profesionalId) });
+      queryClient.invalidateQueries({ queryKey: educacionKeys.lists(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: educacionKeys.enCurso(variables.profesionalId), refetchType: 'active' });
       toast.success('Educación eliminada');
     },
     onError: (error) => {
@@ -189,7 +189,7 @@ export function useReordenarEducacion() {
       return response.data?.data || response.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: educacionKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: educacionKeys.lists(), refetchType: 'active' });
       toast.success('Orden actualizado');
     },
     onError: (error) => {

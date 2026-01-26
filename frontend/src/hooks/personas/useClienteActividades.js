@@ -129,9 +129,9 @@ export function useCrearActividad() {
     },
     onSuccess: (data, variables) => {
       // Invalidar lista de actividades y timeline
-      queryClient.invalidateQueries({ queryKey: ['cliente-actividades', variables.clienteId] });
-      queryClient.invalidateQueries({ queryKey: ['cliente-timeline', variables.clienteId] });
-      queryClient.invalidateQueries({ queryKey: ['cliente-actividades-conteo', variables.clienteId] });
+      queryClient.invalidateQueries({ queryKey: ['cliente-actividades', variables.clienteId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['cliente-timeline', variables.clienteId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['cliente-actividades-conteo', variables.clienteId], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('create', 'Actividad'),
   });
@@ -149,10 +149,10 @@ export function useActualizarActividad() {
       return response.data.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['cliente-actividad', variables.clienteId, variables.actividadId] });
-      queryClient.invalidateQueries({ queryKey: ['cliente-actividades', variables.clienteId] });
-      queryClient.invalidateQueries({ queryKey: ['cliente-timeline', variables.clienteId] });
-      queryClient.invalidateQueries({ queryKey: ['cliente-actividades-conteo', variables.clienteId] });
+      queryClient.invalidateQueries({ queryKey: ['cliente-actividad', variables.clienteId, variables.actividadId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['cliente-actividades', variables.clienteId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['cliente-timeline', variables.clienteId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['cliente-actividades-conteo', variables.clienteId], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('update', 'Actividad'),
   });
@@ -170,9 +170,9 @@ export function useEliminarActividad() {
       return { clienteId, actividadId };
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['cliente-actividades', variables.clienteId] });
-      queryClient.invalidateQueries({ queryKey: ['cliente-timeline', variables.clienteId] });
-      queryClient.invalidateQueries({ queryKey: ['cliente-actividades-conteo', variables.clienteId] });
+      queryClient.invalidateQueries({ queryKey: ['cliente-actividades', variables.clienteId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['cliente-timeline', variables.clienteId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['cliente-actividades-conteo', variables.clienteId], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('delete', 'Actividad'),
   });
@@ -190,10 +190,10 @@ export function useCompletarTarea() {
       return response.data.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['cliente-actividad', variables.clienteId, variables.actividadId] });
-      queryClient.invalidateQueries({ queryKey: ['cliente-actividades', variables.clienteId] });
-      queryClient.invalidateQueries({ queryKey: ['cliente-timeline', variables.clienteId] });
-      queryClient.invalidateQueries({ queryKey: ['cliente-actividades-conteo', variables.clienteId] });
+      queryClient.invalidateQueries({ queryKey: ['cliente-actividad', variables.clienteId, variables.actividadId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['cliente-actividades', variables.clienteId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['cliente-timeline', variables.clienteId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['cliente-actividades-conteo', variables.clienteId], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('update', 'Tarea'),
   });

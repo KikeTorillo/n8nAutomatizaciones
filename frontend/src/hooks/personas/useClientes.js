@@ -91,8 +91,8 @@ export function useCrearWalkIn() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['citas'] });
-      queryClient.invalidateQueries({ queryKey: ['citas-del-dia'] });
+      queryClient.invalidateQueries({ queryKey: ['citas'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['citas-del-dia'], refetchType: 'active' });
     },
   });
 }
@@ -158,8 +158,8 @@ export function useImportarClientesCSV() {
       return response.data.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['clientes'] });
-      queryClient.invalidateQueries({ queryKey: ['clientes-estadisticas'] });
+      queryClient.invalidateQueries({ queryKey: ['clientes'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['clientes-estadisticas'], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('create', 'Clientes'),
   });

@@ -49,8 +49,8 @@ export function useGuardarConfiguracionLealtad() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['lealtad-configuracion'] });
-      queryClient.invalidateQueries({ queryKey: ['lealtad-niveles'] });
+      queryClient.invalidateQueries({ queryKey: ['lealtad-configuracion'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['lealtad-niveles'], refetchType: 'active' });
     },
   });
 }
@@ -90,7 +90,7 @@ export function useCrearNivelLealtad() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['lealtad-niveles'] });
+      queryClient.invalidateQueries({ queryKey: ['lealtad-niveles'], refetchType: 'active' });
     },
   });
 }
@@ -108,7 +108,7 @@ export function useActualizarNivelLealtad() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['lealtad-niveles'] });
+      queryClient.invalidateQueries({ queryKey: ['lealtad-niveles'], refetchType: 'active' });
     },
   });
 }
@@ -126,7 +126,7 @@ export function useEliminarNivelLealtad() {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['lealtad-niveles'] });
+      queryClient.invalidateQueries({ queryKey: ['lealtad-niveles'], refetchType: 'active' });
     },
   });
 }
@@ -144,7 +144,7 @@ export function useCrearNivelesDefault() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['lealtad-niveles'] });
+      queryClient.invalidateQueries({ queryKey: ['lealtad-niveles'], refetchType: 'active' });
     },
   });
 }
@@ -225,10 +225,10 @@ export function useCanjearPuntos() {
       return response.data.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['lealtad-puntos', variables.clienteId] });
-      queryClient.invalidateQueries({ queryKey: ['lealtad-historial', variables.clienteId] });
+      queryClient.invalidateQueries({ queryKey: ['lealtad-puntos', variables.clienteId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['lealtad-historial', variables.clienteId], refetchType: 'active' });
       if (variables.ventaId) {
-        queryClient.invalidateQueries({ queryKey: ['venta', variables.ventaId] });
+        queryClient.invalidateQueries({ queryKey: ['venta', variables.ventaId], refetchType: 'active' });
       }
     },
   });
@@ -252,8 +252,8 @@ export function useAcumularPuntos() {
       return response.data.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['lealtad-puntos', variables.clienteId] });
-      queryClient.invalidateQueries({ queryKey: ['lealtad-historial', variables.clienteId] });
+      queryClient.invalidateQueries({ queryKey: ['lealtad-puntos', variables.clienteId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['lealtad-historial', variables.clienteId], refetchType: 'active' });
     },
   });
 }
@@ -275,9 +275,9 @@ export function useAjustarPuntos() {
       return response.data.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['lealtad-puntos', variables.clienteId] });
-      queryClient.invalidateQueries({ queryKey: ['lealtad-historial', variables.clienteId] });
-      queryClient.invalidateQueries({ queryKey: ['lealtad-clientes'] });
+      queryClient.invalidateQueries({ queryKey: ['lealtad-puntos', variables.clienteId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['lealtad-historial', variables.clienteId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['lealtad-clientes'], refetchType: 'active' });
     },
   });
 }
@@ -460,7 +460,7 @@ export function useLealtadPOS(clienteId, totalCarrito = 0, tieneCupon = false) {
   // Refrescar datos del cliente
   const refrescarPuntos = () => {
     if (clienteId) {
-      queryClient.invalidateQueries({ queryKey: ['lealtad-puntos', clienteId] });
+      queryClient.invalidateQueries({ queryKey: ['lealtad-puntos', clienteId], refetchType: 'active' });
     }
   };
 

@@ -115,8 +115,8 @@ export function useCrearWorkflow() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['workflow-definiciones'] });
-      queryClient.invalidateQueries({ queryKey: ['definiciones-workflow'] });
+      queryClient.invalidateQueries({ queryKey: ['workflow-definiciones'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['definiciones-workflow'], refetchType: 'active' });
     },
   });
 }
@@ -133,9 +133,9 @@ export function useActualizarWorkflow() {
       return response.data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['workflow-definiciones'] });
-      queryClient.invalidateQueries({ queryKey: ['workflow-definicion', variables.id] });
-      queryClient.invalidateQueries({ queryKey: ['definiciones-workflow'] });
+      queryClient.invalidateQueries({ queryKey: ['workflow-definiciones'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['workflow-definicion', variables.id], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['definiciones-workflow'], refetchType: 'active' });
     },
   });
 }
@@ -152,8 +152,8 @@ export function useEliminarWorkflow() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['workflow-definiciones'] });
-      queryClient.invalidateQueries({ queryKey: ['definiciones-workflow'] });
+      queryClient.invalidateQueries({ queryKey: ['workflow-definiciones'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['definiciones-workflow'], refetchType: 'active' });
     },
   });
 }
@@ -173,8 +173,8 @@ export function useDuplicarWorkflow() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['workflow-definiciones'] });
-      queryClient.invalidateQueries({ queryKey: ['definiciones-workflow'] });
+      queryClient.invalidateQueries({ queryKey: ['workflow-definiciones'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['definiciones-workflow'], refetchType: 'active' });
     },
   });
 }
@@ -191,9 +191,9 @@ export function usePublicarWorkflow() {
       return response.data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['workflow-definiciones'] });
-      queryClient.invalidateQueries({ queryKey: ['workflow-definicion', variables.id] });
-      queryClient.invalidateQueries({ queryKey: ['definiciones-workflow'] });
+      queryClient.invalidateQueries({ queryKey: ['workflow-definiciones'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['workflow-definicion', variables.id], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['definiciones-workflow'], refetchType: 'active' });
     },
   });
 }

@@ -110,16 +110,16 @@ export function useAsignarProfesional() {
         queryKey: ['servicio-profesionales', variables.servicioId],
         exact: true
       });
-      queryClient.invalidateQueries({ queryKey: ['servicios'] });
-      queryClient.invalidateQueries({ queryKey: ['servicios-dashboard'], exact: true });
+      queryClient.invalidateQueries({ queryKey: ['servicios'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['servicios-dashboard'], exact: true, refetchType: 'active' });
 
       // Resetear cache del lado de profesionales (bidireccional)
       queryClient.resetQueries({
         queryKey: ['profesional-servicios', variables.profesionalId],
         exact: true
       });
-      queryClient.invalidateQueries({ queryKey: ['profesionales'] });
-      queryClient.invalidateQueries({ queryKey: ['estadisticas-asignaciones'], exact: true });
+      queryClient.invalidateQueries({ queryKey: ['profesionales'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['estadisticas-asignaciones'], exact: true, refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('create', 'Asignacion de profesional'),
   });
@@ -142,16 +142,16 @@ export function useDesasignarProfesional() {
         queryKey: ['servicio-profesionales', data.servicioId],
         exact: true
       });
-      queryClient.invalidateQueries({ queryKey: ['servicios'] });
-      queryClient.invalidateQueries({ queryKey: ['servicios-dashboard'], exact: true });
+      queryClient.invalidateQueries({ queryKey: ['servicios'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['servicios-dashboard'], exact: true, refetchType: 'active' });
 
       // Resetear cache del lado de profesionales (bidireccional)
       queryClient.resetQueries({
         queryKey: ['profesional-servicios', data.profesionalId],
         exact: true
       });
-      queryClient.invalidateQueries({ queryKey: ['profesionales'] });
-      queryClient.invalidateQueries({ queryKey: ['estadisticas-asignaciones'], exact: true });
+      queryClient.invalidateQueries({ queryKey: ['profesionales'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['estadisticas-asignaciones'], exact: true, refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('delete', 'Asignacion de profesional'),
   });

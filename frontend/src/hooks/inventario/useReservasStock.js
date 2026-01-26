@@ -95,9 +95,9 @@ export function useCrearReserva() {
       return response.data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['stock-disponible', variables.producto_id] });
-      queryClient.invalidateQueries({ queryKey: ['stock-disponible-multiple'] });
-      queryClient.invalidateQueries({ queryKey: ['reservas'] });
+      queryClient.invalidateQueries({ queryKey: ['stock-disponible', variables.producto_id], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['stock-disponible-multiple'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['reservas'], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('create', 'Reserva'),
   });
@@ -125,9 +125,9 @@ export function useCrearReservasMultiple() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['stock-disponible'] });
-      queryClient.invalidateQueries({ queryKey: ['stock-disponible-multiple'] });
-      queryClient.invalidateQueries({ queryKey: ['reservas'] });
+      queryClient.invalidateQueries({ queryKey: ['stock-disponible'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['stock-disponible-multiple'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['reservas'], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('create', 'Reservas'),
   });
@@ -145,10 +145,10 @@ export function useConfirmarReserva() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['stock-disponible'] });
-      queryClient.invalidateQueries({ queryKey: ['stock-disponible-multiple'] });
-      queryClient.invalidateQueries({ queryKey: ['reservas'] });
-      queryClient.invalidateQueries({ queryKey: ['productos'] });
+      queryClient.invalidateQueries({ queryKey: ['stock-disponible'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['stock-disponible-multiple'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['reservas'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['productos'], refetchType: 'active' });
     },
   });
 }
@@ -165,10 +165,10 @@ export function useConfirmarReservasMultiple() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['stock-disponible'] });
-      queryClient.invalidateQueries({ queryKey: ['stock-disponible-multiple'] });
-      queryClient.invalidateQueries({ queryKey: ['reservas'] });
-      queryClient.invalidateQueries({ queryKey: ['productos'] });
+      queryClient.invalidateQueries({ queryKey: ['stock-disponible'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['stock-disponible-multiple'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['reservas'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['productos'], refetchType: 'active' });
     },
   });
 }
@@ -185,9 +185,9 @@ export function useCancelarReserva() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['stock-disponible'] });
-      queryClient.invalidateQueries({ queryKey: ['stock-disponible-multiple'] });
-      queryClient.invalidateQueries({ queryKey: ['reservas'] });
+      queryClient.invalidateQueries({ queryKey: ['stock-disponible'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['stock-disponible-multiple'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['reservas'], refetchType: 'active' });
     },
   });
 }

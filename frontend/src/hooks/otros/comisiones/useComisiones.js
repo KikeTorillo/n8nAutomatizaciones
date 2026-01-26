@@ -102,7 +102,7 @@ export function useCrearConfiguracionComision() {
     },
     onSuccess: () => {
       // Invalidar queries de configuración
-      queryClient.invalidateQueries({ queryKey: ['comisiones', 'configuracion'] });
+      queryClient.invalidateQueries({ queryKey: ['comisiones', 'configuracion'], refetchType: 'active' });
     },
   });
 }
@@ -128,8 +128,8 @@ export function useEliminarConfiguracionComision() {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['comisiones', 'configuracion'] });
-      queryClient.invalidateQueries({ queryKey: ['comisiones', 'historial-configuracion'] });
+      queryClient.invalidateQueries({ queryKey: ['comisiones', 'configuracion'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['comisiones', 'historial-configuracion'], refetchType: 'active' });
       success('Configuracion eliminada exitosamente');
     },
     onError: (error) => {
@@ -276,8 +276,8 @@ export function useMarcarComoPagada() {
       return response.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['comisiones'] });
-      queryClient.invalidateQueries({ queryKey: ['comisiones', variables.id] });
+      queryClient.invalidateQueries({ queryKey: ['comisiones'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['comisiones', variables.id], refetchType: 'active' });
       success('Comision marcada como pagada');
     },
     onError: (error) => {

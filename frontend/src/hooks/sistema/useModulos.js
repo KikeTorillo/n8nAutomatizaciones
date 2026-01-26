@@ -83,7 +83,7 @@ export function useActivarModulo() {
     },
     onSuccess: (data, modulo) => {
       // Invalidar queries de módulos
-      queryClient.invalidateQueries({ queryKey: MODULOS_KEYS.all });
+      queryClient.invalidateQueries({ queryKey: MODULOS_KEYS.all, refetchType: 'active' });
 
       // También invalidar queries del módulo específico si existen
       const moduloQueries = {
@@ -96,7 +96,7 @@ export function useActivarModulo() {
 
       const queriesToInvalidate = moduloQueries[modulo] || [];
       queriesToInvalidate.forEach((key) => {
-        queryClient.invalidateQueries({ queryKey: [key] });
+        queryClient.invalidateQueries({ queryKey: [key], refetchType: 'active' });
       });
     },
     onError: createCRUDErrorHandler('update', 'Modulo'),
@@ -116,7 +116,7 @@ export function useDesactivarModulo() {
     },
     onSuccess: () => {
       // Invalidar queries de módulos
-      queryClient.invalidateQueries({ queryKey: MODULOS_KEYS.all });
+      queryClient.invalidateQueries({ queryKey: MODULOS_KEYS.all, refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('update', 'Modulo'),
   });

@@ -50,9 +50,9 @@ export function useActualizarCredito() {
       return response.data.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['cliente-credito', variables.clienteId] });
-      queryClient.invalidateQueries({ queryKey: ['cliente', variables.clienteId] });
-      queryClient.invalidateQueries({ queryKey: ['clientes'] });
+      queryClient.invalidateQueries({ queryKey: ['cliente-credito', variables.clienteId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['cliente', variables.clienteId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['clientes'], refetchType: 'active' });
     },
   });
 }
@@ -70,8 +70,8 @@ export function useSuspenderCredito() {
       return response.data.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['cliente-credito', variables.clienteId] });
-      queryClient.invalidateQueries({ queryKey: ['cliente', variables.clienteId] });
+      queryClient.invalidateQueries({ queryKey: ['cliente-credito', variables.clienteId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['cliente', variables.clienteId], refetchType: 'active' });
     },
   });
 }
@@ -90,8 +90,8 @@ export function useReactivarCredito() {
     },
     onSuccess: (data, variables) => {
       // variables es clienteId directamente
-      queryClient.invalidateQueries({ queryKey: ['cliente-credito', variables] });
-      queryClient.invalidateQueries({ queryKey: ['cliente', variables] });
+      queryClient.invalidateQueries({ queryKey: ['cliente-credito', variables], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['cliente', variables], refetchType: 'active' });
     },
   });
 }
@@ -109,9 +109,9 @@ export function useRegistrarAbono() {
       return response.data.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['cliente-credito', variables.clienteId] });
-      queryClient.invalidateQueries({ queryKey: ['cliente-credito-movimientos', variables.clienteId] });
-      queryClient.invalidateQueries({ queryKey: ['clientes-con-saldo'] });
+      queryClient.invalidateQueries({ queryKey: ['cliente-credito', variables.clienteId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['cliente-credito-movimientos', variables.clienteId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['clientes-con-saldo'], refetchType: 'active' });
     },
   });
 }

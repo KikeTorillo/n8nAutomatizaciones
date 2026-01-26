@@ -200,9 +200,9 @@ export function useCrearIncapacidad() {
       return response.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['incapacidades'] });
-      queryClient.invalidateQueries({ queryKey: ['profesionales'] });
-      queryClient.invalidateQueries({ queryKey: ['bloqueos'] });
+      queryClient.invalidateQueries({ queryKey: ['incapacidades'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['profesionales'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['bloqueos'], refetchType: 'active' });
       success('Incapacidad registrada correctamente');
     },
     onError: (err) => {
@@ -224,8 +224,8 @@ export function useActualizarIncapacidad() {
       return response.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['incapacidades'] });
-      queryClient.invalidateQueries({ queryKey: ['incapacidades', variables.id] });
+      queryClient.invalidateQueries({ queryKey: ['incapacidades'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['incapacidades', variables.id], refetchType: 'active' });
       success('Incapacidad actualizada correctamente');
     },
     onError: (err) => {
@@ -247,8 +247,8 @@ export function useFinalizarIncapacidad() {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['incapacidades'] });
-      queryClient.invalidateQueries({ queryKey: ['profesionales'] });
+      queryClient.invalidateQueries({ queryKey: ['incapacidades'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['profesionales'], refetchType: 'active' });
       success('Incapacidad finalizada correctamente');
     },
     onError: (err) => {
@@ -270,9 +270,9 @@ export function useCancelarIncapacidad() {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['incapacidades'] });
-      queryClient.invalidateQueries({ queryKey: ['profesionales'] });
-      queryClient.invalidateQueries({ queryKey: ['bloqueos'] });
+      queryClient.invalidateQueries({ queryKey: ['incapacidades'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['profesionales'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['bloqueos'], refetchType: 'active' });
       success('Incapacidad cancelada correctamente');
     },
     onError: (err) => {
@@ -294,8 +294,8 @@ export function useCrearProrroga() {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['incapacidades'] });
-      queryClient.invalidateQueries({ queryKey: ['bloqueos'] });
+      queryClient.invalidateQueries({ queryKey: ['incapacidades'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['bloqueos'], refetchType: 'active' });
       success('Prórroga creada correctamente');
     },
     onError: (err) => {

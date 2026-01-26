@@ -103,7 +103,7 @@ export function useCrearCombo() {
     return useMutation({
         mutationFn: (data) => posApi.crearCombo(data),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.combos] });
+            queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.combos], refetchType: 'active' });
             toast.success('Combo creado exitosamente');
         },
         onError: (error) => {
@@ -127,8 +127,8 @@ export function useActualizarCombo() {
     return useMutation({
         mutationFn: ({ productoId, data }) => posApi.actualizarCombo(productoId, data),
         onSuccess: (_, { productoId }) => {
-            queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.combos] });
-            queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.combo, productoId] });
+            queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.combos], refetchType: 'active' });
+            queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.combo, productoId], refetchType: 'active' });
             toast.success('Combo actualizado exitosamente');
         },
         onError: (error) => {
@@ -152,7 +152,7 @@ export function useEliminarCombo() {
     return useMutation({
         mutationFn: ({ productoId, sucursalId }) => posApi.eliminarCombo(productoId, sucursalId),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.combos] });
+            queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.combos], refetchType: 'active' });
             toast.success('Combo eliminado exitosamente');
         },
         onError: (error) => {
@@ -234,7 +234,7 @@ export function useCrearGrupoModificadores() {
     return useMutation({
         mutationFn: (data) => posApi.crearGrupoModificadores(data),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.gruposModificadores] });
+            queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.gruposModificadores], refetchType: 'active' });
             toast({
                 title: 'Grupo creado',
                 description: 'El grupo de modificadores se ha creado exitosamente',
@@ -262,7 +262,7 @@ export function useActualizarGrupoModificadores() {
     return useMutation({
         mutationFn: ({ id, data }) => posApi.actualizarGrupoModificadores(id, data),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.gruposModificadores] });
+            queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.gruposModificadores], refetchType: 'active' });
             toast({
                 title: 'Grupo actualizado',
                 description: 'El grupo de modificadores se ha actualizado exitosamente',
@@ -290,7 +290,7 @@ export function useEliminarGrupoModificadores() {
     return useMutation({
         mutationFn: (id) => posApi.eliminarGrupoModificadores(id),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.gruposModificadores] });
+            queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.gruposModificadores], refetchType: 'active' });
             toast({
                 title: 'Grupo eliminado',
                 description: 'El grupo de modificadores se ha eliminado exitosamente',
@@ -322,7 +322,7 @@ export function useCrearModificador() {
     return useMutation({
         mutationFn: (data) => posApi.crearModificador(data),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.gruposModificadores] });
+            queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.gruposModificadores], refetchType: 'active' });
             toast({
                 title: 'Modificador creado',
                 description: 'El modificador se ha creado exitosamente',
@@ -350,7 +350,7 @@ export function useActualizarModificador() {
     return useMutation({
         mutationFn: ({ id, data }) => posApi.actualizarModificador(id, data),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.gruposModificadores] });
+            queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.gruposModificadores], refetchType: 'active' });
             toast({
                 title: 'Modificador actualizado',
                 description: 'El modificador se ha actualizado exitosamente',
@@ -378,7 +378,7 @@ export function useEliminarModificador() {
     return useMutation({
         mutationFn: (id) => posApi.eliminarModificador(id),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.gruposModificadores] });
+            queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.gruposModificadores], refetchType: 'active' });
             toast({
                 title: 'Modificador eliminado',
                 description: 'El modificador se ha eliminado exitosamente',
@@ -468,9 +468,9 @@ export function useAsignarGrupoAProducto() {
     return useMutation({
         mutationFn: ({ productoId, data }) => posApi.asignarGrupoAProducto(productoId, data),
         onSuccess: (_, { productoId }) => {
-            queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.asignacionesProducto, productoId] });
-            queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.modificadoresProducto, productoId] });
-            queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.tieneModificadores, productoId] });
+            queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.asignacionesProducto, productoId], refetchType: 'active' });
+            queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.modificadoresProducto, productoId], refetchType: 'active' });
+            queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.tieneModificadores, productoId], refetchType: 'active' });
             toast({
                 title: 'Grupo asignado',
                 description: 'El grupo se ha asignado al producto exitosamente',
@@ -499,8 +499,8 @@ export function useAsignarGrupoACategoria() {
         mutationFn: ({ categoriaId, data }) => posApi.asignarGrupoACategoria(categoriaId, data),
         onSuccess: () => {
             // Invalidar todos los modificadores de productos ya que la categoría afecta a múltiples
-            queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.modificadoresProducto] });
-            queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.tieneModificadores] });
+            queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.modificadoresProducto], refetchType: 'active' });
+            queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.tieneModificadores], refetchType: 'active' });
             toast({
                 title: 'Grupo asignado',
                 description: 'El grupo se ha asignado a la categoría exitosamente',
@@ -528,9 +528,9 @@ export function useEliminarAsignacionProducto() {
     return useMutation({
         mutationFn: ({ productoId, grupoId }) => posApi.eliminarAsignacionProducto(productoId, grupoId),
         onSuccess: (_, { productoId }) => {
-            queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.asignacionesProducto, productoId] });
-            queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.modificadoresProducto, productoId] });
-            queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.tieneModificadores, productoId] });
+            queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.asignacionesProducto, productoId], refetchType: 'active' });
+            queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.modificadoresProducto, productoId], refetchType: 'active' });
+            queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.tieneModificadores, productoId], refetchType: 'active' });
             toast({
                 title: 'Asignación eliminada',
                 description: 'La asignación se ha eliminado exitosamente',

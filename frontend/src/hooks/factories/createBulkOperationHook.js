@@ -123,7 +123,7 @@ export function createBulkOperationHook(config) {
       onSuccess: (data, variables, context) => {
         // Invalidar queries
         invalidateKeys.forEach((key) => {
-          queryClient.invalidateQueries({ queryKey: [key] });
+          queryClient.invalidateQueries({ queryKey: [key], refetchType: 'active' });
         });
 
         // Reset progreso

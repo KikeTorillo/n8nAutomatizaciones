@@ -28,9 +28,9 @@ export function useGenerarOCDesdeProducto() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['sugerencias-oc'] });
-      queryClient.invalidateQueries({ queryKey: ['alertas'] });
-      queryClient.invalidateQueries({ queryKey: ['ordenes-compra'] });
+      queryClient.invalidateQueries({ queryKey: ['sugerencias-oc'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['alertas'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['ordenes-compra'], refetchType: 'active' });
     },
   });
 }
@@ -47,9 +47,9 @@ export function useAutoGenerarOCs() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['sugerencias-oc'] });
-      queryClient.invalidateQueries({ queryKey: ['alertas'] });
-      queryClient.invalidateQueries({ queryKey: ['ordenes-compra'] });
+      queryClient.invalidateQueries({ queryKey: ['sugerencias-oc'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['alertas'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['ordenes-compra'], refetchType: 'active' });
     },
   });
 }

@@ -105,8 +105,8 @@ export function useAbrirSesionCaja() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['sesion-caja-activa'] });
-      queryClient.invalidateQueries({ queryKey: ['sesiones-caja'] });
+      queryClient.invalidateQueries({ queryKey: ['sesion-caja-activa'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['sesiones-caja'], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('create', 'Sesión de caja', {
       409: 'Ya existe una sesión de caja abierta',
@@ -133,9 +133,9 @@ export function useCerrarSesionCaja() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['sesion-caja-activa'] });
-      queryClient.invalidateQueries({ queryKey: ['sesiones-caja'] });
-      queryClient.invalidateQueries({ queryKey: ['resumen-sesion-caja'] });
+      queryClient.invalidateQueries({ queryKey: ['sesion-caja-activa'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['sesiones-caja'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['resumen-sesion-caja'], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('update', 'Sesión de caja'),
   });
@@ -159,9 +159,9 @@ export function useRegistrarMovimientoCaja() {
       return response.data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['sesion-caja-activa'] });
-      queryClient.invalidateQueries({ queryKey: ['movimientos-caja', variables.sesionId] });
-      queryClient.invalidateQueries({ queryKey: ['resumen-sesion-caja', variables.sesionId] });
+      queryClient.invalidateQueries({ queryKey: ['sesion-caja-activa'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['movimientos-caja', variables.sesionId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['resumen-sesion-caja', variables.sesionId], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('create', 'Movimiento de caja', {
       404: 'Sesión de caja no encontrada o ya está cerrada',

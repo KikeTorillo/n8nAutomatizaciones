@@ -111,10 +111,10 @@ export function useCrearPago() {
       return response.data?.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.PAGOS] });
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.PAGOS_RESUMEN] });
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.SUSCRIPCIONES] });
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.METRICAS_DASHBOARD] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.PAGOS], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.PAGOS_RESUMEN], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.SUSCRIPCIONES], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.METRICAS_DASHBOARD], refetchType: 'active' });
       success('Pago registrado exitosamente');
     },
     onError: createCRUDErrorHandler('create', 'Pago'),
@@ -134,9 +134,9 @@ export function useActualizarEstadoPago() {
       return response.data?.data;
     },
     onSuccess: (_, { id }) => {
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.PAGOS] });
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.PAGO, id] });
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.PAGOS_RESUMEN] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.PAGOS], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.PAGO, id], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.PAGOS_RESUMEN], refetchType: 'active' });
       success('Estado de pago actualizado');
     },
     onError: createCRUDErrorHandler('update', 'Pago'),
@@ -160,10 +160,10 @@ export function useProcesarReembolso() {
       return response.data?.data;
     },
     onSuccess: (_, { id }) => {
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.PAGOS] });
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.PAGO, id] });
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.PAGOS_RESUMEN] });
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.METRICAS_DASHBOARD] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.PAGOS], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.PAGO, id], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.PAGOS_RESUMEN], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.METRICAS_DASHBOARD], refetchType: 'active' });
       success('Reembolso procesado');
     },
     onError: createCRUDErrorHandler('update', 'Pago'),

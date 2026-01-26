@@ -88,7 +88,7 @@ export function useCrearEvento() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['eventos-digitales'] });
+      queryClient.invalidateQueries({ queryKey: ['eventos-digitales'], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('create', 'Evento', {
       409: 'Ya existe un evento con ese nombre',
@@ -116,10 +116,10 @@ export function useActualizarEvento() {
       return response.data.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['eventos-digitales'] });
-      queryClient.invalidateQueries({ queryKey: ['evento-digital', data.id] });
+      queryClient.invalidateQueries({ queryKey: ['eventos-digitales'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['evento-digital', data.id], refetchType: 'active' });
       if (data.slug) {
-        queryClient.invalidateQueries({ queryKey: ['evento-publico', data.slug] });
+        queryClient.invalidateQueries({ queryKey: ['evento-publico', data.slug], refetchType: 'active' });
       }
     },
     onError: createCRUDErrorHandler('update', 'Evento'),
@@ -139,7 +139,7 @@ export function useEliminarEvento() {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['eventos-digitales'] });
+      queryClient.invalidateQueries({ queryKey: ['eventos-digitales'], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('delete', 'Evento'),
   });
@@ -158,8 +158,8 @@ export function usePublicarEvento() {
       return response.data.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['eventos-digitales'] });
-      queryClient.invalidateQueries({ queryKey: ['evento-digital', data.id] });
+      queryClient.invalidateQueries({ queryKey: ['eventos-digitales'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['evento-digital', data.id], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('update', 'Evento', {
       400: 'El evento ya esta publicado',
@@ -233,8 +233,8 @@ export function useCrearPlantilla() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['plantillas-eventos'] });
-      queryClient.invalidateQueries({ queryKey: ['plantillas-tipo'] });
+      queryClient.invalidateQueries({ queryKey: ['plantillas-eventos'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['plantillas-tipo'], refetchType: 'active' });
     },
   });
 }
@@ -251,9 +251,9 @@ export function useActualizarPlantilla() {
       return response.data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['plantillas-eventos'] });
-      queryClient.invalidateQueries({ queryKey: ['plantillas-tipo'] });
-      queryClient.invalidateQueries({ queryKey: ['plantilla-evento', variables.id] });
+      queryClient.invalidateQueries({ queryKey: ['plantillas-eventos'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['plantillas-tipo'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['plantilla-evento', variables.id], refetchType: 'active' });
     },
   });
 }
@@ -270,8 +270,8 @@ export function useEliminarPlantilla() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['plantillas-eventos'] });
-      queryClient.invalidateQueries({ queryKey: ['plantillas-tipo'] });
+      queryClient.invalidateQueries({ queryKey: ['plantillas-eventos'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['plantillas-tipo'], refetchType: 'active' });
     },
   });
 }
