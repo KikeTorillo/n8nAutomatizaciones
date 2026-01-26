@@ -1,4 +1,5 @@
 import { memo, useId } from 'react';
+import PropTypes from 'prop-types';
 import { cn } from '@/lib/utils';
 import { Label } from '../atoms/Label';
 import {
@@ -58,6 +59,30 @@ const FilterSelectField = memo(function FilterSelectField({
 });
 
 FilterSelectField.displayName = 'FilterSelectField';
+
+FilterSelectField.propTypes = {
+  /** Label del campo */
+  label: PropTypes.string,
+  /** Valor seleccionado */
+  value: PropTypes.string,
+  /** Callback (value) => void */
+  onChange: PropTypes.func,
+  /** Array de { value, label } */
+  options: PropTypes.arrayOf(
+    PropTypes.shape({
+      value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+      label: PropTypes.string.isRequired,
+    })
+  ),
+  /** Texto de opción vacía */
+  placeholder: PropTypes.string,
+  /** Icono opcional */
+  icon: PropTypes.elementType,
+  /** ID del select */
+  id: PropTypes.string,
+  /** Clases adicionales */
+  className: PropTypes.string,
+};
 
 export { FilterSelectField };
 export default FilterSelectField;

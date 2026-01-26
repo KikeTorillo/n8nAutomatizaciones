@@ -21,13 +21,14 @@ export { Checkbox } from './atoms/Checkbox';
 export { Badge } from './atoms/Badge';
 export { LoadingSpinner } from './atoms/LoadingSpinner';
 export { Label } from './atoms/Label';
-export { ToggleSwitch } from './atoms/ToggleSwitch';
+export { ToggleSwitch } from './molecules/ToggleSwitch';
 
 // ========== MOLECULES ==========
 export { Alert } from './molecules/Alert';
 export { SearchInput } from './molecules/SearchInput';
 export { Pagination } from './organisms/Pagination';
 export { StatCard } from './molecules/StatCard';
+export { SkeletonStatCard } from './molecules/SkeletonStatCard';
 export { EmptyState } from './molecules/EmptyState';
 export { ViewTabs } from './molecules/ViewTabs';
 export { Breadcrumb } from './molecules/Breadcrumb';

@@ -32,6 +32,8 @@ const Button = memo(forwardRef(function Button(
         ref={ref}
         type={type}
         disabled={disabled || isLoading}
+        aria-busy={isLoading || undefined}
+        aria-disabled={disabled || isLoading || undefined}
         className={cn(
           baseStyles,
           BUTTON_VARIANTS[variant] || BUTTON_VARIANTS.primary,
@@ -41,7 +43,7 @@ const Button = memo(forwardRef(function Button(
         {...props}
       >
         {isLoading && (
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
         )}
         {children}
       </button>

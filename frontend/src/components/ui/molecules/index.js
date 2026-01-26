@@ -8,6 +8,7 @@ export { ToggleSwitch } from './ToggleSwitch';
 
 export { SearchInput } from './SearchInput';
 export { StatCard } from './StatCard';
+export { SkeletonStatCard } from './SkeletonStatCard';
 export { EmptyState } from './EmptyState';
 export { ViewTabs } from './ViewTabs';
 export { Breadcrumb } from './Breadcrumb';

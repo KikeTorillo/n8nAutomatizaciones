@@ -1,4 +1,5 @@
 import { memo, useId } from 'react';
+import PropTypes from 'prop-types';
 import { cn } from '@/lib/utils';
 import { Label } from '../atoms/Label';
 import {
@@ -51,6 +52,23 @@ const FilterTextField = memo(function FilterTextField({
 });
 
 FilterTextField.displayName = 'FilterTextField';
+
+FilterTextField.propTypes = {
+  /** Label del campo */
+  label: PropTypes.string,
+  /** Valor actual */
+  value: PropTypes.string,
+  /** Callback (value) => void */
+  onChange: PropTypes.func,
+  /** Placeholder del input */
+  placeholder: PropTypes.string,
+  /** Icono opcional */
+  icon: PropTypes.elementType,
+  /** ID del input */
+  id: PropTypes.string,
+  /** Clases adicionales */
+  className: PropTypes.string,
+};
 
 export { FilterTextField };
 export default FilterTextField;

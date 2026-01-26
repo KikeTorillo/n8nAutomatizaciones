@@ -1,4 +1,5 @@
 import { memo, useId } from 'react';
+import PropTypes from 'prop-types';
 import { cn } from '@/lib/utils';
 import { Label } from '../atoms/Label';
 import {
@@ -54,6 +55,25 @@ const FilterDateField = memo(function FilterDateField({
 });
 
 FilterDateField.displayName = 'FilterDateField';
+
+FilterDateField.propTypes = {
+  /** Label del campo */
+  label: PropTypes.string,
+  /** Valor de fecha (YYYY-MM-DD) */
+  value: PropTypes.string,
+  /** Callback (value) => void */
+  onChange: PropTypes.func,
+  /** Fecha mínima */
+  min: PropTypes.string,
+  /** Fecha máxima */
+  max: PropTypes.string,
+  /** Icono opcional */
+  icon: PropTypes.elementType,
+  /** ID del input */
+  id: PropTypes.string,
+  /** Clases adicionales */
+  className: PropTypes.string,
+};
 
 export { FilterDateField };
 export default FilterDateField;

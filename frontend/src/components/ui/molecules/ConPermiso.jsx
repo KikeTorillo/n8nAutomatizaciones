@@ -14,6 +14,7 @@
  * </ConPermiso>
  */
 
+import PropTypes from 'prop-types';
 import { usePermiso } from '@/hooks/sistema/useAccesoModulo';
 
 /**
@@ -34,5 +35,16 @@ export function ConPermiso({ codigo, children, fallback = null, sucursalId }) {
   // Tiene permiso, mostrar children
   return children;
 }
+
+ConPermiso.propTypes = {
+  /** Código del permiso (ej: 'agendamiento.crear_citas') */
+  codigo: PropTypes.string.isRequired,
+  /** Contenido a mostrar si tiene permiso */
+  children: PropTypes.node.isRequired,
+  /** Contenido alternativo si no tiene permiso */
+  fallback: PropTypes.node,
+  /** ID de sucursal específica (opcional, usa la del usuario) */
+  sucursalId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+};
 
 export default ConPermiso;

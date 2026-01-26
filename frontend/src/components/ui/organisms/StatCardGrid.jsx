@@ -1,4 +1,5 @@
 import { memo } from 'react';
+import PropTypes from 'prop-types';
 import { cn } from '@/lib/utils';
 import { StatCard } from '../molecules/StatCard';
 
@@ -47,5 +48,24 @@ export const StatCardGrid = memo(function StatCardGrid({ stats, columns = 4, cla
 });
 
 StatCardGrid.displayName = 'StatCardGrid';
+
+StatCardGrid.propTypes = {
+  /** Array de configuración de cards */
+  stats: PropTypes.arrayOf(
+    PropTypes.shape({
+      icon: PropTypes.elementType.isRequired,
+      label: PropTypes.string.isRequired,
+      value: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
+      color: PropTypes.oneOf(['blue', 'green', 'yellow', 'red', 'purple', 'primary']).isRequired,
+      trend: PropTypes.object,
+      subtext: PropTypes.string,
+      key: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    })
+  ).isRequired,
+  /** Número de columnas en desktop */
+  columns: PropTypes.oneOf([2, 3, 4]),
+  /** Clases adicionales para el grid */
+  className: PropTypes.string,
+};
 
 export default StatCardGrid;
