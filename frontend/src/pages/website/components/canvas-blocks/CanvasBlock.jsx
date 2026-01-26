@@ -8,7 +8,6 @@
 
 import { memo, useCallback } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
-import { useDroppable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, Copy, Trash2, Eye, EyeOff } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -92,41 +91,23 @@ function CanvasBlock({
   onDelete,
   onToggleVisibility,
 }) {
-  // Sortable setup (for reordering within canvas)
+  // Sortable setup (also acts as droppable for palette items)
   const {
     attributes,
     listeners,
-    setNodeRef: setSortableRef,
+    setNodeRef,
     transform,
     transition,
     isDragging: isSortableDragging,
   } = useSortable({ id: bloque.id });
-
-  // Droppable setup (for receiving drops from palette)
-  const { setNodeRef: setDroppableRef, isOver } = useDroppable({
-    id: `droppable-${bloque.id}`,
-    data: {
-      blockId: bloque.id,
-      accepts: 'palette',
-    },
-  });
-
-  // Combine refs for both sortable and droppable
-  const setNodeRef = useCallback(
-    (node) => {
-      setSortableRef(node);
-      setDroppableRef(node);
-    },
-    [setSortableRef, setDroppableRef]
-  );
 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
   };
 
-  // Use isOver from droppable OR isDragOver from props
-  const isCurrentDragOver = isDragOver || isOver;
+  // Use isDragOver from props (set by DndEditorProvider via overInfo)
+  const isCurrentDragOver = isDragOver;
 
   // Get the correct block component
   const BlockComponent = BLOCK_COMPONENTS[bloque.tipo];

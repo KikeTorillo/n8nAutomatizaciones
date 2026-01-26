@@ -78,6 +78,14 @@ class WebsiteBloquesModel {
             );
             const orden = datos.orden !== undefined ? datos.orden : ordenResult.rows[0].next_orden;
 
+            // Si se especifica un orden, desplazar los bloques existentes para hacer espacio
+            if (datos.orden !== undefined) {
+                await db.query(
+                    'UPDATE website_bloques SET orden = orden + 1 WHERE pagina_id = $1 AND orden >= $2',
+                    [datos.pagina_id, datos.orden]
+                );
+            }
+
             const query = `
                 INSERT INTO website_bloques (
                     pagina_id,

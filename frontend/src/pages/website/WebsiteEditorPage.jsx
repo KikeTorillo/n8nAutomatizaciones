@@ -264,20 +264,45 @@ function WebsiteEditorPage() {
         return;
       }
 
-      // Calcular el indice donde insertar
-      let indice = bloques.length; // Por defecto al final
+      // Calcular el orden real donde insertar (basado en el orden del bloque target, no el índice del array)
+      let ordenInsercion;
+
       if (targetId) {
-        const targetIndex = bloques.findIndex((b) => b.id === targetId);
-        if (targetIndex !== -1) {
-          indice = position === 'before' ? targetIndex : targetIndex + 1;
+        const targetBloque = bloques.find((b) => b.id === targetId);
+
+        if (targetBloque) {
+          // Usar el orden REAL del bloque target desde la DB
+          const targetOrden = targetBloque.orden ?? bloques.indexOf(targetBloque);
+
+          if (position === 'before') {
+            ordenInsercion = targetOrden;
+          } else {
+            ordenInsercion = targetOrden + 1;
+          }
+
+          console.log('[DnD Debug]', {
+            tipo,
+            targetId,
+            targetOrden,
+            position,
+            ordenInsercion,
+            totalBloques: bloques.length,
+          });
         }
+      }
+
+      // Si no hay target o no se encontró, insertar al final
+      if (ordenInsercion === undefined) {
+        const maxOrden = bloques.reduce((max, b) => Math.max(max, b.orden ?? 0), -1);
+        ordenInsercion = maxOrden + 1;
+        console.log('[DnD Debug] Sin target, insertando al final:', ordenInsercion);
       }
 
       try {
         const nuevoBloque = await crearBloque.mutateAsync({
           pagina_id: paginaActiva.id,
           tipo: tipo,
-          orden: indice,
+          orden: ordenInsercion,
         });
         seleccionarBloque(nuevoBloque.id);
         toast.success('Bloque agregado');

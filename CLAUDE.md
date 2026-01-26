@@ -108,6 +108,22 @@ Nexo Team (org 1) ─── VENDOR
 - `nivel_jerarquia >= 100` (SuperAdmin)
 - Rutas exentas: `/auth/*`, `/planes/*`, `/health`
 
+### Cobros Recurrentes (MercadoPago Preapproval)
+
+**MercadoPago cobra automáticamente** cada período:
+
+```
+Checkout → Usuario acepta Preapproval → MP guarda tarjeta
+                                              ↓
+                                    MP cobra cada mes (automático)
+                                              ↓
+                                    Webhook "authorized_payment"
+                                              ↓
+                                    Tu sistema actualiza estado
+```
+
+**Nota:** Aplica tanto para Nexo Team como clientes con sus propias credenciales MP.
+
 ---
 
 ## Reglas de Desarrollo
@@ -185,8 +201,6 @@ export const useCrearEntidad = hooks.useCreate;
 | Prioridad | Feature |
 |-----------|---------|
 | **Alta** | Definir UX de `/planes` (landing vs app) |
-| **Alta** | Dunning emails (recordatorios de pago) |
-| **Media** | Job automático: trial expirado → vencida |
 | **Media** | Prorrateo en cambios de plan |
 | **Baja** | 2FA/MFA |
 

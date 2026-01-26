@@ -138,14 +138,8 @@ export function DndEditorProvider({ children, onDropFromPalette, onReorder }) {
       position = activeCenter < overCenter ? 'before' : 'after';
     }
 
-    // Extraer el ID real si tiene prefijo droppable-
-    let overId = over.id;
-    if (String(overId).startsWith('droppable-')) {
-      overId = String(overId).replace('droppable-', '');
-    }
-
     setOverInfo({
-      id: overId,
+      id: over.id,
       position,
     });
   }, []);
@@ -161,12 +155,15 @@ export function DndEditorProvider({ children, onDropFromPalette, onReorder }) {
       if (isPalette && over) {
         // Drop desde paleta
         const tipo = String(active.id).replace('palette-', '');
-        let targetId = over.id;
-        const position = overInfo?.position || 'after';
+        const targetId = over.id;
 
-        // Si el targetId es un droppable-{blockId}, extraer el blockId real
-        if (String(targetId).startsWith('droppable-')) {
-          targetId = String(targetId).replace('droppable-', '');
+        // Calcular posicion usando el centro del elemento arrastrado vs centro del target
+        let position = 'after';
+        if (over.rect && active.rect?.current?.translated) {
+          const activeRect = active.rect.current.translated;
+          const activeCenter = activeRect.top + activeRect.height / 2;
+          const overCenter = over.rect.top + over.rect.height / 2;
+          position = activeCenter < overCenter ? 'before' : 'after';
         }
 
         onDropFromPalette?.({
@@ -176,14 +173,9 @@ export function DndEditorProvider({ children, onDropFromPalette, onReorder }) {
         });
       } else if (!isPalette && over && active.id !== over.id) {
         // Reorden dentro del canvas
-        let overId = over.id;
-        // Si es droppable-{id}, extraer el id real
-        if (String(overId).startsWith('droppable-')) {
-          overId = String(overId).replace('droppable-', '');
-        }
         onReorder?.({
           activeId: active.id,
-          overId: overId,
+          overId: over.id,
         });
       }
 
@@ -191,7 +183,7 @@ export function DndEditorProvider({ children, onDropFromPalette, onReorder }) {
       setActiveDrag(null);
       setOverInfo(null);
     },
-    [onDropFromPalette, onReorder, overInfo]
+    [onDropFromPalette, onReorder]
   );
 
   /**

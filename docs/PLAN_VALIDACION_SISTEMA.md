@@ -12,6 +12,8 @@
 | **RBAC (Roles y Permisos)** | ✅ Validado | Tests automatizados pendientes |
 | **Suscripciones** | ✅ Validado E2E | Definir UX de `/planes` |
 | **Seguridad** | ✅ Implementado | Documentado abajo |
+| **Jobs Automáticos** | ✅ Implementado | Validar ejecución en producción |
+| **Website Builder** | 🔄 En Progreso | Ver Fase 1 abajo |
 
 ---
 
@@ -57,6 +59,23 @@ Nexo Team (org_id=1) ─── VENDOR
 | SuperAdmin reactiva suscripción | ✅ |
 | Org cliente acceso restaurado | ✅ |
 | Trigger anti-duplicados (1 suscripción activa) | ✅ |
+
+### Cobros Recurrentes (MercadoPago Preapproval)
+
+**MercadoPago cobra automáticamente** cada período usando Preapproval API:
+
+```
+Checkout → Usuario acepta → MP guarda tarjeta → MP cobra cada mes → Webhook notifica
+```
+
+| Paso | Responsable |
+|------|-------------|
+| Crear suscripción (checkout) | Tu sistema |
+| Cobrar mensualmente | **MercadoPago (automático)** |
+| Notificar cobro (`authorized_payment`) | MercadoPago (webhook) |
+| Actualizar estado suscripción | Tu sistema |
+
+**Nota:** Esto aplica tanto para Nexo Team como para clientes que conecten sus propias credenciales de MercadoPago.
 
 ### Estados y Acceso
 
@@ -133,7 +152,81 @@ App (autenticado)
 
 ---
 
-## PARTE 5: Tests Pendientes
+## PARTE 5: Jobs Automáticos - ✅ Implementado
+
+### Modelo de Cobros Recurrentes
+
+#### MercadoPago Preapproval (Modelo Actual)
+
+Con **Preapproval API**, MercadoPago cobra automáticamente cada período:
+
+```
+1. Checkout → Crea Preapproval en MercadoPago
+2. Usuario acepta → MP guarda su tarjeta
+3. Cada mes → MP cobra automáticamente
+4. MP envía webhook "authorized_payment"
+5. Tu sistema actualiza estado de suscripción
+```
+
+**Importante:** Tanto Nexo Team como los clientes que conecten sus propias credenciales de MercadoPago usan este modelo. **No se requiere job de cobros** porque MercadoPago lo hace automáticamente.
+
+#### Gateways con Tokenización (Futuro - Stripe)
+
+Para gateways que requieren cobros manuales con tarjeta tokenizada:
+
+```
+1. Usuario guarda tarjeta → Se tokeniza y almacena
+2. Job diario → Busca suscripciones con fecha_proximo_cobro = hoy
+3. Job cobra → Usa token para crear cargo via API
+4. Actualiza estado según resultado
+```
+
+El job `procesar-cobros.job.js` está preparado para este escenario.
+
+### Cronograma de Ejecución
+
+| Hora | Job | Uso Actual | Descripción |
+|------|-----|------------|-------------|
+| 06:00 | `procesar-cobros.job.js` | 🔜 Futuro (Stripe) | Cobros con tarjeta tokenizada |
+| 07:00 | `verificar-trials.job.js` | ✅ Activo | Trials expirados → vencida/activa |
+| 08:00 | `procesar-dunning.job.js` | ✅ Activo | Secuencia dunning + transiciones |
+| */5min | `polling-suscripciones.job.js` | ✅ Activo | Fallback webhooks MercadoPago |
+
+### Funcionalidad de Cada Job
+
+#### `verificar-trials.job.js` ✅ Activo
+- Detecta trials con `fecha_fin_periodo < NOW()`
+- Si tiene método de pago → transición a `activa`
+- Si no tiene método de pago → transición a `vencida`
+
+#### `procesar-dunning.job.js` ✅ Activo
+- Ejecuta secuencia de dunning definida en `DUNNING_SEQUENCE`
+- Envía emails de recordatorio en días configurados
+- Transición automática: `grace_period` → `suspendida` → `cancelada`
+
+#### `polling-suscripciones.job.js` ✅ Activo
+- Fallback por si webhooks de MercadoPago fallan
+- Consulta estado real de suscripciones via API
+- Sincroniza estados discrepantes
+
+#### `procesar-cobros.job.js` 🔜 Futuro
+- **No se usa con MercadoPago** (Preapproval cobra automático)
+- Preparado para Stripe u otros gateways con tokenización
+- Busca suscripciones con `auto_cobro = TRUE` y `fecha_proximo_cobro = hoy`
+
+### Archivos Clave
+
+| Archivo | Ruta |
+|---------|------|
+| Jobs Index | `backend/app/modules/suscripciones-negocio/jobs/index.js` |
+| Servicio Cobros | `backend/app/modules/suscripciones-negocio/services/cobro.service.js` |
+| Servicio Notificaciones | `backend/app/modules/suscripciones-negocio/services/notificaciones.service.js` |
+| Constantes Dunning | `backend/app/config/constants.js` (DUNNING_SEQUENCE) |
+| Servicio Dunning | `backend/app/modules/suscripciones-negocio/services/dunning.service.js` |
+
+---
+
+## PARTE 6: Tests Pendientes
 
 ### Prioridad Alta
 
@@ -146,7 +239,14 @@ App (autenticado)
 
 - [ ] SQL injection en parámetros
 - [ ] IP spoofing con `X-Forwarded-For`
-- [ ] Trial expirado → transición automática a `vencida`
+
+### Jobs Automáticos
+
+- [ ] Ejecutar `verificar-trials.job.js` manualmente para validar transiciones
+- [ ] Ejecutar `procesar-dunning.job.js` y verificar emails enviados
+- [ ] Verificar que `polling-suscripciones.job.js` sincroniza estados correctamente
+- [ ] Probar secuencia completa: trial → vencida → grace_period → suspendida
+- [ ] Validar que MercadoPago envía webhook `authorized_payment` en cobro mensual
 
 ---
 
@@ -168,6 +268,74 @@ App (autenticado)
 | Prioridad | Feature |
 |-----------|---------|
 | **Alta** | Definir UX de `/planes` (landing vs app) |
-| **Alta** | Dunning emails (recordatorios de pago) |
 | **Media** | Prorrateo en cambios de plan |
-| **Media** | Job automático: trial expirado → vencida |
+| **Baja** | 2FA/MFA |
+
+### Recientemente Completados ✅
+
+- ~~Dunning emails (recordatorios de pago)~~ → `procesar-dunning.job.js`
+- ~~Job automático: trial expirado → vencida~~ → `verificar-trials.job.js`
+
+---
+
+## PARTE 7: Website Builder - 🔄 En Progreso
+
+### Objetivo
+
+Transformar el módulo Website en competidor de Wix/Squarespace con ventaja única: integración nativa con CRM, Citas y Facturación.
+
+### Fase 1: Funcionalidades Críticas
+
+| Feature | Estado | Notas |
+|---------|--------|-------|
+| **Drag & Drop Paleta→Canvas** | ✅ Completado | Fix aplicado 25 Ene 2026 |
+| AI Site Generator | ❌ Pendiente | Modal multi-paso + endpoint IA |
+| Preview/Staging | ❌ Pendiente | URL temporal antes de publicar |
+| Versionado/Rollback | ❌ Pendiente | UI falta, SQL existe |
+
+### Fix Drag & Drop (25 Ene 2026)
+
+**Problema:** Bloques se insertaban en posición incorrecta porque se usaba el índice del array frontend como `orden`, pero los valores de orden en la DB podían tener gaps.
+
+**Solución:** Usar el valor `bloque.orden` real de la DB en lugar del índice del array.
+
+**Archivo modificado:**
+- `frontend/src/pages/website/WebsiteEditorPage.jsx` - `handleDropFromPalette()`
+
+**Cambio clave:**
+```javascript
+// ANTES (incorrecto)
+const targetIndex = bloques.findIndex((b) => b.id === targetId);
+indice = position === 'before' ? targetIndex : targetIndex + 1;
+
+// DESPUÉS (correcto)
+const targetOrden = targetBloque.orden ?? bloques.indexOf(targetBloque);
+ordenInsercion = position === 'before' ? targetOrden : targetOrden + 1;
+```
+
+**Verificado:** Drag & drop desde paleta inserta bloques exactamente donde el usuario los suelta.
+
+### Fase 2: Funcionalidades Avanzadas (Pendientes)
+
+| Feature | Prioridad | Descripción |
+|---------|-----------|-------------|
+| Widget de Citas | Alta | Calendario disponibilidad real - **Diferenciador único** |
+| Subdominio nexo.site | Alta | URLs profesionales automáticas |
+| Integraciones (GA4, WA) | Media | Scripts externos inyectados |
+| Dominio Personalizado | Media | SSL automático con Let's Encrypt |
+
+### Fase 3: E-Commerce y Chat (Futuro)
+
+- Carrito + checkout integrado con facturación
+- Chat en vivo con WebSocket
+- Multi-idioma con DeepL
+
+### Archivos Clave del Módulo
+
+| Archivo | Propósito |
+|---------|-----------|
+| `WebsiteEditorPage.jsx` | Página principal del editor WYSIWYG |
+| `DndEditorProvider.jsx` | Contexto DnD para drag & drop |
+| `EditorCanvas.jsx` | Canvas donde se renderizan bloques |
+| `BlockPalette.jsx` | Paleta de bloques arrastrables |
+| `bloques.model.js` | CRUD de bloques con shift de orden |
