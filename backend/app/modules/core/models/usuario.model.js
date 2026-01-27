@@ -1183,7 +1183,9 @@ class UsuarioModel {
                        r.nivel_jerarquia, r.bypass_permisos, r.es_rol_sistema,
                        u.organizacion_id, u.activo, u.email_verificado,
                        u.google_id, u.avatar_url, u.onboarding_completado,
-                       o.nombre_comercial
+                       o.nombre_comercial,
+                       (SELECT us.sucursal_id FROM usuarios_sucursales us
+                        WHERE us.usuario_id = u.id AND us.activo = TRUE LIMIT 1) as sucursal_id
                 FROM usuarios u
                 LEFT JOIN roles r ON r.id = u.rol_id
                 LEFT JOIN organizaciones o ON u.organizacion_id = o.id
