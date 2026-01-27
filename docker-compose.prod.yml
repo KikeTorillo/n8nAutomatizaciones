@@ -235,6 +235,9 @@ services:
       # Google OAuth (Dic 2025 - Flujo Unificado)
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+
+      # Encriptación de credenciales (conectores de pago)
+      CREDENTIAL_ENCRYPTION_KEY: ${CREDENTIAL_ENCRYPTION_KEY}
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
       interval: 15s
@@ -320,6 +323,32 @@ services:
       start_period: 40s
 
   # ========================================
+  # PGADMIN - Database Management (Temporal para pre-launch)
+  # ========================================
+  # ⚠️ IMPORTANTE: Remover o deshabilitar después del lanzamiento
+  # Acceso: https://pgadmin.n8nflowautomat.com (configurar en nginx)
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
+      PGADMIN_CONFIG_ENHANCED_COOKIE_PROTECTION: "True"
+      PGADMIN_CONFIG_LOGIN_BANNER: "'⚠️ PRODUCCIÓN - Solo personal autorizado'"
+      PGADMIN_CONFIG_CONSOLE_LOG_LEVEL: "10"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    ports:
+      - "5050:80"
+    networks:
+      - backend_network
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # ========================================
   # MINIO - Object Storage (S3 Compatible)
   # ========================================
 
@@ -352,6 +381,8 @@ services:
 
 volumes:
   minio_data:
+    driver: local
+  pgadmin_data:
     driver: local
 
 # ========================================
