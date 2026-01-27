@@ -376,23 +376,25 @@ function AppHomePage() {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
       {/* Header */}
       <nav className="bg-white dark:bg-gray-800 shadow-sm">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16 items-center">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-primary-600 rounded-xl flex items-center justify-center">
-                <LayoutDashboard className="w-6 h-6 text-white" />
+        <div className="max-w-5xl mx-auto px-3 sm:px-6 lg:px-8">
+          <div className="flex justify-between h-14 sm:h-16 items-center gap-2">
+            {/* Logo y saludo - se comprime en móvil */}
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-shrink">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-primary-600 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0">
+                <LayoutDashboard className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
               </div>
-              <div>
-                <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+              <div className="min-w-0">
+                <h1 className="text-sm sm:text-lg font-semibold text-gray-900 dark:text-gray-100 truncate">
                   Bienvenido, {user?.nombre}
                 </h1>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
+                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 hidden sm:block">
                   ¿Qué quieres hacer hoy?
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-2 sm:gap-4">
+            {/* Acciones - iconos compactos en móvil */}
+            <div className="flex items-center gap-1 sm:gap-3 flex-shrink-0">
               {/* Selector de sucursal (solo si hay múltiples) */}
               <SucursalSelector />
 
@@ -408,9 +410,10 @@ function AppHomePage() {
                   variant="outline"
                   size="sm"
                   onClick={() => navigate('/mi-perfil')}
+                  title="Mi Perfil"
                 >
-                  <UserCircle className="w-4 h-4 mr-2" />
-                  Mi Perfil
+                  <UserCircle className="w-4 h-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Mi Perfil</span>
                 </Button>
               )}
 
@@ -419,9 +422,10 @@ function AppHomePage() {
                 size="sm"
                 onClick={handleLogout}
                 isLoading={logoutMutation.isPending}
+                title="Cerrar sesión"
               >
-                <LogOut className="w-4 h-4 mr-2" />
-                Salir
+                <LogOut className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Salir</span>
               </Button>
             </div>
           </div>

@@ -58,9 +58,9 @@ function SucursalSelector() {
     if (!sucursalActiva) return null;
 
     return (
-      <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-700">
+      <div className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg bg-gray-100 dark:bg-gray-700">
         <Building2 className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-        <span className="text-sm font-medium text-gray-700 dark:text-gray-300 max-w-[120px] truncate">
+        <span className="text-sm font-medium text-gray-700 dark:text-gray-300 max-w-[80px] sm:max-w-[120px] truncate hidden sm:inline">
           {sucursalActiva.nombre}
         </span>
         {sucursalActiva.es_matriz && (
@@ -88,17 +88,18 @@ function SucursalSelector() {
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         disabled={isPending}
-        className={`flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors ${isPending ? 'opacity-50 cursor-wait' : ''}`}
+        title={sucursalActiva?.nombre || 'Seleccionar sucursal'}
+        className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors ${isPending ? 'opacity-50 cursor-wait' : ''}`}
       >
         <Building2 className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-        <span className="text-sm font-medium text-gray-700 dark:text-gray-300 max-w-[120px] truncate">
+        <span className="text-sm font-medium text-gray-700 dark:text-gray-300 max-w-[80px] sm:max-w-[120px] truncate hidden sm:inline">
           {sucursalActiva?.nombre || 'Seleccionar'}
         </span>
         {sucursalActiva?.es_matriz && (
           <Star className="w-3 h-3 text-amber-500 fill-amber-500" />
         )}
         <ChevronDown
-          className={`w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform ${
+          className={`w-3 h-3 sm:w-4 sm:h-4 text-gray-500 dark:text-gray-400 transition-transform ${
             isOpen ? 'rotate-180' : ''
           }`}
         />
