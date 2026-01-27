@@ -630,6 +630,7 @@ class AuthController {
                 email: usuario.email,
                 rolId: usuario.rol_id,
                 organizacionId: usuario.organizacion_id,
+                sucursalId: usuario.sucursal_id || null,
                 jti: jti
             },
             process.env.JWT_SECRET,
