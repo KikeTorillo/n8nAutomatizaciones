@@ -1823,6 +1823,13 @@ class UsuarioModel {
                 organizacion_id: organizacion.id
             });
 
+            // Obtener datos completos del rol para incluir en respuesta
+            const rolData = await db.query(
+                `SELECT id, codigo, nombre, nivel_jerarquia FROM roles WHERE id = $1`,
+                [rolId]
+            );
+            const rol = rolData.rows[0];
+
             return {
                 usuario: {
                     id: userId,
@@ -1830,7 +1837,12 @@ class UsuarioModel {
                     nombre: usuario.nombre,
                     apellidos: usuario.apellidos,
                     organizacion_id: organizacion.id,
-                    onboarding_completado: true
+                    onboarding_completado: true,
+                    // Fix Ene 2026: Incluir rol actualizado para que frontend actualice estado
+                    rol_id: rolId,
+                    rol_codigo: rol?.codigo,
+                    rol_nombre: rol?.nombre,
+                    nivel_jerarquia: rol?.nivel_jerarquia
                 },
                 organizacion
             };
