@@ -12,7 +12,9 @@ logs/
 .env.dev
 .env.prod
 .env.prod.local
-data
+
+# Data folder en raíz (volúmenes Docker)
+/data
 
 # Docker
 .docker/
