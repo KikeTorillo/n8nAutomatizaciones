@@ -1,11 +1,13 @@
 import { memo } from 'react';
 import PropTypes from 'prop-types';
 import { cn } from '@/lib/utils';
-import CheckboxField from './CheckboxField';
+import { CheckboxField } from '../molecules/CheckboxField';
 
 /**
  * CheckboxGroup - Grupo de checkboxes con título opcional
  * Reutilizable en filtros, formularios y configuraciones
+ *
+ * NOTA: Movido a organisms (Ene 2026) porque compone CheckboxField (molecule)
  *
  * @param {Object} props
  * @param {Array} props.options - Configuración de opciones

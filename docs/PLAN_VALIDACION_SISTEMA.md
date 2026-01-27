@@ -1,6 +1,6 @@
 # Plan: Validación Integral del Sistema
 
-**Última Actualización:** 25 Enero 2026
+**Última Actualización:** 26 Enero 2026
 **Estado:** ✅ Validación Core Completa
 
 ---
@@ -10,10 +10,13 @@
 | Módulo | Estado | Próxima Acción |
 |--------|--------|----------------|
 | **RBAC (Roles y Permisos)** | ✅ Validado | Tests automatizados pendientes |
-| **Suscripciones** | ✅ Validado E2E | Definir UX de `/planes` |
+| **Suscripciones** | ✅ Validado E2E | - |
+| **UX Planes y Checkout** | ✅ Implementado | - |
+| **Checkout Trials** | ✅ Validado E2E | - |
 | **Seguridad** | ✅ Implementado | Documentado abajo |
 | **Jobs Automáticos** | ✅ Implementado | Validar ejecución en producción |
 | **Website Builder** | 🔄 En Progreso | Ver Fase 1 abajo |
+| **Dogfooding Planes** | 🔍 Pendiente | **Validar arquitectura multi-tenant** |
 
 ---
 
@@ -94,35 +97,157 @@ Checkout → Usuario acepta → MP guarda tarjeta → MP cobra cada mes → Webh
 
 ---
 
-## PARTE 3: Pendiente - UX de Pantalla `/planes`
+## PARTE 3: UX de Pantalla `/planes` - ✅ Implementado
 
-### Decisiones Requeridas
+### Decisiones Tomadas (25 Ene 2026)
 
-| Pregunta | Opciones | Decisión |
-|----------|----------|----------|
-| **¿Cuándo aparece `/planes`?** | A) Solo cuando suscripción bloqueada<br>B) Siempre accesible desde menú<br>C) Solo desde landing (público) | **Pendiente** |
-| **¿Acceso desde landing?** | A) Sí, público sin login<br>B) Solo para usuarios autenticados<br>C) Ambos (público + autenticado) | **Pendiente** |
-| **¿Mostrar precios en landing?** | A) Sí, transparente<br>B) No, "Contactar ventas"<br>C) Precios base + "desde $X" | **Pendiente** |
-| **¿Cambio de plan desde dentro?** | A) Self-service completo<br>B) Solo upgrade (downgrade via soporte)<br>C) Todo via soporte | **Pendiente** |
+| Pregunta | Decisión |
+|----------|----------|
+| **¿Cuándo aparece `/planes`?** | Siempre accesible + redirect si bloqueado |
+| **¿Acceso desde landing?** | ✅ Sí, enlace "Planes" en navegación |
+| **¿Mostrar precios en landing?** | ✅ Sí, precios transparentes |
+| **¿Cambio de plan desde dentro?** | Upgrade self-service, downgrade vía soporte |
 
-### Escenarios a Considerar
+### Componentes Implementados
 
-1. **Usuario nuevo visita landing** → ¿Ve planes y precios?
-2. **Usuario en trial** → ¿Cómo accede a upgrade?
-3. **Usuario activo quiere cambiar plan** → ¿Dónde lo hace?
-4. **Usuario con suscripción bloqueada** → ¿Qué ve en `/planes`?
+| Componente | Archivo | Función |
+|------------|---------|---------|
+| `ContactarSoporteModal` | `suscripciones-negocio/` | Modal para downgrades → contactar soporte |
+| `AlertaBloqueado` | `suscripciones-negocio/` | Banner contextual según estado bloqueado |
+| `HistorialPagosCard` | `suscripciones-negocio/` | Últimos pagos en `/mi-plan` |
 
-### Implementación Sugerida
+### Flujos Validados
+
+| Flujo | Estado |
+|-------|--------|
+| Landing → "Planes" → `/planes` | ✅ |
+| Usuario bloqueado → redirect `/planes?estado=vencida` | ✅ |
+| Banner contextual según estado | ✅ |
+| Upgrade → Checkout MercadoPago | ✅ |
+| Downgrade → Modal "Contactar Soporte" | ✅ |
+| Historial pagos en `/mi-plan` | ✅ |
+| FAQ expandido con acordeón | ✅ |
+
+### Sistema Dinámico de Períodos
+
+La UI detecta automáticamente qué períodos tienen precios configurados:
+
+| Campo BD | Visible si |
+|----------|------------|
+| `precio_mensual` | Siempre (NOT NULL) |
+| `precio_trimestral` | Si != NULL |
+| `precio_anual` | Si != NULL |
+
+**Estado actual Nexo Team:**
+- Solo Mensual y Anual configurados
+- Selector solo muestra esos dos botones
+
+### Checkout Modal - Flujos Implementados (26 Ene 2026)
+
+El `CheckoutModal` maneja 3 escenarios distintos según el estado del usuario y el plan:
+
+#### Flujo 1: Usuario NO Autenticado
 
 ```
-Landing Page (público)
-├── /precios → Planes con CTA "Comenzar gratis"
-└── /registro → Crea cuenta + trial automático
+/planes → Click "Seleccionar Plan"
+    ↓
+CheckoutModal detecta !isAuthenticated
+    ↓
+UI: "Crea tu cuenta para continuar"
+    ↓
+Click "Crear cuenta" → localStorage.setItem('nexo_plan_seleccionado', {...})
+    ↓
+Redirect a /registro
+    ↓
+Registro → Activar cuenta → Onboarding
+    ↓
+Onboarding detecta plan en localStorage (si < 1 hora)
+    ↓
+Crea organización + inicia trial automáticamente
+    ↓
+localStorage.removeItem() → Redirect a /home
+```
 
-App (autenticado)
-├── /mi-plan → Estado actual + botón "Cambiar plan"
-├── /planes → Checkout (solo si puede cambiar)
-└── Redirect forzado → Si estado bloqueado
+| Paso | Estado |
+|------|--------|
+| Modal muestra "Crear cuenta para continuar" | ✅ |
+| Botones "Crear cuenta gratis" y "Ya tengo cuenta" | ✅ |
+| localStorage guarda `{plan_id, plan_nombre, periodo, timestamp}` | ✅ |
+| Redirect a `/registro` (no `/auth/registro`) | ✅ |
+| Onboarding lee localStorage e inicia trial | ✅ |
+
+#### Flujo 2: Trial (plan.dias_trial > 0)
+
+```
+Usuario autenticado → /planes → Click "Comenzar prueba gratis"
+    ↓
+CheckoutModal detecta plan.dias_trial > 0
+    ↓
+UI: Sin campo cupón, "Gratis por X días"
+    ↓
+Click "Comenzar X días gratis"
+    ↓
+POST /checkout/iniciar-trial (sin MercadoPago)
+    ↓
+Backend crea suscripción estado='trial', gateway=null
+    ↓
+Redirect a /home
+```
+
+| Paso | Estado |
+|------|--------|
+| Modal título "Comenzar Prueba Gratuita" | ✅ |
+| Campo cupón OCULTO | ✅ |
+| Muestra "Gratis por X días" + precio post-trial | ✅ |
+| Botón "Comenzar X días gratis" | ✅ |
+| Nota "Sin tarjeta requerida" | ✅ |
+| Backend crea suscripción sin gateway | ✅ |
+
+#### Flujo 3: Pago Normal (sin trial)
+
+```
+Usuario autenticado → /planes → Click "Seleccionar Plan"
+    ↓
+CheckoutModal muestra checkout completo
+    ↓
+Campo cupón visible, resumen de precios
+    ↓
+Click "Pagar $X"
+    ↓
+POST /checkout/iniciar → MercadoPago init_point
+    ↓
+Redirect a MercadoPago → Webhook → suscripción 'activa'
+```
+
+| Paso | Estado |
+|------|--------|
+| Modal título "Confirmar Suscripción" | ✅ |
+| Campo cupón visible y funcional | ✅ |
+| Resumen: subtotal, descuento, total | ✅ |
+| Botón "Pagar $X" | ✅ |
+| Redirect a MercadoPago | ✅ |
+
+### Archivos Modificados (26 Ene 2026)
+
+| Archivo | Cambios |
+|---------|---------|
+| `CheckoutModal.jsx` | Detección auth, UI condicional (3 flujos), mutation trial |
+| `suscripciones-negocio.api.js` | Método `iniciarTrial()` |
+| `checkout.js` (routes) | Ruta POST `/iniciar-trial` |
+| `checkout.schemas.js` | Schema `iniciarTrial` |
+| `checkout.controller.js` | Método `iniciarTrial()` |
+| `OnboardingPage.jsx` | Lee plan de localStorage, inicia trial automático |
+
+### Validación de Suscripción Existente
+
+El endpoint `/iniciar-trial` valida que el cliente no tenga suscripción activa antes de crear una nueva:
+
+```javascript
+// Busca TODAS las suscripciones activas del cliente (bypass RLS para cross-vendor)
+const suscripcionesActivas = await SuscripcionesModel.buscarTodasActivasPorClienteBypass(clienteId);
+if (suscripcionesActivas.length > 0) {
+  throw new AppError(`Ya tienes una suscripción activa con el plan ${existente.nombre}`, 400);
+}
 ```
 
 ---
@@ -267,12 +392,16 @@ El job `procesar-cobros.job.js` está preparado para este escenario.
 
 | Prioridad | Feature |
 |-----------|---------|
-| **Alta** | Definir UX de `/planes` (landing vs app) |
+| **Alta** | Validar arquitectura de pagos multi-tenant (PARTE 8) |
+| **Alta** | Formulario de planes con múltiples precios |
 | **Media** | Prorrateo en cambios de plan |
 | **Baja** | 2FA/MFA |
 
 ### Recientemente Completados ✅
 
+- ~~UX de `/planes`~~ → Implementado 25 Ene 2026
+- ~~Checkout Trials sin tarjeta~~ → Implementado 26 Ene 2026
+- ~~Flujo usuario no autenticado → registro → trial automático~~ → 26 Ene 2026
 - ~~Dunning emails (recordatorios de pago)~~ → `procesar-dunning.job.js`
 - ~~Job automático: trial expirado → vencida~~ → `verificar-trials.job.js`
 
@@ -339,3 +468,92 @@ ordenInsercion = position === 'before' ? targetOrden : targetOrden + 1;
 | `EditorCanvas.jsx` | Canvas donde se renderizan bloques |
 | `BlockPalette.jsx` | Paleta de bloques arrastrables |
 | `bloques.model.js` | CRUD de bloques con shift de orden |
+
+---
+
+## PARTE 8: Dogfooding y Arquitectura Multi-Tenant de Pagos - 🔍 PRÓXIMO PASO
+
+### Contexto
+
+Nexo es un SaaS multi-tenant donde:
+1. **Nexo Team (org_id=1)** vende suscripciones a otras organizaciones
+2. **Las organizaciones clientes** pueden a su vez vender suscripciones a SUS clientes
+
+### Preguntas Pendientes de Validar
+
+#### A) Dogfooding - ¿Nexo usa su propio sistema?
+
+| Pregunta | Estado | Acción |
+|----------|--------|--------|
+| ¿Nexo Team tiene planes configurados en `planes_suscripcion_org`? | ✅ Sí | Plan Pro, Plan Trial |
+| ¿La página `/planes` muestra planes de Nexo Team? | ✅ Sí | Validado |
+| ¿El checkout usa credenciales de Nexo en MercadoPago? | ❓ Verificar | Ver configuración |
+
+#### B) Configuración de Planes por Organización
+
+| Pregunta | Estado | Acción |
+|----------|--------|--------|
+| ¿Cada org puede crear sus propios planes? | ❓ Verificar | Revisar modelo y UI |
+| ¿El formulario `PlanFormDrawer` permite todos los períodos? | ⚠️ Limitado | Solo un precio/ciclo |
+| ¿La tabla `planes_suscripcion_org` tiene RLS correcto? | ❓ Verificar | Solo ver planes de tu org |
+
+#### C) Credenciales de Pago Multi-Tenant
+
+| Pregunta | Estado | Acción |
+|----------|--------|--------|
+| ¿Dónde se configuran las credenciales de MercadoPago por org? | ❓ Verificar | ¿Tabla `conectores_pago`? |
+| ¿Cada org puede conectar su propia cuenta de MP? | ❓ Verificar | OAuth o credenciales |
+| ¿Los pagos van a la cuenta correcta según la org? | ❓ **CRÍTICO** | Validar flujo de checkout |
+
+#### D) Flujo de Checkout - ¿A quién le pagan?
+
+```
+Usuario → Selecciona Plan → Checkout → ¿MercadoPago de quién?
+                                        │
+                                        ├── Si plan de Nexo Team → MP de Nexo
+                                        └── Si plan de Org Cliente → MP del Cliente
+```
+
+| Pregunta | Estado | Acción |
+|----------|--------|--------|
+| ¿El checkout detecta de qué org es el plan? | ❓ Verificar | Revisar `checkout.controller.js` |
+| ¿Usa las credenciales correctas según el plan? | ❓ **CRÍTICO** | ¿Hardcodeado o dinámico? |
+| ¿La org cliente recibe el pago en su cuenta? | ❓ Verificar | Probar con org de prueba |
+
+### Validaciones a Realizar
+
+1. **Revisar tabla de conectores de pago**
+   ```sql
+   SELECT * FROM conectores_pago_org WHERE tipo = 'mercadopago';
+   ```
+
+2. **Verificar cómo el checkout obtiene credenciales**
+   - Archivo: `backend/app/modules/suscripciones-negocio/controllers/checkout.controller.js`
+   - ¿Lee credenciales de la org del plan o de env vars?
+
+3. **Verificar flujo completo**
+   - Crear plan en org de prueba
+   - Hacer checkout como cliente
+   - Verificar que el pago va a la cuenta correcta
+
+4. **Revisar formulario de planes**
+   - ¿Permite configurar precio_mensual, precio_trimestral, precio_anual?
+   - Si no, ¿se necesita actualizar el `PlanFormDrawer`?
+
+### Archivos a Revisar
+
+| Archivo | Qué buscar |
+|---------|------------|
+| `conectores.model.js` | Cómo se guardan credenciales MP |
+| `checkout.controller.js` | Cómo selecciona credenciales según org |
+| `mercadopago.service.js` | Si usa credenciales dinámicas o hardcodeadas |
+| `PlanFormDrawer.jsx` | Si permite configurar múltiples precios |
+
+### Resultado Esperado
+
+Al completar esta validación:
+- [ ] Documentar arquitectura de pagos multi-tenant
+- [ ] Confirmar que cada org puede tener sus propias credenciales MP
+- [ ] Confirmar que los pagos van a la cuenta correcta
+- [ ] Actualizar formulario de planes si es necesario
+- [ ] Documentar proceso para que un cliente configure sus pagos

@@ -1,4 +1,4 @@
-import { forwardRef, memo } from 'react';
+import { forwardRef, memo, useId } from 'react';
 import PropTypes from 'prop-types';
 import { cn } from '@/lib/utils';
 import { getTextareaStyles, getAriaDescribedBy } from '@/lib/uiConstants';
@@ -43,8 +43,9 @@ const Textarea = memo(forwardRef(function Textarea(
     },
     ref
   ) {
-    // Generar ID único si hay label pero no ID
-    const textareaId = id || (label ? `textarea-${Math.random().toString(36).substr(2, 9)}` : undefined);
+    // Generar ID único con useId (estable en SSR/hydration)
+    const generatedId = useId();
+    const textareaId = id || generatedId;
 
     const textareaElement = (
       <textarea

@@ -494,6 +494,15 @@ export const suscripcionesNegocioApi = {
     apiClient.post(`${BASE_URL}/checkout/iniciar`, data),
 
   /**
+   * Iniciar trial gratuito (sin pago)
+   * Crea suscripción en estado trial sin redirección a MercadoPago
+   * @param {Object} data - { plan_id, periodo? }
+   * @returns {Promise<Object>} { suscripcion_id, estado, dias_trial, redirect_url }
+   */
+  iniciarTrial: (data) =>
+    apiClient.post(`${BASE_URL}/checkout/iniciar-trial`, data),
+
+  /**
    * Validar cupón de descuento
    * @param {Object} data - { codigo, plan_id, precio_base? }
    * @returns {Promise<Object>} { valido, cupon?, descuento_calculado?, precio_final? }

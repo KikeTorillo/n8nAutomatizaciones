@@ -10,9 +10,17 @@ import { Button } from '../atoms/Button';
  *
  * @param {string} to - Ruta a navegar (opcional, default: navigate(-1))
  * @param {string} label - Texto del botón (default: "Volver")
+ * @param {string} variant - Variante del botón (default: "outline")
+ * @param {string} size - Tamaño del botón (default: "sm")
  * @param {string} className - Clases adicionales
  */
-const BackButton = memo(function BackButton({ to, label = 'Volver', className = '' }) {
+const BackButton = memo(function BackButton({
+  to,
+  label = 'Volver',
+  variant = 'outline',
+  size = 'sm',
+  className = ''
+}) {
   const navigate = useNavigate();
 
   const handleClick = () => {
@@ -25,8 +33,8 @@ const BackButton = memo(function BackButton({ to, label = 'Volver', className = 
 
   return (
     <Button
-      variant="outline"
-      size="sm"
+      variant={variant}
+      size={size}
       onClick={handleClick}
       className={className}
     >
@@ -41,6 +49,8 @@ BackButton.displayName = 'BackButton';
 BackButton.propTypes = {
   to: PropTypes.string,
   label: PropTypes.string,
+  variant: PropTypes.oneOf(['primary', 'secondary', 'outline', 'danger', 'ghost', 'warning', 'success', 'link']),
+  size: PropTypes.oneOf(['sm', 'md', 'lg', 'xl']),
   className: PropTypes.string,
 };
 

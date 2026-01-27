@@ -3,10 +3,7 @@ import { Filter, X, ChevronDown, ChevronUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '../atoms/Button';
 import { SearchInput } from '../molecules/SearchInput';
-import { FilterSelectField } from '../molecules/FilterSelectField';
-import { FilterDateField } from '../molecules/FilterDateField';
-import { FilterTextField } from '../molecules/FilterTextField';
-import { CheckboxField } from '../molecules/CheckboxField';
+import { FilterField } from '../molecules/FilterField';
 
 /**
  * FilterPanel - Panel de filtros reutilizable con búsqueda y filtros expandibles
@@ -62,46 +59,22 @@ export const FilterPanel = memo(function FilterPanel({
   }, [onFilterChange]);
 
   const renderFilterInput = useCallback((config) => {
-    const value = filters[config.key] ?? '';
+    const value = filters[config.key] ?? (config.type === 'checkbox' ? false : '');
     const onChange = handleFilterChange(config.key);
 
-    switch (config.type) {
-      case 'select':
-        return (
-          <FilterSelectField
-            label={config.label}
-            value={value}
-            options={config.options}
-            onChange={onChange}
-          />
-        );
-      case 'date':
-        return (
-          <FilterDateField
-            label={config.label}
-            value={value}
-            onChange={onChange}
-          />
-        );
-      case 'checkbox':
-        return (
-          <CheckboxField
-            checked={!!value}
-            label={config.checkboxLabel || config.label}
-            onChange={(e) => onChange(e.target?.checked ?? e)}
-          />
-        );
-      case 'text':
-      default:
-        return (
-          <FilterTextField
-            label={config.label}
-            value={value}
-            placeholder={config.placeholder}
-            onChange={onChange}
-          />
-        );
-    }
+    return (
+      <FilterField
+        type={config.type || 'text'}
+        label={config.type === 'checkbox' ? (config.checkboxLabel || config.label) : config.label}
+        value={value}
+        onChange={onChange}
+        options={config.options}
+        placeholder={config.placeholder}
+        icon={config.icon}
+        min={config.min}
+        max={config.max}
+      />
+    );
   }, [filters, handleFilterChange]);
 
   return (

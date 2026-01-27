@@ -3,7 +3,7 @@ import { cn } from '@/lib/utils';
 import { FILTER_SECTION_TITLE } from '@/lib/uiConstants';
 
 // Re-exportar componentes unificados de molecules para compatibilidad
-export { FilterSelectField as FilterSelect } from '../../molecules/FilterSelectField';
+export { FilterField } from '../../molecules/FilterField';
 export { CheckboxField as FilterCheckbox } from '../../molecules/CheckboxField';
 
 /**

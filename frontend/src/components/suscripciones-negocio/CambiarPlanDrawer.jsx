@@ -32,6 +32,7 @@ import {
 import { suscripcionesNegocioApi } from '@/services/api/modules';
 import { useToast } from '@/hooks/utils';
 import { formatCurrency, cn } from '@/lib/utils';
+import ContactarSoporteModal from './ContactarSoporteModal';
 
 /**
  * Card individual de plan para selección
@@ -228,6 +229,7 @@ function CambiarPlanDrawer({ isOpen, onClose, suscripcion, onSuccess, isUserPage
   // State
   const [planSeleccionado, setPlanSeleccionado] = useState(null);
   const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
+  const [showSoporteModal, setShowSoporteModal] = useState(false);
 
   // Queries
   const { data: planes, isLoading: loadingPlanes } = usePlanesPublicos();
@@ -251,9 +253,23 @@ function CambiarPlanDrawer({ isOpen, onClose, suscripcion, onSuccess, isUserPage
     return precioNuevo > precioActual && precioNuevo > 0;
   }, [planSeleccionado, suscripcion]);
 
+  // Determinar si es un downgrade (requiere contactar soporte)
+  const esDowngrade = useMemo(() => {
+    if (!planSeleccionado || !suscripcion) return false;
+    const precioActual = parseFloat(suscripcion.precio_actual || 0);
+    const precioNuevo = parseFloat(planSeleccionado.precio_mensual || planSeleccionado.precio || 0);
+    return precioNuevo < precioActual;
+  }, [planSeleccionado, suscripcion]);
+
   // Handler de confirmación
   const handleConfirmar = async () => {
     if (!planSeleccionado || !suscripcion) return;
+
+    // Si es downgrade y es página de usuario, mostrar modal de soporte
+    if (isUserPage && esDowngrade) {
+      setShowSoporteModal(true);
+      return;
+    }
 
     // Si es upgrade a plan de pago, ir a checkout de MercadoPago
     if (isUserPage && esUpgradePago) {
@@ -280,7 +296,7 @@ function CambiarPlanDrawer({ isOpen, onClose, suscripcion, onSuccess, isUserPage
       return;
     }
 
-    // Para downgrades o cambios sin pago, usar la mutación directa
+    // Para cambios sin pago (admin o mismo precio), usar la mutación directa
     const mutateParams = isUserPage
       ? { nuevo_plan_id: planSeleccionado.id }
       : { id: suscripcion.id, nuevo_plan_id: planSeleccionado.id };
@@ -302,10 +318,24 @@ function CambiarPlanDrawer({ isOpen, onClose, suscripcion, onSuccess, isUserPage
   // Reset al cerrar
   const handleClose = () => {
     setPlanSeleccionado(null);
+    setShowSoporteModal(false);
     onClose();
   };
 
+  // Cerrar modal de soporte
+  const handleCloseSoporteModal = () => {
+    setShowSoporteModal(false);
+  };
+
+  // Texto del botón según el tipo de cambio
+  const getBotonTexto = () => {
+    if (isUserPage && esDowngrade) return 'Solicitar Cambio';
+    if (isUserPage && esUpgradePago) return 'Ir a Pagar';
+    return 'Confirmar Cambio';
+  };
+
   return (
+    <>
     <Drawer
       isOpen={isOpen}
       onClose={handleClose}
@@ -372,12 +402,21 @@ function CambiarPlanDrawer({ isOpen, onClose, suscripcion, onSuccess, isUserPage
               disabled={!planSeleccionado || cambiarPlanMutation.isPending || isCheckoutLoading}
               loading={cambiarPlanMutation.isPending || isCheckoutLoading}
             >
-              {isUserPage && esUpgradePago ? 'Ir a Pagar' : 'Confirmar Cambio'}
+              {getBotonTexto()}
             </Button>
           </div>
         </div>
       </div>
     </Drawer>
+
+    {/* Modal de contactar soporte para downgrades */}
+    <ContactarSoporteModal
+      isOpen={showSoporteModal}
+      onClose={handleCloseSoporteModal}
+      planActualNombre={suscripcion?.plan_nombre}
+      planNuevoNombre={planSeleccionado?.nombre}
+    />
+  </>
   );
 }
 

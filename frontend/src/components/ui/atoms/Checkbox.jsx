@@ -1,7 +1,7 @@
 import { forwardRef, memo } from 'react';
 import PropTypes from 'prop-types';
 import { cn } from '@/lib/utils';
-import { getCheckboxStyles, getAriaDescribedBy } from '@/lib/uiConstants';
+import { getCheckboxStyles, CHECKBOX_SIZE_CLASSES, getAriaDescribedBy } from '@/lib/uiConstants';
 
 /**
  * Checkbox - Input checkbox puro accesible
@@ -15,6 +15,7 @@ import { getCheckboxStyles, getAriaDescribedBy } from '@/lib/uiConstants';
  * @param {Object} props
  * @param {boolean} [props.checked] - Estado del checkbox
  * @param {function} [props.onChange] - Handler de cambio
+ * @param {'sm'|'md'|'lg'} [props.size='md'] - Tamaño del checkbox
  * @param {boolean} [props.disabled=false] - Estado deshabilitado
  * @param {boolean} [props.error=false] - Estado de error (borde rojo)
  * @param {string} [props.id] - ID del elemento (para aria-describedby)
@@ -28,6 +29,7 @@ import { getCheckboxStyles, getAriaDescribedBy } from '@/lib/uiConstants';
 const Checkbox = memo(forwardRef(function Checkbox(
     {
       className,
+      size = 'md',
       disabled = false,
       error = false,
       hasError,
@@ -58,6 +60,7 @@ const Checkbox = memo(forwardRef(function Checkbox(
         aria-describedby={id ? getAriaDescribedBy(id, { hasError: isError, hasHelper }) : undefined}
         className={cn(
           getCheckboxStyles({ disabled, error: isError }),
+          CHECKBOX_SIZE_CLASSES[size],
           className
         )}
         {...props}
@@ -73,6 +76,8 @@ Checkbox.propTypes = {
   checked: PropTypes.bool,
   /** Handler de cambio */
   onChange: PropTypes.func,
+  /** Tamaño del checkbox */
+  size: PropTypes.oneOf(['sm', 'md', 'lg']),
   /** Estado deshabilitado */
   disabled: PropTypes.bool,
   /** @deprecated Usar hasError en su lugar */

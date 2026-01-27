@@ -42,7 +42,7 @@ export { ProgressBar, LimitProgressBar } from './molecules/ProgressBar';
 export { FormGroup } from './molecules/FormGroup';
 // Nuevos (Ene 2026) - Optimización arquitectónica
 export { SearchFilterBar } from './organisms/SearchFilterBar';
-export { default as CheckboxGroup } from './molecules/CheckboxGroup';
+export { CheckboxGroup } from './organisms/CheckboxGroup';
 export { CheckboxField } from './molecules/CheckboxField';
 export { DropdownMenu } from './molecules/DropdownMenu';
 
@@ -71,7 +71,6 @@ export {
   AdvancedFilterPanel,
   FilterSection,
   FilterCheckbox,
-  FilterSelect,
   SavedSearchList,
   SavedSearchModal,
   // FilterPanelBase y utilidades (Fase 2 Ene 2026)
@@ -84,10 +83,8 @@ export {
 // FilterChip está en molecules (Ene 2026)
 export { FilterChip } from './molecules/FilterChip';
 
-// Campos de filtro (Ene 2026)
-export { FilterSelectField } from './molecules/FilterSelectField';
-export { FilterDateField } from './molecules/FilterDateField';
-export { FilterTextField } from './molecules/FilterTextField';
+// Campo de filtro unificado (Ene 2026)
+// NOTA: FilterSelectField, FilterDateField, FilterTextField eliminados - usar FilterField
 export { FilterField } from './molecules/FilterField';
 
 // Headers extraídos (Ene 2026)

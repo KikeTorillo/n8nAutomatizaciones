@@ -17,7 +17,7 @@ import { cn } from '@/lib/utils';
 // ==================== CHECKBOX ====================
 
 export const CHECKBOX_BASE = cn(
-  'h-4 w-4 rounded',
+  'rounded',
   'border-gray-300 dark:border-gray-600',
   'accent-primary-600 dark:accent-primary-500',
   'focus:ring-primary-500 dark:focus:ring-primary-400',
@@ -48,7 +48,7 @@ export function getCheckboxStyles({ disabled = false, error = false } = {}) {
 // ==================== SELECT ====================
 
 export const SELECT_BASE = cn(
-  'w-full px-4 h-10 border rounded-lg transition-colors',
+  'w-full px-4 border rounded-lg transition-colors',
   'focus:outline-none focus:ring-2 focus:ring-offset-0',
   'disabled:opacity-50 disabled:cursor-not-allowed appearance-none',
   'bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100'
@@ -106,12 +106,24 @@ export const LABEL_REQUIRED = {
   srOnly: 'sr-only',
 };
 
-// ==================== INPUT SIZE ====================
+// ==================== SIZE CLASSES ====================
 
 export const INPUT_SIZE_CLASSES = {
   sm: 'h-9 text-sm',
   md: 'h-10 text-base',
   lg: 'h-12 text-lg font-semibold',
+};
+
+export const SELECT_SIZE_CLASSES = {
+  sm: 'h-9 text-sm',
+  md: 'h-10 text-base',
+  lg: 'h-12 text-lg',
+};
+
+export const CHECKBOX_SIZE_CLASSES = {
+  sm: 'h-3.5 w-3.5',
+  md: 'h-4 w-4',
+  lg: 'h-5 w-5',
 };
 
 // ==================== INPUT AFFIXES ====================

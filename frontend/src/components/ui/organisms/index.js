@@ -24,6 +24,7 @@ export { AdvancedFilterPanel, SavedSearchModal, SavedSearchList, FilterSection }
 
 // Movidos desde molecules/ (Ene 2026) - demasiado complejos para molecule
 export { MultiSelect } from './MultiSelect';
+export { CheckboxGroup } from './CheckboxGroup';
 export { IconPicker, ICONOS_MAP, CATEGORIAS_ICONOS, IconButton } from './icon-picker';
 export { SmartButtons } from './SmartButtons';
 export { NavDropdown } from './NavDropdown';

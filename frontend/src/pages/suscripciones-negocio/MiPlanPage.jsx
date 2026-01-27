@@ -38,6 +38,7 @@ import {
 import {
   SuscripcionStatusBadge,
   CancelarSuscripcionDrawer,
+  HistorialPagosCard,
 } from '@/components/suscripciones-negocio';
 import { useToast } from '@/hooks/utils';
 import { formatCurrency, formatDate } from '@/lib/utils';
@@ -342,16 +343,24 @@ function MiPlanPage() {
       </div>
 
       {/* Content */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         {suscripcion ? (
-          <PlanActualCard
-            suscripcion={suscripcion}
-            onCambiarPlan={() => setShowCambiarPlan(true)}
-            onCancelar={handleCancelar}
-            onPausar={handlePausar}
-            onReactivar={handleReactivar}
-            isPending={isPending}
-          />
+          <>
+            <PlanActualCard
+              suscripcion={suscripcion}
+              onCambiarPlan={() => setShowCambiarPlan(true)}
+              onCancelar={handleCancelar}
+              onPausar={handlePausar}
+              onReactivar={handleReactivar}
+              isPending={isPending}
+            />
+
+            {/* Historial de pagos */}
+            <HistorialPagosCard
+              suscripcionId={suscripcion.id}
+              limite={5}
+            />
+          </>
         ) : (
           <NoSuscripcionCard />
         )}

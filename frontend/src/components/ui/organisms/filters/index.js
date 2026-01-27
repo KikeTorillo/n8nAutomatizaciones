@@ -3,7 +3,7 @@
  */
 export { default as AdvancedFilterPanel } from './AdvancedFilterPanel';
 // NOTA: FilterChip está en molecules/FilterChip - importar desde allí directamente
-export { default as FilterSection, FilterCheckbox, FilterSelect } from './FilterSection';
+export { default as FilterSection, FilterCheckbox, FilterField } from './FilterSection';
 export { default as SavedSearchList } from './SavedSearchList';
 export { default as SavedSearchModal } from './SavedSearchModal';
 
@@ -17,8 +17,5 @@ export {
   filterGridStyles,
   countActiveFilters,
   useActiveFilters,
-  FilterInput,
-  FilterSelectInput,
-  FilterDateInput,
   FilterCheckboxInput,
 } from './FilterPanelBase';

@@ -1,7 +1,7 @@
 import { forwardRef, memo } from 'react';
 import PropTypes from 'prop-types';
 import { cn } from '@/lib/utils';
-import { getSelectStyles, SELECT_ARROW, getAriaDescribedBy } from '@/lib/uiConstants';
+import { getSelectStyles, SELECT_ARROW, SELECT_SIZE_CLASSES, getAriaDescribedBy } from '@/lib/uiConstants';
 
 /**
  * Select - Componente select puro accesible compatible con React Hook Form
@@ -22,6 +22,7 @@ import { getSelectStyles, SELECT_ARROW, getAriaDescribedBy } from '@/lib/uiConst
  * @param {Object} props
  * @param {Array<{value: string, label: string}>} [props.options=[]] - Opciones del select
  * @param {string} [props.placeholder='Selecciona una opción'] - Texto de placeholder
+ * @param {'sm'|'md'|'lg'} [props.size='md'] - Tamaño del select
  * @param {boolean} [props.hasError=false] - Si tiene error (borde rojo)
  * @param {boolean} [props.required=false] - Si es campo requerido
  * @param {boolean} [props.hasHelper=false] - Si tiene texto de ayuda asociado
@@ -35,6 +36,7 @@ const Select = memo(forwardRef(function Select(
     {
       options = [],
       placeholder = 'Selecciona una opción',
+      size = 'md',
       hasError = false,
       required = false,
       hasHelper = false,
@@ -53,7 +55,7 @@ const Select = memo(forwardRef(function Select(
           aria-invalid={hasError || undefined}
           aria-required={required || undefined}
           aria-describedby={id ? getAriaDescribedBy(id, { hasError, hasHelper }) : undefined}
-          className={cn(getSelectStyles(hasError), className)}
+          className={cn(getSelectStyles(hasError), SELECT_SIZE_CLASSES[size], className)}
           {...props}
         >
           {children ? (
@@ -95,6 +97,8 @@ Select.propTypes = {
   })),
   /** Texto de placeholder */
   placeholder: PropTypes.string,
+  /** Tamaño del select */
+  size: PropTypes.oneOf(['sm', 'md', 'lg']),
   /** Si el select tiene error (borde rojo) */
   hasError: PropTypes.bool,
   /** Si el campo es requerido */

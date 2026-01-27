@@ -63,4 +63,19 @@ router.get(
     asyncHandler(CheckoutController.obtenerResultado.bind(CheckoutController))
 );
 
+/**
+ * POST /checkout/iniciar-trial
+ * Inicia un trial gratuito sin proceso de pago
+ *
+ * @auth Requiere autenticación
+ * @body {plan_id, periodo?}
+ * @returns {suscripcion_id, estado, dias_trial, redirect_url}
+ */
+router.post(
+    '/iniciar-trial',
+    auth.authenticateToken,
+    validateBody(checkoutSchemas.iniciarTrial),
+    asyncHandler(CheckoutController.iniciarTrial.bind(CheckoutController))
+);
+
 module.exports = router;

@@ -9,7 +9,8 @@ import {
   FILTER_GRID_LAYOUTS,
   getFilterToggleStyles,
 } from '@/lib/uiConstants';
-import FilterSection, { FilterCheckbox, FilterSelect } from './FilterSection';
+import FilterSection, { FilterCheckbox } from './FilterSection';
+import { FilterField } from '../../molecules/FilterField';
 import SavedSearchList from './SavedSearchList';
 
 /**
@@ -89,11 +90,12 @@ export const AdvancedFilterPanel = memo(function AdvancedFilterPanel({
 
       case 'select':
         return (
-          <FilterSelect
+          <FilterField
             key={config.id}
+            type="select"
             id={config.id}
             label={config.label}
-            value={filtros[config.id]}
+            value={filtros[config.id] || ''}
             onChange={(value) => handleFilterChange(config.id, value)}
             options={config.options || []}
             placeholder={config.placeholder}

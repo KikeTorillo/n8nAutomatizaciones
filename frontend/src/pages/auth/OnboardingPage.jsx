@@ -13,6 +13,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { authApi } from '@/services/api/endpoints';
+import { suscripcionesNegocioApi } from '@/services/api/modules/suscripciones-negocio.api';
 import useAuthStore, { selectUser, selectSetAuth, selectIsAuthenticated } from '@/store/authStore';
 import { useToast } from '@/hooks/utils';
 import AuthLayout from '@/components/auth/AuthLayout';
@@ -85,7 +86,7 @@ function OnboardingPage() {
       const response = await authApi.completarOnboarding(data);
       return response.data.data;
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       // Limpiar cache
       queryClient.clear();
 
@@ -99,7 +100,33 @@ function OnboardingPage() {
         accessToken: data.accessToken,
       });
 
-      toast.success('¡Tu negocio está listo! Bienvenido a Nexo.');
+      // ═══════════════════════════════════════════════════════════════
+      // PLAN PRESELECCIONADO: Iniciar trial si hay plan en localStorage
+      // ═══════════════════════════════════════════════════════════════
+      const planGuardado = localStorage.getItem('nexo_plan_seleccionado');
+      if (planGuardado) {
+        try {
+          const { plan_id, periodo, timestamp } = JSON.parse(planGuardado);
+          // Solo si es reciente (menos de 1 hora)
+          const UNA_HORA = 60 * 60 * 1000;
+          if (Date.now() - timestamp < UNA_HORA) {
+            // Iniciar trial del plan seleccionado
+            await suscripcionesNegocioApi.iniciarTrial({ plan_id, periodo });
+            toast.success('¡Tu negocio y prueba gratuita están listos! Bienvenido a Nexo.');
+          } else {
+            toast.success('¡Tu negocio está listo! Bienvenido a Nexo.');
+          }
+        } catch (e) {
+          console.error('[Onboarding] Error iniciando trial:', e);
+          // No bloquear el flujo si falla el trial
+          toast.success('¡Tu negocio está listo! Bienvenido a Nexo.');
+        } finally {
+          localStorage.removeItem('nexo_plan_seleccionado');
+        }
+      } else {
+        toast.success('¡Tu negocio está listo! Bienvenido a Nexo.');
+      }
+
       navigate('/home');
     },
     onError: (error) => {

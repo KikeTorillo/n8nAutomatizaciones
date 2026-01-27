@@ -29,15 +29,13 @@ export { Alert } from './Alert';
 // Nuevos (Ene 2026) - Optimización arquitectónica
 export { FilterChip } from './FilterChip';
 // NOTA: SearchFilterBar movido a organisms/ (Ene 2026) - compone múltiples molecules
-export { CheckboxGroup } from './CheckboxGroup';
+// NOTA: CheckboxGroup movido a organisms/ (Ene 2026) - compone CheckboxField (molecule)
 export { CheckboxField } from './CheckboxField';
 export { DropdownMenu } from './DropdownMenu';
 // NOTA: SmartButtons movido a organisms/ (Ene 2026)
 
-// Componentes de filtro unificados (Ene 2026)
-export { FilterSelectField } from './FilterSelectField';
-export { FilterDateField } from './FilterDateField';
-export { FilterTextField } from './FilterTextField';
+// Componente de filtro unificado (Ene 2026)
+// NOTA: FilterSelectField, FilterDateField, FilterTextField eliminados (Ene 2026) - usar FilterField
 export { FilterField } from './FilterField';
 
 // Headers extraídos (Ene 2026)

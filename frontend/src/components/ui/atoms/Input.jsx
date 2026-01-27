@@ -1,4 +1,4 @@
-import { forwardRef, memo } from 'react';
+import { forwardRef, memo, useId } from 'react';
 import PropTypes from 'prop-types';
 import { cn } from '@/lib/utils';
 import { INPUT_SIZE_CLASSES, INPUT_AFFIX, getInputPaddingStyles, getAriaDescribedBy } from '@/lib/uiConstants';
@@ -45,8 +45,9 @@ const Input = memo(forwardRef(function Input(
     },
     ref
   ) {
-    // Generar ID único si hay label pero no ID
-    const inputId = id || (label ? `input-${Math.random().toString(36).substr(2, 9)}` : undefined);
+    // Generar ID único con useId (estable en SSR/hydration)
+    const generatedId = useId();
+    const inputId = id || generatedId;
 
     const baseStyles = cn(
       'w-full border rounded-lg transition-colors',

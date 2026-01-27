@@ -376,6 +376,115 @@ class CheckoutController {
     }
 
     /**
+     * POST /checkout/iniciar-trial
+     *
+     * Inicia un trial gratuito sin proceso de pago:
+     * 1. Valida que el plan tenga días de trial
+     * 2. Verifica que no exista suscripción activa/trial
+     * 3. Crea suscripción en estado 'trial'
+     * 4. Actualiza módulos en la organización
+     * 5. Retorna redirect a /home
+     */
+    async iniciarTrial(req, res) {
+        const { plan_id, periodo } = req.body;
+        const organizacionId = req.user.organizacion_id;
+        const usuarioId = req.user.id;
+
+        logger.info(`[Trial] Iniciando trial para org ${organizacionId}, plan ${plan_id}`);
+
+        // ═══════════════════════════════════════════════════════════════
+        // PASO 1: Determinar estrategia de billing (Platform Billing)
+        // ═══════════════════════════════════════════════════════════════
+        const billingContext = {
+            organizacionId,
+            esVentaPropia: false,
+            clienteId: null,
+            user: req.user
+        };
+
+        const billingStrategy = createBillingStrategy(billingContext);
+
+        // ═══════════════════════════════════════════════════════════════
+        // PASO 2: Obtener IDs según estrategia
+        // ═══════════════════════════════════════════════════════════════
+        const vendorId = billingStrategy.getVendorId(billingContext);
+        const clienteId = await billingStrategy.getClienteId(billingContext);
+
+        logger.debug(`[Trial] Vendor: ${vendorId}, Cliente: ${clienteId}`);
+
+        // ═══════════════════════════════════════════════════════════════
+        // PASO 3: Validar que el plan existe y tiene trial
+        // ═══════════════════════════════════════════════════════════════
+        const plan = await PlanesModel.buscarPorId(plan_id, vendorId);
+        ErrorHelper.throwIfNotFound(plan, 'Plan de suscripción');
+
+        if (!plan.activo) {
+            ErrorHelper.throwValidation('El plan seleccionado no está disponible');
+        }
+
+        if (!plan.dias_trial || plan.dias_trial <= 0) {
+            ErrorHelper.throwValidation('Este plan no tiene período de prueba disponible');
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // PASO 4: Verificar que no tenga NINGUNA suscripción activa/trial
+        // (El constraint idx_suscripciones_cliente_unica_activa impide
+        //  múltiples suscripciones activas por cliente)
+        // ═══════════════════════════════════════════════════════════════
+        const suscripcionesActivas = await SuscripcionesModel.buscarTodasActivasPorClienteBypass(clienteId);
+
+        if (suscripcionesActivas && suscripcionesActivas.length > 0) {
+            const suscActiva = suscripcionesActivas[0];
+            const estadoTexto = suscActiva.estado === 'activa' ? 'activa' :
+                suscActiva.estado === 'trial' ? 'en período de prueba' :
+                    suscActiva.estado === 'grace_period' ? 'en período de gracia' : suscActiva.estado;
+
+            ErrorHelper.throwConflict(
+                `Ya tienes una suscripción ${estadoTexto} con el plan "${suscActiva.plan_nombre}". ` +
+                `Puedes cambiar de plan desde tu página de Mi Plan.`
+            );
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // PASO 5: Crear suscripción en estado 'trial' (SIN MercadoPago)
+        // ═══════════════════════════════════════════════════════════════
+        const suscripcion = await SuscripcionesModel.crear({
+            plan_id,
+            cliente_id: clienteId,
+            periodo,
+            es_trial: true,
+            gateway: null // Trial gratuito no requiere gateway de pago
+        }, vendorId, usuarioId);
+
+        logger.info(`[Trial] Suscripción trial ${suscripcion.id} creada - Plan: ${plan.nombre}, Cliente: ${clienteId}`);
+
+        // ═══════════════════════════════════════════════════════════════
+        // PASO 6: Activar módulos del plan en la organización vinculada
+        // ═══════════════════════════════════════════════════════════════
+        await SuscripcionesModel.actualizarOrgVinculadaAlActivar(suscripcion.id, vendorId);
+
+        // ═══════════════════════════════════════════════════════════════
+        // PASO 7: Responder con éxito
+        // ═══════════════════════════════════════════════════════════════
+        res.json({
+            success: true,
+            message: `¡Comenzaste tu prueba gratuita de ${plan.dias_trial} días!`,
+            data: {
+                suscripcion_id: suscripcion.id,
+                estado: 'trial',
+                dias_trial: plan.dias_trial,
+                fecha_fin_trial: suscripcion.fecha_fin_trial,
+                plan: {
+                    id: plan.id,
+                    nombre: plan.nombre,
+                    codigo: plan.codigo
+                },
+                redirect_url: `${FRONTEND_URL}/home`
+            }
+        });
+    }
+
+    /**
      * GET /checkout/resultado
      *
      * Obtiene el resultado de un pago (usado por el frontend después del callback)

@@ -145,8 +145,30 @@ const obtenerResultado = Joi.object({
         .optional()
 });
 
+/**
+ * Schema para iniciar trial (sin pago)
+ */
+const iniciarTrial = Joi.object({
+    plan_id: Joi.number()
+        .integer()
+        .positive()
+        .required()
+        .messages({
+            'number.base': 'El ID del plan debe ser un número',
+            'any.required': 'El ID del plan es requerido'
+        }),
+
+    periodo: Joi.string()
+        .valid(...PERIODOS_FACTURACION)
+        .default('mensual')
+        .messages({
+            'any.only': `El período debe ser uno de: ${PERIODOS_FACTURACION.join(', ')}`
+        })
+});
+
 module.exports = {
     iniciarCheckout,
     validarCupon,
-    obtenerResultado
+    obtenerResultado,
+    iniciarTrial
 };

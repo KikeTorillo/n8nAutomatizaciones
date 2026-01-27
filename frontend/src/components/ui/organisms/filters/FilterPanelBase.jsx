@@ -10,9 +10,7 @@
  */
 import { useMemo, useCallback, memo } from 'react';
 import { cn } from '@/lib/utils';
-import { FilterSelectField } from '../../molecules/FilterSelectField';
-import { FilterDateField } from '../../molecules/FilterDateField';
-import { FilterTextField } from '../../molecules/FilterTextField';
+import { FilterField } from '../../molecules/FilterField';
 import { CheckboxField } from '../../molecules/CheckboxField';
 
 // ============================================
@@ -89,10 +87,8 @@ export function useActiveFilters(filters, filterConfig, searchKey = 'busqueda') 
 // RE-EXPORT DE COMPONENTES UNIFICADOS
 // ============================================
 
-// Re-exportar desde molecules para compatibilidad con código existente
-export { FilterTextField as FilterInput } from '../../molecules/FilterTextField';
-export { FilterSelectField as FilterSelectInput } from '../../molecules/FilterSelectField';
-export { FilterDateField as FilterDateInput } from '../../molecules/FilterDateField';
+// Re-exportar FilterField unificado para compatibilidad con código existente
+export { FilterField } from '../../molecules/FilterField';
 export { CheckboxField as FilterCheckboxInput } from '../../molecules/CheckboxField';
 
 // ============================================
@@ -121,56 +117,23 @@ export const FilterPanelBase = memo(function FilterPanelBase({
 
   const renderFilter = (config) => {
     const key = config.key || config.id;
-    const value = filters[key];
+    const value = filters[key] ?? (config.type === 'checkbox' ? false : '');
 
-    switch (config.type) {
-      case 'select':
-        return (
-          <div key={key}>
-            <FilterSelectField
-              label={config.label}
-              value={value}
-              onChange={(v) => handleChange(key, v)}
-              options={config.options}
-            />
-          </div>
-        );
-
-      case 'date':
-        return (
-          <div key={key}>
-            <FilterDateField
-              label={config.label}
-              value={value}
-              onChange={(v) => handleChange(key, v)}
-            />
-          </div>
-        );
-
-      case 'checkbox':
-        return (
-          <div key={key}>
-            <CheckboxField
-              checked={!!value}
-              onChange={(e) => handleChange(key, e.target?.checked ?? e)}
-              label={config.checkboxLabel || config.label}
-            />
-          </div>
-        );
-
-      case 'text':
-      default:
-        return (
-          <div key={key}>
-            <FilterTextField
-              label={config.label}
-              value={value}
-              onChange={(v) => handleChange(key, v)}
-              placeholder={config.placeholder}
-            />
-          </div>
-        );
-    }
+    return (
+      <div key={key}>
+        <FilterField
+          type={config.type || 'text'}
+          label={config.type === 'checkbox' ? (config.checkboxLabel || config.label) : config.label}
+          value={value}
+          onChange={(v) => handleChange(key, v)}
+          options={config.options}
+          placeholder={config.placeholder}
+          icon={config.icon}
+          min={config.min}
+          max={config.max}
+        />
+      </div>
+    );
   };
 
   return (

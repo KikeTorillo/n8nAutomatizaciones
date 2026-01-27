@@ -1,11 +1,13 @@
 import { useState, useCallback } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { CreditCard, Tag, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { CreditCard, Tag, Loader2, CheckCircle, AlertCircle, UserPlus, Sparkles, LogIn } from 'lucide-react';
 import { Modal } from '@/components/ui/organisms/Modal';
 import { Button, Input, Badge } from '@/components/ui';
 import { suscripcionesNegocioApi } from '@/services/api/modules/suscripciones-negocio.api';
 import { formatCurrency, cn } from '@/lib/utils';
 import { CICLO_LABELS } from '@/hooks/suscripciones-negocio';
+import { useAuthStore, selectIsAuthenticated } from '@/store';
 
 /**
  * Modal de Checkout para suscripción a un plan
@@ -16,9 +18,29 @@ import { CICLO_LABELS } from '@/hooks/suscripciones-negocio';
  * @param {string} periodo - Período de facturación (mensual, trimestral, anual)
  */
 function CheckoutModal({ isOpen, onClose, plan, periodo = 'mensual' }) {
+  const navigate = useNavigate();
+  const isAuthenticated = useAuthStore(selectIsAuthenticated);
+
   const [cuponCodigo, setCuponCodigo] = useState('');
   const [cuponValidado, setCuponValidado] = useState(null);
   const [cuponError, setCuponError] = useState(null);
+
+  // Detectar si es trial
+  const esTrial = plan?.dias_trial > 0;
+
+  // Guardar plan en localStorage y redirigir
+  const handleGuardarPlanYRedirigir = useCallback((destino) => {
+    if (plan) {
+      localStorage.setItem('nexo_plan_seleccionado', JSON.stringify({
+        plan_id: plan.id,
+        plan_nombre: plan.nombre,
+        periodo,
+        timestamp: Date.now()
+      }));
+    }
+    onClose();
+    navigate(destino);
+  }, [plan, periodo, onClose, navigate]);
 
   // Calcular precio base según período
   const calcularPrecioBase = useCallback(() => {
@@ -62,7 +84,7 @@ function CheckoutModal({ isOpen, onClose, plan, periodo = 'mensual' }) {
     },
   });
 
-  // Mutation para iniciar checkout
+  // Mutation para iniciar checkout (pago con MercadoPago)
   const iniciarCheckoutMutation = useMutation({
     mutationFn: (data) => suscripcionesNegocioApi.iniciarCheckout(data),
     onSuccess: (res) => {
@@ -74,6 +96,17 @@ function CheckoutModal({ isOpen, onClose, plan, periodo = 'mensual' }) {
       }
       // Si se activó directamente (cupón 100%), redirigir al callback
       else if (resultado?.redirect_url) {
+        window.location.href = resultado.redirect_url;
+      }
+    },
+  });
+
+  // Mutation para iniciar trial (sin pago)
+  const iniciarTrialMutation = useMutation({
+    mutationFn: (data) => suscripcionesNegocioApi.iniciarTrial(data),
+    onSuccess: (res) => {
+      const resultado = res.data?.data;
+      if (resultado?.redirect_url) {
         window.location.href = resultado.redirect_url;
       }
     },
@@ -93,12 +126,20 @@ function CheckoutModal({ isOpen, onClose, plan, periodo = 'mensual' }) {
     });
   };
 
-  // Manejar inicio de pago
+  // Manejar inicio de pago (MercadoPago)
   const handlePagar = () => {
     iniciarCheckoutMutation.mutate({
       plan_id: plan.id,
       periodo,
       cupon_codigo: cuponValidado?.cupon?.codigo || undefined,
+    });
+  };
+
+  // Manejar inicio de trial (sin pago)
+  const handleIniciarTrial = () => {
+    iniciarTrialMutation.mutate({
+      plan_id: plan.id,
+      periodo,
     });
   };
 
@@ -117,13 +158,85 @@ function CheckoutModal({ isOpen, onClose, plan, periodo = 'mensual' }) {
 
   if (!plan) return null;
 
-  const isLoading = iniciarCheckoutMutation.isPending;
+  const isLoading = iniciarCheckoutMutation.isPending || iniciarTrialMutation.isPending;
+
+  // ═══════════════════════════════════════════════════════════════
+  // UI CONDICIONAL: No autenticado, Trial, o Pago
+  // ═══════════════════════════════════════════════════════════════
+
+  // CASO 1: Usuario NO autenticado
+  if (!isAuthenticated) {
+    return (
+      <Modal
+        isOpen={isOpen}
+        onClose={handleClose}
+        title="Crear cuenta"
+        size="sm"
+      >
+        <div className="text-center py-4">
+          <UserPlus className="w-12 h-12 mx-auto text-primary-600 dark:text-primary-400 mb-4" />
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+            Crea tu cuenta para continuar
+          </h3>
+          <p className="text-gray-500 dark:text-gray-400 mb-6">
+            {esTrial
+              ? `Comienza tu prueba gratuita de ${plan.dias_trial} días con el plan ${plan.nombre}`
+              : `Suscríbete al plan ${plan.nombre}`
+            }
+          </p>
+
+          {/* Resumen del plan */}
+          <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 mb-6 text-left">
+            <div className="flex items-center justify-between mb-2">
+              <span className="font-medium text-gray-900 dark:text-gray-100">
+                {plan.nombre}
+              </span>
+              <Badge variant="info" size="sm">
+                {CICLO_LABELS[periodo] || periodo}
+              </Badge>
+            </div>
+            {esTrial ? (
+              <p className="text-green-600 dark:text-green-400 font-semibold">
+                Gratis por {plan.dias_trial} días
+              </p>
+            ) : (
+              <p className="text-gray-900 dark:text-gray-100 font-semibold">
+                {formatCurrency(precioBase)}/{periodo === 'mensual' ? 'mes' : periodo}
+              </p>
+            )}
+          </div>
+
+          <div className="space-y-3">
+            <Button
+              variant="primary"
+              className="w-full"
+              onClick={() => handleGuardarPlanYRedirigir('/registro')}
+            >
+              <UserPlus className="w-4 h-4 mr-2" />
+              Crear cuenta gratis
+            </Button>
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => handleGuardarPlanYRedirigir('/login')}
+            >
+              <LogIn className="w-4 h-4 mr-2" />
+              Ya tengo cuenta
+            </Button>
+          </div>
+        </div>
+      </Modal>
+    );
+  }
+
+  // CASO 2 y 3: Usuario autenticado (Trial o Pago)
+  const tituloModal = esTrial ? 'Comenzar Prueba Gratuita' : 'Confirmar Suscripción';
 
   return (
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
-      title="Confirmar Suscripción"
+      title={tituloModal}
       size="sm"
       disableClose={isLoading}
       footer={
@@ -138,7 +251,7 @@ function CheckoutModal({ isOpen, onClose, plan, periodo = 'mensual' }) {
           </Button>
           <Button
             variant="primary"
-            onClick={handlePagar}
+            onClick={esTrial ? handleIniciarTrial : handlePagar}
             disabled={isLoading}
             className="flex-1"
           >
@@ -146,6 +259,11 @@ function CheckoutModal({ isOpen, onClose, plan, periodo = 'mensual' }) {
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                 Procesando...
+              </>
+            ) : esTrial ? (
+              <>
+                <Sparkles className="w-4 h-4 mr-2" />
+                Comenzar {plan.dias_trial} días gratis
               </>
             ) : (
               <>
@@ -173,108 +291,126 @@ function CheckoutModal({ isOpen, onClose, plan, periodo = 'mensual' }) {
               {plan.descripcion}
             </p>
           )}
-          <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-            {formatCurrency(precioBase)}
-            <span className="text-sm font-normal text-gray-500 dark:text-gray-400">
-              /{periodo === 'mensual' ? 'mes' : periodo}
-            </span>
-          </div>
+
+          {/* Precio: Trial vs Normal */}
+          {esTrial ? (
+            <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-3 text-center">
+              <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+                Gratis por {plan.dias_trial} días
+              </p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                Después: {formatCurrency(precioBase)}/{periodo === 'mensual' ? 'mes' : periodo}
+              </p>
+            </div>
+          ) : (
+            <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+              {formatCurrency(precioBase)}
+              <span className="text-sm font-normal text-gray-500 dark:text-gray-400">
+                /{periodo === 'mensual' ? 'mes' : periodo}
+              </span>
+            </div>
+          )}
         </div>
 
-        {/* Campo de cupón */}
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Cupón de descuento (opcional)
-          </label>
-          <div className="flex gap-2">
-            <div className="flex-1 relative">
-              <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <Input
-                value={cuponCodigo}
-                onChange={(e) => setCuponCodigo(e.target.value.toUpperCase())}
-                placeholder="Ingresa tu cupón"
-                className="pl-9"
-                disabled={!!cuponValidado || validarCuponMutation.isPending}
-              />
+        {/* Campo de cupón - SOLO si NO es trial */}
+        {!esTrial && (
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Cupón de descuento (opcional)
+            </label>
+            <div className="flex gap-2">
+              <div className="flex-1 relative">
+                <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Input
+                  value={cuponCodigo}
+                  onChange={(e) => setCuponCodigo(e.target.value.toUpperCase())}
+                  placeholder="Ingresa tu cupón"
+                  className="pl-9"
+                  disabled={!!cuponValidado || validarCuponMutation.isPending}
+                />
+              </div>
+              {cuponValidado ? (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleLimpiarCupon}
+                >
+                  Quitar
+                </Button>
+              ) : (
+                <Button
+                  variant="outline"
+                  onClick={handleValidarCupon}
+                  disabled={!cuponCodigo.trim() || validarCuponMutation.isPending}
+                >
+                  {validarCuponMutation.isPending ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    'Aplicar'
+                  )}
+                </Button>
+              )}
             </div>
-            {cuponValidado ? (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleLimpiarCupon}
-              >
-                Quitar
-              </Button>
-            ) : (
-              <Button
-                variant="outline"
-                onClick={handleValidarCupon}
-                disabled={!cuponCodigo.trim() || validarCuponMutation.isPending}
-              >
-                {validarCuponMutation.isPending ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  'Aplicar'
-                )}
-              </Button>
+
+            {/* Estado del cupón */}
+            {cuponValidado && (
+              <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
+                <CheckCircle className="w-4 h-4" />
+                <span>
+                  Cupón "{cuponValidado.cupon.codigo}" aplicado:
+                  {cuponValidado.cupon.tipo_descuento === 'porcentaje'
+                    ? ` -${cuponValidado.cupon.porcentaje_descuento}%`
+                    : ` -${formatCurrency(cuponValidado.cupon.monto_descuento)}`}
+                </span>
+              </div>
+            )}
+
+            {cuponError && (
+              <div className="flex items-center gap-2 text-sm text-red-600 dark:text-red-400">
+                <AlertCircle className="w-4 h-4" />
+                <span>{cuponError}</span>
+              </div>
             )}
           </div>
+        )}
 
-          {/* Estado del cupón */}
-          {cuponValidado && (
-            <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
-              <CheckCircle className="w-4 h-4" />
-              <span>
-                Cupón "{cuponValidado.cupon.codigo}" aplicado:
-                {cuponValidado.cupon.tipo_descuento === 'porcentaje'
-                  ? ` -${cuponValidado.cupon.porcentaje_descuento}%`
-                  : ` -${formatCurrency(cuponValidado.cupon.monto_descuento)}`}
-              </span>
-            </div>
-          )}
-
-          {cuponError && (
-            <div className="flex items-center gap-2 text-sm text-red-600 dark:text-red-400">
-              <AlertCircle className="w-4 h-4" />
-              <span>{cuponError}</span>
-            </div>
-          )}
-        </div>
-
-        {/* Resumen de precios */}
-        <div className="border-t border-gray-200 dark:border-gray-700 pt-4 space-y-2">
-          <div className="flex justify-between text-sm">
-            <span className="text-gray-500 dark:text-gray-400">Subtotal</span>
-            <span className="text-gray-900 dark:text-gray-100">
-              {formatCurrency(precioBase)}
-            </span>
-          </div>
-
-          {descuento > 0 && (
+        {/* Resumen de precios - SOLO si NO es trial */}
+        {!esTrial && (
+          <div className="border-t border-gray-200 dark:border-gray-700 pt-4 space-y-2">
             <div className="flex justify-between text-sm">
-              <span className="text-green-600 dark:text-green-400">Descuento</span>
-              <span className="text-green-600 dark:text-green-400">
-                -{formatCurrency(descuento)}
+              <span className="text-gray-500 dark:text-gray-400">Subtotal</span>
+              <span className="text-gray-900 dark:text-gray-100">
+                {formatCurrency(precioBase)}
               </span>
             </div>
-          )}
 
-          <div className="flex justify-between text-lg font-bold pt-2 border-t border-gray-200 dark:border-gray-700">
-            <span className="text-gray-900 dark:text-gray-100">Total</span>
-            <span className="text-primary-600 dark:text-primary-400">
-              {formatCurrency(precioFinal)}
-            </span>
+            {descuento > 0 && (
+              <div className="flex justify-between text-sm">
+                <span className="text-green-600 dark:text-green-400">Descuento</span>
+                <span className="text-green-600 dark:text-green-400">
+                  -{formatCurrency(descuento)}
+                </span>
+              </div>
+            )}
+
+            <div className="flex justify-between text-lg font-bold pt-2 border-t border-gray-200 dark:border-gray-700">
+              <span className="text-gray-900 dark:text-gray-100">Total</span>
+              <span className="text-primary-600 dark:text-primary-400">
+                {formatCurrency(precioFinal)}
+              </span>
+            </div>
           </div>
-        </div>
+        )}
 
-        {/* Error de checkout */}
-        {iniciarCheckoutMutation.isError && (
+        {/* Error de checkout o trial */}
+        {(iniciarCheckoutMutation.isError || iniciarTrialMutation.isError) && (
           <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
             <div className="flex items-center gap-2 text-red-700 dark:text-red-400">
               <AlertCircle className="w-4 h-4" />
               <span className="text-sm">
                 {iniciarCheckoutMutation.error?.response?.data?.message ||
-                  'Error al procesar el pago. Intenta de nuevo.'}
+                  iniciarTrialMutation.error?.response?.data?.message ||
+                  'Error al procesar. Intenta de nuevo.'}
               </span>
             </div>
           </div>
@@ -282,7 +418,10 @@ function CheckoutModal({ isOpen, onClose, plan, periodo = 'mensual' }) {
 
         {/* Nota de seguridad */}
         <p className="text-xs text-center text-gray-500 dark:text-gray-400">
-          Serás redirigido a MercadoPago para completar el pago de forma segura.
+          {esTrial
+            ? 'Sin tarjeta requerida. Al terminar el trial podrás elegir continuar o cancelar.'
+            : 'Serás redirigido a MercadoPago para completar el pago de forma segura.'
+          }
         </p>
       </div>
     </Modal>

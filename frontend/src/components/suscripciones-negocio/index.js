@@ -39,3 +39,12 @@ export { default as SuscripcionesNegocioPageLayout } from './SuscripcionesNegoci
 // Guards & Banners (Ene 2026)
 export { default as SuscripcionBanner } from './SuscripcionBanner';
 export { default as SubscriptionGuard } from './SubscriptionGuard';
+
+// Modales
+export { default as ContactarSoporteModal } from './ContactarSoporteModal';
+
+// Alertas
+export { default as AlertaBloqueado } from './AlertaBloqueado';
+
+// Cards
+export { default as HistorialPagosCard } from './HistorialPagosCard';

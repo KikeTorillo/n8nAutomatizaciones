@@ -114,15 +114,15 @@ export default function SubscriptionGuard({ children }) {
     useEffect(() => {
         if (!debeVerificar || isLoading || isError) return;
 
-        // Sin suscripción encontrada → redirigir a planes
+        // Sin suscripción encontrada → redirigir a planes con estado
         if (!suscripcion) {
-            navigate('/planes', { replace: true });
+            navigate('/planes?estado=sin_suscripcion', { replace: true });
             return;
         }
 
-        // Estado bloqueado → redirigir a planes
+        // Estado bloqueado → redirigir a planes con estado para mostrar banner contextual
         if (ESTADOS_BLOQUEADOS.includes(suscripcion.estado)) {
-            navigate('/planes', { replace: true });
+            navigate(`/planes?estado=${suscripcion.estado}`, { replace: true });
         }
     }, [debeVerificar, isLoading, isError, suscripcion, navigate]);
 
