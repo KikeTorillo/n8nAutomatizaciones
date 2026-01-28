@@ -21,9 +21,13 @@ export default function BuscadorProductosPOS({ onProductoSeleccionado }) {
   // Debounce del query para evitar requests excesivos
   const debouncedQuery = useDebounce(query, 300);
 
+  // Normalizar query si parece código de barras (GTIN-14 → EAN-13)
+  const queryNormalizado = /^\d{8,14}$/.test(debouncedQuery)
+    ? extractProductCode(debouncedQuery)
+    : debouncedQuery;
+
   // Búsqueda de productos (solo productos activos con stock)
-  const { data: productos, isLoading } = useBuscarProductos({
-    q: debouncedQuery,
+  const { data: productos, isLoading } = useBuscarProductos(queryNormalizado, {
     solo_activos: true,
     solo_con_stock: true,
     limit: 10
@@ -81,10 +85,8 @@ export default function BuscadorProductosPOS({ onProductoSeleccionado }) {
   };
 
   // Dic 2025: Handler para escaneo de códigos de barras
+  // El hook useBarcodeScanner ya normaliza GTIN-14 → EAN-13
   const handleScan = (code, scanData) => {
-    // Extraer código de producto (maneja GS1 automáticamente)
-    const codigoProducto = extractProductCode(code);
-
     // Guardar datos GS1 si existen (lote, vencimiento, etc.)
     if (scanData?.gs1) {
       setUltimoGS1(scanData.gs1);
@@ -92,8 +94,8 @@ export default function BuscadorProductosPOS({ onProductoSeleccionado }) {
       setUltimoGS1(null);
     }
 
-    // Buscar con el código extraído
-    setQuery(codigoProducto);
+    // Buscar con el código ya normalizado por el hook
+    setQuery(code);
     setMostrarScanner(false);
 
     // Focus en el input para ver resultados

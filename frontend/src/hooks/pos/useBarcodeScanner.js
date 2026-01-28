@@ -13,7 +13,7 @@
  */
 
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { parseGS1 } from '@/utils/gs1Parser';
+import { parseGS1, extractProductCode } from '@/utils/gs1Parser';
 
 // Formatos soportados por html5-qrcode
 export const BARCODE_FORMATS = {
@@ -178,7 +178,7 @@ export function useBarcodeScanner(options = {}) {
                     const gs1Data = parseGS1Enabled ? parseGS1(decodedText) : null;
 
                     const scanData = {
-                        code: gs1Data?.gtin || decodedText,  // Código producto (GTIN extraído o raw)
+                        code: extractProductCode(decodedText),  // Código producto normalizado (GTIN-14 → EAN-13)
                         raw: decodedText,                      // Código original completo
                         gs1: gs1Data?.isGS1 ? gs1Data : null,  // Datos GS1 completos si aplica
                         format: decodedResult?.result?.format?.formatName || 'UNKNOWN',
