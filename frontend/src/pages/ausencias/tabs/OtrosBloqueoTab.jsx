@@ -6,7 +6,7 @@
  */
 import { useState, useMemo } from 'react';
 import { useModalManager } from '@/hooks/utils';
-import { Plus, Lock, Calendar, TrendingDown, Clock, CalendarDays } from 'lucide-react';
+import { Plus, Lock, Calendar, TrendingDown, Clock, CalendarDays, List } from 'lucide-react';
 import { useBloqueos, useEliminarBloqueo } from '@/hooks/agendamiento';
 import { useProfesionales } from '@/hooks/personas';
 import BloqueosList from '@/components/bloqueos/BloqueosList';
@@ -14,7 +14,7 @@ import BloqueosCalendar from '@/components/bloqueos/BloqueosCalendar';
 import BloqueoFilters from '@/components/bloqueos/BloqueoFilters';
 import BloqueoFormDrawer from '@/components/bloqueos/BloqueoFormDrawer';
 import BloqueoDetailModal from '@/components/bloqueos/BloqueoDetailModal';
-import { Button, Modal } from '@/components/ui';
+import { Button, Modal, ViewTabs } from '@/components/ui';
 import {
   calcularEstadisticasBloqueos,
   filtrarBloqueos,
@@ -25,12 +25,11 @@ import { formatCurrency } from '@/lib/utils';
 /**
  * OtrosBloqueoTab - Tab para gestionar bloqueos manuales
  * Filtra automáticamente para mostrar solo bloqueos NO auto-generados
- * @param {Object} props
- * @param {string} [props.initialView='lista'] - Vista inicial ('lista' | 'calendario')
+ * Toggle interno para cambiar entre lista y calendario
  */
-function OtrosBloqueoTab({ initialView = 'lista' }) {
-  // La vista se controla desde la navegación principal (StateNavTabs)
-  const vistaActiva = initialView;
+function OtrosBloqueoTab() {
+  // Vista controlada internamente con toggle
+  const [vistaActiva, setVistaActiva] = useState('lista');
   const [filtros, setFiltros] = useState({
     busqueda: '',
     tipo_bloqueo: '',
@@ -139,26 +138,39 @@ function OtrosBloqueoTab({ initialView = 'lista' }) {
 
   return (
     <div className="space-y-6">
-      {/* Header con botón de crear */}
+      {/* Header con toggle de vista y botón de crear */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center space-x-3">
           <Lock className="h-6 w-6 text-primary-600 dark:text-primary-400 flex-shrink-0" />
           <div>
             <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">
-              Otros Bloqueos
+              Bloqueos
             </h2>
             <p className="text-sm text-gray-600 dark:text-gray-400">
               Mantenimiento, eventos especiales, emergencias
             </p>
           </div>
         </div>
-        <Button
-          onClick={handleNuevoBloqueo}
-          className="w-full sm:w-auto flex items-center justify-center gap-2"
-        >
-          <Plus className="h-5 w-5" />
-          Nuevo Bloqueo
-        </Button>
+        <div className="flex items-center gap-3">
+          {/* Toggle de vista */}
+          <ViewTabs
+            tabs={[
+              { id: 'lista', label: 'Lista', icon: List },
+              { id: 'calendario', label: 'Calendario', icon: CalendarDays },
+            ]}
+            activeTab={vistaActiva}
+            onChange={setVistaActiva}
+            ariaLabel="Vista de bloqueos"
+          />
+          <Button
+            onClick={handleNuevoBloqueo}
+            className="flex items-center justify-center gap-2"
+          >
+            <Plus className="h-5 w-5" />
+            <span className="hidden sm:inline">Nuevo Bloqueo</span>
+            <span className="sm:hidden">Nuevo</span>
+          </Button>
+        </div>
       </div>
 
       {/* Estadísticas */}

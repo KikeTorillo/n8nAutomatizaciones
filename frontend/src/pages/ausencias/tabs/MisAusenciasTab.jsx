@@ -139,15 +139,11 @@ function AusenciaCard({ ausencia, onVerDetalle }) {
 
 /**
  * Tab principal de Mis Ausencias
- * @param {Object} props
- * @param {string|null} [props.initialFilter=null] - Filtro inicial (null | 'vacaciones' | 'incapacidad')
+ * Muestra todas las ausencias (vacaciones + incapacidades) sin filtro
  */
-function MisAusenciasTab({ initialFilter = null }) {
+function MisAusenciasTab() {
   const queryClient = useQueryClient();
   const anioActual = new Date().getFullYear();
-
-  // El filtro se controla desde la navegación principal (StateNavTabs)
-  const filtroTipo = initialFilter;
 
   // Modales centralizados
   const { openModal, closeModal, isOpen } = useModalManager({
@@ -157,10 +153,9 @@ function MisAusenciasTab({ initialFilter = null }) {
   // Dashboard consolidado
   const { data: dashboard, isLoading, error, vacaciones } = useDashboardAusencias(anioActual);
 
-  // Mis ausencias (lista)
+  // Mis ausencias (lista) - sin filtro de tipo, muestra todo
   const { data: ausencias, isLoading: isLoadingAusencias } = useMisAusencias({
     anio: anioActual,
-    tipo: filtroTipo,
   });
 
   const handleRefresh = () => {

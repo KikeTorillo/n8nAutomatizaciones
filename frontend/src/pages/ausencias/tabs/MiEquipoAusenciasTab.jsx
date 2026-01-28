@@ -1,9 +1,9 @@
 /**
  * MiEquipoAusenciasTab - Solicitudes del equipo para supervisores
- * Renderiza la sección según initialSection (navegación desde StateNavTabs)
+ * Muestra solicitudes de vacaciones + incapacidades activas juntos
  * Enero 2026
  */
-import { RefreshCw, HeartPulse, Calendar, Users } from 'lucide-react';
+import { RefreshCw, HeartPulse, Users } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Badge, Button, EmptyState } from '@/components/ui';
 import { SolicitudesEquipoSection } from '@/components/vacaciones';
@@ -102,10 +102,9 @@ function IncapacidadesEquipoSection() {
 
 /**
  * Tab de Mi Equipo
- * @param {Object} props
- * @param {string} [props.initialSection='vacaciones'] - Sección a mostrar ('vacaciones' | 'incapacidades')
+ * Muestra solicitudes de vacaciones + incapacidades activas en una sola vista
  */
-function MiEquipoAusenciasTab({ initialSection = 'vacaciones' }) {
+function MiEquipoAusenciasTab() {
   const queryClient = useQueryClient();
 
   const handleRefresh = () => {
@@ -113,23 +112,14 @@ function MiEquipoAusenciasTab({ initialSection = 'vacaciones' }) {
     queryClient.invalidateQueries({ queryKey: ['incapacidades'], refetchType: 'active' });
   };
 
-  // Configuración por sección
-  const sectionConfig = {
-    vacaciones: { title: 'Solicitudes de Vacaciones', icon: Calendar, color: 'green' },
-    incapacidades: { title: 'Incapacidades Activas', icon: HeartPulse, color: 'red' },
-  };
-
-  const config = sectionConfig[initialSection] || sectionConfig.vacaciones;
-  const Icon = config.icon;
-
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Icon className={`w-5 h-5 text-${config.color}-600 dark:text-${config.color}-400`} />
+          <Users className="w-5 h-5 text-primary-600 dark:text-primary-400" />
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-            {config.title}
+            Mi Equipo
           </h2>
         </div>
         <Button variant="ghost" size="sm" onClick={handleRefresh}>
@@ -137,9 +127,22 @@ function MiEquipoAusenciasTab({ initialSection = 'vacaciones' }) {
         </Button>
       </div>
 
-      {/* Contenido según sección */}
-      {initialSection === 'vacaciones' && <SolicitudesEquipoSection />}
-      {initialSection === 'incapacidades' && <IncapacidadesEquipoSection />}
+      {/* Sección: Solicitudes de Vacaciones Pendientes */}
+      <section className="space-y-4">
+        <h3 className="text-base font-medium text-gray-800 dark:text-gray-200 flex items-center gap-2">
+          Solicitudes Pendientes
+        </h3>
+        <SolicitudesEquipoSection />
+      </section>
+
+      {/* Sección: Incapacidades Activas */}
+      <section className="space-y-4">
+        <h3 className="text-base font-medium text-gray-800 dark:text-gray-200 flex items-center gap-2">
+          <HeartPulse className="w-4 h-4 text-red-500" />
+          Incapacidades Activas
+        </h3>
+        <IncapacidadesEquipoSection />
+      </section>
     </div>
   );
 }

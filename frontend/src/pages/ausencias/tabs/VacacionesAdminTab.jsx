@@ -1,9 +1,9 @@
 /**
  * VacacionesAdminTab - Gestión completa de vacaciones (admin)
- * Renderiza la sección según initialSection (navegación desde StateNavTabs)
+ * Muestra dashboard + solicitudes + estadísticas en una sola vista
  * Enero 2026
  */
-import { Palmtree, Users, RefreshCw, Clock, CheckCircle, Calendar } from 'lucide-react';
+import { ClipboardList, RefreshCw, Clock, CheckCircle, Calendar, Users } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button, StatCardGrid } from '@/components/ui';
 import { VacacionesDashboard, SolicitudesEquipoSection } from '@/components/vacaciones';
@@ -73,34 +73,23 @@ function EstadisticasVacaciones() {
 
 /**
  * Tab de Vacaciones para Admin
- * @param {Object} props
- * @param {string} [props.initialSection='dashboard'] - Sección a mostrar ('dashboard' | 'equipo' | 'estadisticas')
+ * Muestra dashboard + solicitudes + estadísticas en una sola vista scrollable
  */
-function VacacionesAdminTab({ initialSection = 'dashboard' }) {
+function VacacionesAdminTab() {
   const queryClient = useQueryClient();
 
   const handleRefresh = () => {
     queryClient.invalidateQueries({ queryKey: ['vacaciones'], refetchType: 'active' });
   };
 
-  // Configuración por sección
-  const sectionConfig = {
-    dashboard: { title: 'Mi Dashboard', icon: Palmtree, color: 'green' },
-    equipo: { title: 'Solicitudes del Equipo', icon: Users, color: 'primary' },
-    estadisticas: { title: 'Estadísticas de Vacaciones', icon: Calendar, color: 'blue' },
-  };
-
-  const config = sectionConfig[initialSection] || sectionConfig.dashboard;
-  const Icon = config.icon;
-
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Icon className={`w-5 h-5 text-${config.color}-600 dark:text-${config.color}-400`} />
+          <ClipboardList className="w-5 h-5 text-primary-600 dark:text-primary-400" />
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-            {config.title}
+            Solicitudes de Vacaciones
           </h2>
         </div>
         <Button variant="ghost" size="sm" onClick={handleRefresh}>
@@ -108,10 +97,28 @@ function VacacionesAdminTab({ initialSection = 'dashboard' }) {
         </Button>
       </div>
 
-      {/* Contenido según sección */}
-      {initialSection === 'dashboard' && <VacacionesDashboard />}
-      {initialSection === 'equipo' && <SolicitudesEquipoSection />}
-      {initialSection === 'estadisticas' && <EstadisticasVacaciones />}
+      {/* Dashboard con stats principales */}
+      <section className="space-y-4">
+        <VacacionesDashboard />
+      </section>
+
+      {/* Lista de solicitudes */}
+      <section className="space-y-4">
+        <h3 className="text-base font-medium text-gray-800 dark:text-gray-200 flex items-center gap-2">
+          <Users className="w-4 h-4" />
+          Solicitudes del Equipo
+        </h3>
+        <SolicitudesEquipoSection />
+      </section>
+
+      {/* Estadísticas */}
+      <section className="space-y-4">
+        <h3 className="text-base font-medium text-gray-800 dark:text-gray-200 flex items-center gap-2">
+          <Calendar className="w-4 h-4" />
+          Estadísticas del Año
+        </h3>
+        <EstadisticasVacaciones />
+      </section>
     </div>
   );
 }

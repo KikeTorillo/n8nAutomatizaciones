@@ -1,10 +1,10 @@
 /**
  * IncapacidadesAdminTab - Gestión completa de incapacidades (admin)
- * Renderiza la sección según initialSection (navegación desde StateNavTabs)
+ * Muestra lista + estadísticas en una sola vista
  * Enero 2026
  */
 import { useModalManager } from '@/hooks/utils';
-import { HeartPulse, List, BarChart3, Plus, RefreshCw } from 'lucide-react';
+import { HeartPulse, BarChart3, Plus, RefreshCw } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui';
 import {
@@ -15,10 +15,9 @@ import {
 
 /**
  * Tab de Incapacidades para Admin
- * @param {Object} props
- * @param {string} [props.initialSection='lista'] - Sección a mostrar ('lista' | 'estadisticas')
+ * Muestra lista + estadísticas en una sola vista scrollable
  */
-function IncapacidadesAdminTab({ initialSection = 'lista' }) {
+function IncapacidadesAdminTab() {
   const queryClient = useQueryClient();
 
   // Modal de registro
@@ -30,45 +29,44 @@ function IncapacidadesAdminTab({ initialSection = 'lista' }) {
     queryClient.invalidateQueries({ queryKey: ['incapacidades'], refetchType: 'active' });
   };
 
-  // Configuración por sección
-  const sectionConfig = {
-    lista: { title: 'Lista de Incapacidades', icon: List },
-    estadisticas: { title: 'Estadísticas de Incapacidades', icon: BarChart3 },
-  };
-
-  const config = sectionConfig[initialSection] || sectionConfig.lista;
-  const Icon = config.icon;
-
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Icon className="w-5 h-5 text-red-600 dark:text-red-400" />
+          <HeartPulse className="w-5 h-5 text-red-600 dark:text-red-400" />
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-            {config.title}
+            Incapacidades
           </h2>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" onClick={handleRefresh}>
             <RefreshCw className="w-4 h-4" />
           </Button>
-          {initialSection === 'lista' && (
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={() => openModal('form')}
-            >
-              <Plus className="w-4 h-4 mr-1" />
-              Registrar
-            </Button>
-          )}
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={() => openModal('form')}
+          >
+            <Plus className="w-4 h-4 mr-1" />
+            Registrar
+          </Button>
         </div>
       </div>
 
-      {/* Contenido según sección */}
-      {initialSection === 'lista' && <IncapacidadesList />}
-      {initialSection === 'estadisticas' && <IncapacidadesEstadisticas />}
+      {/* Lista de incapacidades */}
+      <section>
+        <IncapacidadesList />
+      </section>
+
+      {/* Estadísticas */}
+      <section className="space-y-4">
+        <h3 className="text-base font-medium text-gray-800 dark:text-gray-200 flex items-center gap-2">
+          <BarChart3 className="w-4 h-4" />
+          Estadísticas
+        </h3>
+        <IncapacidadesEstadisticas />
+      </section>
 
       {/* Modal de registro */}
       <IncapacidadFormModal
