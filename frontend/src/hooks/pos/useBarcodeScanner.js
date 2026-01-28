@@ -77,7 +77,7 @@ export function useBarcodeScanner(options = {}) {
         onError,
         formats = FORMAT_PRESETS.INVENTARIO,
         fps = 10,
-        qrbox = { width: 280, height: 150 },
+        qrbox = { width: 250, height: 120 },
         pauseAfterScan = 1500,
         beepOnScan = true,
         parseGS1Enabled = true
@@ -162,7 +162,11 @@ export function useBarcodeScanner(options = {}) {
             const config = {
                 fps,
                 qrbox,
-                formatsToSupport: formats
+                formatsToSupport: formats,
+                experimentalFeatures: {
+                    useBarCodeDetectorIfSupported: true
+                },
+                aspectRatio: 1.7777778 // 16:9 para mejor captura en móviles
             };
 
             const cameraConfig = selectedCamera

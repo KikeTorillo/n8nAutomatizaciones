@@ -6,7 +6,7 @@
  */
 import { useState, useMemo } from 'react';
 import { useModalManager } from '@/hooks/utils';
-import { Plus, Lock, Calendar, TrendingDown, Clock, CalendarDays, List } from 'lucide-react';
+import { Plus, Lock, Calendar, TrendingDown, Clock, CalendarDays } from 'lucide-react';
 import { useBloqueos, useEliminarBloqueo } from '@/hooks/agendamiento';
 import { useProfesionales } from '@/hooks/personas';
 import BloqueosList from '@/components/bloqueos/BloqueosList';
@@ -25,10 +25,12 @@ import { formatCurrency } from '@/lib/utils';
 /**
  * OtrosBloqueoTab - Tab para gestionar bloqueos manuales
  * Filtra automáticamente para mostrar solo bloqueos NO auto-generados
+ * @param {Object} props
+ * @param {string} [props.initialView='lista'] - Vista inicial ('lista' | 'calendario')
  */
-function OtrosBloqueoTab() {
-  // Estados
-  const [vistaActiva, setVistaActiva] = useState('lista'); // 'lista' | 'calendario'
+function OtrosBloqueoTab({ initialView = 'lista' }) {
+  // La vista se controla desde la navegación principal (StateNavTabs)
+  const vistaActiva = initialView;
   const [filtros, setFiltros] = useState({
     busqueda: '',
     tipo_bloqueo: '',
@@ -232,33 +234,7 @@ function OtrosBloqueoTab() {
         </div>
       </div>
 
-      {/* Toggle de vista Lista/Calendario */}
-      <div className="flex items-center gap-2">
-        <button
-          onClick={() => setVistaActiva('lista')}
-          className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-            vistaActiva === 'lista'
-              ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'
-              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
-          }`}
-        >
-          <List className="w-4 h-4" />
-          Lista
-        </button>
-        <button
-          onClick={() => setVistaActiva('calendario')}
-          className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-            vistaActiva === 'calendario'
-              ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'
-              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
-          }`}
-        >
-          <CalendarDays className="w-4 h-4" />
-          Calendario
-        </button>
-      </div>
-
-      {/* Vista condicional */}
+      {/* Vista según navegación */}
       {vistaActiva === 'calendario' ? (
         <BloqueosCalendar
           profesionalId={filtros.profesional_id ? parseInt(filtros.profesional_id) : null}

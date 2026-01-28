@@ -1,9 +1,8 @@
 /**
  * IncapacidadesAdminTab - Gestión completa de incapacidades (admin)
- * Wrapper de los componentes existentes de incapacidades
+ * Renderiza la sección según initialSection (navegación desde StateNavTabs)
  * Enero 2026
  */
-import { useState } from 'react';
 import { useModalManager } from '@/hooks/utils';
 import { HeartPulse, List, BarChart3, Plus, RefreshCw } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
@@ -16,80 +15,60 @@ import {
 
 /**
  * Tab de Incapacidades para Admin
+ * @param {Object} props
+ * @param {string} [props.initialSection='lista'] - Sección a mostrar ('lista' | 'estadisticas')
  */
-function IncapacidadesAdminTab() {
+function IncapacidadesAdminTab({ initialSection = 'lista' }) {
   const queryClient = useQueryClient();
-  const [activeSection, setActiveSection] = useState('lista');
 
-  // Modales centralizados
+  // Modal de registro
   const { openModal, closeModal, isOpen } = useModalManager({
     form: { isOpen: false },
   });
 
   const handleRefresh = () => {
-    queryClient.invalidateQueries({ queryKey: ['incapacidades'] });
+    queryClient.invalidateQueries({ queryKey: ['incapacidades'], refetchType: 'active' });
   };
+
+  // Configuración por sección
+  const sectionConfig = {
+    lista: { title: 'Lista de Incapacidades', icon: List },
+    estadisticas: { title: 'Estadísticas de Incapacidades', icon: BarChart3 },
+  };
+
+  const config = sectionConfig[initialSection] || sectionConfig.lista;
+  const Icon = config.icon;
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <HeartPulse className="w-5 h-5 text-red-600 dark:text-red-400" />
+          <Icon className="w-5 h-5 text-red-600 dark:text-red-400" />
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-            Gestión de Incapacidades
+            {config.title}
           </h2>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" onClick={handleRefresh}>
             <RefreshCw className="w-4 h-4" />
           </Button>
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={() => openModal('form')}
-          >
-            <Plus className="w-4 h-4 mr-1" />
-            Registrar
-          </Button>
+          {initialSection === 'lista' && (
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => openModal('form')}
+            >
+              <Plus className="w-4 h-4 mr-1" />
+              Registrar
+            </Button>
+          )}
         </div>
       </div>
 
-      {/* Tabs de sección */}
-      <div className="flex items-center gap-2 border-b border-gray-200 dark:border-gray-700 pb-2">
-        <button
-          onClick={() => setActiveSection('lista')}
-          className={`
-            px-4 py-2 text-sm rounded-lg transition-colors flex items-center gap-2
-            ${activeSection === 'lista'
-              ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 font-medium'
-              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
-            }
-          `}
-        >
-          <List className="w-4 h-4" />
-          Lista
-        </button>
-        <button
-          onClick={() => setActiveSection('estadisticas')}
-          className={`
-            px-4 py-2 text-sm rounded-lg transition-colors flex items-center gap-2
-            ${activeSection === 'estadisticas'
-              ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 font-medium'
-              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
-            }
-          `}
-        >
-          <BarChart3 className="w-4 h-4" />
-          Estadísticas
-        </button>
-      </div>
-
-      {/* Contenido */}
-      {activeSection === 'lista' && (
-        <IncapacidadesList onRegistrar={() => setShowFormModal(true)} />
-      )}
-      {activeSection === 'estadisticas' && <IncapacidadesEstadisticas />}
+      {/* Contenido según sección */}
+      {initialSection === 'lista' && <IncapacidadesList />}
+      {initialSection === 'estadisticas' && <IncapacidadesEstadisticas />}
 
       {/* Modal de registro */}
       <IncapacidadFormModal

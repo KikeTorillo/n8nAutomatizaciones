@@ -3,7 +3,7 @@
  * Unifica Vacaciones + Incapacidades en una sola experiencia
  * Enero 2026
  */
-import { useState, useEffect, useMemo, lazy, Suspense } from 'react';
+import { useState, useEffect, useMemo, useCallback, lazy, Suspense } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { format } from 'date-fns';
 import {
@@ -16,6 +16,9 @@ import {
   Ban,
   ClipboardList,
   FileSpreadsheet,
+  BarChart3,
+  List,
+  Calendar,
 } from 'lucide-react';
 import { BackButton, Button, StateNavTabs, LoadingSpinner } from '@/components/ui';
 import useAuthStore, { selectUser } from '@/store/authStore';
@@ -72,89 +75,197 @@ function AusenciasPage() {
   const { data: misAusencias } = useMisAusencias();
   const { data: incapacidadesData } = useIncapacidades({ limite: 100 });
 
-  // Definir tabs disponibles según rol
+  // Definir tabs disponibles según rol (usando IDs compuestos para subtabs)
   const tabs = useMemo(() => {
-    const baseTabs = [
-      {
-        id: 'mis-ausencias',
-        label: 'Mis Ausencias',
-        icon: User,
-        roles: ['all'],
-      },
+    const allTabs = [
+      // Mis Ausencias - subtabs
+      { id: 'mis-ausencias', label: 'Todas', icon: User },
+      { id: 'mis-ausencias-vacaciones', label: 'Vacaciones', icon: Palmtree },
+      { id: 'mis-ausencias-incapacidades', label: 'Incapacidades', icon: HeartPulse },
     ];
 
-    // Supervisor ve Mi Equipo
+    // Supervisor/Admin ve Mi Equipo
     if (esSupervisor || esAdmin) {
-      baseTabs.push({
-        id: 'mi-equipo',
+      allTabs.push(
+        { id: 'mi-equipo-vacaciones', label: 'Solicitudes', icon: Calendar, count: cantidadPendientes },
+        { id: 'mi-equipo-incapacidades', label: 'Incapacidades Activas', icon: HeartPulse },
+      );
+    }
+
+    // Admin ve tabs de gestión con subtabs
+    if (esAdmin) {
+      allTabs.push(
+        // Vacaciones Admin
+        { id: 'vacaciones-dashboard', label: 'Dashboard', icon: Palmtree },
+        { id: 'vacaciones-equipo', label: 'Solicitudes Equipo', icon: Users },
+        { id: 'vacaciones-estadisticas', label: 'Estadísticas', icon: BarChart3 },
+        // Incapacidades Admin
+        { id: 'incapacidades-lista', label: 'Lista', icon: List },
+        { id: 'incapacidades-estadisticas', label: 'Estadísticas', icon: BarChart3 },
+        // Otros Bloqueos
+        { id: 'otros-bloqueos-lista', label: 'Lista', icon: List },
+        { id: 'otros-bloqueos-calendario', label: 'Calendario', icon: CalendarDays },
+      );
+    }
+
+    // Calendario para todos (standalone)
+    allTabs.push({ id: 'calendario', label: 'Calendario', icon: CalendarDays });
+
+    // Configuración solo para admin (standalone)
+    if (esAdmin) {
+      allTabs.push({ id: 'configuracion', label: 'Configuración', icon: Settings });
+    }
+
+    return allTabs;
+  }, [esSupervisor, esAdmin, cantidadPendientes]);
+
+  // Grupos de tabs para desktop (dropdowns que agrupan subtabs)
+  const tabGroups = useMemo(() => {
+    const groups = [
+      { icon: User, label: 'Mis Ausencias', tabIds: ['mis-ausencias', 'mis-ausencias-vacaciones', 'mis-ausencias-incapacidades'] },
+    ];
+
+    if (esSupervisor || esAdmin) {
+      groups.push({ icon: Users, label: 'Mi Equipo', tabIds: ['mi-equipo-vacaciones', 'mi-equipo-incapacidades'] });
+    }
+
+    if (esAdmin) {
+      groups.push(
+        { icon: Palmtree, label: 'Vacaciones', tabIds: ['vacaciones-dashboard', 'vacaciones-equipo', 'vacaciones-estadisticas'] },
+        { icon: HeartPulse, label: 'Incapacidades', tabIds: ['incapacidades-lista', 'incapacidades-estadisticas'] },
+        { icon: Ban, label: 'Otros Bloqueos', tabIds: ['otros-bloqueos-lista', 'otros-bloqueos-calendario'] },
+      );
+    }
+
+    return groups;
+  }, [esSupervisor, esAdmin]);
+
+  // Grupos expandidos para el selector móvil (muestra subtabs)
+  const mobileGroups = useMemo(() => {
+    const groups = [];
+
+    // Grupo: Mis Ausencias
+    groups.push({
+      id: 'mis-ausencias-group',
+      label: 'Mis Ausencias',
+      icon: User,
+      items: [
+        { id: 'mis-ausencias', label: 'Todas', icon: User },
+        { id: 'mis-ausencias-vacaciones', label: 'Vacaciones', icon: Palmtree },
+        { id: 'mis-ausencias-incapacidades', label: 'Incapacidades', icon: HeartPulse },
+      ],
+    });
+
+    // Grupo: Mi Equipo (si supervisor/admin)
+    if (esSupervisor || esAdmin) {
+      groups.push({
+        id: 'mi-equipo-group',
         label: 'Mi Equipo',
         icon: Users,
-        roles: ['supervisor', 'admin'],
-        count: cantidadPendientes,
+        items: [
+          { id: 'mi-equipo-vacaciones', label: 'Solicitudes Vacaciones', icon: Calendar, count: cantidadPendientes },
+          { id: 'mi-equipo-incapacidades', label: 'Incapacidades Activas', icon: HeartPulse },
+        ],
       });
     }
 
-    // Admin ve tabs de gestión
+    // Grupos admin: Vacaciones, Incapacidades, Otros Bloqueos
     if (esAdmin) {
-      baseTabs.push(
+      groups.push(
         {
-          id: 'vacaciones',
+          id: 'vacaciones-group',
           label: 'Vacaciones',
           icon: Palmtree,
-          roles: ['admin'],
+          items: [
+            { id: 'vacaciones-dashboard', label: 'Dashboard', icon: Palmtree },
+            { id: 'vacaciones-equipo', label: 'Solicitudes Equipo', icon: Users },
+            { id: 'vacaciones-estadisticas', label: 'Estadísticas', icon: BarChart3 },
+          ],
         },
         {
-          id: 'incapacidades',
+          id: 'incapacidades-group',
           label: 'Incapacidades',
           icon: HeartPulse,
-          roles: ['admin'],
+          items: [
+            { id: 'incapacidades-lista', label: 'Lista', icon: List },
+            { id: 'incapacidades-estadisticas', label: 'Estadísticas', icon: BarChart3 },
+          ],
         },
         {
-          id: 'otros-bloqueos',
+          id: 'otros-bloqueos-group',
           label: 'Otros Bloqueos',
           icon: Ban,
-          roles: ['admin'],
+          items: [
+            { id: 'otros-bloqueos-lista', label: 'Lista', icon: List },
+            { id: 'otros-bloqueos-calendario', label: 'Calendario', icon: CalendarDays },
+          ],
         }
       );
     }
 
-    // Calendario para todos
-    baseTabs.push({
-      id: 'calendario',
-      label: 'Calendario',
+    // Grupo: General
+    groups.push({
+      id: 'general-group',
+      label: 'General',
       icon: CalendarDays,
-      roles: ['all'],
+      items: [
+        { id: 'calendario', label: 'Calendario', icon: CalendarDays },
+        ...(esAdmin ? [{ id: 'configuracion', label: 'Configuración', icon: Settings }] : []),
+      ],
     });
 
-    // Configuración solo para admin
-    if (esAdmin) {
-      baseTabs.push({
-        id: 'configuracion',
-        label: 'Configuración',
-        icon: Settings,
-        roles: ['admin'],
-      });
-    }
-
-    return baseTabs;
+    return groups;
   }, [esSupervisor, esAdmin, cantidadPendientes]);
 
-  // Grupos de tabs para desktop (solo admin tiene el dropdown de tipos)
-  const tabGroups = useMemo(() => {
-    if (!esAdmin) return [];
-    return [
-      { icon: ClipboardList, label: 'Tipos', tabIds: ['vacaciones', 'incapacidades', 'otros-bloqueos'] },
-    ];
-  }, [esAdmin]);
+  // Parsear IDs compuestos para navegación móvil
+  const parseTabId = useCallback((tabId) => {
+    const mappings = {
+      // Mis Ausencias
+      'mis-ausencias': { tab: 'mis-ausencias', subtab: null },
+      'mis-ausencias-vacaciones': { tab: 'mis-ausencias', subtab: 'vacaciones' },
+      'mis-ausencias-incapacidades': { tab: 'mis-ausencias', subtab: 'incapacidad' },
+      // Mi Equipo
+      'mi-equipo-vacaciones': { tab: 'mi-equipo', subtab: 'vacaciones' },
+      'mi-equipo-incapacidades': { tab: 'mi-equipo', subtab: 'incapacidades' },
+      // Vacaciones Admin
+      'vacaciones-dashboard': { tab: 'vacaciones', subtab: 'dashboard' },
+      'vacaciones-equipo': { tab: 'vacaciones', subtab: 'equipo' },
+      'vacaciones-estadisticas': { tab: 'vacaciones', subtab: 'estadisticas' },
+      // Incapacidades Admin
+      'incapacidades-lista': { tab: 'incapacidades', subtab: 'lista' },
+      'incapacidades-estadisticas': { tab: 'incapacidades', subtab: 'estadisticas' },
+      // Otros Bloqueos
+      'otros-bloqueos-lista': { tab: 'otros-bloqueos', subtab: 'lista' },
+      'otros-bloqueos-calendario': { tab: 'otros-bloqueos', subtab: 'calendario' },
+      // General (sin subtabs)
+      'calendario': { tab: 'calendario', subtab: null },
+      'configuracion': { tab: 'configuracion', subtab: null },
+      // Tabs base (para compatibilidad desktop)
+      'mi-equipo': { tab: 'mi-equipo', subtab: null },
+      'vacaciones': { tab: 'vacaciones', subtab: null },
+      'incapacidades': { tab: 'incapacidades', subtab: null },
+      'otros-bloqueos': { tab: 'otros-bloqueos', subtab: null },
+    };
+    return mappings[tabId] || { tab: tabId, subtab: null };
+  }, []);
+
+  // Todos los IDs válidos (base + compuestos para móvil)
+  const allValidTabIds = useMemo(() => [
+    // Base
+    'mis-ausencias', 'mi-equipo', 'vacaciones', 'incapacidades', 'otros-bloqueos', 'calendario', 'configuracion',
+    // Compuestos (móvil)
+    'mis-ausencias-vacaciones', 'mis-ausencias-incapacidades',
+    'mi-equipo-vacaciones', 'mi-equipo-incapacidades',
+    'vacaciones-dashboard', 'vacaciones-equipo', 'vacaciones-estadisticas',
+    'incapacidades-lista', 'incapacidades-estadisticas',
+    'otros-bloqueos-lista', 'otros-bloqueos-calendario',
+  ], []);
 
   // Estado del tab activo
   const [activeTab, setActiveTab] = useState(() => {
     // Si viene un tab por URL, usarlo si es válido
-    if (tabParam) {
-      const validTabs = ['mis-ausencias', 'mi-equipo', 'vacaciones', 'incapacidades', 'otros-bloqueos', 'calendario', 'configuracion'];
-      if (validTabs.includes(tabParam)) {
-        return tabParam;
-      }
+    if (tabParam && allValidTabIds.includes(tabParam)) {
+      return tabParam;
     }
     return 'mis-ausencias';
   });
@@ -162,13 +273,12 @@ function AusenciasPage() {
   // Sincronizar tab con URL
   useEffect(() => {
     if (tabParam && tabParam !== activeTab) {
-      // Verificar si el tab es válido para este usuario
-      const tabValido = tabs.find((t) => t.id === tabParam);
-      if (tabValido) {
+      // Verificar si el tab es válido (base o compuesto)
+      if (allValidTabIds.includes(tabParam)) {
         setActiveTab(tabParam);
       }
     }
-  }, [tabParam, tabs, activeTab]);
+  }, [tabParam, allValidTabIds, activeTab]);
 
   // Cambiar tab y actualizar URL
   const handleTabChange = (tabId) => {
@@ -178,25 +288,35 @@ function AusenciasPage() {
 
   // Renderizar contenido del tab activo
   const renderTabContent = () => {
+    const { tab: mainTab, subtab } = parseTabId(activeTab);
+
     // Tab principal carga sin Suspense (eager)
-    if (activeTab === 'mis-ausencias') {
-      return <MisAusenciasTab />;
+    if (mainTab === 'mis-ausencias') {
+      return <MisAusenciasTab initialFilter={subtab} />;
     }
 
     // Tabs secundarios con Suspense (lazy)
     let content;
-    switch (activeTab) {
+    switch (mainTab) {
       case 'mi-equipo':
-        content = esSupervisor || esAdmin ? <MiEquipoAusenciasTab /> : null;
+        content = esSupervisor || esAdmin
+          ? <MiEquipoAusenciasTab initialSection={subtab || 'vacaciones'} />
+          : null;
         break;
       case 'vacaciones':
-        content = esAdmin ? <VacacionesAdminTab /> : null;
+        content = esAdmin
+          ? <VacacionesAdminTab initialSection={subtab || 'dashboard'} />
+          : null;
         break;
       case 'incapacidades':
-        content = esAdmin ? <IncapacidadesAdminTab /> : null;
+        content = esAdmin
+          ? <IncapacidadesAdminTab initialSection={subtab || 'lista'} />
+          : null;
         break;
       case 'otros-bloqueos':
-        content = esAdmin ? <OtrosBloqueoTab /> : null;
+        content = esAdmin
+          ? <OtrosBloqueoTab initialView={subtab || 'lista'} />
+          : null;
         break;
       case 'calendario':
         content = <CalendarioAusenciasTab esAdmin={esAdmin} />;
@@ -217,9 +337,10 @@ function AusenciasPage() {
     );
   };
 
-  // Verificar si el tab actual es exportable
+  // Verificar si el tab actual es exportable (usar tab base para la verificación)
   const tabsExportables = ['mis-ausencias', 'mi-equipo', 'incapacidades'];
-  const puedeExportar = tabsExportables.includes(activeTab);
+  const { tab: mainTabForExport } = parseTabId(activeTab);
+  const puedeExportar = tabsExportables.includes(mainTabForExport);
 
   // Handler para exportar CSV según tab activo usando hook centralizado
   const handleExportarAusencias = () => {
@@ -234,7 +355,9 @@ function AusenciasPage() {
       cancelada: 'Cancelada',
     };
 
-    switch (activeTab) {
+    const { tab: exportTab } = parseTabId(activeTab);
+
+    switch (exportTab) {
       case 'mis-ausencias': {
         if (!misAusencias || misAusencias.length === 0) {
           toast.error('No hay ausencias para exportar');
@@ -356,6 +479,7 @@ function AusenciasPage() {
         activeTab={activeTab}
         onTabChange={handleTabChange}
         groups={tabGroups}
+        mobileGroups={mobileGroups}
         sticky={false}
       />
 

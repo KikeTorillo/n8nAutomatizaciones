@@ -77,7 +77,7 @@ export default function GenerarEtiquetaModal({
                 });
 
                 const qrDataUrl = await QRCode.toDataURL(codigoProducto, {
-                    width: 200,
+                    width: 300,
                     margin: 1,
                     color: {
                         dark: '#000000',
@@ -105,10 +105,10 @@ export default function GenerarEtiquetaModal({
 
                 JsBarcode(canvas, codigoFinal, {
                     format: formato,
-                    width: 2,
-                    height: 60,
+                    width: 3,
+                    height: 100,
                     displayValue: true,
-                    fontSize: 14,
+                    fontSize: 18,
                     margin: 10,
                     background: '#ffffff',
                 });
@@ -390,7 +390,7 @@ export default function GenerarEtiquetaModal({
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Vista Previa
                     </label>
-                    <div className="bg-white border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 flex items-center justify-center min-h-[150px]">
+                    <div className="bg-white border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 flex items-center justify-center min-h-[250px]">
                         {error ? (
                             <div className="text-red-500 text-center">
                                 <p>{error}</p>
@@ -406,7 +406,7 @@ export default function GenerarEtiquetaModal({
                                 <img
                                     src={codigoGenerado}
                                     alt="Código generado"
-                                    className="max-h-[80px] mx-auto"
+                                    className="max-h-[180px] max-w-full mx-auto"
                                 />
                                 {mostrarSKU && (
                                     <p className="text-xs text-gray-500 mt-1">SKU: {producto.sku || '-'}</p>

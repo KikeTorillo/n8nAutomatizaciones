@@ -25,6 +25,7 @@ import MobileTabSelector from './MobileTabSelector';
  * @param {string} props.activeTab - ID del tab activo
  * @param {function} props.onTabChange - Callback al cambiar tab (tabId) => void
  * @param {Array<{icon?: React.ComponentType, label: string, tabIds: string[]}>} [props.groups] - Grupos para desktop
+ * @param {Array<{id: string, label: string, icon?: React.ComponentType, items: Array}>} [props.mobileGroups] - Grupos para móvil con subtabs expandidos
  * @param {Object<string, React.ComponentType>} [props.iconMap] - Mapeo de tabId => Icon component
  * @param {boolean} [props.sticky=true] - Si el nav debe ser sticky
  * @param {string} [props.stickyTop='top-0'] - Posición top para sticky
@@ -36,6 +37,7 @@ const StateNavTabs = memo(function StateNavTabs({
   activeTab,
   onTabChange,
   groups = [],
+  mobileGroups,
   iconMap = {},
   sticky = true,
   stickyTop = 'top-0',
@@ -141,6 +143,7 @@ const StateNavTabs = memo(function StateNavTabs({
           activeTab={activeTab}
           onTabChange={onTabChange}
           getTabIcon={getTabIcon}
+          mobileGroups={mobileGroups}
         />
       </div>
     </nav>

@@ -1,10 +1,9 @@
 /**
  * VacacionesAdminTab - Gestión completa de vacaciones (admin)
- * Wrapper del VacacionesDashboard existente con funcionalidades adicionales
+ * Renderiza la sección según initialSection (navegación desde StateNavTabs)
  * Enero 2026
  */
-import { useState } from 'react';
-import { Palmtree, Users, BarChart3, RefreshCw, Clock, CheckCircle, Calendar } from 'lucide-react';
+import { Palmtree, Users, RefreshCw, Clock, CheckCircle, Calendar } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button, StatCardGrid } from '@/components/ui';
 import { VacacionesDashboard, SolicitudesEquipoSection } from '@/components/vacaciones';
@@ -30,7 +29,6 @@ function EstadisticasVacaciones() {
     );
   }
 
-  // Usar datos de estadísticas directamente (incluye total_empleados)
   const totalProfesionales = stats?.saldos?.total_empleados || 0;
   const pendientes = stats?.solicitudes?.pendientes || 0;
   const aprobadas = stats?.solicitudes?.aprobadas || 0;
@@ -75,23 +73,34 @@ function EstadisticasVacaciones() {
 
 /**
  * Tab de Vacaciones para Admin
+ * @param {Object} props
+ * @param {string} [props.initialSection='dashboard'] - Sección a mostrar ('dashboard' | 'equipo' | 'estadisticas')
  */
-function VacacionesAdminTab() {
+function VacacionesAdminTab({ initialSection = 'dashboard' }) {
   const queryClient = useQueryClient();
-  const [activeSection, setActiveSection] = useState('dashboard');
 
   const handleRefresh = () => {
-    queryClient.invalidateQueries({ queryKey: ['vacaciones'] });
+    queryClient.invalidateQueries({ queryKey: ['vacaciones'], refetchType: 'active' });
   };
+
+  // Configuración por sección
+  const sectionConfig = {
+    dashboard: { title: 'Mi Dashboard', icon: Palmtree, color: 'green' },
+    equipo: { title: 'Solicitudes del Equipo', icon: Users, color: 'primary' },
+    estadisticas: { title: 'Estadísticas de Vacaciones', icon: Calendar, color: 'blue' },
+  };
+
+  const config = sectionConfig[initialSection] || sectionConfig.dashboard;
+  const Icon = config.icon;
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Palmtree className="w-5 h-5 text-green-600 dark:text-green-400" />
+          <Icon className={`w-5 h-5 text-${config.color}-600 dark:text-${config.color}-400`} />
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-            Gestión de Vacaciones
+            {config.title}
           </h2>
         </div>
         <Button variant="ghost" size="sm" onClick={handleRefresh}>
@@ -99,53 +108,10 @@ function VacacionesAdminTab() {
         </Button>
       </div>
 
-      {/* Tabs de sección */}
-      <div className="flex items-center gap-2 border-b border-gray-200 dark:border-gray-700 pb-2">
-        <button
-          onClick={() => setActiveSection('dashboard')}
-          className={`
-            px-4 py-2 text-sm rounded-lg transition-colors flex items-center gap-2
-            ${activeSection === 'dashboard'
-              ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 font-medium'
-              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
-            }
-          `}
-        >
-          <Palmtree className="w-4 h-4" />
-          Mi Dashboard
-        </button>
-        <button
-          onClick={() => setActiveSection('equipo')}
-          className={`
-            px-4 py-2 text-sm rounded-lg transition-colors flex items-center gap-2
-            ${activeSection === 'equipo'
-              ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 font-medium'
-              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
-            }
-          `}
-        >
-          <Users className="w-4 h-4" />
-          Solicitudes Equipo
-        </button>
-        <button
-          onClick={() => setActiveSection('estadisticas')}
-          className={`
-            px-4 py-2 text-sm rounded-lg transition-colors flex items-center gap-2
-            ${activeSection === 'estadisticas'
-              ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 font-medium'
-              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
-            }
-          `}
-        >
-          <BarChart3 className="w-4 h-4" />
-          Estadísticas
-        </button>
-      </div>
-
-      {/* Contenido */}
-      {activeSection === 'dashboard' && <VacacionesDashboard />}
-      {activeSection === 'equipo' && <SolicitudesEquipoSection />}
-      {activeSection === 'estadisticas' && <EstadisticasVacaciones />}
+      {/* Contenido según sección */}
+      {initialSection === 'dashboard' && <VacacionesDashboard />}
+      {initialSection === 'equipo' && <SolicitudesEquipoSection />}
+      {initialSection === 'estadisticas' && <EstadisticasVacaciones />}
     </div>
   );
 }

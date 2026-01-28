@@ -48,20 +48,8 @@ const TabDropdown = memo(function TabDropdown({ icon: Icon, label, items, active
         aria-expanded={isOpen}
         aria-haspopup="true"
       >
-        {activeItem ? (
-          <>
-            {(() => {
-              const ActiveIcon = getTabIcon(activeItem.id) || activeItem.icon || Icon;
-              return ActiveIcon ? <ActiveIcon className="h-4 w-4 flex-shrink-0" /> : null;
-            })()}
-            <span>{activeItem.label}</span>
-          </>
-        ) : (
-          <>
-            {Icon && <Icon className="h-4 w-4 flex-shrink-0" />}
-            <span>{label}</span>
-          </>
-        )}
+        {Icon && <Icon className="h-4 w-4 flex-shrink-0" />}
+        <span>{label}</span>
         <ChevronDown className={cn('h-4 w-4 transition-transform', isOpen && 'rotate-180')} />
       </button>
 

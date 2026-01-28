@@ -1,9 +1,8 @@
 /**
  * MiEquipoAusenciasTab - Solicitudes del equipo para supervisores
- * Permite aprobar/rechazar vacaciones y ver incapacidades del equipo
+ * Renderiza la sección según initialSection (navegación desde StateNavTabs)
  * Enero 2026
  */
-import { useState } from 'react';
 import { RefreshCw, HeartPulse, Calendar, Users } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Badge, Button, EmptyState } from '@/components/ui';
@@ -58,33 +57,79 @@ function IncapacidadEquipoCard({ incapacidad }) {
 }
 
 /**
- * Tab de Mi Equipo
+ * Sección de incapacidades activas del equipo
  */
-function MiEquipoAusenciasTab() {
-  const queryClient = useQueryClient();
-  const [activeSection, setActiveSection] = useState('vacaciones');
-
-  // Incapacidades activas del equipo (solo admin/supervisor ve esto)
-  const { data: incapacidadesData, isLoading: isLoadingIncapacidades } = useIncapacidades({
+function IncapacidadesEquipoSection() {
+  const { data: incapacidadesData, isLoading } = useIncapacidades({
     estado: 'activa',
     limite: 50,
   });
 
   const incapacidadesActivas = incapacidadesData?.data || [];
 
+  return (
+    <div className="space-y-4">
+      <p className="text-sm text-gray-600 dark:text-gray-400">
+        Profesionales actualmente con incapacidad médica
+      </p>
+
+      {isLoading ? (
+        <div className="space-y-3">
+          {[1, 2].map((i) => (
+            <div
+              key={i}
+              className="bg-gray-100 dark:bg-gray-800 rounded-lg h-20 animate-pulse"
+            />
+          ))}
+        </div>
+      ) : incapacidadesActivas.length === 0 ? (
+        <EmptyState
+          icon={HeartPulse}
+          title="Sin incapacidades activas"
+          description="No hay profesionales con incapacidad activa en este momento"
+          size="sm"
+        />
+      ) : (
+        <div className="space-y-3">
+          {incapacidadesActivas.map((inc) => (
+            <IncapacidadEquipoCard key={inc.id} incapacidad={inc} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Tab de Mi Equipo
+ * @param {Object} props
+ * @param {string} [props.initialSection='vacaciones'] - Sección a mostrar ('vacaciones' | 'incapacidades')
+ */
+function MiEquipoAusenciasTab({ initialSection = 'vacaciones' }) {
+  const queryClient = useQueryClient();
+
   const handleRefresh = () => {
-    queryClient.invalidateQueries({ queryKey: ['vacaciones'] });
-    queryClient.invalidateQueries({ queryKey: ['incapacidades'] });
+    queryClient.invalidateQueries({ queryKey: ['vacaciones'], refetchType: 'active' });
+    queryClient.invalidateQueries({ queryKey: ['incapacidades'], refetchType: 'active' });
   };
+
+  // Configuración por sección
+  const sectionConfig = {
+    vacaciones: { title: 'Solicitudes de Vacaciones', icon: Calendar, color: 'green' },
+    incapacidades: { title: 'Incapacidades Activas', icon: HeartPulse, color: 'red' },
+  };
+
+  const config = sectionConfig[initialSection] || sectionConfig.vacaciones;
+  const Icon = config.icon;
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Users className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+          <Icon className={`w-5 h-5 text-${config.color}-600 dark:text-${config.color}-400`} />
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-            Mi Equipo
+            {config.title}
           </h2>
         </div>
         <Button variant="ghost" size="sm" onClick={handleRefresh}>
@@ -92,75 +137,9 @@ function MiEquipoAusenciasTab() {
         </Button>
       </div>
 
-      {/* Tabs de sección */}
-      <div className="flex items-center gap-2 border-b border-gray-200 dark:border-gray-700 pb-2">
-        <button
-          onClick={() => setActiveSection('vacaciones')}
-          className={`
-            px-4 py-2 text-sm rounded-lg transition-colors flex items-center gap-2
-            ${activeSection === 'vacaciones'
-              ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 font-medium'
-              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
-            }
-          `}
-        >
-          <Calendar className="w-4 h-4" />
-          Solicitudes de Vacaciones
-        </button>
-        <button
-          onClick={() => setActiveSection('incapacidades')}
-          className={`
-            px-4 py-2 text-sm rounded-lg transition-colors flex items-center gap-2
-            ${activeSection === 'incapacidades'
-              ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 font-medium'
-              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
-            }
-          `}
-        >
-          <HeartPulse className="w-4 h-4" />
-          Incapacidades Activas
-          {incapacidadesActivas.length > 0 && (
-            <span className="px-2 py-0.5 text-xs bg-red-500 text-white rounded-full">
-              {incapacidadesActivas.length}
-            </span>
-          )}
-        </button>
-      </div>
-
-      {/* Contenido */}
-      {activeSection === 'vacaciones' && <SolicitudesEquipoSection />}
-
-      {activeSection === 'incapacidades' && (
-        <div className="space-y-4">
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            Profesionales actualmente con incapacidad médica
-          </p>
-
-          {isLoadingIncapacidades ? (
-            <div className="space-y-3">
-              {[1, 2].map((i) => (
-                <div
-                  key={i}
-                  className="bg-gray-100 dark:bg-gray-800 rounded-lg h-20 animate-pulse"
-                />
-              ))}
-            </div>
-          ) : incapacidadesActivas.length === 0 ? (
-            <EmptyState
-              icon={HeartPulse}
-              title="Sin incapacidades activas"
-              description="No hay profesionales con incapacidad activa en este momento"
-              size="sm"
-            />
-          ) : (
-            <div className="space-y-3">
-              {incapacidadesActivas.map((inc) => (
-                <IncapacidadEquipoCard key={inc.id} incapacidad={inc} />
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+      {/* Contenido según sección */}
+      {initialSection === 'vacaciones' && <SolicitudesEquipoSection />}
+      {initialSection === 'incapacidades' && <IncapacidadesEquipoSection />}
     </div>
   );
 }

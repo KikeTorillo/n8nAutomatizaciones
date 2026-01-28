@@ -3,7 +3,6 @@
  * Muestra saldo de vacaciones + incapacidades propias
  * Enero 2026
  */
-import { useState } from 'react';
 import { useModalManager } from '@/hooks/utils';
 import { RefreshCw, Plus, Calendar, HeartPulse, AlertCircle, CheckCircle, Clock } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
@@ -140,12 +139,15 @@ function AusenciaCard({ ausencia, onVerDetalle }) {
 
 /**
  * Tab principal de Mis Ausencias
+ * @param {Object} props
+ * @param {string|null} [props.initialFilter=null] - Filtro inicial (null | 'vacaciones' | 'incapacidad')
  */
-function MisAusenciasTab() {
+function MisAusenciasTab({ initialFilter = null }) {
   const queryClient = useQueryClient();
   const anioActual = new Date().getFullYear();
 
-  const [filtroTipo, setFiltroTipo] = useState(null); // null = todos
+  // El filtro se controla desde la navegación principal (StateNavTabs)
+  const filtroTipo = initialFilter;
 
   // Modales centralizados
   const { openModal, closeModal, isOpen } = useModalManager({
@@ -264,48 +266,6 @@ function MisAusenciasTab() {
         ]}
         columns={4}
       />
-
-      {/* Filtros para historial */}
-      <div className="flex items-center gap-2 border-b border-gray-200 dark:border-gray-700 pb-2">
-        <button
-          onClick={() => setFiltroTipo(null)}
-          className={`
-            px-3 py-1.5 text-sm rounded-lg transition-colors
-            ${!filtroTipo
-              ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 font-medium'
-              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
-            }
-          `}
-        >
-          Todas
-        </button>
-        <button
-          onClick={() => setFiltroTipo('vacaciones')}
-          className={`
-            px-3 py-1.5 text-sm rounded-lg transition-colors flex items-center gap-1.5
-            ${filtroTipo === 'vacaciones'
-              ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 font-medium'
-              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
-            }
-          `}
-        >
-          <Calendar className="w-3.5 h-3.5" />
-          Vacaciones
-        </button>
-        <button
-          onClick={() => setFiltroTipo('incapacidad')}
-          className={`
-            px-3 py-1.5 text-sm rounded-lg transition-colors flex items-center gap-1.5
-            ${filtroTipo === 'incapacidad'
-              ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 font-medium'
-              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
-            }
-          `}
-        >
-          <HeartPulse className="w-3.5 h-3.5" />
-          Incapacidades
-        </button>
-      </div>
 
       {/* Lista de ausencias */}
       <div className="space-y-3">
