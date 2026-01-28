@@ -16,7 +16,8 @@ function ReportesComisionesFiltros({
   onLimpiar,
   onBuscar,
 }) {
-  const { data: profesionales, isLoading: loadingProfesionales } = useProfesionales();
+  const { data: profesionalesData, isLoading: loadingProfesionales } = useProfesionales();
+  const profesionales = profesionalesData?.profesionales || [];
 
   const handleChange = (field, value) => {
     onChange?.({
@@ -68,10 +69,10 @@ function ReportesComisionesFiltros({
             onChange={(e) => handleChange('profesional_id', e.target.value)}
             disabled={loadingProfesionales}
             placeholder="Todos los profesionales"
-            options={profesionales?.map((prof) => ({
+            options={profesionales.map((prof) => ({
               value: String(prof.id),
               label: `${prof.nombre} ${prof.apellidos || ''}`.trim(),
-            })) || []}
+            }))}
           />
         </div>
 

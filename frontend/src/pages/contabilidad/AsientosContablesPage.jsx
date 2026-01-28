@@ -13,7 +13,6 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import {
-  BackButton,
   Button,
   ConfirmDialog,
   Input,
@@ -21,6 +20,7 @@ import {
   Select,
   Textarea
 } from '@/components/ui';
+import { ContabilidadPageLayout, AsientoFormModal, AsientoDetailModal } from '@/components/contabilidad';
 import { useModalManager } from '@/hooks/utils';
 import {
   useAsientosContables,
@@ -30,7 +30,6 @@ import {
   useAnularAsiento,
   useEliminarAsiento,
 } from '@/hooks/otros';
-import { AsientoFormModal, AsientoDetailModal } from '@/components/contabilidad';
 import { formatCurrency } from '@/lib/utils';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 
@@ -183,27 +182,18 @@ function AsientosContablesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="mb-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <BackButton to="/contabilidad" label="Volver a Contabilidad" className="mb-2" />
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Asientos Contables</h1>
-              <p className="text-gray-600 dark:text-gray-400 mt-1 text-sm">
-                Libro diario - Registro de movimientos contables
-              </p>
-            </div>
-
-            <Button variant="primary" onClick={handleNuevoAsiento}>
-              <Plus className="w-4 h-4 mr-2" />
-              Nuevo Asiento
-            </Button>
-          </div>
-        </div>
-
-        {/* Filtros */}
+    <ContabilidadPageLayout
+      icon={FileSpreadsheet}
+      title="Asientos Contables"
+      subtitle="Libro diario - Registro de movimientos contables"
+      actions={
+        <Button variant="primary" onClick={handleNuevoAsiento}>
+          <Plus className="w-4 h-4 mr-2" />
+          Nuevo Asiento
+        </Button>
+      }
+    >
+      {/* Filtros */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 mb-6">
           <div className="flex flex-col sm:flex-row gap-4">
             {/* Busqueda */}
@@ -417,7 +407,6 @@ function AsientosContablesPage() {
             </div>
           )}
         </div>
-      </div>
 
       {/* Modal Crear/Editar Asiento */}
       <AsientoFormModal
@@ -501,7 +490,7 @@ function AsientosContablesPage() {
           </div>
         </div>
       </Modal>
-    </div>
+    </ContabilidadPageLayout>
   );
 }
 

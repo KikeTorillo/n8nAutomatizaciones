@@ -335,7 +335,7 @@ class SuscripcionesController {
 
         // 2. Validar que org tiene conector MercadoPago
         const ConectoresModel = require('../models/conectores.model');
-        const conector = await ConectoresModel.obtenerCredenciales(organizacionId, 'mercadopago');
+        const conector = await ConectoresModel.obtenerConectorPrincipal(organizacionId, 'mercadopago');
 
         if (!conector) {
             ErrorHelper.throwValidation(

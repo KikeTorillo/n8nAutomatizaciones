@@ -258,11 +258,11 @@ class CheckoutController {
         const externalReference = `org_${vendorId}_sus_${suscripcion.id}_pago_${pago.id}_cliente_${organizacionId}`;
         const mpService = await MercadoPagoService.getForOrganization(vendorId);
 
-        // Determinar email del pagador
+        // Determinar email del pagador basado en el entorno del conector
         let emailPagador;
-        if (process.env.MERCADOPAGO_ENVIRONMENT === 'sandbox') {
+        if (mpService.isSandbox()) {
             emailPagador = process.env.MERCADOPAGO_TEST_PAYER_EMAIL;
-            logger.info(`[Checkout ${billingType}] Sandbox activo, usando email: ${emailPagador}`);
+            logger.info(`[Checkout ${billingType}] Entorno sandbox detectado (token TEST-), usando email: ${emailPagador}`);
         } else {
             emailPagador = req.user.email;
         }

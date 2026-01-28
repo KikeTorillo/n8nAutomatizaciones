@@ -165,6 +165,29 @@ export const useEntidad = crudHooks.useDetail;
 export const useCrearEntidad = crudHooks.useCreate;
 ```
 
+### Frontend - createModuleLayout
+
+Factory para layouts consistentes de módulos con navegación por tabs.
+
+```javascript
+// components/mimodulo/MiModuloPageLayout.jsx
+import { createModuleLayout } from '@/components/ui/templates';
+import MiModuloNavTabs from './MiModuloNavTabs';
+
+export default createModuleLayout({
+  moduleTitle: 'Mi Módulo',
+  moduleDescription: 'Descripción breve del módulo',
+  NavTabsComponent: MiModuloNavTabs,
+});
+
+// Uso en páginas:
+<MiModuloPageLayout icon={Settings} title="Configuración" subtitle="Ajustes del módulo">
+  {/* contenido */}
+</MiModuloPageLayout>
+```
+
+Módulos con layout consistente: CRM, Inventario, Contabilidad, Sucursales, Aprobaciones.
+
 ---
 
 ## Troubleshooting
@@ -183,10 +206,13 @@ export const useCrearEntidad = crudHooks.useCreate;
 
 | Prioridad | Feature |
 |-----------|---------|
-| **Alta** | Definir UX de `/planes` (landing vs app) |
+| **Alta** | Validar arquitectura pagos multi-tenant |
 | **Media** | Prorrateo en cambios de plan |
+| **Media** | Website Builder - AI Site Generator |
 | **Baja** | 2FA/MFA |
+
+Ver `docs/PLAN_VALIDACION_SISTEMA.md` para estado detallado de validaciones.
 
 ---
 
-**Actualizado**: 25 Enero 2026
+**Actualizado**: 28 Enero 2026

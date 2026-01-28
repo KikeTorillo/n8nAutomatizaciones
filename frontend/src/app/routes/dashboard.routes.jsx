@@ -40,9 +40,13 @@ const NotificacionesPage = lazy(() => import('@/pages/notificaciones/Notificacio
 const NotificacionesPreferenciasPage = lazy(() => import('@/pages/notificaciones/NotificacionesPreferenciasPage'));
 
 // Aprobaciones (con retry para chunks problemáticos)
-const AprobacionesPage = lazyLoadWithRetry(
-  () => import('@/pages/aprobaciones/AprobacionesPage'),
-  'AprobacionesPage'
+const AprobacionesPendientesPage = lazyLoadWithRetry(
+  () => import('@/pages/aprobaciones/AprobacionesPendientesPage'),
+  'AprobacionesPendientesPage'
+);
+const AprobacionesHistorialPage = lazyLoadWithRetry(
+  () => import('@/pages/aprobaciones/AprobacionesHistorialPage'),
+  'AprobacionesHistorialPage'
 );
 
 export const dashboardRoutes = [
@@ -81,5 +85,6 @@ export const dashboardRoutes = [
   protectedRoute('notificaciones/preferencias', NotificacionesPreferenciasPage, { requiredRole: ROLES.ALL_AUTHENTICATED }),
 
   // Aprobaciones
-  protectedRoute('aprobaciones', AprobacionesPage, { requiredRole: ROLES.ALL_AUTHENTICATED }),
+  protectedRoute('aprobaciones', AprobacionesPendientesPage, { requiredRole: ROLES.ALL_AUTHENTICATED }),
+  protectedRoute('aprobaciones/historial', AprobacionesHistorialPage, { requiredRole: ROLES.ALL_AUTHENTICATED }),
 ];

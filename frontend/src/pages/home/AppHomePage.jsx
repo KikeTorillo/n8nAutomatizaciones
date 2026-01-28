@@ -37,7 +37,7 @@ import { authApi } from '@/services/api/endpoints';
 
 import AppCard from '@/components/home/AppCard';
 import QuickActions from '@/components/home/QuickActions';
-import { Button, ConfirmDialog, ThemeToggle, StatCard } from '@/components/ui';
+import { Button, ConfirmDialog, ThemeToggle } from '@/components/ui';
 import SucursalSelector from '@/components/sucursales/SucursalSelector';
 import { NotificacionesBell } from '@/components/notificaciones';
 import { TrialBanner } from '@/components/trial';
@@ -523,38 +523,6 @@ function AppHomePage() {
               </div>
             )}
 
-            {/* Métricas Rápidas del Día - Para cualquier cantidad de sucursales */}
-            {!tieneMultiplesSucursales && (
-              <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {tieneAgendamiento && (
-                  <StatCard
-                    icon={Calendar}
-                    label="Citas Pendientes"
-                    value={notifications.agendamiento || 0}
-                    color="primary"
-                    onClick={() => navigate('/citas')}
-                  />
-                )}
-                {tieneInventario && (
-                  <StatCard
-                    icon={Package}
-                    label="Alertas Stock"
-                    value={notifications.inventario || 0}
-                    color="warning"
-                    onClick={() => navigate('/inventario/alertas')}
-                  />
-                )}
-                {tieneWorkflows && notifications.aprobaciones > 0 && (
-                  <StatCard
-                    icon={ClipboardCheck}
-                    label="Aprobaciones"
-                    value={notifications.aprobaciones}
-                    color="primary"
-                    onClick={() => navigate('/aprobaciones')}
-                  />
-                )}
-              </div>
-            )}
           </>
         )}
 

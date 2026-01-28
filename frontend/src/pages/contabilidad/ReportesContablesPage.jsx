@@ -1,21 +1,18 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
-  Download,
   TrendingUp,
   TrendingDown,
   DollarSign,
   BarChart3,
   BookOpen,
   Calendar,
-  FileText,
 } from 'lucide-react';
 import {
-  BackButton,
-  Button,
   Input,
   Select
 } from '@/components/ui';
+import { ContabilidadPageLayout } from '@/components/contabilidad';
 import {
   usePeriodosContables,
   useCuentasAfectables,
@@ -199,18 +196,12 @@ function ReportesContablesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="mb-6">
-          <BackButton to="/contabilidad" label="Volver a Contabilidad" className="mb-2" />
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Reportes Financieros</h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1 text-sm">
-            Reportes contables: Balanza, Libro Mayor, Estado de Resultados y Balance General
-          </p>
-        </div>
-
-        {/* Tabs de reportes */}
+    <ContabilidadPageLayout
+      icon={BarChart3}
+      title="Reportes Financieros"
+      subtitle="Balanza, Libro Mayor, Estado de Resultados y Balance General"
+    >
+      {/* Tabs de reportes */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
           <div className="border-b border-gray-200 dark:border-gray-700">
             <nav className="flex -mb-px overflow-x-auto">
@@ -243,8 +234,7 @@ function ReportesContablesPage() {
           {/* Contenido del reporte */}
           <div className="p-4">{renderReporte()}</div>
         </div>
-      </div>
-    </div>
+    </ContabilidadPageLayout>
   );
 }
 

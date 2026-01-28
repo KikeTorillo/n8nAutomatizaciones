@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { Eye, EyeOff, CheckCircle, AlertTriangle, Loader2 } from 'lucide-react';
 import {
   Button,
-  Checkbox,
+  CheckboxField,
   Drawer,
   FormGroup,
   Input,
@@ -57,17 +57,12 @@ const GATEWAYS_CONFIG = {
   },
 };
 
-const ENTORNOS = [
-  { value: 'sandbox', label: 'Sandbox (Pruebas)' },
-  { value: 'production', label: 'Produccion' },
-];
-
 /**
  * Schema de validación para conectores
+ * NOTA: El entorno se detecta automáticamente por el prefijo del access_token (TEST- = sandbox)
  */
 const conectorSchema = z.object({
   gateway: z.enum(['mercadopago', 'stripe', 'paypal', 'conekta']),
-  entorno: z.enum(['sandbox', 'production']),
   nombre_display: z.string().max(100, 'Máximo 100 caracteres').optional().or(z.literal('')),
   webhook_url: z.string().optional().or(z.literal('')),
   webhook_secret: z.string().optional().or(z.literal('')),
@@ -156,7 +151,6 @@ function ConectorFormDrawer({ isOpen, onClose, conector = null, mode = 'create' 
     // resolver: zodResolver(conectorSchema), // TODO: Habilitar cuando se resuelva el error de Zod
     defaultValues: {
       gateway: 'mercadopago',
-      entorno: 'sandbox',
       nombre_display: '',
       webhook_url: '',
       webhook_secret: '',
@@ -166,7 +160,6 @@ function ConectorFormDrawer({ isOpen, onClose, conector = null, mode = 'create' 
   });
 
   const selectedGateway = watch('gateway');
-  const selectedEntorno = watch('entorno');
   const gatewayConfig = GATEWAYS_CONFIG[selectedGateway];
 
   // Toggle visibilidad de password
@@ -182,7 +175,6 @@ function ConectorFormDrawer({ isOpen, onClose, conector = null, mode = 'create' 
     if (esEdicion && conector) {
       reset({
         gateway: conector.gateway || 'mercadopago',
-        entorno: conector.entorno || 'sandbox',
         nombre_display: conector.nombre_display || '',
         webhook_url: conector.webhook_url || '',
         webhook_secret: '', // No se muestra el secret existente por seguridad
@@ -193,7 +185,6 @@ function ConectorFormDrawer({ isOpen, onClose, conector = null, mode = 'create' 
     } else {
       reset({
         gateway: 'mercadopago',
-        entorno: 'sandbox',
         nombre_display: '',
         webhook_url: '',
         webhook_secret: '',
@@ -231,7 +222,6 @@ function ConectorFormDrawer({ isOpen, onClose, conector = null, mode = 'create' 
 
     const payload = {
       gateway: data.gateway,
-      entorno: data.entorno,
       nombre_display: data.nombre_display || undefined,
       webhook_url: data.webhook_url || undefined,
       webhook_secret: data.webhook_secret || undefined,
@@ -288,50 +278,20 @@ function ConectorFormDrawer({ isOpen, onClose, conector = null, mode = 'create' 
       size="lg"
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        {/* Gateway y Entorno */}
-        <div className="grid grid-cols-2 gap-4">
-          <FormGroup label="Gateway de Pago" error={errors.gateway?.message} required>
-            <Select
-              {...register('gateway')}
-              hasError={!!errors.gateway}
-              disabled={esEdicion}
-            >
-              {Object.entries(GATEWAYS_CONFIG).map(([key, config]) => (
-                <option key={key} value={key}>
-                  {config.nombre}
-                </option>
-              ))}
-            </Select>
-          </FormGroup>
-
-          <FormGroup label="Entorno" error={errors.entorno?.message} required>
-            <Select
-              {...register('entorno')}
-              hasError={!!errors.entorno}
-              disabled={esEdicion}
-            >
-              {ENTORNOS.map((e) => (
-                <option key={e.value} value={e.value}>
-                  {e.label}
-                </option>
-              ))}
-            </Select>
-          </FormGroup>
-        </div>
-
-        {/* Warning para producción */}
-        {selectedEntorno === 'production' && (
-          <div className="flex items-start gap-3 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
-            <AlertTriangle className="w-5 h-5 text-yellow-600 dark:text-yellow-500 flex-shrink-0 mt-0.5" />
-            <div className="text-sm text-yellow-800 dark:text-yellow-200">
-              <p className="font-medium">Entorno de Producción</p>
-              <p className="mt-1">
-                Las credenciales de producción procesarán cobros reales. Asegúrate de usar las
-                claves correctas.
-              </p>
-            </div>
-          </div>
-        )}
+        {/* Gateway de Pago */}
+        <FormGroup label="Gateway de Pago" error={errors.gateway?.message} required>
+          <Select
+            {...register('gateway')}
+            hasError={!!errors.gateway}
+            disabled={esEdicion}
+          >
+            {Object.entries(GATEWAYS_CONFIG).map(([key, config]) => (
+              <option key={key} value={key}>
+                {config.nombre}
+              </option>
+            ))}
+          </Select>
+        </FormGroup>
 
         {/* Nombre Display */}
         <FormGroup
@@ -342,7 +302,7 @@ function ConectorFormDrawer({ isOpen, onClose, conector = null, mode = 'create' 
           <Input
             {...register('nombre_display')}
             hasError={!!errors.nombre_display}
-            placeholder={`Mi ${gatewayConfig?.nombre || 'Conector'} ${selectedEntorno === 'production' ? 'Prod' : 'Test'}`}
+            placeholder={`Mi ${gatewayConfig?.nombre || 'Conector'}`}
           />
         </FormGroup>
 
@@ -417,9 +377,9 @@ function ConectorFormDrawer({ isOpen, onClose, conector = null, mode = 'create' 
         </div>
 
         {/* Es Principal */}
-        <Checkbox
-          label="Establecer como conector principal"
-          description="Se usará por defecto para procesar pagos de este gateway"
+        <CheckboxField
+          label="Usar como conector principal"
+          description="Este conector se usará para procesar todos los pagos de este gateway. Solo puede haber un conector principal por gateway."
           {...register('es_principal')}
         />
 

@@ -46,14 +46,13 @@ const CheckboxField = memo(forwardRef(function CheckboxField(
           <div className="flex-1">
             {label && (
               <Label
+                label={label}
                 htmlFor={checkboxId}
                 className={cn(
                   'text-sm font-medium text-gray-900 dark:text-gray-100 cursor-pointer',
                   disabled && 'opacity-50 cursor-not-allowed'
                 )}
-              >
-                {label}
-              </Label>
+              />
             )}
             {description && (
               <p className={cn(

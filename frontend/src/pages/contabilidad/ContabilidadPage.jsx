@@ -11,9 +11,10 @@ import {
   Clock,
   Calculator,
   Plus,
-  Settings,
+  LayoutDashboard,
 } from 'lucide-react';
-import { BackButton, Button } from '@/components/ui';
+import { Button } from '@/components/ui';
+import { ContabilidadPageLayout } from '@/components/contabilidad';
 import { useDashboardContabilidad, useInicializarCatalogoSAT } from '@/hooks/otros';
 import { formatCurrency } from '@/lib/utils';
 
@@ -86,64 +87,12 @@ function ContabilidadPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <BackButton to="/home" label="Volver al Inicio" className="mb-2" />
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">
-                Contabilidad
-              </h1>
-              <p className="text-gray-600 dark:text-gray-400 mt-2 text-sm sm:text-base">
-                Gestión contable con catálogo SAT México
-              </p>
-            </div>
-
-            {/* Navegación rápida */}
-            <div className="flex flex-wrap gap-2 sm:gap-3">
-              <Button
-                variant="secondary"
-                onClick={() => navigate('/contabilidad/cuentas')}
-                className="flex-1 sm:flex-none text-sm"
-              >
-                <BookOpen className="w-4 h-4 mr-1 sm:mr-2" />
-                <span className="hidden sm:inline">Catálogo</span>
-                <span className="sm:hidden">Cuentas</span>
-              </Button>
-
-              <Button
-                variant="secondary"
-                onClick={() => navigate('/contabilidad/asientos')}
-                className="flex-1 sm:flex-none text-sm"
-              >
-                <FileSpreadsheet className="w-4 h-4 mr-1 sm:mr-2" />
-                Asientos
-              </Button>
-
-              <Button
-                variant="primary"
-                onClick={() => navigate('/contabilidad/reportes')}
-                className="flex-1 sm:flex-none text-sm"
-              >
-                <BarChart3 className="w-4 h-4 mr-1 sm:mr-2" />
-                Reportes
-              </Button>
-
-              <Button
-                variant="ghost"
-                onClick={() => navigate('/contabilidad/configuracion')}
-                className="text-sm"
-                title="Configuración"
-              >
-                <Settings className="w-4 h-4" />
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        {/* Dashboard Stats */}
+    <ContabilidadPageLayout
+      icon={LayoutDashboard}
+      title="Dashboard"
+      subtitle="Resumen y accesos rápidos"
+    >
+      {/* Dashboard Stats */}
         {isLoading ? (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             {[1, 2, 3, 4].map((i) => (
@@ -273,17 +222,16 @@ function ContabilidadPage() {
           </div>
         </div>
 
-        {/* Información adicional */}
-        <div className="mt-8 bg-primary-50 dark:bg-primary-900/30 border border-primary-200 dark:border-primary-800 rounded-lg p-6">
-          <h3 className="font-semibold text-primary-800 dark:text-primary-300 mb-2">Contabilidad Electrónica SAT</h3>
-          <p className="text-primary-700 dark:text-primary-400 text-sm">
-            Este módulo está basado en el Código Agrupador de Cuentas del SAT (Anexo 24),
-            cumpliendo con los requerimientos de la contabilidad electrónica en México.
-            Soporta partida doble, períodos contables y los principales reportes financieros.
-          </p>
-        </div>
+      {/* Información adicional */}
+      <div className="mt-8 bg-primary-50 dark:bg-primary-900/30 border border-primary-200 dark:border-primary-800 rounded-lg p-6">
+        <h3 className="font-semibold text-primary-800 dark:text-primary-300 mb-2">Contabilidad Electrónica SAT</h3>
+        <p className="text-primary-700 dark:text-primary-400 text-sm">
+          Este módulo está basado en el Código Agrupador de Cuentas del SAT (Anexo 24),
+          cumpliendo con los requerimientos de la contabilidad electrónica en México.
+          Soporta partida doble, períodos contables y los principales reportes financieros.
+        </p>
       </div>
-    </div>
+    </ContabilidadPageLayout>
   );
 }
 

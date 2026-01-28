@@ -73,6 +73,20 @@ class ConectoresModel {
         }
 
         return await RLSContextManager.query(organizacionId, async (db) => {
+            // Si se marca como principal, desmarcar los otros del mismo gateway
+            if (data.es_principal) {
+                await db.query(`
+                    UPDATE conectores_pago_org
+                    SET es_principal = false
+                    WHERE organizacion_id = $1 AND gateway = $2 AND es_principal = true
+                `, [organizacionId, data.gateway]);
+
+                logger.debug('[ConectoresModel.crear] Desmarcados otros conectores como principales', {
+                    organizacionId,
+                    gateway: data.gateway
+                });
+            }
+
             const query = `
                 INSERT INTO conectores_pago_org (
                     organizacion_id, gateway, entorno, nombre_display,
@@ -109,7 +123,8 @@ class ConectoresModel {
                 id: result.rows[0].id,
                 organizacionId,
                 gateway: data.gateway,
-                entorno: data.entorno
+                entorno: data.entorno,
+                es_principal: data.es_principal || false
             });
 
             return result.rows[0];
@@ -191,74 +206,6 @@ class ConectoresModel {
     }
 
     /**
-     * Obtener credenciales desencriptadas de un conector
-     * IMPORTANTE: Solo usar internamente, nunca exponer a API
-     *
-     * @param {number} organizacionId - ID de la organización
-     * @param {string} gateway - Gateway a buscar
-     * @param {string} [entorno='production'] - Entorno
-     * @returns {Promise<Object|null>} Credenciales o null si no existe
-     */
-    static async obtenerCredenciales(organizacionId, gateway, entorno = 'production') {
-        return await RLSContextManager.withBypass(async (db) => {
-            const query = `
-                SELECT
-                    id, gateway, entorno,
-                    credenciales_encrypted, credenciales_iv, credenciales_tag,
-                    webhook_secret_encrypted, webhook_secret_iv, webhook_secret_tag,
-                    verificado, metadata
-                FROM conectores_pago_org
-                WHERE organizacion_id = $1
-                  AND gateway = $2
-                  AND entorno = $3
-                  AND activo = true
-                ORDER BY es_principal DESC, verificado DESC
-                LIMIT 1
-            `;
-
-            const result = await db.query(query, [organizacionId, gateway, entorno]);
-
-            if (result.rows.length === 0) {
-                logger.debug('[ConectoresModel.obtenerCredenciales] No hay conector', {
-                    organizacionId,
-                    gateway,
-                    entorno
-                });
-                return null;
-            }
-
-            const row = result.rows[0];
-
-            // Desencriptar credenciales
-            const credenciales = CredentialEncryption.decrypt(
-                row.credenciales_encrypted,
-                row.credenciales_iv,
-                row.credenciales_tag
-            );
-
-            // Desencriptar webhook secret si existe
-            let webhookSecret = null;
-            if (row.webhook_secret_encrypted) {
-                webhookSecret = CredentialEncryption.decryptWebhookSecret(
-                    row.webhook_secret_encrypted,
-                    row.webhook_secret_iv,
-                    row.webhook_secret_tag
-                );
-            }
-
-            return {
-                id: row.id,
-                gateway: row.gateway,
-                entorno: row.entorno,
-                credenciales,
-                webhookSecret,
-                verificado: row.verificado,
-                metadata: row.metadata
-            };
-        });
-    }
-
-    /**
      * Actualizar conector
      *
      * @param {number} organizacionId - ID de la organización
@@ -272,6 +219,21 @@ class ConectoresModel {
             // Verificar que existe
             const existe = await this.buscarPorId(organizacionId, id);
             ErrorHelper.throwIfNotFound(existe, 'Conector de pago');
+
+            // Si se marca como principal, desmarcar los otros del mismo gateway
+            if (data.es_principal === true) {
+                await db.query(`
+                    UPDATE conectores_pago_org
+                    SET es_principal = false
+                    WHERE organizacion_id = $1 AND gateway = $2 AND id != $3 AND es_principal = true
+                `, [organizacionId, existe.gateway, id]);
+
+                logger.debug('[ConectoresModel.actualizar] Desmarcados otros conectores como principales', {
+                    organizacionId,
+                    gateway: existe.gateway,
+                    nuevoConectorPrincipal: id
+                });
+            }
 
             const updates = [];
             const values = [];
@@ -421,6 +383,93 @@ class ConectoresModel {
                     WHERE id = $1
                 `, [id, JSON.stringify({ ultimo_error: new Date().toISOString(), ...metadata })]);
             }
+        });
+    }
+
+    /**
+     * Obtener el conector principal de una organización SIN filtrar por entorno.
+     * El entorno se detecta automáticamente por el prefijo del access_token (TEST- = sandbox).
+     *
+     * Prioridad de selección:
+     * 1. es_principal = true
+     * 2. verificado = true
+     * 3. creado_en DESC (más reciente)
+     *
+     * IMPORTANTE: Solo usar internamente, nunca exponer credenciales a API
+     *
+     * @param {number} organizacionId - ID de la organización
+     * @param {string} gateway - Gateway a buscar ('mercadopago', 'stripe', etc.)
+     * @returns {Promise<Object|null>} Credenciales desencriptadas o null si no existe
+     */
+    static async obtenerConectorPrincipal(organizacionId, gateway) {
+        return await RLSContextManager.withBypass(async (db) => {
+            const query = `
+                SELECT
+                    id, gateway, entorno,
+                    credenciales_encrypted, credenciales_iv, credenciales_tag,
+                    webhook_secret_encrypted, webhook_secret_iv, webhook_secret_tag,
+                    verificado, es_principal, metadata
+                FROM conectores_pago_org
+                WHERE organizacion_id = $1
+                  AND gateway = $2
+                  AND activo = true
+                ORDER BY es_principal DESC, verificado DESC, creado_en DESC
+                LIMIT 1
+            `;
+
+            const result = await db.query(query, [organizacionId, gateway]);
+
+            if (result.rows.length === 0) {
+                logger.debug('[ConectoresModel.obtenerConectorPrincipal] No hay conector principal', {
+                    organizacionId,
+                    gateway
+                });
+                return null;
+            }
+
+            const row = result.rows[0];
+
+            // Desencriptar credenciales
+            const credenciales = CredentialEncryption.decrypt(
+                row.credenciales_encrypted,
+                row.credenciales_iv,
+                row.credenciales_tag
+            );
+
+            // Desencriptar webhook secret si existe
+            let webhookSecret = null;
+            if (row.webhook_secret_encrypted) {
+                webhookSecret = CredentialEncryption.decryptWebhookSecret(
+                    row.webhook_secret_encrypted,
+                    row.webhook_secret_iv,
+                    row.webhook_secret_tag
+                );
+            }
+
+            // Detectar entorno por prefijo del access_token
+            const entornoDetectado = credenciales.access_token?.startsWith('TEST-') ? 'sandbox' : 'production';
+
+            logger.debug('[ConectoresModel.obtenerConectorPrincipal] Conector encontrado', {
+                organizacionId,
+                gateway,
+                conectorId: row.id,
+                es_principal: row.es_principal,
+                entornoGuardado: row.entorno,
+                entornoDetectado,
+                verificado: row.verificado
+            });
+
+            return {
+                id: row.id,
+                gateway: row.gateway,
+                entorno: entornoDetectado, // Usar el detectado, no el guardado en BD
+                entornoGuardado: row.entorno,
+                es_principal: row.es_principal,
+                credenciales,
+                webhookSecret,
+                verificado: row.verificado,
+                metadata: row.metadata
+            };
         });
     }
 

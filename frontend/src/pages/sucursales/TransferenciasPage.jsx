@@ -23,8 +23,7 @@ import {
   Select,
   StandardRowActions,
 } from '@/components/ui';
-import TransferenciaFormDrawer from '@/components/sucursales/TransferenciaFormDrawer';
-import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
+import { TransferenciaFormDrawer, SucursalesPageLayout } from '@/components/sucursales';
 import {
   useTransferencias,
   useSucursales,
@@ -73,7 +72,7 @@ const formatFecha = (fecha) => {
 const COLUMNS = [
   {
     key: 'codigo',
-    header: 'Código',
+    header: 'Codigo',
     render: (row) => (
       <span className="font-mono text-sm font-medium text-gray-900 dark:text-white">
         {row.codigo}
@@ -146,7 +145,7 @@ const COLUMNS = [
 ];
 
 /**
- * Página de gestión de transferencias de stock entre sucursales
+ * Pagina de gestion de transferencias de stock entre sucursales
  */
 function TransferenciasPage() {
   const toast = useToast();
@@ -180,7 +179,7 @@ function TransferenciasPage() {
   const enviarMutation = useEnviarTransferencia();
   const cancelarMutation = useCancelarTransferencia();
 
-  // Filtrar por búsqueda local (código)
+  // Filtrar por busqueda local (codigo)
   const transferenciasFiltradas = transferencias?.filter((t) => {
     if (!busqueda) return true;
     const searchLower = busqueda.toLowerCase();
@@ -259,7 +258,7 @@ function TransferenciasPage() {
   const filtrosActivos = [filtros.estado, filtros.sucursal_origen_id, filtros.sucursal_destino_id, busqueda].filter(Boolean).length;
 
   return (
-    <InventarioPageLayout
+    <SucursalesPageLayout
       icon={ArrowRightLeft}
       title="Transferencias"
       subtitle={`${transferenciasFiltradas?.length || 0} transferencia${(transferenciasFiltradas?.length || 0) !== 1 ? 's' : ''}`}
@@ -279,21 +278,21 @@ function TransferenciasPage() {
         {/* Panel de Filtros */}
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm mb-6">
           <div className="p-4 flex flex-col sm:flex-row sm:items-center gap-3">
-            {/* Barra de búsqueda */}
+            {/* Barra de busqueda */}
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
               <input
                 type="text"
-                placeholder="Buscar por código o sucursal..."
+                placeholder="Buscar por codigo o sucursal..."
                 value={busqueda}
                 onChange={(e) => setBusqueda(e.target.value)}
                 className="w-full pl-10 pr-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
               />
             </div>
 
-            {/* Botones de acción */}
+            {/* Botones de accion */}
             <div className="flex items-center gap-2">
-              {/* Botón Filtros */}
+              {/* Boton Filtros */}
               <button
                 type="button"
                 onClick={() => setShowFilters(!showFilters)}
@@ -318,7 +317,7 @@ function TransferenciasPage() {
                 )}
               </button>
 
-              {/* Botón Limpiar */}
+              {/* Boton Limpiar */}
               {filtrosActivos > 0 && (
                 <button
                   type="button"
@@ -408,7 +407,7 @@ function TransferenciasPage() {
         onClose={() => closeModal('form')}
       />
 
-      {/* Confirmar cancelación */}
+      {/* Confirmar cancelacion */}
       <ConfirmDialog
         isOpen={isOpen('cancel')}
         onClose={() => closeModal('cancel')}
@@ -416,15 +415,15 @@ function TransferenciasPage() {
         title="Cancelar Transferencia"
         message={
           getModalData('cancel')?.estado === 'enviado'
-            ? `¿Estás seguro de cancelar la transferencia ${getModalData('cancel')?.codigo}? El stock será devuelto a la sucursal de origen.`
-            : `¿Estás seguro de cancelar la transferencia ${getModalData('cancel')?.codigo}?`
+            ? `Estas seguro de cancelar la transferencia ${getModalData('cancel')?.codigo}? El stock sera devuelto a la sucursal de origen.`
+            : `Estas seguro de cancelar la transferencia ${getModalData('cancel')?.codigo}?`
         }
-        confirmText="Sí, cancelar"
+        confirmText="Si, cancelar"
         cancelText="No, mantener"
         variant="danger"
         isLoading={cancelarMutation.isPending}
       />
-    </InventarioPageLayout>
+    </SucursalesPageLayout>
   );
 }
 

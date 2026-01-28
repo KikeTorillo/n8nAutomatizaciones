@@ -5,14 +5,14 @@ import {
   Zap,
   Building2,
   Percent,
-  Save,
   RefreshCw,
   CheckCircle2,
   XCircle,
   AlertTriangle,
   BookOpen,
 } from 'lucide-react';
-import { BackButton, Button } from '@/components/ui';
+import { Button } from '@/components/ui';
+import { ContabilidadPageLayout } from '@/components/contabilidad';
 import { useConfiguracionContable, useActualizarConfiguracion } from '@/hooks/otros';
 
 /**
@@ -64,56 +64,51 @@ function ConfiguracionContablePage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-      </div>
+      <ContabilidadPageLayout
+        icon={Settings}
+        title="Configuración"
+        subtitle="Cargando..."
+      >
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+        </div>
+      </ContabilidadPageLayout>
     );
   }
 
   if (!config) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <BackButton to="/contabilidad" label="Volver" className="mb-4" />
-
-          <div className="bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 rounded-lg p-6">
-            <div className="flex items-start gap-4">
-              <AlertTriangle className="w-6 h-6 text-yellow-600 dark:text-yellow-400 flex-shrink-0" />
-              <div>
-                <h3 className="font-semibold text-yellow-800 dark:text-yellow-300 mb-2">Configuración No Disponible</h3>
-                <p className="text-yellow-700 dark:text-yellow-400 text-sm mb-4">
-                  Para acceder a la configuración contable, primero debes inicializar el catálogo SAT
-                  desde la página principal de contabilidad.
-                </p>
-                <Button variant="primary" onClick={() => navigate('/contabilidad')}>
-                  Ir a Contabilidad
-                </Button>
-              </div>
+      <ContabilidadPageLayout
+        icon={Settings}
+        title="Configuración"
+        subtitle="Asientos automáticos y cuentas del sistema"
+      >
+        <div className="bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 rounded-lg p-6">
+          <div className="flex items-start gap-4">
+            <AlertTriangle className="w-6 h-6 text-yellow-600 dark:text-yellow-400 flex-shrink-0" />
+            <div>
+              <h3 className="font-semibold text-yellow-800 dark:text-yellow-300 mb-2">Configuración No Disponible</h3>
+              <p className="text-yellow-700 dark:text-yellow-400 text-sm mb-4">
+                Para acceder a la configuración contable, primero debes inicializar el catálogo SAT
+                desde la página principal de contabilidad.
+              </p>
+              <Button variant="primary" onClick={() => navigate('/contabilidad')}>
+                Ir a Contabilidad
+              </Button>
             </div>
           </div>
         </div>
-      </div>
+      </ContabilidadPageLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <BackButton to="/contabilidad" label="Volver a Contabilidad" className="mb-2" />
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-primary-100 dark:bg-primary-900/40 rounded-lg">
-              <Settings className="w-6 h-6 text-primary-600 dark:text-primary-400" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Configuración Contable</h1>
-              <p className="text-gray-600 dark:text-gray-400 text-sm">Asientos automáticos y cuentas del sistema</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Asientos Automáticos */}
+    <ContabilidadPageLayout
+      icon={Settings}
+      title="Configuración"
+      subtitle="Asientos automáticos y cuentas del sistema"
+    >
+      {/* Asientos Automáticos */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
           <div className="p-6">
             <div className="flex items-start justify-between">
@@ -262,15 +257,14 @@ function ConfiguracionContablePage() {
           </div>
         </div>
 
-        {/* Información */}
-        <div className="mt-6 bg-primary-50 dark:bg-primary-900/30 border border-primary-200 dark:border-primary-800 rounded-lg p-4">
-          <p className="text-primary-800 dark:text-primary-300 text-sm">
-            <strong>Nota:</strong> Las cuentas del sistema se configuran automáticamente al
-            inicializar el catálogo SAT. Si necesitas modificarlas, contacta al administrador.
-          </p>
-        </div>
+      {/* Información */}
+      <div className="mt-6 bg-primary-50 dark:bg-primary-900/30 border border-primary-200 dark:border-primary-800 rounded-lg p-4">
+        <p className="text-primary-800 dark:text-primary-300 text-sm">
+          <strong>Nota:</strong> Las cuentas del sistema se configuran automáticamente al
+          inicializar el catálogo SAT. Si necesitas modificarlas, contacta al administrador.
+        </p>
       </div>
-    </div>
+    </ContabilidadPageLayout>
   );
 }
 

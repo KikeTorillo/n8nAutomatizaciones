@@ -61,10 +61,14 @@ class MercadoPagoService {
 
     /**
      * Factory: Obtener instancia para una organización específica
-     * Busca credenciales en conectores_pago_org. REQUIERE conector configurado.
+     * Busca el conector PRINCIPAL de la organización (es_principal=true).
+     * El entorno se detecta automáticamente por el prefijo del access_token.
+     *
+     * IMPORTANTE: El parámetro `entorno` está DEPRECADO y se ignora.
+     * El sistema ahora detecta el entorno por el prefijo del token (TEST- = sandbox).
      *
      * @param {number} organizacionId - ID de la organización
-     * @param {string} [entorno] - 'sandbox' o 'production' (default: según NODE_ENV)
+     * @param {string} [entorno] - DEPRECADO: Se ignora, el entorno se detecta automáticamente
      * @returns {Promise<MercadoPagoService>} Instancia configurada
      * @throws {Error} Si no hay conector configurado para la organización
      */
@@ -73,22 +77,30 @@ class MercadoPagoService {
             throw new Error('MercadoPago: organizacionId es requerido');
         }
 
-        const env = entorno || (process.env.NODE_ENV === 'production' ? 'production' : 'sandbox');
-        const cacheKey = `${organizacionId}:mercadopago:${env}`;
+        // Log de deprecación si se pasa entorno explícito
+        if (entorno) {
+            logger.warn('[MercadoPagoService] DEPRECADO: El parámetro entorno se ignora. El entorno se detecta automáticamente por el prefijo del access_token.', {
+                organizacionId,
+                entornoIgnorado: entorno
+            });
+        }
+
+        // Cache key ahora solo usa organizacionId (el entorno se detecta del token)
+        const cacheKey = `${organizacionId}:mercadopago:principal`;
 
         // Verificar cache
         const cached = instanceCache.get(cacheKey);
         if (cached && (Date.now() - cached.timestamp) < CACHE_TTL) {
             logger.debug('[MercadoPagoService] Usando instancia cacheada', {
                 organizacionId,
-                entorno: env
+                entornoDetectado: cached.instance.getEnvironment()
             });
             return cached.instance;
         }
 
-        // Buscar credenciales en BD (REQUERIDO)
+        // Buscar conector principal en BD (SIN filtrar por entorno)
         const ConectoresModel = require('../modules/suscripciones-negocio/models/conectores.model');
-        const conector = await ConectoresModel.obtenerCredenciales(organizacionId, 'mercadopago', env);
+        const conector = await ConectoresModel.obtenerConectorPrincipal(organizacionId, 'mercadopago');
 
         if (!conector) {
             throw new Error(
@@ -100,12 +112,15 @@ class MercadoPagoService {
         const credentials = {
             accessToken: conector.credenciales.access_token,
             webhookSecret: conector.webhookSecret,
-            environment: conector.entorno
+            environment: conector.entorno // Entorno detectado automáticamente
         };
 
         logger.info('[MercadoPagoService] Usando credenciales de organización', {
             organizacionId,
-            entorno: env,
+            conectorId: conector.id,
+            es_principal: conector.es_principal,
+            entornoDetectado: conector.entorno,
+            entornoGuardado: conector.entornoGuardado,
             verificado: conector.verificado
         });
 
@@ -131,6 +146,7 @@ class MercadoPagoService {
      */
     static clearCache(organizacionId = null) {
         if (organizacionId) {
+            // Limpiar tanto las claves nuevas (:principal) como las antiguas (:sandbox/:production)
             for (const key of instanceCache.keys()) {
                 if (key.startsWith(`${organizacionId}:`)) {
                     instanceCache.delete(key);
@@ -249,18 +265,26 @@ class MercadoPagoService {
                 }
             );
 
+            // Determinar si usar sandbox o producción basado en el access_token
+            const isTestMode = this.credentials.accessToken.startsWith('TEST-');
+            const initPointUrl = isTestMode
+                ? response.data.sandbox_init_point
+                : response.data.init_point;
+
             logger.info('✅ Suscripción con init_point creada exitosamente', {
                 subscriptionId: response.data.id,
                 email,
                 status: response.data.status,
-                hasInitPoint: !!response.data.init_point,
+                hasInitPoint: !!initPointUrl,
+                isTestMode,
+                urlType: isTestMode ? 'sandbox_init_point' : 'init_point',
                 organizacionId: this.organizacionId
             });
 
             return {
                 id: response.data.id,
                 status: response.data.status,
-                init_point: response.data.init_point
+                init_point: initPointUrl
             };
         } catch (error) {
             logger.error('❌ Error creando suscripción con init_point:', {
@@ -545,6 +569,31 @@ class MercadoPagoService {
             });
             return false;
         }
+    }
+
+    // ====================================================================
+    // DETECCIÓN DE ENTORNO
+    // ====================================================================
+
+    /**
+     * Detecta si el servicio está configurado con credenciales de sandbox.
+     * La detección se basa en el prefijo del access_token:
+     * - 'TEST-' indica sandbox
+     * - Cualquier otro prefijo indica production
+     *
+     * @returns {boolean} true si es sandbox, false si es production
+     */
+    isSandbox() {
+        return this.credentials.accessToken?.startsWith('TEST-') || false;
+    }
+
+    /**
+     * Obtiene el entorno detectado como string
+     *
+     * @returns {string} 'sandbox' o 'production'
+     */
+    getEnvironment() {
+        return this.isSandbox() ? 'sandbox' : 'production';
     }
 
     // ====================================================================

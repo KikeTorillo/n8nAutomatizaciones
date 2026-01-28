@@ -101,50 +101,49 @@ const StateNavTabs = memo(function StateNavTabs({
   };
 
   return (
-    <div
+    <nav
       className={cn(
         'bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700',
         sticky && 'sticky z-10',
         sticky && stickyTop,
         className
       )}
+      aria-label="Tabs"
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Desktop: Tabs horizontales (con o sin grupos) */}
-        <nav className="hidden md:flex items-center -mb-px" aria-label="Tabs">
-          {hasGroups ? (
-            // Modo agrupado: mezclar standalone tabs y grupos
-            <>
-              {standaloneTabs.map(tab => renderStandaloneTab(tab))}
-              {groupsWithTabs.map((group, idx) => (
-                <TabDropdown
-                  key={`group-${idx}`}
-                  icon={group.icon}
-                  label={group.label}
-                  items={group.items}
-                  activeTab={activeTab}
-                  onTabChange={onTabChange}
-                  getTabIcon={getTabIcon}
-                />
-              ))}
-            </>
-          ) : (
-            // Modo simple: todos los tabs horizontales
-            tabs.filter(t => !t.disabled).map(tab => renderStandaloneTab(tab))
-          )}
-        </nav>
-
-        {/* Mobile: Dropdown selector */}
-        <div className="md:hidden py-2">
-          <MobileTabSelector
-            tabs={tabs}
-            activeTab={activeTab}
-            onTabChange={onTabChange}
-            getTabIcon={getTabIcon}
-          />
-        </div>
+      {/* Desktop: Tabs horizontales (con o sin grupos) */}
+      <div className="hidden md:flex items-center gap-1 px-4 py-2">
+        {hasGroups ? (
+          // Modo agrupado: mezclar standalone tabs y grupos
+          <>
+            {standaloneTabs.map(tab => renderStandaloneTab(tab))}
+            {groupsWithTabs.map((group, idx) => (
+              <TabDropdown
+                key={`group-${idx}`}
+                icon={group.icon}
+                label={group.label}
+                items={group.items}
+                activeTab={activeTab}
+                onTabChange={onTabChange}
+                getTabIcon={getTabIcon}
+              />
+            ))}
+          </>
+        ) : (
+          // Modo simple: todos los tabs horizontales
+          tabs.filter(t => !t.disabled).map(tab => renderStandaloneTab(tab))
+        )}
       </div>
-    </div>
+
+      {/* Mobile: Dropdown selector */}
+      <div className="md:hidden px-4 py-2">
+        <MobileTabSelector
+          tabs={tabs}
+          activeTab={activeTab}
+          onTabChange={onTabChange}
+          getTabIcon={getTabIcon}
+        />
+      </div>
+    </nav>
   );
 });
 

@@ -1,5 +1,7 @@
 import { useState } from 'react';
-import { BackButton, Button, Modal } from '@/components/ui';
+import { FileText } from 'lucide-react';
+import { Modal } from '@/components/ui';
+import ComisionesPageLayout from '@/components/comisiones/ComisionesPageLayout';
 import ReportesComisionesFiltros from '@/components/comisiones/ReportesComisionesFiltros';
 import ReporteComisionesTable from '@/components/comisiones/ReporteComisionesTable';
 import ExportButtons from '@/components/comisiones/ExportButtons';
@@ -68,68 +70,54 @@ function ReportesComisionesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <BackButton to="/comisiones" label="Volver a Comisiones" className="mb-2" />
-
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">
-                Reportes de Comisiones
-              </h1>
-              <p className="text-gray-600 dark:text-gray-400 mt-2 text-sm sm:text-base">
-                Consulta, filtra y exporta comisiones por período
-              </p>
-            </div>
-
-            {/* Botones de Exportación */}
-            {comisiones.length > 0 && (
-              <ExportButtons
-                comisiones={comisiones}
-                filtros={filtrosAplicados}
-                disabled={isLoading}
-              />
-            )}
-          </div>
-        </div>
-
-        {/* Filtros */}
-        <div className="mb-6">
-          <ReportesComisionesFiltros
-            filtros={filtros}
-            onChange={setFiltros}
-            onLimpiar={handleLimpiar}
-            onBuscar={handleBuscar}
+    <ComisionesPageLayout
+      icon={FileText}
+      title="Reportes"
+      subtitle="Consulta, filtra y exporta comisiones por período"
+      actions={
+        comisiones.length > 0 && (
+          <ExportButtons
+            comisiones={comisiones}
+            filtros={filtrosAplicados}
+            disabled={isLoading}
           />
-        </div>
-
-        {/* Tabla de Resultados */}
-        <ReporteComisionesTable
-          comisiones={comisiones}
-          isLoading={isLoading}
-          resumen={resumen}
-          onVerDetalle={handleVerDetalle}
+        )
+      }
+    >
+      {/* Filtros */}
+      <div className="mb-6">
+        <ReportesComisionesFiltros
+          filtros={filtros}
+          onChange={setFiltros}
+          onLimpiar={handleLimpiar}
+          onBuscar={handleBuscar}
         />
-
-        {/* Información adicional */}
-        {comisiones.length > 0 && (
-          <div className="mt-6 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg p-4">
-            <h4 className="text-sm font-medium text-green-900 dark:text-green-300 mb-2">
-              Formatos de Exportación
-            </h4>
-            <ul className="text-sm text-green-800 dark:text-green-300 space-y-1 list-disc list-inside">
-              <li>
-                <strong>CSV:</strong> Compatible con Excel, Numbers y Google Sheets
-              </li>
-              <li>
-                <strong>JSON:</strong> Formato estructurado para integración con otros sistemas (PDF próximamente)
-              </li>
-            </ul>
-          </div>
-        )}
       </div>
+
+      {/* Tabla de Resultados */}
+      <ReporteComisionesTable
+        comisiones={comisiones}
+        isLoading={isLoading}
+        resumen={resumen}
+        onVerDetalle={handleVerDetalle}
+      />
+
+      {/* Información adicional */}
+      {comisiones.length > 0 && (
+        <div className="mt-6 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg p-4">
+          <h4 className="text-sm font-medium text-green-900 dark:text-green-300 mb-2">
+            Formatos de Exportación
+          </h4>
+          <ul className="text-sm text-green-800 dark:text-green-300 space-y-1 list-disc list-inside">
+            <li>
+              <strong>CSV:</strong> Compatible con Excel, Numbers y Google Sheets
+            </li>
+            <li>
+              <strong>JSON:</strong> Formato estructurado para integración con otros sistemas (PDF próximamente)
+            </li>
+          </ul>
+        </div>
+      )}
 
       {/* Modal de Detalle */}
       <Modal
@@ -240,7 +228,7 @@ function ReportesComisionesPage() {
           </div>
         )}
       </Modal>
-    </div>
+    </ComisionesPageLayout>
   );
 }
 
