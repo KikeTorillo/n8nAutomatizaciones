@@ -11,7 +11,7 @@
  * ====================================================================
  */
 
-import { useMemo, useCallback } from 'react';
+import { useMemo, useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import {
@@ -30,6 +30,7 @@ import ProfesionalesPageLayout from '@/components/profesionales/ProfesionalesPag
 import ProfesionalesList from '@/components/profesionales/ProfesionalesList';
 import HorariosProfesionalModal from '@/components/profesionales/HorariosProfesionalModal';
 import ServiciosProfesionalModal from '@/components/profesionales/ServiciosProfesionalModal';
+import ProfesionalFormDrawer from '@/components/profesionales/ProfesionalFormDrawer';
 import { useProfesionales, ESTADOS_LABORALES } from '@/hooks/personas';
 import { useDepartamentos } from '@/hooks/personas';
 import { useToast, useExportCSV, useFilters } from '@/hooks/utils';
@@ -96,6 +97,7 @@ function ProfesionalesPage() {
   const navigate = useNavigate();
   const toast = useToast();
   const { exportCSV } = useExportCSV();
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   // Filtros con persistencia
   const {
@@ -142,6 +144,7 @@ function ProfesionalesPage() {
   ], []);
 
   return (
+  <>
     <ListadoCRUDPage
       // Layout
       title="Lista de Profesionales"
@@ -191,7 +194,7 @@ function ProfesionalesPage() {
             <Download className="w-4 h-4 mr-2" />
             <span className="hidden sm:inline">Exportar CSV</span>
           </Button>
-          <Button onClick={() => navigate('/profesionales/nuevo')}>
+          <Button onClick={() => setIsDrawerOpen(true)}>
             <Plus className="w-4 h-4 mr-2" />
             <span className="hidden sm:inline">Nuevo Profesional</span>
             <span className="sm:hidden">Nuevo</span>
@@ -289,6 +292,14 @@ function ProfesionalesPage() {
         </div>
       )}
     />
+
+    {/* Drawer de creacion */}
+    <ProfesionalFormDrawer
+      isOpen={isDrawerOpen}
+      onClose={() => setIsDrawerOpen(false)}
+      mode="create"
+    />
+  </>
   );
 }
 

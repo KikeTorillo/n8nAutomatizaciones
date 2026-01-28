@@ -11,7 +11,7 @@
  * ====================================================================
  */
 
-import { useMemo, useCallback } from 'react';
+import { useMemo, useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import {
@@ -38,6 +38,7 @@ import { useEtiquetas } from '@/hooks/personas';
 import { useToast, useExportCSV, useFilters, usePagination } from '@/hooks/utils';
 import WalkInModal from '@/components/clientes/WalkInModal';
 import ImportarClientesModal from '@/components/clientes/ImportarClientesModal';
+import ClienteFormDrawer from '@/components/clientes/ClienteFormDrawer';
 import ClientesList from '@/components/clientes/ClientesList';
 import ClientesCardsGrid from '@/components/clientes/ClientesCardsGrid';
 import { ClientesStatsGrid } from './components';
@@ -77,16 +78,15 @@ function ClientesTableView({ items, isLoading, pagination, onPageChange }) {
 
 /**
  * Vista de tarjetas para clientes
+ * Nota: onNuevoCliente se maneja desde el boton del header
  */
 function ClientesCardsView({ items, isLoading, pagination, onPageChange }) {
-  const navigate = useNavigate();
   return (
     <ClientesCardsGrid
       clientes={items}
       pagination={pagination}
       isLoading={isLoading}
       onPageChange={onPageChange}
-      onNuevoCliente={() => navigate('/clientes/nuevo')}
     />
   );
 }
@@ -98,6 +98,9 @@ function ClientesPage() {
   const navigate = useNavigate();
   const toast = useToast();
   const { exportCSV } = useExportCSV();
+
+  // Estado para drawer de nuevo cliente
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   // Filtros con persistencia
   const {
@@ -145,9 +148,10 @@ function ClientesPage() {
     toast.success(`Cita walk-in creada exitosamente: ${cita.codigo_cita || 'sin código'}`);
   }, [toast]);
 
+  // Handler para abrir drawer de nuevo cliente
   const handleNuevoCliente = useCallback(() => {
-    navigate('/clientes/nuevo');
-  }, [navigate]);
+    setDrawerOpen(true);
+  }, []);
 
   // ViewModes con componentes custom
   const viewModes = useMemo(() => [
@@ -162,6 +166,7 @@ function ClientesPage() {
   ], []);
 
   return (
+    <>
     <ListadoCRUDPage
       // Layout
       title="Lista de Clientes"
@@ -397,6 +402,14 @@ function ClientesPage() {
         </div>
       )}
     />
+
+    {/* Drawer para crear cliente */}
+    <ClienteFormDrawer
+      isOpen={drawerOpen}
+      onClose={() => setDrawerOpen(false)}
+      mode="create"
+    />
+  </>
   );
 }
 

@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, ScrollRestoration } from 'react-router-dom';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { HelmetProvider } from 'react-helmet-async';
 import { Toaster } from 'sonner';
@@ -68,6 +68,7 @@ function App() {
           <SetupGuard>
             <SubscriptionGuard>
               <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors">
+                <ScrollRestoration />
                 <Outlet />
                 <ToastContainer />
                 <Toaster position="top-center" richColors closeButton theme="system" />

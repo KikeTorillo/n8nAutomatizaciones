@@ -5,9 +5,12 @@ const logger = require('../../../utils/logger');
 
 class ProfesionalController {
     static crear = asyncHandler(async (req, res) => {
-        if (req.body.email) {
+        const { usuario_id, ...datosPersonales } = req.body;
+
+        // Validar email único si se proporciona
+        if (datosPersonales.email) {
             const emailDisponible = await ProfesionalModel.validarEmailDisponible(
-                req.body.email,
+                datosPersonales.email,
                 req.tenant.organizacionId
             );
             if (!emailDisponible) {
@@ -15,10 +18,31 @@ class ProfesionalController {
             }
         }
 
+        // Crear profesional
         const nuevoProfesional = await ProfesionalModel.crear(
             req.tenant.organizacionId,
-            req.body
+            datosPersonales
         );
+
+        // Si se especificó usuario, vincular automáticamente
+        if (usuario_id) {
+            try {
+                const profesionalVinculado = await ProfesionalModel.vincularUsuario(
+                    nuevoProfesional.id,
+                    req.tenant.organizacionId,
+                    usuario_id
+                );
+                return ResponseHelper.success(res, profesionalVinculado, 'Profesional creado y vinculado exitosamente', 201);
+            } catch (error) {
+                // Si falla la vinculación, el profesional ya se creó - informar parcialmente
+                logger.warn(`Profesional ${nuevoProfesional.id} creado pero vinculación falló: ${error.message}`);
+                return ResponseHelper.success(res, {
+                    ...nuevoProfesional,
+                    _warning: 'Profesional creado pero no se pudo vincular al usuario: ' + error.message
+                }, 'Profesional creado (sin vincular)', 201);
+            }
+        }
+
         return ResponseHelper.success(res, nuevoProfesional, 'Profesional creado exitosamente', 201);
     });
 

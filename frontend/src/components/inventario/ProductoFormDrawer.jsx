@@ -298,10 +298,11 @@ function ProductoFormDrawer({ isOpen, onClose, mode = 'create', producto = null 
       onClose={onClose}
       title={mode === 'create' ? 'Nuevo Producto' : 'Editar Producto'}
       subtitle={mode === 'create' ? 'Completa la información del producto' : 'Modifica los datos del producto'}
+      noPadding
     >
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        {/* Tabs de navegación */}
-        <div className="border-b border-gray-200 dark:border-gray-700 -mx-4 px-4 sticky top-0 bg-white dark:bg-gray-800 z-10">
+      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col h-full">
+        {/* Tabs de navegación - sticky */}
+        <div className="border-b border-gray-200 dark:border-gray-700 px-6 sticky top-0 bg-white dark:bg-gray-800 z-10">
           <nav className="flex space-x-1 overflow-x-auto scrollbar-hide" aria-label="Tabs">
             {tabs.map((tab) => (
               <button
@@ -321,56 +322,59 @@ function ProductoFormDrawer({ isOpen, onClose, mode = 'create', producto = null 
           </nav>
         </div>
 
-        {/* Tab: General */}
-        {activeTab === 'general' && (
-          <ProductoFormGeneralTab
-            register={register}
-            errors={errors}
-            categorias={categorias}
-            proveedores={proveedores}
-            imagenPreview={imagenPreview}
-            uploadIsPending={uploadMutation.isPending}
-            onImagenChange={handleImagenChange}
-            onEliminarImagen={handleEliminarImagen}
-          />
-        )}
+        {/* Contenido del tab activo */}
+        <div className="flex-1 overflow-y-auto p-6">
+          {/* Tab: General */}
+          {activeTab === 'general' && (
+            <ProductoFormGeneralTab
+              register={register}
+              errors={errors}
+              categorias={categorias}
+              proveedores={proveedores}
+              imagenPreview={imagenPreview}
+              uploadIsPending={uploadMutation.isPending}
+              onImagenChange={handleImagenChange}
+              onEliminarImagen={handleEliminarImagen}
+            />
+          )}
 
-        {/* Tab: Precios */}
-        {activeTab === 'precios' && (
-          <ProductoFormPreciosTab
-            register={register}
-            errors={errors}
-            preciosMoneda={preciosMoneda}
-            mostrarPreciosMoneda={mostrarPreciosMoneda}
-            monedasDisponibles={monedasDisponibles}
-            onTogglePreciosMoneda={() => setMostrarPreciosMoneda(!mostrarPreciosMoneda)}
-            onAgregarPrecioMoneda={agregarPrecioMoneda}
-            onEliminarPrecioMoneda={eliminarPrecioMoneda}
-            onActualizarPrecioMoneda={actualizarPrecioMoneda}
-          />
-        )}
+          {/* Tab: Precios */}
+          {activeTab === 'precios' && (
+            <ProductoFormPreciosTab
+              register={register}
+              errors={errors}
+              preciosMoneda={preciosMoneda}
+              mostrarPreciosMoneda={mostrarPreciosMoneda}
+              monedasDisponibles={monedasDisponibles}
+              onTogglePreciosMoneda={() => setMostrarPreciosMoneda(!mostrarPreciosMoneda)}
+              onAgregarPrecioMoneda={agregarPrecioMoneda}
+              onEliminarPrecioMoneda={eliminarPrecioMoneda}
+              onActualizarPrecioMoneda={actualizarPrecioMoneda}
+            />
+          )}
 
-        {/* Tab: Inventario (Solo en crear) */}
-        {activeTab === 'inventario' && mode === 'create' && (
-          <ProductoFormInventarioTab register={register} errors={errors} />
-        )}
+          {/* Tab: Inventario (Solo en crear) */}
+          {activeTab === 'inventario' && mode === 'create' && (
+            <ProductoFormInventarioTab register={register} errors={errors} />
+          )}
 
-        {/* Tab: Configuración */}
-        {activeTab === 'config' && (
-          <ProductoFormConfigTab
-            register={register}
-            errors={errors}
-            esPerecedero={esPerecedero}
-            autoGenerarOC={autoGenerarOC}
-            tieneVariantes={tieneVariantes}
-            esEdicion={esEdicion}
-            producto={producto}
-            onMostrarModalVariantes={() => setMostrarModalVariantes(true)}
-          />
-        )}
+          {/* Tab: Configuración */}
+          {activeTab === 'config' && (
+            <ProductoFormConfigTab
+              register={register}
+              errors={errors}
+              esPerecedero={esPerecedero}
+              autoGenerarOC={autoGenerarOC}
+              tieneVariantes={tieneVariantes}
+              esEdicion={esEdicion}
+              producto={producto}
+              onMostrarModalVariantes={() => setMostrarModalVariantes(true)}
+            />
+          )}
+        </div>
 
-        {/* Botones */}
-        <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+        {/* Footer con botones */}
+        <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700 px-6 pb-6">
           <Button type="button" variant="secondary" onClick={onClose}>
             Cancelar
           </Button>

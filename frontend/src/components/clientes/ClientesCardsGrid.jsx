@@ -25,8 +25,8 @@ function ClientesCardsGrid({ clientes, pagination, isLoading, onPageChange, onNu
         icon={UserCircle}
         title="No hay clientes registrados"
         description="Comienza agregando tu primer cliente o atiende un cliente walk-in"
-        actionLabel="Agregar Cliente"
-        onAction={onNuevoCliente || (() => navigate('/clientes/nuevo'))}
+        actionLabel={onNuevoCliente ? "Agregar Cliente" : undefined}
+        onAction={onNuevoCliente}
       />
     );
   }

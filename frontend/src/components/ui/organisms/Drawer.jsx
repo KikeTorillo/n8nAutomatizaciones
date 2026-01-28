@@ -18,6 +18,7 @@ import { DRAWER_SIZES } from '@/lib/uiConstants';
  * @param {'sm'|'md'|'lg'|'xl'|'full'} size - Tamaño del drawer (default: 'xl')
  * @param {boolean} showCloseButton - Mostrar botón de cerrar en el header
  * @param {boolean} disableClose - Deshabilitar cierre por drag/overlay
+ * @param {boolean} noPadding - Desactivar padding del contenido (para layouts con tabs)
  */
 const Drawer = memo(function Drawer({
   isOpen,
@@ -29,6 +30,7 @@ const Drawer = memo(function Drawer({
   size = 'xl',
   showCloseButton = false,
   disableClose = false,
+  noPadding = false,
 }) {
   const handleOpenChange = (open) => {
     if (!open && !disableClose) {
@@ -97,7 +99,7 @@ const Drawer = memo(function Drawer({
             )}
 
             {/* Contenido scrollable */}
-            <div className="flex-1 overflow-y-auto overscroll-contain p-6">
+            <div className={`flex-1 overflow-y-auto overscroll-contain ${noPadding ? '' : 'p-6'}`}>
               {children}
             </div>
 
@@ -135,6 +137,8 @@ Drawer.propTypes = {
   showCloseButton: PropTypes.bool,
   /** Deshabilitar cierre por drag/overlay */
   disableClose: PropTypes.bool,
+  /** Desactivar padding del contenido (para layouts con tabs) */
+  noPadding: PropTypes.bool,
 };
 
 // Exportar también los subcomponentes de Vaul por si se necesita más control

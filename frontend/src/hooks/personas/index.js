@@ -36,6 +36,7 @@ export {
 // ========================================
 
 export * from './useProfesionales';
+export * from './useUsuariosDisponibles';
 export * from './useUsuarios';
 export * from './useOrganigrama';
 export * from './usePuestos';

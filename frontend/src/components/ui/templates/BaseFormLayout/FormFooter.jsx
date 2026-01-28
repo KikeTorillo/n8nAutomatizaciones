@@ -49,7 +49,11 @@ const FormFooter = memo(function FormFooter({
           <Button
             type="button"
             variant="outline"
-            onClick={onPrevious}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onPrevious?.(e);
+            }}
             disabled={isSubmitting}
           >
             {previousLabel}
@@ -73,7 +77,11 @@ const FormFooter = memo(function FormFooter({
         {showNextButton ? (
           <Button
             type="button"
-            onClick={onNext}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onNext?.(e);
+            }}
             disabled={isSubmitting || isDisabled}
             isLoading={isSubmitting}
           >

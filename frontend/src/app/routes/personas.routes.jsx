@@ -17,7 +17,6 @@ const OportunidadesPage = lazy(() => import('@/pages/clientes/OportunidadesPage'
 // Profesionales
 const ProfesionalesPage = lazy(() => import('@/pages/profesionales/ProfesionalesPage'));
 const ProfesionalDetailPage = lazy(() => import('@/pages/profesionales/ProfesionalDetailPage'));
-const NuevoProfesionalWizard = lazy(() => import('@/pages/profesionales/NuevoProfesionalWizard'));
 const OrganigramaPage = lazy(() => import('@/pages/organizacion/OrganigramaPage'));
 const CategoriasProfesionalPage = lazy(() => import('@/pages/profesionales/CategoriasProfesionalPage'));
 
@@ -33,7 +32,7 @@ const OnboardingAdminPage = lazy(() => import('@/pages/onboarding-empleados/Onbo
 export const personasRoutes = [
   // Clientes
   protectedRoute('clientes', ClientesPage, { requiredRole: ROLES.ALL_AUTHENTICATED }),
-  protectedRoute('clientes/nuevo', ClienteFormPage, { requiredRole: ROLES.ALL_AUTHENTICATED }),
+  // Nota: /clientes/nuevo eliminada - ahora usa ClienteFormDrawer
   protectedRoute('clientes/:id', ClienteDetailPage, { requiredRole: ROLES.ALL_AUTHENTICATED }),
   protectedRoute('clientes/:id/editar', ClienteFormPage, { requiredRole: ROLES.ALL_AUTHENTICATED }),
   protectedRoute('clientes/etiquetas', EtiquetasPage, { requiredRole: ROLES.ALL_AUTHENTICATED }),
@@ -41,7 +40,6 @@ export const personasRoutes = [
 
   // Profesionales (solo admin - FIX RBAC Ene 2026)
   protectedRoute('profesionales', ProfesionalesPage, { requiredRole: ROLES.ADMIN_ONLY }),
-  protectedRoute('profesionales/nuevo', NuevoProfesionalWizard, { requiredRole: ROLES.ADMIN_ONLY }),
   protectedRoute('profesionales/organigrama', OrganigramaPage, { requiredRole: ROLES.ADMIN_ONLY }),
   protectedRoute('profesionales/categorias', CategoriasProfesionalPage, { requiredRole: ROLES.ADMIN_ONLY }),
   // Redirect: Incapacidades ahora está en /ausencias
