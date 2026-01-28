@@ -10,11 +10,12 @@ import {
 } from 'date-fns';
 import CalendarioHeader from './CalendarioHeader';
 import CalendarioDia from './CalendarioDia';
+import CitasDiaDrawer from './CitasDiaDrawer';
 import ConfirmarReagendarModal from './ConfirmarReagendarModal';
 import { useCitas, useActualizarCita } from '@/hooks/agendamiento';
 import { aFormatoISO } from '@/utils/dateHelpers';
 import { validarSolapamiento } from '@/utils/citaValidators';
-import { useToast } from '@/hooks/utils';
+import { useToast, useIsMobile } from '@/hooks/utils';
 
 /**
  * Componente principal del calendario mensual con funcionalidad de drag & drop
@@ -22,6 +23,7 @@ import { useToast } from '@/hooks/utils';
  */
 function CalendarioMensual({ onVerCita, onCrearCita }) {
   const toast = useToast();
+  const isMobile = useIsMobile();
   const [mesActual, setMesActual] = useState(new Date());
 
   // Estado para drag & drop
@@ -29,6 +31,9 @@ function CalendarioMensual({ onVerCita, onCrearCita }) {
   const [modalReagendarAbierto, setModalReagendarAbierto] = useState(false);
   const [fechaNuevaReagendar, setFechaNuevaReagendar] = useState(null);
   const [advertenciasReagendar, setAdvertenciasReagendar] = useState([]);
+
+  // Estado para drawer de día (móvil)
+  const [drawerDia, setDrawerDia] = useState({ isOpen: false, fecha: null, citas: [] });
 
   // Mutation para actualizar cita
   const actualizarMutation = useActualizarCita();
@@ -180,6 +185,15 @@ function CalendarioMensual({ onVerCita, onCrearCita }) {
     setAdvertenciasReagendar([]);
   };
 
+  // Handler para abrir drawer de día (modo móvil)
+  const handleDiaClick = (fecha, citasDelDia) => {
+    setDrawerDia({ isOpen: true, fecha, citas: citasDelDia });
+  };
+
+  const handleCerrarDrawerDia = () => {
+    setDrawerDia({ isOpen: false, fecha: null, citas: [] });
+  };
+
   return (
     <>
       {/* Modal de confirmación de reagendar */}
@@ -204,13 +218,16 @@ function CalendarioMensual({ onVerCita, onCrearCita }) {
       />
 
       {/* Calendario */}
-      <div className="p-4">
+      <div className={isMobile ? 'p-2' : 'p-4'}>
         {/* Encabezado de días de la semana */}
-        <div className="grid grid-cols-7 gap-1 mb-2">
-          {['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'].map((dia) => (
+        <div className={`grid grid-cols-7 ${isMobile ? 'gap-1 mb-1' : 'gap-1 mb-2'}`}>
+          {(isMobile ? ['L', 'M', 'X', 'J', 'V', 'S', 'D'] : ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']).map((dia, idx) => (
             <div
-              key={dia}
-              className="text-center text-xs font-semibold text-gray-600 dark:text-gray-400 py-2 uppercase"
+              key={idx}
+              className={`
+                text-center font-semibold text-gray-600 dark:text-gray-400 uppercase
+                ${isMobile ? 'text-[10px] py-1' : 'text-xs py-2'}
+              `}
             >
               {dia}
             </div>
@@ -218,7 +235,7 @@ function CalendarioMensual({ onVerCita, onCrearCita }) {
         </div>
 
         {/* Grid de días */}
-        <div className="grid grid-cols-7 gap-1">
+        <div className={`grid grid-cols-7 ${isMobile ? 'gap-1' : 'gap-1'}`}>
           {diasDelCalendario.map((dia, index) => {
             const fechaISO = aFormatoISO(dia);
             const citasDelDia = citasPorFecha[fechaISO] || [];
@@ -237,39 +254,34 @@ function CalendarioMensual({ onVerCita, onCrearCita }) {
                 onDragStart={handleDragStart}
                 onDrop={handleDrop}
                 isLoading={isLoading}
+                compactMode={isMobile}
+                onDiaClick={handleDiaClick}
               />
             );
           })}
         </div>
 
         {/* Leyenda de estados */}
-        <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
-          <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2">Estados de citas:</p>
-          <div className="flex flex-wrap gap-3">
-            <div className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-              <span className="text-xs text-gray-600 dark:text-gray-400">Pendiente</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded-full bg-primary-500"></div>
-              <span className="text-xs text-gray-600 dark:text-gray-400">Confirmada</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded-full bg-secondary-500"></div>
-              <span className="text-xs text-gray-600 dark:text-gray-400">En curso</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded-full bg-green-500"></div>
-              <span className="text-xs text-gray-600 dark:text-gray-400">Completada</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded-full bg-red-500"></div>
-              <span className="text-xs text-gray-600 dark:text-gray-400">Cancelada</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded-full bg-orange-500"></div>
-              <span className="text-xs text-gray-600 dark:text-gray-400">No Show</span>
-            </div>
+        <div className={`${isMobile ? 'mt-3 pt-3' : 'mt-6 pt-4'} border-t border-gray-200 dark:border-gray-700`}>
+          <p className={`font-semibold text-gray-600 dark:text-gray-400 mb-2 ${isMobile ? 'text-[10px]' : 'text-xs'}`}>
+            Estados de citas:
+          </p>
+          <div className={`flex flex-wrap ${isMobile ? 'gap-2' : 'gap-3'}`}>
+            {[
+              { color: 'bg-yellow-500', label: 'Pendiente' },
+              { color: 'bg-primary-500', label: 'Confirmada' },
+              { color: 'bg-secondary-500', label: 'En curso' },
+              { color: 'bg-green-500', label: 'Completada' },
+              { color: 'bg-red-500', label: 'Cancelada' },
+              { color: 'bg-orange-500', label: 'No Show' },
+            ].map(({ color, label }) => (
+              <div key={label} className="flex items-center gap-1">
+                <div className={`${isMobile ? 'w-2 h-2' : 'w-3 h-3'} rounded-full ${color}`} />
+                <span className={`text-gray-600 dark:text-gray-400 ${isMobile ? 'text-[10px]' : 'text-xs'}`}>
+                  {label}
+                </span>
+              </div>
+            ))}
           </div>
         </div>
 
@@ -284,6 +296,16 @@ function CalendarioMensual({ onVerCita, onCrearCita }) {
         )}
       </div>
     </div>
+
+    {/* Drawer de citas del día (solo móvil) */}
+    <CitasDiaDrawer
+      isOpen={drawerDia.isOpen}
+      onClose={handleCerrarDrawerDia}
+      fecha={drawerDia.fecha}
+      citas={drawerDia.citas}
+      onVerCita={onVerCita}
+      onCrearCita={onCrearCita}
+    />
     </>
   );
 }

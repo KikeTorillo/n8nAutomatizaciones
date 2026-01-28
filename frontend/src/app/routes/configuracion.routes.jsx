@@ -15,7 +15,6 @@ const RecordatoriosPage = lazy(() => import('@/pages/configuracion/Recordatorios
 // Organización
 const DepartamentosPage = lazy(() => import('@/pages/configuracion/DepartamentosPage'));
 const PuestosPage = lazy(() => import('@/pages/configuracion/PuestosPage'));
-const CategoriasConfigPage = lazy(() => import('@/pages/configuracion/CategoriasPage'));
 const DiasFestivosPage = lazy(() => import('@/pages/configuracion/DiasFestivosPage'));
 
 // Usuarios, Roles y Permisos
@@ -40,7 +39,6 @@ export const configuracionRoutes = [
   // Organización (solo admin)
   protectedRoute('configuracion/departamentos', DepartamentosPage, { requiredRole: ROLES.ADMIN_ONLY }),
   protectedRoute('configuracion/puestos', PuestosPage, { requiredRole: ROLES.ADMIN_ONLY }),
-  protectedRoute('configuracion/categorias', CategoriasConfigPage, { requiredRole: ROLES.ADMIN_ONLY }),
   protectedRoute('configuracion/dias-festivos', DiasFestivosPage, { requiredRole: ROLES.ADMIN_ONLY }),
 
   // Usuarios, Roles y Permisos (solo admin)

@@ -19,6 +19,7 @@ const ProfesionalesPage = lazy(() => import('@/pages/profesionales/Profesionales
 const ProfesionalDetailPage = lazy(() => import('@/pages/profesionales/ProfesionalDetailPage'));
 const NuevoProfesionalWizard = lazy(() => import('@/pages/profesionales/NuevoProfesionalWizard'));
 const OrganigramaPage = lazy(() => import('@/pages/organizacion/OrganigramaPage'));
+const CategoriasProfesionalPage = lazy(() => import('@/pages/profesionales/CategoriasProfesionalPage'));
 
 // Ausencias y Vacaciones
 const AusenciasPage = lazy(() => import('@/pages/ausencias/AusenciasPage'));
@@ -42,6 +43,7 @@ export const personasRoutes = [
   protectedRoute('profesionales', ProfesionalesPage, { requiredRole: ROLES.ADMIN_ONLY }),
   protectedRoute('profesionales/nuevo', NuevoProfesionalWizard, { requiredRole: ROLES.ADMIN_ONLY }),
   protectedRoute('profesionales/organigrama', OrganigramaPage, { requiredRole: ROLES.ADMIN_ONLY }),
+  protectedRoute('profesionales/categorias', CategoriasProfesionalPage, { requiredRole: ROLES.ADMIN_ONLY }),
   // Redirect: Incapacidades ahora está en /ausencias
   {
     path: 'profesionales/incapacidades',

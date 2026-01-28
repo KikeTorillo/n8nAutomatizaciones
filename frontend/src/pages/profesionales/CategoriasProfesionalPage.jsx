@@ -12,8 +12,8 @@ import {
 } from 'lucide-react';
 
 import { Button, ConfirmDialog, FormGroup, Input } from '@/components/ui';
+import ProfesionalesPageLayout from '@/components/profesionales/ProfesionalesPageLayout';
 import {
-  ConfigPageHeader,
   ConfigSearchBar,
   ConfigEmptyState,
   ConfigCrudDrawer,
@@ -44,10 +44,10 @@ const TIPO_OPTIONS = Object.entries(TIPOS_CATEGORIA).map(([key, value]) => ({
 }));
 
 /**
- * Página de configuración de Categorías de Profesional
- * Refactorizada con componentes genéricos
+ * Página de Categorías de Profesional
+ * Reubicada desde Configuración al módulo Profesionales
  */
-function CategoriasPage() {
+function CategoriasProfesionalPage() {
   // Queries
   const { data: categorias = [], isLoading } = useCategoriasProfesional();
   const { data: categoriasAgrupadas = {} } = useCategoriasAgrupadas();
@@ -201,20 +201,18 @@ function CategoriasPage() {
   const isFiltered = !!(searchTerm || filterTipo);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <ConfigPageHeader
-        title="Categorías de Profesional"
-        subtitle="Especialidades, niveles, áreas y certificaciones"
-        icon={Tag}
-        actions={
-          <Button onClick={() => handleNuevoConTipo()} size="sm">
-            <Plus className="w-4 h-4 mr-2" />
-            Nueva
-          </Button>
-        }
-      />
-
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <ProfesionalesPageLayout
+      icon={Tag}
+      title="Categorías"
+      subtitle="Especialidades, niveles, áreas y certificaciones"
+      actions={
+        <Button onClick={() => handleNuevoConTipo()} size="sm">
+          <Plus className="w-4 h-4 mr-2" />
+          Nueva
+        </Button>
+      }
+    >
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <ConfigSearchBar
           value={searchTerm}
           onChange={setSearchTerm}
@@ -276,7 +274,7 @@ function CategoriasPage() {
             ))
           )}
         </div>
-      </main>
+      </div>
 
       {/* Drawer Form */}
       <ConfigCrudDrawer
@@ -367,7 +365,7 @@ function CategoriasPage() {
         onConfirm={confirmDelete}
         isLoading={eliminarMutation.isPending}
       />
-    </div>
+    </ProfesionalesPageLayout>
   );
 }
 
@@ -418,4 +416,4 @@ function CategoriaCard({ categoria, onEdit, onDelete }) {
   );
 }
 
-export default CategoriasPage;
+export default CategoriasProfesionalPage;

@@ -1,4 +1,4 @@
-import { Users, Network, ClipboardList } from 'lucide-react';
+import { Users, Network, ClipboardList, Tag } from 'lucide-react';
 import { GenericNavTabs } from '@/components/ui';
 
 /**
@@ -7,6 +7,7 @@ import { GenericNavTabs } from '@/components/ui';
 const NAV_ITEMS = [
   { id: 'lista', label: 'Lista', icon: Users, path: '/profesionales' },
   { id: 'organigrama', label: 'Organigrama', icon: Network, path: '/profesionales/organigrama' },
+  { id: 'categorias', label: 'Categorías', icon: Tag, path: '/profesionales/categorias' },
   { id: 'onboarding', label: 'Onboarding', icon: ClipboardList, path: '/onboarding-empleados' },
 ];
 

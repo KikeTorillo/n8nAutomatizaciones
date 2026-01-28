@@ -35,3 +35,6 @@ export * from './useDeleteConfirmation.jsx';
 
 // Paginación (Ene 2026 - Correcciones auditoría)
 export * from './usePagination';
+
+// Media Queries (Ene 2026 - UX móvil)
+export * from './useMediaQuery';

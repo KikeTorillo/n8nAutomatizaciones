@@ -29,6 +29,9 @@ const citaPuedeSerReagendada = (estado) => {
 /**
  * Componente de celda individual del calendario
  * Muestra el día y las citas programadas para ese día
+ *
+ * @param {boolean} compactMode - Modo compacto para móvil (solo muestra número y dots)
+ * @param {function} onDiaClick - Callback cuando se hace click en el día (modo compacto)
  */
 function CalendarioDia({
   dia,
@@ -39,7 +42,9 @@ function CalendarioDia({
   onCrearCita,
   onDragStart,
   onDrop,
-  isLoading
+  isLoading,
+  compactMode = false,
+  onDiaClick,
 }) {
   const numeroDia = format(dia, 'd');
   const maxCitasVisibles = 3;
@@ -90,6 +95,75 @@ function CalendarioDia({
     onDragStart && onDragStart(cita);
   };
 
+  // Agrupar citas por estado para mostrar dots en modo compacto
+  const citasPorEstado = citas.reduce((acc, cita) => {
+    const estado = cita.estado || 'pendiente';
+    acc[estado] = (acc[estado] || 0) + 1;
+    return acc;
+  }, {});
+
+  // Modo compacto para móvil - solo número y dots indicadores
+  if (compactMode) {
+    const fechaISO = aFormatoISO(dia);
+
+    return (
+      <button
+        onClick={() => esDelMesActual && onDiaClick && onDiaClick(fechaISO, citas)}
+        disabled={!esDelMesActual}
+        className={`
+          aspect-square flex flex-col items-center justify-center rounded-lg
+          transition-all relative
+          ${esDelMesActual
+            ? 'bg-white dark:bg-gray-800 active:scale-95'
+            : 'bg-gray-50 dark:bg-gray-900 opacity-40'
+          }
+          ${esHoy
+            ? 'ring-2 ring-primary-500 dark:ring-primary-400'
+            : 'border border-gray-200 dark:border-gray-700'
+          }
+          ${esDelMesActual && citas.length > 0 ? 'cursor-pointer' : ''}
+        `}
+      >
+        {/* Número del día */}
+        <span
+          className={`
+            text-sm font-semibold leading-none
+            ${esDelMesActual ? 'text-gray-900 dark:text-gray-100' : 'text-gray-400 dark:text-gray-600'}
+            ${esHoy ? 'text-primary-600 dark:text-primary-400' : ''}
+          `}
+        >
+          {numeroDia}
+        </span>
+
+        {/* Dots indicadores de citas */}
+        {citas.length > 0 && (
+          <div className="flex items-center justify-center gap-0.5 mt-1">
+            {/* Mostrar hasta 4 dots */}
+            {Object.entries(citasPorEstado).slice(0, 4).map(([estado, count], idx) => (
+              <span
+                key={idx}
+                className={`w-1.5 h-1.5 rounded-full ${obtenerColorFondo(estado)}`}
+                title={`${count} ${estado}`}
+              />
+            ))}
+            {/* Si hay más de 4 estados diferentes, mostrar indicador */}
+            {Object.keys(citasPorEstado).length > 4 && (
+              <span className="w-1.5 h-1.5 rounded-full bg-gray-400" />
+            )}
+          </div>
+        )}
+
+        {/* Badge de cantidad (solo si hay más de 1 cita) */}
+        {citas.length > 1 && (
+          <span className="absolute -top-1 -right-1 w-4 h-4 text-[10px] font-bold text-white bg-primary-600 rounded-full flex items-center justify-center">
+            {citas.length > 9 ? '9+' : citas.length}
+          </span>
+        )}
+      </button>
+    );
+  }
+
+  // Modo normal (desktop)
   return (
     <div
       onDragOver={handleDragOver}
