@@ -405,7 +405,9 @@ function SolicitudesEquipoSection() {
   const aprobarMutation = useAprobarSolicitud();
   const rechazarMutation = useRechazarSolicitud();
 
-  const solicitudes = data?.data || [];
+  // La API devuelve: { success, data: { data: [...], total, ... } }
+  const responseData = data?.data || data || {};
+  const solicitudes = responseData?.data || [];
 
   // Handlers
   const handleVerDetalle = (sol) => {

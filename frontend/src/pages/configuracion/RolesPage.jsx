@@ -24,7 +24,7 @@ import {
 
 import { Button, Input, Badge, Modal } from '@/components/ui';
 import { ConfirmDialog } from '@/components/ui/organisms';
-import { ConfigPageHeader } from '@/components/configuracion';
+import { ConfiguracionPageLayout } from '@/components/configuracion';
 import {
   useRoles,
   useCrearRol,
@@ -394,21 +394,20 @@ function RolesPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <ConfigPageHeader
-        title="Roles"
-        subtitle="Gestiona los roles de tu organización y sus permisos"
-        icon={Shield}
-        actions={
-          <Button onClick={handleCrear}>
-            <Plus className="w-4 h-4 mr-2" />
-            Nuevo Rol
-          </Button>
-        }
-      />
-
-      {/* Barra de búsqueda */}
-      <div className="relative max-w-md">
+    <ConfiguracionPageLayout
+      icon={Shield}
+      title="Roles"
+      subtitle="Gestiona los roles de tu organización y sus permisos"
+      actions={
+        <Button onClick={handleCrear}>
+          <Plus className="w-4 h-4 mr-2" />
+          Nuevo Rol
+        </Button>
+      }
+    >
+      <div className="space-y-6">
+        {/* Barra de búsqueda */}
+        <div className="relative max-w-md">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
         <Input
           value={searchTerm}
@@ -473,6 +472,7 @@ function RolesPage() {
           )}
         </div>
       )}
+      </div>
 
       {/* Modal de formulario */}
       {showFormModal && (
@@ -552,7 +552,7 @@ function RolesPage() {
           </div>
         </div>
       </Modal>
-    </div>
+    </ConfiguracionPageLayout>
   );
 }
 

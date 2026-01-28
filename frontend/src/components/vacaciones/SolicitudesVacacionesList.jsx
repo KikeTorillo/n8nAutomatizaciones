@@ -193,8 +193,13 @@ const SolicitudesVacacionesList = memo(function SolicitudesVacacionesList({
     limit,
   });
 
-  const solicitudes = data?.data || [];
-  const pagination = data?.pagination || { total: 0, pages: 1 };
+  // La API devuelve: { success, data: { data: [...], total, page, limit, totalPages } }
+  const responseData = data?.data || data || {};
+  const solicitudes = responseData?.data || [];
+  const pagination = {
+    total: responseData?.total || 0,
+    pages: responseData?.totalPages || 1,
+  };
 
   const handleCancelar = async (solicitud) => {
     if (window.confirm('¿Estás seguro de cancelar esta solicitud de vacaciones?')) {

@@ -17,7 +17,7 @@ import {
   StatCardGrid
 } from '@/components/ui';
 import {
-  ConfigPageHeader,
+  ConfiguracionPageLayout,
   ConfigSearchBar,
   ConfigEmptyState,
   ConfigCrudDrawer,
@@ -162,20 +162,18 @@ function PuestosPage() {
   const isFiltered = !!(searchTerm || filterDepartamento);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <ConfigPageHeader
-        title="Puestos"
-        subtitle="Catálogo de puestos de trabajo"
-        icon={Briefcase}
-        actions={
-          <Button onClick={handleNew} size="sm">
-            <Plus className="w-4 h-4 mr-2" />
-            Nuevo
-          </Button>
-        }
-      />
-
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <ConfiguracionPageLayout
+      icon={Briefcase}
+      title="Puestos"
+      subtitle="Catálogo de puestos de trabajo"
+      actions={
+        <Button onClick={handleNew} size="sm">
+          <Plus className="w-4 h-4 mr-2" />
+          Nuevo
+        </Button>
+      }
+    >
+      <div className="max-w-4xl mx-auto">
         <ConfigSearchBar
           value={searchTerm}
           onChange={setSearchTerm}
@@ -223,7 +221,7 @@ function PuestosPage() {
             </div>
           )}
         </div>
-      </main>
+      </div>
 
       {/* Drawer Form */}
       <ConfigCrudDrawer
@@ -312,7 +310,7 @@ function PuestosPage() {
         onConfirm={confirmDelete}
         isLoading={eliminarMutation.isPending}
       />
-    </div>
+    </ConfiguracionPageLayout>
   );
 }
 

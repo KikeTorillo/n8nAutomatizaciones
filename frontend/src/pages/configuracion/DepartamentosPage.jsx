@@ -19,7 +19,7 @@ import {
   StatCardGrid
 } from '@/components/ui';
 import {
-  ConfigPageHeader,
+  ConfiguracionPageLayout,
   ConfigSearchBar,
   ConfigEmptyState,
   ConfigCrudDrawer,
@@ -217,20 +217,18 @@ function DepartamentosPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <ConfigPageHeader
-        title="Departamentos"
-        subtitle="Estructura organizacional de tu empresa"
-        icon={Building}
-        actions={
-          <Button onClick={handleNew} size="sm">
-            <Plus className="w-4 h-4 mr-2" />
-            Nuevo
-          </Button>
-        }
-      />
-
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <ConfiguracionPageLayout
+      icon={Building}
+      title="Departamentos"
+      subtitle="Estructura organizacional de tu empresa"
+      actions={
+        <Button onClick={handleNew} size="sm">
+          <Plus className="w-4 h-4 mr-2" />
+          Nuevo
+        </Button>
+      }
+    >
+      <div className="max-w-4xl mx-auto">
         <ConfigSearchBar
           value={searchTerm}
           onChange={setSearchTerm}
@@ -279,7 +277,7 @@ function DepartamentosPage() {
             </div>
           )}
         </div>
-      </main>
+      </div>
 
       {/* Drawer Form */}
       <ConfigCrudDrawer
@@ -355,7 +353,7 @@ function DepartamentosPage() {
         onConfirm={confirmDelete}
         isLoading={eliminarMutation.isPending}
       />
-    </div>
+    </ConfiguracionPageLayout>
   );
 }
 

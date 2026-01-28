@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 
 import { Badge, Select, ToggleSwitch } from '@/components/ui';
-import { ConfigPageHeader } from '@/components/configuracion';
+import { ConfiguracionPageLayout } from '@/components/configuracion';
 import { useToast } from '@/hooks/utils';
 import { useRoles, usePermisosRol, useActualizarPermisoRol } from '@/hooks/sistema/useRoles';
 import { permisosApi } from '@/services/api/endpoints';
@@ -248,16 +248,12 @@ function PermisosPage() {
   const tieneBypass = rolSeleccionado?.bypassPermisos;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <ConfigPageHeader
-        title="Permisos"
-        subtitle="Configura los permisos por rol y personaliza accesos específicos"
-        icon={Shield}
-        maxWidth="max-w-5xl"
-      />
-
-      {/* Content */}
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <ConfiguracionPageLayout
+      icon={Shield}
+      title="Permisos"
+      subtitle="Configura los permisos por rol y personaliza accesos específicos"
+    >
+      <div className="max-w-5xl mx-auto">
       {/* Selector de rol y búsqueda */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 mb-6">
         <div className="flex flex-col md:flex-row gap-4">
@@ -488,8 +484,8 @@ function PermisosPage() {
           </div>
         </div>
       </div>
-      </main>
-    </div>
+      </div>
+    </ConfiguracionPageLayout>
   );
 }
 

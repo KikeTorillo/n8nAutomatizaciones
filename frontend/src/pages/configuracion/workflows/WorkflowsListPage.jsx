@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 
 import { Button, ConfirmDialog } from '@/components/ui';
-import { ConfigPageHeader, ConfigSearchBar, ConfigEmptyState } from '@/components/configuracion';
+import { ConfiguracionPageLayout, ConfigSearchBar, ConfigEmptyState } from '@/components/configuracion';
 import { useToast } from '@/hooks/utils';
 import { useModalManager } from '@/hooks/utils';
 import {
@@ -152,21 +152,18 @@ function WorkflowsListPage() {
   const isFiltered = !!(searchTerm || filtroEntidad || filtroEstado);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900" onClick={handleClickOutside}>
-      <ConfigPageHeader
-        title="Workflows de Aprobación"
-        subtitle={`${workflows.length} workflow${workflows.length !== 1 ? 's' : ''} configurados`}
-        icon={GitBranch}
-        maxWidth="max-w-7xl"
-        actions={
-          <Button onClick={handleNuevo}>
-            <Plus className="w-4 h-4 mr-2" />
-            Nuevo Workflow
-          </Button>
-        }
-      />
-
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <ConfiguracionPageLayout
+      icon={GitBranch}
+      title="Workflows de Aprobación"
+      subtitle={`${workflows.length} workflow${workflows.length !== 1 ? 's' : ''} configurados`}
+      actions={
+        <Button onClick={handleNuevo}>
+          <Plus className="w-4 h-4 mr-2" />
+          Nuevo Workflow
+        </Button>
+      }
+    >
+      <div className="max-w-7xl mx-auto" onClick={handleClickOutside}>
         <ConfigSearchBar
           value={searchTerm}
           onChange={setSearchTerm}
@@ -206,7 +203,7 @@ function WorkflowsListPage() {
             ))}
           </div>
         )}
-      </main>
+      </div>
 
       <ConfirmDialog
         isOpen={isOpen('delete')}
@@ -218,7 +215,7 @@ function WorkflowsListPage() {
         variant="danger"
         isLoading={eliminarMutation.isPending}
       />
-    </div>
+    </ConfiguracionPageLayout>
   );
 }
 

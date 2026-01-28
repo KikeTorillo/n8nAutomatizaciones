@@ -8,7 +8,7 @@ import {
 } from '@/hooks/sistema';
 import useAuthStore, { selectIsAdmin } from '@/store/authStore';
 import { ConfirmDialog } from '@/components/ui';
-import { ConfigPageHeader } from '@/components/configuracion';
+import { ConfiguracionPageLayout } from '@/components/configuracion';
 import { useToast } from '@/hooks/utils';
 import { useModalManager } from '@/hooks/utils';
 import {
@@ -242,16 +242,12 @@ function ModulosPage() {
   const modulosOpcionales = modulosDisponibles.filter((m) => m.nombre !== 'core');
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <ConfigPageHeader
-        title="Gestión de Módulos"
-        subtitle="Activa o desactiva módulos según tus necesidades"
-        icon={Settings}
-        maxWidth="max-w-5xl"
-      />
-
-      {/* Content */}
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <ConfiguracionPageLayout
+      icon={Settings}
+      title="Gestión de Módulos"
+      subtitle="Activa o desactiva módulos según tus necesidades"
+    >
+      <div className="max-w-5xl mx-auto">
         {/* Info banner */}
         <div className="bg-primary-50 dark:bg-primary-900/30 border border-primary-200 dark:border-primary-800 rounded-lg p-4 mb-8 flex items-start gap-3">
           <Zap className="w-5 h-5 text-primary-600 dark:text-primary-400 flex-shrink-0 mt-0.5" />
@@ -462,7 +458,7 @@ function ModulosPage() {
             {!isAdmin() && ' Contacta a un administrador para modificar los módulos activos.'}
           </p>
         </div>
-      </main>
+      </div>
 
       {/* Confirm Dialog */}
       <ConfirmDialog
@@ -480,7 +476,7 @@ function ModulosPage() {
         variant={getModalProps('confirm').accion === 'activar' ? 'success' : 'warning'}
         isLoading={activarMutation.isPending || desactivarMutation.isPending}
       />
-    </div>
+    </ConfiguracionPageLayout>
   );
 }
 

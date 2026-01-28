@@ -14,14 +14,17 @@ function QuickActions() {
     tieneChatbots,
   } = useModulos();
 
-  // Definir acciones disponibles - Todos usan variaciones de Nexo Purple
+  // Color unificado de Nexo para todos los accesos rápidos
+  const nexoButtonColor = 'bg-primary-600 hover:bg-primary-700';
+
+  // Definir acciones disponibles
   const actions = [
     {
       id: 'nueva-cita',
       label: 'Nueva Cita',
       icon: Calendar,
       path: '/citas',
-      color: 'bg-primary-600 hover:bg-primary-700',
+      color: nexoButtonColor,
       enabled: tieneAgendamiento,
     },
     {
@@ -29,7 +32,7 @@ function QuickActions() {
       label: 'Nuevo Cliente',
       icon: UserPlus,
       path: '/clientes/nuevo',
-      color: 'bg-primary-700 hover:bg-primary-800',
+      color: nexoButtonColor,
       enabled: tieneAgendamiento,
     },
     {
@@ -37,7 +40,7 @@ function QuickActions() {
       label: 'Nueva Venta',
       icon: ShoppingCart,
       path: '/pos/venta',
-      color: 'bg-primary-500 hover:bg-primary-600',
+      color: nexoButtonColor,
       enabled: tienePOS,
     },
     {
@@ -45,7 +48,7 @@ function QuickActions() {
       label: 'Nuevo Producto',
       icon: Package,
       path: '/inventario/productos',
-      color: 'bg-primary-800 hover:bg-primary-900',
+      color: nexoButtonColor,
       enabled: tieneInventario,
     },
     {
@@ -53,7 +56,7 @@ function QuickActions() {
       label: 'Recordatorios',
       icon: Bell,
       path: '/recordatorios',
-      color: 'bg-primary-400 hover:bg-primary-500',
+      color: nexoButtonColor,
       enabled: tieneChatbots,
     },
   ];

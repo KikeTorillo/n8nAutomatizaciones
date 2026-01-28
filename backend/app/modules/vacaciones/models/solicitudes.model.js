@@ -574,13 +574,13 @@ class SolicitudesVacacionesModel {
 
             // Solicitudes por estado
             const solicitudesQuery = await db.query(
-                `SELECT estado, COUNT(*) as cantidad
+                `SELECT sv.estado, COUNT(*) as cantidad
                  FROM solicitudes_vacaciones sv
                  JOIN profesionales p ON p.id = sv.profesional_id
                  WHERE sv.organizacion_id = $1
                    AND EXTRACT(YEAR FROM sv.fecha_inicio) = $2
                    ${departamentoClause}
-                 GROUP BY estado`,
+                 GROUP BY sv.estado`,
                 values
             );
 
@@ -598,6 +598,13 @@ class SolicitudesVacacionesModel {
             );
 
             // Empleados con solicitudes activas (próximas vacaciones)
+            // Esta query no filtra por año, solo por fecha futura, así que usa valores propios
+            const proximasValues = [organizacionId];
+            let proximasDeptClause = '';
+            if (departamentoId) {
+                proximasDeptClause = ' AND p.departamento_id = $2';
+                proximasValues.push(departamentoId);
+            }
             const proximasQuery = await db.query(
                 `SELECT
                     sv.id, sv.codigo, sv.fecha_inicio, sv.fecha_fin, sv.dias_solicitados,
@@ -607,10 +614,10 @@ class SolicitudesVacacionesModel {
                  WHERE sv.organizacion_id = $1
                    AND sv.estado = 'aprobada'
                    AND sv.fecha_inicio >= CURRENT_DATE
-                   ${departamentoClause}
+                   ${proximasDeptClause}
                  ORDER BY sv.fecha_inicio ASC
                  LIMIT 10`,
-                values
+                proximasValues
             );
 
             const solicitudesPorEstado = {};

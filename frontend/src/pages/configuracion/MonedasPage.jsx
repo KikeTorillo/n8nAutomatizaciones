@@ -20,7 +20,7 @@ import {
   Input,
   Modal
 } from '@/components/ui';
-import { ConfigPageHeader } from '@/components/configuracion';
+import { ConfiguracionPageLayout } from '@/components/configuracion';
 import { useToast } from '@/hooks/utils';
 import { monedasApi } from '@/services/api/endpoints';
 import { useCurrency } from '@/hooks/utils';
@@ -161,25 +161,22 @@ function MonedasPage() {
   const isLoading = loadingMonedas || loadingTasas;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <ConfigPageHeader
-        title="Monedas y Tasas de Cambio"
-        subtitle="Gestiona las tasas de conversión"
-        icon={Coins}
-        actions={
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => refetchTasas()}
-            disabled={isLoading}
-          >
-            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
-          </Button>
-        }
-      />
-
-      {/* Content */}
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <ConfiguracionPageLayout
+      icon={Coins}
+      title="Monedas y Tasas de Cambio"
+      subtitle="Gestiona las tasas de conversión"
+      actions={
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => refetchTasas()}
+          disabled={isLoading}
+        >
+          <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+        </Button>
+      }
+    >
+      <div className="max-w-4xl mx-auto space-y-8">
         {/* Monedas Disponibles */}
         <section>
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
@@ -328,7 +325,7 @@ function MonedasPage() {
           </h2>
           <ConversionCalculator monedas={monedas} />
         </section>
-      </main>
+      </div>
 
       {/* Modal: Editar Tasa */}
       <Modal
@@ -439,7 +436,7 @@ function MonedasPage() {
           )}
         </div>
       </Modal>
-    </div>
+    </ConfiguracionPageLayout>
   );
 }
 

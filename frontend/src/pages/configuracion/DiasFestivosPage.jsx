@@ -19,7 +19,7 @@ import {
   Modal,
   Select
 } from '@/components/ui';
-import { ConfigPageHeader, ConfigEmptyState } from '@/components/configuracion';
+import { ConfiguracionPageLayout, ConfigEmptyState } from '@/components/configuracion';
 import { useToast } from '@/hooks/utils';
 import { useModalManager } from '@/hooks/utils';
 import { useBloqueos, useCrearBloqueo, useEliminarBloqueo } from '@/hooks/agendamiento';
@@ -162,26 +162,22 @@ function DiasFestivosPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <ConfigPageHeader
-        title="Días Festivos"
-        subtitle="Feriados nacionales y días no laborables"
-        icon={Calendar}
-        maxWidth="max-w-6xl"
-        actions={
-          <Button
-            variant="outline"
-            onClick={() => openModal('importar')}
-            size="sm"
-          >
-            <Download className="h-4 w-4 mr-2" />
-            Importar
-          </Button>
-        }
-      />
-
-      {/* Content */}
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <ConfiguracionPageLayout
+      icon={Calendar}
+      title="Días Festivos"
+      subtitle="Feriados nacionales y días no laborables"
+      actions={
+        <Button
+          variant="outline"
+          onClick={() => openModal('importar')}
+          size="sm"
+        >
+          <Download className="h-4 w-4 mr-2" />
+          Importar
+        </Button>
+      }
+    >
+      <div className="max-w-6xl mx-auto">
         {/* Filtros */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 mb-6">
           <div className="flex flex-col sm:flex-row gap-4">
@@ -332,7 +328,7 @@ function DiasFestivosPage() {
             ))}
           </div>
         )}
-      </main>
+      </div>
 
       {/* Modal Importar */}
       <Modal
@@ -421,7 +417,7 @@ function DiasFestivosPage() {
         isLoading={eliminarMutation.isPending}
         variant="danger"
       />
-    </div>
+    </ConfiguracionPageLayout>
   );
 }
 

@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 
 import { Button, ConfirmDialog, StatCardGrid } from '@/components/ui';
-import { ConfigPageHeader, ConfigSearchBar, ConfigEmptyState } from '@/components/configuracion';
+import { ConfiguracionPageLayout, ConfigSearchBar, ConfigEmptyState } from '@/components/configuracion';
 import { useToast, useModalManager, useFilters } from '@/hooks/utils';
 import {
   useUsuarios,
@@ -189,21 +189,18 @@ function UsuariosPage() {
 
   return (
     <UsuariosContext.Provider value={contextValue}>
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <ConfigPageHeader
-          title="Usuarios"
-          subtitle="Gestiona el acceso al sistema"
-          icon={Users}
-          maxWidth="max-w-6xl"
-          actions={
-            <Button onClick={handleNuevo} size="sm">
-              <Plus className="w-4 h-4 mr-2" />
-              Nuevo Usuario
-            </Button>
-          }
-        />
-
-        <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <ConfiguracionPageLayout
+        icon={Users}
+        title="Usuarios"
+        subtitle="Gestiona el acceso al sistema"
+        actions={
+          <Button onClick={handleNuevo} size="sm">
+            <Plus className="w-4 h-4 mr-2" />
+            Nuevo Usuario
+          </Button>
+        }
+      >
+        <div className="max-w-6xl mx-auto">
           <StatCardGrid stats={stats} columns={3} className="mb-6" />
 
           <ConfigSearchBar
@@ -244,7 +241,7 @@ function UsuariosPage() {
               </div>
             )}
           </div>
-        </main>
+        </div>
 
         <UsuarioFormDrawer
           isOpen={isOpen('form')}
@@ -266,7 +263,7 @@ function UsuariosPage() {
           onConfirm={confirmarAccion}
           isLoading={cambiarEstadoMutation.isPending || vincularMutation.isPending}
         />
-      </div>
+      </ConfiguracionPageLayout>
     </UsuariosContext.Provider>
   );
 }

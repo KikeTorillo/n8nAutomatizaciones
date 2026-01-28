@@ -27,7 +27,7 @@ import { useToast } from '@/hooks/utils';
 import { useUploadArchivo } from '@/hooks/utils';
 import { useCategoriasMarketplace } from '@/hooks/otros';
 import { Button, Input } from '@/components/ui';
-import { ConfigPageHeader } from '@/components/configuracion';
+import { ConfiguracionPageLayout } from '@/components/configuracion';
 
 /**
  * Página de configuración del negocio
@@ -223,16 +223,12 @@ function NegocioPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <ConfigPageHeader
-        title="Mi Negocio"
-        subtitle="Información de tu organización"
-        icon={Building2}
-        maxWidth="max-w-3xl"
-      />
-
-      {/* Content */}
-      <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <ConfiguracionPageLayout
+      icon={Building2}
+      title="Mi Negocio"
+      subtitle="Información de tu organización"
+    >
+      <div className="max-w-3xl mx-auto">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
 
           {/* Logo Section */}
@@ -575,8 +571,8 @@ function NegocioPage() {
             </div>
           )}
         </form>
-      </main>
-    </div>
+      </div>
+    </ConfiguracionPageLayout>
   );
 }
 

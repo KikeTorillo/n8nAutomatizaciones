@@ -122,6 +122,10 @@ function AppHomePage() {
     logoutMutation.mutate();
   };
 
+  // Colores unificados de Nexo para todas las apps
+  const nexoIconColor = 'text-primary-600 dark:text-primary-400';
+  const nexoIconBg = 'bg-primary-100 dark:bg-primary-900/40';
+
   // Definir aplicaciones disponibles
   // Para empleados: solo mostrar apps habilitadas y no administrativas
   const allApps = [
@@ -131,8 +135,8 @@ function AppHomePage() {
       description: esEmpleado ? 'Mis citas' : 'Gestiona tus citas',
       icon: Calendar,
       path: '/citas',
-      color: 'text-primary-600 dark:text-primary-400',
-      bgColor: 'bg-primary-100 dark:bg-primary-900/40',
+      color: nexoIconColor,
+      bgColor: nexoIconBg,
       enabled: tieneAgendamiento,
       badge: notifications.agendamiento,
       badgeColor: 'bg-primary-500',
@@ -143,8 +147,8 @@ function AppHomePage() {
       description: 'Equipo y horarios',
       icon: Users,
       path: '/profesionales',
-      color: 'text-primary-700 dark:text-primary-300',
-      bgColor: 'bg-primary-100 dark:bg-primary-900/40',
+      color: nexoIconColor,
+      bgColor: nexoIconBg,
       enabled: tieneAgendamiento,
       badge: 0,
       adminOnly: true, // Solo admin/propietario
@@ -155,8 +159,8 @@ function AppHomePage() {
       description: 'Catálogo y precios',
       icon: Briefcase,
       path: '/servicios',
-      color: 'text-primary-500 dark:text-primary-400',
-      bgColor: 'bg-primary-50 dark:bg-primary-900/30',
+      color: nexoIconColor,
+      bgColor: nexoIconBg,
       enabled: tieneAgendamiento,
       badge: 0,
       adminOnly: true, // Solo admin/propietario
@@ -167,8 +171,8 @@ function AppHomePage() {
       description: 'CRM y base de clientes',
       icon: UserCircle,
       path: '/clientes',
-      color: 'text-primary-600 dark:text-primary-400',
-      bgColor: 'bg-primary-100 dark:bg-primary-900/40',
+      color: nexoIconColor,
+      bgColor: nexoIconBg,
       enabled: true, // Siempre activo (módulo core compartido)
       badge: 0,
       adminOnly: false, // Visible para empleados también
@@ -179,8 +183,8 @@ function AppHomePage() {
       description: esEmpleado ? 'Mis ausencias' : 'Vacaciones e incapacidades',
       icon: CalendarOff,
       path: '/ausencias',
-      color: 'text-primary-500 dark:text-primary-400',
-      bgColor: 'bg-primary-50 dark:bg-primary-900/30',
+      color: nexoIconColor,
+      bgColor: nexoIconBg,
       enabled: true, // Siempre activo (módulo core de empleados)
       badge: 0,
       adminOnly: false, // Visible para empleados también
@@ -191,8 +195,8 @@ function AppHomePage() {
       description: 'Productos, stock y proveedores',
       icon: Package,
       path: '/inventario/productos',
-      color: 'text-primary-800 dark:text-primary-300',
-      bgColor: 'bg-primary-100 dark:bg-primary-900/40',
+      color: nexoIconColor,
+      bgColor: nexoIconBg,
       enabled: tieneInventario,
       badge: notifications.inventario,
       badgeColor: 'bg-primary-500',
@@ -203,8 +207,8 @@ function AppHomePage() {
       description: 'Ventas y cobros',
       icon: ShoppingCart,
       path: '/pos/venta',
-      color: 'text-primary-500 dark:text-primary-400',
-      bgColor: 'bg-primary-50 dark:bg-primary-900/30',
+      color: nexoIconColor,
+      bgColor: nexoIconBg,
       enabled: tienePOS,
       badge: notifications.pos,
       badgeColor: 'bg-primary-500',
@@ -215,8 +219,8 @@ function AppHomePage() {
       description: 'Cálculo y pago a profesionales',
       icon: DollarSign,
       path: '/comisiones',
-      color: 'text-primary-700 dark:text-primary-300',
-      bgColor: 'bg-primary-100 dark:bg-primary-900/40',
+      color: nexoIconColor,
+      bgColor: nexoIconBg,
       enabled: tieneComisiones,
       badge: 0,
       adminOnly: true, // Solo admin/propietario
@@ -227,8 +231,8 @@ function AppHomePage() {
       description: 'Catálogo de cuentas y asientos',
       icon: BookOpen,
       path: '/contabilidad',
-      color: 'text-primary-600 dark:text-primary-400',
-      bgColor: 'bg-primary-100 dark:bg-primary-900/40',
+      color: nexoIconColor,
+      bgColor: nexoIconBg,
       enabled: tieneContabilidad,
       badge: 0,
       adminOnly: true, // Solo admin/propietario
@@ -239,8 +243,8 @@ function AppHomePage() {
       description: 'Telegram, WhatsApp con IA',
       icon: Bot,
       path: '/chatbots',
-      color: 'text-primary-400 dark:text-primary-300',
-      bgColor: 'bg-primary-50 dark:bg-primary-900/30',
+      color: nexoIconColor,
+      bgColor: nexoIconBg,
       enabled: tieneChatbots,
       badge: 0,
       adminOnly: true, // Solo admin/propietario
@@ -251,8 +255,8 @@ function AppHomePage() {
       description: 'Tu perfil público y reseñas',
       icon: Store,
       path: '/mi-marketplace',
-      color: 'text-primary-500 dark:text-primary-400',
-      bgColor: 'bg-primary-50 dark:bg-primary-900/30',
+      color: nexoIconColor,
+      bgColor: nexoIconBg,
       enabled: tieneMarketplace,
       badge: 0,
       adminOnly: true, // Solo admin/propietario
@@ -263,8 +267,8 @@ function AppHomePage() {
       description: 'Bodas, XV años y más',
       icon: PartyPopper,
       path: '/eventos-digitales',
-      color: 'text-primary-400 dark:text-primary-300',
-      bgColor: 'bg-primary-50 dark:bg-primary-900/30',
+      color: nexoIconColor,
+      bgColor: nexoIconBg,
       enabled: tieneEventosDigitales,
       badge: 0,
       adminOnly: true, // Solo admin/propietario
@@ -275,8 +279,8 @@ function AppHomePage() {
       description: 'Crea tu página web',
       icon: Globe,
       path: '/website',
-      color: 'text-primary-600 dark:text-primary-400',
-      bgColor: 'bg-primary-100 dark:bg-primary-900/40',
+      color: nexoIconColor,
+      bgColor: nexoIconBg,
       enabled: tieneWebsite,
       badge: 0,
       adminOnly: true, // Solo admin/propietario
@@ -287,8 +291,8 @@ function AppHomePage() {
       description: 'Planes, cobros y métricas SaaS',
       icon: CreditCard,
       path: '/suscripciones-negocio',
-      color: 'text-primary-600 dark:text-primary-400',
-      bgColor: 'bg-primary-100 dark:bg-primary-900/40',
+      color: nexoIconColor,
+      bgColor: nexoIconBg,
       enabled: tieneSuscripcionesNegocio,
       badge: 0,
       adminOnly: true, // Solo admin/propietario
@@ -299,8 +303,8 @@ function AppHomePage() {
       description: 'Gestiona tus sucursales',
       icon: Building2,
       path: '/sucursales',
-      color: 'text-primary-600 dark:text-primary-400',
-      bgColor: 'bg-primary-100 dark:bg-primary-900/40',
+      color: nexoIconColor,
+      bgColor: nexoIconBg,
       enabled: true,
       badge: 0,
       adminOnly: true, // Solo admin/propietario
@@ -311,8 +315,8 @@ function AppHomePage() {
       description: 'Solicitudes pendientes',
       icon: ClipboardCheck,
       path: '/aprobaciones',
-      color: 'text-primary-600 dark:text-primary-400',
-      bgColor: 'bg-primary-100 dark:bg-primary-900/40',
+      color: nexoIconColor,
+      bgColor: nexoIconBg,
       enabled: tieneWorkflows,
       badge: notifications.aprobaciones,
       badgeColor: 'bg-amber-500',
@@ -324,8 +328,8 @@ function AppHomePage() {
       description: 'Métricas y KPIs del negocio',
       icon: BarChart3,
       path: '/dashboard',
-      color: 'text-primary-700 dark:text-primary-300',
-      bgColor: 'bg-primary-100 dark:bg-primary-900/40',
+      color: nexoIconColor,
+      bgColor: nexoIconBg,
       enabled: true,
       badge: 0,
       adminOnly: true, // Solo admin/propietario
@@ -336,8 +340,8 @@ function AppHomePage() {
       description: 'Módulos y preferencias',
       icon: Settings,
       path: '/configuracion',
-      color: 'text-primary-700 dark:text-primary-300',
-      bgColor: 'bg-primary-100 dark:bg-primary-900/40',
+      color: nexoIconColor,
+      bgColor: nexoIconBg,
       enabled: true,
       badge: 0,
       adminOnly: true, // Solo admin/propietario

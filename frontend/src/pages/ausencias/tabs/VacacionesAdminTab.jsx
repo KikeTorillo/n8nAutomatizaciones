@@ -8,7 +8,7 @@ import { Palmtree, Users, BarChart3, RefreshCw, Clock, CheckCircle, Calendar } f
 import { useQueryClient } from '@tanstack/react-query';
 import { Button, StatCardGrid } from '@/components/ui';
 import { VacacionesDashboard, SolicitudesEquipoSection } from '@/components/vacaciones';
-import { useSaldosVacaciones, useEstadisticasVacaciones } from '@/hooks/personas';
+import { useEstadisticasVacaciones } from '@/hooks/personas';
 
 /**
  * Sección de estadísticas
@@ -16,7 +16,6 @@ import { useSaldosVacaciones, useEstadisticasVacaciones } from '@/hooks/personas
 function EstadisticasVacaciones() {
   const anio = new Date().getFullYear();
   const { data: stats, isLoading } = useEstadisticasVacaciones({ anio });
-  const { data: saldos } = useSaldosVacaciones({ anio, limit: 1000 });
 
   if (isLoading) {
     return (
@@ -31,10 +30,11 @@ function EstadisticasVacaciones() {
     );
   }
 
-  const totalProfesionales = saldos?.data?.length || 0;
-  const pendientes = stats?.pendientes || 0;
-  const aprobadas = stats?.aprobadas || 0;
-  const diasTotales = stats?.dias_aprobados || 0;
+  // Usar datos de estadísticas directamente (incluye total_empleados)
+  const totalProfesionales = stats?.saldos?.total_empleados || 0;
+  const pendientes = stats?.solicitudes?.pendientes || 0;
+  const aprobadas = stats?.solicitudes?.aprobadas || 0;
+  const diasTotales = stats?.saldos?.total_dias_usados || 0;
 
   return (
     <StatCardGrid
