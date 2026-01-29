@@ -59,16 +59,23 @@ class UbicacionesAlmacenController {
     static listar = asyncHandler(async (req, res) => {
         const organizacionId = req.tenant.organizacionId;
 
+        // Helper para parsear booleans de query params (Joi puede convertirlos a boolean)
+        const parseBoolean = (value) => {
+            if (value === undefined) return undefined;
+            if (typeof value === 'boolean') return value;
+            return value === 'true';
+        };
+
         const filtros = {
             sucursal_id: req.query.sucursal_id ? parseInt(req.query.sucursal_id) : undefined,
             tipo: req.query.tipo || undefined,
             parent_id: req.query.parent_id !== undefined
                 ? (req.query.parent_id === 'null' ? null : parseInt(req.query.parent_id))
                 : undefined,
-            es_picking: req.query.es_picking !== undefined ? req.query.es_picking === 'true' : undefined,
-            es_recepcion: req.query.es_recepcion !== undefined ? req.query.es_recepcion === 'true' : undefined,
-            activo: req.query.activo !== undefined ? req.query.activo === 'true' : undefined,
-            bloqueada: req.query.bloqueada !== undefined ? req.query.bloqueada === 'true' : undefined,
+            es_picking: parseBoolean(req.query.es_picking),
+            es_recepcion: parseBoolean(req.query.es_recepcion),
+            activo: parseBoolean(req.query.activo),
+            bloqueada: parseBoolean(req.query.bloqueada),
             busqueda: req.query.busqueda || undefined,
             limit: req.query.limit ? parseInt(req.query.limit) : 100,
             offset: req.query.offset ? parseInt(req.query.offset) : 0

@@ -16,6 +16,9 @@ export {
   default,
 } from './createCRUDHooks';
 
+// Re-exportar sanitizeFields para facilitar migración gradual
+export { sanitizeFields, COMMON_FIELDS } from '@/lib/sanitize';
+
 export {
   useSucursalContext,
   createSucursalContextHook,

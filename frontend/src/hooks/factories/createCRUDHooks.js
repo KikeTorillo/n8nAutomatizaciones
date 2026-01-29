@@ -46,6 +46,7 @@
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { sanitizeParams } from '@/lib/params';
+import { sanitizeFields } from '@/lib/sanitize';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 
 /**
@@ -240,46 +241,24 @@ export function createCRUDHooks(config) {
 }
 
 /**
- * Helper para crear funciones de sanitización comunes
+ * Helper para crear funciones de sanitización
+ * Wrapper sobre sanitizeFields para compatibilidad con API existente
+ *
+ * @param {Array} fields - Array de campos: string o { name, type }
+ * @returns {Function} - Función sanitizadora
  */
 export function createSanitizer(fields) {
-  return (data) => {
-    const sanitized = { ...data };
+  const config = {};
 
-    fields.forEach((field) => {
-      if (typeof field === 'string') {
-        // Campo string simple - trim y undefined si vacío
-        if (typeof data[field] === 'string') {
-          sanitized[field] = data[field]?.trim() || undefined;
-        } else if (data[field] === '' || data[field] === null) {
-          sanitized[field] = undefined;
-        }
-      } else if (typeof field === 'object') {
-        const { name, type } = field;
-        switch (type) {
-          case 'string':
-            sanitized[name] = data[name]?.trim() || undefined;
-            break;
-          case 'number':
-            // Para números, solo convertir a undefined si es null o empty string
-            sanitized[name] = data[name] !== '' && data[name] !== null ? data[name] : undefined;
-            break;
-          case 'id':
-            // Para IDs (foreign keys), convertir falsy a undefined
-            sanitized[name] = data[name] || undefined;
-            break;
-          case 'boolean':
-            // Booleans pasan directo
-            break;
-          default:
-            // Por defecto aplicar || undefined
-            sanitized[name] = data[name] || undefined;
-        }
-      }
-    });
+  fields.forEach((field) => {
+    if (typeof field === 'string') {
+      config[field] = 'string';
+    } else if (typeof field === 'object') {
+      config[field.name] = field.type;
+    }
+  });
 
-    return sanitized;
-  };
+  return (data) => sanitizeFields(data, config);
 }
 
 /**

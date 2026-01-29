@@ -24,7 +24,7 @@ import { ConfirmDialog } from './ConfirmDialog';
  * @param {boolean} confirmDelete - Mostrar confirmación antes de eliminar (default: true)
  * @param {string} deleteMessage - Mensaje de confirmación de eliminación
  * @param {string} entityName - Nombre de la entidad para el mensaje de confirmación
- * @param {Array} extraActions - Acciones adicionales [{icon, label, onClick, show}]
+ * @param {Array} extraActions - Acciones adicionales [{icon, label, onClick, show, loading, disabled}]
  * @param {string} size - Tamaño de botones: 'xs' | 'sm' (default: 'sm')
  * @param {string} className - Clases adicionales
  *
@@ -105,6 +105,7 @@ const StandardRowActions = memo(function StandardRowActions({
       icon: a.icon,
       label: a.label,
       onClick: () => a.onClick?.(row),
+      disabled: a.disabled || a.loading,
     })),
     onDelete && canDelete && { icon: Trash2, label: 'Eliminar', onClick: handleDeleteClick, variant: 'danger' },
   ].filter(Boolean);
@@ -197,13 +198,15 @@ const StandardRowActions = memo(function StandardRowActions({
 
         {extraActions.filter(a => a.show !== false).map((action, idx) => {
           const ActionIcon = action.icon;
+          const isDisabled = action.disabled || action.loading;
           return (
             <Button
               key={idx}
               variant="ghost"
               size={buttonSize}
               onClick={() => action.onClick?.(row)}
-              className="p-1.5"
+              disabled={isDisabled}
+              className={cn('p-1.5', isDisabled && 'opacity-50 cursor-not-allowed')}
               aria-label={action.label}
               title={action.label}
             >
@@ -273,6 +276,8 @@ StandardRowActions.propTypes = {
     label: PropTypes.string.isRequired,
     onClick: PropTypes.func,
     show: PropTypes.bool,
+    loading: PropTypes.bool,
+    disabled: PropTypes.bool,
   })),
   /** Tamaño de botones */
   size: PropTypes.oneOf(['xs', 'sm']),

@@ -2,7 +2,7 @@ import { memo } from 'react';
 import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
 import { AlertCircle } from 'lucide-react';
-import { EmptyState } from '../../atoms/EmptyState';
+import { EmptyState } from '../../molecules/EmptyState';
 
 /**
  * DetailNotFoundState - Estado cuando no se encuentra el recurso

@@ -11,4 +11,3 @@ export { Checkbox } from './Checkbox';
 export { Badge } from './Badge';
 export { LoadingSpinner } from './LoadingSpinner';
 export { Label } from './Label';
-export { EmptyState } from './EmptyState';

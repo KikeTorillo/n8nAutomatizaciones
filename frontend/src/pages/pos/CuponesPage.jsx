@@ -12,6 +12,7 @@ import {
   Hash
 } from 'lucide-react';
 
+import { getEstadoVigencia } from '@/lib/estadoVigencia';
 import POSPageLayout from '@/components/pos/POSPageLayout';
 import { ListadoCRUDPage } from '@/components/ui';
 import CuponFormDrawer from '@/components/pos/CuponFormDrawer';
@@ -54,34 +55,7 @@ const getTipoIcon = (tipo) => {
 /**
  * Color y label segun estado/vigencia
  */
-const getEstadoInfo = (cupon) => {
-  if (!cupon.activo) {
-    return {
-      color: 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400',
-      label: 'Inactivo',
-    };
-  }
-  const hoy = new Date();
-  const inicio = cupon.fecha_inicio ? new Date(cupon.fecha_inicio) : null;
-  const fin = cupon.fecha_fin ? new Date(cupon.fecha_fin) : null;
-
-  if (inicio && hoy < inicio) {
-    return {
-      color: 'bg-primary-100 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400',
-      label: 'Programado',
-    };
-  }
-  if (fin && hoy > fin) {
-    return {
-      color: 'bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400',
-      label: 'Expirado',
-    };
-  }
-  return {
-    color: 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400',
-    label: 'Activo',
-  };
-};
+const getEstadoInfo = (cupon) => getEstadoVigencia(cupon);
 
 /**
  * Formatear valor de descuento

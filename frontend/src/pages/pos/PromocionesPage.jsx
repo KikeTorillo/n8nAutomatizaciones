@@ -15,6 +15,7 @@ import {
   Tag
 } from 'lucide-react';
 
+import { getEstadoVigencia, LABELS_FEMENINO } from '@/lib/estadoVigencia';
 import POSPageLayout from '@/components/pos/POSPageLayout';
 import { ListadoCRUDPage } from '@/components/ui';
 import PromocionFormDrawer from '@/components/pos/PromocionFormDrawer';
@@ -60,34 +61,7 @@ const getTipoIcon = (tipo) => {
 /**
  * Color y label segun estado/vigencia
  */
-const getEstadoInfo = (promocion) => {
-  if (!promocion.activo) {
-    return {
-      color: 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400',
-      label: 'Inactiva',
-    };
-  }
-  const hoy = new Date();
-  const inicio = new Date(promocion.fecha_inicio);
-  const fin = promocion.fecha_fin ? new Date(promocion.fecha_fin) : null;
-
-  if (hoy < inicio) {
-    return {
-      color: 'bg-primary-100 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400',
-      label: 'Programada',
-    };
-  }
-  if (fin && hoy > fin) {
-    return {
-      color: 'bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400',
-      label: 'Expirada',
-    };
-  }
-  return {
-    color: 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400',
-    label: 'Activa',
-  };
-};
+const getEstadoInfo = (promocion) => getEstadoVigencia(promocion, { labels: LABELS_FEMENINO });
 
 // =========== COLUMNAS ===========
 

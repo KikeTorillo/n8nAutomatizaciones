@@ -35,22 +35,24 @@ export const UBICACIONES_ALMACEN_KEYS = {
 export function useUbicacionesAlmacen(params = {}) {
   const defaultSucursalId = useSucursalContext(params.sucursal_id);
 
+  // Construir params con sucursal_id resuelto para que queryKey y queryFn usen los mismos valores
+  const resolvedParams = {
+    ...params,
+    sucursal_id: defaultSucursalId || undefined,
+  };
+
+  // Limpiar valores vacíos para el queryKey
+  const cleanParams = { ...resolvedParams };
+  Object.keys(cleanParams).forEach(key => {
+    if (cleanParams[key] === '' || cleanParams[key] === null || cleanParams[key] === undefined) {
+      delete cleanParams[key];
+    }
+  });
+
   return useQuery({
-    queryKey: UBICACIONES_ALMACEN_KEYS.list(params),
+    queryKey: UBICACIONES_ALMACEN_KEYS.list(cleanParams),
     queryFn: async () => {
-      const sanitizedParams = {
-        ...params,
-        sucursal_id: defaultSucursalId || undefined,
-      };
-
-      // Limpiar valores vacíos
-      Object.keys(sanitizedParams).forEach(key => {
-        if (sanitizedParams[key] === '' || sanitizedParams[key] === null || sanitizedParams[key] === undefined) {
-          delete sanitizedParams[key];
-        }
-      });
-
-      const response = await ordenesCompraApi.listarUbicaciones(sanitizedParams);
+      const response = await ordenesCompraApi.listarUbicaciones(cleanParams);
       return response.data.data || { ubicaciones: [], total: 0 };
     },
     staleTime: STALE_TIMES.SEMI_STATIC, // 5 minutos

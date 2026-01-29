@@ -29,7 +29,7 @@ export { SearchInput } from './molecules/SearchInput';
 export { Pagination } from './organisms/Pagination';
 export { StatCard } from './molecules/StatCard';
 export { SkeletonStatCard } from './molecules/SkeletonStatCard';
-export { EmptyState } from './atoms/EmptyState';
+export { EmptyState } from './molecules/EmptyState';
 export { ViewTabs } from './molecules/ViewTabs';
 export { Breadcrumb } from './molecules/Breadcrumb';
 export { RecordNavigation } from './molecules/RecordNavigation';

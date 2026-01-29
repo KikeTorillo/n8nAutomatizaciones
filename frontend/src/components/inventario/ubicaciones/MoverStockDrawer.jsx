@@ -34,7 +34,7 @@ function MoverStockDrawer({ isOpen, onClose, sucursalId }) {
   const moverMutation = useMoverStockUbicacion();
 
   // Obtener ubicaciones (solo bins y estantes para mover stock)
-  const { data: ubicacionesData } = useUbicaciones({
+  const { data: ubicacionesData, isLoading: cargandoUbicaciones } = useUbicaciones({
     sucursal_id: sucursalId,
     activo: true,
     limit: 500,
