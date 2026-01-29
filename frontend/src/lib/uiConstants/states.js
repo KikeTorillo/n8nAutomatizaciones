@@ -49,9 +49,9 @@ export const VALIDATION_STATES = {
     bg: 'bg-green-50 dark:bg-green-900/10',
   },
   warning: {
-    border: 'border-yellow-500 dark:border-yellow-500',
-    text: 'text-yellow-600 dark:text-yellow-400',
-    bg: 'bg-yellow-50 dark:bg-yellow-900/10',
+    border: 'border-amber-500 dark:border-amber-500',
+    text: 'text-amber-600 dark:text-amber-400',
+    bg: 'bg-amber-50 dark:bg-amber-900/10',
   },
 };
 

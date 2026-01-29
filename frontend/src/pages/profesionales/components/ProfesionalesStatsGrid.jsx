@@ -17,10 +17,10 @@ export default function ProfesionalesStatsGrid({ profesionales = [], total = 0, 
     const incapacidad = profesionales.filter(p => p.estado === 'incapacidad').length;
 
     return [
-      { label: 'Total', value: total, icon: Users, color: 'gray' },
+      { label: 'Total', value: total, icon: Users, color: 'purple' },
       { label: 'Activos', value: activos, icon: UserCheck, color: 'green' },
       { label: 'Vacaciones', value: vacaciones, icon: Umbrella, color: 'blue' },
-      { label: 'Incapacidad', value: incapacidad, icon: Stethoscope, color: 'amber' },
+      { label: 'Incapacidad', value: incapacidad, icon: Stethoscope, color: 'yellow' },
     ];
   }, [profesionales, total]);
 

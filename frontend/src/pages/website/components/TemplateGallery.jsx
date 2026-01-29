@@ -24,6 +24,21 @@ import {
   Dumbbell,
   Rocket,
   Briefcase,
+  ShoppingCart,
+  GraduationCap,
+  Home,
+  Scale,
+  PawPrint,
+  Car,
+  Hotel,
+  PartyPopper,
+  Camera,
+  Hammer,
+  Target,
+  TrendingUp,
+  Megaphone,
+  Laptop,
+  Store,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
@@ -33,17 +48,35 @@ import { websiteApi } from '@/services/api/modules/website.api';
 // ========== INDUSTRIA ICONS ==========
 
 const INDUSTRIA_ICONS = {
+  // Originales
   salon: Scissors,
   restaurante: UtensilsCrossed,
   consultorio: Stethoscope,
   gym: Dumbbell,
   landing: Rocket,
   portfolio: Briefcase,
-  tienda: Building2,
-  agencia: Building2,
+  tienda: Store,
+  agencia: Rocket,
+  // Nuevas industrias
+  ecommerce: ShoppingCart,
+  educacion: GraduationCap,
+  inmobiliaria: Home,
+  legal: Scale,
+  veterinaria: PawPrint,
+  automotriz: Car,
+  hotel: Hotel,
+  eventos: PartyPopper,
+  fotografia: Camera,
+  construccion: Hammer,
+  coaching: Target,
+  finanzas: TrendingUp,
+  marketing: Megaphone,
+  tecnologia: Laptop,
+  default: Building2,
 };
 
 const INDUSTRIA_COLORS = {
+  // Originales
   salon: 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400',
   restaurante: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
   consultorio: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
@@ -52,6 +85,22 @@ const INDUSTRIA_COLORS = {
   portfolio: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
   tienda: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400',
   agencia: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400',
+  // Nuevas industrias
+  ecommerce: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+  educacion: 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400',
+  inmobiliaria: 'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400',
+  legal: 'bg-slate-100 text-slate-700 dark:bg-slate-900/30 dark:text-slate-400',
+  veterinaria: 'bg-lime-100 text-lime-700 dark:bg-lime-900/30 dark:text-lime-400',
+  automotriz: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+  hotel: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+  eventos: 'bg-fuchsia-100 text-fuchsia-700 dark:bg-fuchsia-900/30 dark:text-fuchsia-400',
+  fotografia: 'bg-zinc-100 text-zinc-700 dark:bg-zinc-900/30 dark:text-zinc-400',
+  construccion: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
+  coaching: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
+  finanzas: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+  marketing: 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400',
+  tecnologia: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400',
+  default: 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400',
 };
 
 // ========== MAIN COMPONENT ==========

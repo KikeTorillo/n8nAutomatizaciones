@@ -37,7 +37,7 @@ const CheckboxField = memo(forwardRef(function CheckboxField(
             ref={ref}
             id={checkboxId}
             disabled={disabled}
-            error={!!error}
+            hasError={!!error}
             {...props}
           />
         </div>

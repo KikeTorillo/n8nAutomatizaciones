@@ -346,7 +346,7 @@ const CanvasToolbar = memo(function CanvasToolbar({
       </div>
 
       {/* Center: Breakpoints - solo iconos en móvil */}
-      <div className="flex items-center gap-0.5 sm:gap-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-0.5 sm:p-1">
+      <div className="flex items-center gap-0.5 sm:gap-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-0.5 sm:p-1" data-tour="breakpoint-selector">
         {Object.entries(BREAKPOINTS).map(([key, { icon: Icon, label }]) => (
           <button
             key={key}

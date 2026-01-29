@@ -15,7 +15,7 @@
 export const PROGRESS_BAR_COLORS = {
   primary: 'bg-primary-500 dark:bg-primary-400',
   success: 'bg-green-500 dark:bg-green-400',
-  warning: 'bg-yellow-500 dark:bg-yellow-400',
+  warning: 'bg-amber-500 dark:bg-amber-400',
   danger: 'bg-red-500 dark:bg-red-400',
   info: 'bg-primary-500 dark:bg-primary-400',
 };
@@ -26,7 +26,7 @@ export const PROGRESS_BAR_COLORS = {
 export const PROGRESS_TEXT_COLORS = {
   primary: 'text-primary-600 dark:text-primary-400',
   success: 'text-green-600 dark:text-green-400',
-  warning: 'text-yellow-600 dark:text-yellow-400',
+  warning: 'text-amber-600 dark:text-amber-400',
   danger: 'text-red-600 dark:text-red-400',
   info: 'text-primary-600 dark:text-primary-400',
 };

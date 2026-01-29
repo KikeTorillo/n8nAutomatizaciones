@@ -359,7 +359,7 @@ export function getEstadoOptions(entityType, includeAll = true) {
  */
 export const ESTADO_COLORS = {
   success: 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-400',
-  warning: 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-400',
+  warning: 'bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-400',
   error: 'bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-400',
   primary: 'bg-primary-100 dark:bg-primary-900/40 text-primary-800 dark:text-primary-400',
   default: 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300',

@@ -98,14 +98,9 @@ export const createProductosColumns = ({ categorias = [], proveedores = [] }) =>
       header: 'Stock',
       align: 'right',
       render: (row) => (
-        <div>
-          <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
-            {row.stock_actual} {row.unidad_medida || 'unid'}
-          </div>
-          <div className="text-xs text-gray-500 dark:text-gray-400">
-            Min: {row.stock_minimo} | Max: {row.stock_maximo}
-          </div>
-        </div>
+        <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+          {row.stock_actual} {row.unidad_medida || 'unid'}
+        </span>
       ),
     },
     {

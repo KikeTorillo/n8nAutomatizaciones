@@ -1,4 +1,4 @@
-import { forwardRef, memo } from 'react';
+import { forwardRef, memo, useId } from 'react';
 import PropTypes from 'prop-types';
 import { cn } from '@/lib/utils';
 import { getSelectStyles, SELECT_ARROW, SELECT_SIZE_CLASSES, getAriaDescribedBy } from '@/lib/uiConstants';
@@ -47,14 +47,18 @@ const Select = memo(forwardRef(function Select(
     },
     ref
   ) {
+    // Generar ID único con useId (estable en SSR/hydration)
+    const generatedId = useId();
+    const selectId = id || generatedId;
+
     return (
       <div className="relative">
         <select
           ref={ref}
-          id={id}
+          id={selectId}
           aria-invalid={hasError || undefined}
           aria-required={required || undefined}
-          aria-describedby={id ? getAriaDescribedBy(id, { hasError, hasHelper }) : undefined}
+          aria-describedby={selectId ? getAriaDescribedBy(selectId, { hasError, hasHelper }) : undefined}
           className={cn(getSelectStyles(hasError), SELECT_SIZE_CLASSES[size], className)}
           {...props}
         >

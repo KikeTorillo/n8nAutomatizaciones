@@ -61,6 +61,9 @@ CREATE TABLE IF NOT EXISTS ubicaciones_almacen (
     bloqueada BOOLEAN DEFAULT false,       -- Ubicación temporalmente bloqueada
     motivo_bloqueo TEXT,
 
+    -- UBICACIÓN DEFAULT (Fase 0 - Consolidación Stock)
+    es_default BOOLEAN DEFAULT false,      -- Una por sucursal para clientes sin WMS
+
     -- AUDITORÍA
     creado_por INTEGER REFERENCES usuarios(id),
     creado_en TIMESTAMPTZ DEFAULT NOW(),
@@ -112,6 +115,11 @@ CREATE INDEX IF NOT EXISTS idx_ubicaciones_path
 -- Índice para organización (RLS)
 CREATE INDEX IF NOT EXISTS idx_ubicaciones_org
     ON ubicaciones_almacen(organizacion_id);
+
+-- Índice único para ubicación default por sucursal (Fase 0 - Consolidación)
+CREATE UNIQUE INDEX IF NOT EXISTS idx_ubicacion_default_unica
+    ON ubicaciones_almacen(sucursal_id)
+    WHERE es_default = true AND activo = true;
 
 -- ============================================================================
 -- RLS POLICIES

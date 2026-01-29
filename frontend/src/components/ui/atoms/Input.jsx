@@ -40,7 +40,6 @@ const Input = memo(forwardRef(function Input(
       suffix,
       className,
       id,
-      label,
       ...props
     },
     ref
@@ -71,37 +70,41 @@ const Input = memo(forwardRef(function Input(
       'aria-describedby': id ? getAriaDescribedBy(id, { hasError, hasHelper }) : undefined,
     };
 
-    // Componente input base
-    const inputElement = (prefix || suffix) ? (
-      <div className="relative">
-        {prefix && (
-          <div
-            className={cn(INPUT_AFFIX.container, INPUT_AFFIX.left)}
-            aria-hidden="true"
-          >
-            <span className={INPUT_AFFIX.text}>{prefix}</span>
-          </div>
-        )}
+    // Componente input con soporte para prefix/suffix
+    if (prefix || suffix) {
+      return (
+        <div className="relative">
+          {prefix && (
+            <div
+              className={cn(INPUT_AFFIX.container, INPUT_AFFIX.left)}
+              aria-hidden="true"
+            >
+              <span className={INPUT_AFFIX.text}>{prefix}</span>
+            </div>
+          )}
 
-        <input
-          ref={ref}
-          id={inputId}
-          type={type}
-          className={cn(baseStyles, stateStyles, paddingStyles, className)}
-          {...ariaProps}
-          {...props}
-        />
+          <input
+            ref={ref}
+            id={inputId}
+            type={type}
+            className={cn(baseStyles, stateStyles, paddingStyles, className)}
+            {...ariaProps}
+            {...props}
+          />
 
-        {suffix && (
-          <div
-            className={cn(INPUT_AFFIX.container, INPUT_AFFIX.right)}
-            aria-hidden="true"
-          >
-            <span className={INPUT_AFFIX.text}>{suffix}</span>
-          </div>
-        )}
-      </div>
-    ) : (
+          {suffix && (
+            <div
+              className={cn(INPUT_AFFIX.container, INPUT_AFFIX.right)}
+              aria-hidden="true"
+            >
+              <span className={INPUT_AFFIX.text}>{suffix}</span>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    return (
       <input
         ref={ref}
         id={inputId}
@@ -111,23 +114,6 @@ const Input = memo(forwardRef(function Input(
         {...props}
       />
     );
-
-    // Si hay label, envolver con label
-    if (label) {
-      return (
-        <div className="space-y-1">
-          <label
-            htmlFor={inputId}
-            className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-          >
-            {label}
-          </label>
-          {inputElement}
-        </div>
-      );
-    }
-
-    return inputElement;
   }
 ));
 
@@ -156,8 +142,6 @@ Input.propTypes = {
   placeholder: PropTypes.string,
   /** Handler de cambio */
   onChange: PropTypes.func,
-  /** Label del campo (texto o ReactNode para botones de IA) */
-  label: PropTypes.node,
 };
 
 export { Input };

@@ -128,6 +128,10 @@ export {
   selectSetGuardando,
   selectSetGuardado,
   selectSetErrorGuardado,
+  // Bloque recien agregado (animacion)
+  selectBloqueRecienAgregado,
+  selectSetBloqueRecienAgregado,
+  selectClearBloqueRecienAgregado,
   selectReset as selectWebsiteEditorReset,
   // Temporal store hooks
   useTemporalStore,

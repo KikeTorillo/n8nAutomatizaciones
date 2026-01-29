@@ -214,17 +214,19 @@ CREATE TABLE IF NOT EXISTS movimientos_inventario (
     -- 📋 TIPO DE MOVIMIENTO
     tipo_movimiento VARCHAR(30) NOT NULL CHECK (tipo_movimiento IN (
         -- ENTRADAS (cantidad positiva)
-        'entrada_compra',      -- Compra a proveedor
-        'entrada_devolucion',  -- Devolución de cliente
-        'entrada_ajuste',      -- Ajuste manual positivo
+        'entrada_compra',          -- Compra a proveedor
+        'entrada_devolucion',      -- Devolución de cliente
+        'entrada_ajuste',          -- Ajuste manual positivo
+        'transferencia_entrada',   -- Entrada por transferencia entre sucursales
 
         -- SALIDAS (cantidad negativa)
-        'salida_venta',        -- Venta en POS
-        'salida_uso_servicio', -- Usado en cita/servicio
-        'salida_merma',        -- Producto dañado/vencido
-        'salida_robo',         -- Robo
-        'salida_devolucion',   -- Devolución a proveedor
-        'salida_ajuste'        -- Ajuste manual negativo
+        'salida_venta',            -- Venta en POS
+        'salida_uso_servicio',     -- Usado en cita/servicio
+        'salida_merma',            -- Producto dañado/vencido
+        'salida_robo',             -- Robo
+        'salida_devolucion',       -- Devolución a proveedor
+        'salida_ajuste',           -- Ajuste manual negativo
+        'transferencia_salida'     -- Salida por transferencia entre sucursales
     )),
 
     -- 📊 CANTIDAD
@@ -249,6 +251,10 @@ CREATE TABLE IF NOT EXISTS movimientos_inventario (
     fecha_vencimiento DATE, -- Para productos perecederos
     lote VARCHAR(50), -- Número de lote del producto
 
+    -- 📍 UBICACIONES (Fase 0 - Consolidación Stock)
+    ubicacion_origen_id INTEGER,   -- FK a ubicaciones_almacen (agregada después de crear tabla)
+    ubicacion_destino_id INTEGER,  -- FK a ubicaciones_almacen (agregada después de crear tabla)
+
     -- 📅 TIMESTAMPS
     creado_en TIMESTAMPTZ DEFAULT NOW() NOT NULL,
 
@@ -258,7 +264,9 @@ CREATE TABLE IF NOT EXISTS movimientos_inventario (
     -- ✅ CONSTRAINTS
     CHECK (
         (tipo_movimiento LIKE 'entrada%' AND cantidad > 0) OR
-        (tipo_movimiento LIKE 'salida%' AND cantidad < 0)
+        (tipo_movimiento LIKE 'salida%' AND cantidad < 0) OR
+        (tipo_movimiento = 'transferencia_entrada' AND cantidad > 0) OR
+        (tipo_movimiento = 'transferencia_salida' AND cantidad < 0)
     ),
     CHECK (stock_despues = stock_antes + cantidad),
     CHECK (stock_despues >= 0), -- El stock nunca puede ser negativo

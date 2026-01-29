@@ -49,10 +49,10 @@ export const ALERT_VARIANTS = {
     text: 'text-green-700 dark:text-green-300',
   },
   warning: {
-    container: 'bg-yellow-50 border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-800',
-    icon: 'text-yellow-600 dark:text-yellow-400',
-    title: 'text-yellow-800 dark:text-yellow-200',
-    text: 'text-yellow-700 dark:text-yellow-300',
+    container: 'bg-amber-50 border-amber-200 dark:bg-amber-900/20 dark:border-amber-800',
+    icon: 'text-amber-600 dark:text-amber-400',
+    title: 'text-amber-800 dark:text-amber-200',
+    text: 'text-amber-700 dark:text-amber-300',
   },
   danger: {
     container: 'bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-800',
@@ -127,10 +127,10 @@ export const TOAST_EXTENDED_VARIANTS = {
     textColor: 'text-red-800 dark:text-red-200',
   },
   warning: {
-    bg: 'bg-yellow-50 dark:bg-yellow-900/30',
-    border: 'border-yellow-200 dark:border-yellow-800',
-    iconColor: 'text-yellow-600 dark:text-yellow-400',
-    textColor: 'text-yellow-800 dark:text-yellow-200',
+    bg: 'bg-amber-50 dark:bg-amber-900/30',
+    border: 'border-amber-200 dark:border-amber-800',
+    iconColor: 'text-amber-600 dark:text-amber-400',
+    textColor: 'text-amber-800 dark:text-amber-200',
   },
   info: {
     bg: 'bg-primary-50 dark:bg-primary-900/30',

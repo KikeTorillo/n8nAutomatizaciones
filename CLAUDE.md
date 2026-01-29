@@ -2,13 +2,9 @@
 
 **IMPORTANTE**: Toda la comunicación debe ser en español.
 
----
-
 ## Nexo - Sistema de Gestión Empresarial
 
 Plataforma ERP SaaS Multi-Tenant para LATAM con IA Conversacional.
-
----
 
 ## Stack Técnico
 
@@ -20,8 +16,6 @@ Plataforma ERP SaaS Multi-Tenant para LATAM con IA Conversacional.
 | **Pagos** | MercadoPago (Preapproval API) |
 | **IA** | OpenRouter, Ollama (embeddings), Qdrant (vector search), n8n workflows |
 
----
-
 ## Comandos Esenciales
 
 ```bash
@@ -32,8 +26,6 @@ npm run db:connect       # psql directo (user: admin)
 ```
 
 **Nota**: HMR NO funciona en Docker. Reiniciar contenedor + Ctrl+Shift+R.
-
----
 
 ## Arquitectura
 
@@ -51,44 +43,32 @@ await RLSContextManager.query(orgId, async (db) => { ... });
 await RLSContextManager.withBypass(async (db) => { ... });
 ```
 
----
-
 ## Sistema RBAC
 
 | Nivel | Rol | Capacidades |
 |-------|-----|-------------|
 | 100 | super_admin | Acceso TOTAL, bypass RLS, cross-org |
 | 90 | admin | Gestión completa de la organización |
-| 50-79 | (personalizado) | Gerentes, supervisores |
+| 80 | propietario | Gestión alta, acceso a Dashboard/Configuración |
+| 50-79 | supervisor | Gestión de equipo (aprueba vacaciones, registra incapacidades) |
 | 10 | empleado | Operaciones básicas |
 | 5 | cliente | Autoservicio |
-| 1 | bot | Automatizaciones |
 
 ```javascript
 const { RolHelper } = require('../utils/helpers');
 RolHelper.esSuperAdmin(user);           // nivel === 100
 RolHelper.esRolAdministrativo(user);    // nivel >= 90
-RolHelper.puedeGestionarUsuario(gestor, objetivo);  // gestor.nivel > objetivo.nivel
 ```
-
----
 
 ## Sistema de Suscripciones
 
-### Estados y Acceso
-
 | Estado | Acceso | UX |
 |--------|--------|-----|
-| `trial`, `activa`, `pendiente_pago` | ✅ Completo | Normal / Banner info |
-| `grace_period` | ⚠️ Solo GET | Banner rojo urgente |
-| `pausada`, `suspendida`, `cancelada` | ❌ Bloqueado | Redirect a `/planes` |
+| `trial`, `activa`, `pendiente_pago` | ✅ Completo | Normal |
+| `grace_period` | ⚠️ Solo GET | Banner urgente |
+| `pausada`, `suspendida`, `cancelada` | ❌ Bloqueado | Redirect `/planes` |
 
-### Bypasses
-- `organizacion_id === 1` (Nexo Team)
-- `nivel_jerarquia >= 100` (SuperAdmin)
-- Rutas exentas: `/auth/*`, `/planes/*`, `/health`
-
----
+**Bypasses**: `organizacion_id === 1`, `nivel_jerarquia >= 100`, rutas `/auth/*`, `/planes/*`
 
 ## Reglas de Desarrollo
 
@@ -102,36 +82,22 @@ RolHelper.puedeGestionarUsuario(gestor, objetivo);  // gestor.nivel > objetivo.n
 - **Sanitizar opcionales**: Joi rechaza `""`, usar `undefined`
 - **Dark mode**: Siempre variantes `dark:` en Tailwind
 - **Colores**: Solo `primary-*` (primario: `#753572`)
-- **React.memo**: Obligatorio en componentes de lista/tabla y sus items
-- **Cache invalidation**: Siempre usar `refetchType: 'active'`
-
-```javascript
-// ✅ Correcto
-queryClient.invalidateQueries({ queryKey: ['productos'], refetchType: 'active' });
-
-// ❌ Incorrecto (refetch innecesario de queries inactivas)
-queryClient.invalidateQueries({ queryKey: ['productos'] });
-```
+- **React.memo**: Obligatorio en componentes de lista/tabla
+- **Cache invalidation**: `queryClient.invalidateQueries({ queryKey: [...], refetchType: 'active' })`
 
 ### Componentes UI (Atomic Design)
-
 ```
 components/ui/
 ├── atoms/      # Button, Input, Badge, ToggleSwitch
-├── molecules/  # StatCard, Toast, EmptyState, FilterFields
-├── organisms/  # Modal, Drawer, DataTable, Pagination
+├── molecules/  # StatCard, ViewTabs, EmptyState, FilterFields
+├── organisms/  # Modal, Drawer, DataTable, StateNavTabs
 └── templates/  # BasePageLayout, ModuleGuard, ListadoCRUDPage
 ```
-
----
 
 ## Patrones Principales
 
 ### Backend - BaseCrudController
-
 ```javascript
-const { createCrudController } = require('../../../utils/BaseCrudController');
-
 module.exports = createCrudController({
   Model: MiModel,
   resourceName: 'MiEntidad',
@@ -141,54 +107,28 @@ module.exports = createCrudController({
 ```
 
 ### Frontend - createCRUDHooks
-
 ```javascript
-import { createCRUDHooks } from '@/hooks/factories';
-
 const crudHooks = createCRUDHooks({
-  name: 'entidad',
-  namePlural: 'entidades',
-  api: miApi,
-  baseKey: 'entidades',
-  apiMethods: {
-    list: 'listar',
-    get: 'obtenerPorId',
-    create: 'crear',
-    update: 'actualizar',
-    delete: 'eliminar',
-  },
+  name: 'entidad', namePlural: 'entidades',
+  api: miApi, baseKey: 'entidades',
   staleTime: STALE_TIMES.SEMI_STATIC,
 });
-
 export const useEntidades = crudHooks.useList;
-export const useEntidad = crudHooks.useDetail;
-export const useCrearEntidad = crudHooks.useCreate;
 ```
 
-### Frontend - createModuleLayout
-
-Factory para layouts consistentes de módulos con navegación por tabs.
-
+### Navegación con Dropdowns (StateNavTabs)
 ```javascript
-// components/mimodulo/MiModuloPageLayout.jsx
-import { createModuleLayout } from '@/components/ui/templates';
-import MiModuloNavTabs from './MiModuloNavTabs';
-
-export default createModuleLayout({
-  moduleTitle: 'Mi Módulo',
-  moduleDescription: 'Descripción breve del módulo',
-  NavTabsComponent: MiModuloNavTabs,
-});
-
-// Uso en páginas:
-<MiModuloPageLayout icon={Settings} title="Configuración" subtitle="Ajustes del módulo">
-  {/* contenido */}
-</MiModuloPageLayout>
+// Tabs con grupos para crear dropdowns en desktop
+const tabs = [
+  { id: 'mis-items', label: 'Mis Items', icon: User },
+  { id: 'equipo-a', label: 'Sección A', icon: IconA },
+  { id: 'equipo-b', label: 'Sección B', icon: IconB },
+];
+const groups = [
+  { icon: Users, label: 'Mi Equipo', tabIds: ['equipo-a', 'equipo-b'] },
+];
+<StateNavTabs tabs={tabs} groups={groups} activeTab={activeTab} onTabChange={setTab} />
 ```
-
-Módulos con layout consistente: CRM, Inventario, Contabilidad, Sucursales, Aprobaciones.
-
----
 
 ## Troubleshooting
 
@@ -197,21 +137,15 @@ Módulos con layout consistente: CRM, Inventario, Contabilidad, Sucursales, Apro
 | "Organización no encontrada" | `RLSContextManager.withBypass()` |
 | "field not allowed to be empty" | Sanitizar `""` a `undefined` |
 | Cambios no se reflejan | `docker restart <contenedor>` + Ctrl+Shift+R |
-| `X.map is not a function` | Verificar estructura: `{items, paginacion}` no array |
-| Rate limit bloqueando | `docker exec redis redis-cli FLUSHALL` |
-
----
+| `X.map is not a function` | Verificar estructura: `{items, paginacion}` |
 
 ## Pendientes
 
 | Prioridad | Feature |
 |-----------|---------|
-| **Alta** | Validar arquitectura pagos multi-tenant |
+| **Alta** | Website Builder - AI Site Generator |
 | **Media** | Prorrateo en cambios de plan |
-| **Media** | Website Builder - AI Site Generator |
 | **Baja** | 2FA/MFA |
-
-Ver `docs/PLAN_VALIDACION_SISTEMA.md` para estado detallado de validaciones.
 
 ---
 

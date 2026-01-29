@@ -61,8 +61,7 @@ const PuestoSelect = forwardRef(
         <Select
           ref={ref}
           className={className}
-          error={error}
-          label={null}
+          hasError={!!error}
           placeholder={isLoading ? 'Cargando...' : placeholder}
           disabled={disabled || isLoading}
           {...props}

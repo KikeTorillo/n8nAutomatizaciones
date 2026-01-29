@@ -38,7 +38,6 @@ const Textarea = memo(forwardRef(function Textarea(
       hasHelper = false,
       className,
       id,
-      label,
       ...props
     },
     ref
@@ -47,7 +46,7 @@ const Textarea = memo(forwardRef(function Textarea(
     const generatedId = useId();
     const textareaId = id || generatedId;
 
-    const textareaElement = (
+    return (
       <textarea
         ref={ref}
         id={textareaId}
@@ -59,23 +58,6 @@ const Textarea = memo(forwardRef(function Textarea(
         {...props}
       />
     );
-
-    // Si hay label, envolver con label
-    if (label) {
-      return (
-        <div className="space-y-1">
-          <label
-            htmlFor={textareaId}
-            className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-          >
-            {label}
-          </label>
-          {textareaElement}
-        </div>
-      );
-    }
-
-    return textareaElement;
   }
 ));
 
@@ -100,8 +82,6 @@ Textarea.propTypes = {
   onChange: PropTypes.func,
   /** Valor actual */
   value: PropTypes.string,
-  /** Label del campo (texto o ReactNode para botones de IA) */
-  label: PropTypes.node,
 };
 
 export { Textarea };
