@@ -729,6 +729,7 @@ class OrdenesCompraModel {
 
     /**
      * Recibir mercancía (parcial o total)
+     * Ene 2026: Refactorizado para usar registrar_movimiento_con_ubicacion()
      */
     static async recibirMercancia(ordenId, recepciones, usuarioId, organizacionId) {
         return await RLSContextManager.transaction(organizacionId, async (db) => {
@@ -739,13 +740,20 @@ class OrdenesCompraModel {
 
             // Verificar que la orden existe y está en estado válido
             const ordenQuery = await db.query(
-                `SELECT id, estado, folio FROM ordenes_compra WHERE id = $1`,
+                `SELECT id, estado, folio, proveedor_id FROM ordenes_compra WHERE id = $1`,
                 [ordenId]
             );
 
             ErrorHelper.throwIfNotFound(ordenQuery.rows[0], 'Orden de compra');
 
             const orden = ordenQuery.rows[0];
+
+            // Obtener sucursal matriz para el movimiento de inventario
+            const sucursalQuery = await db.query(
+                `SELECT id FROM sucursales WHERE organizacion_id = $1 AND es_matriz = true LIMIT 1`,
+                [organizacionId]
+            );
+            const sucursalId = sucursalQuery.rows[0]?.id;
 
             if (!['enviada', 'parcial'].includes(orden.estado)) {
                 ErrorHelper.throwConflict('Solo se puede recibir mercancía de órdenes enviadas o con recepción parcial');
@@ -819,76 +827,55 @@ class OrdenesCompraModel {
                     ]
                 );
 
-                // Calcular stock antes y después
-                const stockAntes = parseInt(item.stock_actual);
-                const stockDespues = stockAntes + recepcion.cantidad;
-
                 // Calcular valores para el movimiento (incluyendo landed costs)
                 const precioBase = recepcion.precio_unitario_real || item.precio_unitario || 0;
                 const landedCostsUnitario = landedCostsMap.get(recepcion.item_id) || 0;
                 const costoUnitario = precioBase + landedCostsUnitario;
-                const valorTotal = recepcion.cantidad * costoUnitario;
 
-                // Crear movimiento de inventario
+                // Usar función consolidada para crear movimiento y actualizar stock
                 const movimientoQuery = await db.query(
-                    `INSERT INTO movimientos_inventario (
-                        organizacion_id,
-                        producto_id,
-                        tipo_movimiento,
-                        cantidad,
-                        costo_unitario,
-                        valor_total,
-                        stock_antes,
-                        stock_despues,
-                        proveedor_id,
-                        usuario_id,
-                        referencia,
-                        motivo,
-                        fecha_vencimiento,
-                        lote
-                    )
-                    SELECT
-                        oc.organizacion_id,
-                        $1,
-                        'entrada_compra',
-                        $2,
-                        $3,
-                        $4,
-                        $5,
-                        $6,
-                        oc.proveedor_id,
-                        $7,
-                        $8,
-                        'Recepción de orden de compra',
-                        $9,
-                        $10
-                    FROM ordenes_compra oc
-                    WHERE oc.id = $11
-                    RETURNING id`,
+                    `SELECT registrar_movimiento_con_ubicacion(
+                        $1,  -- organizacion_id
+                        $2,  -- producto_id
+                        $3,  -- tipo_movimiento
+                        $4,  -- cantidad
+                        $5,  -- sucursal_id
+                        NULL, -- ubicacion_id (usa default)
+                        $6,  -- lote
+                        $7,  -- fecha_vencimiento
+                        $8,  -- referencia
+                        $9,  -- motivo
+                        $10, -- usuario_id
+                        $11, -- costo_unitario
+                        $12, -- proveedor_id
+                        NULL, -- venta_pos_id
+                        NULL, -- cita_id
+                        NULL  -- variante_id
+                    ) as movimiento_id`,
                     [
+                        organizacionId,
                         item.producto_id,
+                        'entrada_compra',
                         recepcion.cantidad,
-                        costoUnitario,
-                        valorTotal,
-                        stockAntes,
-                        stockDespues,
-                        usuarioId,
-                        `OC: ${orden.folio}`,
-                        recepcion.fecha_vencimiento || null,
+                        sucursalId,
                         recepcion.lote || null,
-                        ordenId
+                        recepcion.fecha_vencimiento || null,
+                        `OC: ${orden.folio}`,
+                        'Recepción de orden de compra',
+                        usuarioId,
+                        costoUnitario,
+                        orden.proveedor_id
                     ]
                 );
 
-                const movimientoId = movimientoQuery.rows[0].id;
+                const movimientoId = movimientoQuery.rows[0].movimiento_id;
 
-                // Actualizar stock del producto
-                await db.query(
-                    `UPDATE productos
-                     SET stock_actual = $1, actualizado_en = NOW()
-                     WHERE id = $2`,
-                    [stockDespues, item.producto_id]
+                // Obtener stock actualizado después del movimiento
+                const stockQuery = await db.query(
+                    `SELECT stock_actual FROM productos WHERE id = $1`,
+                    [item.producto_id]
                 );
+                const stockDespues = stockQuery.rows[0]?.stock_actual || 0;
 
                 // Actualizar precio_compra si cambió
                 if (recepcion.precio_unitario_real && recepcion.precio_unitario_real !== item.precio_unitario) {
@@ -1069,8 +1056,15 @@ class OrdenesCompraModel {
                 items_recibidos: itemsRecibidos.length
             });
 
-            // Obtener orden actualizada
-            const ordenActualizada = await this.obtenerPorId(ordenId, organizacionId);
+            // Obtener orden actualizada (consulta directa)
+            const ordenActualizadaQuery = await db.query(
+                `SELECT oc.*, p.nombre as proveedor_nombre
+                 FROM ordenes_compra oc
+                 LEFT JOIN proveedores p ON p.id = oc.proveedor_id
+                 WHERE oc.id = $1`,
+                [ordenId]
+            );
+            const ordenActualizada = ordenActualizadaQuery.rows[0];
 
             return {
                 orden: ordenActualizada,
