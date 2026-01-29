@@ -198,50 +198,9 @@ CREATE POLICY servicios_sucursales_delete_policy ON servicios_sucursales
     );
 
 -- ====================================================================
--- RLS: stock_sucursales
+-- NOTA: RLS de stock_sucursales ELIMINADO (Enero 2026)
+-- La nueva arquitectura usa stock_ubicaciones
 -- ====================================================================
-ALTER TABLE stock_sucursales ENABLE ROW LEVEL SECURITY;
-ALTER TABLE stock_sucursales FORCE ROW LEVEL SECURITY;
-
-CREATE POLICY stock_sucursales_select_policy ON stock_sucursales
-    FOR SELECT
-    USING (
-        current_setting('app.bypass_rls', true) = 'true'
-        OR sucursal_id IN (
-            SELECT id FROM sucursales
-            WHERE organizacion_id = NULLIF(current_setting('app.current_tenant_id', true), '')::INTEGER
-        )
-    );
-
-CREATE POLICY stock_sucursales_insert_policy ON stock_sucursales
-    FOR INSERT
-    WITH CHECK (
-        current_setting('app.bypass_rls', true) = 'true'
-        OR sucursal_id IN (
-            SELECT id FROM sucursales
-            WHERE organizacion_id = NULLIF(current_setting('app.current_tenant_id', true), '')::INTEGER
-        )
-    );
-
-CREATE POLICY stock_sucursales_update_policy ON stock_sucursales
-    FOR UPDATE
-    USING (
-        current_setting('app.bypass_rls', true) = 'true'
-        OR sucursal_id IN (
-            SELECT id FROM sucursales
-            WHERE organizacion_id = NULLIF(current_setting('app.current_tenant_id', true), '')::INTEGER
-        )
-    );
-
-CREATE POLICY stock_sucursales_delete_policy ON stock_sucursales
-    FOR DELETE
-    USING (
-        current_setting('app.bypass_rls', true) = 'true'
-        OR sucursal_id IN (
-            SELECT id FROM sucursales
-            WHERE organizacion_id = NULLIF(current_setting('app.current_tenant_id', true), '')::INTEGER
-        )
-    );
 
 -- ====================================================================
 -- RLS: transferencias_stock

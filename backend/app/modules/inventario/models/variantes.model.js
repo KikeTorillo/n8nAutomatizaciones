@@ -217,8 +217,9 @@ class VariantesModel {
 
     /**
      * Ajustar stock de una variante
+     * Ene 2026: Refactorizado para usar registrar_movimiento_con_ubicacion()
      */
-    static async ajustarStock(id, cantidad, tipo, motivo, usuarioId, organizacionId) {
+    static async ajustarStock(id, cantidad, tipo, motivo, usuarioId, organizacionId, sucursalId = null) {
         return await RLSContextManager.transaction(organizacionId, async (db) => {
             // Obtener variante actual
             const varianteQuery = `
@@ -226,7 +227,6 @@ class VariantesModel {
                 FROM variantes_producto v
                 JOIN productos p ON p.id = v.producto_id
                 WHERE v.id = $1 AND v.organizacion_id = $2
-                FOR UPDATE
             `;
             const varianteResult = await db.query(varianteQuery, [id, organizacionId]);
 
@@ -235,41 +235,44 @@ class VariantesModel {
             const variante = varianteResult.rows[0];
             const stockAntes = variante.stock_actual;
             const cantidadAjuste = tipo.startsWith('entrada') ? Math.abs(cantidad) : -Math.abs(cantidad);
-            const stockDespues = stockAntes + cantidadAjuste;
 
-            if (stockDespues < 0) {
-                ErrorHelper.throwConflict('Stock insuficiente');
-            }
-
-            // Actualizar stock de la variante
+            // Usar función consolidada para registrar movimiento
             await db.query(`
-                UPDATE variantes_producto
-                SET stock_actual = $1, actualizado_en = NOW()
-                WHERE id = $2
-            `, [stockDespues, id]);
-
-            // Registrar movimiento
-            const movimientoQuery = `
-                INSERT INTO movimientos_inventario (
-                    organizacion_id, producto_id, variante_id,
-                    tipo_movimiento, cantidad,
-                    stock_antes, stock_despues,
-                    motivo, usuario_id
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-                RETURNING *
-            `;
-
-            await db.query(movimientoQuery, [
+                SELECT registrar_movimiento_con_ubicacion(
+                    $1,  -- organizacion_id
+                    $2,  -- producto_id
+                    $3,  -- tipo_movimiento
+                    $4,  -- cantidad
+                    $5,  -- sucursal_id
+                    NULL, -- ubicacion_id
+                    NULL, -- lote
+                    NULL, -- fecha_vencimiento
+                    NULL, -- referencia
+                    $6,  -- motivo
+                    $7,  -- usuario_id
+                    NULL, -- costo_unitario
+                    NULL, -- proveedor_id
+                    NULL, -- venta_pos_id
+                    NULL, -- cita_id
+                    $8   -- variante_id
+                )
+            `, [
                 organizacionId,
                 variante.producto_id,
-                id,
                 tipo,
                 cantidadAjuste,
-                stockAntes,
-                stockDespues,
+                sucursalId,
                 motivo,
-                usuarioId
+                usuarioId,
+                id
             ]);
+
+            // Obtener stock actualizado
+            const stockActualizado = await db.query(
+                `SELECT stock_actual FROM variantes_producto WHERE id = $1`,
+                [id]
+            );
+            const stockDespues = stockActualizado.rows[0].stock_actual;
 
             logger.info(`Stock ajustado variante ${id}: ${stockAntes} -> ${stockDespues}`);
 
@@ -416,10 +419,42 @@ class VariantesModel {
 
             // Marcar producto como con variantes
             if (variantesCreadas.length > 0) {
+                // Obtener stock actual del producto
+                const stockQuery = await db.query(
+                    `SELECT stock_actual FROM productos WHERE id = $1`,
+                    [productoId]
+                );
+                const stockActual = stockQuery.rows[0]?.stock_actual || 0;
+
+                // Marcar como producto con variantes (sin tocar stock_actual directamente)
                 await db.query(`
-                    UPDATE productos SET tiene_variantes = true, stock_actual = 0
+                    UPDATE productos SET tiene_variantes = true
                     WHERE id = $1
                 `, [productoId]);
+
+                // Si tenía stock, ajustar a 0 usando función consolidada
+                if (stockActual > 0) {
+                    const sucursalQuery = await db.query(
+                        `SELECT id FROM sucursales
+                         WHERE organizacion_id = $1 AND es_matriz = true LIMIT 1`,
+                        [organizacionId]
+                    );
+                    if (sucursalQuery.rows.length > 0) {
+                        await db.query(`
+                            SELECT registrar_movimiento_con_ubicacion(
+                                $1, $2, 'salida_ajuste', $3, $4,
+                                NULL, NULL, NULL, NULL,
+                                $5, NULL, NULL, NULL, NULL, NULL, NULL
+                            )
+                        `, [
+                            organizacionId,
+                            productoId,
+                            -stockActual,  // Negativo para reducir
+                            sucursalQuery.rows[0].id,
+                            'Stock transferido a variantes al activar modo variantes'
+                        ]);
+                    }
+                }
             }
 
             logger.info(`Generadas ${variantesCreadas.length} variantes para producto ${productoId}`);

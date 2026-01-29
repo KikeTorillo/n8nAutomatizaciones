@@ -217,7 +217,7 @@ class ProductosModel {
                 data.proveedor_id || null,
                 data.precio_compra !== undefined ? data.precio_compra : 0,
                 data.precio_venta,
-                data.stock_actual !== undefined ? data.stock_actual : 0,
+                0,  // stock_actual es calculado via stock_ubicaciones, siempre inicia en 0
                 data.stock_minimo !== undefined ? data.stock_minimo : 5,
                 data.stock_maximo !== undefined ? data.stock_maximo : 100,
                 data.unidad_medida || 'unidad',
@@ -242,6 +242,61 @@ class ProductosModel {
             logger.info('[ProductosModel.crear] Producto creado', {
                 producto_id: producto.id
             });
+
+            // Ene 2026: Si hay stock inicial, registrar movimiento usando función consolidada
+            const stockInicial = data.stock_actual !== undefined ? data.stock_actual : 0;
+            if (stockInicial > 0) {
+                // Obtener sucursal matriz de la organización
+                const sucursalQuery = await db.query(
+                    `SELECT id FROM sucursales
+                     WHERE organizacion_id = $1 AND es_matriz = true
+                     LIMIT 1`,
+                    [organizacionId]
+                );
+
+                if (sucursalQuery.rows.length > 0) {
+                    const sucursalId = sucursalQuery.rows[0].id;
+
+                    // Registrar movimiento de entrada inicial usando función consolidada
+                    // Nota: Usamos 'entrada_ajuste' porque es el tipo válido más apropiado
+                    await db.query(
+                        `SELECT registrar_movimiento_con_ubicacion(
+                            $1,  -- organizacion_id
+                            $2,  -- producto_id
+                            $3,  -- tipo_movimiento
+                            $4,  -- cantidad (positivo = entrada)
+                            $5,  -- sucursal_id
+                            NULL, -- ubicacion_id (usa default)
+                            NULL, -- lote
+                            NULL, -- fecha_vencimiento
+                            NULL, -- referencia
+                            $6,  -- motivo
+                            NULL, -- usuario_id
+                            $7,  -- costo_unitario
+                            $8,  -- proveedor_id
+                            NULL, -- venta_pos_id
+                            NULL, -- cita_id
+                            NULL  -- variante_id
+                        )`,
+                        [
+                            organizacionId,
+                            producto.id,
+                            'entrada_ajuste',  // Tipo válido para stock inicial
+                            stockInicial,
+                            sucursalId,
+                            'Stock inicial al crear producto',
+                            data.precio_compra || 0,
+                            data.proveedor_id || null
+                        ]
+                    );
+
+                    logger.info('[ProductosModel.crear] Stock inicial registrado con función consolidada', {
+                        producto_id: producto.id,
+                        stock_inicial: stockInicial,
+                        sucursal_id: sucursalId
+                    });
+                }
+            }
 
             // Guardar precios multi-moneda si se proporcionan
             if (data.precios_moneda && Array.isArray(data.precios_moneda)) {
@@ -718,59 +773,72 @@ class ProductosModel {
 
     /**
      * Ajustar stock manualmente (conteo físico, correcciones)
+     * Ene 2026: Refactorizado para usar registrar_movimiento_con_ubicacion()
      */
     static async ajustarStock(id, ajuste, organizacionId) {
         return await RLSContextManager.transaction(organizacionId, async (db) => {
             // 1. Verificar que el producto existe
             const checkQuery = `
-                SELECT * FROM productos
+                SELECT id, nombre FROM productos
                 WHERE id = $1 AND organizacion_id = $2
             `;
             const checkResult = await db.query(checkQuery, [id, organizacionId]);
 
             ErrorHelper.throwIfNotFound(checkResult.rows[0], 'Producto');
 
-            const producto = checkResult.rows[0];
-            const nuevoStock = producto.stock_actual + ajuste.cantidad_ajuste;
-
-            if (nuevoStock < 0) {
-                ErrorHelper.throwConflict(`Stock insuficiente. Stock actual: ${producto.stock_actual}, ajuste: ${ajuste.cantidad_ajuste}`);
+            // 2. Obtener sucursal_id (usar proporcionada o buscar matriz por defecto)
+            let sucursalId = ajuste.sucursal_id;
+            if (!sucursalId) {
+                const sucursalQuery = await db.query(
+                    `SELECT id FROM sucursales
+                     WHERE organizacion_id = $1 AND es_matriz = true
+                     LIMIT 1`,
+                    [organizacionId]
+                );
+                if (sucursalQuery.rows.length > 0) {
+                    sucursalId = sucursalQuery.rows[0].id;
+                } else {
+                    ErrorHelper.throwValidation('No se encontró sucursal matriz para registrar el ajuste de stock');
+                }
             }
 
-            // 2. Actualizar stock del producto
-            const updateQuery = `
-                UPDATE productos
-                SET stock_actual = $1,
-                    actualizado_en = NOW()
-                WHERE id = $2 AND organizacion_id = $3
-                RETURNING *
-            `;
-            const updateResult = await db.query(updateQuery, [nuevoStock, id, organizacionId]);
-
-            // 3. Registrar movimiento de inventario
-            const movimientoQuery = `
-                INSERT INTO movimientos_inventario (
-                    organizacion_id, producto_id, tipo_movimiento, cantidad,
-                    stock_antes, stock_despues, motivo, referencia
+            // 3. Usar función consolidada para registrar movimiento y actualizar stock
+            await db.query(`
+                SELECT registrar_movimiento_con_ubicacion(
+                    $1,  -- organizacion_id
+                    $2,  -- producto_id
+                    $3,  -- tipo_movimiento
+                    $4,  -- cantidad
+                    $5,  -- sucursal_id
+                    NULL, -- ubicacion_id
+                    NULL, -- lote
+                    NULL, -- fecha_vencimiento
+                    $6,  -- referencia
+                    $7,  -- motivo
+                    NULL, -- usuario_id
+                    NULL, -- costo_unitario
+                    NULL, -- proveedor_id
+                    NULL, -- venta_pos_id
+                    NULL, -- cita_id
+                    NULL  -- variante_id
                 )
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-                RETURNING *
-            `;
-
-            const movimientoValues = [
+            `, [
                 organizacionId,
                 id,
                 ajuste.tipo_movimiento,
                 ajuste.cantidad_ajuste,
-                producto.stock_actual,
-                nuevoStock,
-                ajuste.motivo,
-                `Ajuste manual de stock`
-            ];
+                sucursalId,
+                'Ajuste manual de stock',
+                ajuste.motivo
+            ]);
 
-            await db.query(movimientoQuery, movimientoValues);
+            // 3. Obtener producto actualizado
+            const resultQuery = `
+                SELECT * FROM productos WHERE id = $1
+            `;
+            const result = await db.query(resultQuery, [id]);
 
-            return updateResult.rows[0];
+            return result.rows[0];
         });
     }
 

@@ -422,6 +422,7 @@ class AjustesMasivosModel {
             const errores = [];
 
             // 3. Aplicar cada item
+            // Ene 2026: Refactorizado para usar registrar_movimiento_con_ubicacion()
             for (const item of itemsQuery.rows) {
                 try {
                     // Determinar tipo de movimiento
@@ -429,67 +430,38 @@ class AjustesMasivosModel {
                         ? 'entrada_ajuste'
                         : 'salida_ajuste';
 
-                    // Registrar movimiento de inventario
-                    const movimientoData = {
-                        producto_id: item.producto_id,
-                        tipo_movimiento: tipoMovimiento,
-                        cantidad: item.cantidad_ajuste,
-                        costo_unitario: item.costo_unitario || 0,
-                        usuario_id: usuarioId,
-                        referencia: `Ajuste masivo: ${ajuste.folio}`,
-                        motivo: item.motivo_csv || 'Ajuste masivo CSV',
-                        sucursal_id: ajuste.sucursal_id
-                    };
-
-                    // Usar MovimientosInventarioModel directamente dentro de la transacción
-                    // Para evitar transacción anidada, hacemos el insert manual
-                    const stockActual = await this._obtenerStockActual(db, item.producto_id, item.variante_id);
-                    const stockDespues = stockActual + item.cantidad_ajuste;
-
-                    // Validar stock no negativo
-                    if (stockDespues < 0) {
-                        ErrorHelper.throwConflict(`Stock insuficiente. Actual: ${stockActual}, ajuste: ${item.cantidad_ajuste}`);
-                    }
-
-                    // Insertar movimiento
+                    // Usar función consolidada para registrar movimiento
                     const movimientoResult = await db.query(`
-                        INSERT INTO movimientos_inventario (
-                            organizacion_id, sucursal_id, producto_id,
-                            tipo_movimiento, cantidad,
-                            stock_antes, stock_despues,
-                            costo_unitario, valor_total,
-                            usuario_id, referencia, motivo
-                        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-                        RETURNING id
+                        SELECT registrar_movimiento_con_ubicacion(
+                            $1,  -- organizacion_id
+                            $2,  -- producto_id
+                            $3,  -- tipo_movimiento
+                            $4,  -- cantidad
+                            $5,  -- sucursal_id
+                            NULL, -- ubicacion_id
+                            NULL, -- lote
+                            NULL, -- fecha_vencimiento
+                            $6,  -- referencia
+                            $7,  -- motivo
+                            $8,  -- usuario_id
+                            $9,  -- costo_unitario
+                            NULL, -- proveedor_id
+                            NULL, -- venta_pos_id
+                            NULL, -- cita_id
+                            $10  -- variante_id
+                        ) as movimiento_id
                     `, [
                         organizacionId,
-                        ajuste.sucursal_id,
                         item.producto_id,
                         tipoMovimiento,
                         item.cantidad_ajuste,
-                        stockActual,
-                        stockDespues,
-                        item.costo_unitario || 0,
-                        Math.abs(item.cantidad_ajuste) * (item.costo_unitario || 0),
-                        usuarioId,
+                        ajuste.sucursal_id,
                         `Ajuste masivo: ${ajuste.folio}`,
-                        item.motivo_csv || 'Ajuste masivo CSV'
+                        item.motivo_csv || 'Ajuste masivo CSV',
+                        usuarioId,
+                        item.costo_unitario || 0,
+                        item.variante_id || null
                     ]);
-
-                    // Actualizar stock del producto o variante
-                    if (item.variante_id) {
-                        await db.query(`
-                            UPDATE variantes_producto SET
-                                stock_actual = $1, actualizado_en = NOW()
-                            WHERE id = $2
-                        `, [stockDespues, item.variante_id]);
-                    } else {
-                        await db.query(`
-                            UPDATE productos SET
-                                stock_actual = $1, actualizado_en = NOW()
-                            WHERE id = $2
-                        `, [stockDespues, item.producto_id]);
-                    }
 
                     // Marcar item como aplicado
                     await db.query(`
@@ -498,14 +470,14 @@ class AjustesMasivosModel {
                             movimiento_id = $1,
                             aplicado_en = NOW()
                         WHERE id = $2
-                    `, [movimientoResult.rows[0].id, item.id]);
+                    `, [movimientoResult.rows[0].movimiento_id, item.id]);
 
                     aplicados.push({
                         item_id: item.id,
                         fila: item.fila_numero,
                         producto: item.producto_nombre,
                         cantidad: item.cantidad_ajuste,
-                        movimiento_id: movimientoResult.rows[0].id
+                        movimiento_id: movimientoResult.rows[0].movimiento_id
                     });
 
                 } catch (error) {

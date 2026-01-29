@@ -981,6 +981,7 @@ class VentasPOSModel {
     /**
      * Cancelar venta completa
      * CRÍTICO: Revierte el stock de todos los items
+     * Ene 2026: Refactorizado para usar registrar_movimiento_con_ubicacion()
      */
     static async cancelar(id, motivo, usuarioId, organizacionId) {
         return await RLSContextManager.transaction(organizacionId, async (db) => {
@@ -991,7 +992,7 @@ class VentasPOSModel {
 
             // Obtener venta con items
             const ventaQuery = await db.query(
-                `SELECT id, folio, estado, tipo_venta FROM ventas_pos WHERE id = $1`,
+                `SELECT id, folio, estado, tipo_venta, sucursal_id FROM ventas_pos WHERE id = $1`,
                 [id]
             );
 
@@ -1004,9 +1005,9 @@ class VentasPOSModel {
                 ErrorHelper.throwConflict('La venta ya está cancelada');
             }
 
-            // Obtener items de la venta
+            // Obtener items de la venta (incluir variante_id)
             const itemsQuery = await db.query(
-                `SELECT producto_id, cantidad FROM ventas_pos_items WHERE venta_pos_id = $1`,
+                `SELECT producto_id, variante_id, cantidad FROM ventas_pos_items WHERE venta_pos_id = $1`,
                 [id]
             );
 
@@ -1016,50 +1017,40 @@ class VentasPOSModel {
                     total_items: itemsQuery.rows.length
                 });
 
-                // Para cada item, crear movimiento de entrada (devolución)
+                // Para cada item, usar función consolidada para entrada (devolución)
                 for (const item of itemsQuery.rows) {
-                    // Obtener stock actual del producto
-                    const productoQuery = await db.query(
-                        `SELECT stock_actual FROM productos WHERE id = $1`,
-                        [item.producto_id]
+                    // Usar función SQL consolidada
+                    await db.query(
+                        `SELECT registrar_movimiento_con_ubicacion(
+                            $1,  -- organizacion_id
+                            $2,  -- producto_id
+                            $3,  -- tipo_movimiento
+                            $4,  -- cantidad (positivo para entrada)
+                            $5,  -- sucursal_id
+                            NULL, -- ubicacion_id
+                            NULL, -- lote
+                            NULL, -- fecha_vencimiento
+                            NULL, -- referencia
+                            $6,  -- motivo
+                            $7,  -- usuario_id
+                            NULL, -- costo_unitario
+                            NULL, -- proveedor_id
+                            $8,  -- venta_pos_id
+                            NULL, -- cita_id
+                            $9   -- variante_id
+                        )`,
+                        [
+                            organizacionId,
+                            item.producto_id,
+                            'entrada_devolucion',
+                            item.cantidad,  // Positivo porque es entrada
+                            venta.sucursal_id,
+                            `Cancelación de venta ${venta.folio}: ${motivo || 'Sin motivo especificado'}`,
+                            usuarioId,
+                            id,
+                            item.variante_id || null
+                        ]
                     );
-
-                    if (productoQuery.rows.length > 0) {
-                        const stockAntes = productoQuery.rows[0].stock_actual;
-                        const stockDespues = stockAntes + item.cantidad;
-
-                        // Insertar movimiento de inventario (entrada por devolución)
-                        await db.query(
-                            `INSERT INTO movimientos_inventario (
-                                organizacion_id,
-                                producto_id,
-                                tipo_movimiento,
-                                cantidad,
-                                stock_antes,
-                                stock_despues,
-                                venta_pos_id,
-                                usuario_id,
-                                motivo
-                            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
-                            [
-                                organizacionId,
-                                item.producto_id,
-                                'entrada_devolucion',
-                                item.cantidad,
-                                stockAntes,
-                                stockDespues,
-                                id,
-                                usuarioId,
-                                `Cancelación de venta ${venta.folio}: ${motivo || 'Sin motivo especificado'}`
-                            ]
-                        );
-
-                        // Actualizar stock del producto
-                        await db.query(
-                            `UPDATE productos SET stock_actual = $1, actualizado_en = NOW() WHERE id = $2`,
-                            [stockDespues, item.producto_id]
-                        );
-                    }
                 }
             }
 
@@ -1095,6 +1086,7 @@ class VentasPOSModel {
     /**
      * Procesar devolución parcial o total de items
      * CRÍTICO: Ajusta stock y puede generar nota de crédito
+     * Ene 2026: Refactorizado para usar registrar_movimiento_con_ubicacion()
      */
     static async devolver(id, itemsDevueltos, motivo, usuarioId, organizacionId) {
         return await RLSContextManager.transaction(organizacionId, async (db) => {
@@ -1109,9 +1101,9 @@ class VentasPOSModel {
                 ErrorHelper.throwValidation('Debe especificar al menos un item para devolver');
             }
 
-            // Obtener venta (incluir cliente_id para reversión de puntos)
+            // Obtener venta (incluir cliente_id para reversión de puntos y sucursal_id)
             const ventaQuery = await db.query(
-                `SELECT id, folio, total, estado, cliente_id FROM ventas_pos WHERE id = $1`,
+                `SELECT id, folio, total, estado, cliente_id, sucursal_id FROM ventas_pos WHERE id = $1`,
                 [id]
             );
 
@@ -1131,9 +1123,9 @@ class VentasPOSModel {
 
             // Procesar cada item devuelto
             for (const itemDevuelto of itemsDevueltos) {
-                // Validar que el item pertenece a la venta
+                // Validar que el item pertenece a la venta (incluir variante_id)
                 const itemQuery = await db.query(
-                    `SELECT id, producto_id, cantidad, precio_final, subtotal
+                    `SELECT id, producto_id, variante_id, cantidad, precio_final, subtotal
                      FROM ventas_pos_items
                      WHERE id = $1 AND venta_pos_id = $2`,
                     [itemDevuelto.item_id, id]
@@ -1157,48 +1149,38 @@ class VentasPOSModel {
                 const montoDevuelto = (item.precio_final * itemDevuelto.cantidad_devolver);
                 totalDevuelto += montoDevuelto;
 
-                // Obtener stock actual del producto
-                const productoQuery = await db.query(
-                    `SELECT stock_actual FROM productos WHERE id = $1`,
-                    [item.producto_id]
+                // Usar función SQL consolidada para entrada por devolución
+                await db.query(
+                    `SELECT registrar_movimiento_con_ubicacion(
+                        $1,  -- organizacion_id
+                        $2,  -- producto_id
+                        $3,  -- tipo_movimiento
+                        $4,  -- cantidad (positivo para entrada)
+                        $5,  -- sucursal_id
+                        NULL, -- ubicacion_id
+                        NULL, -- lote
+                        NULL, -- fecha_vencimiento
+                        NULL, -- referencia
+                        $6,  -- motivo
+                        $7,  -- usuario_id
+                        NULL, -- costo_unitario
+                        NULL, -- proveedor_id
+                        $8,  -- venta_pos_id
+                        NULL, -- cita_id
+                        $9   -- variante_id
+                    )`,
+                    [
+                        organizacionId,
+                        item.producto_id,
+                        'entrada_devolucion',
+                        itemDevuelto.cantidad_devolver,  // Positivo porque es entrada
+                        venta.sucursal_id,
+                        `Devolución de venta ${venta.folio}: ${motivo || 'Sin motivo especificado'}`,
+                        usuarioId,
+                        id,
+                        item.variante_id || null
+                    ]
                 );
-
-                if (productoQuery.rows.length > 0) {
-                    const stockAntes = productoQuery.rows[0].stock_actual;
-                    const stockDespues = stockAntes + itemDevuelto.cantidad_devolver;
-
-                    // Insertar movimiento de inventario (entrada por devolución)
-                    await db.query(
-                        `INSERT INTO movimientos_inventario (
-                            organizacion_id,
-                            producto_id,
-                            tipo_movimiento,
-                            cantidad,
-                            stock_antes,
-                            stock_despues,
-                            venta_pos_id,
-                            usuario_id,
-                            motivo
-                        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
-                        [
-                            organizacionId,
-                            item.producto_id,
-                            'entrada_devolucion',
-                            itemDevuelto.cantidad_devolver,
-                            stockAntes,
-                            stockDespues,
-                            id,
-                            usuarioId,
-                            `Devolución de venta ${venta.folio}: ${motivo || 'Sin motivo especificado'}`
-                        ]
-                    );
-
-                    // Actualizar stock del producto
-                    await db.query(
-                        `UPDATE productos SET stock_actual = $1, actualizado_en = NOW() WHERE id = $2`,
-                        [stockDespues, item.producto_id]
-                    );
-                }
 
                 itemsActualizados.push({
                     item_id: itemDevuelto.item_id,
@@ -1635,6 +1617,7 @@ class VentasPOSModel {
     /**
      * Eliminar venta (marca como eliminada, revierte stock)
      * DELETE /api/v1/pos/ventas/:id
+     * Ene 2026: Refactorizado para usar registrar_movimiento_con_ubicacion()
      */
     static async eliminar(organizacionId, id, data) {
         return await RLSContextManager.transaction(organizacionId, async (db) => {
@@ -1653,40 +1636,47 @@ class VentasPOSModel {
                 ErrorHelper.throwConflict('La venta ya está cancelada');
             }
 
-            // 1. Obtener items de la venta
+            // 1. Obtener items de la venta (incluir variante_id)
             const itemsQuery = `
-                SELECT * FROM ventas_pos_items
+                SELECT producto_id, variante_id, cantidad FROM ventas_pos_items
                 WHERE venta_pos_id = $1
             `;
             const itemsResult = await db.query(itemsQuery, [id]);
 
-            // 2. Revertir stock de cada producto
+            // 2. Revertir stock de cada producto usando función consolidada
             for (const item of itemsResult.rows) {
-                const updateStockQuery = `
-                    UPDATE productos
-                    SET stock_actual = stock_actual + $1,
-                        actualizado_en = NOW()
-                    WHERE id = $2 AND organizacion_id = $3
-                `;
-                await db.query(updateStockQuery, [item.cantidad, item.producto_id, organizacionId]);
-
-                // Registrar movimiento de reversión
-                const movimientoQuery = `
-                    INSERT INTO movimientos_inventario (
-                        organizacion_id, producto_id, tipo_movimiento, cantidad,
-                        venta_pos_id, motivo, referencia
-                    )
-                    VALUES ($1, $2, 'entrada_devolucion', $3, $4, $5, $6)
-                `;
-
-                await db.query(movimientoQuery, [
-                    organizacionId,
-                    item.producto_id,
-                    item.cantidad,
-                    id,
-                    data.motivo || 'Venta eliminada',
-                    `Reversión de venta ${venta.folio}`
-                ]);
+                await db.query(
+                    `SELECT registrar_movimiento_con_ubicacion(
+                        $1,  -- organizacion_id
+                        $2,  -- producto_id
+                        $3,  -- tipo_movimiento
+                        $4,  -- cantidad (positivo para entrada)
+                        $5,  -- sucursal_id
+                        NULL, -- ubicacion_id
+                        NULL, -- lote
+                        NULL, -- fecha_vencimiento
+                        $6,  -- referencia
+                        $7,  -- motivo
+                        $8,  -- usuario_id
+                        NULL, -- costo_unitario
+                        NULL, -- proveedor_id
+                        $9,  -- venta_pos_id
+                        NULL, -- cita_id
+                        $10  -- variante_id
+                    )`,
+                    [
+                        organizacionId,
+                        item.producto_id,
+                        'entrada_devolucion',
+                        item.cantidad,  // Positivo porque es entrada
+                        venta.sucursal_id,
+                        `Reversión de venta ${venta.folio}`,
+                        data.motivo || 'Venta eliminada',
+                        data.usuario_id,
+                        id,
+                        item.variante_id || null
+                    ]
+                );
             }
 
             // 3. Marcar venta como cancelada

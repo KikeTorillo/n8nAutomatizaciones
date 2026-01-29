@@ -106,7 +106,7 @@ function ClienteCard({ cliente }) {
         <Button
           variant="outline"
           size="sm"
-          onClick={() => navigate(`/clientes/${cliente.id}/editar`)}
+          onClick={() => navigate(`/clientes/${cliente.id}`)}
           aria-label={`Editar cliente ${cliente.nombre}`}
         >
           <Edit className="w-4 h-4" />

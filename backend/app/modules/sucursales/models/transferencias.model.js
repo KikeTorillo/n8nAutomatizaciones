@@ -404,7 +404,7 @@ class TransferenciasStockModel {
                 ErrorHelper.throwConflict('La transferencia ya está cancelada');
             }
 
-            // Si estaba en enviado, devolver stock a origen
+            // Si estaba en enviado, devolver stock a origen usando función consolidada
             if (estadoActual === 'enviado') {
                 const sucursalOrigenId = transferenciaQuery.rows[0].sucursal_origen_id;
                 const items = await db.query(
@@ -413,11 +413,21 @@ class TransferenciasStockModel {
                 );
 
                 for (const item of items.rows) {
+                    // Devolver stock usando función consolidada (entrada_ajuste con cantidad positiva)
                     await db.query(`
-                        UPDATE stock_sucursales
-                        SET cantidad = cantidad + $1, actualizado_en = NOW()
-                        WHERE producto_id = $2 AND sucursal_id = $3
-                    `, [item.cantidad_enviada, item.producto_id, sucursalOrigenId]);
+                        SELECT registrar_movimiento_con_ubicacion(
+                            $1, $2, 'entrada_ajuste', $3, $4,
+                            NULL, NULL, NULL, NULL,
+                            $5, $6, NULL, NULL, NULL, NULL, NULL
+                        )
+                    `, [
+                        organizacionId,
+                        item.producto_id,
+                        item.cantidad_enviada,  // Positivo para devolver stock
+                        sucursalOrigenId,
+                        `Cancelación de transferencia ${id} - stock devuelto a origen`,
+                        usuarioId
+                    ]);
                 }
             }
 

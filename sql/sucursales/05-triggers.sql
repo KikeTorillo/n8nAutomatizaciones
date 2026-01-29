@@ -240,44 +240,31 @@ CREATE TRIGGER trg_profesionales_asignar_sucursal
     EXECUTE FUNCTION trigger_asignar_profesional_sucursal();
 
 -- ====================================================================
--- TRIGGER: inicializar_stock_sucursal
+-- TRIGGER: inicializar_stock_sucursal (DEPRECADO - Enero 2026)
 -- ====================================================================
--- Al crear un producto, inicializa stock en la sucursal matriz.
+-- NOTA: Este trigger está DEPRECADO. La nueva arquitectura usa
+-- stock_ubicaciones como única fuente de verdad.
+-- Ver: sql/inventario/33-consolidacion-stock.sql
+--
+-- La función registrar_movimiento_con_ubicacion() maneja todo el flujo
+-- de stock, incluyendo la inicialización al crear productos.
 -- ====================================================================
 CREATE OR REPLACE FUNCTION trigger_inicializar_stock_sucursal()
 RETURNS TRIGGER AS $$
-DECLARE
-    v_sucursal_matriz_id INTEGER;
 BEGIN
-    -- Obtener sucursal matriz
-    v_sucursal_matriz_id := obtener_sucursal_matriz(NEW.organizacion_id);
-
-    -- Si existe sucursal matriz, crear registro de stock
-    IF v_sucursal_matriz_id IS NOT NULL THEN
-        INSERT INTO stock_sucursales (
-            producto_id,
-            sucursal_id,
-            cantidad,
-            stock_minimo,
-            stock_maximo
-        ) VALUES (
-            NEW.id,
-            v_sucursal_matriz_id,
-            NEW.stock_actual,
-            NEW.stock_minimo,
-            NEW.stock_maximo
-        )
-        ON CONFLICT (producto_id, sucursal_id) DO NOTHING;
-    END IF;
-
+    -- DEPRECADO: Ya no se usa stock_sucursales como fuente de verdad
+    -- La función registrar_movimiento_con_ubicacion() en
+    -- sql/inventario/33-consolidacion-stock.sql maneja el stock
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER trg_productos_inicializar_stock
-    AFTER INSERT ON productos
-    FOR EACH ROW
-    EXECUTE FUNCTION trigger_inicializar_stock_sucursal();
+-- TRIGGER DESHABILITADO - No crear registros en stock_sucursales
+-- La nueva arquitectura usa stock_ubicaciones exclusivamente
+-- CREATE TRIGGER trg_productos_inicializar_stock
+--     AFTER INSERT ON productos
+--     FOR EACH ROW
+--     EXECUTE FUNCTION trigger_inicializar_stock_sucursal();
 
 -- ====================================================================
 -- TRIGGER: actualizar_timestamp_stock
@@ -290,10 +277,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER trg_stock_sucursales_updated
-    BEFORE UPDATE ON stock_sucursales
-    FOR EACH ROW
-    EXECUTE FUNCTION trigger_actualizar_timestamp_stock();
+-- NOTA (Enero 2026): Trigger trg_stock_sucursales_updated ELIMINADO
+-- La tabla stock_sucursales ya no existe
 
 CREATE TRIGGER trg_servicios_sucursales_updated
     BEFORE UPDATE ON servicios_sucursales

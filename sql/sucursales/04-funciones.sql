@@ -105,70 +105,19 @@ $$ LANGUAGE plpgsql STABLE;
 COMMENT ON FUNCTION obtener_sucursales_usuario IS 'Retorna array de IDs de sucursales asignadas a un usuario';
 
 -- ====================================================================
--- FUNCION: obtener_stock_sucursal
+-- NOTA (Enero 2026): Funciones legacy de stock_sucursales ELIMINADAS
 -- ====================================================================
--- Retorna el stock de un producto en una sucursal específica.
+-- Las siguientes funciones fueron eliminadas porque usaban stock_sucursales:
+-- - obtener_stock_sucursal()
+-- - obtener_stock_total_producto()
+-- - validar_stock_transferencia()
+--
+-- La nueva arquitectura usa:
+-- - stock_ubicaciones como única fuente de verdad
+-- - v_stock_consolidado para consultas de stock
+-- - registrar_movimiento_con_ubicacion() para todas las operaciones
+-- Ver: sql/inventario/33-consolidacion-stock.sql
 -- ====================================================================
-CREATE OR REPLACE FUNCTION obtener_stock_sucursal(
-    p_producto_id INTEGER,
-    p_sucursal_id INTEGER
-)
-RETURNS INTEGER AS $$
-DECLARE
-    v_cantidad INTEGER;
-BEGIN
-    SELECT cantidad INTO v_cantidad
-    FROM stock_sucursales
-    WHERE producto_id = p_producto_id
-    AND sucursal_id = p_sucursal_id;
-
-    RETURN COALESCE(v_cantidad, 0);
-END;
-$$ LANGUAGE plpgsql STABLE;
-
-COMMENT ON FUNCTION obtener_stock_sucursal IS 'Retorna stock de un producto en una sucursal. 0 si no existe registro.';
-
--- ====================================================================
--- FUNCION: obtener_stock_total_producto
--- ====================================================================
--- Retorna el stock total de un producto sumando todas las sucursales.
--- ====================================================================
-CREATE OR REPLACE FUNCTION obtener_stock_total_producto(p_producto_id INTEGER)
-RETURNS INTEGER AS $$
-DECLARE
-    v_total INTEGER;
-BEGIN
-    SELECT COALESCE(SUM(cantidad), 0) INTO v_total
-    FROM stock_sucursales
-    WHERE producto_id = p_producto_id;
-
-    RETURN v_total;
-END;
-$$ LANGUAGE plpgsql STABLE;
-
-COMMENT ON FUNCTION obtener_stock_total_producto IS 'Retorna stock total de un producto sumando todas las sucursales';
-
--- ====================================================================
--- FUNCION: validar_stock_transferencia
--- ====================================================================
--- Valida que haya stock suficiente para una transferencia.
--- Retorna TRUE si hay stock suficiente, FALSE si no.
--- ====================================================================
-CREATE OR REPLACE FUNCTION validar_stock_transferencia(
-    p_producto_id INTEGER,
-    p_sucursal_origen_id INTEGER,
-    p_cantidad INTEGER
-)
-RETURNS BOOLEAN AS $$
-DECLARE
-    v_stock_actual INTEGER;
-BEGIN
-    v_stock_actual := obtener_stock_sucursal(p_producto_id, p_sucursal_origen_id);
-    RETURN v_stock_actual >= p_cantidad;
-END;
-$$ LANGUAGE plpgsql STABLE;
-
-COMMENT ON FUNCTION validar_stock_transferencia IS 'Valida stock suficiente para transferencia. TRUE = OK, FALSE = insuficiente.';
 
 -- ====================================================================
 -- FUNCION: procesar_envio_transferencia

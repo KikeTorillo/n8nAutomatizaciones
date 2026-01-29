@@ -37,12 +37,9 @@ CREATE INDEX idx_servicios_sucursales_sucursal ON servicios_sucursales(sucursal_
 CREATE INDEX idx_servicios_sucursales_activos ON servicios_sucursales(sucursal_id) WHERE activo = TRUE;
 
 -- ====================================================================
--- INDICES: stock_sucursales
+-- NOTA: Índices de stock_sucursales ELIMINADOS (Enero 2026)
+-- La nueva arquitectura usa stock_ubicaciones
 -- ====================================================================
-CREATE INDEX idx_stock_sucursales_producto ON stock_sucursales(producto_id);
-CREATE INDEX idx_stock_sucursales_sucursal ON stock_sucursales(sucursal_id);
-CREATE INDEX idx_stock_sucursales_bajo_stock ON stock_sucursales(sucursal_id)
-    WHERE cantidad <= stock_minimo;
 
 -- ====================================================================
 -- INDICES: transferencias_stock
@@ -66,9 +63,6 @@ CREATE INDEX idx_transferencias_items_producto ON transferencias_stock_items(pro
 -- ====================================================================
 -- Índice para búsquedas de transferencias por organización y rango de fechas
 CREATE INDEX idx_transferencias_org_fecha ON transferencias_stock(organizacion_id, creado_en DESC);
-
--- Índice para búsquedas de stock por sucursal y producto (consultas frecuentes)
-CREATE INDEX idx_stock_sucursal_producto ON stock_sucursales(sucursal_id, producto_id);
 
 -- ====================================================================
 -- FIN: INDICES DE SUCURSALES

@@ -603,9 +603,9 @@ class ConteosModel {
         return await RLSContextManager.transaction(organizacionId, async (db) => {
             logger.info('[ConteosModel.aplicarAjustes] Aplicando ajustes', { conteo_id: id });
 
-            // Verificar estado
+            // Verificar estado (incluir sucursal_id para movimientos)
             const conteoQuery = await db.query(
-                `SELECT c.*, c.folio
+                `SELECT c.*, c.folio, c.sucursal_id
                  FROM conteos_inventario c
                  WHERE c.id = $1`,
                 [id]
@@ -631,6 +631,7 @@ class ConteosModel {
             const ajustesRealizados = [];
 
             // Crear movimiento de ajuste para cada item con diferencia
+            // Ene 2026: Refactorizado para usar registrar_movimiento_con_ubicacion()
             for (const item of itemsQuery.rows) {
                 const tipoMovimiento = item.diferencia > 0
                     ? 'entrada_ajuste'
@@ -639,69 +640,53 @@ class ConteosModel {
                 // Determinar el costo unitario para el movimiento
                 const costoUnitario = item.costo_unitario || 0;
 
-                // Registrar movimiento de inventario
+                // Usar función consolidada para registrar movimiento
                 const movimiento = await db.query(
-                    `INSERT INTO movimientos_inventario (
-                        organizacion_id,
-                        producto_id,
-                        tipo_movimiento,
-                        cantidad,
-                        costo_unitario,
-                        valor_total,
-                        stock_antes,
-                        stock_despues,
-                        usuario_id,
-                        referencia,
-                        motivo
-                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-                    RETURNING id`,
+                    `SELECT registrar_movimiento_con_ubicacion(
+                        $1,  -- organizacion_id
+                        $2,  -- producto_id
+                        $3,  -- tipo_movimiento
+                        $4,  -- cantidad (diferencia)
+                        $5,  -- sucursal_id
+                        NULL, -- ubicacion_id
+                        NULL, -- lote
+                        NULL, -- fecha_vencimiento
+                        $6,  -- referencia
+                        $7,  -- motivo
+                        $8,  -- usuario_id
+                        $9,  -- costo_unitario
+                        NULL, -- proveedor_id
+                        NULL, -- venta_pos_id
+                        NULL, -- cita_id
+                        $10  -- variante_id
+                    ) as movimiento_id`,
                     [
                         organizacionId,
                         item.producto_id,
                         tipoMovimiento,
                         item.diferencia,
-                        costoUnitario,
-                        Math.abs(item.diferencia) * costoUnitario,
-                        item.cantidad_sistema,
-                        item.cantidad_contada,
-                        usuarioId,
+                        conteo.sucursal_id,
                         `Conteo: ${conteo.folio}`,
-                        `Ajuste por conteo físico. Diferencia: ${item.diferencia}`
+                        `Ajuste por conteo físico. Diferencia: ${item.diferencia}`,
+                        usuarioId,
+                        costoUnitario,
+                        item.variante_id || null
                     ]
                 );
-
-                // Actualizar stock del producto
-                if (item.variante_id) {
-                    // Actualizar variante
-                    await db.query(
-                        `UPDATE variantes_producto
-                         SET stock_actual = $1, actualizado_en = NOW()
-                         WHERE id = $2`,
-                        [item.cantidad_contada, item.variante_id]
-                    );
-                } else {
-                    // Actualizar producto
-                    await db.query(
-                        `UPDATE productos
-                         SET stock_actual = $1, actualizado_en = NOW()
-                         WHERE id = $2`,
-                        [item.cantidad_contada, item.producto_id]
-                    );
-                }
 
                 // Vincular movimiento al item
                 await db.query(
                     `UPDATE conteos_inventario_items
                      SET movimiento_id = $1, estado = 'ajustado'
                      WHERE id = $2`,
-                    [movimiento.rows[0].id, item.id]
+                    [movimiento.rows[0].movimiento_id, item.id]
                 );
 
                 ajustesRealizados.push({
                     item_id: item.id,
                     producto_nombre: item.producto_nombre,
                     diferencia: item.diferencia,
-                    movimiento_id: movimiento.rows[0].id
+                    movimiento_id: movimiento.rows[0].movimiento_id
                 });
             }
 

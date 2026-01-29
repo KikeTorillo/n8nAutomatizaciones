@@ -210,19 +210,19 @@ BEGIN
         FROM variantes_producto
         WHERE id = p_variante_id;
     ELSIF p_producto_id IS NOT NULL THEN
-        -- Si hay sucursal específica, buscar en stock_sucursales
+        -- Si hay sucursal específica, usar vista consolidada desde stock_ubicaciones
         IF p_sucursal_id IS NOT NULL THEN
-            SELECT COALESCE(cantidad, 0) INTO v_stock_actual
-            FROM stock_sucursales
+            SELECT COALESCE(cantidad_total, 0) INTO v_stock_actual
+            FROM v_stock_consolidado
             WHERE producto_id = p_producto_id
               AND sucursal_id = p_sucursal_id;
 
-            -- Si no existe registro en stock_sucursales, usar stock del producto
+            -- Si no hay registro, el producto no tiene stock en esa sucursal
             IF v_stock_actual IS NULL THEN
-                SELECT stock_actual INTO v_stock_actual
-                FROM productos WHERE id = p_producto_id;
+                v_stock_actual := 0;
             END IF;
         ELSE
+            -- Stock total del producto (ya sincronizado por trigger)
             SELECT stock_actual INTO v_stock_actual
             FROM productos WHERE id = p_producto_id;
         END IF;

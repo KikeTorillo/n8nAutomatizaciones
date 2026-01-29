@@ -9,7 +9,6 @@ import { protectedRoute, ROLES } from './helpers/routeHelpers';
 
 // Clientes
 const ClientesPage = lazy(() => import('@/pages/clientes/ClientesPage'));
-const ClienteFormPage = lazy(() => import('@/pages/clientes/ClienteFormPage'));
 const ClienteDetailPage = lazy(() => import('@/pages/clientes/ClienteDetailPage'));
 const EtiquetasPage = lazy(() => import('@/pages/clientes/EtiquetasPage'));
 const OportunidadesPage = lazy(() => import('@/pages/clientes/OportunidadesPage'));
@@ -32,9 +31,13 @@ const OnboardingAdminPage = lazy(() => import('@/pages/onboarding-empleados/Onbo
 export const personasRoutes = [
   // Clientes
   protectedRoute('clientes', ClientesPage, { requiredRole: ROLES.ALL_AUTHENTICATED }),
-  // Nota: /clientes/nuevo eliminada - ahora usa ClienteFormDrawer
+  // Nota: /clientes/nuevo y /clientes/:id/editar eliminadas - ahora usan ClienteFormDrawer
   protectedRoute('clientes/:id', ClienteDetailPage, { requiredRole: ROLES.ALL_AUTHENTICATED }),
-  protectedRoute('clientes/:id/editar', ClienteFormPage, { requiredRole: ROLES.ALL_AUTHENTICATED }),
+  // Redirect para URLs antiguas de edición
+  {
+    path: 'clientes/:id/editar',
+    element: <Navigate to=".." replace />,
+  },
   protectedRoute('clientes/etiquetas', EtiquetasPage, { requiredRole: ROLES.ALL_AUTHENTICATED }),
   protectedRoute('clientes/oportunidades', OportunidadesPage, { requiredRole: ROLES.ALL_AUTHENTICATED }),
 

@@ -156,7 +156,7 @@ function ClientesList({
               variant="primary"
               onClick={(e) => {
                 e.stopPropagation();
-                navigate(`/clientes/${row.id}/editar`);
+                navigate(`/clientes/${row.id}`);
               }}
             />
           </DataTableActions>

@@ -15,7 +15,7 @@
  * ====================================================================
  */
 
-import { lazy, Suspense, useMemo } from 'react';
+import { lazy, Suspense, useMemo, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
   Edit,
@@ -36,6 +36,7 @@ import {
   BaseDetailLayout,
 } from '@/components/ui';
 import ClienteEtiquetasEditor from '@/components/clientes/ClienteEtiquetasEditor';
+import ClienteFormDrawer from '@/components/clientes/ClienteFormDrawer';
 import { useCliente, useEstadisticasCliente } from '@/hooks/personas';
 import { useUsuarios } from '@/hooks/personas';
 
@@ -175,6 +176,9 @@ function ClienteDetailPage() {
   const { id } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
 
+  // Estado para drawer de edición
+  const [editDrawerOpen, setEditDrawerOpen] = useState(false);
+
   // Tab activo desde URL o default 'general'
   const activeTab = searchParams.get('tab') || 'general';
 
@@ -184,7 +188,7 @@ function ClienteDetailPage() {
   };
 
   // Obtener datos del cliente
-  const { data: cliente, isLoading: loadingCliente, error } = useCliente(id);
+  const { data: cliente, isLoading: loadingCliente, error, refetch } = useCliente(id);
 
   // Obtener estadísticas del cliente (Vista 360°)
   const { data: estadisticas } = useEstadisticasCliente(id);
@@ -199,10 +203,10 @@ function ClienteDetailPage() {
     return (
       <ClienteHeaderContent
         cliente={cliente}
-        onEdit={() => navigate(`/clientes/${id}/editar`)}
+        onEdit={() => setEditDrawerOpen(true)}
       />
     );
-  }, [cliente, navigate, id]);
+  }, [cliente]);
 
   // Renderizar tab activo
   const renderTabContent = () => {
@@ -287,6 +291,18 @@ function ClienteDetailPage() {
       >
         {renderTabContent()}
       </BaseDetailLayout>
+
+      {/* Drawer de edición */}
+      <ClienteFormDrawer
+        mode="edit"
+        cliente={cliente}
+        isOpen={editDrawerOpen}
+        onClose={() => setEditDrawerOpen(false)}
+        onSuccess={() => {
+          setEditDrawerOpen(false);
+          refetch();
+        }}
+      />
     </div>
   );
 }

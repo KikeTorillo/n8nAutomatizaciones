@@ -11,7 +11,9 @@ class MovimientosInventarioModel {
 
     /**
      * Registrar movimiento de inventario
-     * CRÍTICO: Actualiza stock_actual del producto automáticamente
+     * CRÍTICO: Usa registrar_movimiento_con_ubicacion() para mantener
+     * sincronizado stock_ubicaciones y productos.stock_actual
+     * Ene 2026: Refactorizado para usar función SQL consolidada
      */
     static async registrar(data, organizacionId) {
         return await RLSContextManager.transaction(organizacionId, async (db) => {
@@ -24,21 +26,12 @@ class MovimientosInventarioModel {
 
             // Validar que el producto existe
             const productoQuery = await db.query(
-                `SELECT id, stock_actual, nombre FROM productos
+                `SELECT id, nombre FROM productos
                  WHERE id = $1 AND organizacion_id = $2`,
                 [data.producto_id, organizacionId]
             );
 
             ErrorHelper.throwIfNotFound(productoQuery.rows[0], 'Producto');
-
-            const producto = productoQuery.rows[0];
-            const stockAntes = producto.stock_actual;
-            const stockDespues = stockAntes + data.cantidad;
-
-            // Validar que el stock no quede negativo
-            if (stockDespues < 0) {
-                ErrorHelper.throwConflict(`Stock insuficiente. Stock actual: ${stockAntes}, intentando restar: ${Math.abs(data.cantidad)}`);
-            }
 
             // Validar proveedor si es entrada de compra
             if (data.tipo_movimiento === 'entrada_compra' && data.proveedor_id) {
@@ -51,72 +44,67 @@ class MovimientosInventarioModel {
                 ErrorHelper.throwIfNotFound(proveedorQuery.rows[0], 'Proveedor');
             }
 
-            // Calcular valor_total
-            const costoUnitario = data.costo_unitario || 0;
-            const valorTotal = Math.abs(data.cantidad) * costoUnitario;
-
-            // Insertar movimiento
-            // ✅ FEATURE: Multi-sucursal - sucursal_id agregado
+            // Usar función SQL consolidada que maneja:
+            // 1. Inserción del movimiento
+            // 2. Actualización de stock_ubicaciones
+            // 3. Sincronización de productos.stock_actual (via trigger)
+            // 4. Sincronización de variantes_producto.stock_actual (si aplica)
             const query = `
-                INSERT INTO movimientos_inventario (
-                    organizacion_id,
-                    sucursal_id,
-                    producto_id,
-                    tipo_movimiento,
-                    cantidad,
-                    stock_antes,
-                    stock_despues,
-                    costo_unitario,
-                    valor_total,
-                    proveedor_id,
-                    venta_pos_id,
-                    cita_id,
-                    usuario_id,
-                    referencia,
-                    motivo,
-                    fecha_vencimiento,
-                    lote
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
-                RETURNING *
+                SELECT registrar_movimiento_con_ubicacion(
+                    $1,  -- p_organizacion_id
+                    $2,  -- p_producto_id
+                    $3,  -- p_tipo_movimiento
+                    $4,  -- p_cantidad
+                    $5,  -- p_sucursal_id
+                    $6,  -- p_ubicacion_id
+                    $7,  -- p_lote
+                    $8,  -- p_fecha_vencimiento
+                    $9,  -- p_referencia
+                    $10, -- p_motivo
+                    $11, -- p_usuario_id
+                    $12, -- p_costo_unitario
+                    $13, -- p_proveedor_id
+                    $14, -- p_venta_pos_id
+                    $15, -- p_cita_id
+                    $16  -- p_variante_id
+                ) as movimiento_id
             `;
 
             const values = [
                 organizacionId,
-                data.sucursal_id || null, // ✅ Multi-sucursal
                 data.producto_id,
                 data.tipo_movimiento,
                 data.cantidad,
-                stockAntes,
-                stockDespues,
-                costoUnitario,
-                valorTotal,
+                data.sucursal_id || null,
+                data.ubicacion_id || null,
+                data.lote || null,
+                data.fecha_vencimiento || null,
+                data.referencia || null,
+                data.motivo || null,
+                data.usuario_id || null,
+                data.costo_unitario || null,
                 data.proveedor_id || null,
                 data.venta_pos_id || null,
                 data.cita_id || null,
-                data.usuario_id || null,
-                data.referencia || null,
-                data.motivo || null,
-                data.fecha_vencimiento || null,
-                data.lote || null
+                data.variante_id || null
             ];
 
-            const resultMovimiento = await db.query(query, values);
+            const result = await db.query(query, values);
+            const movimientoId = result.rows[0].movimiento_id;
 
-            // Actualizar stock del producto
-            await db.query(
-                `UPDATE productos
-                 SET stock_actual = $1, actualizado_en = NOW()
-                 WHERE id = $2`,
-                [stockDespues, data.producto_id]
+            // Obtener el movimiento completo para retornar
+            const movimientoQuery = await db.query(
+                `SELECT * FROM movimientos_inventario WHERE id = $1`,
+                [movimientoId]
             );
 
             logger.info('[MovimientosInventarioModel.registrar] Movimiento registrado', {
-                movimiento_id: resultMovimiento.rows[0].id,
-                stock_antes: stockAntes,
-                stock_despues: stockDespues
+                movimiento_id: movimientoId,
+                stock_antes: movimientoQuery.rows[0].stock_antes,
+                stock_despues: movimientoQuery.rows[0].stock_despues
             });
 
-            return resultMovimiento.rows[0];
+            return movimientoQuery.rows[0];
         });
     }
 

@@ -9,9 +9,11 @@
 -- * usuarios_sucursales - Asignación de usuarios a sucursales
 -- * profesionales_sucursales - Asignación de profesionales a sucursales
 -- * servicios_sucursales - Personalización de servicios por sucursal
--- * stock_sucursales - Inventario distribuido por sucursal
 -- * transferencias_stock - Transferencias entre sucursales
 -- * transferencias_stock_items - Detalle de productos transferidos
+--
+-- NOTA (Enero 2026): stock_sucursales fue ELIMINADA.
+-- La nueva arquitectura usa stock_ubicaciones (ver: inventario/33-consolidacion-stock.sql)
 --
 -- Fecha: Diciembre 2025
 -- ====================================================================
@@ -206,38 +208,11 @@ COMMENT ON COLUMN servicios_sucursales.precio_override IS 'Precio específico pa
 COMMENT ON COLUMN servicios_sucursales.duracion_override IS 'Duración específica para esta sucursal en minutos. NULL = usar duración base.';
 
 -- ====================================================================
--- TABLA: stock_sucursales
+-- NOTA: La tabla stock_sucursales fue ELIMINADA (Enero 2026)
 -- ====================================================================
--- Inventario distribuido por sucursal.
--- Cada sucursal puede tener stock independiente de cada producto.
+-- La nueva arquitectura usa stock_ubicaciones como única fuente de verdad.
+-- Ver: sql/inventario/33-consolidacion-stock.sql
 -- ====================================================================
-CREATE TABLE stock_sucursales (
-    -- 🔑 IDENTIFICACION
-    id SERIAL PRIMARY KEY,
-    producto_id INTEGER NOT NULL REFERENCES productos(id) ON DELETE CASCADE,
-    sucursal_id INTEGER NOT NULL REFERENCES sucursales(id) ON DELETE CASCADE,
-
-    -- 📦 STOCK
-    cantidad INTEGER NOT NULL DEFAULT 0,
-    stock_minimo INTEGER DEFAULT 0,
-    stock_maximo INTEGER,
-
-    -- 📍 UBICACION EN ALMACEN
-    ubicacion_almacen VARCHAR(50),  -- Ej: "A-03-02" (Pasillo-Estante-Nivel)
-
-    -- 📅 TIMESTAMPS
-    actualizado_en TIMESTAMPTZ DEFAULT NOW(),
-
-    -- ✅ CONSTRAINTS
-    CONSTRAINT uq_producto_sucursal UNIQUE(producto_id, sucursal_id),
-    CONSTRAINT chk_stock_cantidad CHECK (cantidad >= 0),
-    CONSTRAINT chk_stock_minimo CHECK (stock_minimo >= 0),
-    CONSTRAINT chk_stock_maximo CHECK (stock_maximo IS NULL OR stock_maximo >= stock_minimo)
-);
-
-COMMENT ON TABLE stock_sucursales IS 'Inventario distribuido por sucursal. Permite stock independiente por ubicación.';
-COMMENT ON COLUMN stock_sucursales.cantidad IS 'Stock actual del producto en esta sucursal';
-COMMENT ON COLUMN stock_sucursales.ubicacion_almacen IS 'Ubicación física en el almacén (ej: A-03-02)';
 
 -- ====================================================================
 -- TABLA: transferencias_stock

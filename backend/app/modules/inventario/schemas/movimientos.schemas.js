@@ -10,6 +10,7 @@ const movimientosSchemas = {
     /**
      * Schema para registrar movimiento
      * POST /api/v1/inventario/movimientos
+     * Ene 2026: Agregados campos ubicación y tipos transferencia para consolidación de stock
      */
     registrarMovimiento: {
         body: Joi.object({
@@ -20,8 +21,10 @@ const movimientosSchemas = {
             tipo_movimiento: Joi.string()
                 .valid(
                     'entrada_compra', 'entrada_devolucion', 'entrada_ajuste',
+                    'entrada_transferencia',
                     'salida_venta', 'salida_uso_servicio', 'salida_merma',
-                    'salida_robo', 'salida_devolucion', 'salida_ajuste'
+                    'salida_robo', 'salida_devolucion', 'salida_ajuste',
+                    'salida_transferencia'
                 )
                 .required()
                 .messages({
@@ -44,7 +47,13 @@ const movimientosSchemas = {
             fecha_vencimiento: Joi.date().iso().optional().allow(null),
             lote: Joi.string().max(50).optional().allow(null, ''),
             // FEATURE: Multi-sucursal
-            sucursal_id: Joi.number().integer().positive().optional().allow(null)
+            sucursal_id: Joi.number().integer().positive().optional().allow(null),
+            // FEATURE: Consolidación stock - ubicaciones WMS
+            ubicacion_id: Joi.number().integer().positive().optional().allow(null),
+            ubicacion_origen_id: Joi.number().integer().positive().optional().allow(null),
+            ubicacion_destino_id: Joi.number().integer().positive().optional().allow(null),
+            // FEATURE: Variantes de producto
+            variante_id: Joi.number().integer().positive().optional().allow(null)
         }).custom((value, helpers) => {
             // Validación: Las entradas deben tener cantidad positiva
             if (value.tipo_movimiento?.startsWith('entrada') && value.cantidad <= 0) {
@@ -67,13 +76,16 @@ const movimientosSchemas = {
     /**
      * Schema para listar movimientos
      * GET /api/v1/inventario/movimientos
+     * Ene 2026: Agregados tipos transferencia para consolidación de stock
      */
     listarMovimientos: {
         query: withPagination({
             tipo_movimiento: Joi.string().valid(
                 'entrada_compra', 'entrada_devolucion', 'entrada_ajuste',
+                'entrada_transferencia',
                 'salida_venta', 'salida_uso_servicio', 'salida_merma',
-                'salida_robo', 'salida_devolucion', 'salida_ajuste'
+                'salida_robo', 'salida_devolucion', 'salida_ajuste',
+                'salida_transferencia'
             ).optional(),
             categoria: Joi.string().valid('entrada', 'salida').optional(),
             producto_id: idOptional,

@@ -45,6 +45,7 @@ COMMENT ON FUNCTION generar_folio_venta IS 'Genera folio único auto-incremental
 -- Descripción: Calcula subtotal, total y monto_pendiente automáticamente
 --              ADEMÁS descuenta stock si la venta está completada
 -- Uso: Llamada por trigger al modificar ventas_pos_items
+-- Ene 2026: Refactorizado para usar registrar_movimiento_con_ubicacion()
 -- ============================================================================
 CREATE OR REPLACE FUNCTION calcular_totales_venta_pos()
 RETURNS TRIGGER AS $$
@@ -54,9 +55,12 @@ DECLARE
     v_estado_venta VARCHAR(20);
     v_organizacion_id INTEGER;
     v_usuario_id INTEGER;
+    v_sucursal_id INTEGER;
     item RECORD;
     v_stock_actual INTEGER;
-    v_ruta_preferida VARCHAR(20);  -- Dic 2025: Soporte dropship
+    v_ruta_preferida VARCHAR(20);
+    v_costo_unitario DECIMAL(10,2);
+    v_movimiento_id INTEGER;
 BEGIN
     -- ⚠️ CRÍTICO: Bypass RLS para operaciones de sistema
     PERFORM set_config('app.bypass_rls', 'true', true);
@@ -79,12 +83,12 @@ BEGIN
         actualizado_en = NOW()
     WHERE id = v_venta_pos_id;
 
-    -- ✨ NUEVO: Descontar stock si la venta está completada
+    -- ✨ Descontar stock si la venta está completada
     -- Solo se ejecuta en INSERT de items (cuando se agregan productos a la venta)
     IF TG_OP = 'INSERT' THEN
         -- Obtener estado de la venta
-        SELECT estado, organizacion_id, usuario_id
-        INTO v_estado_venta, v_organizacion_id, v_usuario_id
+        SELECT estado, organizacion_id, usuario_id, sucursal_id
+        INTO v_estado_venta, v_organizacion_id, v_usuario_id, v_sucursal_id
         FROM ventas_pos
         WHERE id = v_venta_pos_id;
 
@@ -100,84 +104,56 @@ BEGIN
                 FOR item IN
                     SELECT * FROM ventas_pos_items WHERE venta_pos_id = v_venta_pos_id
                 LOOP
-                    -- Dic 2025: Soporte para variantes de producto
+                    -- Obtener ruta preferida y costo del producto
+                    SELECT COALESCE(ruta_preferida, 'normal'), COALESCE(precio_compra, 0)
+                    INTO v_ruta_preferida, v_costo_unitario
+                    FROM productos
+                    WHERE id = item.producto_id;
+
+                    -- Dic 2025: Dropship no requiere stock ni descuento
+                    IF v_ruta_preferida = 'dropship' THEN
+                        CONTINUE;
+                    END IF;
+
+                    -- Validar stock (de variante o producto)
                     IF item.variante_id IS NOT NULL THEN
-                        -- ✅ Lock optimista para VARIANTE
                         SELECT stock_actual INTO v_stock_actual
                         FROM variantes_producto
                         WHERE id = item.variante_id
                         FOR UPDATE;
-
-                        -- Validar stock de variante
-                        IF v_stock_actual < item.cantidad THEN
-                            PERFORM set_config('app.bypass_rls', 'false', true);
-                            RAISE EXCEPTION 'Stock insuficiente para variante ID %: disponible %, requerido %',
-                                item.variante_id, v_stock_actual, item.cantidad;
-                        END IF;
-
-                        -- Actualizar stock de la variante
-                        UPDATE variantes_producto
-                        SET stock_actual = stock_actual - item.cantidad,
-                            actualizado_en = NOW()
-                        WHERE id = item.variante_id;
                     ELSE
-                        -- ✅ Lock optimista: Evitar race conditions (producto normal)
-                        SELECT stock_actual, COALESCE(ruta_preferida, 'normal')
-                        INTO v_stock_actual, v_ruta_preferida
+                        SELECT stock_actual INTO v_stock_actual
                         FROM productos
                         WHERE id = item.producto_id
                         FOR UPDATE;
-
-                        -- Dic 2025: Dropship no requiere stock ni descuento
-                        -- El proveedor envía directo al cliente, no hay movimiento de inventario
-                        IF v_ruta_preferida = 'dropship' THEN
-                            CONTINUE; -- Skip: no descontar stock ni crear movimiento
-                        END IF;
-
-                        -- Validar stock suficiente (solo productos normales)
-                        IF v_stock_actual < item.cantidad THEN
-                            PERFORM set_config('app.bypass_rls', 'false', true);
-                            RAISE EXCEPTION 'Stock insuficiente para producto ID %: disponible %, requerido %',
-                                item.producto_id, v_stock_actual, item.cantidad;
-                        END IF;
-
-                        -- Actualizar stock del producto
-                        UPDATE productos
-                        SET stock_actual = stock_actual - item.cantidad,
-                            actualizado_en = NOW()
-                        WHERE id = item.producto_id;
                     END IF;
 
-                    -- Registrar movimiento de inventario
-                    INSERT INTO movimientos_inventario (
-                        organizacion_id,
-                        producto_id,
-                        variante_id,
-                        tipo_movimiento,
-                        cantidad,
-                        stock_antes,
-                        stock_despues,
-                        costo_unitario,
-                        valor_total,
-                        venta_pos_id,
-                        usuario_id,
-                        creado_en
-                    )
-                    SELECT
+                    -- Validar stock suficiente
+                    IF v_stock_actual < item.cantidad THEN
+                        PERFORM set_config('app.bypass_rls', 'false', true);
+                        RAISE EXCEPTION 'Stock insuficiente para producto ID %: disponible %, requerido %',
+                            item.producto_id, v_stock_actual, item.cantidad;
+                    END IF;
+
+                    -- Usar función consolidada de movimientos
+                    SELECT registrar_movimiento_con_ubicacion(
                         v_organizacion_id,
                         item.producto_id,
-                        item.variante_id,
                         'salida_venta',
-                        -item.cantidad, -- Negativo porque es salida
-                        v_stock_actual, -- Stock antes (con lock)
-                        v_stock_actual - item.cantidad, -- Stock después
-                        p.precio_compra,
-                        p.precio_compra * item.cantidad,
-                        v_venta_pos_id,
+                        -item.cantidad,  -- Negativo porque es salida
+                        v_sucursal_id,
+                        NULL,  -- ubicacion_id (usa default)
+                        NULL,  -- lote
+                        NULL,  -- fecha_vencimiento
+                        NULL,  -- referencia
+                        'Venta POS',
                         v_usuario_id,
-                        NOW()
-                    FROM productos p
-                    WHERE p.id = item.producto_id;
+                        v_costo_unitario,
+                        NULL,  -- proveedor_id
+                        v_venta_pos_id,
+                        NULL,  -- cita_id
+                        item.variante_id
+                    ) INTO v_movimiento_id;
 
                     -- Ene 2026: Si el producto es combo, descontar stock de componentes
                     IF EXISTS (
@@ -186,11 +162,10 @@ BEGIN
                         AND activo = true
                         AND manejo_stock = 'descontar_componentes'
                     ) THEN
-                        -- Obtener sucursal_id de la venta
                         PERFORM descontar_stock_combo(
                             item.producto_id,
                             item.cantidad,
-                            (SELECT sucursal_id FROM ventas_pos WHERE id = v_venta_pos_id),
+                            v_sucursal_id,
                             v_venta_pos_id
                         );
                     END IF;
@@ -217,6 +192,7 @@ COMMENT ON FUNCTION calcular_totales_venta_pos IS 'Calcula totales Y descuenta s
 -- Descripción: Descuenta stock cuando se actualiza el estado de una venta existente
 --              (Solo para casos de UPDATE, no INSERT - esos los maneja calcular_totales_venta_pos)
 -- Uso: Llamada por trigger al cambiar estado a 'completada' en ventas existentes
+-- Ene 2026: Refactorizado para usar registrar_movimiento_con_ubicacion()
 -- ============================================================================
 CREATE OR REPLACE FUNCTION actualizar_stock_venta_pos()
 RETURNS TRIGGER AS $$
@@ -224,6 +200,8 @@ DECLARE
     item RECORD;
     v_stock_actual INTEGER;
     v_ruta_preferida VARCHAR(20);
+    v_costo_unitario DECIMAL(10,2);
+    v_movimiento_id INTEGER;
 BEGIN
     -- ⚠️ CRÍTICO: Bypass RLS para operaciones de sistema
     PERFORM set_config('app.bypass_rls', 'true', true);
@@ -248,94 +226,75 @@ BEGIN
         FOR item IN
             SELECT * FROM ventas_pos_items WHERE venta_pos_id = NEW.id
         LOOP
-            -- Dic 2025: Soporte para variantes de producto
+            -- Obtener ruta preferida y costo del producto
+            SELECT COALESCE(ruta_preferida, 'normal'), COALESCE(precio_compra, 0)
+            INTO v_ruta_preferida, v_costo_unitario
+            FROM productos
+            WHERE id = item.producto_id;
+
+            -- Ene 2026: Dropship - usar función consolidada para trazabilidad (SSOT)
+            -- No afecta stock (cantidad 0) pero mantiene registro para auditoría
+            IF v_ruta_preferida = 'dropship' THEN
+                SELECT registrar_movimiento_con_ubicacion(
+                    NEW.organizacion_id,
+                    item.producto_id,
+                    'salida_venta',
+                    0,  -- cantidad 0 para dropship (no afecta stock)
+                    NEW.sucursal_id,
+                    NULL,  -- ubicacion_id
+                    NULL,  -- lote
+                    NULL,  -- fecha_vencimiento
+                    NULL,  -- referencia
+                    'Dropship - envío directo de proveedor (sin stock local)',
+                    NEW.usuario_id,
+                    v_costo_unitario,
+                    NULL,  -- proveedor_id
+                    NEW.id,  -- venta_pos_id
+                    NULL,  -- cita_id
+                    item.variante_id
+                ) INTO v_movimiento_id;
+                CONTINUE;
+            END IF;
+
+            -- Validar stock (de variante o producto)
             IF item.variante_id IS NOT NULL THEN
-                -- ✅ Lock optimista para VARIANTE
                 SELECT stock_actual INTO v_stock_actual
                 FROM variantes_producto
                 WHERE id = item.variante_id
                 FOR UPDATE;
-
-                -- Validar stock de variante
-                IF v_stock_actual < item.cantidad THEN
-                    PERFORM set_config('app.bypass_rls', 'false', true);
-                    RAISE EXCEPTION 'Stock insuficiente para variante ID %: disponible %, requerido %',
-                        item.variante_id, v_stock_actual, item.cantidad;
-                END IF;
-
-                -- Actualizar stock de la variante
-                UPDATE variantes_producto
-                SET stock_actual = stock_actual - item.cantidad,
-                    actualizado_en = NOW()
-                WHERE id = item.variante_id;
             ELSE
-                -- ✅ Lock optimista: Evitar race conditions (producto normal)
-                SELECT stock_actual, COALESCE(ruta_preferida, 'normal')
-                INTO v_stock_actual, v_ruta_preferida
+                SELECT stock_actual INTO v_stock_actual
                 FROM productos
                 WHERE id = item.producto_id
                 FOR UPDATE;
-
-                -- Dic 2025: Dropship no requiere stock ni descuento
-                IF v_ruta_preferida = 'dropship' THEN
-                    INSERT INTO movimientos_inventario (
-                        organizacion_id, producto_id, variante_id,
-                        tipo_movimiento, cantidad, stock_antes, stock_despues,
-                        costo_unitario, valor_total, venta_pos_id, usuario_id, creado_en
-                    )
-                    SELECT NEW.organizacion_id, item.producto_id, item.variante_id,
-                        'salida_venta', -item.cantidad, v_stock_actual, v_stock_actual,
-                        p.precio_compra, p.precio_compra * item.cantidad,
-                        NEW.id, NEW.usuario_id, NOW()
-                    FROM productos p WHERE p.id = item.producto_id;
-
-                    CONTINUE;
-                END IF;
-
-                -- Validar stock suficiente
-                IF v_stock_actual < item.cantidad THEN
-                    PERFORM set_config('app.bypass_rls', 'false', true);
-                    RAISE EXCEPTION 'Stock insuficiente para producto ID %: disponible %, requerido %',
-                        item.producto_id, v_stock_actual, item.cantidad;
-                END IF;
-
-                -- Actualizar stock del producto
-                UPDATE productos
-                SET stock_actual = stock_actual - item.cantidad,
-                    actualizado_en = NOW()
-                WHERE id = item.producto_id;
             END IF;
 
-            -- Registrar movimiento de inventario
-            INSERT INTO movimientos_inventario (
-                organizacion_id,
-                producto_id,
-                variante_id,
-                tipo_movimiento,
-                cantidad,
-                stock_antes,
-                stock_despues,
-                costo_unitario,
-                valor_total,
-                venta_pos_id,
-                usuario_id,
-                creado_en
-            )
-            SELECT
+            -- Validar stock suficiente
+            IF v_stock_actual < item.cantidad THEN
+                PERFORM set_config('app.bypass_rls', 'false', true);
+                RAISE EXCEPTION 'Stock insuficiente para producto ID %: disponible %, requerido %',
+                    item.producto_id, v_stock_actual, item.cantidad;
+            END IF;
+
+            -- Usar función consolidada de movimientos
+            SELECT registrar_movimiento_con_ubicacion(
                 NEW.organizacion_id,
                 item.producto_id,
-                item.variante_id,
                 'salida_venta',
-                -item.cantidad, -- Negativo porque es salida
-                v_stock_actual, -- Stock antes (con lock)
-                v_stock_actual - item.cantidad, -- Stock después
-                p.precio_compra,
-                p.precio_compra * item.cantidad,
-                NEW.id,
+                -item.cantidad,  -- Negativo porque es salida
+                NEW.sucursal_id,
+                NULL,  -- ubicacion_id (usa default)
+                NULL,  -- lote
+                NULL,  -- fecha_vencimiento
+                NULL,  -- referencia
+                'Venta POS (cambio estado)',
                 NEW.usuario_id,
-                NOW()
-            FROM productos p
-            WHERE p.id = item.producto_id;
+                v_costo_unitario,
+                NULL,  -- proveedor_id
+                NEW.id,
+                NULL,  -- cita_id
+                item.variante_id
+            ) INTO v_movimiento_id;
 
             -- Ene 2026: Si el producto es combo, descontar stock de componentes
             IF EXISTS (

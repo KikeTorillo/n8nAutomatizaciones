@@ -461,18 +461,31 @@ BEGIN
 
     -- Solo descontar si el manejo es por componentes
     IF v_combo.manejo_stock = 'descontar_componentes' THEN
-        -- Iterar componentes y descontar
+        -- Iterar componentes y descontar usando función consolidada
         FOR v_componente IN
-            SELECT * FROM obtener_componentes_combo(p_producto_id)
+            SELECT oc.*, p.precio_compra AS costo_unitario
+            FROM obtener_componentes_combo(p_producto_id) oc
+            JOIN productos p ON p.id = oc.producto_id
         LOOP
-            -- Descontar del producto
-            UPDATE productos
-            SET stock_actual = stock_actual - (v_componente.cantidad * p_cantidad)
-            WHERE id = v_componente.producto_id
-              AND organizacion_id = v_org_id;
-
-            -- Registrar movimiento si hay tabla de movimientos
-            -- (Se integra con sistema de inventario existente)
+            -- Usar función consolidada para descontar stock de componente
+            PERFORM registrar_movimiento_con_ubicacion(
+                v_org_id,
+                v_componente.producto_id,
+                'salida_venta',
+                -(v_componente.cantidad * p_cantidad),  -- Negativo = salida
+                p_sucursal_id,
+                NULL,  -- ubicacion_id
+                NULL,  -- lote
+                NULL,  -- fecha_vencimiento
+                NULL,  -- referencia
+                format('Componente de combo (venta POS %s)', COALESCE(p_venta_id::TEXT, 'N/A')),
+                NULL,  -- usuario_id (no disponible en función SQL)
+                COALESCE(v_componente.costo_unitario, 0),
+                NULL,  -- proveedor_id
+                p_venta_id,
+                NULL,  -- cita_id
+                NULL   -- variante_id
+            );
         END LOOP;
     END IF;
 

@@ -39,7 +39,6 @@
     "usuarios_sucursales",
     "profesionales_sucursales",
     "servicios_sucursales",
-    "stock_sucursales",
     "transferencias_stock",
     "transferencias_stock_items"
   ],
