@@ -6,7 +6,7 @@ El modulo Website permite a las organizaciones crear y gestionar sitios web prof
 
 ---
 
-## Estado Actual (Enero 2026) - Fase 1 Completada
+## Estado Actual (Enero 2026) - Fase 1.5 Completada
 
 ### Arquitectura
 
@@ -14,16 +14,27 @@ El modulo Website permite a las organizaciones crear y gestionar sitios web prof
 ┌─────────────────────────────────────────────────────────────────┐
 │                        FRONTEND                                  │
 ├─────────────────────────────────────────────────────────────────┤
-│  WebsiteBuilder (Canvas WYSIWYG)                                │
-│  ├── DndEditorProvider (contexto drag & drop)                   │
+│  WebsiteEditorPage (Editor principal)                           │
+│  ├── DndEditorProvider (contexto drag & drop @dnd-kit)          │
 │  ├── BlockPalette (16 tipos de bloques, draggables)             │
-│  ├── CanvasBlock (renderizado visual, drop zones)               │
-│  ├── BlockEditor (edicion de propiedades)                       │
+│  ├── EditorCanvas (renderizado visual, drop zones)              │
+│  ├── PropertiesPanel (edicion de propiedades del bloque)        │
+│  ├── PageManager (gestion de paginas)                           │
+│  ├── ThemeEditor (colores y fuentes)                            │
+│  ├── MobileEditorFAB (acceso rapido en movil)                   │
 │  ├── AIWizard (generador de sitios con IA)                      │
+│  ├── TemplateGallery (galeria de templates)                     │
+│  ├── SlashMenu (insercion rapida con /)                         │
 │  ├── PreviewModal (preview con token temporal)                  │
 │  ├── VersionHistory (historial y rollback)                      │
 │  ├── AnalyticsDashboard (metricas)                              │
 │  └── SEOPanel (auditoria y optimizacion)                        │
+│                                                                   │
+│  Hooks del Editor:                                               │
+│  ├── useEditorLayout (responsive: mobile/tablet/desktop)        │
+│  ├── useAutosave (debounce 3s)                                  │
+│  ├── useEditorShortcuts (Ctrl+Z, Ctrl+D, etc.)                  │
+│  └── useEstadoGuardado (indicador visual)                       │
 ├─────────────────────────────────────────────────────────────────┤
 │                        BACKEND                                   │
 ├─────────────────────────────────────────────────────────────────┤
@@ -68,15 +79,18 @@ El modulo Website permite a las organizaciones crear y gestionar sitios web prof
 ### Funcionalidades Implementadas
 
 #### Editor Visual (Canvas)
-- **Clic para agregar bloques** - Funciona correctamente
-- **Drag & drop desde paleta** - PENDIENTE FIX (detecta drop pero no inserta)
-- Drag & drop para reordenar bloques existentes
+- **Clic para agregar bloques** - Completo
+- **Drag & drop desde paleta** - Completo (con drop zones entre bloques)
+- **Drag & drop para reordenar bloques** - Completo
 - Edicion inline de textos
-- Preview en tiempo real
-- Responsive (desktop/tablet/mobile)
+- Preview en tiempo real con breakpoints (desktop/tablet/mobile)
+- **Layout responsive** - Sidebar en desktop, Drawers en movil/tablet
+- **MobileEditorFAB** - Acceso rapido a Bloques/Paginas/Tema en movil
 - Undo/Redo (Ctrl+Z / Ctrl+Y)
 - Duplicar bloques (Ctrl+D)
 - Ocultar/mostrar bloques
+- SlashMenu (presionar "/" para insertar bloque rapido)
+- Autosave con debounce de 3 segundos
 
 #### AI Site Generator (Completado)
 - **Generar sitio web completo desde un prompt**
@@ -109,29 +123,29 @@ El modulo Website permite a las organizaciones crear y gestionar sitios web prof
 
 ---
 
-## PROXIMO PASO INMEDIATO: Fix Drag & Drop desde Paleta
+## Ultimas Mejoras (28 Enero 2026)
 
-### Problema Detectado
-El drag desde la paleta al canvas se detecta (status: "Draggable item palette-galeria was dropped") pero el bloque NO se inserta en el canvas.
+### Fix: MobileEditorFAB con botones bloqueados
+**Problema**: Cuando se creaba un sitio sin paginas, el FAB en movil estaba completamente bloqueado, impidiendo acceder a "Paginas" para crear la primera.
 
-### Diagnostico
-```
-Estado actual:
-- useDraggable en BlockPalette: OK (genera eventos de drag)
-- useDroppable en EditorCanvas: OK (detecta el drop)
-- Accion insertarBloqueEnPosicion: NO SE EJECUTA
-```
+**Solucion**: Logica de disabled por funcionalidad:
 
-### Solucion Propuesta
-Revisar `EditorCanvas.jsx` en el handler `handleDragEnd`:
-1. Verificar que detecta `source: 'palette'` en el evento
-2. Calcular indice de insercion basado en posicion del drop
-3. Llamar a `insertarBloqueEnPosicion(tipo, indice)` del store
+| Opcion | Cuando disabled |
+|--------|-----------------|
+| Bloques | `!paginaActiva` (necesita pagina) |
+| Paginas | NUNCA (siempre habilitado) |
+| Tema | NUNCA (siempre habilitado) |
+| Templates | `!tieneSitio` (necesita sitio) |
 
-### Archivos a Revisar
-- `frontend/src/pages/website/components/EditorCanvas.jsx` - handleDragEnd
-- `frontend/src/pages/website/components/DndEditorProvider.jsx` - contexto compartido
-- `frontend/src/store/websiteEditorStore.js` - accion insertarBloqueEnPosicion
+**Archivos modificados**:
+- `MobileEditorFAB.jsx` - Props `disabledBloques` y `disabledTemplates`
+- `WebsiteEditorPage.jsx` - Pasa props especificas al FAB
+
+### Fix Anterior: Drag & Drop desde Paleta (Completado)
+El drag desde la paleta al canvas ahora funciona correctamente:
+- Drop zones visibles entre bloques
+- Calculo de posicion basado en orden real del bloque target
+- Insercion en posicion correcta (antes/despues del target)
 
 ---
 
@@ -144,13 +158,14 @@ Revisar `EditorCanvas.jsx` en el handler `handleDragEnd`:
 | **Tiempo para crear sitio** | 2-5 min (IA) | 3-10 min | OK |
 | **Curva de aprendizaje** | Media | Baja | Mejorar |
 | **Onboarding guiado** | No | Si (tour interactivo) | Agregar |
-| **Drag & drop fluido** | Parcial (clic OK, drag NO) | Excelente | Fix urgente |
+| **Drag & drop fluido** | Completo | Excelente | OK |
 | **Preview instantaneo** | Si | Si | OK |
-| **Indicadores visuales drop** | No | Si (linea azul) | Agregar |
+| **Indicadores visuales drop** | Si (linea entre bloques) | Si (linea azul) | OK |
 | **Feedback visual al arrastrar** | Basico | Animaciones suaves | Mejorar |
 | **Deshacer/Rehacer** | Si (Ctrl+Z/Y) | Si + historial visual | OK |
-| **Guardado automatico** | Si | Si | OK |
+| **Guardado automatico** | Si (3s debounce) | Si | OK |
 | **Responsive preview** | 3 vistas | 3 vistas + custom | OK |
+| **Editor movil** | FAB + Drawers | Limitado | OK |
 
 ### Flujo de Usuario en Wix (Referencia)
 
@@ -172,17 +187,18 @@ Revisar `EditorCanvas.jsx` en el handler `handleDragEnd`:
 2. Wizard IA: nombre → descripcion → industria → estilo → preview
 3. Sitio generado con 5 paginas y ~20 bloques
 4. Editor con sidebar (bloques) + canvas central
-5. Click en bloque de paleta = agregar al final (OK)
-6. Drag desde paleta = NO FUNCIONA (detecta pero no inserta)
-7. Click en bloque del canvas = seleccionar + panel derecho
-8. Publicar = cambiar estado (falta subdominio)
+5. Click en bloque de paleta = agregar al final
+6. Drag desde paleta = insertar en posicion especifica (drop zones visibles)
+7. Click en bloque del canvas = seleccionar + panel derecho de propiedades
+8. En movil: FAB para acceder a Bloques/Paginas/Tema via Drawers
+9. Publicar = cambiar estado (falta subdominio)
 ```
 
 ### Problemas de UX Identificados
 
 #### Criticos (Afectan usabilidad core)
-1. **Drag & drop desde paleta no funciona** - Frustracion usuario
-2. **Sin indicadores visuales de drop zone** - Usuario no sabe donde soltar
+1. ~~**Drag & drop desde paleta no funciona**~~ - RESUELTO
+2. ~~**Sin indicadores visuales de drop zone**~~ - RESUELTO (linea entre bloques)
 3. **Sin onboarding/tutorial** - Curva de aprendizaje innecesaria
 
 #### Importantes (Afectan experiencia)
@@ -198,22 +214,23 @@ Revisar `EditorCanvas.jsx` en el handler `handleDragEnd`:
 
 ### Plan de Mejoras UX (Priorizado)
 
-#### Sprint 1: Fix Core (1 semana)
-- [ ] **Fix drag & drop desde paleta** - BLOQUEANTE
-- [ ] Agregar linea indicadora de drop zone entre bloques
+#### Sprint 1: Fix Core - COMPLETADO
+- [x] **Fix drag & drop desde paleta**
+- [x] Agregar linea indicadora de drop zone entre bloques
+- [x] **Fix MobileEditorFAB** - Botones no bloqueados sin pagina
 - [ ] Preview fantasma del bloque al arrastrar
 
-#### Sprint 2: Feedback Visual (1 semana)
+#### Sprint 2: Feedback Visual
 - [ ] Animacion suave al insertar bloque
 - [ ] Highlight de bloque al hover en paleta
 - [ ] Toast de confirmacion mas visible
 
-#### Sprint 3: Onboarding (1 semana)
+#### Sprint 3: Onboarding
 - [ ] Tour interactivo para usuarios nuevos (3-5 pasos)
 - [ ] Tooltips en iconos de la barra de herramientas
 - [ ] Video tutorial embebido (opcional)
 
-#### Sprint 4: Pulido (1 semana)
+#### Sprint 4: Pulido
 - [ ] Zoom con Ctrl+scroll
 - [ ] Guias de alineacion al mover bloques
 - [ ] Historial visual de cambios (timeline)
@@ -383,19 +400,31 @@ backend/app/modules/website/
 frontend/src/pages/website/
 ├── components/
 │   ├── canvas-blocks/        # 16 componentes visuales
-│   ├── blocks/               # 16 editores
+│   ├── blocks/               # 16 editores de propiedades
 │   ├── AIWizard/
 │   │   └── AIWizardModal.jsx
-│   ├── DndEditorProvider.jsx # Contexto DnD - REVISAR
-│   ├── BlockPalette.jsx      # Paleta - REVISAR
-│   ├── EditorCanvas.jsx      # Canvas - REVISAR handleDragEnd
-│   ├── BlockEditor.jsx
+│   ├── DndEditorProvider.jsx # Contexto DnD (@dnd-kit)
+│   ├── BlockPalette.jsx      # Paleta de bloques (draggable)
+│   ├── EditorCanvas.jsx      # Canvas principal con drop zones
+│   ├── PropertiesPanel.jsx   # Panel derecho de propiedades
+│   ├── PageManager.jsx       # Gestion de paginas
+│   ├── ThemeEditor.jsx       # Editor de tema (colores/fuentes)
+│   ├── MobileEditorFAB.jsx   # FAB para acceso rapido en movil
+│   ├── SlashMenu.jsx         # Menu "/" para insercion rapida
+│   ├── TemplateGallery.jsx   # Galeria de templates
+│   ├── BlockEditor.jsx       # Editor legacy de bloques
 │   ├── PreviewModal.jsx
 │   ├── VersionHistory.jsx
 │   ├── AnalyticsDashboard.jsx
 │   └── SEOPanel.jsx
+├── hooks/
+│   ├── index.js              # Exports
+│   ├── useEditorLayout.js    # Layout responsive (mobile/tablet/desktop)
+│   ├── useAutosave.js        # Guardado automatico con debounce
+│   ├── useEditorShortcuts.js # Atajos de teclado
+│   └── useEstadoGuardado.js  # Indicador de estado de guardado
 ├── WebsiteBuilder.jsx
-└── WebsiteEditorPage.jsx
+└── WebsiteEditorPage.jsx     # Pagina principal del editor
 ```
 
 ---
@@ -416,10 +445,12 @@ frontend/src/pages/website/
 
 ## Roadmap
 
-### Fase 1.5 - Fix UX (Inmediato)
-- [ ] **Fix drag & drop desde paleta** - PRIORIDAD CRITICA
-- [ ] Indicadores visuales de drop zone
-- [ ] Preview fantasma al arrastrar
+### Fase 1.5 - Fix UX - COMPLETADA
+- [x] **Fix drag & drop desde paleta**
+- [x] Indicadores visuales de drop zone
+- [x] Layout responsive (mobile/tablet/desktop)
+- [x] MobileEditorFAB con logica correcta de disabled
+- [ ] Preview fantasma al arrastrar (pendiente)
 
 ### Fase 2 - Diferenciadores
 - [ ] Widget de Citas integrado
@@ -433,4 +464,4 @@ frontend/src/pages/website/
 
 ---
 
-*Documento actualizado: 26 Enero 2026*
+*Documento actualizado: 28 Enero 2026*

@@ -14,6 +14,7 @@ import {
   pointerWithin,
   KeyboardSensor,
   PointerSensor,
+  TouchSensor,
   useSensor,
   useSensors,
 } from '@dnd-kit/core';
@@ -92,11 +93,17 @@ export function DndEditorProvider({ children, onDropFromPalette, onReorder }) {
   const [activeDrag, setActiveDrag] = useState(null);
   const [overInfo, setOverInfo] = useState(null);
 
-  // Sensores de DnD
+  // Sensores de DnD (incluye TouchSensor para dispositivos móviles)
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
         distance: 8,
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 200,
+        tolerance: 5,
       },
     }),
     useSensor(KeyboardSensor)

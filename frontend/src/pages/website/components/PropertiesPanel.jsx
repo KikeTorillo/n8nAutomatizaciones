@@ -193,6 +193,18 @@ const BREAKPOINT_LABELS = {
   mobile: 'Móvil',
 };
 
+/**
+ * PropertiesPanel
+ *
+ * @param {Object} props
+ * @param {Object} props.bloque - Bloque seleccionado
+ * @param {Function} props.onUpdate - Callback para actualizar
+ * @param {Function} props.onDuplicate - Callback para duplicar
+ * @param {Function} props.onDelete - Callback para eliminar
+ * @param {Function} props.onClose - Callback para cerrar panel
+ * @param {boolean} props.isLoading - Si está guardando
+ * @param {boolean} props.isInDrawer - Si se renderiza dentro de un drawer (móvil/tablet)
+ */
 function PropertiesPanel({
   bloque,
   onUpdate,
@@ -200,6 +212,7 @@ function PropertiesPanel({
   onDelete,
   onClose,
   isLoading = false,
+  isInDrawer = false,
 }) {
   const [activeTab, setActiveTab] = useState('contenido');
   const [localContent, setLocalContent] = useState({});
@@ -229,7 +242,10 @@ function PropertiesPanel({
 
   if (!bloque) {
     return (
-      <div className="h-full flex flex-col items-center justify-center p-6 text-center">
+      <div className={cn(
+        'flex flex-col items-center justify-center p-6 text-center',
+        isInDrawer ? 'py-12' : 'h-full'
+      )}>
         <Settings className="w-12 h-12 text-gray-300 dark:text-gray-600 mb-4" />
         <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
           Sin selección
@@ -242,32 +258,55 @@ function PropertiesPanel({
   }
 
   return (
-    <div className="h-full flex flex-col bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700">
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-        <div className="flex items-center gap-3">
-          <div>
-            <h3 className="font-semibold text-gray-900 dark:text-white capitalize">
-              {bloque.tipo}
-            </h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              {isLoading ? 'Guardando...' : 'Propiedades'}
-            </p>
+    <div className={cn(
+      'flex flex-col bg-white dark:bg-gray-800',
+      // Sin borde en drawer (Drawer ya lo proporciona), con borde en panel lateral
+      !isInDrawer && 'h-full border-l border-gray-200 dark:border-gray-700'
+    )}>
+      {/* Header - oculto en drawer porque el Drawer ya tiene título */}
+      {!isInDrawer && (
+        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex items-center gap-3">
+            <div>
+              <h3 className="font-semibold text-gray-900 dark:text-white capitalize">
+                {bloque.tipo}
+              </h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {isLoading ? 'Guardando...' : 'Propiedades'}
+              </p>
+            </div>
+            {/* Breakpoint indicator */}
+            {breakpoint !== 'desktop' && (
+              <BreakpointBadge breakpoint={breakpoint} />
+            )}
           </div>
-          {/* Breakpoint indicator */}
-          {breakpoint !== 'desktop' && (
-            <BreakpointBadge breakpoint={breakpoint} />
+          <button
+            onClick={onClose}
+            className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+      )}
+
+      {/* Tipo de bloque e indicador de guardado en drawer */}
+      {isInDrawer && (
+        <div className="flex items-center justify-between px-2 py-2 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex items-center gap-2">
+            <span className="px-2 py-1 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 rounded text-sm font-medium capitalize">
+              {bloque.tipo}
+            </span>
+            {breakpoint !== 'desktop' && (
+              <BreakpointBadge breakpoint={breakpoint} />
+            )}
+          </div>
+          {isLoading && (
+            <span className="text-xs text-gray-500 dark:text-gray-400">Guardando...</span>
           )}
         </div>
-        <button
-          onClick={onClose}
-          className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded transition-colors"
-        >
-          <X className="w-5 h-5" />
-        </button>
-      </div>
+      )}
 
-      {/* Tabs */}
+      {/* Tabs - siempre con labels en drawer (más espacio) */}
       <div className="flex border-b border-gray-200 dark:border-gray-700">
         {TABS.map((tab) => (
           <button
@@ -281,7 +320,8 @@ function PropertiesPanel({
             )}
           >
             <tab.icon className="w-4 h-4" />
-            <span className="hidden sm:inline">{tab.label}</span>
+            {/* Siempre mostrar label en drawer, condicional en sidebar */}
+            <span className={isInDrawer ? '' : 'hidden sm:inline'}>{tab.label}</span>
           </button>
         ))}
       </div>

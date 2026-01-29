@@ -196,11 +196,11 @@ function EditorCanvas({
 
       {/* Canvas Area */}
       <div
-        className="flex-1 overflow-auto p-6"
+        className="flex-1 overflow-auto p-2 sm:p-4 md:p-6"
         onClick={handleCanvasClick}
         data-canvas-background="true"
       >
-        <div className="flex justify-center min-h-full">
+        <div className="flex justify-center items-start min-h-full">
           {/* Canvas Container */}
           <motion.div
             initial={false}
@@ -287,14 +287,14 @@ const CanvasToolbar = memo(function CanvasToolbar({
   estadoGuardado,
 }) {
   return (
-    <div className="flex items-center justify-between px-4 py-2 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+    <div className="flex items-center justify-between px-2 sm:px-4 py-2 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
       {/* Left: Undo/Redo */}
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-0.5 sm:gap-1">
         <button
           onClick={onUndo}
           disabled={!canUndo}
           className={cn(
-            'p-2 rounded-lg transition-colors',
+            'p-1.5 sm:p-2 rounded-lg transition-colors',
             canUndo
               ? 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400'
               : 'text-gray-300 dark:text-gray-600 cursor-not-allowed'
@@ -307,7 +307,7 @@ const CanvasToolbar = memo(function CanvasToolbar({
           onClick={onRedo}
           disabled={!canRedo}
           className={cn(
-            'p-2 rounded-lg transition-colors',
+            'p-1.5 sm:p-2 rounded-lg transition-colors',
             canRedo
               ? 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400'
               : 'text-gray-300 dark:text-gray-600 cursor-not-allowed'
@@ -317,13 +317,13 @@ const CanvasToolbar = memo(function CanvasToolbar({
           <Redo2 className="w-4 h-4" />
         </button>
 
-        {/* Divider */}
-        <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-2" />
+        {/* Divider - oculto en móvil para ahorrar espacio */}
+        <div className="hidden sm:block w-px h-6 bg-gray-200 dark:bg-gray-700 mx-2" />
 
-        {/* Save Status */}
+        {/* Save Status - solo icono en móvil */}
         <div
           className={cn(
-            'flex items-center gap-1.5 px-2 py-1 rounded-md text-xs',
+            'flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-2 py-1 rounded-md text-xs',
             estadoGuardado.bgColor,
             estadoGuardado.color
           )}
@@ -340,18 +340,19 @@ const CanvasToolbar = memo(function CanvasToolbar({
           {estadoGuardado.icono === 'alert' && (
             <span className="text-xs">!</span>
           )}
-          <span>{estadoGuardado.texto}</span>
+          {/* Texto oculto en móvil */}
+          <span className="hidden sm:inline">{estadoGuardado.texto}</span>
         </div>
       </div>
 
-      {/* Center: Breakpoints */}
-      <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+      {/* Center: Breakpoints - solo iconos en móvil */}
+      <div className="flex items-center gap-0.5 sm:gap-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-0.5 sm:p-1">
         {Object.entries(BREAKPOINTS).map(([key, { icon: Icon, label }]) => (
           <button
             key={key}
             onClick={() => onBreakpointChange(key)}
             className={cn(
-              'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm transition-colors',
+              'flex items-center gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-md text-sm transition-colors',
               breakpoint === key
                 ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
                 : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
@@ -359,18 +360,20 @@ const CanvasToolbar = memo(function CanvasToolbar({
             title={label}
           >
             <Icon className="w-4 h-4" />
-            <span className="hidden sm:inline">{label}</span>
+            {/* Label oculto en móvil y tablet */}
+            <span className="hidden lg:inline">{label}</span>
           </button>
         ))}
       </div>
 
-      {/* Right: Zoom */}
-      <div className="flex items-center gap-2">
+      {/* Right: Zoom - simplificado en móvil */}
+      <div className="flex items-center gap-1 sm:gap-2">
+        {/* Botones de zoom ocultos en móvil, solo select */}
         <button
           onClick={() => onZoomChange(Math.max(50, zoom - 25))}
           disabled={zoom <= 50}
           className={cn(
-            'p-2 rounded-lg transition-colors',
+            'hidden sm:block p-2 rounded-lg transition-colors',
             zoom > 50
               ? 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400'
               : 'text-gray-300 dark:text-gray-600 cursor-not-allowed'
@@ -383,7 +386,7 @@ const CanvasToolbar = memo(function CanvasToolbar({
         <select
           value={zoom}
           onChange={(e) => onZoomChange(Number(e.target.value))}
-          className="px-2 py-1 text-sm bg-transparent border border-gray-200 dark:border-gray-700 rounded-md text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-1 focus:ring-primary-500"
+          className="px-1 sm:px-2 py-1 text-xs sm:text-sm bg-transparent border border-gray-200 dark:border-gray-700 rounded-md text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-1 focus:ring-primary-500"
         >
           {ZOOM_LEVELS.map((level) => (
             <option key={level} value={level}>
@@ -396,7 +399,7 @@ const CanvasToolbar = memo(function CanvasToolbar({
           onClick={() => onZoomChange(Math.min(200, zoom + 25))}
           disabled={zoom >= 200}
           className={cn(
-            'p-2 rounded-lg transition-colors',
+            'hidden sm:block p-2 rounded-lg transition-colors',
             zoom < 200
               ? 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400'
               : 'text-gray-300 dark:text-gray-600 cursor-not-allowed'

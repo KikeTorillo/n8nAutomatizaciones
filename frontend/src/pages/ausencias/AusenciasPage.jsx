@@ -9,12 +9,13 @@ import { format } from 'date-fns';
 import {
   User,
   Users,
-  HeartPulse,
   CalendarDays,
   Settings,
-  Ban,
-  ClipboardList,
+  BarChart3,
   FileSpreadsheet,
+  Umbrella,
+  HeartPulse,
+  Lock,
 } from 'lucide-react';
 import { BackButton, Button, StateNavTabs, LoadingSpinner } from '@/components/ui';
 import useAuthStore, { selectUser } from '@/store/authStore';
@@ -23,16 +24,13 @@ import {
   useSolicitudesPendientesAusencias,
   useMisAusencias,
 } from '@/hooks/personas';
-import { useIncapacidades } from '@/hooks/personas';
 
 // Tab principal (carga eager)
 import MisAusenciasTab from './tabs/MisAusenciasTab';
 
 // Tabs secundarios (carga lazy para mejor performance)
 const MiEquipoAusenciasTab = lazy(() => import('./tabs/MiEquipoAusenciasTab'));
-const VacacionesAdminTab = lazy(() => import('./tabs/VacacionesAdminTab'));
-const IncapacidadesAdminTab = lazy(() => import('./tabs/IncapacidadesAdminTab'));
-const OtrosBloqueoTab = lazy(() => import('./tabs/OtrosBloqueoTab'));
+const DashboardAusenciasTab = lazy(() => import('./tabs/DashboardAusenciasTab'));
 const CalendarioAusenciasTab = lazy(() => import('./tabs/CalendarioAusenciasTab'));
 const ConfiguracionAusenciasTab = lazy(() => import('./tabs/ConfiguracionAusenciasTab'));
 
@@ -69,7 +67,6 @@ function AusenciasPage() {
 
   // Hooks para datos exportables (cargan solo cuando se necesitan para exportar)
   const { data: misAusencias } = useMisAusencias();
-  const { data: incapacidadesData } = useIncapacidades({ limite: 100 });
 
   // Definir tabs disponibles según rol
   const tabs = useMemo(() => {
@@ -77,29 +74,26 @@ function AusenciasPage() {
       { id: 'mis-ausencias', label: 'Mis Ausencias', icon: User },
     ];
 
-    // Supervisor ve Mi Equipo
+    // Supervisor/Admin ve Mi Equipo (3 sub-tabs)
     if (esSupervisor || esAdmin) {
-      allTabs.push({
-        id: 'mi-equipo',
-        label: 'Mi Equipo',
-        icon: Users,
-        count: cantidadPendientes,
-      });
+      allTabs.push(
+        { id: 'equipo-vacaciones', label: 'Vacaciones', icon: Umbrella, count: cantidadPendientes },
+        { id: 'equipo-incapacidades', label: 'Incapacidades', icon: HeartPulse },
+        { id: 'equipo-bloqueos', label: 'Bloqueos', icon: Lock },
+      );
     }
 
     // Admin ve gestión completa
     if (esAdmin) {
       allTabs.push(
-        { id: 'solicitudes', label: 'Solicitudes', icon: ClipboardList },
-        { id: 'incapacidades', label: 'Incapacidades', icon: HeartPulse },
-        { id: 'bloqueos', label: 'Bloqueos', icon: Ban },
+        { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
       );
     }
 
     // Calendario para todos
     allTabs.push({ id: 'calendario', label: 'Calendario', icon: CalendarDays });
 
-    // Configuración solo admin (va dentro del grupo Administración)
+    // Configuración solo admin
     if (esAdmin) {
       allTabs.push({ id: 'configuracion', label: 'Configuración', icon: Settings });
     }
@@ -108,19 +102,29 @@ function AusenciasPage() {
   }, [esSupervisor, esAdmin, cantidadPendientes]);
 
   // Grupos de tabs para desktop (evita overflow horizontal)
-  // StateNavTabs renderiza: standalone tabs primero, luego grupos al final
   const tabGroups = useMemo(() => {
-    if (!esAdmin) return [];
+    const groups = [];
 
-    // Admin: agrupar gestión administrativa en un dropdown
-    return [
-      {
-        icon: ClipboardList,
+    // Grupo Mi Equipo para supervisores/admin
+    if (esSupervisor || esAdmin) {
+      groups.push({
+        icon: Users,
+        label: 'Mi Equipo',
+        tabIds: ['equipo-vacaciones', 'equipo-incapacidades', 'equipo-bloqueos'],
+      });
+    }
+
+    // Grupo Administración solo para admin
+    if (esAdmin) {
+      groups.push({
+        icon: BarChart3,
         label: 'Administración',
-        tabIds: ['solicitudes', 'incapacidades', 'bloqueos', 'configuracion'],
-      },
-    ];
-  }, [esAdmin]);
+        tabIds: ['dashboard', 'configuracion'],
+      });
+    }
+
+    return groups;
+  }, [esSupervisor, esAdmin]);
 
   // IDs válidos de tabs
   const validTabIds = useMemo(() => tabs.map(t => t.id), [tabs]);
@@ -159,17 +163,17 @@ function AusenciasPage() {
     // Tabs secundarios con Suspense (lazy)
     let content;
     switch (activeTab) {
-      case 'mi-equipo':
-        content = (esSupervisor || esAdmin) ? <MiEquipoAusenciasTab /> : null;
+      case 'equipo-vacaciones':
+        content = (esSupervisor || esAdmin) ? <MiEquipoAusenciasTab seccion="vacaciones" /> : null;
         break;
-      case 'solicitudes':
-        content = esAdmin ? <VacacionesAdminTab /> : null;
+      case 'equipo-incapacidades':
+        content = (esSupervisor || esAdmin) ? <MiEquipoAusenciasTab seccion="incapacidades" /> : null;
         break;
-      case 'incapacidades':
-        content = esAdmin ? <IncapacidadesAdminTab /> : null;
+      case 'equipo-bloqueos':
+        content = (esSupervisor || esAdmin) ? <MiEquipoAusenciasTab seccion="bloqueos" /> : null;
         break;
-      case 'bloqueos':
-        content = esAdmin ? <OtrosBloqueoTab /> : null;
+      case 'dashboard':
+        content = esAdmin ? <DashboardAusenciasTab /> : null;
         break;
       case 'calendario':
         content = <CalendarioAusenciasTab esAdmin={esAdmin} />;
@@ -191,22 +195,11 @@ function AusenciasPage() {
   };
 
   // Verificar si el tab actual es exportable
-  const tabsExportables = ['mis-ausencias', 'mi-equipo', 'incapacidades'];
+  const tabsExportables = ['mis-ausencias', 'equipo-vacaciones'];
   const puedeExportar = tabsExportables.includes(activeTab);
 
   // Handler para exportar CSV según tab activo usando hook centralizado
   const handleExportarAusencias = () => {
-    const tiposLabel = {
-      enfermedad_general: 'Enfermedad General',
-      maternidad: 'Maternidad',
-      riesgo_trabajo: 'Riesgo de Trabajo',
-    };
-    const estadosLabel = {
-      activa: 'Activa',
-      finalizada: 'Finalizada',
-      cancelada: 'Cancelada',
-    };
-
     switch (activeTab) {
       case 'mis-ausencias': {
         if (!misAusencias || misAusencias.length === 0) {
@@ -234,7 +227,7 @@ function AusenciasPage() {
         break;
       }
 
-      case 'mi-equipo': {
+      case 'equipo-vacaciones': {
         if (!pendientes || pendientes.length === 0) {
           toast.error('No hay solicitudes del equipo para exportar');
           return;
@@ -259,35 +252,6 @@ function AusenciasPage() {
           { key: 'estado', header: 'Estado' },
           { key: 'motivo', header: 'Motivo' },
         ], `equipo_ausencias_${format(new Date(), 'yyyyMMdd')}`);
-        break;
-      }
-
-      case 'incapacidades': {
-        const incapacidades = incapacidadesData?.data || [];
-        if (incapacidades.length === 0) {
-          toast.error('No hay incapacidades para exportar');
-          return;
-        }
-        const datosIncapacidades = incapacidades.map((i) => ({
-          codigo: i.codigo || '',
-          profesional: i.profesional_nombre || '',
-          tipo: tiposLabel[i.tipo_incapacidad] || i.tipo_incapacidad || '',
-          fecha_inicio: i.fecha_inicio ? format(new Date(i.fecha_inicio.split('T')[0] + 'T12:00:00'), 'dd/MM/yyyy') : '',
-          fecha_fin: i.fecha_fin ? format(new Date(i.fecha_fin.split('T')[0] + 'T12:00:00'), 'dd/MM/yyyy') : '',
-          dias: i.dias_autorizados || 0,
-          folio_imss: i.folio_imss || '',
-          estado: estadosLabel[i.estado] || i.estado || '',
-        }));
-        exportCSV(datosIncapacidades, [
-          { key: 'codigo', header: 'Código' },
-          { key: 'profesional', header: 'Profesional' },
-          { key: 'tipo', header: 'Tipo' },
-          { key: 'fecha_inicio', header: 'Fecha Inicio' },
-          { key: 'fecha_fin', header: 'Fecha Fin' },
-          { key: 'dias', header: 'Días' },
-          { key: 'folio_imss', header: 'Folio IMSS' },
-          { key: 'estado', header: 'Estado' },
-        ], `incapacidades_${format(new Date(), 'yyyyMMdd')}`);
         break;
       }
 

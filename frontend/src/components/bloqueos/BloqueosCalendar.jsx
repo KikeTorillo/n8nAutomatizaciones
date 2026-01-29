@@ -11,19 +11,22 @@ import {
 } from 'date-fns';
 import CalendarioHeader from '@/components/citas/CalendarioHeader';
 import CalendarioDiaBloqueo from './CalendarioDiaBloqueo';
+import BloqueosDiaDrawer from './BloqueosDiaDrawer';
+import { useCalendarioMobile } from '@/components/calendario-shared';
 import { useBloqueos } from '@/hooks/agendamiento';
 import { aFormatoISO, generarRangoFechas } from '@/utils/dateHelpers';
 import { LABELS_TIPO_BLOQUEO } from '@/utils/bloqueoHelpers';
 
-// Constante fuera del componente para evitar recreación (Fase 3 Ene 2026)
-const DIAS_SEMANA = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
-
 /**
  * Componente de calendario mensual para visualizar bloqueos
  * Muestra los bloqueos en formato de calendario con navegación entre meses
+ * Ene 2026: Agregado soporte móvil con drawer
  */
 function BloqueosCalendar({ profesionalId = null, onVerBloqueo, onCrearBloqueo }) {
   const [mesActual, setMesActual] = useState(new Date());
+
+  // Hook para móvil
+  const { isMobile, drawerDia, handleDiaClick, handleCerrarDrawer, diasSemanaHeaders } = useCalendarioMobile();
 
   // Calcular rango de fechas para el mes actual (incluyendo días de meses adyacentes)
   const { inicio, fin } = useMemo(() => {
@@ -125,13 +128,16 @@ function BloqueosCalendar({ profesionalId = null, onVerBloqueo, onCrearBloqueo }
       />
 
       {/* Calendario */}
-      <div className="p-4">
+      <div className={isMobile ? 'p-2' : 'p-4'}>
         {/* Encabezado de días de la semana */}
-        <div className="grid grid-cols-7 gap-1 mb-2">
-          {DIAS_SEMANA.map((dia) => (
+        <div className={`grid grid-cols-7 ${isMobile ? 'gap-1 mb-1' : 'gap-1 mb-2'}`}>
+          {diasSemanaHeaders.map((dia, idx) => (
             <div
-              key={dia}
-              className="text-center text-xs font-semibold text-gray-600 dark:text-gray-400 py-2 uppercase"
+              key={idx}
+              className={`
+                text-center font-semibold text-gray-600 dark:text-gray-400 uppercase
+                ${isMobile ? 'text-[10px] py-1' : 'text-xs py-2'}
+              `}
             >
               {dia}
             </div>
@@ -139,7 +145,7 @@ function BloqueosCalendar({ profesionalId = null, onVerBloqueo, onCrearBloqueo }
         </div>
 
         {/* Grid de días */}
-        <div className="grid grid-cols-7 gap-1">
+        <div className={`grid grid-cols-7 ${isMobile ? 'gap-1' : 'gap-1'}`}>
           {diasDelCalendario.map((dia, index) => {
             const fechaISO = aFormatoISO(dia);
             const bloqueosDelDia = bloqueosPorFecha[fechaISO] || [];
@@ -156,65 +162,75 @@ function BloqueosCalendar({ profesionalId = null, onVerBloqueo, onCrearBloqueo }
                 onVerBloqueo={onVerBloqueo}
                 onCrearBloqueo={onCrearBloqueo ? () => onCrearBloqueo(fechaISO) : undefined}
                 isLoading={isLoading}
+                compactMode={isMobile}
+                onDiaClick={handleDiaClick}
               />
             );
           })}
         </div>
 
         {/* Leyenda de tipos de bloqueo */}
-        <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
-          <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2">Tipos de bloqueo:</p>
-          <div className="flex flex-wrap gap-3">
+        <div className={`${isMobile ? 'mt-3 pt-3' : 'mt-6 pt-4'} border-t border-gray-200 dark:border-gray-700`}>
+          <p className={`font-semibold text-gray-600 dark:text-gray-400 mb-2 ${isMobile ? 'text-[10px]' : 'text-xs'}`}>
+            Tipos de bloqueo:
+          </p>
+          <div className={`flex flex-wrap ${isMobile ? 'gap-2' : 'gap-3'}`}>
             <div className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded-full bg-secondary-500"></div>
-              <span className="text-xs text-gray-600 dark:text-gray-400">{LABELS_TIPO_BLOQUEO.vacaciones}</span>
+              <div className={`${isMobile ? 'w-2 h-2' : 'w-3 h-3'} rounded-full bg-secondary-500`}></div>
+              <span className={`text-gray-600 dark:text-gray-400 ${isMobile ? 'text-[10px]' : 'text-xs'}`}>{LABELS_TIPO_BLOQUEO.vacaciones}</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded-full bg-red-500"></div>
-              <span className="text-xs text-gray-600 dark:text-gray-400">{LABELS_TIPO_BLOQUEO.feriado}</span>
+              <div className={`${isMobile ? 'w-2 h-2' : 'w-3 h-3'} rounded-full bg-red-500`}></div>
+              <span className={`text-gray-600 dark:text-gray-400 ${isMobile ? 'text-[10px]' : 'text-xs'}`}>{LABELS_TIPO_BLOQUEO.feriado}</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded-full bg-orange-500"></div>
-              <span className="text-xs text-gray-600 dark:text-gray-400">{LABELS_TIPO_BLOQUEO.mantenimiento}</span>
+              <div className={`${isMobile ? 'w-2 h-2' : 'w-3 h-3'} rounded-full bg-orange-500`}></div>
+              <span className={`text-gray-600 dark:text-gray-400 ${isMobile ? 'text-[10px]' : 'text-xs'}`}>{LABELS_TIPO_BLOQUEO.mantenimiento}</span>
             </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded-full bg-primary-500"></div>
-              <span className="text-xs text-gray-600 dark:text-gray-400">{LABELS_TIPO_BLOQUEO.evento_especial}</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded-full bg-amber-500"></div>
-              <span className="text-xs text-gray-600 dark:text-gray-400">{LABELS_TIPO_BLOQUEO.emergencia}</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded-full bg-primary-500"></div>
-              <span className="text-xs text-gray-600 dark:text-gray-400">{LABELS_TIPO_BLOQUEO.personal}</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded-full bg-gray-500"></div>
-              <span className="text-xs text-gray-600 dark:text-gray-400">{LABELS_TIPO_BLOQUEO.organizacional}</span>
-            </div>
+            {!isMobile && (
+              <>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-3 h-3 rounded-full bg-primary-500"></div>
+                  <span className="text-xs text-gray-600 dark:text-gray-400">{LABELS_TIPO_BLOQUEO.evento_especial}</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-3 h-3 rounded-full bg-amber-500"></div>
+                  <span className="text-xs text-gray-600 dark:text-gray-400">{LABELS_TIPO_BLOQUEO.emergencia}</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-3 h-3 rounded-full bg-primary-500"></div>
+                  <span className="text-xs text-gray-600 dark:text-gray-400">{LABELS_TIPO_BLOQUEO.personal}</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-3 h-3 rounded-full bg-gray-500"></div>
+                  <span className="text-xs text-gray-600 dark:text-gray-400">{LABELS_TIPO_BLOQUEO.organizacional}</span>
+                </div>
+              </>
+            )}
           </div>
         </div>
 
-        {/* Información adicional */}
-        <div className="mt-4 p-3 bg-primary-50 dark:bg-primary-900/30 border border-primary-200 dark:border-primary-800 rounded-lg">
-          <div className="flex items-start gap-2">
-            <div className="text-primary-600 dark:text-primary-300 text-sm">
-              <p className="font-medium mb-1">💡 Información útil</p>
-              <ul className="list-disc list-inside text-xs space-y-0.5 text-primary-700 dark:text-primary-300">
-                <li>Los días con fondo rojo tienen bloqueos organizacionales (afectan a todos)</li>
-                <li>El icono 🕐 indica que el bloqueo es de horario parcial (no todo el día)</li>
-                <li>Haz clic en un bloqueo para ver más detalles</li>
-                {profesionalId && (
-                  <li>Vista filtrada para un profesional específico</li>
-                )}
-                {!profesionalId && (
-                  <li>Mostrando todos los bloqueos (organizacionales e individuales)</li>
-                )}
-              </ul>
+        {/* Información adicional (solo desktop) */}
+        {!isMobile && (
+          <div className="mt-4 p-3 bg-primary-50 dark:bg-primary-900/30 border border-primary-200 dark:border-primary-800 rounded-lg">
+            <div className="flex items-start gap-2">
+              <div className="text-primary-600 dark:text-primary-300 text-sm">
+                <p className="font-medium mb-1">Información útil</p>
+                <ul className="list-disc list-inside text-xs space-y-0.5 text-primary-700 dark:text-primary-300">
+                  <li>Los días con fondo rojo tienen bloqueos organizacionales (afectan a todos)</li>
+                  <li>El icono de reloj indica que el bloqueo es de horario parcial (no todo el día)</li>
+                  <li>Haz clic en un bloqueo para ver más detalles</li>
+                  {profesionalId && (
+                    <li>Vista filtrada para un profesional específico</li>
+                  )}
+                  {!profesionalId && (
+                    <li>Mostrando todos los bloqueos (organizacionales e individuales)</li>
+                  )}
+                </ul>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Loading overlay */}
         {isLoading && (
@@ -226,6 +242,16 @@ function BloqueosCalendar({ profesionalId = null, onVerBloqueo, onCrearBloqueo }
           </div>
         )}
       </div>
+
+      {/* Drawer de día (móvil) */}
+      <BloqueosDiaDrawer
+        isOpen={drawerDia.isOpen}
+        onClose={handleCerrarDrawer}
+        fecha={drawerDia.fecha}
+        bloqueos={drawerDia.items}
+        onVerBloqueo={onVerBloqueo}
+        onCrearBloqueo={onCrearBloqueo}
+      />
     </div>
   );
 }

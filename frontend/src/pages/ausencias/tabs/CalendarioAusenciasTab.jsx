@@ -2,8 +2,9 @@
  * CalendarioAusenciasTab - Calendario unificado de ausencias
  * Muestra vacaciones + incapacidades en un calendario mensual
  * Enero 2026
+ * Ene 2026: Agregado soporte móvil con drawer
  */
-import { useState, useMemo } from 'react';
+import { useState, useMemo, memo } from 'react';
 import {
   CalendarDays,
   ChevronLeft,
@@ -27,15 +28,29 @@ import {
 import { es } from 'date-fns/locale';
 import { useQueryClient } from '@tanstack/react-query';
 import { Badge, Button, Modal } from '@/components/ui';
-import { useCalendarioAusencias, formatRangoFechas } from '@/hooks/personas';
+import { useCalendarioAusencias } from '@/hooks/personas';
 import { useDepartamentosActivos } from '@/hooks/personas';
+import { useCalendarioMobile } from '@/components/calendario-shared';
+import AusenciasDiaDrawer from './AusenciasDiaDrawer';
 
 /**
  * Celda del calendario
+ * compactMode: modo compacto para móvil
+ * onDiaClick: callback para click en día (móvil)
  */
-function CalendarioDia({ dia, eventos, esDelMesActual, esHoy, onVerEvento, isLoading }) {
+const CalendarioDia = memo(function CalendarioDia({
+  dia,
+  eventos,
+  esDelMesActual,
+  esHoy,
+  onVerEvento,
+  isLoading,
+  compactMode = false,
+  onDiaClick,
+}) {
   const numeroDia = dia.getDate();
   const maxVisible = 3;
+  const fechaISO = format(dia, 'yyyy-MM-dd');
 
   // Ordenar por tipo (incapacidades primero por ser más críticas)
   const eventosOrdenados = [...eventos].sort((a, b) => {
@@ -47,14 +62,76 @@ function CalendarioDia({ dia, eventos, esDelMesActual, esHoy, onVerEvento, isLoa
   const visibles = eventosOrdenados.slice(0, maxVisible);
   const ocultos = eventosOrdenados.length - maxVisible;
 
+  // Agrupar eventos por tipo para dots
+  const tieneIncapacidades = eventos.some((e) => e.tipo === 'incapacidad');
+  const tieneVacacionesPendientes = eventos.some((e) => e.tipo !== 'incapacidad' && e.estado === 'pendiente');
+  const tieneVacacionesAprobadas = eventos.some((e) => e.tipo !== 'incapacidad' && e.estado === 'aprobada');
+
   if (isLoading) {
     return (
-      <div className="min-h-[100px] p-1 border-r border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+      <div className={`${compactMode ? 'aspect-square' : 'min-h-[100px]'} p-1 border-r border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50`}>
         <div className="h-4 w-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
       </div>
     );
   }
 
+  // Modo compacto para móvil
+  if (compactMode) {
+    return (
+      <button
+        onClick={() => esDelMesActual && onDiaClick && onDiaClick(fechaISO, eventos)}
+        disabled={!esDelMesActual}
+        className={`
+          aspect-square flex flex-col items-center justify-center rounded-lg
+          transition-all relative
+          ${esDelMesActual
+            ? 'bg-white dark:bg-gray-800 active:scale-95'
+            : 'bg-gray-50 dark:bg-gray-900 opacity-40'
+          }
+          ${esHoy
+            ? 'ring-2 ring-primary-500 dark:ring-primary-400'
+            : 'border border-gray-200 dark:border-gray-700'
+          }
+          ${esDelMesActual && eventos.length > 0 ? 'cursor-pointer' : ''}
+        `}
+      >
+        {/* Número del día */}
+        <span
+          className={`
+            text-sm font-semibold leading-none
+            ${esDelMesActual ? 'text-gray-900 dark:text-gray-100' : 'text-gray-400 dark:text-gray-600'}
+            ${esHoy ? 'text-primary-600 dark:text-primary-400' : ''}
+          `}
+        >
+          {numeroDia}
+        </span>
+
+        {/* Dots indicadores */}
+        {eventos.length > 0 && (
+          <div className="flex items-center justify-center gap-0.5 mt-1">
+            {tieneIncapacidades && (
+              <span className="w-1.5 h-1.5 rounded-full bg-red-500" title="Incapacidades" />
+            )}
+            {tieneVacacionesPendientes && (
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500" title="Pendientes" />
+            )}
+            {tieneVacacionesAprobadas && (
+              <span className="w-1.5 h-1.5 rounded-full bg-green-500" title="Aprobadas" />
+            )}
+          </div>
+        )}
+
+        {/* Badge de cantidad */}
+        {eventos.length > 1 && (
+          <span className="absolute -top-1 -right-1 w-4 h-4 text-[10px] font-bold text-white bg-primary-600 rounded-full flex items-center justify-center">
+            {eventos.length > 9 ? '9+' : eventos.length}
+          </span>
+        )}
+      </button>
+    );
+  }
+
+  // Modo normal (desktop)
   return (
     <div
       className={`
@@ -117,7 +194,7 @@ function CalendarioDia({ dia, eventos, esDelMesActual, esHoy, onVerEvento, isLoa
       </div>
     </div>
   );
-}
+});
 
 /**
  * Modal de detalle de evento
@@ -233,6 +310,9 @@ function CalendarioAusenciasTab({ esAdmin }) {
     departamento_id: null,
   });
   const [eventoSeleccionado, setEventoSeleccionado] = useState(null);
+
+  // Hook para móvil
+  const { isMobile, drawerDia, handleDiaClick, handleCerrarDrawer, diasSemanaHeaders } = useCalendarioMobile();
 
   // Departamentos para filtro
   const { data: departamentosData } = useDepartamentosActivos();
@@ -370,17 +450,17 @@ function CalendarioAusenciasTab({ esAdmin }) {
       </div>
 
       {/* Leyenda */}
-      <div className="flex items-center gap-4 text-xs">
+      <div className={`flex items-center ${isMobile ? 'gap-2 text-[10px]' : 'gap-4 text-xs'}`}>
         <div className="flex items-center gap-1">
-          <span className="w-3 h-3 rounded bg-green-500" />
-          <span className="text-gray-600 dark:text-gray-400">Vacaciones aprobadas</span>
+          <span className={`${isMobile ? 'w-2 h-2' : 'w-3 h-3'} rounded bg-green-500`} />
+          <span className="text-gray-600 dark:text-gray-400">{isMobile ? 'Aprobadas' : 'Vacaciones aprobadas'}</span>
         </div>
         <div className="flex items-center gap-1">
-          <span className="w-3 h-3 rounded bg-amber-500" />
+          <span className={`${isMobile ? 'w-2 h-2' : 'w-3 h-3'} rounded bg-amber-500`} />
           <span className="text-gray-600 dark:text-gray-400">Pendientes</span>
         </div>
         <div className="flex items-center gap-1">
-          <span className="w-3 h-3 rounded bg-red-500" />
+          <span className={`${isMobile ? 'w-2 h-2' : 'w-3 h-3'} rounded bg-red-500`} />
           <span className="text-gray-600 dark:text-gray-400">Incapacidades</span>
         </div>
       </div>
@@ -388,11 +468,14 @@ function CalendarioAusenciasTab({ esAdmin }) {
       {/* Calendario */}
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
         {/* Header días de la semana */}
-        <div className="grid grid-cols-7 border-b border-gray-200 dark:border-gray-700">
-          {['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'].map((dia) => (
+        <div className={`grid grid-cols-7 border-b border-gray-200 dark:border-gray-700 ${isMobile ? '' : ''}`}>
+          {diasSemanaHeaders.map((dia, idx) => (
             <div
-              key={dia}
-              className="py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/50"
+              key={idx}
+              className={`
+                text-center font-medium text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/50
+                ${isMobile ? 'py-1 text-[10px]' : 'py-2 text-xs'}
+              `}
             >
               {dia}
             </div>
@@ -400,7 +483,7 @@ function CalendarioAusenciasTab({ esAdmin }) {
         </div>
 
         {/* Grid de días */}
-        <div className="grid grid-cols-7">
+        <div className={`grid grid-cols-7 ${isMobile ? 'p-1 gap-1' : ''}`}>
           {diasCalendario.map((dia) => {
             const fechaISO = format(dia, 'yyyy-MM-dd');
             const eventosDelDia = eventosPorFecha[fechaISO] || [];
@@ -414,6 +497,8 @@ function CalendarioAusenciasTab({ esAdmin }) {
                 esHoy={isToday(dia)}
                 onVerEvento={setEventoSeleccionado}
                 isLoading={isLoading}
+                compactMode={isMobile}
+                onDiaClick={handleDiaClick}
               />
             );
           })}
@@ -430,6 +515,15 @@ function CalendarioAusenciasTab({ esAdmin }) {
         isOpen={!!eventoSeleccionado}
         onClose={() => setEventoSeleccionado(null)}
         evento={eventoSeleccionado}
+      />
+
+      {/* Drawer de día (móvil) */}
+      <AusenciasDiaDrawer
+        isOpen={drawerDia.isOpen}
+        onClose={handleCerrarDrawer}
+        fecha={drawerDia.fecha}
+        eventos={drawerDia.items}
+        onVerEvento={setEventoSeleccionado}
       />
     </div>
   );

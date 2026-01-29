@@ -21,10 +21,7 @@ import {
   TIPOS_AUSENCIA_CONFIG,
   getTipoIncapacidadConfig,
 } from '@/hooks/personas';
-import {
-  SaldoVacacionesCard,
-  SolicitudVacacionesModal,
-} from '@/components/vacaciones';
+import { SolicitudVacacionesModal } from '@/components/vacaciones';
 import { formatDias, ESTADOS_SOLICITUD } from '@/hooks/personas';
 
 /**
@@ -198,15 +195,6 @@ function MisAusenciasTab() {
           </Button>
         </div>
       </div>
-
-      {/* Saldo de vacaciones */}
-      {dashboard && (
-        <SaldoVacacionesCard
-          saldo={dashboard.saldoVacaciones}
-          nivel={dashboard.nivelVacaciones}
-          isLoading={isLoading}
-        />
-      )}
 
       {/* Incapacidades activas */}
       {dashboard?.incapacidadesActivas?.length > 0 && (

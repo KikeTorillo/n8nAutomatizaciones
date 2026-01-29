@@ -12,3 +12,4 @@ export {
   RESPONSIVE_DEFAULTS,
   getResponsiveClasses,
 } from './useResponsiveConfig';
+export { useEditorLayout, PANEL_TYPES } from './useEditorLayout';

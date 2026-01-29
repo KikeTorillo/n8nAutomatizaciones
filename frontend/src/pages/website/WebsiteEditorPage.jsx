@@ -34,13 +34,16 @@ import {
   selectDeseleccionarBloque,
   selectActualizarBloqueLocal,
   selectReordenarBloquesLocal,
+  selectBreakpoint,
+  selectSetBreakpoint,
+  selectSetZoom,
 } from '@/store';
 
 // Hooks existentes
 import { useWebsiteEditor, useWebsiteBloques } from '@/hooks/otros';
 
 // Hooks nuevos del editor
-import { useAutosave, useEstadoGuardado, useEditorShortcuts } from './hooks';
+import { useAutosave, useEstadoGuardado, useEditorShortcuts, useEditorLayout } from './hooks';
 
 // Componentes del editor
 import PageManager from './components/PageManager';
@@ -53,9 +56,10 @@ import TemplateGallery from './components/TemplateGallery';
 import SlashMenu from './components/SlashMenu';
 import { DndEditorProvider } from './components/DndEditorProvider';
 import AIWizardModal from './components/AIWizard/AIWizardModal';
+import MobileEditorFAB from './components/MobileEditorFAB';
 
 // UI
-import { BackButton } from '@/components/ui';
+import { BackButton, Drawer } from '@/components/ui';
 
 /**
  * WebsiteEditorPage - Editor visual WYSIWYG del sitio web
@@ -65,17 +69,37 @@ function WebsiteEditorPage() {
 
   // ========== ESTADO LOCAL ==========
   const [paginaActiva, setPaginaActiva] = useState(null);
-  const [panelActivo, setPanelActivo] = useState('bloques');
   const [mostrarCrearSitio, setMostrarCrearSitio] = useState(false);
   const [mostrarTemplates, setMostrarTemplates] = useState(false);
   const [modoEditor, setModoEditor] = useState('canvas'); // 'canvas' | 'bloques'
-  const [mostrarPropiedades, setMostrarPropiedades] = useState(true);
   const [slashMenu, setSlashMenu] = useState({
     isOpen: false,
     position: { x: 0, y: 0 },
     query: '',
   });
   const [mostrarAIWizard, setMostrarAIWizard] = useState(false);
+
+  // ========== LAYOUT RESPONSIVE ==========
+  const {
+    isMobile,
+    isTablet,
+    isDesktop,
+    layoutType,
+    showSidebar,
+    showSecondaryPanel,
+    propertiesAsDrawer,
+    showPropertiesPanel,
+    drawerAbierto,
+    panelActivo,
+    mostrarPropiedades,
+    openPanel,
+    closeDrawer,
+    setPanelActivo,
+    abrirPropiedades,
+    cerrarPropiedades,
+    setMostrarPropiedades,
+    PANEL_TYPES,
+  } = useEditorLayout();
 
   // ========== STORE STATE ==========
   const bloques = useWebsiteEditorStore(selectBloques);
@@ -85,6 +109,9 @@ function WebsiteEditorPage() {
   const deseleccionarBloque = useWebsiteEditorStore(selectDeseleccionarBloque);
   const actualizarBloqueLocal = useWebsiteEditorStore(selectActualizarBloqueLocal);
   const reordenarBloquesLocal = useWebsiteEditorStore(selectReordenarBloquesLocal);
+  const breakpoint = useWebsiteEditorStore(selectBreakpoint);
+  const setBreakpoint = useWebsiteEditorStore(selectSetBreakpoint);
+  const setZoom = useWebsiteEditorStore(selectSetZoom);
 
   // ========== HOOK DEL EDITOR ==========
   const {
@@ -126,6 +153,25 @@ function WebsiteEditorPage() {
       setPaginaActiva(paginaInicio);
     }
   }, [paginas, paginaActiva]);
+
+  // Abrir drawer de propiedades al seleccionar bloque en móvil/tablet
+  useEffect(() => {
+    if (bloqueSeleccionado && propertiesAsDrawer && modoEditor === 'canvas') {
+      abrirPropiedades();
+    }
+  }, [bloqueSeleccionado, propertiesAsDrawer, modoEditor, abrirPropiedades]);
+
+  // Auto-ajustar breakpoint y zoom en móvil
+  useEffect(() => {
+    if (isMobile && tieneSitio) {
+      // Auto-seleccionar breakpoint Mobile en viewport móvil
+      if (breakpoint !== 'mobile') {
+        setBreakpoint('mobile');
+      }
+      // Siempre usar 100% en móvil para mejor visibilidad
+      setZoom(100);
+    }
+  }, [isMobile, tieneSitio, breakpoint, setBreakpoint, setZoom]);
 
   // ========== AUTOSAVE ==========
   const handleSaveAll = useCallback(
@@ -547,52 +593,54 @@ function WebsiteEditorPage() {
   // ========== RENDER: EDITOR PRINCIPAL ==========
   return (
     <div className="h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
-      {/* Header del editor */}
-      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 h-14 flex items-center justify-between flex-shrink-0">
-        <div className="flex items-center gap-4">
-          <BackButton to="/home" label="Volver" />
+      {/* Header del editor - Responsive */}
+      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-2 sm:px-4 h-12 sm:h-14 flex items-center justify-between flex-shrink-0">
+        <div className="flex items-center gap-2 sm:gap-4">
+          {/* BackButton - solo icono en móvil */}
+          <BackButton to="/home" label={isMobile ? '' : 'Volver'} />
           <div className="flex items-center gap-2">
-            <Globe2 className="w-5 h-5 text-primary-600 dark:text-primary-400" />
-            <span className="font-semibold text-gray-900 dark:text-gray-100">
+            <Globe2 className="w-4 h-4 sm:w-5 sm:h-5 text-primary-600 dark:text-primary-400" />
+            {/* Nombre del sitio - truncado en móvil */}
+            <span className="font-semibold text-gray-900 dark:text-gray-100 text-sm sm:text-base truncate max-w-[80px] sm:max-w-[150px] md:max-w-none">
               {config?.nombre_sitio || 'Mi Sitio'}
             </span>
           </div>
-          {/* Status badge */}
+          {/* Status badge - compacto en móvil */}
           <span
-            className={`px-2 py-1 text-xs rounded-full ${
+            className={`px-1.5 sm:px-2 py-0.5 sm:py-1 text-xs rounded-full ${
               estaPublicado
                 ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
                 : 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'
             }`}
           >
-            {estaPublicado ? 'Publicado' : 'Borrador'}
+            {estaPublicado ? (isMobile ? 'Pub' : 'Publicado') : (isMobile ? 'Borr' : 'Borrador')}
           </span>
         </div>
 
-        <div className="flex items-center gap-2">
-          {/* Editor Mode Toggle */}
-          <div className="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+        <div className="flex items-center gap-1 sm:gap-2">
+          {/* Editor Mode Toggle - oculto en móvil (usa modo canvas por defecto) */}
+          <div className="hidden sm:flex bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
             <button
               onClick={() => setModoEditor('canvas')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm transition-colors ${
+              className={`flex items-center gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-md text-sm transition-colors ${
                 modoEditor === 'canvas'
                   ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
                   : 'text-gray-600 dark:text-gray-400'
               }`}
             >
               <Layout className="w-4 h-4" />
-              Visual
+              <span className="hidden md:inline">Visual</span>
             </button>
             <button
               onClick={() => setModoEditor('bloques')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm transition-colors ${
+              className={`flex items-center gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-md text-sm transition-colors ${
                 modoEditor === 'bloques'
                   ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
                   : 'text-gray-600 dark:text-gray-400'
               }`}
             >
               <FileText className="w-4 h-4" />
-              Bloques
+              <span className="hidden md:inline">Bloques</span>
             </button>
           </div>
 
@@ -602,18 +650,18 @@ function WebsiteEditorPage() {
               href={`/sitio/${config.slug}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-600 dark:text-gray-400 transition-colors"
+              className="flex items-center gap-2 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-600 dark:text-gray-400 transition-colors"
             >
               <ExternalLink className="w-4 h-4" />
-              <span className="hidden sm:inline">Ver sitio</span>
+              <span className="hidden lg:inline">Ver sitio</span>
             </a>
           )}
 
-          {/* Publicar */}
+          {/* Publicar - compacto en móvil */}
           <button
             onClick={handlePublicar}
             disabled={publicarSitio.isPending}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
+            className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg font-medium transition-colors text-sm ${
               estaPublicado
                 ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 hover:bg-amber-200 dark:hover:bg-amber-900/50'
                 : 'bg-primary-600 text-white hover:bg-primary-700'
@@ -639,121 +687,125 @@ function WebsiteEditorPage() {
         onReorder={handleDndReorder}
       >
         <div className="flex-1 flex overflow-hidden">
-          {/* Panel izquierdo - Navegacion */}
-        <aside className="w-14 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col items-center py-4 gap-2">
-          <button
-            onClick={() => setPanelActivo('bloques')}
-            className={`p-3 rounded-lg transition-colors ${
-              panelActivo === 'bloques'
-                ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
-                : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400'
-            }`}
-            title="Bloques"
-          >
-            <Plus className="w-5 h-5" />
-          </button>
-          <button
-            onClick={() => setPanelActivo('paginas')}
-            className={`p-3 rounded-lg transition-colors ${
-              panelActivo === 'paginas'
-                ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
-                : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400'
-            }`}
-            title="Páginas"
-          >
-            <FileText className="w-5 h-5" />
-          </button>
-          <button
-            onClick={() => setPanelActivo('tema')}
-            className={`p-3 rounded-lg transition-colors ${
-              panelActivo === 'tema'
-                ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
-                : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400'
-            }`}
-            title="Tema"
-          >
-            <Palette className="w-5 h-5" />
-          </button>
-          <button
-            onClick={() => setMostrarTemplates(true)}
-            className="p-3 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-600 dark:text-gray-400 transition-colors"
-            title="Templates"
-          >
-            <Sparkles className="w-5 h-5" />
-          </button>
-          <div className="flex-1" />
-          <button
-            onClick={() => navigate('/configuracion')}
-            className="p-3 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-600 dark:text-gray-400 transition-colors"
-            title="Configuración"
-          >
-            <Settings className="w-5 h-5" />
-          </button>
-        </aside>
+          {/* Panel izquierdo - Navegacion (oculto en móvil) */}
+          {showSidebar && (
+            <aside className="w-12 md:w-14 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col items-center py-2 md:py-4 gap-1 md:gap-2 flex-shrink-0">
+              <button
+                onClick={() => setPanelActivo(PANEL_TYPES.BLOQUES)}
+                className={`p-2 md:p-3 rounded-lg transition-colors ${
+                  panelActivo === PANEL_TYPES.BLOQUES
+                    ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
+                    : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400'
+                }`}
+                title="Bloques"
+              >
+                <Plus className="w-5 h-5" />
+              </button>
+              <button
+                onClick={() => setPanelActivo(PANEL_TYPES.PAGINAS)}
+                className={`p-2 md:p-3 rounded-lg transition-colors ${
+                  panelActivo === PANEL_TYPES.PAGINAS
+                    ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
+                    : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400'
+                }`}
+                title="Páginas"
+              >
+                <FileText className="w-5 h-5" />
+              </button>
+              <button
+                onClick={() => setPanelActivo(PANEL_TYPES.TEMA)}
+                className={`p-2 md:p-3 rounded-lg transition-colors ${
+                  panelActivo === PANEL_TYPES.TEMA
+                    ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
+                    : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400'
+                }`}
+                title="Tema"
+              >
+                <Palette className="w-5 h-5" />
+              </button>
+              <button
+                onClick={() => setMostrarTemplates(true)}
+                className="p-2 md:p-3 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-600 dark:text-gray-400 transition-colors"
+                title="Templates"
+              >
+                <Sparkles className="w-5 h-5" />
+              </button>
+              <div className="flex-1" />
+              <button
+                onClick={() => navigate('/configuracion')}
+                className="p-2 md:p-3 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-600 dark:text-gray-400 transition-colors"
+                title="Configuración"
+              >
+                <Settings className="w-5 h-5" />
+              </button>
+            </aside>
+          )}
 
-        {/* Panel secundario - Contenido según panelActivo */}
-        <aside className="w-72 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 overflow-y-auto flex-shrink-0">
-          {panelActivo === 'bloques' && (
-            <BlockPalette
-              tiposBloques={tiposBloques}
-              onAgregarBloque={handleAgregarBloque}
-              disabled={!paginaActiva}
-            />
+          {/* Panel secundario - Contenido según panelActivo (solo desktop) */}
+          {showSecondaryPanel && (
+            <aside className="w-72 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 overflow-y-auto flex-shrink-0">
+              {panelActivo === PANEL_TYPES.BLOQUES && (
+                <BlockPalette
+                  tiposBloques={tiposBloques}
+                  onAgregarBloque={handleAgregarBloque}
+                  disabled={!paginaActiva}
+                />
+              )}
+              {panelActivo === PANEL_TYPES.PAGINAS && (
+                <PageManager
+                  paginas={paginas}
+                  paginaActiva={paginaActiva}
+                  onSeleccionar={setPaginaActiva}
+                  onCrear={crearPagina.mutateAsync}
+                  onActualizar={actualizarPagina.mutateAsync}
+                  onEliminar={eliminarPagina.mutateAsync}
+                />
+              )}
+              {panelActivo === PANEL_TYPES.TEMA && (
+                <ThemeEditor
+                  config={config}
+                  onActualizar={(tema) =>
+                    actualizarConfig.mutateAsync({
+                      id: config.id,
+                      data: tema,
+                    })
+                  }
+                />
+              )}
+            </aside>
           )}
-          {panelActivo === 'paginas' && (
-            <PageManager
-              paginas={paginas}
-              paginaActiva={paginaActiva}
-              onSeleccionar={setPaginaActiva}
-              onCrear={crearPagina.mutateAsync}
-              onActualizar={actualizarPagina.mutateAsync}
-              onEliminar={eliminarPagina.mutateAsync}
-            />
-          )}
-          {panelActivo === 'tema' && (
-            <ThemeEditor
-              config={config}
-              onActualizar={(tema) =>
-                actualizarConfig.mutateAsync({
-                  id: config.id,
-                  data: tema,
-                })
-              }
-            />
-          )}
-        </aside>
 
-        {/* Area principal */}
-        <main className="flex-1 overflow-hidden">
-          {modoEditor === 'canvas' ? (
-            <EditorCanvas
-              bloques={bloques}
-              tema={config}
-              onReordenar={handleReordenarBloques}
-              onActualizarBloque={handleActualizarBloque}
-              isLoading={bloquesLoading}
-            />
-          ) : (
-            <div className="h-full overflow-y-auto p-6 bg-gray-50 dark:bg-gray-900">
-              <BlockEditor
-                pagina={paginaActiva}
+          {/* Area principal */}
+          <main className="flex-1 overflow-hidden">
+            {modoEditor === 'canvas' ? (
+              <EditorCanvas
                 bloques={bloques}
-                bloqueSeleccionado={bloqueSeleccionado}
-                onSeleccionar={seleccionarBloque}
-                onActualizar={handleActualizarBloque}
-                onEliminar={handleEliminarBloque}
-                onDuplicar={handleDuplicarBloque}
-                onReordenar={handleReordenarBloques}
-                isLoading={bloquesLoading}
                 tema={config}
-                industria={config?.industria || 'default'}
+                onReordenar={handleReordenarBloques}
+                onActualizarBloque={handleActualizarBloque}
+                isLoading={bloquesLoading}
               />
-            </div>
-          )}
-        </main>
+            ) : (
+              <div className="h-full overflow-y-auto p-4 sm:p-6 bg-gray-50 dark:bg-gray-900">
+                <BlockEditor
+                  pagina={paginaActiva}
+                  bloques={bloques}
+                  bloqueSeleccionado={bloqueSeleccionado}
+                  onSeleccionar={seleccionarBloque}
+                  onActualizar={handleActualizarBloque}
+                  onEliminar={handleEliminarBloque}
+                  onDuplicar={handleDuplicarBloque}
+                  onReordenar={handleReordenarBloques}
+                  isLoading={bloquesLoading}
+                  tema={config}
+                  industria={config?.industria || 'default'}
+                />
+              </div>
+            )}
+          </main>
 
-          {/* Panel derecho - Propiedades (solo en modo canvas con bloque seleccionado) */}
-          {modoEditor === 'canvas' && bloqueSeleccionado && mostrarPropiedades && (
+          {/* Panel derecho - Propiedades (solo desktop, en modo canvas con bloque seleccionado) */}
+          {showPropertiesPanel && modoEditor === 'canvas' && bloqueSeleccionado && (
             <aside className="w-80 flex-shrink-0">
               <PropertiesPanel
                 bloque={bloqueSeleccionadoCompleto}
@@ -762,13 +814,112 @@ function WebsiteEditorPage() {
                 }
                 onDuplicate={handleDuplicarBloque}
                 onDelete={handleEliminarBloque}
-                onClose={() => setMostrarPropiedades(false)}
+                onClose={cerrarPropiedades}
                 isLoading={estaGuardando}
               />
             </aside>
           )}
         </div>
       </DndEditorProvider>
+
+      {/* ========== MOBILE DRAWERS ========== */}
+
+      {/* Drawer: Bloques (móvil) */}
+      <Drawer
+        isOpen={drawerAbierto === PANEL_TYPES.BLOQUES}
+        onClose={closeDrawer}
+        title="Agregar bloque"
+        subtitle="Toca para agregar al final de la página"
+        size="lg"
+      >
+        <BlockPalette
+          tiposBloques={tiposBloques}
+          onAgregarBloque={(tipo) => {
+            handleAgregarBloque(tipo);
+            closeDrawer();
+          }}
+          disabled={!paginaActiva}
+          isInDrawer
+        />
+      </Drawer>
+
+      {/* Drawer: Páginas (móvil) */}
+      <Drawer
+        isOpen={drawerAbierto === PANEL_TYPES.PAGINAS}
+        onClose={closeDrawer}
+        title="Páginas"
+        subtitle="Gestiona las páginas de tu sitio"
+        size="lg"
+      >
+        <PageManager
+          paginas={paginas}
+          paginaActiva={paginaActiva}
+          onSeleccionar={(pagina) => {
+            setPaginaActiva(pagina);
+            closeDrawer();
+          }}
+          onCrear={crearPagina.mutateAsync}
+          onActualizar={actualizarPagina.mutateAsync}
+          onEliminar={eliminarPagina.mutateAsync}
+        />
+      </Drawer>
+
+      {/* Drawer: Tema (móvil) */}
+      <Drawer
+        isOpen={drawerAbierto === PANEL_TYPES.TEMA}
+        onClose={closeDrawer}
+        title="Tema"
+        subtitle="Personaliza colores y fuentes"
+        size="lg"
+      >
+        <ThemeEditor
+          config={config}
+          onActualizar={(tema) =>
+            actualizarConfig.mutateAsync({
+              id: config.id,
+              data: tema,
+            })
+          }
+        />
+      </Drawer>
+
+      {/* Drawer: Propiedades (móvil y tablet) */}
+      <Drawer
+        isOpen={propertiesAsDrawer && drawerAbierto === PANEL_TYPES.PROPIEDADES && bloqueSeleccionado}
+        onClose={closeDrawer}
+        title={`Propiedades: ${bloqueSeleccionadoCompleto?.tipo || 'Bloque'}`}
+        subtitle={estaGuardando ? 'Guardando...' : 'Edita las propiedades del bloque'}
+        size="lg"
+        showCloseButton
+      >
+        <PropertiesPanel
+          bloque={bloqueSeleccionadoCompleto}
+          onUpdate={(contenido) =>
+            handleActualizarBloque(bloqueSeleccionado, contenido)
+          }
+          onDuplicate={(id) => {
+            handleDuplicarBloque(id);
+            closeDrawer();
+          }}
+          onDelete={(id) => {
+            handleEliminarBloque(id);
+            closeDrawer();
+          }}
+          onClose={closeDrawer}
+          isLoading={estaGuardando}
+          isInDrawer
+        />
+      </Drawer>
+
+      {/* FAB móvil para acceder a paneles */}
+      {isMobile && (
+        <MobileEditorFAB
+          onOpenPanel={openPanel}
+          onOpenTemplates={() => setMostrarTemplates(true)}
+          disabledBloques={!paginaActiva}
+          disabledTemplates={!tieneSitio}
+        />
+      )}
 
       {/* Template Gallery Modal */}
       <TemplateGallery

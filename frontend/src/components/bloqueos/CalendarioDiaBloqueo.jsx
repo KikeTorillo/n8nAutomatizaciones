@@ -2,12 +2,14 @@ import { memo } from 'react';
 import { format } from 'date-fns';
 import { Lock, Clock, Building, User, Plus } from 'lucide-react';
 import { obtenerColorTipoBloqueo, esBloqueoDiaCompleto } from '@/utils/bloqueoHelpers';
+import { aFormatoISO } from '@/utils/dateHelpers';
 
 /**
  * Componente de celda individual del calendario para bloqueos
  * Muestra el día y los bloqueos programados para ese día
  *
  * Memoizado para evitar re-renders innecesarios (Fase 3 Ene 2026)
+ * Ene 2026: Agregado modo compacto para móvil
  */
 function CalendarioDiaBloqueo({
   dia,
@@ -17,6 +19,8 @@ function CalendarioDiaBloqueo({
   onVerBloqueo,
   onCrearBloqueo,
   isLoading,
+  compactMode = false,
+  onDiaClick,
 }) {
   const numeroDia = format(dia, 'd');
   const maxBloqueosVisibles = 2;
@@ -26,6 +30,82 @@ function CalendarioDiaBloqueo({
   // Verificar si hay bloqueo organizacional (afecta a todos)
   const tieneBloqueoOrganizacional = bloqueos.some((b) => !b.profesional_id);
 
+  // Agrupar bloqueos por tipo para mostrar dots en modo compacto
+  const bloqueosPorTipo = bloqueos.reduce((acc, bloqueo) => {
+    const tipo = bloqueo.tipo_bloqueo_codigo || 'otro';
+    acc[tipo] = (acc[tipo] || 0) + 1;
+    return acc;
+  }, {});
+
+  // Modo compacto para móvil - solo número y dots indicadores
+  if (compactMode) {
+    const fechaISO = aFormatoISO(dia);
+
+    return (
+      <button
+        onClick={() => esDelMesActual && onDiaClick && onDiaClick(fechaISO, bloqueos)}
+        disabled={!esDelMesActual}
+        className={`
+          aspect-square flex flex-col items-center justify-center rounded-lg
+          transition-all relative
+          ${esDelMesActual
+            ? tieneBloqueoOrganizacional
+              ? 'bg-red-50 dark:bg-red-900/20 active:scale-95'
+              : 'bg-white dark:bg-gray-800 active:scale-95'
+            : 'bg-gray-50 dark:bg-gray-900 opacity-40'
+          }
+          ${esHoy
+            ? 'ring-2 ring-primary-500 dark:ring-primary-400'
+            : tieneBloqueoOrganizacional && esDelMesActual
+              ? 'border border-red-300 dark:border-red-700'
+              : 'border border-gray-200 dark:border-gray-700'
+          }
+          ${esDelMesActual && bloqueos.length > 0 ? 'cursor-pointer' : ''}
+        `}
+      >
+        {/* Número del día */}
+        <span
+          className={`
+            text-sm font-semibold leading-none
+            ${esDelMesActual ? 'text-gray-900 dark:text-gray-100' : 'text-gray-400 dark:text-gray-600'}
+            ${esHoy ? 'text-primary-600 dark:text-primary-400' : ''}
+          `}
+        >
+          {numeroDia}
+        </span>
+
+        {/* Dots indicadores por tipo */}
+        {bloqueos.length > 0 && (
+          <div className="flex items-center justify-center gap-0.5 mt-1">
+            {Object.entries(bloqueosPorTipo).slice(0, 4).map(([tipo, count], idx) => {
+              const colores = obtenerColorTipoBloqueo(tipo);
+              return (
+                <span
+                  key={idx}
+                  className={`w-1.5 h-1.5 rounded-full ${colores.bg}`}
+                  title={`${count} ${tipo}`}
+                />
+              );
+            })}
+          </div>
+        )}
+
+        {/* Icono organizacional */}
+        {tieneBloqueoOrganizacional && esDelMesActual && (
+          <Lock className="absolute top-0.5 right-0.5 w-2.5 h-2.5 text-red-500" />
+        )}
+
+        {/* Badge de cantidad (solo si hay más de 1) */}
+        {bloqueos.length > 1 && (
+          <span className="absolute -top-1 -right-1 w-4 h-4 text-[10px] font-bold text-white bg-red-600 rounded-full flex items-center justify-center">
+            {bloqueos.length > 9 ? '9+' : bloqueos.length}
+          </span>
+        )}
+      </button>
+    );
+  }
+
+  // Modo normal (desktop)
   return (
     <div
       className={`
@@ -181,7 +261,8 @@ function areEqual(prev, next) {
     prev.bloqueos.length === next.bloqueos.length &&
     prev.esDelMesActual === next.esDelMesActual &&
     prev.esHoy === next.esHoy &&
-    prev.isLoading === next.isLoading
+    prev.isLoading === next.isLoading &&
+    prev.compactMode === next.compactMode
   );
 }
 

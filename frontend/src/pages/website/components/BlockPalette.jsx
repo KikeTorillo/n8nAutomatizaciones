@@ -98,8 +98,14 @@ const DESCRIPCIONES_BLOQUES = {
 
 /**
  * BlockPalette - Paleta de bloques disponibles
+ *
+ * @param {Object} props
+ * @param {Array} props.tiposBloques - Lista de tipos de bloques disponibles
+ * @param {Function} props.onAgregarBloque - Callback al agregar un bloque
+ * @param {boolean} props.disabled - Si la paleta está deshabilitada
+ * @param {boolean} props.isInDrawer - Si se renderiza dentro de un drawer (móvil)
  */
-function BlockPalette({ tiposBloques = [], onAgregarBloque, disabled }) {
+function BlockPalette({ tiposBloques = [], onAgregarBloque, disabled, isInDrawer = false }) {
   // Si no hay tipos del backend, usar lista hardcoded
   const tipos = tiposBloques.length > 0
     ? tiposBloques
@@ -144,7 +150,11 @@ function BlockPalette({ tiposBloques = [], onAgregarBloque, disabled }) {
         <h4 className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2 px-1">
           {titulo}
         </h4>
-        <div className="grid grid-cols-2 gap-2">
+        {/* Grid 3 columnas en drawer (más espacio), 2 columnas en sidebar */}
+        <div className={cn(
+          'grid gap-2',
+          isInDrawer ? 'grid-cols-3' : 'grid-cols-2'
+        )}>
           {bloques.map((bloque) => (
             <DraggableBloqueCard
               key={bloque.tipo}
@@ -152,6 +162,7 @@ function BlockPalette({ tiposBloques = [], onAgregarBloque, disabled }) {
               nombre={bloque.nombre}
               onClick={() => onAgregarBloque(bloque.tipo)}
               disabled={disabled}
+              isInDrawer={isInDrawer}
             />
           ))}
         </div>
@@ -161,16 +172,21 @@ function BlockPalette({ tiposBloques = [], onAgregarBloque, disabled }) {
 
   return (
     <div className="h-full flex flex-col">
-      {/* Header */}
-      <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-        <h3 className="font-semibold text-gray-900 dark:text-gray-100">Agregar bloque</h3>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-          Arrastra al canvas o haz clic para agregar
-        </p>
-      </div>
+      {/* Header - oculto en drawer porque el Drawer ya tiene título */}
+      {!isInDrawer && (
+        <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+          <h3 className="font-semibold text-gray-900 dark:text-gray-100">Agregar bloque</h3>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            Arrastra al canvas o haz clic para agregar
+          </p>
+        </div>
+      )}
 
       {/* Bloques */}
-      <div className="flex-1 overflow-y-auto p-4">
+      <div className={cn(
+        'flex-1 overflow-y-auto',
+        isInDrawer ? 'p-2' : 'p-4'
+      )}>
         {disabled && (
           <div className="bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 rounded-lg p-3 mb-4 text-center">
             <p className="text-sm text-amber-700 dark:text-amber-400">
@@ -191,7 +207,7 @@ function BlockPalette({ tiposBloques = [], onAgregarBloque, disabled }) {
 /**
  * Card de bloque individual con soporte para drag
  */
-const DraggableBloqueCard = memo(function DraggableBloqueCard({ tipo, nombre, onClick, disabled }) {
+const DraggableBloqueCard = memo(function DraggableBloqueCard({ tipo, nombre, onClick, disabled, isInDrawer = false }) {
   const Icono = ICONOS_BLOQUES[tipo] || Layout;
   const colores = COLORES_BLOQUES[tipo] || { bg: 'bg-gray-100', text: 'text-gray-600', dark: 'dark:bg-gray-700 dark:text-gray-400' };
   const descripcion = DESCRIPCIONES_BLOQUES[tipo] || '';
@@ -218,29 +234,38 @@ const DraggableBloqueCard = memo(function DraggableBloqueCard({ tipo, nombre, on
       {...listeners}
       onClick={disabled ? undefined : onClick}
       className={cn(
-        'p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-left',
+        'rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-left',
         'transition-all cursor-grab active:cursor-grabbing',
         'hover:border-primary-300 dark:hover:border-primary-600 hover:shadow-md',
         'group relative',
+        // Padding más grande en drawer para mejor touch target
+        isInDrawer ? 'p-4' : 'p-3',
         isDragging && 'opacity-50 scale-95',
         disabled && 'opacity-50 cursor-not-allowed hover:border-gray-200 dark:hover:border-gray-700 hover:shadow-none'
       )}
       title={descripcion}
     >
-      {/* Drag indicator */}
-      <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
-        <GripVertical className="w-3 h-3 text-gray-300 dark:text-gray-600" />
-      </div>
+      {/* Drag indicator - oculto en móvil (drawer) */}
+      {!isInDrawer && (
+        <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <GripVertical className="w-3 h-3 text-gray-300 dark:text-gray-600" />
+        </div>
+      )}
 
       <div className={cn(
-        'w-8 h-8 rounded-lg flex items-center justify-center mb-2',
+        'rounded-lg flex items-center justify-center mb-2',
         'group-hover:scale-110 transition-transform',
         colores.bg,
-        colores.dark
+        colores.dark,
+        // Icono más grande en drawer para mejor touch target
+        isInDrawer ? 'w-10 h-10' : 'w-8 h-8'
       )}>
-        <Icono className={cn('w-4 h-4', colores.text)} />
+        <Icono className={cn(colores.text, isInDrawer ? 'w-5 h-5' : 'w-4 h-4')} />
       </div>
-      <p className="text-xs font-medium text-gray-900 dark:text-gray-100">{nombre}</p>
+      <p className={cn(
+        'font-medium text-gray-900 dark:text-gray-100',
+        isInDrawer ? 'text-sm' : 'text-xs'
+      )}>{nombre}</p>
     </div>
   );
 });

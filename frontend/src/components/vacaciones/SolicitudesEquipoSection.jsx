@@ -6,7 +6,7 @@
 import { useState } from 'react';
 import {
   Users, Calendar, Check, X, Eye, Loader2, AlertCircle,
-  RefreshCw, User, Clock
+  User, Clock
 } from 'lucide-react';
 import {
   Badge,
@@ -447,23 +447,7 @@ function SolicitudesEquipoSection() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-            <Users className="h-6 w-6 text-primary-500" />
-            Solicitudes de Mi Equipo
-          </h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            Revisa y gestiona las solicitudes de vacaciones de tu equipo
-          </p>
-        </div>
-        <Button variant="ghost" size="sm" onClick={() => refetch()}>
-          <RefreshCw className="h-4 w-4" />
-        </Button>
-      </div>
-
+    <div className="space-y-4">
       {/* Loading */}
       {isLoading && (
         <div className="flex items-center justify-center py-12">
