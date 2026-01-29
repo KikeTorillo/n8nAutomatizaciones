@@ -1,8 +1,8 @@
 import { forwardRef, useId, memo } from 'react';
 import PropTypes from 'prop-types';
 import { cn } from '@/lib/utils';
-import Checkbox from '../atoms/Checkbox';
-import Label from '../atoms/Label';
+import { Checkbox } from '../atoms/Checkbox';
+import { Label } from '../atoms/Label';
 
 /**
  * CheckboxField - Checkbox con label, description y error
@@ -63,7 +63,7 @@ const CheckboxField = memo(forwardRef(function CheckboxField(
               </p>
             )}
             {error && (
-              <p className="text-xs text-red-600 mt-1">{error}</p>
+              <p className="text-xs text-red-600 dark:text-red-400 mt-1">{error}</p>
             )}
           </div>
         )}
@@ -86,4 +86,3 @@ CheckboxField.propTypes = {
 };
 
 export { CheckboxField };
-export default CheckboxField;

@@ -136,13 +136,14 @@ BEGIN
                     END IF;
 
                     -- Usar función consolidada de movimientos
+                    -- Ene 2026: Resuelve ubicación por usuario via usuarios_ubicaciones
                     SELECT registrar_movimiento_con_ubicacion(
                         v_organizacion_id,
                         item.producto_id,
                         'salida_venta',
                         -item.cantidad,  -- Negativo porque es salida
                         v_sucursal_id,
-                        NULL,  -- ubicacion_id (usa default)
+                        NULL,  -- ubicacion_id (resuelve por usuario o default sucursal)
                         NULL,  -- lote
                         NULL,  -- fecha_vencimiento
                         NULL,  -- referencia
@@ -277,13 +278,14 @@ BEGIN
             END IF;
 
             -- Usar función consolidada de movimientos
+            -- Ene 2026: Resuelve ubicación por usuario via usuarios_ubicaciones
             SELECT registrar_movimiento_con_ubicacion(
                 NEW.organizacion_id,
                 item.producto_id,
                 'salida_venta',
                 -item.cantidad,  -- Negativo porque es salida
                 NEW.sucursal_id,
-                NULL,  -- ubicacion_id (usa default)
+                NULL,  -- ubicacion_id (resuelve por usuario o default sucursal)
                 NULL,  -- lote
                 NULL,  -- fecha_vencimiento
                 NULL,  -- referencia

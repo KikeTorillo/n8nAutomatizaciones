@@ -1,25 +1,42 @@
-import { useState, useRef, useEffect, memo } from 'react';
+import { useState, useRef, useCallback, memo } from 'react';
 import PropTypes from 'prop-types';
 import { MoreVertical } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '../atoms/Button';
 import { useClickOutsideRef } from '@/hooks/utils/useClickOutside';
+import { useEscapeKey } from '@/hooks/utils/useEscapeKey';
 
 /**
  * DropdownMenu - Menú desplegable para acciones
+ *
+ * Soporta modo controlado y no controlado:
+ * - No controlado (default): gestiona su propio estado interno
+ * - Controlado: usa `isOpen` y `onOpenChange` props
  *
  * @param {Object} props
  * @param {React.ReactNode} props.trigger - Elemento que dispara el dropdown (default: ícono de 3 puntos)
  * @param {Array} props.items - Array de items: { label, icon, onClick, variant, disabled, divider }
  * @param {string} props.align - Alineación del menú: 'left' | 'right' (default: 'right')
  * @param {string} props.className - Clases adicionales para el contenedor
+ * @param {boolean} [props.isOpen] - Estado controlado del dropdown
+ * @param {Function} [props.onOpenChange] - Callback cuando cambia el estado: (isOpen: boolean) => void
  *
  * @example
+ * // Modo no controlado (default)
  * <DropdownMenu
  *   items={[
  *     { label: 'Editar', icon: Edit, onClick: () => handleEdit() },
  *     { label: 'Eliminar', icon: Trash, onClick: () => handleDelete(), variant: 'danger' },
  *   ]}
+ * />
+ *
+ * @example
+ * // Modo controlado
+ * const [isOpen, setIsOpen] = useState(false);
+ * <DropdownMenu
+ *   isOpen={isOpen}
+ *   onOpenChange={setIsOpen}
+ *   items={[...]}
  * />
  */
 const DropdownMenu = memo(function DropdownMenu({
@@ -27,44 +44,57 @@ const DropdownMenu = memo(function DropdownMenu({
   items = [],
   align = 'right',
   className,
+  isOpen: controlledIsOpen,
+  onOpenChange,
 }) {
-  const [isOpen, setIsOpen] = useState(false);
+  const [internalIsOpen, setInternalIsOpen] = useState(false);
   const dropdownRef = useRef(null);
+
+  // Patrón controlled/uncontrolled
+  const isControlled = controlledIsOpen !== undefined;
+  const isOpen = isControlled ? controlledIsOpen : internalIsOpen;
+
+  const setIsOpen = useCallback((newValue) => {
+    const nextValue = typeof newValue === 'function' ? newValue(isOpen) : newValue;
+    if (isControlled) {
+      onOpenChange?.(nextValue);
+    } else {
+      setInternalIsOpen(nextValue);
+    }
+  }, [isControlled, isOpen, onOpenChange]);
 
   // Cerrar al hacer click fuera (usando hook centralizado)
   useClickOutsideRef(dropdownRef, () => setIsOpen(false), isOpen);
 
-  // Cerrar con Escape
-  useEffect(() => {
-    function handleKeyDown(event) {
-      if (event.key === 'Escape') setIsOpen(false);
-    }
-    if (isOpen) {
-      document.addEventListener('keydown', handleKeyDown);
-      return () => document.removeEventListener('keydown', handleKeyDown);
-    }
-  }, [isOpen]);
+  // Cerrar con Escape (usando hook centralizado)
+  useEscapeKey(() => setIsOpen(false), isOpen);
 
-  const handleItemClick = (item) => {
+  const handleItemClick = useCallback((item) => {
     if (item.disabled) return;
     item.onClick?.();
     setIsOpen(false);
-  };
+  }, [setIsOpen]);
+
+  const handleToggle = useCallback(() => {
+    setIsOpen(prev => !prev);
+  }, [setIsOpen]);
 
   return (
     <div className={cn('relative inline-block', className)} ref={dropdownRef}>
       {/* Trigger */}
       {trigger ? (
-        <div onClick={() => setIsOpen(!isOpen)}>
+        <div onClick={handleToggle}>
           {trigger}
         </div>
       ) : (
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => setIsOpen(!isOpen)}
+          onClick={handleToggle}
           className="p-1.5"
           aria-label="Más opciones"
+          aria-expanded={isOpen}
+          aria-haspopup="menu"
         >
           <MoreVertical className="h-4 w-4" />
         </Button>
@@ -87,6 +117,7 @@ const DropdownMenu = memo(function DropdownMenu({
                 <div
                   key={`divider-${index}`}
                   className="my-1 border-t border-gray-200 dark:border-gray-700"
+                  role="separator"
                 />
               );
             }
@@ -147,7 +178,10 @@ DropdownMenu.propTypes = {
   ),
   align: PropTypes.oneOf(['left', 'right']),
   className: PropTypes.string,
+  /** Estado controlado del dropdown */
+  isOpen: PropTypes.bool,
+  /** Callback cuando cambia el estado: (isOpen: boolean) => void */
+  onOpenChange: PropTypes.func,
 };
 
 export { DropdownMenu };
-export default DropdownMenu;

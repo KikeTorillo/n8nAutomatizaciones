@@ -111,4 +111,3 @@ CheckboxGroup.propTypes = {
   className: PropTypes.string,
 };
 
-export default CheckboxGroup;

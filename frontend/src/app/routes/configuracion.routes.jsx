@@ -21,6 +21,7 @@ const DiasFestivosPage = lazy(() => import('@/pages/configuracion/DiasFestivosPa
 const RolesPage = lazy(() => import('@/pages/configuracion/RolesPage'));
 const PermisosPage = lazy(() => import('@/pages/configuracion/PermisosPage'));
 const UsuariosPage = lazy(() => import('@/pages/configuracion/UsuariosPage'));
+const UsuarioDetailPage = lazy(() => import('@/pages/configuracion/UsuarioDetailPage'));
 
 // Monedas
 const MonedasPage = lazy(() => import('@/pages/configuracion/MonedasPage'));
@@ -45,6 +46,7 @@ export const configuracionRoutes = [
   protectedRoute('configuracion/roles', RolesPage, { requiredRole: ROLES.ADMIN_ONLY }),
   protectedRoute('configuracion/permisos', PermisosPage, { requiredRole: ROLES.ADMIN_ONLY }),
   protectedRoute('configuracion/usuarios', UsuariosPage, { requiredRole: ROLES.ADMIN_ONLY }),
+  protectedRoute('configuracion/usuarios/:id', UsuarioDetailPage, { requiredRole: ROLES.ADMIN_ONLY }),
 
   // Monedas (solo admin)
   protectedRoute('configuracion/monedas', MonedasPage, { requiredRole: ROLES.ADMIN_ONLY }),

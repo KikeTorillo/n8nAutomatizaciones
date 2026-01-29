@@ -106,4 +106,3 @@ export const NavDropdown = memo(function NavDropdown({
 
 NavDropdown.displayName = 'NavDropdown';
 
-export default NavDropdown;

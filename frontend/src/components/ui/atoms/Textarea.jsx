@@ -85,4 +85,3 @@ Textarea.propTypes = {
 };
 
 export { Textarea };
-export default Textarea;

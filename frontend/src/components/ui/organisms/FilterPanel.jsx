@@ -202,4 +202,3 @@ export const FilterChips = memo(function FilterChips({
 
 FilterChips.displayName = 'FilterChips';
 
-export default FilterPanel;

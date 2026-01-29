@@ -184,4 +184,3 @@ LimitProgressBar.propTypes = {
   porcentaje: PropTypes.number,
 };
 
-export default ProgressBar;

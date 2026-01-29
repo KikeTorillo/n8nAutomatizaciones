@@ -5,6 +5,7 @@
  */
 
 import { useState, useMemo, createContext, useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Users,
   Plus,
@@ -16,6 +17,7 @@ import {
   Loader2,
   Link2,
   Link2Off,
+  Eye,
 } from 'lucide-react';
 
 import { Button, ConfirmDialog, StatCardGrid } from '@/components/ui';
@@ -55,6 +57,7 @@ const INITIAL_FILTERS = {
 
 function UsuariosPage() {
   const toast = useToast();
+  const navigate = useNavigate();
 
   // Filtros consolidados con useFilters
   const {
@@ -174,18 +177,24 @@ function UsuariosPage() {
 
   const isFiltered = hasFiltrosActivos;
 
+  // Handler para ver detalle
+  const handleVerDetalle = (usuarioId) => {
+    navigate(`/configuracion/usuarios/${usuarioId}`);
+  };
+
   // Contexto compartido para UsuarioRow (reduce prop drilling)
   const contextValue = useMemo(() => ({
     onCambiarRol: handleCambiarRol,
     onDesvincular: handleDesvincular,
     onVincular: handleVincularProfesional,
+    onVerDetalle: handleVerDetalle,
     vinculandoUsuario,
     setVinculandoUsuario,
     profesionalesDisponibles,
     getRolBadgeColor,
     cambiarRolMutation,
     cambiarEstadoMutation,
-  }), [vinculandoUsuario, profesionalesDisponibles, cambiarRolMutation, cambiarEstadoMutation]);
+  }), [vinculandoUsuario, profesionalesDisponibles, cambiarRolMutation, cambiarEstadoMutation, navigate]);
 
   return (
     <UsuariosContext.Provider value={contextValue}>
@@ -277,6 +286,7 @@ function UsuarioRow({ usuario, onEdit, onToggleActivo }) {
     onCambiarRol,
     onDesvincular,
     onVincular,
+    onVerDetalle,
     vinculandoUsuario,
     setVinculandoUsuario,
     profesionalesDisponibles,
@@ -399,6 +409,9 @@ function UsuarioRow({ usuario, onEdit, onToggleActivo }) {
               ${usuario.activo ? 'translate-x-5' : 'translate-x-0'}
             `} />
           </button>
+          <Button variant="ghost" size="sm" onClick={() => onVerDetalle(usuario.id)} title="Ver detalle">
+            <Eye className="w-4 h-4" />
+          </Button>
           <Button variant="ghost" size="sm" onClick={onEdit}>Editar</Button>
         </div>
       </div>

@@ -1,7 +1,9 @@
 const express = require('express');
 const UsuarioController = require('../controllers/usuario.controller');
+const UsuariosUbicacionesController = require('../controllers/usuariosUbicaciones.controller');
 const { auth, tenant, rateLimiting, validation, subscription } = require('../../../middleware');
 const usuarioSchemas = require('../schemas/usuario.schemas');
+const usuariosUbicacionesSchemas = require('../schemas/usuariosUbicaciones.schemas');
 
 const router = express.Router();
 
@@ -119,6 +121,53 @@ router.patch('/:id/vincular-profesional',
     rateLimiting.heavyOperationRateLimit,
     validation.validate(usuarioSchemas.vincularProfesional),
     UsuarioController.vincularProfesional
+);
+
+// ========== Gestión de Ubicaciones de Usuario - Ene 2026 ==========
+
+// Obtener ubicaciones disponibles para asignar (ANTES de /:id/ubicaciones)
+router.get('/:id/ubicaciones-disponibles',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    validation.validate(usuariosUbicacionesSchemas.ubicacionesDisponibles),
+    UsuariosUbicacionesController.obtenerDisponibles
+);
+
+// Obtener ubicaciones asignadas a un usuario
+router.get('/:id/ubicaciones',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    validation.validate(usuariosUbicacionesSchemas.listarUbicaciones),
+    UsuariosUbicacionesController.obtenerUbicaciones
+);
+
+// Asignar ubicación a usuario
+router.post('/:id/ubicaciones',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.heavyOperationRateLimit,
+    validation.validate(usuariosUbicacionesSchemas.asignarUbicacion),
+    UsuariosUbicacionesController.asignarUbicacion
+);
+
+// Actualizar permisos de asignación de ubicación
+router.patch('/:id/ubicaciones/:ubicacionId',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.heavyOperationRateLimit,
+    validation.validate(usuariosUbicacionesSchemas.actualizarAsignacion),
+    UsuariosUbicacionesController.actualizarAsignacion
+);
+
+// Desasignar ubicación de usuario
+router.delete('/:id/ubicaciones/:ubicacionId',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.heavyOperationRateLimit,
+    validation.validate(usuariosUbicacionesSchemas.desasignarUbicacion),
+    UsuariosUbicacionesController.desasignarUbicacion
 );
 
 module.exports = router;

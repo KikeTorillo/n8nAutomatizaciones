@@ -97,8 +97,19 @@ const MultiSelect = memo(forwardRef(
         <div className="relative">
           {/* Campo principal */}
           <div
+            role="combobox"
+            aria-label={label || placeholder}
+            aria-expanded={isOpen}
+            aria-haspopup="listbox"
+            tabIndex={disabled ? -1 : 0}
             className={cn(baseStyles, stateStyles, className)}
             onClick={() => !disabled && setIsOpen(!isOpen)}
+            onKeyDown={(e) => {
+              if (!disabled && (e.key === 'Enter' || e.key === ' ')) {
+                e.preventDefault();
+                setIsOpen(!isOpen);
+              }
+            }}
           >
             <div className="flex items-center flex-wrap gap-1.5 min-h-6">
               {/* Tags de seleccionados */}
@@ -212,4 +223,3 @@ const MultiSelect = memo(forwardRef(
 MultiSelect.displayName = 'MultiSelect';
 
 export { MultiSelect };
-export default MultiSelect;

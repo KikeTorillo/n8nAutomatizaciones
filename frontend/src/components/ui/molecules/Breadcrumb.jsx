@@ -86,4 +86,3 @@ Breadcrumb.propTypes = {
   homeLink: PropTypes.bool,
 };
 
-export default Breadcrumb;

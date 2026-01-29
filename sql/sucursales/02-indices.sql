@@ -42,6 +42,21 @@ CREATE INDEX idx_servicios_sucursales_activos ON servicios_sucursales(sucursal_i
 -- ====================================================================
 
 -- ====================================================================
+-- INDICES: usuarios_ubicaciones (Enero 2026)
+-- ====================================================================
+CREATE INDEX idx_usuarios_ubicaciones_usuario ON usuarios_ubicaciones(usuario_id);
+CREATE INDEX idx_usuarios_ubicaciones_ubicacion ON usuarios_ubicaciones(ubicacion_id);
+CREATE INDEX idx_usuarios_ubicaciones_org ON usuarios_ubicaciones(organizacion_id);
+
+-- Índice parcial para búsqueda rápida de ubicación default del usuario
+CREATE INDEX idx_usuarios_ubicaciones_default ON usuarios_ubicaciones(usuario_id)
+    WHERE es_default = true AND activo = true;
+
+-- Índice para filtrar ubicaciones activas por usuario
+CREATE INDEX idx_usuarios_ubicaciones_activos ON usuarios_ubicaciones(usuario_id)
+    WHERE activo = true;
+
+-- ====================================================================
 -- INDICES: transferencias_stock
 -- ====================================================================
 CREATE INDEX idx_transferencias_org ON transferencias_stock(organizacion_id);

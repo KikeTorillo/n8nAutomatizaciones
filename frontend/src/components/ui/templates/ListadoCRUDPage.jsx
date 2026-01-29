@@ -3,7 +3,7 @@ import { cn } from '@/lib/utils';
 import { DataTable } from '../organisms/DataTable';
 import { SearchInput } from '../molecules/SearchInput';
 import { Button } from '../atoms/Button';
-import StatCardGrid from '../organisms/StatCardGrid';
+import { StatCardGrid } from '../organisms/StatCardGrid';
 import { ViewTabs } from '../molecules/ViewTabs';
 import { useFilters, usePagination, normalizePagination, useModalManager, useDeleteConfirmation, useExportCSV } from '@/hooks/utils';
 import { Plus, Search, Download } from 'lucide-react';

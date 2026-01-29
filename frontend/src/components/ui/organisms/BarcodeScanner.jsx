@@ -254,4 +254,3 @@ BarcodeScanner.propTypes = {
 };
 
 export { BarcodeScanner };
-export default BarcodeScanner;

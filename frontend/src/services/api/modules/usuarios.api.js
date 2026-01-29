@@ -84,6 +84,49 @@ export const usuariosApi = {
    * @returns {Promise<Object>}
    */
   sinProfesional: () => apiClient.get('/usuarios/sin-profesional'),
+
+  // ========== Gestión de Ubicaciones de Usuario - Ene 2026 ==========
+
+  /**
+   * Obtener ubicaciones asignadas a un usuario
+   * @param {number} usuarioId - ID del usuario
+   * @returns {Promise<Object>}
+   */
+  obtenerUbicaciones: (usuarioId) => apiClient.get(`/usuarios/${usuarioId}/ubicaciones`),
+
+  /**
+   * Obtener ubicaciones disponibles para asignar a un usuario
+   * @param {number} usuarioId - ID del usuario
+   * @returns {Promise<Object>}
+   */
+  ubicacionesDisponibles: (usuarioId) => apiClient.get(`/usuarios/${usuarioId}/ubicaciones-disponibles`),
+
+  /**
+   * Asignar ubicación a usuario
+   * @param {number} usuarioId - ID del usuario
+   * @param {Object} data - { ubicacion_id, es_default?, puede_recibir?, puede_despachar? }
+   * @returns {Promise<Object>}
+   */
+  asignarUbicacion: (usuarioId, data) => apiClient.post(`/usuarios/${usuarioId}/ubicaciones`, data),
+
+  /**
+   * Actualizar permisos de asignación de ubicación
+   * @param {number} usuarioId - ID del usuario
+   * @param {number} ubicacionId - ID de la ubicación
+   * @param {Object} data - { es_default?, puede_recibir?, puede_despachar? }
+   * @returns {Promise<Object>}
+   */
+  actualizarAsignacionUbicacion: (usuarioId, ubicacionId, data) =>
+    apiClient.patch(`/usuarios/${usuarioId}/ubicaciones/${ubicacionId}`, data),
+
+  /**
+   * Desasignar ubicación de usuario
+   * @param {number} usuarioId - ID del usuario
+   * @param {number} ubicacionId - ID de la ubicación
+   * @returns {Promise<Object>}
+   */
+  desasignarUbicacion: (usuarioId, ubicacionId) =>
+    apiClient.delete(`/usuarios/${usuarioId}/ubicaciones/${ubicacionId}`),
 };
 
 // ==================== PROFESIONALES ====================

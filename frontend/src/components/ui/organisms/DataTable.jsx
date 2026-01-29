@@ -1,7 +1,7 @@
 import { useMemo, memo, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import { SkeletonTable } from '../molecules/SkeletonTable';
-import { EmptyState } from '../molecules/EmptyState';
+import { EmptyState } from '../atoms/EmptyState';
 import { Pagination } from './Pagination';
 import { Inbox } from 'lucide-react';
 import {

@@ -81,6 +81,7 @@ const StateNavTabs = memo(function StateNavTabs({
       <button
         key={tab.id}
         onClick={() => onTabChange(tab.id)}
+        aria-current={isActive ? 'page' : undefined}
         className={cn(
           TAB_STYLES.base,
           isActive ? TAB_STYLES.active : TAB_STYLES.inactive
@@ -153,4 +154,3 @@ const StateNavTabs = memo(function StateNavTabs({
 StateNavTabs.displayName = 'StateNavTabs';
 
 export { StateNavTabs };
-export default StateNavTabs;

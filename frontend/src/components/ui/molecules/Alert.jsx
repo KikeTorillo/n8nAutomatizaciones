@@ -159,4 +159,3 @@ Alert.propTypes = {
 };
 
 export { Alert };
-export default Alert;

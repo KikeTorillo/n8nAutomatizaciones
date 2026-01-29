@@ -140,5 +140,17 @@ CREATE INDEX IF NOT EXISTS idx_archivos_sucursal ON archivos_storage(sucursal_id
 CREATE INDEX IF NOT EXISTS idx_website_sucursal ON website_config(sucursal_id) WHERE sucursal_id IS NOT NULL;
 
 -- ====================================================================
+-- USUARIOS_UBICACIONES (Enero 2026)
+-- ====================================================================
+-- FK diferida porque ubicaciones_almacen se crea después de usuarios_ubicaciones
+-- en el orden de ejecución de scripts SQL.
+ALTER TABLE usuarios_ubicaciones
+ADD CONSTRAINT fk_usuarios_ubicaciones_ubicacion
+FOREIGN KEY (ubicacion_id) REFERENCES ubicaciones_almacen(id) ON DELETE CASCADE;
+
+CREATE INDEX IF NOT EXISTS idx_usuarios_ubicaciones_ubicacion_fk
+ON usuarios_ubicaciones(ubicacion_id);
+
+-- ====================================================================
 -- FIN: FOREIGN KEYS DE SUCURSALES
 -- ====================================================================

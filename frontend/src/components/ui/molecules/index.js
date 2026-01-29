@@ -9,7 +9,7 @@ export { ToggleSwitch } from './ToggleSwitch';
 export { SearchInput } from './SearchInput';
 export { StatCard } from './StatCard';
 export { SkeletonStatCard } from './SkeletonStatCard';
-export { EmptyState } from './EmptyState';
+// NOTA: EmptyState movido a atoms/ (Ene 2026) - componente sin lógica interna compleja
 export { ViewTabs } from './ViewTabs';
 export { Breadcrumb } from './Breadcrumb';
 export { RecordNavigation } from './RecordNavigation';

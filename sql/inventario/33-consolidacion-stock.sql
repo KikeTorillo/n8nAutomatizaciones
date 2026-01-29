@@ -73,6 +73,66 @@ $$ LANGUAGE plpgsql;
 COMMENT ON FUNCTION crear_ubicacion_default_sucursal IS 'Obtiene o crea ubicación default de una sucursal';
 
 -- ============================================================================
+-- FUNCIÓN: obtener_ubicacion_usuario (Enero 2026)
+-- Descripción: Obtiene ubicación para un usuario según sus permisos asignados
+-- Flujo de resolución:
+-- 1. Buscar ubicación default del usuario en la sucursal
+-- 2. Si no tiene default, buscar cualquier ubicación permitida
+-- 3. Fallback: ubicación default de sucursal (comportamiento legacy)
+-- NOTA: Esta función debe estar ANTES de registrar_movimiento_con_ubicacion
+-- ============================================================================
+CREATE OR REPLACE FUNCTION obtener_ubicacion_usuario(
+    p_usuario_id INTEGER,
+    p_sucursal_id INTEGER,
+    p_organizacion_id INTEGER,
+    p_tipo_operacion VARCHAR(20) DEFAULT 'despachar' -- 'recibir' o 'despachar'
+)
+RETURNS INTEGER AS $$
+DECLARE
+    v_ubicacion_id INTEGER;
+BEGIN
+    -- 1. Buscar ubicación default del usuario en esta sucursal
+    SELECT uu.ubicacion_id INTO v_ubicacion_id
+    FROM usuarios_ubicaciones uu
+    JOIN ubicaciones_almacen ua ON ua.id = uu.ubicacion_id
+    WHERE uu.usuario_id = p_usuario_id
+      AND ua.sucursal_id = p_sucursal_id
+      AND uu.es_default = true
+      AND uu.activo = true
+      AND ua.activo = true
+      AND CASE
+          WHEN p_tipo_operacion = 'recibir' THEN uu.puede_recibir
+          ELSE uu.puede_despachar
+          END = true;
+
+    -- 2. Si no tiene default, buscar cualquier ubicación permitida
+    IF v_ubicacion_id IS NULL THEN
+        SELECT uu.ubicacion_id INTO v_ubicacion_id
+        FROM usuarios_ubicaciones uu
+        JOIN ubicaciones_almacen ua ON ua.id = uu.ubicacion_id
+        WHERE uu.usuario_id = p_usuario_id
+          AND ua.sucursal_id = p_sucursal_id
+          AND uu.activo = true
+          AND ua.activo = true
+          AND CASE
+              WHEN p_tipo_operacion = 'recibir' THEN uu.puede_recibir
+              ELSE uu.puede_despachar
+              END = true
+        LIMIT 1;
+    END IF;
+
+    -- 3. Fallback: ubicación default de sucursal (comportamiento legacy)
+    IF v_ubicacion_id IS NULL THEN
+        v_ubicacion_id := crear_ubicacion_default_sucursal(p_sucursal_id, p_organizacion_id);
+    END IF;
+
+    RETURN v_ubicacion_id;
+END;
+$$ LANGUAGE plpgsql STABLE;
+
+COMMENT ON FUNCTION obtener_ubicacion_usuario IS 'Obtiene ubicación del usuario para operaciones o fallback a default de sucursal';
+
+-- ============================================================================
 -- FUNCIÓN: sincronizar_stock_producto
 -- Descripción: Sincroniza productos.stock_actual desde stock_ubicaciones
 -- ============================================================================
@@ -126,6 +186,7 @@ CREATE TRIGGER trg_sincronizar_stock
 -- FUNCIÓN: registrar_movimiento_con_ubicacion
 -- Descripción: Registra movimiento Y actualiza stock_ubicaciones atómicamente
 -- Ene 2026: Agregado p_variante_id para soporte de variantes de producto
+-- Ene 2026: Resolución de ubicación basada en usuario (usuarios_ubicaciones)
 -- ============================================================================
 CREATE OR REPLACE FUNCTION registrar_movimiento_con_ubicacion(
     p_organizacion_id INTEGER,
@@ -152,10 +213,24 @@ DECLARE
     v_stock_despues INTEGER;
     v_movimiento_id INTEGER;
     v_valor_total DECIMAL(10,2);
+    v_tipo_operacion VARCHAR(20);
 BEGIN
-    -- Obtener o crear ubicación default si no se especifica
+    -- Obtener ubicación: prioridad usuario > default sucursal
     IF p_ubicacion_id IS NULL THEN
-        v_ubicacion_id := crear_ubicacion_default_sucursal(p_sucursal_id, p_organizacion_id);
+        -- Determinar tipo de operación basado en cantidad
+        IF p_cantidad > 0 THEN
+            v_tipo_operacion := 'recibir';
+        ELSE
+            v_tipo_operacion := 'despachar';
+        END IF;
+
+        -- Si hay usuario, intentar obtener su ubicación asignada
+        IF p_usuario_id IS NOT NULL THEN
+            v_ubicacion_id := obtener_ubicacion_usuario(p_usuario_id, p_sucursal_id, p_organizacion_id, v_tipo_operacion);
+        ELSE
+            -- Fallback: ubicación default de sucursal
+            v_ubicacion_id := crear_ubicacion_default_sucursal(p_sucursal_id, p_organizacion_id);
+        END IF;
     ELSE
         v_ubicacion_id := p_ubicacion_id;
     END IF;

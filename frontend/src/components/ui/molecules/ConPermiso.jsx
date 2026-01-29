@@ -14,6 +14,7 @@
  * </ConPermiso>
  */
 
+import { memo } from 'react';
 import PropTypes from 'prop-types';
 import { usePermiso } from '@/hooks/sistema/useAccesoModulo';
 
@@ -23,7 +24,7 @@ import { usePermiso } from '@/hooks/sistema/useAccesoModulo';
  * @param {ReactNode} fallback - Contenido alternativo si no tiene permiso (opcional)
  * @param {number} sucursalId - ID de sucursal específica (opcional, usa la del usuario)
  */
-export function ConPermiso({ codigo, children, fallback = null, sucursalId }) {
+export const ConPermiso = memo(function ConPermiso({ codigo, children, fallback = null, sucursalId }) {
   const { tiene, isLoading } = usePermiso(codigo, sucursalId);
 
   // Mientras carga, no mostrar nada para evitar flash
@@ -34,7 +35,9 @@ export function ConPermiso({ codigo, children, fallback = null, sucursalId }) {
 
   // Tiene permiso, mostrar children
   return children;
-}
+});
+
+ConPermiso.displayName = 'ConPermiso';
 
 ConPermiso.propTypes = {
   /** Código del permiso (ej: 'agendamiento.crear_citas') */
@@ -47,4 +50,3 @@ ConPermiso.propTypes = {
   sucursalId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
 };
 
-export default ConPermiso;

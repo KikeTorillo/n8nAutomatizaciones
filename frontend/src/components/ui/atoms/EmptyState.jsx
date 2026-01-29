@@ -2,7 +2,7 @@ import { memo } from 'react';
 import PropTypes from 'prop-types';
 import { cn } from '@/lib/utils';
 import { Inbox } from 'lucide-react';
-import { Button } from '../atoms/Button';
+import { Button } from './Button';
 import { EMPTY_STATE_SIZES, EMPTY_STATE_BASE } from '@/lib/uiConstants';
 
 /**

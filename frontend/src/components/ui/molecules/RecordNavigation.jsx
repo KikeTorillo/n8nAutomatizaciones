@@ -109,4 +109,3 @@ RecordNavigation.propTypes = {
   className: PropTypes.string,
 };
 
-export default RecordNavigation;

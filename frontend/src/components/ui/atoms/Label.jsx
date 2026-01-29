@@ -50,4 +50,3 @@ Label.propTypes = {
 };
 
 export { Label };
-export default Label;

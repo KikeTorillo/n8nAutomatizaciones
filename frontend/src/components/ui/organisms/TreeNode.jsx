@@ -251,4 +251,3 @@ export function useTreeExpansion(initialState = {}) {
   return { expanded, toggle, expandAll, collapseAll, setExpanded };
 }
 
-export default TreeView;

@@ -215,6 +215,44 @@ COMMENT ON COLUMN servicios_sucursales.duracion_override IS 'Duración específi
 -- ====================================================================
 
 -- ====================================================================
+-- TABLA: usuarios_ubicaciones (Enero 2026)
+-- ====================================================================
+-- Asignación de ubicaciones permitidas por usuario con permisos granulares.
+-- Permite control de qué ubicaciones puede usar cada usuario para operaciones.
+--
+-- FLUJO DE RESOLUCIÓN:
+-- 1. Si usuario tiene ubicación default asignada → usar esa
+-- 2. Si no → usar ubicación default de sucursal (comportamiento legacy)
+-- ====================================================================
+CREATE TABLE usuarios_ubicaciones (
+    -- 🔑 IDENTIFICACION
+    id SERIAL PRIMARY KEY,
+    organizacion_id INTEGER NOT NULL REFERENCES organizaciones(id) ON DELETE CASCADE,
+    usuario_id INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+    ubicacion_id INTEGER NOT NULL, -- FK diferida en 06-foreign-keys.sql (ubicaciones_almacen se crea después)
+
+    -- ⚙️ CONFIGURACION
+    es_default BOOLEAN DEFAULT false,
+    puede_recibir BOOLEAN DEFAULT true,
+    puede_despachar BOOLEAN DEFAULT true,
+
+    -- 📊 ESTADO
+    activo BOOLEAN DEFAULT true,
+
+    -- 📅 TIMESTAMPS
+    creado_en TIMESTAMPTZ DEFAULT NOW(),
+    actualizado_en TIMESTAMPTZ DEFAULT NOW(),
+
+    -- ✅ CONSTRAINTS
+    CONSTRAINT uq_usuario_ubicacion UNIQUE(usuario_id, ubicacion_id)
+);
+
+COMMENT ON TABLE usuarios_ubicaciones IS 'Asignación de ubicaciones permitidas por usuario para operaciones de inventario';
+COMMENT ON COLUMN usuarios_ubicaciones.es_default IS 'Ubicación preferida del usuario para operaciones. Solo una por usuario/sucursal.';
+COMMENT ON COLUMN usuarios_ubicaciones.puede_recibir IS 'TRUE si el usuario puede recibir mercancía en esta ubicación';
+COMMENT ON COLUMN usuarios_ubicaciones.puede_despachar IS 'TRUE si el usuario puede despachar/vender desde esta ubicación';
+
+-- ====================================================================
 -- TABLA: transferencias_stock
 -- ====================================================================
 -- Transferencias de inventario entre sucursales.

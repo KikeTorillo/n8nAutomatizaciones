@@ -77,4 +77,3 @@ export const SmartButtons = memo(function SmartButtons({ buttons = [], className
 
 SmartButtons.displayName = 'SmartButtons';
 
-export default SmartButtons;

@@ -59,4 +59,3 @@ BackButton.propTypes = {
 };
 
 export { BackButton };
-export default BackButton;

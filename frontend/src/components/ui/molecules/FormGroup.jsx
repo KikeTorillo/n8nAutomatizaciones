@@ -8,7 +8,7 @@
 import { memo, useId, cloneElement, isValidElement } from 'react';
 import PropTypes from 'prop-types';
 import { cn } from '@/lib/utils';
-import Label from '../atoms/Label';
+import { Label } from '../atoms/Label';
 
 /**
  * Componente FormGroup reutilizable
@@ -73,4 +73,3 @@ FormGroup.propTypes = {
 };
 
 export { FormGroup };
-export default FormGroup;

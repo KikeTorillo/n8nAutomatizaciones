@@ -2,8 +2,7 @@ import { memo } from 'react';
 import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
 import { AlertCircle } from 'lucide-react';
-import { Button } from '../../atoms/Button';
-import { EmptyState } from '../../molecules/EmptyState';
+import { EmptyState } from '../../atoms/EmptyState';
 
 /**
  * DetailNotFoundState - Estado cuando no se encuentra el recurso
@@ -32,11 +31,8 @@ const DetailNotFoundState = memo(function DetailNotFoundState({
         icon={AlertCircle}
         title={title}
         description={description}
-        action={backTo && (
-          <Button onClick={() => navigate(backTo)}>
-            {backLabel}
-          </Button>
-        )}
+        actionLabel={backTo ? backLabel : undefined}
+        onAction={backTo ? () => navigate(backTo) : undefined}
       />
     </div>
   );

@@ -54,4 +54,3 @@ const ThemeToggle = memo(function ThemeToggle({ className, size = 'md' }) {
 ThemeToggle.displayName = 'ThemeToggle';
 
 export { ThemeToggle };
-export default ThemeToggle;

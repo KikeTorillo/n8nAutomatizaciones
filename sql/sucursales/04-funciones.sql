@@ -105,6 +105,115 @@ $$ LANGUAGE plpgsql STABLE;
 COMMENT ON FUNCTION obtener_sucursales_usuario IS 'Retorna array de IDs de sucursales asignadas a un usuario';
 
 -- ====================================================================
+-- FUNCION: obtener_ubicacion_usuario (Enero 2026)
+-- ====================================================================
+-- Obtiene la ubicación para un usuario según sus permisos asignados.
+-- Flujo de resolución:
+-- 1. Buscar ubicación default del usuario en la sucursal
+-- 2. Si no tiene default, buscar cualquier ubicación permitida
+-- 3. Fallback: ubicación default de sucursal (comportamiento legacy)
+-- ====================================================================
+CREATE OR REPLACE FUNCTION obtener_ubicacion_usuario(
+    p_usuario_id INTEGER,
+    p_sucursal_id INTEGER,
+    p_organizacion_id INTEGER,
+    p_tipo_operacion VARCHAR(20) DEFAULT 'despachar' -- 'recibir' o 'despachar'
+)
+RETURNS INTEGER AS $$
+DECLARE
+    v_ubicacion_id INTEGER;
+BEGIN
+    -- 1. Buscar ubicación default del usuario en esta sucursal
+    SELECT uu.ubicacion_id INTO v_ubicacion_id
+    FROM usuarios_ubicaciones uu
+    JOIN ubicaciones_almacen ua ON ua.id = uu.ubicacion_id
+    WHERE uu.usuario_id = p_usuario_id
+      AND ua.sucursal_id = p_sucursal_id
+      AND uu.es_default = true
+      AND uu.activo = true
+      AND ua.activo = true
+      AND CASE
+          WHEN p_tipo_operacion = 'recibir' THEN uu.puede_recibir
+          ELSE uu.puede_despachar
+          END = true;
+
+    -- 2. Si no tiene default, buscar cualquier ubicación permitida
+    IF v_ubicacion_id IS NULL THEN
+        SELECT uu.ubicacion_id INTO v_ubicacion_id
+        FROM usuarios_ubicaciones uu
+        JOIN ubicaciones_almacen ua ON ua.id = uu.ubicacion_id
+        WHERE uu.usuario_id = p_usuario_id
+          AND ua.sucursal_id = p_sucursal_id
+          AND uu.activo = true
+          AND ua.activo = true
+          AND CASE
+              WHEN p_tipo_operacion = 'recibir' THEN uu.puede_recibir
+              ELSE uu.puede_despachar
+              END = true
+        LIMIT 1;
+    END IF;
+
+    -- 3. Fallback: ubicación default de sucursal (comportamiento legacy)
+    IF v_ubicacion_id IS NULL THEN
+        v_ubicacion_id := crear_ubicacion_default_sucursal(p_sucursal_id, p_organizacion_id);
+    END IF;
+
+    RETURN v_ubicacion_id;
+END;
+$$ LANGUAGE plpgsql STABLE;
+
+COMMENT ON FUNCTION obtener_ubicacion_usuario IS 'Obtiene ubicación del usuario para operaciones o fallback a default de sucursal';
+
+-- ====================================================================
+-- TRIGGER: Asignar ubicación default al asignar usuario a sucursal
+-- ====================================================================
+-- Auto-asigna la ubicación default de la sucursal al usuario cuando
+-- se le asigna a una nueva sucursal.
+-- ====================================================================
+CREATE OR REPLACE FUNCTION trigger_asignar_ubicacion_default_usuario()
+RETURNS TRIGGER AS $$
+DECLARE
+    v_ubicacion_id INTEGER;
+    v_organizacion_id INTEGER;
+BEGIN
+    -- Solo si se activa la asignación
+    IF NEW.activo = true THEN
+        -- Obtener organizacion_id de la sucursal
+        SELECT organizacion_id INTO v_organizacion_id
+        FROM sucursales
+        WHERE id = NEW.sucursal_id;
+
+        -- Obtener ubicación default de la sucursal
+        SELECT id INTO v_ubicacion_id
+        FROM ubicaciones_almacen
+        WHERE sucursal_id = NEW.sucursal_id
+          AND es_default = true
+          AND activo = true;
+
+        IF v_ubicacion_id IS NOT NULL THEN
+            INSERT INTO usuarios_ubicaciones (
+                organizacion_id, usuario_id, ubicacion_id, es_default, activo
+            )
+            SELECT v_organizacion_id, NEW.usuario_id, v_ubicacion_id, true, true
+            WHERE NOT EXISTS (
+                SELECT 1 FROM usuarios_ubicaciones
+                WHERE usuario_id = NEW.usuario_id AND ubicacion_id = v_ubicacion_id
+            );
+        END IF;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_asignar_ubicacion_usuario ON usuarios_sucursales;
+CREATE TRIGGER trg_asignar_ubicacion_usuario
+    AFTER INSERT OR UPDATE ON usuarios_sucursales
+    FOR EACH ROW
+    EXECUTE FUNCTION trigger_asignar_ubicacion_default_usuario();
+
+COMMENT ON FUNCTION trigger_asignar_ubicacion_default_usuario IS 'Auto-asigna ubicación default de sucursal al usuario cuando se le asigna a la sucursal';
+
+-- ====================================================================
 -- NOTA (Enero 2026): Funciones legacy de stock_sucursales ELIMINADAS
 -- ====================================================================
 -- Las siguientes funciones fueron eliminadas porque usaban stock_sucursales:

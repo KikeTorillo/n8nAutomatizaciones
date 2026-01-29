@@ -68,4 +68,3 @@ StatCardGrid.propTypes = {
   className: PropTypes.string,
 };
 
-export default StatCardGrid;

@@ -132,4 +132,3 @@ SearchFilterBar.propTypes = {
 
 const MemoizedSearchFilterBar = memo(SearchFilterBar);
 export { MemoizedSearchFilterBar as SearchFilterBar };
-export default MemoizedSearchFilterBar;

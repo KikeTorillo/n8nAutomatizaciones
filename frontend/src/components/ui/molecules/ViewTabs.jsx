@@ -102,4 +102,3 @@ TabButton.propTypes = {
   onChange: PropTypes.func.isRequired,
 };
 
-export default ViewTabs;

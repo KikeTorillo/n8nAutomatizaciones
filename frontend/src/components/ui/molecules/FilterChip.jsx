@@ -88,4 +88,3 @@ FilterChip.propTypes = {
 };
 
 export { FilterChip };
-export default FilterChip;

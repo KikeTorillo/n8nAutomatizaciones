@@ -1,8 +1,8 @@
 import { memo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import NavDropdown from './NavDropdown';
-import MobileNavSelector from './MobileNavSelector';
+import { NavDropdown } from './NavDropdown';
+import { MobileNavSelector } from './MobileNavSelector';
 
 /**
  * Encuentra el item activo basado en la ruta actual (modo flat)
@@ -135,4 +135,3 @@ const GenericNavTabs = memo(function GenericNavTabs({
 GenericNavTabs.displayName = 'GenericNavTabs';
 
 export { GenericNavTabs };
-export default GenericNavTabs;

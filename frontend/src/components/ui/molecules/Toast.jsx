@@ -74,4 +74,3 @@ Toast.propTypes = {
 };
 
 export { Toast };
-export default Toast;

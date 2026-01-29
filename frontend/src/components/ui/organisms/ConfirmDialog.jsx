@@ -119,4 +119,3 @@ const ConfirmDialog = memo(function ConfirmDialog({
 ConfirmDialog.displayName = 'ConfirmDialog';
 
 export { ConfirmDialog };
-export default ConfirmDialog;

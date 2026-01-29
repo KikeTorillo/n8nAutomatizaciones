@@ -53,4 +53,3 @@ SkeletonStatCard.propTypes = {
   className: PropTypes.string,
 };
 
-export default SkeletonStatCard;

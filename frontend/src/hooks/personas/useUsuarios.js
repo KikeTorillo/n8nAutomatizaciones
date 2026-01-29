@@ -236,3 +236,98 @@ export const ESTADOS_USUARIO = {
   activo: { label: 'Activo', color: 'green' },
   inactivo: { label: 'Inactivo', color: 'gray' },
 };
+
+// ====================================================================
+// UBICACIONES DE USUARIO - Ene 2026
+// ====================================================================
+
+/**
+ * Hook para obtener ubicaciones asignadas a un usuario
+ * @param {number} usuarioId - ID del usuario
+ */
+export function useUbicacionesUsuario(usuarioId) {
+  return useQuery({
+    queryKey: ['usuario-ubicaciones', usuarioId],
+    queryFn: async () => {
+      const response = await usuariosApi.obtenerUbicaciones(usuarioId);
+      return response.data.data || [];
+    },
+    enabled: !!usuarioId,
+    staleTime: STALE_TIMES.SEMI_STATIC,
+  });
+}
+
+/**
+ * Hook para obtener ubicaciones disponibles para asignar a un usuario
+ * Solo ubicaciones de sucursales donde el usuario está asignado
+ * @param {number} usuarioId - ID del usuario
+ */
+export function useUbicacionesDisponiblesUsuario(usuarioId) {
+  return useQuery({
+    queryKey: ['usuario-ubicaciones-disponibles', usuarioId],
+    queryFn: async () => {
+      const response = await usuariosApi.ubicacionesDisponibles(usuarioId);
+      return response.data.data || [];
+    },
+    enabled: !!usuarioId,
+    staleTime: STALE_TIMES.DYNAMIC,
+  });
+}
+
+/**
+ * Hook para asignar ubicación a usuario
+ */
+export function useAsignarUbicacionUsuario() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ usuarioId, data }) => {
+      const response = await usuariosApi.asignarUbicacion(usuarioId, data);
+      return response.data.data;
+    },
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['usuario-ubicaciones', variables.usuarioId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['usuario-ubicaciones-disponibles', variables.usuarioId], refetchType: 'active' });
+    },
+    onError: createCRUDErrorHandler('create', 'Asignación de ubicación', {
+      400: 'El usuario no está asignado a la sucursal de esta ubicación',
+    }),
+  });
+}
+
+/**
+ * Hook para actualizar permisos de asignación de ubicación
+ */
+export function useActualizarAsignacionUbicacion() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ usuarioId, ubicacionId, data }) => {
+      const response = await usuariosApi.actualizarAsignacionUbicacion(usuarioId, ubicacionId, data);
+      return response.data.data;
+    },
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['usuario-ubicaciones', variables.usuarioId], refetchType: 'active' });
+    },
+    onError: createCRUDErrorHandler('update', 'Asignación de ubicación'),
+  });
+}
+
+/**
+ * Hook para desasignar ubicación de usuario
+ */
+export function useDesasignarUbicacionUsuario() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ usuarioId, ubicacionId }) => {
+      const response = await usuariosApi.desasignarUbicacion(usuarioId, ubicacionId);
+      return response.data.data;
+    },
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['usuario-ubicaciones', variables.usuarioId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['usuario-ubicaciones-disponibles', variables.usuarioId], refetchType: 'active' });
+    },
+    onError: createCRUDErrorHandler('delete', 'Asignación de ubicación'),
+  });
+}

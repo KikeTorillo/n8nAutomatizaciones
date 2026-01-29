@@ -203,6 +203,40 @@ CREATE POLICY servicios_sucursales_delete_policy ON servicios_sucursales
 -- ====================================================================
 
 -- ====================================================================
+-- RLS: usuarios_ubicaciones (Enero 2026)
+-- ====================================================================
+ALTER TABLE usuarios_ubicaciones ENABLE ROW LEVEL SECURITY;
+ALTER TABLE usuarios_ubicaciones FORCE ROW LEVEL SECURITY;
+
+CREATE POLICY usuarios_ubicaciones_select_policy ON usuarios_ubicaciones
+    FOR SELECT
+    USING (
+        current_setting('app.bypass_rls', true) = 'true'
+        OR organizacion_id = NULLIF(current_setting('app.current_tenant_id', true), '')::INTEGER
+    );
+
+CREATE POLICY usuarios_ubicaciones_insert_policy ON usuarios_ubicaciones
+    FOR INSERT
+    WITH CHECK (
+        current_setting('app.bypass_rls', true) = 'true'
+        OR organizacion_id = NULLIF(current_setting('app.current_tenant_id', true), '')::INTEGER
+    );
+
+CREATE POLICY usuarios_ubicaciones_update_policy ON usuarios_ubicaciones
+    FOR UPDATE
+    USING (
+        current_setting('app.bypass_rls', true) = 'true'
+        OR organizacion_id = NULLIF(current_setting('app.current_tenant_id', true), '')::INTEGER
+    );
+
+CREATE POLICY usuarios_ubicaciones_delete_policy ON usuarios_ubicaciones
+    FOR DELETE
+    USING (
+        current_setting('app.bypass_rls', true) = 'true'
+        OR organizacion_id = NULLIF(current_setting('app.current_tenant_id', true), '')::INTEGER
+    );
+
+-- ====================================================================
 -- RLS: transferencias_stock
 -- ====================================================================
 ALTER TABLE transferencias_stock ENABLE ROW LEVEL SECURITY;
