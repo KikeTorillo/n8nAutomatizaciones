@@ -28,6 +28,7 @@ import {
   Clock,
   FileText,
   TrendingUp,
+  CreditCard,
 } from 'lucide-react';
 import {
   Button,
@@ -45,6 +46,7 @@ import ClienteGeneralTab from './tabs/ClienteGeneralTab';
 const ClienteTimelineTab = lazy(() => import('./tabs/ClienteTimelineTab'));
 const ClienteDocumentosTab = lazy(() => import('./tabs/ClienteDocumentosTab'));
 const ClienteOportunidadesTab = lazy(() => import('./tabs/ClienteOportunidadesTab'));
+const ClienteCreditoTab = lazy(() => import('./tabs/ClienteCreditoTab'));
 
 // Fallback para tabs lazy
 function TabLoadingFallback() {
@@ -61,6 +63,7 @@ const CLIENTE_TABS = [
   { id: 'historial', label: 'Historial', icon: Clock },
   { id: 'documentos', label: 'Documentos', icon: FileText },
   { id: 'oportunidades', label: 'Oportunidades', icon: TrendingUp },
+  { id: 'credito', label: 'Crédito', icon: CreditCard },
 ];
 
 /**
@@ -236,6 +239,13 @@ function ClienteDetailPage() {
           <ClienteOportunidadesTab
             clienteId={parseInt(id)}
             usuarios={usuarios}
+          />
+        );
+        break;
+      case 'credito':
+        content = (
+          <ClienteCreditoTab
+            clienteId={parseInt(id)}
           />
         );
         break;

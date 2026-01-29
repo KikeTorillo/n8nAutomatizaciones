@@ -23,6 +23,7 @@ import {
   Tags,
   MessageCircle,
   Send,
+  CreditCard,
 } from 'lucide-react';
 import {
   Button,
@@ -76,8 +77,9 @@ function ClienteForm({ cliente = null, onSubmit, isLoading = false }) {
     defaultValues: clienteDefaults,
   });
 
-  // Watch del tipo para campos condicionales
+  // Watch del tipo y crédito para campos condicionales
   const tipoCliente = watch('tipo');
+  const permiteCredito = watch('permite_credito');
 
   // Cargar datos de profesionales para preferencias
   const { data: profesionalesData } = useProfesionales();
@@ -765,6 +767,99 @@ function ClienteForm({ cliente = null, onSubmit, isLoading = false }) {
               />
             )}
           />
+        </div>
+      </div>
+
+      {/* Crédito / Fiado */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+          <CreditCard className="w-5 h-5 text-green-600 dark:text-green-400" />
+          Crédito / Fiado
+        </h3>
+
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+          Permite que el cliente realice compras a crédito (fiado) en el punto de venta.
+        </p>
+
+        <div className="space-y-4">
+          <Controller
+            name="permite_credito"
+            control={control}
+            render={({ field }) => (
+              <Checkbox
+                label="Habilitar crédito para este cliente"
+                description="El cliente podrá comprar a crédito hasta el límite establecido"
+                checked={field.value}
+                onChange={(e) => field.onChange(e.target.checked)}
+              />
+            )}
+          />
+
+          {permiteCredito && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+              <Controller
+                name="limite_credito"
+                control={control}
+                render={({ field }) => (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Límite de Crédito *
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400">
+                        $
+                      </span>
+                      <Input
+                        {...field}
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        placeholder="0.00"
+                        className="pl-7"
+                        error={errors.limite_credito?.message}
+                      />
+                    </div>
+                    {errors.limite_credito && (
+                      <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                        {errors.limite_credito.message}
+                      </p>
+                    )}
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                      Monto máximo que puede deber el cliente
+                    </p>
+                  </div>
+                )}
+              />
+
+              <Controller
+                name="dias_credito"
+                control={control}
+                render={({ field }) => (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Días de Crédito
+                    </label>
+                    <Input
+                      {...field}
+                      type="number"
+                      min="1"
+                      max="365"
+                      placeholder="30"
+                      error={errors.dias_credito?.message}
+                    />
+                    {errors.dias_credito && (
+                      <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                        {errors.dias_credito.message}
+                      </p>
+                    )}
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                      Plazo para pagar (1-365 días)
+                    </p>
+                  </div>
+                )}
+              />
+            </div>
+          )}
         </div>
       </div>
 

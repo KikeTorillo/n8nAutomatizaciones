@@ -300,6 +300,7 @@ const actualizar = {
             .trim()
             .allow(null, ''),
         estado_id: commonSchemas.id
+            .optional()
             .allow(null),
         codigo_postal: Joi.string()
             .max(LIMITES.CP_MAX)
@@ -309,6 +310,7 @@ const actualizar = {
                 'string.pattern.base': 'Código postal debe ser de 5 dígitos'
             }),
         pais_id: commonSchemas.id
+            .optional()
             .allow(null),
 
         // ====================================================================

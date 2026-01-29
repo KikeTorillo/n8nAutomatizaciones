@@ -126,6 +126,35 @@ export const clienteSchema = z
 
     // Foto (URL, no archivo)
     foto_url: optionalString('URL de foto', 0, 500),
+
+    // Configuración de Crédito/Fiado
+    permite_credito: z.boolean().default(false),
+    limite_credito: z
+      .string()
+      .optional()
+      .or(z.literal(''))
+      .transform((val) => {
+        if (!val || val === '') return undefined;
+        const num = parseFloat(val);
+        return isNaN(num) ? undefined : num;
+      })
+      .refine(
+        (val) => val === undefined || (val >= 0 && val <= 9999999999.99),
+        { message: 'El límite de crédito debe ser entre 0 y 9,999,999,999.99' }
+      ),
+    dias_credito: z
+      .string()
+      .optional()
+      .or(z.literal(''))
+      .transform((val) => {
+        if (!val || val === '') return undefined;
+        const num = parseInt(val, 10);
+        return isNaN(num) ? undefined : num;
+      })
+      .refine(
+        (val) => val === undefined || (val >= 1 && val <= 365),
+        { message: 'Los días de crédito deben ser entre 1 y 365' }
+      ),
   })
   .superRefine((data, ctx) => {
     // Validacion condicional: RFC solo valido para empresas
@@ -168,6 +197,10 @@ export const clienteDefaults = {
   marketing_permitido: true,
   activo: true,
   foto_url: '',
+  // Crédito/Fiado
+  permite_credito: false,
+  limite_credito: '',
+  dias_credito: '',
 };
 
 /**
@@ -200,6 +233,10 @@ export function clienteToFormData(cliente) {
     marketing_permitido: cliente.marketing_permitido ?? true,
     activo: cliente.activo ?? true,
     foto_url: cliente.foto_url || '',
+    // Crédito/Fiado
+    permite_credito: cliente.permite_credito ?? false,
+    limite_credito: cliente.limite_credito?.toString() || '',
+    dias_credito: cliente.dias_credito?.toString() || '',
   };
 }
 
@@ -244,6 +281,11 @@ export function formDataToApi(formData, fotoUrl = null) {
 
     // Foto
     foto_url: fotoUrl || formData.foto_url || undefined,
+
+    // Crédito/Fiado
+    permite_credito: formData.permite_credito,
+    limite_credito: formData.permite_credito ? formData.limite_credito : undefined,
+    dias_credito: formData.permite_credito ? formData.dias_credito : undefined,
   };
 
   // Eliminar campos undefined para que Joi no los rechace

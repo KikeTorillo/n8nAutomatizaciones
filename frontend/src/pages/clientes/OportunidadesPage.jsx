@@ -10,15 +10,17 @@
  */
 
 import { useState, useMemo } from 'react';
-import { TrendingUp, List, Columns3, DollarSign, Target, Clock, CheckCircle } from 'lucide-react';
+import { TrendingUp, List, Columns3, DollarSign, Target, Clock, CheckCircle, Settings } from 'lucide-react';
 import ClientesPageLayout from '@/components/clientes/ClientesPageLayout';
 import {
   EmptyState,
   SkeletonTable,
   StatCardGrid,
-  ViewTabs
+  ViewTabs,
+  Button,
 } from '@/components/ui';
 import PipelineKanban from '@/components/clientes/PipelineKanban';
+import { EtapasConfigDrawer } from '@/components/clientes/etapas';
 import {
   useOportunidades,
   useEstadisticasPipeline,
@@ -35,6 +37,7 @@ const VIEW_TABS = [
 
 export default function OportunidadesPage() {
   const [vista, setVista] = useState('kanban');
+  const [showConfigDrawer, setShowConfigDrawer] = useState(false);
 
   // Datos
   const { data: oportunidadesData, isLoading: isLoadingOportunidades } = useOportunidades();
@@ -82,6 +85,15 @@ export default function OportunidadesPage() {
       icon={TrendingUp}
       title="Oportunidades"
       subtitle={`Pipeline de ventas B2B`}
+      actions={
+        <Button
+          variant="outline"
+          onClick={() => setShowConfigDrawer(true)}
+        >
+          <Settings className="w-4 h-4 mr-2" />
+          Configurar Etapas
+        </Button>
+      }
     >
       {/* Stats */}
       {!isLoadingStats && estadisticas && (
@@ -105,6 +117,12 @@ export default function OportunidadesPage() {
           isLoading={isLoadingOportunidades}
         />
       )}
+
+      {/* Drawer de configuración de etapas */}
+      <EtapasConfigDrawer
+        isOpen={showConfigDrawer}
+        onClose={() => setShowConfigDrawer(false)}
+      />
     </ClientesPageLayout>
   );
 }
