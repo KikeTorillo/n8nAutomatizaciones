@@ -37,6 +37,7 @@ import {
   selectBreakpoint,
   selectSetBreakpoint,
   selectSetZoom,
+  selectSetBloqueRecienAgregado,
 } from '@/store';
 
 // Hooks existentes
@@ -57,6 +58,7 @@ import SlashMenu from './components/SlashMenu';
 import { DndEditorProvider } from './components/DndEditorProvider';
 import AIWizardModal from './components/AIWizard/AIWizardModal';
 import MobileEditorFAB from './components/MobileEditorFAB';
+import { EditorTour } from './components/OnboardingTour';
 
 // UI
 import { BackButton, Drawer } from '@/components/ui';
@@ -78,6 +80,7 @@ function WebsiteEditorPage() {
     query: '',
   });
   const [mostrarAIWizard, setMostrarAIWizard] = useState(false);
+  const [tourReady, setTourReady] = useState(false);
 
   // ========== LAYOUT RESPONSIVE ==========
   const {
@@ -112,6 +115,7 @@ function WebsiteEditorPage() {
   const breakpoint = useWebsiteEditorStore(selectBreakpoint);
   const setBreakpoint = useWebsiteEditorStore(selectSetBreakpoint);
   const setZoom = useWebsiteEditorStore(selectSetZoom);
+  const setBloqueRecienAgregado = useWebsiteEditorStore(selectSetBloqueRecienAgregado);
 
   // ========== HOOK DEL EDITOR ==========
   const {
@@ -172,6 +176,17 @@ function WebsiteEditorPage() {
       setZoom(100);
     }
   }, [isMobile, tieneSitio, breakpoint, setBreakpoint, setZoom]);
+
+  // Marcar el tour como listo cuando el editor está cargado
+  useEffect(() => {
+    if (tieneSitio && !bloquesLoading && paginaActiva) {
+      // Pequeño delay para asegurar que todos los elementos están renderizados
+      const timeoutId = setTimeout(() => {
+        setTourReady(true);
+      }, 800);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [tieneSitio, bloquesLoading, paginaActiva]);
 
   // ========== AUTOSAVE ==========
   const handleSaveAll = useCallback(
@@ -248,6 +263,7 @@ function WebsiteEditorPage() {
         orden: bloques.length,
       });
       seleccionarBloque(nuevoBloque.id);
+      setBloqueRecienAgregado(nuevoBloque.id); // Activar animacion de insercion
       toast.success('Bloque agregado');
     } catch (error) {
       toast.error(error.response?.data?.message || 'Error al agregar bloque');
@@ -351,12 +367,13 @@ function WebsiteEditorPage() {
           orden: ordenInsercion,
         });
         seleccionarBloque(nuevoBloque.id);
+        setBloqueRecienAgregado(nuevoBloque.id); // Activar animacion de insercion
         toast.success('Bloque agregado');
       } catch (error) {
         toast.error(error.response?.data?.message || 'Error al agregar bloque');
       }
     },
-    [paginaActiva, bloques, crearBloque, seleccionarBloque]
+    [paginaActiva, bloques, crearBloque, seleccionarBloque, setBloqueRecienAgregado]
   );
 
   /**
@@ -661,6 +678,7 @@ function WebsiteEditorPage() {
           <button
             onClick={handlePublicar}
             disabled={publicarSitio.isPending}
+            data-tour="publish-button"
             className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg font-medium transition-colors text-sm ${
               estaPublicado
                 ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 hover:bg-amber-200 dark:hover:bg-amber-900/50'
@@ -685,11 +703,12 @@ function WebsiteEditorPage() {
       <DndEditorProvider
         onDropFromPalette={handleDropFromPalette}
         onReorder={handleDndReorder}
+        tema={config}
       >
         <div className="flex-1 flex overflow-hidden">
           {/* Panel izquierdo - Navegacion (oculto en móvil) */}
           {showSidebar && (
-            <aside className="w-12 md:w-14 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col items-center py-2 md:py-4 gap-1 md:gap-2 flex-shrink-0">
+            <aside className="w-12 md:w-14 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col items-center py-2 md:py-4 gap-1 md:gap-2 flex-shrink-0" data-tour="block-palette">
               <button
                 onClick={() => setPanelActivo(PANEL_TYPES.BLOQUES)}
                 className={`p-2 md:p-3 rounded-lg transition-colors ${
@@ -776,7 +795,7 @@ function WebsiteEditorPage() {
           )}
 
           {/* Area principal */}
-          <main className="flex-1 overflow-hidden">
+          <main className="flex-1 overflow-hidden" data-tour="editor-canvas">
             {modoEditor === 'canvas' ? (
               <EditorCanvas
                 bloques={bloques}
@@ -806,7 +825,7 @@ function WebsiteEditorPage() {
 
           {/* Panel derecho - Propiedades (solo desktop, en modo canvas con bloque seleccionado) */}
           {showPropertiesPanel && modoEditor === 'canvas' && bloqueSeleccionado && (
-            <aside className="w-80 flex-shrink-0">
+            <aside className="w-80 flex-shrink-0" data-tour="properties-panel">
               <PropertiesPanel
                 bloque={bloqueSeleccionadoCompleto}
                 onUpdate={(contenido) =>
@@ -937,6 +956,14 @@ function WebsiteEditorPage() {
         query={slashMenu.query}
         onSelect={handleSlashSelect}
         onClose={handleSlashClose}
+      />
+
+      {/* Onboarding Tour */}
+      <EditorTour
+        isReady={tourReady}
+        isMobile={isMobile}
+        onComplete={() => console.log('[EditorTour] Completado')}
+        onSkip={() => console.log('[EditorTour] Saltado')}
       />
     </div>
   );

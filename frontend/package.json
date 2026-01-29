@@ -30,6 +30,7 @@
     "d3-org-chart": "^3.1.1",
     "date-fns": "^4.1.0",
     "dompurify": "^3.3.1",
+    "driver.js": "^1.4.0",
     "framer-motion": "^12.23.22",
     "html5-qrcode": "^2.3.8",
     "jsbarcode": "^3.12.1",

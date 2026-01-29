@@ -18,65 +18,7 @@ import {
   useSensor,
   useSensors,
 } from '@dnd-kit/core';
-import { motion } from 'framer-motion';
-import {
-  Layout,
-  Briefcase,
-  MessageSquareQuote,
-  Users,
-  MousePointerClick,
-  Mail,
-  PanelBottom,
-  Type,
-  Image,
-  Video,
-  Minus,
-  DollarSign,
-  HelpCircle,
-  Clock,
-  TrendingUp,
-  GitBranch,
-} from 'lucide-react';
-
-// Iconos por tipo de bloque
-const ICONOS_BLOQUES = {
-  hero: Layout,
-  servicios: Briefcase,
-  testimonios: MessageSquareQuote,
-  equipo: Users,
-  cta: MousePointerClick,
-  contacto: Mail,
-  footer: PanelBottom,
-  texto: Type,
-  galeria: Image,
-  video: Video,
-  separador: Minus,
-  pricing: DollarSign,
-  faq: HelpCircle,
-  countdown: Clock,
-  stats: TrendingUp,
-  timeline: GitBranch,
-};
-
-// Nombres por tipo de bloque
-const NOMBRES_BLOQUES = {
-  hero: 'Hero',
-  servicios: 'Servicios',
-  testimonios: 'Testimonios',
-  equipo: 'Equipo',
-  cta: 'CTA',
-  contacto: 'Contacto',
-  footer: 'Footer',
-  texto: 'Texto',
-  galeria: 'Galeria',
-  video: 'Video',
-  separador: 'Separador',
-  pricing: 'Precios',
-  faq: 'FAQ',
-  countdown: 'Countdown',
-  stats: 'Estadisticas',
-  timeline: 'Timeline',
-};
+import { BlockDragPreview } from './DragPreview';
 
 // Contexto para compartir estado de drag
 const DndEditorContext = createContext(null);
@@ -87,8 +29,13 @@ export function useDndEditor() {
 
 /**
  * Proveedor DnD que envuelve el editor
+ * @param {Object} props
+ * @param {React.ReactNode} props.children - Contenido del editor
+ * @param {Function} props.onDropFromPalette - Callback al soltar desde paleta
+ * @param {Function} props.onReorder - Callback al reordenar bloques
+ * @param {Object} props.tema - Tema del sitio (para preview)
  */
-export function DndEditorProvider({ children, onDropFromPalette, onReorder }) {
+export function DndEditorProvider({ children, onDropFromPalette, onReorder, tema }) {
   // Estado de drag
   const [activeDrag, setActiveDrag] = useState(null);
   const [overInfo, setOverInfo] = useState(null);
@@ -220,41 +167,17 @@ export function DndEditorProvider({ children, onDropFromPalette, onReorder }) {
       >
         {children}
 
-        {/* Drag Overlay */}
+        {/* Drag Overlay - Preview mejorado */}
         <DragOverlay dropAnimation={{
           duration: 200,
           easing: 'cubic-bezier(0.18, 0.67, 0.6, 1.22)',
         }}>
           {activeDrag?.source === 'palette' && (
-            <PaletteDragOverlay tipo={activeDrag.tipo} />
+            <BlockDragPreview tipo={activeDrag.tipo} tema={tema} />
           )}
         </DragOverlay>
       </DndContext>
     </DndEditorContext.Provider>
-  );
-}
-
-/**
- * Overlay visual cuando se arrastra desde la paleta
- */
-function PaletteDragOverlay({ tipo }) {
-  const Icono = ICONOS_BLOQUES[tipo] || Layout;
-  const nombre = NOMBRES_BLOQUES[tipo] || tipo;
-
-  return (
-    <motion.div
-      initial={{ scale: 0.8, opacity: 0 }}
-      animate={{ scale: 1, opacity: 1 }}
-      className="flex items-center gap-3 px-4 py-3 bg-white dark:bg-gray-800 rounded-lg shadow-2xl border-2 border-primary-500 pointer-events-none"
-    >
-      <div className="w-10 h-10 bg-primary-100 dark:bg-primary-900/30 rounded-lg flex items-center justify-center">
-        <Icono className="w-5 h-5 text-primary-600 dark:text-primary-400" />
-      </div>
-      <div>
-        <p className="font-medium text-gray-900 dark:text-gray-100">{nombre}</p>
-        <p className="text-xs text-gray-500 dark:text-gray-400">Soltar para agregar</p>
-      </div>
-    </motion.div>
   );
 }
 

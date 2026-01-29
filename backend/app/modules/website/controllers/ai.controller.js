@@ -236,10 +236,75 @@ const detectarIndustria = asyncHandler(async (req, res) => {
   });
 });
 
+/**
+ * Generar texto con tono personalizado
+ * POST /api/v1/website/ai/generar-texto
+ *
+ * Body:
+ * - campo: string (requerido) - Nombre del campo (titulo, descripcion, etc.)
+ * - industria: string (opcional) - Tipo de industria
+ * - tono: string (requerido) - Tono del texto (profesional, casual, persuasivo, informativo, emotivo)
+ * - contexto: object (opcional) - Contexto adicional
+ * - longitud: string (opcional) - Longitud del texto (corto, medio, largo)
+ */
+const generarTextoConTono = asyncHandler(async (req, res) => {
+  const { campo, industria, tono, contexto, longitud } = req.body;
+
+  if (!campo) {
+    ErrorHelper.throwBadRequest('Se requiere el campo a generar');
+  }
+
+  if (!tono) {
+    ErrorHelper.throwBadRequest('Se requiere el tono');
+  }
+
+  const tonosValidos = ['profesional', 'casual', 'persuasivo', 'informativo', 'emotivo'];
+  if (!tonosValidos.includes(tono)) {
+    ErrorHelper.throwBadRequest(`Tono invalido. Opciones: ${tonosValidos.join(', ')}`);
+  }
+
+  const longitudesValidas = ['corto', 'medio', 'largo'];
+  const longitudFinal = longitudesValidas.includes(longitud) ? longitud : 'medio';
+
+  // Mapear longitud a palabras
+  const palabrasPorLongitud = {
+    corto: '10-20',
+    medio: '30-50',
+    largo: '70-100',
+  };
+
+  // Construir prompt con tono
+  const instruccionesTono = {
+    profesional: 'Usa un tono formal, corporativo y profesional. Evita jerga coloquial.',
+    casual: 'Usa un tono amigable, cercano y conversacional. Conecta con el lector.',
+    persuasivo: 'Usa un tono orientado a ventas, con llamadas a la acción. Genera urgencia.',
+    informativo: 'Usa un tono educativo y claro. Enfocate en explicar y ensenar.',
+    emotivo: 'Usa un tono que conecte emocionalmente. Apela a sentimientos y valores.',
+  };
+
+  // Generar texto usando el servicio de IA con instrucciones de tono
+  const texto = await WebsiteAIService.generarConTono({
+    campo,
+    industria: industria || 'default',
+    tono,
+    instruccionesTono: instruccionesTono[tono],
+    palabras: palabrasPorLongitud[longitudFinal],
+    contexto: contexto || {},
+  });
+
+  ResponseHelper.success(res, {
+    texto,
+    tono,
+    longitud: longitudFinal,
+    generado_con_ia: WebsiteAIService.isAvailable(),
+  });
+});
+
 module.exports = {
   generarContenido,
   generarBloque,
   obtenerStatus,
   generarSitio,
   detectarIndustria,
+  generarTextoConTono,
 };

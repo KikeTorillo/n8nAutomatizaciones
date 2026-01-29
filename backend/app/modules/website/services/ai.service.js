@@ -255,6 +255,263 @@ const TEMPLATES_CONTENIDO = {
       ],
     },
   },
+  // ========== NUEVAS INDUSTRIAS ==========
+  ecommerce: {
+    hero: {
+      titulo: 'Tu Tienda Online de Confianza',
+      subtitulo: 'Descubre productos de calidad con envío rápido y garantía de satisfacción.',
+      boton_texto: 'Ver Productos',
+    },
+    servicios: {
+      titulo: 'Categorías',
+      items: [
+        { nombre: 'Productos Destacados', descripcion: 'Los más vendidos y mejor valorados por nuestros clientes.' },
+        { nombre: 'Ofertas Especiales', descripcion: 'Descuentos exclusivos en productos seleccionados.' },
+        { nombre: 'Nuevos Lanzamientos', descripcion: 'Descubre las últimas novedades de nuestro catálogo.' },
+        { nombre: 'Envío Express', descripcion: 'Recibe tu pedido en 24-48 horas.' },
+      ],
+    },
+  },
+  educacion: {
+    hero: {
+      titulo: 'Aprende Sin Límites',
+      subtitulo: 'Cursos y programas diseñados para impulsar tu crecimiento profesional.',
+      boton_texto: 'Ver Cursos',
+    },
+    servicios: {
+      titulo: 'Nuestros Programas',
+      items: [
+        { nombre: 'Cursos Online', descripcion: 'Aprende a tu ritmo con contenido de calidad.' },
+        { nombre: 'Clases en Vivo', descripcion: 'Interactúa con instructores expertos en tiempo real.' },
+        { nombre: 'Certificaciones', descripcion: 'Obtén credenciales que validan tus conocimientos.' },
+        { nombre: 'Mentoría Personalizada', descripcion: 'Acompañamiento individual para alcanzar tus metas.' },
+      ],
+    },
+  },
+  inmobiliaria: {
+    hero: {
+      titulo: 'Encuentra Tu Hogar Ideal',
+      subtitulo: 'Te ayudamos a encontrar la propiedad perfecta para ti y tu familia.',
+      boton_texto: 'Ver Propiedades',
+    },
+    servicios: {
+      titulo: 'Nuestros Servicios',
+      items: [
+        { nombre: 'Venta de Propiedades', descripcion: 'Casas, departamentos y terrenos en las mejores ubicaciones.' },
+        { nombre: 'Renta', descripcion: 'Opciones de alquiler para todos los presupuestos.' },
+        { nombre: 'Asesoría Inmobiliaria', descripcion: 'Te guiamos en cada paso de tu inversión.' },
+        { nombre: 'Valuación', descripcion: 'Conoce el valor real de tu propiedad.' },
+      ],
+    },
+  },
+  legal: {
+    hero: {
+      titulo: 'Defensa Legal Experta',
+      subtitulo: 'Protegemos tus derechos con experiencia, ética y resultados comprobados.',
+      boton_texto: 'Agendar Consulta',
+    },
+    servicios: {
+      titulo: 'Áreas de Práctica',
+      items: [
+        { nombre: 'Derecho Corporativo', descripcion: 'Asesoría legal integral para empresas.' },
+        { nombre: 'Derecho Civil', descripcion: 'Contratos, sucesiones y asuntos familiares.' },
+        { nombre: 'Litigios', descripcion: 'Representación efectiva en tribunales.' },
+        { nombre: 'Derecho Laboral', descripcion: 'Protección para empleados y empleadores.' },
+      ],
+    },
+  },
+  veterinaria: {
+    hero: {
+      titulo: 'Cuidamos a Tu Mejor Amigo',
+      subtitulo: 'Servicios veterinarios con amor y profesionalismo para tus mascotas.',
+      boton_texto: 'Agendar Cita',
+    },
+    servicios: {
+      titulo: 'Nuestros Servicios',
+      items: [
+        { nombre: 'Consulta General', descripcion: 'Revisión completa y diagnóstico de salud.' },
+        { nombre: 'Vacunación', descripcion: 'Protege a tu mascota con el esquema completo.' },
+        { nombre: 'Cirugía', descripcion: 'Procedimientos seguros con tecnología avanzada.' },
+        { nombre: 'Estética y Grooming', descripcion: 'Baño, corte y cuidado del pelaje.' },
+      ],
+    },
+  },
+  automotriz: {
+    hero: {
+      titulo: 'Tu Auto en las Mejores Manos',
+      subtitulo: 'Servicio automotriz de calidad con técnicos certificados y garantía.',
+      boton_texto: 'Agendar Servicio',
+    },
+    servicios: {
+      titulo: 'Servicios',
+      items: [
+        { nombre: 'Mantenimiento Preventivo', descripcion: 'Cuida tu vehículo con servicio regular.' },
+        { nombre: 'Reparaciones', descripcion: 'Diagnóstico y reparación de todo tipo de fallas.' },
+        { nombre: 'Hojalatería y Pintura', descripcion: 'Restauramos la apariencia de tu auto.' },
+        { nombre: 'Refacciones', descripcion: 'Partes originales y de alta calidad.' },
+      ],
+    },
+  },
+  hotel: {
+    hero: {
+      titulo: 'Vive una Experiencia Única',
+      subtitulo: 'Hospedaje de lujo con servicio excepcional y ubicación privilegiada.',
+      boton_texto: 'Reservar Ahora',
+    },
+    servicios: {
+      titulo: 'Habitaciones',
+      items: [
+        { nombre: 'Suite Presidencial', descripcion: 'El máximo lujo y confort para tu estadía.' },
+        { nombre: 'Habitación Deluxe', descripcion: 'Amplia, elegante y con todas las amenidades.' },
+        { nombre: 'Habitación Estándar', descripcion: 'Comodidad y calidad a precio accesible.' },
+        { nombre: 'Suite Familiar', descripcion: 'Espacio ideal para viajes en familia.' },
+      ],
+    },
+  },
+  eventos: {
+    hero: {
+      titulo: 'Hacemos Realidad Tu Evento',
+      subtitulo: 'Organización profesional de eventos memorables e inolvidables.',
+      boton_texto: 'Cotizar Evento',
+    },
+    servicios: {
+      titulo: 'Tipos de Eventos',
+      items: [
+        { nombre: 'Bodas', descripcion: 'Celebra el día más importante de tu vida.' },
+        { nombre: 'Eventos Corporativos', descripcion: 'Conferencias, lanzamientos y reuniones.' },
+        { nombre: 'Fiestas Privadas', descripcion: 'Cumpleaños, aniversarios y celebraciones.' },
+        { nombre: 'Catering', descripcion: 'Menús gourmet para todo tipo de eventos.' },
+      ],
+    },
+  },
+  fotografia: {
+    hero: {
+      titulo: 'Capturamos Tus Momentos',
+      subtitulo: 'Fotografía profesional que cuenta historias y preserva recuerdos.',
+      boton_texto: 'Ver Portafolio',
+    },
+    servicios: {
+      titulo: 'Servicios Fotográficos',
+      items: [
+        { nombre: 'Sesiones de Retrato', descripcion: 'Fotos profesionales que destacan tu esencia.' },
+        { nombre: 'Fotografía de Bodas', descripcion: 'Capturamos la magia de tu día especial.' },
+        { nombre: 'Fotografía Comercial', descripcion: 'Imágenes de producto y corporativas.' },
+        { nombre: 'Video', descripcion: 'Producción audiovisual de alta calidad.' },
+      ],
+    },
+  },
+  construccion: {
+    hero: {
+      titulo: 'Construimos Tu Futuro',
+      subtitulo: 'Proyectos de construcción con calidad, puntualidad y transparencia.',
+      boton_texto: 'Cotizar Proyecto',
+    },
+    servicios: {
+      titulo: 'Nuestros Servicios',
+      items: [
+        { nombre: 'Construcción Residencial', descripcion: 'Casas y edificios habitacionales.' },
+        { nombre: 'Construcción Comercial', descripcion: 'Locales, oficinas y naves industriales.' },
+        { nombre: 'Remodelaciones', descripcion: 'Transformamos espacios con diseño moderno.' },
+        { nombre: 'Diseño Arquitectónico', descripcion: 'Planos y renders de tu proyecto ideal.' },
+      ],
+    },
+  },
+  coaching: {
+    hero: {
+      titulo: 'Desbloquea Tu Potencial',
+      subtitulo: 'Coaching transformacional para alcanzar tus metas personales y profesionales.',
+      boton_texto: 'Agendar Sesión',
+    },
+    servicios: {
+      titulo: 'Programas',
+      items: [
+        { nombre: 'Coaching Ejecutivo', descripcion: 'Desarrolla liderazgo y habilidades directivas.' },
+        { nombre: 'Coaching de Vida', descripcion: 'Encuentra claridad y propósito en tu vida.' },
+        { nombre: 'Coaching de Equipos', descripcion: 'Mejora la dinámica y resultados de tu equipo.' },
+        { nombre: 'Talleres Grupales', descripcion: 'Experiencias transformadoras en grupo.' },
+      ],
+    },
+  },
+  finanzas: {
+    hero: {
+      titulo: 'Tu Futuro Financiero Seguro',
+      subtitulo: 'Asesoría experta para hacer crecer y proteger tu patrimonio.',
+      boton_texto: 'Agendar Asesoría',
+    },
+    servicios: {
+      titulo: 'Servicios Financieros',
+      items: [
+        { nombre: 'Planeación Financiera', descripcion: 'Estrategias personalizadas para tus metas.' },
+        { nombre: 'Inversiones', descripcion: 'Portafolios diversificados para tu perfil.' },
+        { nombre: 'Contabilidad', descripcion: 'Servicios contables para personas y empresas.' },
+        { nombre: 'Seguros', descripcion: 'Protección integral para ti y tu familia.' },
+      ],
+    },
+  },
+  marketing: {
+    hero: {
+      titulo: 'Impulsa Tu Marca',
+      subtitulo: 'Estrategias de marketing digital que generan resultados medibles.',
+      boton_texto: 'Conocer Más',
+    },
+    servicios: {
+      titulo: 'Servicios',
+      items: [
+        { nombre: 'Marketing Digital', descripcion: 'Estrategias completas para el mundo online.' },
+        { nombre: 'Redes Sociales', descripcion: 'Gestión y contenido que conecta con tu audiencia.' },
+        { nombre: 'SEO y SEM', descripcion: 'Posiciona tu marca en buscadores.' },
+        { nombre: 'Branding', descripcion: 'Identidad visual que destaca y perdura.' },
+      ],
+    },
+  },
+  tecnologia: {
+    hero: {
+      titulo: 'Soluciones Tecnológicas',
+      subtitulo: 'Software y tecnología que impulsan la transformación de tu negocio.',
+      boton_texto: 'Ver Soluciones',
+    },
+    servicios: {
+      titulo: 'Nuestras Soluciones',
+      items: [
+        { nombre: 'Desarrollo de Software', descripcion: 'Aplicaciones a medida para tu empresa.' },
+        { nombre: 'Apps Móviles', descripcion: 'iOS y Android con la mejor experiencia.' },
+        { nombre: 'Cloud y DevOps', descripcion: 'Infraestructura escalable y segura.' },
+        { nombre: 'Consultoría IT', descripcion: 'Asesoría experta en tecnología.' },
+      ],
+    },
+  },
+  tienda: {
+    hero: {
+      titulo: 'Productos de Calidad',
+      subtitulo: 'Encuentra todo lo que necesitas con la mejor atención y precios.',
+      boton_texto: 'Ver Catálogo',
+    },
+    servicios: {
+      titulo: 'Categorías',
+      items: [
+        { nombre: 'Productos Destacados', descripcion: 'Lo mejor de nuestro inventario.' },
+        { nombre: 'Ofertas', descripcion: 'Descuentos especiales para ti.' },
+        { nombre: 'Nuevos Productos', descripcion: 'Las últimas novedades del mercado.' },
+        { nombre: 'Servicio a Domicilio', descripcion: 'Recibe tus compras en casa.' },
+      ],
+    },
+  },
+  agencia: {
+    hero: {
+      titulo: 'Creatividad que Transforma',
+      subtitulo: 'Soluciones creativas y estratégicas para hacer crecer tu marca.',
+      boton_texto: 'Ver Proyectos',
+    },
+    servicios: {
+      titulo: 'Servicios',
+      items: [
+        { nombre: 'Branding', descripcion: 'Identidad de marca que conecta y perdura.' },
+        { nombre: 'Diseño Gráfico', descripcion: 'Piezas visuales de alto impacto.' },
+        { nombre: 'Desarrollo Web', descripcion: 'Sitios modernos y funcionales.' },
+        { nombre: 'Producción Audiovisual', descripcion: 'Videos que cuentan historias.' },
+      ],
+    },
+  },
 };
 
 /**
@@ -641,6 +898,146 @@ class WebsiteAIService {
           contenido: 'Contenido del bloque.',
         };
     }
+  }
+
+  /**
+   * Generar texto con tono personalizado
+   * @param {Object} params
+   * @param {string} params.campo - Campo a generar
+   * @param {string} params.industria - Industria del negocio
+   * @param {string} params.tono - Tono del texto
+   * @param {string} params.instruccionesTono - Instrucciones especificas del tono
+   * @param {string} params.palabras - Rango de palabras (ej: "30-50")
+   * @param {Object} params.contexto - Contexto adicional
+   * @returns {Promise<string>} Texto generado
+   */
+  static async generarConTono({ campo, industria, tono, instruccionesTono, palabras, contexto }) {
+    // Si no hay API, usar fallback con templates
+    if (!this.isAvailable()) {
+      return this.generarTextoFallbackConTono(campo, industria, tono, contexto);
+    }
+
+    // Verificar circuit breaker
+    if (isCircuitOpen()) {
+      return this.generarTextoFallbackConTono(campo, industria, tono, contexto);
+    }
+
+    const prompt = `Genera un texto para el campo "${campo}" de un sitio web de ${industria}.
+${instruccionesTono}
+El texto debe tener entre ${palabras} palabras.
+${contexto.nombre ? `Nombre del negocio: ${contexto.nombre}` : ''}
+${contexto.descripcion ? `Descripcion: ${contexto.descripcion}` : ''}
+
+IMPORTANTE: Responde SOLO con el texto generado, sin comillas, sin explicaciones, sin prefijos como "Aqui tienes".`;
+
+    // Configurar timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), CIRCUIT_BREAKER.TIMEOUT_MS);
+
+    try {
+      const response = await fetch(`${OPENROUTER_BASE_URL}/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+          'Content-Type': 'application/json',
+          'HTTP-Referer': process.env.APP_URL || 'https://nexo.com',
+          'X-Title': 'Nexo Website Editor - AI Writer',
+        },
+        body: JSON.stringify({
+          model: DEFAULT_MODEL,
+          messages: [
+            {
+              role: 'system',
+              content: 'Eres un experto copywriter y redactor publicitario. Generas contenido conciso, profesional y adaptado al tono solicitado. NUNCA incluyas explicaciones, solo el texto solicitado.',
+            },
+            {
+              role: 'user',
+              content: prompt,
+            },
+          ],
+          max_tokens: 300,
+          temperature: 0.8,
+        }),
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(`OpenRouter error: ${response.status} - ${error}`);
+      }
+
+      const data = await response.json();
+      const texto = data.choices[0]?.message?.content?.trim() || '';
+
+      recordSuccess();
+
+      // Limpiar posibles artefactos
+      return texto
+        .replace(/^["']|["']$/g, '') // Quitar comillas al inicio/final
+        .replace(/^(Aqui tienes|Claro|Por supuesto)[:\s]*/i, '') // Quitar prefijos comunes
+        .trim();
+
+    } catch (error) {
+      clearTimeout(timeoutId);
+
+      if (error.name === 'AbortError') {
+        const timeoutError = new Error(`Timeout generando texto`);
+        recordFailure(timeoutError);
+      } else {
+        recordFailure(error);
+      }
+
+      // Fallback
+      return this.generarTextoFallbackConTono(campo, industria, tono, contexto);
+    }
+  }
+
+  /**
+   * Generar texto fallback con variaciones por tono
+   */
+  static generarTextoFallbackConTono(campo, industria, tono, contexto) {
+    const nombre = contexto.nombre || 'nuestro negocio';
+
+    // Templates base por campo
+    const templates = {
+      titulo: {
+        profesional: `Soluciones Profesionales de ${industria}`,
+        casual: `Bienvenido a ${nombre}!`,
+        persuasivo: `Transforma tu experiencia con ${nombre}`,
+        informativo: `Todo sobre ${industria}`,
+        emotivo: `${nombre}: Donde los suenos se hacen realidad`,
+      },
+      subtitulo: {
+        profesional: `Expertos comprometidos con la excelencia y resultados de calidad.`,
+        casual: `Estamos aqui para ayudarte. Contactanos cuando quieras.`,
+        persuasivo: `No esperes mas. Descubre por que miles nos eligen cada dia.`,
+        informativo: `Conoce nuestros servicios y como podemos ayudarte.`,
+        emotivo: `Porque tu satisfaccion es lo que nos impulsa cada dia.`,
+      },
+      descripcion: {
+        profesional: `Ofrecemos servicios de ${industria} con los mas altos estandares de calidad. Nuestro equipo de profesionales esta listo para atenderte.`,
+        casual: `Somos ${nombre} y nos encanta lo que hacemos. Ven a conocernos, te vas a sorprender de lo que podemos lograr juntos.`,
+        persuasivo: `Por que conformarte con menos? En ${nombre} te garantizamos resultados excepcionales. Agenda tu cita hoy y compruebalo tu mismo.`,
+        informativo: `En ${nombre} brindamos una amplia gama de servicios de ${industria}. Contamos con profesionales capacitados y tecnologia de punta.`,
+        emotivo: `Cada cliente que nos visita se convierte en parte de nuestra familia. En ${nombre} creemos que mereces lo mejor, y trabajamos para dartelo.`,
+      },
+      boton: {
+        profesional: 'Solicitar Informacion',
+        casual: 'Contactanos',
+        persuasivo: 'Reserva Ahora',
+        informativo: 'Conocer Mas',
+        emotivo: 'Comienza Tu Historia',
+      },
+    };
+
+    // Buscar template para el campo y tono
+    const campoNormalizado = campo.toLowerCase().replace(/[-_]/g, '');
+    const templateCampo = templates[campoNormalizado] || templates.descripcion;
+    const texto = templateCampo[tono] || templateCampo.profesional;
+
+    return texto;
   }
 
   /**

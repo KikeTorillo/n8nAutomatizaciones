@@ -452,6 +452,46 @@ export const websiteApi = {
   obtenerSchemaSEO: (websiteId, tipo = 'LocalBusiness') =>
     apiClient.get('/website/seo/schema', { params: { website_id: websiteId, tipo } })
       .then((res) => res.data?.data || res.data),
+
+  // ========== Imágenes (Unsplash) ==========
+
+  /**
+   * Buscar imagenes en Unsplash
+   * @param {Object} params - { query, page?, per_page?, orientation? }
+   * @returns {Promise<Object>}
+   */
+  buscarImagenesUnsplash: (params) =>
+    apiClient.get('/website/images/search', { params: { q: params.query, ...params } })
+      .then((res) => res.data?.data || res.data),
+
+  /**
+   * Descargar imagen de Unsplash
+   * @param {Object} datos - { url, photographer, unsplashId, downloadLocation }
+   * @returns {Promise<Object>}
+   */
+  descargarImagenUnsplash: (datos) =>
+    apiClient.post('/website/images/download', datos)
+      .then((res) => res.data?.data || res.data),
+
+  /**
+   * Obtener imagen aleatoria de Unsplash
+   * @param {string} query - Termino de busqueda opcional
+   * @returns {Promise<Object>}
+   */
+  obtenerImagenAleatoriaUnsplash: (query) =>
+    apiClient.get('/website/images/random', { params: query ? { query } : {} })
+      .then((res) => res.data?.data || res.data),
+
+  // ========== IA - Generación con Tonos ==========
+
+  /**
+   * Generar texto con tono personalizado
+   * @param {Object} datos - { campo, industria, tono, contexto?, longitud? }
+   * @returns {Promise<Object>}
+   */
+  generarTextoConTono: (datos) =>
+    apiClient.post('/website/ai/generar-texto', datos)
+      .then((res) => res.data?.data || res.data),
 };
 
 export default websiteApi;

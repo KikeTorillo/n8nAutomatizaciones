@@ -62,6 +62,9 @@ const initialState = {
 
   // Flag para detectar cambios no guardados
   tieneClambiosLocales: false,
+
+  // ID del bloque recien agregado (para animacion de insercion)
+  bloqueRecienAgregado: null,
 };
 
 // ========== STORE CREATION ==========
@@ -318,6 +321,30 @@ const useWebsiteEditorStore = create(
         actualizarHistorial: (puedeUndo, puedeRedo) =>
           set({ puedeUndo, puedeRedo }),
 
+        // ========== BLOQUE RECIEN AGREGADO (ANIMACION) ==========
+
+        /**
+         * Marca un bloque como recien agregado (para animacion)
+         * Se limpia automaticamente despues de un timeout
+         */
+        setBloqueRecienAgregado: (id) => {
+          set({ bloqueRecienAgregado: id });
+          // Limpiar automaticamente despues de 1.5s
+          setTimeout(() => {
+            set((state) =>
+              state.bloqueRecienAgregado === id
+                ? { bloqueRecienAgregado: null }
+                : state
+            );
+          }, 1500);
+        },
+
+        /**
+         * Limpia el bloque recien agregado manualmente
+         */
+        clearBloqueRecienAgregado: () =>
+          set({ bloqueRecienAgregado: null }),
+
         // ========== RESET ==========
 
         /**
@@ -373,6 +400,9 @@ export const selectPuedeRedo = (state) => state.puedeRedo;
 // Página activa
 export const selectPaginaActivaId = (state) => state.paginaActivaId;
 
+// Bloque recien agregado (para animacion)
+export const selectBloqueRecienAgregado = (state) => state.bloqueRecienAgregado;
+
 // ========== ACCIONES ==========
 
 export const selectSetBloques = (state) => state.setBloques;
@@ -396,6 +426,9 @@ export const selectSetZoom = (state) => state.setZoom;
 export const selectSetGuardando = (state) => state.setGuardando;
 export const selectSetGuardado = (state) => state.setGuardado;
 export const selectSetErrorGuardado = (state) => state.setErrorGuardado;
+
+export const selectSetBloqueRecienAgregado = (state) => state.setBloqueRecienAgregado;
+export const selectClearBloqueRecienAgregado = (state) => state.clearBloqueRecienAgregado;
 
 export const selectReset = (state) => state.reset;
 

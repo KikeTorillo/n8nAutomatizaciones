@@ -12,6 +12,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, Copy, Trash2, Eye, EyeOff } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { useWebsiteEditorStore, selectBloqueRecienAgregado } from '@/store';
 
 // Canvas block components
 import HeroCanvasBlock from './HeroCanvasBlock';
@@ -91,6 +92,10 @@ function CanvasBlock({
   onDelete,
   onToggleVisibility,
 }) {
+  // Verificar si es un bloque recien agregado
+  const bloqueRecienAgregado = useWebsiteEditorStore(selectBloqueRecienAgregado);
+  const isNewlyAdded = bloqueRecienAgregado === bloque.id;
+
   // Sortable setup (also acts as droppable for palette items)
   const {
     attributes,
@@ -135,17 +140,33 @@ function CanvasBlock({
     [onDoubleClick]
   );
 
+  // Variantes de animacion para bloques recien agregados
+  const insertionVariants = {
+    initial: { opacity: 0, y: -20, scale: 0.95 },
+    animate: {
+      opacity: 1,
+      y: 0,
+      scale: 1,
+      transition: { duration: 0.4, ease: 'easeOut' },
+    },
+  };
+
   // ========== RENDER ==========
 
   return (
-    <div
+    <motion.div
       ref={setNodeRef}
       style={style}
+      variants={isNewlyAdded ? insertionVariants : undefined}
+      initial={isNewlyAdded ? 'initial' : false}
+      animate={isNewlyAdded ? 'animate' : undefined}
       className={cn(
         'relative group/block',
         isSortableDragging && 'opacity-30 scale-[0.98]',
         isDragging && 'shadow-2xl',
-        'transition-all duration-200'
+        'transition-all duration-200',
+        // Glow effect para bloque recien agregado
+        isNewlyAdded && 'ring-2 ring-primary-500/50 ring-offset-2 rounded-lg'
       )}
     >
       {/* Drop Indicator - Before */}
@@ -266,7 +287,23 @@ function CanvasBlock({
           <DropIndicator position="after" />
         )}
       </AnimatePresence>
-    </div>
+
+      {/* Glow overlay para bloque recien agregado */}
+      <AnimatePresence>
+        {isNewlyAdded && (
+          <motion.div
+            initial={{ opacity: 0.8 }}
+            animate={{ opacity: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1.5, ease: 'easeOut' }}
+            className="absolute inset-0 pointer-events-none rounded-lg"
+            style={{
+              boxShadow: '0 0 30px 10px rgba(117, 53, 114, 0.4)',
+            }}
+          />
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 }
 

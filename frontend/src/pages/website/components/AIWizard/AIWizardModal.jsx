@@ -27,14 +27,31 @@ import { cn } from '@/lib/utils';
 import { Modal } from '@/components/ui';
 import websiteApi from '@/services/api/modules/website.api';
 
-// Industrias disponibles
+// Industrias disponibles (20 total)
 const INDUSTRIAS = [
+  // Originales
   { id: 'salon', nombre: 'Salon de Belleza', emoji: '💇', descripcion: 'Peluquerias, spas, esteticas' },
   { id: 'restaurante', nombre: 'Restaurante', emoji: '🍽️', descripcion: 'Restaurantes, cafes, bares' },
   { id: 'consultorio', nombre: 'Consultorio', emoji: '🏥', descripcion: 'Medicos, dentistas, psicologos' },
   { id: 'gym', nombre: 'Gimnasio', emoji: '💪', descripcion: 'Gyms, studios de fitness, yoga' },
   { id: 'tienda', nombre: 'Tienda', emoji: '🛍️', descripcion: 'Tiendas, boutiques, comercios' },
   { id: 'agencia', nombre: 'Agencia', emoji: '🚀', descripcion: 'Marketing, diseno, software' },
+  // Nuevas industrias
+  { id: 'ecommerce', nombre: 'E-commerce', emoji: '🛒', descripcion: 'Tienda online, marketplace' },
+  { id: 'educacion', nombre: 'Educacion', emoji: '📚', descripcion: 'Cursos, academia, tutoria' },
+  { id: 'inmobiliaria', nombre: 'Inmobiliaria', emoji: '🏠', descripcion: 'Venta, renta de propiedades' },
+  { id: 'legal', nombre: 'Legal', emoji: '⚖️', descripcion: 'Abogados, notarias, bufetes' },
+  { id: 'veterinaria', nombre: 'Veterinaria', emoji: '🐾', descripcion: 'Clinicas, petshops, grooming' },
+  { id: 'automotriz', nombre: 'Automotriz', emoji: '🚗', descripcion: 'Talleres, refacciones, autos' },
+  { id: 'hotel', nombre: 'Hotel', emoji: '🏨', descripcion: 'Hoteles, hostales, Airbnb' },
+  { id: 'eventos', nombre: 'Eventos', emoji: '🎉', descripcion: 'Bodas, fiestas, catering' },
+  { id: 'fotografia', nombre: 'Fotografia', emoji: '📷', descripcion: 'Fotografos, estudios, video' },
+  { id: 'construccion', nombre: 'Construccion', emoji: '🏗️', descripcion: 'Constructoras, arquitectos' },
+  { id: 'coaching', nombre: 'Coaching', emoji: '🎯', descripcion: 'Coaches, mentores, terapeutas' },
+  { id: 'finanzas', nombre: 'Finanzas', emoji: '💼', descripcion: 'Contadores, asesores, seguros' },
+  { id: 'marketing', nombre: 'Marketing', emoji: '📈', descripcion: 'Agencias digitales, SEO, ads' },
+  { id: 'tecnologia', nombre: 'Tecnologia', emoji: '💻', descripcion: 'Software, apps, startups' },
+  // Default
   { id: 'default', nombre: 'Otro', emoji: '🏢', descripcion: 'Cualquier otro tipo de negocio' },
 ];
 
@@ -374,23 +391,23 @@ function StepIndustria({ formData, onChange }) {
         </p>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 max-h-[320px] overflow-y-auto pr-1">
         {INDUSTRIAS.map((industria) => (
           <button
             key={industria.id}
             onClick={() => onChange({ ...formData, industria: industria.id })}
             className={cn(
-              'p-4 rounded-xl border-2 text-left transition-all',
+              'p-3 rounded-lg border-2 text-left transition-all',
               formData.industria === industria.id
                 ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
                 : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
             )}
           >
-            <span className="text-2xl mb-2 block">{industria.emoji}</span>
-            <p className="font-medium text-gray-900 dark:text-white text-sm">
+            <span className="text-xl mb-1 block">{industria.emoji}</span>
+            <p className="font-medium text-gray-900 dark:text-white text-xs">
               {industria.nombre}
             </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+            <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-1">
               {industria.descripcion}
             </p>
           </button>

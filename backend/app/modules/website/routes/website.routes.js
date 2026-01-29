@@ -572,6 +572,20 @@ router.post('/ai/detectar-industria',
     WebsiteAIController.detectarIndustria
 );
 
+/**
+ * POST /api/v1/website/ai/generar-texto
+ * Generar texto con tono personalizado
+ * @requires auth - cualquier rol
+ * @requires tenant
+ */
+router.post('/ai/generar-texto',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('website'),
+    rateLimiting.aiRateLimit || rateLimiting.apiRateLimit,
+    WebsiteAIController.generarTextoConTono
+);
+
 // ===================================================================
 // ANALYTICS
 // ===================================================================
@@ -782,5 +796,12 @@ router.delete('/versiones/:id',
     rateLimiting.apiRateLimit,
     WebsiteVersionesController.eliminar
 );
+
+// ===================================================================
+// IMÁGENES (UNSPLASH)
+// ===================================================================
+
+const imagesRouter = require('./images.routes');
+router.use('/images', imagesRouter);
 
 module.exports = router;
