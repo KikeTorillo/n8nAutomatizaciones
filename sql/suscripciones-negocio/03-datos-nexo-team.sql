@@ -51,17 +51,22 @@ BEGIN
     LIMIT 1;
 
     -- Insertar los 2 planes usando el ID dinámico (Trial + Pro)
+    -- Con seat-based billing: usuarios_incluidos, precio_usuario_adicional, max_usuarios_hard
     INSERT INTO planes_suscripcion_org (
         organizacion_id, codigo, nombre, descripcion,
-        precio_mensual, precio_anual, dias_trial, activo, features, limites, creado_por
+        precio_mensual, precio_anual, dias_trial, activo, features, limites,
+        usuarios_incluidos, precio_usuario_adicional, max_usuarios_hard,
+        creado_por
     ) VALUES
     (v_nexo_team_id, 'trial', 'Plan Trial', 'Prueba gratuita de 14 días con acceso limitado', 0, 0, 14, true,
      '["agendamiento", "inventario", "pos"]'::jsonb,
-     '{"citas": 50, "profesionales": 2, "servicios": 10, "clientes": 100}'::jsonb,
+     '{"citas": 50, "profesionales": 2, "servicios": 10, "clientes": 100, "usuarios": 3}'::jsonb,
+     3, NULL, 3,  -- Trial: 3 usuarios incluidos, sin precio adicional (hard limit de 3)
      v_superadmin_id),
     (v_nexo_team_id, 'pro', 'Plan Pro', 'Plan completo con todas las funcionalidades para empresas', 249, 2490, 0, true,
      '["agendamiento", "inventario", "pos", "comisiones", "contabilidad", "marketplace", "chatbots", "workflows", "suscripciones-negocio"]'::jsonb,
-     '{"citas": -1, "profesionales": -1, "servicios": -1, "clientes": -1}'::jsonb,
+     '{"citas": -1, "profesionales": -1, "servicios": -1, "clientes": -1, "usuarios": 5}'::jsonb,
+     5, 49.00, NULL,  -- Pro: 5 usuarios incluidos, $49/extra, sin hard limit
      v_superadmin_id);
 
     RAISE NOTICE 'Planes de suscripción para Nexo Team (id=%) creados exitosamente (2 planes: trial, pro)', v_nexo_team_id;
@@ -82,14 +87,20 @@ BEGIN
     -- Detectar Nexo Team por codigo_tenant (no por id)
     IF NEW.codigo_tenant = 'nexo-team' THEN
         IF NOT EXISTS (SELECT 1 FROM planes_suscripcion_org WHERE organizacion_id = NEW.id) THEN
-            INSERT INTO planes_suscripcion_org (organizacion_id, codigo, nombre, descripcion, precio_mensual, precio_anual, dias_trial, activo, features, limites)
+            INSERT INTO planes_suscripcion_org (
+                organizacion_id, codigo, nombre, descripcion,
+                precio_mensual, precio_anual, dias_trial, activo, features, limites,
+                usuarios_incluidos, precio_usuario_adicional, max_usuarios_hard
+            )
             VALUES
             (NEW.id, 'trial', 'Plan Trial', 'Prueba gratuita de 14 días con acceso limitado', 0, 0, 14, true,
              '["agendamiento", "inventario", "pos"]'::jsonb,
-             '{"citas": 50, "profesionales": 2, "servicios": 10, "clientes": 100}'::jsonb),
+             '{"citas": 50, "profesionales": 2, "servicios": 10, "clientes": 100, "usuarios": 3}'::jsonb,
+             3, NULL, 3),  -- Trial: hard limit de 3 usuarios
             (NEW.id, 'pro', 'Plan Pro', 'Plan completo con todas las funcionalidades', 249, 2490, 0, true,
              '["agendamiento", "inventario", "pos", "comisiones", "contabilidad", "marketplace", "chatbots", "workflows", "suscripciones-negocio"]'::jsonb,
-             '{"citas": -1, "profesionales": -1, "servicios": -1, "clientes": -1}'::jsonb);
+             '{"citas": -1, "profesionales": -1, "servicios": -1, "clientes": -1, "usuarios": 5}'::jsonb,
+             5, 49.00, NULL);  -- Pro: 5 incluidos, $49/extra, sin hard limit
             RAISE NOTICE 'Planes Nexo Team (id=%) creados via trigger (2 planes: trial, pro)', NEW.id;
         END IF;
     END IF;

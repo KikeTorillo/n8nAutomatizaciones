@@ -539,4 +539,38 @@ export const suscripcionesNegocioApi = {
    */
   iniciarPagoPublico: (token) =>
     publicApiClient.post(`${BASE_URL}/checkout/link/${token}/pagar`),
+
+  // ========================================================================
+  // USO DE USUARIOS (SEAT-BASED BILLING)
+  // ========================================================================
+
+  /**
+   * Obtener resumen de uso de usuarios
+   * @returns {Promise<Object>} { usuariosActuales, usuariosIncluidos, porcentajeUso, estadoUso, cobroAdicionalProyectado, ... }
+   */
+  obtenerResumenUso: () =>
+    apiClient.get(`${BASE_URL}/uso/resumen`),
+
+  /**
+   * Obtener historial diario de uso de usuarios
+   * @param {Object} params - { dias?: number } - default 30
+   * @returns {Promise<Object>} { items: [{ fecha, usuarios_activos, usuarios_incluidos, usuarios_extra }] }
+   */
+  obtenerHistorialUso: (params = {}) =>
+    apiClient.get(`${BASE_URL}/uso/historial`, { params }),
+
+  /**
+   * Obtener proyección del próximo cobro con desglose
+   * @returns {Promise<Object>} { precioBase, ajusteUsuarios, totalProyectado, fechaProximoCobro, ... }
+   */
+  obtenerProyeccionCobro: () =>
+    apiClient.get(`${BASE_URL}/uso/proyeccion`),
+
+  /**
+   * Verificar si se puede crear usuario(s) - para validación previa en formularios
+   * @param {Object} params - { cantidad?: number } - default 1
+   * @returns {Promise<Object>} { puedeCrear, advertencia, costoAdicional, esHardLimit }
+   */
+  verificarLimiteUsuarios: (params = {}) =>
+    apiClient.get(`${BASE_URL}/uso/verificar-limite`, { params }),
 };

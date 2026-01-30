@@ -2,8 +2,8 @@ import { memo } from 'react';
 import { cn } from '@/lib/utils';
 import { FILTER_SECTION_TITLE } from '@/lib/uiConstants';
 
-// Re-exportar componentes unificados de molecules para compatibilidad
-export { FilterField } from '../../molecules/FilterField';
+// Re-exportar componentes unificados para compatibilidad
+export { FilterField } from '../FilterField';
 export { CheckboxField as FilterCheckbox } from '../../molecules/CheckboxField';
 
 /**

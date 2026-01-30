@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Save, Image, Sparkles } from 'lucide-react';
+import { useCallback, useMemo } from 'react';
+import { Save, Image } from 'lucide-react';
 import {
   Button,
   Checkbox,
@@ -8,43 +8,31 @@ import {
   Textarea
 } from '@/components/ui';
 import { AIGenerateButton, AISuggestionBanner } from '../AIGenerator';
+import { useBlockEditor } from '../../hooks';
 
 /**
  * HeroEditor - Editor del bloque Hero
  */
 function HeroEditor({ contenido, onGuardar, tema, isSaving, industria = 'default' }) {
-  const [form, setForm] = useState({
-    titulo: contenido.titulo || '',
-    subtitulo: contenido.subtitulo || '',
-    cta_texto: contenido.cta_texto || '',
-    cta_url: contenido.cta_url || '',
-    imagen_fondo: contenido.imagen_fondo || '',
-    alineacion: contenido.alineacion || 'center',
-    overlay: contenido.overlay !== false,
-  });
+  // Valores por defecto del formulario
+  const defaultValues = useMemo(() => ({
+    titulo: '',
+    subtitulo: '',
+    cta_texto: '',
+    cta_url: '',
+    imagen_fondo: '',
+    alineacion: 'center',
+    overlay: true,
+  }), []);
 
-  const [cambios, setCambios] = useState(false);
+  // Hook para manejo del formulario
+  const { form, setForm, cambios, handleSubmit, handleFieldChange } = useBlockEditor(
+    contenido,
+    defaultValues
+  );
 
   // Verificar si el contenido está esencialmente vacío
   const contenidoVacio = !contenido.titulo && !contenido.subtitulo;
-
-  useEffect(() => {
-    setCambios(JSON.stringify(form) !== JSON.stringify({
-      titulo: contenido.titulo || '',
-      subtitulo: contenido.subtitulo || '',
-      cta_texto: contenido.cta_texto || '',
-      cta_url: contenido.cta_url || '',
-      imagen_fondo: contenido.imagen_fondo || '',
-      alineacion: contenido.alineacion || 'center',
-      overlay: contenido.overlay !== false,
-    }));
-  }, [form, contenido]);
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onGuardar(form);
-    setCambios(false);
-  };
 
   // Callback para generación de IA de bloque completo
   const handleAIGenerate = useCallback((generatedContent) => {
@@ -54,7 +42,7 @@ function HeroEditor({ contenido, onGuardar, tema, isSaving, industria = 'default
       subtitulo: generatedContent.subtitulo || prev.subtitulo,
       cta_texto: generatedContent.boton_texto || generatedContent.boton || prev.cta_texto,
     }));
-  }, []);
+  }, [setForm]);
 
   const alineacionOptions = [
     { value: 'left', label: 'Izquierda' },
@@ -63,7 +51,7 @@ function HeroEditor({ contenido, onGuardar, tema, isSaving, industria = 'default
   ];
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit(onGuardar)} className="space-y-4">
       {/* Banner de sugerencia IA para contenido vacío */}
       {contenidoVacio && (
         <AISuggestionBanner
@@ -83,13 +71,13 @@ function HeroEditor({ contenido, onGuardar, tema, isSaving, industria = 'default
                 tipo="hero"
                 campo="titulo"
                 industria={industria}
-                onGenerate={(text) => setForm({ ...form, titulo: text })}
+                onGenerate={(text) => handleFieldChange('titulo', text)}
                 size="sm"
               />
             </span>
           }
           value={form.titulo}
-          onChange={(e) => setForm({ ...form, titulo: e.target.value })}
+          onChange={(e) => handleFieldChange('titulo', e.target.value)}
           placeholder="Bienvenido a nuestro negocio"
           className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
@@ -106,13 +94,13 @@ function HeroEditor({ contenido, onGuardar, tema, isSaving, industria = 'default
                 campo="subtitulo"
                 industria={industria}
                 contexto={{ titulo: form.titulo }}
-                onGenerate={(text) => setForm({ ...form, subtitulo: text })}
+                onGenerate={(text) => handleFieldChange('subtitulo', text)}
                 size="sm"
               />
             </span>
           }
           value={form.subtitulo}
-          onChange={(e) => setForm({ ...form, subtitulo: e.target.value })}
+          onChange={(e) => handleFieldChange('subtitulo', e.target.value)}
           placeholder="Una descripción breve de lo que hacemos"
           rows={2}
           className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
@@ -128,20 +116,20 @@ function HeroEditor({ contenido, onGuardar, tema, isSaving, industria = 'default
                 tipo="hero"
                 campo="boton"
                 industria={industria}
-                onGenerate={(text) => setForm({ ...form, cta_texto: text })}
+                onGenerate={(text) => handleFieldChange('cta_texto', text)}
                 size="sm"
               />
             </span>
           }
           value={form.cta_texto}
-          onChange={(e) => setForm({ ...form, cta_texto: e.target.value })}
+          onChange={(e) => handleFieldChange('cta_texto', e.target.value)}
           placeholder="Contactar"
           className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
         <Input
           label="URL del botón"
           value={form.cta_url}
-          onChange={(e) => setForm({ ...form, cta_url: e.target.value })}
+          onChange={(e) => handleFieldChange('cta_url', e.target.value)}
           placeholder="/contacto"
           className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
@@ -156,7 +144,7 @@ function HeroEditor({ contenido, onGuardar, tema, isSaving, industria = 'default
           </span>
         }
         value={form.imagen_fondo}
-        onChange={(e) => setForm({ ...form, imagen_fondo: e.target.value })}
+        onChange={(e) => handleFieldChange('imagen_fondo', e.target.value)}
         placeholder="https://ejemplo.com/imagen.jpg"
         className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
       />
@@ -165,7 +153,7 @@ function HeroEditor({ contenido, onGuardar, tema, isSaving, industria = 'default
         <Select
           label="Alineación"
           value={form.alineacion}
-          onChange={(e) => setForm({ ...form, alineacion: e.target.value })}
+          onChange={(e) => handleFieldChange('alineacion', e.target.value)}
           options={alineacionOptions}
           className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
@@ -173,7 +161,7 @@ function HeroEditor({ contenido, onGuardar, tema, isSaving, industria = 'default
           <Checkbox
             label="Overlay oscuro"
             checked={form.overlay}
-            onChange={(e) => setForm({ ...form, overlay: e.target.checked })}
+            onChange={(e) => handleFieldChange('overlay', e.target.checked)}
           />
         </div>
       </div>

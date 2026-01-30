@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Save, Plus, Trash2, GripVertical, Sparkles } from 'lucide-react';
+import { useCallback, useMemo } from 'react';
+import { Save, Plus, Trash2, GripVertical } from 'lucide-react';
 import {
   Button,
   Input,
@@ -7,54 +7,50 @@ import {
   Textarea
 } from '@/components/ui';
 import { AIGenerateButton, AISuggestionBanner } from '../AIGenerator';
+import { useBlockEditor, useArrayItems } from '../../hooks';
 
 /**
  * ServiciosEditor - Editor del bloque Servicios
  */
 function ServiciosEditor({ contenido, onGuardar, tema, isSaving, industria = 'default' }) {
-  const [form, setForm] = useState({
-    titulo: contenido.titulo || 'Nuestros Servicios',
-    subtitulo: contenido.subtitulo || '',
-    servicios: contenido.servicios || [
-      { nombre: '', descripcion: '', icono: '', precio: '' }
-    ],
-    columnas: contenido.columnas || 3,
-  });
+  // Valores por defecto del formulario
+  const defaultValues = useMemo(() => ({
+    titulo: 'Nuestros Servicios',
+    subtitulo: '',
+    servicios: [{ nombre: '', descripcion: '', icono: '', precio: '' }],
+    columnas: 3,
+  }), []);
 
-  const [cambios, setCambios] = useState(false);
+  // Default item para nuevos servicios
+  const defaultServicio = useMemo(() => ({
+    nombre: '',
+    descripcion: '',
+    icono: '',
+    precio: '',
+  }), []);
+
+  // Hook para manejo del formulario
+  const { form, setForm, cambios, handleSubmit, handleFieldChange } = useBlockEditor(
+    contenido,
+    defaultValues
+  );
+
+  // Hook para manejo del array de servicios
+  const {
+    handleAgregar: handleAgregarServicio,
+    handleEliminar: handleEliminarServicio,
+    handleChange: handleServicioChange,
+  } = useArrayItems(setForm, 'servicios', defaultServicio);
 
   // Verificar si el contenido está esencialmente vacío
   const serviciosVacios = !contenido.servicios || contenido.servicios.length === 0 ||
     (contenido.servicios.length === 1 && !contenido.servicios[0]?.nombre);
-
-  useEffect(() => {
-    setCambios(JSON.stringify(form) !== JSON.stringify({
-      titulo: contenido.titulo || 'Nuestros Servicios',
-      subtitulo: contenido.subtitulo || '',
-      servicios: contenido.servicios || [
-        { nombre: '', descripcion: '', icono: '', precio: '' }
-      ],
-      columnas: contenido.columnas || 3,
-    }));
-  }, [form, contenido]);
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onGuardar(form);
-    setCambios(false);
-  };
 
   // Callback para generación de IA de bloque completo
   const handleAIGenerate = useCallback((generatedContent) => {
     setForm(prev => ({
       ...prev,
       titulo: generatedContent.titulo || prev.titulo,
-      items: generatedContent.items ? generatedContent.items.map(item => ({
-        nombre: item.nombre || '',
-        descripcion: item.descripcion || '',
-        icono: '',
-        precio: item.precio || '',
-      })) : prev.servicios,
       servicios: generatedContent.items ? generatedContent.items.map(item => ({
         nombre: item.nombre || '',
         descripcion: item.descripcion || '',
@@ -62,27 +58,7 @@ function ServiciosEditor({ contenido, onGuardar, tema, isSaving, industria = 'de
         precio: item.precio || '',
       })) : prev.servicios,
     }));
-  }, []);
-
-  const handleAgregarServicio = () => {
-    setForm({
-      ...form,
-      servicios: [...form.servicios, { nombre: '', descripcion: '', icono: '', precio: '' }]
-    });
-  };
-
-  const handleEliminarServicio = (index) => {
-    setForm({
-      ...form,
-      servicios: form.servicios.filter((_, i) => i !== index)
-    });
-  };
-
-  const handleServicioChange = (index, campo, valor) => {
-    const nuevosServicios = [...form.servicios];
-    nuevosServicios[index] = { ...nuevosServicios[index], [campo]: valor };
-    setForm({ ...form, servicios: nuevosServicios });
-  };
+  }, [setForm]);
 
   const columnasOptions = [
     { value: '2', label: '2 columnas' },
@@ -91,7 +67,7 @@ function ServiciosEditor({ contenido, onGuardar, tema, isSaving, industria = 'de
   ];
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit(onGuardar)} className="space-y-4">
       {/* Banner de sugerencia IA para contenido vacío */}
       {serviciosVacios && (
         <AISuggestionBanner
@@ -110,20 +86,20 @@ function ServiciosEditor({ contenido, onGuardar, tema, isSaving, industria = 'de
                 tipo="servicios"
                 campo="titulo"
                 industria={industria}
-                onGenerate={(text) => setForm({ ...form, titulo: text })}
+                onGenerate={(text) => handleFieldChange('titulo', text)}
                 size="sm"
               />
             </span>
           }
           value={form.titulo}
-          onChange={(e) => setForm({ ...form, titulo: e.target.value })}
+          onChange={(e) => handleFieldChange('titulo', e.target.value)}
           placeholder="Nuestros Servicios"
           className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
         <Select
           label="Columnas"
           value={String(form.columnas)}
-          onChange={(e) => setForm({ ...form, columnas: parseInt(e.target.value) })}
+          onChange={(e) => handleFieldChange('columnas', parseInt(e.target.value))}
           options={columnasOptions}
           className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
@@ -132,7 +108,7 @@ function ServiciosEditor({ contenido, onGuardar, tema, isSaving, industria = 'de
       <Input
         label="Subtítulo (opcional)"
         value={form.subtitulo}
-        onChange={(e) => setForm({ ...form, subtitulo: e.target.value })}
+        onChange={(e) => handleFieldChange('subtitulo', e.target.value)}
         placeholder="Lo que podemos hacer por ti"
         className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
       />

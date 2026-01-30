@@ -8,6 +8,7 @@
 
 const Joi = require('joi');
 const { fields, withPagination } = require('../../../schemas/shared');
+const { TIPOS_VENTA_VALIDOS } = require('../constants/pos.constants');
 
 const posSchemas = {
     // ========================================================================
@@ -21,7 +22,7 @@ const posSchemas = {
     crearVenta: {
         body: Joi.object({
             tipo_venta: Joi.string()
-                .valid('directa', 'cita', 'apartado', 'cotizacion')
+                .valid(...TIPOS_VENTA_VALIDOS)
                 .optional()
                 .default('directa')
                 .messages({
@@ -205,7 +206,7 @@ const posSchemas = {
                 .optional(),
 
             tipo_venta: Joi.string()
-                .valid('directa', 'cita', 'apartado', 'cotizacion')
+                .valid(...TIPOS_VENTA_VALIDOS)
                 .optional(),
 
             cliente_id: Joi.number().integer().positive().optional(),
@@ -415,7 +416,7 @@ const posSchemas = {
 
         body: Joi.object({
             tipo_venta: Joi.string()
-                .valid('directa', 'cita', 'apartado', 'cotizacion')
+                .valid(...TIPOS_VENTA_VALIDOS)
                 .optional(),
 
             cliente_id: Joi.number().integer().positive().optional().allow(null),

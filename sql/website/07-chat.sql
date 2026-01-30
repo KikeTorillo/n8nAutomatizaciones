@@ -206,7 +206,7 @@ ALTER TABLE website_chat_respuestas_rapidas ENABLE ROW LEVEL SECURITY;
 -- Conversaciones
 CREATE POLICY chat_conv_org_select ON website_chat_conversaciones
     FOR SELECT
-    USING (organizacion_id = current_setting('app.current_org_id', true)::int);
+    USING (organizacion_id = NULLIF(current_setting('app.current_tenant_id', true), '')::INTEGER);
 
 CREATE POLICY chat_conv_org_insert ON website_chat_conversaciones
     FOR INSERT
@@ -214,7 +214,7 @@ CREATE POLICY chat_conv_org_insert ON website_chat_conversaciones
 
 CREATE POLICY chat_conv_org_update ON website_chat_conversaciones
     FOR UPDATE
-    USING (organizacion_id = current_setting('app.current_org_id', true)::int);
+    USING (organizacion_id = NULLIF(current_setting('app.current_tenant_id', true), '')::INTEGER);
 
 CREATE POLICY chat_conv_superadmin ON website_chat_conversaciones
     FOR ALL
@@ -226,7 +226,7 @@ CREATE POLICY chat_msg_org_select ON website_chat_mensajes
     USING (EXISTS (
         SELECT 1 FROM website_chat_conversaciones c
         WHERE c.id = conversacion_id
-        AND c.organizacion_id = current_setting('app.current_org_id', true)::int
+        AND c.organizacion_id = NULLIF(current_setting('app.current_tenant_id', true), '')::INTEGER
     ));
 
 CREATE POLICY chat_msg_insert ON website_chat_mensajes
@@ -240,7 +240,7 @@ CREATE POLICY chat_msg_superadmin ON website_chat_mensajes
 -- Respuestas rapidas
 CREATE POLICY chat_respuestas_org ON website_chat_respuestas_rapidas
     FOR ALL
-    USING (organizacion_id = current_setting('app.current_org_id', true)::int);
+    USING (organizacion_id = NULLIF(current_setting('app.current_tenant_id', true), '')::INTEGER);
 
 CREATE POLICY chat_respuestas_superadmin ON website_chat_respuestas_rapidas
     FOR ALL

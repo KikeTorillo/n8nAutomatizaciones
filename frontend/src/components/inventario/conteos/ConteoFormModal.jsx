@@ -4,7 +4,7 @@ import { ClipboardList, Calendar, User, Info } from 'lucide-react';
 import { useCategorias, useUbicacionesAlmacen } from '@/hooks/inventario';
 import { useUsuarios } from '@/hooks/personas';
 import { TIPOS_CONTEO, TIPOS_CONTEO_LABELS } from '@/hooks/inventario';
-import { useAuthStore } from '@/store/authStore';
+import { useAuthStore } from '@/store';
 
 /**
  * Modal para crear un nuevo conteo de inventario

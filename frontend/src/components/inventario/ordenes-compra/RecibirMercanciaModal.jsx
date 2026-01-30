@@ -5,7 +5,7 @@ import { useToast } from '@/hooks/utils';
 import { useOrdenCompra, useRecibirMercancia, useUbicacionesAlmacen } from '@/hooks/inventario';
 import { useVerificarExistencia } from '@/hooks/inventario';
 import { useResumenCostos } from '@/hooks/inventario';
-import { useAuth } from '@/hooks/auth';
+import { useAuth } from '@/hooks/sistema';
 
 /**
  * Modal para registrar recepción de mercancía

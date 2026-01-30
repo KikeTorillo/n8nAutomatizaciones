@@ -92,22 +92,22 @@ CREATE POLICY website_templates_public_read ON website_templates
 -- Política: Organización puede leer sus templates personalizados
 CREATE POLICY website_templates_org_read ON website_templates
     FOR SELECT
-    USING (organizacion_id = current_setting('app.current_org_id', true)::int);
+    USING (organizacion_id = NULLIF(current_setting('app.current_tenant_id', true), '')::INTEGER);
 
 -- Política: Organización puede crear sus propios templates
 CREATE POLICY website_templates_org_insert ON website_templates
     FOR INSERT
-    WITH CHECK (organizacion_id = current_setting('app.current_org_id', true)::int);
+    WITH CHECK (organizacion_id = NULLIF(current_setting('app.current_tenant_id', true), '')::INTEGER);
 
 -- Política: Organización puede modificar sus templates
 CREATE POLICY website_templates_org_update ON website_templates
     FOR UPDATE
-    USING (organizacion_id = current_setting('app.current_org_id', true)::int);
+    USING (organizacion_id = NULLIF(current_setting('app.current_tenant_id', true), '')::INTEGER);
 
 -- Política: Organización puede eliminar sus templates
 CREATE POLICY website_templates_org_delete ON website_templates
     FOR DELETE
-    USING (organizacion_id = current_setting('app.current_org_id', true)::int);
+    USING (organizacion_id = NULLIF(current_setting('app.current_tenant_id', true), '')::INTEGER);
 
 -- Política: SuperAdmin puede hacer todo
 CREATE POLICY website_templates_superadmin ON website_templates

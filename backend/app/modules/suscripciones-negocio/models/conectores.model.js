@@ -446,24 +446,24 @@ class ConectoresModel {
                 );
             }
 
-            // Detectar entorno por prefijo del access_token
-            const entornoDetectado = credenciales.access_token?.startsWith('TEST-') ? 'sandbox' : 'production';
+            // IMPORTANTE: Usar el entorno guardado en la BD, NO detectar por prefijo del token.
+            // Las cuentas de PRUEBA de MercadoPago generan tokens APP_USR- (no TEST-),
+            // solo las cuentas REALES tienen tokens TEST- para sandbox.
+            // El usuario configura explícitamente el entorno al crear el conector.
 
             logger.debug('[ConectoresModel.obtenerConectorPrincipal] Conector encontrado', {
                 organizacionId,
                 gateway,
                 conectorId: row.id,
                 es_principal: row.es_principal,
-                entornoGuardado: row.entorno,
-                entornoDetectado,
+                entorno: row.entorno,
                 verificado: row.verificado
             });
 
             return {
                 id: row.id,
                 gateway: row.gateway,
-                entorno: entornoDetectado, // Usar el detectado, no el guardado en BD
-                entornoGuardado: row.entorno,
+                entorno: row.entorno, // Usar el entorno configurado por el usuario
                 es_principal: row.es_principal,
                 credenciales,
                 webhookSecret,

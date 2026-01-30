@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useMemo } from 'react';
 import { Save, Plus, Trash2, Image, GripVertical } from 'lucide-react';
 import {
   Button,
@@ -6,60 +6,42 @@ import {
   Input,
   Select
 } from '@/components/ui';
+import { useBlockEditor, useArrayItems } from '../../hooks';
 
 /**
  * GaleriaEditor - Editor del bloque Galería
  */
 function GaleriaEditor({ contenido, onGuardar, tema, isSaving }) {
-  const [form, setForm] = useState({
-    titulo: contenido.titulo || '',
-    subtitulo: contenido.subtitulo || '',
-    imagenes: contenido.imagenes || [],
-    columnas: contenido.columnas || 3,
-    espaciado: contenido.espaciado || 'normal',
-    estilo: contenido.estilo || 'grid',
-    lightbox: contenido.lightbox !== false,
-  });
+  // Valores por defecto del formulario
+  const defaultValues = useMemo(() => ({
+    titulo: '',
+    subtitulo: '',
+    imagenes: [],
+    columnas: 3,
+    espaciado: 'normal',
+    estilo: 'grid',
+    lightbox: true,
+  }), []);
 
-  const [cambios, setCambios] = useState(false);
+  // Default item para nuevas imágenes
+  const defaultImagen = useMemo(() => ({
+    url: '',
+    alt: '',
+    titulo: '',
+  }), []);
 
-  useEffect(() => {
-    setCambios(JSON.stringify(form) !== JSON.stringify({
-      titulo: contenido.titulo || '',
-      subtitulo: contenido.subtitulo || '',
-      imagenes: contenido.imagenes || [],
-      columnas: contenido.columnas || 3,
-      espaciado: contenido.espaciado || 'normal',
-      estilo: contenido.estilo || 'grid',
-      lightbox: contenido.lightbox !== false,
-    }));
-  }, [form, contenido]);
+  // Hook para manejo del formulario
+  const { form, setForm, cambios, handleSubmit, handleFieldChange } = useBlockEditor(
+    contenido,
+    defaultValues
+  );
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onGuardar(form);
-    setCambios(false);
-  };
-
-  const handleAgregar = () => {
-    setForm({
-      ...form,
-      imagenes: [...form.imagenes, { url: '', alt: '', titulo: '' }]
-    });
-  };
-
-  const handleEliminar = (index) => {
-    setForm({
-      ...form,
-      imagenes: form.imagenes.filter((_, i) => i !== index)
-    });
-  };
-
-  const handleChange = (index, campo, valor) => {
-    const nuevas = [...form.imagenes];
-    nuevas[index] = { ...nuevas[index], [campo]: valor };
-    setForm({ ...form, imagenes: nuevas });
-  };
+  // Hook para manejo del array de imágenes
+  const {
+    handleAgregar,
+    handleEliminar,
+    handleChange,
+  } = useArrayItems(setForm, 'imagenes', defaultImagen);
 
   const columnasOptions = [
     { value: '2', label: '2' },
@@ -82,19 +64,19 @@ function GaleriaEditor({ contenido, onGuardar, tema, isSaving }) {
   ];
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit(onGuardar)} className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
         <Input
           label="Título (opcional)"
           value={form.titulo}
-          onChange={(e) => setForm({ ...form, titulo: e.target.value })}
+          onChange={(e) => handleFieldChange('titulo', e.target.value)}
           placeholder="Nuestra Galería"
           className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
         <Input
           label="Subtítulo (opcional)"
           value={form.subtitulo}
-          onChange={(e) => setForm({ ...form, subtitulo: e.target.value })}
+          onChange={(e) => handleFieldChange('subtitulo', e.target.value)}
           placeholder="Nuestros mejores trabajos"
           className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
@@ -104,21 +86,21 @@ function GaleriaEditor({ contenido, onGuardar, tema, isSaving }) {
         <Select
           label="Columnas"
           value={String(form.columnas)}
-          onChange={(e) => setForm({ ...form, columnas: parseInt(e.target.value) })}
+          onChange={(e) => handleFieldChange('columnas', parseInt(e.target.value))}
           options={columnasOptions}
           className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
         <Select
           label="Espaciado"
           value={form.espaciado}
-          onChange={(e) => setForm({ ...form, espaciado: e.target.value })}
+          onChange={(e) => handleFieldChange('espaciado', e.target.value)}
           options={espaciadoOptions}
           className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
         <Select
           label="Estilo"
           value={form.estilo}
-          onChange={(e) => setForm({ ...form, estilo: e.target.value })}
+          onChange={(e) => handleFieldChange('estilo', e.target.value)}
           options={estiloOptions}
           className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
@@ -127,7 +109,7 @@ function GaleriaEditor({ contenido, onGuardar, tema, isSaving }) {
       <Checkbox
         label="Abrir en lightbox al hacer clic"
         checked={form.lightbox}
-        onChange={(e) => setForm({ ...form, lightbox: e.target.checked })}
+        onChange={(e) => handleFieldChange('lightbox', e.target.checked)}
       />
 
       {/* Lista de imágenes */}

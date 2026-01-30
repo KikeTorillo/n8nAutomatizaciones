@@ -124,6 +124,14 @@ class POSMainController {
     static obtenerPagosVenta(req, res) {
         return VentasPOSController.obtenerPagosVenta(req, res);
     }
+
+    // ===================================================================
+    // ⚙️ CONFIGURACIÓN POS
+    // ===================================================================
+
+    static obtenerTiposVenta(req, res) {
+        return VentasPOSController.obtenerTiposVenta(req, res);
+    }
 }
 
 module.exports = POSMainController;

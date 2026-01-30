@@ -102,3 +102,12 @@ export {
   useCheckoutPublico,
   useIniciarPagoPublico,
 } from './useClienteSuscripciones';
+
+// Uso de usuarios (Seat-based billing)
+export {
+  useResumenUso,
+  useHistorialUso,
+  useProyeccionCobro,
+  useVerificarLimiteUsuarios,
+  useUsoUsuariosDashboard,
+} from './useUsoUsuarios';

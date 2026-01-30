@@ -114,6 +114,7 @@ export {
   selectAgregarBloqueLocal,
   selectEliminarBloqueLocal,
   selectDuplicarBloqueLocal,
+  selectToggleVisibilidadBloque,
   selectInsertarBloqueEnPosicion,
   // Acciones de selección
   selectSeleccionarBloque,
@@ -128,6 +129,12 @@ export {
   selectSetGuardando,
   selectSetGuardado,
   selectSetErrorGuardado,
+  // Acciones de version (bloqueo optimista)
+  selectActualizarVersionBloque,
+  // Conflicto de versión (bloqueo optimista)
+  selectConflictoVersion,
+  selectSetConflictoVersion,
+  selectClearConflictoVersion,
   // Bloque recien agregado (animacion)
   selectBloqueRecienAgregado,
   selectSetBloqueRecienAgregado,

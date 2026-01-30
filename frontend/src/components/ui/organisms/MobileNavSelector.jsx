@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, memo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronDown, Check, Menu } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useClickOutsideRef, useEscapeKey } from '@/hooks/utils';
 
 /**
  * MobileNavSelector - Selector dropdown para navegación móvil
@@ -42,27 +43,11 @@ const MobileNavSelector = memo(function MobileNavSelector({
     ? groups?.find(g => g.id === activeGroupId)
     : null;
 
-  // Cerrar al hacer click fuera
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsOpen(false);
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  // Cerrar al hacer click fuera (hook centralizado)
+  useClickOutsideRef(dropdownRef, () => setIsOpen(false), isOpen);
 
-  // Cerrar con Escape
-  useEffect(() => {
-    function handleKeyDown(event) {
-      if (event.key === 'Escape') setIsOpen(false);
-    }
-    if (isOpen) {
-      document.addEventListener('keydown', handleKeyDown);
-      return () => document.removeEventListener('keydown', handleKeyDown);
-    }
-  }, [isOpen]);
+  // Cerrar con Escape (hook centralizado)
+  useEscapeKey(() => setIsOpen(false), isOpen);
 
   const handleItemClick = useCallback((path) => {
     navigate(path);

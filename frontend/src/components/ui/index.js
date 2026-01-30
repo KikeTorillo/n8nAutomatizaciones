@@ -21,7 +21,7 @@ export { Checkbox } from './atoms/Checkbox';
 export { Badge } from './atoms/Badge';
 export { LoadingSpinner } from './atoms/LoadingSpinner';
 export { Label } from './atoms/Label';
-export { ToggleSwitch } from './molecules/ToggleSwitch';
+// NOTA: ToggleSwitch movido a molecules/ por complejidad (Ene 2026) - ver sección MOLECULES
 
 // ========== MOLECULES ==========
 export { Alert } from './molecules/Alert';
@@ -45,6 +45,8 @@ export { SearchFilterBar } from './organisms/SearchFilterBar';
 export { CheckboxGroup } from './organisms/CheckboxGroup';
 export { CheckboxField } from './molecules/CheckboxField';
 export { DropdownMenu } from './molecules/DropdownMenu';
+export { ToggleSwitch } from './molecules/ToggleSwitch';
+export { Card } from './molecules/Card';
 
 // ========== ORGANISMS ==========
 export { Modal } from './organisms/Modal';
@@ -83,9 +85,9 @@ export {
 // FilterChip está en molecules (Ene 2026)
 export { FilterChip } from './molecules/FilterChip';
 
-// Campo de filtro unificado (Ene 2026)
+// Campo de filtro unificado (movido a organisms/ Ene 2026)
 // NOTA: FilterSelectField, FilterDateField, FilterTextField eliminados - usar FilterField
-export { FilterField } from './molecules/FilterField';
+export { FilterField } from './organisms/FilterField';
 
 // Headers extraídos (Ene 2026)
 export { ModalHeader } from './molecules/ModalHeader';

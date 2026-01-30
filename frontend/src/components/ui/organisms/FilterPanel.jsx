@@ -1,9 +1,10 @@
-import { useState, useMemo, useCallback, memo } from 'react';
+import { useState, useCallback, memo } from 'react';
 import { Filter, X, ChevronDown, ChevronUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '../atoms/Button';
 import { SearchInput } from '../molecules/SearchInput';
-import { FilterField } from '../molecules/FilterField';
+import { FilterField } from './FilterField';
+import { useActiveFilters } from './filters/FilterPanelBase';
 
 /**
  * FilterPanel - Panel de filtros reutilizable con búsqueda y filtros expandibles
@@ -37,18 +38,8 @@ export const FilterPanel = memo(function FilterPanel({
 }) {
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
 
-  // Contar filtros activos
-  const activeFilterCount = useMemo(() => {
-    let count = 0;
-    filterConfig.forEach(config => {
-      const value = filters[config.key];
-      if (value !== undefined && value !== '' && value !== null && value !== false) {
-        count++;
-      }
-    });
-    if (filters[searchKey]?.trim()) count++;
-    return count;
-  }, [filters, filterConfig, searchKey]);
+  // Usar hook centralizado para contar filtros activos
+  const activeFilterCount = useActiveFilters(filters, filterConfig, searchKey);
 
   const handleSearchChange = useCallback((e) => {
     onFilterChange(searchKey, e.target.value);

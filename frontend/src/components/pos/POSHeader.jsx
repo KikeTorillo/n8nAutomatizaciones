@@ -30,6 +30,8 @@ export default function POSHeader({
   onToggleMenuCaja,
   onMovimientosCaja,
   onCierreCaja,
+  // Tipo de venta (componente externo)
+  tipoVentaSelector,
 }) {
   // Componente de caja dropdown
   const CajaDropdown = () => {
@@ -115,8 +117,11 @@ export default function POSHeader({
         <ContextInfo />
       </div>
 
-      {/* Row 3: Cliente selector + Vaciar carrito */}
+      {/* Row 3: Tipo venta + Cliente selector + Vaciar carrito */}
       <div className="flex items-center gap-3">
+        {/* Tipo de venta */}
+        {tipoVentaSelector}
+
         <div className="flex-1 max-w-xs sm:max-w-sm">
           <ClienteSelector
             value={clienteSeleccionado}

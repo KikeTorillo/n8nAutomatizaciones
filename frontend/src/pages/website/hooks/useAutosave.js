@@ -8,6 +8,7 @@
 
 import { useEffect, useRef, useCallback } from 'react';
 import { useWebsiteEditorStore } from '@/store';
+import { toast } from 'sonner';
 
 // Constantes
 const DEBOUNCE_MS = 3000; // 3 segundos de debounce
@@ -36,6 +37,7 @@ export function useAutosave({ onSave, enabled = true, debounceMs = DEBOUNCE_MS }
   const setGuardando = useWebsiteEditorStore((state) => state.setGuardando);
   const setGuardado = useWebsiteEditorStore((state) => state.setGuardado);
   const setErrorGuardado = useWebsiteEditorStore((state) => state.setErrorGuardado);
+  const setConflictoVersion = useWebsiteEditorStore((state) => state.setConflictoVersion);
 
   /**
    * Guarda los cambios con mutex para evitar conflictos
@@ -69,6 +71,19 @@ export function useAutosave({ onSave, enabled = true, debounceMs = DEBOUNCE_MS }
     } catch (error) {
       console.error('[Autosave] Error al guardar:', error);
 
+      // Error 409: Conflicto de versión (otro usuario modificó el bloque)
+      const status = error.response?.status;
+      if (status === 409) {
+        const mensaje = error.response?.data?.message || 'Otro usuario modificó este bloque. Recarga la página para ver los cambios.';
+        toast.error(mensaje, { duration: 6000 });
+        setConflictoVersion({
+          mensaje,
+          timestamp: new Date().toISOString(),
+        });
+        retryCountRef.current = 0;
+        return; // No reintentar conflictos de versión
+      }
+
       // Reintentar si no hemos excedido el límite
       if (retryCountRef.current < MAX_RETRIES) {
         retryCountRef.current++;
@@ -79,13 +94,15 @@ export function useAutosave({ onSave, enabled = true, debounceMs = DEBOUNCE_MS }
           guardar();
         }, RETRY_DELAY_MS * retryCountRef.current);
       } else {
+        const mensaje = error.response?.data?.message || 'Error al guardar cambios';
+        toast.error(mensaje);
         setErrorGuardado();
         retryCountRef.current = 0;
       }
     } finally {
       mutexRef.current = false;
     }
-  }, [bloques, tieneClambiosLocales, onSave, setGuardando, setGuardado, setErrorGuardado]);
+  }, [bloques, tieneClambiosLocales, onSave, setGuardando, setGuardado, setErrorGuardado, setConflictoVersion]);
 
   /**
    * Efecto para debounce de cambios
@@ -221,6 +238,47 @@ export function useEstadoGuardado() {
     ultimoGuardado,
     ...getEstadoVisual(),
   };
+}
+
+/**
+ * Función utilitaria para recargar datos del servidor
+ * Usada por ConflictAlert para rollback visual en conflictos 409
+ * @param {string} paginaId - ID de la página a recargar
+ * @param {QueryClient} queryClient - Instancia de TanStack Query
+ * @param {Function} setBloques - Función del store para actualizar bloques
+ * @param {Function} clearConflictoVersion - Función para limpiar conflicto
+ */
+export async function recargarDatosServidor(paginaId, queryClient, setBloques, clearConflictoVersion) {
+  if (!paginaId) {
+    console.warn('[recargarDatosServidor] No hay paginaId especificado');
+    return false;
+  }
+
+  try {
+    // Invalidar cache para forzar re-fetch
+    await queryClient.invalidateQueries({
+      queryKey: ['bloques', paginaId],
+      refetchType: 'active',
+    });
+
+    // Obtener datos frescos del cache después del refetch
+    const bloquesActualizados = queryClient.getQueryData(['bloques', paginaId]);
+
+    if (bloquesActualizados) {
+      // Actualizar el store con los datos del servidor
+      setBloques(bloquesActualizados, paginaId);
+    }
+
+    // Limpiar el estado de conflicto
+    if (clearConflictoVersion) {
+      clearConflictoVersion();
+    }
+
+    return true;
+  } catch (error) {
+    console.error('[recargarDatosServidor] Error:', error);
+    return false;
+  }
 }
 
 export default useAutosave;

@@ -121,7 +121,7 @@ ALTER TABLE website_analytics ENABLE ROW LEVEL SECURITY;
 -- Politica: Organizacion puede ver sus analytics
 CREATE POLICY website_analytics_org_select ON website_analytics
     FOR SELECT
-    USING (organizacion_id = current_setting('app.current_org_id', true)::int);
+    USING (organizacion_id = NULLIF(current_setting('app.current_tenant_id', true), '')::INTEGER);
 
 -- Politica: Insercion publica (para tracking desde sitio publico)
 -- Nota: Los inserts se hacen con bypass de RLS desde el controller publico

@@ -69,7 +69,7 @@ class WebsiteAnalyticsModel {
       fuente,
       ip,
       user_agent,
-      datos_extra,
+      datos_evento,
     } = datos;
 
     // Validar tipo de evento
@@ -87,7 +87,7 @@ class WebsiteAnalyticsModel {
         fuente,
         ip_hash,
         dispositivo,
-        datos_extra
+        datos_evento
       )
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
       RETURNING id, evento_tipo, pagina_slug, creado_en
@@ -103,7 +103,7 @@ class WebsiteAnalyticsModel {
         fuente || 'directo',
         this.hashearIP(ip),
         this.detectarDispositivo(user_agent),
-        datos_extra ? JSON.stringify(datos_extra) : null,
+        datos_evento ? JSON.stringify(datos_evento) : null,
       ]);
     });
 
@@ -226,8 +226,8 @@ class WebsiteAnalyticsModel {
         p.titulo as pagina_titulo,
         COUNT(*) as visitas,
         COUNT(DISTINCT a.ip_hash) as visitantes_unicos,
-        ROUND(AVG(CASE WHEN a.evento_tipo = 'tiempo_en_pagina' AND (a.datos_extra->>'segundos')::int > 0
-          THEN (a.datos_extra->>'segundos')::int END), 0) as tiempo_promedio_segundos
+        ROUND(AVG(CASE WHEN a.evento_tipo = 'tiempo_en_pagina' AND (a.datos_evento->>'segundos')::int > 0
+          THEN (a.datos_evento->>'segundos')::int END), 0) as tiempo_promedio_segundos
       FROM website_analytics a
       LEFT JOIN website_paginas p ON a.pagina_slug = p.slug AND a.website_id = p.website_id
       WHERE a.organizacion_id = $1

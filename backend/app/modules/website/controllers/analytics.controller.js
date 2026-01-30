@@ -87,7 +87,7 @@ const WebsiteAnalyticsController = {
    * @requires tenant
    */
   listarEventos: asyncHandler(async (req, res) => {
-    const organizacionId = req.user.organizacion_id;
+    const organizacionId = req.tenant.organizacionId;
     const {
       website_id,
       evento_tipo,
@@ -118,7 +118,7 @@ const WebsiteAnalyticsController = {
    * @requires tenant
    */
   obtenerResumen: asyncHandler(async (req, res) => {
-    const organizacionId = req.user.organizacion_id;
+    const organizacionId = req.tenant.organizacionId;
     const {
       dias = 30,
       website_id,
@@ -145,7 +145,7 @@ const WebsiteAnalyticsController = {
    * @requires tenant
    */
   obtenerPaginasPopulares: asyncHandler(async (req, res) => {
-    const organizacionId = req.user.organizacion_id;
+    const organizacionId = req.tenant.organizacionId;
     const {
       dias = 30,
       website_id,
@@ -174,7 +174,7 @@ const WebsiteAnalyticsController = {
    * @requires tenant
    */
   obtenerTiempoReal: asyncHandler(async (req, res) => {
-    const organizacionId = req.user.organizacion_id;
+    const organizacionId = req.tenant.organizacionId;
     const { website_id } = req.query;
 
     const tiempoReal = await WebsiteAnalyticsModel.obtenerTiempoReal(

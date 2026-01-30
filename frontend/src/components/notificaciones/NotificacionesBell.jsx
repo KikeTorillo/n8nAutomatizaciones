@@ -1,4 +1,4 @@
-import { memo, useState, useRef, useEffect, useCallback } from 'react';
+import { memo, useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Bell,
@@ -28,6 +28,7 @@ import {
   useArchivarNotificacion,
   NOTIFICACION_NIVELES,
 } from '@/hooks/sistema';
+import { useClickOutsideRef } from '@/hooks/utils';
 
 /**
  * Iconos por categoria de notificacion
@@ -210,18 +211,11 @@ export const NotificacionesBell = memo(function NotificacionesBell() {
   const marcarTodasLeidas = useMarcarTodasNotificacionesLeidas();
   const archivar = useArchivarNotificacion();
 
-  // Cerrar dropdown al hacer click fuera
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsOpen(false);
-        setMenuAbierto(null);
-      }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  // Cerrar dropdown al hacer click fuera (hook centralizado)
+  useClickOutsideRef(dropdownRef, () => {
+    setIsOpen(false);
+    setMenuAbierto(null);
+  }, isOpen);
 
   // Handlers memoizados
   const handleToggleDropdown = useCallback(() => setIsOpen(prev => !prev), []);

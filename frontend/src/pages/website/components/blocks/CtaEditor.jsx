@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Save, Sparkles } from 'lucide-react';
+import { useCallback, useMemo } from 'react';
+import { Save } from 'lucide-react';
 import {
   Button,
   Input,
@@ -7,45 +7,32 @@ import {
   Textarea
 } from '@/components/ui';
 import { AIGenerateButton, AISuggestionBanner } from '../AIGenerator';
+import { useBlockEditor } from '../../hooks';
 
 /**
  * CtaEditor - Editor del bloque Call To Action
  */
 function CtaEditor({ contenido, onGuardar, tema, isSaving, industria = 'default' }) {
-  const [form, setForm] = useState({
-    titulo: contenido.titulo || '¿Listo para empezar?',
-    subtitulo: contenido.subtitulo || '',
-    boton_texto: contenido.boton_texto || 'Contactar',
-    boton_url: contenido.boton_url || '',
-    boton_secundario_texto: contenido.boton_secundario_texto || '',
-    boton_secundario_url: contenido.boton_secundario_url || '',
-    estilo: contenido.estilo || 'primario',
-    alineacion: contenido.alineacion || 'center',
-  });
+  // Valores por defecto del formulario
+  const defaultValues = useMemo(() => ({
+    titulo: '¿Listo para empezar?',
+    subtitulo: '',
+    boton_texto: 'Contactar',
+    boton_url: '',
+    boton_secundario_texto: '',
+    boton_secundario_url: '',
+    estilo: 'primario',
+    alineacion: 'center',
+  }), []);
 
-  const [cambios, setCambios] = useState(false);
+  // Hook para manejo del formulario
+  const { form, setForm, cambios, handleSubmit, handleFieldChange } = useBlockEditor(
+    contenido,
+    defaultValues
+  );
 
   // Verificar si el contenido está esencialmente vacío (usa valores por defecto)
   const contenidoVacio = contenido.titulo === '¿Listo para empezar?' || !contenido.titulo;
-
-  useEffect(() => {
-    setCambios(JSON.stringify(form) !== JSON.stringify({
-      titulo: contenido.titulo || '¿Listo para empezar?',
-      subtitulo: contenido.subtitulo || '',
-      boton_texto: contenido.boton_texto || 'Contactar',
-      boton_url: contenido.boton_url || '',
-      boton_secundario_texto: contenido.boton_secundario_texto || '',
-      boton_secundario_url: contenido.boton_secundario_url || '',
-      estilo: contenido.estilo || 'primario',
-      alineacion: contenido.alineacion || 'center',
-    }));
-  }, [form, contenido]);
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onGuardar(form);
-    setCambios(false);
-  };
 
   // Callback para generación de IA de bloque completo
   const handleAIGenerate = useCallback((generatedContent) => {
@@ -55,7 +42,7 @@ function CtaEditor({ contenido, onGuardar, tema, isSaving, industria = 'default'
       subtitulo: generatedContent.subtitulo || prev.subtitulo,
       boton_texto: generatedContent.boton_texto || generatedContent.boton || prev.boton_texto,
     }));
-  }, []);
+  }, [setForm]);
 
   const estiloOptions = [
     { value: 'primario', label: 'Color primario' },
@@ -71,7 +58,7 @@ function CtaEditor({ contenido, onGuardar, tema, isSaving, industria = 'default'
   ];
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit(onGuardar)} className="space-y-4">
       {/* Banner de sugerencia IA para contenido vacío */}
       {contenidoVacio && (
         <AISuggestionBanner
@@ -89,13 +76,13 @@ function CtaEditor({ contenido, onGuardar, tema, isSaving, industria = 'default'
               tipo="cta"
               campo="titulo"
               industria={industria}
-              onGenerate={(text) => setForm({ ...form, titulo: text })}
+              onGenerate={(text) => handleFieldChange('titulo', text)}
               size="sm"
             />
           </span>
         }
         value={form.titulo}
-        onChange={(e) => setForm({ ...form, titulo: e.target.value })}
+        onChange={(e) => handleFieldChange('titulo', e.target.value)}
         placeholder="¿Listo para empezar?"
         className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
       />
@@ -109,13 +96,13 @@ function CtaEditor({ contenido, onGuardar, tema, isSaving, industria = 'default'
               campo="subtitulo"
               industria={industria}
               contexto={{ titulo: form.titulo }}
-              onGenerate={(text) => setForm({ ...form, subtitulo: text })}
+              onGenerate={(text) => handleFieldChange('subtitulo', text)}
               size="sm"
             />
           </span>
         }
         value={form.subtitulo}
-        onChange={(e) => setForm({ ...form, subtitulo: e.target.value })}
+        onChange={(e) => handleFieldChange('subtitulo', e.target.value)}
         placeholder="Contáctanos hoy y recibe una consulta gratuita"
         rows={2}
         className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
@@ -130,20 +117,20 @@ function CtaEditor({ contenido, onGuardar, tema, isSaving, industria = 'default'
                 tipo="cta"
                 campo="boton"
                 industria={industria}
-                onGenerate={(text) => setForm({ ...form, boton_texto: text })}
+                onGenerate={(text) => handleFieldChange('boton_texto', text)}
                 size="sm"
               />
             </span>
           }
           value={form.boton_texto}
-          onChange={(e) => setForm({ ...form, boton_texto: e.target.value })}
+          onChange={(e) => handleFieldChange('boton_texto', e.target.value)}
           placeholder="Contactar"
           className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
         <Input
           label="URL del botón"
           value={form.boton_url}
-          onChange={(e) => setForm({ ...form, boton_url: e.target.value })}
+          onChange={(e) => handleFieldChange('boton_url', e.target.value)}
           placeholder="/contacto"
           className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
@@ -153,14 +140,14 @@ function CtaEditor({ contenido, onGuardar, tema, isSaving, industria = 'default'
         <Input
           label="Botón secundario (opcional)"
           value={form.boton_secundario_texto}
-          onChange={(e) => setForm({ ...form, boton_secundario_texto: e.target.value })}
+          onChange={(e) => handleFieldChange('boton_secundario_texto', e.target.value)}
           placeholder="Más información"
           className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
         <Input
           label="URL secundario"
           value={form.boton_secundario_url}
-          onChange={(e) => setForm({ ...form, boton_secundario_url: e.target.value })}
+          onChange={(e) => handleFieldChange('boton_secundario_url', e.target.value)}
           placeholder="/servicios"
           className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
@@ -170,14 +157,14 @@ function CtaEditor({ contenido, onGuardar, tema, isSaving, industria = 'default'
         <Select
           label="Estilo de fondo"
           value={form.estilo}
-          onChange={(e) => setForm({ ...form, estilo: e.target.value })}
+          onChange={(e) => handleFieldChange('estilo', e.target.value)}
           options={estiloOptions}
           className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
         <Select
           label="Alineación"
           value={form.alineacion}
-          onChange={(e) => setForm({ ...form, alineacion: e.target.value })}
+          onChange={(e) => handleFieldChange('alineacion', e.target.value)}
           options={alineacionOptions}
           className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />

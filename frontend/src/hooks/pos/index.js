@@ -31,3 +31,4 @@ export * from './useBarcodeScanner';
 export * from './usePOSBroadcast';
 export * from './useCombosModificadores';
 export * from './useLealtad';
+export { useTiposVenta, TIPO_VENTA, TIPOS_VENTA_KEYS } from './useTiposVenta';

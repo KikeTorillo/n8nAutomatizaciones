@@ -9,6 +9,7 @@ const RLSContextManager = require('../../../utils/rlsContextManager');
 const OrganizacionModel = require('../../core/models/organizacion.model');
 const DropshipModel = require('../../inventario/models/dropship.model');
 const logger = require('../../../utils/logger');
+const { TIPOS_VENTA_CONFIG } = require('../constants/pos.constants');
 
 /**
  * Controller para gestión de ventas POS
@@ -482,6 +483,21 @@ class VentasPOSController {
             res,
             resultado,
             'Pagos de venta obtenidos exitosamente'
+        );
+    });
+
+    /**
+     * Obtener tipos de venta disponibles
+     * GET /api/v1/pos/config/tipos-venta
+     */
+    static obtenerTiposVenta = asyncHandler(async (req, res) => {
+        // Convertir objeto a array para el frontend
+        const tipos = Object.values(TIPOS_VENTA_CONFIG);
+
+        return ResponseHelper.success(
+            res,
+            tipos,
+            'Tipos de venta obtenidos exitosamente'
         );
     });
 }

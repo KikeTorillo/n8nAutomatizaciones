@@ -90,17 +90,17 @@ ALTER TABLE website_contactos ENABLE ROW LEVEL SECURITY;
 -- Política: Organización puede ver sus contactos
 CREATE POLICY website_contactos_org_select ON website_contactos
     FOR SELECT
-    USING (organizacion_id = current_setting('app.current_org_id', true)::int);
+    USING (organizacion_id = NULLIF(current_setting('app.current_tenant_id', true), '')::INTEGER);
 
 -- Política: Organización puede actualizar sus contactos (marcar leído, agregar notas)
 CREATE POLICY website_contactos_org_update ON website_contactos
     FOR UPDATE
-    USING (organizacion_id = current_setting('app.current_org_id', true)::int);
+    USING (organizacion_id = NULLIF(current_setting('app.current_tenant_id', true), '')::INTEGER);
 
 -- Política: Organización puede eliminar sus contactos
 CREATE POLICY website_contactos_org_delete ON website_contactos
     FOR DELETE
-    USING (organizacion_id = current_setting('app.current_org_id', true)::int);
+    USING (organizacion_id = NULLIF(current_setting('app.current_tenant_id', true), '')::INTEGER);
 
 -- Política: Inserción pública (para formularios de contacto)
 -- Nota: Los inserts públicos se hacen con bypass de RLS desde el controller

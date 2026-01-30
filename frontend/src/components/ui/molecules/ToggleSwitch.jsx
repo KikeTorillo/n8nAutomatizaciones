@@ -2,6 +2,7 @@ import { memo, forwardRef } from 'react';
 import PropTypes from 'prop-types';
 import { cn } from '@/lib/utils';
 import { TOGGLE_SIZES, TOGGLE_COLORS } from '@/lib/uiConstants';
+import { Spinner } from '../atoms/Spinner';
 
 /**
  * ToggleSwitch - Componente de interruptor on/off
@@ -66,28 +67,7 @@ const ToggleSwitch = memo(forwardRef(function ToggleSwitch({
       return loadingIcon;
     }
     if (loading) {
-      return (
-        <svg
-          className={cn(sizeConfig.icon, 'animate-spin text-gray-400')}
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-        >
-          <circle
-            className="opacity-25"
-            cx="12"
-            cy="12"
-            r="10"
-            stroke="currentColor"
-            strokeWidth="4"
-          />
-          <path
-            className="opacity-75"
-            fill="currentColor"
-            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-          />
-        </svg>
-      );
+      return <Spinner className={cn(sizeConfig.icon, 'text-gray-400')} />;
     }
     if (enabled && enabledIcon) {
       return enabledIcon;

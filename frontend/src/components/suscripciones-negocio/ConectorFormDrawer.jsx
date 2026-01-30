@@ -29,6 +29,14 @@ const GATEWAYS_CONFIG = {
     campos: [
       { name: 'access_token', label: 'Access Token', required: true, type: 'password' },
       { name: 'public_key', label: 'Public Key', required: false, type: 'text' },
+      {
+        name: 'test_payer_email',
+        label: 'Email Pagador de Prueba',
+        required: false, // Se valida dinámicamente según entorno
+        requiredInSandbox: true,
+        type: 'email',
+        helper: 'Email de la cuenta comprador de prueba (requerido en sandbox)',
+      },
     ],
     docUrl: 'https://www.mercadopago.com.mx/developers/panel/credentials',
   },
@@ -59,10 +67,10 @@ const GATEWAYS_CONFIG = {
 
 /**
  * Schema de validación para conectores
- * NOTA: El entorno se detecta automáticamente por el prefijo del access_token (TEST- = sandbox)
  */
 const conectorSchema = z.object({
   gateway: z.enum(['mercadopago', 'stripe', 'paypal', 'conekta']),
+  entorno: z.enum(['sandbox', 'production']).default('sandbox'),
   nombre_display: z.string().max(100, 'Máximo 100 caracteres').optional().or(z.literal('')),
   webhook_url: z.string().optional().or(z.literal('')),
   webhook_secret: z.string().optional().or(z.literal('')),
@@ -73,15 +81,18 @@ const conectorSchema = z.object({
 /**
  * Campo de credencial con toggle de visibilidad
  */
-function CredentialField({ campo, register, errors, showPassword, onTogglePassword }) {
+function CredentialField({ campo, register, errors, showPassword, onTogglePassword, entorno }) {
   const isPassword = campo.type === 'password';
+  const helperText = campo.helper || (campo.prefix && `Debe empezar con "${campo.prefix}"`);
+  // El campo es requerido si: es siempre requerido, o es requerido en sandbox y estamos en sandbox
+  const isRequired = campo.required || (campo.requiredInSandbox && entorno === 'sandbox');
 
   return (
     <FormGroup
       label={campo.label}
       error={errors.credenciales?.[campo.name]?.message}
-      required={campo.required}
-      helper={campo.prefix && `Debe empezar con "${campo.prefix}"`}
+      required={isRequired}
+      helper={helperText}
     >
       <div className="relative">
         <Input
@@ -151,6 +162,7 @@ function ConectorFormDrawer({ isOpen, onClose, conector = null, mode = 'create' 
     // resolver: zodResolver(conectorSchema), // TODO: Habilitar cuando se resuelva el error de Zod
     defaultValues: {
       gateway: 'mercadopago',
+      entorno: 'sandbox',
       nombre_display: '',
       webhook_url: '',
       webhook_secret: '',
@@ -175,6 +187,7 @@ function ConectorFormDrawer({ isOpen, onClose, conector = null, mode = 'create' 
     if (esEdicion && conector) {
       reset({
         gateway: conector.gateway || 'mercadopago',
+        entorno: conector.entorno || 'sandbox',
         nombre_display: conector.nombre_display || '',
         webhook_url: conector.webhook_url || '',
         webhook_secret: '', // No se muestra el secret existente por seguridad
@@ -185,6 +198,7 @@ function ConectorFormDrawer({ isOpen, onClose, conector = null, mode = 'create' 
     } else {
       reset({
         gateway: 'mercadopago',
+        entorno: 'sandbox',
         nombre_display: '',
         webhook_url: '',
         webhook_secret: '',
@@ -220,8 +234,20 @@ function ConectorFormDrawer({ isOpen, onClose, conector = null, mode = 'create' 
       }
     }
 
+    // Validar campos requeridos en sandbox
+    if (data.entorno === 'sandbox') {
+      const camposSandbox = gatewayConfig.campos.filter((c) => c.requiredInSandbox);
+      const faltantesSandbox = camposSandbox.filter((c) => !credencialesLimpias[c.name]);
+
+      if (faltantesSandbox.length > 0) {
+        showError(`En modo Sandbox se requiere: ${faltantesSandbox.map((c) => c.label).join(', ')}`);
+        return;
+      }
+    }
+
     const payload = {
       gateway: data.gateway,
+      entorno: data.entorno,
       nombre_display: data.nombre_display || undefined,
       webhook_url: data.webhook_url || undefined,
       webhook_secret: data.webhook_secret || undefined,
@@ -293,6 +319,19 @@ function ConectorFormDrawer({ isOpen, onClose, conector = null, mode = 'create' 
           </Select>
         </FormGroup>
 
+        {/* Entorno */}
+        <FormGroup
+          label="Entorno"
+          error={errors.entorno?.message}
+          required
+          helper="Sandbox para pruebas, Production para pagos reales"
+        >
+          <Select {...register('entorno')} hasError={!!errors.entorno}>
+            <option value="sandbox">Sandbox (Pruebas)</option>
+            <option value="production">Producción</option>
+          </Select>
+        </FormGroup>
+
         {/* Nombre Display */}
         <FormGroup
           label="Nombre para Mostrar"
@@ -339,6 +378,7 @@ function ConectorFormDrawer({ isOpen, onClose, conector = null, mode = 'create' 
               errors={errors}
               showPassword={showPassword}
               onTogglePassword={handleTogglePassword}
+              entorno={watch('entorno')}
             />
           ))}
         </div>

@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Check } from 'lucide-react';
+import { Check, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/utils';
 import useAuthStore, { selectUser } from '@/store/authStore';
@@ -23,6 +23,7 @@ import AperturaCajaModal from '@/components/pos/AperturaCajaModal';
 import CierreCajaModal from '@/components/pos/CierreCajaModal';
 import MovimientosCajaDrawer from '@/components/pos/MovimientosCajaDrawer';
 import ModificadoresProductoModal from '@/components/pos/ModificadoresProductoModal';
+import TipoVentaSelector from '@/components/pos/TipoVentaSelector';
 import { ConfirmDialog } from '@/components/ui';
 import { playCashRegisterSound } from '@/utils/audioFeedback';
 
@@ -97,6 +98,13 @@ export default function VentaPOSPage() {
   // ==================== ESTADO UI ====================
   const [vistaProductos, setVistaProductos] = useState('grid');
   const [categoriaActiva, setCategoriaActiva] = useState(null);
+
+  // ==================== TIPO DE VENTA ====================
+  const [tipoVenta, setTipoVenta] = useState('directa');
+  const [datosApartado, setDatosApartado] = useState({
+    fecha_apartado: null,
+    fecha_vencimiento_apartado: null
+  });
 
   // ==================== QUERIES ====================
   const { data: categorias = [], isLoading: isLoadingCategorias } = useCategoriasPOS();
@@ -173,6 +181,13 @@ export default function VentaPOSPage() {
       toast.error('Agrega productos al carrito primero');
       return;
     }
+    // Validación para apartado
+    if (tipoVenta === 'apartado') {
+      if (!datosApartado.fecha_apartado || !datosApartado.fecha_vencimiento_apartado) {
+        toast.error('Apartado requiere fechas de apartado y vencimiento');
+        return;
+      }
+    }
     openModal('pago');
     broadcastPaymentStart({ total: cart.total, items: cart.items.length });
   };
@@ -181,7 +196,7 @@ export default function VentaPOSPage() {
     const esPagoSplit = Array.isArray(datosPago.pagos) && datosPago.pagos.length > 1;
     try {
       const datosVenta = {
-        tipo_venta: 'directa',
+        tipo_venta: tipoVenta,
         usuario_id: user.id,
         sucursal_id: sucursalId || 1,
         cliente_id: cart.clienteSeleccionado?.id || undefined,
@@ -197,7 +212,12 @@ export default function VentaPOSPage() {
         promociones_aplicadas: promocionesAplicadas.filter(p => p.id || p.promocion_id).map(p => ({ promocion_id: p.promocion_id || p.id, descuento: p.descuento || 0 })),
         descuento_promociones: descuentoPromociones,
         descuento_puntos: cart.descuentoPuntos || 0,
-        puntos_canjeados: cart.puntosCanjeados || 0
+        puntos_canjeados: cart.puntosCanjeados || 0,
+        // Datos condicionales para apartado
+        ...(tipoVenta === 'apartado' && {
+          fecha_apartado: datosApartado.fecha_apartado,
+          fecha_vencimiento_apartado: datosApartado.fecha_vencimiento_apartado
+        })
       };
 
       const resultado = await crearVenta.mutateAsync(datosVenta);
@@ -216,6 +236,8 @@ export default function VentaPOSPage() {
 
       broadcastPaymentComplete({ folio: resultado.folio, total: cart.total, puntosGanados: resultado.puntos_ganados || 0 });
       cart.limpiarDespuesDeVenta();
+      setTipoVenta('directa');
+      setDatosApartado({ fecha_apartado: null, fecha_vencimiento_apartado: null });
       closeModal('pago');
     } catch (error) {
       console.error('Error al procesar venta:', error);
@@ -239,6 +261,13 @@ export default function VentaPOSPage() {
         onToggleMenuCaja={() => isOpen('menuCaja') ? closeModal('menuCaja') : openModal('menuCaja')}
         onMovimientosCaja={() => { openModal('movimientosCaja'); closeModal('menuCaja'); }}
         onCierreCaja={() => { openModal('cierreCaja'); closeModal('menuCaja'); }}
+        tipoVentaSelector={
+          <TipoVentaSelector
+            value={tipoVenta}
+            onChange={setTipoVenta}
+            disabled={!sesionActiva}
+          />
+        }
       />
 
       <POSNavTabs />
@@ -298,11 +327,42 @@ export default function VentaPOSPage() {
               </div>
             )}
 
+            {/* Campos de fecha para apartado */}
+            {tipoVenta === 'apartado' && cart.items.length > 0 && (
+              <div className="p-3 border-t border-gray-200 dark:border-gray-700 bg-amber-50 dark:bg-amber-900/20">
+                <div className="flex items-center gap-2 mb-2">
+                  <Clock className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                  <span className="text-sm font-medium text-amber-700 dark:text-amber-300">Configuración de Apartado</span>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">Fecha apartado</label>
+                    <input
+                      type="date"
+                      value={datosApartado.fecha_apartado || ''}
+                      onChange={(e) => setDatosApartado(prev => ({ ...prev, fecha_apartado: e.target.value }))}
+                      className="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">Fecha vencimiento</label>
+                    <input
+                      type="date"
+                      value={datosApartado.fecha_vencimiento_apartado || ''}
+                      onChange={(e) => setDatosApartado(prev => ({ ...prev, fecha_vencimiento_apartado: e.target.value }))}
+                      min={datosApartado.fecha_apartado || undefined}
+                      className="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
             {cart.items.length > 0 && (
               <div className="p-3 sm:p-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
                 <button onClick={handleProcederPago} className="w-full py-3 sm:py-4 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg transition-colors flex items-center justify-center gap-2 sm:gap-3 text-base sm:text-lg shadow-lg hover:shadow-xl">
                   <Check className="h-5 w-5 sm:h-6 sm:w-6" />
-                  PROCEDER AL PAGO
+                  {tipoVenta === 'cotizacion' ? 'CREAR COTIZACIÓN' : tipoVenta === 'apartado' ? 'CREAR APARTADO' : 'PROCEDER AL PAGO'}
                 </button>
               </div>
             )}
@@ -315,7 +375,7 @@ export default function VentaPOSPage() {
       <ConfirmDialog isOpen={isOpen('confirmVaciar')} onClose={() => closeModal('confirmVaciar')} onConfirm={() => { cart.vaciarCarrito(); closeModal('confirmVaciar'); }} title="Vaciar carrito" message="¿Estás seguro de vaciar el carrito? Se eliminarán todos los productos agregados." confirmText="Vaciar" cancelText="Cancelar" variant="warning" />
       <SeleccionarNSModal isOpen={isOpen('seleccionNS')} onClose={() => closeModal('seleccionNS')} producto={getModalData('seleccionNS')?.producto} cantidad={1} onSeleccionar={handleNSSeleccionado} />
       <ModificadoresProductoModal isOpen={isOpen('modificadores')} onClose={() => closeModal('modificadores')} producto={getModalData('modificadores')?.producto} onConfirmar={handleModificadoresConfirmados} />
-      <AperturaCajaModal isOpen={isOpen('aperturaCaja')} onClose={() => { if (sesionActiva) closeModal('aperturaCaja'); }} onSuccess={() => closeModal('aperturaCaja')} />
+      <AperturaCajaModal isOpen={isOpen('aperturaCaja')} onClose={() => { if (sesionActiva) { closeModal('aperturaCaja'); } else { navigate('/home'); } }} onSuccess={() => closeModal('aperturaCaja')} />
       <CierreCajaModal isOpen={isOpen('cierreCaja')} onClose={() => closeModal('cierreCaja')} sesionId={sesionActiva?.id} onSuccess={() => { closeModal('cierreCaja'); openModal('aperturaCaja'); }} />
       <MovimientosCajaDrawer isOpen={isOpen('movimientosCaja')} onClose={() => closeModal('movimientosCaja')} sesionId={sesionActiva?.id} />
       {isOpen('menuCaja') && <div className="fixed inset-0 z-40" onClick={() => closeModal('menuCaja')} />}

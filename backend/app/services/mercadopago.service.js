@@ -112,7 +112,8 @@ class MercadoPagoService {
         const credentials = {
             accessToken: conector.credenciales.access_token,
             webhookSecret: conector.webhookSecret,
-            environment: conector.entorno // Entorno detectado automáticamente
+            environment: conector.entorno, // Entorno detectado automáticamente
+            testPayerEmail: conector.credenciales.test_payer_email || null
         };
 
         logger.info('[MercadoPagoService] Usando credenciales de organización', {
@@ -265,8 +266,8 @@ class MercadoPagoService {
                 }
             );
 
-            // Determinar si usar sandbox o producción basado en el access_token
-            const isTestMode = this.credentials.accessToken.startsWith('TEST-');
+            // Determinar si usar sandbox o producción basado en environment del conector
+            const isTestMode = this.isSandbox();
             const initPointUrl = isTestMode
                 ? response.data.sandbox_init_point
                 : response.data.init_point;
@@ -277,6 +278,7 @@ class MercadoPagoService {
                 status: response.data.status,
                 hasInitPoint: !!initPointUrl,
                 isTestMode,
+                environment: this.credentials.environment,
                 urlType: isTestMode ? 'sandbox_init_point' : 'init_point',
                 organizacionId: this.organizacionId
             });
@@ -577,14 +579,17 @@ class MercadoPagoService {
 
     /**
      * Detecta si el servicio está configurado con credenciales de sandbox.
-     * La detección se basa en el prefijo del access_token:
-     * - 'TEST-' indica sandbox
-     * - Cualquier otro prefijo indica production
+     *
+     * IMPORTANTE: La detección se basa en el campo `environment` del conector,
+     * NO en el prefijo del access_token. Esto es necesario porque:
+     * - Las cuentas de PRUEBA de MercadoPago generan tokens con prefijo APP_USR-, no TEST-
+     * - Solo las cuentas REALES tienen tokens TEST- para sandbox
+     * - El usuario configura explícitamente el entorno al crear el conector
      *
      * @returns {boolean} true si es sandbox, false si es production
      */
     isSandbox() {
-        return this.credentials.accessToken?.startsWith('TEST-') || false;
+        return this.credentials.environment === 'sandbox';
     }
 
     /**
@@ -594,6 +599,16 @@ class MercadoPagoService {
      */
     getEnvironment() {
         return this.isSandbox() ? 'sandbox' : 'production';
+    }
+
+    /**
+     * Obtiene el email de pagador de prueba configurado en el conector.
+     * Útil para modo sandbox donde se requiere un email de cuenta de prueba.
+     *
+     * @returns {string|null} Email de prueba o null si no está configurado
+     */
+    getTestPayerEmail() {
+        return this.credentials.testPayerEmail || null;
     }
 
     // ====================================================================

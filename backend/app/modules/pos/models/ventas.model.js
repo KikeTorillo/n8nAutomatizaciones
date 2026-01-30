@@ -124,8 +124,9 @@ class VentasPOSModel {
                         ErrorHelper.throwConflict(`Producto "${producto.nombre}" no está disponible para venta`);
                     }
 
-                    // Para cotizaciones no necesitamos reservar stock
-                    if (data.tipo_venta === 'cotizacion') {
+                    // Para cotizaciones y ventas directas no necesitamos reservar stock
+                    // Ventas directas: el cliente tiene el producto en mano, descuento inmediato via trigger
+                    if (data.tipo_venta === 'cotizacion' || data.tipo_venta === 'directa') {
                         continue;
                     }
 
@@ -548,7 +549,7 @@ class VentasPOSModel {
             // Las reservas se crearon al inicio, ahora las confirmamos
             // El descuento real de stock lo hace el trigger de venta
             // ================================================================
-            if (reservasCreadas.length > 0 && data.tipo_venta !== 'cotizacion') {
+            if (reservasCreadas.length > 0 && !['cotizacion', 'directa'].includes(data.tipo_venta)) {
                 for (const reserva of reservasCreadas) {
                     try {
                         // Actualizar origen_id ahora que tenemos el ID de la venta

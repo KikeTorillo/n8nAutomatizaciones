@@ -34,3 +34,6 @@ export { SearchFilterBar } from './SearchFilterBar';
 // Componentes estándar (Ene 2026) - Reducen código duplicado
 export { StandardRowActions } from './StandardRowActions';
 export { StandardFilterGrid } from './StandardFilterGrid';
+
+// Componente de filtro unificado (movido desde molecules/ Ene 2026)
+export { FilterField } from './FilterField';

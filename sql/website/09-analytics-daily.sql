@@ -92,7 +92,7 @@ ALTER TABLE website_analytics_daily ENABLE ROW LEVEL SECURITY;
 -- Politica: Organizacion puede ver sus metricas
 CREATE POLICY website_analytics_daily_org_select ON website_analytics_daily
     FOR SELECT
-    USING (organizacion_id = current_setting('app.current_org_id', true)::int);
+    USING (organizacion_id = NULLIF(current_setting('app.current_tenant_id', true), '')::INTEGER);
 
 -- Politica: Solo insercion via funcion (bypass RLS)
 CREATE POLICY website_analytics_daily_insert ON website_analytics_daily

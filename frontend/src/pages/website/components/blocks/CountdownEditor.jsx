@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { Save, Clock, Calendar } from 'lucide-react';
 import {
   Button,
@@ -7,73 +7,67 @@ import {
   ToggleSwitch
 } from '@/components/ui';
 import { AIGenerateButton, AISuggestionBanner } from '../AIGenerator';
+import { useBlockEditor } from '../../hooks';
 
 /**
  * CountdownEditor - Editor del bloque Countdown (Contador Regresivo)
  */
 function CountdownEditor({ contenido, onGuardar, tema, isSaving, industria = 'default' }) {
   // Default date: 30 days from now
-  const defaultDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-  const defaultDateStr = defaultDate.toISOString().slice(0, 16);
+  const defaultDateStr = useMemo(() => {
+    const defaultDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+    return defaultDate.toISOString().slice(0, 16);
+  }, []);
 
-  const [form, setForm] = useState({
-    titulo: contenido.titulo || 'Gran Inauguracion',
-    subtitulo: contenido.subtitulo || 'No te pierdas este evento especial',
-    fecha_objetivo: contenido.fecha_objetivo ? contenido.fecha_objetivo.slice(0, 16) : defaultDateStr,
-    mostrar_dias: contenido.mostrar_dias !== false,
-    mostrar_horas: contenido.mostrar_horas !== false,
-    mostrar_minutos: contenido.mostrar_minutos !== false,
-    mostrar_segundos: contenido.mostrar_segundos !== false,
-    texto_finalizado: contenido.texto_finalizado || 'El evento ha comenzado!',
-    accion_finalizado: contenido.accion_finalizado || 'ocultar',
-    fondo_tipo: contenido.fondo_tipo || 'color',
-    fondo_valor: contenido.fondo_valor || '#1F2937',
-    color_texto: contenido.color_texto || '#FFFFFF',
-    boton_texto: contenido.boton_texto || '',
-    boton_url: contenido.boton_url || '',
-  });
+  // Valores por defecto del formulario
+  const defaultValues = useMemo(() => ({
+    titulo: 'Gran Inauguracion',
+    subtitulo: 'No te pierdas este evento especial',
+    fecha_objetivo: defaultDateStr,
+    mostrar_dias: true,
+    mostrar_horas: true,
+    mostrar_minutos: true,
+    mostrar_segundos: true,
+    texto_finalizado: 'El evento ha comenzado!',
+    accion_finalizado: 'ocultar',
+    fondo_tipo: 'color',
+    fondo_valor: '#1F2937',
+    color_texto: '#FFFFFF',
+    boton_texto: '',
+    boton_url: '',
+  }), [defaultDateStr]);
 
-  const [cambios, setCambios] = useState(false);
+  // Pre-process contenido para fecha_objetivo
+  const processedContenido = useMemo(() => ({
+    ...contenido,
+    fecha_objetivo: contenido.fecha_objetivo ? contenido.fecha_objetivo.slice(0, 16) : undefined,
+  }), [contenido]);
+
+  // Hook para manejo del formulario
+  const { form, setForm, cambios, handleSubmit, handleFieldChange } = useBlockEditor(
+    processedContenido,
+    defaultValues
+  );
 
   const esVacio = !contenido.titulo && !contenido.fecha_objetivo;
 
-  useEffect(() => {
-    setCambios(JSON.stringify(form) !== JSON.stringify({
-      titulo: contenido.titulo || 'Gran Inauguracion',
-      subtitulo: contenido.subtitulo || 'No te pierdas este evento especial',
-      fecha_objetivo: contenido.fecha_objetivo ? contenido.fecha_objetivo.slice(0, 16) : defaultDateStr,
-      mostrar_dias: contenido.mostrar_dias !== false,
-      mostrar_horas: contenido.mostrar_horas !== false,
-      mostrar_minutos: contenido.mostrar_minutos !== false,
-      mostrar_segundos: contenido.mostrar_segundos !== false,
-      texto_finalizado: contenido.texto_finalizado || 'El evento ha comenzado!',
-      accion_finalizado: contenido.accion_finalizado || 'ocultar',
-      fondo_tipo: contenido.fondo_tipo || 'color',
-      fondo_valor: contenido.fondo_valor || '#1F2937',
-      color_texto: contenido.color_texto || '#FFFFFF',
-      boton_texto: contenido.boton_texto || '',
-      boton_url: contenido.boton_url || '',
-    }));
-  }, [form, contenido, defaultDateStr]);
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    // Convert datetime-local to ISO string
+  // Submit personalizado que convierte fecha a ISO
+  const onSubmit = (data) => {
     const formToSave = {
-      ...form,
-      fecha_objetivo: new Date(form.fecha_objetivo).toISOString(),
+      ...data,
+      fecha_objetivo: new Date(data.fecha_objetivo).toISOString(),
     };
     onGuardar(formToSave);
-    setCambios(false);
   };
 
+  // Callback para generación de IA de bloque completo
   const handleAIGenerate = useCallback((generatedContent) => {
     setForm(prev => ({
       ...prev,
       titulo: generatedContent.titulo || prev.titulo,
       subtitulo: generatedContent.subtitulo || prev.subtitulo,
     }));
-  }, []);
+  }, [setForm]);
 
   const fondoOptions = [
     { value: 'color', label: 'Color solido' },
@@ -87,7 +81,7 @@ function CountdownEditor({ contenido, onGuardar, tema, isSaving, industria = 'de
   ];
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       {esVacio && (
         <AISuggestionBanner
           tipo="countdown"
@@ -105,13 +99,13 @@ function CountdownEditor({ contenido, onGuardar, tema, isSaving, industria = 'de
               tipo="countdown"
               campo="titulo"
               industria={industria}
-              onGenerate={(text) => setForm({ ...form, titulo: text })}
+              onGenerate={(text) => handleFieldChange('titulo', text)}
               size="sm"
             />
           </span>
         }
         value={form.titulo}
-        onChange={(e) => setForm({ ...form, titulo: e.target.value })}
+        onChange={(e) => handleFieldChange('titulo', e.target.value)}
         placeholder="Gran Inauguracion"
         className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
       />
@@ -119,7 +113,7 @@ function CountdownEditor({ contenido, onGuardar, tema, isSaving, industria = 'de
       <Input
         label="Subtitulo"
         value={form.subtitulo}
-        onChange={(e) => setForm({ ...form, subtitulo: e.target.value })}
+        onChange={(e) => handleFieldChange('subtitulo', e.target.value)}
         placeholder="No te pierdas este evento especial"
         className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
       />
@@ -133,7 +127,7 @@ function CountdownEditor({ contenido, onGuardar, tema, isSaving, industria = 'de
         <Input
           type="datetime-local"
           value={form.fecha_objetivo}
-          onChange={(e) => setForm({ ...form, fecha_objetivo: e.target.value })}
+          onChange={(e) => handleFieldChange('fecha_objetivo', e.target.value)}
           className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
       </div>
@@ -143,28 +137,28 @@ function CountdownEditor({ contenido, onGuardar, tema, isSaving, industria = 'de
         <div className="flex flex-col items-center">
           <ToggleSwitch
             checked={form.mostrar_dias}
-            onChange={(checked) => setForm({ ...form, mostrar_dias: checked })}
+            onChange={(checked) => handleFieldChange('mostrar_dias', checked)}
           />
           <span className="text-xs text-gray-500 dark:text-gray-400 mt-1">Dias</span>
         </div>
         <div className="flex flex-col items-center">
           <ToggleSwitch
             checked={form.mostrar_horas}
-            onChange={(checked) => setForm({ ...form, mostrar_horas: checked })}
+            onChange={(checked) => handleFieldChange('mostrar_horas', checked)}
           />
           <span className="text-xs text-gray-500 dark:text-gray-400 mt-1">Horas</span>
         </div>
         <div className="flex flex-col items-center">
           <ToggleSwitch
             checked={form.mostrar_minutos}
-            onChange={(checked) => setForm({ ...form, mostrar_minutos: checked })}
+            onChange={(checked) => handleFieldChange('mostrar_minutos', checked)}
           />
           <span className="text-xs text-gray-500 dark:text-gray-400 mt-1">Minutos</span>
         </div>
         <div className="flex flex-col items-center">
           <ToggleSwitch
             checked={form.mostrar_segundos}
-            onChange={(checked) => setForm({ ...form, mostrar_segundos: checked })}
+            onChange={(checked) => handleFieldChange('mostrar_segundos', checked)}
           />
           <span className="text-xs text-gray-500 dark:text-gray-400 mt-1">Segundos</span>
         </div>
@@ -175,14 +169,14 @@ function CountdownEditor({ contenido, onGuardar, tema, isSaving, industria = 'de
         <Select
           label="Al finalizar"
           value={form.accion_finalizado}
-          onChange={(e) => setForm({ ...form, accion_finalizado: e.target.value })}
+          onChange={(e) => handleFieldChange('accion_finalizado', e.target.value)}
           options={accionOptions}
           className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
         <Input
           label="Mensaje de finalizacion"
           value={form.texto_finalizado}
-          onChange={(e) => setForm({ ...form, texto_finalizado: e.target.value })}
+          onChange={(e) => handleFieldChange('texto_finalizado', e.target.value)}
           placeholder="El evento ha comenzado!"
           className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
@@ -196,7 +190,7 @@ function CountdownEditor({ contenido, onGuardar, tema, isSaving, industria = 'de
           <Select
             label="Tipo de fondo"
             value={form.fondo_tipo}
-            onChange={(e) => setForm({ ...form, fondo_tipo: e.target.value })}
+            onChange={(e) => handleFieldChange('fondo_tipo', e.target.value)}
             options={fondoOptions}
             className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
           />
@@ -204,7 +198,7 @@ function CountdownEditor({ contenido, onGuardar, tema, isSaving, industria = 'de
             label={form.fondo_tipo === 'imagen' ? 'URL de imagen' : 'Color de fondo'}
             type={form.fondo_tipo === 'imagen' ? 'url' : 'color'}
             value={form.fondo_valor}
-            onChange={(e) => setForm({ ...form, fondo_valor: e.target.value })}
+            onChange={(e) => handleFieldChange('fondo_valor', e.target.value)}
             className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
           />
         </div>
@@ -214,7 +208,7 @@ function CountdownEditor({ contenido, onGuardar, tema, isSaving, industria = 'de
             label="Color de texto"
             type="color"
             value={form.color_texto}
-            onChange={(e) => setForm({ ...form, color_texto: e.target.value })}
+            onChange={(e) => handleFieldChange('color_texto', e.target.value)}
             className="w-20"
           />
         </div>
@@ -227,14 +221,14 @@ function CountdownEditor({ contenido, onGuardar, tema, isSaving, industria = 'de
           <Input
             label="Texto del boton"
             value={form.boton_texto}
-            onChange={(e) => setForm({ ...form, boton_texto: e.target.value })}
+            onChange={(e) => handleFieldChange('boton_texto', e.target.value)}
             placeholder="Registrarse"
             className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
           />
           <Input
             label="URL del boton"
             value={form.boton_url}
-            onChange={(e) => setForm({ ...form, boton_url: e.target.value })}
+            onChange={(e) => handleFieldChange('boton_url', e.target.value)}
             placeholder="#contacto"
             className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
           />

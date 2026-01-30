@@ -1,77 +1,56 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { Save, MapPin, Phone, Mail, Clock, Plus, Trash2, GripVertical, Settings2 } from 'lucide-react';
 import { Button, CheckboxField, Input, Select, ToggleSwitch } from '@/components/ui';
 import { AIGenerateButton, AISuggestionBanner } from '../AIGenerator';
+import { useBlockEditor } from '../../hooks';
 
 /**
  * ContactoEditor - Editor del bloque Contacto
  * Soporta formularios simples y multi-step
  */
 function ContactoEditor({ contenido, onGuardar, tema, isSaving, industria = 'default' }) {
-  const [form, setForm] = useState({
-    titulo: contenido.titulo || 'Contactanos',
-    subtitulo: contenido.subtitulo || '',
-    direccion: contenido.direccion || '',
-    telefono: contenido.telefono || '',
-    email: contenido.email || '',
-    horario: contenido.horario || '',
-    mostrar_mapa: contenido.mostrar_mapa || false,
-    mapa_url: contenido.mapa_url || '',
-    mostrar_formulario: contenido.mostrar_formulario !== false,
-    // Nuevos campos para multi-step
-    tipo_formulario: contenido.tipo_formulario || 'simple', // simple | multi_step
-    formulario_campos: contenido.formulario_campos || ['nombre', 'email', 'mensaje'],
-    pasos: contenido.pasos || [
+  // Valores por defecto del formulario
+  const defaultValues = useMemo(() => ({
+    titulo: 'Contactanos',
+    subtitulo: '',
+    direccion: '',
+    telefono: '',
+    email: '',
+    horario: '',
+    mostrar_mapa: false,
+    mapa_url: '',
+    mostrar_formulario: true,
+    tipo_formulario: 'simple',
+    formulario_campos: ['nombre', 'email', 'mensaje'],
+    pasos: [
       { titulo: 'Informacion basica', campos: ['nombre', 'email'] },
       { titulo: 'Tu consulta', campos: ['servicio', 'mensaje'] },
     ],
-    campos_config: contenido.campos_config || {},
-    crear_cliente_crm: contenido.crear_cliente_crm !== false,
-    texto_boton: contenido.texto_boton || 'Enviar',
-    mensaje_exito: contenido.mensaje_exito || 'Gracias por contactarnos. Te responderemos pronto.',
-  });
+    campos_config: {},
+    crear_cliente_crm: true,
+    texto_boton: 'Enviar',
+    mensaje_exito: 'Gracias por contactarnos. Te responderemos pronto.',
+  }), []);
 
-  const [cambios, setCambios] = useState(false);
+  // Hook para manejo del formulario
+  const { form, setForm, cambios, handleSubmit, handleFieldChange } = useBlockEditor(
+    contenido,
+    defaultValues
+  );
+
   const [tabActiva, setTabActiva] = useState('info'); // info | formulario | avanzado
 
   // Verificar si el contenido esta vacio
   const contenidoVacio = contenido.titulo === 'Contactanos' || !contenido.titulo;
 
-  useEffect(() => {
-    const original = {
-      titulo: contenido.titulo || 'Contactanos',
-      subtitulo: contenido.subtitulo || '',
-      direccion: contenido.direccion || '',
-      telefono: contenido.telefono || '',
-      email: contenido.email || '',
-      horario: contenido.horario || '',
-      mostrar_mapa: contenido.mostrar_mapa || false,
-      mapa_url: contenido.mapa_url || '',
-      mostrar_formulario: contenido.mostrar_formulario !== false,
-      tipo_formulario: contenido.tipo_formulario || 'simple',
-      formulario_campos: contenido.formulario_campos || ['nombre', 'email', 'mensaje'],
-      pasos: contenido.pasos || [],
-      campos_config: contenido.campos_config || {},
-      crear_cliente_crm: contenido.crear_cliente_crm !== false,
-      texto_boton: contenido.texto_boton || 'Enviar',
-      mensaje_exito: contenido.mensaje_exito || 'Gracias por contactarnos. Te responderemos pronto.',
-    };
-    setCambios(JSON.stringify(form) !== JSON.stringify(original));
-  }, [form, contenido]);
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onGuardar(form);
-    setCambios(false);
-  };
-
+  // Callback para generación de IA
   const handleAIGenerate = useCallback((generatedContent) => {
     setForm(prev => ({
       ...prev,
       titulo: generatedContent.titulo || prev.titulo,
       subtitulo: generatedContent.subtitulo || prev.subtitulo,
     }));
-  }, []);
+  }, [setForm]);
 
   // Campos disponibles para formularios
   const camposDisponibles = [
@@ -86,48 +65,54 @@ function ContactoEditor({ contenido, onGuardar, tema, isSaving, industria = 'def
   ];
 
   const toggleCampo = (campo) => {
-    const campos = [...form.formulario_campos];
-    const index = campos.indexOf(campo);
-    if (index > -1) {
-      campos.splice(index, 1);
-    } else {
-      campos.push(campo);
-    }
-    setForm({ ...form, formulario_campos: campos });
+    setForm(prev => {
+      const campos = [...prev.formulario_campos];
+      const index = campos.indexOf(campo);
+      if (index > -1) {
+        campos.splice(index, 1);
+      } else {
+        campos.push(campo);
+      }
+      return { ...prev, formulario_campos: campos };
+    });
   };
 
   // Funciones para multi-step
   const agregarPaso = () => {
-    setForm({
-      ...form,
-      pasos: [...form.pasos, { titulo: `Paso ${form.pasos.length + 1}`, campos: [] }]
-    });
+    setForm(prev => ({
+      ...prev,
+      pasos: [...prev.pasos, { titulo: `Paso ${prev.pasos.length + 1}`, campos: [] }]
+    }));
   };
 
   const eliminarPaso = (index) => {
-    setForm({
-      ...form,
-      pasos: form.pasos.filter((_, i) => i !== index)
-    });
+    setForm(prev => ({
+      ...prev,
+      pasos: prev.pasos.filter((_, i) => i !== index)
+    }));
   };
 
   const actualizarPaso = (index, campo, valor) => {
-    const nuevos = [...form.pasos];
-    nuevos[index] = { ...nuevos[index], [campo]: valor };
-    setForm({ ...form, pasos: nuevos });
+    setForm(prev => {
+      const nuevos = [...prev.pasos];
+      nuevos[index] = { ...nuevos[index], [campo]: valor };
+      return { ...prev, pasos: nuevos };
+    });
   };
 
   const toggleCampoPaso = (pasoIndex, campoId) => {
-    const nuevos = [...form.pasos];
-    const campos = nuevos[pasoIndex].campos || [];
-    const index = campos.indexOf(campoId);
-    if (index > -1) {
-      campos.splice(index, 1);
-    } else {
-      campos.push(campoId);
-    }
-    nuevos[pasoIndex].campos = campos;
-    setForm({ ...form, pasos: nuevos });
+    setForm(prev => {
+      const nuevos = [...prev.pasos];
+      const campos = nuevos[pasoIndex].campos || [];
+      const index = campos.indexOf(campoId);
+      if (index > -1) {
+        campos.splice(index, 1);
+      } else {
+        campos.push(campoId);
+      }
+      nuevos[pasoIndex].campos = campos;
+      return { ...prev, pasos: nuevos };
+    });
   };
 
   const tipoFormularioOptions = [
@@ -136,7 +121,7 @@ function ContactoEditor({ contenido, onGuardar, tema, isSaving, industria = 'def
   ];
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit(onGuardar)} className="space-y-4">
       {contenidoVacio && (
         <AISuggestionBanner
           tipo="contacto"
@@ -194,13 +179,13 @@ function ContactoEditor({ contenido, onGuardar, tema, isSaving, industria = 'def
                     tipo="contacto"
                     campo="titulo"
                     industria={industria}
-                    onGenerate={(text) => setForm({ ...form, titulo: text })}
+                    onGenerate={(text) => handleFieldChange('titulo', text)}
                     size="sm"
                   />
                 </span>
               }
               value={form.titulo}
-              onChange={(e) => setForm({ ...form, titulo: e.target.value })}
+              onChange={(e) => handleFieldChange('titulo', e.target.value)}
               placeholder="Contactanos"
               className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
             />
@@ -212,13 +197,13 @@ function ContactoEditor({ contenido, onGuardar, tema, isSaving, industria = 'def
                     tipo="contacto"
                     campo="subtitulo"
                     industria={industria}
-                    onGenerate={(text) => setForm({ ...form, subtitulo: text })}
+                    onGenerate={(text) => handleFieldChange('subtitulo', text)}
                     size="sm"
                   />
                 </span>
               }
               value={form.subtitulo}
-              onChange={(e) => setForm({ ...form, subtitulo: e.target.value })}
+              onChange={(e) => handleFieldChange('subtitulo', e.target.value)}
               placeholder="Estamos aqui para ayudarte"
               className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
             />
@@ -236,7 +221,7 @@ function ContactoEditor({ contenido, onGuardar, tema, isSaving, industria = 'def
                   </span>
                 }
                 value={form.direccion}
-                onChange={(e) => setForm({ ...form, direccion: e.target.value })}
+                onChange={(e) => handleFieldChange('direccion', e.target.value)}
                 placeholder="Calle 123, Ciudad"
                 size="sm"
                 className="dark:bg-gray-600 dark:border-gray-500 dark:text-gray-100"
@@ -249,7 +234,7 @@ function ContactoEditor({ contenido, onGuardar, tema, isSaving, industria = 'def
                   </span>
                 }
                 value={form.telefono}
-                onChange={(e) => setForm({ ...form, telefono: e.target.value })}
+                onChange={(e) => handleFieldChange('telefono', e.target.value)}
                 placeholder="+52 123 456 7890"
                 size="sm"
                 className="dark:bg-gray-600 dark:border-gray-500 dark:text-gray-100"
@@ -263,7 +248,7 @@ function ContactoEditor({ contenido, onGuardar, tema, isSaving, industria = 'def
                   </span>
                 }
                 value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                onChange={(e) => handleFieldChange('email', e.target.value)}
                 placeholder="contacto@negocio.com"
                 size="sm"
                 className="dark:bg-gray-600 dark:border-gray-500 dark:text-gray-100"
@@ -276,7 +261,7 @@ function ContactoEditor({ contenido, onGuardar, tema, isSaving, industria = 'def
                   </span>
                 }
                 value={form.horario}
-                onChange={(e) => setForm({ ...form, horario: e.target.value })}
+                onChange={(e) => handleFieldChange('horario', e.target.value)}
                 placeholder="Lun-Vie 9:00-18:00"
                 size="sm"
                 className="dark:bg-gray-600 dark:border-gray-500 dark:text-gray-100"
@@ -290,7 +275,7 @@ function ContactoEditor({ contenido, onGuardar, tema, isSaving, industria = 'def
               <CheckboxField
                 label="Mostrar"
                 checked={form.mostrar_mapa}
-                onChange={(e) => setForm({ ...form, mostrar_mapa: e.target.checked })}
+                onChange={(e) => handleFieldChange('mostrar_mapa', e.target.checked)}
               />
             </div>
 
@@ -298,7 +283,7 @@ function ContactoEditor({ contenido, onGuardar, tema, isSaving, industria = 'def
               <Input
                 type="url"
                 value={form.mapa_url}
-                onChange={(e) => setForm({ ...form, mapa_url: e.target.value })}
+                onChange={(e) => handleFieldChange('mapa_url', e.target.value)}
                 placeholder="URL del embed de Google Maps"
                 size="sm"
                 className="dark:bg-gray-600 dark:border-gray-500 dark:text-gray-100"
@@ -315,14 +300,14 @@ function ContactoEditor({ contenido, onGuardar, tema, isSaving, industria = 'def
             <div className="flex items-center gap-4">
               <ToggleSwitch
                 checked={form.mostrar_formulario}
-                onChange={(checked) => setForm({ ...form, mostrar_formulario: checked })}
+                onChange={(checked) => handleFieldChange('mostrar_formulario', checked)}
                 label="Mostrar formulario"
               />
             </div>
             {form.mostrar_formulario && (
               <Select
                 value={form.tipo_formulario}
-                onChange={(e) => setForm({ ...form, tipo_formulario: e.target.value })}
+                onChange={(e) => handleFieldChange('tipo_formulario', e.target.value)}
                 options={tipoFormularioOptions}
                 className="w-48 dark:bg-gray-700 dark:border-gray-600"
               />
@@ -425,14 +410,14 @@ function ContactoEditor({ contenido, onGuardar, tema, isSaving, industria = 'def
               <Input
                 label="Texto del boton"
                 value={form.texto_boton}
-                onChange={(e) => setForm({ ...form, texto_boton: e.target.value })}
+                onChange={(e) => handleFieldChange('texto_boton', e.target.value)}
                 placeholder="Enviar"
                 className="dark:bg-gray-700 dark:border-gray-600"
               />
               <Input
                 label="Mensaje de exito"
                 value={form.mensaje_exito}
-                onChange={(e) => setForm({ ...form, mensaje_exito: e.target.value })}
+                onChange={(e) => handleFieldChange('mensaje_exito', e.target.value)}
                 placeholder="Gracias por contactarnos..."
                 className="dark:bg-gray-700 dark:border-gray-600"
               />
@@ -456,7 +441,7 @@ function ContactoEditor({ contenido, onGuardar, tema, isSaving, industria = 'def
             </p>
             <ToggleSwitch
               checked={form.crear_cliente_crm}
-              onChange={(checked) => setForm({ ...form, crear_cliente_crm: checked })}
+              onChange={(checked) => handleFieldChange('crear_cliente_crm', checked)}
               label="Crear cliente en CRM"
             />
           </div>

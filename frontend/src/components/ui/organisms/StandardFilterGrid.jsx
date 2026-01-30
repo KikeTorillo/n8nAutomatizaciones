@@ -1,7 +1,7 @@
 import { memo } from 'react';
 import PropTypes from 'prop-types';
 import { cn } from '@/lib/utils';
-import { FilterField } from '../molecules/FilterField';
+import { FilterField } from './FilterField';
 import { FILTER_GRID_LAYOUTS } from '@/lib/uiConstants';
 
 /**

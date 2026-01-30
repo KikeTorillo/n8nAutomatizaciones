@@ -10,7 +10,7 @@
  */
 import { useMemo, useCallback, memo } from 'react';
 import { cn } from '@/lib/utils';
-import { FilterField } from '../../molecules/FilterField';
+import { FilterField } from '../FilterField';
 import { CheckboxField } from '../../molecules/CheckboxField';
 
 // ============================================
@@ -88,7 +88,7 @@ export function useActiveFilters(filters, filterConfig, searchKey = 'busqueda') 
 // ============================================
 
 // Re-exportar FilterField unificado para compatibilidad con código existente
-export { FilterField } from '../../molecules/FilterField';
+export { FilterField } from '../FilterField';
 export { CheckboxField as FilterCheckboxInput } from '../../molecules/CheckboxField';
 
 // ============================================

@@ -137,7 +137,7 @@ CREATE POLICY traducciones_org_select ON website_traducciones
     USING (EXISTS (
         SELECT 1 FROM website_config wc
         WHERE wc.id = website_id
-        AND wc.organizacion_id = current_setting('app.current_org_id', true)::int
+        AND wc.organizacion_id = NULLIF(current_setting('app.current_tenant_id', true), '')::INTEGER
     ));
 
 CREATE POLICY traducciones_org_insert ON website_traducciones
@@ -145,7 +145,7 @@ CREATE POLICY traducciones_org_insert ON website_traducciones
     WITH CHECK (EXISTS (
         SELECT 1 FROM website_config wc
         WHERE wc.id = website_id
-        AND wc.organizacion_id = current_setting('app.current_org_id', true)::int
+        AND wc.organizacion_id = NULLIF(current_setting('app.current_tenant_id', true), '')::INTEGER
     ));
 
 CREATE POLICY traducciones_org_update ON website_traducciones
@@ -153,7 +153,7 @@ CREATE POLICY traducciones_org_update ON website_traducciones
     USING (EXISTS (
         SELECT 1 FROM website_config wc
         WHERE wc.id = website_id
-        AND wc.organizacion_id = current_setting('app.current_org_id', true)::int
+        AND wc.organizacion_id = NULLIF(current_setting('app.current_tenant_id', true), '')::INTEGER
     ));
 
 CREATE POLICY traducciones_org_delete ON website_traducciones
@@ -161,7 +161,7 @@ CREATE POLICY traducciones_org_delete ON website_traducciones
     USING (EXISTS (
         SELECT 1 FROM website_config wc
         WHERE wc.id = website_id
-        AND wc.organizacion_id = current_setting('app.current_org_id', true)::int
+        AND wc.organizacion_id = NULLIF(current_setting('app.current_tenant_id', true), '')::INTEGER
     ));
 
 CREATE POLICY traducciones_superadmin ON website_traducciones
@@ -186,7 +186,7 @@ CREATE POLICY idiomas_org_all ON website_idiomas_config
     USING (EXISTS (
         SELECT 1 FROM website_config wc
         WHERE wc.id = website_id
-        AND wc.organizacion_id = current_setting('app.current_org_id', true)::int
+        AND wc.organizacion_id = NULLIF(current_setting('app.current_tenant_id', true), '')::INTEGER
     ));
 
 CREATE POLICY idiomas_superadmin ON website_idiomas_config

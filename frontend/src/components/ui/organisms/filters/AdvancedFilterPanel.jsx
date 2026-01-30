@@ -10,7 +10,7 @@ import {
   getFilterToggleStyles,
 } from '@/lib/uiConstants';
 import FilterSection, { FilterCheckbox } from './FilterSection';
-import { FilterField } from '../../molecules/FilterField';
+import { FilterField } from '../FilterField';
 import SavedSearchList from './SavedSearchList';
 
 /**

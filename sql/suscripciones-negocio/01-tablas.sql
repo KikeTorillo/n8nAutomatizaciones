@@ -47,6 +47,11 @@ CREATE TABLE IF NOT EXISTS planes_suscripcion_org (
     -- Features (array de strings)
     features JSONB DEFAULT '[]',                    -- ["api_access", "priority_support"]
 
+    -- Pricing por usuario (Seat-based billing)
+    precio_usuario_adicional NUMERIC(10,2) DEFAULT NULL, -- Precio por usuario extra. NULL = hard limit
+    usuarios_incluidos INTEGER DEFAULT 5,                -- Usuarios incluidos en precio base
+    max_usuarios_hard INTEGER DEFAULT NULL,              -- Límite absoluto. NULL = ilimitado
+
     -- UI
     color VARCHAR(7) DEFAULT '#6366F1',             -- Color para la UI
     icono VARCHAR(50) DEFAULT 'package',            -- Icono lucide-react
@@ -133,6 +138,15 @@ CREATE TABLE IF NOT EXISTS suscripciones_org (
     -- Métricas
     meses_activo INTEGER DEFAULT 0,                 -- Contador de meses pagados
     total_pagado NUMERIC(12,2) DEFAULT 0,           -- Total histórico pagado
+
+    -- Tracking de usuarios (Seat-based billing)
+    usuarios_contratados INTEGER DEFAULT 0,             -- Snapshot de usuarios al último cobro
+    usuarios_max_periodo INTEGER DEFAULT 0,             -- Máximo usuarios activos del período
+    precio_usuario_snapshot NUMERIC(10,2),              -- Precio por usuario al momento de suscripción
+    ajuste_pendiente NUMERIC(10,2) DEFAULT 0,           -- Monto adicional a cobrar en próxima factura
+
+    -- Prorrateo
+    credito_pendiente NUMERIC(10,2) DEFAULT 0,          -- Crédito por downgrade para próxima factura
 
     -- Auditoría
     creado_en TIMESTAMP DEFAULT NOW(),
@@ -562,10 +576,95 @@ COMMENT ON FUNCTION fn_cancelar_suscripciones_anteriores IS
 'Cancela automáticamente suscripciones anteriores cuando una nueva se activa. Evita duplicados.';
 
 -- ============================================================================
+-- 10. TABLA: uso_usuarios_org
+-- ============================================================================
+-- Tracking diario de uso de usuarios para seat-based billing.
+-- ----------------------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS uso_usuarios_org (
+    id SERIAL PRIMARY KEY,
+    organizacion_id INTEGER NOT NULL REFERENCES organizaciones(id) ON DELETE CASCADE,
+    suscripcion_id INTEGER NOT NULL REFERENCES suscripciones_org(id) ON DELETE CASCADE,
+    fecha DATE NOT NULL,
+    usuarios_activos INTEGER NOT NULL,
+    usuarios_incluidos INTEGER NOT NULL,
+    creado_en TIMESTAMP DEFAULT NOW(),
+
+    CONSTRAINT uq_uso_usuarios_fecha UNIQUE(suscripcion_id, fecha)
+);
+
+CREATE INDEX IF NOT EXISTS idx_uso_usuarios_fecha ON uso_usuarios_org(suscripcion_id, fecha DESC);
+CREATE INDEX IF NOT EXISTS idx_uso_usuarios_org ON uso_usuarios_org(organizacion_id);
+
+ALTER TABLE uso_usuarios_org ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY uso_usuarios_select ON uso_usuarios_org
+    FOR SELECT USING (
+        organizacion_id = current_setting('app.current_tenant_id', true)::INTEGER
+        OR current_setting('app.bypass_rls', true) = 'true'
+    );
+
+CREATE POLICY uso_usuarios_insert ON uso_usuarios_org
+    FOR INSERT WITH CHECK (
+        current_setting('app.bypass_rls', true) = 'true'
+    );
+
+COMMENT ON TABLE uso_usuarios_org IS 'Tracking diario de usuarios activos para cálculo de ajuste mensual por excedentes.';
+
+-- ============================================================================
+-- 11. TABLA: ajustes_facturacion_org
+-- ============================================================================
+-- Log de ajustes aplicados a facturas (usuarios extra, prorrateo, créditos).
+-- ----------------------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS ajustes_facturacion_org (
+    id SERIAL PRIMARY KEY,
+    organizacion_id INTEGER NOT NULL REFERENCES organizaciones(id) ON DELETE CASCADE,
+    suscripcion_id INTEGER NOT NULL REFERENCES suscripciones_org(id) ON DELETE CASCADE,
+    pago_id INTEGER REFERENCES pagos_suscripcion(id) ON DELETE SET NULL,
+
+    tipo VARCHAR(30) NOT NULL,                         -- usuario_adicional, prorrateo_cargo, prorrateo_credito
+    monto NUMERIC(10,2) NOT NULL,
+    descripcion TEXT,
+
+    -- Detalles para tipo usuario_adicional
+    usuarios_base INTEGER,
+    usuarios_facturados INTEGER,
+    precio_unitario NUMERIC(10,2),
+
+    -- Detalles para tipo prorrateo
+    dias_prorrateados INTEGER,
+    dias_periodo INTEGER,
+
+    creado_en TIMESTAMP DEFAULT NOW(),
+
+    CONSTRAINT chk_tipo_ajuste CHECK (
+        tipo IN ('usuario_adicional', 'prorrateo_cargo', 'prorrateo_credito', 'credito_manual')
+    )
+);
+
+CREATE INDEX IF NOT EXISTS idx_ajustes_suscripcion ON ajustes_facturacion_org(suscripcion_id, creado_en DESC);
+
+ALTER TABLE ajustes_facturacion_org ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY ajustes_select ON ajustes_facturacion_org
+    FOR SELECT USING (
+        organizacion_id = current_setting('app.current_tenant_id', true)::INTEGER
+        OR current_setting('app.bypass_rls', true) = 'true'
+    );
+
+CREATE POLICY ajustes_insert ON ajustes_facturacion_org
+    FOR INSERT WITH CHECK (
+        current_setting('app.bypass_rls', true) = 'true'
+    );
+
+COMMENT ON TABLE ajustes_facturacion_org IS 'Registro de ajustes aplicados a facturas: usuarios extra, prorrateo, créditos.';
+
+-- ============================================================================
 -- MIGRACIÓN COMPLETADA
 -- ============================================================================
--- Tablas creadas: 5
--- Índices creados: 19 (incluyendo índices únicos de duplicados)
--- Políticas RLS: 15
+-- Tablas creadas: 7
+-- Índices creados: 21 (incluyendo índices únicos de duplicados)
+-- Políticas RLS: 19
 -- Triggers: 2 (cancelación automática de suscripciones duplicadas)
 -- ============================================================================

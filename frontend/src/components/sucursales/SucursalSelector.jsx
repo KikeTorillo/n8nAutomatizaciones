@@ -8,6 +8,7 @@ import useSucursalStore, {
 } from '@/store/sucursalStore';
 import { useSucursalesUsuario, useCambiarSucursal, useInvalidarPermisosAlCambiarSucursal } from '@/hooks/sistema';
 import useAuthStore, { selectUser } from '@/store/authStore';
+import { useClickOutsideRef } from '@/hooks/utils';
 
 /**
  * Selector de sucursal para el header
@@ -41,17 +42,8 @@ function SucursalSelector() {
     }
   }, [sucursales, setSucursalesDisponibles]);
 
-  // Cerrar dropdown al hacer clic fuera
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsOpen(false);
-      }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  // Cerrar dropdown al hacer clic fuera (hook centralizado)
+  useClickOutsideRef(dropdownRef, () => setIsOpen(false), isOpen);
 
   // Si hay 0-1 sucursales, mostrar solo el nombre sin dropdown
   if (sucursalesDisponibles.length <= 1) {

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { Save, Plus, Trash2, TrendingUp, GripVertical, Users, Calendar, Briefcase, Star, Award, Heart, Zap } from 'lucide-react';
 import {
   Button,
@@ -7,6 +7,7 @@ import {
   ToggleSwitch
 } from '@/components/ui';
 import { AIGenerateButton, AISuggestionBanner } from '../AIGenerator';
+import { useBlockEditor, useArrayItems } from '../../hooks';
 
 // Iconos disponibles
 const ICON_OPTIONS = [
@@ -24,41 +25,46 @@ const ICON_OPTIONS = [
  * StatsEditor - Editor del bloque Stats (Estadisticas/Numeros)
  */
 function StatsEditor({ contenido, onGuardar, tema, isSaving, industria = 'default' }) {
-  const [form, setForm] = useState({
-    titulo_seccion: contenido.titulo_seccion || 'Nuestros Numeros',
-    subtitulo_seccion: contenido.subtitulo_seccion || 'Lo que hemos logrado',
-    columnas: contenido.columnas || 4,
-    animar: contenido.animar !== false,
-    duracion_animacion: contenido.duracion_animacion || 2000,
-    items: contenido.items || [
+  // Valores por defecto del formulario
+  const defaultValues = useMemo(() => ({
+    titulo_seccion: 'Nuestros Numeros',
+    subtitulo_seccion: 'Lo que hemos logrado',
+    columnas: 4,
+    animar: true,
+    duracion_animacion: 2000,
+    items: [
       { numero: 500, sufijo: '+', prefijo: '', titulo: 'Clientes Satisfechos', icono: 'users' },
       { numero: 10, sufijo: '', prefijo: '', titulo: 'Anos de Experiencia', icono: 'calendar' },
       { numero: 1000, sufijo: '+', prefijo: '', titulo: 'Proyectos Completados', icono: 'briefcase' },
       { numero: 98, sufijo: '%', prefijo: '', titulo: 'Satisfaccion', icono: 'star' },
     ],
-  });
+  }), []);
 
-  const [cambios, setCambios] = useState(false);
+  // Default item para nuevas estadísticas
+  const defaultStat = useMemo(() => ({
+    numero: 0,
+    sufijo: '',
+    prefijo: '',
+    titulo: 'Nueva Estadistica',
+    icono: 'star'
+  }), []);
+
+  // Hook para manejo del formulario
+  const { form, setForm, cambios, handleSubmit, handleFieldChange } = useBlockEditor(
+    contenido,
+    defaultValues
+  );
+
+  // Hook para manejo del array de items
+  const {
+    handleAgregar: handleAgregarStat,
+    handleEliminar: handleEliminarStat,
+    handleChange: handleChangeStat,
+  } = useArrayItems(setForm, 'items', defaultStat);
 
   const statsVacios = !contenido.items || contenido.items.length === 0;
 
-  useEffect(() => {
-    setCambios(JSON.stringify(form) !== JSON.stringify({
-      titulo_seccion: contenido.titulo_seccion || 'Nuestros Numeros',
-      subtitulo_seccion: contenido.subtitulo_seccion || 'Lo que hemos logrado',
-      columnas: contenido.columnas || 4,
-      animar: contenido.animar !== false,
-      duracion_animacion: contenido.duracion_animacion || 2000,
-      items: contenido.items || [],
-    }));
-  }, [form, contenido]);
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onGuardar(form);
-    setCambios(false);
-  };
-
+  // Callback para generación de IA de bloque completo
   const handleAIGenerate = useCallback((generatedContent) => {
     setForm(prev => ({
       ...prev,
@@ -66,27 +72,7 @@ function StatsEditor({ contenido, onGuardar, tema, isSaving, industria = 'defaul
       subtitulo_seccion: generatedContent.subtitulo_seccion || prev.subtitulo_seccion,
       items: generatedContent.items || prev.items,
     }));
-  }, []);
-
-  const handleAgregarStat = () => {
-    setForm({
-      ...form,
-      items: [...form.items, { numero: 0, sufijo: '', prefijo: '', titulo: 'Nueva Estadistica', icono: 'star' }]
-    });
-  };
-
-  const handleEliminarStat = (index) => {
-    setForm({
-      ...form,
-      items: form.items.filter((_, i) => i !== index)
-    });
-  };
-
-  const handleChangeStat = (index, campo, valor) => {
-    const nuevos = [...form.items];
-    nuevos[index] = { ...nuevos[index], [campo]: valor };
-    setForm({ ...form, items: nuevos });
-  };
+  }, [setForm]);
 
   const columnasOptions = [
     { value: 2, label: '2 columnas' },
@@ -97,7 +83,7 @@ function StatsEditor({ contenido, onGuardar, tema, isSaving, industria = 'defaul
   const iconoOptions = ICON_OPTIONS.map(opt => ({ value: opt.value, label: opt.label }));
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit(onGuardar)} className="space-y-4">
       {statsVacios && (
         <AISuggestionBanner
           tipo="stats"
@@ -116,19 +102,19 @@ function StatsEditor({ contenido, onGuardar, tema, isSaving, industria = 'defaul
                 tipo="stats"
                 campo="titulo"
                 industria={industria}
-                onGenerate={(text) => setForm({ ...form, titulo_seccion: text })}
+                onGenerate={(text) => handleFieldChange('titulo_seccion', text)}
                 size="sm"
               />
             </span>
           }
           value={form.titulo_seccion}
-          onChange={(e) => setForm({ ...form, titulo_seccion: e.target.value })}
+          onChange={(e) => handleFieldChange('titulo_seccion', e.target.value)}
           className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
         <Select
           label="Columnas"
           value={form.columnas}
-          onChange={(e) => setForm({ ...form, columnas: parseInt(e.target.value) })}
+          onChange={(e) => handleFieldChange('columnas', parseInt(e.target.value))}
           options={columnasOptions}
           className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
@@ -137,7 +123,7 @@ function StatsEditor({ contenido, onGuardar, tema, isSaving, industria = 'defaul
       <Input
         label="Subtitulo (opcional)"
         value={form.subtitulo_seccion}
-        onChange={(e) => setForm({ ...form, subtitulo_seccion: e.target.value })}
+        onChange={(e) => handleFieldChange('subtitulo_seccion', e.target.value)}
         className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
       />
 
@@ -145,7 +131,7 @@ function StatsEditor({ contenido, onGuardar, tema, isSaving, industria = 'defaul
       <div className="flex items-center gap-6">
         <ToggleSwitch
           checked={form.animar}
-          onChange={(checked) => setForm({ ...form, animar: checked })}
+          onChange={(checked) => handleFieldChange('animar', checked)}
           label="Animar numeros"
         />
         {form.animar && (
@@ -153,7 +139,7 @@ function StatsEditor({ contenido, onGuardar, tema, isSaving, industria = 'defaul
             label="Duracion (ms)"
             type="number"
             value={form.duracion_animacion}
-            onChange={(e) => setForm({ ...form, duracion_animacion: parseInt(e.target.value) })}
+            onChange={(e) => handleFieldChange('duracion_animacion', parseInt(e.target.value))}
             className="w-32 dark:bg-gray-700 dark:border-gray-600"
             min={500}
             max={5000}

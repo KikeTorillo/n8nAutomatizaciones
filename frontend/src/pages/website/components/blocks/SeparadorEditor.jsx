@@ -1,38 +1,27 @@
-import { useState, useEffect } from 'react';
+import { useMemo } from 'react';
 import { Save } from 'lucide-react';
 import { Button, Input, Select } from '@/components/ui';
+import { useBlockEditor } from '../../hooks';
 
 /**
  * SeparadorEditor - Editor del bloque Separador
  */
 function SeparadorEditor({ contenido, onGuardar, tema, isSaving }) {
-  const [form, setForm] = useState({
-    estilo: contenido.estilo || 'linea',
-    grosor: contenido.grosor || 'normal',
-    ancho: contenido.ancho || 'full',
-    color: contenido.color || '',
-    espaciado: contenido.espaciado || 'normal',
-    icono: contenido.icono || '',
-  });
+  // Valores por defecto del formulario
+  const defaultValues = useMemo(() => ({
+    estilo: 'linea',
+    grosor: 'normal',
+    ancho: 'full',
+    color: '',
+    espaciado: 'normal',
+    icono: '',
+  }), []);
 
-  const [cambios, setCambios] = useState(false);
-
-  useEffect(() => {
-    setCambios(JSON.stringify(form) !== JSON.stringify({
-      estilo: contenido.estilo || 'linea',
-      grosor: contenido.grosor || 'normal',
-      ancho: contenido.ancho || 'full',
-      color: contenido.color || '',
-      espaciado: contenido.espaciado || 'normal',
-      icono: contenido.icono || '',
-    }));
-  }, [form, contenido]);
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onGuardar(form);
-    setCambios(false);
-  };
+  // Hook para manejo del formulario
+  const { form, cambios, handleSubmit, handleFieldChange } = useBlockEditor(
+    contenido,
+    defaultValues
+  );
 
   const colorActual = form.color || tema?.colores?.primario || '#E5E7EB';
 
@@ -146,19 +135,19 @@ function SeparadorEditor({ contenido, onGuardar, tema, isSaving }) {
   ];
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit(onGuardar)} className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
         <Select
           label="Estilo"
           value={form.estilo}
-          onChange={(e) => setForm({ ...form, estilo: e.target.value })}
+          onChange={(e) => handleFieldChange('estilo', e.target.value)}
           options={estiloOptions}
           className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
         <Select
           label="Grosor"
           value={form.grosor}
-          onChange={(e) => setForm({ ...form, grosor: e.target.value })}
+          onChange={(e) => handleFieldChange('grosor', e.target.value)}
           options={grosorOptions}
           disabled={form.estilo === 'espacio'}
           className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
@@ -169,14 +158,14 @@ function SeparadorEditor({ contenido, onGuardar, tema, isSaving }) {
         <Select
           label="Ancho"
           value={form.ancho}
-          onChange={(e) => setForm({ ...form, ancho: e.target.value })}
+          onChange={(e) => handleFieldChange('ancho', e.target.value)}
           options={anchoOptions}
           className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
         <Select
           label="Espaciado vertical"
           value={form.espaciado}
-          onChange={(e) => setForm({ ...form, espaciado: e.target.value })}
+          onChange={(e) => handleFieldChange('espaciado', e.target.value)}
           options={espaciadoOptions}
           className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
@@ -190,13 +179,13 @@ function SeparadorEditor({ contenido, onGuardar, tema, isSaving }) {
           <input
             type="color"
             value={form.color || colorActual}
-            onChange={(e) => setForm({ ...form, color: e.target.value })}
+            onChange={(e) => handleFieldChange('color', e.target.value)}
             className="w-10 h-10 rounded border border-gray-300 dark:border-gray-600 cursor-pointer"
             disabled={form.estilo === 'espacio'}
           />
           <Input
             value={form.color}
-            onChange={(e) => setForm({ ...form, color: e.target.value })}
+            onChange={(e) => handleFieldChange('color', e.target.value)}
             placeholder="Usar color del tema"
             disabled={form.estilo === 'espacio'}
             className="flex-1 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
@@ -206,7 +195,7 @@ function SeparadorEditor({ contenido, onGuardar, tema, isSaving }) {
               type="button"
               variant="ghost"
               size="sm"
-              onClick={() => setForm({ ...form, color: '' })}
+              onClick={() => handleFieldChange('color', '')}
             >
               Resetear
             </Button>

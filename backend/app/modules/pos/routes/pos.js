@@ -19,6 +19,22 @@ const posSchemas = require('../schemas/pos.schemas');
 const { verificarPermiso, verificarLimiteNumerico } = require('../../../middleware/permisos');
 
 const router = express.Router();
+
+// ===================================================================
+// CONFIGURACIÓN POS
+// ===================================================================
+
+/**
+ * GET /api/v1/pos/config/tipos-venta
+ * Obtener tipos de venta disponibles
+ * Returns: Array de configuración de tipos de venta
+ */
+router.get('/config/tipos-venta',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    POSController.obtenerTiposVenta
+);
 const validate = validation.validate;
 
 // ===================================================================

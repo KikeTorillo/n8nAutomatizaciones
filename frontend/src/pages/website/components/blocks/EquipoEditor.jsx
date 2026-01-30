@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useMemo } from 'react';
 import { Save, Plus, Trash2, User } from 'lucide-react';
 import {
   Button,
@@ -6,60 +6,41 @@ import {
   Select,
   Textarea
 } from '@/components/ui';
+import { useBlockEditor, useArrayItems } from '../../hooks';
 
 /**
  * EquipoEditor - Editor del bloque Equipo
  */
 function EquipoEditor({ contenido, onGuardar, tema, isSaving }) {
-  const [form, setForm] = useState({
-    titulo: contenido.titulo || 'Nuestro Equipo',
-    subtitulo: contenido.subtitulo || '',
-    miembros: contenido.miembros || [
-      { nombre: '', cargo: '', foto: '', bio: '' }
-    ],
-    columnas: contenido.columnas || 3,
-    mostrar_redes: contenido.mostrar_redes !== false,
-  });
+  // Valores por defecto del formulario
+  const defaultValues = useMemo(() => ({
+    titulo: 'Nuestro Equipo',
+    subtitulo: '',
+    miembros: [{ nombre: '', cargo: '', foto: '', bio: '' }],
+    columnas: 3,
+    mostrar_redes: true,
+  }), []);
 
-  const [cambios, setCambios] = useState(false);
+  // Default item para nuevos miembros
+  const defaultMiembro = useMemo(() => ({
+    nombre: '',
+    cargo: '',
+    foto: '',
+    bio: '',
+  }), []);
 
-  useEffect(() => {
-    setCambios(JSON.stringify(form) !== JSON.stringify({
-      titulo: contenido.titulo || 'Nuestro Equipo',
-      subtitulo: contenido.subtitulo || '',
-      miembros: contenido.miembros || [
-        { nombre: '', cargo: '', foto: '', bio: '' }
-      ],
-      columnas: contenido.columnas || 3,
-      mostrar_redes: contenido.mostrar_redes !== false,
-    }));
-  }, [form, contenido]);
+  // Hook para manejo del formulario
+  const { form, setForm, cambios, handleSubmit, handleFieldChange } = useBlockEditor(
+    contenido,
+    defaultValues
+  );
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onGuardar(form);
-    setCambios(false);
-  };
-
-  const handleAgregar = () => {
-    setForm({
-      ...form,
-      miembros: [...form.miembros, { nombre: '', cargo: '', foto: '', bio: '' }]
-    });
-  };
-
-  const handleEliminar = (index) => {
-    setForm({
-      ...form,
-      miembros: form.miembros.filter((_, i) => i !== index)
-    });
-  };
-
-  const handleChange = (index, campo, valor) => {
-    const nuevos = [...form.miembros];
-    nuevos[index] = { ...nuevos[index], [campo]: valor };
-    setForm({ ...form, miembros: nuevos });
-  };
+  // Hook para manejo del array de miembros
+  const {
+    handleAgregar,
+    handleEliminar,
+    handleChange,
+  } = useArrayItems(setForm, 'miembros', defaultMiembro);
 
   const columnasOptions = [
     { value: '2', label: '2 columnas' },
@@ -68,19 +49,19 @@ function EquipoEditor({ contenido, onGuardar, tema, isSaving }) {
   ];
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit(onGuardar)} className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
         <Input
           label="Título de sección"
           value={form.titulo}
-          onChange={(e) => setForm({ ...form, titulo: e.target.value })}
+          onChange={(e) => handleFieldChange('titulo', e.target.value)}
           placeholder="Nuestro Equipo"
           className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
         <Select
           label="Columnas"
           value={String(form.columnas)}
-          onChange={(e) => setForm({ ...form, columnas: parseInt(e.target.value) })}
+          onChange={(e) => handleFieldChange('columnas', parseInt(e.target.value))}
           options={columnasOptions}
           className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
@@ -89,7 +70,7 @@ function EquipoEditor({ contenido, onGuardar, tema, isSaving }) {
       <Input
         label="Subtítulo (opcional)"
         value={form.subtitulo}
-        onChange={(e) => setForm({ ...form, subtitulo: e.target.value })}
+        onChange={(e) => handleFieldChange('subtitulo', e.target.value)}
         placeholder="Los profesionales que te atenderán"
         className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
       />

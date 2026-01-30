@@ -34,13 +34,16 @@ export { CheckboxField } from './CheckboxField';
 export { DropdownMenu } from './DropdownMenu';
 // NOTA: SmartButtons movido a organisms/ (Ene 2026)
 
-// Componente de filtro unificado (Ene 2026)
-// NOTA: FilterSelectField, FilterDateField, FilterTextField eliminados (Ene 2026) - usar FilterField
-export { FilterField } from './FilterField';
+// NOTA: FilterField movido a organisms/ por complejidad multi-tipo (Ene 2026)
+// Importar desde '@/components/ui/organisms' o '@/components/ui'
 
 // Headers extraídos (Ene 2026)
 export { ModalHeader } from './ModalHeader';
 export { DrawerHeader } from './DrawerHeader';
 
 // Permisos granulares (Ene 2026) - FIX RBAC
+// DECISIÓN: Mantener en molecules - es wrapper composable similar a FormGroup, no HOC
 export { ConPermiso } from './ConPermiso';
+
+// Card genérico (Ene 2026)
+export { Card } from './Card';

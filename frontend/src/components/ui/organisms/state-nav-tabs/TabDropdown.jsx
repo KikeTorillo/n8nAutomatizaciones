@@ -1,7 +1,7 @@
 import { memo, useState, useRef } from 'react';
 import { ChevronDown, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useClickOutside, useEscapeKey } from '@/hooks/utils';
+import { useClickOutsideRef, useEscapeKey } from '@/hooks/utils';
 import { TAB_STYLES, DROPDOWN_ITEM_STYLES } from './constants';
 
 /**
@@ -21,8 +21,8 @@ const TabDropdown = memo(function TabDropdown({ icon: Icon, label, items, active
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
 
-  // Cerrar al hacer click fuera
-  useClickOutside(dropdownRef, () => setIsOpen(false));
+  // Cerrar al hacer click fuera (useClickOutsideRef para refs externas)
+  useClickOutsideRef(dropdownRef, () => setIsOpen(false), isOpen);
 
   // Cerrar con Escape
   useEscapeKey(() => setIsOpen(false), isOpen);

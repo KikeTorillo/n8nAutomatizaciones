@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { Save, Plus, Trash2, HelpCircle, GripVertical } from 'lucide-react';
 import {
   Button,
@@ -7,44 +7,49 @@ import {
   ToggleSwitch
 } from '@/components/ui';
 import { AIGenerateButton, AISuggestionBanner } from '../AIGenerator';
+import { useBlockEditor, useArrayItems } from '../../hooks';
 
 /**
  * FaqEditor - Editor del bloque FAQ (Preguntas Frecuentes)
  */
 function FaqEditor({ contenido, onGuardar, tema, isSaving, industria = 'default' }) {
-  const [form, setForm] = useState({
-    titulo_seccion: contenido.titulo_seccion || 'Preguntas Frecuentes',
-    subtitulo_seccion: contenido.subtitulo_seccion || 'Encuentra respuestas a las preguntas mas comunes',
-    layout: contenido.layout || 'accordion',
-    permitir_multiple: contenido.permitir_multiple || false,
-    items: contenido.items || [
+  // Valores por defecto del formulario
+  const defaultValues = useMemo(() => ({
+    titulo_seccion: 'Preguntas Frecuentes',
+    subtitulo_seccion: 'Encuentra respuestas a las preguntas mas comunes',
+    layout: 'accordion',
+    permitir_multiple: false,
+    items: [
       {
         pregunta: 'Como puedo agendar una cita?',
         respuesta: 'Puedes agendar una cita facilmente a traves de nuestro formulario de contacto o llamando a nuestro numero de telefono.'
       }
     ],
-  });
+  }), []);
 
-  const [cambios, setCambios] = useState(false);
+  // Default item para nuevas FAQs
+  const defaultFaq = useMemo(() => ({
+    pregunta: '',
+    respuesta: '',
+  }), []);
 
+  // Hook para manejo del formulario
+  const { form, setForm, cambios, handleSubmit, handleFieldChange } = useBlockEditor(
+    contenido,
+    defaultValues
+  );
+
+  // Hook para manejo del array de items
+  const {
+    handleAgregar: handleAgregarFaq,
+    handleEliminar: handleEliminarFaq,
+    handleChange: handleChangeFaq,
+  } = useArrayItems(setForm, 'items', defaultFaq);
+
+  // Verificar si el contenido está vacío
   const faqsVacias = !contenido.items || contenido.items.length === 0;
 
-  useEffect(() => {
-    setCambios(JSON.stringify(form) !== JSON.stringify({
-      titulo_seccion: contenido.titulo_seccion || 'Preguntas Frecuentes',
-      subtitulo_seccion: contenido.subtitulo_seccion || 'Encuentra respuestas a las preguntas mas comunes',
-      layout: contenido.layout || 'accordion',
-      permitir_multiple: contenido.permitir_multiple || false,
-      items: contenido.items || [],
-    }));
-  }, [form, contenido]);
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onGuardar(form);
-    setCambios(false);
-  };
-
+  // Callback para generación de IA de bloque completo
   const handleAIGenerate = useCallback((generatedContent) => {
     setForm(prev => ({
       ...prev,
@@ -52,30 +57,10 @@ function FaqEditor({ contenido, onGuardar, tema, isSaving, industria = 'default'
       subtitulo_seccion: generatedContent.subtitulo_seccion || prev.subtitulo_seccion,
       items: generatedContent.items || prev.items,
     }));
-  }, []);
-
-  const handleAgregarFaq = () => {
-    setForm({
-      ...form,
-      items: [...form.items, { pregunta: '', respuesta: '' }]
-    });
-  };
-
-  const handleEliminarFaq = (index) => {
-    setForm({
-      ...form,
-      items: form.items.filter((_, i) => i !== index)
-    });
-  };
-
-  const handleChangeFaq = (index, campo, valor) => {
-    const nuevos = [...form.items];
-    nuevos[index] = { ...nuevos[index], [campo]: valor };
-    setForm({ ...form, items: nuevos });
-  };
+  }, [setForm]);
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit(onGuardar)} className="space-y-4">
       {faqsVacias && (
         <AISuggestionBanner
           tipo="faq"
@@ -94,19 +79,19 @@ function FaqEditor({ contenido, onGuardar, tema, isSaving, industria = 'default'
                 tipo="faq"
                 campo="titulo"
                 industria={industria}
-                onGenerate={(text) => setForm({ ...form, titulo_seccion: text })}
+                onGenerate={(text) => handleFieldChange('titulo_seccion', text)}
                 size="sm"
               />
             </span>
           }
           value={form.titulo_seccion}
-          onChange={(e) => setForm({ ...form, titulo_seccion: e.target.value })}
+          onChange={(e) => handleFieldChange('titulo_seccion', e.target.value)}
           className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
         <div className="flex items-center pt-6">
           <ToggleSwitch
             checked={form.permitir_multiple}
-            onChange={(checked) => setForm({ ...form, permitir_multiple: checked })}
+            onChange={(checked) => handleFieldChange('permitir_multiple', checked)}
             label="Permitir abrir multiples"
           />
         </div>
@@ -115,7 +100,7 @@ function FaqEditor({ contenido, onGuardar, tema, isSaving, industria = 'default'
       <Input
         label="Subtitulo (opcional)"
         value={form.subtitulo_seccion}
-        onChange={(e) => setForm({ ...form, subtitulo_seccion: e.target.value })}
+        onChange={(e) => handleFieldChange('subtitulo_seccion', e.target.value)}
         className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
       />
 

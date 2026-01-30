@@ -198,6 +198,18 @@ const useWebsiteEditorStore = create(
           }),
 
         /**
+         * Toggle visibilidad de un bloque
+         */
+        toggleVisibilidadBloque: (id) =>
+          set((state) => ({
+            bloques: state.bloques.map((b) =>
+              b.id === id ? { ...b, visible: !b.visible } : b
+            ),
+            tieneClambiosLocales: true,
+            estadoGuardado: 'unsaved',
+          })),
+
+        /**
          * Inserta un bloque en una posición específica (para drag desde paleta)
          * @param {Object} bloque - Bloque a insertar
          * @param {number} indice - Índice donde insertar (si no se especifica, al final)
@@ -464,6 +476,7 @@ export const selectReordenarBloquesLocal = (state) => state.reordenarBloquesLoca
 export const selectAgregarBloqueLocal = (state) => state.agregarBloqueLocal;
 export const selectEliminarBloqueLocal = (state) => state.eliminarBloqueLocal;
 export const selectDuplicarBloqueLocal = (state) => state.duplicarBloqueLocal;
+export const selectToggleVisibilidadBloque = (state) => state.toggleVisibilidadBloque;
 export const selectInsertarBloqueEnPosicion = (state) => state.insertarBloqueEnPosicion;
 
 export const selectSeleccionarBloque = (state) => state.seleccionarBloque;

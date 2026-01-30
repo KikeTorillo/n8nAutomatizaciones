@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { Save, Plus, Trash2, Star, DollarSign, GripVertical } from 'lucide-react';
 import {
   Button,
@@ -8,54 +8,60 @@ import {
   ToggleSwitch
 } from '@/components/ui';
 import { AIGenerateButton, AISuggestionBanner } from '../AIGenerator';
+import { useBlockEditor, useArrayItems } from '../../hooks';
 
 /**
  * PricingEditor - Editor del bloque Pricing (Tablas de Precios)
  */
 function PricingEditor({ contenido, onGuardar, tema, isSaving, industria = 'default' }) {
-  const [form, setForm] = useState({
-    titulo_seccion: contenido.titulo_seccion || 'Nuestros Planes',
-    subtitulo_seccion: contenido.subtitulo_seccion || 'Elige el plan perfecto para ti',
-    columnas: contenido.columnas || 3,
-    moneda: contenido.moneda || 'USD',
-    mostrar_toggle_anual: contenido.mostrar_toggle_anual || false,
-    descuento_anual: contenido.descuento_anual || 20,
-    planes: contenido.planes || [
-      {
-        nombre: 'Basico',
-        precio: 29,
-        periodo: 'mes',
-        descripcion: 'Ideal para empezar',
-        caracteristicas: ['Caracteristica 1', 'Caracteristica 2', 'Caracteristica 3'],
-        es_popular: false,
-        boton_texto: 'Comenzar',
-        boton_url: '#contacto'
-      }
-    ],
-  });
+  // Valores por defecto del formulario
+  const defaultValues = useMemo(() => ({
+    titulo_seccion: 'Nuestros Planes',
+    subtitulo_seccion: 'Elige el plan perfecto para ti',
+    columnas: 3,
+    moneda: 'USD',
+    mostrar_toggle_anual: false,
+    descuento_anual: 20,
+    planes: [{
+      nombre: 'Basico',
+      precio: 29,
+      periodo: 'mes',
+      descripcion: 'Ideal para empezar',
+      caracteristicas: ['Caracteristica 1', 'Caracteristica 2', 'Caracteristica 3'],
+      es_popular: false,
+      boton_texto: 'Comenzar',
+      boton_url: '#contacto'
+    }],
+  }), []);
 
-  const [cambios, setCambios] = useState(false);
+  // Default item para nuevos planes
+  const defaultPlan = useMemo(() => ({
+    nombre: 'Nuevo Plan',
+    precio: 0,
+    periodo: 'mes',
+    descripcion: '',
+    caracteristicas: [],
+    es_popular: false,
+    boton_texto: 'Comenzar',
+    boton_url: '#contacto'
+  }), []);
+
+  // Hook para manejo del formulario
+  const { form, setForm, cambios, handleSubmit, handleFieldChange } = useBlockEditor(
+    contenido,
+    defaultValues
+  );
+
+  // Hook para manejo del array de planes
+  const {
+    handleAgregar: handleAgregarPlan,
+    handleEliminar: handleEliminarPlan,
+    handleChange: handleChangePlan,
+  } = useArrayItems(setForm, 'planes', defaultPlan);
 
   const planesVacios = !contenido.planes || contenido.planes.length === 0;
 
-  useEffect(() => {
-    setCambios(JSON.stringify(form) !== JSON.stringify({
-      titulo_seccion: contenido.titulo_seccion || 'Nuestros Planes',
-      subtitulo_seccion: contenido.subtitulo_seccion || 'Elige el plan perfecto para ti',
-      columnas: contenido.columnas || 3,
-      moneda: contenido.moneda || 'USD',
-      mostrar_toggle_anual: contenido.mostrar_toggle_anual || false,
-      descuento_anual: contenido.descuento_anual || 20,
-      planes: contenido.planes || [],
-    }));
-  }, [form, contenido]);
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onGuardar(form);
-    setCambios(false);
-  };
-
+  // Callback para generación de IA de bloque completo
   const handleAIGenerate = useCallback((generatedContent) => {
     setForm(prev => ({
       ...prev,
@@ -63,53 +69,30 @@ function PricingEditor({ contenido, onGuardar, tema, isSaving, industria = 'defa
       subtitulo_seccion: generatedContent.subtitulo_seccion || prev.subtitulo_seccion,
       planes: generatedContent.planes || prev.planes,
     }));
-  }, []);
-
-  const handleAgregarPlan = () => {
-    setForm({
-      ...form,
-      planes: [...form.planes, {
-        nombre: 'Nuevo Plan',
-        precio: 0,
-        periodo: 'mes',
-        descripcion: '',
-        caracteristicas: [],
-        es_popular: false,
-        boton_texto: 'Comenzar',
-        boton_url: '#contacto'
-      }]
-    });
-  };
-
-  const handleEliminarPlan = (index) => {
-    setForm({
-      ...form,
-      planes: form.planes.filter((_, i) => i !== index)
-    });
-  };
-
-  const handleChangePlan = (index, campo, valor) => {
-    const nuevos = [...form.planes];
-    nuevos[index] = { ...nuevos[index], [campo]: valor };
-    setForm({ ...form, planes: nuevos });
-  };
+  }, [setForm]);
 
   const handleAgregarCaracteristica = (planIndex) => {
-    const nuevos = [...form.planes];
-    nuevos[planIndex].caracteristicas = [...(nuevos[planIndex].caracteristicas || []), ''];
-    setForm({ ...form, planes: nuevos });
+    setForm(prev => {
+      const nuevos = [...prev.planes];
+      nuevos[planIndex].caracteristicas = [...(nuevos[planIndex].caracteristicas || []), ''];
+      return { ...prev, planes: nuevos };
+    });
   };
 
   const handleCambiarCaracteristica = (planIndex, featIndex, valor) => {
-    const nuevos = [...form.planes];
-    nuevos[planIndex].caracteristicas[featIndex] = valor;
-    setForm({ ...form, planes: nuevos });
+    setForm(prev => {
+      const nuevos = [...prev.planes];
+      nuevos[planIndex].caracteristicas[featIndex] = valor;
+      return { ...prev, planes: nuevos };
+    });
   };
 
   const handleEliminarCaracteristica = (planIndex, featIndex) => {
-    const nuevos = [...form.planes];
-    nuevos[planIndex].caracteristicas = nuevos[planIndex].caracteristicas.filter((_, i) => i !== featIndex);
-    setForm({ ...form, planes: nuevos });
+    setForm(prev => {
+      const nuevos = [...prev.planes];
+      nuevos[planIndex].caracteristicas = nuevos[planIndex].caracteristicas.filter((_, i) => i !== featIndex);
+      return { ...prev, planes: nuevos };
+    });
   };
 
   const columnasOptions = [
@@ -133,7 +116,7 @@ function PricingEditor({ contenido, onGuardar, tema, isSaving, industria = 'defa
   ];
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit(onGuardar)} className="space-y-4">
       {planesVacios && (
         <AISuggestionBanner
           tipo="pricing"
@@ -152,19 +135,19 @@ function PricingEditor({ contenido, onGuardar, tema, isSaving, industria = 'defa
                 tipo="pricing"
                 campo="titulo"
                 industria={industria}
-                onGenerate={(text) => setForm({ ...form, titulo_seccion: text })}
+                onGenerate={(text) => handleFieldChange('titulo_seccion', text)}
                 size="sm"
               />
             </span>
           }
           value={form.titulo_seccion}
-          onChange={(e) => setForm({ ...form, titulo_seccion: e.target.value })}
+          onChange={(e) => handleFieldChange('titulo_seccion', e.target.value)}
           className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
         <Select
           label="Columnas"
           value={form.columnas}
-          onChange={(e) => setForm({ ...form, columnas: parseInt(e.target.value) })}
+          onChange={(e) => handleFieldChange('columnas', parseInt(e.target.value))}
           options={columnasOptions}
           className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
@@ -173,7 +156,7 @@ function PricingEditor({ contenido, onGuardar, tema, isSaving, industria = 'defa
       <Input
         label="Subtitulo (opcional)"
         value={form.subtitulo_seccion}
-        onChange={(e) => setForm({ ...form, subtitulo_seccion: e.target.value })}
+        onChange={(e) => handleFieldChange('subtitulo_seccion', e.target.value)}
         className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
       />
 
@@ -181,14 +164,14 @@ function PricingEditor({ contenido, onGuardar, tema, isSaving, industria = 'defa
         <Select
           label="Moneda"
           value={form.moneda}
-          onChange={(e) => setForm({ ...form, moneda: e.target.value })}
+          onChange={(e) => handleFieldChange('moneda', e.target.value)}
           options={monedaOptions}
           className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
         <div className="flex items-center gap-4 pt-6">
           <ToggleSwitch
             checked={form.mostrar_toggle_anual}
-            onChange={(checked) => setForm({ ...form, mostrar_toggle_anual: checked })}
+            onChange={(checked) => handleFieldChange('mostrar_toggle_anual', checked)}
             label="Toggle mensual/anual"
           />
         </div>

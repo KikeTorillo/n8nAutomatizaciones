@@ -34,6 +34,12 @@ export const QUERY_KEYS = {
   PAGO: 'suscripciones-negocio-pago',
   PAGOS_RESUMEN: 'suscripciones-negocio-pagos-resumen',
 
+  // Uso de usuarios (Seat-based billing)
+  USO_RESUMEN: 'suscripciones-negocio-uso-resumen',
+  USO_HISTORIAL: 'suscripciones-negocio-uso-historial',
+  USO_PROYECCION: 'suscripciones-negocio-uso-proyeccion',
+  USO_VERIFICAR_LIMITE: 'suscripciones-negocio-uso-verificar-limite',
+
   // Métricas
   METRICAS_DASHBOARD: 'suscripciones-negocio-metricas-dashboard',
   METRICAS_MRR: 'suscripciones-negocio-metricas-mrr',

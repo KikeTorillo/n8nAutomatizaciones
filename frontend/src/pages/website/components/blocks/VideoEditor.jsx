@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Save, Video } from 'lucide-react';
 import {
   Button,
@@ -6,41 +6,33 @@ import {
   Input,
   Select
 } from '@/components/ui';
+import { useBlockEditor } from '../../hooks';
 
 /**
  * VideoEditor - Editor del bloque Video
  */
 function VideoEditor({ contenido, onGuardar, tema, isSaving }) {
-  const [form, setForm] = useState({
-    titulo: contenido.titulo || '',
-    subtitulo: contenido.subtitulo || '',
-    url: contenido.url || '',
-    tipo: contenido.tipo || 'youtube',
-    autoplay: contenido.autoplay || false,
-    loop: contenido.loop || false,
-    muted: contenido.muted || false,
-    controles: contenido.controles !== false,
-    ancho: contenido.ancho || 'full',
-    alineacion: contenido.alineacion || 'center',
-  });
+  // Valores por defecto del formulario
+  const defaultValues = useMemo(() => ({
+    titulo: '',
+    subtitulo: '',
+    url: '',
+    tipo: 'youtube',
+    autoplay: false,
+    loop: false,
+    muted: false,
+    controles: true,
+    ancho: 'full',
+    alineacion: 'center',
+  }), []);
 
-  const [cambios, setCambios] = useState(false);
+  // Hook para manejo del formulario
+  const { form, setForm, cambios, handleSubmit, handleFieldChange } = useBlockEditor(
+    contenido,
+    defaultValues
+  );
+
   const [embedUrl, setEmbedUrl] = useState('');
-
-  useEffect(() => {
-    setCambios(JSON.stringify(form) !== JSON.stringify({
-      titulo: contenido.titulo || '',
-      subtitulo: contenido.subtitulo || '',
-      url: contenido.url || '',
-      tipo: contenido.tipo || 'youtube',
-      autoplay: contenido.autoplay || false,
-      loop: contenido.loop || false,
-      muted: contenido.muted || false,
-      controles: contenido.controles !== false,
-      ancho: contenido.ancho || 'full',
-      alineacion: contenido.alineacion || 'center',
-    }));
-  }, [form, contenido]);
 
   // Generar URL de embed
   useEffect(() => {
@@ -78,12 +70,6 @@ function VideoEditor({ contenido, onGuardar, tema, isSaving }) {
     setEmbedUrl(url);
   }, [form.url, form.tipo, form.autoplay, form.loop, form.muted, form.controles]);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onGuardar({ ...form, embed_url: embedUrl });
-    setCambios(false);
-  };
-
   const handleUrlChange = (url) => {
     let tipo = form.tipo;
     if (url.includes('youtube.com') || url.includes('youtu.be')) {
@@ -91,7 +77,12 @@ function VideoEditor({ contenido, onGuardar, tema, isSaving }) {
     } else if (url.includes('vimeo.com')) {
       tipo = 'vimeo';
     }
-    setForm({ ...form, url, tipo });
+    setForm(prev => ({ ...prev, url, tipo }));
+  };
+
+  // Submit personalizado que incluye embed_url
+  const onSubmit = (data) => {
+    onGuardar({ ...data, embed_url: embedUrl });
   };
 
   const tipoOptions = [
@@ -113,19 +104,19 @@ function VideoEditor({ contenido, onGuardar, tema, isSaving }) {
   ];
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
         <Input
           label="Título (opcional)"
           value={form.titulo}
-          onChange={(e) => setForm({ ...form, titulo: e.target.value })}
+          onChange={(e) => handleFieldChange('titulo', e.target.value)}
           placeholder="Video destacado"
           className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
         <Select
           label="Plataforma"
           value={form.tipo}
-          onChange={(e) => setForm({ ...form, tipo: e.target.value })}
+          onChange={(e) => handleFieldChange('tipo', e.target.value)}
           options={tipoOptions}
           className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
@@ -147,7 +138,7 @@ function VideoEditor({ contenido, onGuardar, tema, isSaving }) {
       <Input
         label="Subtítulo (opcional)"
         value={form.subtitulo}
-        onChange={(e) => setForm({ ...form, subtitulo: e.target.value })}
+        onChange={(e) => handleFieldChange('subtitulo', e.target.value)}
         placeholder="Descripción del video"
         className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
       />
@@ -156,14 +147,14 @@ function VideoEditor({ contenido, onGuardar, tema, isSaving }) {
         <Select
           label="Ancho"
           value={form.ancho}
-          onChange={(e) => setForm({ ...form, ancho: e.target.value })}
+          onChange={(e) => handleFieldChange('ancho', e.target.value)}
           options={anchoOptions}
           className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
         <Select
           label="Alineación"
           value={form.alineacion}
-          onChange={(e) => setForm({ ...form, alineacion: e.target.value })}
+          onChange={(e) => handleFieldChange('alineacion', e.target.value)}
           options={alineacionOptions}
           className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
@@ -176,22 +167,22 @@ function VideoEditor({ contenido, onGuardar, tema, isSaving }) {
           <Checkbox
             label="Autoplay"
             checked={form.autoplay}
-            onChange={(e) => setForm({ ...form, autoplay: e.target.checked })}
+            onChange={(e) => handleFieldChange('autoplay', e.target.checked)}
           />
           <Checkbox
             label="Loop (repetir)"
             checked={form.loop}
-            onChange={(e) => setForm({ ...form, loop: e.target.checked })}
+            onChange={(e) => handleFieldChange('loop', e.target.checked)}
           />
           <Checkbox
             label="Silenciado"
             checked={form.muted}
-            onChange={(e) => setForm({ ...form, muted: e.target.checked })}
+            onChange={(e) => handleFieldChange('muted', e.target.checked)}
           />
           <Checkbox
             label="Mostrar controles"
             checked={form.controles}
-            onChange={(e) => setForm({ ...form, controles: e.target.checked })}
+            onChange={(e) => handleFieldChange('controles', e.target.checked)}
           />
         </div>
       </div>

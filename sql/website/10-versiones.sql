@@ -88,17 +88,17 @@ ALTER TABLE website_versiones ENABLE ROW LEVEL SECURITY;
 -- Politica: Organizacion puede ver sus versiones
 CREATE POLICY website_versiones_org_select ON website_versiones
     FOR SELECT
-    USING (organizacion_id = current_setting('app.current_org_id', true)::int);
+    USING (organizacion_id = NULLIF(current_setting('app.current_tenant_id', true), '')::INTEGER);
 
 -- Politica: Organizacion puede crear versiones
 CREATE POLICY website_versiones_org_insert ON website_versiones
     FOR INSERT
-    WITH CHECK (organizacion_id = current_setting('app.current_org_id', true)::int);
+    WITH CHECK (organizacion_id = NULLIF(current_setting('app.current_tenant_id', true), '')::INTEGER);
 
 -- Politica: Organizacion puede eliminar sus versiones
 CREATE POLICY website_versiones_org_delete ON website_versiones
     FOR DELETE
-    USING (organizacion_id = current_setting('app.current_org_id', true)::int);
+    USING (organizacion_id = NULLIF(current_setting('app.current_tenant_id', true), '')::INTEGER);
 
 -- Politica: SuperAdmin puede ver todo
 CREATE POLICY website_versiones_superadmin ON website_versiones

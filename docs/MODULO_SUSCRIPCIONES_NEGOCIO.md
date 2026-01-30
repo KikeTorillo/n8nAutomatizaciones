@@ -1,347 +1,181 @@
-# Módulo Suscripciones Negocio - Nexo ERP
+# Módulo Suscripciones Negocio
 
-Sistema de facturación recurrente con MercadoPago. Soporta Platform Billing (Nexo → Orgs) y Customer Billing (Org → Clientes).
+Sistema de facturación recurrente con MercadoPago para Nexo ERP.
 
 ---
 
 ## Arquitectura
 
-```mermaid
-flowchart TB
-    subgraph FRONTEND["🖥️ FRONTEND"]
-        MP[MiPlanPage]
-        SP[SuscripcionesListPage]
-        PP[PlanesPage]
-        CP[CuponesPage]
-        ME[MetricasPage]
-    end
-
-    subgraph BACKEND["⚙️ BACKEND"]
-        subgraph ROUTES["Routes (70+ endpoints)"]
-            R1[/planes]
-            R2[/suscripciones]
-            R3[/pagos]
-            R4[/cupones]
-            R5[/metricas]
-            R6[/uso]
-            R7[/webhooks]
-            R8[/checkout]
-        end
-
-        subgraph SERVICES["Services"]
-            S1[MercadoPagoService]
-            S2[CobroService]
-            S3[UsageTrackingService]
-            S4[ProrrateoService]
-            S5[NotificacionesService]
-        end
-
-        subgraph JOBS["Cron Jobs"]
-            J1[06:00 Cobros]
-            J2[07:00 Trials]
-            J3[08:00 Dunning]
-            J4[23:55 Uso usuarios]
-            J5[*/5min Polling MP]
-        end
-    end
-
-    subgraph GATEWAY["💳 GATEWAY"]
-        MP_API[MercadoPago API]
-        WH[Webhooks]
-    end
-
-    subgraph DB["💾 DATABASE"]
-        T1[(planes_suscripcion_org)]
-        T2[(suscripciones_org)]
-        T3[(pagos_suscripcion)]
-        T4[(cupones_org)]
-        T5[(uso_usuarios_org)]
-        T6[(ajustes_facturacion_org)]
-    end
-
-    FRONTEND --> ROUTES
-    ROUTES --> SERVICES
-    SERVICES --> DB
-    SERVICES <--> MP_API
-    WH --> R7
-    JOBS --> SERVICES
+```
+Frontend                    Backend                         Gateway
+─────────────────────────────────────────────────────────────────────
+MiPlanPage ───────────────► /checkout/iniciar ────────────► MercadoPago
+SuscripcionesListPage ────► /suscripciones/*                    │
+PlanesPage ───────────────► /planes/*                           │
+MetricasPage ─────────────► /metricas/*                         ▼
+                                                            Webhooks
+                                  ◄─────────────────────────────┘
+                                  │
+                           ┌──────┴──────┐
+                           │   Services  │
+                           ├─────────────┤
+                           │ MercadoPago │
+                           │ UsageTrack  │
+                           │ Prorrateo   │
+                           └──────┬──────┘
+                                  │
+                           ┌──────┴──────┐
+                           │  Database   │
+                           └─────────────┘
 ```
 
 ---
 
 ## Estados de Suscripción
 
-```mermaid
-stateDiagram-v2
-    [*] --> trial: Nuevo registro
-
-    trial --> activa: Pago exitoso
-    trial --> vencida: Expiró sin pago
-
-    activa --> pausada: Usuario pausa
-    activa --> cancelada: Usuario cancela
-    activa --> pendiente_pago: Falla cobro
-
-    pausada --> activa: Usuario reactiva
-    pausada --> cancelada: Cancela pausada
-
-    pendiente_pago --> activa: Pago exitoso
-    pendiente_pago --> grace_period: 3 días sin pago
-
-    grace_period --> activa: Pago exitoso
-    grace_period --> suspendida: 7 días sin pago
-
-    suspendida --> activa: Pago exitoso
-    suspendida --> cancelada: 30 días sin pago
-
-    vencida --> [*]
-    cancelada --> [*]
 ```
-
-### Acceso por Estado
+[Nuevo] ──► trial ──► activa ──► pausada ──► activa
+                │         │          └────► cancelada
+                │         └──► pendiente_pago ──► grace_period ──► suspendida ──► cancelada
+                │                     └──────────────► activa (pago exitoso)
+                └──► vencida (expiró sin pago)
+```
 
 | Estado | Acceso | UX |
 |--------|--------|-----|
-| `trial`, `activa`, `pendiente_pago` | ✅ Completo | Normal |
-| `grace_period` | ⚠️ Solo lectura | Banner urgente |
-| `pausada`, `suspendida`, `cancelada` | ❌ Bloqueado | Redirect `/planes` |
+| `trial`, `activa`, `pendiente_pago` | Completo | Normal |
+| `grace_period` | Solo lectura | Banner urgente |
+| `pausada`, `suspendida`, `cancelada` | Bloqueado | Redirect `/planes` |
+
+---
+
+## MercadoPago
+
+### Arquitectura de Cuentas de Prueba
+
+```
+CUENTA REAL (tu cuenta principal)
+  └── Panel Developers → Test Users
+          │
+          ├──► CUENTA VENDEDOR (Test User)
+          │    • Recibe los pagos
+          │    • Access Token: APP_USR-xxx
+          │    • Configura webhooks
+          │
+          └──► CUENTA COMPRADOR (Test User)
+               • Realiza los pagos
+               • Email: test_user_xxx@testuser.com
+               • Tiene tarjetas de prueba
+```
+
+**Importante**: Las cuentas de prueba generan tokens `APP_USR-` (no `TEST-`). Son un sandbox completo.
+
+### Configuración del Conector
+
+| Campo | Sandbox | Production |
+|-------|---------|------------|
+| `entorno` | `sandbox` | `production` |
+| `access_token` | De cuenta vendedor de prueba | De cuenta real |
+| `test_payer_email` | **Requerido** - Email comprador prueba | No se usa |
+| `webhook_secret` | Secret del webhook | Secret del webhook |
+
+### Flujo de Checkout
+
+```
+Usuario ──► Selecciona plan ──► POST /checkout/iniciar
+                                       │
+                                       ├─► Detecta entorno (sandbox/prod)
+                                       ├─► Si sandbox: usa test_payer_email del conector
+                                       ├─► Crea suscripción en MercadoPago
+                                       └─► Retorna init_point URL
+                                              │
+                               Redirect a MP ◄┘
+                                       │
+                               Pago completado
+                                       │
+                               Webhook ──► Actualiza estado → activa
+```
+
+### Detección de Entorno
+
+```javascript
+// El entorno se detecta por el campo del conector, NO por prefijo del token
+isSandbox() {
+    return this.credentials.environment === 'sandbox';
+}
+
+// Selección de URL de checkout
+const initPointUrl = isSandbox()
+    ? response.data.sandbox_init_point
+    : response.data.init_point;
+```
+
+### Setup Paso a Paso
+
+1. **Crear cuentas de prueba** en https://mercadopago.com.mx/developers/panel/test-users
+   - Usuario Vendedor (recibirá pagos)
+   - Usuario Comprador (realizará pagos)
+
+2. **Obtener credenciales del vendedor**
+   - Login con cuenta vendedor de prueba
+   - Panel developers → Credenciales de Producción
+   - Copiar `Access Token` (APP_USR-xxx)
+
+3. **Configurar webhook del vendedor**
+   - URL: `https://tu-dominio/api/v1/suscripciones-negocio/webhooks/mercadopago/1`
+   - Eventos: `subscription_preapproval`, `subscription_authorized_payment`
+   - Guardar el Secret
+
+4. **Crear conector en Nexo**
+   - Gateway: MercadoPago
+   - Entorno: Sandbox
+   - Access Token: (del paso 2)
+   - Email Pagador de Prueba: `test_user_xxx@testuser.com`
+   - Webhook Secret: (del paso 3)
+   - Marcar como principal
+
+### Tarjetas de Prueba
+
+| Tarjeta | Número | CVV | Vencimiento |
+|---------|--------|-----|-------------|
+| Mastercard | 5474 9254 3267 0366 | 123 | 11/27 |
+| Visa | 4509 9535 6623 3704 | 123 | 11/27 |
+| Amex | 3711 803032 57522 | 1234 | 11/27 |
+
+### Errores Comunes
+
+| Error | Causa | Solución |
+|-------|-------|----------|
+| "Both payer and collector must be real or test users" | Email real en sandbox | Verificar `test_payer_email` en conector |
+| "No se pudo obtener enlace de pago" | Conector mal configurado | Verificar conectividad, verificar es_principal |
+| Webhook no procesa | URL incorrecta o secret malo | Verificar en cuenta vendedor de prueba |
 
 ---
 
 ## Seat-Based Billing
 
-Facturación por cantidad de usuarios activos.
+### Tracking Diario (23:55)
 
-```mermaid
-flowchart LR
-    subgraph TRACKING["📊 TRACKING DIARIO"]
-        JOB[Job 23:55] --> COUNT[Contar usuarios activos]
-        COUNT --> SAVE[(uso_usuarios_org)]
-        COUNT --> MAX[Actualizar usuarios_max_periodo]
-    end
-
-    subgraph COBRO["💰 COBRO MENSUAL"]
-        C1[Obtener usuarios_max_periodo]
-        C2[Comparar vs usuarios_incluidos]
-        C3{¿Excede?}
-        C4[Calcular ajuste]
-        C5[Cobrar base + ajuste]
-
-        C1 --> C2 --> C3
-        C3 -->|Sí| C4 --> C5
-        C3 -->|No| C5
-    end
-
-    subgraph UI["🖥️ UI"]
-        IND[UsageIndicator]
-        IND --> |Verde| N[<80%]
-        IND --> |Amarillo| W[80-100%]
-        IND --> |Rojo| E[>100%]
-    end
-
-    TRACKING --> COBRO
+```sql
+INSERT INTO uso_usuarios_org (organizacion_id, fecha, usuarios_activos)
+SELECT organizacion_id, CURRENT_DATE, COUNT(*)
+FROM usuarios WHERE activo = true
+GROUP BY organizacion_id;
 ```
 
-### Configuración por Plan
+### Cobro Mensual
 
-| Plan | Usuarios Incluidos | Precio Extra | Límite |
-|------|-------------------|--------------|--------|
+```
+usuarios_max_periodo = MAX(usuarios_activos) durante el período
+usuarios_extra = usuarios_max_periodo - usuarios_incluidos
+ajuste = usuarios_extra × precio_usuario_extra
+total = precio_base + ajuste
+```
+
+| Plan | Incluidos | Extra | Límite |
+|------|-----------|-------|--------|
 | Trial | 3 | N/A | Hard (bloquea) |
-| Pro | 5 | $49/mes | Soft (cobra) |
-
----
-
-## Flujo de Cobro
-
-```mermaid
-sequenceDiagram
-    participant JOB as Cron Job (06:00)
-    participant SRV as CobroService
-    participant USG as UsageTrackingService
-    participant MP as MercadoPago
-    participant DB as Database
-    participant NOT as Notificaciones
-
-    JOB->>SRV: procesarCobros()
-    SRV->>DB: Obtener suscripciones a cobrar
-
-    loop Cada suscripción
-        SRV->>USG: calcularAjusteUsuarios()
-        USG-->>SRV: { monto, usuarios }
-        SRV->>SRV: montoTotal = base + ajuste
-        SRV->>MP: Crear pago (preapproval)
-
-        alt Pago exitoso
-            MP-->>SRV: approved
-            SRV->>DB: Registrar pago
-            SRV->>DB: Reset usuarios_max_periodo
-            SRV->>NOT: Enviar recibo
-        else Pago fallido
-            MP-->>SRV: rejected
-            SRV->>DB: Estado → pendiente_pago
-            SRV->>NOT: Notificar fallo
-        end
-    end
-```
-
----
-
-## Flujo de Checkout (Platform Billing)
-
-```mermaid
-sequenceDiagram
-    participant U as Usuario
-    participant FE as Frontend
-    participant BE as Backend
-    participant MP as MercadoPago
-
-    U->>FE: Selecciona plan
-    FE->>BE: POST /checkout/iniciar
-    BE->>MP: Crear preferencia
-    MP-->>BE: init_point URL
-    BE-->>FE: { checkoutUrl }
-    FE->>U: Redirect a MP
-
-    U->>MP: Completa pago
-    MP->>BE: Webhook payment.created
-    BE->>BE: Crear/actualizar suscripción
-    BE->>BE: Registrar pago
-
-    MP->>U: Redirect back_url
-    U->>FE: Página de éxito
-```
-
----
-
-## Prorrateo en Cambio de Plan
-
-```mermaid
-flowchart TB
-    subgraph CALCULO["🧮 CÁLCULO"]
-        D1[Días usados en período actual]
-        D2[Días restantes]
-        F[Factor = restantes / total]
-
-        CR[Crédito = precio_actual × factor]
-        CA[Cargo = precio_nuevo × factor]
-        DIF[Diferencia = cargo - crédito]
-    end
-
-    subgraph ACCION["⚡ ACCIÓN"]
-        UP{¿Upgrade?}
-        CB[Cobrar diferencia inmediato]
-        CD[Acumular crédito]
-    end
-
-    D1 --> F
-    D2 --> F
-    F --> CR
-    F --> CA
-    CR --> DIF
-    CA --> DIF
-    DIF --> UP
-    UP -->|Diferencia > 0| CB
-    UP -->|Diferencia < 0| CD
-```
-
-### Ejemplo
-
-- Plan actual: Pro $599/mes, día 15 del período
-- Plan nuevo: Premium $999/mes
-- Factor: 15/30 = 0.5
-- Crédito: $599 × 0.5 = $299.50
-- Cargo: $999 × 0.5 = $499.50
-- **Cobro inmediato**: $200
-
----
-
-## Endpoints Principales
-
-### Suscripciones
-```
-GET    /suscripciones              # Listar con filtros
-GET    /suscripciones/:id          # Detalle
-GET    /suscripciones/mi-suscripcion # Suscripción del usuario actual
-POST   /suscripciones/cambiar-plan # Cambiar plan (admin)
-POST   /suscripciones/mi-plan/cambiar # Cambiar mi plan
-PATCH  /suscripciones/:id/pausar   # Pausar
-PATCH  /suscripciones/:id/reactivar # Reactivar
-POST   /suscripciones/:id/cancelar # Cancelar
-```
-
-### Uso de Usuarios
-```
-GET    /uso/resumen                # Resumen actual
-GET    /uso/historial              # Historial diario
-GET    /uso/proyeccion             # Proyección próximo cobro
-GET    /uso/verificar-limite       # Verificar antes de crear usuario
-```
-
-### Checkout Público (sin auth)
-```
-GET    /checkout/link/:token       # Obtener datos checkout
-POST   /checkout/link/:token/pago  # Iniciar pago
-```
-
----
-
-## Tablas Principales
-
-| Tabla | Propósito |
-|-------|-----------|
-| `planes_suscripcion_org` | Catálogo de planes por organización |
-| `suscripciones_org` | Suscripciones activas |
-| `pagos_suscripcion` | Historial de pagos |
-| `cupones_org` | Cupones de descuento |
-| `checkout_tokens` | Tokens para checkout público |
-| `uso_usuarios_org` | Tracking diario de usuarios |
-| `ajustes_facturacion_org` | Log de ajustes (usuarios extra, prorrateo) |
-| `conectores_pasarela_pago` | Configuración de gateways |
-
----
-
-## Métricas Disponibles
-
-| Métrica | Endpoint |
-|---------|----------|
-| MRR (Ingreso Mensual Recurrente) | `/metricas/mrr` |
-| ARR (Ingreso Anual Recurrente) | `/metricas/arr` |
-| Churn Rate | `/metricas/churn` |
-| LTV (Lifetime Value) | `/metricas/ltv` |
-| Suscriptores Activos | `/metricas/suscriptores-activos` |
-| Distribución por Estado | `/metricas/distribucion-estado` |
-| Top Planes | `/metricas/top-planes` |
-| Evolución MRR/Churn/Suscriptores | `/metricas/evolucion-*` |
-
----
-
-## Estrategias de Billing
-
-```mermaid
-classDiagram
-    class BillingStrategy {
-        <<interface>>
-        +crearCheckout()
-        +procesarWebhook()
-        +cancelarSuscripcion()
-    }
-
-    class PlatformBillingStrategy {
-        Nexo Team → Organizaciones
-        org_vendedora_id = 1
-    }
-
-    class CustomerBillingStrategy {
-        Organización → Sus Clientes
-        es_venta_propia = true
-    }
-
-    BillingStrategy <|-- PlatformBillingStrategy
-    BillingStrategy <|-- CustomerBillingStrategy
-```
-
-**Platform Billing**: Nexo Team (org_id=1) vende a otras organizaciones.
-**Customer Billing**: Una organización vende suscripciones a sus propios clientes.
+| Pro | 5 | $49/usuario | Soft (cobra) |
 
 ---
 
@@ -349,12 +183,93 @@ classDiagram
 
 | Hora | Job | Función |
 |------|-----|---------|
-| 06:00 | `procesar-cobros` | Procesa cobros automáticos |
+| 06:00 | `procesar-cobros` | Cobros automáticos |
 | 07:00 | `verificar-trials` | Expira trials vencidos |
-| 08:00 | `procesar-dunning` | Transiciones: pendiente → grace → suspendida |
-| 23:55 | `registrar-uso-usuarios` | Guarda usuarios activos diarios |
+| 08:00 | `procesar-dunning` | pendiente → grace → suspendida |
+| 23:55 | `registrar-uso-usuarios` | Snapshot usuarios activos |
 | */5min | `polling-suscripciones` | Fallback si webhooks fallan |
 
 ---
 
-**Estado**: ✅ Completo | **Última revisión**: 30 Enero 2026
+## Endpoints Principales
+
+```
+# Suscripciones
+GET    /suscripciones/mi-suscripcion
+POST   /suscripciones/mi-plan/cambiar
+PATCH  /suscripciones/:id/pausar
+POST   /suscripciones/:id/cancelar
+
+# Checkout
+POST   /checkout/iniciar
+GET    /checkout/link/:token
+POST   /checkout/link/:token/pago
+
+# Uso
+GET    /uso/resumen
+GET    /uso/proyeccion
+GET    /uso/verificar-limite
+
+# Métricas
+GET    /metricas/mrr
+GET    /metricas/churn
+GET    /metricas/suscriptores-activos
+```
+
+---
+
+## Tablas
+
+| Tabla | Propósito |
+|-------|-----------|
+| `planes_suscripcion_org` | Catálogo de planes |
+| `suscripciones_org` | Suscripciones activas |
+| `pagos_suscripcion` | Historial de pagos |
+| `uso_usuarios_org` | Tracking diario usuarios |
+| `ajustes_facturacion_org` | Log de ajustes |
+| `conectores_pago_org` | Gateways por organización |
+
+---
+
+## Pendientes
+
+### Alta Prioridad
+
+| Feature | Estado |
+|---------|--------|
+| Ajuste por usuarios extra (probar exceder límite) | Por probar |
+| Prorrateo cambio de plan mid-cycle | Por implementar |
+
+### Media Prioridad
+
+| Feature |
+|---------|
+| Retry cuando init_point viene vacío |
+| Notificaciones email (recibos, alertas) |
+| Customer Billing (org vende a sus clientes) |
+
+### Fórmula Prorrateo
+
+```
+factor = días_restantes / días_período
+crédito = precio_actual × factor
+cargo = precio_nuevo × factor
+diferencia = cargo - crédito
+
+diferencia > 0 → cobrar inmediato (upgrade)
+diferencia < 0 → acumular crédito (downgrade)
+```
+
+---
+
+## Credenciales Actuales (Nexo Team - Sandbox)
+
+```
+# Cuenta Comprador de Prueba
+Email: test_user_2716725750605322996@testuser.com
+Password: UCgyF4L44D
+```
+
+---
+
+**Estado**: Checkout funcional | **Última revisión**: 30 Enero 2026

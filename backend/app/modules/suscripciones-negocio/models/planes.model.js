@@ -68,6 +68,7 @@ class PlanesModel {
                     id, codigo, nombre, descripcion,
                     precio_mensual, precio_trimestral, precio_anual, moneda,
                     dias_trial, limites, features,
+                    precio_usuario_adicional, usuarios_incluidos, max_usuarios_hard,
                     color, icono, destacado, activo, orden_display,
                     creado_en, actualizado_en
                 FROM planes_suscripcion_org
@@ -105,6 +106,7 @@ class PlanesModel {
                     id, codigo, nombre, descripcion,
                     precio_mensual, precio_trimestral, precio_anual, moneda,
                     dias_trial, limites, features,
+                    precio_usuario_adicional, usuarios_incluidos, max_usuarios_hard,
                     color, icono, destacado, orden_display
                 FROM planes_suscripcion_org
                 WHERE activo = TRUE
@@ -130,6 +132,7 @@ class PlanesModel {
                     id, codigo, nombre, descripcion,
                     precio_mensual, precio_trimestral, precio_anual, moneda,
                     dias_trial, limites, features,
+                    precio_usuario_adicional, usuarios_incluidos, max_usuarios_hard,
                     color, icono, destacado, activo, orden_display,
                     creado_en, actualizado_en, creado_por
                 FROM planes_suscripcion_org
@@ -155,6 +158,7 @@ class PlanesModel {
                     id, codigo, nombre, descripcion,
                     precio_mensual, precio_trimestral, precio_anual, moneda,
                     dias_trial, limites, features,
+                    precio_usuario_adicional, usuarios_incluidos, max_usuarios_hard,
                     color, icono, destacado, activo
                 FROM planes_suscripcion_org
                 WHERE codigo = $1

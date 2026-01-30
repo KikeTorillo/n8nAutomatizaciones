@@ -48,3 +48,6 @@ export { default as AlertaBloqueado } from './AlertaBloqueado';
 
 // Cards
 export { default as HistorialPagosCard } from './HistorialPagosCard';
+
+// Uso de usuarios (Seat-based billing)
+export { default as UsageIndicator } from './UsageIndicator';

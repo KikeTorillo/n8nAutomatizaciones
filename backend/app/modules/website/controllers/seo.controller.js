@@ -76,7 +76,7 @@ const WebsiteSEOController = {
    * @requires tenant
    */
   obtenerAuditoria: asyncHandler(async (req, res) => {
-    const organizacionId = req.user.organizacion_id;
+    const organizacionId = req.tenant.organizacionId;
     const { website_id } = req.query;
 
     const auditoria = await WebsiteSEOService.auditar(organizacionId, website_id);
@@ -94,7 +94,7 @@ const WebsiteSEOController = {
    * @requires tenant
    */
   previewGoogle: asyncHandler(async (req, res) => {
-    const organizacionId = req.user.organizacion_id;
+    const organizacionId = req.tenant.organizacionId;
     const { website_id } = req.query;
 
     if (!website_id) {
@@ -119,7 +119,7 @@ const WebsiteSEOController = {
    * @requires tenant
    */
   obtenerSchema: asyncHandler(async (req, res) => {
-    const organizacionId = req.user.organizacion_id;
+    const organizacionId = req.tenant.organizacionId;
     const { website_id, tipo = 'LocalBusiness' } = req.query;
 
     if (!website_id) {

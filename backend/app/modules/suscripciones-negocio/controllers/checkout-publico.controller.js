@@ -187,8 +187,11 @@ class CheckoutPublicoController {
         // Determinar email del pagador basado en el entorno del conector
         let emailPagador;
         if (mpService.isSandbox()) {
-            emailPagador = process.env.MERCADOPAGO_TEST_PAYER_EMAIL;
-            logger.info(`[CheckoutPublico] Entorno sandbox detectado (token TEST-), usando email: ${emailPagador}`);
+            emailPagador = mpService.getTestPayerEmail();
+            if (!emailPagador) {
+                throw new Error('Modo Sandbox requiere configurar el Email Pagador de Prueba en el conector de MercadoPago');
+            }
+            logger.info(`[CheckoutPublico] Entorno sandbox, usando email de prueba: ${emailPagador}`);
         } else {
             emailPagador = checkout.cliente_email;
         }

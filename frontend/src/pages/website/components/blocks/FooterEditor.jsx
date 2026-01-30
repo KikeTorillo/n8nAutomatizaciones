@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useMemo } from 'react';
 import { Save, Plus, Trash2 } from 'lucide-react';
 import {
   Button,
@@ -6,88 +6,50 @@ import {
   Select,
   Textarea
 } from '@/components/ui';
+import { useBlockEditor, useArrayItems } from '../../hooks';
 
 /**
  * FooterEditor - Editor del bloque Footer
  */
 function FooterEditor({ contenido, onGuardar, tema, isSaving }) {
-  const [form, setForm] = useState({
-    copyright: contenido.copyright || `© ${new Date().getFullYear()} Mi Negocio. Todos los derechos reservados.`,
-    logo: contenido.logo || '',
-    descripcion: contenido.descripcion || '',
-    links: contenido.links || [
+  // Valores por defecto del formulario
+  const defaultValues = useMemo(() => ({
+    copyright: `© ${new Date().getFullYear()} Mi Negocio. Todos los derechos reservados.`,
+    logo: '',
+    descripcion: '',
+    links: [
       { texto: 'Inicio', url: '/' },
       { texto: 'Servicios', url: '/servicios' },
       { texto: 'Contacto', url: '/contacto' },
     ],
-    redes_sociales: contenido.redes_sociales || [],
-    columnas: contenido.columnas || 1,
-    estilo: contenido.estilo || 'oscuro',
-  });
+    redes_sociales: [],
+    columnas: 1,
+    estilo: 'oscuro',
+  }), []);
 
-  const [cambios, setCambios] = useState(false);
+  // Default items para arrays
+  const defaultLink = useMemo(() => ({ texto: '', url: '' }), []);
+  const defaultRed = useMemo(() => ({ red: 'facebook', url: '' }), []);
 
-  useEffect(() => {
-    setCambios(JSON.stringify(form) !== JSON.stringify({
-      copyright: contenido.copyright || `© ${new Date().getFullYear()} Mi Negocio. Todos los derechos reservados.`,
-      logo: contenido.logo || '',
-      descripcion: contenido.descripcion || '',
-      links: contenido.links || [
-        { texto: 'Inicio', url: '/' },
-        { texto: 'Servicios', url: '/servicios' },
-        { texto: 'Contacto', url: '/contacto' },
-      ],
-      redes_sociales: contenido.redes_sociales || [],
-      columnas: contenido.columnas || 1,
-      estilo: contenido.estilo || 'oscuro',
-    }));
-  }, [form, contenido]);
+  // Hook para manejo del formulario
+  const { form, setForm, cambios, handleSubmit, handleFieldChange } = useBlockEditor(
+    contenido,
+    defaultValues
+  );
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onGuardar(form);
-    setCambios(false);
-  };
+  // Hook para manejo del array de links
+  const {
+    handleAgregar: handleAgregarLink,
+    handleEliminar: handleEliminarLink,
+    handleChange: handleLinkChange,
+  } = useArrayItems(setForm, 'links', defaultLink);
 
-  const handleAgregarLink = () => {
-    setForm({
-      ...form,
-      links: [...form.links, { texto: '', url: '' }]
-    });
-  };
-
-  const handleEliminarLink = (index) => {
-    setForm({
-      ...form,
-      links: form.links.filter((_, i) => i !== index)
-    });
-  };
-
-  const handleLinkChange = (index, campo, valor) => {
-    const nuevos = [...form.links];
-    nuevos[index] = { ...nuevos[index], [campo]: valor };
-    setForm({ ...form, links: nuevos });
-  };
-
-  const handleAgregarRed = () => {
-    setForm({
-      ...form,
-      redes_sociales: [...form.redes_sociales, { red: 'facebook', url: '' }]
-    });
-  };
-
-  const handleEliminarRed = (index) => {
-    setForm({
-      ...form,
-      redes_sociales: form.redes_sociales.filter((_, i) => i !== index)
-    });
-  };
-
-  const handleRedChange = (index, campo, valor) => {
-    const nuevos = [...form.redes_sociales];
-    nuevos[index] = { ...nuevos[index], [campo]: valor };
-    setForm({ ...form, redes_sociales: nuevos });
-  };
+  // Hook para manejo del array de redes sociales
+  const {
+    handleAgregar: handleAgregarRed,
+    handleEliminar: handleEliminarRed,
+    handleChange: handleRedChange,
+  } = useArrayItems(setForm, 'redes_sociales', defaultRed);
 
   const estiloOptions = [
     { value: 'oscuro', label: 'Oscuro' },
@@ -106,12 +68,12 @@ function FooterEditor({ contenido, onGuardar, tema, isSaving }) {
   ];
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit(onGuardar)} className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
         <Select
           label="Estilo"
           value={form.estilo}
-          onChange={(e) => setForm({ ...form, estilo: e.target.value })}
+          onChange={(e) => handleFieldChange('estilo', e.target.value)}
           options={estiloOptions}
           className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
@@ -119,7 +81,7 @@ function FooterEditor({ contenido, onGuardar, tema, isSaving }) {
           type="url"
           label="Logo URL (opcional)"
           value={form.logo}
-          onChange={(e) => setForm({ ...form, logo: e.target.value })}
+          onChange={(e) => handleFieldChange('logo', e.target.value)}
           placeholder="https://ejemplo.com/logo.png"
           className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
@@ -128,7 +90,7 @@ function FooterEditor({ contenido, onGuardar, tema, isSaving }) {
       <Textarea
         label="Descripción breve (opcional)"
         value={form.descripcion}
-        onChange={(e) => setForm({ ...form, descripcion: e.target.value })}
+        onChange={(e) => handleFieldChange('descripcion', e.target.value)}
         placeholder="Breve descripción del negocio"
         rows={2}
         className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
@@ -137,7 +99,7 @@ function FooterEditor({ contenido, onGuardar, tema, isSaving }) {
       <Input
         label="Texto de copyright"
         value={form.copyright}
-        onChange={(e) => setForm({ ...form, copyright: e.target.value })}
+        onChange={(e) => handleFieldChange('copyright', e.target.value)}
         className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
       />
 

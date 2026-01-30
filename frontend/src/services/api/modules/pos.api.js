@@ -5,6 +5,14 @@ import apiClient from '../client';
  * Ventas, sesiones de caja, cupones, promociones
  */
 export const posApi = {
+  // ========== Configuración POS ==========
+
+  /**
+   * Obtener tipos de venta disponibles
+   * @returns {Promise<Object>} Array de configuración de tipos de venta
+   */
+  obtenerTiposVenta: () => apiClient.get('/pos/config/tipos-venta'),
+
   // ========== Ventas POS ==========
 
   /**

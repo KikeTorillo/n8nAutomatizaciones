@@ -19,7 +19,11 @@ const credencialesMercadoPago = Joi.object({
         .messages({
             'any.required': 'El access_token de MercadoPago es requerido'
         }),
-    public_key: Joi.string().optional()
+    public_key: Joi.string().optional(),
+    test_payer_email: Joi.string().email().optional()
+        .messages({
+            'string.email': 'El email de prueba debe ser un email válido'
+        })
 }).unknown(true); // Permite campos adicionales
 
 const credencialesStripe = Joi.object({
@@ -55,6 +59,19 @@ const credencialesPorGateway = Joi.alternatives().conditional(Joi.ref('...gatewa
         })
     })
 });
+
+/**
+ * Validación custom: MercadoPago en sandbox requiere test_payer_email
+ */
+const validarTestPayerEmail = (value, helpers) => {
+    const { gateway, entorno, credenciales } = value;
+    if (gateway === 'mercadopago' && entorno === 'sandbox') {
+        if (!credenciales?.test_payer_email) {
+            return helpers.error('custom.testPayerEmailRequired');
+        }
+    }
+    return value;
+};
 
 /**
  * POST /conectores - Crear conector
@@ -95,6 +112,8 @@ const crear = {
             .optional(),
         es_principal: Joi.boolean()
             .default(false)
+    }).custom(validarTestPayerEmail).messages({
+        'custom.testPayerEmailRequired': 'MercadoPago en modo Sandbox requiere el Email Pagador de Prueba'
     })
 };
 

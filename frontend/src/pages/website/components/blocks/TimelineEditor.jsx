@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { Save, Plus, Trash2, Clock, GripVertical, Calendar, Flag, Star, Zap, CheckCircle } from 'lucide-react';
 import {
   Button,
@@ -8,6 +8,7 @@ import {
   ToggleSwitch
 } from '@/components/ui';
 import { AIGenerateButton, AISuggestionBanner } from '../AIGenerator';
+import { useBlockEditor, useArrayItems } from '../../hooks';
 
 // Iconos disponibles para los items del timeline
 const ICON_OPTIONS = [
@@ -23,40 +24,44 @@ const ICON_OPTIONS = [
  * TimelineEditor - Editor del bloque Timeline (Linea de Tiempo)
  */
 function TimelineEditor({ contenido, onGuardar, tema, isSaving, industria = 'default' }) {
-  const [form, setForm] = useState({
-    titulo_seccion: contenido.titulo_seccion || 'Nuestra Historia',
-    subtitulo_seccion: contenido.subtitulo_seccion || 'Un recorrido por nuestros logros',
-    orientacion: contenido.orientacion || 'vertical',
-    mostrar_linea: contenido.mostrar_linea !== false,
-    alternar_lados: contenido.alternar_lados !== false,
-    items: contenido.items || [
+  // Valores por defecto del formulario
+  const defaultValues = useMemo(() => ({
+    titulo_seccion: 'Nuestra Historia',
+    subtitulo_seccion: 'Un recorrido por nuestros logros',
+    orientacion: 'vertical',
+    mostrar_linea: true,
+    alternar_lados: true,
+    items: [
       { fecha: '2020', titulo: 'Fundacion', descripcion: 'Iniciamos operaciones con un pequeno equipo.', icono: 'flag' },
       { fecha: '2022', titulo: 'Expansion', descripcion: 'Abrimos nuestra segunda oficina.', icono: 'star' },
       { fecha: '2024', titulo: 'Reconocimiento', descripcion: 'Recibimos premio a la innovacion.', icono: 'zap' },
     ],
-  });
+  }), []);
 
-  const [cambios, setCambios] = useState(false);
+  // Default item para nuevos eventos
+  const defaultItem = useMemo(() => ({
+    fecha: '',
+    titulo: 'Nuevo Evento',
+    descripcion: '',
+    icono: 'calendar'
+  }), []);
+
+  // Hook para manejo del formulario
+  const { form, setForm, cambios, handleSubmit, handleFieldChange } = useBlockEditor(
+    contenido,
+    defaultValues
+  );
+
+  // Hook para manejo del array de items
+  const {
+    handleAgregar: handleAgregarItem,
+    handleEliminar: handleEliminarItem,
+    handleChange: handleChangeItem,
+  } = useArrayItems(setForm, 'items', defaultItem);
 
   const timelineVacio = !contenido.items || contenido.items.length === 0;
 
-  useEffect(() => {
-    setCambios(JSON.stringify(form) !== JSON.stringify({
-      titulo_seccion: contenido.titulo_seccion || 'Nuestra Historia',
-      subtitulo_seccion: contenido.subtitulo_seccion || 'Un recorrido por nuestros logros',
-      orientacion: contenido.orientacion || 'vertical',
-      mostrar_linea: contenido.mostrar_linea !== false,
-      alternar_lados: contenido.alternar_lados !== false,
-      items: contenido.items || [],
-    }));
-  }, [form, contenido]);
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onGuardar(form);
-    setCambios(false);
-  };
-
+  // Callback para generación de IA de bloque completo
   const handleAIGenerate = useCallback((generatedContent) => {
     setForm(prev => ({
       ...prev,
@@ -64,27 +69,7 @@ function TimelineEditor({ contenido, onGuardar, tema, isSaving, industria = 'def
       subtitulo_seccion: generatedContent.subtitulo_seccion || prev.subtitulo_seccion,
       items: generatedContent.items || prev.items,
     }));
-  }, []);
-
-  const handleAgregarItem = () => {
-    setForm({
-      ...form,
-      items: [...form.items, { fecha: '', titulo: 'Nuevo Evento', descripcion: '', icono: 'calendar' }]
-    });
-  };
-
-  const handleEliminarItem = (index) => {
-    setForm({
-      ...form,
-      items: form.items.filter((_, i) => i !== index)
-    });
-  };
-
-  const handleChangeItem = (index, campo, valor) => {
-    const nuevos = [...form.items];
-    nuevos[index] = { ...nuevos[index], [campo]: valor };
-    setForm({ ...form, items: nuevos });
-  };
+  }, [setForm]);
 
   const orientacionOptions = [
     { value: 'vertical', label: 'Vertical' },
@@ -94,7 +79,7 @@ function TimelineEditor({ contenido, onGuardar, tema, isSaving, industria = 'def
   const iconoOptions = ICON_OPTIONS.map(opt => ({ value: opt.value, label: opt.label }));
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit(onGuardar)} className="space-y-4">
       {timelineVacio && (
         <AISuggestionBanner
           tipo="timeline"
@@ -113,19 +98,19 @@ function TimelineEditor({ contenido, onGuardar, tema, isSaving, industria = 'def
                 tipo="timeline"
                 campo="titulo"
                 industria={industria}
-                onGenerate={(text) => setForm({ ...form, titulo_seccion: text })}
+                onGenerate={(text) => handleFieldChange('titulo_seccion', text)}
                 size="sm"
               />
             </span>
           }
           value={form.titulo_seccion}
-          onChange={(e) => setForm({ ...form, titulo_seccion: e.target.value })}
+          onChange={(e) => handleFieldChange('titulo_seccion', e.target.value)}
           className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
         <Select
           label="Orientacion"
           value={form.orientacion}
-          onChange={(e) => setForm({ ...form, orientacion: e.target.value })}
+          onChange={(e) => handleFieldChange('orientacion', e.target.value)}
           options={orientacionOptions}
           className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
@@ -134,7 +119,7 @@ function TimelineEditor({ contenido, onGuardar, tema, isSaving, industria = 'def
       <Input
         label="Subtitulo (opcional)"
         value={form.subtitulo_seccion}
-        onChange={(e) => setForm({ ...form, subtitulo_seccion: e.target.value })}
+        onChange={(e) => handleFieldChange('subtitulo_seccion', e.target.value)}
         className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
       />
 
@@ -142,13 +127,13 @@ function TimelineEditor({ contenido, onGuardar, tema, isSaving, industria = 'def
       <div className="flex items-center gap-6">
         <ToggleSwitch
           checked={form.mostrar_linea}
-          onChange={(checked) => setForm({ ...form, mostrar_linea: checked })}
+          onChange={(checked) => handleFieldChange('mostrar_linea', checked)}
           label="Mostrar linea conectora"
         />
         {form.orientacion === 'vertical' && (
           <ToggleSwitch
             checked={form.alternar_lados}
-            onChange={(checked) => setForm({ ...form, alternar_lados: checked })}
+            onChange={(checked) => handleFieldChange('alternar_lados', checked)}
             label="Alternar lados"
           />
         )}

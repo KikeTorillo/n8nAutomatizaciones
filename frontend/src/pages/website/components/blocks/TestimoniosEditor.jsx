@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Save, Plus, Trash2, Star, Sparkles } from 'lucide-react';
+import { useCallback, useMemo } from 'react';
+import { Save, Plus, Trash2, Star } from 'lucide-react';
 import {
   Button,
   Input,
@@ -7,42 +7,45 @@ import {
   Textarea
 } from '@/components/ui';
 import { AIGenerateButton, AISuggestionBanner } from '../AIGenerator';
+import { useBlockEditor, useArrayItems } from '../../hooks';
 
 /**
  * TestimoniosEditor - Editor del bloque Testimonios
  */
 function TestimoniosEditor({ contenido, onGuardar, tema, isSaving, industria = 'default' }) {
-  const [form, setForm] = useState({
-    titulo: contenido.titulo || 'Lo que dicen nuestros clientes',
-    subtitulo: contenido.subtitulo || '',
-    testimonios: contenido.testimonios || [
-      { autor: '', cargo: '', texto: '', estrellas: 5, foto: '' }
-    ],
-    estilo: contenido.estilo || 'cards',
-  });
+  // Valores por defecto del formulario
+  const defaultValues = useMemo(() => ({
+    titulo: 'Lo que dicen nuestros clientes',
+    subtitulo: '',
+    testimonios: [{ autor: '', cargo: '', texto: '', estrellas: 5, foto: '' }],
+    estilo: 'cards',
+  }), []);
 
-  const [cambios, setCambios] = useState(false);
+  // Default item para nuevos testimonios
+  const defaultTestimonio = useMemo(() => ({
+    autor: '',
+    cargo: '',
+    texto: '',
+    estrellas: 5,
+    foto: '',
+  }), []);
+
+  // Hook para manejo del formulario
+  const { form, setForm, cambios, handleSubmit, handleFieldChange } = useBlockEditor(
+    contenido,
+    defaultValues
+  );
+
+  // Hook para manejo del array de testimonios
+  const {
+    handleAgregar,
+    handleEliminar,
+    handleChange,
+  } = useArrayItems(setForm, 'testimonios', defaultTestimonio);
 
   // Verificar si el contenido está esencialmente vacío
   const testimoniosVacios = !contenido.testimonios || contenido.testimonios.length === 0 ||
     (contenido.testimonios.length === 1 && !contenido.testimonios[0]?.texto);
-
-  useEffect(() => {
-    setCambios(JSON.stringify(form) !== JSON.stringify({
-      titulo: contenido.titulo || 'Lo que dicen nuestros clientes',
-      subtitulo: contenido.subtitulo || '',
-      testimonios: contenido.testimonios || [
-        { autor: '', cargo: '', texto: '', estrellas: 5, foto: '' }
-      ],
-      estilo: contenido.estilo || 'cards',
-    }));
-  }, [form, contenido]);
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onGuardar(form);
-    setCambios(false);
-  };
 
   // Callback para generación de IA de bloque completo
   const handleAIGenerate = useCallback((generatedContent) => {
@@ -57,27 +60,7 @@ function TestimoniosEditor({ contenido, onGuardar, tema, isSaving, industria = '
         foto: '',
       })) : prev.testimonios,
     }));
-  }, []);
-
-  const handleAgregar = () => {
-    setForm({
-      ...form,
-      testimonios: [...form.testimonios, { autor: '', cargo: '', texto: '', estrellas: 5, foto: '' }]
-    });
-  };
-
-  const handleEliminar = (index) => {
-    setForm({
-      ...form,
-      testimonios: form.testimonios.filter((_, i) => i !== index)
-    });
-  };
-
-  const handleChange = (index, campo, valor) => {
-    const nuevos = [...form.testimonios];
-    nuevos[index] = { ...nuevos[index], [campo]: valor };
-    setForm({ ...form, testimonios: nuevos });
-  };
+  }, [setForm]);
 
   const estiloOptions = [
     { value: 'cards', label: 'Tarjetas' },
@@ -86,7 +69,7 @@ function TestimoniosEditor({ contenido, onGuardar, tema, isSaving, industria = '
   ];
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit(onGuardar)} className="space-y-4">
       {/* Banner de sugerencia IA para contenido vacío */}
       {testimoniosVacios && (
         <AISuggestionBanner
@@ -105,20 +88,20 @@ function TestimoniosEditor({ contenido, onGuardar, tema, isSaving, industria = '
                 tipo="testimonios"
                 campo="titulo"
                 industria={industria}
-                onGenerate={(text) => setForm({ ...form, titulo: text })}
+                onGenerate={(text) => handleFieldChange('titulo', text)}
                 size="sm"
               />
             </span>
           }
           value={form.titulo}
-          onChange={(e) => setForm({ ...form, titulo: e.target.value })}
+          onChange={(e) => handleFieldChange('titulo', e.target.value)}
           placeholder="Lo que dicen nuestros clientes"
           className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
         <Select
           label="Estilo de presentación"
           value={form.estilo}
-          onChange={(e) => setForm({ ...form, estilo: e.target.value })}
+          onChange={(e) => handleFieldChange('estilo', e.target.value)}
           options={estiloOptions}
           className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
@@ -127,7 +110,7 @@ function TestimoniosEditor({ contenido, onGuardar, tema, isSaving, industria = '
       <Input
         label="Subtítulo (opcional)"
         value={form.subtitulo}
-        onChange={(e) => setForm({ ...form, subtitulo: e.target.value })}
+        onChange={(e) => handleFieldChange('subtitulo', e.target.value)}
         placeholder="Opiniones reales de clientes satisfechos"
         className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
       />

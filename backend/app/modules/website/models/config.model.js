@@ -172,7 +172,9 @@ class WebsiteConfigModel {
                 'favicon_url', 'logo_url', 'logo_alt',
                 'color_primario', 'color_secundario', 'color_acento',
                 'color_texto', 'color_fondo',
-                'fuente_titulos', 'fuente_cuerpo', 'redes_sociales'
+                'fuente_titulos', 'fuente_cuerpo', 'redes_sociales',
+                'og_image_url', 'schema_type', 'schema_datos',
+                'idiomas_activos', 'idioma_default'
             ];
 
             for (const campo of camposPermitidos) {

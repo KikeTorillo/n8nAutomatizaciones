@@ -20,6 +20,15 @@ const RLSContextManager = require('../rlsContextManager');
 const { PlanLimitExceededError } = require('../errors');
 const logger = require('../logger');
 
+// Lazy load para evitar dependencia circular
+let UsageTrackingService = null;
+const getUsageTrackingService = () => {
+    if (!UsageTrackingService) {
+        UsageTrackingService = require('../../modules/suscripciones-negocio/services/usage-tracking.service');
+    }
+    return UsageTrackingService;
+};
+
 /**
  * Límites por defecto cuando no hay suscripción activa
  */
@@ -265,6 +274,89 @@ class LimitesHelper {
             },
             uso: resumen
         };
+    }
+
+    /**
+     * Verifica límite de usuarios con soporte para soft limits (seat-based billing)
+     *
+     * A diferencia de verificarLimite(), este método considera:
+     * - Hard limits: bloquea si se excede (para trials)
+     * - Soft limits: permite con advertencia de cobro adicional (para planes de pago)
+     *
+     * @param {number} organizacionId - ID de la organización
+     * @param {number} cantidadACrear - Cantidad de usuarios a crear (default 1)
+     * @returns {Promise<Object>} - {
+     *   puedeCrear: boolean,
+     *   advertencia: string|null,
+     *   costoAdicional: number,
+     *   esHardLimit: boolean,
+     *   detalle: Object
+     * }
+     */
+    static async verificarLimiteUsuariosConAjuste(organizacionId, cantidadACrear = 1) {
+        try {
+            const UsageService = getUsageTrackingService();
+            return await UsageService.verificarLimiteConAjuste(organizacionId, cantidadACrear);
+        } catch (error) {
+            // Si el servicio falla, usar verificación tradicional como fallback
+            logger.warn('[LimitesHelper] Error en verificación con ajuste, usando fallback', {
+                organizacionId,
+                error: error.message
+            });
+
+            const resultado = await this.verificarLimite(organizacionId, 'usuarios', cantidadACrear);
+
+            return {
+                puedeCrear: resultado.puedeCrear,
+                advertencia: resultado.puedeCrear ? null : `Límite de ${resultado.limite} usuarios alcanzado`,
+                costoAdicional: 0,
+                esHardLimit: true,
+                detalle: {
+                    usuariosActuales: resultado.usoActual,
+                    usuariosIncluidos: resultado.limite,
+                    planNombre: resultado.nombrePlan
+                }
+            };
+        }
+    }
+
+    /**
+     * Verifica límite de usuarios con ajuste y lanza error si es hard limit excedido
+     * Para soft limits, retorna advertencia pero no lanza error
+     *
+     * @param {number} organizacionId - ID de la organización
+     * @param {number} cantidadACrear - Cantidad que se quiere crear
+     * @throws {PlanLimitExceededError} Si es hard limit y se excede
+     * @returns {Promise<Object>} - Resultado de la verificación
+     */
+    static async verificarLimiteUsuariosOLanzar(organizacionId, cantidadACrear = 1) {
+        const resultado = await this.verificarLimiteUsuariosConAjuste(organizacionId, cantidadACrear);
+
+        if (!resultado.puedeCrear) {
+            logger.warn('[LimitesHelper] Límite de usuarios excedido (hard limit)', {
+                organizacionId,
+                cantidadACrear,
+                detalle: resultado.detalle
+            });
+
+            throw new PlanLimitExceededError(
+                'usuarios',
+                resultado.detalle.maxUsuariosHard || resultado.detalle.usuariosIncluidos,
+                resultado.detalle.usuariosActuales,
+                resultado.detalle.planNombre
+            );
+        }
+
+        // Si hay advertencia (soft limit), logear pero no lanzar error
+        if (resultado.advertencia) {
+            logger.info('[LimitesHelper] Usuario adicional con cobro extra', {
+                organizacionId,
+                costoAdicional: resultado.costoAdicional,
+                advertencia: resultado.advertencia
+            });
+        }
+
+        return resultado;
     }
 }
 

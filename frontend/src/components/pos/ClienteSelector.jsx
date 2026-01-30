@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { UserCircle, Search, X, Plus, Check } from 'lucide-react';
 import { useBuscarClientes, useCrearCliente } from '@/hooks/personas';
-import { useDebounce } from '@/hooks/utils/useDebounce';
+import { useDebounce, useClickOutsideRef } from '@/hooks/utils';
 import { Button, Input } from '@/components/ui';
 
 /**
@@ -43,18 +43,11 @@ export default function ClienteSelector({
   // Mutación para crear cliente
   const crearCliente = useCrearCliente();
 
-  // Cerrar dropdown al hacer clic fuera
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsOpen(false);
-        setShowCreateForm(false);
-      }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  // Cerrar dropdown al hacer clic fuera (hook centralizado)
+  useClickOutsideRef(dropdownRef, () => {
+    setIsOpen(false);
+    setShowCreateForm(false);
+  }, isOpen);
 
   // Seleccionar cliente
   const handleSelect = (cliente) => {

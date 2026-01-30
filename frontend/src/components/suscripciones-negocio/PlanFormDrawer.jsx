@@ -24,6 +24,10 @@ const planSchema = z.object({
   precio: z.coerce.number().min(0, 'El precio no puede ser negativo'),
   ciclo_facturacion: z.enum(['mensual', 'trimestral', 'semestral', 'anual']),
   dias_prueba: z.coerce.number().min(0, 'No puede ser negativo').max(90, 'Máximo 90 días').default(0),
+  // Campos seat-based billing
+  usuarios_incluidos: z.coerce.number().min(1, 'Mínimo 1 usuario').default(5),
+  precio_usuario_adicional: z.coerce.number().min(0, 'No puede ser negativo').nullable().optional(),
+  max_usuarios_hard: z.coerce.number().min(1, 'Mínimo 1 usuario').nullable().optional(),
   caracteristicas: z.array(z.object({
     texto: z.string().min(1, 'La característica no puede estar vacía'),
   })).optional(),
@@ -57,6 +61,9 @@ function PlanFormDrawer({ isOpen, onClose, plan = null, mode = 'create' }) {
       precio: 0,
       ciclo_facturacion: CICLOS_FACTURACION.MENSUAL,
       dias_prueba: 14,
+      usuarios_incluidos: 5,
+      precio_usuario_adicional: null,
+      max_usuarios_hard: null,
       caracteristicas: [],
       activo: true,
     },
@@ -83,6 +90,9 @@ function PlanFormDrawer({ isOpen, onClose, plan = null, mode = 'create' }) {
         precio: plan.precio_mensual || plan.precio || 0,
         ciclo_facturacion: plan.ciclo_facturacion || CICLOS_FACTURACION.MENSUAL,
         dias_prueba: plan.dias_trial ?? plan.dias_prueba ?? 0,
+        usuarios_incluidos: plan.usuarios_incluidos ?? 5,
+        precio_usuario_adicional: plan.precio_usuario_adicional ?? null,
+        max_usuarios_hard: plan.max_usuarios_hard ?? null,
         caracteristicas: caracteristicasArray,
         activo: plan.activo ?? true,
       });
@@ -93,6 +103,9 @@ function PlanFormDrawer({ isOpen, onClose, plan = null, mode = 'create' }) {
         precio: 0,
         ciclo_facturacion: CICLOS_FACTURACION.MENSUAL,
         dias_prueba: 14,
+        usuarios_incluidos: 5,
+        precio_usuario_adicional: null,
+        max_usuarios_hard: null,
         caracteristicas: [],
         activo: true,
       });
@@ -112,12 +125,18 @@ function PlanFormDrawer({ isOpen, onClose, plan = null, mode = 'create' }) {
     };
 
     // Mapear campos del frontend a los nombres del backend
+    // Sanitizar campos numéricos opcionales: vacío o 0 → null para usuarios adicionales
+    const sanitizeNullable = (val) => (val === '' || val === 0 || val === null) ? null : Number(val);
+
     const payload = {
       codigo: esEdicion ? undefined : generarCodigo(data.nombre),
       nombre: data.nombre,
       descripcion: data.descripcion || undefined,
       precio_mensual: data.precio,
       dias_trial: data.dias_prueba,
+      usuarios_incluidos: Number(data.usuarios_incluidos) || 5,
+      precio_usuario_adicional: sanitizeNullable(data.precio_usuario_adicional),
+      max_usuarios_hard: sanitizeNullable(data.max_usuarios_hard),
       features: data.caracteristicas?.map(c => c.texto) || [],
       activo: data.activo,
     };
@@ -215,6 +234,60 @@ function PlanFormDrawer({ isOpen, onClose, plan = null, mode = 'create' }) {
             placeholder="14"
           />
         </FormGroup>
+
+        {/* Sección Seat-Based Billing */}
+        <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+          <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-4">
+            Facturación por Usuario
+          </h4>
+
+          {/* Usuarios incluidos */}
+          <FormGroup
+            label="Usuarios Incluidos"
+            error={errors.usuarios_incluidos?.message}
+            helper="Número de usuarios incluidos en el precio base del plan"
+          >
+            <Input
+              type="number"
+              min="1"
+              {...register('usuarios_incluidos')}
+              hasError={!!errors.usuarios_incluidos}
+              placeholder="5"
+            />
+          </FormGroup>
+
+          {/* Precio usuario adicional y límite máximo */}
+          <div className="grid grid-cols-2 gap-4 mt-4">
+            <FormGroup
+              label="Precio Usuario Adicional"
+              error={errors.precio_usuario_adicional?.message}
+              helper="Dejar vacío si no permite usuarios extra"
+            >
+              <Input
+                type="number"
+                step="0.01"
+                min="0"
+                {...register('precio_usuario_adicional')}
+                hasError={!!errors.precio_usuario_adicional}
+                placeholder="49.00"
+              />
+            </FormGroup>
+
+            <FormGroup
+              label="Límite Máximo Usuarios"
+              error={errors.max_usuarios_hard?.message}
+              helper="Dejar vacío para ilimitado"
+            >
+              <Input
+                type="number"
+                min="1"
+                {...register('max_usuarios_hard')}
+                hasError={!!errors.max_usuarios_hard}
+                placeholder="∞"
+              />
+            </FormGroup>
+          </div>
+        </div>
 
         {/* Características */}
         <FormGroup label="Características del Plan">

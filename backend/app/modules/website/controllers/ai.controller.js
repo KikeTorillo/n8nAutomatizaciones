@@ -88,7 +88,7 @@ const obtenerStatus = asyncHandler(async (req, res) => {
  */
 const generarSitio = asyncHandler(async (req, res) => {
   const { descripcion, nombre, industria, estilo, aplicar } = req.body;
-  const orgId = req.user.organizacion_id;
+  const orgId = req.tenant.organizacionId;
   const userId = req.user.id;
 
   if (!descripcion || !nombre) {

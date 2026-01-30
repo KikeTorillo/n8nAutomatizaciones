@@ -11,6 +11,7 @@ const PagosController = require('./pagos.controller');
 const CuponesController = require('./cupones.controller');
 const MetricasController = require('./metricas.controller');
 const WebhooksController = require('./webhooks.controller');
+const UsoController = require('./uso.controller');
 
 module.exports = {
     PlanesController,
@@ -18,5 +19,6 @@ module.exports = {
     PagosController,
     CuponesController,
     MetricasController,
-    WebhooksController
+    WebhooksController,
+    UsoController
 };

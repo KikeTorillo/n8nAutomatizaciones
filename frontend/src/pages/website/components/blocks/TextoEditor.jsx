@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Save, Bold, Italic, List, AlignLeft, AlignCenter, AlignRight, Sparkles } from 'lucide-react';
+import { useCallback, useMemo } from 'react';
+import { Save, Bold, Italic, List, AlignLeft, AlignCenter, AlignRight } from 'lucide-react';
 import {
   Button,
   Input,
@@ -8,39 +8,29 @@ import {
 } from '@/components/ui';
 import { sanitizeHTML } from '@/lib/sanitize';
 import { AIGenerateButton, AISuggestionBanner } from '../AIGenerator';
+import { useBlockEditor } from '../../hooks';
 
 /**
  * TextoEditor - Editor del bloque de texto enriquecido
  */
 function TextoEditor({ contenido, onGuardar, tema, isSaving, industria = 'default' }) {
-  const [form, setForm] = useState({
-    titulo: contenido.titulo || '',
-    html: contenido.html || '',
-    alineacion: contenido.alineacion || 'left',
-    ancho: contenido.ancho || 'full',
-    padding: contenido.padding || 'normal',
-  });
+  // Valores por defecto del formulario
+  const defaultValues = useMemo(() => ({
+    titulo: '',
+    html: '',
+    alineacion: 'left',
+    ancho: 'full',
+    padding: 'normal',
+  }), []);
 
-  const [cambios, setCambios] = useState(false);
+  // Hook para manejo del formulario
+  const { form, setForm, cambios, handleSubmit, handleFieldChange } = useBlockEditor(
+    contenido,
+    defaultValues
+  );
 
   // Verificar si el contenido está esencialmente vacío
   const contenidoVacio = !contenido.html || contenido.html.trim() === '';
-
-  useEffect(() => {
-    setCambios(JSON.stringify(form) !== JSON.stringify({
-      titulo: contenido.titulo || '',
-      html: contenido.html || '',
-      alineacion: contenido.alineacion || 'left',
-      ancho: contenido.ancho || 'full',
-      padding: contenido.padding || 'normal',
-    }));
-  }, [form, contenido]);
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onGuardar(form);
-    setCambios(false);
-  };
 
   // Callback para generación de IA de contenido de texto
   const handleAIGenerate = useCallback((generatedContent) => {
@@ -51,7 +41,7 @@ function TextoEditor({ contenido, onGuardar, tema, isSaving, industria = 'defaul
       ...prev,
       html: htmlContent,
     }));
-  }, []);
+  }, [setForm]);
 
   const insertTag = (openTag, closeTag) => {
     const textarea = document.getElementById('texto-html');
@@ -60,7 +50,7 @@ function TextoEditor({ contenido, onGuardar, tema, isSaving, industria = 'defaul
     const text = form.html;
     const selectedText = text.substring(start, end);
     const newText = text.substring(0, start) + openTag + selectedText + closeTag + text.substring(end);
-    setForm({ ...form, html: newText });
+    handleFieldChange('html', newText);
   };
 
   const anchoOptions = [
@@ -77,7 +67,7 @@ function TextoEditor({ contenido, onGuardar, tema, isSaving, industria = 'defaul
   ];
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit(onGuardar)} className="space-y-4">
       {/* Banner de sugerencia IA para contenido vacío */}
       {contenidoVacio && (
         <AISuggestionBanner
@@ -90,7 +80,7 @@ function TextoEditor({ contenido, onGuardar, tema, isSaving, industria = 'defaul
       <Input
         label="Título (opcional)"
         value={form.titulo}
-        onChange={(e) => setForm({ ...form, titulo: e.target.value })}
+        onChange={(e) => handleFieldChange('titulo', e.target.value)}
         placeholder="Título de la sección"
         className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
       />
@@ -132,7 +122,7 @@ function TextoEditor({ contenido, onGuardar, tema, isSaving, industria = 'defaul
           type="button"
           variant={form.alineacion === 'left' ? 'primary' : 'ghost'}
           size="sm"
-          onClick={() => setForm({ ...form, alineacion: 'left' })}
+          onClick={() => handleFieldChange('alineacion', 'left')}
           title="Alinear izquierda"
           className="dark:hover:bg-gray-600"
         >
@@ -142,7 +132,7 @@ function TextoEditor({ contenido, onGuardar, tema, isSaving, industria = 'defaul
           type="button"
           variant={form.alineacion === 'center' ? 'primary' : 'ghost'}
           size="sm"
-          onClick={() => setForm({ ...form, alineacion: 'center' })}
+          onClick={() => handleFieldChange('alineacion', 'center')}
           title="Centrar"
           className="dark:hover:bg-gray-600"
         >
@@ -152,7 +142,7 @@ function TextoEditor({ contenido, onGuardar, tema, isSaving, industria = 'defaul
           type="button"
           variant={form.alineacion === 'right' ? 'primary' : 'ghost'}
           size="sm"
-          onClick={() => setForm({ ...form, alineacion: 'right' })}
+          onClick={() => handleFieldChange('alineacion', 'right')}
           title="Alinear derecha"
           className="dark:hover:bg-gray-600"
         >
@@ -172,13 +162,13 @@ function TextoEditor({ contenido, onGuardar, tema, isSaving, industria = 'defaul
                 campo="contenido"
                 industria={industria}
                 contexto={{ tema: 'información general del negocio' }}
-                onGenerate={(text) => setForm({ ...form, html: text.includes('<') ? text : `<p>${text}</p>` })}
+                onGenerate={(text) => handleFieldChange('html', text.includes('<') ? text : `<p>${text}</p>`)}
                 size="sm"
               />
             </span>
           }
           value={form.html}
-          onChange={(e) => setForm({ ...form, html: e.target.value })}
+          onChange={(e) => handleFieldChange('html', e.target.value)}
           placeholder="<p>Escribe tu contenido aquí...</p>"
           rows={8}
           className="font-mono text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
@@ -192,14 +182,14 @@ function TextoEditor({ contenido, onGuardar, tema, isSaving, industria = 'defaul
         <Select
           label="Ancho del contenido"
           value={form.ancho}
-          onChange={(e) => setForm({ ...form, ancho: e.target.value })}
+          onChange={(e) => handleFieldChange('ancho', e.target.value)}
           options={anchoOptions}
           className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
         <Select
           label="Espaciado"
           value={form.padding}
-          onChange={(e) => setForm({ ...form, padding: e.target.value })}
+          onChange={(e) => handleFieldChange('padding', e.target.value)}
           options={paddingOptions}
           className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />

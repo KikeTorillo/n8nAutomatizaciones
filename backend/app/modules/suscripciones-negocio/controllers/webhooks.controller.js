@@ -477,25 +477,11 @@ class WebhooksController {
             // NOTA: Usamos métodos Bypass porque los planes (Nexo Team org 1)
             // y las suscripciones (cliente org N) están en orgs diferentes
             if (mpSuscripcion.status === 'authorized') {
-                await SuscripcionesModel.cambiarEstadoBypass(
-                    suscripcion.id,
-                    'activa',
-                    { razon: 'Autorizada vía webhook MercadoPago (subscription_preapproval)' }
-                );
-
-                // Procesar como cobro exitoso (actualiza fecha próximo cobro, etc.)
-                await SuscripcionesModel.procesarCobroExitosoBypass(
-                    suscripcion.id,
-                    suscripcion
-                );
-
-                logger.info('✅ Suscripción activada vía webhook subscription_preapproval', {
-                    suscripcion_id: suscripcion.id,
-                    subscription_id_gateway: subscriptionId,
-                    organizacionId: suscripcion.organizacion_id
-                });
-
-                // Cancelar suscripciones anteriores (trial, otras activas) para evitar duplicados
+                // ============================================
+                // PASO 1: Cancelar suscripciones anteriores PRIMERO
+                // ============================================
+                // CRÍTICO: Debe ejecutarse ANTES de activar la nueva suscripción
+                // para evitar violar el constraint idx_suscripciones_cliente_unica_activa
                 if (suscripcion.cliente_id) {
                     const canceladas = await SuscripcionesModel.cancelarSuscripcionesAnterioresBypass(
                         suscripcion.cliente_id,
@@ -506,6 +492,29 @@ class WebhooksController {
                         logger.info(`[Webhook MP] Suscripciones anteriores canceladas: ${canceladas.join(', ')}`);
                     }
                 }
+
+                // ============================================
+                // PASO 2: Activar la nueva suscripción
+                // ============================================
+                await SuscripcionesModel.cambiarEstadoBypass(
+                    suscripcion.id,
+                    'activa',
+                    { razon: 'Autorizada vía webhook MercadoPago (subscription_preapproval)' }
+                );
+
+                // ============================================
+                // PASO 3: Procesar cobro y registrar
+                // ============================================
+                await SuscripcionesModel.procesarCobroExitosoBypass(
+                    suscripcion.id,
+                    suscripcion
+                );
+
+                logger.info('✅ Suscripción activada vía webhook subscription_preapproval', {
+                    suscripcion_id: suscripcion.id,
+                    subscription_id_gateway: subscriptionId,
+                    organizacionId: suscripcion.organizacion_id
+                });
 
             } else if (mpSuscripcion.status === 'cancelled') {
                 await SuscripcionesModel.cambiarEstadoBypass(
@@ -616,7 +625,25 @@ class WebhooksController {
             // NOTA: MercadoPago usa "processed" para pagos de suscripción exitosos
             // NOTA: Usamos Bypass porque planes y suscripciones están en orgs diferentes
             if (status === 'approved' || status === 'processed') {
-                // Solo cambiar estado si no está ya activa
+                // ============================================
+                // PASO 1: Cancelar suscripciones anteriores PRIMERO
+                // ============================================
+                // CRÍTICO: Debe ejecutarse ANTES de activar la nueva suscripción
+                // para evitar violar el constraint idx_suscripciones_cliente_unica_activa
+                if (suscripcion.cliente_id) {
+                    const canceladas = await SuscripcionesModel.cancelarSuscripcionesAnterioresBypass(
+                        suscripcion.cliente_id,
+                        suscripcion.id,
+                        `Upgrade a plan ${suscripcion.plan_nombre || 'nuevo'}`
+                    );
+                    if (canceladas.length > 0) {
+                        logger.info(`[Webhook MP] Suscripciones anteriores canceladas: ${canceladas.join(', ')}`);
+                    }
+                }
+
+                // ============================================
+                // PASO 2: Activar la nueva suscripción
+                // ============================================
                 if (suscripcion.estado !== 'activa') {
                     await SuscripcionesModel.cambiarEstadoBypass(
                         suscripcion.id,
@@ -625,6 +652,9 @@ class WebhooksController {
                     );
                 }
 
+                // ============================================
+                // PASO 3: Procesar pago y enviar notificaciones
+                // ============================================
                 // Buscar pago pendiente existente para esta suscripción y actualizarlo
                 const pagoExistente = await PagosModel.buscarPendientePorSuscripcion(suscripcion.id);
 
@@ -679,18 +709,6 @@ class WebhooksController {
                     preapproval_id: preapprovalId,
                     status
                 });
-
-                // Cancelar suscripciones anteriores (trial, otras activas) para evitar duplicados
-                if (suscripcion.cliente_id) {
-                    const canceladas = await SuscripcionesModel.cancelarSuscripcionesAnterioresBypass(
-                        suscripcion.cliente_id,
-                        suscripcion.id,
-                        `Upgrade a plan ${suscripcion.plan_nombre || 'nuevo'}`
-                    );
-                    if (canceladas.length > 0) {
-                        logger.info(`[Webhook MP] Suscripciones anteriores canceladas: ${canceladas.join(', ')}`);
-                    }
-                }
             } else if (status === 'rejected' || status === 'cancelled') {
                 // Enviar email de pago fallido
                 const razonFallo = pagoAutorizado.rejection_code || 'Pago rechazado';

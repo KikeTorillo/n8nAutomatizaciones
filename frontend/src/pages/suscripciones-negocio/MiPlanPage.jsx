@@ -33,6 +33,7 @@ import {
   useMiSuscripcion,
   usePausarSuscripcion,
   useReactivarSuscripcion,
+  useResumenUso,
   ESTADOS_SUSCRIPCION,
 } from '@/hooks/suscripciones-negocio';
 import {
@@ -40,6 +41,7 @@ import {
   CancelarSuscripcionDrawer,
   HistorialPagosCard,
 } from '@/components/suscripciones-negocio';
+import UsageIndicator from '@/components/suscripciones-negocio/UsageIndicator';
 import { useToast } from '@/hooks/utils';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import CambiarPlanDrawer from '@/components/suscripciones-negocio/CambiarPlanDrawer';
@@ -265,6 +267,7 @@ function MiPlanPage() {
 
   // Queries
   const { data: suscripcion, isLoading, refetch } = useMiSuscripcion();
+  const { data: resumenUso } = useResumenUso();
 
   // Mutations
   const pausarMutation = usePausarSuscripcion();
@@ -354,6 +357,21 @@ function MiPlanPage() {
               onReactivar={handleReactivar}
               isPending={isPending}
             />
+
+            {/* Uso de usuarios (Seat-based billing) */}
+            {resumenUso && resumenUso.tieneSuscripcion !== false && (
+              <UsageIndicator
+                usuariosActuales={resumenUso.usuariosActuales}
+                usuariosIncluidos={resumenUso.usuariosIncluidos}
+                maxUsuariosHard={resumenUso.maxUsuariosHard}
+                porcentajeUso={resumenUso.porcentajeUso}
+                estadoUso={resumenUso.estadoUso}
+                cobroAdicionalProyectado={resumenUso.cobroAdicionalProyectado}
+                precioUsuarioAdicional={resumenUso.precioUsuarioAdicional}
+                esHardLimit={resumenUso.esHardLimit}
+                planNombre={resumenUso.planNombre}
+              />
+            )}
 
             {/* Historial de pagos */}
             <HistorialPagosCard

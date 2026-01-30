@@ -24,6 +24,7 @@ const webhooksRoutes = require('./webhooks');
 const checkoutRoutes = require('./checkout');
 const checkoutPublicoRoutes = require('./checkout-publico');
 const conectoresRoutes = require('./conectores');
+const usoRoutes = require('./uso.routes');
 
 // ============================================================================
 // RUTAS PÚBLICAS (sin autenticación) - Deben ir ANTES de rutas protegidas
@@ -43,5 +44,6 @@ router.use('/metricas', metricasRoutes);
 router.use('/webhooks', webhooksRoutes);
 router.use('/checkout', checkoutRoutes);  // Las rutas autenticadas de /checkout
 router.use('/conectores', conectoresRoutes);
+router.use('/uso', usoRoutes);  // Uso de usuarios (seat-based billing)
 
 module.exports = router;

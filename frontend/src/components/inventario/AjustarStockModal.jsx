@@ -6,7 +6,7 @@ import { TrendingUp, TrendingDown, AlertCircle, MapPin } from 'lucide-react';
 import { Button, Drawer, FormGroup, Input, Textarea } from '@/components/ui';
 import { useAjustarStock, useUbicacionesAlmacen } from '@/hooks/inventario';
 import { useToast } from '@/hooks/utils';
-import { useAuth } from '@/hooks/auth';
+import { useAuth } from '@/hooks/sistema';
 
 /**
  * Schema de validación Zod para ajuste de stock
