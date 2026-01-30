@@ -803,6 +803,7 @@ class ProductosModel {
             }
 
             // 3. Usar función consolidada para registrar movimiento y actualizar stock
+            // Ene 2026: Soporta ubicacion_id explícita para integración con WMS
             await db.query(`
                 SELECT registrar_movimiento_con_ubicacion(
                     $1,  -- organizacion_id
@@ -810,11 +811,11 @@ class ProductosModel {
                     $3,  -- tipo_movimiento
                     $4,  -- cantidad
                     $5,  -- sucursal_id
-                    NULL, -- ubicacion_id
+                    $6,  -- ubicacion_id (NULL usa default)
                     NULL, -- lote
                     NULL, -- fecha_vencimiento
-                    $6,  -- referencia
-                    $7,  -- motivo
+                    $7,  -- referencia
+                    $8,  -- motivo
                     NULL, -- usuario_id
                     NULL, -- costo_unitario
                     NULL, -- proveedor_id
@@ -828,6 +829,7 @@ class ProductosModel {
                 ajuste.tipo_movimiento,
                 ajuste.cantidad_ajuste,
                 sucursalId,
+                ajuste.ubicacion_id || null, // Ubicación explícita o NULL para default
                 'Ajuste manual de stock',
                 ajuste.motivo
             ]);

@@ -312,3 +312,41 @@ export function useCancelarTransferencia() {
     onError: createCRUDErrorHandler('update', 'Transferencia'),
   });
 }
+
+/**
+ * Hook para agregar item a transferencia (solo en estado borrador)
+ */
+export function useAgregarItemTransferencia() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ transferenciaId, data }) => {
+      const response = await sucursalesApi.agregarItemTransferencia(transferenciaId, data);
+      return response.data.data;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['transferencia', variables.transferenciaId], exact: true, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['transferencias'], refetchType: 'active' });
+    },
+    onError: createCRUDErrorHandler('create', 'Item'),
+  });
+}
+
+/**
+ * Hook para eliminar item de transferencia (solo en estado borrador)
+ */
+export function useEliminarItemTransferencia() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ transferenciaId, itemId }) => {
+      const response = await sucursalesApi.eliminarItemTransferencia(transferenciaId, itemId);
+      return response.data.data;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['transferencia', variables.transferenciaId], exact: true, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['transferencias'], refetchType: 'active' });
+    },
+    onError: createCRUDErrorHandler('delete', 'Item'),
+  });
+}

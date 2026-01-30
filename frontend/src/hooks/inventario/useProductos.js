@@ -121,16 +121,18 @@ export function useBulkCrearProductos() {
 
 /**
  * Hook para ajustar stock manualmente (conteo físico, correcciones)
+ * Ene 2026: Soporta ubicacion_id opcional para integración WMS
  */
 export function useAjustarStock() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, cantidad_ajuste, motivo, tipo_movimiento }) => {
+    mutationFn: async ({ id, cantidad_ajuste, motivo, tipo_movimiento, ubicacion_id }) => {
       const response = await inventarioApi.ajustarStock(id, {
         cantidad_ajuste,
         motivo,
         tipo_movimiento,
+        ubicacion_id, // Ubicación destino opcional
       });
       return response.data.data;
     },

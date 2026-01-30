@@ -73,6 +73,23 @@ class VentasPOSModel {
                 }
             }
 
+            // Ene 2026: Obtener sesión de caja activa del usuario (para vincular venta)
+            let sesionCajaId = null;
+            if (data.sucursal_id) {
+                const sesionQuery = await db.query(
+                    `SELECT id FROM sesiones_caja
+                     WHERE organizacion_id = $1
+                     AND sucursal_id = $2
+                     AND usuario_id = $3
+                     AND estado = 'abierta'
+                     LIMIT 1`,
+                    [organizacionId, data.sucursal_id, data.usuario_id]
+                );
+                if (sesionQuery.rows.length > 0) {
+                    sesionCajaId = sesionQuery.rows[0].id;
+                }
+            }
+
             // ================================================================
             // VALIDACIÓN Y RESERVA ATÓMICA DE STOCK
             // Arquitectura Superior v2.0 - Dic 2025
@@ -299,7 +316,7 @@ class VentasPOSModel {
 
             // Insertar venta con folio generado manualmente
             // ✅ FEATURE: Multi-sucursal - sucursal_id agregado
-            // ✅ Ene 2026: puntos_canjeados y descuento_puntos para lealtad
+            // ✅ Ene 2026: puntos_canjeados, descuento_puntos y sesion_caja_id
             const ventaQuery = `
                 INSERT INTO ventas_pos (
                     organizacion_id,
@@ -310,6 +327,7 @@ class VentasPOSModel {
                     cita_id,
                     profesional_id,
                     usuario_id,
+                    sesion_caja_id,
                     subtotal,
                     descuento_porcentaje,
                     descuento_monto,
@@ -326,7 +344,7 @@ class VentasPOSModel {
                     fecha_vencimiento_apartado,
                     puntos_canjeados,
                     descuento_puntos
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24)
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25)
                 RETURNING *
             `;
 
@@ -369,6 +387,7 @@ class VentasPOSModel {
                 data.cita_id || null,
                 data.profesional_id || null,
                 data.usuario_id,
+                sesionCajaId,             // Ene 2026: sesión de caja activa
                 subtotal,
                 data.descuento_porcentaje || 0,
                 descuentoVenta,
@@ -1923,6 +1942,23 @@ class VentasPOSModel {
             ErrorHelper.throwValidation('La venta debe tener al menos un item');
         }
 
+        // Ene 2026: Obtener sesión de caja activa del usuario
+        let sesionCajaId = null;
+        if (data.sucursal_id) {
+            const sesionQuery = await db.query(
+                `SELECT id FROM sesiones_caja
+                 WHERE organizacion_id = $1
+                 AND sucursal_id = $2
+                 AND usuario_id = $3
+                 AND estado = 'abierta'
+                 LIMIT 1`,
+                [organizacionId, data.sucursal_id, data.usuario_id]
+            );
+            if (sesionQuery.rows.length > 0) {
+                sesionCajaId = sesionQuery.rows[0].id;
+            }
+        }
+
         // Generar folio
         const year = new Date().getFullYear();
         const folioQuery = await db.query(
@@ -1942,11 +1978,11 @@ class VentasPOSModel {
         const ventaQuery = `
             INSERT INTO ventas_pos (
                 organizacion_id, sucursal_id, folio, tipo_venta,
-                cliente_id, cita_id, profesional_id, usuario_id,
+                cliente_id, cita_id, profesional_id, usuario_id, sesion_caja_id,
                 subtotal, descuento_porcentaje, descuento_monto,
                 impuestos, total, metodo_pago, estado_pago,
                 monto_pagado, monto_pendiente, notas, estado, fecha_venta
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
             RETURNING *
         `;
 
@@ -1979,6 +2015,7 @@ class VentasPOSModel {
             data.cita_id || null,
             data.profesional_id || null,
             data.usuario_id,
+            sesionCajaId,             // Ene 2026: sesión de caja activa
             subtotal,
             data.descuento_porcentaje || 0,
             descuentoVenta,

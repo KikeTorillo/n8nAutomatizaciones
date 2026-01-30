@@ -11,6 +11,8 @@ import {
   User,
   FileText,
   AlertTriangle,
+  Edit,
+  MapPin,
 } from 'lucide-react';
 import {
   Button,
@@ -18,13 +20,14 @@ import {
   LoadingSpinner,
   Modal
 } from '@/components/ui';
-import { SucursalesPageLayout } from '@/components/sucursales';
+import { SucursalesPageLayout, TransferenciaItemsDrawer } from '@/components/sucursales';
 import {
   useTransferencia,
   useEnviarTransferencia,
   useRecibirTransferencia,
   useCancelarTransferencia,
 } from '@/hooks/sistema';
+import { useUbicacionesAlmacen } from '@/hooks/inventario';
 import { useToast } from '@/hooks/utils';
 import { useModalManager } from '@/hooks/utils';
 
@@ -73,6 +76,7 @@ function TransferenciaDetailPage() {
   const { openModal, closeModal, isOpen } = useModalManager({
     recibir: { isOpen: false },
     cancelar: { isOpen: false },
+    items: { isOpen: false },
   });
 
   // Estado para items de recepcion (datos del formulario)
@@ -80,6 +84,14 @@ function TransferenciaDetailPage() {
 
   // Fetch data
   const { data: transferencia, isLoading } = useTransferencia(id);
+
+  // Fetch ubicaciones de la sucursal destino para recepción
+  const { data: ubicacionesDestinoData } = useUbicacionesAlmacen({
+    sucursal_id: transferencia?.sucursal_destino_id,
+    activo: true,
+    bloqueada: false,
+  });
+  const ubicacionesDestino = ubicacionesDestinoData?.ubicaciones || [];
 
   // Mutations
   const enviarMutation = useEnviarTransferencia();
@@ -161,6 +173,7 @@ function TransferenciaDetailPage() {
         sku: item.producto_sku,
         cantidad_enviada: item.cantidad_enviada,
         cantidad_recibida: item.cantidad_recibida || item.cantidad_enviada,
+        ubicacion_destino_id: item.ubicacion_destino_id || '',
       })) || []
     );
     openModal('recibir');
@@ -173,6 +186,13 @@ function TransferenciaDetailPage() {
     setItemsRecepcion(newItems);
   };
 
+  // Handler: Actualizar ubicación destino
+  const handleUbicacionDestinoChange = (index, ubicacionId) => {
+    const newItems = [...itemsRecepcion];
+    newItems[index].ubicacion_destino_id = ubicacionId ? parseInt(ubicacionId) : undefined;
+    setItemsRecepcion(newItems);
+  };
+
   // Handler: Confirmar recepcion
   const handleConfirmarRecepcion = async () => {
     try {
@@ -182,6 +202,7 @@ function TransferenciaDetailPage() {
           items: itemsRecepcion.map((item) => ({
             id: item.id,
             cantidad_recibida: item.cantidad_recibida,
+            ubicacion_destino_id: item.ubicacion_destino_id || undefined,
           })),
         },
       });
@@ -223,6 +244,13 @@ function TransferenciaDetailPage() {
           {/* Acciones segun estado */}
           {transferencia.estado === 'borrador' && (
             <>
+              <Button
+                variant="secondary"
+                onClick={() => openModal('items')}
+              >
+                <Edit className="w-4 h-4 mr-2" />
+                Editar Items
+              </Button>
               <Button
                 variant="primary"
                 onClick={handleEnviar}
@@ -503,29 +531,51 @@ function TransferenciaDetailPage() {
             {itemsRecepcion.map((item, index) => (
               <div
                 key={item.id}
-                className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
+                className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
               >
-                <div className="flex-1 min-w-0 mr-4">
-                  <p className="font-medium text-gray-900 dark:text-white truncate">
-                    {item.nombre}
-                  </p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    SKU: {item.sku} | Enviadas: {item.cantidad_enviada}
-                  </p>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex-1 min-w-0 mr-4">
+                    <p className="font-medium text-gray-900 dark:text-white truncate">
+                      {item.nombre}
+                    </p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      SKU: {item.sku} | Enviadas: {item.cantidad_enviada}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <label className="text-sm text-gray-600 dark:text-gray-400">
+                      Recibidas:
+                    </label>
+                    <Input
+                      type="number"
+                      min={0}
+                      max={item.cantidad_enviada}
+                      value={item.cantidad_recibida}
+                      onChange={(e) => handleCantidadChange(index, e.target.value)}
+                      className="w-20 text-center"
+                    />
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <label className="text-sm text-gray-600 dark:text-gray-400">
-                    Recibidas:
-                  </label>
-                  <Input
-                    type="number"
-                    min={0}
-                    max={item.cantidad_enviada}
-                    value={item.cantidad_recibida}
-                    onChange={(e) => handleCantidadChange(index, e.target.value)}
-                    className="w-20 text-center"
-                  />
-                </div>
+                {/* Selector de ubicación destino */}
+                {ubicacionesDestino.length > 0 && (
+                  <div className="mt-2">
+                    <div className="relative">
+                      <MapPin className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <select
+                        value={item.ubicacion_destino_id || ''}
+                        onChange={(e) => handleUbicacionDestinoChange(index, e.target.value)}
+                        className="pl-8 w-full text-sm rounded border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                      >
+                        <option value="">Ubicacion por defecto</option>
+                        {ubicacionesDestino.map((u) => (
+                          <option key={u.id} value={u.id}>
+                            {u.codigo || u.nombre}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -597,6 +647,13 @@ function TransferenciaDetailPage() {
           </div>
         </div>
       </Modal>
+
+      {/* Drawer Editar Items */}
+      <TransferenciaItemsDrawer
+        isOpen={isOpen('items')}
+        onClose={() => closeModal('items')}
+        transferenciaId={transferencia?.id}
+      />
     </SucursalesPageLayout>
   );
 }

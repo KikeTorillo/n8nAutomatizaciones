@@ -240,9 +240,9 @@ CREATE TABLE IF NOT EXISTS movimientos_inventario (
 
     -- 🔗 RELACIONES
     proveedor_id INTEGER REFERENCES proveedores(id),
-    venta_pos_id INTEGER, -- FK a ventas_pos (sin FK formal - se valida en backend)
-    cita_id INTEGER, -- FK a citas (tabla particionada - sin FK formal)
-    variante_id INTEGER, -- FK a variantes_producto (sin REFERENCES - tabla nueva)
+    venta_pos_id INTEGER, -- FK diferido a ventas_pos (ver al final del archivo)
+    cita_id INTEGER, -- Sin FK (citas es particionada por fecha_cita) - se valida en backend
+    variante_id INTEGER, -- FK diferido a variantes_producto (ver al final del archivo)
     usuario_id INTEGER REFERENCES usuarios(id),
 
     -- 📝 METADATA
@@ -252,8 +252,8 @@ CREATE TABLE IF NOT EXISTS movimientos_inventario (
     lote VARCHAR(50), -- Número de lote del producto
 
     -- 📍 UBICACIONES (Fase 0 - Consolidación Stock)
-    ubicacion_origen_id INTEGER,   -- FK a ubicaciones_almacen (agregada después de crear tabla)
-    ubicacion_destino_id INTEGER,  -- FK a ubicaciones_almacen (agregada después de crear tabla)
+    ubicacion_origen_id INTEGER,   -- FK diferido a ubicaciones_almacen (ver al final del archivo)
+    ubicacion_destino_id INTEGER,  -- FK diferido a ubicaciones_almacen (ver al final del archivo)
 
     -- 📅 TIMESTAMPS
     creado_en TIMESTAMPTZ DEFAULT NOW() NOT NULL,
@@ -397,6 +397,16 @@ CREATE TABLE IF NOT EXISTS configuracion_inventario (
 COMMENT ON TABLE configuracion_inventario IS 'Configuración del módulo de inventario por organización';
 COMMENT ON COLUMN configuracion_inventario.metodo_valoracion IS 'Método de valoración: FIFO, LIFO o Promedio Ponderado';
 COMMENT ON COLUMN configuracion_inventario.dropship_auto_generar_oc IS 'Si true, genera OC automáticamente al vender producto dropship';
+
+-- ============================================================================
+-- NOTA: FK DIFERIDOS MOVIDOS A inventario/35-foreign-keys-diferidos.sql
+-- ============================================================================
+-- Los siguientes FKs requieren tablas de otros módulos que se crean después:
+-- - fk_movimientos_variante → variantes_producto (archivo 20)
+-- - fk_movimientos_ubicacion_origen → ubicaciones_almacen (archivo 13)
+-- - fk_movimientos_ubicacion_destino → ubicaciones_almacen (archivo 13)
+-- - fk_movimientos_venta_pos → ventas_pos (pos/01-tablas.sql)
+-- ============================================================================
 
 -- ============================================================================
 -- FIN: TABLAS DE INVENTARIO

@@ -152,5 +152,23 @@ CREATE INDEX IF NOT EXISTS idx_usuarios_ubicaciones_ubicacion_fk
 ON usuarios_ubicaciones(ubicacion_id);
 
 -- ====================================================================
+-- TRANSFERENCIAS_STOCK_ITEMS - UBICACIONES WMS (Enero 2026)
+-- ====================================================================
+-- FKs diferidas para ubicaciones origen/destino en transferencias
+ALTER TABLE transferencias_stock_items
+ADD CONSTRAINT fk_transferencias_items_ubicacion_origen
+FOREIGN KEY (ubicacion_origen_id) REFERENCES ubicaciones_almacen(id) ON DELETE SET NULL;
+
+ALTER TABLE transferencias_stock_items
+ADD CONSTRAINT fk_transferencias_items_ubicacion_destino
+FOREIGN KEY (ubicacion_destino_id) REFERENCES ubicaciones_almacen(id) ON DELETE SET NULL;
+
+CREATE INDEX IF NOT EXISTS idx_transferencias_items_ubicacion_origen
+ON transferencias_stock_items(ubicacion_origen_id) WHERE ubicacion_origen_id IS NOT NULL;
+
+CREATE INDEX IF NOT EXISTS idx_transferencias_items_ubicacion_destino
+ON transferencias_stock_items(ubicacion_destino_id) WHERE ubicacion_destino_id IS NOT NULL;
+
+-- ====================================================================
 -- FIN: FOREIGN KEYS DE SUCURSALES
 -- ====================================================================

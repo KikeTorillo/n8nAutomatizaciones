@@ -51,12 +51,14 @@ class TransferenciasStockModel {
                 for (const item of data.items) {
                     await db.query(`
                         INSERT INTO transferencias_stock_items (
-                            transferencia_id, producto_id, cantidad_enviada, notas
-                        ) VALUES ($1, $2, $3, $4)
+                            transferencia_id, producto_id, cantidad_enviada, ubicacion_origen_id, lote, notas
+                        ) VALUES ($1, $2, $3, $4, $5, $6)
                     `, [
                         transferencia.id,
                         item.producto_id,
                         item.cantidad_enviada,
+                        item.ubicacion_origen_id || null,
+                        item.lote || null,
                         item.notas || null
                     ]);
                 }
@@ -101,14 +103,20 @@ class TransferenciasStockModel {
 
             const transferencia = transferenciaResult.rows[0];
 
-            // Items
+            // Items con ubicaciones
             const itemsQuery = `
                 SELECT
                     ti.*,
                     p.nombre AS producto_nombre,
-                    p.sku AS producto_sku
+                    p.sku AS producto_sku,
+                    uo.codigo AS ubicacion_origen_codigo,
+                    uo.nombre AS ubicacion_origen_nombre,
+                    ud.codigo AS ubicacion_destino_codigo,
+                    ud.nombre AS ubicacion_destino_nombre
                 FROM transferencias_stock_items ti
                 JOIN productos p ON ti.producto_id = p.id
+                LEFT JOIN ubicaciones_almacen uo ON ti.ubicacion_origen_id = uo.id
+                LEFT JOIN ubicaciones_almacen ud ON ti.ubicacion_destino_id = ud.id
                 WHERE ti.transferencia_id = $1
                 ORDER BY ti.id
             `;
@@ -203,11 +211,13 @@ class TransferenciasStockModel {
 
             const query = `
                 INSERT INTO transferencias_stock_items (
-                    transferencia_id, producto_id, cantidad_enviada, notas
-                ) VALUES ($1, $2, $3, $4)
+                    transferencia_id, producto_id, cantidad_enviada, ubicacion_origen_id, lote, notas
+                ) VALUES ($1, $2, $3, $4, $5, $6)
                 ON CONFLICT (transferencia_id, producto_id)
                 DO UPDATE SET
                     cantidad_enviada = EXCLUDED.cantidad_enviada,
+                    ubicacion_origen_id = EXCLUDED.ubicacion_origen_id,
+                    lote = EXCLUDED.lote,
                     notas = EXCLUDED.notas
                 RETURNING *
             `;
@@ -216,6 +226,8 @@ class TransferenciasStockModel {
                 transferenciaId,
                 data.producto_id,
                 data.cantidad_enviada,
+                data.ubicacion_origen_id || null,
+                data.lote || null,
                 data.notas || null
             ]);
 
@@ -343,10 +355,13 @@ class TransferenciasStockModel {
                 for (const item of data.items) {
                     await db.query(`
                         UPDATE transferencias_stock_items
-                        SET cantidad_recibida = $1, notas = COALESCE($2, notas)
-                        WHERE id = $3 AND transferencia_id = $4
+                        SET cantidad_recibida = $1,
+                            ubicacion_destino_id = COALESCE($2, ubicacion_destino_id),
+                            notas = COALESCE($3, notas)
+                        WHERE id = $4 AND transferencia_id = $5
                     `, [
                         item.cantidad_recibida,
+                        item.ubicacion_destino_id || null,
                         item.notas || null,
                         item.id,
                         id

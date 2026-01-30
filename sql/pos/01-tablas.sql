@@ -29,6 +29,7 @@ CREATE TABLE IF NOT EXISTS ventas_pos (
     cita_id INTEGER, -- FK a citas (tabla particionada - sin FK formal, se valida en backend)
     profesional_id INTEGER REFERENCES profesionales(id), -- Quien atendió/vendió
     usuario_id INTEGER NOT NULL REFERENCES usuarios(id), -- Quien registró la venta
+    sesion_caja_id INTEGER, -- FK diferido a sesiones_caja (ver 06-foreign-keys.sql)
 
     -- 💰 TOTALES
     subtotal DECIMAL(10, 2) NOT NULL DEFAULT 0,
@@ -112,6 +113,7 @@ COMMENT ON COLUMN ventas_pos.estado_pago IS 'Estado del pago: pendiente, pagado,
 COMMENT ON COLUMN ventas_pos.monto_pendiente IS 'Calculado automáticamente: total - monto_pagado';
 COMMENT ON COLUMN ventas_pos.ticket_url IS 'URL del ticket PDF generado (se genera después de completar venta)';
 COMMENT ON COLUMN ventas_pos.cita_id IS 'Referencia a cita si venta ocurrió durante un servicio (sin FK por particionamiento)';
+COMMENT ON COLUMN ventas_pos.sesion_caja_id IS 'Sesión de caja en la que se registró la venta (para conciliación de efectivo)';
 
 -- ============================================================================
 -- TABLA: ventas_pos_items

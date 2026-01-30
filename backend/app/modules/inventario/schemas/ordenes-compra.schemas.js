@@ -202,7 +202,10 @@ const ordenesCompraSchemas = {
                             lote: Joi.string().max(50).optional().allow(null, ''),
                             fecha_vencimiento: Joi.string().isoDate().optional().allow(null)
                         })
-                    ).optional()
+                    ).optional(),
+                    // Ubicación destino opcional (Ene 2026 - Integración ubicaciones)
+                    ubicacion_id: Joi.number().integer().positive().optional()
+                        .description('Ubicación destino opcional, usa default si no se especifica')
                 })
             ).min(1).max(100).required().messages({
                 'any.required': 'Debe incluir al menos una recepción',

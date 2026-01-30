@@ -317,6 +317,11 @@ CREATE TABLE transferencias_stock_items (
     cantidad_enviada INTEGER NOT NULL,
     cantidad_recibida INTEGER,          -- Puede diferir (merma, error, faltante)
 
+    -- 📍 UBICACIONES WMS (Ene 2026)
+    ubicacion_origen_id INTEGER,        -- FK diferida a ubicaciones_almacen (ver 06-foreign-keys.sql)
+    ubicacion_destino_id INTEGER,       -- FK diferida a ubicaciones_almacen (ver 06-foreign-keys.sql)
+    lote VARCHAR(50),                   -- Número de lote (trazabilidad)
+
     -- 📝 NOTAS
     notas TEXT,
 
@@ -332,6 +337,9 @@ CREATE TABLE transferencias_stock_items (
 COMMENT ON TABLE transferencias_stock_items IS 'Detalle de productos en transferencias de stock.';
 COMMENT ON COLUMN transferencias_stock_items.cantidad_enviada IS 'Cantidad de unidades enviadas';
 COMMENT ON COLUMN transferencias_stock_items.cantidad_recibida IS 'Cantidad recibida (puede diferir por merma). NULL hasta que se reciba.';
+COMMENT ON COLUMN transferencias_stock_items.ubicacion_origen_id IS 'Ubicación WMS de donde sale el producto (NULL = default sucursal)';
+COMMENT ON COLUMN transferencias_stock_items.ubicacion_destino_id IS 'Ubicación WMS donde entra el producto (NULL = default sucursal)';
+COMMENT ON COLUMN transferencias_stock_items.lote IS 'Número de lote para trazabilidad';
 
 -- ====================================================================
 -- FIN: TABLAS DE SUCURSALES

@@ -2,10 +2,11 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { TrendingUp, TrendingDown, AlertCircle } from 'lucide-react';
+import { TrendingUp, TrendingDown, AlertCircle, MapPin } from 'lucide-react';
 import { Button, Drawer, FormGroup, Input, Textarea } from '@/components/ui';
-import { useAjustarStock } from '@/hooks/inventario';
+import { useAjustarStock, useUbicacionesAlmacen } from '@/hooks/inventario';
 import { useToast } from '@/hooks/utils';
+import { useAuth } from '@/hooks/auth';
 
 /**
  * Schema de validación Zod para ajuste de stock
@@ -22,6 +23,8 @@ const ajustarStockSchema = z.object({
     .string()
     .min(5, 'El motivo debe tener al menos 5 caracteres')
     .max(500, 'Máximo 500 caracteres'),
+  // Ene 2026: Ubicación destino opcional para integración WMS
+  ubicacion_id: z.coerce.number().optional(),
 });
 
 /**
@@ -29,10 +32,19 @@ const ajustarStockSchema = z.object({
  */
 function AjustarStockModal({ isOpen, onClose, producto }) {
   const { success: showSuccess, error: showError } = useToast();
+  const { user } = useAuth();
   const [stockProyectado, setStockProyectado] = useState(producto?.stock_actual || 0);
 
   // Mutation
   const ajustarMutation = useAjustarStock();
+
+  // Query ubicaciones disponibles
+  const { data: ubicacionesData } = useUbicacionesAlmacen({
+    sucursal_id: user?.sucursal_id,
+    activo: true,
+    bloqueada: false,
+  });
+  const ubicaciones = ubicacionesData?.ubicaciones || [];
 
   // Form
   const {
@@ -47,6 +59,7 @@ function AjustarStockModal({ isOpen, onClose, producto }) {
       tipo_movimiento: 'entrada_ajuste',
       cantidad_ajuste: 0,
       motivo: '',
+      ubicacion_id: undefined,
     },
   });
 
@@ -80,6 +93,7 @@ function AjustarStockModal({ isOpen, onClose, producto }) {
         tipo_movimiento: data.tipo_movimiento,
         cantidad_ajuste: cantidadFinal,
         motivo: data.motivo,
+        ubicacion_id: data.ubicacion_id || undefined, // Ubicación destino opcional
       },
       {
         onSuccess: () => {
@@ -203,6 +217,31 @@ function AjustarStockModal({ isOpen, onClose, producto }) {
             </label>
           </div>
         </FormGroup>
+
+        {/* Ubicación (opcional) */}
+        {ubicaciones.length > 0 && (
+          <FormGroup
+            label="Ubicación"
+            helper="Selecciona la ubicación donde se aplicará el ajuste (opcional)"
+          >
+            <div className="relative">
+              <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500" />
+              <select
+                {...register('ubicacion_id')}
+                className="pl-10 w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+              >
+                <option value="">Usar ubicación por defecto</option>
+                {ubicaciones.map((u) => (
+                  <option key={u.id} value={u.id}>
+                    {u.codigo || u.nombre}
+                    {u.es_recepcion && ' (Recepción)'}
+                    {u.es_picking && ' (Picking)'}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </FormGroup>
+        )}
 
         {/* Cantidad a Ajustar */}
         <FormGroup

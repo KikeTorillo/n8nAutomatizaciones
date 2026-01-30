@@ -233,31 +233,40 @@ COMMENT ON FUNCTION trigger_asignar_ubicacion_default_usuario IS 'Auto-asigna ub
 -- ====================================================================
 -- Procesa el envío de una transferencia: resta stock de origen.
 -- Usa registrar_movimiento_con_ubicacion para sincronizar stock_ubicaciones.
+-- Ene 2026: Soporta ubicación específica por item (WMS)
 -- ====================================================================
 CREATE OR REPLACE FUNCTION procesar_envio_transferencia(p_transferencia_id INTEGER)
 RETURNS BOOLEAN AS $$
 DECLARE
     v_item RECORD;
     v_transferencia RECORD;
-    v_ubicacion_origen INTEGER;
+    v_ubicacion_id INTEGER;
 BEGIN
     -- Obtener datos de la transferencia
     SELECT * INTO v_transferencia
     FROM transferencias_stock
     WHERE id = p_transferencia_id;
 
-    -- Obtener ubicación default de origen
-    v_ubicacion_origen := crear_ubicacion_default_sucursal(
-        v_transferencia.sucursal_origen_id,
-        v_transferencia.organizacion_id
-    );
-
     -- Procesar cada item
     FOR v_item IN
-        SELECT producto_id, cantidad_enviada
+        SELECT
+            producto_id,
+            cantidad_enviada,
+            ubicacion_origen_id,
+            lote
         FROM transferencias_stock_items
         WHERE transferencia_id = p_transferencia_id
     LOOP
+        -- Usar ubicación específica del item o default de sucursal
+        IF v_item.ubicacion_origen_id IS NOT NULL THEN
+            v_ubicacion_id := v_item.ubicacion_origen_id;
+        ELSE
+            v_ubicacion_id := crear_ubicacion_default_sucursal(
+                v_transferencia.sucursal_origen_id,
+                v_transferencia.organizacion_id
+            );
+        END IF;
+
         -- Registrar movimiento de salida con ubicación
         PERFORM registrar_movimiento_con_ubicacion(
             v_transferencia.organizacion_id,
@@ -265,8 +274,8 @@ BEGIN
             'transferencia_salida',
             -v_item.cantidad_enviada,  -- Negativo = salida
             v_transferencia.sucursal_origen_id,
-            v_ubicacion_origen,
-            NULL,  -- lote
+            v_ubicacion_id,
+            v_item.lote,  -- lote del item
             NULL,  -- fecha_vencimiento
             v_transferencia.codigo,  -- referencia
             'Transferencia a sucursal destino',
@@ -282,20 +291,21 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-COMMENT ON FUNCTION procesar_envio_transferencia IS 'Procesa envío de transferencia: resta stock de sucursal origen via stock_ubicaciones';
+COMMENT ON FUNCTION procesar_envio_transferencia IS 'Procesa envío de transferencia: resta stock de sucursal origen via stock_ubicaciones. Soporta ubicación específica por item.';
 
 -- ====================================================================
 -- FUNCION: procesar_recepcion_transferencia
 -- ====================================================================
 -- Procesa la recepción de una transferencia: suma stock a destino.
 -- Usa registrar_movimiento_con_ubicacion para sincronizar stock_ubicaciones.
+-- Ene 2026: Soporta ubicación específica por item (WMS)
 -- ====================================================================
 CREATE OR REPLACE FUNCTION procesar_recepcion_transferencia(p_transferencia_id INTEGER)
 RETURNS BOOLEAN AS $$
 DECLARE
     v_item RECORD;
     v_transferencia RECORD;
-    v_ubicacion_destino INTEGER;
+    v_ubicacion_id INTEGER;
     v_cantidad INTEGER;
 BEGIN
     -- Obtener datos de la transferencia
@@ -303,18 +313,27 @@ BEGIN
     FROM transferencias_stock
     WHERE id = p_transferencia_id;
 
-    -- Obtener ubicación default de destino
-    v_ubicacion_destino := crear_ubicacion_default_sucursal(
-        v_transferencia.sucursal_destino_id,
-        v_transferencia.organizacion_id
-    );
-
     -- Procesar cada item
     FOR v_item IN
-        SELECT producto_id, cantidad_enviada, cantidad_recibida
+        SELECT
+            producto_id,
+            cantidad_enviada,
+            cantidad_recibida,
+            ubicacion_destino_id,
+            lote
         FROM transferencias_stock_items
         WHERE transferencia_id = p_transferencia_id
     LOOP
+        -- Usar ubicación específica del item o default de sucursal
+        IF v_item.ubicacion_destino_id IS NOT NULL THEN
+            v_ubicacion_id := v_item.ubicacion_destino_id;
+        ELSE
+            v_ubicacion_id := crear_ubicacion_default_sucursal(
+                v_transferencia.sucursal_destino_id,
+                v_transferencia.organizacion_id
+            );
+        END IF;
+
         -- Usar cantidad_recibida si existe (permite merma)
         v_cantidad := COALESCE(v_item.cantidad_recibida, v_item.cantidad_enviada);
 
@@ -325,8 +344,8 @@ BEGIN
             'transferencia_entrada',
             v_cantidad,  -- Positivo = entrada
             v_transferencia.sucursal_destino_id,
-            v_ubicacion_destino,
-            NULL,  -- lote
+            v_ubicacion_id,
+            v_item.lote,  -- lote del item
             NULL,  -- fecha_vencimiento
             v_transferencia.codigo,  -- referencia
             'Recepción de transferencia',
@@ -342,7 +361,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-COMMENT ON FUNCTION procesar_recepcion_transferencia IS 'Procesa recepción de transferencia: suma stock a sucursal destino via stock_ubicaciones';
+COMMENT ON FUNCTION procesar_recepcion_transferencia IS 'Procesa recepción de transferencia: suma stock a sucursal destino via stock_ubicaciones. Soporta ubicación específica por item.';
 
 -- ====================================================================
 -- FIN: FUNCIONES DE SUCURSALES

@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Package, Check, AlertTriangle, Hash, Plus, X, ChevronDown, ChevronUp, ScanLine, Info } from 'lucide-react';
+import { Package, Check, AlertTriangle, Hash, Plus, X, ChevronDown, ChevronUp, ScanLine, Info, MapPin } from 'lucide-react';
 import { BarcodeScanner, Button, Drawer } from '@/components/ui';
 import { useToast } from '@/hooks/utils';
-import { useOrdenCompra, useRecibirMercancia } from '@/hooks/inventario';
+import { useOrdenCompra, useRecibirMercancia, useUbicacionesAlmacen } from '@/hooks/inventario';
 import { useVerificarExistencia } from '@/hooks/inventario';
 import { useResumenCostos } from '@/hooks/inventario';
+import { useAuth } from '@/hooks/auth';
 
 /**
  * Modal para registrar recepción de mercancía
@@ -12,9 +13,17 @@ import { useResumenCostos } from '@/hooks/inventario';
  */
 export default function RecibirMercanciaModal({ isOpen, onClose, orden }) {
   const { showToast } = useToast();
+  const { user } = useAuth();
 
   // Query detalle de la orden
   const { data: ordenDetalle, isLoading } = useOrdenCompra(orden?.id);
+
+  // Query ubicaciones disponibles para recepción
+  const { data: ubicacionesData } = useUbicacionesAlmacen({
+    sucursal_id: user?.sucursal_id,
+    activo: true,
+    bloqueada: false,
+  });
 
   // Estado de recepciones
   const [recepciones, setRecepciones] = useState([]);
@@ -33,6 +42,15 @@ export default function RecibirMercanciaModal({ isOpen, onClose, orden }) {
   const [showScanner, setShowScanner] = useState(false);
   const [scanMode, setScanMode] = useState('producto'); // 'producto' o 'ns'
   const [scanTargetItem, setScanTargetItem] = useState(null); // Para NS específico
+
+  // Obtener ubicaciones formateadas para el selector
+  const ubicaciones = ubicacionesData?.ubicaciones || [];
+
+  // Obtener ubicación por defecto para recepción (es_recepcion = true o primera disponible)
+  const getUbicacionRecepcionDefault = () => {
+    const ubicacionRecepcion = ubicaciones.find(u => u.es_recepcion);
+    return ubicacionRecepcion?.id || undefined;
+  };
 
   // Inicializar recepciones cuando se carga la orden
   useEffect(() => {
@@ -54,6 +72,7 @@ export default function RecibirMercanciaModal({ isOpen, onClose, orden }) {
           lote: '',
           notas: '',
           numeros_serie: [], // Array de NS para productos que lo requieren
+          ubicacion_id: getUbicacionRecepcionDefault(), // Ubicación por defecto para recepción
         }));
       setRecepciones(recepcionesIniciales);
     }
@@ -116,6 +135,12 @@ export default function RecibirMercanciaModal({ isOpen, onClose, orden }) {
   const handleNotasChange = (index, notas) => {
     const nuevasRecepciones = [...recepciones];
     nuevasRecepciones[index].notas = notas;
+    setRecepciones(nuevasRecepciones);
+  };
+
+  const handleUbicacionChange = (index, ubicacionId) => {
+    const nuevasRecepciones = [...recepciones];
+    nuevasRecepciones[index].ubicacion_id = ubicacionId ? parseInt(ubicacionId) : undefined;
     setRecepciones(nuevasRecepciones);
   };
 
@@ -301,6 +326,7 @@ export default function RecibirMercanciaModal({ isOpen, onClose, orden }) {
         fecha_vencimiento: r.fecha_vencimiento || undefined,
         lote: r.lote?.trim() || undefined,
         notas: r.notas?.trim() || undefined,
+        ubicacion_id: r.ubicacion_id || undefined, // Ubicación destino opcional
         numeros_serie: r.requiere_numero_serie ? r.numeros_serie.map(ns => ({
           numero_serie: ns.numero_serie?.trim(),
           lote: ns.lote?.trim() || r.lote?.trim() || undefined,
@@ -449,6 +475,9 @@ export default function RecibirMercanciaModal({ isOpen, onClose, orden }) {
                   <th className="px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                     Lote
                   </th>
+                  <th className="px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                    Ubicación
+                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -504,6 +533,20 @@ export default function RecibirMercanciaModal({ isOpen, onClose, orden }) {
                         className="w-24 text-center rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:border-primary-500 focus:ring-primary-500"
                         placeholder="Opcional"
                       />
+                    </td>
+                    <td className="px-4 py-3">
+                      <select
+                        value={item.ubicacion_id || ''}
+                        onChange={(e) => handleUbicacionChange(index, e.target.value)}
+                        className="w-32 text-sm rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                      >
+                        <option value="">Por defecto</option>
+                        {ubicaciones.map((u) => (
+                          <option key={u.id} value={u.id}>
+                            {u.codigo || u.nombre}
+                          </option>
+                        ))}
+                      </select>
                     </td>
                   </tr>
                 ))}

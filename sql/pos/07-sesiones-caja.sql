@@ -273,6 +273,7 @@ CREATE POLICY desglose_billetes_delete_policy ON desglose_billetes
 
 -- ============================================================================
 -- FUNCIÓN: Calcular totales de sesión
+-- Optimizada Ene 2026: Usa FK directo sesion_caja_id en lugar de rango fechas
 -- ============================================================================
 CREATE OR REPLACE FUNCTION calcular_totales_sesion(p_sesion_id INTEGER)
 RETURNS TABLE (
@@ -283,27 +284,21 @@ RETURNS TABLE (
 ) AS $$
 DECLARE
     v_monto_inicial DECIMAL(12,2);
-    v_organizacion_id INTEGER;
 BEGIN
-    -- Obtener datos de la sesión
-    SELECT monto_inicial, organizacion_id
-    INTO v_monto_inicial, v_organizacion_id
+    -- Obtener monto inicial de la sesión
+    SELECT monto_inicial
+    INTO v_monto_inicial
     FROM sesiones_caja
     WHERE id = p_sesion_id;
 
-    -- Total ventas en efectivo durante la sesión
+    -- Total ventas en efectivo durante la sesión (usa FK directo - mucho más eficiente)
     SELECT COALESCE(SUM(
         CASE WHEN metodo_pago = 'efectivo' THEN monto_pagado ELSE 0 END
     ), 0)
     INTO total_ventas_efectivo
     FROM ventas_pos
-    WHERE organizacion_id = v_organizacion_id
-    AND estado_pago IN ('pagado', 'parcial')
-    AND fecha_venta >= (SELECT fecha_apertura FROM sesiones_caja WHERE id = p_sesion_id)
-    AND (
-        fecha_venta < (SELECT fecha_cierre FROM sesiones_caja WHERE id = p_sesion_id)
-        OR (SELECT fecha_cierre FROM sesiones_caja WHERE id = p_sesion_id) IS NULL
-    );
+    WHERE sesion_caja_id = p_sesion_id
+    AND estado_pago IN ('pagado', 'parcial');
 
     -- Total entradas de efectivo
     SELECT COALESCE(SUM(monto), 0)
@@ -324,7 +319,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
-COMMENT ON FUNCTION calcular_totales_sesion IS 'Calcula los totales de una sesión de caja para el cierre';
+COMMENT ON FUNCTION calcular_totales_sesion IS 'Calcula totales de sesión de caja usando FK directo sesion_caja_id';
 
 -- ============================================================================
 -- TRIGGER: Actualizar timestamp

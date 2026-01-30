@@ -194,7 +194,10 @@ const productosSchemas = {
                 .messages({
                     'any.required': 'tipo_movimiento es requerido',
                     'any.only': 'tipo_movimiento debe ser entrada_ajuste o salida_ajuste'
-                })
+                }),
+            // Ene 2026: Ubicación destino opcional para integración WMS
+            ubicacion_id: Joi.number().integer().positive().optional()
+                .description('Ubicación destino opcional, usa default si no se especifica')
         }).custom((value, helpers) => {
             // Validación: Las entradas deben tener cantidad positiva
             if (value.tipo_movimiento === 'entrada_ajuste' && value.cantidad_ajuste <= 0) {

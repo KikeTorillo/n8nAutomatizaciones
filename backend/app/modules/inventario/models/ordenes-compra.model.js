@@ -833,6 +833,7 @@ class OrdenesCompraModel {
                 const costoUnitario = precioBase + landedCostsUnitario;
 
                 // Usar función consolidada para crear movimiento y actualizar stock
+                // Ene 2026: Soporta ubicacion_id explícita para integración con WMS
                 const movimientoQuery = await db.query(
                     `SELECT registrar_movimiento_con_ubicacion(
                         $1,  -- organizacion_id
@@ -840,14 +841,14 @@ class OrdenesCompraModel {
                         $3,  -- tipo_movimiento
                         $4,  -- cantidad
                         $5,  -- sucursal_id
-                        NULL, -- ubicacion_id (usa default)
-                        $6,  -- lote
-                        $7,  -- fecha_vencimiento
-                        $8,  -- referencia
-                        $9,  -- motivo
-                        $10, -- usuario_id
-                        $11, -- costo_unitario
-                        $12, -- proveedor_id
+                        $6,  -- ubicacion_id (NULL usa default)
+                        $7,  -- lote
+                        $8,  -- fecha_vencimiento
+                        $9,  -- referencia
+                        $10, -- motivo
+                        $11, -- usuario_id
+                        $12, -- costo_unitario
+                        $13, -- proveedor_id
                         NULL, -- venta_pos_id
                         NULL, -- cita_id
                         NULL  -- variante_id
@@ -858,6 +859,7 @@ class OrdenesCompraModel {
                         'entrada_compra',
                         recepcion.cantidad,
                         sucursalId,
+                        recepcion.ubicacion_id || null, // Ubicación explícita o NULL para default
                         recepcion.lote || null,
                         recepcion.fecha_vencimiento || null,
                         `OC: ${orden.folio}`,

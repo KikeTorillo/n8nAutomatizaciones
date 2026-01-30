@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { format } from 'date-fns';
 import {
   Plus,
   Search,
@@ -14,14 +15,21 @@ import {
   ChevronDown,
   ChevronUp,
   RotateCcw,
+  FileText,
+  Edit,
+  FileSpreadsheet,
+  TrendingUp,
+  Calendar,
 } from 'lucide-react';
-import { useModalManager } from '@/hooks/utils';
+import { useModalManager, useToast, useExportCSV } from '@/hooks/utils';
 import {
   Button,
   ConfirmDialog,
   DataTable,
   Select,
   StandardRowActions,
+  SmartButtons,
+  StatCardGrid,
 } from '@/components/ui';
 import { TransferenciaFormDrawer, SucursalesPageLayout } from '@/components/sucursales';
 import {
@@ -30,7 +38,6 @@ import {
   useEnviarTransferencia,
   useCancelarTransferencia,
 } from '@/hooks/sistema';
-import { useToast } from '@/hooks/utils';
 
 // Mapeo de estados a colores e iconos
 const estadoConfig = {
@@ -150,6 +157,7 @@ const COLUMNS = [
 function TransferenciasPage() {
   const toast = useToast();
   const navigate = useNavigate();
+  const { exportCSV } = useExportCSV();
   const [busqueda, setBusqueda] = useState('');
   const [showFilters, setShowFilters] = useState(false);
 
@@ -189,6 +197,139 @@ function TransferenciasPage() {
       t.sucursal_destino_nombre?.toLowerCase().includes(searchLower)
     );
   });
+
+  // Calcular estadísticas para SmartButtons y StatCardGrid
+  const estadisticas = useMemo(() => {
+    if (!transferencias || transferencias.length === 0) {
+      return {
+        total: 0,
+        porEstado: { borrador: 0, enviado: 0, recibido: 0, cancelado: 0 },
+        totalUnidades: 0,
+        mesActual: 0,
+      };
+    }
+
+    const porEstado = transferencias.reduce((acc, t) => {
+      acc[t.estado] = (acc[t.estado] || 0) + 1;
+      return acc;
+    }, { borrador: 0, enviado: 0, recibido: 0, cancelado: 0 });
+
+    const totalUnidades = transferencias.reduce(
+      (sum, t) => sum + (t.total_unidades || 0),
+      0
+    );
+
+    // Calcular transferencias del mes actual
+    const inicioMes = new Date();
+    inicioMes.setDate(1);
+    inicioMes.setHours(0, 0, 0, 0);
+
+    const mesActual = transferencias.filter((t) => {
+      const fecha = new Date(t.creado_en);
+      return fecha >= inicioMes;
+    }).length;
+
+    return {
+      total: transferencias.length,
+      porEstado,
+      totalUnidades,
+      mesActual,
+    };
+  }, [transferencias]);
+
+  // Configuración de SmartButtons para filtros rápidos
+  const smartButtonsConfig = useMemo(() => [
+    {
+      id: 'todas',
+      icon: FileText,
+      value: estadisticas.total,
+      label: 'Total',
+      color: filtros.estado === '' ? 'primary' : 'gray',
+      onClick: () => setFiltros((prev) => ({ ...prev, estado: '' })),
+    },
+    {
+      id: 'borrador',
+      icon: Edit,
+      value: estadisticas.porEstado.borrador,
+      label: 'Borradores',
+      color: filtros.estado === 'borrador' ? 'yellow' : 'gray',
+      onClick: () => setFiltros((prev) => ({ ...prev, estado: 'borrador' })),
+    },
+    {
+      id: 'enviado',
+      icon: Send,
+      value: estadisticas.porEstado.enviado,
+      label: 'Enviados',
+      color: filtros.estado === 'enviado' ? 'primary' : 'gray',
+      onClick: () => setFiltros((prev) => ({ ...prev, estado: 'enviado' })),
+    },
+    {
+      id: 'recibido',
+      icon: CheckCircle,
+      value: estadisticas.porEstado.recibido,
+      label: 'Recibidos',
+      color: filtros.estado === 'recibido' ? 'green' : 'gray',
+      onClick: () => setFiltros((prev) => ({ ...prev, estado: 'recibido' })),
+    },
+  ], [estadisticas, filtros.estado]);
+
+  // Configuración de StatCardGrid
+  const statsConfig = useMemo(() => [
+    {
+      icon: ArrowRightLeft,
+      label: 'Total Transferencias',
+      value: estadisticas.total,
+      color: 'primary',
+    },
+    {
+      icon: Calendar,
+      label: 'Este Mes',
+      value: estadisticas.mesActual,
+      color: 'blue',
+    },
+    {
+      icon: Package,
+      label: 'Unidades Movidas',
+      value: estadisticas.totalUnidades.toLocaleString('es-MX'),
+      color: 'green',
+    },
+    {
+      icon: TrendingUp,
+      label: 'En Tránsito',
+      value: estadisticas.porEstado.enviado,
+      color: 'yellow',
+    },
+  ], [estadisticas]);
+
+  // Handler para exportar CSV
+  const handleExportarCSV = () => {
+    if (!transferenciasFiltradas || transferenciasFiltradas.length === 0) {
+      toast.error('No hay datos para exportar');
+      return;
+    }
+
+    const datosExportar = transferenciasFiltradas.map((t) => ({
+      codigo: t.codigo || '',
+      sucursal_origen: t.sucursal_origen_nombre || '',
+      sucursal_destino: t.sucursal_destino_nombre || '',
+      estado: estadoConfig[t.estado]?.label || t.estado,
+      total_items: t.total_items || 0,
+      total_unidades: t.total_unidades || 0,
+      fecha_creacion: t.creado_en ? format(new Date(t.creado_en), 'dd/MM/yyyy HH:mm') : '',
+      notas: t.notas || '',
+    }));
+
+    exportCSV(datosExportar, [
+      { key: 'codigo', header: 'Código' },
+      { key: 'sucursal_origen', header: 'Sucursal Origen' },
+      { key: 'sucursal_destino', header: 'Sucursal Destino' },
+      { key: 'estado', header: 'Estado' },
+      { key: 'total_items', header: 'Items' },
+      { key: 'total_unidades', header: 'Unidades' },
+      { key: 'fecha_creacion', header: 'Fecha Creación' },
+      { key: 'notas', header: 'Notas' },
+    ], `transferencias_${format(new Date(), 'yyyyMMdd')}`);
+  };
 
   // Handler para limpiar filtros
   const handleLimpiarFiltros = () => {
@@ -263,20 +404,39 @@ function TransferenciasPage() {
       title="Transferencias"
       subtitle={`${transferenciasFiltradas?.length || 0} transferencia${(transferenciasFiltradas?.length || 0) !== 1 ? 's' : ''}`}
       actions={
-        <Button
-          variant="primary"
-          onClick={handleNuevaTransferencia}
-          icon={Plus}
-          className="flex-1 sm:flex-none text-sm"
-        >
-          <span className="hidden sm:inline">Nueva Transferencia</span>
-          <span className="sm:hidden">Nueva</span>
-        </Button>
+        <>
+          <Button
+            variant="secondary"
+            onClick={handleExportarCSV}
+            disabled={!transferenciasFiltradas || transferenciasFiltradas.length === 0}
+            icon={FileSpreadsheet}
+            className="flex-1 sm:flex-none text-sm"
+          >
+            <span className="hidden sm:inline">Exportar CSV</span>
+            <span className="sm:hidden">CSV</span>
+          </Button>
+          <Button
+            variant="primary"
+            onClick={handleNuevaTransferencia}
+            icon={Plus}
+            className="flex-1 sm:flex-none text-sm"
+          >
+            <span className="hidden sm:inline">Nueva Transferencia</span>
+            <span className="sm:hidden">Nueva</span>
+          </Button>
+        </>
       }
     >
 
+      <div className="space-y-6">
+        {/* SmartButtons - Filtros rápidos por estado */}
+        <SmartButtons buttons={smartButtonsConfig} className="mb-2" />
+
+        {/* StatCardGrid - Métricas */}
+        <StatCardGrid stats={statsConfig} columns={4} />
+
         {/* Panel de Filtros */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm mb-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
           <div className="p-4 flex flex-col sm:flex-row sm:items-center gap-3">
             {/* Barra de busqueda */}
             <div className="relative flex-1">
@@ -400,6 +560,7 @@ function TransferenciasPage() {
           }}
           skeletonRows={5}
         />
+      </div>
 
       {/* Modal crear transferencia */}
       <TransferenciaFormDrawer
