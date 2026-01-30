@@ -1,6 +1,6 @@
 # Módulo Inventario - Consolidación de Stock
 
-**Estado**: ✅ Completo | **Última revisión**: 29 Enero 2026
+**Estado**: 🟡 En validación | **Última revisión**: 30 Enero 2026
 
 ---
 
@@ -8,70 +8,52 @@
 
 ```mermaid
 flowchart TB
-    subgraph ENTRADAS["+ ENTRADAS"]
+    subgraph ENTRADAS["📥 ENTRADAS"]
         OC[Recepción OC]
         DEV[Devolución POS]
         AJE[Ajuste +]
-        TRE[Transferencia Entrada]
-        CSV_E[Ajuste Masivo CSV +]
-        CNT_E[Conteo Físico +]
+        TRE[Transfer. Entrada]
     end
 
-    subgraph SALIDAS["- SALIDAS"]
+    subgraph SALIDAS["📤 SALIDAS"]
         VTA[Venta POS]
         AJS[Ajuste -]
-        TRS[Transferencia Salida]
-        CSV_S[Ajuste Masivo CSV -]
-        CNT_S[Conteo Físico -]
+        TRS[Transfer. Salida]
     end
 
-    subgraph WMS["WMS - Resolución Ubicación"]
+    subgraph WMS["🏷️ RESOLUCIÓN UBICACIÓN"]
         UU[(usuarios_ubicaciones)]
         UA[(ubicaciones_almacen)]
-        CSV_U[ubicacion_codigo CSV]
-        CNT_U[filtro ubicacion_id]
     end
 
-    subgraph CORE["CORE - Función Consolidada"]
+    subgraph CORE["⚙️ FUNCIÓN CENTRAL"]
         FN[registrar_movimiento_con_ubicacion]
     end
 
-    subgraph STORAGE["ALMACENAMIENTO"]
+    subgraph STORAGE["💾 ALMACENAMIENTO"]
         SU[(stock_ubicaciones)]
         MI[(movimientos_inventario)]
         SP[(productos.stock_actual)]
     end
 
-    %% Entradas directas
-    OC -->|ubicacion UI| FN
+    %% Entradas
+    OC -->|ubicación UI| FN
     DEV -->|auto usuario| UU
-    AJE -->|ubicacion UI| FN
-    TRE -->|ubicacion_destino_id| FN
+    AJE -->|ubicación UI| FN
+    TRE -->|ubicación destino| FN
 
     %% Salidas con resolución
     VTA --> UU
     UU -->|default/permiso| UA
     UA --> FN
+    AJS -->|ubicación UI| FN
+    TRS -->|ubicación origen| FN
 
-    AJS -->|ubicacion UI| FN
-    TRS -->|ubicacion_origen_id| FN
-
-    %% Ajustes Masivos CSV
-    CSV_E --> CSV_U
-    CSV_S --> CSV_U
-    CSV_U -->|codigo → id| UA
-
-    %% Conteos Físicos
-    CNT_E --> CNT_U
-    CNT_S --> CNT_U
-    CNT_U --> UA
-
-    %% Core a Storage
+    %% Storage
     FN --> SU
     FN --> MI
     SU -->|trigger sync| SP
 
-    %% Estilos
     style FN fill:#753572,color:#fff
     style SU fill:#2d5a27,color:#fff
     style SP fill:#1e3a5f,color:#fff
@@ -111,57 +93,34 @@ obtener_ubicacion_usuario(usuario_id, sucursal_id)
 
 ---
 
-## Estado de Operaciones
+## Operaciones y Tipos de Movimiento
 
-| Operación | Tipo Movimiento | Ubicación | Estado |
-|-----------|-----------------|-----------|--------|
-| Venta POS | `salida_venta` | Auto (usuario) | ✅ |
-| Recepción OC | `entrada_compra` | Selector UI | ✅ |
-| Ajuste stock | `entrada/salida_ajuste` | Selector UI | ✅ |
-| Mover stock | `transferencia` | Manual | ✅ |
-| Transferencia inter-sucursal | `transferencia_salida/entrada` | Selector UI | ✅ |
-| Devolución POS | `entrada_devolucion` | Auto (usuario) | ✅ |
-| Ajuste masivo CSV | `ajuste` | Columna CSV | ✅ |
-| Conteo físico | `ajuste` | Por ubicación | ✅ |
-
----
-
-## Transferencias Inter-Sucursal
-
-```
-Sucursal Origen                     Sucursal Destino
-[Ubicación A] ─── enviar ───>      [En Tránsito] ─── recibir ───> [Ubicación B]
-```
-
-- Items soportan `ubicacion_origen_id` y `ubicacion_destino_id`
-- UI: Selector ubicación origen al agregar, destino al recibir
+| Operación | Tipo Movimiento | Ubicación |
+|-----------|-----------------|-----------|
+| Venta POS | `salida_venta` | Auto (usuario) |
+| Recepción OC | `entrada_compra` | Selector UI |
+| Ajuste stock | `entrada/salida_ajuste` | Selector UI |
+| Mover stock | `transferencia` | Manual |
+| Transferencia inter-sucursal | `transferencia_salida/entrada` | Selector UI |
+| Devolución POS | `entrada_devolucion` | Auto (usuario) |
+| Conteo físico | `ajuste` | Por ubicación |
 
 ---
 
-## Ajustes Masivos CSV
+## Tipos de Venta y Reservas
 
-Plantilla con columna ubicación:
-```csv
-sku,codigo_barras,cantidad_ajuste,ubicacion_codigo,motivo
-PROD-001,,+10,BIN-A01,Entrada por recepción
-,7501234567890,-5,BIN-B02,Salida por merma
-```
+| Tipo Venta | Reserva | Comportamiento Stock |
+|------------|---------|---------------------|
+| `directa` | ❌ No | Descuento inmediato via trigger |
+| `cotizacion` | ❌ No | No afecta stock |
+| `apartado` | ✅ Sí | Reserva hasta confirmación/vencimiento |
+| `cita` | ✅ Sí | Reserva para servicio agendado |
 
-- Validación resuelve `ubicacion_codigo` → `ubicacion_id`
-- Error si ubicación no existe en sucursal
-
----
-
-## Conteos de Inventario
-
-Tipo `por_ubicacion`:
-- Selector de ubicación en modal de creación
-- Items generados con `ubicacion_id` del filtro
-- Ajustes aplicados a ubicación específica
+**Centralización**: Tipos de venta definidos en `backend/app/modules/pos/constants/pos.constants.js` y consumidos via API `/pos/config/tipos-venta`.
 
 ---
 
-## Queries de Diagnóstico
+## Diagnóstico SQL
 
 ```sql
 -- Verificar sincronización
@@ -182,33 +141,78 @@ WHERE uu.usuario_id = ? AND uu.activo = true;
 
 ---
 
-## Validación pg_cron
+## Jobs pg_cron
 
 | Job | Horario | Función |
 |-----|---------|---------|
 | `validar-sincronizacion-stock` | 04:00 AM | `ejecutar_validacion_stock_diaria()` |
-
-Auditoría: `auditoria_sincronizacion_stock`
-
----
-
-## Pendientes
-
-### Pruebas E2E Frontend
-
-| Flujo | Validación Principal |
-|-------|---------------------|
-| Ajuste Stock | Selector ubicación → stock en ubicación correcta |
-| Recepción OC | Ubicación destino → stock_ubicaciones actualizado |
-| Transferencia | Ubicación origen/destino por item funciona |
-| Conteo por Ubicación | Filtro ubicación → items con ubicacion_id → ajuste aplica a ubicación |
-| Ajuste Masivo CSV | Columna ubicacion_codigo → validación → movimiento con ubicación |
+| `expirar-reservas-stock` | */30 min | Expira reservas pendientes > 30 min |
 
 ---
 
-## Historial
+## Estado Actual (30 Enero 2026)
 
-| Fecha | Cambio |
-|-------|--------|
-| 29 Ene 2026 | Implementación completa: Ajustes masivos CSV con ubicación, Conteos por ubicación, Transferencias ubicacion_destino_id por item |
-| 29 Ene 2026 | Validación PostgreSQL: 256 tablas, 13 jobs pg_cron, FKs verificadas |
+### Validación Parcial
+
+| Operación | Estado | Notas |
+|-----------|--------|-------|
+| Ajuste entrada/salida | ✅ Pass | Stock actualizado correctamente |
+| Venta directa POS | ✅ Pass | Sin reserva, descuento inmediato |
+| Selector tipo venta POS | ✅ Pass | Centralizado backend → frontend |
+| Devolución POS | ✅ Pass | Stock revertido |
+| Mover stock ubicaciones | ⚠️ Bloqueado | Requiere stock en `stock_ubicaciones` |
+| Transferencias | ⚠️ Bloqueado | Límite plan 1 sucursal |
+| Conteos | ❌ Pendiente | Bug importación frontend |
+| Recepción OC | 🔲 Pendiente | No validado |
+
+### Bugs Conocidos
+
+1. **Conteos de Inventario**: Error de importación `useAuthStore` en página de operaciones
+2. **Mover Stock**: Productos legacy sin registro en `stock_ubicaciones`
+
+---
+
+## Pendientes - Validación E2E Próxima Sesión
+
+Validación completa desde proyecto limpio:
+
+### 1. Setup Inicial
+- [ ] Levantar proyecto desde cero (docker-compose up)
+- [ ] Crear organización y usuario admin
+- [ ] Crear sucursal con ubicaciones de almacén
+
+### 2. Configuración WMS
+- [ ] Crear ubicaciones (DEFAULT, ALMACEN, MOSTRADOR)
+- [ ] Asignar ubicaciones a usuarios con permisos
+
+### 3. Inventario Base
+- [ ] Crear categorías de productos
+- [ ] Crear productos con stock inicial
+- [ ] Verificar registro automático en `stock_ubicaciones`
+
+### 4. Validación Operaciones
+- [ ] **Ajustes**: Entrada y salida con selector de ubicación
+- [ ] **Mover stock**: Entre ubicaciones de misma sucursal
+- [ ] **Conteos**: Crear conteo por ubicación y aplicar diferencias
+- [ ] **Órdenes de Compra**: Crear → Recibir → Verificar stock
+
+### 5. Validación POS
+- [ ] Venta directa (descuento inmediato)
+- [ ] Cotización (sin afectar stock)
+- [ ] Apartado (reserva y confirmación)
+- [ ] Devolución (reversión stock)
+
+### 6. Validación Multi-Usuario
+- [ ] Usuario con ubicación MOSTRADOR solo ve/opera esa ubicación
+- [ ] Usuario con ubicación ALMACEN solo ve/opera esa ubicación
+- [ ] Verificar permisos `puede_recibir` y `puede_despachar`
+
+### 7. Transferencias (si aplica)
+- [ ] Ajustar límite sucursales en plan
+- [ ] Crear segunda sucursal
+- [ ] Flujo: Enviar → Tránsito → Recibir
+
+### Criterios de Éxito
+- `validar_sincronizacion_stock()` sin discrepancias
+- Kardex refleja todos los movimientos
+- Stock por ubicación coincide con total producto
