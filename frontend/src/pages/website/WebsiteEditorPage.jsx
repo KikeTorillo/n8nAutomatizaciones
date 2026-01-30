@@ -39,6 +39,7 @@ import {
   selectSetZoom,
   selectSetBloqueRecienAgregado,
   selectActualizarVersionBloque,
+  selectToggleVisibilidadBloque,
 } from '@/store';
 
 // Hooks existentes
@@ -60,6 +61,7 @@ import { DndEditorProvider } from './components/DndEditorProvider';
 import AIWizardModal from './components/AIWizard/AIWizardModal';
 import MobileEditorFAB from './components/MobileEditorFAB';
 import { EditorTour } from './components/OnboardingTour';
+import ConflictAlert from './components/ConflictAlert';
 
 // UI
 import { BackButton, Drawer } from '@/components/ui';
@@ -114,6 +116,7 @@ function WebsiteEditorPage() {
   const actualizarBloqueLocal = useWebsiteEditorStore(selectActualizarBloqueLocal);
   const actualizarVersionBloque = useWebsiteEditorStore(selectActualizarVersionBloque);
   const reordenarBloquesLocal = useWebsiteEditorStore(selectReordenarBloquesLocal);
+  const toggleVisibilidadBloque = useWebsiteEditorStore(selectToggleVisibilidadBloque);
   const breakpoint = useWebsiteEditorStore(selectBreakpoint);
   const setBreakpoint = useWebsiteEditorStore(selectSetBreakpoint);
   const setZoom = useWebsiteEditorStore(selectSetZoom);
@@ -309,15 +312,45 @@ function WebsiteEditorPage() {
     }
   };
 
+  const handleToggleVisibilidad = async (bloqueId) => {
+    const bloque = bloques.find((b) => b.id === bloqueId);
+    if (!bloque) return;
+
+    const nuevoVisible = !bloque.visible;
+
+    // Actualizar localmente primero para feedback inmediato
+    toggleVisibilidadBloque(bloqueId);
+
+    try {
+      await actualizarBloque.mutateAsync({
+        id: bloqueId,
+        data: {
+          visible: nuevoVisible,
+          version: bloque.version,
+        },
+        paginaId: bloque.pagina_id,
+      });
+    } catch (error) {
+      // Revertir cambio local si falla
+      toggleVisibilidadBloque(bloqueId);
+      toast.error(error.response?.data?.message || 'Error al cambiar visibilidad');
+    }
+  };
+
   const handleReordenarBloques = async (nuevoOrden) => {
+    // Normalizar input: puede venir como array de IDs o array de {id, orden}
+    const idsOrdenados = nuevoOrden.map((item) =>
+      typeof item === 'string' ? item : item.id
+    );
+
     // Actualizar localmente primero
-    reordenarBloquesLocal(nuevoOrden);
+    reordenarBloquesLocal(idsOrdenados);
 
     // Persistir en servidor
     try {
       await reordenarBloques.mutateAsync({
         paginaId: paginaActiva.id,
-        ordenamiento: nuevoOrden.map((id, index) => ({ id, orden: index })),
+        ordenamiento: idsOrdenados.map((id, index) => ({ id, orden: index })),
       });
     } catch (error) {
       toast.error('Error al reordenar');
@@ -709,6 +742,9 @@ function WebsiteEditorPage() {
         </div>
       </header>
 
+      {/* Alerta de conflicto de versión (rollback visual) */}
+      <ConflictAlert />
+
       {/* Cuerpo del editor - Envuelto en DndEditorProvider para drag desde paleta */}
       <DndEditorProvider
         onDropFromPalette={handleDropFromPalette}
@@ -812,6 +848,9 @@ function WebsiteEditorPage() {
                 tema={config}
                 onReordenar={handleReordenarBloques}
                 onActualizarBloque={handleActualizarBloque}
+                onEliminarBloque={handleEliminarBloque}
+                onDuplicarBloque={handleDuplicarBloque}
+                onToggleVisibilidad={handleToggleVisibilidad}
                 isLoading={bloquesLoading}
               />
             ) : (

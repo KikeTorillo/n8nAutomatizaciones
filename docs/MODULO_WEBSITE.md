@@ -13,11 +13,12 @@ Constructor de sitios web integrado con ERP. Ventaja competitiva: CRM, citas, se
 | Editor Visual | 16 bloques, drag & drop (@dnd-kit), inline editing |
 | AI Site Generator | 21 industrias, OpenRouter (qwen3-235b), circuit breaker |
 | Acciones de Bloque | Duplicar, eliminar, toggle visibilidad (persistencia servidor) |
+| Reordenamiento | Drag & drop en vista Visual y Bloques |
 | Autosave | 3s debounce, mutex, reintentos, bloqueo optimista (409) |
 | Responsive Preview | Desktop/Tablet/Mobile con zoom |
 | SEO | Score tiempo real, 7 reglas |
 | Undo/Redo | Ctrl+Z/Y con Zustand temporal |
-| Unsplash + AI Writer | Imágenes y contenido generado |
+| Unsplash + AI Writer | Imágenes y contenido generado por campo |
 
 ### Arquitectura
 
@@ -25,9 +26,9 @@ Constructor de sitios web integrado con ERP. Ventaja competitiva: CRM, citas, se
 FRONTEND                              BACKEND (53 endpoints)
 ├── WebsiteEditorPage                 ├── /config/* (9)
 ├── EditorCanvas + CanvasBlock        ├── /paginas/* (6)
-├── PropertiesPanel (4 tabs)          ├── /bloques/* (10)
-├── BlockPalette                      ├── /ai/* (6) - OpenRouter
-└── ConflictAlert (409)               └── /public/* (8) - Sin auth
+├── BlockEditor (vista lista)         ├── /bloques/* (10)
+├── PropertiesPanel (4 tabs)          ├── /ai/* (6) - OpenRouter
+└── BlockPalette                      └── /public/* (8) - Sin auth
 
 HOOKS: useBlockEditor, useArrayItems, useAutosave, useEstadoGuardado
 STORE: websiteEditorStore.js + temporal middleware
@@ -50,9 +51,8 @@ GET  /api/v1/public/preview/:token        # Preview no publicado
 
 | Prioridad | Feature | Descripción |
 |-----------|---------|-------------|
-| Media | Prorrateo planes | Calcular diferencia al cambiar plan mid-cycle |
+| Alta | AI + Unsplash | Generar sitios con imágenes relevantes de Unsplash |
 | Media | Undo/Redo global | Conectar editores individuales al temporal middleware |
-| Baja | 2FA/MFA | Autenticación de dos factores |
 
 ---
 

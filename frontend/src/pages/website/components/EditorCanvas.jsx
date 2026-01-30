@@ -53,6 +53,9 @@ const ZOOM_LEVELS = [50, 75, 100, 125, 150, 200];
  * @param {Object} props.tema - Tema del sitio (colores, fuentes)
  * @param {Function} props.onReordenar - Callback para reordenar bloques
  * @param {Function} props.onActualizarBloque - Callback para actualizar bloque
+ * @param {Function} props.onEliminarBloque - Callback para eliminar bloque (servidor)
+ * @param {Function} props.onDuplicarBloque - Callback para duplicar bloque (servidor)
+ * @param {Function} props.onToggleVisibilidad - Callback para toggle visibilidad (servidor)
  * @param {boolean} props.isLoading - Si esta cargando
  */
 function EditorCanvas({
@@ -60,6 +63,9 @@ function EditorCanvas({
   tema,
   onReordenar,
   onActualizarBloque,
+  onEliminarBloque,
+  onDuplicarBloque,
+  onToggleVisibilidad,
   isLoading = false,
 }) {
   // Store state
@@ -86,6 +92,15 @@ function EditorCanvas({
   );
   const actualizarBloqueLocal = useWebsiteEditorStore(
     (state) => state.actualizarBloqueLocal
+  );
+  const eliminarBloqueLocal = useWebsiteEditorStore(
+    (state) => state.eliminarBloqueLocal
+  );
+  const duplicarBloqueLocal = useWebsiteEditorStore(
+    (state) => state.duplicarBloqueLocal
+  );
+  const toggleVisibilidadBloque = useWebsiteEditorStore(
+    (state) => state.toggleVisibilidadBloque
   );
 
   // Estado de guardado
@@ -149,6 +164,52 @@ function EditorCanvas({
       onActualizarBloque?.(id, contenido);
     },
     [actualizarBloqueLocal, onActualizarBloque]
+  );
+
+  /**
+   * Manejar toggle de visibilidad
+   * Usa el callback del servidor si está disponible
+   */
+  const handleToggleVisibility = useCallback(
+    (id) => {
+      if (onToggleVisibilidad) {
+        onToggleVisibilidad(id);
+      } else {
+        toggleVisibilidadBloque(id);
+      }
+    },
+    [onToggleVisibilidad, toggleVisibilidadBloque]
+  );
+
+  /**
+   * Manejar duplicar bloque
+   * Usa el callback del servidor si está disponible
+   */
+  const handleDuplicate = useCallback(
+    (id) => {
+      if (onDuplicarBloque) {
+        onDuplicarBloque(id);
+      } else {
+        const nuevoId = `bloque-${Date.now()}`;
+        duplicarBloqueLocal(id, nuevoId);
+      }
+    },
+    [onDuplicarBloque, duplicarBloqueLocal]
+  );
+
+  /**
+   * Manejar eliminar bloque
+   * Usa el callback del servidor si está disponible
+   */
+  const handleDelete = useCallback(
+    (id) => {
+      if (onEliminarBloque) {
+        onEliminarBloque(id);
+      } else {
+        eliminarBloqueLocal(id);
+      }
+    },
+    [onEliminarBloque, eliminarBloqueLocal]
   );
 
   // ========== COMPUTED ==========
@@ -253,6 +314,9 @@ function EditorCanvas({
                         onContentChange={(contenido) =>
                           handleContentChange(bloque.id, contenido)
                         }
+                        onToggleVisibility={handleToggleVisibility}
+                        onDuplicate={handleDuplicate}
+                        onDelete={handleDelete}
                         isDragOver={overInfo?.id === bloque.id && isDraggingFromPalette}
                         dropPosition={overInfo?.id === bloque.id ? overInfo.position : null}
                         isFirstBlock={index === 0}

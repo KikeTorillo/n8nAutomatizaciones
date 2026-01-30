@@ -206,14 +206,17 @@ function CanvasBlock({
         </button>
       </div>
 
-      {/* Top-right Controls */}
+      {/* Block Controls - Position changes based on isFirstBlock */}
       <AnimatePresence>
         {(isSelected || false) && (
           <motion.div
-            initial={{ opacity: 0, y: -10 }}
+            initial={{ opacity: 0, y: isFirstBlock ? 10 : -10 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="absolute -top-10 right-2 flex items-center gap-1 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-1 z-20"
+            exit={{ opacity: 0, y: isFirstBlock ? 10 : -10 }}
+            className={cn(
+              'absolute right-2 flex items-center gap-1 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-1 z-20',
+              isFirstBlock ? '-bottom-10' : '-top-10'
+            )}
           >
             {/* Toggle Visibility */}
             <button
