@@ -38,6 +38,7 @@ import {
   selectSetBreakpoint,
   selectSetZoom,
   selectSetBloqueRecienAgregado,
+  selectActualizarVersionBloque,
 } from '@/store';
 
 // Hooks existentes
@@ -111,6 +112,7 @@ function WebsiteEditorPage() {
   const seleccionarBloque = useWebsiteEditorStore(selectSeleccionarBloque);
   const deseleccionarBloque = useWebsiteEditorStore(selectDeseleccionarBloque);
   const actualizarBloqueLocal = useWebsiteEditorStore(selectActualizarBloqueLocal);
+  const actualizarVersionBloque = useWebsiteEditorStore(selectActualizarVersionBloque);
   const reordenarBloquesLocal = useWebsiteEditorStore(selectReordenarBloquesLocal);
   const breakpoint = useWebsiteEditorStore(selectBreakpoint);
   const setBreakpoint = useWebsiteEditorStore(selectSetBreakpoint);
@@ -193,13 +195,21 @@ function WebsiteEditorPage() {
     async (bloquesToSave) => {
       // Guardar cada bloque modificado
       for (const bloque of bloquesToSave) {
-        await actualizarBloque.mutateAsync({
+        const resultado = await actualizarBloque.mutateAsync({
           id: bloque.id,
-          data: { contenido: bloque.contenido },
+          data: {
+            contenido: bloque.contenido,
+            version: bloque.version, // Requerido para bloqueo optimista
+          },
+          paginaId: bloque.pagina_id,
         });
+        // Actualizar version local con la nueva del servidor
+        if (resultado?.version) {
+          actualizarVersionBloque(bloque.id, resultado.version);
+        }
       }
     },
-    [actualizarBloque]
+    [actualizarBloque, actualizarVersionBloque]
   );
 
   const { guardarAhora, estaGuardando } = useAutosave({
@@ -710,9 +720,9 @@ function WebsiteEditorPage() {
           {showSidebar && (
             <aside className="w-12 md:w-14 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col items-center py-2 md:py-4 gap-1 md:gap-2 flex-shrink-0" data-tour="block-palette">
               <button
-                onClick={() => setPanelActivo(PANEL_TYPES.BLOQUES)}
+                onClick={() => openPanel(PANEL_TYPES.BLOQUES)}
                 className={`p-2 md:p-3 rounded-lg transition-colors ${
-                  panelActivo === PANEL_TYPES.BLOQUES
+                  panelActivo === PANEL_TYPES.BLOQUES && showSecondaryPanel
                     ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
                     : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400'
                 }`}
@@ -721,9 +731,9 @@ function WebsiteEditorPage() {
                 <Plus className="w-5 h-5" />
               </button>
               <button
-                onClick={() => setPanelActivo(PANEL_TYPES.PAGINAS)}
+                onClick={() => openPanel(PANEL_TYPES.PAGINAS)}
                 className={`p-2 md:p-3 rounded-lg transition-colors ${
-                  panelActivo === PANEL_TYPES.PAGINAS
+                  panelActivo === PANEL_TYPES.PAGINAS && showSecondaryPanel
                     ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
                     : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400'
                 }`}
@@ -732,9 +742,9 @@ function WebsiteEditorPage() {
                 <FileText className="w-5 h-5" />
               </button>
               <button
-                onClick={() => setPanelActivo(PANEL_TYPES.TEMA)}
+                onClick={() => openPanel(PANEL_TYPES.TEMA)}
                 className={`p-2 md:p-3 rounded-lg transition-colors ${
-                  panelActivo === PANEL_TYPES.TEMA
+                  panelActivo === PANEL_TYPES.TEMA && showSecondaryPanel
                     ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
                     : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400'
                 }`}
@@ -835,6 +845,9 @@ function WebsiteEditorPage() {
                 onDelete={handleEliminarBloque}
                 onClose={cerrarPropiedades}
                 isLoading={estaGuardando}
+                config={config}
+                pagina={paginaActiva}
+                bloques={bloques}
               />
             </aside>
           )}
@@ -927,6 +940,9 @@ function WebsiteEditorPage() {
           onClose={closeDrawer}
           isLoading={estaGuardando}
           isInDrawer
+          config={config}
+          pagina={paginaActiva}
+          bloques={bloques}
         />
       </Drawer>
 

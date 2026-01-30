@@ -111,6 +111,7 @@ class ConteosModel {
             const itemsQuery = `
                 SELECT
                     ci.id, ci.conteo_id, ci.producto_id, ci.variante_id,
+                    ci.ubicacion_id,
                     ci.cantidad_sistema, ci.cantidad_contada, ci.diferencia,
                     ci.costo_unitario, ci.valor_diferencia, ci.estado,
                     ci.contado_por_id, ci.contado_en, ci.notas, ci.creado_en,
@@ -119,11 +120,13 @@ class ConteosModel {
                     p.codigo_barras,
                     p.stock_actual AS stock_actual_sistema,
                     v.nombre_variante AS variante_nombre,
-                    uc.nombre AS contado_por_nombre
+                    uc.nombre AS contado_por_nombre,
+                    ua.codigo AS ubicacion_codigo
                 FROM conteos_inventario_items ci
                 LEFT JOIN productos p ON p.id = ci.producto_id
                 LEFT JOIN variantes_producto v ON v.id = ci.variante_id
                 LEFT JOIN usuarios uc ON uc.id = ci.contado_por_id
+                LEFT JOIN ubicaciones_almacen ua ON ua.id = ci.ubicacion_id
                 WHERE ci.conteo_id = $1
                 ORDER BY ci.estado ASC, p.nombre ASC
             `;
@@ -384,18 +387,29 @@ class ConteosModel {
             limit = `LIMIT $${values.length}`;
         }
 
+        // Determinar ubicacion_id para items del conteo
+        const ubicacionIdParam = conteo.tipo_conteo === 'por_ubicacion' && filtros.ubicacion_id
+            ? filtros.ubicacion_id
+            : null;
+
         const productosQuery = `
             SELECT
                 p.id AS producto_id,
                 p.stock_actual AS cantidad_sistema,
                 COALESCE(p.precio_compra, 0) AS costo_unitario,
-                NULL::integer AS ubicacion_id,
+                ${ubicacionIdParam ? `$${paramCounter}::integer` : 'NULL::integer'} AS ubicacion_id,
                 p.nombre
             FROM productos p
             WHERE ${whereConditions.join(' AND ')}
             ${orderBy}
             ${limit}
         `;
+
+        // Agregar parámetro de ubicación si aplica
+        if (ubicacionIdParam) {
+            values.push(ubicacionIdParam);
+            paramCounter++;
+        }
 
         const productosResult = await db.query(productosQuery, values);
 
@@ -619,9 +633,9 @@ class ConteosModel {
                 ErrorHelper.throwConflict(`Solo se pueden aplicar ajustes a conteos completados. Estado actual: ${conteo.estado}`);
             }
 
-            // Obtener items con diferencia
+            // Obtener items con diferencia (incluir ubicacion_id)
             const itemsQuery = await db.query(
-                `SELECT ci.*, p.nombre AS producto_nombre
+                `SELECT ci.*, ci.ubicacion_id, p.nombre AS producto_nombre
                  FROM conteos_inventario_items ci
                  JOIN productos p ON p.id = ci.producto_id
                  WHERE ci.conteo_id = $1 AND ci.diferencia != 0`,
@@ -648,17 +662,17 @@ class ConteosModel {
                         $3,  -- tipo_movimiento
                         $4,  -- cantidad (diferencia)
                         $5,  -- sucursal_id
-                        NULL, -- ubicacion_id
+                        $6,  -- ubicacion_id (del item del conteo)
                         NULL, -- lote
                         NULL, -- fecha_vencimiento
-                        $6,  -- referencia
-                        $7,  -- motivo
-                        $8,  -- usuario_id
-                        $9,  -- costo_unitario
+                        $7,  -- referencia
+                        $8,  -- motivo
+                        $9,  -- usuario_id
+                        $10, -- costo_unitario
                         NULL, -- proveedor_id
                         NULL, -- venta_pos_id
                         NULL, -- cita_id
-                        $10  -- variante_id
+                        $11  -- variante_id
                     ) as movimiento_id`,
                     [
                         organizacionId,
@@ -666,6 +680,7 @@ class ConteosModel {
                         tipoMovimiento,
                         item.diferencia,
                         conteo.sucursal_id,
+                        item.ubicacion_id || null,
                         `Conteo: ${conteo.folio}`,
                         `Ajuste por conteo físico. Diferencia: ${item.diferencia}`,
                         usuarioId,

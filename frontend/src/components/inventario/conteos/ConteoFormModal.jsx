@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Button, Drawer, Textarea } from '@/components/ui';
 import { ClipboardList, Calendar, User, Info } from 'lucide-react';
-import { useCategorias } from '@/hooks/inventario';
+import { useCategorias, useUbicacionesAlmacen } from '@/hooks/inventario';
 import { useUsuarios } from '@/hooks/personas';
 import { TIPOS_CONTEO, TIPOS_CONTEO_LABELS } from '@/hooks/inventario';
+import { useAuthStore } from '@/store/authStore';
 
 /**
  * Modal para crear un nuevo conteo de inventario
@@ -24,12 +25,21 @@ export default function ConteoFormModal({ isOpen, onClose, onSubmit, isLoading }
         notas: '',
     });
 
+    // Auth
+    const { user } = useAuthStore();
+
     // Queries
     const { data: categoriasData } = useCategorias({ activo: true });
     const categorias = categoriasData?.categorias || [];
 
     const { data: usuariosData } = useUsuarios({ activo: true, limit: 100 });
     const usuarios = usuariosData?.usuarios || [];
+
+    const { data: ubicacionesData } = useUbicacionesAlmacen({
+        sucursal_id: user?.sucursal_id,
+        activo: true,
+    });
+    const ubicaciones = ubicacionesData?.items || [];
 
     // Reset form on close
     useEffect(() => {
@@ -78,6 +88,10 @@ export default function ConteoFormModal({ isOpen, onClose, onSubmit, isLoading }
         // Agregar filtros según tipo
         if (formData.tipo_conteo === TIPOS_CONTEO.POR_CATEGORIA && formData.filtros.categoria_id) {
             data.filtros.categoria_id = parseInt(formData.filtros.categoria_id);
+        }
+
+        if (formData.tipo_conteo === TIPOS_CONTEO.POR_UBICACION && formData.filtros.ubicacion_id) {
+            data.filtros.ubicacion_id = parseInt(formData.filtros.ubicacion_id);
         }
 
         if (formData.tipo_conteo === TIPOS_CONTEO.ALEATORIO) {
@@ -146,6 +160,27 @@ export default function ConteoFormModal({ isOpen, onClose, onSubmit, isLoading }
                             {categorias.map((cat) => (
                                 <option key={cat.id} value={cat.id}>
                                     {cat.nombre}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                )}
+
+                {formData.tipo_conteo === TIPOS_CONTEO.POR_UBICACION && (
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Ubicación de Almacén *
+                        </label>
+                        <select
+                            value={formData.filtros.ubicacion_id}
+                            onChange={(e) => handleFiltroChange('ubicacion_id', e.target.value)}
+                            required
+                            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                        >
+                            <option value="">Selecciona una ubicación</option>
+                            {ubicaciones.map((ubic) => (
+                                <option key={ubic.id} value={ubic.id}>
+                                    {ubic.codigo} - {ubic.nombre}
                                 </option>
                             ))}
                         </select>

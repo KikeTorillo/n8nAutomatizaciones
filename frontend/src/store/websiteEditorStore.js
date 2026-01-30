@@ -417,7 +417,7 @@ const useWebsiteEditorStore = create(
       },
     }
   )
-);
+));
 
 // ========== SELECTORES ==========
 

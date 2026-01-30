@@ -299,6 +299,9 @@ export default function AjusteMasivoModal({ isOpen, onClose, onSuccess }) {
                                                     Cantidad
                                                 </th>
                                                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400">
+                                                    Ubicación
+                                                </th>
+                                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400">
                                                     Motivo
                                                 </th>
                                             </tr>
@@ -319,6 +322,9 @@ export default function AjusteMasivoModal({ isOpen, onClose, onSuccess }) {
                                                     }`}>
                                                         {item.cantidad_ajuste > 0 ? '+' : ''}
                                                         {item.cantidad_ajuste}
+                                                    </td>
+                                                    <td className="px-3 py-2 text-gray-500 dark:text-gray-400 font-mono text-xs">
+                                                        {item.ubicacion_codigo || '(default)'}
                                                     </td>
                                                     <td className="px-3 py-2 text-gray-600 dark:text-gray-400 truncate max-w-[150px]">
                                                         {item.motivo || '-'}

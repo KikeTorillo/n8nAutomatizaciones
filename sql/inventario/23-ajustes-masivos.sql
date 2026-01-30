@@ -76,10 +76,12 @@ CREATE TABLE IF NOT EXISTS ajustes_masivos_items (
     codigo_barras_csv VARCHAR(100),
     cantidad_csv VARCHAR(50),
     motivo_csv VARCHAR(500),
+    ubicacion_codigo_csv VARCHAR(30),        -- Código de ubicación del CSV
 
     -- DATOS RESUELTOS (después de validación)
     producto_id INTEGER REFERENCES productos(id) ON DELETE SET NULL,
     variante_id INTEGER REFERENCES variantes_producto(id) ON DELETE SET NULL,
+    ubicacion_id INTEGER REFERENCES ubicaciones_almacen(id) ON DELETE SET NULL,
     producto_nombre VARCHAR(200),
     cantidad_ajuste INTEGER,
 

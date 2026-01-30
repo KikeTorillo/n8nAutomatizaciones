@@ -339,5 +339,30 @@ CREATE TRIGGER trigger_update_sesiones_caja_timestamp
     EXECUTE FUNCTION update_sesiones_caja_timestamp();
 
 -- ============================================================================
+-- FK: ventas_pos.sesion_caja_id -> sesiones_caja.id
+-- ============================================================================
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.table_constraints
+        WHERE constraint_name = 'fk_ventas_pos_sesion_caja'
+          AND table_name = 'ventas_pos'
+    ) THEN
+        ALTER TABLE ventas_pos
+        ADD CONSTRAINT fk_ventas_pos_sesion_caja
+        FOREIGN KEY (sesion_caja_id) REFERENCES sesiones_caja(id) ON DELETE SET NULL;
+
+        RAISE NOTICE 'FK fk_ventas_pos_sesion_caja creado exitosamente';
+    ELSE
+        RAISE NOTICE 'FK fk_ventas_pos_sesion_caja ya existe';
+    END IF;
+END $$;
+
+-- Índice para performance en consultas de sesión
+CREATE INDEX IF NOT EXISTS idx_ventas_pos_sesion_caja
+    ON ventas_pos(sesion_caja_id)
+    WHERE sesion_caja_id IS NOT NULL;
+
+-- ============================================================================
 -- FIN: SESIONES DE CAJA
 -- ============================================================================

@@ -110,6 +110,7 @@ const recibirTransferenciaSchema = Joi.object({
         Joi.object({
             id: Joi.number().integer().positive().required(),
             cantidad_recibida: Joi.number().integer().min(0).required(),
+            ubicacion_destino_id: Joi.number().integer().positive().optional().allow(null),
             notas: Joi.string().max(200).optional().allow('', null)
         })
     ).optional()

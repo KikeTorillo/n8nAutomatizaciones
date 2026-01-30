@@ -41,12 +41,12 @@ export function useEditorLayout() {
 
   /**
    * Abre un panel/drawer
-   * En móvil: abre el drawer correspondiente
+   * En móvil/tablet: abre el drawer correspondiente
    * En desktop: cambia el panel activo del sidebar
    */
   const openPanel = useCallback((tipo) => {
-    if (isMobile || (isTablet && tipo === PANEL_TYPES.PROPIEDADES)) {
-      // En móvil o tablet (para propiedades), usar drawer
+    if (isMobile || isTablet) {
+      // En móvil y tablet, usar drawer para todos los paneles
       setDrawerAbierto(tipo);
     } else {
       // En desktop, cambiar panel del sidebar

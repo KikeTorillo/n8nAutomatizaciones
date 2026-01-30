@@ -4,9 +4,17 @@
  * ====================================================================
  * Panel lateral derecho para editar propiedades del bloque seleccionado.
  * Muestra configuraciones que no se pueden editar inline (URLs, colores, etc.)
+ *
+ * Integra:
+ * - SEOTipsPanel: Tips SEO en tiempo real
+ * - AIWriterPopover: Generación de texto con IA
+ * - UnsplashModal: Búsqueda de imágenes
+ *
+ * @version 2.0.0
+ * @since 2026-01-29
  */
 
-import { useState, useEffect, memo, useCallback } from 'react';
+import { useState, useEffect, memo, useCallback, useRef } from 'react';
 import {
   X,
   Settings,
@@ -21,15 +29,21 @@ import {
   EyeOff,
   Trash2,
   Copy,
-  Loader2,
   Monitor,
   Tablet,
   Smartphone,
-  RotateCcw,
+  Search,
+  Sparkles,
+  ImagePlus,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useWebsiteEditorStore } from '@/store';
+
+// Componentes integrados
+import SEOTipsPanel from './SEOTips/SEOTipsPanel';
+import AIWriterPopover from './AIWriter/AIWriterPopover';
+import UnsplashModal from './UnsplashPicker/UnsplashModal';
 
 // ========== TABS CONFIG ==========
 
@@ -37,6 +51,7 @@ const TABS = [
   { id: 'contenido', label: 'Contenido', icon: Settings },
   { id: 'estilo', label: 'Estilo', icon: Paintbrush },
   { id: 'avanzado', label: 'Avanzado', icon: Code },
+  { id: 'seo', label: 'SEO', icon: Search },
 ];
 
 // ========== BLOCK TYPE CONFIGS ==========
@@ -44,7 +59,10 @@ const TABS = [
 const BLOCK_CONFIGS = {
   hero: {
     contenido: [
+      { key: 'titulo', label: 'Título', type: 'text', aiEnabled: true },
+      { key: 'subtitulo', label: 'Subtítulo', type: 'textarea', aiEnabled: true },
       { key: 'imagen_url', label: 'Imagen de fondo', type: 'image' },
+      { key: 'boton_texto', label: 'Texto del botón', type: 'text', aiEnabled: true },
       { key: 'boton_url', label: 'URL del botón', type: 'url' },
       { key: 'boton_tipo', label: 'Tipo de botón', type: 'select', options: [
         { value: 'link', label: 'Enlace' },
@@ -59,6 +77,7 @@ const BLOCK_CONFIGS = {
   },
   servicios: {
     contenido: [
+      { key: 'titulo', label: 'Título de sección', type: 'text', aiEnabled: true },
       { key: 'columnas', label: 'Columnas', type: 'select', options: [
         { value: 2, label: '2 columnas' },
         { value: 3, label: '3 columnas' },
@@ -73,6 +92,7 @@ const BLOCK_CONFIGS = {
   },
   testimonios: {
     contenido: [
+      { key: 'titulo', label: 'Título de sección', type: 'text', aiEnabled: true },
       { key: 'layout', label: 'Diseño', type: 'select', options: [
         { value: 'grid', label: 'Grid' },
         { value: 'carousel', label: 'Carrusel' },
@@ -85,6 +105,8 @@ const BLOCK_CONFIGS = {
   },
   equipo: {
     contenido: [
+      { key: 'titulo_seccion', label: 'Título de sección', type: 'text', aiEnabled: true },
+      { key: 'subtitulo_seccion', label: 'Subtítulo', type: 'textarea', aiEnabled: true },
       { key: 'mostrar_redes', label: 'Mostrar redes sociales', type: 'toggle' },
       { key: 'origen', label: 'Origen de datos', type: 'select', options: [
         { value: 'manual', label: 'Manual' },
@@ -94,6 +116,9 @@ const BLOCK_CONFIGS = {
   },
   cta: {
     contenido: [
+      { key: 'titulo', label: 'Título', type: 'text', aiEnabled: true },
+      { key: 'subtitulo', label: 'Subtítulo', type: 'textarea', aiEnabled: true },
+      { key: 'boton_texto', label: 'Texto del botón', type: 'text', aiEnabled: true },
       { key: 'boton_url', label: 'URL del botón', type: 'url' },
       { key: 'boton_tipo', label: 'Tipo de botón', type: 'select', options: [
         { value: 'link', label: 'Enlace' },
@@ -112,6 +137,8 @@ const BLOCK_CONFIGS = {
   },
   contacto: {
     contenido: [
+      { key: 'titulo', label: 'Título', type: 'text', aiEnabled: true },
+      { key: 'subtitulo', label: 'Subtítulo', type: 'textarea', aiEnabled: true },
       { key: 'mostrar_formulario', label: 'Mostrar formulario', type: 'toggle' },
       { key: 'mostrar_info', label: 'Mostrar información', type: 'toggle' },
       { key: 'mostrar_mapa', label: 'Mostrar mapa', type: 'toggle' },
@@ -119,17 +146,21 @@ const BLOCK_CONFIGS = {
   },
   footer: {
     contenido: [
+      { key: 'descripcion', label: 'Descripción', type: 'textarea', aiEnabled: true },
       { key: 'logo_url', label: 'URL del logo', type: 'image' },
       { key: 'mostrar_redes', label: 'Mostrar redes sociales', type: 'toggle' },
     ],
   },
   texto: {
     contenido: [
+      { key: 'contenido', label: 'Contenido', type: 'textarea', aiEnabled: true },
       { key: 'alineacion', label: 'Alineación', type: 'alignment' },
     ],
   },
   galeria: {
     contenido: [
+      { key: 'titulo_seccion', label: 'Título', type: 'text', aiEnabled: true },
+      { key: 'subtitulo_seccion', label: 'Subtítulo', type: 'textarea', aiEnabled: true },
       { key: 'layout', label: 'Diseño', type: 'select', options: [
         { value: 'grid', label: 'Grid' },
         { value: 'masonry', label: 'Masonry' },
@@ -144,8 +175,10 @@ const BLOCK_CONFIGS = {
   },
   video: {
     contenido: [
-      { key: 'url', label: 'URL del video', type: 'url', placeholder: 'YouTube, Vimeo o MP4' },
-      { key: 'tipo', label: 'Tipo', type: 'select', options: [
+      { key: 'titulo_seccion', label: 'Título', type: 'text', aiEnabled: true },
+      { key: 'subtitulo_seccion', label: 'Subtítulo', type: 'textarea', aiEnabled: true },
+      { key: 'video_url', label: 'URL del video', type: 'url', placeholder: 'YouTube, Vimeo o MP4' },
+      { key: 'video_tipo', label: 'Tipo', type: 'select', options: [
         { value: 'youtube', label: 'YouTube' },
         { value: 'vimeo', label: 'Vimeo' },
         { value: 'mp4', label: 'MP4 directo' },
@@ -156,7 +189,7 @@ const BLOCK_CONFIGS = {
   },
   separador: {
     contenido: [
-      { key: 'tipo', label: 'Tipo', type: 'select', options: [
+      { key: 'estilo', label: 'Estilo', type: 'select', options: [
         { value: 'linea', label: 'Línea' },
         { value: 'espacio', label: 'Espacio' },
         { value: 'ondas', label: 'Ondas' },
@@ -165,6 +198,51 @@ const BLOCK_CONFIGS = {
       { key: 'color', label: 'Color', type: 'color' },
     ],
   },
+  pricing: {
+    contenido: [
+      { key: 'titulo_seccion', label: 'Título', type: 'text', aiEnabled: true },
+      { key: 'subtitulo_seccion', label: 'Subtítulo', type: 'textarea', aiEnabled: true },
+    ],
+  },
+  faq: {
+    contenido: [
+      { key: 'titulo_seccion', label: 'Título', type: 'text', aiEnabled: true },
+      { key: 'subtitulo_seccion', label: 'Subtítulo', type: 'textarea', aiEnabled: true },
+    ],
+  },
+  countdown: {
+    contenido: [
+      { key: 'titulo', label: 'Título', type: 'text', aiEnabled: true },
+      { key: 'subtitulo', label: 'Subtítulo', type: 'textarea', aiEnabled: true },
+      { key: 'fecha_objetivo', label: 'Fecha objetivo', type: 'text', placeholder: 'YYYY-MM-DD' },
+      { key: 'texto_finalizado', label: 'Texto al finalizar', type: 'text', aiEnabled: true },
+    ],
+  },
+  stats: {
+    contenido: [
+      { key: 'titulo_seccion', label: 'Título', type: 'text', aiEnabled: true },
+      { key: 'subtitulo_seccion', label: 'Subtítulo', type: 'textarea', aiEnabled: true },
+    ],
+  },
+  timeline: {
+    contenido: [
+      { key: 'titulo_seccion', label: 'Título', type: 'text', aiEnabled: true },
+      { key: 'subtitulo_seccion', label: 'Subtítulo', type: 'textarea', aiEnabled: true },
+    ],
+  },
+};
+
+// Iconos de breakpoint
+const BREAKPOINT_ICONS = {
+  desktop: Monitor,
+  tablet: Tablet,
+  mobile: Smartphone,
+};
+
+const BREAKPOINT_LABELS = {
+  desktop: 'Escritorio',
+  tablet: 'Tablet',
+  mobile: 'Móvil',
 };
 
 // ========== MAIN COMPONENT ==========
@@ -179,31 +257,10 @@ const BLOCK_CONFIGS = {
  * @param {Function} props.onDelete - Callback para eliminar
  * @param {Function} props.onClose - Callback para cerrar panel
  * @param {boolean} props.isLoading - Si está guardando
- */
-// Iconos de breakpoint
-const BREAKPOINT_ICONS = {
-  desktop: Monitor,
-  tablet: Tablet,
-  mobile: Smartphone,
-};
-
-const BREAKPOINT_LABELS = {
-  desktop: 'Escritorio',
-  tablet: 'Tablet',
-  mobile: 'Móvil',
-};
-
-/**
- * PropertiesPanel
- *
- * @param {Object} props
- * @param {Object} props.bloque - Bloque seleccionado
- * @param {Function} props.onUpdate - Callback para actualizar
- * @param {Function} props.onDuplicate - Callback para duplicar
- * @param {Function} props.onDelete - Callback para eliminar
- * @param {Function} props.onClose - Callback para cerrar panel
- * @param {boolean} props.isLoading - Si está guardando
  * @param {boolean} props.isInDrawer - Si se renderiza dentro de un drawer (móvil/tablet)
+ * @param {Object} props.config - Configuración del sitio (para SEO)
+ * @param {Object} props.pagina - Página actual (para SEO)
+ * @param {Array} props.bloques - Todos los bloques de la página (para SEO)
  */
 function PropertiesPanel({
   bloque,
@@ -213,10 +270,26 @@ function PropertiesPanel({
   onClose,
   isLoading = false,
   isInDrawer = false,
+  config = null,
+  pagina = null,
+  bloques = [],
 }) {
   const [activeTab, setActiveTab] = useState('contenido');
   const [localContent, setLocalContent] = useState({});
   const breakpoint = useWebsiteEditorStore((state) => state.breakpoint);
+
+  // Estado para AI Writer
+  const [aiWriterState, setAIWriterState] = useState({
+    isOpen: false,
+    campo: null,
+    position: { top: 0, left: 0 },
+  });
+
+  // Estado para Unsplash Modal
+  const [unsplashState, setUnsplashState] = useState({
+    isOpen: false,
+    targetField: null,
+  });
 
   // Sync local content with bloque
   useEffect(() => {
@@ -237,8 +310,77 @@ function PropertiesPanel({
     [localContent, onUpdate]
   );
 
+  /**
+   * Abrir AI Writer para un campo
+   */
+  const openAIWriter = useCallback((campo, event) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    setAIWriterState({
+      isOpen: true,
+      campo,
+      position: {
+        top: rect.bottom + 8,
+        left: Math.min(rect.left, window.innerWidth - 300),
+      },
+    });
+  }, []);
+
+  /**
+   * Cerrar AI Writer
+   */
+  const closeAIWriter = useCallback(() => {
+    setAIWriterState({
+      isOpen: false,
+      campo: null,
+      position: { top: 0, left: 0 },
+    });
+  }, []);
+
+  /**
+   * Manejar texto generado por AI
+   */
+  const handleAIGenerate = useCallback((text) => {
+    if (aiWriterState.campo) {
+      handleChange(aiWriterState.campo, text);
+    }
+    closeAIWriter();
+  }, [aiWriterState.campo, handleChange, closeAIWriter]);
+
+  /**
+   * Abrir Unsplash Modal para un campo
+   */
+  const openUnsplash = useCallback((targetField) => {
+    setUnsplashState({
+      isOpen: true,
+      targetField,
+    });
+  }, []);
+
+  /**
+   * Cerrar Unsplash Modal
+   */
+  const closeUnsplash = useCallback(() => {
+    setUnsplashState({
+      isOpen: false,
+      targetField: null,
+    });
+  }, []);
+
+  /**
+   * Manejar imagen seleccionada de Unsplash
+   */
+  const handleUnsplashSelect = useCallback((url) => {
+    if (unsplashState.targetField) {
+      handleChange(unsplashState.targetField, url);
+    }
+    closeUnsplash();
+  }, [unsplashState.targetField, handleChange, closeUnsplash]);
+
   // Get config for this block type
-  const config = bloque ? BLOCK_CONFIGS[bloque.tipo] : null;
+  const blockConfig = bloque ? BLOCK_CONFIGS[bloque.tipo] : null;
+
+  // Obtener industria del config
+  const industria = config?.industria || 'default';
 
   if (!bloque) {
     return (
@@ -338,17 +480,21 @@ function PropertiesPanel({
           >
             {activeTab === 'contenido' && (
               <TabContent
-                fields={config?.contenido || []}
+                fields={blockConfig?.contenido || []}
                 values={localContent}
                 onChange={handleChange}
+                onOpenAIWriter={openAIWriter}
+                onOpenUnsplash={openUnsplash}
               />
             )}
 
             {activeTab === 'estilo' && (
               <TabContent
-                fields={config?.estilo || []}
+                fields={blockConfig?.estilo || []}
                 values={localContent}
                 onChange={handleChange}
+                onOpenAIWriter={openAIWriter}
+                onOpenUnsplash={openUnsplash}
               />
             )}
 
@@ -393,6 +539,15 @@ function PropertiesPanel({
                 </div>
               </div>
             )}
+
+            {activeTab === 'seo' && (
+              <SEOTipsPanel
+                config={config}
+                pagina={pagina}
+                bloques={bloques}
+                compacto={isInDrawer}
+              />
+            )}
           </motion.div>
         </AnimatePresence>
       </div>
@@ -414,13 +569,35 @@ function PropertiesPanel({
           Eliminar bloque
         </button>
       </div>
+
+      {/* AI Writer Popover */}
+      <AIWriterPopover
+        isOpen={aiWriterState.isOpen}
+        campo={aiWriterState.campo}
+        industria={industria}
+        contexto={{
+          nombre: config?.nombre_sitio,
+          descripcion: config?.descripcion,
+        }}
+        position={aiWriterState.position}
+        onGenerate={handleAIGenerate}
+        onClose={closeAIWriter}
+      />
+
+      {/* Unsplash Modal */}
+      <UnsplashModal
+        isOpen={unsplashState.isOpen}
+        onClose={closeUnsplash}
+        onSelect={handleUnsplashSelect}
+        industria={industria}
+      />
     </div>
   );
 }
 
 // ========== TAB CONTENT ==========
 
-function TabContent({ fields, values, onChange }) {
+function TabContent({ fields, values, onChange, onOpenAIWriter, onOpenUnsplash }) {
   if (!fields || fields.length === 0) {
     return (
       <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
@@ -437,6 +614,8 @@ function TabContent({ fields, values, onChange }) {
           field={field}
           value={values[field.key]}
           onChange={(value) => onChange(field.key, value)}
+          onOpenAIWriter={onOpenAIWriter}
+          onOpenUnsplash={onOpenUnsplash}
         />
       ))}
     </div>
@@ -445,22 +624,61 @@ function TabContent({ fields, values, onChange }) {
 
 // ========== FIELD RENDERER ==========
 
-function FieldRenderer({ field, value, onChange }) {
-  const { key, label, type, placeholder, options, min, max, step } = field;
+function FieldRenderer({ field, value, onChange, onOpenAIWriter, onOpenUnsplash }) {
+  const { key, label, type, placeholder, options, min, max, step, aiEnabled } = field;
+  const fieldRef = useRef(null);
 
   switch (type) {
     case 'text':
       return (
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            {label}
-          </label>
+        <div ref={fieldRef}>
+          <div className="flex items-center justify-between mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              {label}
+            </label>
+            {aiEnabled && (
+              <button
+                onClick={(e) => onOpenAIWriter?.(key, e)}
+                className="p-1 text-primary-500 hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded transition-colors"
+                title="Generar con IA"
+              >
+                <Sparkles className="w-4 h-4" />
+              </button>
+            )}
+          </div>
           <input
             type="text"
             value={value || ''}
             onChange={(e) => onChange(e.target.value)}
             placeholder={placeholder}
             className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white text-sm focus:ring-1 focus:ring-primary-500"
+          />
+        </div>
+      );
+
+    case 'textarea':
+      return (
+        <div ref={fieldRef}>
+          <div className="flex items-center justify-between mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              {label}
+            </label>
+            {aiEnabled && (
+              <button
+                onClick={(e) => onOpenAIWriter?.(key, e)}
+                className="p-1 text-primary-500 hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded transition-colors"
+                title="Generar con IA"
+              >
+                <Sparkles className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+          <textarea
+            value={value || ''}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder={placeholder}
+            rows={3}
+            className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white text-sm focus:ring-1 focus:ring-primary-500 resize-none"
           />
         </div>
       );
@@ -487,9 +705,19 @@ function FieldRenderer({ field, value, onChange }) {
     case 'image':
       return (
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            {label}
-          </label>
+          <div className="flex items-center justify-between mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              {label}
+            </label>
+            <button
+              onClick={() => onOpenUnsplash?.(key)}
+              className="flex items-center gap-1 px-2 py-1 text-xs text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded transition-colors"
+              title="Buscar en Unsplash"
+            >
+              <ImagePlus className="w-3.5 h-3.5" />
+              Unsplash
+            </button>
+          </div>
           <div className="relative">
             <ImageIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input

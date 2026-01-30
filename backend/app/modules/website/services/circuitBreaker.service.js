@@ -1,10 +1,11 @@
 /**
- * @fileoverview Circuit Breaker Distribuido para servicios de IA
+ * @fileoverview Circuit Breaker Distribuido Genérico
  *
  * Sistema de circuit breaker compartido entre instancias via Redis:
  * - Redis (DB 5) para estado distribuido
  * - Pub/Sub para sincronización en tiempo real
  * - Fallback a estado local si Redis no disponible
+ * - Retry con backoff exponencial y jitter
  *
  * Estados del circuito:
  * - CLOSED: Funcionamiento normal, las requests pasan
@@ -12,39 +13,12 @@
  * - HALF_OPEN: Probando reconexión, permite una request de prueba
  *
  * @author Backend Team
- * @version 1.0.0
+ * @version 2.0.0
  * @since 2026-01-29
  */
 
 const RedisClientFactory = require('../../../services/RedisClientFactory');
 const logger = require('../../../utils/logger');
-
-/**
- * Canal de Pub/Sub para sincronización del circuit breaker
- * @constant {string}
- */
-const CHANNEL_CIRCUIT_SYNC = 'circuit:ai:sync';
-
-/**
- * Clave Redis para estado del circuit breaker
- * @constant {string}
- */
-const CIRCUIT_STATE_KEY = 'circuit:ai:openrouter:state';
-
-/**
- * Configuración del Circuit Breaker
- * @constant {Object}
- */
-const CONFIG = {
-    /** Timeout en milisegundos para requests a OpenRouter */
-    TIMEOUT_MS: 10000,
-    /** Número de fallas consecutivas para abrir el circuito */
-    FAILURE_THRESHOLD: 5,
-    /** Tiempo en ms antes de intentar cerrar el circuito */
-    RESET_TIMEOUT_MS: 30000,
-    /** TTL del estado en Redis (1 hora) */
-    STATE_TTL_SECONDS: 3600,
-};
 
 /**
  * Estados posibles del circuito
@@ -57,15 +31,62 @@ const CircuitState = {
 };
 
 /**
- * Circuit Breaker Distribuido para servicios de IA
+ * Error lanzado cuando el circuito está abierto
+ */
+class CircuitOpenError extends Error {
+    /**
+     * @param {string} circuitName - Nombre del circuito
+     * @param {number} timeUntilRetry - Tiempo hasta el próximo intento en ms
+     */
+    constructor(circuitName, timeUntilRetry) {
+        super(`Circuit breaker [${circuitName}] is OPEN. Retry in ${Math.ceil(timeUntilRetry / 1000)}s`);
+        this.name = 'CircuitOpenError';
+        this.circuitName = circuitName;
+        this.timeUntilRetry = timeUntilRetry;
+        this.retryAfter = Math.ceil(timeUntilRetry / 1000);
+    }
+}
+
+/**
+ * Configuración por defecto del Circuit Breaker
+ * @constant {Object}
+ */
+const DEFAULT_CONFIG = {
+    /** Timeout en milisegundos para requests */
+    timeoutMs: 10000,
+    /** Número de fallas consecutivas para abrir el circuito */
+    failureThreshold: 5,
+    /** Tiempo en ms antes de intentar cerrar el circuito */
+    resetTimeoutMs: 30000,
+    /** TTL del estado en Redis (1 hora) */
+    stateTtlSeconds: 3600,
+    /** Configuración de retry */
+    retry: {
+        maxRetries: 3,
+        baseDelayMs: 100,
+        maxDelayMs: 8000,
+        jitter: true,
+        backoffMultiplier: 2,
+    },
+};
+
+/**
+ * Circuit Breaker Distribuido Genérico
  *
  * Comparte estado entre instancias usando Redis. Si Redis no está disponible,
  * funciona con estado local (degradación graceful).
  *
- * @class AICircuitBreaker
+ * @class CircuitBreaker
  */
-class AICircuitBreaker {
-    constructor() {
+class CircuitBreaker {
+    /**
+     * @param {string} name - Nombre único del circuit breaker
+     * @param {Object} config - Configuración personalizada
+     */
+    constructor(name, config = {}) {
+        this.name = name;
+        this.config = { ...DEFAULT_CONFIG, ...config, retry: { ...DEFAULT_CONFIG.retry, ...config.retry } };
+
         /** @type {import('redis').RedisClientType|null} Cliente Redis */
         this.redisClient = null;
 
@@ -77,6 +98,10 @@ class AICircuitBreaker {
 
         /** @type {boolean} Servicio inicializado */
         this.isInitialized = false;
+
+        // Canal y clave Redis para este circuito específico
+        this.channelName = `circuit:${name}:sync`;
+        this.stateKey = `circuit:${name}:state`;
 
         // Estado local (fallback y cache)
         this.localState = {
@@ -98,10 +123,10 @@ class AICircuitBreaker {
     async initRedis() {
         try {
             // Usar DB 5 (misma que websiteCache)
-            this.redisClient = await RedisClientFactory.getClient(5, 'AICircuitBreaker');
+            this.redisClient = await RedisClientFactory.getClient(5, `CircuitBreaker:${this.name}`);
 
             if (!this.redisClient) {
-                logger.info('[AICircuitBreaker] Redis no disponible, usando estado local');
+                logger.info(`[CircuitBreaker:${this.name}] Redis no disponible, usando estado local`);
                 this.isInitialized = true;
                 return;
             }
@@ -109,15 +134,15 @@ class AICircuitBreaker {
             this.redisAvailable = true;
 
             // Cliente separado para Pub/Sub
-            this.subscriberClient = await RedisClientFactory.createSubscriber(5, 'AICircuitBreakerPubSub');
+            this.subscriberClient = await RedisClientFactory.createSubscriber(5, `CircuitBreaker:${this.name}:PubSub`);
 
             if (this.subscriberClient) {
-                await this.subscriberClient.subscribe(CHANNEL_CIRCUIT_SYNC, (message) => {
+                await this.subscriberClient.subscribe(this.channelName, (message) => {
                     this.handleSyncMessage(message);
                 });
 
-                logger.info('[AICircuitBreaker] Suscrito a canal de sincronización', {
-                    channel: CHANNEL_CIRCUIT_SYNC,
+                logger.info(`[CircuitBreaker:${this.name}] Suscrito a canal de sincronización`, {
+                    channel: this.channelName,
                 });
             }
 
@@ -125,10 +150,10 @@ class AICircuitBreaker {
             await this.loadStateFromRedis();
 
             this.isInitialized = true;
-            logger.info('[AICircuitBreaker] Inicializado correctamente');
+            logger.info(`[CircuitBreaker:${this.name}] Inicializado correctamente`);
 
         } catch (error) {
-            logger.warn('[AICircuitBreaker] Error inicializando Redis, usando estado local', {
+            logger.warn(`[CircuitBreaker:${this.name}] Error inicializando Redis, usando estado local`, {
                 error: error.message,
             });
             this.redisClient = null;
@@ -147,7 +172,7 @@ class AICircuitBreaker {
         if (!this.redisClient || !this.redisAvailable) return;
 
         try {
-            const stateJson = await this.redisClient.get(CIRCUIT_STATE_KEY);
+            const stateJson = await this.redisClient.get(this.stateKey);
             if (stateJson) {
                 const state = JSON.parse(stateJson);
                 this.localState = {
@@ -156,10 +181,10 @@ class AICircuitBreaker {
                     openedAt: state.openedAt || null,
                     lastError: state.lastError || null,
                 };
-                logger.debug('[AICircuitBreaker] Estado cargado desde Redis', this.localState);
+                logger.debug(`[CircuitBreaker:${this.name}] Estado cargado desde Redis`, this.localState);
             }
         } catch (error) {
-            logger.debug('[AICircuitBreaker] Error cargando estado desde Redis', {
+            logger.debug(`[CircuitBreaker:${this.name}] Error cargando estado desde Redis`, {
                 error: error.message,
             });
         }
@@ -175,12 +200,12 @@ class AICircuitBreaker {
 
         try {
             await this.redisClient.set(
-                CIRCUIT_STATE_KEY,
+                this.stateKey,
                 JSON.stringify(this.localState),
-                { EX: CONFIG.STATE_TTL_SECONDS }
+                { EX: this.config.stateTtlSeconds }
             );
         } catch (error) {
-            logger.debug('[AICircuitBreaker] Error guardando estado en Redis', {
+            logger.debug(`[CircuitBreaker:${this.name}] Error guardando estado en Redis`, {
                 error: error.message,
             });
         }
@@ -197,7 +222,7 @@ class AICircuitBreaker {
 
         try {
             await this.redisClient.publish(
-                CHANNEL_CIRCUIT_SYNC,
+                this.channelName,
                 JSON.stringify({
                     action,
                     state: this.localState,
@@ -206,7 +231,7 @@ class AICircuitBreaker {
                 })
             );
         } catch (error) {
-            logger.debug('[AICircuitBreaker] Error publicando cambio de estado', {
+            logger.debug(`[CircuitBreaker:${this.name}] Error publicando cambio de estado`, {
                 error: error.message,
             });
         }
@@ -224,7 +249,7 @@ class AICircuitBreaker {
             // Ignorar mensajes propios
             if (data.instanceId === process.pid) return;
 
-            logger.debug('[AICircuitBreaker] Sincronizando estado desde otra instancia', {
+            logger.debug(`[CircuitBreaker:${this.name}] Sincronizando estado desde otra instancia`, {
                 fromInstance: data.instanceId,
                 action: data.action,
             });
@@ -239,14 +264,48 @@ class AICircuitBreaker {
                 };
             }
         } catch (error) {
-            logger.error('[AICircuitBreaker] Error procesando mensaje de sincronización', {
+            logger.error(`[CircuitBreaker:${this.name}] Error procesando mensaje de sincronización`, {
                 error: error.message,
             });
         }
     }
 
     /**
-     * Verifica si el circuito está abierto
+     * Calcula el delay para el siguiente retry con backoff exponencial y jitter
+     * @private
+     * @param {number} attempt - Número de intento (0-based)
+     * @returns {number} Delay en milisegundos
+     */
+    calculateRetryDelay(attempt) {
+        const { baseDelayMs, maxDelayMs, backoffMultiplier, jitter } = this.config.retry;
+
+        // Backoff exponencial: baseDelay * (multiplier ^ attempt)
+        let delay = baseDelayMs * Math.pow(backoffMultiplier, attempt);
+
+        // Limitar al máximo
+        delay = Math.min(delay, maxDelayMs);
+
+        // Agregar jitter (0-50% del delay)
+        if (jitter) {
+            const jitterAmount = delay * 0.5 * Math.random();
+            delay = delay + jitterAmount;
+        }
+
+        return Math.floor(delay);
+    }
+
+    /**
+     * Espera un tiempo determinado
+     * @private
+     * @param {number} ms - Milisegundos a esperar
+     * @returns {Promise<void>}
+     */
+    sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    /**
+     * Verifica si el circuito está abierto y actualiza estado si es necesario
      * @async
      * @returns {Promise<boolean>} true si el circuito está abierto
      */
@@ -259,12 +318,12 @@ class AICircuitBreaker {
         if (this.localState.state === CircuitState.OPEN) {
             const now = Date.now();
             // Verificar si es tiempo de intentar cerrar
-            if (now - this.localState.openedAt >= CONFIG.RESET_TIMEOUT_MS) {
+            if (now - this.localState.openedAt >= this.config.resetTimeoutMs) {
                 this.localState.state = CircuitState.HALF_OPEN;
                 await this.saveStateToRedis();
                 await this.publishStateChange('half_open');
 
-                logger.info('[AICircuitBreaker] Circuito HALF_OPEN - intentando reconectar');
+                logger.info(`[CircuitBreaker:${this.name}] Circuito HALF_OPEN - intentando reconectar`);
                 return false;
             }
             return true;
@@ -279,7 +338,7 @@ class AICircuitBreaker {
      */
     getTimeUntilRetry() {
         if (this.localState.state !== CircuitState.OPEN) return 0;
-        return Math.max(0, CONFIG.RESET_TIMEOUT_MS - (Date.now() - this.localState.openedAt));
+        return Math.max(0, this.config.resetTimeoutMs - (Date.now() - this.localState.openedAt));
     }
 
     /**
@@ -291,11 +350,11 @@ class AICircuitBreaker {
         this.localState.failureCount++;
         this.localState.lastError = error.message;
 
-        if (this.localState.failureCount >= CONFIG.FAILURE_THRESHOLD) {
+        if (this.localState.failureCount >= this.config.failureThreshold) {
             this.localState.state = CircuitState.OPEN;
             this.localState.openedAt = Date.now();
 
-            logger.warn('[AICircuitBreaker] Circuito ABIERTO - demasiadas fallas consecutivas', {
+            logger.warn(`[CircuitBreaker:${this.name}] Circuito ABIERTO - demasiadas fallas consecutivas`, {
                 failureCount: this.localState.failureCount,
                 lastError: this.localState.lastError,
             });
@@ -318,11 +377,64 @@ class AICircuitBreaker {
         this.localState.openedAt = null;
 
         if (wasOpen) {
-            logger.info('[AICircuitBreaker] Circuito CERRADO - conexión restaurada');
+            logger.info(`[CircuitBreaker:${this.name}] Circuito CERRADO - conexión restaurada`);
         }
 
         await this.saveStateToRedis();
         await this.publishStateChange('success');
+    }
+
+    /**
+     * Ejecuta una función con protección del circuit breaker y retry automático
+     * @async
+     * @template T
+     * @param {() => Promise<T>} fn - Función a ejecutar
+     * @param {Object} options - Opciones de ejecución
+     * @param {boolean} [options.skipRetry=false] - Saltar reintentos
+     * @returns {Promise<T>} Resultado de la función
+     * @throws {CircuitOpenError} Si el circuito está abierto
+     * @throws {Error} Si todos los reintentos fallan
+     */
+    async execute(fn, options = {}) {
+        const { skipRetry = false } = options;
+        const { maxRetries } = this.config.retry;
+
+        // Verificar si el circuito está abierto
+        if (await this.isOpen()) {
+            const timeUntilRetry = this.getTimeUntilRetry();
+            throw new CircuitOpenError(this.name, timeUntilRetry);
+        }
+
+        let lastError;
+        const retries = skipRetry ? 0 : maxRetries;
+
+        for (let attempt = 0; attempt <= retries; attempt++) {
+            try {
+                // Ejecutar la función
+                const result = await fn();
+
+                // Éxito: resetear circuit breaker
+                await this.recordSuccess();
+
+                return result;
+
+            } catch (error) {
+                lastError = error;
+
+                // Log del intento fallido
+                if (attempt < retries) {
+                    const delay = this.calculateRetryDelay(attempt);
+                    logger.debug(`[CircuitBreaker:${this.name}] Intento ${attempt + 1}/${retries + 1} fallido, reintentando en ${delay}ms`, {
+                        error: error.message,
+                    });
+                    await this.sleep(delay);
+                }
+            }
+        }
+
+        // Todos los intentos fallaron
+        await this.recordFailure(lastError);
+        throw lastError;
     }
 
     /**
@@ -331,6 +443,7 @@ class AICircuitBreaker {
      */
     getStatus() {
         return {
+            name: this.name,
             state: this.localState.state,
             failureCount: this.localState.failureCount,
             lastError: this.localState.lastError,
@@ -338,9 +451,10 @@ class AICircuitBreaker {
             timeUntilRetry: this.getTimeUntilRetry(),
             redisAvailable: this.redisAvailable,
             config: {
-                timeoutMs: CONFIG.TIMEOUT_MS,
-                failureThreshold: CONFIG.FAILURE_THRESHOLD,
-                resetTimeoutMs: CONFIG.RESET_TIMEOUT_MS,
+                timeoutMs: this.config.timeoutMs,
+                failureThreshold: this.config.failureThreshold,
+                resetTimeoutMs: this.config.resetTimeoutMs,
+                retry: this.config.retry,
             },
         };
     }
@@ -350,7 +464,7 @@ class AICircuitBreaker {
      * @returns {number} Timeout en milisegundos
      */
     getTimeoutMs() {
-        return CONFIG.TIMEOUT_MS;
+        return this.config.timeoutMs;
     }
 
     /**
@@ -360,7 +474,7 @@ class AICircuitBreaker {
     async close() {
         try {
             if (this.subscriberClient && this.subscriberClient.isOpen) {
-                await this.subscriberClient.unsubscribe(CHANNEL_CIRCUIT_SYNC);
+                await this.subscriberClient.unsubscribe(this.channelName);
                 this.subscriberClient.removeAllListeners();
                 await this.subscriberClient.quit();
             }
@@ -370,16 +484,98 @@ class AICircuitBreaker {
             this.redisClient = null;
             this.subscriberClient = null;
 
-            logger.info('[AICircuitBreaker] Conexiones cerradas');
+            logger.info(`[CircuitBreaker:${this.name}] Conexiones cerradas`);
         } catch (error) {
-            logger.error('[AICircuitBreaker] Error cerrando conexiones', {
+            logger.error(`[CircuitBreaker:${this.name}] Error cerrando conexiones`, {
                 error: error.message,
             });
         }
     }
 }
 
-// Exportar instancia singleton
-const aiCircuitBreaker = new AICircuitBreaker();
+/**
+ * Factory para crear instancias de Circuit Breaker
+ */
+class CircuitBreakerFactory {
+    /** @type {Map<string, CircuitBreaker>} Cache de instancias */
+    static instances = new Map();
 
-module.exports = aiCircuitBreaker;
+    /**
+     * Obtiene o crea una instancia de Circuit Breaker
+     * @param {string} name - Nombre único del circuit breaker
+     * @param {Object} config - Configuración personalizada
+     * @returns {CircuitBreaker}
+     */
+    static getInstance(name, config = {}) {
+        if (!this.instances.has(name)) {
+            this.instances.set(name, new CircuitBreaker(name, config));
+        }
+        return this.instances.get(name);
+    }
+
+    /**
+     * Obtiene estado de todos los circuit breakers
+     * @returns {Object} Estado de todos los circuitos
+     */
+    static getAllStatus() {
+        const status = {};
+        for (const [name, breaker] of this.instances) {
+            status[name] = breaker.getStatus();
+        }
+        return status;
+    }
+
+    /**
+     * Cierra todas las instancias
+     * @async
+     */
+    static async closeAll() {
+        for (const [name, breaker] of this.instances) {
+            await breaker.close();
+        }
+        this.instances.clear();
+    }
+}
+
+// ========== INSTANCIAS PREDEFINIDAS ==========
+
+/**
+ * Circuit Breaker para servicios de IA (OpenRouter)
+ */
+const aiCircuitBreaker = CircuitBreakerFactory.getInstance('ai:openrouter', {
+    timeoutMs: 10000,
+    failureThreshold: 5,
+    resetTimeoutMs: 30000,
+    retry: {
+        maxRetries: 3,
+        baseDelayMs: 100,
+        maxDelayMs: 8000,
+        jitter: true,
+        backoffMultiplier: 2,
+    },
+});
+
+/**
+ * Circuit Breaker para servicios de Unsplash
+ */
+const unsplashCircuitBreaker = CircuitBreakerFactory.getInstance('images:unsplash', {
+    timeoutMs: 8000,
+    failureThreshold: 5,
+    resetTimeoutMs: 30000,
+    retry: {
+        maxRetries: 2,
+        baseDelayMs: 200,
+        maxDelayMs: 4000,
+        jitter: true,
+        backoffMultiplier: 2,
+    },
+});
+
+module.exports = {
+    CircuitBreaker,
+    CircuitBreakerFactory,
+    CircuitOpenError,
+    CircuitState,
+    aiCircuitBreaker,
+    unsplashCircuitBreaker,
+};

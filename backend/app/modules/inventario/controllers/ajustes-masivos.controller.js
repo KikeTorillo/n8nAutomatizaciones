@@ -114,10 +114,10 @@ const cancelar = asyncHandler(async (req, res) => {
  * GET /api/v1/inventario/ajustes-masivos/plantilla
  */
 const descargarPlantilla = asyncHandler(async (req, res) => {
-    const csvContent = `sku,codigo_barras,cantidad_ajuste,motivo
-PROD-001,,+10,Entrada por recepción manual
-,7501234567890,-5,Salida por merma o daño
-SKU-VARIANTE,,+3,Corrección de inventario`;
+    const csvContent = `sku,codigo_barras,cantidad_ajuste,ubicacion_codigo,motivo
+PROD-001,,+10,BIN-A01,Entrada por recepción manual
+,7501234567890,-5,BIN-B02,Salida por merma o daño
+SKU-VARIANTE,,+3,,Corrección (usa ubicación default)`;
 
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
     res.setHeader('Content-Disposition', 'attachment; filename="plantilla_ajustes_masivos.csv"');

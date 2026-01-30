@@ -3,9 +3,15 @@
  * IMAGES CONTROLLER
  * ====================================================================
  * Controller para busqueda y descarga de imagenes.
+ * Incluye manejo de Circuit Breaker para errores de servicio.
+ *
+ * @author Backend Team
+ * @version 2.0.0
+ * @since 2026-01-29
  */
 
 const UnsplashService = require('../services/unsplash.service');
+const { CircuitOpenError } = require('../services/circuitBreaker.service');
 const asyncHandler = require('express-async-handler');
 
 /**
@@ -29,17 +35,30 @@ const buscarImagenes = asyncHandler(async (req, res) => {
     });
   }
 
-  const results = await UnsplashService.search({
-    query,
-    page: parseInt(page),
-    per_page: parseInt(per_page),
-    orientation,
-  });
+  try {
+    const results = await UnsplashService.search({
+      query,
+      page: parseInt(page),
+      per_page: parseInt(per_page),
+      orientation,
+    });
 
-  res.json({
-    success: true,
-    data: results,
-  });
+    res.json({
+      success: true,
+      data: results,
+    });
+  } catch (error) {
+    // Manejar CircuitOpenError específicamente
+    if (error instanceof CircuitOpenError) {
+      return res.status(503).json({
+        success: false,
+        message: 'Servicio de imágenes temporalmente no disponible',
+        retryAfter: error.retryAfter,
+        circuit: error.circuitName,
+      });
+    }
+    throw error;
+  }
 });
 
 /**
@@ -93,11 +112,40 @@ const imagenAleatoria = asyncHandler(async (req, res) => {
     });
   }
 
-  const image = await UnsplashService.getRandom(query);
+  try {
+    const image = await UnsplashService.getRandom(query);
+
+    res.json({
+      success: true,
+      data: image,
+    });
+  } catch (error) {
+    // Manejar CircuitOpenError específicamente
+    if (error instanceof CircuitOpenError) {
+      return res.status(503).json({
+        success: false,
+        message: 'Servicio de imágenes temporalmente no disponible',
+        retryAfter: error.retryAfter,
+        circuit: error.circuitName,
+      });
+    }
+    throw error;
+  }
+});
+
+/**
+ * Obtener estado del circuit breaker de Unsplash
+ * GET /api/v1/website/images/status
+ */
+const obtenerStatus = asyncHandler(async (req, res) => {
+  const status = UnsplashService.getCircuitBreakerStatus();
 
   res.json({
     success: true,
-    data: image,
+    data: {
+      available: UnsplashService.isAvailable(),
+      circuitBreaker: status,
+    },
   });
 });
 
@@ -105,4 +153,5 @@ module.exports = {
   buscarImagenes,
   descargarImagen,
   imagenAleatoria,
+  obtenerStatus,
 };

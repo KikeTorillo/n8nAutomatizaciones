@@ -19,7 +19,7 @@ const fetch = require('node-fetch');
 const AbortController = require('abort-controller');
 
 // Circuit Breaker distribuido
-const aiCircuitBreaker = require('./circuitBreaker.service');
+const { aiCircuitBreaker, CircuitOpenError } = require('./circuitBreaker.service');
 
 // Configuración de OpenRouter (requiere API key)
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
@@ -471,16 +471,11 @@ class WebsiteAIService {
 
   /**
    * Generar usando OpenRouter con Circuit Breaker Distribuido
-   * @throws {Error} Si el circuito está abierto o la request falla
+   * Usa el método execute() que incluye retry automático con backoff exponencial
+   * @throws {CircuitOpenError} Si el circuito está abierto
+   * @throws {Error} Si todos los reintentos fallan
    */
   static async generarConOpenRouter({ tipo, campo, industria, contexto }) {
-    // Verificar estado del circuit breaker (distribuido)
-    if (await aiCircuitBreaker.isOpen()) {
-      const status = aiCircuitBreaker.getStatus();
-      throw new Error(`Circuit breaker OPEN: servicio de IA temporalmente no disponible. ` +
-        `Reintentando en ${Math.ceil(status.timeUntilRetry / 1000)}s`);
-    }
-
     const promptTemplate = PROMPTS_POR_TIPO[tipo]?.[campo];
     if (!promptTemplate) {
       throw new Error(`No hay prompt para ${tipo}.${campo}`);
@@ -495,67 +490,61 @@ class WebsiteAIService {
       .replace(/{cargo}/g, contexto.cargo || '')
       .replace(/{tema}/g, contexto.tema || 'nuestros servicios');
 
-    // Configurar timeout con AbortController
-    const controller = new AbortController();
-    const timeoutMs = aiCircuitBreaker.getTimeoutMs();
-    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+    // Ejecutar con circuit breaker (incluye retry automático)
+    return aiCircuitBreaker.execute(async () => {
+      // Configurar timeout con AbortController
+      const controller = new AbortController();
+      const timeoutMs = aiCircuitBreaker.getTimeoutMs();
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
-    try {
-      const response = await fetch(`${OPENROUTER_BASE_URL}/chat/completions`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
-          'Content-Type': 'application/json',
-          'HTTP-Referer': process.env.APP_URL || 'https://nexo.com',
-          'X-Title': 'Nexo Website Editor',
-        },
-        body: JSON.stringify({
-          model: DEFAULT_MODEL,
-          messages: [
-            {
-              role: 'system',
-              content: 'Eres un experto en copywriting y marketing digital. Generas contenido conciso, profesional y persuasivo para sitios web de negocios. Responde SOLO con el texto solicitado, sin explicaciones adicionales.',
-            },
-            {
-              role: 'user',
-              content: prompt,
-            },
-          ],
-          max_tokens: 200,
-          temperature: 0.7,
-        }),
-        signal: controller.signal
-      });
+      try {
+        const response = await fetch(`${OPENROUTER_BASE_URL}/chat/completions`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+            'Content-Type': 'application/json',
+            'HTTP-Referer': process.env.APP_URL || 'https://nexo.com',
+            'X-Title': 'Nexo Website Editor',
+          },
+          body: JSON.stringify({
+            model: DEFAULT_MODEL,
+            messages: [
+              {
+                role: 'system',
+                content: 'Eres un experto en copywriting y marketing digital. Generas contenido conciso, profesional y persuasivo para sitios web de negocios. Responde SOLO con el texto solicitado, sin explicaciones adicionales.',
+              },
+              {
+                role: 'user',
+                content: prompt,
+              },
+            ],
+            max_tokens: 200,
+            temperature: 0.7,
+          }),
+          signal: controller.signal
+        });
 
-      clearTimeout(timeoutId);
+        clearTimeout(timeoutId);
 
-      if (!response.ok) {
-        const error = await response.text();
-        throw new Error(`OpenRouter error: ${response.status} - ${error}`);
+        if (!response.ok) {
+          const error = await response.text();
+          throw new Error(`OpenRouter error: ${response.status} - ${error}`);
+        }
+
+        const data = await response.json();
+        return data.choices[0]?.message?.content?.trim() || '';
+
+      } catch (error) {
+        clearTimeout(timeoutId);
+
+        // Manejar timeout específicamente
+        if (error.name === 'AbortError') {
+          throw new Error(`Request timeout: OpenRouter no respondió en ${timeoutMs / 1000}s`);
+        }
+
+        throw error;
       }
-
-      const data = await response.json();
-      const result = data.choices[0]?.message?.content?.trim() || '';
-
-      // Éxito: resetear circuit breaker (distribuido)
-      await aiCircuitBreaker.recordSuccess();
-
-      return result;
-
-    } catch (error) {
-      clearTimeout(timeoutId);
-
-      // Manejar timeout específicamente
-      if (error.name === 'AbortError') {
-        const timeoutError = new Error(`Request timeout: OpenRouter no respondió en ${timeoutMs / 1000}s`);
-        await aiCircuitBreaker.recordFailure(timeoutError);
-        throw timeoutError;
-      }
-
-      // Registrar falla en circuit breaker (distribuido)
-      await aiCircuitBreaker.recordFailure(error);
-      throw error;
-    }
+    });
   }
 
   /**
@@ -825,6 +814,7 @@ class WebsiteAIService {
 
   /**
    * Generar texto con tono personalizado
+   * Usa el método execute() que incluye retry automático con backoff exponencial
    * @param {Object} params
    * @param {string} params.campo - Campo a generar
    * @param {string} params.industria - Industria del negocio
@@ -840,11 +830,6 @@ class WebsiteAIService {
       return this.generarTextoFallbackConTono(campo, industria, tono, contexto);
     }
 
-    // Verificar circuit breaker (distribuido)
-    if (await aiCircuitBreaker.isOpen()) {
-      return this.generarTextoFallbackConTono(campo, industria, tono, contexto);
-    }
-
     const prompt = `Genera un texto para el campo "${campo}" de un sitio web de ${industria}.
 ${instruccionesTono}
 El texto debe tener entre ${palabras} palabras.
@@ -853,49 +838,61 @@ ${contexto.descripcion ? `Descripcion: ${contexto.descripcion}` : ''}
 
 IMPORTANTE: Responde SOLO con el texto generado, sin comillas, sin explicaciones, sin prefijos como "Aqui tienes".`;
 
-    // Configurar timeout
-    const controller = new AbortController();
-    const timeoutMs = aiCircuitBreaker.getTimeoutMs();
-    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-
     try {
-      const response = await fetch(`${OPENROUTER_BASE_URL}/chat/completions`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
-          'Content-Type': 'application/json',
-          'HTTP-Referer': process.env.APP_URL || 'https://nexo.com',
-          'X-Title': 'Nexo Website Editor - AI Writer',
-        },
-        body: JSON.stringify({
-          model: DEFAULT_MODEL,
-          messages: [
-            {
-              role: 'system',
-              content: 'Eres un experto copywriter y redactor publicitario. Generas contenido conciso, profesional y adaptado al tono solicitado. NUNCA incluyas explicaciones, solo el texto solicitado.',
+      // Ejecutar con circuit breaker (incluye retry automático)
+      const texto = await aiCircuitBreaker.execute(async () => {
+        // Configurar timeout
+        const controller = new AbortController();
+        const timeoutMs = aiCircuitBreaker.getTimeoutMs();
+        const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+        try {
+          const response = await fetch(`${OPENROUTER_BASE_URL}/chat/completions`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+              'Content-Type': 'application/json',
+              'HTTP-Referer': process.env.APP_URL || 'https://nexo.com',
+              'X-Title': 'Nexo Website Editor - AI Writer',
             },
-            {
-              role: 'user',
-              content: prompt,
-            },
-          ],
-          max_tokens: 300,
-          temperature: 0.8,
-        }),
-        signal: controller.signal,
+            body: JSON.stringify({
+              model: DEFAULT_MODEL,
+              messages: [
+                {
+                  role: 'system',
+                  content: 'Eres un experto copywriter y redactor publicitario. Generas contenido conciso, profesional y adaptado al tono solicitado. NUNCA incluyas explicaciones, solo el texto solicitado.',
+                },
+                {
+                  role: 'user',
+                  content: prompt,
+                },
+              ],
+              max_tokens: 300,
+              temperature: 0.8,
+            }),
+            signal: controller.signal,
+          });
+
+          clearTimeout(timeoutId);
+
+          if (!response.ok) {
+            const error = await response.text();
+            throw new Error(`OpenRouter error: ${response.status} - ${error}`);
+          }
+
+          const data = await response.json();
+          return data.choices[0]?.message?.content?.trim() || '';
+
+        } catch (error) {
+          clearTimeout(timeoutId);
+
+          if (error.name === 'AbortError') {
+            throw new Error(`Timeout generando texto`);
+          }
+
+          throw error;
+        }
       });
-
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        const error = await response.text();
-        throw new Error(`OpenRouter error: ${response.status} - ${error}`);
-      }
-
-      const data = await response.json();
-      const texto = data.choices[0]?.message?.content?.trim() || '';
-
-      await aiCircuitBreaker.recordSuccess();
 
       // Limpiar posibles artefactos
       return texto
@@ -904,16 +901,8 @@ IMPORTANTE: Responde SOLO con el texto generado, sin comillas, sin explicaciones
         .trim();
 
     } catch (error) {
-      clearTimeout(timeoutId);
-
-      if (error.name === 'AbortError') {
-        const timeoutError = new Error(`Timeout generando texto`);
-        await aiCircuitBreaker.recordFailure(timeoutError);
-      } else {
-        await aiCircuitBreaker.recordFailure(error);
-      }
-
-      // Fallback
+      // Si CircuitOpenError o todos los reintentos fallan, usar fallback
+      console.warn('[WebsiteAIService] Error con IA, usando fallback:', error.message);
       return this.generarTextoFallbackConTono(campo, industria, tono, contexto);
     }
   }

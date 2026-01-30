@@ -603,6 +603,7 @@ export default function ConteoDetallePage() {
                                                     <p className="text-sm text-gray-500 dark:text-gray-400">
                                                         SKU: {item.producto_sku || '-'}
                                                         {item.codigo_barras && ` • ${item.codigo_barras}`}
+                                                        {item.ubicacion_codigo && ` • Ubic: ${item.ubicacion_codigo}`}
                                                     </p>
                                                 </div>
 

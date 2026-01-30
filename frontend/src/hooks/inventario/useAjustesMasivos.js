@@ -269,6 +269,7 @@ export function parsearCSVAjustes(csvContent) {
         sku: headers.indexOf('sku'),
         codigo_barras: headers.indexOf('codigo_barras'),
         cantidad_ajuste: headers.indexOf('cantidad_ajuste'),
+        ubicacion_codigo: headers.indexOf('ubicacion_codigo'),
         motivo: headers.indexOf('motivo'),
     };
 
@@ -283,6 +284,7 @@ export function parsearCSVAjustes(csvContent) {
         const sku = colIndex.sku >= 0 ? values[colIndex.sku]?.trim() : '';
         const codigo_barras = colIndex.codigo_barras >= 0 ? values[colIndex.codigo_barras]?.trim() : '';
         const cantidad_str = colIndex.cantidad_ajuste >= 0 ? values[colIndex.cantidad_ajuste]?.trim() : '';
+        const ubicacion_codigo = colIndex.ubicacion_codigo >= 0 ? values[colIndex.ubicacion_codigo]?.trim() : '';
         const motivo = colIndex.motivo >= 0 ? values[colIndex.motivo]?.trim() : '';
 
         // Validaciones básicas
@@ -302,6 +304,7 @@ export function parsearCSVAjustes(csvContent) {
             sku: sku || undefined,
             codigo_barras: codigo_barras || undefined,
             cantidad_ajuste,
+            ubicacion_codigo: ubicacion_codigo || undefined,
             motivo: motivo || undefined,
         });
     }

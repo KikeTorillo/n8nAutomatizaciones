@@ -27,6 +27,7 @@ const ajustesMasivosSchemas = {
                         'any.required': 'La cantidad de ajuste es requerida',
                         'number.base': 'La cantidad debe ser un número entero'
                     }),
+                    ubicacion_codigo: Joi.string().max(30).allow('', null).optional(),
                     motivo: Joi.string().max(500).allow('', null).optional()
                 }).custom((value, helpers) => {
                     // Validar que al menos uno de sku o codigo_barras esté presente

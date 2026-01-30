@@ -27,6 +27,7 @@ const WebsiteAIController = require('../controllers/ai.controller');
 const WebsiteAnalyticsController = require('../controllers/analytics.controller');
 const WebsiteSEOController = require('../controllers/seo.controller');
 const WebsiteVersionesController = require('../controllers/versiones.controller');
+const WebsiteHealthController = require('../controllers/health.controller');
 const { auth, tenant, rateLimiting, validation, subscription, modules } = require('../../../middleware');
 const websiteSchemas = require('../schemas/website.schemas');
 
@@ -795,6 +796,32 @@ router.delete('/versiones/:id',
     auth.requireRole(['admin']),
     rateLimiting.apiRateLimit,
     WebsiteVersionesController.eliminar
+);
+
+// ===================================================================
+// HEALTH CHECK
+// ===================================================================
+
+/**
+ * GET /api/v1/website/health
+ * Obtener estado de salud del módulo website
+ * @requires auth - cualquier rol
+ */
+router.get('/health',
+    auth.authenticateToken,
+    rateLimiting.apiRateLimit,
+    WebsiteHealthController.obtenerHealth
+);
+
+/**
+ * GET /api/v1/website/health/ping
+ * Ping rápido para verificar disponibilidad
+ * @requires auth - cualquier rol
+ */
+router.get('/health/ping',
+    auth.authenticateToken,
+    rateLimiting.apiRateLimit,
+    WebsiteHealthController.ping
 );
 
 // ===================================================================

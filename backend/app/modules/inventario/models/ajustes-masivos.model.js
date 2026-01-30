@@ -50,8 +50,8 @@ class AjustesMasivosModel {
                 const itemQuery = `
                     INSERT INTO ajustes_masivos_items (
                         ajuste_masivo_id, fila_numero,
-                        sku_csv, codigo_barras_csv, cantidad_csv, motivo_csv
-                    ) VALUES ($1, $2, $3, $4, $5, $6)
+                        sku_csv, codigo_barras_csv, cantidad_csv, motivo_csv, ubicacion_codigo_csv
+                    ) VALUES ($1, $2, $3, $4, $5, $6, $7)
                     RETURNING *
                 `;
 
@@ -61,7 +61,8 @@ class AjustesMasivosModel {
                     item.sku || null,
                     item.codigo_barras || null,
                     String(item.cantidad_ajuste),
-                    item.motivo || null
+                    item.motivo || null,
+                    item.ubicacion_codigo || null
                 ]);
 
                 itemsInsertados.push(itemResult.rows[0]);
@@ -298,6 +299,25 @@ class AjustesMasivosModel {
 
                     const producto = productoQuery.rows[0];
 
+                    // Resolver ubicación si se proporcionó
+                    let ubicacionId = null;
+                    if (item.ubicacion_codigo_csv) {
+                        const ubicacionQuery = await db.query(`
+                            SELECT id FROM ubicaciones_almacen
+                            WHERE codigo = $1
+                              AND sucursal_id = $2
+                              AND activo = true
+                        `, [item.ubicacion_codigo_csv, ajuste.sucursal_id]);
+
+                        if (ubicacionQuery.rows.length === 0) {
+                            await this._marcarItemError(db, item.id, 'ubicacion_no_encontrada',
+                                `Ubicación no encontrada: "${item.ubicacion_codigo_csv}"`);
+                            itemsError++;
+                            continue;
+                        }
+                        ubicacionId = ubicacionQuery.rows[0].id;
+                    }
+
                     // Calcular stock después
                     const stockDespues = producto.stock_actual + cantidad;
 
@@ -317,19 +337,21 @@ class AjustesMasivosModel {
                         UPDATE ajustes_masivos_items SET
                             producto_id = $1,
                             variante_id = $2,
-                            producto_nombre = $3,
-                            cantidad_ajuste = $4,
-                            stock_antes = $5,
-                            stock_despues = $6,
-                            costo_unitario = $7,
-                            valor_ajuste = $8,
+                            ubicacion_id = $3,
+                            producto_nombre = $4,
+                            cantidad_ajuste = $5,
+                            stock_antes = $6,
+                            stock_despues = $7,
+                            costo_unitario = $8,
+                            valor_ajuste = $9,
                             estado = 'valido',
                             error_tipo = NULL,
                             error_mensaje = NULL
-                        WHERE id = $9
+                        WHERE id = $10
                     `, [
                         producto.producto_id,
                         producto.variante_id,
+                        ubicacionId,
                         producto.producto_nombre,
                         cantidad,
                         producto.stock_actual,
@@ -438,17 +460,17 @@ class AjustesMasivosModel {
                             $3,  -- tipo_movimiento
                             $4,  -- cantidad
                             $5,  -- sucursal_id
-                            NULL, -- ubicacion_id
+                            $6,  -- ubicacion_id (del item validado)
                             NULL, -- lote
                             NULL, -- fecha_vencimiento
-                            $6,  -- referencia
-                            $7,  -- motivo
-                            $8,  -- usuario_id
-                            $9,  -- costo_unitario
+                            $7,  -- referencia
+                            $8,  -- motivo
+                            $9,  -- usuario_id
+                            $10, -- costo_unitario
                             NULL, -- proveedor_id
                             NULL, -- venta_pos_id
                             NULL, -- cita_id
-                            $10  -- variante_id
+                            $11  -- variante_id
                         ) as movimiento_id
                     `, [
                         organizacionId,
@@ -456,6 +478,7 @@ class AjustesMasivosModel {
                         tipoMovimiento,
                         item.cantidad_ajuste,
                         ajuste.sucursal_id,
+                        item.ubicacion_id || null,
                         `Ajuste masivo: ${ajuste.folio}`,
                         item.motivo_csv || 'Ajuste masivo CSV',
                         usuarioId,

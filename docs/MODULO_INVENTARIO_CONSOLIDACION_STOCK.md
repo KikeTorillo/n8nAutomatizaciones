@@ -1,6 +1,81 @@
 # Módulo Inventario - Consolidación de Stock
 
-**Estado**: Operativo | **Última revisión**: 29 Enero 2026
+**Estado**: ✅ Completo | **Última revisión**: 29 Enero 2026
+
+---
+
+## Diagrama de Flujo
+
+```mermaid
+flowchart TB
+    subgraph ENTRADAS["+ ENTRADAS"]
+        OC[Recepción OC]
+        DEV[Devolución POS]
+        AJE[Ajuste +]
+        TRE[Transferencia Entrada]
+        CSV_E[Ajuste Masivo CSV +]
+        CNT_E[Conteo Físico +]
+    end
+
+    subgraph SALIDAS["- SALIDAS"]
+        VTA[Venta POS]
+        AJS[Ajuste -]
+        TRS[Transferencia Salida]
+        CSV_S[Ajuste Masivo CSV -]
+        CNT_S[Conteo Físico -]
+    end
+
+    subgraph WMS["WMS - Resolución Ubicación"]
+        UU[(usuarios_ubicaciones)]
+        UA[(ubicaciones_almacen)]
+        CSV_U[ubicacion_codigo CSV]
+        CNT_U[filtro ubicacion_id]
+    end
+
+    subgraph CORE["CORE - Función Consolidada"]
+        FN[registrar_movimiento_con_ubicacion]
+    end
+
+    subgraph STORAGE["ALMACENAMIENTO"]
+        SU[(stock_ubicaciones)]
+        MI[(movimientos_inventario)]
+        SP[(productos.stock_actual)]
+    end
+
+    %% Entradas directas
+    OC -->|ubicacion UI| FN
+    DEV -->|auto usuario| UU
+    AJE -->|ubicacion UI| FN
+    TRE -->|ubicacion_destino_id| FN
+
+    %% Salidas con resolución
+    VTA --> UU
+    UU -->|default/permiso| UA
+    UA --> FN
+
+    AJS -->|ubicacion UI| FN
+    TRS -->|ubicacion_origen_id| FN
+
+    %% Ajustes Masivos CSV
+    CSV_E --> CSV_U
+    CSV_S --> CSV_U
+    CSV_U -->|codigo → id| UA
+
+    %% Conteos Físicos
+    CNT_E --> CNT_U
+    CNT_S --> CNT_U
+    CNT_U --> UA
+
+    %% Core a Storage
+    FN --> SU
+    FN --> MI
+    SU -->|trigger sync| SP
+
+    %% Estilos
+    style FN fill:#753572,color:#fff
+    style SU fill:#2d5a27,color:#fff
+    style SP fill:#1e3a5f,color:#fff
+```
 
 ---
 
@@ -16,57 +91,14 @@ productos.stock_actual (CALCULADO)
 
 ---
 
-## Diagrama de Flujo
-
-```mermaid
-flowchart TB
-    subgraph ENTRADAS["+Stock"]
-        OC[Recepción OC]
-        DEV[Devolución]
-        AJE[Ajuste +]
-        TRE[Transferencia Entrada]
-    end
-
-    subgraph SALIDAS["-Stock"]
-        VTA[Venta POS]
-        AJS[Ajuste -]
-        TRS[Transferencia Salida]
-    end
-
-    subgraph WMS["Resolución Ubicación"]
-        UU[(usuarios_ubicaciones)]
-        UA[(ubicaciones_almacen)]
-    end
-
-    OC --> FN
-    DEV --> FN
-    AJE --> FN
-    TRE --> FN
-
-    VTA --> UU
-    UU --> UA
-    UA --> FN
-
-    AJS --> FN
-    TRS --> FN
-
-    FN[registrar_movimiento_con_ubicacion]
-
-    FN --> SU[(stock_ubicaciones)]
-    FN --> MI[(movimientos_inventario)]
-    SU -->|trigger| SP[(productos.stock_actual)]
-```
-
----
-
 ## Resolución de Ubicación
 
 ```
 obtener_ubicacion_usuario(usuario_id, sucursal_id)
         ↓
-1. Ubicación default del usuario (es_default=true, puede_despachar=true)
+1. Ubicación default del usuario (es_default=true)
         ↓ no encontrada
-2. Cualquier ubicación con permiso (puede_despachar=true)
+2. Cualquier ubicación con permiso
         ↓ no encontrada
 3. Fallback: ubicación DEFAULT de sucursal
 ```
@@ -89,45 +121,64 @@ obtener_ubicacion_usuario(usuario_id, sucursal_id)
 | Mover stock | `transferencia` | Manual | ✅ |
 | Transferencia inter-sucursal | `transferencia_salida/entrada` | Selector UI | ✅ |
 | Devolución POS | `entrada_devolucion` | Auto (usuario) | ✅ |
-| Ajuste masivo CSV | `ajuste` | Default | ⚠️ |
+| Ajuste masivo CSV | `ajuste` | Columna CSV | ✅ |
+| Conteo físico | `ajuste` | Por ubicación | ✅ |
 
 ---
 
-## Transferencias Inter-Sucursal (Actualizado 29 Ene 2026)
+## Transferencias Inter-Sucursal
 
-Las transferencias ahora soportan ubicaciones específicas por item:
-
-### Flujo
 ```
 Sucursal Origen                     Sucursal Destino
-----------------                    ----------------
-[Ubicación A] ─── enviar ───>      [En Tránsito]
-                                         │
-                                    recibir
-                                         ↓
-                                   [Ubicación B]
+[Ubicación A] ─── enviar ───>      [En Tránsito] ─── recibir ───> [Ubicación B]
 ```
 
-### Componentes Actualizados
-- **Backend**: `transferencias.model.js` - soporta `ubicacion_origen_id` y `ubicacion_destino_id` por item
-- **SQL**: `procesar_envio_transferencia()` y `procesar_recepcion_transferencia()` usan ubicación específica
-- **Frontend**:
-  - `TransferenciaItemsDrawer.jsx` - selector ubicación origen al agregar items
-  - `TransferenciaDetailPage.jsx` - selector ubicación destino al recibir
-
-### Tabla: transferencias_stock_items
-Nuevas columnas:
-- `ubicacion_origen_id` - FK a ubicaciones_almacen
-- `ubicacion_destino_id` - FK a ubicaciones_almacen
-- `lote` - trazabilidad de lotes
+- Items soportan `ubicacion_origen_id` y `ubicacion_destino_id`
+- UI: Selector ubicación origen al agregar, destino al recibir
 
 ---
 
-## GAPs Pendientes
+## Ajustes Masivos CSV
 
-### 1. Ajustes Masivos CSV
-- No incluye columna de ubicación
-- No permite conteos físicos por bin
+Plantilla con columna ubicación:
+```csv
+sku,codigo_barras,cantidad_ajuste,ubicacion_codigo,motivo
+PROD-001,,+10,BIN-A01,Entrada por recepción
+,7501234567890,-5,BIN-B02,Salida por merma
+```
+
+- Validación resuelve `ubicacion_codigo` → `ubicacion_id`
+- Error si ubicación no existe en sucursal
+
+---
+
+## Conteos de Inventario
+
+Tipo `por_ubicacion`:
+- Selector de ubicación en modal de creación
+- Items generados con `ubicacion_id` del filtro
+- Ajustes aplicados a ubicación específica
+
+---
+
+## Queries de Diagnóstico
+
+```sql
+-- Verificar sincronización
+SELECT * FROM validar_sincronizacion_stock();
+
+-- Stock por ubicación
+SELECT ua.codigo, su.producto_id, su.cantidad
+FROM stock_ubicaciones su
+JOIN ubicaciones_almacen ua ON ua.id = su.ubicacion_id
+WHERE ua.sucursal_id = ?;
+
+-- Ubicaciones de usuario
+SELECT ua.codigo, uu.es_default, uu.puede_despachar
+FROM usuarios_ubicaciones uu
+JOIN ubicaciones_almacen ua ON ua.id = uu.ubicacion_id
+WHERE uu.usuario_id = ? AND uu.activo = true;
+```
 
 ---
 
@@ -141,81 +192,23 @@ Auditoría: `auditoria_sincronizacion_stock`
 
 ---
 
-## Queries de Diagnóstico
+## Pendientes
 
-```sql
--- Verificar sincronización
-SELECT * FROM validar_sincronizacion_stock();
+### Pruebas E2E Frontend
 
--- Stock por ubicación de sucursal
-SELECT ua.codigo, su.producto_id, su.cantidad
-FROM stock_ubicaciones su
-JOIN ubicaciones_almacen ua ON ua.id = su.ubicacion_id
-WHERE ua.sucursal_id = ?;
-
--- Ubicaciones de usuario
-SELECT ua.codigo, uu.es_default, uu.puede_despachar
-FROM usuarios_ubicaciones uu
-JOIN ubicaciones_almacen ua ON ua.id = uu.ubicacion_id
-WHERE uu.usuario_id = ? AND uu.activo = true;
-
--- Sincronizar manual (emergencia)
-SELECT sincronizar_stock_producto(?);
-```
+| Flujo | Validación Principal |
+|-------|---------------------|
+| Ajuste Stock | Selector ubicación → stock en ubicación correcta |
+| Recepción OC | Ubicación destino → stock_ubicaciones actualizado |
+| Transferencia | Ubicación origen/destino por item funciona |
+| Conteo por Ubicación | Filtro ubicación → items con ubicacion_id → ajuste aplica a ubicación |
+| Ajuste Masivo CSV | Columna ubicacion_codigo → validación → movimiento con ubicación |
 
 ---
 
-## Próximo Paso: Validación E2E Frontend
+## Historial
 
-### Flujos a Validar
-
-| Flujo | Página | Validaciones |
-|-------|--------|--------------|
-| **Ajuste de Stock** | `ProductosPage` → AjustarStockModal | Selector ubicación visible, stock se registra en ubicación correcta |
-| **Recepción OC** | `OrdenesCompraPage` → RecibirMercanciaModal | Selector ubicación funciona, stock entra a ubicación seleccionada |
-| **Mover Stock** | `UbicacionesAlmacenPage` | Arrastrar producto entre bins, validar movimiento |
-| **Transferencia Inter-Sucursal** | `TransferenciasPage` | Crear → Editar items → Enviar → Recibir |
-| **Asignar Ubicación Usuario** | `UsuariosPage` o config | Usuario puede tener ubicación default asignada |
-| **Conteo Físico** | `ConteosPage` | Crear conteo, registrar cantidades, aplicar ajuste |
-| **Operaciones Almacén** | `OperacionesAlmacenPage` | Picking, putaway, QC funcionan con ubicaciones |
-
-### Checklist por Flujo
-
-```
-□ Ajuste Stock
-  □ Abrir modal desde producto
-  □ Ver selector de ubicación con opciones
-  □ Seleccionar ubicación y ajustar cantidad
-  □ Verificar en BD: stock_ubicaciones actualizado
-  □ Verificar: movimientos_inventario con ubicacion_origen_id
-
-□ Recepción OC
-  □ Crear OC con items
-  □ Enviar OC
-  □ Abrir modal recibir mercancía
-  □ Ver selector de ubicación destino
-  □ Recibir parcial/total
-  □ Verificar stock en ubicación correcta
-
-□ Transferencia Inter-Sucursal
-  □ Crear transferencia (origen → destino)
-  □ Agregar items con selector de ubicación origen
-  □ Ver ubicación origen en lista de items
-  □ Enviar (stock sale de ubicación específica o default)
-  □ Recibir con selector de ubicación destino por item
-  □ Verificar movimientos con ubicacion_origen_id y ubicacion_destino_id
-
-□ Ubicaciones Usuario
-  □ Asignar ubicación a usuario
-  □ Marcar como default
-  □ Verificar permisos puede_recibir/puede_despachar
-  □ Hacer venta POS y validar que use ubicación default
-```
-
-### Resultado Esperado
-
-Todos los flujos deben:
-1. Mostrar selector de ubicación cuando aplica
-2. Registrar movimiento con `ubicacion_origen_id` o `ubicacion_destino_id`
-3. Actualizar `stock_ubicaciones` correctamente
-4. Trigger sincroniza `productos.stock_actual`
+| Fecha | Cambio |
+|-------|--------|
+| 29 Ene 2026 | Implementación completa: Ajustes masivos CSV con ubicación, Conteos por ubicación, Transferencias ubicacion_destino_id por item |
+| 29 Ene 2026 | Validación PostgreSQL: 256 tablas, 13 jobs pg_cron, FKs verificadas |
