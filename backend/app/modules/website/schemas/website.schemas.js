@@ -128,6 +128,11 @@ const websiteSchemas = {
             })
         }),
         body: Joi.object({
+            // Bloqueo optimista - requerido para actualizaciones
+            version: Joi.number().integer().min(1).required().messages({
+                'any.required': 'Se requiere version para actualizar (bloqueo optimista)',
+                'number.min': 'La version debe ser mayor a 0'
+            }),
             slug: Joi.string()
                 .min(3)
                 .max(100)
@@ -152,8 +157,6 @@ const websiteSchemas = {
             fuente_titulos: Joi.string().max(100).optional().allow(null, ''),
             fuente_cuerpo: Joi.string().max(100).optional().allow(null, ''),
             redes_sociales: Joi.object().optional().allow(null)
-        }).min(1).messages({
-            'object.min': 'Debe proporcionar al menos un campo para actualizar'
         })
     },
 
@@ -247,6 +250,11 @@ const websiteSchemas = {
             id: Joi.string().uuid().required()
         }),
         body: Joi.object({
+            // Bloqueo optimista - requerido para actualizaciones
+            version: Joi.number().integer().min(1).required().messages({
+                'any.required': 'Se requiere version para actualizar (bloqueo optimista)',
+                'number.min': 'La version debe ser mayor a 0'
+            }),
             slug: Joi.string()
                 .max(100)
                 .pattern(slugRegex)
@@ -258,7 +266,7 @@ const websiteSchemas = {
             visible_menu: Joi.boolean().optional(),
             icono: Joi.string().max(50).optional().allow(null, ''),
             publicada: Joi.boolean().optional()
-        }).min(1)
+        })
     },
 
     /**
@@ -342,12 +350,17 @@ const websiteSchemas = {
             id: Joi.string().uuid().required()
         }),
         body: Joi.object({
+            // Bloqueo optimista - requerido para actualizaciones
+            version: Joi.number().integer().min(1).required().messages({
+                'any.required': 'Se requiere version para actualizar (bloqueo optimista)',
+                'number.min': 'La version debe ser mayor a 0'
+            }),
             tipo: Joi.string().valid(...TIPOS_BLOQUE).optional(),
             contenido: jsonbWithMaxSize().optional().allow(null),
             estilos: jsonbWithMaxSize().optional().allow(null),
             orden: Joi.number().integer().min(0).optional(),
             visible: Joi.boolean().optional()
-        }).min(1)
+        })
     },
 
     /**

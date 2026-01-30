@@ -148,15 +148,21 @@ class WebsiteConfigModel {
     }
 
     /**
-     * Actualizar configuración del sitio
+     * Actualizar configuración del sitio con bloqueo optimista
      *
      * @param {string} id - ID del website_config (UUID)
-     * @param {Object} datos - Datos a actualizar
+     * @param {Object} datos - Datos a actualizar (debe incluir version)
      * @param {number} organizacionId - ID de la organización
      * @returns {Object} Configuración actualizada
+     * @throws {Error} 409 si la configuración fue modificada por otro usuario
      */
     static async actualizar(id, datos, organizacionId) {
         return await RLSContextManager.query(organizacionId, async (db) => {
+            // Validar que se proporcione version para bloqueo optimista
+            if (datos.version === undefined) {
+                ErrorHelper.throwValidation('Se requiere version para actualizar', 'version');
+            }
+
             const campos = [];
             const valores = [id];
             let paramIndex = 2;
@@ -186,21 +192,43 @@ class WebsiteConfigModel {
                 ErrorHelper.throwValidation('No hay campos para actualizar');
             }
 
+            // Agregar version al WHERE para bloqueo optimista
+            const versionParam = paramIndex;
+            valores.push(datos.version);
+
             const query = `
                 UPDATE website_config
                 SET ${campos.join(', ')},
+                    version = version + 1,
                     actualizado_en = NOW()
-                WHERE id = $1
+                WHERE id = $1 AND version = $${versionParam}
                 RETURNING *
             `;
 
             logger.info('[WebsiteConfigModel.actualizar] Actualizando configuración', {
                 website_id: id,
                 organizacion_id: organizacionId,
-                campos_actualizados: Object.keys(datos)
+                version: datos.version,
+                campos_actualizados: Object.keys(datos).filter(k => k !== 'version')
             });
 
             const result = await db.query(query, valores);
+
+            // Bloqueo optimista: verificar si se actualizó
+            if (result.rowCount === 0) {
+                // Verificar si la configuración existe
+                const existe = await db.query(
+                    'SELECT version FROM website_config WHERE id = $1',
+                    [id]
+                );
+                if (existe.rows.length > 0) {
+                    ErrorHelper.throwConflict(
+                        'La configuración fue modificada por otro usuario. Recarga la página para ver los cambios.'
+                    );
+                }
+                return null; // Configuración no encontrada
+            }
+
             return result.rows[0];
         });
     }

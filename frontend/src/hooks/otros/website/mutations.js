@@ -1,145 +1,22 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { STALE_TIMES } from '@/app/queryClient';
+/**
+ * ====================================================================
+ * WEBSITE - HOOKS DE ESCRITURA (MUTATIONS)
+ * ====================================================================
+ * Hooks de TanStack Query para operaciones de escritura del modulo website.
+ * Incluye manejo de errores 409 (conflicto de version / bloqueo optimista).
+ *
+ * @since 2026-01-29
+ */
+
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { websiteApi } from '@/services/api/endpoints';
-import useAuthStore, { selectIsAuthenticated } from '@/store/authStore';
 import { toast } from 'sonner';
-
-/**
- * QUERY KEYS para website
- */
-export const WEBSITE_KEYS = {
-  all: ['website'],
-  config: () => [...WEBSITE_KEYS.all, 'config'],
-  paginas: () => [...WEBSITE_KEYS.all, 'paginas'],
-  pagina: (id) => [...WEBSITE_KEYS.paginas(), id],
-  bloques: (paginaId) => [...WEBSITE_KEYS.all, 'bloques', paginaId],
-  bloque: (id) => [...WEBSITE_KEYS.all, 'bloque', id],
-  tiposBloques: () => [...WEBSITE_KEYS.all, 'tipos-bloques'],
-  defaultBloque: (tipo) => [...WEBSITE_KEYS.all, 'default-bloque', tipo],
-  slugDisponible: (slug) => [...WEBSITE_KEYS.all, 'slug', slug],
-};
-
-// ==================== QUERIES - CONFIG ====================
-
-/**
- * Hook para obtener la configuración del sitio web
- */
-export function useWebsiteConfig() {
-  const isAuthenticated = useAuthStore(selectIsAuthenticated);
-
-  return useQuery({
-    queryKey: WEBSITE_KEYS.config(),
-    queryFn: async () => {
-      const response = await websiteApi.obtenerConfig();
-      return response.data.data;
-    },
-    enabled: isAuthenticated,
-    staleTime: STALE_TIMES.SEMI_STATIC,
-  });
-}
-
-/**
- * Hook para verificar disponibilidad de slug
- */
-export function useVerificarSlug(slug, excludeId) {
-  return useQuery({
-    queryKey: WEBSITE_KEYS.slugDisponible(slug),
-    queryFn: async () => {
-      const response = await websiteApi.verificarSlug(slug, excludeId);
-      return response.data.data;
-    },
-    enabled: !!slug && slug.length >= 3,
-    staleTime: STALE_TIMES.REAL_TIME,
-  });
-}
-
-// ==================== QUERIES - PÁGINAS ====================
-
-/**
- * Hook para listar páginas del sitio
- */
-export function useWebsitePaginas() {
-  const isAuthenticated = useAuthStore(selectIsAuthenticated);
-
-  return useQuery({
-    queryKey: WEBSITE_KEYS.paginas(),
-    queryFn: async () => {
-      const response = await websiteApi.listarPaginas();
-      return response.data.data;
-    },
-    enabled: isAuthenticated,
-    staleTime: STALE_TIMES.DYNAMIC,
-  });
-}
-
-/**
- * Hook para obtener una página por ID
- */
-export function useWebsitePagina(id) {
-  const isAuthenticated = useAuthStore(selectIsAuthenticated);
-
-  return useQuery({
-    queryKey: WEBSITE_KEYS.pagina(id),
-    queryFn: async () => {
-      const response = await websiteApi.obtenerPagina(id);
-      return response.data.data;
-    },
-    enabled: isAuthenticated && !!id,
-  });
-}
-
-// ==================== QUERIES - BLOQUES ====================
-
-/**
- * Hook para listar bloques de una página
- */
-export function useWebsiteBloques(paginaId) {
-  const isAuthenticated = useAuthStore(selectIsAuthenticated);
-
-  return useQuery({
-    queryKey: WEBSITE_KEYS.bloques(paginaId),
-    queryFn: async () => {
-      const response = await websiteApi.listarBloques(paginaId);
-      return response.data.data;
-    },
-    enabled: isAuthenticated && !!paginaId,
-    staleTime: STALE_TIMES.FREQUENT,
-  });
-}
-
-/**
- * Hook para obtener tipos de bloques disponibles
- */
-export function useTiposBloques() {
-  return useQuery({
-    queryKey: WEBSITE_KEYS.tiposBloques(),
-    queryFn: async () => {
-      const response = await websiteApi.listarTiposBloques();
-      return response.data.data;
-    },
-    staleTime: STALE_TIMES.LONG,
-  });
-}
-
-/**
- * Hook para obtener contenido default de un tipo de bloque
- */
-export function useDefaultBloque(tipo) {
-  return useQuery({
-    queryKey: WEBSITE_KEYS.defaultBloque(tipo),
-    queryFn: async () => {
-      const response = await websiteApi.obtenerDefaultBloque(tipo);
-      return response.data.data;
-    },
-    enabled: !!tipo,
-    staleTime: STALE_TIMES.LONG,
-  });
-}
+import { WEBSITE_KEYS } from './constants';
 
 // ==================== MUTATIONS - CONFIG ====================
 
 /**
- * Hook para crear configuración del sitio
+ * Hook para crear configuracion del sitio
  */
 export function useCrearWebsiteConfig() {
   const queryClient = useQueryClient();
@@ -156,8 +33,8 @@ export function useCrearWebsiteConfig() {
 }
 
 /**
- * Hook para actualizar configuración del sitio
- * Maneja errores 409 (conflicto de versión) con toast y opción de recargar
+ * Hook para actualizar configuracion del sitio
+ * Maneja errores 409 (conflicto de version) con toast y opcion de recargar
  */
 export function useActualizarWebsiteConfig() {
   const queryClient = useQueryClient();
@@ -172,8 +49,8 @@ export function useActualizarWebsiteConfig() {
     },
     onError: (error) => {
       if (error?.response?.status === 409) {
-        toast.error('Conflicto de edición', {
-          description: 'Otro usuario modificó esta configuración. Recarga para ver los cambios.',
+        toast.error('Conflicto de edicion', {
+          description: 'Otro usuario modifico esta configuracion. Recarga para ver los cambios.',
           action: {
             label: 'Recargar',
             onClick: () => queryClient.invalidateQueries({ queryKey: WEBSITE_KEYS.config() }),
@@ -219,10 +96,10 @@ export function useEliminarWebsite() {
   });
 }
 
-// ==================== MUTATIONS - PÁGINAS ====================
+// ==================== MUTATIONS - PAGINAS ====================
 
 /**
- * Hook para crear página
+ * Hook para crear pagina
  */
 export function useCrearPagina() {
   const queryClient = useQueryClient();
@@ -239,8 +116,8 @@ export function useCrearPagina() {
 }
 
 /**
- * Hook para actualizar página
- * Maneja errores 409 (conflicto de versión) con toast y opción de recargar
+ * Hook para actualizar pagina
+ * Maneja errores 409 (conflicto de version) con toast y opcion de recargar
  */
 export function useActualizarPagina() {
   const queryClient = useQueryClient();
@@ -256,8 +133,8 @@ export function useActualizarPagina() {
     },
     onError: (error, { id }) => {
       if (error?.response?.status === 409) {
-        toast.error('Conflicto de edición', {
-          description: 'Otro usuario modificó esta página. Recarga para ver los cambios.',
+        toast.error('Conflicto de edicion', {
+          description: 'Otro usuario modifico esta pagina. Recarga para ver los cambios.',
           action: {
             label: 'Recargar',
             onClick: () => {
@@ -273,7 +150,7 @@ export function useActualizarPagina() {
 }
 
 /**
- * Hook para reordenar páginas
+ * Hook para reordenar paginas
  */
 export function useReordenarPaginas() {
   const queryClient = useQueryClient();
@@ -290,7 +167,7 @@ export function useReordenarPaginas() {
 }
 
 /**
- * Hook para eliminar página
+ * Hook para eliminar pagina
  */
 export function useEliminarPagina() {
   const queryClient = useQueryClient();
@@ -327,7 +204,7 @@ export function useCrearBloque() {
 
 /**
  * Hook para actualizar bloque
- * Maneja errores 409 (conflicto de versión) con toast y opción de recargar
+ * Maneja errores 409 (conflicto de version) con toast y opcion de recargar
  */
 export function useActualizarBloque() {
   const queryClient = useQueryClient();
@@ -343,8 +220,8 @@ export function useActualizarBloque() {
     },
     onError: (error, { paginaId }) => {
       if (error?.response?.status === 409) {
-        toast.error('Conflicto de edición', {
-          description: 'Otro usuario modificó este bloque. Recarga para ver los cambios.',
+        toast.error('Conflicto de edicion', {
+          description: 'Otro usuario modifico este bloque. Recarga para ver los cambios.',
           action: {
             label: 'Recargar',
             onClick: () => {
@@ -410,67 +287,3 @@ export function useEliminarBloque() {
     },
   });
 }
-
-// ==================== HOOK COMBINADO ====================
-
-/**
- * Hook combinado para el editor del website
- */
-export function useWebsiteEditor() {
-  const { data: config, isLoading: configLoading, refetch: refetchConfig } = useWebsiteConfig();
-  const { data: paginasData, isLoading: paginasLoading, refetch: refetchPaginas } = useWebsitePaginas();
-  const { data: tiposBloques } = useTiposBloques();
-
-  const crearConfig = useCrearWebsiteConfig();
-  const actualizarConfig = useActualizarWebsiteConfig();
-  const publicarSitio = usePublicarWebsite();
-  const eliminarSitio = useEliminarWebsite();
-
-  const crearPagina = useCrearPagina();
-  const actualizarPagina = useActualizarPagina();
-  const reordenarPaginas = useReordenarPaginas();
-  const eliminarPagina = useEliminarPagina();
-
-  const crearBloque = useCrearBloque();
-  const actualizarBloque = useActualizarBloque();
-  const reordenarBloques = useReordenarBloques();
-  const duplicarBloque = useDuplicarBloque();
-  const eliminarBloque = useEliminarBloque();
-
-  return {
-    // Data
-    config,
-    paginas: paginasData || [],
-    tiposBloques: tiposBloques?.tipos || [],
-
-    // Estado
-    isLoading: configLoading || paginasLoading,
-    tieneSitio: !!config,
-    estaPublicado: config?.publicado || false,
-
-    // Refetch
-    refetchConfig,
-    refetchPaginas,
-
-    // Mutations - Config
-    crearConfig,
-    actualizarConfig,
-    publicarSitio,
-    eliminarSitio,
-
-    // Mutations - Páginas
-    crearPagina,
-    actualizarPagina,
-    reordenarPaginas,
-    eliminarPagina,
-
-    // Mutations - Bloques
-    crearBloque,
-    actualizarBloque,
-    reordenarBloques,
-    duplicarBloque,
-    eliminarBloque,
-  };
-}
-
-export default useWebsiteEditor;

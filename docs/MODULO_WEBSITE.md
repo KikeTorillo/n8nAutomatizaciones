@@ -18,202 +18,178 @@ FRONTEND                              BACKEND
 ├── EditorCanvas + CanvasBlock        └── /api/v1/public/sitio/* (publico)
 ├── PropertiesPanel
 ├── OnboardingTour (driver.js)        BASE DE DATOS
-├── AIWizard (21 industrias)          ├── website_config
-├── SEOTips/ (componentes)            ├── website_paginas
-├── AIWriter/ (componentes)           ├── website_bloques
+├── AIWizard (21 industrias)          ├── website_config (+ version)
+├── SEOTips/ (componentes)            ├── website_paginas (+ version)
+├── AIWriter/ (componentes)           ├── website_bloques (+ version)
 ├── DragPreview/ (componentes)        ├── website_versiones
 └── UnsplashPicker/ (componentes)     └── website_analytics
+
+HOOKS (frontend/src/hooks/otros/website/)
+├── constants.js      # WEBSITE_KEYS, ANALYTICS_KEYS
+├── queries.js        # 8 hooks de lectura
+├── mutations.js      # 12 hooks de escritura (manejo 409)
+├── manager.js        # useWebsiteEditor (combinado)
+└── useWebsiteAnalytics.js
+
+SERVICIOS BACKEND
+├── ai.service.js              # IA con Circuit Breaker distribuido
+├── circuitBreaker.service.js  # Redis Pub/Sub (nuevo)
+├── websiteCache.service.js    # Cache Redis DB 5
+└── site-generator.service.js  # 21 industrias
 ```
 
 ### Funcionalidades Core
 
 | Feature | Estado |
 |---------|--------|
-| Editor Drag & Drop | ✅ Completo |
-| 16 tipos de bloques | ✅ Completo |
-| AI Site Generator | ✅ 21 industrias |
-| Onboarding Tour | ✅ 5 pasos con driver.js |
-| Preview/Staging | ✅ Tokens temporales |
-| Versionado/Rollback | ✅ Completo |
-| Layout Responsive | ✅ Desktop/Tablet/Mobile |
-| MobileEditorFAB | ✅ Acceso rapido movil |
-| Autosave | ✅ Debounce 3s |
+| Editor Drag & Drop | ✅ |
+| 16 tipos de bloques | ✅ |
+| AI Site Generator (21 industrias) | ✅ |
+| Bloqueo Optimista (version) | ✅ Nuevo |
+| Circuit Breaker Distribuido | ✅ Nuevo |
+| Persistencia Store (localStorage) | ✅ Nuevo |
+| Manejo conflictos 409 (toast) | ✅ Nuevo |
+| Preview/Staging | ✅ |
+| Versionado/Rollback | ✅ |
+| Autosave (3s debounce) | ✅ |
 
 ---
 
-## Implementado en Sprint UX (29 Enero 2026)
+## Mejoras Arquitectonicas (29 Enero 2026)
 
-### Completado y Funcionando
+### 1. Bloqueo Optimista
 
-1. **Onboarding Tour Interactivo**
-   - `frontend/src/pages/website/components/OnboardingTour/`
-   - 5 pasos: Paleta → Canvas → Propiedades → Responsive → Publicar
-   - Persistencia en localStorage
-   - Estilos Nexo (morado primary)
+Evita perdida de datos cuando 2 usuarios editan simultaneamente.
 
-2. **21 Industrias en Wizard IA**
-   - 14 nuevas: ecommerce, educacion, inmobiliaria, legal, veterinaria, automotriz, hotel, eventos, fotografia, construccion, coaching, finanzas, marketing, tecnologia
-   - Templates de contenido en `backend/app/modules/website/services/ai.service.js`
-   - Estructuras de paginas en `site-generator.service.js`
+**Implementacion:**
+- Campo `version INTEGER NOT NULL DEFAULT 1` en 3 tablas SQL
+- UPDATE incluye `WHERE version = $N` y `version = version + 1`
+- Error 409 si version no coincide
+- Frontend muestra toast con opcion de recargar
 
-3. **Endpoints de Imagenes (Unsplash)**
-   - `GET /api/v1/website/images/search`
-   - `POST /api/v1/website/images/download`
-   - `GET /api/v1/website/images/random`
-   - Servicio: `backend/app/modules/website/services/unsplash.service.js`
+**Archivos:**
+- `sql/website/01-tablas.sql`
+- `models/bloques.model.js`, `paginas.model.js`, `config.model.js`
+- `schemas/website.schemas.js`
+- `hooks/otros/website/mutations.js`
 
-4. **AI Content Writer con Tonos**
-   - Endpoint: `POST /api/v1/website/ai/generar-texto`
-   - 5 tonos: profesional, casual, persuasivo, informativo, emotivo
-   - Componentes: `frontend/src/pages/website/components/AIWriter/`
+### 2. Circuit Breaker Distribuido
 
-5. **SEO Tips en Tiempo Real**
-   - 7 reglas con pesos (score 0-100)
-   - Componentes: `frontend/src/pages/website/components/SEOTips/`
-   - Hook: `useSEOAnalysis.js`
+Comparte estado entre instancias via Redis.
 
-### Componentes Creados (Pendiente Integracion)
+**Configuracion:**
+- Timeout: 10s
+- Umbral fallas: 5 consecutivas
+- Reset: 30s
+- Redis DB 5 + Pub/Sub canal `circuit:ai:sync`
 
-| Componente | Ubicacion | Pendiente |
-|------------|-----------|-----------|
-| SEOTipsPanel | `components/SEOTips/` | Agregar 4to tab en PropertiesPanel |
-| AIWriterPopover | `components/AIWriter/` | Agregar boton ✨ en campos texto |
-| UnsplashModal | `components/UnsplashPicker/` | Agregar boton en campos imagen |
-| BlockDragPreview | `components/DragPreview/` | Integrar en DragOverlay |
+**Archivos:**
+- `services/circuitBreaker.service.js` (nuevo)
+- `services/ai.service.js` (actualizado)
 
-### Correciones de Imports
+### 3. Reorganizacion Hooks
 
-```javascript
-// images.routes.js - Corregido
-const { auth } = require('../../../middleware');
-router.use(auth.authenticateToken);
+Estructura modular siguiendo patrones del proyecto.
 
-// images.controller.js - Corregido
-const asyncHandler = require('express-async-handler');
+**Estructura:**
 ```
+hooks/otros/website/
+├── constants.js   # Query keys centralizadas
+├── queries.js     # Hooks de lectura
+├── mutations.js   # Hooks de escritura + manejo 409
+├── manager.js     # useWebsiteEditor
+└── index.js       # Barrel exports
+```
+
+### 4. Persistencia Store
+
+Recupera estado del editor al recargar pagina.
+
+**Persiste:**
+- `bloques`, `paginaActivaId`, `zoom`, `breakpoint`
+
+**Archivo:**
+- `store/websiteEditorStore.js` (middleware persist)
 
 ---
 
-## Pendientes para Proxima Sesion
+## Pendientes
 
-### Alta Prioridad
+### Proximo Paso: Prueba Completa Frontend
 
-1. **Integrar SEO Tab en PropertiesPanel**
-   ```jsx
-   // PropertiesPanel.jsx - Agregar tab
-   <button>SEO</button>
-   // Renderizar SEOTipsPanel cuando tab activo
-   ```
+Verificar funcionamiento end-to-end del modulo:
 
-2. **Integrar AI Writer en campos de texto**
-   ```jsx
-   // En campos type: 'text' o 'textarea'
-   <AIWriterPopover campo={campo} onGenerar={handleUpdate} />
-   ```
+1. **Flujo de creacion de sitio**
+   - Crear config con AIWizard
+   - Verificar que campo `version` se retorna
 
-3. **Integrar Unsplash en campos de imagen**
-   ```jsx
-   // En campos type: 'image'
-   <UnsplashModal onSelect={(url) => handleUpdate(url)} />
-   ```
+2. **Edicion de bloques**
+   - Editar bloque y guardar
+   - Verificar incremento de version
+   - Simular conflicto (2 pestanas) - debe mostrar toast 409
 
-4. **Configurar API Key Unsplash**
-   - Usuario debe crear app en unsplash.com/developers
-   - Agregar `UNSPLASH_ACCESS_KEY` en `.env`
+3. **Persistencia**
+   - Editar bloques sin guardar
+   - Recargar pagina
+   - Verificar que estado se recupera de localStorage
 
-### Media Prioridad
+4. **Circuit Breaker**
+   - Verificar logs de estado en backend
+   - Confirmar fallback a templates cuando IA falla
 
-5. **Probar Preview Fantasma en Drag**
-   - Componente creado en `DragPreview/BlockDragPreview.jsx`
-   - Integrar en `DndEditorProvider.jsx` linea ~224
+5. **Hooks reorganizados**
+   - Verificar que imports existentes siguen funcionando
+   - Probar nuevos imports desde `index.js`
 
-6. **Verificar Animacion de Insercion**
-   - Store: `bloqueRecienAgregado` en `websiteEditorStore.js`
-   - CanvasBlock deberia detectar y animar
+### Integraciones Pendientes
 
-### Baja Prioridad
+| Componente | Estado | Accion |
+|------------|--------|--------|
+| SEOTipsPanel | Creado | Agregar 4to tab en PropertiesPanel |
+| AIWriterPopover | Creado | Agregar boton en campos texto |
+| UnsplashModal | Creado | Agregar boton en campos imagen |
+| BlockDragPreview | Creado | Integrar en DragOverlay |
 
-7. **Agregar mas reglas SEO**
-8. **Mejorar templates de industrias**
-
----
-
-## Endpoints Nuevos (29 Enero 2026)
-
-```
-# Imagenes (Unsplash)
-GET  /api/v1/website/images/search?q=...&page=1
-POST /api/v1/website/images/download
-GET  /api/v1/website/images/random
-
-# AI con Tonos
-POST /api/v1/website/ai/generar-texto
-     { campo, industria, tono, contexto, longitud }
-```
-
----
-
-## Archivos Modificados/Creados
-
-### Nuevos
-```
-frontend/src/pages/website/components/
-├── OnboardingTour/
-│   ├── EditorTour.jsx
-│   ├── useTourSteps.js
-│   ├── useTourState.js
-│   └── index.js
-├── DragPreview/
-│   ├── BlockDragPreview.jsx
-│   ├── PreviewRenderer.jsx
-│   └── index.js
-├── UnsplashPicker/
-│   ├── UnsplashModal.jsx
-│   ├── UnsplashGrid.jsx
-│   ├── useUnsplashSearch.js
-│   └── index.js
-├── AIWriter/
-│   ├── AIWriterPopover.jsx
-│   ├── ToneSelector.jsx
-│   ├── useAIWriter.js
-│   └── index.js
-└── SEOTips/
-    ├── SEOTipsPanel.jsx
-    ├── SEOScore.jsx
-    ├── SEORule.jsx
-    ├── useSEOAnalysis.js
-    ├── seoRules.js
-    └── index.js
-
-backend/app/modules/website/
-├── services/unsplash.service.js
-├── controllers/images.controller.js
-└── routes/images.routes.js
-```
-
-### Modificados
-```
-frontend/
-├── WebsiteEditorPage.jsx (tour, data-tour attrs)
-└── store/websiteEditorStore.js (bloqueRecienAgregado)
-
-backend/
-├── services/ai.service.js (generarConTono, 14 industrias)
-├── services/site-generator.service.js (14 industrias)
-├── controllers/ai.controller.js (generarTextoConTono)
-└── routes/website.routes.js (imagenes, generar-texto)
-```
-
----
-
-## Dependencias
+### Configuracion Requerida
 
 ```bash
-# Instalada
-npm install driver.js  # Tour interactivo
-
 # Variables de entorno
 UNSPLASH_ACCESS_KEY=<pendiente>  # Usuario debe configurar
+REDIS_HOST=redis                 # Para circuit breaker distribuido
+```
+
+---
+
+## Endpoints
+
+```
+# Config
+GET    /api/v1/website/config
+POST   /api/v1/website/config
+PUT    /api/v1/website/config/:id      # Requiere version
+
+# Paginas
+GET    /api/v1/website/paginas
+POST   /api/v1/website/paginas
+PUT    /api/v1/website/paginas/:id     # Requiere version
+
+# Bloques
+GET    /api/v1/website/paginas/:id/bloques
+POST   /api/v1/website/bloques
+PUT    /api/v1/website/bloques/:id     # Requiere version
+
+# IA
+POST   /api/v1/website/ai/generar-texto
+POST   /api/v1/website/ai/generar-sitio
+
+# Imagenes (Unsplash)
+GET    /api/v1/website/images/search
+POST   /api/v1/website/images/download
+GET    /api/v1/website/images/random
+
+# Publico
+GET    /api/v1/public/sitio/:slug
+GET    /api/v1/public/sitio/:slug/:pagina
 ```
 
 ---

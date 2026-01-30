@@ -8,7 +8,7 @@
 
 import { create } from 'zustand';
 import { temporal } from 'zundo';
-import { subscribeWithSelector } from 'zustand/middleware';
+import { subscribeWithSelector, persist, createJSONStorage } from 'zustand/middleware';
 
 // ========== STATE INTERFACE ==========
 /**
@@ -19,6 +19,7 @@ import { subscribeWithSelector } from 'zustand/middleware';
  * @property {Object} estilos - Estilos customizados
  * @property {number} orden - Orden en la página
  * @property {boolean} visible - Si está visible
+ * @property {number} version - Versión para bloqueo optimista
  */
 
 /**
@@ -65,14 +66,18 @@ const initialState = {
 
   // ID del bloque recien agregado (para animacion de insercion)
   bloqueRecienAgregado: null,
+
+  // Conflicto de versión (bloqueo optimista)
+  conflictoVersion: null, // { bloqueId, versionLocal, versionServidor }
 };
 
 // ========== STORE CREATION ==========
 const useWebsiteEditorStore = create(
   subscribeWithSelector(
-    temporal(
-      (set, get) => ({
-        ...initialState,
+    persist(
+      temporal(
+        (set, get) => ({
+          ...initialState,
 
         // ========== BLOQUES ACTIONS ==========
 
@@ -313,6 +318,28 @@ const useWebsiteEditorStore = create(
         setErrorGuardado: () =>
           set({ estadoGuardado: 'error' }),
 
+        /**
+         * Registra un conflicto de versión (bloqueo optimista)
+         */
+        setConflictoVersion: (conflicto) =>
+          set({ conflictoVersion: conflicto, estadoGuardado: 'error' }),
+
+        /**
+         * Limpia el conflicto de versión
+         */
+        clearConflictoVersion: () =>
+          set({ conflictoVersion: null }),
+
+        /**
+         * Actualiza la versión de un bloque después de guardar exitosamente
+         */
+        actualizarVersionBloque: (id, nuevaVersion) =>
+          set((state) => ({
+            bloques: state.bloques.map((b) =>
+              b.id === id ? { ...b, version: nuevaVersion } : b
+            ),
+          })),
+
         // ========== HISTORIAL ACTIONS ==========
 
         /**
@@ -366,7 +393,29 @@ const useWebsiteEditorStore = create(
           // Puede usarse para analytics
         },
       }
-    )
+    ),
+    {
+      // Configuración de persist middleware (localStorage)
+      name: 'website-editor-storage',
+      storage: createJSONStorage(() => localStorage),
+      // Solo persistir estado relevante para recuperación
+      partialize: (state) => ({
+        bloques: state.bloques,
+        paginaActivaId: state.paginaActivaId,
+        zoom: state.zoom,
+        breakpoint: state.breakpoint,
+      }),
+      // Versión del schema para migraciones futuras
+      version: 1,
+      // Migrar datos de versiones anteriores si es necesario
+      migrate: (persistedState, version) => {
+        if (version === 0) {
+          // Migración de v0 a v1
+          return { ...persistedState };
+        }
+        return persistedState;
+      },
+    }
   )
 );
 
@@ -403,6 +452,9 @@ export const selectPaginaActivaId = (state) => state.paginaActivaId;
 // Bloque recien agregado (para animacion)
 export const selectBloqueRecienAgregado = (state) => state.bloqueRecienAgregado;
 
+// Conflicto de versión (bloqueo optimista)
+export const selectConflictoVersion = (state) => state.conflictoVersion;
+
 // ========== ACCIONES ==========
 
 export const selectSetBloques = (state) => state.setBloques;
@@ -429,6 +481,10 @@ export const selectSetErrorGuardado = (state) => state.setErrorGuardado;
 
 export const selectSetBloqueRecienAgregado = (state) => state.setBloqueRecienAgregado;
 export const selectClearBloqueRecienAgregado = (state) => state.clearBloqueRecienAgregado;
+
+export const selectSetConflictoVersion = (state) => state.setConflictoVersion;
+export const selectClearConflictoVersion = (state) => state.clearConflictoVersion;
+export const selectActualizarVersionBloque = (state) => state.actualizarVersionBloque;
 
 export const selectReset = (state) => state.reset;
 

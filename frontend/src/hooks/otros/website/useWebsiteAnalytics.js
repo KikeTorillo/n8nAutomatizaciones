@@ -1,18 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
-import { websiteApi } from '@/services/api/modules/website.api';
+import { websiteApi } from '@/services/api/endpoints';
 import useAuthStore, { selectIsAuthenticated } from '@/store/authStore';
-
-/**
- * QUERY KEYS para analytics del website
- */
-export const ANALYTICS_KEYS = {
-  all: ['website', 'analytics'],
-  resumen: (params) => [...ANALYTICS_KEYS.all, 'resumen', params],
-  paginas: (params) => [...ANALYTICS_KEYS.all, 'paginas', params],
-  eventos: (params) => [...ANALYTICS_KEYS.all, 'eventos', params],
-  tiempoReal: (websiteId) => [...ANALYTICS_KEYS.all, 'tiempo-real', websiteId],
-};
+import { ANALYTICS_KEYS } from './constants';
 
 /**
  * Hook para obtener el resumen de analytics
@@ -25,7 +15,7 @@ export function useWebsiteAnalyticsResumen(params = {}) {
     queryKey: ANALYTICS_KEYS.resumen(params),
     queryFn: async () => {
       const response = await websiteApi.obtenerResumenAnalytics(params);
-      return response;
+      return response.data?.data ?? response.data ?? response;
     },
     enabled: isAuthenticated,
     staleTime: STALE_TIMES.DYNAMIC,
@@ -43,7 +33,7 @@ export function useWebsiteAnalyticsPaginas(params = {}) {
     queryKey: ANALYTICS_KEYS.paginas(params),
     queryFn: async () => {
       const response = await websiteApi.obtenerPaginasPopulares(params);
-      return response;
+      return response.data?.data ?? response.data ?? response;
     },
     enabled: isAuthenticated,
     staleTime: STALE_TIMES.DYNAMIC,
@@ -61,7 +51,7 @@ export function useWebsiteAnalyticsEventos(params = {}) {
     queryKey: ANALYTICS_KEYS.eventos(params),
     queryFn: async () => {
       const response = await websiteApi.listarEventos(params);
-      return response;
+      return response.data?.data ?? response.data ?? response;
     },
     enabled: isAuthenticated,
     staleTime: STALE_TIMES.FREQUENT,
@@ -81,7 +71,7 @@ export function useWebsiteAnalyticsTiempoReal(websiteId = null, options = {}) {
     queryKey: ANALYTICS_KEYS.tiempoReal(websiteId),
     queryFn: async () => {
       const response = await websiteApi.obtenerTiempoReal(websiteId);
-      return response;
+      return response.data?.data ?? response.data ?? response;
     },
     enabled: isAuthenticated && enabled,
     staleTime: STALE_TIMES.REAL_TIME,

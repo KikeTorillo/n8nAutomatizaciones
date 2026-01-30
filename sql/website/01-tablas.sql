@@ -82,11 +82,15 @@ CREATE TABLE IF NOT EXISTS website_config (
 
     -- Timestamps
     creado_en TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    actualizado_en TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    actualizado_en TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+
+    -- Bloqueo optimista
+    version INTEGER NOT NULL DEFAULT 1
 );
 
 -- Comentarios
 COMMENT ON TABLE website_config IS 'Configuración del sitio web público de cada organización';
+COMMENT ON COLUMN website_config.version IS 'Bloqueo optimista - incrementa en cada UPDATE';
 COMMENT ON COLUMN website_config.slug IS 'URL amigable: nexo.com/sitio/{slug}';
 COMMENT ON COLUMN website_config.publicado IS 'Si es false, el sitio no es accesible públicamente';
 
@@ -124,12 +128,16 @@ CREATE TABLE IF NOT EXISTS website_paginas (
     creado_en TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     actualizado_en TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
 
+    -- Bloqueo optimista
+    version INTEGER NOT NULL DEFAULT 1,
+
     -- Restricción: slug único por sitio
     UNIQUE(website_id, slug)
 );
 
 -- Comentarios
 COMMENT ON TABLE website_paginas IS 'Páginas individuales del sitio web';
+COMMENT ON COLUMN website_paginas.version IS 'Bloqueo optimista - incrementa en cada UPDATE';
 COMMENT ON COLUMN website_paginas.slug IS 'Ruta de la página. Vacío = página de inicio';
 COMMENT ON COLUMN website_paginas.orden IS 'Orden en el menú de navegación';
 
@@ -178,11 +186,15 @@ CREATE TABLE IF NOT EXISTS website_bloques (
 
     -- Timestamps
     creado_en TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    actualizado_en TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    actualizado_en TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+
+    -- Bloqueo optimista
+    version INTEGER NOT NULL DEFAULT 1
 );
 
 -- Comentarios
 COMMENT ON TABLE website_bloques IS 'Bloques de contenido arrastrables dentro de cada página';
+COMMENT ON COLUMN website_bloques.version IS 'Bloqueo optimista - incrementa en cada UPDATE';
 COMMENT ON COLUMN website_bloques.tipo IS 'Tipo de bloque: hero, servicios, testimonios, equipo, cta, contacto, footer, etc.';
 COMMENT ON COLUMN website_bloques.contenido IS 'Contenido del bloque en formato JSON. Estructura varía según el tipo.';
 COMMENT ON COLUMN website_bloques.estilos IS 'Estilos CSS personalizados que sobreescriben el tema';

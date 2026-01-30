@@ -5,106 +5,27 @@
  * Servicio para generación de contenido con IA para el editor de website.
  * Preparado para integración con OpenRouter u otros proveedores LLM.
  *
- * Incluye Circuit Breaker para protección contra fallas:
+ * Incluye Circuit Breaker DISTRIBUIDO para protección contra fallas:
  * - Timeout: 10 segundos por request
  * - Umbral de fallas: 5 consecutivas abre el circuito
  * - Reset: 30 segundos después intenta de nuevo
+ * - Sincronización via Redis entre múltiples instancias
  *
  * Fecha creación: 25 Enero 2026
+ * Actualizado: 29 Enero 2026 - Circuit Breaker distribuido con Redis
  */
 
 const fetch = require('node-fetch');
 const AbortController = require('abort-controller');
+
+// Circuit Breaker distribuido
+const aiCircuitBreaker = require('./circuitBreaker.service');
 
 // Configuración de OpenRouter (requiere API key)
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
 const OPENROUTER_BASE_URL = 'https://openrouter.ai/api/v1';
 // Mismo modelo que el agente de citas de n8n (Qwen3 Flagship 235B)
 const DEFAULT_MODEL = 'qwen/qwen3-235b-a22b';
-
-// ====================================================================
-// CIRCUIT BREAKER CONFIGURATION
-// ====================================================================
-const CIRCUIT_BREAKER = {
-    /** Timeout en milisegundos para requests a OpenRouter */
-    TIMEOUT_MS: 10000,
-    /** Número de fallas consecutivas para abrir el circuito */
-    FAILURE_THRESHOLD: 5,
-    /** Tiempo en ms antes de intentar cerrar el circuito */
-    RESET_TIMEOUT_MS: 30000,
-    /** Estado actual del circuito */
-    state: 'CLOSED', // CLOSED, OPEN, HALF_OPEN
-    /** Contador de fallas consecutivas */
-    failureCount: 0,
-    /** Timestamp de cuando se abrió el circuito */
-    openedAt: null,
-    /** Último error registrado */
-    lastError: null
-};
-
-/**
- * Verifica si el circuito está abierto
- * @returns {boolean}
- */
-function isCircuitOpen() {
-    if (CIRCUIT_BREAKER.state === 'OPEN') {
-        // Verificar si es tiempo de intentar cerrar
-        const now = Date.now();
-        if (now - CIRCUIT_BREAKER.openedAt >= CIRCUIT_BREAKER.RESET_TIMEOUT_MS) {
-            CIRCUIT_BREAKER.state = 'HALF_OPEN';
-            console.log('[WebsiteAIService] Circuit breaker: HALF_OPEN - intentando reconectar');
-            return false;
-        }
-        return true;
-    }
-    return false;
-}
-
-/**
- * Registra una falla en el circuit breaker
- * @param {Error} error
- */
-function recordFailure(error) {
-    CIRCUIT_BREAKER.failureCount++;
-    CIRCUIT_BREAKER.lastError = error.message;
-
-    if (CIRCUIT_BREAKER.failureCount >= CIRCUIT_BREAKER.FAILURE_THRESHOLD) {
-        CIRCUIT_BREAKER.state = 'OPEN';
-        CIRCUIT_BREAKER.openedAt = Date.now();
-        console.warn('[WebsiteAIService] Circuit breaker: OPEN - demasiadas fallas consecutivas', {
-            failureCount: CIRCUIT_BREAKER.failureCount,
-            lastError: CIRCUIT_BREAKER.lastError
-        });
-    }
-}
-
-/**
- * Registra un éxito y resetea el circuit breaker
- */
-function recordSuccess() {
-    CIRCUIT_BREAKER.failureCount = 0;
-    CIRCUIT_BREAKER.lastError = null;
-    if (CIRCUIT_BREAKER.state !== 'CLOSED') {
-        console.log('[WebsiteAIService] Circuit breaker: CLOSED - conexión restaurada');
-    }
-    CIRCUIT_BREAKER.state = 'CLOSED';
-}
-
-/**
- * Obtiene el estado actual del circuit breaker
- * @returns {Object}
- */
-function getCircuitBreakerStatus() {
-    return {
-        state: CIRCUIT_BREAKER.state,
-        failureCount: CIRCUIT_BREAKER.failureCount,
-        lastError: CIRCUIT_BREAKER.lastError,
-        openedAt: CIRCUIT_BREAKER.openedAt,
-        timeUntilRetry: CIRCUIT_BREAKER.state === 'OPEN'
-            ? Math.max(0, CIRCUIT_BREAKER.RESET_TIMEOUT_MS - (Date.now() - CIRCUIT_BREAKER.openedAt))
-            : 0
-    };
-}
 
 // Prompts optimizados por tipo de bloque
 const PROMPTS_POR_TIPO = {
@@ -549,14 +470,15 @@ class WebsiteAIService {
   }
 
   /**
-   * Generar usando OpenRouter con Circuit Breaker
+   * Generar usando OpenRouter con Circuit Breaker Distribuido
    * @throws {Error} Si el circuito está abierto o la request falla
    */
   static async generarConOpenRouter({ tipo, campo, industria, contexto }) {
-    // Verificar estado del circuit breaker
-    if (isCircuitOpen()) {
+    // Verificar estado del circuit breaker (distribuido)
+    if (await aiCircuitBreaker.isOpen()) {
+      const status = aiCircuitBreaker.getStatus();
       throw new Error(`Circuit breaker OPEN: servicio de IA temporalmente no disponible. ` +
-        `Reintentando en ${Math.ceil(getCircuitBreakerStatus().timeUntilRetry / 1000)}s`);
+        `Reintentando en ${Math.ceil(status.timeUntilRetry / 1000)}s`);
     }
 
     const promptTemplate = PROMPTS_POR_TIPO[tipo]?.[campo];
@@ -575,7 +497,8 @@ class WebsiteAIService {
 
     // Configurar timeout con AbortController
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), CIRCUIT_BREAKER.TIMEOUT_MS);
+    const timeoutMs = aiCircuitBreaker.getTimeoutMs();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
     try {
       const response = await fetch(`${OPENROUTER_BASE_URL}/chat/completions`, {
@@ -614,8 +537,8 @@ class WebsiteAIService {
       const data = await response.json();
       const result = data.choices[0]?.message?.content?.trim() || '';
 
-      // Éxito: resetear circuit breaker
-      recordSuccess();
+      // Éxito: resetear circuit breaker (distribuido)
+      await aiCircuitBreaker.recordSuccess();
 
       return result;
 
@@ -624,13 +547,13 @@ class WebsiteAIService {
 
       // Manejar timeout específicamente
       if (error.name === 'AbortError') {
-        const timeoutError = new Error(`Request timeout: OpenRouter no respondió en ${CIRCUIT_BREAKER.TIMEOUT_MS / 1000}s`);
-        recordFailure(timeoutError);
+        const timeoutError = new Error(`Request timeout: OpenRouter no respondió en ${timeoutMs / 1000}s`);
+        await aiCircuitBreaker.recordFailure(timeoutError);
         throw timeoutError;
       }
 
-      // Registrar falla en circuit breaker
-      recordFailure(error);
+      // Registrar falla en circuit breaker (distribuido)
+      await aiCircuitBreaker.recordFailure(error);
       throw error;
     }
   }
@@ -640,7 +563,7 @@ class WebsiteAIService {
    * @returns {Object}
    */
   static getCircuitBreakerStatus() {
-    return getCircuitBreakerStatus();
+    return aiCircuitBreaker.getStatus();
   }
 
   /**
@@ -917,8 +840,8 @@ class WebsiteAIService {
       return this.generarTextoFallbackConTono(campo, industria, tono, contexto);
     }
 
-    // Verificar circuit breaker
-    if (isCircuitOpen()) {
+    // Verificar circuit breaker (distribuido)
+    if (await aiCircuitBreaker.isOpen()) {
       return this.generarTextoFallbackConTono(campo, industria, tono, contexto);
     }
 
@@ -932,7 +855,8 @@ IMPORTANTE: Responde SOLO con el texto generado, sin comillas, sin explicaciones
 
     // Configurar timeout
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), CIRCUIT_BREAKER.TIMEOUT_MS);
+    const timeoutMs = aiCircuitBreaker.getTimeoutMs();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
     try {
       const response = await fetch(`${OPENROUTER_BASE_URL}/chat/completions`, {
@@ -971,7 +895,7 @@ IMPORTANTE: Responde SOLO con el texto generado, sin comillas, sin explicaciones
       const data = await response.json();
       const texto = data.choices[0]?.message?.content?.trim() || '';
 
-      recordSuccess();
+      await aiCircuitBreaker.recordSuccess();
 
       // Limpiar posibles artefactos
       return texto
@@ -984,9 +908,9 @@ IMPORTANTE: Responde SOLO con el texto generado, sin comillas, sin explicaciones
 
       if (error.name === 'AbortError') {
         const timeoutError = new Error(`Timeout generando texto`);
-        recordFailure(timeoutError);
+        await aiCircuitBreaker.recordFailure(timeoutError);
       } else {
-        recordFailure(error);
+        await aiCircuitBreaker.recordFailure(error);
       }
 
       // Fallback
