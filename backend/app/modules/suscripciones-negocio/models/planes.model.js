@@ -66,7 +66,7 @@ class PlanesModel {
             const query = `
                 SELECT
                     id, codigo, nombre, descripcion,
-                    precio_mensual, precio_trimestral, precio_anual, moneda,
+                    precio_mensual, precio_trimestral, precio_semestral, precio_anual, moneda,
                     dias_trial, limites, features,
                     precio_usuario_adicional, usuarios_incluidos, max_usuarios_hard,
                     color, icono, destacado, activo, orden_display,
@@ -104,7 +104,7 @@ class PlanesModel {
             const query = `
                 SELECT
                     id, codigo, nombre, descripcion,
-                    precio_mensual, precio_trimestral, precio_anual, moneda,
+                    precio_mensual, precio_trimestral, precio_semestral, precio_anual, moneda,
                     dias_trial, limites, features,
                     precio_usuario_adicional, usuarios_incluidos, max_usuarios_hard,
                     color, icono, destacado, orden_display
@@ -130,7 +130,7 @@ class PlanesModel {
             const query = `
                 SELECT
                     id, codigo, nombre, descripcion,
-                    precio_mensual, precio_trimestral, precio_anual, moneda,
+                    precio_mensual, precio_trimestral, precio_semestral, precio_anual, moneda,
                     dias_trial, limites, features,
                     precio_usuario_adicional, usuarios_incluidos, max_usuarios_hard,
                     color, icono, destacado, activo, orden_display,
@@ -156,7 +156,7 @@ class PlanesModel {
             const query = `
                 SELECT
                     id, codigo, nombre, descripcion,
-                    precio_mensual, precio_trimestral, precio_anual, moneda,
+                    precio_mensual, precio_trimestral, precio_semestral, precio_anual, moneda,
                     dias_trial, limites, features,
                     precio_usuario_adicional, usuarios_incluidos, max_usuarios_hard,
                     color, icono, destacado, activo
@@ -185,6 +185,7 @@ class PlanesModel {
                 descripcion,
                 precio_mensual = 0,
                 precio_trimestral,
+                precio_semestral,
                 precio_anual,
                 moneda = 'MXN',
                 dias_trial = 0,
@@ -200,11 +201,11 @@ class PlanesModel {
             const query = `
                 INSERT INTO planes_suscripcion_org (
                     organizacion_id, codigo, nombre, descripcion,
-                    precio_mensual, precio_trimestral, precio_anual, moneda,
+                    precio_mensual, precio_trimestral, precio_semestral, precio_anual, moneda,
                     dias_trial, limites, features,
                     color, icono, destacado, activo, orden_display,
                     creado_por
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
                 RETURNING *
             `;
 
@@ -215,6 +216,7 @@ class PlanesModel {
                 descripcion,
                 precio_mensual,
                 precio_trimestral,
+                precio_semestral,
                 precio_anual,
                 moneda,
                 dias_trial,
@@ -255,6 +257,7 @@ class PlanesModel {
                 descripcion,
                 precio_mensual,
                 precio_trimestral,
+                precio_semestral,
                 precio_anual,
                 moneda,
                 dias_trial,
@@ -286,6 +289,10 @@ class PlanesModel {
             if (precio_trimestral !== undefined) {
                 updates.push(`precio_trimestral = $${paramCount++}`);
                 values.push(precio_trimestral);
+            }
+            if (precio_semestral !== undefined) {
+                updates.push(`precio_semestral = $${paramCount++}`);
+                values.push(precio_semestral);
             }
             if (precio_anual !== undefined) {
                 updates.push(`precio_anual = $${paramCount++}`);

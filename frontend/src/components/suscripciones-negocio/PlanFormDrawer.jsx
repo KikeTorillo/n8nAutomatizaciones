@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
-import { useForm, useFieldArray } from 'react-hook-form';
+import { useEffect, useMemo } from 'react';
+import { useForm, useFieldArray, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Plus, Trash2 } from 'lucide-react';
@@ -9,11 +9,11 @@ import {
   Drawer,
   FormGroup,
   Input,
-  Select,
   Textarea,
 } from '@/components/ui';
-import { useCrearPlan, useActualizarPlan, CICLOS_FACTURACION } from '@/hooks/suscripciones-negocio';
+import { useCrearPlan, useActualizarPlan } from '@/hooks/suscripciones-negocio';
 import { useToast } from '@/hooks/utils';
+import { formatCurrency } from '@/lib/utils';
 
 /**
  * Schema de validación Zod
@@ -21,13 +21,11 @@ import { useToast } from '@/hooks/utils';
 const planSchema = z.object({
   nombre: z.string().min(1, 'El nombre es requerido').max(100, 'Máximo 100 caracteres'),
   descripcion: z.string().max(500, 'Máximo 500 caracteres').optional(),
-  precio: z.coerce.number().min(0, 'El precio no puede ser negativo'),
-  ciclo_facturacion: z.enum(['mensual', 'trimestral', 'semestral', 'anual']),
+  precio_mensual: z.coerce.number().min(0, 'El precio no puede ser negativo'),
+  precio_trimestral: z.coerce.number().min(0, 'El precio no puede ser negativo').nullable().optional(),
+  precio_semestral: z.coerce.number().min(0, 'El precio no puede ser negativo').nullable().optional(),
+  precio_anual: z.coerce.number().min(0, 'El precio no puede ser negativo').nullable().optional(),
   dias_prueba: z.coerce.number().min(0, 'No puede ser negativo').max(90, 'Máximo 90 días').default(0),
-  // Campos seat-based billing
-  usuarios_incluidos: z.coerce.number().min(1, 'Mínimo 1 usuario').default(5),
-  precio_usuario_adicional: z.coerce.number().min(0, 'No puede ser negativo').nullable().optional(),
-  max_usuarios_hard: z.coerce.number().min(1, 'Mínimo 1 usuario').nullable().optional(),
   caracteristicas: z.array(z.object({
     texto: z.string().min(1, 'La característica no puede estar vacía'),
   })).optional(),
@@ -58,16 +56,48 @@ function PlanFormDrawer({ isOpen, onClose, plan = null, mode = 'create' }) {
     defaultValues: {
       nombre: '',
       descripcion: '',
-      precio: 0,
-      ciclo_facturacion: CICLOS_FACTURACION.MENSUAL,
+      precio_mensual: 0,
+      precio_trimestral: null,
+      precio_semestral: null,
+      precio_anual: null,
       dias_prueba: 14,
-      usuarios_incluidos: 5,
-      precio_usuario_adicional: null,
-      max_usuarios_hard: null,
       caracteristicas: [],
       activo: true,
     },
   });
+
+  // Observar precio mensual para cálculo de descuentos
+  const precioMensual = useWatch({ control, name: 'precio_mensual' });
+  const precioTrimestral = useWatch({ control, name: 'precio_trimestral' });
+  const precioSemestral = useWatch({ control, name: 'precio_semestral' });
+  const precioAnual = useWatch({ control, name: 'precio_anual' });
+
+  // Calcular info de descuento
+  const calcularInfoDescuento = useMemo(() => {
+    const mensual = parseFloat(precioMensual) || 0;
+    if (mensual <= 0) return { trimestral: null, semestral: null, anual: null };
+
+    const calcular = (precio, meses) => {
+      const precioValor = parseFloat(precio);
+      if (!precioValor || precioValor <= 0) return null;
+      const sinDescuento = mensual * meses;
+      const ahorro = sinDescuento - precioValor;
+      const porcentaje = (ahorro / sinDescuento) * 100;
+      const precioMensualEquiv = precioValor / meses;
+      return {
+        sinDescuento,
+        ahorro: ahorro > 0 ? ahorro : 0,
+        porcentaje: porcentaje > 0 ? porcentaje.toFixed(0) : 0,
+        precioMensualEquiv,
+      };
+    };
+
+    return {
+      trimestral: calcular(precioTrimestral, 3),
+      semestral: calcular(precioSemestral, 6),
+      anual: calcular(precioAnual, 12),
+    };
+  }, [precioMensual, precioTrimestral, precioSemestral, precioAnual]);
 
   // Field array para características
   const { fields, append, remove } = useFieldArray({
@@ -87,12 +117,11 @@ function PlanFormDrawer({ isOpen, onClose, plan = null, mode = 'create' }) {
       reset({
         nombre: plan.nombre || '',
         descripcion: plan.descripcion || '',
-        precio: plan.precio_mensual || plan.precio || 0,
-        ciclo_facturacion: plan.ciclo_facturacion || CICLOS_FACTURACION.MENSUAL,
+        precio_mensual: plan.precio_mensual || plan.precio || 0,
+        precio_trimestral: plan.precio_trimestral || null,
+        precio_semestral: plan.precio_semestral || null,
+        precio_anual: plan.precio_anual || null,
         dias_prueba: plan.dias_trial ?? plan.dias_prueba ?? 0,
-        usuarios_incluidos: plan.usuarios_incluidos ?? 5,
-        precio_usuario_adicional: plan.precio_usuario_adicional ?? null,
-        max_usuarios_hard: plan.max_usuarios_hard ?? null,
         caracteristicas: caracteristicasArray,
         activo: plan.activo ?? true,
       });
@@ -100,12 +129,11 @@ function PlanFormDrawer({ isOpen, onClose, plan = null, mode = 'create' }) {
       reset({
         nombre: '',
         descripcion: '',
-        precio: 0,
-        ciclo_facturacion: CICLOS_FACTURACION.MENSUAL,
+        precio_mensual: 0,
+        precio_trimestral: null,
+        precio_semestral: null,
+        precio_anual: null,
         dias_prueba: 14,
-        usuarios_incluidos: 5,
-        precio_usuario_adicional: null,
-        max_usuarios_hard: null,
         caracteristicas: [],
         activo: true,
       });
@@ -124,19 +152,22 @@ function PlanFormDrawer({ isOpen, onClose, plan = null, mode = 'create' }) {
         .replace(/^-|-$/g, '');
     };
 
-    // Mapear campos del frontend a los nombres del backend
-    // Sanitizar campos numéricos opcionales: vacío o 0 → null para usuarios adicionales
-    const sanitizeNullable = (val) => (val === '' || val === 0 || val === null) ? null : Number(val);
+    // Sanitizar precios opcionales (convertir 0, "" a null para que el backend lo actualice)
+    const sanitizarPrecioOpcional = (valor) => {
+      const num = parseFloat(valor);
+      return !isNaN(num) && num > 0 ? num : null;
+    };
 
+    // Mapear campos del frontend a los nombres del backend
     const payload = {
       codigo: esEdicion ? undefined : generarCodigo(data.nombre),
       nombre: data.nombre,
       descripcion: data.descripcion || undefined,
-      precio_mensual: data.precio,
+      precio_mensual: data.precio_mensual,
+      precio_trimestral: sanitizarPrecioOpcional(data.precio_trimestral),
+      precio_semestral: sanitizarPrecioOpcional(data.precio_semestral),
+      precio_anual: sanitizarPrecioOpcional(data.precio_anual),
       dias_trial: data.dias_prueba,
-      usuarios_incluidos: Number(data.usuarios_incluidos) || 5,
-      precio_usuario_adicional: sanitizeNullable(data.precio_usuario_adicional),
-      max_usuarios_hard: sanitizeNullable(data.max_usuarios_hard),
       features: data.caracteristicas?.map(c => c.texto) || [],
       activo: data.activo,
     };
@@ -196,26 +227,116 @@ function PlanFormDrawer({ isOpen, onClose, plan = null, mode = 'create' }) {
           />
         </FormGroup>
 
-        {/* Precio y Ciclo */}
-        <div className="grid grid-cols-2 gap-4">
-          <FormGroup label="Precio" error={errors.precio?.message} required>
-            <Input
-              type="number"
-              step="0.01"
-              min="0"
-              {...register('precio')}
-              hasError={!!errors.precio}
-              placeholder="249.00"
-            />
+        {/* Precios por Periodo */}
+        <div className="space-y-4">
+          <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            Precios por Periodo
+          </h4>
+
+          {/* Precio Mensual (requerido) */}
+          <FormGroup label="Precio Mensual" error={errors.precio_mensual?.message} required>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+              <Input
+                type="number"
+                step="0.01"
+                min="0"
+                {...register('precio_mensual')}
+                hasError={!!errors.precio_mensual}
+                placeholder="249.00"
+                className="pl-7"
+              />
+            </div>
           </FormGroup>
 
-          <FormGroup label="Ciclo de Facturación" error={errors.ciclo_facturacion?.message} required>
-            <Select {...register('ciclo_facturacion')} hasError={!!errors.ciclo_facturacion}>
-              <option value="mensual">Mensual</option>
-              <option value="trimestral">Trimestral</option>
-              <option value="semestral">Semestral</option>
-              <option value="anual">Anual</option>
-            </Select>
+          {/* Precio Trimestral (opcional) */}
+          <FormGroup
+            label="Precio Trimestral"
+            error={errors.precio_trimestral?.message}
+            helper={precioMensual > 0 ? `Sin descuento: ${formatCurrency(precioMensual * 3)}` : undefined}
+          >
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+              <Input
+                type="number"
+                step="0.01"
+                min="0"
+                {...register('precio_trimestral')}
+                hasError={!!errors.precio_trimestral}
+                placeholder="Dejar vacío para no ofrecer"
+                className="pl-7"
+              />
+            </div>
+            {calcularInfoDescuento.trimestral && (
+              <p className="mt-1 text-xs text-green-600 dark:text-green-400">
+                Equivale a {formatCurrency(calcularInfoDescuento.trimestral.precioMensualEquiv)}/mes
+                {calcularInfoDescuento.trimestral.porcentaje > 0 && (
+                  <span className="ml-1 font-medium">
+                    (Ahorro: {calcularInfoDescuento.trimestral.porcentaje}%)
+                  </span>
+                )}
+              </p>
+            )}
+          </FormGroup>
+
+          {/* Precio Semestral (opcional) */}
+          <FormGroup
+            label="Precio Semestral"
+            error={errors.precio_semestral?.message}
+            helper={precioMensual > 0 ? `Sin descuento: ${formatCurrency(precioMensual * 6)}` : undefined}
+          >
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+              <Input
+                type="number"
+                step="0.01"
+                min="0"
+                {...register('precio_semestral')}
+                hasError={!!errors.precio_semestral}
+                placeholder="Dejar vacío para no ofrecer"
+                className="pl-7"
+              />
+            </div>
+            {calcularInfoDescuento.semestral && (
+              <p className="mt-1 text-xs text-green-600 dark:text-green-400">
+                Equivale a {formatCurrency(calcularInfoDescuento.semestral.precioMensualEquiv)}/mes
+                {calcularInfoDescuento.semestral.porcentaje > 0 && (
+                  <span className="ml-1 font-medium">
+                    (Ahorro: {calcularInfoDescuento.semestral.porcentaje}%)
+                  </span>
+                )}
+              </p>
+            )}
+          </FormGroup>
+
+          {/* Precio Anual (opcional) */}
+          <FormGroup
+            label="Precio Anual"
+            error={errors.precio_anual?.message}
+            helper={precioMensual > 0 ? `Sin descuento: ${formatCurrency(precioMensual * 12)}` : undefined}
+          >
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+              <Input
+                type="number"
+                step="0.01"
+                min="0"
+                {...register('precio_anual')}
+                hasError={!!errors.precio_anual}
+                placeholder="Dejar vacío para no ofrecer"
+                className="pl-7"
+              />
+            </div>
+            {calcularInfoDescuento.anual && (
+              <p className="mt-1 text-xs text-green-600 dark:text-green-400">
+                Equivale a {formatCurrency(calcularInfoDescuento.anual.precioMensualEquiv)}/mes
+                {calcularInfoDescuento.anual.porcentaje > 0 && (
+                  <span className="ml-1 font-medium">
+                    (Ahorro: {calcularInfoDescuento.anual.porcentaje}%)
+                  </span>
+                )}
+              </p>
+            )}
           </FormGroup>
         </div>
 
@@ -234,60 +355,6 @@ function PlanFormDrawer({ isOpen, onClose, plan = null, mode = 'create' }) {
             placeholder="14"
           />
         </FormGroup>
-
-        {/* Sección Seat-Based Billing */}
-        <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-          <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-4">
-            Facturación por Usuario
-          </h4>
-
-          {/* Usuarios incluidos */}
-          <FormGroup
-            label="Usuarios Incluidos"
-            error={errors.usuarios_incluidos?.message}
-            helper="Número de usuarios incluidos en el precio base del plan"
-          >
-            <Input
-              type="number"
-              min="1"
-              {...register('usuarios_incluidos')}
-              hasError={!!errors.usuarios_incluidos}
-              placeholder="5"
-            />
-          </FormGroup>
-
-          {/* Precio usuario adicional y límite máximo */}
-          <div className="grid grid-cols-2 gap-4 mt-4">
-            <FormGroup
-              label="Precio Usuario Adicional"
-              error={errors.precio_usuario_adicional?.message}
-              helper="Dejar vacío si no permite usuarios extra"
-            >
-              <Input
-                type="number"
-                step="0.01"
-                min="0"
-                {...register('precio_usuario_adicional')}
-                hasError={!!errors.precio_usuario_adicional}
-                placeholder="49.00"
-              />
-            </FormGroup>
-
-            <FormGroup
-              label="Límite Máximo Usuarios"
-              error={errors.max_usuarios_hard?.message}
-              helper="Dejar vacío para ilimitado"
-            >
-              <Input
-                type="number"
-                min="1"
-                {...register('max_usuarios_hard')}
-                hasError={!!errors.max_usuarios_hard}
-                placeholder="∞"
-              />
-            </FormGroup>
-          </div>
-        </div>
 
         {/* Características */}
         <FormGroup label="Características del Plan">

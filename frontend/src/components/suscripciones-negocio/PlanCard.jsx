@@ -2,7 +2,30 @@ import { memo } from 'react';
 import { Check, Star } from 'lucide-react';
 import { Badge, Button } from '@/components/ui';
 import { formatCurrency, cn } from '@/lib/utils';
-import { CICLO_LABELS } from '@/hooks/suscripciones-negocio';
+import { CICLO_LABELS, CICLO_MESES } from '@/hooks/suscripciones-negocio';
+
+/**
+ * Calcula el precio total de un plan según el periodo seleccionado
+ */
+function calcularPrecioPorPeriodo(plan, periodo) {
+  if (!plan) return 0;
+
+  const campoDirecto = {
+    mensual: 'precio_mensual',
+    trimestral: 'precio_trimestral',
+    semestral: 'precio_semestral',
+    anual: 'precio_anual',
+  }[periodo];
+
+  const precioDirecto = parseFloat(plan[campoDirecto]);
+  if (!isNaN(precioDirecto) && precioDirecto > 0) {
+    return precioDirecto;
+  }
+
+  // Fallback: multiplicar precio mensual por meses
+  const meses = CICLO_MESES[periodo] || 1;
+  return (parseFloat(plan.precio_mensual) || 0) * meses;
+}
 
 /**
  * Card para mostrar información de un plan de suscripción
@@ -11,12 +34,14 @@ import { CICLO_LABELS } from '@/hooks/suscripciones-negocio';
  * @param {boolean} isSelected - Plan actualmente seleccionado
  * @param {Function} onSelect - Callback al seleccionar
  * @param {Function} onEdit - Callback al editar
+ * @param {string} periodoSeleccionado - Periodo de facturación seleccionado
  */
-function PlanCard({ plan, isPopular, isSelected, onSelect, onEdit }) {
+function PlanCard({ plan, isPopular, isSelected, onSelect, onEdit, periodoSeleccionado = 'mensual' }) {
   if (!plan) return null;
 
-  // Mapear campos del backend al frontend
-  const precio = plan.precio_mensual || plan.precio || 0;
+  const meses = CICLO_MESES[periodoSeleccionado] || 1;
+  const precioTotal = calcularPrecioPorPeriodo(plan, periodoSeleccionado);
+  const precioMensualEquiv = precioTotal / meses;
   const diasTrial = plan.dias_trial ?? plan.dias_prueba ?? 0;
   const caracteristicas = plan.features || plan.caracteristicas || [];
 
@@ -56,10 +81,15 @@ function PlanCard({ plan, isPopular, isSelected, onSelect, onEdit }) {
       <div className="text-center mb-6">
         <div className="flex items-baseline justify-center gap-1">
           <span className="text-4xl font-bold text-gray-900 dark:text-gray-100">
-            {formatCurrency(precio)}
+            {formatCurrency(precioMensualEquiv)}
           </span>
           <span className="text-gray-500 dark:text-gray-400">/mes</span>
         </div>
+        {meses > 1 && (
+          <p className="mt-1 text-sm text-primary-600 dark:text-primary-400">
+            Total: {formatCurrency(precioTotal)}/{CICLO_LABELS[periodoSeleccionado]?.toLowerCase()}
+          </p>
+        )}
         {diasTrial > 0 && (
           <p className="mt-2 text-sm text-primary-600 dark:text-primary-400">
             {diasTrial} días de prueba gratis

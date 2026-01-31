@@ -149,7 +149,9 @@ class CheckoutController {
                 precioBase = parseFloat(plan.precio_trimestral) || parseFloat(plan.precio_mensual) * 3;
                 break;
             case 'semestral':
-                precioBase = parseFloat(plan.precio_mensual) * 6;
+                precioBase = plan.precio_semestral
+                    ? parseFloat(plan.precio_semestral)
+                    : parseFloat(plan.precio_mensual) * 6;
                 break;
             case 'anual':
                 precioBase = parseFloat(plan.precio_anual) || parseFloat(plan.precio_mensual) * 12;

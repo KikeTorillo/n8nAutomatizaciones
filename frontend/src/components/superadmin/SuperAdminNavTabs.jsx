@@ -1,4 +1,4 @@
-import { LayoutDashboard, Store, Palette } from 'lucide-react';
+import { LayoutDashboard, Store, Palette, Settings } from 'lucide-react';
 import { GenericNavTabs } from '@/components/ui';
 
 /**
@@ -11,6 +11,7 @@ const NAV_ITEMS = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: '/superadmin' },
     { id: 'marketplace', label: 'Marketplace', icon: Store, path: '/superadmin/marketplace' },
     { id: 'plantillas', label: 'Plantillas', icon: Palette, path: '/superadmin/plantillas-eventos' },
+    { id: 'entitlements', label: 'Entitlements', icon: Settings, path: '/superadmin/entitlements-plataforma' },
 ];
 
 /**

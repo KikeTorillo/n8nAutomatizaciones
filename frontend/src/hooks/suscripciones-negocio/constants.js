@@ -89,6 +89,7 @@ export const ESTADO_COLORS = {
 export const CICLOS_FACTURACION = {
   MENSUAL: 'mensual',
   TRIMESTRAL: 'trimestral',
+  SEMESTRAL: 'semestral',
   ANUAL: 'anual',
 };
 
@@ -96,6 +97,7 @@ export const CICLOS_FACTURACION = {
 export const CICLO_LABELS = {
   [CICLOS_FACTURACION.MENSUAL]: 'Mensual',
   [CICLOS_FACTURACION.TRIMESTRAL]: 'Trimestral',
+  [CICLOS_FACTURACION.SEMESTRAL]: 'Semestral',
   [CICLOS_FACTURACION.ANUAL]: 'Anual',
 };
 
@@ -103,7 +105,16 @@ export const CICLO_LABELS = {
 export const CICLO_PRECIO_FIELD = {
   [CICLOS_FACTURACION.MENSUAL]: 'precio_mensual',
   [CICLOS_FACTURACION.TRIMESTRAL]: 'precio_trimestral',
+  [CICLOS_FACTURACION.SEMESTRAL]: 'precio_semestral',
   [CICLOS_FACTURACION.ANUAL]: 'precio_anual',
+};
+
+// Mapeo de ciclo a cantidad de meses
+export const CICLO_MESES = {
+  [CICLOS_FACTURACION.MENSUAL]: 1,
+  [CICLOS_FACTURACION.TRIMESTRAL]: 3,
+  [CICLOS_FACTURACION.SEMESTRAL]: 6,
+  [CICLOS_FACTURACION.ANUAL]: 12,
 };
 
 // Tipos de descuento

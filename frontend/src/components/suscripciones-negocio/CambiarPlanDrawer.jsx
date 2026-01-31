@@ -29,6 +29,8 @@ import {
   useCambiarPlanSuscripcion,
   useCambiarMiPlan,
   useCalcularProrrateo,
+  CICLO_LABELS,
+  CICLO_MESES,
 } from '@/hooks/suscripciones-negocio';
 import { suscripcionesNegocioApi } from '@/services/api/modules';
 import { useToast } from '@/hooks/utils';
@@ -36,11 +38,72 @@ import { formatCurrency, cn } from '@/lib/utils';
 import ProrrateoResumen from './ProrrateoResumen';
 
 /**
+ * Calcula el precio total de un plan según el periodo seleccionado
+ * @param {Object} plan - El plan
+ * @param {string} periodo - El periodo (mensual, trimestral, semestral, anual)
+ * @returns {number} Precio total del periodo
+ */
+function calcularPrecioPorPeriodo(plan, periodo) {
+  if (!plan) return 0;
+
+  // Mapeo de periodo a campo de precio
+  const campoDirecto = {
+    mensual: 'precio_mensual',
+    trimestral: 'precio_trimestral',
+    semestral: 'precio_semestral',
+    anual: 'precio_anual',
+  }[periodo];
+
+  const precioDirecto = parseFloat(plan[campoDirecto]);
+  if (!isNaN(precioDirecto) && precioDirecto > 0) {
+    return precioDirecto;
+  }
+
+  // Fallback: multiplicar precio mensual por meses
+  const meses = CICLO_MESES[periodo] || 1;
+  return (parseFloat(plan.precio_mensual) || 0) * meses;
+}
+
+/**
+ * Calcula el precio mensual equivalente de un plan según el periodo
+ * @param {Object} plan - El plan
+ * @param {string} periodo - El periodo
+ * @returns {number} Precio mensual equivalente
+ */
+function calcularPrecioMensualEquivalente(plan, periodo) {
+  const precioTotal = calcularPrecioPorPeriodo(plan, periodo);
+  const meses = CICLO_MESES[periodo] || 1;
+  return precioTotal / meses;
+}
+
+/**
+ * Verifica si un plan tiene precio configurado para un periodo
+ * @param {Object} plan - El plan
+ * @param {string} periodo - El periodo
+ * @returns {boolean}
+ */
+function planTienePrecio(plan, periodo) {
+  if (!plan) return false;
+  if (periodo === 'mensual') return true;
+
+  const campoDirecto = {
+    trimestral: 'precio_trimestral',
+    semestral: 'precio_semestral',
+    anual: 'precio_anual',
+  }[periodo];
+
+  const precioDirecto = parseFloat(plan[campoDirecto]);
+  return !isNaN(precioDirecto) && precioDirecto > 0;
+}
+
+/**
  * Card individual de plan para selección
  */
-function PlanSeleccionCard({ plan, planActualId, onSelect, isSelected }) {
+function PlanSeleccionCard({ plan, planActualId, onSelect, isSelected, periodoSeleccionado = 'mensual' }) {
   const esActual = plan.id === planActualId;
-  const precio = plan.precio_mensual || plan.precio || 0;
+  const precioMensualEquiv = calcularPrecioMensualEquivalente(plan, periodoSeleccionado);
+  const precioTotal = calcularPrecioPorPeriodo(plan, periodoSeleccionado);
+  const meses = CICLO_MESES[periodoSeleccionado] || 1;
   const features = plan.features || plan.caracteristicas || [];
 
   return (
@@ -118,11 +181,16 @@ function PlanSeleccionCard({ plan, planActualId, onSelect, isSelected }) {
             'text-xl font-bold',
             esActual ? 'text-gray-400' : 'text-gray-900 dark:text-gray-100'
           )}>
-            {formatCurrency(precio)}
+            {formatCurrency(precioMensualEquiv)}
           </div>
           <div className="text-xs text-gray-500 dark:text-gray-400">
             /mes
           </div>
+          {meses > 1 && (
+            <div className="text-xs text-primary-600 dark:text-primary-400 mt-1">
+              Total: {formatCurrency(precioTotal)}/{CICLO_LABELS[periodoSeleccionado]?.toLowerCase()}
+            </div>
+          )}
         </div>
       </div>
 
@@ -141,12 +209,12 @@ function PlanSeleccionCard({ plan, planActualId, onSelect, isSelected }) {
 /**
  * Resumen del cambio de plan
  */
-function ResumenCambio({ planActual, planNuevo }) {
+function ResumenCambio({ planActual, planNuevo, periodoSeleccionado = 'mensual' }) {
   if (!planActual || !planNuevo) return null;
 
   const precioActual = planActual.precio_actual || planActual.precio_mensual || 0;
-  const precioNuevo = planNuevo.precio_mensual || planNuevo.precio || 0;
-  const diferencia = precioNuevo - precioActual;
+  const precioNuevoMensual = calcularPrecioMensualEquivalente(planNuevo, periodoSeleccionado);
+  const diferencia = precioNuevoMensual - precioActual;
 
   const esUpgrade = diferencia > 0;
   const esDowngrade = diferencia < 0;
@@ -166,9 +234,9 @@ function ResumenCambio({ planActual, planNuevo }) {
       </div>
 
       <div className="flex items-center justify-between text-sm">
-        <span className="text-gray-500 dark:text-gray-400">Nuevo plan</span>
+        <span className="text-gray-500 dark:text-gray-400">Nuevo plan ({CICLO_LABELS[periodoSeleccionado]})</span>
         <span className="font-medium text-gray-900 dark:text-gray-100">
-          {formatCurrency(precioNuevo)}/mes
+          {formatCurrency(precioNuevoMensual)}/mes
         </span>
       </div>
 
@@ -228,6 +296,7 @@ function CambiarPlanDrawer({ isOpen, onClose, suscripcion, onSuccess, isUserPage
 
   // State
   const [planSeleccionado, setPlanSeleccionado] = useState(null);
+  const [periodoSeleccionado, setPeriodoSeleccionado] = useState('mensual');
   const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
 
   // Queries
@@ -257,17 +326,17 @@ function CambiarPlanDrawer({ isOpen, onClose, suscripcion, onSuccess, isUserPage
   const esUpgradePago = useMemo(() => {
     if (!planSeleccionado || !suscripcion) return false;
     const precioActual = parseFloat(suscripcion.precio_actual || 0);
-    const precioNuevo = parseFloat(planSeleccionado.precio_mensual || planSeleccionado.precio || 0);
-    return precioNuevo > precioActual && precioNuevo > 0;
-  }, [planSeleccionado, suscripcion]);
+    const precioNuevoMensual = calcularPrecioMensualEquivalente(planSeleccionado, periodoSeleccionado);
+    return precioNuevoMensual > precioActual && precioNuevoMensual > 0;
+  }, [planSeleccionado, suscripcion, periodoSeleccionado]);
 
   // Determinar si es un downgrade (ahora con prorrateo automático)
   const esDowngrade = useMemo(() => {
     if (!planSeleccionado || !suscripcion) return false;
     const precioActual = parseFloat(suscripcion.precio_actual || 0);
-    const precioNuevo = parseFloat(planSeleccionado.precio_mensual || planSeleccionado.precio || 0);
-    return precioNuevo < precioActual;
-  }, [planSeleccionado, suscripcion]);
+    const precioNuevoMensual = calcularPrecioMensualEquivalente(planSeleccionado, periodoSeleccionado);
+    return precioNuevoMensual < precioActual;
+  }, [planSeleccionado, suscripcion, periodoSeleccionado]);
 
   // Handler de confirmación
   const handleConfirmar = async () => {
@@ -279,7 +348,7 @@ function CambiarPlanDrawer({ isOpen, onClose, suscripcion, onSuccess, isUserPage
       try {
         const response = await suscripcionesNegocioApi.iniciarCheckout({
           plan_id: planSeleccionado.id,
-          periodo: 'mensual',
+          periodo: periodoSeleccionado,
         });
 
         const initPoint = response.data?.data?.init_point;
@@ -326,6 +395,7 @@ function CambiarPlanDrawer({ isOpen, onClose, suscripcion, onSuccess, isUserPage
   // Reset al cerrar
   const handleClose = () => {
     setPlanSeleccionado(null);
+    setPeriodoSeleccionado('mensual');
     onClose();
   };
 
@@ -366,6 +436,35 @@ function CambiarPlanDrawer({ isOpen, onClose, suscripcion, onSuccess, isUserPage
             </div>
           ) : (
             <>
+              {/* Selector de periodo */}
+              <div>
+                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                  Periodo de facturación
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {Object.entries(CICLO_LABELS).map(([value, label]) => (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => setPeriodoSeleccionado(value)}
+                      className={cn(
+                        'px-3 py-1.5 rounded-md text-sm font-medium transition-colors',
+                        periodoSeleccionado === value
+                          ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 border-2 border-primary-500'
+                          : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 border-2 border-transparent hover:border-gray-300 dark:hover:border-gray-600'
+                      )}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+                {periodoSeleccionado !== 'mensual' && (
+                  <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                    Los precios se muestran como equivalente mensual. El cobro se realiza mensualmente.
+                  </p>
+                )}
+              </div>
+
               {/* Lista de planes */}
               <div>
                 <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
@@ -379,6 +478,7 @@ function CambiarPlanDrawer({ isOpen, onClose, suscripcion, onSuccess, isUserPage
                       planActualId={suscripcion?.plan_id}
                       isSelected={planSeleccionado?.id === plan.id}
                       onSelect={setPlanSeleccionado}
+                      periodoSeleccionado={periodoSeleccionado}
                     />
                   ))}
                 </div>
@@ -389,6 +489,7 @@ function CambiarPlanDrawer({ isOpen, onClose, suscripcion, onSuccess, isUserPage
                 <ResumenCambio
                   planActual={suscripcion}
                   planNuevo={planSeleccionado}
+                  periodoSeleccionado={periodoSeleccionado}
                 />
               )}
 

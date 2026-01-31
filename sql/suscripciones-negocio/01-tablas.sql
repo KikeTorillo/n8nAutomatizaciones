@@ -35,6 +35,7 @@ CREATE TABLE IF NOT EXISTS planes_suscripcion_org (
     -- Precios (soporte multi-periodo)
     precio_mensual NUMERIC(10,2) NOT NULL DEFAULT 0,
     precio_trimestral NUMERIC(10,2),
+    precio_semestral NUMERIC(10,2),
     precio_anual NUMERIC(10,2),
     moneda VARCHAR(3) DEFAULT 'MXN',                -- MXN, USD, EUR
 
@@ -70,6 +71,7 @@ CREATE TABLE IF NOT EXISTS planes_suscripcion_org (
     CONSTRAINT uq_plan_codigo_org UNIQUE (organizacion_id, codigo),
     CONSTRAINT chk_precio_mensual CHECK (precio_mensual >= 0),
     CONSTRAINT chk_precio_trimestral CHECK (precio_trimestral IS NULL OR precio_trimestral >= 0),
+    CONSTRAINT chk_precio_semestral CHECK (precio_semestral IS NULL OR precio_semestral >= 0),
     CONSTRAINT chk_precio_anual CHECK (precio_anual IS NULL OR precio_anual >= 0),
     CONSTRAINT chk_dias_trial CHECK (dias_trial >= 0 AND dias_trial <= 90)
 );

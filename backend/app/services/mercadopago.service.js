@@ -380,6 +380,49 @@ class MercadoPagoService {
     }
 
     /**
+     * Actualizar monto del preapproval (para seat-based billing)
+     *
+     * @param {string} subscriptionId - ID de suscripción en MP
+     * @param {number} nuevoMonto - Nuevo monto a cobrar
+     * @param {string} moneda - Moneda (default: MXN)
+     * @returns {Promise<Object>} Suscripción actualizada
+     */
+    async actualizarMontoPreapproval(subscriptionId, nuevoMonto, moneda = 'MXN') {
+        this._ensureInitialized();
+        try {
+            logger.info('Actualizando monto de preapproval', {
+                subscriptionId,
+                nuevoMonto,
+                moneda,
+                organizacionId: this.organizacionId
+            });
+
+            const response = await this.subscriptionClient.update({
+                id: subscriptionId,
+                body: {
+                    auto_recurring: {
+                        transaction_amount: nuevoMonto,
+                        currency_id: moneda
+                    }
+                }
+            });
+
+            logger.info('✅ Monto de preapproval actualizado', {
+                subscriptionId,
+                nuevoMonto
+            });
+            return response;
+        } catch (error) {
+            logger.error('Error actualizando monto de preapproval:', {
+                subscriptionId,
+                nuevoMonto,
+                error: error.message
+            });
+            throw new Error(`Error actualizando monto: ${error.message}`);
+        }
+    }
+
+    /**
      * Cancelar suscripción
      *
      * @param {string} subscriptionId - ID de suscripción en MP

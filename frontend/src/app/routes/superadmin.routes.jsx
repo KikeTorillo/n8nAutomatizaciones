@@ -12,6 +12,7 @@ const SuperAdminLayout = lazy(() => import('@/components/superadmin/SuperAdminLa
 const SuperAdminDashboard = lazy(() => import('@/pages/superadmin/Dashboard'));
 const MarketplaceGestion = lazy(() => import('@/pages/superadmin/MarketplaceGestion'));
 const PlantillasEventos = lazy(() => import('@/pages/superadmin/PlantillasEventos'));
+const EntitlementsPlataforma = lazy(() => import('@/pages/superadmin/EntitlementsPlataforma'));
 
 /**
  * Rutas de Super Admin con nested routes
@@ -41,6 +42,10 @@ export const superadminRoutes = [
       {
         path: 'plantillas-eventos',
         element: withSuspense(PlantillasEventos),
+      },
+      {
+        path: 'entitlements-plataforma',
+        element: withSuspense(EntitlementsPlataforma),
       },
     ],
   },
