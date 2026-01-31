@@ -13,7 +13,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { ConfirmDialog } from '@/components/ui';
+import { DeleteConfirmDialog } from '@/components/ui';
 import {
   DndContext,
   closestCenter,
@@ -189,15 +189,12 @@ function PageManager({
       </div>
 
       {/* Modal confirmar eliminar página */}
-      <ConfirmDialog
+      <DeleteConfirmDialog
         isOpen={isOpen('delete')}
         onClose={() => closeModal('delete')}
         onConfirm={handleEliminar}
-        title="Eliminar Página"
-        message={`¿Estás seguro de eliminar la página "${getModalData('delete')?.titulo}"?`}
-        confirmText="Eliminar"
-        cancelText="Cancelar"
-        variant="danger"
+        itemName={getModalData('delete')?.titulo}
+        itemType="la página"
         isLoading={eliminando}
       />
     </div>

@@ -28,7 +28,7 @@ import {
   MessageCircle,
   User,
 } from 'lucide-react';
-import { Button, LoadingSpinner } from '@/components/ui';
+import { Button, AsyncBoundary } from '@/components/ui';
 import { citasApi } from '@/services/api/endpoints';
 import { useQuery } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
@@ -305,13 +305,18 @@ export default function ClienteGeneralTab({ cliente, estadisticas }) {
               )}
             </div>
 
-            {loadingCitas ? (
-              <div className="flex items-center justify-center py-8">
-                <LoadingSpinner />
-              </div>
-            ) : citasData && citasData.length > 0 ? (
+            <AsyncBoundary
+              isLoading={loadingCitas}
+              isEmpty={!citasData || citasData.length === 0}
+              loadingText="Cargando citas..."
+              emptyIcon={Heart}
+              emptyTitle="Sin citas registradas"
+              emptyDescription="Este cliente aún no tiene citas registradas"
+              emptyActionLabel="Agendar Primera Cita"
+              onEmptyAction={() => navigate('/citas', { state: { abrirModal: true, clienteId } })}
+            >
               <div className="space-y-4">
-                {citasData.map((cita) => (
+                {citasData?.map((cita) => (
                   <div
                     key={cita.id}
                     className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer"
@@ -357,23 +362,7 @@ export default function ClienteGeneralTab({ cliente, estadisticas }) {
                   </div>
                 ))}
               </div>
-            ) : (
-              <div className="text-center py-12">
-                <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Heart className="w-8 h-8 text-gray-400 dark:text-gray-500" />
-                </div>
-                <p className="text-gray-600 dark:text-gray-400">
-                  Este cliente aún no tiene citas registradas
-                </p>
-                <Button
-                  variant="outline"
-                  onClick={() => navigate('/citas', { state: { abrirModal: true, clienteId } })}
-                  className="mt-4"
-                >
-                  Agendar Primera Cita
-                </Button>
-              </div>
-            )}
+            </AsyncBoundary>
           </div>
 
           {/* Servicios Frecuentes */}

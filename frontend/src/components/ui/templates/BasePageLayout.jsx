@@ -1,6 +1,7 @@
 import { memo } from 'react';
 import { cn } from '@/lib/utils';
 import { BackButton } from '../molecules/BackButton';
+import { SEMANTIC_COLORS } from '@/lib/uiConstants';
 
 /**
  * BasePageLayout - Layout base unificado para módulos
@@ -56,7 +57,7 @@ const BasePageLayout = memo(function BasePageLayout({
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="flex items-center space-x-3">
                 {Icon && (
-                  <Icon className="h-7 w-7 sm:h-8 sm:w-8 text-primary-600 dark:text-primary-400 flex-shrink-0" />
+                  <Icon className={cn('h-7 w-7 sm:h-8 sm:w-8 flex-shrink-0', SEMANTIC_COLORS.primary.icon)} />
                 )}
                 <div>
                   <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100">

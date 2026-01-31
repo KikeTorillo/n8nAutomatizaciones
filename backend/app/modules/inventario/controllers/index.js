@@ -111,6 +111,18 @@ class InventarioMainController {
         return ProductosController.buscar(req, res);
     }
 
+    static obtenerStockPorUbicacion(req, res) {
+        return ProductosController.obtenerStockPorUbicacion(req, res);
+    }
+
+    static obtenerMiStock(req, res) {
+        return ProductosController.obtenerMiStock(req, res);
+    }
+
+    static listarConStockFiltrado(req, res) {
+        return ProductosController.listarConStockFiltrado(req, res);
+    }
+
     // ===================================================================
     // 📊 ENDPOINTS MOVIMIENTOS
     // ===================================================================

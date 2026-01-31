@@ -29,10 +29,18 @@
 const { MercadoPagoConfig, PreApproval, Payment } = require('mercadopago');
 const crypto = require('crypto');
 const logger = require('../utils/logger');
+const { CircuitBreakerFactory } = require('../utils/circuitBreaker');
 
 // Cache de instancias por organización (evita recrear en cada request)
 const instanceCache = new Map();
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutos
+
+// Circuit Breaker configurado para MercadoPago
+const CIRCUIT_BREAKER_OPTIONS = {
+    maxFailures: 5,           // Abrir después de 5 fallos
+    resetTimeout: 60000,      // Reintentar después de 1 minuto
+    halfOpenMaxCalls: 1,      // 1 llamada de prueba
+};
 
 class MercadoPagoService {
 
@@ -203,6 +211,37 @@ class MercadoPagoService {
     // ====================================================================
 
     /**
+     * Obtener circuit breaker para esta organización
+     * @private
+     */
+    _getCircuitBreaker() {
+        const name = `mercadopago-org-${this.organizacionId || 'global'}`;
+        return CircuitBreakerFactory.get(name, {
+            ...CIRCUIT_BREAKER_OPTIONS,
+            onStateChange: async (oldState, newState, stats) => {
+                // Sincronizar con errores_consecutivos en conectores_pago_org
+                if (this.organizacionId && newState === 'OPEN') {
+                    try {
+                        const ConectoresModel = require('../modules/suscripciones-negocio/models/conectores.model');
+                        await ConectoresModel.incrementarErroresConsecutivos(this.organizacionId, 'mercadopago');
+                        logger.warn(`[MercadoPago] Circuit breaker OPEN para org ${this.organizacionId}`, stats);
+                    } catch (err) {
+                        logger.error('Error actualizando errores_consecutivos', { error: err.message });
+                    }
+                } else if (this.organizacionId && newState === 'CLOSED') {
+                    try {
+                        const ConectoresModel = require('../modules/suscripciones-negocio/models/conectores.model');
+                        await ConectoresModel.resetearErroresConsecutivos(this.organizacionId, 'mercadopago');
+                        logger.info(`[MercadoPago] Circuit breaker CLOSED para org ${this.organizacionId}`);
+                    } catch (err) {
+                        logger.error('Error reseteando errores_consecutivos', { error: err.message });
+                    }
+                }
+            }
+        });
+    }
+
+    /**
      * Crear suscripción SIN plan asociado - Genera init_point para pago pendiente
      *
      * Este método crea una suscripción definiendo auto_recurring directamente,
@@ -224,81 +263,85 @@ class MercadoPagoService {
      */
     async crearSuscripcionConInitPoint({ nombre, precio, moneda = 'MXN', email, returnUrl, externalReference }) {
         this._ensureInitialized();
-        try {
-            logger.info('Creando suscripción con init_point (sin plan asociado)', {
-                nombre,
-                precio,
-                moneda,
-                email,
-                externalReference,
-                organizacionId: this.organizacionId
-            });
+        const circuitBreaker = this._getCircuitBreaker();
 
-            const axios = require('axios');
+        return await circuitBreaker.execute(async () => {
+            try {
+                logger.info('Creando suscripción con init_point (sin plan asociado)', {
+                    nombre,
+                    precio,
+                    moneda,
+                    email,
+                    externalReference,
+                    organizacionId: this.organizacionId
+                });
 
-            const subscriptionData = {
-                reason: nombre,
-                payer_email: email,
-                back_url: returnUrl,
-                external_reference: externalReference,
-                status: 'pending', // CRÍTICO: pending genera init_point
-                auto_recurring: {
-                    frequency: 1,
-                    frequency_type: 'months',
-                    transaction_amount: precio,
-                    currency_id: moneda
-                }
-            };
+                const axios = require('axios');
 
-            // NOTA: notification_url NO es un parámetro oficial de preapproval.
-            // Los webhooks de suscripciones se configuran en el panel de MercadoPago.
+                const subscriptionData = {
+                    reason: nombre,
+                    payer_email: email,
+                    back_url: returnUrl,
+                    external_reference: externalReference,
+                    status: 'pending', // CRÍTICO: pending genera init_point
+                    auto_recurring: {
+                        frequency: 1,
+                        frequency_type: 'months',
+                        transaction_amount: precio,
+                        currency_id: moneda
+                    }
+                };
 
-            const response = await axios.post(
-                'https://api.mercadopago.com/preapproval',
-                subscriptionData,
-                {
-                    headers: {
-                        'Authorization': `Bearer ${this.credentials.accessToken}`,
-                        'Content-Type': 'application/json',
-                        'X-Idempotency-Key': this._generateIdempotencyKey()
-                    },
-                    timeout: 5000
-                }
-            );
+                // NOTA: notification_url NO es un parámetro oficial de preapproval.
+                // Los webhooks de suscripciones se configuran en el panel de MercadoPago.
 
-            // Determinar si usar sandbox o producción basado en environment del conector
-            const isTestMode = this.isSandbox();
-            const initPointUrl = isTestMode
-                ? response.data.sandbox_init_point
-                : response.data.init_point;
+                const response = await axios.post(
+                    'https://api.mercadopago.com/preapproval',
+                    subscriptionData,
+                    {
+                        headers: {
+                            'Authorization': `Bearer ${this.credentials.accessToken}`,
+                            'Content-Type': 'application/json',
+                            'X-Idempotency-Key': this._generateIdempotencyKey()
+                        },
+                        timeout: 5000
+                    }
+                );
 
-            logger.info('✅ Suscripción con init_point creada exitosamente', {
-                subscriptionId: response.data.id,
-                email,
-                status: response.data.status,
-                hasInitPoint: !!initPointUrl,
-                isTestMode,
-                environment: this.credentials.environment,
-                urlType: isTestMode ? 'sandbox_init_point' : 'init_point',
-                organizacionId: this.organizacionId
-            });
+                // Determinar si usar sandbox o producción basado en environment del conector
+                const isTestMode = this.isSandbox();
+                const initPointUrl = isTestMode
+                    ? response.data.sandbox_init_point
+                    : response.data.init_point;
 
-            return {
-                id: response.data.id,
-                status: response.data.status,
-                init_point: initPointUrl
-            };
-        } catch (error) {
-            logger.error('❌ Error creando suscripción con init_point:', {
-                error: error.message,
-                nombre,
-                precio,
-                email,
-                responseData: error.response?.data,
-                organizacionId: this.organizacionId
-            });
-            throw new Error(`Error creando suscripción: ${error.message}`);
-        }
+                logger.info('✅ Suscripción con init_point creada exitosamente', {
+                    subscriptionId: response.data.id,
+                    email,
+                    status: response.data.status,
+                    hasInitPoint: !!initPointUrl,
+                    isTestMode,
+                    environment: this.credentials.environment,
+                    urlType: isTestMode ? 'sandbox_init_point' : 'init_point',
+                    organizacionId: this.organizacionId
+                });
+
+                return {
+                    id: response.data.id,
+                    status: response.data.status,
+                    init_point: initPointUrl
+                };
+            } catch (error) {
+                logger.error('❌ Error creando suscripción con init_point:', {
+                    error: error.message,
+                    nombre,
+                    precio,
+                    email,
+                    responseData: error.response?.data,
+                    organizacionId: this.organizacionId
+                });
+                throw new Error(`Error creando suscripción: ${error.message}`);
+            }
+        });
     }
 
     /**
@@ -388,49 +431,57 @@ class MercadoPagoService {
     /**
      * Obtener suscripción por ID
      * Usa axios directamente para mejor manejo de errores
+     * Protegido con circuit breaker
      *
      * @param {string} subscriptionId - ID de suscripción en MP
      * @returns {Promise<Object>} Datos de la suscripción
      */
     async obtenerSuscripcion(subscriptionId) {
         this._ensureInitialized();
-        try {
-            const axios = require('axios');
-            const response = await axios.get(
-                `https://api.mercadopago.com/preapproval/${subscriptionId}`,
-                {
-                    headers: {
-                        'Authorization': `Bearer ${this.credentials.accessToken}`
-                    },
-                    timeout: 10000
+        const circuitBreaker = this._getCircuitBreaker();
+
+        return await circuitBreaker.execute(async () => {
+            try {
+                const axios = require('axios');
+                const response = await axios.get(
+                    `https://api.mercadopago.com/preapproval/${subscriptionId}`,
+                    {
+                        headers: {
+                            'Authorization': `Bearer ${this.credentials.accessToken}`
+                        },
+                        timeout: 10000
+                    }
+                );
+
+                logger.debug('Suscripción obtenida de MercadoPago', {
+                    subscriptionId,
+                    status: response.data.status,
+                    organizacionId: this.organizacionId
+                });
+
+                return response.data;
+            } catch (error) {
+                logger.error('Error obteniendo suscripción:', {
+                    subscriptionId,
+                    error: error.message,
+                    status: error.response?.status,
+                    data: error.response?.data,
+                    organizacionId: this.organizacionId
+                });
+
+                // Si es 404, la suscripción no existe (no contar como fallo de circuit breaker)
+                if (error.response?.status === 404) {
+                    // Marcar el error como no-retriable para el circuit breaker
+                    const notFoundError = new Error(`Suscripción ${subscriptionId} no encontrada en MercadoPago`);
+                    notFoundError.isNotRetriable = true;
+                    throw notFoundError;
                 }
-            );
 
-            logger.debug('Suscripción obtenida de MercadoPago', {
-                subscriptionId,
-                status: response.data.status,
-                organizacionId: this.organizacionId
-            });
-
-            return response.data;
-        } catch (error) {
-            logger.error('Error obteniendo suscripción:', {
-                subscriptionId,
-                error: error.message,
-                status: error.response?.status,
-                data: error.response?.data,
-                organizacionId: this.organizacionId
-            });
-
-            // Si es 404, la suscripción no existe
-            if (error.response?.status === 404) {
-                throw new Error(`Suscripción ${subscriptionId} no encontrada en MercadoPago`);
+                // Incluir más detalles del error
+                const errorDetail = error.response?.data?.message || error.response?.data?.error || error.message;
+                throw new Error(`Error obteniendo suscripción: ${errorDetail}`);
             }
-
-            // Incluir más detalles del error
-            const errorDetail = error.response?.data?.message || error.response?.data?.error || error.message;
-            throw new Error(`Error obteniendo suscripción: ${errorDetail}`);
-        }
+        });
     }
 
     // ====================================================================

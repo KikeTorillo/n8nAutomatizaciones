@@ -7,6 +7,7 @@ import { StatCardGrid } from '../organisms/StatCardGrid';
 import { ViewTabs } from '../molecules/ViewTabs';
 import { useFilters, usePagination, normalizePagination, useModalManager, useDeleteConfirmation, useExportCSV } from '@/hooks/utils';
 import { Plus, Search, Download } from 'lucide-react';
+import { SEMANTIC_COLORS } from '@/lib/uiConstants';
 
 /**
  * ListadoCRUDPage - Template para paginas CRUD estandar
@@ -411,7 +412,7 @@ const ListadoCRUDPage = memo(function ListadoCRUDPage({
       {/* Header simple si no hay PageLayout */}
       <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-3">
-          {Icon && <Icon className="h-7 w-7 text-primary-600 dark:text-primary-400" />}
+          {Icon && <Icon className={cn('h-7 w-7', SEMANTIC_COLORS.primary.icon)} />}
           <div>
             <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">{title}</h1>
             <p className="text-sm text-gray-600 dark:text-gray-400">{computedSubtitle}</p>

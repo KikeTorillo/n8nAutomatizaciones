@@ -99,19 +99,23 @@ function EmptyState() {
 /**
  * HistorialPagosCard
  *
- * @param {number} suscripcionId - ID de la suscripción para filtrar pagos
+ * @param {Array} pagos - Lista de pagos directa (opcional, evita llamada API)
+ * @param {number} suscripcionId - ID de la suscripción para filtrar pagos (si no se pasan pagos)
  * @param {number} limite - Cantidad máxima de pagos a mostrar (default: 5)
  * @param {string} className - Clases adicionales
  */
-function HistorialPagosCard({ suscripcionId, limite = 5, className }) {
-  // Query de pagos filtrados por suscripción
-  const { data, isLoading, isError } = usePagos({
-    suscripcion_id: suscripcionId,
-    limit: limite,
-    page: 1,
-  });
+function HistorialPagosCard({ pagos: pagosProp, suscripcionId, limite = 5, className }) {
+  // Solo hacer query si no se pasan pagos directamente
+  const shouldFetch = !pagosProp && !!suscripcionId;
+  const { data, isLoading, isError } = usePagos(
+    { suscripcion_id: suscripcionId, limit: limite, page: 1 },
+    { enabled: shouldFetch }
+  );
 
-  const pagos = data?.items || [];
+  // Usar pagos de prop o de query
+  const pagos = pagosProp || data?.items || [];
+  // Si se pasan pagos directamente, no está cargando
+  const loading = shouldFetch && isLoading;
 
   return (
     <div
@@ -136,11 +140,11 @@ function HistorialPagosCard({ suscripcionId, limite = 5, className }) {
 
       {/* Contenido */}
       <div className="px-6 py-2">
-        {isLoading ? (
+        {loading ? (
           <div className="flex items-center justify-center py-8">
             <LoadingSpinner size="md" />
           </div>
-        ) : isError ? (
+        ) : (shouldFetch && isError) ? (
           <div className="text-center py-6">
             <p className="text-sm text-red-500 dark:text-red-400">
               Error al cargar el historial de pagos

@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { memo, forwardRef } from 'react';
 import PropTypes from 'prop-types';
 import { Drawer as VaulDrawer } from 'vaul';
 import { X } from 'lucide-react';
@@ -19,8 +19,9 @@ import { DRAWER_SIZES } from '@/lib/uiConstants';
  * @param {boolean} showCloseButton - Mostrar botón de cerrar en el header
  * @param {boolean} disableClose - Deshabilitar cierre por drag/overlay
  * @param {boolean} noPadding - Desactivar padding del contenido (para layouts con tabs)
+ * @param {React.Ref} ref - Ref para acceder al contenedor del drawer
  */
-const Drawer = memo(function Drawer({
+const Drawer = memo(forwardRef(function Drawer({
   isOpen,
   onClose,
   title,
@@ -31,7 +32,7 @@ const Drawer = memo(function Drawer({
   showCloseButton = false,
   disableClose = false,
   noPadding = false,
-}) {
+}, ref) {
   const handleOpenChange = (open) => {
     if (!open && !disableClose) {
       onClose();
@@ -55,6 +56,9 @@ const Drawer = memo(function Drawer({
 
         {/* Contenido del Drawer */}
         <VaulDrawer.Content
+          ref={ref}
+          role="dialog"
+          aria-modal="true"
           className={cn(
             'fixed bottom-0 left-0 right-0 z-50 flex flex-col rounded-t-2xl bg-white dark:bg-gray-800',
             DRAWER_SIZES[size] || DRAWER_SIZES.xl
@@ -114,7 +118,7 @@ const Drawer = memo(function Drawer({
       </VaulDrawer.Portal>
     </VaulDrawer.Root>
   );
-});
+}));
 
 Drawer.displayName = 'Drawer';
 

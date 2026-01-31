@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { BarChart3, Calendar, DollarSign, Package, TrendingUp, Download, Receipt } from 'lucide-react';
 import {
+  AsyncBoundary,
   BackButton,
   Button,
   Input,
@@ -123,21 +124,17 @@ export default function ReporteVentasDiariasPage() {
       </div>
 
       {/* Contenido */}
-      {isLoading ? (
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-8 text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 dark:border-primary-400 mx-auto mb-4"></div>
-          <p className="text-gray-500 dark:text-gray-400">Cargando reporte...</p>
-        </div>
-      ) : isError ? (
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-8 text-center text-red-600 dark:text-red-400">
-          <p>Error al cargar el reporte. Verifica la fecha seleccionada.</p>
-        </div>
-      ) : !reporteData ? (
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-8 text-center text-gray-500 dark:text-gray-400">
-          <Calendar className="h-16 w-16 mx-auto mb-4 text-gray-300 dark:text-gray-600" />
-          <p className="text-lg font-medium">Selecciona una fecha para generar el reporte</p>
-        </div>
-      ) : (
+      <AsyncBoundary
+        isLoading={isLoading}
+        isError={isError}
+        isEmpty={!reporteData}
+        loadingText="Cargando reporte..."
+        errorTitle="Error al cargar"
+        errorMessage="Error al cargar el reporte. Verifica la fecha seleccionada."
+        emptyIcon={Calendar}
+        emptyTitle="Sin datos"
+        emptyDescription="Selecciona una fecha para generar el reporte"
+      >
         <>
           {/* Cards de resumen */}
           <StatCardGrid
@@ -381,7 +378,7 @@ export default function ReporteVentasDiariasPage() {
             </div>
           )}
         </>
-      )}
+      </AsyncBoundary>
       </div>
     </div>
   );

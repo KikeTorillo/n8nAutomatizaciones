@@ -2,6 +2,7 @@ import { memo } from 'react';
 import PropTypes from 'prop-types';
 import { X, AlertTriangle, Info, CheckCircle, XCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ALERT_VARIANTS } from '@/lib/uiConstants';
 
 // Mapeo de iconos por defecto según la variante
 const defaultIcons = {
@@ -26,49 +27,6 @@ const defaultIcons = {
  * @param {string} [props.className] - Clases adicionales
  */
 
-const variantStyles = {
-  info: {
-    bg: 'bg-primary-50 dark:bg-primary-900/20',
-    border: 'border-primary-200 dark:border-primary-800',
-    iconBg: 'bg-primary-100 dark:bg-primary-900/40',
-    iconColor: 'text-primary-600 dark:text-primary-400',
-    titleColor: 'text-primary-800 dark:text-primary-200',
-    textColor: 'text-primary-700 dark:text-primary-300',
-  },
-  success: {
-    bg: 'bg-green-50 dark:bg-green-900/20',
-    border: 'border-green-200 dark:border-green-800',
-    iconBg: 'bg-green-100 dark:bg-green-900/40',
-    iconColor: 'text-green-600 dark:text-green-400',
-    titleColor: 'text-green-800 dark:text-green-200',
-    textColor: 'text-green-700 dark:text-green-300',
-  },
-  warning: {
-    bg: 'bg-amber-50 dark:bg-amber-900/20',
-    border: 'border-amber-200 dark:border-amber-800',
-    iconBg: 'bg-amber-100 dark:bg-amber-900/40',
-    iconColor: 'text-amber-600 dark:text-amber-400',
-    titleColor: 'text-amber-800 dark:text-amber-200',
-    textColor: 'text-amber-700 dark:text-amber-300',
-  },
-  error: {
-    bg: 'bg-red-50 dark:bg-red-900/20',
-    border: 'border-red-200 dark:border-red-800',
-    iconBg: 'bg-red-100 dark:bg-red-900/40',
-    iconColor: 'text-red-600 dark:text-red-400',
-    titleColor: 'text-red-800 dark:text-red-200',
-    textColor: 'text-red-700 dark:text-red-300',
-  },
-  rose: {
-    bg: 'bg-rose-50 dark:bg-rose-900/20',
-    border: 'border-rose-200 dark:border-rose-800',
-    iconBg: 'bg-rose-100 dark:bg-rose-900/40',
-    iconColor: 'text-rose-600 dark:text-rose-400',
-    titleColor: 'text-rose-800 dark:text-rose-200',
-    textColor: 'text-rose-700 dark:text-rose-300',
-  },
-};
-
 const Alert = memo(function Alert({
   variant = 'info',
   icon: Icon,
@@ -79,7 +37,7 @@ const Alert = memo(function Alert({
   onDismiss,
   className,
 }) {
-  const styles = variantStyles[variant] || variantStyles.info;
+  const styles = ALERT_VARIANTS[variant] || ALERT_VARIANTS.info;
   const DefaultIcon = defaultIcons[variant] || defaultIcons.warning;
 
   return (
@@ -87,8 +45,7 @@ const Alert = memo(function Alert({
       role="alert"
       aria-live={variant === 'error' ? 'assertive' : 'polite'}
       className={cn(
-        styles.bg,
-        styles.border,
+        styles.container,
         'border rounded-lg p-4',
         className
       )}
@@ -97,7 +54,7 @@ const Alert = memo(function Alert({
         {/* Icono principal */}
         {Icon && (
           <div className={cn('p-3 rounded-lg', styles.iconBg)}>
-            <Icon className={cn('h-6 w-6', styles.iconColor)} />
+            <Icon className={cn('h-6 w-6', styles.icon)} />
           </div>
         )}
 
@@ -107,8 +64,8 @@ const Alert = memo(function Alert({
           {title && (
             <div className="flex items-center justify-between gap-2 mb-1">
               <div className="flex items-center gap-2">
-                <DefaultIcon className={cn('h-4 w-4', styles.iconColor)} />
-                <h3 className={cn('font-semibold', styles.titleColor)}>
+                {!Icon && <DefaultIcon className={cn('h-4 w-4', styles.icon)} />}
+                <h3 className={cn('font-semibold', styles.title)}>
                   {title}
                 </h3>
               </div>
@@ -118,7 +75,7 @@ const Alert = memo(function Alert({
                   onClick={onDismiss}
                   className={cn(
                     'p-1 rounded-lg transition-colors',
-                    styles.textColor,
+                    styles.text,
                     'hover:bg-black/5 dark:hover:bg-white/5'
                   )}
                 >
@@ -129,7 +86,7 @@ const Alert = memo(function Alert({
           )}
 
           {/* Contenido de la alerta */}
-          <div className={styles.textColor}>
+          <div className={styles.text}>
             {children}
           </div>
 

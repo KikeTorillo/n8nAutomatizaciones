@@ -2,7 +2,7 @@ import { forwardRef, useState, useEffect, useCallback, useMemo, memo } from 'rea
 import PropTypes from 'prop-types';
 import { Search, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { SEARCH_INPUT_SIZES } from '@/lib/uiConstants';
+import { SEARCH_INPUT_SIZES, getInputBaseStyles } from '@/lib/uiConstants';
 
 /**
  * SearchInput - Componente de búsqueda reutilizable con debounce
@@ -123,14 +123,7 @@ const SearchInput = memo(forwardRef(
           autoFocus={autoFocus}
           disabled={disabled}
           className={cn(
-            'w-full border rounded-lg transition-colors',
-            'focus:outline-none focus:ring-2 focus:ring-offset-0',
-            'disabled:opacity-50 disabled:cursor-not-allowed',
-            'bg-white dark:bg-gray-800',
-            'text-gray-900 dark:text-gray-100',
-            'placeholder:text-gray-400 dark:placeholder:text-gray-500',
-            'border-gray-300 dark:border-gray-600',
-            'focus:border-primary-500 focus:ring-primary-500',
+            getInputBaseStyles(false),
             currentSize.input,
             currentSize.paddingLeft,
             currentSize.paddingRight

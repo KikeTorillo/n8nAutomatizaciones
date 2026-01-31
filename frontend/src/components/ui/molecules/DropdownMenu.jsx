@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, memo } from 'react';
+import { useState, useRef, useCallback, useEffect, memo, useId, forwardRef } from 'react';
 import PropTypes from 'prop-types';
 import { MoreVertical } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -20,6 +20,7 @@ import { useEscapeKey } from '@/hooks/utils/useEscapeKey';
  * @param {string} props.className - Clases adicionales para el contenedor
  * @param {boolean} [props.isOpen] - Estado controlado del dropdown
  * @param {Function} [props.onOpenChange] - Callback cuando cambia el estado: (isOpen: boolean) => void
+ * @param {React.Ref} ref - Ref para acceder al contenedor del dropdown
  *
  * @example
  * // Modo no controlado (default)
@@ -39,20 +40,26 @@ import { useEscapeKey } from '@/hooks/utils/useEscapeKey';
  *   items={[...]}
  * />
  */
-const DropdownMenu = memo(function DropdownMenu({
+const DropdownMenu = memo(forwardRef(function DropdownMenu({
   trigger,
   items = [],
   align = 'right',
   className,
   isOpen: controlledIsOpen,
   onOpenChange,
-}) {
+}, ref) {
   const [internalIsOpen, setInternalIsOpen] = useState(false);
+  const [focusedIndex, setFocusedIndex] = useState(-1);
   const dropdownRef = useRef(null);
+  const itemRefs = useRef([]);
+  const triggerId = useId();
 
   // Patrón controlled/uncontrolled
   const isControlled = controlledIsOpen !== undefined;
   const isOpen = isControlled ? controlledIsOpen : internalIsOpen;
+
+  // Items habilitados (excluye dividers y disabled)
+  const enabledItems = items.filter(item => !item.divider && !item.disabled);
 
   const setIsOpen = useCallback((newValue) => {
     const nextValue = typeof newValue === 'function' ? newValue(isOpen) : newValue;
@@ -69,6 +76,50 @@ const DropdownMenu = memo(function DropdownMenu({
   // Cerrar con Escape (usando hook centralizado)
   useEscapeKey(() => setIsOpen(false), isOpen);
 
+  // Reset focus al cerrar
+  useEffect(() => {
+    if (!isOpen) {
+      setFocusedIndex(-1);
+    }
+  }, [isOpen]);
+
+  // Focus en item cuando cambia focusedIndex
+  useEffect(() => {
+    if (isOpen && focusedIndex >= 0 && itemRefs.current[focusedIndex]) {
+      itemRefs.current[focusedIndex].focus();
+    }
+  }, [isOpen, focusedIndex]);
+
+  // Handler de navegación por teclado
+  const handleKeyDown = useCallback((e) => {
+    if (!isOpen) return;
+
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        setFocusedIndex(prev =>
+          prev < enabledItems.length - 1 ? prev + 1 : 0
+        );
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        setFocusedIndex(prev =>
+          prev > 0 ? prev - 1 : enabledItems.length - 1
+        );
+        break;
+      case 'Home':
+        e.preventDefault();
+        setFocusedIndex(0);
+        break;
+      case 'End':
+        e.preventDefault();
+        setFocusedIndex(enabledItems.length - 1);
+        break;
+      default:
+        break;
+    }
+  }, [isOpen, enabledItems.length]);
+
   const handleItemClick = useCallback((item) => {
     if (item.disabled) return;
     item.onClick?.();
@@ -79,15 +130,26 @@ const DropdownMenu = memo(function DropdownMenu({
     setIsOpen(prev => !prev);
   }, [setIsOpen]);
 
+  // Combinar refs (externo + interno para click outside)
+  const setRefs = useCallback((node) => {
+    dropdownRef.current = node;
+    if (typeof ref === 'function') {
+      ref(node);
+    } else if (ref) {
+      ref.current = node;
+    }
+  }, [ref]);
+
   return (
-    <div className={cn('relative inline-block', className)} ref={dropdownRef}>
+    <div className={cn('relative inline-block', className)} ref={setRefs}>
       {/* Trigger */}
       {trigger ? (
-        <div onClick={handleToggle}>
+        <div id={triggerId} onClick={handleToggle}>
           {trigger}
         </div>
       ) : (
         <Button
+          id={triggerId}
           variant="ghost"
           size="sm"
           onClick={handleToggle}
@@ -109,58 +171,72 @@ const DropdownMenu = memo(function DropdownMenu({
           )}
           role="menu"
           aria-orientation="vertical"
+          aria-labelledby={triggerId}
+          onKeyDown={handleKeyDown}
         >
-          {items.map((item, index) => {
-            // Divider
-            if (item.divider) {
-              return (
-                <div
-                  key={`divider-${index}`}
-                  className="my-1 border-t border-gray-200 dark:border-gray-700"
-                  role="separator"
-                />
-              );
-            }
-
-            const Icon = item.icon;
-            const isDanger = item.variant === 'danger';
-
-            return (
-              <button
-                key={item.label || index}
-                onClick={() => handleItemClick(item)}
-                disabled={item.disabled}
-                className={cn(
-                  'w-full flex items-center gap-2 px-3 py-2 text-sm text-left transition-colors',
-                  item.disabled
-                    ? 'text-gray-400 dark:text-gray-500 cursor-not-allowed'
-                    : isDanger
-                    ? 'text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20'
-                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-                )}
-                role="menuitem"
-              >
-                {Icon && (
-                  <Icon
-                    className={cn(
-                      'h-4 w-4',
-                      item.disabled
-                        ? 'text-gray-400'
-                        : isDanger
-                        ? 'text-red-500'
-                        : 'text-gray-500 dark:text-gray-400'
-                    )}
+          {(() => {
+            // Contador para índice en enabledItems
+            let enabledIndex = -1;
+            return items.map((item, index) => {
+              // Divider
+              if (item.divider) {
+                return (
+                  <div
+                    key={`divider-${index}`}
+                    className="my-1 border-t border-gray-200 dark:border-gray-700"
+                    role="separator"
                   />
-                )}
-                <span>{item.label}</span>
-              </button>
-            );
-          })}
+                );
+              }
+
+              // Incrementar índice solo para items no-divider y no-disabled
+              const isEnabled = !item.disabled;
+              if (isEnabled) enabledIndex++;
+              const currentEnabledIndex = enabledIndex;
+
+              const Icon = item.icon;
+              const isDanger = item.variant === 'danger';
+
+              return (
+                <button
+                  key={item.label || index}
+                  ref={isEnabled ? (el) => { itemRefs.current[currentEnabledIndex] = el; } : undefined}
+                  onClick={() => handleItemClick(item)}
+                  disabled={item.disabled}
+                  tabIndex={isEnabled && focusedIndex === currentEnabledIndex ? 0 : -1}
+                  className={cn(
+                    'w-full flex items-center gap-2 px-3 py-2 text-sm text-left transition-colors',
+                    'focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-700',
+                    item.disabled
+                      ? 'text-gray-400 dark:text-gray-500 cursor-not-allowed'
+                      : isDanger
+                      ? 'text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20'
+                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                  )}
+                  role="menuitem"
+                >
+                  {Icon && (
+                    <Icon
+                      className={cn(
+                        'h-4 w-4',
+                        item.disabled
+                          ? 'text-gray-400'
+                          : isDanger
+                          ? 'text-red-500'
+                          : 'text-gray-500 dark:text-gray-400'
+                      )}
+                    />
+                  )}
+                  <span>{item.label}</span>
+                </button>
+              );
+            });
+          })()}
         </div>
       )}
     </div>
   );
-});
+}));
 
 DropdownMenu.displayName = 'DropdownMenu';
 

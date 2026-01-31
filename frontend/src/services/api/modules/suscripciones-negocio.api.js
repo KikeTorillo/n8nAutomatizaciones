@@ -114,6 +114,17 @@ export const suscripcionesNegocioApi = {
     apiClient.patch(`${BASE_URL}/suscripciones/mi-suscripcion/cambiar-plan`, data),
 
   /**
+   * Calcular prorrateo para cambio de plan
+   * Permite ver el crédito/cargo antes de confirmar el cambio
+   * @param {number} nuevoPlanId - ID del plan destino
+   * @returns {Promise<Object>} - Detalle del prorrateo con crédito/cargo calculado
+   */
+  calcularProrrateo: (nuevoPlanId) =>
+    apiClient.get(`${BASE_URL}/suscripciones/mi-suscripcion/calcular-prorrateo`, {
+      params: { nuevo_plan_id: nuevoPlanId }
+    }),
+
+  /**
    * Cancelar mi propia suscripción (dogfooding)
    * @param {Object} data - { motivo_cancelacion }
    * @returns {Promise<Object>}
@@ -503,11 +514,11 @@ export const suscripcionesNegocioApi = {
     apiClient.post(`${BASE_URL}/checkout/iniciar-trial`, data),
 
   /**
-   * Validar cupón de descuento
+   * Validar cupón de descuento en checkout
    * @param {Object} data - { codigo, plan_id, precio_base? }
    * @returns {Promise<Object>} { valido, cupon?, descuento_calculado?, precio_final? }
    */
-  validarCupon: (data) =>
+  validarCuponCheckout: (data) =>
     apiClient.post(`${BASE_URL}/checkout/validar-cupon`, data),
 
   /**

@@ -20,11 +20,16 @@ import { getTextareaStyles, getAriaDescribedBy } from '@/lib/uiConstants';
  *   {...register('descripcion')}
  * />
  *
+ * @example
+ * // Con resize habilitado
+ * <Textarea rows={4} resizable="vertical" {...register('notas')} />
+ *
  * @param {Object} props
  * @param {number} [props.rows=3] - Número de filas visibles
  * @param {boolean} [props.hasError=false] - Si tiene error (borde rojo)
  * @param {boolean} [props.required=false] - Si es campo requerido
  * @param {boolean} [props.hasHelper=false] - Si tiene texto de ayuda asociado
+ * @param {'none'|'vertical'|'horizontal'|'both'} [props.resizable='none'] - Modo de redimensionamiento
  * @param {string} [props.id] - ID del elemento
  * @param {string} [props.className] - Clases adicionales
  * @param {React.Ref} ref - Forward ref
@@ -36,6 +41,7 @@ const Textarea = memo(forwardRef(function Textarea(
       hasError = false,
       required = false,
       hasHelper = false,
+      resizable = 'none',
       className,
       id,
       ...props
@@ -54,7 +60,7 @@ const Textarea = memo(forwardRef(function Textarea(
         aria-invalid={hasError || undefined}
         aria-required={required || undefined}
         aria-describedby={textareaId ? getAriaDescribedBy(textareaId, { hasError, hasHelper }) : undefined}
-        className={cn(getTextareaStyles(hasError), className)}
+        className={cn(getTextareaStyles(hasError, resizable), className)}
         {...props}
       />
     );
@@ -72,6 +78,8 @@ Textarea.propTypes = {
   required: PropTypes.bool,
   /** Si tiene texto de ayuda asociado */
   hasHelper: PropTypes.bool,
+  /** Modo de redimensionamiento del textarea */
+  resizable: PropTypes.oneOf(['none', 'vertical', 'horizontal', 'both']),
   /** ID del elemento */
   id: PropTypes.string,
   /** Clases CSS adicionales */

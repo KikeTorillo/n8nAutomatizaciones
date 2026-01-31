@@ -79,7 +79,7 @@ export function getSelectStyles(hasError = false) {
 export const TEXTAREA_BASE = cn(
   'w-full px-4 py-3 border rounded-lg transition-colors',
   'focus:outline-none focus:ring-2 focus:ring-offset-0',
-  'disabled:opacity-50 disabled:cursor-not-allowed resize-none',
+  'disabled:opacity-50 disabled:cursor-not-allowed',
   'bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100',
   'placeholder:text-gray-400 dark:placeholder:text-gray-500'
 );
@@ -88,13 +88,28 @@ export const TEXTAREA_BASE = cn(
 export const TEXTAREA_STATES = SELECT_STATES;
 
 /**
+ * Modos de resize para textarea
+ */
+export const TEXTAREA_RESIZE = {
+  none: 'resize-none',
+  vertical: 'resize-y',
+  horizontal: 'resize-x',
+  both: 'resize',
+};
+
+/**
  * Genera clases de estilo para textarea
  *
  * @param {boolean} [hasError=false] - Estado de error
+ * @param {'none'|'vertical'|'horizontal'|'both'} [resize='none'] - Modo de resize
  * @returns {string} - Clases Tailwind
  */
-export function getTextareaStyles(hasError = false) {
-  return cn(TEXTAREA_BASE, hasError ? TEXTAREA_STATES.error : TEXTAREA_STATES.default);
+export function getTextareaStyles(hasError = false, resize = 'none') {
+  return cn(
+    TEXTAREA_BASE,
+    TEXTAREA_RESIZE[resize] || TEXTAREA_RESIZE.none,
+    hasError ? TEXTAREA_STATES.error : TEXTAREA_STATES.default
+  );
 }
 
 // ==================== LABEL ====================

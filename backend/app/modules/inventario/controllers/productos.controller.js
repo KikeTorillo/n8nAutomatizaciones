@@ -183,6 +183,74 @@ class ProductosController {
             'Búsqueda completada exitosamente'
         );
     });
+
+    /**
+     * Obtener stock de un producto desglosado por ubicación
+     * GET /api/v1/inventario/productos/:id/stock-ubicaciones
+     * Query params: sucursal_id?, usuario_id?
+     */
+    static obtenerStockPorUbicacion = asyncHandler(async (req, res) => {
+        const { id } = req.params;
+        const organizacionId = req.tenant.organizacionId;
+
+        const opciones = {
+            sucursal_id: ParseHelper.parseInt(req.query.sucursal_id),
+            usuario_id: ParseHelper.parseInt(req.query.usuario_id)
+        };
+
+        const stock = await ProductosModel.obtenerStockPorUbicacion(
+            parseInt(id),
+            organizacionId,
+            opciones
+        );
+
+        return ResponseHelper.success(res, stock, 'Stock por ubicación obtenido exitosamente');
+    });
+
+    /**
+     * Obtener stock de un producto en la ubicación del usuario actual
+     * GET /api/v1/inventario/productos/:id/mi-stock
+     */
+    static obtenerMiStock = asyncHandler(async (req, res) => {
+        const { id } = req.params;
+        const organizacionId = req.tenant.organizacionId;
+        const usuarioId = req.user.id;
+
+        const stock = await ProductosModel.obtenerStockUsuario(
+            parseInt(id),
+            usuarioId,
+            organizacionId
+        );
+
+        return ResponseHelper.success(res, stock, 'Mi stock obtenido exitosamente');
+    });
+
+    /**
+     * Listar productos con stock filtrado por ubicación
+     * GET /api/v1/inventario/productos/stock-filtrado
+     * Query params: ubicacion_id?, sucursal_id?, usuario_ubicacion?, solo_con_stock?, busqueda?, categoria_id?
+     */
+    static listarConStockFiltrado = asyncHandler(async (req, res) => {
+        const organizacionId = req.tenant.organizacionId;
+
+        const filtros = {
+            ubicacion_id: ParseHelper.parseInt(req.query.ubicacion_id),
+            sucursal_id: ParseHelper.parseInt(req.query.sucursal_id),
+            // Si usuario_ubicacion=true, filtrar por ubicaciones del usuario actual
+            usuario_id: ParseHelper.parseBoolean(req.query.usuario_ubicacion)
+                ? req.user.id
+                : ParseHelper.parseInt(req.query.usuario_id),
+            solo_con_stock: ParseHelper.parseBoolean(req.query.solo_con_stock, false),
+            busqueda: ParseHelper.parseString(req.query.busqueda),
+            categoria_id: ParseHelper.parseInt(req.query.categoria_id),
+            limit: ParseHelper.parseInt(req.query.limit, 50),
+            offset: ParseHelper.parseInt(req.query.offset, 0)
+        };
+
+        const resultado = await ProductosModel.listarConStockUbicacion(organizacionId, filtros);
+
+        return ResponseHelper.success(res, resultado, 'Productos con stock filtrado obtenidos exitosamente');
+    });
 }
 
 module.exports = ProductosController;

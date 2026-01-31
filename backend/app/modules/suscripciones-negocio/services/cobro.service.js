@@ -12,7 +12,18 @@ const StripeService = require('./stripe.service');
 const MercadoPagoService = require('./mercadopago.service');
 const NotificacionesService = require('./notificaciones.service');
 const { ErrorHelper } = require('../../../utils/helpers');
+const { retryWithBackoff, isRetriableError } = require('../../../utils/retryWithBackoff');
 const logger = require('../../../utils/logger');
+
+// Configuración de retry para cobros
+const COBRO_RETRY_OPTIONS = {
+    maxRetries: 3,
+    baseDelay: 2000,       // 2 segundos inicial
+    maxDelay: 30000,       // 30 segundos máximo
+    factor: 2,             // Duplicar cada intento
+    name: 'cobro',
+    retryIf: isRetriableError
+};
 
 class CobroService {
 
@@ -235,6 +246,7 @@ class CobroService {
 
     /**
      * Procesar cobro con MercadoPago
+     * Usa retry con backoff exponencial para manejar errores transitorios
      *
      * @param {Object} suscripcion - Suscripción
      * @param {Object} pago - Registro de pago
@@ -243,22 +255,37 @@ class CobroService {
      */
     static async _procesarCobroMercadoPago(suscripcion, pago, monto) {
         try {
-            // Multi-tenant: pasar organizacionId para usar credenciales de la org
-            const pagoMP = await MercadoPagoService.crearPago({
-                transaction_amount: monto,
-                token: suscripcion.payment_method_id, // Tarjeta tokenizada
-                description: `Suscripción ${suscripcion.plan_nombre} - ${suscripcion.periodo}`,
-                installments: 1,
-                payment_method_id: 'visa', // Esto debería venir de los datos del payment method
-                payer: {
-                    email: suscripcion.cliente_email || suscripcion.suscriptor_externo?.email
-                },
-                metadata: {
-                    suscripcion_id: suscripcion.id,
-                    pago_id: pago.id,
-                    organizacion_id: suscripcion.organizacion_id
+            // Usar retry con backoff exponencial
+            const pagoMP = await retryWithBackoff(async () => {
+                // Multi-tenant: pasar organizacionId para usar credenciales de la org
+                return await MercadoPagoService.crearPago({
+                    transaction_amount: monto,
+                    token: suscripcion.payment_method_id, // Tarjeta tokenizada
+                    description: `Suscripción ${suscripcion.plan_nombre} - ${suscripcion.periodo}`,
+                    installments: 1,
+                    payment_method_id: 'visa', // Esto debería venir de los datos del payment method
+                    payer: {
+                        email: suscripcion.cliente_email || suscripcion.suscriptor_externo?.email
+                    },
+                    metadata: {
+                        suscripcion_id: suscripcion.id,
+                        pago_id: pago.id,
+                        organizacion_id: suscripcion.organizacion_id
+                    }
+                }, suscripcion.organizacion_id);
+            }, {
+                ...COBRO_RETRY_OPTIONS,
+                name: `cobro-mp-${suscripcion.id}`,
+                onRetry: (error, attempt, delay) => {
+                    logger.warn(`[Cobro] Reintentando cobro MercadoPago`, {
+                        suscripcionId: suscripcion.id,
+                        pagoId: pago.id,
+                        attempt,
+                        delayMs: Math.round(delay),
+                        error: error.message
+                    });
                 }
-            }, suscripcion.organizacion_id);
+            });
 
             if (pagoMP.status === 'approved') {
                 // Actualizar pago con datos de MercadoPago
@@ -283,7 +310,11 @@ class CobroService {
             }
 
         } catch (error) {
-            logger.error('Error en cobro MercadoPago', { error: error.message });
+            logger.error('Error en cobro MercadoPago (después de reintentos)', {
+                error: error.message,
+                suscripcionId: suscripcion.id,
+                pagoId: pago.id
+            });
 
             return {
                 exitoso: false,

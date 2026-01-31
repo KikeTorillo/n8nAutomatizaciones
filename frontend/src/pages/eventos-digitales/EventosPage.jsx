@@ -15,7 +15,7 @@ import {
 import {
   BackButton,
   Button,
-  ConfirmDialog,
+  DeleteConfirmDialog,
   Input,
   LoadingSpinner
 } from '@/components/ui';
@@ -319,15 +319,12 @@ function EventosPage() {
       </div>
 
       {/* Modal de confirmación para eliminar */}
-      <ConfirmDialog
+      <DeleteConfirmDialog
         isOpen={isOpen('delete')}
         onClose={() => closeModal('delete')}
         onConfirm={handleEliminar}
-        title="Eliminar evento"
-        message={`¿Estás seguro de eliminar el evento "${getModalData('delete')?.nombre}"? Esta acción no se puede deshacer.`}
-        confirmText="Eliminar"
-        cancelText="Cancelar"
-        variant="danger"
+        itemName={getModalData('delete')?.nombre}
+        itemType="el evento"
         isLoading={eliminarEvento.isPending}
       />
     </div>

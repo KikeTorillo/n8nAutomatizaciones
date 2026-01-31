@@ -312,7 +312,7 @@ class WebsitePaginasModel {
     }
 
     /**
-     * Reordenar páginas
+     * Reordenar páginas con bloqueo pesimista
      *
      * @param {string} websiteId - ID del website_config
      * @param {Array} ordenamiento - Array de {id, orden}
@@ -321,6 +321,14 @@ class WebsitePaginasModel {
      */
     static async reordenar(websiteId, ordenamiento, organizacionId) {
         return await RLSContextManager.transaction(organizacionId, async (db) => {
+            // Bloqueo pesimista: SELECT FOR UPDATE para prevenir race conditions
+            const ids = ordenamiento.map(item => item.id);
+            await db.query(
+                'SELECT id FROM website_paginas WHERE id = ANY($1) AND website_id = $2 FOR UPDATE',
+                [ids, websiteId]
+            );
+
+            // Actualizar orden de cada página
             for (const item of ordenamiento) {
                 await db.query(
                     'UPDATE website_paginas SET orden = $1, actualizado_en = NOW() WHERE id = $2 AND website_id = $3',
@@ -361,6 +369,67 @@ class WebsitePaginasModel {
             const result = await db.query(query, [id]);
             return result.rows.length > 0;
         });
+    }
+
+    /**
+     * Crear página con sus bloques desde el generador de sitios IA
+     *
+     * @param {Object} datos - Datos de la página (incluye array de bloques)
+     * @param {string} websiteId - ID del website_config
+     * @param {Object} db - Conexión de transacción
+     * @returns {Object} Página creada con sus bloques
+     */
+    static async crearConBloques(datos, websiteId, db) {
+        // Crear la página
+        const { rows: [pagina] } = await db.query(
+            `INSERT INTO website_paginas (
+                website_id, slug, titulo, descripcion_seo,
+                orden, visible_menu, publicada
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+            RETURNING *`,
+            [
+                websiteId,
+                datos.slug,
+                datos.titulo,
+                datos.descripcion_seo || null,
+                datos.orden,
+                datos.visible_menu !== false,
+                true,
+            ]
+        );
+
+        logger.info('[WebsitePaginasModel.crearConBloques] Página creada', {
+            pagina_id: pagina.id,
+            slug: datos.slug,
+            total_bloques: datos.bloques?.length || 0
+        });
+
+        // Crear los bloques de la página
+        const bloquesCreados = [];
+        if (datos.bloques && datos.bloques.length > 0) {
+            for (const bloque of datos.bloques) {
+                const { rows: [bloqueCreado] } = await db.query(
+                    `INSERT INTO website_bloques (
+                        pagina_id, tipo, contenido, estilos, orden, visible
+                    ) VALUES ($1, $2, $3, $4, $5, $6)
+                    RETURNING *`,
+                    [
+                        pagina.id,
+                        bloque.tipo,
+                        JSON.stringify(bloque.contenido || {}),
+                        JSON.stringify(bloque.estilos || {}),
+                        bloque.orden,
+                        bloque.visible !== false,
+                    ]
+                );
+                bloquesCreados.push(bloqueCreado);
+            }
+        }
+
+        return {
+            ...pagina,
+            bloques: bloquesCreados,
+        };
     }
 
     /**

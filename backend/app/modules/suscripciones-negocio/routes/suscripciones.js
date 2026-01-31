@@ -30,6 +30,18 @@ router.get(
 );
 
 /**
+ * GET /api/v1/suscripciones-negocio/suscripciones/mi-suscripcion/calcular-prorrateo
+ * Calcular prorrateo para cambio de plan
+ * Permite al usuario ver el crédito/cargo antes de cambiar de plan
+ */
+router.get(
+    '/mi-suscripcion/calcular-prorrateo',
+    ...authChain,
+    // Sin verificación de permisos - el usuario solo puede ver su propio prorrateo
+    SuscripcionesController.calcularProrrateo
+);
+
+/**
  * PATCH /api/v1/suscripciones-negocio/suscripciones/mi-suscripcion/cambiar-plan
  * Cambiar plan de mi propia suscripción
  * Disponible para cualquier usuario autenticado (solo puede cambiar su propio plan)

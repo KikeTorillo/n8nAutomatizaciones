@@ -33,23 +33,23 @@ function ToneSelector({
         <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">
           Tono
         </label>
-        <div className="grid grid-cols-5 gap-1">
+        <div className="flex flex-wrap gap-1.5">
           {TONOS.map((tono) => (
             <button
               key={tono.id}
               onClick={() => onTonoChange?.(tono.id)}
               disabled={disabled}
-              title={tono.descripcion}
+              title={`${tono.nombre}: ${tono.descripcion}`}
               className={cn(
-                'flex flex-col items-center p-2 rounded-lg border transition-all text-center',
+                'flex items-center gap-1 px-2 py-1.5 rounded-lg border transition-all',
                 selectedTono === tono.id
                   ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
                   : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600',
                 disabled && 'opacity-50 cursor-not-allowed'
               )}
             >
-              <span className="text-lg mb-0.5">{tono.emoji}</span>
-              <span className="text-[10px] text-gray-700 dark:text-gray-300 truncate w-full">
+              <span className="text-sm">{tono.emoji}</span>
+              <span className="text-[11px] text-gray-700 dark:text-gray-300">
                 {tono.nombre}
               </span>
             </button>

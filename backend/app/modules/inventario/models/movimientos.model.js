@@ -249,6 +249,13 @@ class MovimientosInventarioModel {
                 paramCounter++;
             }
 
+            // ✅ FEATURE Ene 2026: Filtrar por ubicación
+            if (filtros.ubicacion_id) {
+                whereConditions.push(`(m.ubicacion_origen_id = $${paramCounter} OR m.ubicacion_destino_id = $${paramCounter})`);
+                values.push(filtros.ubicacion_id);
+                paramCounter++;
+            }
+
             // CRÍTICO: Filtro por rango de fechas (aprovecha particionamiento)
             if (filtros.fecha_desde) {
                 whereConditions.push(`m.creado_en >= $${paramCounter}`);
@@ -262,17 +269,24 @@ class MovimientosInventarioModel {
                 paramCounter++;
             }
 
+            // Ene 2026: Query actualizado con JOINs a ubicaciones
             const query = `
                 SELECT
                     m.*,
                     p.nombre AS nombre_producto,
                     p.sku,
                     prov.nombre AS nombre_proveedor,
-                    u.nombre AS nombre_usuario
+                    u.nombre AS nombre_usuario,
+                    uo.codigo AS ubicacion_origen_codigo,
+                    uo.nombre AS ubicacion_origen_nombre,
+                    ud.codigo AS ubicacion_destino_codigo,
+                    ud.nombre AS ubicacion_destino_nombre
                 FROM movimientos_inventario m
                 JOIN productos p ON p.id = m.producto_id
                 LEFT JOIN proveedores prov ON prov.id = m.proveedor_id
                 LEFT JOIN usuarios u ON u.id = m.usuario_id
+                LEFT JOIN ubicaciones_almacen uo ON uo.id = m.ubicacion_origen_id
+                LEFT JOIN ubicaciones_almacen ud ON ud.id = m.ubicacion_destino_id
                 WHERE ${whereConditions.join(' AND ')}
                 ORDER BY m.creado_en DESC
                 LIMIT $${paramCounter}

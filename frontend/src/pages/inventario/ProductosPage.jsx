@@ -9,7 +9,7 @@
  */
 
 import { useState, useMemo, useCallback } from 'react';
-import { Package, Plus, Upload, ScanLine, Search, FileSpreadsheet, TrendingDown, AlertTriangle } from 'lucide-react';
+import { Package, Plus, Upload, ScanLine, Search, FileSpreadsheet, TrendingDown, AlertTriangle, MapPin } from 'lucide-react';
 import { format } from 'date-fns';
 import {
   AdvancedFilterPanel,
@@ -18,10 +18,11 @@ import {
   ListadoCRUDPage,
   SavedSearchModal,
   BarcodeScanner,
+  ToggleSwitch,
 } from '@/components/ui';
 import { useToast, useFilters, useSavedFilters, useExportCSV } from '@/hooks/utils';
 import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
-import { useProductos, useEliminarProducto, useCategorias, useProveedores } from '@/hooks/inventario';
+import { useProductos, useEliminarProducto, useCategorias, useProveedores, useProductosStockFiltrado } from '@/hooks/inventario';
 import ProductoFormDrawer from '@/components/inventario/ProductoFormDrawer';
 import BulkProductosModal from '@/components/inventario/BulkProductosModal';
 import AjustarStockModal from '@/components/inventario/AjustarStockModal';
@@ -80,10 +81,14 @@ function ProductosPage() {
   const { data: proveedoresData } = useProveedores({ activo: true });
   const proveedores = proveedoresData?.proveedores || [];
 
-  // Columnas memoizadas
+  // Columnas memoizadas - incluye flag de ver_mi_ubicacion
   const columns = useMemo(
-    () => createProductosColumns({ categorias, proveedores }),
-    [categorias, proveedores]
+    () => createProductosColumns({
+      categorias,
+      proveedores,
+      verMiUbicacion: filtros.ver_mi_ubicacion,
+    }),
+    [categorias, proveedores, filtros.ver_mi_ubicacion]
   );
 
   // Configuración de filtros memoizada
@@ -122,9 +127,24 @@ function ProductosPage() {
     }
     if (key === 'stock_bajo') return { label: 'Stock bajo', value: '' };
     if (key === 'stock_agotado') return { label: 'Agotados', value: '' };
+    if (key === 'ver_mi_ubicacion') return { label: 'Mi ubicación', value: '' };
     if (key === 'busqueda') return { label: 'Búsqueda', value };
     return { label: key, value: String(value) };
   }, [categorias, proveedores]);
+
+  // Hook para obtener productos con stock filtrado por ubicación
+  // Solo se usa cuando ver_mi_ubicacion está activo
+  const useProductosConUbicacion = (params) => {
+    const normalQuery = useProductos({ ...params, ...filtrosQuery });
+    const filtradoQuery = useProductosStockFiltrado({
+      ...params,
+      ...filtrosQuery,
+      usuario_ubicacion: true, // Filtrar por ubicación del usuario actual
+    });
+
+    // Retornar query filtrado si está activo el toggle, sino el normal
+    return filtros.ver_mi_ubicacion ? filtradoQuery : normalQuery;
+  };
 
   return (
     <ListadoCRUDPage
@@ -133,8 +153,8 @@ function ProductosPage() {
       icon={Package}
       PageLayout={InventarioPageLayout}
 
-      // Data
-      useListQuery={(params) => useProductos({ ...params, ...filtrosQuery })}
+      // Data - usa query filtrado por ubicación si está activo el toggle
+      useListQuery={useProductosConUbicacion}
       dataKey="productos"
 
       // Mutations
@@ -225,6 +245,29 @@ function ProductosPage() {
       // Custom filters rendering
       renderFilters={({ resetPage }) => (
         <>
+          {/* Toggle de filtro por ubicación */}
+          <div className="flex items-center justify-between mb-4 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
+            <div className="flex items-center gap-2">
+              <MapPin className={`h-5 w-5 ${filtros.ver_mi_ubicacion ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400'}`} />
+              <div>
+                <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                  Ver stock de mi ubicación
+                </span>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Filtra el stock según tu ubicación asignada
+                </p>
+              </div>
+            </div>
+            <ToggleSwitch
+              checked={filtros.ver_mi_ubicacion}
+              onChange={(checked) => {
+                setFiltro('ver_mi_ubicacion', checked);
+                resetPage();
+              }}
+              size="md"
+            />
+          </div>
+
           {/* Panel de Filtros Avanzados */}
           <AdvancedFilterPanel
             filtros={filtros}

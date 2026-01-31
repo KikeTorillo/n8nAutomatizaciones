@@ -12,7 +12,7 @@ import {
 import {
   Button,
   Checkbox,
-  ConfirmDialog,
+  DeleteConfirmDialog,
   Input,
   Select
 } from '@/components/ui';
@@ -500,14 +500,13 @@ function CuentasContablesPage() {
       />
 
       {/* Confirm Eliminar */}
-      <ConfirmDialog
-        open={isOpen('eliminar')}
+      <DeleteConfirmDialog
+        isOpen={isOpen('eliminar')}
         onClose={() => closeModal('eliminar')}
         onConfirm={handleEliminar}
-        title="Eliminar Cuenta"
-        message={`¿Estás seguro de eliminar la cuenta "${getModalData('eliminar')?.codigo} - ${getModalData('eliminar')?.nombre}"? Esta acción desactivará la cuenta.`}
-        confirmText="Eliminar"
-        confirmVariant="danger"
+        itemName={`${getModalData('eliminar')?.codigo} - ${getModalData('eliminar')?.nombre}`}
+        itemType="la cuenta"
+        description="Esta acción desactivará la cuenta."
         isLoading={eliminarCuenta.isPending}
       />
     </ContabilidadPageLayout>

@@ -1,32 +1,44 @@
 /**
  * Configuración de columnas para tabla de Productos
  * Ene 2026 - Migración a ListadoCRUDPage
+ * Ene 2026 - Soporte para filtro de stock por ubicación
  */
 
-import { ImageIcon } from 'lucide-react';
+import { ImageIcon, MapPin } from 'lucide-react';
 import { Badge } from '@/components/ui';
 
 /**
  * Helpers para determinar estado de stock
+ * @param {Object} producto - Objeto del producto
+ * @param {boolean} usarStockFiltrado - Si usar stock_filtrado en lugar de stock_actual
  */
-export const getStockVariant = (producto) => {
-  if (producto.stock_actual === 0) return 'error';
-  if (producto.stock_actual <= producto.stock_minimo) return 'warning';
-  if (producto.stock_actual >= producto.stock_maximo) return 'primary';
+export const getStockVariant = (producto, usarStockFiltrado = false) => {
+  const stock = usarStockFiltrado && producto.stock_filtrado !== undefined
+    ? producto.stock_filtrado
+    : producto.stock_actual;
+
+  if (stock === 0) return 'error';
+  if (stock <= producto.stock_minimo) return 'warning';
+  if (stock >= producto.stock_maximo) return 'primary';
   return 'success';
 };
 
-export const getStockLabel = (producto) => {
-  if (producto.stock_actual === 0) return 'Agotado';
-  if (producto.stock_actual <= producto.stock_minimo) return 'Stock bajo';
-  if (producto.stock_actual >= producto.stock_maximo) return 'Stock alto';
+export const getStockLabel = (producto, usarStockFiltrado = false) => {
+  const stock = usarStockFiltrado && producto.stock_filtrado !== undefined
+    ? producto.stock_filtrado
+    : producto.stock_actual;
+
+  if (stock === 0) return 'Agotado';
+  if (stock <= producto.stock_minimo) return 'Stock bajo';
+  if (stock >= producto.stock_maximo) return 'Stock alto';
   return 'Normal';
 };
 
 /**
  * Factory para crear columnas con categorías y proveedores
+ * @param {Object} options - { categorias, proveedores, verMiUbicacion }
  */
-export const createProductosColumns = ({ categorias = [], proveedores = [] }) => {
+export const createProductosColumns = ({ categorias = [], proveedores = [], verMiUbicacion = false }) => {
   const obtenerNombreCategoria = (categoriaId) => {
     const categoria = categorias.find((c) => c.id === categoriaId);
     return categoria?.nombre || 'Sin categoría';
@@ -95,13 +107,34 @@ export const createProductosColumns = ({ categorias = [], proveedores = [] }) =>
     },
     {
       key: 'stock_actual',
-      header: 'Stock',
+      header: verMiUbicacion ? 'Mi Stock' : 'Stock',
       align: 'right',
-      render: (row) => (
-        <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-          {row.stock_actual} {row.unidad_medida || 'unid'}
-        </span>
-      ),
+      render: (row) => {
+        // Si está activo el filtro de ubicación y hay stock_filtrado disponible
+        const stockMostrado = verMiUbicacion && row.stock_filtrado !== undefined
+          ? row.stock_filtrado
+          : row.stock_actual;
+        const stockTotal = row.stock_total !== undefined ? row.stock_total : row.stock_actual;
+
+        return (
+          <div className="text-right">
+            <div className="flex items-center justify-end gap-1">
+              {verMiUbicacion && (
+                <MapPin className="h-3.5 w-3.5 text-primary-500" />
+              )}
+              <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                {stockMostrado} {row.unidad_medida || 'unid'}
+              </span>
+            </div>
+            {/* Mostrar stock total como referencia cuando se filtra por ubicación */}
+            {verMiUbicacion && stockTotal !== stockMostrado && (
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                Total: {stockTotal}
+              </span>
+            )}
+          </div>
+        );
+      },
     },
     {
       key: 'precio_venta',
@@ -115,8 +148,8 @@ export const createProductosColumns = ({ categorias = [], proveedores = [] }) =>
       header: 'Estado',
       align: 'center',
       render: (row) => (
-        <Badge variant={getStockVariant(row)} size="sm">
-          {getStockLabel(row)}
+        <Badge variant={getStockVariant(row, verMiUbicacion)} size="sm">
+          {getStockLabel(row, verMiUbicacion)}
         </Badge>
       ),
     },
@@ -133,12 +166,19 @@ export const PRODUCTOS_INITIAL_FILTERS = {
   activo: true,
   stock_bajo: false,
   stock_agotado: false,
+  ver_mi_ubicacion: false, // Ene 2026: Toggle para filtrar stock por ubicación del usuario
 };
 
 /**
  * Factory para crear configuración de filtros
  */
 export const createFilterConfig = ({ categorias = [], proveedores = [] }) => [
+  {
+    id: 'ver_mi_ubicacion',
+    label: 'Filtrar por ubicación',
+    type: 'toggle',
+    description: 'Ver solo stock de mi ubicación asignada',
+  },
   {
     id: 'stock',
     label: 'Estado de Stock',

@@ -370,6 +370,10 @@ CREATE POLICY stock_ubicaciones_delete ON stock_ubicaciones
 -- FUNCIÓN: mover_stock_ubicacion
 -- Descripción: Mueve stock de una ubicación a otra
 -- ============================================================================
+-- FUNCIÓN: mover_stock_ubicacion
+-- Descripción: Transfiere stock de un producto entre ubicaciones
+-- Nota: Usa COALESCE(lote, '') para coincidir con el índice único
+-- ============================================================================
 CREATE OR REPLACE FUNCTION mover_stock_ubicacion(
     p_producto_id INTEGER,
     p_ubicacion_origen_id INTEGER,
@@ -382,17 +386,18 @@ RETURNS BOOLEAN AS $$
 DECLARE
     v_stock_origen INTEGER;
     v_organizacion_id INTEGER;
+    v_exists BOOLEAN;
 BEGIN
     -- Obtener organización
     SELECT organizacion_id INTO v_organizacion_id
     FROM ubicaciones_almacen WHERE id = p_ubicacion_origen_id;
 
-    -- Verificar stock en origen
+    -- Verificar stock en origen (usando COALESCE para coincidir con índice único)
     SELECT cantidad INTO v_stock_origen
     FROM stock_ubicaciones
     WHERE ubicacion_id = p_ubicacion_origen_id
     AND producto_id = p_producto_id
-    AND (lote = p_lote OR (lote IS NULL AND p_lote IS NULL));
+    AND COALESCE(lote, '') = COALESCE(p_lote, '');
 
     IF v_stock_origen IS NULL OR v_stock_origen < p_cantidad THEN
         RAISE EXCEPTION 'Stock insuficiente en ubicación origen. Disponible: %, Solicitado: %',
@@ -405,30 +410,36 @@ BEGIN
         actualizado_en = NOW()
     WHERE ubicacion_id = p_ubicacion_origen_id
     AND producto_id = p_producto_id
-    AND (lote = p_lote OR (lote IS NULL AND p_lote IS NULL));
+    AND COALESCE(lote, '') = COALESCE(p_lote, '');
 
-    -- Actualizar capacidad ocupada de origen
-    UPDATE ubicaciones_almacen
-    SET capacidad_ocupada = capacidad_ocupada - p_cantidad,
-        actualizado_en = NOW()
-    WHERE id = p_ubicacion_origen_id;
+    -- Nota: capacidad_ocupada se actualiza automáticamente via trigger trg_sincronizar_capacidad
 
-    -- Agregar a destino (INSERT o UPDATE)
-    INSERT INTO stock_ubicaciones (
-        organizacion_id, ubicacion_id, producto_id, cantidad, lote
-    ) VALUES (
-        v_organizacion_id, p_ubicacion_destino_id, p_producto_id, p_cantidad, p_lote
-    )
-    ON CONFLICT (ubicacion_id, producto_id, lote)
-    DO UPDATE SET
-        cantidad = stock_ubicaciones.cantidad + p_cantidad,
-        actualizado_en = NOW();
+    -- Verificar si existe registro en destino
+    SELECT EXISTS(
+        SELECT 1 FROM stock_ubicaciones
+        WHERE ubicacion_id = p_ubicacion_destino_id
+        AND producto_id = p_producto_id
+        AND COALESCE(lote, '') = COALESCE(p_lote, '')
+    ) INTO v_exists;
 
-    -- Actualizar capacidad ocupada de destino
-    UPDATE ubicaciones_almacen
-    SET capacidad_ocupada = capacidad_ocupada + p_cantidad,
-        actualizado_en = NOW()
-    WHERE id = p_ubicacion_destino_id;
+    IF v_exists THEN
+        -- Actualizar destino existente
+        UPDATE stock_ubicaciones
+        SET cantidad = cantidad + p_cantidad,
+            actualizado_en = NOW()
+        WHERE ubicacion_id = p_ubicacion_destino_id
+        AND producto_id = p_producto_id
+        AND COALESCE(lote, '') = COALESCE(p_lote, '');
+    ELSE
+        -- Insertar nuevo registro en destino
+        INSERT INTO stock_ubicaciones (
+            organizacion_id, ubicacion_id, producto_id, cantidad, lote
+        ) VALUES (
+            v_organizacion_id, p_ubicacion_destino_id, p_producto_id, p_cantidad, p_lote
+        );
+    END IF;
+
+    -- Nota: capacidad_ocupada se actualiza automáticamente via trigger trg_sincronizar_capacidad
 
     -- Limpiar registros con cantidad 0
     DELETE FROM stock_ubicaciones

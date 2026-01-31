@@ -27,6 +27,12 @@ export const SEMANTIC_COLORS = {
     icon: 'text-primary-600 dark:text-primary-400',
     ring: 'focus:ring-primary-500',
     hover: 'hover:bg-primary-200 dark:hover:bg-primary-800/40',
+    // Estados de selección/activación para tabs, listas, navegación
+    selectedBg: 'bg-primary-600 text-white',
+    selectedBgDark: 'bg-primary-600 dark:bg-primary-500 text-white',
+    activeBg: 'bg-primary-50 dark:bg-primary-900/30',
+    activeText: 'text-primary-700 dark:text-primary-400',
+    hoverSubtle: 'hover:bg-primary-50 dark:hover:bg-primary-900/20',
   },
   success: {
     bg: 'bg-green-100 dark:bg-green-900/40',

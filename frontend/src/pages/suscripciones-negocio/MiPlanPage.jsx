@@ -28,6 +28,7 @@ import {
   Badge,
   LoadingSpinner,
   ConfirmDialog,
+  BackButton,
 } from '@/components/ui';
 import {
   useMiSuscripcion,
@@ -42,6 +43,7 @@ import {
   HistorialPagosCard,
 } from '@/components/suscripciones-negocio';
 import UsageIndicator from '@/components/suscripciones-negocio/UsageIndicator';
+import BalanceAjustesCard from '@/components/suscripciones-negocio/BalanceAjustesCard';
 import { useToast } from '@/hooks/utils';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import CambiarPlanDrawer from '@/components/suscripciones-negocio/CambiarPlanDrawer';
@@ -257,7 +259,6 @@ function PlanActualCard({ suscripcion, onCambiarPlan, onCancelar, onPausar, onRe
  * Página principal Mi Plan
  */
 function MiPlanPage() {
-  const navigate = useNavigate();
   const { success, error: showError } = useToast();
 
   // State
@@ -334,14 +335,20 @@ function MiPlanPage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-            Mi Plan
-          </h1>
-          <p className="mt-2 text-gray-500 dark:text-gray-400">
-            Gestiona tu suscripción y visualiza los detalles de tu plan actual
-          </p>
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
+        <BackButton to="/home" label="Volver al Inicio" className="mb-3" />
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <div className="p-2 rounded-lg bg-primary-100 dark:bg-primary-900/30">
+              <CreditCard className="w-6 h-6 text-primary-600 dark:text-primary-400" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Mi Plan</h1>
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                Gestiona tu suscripción y visualiza los detalles de tu plan actual
+              </p>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -358,6 +365,14 @@ function MiPlanPage() {
               isPending={isPending}
             />
 
+            {/* Balance de ajustes pendientes (créditos/cargos) */}
+            {suscripcion.balance_ajustes && (
+              <BalanceAjustesCard
+                balance={suscripcion.balance_ajustes}
+                moneda={suscripcion.moneda}
+              />
+            )}
+
             {/* Uso de usuarios (Seat-based billing) */}
             {resumenUso && resumenUso.tieneSuscripcion !== false && (
               <UsageIndicator
@@ -373,10 +388,9 @@ function MiPlanPage() {
               />
             )}
 
-            {/* Historial de pagos */}
+            {/* Historial de pagos - usa ultimos_pagos que viene con la suscripción */}
             <HistorialPagosCard
-              suscripcionId={suscripcion.id}
-              limite={5}
+              pagos={suscripcion.ultimos_pagos}
             />
           </>
         ) : (

@@ -836,7 +836,7 @@ El texto debe tener entre ${palabras} palabras.
 ${contexto.nombre ? `Nombre del negocio: ${contexto.nombre}` : ''}
 ${contexto.descripcion ? `Descripcion: ${contexto.descripcion}` : ''}
 
-IMPORTANTE: Responde SOLO con el texto generado, sin comillas, sin explicaciones, sin prefijos como "Aqui tienes".`;
+IMPORTANTE: Responde SOLO con el texto generado en español, sin comillas, sin explicaciones, sin prefijos como "Aqui tienes". /no_think`;
 
     try {
       // Ejecutar con circuit breaker (incluye retry automático)

@@ -64,7 +64,7 @@ import { EditorTour } from './components/OnboardingTour';
 import ConflictAlert from './components/ConflictAlert';
 
 // UI
-import { BackButton, Drawer } from '@/components/ui';
+import { BackButton, Drawer, ModuleGuard } from '@/components/ui';
 
 /**
  * WebsiteEditorPage - Editor visual WYSIWYG del sitio web
@@ -511,6 +511,136 @@ function WebsiteEditorPage() {
     () => bloques.find((b) => b.id === bloqueSeleccionado),
     [bloques, bloqueSeleccionado]
   );
+
+  // ========== RENDER: CONTENIDO DEL EDITOR ==========
+  return (
+      <WebsiteEditorContent
+        isLoading={isLoading}
+        tieneSitio={tieneSitio}
+        mostrarCrearSitio={mostrarCrearSitio}
+        setMostrarCrearSitio={setMostrarCrearSitio}
+        mostrarTemplates={mostrarTemplates}
+        setMostrarTemplates={setMostrarTemplates}
+        mostrarAIWizard={mostrarAIWizard}
+        setMostrarAIWizard={setMostrarAIWizard}
+        config={config}
+        paginas={paginas}
+        paginaActiva={paginaActiva}
+        setPaginaActiva={setPaginaActiva}
+        bloques={bloques}
+        bloqueSeleccionado={bloqueSeleccionado}
+        bloqueSeleccionadoCompleto={bloqueSeleccionadoCompleto}
+        tiposBloques={tiposBloques}
+        bloquesLoading={bloquesLoading}
+        estaPublicado={estaPublicado}
+        estaGuardando={estaGuardando}
+        modoEditor={modoEditor}
+        setModoEditor={setModoEditor}
+        slashMenu={slashMenu}
+        setSlashMenu={setSlashMenu}
+        tourReady={tourReady}
+        // Layout
+        isMobile={isMobile}
+        showSidebar={showSidebar}
+        showSecondaryPanel={showSecondaryPanel}
+        propertiesAsDrawer={propertiesAsDrawer}
+        showPropertiesPanel={showPropertiesPanel}
+        drawerAbierto={drawerAbierto}
+        panelActivo={panelActivo}
+        openPanel={openPanel}
+        closeDrawer={closeDrawer}
+        cerrarPropiedades={cerrarPropiedades}
+        PANEL_TYPES={PANEL_TYPES}
+        // Handlers
+        handleCrearSitio={handleCrearSitio}
+        handlePublicar={handlePublicar}
+        handleAgregarBloque={handleAgregarBloque}
+        handleActualizarBloque={handleActualizarBloque}
+        handleEliminarBloque={handleEliminarBloque}
+        handleDuplicarBloque={handleDuplicarBloque}
+        handleToggleVisibilidad={handleToggleVisibilidad}
+        handleReordenarBloques={handleReordenarBloques}
+        handleDropFromPalette={handleDropFromPalette}
+        handleDndReorder={handleDndReorder}
+        handleSlashSelect={handleSlashSelect}
+        handleSlashClose={handleSlashClose}
+        // Mutations
+        crearConfig={crearConfig}
+        actualizarConfig={actualizarConfig}
+        publicarSitio={publicarSitio}
+        crearPagina={crearPagina}
+        actualizarPagina={actualizarPagina}
+        eliminarPagina={eliminarPagina}
+        seleccionarBloque={seleccionarBloque}
+        deseleccionarBloque={deseleccionarBloque}
+      />
+  );
+}
+
+/**
+ * WebsiteEditorContent - Contenido interno del editor (después de verificar módulo)
+ */
+function WebsiteEditorContent({
+  isLoading,
+  tieneSitio,
+  mostrarCrearSitio,
+  setMostrarCrearSitio,
+  mostrarTemplates,
+  setMostrarTemplates,
+  mostrarAIWizard,
+  setMostrarAIWizard,
+  config,
+  paginas,
+  paginaActiva,
+  setPaginaActiva,
+  bloques,
+  bloqueSeleccionado,
+  bloqueSeleccionadoCompleto,
+  tiposBloques,
+  bloquesLoading,
+  estaPublicado,
+  estaGuardando,
+  modoEditor,
+  setModoEditor,
+  slashMenu,
+  setSlashMenu,
+  tourReady,
+  // Layout
+  isMobile,
+  showSidebar,
+  showSecondaryPanel,
+  propertiesAsDrawer,
+  showPropertiesPanel,
+  drawerAbierto,
+  panelActivo,
+  openPanel,
+  closeDrawer,
+  cerrarPropiedades,
+  PANEL_TYPES,
+  // Handlers
+  handleCrearSitio,
+  handlePublicar,
+  handleAgregarBloque,
+  handleActualizarBloque,
+  handleEliminarBloque,
+  handleDuplicarBloque,
+  handleToggleVisibilidad,
+  handleReordenarBloques,
+  handleDropFromPalette,
+  handleDndReorder,
+  handleSlashSelect,
+  handleSlashClose,
+  // Mutations
+  crearConfig,
+  actualizarConfig,
+  publicarSitio,
+  crearPagina,
+  actualizarPagina,
+  eliminarPagina,
+  seleccionarBloque,
+  deseleccionarBloque,
+}) {
+  const navigate = useNavigate();
 
   // ========== RENDER: LOADING ==========
   if (isLoading) {
@@ -1159,4 +1289,16 @@ function CrearSitioModal({ onCrear, onCancelar, isLoading }) {
   );
 }
 
-export default WebsiteEditorPage;
+/**
+ * WebsiteEditorPageWithGuard - Wrapper que verifica módulo ANTES de cargar el editor
+ * Esto evita ejecutar hooks y llamadas API si el módulo no está activo
+ */
+function WebsiteEditorPageWithGuard() {
+  return (
+    <ModuleGuard requiere="website">
+      <WebsiteEditorPage />
+    </ModuleGuard>
+  );
+}
+
+export default WebsiteEditorPageWithGuard;

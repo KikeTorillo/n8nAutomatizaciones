@@ -458,8 +458,12 @@ CREATE POLICY suscripciones_delete_own ON suscripciones_org
     FOR DELETE USING (organizacion_id = current_setting('app.current_tenant_id')::INTEGER);
 
 -- Políticas para pagos_suscripcion
+-- Incluye bypass para endpoint mi-suscripcion (dogfooding: suscripción en org 1, usuario en otra org)
 CREATE POLICY pagos_select_own ON pagos_suscripcion
-    FOR SELECT USING (organizacion_id = current_setting('app.current_tenant_id')::INTEGER);
+    FOR SELECT USING (
+        (organizacion_id = current_setting('app.current_tenant_id', true)::INTEGER)
+        OR (current_setting('app.bypass_rls', true) = 'true')
+    );
 
 CREATE POLICY pagos_insert_own ON pagos_suscripcion
     FOR INSERT WITH CHECK (organizacion_id = current_setting('app.current_tenant_id')::INTEGER);

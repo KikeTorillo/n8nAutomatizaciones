@@ -28,11 +28,12 @@ import {
   usePlanesPublicos,
   useCambiarPlanSuscripcion,
   useCambiarMiPlan,
+  useCalcularProrrateo,
 } from '@/hooks/suscripciones-negocio';
 import { suscripcionesNegocioApi } from '@/services/api/modules';
 import { useToast } from '@/hooks/utils';
 import { formatCurrency, cn } from '@/lib/utils';
-import ContactarSoporteModal from './ContactarSoporteModal';
+import ProrrateoResumen from './ProrrateoResumen';
 
 /**
  * Card individual de plan para selección
@@ -41,7 +42,6 @@ function PlanSeleccionCard({ plan, planActualId, onSelect, isSelected }) {
   const esActual = plan.id === planActualId;
   const precio = plan.precio_mensual || plan.precio || 0;
   const features = plan.features || plan.caracteristicas || [];
-  const diasTrial = plan.dias_trial ?? plan.dias_prueba ?? 0;
 
   return (
     <div
@@ -229,10 +229,18 @@ function CambiarPlanDrawer({ isOpen, onClose, suscripcion, onSuccess, isUserPage
   // State
   const [planSeleccionado, setPlanSeleccionado] = useState(null);
   const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
-  const [showSoporteModal, setShowSoporteModal] = useState(false);
 
   // Queries
   const { data: planes, isLoading: loadingPlanes } = usePlanesPublicos();
+
+  // Query de prorrateo (solo se activa cuando hay plan seleccionado y es página de usuario)
+  const {
+    data: prorrateo,
+    isLoading: loadingProrrateo,
+    error: errorProrrateo,
+  } = useCalcularProrrateo(planSeleccionado?.id, {
+    enabled: isUserPage && !!planSeleccionado && planSeleccionado.id !== suscripcion?.plan_id,
+  });
 
   // Mutations - usar hook apropiado según contexto
   const cambiarPlanAdminMutation = useCambiarPlanSuscripcion();
@@ -253,7 +261,7 @@ function CambiarPlanDrawer({ isOpen, onClose, suscripcion, onSuccess, isUserPage
     return precioNuevo > precioActual && precioNuevo > 0;
   }, [planSeleccionado, suscripcion]);
 
-  // Determinar si es un downgrade (requiere contactar soporte)
+  // Determinar si es un downgrade (ahora con prorrateo automático)
   const esDowngrade = useMemo(() => {
     if (!planSeleccionado || !suscripcion) return false;
     const precioActual = parseFloat(suscripcion.precio_actual || 0);
@@ -264,12 +272,6 @@ function CambiarPlanDrawer({ isOpen, onClose, suscripcion, onSuccess, isUserPage
   // Handler de confirmación
   const handleConfirmar = async () => {
     if (!planSeleccionado || !suscripcion) return;
-
-    // Si es downgrade y es página de usuario, mostrar modal de soporte
-    if (isUserPage && esDowngrade) {
-      setShowSoporteModal(true);
-      return;
-    }
 
     // Si es upgrade a plan de pago, ir a checkout de MercadoPago
     if (isUserPage && esUpgradePago) {
@@ -296,9 +298,10 @@ function CambiarPlanDrawer({ isOpen, onClose, suscripcion, onSuccess, isUserPage
       return;
     }
 
-    // Para cambios sin pago (admin o mismo precio), usar la mutación directa
+    // Para downgrades y cambios sin pago, usar la mutación directa
+    // El backend aplica el prorrateo automáticamente
     const mutateParams = isUserPage
-      ? { nuevo_plan_id: planSeleccionado.id }
+      ? { nuevo_plan_id: planSeleccionado.id, cambio_inmediato: true }
       : { id: suscripcion.id, nuevo_plan_id: planSeleccionado.id };
 
     cambiarPlanMutation.mutate(
@@ -306,6 +309,11 @@ function CambiarPlanDrawer({ isOpen, onClose, suscripcion, onSuccess, isUserPage
       {
         onSuccess: () => {
           setPlanSeleccionado(null);
+          if (esDowngrade && prorrateo?.requiereCredito) {
+            success(`Plan cambiado. Se aplicó un crédito de ${formatCurrency(Math.abs(prorrateo.diferencia))} para tu próxima factura.`);
+          } else {
+            success('Plan cambiado exitosamente');
+          }
           onSuccess?.();
         },
         onError: (err) => {
@@ -318,21 +326,22 @@ function CambiarPlanDrawer({ isOpen, onClose, suscripcion, onSuccess, isUserPage
   // Reset al cerrar
   const handleClose = () => {
     setPlanSeleccionado(null);
-    setShowSoporteModal(false);
     onClose();
-  };
-
-  // Cerrar modal de soporte
-  const handleCloseSoporteModal = () => {
-    setShowSoporteModal(false);
   };
 
   // Texto del botón según el tipo de cambio
   const getBotonTexto = () => {
-    if (isUserPage && esDowngrade) return 'Solicitar Cambio';
     if (isUserPage && esUpgradePago) return 'Ir a Pagar';
+    if (isUserPage && esDowngrade) return 'Confirmar Downgrade';
     return 'Confirmar Cambio';
   };
+
+  // Verificar si se puede confirmar (esperando prorrateo en downgrades)
+  const puedeConfirmar = useMemo(() => {
+    if (!planSeleccionado) return false;
+    if (isUserPage && esDowngrade && loadingProrrateo) return false;
+    return true;
+  }, [planSeleccionado, isUserPage, esDowngrade, loadingProrrateo]);
 
   return (
     <>
@@ -376,10 +385,19 @@ function CambiarPlanDrawer({ isOpen, onClose, suscripcion, onSuccess, isUserPage
               </div>
 
               {/* Resumen si hay plan seleccionado */}
-              {planSeleccionado && (
+              {planSeleccionado && !isUserPage && (
                 <ResumenCambio
                   planActual={suscripcion}
                   planNuevo={planSeleccionado}
+                />
+              )}
+
+              {/* Prorrateo detallado para usuarios (con cálculo real) */}
+              {planSeleccionado && isUserPage && planSeleccionado.id !== suscripcion?.plan_id && (
+                <ProrrateoResumen
+                  prorrateo={prorrateo}
+                  isLoading={loadingProrrateo}
+                  error={errorProrrateo}
                 />
               )}
             </>
@@ -399,7 +417,7 @@ function CambiarPlanDrawer({ isOpen, onClose, suscripcion, onSuccess, isUserPage
             <Button
               variant="primary"
               onClick={handleConfirmar}
-              disabled={!planSeleccionado || cambiarPlanMutation.isPending || isCheckoutLoading}
+              disabled={!puedeConfirmar || cambiarPlanMutation.isPending || isCheckoutLoading}
               loading={cambiarPlanMutation.isPending || isCheckoutLoading}
             >
               {getBotonTexto()}
@@ -408,14 +426,6 @@ function CambiarPlanDrawer({ isOpen, onClose, suscripcion, onSuccess, isUserPage
         </div>
       </div>
     </Drawer>
-
-    {/* Modal de contactar soporte para downgrades */}
-    <ContactarSoporteModal
-      isOpen={showSoporteModal}
-      onClose={handleCloseSoporteModal}
-      planActualNombre={suscripcion?.plan_nombre}
-      planNuevoNombre={planSeleccionado?.nombre}
-    />
   </>
   );
 }

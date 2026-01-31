@@ -13,7 +13,7 @@ import { useToast } from '@/hooks/utils';
 import {
   Button,
   Checkbox,
-  ConfirmDialog,
+  DeleteConfirmDialog,
   Drawer,
   Input,
   Select,
@@ -684,15 +684,14 @@ function CustomFieldsBuilder({ entidadTipo: initialEntidadTipo = null }) {
       </Drawer>
 
       {/* Confirmar eliminacion */}
-      <ConfirmDialog
+      <DeleteConfirmDialog
         isOpen={!!confirmDelete}
         onClose={() => setConfirmDelete(null)}
         onConfirm={handleEliminar}
-        title="Eliminar campo"
-        message={`¿Estas seguro de eliminar el campo "${confirmDelete?.nombre}"? Esta accion no se puede deshacer y se perderan todos los valores guardados.`}
-        confirmLabel="Eliminar"
-        variant="danger"
-        loading={eliminarMutation.isPending}
+        itemName={confirmDelete?.nombre}
+        itemType="el campo"
+        description="Se perderán todos los valores guardados."
+        isLoading={eliminarMutation.isPending}
       />
     </div>
   );

@@ -1105,6 +1105,40 @@ const inventarioSchemas = {
     },
 
     /**
+     * Schema para obtener stock por ubicaciones
+     * GET /api/v1/inventario/productos/:id/stock-ubicaciones
+     * Ene 2026: Nuevo endpoint para filtrado de stock por ubicación
+     */
+    obtenerStockUbicaciones: {
+        params: Joi.object({
+            id: Joi.number().integer().positive().required()
+        }),
+        query: Joi.object({
+            sucursal_id: Joi.number().integer().positive().optional(),
+            usuario_id: Joi.number().integer().positive().optional()
+        })
+    },
+
+    /**
+     * Schema para listar productos con stock filtrado por ubicación
+     * GET /api/v1/inventario/productos/stock-filtrado
+     * Ene 2026: Nuevo endpoint para filtrado WMS
+     */
+    listarProductosStockFiltrado: {
+        query: Joi.object({
+            ubicacion_id: Joi.number().integer().positive().optional(),
+            sucursal_id: Joi.number().integer().positive().optional(),
+            usuario_id: Joi.number().integer().positive().optional(),
+            usuario_ubicacion: Joi.boolean().optional(), // true = usar ubicación del usuario actual
+            solo_con_stock: Joi.boolean().optional().default(false),
+            busqueda: Joi.string().max(100).optional(),
+            categoria_id: Joi.number().integer().positive().optional(),
+            limit: Joi.number().integer().min(1).max(100).optional().default(50),
+            offset: Joi.number().integer().min(0).optional().default(0)
+        })
+    },
+
+    /**
      * Schema para extender reserva
      * PATCH /api/v1/inventario/reservas/:id/extender
      */

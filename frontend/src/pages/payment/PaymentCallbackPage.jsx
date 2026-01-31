@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   CheckCircle,
   XCircle,
@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { Button, LoadingSpinner } from '@/components/ui';
 import { suscripcionesNegocioApi } from '@/services/api/modules/suscripciones-negocio.api';
+import { QUERY_KEYS } from '@/hooks/suscripciones-negocio/constants';
 import { formatCurrency } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 
@@ -25,6 +26,7 @@ import { cn } from '@/lib/utils';
 function PaymentCallbackPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   // Parámetros de MercadoPago
   const collectionStatus = searchParams.get('collection_status') || searchParams.get('status');
@@ -69,6 +71,33 @@ function PaymentCallbackPage() {
     estadoResultado || (collectionStatus === 'approved' ? 'aprobado' :
       collectionStatus === 'pending' ? 'pendiente' :
         collectionStatus === 'rejected' ? 'rechazado' : 'desconocido');
+
+  // Invalidar caché cuando el pago es exitoso para que MiPlanPage muestre datos frescos
+  useEffect(() => {
+    if (estadoFinal === 'aprobado' && !isLoading) {
+      queryClient.invalidateQueries({
+        queryKey: [QUERY_KEYS.MI_SUSCRIPCION],
+        refetchType: 'active'
+      });
+      queryClient.invalidateQueries({
+        queryKey: [QUERY_KEYS.USO_RESUMEN],
+        refetchType: 'active'
+      });
+      queryClient.invalidateQueries({
+        queryKey: [QUERY_KEYS.SUSCRIPCIONES],
+        refetchType: 'active'
+      });
+      queryClient.invalidateQueries({
+        queryKey: [QUERY_KEYS.METRICAS_DASHBOARD],
+        refetchType: 'active'
+      });
+      // Invalidar auth/me para actualizar plan_actual en el contexto de usuario
+      queryClient.invalidateQueries({
+        queryKey: ['auth-user'],
+        refetchType: 'active'
+      });
+    }
+  }, [estadoFinal, isLoading, queryClient]);
 
   // Configuración según estado
   const estadoConfig = {

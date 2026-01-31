@@ -2,6 +2,7 @@ import { memo } from 'react';
 import PropTypes from 'prop-types';
 import { cn } from '@/lib/utils';
 import { BackButton } from '../../molecules/BackButton';
+import { SEMANTIC_COLORS } from '@/lib/uiConstants';
 
 /**
  * FormHeader - Header para páginas de formulario
@@ -24,8 +25,8 @@ const FormHeader = memo(function FormHeader({
 
       <div className="flex items-center gap-3">
         {Icon && (
-          <div className="flex-shrink-0 p-2 bg-primary-100 dark:bg-primary-900/30 rounded-lg">
-            <Icon className="w-6 h-6 text-primary-600 dark:text-primary-400" />
+          <div className={cn('flex-shrink-0 p-2 rounded-lg', SEMANTIC_COLORS.primary.bg)}>
+            <Icon className={cn('w-6 h-6', SEMANTIC_COLORS.primary.icon)} />
           </div>
         )}
 

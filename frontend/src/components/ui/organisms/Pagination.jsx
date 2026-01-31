@@ -2,7 +2,7 @@ import { useMemo, memo } from 'react';
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '../atoms/Button';
-import { PAGINATION_SIZES } from '@/lib/uiConstants';
+import { PAGINATION_SIZES, SEMANTIC_COLORS } from '@/lib/uiConstants';
 
 /**
  * Pagination - Componente de paginación reutilizable
@@ -90,7 +90,12 @@ export const Pagination = memo(function Pagination({
     >
       {/* Info de paginación */}
       {showInfo && (
-        <p className="text-sm text-gray-600 dark:text-gray-400 order-2 sm:order-1">
+        <p
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+          className="text-sm text-gray-600 dark:text-gray-400 order-2 sm:order-1"
+        >
           Mostrando{' '}
           <span className="font-medium text-gray-900 dark:text-gray-100">
             {startItem}-{endItem}
@@ -118,7 +123,7 @@ export const Pagination = memo(function Pagination({
                   ? 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
                   : 'text-gray-400 dark:text-gray-600 cursor-not-allowed'
               )}
-              title="Primera página"
+              aria-label="Ir a primera página"
             >
               <ChevronsLeft className={sizes.icon} />
             </button>
@@ -129,6 +134,7 @@ export const Pagination = memo(function Pagination({
             type="button"
             onClick={() => onPageChange(page - 1)}
             disabled={!hasPrev}
+            aria-label="Ir a página anterior"
             className={cn(
               sizes.button,
               'rounded-lg transition-colors flex items-center gap-1',
@@ -162,7 +168,7 @@ export const Pagination = memo(function Pagination({
                     sizes.page,
                     'rounded-lg font-medium transition-colors flex items-center justify-center',
                     pageNum === page
-                      ? 'bg-primary-600 text-white'
+                      ? SEMANTIC_COLORS.primary.selectedBg
                       : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
                   )}
                 >
@@ -182,6 +188,7 @@ export const Pagination = memo(function Pagination({
             type="button"
             onClick={() => onPageChange(page + 1)}
             disabled={!hasNext}
+            aria-label="Ir a página siguiente"
             className={cn(
               sizes.button,
               'rounded-lg transition-colors flex items-center gap-1',
@@ -207,7 +214,7 @@ export const Pagination = memo(function Pagination({
                   ? 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
                   : 'text-gray-400 dark:text-gray-600 cursor-not-allowed'
               )}
-              title="Última página"
+              aria-label="Ir a última página"
             >
               <ChevronsRight className={sizes.icon} />
             </button>

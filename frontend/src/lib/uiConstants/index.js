@@ -159,6 +159,8 @@ export {
   CARD_ELEVATED,
   CARD_FLAT,
   CARD_OUTLINE,
+  CARD_STATUS_STYLES,
+  CARD_PADDING_STYLES,
   SURFACE_HOVER,
   SURFACE_HOVER_SUBTLE,
   OVERLAY_BACKDROP,
@@ -225,6 +227,7 @@ export {
   getSelectStyles,
   TEXTAREA_BASE,
   TEXTAREA_STATES,
+  TEXTAREA_RESIZE,
   getTextareaStyles,
   LABEL_BASE,
   LABEL_REQUIRED,
@@ -250,3 +253,10 @@ export {
   STATE_DROPDOWN_MENU_STYLES,
   STATE_MOBILE_SELECTOR_STYLES,
 } from './stateNavTabs';
+
+// Page Header (Ene 2026)
+export {
+  PAGE_HEADER_ICON_COLORS,
+  getPageHeaderIconColor,
+  PAGE_HEADER_STYLES,
+} from './pageHeader';

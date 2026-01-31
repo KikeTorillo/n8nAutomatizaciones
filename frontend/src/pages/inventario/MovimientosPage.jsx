@@ -1,5 +1,5 @@
 import { useMemo, useCallback } from 'react';
-import { FileBarChart, TrendingUp, TrendingDown, ArrowLeftRight, FileSpreadsheet } from 'lucide-react';
+import { FileBarChart, TrendingUp, TrendingDown, ArrowLeftRight, FileSpreadsheet, MapPin } from 'lucide-react';
 import { useModalManager, useToast, useExportCSV, useFilters } from '@/hooks/utils';
 import {
   Badge,
@@ -11,7 +11,7 @@ import {
   Pagination
 } from '@/components/ui';
 import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
-import { useMovimientos, useProductos, useProveedores } from '@/hooks/inventario';
+import { useMovimientos, useProductos, useProveedores, useUbicacionesAlmacen } from '@/hooks/inventario';
 import KardexModal from '@/components/inventario/KardexModal';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -25,6 +25,7 @@ const INITIAL_FILTERS = {
   categoria: '',
   producto_id: '',
   proveedor_id: '',
+  ubicacion_id: '', // Ene 2026: Filtro por ubicación
   fecha_desde: '',
   fecha_hasta: '',
   limit: ITEMS_PER_PAGE,
@@ -144,6 +145,27 @@ const createColumns = (onVerKardex) => [
     ),
   },
   {
+    key: 'ubicacion',
+    header: 'Ubicación',
+    hideOnMobile: true,
+    render: (row) => {
+      const ubicacion = row.ubicacion_destino_codigo || row.ubicacion_origen_codigo;
+      const ubicacionNombre = row.ubicacion_destino_nombre || row.ubicacion_origen_nombre;
+      if (!ubicacion) return <span className="text-sm text-gray-400 dark:text-gray-500">-</span>;
+      return (
+        <div className="flex items-center gap-1">
+          <MapPin className="h-3.5 w-3.5 text-gray-400" />
+          <div>
+            <div className="text-sm text-gray-900 dark:text-gray-100">{ubicacion}</div>
+            {ubicacionNombre && (
+              <div className="text-xs text-gray-500 dark:text-gray-400">{ubicacionNombre}</div>
+            )}
+          </div>
+        </div>
+      );
+    },
+  },
+  {
     key: 'referencia',
     header: 'Referencia',
     hideOnMobile: true,
@@ -209,6 +231,10 @@ function MovimientosPage() {
   const { data: proveedoresData } = useProveedores({ activo: true });
   const proveedores = proveedoresData?.proveedores || [];
 
+  // Ene 2026: Query de ubicaciones para filtro
+  const { data: ubicacionesData } = useUbicacionesAlmacen({ activo: true });
+  const ubicaciones = ubicacionesData?.ubicaciones || [];
+
   // Paginación
   const page = Math.floor(filtrosQuery.offset / ITEMS_PER_PAGE) + 1;
   const totalPages = Math.ceil(total / ITEMS_PER_PAGE);
@@ -253,9 +279,18 @@ function MovimientosPage() {
       type: 'select',
       options: proveedores.map((p) => ({ value: p.id, label: p.nombre })),
     },
+    {
+      key: 'ubicacion_id',
+      label: 'Ubicación',
+      type: 'select',
+      options: ubicaciones.map((u) => ({
+        value: u.id,
+        label: `${u.codigo}${u.nombre ? ` - ${u.nombre}` : ''}`,
+      })),
+    },
     { key: 'fecha_desde', label: 'Desde', type: 'date' },
     { key: 'fecha_hasta', label: 'Hasta', type: 'date' },
-  ], [productos, proveedores]);
+  ], [productos, proveedores, ubicaciones]);
 
   // Handlers
   const handleFiltroChange = useCallback((campo, valor) => {

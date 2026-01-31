@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { memo, forwardRef } from 'react';
 import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
@@ -14,15 +14,16 @@ import { Button } from '../atoms/Button';
  * @param {string} size - Tamaño del botón (default: "sm")
  * @param {boolean} iconOnly - Solo mostrar icono sin texto (útil para móvil)
  * @param {string} className - Clases adicionales
+ * @param {React.Ref} ref - Ref para acceder al elemento Button
  */
-const BackButton = memo(function BackButton({
+const BackButton = memo(forwardRef(function BackButton({
   to,
   label = 'Volver',
   variant = 'outline',
   size = 'sm',
   iconOnly = false,
   className = ''
-}) {
+}, ref) {
   const navigate = useNavigate();
 
   const handleClick = () => {
@@ -35,6 +36,7 @@ const BackButton = memo(function BackButton({
 
   return (
     <Button
+      ref={ref}
       variant={variant}
       size={size}
       onClick={handleClick}
@@ -45,7 +47,7 @@ const BackButton = memo(function BackButton({
       {!iconOnly && label}
     </Button>
   );
-});
+}));
 
 BackButton.displayName = 'BackButton';
 

@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { cn } from '@/lib/utils';
 import { BackButton } from '../../molecules/BackButton';
 import { Badge } from '../../atoms/Badge';
+import { SEMANTIC_COLORS } from '@/lib/uiConstants';
 
 /**
  * DetailHeader - Header para páginas de detalle
@@ -41,8 +42,8 @@ const DetailHeader = memo(function DetailHeader({
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div className="flex items-start gap-3">
           {Icon && (
-            <div className="flex-shrink-0 p-2 bg-primary-100 dark:bg-primary-900/30 rounded-lg">
-              <Icon className="w-6 h-6 text-primary-600 dark:text-primary-400" />
+            <div className={cn('flex-shrink-0 p-2 rounded-lg', SEMANTIC_COLORS.primary.bg)}>
+              <Icon className={cn('w-6 h-6', SEMANTIC_COLORS.primary.icon)} />
             </div>
           )}
 

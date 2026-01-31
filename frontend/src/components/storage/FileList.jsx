@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { FileImage, FileText, File, Download, Trash2, Eye, ExternalLink, Loader2, MoreVertical } from 'lucide-react';
 import { useArchivos, useEliminarArchivo } from '@/hooks/utils';
 import { useToast } from '@/hooks/utils';
-import { Button, ConfirmDialog } from '@/components/ui';
+import { DeleteConfirmDialog } from '@/components/ui';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -216,14 +216,12 @@ function FileList({
         )}
 
         {/* Confirm Delete */}
-        <ConfirmDialog
+        <DeleteConfirmDialog
           isOpen={!!deleteTarget}
           onClose={() => setDeleteTarget(null)}
           onConfirm={handleDelete}
-          title="Eliminar archivo"
-          message={`¿Estás seguro de eliminar "${deleteTarget?.nombre_original}"? Esta acción no se puede deshacer.`}
-          confirmText="Eliminar"
-          confirmVariant="danger"
+          itemName={deleteTarget?.nombre_original}
+          itemType="el archivo"
           isLoading={isDeleting}
         />
       </>
@@ -321,14 +319,12 @@ function FileList({
       )}
 
       {/* Confirm Delete */}
-      <ConfirmDialog
+      <DeleteConfirmDialog
         isOpen={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
         onConfirm={handleDelete}
-        title="Eliminar archivo"
-        message={`¿Estás seguro de eliminar "${deleteTarget?.nombre_original}"? Esta acción no se puede deshacer.`}
-        confirmText="Eliminar"
-        confirmVariant="danger"
+        itemName={deleteTarget?.nombre_original}
+        itemType="el archivo"
         isLoading={isDeleting}
       />
     </>

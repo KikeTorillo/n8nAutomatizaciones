@@ -108,91 +108,21 @@ const generarSitio = asyncHandler(async (req, res) => {
 
   // Si aplicar es true, crear el sitio en la BD
   if (aplicar) {
+    // Verificar si ya existe un sitio
+    const existente = await ConfigModel.verificarExistente(orgId);
+    if (existente) {
+      ErrorHelper.throwConflict('Ya existe un sitio web para esta organizacion. Elimina el existente primero.');
+    }
+
     const sitioCreado = await RLSContextManager.transaction(orgId, async (db) => {
-      // Verificar si ya existe un sitio
-      const existente = await db.query(
-        'SELECT id FROM website_config WHERE organizacion_id = $1 LIMIT 1',
-        [orgId]
-      );
+      // Crear configuración usando el model
+      const config = await ConfigModel.crearDesdeGenerador(sitioGenerado.config, orgId, db);
 
-      if (existente.rows.length > 0) {
-        ErrorHelper.throwConflict('Ya existe un sitio web para esta organizacion. Elimina el existente primero.');
-      }
-
-      // Crear configuracion
-      const configData = {
-        ...sitioGenerado.config,
-        organizacion_id: orgId,
-      };
-
-      const { rows: [config] } = await db.query(
-        `INSERT INTO website_config (
-          organizacion_id, slug, nombre_sitio, descripcion_seo, keywords_seo,
-          color_primario, color_secundario, color_acento, color_fondo, color_texto,
-          fuente_titulos, fuente_cuerpo, publicado
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, false)
-        RETURNING *`,
-        [
-          orgId,
-          configData.slug,
-          configData.nombre_sitio,
-          configData.descripcion_seo,
-          configData.keywords_seo,
-          configData.color_primario,
-          configData.color_secundario,
-          configData.color_acento,
-          configData.color_fondo,
-          configData.color_texto,
-          configData.fuente_titulos,
-          configData.fuente_cuerpo,
-        ]
-      );
-
-      // Crear paginas con bloques
+      // Crear páginas con sus bloques
       const paginasCreadas = [];
-
       for (const pagina of sitioGenerado.paginas) {
-        const { rows: [paginaCreada] } = await db.query(
-          `INSERT INTO website_paginas (
-            website_id, slug, titulo, descripcion_seo,
-            orden, visible_menu, publicada
-          ) VALUES ($1, $2, $3, $4, $5, $6, $7)
-          RETURNING *`,
-          [
-            config.id,
-            pagina.slug,
-            pagina.titulo,
-            pagina.descripcion_seo,
-            pagina.orden,
-            pagina.visible_menu,
-            true,
-          ]
-        );
-
-        // Crear bloques de la pagina
-        const bloquesCreados = [];
-        for (const bloque of pagina.bloques) {
-          const { rows: [bloqueCreado] } = await db.query(
-            `INSERT INTO website_bloques (
-              pagina_id, tipo, contenido, estilos, orden, visible
-            ) VALUES ($1, $2, $3, $4, $5, $6)
-            RETURNING *`,
-            [
-              paginaCreada.id,
-              bloque.tipo,
-              JSON.stringify(bloque.contenido),
-              JSON.stringify(bloque.estilos || {}),
-              bloque.orden,
-              bloque.visible,
-            ]
-          );
-          bloquesCreados.push(bloqueCreado);
-        }
-
-        paginasCreadas.push({
-          ...paginaCreada,
-          bloques: bloquesCreados,
-        });
+        const paginaCreada = await PaginasModel.crearConBloques(pagina, config.id, db);
+        paginasCreadas.push(paginaCreada);
       }
 
       return {

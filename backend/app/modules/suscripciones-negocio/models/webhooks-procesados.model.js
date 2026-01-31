@@ -14,7 +14,7 @@ const logger = require('../../../utils/logger');
 class WebhooksProcesadosModel {
 
     /**
-     * Verifica si un webhook ya fue procesado
+     * Verifica si un webhook ya fue procesado por request_id
      *
      * @param {string} gateway - Gateway de pago ('mercadopago', 'stripe')
      * @param {string} requestId - ID único del request (x-request-id header)
@@ -28,6 +28,33 @@ class WebhooksProcesadosModel {
                 `SELECT 1 FROM webhooks_procesados
                  WHERE gateway = $1 AND request_id = $2`,
                 [gateway, requestId]
+            );
+            return result.rows.length > 0;
+        });
+    }
+
+    /**
+     * Verifica si un evento con data_id ya fue procesado exitosamente
+     * IMPORTANTE: MercadoPago puede enviar múltiples webhooks con diferente request_id
+     * pero el mismo data_id. Esta verificación previene procesamiento duplicado.
+     *
+     * @param {string} gateway - Gateway de pago ('mercadopago', 'stripe')
+     * @param {string} eventType - Tipo de evento (subscription_preapproval, payment, etc.)
+     * @param {string} dataId - ID del recurso (pago, suscripción)
+     * @returns {Promise<boolean>} true si ya fue procesado exitosamente
+     */
+    static async yaFueProcesadoExitosamente(gateway, eventType, dataId) {
+        if (!dataId) return false;
+
+        return await RLSContextManager.withBypass(async (db) => {
+            const result = await db.query(
+                `SELECT 1 FROM webhooks_procesados
+                 WHERE gateway = $1
+                   AND event_type = $2
+                   AND data_id = $3
+                   AND resultado = 'success'
+                 LIMIT 1`,
+                [gateway, eventType, dataId]
             );
             return result.rows.length > 0;
         });

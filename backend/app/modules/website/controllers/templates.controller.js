@@ -106,13 +106,22 @@ const aplicar = asyncHandler(async (req, res) => {
     } else {
       config = configExistente;
 
-      // Opcionalmente actualizar tema
+      // Opcionalmente actualizar tema (incluir version para bloqueo optimista)
       if (template.tema_default && Object.keys(template.tema_default).length > 0) {
         await WebsiteConfigModel.actualizar(
           config.id,
-          template.tema_default,
+          {
+            ...template.tema_default,
+            version: config.version, // Requerido para bloqueo optimista
+          },
           organizacionId
         );
+      }
+
+      // Eliminar páginas existentes (y sus bloques en cascada) para reemplazar con el template
+      const paginasExistentes = await WebsitePaginasModel.listar(config.id, organizacionId);
+      for (const pagina of paginasExistentes) {
+        await WebsitePaginasModel.eliminar(pagina.id, organizacionId);
       }
     }
 

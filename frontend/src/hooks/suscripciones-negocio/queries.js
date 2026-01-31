@@ -104,3 +104,26 @@ export function useMiSuscripcion(options = {}) {
     ...restOptions,
   });
 }
+
+/**
+ * Hook para calcular prorrateo al cambiar de plan
+ * Calcula el crédito/cargo que se aplicaría al cambiar de plan
+ *
+ * @param {number} nuevoPlanId - ID del plan destino
+ * @param {Object} options - Opciones adicionales para useQuery
+ * @param {boolean} options.enabled - Si debe ejecutarse la query (default: true cuando hay nuevoPlanId)
+ */
+export function useCalcularProrrateo(nuevoPlanId, options = {}) {
+  const { enabled = true, ...restOptions } = options;
+
+  return useQuery({
+    queryKey: [QUERY_KEYS.MI_SUSCRIPCION, 'prorrateo', nuevoPlanId],
+    queryFn: async () => {
+      const response = await suscripcionesNegocioApi.calcularProrrateo(nuevoPlanId);
+      return response.data?.data;
+    },
+    staleTime: STALE_TIMES.DYNAMIC,
+    enabled: enabled && !!nuevoPlanId,
+    ...restOptions,
+  });
+}

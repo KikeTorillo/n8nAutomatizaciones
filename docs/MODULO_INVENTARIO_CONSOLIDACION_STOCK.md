@@ -1,218 +1,296 @@
 # Módulo Inventario - Consolidación de Stock
 
-**Estado**: 🟡 En validación | **Última revisión**: 30 Enero 2026
+**Estado**: ✅ Validado E2E | **Última revisión**: 30 Enero 2026
 
 ---
 
-## Diagrama de Flujo
+## Diagrama de Tablas SQL - Cálculo de Stock
 
-```mermaid
-flowchart TB
-    subgraph ENTRADAS["📥 ENTRADAS"]
-        OC[Recepción OC]
-        DEV[Devolución POS]
-        AJE[Ajuste +]
-        TRE[Transfer. Entrada]
-    end
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         ARQUITECTURA DE STOCK                                │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│   ┌─────────────────────┐                                                   │
+│   │ ubicaciones_almacen │ ◄── Jerarquía: zona → pasillo → estante → bin    │
+│   ├─────────────────────┤                                                   │
+│   │ id                  │                                                   │
+│   │ sucursal_id         │                                                   │
+│   │ codigo              │ "BIN-E2E-01"                                      │
+│   │ tipo                │ zona|pasillo|estante|bin                          │
+│   │ capacidad_maxima    │ 500                                               │
+│   │ capacidad_ocupada   │ 30 ◄── Actualizado por trigger                   │
+│   └─────────┬───────────┘                                                   │
+│             │ 1:N                                                           │
+│             ▼                                                               │
+│   ┌─────────────────────┐                                                   │
+│   │  stock_ubicaciones  │ ◄── FUENTE DE VERDAD                             │
+│   ├─────────────────────┤                                                   │
+│   │ id                  │                                                   │
+│   │ ubicacion_id ───────┼──► FK a ubicaciones_almacen                      │
+│   │ producto_id ────────┼──► FK a productos                                │
+│   │ cantidad            │ 30                                                │
+│   │ lote                │ NULL | "LOTE-001"                                 │
+│   └─────────┬───────────┘                                                   │
+│             │                                                               │
+│             │ trigger: trg_sincronizar_stock                                │
+│             │ trigger: trg_sincronizar_capacidad                            │
+│             ▼                                                               │
+│   ┌─────────────────────┐                                                   │
+│   │     productos       │ ◄── Stock agregado                               │
+│   ├─────────────────────┤                                                   │
+│   │ id                  │                                                   │
+│   │ sku                 │ "E2E-001"                                         │
+│   │ stock_actual        │ 100 ◄── SUM(stock_ubicaciones.cantidad)          │
+│   │ stock_minimo        │ 5                                                 │
+│   │ stock_maximo        │ 100                                               │
+│   └─────────────────────┘                                                   │
+│                                                                              │
+│   ┌─────────────────────┐                                                   │
+│   │movimientos_inventario│ ◄── Kardex (particionado por mes)               │
+│   ├─────────────────────┤                                                   │
+│   │ producto_id         │                                                   │
+│   │ tipo_movimiento     │ entrada_*|salida_*|transferencia_*               │
+│   │ cantidad            │ +100 / -50                                        │
+│   │ stock_antes         │                                                   │
+│   │ stock_despues       │ = stock_antes + cantidad                         │
+│   │ ubicacion_origen_id │                                                   │
+│   │ ubicacion_destino_id│                                                   │
+│   └─────────────────────┘                                                   │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
 
-    subgraph SALIDAS["📤 SALIDAS"]
-        VTA[Venta POS]
-        AJS[Ajuste -]
-        TRS[Transfer. Salida]
-    end
+FÓRMULA DE STOCK:
+  productos.stock_actual = SUM(stock_ubicaciones.cantidad)
+                           WHERE producto_id = ? GROUP BY sucursal_id
 
-    subgraph WMS["🏷️ RESOLUCIÓN UBICACIÓN"]
-        UU[(usuarios_ubicaciones)]
-        UA[(ubicaciones_almacen)]
-    end
-
-    subgraph CORE["⚙️ FUNCIÓN CENTRAL"]
-        FN[registrar_movimiento_con_ubicacion]
-    end
-
-    subgraph STORAGE["💾 ALMACENAMIENTO"]
-        SU[(stock_ubicaciones)]
-        MI[(movimientos_inventario)]
-        SP[(productos.stock_actual)]
-    end
-
-    %% Entradas
-    OC -->|ubicación UI| FN
-    DEV -->|auto usuario| UU
-    AJE -->|ubicación UI| FN
-    TRE -->|ubicación destino| FN
-
-    %% Salidas con resolución
-    VTA --> UU
-    UU -->|default/permiso| UA
-    UA --> FN
-    AJS -->|ubicación UI| FN
-    TRS -->|ubicación origen| FN
-
-    %% Storage
-    FN --> SU
-    FN --> MI
-    SU -->|trigger sync| SP
-
-    style FN fill:#753572,color:#fff
-    style SU fill:#2d5a27,color:#fff
-    style SP fill:#1e3a5f,color:#fff
+TRIGGERS ACTIVOS:
+  1. trg_sincronizar_stock     → Actualiza productos.stock_actual
+  2. trg_sincronizar_capacidad → Actualiza ubicaciones_almacen.capacidad_ocupada
 ```
 
 ---
 
-## Arquitectura
+## Diagrama de Flujo de Datos
 
 ```
-stock_ubicaciones (FUENTE DE VERDAD)
-       ↓ trigger trg_sincronizar_stock
-productos.stock_actual (CALCULADO)
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           FLUJO DE DATOS - INVENTARIO                        │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  ┌──────────────────────────────────────────────────────────────────────┐   │
+│  │                          FRONTEND (React)                             │   │
+│  ├──────────────────────────────────────────────────────────────────────┤   │
+│  │                                                                       │   │
+│  │  ProductosPage ──► useProductos() ──► GET /productos                 │   │
+│  │       │                                                               │   │
+│  │       ├─► Crear ──► POST /productos ──────────────────────┐          │   │
+│  │       ├─► Editar ─► PUT /productos/:id                    │          │   │
+│  │       └─► Ajustar ► POST /stock/ajustar ──────────────────┤          │   │
+│  │                                                            │          │   │
+│  │  UbicacionesPage ──► useUbicaciones()                      │          │   │
+│  │       │                                                    │          │   │
+│  │       ├─► Crear ──► POST /ubicaciones                      │          │   │
+│  │       └─► Mover ──► POST /stock/mover ────────────────────┤          │   │
+│  │                                                            │          │   │
+│  │  MovimientosPage ──► useMovimientos() ──► GET /movimientos │          │   │
+│  │                                                            │          │   │
+│  └────────────────────────────────────────┬───────────────────┘          │   │
+│                                           │                              │   │
+├───────────────────────────────────────────┼──────────────────────────────┤   │
+│                                           ▼                              │   │
+│  ┌──────────────────────────────────────────────────────────────────────┐   │
+│  │                        BACKEND (Express + Node.js)                    │   │
+│  ├──────────────────────────────────────────────────────────────────────┤   │
+│  │                                                                       │   │
+│  │  productos.routes.js                                                  │   │
+│  │       │                                                               │   │
+│  │       ├─► productos.controller.js                                     │   │
+│  │       │        │                                                      │   │
+│  │       │        └─► productos.model.js ──► RLSContextManager.query()  │   │
+│  │       │                                                               │   │
+│  │       └─► stock.controller.js                                         │   │
+│  │                │                                                      │   │
+│  │                └─► stock.model.js                                     │   │
+│  │                         │                                             │   │
+│  │                         └─► registrar_movimiento_con_ubicacion()     │   │
+│  │                         └─► mover_stock_ubicacion()                  │   │
+│  │                                                                       │   │
+│  └────────────────────────────────────────┬──────────────────────────────┘   │
+│                                           │                              │   │
+├───────────────────────────────────────────┼──────────────────────────────┤   │
+│                                           ▼                              │   │
+│  ┌──────────────────────────────────────────────────────────────────────┐   │
+│  │                         DATABASE (PostgreSQL)                         │   │
+│  ├──────────────────────────────────────────────────────────────────────┤   │
+│  │                                                                       │   │
+│  │  ┌─────────────────┐    INSERT/UPDATE    ┌─────────────────┐         │   │
+│  │  │stock_ubicaciones│ ◄─────────────────► │    TRIGGERS     │         │   │
+│  │  └────────┬────────┘                     └────────┬────────┘         │   │
+│  │           │                                       │                   │   │
+│  │           │ trg_sincronizar_stock                 │                   │   │
+│  │           ▼                                       ▼                   │   │
+│  │  ┌─────────────────┐                     ┌─────────────────┐         │   │
+│  │  │    productos    │                     │ubicaciones_almacen│        │   │
+│  │  │  stock_actual   │◄────────────────────│capacidad_ocupada │        │   │
+│  │  └─────────────────┘                     └─────────────────┘         │   │
+│  │           │                                       │                   │   │
+│  │           └───────────────────┬───────────────────┘                   │   │
+│  │                               │                                       │   │
+│  │                               ▼                                       │   │
+│  │                     ┌─────────────────────┐                           │   │
+│  │                     │movimientos_inventario│ ◄── Kardex              │   │
+│  │                     │   (particionada)    │                           │   │
+│  │                     └─────────────────────┘                           │   │
+│  │                                                                       │   │
+│  │  ┌─────────────────────────────────────────────────────────────────┐ │   │
+│  │  │                       pg_cron JOBS                               │ │   │
+│  │  ├─────────────────────────────────────────────────────────────────┤ │   │
+│  │  │ • validar_sincronizacion_stock  (04:00 AM) → Detecta diferencias│ │   │
+│  │  │ • expirar_reservas_pendientes   (*/5 min)  → Libera reservas    │ │   │
+│  │  └─────────────────────────────────────────────────────────────────┘ │   │
+│  │                                                                       │   │
+│  └──────────────────────────────────────────────────────────────────────┘   │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
 ```
-
-**Función central**: `registrar_movimiento_con_ubicacion()`
-
----
-
-## Resolución de Ubicación
-
-```
-obtener_ubicacion_usuario(usuario_id, sucursal_id)
-        ↓
-1. Ubicación default del usuario (es_default=true)
-        ↓ no encontrada
-2. Cualquier ubicación con permiso
-        ↓ no encontrada
-3. Fallback: ubicación DEFAULT de sucursal
-```
-
-| Permiso | Operaciones |
-|---------|-------------|
-| `puede_recibir` | Recepciones, devoluciones |
-| `puede_despachar` | Ventas, salidas |
-| `es_default` | Prioridad al resolver |
 
 ---
 
 ## Operaciones y Tipos de Movimiento
 
-| Operación | Tipo Movimiento | Ubicación |
-|-----------|-----------------|-----------|
-| Venta POS | `salida_venta` | Auto (usuario) |
-| Recepción OC | `entrada_compra` | Selector UI |
-| Ajuste stock | `entrada/salida_ajuste` | Selector UI |
-| Mover stock | `transferencia` | Manual |
-| Transferencia inter-sucursal | `transferencia_salida/entrada` | Selector UI |
-| Devolución POS | `entrada_devolucion` | Auto (usuario) |
-| Conteo físico | `ajuste` | Por ubicación |
+| Operación | Tipo Movimiento | Afecta stock_ubicaciones |
+|-----------|-----------------|--------------------------|
+| Venta POS | `salida_venta` | Descuenta de ubicación usuario |
+| Recepción OC | `entrada_compra` | Incrementa en ubicación seleccionada |
+| Ajuste manual | `entrada/salida_ajuste` | Según tipo |
+| Mover stock | N/A (interno) | Transfiere entre ubicaciones |
+| Devolución cliente | `entrada_devolucion` | Incrementa en ubicación |
 
 ---
 
-## Tipos de Venta y Reservas
+## Funciones SQL Clave
 
-| Tipo Venta | Reserva | Comportamiento Stock |
-|------------|---------|---------------------|
-| `directa` | ❌ No | Descuento inmediato via trigger |
-| `cotizacion` | ❌ No | No afecta stock |
-| `apartado` | ✅ Sí | Reserva hasta confirmación/vencimiento |
-| `cita` | ✅ Sí | Reserva para servicio agendado |
-
-**Centralización**: Tipos de venta definidos en `backend/app/modules/pos/constants/pos.constants.js` y consumidos via API `/pos/config/tipos-venta`.
+| Función | Ubicación | Propósito |
+|---------|-----------|-----------|
+| `registrar_movimiento_con_ubicacion()` | 33-consolidacion-stock.sql | Registra movimiento + actualiza stock |
+| `mover_stock_ubicacion()` | 13-ubicaciones-almacen.sql | Transfiere entre ubicaciones |
+| `obtener_ubicacion_usuario()` | 33-consolidacion-stock.sql | Resuelve ubicación del usuario |
+| `validar_sincronizacion_stock()` | 34-job-validacion-stock.sql | Detecta discrepancias |
 
 ---
 
 ## Diagnóstico SQL
 
 ```sql
--- Verificar sincronización
+-- Verificar sincronización (debe retornar 0 filas)
 SELECT * FROM validar_sincronizacion_stock();
 
--- Stock por ubicación
-SELECT ua.codigo, su.producto_id, su.cantidad
+-- Stock por ubicación de un producto
+SELECT ua.codigo, su.cantidad
 FROM stock_ubicaciones su
 JOIN ubicaciones_almacen ua ON ua.id = su.ubicacion_id
-WHERE ua.sucursal_id = ?;
+WHERE su.producto_id = ?;
 
--- Ubicaciones de usuario
-SELECT ua.codigo, uu.es_default, uu.puede_despachar
-FROM usuarios_ubicaciones uu
-JOIN ubicaciones_almacen ua ON ua.id = uu.ubicacion_id
-WHERE uu.usuario_id = ? AND uu.activo = true;
+-- Kardex de producto
+SELECT tipo_movimiento, cantidad, stock_posterior, referencia
+FROM movimientos_inventario WHERE producto_id = ? ORDER BY creado_en;
+
+-- Capacidad de ubicaciones
+SELECT codigo, capacidad_ocupada, capacidad_maxima
+FROM ubicaciones_almacen WHERE sucursal_id = ?;
 ```
 
 ---
 
 ## Jobs pg_cron
 
-| Job | Horario | Función |
-|-----|---------|---------|
-| `validar-sincronizacion-stock` | 04:00 AM | `ejecutar_validacion_stock_diaria()` |
-| `expirar-reservas-stock` | */30 min | Expira reservas pendientes > 30 min |
+| Job | Horario | Estado |
+|-----|---------|--------|
+| `validar-sincronizacion-stock` | 04:00 AM | ✅ Activo |
+| `expirar-reservas-stock` | */5 min | ✅ Activo |
 
 ---
 
-## Estado Actual (30 Enero 2026)
+## Validación E2E (30 Enero 2026)
 
-### Validación Parcial
-
-| Operación | Estado | Notas |
-|-----------|--------|-------|
-| Ajuste entrada/salida | ✅ Pass | Stock actualizado correctamente |
-| Venta directa POS | ✅ Pass | Sin reserva, descuento inmediato |
-| Selector tipo venta POS | ✅ Pass | Centralizado backend → frontend |
-| Devolución POS | ✅ Pass | Stock revertido |
-| Mover stock ubicaciones | ⚠️ Bloqueado | Requiere stock en `stock_ubicaciones` |
-| Transferencias | ⚠️ Bloqueado | Límite plan 1 sucursal |
-| Conteos | ❌ Pendiente | Bug importación frontend |
-| Recepción OC | 🔲 Pendiente | No validado |
-
-### Bugs Conocidos
-
-1. **Conteos de Inventario**: Error de importación `useAuthStore` en página de operaciones
-2. **Mover Stock**: Productos legacy sin registro en `stock_ubicaciones`
+| Prueba | Estado | Resultado |
+|--------|--------|-----------|
+| Login y navegación | ✅ Pass | Acceso correcto |
+| CRUD Categorías | ✅ Pass | "Electrónicos E2E" creada |
+| CRUD Productos | ✅ Pass | "Producto E2E Test" creado y editado |
+| Crear ubicaciones WMS | ✅ Pass | ZONA-E2E, BIN-E2E-01, BIN-E2E-02 |
+| Mover stock (50 → BIN-01) | ✅ Pass | capacidad_ocupada = 50 |
+| Mover stock (20 → BIN-02) | ✅ Pass | BIN-01: 30, BIN-02: 20 |
+| Trigger sincronización | ✅ Pass | Sin errores de constraint |
+| Kardex | ✅ Pass | Movimiento inicial visible |
 
 ---
 
-## Pendientes - Validación E2E Próxima Sesión
+## Archivos del Módulo
 
-Validación completa desde proyecto limpio:
+### SQL
+- `sql/inventario/01-tablas.sql` - Tablas base
+- `sql/inventario/13-ubicaciones-almacen.sql` - WMS + stock_ubicaciones
+- `sql/inventario/33-consolidacion-stock.sql` - Función central + triggers
+- `sql/inventario/34-job-validacion-stock.sql` - Job validación
+- `sql/inventario/35-job-expirar-reservas.sql` - Job reservas
 
-### 1. Setup Inicial
-- [ ] Levantar proyecto desde cero (docker-compose up)
-- [ ] Crear organización y usuario admin
-- [ ] Crear sucursal con ubicaciones de almacén
+### Backend
+- `backend/app/modules/inventario/controllers/productos.controller.js`
+- `backend/app/modules/inventario/models/productos.model.js`
+- `backend/app/modules/inventario/models/stock.model.js`
 
-### 2. Configuración WMS
-- [ ] Crear ubicaciones (DEFAULT, ALMACEN, MOSTRADOR)
-- [ ] Asignar ubicaciones a usuarios con permisos
+### Frontend
+- `frontend/src/pages/inventario/ProductosPage.jsx`
+- `frontend/src/pages/inventario/UbicacionesAlmacenPage.jsx`
+- `frontend/src/pages/inventario/MovimientosPage.jsx`
+- `frontend/src/components/inventario/ubicaciones/MoverStockDrawer.jsx`
 
-### 3. Inventario Base
-- [ ] Crear categorías de productos
-- [ ] Crear productos con stock inicial
-- [ ] Verificar registro automático en `stock_ubicaciones`
+---
 
-### 4. Validación Operaciones
-- [ ] **Ajustes**: Entrada y salida con selector de ubicación
-- [ ] **Mover stock**: Entre ubicaciones de misma sucursal
-- [ ] **Conteos**: Crear conteo por ubicación y aplicar diferencias
-- [ ] **Órdenes de Compra**: Crear → Recibir → Verificar stock
+## Próximo Paso: Validación E2E Completa de Flujos Integrados
 
-### 5. Validación POS
-- [ ] Venta directa (descuento inmediato)
-- [ ] Cotización (sin afectar stock)
-- [ ] Apartado (reserva y confirmación)
-- [ ] Devolución (reversión stock)
+**Prioridad**: Alta
+**Objetivo**: Validar todos los flujos que afectan inventario desde diferentes módulos
 
-### 6. Validación Multi-Usuario
-- [ ] Usuario con ubicación MOSTRADOR solo ve/opera esa ubicación
-- [ ] Usuario con ubicación ALMACEN solo ve/opera esa ubicación
-- [ ] Verificar permisos `puede_recibir` y `puede_despachar`
+### Checklist de Validación
 
-### 7. Transferencias (si aplica)
-- [ ] Ajustar límite sucursales en plan
-- [ ] Crear segunda sucursal
-- [ ] Flujo: Enviar → Tránsito → Recibir
+| # | Módulo | Flujo | Validar |
+|---|--------|-------|---------|
+| 1 | **POS** | Venta directa | Stock descuenta de ubicación usuario |
+| 2 | **POS** | Venta con apartado | Reserva se crea, stock no descuenta hasta completar |
+| 3 | **POS** | Devolución | Stock regresa a ubicación correcta |
+| 4 | **POS** | Cancelación | Stock se restaura |
+| 5 | **OC** | Crear orden de compra | No afecta stock |
+| 6 | **OC** | Recepción parcial | Stock incrementa en ubicación seleccionada |
+| 7 | **OC** | Recepción completa | Stock total correcto, OC cerrada |
+| 8 | **OC** | Devolución a proveedor | Stock descuenta |
+| 9 | **Transferencias** | Entre sucursales | Salida en origen, entrada en destino |
+| 10 | **Transferencias** | Recepción de transferencia | Stock incrementa en sucursal destino |
+| 11 | **Conteos** | Conteo cíclico completo | Ajustes aplicados correctamente |
+| 12 | **Reservas** | Expiración automática | Job libera reservas vencidas |
+| 13 | **Servicios** | Uso de producto en cita | Stock descuenta como `salida_uso_servicio` |
+| 14 | **Combos/Kits** | Venta de combo | Descuenta componentes individuales |
 
-### Criterios de Éxito
-- `validar_sincronizacion_stock()` sin discrepancias
-- Kardex refleja todos los movimientos
-- Stock por ubicación coincide con total producto
+### Escenarios Críticos
+
+```
+1. POS → Venta → stock_ubicaciones ↓ → productos.stock_actual ↓
+2. OC  → Recepción → stock_ubicaciones ↑ → productos.stock_actual ↑
+3. Transferencia → Origen ↓ + Destino ↑ → stock_actual sin cambio global
+4. Apartado → Reserva activa → Expiración (5min) → Reserva liberada
+```
+
+---
+
+## Pendientes Menores
+
+| Prioridad | Item |
+|-----------|------|
+| Media | POS mostrar stock de ubicación del usuario |
+| Baja | Reportes de ocupación por zona |
+
+---
+
+**Actualizado**: 30 Enero 2026 - Post validación E2E

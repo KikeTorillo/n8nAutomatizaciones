@@ -2,6 +2,7 @@ import { memo } from 'react';
 import PropTypes from 'prop-types';
 import { Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { SEMANTIC_COLORS } from '@/lib/uiConstants';
 
 /**
  * FormWizardStepper - Indicador de pasos para formularios wizard
@@ -52,7 +53,7 @@ const FormWizardStepper = memo(function FormWizardStepper({
                 <div
                   className={cn(
                     'absolute top-4 left-8 -right-4 sm:left-12 h-0.5',
-                    isCompleted ? 'bg-primary-600' : 'bg-gray-200 dark:bg-gray-700'
+                    isCompleted ? SEMANTIC_COLORS.primary.bgSolid : 'bg-gray-200 dark:bg-gray-700'
                   )}
                   aria-hidden="true"
                 />
@@ -72,8 +73,8 @@ const FormWizardStepper = memo(function FormWizardStepper({
                 <span
                   className={cn(
                     'w-8 h-8 flex items-center justify-center rounded-full text-sm font-medium transition-colors',
-                    isCompleted && 'bg-primary-600 text-white',
-                    isActive && !isCompleted && 'bg-primary-600 text-white ring-4 ring-primary-100 dark:ring-primary-900/30',
+                    isCompleted && SEMANTIC_COLORS.primary.selectedBg,
+                    isActive && !isCompleted && cn(SEMANTIC_COLORS.primary.selectedBg, 'ring-4 ring-primary-100 dark:ring-primary-900/30'),
                     !isActive && !isCompleted && 'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
                   )}
                 >

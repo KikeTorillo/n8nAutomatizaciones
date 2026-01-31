@@ -1,5 +1,5 @@
 import { Plus, Bot, MessageCircle, MessageSquare, Power, Trash2 } from 'lucide-react';
-import { BackButton, Button, ConfirmDialog, LoadingSpinner } from '@/components/ui';
+import { BackButton, Button, DeleteConfirmDialog, LoadingSpinner } from '@/components/ui';
 import { useChatbots, useEliminarChatbot, useCambiarEstadoChatbot } from '@/hooks/otros';
 import { useToast } from '@/hooks/utils';
 import { useModalManager } from '@/hooks/utils';
@@ -255,15 +255,13 @@ function ChatbotsPage() {
         )}
 
         {/* Modal de Confirmación de Eliminación */}
-        <ConfirmDialog
+        <DeleteConfirmDialog
           isOpen={isOpen('delete')}
           onClose={() => closeModal('delete')}
           onConfirm={handleConfirmDelete}
-          title="Eliminar chatbot"
-          message={`Esta acción eliminará el chatbot "${getModalData('delete')?.nombre}" y su workflow asociado en n8n. Esta acción no se puede deshacer.`}
-          confirmText="Eliminar"
-          cancelText="Cancelar"
-          variant="danger"
+          itemName={getModalData('delete')?.nombre}
+          itemType="el chatbot"
+          description="Se eliminará también su workflow asociado en n8n."
           isLoading={eliminarMutation.isPending}
         />
       </div>

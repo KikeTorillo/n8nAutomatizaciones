@@ -65,11 +65,33 @@ export const SECTION_HEADER = 'border-b border-gray-200 dark:border-gray-700';
  */
 export const SECTION_FOOTER = 'border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900';
 
+/**
+ * Estilos de status para cards (success, warning, error, info)
+ */
+export const CARD_STATUS_STYLES = {
+  success: 'bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800',
+  warning: 'bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800',
+  error: 'bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800',
+  info: 'bg-primary-50 dark:bg-primary-900/30 border border-primary-200 dark:border-primary-800',
+};
+
+/**
+ * Estilos de padding para cards
+ */
+export const CARD_PADDING_STYLES = {
+  none: '',
+  sm: 'p-3',
+  md: 'p-4',
+  lg: 'p-6',
+};
+
 export default {
   CARD_BASE,
   CARD_ELEVATED,
   CARD_FLAT,
   CARD_OUTLINE,
+  CARD_STATUS_STYLES,
+  CARD_PADDING_STYLES,
   SURFACE_HOVER,
   SURFACE_HOVER_SUBTLE,
   OVERLAY_BACKDROP,

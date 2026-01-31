@@ -1,7 +1,8 @@
-import { memo, useEffect, useCallback } from 'react';
+import { memo, useEffect, useCallback, forwardRef, useId } from 'react';
 import PropTypes from 'prop-types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
+import FocusTrap from 'focus-trap-react';
 import { MODAL_SIZES } from '@/lib/uiConstants';
 
 /**
@@ -18,8 +19,9 @@ import { MODAL_SIZES } from '@/lib/uiConstants';
  * @param {string} size - Tamaño del modal ('sm', 'md', 'lg', 'xl')
  * @param {boolean} showCloseButton - Mostrar botón de cierre (default: true)
  * @param {boolean} disableClose - Deshabilitar cierre del modal (para estados de carga)
+ * @param {React.Ref} ref - Ref para acceder al contenedor del modal
  */
-const Modal = memo(function Modal({
+const Modal = memo(forwardRef(function Modal({
   isOpen,
   onClose,
   title,
@@ -29,7 +31,10 @@ const Modal = memo(function Modal({
   size = 'md',
   showCloseButton = true,
   disableClose = false
-}) {
+}, ref) {
+  // Generar ID único para aria-labelledby
+  const titleId = useId();
+
   // Bloquear scroll del body cuando el modal está abierto (usando CSS class)
   useEffect(() => {
     if (isOpen) {
@@ -59,6 +64,7 @@ const Modal = memo(function Modal({
         <>
           {/* Backdrop */}
           <motion.div
+            aria-hidden="true"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -69,60 +75,76 @@ const Modal = memo(function Modal({
 
           {/* Modal */}
           <div className="fixed inset-0 flex items-center justify-center p-4 z-50">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              transition={{ duration: 0.2 }}
-              onClick={(e) => e.stopPropagation()}
-              className={`
-                bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full ${MODAL_SIZES[size]}
-                max-h-[90vh] overflow-hidden flex flex-col
-              `}
+            <FocusTrap
+              active={isOpen && !disableClose}
+              focusTrapOptions={{
+                allowOutsideClick: true,
+                escapeDeactivates: false, // Ya manejamos ESC manualmente
+                fallbackFocus: '[role="dialog"]',
+              }}
             >
-              {/* Header */}
-              {title && (
-                <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-                  <div>
-                    <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-                      {title}
-                    </h2>
-                    {subtitle && (
-                      <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{subtitle}</p>
+              <motion.div
+                ref={ref}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby={title ? titleId : undefined}
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                transition={{ duration: 0.2 }}
+                onClick={(e) => e.stopPropagation()}
+                className={`
+                  bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full ${MODAL_SIZES[size]}
+                  max-h-[90vh] overflow-hidden flex flex-col
+                `}
+              >
+                {/* Header */}
+                {title && (
+                  <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+                    <div>
+                      <h2
+                        id={titleId}
+                        className="text-xl font-semibold text-gray-900 dark:text-gray-100"
+                      >
+                        {title}
+                      </h2>
+                      {subtitle && (
+                        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{subtitle}</p>
+                      )}
+                    </div>
+                    {showCloseButton && (
+                      <button
+                        type="button"
+                        onClick={onClose}
+                        disabled={disableClose}
+                        className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors disabled:opacity-50"
+                        aria-label="Cerrar modal"
+                      >
+                        <X className="w-6 h-6" />
+                      </button>
                     )}
                   </div>
-                  {showCloseButton && (
-                    <button
-                      type="button"
-                      onClick={onClose}
-                      disabled={disableClose}
-                      className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors disabled:opacity-50"
-                      aria-label="Cerrar modal"
-                    >
-                      <X className="w-6 h-6" />
-                    </button>
-                  )}
-                </div>
-              )}
+                )}
 
-              {/* Content */}
-              <div className="overflow-y-auto flex-1 p-6">
-                {children}
-              </div>
-
-              {/* Footer */}
-              {footer && (
-                <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
-                  {footer}
+                {/* Content */}
+                <div className="overflow-y-auto flex-1 p-6">
+                  {children}
                 </div>
-              )}
-            </motion.div>
+
+                {/* Footer */}
+                {footer && (
+                  <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+                    {footer}
+                  </div>
+                )}
+              </motion.div>
+            </FocusTrap>
           </div>
         </>
       )}
     </AnimatePresence>
   );
-});
+}));
 
 Modal.displayName = 'Modal';
 

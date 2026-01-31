@@ -291,6 +291,75 @@ class WebsiteConfigModel {
     }
 
     /**
+     * Verificar si ya existe un sitio para la organización
+     *
+     * @param {number} organizacionId - ID de la organización
+     * @returns {Object|null} Config existente o null
+     */
+    static async verificarExistente(organizacionId) {
+        return await RLSContextManager.query(organizacionId, async (db) => {
+            const result = await db.query(
+                'SELECT id FROM website_config WHERE organizacion_id = $1 LIMIT 1',
+                [organizacionId]
+            );
+            return result.rows[0] || null;
+        });
+    }
+
+    /**
+     * Crear configuración desde el generador de sitios IA
+     * Versión simplificada para uso interno (sin publicar)
+     *
+     * @param {Object} datos - Datos generados por IA
+     * @param {number} organizacionId - ID de la organización
+     * @param {Object} db - Conexión de transacción (opcional)
+     * @returns {Object} Configuración creada
+     */
+    static async crearDesdeGenerador(datos, organizacionId, db = null) {
+        const ejecutar = async (conn) => {
+            const query = `
+                INSERT INTO website_config (
+                    organizacion_id, slug, nombre_sitio, descripcion_seo, keywords_seo,
+                    color_primario, color_secundario, color_acento, color_fondo, color_texto,
+                    fuente_titulos, fuente_cuerpo, publicado
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, false)
+                RETURNING *
+            `;
+
+            const valores = [
+                organizacionId,
+                datos.slug,
+                datos.nombre_sitio,
+                datos.descripcion_seo || null,
+                datos.keywords_seo || null,
+                datos.color_primario || '#3B82F6',
+                datos.color_secundario || '#1E40AF',
+                datos.color_acento || '#F59E0B',
+                datos.color_fondo || '#FFFFFF',
+                datos.color_texto || '#1F2937',
+                datos.fuente_titulos || 'Inter',
+                datos.fuente_cuerpo || 'Inter',
+            ];
+
+            logger.info('[WebsiteConfigModel.crearDesdeGenerador] Creando config desde IA', {
+                organizacion_id: organizacionId,
+                slug: datos.slug
+            });
+
+            const result = await conn.query(query, valores);
+            return result.rows[0];
+        };
+
+        // Si se pasa conexión de transacción, usarla directamente
+        if (db) {
+            return await ejecutar(db);
+        }
+
+        // Si no, crear contexto RLS
+        return await RLSContextManager.query(organizacionId, ejecutar);
+    }
+
+    /**
      * Eliminar configuración del sitio
      *
      * @param {string} id - ID del website_config

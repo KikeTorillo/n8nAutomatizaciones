@@ -307,7 +307,7 @@ class ConteosModel {
             });
 
             // Retornar conteo completo
-            return await this.obtenerPorId(id, organizacionId);
+            return await ConteosModel.buscarPorId(organizacionId, id);
         });
     }
 
@@ -600,7 +600,7 @@ class ConteosModel {
                 folio: conteo.folio
             });
 
-            return await this.obtenerPorId(id, organizacionId);
+            return await ConteosModel.buscarPorId(organizacionId, id);
         });
     }
 
@@ -722,7 +722,7 @@ class ConteosModel {
             });
 
             return {
-                conteo: await this.obtenerPorId(id, organizacionId),
+                conteo: await ConteosModel.buscarPorId(organizacionId, id),
                 ajustes_realizados: ajustesRealizados
             };
         });
@@ -782,7 +782,7 @@ class ConteosModel {
                 folio: conteo.folio
             });
 
-            return await this.obtenerPorId(id, organizacionId);
+            return await ConteosModel.buscarPorId(organizacionId, id);
         });
     }
 

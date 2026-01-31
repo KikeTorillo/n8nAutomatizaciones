@@ -18,8 +18,9 @@ import { QUERY_KEYS } from './constants';
 /**
  * Hook para listar pagos con paginación y filtros
  * @param {Object} params - { page, limit, estado, suscripcion_id, metodo_pago, fecha_desde, fecha_hasta }
+ * @param {Object} options - Opciones adicionales de useQuery (ej: { enabled: false })
  */
-export function usePagos(params = {}) {
+export function usePagos(params = {}, options = {}) {
   return useQuery({
     queryKey: [QUERY_KEYS.PAGOS, params],
     queryFn: async () => {
@@ -36,6 +37,7 @@ export function usePagos(params = {}) {
     },
     staleTime: STALE_TIMES.DYNAMIC,
     placeholderData: keepPreviousData,
+    ...options,
   });
 }
 

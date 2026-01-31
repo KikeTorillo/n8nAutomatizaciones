@@ -1,8 +1,9 @@
 import { memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useModulos } from '@/hooks/sistema';
-import { Lock, Package, ShoppingCart, DollarSign, Globe, Bot, Calendar, ArrowLeft } from 'lucide-react';
+import { Lock, Package, ShoppingCart, DollarSign, Globe, Globe2, Bot, Calendar, ArrowLeft } from 'lucide-react';
 import { Button } from '../atoms/Button';
+import { SEMANTIC_COLORS } from '@/lib/uiConstants';
 
 /**
  * Mapeo de iconos por módulo
@@ -15,6 +16,7 @@ const ICONOS_MODULOS = {
   comisiones: DollarSign,
   marketplace: Globe,
   chatbots: Bot,
+  website: Globe2,
 };
 
 /**
@@ -28,6 +30,7 @@ const NOMBRES_MODULOS = {
   comisiones: 'Sistema de Comisiones',
   marketplace: 'Marketplace Público',
   chatbots: 'Chatbots IA',
+  website: 'Mi Sitio Web',
 };
 
 /**
@@ -89,7 +92,7 @@ const ModuleGuard = memo(function ModuleGuard({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 dark:border-primary-400"></div>
+        <div className={`animate-spin rounded-full h-8 w-8 border-b-2 ${SEMANTIC_COLORS.primary.borderSolid}`}></div>
       </div>
     );
   }

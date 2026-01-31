@@ -93,20 +93,38 @@ function AIWriterPopover({
     onClose?.();
   }, [reset, onClose]);
 
+  // Calcular si estamos en móvil
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+
   if (!isOpen) return null;
 
   return (
     <AnimatePresence>
+      {/* Backdrop en móvil */}
+      {isMobile && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-black/20 z-40"
+          onClick={handleClose}
+        />
+      )}
       <motion.div
         ref={popoverRef}
-        initial={{ opacity: 0, scale: 0.95, y: -5 }}
+        initial={{ opacity: 0, scale: 0.95, y: isMobile ? 20 : -5 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.95, y: -5 }}
+        exit={{ opacity: 0, scale: 0.95, y: isMobile ? 20 : -5 }}
         transition={{ duration: 0.15 }}
-        className="fixed z-50 w-72 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden"
-        style={{
-          top: position?.top || 0,
-          left: position?.left || 0,
+        className={cn(
+          "fixed z-50 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 flex flex-col",
+          isMobile
+            ? "inset-x-4 bottom-4 max-h-[70vh]"
+            : "w-72 max-h-[80vh]"
+        )}
+        style={isMobile ? {} : {
+          top: Math.min(position?.top || 0, (typeof window !== 'undefined' ? window.innerHeight : 800) - 400),
+          left: Math.max(16, Math.min(position?.left || 0, (typeof window !== 'undefined' ? window.innerWidth : 400) - 320)),
         }}
       >
         {/* Header */}
@@ -123,8 +141,8 @@ function AIWriterPopover({
           </button>
         </div>
 
-        {/* Content */}
-        <div className="p-4 space-y-4">
+        {/* Content - scrollable */}
+        <div className="p-4 space-y-3 overflow-y-auto flex-1 min-h-0">
           {/* Selector de tono y longitud */}
           <ToneSelector
             selectedTono={selectedTono}
@@ -136,59 +154,59 @@ function AIWriterPopover({
 
           {/* Preview del texto generado */}
           {previewText && (
-            <div className="p-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-700">
+            <div className="p-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-700 max-h-32 overflow-y-auto">
               <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
                 {previewText}
               </p>
             </div>
           )}
+        </div>
 
-          {/* Botones de accion */}
-          <div className="flex gap-2">
-            {!previewText ? (
+        {/* Botones de accion - siempre visibles */}
+        <div className="px-4 pb-3 pt-2 flex gap-2 border-t border-gray-100 dark:border-gray-700">
+          {!previewText ? (
+            <button
+              onClick={handleGenerate}
+              disabled={isGenerating}
+              className={cn(
+                'flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-colors',
+                isGenerating
+                  ? 'bg-gray-100 dark:bg-gray-700 text-gray-400 cursor-wait'
+                  : 'bg-primary-600 text-white hover:bg-primary-700'
+              )}
+            >
+              {isGenerating ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Generando...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-4 h-4" />
+                  Generar
+                </>
+              )}
+            </button>
+          ) : (
+            <>
               <button
                 onClick={handleGenerate}
                 disabled={isGenerating}
-                className={cn(
-                  'flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-colors',
-                  isGenerating
-                    ? 'bg-gray-100 dark:bg-gray-700 text-gray-400 cursor-wait'
-                    : 'bg-primary-600 text-white hover:bg-primary-700'
-                )}
+                className="flex items-center justify-center gap-1 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
               >
-                {isGenerating ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Generando...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="w-4 h-4" />
-                    Generar
-                  </>
-                )}
+                <RefreshCw className={cn('w-4 h-4', isGenerating && 'animate-spin')} />
+                Regenerar
               </button>
-            ) : (
-              <>
-                <button
-                  onClick={handleGenerate}
-                  disabled={isGenerating}
-                  className="flex items-center justify-center gap-1 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-                >
-                  <RefreshCw className={cn('w-4 h-4', isGenerating && 'animate-spin')} />
-                  Regenerar
-                </button>
-                <button
-                  onClick={handleApply}
-                  disabled={isGenerating}
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium text-sm bg-green-600 text-white hover:bg-green-700 transition-colors"
-                >
-                  <Check className="w-4 h-4" />
-                  Usar texto
-                </button>
-              </>
-            )}
-          </div>
+              <button
+                onClick={handleApply}
+                disabled={isGenerating}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium text-sm bg-green-600 text-white hover:bg-green-700 transition-colors"
+              >
+                <Check className="w-4 h-4" />
+                Usar texto
+              </button>
+            </>
+          )}
         </div>
 
         {/* Footer hint */}

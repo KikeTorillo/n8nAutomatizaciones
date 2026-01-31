@@ -12,8 +12,9 @@
  */
 
 const asyncHandler = require('../../../middleware/asyncHandler');
-const { SuscripcionesModel, PlanesModel, CuponesModel, CheckoutTokensModel } = require('../models');
+const { SuscripcionesModel, PlanesModel, CuponesModel, CheckoutTokensModel, PagosModel } = require('../models');
 const { ResponseHelper, ErrorHelper, ParseHelper } = require('../../../utils/helpers');
+const ProrrateoService = require('../services/prorrateo.service');
 const logger = require('../../../utils/logger');
 
 // URL del frontend
@@ -510,10 +511,59 @@ class SuscripcionesController {
             diasTrialRestantes = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
         }
 
+        // Obtener balance de ajustes pendientes (créditos/cargos)
+        let balanceAjustes = null;
+        try {
+            balanceAjustes = await ProrrateoService.obtenerBalanceAjustes(suscripcion.id);
+        } catch (err) {
+            logger.warn('Error obteniendo balance de ajustes', { error: err.message });
+        }
+
+        // Obtener últimos pagos usando bypass (la suscripción pertenece a Nexo Team)
+        let ultimosPagos = [];
+        try {
+            ultimosPagos = await PagosModel.listarPorSuscripcionBypass(suscripcion.id, 5);
+        } catch (err) {
+            logger.warn('Error obteniendo pagos de suscripción', { error: err.message });
+        }
+
         return ResponseHelper.success(res, {
             ...suscripcion,
-            dias_trial_restantes: diasTrialRestantes
+            dias_trial_restantes: diasTrialRestantes,
+            balance_ajustes: balanceAjustes,
+            ultimos_pagos: ultimosPagos
         });
+    });
+
+    /**
+     * Calcular prorrateo para cambio de plan
+     * GET /api/v1/suscripciones-negocio/suscripciones/mi-suscripcion/calcular-prorrateo
+     *
+     * Calcula el crédito/cargo que se aplicaría al cambiar de plan.
+     * Permite al usuario ver el detalle antes de confirmar el cambio.
+     */
+    static calcularProrrateo = asyncHandler(async (req, res) => {
+        const { nuevo_plan_id } = req.query;
+        const organizacionId = req.user.organizacion_id;
+
+        if (!nuevo_plan_id) {
+            return ResponseHelper.error(res, 'Se requiere nuevo_plan_id', 400);
+        }
+
+        // Buscar la suscripción activa del usuario
+        const suscripcion = await SuscripcionesModel.buscarActivaPorOrganizacion(organizacionId);
+
+        if (!suscripcion) {
+            return ResponseHelper.error(res, 'No tienes una suscripción activa', 404);
+        }
+
+        // Calcular prorrateo
+        const prorrateo = await ProrrateoService.calcularProrrateo(
+            suscripcion.id,
+            parseInt(nuevo_plan_id, 10)
+        );
+
+        return ResponseHelper.success(res, prorrateo);
     });
 }
 

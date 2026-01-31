@@ -142,9 +142,74 @@ export function useAjustarStock() {
       queryClient.invalidateQueries({ queryKey: ['stock-critico'], refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: ['movimientos'], refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: ['kardex', variables.id], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['stock-ubicacion'], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('update', 'Stock', {
       400: 'Datos inválidos. Revisa cantidad y tipo de movimiento',
     }),
+  });
+}
+
+// =========================================================================
+// HOOKS DE STOCK POR UBICACIÓN (Ene 2026)
+// =========================================================================
+
+/**
+ * Hook para obtener stock de un producto desglosado por ubicación
+ * @param {number} productoId - ID del producto
+ * @param {Object} options - { sucursal_id?, usuario_id?, enabled? }
+ * @returns {Object} { total, ubicaciones: [...] }
+ */
+export function useStockPorUbicacion(productoId, options = {}) {
+  const { sucursal_id, usuario_id, enabled = true } = options;
+
+  return useQuery({
+    queryKey: ['stock-ubicacion', productoId, { sucursal_id, usuario_id }],
+    queryFn: async () => {
+      const params = sanitizeParams({ sucursal_id, usuario_id });
+      const response = await inventarioApi.obtenerStockPorUbicacion(productoId, params);
+      return response.data.data;
+    },
+    enabled: enabled && !!productoId,
+    staleTime: STALE_TIMES.REAL_TIME, // 30 seg - datos de ubicación cambian frecuentemente
+  });
+}
+
+/**
+ * Hook para obtener stock del producto en la ubicación del usuario actual
+ * @param {number} productoId - ID del producto
+ * @param {Object} options - { enabled? }
+ * @returns {Object} { cantidad, ubicacion_id, ubicacion_nombre, es_ubicacion_asignada }
+ */
+export function useMiStock(productoId, options = {}) {
+  const { enabled = true } = options;
+
+  return useQuery({
+    queryKey: ['mi-stock', productoId],
+    queryFn: async () => {
+      const response = await inventarioApi.obtenerMiStock(productoId);
+      return response.data.data;
+    },
+    enabled: enabled && !!productoId,
+    staleTime: STALE_TIMES.REAL_TIME,
+  });
+}
+
+/**
+ * Hook para listar productos con stock filtrado por ubicación
+ * Útil para mostrar stock de "mi ubicación" vs "stock total"
+ * @param {Object} params - { ubicacion_id?, sucursal_id?, usuario_ubicacion?, solo_con_stock?, busqueda?, categoria_id?, limit?, offset? }
+ * @returns {Object} { productos, total, filtro_aplicado }
+ */
+export function useProductosStockFiltrado(params = {}) {
+  return useQuery({
+    queryKey: ['productos-stock-filtrado', params],
+    queryFn: async () => {
+      const cleanParams = sanitizeParams(params);
+      const response = await inventarioApi.listarProductosStockFiltrado(cleanParams);
+      return response.data.data;
+    },
+    staleTime: STALE_TIMES.SEMI_STATIC,
+    placeholderData: (previousData) => previousData, // Mantener datos anteriores durante refetch
   });
 }

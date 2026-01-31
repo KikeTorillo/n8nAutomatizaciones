@@ -100,9 +100,10 @@ export const SkeletonTable = memo(function SkeletonTable({
 /**
  * SkeletonCard - Skeleton loading para cards
  */
-export const SkeletonCard = memo(function SkeletonCard({ className }) {
+export const SkeletonCard = memo(function SkeletonCard({ className, style }) {
   return (
     <div
+      style={style}
       className={cn(
         'bg-white dark:bg-gray-800 rounded-lg shadow-sm',
         'border border-gray-200 dark:border-gray-700',
@@ -155,6 +156,7 @@ SkeletonTable.propTypes = {
 
 SkeletonCard.propTypes = {
   className: PropTypes.string,
+  style: PropTypes.object,
 };
 
 SkeletonList.propTypes = {

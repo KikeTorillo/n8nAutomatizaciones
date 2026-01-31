@@ -31,16 +31,18 @@ class UsageTrackingService {
      */
     static async registrarUsoDiario(suscripcionId) {
         return await RLSContextManager.withBypass(async (db) => {
-            // Obtener datos de la suscripción y plan
+            // Obtener datos de la suscripción, plan y organización vinculada (Platform Billing)
             const suscripcionQuery = `
                 SELECT
                     s.id, s.organizacion_id, s.estado,
                     s.usuarios_max_periodo,
                     p.usuarios_incluidos,
                     p.precio_usuario_adicional,
-                    p.max_usuarios_hard
+                    p.max_usuarios_hard,
+                    c.organizacion_vinculada_id
                 FROM suscripciones_org s
                 INNER JOIN planes_suscripcion_org p ON s.plan_id = p.id
+                LEFT JOIN clientes c ON s.cliente_id = c.id
                 WHERE s.id = $1
             `;
             const suscResult = await db.query(suscripcionQuery, [suscripcionId]);
@@ -56,13 +58,16 @@ class UsageTrackingService {
                 return null;
             }
 
+            // Usar organización vinculada (Platform Billing) o propietaria (Customer Billing)
+            const orgIdParaConteo = suscripcion.organizacion_vinculada_id || suscripcion.organizacion_id;
+
             // Contar usuarios activos de la organización
             const countQuery = `
                 SELECT COUNT(*)::int as total
                 FROM usuarios
                 WHERE organizacion_id = $1 AND activo = true
             `;
-            const countResult = await db.query(countQuery, [suscripcion.organizacion_id]);
+            const countResult = await db.query(countQuery, [orgIdParaConteo]);
             const usuariosActivos = countResult.rows[0]?.total || 0;
 
             const usuariosIncluidos = suscripcion.usuarios_incluidos || 5;
@@ -319,7 +324,7 @@ class UsageTrackingService {
      */
     static async obtenerResumenUso(suscripcionId) {
         return await RLSContextManager.withBypass(async (db) => {
-            // Obtener suscripción con plan
+            // Obtener suscripción con plan y organización vinculada (Platform Billing)
             const suscQuery = `
                 SELECT
                     s.id, s.organizacion_id, s.estado,
@@ -327,9 +332,11 @@ class UsageTrackingService {
                     s.precio_usuario_snapshot, s.ajuste_pendiente,
                     s.fecha_proximo_cobro,
                     p.usuarios_incluidos, p.precio_usuario_adicional, p.max_usuarios_hard,
-                    p.nombre as plan_nombre
+                    p.nombre as plan_nombre,
+                    c.organizacion_vinculada_id
                 FROM suscripciones_org s
                 INNER JOIN planes_suscripcion_org p ON s.plan_id = p.id
+                LEFT JOIN clientes c ON s.cliente_id = c.id
                 WHERE s.id = $1
             `;
             const suscResult = await db.query(suscQuery, [suscripcionId]);
@@ -339,13 +346,16 @@ class UsageTrackingService {
                 throw new Error(`Suscripción ${suscripcionId} no encontrada`);
             }
 
+            // Usar organización vinculada (Platform Billing) o propietaria (Customer Billing)
+            const orgIdParaConteo = suscripcion.organizacion_vinculada_id || suscripcion.organizacion_id;
+
             // Contar usuarios actuales
             const countQuery = `
                 SELECT COUNT(*)::int as total
                 FROM usuarios
                 WHERE organizacion_id = $1 AND activo = true
             `;
-            const countResult = await db.query(countQuery, [suscripcion.organizacion_id]);
+            const countResult = await db.query(countQuery, [orgIdParaConteo]);
             const usuariosActuales = countResult.rows[0]?.total || 0;
 
             const usuariosIncluidos = suscripcion.usuarios_incluidos || 5;

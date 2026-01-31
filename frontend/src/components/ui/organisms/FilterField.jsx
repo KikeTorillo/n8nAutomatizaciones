@@ -1,4 +1,4 @@
-import { memo, useId } from 'react';
+import { memo, useId, forwardRef } from 'react';
 import PropTypes from 'prop-types';
 import { cn } from '@/lib/utils';
 import { Label } from '../atoms/Label';
@@ -31,6 +31,7 @@ import {
  * @param {string} max - Fecha/número máximo
  * @param {number} step - Incremento para inputs numéricos
  * @param {string} className - Clases adicionales
+ * @param {React.Ref} ref - Ref para acceder al elemento input/select/checkbox
  *
  * @example
  * // Campo de texto
@@ -54,7 +55,7 @@ import {
  * // Checkbox
  * <FilterField type="checkbox" label="Solo activos" value={soloActivos} onChange={setSoloActivos} />
  */
-const FilterField = memo(function FilterField({
+const FilterField = memo(forwardRef(function FilterField({
   type = 'text',
   label,
   value,
@@ -68,7 +69,7 @@ const FilterField = memo(function FilterField({
   id,
   className,
   disabled = false,
-}) {
+}, ref) {
   const generatedId = useId();
   const fieldId = id || generatedId;
 
@@ -77,6 +78,7 @@ const FilterField = memo(function FilterField({
     return (
       <div className={cn('flex items-center gap-2', className)}>
         <Checkbox
+          ref={ref}
           id={fieldId}
           checked={!!value}
           onChange={(e) => onChange?.(e.target.checked)}
@@ -114,7 +116,7 @@ const FilterField = memo(function FilterField({
       )}
 
       {type === 'select' ? (
-        <select {...inputProps}>
+        <select ref={ref} {...inputProps}>
           <option value="">{placeholder || 'Seleccionar...'}</option>
           {options.map((option) => (
             <option key={option.value} value={option.value}>
@@ -124,6 +126,7 @@ const FilterField = memo(function FilterField({
         </select>
       ) : (
         <input
+          ref={ref}
           {...inputProps}
           type={type}
           placeholder={placeholder}
@@ -134,7 +137,7 @@ const FilterField = memo(function FilterField({
       )}
     </div>
   );
-});
+}));
 
 FilterField.displayName = 'FilterField';
 

@@ -1,18 +1,7 @@
 import { memo } from 'react';
 import PropTypes from 'prop-types';
 import { cn } from '@/lib/utils';
-
-/**
- * Tamaños del spinner
- * Ene 2026: Extraído de ToggleSwitch y LoadingSpinner para reutilización
- */
-const SIZES = {
-  xs: 'w-3 h-3',
-  sm: 'w-4 h-4',
-  md: 'w-5 h-5',
-  lg: 'w-6 h-6',
-  xl: 'w-8 h-8',
-};
+import { ICON_SIZES } from '@/lib/uiConstants';
 
 /**
  * Spinner - Indicador de carga SVG reutilizable
@@ -38,7 +27,7 @@ const Spinner = memo(function Spinner({
 }) {
   return (
     <svg
-      className={cn(SIZES[size] || SIZES.md, 'animate-spin', className)}
+      className={cn(ICON_SIZES[size] || ICON_SIZES.md, 'animate-spin', className)}
       xmlns="http://www.w3.org/2000/svg"
       fill="none"
       viewBox="0 0 24 24"

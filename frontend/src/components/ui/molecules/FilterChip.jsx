@@ -2,6 +2,7 @@ import { memo } from 'react';
 import PropTypes from 'prop-types';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { BADGE_COLORS } from '@/lib/uiConstants';
 
 /**
  * FilterChip - Chip de filtro activo con botón para remover
@@ -30,14 +31,8 @@ const FilterChip = memo(function FilterChip({
   className,
 }) {
   const variants = {
-    primary: cn(
-      'bg-primary-100 text-primary-800 border-primary-200',
-      'dark:bg-primary-900/40 dark:text-primary-300 dark:border-primary-700'
-    ),
-    gray: cn(
-      'bg-gray-100 text-gray-700 border-gray-200',
-      'dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600'
-    ),
+    primary: cn(BADGE_COLORS.primary, 'border-primary-200 dark:border-primary-700'),
+    gray: cn(BADGE_COLORS.default, 'border-gray-200 dark:border-gray-600'),
   };
 
   return (

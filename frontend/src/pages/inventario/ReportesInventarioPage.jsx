@@ -87,11 +87,13 @@ function ReporteValorInventario() {
             icon: Package,
             label: 'Total Productos',
             value: totalProductos.toLocaleString('es-MX'),
+            color: 'blue',
           },
           {
             icon: Layers,
             label: 'Unidades Totales',
             value: totalUnidades.toLocaleString('es-MX'),
+            color: 'purple',
           },
           {
             icon: TrendingUp,

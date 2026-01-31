@@ -573,6 +573,32 @@ class PagosModel {
             return result.rows[0];
         });
     }
+
+    /**
+     * Listar pagos por suscripción usando bypass RLS
+     * Usado para endpoint mi-suscripcion donde el usuario puede estar en org diferente
+     *
+     * @param {number} suscripcionId - ID de la suscripción
+     * @param {number} limite - Cantidad máxima de pagos (default: 5)
+     * @returns {Promise<Array>} - Lista de pagos
+     */
+    static async listarPorSuscripcionBypass(suscripcionId, limite = 5) {
+        return await RLSContextManager.withBypass(async (db) => {
+            const query = `
+                SELECT
+                    id, suscripcion_id, monto, moneda, estado,
+                    gateway, metodo_pago, ultimos_digitos,
+                    fecha_pago, creado_en
+                FROM pagos_suscripcion
+                WHERE suscripcion_id = $1
+                ORDER BY creado_en DESC
+                LIMIT $2
+            `;
+
+            const result = await db.query(query, [suscripcionId, limite]);
+            return result.rows;
+        });
+    }
 }
 
 module.exports = PagosModel;

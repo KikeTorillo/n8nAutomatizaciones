@@ -9,6 +9,7 @@ import { memo, useId, cloneElement, isValidElement } from 'react';
 import PropTypes from 'prop-types';
 import { cn } from '@/lib/utils';
 import { Label } from '../atoms/Label';
+import { FORM_GROUP } from '@/lib/uiConstants';
 
 /**
  * Componente FormGroup reutilizable
@@ -44,10 +45,10 @@ const FormGroup = memo(function FormGroup({
       <Label label={label} required={required} htmlFor={htmlFor} />
       {enhancedChildren}
       {helper && !error && (
-        <p id={helperId} className="mt-1 text-sm text-gray-500 dark:text-gray-400">{helper}</p>
+        <p id={helperId} className={FORM_GROUP.helper}>{helper}</p>
       )}
       {error && (
-        <p id={errorId} className="mt-1 text-sm text-red-600 dark:text-red-400">{error}</p>
+        <p id={errorId} className={FORM_GROUP.error}>{error}</p>
       )}
     </div>
   );

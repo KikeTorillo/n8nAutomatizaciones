@@ -499,6 +499,58 @@ class ConectoresModel {
             return parseInt(result.rows[0].total) > 0;
         });
     }
+
+    /**
+     * Incrementar contador de errores consecutivos (usado por circuit breaker)
+     *
+     * @param {number} organizacionId - ID de la organización
+     * @param {string} gateway - Gateway
+     * @returns {Promise<void>}
+     */
+    static async incrementarErroresConsecutivos(organizacionId, gateway) {
+        return await RLSContextManager.withBypass(async (db) => {
+            await db.query(`
+                UPDATE conectores_pago_org
+                SET errores_consecutivos = errores_consecutivos + 1,
+                    ultima_verificacion = NOW()
+                WHERE organizacion_id = $1
+                  AND gateway = $2
+                  AND activo = true
+                  AND es_principal = true
+            `, [organizacionId, gateway]);
+
+            logger.debug('[ConectoresModel] Errores consecutivos incrementados', {
+                organizacionId,
+                gateway
+            });
+        });
+    }
+
+    /**
+     * Resetear contador de errores consecutivos (usado por circuit breaker)
+     *
+     * @param {number} organizacionId - ID de la organización
+     * @param {string} gateway - Gateway
+     * @returns {Promise<void>}
+     */
+    static async resetearErroresConsecutivos(organizacionId, gateway) {
+        return await RLSContextManager.withBypass(async (db) => {
+            await db.query(`
+                UPDATE conectores_pago_org
+                SET errores_consecutivos = 0,
+                    ultima_verificacion = NOW()
+                WHERE organizacion_id = $1
+                  AND gateway = $2
+                  AND activo = true
+                  AND es_principal = true
+            `, [organizacionId, gateway]);
+
+            logger.debug('[ConectoresModel] Errores consecutivos reseteados', {
+                organizacionId,
+                gateway
+            });
+        });
+    }
 }
 
 // Exportar constantes útiles

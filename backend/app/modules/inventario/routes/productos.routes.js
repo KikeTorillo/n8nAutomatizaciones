@@ -70,6 +70,19 @@ router.get('/productos/stock-critico',
 );
 
 /**
+ * GET /api/v1/inventario/productos/stock-filtrado
+ * Listar productos con stock filtrado por ubicación/sucursal/usuario
+ * Query params: ubicacion_id?, sucursal_id?, usuario_ubicacion?, solo_con_stock?, busqueda?, categoria_id?
+ */
+router.get('/productos/stock-filtrado',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.listarProductosStockFiltrado),
+    InventarioController.listarConStockFiltrado
+);
+
+/**
  * POST /api/v1/inventario/productos/stock-disponible
  * Obtener stock disponible de multiples productos
  */
@@ -147,6 +160,31 @@ router.get('/productos/:id/stock-disponible',
     rateLimiting.apiRateLimit,
     validate(inventarioSchemas.stockDisponible),
     InventarioController.stockDisponible
+);
+
+/**
+ * GET /api/v1/inventario/productos/:id/stock-ubicaciones
+ * Obtener stock de un producto desglosado por ubicación
+ * Query params: sucursal_id?, usuario_id?
+ */
+router.get('/productos/:id/stock-ubicaciones',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.obtenerStockUbicaciones),
+    InventarioController.obtenerStockPorUbicacion
+);
+
+/**
+ * GET /api/v1/inventario/productos/:id/mi-stock
+ * Obtener stock de un producto en la ubicación del usuario actual
+ */
+router.get('/productos/:id/mi-stock',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.obtenerPorId),
+    InventarioController.obtenerMiStock
 );
 
 /**

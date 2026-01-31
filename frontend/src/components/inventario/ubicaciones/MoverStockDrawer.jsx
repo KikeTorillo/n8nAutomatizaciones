@@ -70,8 +70,8 @@ function MoverStockDrawer({ isOpen, onClose, sucursalId }) {
   const { data: stockOrigen, isLoading: cargandoStock } = useStockUbicacion(ubicacionOrigenId);
   const productosEnOrigen = stockOrigen || [];
 
-  // Producto seleccionado
-  const productoSeleccionado = productosEnOrigen.find(p => p.producto_id === productoSeleccionadoId);
+  // Producto seleccionado (convertir a Number porque el select devuelve string)
+  const productoSeleccionado = productosEnOrigen.find(p => p.producto_id === Number(productoSeleccionadoId));
 
   // Resetear al cerrar
   useEffect(() => {

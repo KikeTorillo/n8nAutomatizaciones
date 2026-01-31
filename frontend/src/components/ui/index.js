@@ -55,6 +55,7 @@ export { default as IconPicker, ICONOS_MAP, CATEGORIAS_ICONOS, IconButton } from
 export { MultiSelect } from './organisms/MultiSelect';
 export { BarcodeScanner } from './organisms/BarcodeScanner';
 export { ConfirmDialog } from './organisms/ConfirmDialog';
+export { DeleteConfirmDialog } from './organisms/DeleteConfirmDialog';
 export { DataTable, DataTableActions, DataTableActionButton } from './organisms/DataTable';
 export { FilterPanel, FilterChips } from './organisms/FilterPanel';
 export { StatCardGrid } from './organisms/StatCardGrid';
@@ -108,6 +109,8 @@ export { ListadoCRUDPage } from './templates/ListadoCRUDPage';
 // Nuevos templates (Ene 2026)
 export { BaseDetailLayout, DetailHeader, DetailLoadingState, DetailNotFoundState } from './templates/BaseDetailLayout';
 export { BaseFormLayout, FormHeader, FormWizardStepper, FormFooter } from './templates/BaseFormLayout';
+export { AsyncBoundary } from './templates/AsyncBoundary';
+export { PageHeader } from './templates/PageHeader';
 
 // ========== EXTERNOS ==========
 export { default as ChunkErrorBoundary } from '../common/ChunkErrorBoundary';

@@ -845,6 +845,301 @@ class ProductosModel {
     }
 
     /**
+     * Obtener stock de un producto desglosado por ubicación
+     * Ene 2026: Nuevo endpoint para filtro de stock por ubicación
+     * @param {number} productoId - ID del producto
+     * @param {number} organizacionId - ID de la organización
+     * @param {Object} opciones - { sucursal_id?, usuario_id? }
+     * @returns {Object} { total, ubicaciones: [...] }
+     */
+    static async obtenerStockPorUbicacion(productoId, organizacionId, opciones = {}) {
+        return await RLSContextManager.query(organizacionId, async (db) => {
+            const { sucursal_id, usuario_id } = opciones;
+
+            let whereConditions = ['su.producto_id = $1', 'su.cantidad > 0'];
+            let params = [productoId];
+            let paramIndex = 2;
+
+            // Filtrar por sucursal si se especifica
+            if (sucursal_id) {
+                whereConditions.push(`ua.sucursal_id = $${paramIndex++}`);
+                params.push(sucursal_id);
+            }
+
+            // Filtrar por ubicaciones del usuario si se especifica
+            if (usuario_id) {
+                whereConditions.push(`EXISTS (
+                    SELECT 1 FROM usuarios_ubicaciones uu
+                    WHERE uu.ubicacion_id = su.ubicacion_id
+                      AND uu.usuario_id = $${paramIndex}
+                      AND uu.activo = true
+                )`);
+                params.push(usuario_id);
+                paramIndex++;
+            }
+
+            const query = `
+                SELECT
+                    su.ubicacion_id,
+                    su.cantidad,
+                    su.lote,
+                    su.fecha_vencimiento,
+                    su.fecha_entrada,
+                    ua.codigo as ubicacion_codigo,
+                    ua.nombre as ubicacion_nombre,
+                    ua.tipo as ubicacion_tipo,
+                    ua.es_picking,
+                    s.id as sucursal_id,
+                    s.nombre as sucursal_nombre
+                FROM stock_ubicaciones su
+                JOIN ubicaciones_almacen ua ON ua.id = su.ubicacion_id
+                JOIN sucursales s ON s.id = ua.sucursal_id
+                WHERE ${whereConditions.join(' AND ')}
+                ORDER BY ua.es_picking DESC, su.fecha_entrada ASC
+            `;
+
+            const result = await db.query(query, params);
+
+            // Calcular totales
+            const total = result.rows.reduce((sum, row) => sum + parseInt(row.cantidad), 0);
+
+            return {
+                producto_id: productoId,
+                total,
+                ubicaciones: result.rows
+            };
+        });
+    }
+
+    /**
+     * Obtener stock del usuario en su ubicación asignada
+     * Ene 2026: Endpoint para mostrar "Mi stock" en UI
+     * @param {number} productoId - ID del producto
+     * @param {number} usuarioId - ID del usuario
+     * @param {number} organizacionId - ID de la organización
+     * @returns {Object} { cantidad, ubicacion }
+     */
+    static async obtenerStockUsuario(productoId, usuarioId, organizacionId) {
+        return await RLSContextManager.query(organizacionId, async (db) => {
+            const query = `
+                SELECT
+                    COALESCE(SUM(su.cantidad), 0) as cantidad,
+                    ua.id as ubicacion_id,
+                    ua.codigo as ubicacion_codigo,
+                    ua.nombre as ubicacion_nombre,
+                    s.id as sucursal_id,
+                    s.nombre as sucursal_nombre
+                FROM usuarios_ubicaciones uu
+                JOIN ubicaciones_almacen ua ON ua.id = uu.ubicacion_id
+                JOIN sucursales s ON s.id = ua.sucursal_id
+                LEFT JOIN stock_ubicaciones su ON su.ubicacion_id = uu.ubicacion_id
+                    AND su.producto_id = $1
+                WHERE uu.usuario_id = $2
+                  AND uu.activo = true
+                  AND ua.activo = true
+                  AND uu.es_default = true
+                GROUP BY ua.id, ua.codigo, ua.nombre, s.id, s.nombre
+                LIMIT 1
+            `;
+
+            const result = await db.query(query, [productoId, usuarioId]);
+
+            if (result.rows.length === 0) {
+                // Usuario no tiene ubicación asignada, devolver stock global
+                const globalQuery = `
+                    SELECT stock_actual as cantidad FROM productos WHERE id = $1
+                `;
+                const globalResult = await db.query(globalQuery, [productoId]);
+                return {
+                    cantidad: parseInt(globalResult.rows[0]?.cantidad || 0),
+                    ubicacion_id: null,
+                    ubicacion_codigo: null,
+                    ubicacion_nombre: 'Stock Global',
+                    es_ubicacion_asignada: false
+                };
+            }
+
+            return {
+                ...result.rows[0],
+                cantidad: parseInt(result.rows[0].cantidad),
+                es_ubicacion_asignada: true
+            };
+        });
+    }
+
+    /**
+     * Listar productos con stock filtrado por ubicación
+     * Ene 2026: Extensión de listar() para filtrado WMS
+     * @param {number} organizacionId
+     * @param {Object} filtros - Incluye ubicacion_id o usuario_ubicacion
+     * @returns {Object} { productos, total }
+     */
+    static async listarConStockUbicacion(organizacionId, filtros = {}) {
+        return await RLSContextManager.query(organizacionId, async (db) => {
+            const {
+                ubicacion_id,
+                sucursal_id,
+                usuario_id,
+                solo_con_stock = false,
+                limit = 50,
+                offset = 0,
+                busqueda,
+                categoria_id
+            } = filtros;
+
+            let whereConditions = ['p.organizacion_id = $1', 'p.activo = true'];
+            let params = [organizacionId];
+            let paramIndex = 2;
+
+            // Construir subconsulta de stock según filtros
+            let stockSubquery;
+
+            if (ubicacion_id) {
+                // Stock de una ubicación específica
+                stockSubquery = `
+                    SELECT COALESCE(SUM(su.cantidad), 0)
+                    FROM stock_ubicaciones su
+                    WHERE su.producto_id = p.id AND su.ubicacion_id = $${paramIndex}
+                `;
+                params.push(ubicacion_id);
+                paramIndex++;
+            } else if (usuario_id) {
+                // Stock de las ubicaciones del usuario
+                stockSubquery = `
+                    SELECT COALESCE(SUM(su.cantidad), 0)
+                    FROM stock_ubicaciones su
+                    JOIN usuarios_ubicaciones uu ON uu.ubicacion_id = su.ubicacion_id
+                    WHERE su.producto_id = p.id
+                      AND uu.usuario_id = $${paramIndex}
+                      AND uu.activo = true
+                `;
+                params.push(usuario_id);
+                paramIndex++;
+            } else if (sucursal_id) {
+                // Stock de toda la sucursal
+                stockSubquery = `
+                    SELECT COALESCE(SUM(su.cantidad), 0)
+                    FROM stock_ubicaciones su
+                    JOIN ubicaciones_almacen ua ON ua.id = su.ubicacion_id
+                    WHERE su.producto_id = p.id AND ua.sucursal_id = $${paramIndex}
+                `;
+                params.push(sucursal_id);
+                paramIndex++;
+            } else {
+                // Stock total
+                stockSubquery = 'p.stock_actual';
+            }
+
+            // Filtro de búsqueda
+            if (busqueda) {
+                whereConditions.push(`(
+                    p.nombre ILIKE $${paramIndex} OR
+                    p.sku ILIKE $${paramIndex} OR
+                    p.codigo_barras ILIKE $${paramIndex}
+                )`);
+                params.push(`%${busqueda}%`);
+                paramIndex++;
+            }
+
+            // Filtro de categoría
+            if (categoria_id) {
+                whereConditions.push(`p.categoria_id = $${paramIndex}`);
+                params.push(categoria_id);
+                paramIndex++;
+            }
+
+            // Filtro de solo con stock
+            const stockAlias = typeof stockSubquery === 'string' && stockSubquery === 'p.stock_actual'
+                ? 'p.stock_actual'
+                : `(${stockSubquery})`;
+
+            if (solo_con_stock) {
+                whereConditions.push(`${stockAlias} > 0`);
+            }
+
+            // Guardar params para countQuery ANTES de agregar limit/offset
+            // El countQuery usa las mismas condiciones WHERE
+            const countParams = [...params];
+
+            const query = `
+                SELECT
+                    p.id,
+                    p.nombre,
+                    p.sku,
+                    p.codigo_barras,
+                    p.precio_venta,
+                    p.precio_compra,
+                    p.stock_actual as stock_total,
+                    (${stockSubquery}) as stock_filtrado,
+                    c.nombre as nombre_categoria,
+                    prov.nombre as nombre_proveedor
+                FROM productos p
+                LEFT JOIN categorias_productos c ON c.id = p.categoria_id
+                LEFT JOIN proveedores prov ON prov.id = p.proveedor_id
+                WHERE ${whereConditions.join(' AND ')}
+                ORDER BY p.nombre ASC
+                LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
+            `;
+
+            params.push(limit, offset);
+
+            // Query de conteo - usar whereConditions sin subquery de stock
+            // El WHERE solo tiene: organizacion_id, activo, busqueda, categoria_id
+            // La subquery de stock solo aparece si solo_con_stock es true
+            const countWhereConditions = whereConditions.filter(cond =>
+                !cond.includes('stock_filtrado') && !cond.includes('stock_ubicaciones')
+            );
+
+            // Reconstruir params para countQuery sin los params de la subquery de stock
+            // Solo incluir: organizacionId + busqueda + categoria_id
+            let countQueryParams = [organizacionId];
+            let countParamIndex = 2;
+
+            if (busqueda) {
+                countQueryParams.push(`%${busqueda}%`);
+                countParamIndex++;
+            }
+            if (categoria_id) {
+                countQueryParams.push(categoria_id);
+                countParamIndex++;
+            }
+
+            // Reconstruir condiciones WHERE para countQuery
+            let countWheres = ['p.organizacion_id = $1', 'p.activo = true'];
+            let cpi = 2;
+            if (busqueda) {
+                countWheres.push(`(p.nombre ILIKE $${cpi} OR p.sku ILIKE $${cpi} OR p.codigo_barras ILIKE $${cpi})`);
+                cpi++;
+            }
+            if (categoria_id) {
+                countWheres.push(`p.categoria_id = $${cpi}`);
+                cpi++;
+            }
+
+            const countQuery = `
+                SELECT COUNT(*) as total
+                FROM productos p
+                WHERE ${countWheres.join(' AND ')}
+            `;
+
+            const [dataResult, countResult] = await Promise.all([
+                db.query(query, params),
+                db.query(countQuery, countQueryParams)
+            ]);
+
+            return {
+                productos: dataResult.rows.map(p => ({
+                    ...p,
+                    stock_filtrado: parseInt(p.stock_filtrado),
+                    stock_total: parseInt(p.stock_total)
+                })),
+                total: parseInt(countResult.rows[0]?.total || 0),
+                filtro_aplicado: ubicacion_id ? 'ubicacion' : usuario_id ? 'usuario' : sucursal_id ? 'sucursal' : 'global'
+            };
+        });
+    }
+
+    /**
      * Búsqueda avanzada de productos (full-text search + código de barras)
      * Dic 2025: Incluye requiere_numero_serie para integración POS
      * Dic 2025: Busca también en variantes_producto (variantes primero)

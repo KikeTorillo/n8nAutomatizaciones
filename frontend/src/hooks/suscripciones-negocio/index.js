@@ -38,6 +38,7 @@ export {
   useSuscripcionesCliente,
   useHistorialSuscripcion,
   useMiSuscripcion,
+  useCalcularProrrateo,
 } from './queries';
 
 // Suscripciones - Mutations

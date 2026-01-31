@@ -108,13 +108,51 @@ class WebhooksController {
         });
 
         // 2. IDEMPOTENCIA: Verificar si ya fue procesado
+        // 2a. Verificar por request_id (mismo webhook reenviado)
         if (requestId) {
             const yaProcesado = await WebhooksProcesadosModel.yaFueProcesado('mercadopago', requestId);
             if (yaProcesado) {
-                logger.info('Webhook duplicado ignorado (idempotencia)', {
+                logger.info('Webhook duplicado ignorado (mismo request_id)', {
                     requestId,
                     organizacionId
                 });
+                return ResponseHelper.success(res, {
+                    received: true,
+                    deduplicated: true
+                });
+            }
+        }
+
+        // 2b. Verificar por data_id + event_type (diferente request_id pero mismo evento)
+        // IMPORTANTE: MercadoPago envía múltiples webhooks con diferentes request_id
+        // pero el mismo data_id para el mismo evento
+        const eventType = req.body.type || 'unknown';
+        if (dataId && eventType !== 'unknown') {
+            const yaExitoso = await WebhooksProcesadosModel.yaFueProcesadoExitosamente(
+                'mercadopago',
+                eventType,
+                dataId
+            );
+            if (yaExitoso) {
+                logger.info('Webhook duplicado ignorado (mismo data_id ya exitoso)', {
+                    dataId,
+                    eventType,
+                    requestId,
+                    organizacionId
+                });
+                // Registrar como skipped para trazabilidad
+                if (requestId) {
+                    await WebhooksProcesadosModel.registrar({
+                        gateway: 'mercadopago',
+                        requestId,
+                        eventType,
+                        dataId,
+                        organizacionId,
+                        resultado: 'skipped',
+                        mensaje: 'Evento ya procesado exitosamente con otro request_id',
+                        ipOrigen
+                    });
+                }
                 return ResponseHelper.success(res, {
                     received: true,
                     deduplicated: true

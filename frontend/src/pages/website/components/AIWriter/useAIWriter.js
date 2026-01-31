@@ -73,7 +73,14 @@ export function useAIWriter({ industria = 'default', onSuccess, onError } = {}) 
         longitud: selectedLongitud,
       }),
     onSuccess: (data) => {
-      onSuccess?.(data?.texto || data);
+      // Extraer texto de la respuesta (puede venir como objeto o string)
+      const texto = typeof data === 'string' ? data : data?.texto;
+      if (texto && typeof texto === 'string') {
+        onSuccess?.(texto);
+      } else {
+        console.warn('[useAIWriter] Respuesta inesperada:', data);
+        onError?.('Respuesta inválida del servidor');
+      }
     },
     onError: (error) => {
       onError?.(error.response?.data?.message || 'Error al generar texto');
@@ -100,7 +107,9 @@ export function useAIWriter({ industria = 'default', onSuccess, onError } = {}) 
     selectedTono,
     selectedLongitud,
     isGenerating: generateMutation.isPending,
-    generatedText: generateMutation.data?.texto || generateMutation.data,
+    generatedText: typeof generateMutation.data === 'string'
+      ? generateMutation.data
+      : generateMutation.data?.texto,
     error: generateMutation.error,
 
     // Constantes

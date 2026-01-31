@@ -73,4 +73,31 @@ export const stockApi = {
    */
   verificarDisponibilidad: (productoId, params) =>
     apiClient.get(`/inventario/productos/${productoId}/verificar-disponibilidad`, { params }),
+
+  // ========== Stock por Ubicación (Ene 2026) ==========
+
+  /**
+   * Obtener stock de un producto desglosado por ubicación
+   * @param {number} productoId
+   * @param {Object} params - { sucursal_id?, usuario_id? }
+   * @returns {Promise<Object>} { producto_id, total, ubicaciones: [...] }
+   */
+  obtenerStockPorUbicacion: (productoId, params = {}) =>
+    apiClient.get(`/inventario/productos/${productoId}/stock-ubicaciones`, { params }),
+
+  /**
+   * Obtener stock de un producto en la ubicación del usuario actual
+   * @param {number} productoId
+   * @returns {Promise<Object>} { cantidad, ubicacion_id, ubicacion_nombre, es_ubicacion_asignada }
+   */
+  obtenerMiStock: (productoId) =>
+    apiClient.get(`/inventario/productos/${productoId}/mi-stock`),
+
+  /**
+   * Listar productos con stock filtrado por ubicación/sucursal/usuario
+   * @param {Object} params - { ubicacion_id?, sucursal_id?, usuario_ubicacion?, solo_con_stock?, busqueda?, categoria_id?, limit?, offset? }
+   * @returns {Promise<Object>} { productos, total, filtro_aplicado }
+   */
+  listarProductosStockFiltrado: (params = {}) =>
+    apiClient.get('/inventario/productos/stock-filtrado', { params }),
 };

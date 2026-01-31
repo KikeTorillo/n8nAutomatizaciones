@@ -1,6 +1,7 @@
 const RLSContextManager = require('../../../utils/rlsContextManager');
 const { ErrorHelper } = require('../../../utils/helpers');
 const logger = require('../../../utils/logger');
+const blockDefaults = require('../data/block-defaults.json');
 
 /**
  * ====================================================================
@@ -288,7 +289,7 @@ class WebsiteBloquesModel {
     }
 
     /**
-     * Reordenar bloques de una página
+     * Reordenar bloques de una página con bloqueo pesimista
      *
      * @param {string} paginaId - ID de la página
      * @param {Array} ordenamiento - Array de {id, orden}
@@ -297,6 +298,14 @@ class WebsiteBloquesModel {
      */
     static async reordenar(paginaId, ordenamiento, organizacionId) {
         return await RLSContextManager.transaction(organizacionId, async (db) => {
+            // Bloqueo pesimista: SELECT FOR UPDATE para prevenir race conditions
+            const ids = ordenamiento.map(item => item.id);
+            await db.query(
+                'SELECT id FROM website_bloques WHERE id = ANY($1) AND pagina_id = $2 FOR UPDATE',
+                [ids, paginaId]
+            );
+
+            // Actualizar orden de cada bloque
             for (const item of ordenamiento) {
                 await db.query(
                     'UPDATE website_bloques SET orden = $1, actualizado_en = NOW() WHERE id = $2 AND pagina_id = $3',
@@ -395,243 +404,30 @@ class WebsiteBloquesModel {
 
     /**
      * Obtener contenido por defecto para un tipo de bloque
+     * Lee de block-defaults.json y aplica valores dinámicos
      *
      * @param {string} tipo - Tipo de bloque
      * @returns {Object} Contenido por defecto
      */
     static obtenerContenidoDefault(tipo) {
-        const defaults = {
-            hero: {
-                titulo: 'Bienvenido a nuestro negocio',
-                subtitulo: 'Los mejores servicios de la ciudad',
-                imagen_url: '',
-                imagen_overlay: 0.5,
-                alineacion: 'center',
-                boton_texto: 'Agendar Cita',
-                boton_url: '#contacto',
-                boton_tipo: 'agendar'
-            },
-            servicios: {
-                titulo_seccion: 'Nuestros Servicios',
-                subtitulo_seccion: 'Lo que ofrecemos',
-                columnas: 3,
-                origen: 'manual',
-                mostrar_precio: true,
-                items: []
-            },
-            testimonios: {
-                titulo_seccion: 'Lo que dicen nuestros clientes',
-                origen: 'manual',
-                layout: 'carousel',
-                items: []
-            },
-            equipo: {
-                titulo_seccion: 'Nuestro Equipo',
-                origen: 'manual',
-                layout: 'grid',
-                mostrar_redes: true,
-                items: []
-            },
-            cta: {
-                titulo: '¿Listo para agendar?',
-                descripcion: 'Reserva tu cita en minutos',
-                boton_texto: 'Agendar Ahora',
-                boton_tipo: 'agendar',
-                boton_url: '',
-                fondo_tipo: 'color',
-                fondo_valor: '#3B82F6'
-            },
-            contacto: {
-                titulo_seccion: 'Contáctanos',
-                mostrar_formulario: true,
-                campos_formulario: ['nombre', 'email', 'telefono', 'mensaje'],
-                mostrar_info: true,
-                telefono: '',
-                email: '',
-                direccion: '',
-                mostrar_mapa: false,
-                coordenadas: { lat: 0, lng: 0 },
-                horarios: ''
-            },
-            footer: {
-                logo_url: '',
-                descripcion: 'Tu negocio de confianza',
-                columnas: [],
-                mostrar_redes: true,
-                copyright: `© ${new Date().getFullYear()} Mi Negocio. Todos los derechos reservados.`
-            },
-            texto: {
-                contenido: '<p>Escribe tu contenido aquí...</p>',
-                alineacion: 'left'
-            },
-            galeria: {
-                titulo_seccion: 'Galería',
-                layout: 'grid',
-                columnas: 3,
-                imagenes: []
-            },
-            video: {
-                titulo_seccion: '',
-                tipo: 'youtube',
-                url: '',
-                autoplay: false,
-                mostrar_controles: true
-            },
-            separador: {
-                tipo: 'linea',
-                altura: 50,
-                color: '#E5E7EB'
-            },
-            pricing: {
-                titulo_seccion: 'Nuestros Planes',
-                subtitulo_seccion: 'Elige el plan perfecto para ti',
-                columnas: 3,
-                mostrar_popular: true,
-                planes: [
-                    {
-                        nombre: 'Básico',
-                        precio: 29,
-                        periodo: 'mes',
-                        descripcion: 'Ideal para empezar',
-                        caracteristicas: ['Característica 1', 'Característica 2', 'Característica 3'],
-                        es_popular: false,
-                        boton_texto: 'Comenzar',
-                        boton_url: '#contacto'
-                    },
-                    {
-                        nombre: 'Profesional',
-                        precio: 59,
-                        periodo: 'mes',
-                        descripcion: 'Para negocios en crecimiento',
-                        caracteristicas: ['Todo del Básico', 'Característica 4', 'Característica 5', 'Característica 6'],
-                        es_popular: true,
-                        boton_texto: 'Comenzar',
-                        boton_url: '#contacto'
-                    },
-                    {
-                        nombre: 'Empresarial',
-                        precio: 99,
-                        periodo: 'mes',
-                        descripcion: 'Para grandes equipos',
-                        caracteristicas: ['Todo del Profesional', 'Característica 7', 'Característica 8', 'Soporte prioritario'],
-                        es_popular: false,
-                        boton_texto: 'Contactar',
-                        boton_url: '#contacto'
-                    }
-                ],
-                moneda: 'USD',
-                mostrar_toggle_anual: false,
-                descuento_anual: 20
-            },
-            faq: {
-                titulo_seccion: 'Preguntas Frecuentes',
-                subtitulo_seccion: 'Encuentra respuestas a las preguntas más comunes',
-                layout: 'accordion',
-                permitir_multiple: false,
-                items: [
-                    {
-                        pregunta: '¿Cómo puedo agendar una cita?',
-                        respuesta: 'Puedes agendar una cita fácilmente a través de nuestro formulario de contacto o llamando a nuestro número de teléfono.'
-                    },
-                    {
-                        pregunta: '¿Cuáles son los métodos de pago aceptados?',
-                        respuesta: 'Aceptamos efectivo, tarjetas de crédito/débito y transferencias bancarias.'
-                    },
-                    {
-                        pregunta: '¿Tienen política de cancelación?',
-                        respuesta: 'Sí, puedes cancelar tu cita con al menos 24 horas de anticipación sin ningún cargo.'
-                    }
-                ]
-            },
-            countdown: {
-                titulo: 'Gran Inauguración',
-                subtitulo: 'No te pierdas este evento especial',
-                fecha_objetivo: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-                mostrar_dias: true,
-                mostrar_horas: true,
-                mostrar_minutos: true,
-                mostrar_segundos: true,
-                texto_finalizado: '¡El evento ha comenzado!',
-                accion_finalizado: 'ocultar',
-                fondo_tipo: 'color',
-                fondo_valor: '#1F2937',
-                color_texto: '#FFFFFF',
-                boton_texto: '',
-                boton_url: ''
-            },
-            stats: {
-                titulo_seccion: 'Nuestros Números',
-                subtitulo_seccion: 'Lo que hemos logrado',
-                columnas: 4,
-                animar: true,
-                duracion_animacion: 2000,
-                items: [
-                    {
-                        numero: 500,
-                        sufijo: '+',
-                        prefijo: '',
-                        titulo: 'Clientes Satisfechos',
-                        icono: 'users'
-                    },
-                    {
-                        numero: 10,
-                        sufijo: '',
-                        prefijo: '',
-                        titulo: 'Años de Experiencia',
-                        icono: 'calendar'
-                    },
-                    {
-                        numero: 1000,
-                        sufijo: '+',
-                        prefijo: '',
-                        titulo: 'Proyectos Completados',
-                        icono: 'briefcase'
-                    },
-                    {
-                        numero: 98,
-                        sufijo: '%',
-                        prefijo: '',
-                        titulo: 'Satisfacción',
-                        icono: 'star'
-                    }
-                ]
-            },
-            timeline: {
-                titulo_seccion: 'Nuestra Historia',
-                subtitulo_seccion: 'Un recorrido por nuestros logros',
-                layout: 'alternado',
-                mostrar_linea: true,
-                color_linea: '#3B82F6',
-                items: [
-                    {
-                        fecha: '2020',
-                        titulo: 'Fundación',
-                        descripcion: 'Comenzamos nuestra aventura con una visión clara.',
-                        icono: 'rocket'
-                    },
-                    {
-                        fecha: '2021',
-                        titulo: 'Primer Hito',
-                        descripcion: 'Alcanzamos nuestros primeros 100 clientes.',
-                        icono: 'flag'
-                    },
-                    {
-                        fecha: '2022',
-                        titulo: 'Expansión',
-                        descripcion: 'Abrimos nuestra segunda ubicación.',
-                        icono: 'map-pin'
-                    },
-                    {
-                        fecha: '2023',
-                        titulo: 'Reconocimiento',
-                        descripcion: 'Recibimos el premio a la excelencia en servicio.',
-                        icono: 'award'
-                    }
-                ]
-            }
-        };
+        const template = blockDefaults[tipo];
+        if (!template) {
+            return {};
+        }
 
-        return defaults[tipo] || {};
+        // Clonar para no mutar el objeto original
+        const contenido = JSON.parse(JSON.stringify(template));
+
+        // Aplicar valores dinámicos
+        if (tipo === 'footer' && contenido.copyright) {
+            contenido.copyright = contenido.copyright.replace('{{YEAR}}', new Date().getFullYear());
+        }
+
+        if (tipo === 'countdown' && contenido.fecha_objetivo === '{{DATE_30_DAYS}}') {
+            contenido.fecha_objetivo = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+        }
+
+        return contenido;
     }
 }
 

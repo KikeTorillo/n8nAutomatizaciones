@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { DollarSign, Edit, Trash2, History, CheckCircle, XCircle, Globe } from 'lucide-react';
-import { Button, ConfirmDialog } from '@/components/ui';
+import { Button, DeleteConfirmDialog } from '@/components/ui';
 import { useEliminarConfiguracionComision } from '@/hooks/otros';
 import { formatCurrency } from '@/lib/utils';
 
@@ -215,22 +215,20 @@ function ConfiguracionComisionesTable({
       </div>
 
       {/* Confirm Delete Dialog */}
-      <ConfirmDialog
+      <DeleteConfirmDialog
         isOpen={deleteDialogOpen}
         onClose={() => {
           setDeleteDialogOpen(false);
           setSelectedConfig(null);
         }}
         onConfirm={handleConfirmDelete}
-        title="Eliminar Configuración"
-        message={`¿Estás seguro de que deseas eliminar esta configuración de comisión? ${
+        itemName="esta configuración de comisión"
+        itemType=""
+        description={
           selectedConfig?.servicio_id
             ? 'Las comisiones futuras para este servicio no se calcularán automáticamente.'
             : 'Las comisiones futuras para todos los servicios de este profesional no se calcularán automáticamente.'
-        }`}
-        confirmText="Eliminar"
-        cancelText="Cancelar"
-        variant="danger"
+        }
         isLoading={eliminarMutation.isLoading}
       />
     </>

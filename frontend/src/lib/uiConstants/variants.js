@@ -38,27 +38,38 @@ export const BADGE_VARIANTS = BADGE_COLORS;
 export const ALERT_VARIANTS = {
   info: {
     container: 'bg-primary-50 border-primary-200 dark:bg-primary-900/20 dark:border-primary-800',
+    iconBg: 'bg-primary-100 dark:bg-primary-900/40',
     icon: 'text-primary-600 dark:text-primary-400',
     title: 'text-primary-800 dark:text-primary-200',
     text: 'text-primary-700 dark:text-primary-300',
   },
   success: {
     container: 'bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-800',
+    iconBg: 'bg-green-100 dark:bg-green-900/40',
     icon: 'text-green-600 dark:text-green-400',
     title: 'text-green-800 dark:text-green-200',
     text: 'text-green-700 dark:text-green-300',
   },
   warning: {
     container: 'bg-amber-50 border-amber-200 dark:bg-amber-900/20 dark:border-amber-800',
+    iconBg: 'bg-amber-100 dark:bg-amber-900/40',
     icon: 'text-amber-600 dark:text-amber-400',
     title: 'text-amber-800 dark:text-amber-200',
     text: 'text-amber-700 dark:text-amber-300',
   },
   danger: {
     container: 'bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-800',
+    iconBg: 'bg-red-100 dark:bg-red-900/40',
     icon: 'text-red-600 dark:text-red-400',
     title: 'text-red-800 dark:text-red-200',
     text: 'text-red-700 dark:text-red-300',
+  },
+  rose: {
+    container: 'bg-rose-50 border-rose-200 dark:bg-rose-900/20 dark:border-rose-800',
+    iconBg: 'bg-rose-100 dark:bg-rose-900/40',
+    icon: 'text-rose-600 dark:text-rose-400',
+    title: 'text-rose-800 dark:text-rose-200',
+    text: 'text-rose-700 dark:text-rose-300',
   },
 };
 // Alias para retrocompatibilidad
