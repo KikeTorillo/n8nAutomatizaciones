@@ -626,16 +626,23 @@ class PerfilesMarketplaceModel {
                     o.nombre_comercial,
                     o.categoria_id,
                     o.activo as org_activa,
-                    o.plan_actual as plan_nombre,
-                    CASE o.plan_actual
+                    -- NOTA Feb 2026: plan_actual eliminado, obtener via suscripciones_org
+                    COALESCE(ps.codigo, 'trial') as plan_nombre,
+                    CASE COALESCE(ps.codigo, 'trial')
                         WHEN 'trial' THEN 0
                         WHEN 'basico' THEN 1
                         WHEN 'profesional' THEN 2
+                        WHEN 'pro' THEN 2
+                        WHEN 'enterprise' THEN 3
                         WHEN 'custom' THEN 3
                         ELSE 0
                     END as nivel_plan
                 FROM marketplace_perfiles mp
                 INNER JOIN organizaciones o ON mp.organizacion_id = o.id
+                LEFT JOIN clientes cli ON cli.organizacion_vinculada_id = o.id
+                LEFT JOIN suscripciones_org so ON so.cliente_id = cli.id
+                    AND so.estado IN ('activa', 'trial', 'grace_period')
+                LEFT JOIN planes_suscripcion_org ps ON so.plan_id = ps.id
                 LEFT JOIN ciudades c ON mp.ciudad_id = c.id
                 LEFT JOIN estados e ON mp.estado_id = e.id
                 LEFT JOIN paises p ON mp.pais_id = p.id

@@ -3,7 +3,7 @@
  * DOGFOODING SERVICE
  * ====================================================================
  * Servicio para vincular organizaciones de la plataforma como clientes
- * en Nexo Team (org_id = 4) para el modelo dogfooding.
+ * en Nexo Team (NEXO_TEAM_ORG_ID configurable via env) para el modelo dogfooding.
  *
  * Cada nueva organización registrada crea automáticamente:
  * 1. Un cliente en el CRM de Nexo Team

@@ -226,10 +226,34 @@ const verifyTenantActive = async (req, res, next) => {
     // ✅ FIX: Usar set_config con false para que sea local a la transacción
     await client.query('SELECT set_config($1, $2, false)', ['app.bypass_rls', 'true']);
 
-    const result = await client.query(
-      'SELECT activo, suspendido, plan_actual, fecha_activacion FROM organizaciones WHERE id = $1',
-      [req.user.organizacion_id]
-    );
+    // Query unificada: organizaciones + suscripciones_org + planes_suscripcion_org
+    // Fuente de verdad: suscripciones_org para el plan (Feb 2026 - plan_actual eliminado)
+    const result = await client.query(`
+      SELECT
+        o.activo,
+        o.suspendido,
+        o.fecha_activacion,
+        o.modulos_activos,
+        COALESCE(p.codigo, 'trial') as plan_codigo,
+        s.estado as estado_suscripcion,
+        s.es_trial,
+        s.fecha_fin_trial
+      FROM organizaciones o
+      LEFT JOIN clientes c ON c.organizacion_vinculada_id = o.id
+      LEFT JOIN suscripciones_org s ON s.cliente_id = c.id
+        AND s.estado IN ('activa', 'trial', 'grace_period', 'pendiente_pago')
+      LEFT JOIN planes_suscripcion_org p ON s.plan_id = p.id
+      WHERE o.id = $1
+      ORDER BY
+        CASE s.estado
+          WHEN 'activa' THEN 1
+          WHEN 'trial' THEN 2
+          WHEN 'grace_period' THEN 3
+          WHEN 'pendiente_pago' THEN 4
+          ELSE 5
+        END
+      LIMIT 1
+    `, [req.user.organizacion_id]);
 
     if (result.rows.length === 0) {
       logger.error('Organización no encontrada', {
@@ -258,12 +282,17 @@ const verifyTenantActive = async (req, res, next) => {
       req.tenant = {};
     }
     req.tenant.organizacionId = req.user.organizacion_id;
-    req.tenant.plan = organizacion.plan_actual;
+    // Fuente de verdad: suscripciones_org via JOIN
+    req.tenant.plan = organizacion.plan_codigo;
+    req.tenant.estadoSuscripcion = organizacion.estado_suscripcion;
+    req.tenant.esTrial = organizacion.es_trial;
+    req.tenant.fechaFinTrial = organizacion.fecha_fin_trial;
     req.tenant.fecha_activacion = organizacion.fecha_activacion;
 
     logger.debug('Organización verificada y activa', {
       organizacionId: req.user.organizacion_id,
-      plan: organizacion.plan_actual,
+      plan: organizacion.plan_codigo,
+      estadoSuscripcion: organizacion.estado_suscripcion,
       activo: organizacion.activo
     });
 
@@ -389,11 +418,31 @@ const setTenantContextFromBody = async (req, res, next) => {
     // Configurar bypass RLS para verificar existencia de organización
     await client.query('SELECT set_config($1, $2, false)', ['app.bypass_rls', 'true']);
 
-    // Verificar que la organización existe y está activa
-    const result = await client.query(
-      'SELECT id, activo, suspendido, plan_actual FROM organizaciones WHERE id = $1',
-      [organizacionId]
-    );
+    // Query unificada: organizaciones + suscripciones_org + planes_suscripcion_org
+    // Fuente de verdad: suscripciones_org para el plan (Feb 2026 - plan_actual eliminado)
+    const result = await client.query(`
+      SELECT
+        o.id,
+        o.activo,
+        o.suspendido,
+        COALESCE(p.codigo, 'trial') as plan_codigo,
+        s.estado as estado_suscripcion,
+        s.es_trial
+      FROM organizaciones o
+      LEFT JOIN clientes c ON c.organizacion_vinculada_id = o.id
+      LEFT JOIN suscripciones_org s ON s.cliente_id = c.id
+        AND s.estado IN ('activa', 'trial', 'grace_period', 'pendiente_pago')
+      LEFT JOIN planes_suscripcion_org p ON s.plan_id = p.id
+      WHERE o.id = $1
+      ORDER BY
+        CASE s.estado
+          WHEN 'activa' THEN 1
+          WHEN 'trial' THEN 2
+          WHEN 'grace_period' THEN 3
+          ELSE 4
+        END
+      LIMIT 1
+    `, [organizacionId]);
 
     if (result.rows.length === 0) {
       logger.warn('setTenantContextFromBody: Organización no encontrada', {
@@ -423,11 +472,15 @@ const setTenantContextFromBody = async (req, res, next) => {
       req.tenant = {};
     }
     req.tenant.organizacionId = organizacionId;
-    req.tenant.plan = organizacion.plan_actual;
+    // Fuente de verdad: suscripciones_org via JOIN
+    req.tenant.plan = organizacion.plan_codigo;
+    req.tenant.estadoSuscripcion = organizacion.estado_suscripcion;
+    req.tenant.esTrial = organizacion.es_trial;
 
     logger.debug('Tenant context establecido desde body', {
       organizacionId,
-      plan: organizacion.plan_actual,
+      plan: organizacion.plan_codigo,
+      estadoSuscripcion: organizacion.estado_suscripcion,
       path: req.path,
       method: req.method
     });
@@ -496,11 +549,31 @@ const setTenantContextFromQuery = async (req, res, next) => {
     // Configurar bypass RLS para verificar existencia de organización
     await client.query('SELECT set_config($1, $2, false)', ['app.bypass_rls', 'true']);
 
-    // Verificar que la organización existe y está activa
-    const result = await client.query(
-      'SELECT id, activo, suspendido, plan_actual FROM organizaciones WHERE id = $1',
-      [organizacionId]
-    );
+    // Query unificada: organizaciones + suscripciones_org + planes_suscripcion_org
+    // Fuente de verdad: suscripciones_org para el plan (Feb 2026 - plan_actual eliminado)
+    const result = await client.query(`
+      SELECT
+        o.id,
+        o.activo,
+        o.suspendido,
+        COALESCE(p.codigo, 'trial') as plan_codigo,
+        s.estado as estado_suscripcion,
+        s.es_trial
+      FROM organizaciones o
+      LEFT JOIN clientes c ON c.organizacion_vinculada_id = o.id
+      LEFT JOIN suscripciones_org s ON s.cliente_id = c.id
+        AND s.estado IN ('activa', 'trial', 'grace_period', 'pendiente_pago')
+      LEFT JOIN planes_suscripcion_org p ON s.plan_id = p.id
+      WHERE o.id = $1
+      ORDER BY
+        CASE s.estado
+          WHEN 'activa' THEN 1
+          WHEN 'trial' THEN 2
+          WHEN 'grace_period' THEN 3
+          ELSE 4
+        END
+      LIMIT 1
+    `, [organizacionId]);
 
     if (result.rows.length === 0) {
       logger.warn('setTenantContextFromQuery: Organización no encontrada', {
@@ -530,11 +603,15 @@ const setTenantContextFromQuery = async (req, res, next) => {
       req.tenant = {};
     }
     req.tenant.organizacionId = organizacionId;
-    req.tenant.plan = organizacion.plan_actual;
+    // Fuente de verdad: suscripciones_org via JOIN
+    req.tenant.plan = organizacion.plan_codigo;
+    req.tenant.estadoSuscripcion = organizacion.estado_suscripcion;
+    req.tenant.esTrial = organizacion.es_trial;
 
     logger.debug('Tenant context establecido desde query', {
       organizacionId,
-      plan: organizacion.plan_actual,
+      plan: organizacion.plan_codigo,
+      estadoSuscripcion: organizacion.estado_suscripcion,
       path: req.path,
       method: req.method
     });

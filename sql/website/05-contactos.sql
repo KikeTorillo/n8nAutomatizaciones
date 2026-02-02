@@ -151,5 +151,14 @@ GROUP BY organizacion_id, DATE(creado_en);
 COMMENT ON VIEW vw_website_contactos_diarios IS 'Resumen diario de contactos recibidos por organización';
 
 -- ====================================================================
+-- PERMISOS
+-- ====================================================================
+
+-- Permisos para saas_app (usuario de la aplicación)
+GRANT SELECT, INSERT, UPDATE, DELETE ON website_contactos TO saas_app;
+GRANT SELECT ON vw_website_contactos_diarios TO saas_app, readonly_user;
+GRANT EXECUTE ON FUNCTION website_contactos_no_leidos TO saas_app;
+
+-- ====================================================================
 -- FIN DEL ARCHIVO
 -- ====================================================================

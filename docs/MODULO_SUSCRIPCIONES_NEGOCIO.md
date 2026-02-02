@@ -10,9 +10,9 @@ Sistema de facturación recurrente multi-propósito para Nexo ERP.
 |---------|-------|
 | **Propósito** | Facturación recurrente con MercadoPago |
 | **Modelo** | Dogfooding (Nexo lo usa + clientes lo usan) |
-| **Estado** | Platform Billing ✅ | Customer Billing 🚧 | Seat-Based Billing ✅ |
+| **Estado** | Platform Billing ✅ E2E Validado | Customer Billing 🟡 Pendiente E2E |
 | **Gateway** | MercadoPago (Preapproval API) |
-| **Última revisión** | 31 Enero 2026 (precio_semestral agregado) |
+| **Última revisión** | 31 Enero 2026 |
 
 ---
 
@@ -36,7 +36,7 @@ El módulo implementa **dos estrategias de facturación** en un mismo sistema:
 │  └──────────────────┘         └──────────────────────────────┘ │
 │         │                                    │                  │
 │         │ PLATFORM BILLING                   │ CUSTOMER BILLING │
-│         │ (ACTIVO ✅)                        │ (PREPARADO 🚧)   │
+│         │ (ACTIVO ✅)                        │ (UI COMPLETA 🟡) │
 │         ▼                                    ▼                  │
 │  ┌──────────────────┐         ┌──────────────────────────────┐ │
 │  │ Organizaciones   │         │  Clientes de las             │ │
@@ -61,7 +61,7 @@ El módulo implementa **dos estrategias de facturación** en un mismo sistema:
 | **Cliente** | `clientes.organizacion_vinculada_id ≠ NULL` | `clientes.organizacion_vinculada_id = NULL` |
 | **Límites** | ✅ Se aplican (usuarios, sucursales) | ❌ No aplican |
 | **Features → Módulos** | ✅ Se activan automáticamente | ❌ No se mapean |
-| **Estado** | **ACTIVO** | **PREPARADO** |
+| **Estado** | **ACTIVO** | **UI COMPLETA** (pendiente E2E) |
 
 ---
 
@@ -833,64 +833,358 @@ GET    /metricas/churn
 
 | Tabla | Propósito | Multi-tenant |
 |-------|-----------|--------------|
-| `planes_suscripcion_org` | Catálogo de planes (precios mensual/trimestral/semestral/anual) | ✅ Por org |
+| `planes_suscripcion_org` | Catálogo de planes | ✅ Por org |
 | `suscripciones_org` | Suscripciones activas | ✅ Por org |
 | `pagos_suscripcion` | Historial de pagos | ✅ Por org |
-| `uso_usuarios_org` | Tracking diario | ✅ Por org |
+| `uso_usuarios_org` | Tracking diario usuarios | ✅ Por org |
 | `conectores_pago_org` | Gateways de pago | ✅ Por org |
 | `cupones_suscripcion` | Códigos de descuento | ✅ Por org |
-| `webhooks_suscripcion` | Log de webhooks | ✅ Por org |
+| `webhooks_procesados` | Idempotencia webhooks (evita duplicados) | Global |
 | `ajustes_facturacion_org` | Log de ajustes seat-based | ✅ Por org |
+
+> **Nota**: Existe `webhooks_suscripcion` (auditoría completa) pero no se usa. Ver decisión pendiente.
 
 ---
 
-## Archivos Clave
+## Archivos del Módulo (Inventario Completo)
+
+### Backend - Módulo suscripciones-negocio
 
 ```
 backend/app/modules/suscripciones-negocio/
-├── strategies/
-│   ├── BillingStrategy.js           # Interfaz base
-│   ├── PlatformBillingStrategy.js   # Nexo → Orgs (ACTIVO)
-│   └── CustomerBillingStrategy.js   # Org → Clientes (PREPARADO)
-├── controllers/
-│   ├── checkout.controller.js       # Flujo de pago
-│   ├── suscripciones.controller.js  # CRUD suscripciones
-│   ├── entitlements.controller.js   # ✅ NUEVO - Gestión entitlements
-│   └── webhooks.controller.js       # Procesamiento webhooks
-├── routes/
-│   ├── entitlements.routes.js       # ✅ NUEVO - Rutas SuperAdmin
-│   └── ...
-├── schemas/
-│   ├── entitlements.schemas.js      # ✅ NUEVO - Validación Joi
-│   └── ...
-├── models/
-│   ├── suscripciones.model.js       # Lógica de negocio
-│   └── planes.model.js              # Gestión de planes
-├── services/
-│   ├── mercadopago.service.js       # Wrapper MP multi-tenant
-│   ├── usage-tracking.service.js    # Seat-based billing
-│   └── cobro.service.js             # Procesamiento de cobros
-└── jobs/
-    ├── procesar-cobros.job.js       # 06:00 diario
-    ├── verificar-trials.job.js      # 07:00 diario
-    ├── ajustar-preapproval.job.js   # ✅ Día 28, 20:00 - Seat-based billing
-    ├── registrar-uso-usuarios.job.js # 23:55 diario
-    └── polling-suscripciones.job.js # Cada 5 min
+├── strategies/                          # ✅ 100% documentado
+│   ├── index.js                         # Export strategies
+│   ├── BillingStrategy.js               # Interfaz base
+│   ├── PlatformBillingStrategy.js       # Nexo → Orgs (ACTIVO)
+│   └── CustomerBillingStrategy.js       # Org → Clientes (UI COMPLETA)
+│
+├── controllers/                         # 12 archivos
+│   ├── index.js                         # Export controllers
+│   ├── checkout.controller.js           # Flujo de pago autenticado
+│   ├── checkout-publico.controller.js   # 🆕 Checkout sin auth
+│   ├── conectores.controller.js         # 🆕 CRUD conectores de pago
+│   ├── cupones.controller.js            # 🆕 CRUD cupones descuento
+│   ├── entitlements.controller.js       # Gestión entitlements (SuperAdmin)
+│   ├── metricas.controller.js           # 🆕 Dashboard métricas SaaS
+│   ├── pagos.controller.js              # 🆕 Historial de pagos
+│   ├── planes.controller.js             # 🆕 CRUD planes suscripción
+│   ├── suscripciones.controller.js      # CRUD suscripciones
+│   ├── uso.controller.js                # 🆕 Uso de recursos
+│   └── webhooks.controller.js           # Procesamiento webhooks MP
+│
+├── routes/                              # 12 archivos
+│   ├── index.js                         # Mount de todas las rutas
+│   ├── checkout.js                      # /checkout/*
+│   ├── checkout-publico.js              # 🆕 /checkout/publico/*
+│   ├── conectores.js                    # 🆕 /conectores/*
+│   ├── cupones.js                       # 🆕 /cupones/*
+│   ├── entitlements.routes.js           # /entitlements/*
+│   ├── metricas.js                      # 🆕 /metricas/*
+│   ├── pagos.js                         # 🆕 /pagos/*
+│   ├── planes.js                        # 🆕 /planes/*
+│   ├── suscripciones.js                 # /suscripciones/*
+│   ├── uso.routes.js                    # 🆕 /uso/*
+│   └── webhooks.js                      # /webhooks/*
+│
+├── schemas/                             # 4 archivos
+│   ├── checkout.schemas.js              # Validación checkout
+│   ├── conectores.schemas.js            # 🆕 Validación conectores
+│   ├── entitlements.schemas.js          # Validación entitlements
+│   └── suscripciones.schemas.js         # 🆕 Validación suscripciones
+│
+├── models/                              # 9 archivos
+│   ├── index.js                         # Export models
+│   ├── checkout-tokens.model.js         # 🆕 Tokens checkout público
+│   ├── conectores.model.js              # 🆕 Conectores de pago
+│   ├── cupones.model.js                 # 🆕 Cupones descuento
+│   ├── metricas.model.js                # 🆕 Cálculos MRR/ARR/Churn/LTV
+│   ├── pagos.model.js                   # 🆕 Historial pagos
+│   ├── planes.model.js                  # Gestión de planes
+│   ├── suscripciones.model.js           # Lógica central (66KB)
+│   └── webhooks-procesados.model.js     # 🆕 Log idempotencia webhooks
+│
+├── services/                            # 6 archivos
+│   ├── cobro.service.js                 # Procesamiento de cobros
+│   ├── mercadopago.service.js           # Wrapper MP multi-tenant
+│   ├── notificaciones.service.js        # Emails transaccionales (6 templates)
+│   ├── prorrateo.service.js             # 🆕 Cálculos prorrateo
+│   ├── stripe.service.js                # 🆕 Gateway alternativo (preparado)
+│   └── usage-tracking.service.js        # Seat-based billing
+│
+└── jobs/                                # 8 archivos
+    ├── index.js                         # Orquesta todos los jobs
+    ├── ajustar-preapproval.job.js       # Día 28, 20:00 - Ajusta monto MP
+    ├── monitorear-webhooks.job.js       # 🆕 Cada hora :30 - Alertas
+    ├── polling-suscripciones.job.js     # Cada 5 min - Fallback webhooks
+    ├── procesar-cobros.job.js           # 06:00 - Cobros (Stripe/Manual)
+    ├── procesar-dunning.job.js          # 🆕 08:00 - Grace → Suspensión
+    ├── registrar-uso-usuarios.job.js    # 23:55 - Snapshot usuarios
+    └── verificar-trials.job.js          # 07:00 - Expira trials
+```
 
+### Backend - Helpers y Middlewares
+
+```
 backend/app/
-├── utils/helpers/LimitesHelper.js   # Verificación de límites
-├── config/constants.js              # FEATURE_TO_MODULO, estados
-├── services/dogfoodingService.js    # Vinculación org → cliente
-└── middleware/suscripcionActiva.js  # Guard de acceso
+├── utils/
+│   ├── helpers/
+│   │   └── LimitesHelper.js             # Verificación límites (363 líneas)
+│   ├── circuitBreaker.js                # Protección fallos cascada (265 líneas)
+│   └── retryWithBackoff.js              # Reintentos exponenciales (234 líneas)
+├── config/
+│   └── constants.js                     # FEATURE_TO_MODULO, estados (137 líneas)
+├── services/
+│   └── dogfoodingService.js             # Vinculación org→cliente (203 líneas)
+└── middleware/
+    └── suscripcionActiva.js             # Guard de acceso (149 líneas)
+```
 
+### Frontend - Módulo suscripciones-negocio
+
+```
+frontend/src/
+├── pages/suscripciones-negocio/         # 10 páginas
+│   ├── index.js                         # Export páginas
+│   ├── ClienteSuscripcionesPage.jsx     # 🆕 Customer Billing UI
+│   ├── ConectoresPage.jsx               # 🆕 Gestión conectores pago
+│   ├── CuponesPage.jsx                  # 🆕 Gestión cupones
+│   ├── MetricasPage.jsx                 # 🆕 Dashboard métricas SaaS
+│   ├── MiPlanPage.jsx                   # 🆕 Vista plan actual usuario
+│   ├── PagosPage.jsx                    # 🆕 Historial pagos
+│   ├── PlanesPage.jsx                   # 🆕 Catálogo planes
+│   ├── SuscripcionDetailPage.jsx        # 🆕 Detalle suscripción
+│   ├── SuscripcionesListPage.jsx        # 🆕 Lista suscripciones
+│   └── SuscripcionesNegocioPage.jsx     # 🆕 Página principal módulo
+│
+├── components/suscripciones-negocio/    # 29 componentes
+│   ├── index.js                         # Export componentes
+│   │
+│   │   # Badges y Status
+│   ├── ConectorStatusBadge.jsx          # Estado conector
+│   ├── CuponBadge.jsx                   # Badge cupón aplicado
+│   ├── SuscripcionStatusBadge.jsx       # Estado suscripción
+│   │
+│   │   # Cards
+│   ├── BalanceAjustesCard.jsx           # Balance créditos/cargos
+│   ├── HistorialPagosCard.jsx           # Historial pagos inline
+│   ├── PlanCard.jsx                     # Tarjeta plan
+│   ├── ProrrateoResumen.jsx             # Resumen prorrateo
+│   ├── UsageIndicator.jsx               # Indicador uso recursos
+│   │
+│   │   # Forms/Drawers
+│   ├── CambiarPlanDrawer.jsx            # Cambio de plan
+│   ├── CancelarSuscripcionDrawer.jsx    # Cancelación
+│   ├── ConectorFormDrawer.jsx           # CRUD conector
+│   ├── CrearSuscripcionClienteDrawer.jsx # Customer Billing
+│   ├── CuponFormDrawer.jsx              # CRUD cupón
+│   ├── PlanFormDrawer.jsx               # CRUD plan
+│   ├── SuscripcionFormDrawer.jsx        # CRUD suscripción
+│   │
+│   │   # Layout/Navigation
+│   ├── SuscripcionBanner.jsx            # Banner estado suscripción
+│   ├── SuscripcionesNegocioNavTabs.jsx  # Navegación módulo
+│   ├── SuscripcionesNegocioPageLayout.jsx # Layout base
+│   │
+│   │   # Modals/Alerts
+│   ├── AlertaBloqueado.jsx              # Alerta acceso bloqueado
+│   ├── ContactarSoporteModal.jsx        # Modal soporte
+│   ├── SubscriptionGuard.jsx            # Guard componente
+│   │
+│   │   # Tabs (Detalle suscripción)
+│   ├── tabs/
+│   │   ├── SuscripcionGeneralTab.jsx    # Tab info general
+│   │   ├── SuscripcionHistorialTab.jsx  # Tab historial
+│   │   └── SuscripcionPagosTab.jsx      # Tab pagos
+│   │
+│   │   # Charts (Métricas)
+│   └── charts/
+│       ├── ChurnChart.jsx               # Gráfico churn
+│       ├── DistribucionEstadoChart.jsx  # Estados suscripciones
+│       ├── MRRChart.jsx                 # MRR/ARR
+│       ├── SuscriptoresChart.jsx        # Crecimiento suscriptores
+│       └── TopPlanesChart.jsx           # Planes populares
+│
+├── hooks/suscripciones-negocio/         # 11 hooks
+│   ├── index.js                         # Export hooks
+│   ├── constants.js                     # Constantes módulo
+│   ├── mutations.js                     # Mutaciones compartidas
+│   ├── queries.js                       # Queries compartidas
+│   ├── useClienteSuscripciones.js       # Hook Customer Billing
+│   ├── useConectores.js                 # CRUD conectores
+│   ├── useCupones.js                    # CRUD cupones
+│   ├── useMetricas.js                   # Dashboard métricas
+│   ├── usePagos.js                      # Historial pagos
+│   ├── usePlanes.js                     # CRUD planes
+│   └── useUsoUsuarios.js                # Uso recursos
+│
+└── pages/checkout/                      # Checkout público
+    └── CheckoutPublicoPage.jsx          # 🆕 Checkout sin auth
+
+frontend/src/components/checkout/
+├── index.js
+└── CheckoutModal.jsx                    # Modal checkout autenticado
+```
+
+### Frontend - SuperAdmin (Entitlements)
+
+```
 frontend/src/
 ├── pages/superadmin/
-│   └── EntitlementsPlataforma.jsx   # ✅ NUEVO - Página principal
+│   └── EntitlementsPlataforma.jsx       # Página gestión entitlements
 ├── components/superadmin/
-│   └── EntitlementsFormDrawer.jsx   # ✅ NUEVO - Drawer edición
+│   └── EntitlementsFormDrawer.jsx       # Drawer edición entitlements
 └── hooks/superadmin/
-    └── useEntitlements.js           # ✅ NUEVO - React Query hooks
+    └── useEntitlements.js               # React Query hooks
 ```
+
+### Resumen de Cobertura
+
+| Capa | Total Archivos | Documentados Antes | Cobertura Actual |
+|------|----------------|-------------------|------------------|
+| **Backend strategies** | 4 | 4 | ✅ 100% |
+| **Backend controllers** | 12 | 4 | ✅ 100% |
+| **Backend routes** | 12 | 1 | ✅ 100% |
+| **Backend schemas** | 4 | 1 | ✅ 100% |
+| **Backend models** | 9 | 2 | ✅ 100% |
+| **Backend services** | 6 | 3 | ✅ 100% |
+| **Backend jobs** | 8 | 5 | ✅ 100% |
+| **Frontend pages** | 11 | 1 | ✅ 100% |
+| **Frontend components** | 30 | 1 | ✅ 100% |
+| **Frontend hooks** | 12 | 1 | ✅ 100% |
+| **TOTAL** | **108** | **23** | ✅ **100%** |
+
+---
+
+## Funcionalidades Adicionales (Implementadas)
+
+Estas funcionalidades están completamente implementadas pero no estaban detalladas en la documentación original.
+
+### Sistema de Cupones
+
+| Endpoint | Método | Descripción |
+|----------|--------|-------------|
+| `/cupones` | GET | Lista cupones de la organización |
+| `/cupones` | POST | Crear cupón (código, descuento %, fechas) |
+| `/cupones/:id` | PUT | Actualizar cupón |
+| `/cupones/:id` | DELETE | Eliminar cupón |
+| `/cupones/validar/:codigo` | GET | Validar cupón antes de checkout |
+
+**Archivos**: `cupones.controller.js`, `cupones.model.js`, `cupones.js` (routes), `CuponesPage.jsx`, `CuponFormDrawer.jsx`, `CuponBadge.jsx`, `useCupones.js`
+
+### Dashboard de Métricas SaaS
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  /suscripciones-negocio/metricas                                            │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐        │
+│  │    MRR      │  │    ARR      │  │   Churn     │  │    LTV      │        │
+│  │  $12,450    │  │  $149,400   │  │   2.3%      │  │   $2,890    │        │
+│  └─────────────┘  └─────────────┘  └─────────────┘  └─────────────┘        │
+│                                                                             │
+│  ┌────────────────────────────────────────────────────────────────┐        │
+│  │  MRRChart.jsx - Evolución MRR/ARR últimos 12 meses             │        │
+│  └────────────────────────────────────────────────────────────────┘        │
+│                                                                             │
+│  ┌─────────────────────┐  ┌────────────────────────────────────────┐       │
+│  │ DistribucionEstado  │  │  TopPlanesChart - Planes más vendidos  │       │
+│  │ (activa/trial/etc)  │  │                                        │       │
+│  └─────────────────────┘  └────────────────────────────────────────┘       │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+**Cálculos en `metricas.model.js`**:
+- **MRR**: Suma de suscripciones activas × precio mensual
+- **ARR**: MRR × 12
+- **Churn Rate**: Cancelaciones últimos 30 días / Total inicio período
+- **LTV**: ARPU / Churn Rate mensual
+
+### Conectores de Pago Multi-Tenant
+
+Cada organización puede configurar su propio conector de MercadoPago.
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  conectores_pago_org                                                        │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  organizacion_id │ gateway       │ entorno    │ access_token │ activo      │
+│──────────────────┼───────────────┼────────────┼──────────────┼─────────────│
+│  1 (Nexo Team)   │ mercadopago   │ production │ APP_USR-xxx  │ true        │
+│  5 (Gimnasio)    │ mercadopago   │ sandbox    │ APP_USR-yyy  │ true        │
+│  8 (Consultorio) │ mercadopago   │ sandbox    │ APP_USR-zzz  │ false       │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+**Endpoints**: `/conectores` (CRUD completo)
+**Archivos**: `conectores.controller.js`, `conectores.model.js`, `ConectoresPage.jsx`, `ConectorFormDrawer.jsx`, `useConectores.js`
+
+### Dunning Automático (Gestión de Impagos)
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  SECUENCIA DE DUNNING                                                       │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  Día 0: Fallo de cobro                                                      │
+│    └─> estado: 'vencida'                                                   │
+│    └─> Job monitorear-webhooks detecta                                     │
+│                                                                             │
+│  Día 1-7: Grace Period                                                      │
+│    └─> estado: 'grace_period'                                              │
+│    └─> Acceso: Solo lectura (solo GET permitido)                           │
+│    └─> UI: Banner urgente para regularizar                                 │
+│                                                                             │
+│  Día 8+: Suspensión                                                        │
+│    └─> Job procesar-dunning.job.js (08:00)                                │
+│    └─> estado: 'suspendida'                                                │
+│    └─> Acceso: Bloqueado completamente                                     │
+│    └─> UI: Redirect a /planes con alerta                                   │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+**Job**: `procesar-dunning.job.js` - Se ejecuta diario a las 08:00
+
+### Monitoreo de Webhooks
+
+**Job**: `monitorear-webhooks.job.js` - Se ejecuta cada hora en el minuto :30
+
+Detecta webhooks sin procesar, fallidos repetidamente, o suscripciones sin pago esperado.
+
+### Polling de Fallback
+
+**Job**: `polling-suscripciones.job.js` - Cada 5 minutos
+
+Sincroniza estado con MercadoPago si webhook falló, suscripción en estado transitorio > 1 hora, o hay discrepancia.
+
+### Emails Transaccionales ✅
+
+Sistema completo de notificaciones por email para el ciclo de vida de suscripciones.
+
+```
+backend/app/services/email/templates/suscripciones/
+├── index.js              # Exporta todos los templates
+├── pagoExitoso.js        # Confirmación de pago
+├── pagoFallido.js        # Notificación fallo de cobro
+├── recordatorioCobro.js  # Aviso 3 días antes
+├── gracePeriod.js        # Entrada a período de gracia
+├── suspension.js         # Cuenta suspendida
+└── cancelacion.js        # Confirmación cancelación
+```
+
+| Email | Trigger | Estado |
+|-------|---------|--------|
+| **Pago confirmado** | Webhook `authorized_payment` | ✅ Funcionando |
+| **Pago fallido** | Webhook `payment.failed` | ✅ Implementado |
+| **Grace period** | `procesar-dunning.job.js` | ✅ Implementado |
+| **Suspensión** | `procesar-dunning.job.js` | ✅ Implementado |
+| **Cancelación** | Acción del usuario | ✅ Implementado |
+| **Fin de trial** | `verificar-trials.job.js` | ✅ Implementado |
+| **Recordatorio cobro** | — | ⚠️ Falta job que lo dispare |
+
+**Pendiente**: Crear job para enviar recordatorio 3 días antes del cobro.
 
 ---
 
@@ -962,7 +1256,58 @@ diferencia < 0 → acumular crédito (downgrade)
 
 ---
 
-## Flujo Customer Billing (Preparado, No Activo)
+## Flujo Customer Billing (UI Completa, Pendiente Validación E2E)
+
+### Estado Actual 🟡
+
+Customer Billing tiene **UI implementada** pero requiere validación end-to-end del flujo completo.
+
+| Componente | Estado | Archivo |
+|------------|--------|---------|
+| **Página principal** | ✅ Implementada | `ClienteSuscripcionesPage.jsx` |
+| **Drawer crear link** | ✅ Implementado | `CrearSuscripcionClienteDrawer.jsx` |
+| **Checkout público** | ✅ Implementado | `CheckoutPublicoPage.jsx` |
+| **Controller checkout** | ✅ Implementado | `checkout-publico.controller.js` |
+| **Model tokens** | ✅ Implementado | `checkout-tokens.model.js` |
+| **Strategy** | ✅ Implementada | `CustomerBillingStrategy.js` |
+
+### Flujo Implementado
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    CUSTOMER BILLING - FLUJO ACTUAL                           │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  1. CONFIGURACIÓN (Admin del negocio)                                       │
+│     ├─> Crea planes propios en su organización                             │
+│     ├─> Configura conector MercadoPago propio                              │
+│     └─> Accede a /suscripciones-negocio/clientes                           │
+│                                                                             │
+│  2. GENERAR LINK (CrearSuscripcionClienteDrawer)                           │
+│     ├─> Selecciona cliente del CRM                                         │
+│     ├─> Selecciona plan                                                     │
+│     ├─> POST /checkout/crear-link-cliente                                  │
+│     └─> Obtiene URL: /checkout/publico/{token}                             │
+│                                                                             │
+│  3. CHECKOUT PÚBLICO (CheckoutPublicoPage)                                 │
+│     ├─> Cliente accede SIN autenticación                                   │
+│     ├─> Ve detalles del plan y precio                                      │
+│     ├─> GET /checkout/publico/:token (valida token)                        │
+│     └─> POST /checkout/publico/crear-suscripcion                           │
+│                                                                             │
+│  4. PROCESAMIENTO (CustomerBillingStrategy)                                │
+│     ├─> vendorId = organización del negocio                                │
+│     ├─> clienteId = cliente del CRM (sin org vinculada)                    │
+│     ├─> Crea preapproval en MP del negocio                                 │
+│     └─> Redirect a checkout MercadoPago                                    │
+│                                                                             │
+│  5. ACTIVACIÓN (Webhook)                                                   │
+│     ├─> MP notifica pago autorizado                                        │
+│     ├─> Se activa suscripción del cliente                                  │
+│     └─> ❓ Entitlements: NO se aplican (solo para Platform Billing)        │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
 
 ### Caso de Uso: Gimnasio vende membresías
 
@@ -976,9 +1321,19 @@ Gimnasio (org 5) ──► Crea planes propios
                           │
                     ──────────────────────────
                           │
-Cliente del gimnasio ──► POST /checkout/iniciar
-                          │  es_venta_propia: true
-                          │  cliente_id: 100
+Admin gimnasio ──────────► POST /checkout/crear-link-cliente
+                          │  cliente_id: 100, plan_id: X
+                          │
+                    Genera token + URL pública
+                          │
+Cliente recibe link ────► GET /checkout/publico/{token}
+                          │
+                    ┌─────▼───────────────┐
+                    │ CheckoutPublicoPage │
+                    │ (sin autenticación) │
+                    └─────┬───────────────┘
+                          │
+                    POST /checkout/publico/crear-suscripcion
                           │
                     ┌─────▼─────┐
                     │ Strategy: │
@@ -995,47 +1350,49 @@ Cliente del gimnasio ──► POST /checkout/iniciar
                     │ del gym)  │
                     └─────┬─────┘
                           │
-                    Pago completado
-                          │
-                    ¿Qué pasa con features/limites?
-                    └─► NADA (no hay código para esto)
+                    Pago completado → Webhook → Suscripción activa
 ```
 
-### Lo que Falta para Customer Billing
+### Pendientes para Customer Billing
 
-1. **Schema de límites de servicio**
-2. **UI para definir beneficios** (no módulos)
-3. **Verificación de límites del negocio** (ej: visitas/mes)
-4. **Acceso del cliente** a beneficios (portal de cliente)
+| Tarea | Prioridad | Descripción |
+|-------|-----------|-------------|
+| **Validar flujo E2E** | Alta | Probar: crear link → cliente paga → webhook procesa |
+| **Portal de cliente** | Baja | UI para que clientes vean su suscripción |
 
 ---
 
 ## Pendientes
 
-### Alta Prioridad
+### Decisiones Técnicas Pendientes
 
-| Feature | Estado | Descripción |
-|---------|--------|-------------|
-| ~~Pantalla Entitlements SuperAdmin~~ | **✅ COMPLETADO** | UI para gestionar límites/features |
-| ~~Job ajustar-preapproval~~ | **✅ COMPLETADO** | Actualizar monto en MP antes del cobro para seat-based billing |
-| Pruebas E2E desde frontend | **PENDIENTE** | Validar flujos completos en navegador |
+| Decisión | Contexto | Opciones |
+|----------|----------|----------|
+| **Consolidar tablas webhooks** | Existen 2 tablas: `webhooks_procesados` (idempotencia, se usa) y `webhooks_suscripcion` (auditoría, vacía/no se usa) | A) Fusionar en una sola | B) Eliminar `webhooks_suscripcion` |
 
-### Media Prioridad
+### Por Hacer
 
-| Feature | Estado | Descripción |
-|---------|--------|-------------|
-| Customer Billing activo | Arquitectura lista | Endpoint público para orgs que venden |
-| Notificaciones email | Por implementar | Recibos, alertas de vencimiento |
-| Stripe como gateway | Service preparado | Alternativa a MercadoPago |
-| Cobro adicional prorateado | Por implementar | Cobrar diferencia cuando agregan usuarios a mitad de mes |
+| Feature | Prioridad | Descripción |
+|---------|-----------|-------------|
+| **Validar Customer Billing E2E** | Alta | Probar flujo completo: crear link → cliente paga → webhook procesa |
+| Job recordatorio de cobro | Media | Enviar email 3 días antes del cobro |
+| Stripe como gateway | Baja | Service listo, faltan endpoints y UI |
 
-### Baja Prioridad
+### Validaciones E2E Realizadas (31 Enero 2026)
 
-| Feature | Descripción |
-|---------|-------------|
-| Separar tabla entitlements | Mover `limites`/`features` a tabla dedicada |
-| Portal de cliente | UI para clientes de Customer Billing |
-| Webhooks salientes | Notificar a orgs sobre eventos de suscripción |
+| Prueba | Resultado | Notas |
+|--------|-----------|-------|
+| **Entitlements SuperAdmin** | 🟡 | UI funciona (lista, edita). Pendiente validar que cambios apliquen |
+| **Platform Billing** | ✅ | Trial → Checkout → MP → Webhook → Plan Pro activo |
+| **Prorrateo** | ✅ | Cálculo correcto ($93.33 por 14 días restantes) |
+| **Webhooks MP** | ✅ | `subscription_preapproval` y `subscription_authorized_payment` procesados |
+| **Customer Billing** | 🟡 | Pendiente validar en próxima sesión |
+
+### Próximos Pasos E2E
+
+1. **Entitlements funcionales**: Cambiar límite de usuarios en un plan → verificar que org con ese plan respete el nuevo límite
+2. **Entitlements módulos**: Desactivar módulo en plan → verificar que org pierde acceso a ese módulo
+3. **Customer Billing**: Crear link → cliente paga → webhook activa suscripción
 
 ---
 
@@ -1344,4 +1701,6 @@ Password: Enrique23
 
 ---
 
-**Estado**: Platform Billing ✅ Funcional | Customer Billing 🚧 Preparado | Entitlements UI ✅ Implementado | Seat-Based Billing ✅ Funcional | Multi-Periodo (mensual/trim/semestral/anual) ✅
+**Estado**: Platform Billing ✅ E2E | Customer Billing 🟡 Pendiente E2E | Seat-Based ✅ | Webhooks ✅
+
+**Última actualización**: 31 Enero 2026 (validación E2E Platform Billing completada)

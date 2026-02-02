@@ -21,7 +21,7 @@ const PlanesModel = require('../models/planes.model');
 const SuscripcionesModel = require('../models/suscripciones.model');
 const CuponesModel = require('../models/cupones.model');
 const PagosModel = require('../models/pagos.model');
-const MercadoPagoService = require('../../../services/mercadopago.service');
+const { GatewayFactory } = require('../gateways');
 const { ErrorHelper } = require('../../../utils/helpers');
 const logger = require('../../../utils/logger');
 const { NEXO_TEAM_ORG_ID } = require('../../../config/constants');
@@ -103,15 +103,15 @@ class CheckoutController {
             if (suscripcionExistente.estado === 'pendiente_pago' && suscripcionExistente.subscription_id_gateway) {
                 logger.info(`[Checkout ${billingType}] Retornando init_point existente para suscripción ${suscripcionExistente.id}`);
 
-                const mpService = await MercadoPagoService.getForOrganization(vendorId);
+                const gateway = await GatewayFactory.getGateway(vendorId);
                 try {
-                    const mpSuscripcion = await mpService.obtenerSuscripcion(suscripcionExistente.subscription_id_gateway);
+                    const gatewaySub = await gateway.getSubscription(suscripcionExistente.subscription_id_gateway);
 
                     return res.json({
                         success: true,
                         message: 'Checkout pendiente existente. Use el mismo link para completar el pago.',
                         data: {
-                            init_point: mpSuscripcion.init_point,
+                            init_point: gatewaySub.raw?.init_point || gatewaySub.checkoutUrl,
                             suscripcion_id: suscripcionExistente.id,
                             plan: {
                                 id: plan.id,
@@ -121,8 +121,8 @@ class CheckoutController {
                             existente: true
                         }
                     });
-                } catch (mpError) {
-                    logger.warn(`[Checkout ${billingType}] No se pudo obtener suscripción de MP: ${mpError.message}. Creando nueva.`);
+                } catch (gatewayError) {
+                    logger.warn(`[Checkout ${billingType}] No se pudo obtener suscripción del gateway: ${gatewayError.message}. Creando nueva.`);
                 }
             }
 
@@ -254,25 +254,25 @@ class CheckoutController {
         }, vendorId);
 
         // ═══════════════════════════════════════════════════════════════
-        // PASO 12: Crear preferencia en MercadoPago
+        // PASO 12: Crear suscripción en el gateway de pagos
         // ═══════════════════════════════════════════════════════════════
         // Formato: org_{vendorId}_sus_{suscripcionId}_pago_{pagoId}_cliente_{orgCliente}
         const externalReference = `org_${vendorId}_sus_${suscripcion.id}_pago_${pago.id}_cliente_${organizacionId}`;
-        const mpService = await MercadoPagoService.getForOrganization(vendorId);
+        const gateway = await GatewayFactory.getGateway(vendorId);
 
-        // Determinar email del pagador basado en el entorno del conector
+        // Determinar email del pagador basado en el entorno del gateway
         let emailPagador;
-        if (mpService.isSandbox()) {
-            emailPagador = mpService.getTestPayerEmail();
+        if (gateway.isSandbox()) {
+            emailPagador = gateway.getTestPayerEmail();
             if (!emailPagador) {
-                throw new Error('Modo Sandbox requiere configurar el Email Pagador de Prueba en el conector de MercadoPago');
+                throw new Error(`Modo Sandbox requiere configurar el Email Pagador de Prueba en el conector de ${gateway.getGatewayName()}`);
             }
             logger.info(`[Checkout ${billingType}] Entorno sandbox, usando email de prueba: ${emailPagador}`);
         } else {
             emailPagador = req.user.email;
         }
 
-        const mpResponse = await mpService.crearSuscripcionConInitPoint({
+        const gatewayResponse = await gateway.createSubscription({
             nombre: `Suscripción ${plan.nombre} - ${periodo}`,
             precio: precioFinal,
             moneda: plan.moneda || 'MXN',
@@ -282,19 +282,19 @@ class CheckoutController {
         });
 
         // ═══════════════════════════════════════════════════════════════
-        // PASO 13: Actualizar suscripción con ID de MercadoPago
+        // PASO 13: Actualizar suscripción con ID del gateway
         // ═══════════════════════════════════════════════════════════════
         await SuscripcionesModel.actualizarGatewayIds(suscripcion.id, {
-            subscription_id_gateway: mpResponse.id
+            subscription_id_gateway: gatewayResponse.subscriptionId
         }, vendorId);
 
-        logger.info(`[Checkout ${billingType}] Suscripción ${suscripcion.id} creada - Plan: ${plan.nombre}, Precio: ${precioFinal}, Cliente: ${clienteId}`);
+        logger.info(`[Checkout ${billingType}] Suscripción ${suscripcion.id} creada - Plan: ${plan.nombre}, Precio: ${precioFinal}, Cliente: ${clienteId}, Gateway: ${gateway.getGatewayName()}`);
 
         res.json({
             success: true,
             message: 'Checkout iniciado correctamente',
             data: {
-                init_point: mpResponse.init_point,
+                init_point: gatewayResponse.checkoutUrl,
                 suscripcion_id: suscripcion.id,
                 pago_id: pago.id,
                 plan: {

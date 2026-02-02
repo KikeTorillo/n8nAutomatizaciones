@@ -29,7 +29,8 @@ const PERIODOS_METRICAS = [
     'año'
 ];
 
-// Campos que se retornan en las consultas de organizaciones (Nov 2025: categoria_id, app_seleccionada, ubicación)
+// Campos que se retornan en las consultas de organizaciones
+// NOTA Feb 2026: plan_actual eliminado (ahora se obtiene via suscripciones_org)
 const SELECT_FIELDS = [
     'id',
     'codigo_tenant',
@@ -45,7 +46,6 @@ const SELECT_FIELDS = [
     'logo_url',
     'colores_marca',
     'configuracion_ui',
-    'plan_actual',
     'app_seleccionada',  // App elegida en Plan Free (Nov 2025)
     'mcp_credential_id',
     // Ubicación geográfica (Nov 2025 - Catálogo normalizado)
@@ -95,8 +95,8 @@ const CAMPOS_ACTUALIZABLES = [
     'motivo_suspension',
     // Configuración POS (Dic 2025)
     'pos_requiere_profesional',
-    // Dogfooding - Actualización automática desde suscripciones (Ene 2026)
-    'plan_actual',
+    // Dogfooding - Actualización automática desde suscripciones
+    // NOTA Feb 2026: plan_actual eliminado (se obtiene via suscripciones_org)
     'modulos_activos'
 ];
 

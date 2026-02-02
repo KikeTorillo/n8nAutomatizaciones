@@ -288,7 +288,6 @@ class UsuarioModel {
                     o.categoria_id,
                     ci.codigo as categoria_codigo,
                     o.nombre_comercial,
-                    o.plan_actual,
                     o.moneda,
                     o.zona_horaria,
                     (SELECT us.sucursal_id FROM usuarios_sucursales us
@@ -1741,12 +1740,14 @@ class UsuarioModel {
                     .substring(0, 50) + '-' + SecureRandom.slugSuffix(4);
 
                 // 4. Crear organización (con módulos activos seleccionados)
+                // NOTA Feb 2026: plan_actual eliminado de organizaciones
+                // El plan se maneja via suscripciones_org (dogfooding hook)
                 const orgResult = await db.query(`
                     INSERT INTO organizaciones (
                         codigo_tenant, slug, nombre_comercial, razon_social,
                         email_admin, categoria_id, estado_id, ciudad_id,
-                        plan_actual, activo, modulos_activos
-                    ) VALUES ($1, $2, $3, $3, $4, $5, $6, $7, 'trial', TRUE, $8)
+                        activo, modulos_activos
+                    ) VALUES ($1, $2, $3, $3, $4, $5, $6, $7, TRUE, $8)
                     RETURNING id, codigo_tenant, slug, nombre_comercial
                 `, [codigoTenant, slug, nombre_negocio, usuario.email, categoria_id, estado_id, ciudad_id, modulosActivos]);
 

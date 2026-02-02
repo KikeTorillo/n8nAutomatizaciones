@@ -48,9 +48,10 @@ function PaymentCallbackPage() {
     data: resultado,
     isLoading,
     isError,
+    isFetching,
     refetch,
   } = useQuery({
-    queryKey: ['checkout-resultado', suscripcionId || preapprovalId, collectionStatus],
+    queryKey: ['checkout-resultado', suscripcionId || preapprovalId],
     queryFn: () =>
       suscripcionesNegocioApi.obtenerResultadoCheckout({
         suscripcion_id: suscripcionId,
@@ -60,6 +61,7 @@ function PaymentCallbackPage() {
       }),
     enabled: !!(suscripcionId || preapprovalId),
     staleTime: 0,
+    gcTime: 0, // No cachear para siempre obtener datos frescos
     refetchOnWindowFocus: false,
   });
 
@@ -231,9 +233,9 @@ function PaymentCallbackPage() {
               <Button
                 variant="primary"
                 className="w-full"
-                onClick={() => navigate('/dashboard')}
+                onClick={() => navigate('/')}
               >
-                Ir al Dashboard
+                Ir al Inicio
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             )}
@@ -244,16 +246,17 @@ function PaymentCallbackPage() {
                   variant="outline"
                   className="w-full"
                   onClick={() => refetch()}
+                  disabled={isFetching}
                 >
-                  <RefreshCw className="w-4 h-4 mr-2" />
-                  Verificar estado
+                  <RefreshCw className={cn('w-4 h-4 mr-2', isFetching && 'animate-spin')} />
+                  {isFetching ? 'Verificando...' : 'Verificar estado'}
                 </Button>
                 <Button
                   variant="ghost"
                   className="w-full"
-                  onClick={() => navigate('/dashboard')}
+                  onClick={() => navigate('/')}
                 >
-                  Ir al Dashboard
+                  Ir al Inicio
                 </Button>
               </>
             )}
@@ -270,9 +273,9 @@ function PaymentCallbackPage() {
                 <Button
                   variant="ghost"
                   className="w-full"
-                  onClick={() => navigate('/dashboard')}
+                  onClick={() => navigate('/')}
                 >
-                  Ir al Dashboard
+                  Ir al Inicio
                 </Button>
               </>
             )}
@@ -281,9 +284,9 @@ function PaymentCallbackPage() {
               <Button
                 variant="outline"
                 className="w-full"
-                onClick={() => navigate('/dashboard')}
+                onClick={() => navigate('/')}
               >
-                Ir al Dashboard
+                Ir al Inicio
               </Button>
             )}
           </div>

@@ -239,7 +239,6 @@ erDiagram
         varchar razon_social
         varchar rfc_nif
         int categoria_id FK
-        varchar plan_actual
         varchar zona_horaria
         varchar moneda
         boolean activo

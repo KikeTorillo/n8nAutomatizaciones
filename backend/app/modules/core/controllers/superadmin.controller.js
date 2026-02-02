@@ -115,19 +115,25 @@ class SuperAdminController {
 
             // Top 10 organizaciones por actividad (usuarios + citas recientes)
             const topOrganizaciones = await RLSContextManager.withBypass(async (db) => {
+                // Fuente de verdad: suscripciones_org via JOIN
                 const topOrgsQuery = `
                     SELECT
                         o.id,
                         o.nombre_comercial,
-                        o.plan_actual,
+                        COALESCE(p.codigo, 'sin_plan') as plan_actual,
                         o.activo,
                         o.suspendido,
                         o.fecha_registro,
+                        s.estado as estado_suscripcion,
                         (SELECT COUNT(*) FROM usuarios u WHERE u.organizacion_id = o.id AND u.activo = true) as total_usuarios,
                         (SELECT COUNT(*) FROM profesionales p WHERE p.organizacion_id = o.id AND p.activo = true) as total_profesionales,
                         (SELECT COUNT(*) FROM clientes c WHERE c.organizacion_id = o.id) as total_clientes,
                         (SELECT COUNT(*) FROM citas ct WHERE ct.organizacion_id = o.id AND ct.fecha_cita >= DATE_TRUNC('month', CURRENT_DATE)) as citas_mes
                     FROM organizaciones o
+                    LEFT JOIN clientes cl ON cl.organizacion_vinculada_id = o.id
+                    LEFT JOIN suscripciones_org s ON s.cliente_id = cl.id
+                        AND s.estado IN ('activa', 'trial', 'grace_period')
+                    LEFT JOIN planes_suscripcion_org p ON s.plan_id = p.id
                     WHERE o.activo = true
                     ORDER BY citas_mes DESC NULLS LAST, total_usuarios DESC
                     LIMIT 10
@@ -209,9 +215,9 @@ class SuperAdminController {
                     paramCounter++;
                 }
 
-                // Filtro por plan
+                // Filtro por plan (usa suscripciones_org como fuente de verdad)
                 if (plan) {
-                    whereConditions.push(`o.plan_actual = $${paramCounter}`);
+                    whereConditions.push(`p.codigo = $${paramCounter}`);
                     params.push(plan);
                     paramCounter++;
                 }
@@ -233,22 +239,27 @@ class SuperAdminController {
 
                 const whereClause = whereConditions.join(' AND ');
 
-                // Query principal (sin tablas viejas)
+                // Query principal - Fuente de verdad: suscripciones_org via JOIN
                 const query = `
                     SELECT
                         o.id,
                         o.nombre_comercial,
                         o.email_admin,
-                        o.plan_actual,
+                        COALESCE(p.codigo, 'sin_plan') as plan_actual,
                         o.activo,
                         o.suspendido,
                         o.fecha_registro,
                         o.fecha_activacion,
+                        s.estado as estado_suscripcion,
                         (SELECT COUNT(*) FROM usuarios u WHERE u.organizacion_id = o.id AND u.activo = true) as total_usuarios,
-                        (SELECT COUNT(*) FROM profesionales p WHERE p.organizacion_id = o.id AND p.activo = true) as total_profesionales,
+                        (SELECT COUNT(*) FROM profesionales pr WHERE pr.organizacion_id = o.id AND pr.activo = true) as total_profesionales,
                         (SELECT COUNT(*) FROM clientes c WHERE c.organizacion_id = o.id) as total_clientes,
                         (SELECT COUNT(*) FROM citas ct WHERE ct.organizacion_id = o.id AND ct.fecha_cita >= DATE_TRUNC('month', CURRENT_DATE)) as citas_mes
                     FROM organizaciones o
+                    LEFT JOIN clientes cl ON cl.organizacion_vinculada_id = o.id
+                    LEFT JOIN suscripciones_org s ON s.cliente_id = cl.id
+                        AND s.estado IN ('activa', 'trial', 'grace_period')
+                    LEFT JOIN planes_suscripcion_org p ON s.plan_id = p.id
                     WHERE ${whereClause}
                     ORDER BY o.${ordenSafe} ${direccionSafe} NULLS LAST
                     LIMIT $${paramCounter} OFFSET $${paramCounter + 1}
@@ -260,6 +271,10 @@ class SuperAdminController {
                 // Contar total
                 const countQuery = `
                     SELECT COUNT(*) FROM organizaciones o
+                    LEFT JOIN clientes cl ON cl.organizacion_vinculada_id = o.id
+                    LEFT JOIN suscripciones_org s ON s.cliente_id = cl.id
+                        AND s.estado IN ('activa', 'trial', 'grace_period')
+                    LEFT JOIN planes_suscripcion_org p ON s.plan_id = p.id
                     WHERE ${whereClause}
                 `;
 

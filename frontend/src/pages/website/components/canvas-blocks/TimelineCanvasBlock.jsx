@@ -3,6 +3,11 @@
  * TIMELINE CANVAS BLOCK
  * ====================================================================
  * Bloque de linea de tiempo para historia/proceso en el canvas WYSIWYG.
+ *
+ * Layouts soportados:
+ * - alternado: Zigzag izquierda-derecha (default)
+ * - izquierda: Todo el contenido a la izquierda del dot
+ * - derecha: Todo el contenido a la derecha del dot
  */
 
 import { memo } from 'react';
@@ -35,107 +40,25 @@ const ICONS = {
   heart: Heart,
 };
 
-/**
- * Timeline Item Component
- */
-function TimelineItem({ item, index, total, layout, colorLinea, isEditing, onUpdate }) {
-  const { fecha, titulo, descripcion, icono = 'star' } = item;
-  const Icon = ICONS[icono] || Star;
-  const isLeft = layout === 'izquierda' || (layout === 'alternado' && index % 2 === 0);
-  const isLast = index === total - 1;
-
-  return (
-    <div
-      className={cn(
-        'relative flex items-start gap-6',
-        layout === 'alternado' && 'md:justify-center',
-        layout === 'alternado' && index % 2 === 1 && 'md:flex-row-reverse'
-      )}
-    >
-      {/* Content - Left side for alternating */}
-      {layout === 'alternado' && (
-        <div
-          className={cn(
-            'hidden md:block md:w-5/12',
-            index % 2 === 0 ? 'text-right pr-8' : 'text-left pl-8'
-          )}
-        >
-          {index % 2 === 0 && (
-            <TimelineContent
-              item={item}
-              index={index}
-              isEditing={isEditing}
-              onUpdate={onUpdate}
-            />
-          )}
-        </div>
-      )}
-
-      {/* Timeline Line & Dot */}
-      <div className="flex flex-col items-center">
-        {/* Dot */}
-        <div
-          className="w-12 h-12 rounded-full flex items-center justify-center z-10 shadow-lg"
-          style={{ backgroundColor: colorLinea }}
-        >
-          <Icon className="w-6 h-6 text-white" />
-        </div>
-
-        {/* Line */}
-        {!isLast && (
-          <div
-            className="w-0.5 flex-1 min-h-[80px]"
-            style={{ backgroundColor: `${colorLinea}40` }}
-          />
-        )}
-      </div>
-
-      {/* Content */}
-      <div
-        className={cn(
-          'flex-1 pb-12',
-          layout === 'alternado' && 'md:w-5/12',
-          layout === 'alternado' && index % 2 === 0 && 'md:hidden'
-        )}
-      >
-        <TimelineContent
-          item={item}
-          index={index}
-          isEditing={isEditing}
-          onUpdate={onUpdate}
-        />
-      </div>
-
-      {/* Content - Right side for alternating */}
-      {layout === 'alternado' && (
-        <div
-          className={cn(
-            'hidden md:block md:w-5/12',
-            index % 2 === 1 ? 'text-right pr-8' : 'text-left pl-8'
-          )}
-        >
-          {index % 2 === 1 && (
-            <TimelineContent
-              item={item}
-              index={index}
-              isEditing={isEditing}
-              onUpdate={onUpdate}
-            />
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
+// Default items cuando no hay ninguno configurado
+const DEFAULT_ITEMS = [
+  { fecha: '2020', titulo: 'Fundacion', descripcion: 'Comenzamos nuestra aventura con una vision clara.', icono: 'rocket' },
+  { fecha: '2021', titulo: 'Primer Hito', descripcion: 'Alcanzamos nuestros primeros 100 clientes.', icono: 'flag' },
+  { fecha: '2022', titulo: 'Expansion', descripcion: 'Abrimos nuestra segunda ubicacion.', icono: 'map-pin' },
+  { fecha: '2023', titulo: 'Reconocimiento', descripcion: 'Recibimos el premio a la excelencia en servicio.', icono: 'award' },
+];
 
 /**
- * Timeline Content Component
+ * Timeline Content Component - El card con la información
  */
-function TimelineContent({ item, index, isEditing, onUpdate }) {
+function TimelineContent({ item, index, isEditing, onUpdate, alignment = 'left' }) {
   const { fecha, titulo, descripcion } = item;
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg">
+    <div className={cn(
+      'bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg',
+      alignment === 'right' && 'text-right'
+    )}>
       {/* Date Badge */}
       {isEditing ? (
         <InlineText
@@ -183,6 +106,147 @@ function TimelineContent({ item, index, isEditing, onUpdate }) {
 }
 
 /**
+ * Timeline Dot Component - El círculo con icono y línea
+ */
+function TimelineDot({ icon, color, isLast }) {
+  const Icon = ICONS[icon] || Star;
+
+  return (
+    <div className="flex flex-col items-center flex-shrink-0">
+      <div
+        className="w-12 h-12 rounded-full flex items-center justify-center z-10 shadow-lg"
+        style={{ backgroundColor: color }}
+      >
+        <Icon className="w-6 h-6 text-white" />
+      </div>
+      {!isLast && (
+        <div
+          className="w-0.5 flex-1 min-h-[80px]"
+          style={{ backgroundColor: `${color}40` }}
+        />
+      )}
+    </div>
+  );
+}
+
+/**
+ * Timeline Item - Layout Izquierda (contenido a la izquierda del dot)
+ */
+function TimelineItemLeft({ item, index, total, colorLinea, isEditing, onUpdate }) {
+  return (
+    <div className="flex items-start gap-6 pb-8">
+      {/* Content */}
+      <div className="flex-1">
+        <TimelineContent
+          item={item}
+          index={index}
+          isEditing={isEditing}
+          onUpdate={onUpdate}
+          alignment="right"
+        />
+      </div>
+      {/* Dot */}
+      <TimelineDot
+        icon={item.icono}
+        color={colorLinea}
+        isLast={index === total - 1}
+      />
+      {/* Spacer for symmetry */}
+      <div className="flex-1 hidden md:block" />
+    </div>
+  );
+}
+
+/**
+ * Timeline Item - Layout Derecha (contenido a la derecha del dot)
+ */
+function TimelineItemRight({ item, index, total, colorLinea, isEditing, onUpdate }) {
+  return (
+    <div className="flex items-start gap-6 pb-8">
+      {/* Spacer for symmetry */}
+      <div className="flex-1 hidden md:block" />
+      {/* Dot */}
+      <TimelineDot
+        icon={item.icono}
+        color={colorLinea}
+        isLast={index === total - 1}
+      />
+      {/* Content */}
+      <div className="flex-1">
+        <TimelineContent
+          item={item}
+          index={index}
+          isEditing={isEditing}
+          onUpdate={onUpdate}
+          alignment="left"
+        />
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Timeline Item - Layout Alternado
+ */
+function TimelineItemAlternado({ item, index, total, colorLinea, isEditing, onUpdate }) {
+  const isEven = index % 2 === 0;
+
+  return (
+    <div className="flex items-start gap-6 pb-8">
+      {/* Left side */}
+      <div className={cn('flex-1', !isEven && 'hidden md:block')}>
+        {isEven && (
+          <TimelineContent
+            item={item}
+            index={index}
+            isEditing={isEditing}
+            onUpdate={onUpdate}
+            alignment="right"
+          />
+        )}
+      </div>
+
+      {/* Dot (center) */}
+      <TimelineDot
+        icon={item.icono}
+        color={colorLinea}
+        isLast={index === total - 1}
+      />
+
+      {/* Right side */}
+      <div className={cn('flex-1', isEven && 'hidden md:block')}>
+        {!isEven && (
+          <TimelineContent
+            item={item}
+            index={index}
+            isEditing={isEditing}
+            onUpdate={onUpdate}
+            alignment="left"
+          />
+        )}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Timeline Item wrapper que selecciona el layout correcto
+ */
+function TimelineItem({ item, index, total, layout, colorLinea, isEditing, onUpdate }) {
+  const props = { item, index, total, colorLinea, isEditing, onUpdate };
+
+  switch (layout) {
+    case 'izquierda':
+      return <TimelineItemLeft {...props} />;
+    case 'derecha':
+      return <TimelineItemRight {...props} />;
+    case 'alternado':
+    default:
+      return <TimelineItemAlternado {...props} />;
+  }
+}
+
+/**
  * Timeline Canvas Block
  */
 function TimelineCanvasBlock({ bloque, tema, isEditing, onContentChange }) {
@@ -191,20 +255,13 @@ function TimelineCanvasBlock({ bloque, tema, isEditing, onContentChange }) {
     titulo_seccion = 'Nuestra Historia',
     subtitulo_seccion = 'Un recorrido por nuestros logros',
     layout = 'alternado',
-    color_linea = '#3B82F6',
-    items = [],
+    color_linea,
   } = contenido;
 
-  // Default items if empty
-  const hitos =
-    items.length > 0
-      ? items
-      : [
-          { fecha: '2020', titulo: 'Fundacion', descripcion: 'Comenzamos nuestra aventura con una vision clara.', icono: 'rocket' },
-          { fecha: '2021', titulo: 'Primer Hito', descripcion: 'Alcanzamos nuestros primeros 100 clientes.', icono: 'flag' },
-          { fecha: '2022', titulo: 'Expansion', descripcion: 'Abrimos nuestra segunda ubicacion.', icono: 'map-pin' },
-          { fecha: '2023', titulo: 'Reconocimiento', descripcion: 'Recibimos el premio a la excelencia en servicio.', icono: 'award' },
-        ];
+  // Solo usar defaults si items no está definido en contenido
+  // Si el usuario vació los items explícitamente, respetar ese valor
+  const hasExplicitItems = 'items' in contenido;
+  const hitos = hasExplicitItems ? (contenido.items || []) : DEFAULT_ITEMS;
 
   /**
    * Update a single item
@@ -254,20 +311,29 @@ function TimelineCanvasBlock({ bloque, tema, isEditing, onContentChange }) {
         </div>
 
         {/* Timeline */}
-        <div className="relative">
-          {hitos.map((item, index) => (
-            <TimelineItem
-              key={index}
-              item={item}
-              index={index}
-              total={hitos.length}
-              layout={layout}
-              colorLinea={lineColor}
-              isEditing={isEditing}
-              onUpdate={updateItem}
-            />
-          ))}
-        </div>
+        {hitos.length > 0 ? (
+          <div className="relative">
+            {hitos.map((item, index) => (
+              <TimelineItem
+                key={index}
+                item={item}
+                index={index}
+                total={hitos.length}
+                layout={layout}
+                colorLinea={lineColor}
+                isEditing={isEditing}
+                onUpdate={updateItem}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12 text-gray-400 dark:text-gray-500">
+            <p>No hay hitos configurados.</p>
+            {isEditing && (
+              <p className="text-sm mt-2">Usa el panel de propiedades para agregar hitos.</p>
+            )}
+          </div>
+        )}
       </div>
     </section>
   );

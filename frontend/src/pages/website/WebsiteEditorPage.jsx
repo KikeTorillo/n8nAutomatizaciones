@@ -19,7 +19,6 @@ import {
   Check,
   X,
   Layout,
-  Settings,
   Sparkles,
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -163,12 +162,23 @@ function WebsiteEditorPage() {
     }
   }, [paginas, paginaActiva]);
 
-  // Abrir drawer de propiedades al seleccionar bloque en móvil/tablet
+  // Abrir panel/drawer de propiedades al seleccionar bloque
+  // En móvil/tablet: abre drawer
+  // En desktop: reabre panel si estaba cerrado
   useEffect(() => {
-    if (bloqueSeleccionado && propertiesAsDrawer && modoEditor === 'canvas') {
+    if (bloqueSeleccionado && modoEditor === 'canvas') {
       abrirPropiedades();
     }
-  }, [bloqueSeleccionado, propertiesAsDrawer, modoEditor, abrirPropiedades]);
+  }, [bloqueSeleccionado, modoEditor, abrirPropiedades]);
+
+  /**
+   * Handler para cerrar propiedades Y deseleccionar bloque
+   * Esto permite que al volver a hacer click en el mismo bloque se reabra el panel
+   */
+  const handleCerrarPropiedades = useCallback(() => {
+    cerrarPropiedades();
+    deseleccionarBloque();
+  }, [cerrarPropiedades, deseleccionarBloque]);
 
   // Auto-ajustar breakpoint y zoom en móvil
   useEffect(() => {
@@ -549,7 +559,7 @@ function WebsiteEditorPage() {
         panelActivo={panelActivo}
         openPanel={openPanel}
         closeDrawer={closeDrawer}
-        cerrarPropiedades={cerrarPropiedades}
+        cerrarPropiedades={handleCerrarPropiedades}
         PANEL_TYPES={PANEL_TYPES}
         // Handlers
         handleCrearSitio={handleCrearSitio}
@@ -925,14 +935,6 @@ function WebsiteEditorContent({
               >
                 <Sparkles className="w-5 h-5" />
               </button>
-              <div className="flex-1" />
-              <button
-                onClick={() => navigate('/configuracion')}
-                className="p-2 md:p-3 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-600 dark:text-gray-400 transition-colors"
-                title="Configuración"
-              >
-                <Settings className="w-5 h-5" />
-              </button>
             </aside>
           )}
 
@@ -1087,7 +1089,10 @@ function WebsiteEditorContent({
       {/* Drawer: Propiedades (móvil y tablet) */}
       <Drawer
         isOpen={propertiesAsDrawer && drawerAbierto === PANEL_TYPES.PROPIEDADES && bloqueSeleccionado}
-        onClose={closeDrawer}
+        onClose={() => {
+          closeDrawer();
+          deseleccionarBloque();
+        }}
         title={`Propiedades: ${bloqueSeleccionadoCompleto?.tipo || 'Bloque'}`}
         subtitle={estaGuardando ? 'Guardando...' : 'Edita las propiedades del bloque'}
         size="lg"
@@ -1106,7 +1111,10 @@ function WebsiteEditorContent({
             handleEliminarBloque(id);
             closeDrawer();
           }}
-          onClose={closeDrawer}
+          onClose={() => {
+            closeDrawer();
+            deseleccionarBloque();
+          }}
           isLoading={estaGuardando}
           isInDrawer
           config={config}

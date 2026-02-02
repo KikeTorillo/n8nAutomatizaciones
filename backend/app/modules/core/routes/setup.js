@@ -467,6 +467,8 @@ router.post('/unified-setup',
 
                 // ================================================================
                 // 4.1.1 NUEVO: Crear organización "Nexo Team" para dogfooding
+                // NOTA Feb 2026: plan_actual eliminado de organizaciones
+                // El plan se maneja via suscripciones_org (dogfooding hook)
                 // ================================================================
                 const orgCreada = await db.query(`
                     INSERT INTO organizaciones (
@@ -475,7 +477,6 @@ router.post('/unified-setup',
                         nombre_comercial,
                         razon_social,
                         email_admin,
-                        plan_actual,
                         moneda,
                         zona_horaria,
                         activo
@@ -485,7 +486,6 @@ router.post('/unified-setup',
                         'Nexo Team',
                         'Nexo Platform S.A. de C.V.',
                         $1,
-                        'pro',
                         'MXN',
                         'America/Mexico_City',
                         TRUE

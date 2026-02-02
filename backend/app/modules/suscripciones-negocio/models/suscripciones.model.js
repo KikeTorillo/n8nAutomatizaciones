@@ -578,6 +578,10 @@ class SuscripcionesModel {
 
             logger.info(`Suscripción ${id} cambió de plan ${suscripcion.plan_id} a ${nuevoPlanId}`);
 
+            // Sincronizar modulos_activos en organización vinculada
+            // NOTA Feb 2026: plan_actual eliminado, solo se sincronizan módulos
+            await this.actualizarOrgVinculadaAlActivar(id, organizacionId);
+
             return result.rows[0];
         });
     }
@@ -722,32 +726,39 @@ class SuscripcionesModel {
                     }
                 });
 
-                // 3. Actualizar organización vinculada
+                // 3. Actualizar organización vinculada (solo modulos_activos)
+                // NOTA Feb 2026: plan_actual eliminado de organizaciones
+                // El plan se obtiene siempre via JOIN con suscripciones_org
                 const updateQuery = `
                     UPDATE organizaciones
-                    SET plan_actual = $2,
-                        modulos_activos = $3,
+                    SET modulos_activos = $2,
                         actualizado_en = NOW()
                     WHERE id = $1
-                    RETURNING id, plan_actual, modulos_activos
+                    RETURNING id, modulos_activos
                 `;
 
                 const updateResult = await db.query(updateQuery, [
                     orgVinculadaId,
-                    planCodigo,
                     JSON.stringify(modulosActivos)
                 ]);
 
                 if (updateResult.rows[0]) {
-                    logger.info(`Dogfooding: Org ${orgVinculadaId} actualizada a plan '${planCodigo}' con módulos: ${Object.keys(modulosActivos).join(', ')}`);
+                    logger.info(`Dogfooding: Org ${orgVinculadaId} actualizada con módulos: ${Object.keys(modulosActivos).join(', ')}`);
                 }
 
                 return orgVinculadaId;
             });
 
         } catch (error) {
-            logger.error(`Error actualizando org vinculada para suscripción ${suscripcionId}:`, error);
+            // Log detallado para debugging de sincronización
+            logger.error(`Error actualizando org vinculada para suscripción ${suscripcionId}:`, {
+                error: error.message,
+                stack: error.stack,
+                suscripcionId,
+                organizacionId
+            });
             // No lanzar error para no interrumpir el flujo de cobro
+            // TODO: Considerar encolar para reintento posterior si la frecuencia de errores aumenta
             return null;
         }
     }
@@ -1445,18 +1456,20 @@ class SuscripcionesModel {
             }
 
             // Obtener webhooks como historial de eventos
+            // NOTA: Usa webhooks_procesados (tabla consolidada para idempotencia)
             const webhooksQuery = `
                 SELECT
                     id,
-                    evento_tipo,
+                    event_type as evento_tipo,
                     gateway,
-                    procesado,
-                    fecha_procesado,
-                    mensaje_error,
-                    recibido_en
-                FROM webhooks_suscripcion
-                WHERE suscripcion_id = $1
-                ORDER BY recibido_en DESC
+                    resultado,
+                    procesado_en as fecha_procesado,
+                    mensaje as mensaje_error,
+                    metadata
+                FROM webhooks_procesados
+                WHERE data_id = $1::text
+                   OR suscripcion_id = $1
+                ORDER BY procesado_en DESC
                 LIMIT 50
             `;
 
@@ -1483,11 +1496,12 @@ class SuscripcionesModel {
                     id: w.id,
                     tipo: 'webhook',
                     descripcion: `Webhook: ${w.evento_tipo}`,
-                    fecha: w.fecha_procesado || w.recibido_en,
+                    fecha: w.fecha_procesado,
                     detalles: {
                         gateway: w.gateway,
-                        procesado: w.procesado,
-                        error: w.mensaje_error
+                        resultado: w.resultado,
+                        error: w.mensaje_error,
+                        metadata: w.metadata
                     }
                 });
             });

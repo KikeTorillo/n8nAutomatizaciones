@@ -97,10 +97,16 @@ class PlanesModel {
      * Listar solo planes activos (sin paginación)
      *
      * @param {number} organizacionId - ID de la organización
+     * @param {boolean} soloPublicos - Si true, filtra planes con publico = TRUE (para /planes/publicos)
      * @returns {Promise<Array>} - Array de planes activos
      */
-    static async listarActivos(organizacionId) {
+    static async listarActivos(organizacionId, soloPublicos = false) {
         return await RLSContextManager.query(organizacionId, async (db) => {
+            // Filtrar planes no públicos (ej: enterprise) cuando es para página pública
+            const whereClause = soloPublicos
+                ? 'WHERE activo = TRUE AND (publico = TRUE OR publico IS NULL)'
+                : 'WHERE activo = TRUE';
+
             const query = `
                 SELECT
                     id, codigo, nombre, descripcion,
@@ -109,7 +115,7 @@ class PlanesModel {
                     precio_usuario_adicional, usuarios_incluidos, max_usuarios_hard,
                     color, icono, destacado, orden_display
                 FROM planes_suscripcion_org
-                WHERE activo = TRUE
+                ${whereClause}
                 ORDER BY orden_display ASC, nombre ASC
             `;
 

@@ -51,10 +51,12 @@ class PlanesController {
      *
      * NO requiere autenticación. Retorna los planes activos de Nexo Team
      * para que cualquier visitante pueda ver las opciones de suscripción.
+     * Excluye planes internos (publico = FALSE) como enterprise.
      */
     static listarPublicos = asyncHandler(async (req, res) => {
         // Siempre usar la organización Nexo Team para planes públicos
-        const planes = await PlanesModel.listarActivos(NEXO_TEAM_ORG_ID);
+        // soloPublicos = true para excluir planes internos (ej: enterprise)
+        const planes = await PlanesModel.listarActivos(NEXO_TEAM_ORG_ID, true);
 
         return ResponseHelper.success(res, planes);
     });

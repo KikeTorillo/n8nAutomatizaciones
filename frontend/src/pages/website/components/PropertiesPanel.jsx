@@ -35,6 +35,7 @@ import {
   Search,
   Sparkles,
   ImagePlus,
+  ChevronRight,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -44,6 +45,7 @@ import { useWebsiteEditorStore } from '@/store';
 import SEOTipsPanel from './SEOTips/SEOTipsPanel';
 import AIWriterPopover from './AIWriter/AIWriterPopover';
 import UnsplashModal from './UnsplashPicker/UnsplashModal';
+import TimelineItemsDrawer from './TimelineItemsDrawer';
 
 // ========== TABS CONFIG ==========
 
@@ -228,6 +230,13 @@ const BLOCK_CONFIGS = {
     contenido: [
       { key: 'titulo_seccion', label: 'Título', type: 'text', aiEnabled: true },
       { key: 'subtitulo_seccion', label: 'Subtítulo', type: 'textarea', aiEnabled: true },
+      { key: 'layout', label: 'Disposición', type: 'select', options: [
+        { value: 'alternado', label: 'Alternado (zigzag)' },
+        { value: 'izquierda', label: 'Todo a la izquierda' },
+        { value: 'derecha', label: 'Todo a la derecha' },
+      ]},
+      { key: 'color_linea', label: 'Color de línea', type: 'color' },
+      { key: 'items', label: 'Hitos', type: 'itemsEditor', itemType: 'timeline' },
     ],
   },
 };
@@ -289,6 +298,13 @@ function PropertiesPanel({
   const [unsplashState, setUnsplashState] = useState({
     isOpen: false,
     targetField: null,
+  });
+
+  // Estado para Items Editor (Timeline)
+  const [itemsEditorState, setItemsEditorState] = useState({
+    isOpen: false,
+    itemType: null,
+    fieldKey: null,
   });
 
   // Sync local content with bloque
@@ -375,6 +391,37 @@ function PropertiesPanel({
     }
     closeUnsplash();
   }, [unsplashState.targetField, handleChange, closeUnsplash]);
+
+  /**
+   * Abrir Items Editor para un campo
+   */
+  const openItemsEditor = useCallback((fieldKey, itemType) => {
+    setItemsEditorState({
+      isOpen: true,
+      itemType,
+      fieldKey,
+    });
+  }, []);
+
+  /**
+   * Cerrar Items Editor
+   */
+  const closeItemsEditor = useCallback(() => {
+    setItemsEditorState({
+      isOpen: false,
+      itemType: null,
+      fieldKey: null,
+    });
+  }, []);
+
+  /**
+   * Manejar cambios desde Items Editor
+   */
+  const handleItemsChange = useCallback((items) => {
+    if (itemsEditorState.fieldKey) {
+      handleChange(itemsEditorState.fieldKey, items);
+    }
+  }, [itemsEditorState.fieldKey, handleChange]);
 
   // Get config for this block type
   const blockConfig = bloque ? BLOCK_CONFIGS[bloque.tipo] : null;
@@ -485,6 +532,7 @@ function PropertiesPanel({
                 onChange={handleChange}
                 onOpenAIWriter={openAIWriter}
                 onOpenUnsplash={openUnsplash}
+                onOpenItemsEditor={openItemsEditor}
               />
             )}
 
@@ -495,6 +543,7 @@ function PropertiesPanel({
                 onChange={handleChange}
                 onOpenAIWriter={openAIWriter}
                 onOpenUnsplash={openUnsplash}
+                onOpenItemsEditor={openItemsEditor}
               />
             )}
 
@@ -591,13 +640,23 @@ function PropertiesPanel({
         onSelect={handleUnsplashSelect}
         industria={industria}
       />
+
+      {/* Timeline Items Drawer */}
+      {itemsEditorState.itemType === 'timeline' && (
+        <TimelineItemsDrawer
+          isOpen={itemsEditorState.isOpen}
+          onClose={closeItemsEditor}
+          items={localContent[itemsEditorState.fieldKey] || []}
+          onChange={handleItemsChange}
+        />
+      )}
     </div>
   );
 }
 
 // ========== TAB CONTENT ==========
 
-function TabContent({ fields, values, onChange, onOpenAIWriter, onOpenUnsplash }) {
+function TabContent({ fields, values, onChange, onOpenAIWriter, onOpenUnsplash, onOpenItemsEditor }) {
   if (!fields || fields.length === 0) {
     return (
       <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
@@ -616,6 +675,7 @@ function TabContent({ fields, values, onChange, onOpenAIWriter, onOpenUnsplash }
           onChange={(value) => onChange(field.key, value)}
           onOpenAIWriter={onOpenAIWriter}
           onOpenUnsplash={onOpenUnsplash}
+          onOpenItemsEditor={onOpenItemsEditor}
         />
       ))}
     </div>
@@ -624,8 +684,8 @@ function TabContent({ fields, values, onChange, onOpenAIWriter, onOpenUnsplash }
 
 // ========== FIELD RENDERER ==========
 
-function FieldRenderer({ field, value, onChange, onOpenAIWriter, onOpenUnsplash }) {
-  const { key, label, type, placeholder, options, min, max, step, aiEnabled } = field;
+function FieldRenderer({ field, value, onChange, onOpenAIWriter, onOpenUnsplash, onOpenItemsEditor }) {
+  const { key, label, type, placeholder, options, min, max, step, aiEnabled, itemType } = field;
   const fieldRef = useRef(null);
 
   switch (type) {
@@ -852,10 +912,10 @@ function FieldRenderer({ field, value, onChange, onOpenAIWriter, onOpenUnsplash 
           </label>
           <div className="flex gap-1 bg-gray-100 dark:bg-gray-700 p-1 rounded-lg">
             {[
-              { v: 'left', Icon: AlignLeft },
-              { v: 'center', Icon: AlignCenter },
-              { v: 'right', Icon: AlignRight },
-            ].map(({ v, Icon }) => (
+              { v: 'left', AlignIcon: AlignLeft },
+              { v: 'center', AlignIcon: AlignCenter },
+              { v: 'right', AlignIcon: AlignRight },
+            ].map(({ v, AlignIcon }) => (
               <button
                 key={v}
                 onClick={() => onChange(v)}
@@ -866,12 +926,35 @@ function FieldRenderer({ field, value, onChange, onOpenAIWriter, onOpenUnsplash 
                     : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
                 )}
               >
-                <Icon className="w-4 h-4 mx-auto" />
+                <AlignIcon className="w-4 h-4 mx-auto" />
               </button>
             ))}
           </div>
         </div>
       );
+
+    case 'itemsEditor': {
+      const itemCount = Array.isArray(value) ? value.length : 0;
+      return (
+        <div>
+          <button
+            type="button"
+            onClick={() => onOpenItemsEditor?.(key, itemType)}
+            className="w-full flex items-center justify-between px-3 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors group"
+          >
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                {label}
+              </span>
+              <span className="px-2 py-0.5 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 text-xs font-medium rounded-full">
+                {itemCount}
+              </span>
+            </div>
+            <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors" />
+          </button>
+        </div>
+      );
+    }
 
     default:
       return null;

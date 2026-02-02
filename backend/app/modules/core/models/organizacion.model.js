@@ -21,9 +21,9 @@ class OrganizacionModel {
                 INSERT INTO organizaciones (
                     nombre_comercial, razon_social, rfc_nif, categoria_id,
                     configuracion_categoria, email_admin, telefono, codigo_tenant, slug,
-                    sitio_web, logo_url, colores_marca, configuracion_ui, plan_actual,
+                    sitio_web, logo_url, colores_marca, configuracion_ui,
                     app_seleccionada, pais_id, estado_id, ciudad_id
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
                 RETURNING *
             `;
 
@@ -40,7 +40,8 @@ class OrganizacionModel {
             const slug = `${baseSlug}-${uniqueSuffix}`.substring(0, 50);
 
             // Determinar plan: free, pro, trial (default: trial)
-            const plan = organizacionData.plan || organizacionData.plan_actual || 'trial';
+            // NOTA Feb 2026: plan ya no se guarda en organizaciones, solo en suscripciones_org
+            const plan = organizacionData.plan || 'trial';
 
             // app_seleccionada solo aplica para Plan Free
             // Para otros planes es NULL (tienen acceso a todas las apps)
@@ -60,7 +61,6 @@ class OrganizacionModel {
                 organizacionData.logo_url || null,
                 organizacionData.colores_marca || {},
                 organizacionData.configuracion_ui || {},
-                plan,
                 appSeleccionada,
                 // Ubicación geográfica (Nov 2025)
                 organizacionData.pais_id || 1,        // Default: México (id=1)

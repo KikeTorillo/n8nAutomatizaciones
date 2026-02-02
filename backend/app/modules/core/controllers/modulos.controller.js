@@ -193,16 +193,29 @@ class ModulosController {
         logger.info(`[ModulosController] Empleado ${userId}: acceso a módulos de suscripción (permisos granulares pendiente)`);
       }
 
-      // ACTUALIZADO Ene 2026: Sistema subscripciones v1 eliminado
-      // Ahora todos los módulos están disponibles sin límites
-      // plan_actual está en organizaciones directamente
+      // ACTUALIZADO Feb 2026: Fuente de verdad unificada - suscripciones_org
+      // El plan se obtiene de suscripciones_org via JOIN (plan_actual eliminado de organizaciones)
       let planInfo = null;
       try {
         const result = await RLSContextManager.withBypass(async (db) => {
           const query = `
-            SELECT plan_actual
-            FROM organizaciones
-            WHERE id = $1
+            SELECT COALESCE(p.codigo, 'trial') as plan_codigo,
+                   COALESCE(p.nombre, 'Trial') as plan_nombre,
+                   s.es_trial,
+                   s.estado as estado_suscripcion
+            FROM organizaciones o
+            LEFT JOIN clientes c ON c.organizacion_vinculada_id = o.id
+            LEFT JOIN suscripciones_org s ON s.cliente_id = c.id
+              AND s.estado IN ('activa', 'trial', 'grace_period', 'pendiente_pago')
+            LEFT JOIN planes_suscripcion_org p ON s.plan_id = p.id
+            WHERE o.id = $1
+            ORDER BY
+              CASE s.estado
+                WHEN 'activa' THEN 1
+                WHEN 'trial' THEN 2
+                WHEN 'grace_period' THEN 3
+                ELSE 4
+              END
             LIMIT 1
           `;
           return await db.query(query, [organizacionId]);
@@ -210,14 +223,15 @@ class ModulosController {
 
         if (result.rows.length > 0) {
           const row = result.rows[0];
-          const tipo = row.plan_actual || 'pro';
+          const tipo = row.plan_codigo || 'trial';
           planInfo = {
             codigo: tipo,
-            nombre: tipo === 'trial' ? 'Trial' : 'Pro',
+            nombre: row.plan_nombre || (tipo === 'trial' ? 'Trial' : 'Pro'),
             tipo: tipo,
             es_free: false,
             es_pro: tipo === 'pro',
-            es_trial: tipo === 'trial',
+            es_trial: row.es_trial || tipo === 'trial',
+            estado_suscripcion: row.estado_suscripcion,
             todas_las_apps: true  // Todos los módulos disponibles
           };
         }

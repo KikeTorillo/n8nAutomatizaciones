@@ -141,29 +141,21 @@ class OrganizacionController {
         }
 
         // PASO 2: Preparar datos de la organización
+        // NOTA Feb 2026: plan_actual eliminado de organizaciones
+        // El plan se maneja via suscripciones_org (dogfooding hook)
         const organizacionData = {
             nombre_comercial: organizacion.nombre_comercial,
             razon_social: organizacion.razon_social,
             rfc_nif: organizacion.rfc,
             categoria_id: organizacion.categoria_id,
-            plan_actual: organizacion.plan || 'basico',
+            plan: organizacion.plan || 'basico', // Solo para referencia, no se guarda en org
             telefono: organizacion.telefono_principal,
             email_admin: admin.email
         };
 
         // PASO 3: Crear organización
+        // La suscripción se crea automáticamente via dogfooding hook en DogfoodingService
         const nuevaOrganizacion = await OrganizacionModel.crear(organizacionData);
-
-        // PASO 4: Crear subscripción trial para TODOS los planes
-        // ✅ NUEVO FLUJO: Todos empiezan con trial (14 días para planes de pago)
-        // - trial/custom: trial indefinido sin pago requerido
-        // - basico/profesional: trial de 14 días, luego activan pago desde dashboard
-        const diasTrial = 14; // Trial de 14 días para planes de pago
-        await OrganizacionModel.crearSubscripcionActiva(
-            nuevaOrganizacion.id,
-            organizacionData.plan_actual,
-            diasTrial
-        );
 
         // PASO 4.5: Guardar módulos activos seleccionados durante el onboarding
         if (modulos_activos && modulos_activos.length > 0) {
@@ -237,7 +229,7 @@ class OrganizacionController {
 
     /**
      * Obtener estado de suscripción de la organización
-     * Usado para mostrar el TrialBanner en el frontend
+     * REFACTORIZADO: Lee de suscripciones_org (fuente de verdad)
      */
     static obtenerEstadoSuscripcion = asyncHandler(async (req, res) => {
         const organizacionId = parseInt(req.params.id);
@@ -247,38 +239,65 @@ class OrganizacionController {
             return ResponseHelper.error(res, 'No tienes permisos para acceder a esta información', 403);
         }
 
-        const organizacion = await OrganizacionModel.obtenerPorId(organizacionId);
+        // Obtener suscripción activa desde suscripciones_org (fuente de verdad)
+        const SuscripcionesModel = require('../../suscripciones-negocio/models/suscripciones.model');
+        const suscripcion = await SuscripcionesModel.buscarActivaPorOrganizacion(organizacionId);
 
+        // Obtener organización para modulos_activos
+        const organizacion = await OrganizacionModel.obtenerPorId(organizacionId);
         if (!organizacion) {
             return ResponseHelper.notFound(res, 'Organización no encontrada');
         }
 
-        const planActual = organizacion.plan_actual || 'trial';
-        const esTrial = planActual === 'trial';
+        // Si no hay suscripción, asumir trial (org nueva o sin configurar)
+        if (!suscripcion) {
+            const DIAS_TRIAL = 14;
+            let diasRestantesTrial = DIAS_TRIAL;
+            let fechaFinTrial = null;
 
-        // Calcular días restantes del trial (14 días desde creación)
-        const DIAS_TRIAL = 14;
+            if (organizacion.creado_en) {
+                const fechaCreacion = new Date(organizacion.creado_en);
+                fechaFinTrial = new Date(fechaCreacion);
+                fechaFinTrial.setDate(fechaFinTrial.getDate() + DIAS_TRIAL);
+
+                const hoy = new Date();
+                const diffTime = fechaFinTrial.getTime() - hoy.getTime();
+                diasRestantesTrial = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+            }
+
+            return ResponseHelper.success(res, {
+                plan_actual: 'trial',
+                plan_nombre: 'Plan Trial',
+                es_trial: true,
+                dias_restantes_trial: diasRestantesTrial,
+                fecha_fin_trial: fechaFinTrial,
+                trial_expirado: diasRestantesTrial === 0,
+                modulos_activos: organizacion.modulos_activos || { core: true }
+            });
+        }
+
+        // Calcular días restantes de trial desde fecha real
         let diasRestantesTrial = 0;
-        let fechaFinTrial = null;
-
-        if (esTrial && organizacion.creado_en) {
-            const fechaCreacion = new Date(organizacion.creado_en);
-            fechaFinTrial = new Date(fechaCreacion);
-            fechaFinTrial.setDate(fechaFinTrial.getDate() + DIAS_TRIAL);
-
+        if (suscripcion.es_trial && suscripcion.fecha_fin_trial) {
+            const finTrial = new Date(suscripcion.fecha_fin_trial);
             const hoy = new Date();
-            const diffTime = fechaFinTrial.getTime() - hoy.getTime();
+            const diffTime = finTrial.getTime() - hoy.getTime();
             diasRestantesTrial = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
         }
 
+        const esTrial = suscripcion.es_trial || suscripcion.estado === 'trial';
+
         return ResponseHelper.success(res, {
-            plan_actual: planActual,
-            plan_nombre: planActual === 'trial' ? 'Plan Trial' : planActual === 'pro' ? 'Plan Pro' : planActual,
+            plan_actual: suscripcion.plan_codigo || 'trial',
+            plan_nombre: suscripcion.plan_nombre || 'Plan Trial',
             es_trial: esTrial,
             dias_restantes_trial: diasRestantesTrial,
-            fecha_fin_trial: fechaFinTrial,
+            fecha_fin_trial: suscripcion.fecha_fin_trial,
             trial_expirado: esTrial && diasRestantesTrial === 0,
-            modulos_activos: organizacion.modulos_activos || {}
+            modulos_activos: organizacion.modulos_activos || { core: true },
+            // Info adicional
+            estado_suscripcion: suscripcion.estado,
+            fecha_proximo_cobro: suscripcion.fecha_proximo_cobro
         });
     });
 

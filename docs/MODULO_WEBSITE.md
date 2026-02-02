@@ -90,9 +90,25 @@ GET  /api/v1/public/preview/:token        # Preview no publicado
 
 ---
 
-## Mejoras Recientes (30 Enero 2026)
+## Mejoras Recientes
 
-### Deuda Técnica Resuelta
+### Timeline Block - Editor Avanzado (2 Feb 2026)
+
+| Funcionalidad | Detalle |
+|---------------|---------|
+| **Disposición** | 3 layouts: alternado (zigzag), izquierda, derecha |
+| **Color de línea** | Selector de color con fallback al tema primario |
+| **Editor de hitos** | Drawer dedicado (no abarrota PropertiesPanel) |
+| **Drag & drop** | Reordenar hitos con @dnd-kit |
+| **Selector de iconos** | 10 opciones: rocket, flag, star, zap, award, users, building, target, heart, map-pin |
+| **Campos por hito** | Fecha, icono, título, descripción |
+
+**Archivos modificados:**
+- `PropertiesPanel.jsx` - Agregado `itemsEditor` type + integración con drawer
+- `TimelineCanvasBlock.jsx` - Soporte layouts + color personalizable
+- `TimelineItemsDrawer.jsx` - Nuevo componente para edición de hitos
+
+### Deuda Técnica Resuelta (30 Enero 2026)
 
 | Cambio | Archivos | Beneficio |
 |--------|----------|-----------|
@@ -115,14 +131,36 @@ PaginasModel.crearConBloques(datos, websiteId, db) // Crear página + bloques en
 
 ## Pendientes
 
-| Prioridad | Feature |
-|-----------|---------|
-| Alta | AI Chat Conversacional - Wizard para crear sitio |
-| Alta | AI Image Generator - Integrar DALL-E o Stable Diffusion |
-| Media | Undo/Redo global - Conectar editores inline al temporal middleware |
-| Media | Ecommerce básico - Bloque productos, carrito |
-| Baja | Más templates (de 17 a 50+ industrias) |
+| Prioridad | Feature | Detalle |
+|-----------|---------|---------|
+| **Alta** | Validación bloque a bloque | Probar cada uno de los 16 bloques en profundidad: campos, estilos, responsivo |
+| Alta | AI Chat Conversacional | Wizard para crear sitio |
+| Alta | AI Image Generator | Integrar DALL-E o Stable Diffusion |
+| Media | Undo/Redo global | Conectar editores inline al temporal middleware |
+| Media | Ecommerce básico | Bloque productos, carrito |
+| Baja | Más templates | De 17 a 50+ industrias |
+
+### Bloques a Validar (16 total)
+
+| # | Bloque | Estado | Notas |
+|---|--------|--------|-------|
+| 1 | Hero | ⏳ Pendiente | Imagen, título, CTA, alineación |
+| 2 | Servicios | ⏳ Pendiente | Columnas, precios, origen datos |
+| 3 | Testimonios | ⏳ Pendiente | Grid/Carousel, origen datos |
+| 4 | Equipo | ⏳ Pendiente | Redes sociales, origen datos |
+| 5 | CTA | ⏳ Pendiente | Fondo tipo (color/imagen/gradiente) |
+| 6 | Contacto | ⏳ Pendiente | Formulario, info, mapa |
+| 7 | Footer | ⏳ Pendiente | Logo, redes, links |
+| 8 | Texto | ⏳ Pendiente | Alineación |
+| 9 | Galería | ⏳ Pendiente | Grid/Masonry/Carousel, columnas |
+| 10 | Video | ⏳ Pendiente | YouTube/Vimeo/MP4, autoplay |
+| 11 | Separador | ⏳ Pendiente | Línea/Espacio/Ondas |
+| 12 | Pricing | ⏳ Pendiente | Tablas de precios |
+| 13 | FAQ | ⏳ Pendiente | Accordion |
+| 14 | Countdown | ⏳ Pendiente | Fecha objetivo |
+| 15 | Stats | ⏳ Pendiente | Números animados |
+| 16 | Timeline | ✅ Validado | Layout, color, editor hitos |
 
 ---
 
-*Actualizado: 30 Enero 2026*
+*Actualizado: 2 Febrero 2026*

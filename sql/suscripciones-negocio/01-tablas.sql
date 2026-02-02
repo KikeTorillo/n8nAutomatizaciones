@@ -11,10 +11,12 @@
 -- 2. Tabla suscripciones_org - Suscripciones de clientes
 -- 3. Tabla pagos_suscripcion - Historial de pagos
 -- 4. Tabla cupones_suscripcion - Cupones de descuento
--- 5. Tabla webhooks_suscripcion - Webhooks de gateways
--- 6. Índices de rendimiento
--- 7. Políticas RLS
--- 8. Funciones de métricas (MRR, Churn, LTV)
+-- 5. Índices de rendimiento
+-- 6. Políticas RLS
+-- 7. Índices únicos para prevención de duplicados
+-- 8. Trigger cancelación automática
+-- 9. Tabla uso_usuarios_org - Tracking de seats
+-- 10. Tabla ajustes_facturacion_org - Log de ajustes
 -- ============================================================================
 
 -- ============================================================================
@@ -60,6 +62,7 @@ CREATE TABLE IF NOT EXISTS planes_suscripcion_org (
 
     -- Control
     activo BOOLEAN DEFAULT TRUE,
+    publico BOOLEAN DEFAULT TRUE,                   -- FALSE = no aparece en /planes/publicos (ej: enterprise)
     orden_display INTEGER DEFAULT 0,                -- Orden en UI
 
     -- Auditoría
@@ -309,51 +312,7 @@ COMMENT ON TABLE cupones_suscripcion IS
 'Cupones de descuento para suscripciones. Soporta descuentos por porcentaje o monto fijo.';
 
 -- ============================================================================
--- 5. TABLA: webhooks_suscripcion
--- ============================================================================
--- Registro de webhooks recibidos de gateways de pago (auditoría y debugging).
--- ----------------------------------------------------------------------------
-
-CREATE TABLE IF NOT EXISTS webhooks_suscripcion (
-    -- Identificación
-    id SERIAL PRIMARY KEY,
-    organizacion_id INTEGER REFERENCES organizaciones(id) ON DELETE SET NULL,
-
-    -- Gateway
-    gateway VARCHAR(30) NOT NULL,                    -- stripe, mercadopago
-    evento_tipo VARCHAR(100) NOT NULL,               -- payment_intent.succeeded, charge.failed
-    evento_id VARCHAR(150) NOT NULL,                 -- evt_xxxxx (Stripe)
-
-    -- Payload
-    payload JSONB NOT NULL,                          -- Payload completo del webhook
-
-    -- Procesamiento
-    procesado BOOLEAN DEFAULT FALSE,
-    fecha_procesado TIMESTAMP,
-    resultado VARCHAR(20),                           -- success, error, ignored
-    mensaje_error TEXT,
-
-    -- Signature validation
-    signature_valida BOOLEAN,
-
-    -- Relación con entidades
-    suscripcion_id INTEGER REFERENCES suscripciones_org(id) ON DELETE SET NULL,
-    pago_id INTEGER REFERENCES pagos_suscripcion(id) ON DELETE SET NULL,
-
-    -- Auditoría
-    recibido_en TIMESTAMP DEFAULT NOW(),
-    ip_origen INET,
-
-    -- Constraints
-    CONSTRAINT uq_evento_id_gateway UNIQUE (gateway, evento_id),
-    CONSTRAINT chk_resultado CHECK (resultado IS NULL OR resultado IN ('success', 'error', 'ignored'))
-);
-
-COMMENT ON TABLE webhooks_suscripcion IS
-'Registro de webhooks recibidos de Stripe/MercadoPago para auditoría y debugging.';
-
--- ============================================================================
--- 5.1. AGREGAR FOREIGN KEY CIRCULAR (después de crear cupones)
+-- 4.1. AGREGAR FOREIGN KEY CIRCULAR (después de crear cupones)
 -- ============================================================================
 -- Agregar FK de cupon_aplicado_id ahora que la tabla cupones_suscripcion existe
 
@@ -364,7 +323,7 @@ ALTER TABLE suscripciones_org
     ON DELETE SET NULL;
 
 -- ============================================================================
--- 6. ÍNDICES DE RENDIMIENTO
+-- 5. ÍNDICES DE RENDIMIENTO
 -- ============================================================================
 
 -- Índices para planes_suscripcion_org
@@ -376,6 +335,11 @@ CREATE INDEX IF NOT EXISTS idx_suscripciones_organizacion ON suscripciones_org(o
 CREATE INDEX IF NOT EXISTS idx_suscripciones_cliente ON suscripciones_org(cliente_id) WHERE cliente_id IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_suscripciones_estado ON suscripciones_org(estado);
 CREATE INDEX IF NOT EXISTS idx_suscripciones_activas ON suscripciones_org(organizacion_id, estado) WHERE estado IN ('activa', 'trial');
+
+-- Índice compuesto para middleware unificado (query de verificación de tenant + suscripción)
+-- Optimiza JOINs donde se busca suscripción activa por organizacion_id
+CREATE INDEX IF NOT EXISTS idx_suscripciones_org_estado_org
+    ON suscripciones_org(organizacion_id, estado);
 
 -- **CRÍTICO**: Índice para cron job de cobros automáticos
 CREATE INDEX IF NOT EXISTS idx_suscripciones_proximo_cobro
@@ -400,13 +364,8 @@ CREATE INDEX IF NOT EXISTS idx_pagos_transaction_id ON pagos_suscripcion(gateway
 CREATE INDEX IF NOT EXISTS idx_cupones_organizacion ON cupones_suscripcion(organizacion_id);
 CREATE INDEX IF NOT EXISTS idx_cupones_activos ON cupones_suscripcion(activo, fecha_expiracion) WHERE activo = TRUE;
 
--- Índices para webhooks_suscripcion
-CREATE INDEX IF NOT EXISTS idx_webhooks_gateway ON webhooks_suscripcion(gateway, evento_tipo);
-CREATE INDEX IF NOT EXISTS idx_webhooks_no_procesados ON webhooks_suscripcion(procesado, recibido_en) WHERE procesado = FALSE;
-CREATE INDEX IF NOT EXISTS idx_webhooks_organizacion ON webhooks_suscripcion(organizacion_id);
-
 -- ============================================================================
--- 7. POLÍTICAS RLS (ROW LEVEL SECURITY)
+-- 6. POLÍTICAS RLS (ROW LEVEL SECURITY)
 -- ============================================================================
 -- Todas las tablas usan RLS estricto con organizacion_id.
 -- ----------------------------------------------------------------------------
@@ -416,7 +375,6 @@ ALTER TABLE planes_suscripcion_org ENABLE ROW LEVEL SECURITY;
 ALTER TABLE suscripciones_org ENABLE ROW LEVEL SECURITY;
 ALTER TABLE pagos_suscripcion ENABLE ROW LEVEL SECURITY;
 ALTER TABLE cupones_suscripcion ENABLE ROW LEVEL SECURITY;
-ALTER TABLE webhooks_suscripcion ENABLE ROW LEVEL SECURITY;
 
 -- Políticas para planes_suscripcion_org
 -- NOTA: Incluye bypass para permitir JOINs cross-org (suscripciones de clientes con planes de Nexo Team)
@@ -486,15 +444,8 @@ CREATE POLICY cupones_update_own ON cupones_suscripcion
 CREATE POLICY cupones_delete_own ON cupones_suscripcion
     FOR DELETE USING (organizacion_id = current_setting('app.current_tenant_id')::INTEGER);
 
--- Políticas para webhooks_suscripcion
-CREATE POLICY webhooks_select_own ON webhooks_suscripcion
-    FOR SELECT USING (organizacion_id = current_setting('app.current_tenant_id')::INTEGER OR organizacion_id IS NULL);
-
-CREATE POLICY webhooks_insert_own ON webhooks_suscripcion
-    FOR INSERT WITH CHECK (organizacion_id IS NULL OR organizacion_id = current_setting('app.current_tenant_id')::INTEGER);
-
 -- ============================================================================
--- 8. ÍNDICES ÚNICOS PARA PREVENCIÓN DE DUPLICADOS
+-- 7. ÍNDICES ÚNICOS PARA PREVENCIÓN DE DUPLICADOS
 -- ============================================================================
 -- Prevenir que un cliente tenga múltiples suscripciones activas.
 -- Solo permite 1 suscripción activa por cliente (sin importar el plan).
@@ -516,7 +467,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_suscripciones_externo_unica_activa
       AND estado IN ('activa', 'trial', 'pausada', 'grace_period');
 
 -- ============================================================================
--- 9. TRIGGER: CANCELAR SUSCRIPCIONES ANTERIORES AL ACTIVAR
+-- 8. TRIGGER: CANCELAR SUSCRIPCIONES ANTERIORES AL ACTIVAR
 -- ============================================================================
 -- Cuando una suscripción cambia a estado 'activa', cancela automáticamente
 -- cualquier otra suscripción del mismo cliente (trial, pausada, etc.)
@@ -582,7 +533,7 @@ COMMENT ON FUNCTION fn_cancelar_suscripciones_anteriores IS
 'Cancela automáticamente suscripciones anteriores cuando una nueva se activa. Evita duplicados.';
 
 -- ============================================================================
--- 10. TABLA: uso_usuarios_org
+-- 9. TABLA: uso_usuarios_org
 -- ============================================================================
 -- Tracking diario de uso de usuarios para seat-based billing.
 -- ----------------------------------------------------------------------------
@@ -618,7 +569,7 @@ CREATE POLICY uso_usuarios_insert ON uso_usuarios_org
 COMMENT ON TABLE uso_usuarios_org IS 'Tracking diario de usuarios activos para cálculo de ajuste mensual por excedentes.';
 
 -- ============================================================================
--- 11. TABLA: ajustes_facturacion_org
+-- 10. TABLA: ajustes_facturacion_org
 -- ============================================================================
 -- Log de ajustes aplicados a facturas (usuarios extra, prorrateo, créditos).
 -- ----------------------------------------------------------------------------
@@ -669,8 +620,9 @@ COMMENT ON TABLE ajustes_facturacion_org IS 'Registro de ajustes aplicados a fac
 -- ============================================================================
 -- MIGRACIÓN COMPLETADA
 -- ============================================================================
--- Tablas creadas: 7
--- Índices creados: 21 (incluyendo índices únicos de duplicados)
--- Políticas RLS: 19
+-- Tablas creadas: 6 (planes, suscripciones, pagos, cupones, uso_usuarios, ajustes)
+-- Índices creados: 18 (incluyendo índices únicos de duplicados)
+-- Políticas RLS: 16
 -- Triggers: 2 (cancelación automática de suscripciones duplicadas)
+-- NOTA: webhooks se manejan en webhooks_procesados (08-idempotencia-webhooks.sql)
 -- ============================================================================

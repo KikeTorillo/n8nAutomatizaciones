@@ -11,8 +11,7 @@
 const asyncHandler = require('../../../middleware/asyncHandler');
 const { PagosModel, SuscripcionesModel, WebhooksProcesadosModel } = require('../models');
 const StripeService = require('../services/stripe.service');
-// MercadoPagoService se importa dinámicamente en webhookMercadoPago
-// para obtener la instancia correcta según organizacionId
+const { GatewayFactory, EventTypes } = require('../gateways');
 const NotificacionesService = require('../services/notificaciones.service');
 const { ResponseHelper } = require('../../../utils/helpers');
 const logger = require('../../../utils/logger');
@@ -160,11 +159,10 @@ class WebhooksController {
             }
         }
 
-        // 3. Obtener instancia de MercadoPago para ESTA organización
-        let mpService;
+        // 3. Obtener gateway para ESTA organización
+        let gateway;
         try {
-            const MercadoPagoServiceMain = require('../../../services/mercadopago.service');
-            mpService = await MercadoPagoServiceMain.getForOrganization(organizacionId);
+            gateway = await GatewayFactory.getGateway(organizacionId, 'mercadopago');
         } catch (error) {
             logger.error('No hay conector MercadoPago para organización', {
                 organizacionId,
@@ -189,7 +187,7 @@ class WebhooksController {
         }
 
         // 4. Validar HMAC con credenciales de ESTA organización
-        const esValido = mpService.validarWebhook(signature, requestId, dataId);
+        const esValido = gateway.validateWebhook({ signature, requestId, dataId });
 
         if (!esValido) {
             logger.warn('Webhook MercadoPago inválido', {
@@ -215,20 +213,28 @@ class WebhooksController {
             return ResponseHelper.error(res, 'Invalid signature', 400);
         }
 
-        // 5. Procesar evento (ya validado)
+        // 5. Normalizar evento y procesar
         const { type, action, data } = req.body;
+        const normalizedEvent = gateway.normalizeEvent({ type, action, data });
         let resultado = 'success';
         let mensaje = null;
 
+        logger.debug('Evento normalizado', {
+            originalType: type,
+            normalizedType: normalizedEvent.type,
+            resourceId: normalizedEvent.resourceId
+        });
+
         try {
+            // Procesar según el tipo de evento normalizado
             if (type === 'payment') {
-                await this._procesarPagoMercadoPago(data.id, organizacionId, mpService);
+                await this._procesarPagoMercadoPago(data.id, organizacionId, gateway);
             } else if (type === 'subscription_preapproval') {
-                await this._procesarSuscripcionMercadoPago(data.id, action, organizacionId);
+                await this._procesarSuscripcionMercadoPago(data.id, action, organizacionId, gateway);
             } else if (type === 'subscription_authorized_payment') {
                 // Pago de suscripción autorizado - procesar como pago
-                await this._procesarPagoSuscripcionMercadoPago(data.id, organizacionId, mpService);
-            } else {
+                await this._procesarPagoSuscripcionMercadoPago(data.id, organizacionId, gateway);
+            } else if (normalizedEvent.isUnknown()) {
                 resultado = 'skipped';
                 mensaje = `Evento no manejado: ${type}`;
                 logger.debug(`Evento MercadoPago no manejado: ${type}`, { action });
@@ -366,16 +372,16 @@ class WebhooksController {
      *
      * @param {string} paymentId - ID del pago en MercadoPago
      * @param {number} organizacionId - ID de la organización (de la URL del webhook)
-     * @param {Object} mpService - Instancia de MercadoPagoService con credenciales correctas
+     * @param {Object} gateway - Instancia del gateway con credenciales correctas
      */
-    static async _procesarPagoMercadoPago(paymentId, organizacionId, mpService) {
+    static async _procesarPagoMercadoPago(paymentId, organizacionId, gateway) {
         try {
-            // Obtener pago de MP usando la instancia de la organización
-            const pago = await mpService.obtenerPago(paymentId);
+            // Obtener pago del gateway
+            const pagoDetails = await gateway.getPayment(paymentId);
 
             logger.info('Procesando pago MercadoPago', {
                 payment_id: paymentId,
-                status: pago.status,
+                status: pagoDetails.status,
                 organizacionId
             });
 
@@ -395,8 +401,8 @@ class WebhooksController {
                 return;
             }
 
-            // Actualizar estado según MercadoPago
-            if (pago.status === 'approved') {
+            // Actualizar estado según el gateway
+            if (pagoDetails.status === 'approved') {
                 await PagosModel.actualizarEstado(pagoLocal.id, 'completado', pagoLocal.organizacion_id);
 
                 // Actualizar suscripción
@@ -414,7 +420,7 @@ class WebhooksController {
                     if (suscripcion) {
                         await NotificacionesService.enviarConfirmacionPago(suscripcion, {
                             ...pagoLocal,
-                            monto: pago.transaction_amount,
+                            monto: pagoDetails.amount,
                             transaction_id: paymentId.toString()
                         });
                     }
@@ -425,7 +431,7 @@ class WebhooksController {
                     suscripcion_id: pagoLocal.suscripcion_id,
                     organizacionId
                 });
-            } else if (pago.status === 'rejected' || pago.status === 'cancelled') {
+            } else if (pagoDetails.status === 'rejected' || pagoDetails.status === 'cancelled') {
                 await PagosModel.actualizarEstado(pagoLocal.id, 'fallido', pagoLocal.organizacion_id);
 
                 // Enviar email de pago fallido
@@ -435,14 +441,14 @@ class WebhooksController {
                         pagoLocal.organizacion_id
                     );
                     if (suscripcion) {
-                        const razonFallo = pago.status_detail || 'Pago rechazado por el procesador';
+                        const razonFallo = pagoDetails.statusDetail || 'Pago rechazado por el procesador';
                         await NotificacionesService.enviarFalloPago(suscripcion, pagoLocal, razonFallo);
                     }
                 }
 
                 logger.info('⚠️ Pago MercadoPago rechazado/cancelado', {
                     payment_id: paymentId,
-                    status: pago.status,
+                    status: pagoDetails.status,
                     organizacionId
                 });
             }
@@ -466,8 +472,9 @@ class WebhooksController {
      * @param {string} subscriptionId - ID de la suscripción (preapproval) en MercadoPago
      * @param {string} action - Acción del evento (created, updated, etc.)
      * @param {number} organizacionId - ID de la organización
+     * @param {Object} [gateway] - Gateway opcional (si no se pasa, se obtiene uno nuevo)
      */
-    static async _procesarSuscripcionMercadoPago(subscriptionId, action, organizacionId) {
+    static async _procesarSuscripcionMercadoPago(subscriptionId, action, organizacionId, gateway = null) {
         try {
             logger.info('Procesando suscripción MercadoPago (subscription_preapproval)', {
                 subscription_id: subscriptionId,
@@ -475,17 +482,18 @@ class WebhooksController {
                 organizacionId
             });
 
-            // 1. Obtener instancia de MercadoPago para esta organización
-            const MercadoPagoServiceMain = require('../../../services/mercadopago.service');
-            const mpService = await MercadoPagoServiceMain.getForOrganization(organizacionId);
+            // 1. Obtener gateway para esta organización (si no fue pasado)
+            if (!gateway) {
+                gateway = await GatewayFactory.getGateway(organizacionId, 'mercadopago');
+            }
 
-            // 2. Obtener la suscripción de MercadoPago
-            const mpSuscripcion = await mpService.obtenerSuscripcion(subscriptionId);
+            // 2. Obtener la suscripción del gateway
+            const gatewaySub = await gateway.getSubscription(subscriptionId);
 
             logger.info('Estado de suscripción en MercadoPago', {
                 subscription_id: subscriptionId,
-                status: mpSuscripcion.status,
-                payer_email: mpSuscripcion.payer_email
+                status: gatewaySub.status,
+                payer_email: gatewaySub.payerEmail
             });
 
             // 3. Buscar suscripción en nuestra BD por el ID de gateway
@@ -514,7 +522,7 @@ class WebhooksController {
             // 4. Si la suscripción está "authorized", activarla
             // NOTA: Usamos métodos Bypass porque los planes (Nexo Team org 1)
             // y las suscripciones (cliente org N) están en orgs diferentes
-            if (mpSuscripcion.status === 'authorized') {
+            if (gatewaySub.status === 'authorized') {
                 // ============================================
                 // PASO 1: Cancelar suscripciones anteriores PRIMERO
                 // ============================================
@@ -554,26 +562,26 @@ class WebhooksController {
                     organizacionId: suscripcion.organizacion_id
                 });
 
-            } else if (mpSuscripcion.status === 'cancelled') {
+            } else if (gatewaySub.status === 'cancelled') {
                 await SuscripcionesModel.cambiarEstadoBypass(
                     suscripcion.id,
                     'cancelada',
-                    { razon: 'Cancelada en MercadoPago' }
+                    { razon: `Cancelada en ${gateway.getGatewayName()}` }
                 );
 
                 // Enviar email de cancelación
-                await NotificacionesService.enviarCancelacion(suscripcion, 'Cancelada desde MercadoPago');
+                await NotificacionesService.enviarCancelacion(suscripcion, `Cancelada desde ${gateway.getGatewayName()}`);
 
                 logger.info('⚠️ Suscripción cancelada vía webhook', {
                     suscripcion_id: suscripcion.id,
                     subscription_id_gateway: subscriptionId
                 });
 
-            } else if (mpSuscripcion.status === 'paused') {
+            } else if (gatewaySub.status === 'paused') {
                 await SuscripcionesModel.cambiarEstadoBypass(
                     suscripcion.id,
                     'pausada',
-                    { razon: 'Pausada en MercadoPago' }
+                    { razon: `Pausada en ${gateway.getGatewayName()}` }
                 );
 
                 logger.info('⏸️ Suscripción pausada vía webhook', {
@@ -583,7 +591,7 @@ class WebhooksController {
 
             } else {
                 logger.debug('Estado de suscripción no requiere acción', {
-                    status: mpSuscripcion.status,
+                    status: gatewaySub.status,
                     subscription_id: subscriptionId
                 });
             }
@@ -607,18 +615,18 @@ class WebhooksController {
      *
      * @param {string} authorizedPaymentId - ID del pago autorizado en MercadoPago
      * @param {number} organizacionId - ID de la organización
-     * @param {Object} mpService - Instancia de MercadoPagoService
+     * @param {Object} gateway - Instancia del gateway
      */
-    static async _procesarPagoSuscripcionMercadoPago(authorizedPaymentId, organizacionId, mpService) {
+    static async _procesarPagoSuscripcionMercadoPago(authorizedPaymentId, organizacionId, gateway) {
         try {
             logger.info('Procesando pago de suscripción MercadoPago', {
                 authorized_payment_id: authorizedPaymentId,
                 organizacionId
             });
 
-            // Obtener detalles del pago autorizado de MP
-            // El authorized_payment tiene referencia al preapproval_id
-            const pagoAutorizado = await mpService.obtenerPagoAutorizado(authorizedPaymentId);
+            // Obtener detalles del pago autorizado del gateway
+            // El authorized_payment tiene referencia al preapproval_id (solo MP soporta esto)
+            const pagoAutorizado = await gateway.getAuthorizedPayment(authorizedPaymentId);
 
             if (!pagoAutorizado) {
                 logger.warn('Pago autorizado no encontrado en MercadoPago', {
@@ -627,13 +635,13 @@ class WebhooksController {
                 return;
             }
 
-            const preapprovalId = pagoAutorizado.preapproval_id;
+            const preapprovalId = pagoAutorizado.subscriptionId;
             const status = pagoAutorizado.status;
 
             logger.info('Detalles pago autorizado MercadoPago', {
                 preapproval_id: preapprovalId,
                 status,
-                monto: pagoAutorizado.transaction_amount
+                monto: pagoAutorizado.amount
             });
 
             // Buscar suscripción en nuestra BD por preapproval_id
@@ -714,10 +722,10 @@ class WebhooksController {
                     // Si no hay pago pendiente, crear uno nuevo
                     await PagosModel.crear({
                         suscripcion_id: suscripcion.id,
-                        monto: pagoAutorizado.transaction_amount,
-                        moneda: pagoAutorizado.currency_id || 'MXN',
+                        monto: pagoAutorizado.amount,
+                        moneda: pagoAutorizado.currency || 'MXN',
                         estado: 'completado',
-                        gateway: 'mercadopago',
+                        gateway: gateway.getGatewayName(),
                         transaction_id: authorizedPaymentId,
                         fecha_pago: new Date()
                     }, suscripcion.organizacion_id);
@@ -736,8 +744,8 @@ class WebhooksController {
                 // Enviar email de confirmación de pago
                 await NotificacionesService.enviarConfirmacionPago(suscripcion, {
                     id: authorizedPaymentId,
-                    monto: pagoAutorizado.transaction_amount,
-                    moneda: pagoAutorizado.currency_id || 'MXN',
+                    monto: pagoAutorizado.amount,
+                    moneda: pagoAutorizado.currency || 'MXN',
                     transaction_id: authorizedPaymentId,
                     creado_en: new Date()
                 });
@@ -749,9 +757,9 @@ class WebhooksController {
                 });
             } else if (status === 'rejected' || status === 'cancelled') {
                 // Enviar email de pago fallido
-                const razonFallo = pagoAutorizado.rejection_code || 'Pago rechazado';
+                const razonFallo = pagoAutorizado.rejectionCode || 'Pago rechazado';
                 await NotificacionesService.enviarFalloPago(suscripcion, {
-                    monto: pagoAutorizado.transaction_amount
+                    monto: pagoAutorizado.amount
                 }, razonFallo);
 
                 logger.warn('Pago de suscripción rechazado/cancelado', {

@@ -140,7 +140,8 @@ class AuthController {
                 categoria_id: usuario.categoria_id || null,
                 categoria_codigo: usuario.categoria_codigo || null,
                 nombre_comercial: usuario.nombre_comercial || null,
-                plan_actual: usuario.plan_actual || null,
+                // NOTA Feb 2026: plan_actual eliminado de organizaciones
+                // El plan ahora se obtiene via suscripciones_org cuando es necesario
                 // Multi-moneda (Fase 4 - Dic 2025)
                 moneda: usuario.moneda || 'MXN',
                 zona_horaria: usuario.zona_horaria || 'America/Mexico_City'

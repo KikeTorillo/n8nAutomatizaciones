@@ -76,13 +76,12 @@ INSERT INTO organizaciones (
 
 \echo '   ✅ Organización creada con ID:' :org1_id
 
--- Verificar suscripción automática
+-- Verificar organización creada
 SELECT
-    '   📦 Plan:' as info,
-    ps.nombre_plan,
-    o.plan_actual as estado
+    '   📦 Organización:' as info,
+    o.nombre_comercial,
+    CASE WHEN o.activo THEN 'Activa' ELSE 'Inactiva' END as estado
 FROM organizaciones o
-LEFT JOIN planes_subscripcion ps ON ps.codigo_plan = o.plan_actual::TEXT
 WHERE o.id = :org1_id;
 
 \echo ''
@@ -541,12 +540,16 @@ ORDER BY id;
 
 \echo ''
 
-\echo '📦 Suscripciones asignadas:'
+\echo '📦 Organizaciones activas:'
 SELECT
     '   → ' || o.nombre_comercial as organizacion,
-    o.plan_actual as plan,
+    COALESCE(p.codigo, 'sin_plan') as plan,
     CASE WHEN o.activo THEN '✅ Activo' ELSE '❌ Inactivo' END as estado
 FROM organizaciones o
+LEFT JOIN clientes c ON c.organizacion_vinculada_id = o.id
+LEFT JOIN suscripciones_org s ON s.cliente_id = c.id
+    AND s.estado IN ('activa', 'trial', 'grace_period')
+LEFT JOIN planes_suscripcion_org p ON s.plan_id = p.id
 WHERE codigo_tenant LIKE 'TEST-%'
 ORDER BY o.id;
 

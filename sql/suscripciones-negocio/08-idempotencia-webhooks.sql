@@ -14,14 +14,36 @@ CREATE TABLE IF NOT EXISTS webhooks_procesados (
     event_type VARCHAR(100) NOT NULL,       -- 'payment', 'subscription_preapproval', etc.
     data_id VARCHAR(150),                   -- ID del recurso (pago, suscripción)
     organizacion_id INTEGER,                -- Org que recibió el webhook (del URL)
+    suscripcion_id INTEGER,                 -- FK a suscripciones_org (opcional)
     resultado VARCHAR(20) NOT NULL,         -- 'success', 'error', 'skipped'
     mensaje TEXT,                           -- Mensaje adicional o error
+    metadata JSONB,                         -- Datos adicionales del evento (payload resumido)
     procesado_en TIMESTAMP DEFAULT NOW(),
     ip_origen INET,                         -- IP del request
 
     -- Constraint único para deduplicación
     CONSTRAINT uq_webhook_request UNIQUE (gateway, request_id)
 );
+
+-- Migración: Agregar columna metadata si la tabla ya existe
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'webhooks_procesados' AND column_name = 'metadata'
+    ) THEN
+        ALTER TABLE webhooks_procesados ADD COLUMN metadata JSONB;
+        RAISE NOTICE 'Columna metadata agregada a webhooks_procesados';
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'webhooks_procesados' AND column_name = 'suscripcion_id'
+    ) THEN
+        ALTER TABLE webhooks_procesados ADD COLUMN suscripcion_id INTEGER;
+        RAISE NOTICE 'Columna suscripcion_id agregada a webhooks_procesados';
+    END IF;
+END $$;
 
 -- Índice para consultas por fecha (limpieza)
 CREATE INDEX IF NOT EXISTS idx_webhooks_procesados_fecha
@@ -30,6 +52,11 @@ CREATE INDEX IF NOT EXISTS idx_webhooks_procesados_fecha
 -- Índice para consultas por gateway y data_id
 CREATE INDEX IF NOT EXISTS idx_webhooks_procesados_gateway_data
     ON webhooks_procesados(gateway, data_id);
+
+-- Índice para consultas por suscripcion_id (historial)
+CREATE INDEX IF NOT EXISTS idx_webhooks_procesados_suscripcion
+    ON webhooks_procesados(suscripcion_id)
+    WHERE suscripcion_id IS NOT NULL;
 
 -- 2. Índice único en pagos para prevenir duplicados por transaction_id
 -- Solo aplica cuando transaction_id no es NULL y estado es 'completado'

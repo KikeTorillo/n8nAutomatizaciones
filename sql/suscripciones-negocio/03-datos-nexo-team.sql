@@ -1,107 +1,122 @@
 -- ====================================================================
--- DATOS INICIALES: PLANES DE SUSCRIPCIÓN NEXO TEAM
+-- DATOS INICIALES: PLANES Y SUSCRIPCIÓN NEXO TEAM
 -- ====================================================================
--- Planes de suscripción para la organización Nexo Team (codigo_tenant = 'nexo-team')
--- que gestiona las suscripciones de todas las organizaciones de la plataforma.
---
--- Estos planes se usan en el flujo de dogfooding:
--- 1. Nueva org se registra → se crea cliente en Nexo Team
--- 2. Cliente obtiene suscripción trial automáticamente
--- 3. Al activarse, los features del plan se mapean a módulos
---
--- NOTA: Se detecta Nexo Team por codigo_tenant='nexo-team' (no por id=1)
--- porque el ID puede variar según el orden de creación.
+-- Trigger que crea automáticamente cuando se crea la organización
+-- Nexo Team (codigo_tenant = 'nexo-team'):
+--   1. Planes trial y pro (públicos)
+--   2. Plan enterprise (interno, no público)
+--   3. Cliente interno (Nexo Team suscrito a sí mismo)
+--   4. Suscripción permanente al plan enterprise
 --
 -- @module suscripciones-negocio/datos-nexo-team
--- @author Nexo Team
--- @version 2.0.0
--- @date 22 Enero 2026
--- @changes Solo 2 planes: Trial y Pro (eliminados básico y enterprise)
+-- @version 3.0.0
+-- @date Febrero 2026
 -- ====================================================================
 
--- ====================================================================
--- PARTE 1: Insertar planes si Nexo Team ya existe (para migraciones)
--- ====================================================================
-DO $$
-DECLARE
-    v_nexo_team_id INT;
-    v_superadmin_id INT;
-BEGIN
-    -- Buscar Nexo Team por codigo_tenant (más robusto que por id)
-    SELECT id INTO v_nexo_team_id
-    FROM organizaciones
-    WHERE codigo_tenant = 'nexo-team';
-
-    IF v_nexo_team_id IS NULL THEN
-        RAISE NOTICE 'Nexo Team (codigo_tenant=nexo-team) no existe aún. Los planes se crearán via trigger.';
-        RETURN;
-    END IF;
-
-    -- Verificar si ya existen planes para Nexo Team
-    IF EXISTS (SELECT 1 FROM planes_suscripcion_org WHERE organizacion_id = v_nexo_team_id) THEN
-        RAISE NOTICE 'Ya existen planes para Nexo Team (id=%). Saltando inserción.', v_nexo_team_id;
-        RETURN;
-    END IF;
-
-    -- Obtener ID del superadmin (si existe)
-    SELECT id INTO v_superadmin_id
-    FROM usuarios
-    WHERE organizacion_id = v_nexo_team_id
-    ORDER BY id ASC
-    LIMIT 1;
-
-    -- Insertar los 2 planes usando el ID dinámico (Trial + Pro)
-    -- Con seat-based billing: usuarios_incluidos, precio_usuario_adicional, max_usuarios_hard
-    INSERT INTO planes_suscripcion_org (
-        organizacion_id, codigo, nombre, descripcion,
-        precio_mensual, precio_anual, dias_trial, activo, features, limites,
-        usuarios_incluidos, precio_usuario_adicional, max_usuarios_hard,
-        creado_por
-    ) VALUES
-    (v_nexo_team_id, 'trial', 'Plan Trial', 'Prueba gratuita de 14 días con acceso limitado', 0, 0, 14, true,
-     '["agendamiento", "inventario", "pos"]'::jsonb,
-     '{"citas": 50, "profesionales": 2, "servicios": 10, "clientes": 100, "usuarios": 3}'::jsonb,
-     3, NULL, 3,  -- Trial: 3 usuarios incluidos, sin precio adicional (hard limit de 3)
-     v_superadmin_id),
-    (v_nexo_team_id, 'pro', 'Plan Pro', 'Plan completo con todas las funcionalidades para empresas', 249, 2490, 0, true,
-     '["agendamiento", "inventario", "pos", "comisiones", "contabilidad", "marketplace", "chatbots", "workflows", "suscripciones-negocio"]'::jsonb,
-     '{"citas": -1, "profesionales": -1, "servicios": -1, "clientes": -1, "usuarios": 5}'::jsonb,
-     5, 49.00, NULL,  -- Pro: 5 usuarios incluidos, $49/extra, sin hard limit
-     v_superadmin_id);
-
-    RAISE NOTICE 'Planes de suscripción para Nexo Team (id=%) creados exitosamente (2 planes: trial, pro)', v_nexo_team_id;
-END $$;
-
--- ====================================================================
--- PARTE 2: Trigger para crear planes cuando se cree Nexo Team (instalaciones nuevas)
--- ====================================================================
--- NOTA: Usa SECURITY DEFINER para bypassear RLS durante la creación inicial.
--- Sin esto, el SELECT en NOT EXISTS falla porque app.current_tenant_id está vacío.
--- ====================================================================
 CREATE OR REPLACE FUNCTION crear_planes_nexo_team()
 RETURNS TRIGGER
 SECURITY DEFINER  -- Permite ejecutar como owner (bypassea RLS)
 SET search_path = public
 AS $$
+DECLARE
+    v_plan_enterprise_id INT;
+    v_cliente_id INT;
 BEGIN
-    -- Detectar Nexo Team por codigo_tenant (no por id)
+    -- Solo actuar cuando se crea Nexo Team
     IF NEW.codigo_tenant = 'nexo-team' THEN
+        -- Verificar que no existan planes (evitar duplicados)
         IF NOT EXISTS (SELECT 1 FROM planes_suscripcion_org WHERE organizacion_id = NEW.id) THEN
+
+            -- ========================================
+            -- 1. Planes públicos: Trial y Pro
+            -- ========================================
             INSERT INTO planes_suscripcion_org (
                 organizacion_id, codigo, nombre, descripcion,
-                precio_mensual, precio_anual, dias_trial, activo, features, limites,
+                precio_mensual, precio_anual, dias_trial, activo, publico, features, limites,
                 usuarios_incluidos, precio_usuario_adicional, max_usuarios_hard
             )
             VALUES
-            (NEW.id, 'trial', 'Plan Trial', 'Prueba gratuita de 14 días con acceso limitado', 0, 0, 14, true,
+            (NEW.id, 'trial', 'Plan Trial', 'Prueba gratuita de 14 días con acceso limitado',
+             0, 0, 14, true, true,
              '["agendamiento", "inventario", "pos"]'::jsonb,
              '{"citas": 50, "profesionales": 2, "servicios": 10, "clientes": 100, "usuarios": 3}'::jsonb,
-             3, NULL, 3),  -- Trial: hard limit de 3 usuarios
-            (NEW.id, 'pro', 'Plan Pro', 'Plan completo con todas las funcionalidades', 249, 2490, 0, true,
+             3, NULL, 3),
+            (NEW.id, 'pro', 'Plan Pro', 'Plan completo con todas las funcionalidades',
+             249, 2490, 0, true, true,
              '["agendamiento", "inventario", "pos", "comisiones", "contabilidad", "marketplace", "chatbots", "workflows", "suscripciones-negocio"]'::jsonb,
              '{"citas": -1, "profesionales": -1, "servicios": -1, "clientes": -1, "usuarios": 5}'::jsonb,
-             5, 49.00, NULL);  -- Pro: 5 incluidos, $49/extra, sin hard limit
-            RAISE NOTICE 'Planes Nexo Team (id=%) creados via trigger (2 planes: trial, pro)', NEW.id;
+             5, 49.00, NULL);
+
+            -- ========================================
+            -- 2. Plan Enterprise (interno, NO público)
+            -- ========================================
+            INSERT INTO planes_suscripcion_org (
+                organizacion_id, codigo, nombre, descripcion,
+                precio_mensual, precio_anual, moneda,
+                dias_trial, limites, features,
+                usuarios_incluidos, max_usuarios_hard, precio_usuario_adicional,
+                color, icono, destacado, publico, activo, orden_display
+            ) VALUES (
+                NEW.id,
+                'enterprise',
+                'Plan Enterprise',
+                'Plan interno del sistema - acceso completo sin restricciones',
+                0, 0, 'MXN',
+                0,
+                '{"usuarios": 999999, "clientes": 999999, "productos": 999999}'::jsonb,
+                '["all_features", "agendamiento", "inventario", "pos", "comisiones", "marketplace", "chatbots", "website", "contabilidad", "workflows", "suscripciones-negocio"]'::jsonb,
+                999, NULL, NULL,
+                '#1a1a2e', 'Shield', FALSE,
+                FALSE,  -- NO PÚBLICO - no aparece en /planes/publicos
+                TRUE,
+                -1
+            )
+            RETURNING id INTO v_plan_enterprise_id;
+
+            -- ========================================
+            -- 3. Cliente interno (Nexo Team → sí mismo)
+            -- ========================================
+            INSERT INTO clientes (
+                organizacion_id, tipo, nombre, email,
+                organizacion_vinculada_id, notas_especiales, activo
+            ) VALUES (
+                NEW.id,
+                'empresa',
+                'Nexo Team (Sistema)',
+                'sistema@nexo.io',
+                NEW.id,  -- organizacion_vinculada_id = Nexo Team (se suscribe a sí mismo)
+                'Cliente interno del sistema - NO ELIMINAR',
+                TRUE
+            )
+            RETURNING id INTO v_cliente_id;
+
+            -- ========================================
+            -- 4. Suscripción permanente (nunca expira)
+            -- ========================================
+            INSERT INTO suscripciones_org (
+                organizacion_id, plan_id, cliente_id,
+                periodo, estado, fecha_inicio,
+                fecha_proximo_cobro, fecha_fin, es_trial,
+                gateway, precio_actual, moneda,
+                auto_cobro, meses_activo
+            ) VALUES (
+                NEW.id,
+                v_plan_enterprise_id,
+                v_cliente_id,
+                'anual',
+                'activa',
+                CURRENT_DATE,
+                NULL,   -- Sin próximo cobro
+                NULL,   -- Sin fecha fin (nunca expira)
+                FALSE,  -- No es trial
+                'manual',
+                0,
+                'MXN',
+                FALSE,  -- No auto-cobro
+                9999    -- Meses activo (permanente)
+            );
+
+            RAISE NOTICE 'Nexo Team (id=%): 3 planes + cliente interno + suscripción enterprise creados', NEW.id;
         END IF;
     END IF;
     RETURN NEW;
@@ -116,26 +131,5 @@ CREATE TRIGGER trigger_crear_planes_nexo_team
     EXECUTE FUNCTION crear_planes_nexo_team();
 
 -- ====================================================================
--- VERIFICACIÓN
+-- FIN - Todo se crea automáticamente cuando se registra Nexo Team
 -- ====================================================================
-DO $$
-DECLARE
-    v_nexo_team_id INT;
-    v_count INT;
-BEGIN
-    -- Buscar Nexo Team por codigo_tenant
-    SELECT id INTO v_nexo_team_id
-    FROM organizaciones
-    WHERE codigo_tenant = 'nexo-team';
-
-    IF v_nexo_team_id IS NOT NULL THEN
-        SELECT COUNT(*) INTO v_count FROM planes_suscripcion_org WHERE organizacion_id = v_nexo_team_id;
-        IF v_count > 0 THEN
-            RAISE NOTICE 'Total planes en Nexo Team (id=%): %', v_nexo_team_id, v_count;
-        ELSE
-            RAISE NOTICE 'Nexo Team existe (id=%) pero no tiene planes. Verificar trigger.', v_nexo_team_id;
-        END IF;
-    ELSE
-        RAISE NOTICE 'Trigger instalado. Planes se crearán cuando se cree Nexo Team (codigo_tenant=nexo-team).';
-    END IF;
-END $$;

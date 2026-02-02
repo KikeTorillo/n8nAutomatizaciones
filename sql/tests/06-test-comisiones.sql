@@ -14,8 +14,8 @@
 
 -- 1️⃣ Crear organización de prueba
 WITH nueva_org AS (
-    INSERT INTO organizaciones (codigo_tenant, slug, nombre_comercial, tipo_industria, email_admin, plan_actual)
-    VALUES ('TESTCOM' || floor(random() * 10000)::text, 'test-com-' || floor(random() * 10000)::text, 'Test Comisiones SA', 'barberia', 'test@comisiones.com', 'profesional')
+    INSERT INTO organizaciones (codigo_tenant, slug, nombre_comercial, tipo_industria, email_admin)
+    VALUES ('TESTCOM' || floor(random() * 10000)::text, 'test-com-' || floor(random() * 10000)::text, 'Test Comisiones SA', 'barberia', 'test@comisiones.com')
     RETURNING id
 )
 SELECT id AS org_id INTO TEMP TABLE vars_org FROM nueva_org;

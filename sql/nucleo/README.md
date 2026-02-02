@@ -14,7 +14,6 @@ Tablas fundamentales del sistema multi-tenant.
 | `06-triggers.sql` | Triggers de auditoría y validación |
 | `07-datos-iniciales.sql` | Datos seed (planes, roles) |
 | `08-funciones-modulos.sql` | Funciones para verificar módulos activos |
-| `09-vistas-modulos.sql` | Vistas de estado de módulos |
 | `10-activaciones-cuenta.sql` | Sistema de activación por email |
 | `11-tablas-permisos.sql` | **Sistema de permisos normalizados** |
 | `12-funciones-permisos.sql` | **Funciones para consultar permisos** |

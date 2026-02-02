@@ -21,6 +21,56 @@ const { DUNNING_SEQUENCE, GRACE_PERIOD_DAYS, SUSPENSION_DAYS } = require('../../
 class ProcesarDunningJob {
 
     /**
+     * Cambiar estado con Lock Optimista
+     * Evita race conditions con webhooks usando `actualizado_en` como versión
+     *
+     * @param {Object} db - Conexión de base de datos
+     * @param {number} suscripcionId - ID de la suscripción
+     * @param {string} nuevoEstado - Nuevo estado a aplicar
+     * @param {Date|string} actualizadoEnOriginal - Timestamp original para verificación
+     * @param {Object} options - Opciones adicionales (razon, etc.)
+     * @returns {Promise<boolean>} - true si se actualizó, false si webhook ya procesó
+     */
+    static async _cambiarEstadoConLock(db, suscripcionId, nuevoEstado, actualizadoEnOriginal, options = {}) {
+        const { GRACE_PERIOD_DAYS } = require('../../../config/constants');
+
+        // Construir campos adicionales según el nuevo estado
+        let camposAdicionales = '';
+        const values = [nuevoEstado, suscripcionId, actualizadoEnOriginal];
+
+        if (nuevoEstado === 'grace_period') {
+            camposAdicionales = `, fecha_gracia = CURRENT_DATE + ${GRACE_PERIOD_DAYS}`;
+        }
+
+        const result = await db.query(`
+            UPDATE suscripciones_org
+            SET estado = $1, actualizado_en = NOW()${camposAdicionales}
+            WHERE id = $2
+              AND actualizado_en = $3
+              AND estado NOT IN ('activa', 'cancelada')
+            RETURNING id
+        `, values);
+
+        if (result.rowCount === 0) {
+            // El webhook ya actualizó la suscripción o el estado cambió
+            logger.info(`[Dunning] Lock optimista falló para suscripción ${suscripcionId}: webhook probablemente ya procesó el cambio`, {
+                suscripcion_id: suscripcionId,
+                intento_estado: nuevoEstado,
+                actualizado_en_esperado: actualizadoEnOriginal
+            });
+            return false;
+        }
+
+        logger.info(`[Dunning] Estado actualizado con lock optimista: Suscripción ${suscripcionId} → ${nuevoEstado}`, {
+            suscripcion_id: suscripcionId,
+            nuevo_estado: nuevoEstado,
+            razon: options.razon || 'Transición automática por dunning'
+        });
+
+        return true;
+    }
+
+    /**
      * Iniciar cron job
      */
     static init() {
@@ -53,6 +103,7 @@ class ProcesarDunningJob {
                 emails_enviados: 0,
                 transiciones_grace_period: 0,
                 transiciones_suspendida: 0,
+                omitidas_por_webhook: 0,
                 errores: 0
             };
 
@@ -81,13 +132,24 @@ class ProcesarDunningJob {
                             resumen.emails_enviados++;
                             logger.info(`📧 Email ${accion.subtipo} enviado: Suscripción ${suscripcion.id}`);
                         } else if (accion.tipo === 'cambiar_estado' && accion.nuevo_estado === 'grace_period') {
-                            await SuscripcionesModel.cambiarEstadoBypass(
-                                suscripcion.id,
-                                'grace_period',
-                                { razon: 'Transición automática por dunning' }
-                            );
-                            resumen.transiciones_grace_period++;
-                            logger.info(`⏳ Suscripción ${suscripcion.id} movida a grace_period`);
+                            // Usar lock optimista para evitar race conditions con webhooks
+                            const actualizado = await RLSContextManager.withBypass(async (db) => {
+                                return await this._cambiarEstadoConLock(
+                                    db,
+                                    suscripcion.id,
+                                    'grace_period',
+                                    suscripcion.actualizado_en,
+                                    { razon: 'Transición automática por dunning' }
+                                );
+                            });
+
+                            if (actualizado) {
+                                resumen.transiciones_grace_period++;
+                                logger.info(`⏳ Suscripción ${suscripcion.id} movida a grace_period`);
+                            } else {
+                                resumen.omitidas_por_webhook++;
+                                logger.info(`⏭️ Suscripción ${suscripcion.id} omitida: ya fue actualizada por webhook`);
+                            }
                         }
                     }
                 } catch (error) {
@@ -111,14 +173,24 @@ class ProcesarDunningJob {
                         const fechaGracia = new Date(suscripcion.fecha_gracia);
 
                         if (hoy >= fechaGracia) {
-                            // Grace period expirado → suspender
-                            await SuscripcionesModel.cambiarEstadoBypass(
-                                suscripcion.id,
-                                'suspendida',
-                                { razon: 'Grace period expirado - transición automática' }
-                            );
-                            resumen.transiciones_suspendida++;
-                            logger.warn(`🚫 Suscripción ${suscripcion.id} suspendida (grace period expirado)`);
+                            // Grace period expirado → suspender con lock optimista
+                            const actualizado = await RLSContextManager.withBypass(async (db) => {
+                                return await this._cambiarEstadoConLock(
+                                    db,
+                                    suscripcion.id,
+                                    'suspendida',
+                                    suscripcion.actualizado_en,
+                                    { razon: 'Grace period expirado - transición automática' }
+                                );
+                            });
+
+                            if (actualizado) {
+                                resumen.transiciones_suspendida++;
+                                logger.warn(`🚫 Suscripción ${suscripcion.id} suspendida (grace period expirado)`);
+                            } else {
+                                resumen.omitidas_por_webhook++;
+                                logger.info(`⏭️ Suscripción ${suscripcion.id} omitida: ya fue actualizada por webhook`);
+                            }
                         } else {
                             // Calcular días restantes y enviar recordatorio urgente
                             const diasRestantes = this._calcularDiasDesde(hoy, fechaGracia);
@@ -165,6 +237,7 @@ class ProcesarDunningJob {
             logger.info(`📧 Emails enviados: ${resumen.emails_enviados}`);
             logger.info(`⏳ Transiciones a grace_period: ${resumen.transiciones_grace_period}`);
             logger.info(`🚫 Transiciones a suspendida: ${resumen.transiciones_suspendida}`);
+            logger.info(`⏭️  Omitidas por webhook: ${resumen.omitidas_por_webhook}`);
             logger.info(`❌ Errores: ${resumen.errores}`);
             logger.info(`⏱️  Duración: ${duracion} segundos`);
             logger.info('═══════════════════════════════════════════════\n');

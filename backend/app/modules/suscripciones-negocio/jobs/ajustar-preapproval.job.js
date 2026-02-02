@@ -14,9 +14,10 @@
 
 const cron = require('node-cron');
 const RLSContextManager = require('../../../utils/rlsContextManager');
-const MercadoPagoService = require('../../../services/mercadopago.service');
+const { GatewayFactory } = require('../gateways');
 const UsageTrackingService = require('../services/usage-tracking.service');
 const logger = require('../../../utils/logger');
+const { NEXO_TEAM_ORG_ID } = require('../../../config/constants');
 
 class AjustarPreapprovalJob {
 
@@ -167,31 +168,31 @@ class AjustarPreapprovalJob {
             nuevoMonto
         });
 
-        // Obtener monto actual en MercadoPago
-        const mpService = await MercadoPagoService.getForOrganization(1);
+        // Obtener gateway para Nexo Team (vendedor de planes)
+        const gateway = await GatewayFactory.getGateway(NEXO_TEAM_ORG_ID);
 
-        let mpSuscripcion;
+        let gatewaySub;
         try {
-            mpSuscripcion = await mpService.obtenerSuscripcion(preapprovalId);
+            gatewaySub = await gateway.getSubscription(preapprovalId);
         } catch (error) {
-            logger.warn(`No se pudo obtener preapproval ${preapprovalId}`);
+            logger.warn(`No se pudo obtener suscripción ${preapprovalId} del gateway`);
             return { ajustado: false, error: error.message };
         }
 
-        const montoActualMP = mpSuscripcion.auto_recurring?.transaction_amount || 0;
+        const montoActualGateway = gatewaySub.amount || 0;
 
         // Si el monto es igual, no hay que actualizar
-        if (Math.abs(montoActualMP - nuevoMonto) < 0.01) {
+        if (Math.abs(montoActualGateway - nuevoMonto) < 0.01) {
             return {
                 ajustado: false,
                 razon: 'Monto ya es correcto',
-                montoActual: montoActualMP,
+                montoActual: montoActualGateway,
                 nuevoMonto
             };
         }
 
-        // Actualizar el preapproval en MercadoPago
-        await mpService.actualizarMontoPreapproval(
+        // Actualizar el monto en el gateway
+        await gateway.updateSubscriptionAmount(
             preapprovalId,
             nuevoMonto,
             moneda || 'MXN'

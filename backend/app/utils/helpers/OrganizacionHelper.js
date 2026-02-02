@@ -36,8 +36,9 @@ class OrganizacionHelper {
       await db.query('SELECT set_config($1, $2, false)', ['app.bypass_rls', 'true']);
 
       // Consultar organización
+      // NOTA Feb 2026: plan_actual eliminado de organizaciones
       const result = await db.query(
-        `SELECT id, nombre_comercial, activo, suspendido, plan_actual
+        `SELECT id, nombre_comercial, activo, suspendido
          FROM organizaciones
          WHERE id = $1`,
         [orgId]
@@ -65,8 +66,7 @@ class OrganizacionHelper {
 
       logger.debug('Organización validada correctamente', {
         organizacionId: orgId,
-        nombre: organizacion.nombre_comercial,
-        plan: organizacion.plan_actual
+        nombre: organizacion.nombre_comercial
       });
 
       return { valida: true, organizacion };

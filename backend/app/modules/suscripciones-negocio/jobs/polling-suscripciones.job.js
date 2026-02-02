@@ -13,7 +13,7 @@
 
 const cron = require('node-cron');
 const SuscripcionesModel = require('../models/suscripciones.model');
-const MercadoPagoService = require('../../../services/mercadopago.service');
+const { GatewayFactory } = require('../gateways');
 const logger = require('../../../utils/logger');
 const { NEXO_TEAM_ORG_ID } = require('../../../config/constants');
 
@@ -50,11 +50,11 @@ class PollingSuscripcionesJob {
 
             logger.info(`[Polling] Verificando ${pendientes.length} suscripciones pendientes`);
 
-            let mpService;
+            let gateway;
             try {
-                mpService = await MercadoPagoService.getForOrganization(NEXO_TEAM_ORG_ID);
+                gateway = await GatewayFactory.getGateway(NEXO_TEAM_ORG_ID);
             } catch (error) {
-                logger.error('[Polling] No se pudo obtener servicio MercadoPago', {
+                logger.error('[Polling] No se pudo obtener gateway de pagos', {
                     error: error.message
                 });
                 return;
@@ -73,12 +73,12 @@ class PollingSuscripcionesJob {
                 try {
                     resumen.verificadas++;
 
-                    // Consultar estado en MercadoPago
-                    const mpSuscripcion = await mpService.obtenerSuscripcion(sus.subscription_id_gateway);
+                    // Consultar estado en el gateway
+                    const gatewaySub = await gateway.getSubscription(sus.subscription_id_gateway);
 
-                    logger.debug(`[Polling] Suscripción ${sus.id} estado en MP: ${mpSuscripcion.status}`);
+                    logger.debug(`[Polling] Suscripción ${sus.id} estado en gateway: ${gatewaySub.status}`);
 
-                    if (mpSuscripcion.status === 'authorized') {
+                    if (gatewaySub.status === 'authorized') {
                         // El usuario ya autorizó el pago, activar suscripción
                         // NOTA: Usamos métodos Bypass porque los planes (Nexo Team org 1)
                         // y las suscripciones (cliente org N) están en orgs diferentes
@@ -105,16 +105,16 @@ class PollingSuscripcionesJob {
                         }
 
                         resumen.activadas++;
-                        logger.info(`[Polling] ✅ Suscripción ${sus.id} activada (MP status: authorized)`);
+                        logger.info(`[Polling] ✅ Suscripción ${sus.id} activada (gateway status: authorized)`);
 
-                    } else if (mpSuscripcion.status === 'cancelled') {
+                    } else if (gatewaySub.status === 'cancelled') {
                         await SuscripcionesModel.cambiarEstadoBypass(
                             sus.id,
                             'cancelada',
-                            { razon: 'Cancelada en MercadoPago' }
+                            { razon: `Cancelada en ${gateway.getGatewayName()}` }
                         );
                         resumen.canceladas++;
-                        logger.info(`[Polling] ⚠️ Suscripción ${sus.id} cancelada en MP`);
+                        logger.info(`[Polling] ⚠️ Suscripción ${sus.id} cancelada en gateway`);
 
                     } else {
                         // status 'pending' = aún no ha pagado, no hacer nada

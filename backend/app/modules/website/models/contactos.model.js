@@ -5,7 +5,7 @@
  * Modelo para gestionar los contactos/leads recibidos desde
  * el formulario público del sitio web.
  *
- * TABLA: website_contactos (se crea automáticamente si no existe)
+ * TABLA: website_contactos (creada en sql/website/05-contactos.sql)
  *
  * Fecha creación: 25 Enero 2026
  */
@@ -18,80 +18,24 @@ const db = require('../../../config/database');
  */
 class WebsiteContactosModel {
   /**
-   * Inicializar tabla si no existe
+   * Verificar que la tabla existe
+   * NOTA: La tabla se crea desde sql/website/05-contactos.sql
+   * Este método solo verifica, no crea estructura (separación de responsabilidades)
    */
-  static async inicializarTabla() {
-    const query = `
-      CREATE TABLE IF NOT EXISTS website_contactos (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        website_id UUID NOT NULL REFERENCES website_config(id) ON DELETE CASCADE,
-        organizacion_id INTEGER NOT NULL REFERENCES organizaciones(id) ON DELETE CASCADE,
-
-        -- Datos del contacto
-        nombre VARCHAR(100) NOT NULL,
-        email VARCHAR(255),
-        telefono VARCHAR(30),
-        mensaje TEXT,
-
-        -- Metadatos
-        pagina_origen VARCHAR(100),
-        ip_origen INET,
-        user_agent TEXT,
-
-        -- Estado
-        leido BOOLEAN DEFAULT false,
-        respondido BOOLEAN DEFAULT false,
-        notas TEXT,
-
-        creado_en TIMESTAMPTZ DEFAULT NOW(),
-        actualizado_en TIMESTAMPTZ DEFAULT NOW()
-      );
-
-      -- Índices
-      CREATE INDEX IF NOT EXISTS idx_website_contactos_website ON website_contactos(website_id);
-      CREATE INDEX IF NOT EXISTS idx_website_contactos_org ON website_contactos(organizacion_id);
-      CREATE INDEX IF NOT EXISTS idx_website_contactos_no_leidos ON website_contactos(organizacion_id, leido) WHERE leido = false;
-      CREATE INDEX IF NOT EXISTS idx_website_contactos_fecha ON website_contactos(creado_en DESC);
-
-      -- RLS
-      ALTER TABLE website_contactos ENABLE ROW LEVEL SECURITY;
-
-      -- Política para lectura/escritura por organización
-      DO $$
-      BEGIN
-        IF NOT EXISTS (
-          SELECT 1 FROM pg_policies WHERE tablename = 'website_contactos' AND policyname = 'website_contactos_org_all'
-        ) THEN
-          CREATE POLICY website_contactos_org_all ON website_contactos
-            FOR ALL USING (
-              organizacion_id = COALESCE(
-                NULLIF(current_setting('app.current_org_id', true), '')::int,
-                organizacion_id
-              )
-            );
-        END IF;
-      END $$;
-
-      -- Política para bypass (super_admin, webhooks)
-      DO $$
-      BEGIN
-        IF NOT EXISTS (
-          SELECT 1 FROM pg_policies WHERE tablename = 'website_contactos' AND policyname = 'website_contactos_bypass'
-        ) THEN
-          CREATE POLICY website_contactos_bypass ON website_contactos
-            FOR ALL USING (current_setting('app.bypass_rls', true) = 'true');
-        END IF;
-      END $$;
-    `;
-
+  static async verificarTabla() {
     try {
-      await db.query(query);
-      console.log('[WebsiteContactosModel] Tabla inicializada');
-    } catch (error) {
-      // Ignorar si ya existe
-      if (!error.message.includes('already exists')) {
-        console.error('[WebsiteContactosModel] Error inicializando tabla:', error.message);
+      const result = await db.query(`
+        SELECT EXISTS (
+          SELECT 1 FROM information_schema.tables
+          WHERE table_name = 'website_contactos'
+        ) as existe
+      `);
+
+      if (!result.rows[0].existe) {
+        console.warn('[WebsiteContactosModel] ⚠️ Tabla website_contactos no existe. Ejecutar sql/website/05-contactos.sql');
       }
+    } catch (error) {
+      console.error('[WebsiteContactosModel] Error verificando tabla:', error.message);
     }
   }
 
@@ -283,7 +227,8 @@ class WebsiteContactosModel {
   }
 }
 
-// Inicializar tabla al cargar el módulo
-WebsiteContactosModel.inicializarTabla().catch(console.error);
+// Verificar que la tabla existe al cargar el módulo
+// NOTA: La creación de la tabla se hace desde sql/website/05-contactos.sql
+WebsiteContactosModel.verificarTabla().catch(console.error);
 
 module.exports = WebsiteContactosModel;
