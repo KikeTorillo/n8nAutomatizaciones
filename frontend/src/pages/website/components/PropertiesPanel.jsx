@@ -495,22 +495,23 @@ function PropertiesPanel({
         </div>
       )}
 
-      {/* Tabs - siempre con labels en drawer (más espacio) */}
+      {/* Tabs - con labels en drawer, solo iconos en sidebar (espacio limitado) */}
       <div className="flex border-b border-gray-200 dark:border-gray-700">
         {TABS.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
+            title={tab.label}
             className={cn(
-              'flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium transition-colors',
+              'flex-1 flex items-center justify-center gap-1.5 px-2 py-2 text-sm font-medium transition-colors',
               activeTab === tab.id
                 ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-600 dark:border-primary-400'
                 : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
             )}
           >
             <tab.icon className="w-4 h-4" />
-            {/* Siempre mostrar label en drawer, condicional en sidebar */}
-            <span className={isInDrawer ? '' : 'hidden sm:inline'}>{tab.label}</span>
+            {/* Solo mostrar labels en drawer donde hay más espacio */}
+            {isInDrawer && <span>{tab.label}</span>}
           </button>
         ))}
       </div>

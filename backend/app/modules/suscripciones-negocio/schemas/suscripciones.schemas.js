@@ -8,6 +8,23 @@
 const Joi = require('joi');
 const { fields } = require('../../../schemas/shared');
 
+/**
+ * Módulos válidos del sistema
+ */
+const MODULOS_VALIDOS = [
+    'agendamiento',
+    'inventario',
+    'pos',
+    'comisiones',
+    'contabilidad',
+    'marketplace',
+    'chatbots',
+    'workflows',
+    'eventos-digitales',
+    'website',
+    'suscripciones-negocio'
+];
+
 // ====================================================================
 // SCHEMAS: PLANES
 // ====================================================================
@@ -24,10 +41,14 @@ const crearPlan = Joi.object({
     dias_trial: Joi.number().integer().min(0).max(365).default(0),
     limites: fields.metadata.default({}),
     features: Joi.array().items(Joi.string()).default([]),
+    modulos_habilitados: Joi.array().items(
+        Joi.string().valid(...MODULOS_VALIDOS)
+    ).default([]),
     color: fields.colorHex.default('#6366F1'),
     icono: fields.icono.default('package'),
     destacado: Joi.boolean().default(false),
     activo: fields.activo.default(true),
+    publico: Joi.boolean().default(true),
     orden_display: fields.orden.default(0)
 });
 
@@ -42,10 +63,14 @@ const actualizarPlan = Joi.object({
     dias_trial: Joi.number().integer().min(0).max(365),
     limites: fields.metadata,
     features: Joi.array().items(Joi.string()),
+    modulos_habilitados: Joi.array().items(
+        Joi.string().valid(...MODULOS_VALIDOS)
+    ),
     color: fields.colorHex,
     icono: fields.icono,
     destacado: Joi.boolean(),
     activo: fields.activo,
+    publico: Joi.boolean(),
     orden_display: fields.orden
 }).min(1);
 

@@ -11,8 +11,9 @@
 const RLSContextManager = require('../../../utils/rlsContextManager');
 const { ErrorHelper, ParseHelper } = require('../../../utils/helpers');
 const logger = require('../../../utils/logger');
-const { NEXO_TEAM_ORG_ID, FEATURE_TO_MODULO, MODULOS_BASE } = require('../../../config/constants');
+const { NEXO_TEAM_ORG_ID } = require('../../../config/constants');
 const NotificacionesService = require('../services/notificaciones.service');
+const ModulosSyncService = require('../../../services/modulosSyncService');
 
 class SuscripcionesModel {
 
@@ -697,7 +698,7 @@ class SuscripcionesModel {
                 const suscQuery = `
                     SELECT s.id, s.cliente_id, s.plan_id,
                            c.organizacion_vinculada_id,
-                           p.codigo, p.features
+                           p.codigo, p.modulos_habilitados
                     FROM suscripciones_org s
                     LEFT JOIN clientes c ON s.cliente_id = c.id AND c.organizacion_id = $2
                     INNER JOIN planes_suscripcion_org p ON s.plan_id = p.id
@@ -713,18 +714,10 @@ class SuscripcionesModel {
                 }
 
                 const orgVinculadaId = suscripcion.organizacion_vinculada_id;
-                const planCodigo = suscripcion.codigo || 'pro';
-                const features = suscripcion.features || [];
+                const modulosHabilitados = suscripcion.modulos_habilitados || [];
 
-                // 2. Mapear features → módulos
-                const modulosActivos = { ...MODULOS_BASE }; // Siempre incluye core: true
-
-                features.forEach(feature => {
-                    const modulo = FEATURE_TO_MODULO[feature];
-                    if (modulo) {
-                        modulosActivos[modulo] = true;
-                    }
-                });
+                // 2. Construir objeto de módulos activos usando el servicio centralizado
+                const modulosActivos = ModulosSyncService.construirModulosActivos(modulosHabilitados);
 
                 // 3. Actualizar organización vinculada (solo modulos_activos)
                 // NOTA Feb 2026: plan_actual eliminado de organizaciones
@@ -1045,7 +1038,7 @@ class SuscripcionesModel {
                     s.cliente_id,
                     p.nombre as plan_nombre,
                     p.codigo as plan_codigo,
-                    p.features
+                    p.modulos_habilitados
                 FROM suscripciones_org s
                 INNER JOIN planes_suscripcion_org p ON s.plan_id = p.id
                 WHERE s.estado = 'pendiente_pago'
@@ -1231,6 +1224,7 @@ class SuscripcionesModel {
                     p.codigo as plan_codigo,
                     p.features as plan_features,
                     p.limites as plan_limites,
+                    p.modulos_habilitados as modulos_habilitados,
                     c.nombre as cliente_nombre,
                     c.email as cliente_email
                 FROM suscripciones_org s

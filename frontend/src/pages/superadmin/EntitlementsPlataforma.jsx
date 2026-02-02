@@ -22,6 +22,7 @@ import EntitlementsFormDrawer from '@/components/superadmin/EntitlementsFormDraw
  */
 function EntitlementsPlataforma() {
     const { data, isLoading } = usePlanesEntitlements();
+
     const [drawerOpen, setDrawerOpen] = useState(false);
     const [planSeleccionado, setPlanSeleccionado] = useState(null);
 
@@ -106,9 +107,9 @@ function EntitlementsPlataforma() {
             key: 'modulos',
             header: 'Módulos',
             render: (row) => {
-                const count = (row.features || []).length;
+                const count = (row.modulos_habilitados || []).length;
                 return (
-                    <Badge variant="default">
+                    <Badge variant={count > 0 ? 'default' : 'secondary'}>
                         {count} módulo{count !== 1 ? 's' : ''}
                     </Badge>
                 );

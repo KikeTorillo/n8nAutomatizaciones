@@ -4,6 +4,8 @@ const { OrganizacionModel, UsuarioModel } = require('../models');
 const { ResponseHelper } = require('../../../utils/helpers');
 const { asyncHandler } = require('../../../middleware');
 const authConfig = require('../../../config/auth');
+const RLSContextManager = require('../../../utils/rlsContextManager');
+const { NEXO_TEAM_ORG_ID } = require('../../../config/constants');
 
 
 class OrganizacionController {
@@ -229,7 +231,7 @@ class OrganizacionController {
 
     /**
      * Obtener estado de suscripción de la organización
-     * REFACTORIZADO: Lee de suscripciones_org (fuente de verdad)
+     * OPTIMIZADO Feb 2026: Query única combinada para mejor rendimiento
      */
     static obtenerEstadoSuscripcion = asyncHandler(async (req, res) => {
         const organizacionId = parseInt(req.params.id);
@@ -239,24 +241,74 @@ class OrganizacionController {
             return ResponseHelper.error(res, 'No tienes permisos para acceder a esta información', 403);
         }
 
-        // Obtener suscripción activa desde suscripciones_org (fuente de verdad)
-        const SuscripcionesModel = require('../../suscripciones-negocio/models/suscripciones.model');
-        const suscripcion = await SuscripcionesModel.buscarActivaPorOrganizacion(organizacionId);
+        // Query única que obtiene organización + suscripción + plan en una sola llamada
+        const resultado = await RLSContextManager.withBypass(async (db) => {
+            const query = `
+                SELECT
+                    o.id as org_id,
+                    o.modulos_activos,
+                    o.creado_en as org_creado_en,
+                    s.id as suscripcion_id,
+                    s.estado as suscripcion_estado,
+                    s.es_trial,
+                    s.fecha_fin_trial,
+                    s.fecha_proximo_cobro,
+                    p.codigo as plan_codigo,
+                    p.nombre as plan_nombre,
+                    p.modulos_habilitados,
+                    p.dias_trial as plan_dias_trial
+                FROM organizaciones o
+                LEFT JOIN clientes c ON c.organizacion_vinculada_id = o.id
+                LEFT JOIN suscripciones_org s ON s.cliente_id = c.id
+                    AND s.estado IN ('activa', 'trial', 'pendiente_pago', 'grace_period', 'vencida')
+                LEFT JOIN planes_suscripcion_org p ON s.plan_id = p.id
+                WHERE o.id = $1
+                ORDER BY
+                    CASE s.estado
+                        WHEN 'activa' THEN 1
+                        WHEN 'trial' THEN 2
+                        WHEN 'grace_period' THEN 3
+                        WHEN 'pendiente_pago' THEN 4
+                        WHEN 'vencida' THEN 5
+                    END NULLS LAST,
+                    s.creado_en DESC NULLS LAST
+                LIMIT 1
+            `;
 
-        // Obtener organización para modulos_activos
-        const organizacion = await OrganizacionModel.obtenerPorId(organizacionId);
-        if (!organizacion) {
+            return (await db.query(query, [organizacionId])).rows[0];
+        });
+
+        // Organización no encontrada
+        if (!resultado) {
             return ResponseHelper.notFound(res, 'Organización no encontrada');
         }
 
-        // Si no hay suscripción, asumir trial (org nueva o sin configurar)
-        if (!suscripcion) {
-            const DIAS_TRIAL = 14;
+        const modulosActivos = resultado.modulos_activos || { core: true };
+
+        // Si no hay suscripción activa, asumir trial basado en fecha de creación
+        if (!resultado.suscripcion_id) {
+            // Obtener plan trial (con cache en memoria para evitar queries repetidas)
+            let planTrial = OrganizacionController._planTrialCache;
+            const CACHE_TTL = 3600000; // 1 hora
+
+            if (!planTrial || Date.now() - OrganizacionController._planTrialCacheTime > CACHE_TTL) {
+                const planQuery = await RLSContextManager.withBypass(async (db) => {
+                    return (await db.query(
+                        `SELECT modulos_habilitados, dias_trial FROM planes_suscripcion_org WHERE codigo = 'trial' AND organizacion_id = $1`,
+                        [NEXO_TEAM_ORG_ID]
+                    )).rows[0];
+                });
+                planTrial = planQuery || { modulos_habilitados: [], dias_trial: 14 };
+                OrganizacionController._planTrialCache = planTrial;
+                OrganizacionController._planTrialCacheTime = Date.now();
+            }
+
+            const DIAS_TRIAL = planTrial.dias_trial || 14;
             let diasRestantesTrial = DIAS_TRIAL;
             let fechaFinTrial = null;
 
-            if (organizacion.creado_en) {
-                const fechaCreacion = new Date(organizacion.creado_en);
+            if (resultado.org_creado_en) {
+                const fechaCreacion = new Date(resultado.org_creado_en);
                 fechaFinTrial = new Date(fechaCreacion);
                 fechaFinTrial.setDate(fechaFinTrial.getDate() + DIAS_TRIAL);
 
@@ -272,34 +324,39 @@ class OrganizacionController {
                 dias_restantes_trial: diasRestantesTrial,
                 fecha_fin_trial: fechaFinTrial,
                 trial_expirado: diasRestantesTrial === 0,
-                modulos_activos: organizacion.modulos_activos || { core: true }
+                modulos_activos: modulosActivos,
+                modulos_habilitados: planTrial.modulos_habilitados || []
             });
         }
 
-        // Calcular días restantes de trial desde fecha real
+        // Calcular días restantes de trial
         let diasRestantesTrial = 0;
-        if (suscripcion.es_trial && suscripcion.fecha_fin_trial) {
-            const finTrial = new Date(suscripcion.fecha_fin_trial);
+        if (resultado.es_trial && resultado.fecha_fin_trial) {
+            const finTrial = new Date(resultado.fecha_fin_trial);
             const hoy = new Date();
             const diffTime = finTrial.getTime() - hoy.getTime();
             diasRestantesTrial = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
         }
 
-        const esTrial = suscripcion.es_trial || suscripcion.estado === 'trial';
+        const esTrial = resultado.es_trial || resultado.suscripcion_estado === 'trial';
 
         return ResponseHelper.success(res, {
-            plan_actual: suscripcion.plan_codigo || 'trial',
-            plan_nombre: suscripcion.plan_nombre || 'Plan Trial',
+            plan_actual: resultado.plan_codigo || 'trial',
+            plan_nombre: resultado.plan_nombre || 'Plan Trial',
             es_trial: esTrial,
             dias_restantes_trial: diasRestantesTrial,
-            fecha_fin_trial: suscripcion.fecha_fin_trial,
+            fecha_fin_trial: resultado.fecha_fin_trial,
             trial_expirado: esTrial && diasRestantesTrial === 0,
-            modulos_activos: organizacion.modulos_activos || { core: true },
-            // Info adicional
-            estado_suscripcion: suscripcion.estado,
-            fecha_proximo_cobro: suscripcion.fecha_proximo_cobro
+            modulos_activos: modulosActivos,
+            modulos_habilitados: resultado.modulos_habilitados || [],
+            estado_suscripcion: resultado.suscripcion_estado,
+            fecha_proximo_cobro: resultado.fecha_proximo_cobro
         });
     });
+
+    // Cache estático para plan trial (evita queries repetidas)
+    static _planTrialCache = null;
+    static _planTrialCacheTime = 0;
 
     static cambiarPlan = asyncHandler(async (req, res) => {
         const { nuevo_plan, configuracion_plan = {} } = req.body;

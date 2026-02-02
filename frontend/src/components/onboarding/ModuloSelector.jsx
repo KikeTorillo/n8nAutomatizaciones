@@ -1,6 +1,7 @@
 /**
  * ModuloSelector - Selector de módulos para onboarding
  * Dic 2025 - Estilo Odoo
+ * Feb 2026 - Refactorizado para usar constantes centralizadas
  *
  * Permite al usuario seleccionar qué módulos quiere activar
  * durante el proceso de onboarding inicial.
@@ -8,155 +9,79 @@
 
 import { useMemo } from 'react';
 import {
-  Calendar,
-  Package,
-  ShoppingCart,
-  DollarSign,
   Globe,
-  Bot,
-  PartyPopper,
-  Calculator,
   AlertTriangle,
   Sparkles,
-  ClipboardCheck,
-  CreditCard,
 } from 'lucide-react';
-
-/**
- * Definición de módulos disponibles para selección
- * Excluye 'core' que siempre está activo
- */
-const MODULOS_ONBOARDING = [
-  {
-    nombre: 'agendamiento',
-    display_name: 'Agendamiento',
-    descripcion: 'Citas, profesionales y servicios',
-    icono: Calendar,
-    dependencias: [],
-  },
-  {
-    nombre: 'inventario',
-    display_name: 'Inventario',
-    descripcion: 'Productos, proveedores y stock',
-    icono: Package,
-    dependencias: [],
-  },
-  {
-    nombre: 'workflows',
-    display_name: 'Aprobaciones',
-    descripcion: 'Flujos de aprobación para compras',
-    icono: ClipboardCheck,
-    dependencias: ['inventario'],
-  },
-  {
-    nombre: 'pos',
-    display_name: 'Punto de Venta',
-    descripcion: 'Terminal de venta y caja',
-    icono: ShoppingCart,
-    dependencias: ['inventario'],
-  },
-  {
-    nombre: 'comisiones',
-    display_name: 'Comisiones',
-    descripcion: 'Pago a empleados automático',
-    icono: DollarSign,
-    dependencias: [], // Opcional: agendamiento, pos
-  },
-  {
-    nombre: 'contabilidad',
-    display_name: 'Contabilidad',
-    descripcion: 'Cuentas, asientos y reportes SAT',
-    icono: Calculator,
-    dependencias: [],
-  },
-  {
-    nombre: 'marketplace',
-    display_name: 'Marketplace',
-    descripcion: 'Perfil público y SEO',
-    icono: Globe,
-    dependencias: ['agendamiento'],
-  },
-  {
-    nombre: 'chatbots',
-    display_name: 'Chatbots IA',
-    descripcion: 'WhatsApp y Telegram',
-    icono: Bot,
-    dependencias: ['agendamiento'],
-  },
-  {
-    nombre: 'eventos-digitales',
-    display_name: 'Eventos',
-    descripcion: 'Invitaciones y acomodo de mesas',
-    icono: PartyPopper,
-    dependencias: [],
-  },
-  {
-    nombre: 'website',
-    display_name: 'Mi Sitio Web',
-    descripcion: 'Página web pública',
-    icono: Globe,
-    dependencias: [],
-  },
-  {
-    nombre: 'suscripciones-negocio',
-    display_name: 'Suscripciones',
-    descripcion: 'Membresías y cobros recurrentes',
-    icono: CreditCard,
-    dependencias: [], // clientes siempre activo (can_disable: false)
-  },
-];
-
-/**
- * Colores por módulo - Variaciones de Nexo Purple
- */
-const COLORES = {
-  agendamiento: 'bg-primary-100 dark:bg-primary-900/40 text-primary-600 dark:text-primary-400',
-  inventario: 'bg-primary-100 dark:bg-primary-900/40 text-primary-800 dark:text-primary-300',
-  workflows: 'bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300',
-  pos: 'bg-primary-50 dark:bg-primary-900/30 text-primary-500 dark:text-primary-400',
-  comisiones: 'bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300',
-  contabilidad: 'bg-primary-100 dark:bg-primary-900/40 text-primary-600 dark:text-primary-400',
-  marketplace: 'bg-primary-50 dark:bg-primary-900/30 text-primary-500 dark:text-primary-400',
-  chatbots: 'bg-primary-50 dark:bg-primary-900/30 text-primary-400 dark:text-primary-300',
-  'eventos-digitales': 'bg-primary-50 dark:bg-primary-900/30 text-primary-400 dark:text-primary-300',
-  website: 'bg-primary-100 dark:bg-primary-900/40 text-primary-600 dark:text-primary-400',
-  'suscripciones-negocio': 'bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300',
-};
+import { MODULOS_LISTA, MODULOS_COLORES } from '@/hooks/sistema/constants';
+import { MODULOS_ICONOS } from '@/hooks/sistema/modulosIconos';
 
 /**
  * Componente de selector de módulos
  * @param {Object} props
  * @param {Object} props.value - Objeto con estado de módulos { agendamiento: true, ... }
  * @param {Function} props.onChange - Callback cuando cambia la selección
+ * @param {string[]|null} props.modulosDisponibles - Módulos habilitados en el plan del usuario
+ *        Si es null, se muestra skeleton (cargando)
+ *        Si es array vacío, se muestran todos los módulos
  */
-function ModuloSelector({ value = {}, onChange }) {
-  // Calcular dependencias faltantes para cada módulo
-  const getDependenciasFaltantes = (modulo) => {
-    if (!modulo.dependencias?.length) return [];
-    return modulo.dependencias.filter((dep) => !value[dep]);
-  };
+function ModuloSelector({ value = {}, onChange, modulosDisponibles = null }) {
+  // Filtrar módulos según los disponibles en el plan
+  const modulosFiltrados = useMemo(() => {
+    // Si es null, aún estamos cargando (se mostrará skeleton)
+    if (modulosDisponibles === null) {
+      return [];
+    }
+    // Si el plan no tiene módulos habilitados, retornar vacío
+    if (modulosDisponibles.length === 0) {
+      return [];
+    }
+    // Filtrar solo los módulos habilitados en el plan (usando constantes centralizadas)
+    return MODULOS_LISTA.filter(m => modulosDisponibles.includes(m.nombre));
+  }, [modulosDisponibles]);
 
-  // Obtener nombre legible de un módulo
-  const getDisplayName = (nombre) => {
-    const m = MODULOS_ONBOARDING.find((mod) => mod.nombre === nombre);
-    return m?.display_name || nombre;
-  };
+  // Helpers memoizados para evitar re-creación en cada render
+  const helpers = useMemo(() => {
+    // Calcular dependencias faltantes para cada módulo
+    // Solo considerar dependencias que están disponibles en el plan
+    const getDependenciasFaltantes = (modulo) => {
+      if (!modulo.dependencias?.length) return [];
+      if (!modulosDisponibles) return [];
+      // Solo mostrar dependencias que estén disponibles en el plan
+      const depsDisponibles = modulo.dependencias.filter(dep =>
+        modulosDisponibles.includes(dep)
+      );
+      return depsDisponibles.filter((dep) => !value[dep]);
+    };
+
+    // Obtener nombre legible de un módulo
+    const getDisplayName = (nombre) => {
+      const m = MODULOS_LISTA.find((mod) => mod.nombre === nombre);
+      return m?.display_name || nombre;
+    };
+
+    return { getDependenciasFaltantes, getDisplayName };
+  }, [modulosDisponibles, value]);
+
+  const { getDependenciasFaltantes, getDisplayName } = helpers;
 
   // Handler para toggle de módulo
   const handleToggle = (nombreModulo) => {
-    const moduloData = MODULOS_ONBOARDING.find((m) => m.nombre === nombreModulo);
+    const moduloData = modulosFiltrados.find((m) => m.nombre === nombreModulo);
     const nuevoEstado = !value[nombreModulo];
 
     let nuevosModulos = { ...value, [nombreModulo]: nuevoEstado };
 
     if (nuevoEstado && moduloData?.dependencias?.length) {
-      // Si activamos un módulo, auto-activar sus dependencias
+      // Si activamos un módulo, auto-activar sus dependencias (solo las disponibles)
       moduloData.dependencias.forEach((dep) => {
-        nuevosModulos[dep] = true;
+        if (modulosFiltrados.some(m => m.nombre === dep)) {
+          nuevosModulos[dep] = true;
+        }
       });
     } else if (!nuevoEstado) {
       // Si desactivamos un módulo, desactivar los que dependen de él
-      MODULOS_ONBOARDING.forEach((m) => {
+      modulosFiltrados.forEach((m) => {
         if (m.dependencias?.includes(nombreModulo) && nuevosModulos[m.nombre]) {
           nuevosModulos[m.nombre] = false;
         }
@@ -170,6 +95,54 @@ function ModuloSelector({ value = {}, onChange }) {
   const modulosSeleccionados = useMemo(() => {
     return Object.values(value).filter(Boolean).length;
   }, [value]);
+
+  // Si modulosDisponibles es null, mostrar skeleton (cargando planes)
+  if (modulosDisponibles === null) {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <Sparkles className="w-5 h-5 text-primary-500" />
+          <span className="font-medium text-gray-900 dark:text-gray-100">
+            ¿Qué necesitas para tu negocio?
+          </span>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {[1, 2, 3, 4].map((i) => (
+            <div
+              key={i}
+              className="p-3 rounded-lg border-2 border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 animate-pulse"
+            >
+              <div className="flex items-start gap-3">
+                <div className="w-9 h-9 rounded-lg bg-gray-200 dark:bg-gray-700" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded" />
+                  <div className="h-3 w-32 bg-gray-200 dark:bg-gray-700 rounded" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Si no hay módulos disponibles en el plan, mostrar mensaje informativo
+  if (modulosFiltrados.length === 0) {
+    return (
+      <div className="bg-primary-50 dark:bg-primary-900/30 rounded-lg p-4 border border-primary-200 dark:border-primary-800">
+        <div className="flex items-center gap-2">
+          <Sparkles className="w-5 h-5 text-primary-500" />
+          <span className="font-medium text-gray-900 dark:text-gray-100">
+            Módulos incluidos
+          </span>
+        </div>
+        <p className="text-sm text-primary-700 dark:text-primary-300 mt-2">
+          Tu plan incluye los módulos base. Podrás activar módulos adicionales
+          después desde Configuración &gt; Módulos.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -188,12 +161,12 @@ function ModuloSelector({ value = {}, onChange }) {
         )}
       </div>
 
-      {/* Grid de módulos */}
-      <div className="grid grid-cols-2 gap-3">
-        {MODULOS_ONBOARDING.map((modulo) => {
-          const Icono = modulo.icono;
+      {/* Grid de módulos - Responsive 1-2 columnas */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {modulosFiltrados.map((modulo) => {
+          const Icono = MODULOS_ICONOS[modulo.nombre] || Globe;
           const activo = value[modulo.nombre] === true;
-          const colorClasses = COLORES[modulo.nombre];
+          const colorClasses = MODULOS_COLORES[modulo.nombre];
           const dependenciasFaltantes = getDependenciasFaltantes(modulo);
           const tieneDependenciasFaltantes = dependenciasFaltantes.length > 0;
 

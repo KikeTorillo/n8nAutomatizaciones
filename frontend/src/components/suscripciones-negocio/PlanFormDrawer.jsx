@@ -5,11 +5,12 @@ import { z } from 'zod';
 import { Plus, Trash2 } from 'lucide-react';
 import {
   Button,
-  Checkbox,
+  CheckboxField,
   Drawer,
   FormGroup,
   Input,
   Textarea,
+  ToggleSwitch,
 } from '@/components/ui';
 import { useCrearPlan, useActualizarPlan } from '@/hooks/suscripciones-negocio';
 import { useToast } from '@/hooks/utils';
@@ -30,6 +31,8 @@ const planSchema = z.object({
     texto: z.string().min(1, 'La característica no puede estar vacía'),
   })).optional(),
   activo: z.boolean().default(true),
+  publico: z.boolean().default(true),
+  color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Color inválido').default('#6366F1'),
 });
 
 /**
@@ -51,6 +54,7 @@ function PlanFormDrawer({ isOpen, onClose, plan = null, mode = 'create' }) {
     formState: { errors },
     reset,
     control,
+    setValue,
   } = useForm({
     resolver: zodResolver(planSchema),
     defaultValues: {
@@ -63,6 +67,8 @@ function PlanFormDrawer({ isOpen, onClose, plan = null, mode = 'create' }) {
       dias_prueba: 14,
       caracteristicas: [],
       activo: true,
+      publico: true,
+      color: '#6366F1',
     },
   });
 
@@ -71,6 +77,8 @@ function PlanFormDrawer({ isOpen, onClose, plan = null, mode = 'create' }) {
   const precioTrimestral = useWatch({ control, name: 'precio_trimestral' });
   const precioSemestral = useWatch({ control, name: 'precio_semestral' });
   const precioAnual = useWatch({ control, name: 'precio_anual' });
+  const isPublico = useWatch({ control, name: 'publico' });
+  const colorActual = useWatch({ control, name: 'color' });
 
   // Calcular info de descuento
   const calcularInfoDescuento = useMemo(() => {
@@ -124,6 +132,8 @@ function PlanFormDrawer({ isOpen, onClose, plan = null, mode = 'create' }) {
         dias_prueba: plan.dias_trial ?? plan.dias_prueba ?? 0,
         caracteristicas: caracteristicasArray,
         activo: plan.activo ?? true,
+        publico: plan.publico ?? true,
+        color: plan.color || '#6366F1',
       });
     } else {
       reset({
@@ -136,6 +146,8 @@ function PlanFormDrawer({ isOpen, onClose, plan = null, mode = 'create' }) {
         dias_prueba: 14,
         caracteristicas: [],
         activo: true,
+        publico: true,
+        color: '#6366F1',
       });
     }
   }, [esEdicion, plan, reset]);
@@ -170,6 +182,8 @@ function PlanFormDrawer({ isOpen, onClose, plan = null, mode = 'create' }) {
       dias_trial: data.dias_prueba,
       features: data.caracteristicas?.map(c => c.texto) || [],
       activo: data.activo,
+      publico: data.publico,
+      color: data.color,
     };
 
     if (esEdicion) {
@@ -225,6 +239,34 @@ function PlanFormDrawer({ isOpen, onClose, plan = null, mode = 'create' }) {
             hasError={!!errors.descripcion}
             placeholder="Descripción breve del plan"
           />
+        </FormGroup>
+
+        {/* Color del Plan */}
+        <FormGroup label="Color del Plan" error={errors.color?.message}>
+          <div className="flex items-center gap-3">
+            <div
+              className="w-10 h-10 rounded-lg border-2 border-gray-300 dark:border-gray-600 cursor-pointer flex items-center justify-center text-white font-bold text-sm"
+              style={{ backgroundColor: colorActual || '#6366F1' }}
+            >
+              {(plan?.nombre || 'P')[0].toUpperCase()}
+            </div>
+            <Input
+              type="color"
+              {...register('color')}
+              className="w-16 h-10 p-1 cursor-pointer"
+            />
+            <Input
+              type="text"
+              value={colorActual || '#6366F1'}
+              onChange={(e) => setValue('color', e.target.value)}
+              placeholder="#6366F1"
+              className="flex-1 font-mono"
+              maxLength={7}
+            />
+          </div>
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            Este color se usa en la página de planes y checkout
+          </p>
         </FormGroup>
 
         {/* Precios por Periodo */}
@@ -390,11 +432,37 @@ function PlanFormDrawer({ isOpen, onClose, plan = null, mode = 'create' }) {
           </div>
         </FormGroup>
 
-        {/* Activo */}
-        <Checkbox
-          label="Plan activo (disponible para nuevas suscripciones)"
-          {...register('activo')}
-        />
+        {/* Estado y Visibilidad */}
+        <div className="space-y-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+          <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            Estado y Visibilidad
+          </h4>
+
+          {/* Activo */}
+          <CheckboxField
+            label="Plan activo"
+            description="Disponible para nuevas suscripciones"
+            {...register('activo')}
+          />
+
+          {/* Público */}
+          <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+            <div>
+              <span className="text-sm font-medium text-gray-900 dark:text-white">
+                Plan Público
+              </span>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {isPublico
+                  ? 'Visible en página de planes y checkout'
+                  : 'Oculto (solo uso interno)'}
+              </p>
+            </div>
+            <ToggleSwitch
+              enabled={isPublico ?? true}
+              onChange={(val) => setValue('publico', val)}
+            />
+          </div>
+        </div>
 
         {/* Botones */}
         <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">

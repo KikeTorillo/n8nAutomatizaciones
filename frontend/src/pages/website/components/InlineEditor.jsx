@@ -39,16 +39,27 @@ export const InlineText = memo(function InlineText({
 }) {
   const elementRef = useRef(null);
   const [isFocused, setIsFocused] = useState(false);
+  // Track el valor local para evitar conflictos durante edición
+  const lastValueRef = useRef(value);
 
   // Sincronizar valor externo con el contenido del elemento
+  // Solo cuando no está enfocado y el valor realmente cambió desde afuera
   useEffect(() => {
     if (elementRef.current && !isFocused) {
-      const currentText = elementRef.current.innerText;
-      if (currentText !== value) {
+      // Solo actualizar si el valor cambió desde el exterior (no por nuestra propia edición)
+      if (value !== lastValueRef.current) {
         elementRef.current.innerText = value || '';
+        lastValueRef.current = value;
       }
     }
   }, [value, isFocused]);
+
+  // Inicializar el contenido solo en el primer render
+  useEffect(() => {
+    if (elementRef.current && elementRef.current.innerText === '') {
+      elementRef.current.innerText = value || '';
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   /**
    * Manejar blur - guardar cambios
@@ -57,11 +68,12 @@ export const InlineText = memo(function InlineText({
     (e) => {
       setIsFocused(false);
       const newValue = e.target.innerText;
-      if (newValue !== value) {
+      if (newValue !== lastValueRef.current) {
+        lastValueRef.current = newValue;
         onChange(newValue);
       }
     },
-    [value, onChange]
+    [onChange]
   );
 
   /**
@@ -110,9 +122,7 @@ export const InlineText = memo(function InlineText({
         disabled && 'cursor-default pointer-events-none',
         className
       )}
-    >
-      {value}
-    </Component>
+    />
   );
 });
 

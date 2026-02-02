@@ -105,8 +105,13 @@ GET  /api/v1/public/preview/:token        # Preview no publicado
 
 **Archivos modificados:**
 - `PropertiesPanel.jsx` - Agregado `itemsEditor` type + integración con drawer
-- `TimelineCanvasBlock.jsx` - Soporte layouts + color personalizable
+- `TimelineCanvasBlock.jsx` - Soporte layouts + color personalizable + fix edición inline items
 - `TimelineItemsDrawer.jsx` - Nuevo componente para edición de hitos
+- `InlineEditor.jsx` - Fix sincronización de valores en contentEditable
+
+**Bug fix (2 Feb 2026):** Edición inline de fechas/títulos de hitos ahora guarda correctamente.
+El problema era un conflicto entre React children y contentEditable. Se corrigió usando refs
+para inicializar y sincronizar el contenido.
 
 ### Deuda Técnica Resuelta (30 Enero 2026)
 

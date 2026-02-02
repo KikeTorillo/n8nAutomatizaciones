@@ -67,9 +67,9 @@ class PlanesModel {
                 SELECT
                     id, codigo, nombre, descripcion,
                     precio_mensual, precio_trimestral, precio_semestral, precio_anual, moneda,
-                    dias_trial, limites, features,
+                    dias_trial, limites, features, modulos_habilitados,
                     precio_usuario_adicional, usuarios_incluidos, max_usuarios_hard,
-                    color, icono, destacado, activo, orden_display,
+                    color, icono, destacado, activo, publico, orden_display,
                     creado_en, actualizado_en
                 FROM planes_suscripcion_org
                 ${whereClause}
@@ -111,9 +111,9 @@ class PlanesModel {
                 SELECT
                     id, codigo, nombre, descripcion,
                     precio_mensual, precio_trimestral, precio_semestral, precio_anual, moneda,
-                    dias_trial, limites, features,
+                    dias_trial, limites, features, modulos_habilitados,
                     precio_usuario_adicional, usuarios_incluidos, max_usuarios_hard,
-                    color, icono, destacado, orden_display
+                    color, icono, destacado, publico, orden_display
                 FROM planes_suscripcion_org
                 ${whereClause}
                 ORDER BY orden_display ASC, nombre ASC
@@ -137,9 +137,9 @@ class PlanesModel {
                 SELECT
                     id, codigo, nombre, descripcion,
                     precio_mensual, precio_trimestral, precio_semestral, precio_anual, moneda,
-                    dias_trial, limites, features,
+                    dias_trial, limites, features, modulos_habilitados,
                     precio_usuario_adicional, usuarios_incluidos, max_usuarios_hard,
-                    color, icono, destacado, activo, orden_display,
+                    color, icono, destacado, activo, publico, orden_display,
                     creado_en, actualizado_en, creado_por
                 FROM planes_suscripcion_org
                 WHERE id = $1
@@ -163,9 +163,9 @@ class PlanesModel {
                 SELECT
                     id, codigo, nombre, descripcion,
                     precio_mensual, precio_trimestral, precio_semestral, precio_anual, moneda,
-                    dias_trial, limites, features,
+                    dias_trial, limites, features, modulos_habilitados,
                     precio_usuario_adicional, usuarios_incluidos, max_usuarios_hard,
-                    color, icono, destacado, activo
+                    color, icono, destacado, activo, publico
                 FROM planes_suscripcion_org
                 WHERE codigo = $1
             `;
@@ -197,10 +197,12 @@ class PlanesModel {
                 dias_trial = 0,
                 limites = {},
                 features = [],
+                modulos_habilitados = [],
                 color = '#6366F1',
                 icono = 'package',
                 destacado = false,
                 activo = true,
+                publico = true,
                 orden_display = 0
             } = planData;
 
@@ -208,10 +210,10 @@ class PlanesModel {
                 INSERT INTO planes_suscripcion_org (
                     organizacion_id, codigo, nombre, descripcion,
                     precio_mensual, precio_trimestral, precio_semestral, precio_anual, moneda,
-                    dias_trial, limites, features,
-                    color, icono, destacado, activo, orden_display,
+                    dias_trial, limites, features, modulos_habilitados,
+                    color, icono, destacado, activo, publico, orden_display,
                     creado_por
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
                 RETURNING *
             `;
 
@@ -228,10 +230,12 @@ class PlanesModel {
                 dias_trial,
                 JSON.stringify(limites),
                 JSON.stringify(features),
+                JSON.stringify(modulos_habilitados),
                 color,
                 icono,
                 destacado,
                 activo,
+                publico,
                 orden_display,
                 creadoPorId
             ];
@@ -269,10 +273,12 @@ class PlanesModel {
                 dias_trial,
                 limites,
                 features,
+                modulos_habilitados,
                 color,
                 icono,
                 destacado,
                 activo,
+                publico,
                 orden_display
             } = planData;
 
@@ -320,6 +326,10 @@ class PlanesModel {
                 updates.push(`features = $${paramCount++}`);
                 values.push(JSON.stringify(features));
             }
+            if (modulos_habilitados !== undefined) {
+                updates.push(`modulos_habilitados = $${paramCount++}`);
+                values.push(JSON.stringify(modulos_habilitados));
+            }
             if (color !== undefined) {
                 updates.push(`color = $${paramCount++}`);
                 values.push(color);
@@ -335,6 +345,10 @@ class PlanesModel {
             if (activo !== undefined) {
                 updates.push(`activo = $${paramCount++}`);
                 values.push(activo);
+            }
+            if (publico !== undefined) {
+                updates.push(`publico = $${paramCount++}`);
+                values.push(publico);
             }
             if (orden_display !== undefined) {
                 updates.push(`orden_display = $${paramCount++}`);

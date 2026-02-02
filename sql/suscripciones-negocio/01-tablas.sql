@@ -47,8 +47,11 @@ CREATE TABLE IF NOT EXISTS planes_suscripcion_org (
     -- Límites (JSONB para flexibilidad)
     limites JSONB DEFAULT '{}',                     -- {"usuarios": 10, "clientes": 500}
 
-    -- Features (array de strings)
-    features JSONB DEFAULT '[]',                    -- ["api_access", "priority_support"]
+    -- Features (array de strings descriptivos para display)
+    features JSONB DEFAULT '[]',                    -- ["Usuarios ilimitados", "Soporte prioritario"]
+
+    -- Módulos del sistema habilitados (control de acceso)
+    modulos_habilitados JSONB DEFAULT '[]',         -- ["agendamiento", "pos", "inventario"]
 
     -- Pricing por usuario (Seat-based billing)
     precio_usuario_adicional NUMERIC(10,2) DEFAULT NULL, -- Precio por usuario extra. NULL = hard limit
@@ -86,7 +89,10 @@ COMMENT ON COLUMN planes_suscripcion_org.limites IS
 'Límites del plan en formato JSONB. Ej: {"usuarios": 10, "productos": 1000, "storage_gb": 50}';
 
 COMMENT ON COLUMN planes_suscripcion_org.features IS
-'Lista de features habilitadas en formato array JSONB. Ej: ["api_access", "whatsapp_integration"]';
+'Características descriptivas para display/marketing. Ej: ["Usuarios ilimitados", "API REST"]';
+
+COMMENT ON COLUMN planes_suscripcion_org.modulos_habilitados IS
+'Módulos del sistema habilitados para control de acceso. Valores válidos: agendamiento, inventario, pos, comisiones, contabilidad, marketplace, chatbots, workflows, eventos-digitales, website, suscripciones-negocio';
 
 -- ============================================================================
 -- 2. TABLA: suscripciones_org

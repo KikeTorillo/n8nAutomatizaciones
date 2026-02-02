@@ -265,11 +265,13 @@ function TimelineCanvasBlock({ bloque, tema, isEditing, onContentChange }) {
 
   /**
    * Update a single item
+   * Si estamos usando defaults, primero inicializamos los items explícitos
    */
   const updateItem = (index, field, value) => {
-    const newItems = [...hitos];
-    newItems[index] = { ...newItems[index], [field]: value };
-    onContentChange({ items: newItems });
+    // Siempre trabajar con una copia de los hitos actuales
+    const currentItems = hasExplicitItems ? [...(contenido.items || [])] : [...DEFAULT_ITEMS];
+    currentItems[index] = { ...currentItems[index], [field]: value };
+    onContentChange({ items: currentItems });
   };
 
   const colorPrimario = tema?.color_primario || '#753572';
@@ -315,7 +317,7 @@ function TimelineCanvasBlock({ bloque, tema, isEditing, onContentChange }) {
           <div className="relative">
             {hitos.map((item, index) => (
               <TimelineItem
-                key={index}
+                key={`${index}-${item.fecha}-${item.titulo}`}
                 item={item}
                 index={index}
                 total={hitos.length}

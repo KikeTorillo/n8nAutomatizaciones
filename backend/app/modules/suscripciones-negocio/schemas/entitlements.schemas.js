@@ -11,6 +11,23 @@
 const Joi = require('joi');
 
 /**
+ * Módulos válidos del sistema
+ */
+const MODULOS_VALIDOS = [
+    'agendamiento',
+    'inventario',
+    'pos',
+    'comisiones',
+    'contabilidad',
+    'marketplace',
+    'chatbots',
+    'workflows',
+    'eventos-digitales',
+    'website',
+    'suscripciones-negocio'
+];
+
+/**
  * Schema para actualizar entitlements de un plan
  */
 const actualizarEntitlements = {
@@ -30,9 +47,12 @@ const actualizarEntitlements = {
             .messages({
                 'object.base': 'Límites debe ser un objeto'
             }),
-        features: Joi.array().items(Joi.string()).default([])
+        modulos_habilitados: Joi.array().items(
+            Joi.string().valid(...MODULOS_VALIDOS)
+        ).default([])
             .messages({
-                'array.base': 'Features debe ser un array'
+                'array.base': 'Módulos habilitados debe ser un array',
+                'any.only': 'Módulo no válido. Valores permitidos: ' + MODULOS_VALIDOS.join(', ')
             }),
         usuarios_incluidos: Joi.number().integer().min(1).required()
             .messages({
@@ -49,6 +69,10 @@ const actualizarEntitlements = {
             .messages({
                 'number.base': 'Máximo usuarios debe ser un número',
                 'number.min': 'Mínimo 1 usuario'
+            }),
+        sincronizar_organizaciones: Joi.boolean().default(false)
+            .messages({
+                'boolean.base': 'sincronizar_organizaciones debe ser booleano'
             })
     })
 };

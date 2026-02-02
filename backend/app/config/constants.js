@@ -22,32 +22,22 @@
 const NEXO_TEAM_ORG_ID = parseInt(process.env.NEXO_TEAM_ORG_ID) || 1;
 
 /**
- * Mapeo de features de planes a módulos del sistema
- * Usado para activar/desactivar módulos cuando una suscripción se activa
- *
- * Las features vienen del campo `features[]` en planes_suscripcion_org
- * Los módulos se guardan en `modulos_activos` de organizaciones
+ * Módulos válidos del sistema
+ * Usados para validación en entitlements y sincronización de suscripciones
  */
-const FEATURE_TO_MODULO = {
-    'agendamiento': 'agendamiento',
-    'inventario': 'inventario',
-    'pos': 'pos',
-    'comisiones': 'comisiones',
-    'contabilidad': 'contabilidad',
-    'marketplace': 'marketplace',
-    'chatbots': 'chatbots',
-    'workflows': 'workflows',
-    'eventos-digitales': 'eventos-digitales',
-    'website': 'website',
-    'suscripciones-negocio': 'suscripciones-negocio'
-};
-
-/**
- * Módulos base que siempre están activos (independiente del plan)
- */
-const MODULOS_BASE = {
-    core: true
-};
+const MODULOS_VALIDOS = [
+    'agendamiento',
+    'inventario',
+    'pos',
+    'comisiones',
+    'contabilidad',
+    'marketplace',
+    'chatbots',
+    'workflows',
+    'eventos-digitales',
+    'website',
+    'suscripciones-negocio'
+];
 
 /**
  * Estados válidos para suscripciones
@@ -121,8 +111,7 @@ const RUTAS_EXENTAS_SUSCRIPCION = [
 
 module.exports = {
     NEXO_TEAM_ORG_ID,
-    FEATURE_TO_MODULO,
-    MODULOS_BASE,
+    MODULOS_VALIDOS,
     ESTADOS_SUSCRIPCION,
     PERIODOS_FACTURACION,
     // Grace Period (Ene 2026)

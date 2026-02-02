@@ -48,7 +48,8 @@ const schema = z.object({
         clientes: optionalInt,
         sucursales: optionalInt,
     }).optional(),
-    features: z.array(z.string()).default([]),
+    modulos_habilitados: z.array(z.string()).default([]),
+    sincronizar_organizaciones: z.boolean().default(true),
 });
 
 /**
@@ -72,11 +73,12 @@ function EntitlementsFormDrawer({ isOpen, onClose, plan, modulosDisponibles = []
             precio_usuario_adicional: null,
             max_usuarios_hard: null,
             limites: {},
-            features: [],
+            modulos_habilitados: [],
+            sincronizar_organizaciones: true,
         }
     });
 
-    const selectedFeatures = watch('features') || [];
+    const selectedModulos = watch('modulos_habilitados') || [];
 
     // Cargar datos del plan al abrir
     useEffect(() => {
@@ -86,20 +88,21 @@ function EntitlementsFormDrawer({ isOpen, onClose, plan, modulosDisponibles = []
                 precio_usuario_adicional: plan.precio_usuario_adicional ?? '',
                 max_usuarios_hard: plan.max_usuarios_hard ?? '',
                 limites: plan.limites || {},
-                features: plan.features || [],
+                modulos_habilitados: plan.modulos_habilitados || [],
+                sincronizar_organizaciones: true,
             });
         }
     }, [plan, reset]);
 
     /**
-     * Toggle de feature (módulo)
+     * Toggle de módulo habilitado
      */
-    const toggleFeature = (feature) => {
-        const current = selectedFeatures;
-        if (current.includes(feature)) {
-            setValue('features', current.filter(f => f !== feature));
+    const toggleModulo = (modulo) => {
+        const current = selectedModulos;
+        if (current.includes(modulo)) {
+            setValue('modulos_habilitados', current.filter(m => m !== modulo));
         } else {
-            setValue('features', [...current, feature]);
+            setValue('modulos_habilitados', [...current, modulo]);
         }
     };
 
@@ -239,22 +242,35 @@ function EntitlementsFormDrawer({ isOpen, onClose, plan, modulosDisponibles = []
                     </div>
                 </div>
 
-                {/* Sección: Módulos */}
+                {/* Sección: Módulos Habilitados */}
                 <div className="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
                     <h4 className="font-medium text-gray-900 dark:text-white">
-                        Módulos Activados
+                        Módulos Habilitados
                     </h4>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                        Controla qué módulos del sistema están disponibles para este plan
+                    </p>
 
                     <div className="grid grid-cols-2 gap-2">
                         {modulosDisponibles.map((modulo) => (
                             <CheckboxField
                                 key={modulo}
                                 label={formatModuloName(modulo)}
-                                checked={selectedFeatures.includes(modulo)}
-                                onChange={() => toggleFeature(modulo)}
+                                checked={selectedModulos.includes(modulo)}
+                                onChange={() => toggleModulo(modulo)}
                             />
                         ))}
                     </div>
+                </div>
+
+                {/* Sección: Sincronización */}
+                <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <CheckboxField
+                        label="Sincronizar organizaciones existentes"
+                        description="Actualizar módulos activos de todas las organizaciones con este plan"
+                        checked={watch('sincronizar_organizaciones')}
+                        onChange={(e) => setValue('sincronizar_organizaciones', e.target.checked)}
+                    />
                 </div>
 
                 {/* Botones */}

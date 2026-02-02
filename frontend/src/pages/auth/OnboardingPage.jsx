@@ -6,12 +6,12 @@
  * Flujo: Usuario nuevo via Google → Esta página → Crear organización → Dashboard
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { authApi } from '@/services/api/endpoints';
 import { suscripcionesNegocioApi } from '@/services/api/modules/suscripciones-negocio.api';
 import useAuthStore, { selectUser, selectSetAuth, selectIsAuthenticated } from '@/store/authStore';
@@ -42,6 +42,18 @@ const onboardingSchema = z.object({
   modulos: z.record(z.string(), z.boolean()).default({})
 });
 
+/**
+ * Validar plan guardado en localStorage
+ * Función pura fuera del componente para evitar re-creación
+ * @param {number} planId - ID del plan a validar
+ * @param {Array} planesDisponibles - Lista de planes disponibles
+ * @returns {Object|null} Plan encontrado o null
+ */
+const validarPlanGuardado = (planId, planesDisponibles) => {
+  if (!planId || !planesDisponibles?.length) return null;
+  return planesDisponibles.find(p => p.id === planId) || null;
+};
+
 function OnboardingPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -49,6 +61,57 @@ function OnboardingPage() {
   const setAuth = useAuthStore(selectSetAuth);
   const isAuthenticated = useAuthStore(selectIsAuthenticated);
   const toast = useToast();
+
+  // ═══════════════════════════════════════════════════════════════
+  // CARGAR PLANES PÚBLICOS para determinar módulos disponibles
+  // ═══════════════════════════════════════════════════════════════
+  const { data: planesData } = useQuery({
+    queryKey: ['planes', 'publicos'],
+    queryFn: async () => {
+      const response = await suscripcionesNegocioApi.listarPlanesPublicos();
+      return response.data?.data || [];
+    },
+    staleTime: 1000 * 60 * 10, // 10 minutos
+  });
+
+  // Determinar los módulos disponibles según el plan del usuario
+  const modulosDisponibles = useMemo(() => {
+    if (!planesData?.length) return null; // Aún cargando
+
+    // Verificar si hay plan guardado en localStorage
+    const planGuardado = localStorage.getItem('nexo_plan_seleccionado');
+    let plan = null;
+
+    if (planGuardado) {
+      try {
+        const { plan_id, timestamp } = JSON.parse(planGuardado);
+        const UNA_HORA = 60 * 60 * 1000;
+        if (Date.now() - timestamp < UNA_HORA) {
+          // Validar que el plan_id existe en los planes disponibles
+          plan = validarPlanGuardado(plan_id, planesData);
+          if (!plan && import.meta.env.DEV) {
+            console.warn('[Onboarding] Plan guardado no encontrado en planesData:', plan_id);
+          }
+        }
+      } catch (e) {
+        console.error('[Onboarding] Error parseando plan guardado:', e);
+        // Limpiar localStorage corrupto
+        localStorage.removeItem('nexo_plan_seleccionado');
+      }
+    }
+
+    // Si no hay plan guardado o no se encontró, usar plan trial
+    if (!plan) {
+      plan = planesData.find(p => p.codigo === 'trial');
+    }
+
+    // Fallback: usar el primer plan disponible
+    if (!plan && planesData.length > 0) {
+      plan = planesData[0];
+    }
+
+    return plan?.modulos_habilitados || [];
+  }, [planesData]);
 
   // Verificar que el usuario está autenticado pero sin organización
   useEffect(() => {
@@ -210,10 +273,12 @@ function OnboardingPage() {
           </div>
 
           {/* Selector de Módulos (estilo Odoo) */}
+          {/* Solo mostrar módulos habilitados en el plan del usuario */}
           <div className="border-t border-gray-200 dark:border-gray-700 pt-5">
             <ModuloSelector
               value={watch('modulos')}
               onChange={(modulos) => setValue('modulos', modulos)}
+              modulosDisponibles={modulosDisponibles}
             />
           </div>
 

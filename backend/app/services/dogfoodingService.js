@@ -122,6 +122,13 @@ class DogfoodingService {
 
             logger.info(`Dogfooding: Suscripción trial ${suscripcion?.id} creada para cliente ${cliente.id}`);
 
+            // Sincronizar módulos del plan trial a la organización
+            // Esto permite que las organizaciones nuevas tengan acceso a los módulos durante el trial
+            if (suscripcion?.id) {
+                await SuscripcionesModel.actualizarOrgVinculadaAlActivar(suscripcion.id, NEXO_TEAM_ORG_ID);
+                logger.info(`Dogfooding: Módulos sincronizados para org ${organizacion.id} (trial)`);
+            }
+
             return suscripcion;
 
         } catch (error) {

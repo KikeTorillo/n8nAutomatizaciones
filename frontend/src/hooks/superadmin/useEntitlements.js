@@ -30,6 +30,7 @@ export function usePlanesEntitlements() {
 
 /**
  * Hook para actualizar entitlements de un plan
+ * Ahora incluye opción de sincronizar organizaciones existentes automáticamente
  * @returns {UseMutationResult} Mutation para actualizar
  */
 export function useActualizarEntitlements() {
@@ -45,6 +46,8 @@ export function useActualizarEntitlements() {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: QUERY_KEY, refetchType: 'active' });
+            // También invalidar módulos por si se sincronizaron organizaciones
+            queryClient.invalidateQueries({ queryKey: ['modulos'], refetchType: 'active' });
         },
     });
 }

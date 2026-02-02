@@ -32,17 +32,20 @@ BEGIN
             -- ========================================
             INSERT INTO planes_suscripcion_org (
                 organizacion_id, codigo, nombre, descripcion,
-                precio_mensual, precio_anual, dias_trial, activo, publico, features, limites,
+                precio_mensual, precio_anual, dias_trial, activo, publico,
+                features, modulos_habilitados, limites,
                 usuarios_incluidos, precio_usuario_adicional, max_usuarios_hard
             )
             VALUES
             (NEW.id, 'trial', 'Plan Trial', 'Prueba gratuita de 14 días con acceso limitado',
              0, 0, 14, true, true,
-             '["agendamiento", "inventario", "pos"]'::jsonb,
+             '[]'::jsonb,  -- Features descriptivas (display)
+             '["agendamiento", "inventario", "pos"]'::jsonb,  -- Módulos habilitados (control acceso)
              '{"citas": 50, "profesionales": 2, "servicios": 10, "clientes": 100, "usuarios": 3}'::jsonb,
              3, NULL, 3),
             (NEW.id, 'pro', 'Plan Pro', 'Plan completo con todas las funcionalidades',
              249, 2490, 0, true, true,
+             '[]'::jsonb,  -- Features descriptivas (display)
              '["agendamiento", "inventario", "pos", "comisiones", "contabilidad", "marketplace", "chatbots", "workflows", "suscripciones-negocio"]'::jsonb,
              '{"citas": -1, "profesionales": -1, "servicios": -1, "clientes": -1, "usuarios": 5}'::jsonb,
              5, 49.00, NULL);
@@ -53,7 +56,7 @@ BEGIN
             INSERT INTO planes_suscripcion_org (
                 organizacion_id, codigo, nombre, descripcion,
                 precio_mensual, precio_anual, moneda,
-                dias_trial, limites, features,
+                dias_trial, limites, features, modulos_habilitados,
                 usuarios_incluidos, max_usuarios_hard, precio_usuario_adicional,
                 color, icono, destacado, publico, activo, orden_display
             ) VALUES (
@@ -64,7 +67,8 @@ BEGIN
                 0, 0, 'MXN',
                 0,
                 '{"usuarios": 999999, "clientes": 999999, "productos": 999999}'::jsonb,
-                '["all_features", "agendamiento", "inventario", "pos", "comisiones", "marketplace", "chatbots", "website", "contabilidad", "workflows", "suscripciones-negocio"]'::jsonb,
+                '[]'::jsonb,  -- Features descriptivas (display)
+                '["agendamiento", "inventario", "pos", "comisiones", "contabilidad", "marketplace", "chatbots", "website", "workflows", "suscripciones-negocio", "eventos-digitales"]'::jsonb,
                 999, NULL, NULL,
                 '#1a1a2e', 'Shield', FALSE,
                 FALSE,  -- NO PÚBLICO - no aparece en /planes/publicos
