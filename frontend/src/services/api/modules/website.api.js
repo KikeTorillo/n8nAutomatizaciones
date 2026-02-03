@@ -171,6 +171,15 @@ export const websiteApi = {
     apiClient.get('/website/servicios-erp', { params })
       .then((res) => res.data?.data || res.data),
 
+  /**
+   * Obtener profesionales del ERP para el editor de bloques (bloque equipo)
+   * @param {Object} params - { busqueda?, departamento_id? }
+   * @returns {Promise<Object>} - { profesionales: [], departamentos: [] }
+   */
+  obtenerProfesionalesERP: (params = {}) =>
+    apiClient.get('/website/profesionales-erp', { params })
+      .then((res) => res.data?.data || res.data),
+
   // ========== Rutas Públicas (sin auth) ==========
 
   /**
