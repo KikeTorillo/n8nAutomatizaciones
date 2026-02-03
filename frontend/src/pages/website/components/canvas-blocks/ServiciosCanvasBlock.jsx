@@ -3,12 +3,15 @@
  * SERVICIOS CANVAS BLOCK
  * ====================================================================
  * Bloque de servicios editable para el canvas WYSIWYG.
+ * Soporta origen manual o desde ERP.
  */
 
-import { memo } from 'react';
+import { memo, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
 import { InlineText } from '../InlineEditor';
 import * as LucideIcons from 'lucide-react';
+import websiteApi from '@/services/api/modules/website.api';
 
 /**
  * Servicios Canvas Block
@@ -19,31 +22,78 @@ function ServiciosCanvasBlock({ bloque, tema, isEditing, onContentChange }) {
     titulo_seccion = 'Nuestros Servicios',
     subtitulo_seccion = 'Lo que ofrecemos',
     columnas = 3,
-    mostrar_precio = false,
+    origen = 'manual',
+    filtro_erp = {},
+    mostrar_precio = true,
+    mostrar_duracion = false,
     items = [],
   } = contenido;
 
-  // Default items if empty
-  const servicios =
-    items.length > 0
-      ? items
-      : [
-          { icono: 'Scissors', titulo: 'Servicio 1', descripcion: 'Descripción del servicio', precio: 0 },
-          { icono: 'Brush', titulo: 'Servicio 2', descripcion: 'Descripción del servicio', precio: 0 },
-          { icono: 'Sparkles', titulo: 'Servicio 3', descripcion: 'Descripción del servicio', precio: 0 },
-        ];
+  // Query para servicios del ERP (solo si origen es 'erp')
+  const { data: serviciosERP = [], isLoading: loadingERP } = useQuery({
+    queryKey: ['website-canvas-servicios-erp', filtro_erp],
+    queryFn: async () => {
+      const response = await websiteApi.obtenerServiciosERP();
+      if (!response?.servicios) return [];
 
-  // Grid columns class
+      let filtrados = response.servicios;
+      const { modo = 'todos', categorias = [], servicio_ids = [] } = filtro_erp;
+
+      // Aplicar filtros
+      if (modo === 'categoria' && categorias.length > 0) {
+        filtrados = filtrados.filter(s => categorias.includes(s.categoria));
+      } else if (modo === 'seleccion' && servicio_ids.length > 0) {
+        filtrados = filtrados.filter(s => servicio_ids.includes(s.id));
+      }
+
+      return filtrados;
+    },
+    enabled: origen === 'erp',
+    staleTime: 1000 * 60,
+  });
+
+  // Mapear servicios ERP al formato esperado
+  const serviciosERPMapped = useMemo(() => {
+    return serviciosERP.map(s => ({
+      icono: null,
+      nombre: s.nombre,
+      descripcion: s.descripcion,
+      precio: s.precio,
+      duracion_minutos: s.duracion_minutos,
+      imagen_url: s.imagen_url,
+      color_servicio: s.color_servicio,
+    }));
+  }, [serviciosERP]);
+
+  // Determinar servicios a renderizar segun origen
+  const servicios = useMemo(() => {
+    if (origen === 'erp') {
+      return serviciosERPMapped.length > 0 ? serviciosERPMapped : [
+        { icono: 'Database', nombre: 'Cargando servicios...', descripcion: 'Desde el módulo de Servicios', precio: 0 },
+      ];
+    }
+
+    // Modo manual - usar items o defaults
+    return items.length > 0 ? items : [
+      { icono: 'Scissors', nombre: 'Servicio 1', descripcion: 'Descripción del servicio', precio: 0 },
+      { icono: 'Brush', nombre: 'Servicio 2', descripcion: 'Descripción del servicio', precio: 0 },
+      { icono: 'Sparkles', nombre: 'Servicio 3', descripcion: 'Descripción del servicio', precio: 0 },
+    ];
+  }, [origen, items, serviciosERPMapped]);
+
+  // Grid columns class (keys como string para compatibilidad con select)
   const gridCols = {
-    2: 'grid-cols-1 md:grid-cols-2',
-    3: 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3',
-    4: 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4',
+    '2': 'grid-cols-1 md:grid-cols-2',
+    '3': 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3',
+    '4': 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4',
   };
+  const colKey = String(columnas);
 
   /**
-   * Update a single service item
+   * Update a single service item (solo modo manual)
    */
   const updateItem = (index, field, value) => {
+    if (origen === 'erp') return; // No editar items ERP inline
     const newItems = [...servicios];
     newItems[index] = { ...newItems[index], [field]: value };
     onContentChange({ items: newItems });
@@ -86,47 +136,87 @@ function ServiciosCanvasBlock({ bloque, tema, isEditing, onContentChange }) {
               </p>
             )
           )}
+
+          {/* Indicador de origen ERP en modo edicion */}
+          {isEditing && origen === 'erp' && (
+            <div className="mt-2 inline-flex items-center gap-1.5 px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded text-xs">
+              <LucideIcons.Database className="w-3 h-3" />
+              Servicios desde ERP
+              {loadingERP && <LucideIcons.Loader2 className="w-3 h-3 animate-spin" />}
+            </div>
+          )}
         </div>
 
         {/* Services Grid */}
-        <div className={cn('grid gap-8', gridCols[columnas] || gridCols[3])}>
+        <div className={cn('grid gap-8', gridCols[colKey] || gridCols['3'])}>
           {servicios.map((servicio, index) => {
             // Get icon component
-            const IconComponent = LucideIcons[servicio.icono] || LucideIcons.Star;
+            const IconComponent = servicio.icono
+              ? (LucideIcons[servicio.icono] || LucideIcons.Star)
+              : null;
+
+            // Soportar tanto 'titulo' como 'nombre' para compatibilidad
+            const servicioNombre = servicio.titulo || servicio.nombre || '';
 
             return (
               <div
                 key={index}
-                className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow"
+                className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow overflow-hidden"
               >
-                {/* Icon */}
-                <div
-                  className="w-14 h-14 rounded-lg flex items-center justify-center mb-4"
-                  style={{
-                    backgroundColor: `var(--color-primario, ${tema?.color_primario || '#753572'})20`,
-                    color: `var(--color-primario, ${tema?.color_primario || '#753572'})`,
-                  }}
-                >
-                  <IconComponent className="w-7 h-7" />
-                </div>
+                {/* Image or Icon */}
+                {servicio.imagen_url ? (
+                  <div className="relative h-40 -mx-6 -mt-6 mb-4 overflow-hidden">
+                    <img
+                      src={servicio.imagen_url}
+                      alt={servicioNombre}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                ) : IconComponent ? (
+                  <div
+                    className="w-14 h-14 rounded-lg flex items-center justify-center mb-4"
+                    style={{
+                      backgroundColor: servicio.color_servicio
+                        ? `${servicio.color_servicio}20`
+                        : `var(--color-primario, ${tema?.color_primario || '#753572'})20`,
+                      color: servicio.color_servicio || `var(--color-primario, ${tema?.color_primario || '#753572'})`,
+                    }}
+                  >
+                    <IconComponent className="w-7 h-7" />
+                  </div>
+                ) : (
+                  <div
+                    className="w-14 h-14 rounded-lg flex items-center justify-center mb-4"
+                    style={{
+                      backgroundColor: `var(--color-primario, ${tema?.color_primario || '#753572'})20`,
+                    }}
+                  >
+                    <span
+                      className="text-2xl font-bold"
+                      style={{ color: `var(--color-primario, ${tema?.color_primario || '#753572'})` }}
+                    >
+                      {(servicioNombre || 'S').charAt(0)}
+                    </span>
+                  </div>
+                )}
 
                 {/* Title */}
-                {isEditing ? (
+                {isEditing && origen === 'manual' ? (
                   <InlineText
-                    value={servicio.titulo}
-                    onChange={(value) => updateItem(index, 'titulo', value)}
+                    value={servicioNombre}
+                    onChange={(value) => updateItem(index, 'nombre', value)}
                     placeholder="Nombre del servicio"
                     className="text-xl font-semibold text-gray-900 dark:text-white mb-2 block"
                     as="h3"
                   />
                 ) : (
                   <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                    {servicio.titulo}
+                    {servicioNombre}
                   </h3>
                 )}
 
                 {/* Description */}
-                {isEditing ? (
+                {isEditing && origen === 'manual' ? (
                   <InlineText
                     value={servicio.descripcion}
                     onChange={(value) => updateItem(index, 'descripcion', value)}
@@ -141,15 +231,24 @@ function ServiciosCanvasBlock({ bloque, tema, isEditing, onContentChange }) {
                   </p>
                 )}
 
-                {/* Price */}
-                {mostrar_precio && servicio.precio > 0 && (
-                  <p
-                    className="mt-4 text-lg font-bold"
-                    style={{ color: `var(--color-primario, ${tema?.color_primario || '#753572'})` }}
-                  >
-                    ${servicio.precio.toLocaleString()}
-                  </p>
-                )}
+                {/* Price and Duration */}
+                <div className="mt-4 flex items-center justify-between">
+                  {mostrar_precio && servicio.precio > 0 && (
+                    <p
+                      className="text-lg font-bold"
+                      style={{ color: `var(--color-primario, ${tema?.color_primario || '#753572'})` }}
+                    >
+                      ${typeof servicio.precio === 'number'
+                        ? servicio.precio.toLocaleString()
+                        : parseFloat(servicio.precio || 0).toLocaleString()}
+                    </p>
+                  )}
+                  {mostrar_duracion && servicio.duracion_minutos > 0 && (
+                    <span className="text-sm text-gray-500 dark:text-gray-400">
+                      {servicio.duracion_minutos} min
+                    </span>
+                  )}
+                </div>
               </div>
             );
           })}

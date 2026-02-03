@@ -46,6 +46,7 @@ import SEOTipsPanel from './SEOTips/SEOTipsPanel';
 import AIWriterPopover from './AIWriter/AIWriterPopover';
 import UnsplashModal from './UnsplashPicker/UnsplashModal';
 import TimelineItemsDrawer from './TimelineItemsDrawer';
+import ServiciosItemsDrawer from './ServiciosItemsDrawer';
 
 // ========== TABS CONFIG ==========
 
@@ -79,17 +80,27 @@ const BLOCK_CONFIGS = {
   },
   servicios: {
     contenido: [
-      { key: 'titulo', label: 'Título de sección', type: 'text', aiEnabled: true },
+      { key: 'titulo_seccion', label: 'Título de sección', type: 'text', aiEnabled: true },
+      { key: 'subtitulo_seccion', label: 'Subtítulo', type: 'text', aiEnabled: true },
       { key: 'columnas', label: 'Columnas', type: 'select', options: [
         { value: 2, label: '2 columnas' },
         { value: 3, label: '3 columnas' },
         { value: 4, label: '4 columnas' },
       ]},
       { key: 'mostrar_precio', label: 'Mostrar precios', type: 'toggle' },
+      { key: 'mostrar_duracion', label: 'Mostrar duración', type: 'toggle' },
       { key: 'origen', label: 'Origen de datos', type: 'select', options: [
         { value: 'manual', label: 'Manual' },
-        { value: 'modulo', label: 'Módulo Servicios' },
+        { value: 'erp', label: 'Módulo Servicios (ERP)' },
       ]},
+      // Editor de servicios - solo en modo manual
+      {
+        key: 'items',
+        label: 'Servicios',
+        type: 'itemsEditor',
+        itemType: 'servicios',
+        showWhen: (contenido) => contenido?.origen !== 'erp',
+      },
     ],
   },
   testimonios: {
@@ -651,6 +662,16 @@ function PropertiesPanel({
           onChange={handleItemsChange}
         />
       )}
+
+      {/* Servicios Items Drawer */}
+      {itemsEditorState.itemType === 'servicios' && (
+        <ServiciosItemsDrawer
+          isOpen={itemsEditorState.isOpen}
+          onClose={closeItemsEditor}
+          items={localContent[itemsEditorState.fieldKey] || []}
+          onChange={handleItemsChange}
+        />
+      )}
     </div>
   );
 }
@@ -668,17 +689,23 @@ function TabContent({ fields, values, onChange, onOpenAIWriter, onOpenUnsplash, 
 
   return (
     <div className="space-y-4">
-      {fields.map((field) => (
-        <FieldRenderer
-          key={field.key}
-          field={field}
-          value={values[field.key]}
-          onChange={(value) => onChange(field.key, value)}
-          onOpenAIWriter={onOpenAIWriter}
-          onOpenUnsplash={onOpenUnsplash}
-          onOpenItemsEditor={onOpenItemsEditor}
-        />
-      ))}
+      {fields.map((field) => {
+        // Verificar condición showWhen si existe
+        if (field.showWhen && !field.showWhen(values)) {
+          return null;
+        }
+        return (
+          <FieldRenderer
+            key={field.key}
+            field={field}
+            value={values[field.key]}
+            onChange={(value) => onChange(field.key, value)}
+            onOpenAIWriter={onOpenAIWriter}
+            onOpenUnsplash={onOpenUnsplash}
+            onOpenItemsEditor={onOpenItemsEditor}
+          />
+        );
+      })}
     </div>
   );
 }

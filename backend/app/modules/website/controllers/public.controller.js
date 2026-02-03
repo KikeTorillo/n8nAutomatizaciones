@@ -276,10 +276,13 @@ class WebsitePublicController {
      * GET /api/v1/public/sitio/:slug/servicios
      *
      * @public Sin autenticación requerida
+     * @query {string} categorias - Categorías separadas por coma
+     * @query {string} ids - IDs de servicios separados por coma
      * @returns Lista de servicios activos de la organización
      */
     static obtenerServicios = asyncHandler(async (req, res) => {
         const { slug } = req.params;
+        const { categorias, ids } = req.query;
 
         // Obtener config para validar que existe y obtener organizacion_id
         const config = await WebsiteConfigModel.obtenerPorSlug(slug);
@@ -289,20 +292,44 @@ class WebsitePublicController {
 
         // Obtener servicios activos de la organización
         const servicios = await RLSContextManager.withBypass(async (db) => {
-            const query = `
+            let query = `
                 SELECT
                     s.id,
                     s.nombre,
                     s.descripcion,
                     s.precio,
                     s.duracion_minutos,
-                    s.imagen_url
+                    s.imagen_url,
+                    s.categoria
                 FROM servicios s
                 WHERE s.organizacion_id = $1
                 AND s.activo = true
-                ORDER BY s.nombre ASC
             `;
-            const result = await db.query(query, [config.organizacion_id]);
+            const params = [config.organizacion_id];
+            let paramIndex = 2;
+
+            // Filtrar por categorías
+            if (categorias) {
+                const cats = categorias.split(',').map(c => c.trim()).filter(Boolean);
+                if (cats.length > 0) {
+                    query += ` AND s.categoria = ANY($${paramIndex})`;
+                    params.push(cats);
+                    paramIndex++;
+                }
+            }
+
+            // Filtrar por IDs específicos
+            if (ids) {
+                const idsList = ids.split(',').map(Number).filter(n => !isNaN(n));
+                if (idsList.length > 0) {
+                    query += ` AND s.id = ANY($${paramIndex})`;
+                    params.push(idsList);
+                }
+            }
+
+            query += ` ORDER BY s.nombre ASC`;
+
+            const result = await db.query(query, params);
             return result.rows;
         });
 

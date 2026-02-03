@@ -1,15 +1,15 @@
 /**
  * ====================================================================
- * TIMELINE ITEMS DRAWER
+ * SERVICIOS ITEMS DRAWER
  * ====================================================================
- * Drawer para editar los hitos del bloque Timeline con:
+ * Drawer para editar los servicios del bloque Servicios con:
  * - Lista sortable usando dnd-kit
- * - Agregar/editar/eliminar hitos
- * - Campos: fecha, título, descripción, icono
+ * - Agregar/editar/eliminar servicios
+ * - Campos: nombre, descripción, icono, precio
  * - Reordenar con drag & drop
  *
  * @version 1.0.0
- * @since 2026-02-01
+ * @since 2026-02-03
  */
 
 import { useState, useMemo, useCallback, memo } from 'react';
@@ -37,16 +37,16 @@ import {
   Trash2,
   ChevronDown,
   ChevronUp,
-  Rocket,
-  Flag,
-  MapPin,
-  Award,
-  Users,
-  Building,
+  Scissors,
+  Brush,
   Star,
-  Zap,
-  Target,
+  Sparkles,
   Heart,
+  Zap,
+  Camera,
+  Coffee,
+  Gift,
+  Wrench,
 } from 'lucide-react';
 import { Drawer, Button } from '@/components/ui';
 import { cn } from '@/lib/utils';
@@ -54,21 +54,21 @@ import { cn } from '@/lib/utils';
 // ========== ICON OPTIONS ==========
 
 const ICON_OPTIONS = [
-  { value: 'rocket', label: 'Cohete', Icon: Rocket },
-  { value: 'flag', label: 'Bandera', Icon: Flag },
-  { value: 'star', label: 'Estrella', Icon: Star },
-  { value: 'zap', label: 'Rayo', Icon: Zap },
-  { value: 'award', label: 'Premio', Icon: Award },
-  { value: 'users', label: 'Usuarios', Icon: Users },
-  { value: 'building', label: 'Edificio', Icon: Building },
-  { value: 'target', label: 'Objetivo', Icon: Target },
-  { value: 'heart', label: 'Corazón', Icon: Heart },
-  { value: 'map-pin', label: 'Ubicación', Icon: MapPin },
+  { value: 'Scissors', label: 'Tijeras', Icon: Scissors },
+  { value: 'Brush', label: 'Pincel', Icon: Brush },
+  { value: 'Star', label: 'Estrella', Icon: Star },
+  { value: 'Sparkles', label: 'Brillos', Icon: Sparkles },
+  { value: 'Heart', label: 'Corazón', Icon: Heart },
+  { value: 'Zap', label: 'Rayo', Icon: Zap },
+  { value: 'Camera', label: 'Cámara', Icon: Camera },
+  { value: 'Coffee', label: 'Café', Icon: Coffee },
+  { value: 'Gift', label: 'Regalo', Icon: Gift },
+  { value: 'Wrench', label: 'Herramienta', Icon: Wrench },
 ];
 
-// ========== TIMELINE ITEM (Sortable) ==========
+// ========== SERVICIO ITEM (Sortable) ==========
 
-const TimelineItemCard = memo(function TimelineItemCard({
+const ServicioItemCard = memo(function ServicioItemCard({
   item,
   isExpanded,
   onToggleExpand,
@@ -115,7 +115,7 @@ const TimelineItemCard = memo(function TimelineItemCard({
           <GripVertical className="w-5 h-5" />
         </button>
 
-        {/* Icono del hito */}
+        {/* Icono del servicio */}
         <div className="w-8 h-8 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center flex-shrink-0">
           <IconComponent className="w-4 h-4 text-primary-600 dark:text-primary-400" />
         </div>
@@ -123,8 +123,13 @@ const TimelineItemCard = memo(function TimelineItemCard({
         {/* Info resumida */}
         <div className="flex-1 min-w-0">
           <span className="font-medium text-gray-900 dark:text-gray-100 truncate block">
-            {item.fecha || 'Sin fecha'} - {item.titulo || 'Sin título'}
+            {item.nombre || 'Nuevo servicio'}
           </span>
+          {item.precio && (
+            <span className="text-xs text-primary-600 dark:text-primary-400">
+              ${item.precio}
+            </span>
+          )}
         </div>
 
         {/* Botones */}
@@ -147,16 +152,16 @@ const TimelineItemCard = memo(function TimelineItemCard({
       {/* Campos expandidos */}
       {isExpanded && (
         <div className="px-4 pb-4 pt-1 border-t border-gray-100 dark:border-gray-700 space-y-3">
-          {/* Fecha */}
+          {/* Nombre */}
           <div>
             <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-              Fecha
+              Nombre del servicio
             </label>
             <input
               type="text"
-              value={item.fecha || ''}
-              onChange={(e) => onChange(item._id, 'fecha', e.target.value)}
-              placeholder="Ej: 2020, Enero 2021, Q1 2022"
+              value={item.nombre || ''}
+              onChange={(e) => onChange(item._id, 'nombre', e.target.value)}
+              placeholder="Ej: Corte de cabello"
               className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white text-sm focus:ring-1 focus:ring-primary-500"
             />
           </div>
@@ -186,20 +191,6 @@ const TimelineItemCard = memo(function TimelineItemCard({
             </div>
           </div>
 
-          {/* Título */}
-          <div>
-            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-              Título
-            </label>
-            <input
-              type="text"
-              value={item.titulo || ''}
-              onChange={(e) => onChange(item._id, 'titulo', e.target.value)}
-              placeholder="Título del hito"
-              className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white text-sm focus:ring-1 focus:ring-primary-500"
-            />
-          </div>
-
           {/* Descripción */}
           <div>
             <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
@@ -208,9 +199,23 @@ const TimelineItemCard = memo(function TimelineItemCard({
             <textarea
               value={item.descripcion || ''}
               onChange={(e) => onChange(item._id, 'descripcion', e.target.value)}
-              placeholder="Descripción del hito"
+              placeholder="Descripción breve del servicio"
               rows={2}
               className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white text-sm focus:ring-1 focus:ring-primary-500 resize-none"
+            />
+          </div>
+
+          {/* Precio */}
+          <div>
+            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+              Precio (opcional)
+            </label>
+            <input
+              type="text"
+              value={item.precio || ''}
+              onChange={(e) => onChange(item._id, 'precio', e.target.value)}
+              placeholder="Ej: 250"
+              className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white text-sm focus:ring-1 focus:ring-primary-500"
             />
           </div>
         </div>
@@ -219,13 +224,13 @@ const TimelineItemCard = memo(function TimelineItemCard({
   );
 });
 
-TimelineItemCard.propTypes = {
+ServicioItemCard.propTypes = {
   item: PropTypes.shape({
     _id: PropTypes.string.isRequired,
-    fecha: PropTypes.string,
-    titulo: PropTypes.string,
+    nombre: PropTypes.string,
     descripcion: PropTypes.string,
     icono: PropTypes.string,
+    precio: PropTypes.string,
   }).isRequired,
   isExpanded: PropTypes.bool.isRequired,
   onToggleExpand: PropTypes.func.isRequired,
@@ -236,12 +241,12 @@ TimelineItemCard.propTypes = {
 
 // ========== MAIN DRAWER ==========
 
-function TimelineItemsDrawer({ isOpen, onClose, items = [], onChange }) {
+function ServiciosItemsDrawer({ isOpen, onClose, items = [], onChange }) {
   // Agregar _id temporal a cada item para el drag & drop
   const itemsWithIds = useMemo(() => {
     return items.map((item, index) => ({
       ...item,
-      _id: item._id || `item-${index}`,
+      _id: item._id || `srv-${index}`,
     }));
   }, [items]);
 
@@ -318,11 +323,11 @@ function TimelineItemsDrawer({ isOpen, onClose, items = [], onChange }) {
   // Agregar nuevo item
   const handleAddItem = useCallback(() => {
     const newItem = {
-      _id: `item-${Date.now()}`,
-      fecha: '',
-      titulo: '',
+      _id: `srv-${Date.now()}`,
+      nombre: '',
       descripcion: '',
-      icono: 'star',
+      icono: 'Star',
+      precio: '',
     };
     setLocalItems((items) => [...items, newItem]);
     setExpandedId(newItem._id);
@@ -347,7 +352,7 @@ function TimelineItemsDrawer({ isOpen, onClose, items = [], onChange }) {
     <Drawer
       isOpen={isOpen}
       onClose={handleCancel}
-      title="Editar Hitos del Timeline"
+      title="Editar Servicios"
       subtitle="Arrastra para reordenar, expande para editar"
       size="full"
       showCloseButton
@@ -364,16 +369,16 @@ function TimelineItemsDrawer({ isOpen, onClose, items = [], onChange }) {
       <div className="mb-4">
         <Button variant="outline" onClick={handleAddItem} className="w-full">
           <Plus className="w-4 h-4 mr-2" />
-          Agregar hito
+          Agregar servicio
         </Button>
       </div>
 
-      {/* Lista de hitos */}
+      {/* Lista de servicios */}
       {localItems.length === 0 ? (
         <div className="text-center py-8 text-gray-500 dark:text-gray-400">
           <Star className="w-12 h-12 mx-auto mb-3 opacity-30" />
-          <p className="font-medium">Sin hitos</p>
-          <p className="text-sm mt-1">Agrega tu primer hito para comenzar</p>
+          <p className="font-medium">Sin servicios</p>
+          <p className="text-sm mt-1">Agrega tu primer servicio para comenzar</p>
         </div>
       ) : (
         <DndContext
@@ -389,7 +394,7 @@ function TimelineItemsDrawer({ isOpen, onClose, items = [], onChange }) {
           >
             <div className="space-y-2">
               {localItems.map((item, index) => (
-                <TimelineItemCard
+                <ServicioItemCard
                   key={item._id}
                   item={item}
                   index={index}
@@ -405,7 +410,7 @@ function TimelineItemsDrawer({ isOpen, onClose, items = [], onChange }) {
           {/* Overlay durante el drag */}
           <DragOverlay>
             {activeItem && (
-              <TimelineItemCard
+              <ServicioItemCard
                 item={activeItem}
                 index={0}
                 isExpanded={false}
@@ -422,18 +427,18 @@ function TimelineItemsDrawer({ isOpen, onClose, items = [], onChange }) {
   );
 }
 
-TimelineItemsDrawer.propTypes = {
+ServiciosItemsDrawer.propTypes = {
   isOpen: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
   items: PropTypes.arrayOf(
     PropTypes.shape({
-      fecha: PropTypes.string,
-      titulo: PropTypes.string,
+      nombre: PropTypes.string,
       descripcion: PropTypes.string,
       icono: PropTypes.string,
+      precio: PropTypes.string,
     })
   ),
   onChange: PropTypes.func.isRequired,
 };
 
-export default memo(TimelineItemsDrawer);
+export default memo(ServiciosItemsDrawer);

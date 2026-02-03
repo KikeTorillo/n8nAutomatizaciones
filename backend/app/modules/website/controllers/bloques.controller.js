@@ -1,6 +1,7 @@
 const { WebsiteBloquesModel, WebsitePaginasModel } = require('../models');
 const { ResponseHelper } = require('../../../utils/helpers');
 const { asyncHandler } = require('../../../middleware');
+const RLSContextManager = require('../../../utils/rlsContextManager');
 
 /**
  * ====================================================================
@@ -326,6 +327,123 @@ class WebsiteBloquesController {
             tipos,
             'Tipos de bloques obtenidos exitosamente'
         );
+    });
+
+    /**
+     * Obtener servicios del ERP para el editor
+     * GET /api/v1/website/servicios-erp
+     *
+     * @requires auth - cualquier rol de la organización
+     * @requires tenant - organizacionId desde RLS context
+     * @query {string} busqueda - Búsqueda por nombre/descripción
+     * @query {string} categoria - Filtrar por categoría
+     * @returns Lista de servicios y categorías disponibles
+     */
+    static obtenerServiciosERP = asyncHandler(async (req, res) => {
+        const organizacionId = req.tenant.organizacionId;
+        const { busqueda, categoria } = req.query;
+
+        const result = await RLSContextManager.query(organizacionId, async (db) => {
+            // Obtener servicios
+            let query = `
+                SELECT id, nombre, descripcion, precio, duracion_minutos,
+                       imagen_url, categoria, color_servicio
+                FROM servicios
+                WHERE activo = true AND eliminado_en IS NULL
+            `;
+            const params = [];
+            let paramIndex = 1;
+
+            if (busqueda) {
+                query += ` AND (nombre ILIKE $${paramIndex} OR descripcion ILIKE $${paramIndex})`;
+                params.push(`%${busqueda}%`);
+                paramIndex++;
+            }
+            if (categoria) {
+                query += ` AND categoria = $${paramIndex}`;
+                params.push(categoria);
+            }
+            query += ` ORDER BY nombre ASC LIMIT 100`;
+
+            const servicios = await db.query(query, params);
+
+            // Obtener categorías únicas
+            const categoriasResult = await db.query(`
+                SELECT DISTINCT categoria
+                FROM servicios
+                WHERE activo = true AND eliminado_en IS NULL AND categoria IS NOT NULL
+                ORDER BY categoria
+            `);
+
+            return {
+                servicios: servicios.rows,
+                categorias: categoriasResult.rows.map(r => r.categoria)
+            };
+        });
+
+        return ResponseHelper.success(res, result, 'Servicios obtenidos');
+    });
+
+    /**
+     * Obtener profesionales del ERP para el editor
+     * GET /api/v1/website/profesionales-erp
+     *
+     * @requires auth - cualquier rol de la organización
+     * @requires tenant - organizacionId desde RLS context
+     * @query {string} busqueda - Búsqueda por nombre
+     * @query {string} departamento_id - Filtrar por departamento
+     * @returns Lista de profesionales y departamentos disponibles
+     */
+    static obtenerProfesionalesERP = asyncHandler(async (req, res) => {
+        const organizacionId = req.tenant.organizacionId;
+        const { busqueda, departamento_id } = req.query;
+
+        const result = await RLSContextManager.query(organizacionId, async (db) => {
+            // Obtener profesionales
+            let query = `
+                SELECT
+                    p.id, p.nombre_completo, p.foto_url, p.biografia, p.email,
+                    pu.nombre as puesto_nombre,
+                    d.id as departamento_id, d.nombre as departamento_nombre
+                FROM profesionales p
+                LEFT JOIN puestos pu ON p.puesto_id = pu.id
+                LEFT JOIN departamentos d ON p.departamento_id = d.id
+                WHERE p.activo = true
+                  AND p.estado = 'activo'
+                  AND p.eliminado_en IS NULL
+            `;
+            const params = [];
+            let paramIndex = 1;
+
+            if (busqueda) {
+                query += ` AND p.nombre_completo ILIKE $${paramIndex}`;
+                params.push(`%${busqueda}%`);
+                paramIndex++;
+            }
+            if (departamento_id) {
+                query += ` AND p.departamento_id = $${paramIndex}`;
+                params.push(departamento_id);
+            }
+            query += ` ORDER BY p.nombre_completo ASC LIMIT 50`;
+
+            const profesionales = await db.query(query, params);
+
+            // Obtener departamentos únicos para filtros
+            const deptosResult = await db.query(`
+                SELECT DISTINCT d.id, d.nombre
+                FROM profesionales p
+                JOIN departamentos d ON p.departamento_id = d.id
+                WHERE p.activo = true AND p.estado = 'activo' AND p.eliminado_en IS NULL
+                ORDER BY d.nombre
+            `);
+
+            return {
+                profesionales: profesionales.rows,
+                departamentos: deptosResult.rows
+            };
+        });
+
+        return ResponseHelper.success(res, result, 'Profesionales obtenidos');
     });
 }
 

@@ -273,6 +273,34 @@ router.delete('/paginas/:id',
 // ===================================================================
 
 /**
+ * GET /api/v1/website/servicios-erp
+ * Obtener servicios del ERP para el editor de bloques
+ * @requires auth - cualquier rol
+ * @requires tenant
+ */
+router.get('/servicios-erp',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('website'),
+    rateLimiting.apiRateLimit,
+    WebsiteBloquesController.obtenerServiciosERP
+);
+
+/**
+ * GET /api/v1/website/profesionales-erp
+ * Obtener profesionales del ERP para el editor de bloques (bloque equipo)
+ * @requires auth - cualquier rol
+ * @requires tenant
+ */
+router.get('/profesionales-erp',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('website'),
+    rateLimiting.apiRateLimit,
+    WebsiteBloquesController.obtenerProfesionalesERP
+);
+
+/**
  * GET /api/v1/website/bloques/tipos
  * Listar tipos de bloques disponibles
  * @requires auth - cualquier rol

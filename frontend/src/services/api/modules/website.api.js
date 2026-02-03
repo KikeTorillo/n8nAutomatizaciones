@@ -162,6 +162,15 @@ export const websiteApi = {
    */
   obtenerDefaultBloque: (tipo) => apiClient.get(`/website/bloques/tipos/${tipo}/default`),
 
+  /**
+   * Obtener servicios del ERP para el editor de bloques
+   * @param {Object} params - { busqueda?, categoria? }
+   * @returns {Promise<Object>} - { servicios: [], categorias: [] }
+   */
+  obtenerServiciosERP: (params = {}) =>
+    apiClient.get('/website/servicios-erp', { params })
+      .then((res) => res.data?.data || res.data),
+
   // ========== Rutas Públicas (sin auth) ==========
 
   /**

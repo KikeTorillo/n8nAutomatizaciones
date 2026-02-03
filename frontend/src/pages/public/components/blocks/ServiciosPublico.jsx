@@ -1,38 +1,73 @@
+import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import * as LucideIcons from 'lucide-react';
 
 /**
  * ServiciosPublico - Renderiza bloque de servicios en sitio público
+ * Soporta origen manual o desde ERP (sistema)
  */
 export default function ServiciosPublico({ contenido, tema, slug }) {
   const {
-    titulo = 'Nuestros Servicios',
-    subtitulo = '',
+    titulo_seccion = 'Nuestros Servicios',
+    subtitulo_seccion = '',
     items = [],
     origen = 'manual',
+    filtro_erp = {},
     columnas = 3,
+    mostrar_precio = true,
+    mostrar_duracion = false,
   } = contenido;
 
-  // Cargar servicios del sistema si origen es "sistema"
+  // Compatibilidad con nombre antiguo "titulo" y "subtitulo"
+  const titulo = contenido.titulo || titulo_seccion;
+  const subtitulo = contenido.subtitulo || subtitulo_seccion;
+
+  // Construir query params para filtros ERP
+  const queryParams = useMemo(() => {
+    if (origen !== 'sistema' && origen !== 'erp') return '';
+
+    const params = new URLSearchParams();
+    const { modo = 'todos', categorias = [], servicio_ids = [] } = filtro_erp;
+
+    if (modo === 'categoria' && categorias.length > 0) {
+      params.set('categorias', categorias.join(','));
+    }
+    if (modo === 'seleccion' && servicio_ids.length > 0) {
+      params.set('ids', servicio_ids.join(','));
+    }
+
+    return params.toString() ? `?${params.toString()}` : '';
+  }, [origen, filtro_erp]);
+
+  // Cargar servicios del sistema si origen es "sistema" o "erp"
   const { data: serviciosSistema } = useQuery({
-    queryKey: ['servicios-publicos', slug],
+    queryKey: ['servicios-publicos', slug, queryParams],
     queryFn: async () => {
-      const response = await axios.get(`/api/v1/public/sitio/${slug}/servicios`);
+      const url = `/api/v1/public/sitio/${slug}/servicios${queryParams}`;
+      const response = await axios.get(url);
       return response.data.data?.servicios || [];
     },
-    enabled: origen === 'sistema' && !!slug,
+    enabled: (origen === 'sistema' || origen === 'erp') && !!slug,
     staleTime: 1000 * 60 * 5,
   });
 
-  // Usar servicios del sistema o manuales según el origen
-  const servicios = origen === 'sistema' ? (serviciosSistema || []) : items;
+  // Usar servicios del sistema o manuales segun el origen
+  const servicios = (origen === 'sistema' || origen === 'erp')
+    ? (serviciosSistema || [])
+    : items;
 
   const columnasClases = {
-    2: 'md:grid-cols-2',
-    3: 'md:grid-cols-3',
-    4: 'md:grid-cols-2 lg:grid-cols-4',
+    '2': 'md:grid-cols-2',
+    '3': 'md:grid-cols-3',
+    '4': 'md:grid-cols-2 lg:grid-cols-4',
   };
+  const colKey = String(columnas);
+
+  // Si no hay servicios, no renderizar nada
+  if (servicios.length === 0 && (origen === 'sistema' || origen === 'erp')) {
+    return null;
+  }
 
   return (
     <section className="py-16 sm:py-24 bg-white">
@@ -56,10 +91,10 @@ export default function ServiciosPublico({ contenido, tema, slug }) {
         </div>
 
         {/* Grid de servicios */}
-        <div className={`grid grid-cols-1 gap-8 ${columnasClases[columnas] || columnasClases[3]}`}>
+        <div className={`grid grid-cols-1 gap-8 ${columnasClases[colKey] || columnasClases['3']}`}>
           {servicios.map((servicio, index) => (
             <div
-              key={index}
+              key={servicio.id || index}
               className="group rounded-xl border border-gray-200 hover:border-transparent hover:shadow-xl transition-all duration-300 overflow-hidden bg-white"
             >
               {/* Imagen del servicio */}
@@ -110,18 +145,18 @@ export default function ServiciosPublico({ contenido, tema, slug }) {
                 )}
 
                 <div className="flex items-center justify-between">
-                  {servicio.precio && (
+                  {mostrar_precio && servicio.precio > 0 && (
                     <p
                       className="text-xl font-bold"
                       style={{ color: 'var(--color-primario)' }}
                     >
                       ${typeof servicio.precio === 'number'
                         ? servicio.precio.toLocaleString()
-                        : parseFloat(servicio.precio).toLocaleString()}
+                        : parseFloat(servicio.precio || 0).toLocaleString()}
                     </p>
                   )}
 
-                  {servicio.duracion_minutos && (
+                  {mostrar_duracion && servicio.duracion_minutos > 0 && (
                     <span className="text-sm text-gray-500">
                       {servicio.duracion_minutos} min
                     </span>

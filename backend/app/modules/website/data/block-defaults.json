@@ -14,7 +14,13 @@
     "subtitulo_seccion": "Lo que ofrecemos",
     "columnas": 3,
     "origen": "manual",
+    "filtro_erp": {
+      "modo": "todos",
+      "categorias": [],
+      "servicio_ids": []
+    },
     "mostrar_precio": true,
+    "mostrar_duracion": false,
     "items": []
   },
   "testimonios": {
