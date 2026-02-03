@@ -5,7 +5,7 @@ import {
   Calendar,
   Building2,
 } from 'lucide-react';
-import useAuthStore, { selectUser } from '@/store/authStore';
+import { useAuthStore, selectUser } from '@/features/auth';
 import { BackButton, Card } from '@/components/ui';
 import CambiarPasswordForm from './components/CambiarPasswordForm';
 import { format } from 'date-fns';

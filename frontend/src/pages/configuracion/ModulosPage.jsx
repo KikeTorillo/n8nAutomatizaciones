@@ -8,7 +8,7 @@ import {
   useEstadoSuscripcion,
 } from '@/hooks/sistema';
 import { MODULOS_COLORES } from '@/hooks/sistema/constants';
-import useAuthStore, { selectIsAdmin } from '@/store/authStore';
+import { useAuthStore, selectIsAdmin } from '@/features/auth';
 import { ConfirmDialog } from '@/components/ui';
 import { ConfiguracionPageLayout } from '@/components/configuracion';
 import { useToast } from '@/hooks/utils';

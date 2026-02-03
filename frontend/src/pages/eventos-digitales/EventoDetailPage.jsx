@@ -17,7 +17,7 @@ import {
 import { BackButton, Button, LoadingSpinner } from '@/components/ui';
 import { useToast } from '@/hooks/utils';
 import { SeatingChartEditor } from '@/components/eventos-digitales';
-import { hasToken } from '@/services/auth/tokenManager';
+import { hasToken } from '@/features/auth';
 import {
   useEvento,
   useEventoEstadisticas,

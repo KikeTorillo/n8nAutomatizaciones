@@ -4,7 +4,7 @@
  */
 
 import { lazy } from 'react';
-import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import { ProtectedRoute } from '@/features/auth';
 import { protectedRoute, withSuspense, ROLES } from './helpers/routeHelpers';
 import { lazyLoadWithRetry } from '@/utils/lazyLoadWithRetry';
 

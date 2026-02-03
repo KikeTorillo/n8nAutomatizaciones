@@ -7,9 +7,8 @@
  */
 
 module.exports = {
-  AuthController: require('./auth.controller'),
+  AuthController: require('../../auth/controllers/auth.controller'),
   SuperadminController: require('./superadmin.controller'),
-  WebhooksController: require('./webhooks.controller'),
   RolesController: require('./roles.controller'),
   OrganizacionController: require('./organizacion.controller'),
   UsuarioController: require('./usuario.controller'),

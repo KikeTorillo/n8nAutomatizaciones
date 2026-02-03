@@ -1,6 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { authApi } from '@/services/api/modules/auth.api';
-import useAuthStore, { selectSetTokens } from '@/store/authStore';
+import { authApi, useAuthStore, selectSetTokens } from '@/features/auth';
 import useSucursalStore, { selectSetSucursalActiva } from '@/store/sucursalStore';
 import usePermisosStore, { selectInvalidarCache } from '@/store/permisosStore';
 import { toast } from 'sonner';

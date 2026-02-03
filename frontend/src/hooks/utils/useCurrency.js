@@ -15,7 +15,7 @@
  */
 
 import { useMemo } from 'react';
-import useAuthStore, { selectUser } from '@/store/authStore';
+import { useAuthStore, selectUser } from '@/features/auth';
 import {
   formatCurrencyDynamic,
   getCurrencyConfig,

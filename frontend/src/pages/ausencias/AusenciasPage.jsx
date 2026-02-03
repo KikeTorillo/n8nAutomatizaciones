@@ -18,7 +18,7 @@ import {
   Lock,
 } from 'lucide-react';
 import { BackButton, Button, StateNavTabs, LoadingSpinner } from '@/components/ui';
-import useAuthStore, { selectUser } from '@/store/authStore';
+import { useAuthStore, selectUser } from '@/features/auth';
 import { useToast, useExportCSV } from '@/hooks/utils';
 import {
   useSolicitudesPendientesAusencias,

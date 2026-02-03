@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { organizacionesApi } from '@/services/api/endpoints';
-import useAuthStore, { selectUser } from '@/store/authStore';
+import { useAuthStore, selectUser } from '@/features/auth';
 import { Button } from '@/components/ui';
 import {
   Rocket,

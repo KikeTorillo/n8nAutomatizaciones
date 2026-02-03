@@ -19,7 +19,7 @@ import QuickEditDrawer from '@/components/profesionales/cards/QuickEditDrawer';
 import HorariosProfesionalModal from '@/components/profesionales/HorariosProfesionalModal';
 import ServiciosProfesionalModal from '@/components/profesionales/ServiciosProfesionalModal';
 import OnboardingProgresoSection from '@/components/profesionales/OnboardingProgresoSection';
-import useAuthStore, { selectUser } from '@/store/authStore';
+import { useAuthStore, selectUser } from '@/features/auth';
 
 /**
  * Tab Configuración del profesional

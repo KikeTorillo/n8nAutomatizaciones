@@ -1,6 +1,7 @@
 import axios from 'axios';
 import axiosRetry from 'axios-retry';
-import useAuthStore from '@/store/authStore';
+// NOTA: Importar directamente para evitar dependencia circular con features/auth/index.js
+import useAuthStore from '@/features/auth/store/authStore';
 import {
   getAccessToken,
   setAccessToken,
@@ -9,7 +10,7 @@ import {
   subscribeToRefresh,
   notifyRefreshSubscribers,
   resetTokenManager,
-} from '@/services/auth/tokenManager';
+} from '@/features/auth/services/tokenManager';
 
 const apiClient = axios.create({
   // Usar ruta relativa para que el proxy de Vite funcione

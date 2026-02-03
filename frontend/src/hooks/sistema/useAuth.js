@@ -1,12 +1,13 @@
 import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { authApi } from '@/services/api/endpoints';
-import useAuthStore, {
+import {
+  useAuthStore,
   selectSetAuth,
   selectLogout,
   selectIsAuthenticated,
   selectUser,
-} from '@/store/authStore';
+} from '@/features/auth';
 
 /**
  * Hook personalizado para manejo de autenticación

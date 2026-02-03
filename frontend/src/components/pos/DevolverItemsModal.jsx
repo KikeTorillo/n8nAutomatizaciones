@@ -7,7 +7,7 @@ import {
   Textarea
 } from '@/components/ui';
 import { useToast } from '@/hooks/utils';
-import useAuthStore, { selectUser } from '@/store/authStore';
+import { useAuthStore, selectUser } from '@/features/auth';
 import useSucursalStore, { selectSucursalActiva } from '@/store/sucursalStore';
 import { useVenta, useDevolverItems } from '@/hooks/pos';
 

@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { organizacionesApi, serviciosApi, bloqueosApi } from '@/services/api/endpoints';
-import useAuthStore, { selectUser } from '@/store/authStore';
+import { useAuthStore, selectUser } from '@/features/auth';
 import { aFormatoISO } from '@/utils/dateHelpers';
 
 /**

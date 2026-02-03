@@ -13,7 +13,6 @@
     "notes": "Módulo base, siempre activo"
   },
   "routes": {
-    "auth": "/api/v1/auth",
     "organizaciones": "/api/v1/organizaciones",
     "usuarios": "/api/v1/usuarios",
     "superadmin": "/api/v1/superadmin",

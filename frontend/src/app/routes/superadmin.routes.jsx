@@ -4,7 +4,7 @@
  */
 
 import { lazy, Suspense } from 'react';
-import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import { ProtectedRoute } from '@/features/auth';
 import { withSuspense, loadingFallback, ROLES } from './helpers/routeHelpers';
 
 // Super Admin Layout y páginas

@@ -1,7 +1,7 @@
 import EducacionFormalSection from '@/components/profesionales/EducacionFormalSection';
 import ExperienciaLaboralSection from '@/components/profesionales/ExperienciaLaboralSection';
 import HabilidadesSection from '@/components/profesionales/HabilidadesSection';
-import useAuthStore, { selectUser } from '@/store/authStore';
+import { useAuthStore, selectUser } from '@/features/auth';
 
 /**
  * Tab Currículum del profesional

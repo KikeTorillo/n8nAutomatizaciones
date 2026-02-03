@@ -15,7 +15,7 @@ import {
   Info,
   ExternalLink,
 } from 'lucide-react';
-import useAuthStore, { selectUser } from '@/store/authStore';
+import { useAuthStore, selectUser } from '@/features/auth';
 import { useProfesional } from '@/hooks/personas';
 import { useBloqueos } from '@/hooks/agendamiento';
 import { useSaldosVacaciones } from '@/hooks/personas';

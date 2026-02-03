@@ -13,7 +13,7 @@ import {
 import PropTypes from 'prop-types';
 import { Alert, Button, EmptyState, LoadingSpinner } from '@/components/ui';
 import InfoCard from '@/components/profesionales/cards/InfoCard';
-import useAuthStore, { selectUser } from '@/store/authStore';
+import { useAuthStore, selectUser } from '@/features/auth';
 import { useBloqueos } from '@/hooks/agendamiento';
 import { useSaldosVacaciones } from '@/hooks/personas';
 import {

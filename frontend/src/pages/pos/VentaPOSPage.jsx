@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { Check, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/utils';
-import useAuthStore, { selectUser } from '@/store/authStore';
+import { useAuthStore, selectUser } from '@/features/auth';
 import useSucursalStore, { selectGetSucursalId } from '@/store/sucursalStore';
 import { useCrearVenta } from '@/hooks/pos';
 import { useAccesoModulo } from '@/hooks/sistema';

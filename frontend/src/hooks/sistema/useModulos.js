@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { modulosApi } from '@/services/api/endpoints';
-import useAuthStore, { selectIsAuthenticated, selectUser } from '@/store/authStore';
+import { useAuthStore, selectIsAuthenticated, selectUser } from '@/features/auth';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 
 /**

@@ -3,12 +3,15 @@
  * EQUIPO CANVAS BLOCK
  * ====================================================================
  * Bloque de equipo editable para el canvas WYSIWYG.
+ * Soporta origen manual o desde ERP (profesionales).
  */
 
-import { memo } from 'react';
+import { memo, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
-import { Instagram, Facebook, Linkedin, Twitter } from 'lucide-react';
+import { Instagram, Facebook, Linkedin, Twitter, Database, Loader2 } from 'lucide-react';
 import { InlineText } from '../InlineEditor';
+import websiteApi from '@/services/api/modules/website.api';
 
 /**
  * Equipo Canvas Block
@@ -17,42 +20,67 @@ function EquipoCanvasBlock({ bloque, tema, isEditing, onContentChange }) {
   const contenido = bloque.contenido || {};
   const {
     titulo_seccion = 'Nuestro Equipo',
+    subtitulo_seccion = '',
     mostrar_redes = true,
+    origen = 'manual',
+    filtro_profesionales = {},
     items = [],
   } = contenido;
 
-  // Default items if empty
-  const miembros =
-    items.length > 0
-      ? items
-      : [
-          {
-            nombre: 'Ana García',
-            cargo: 'Directora',
-            descripcion: 'Experta con más de 10 años de experiencia.',
-            foto_url: null,
-            redes: {},
-          },
-          {
-            nombre: 'Carlos López',
-            cargo: 'Especialista',
-            descripcion: 'Apasionado por brindar el mejor servicio.',
-            foto_url: null,
-            redes: {},
-          },
-          {
-            nombre: 'María Rodríguez',
-            cargo: 'Coordinadora',
-            descripcion: 'Siempre atenta a cada detalle.',
-            foto_url: null,
-            redes: {},
-          },
-        ];
+  // Query para profesionales del ERP (solo si origen es 'profesionales')
+  const { data: profesionalesERP = [], isLoading: loadingERP } = useQuery({
+    queryKey: ['website-canvas-profesionales-erp', filtro_profesionales],
+    queryFn: async () => {
+      const response = await websiteApi.obtenerProfesionalesERP();
+      if (!response?.profesionales) return [];
+
+      let filtrados = response.profesionales;
+      const { modo = 'todos', departamento_ids = [], profesional_ids = [] } = filtro_profesionales;
+
+      // Aplicar filtros
+      if (modo === 'departamento' && departamento_ids.length > 0) {
+        filtrados = filtrados.filter(p => departamento_ids.includes(p.departamento_id));
+      } else if (modo === 'seleccion' && profesional_ids.length > 0) {
+        filtrados = filtrados.filter(p => profesional_ids.includes(p.id));
+      }
+
+      return filtrados;
+    },
+    enabled: origen === 'profesionales',
+    staleTime: 1000 * 60,
+  });
+
+  // Mapear profesionales ERP al formato del bloque
+  const profesionalesERPMapped = useMemo(() => {
+    return profesionalesERP.map(p => ({
+      nombre: p.nombre_completo,
+      cargo: p.puesto_nombre || 'Profesional',
+      descripcion: p.biografia || '',
+      foto_url: p.foto_url,
+      redes: {},
+    }));
+  }, [profesionalesERP]);
+
+  // Determinar miembros a renderizar según origen
+  const miembros = useMemo(() => {
+    if (origen === 'profesionales') {
+      return profesionalesERPMapped.length > 0 ? profesionalesERPMapped : [
+        { nombre: 'Cargando profesionales...', cargo: 'Desde el módulo Profesionales', descripcion: '', foto_url: null, redes: {} },
+      ];
+    }
+    // Modo manual - usar items o defaults
+    return items.length > 0 ? items : [
+      { nombre: 'Ana García', cargo: 'Directora', descripcion: 'Experta con más de 10 años de experiencia.', foto_url: null, redes: {} },
+      { nombre: 'Carlos López', cargo: 'Especialista', descripcion: 'Apasionado por brindar el mejor servicio.', foto_url: null, redes: {} },
+      { nombre: 'María Rodríguez', cargo: 'Coordinadora', descripcion: 'Siempre atenta a cada detalle.', foto_url: null, redes: {} },
+    ];
+  }, [origen, items, profesionalesERPMapped]);
 
   /**
-   * Update a single team member
+   * Update a single team member (solo modo manual)
    */
   const updateItem = (index, field, value) => {
+    if (origen === 'profesionales') return; // No editar items del ERP inline
     const newItems = [...miembros];
     newItems[index] = { ...newItems[index], [field]: value };
     onContentChange({ items: newItems });
@@ -78,16 +106,41 @@ function EquipoCanvasBlock({ bloque, tema, isEditing, onContentChange }) {
               value={titulo_seccion}
               onChange={(value) => onContentChange({ titulo_seccion: value })}
               placeholder="Título de sección"
-              className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white block"
+              className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4 block"
               as="h2"
             />
           ) : (
             <h2
-              className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white"
+              className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4"
               style={{ fontFamily: 'var(--fuente-titulos)' }}
             >
               {titulo_seccion}
             </h2>
+          )}
+
+          {subtitulo_seccion && (
+            isEditing ? (
+              <InlineText
+                value={subtitulo_seccion}
+                onChange={(value) => onContentChange({ subtitulo_seccion: value })}
+                placeholder="Subtítulo"
+                className="text-lg text-gray-600 dark:text-gray-400 block"
+                as="p"
+              />
+            ) : (
+              <p className="text-lg text-gray-600 dark:text-gray-400">
+                {subtitulo_seccion}
+              </p>
+            )
+          )}
+
+          {/* Indicador de origen ERP en modo edición */}
+          {isEditing && origen === 'profesionales' && (
+            <div className="mt-2 inline-flex items-center gap-1.5 px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded text-xs">
+              <Database className="w-3 h-3" />
+              Profesionales desde ERP
+              {loadingERP && <Loader2 className="w-3 h-3 animate-spin" />}
+            </div>
           )}
         </div>
 
@@ -124,7 +177,7 @@ function EquipoCanvasBlock({ bloque, tema, isEditing, onContentChange }) {
               {/* Info */}
               <div className="p-6 text-center">
                 {/* Name */}
-                {isEditing ? (
+                {isEditing && origen === 'manual' ? (
                   <InlineText
                     value={miembro.nombre}
                     onChange={(value) => updateItem(index, 'nombre', value)}
@@ -139,7 +192,7 @@ function EquipoCanvasBlock({ bloque, tema, isEditing, onContentChange }) {
                 )}
 
                 {/* Position */}
-                {isEditing ? (
+                {isEditing && origen === 'manual' ? (
                   <InlineText
                     value={miembro.cargo}
                     onChange={(value) => updateItem(index, 'cargo', value)}
@@ -158,7 +211,7 @@ function EquipoCanvasBlock({ bloque, tema, isEditing, onContentChange }) {
 
                 {/* Description */}
                 {miembro.descripcion && (
-                  isEditing ? (
+                  isEditing && origen === 'manual' ? (
                     <InlineText
                       value={miembro.descripcion}
                       onChange={(value) => updateItem(index, 'descripcion', value)}

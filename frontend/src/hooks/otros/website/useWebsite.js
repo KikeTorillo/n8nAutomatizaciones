@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { websiteApi } from '@/services/api/endpoints';
-import useAuthStore, { selectIsAuthenticated } from '@/store/authStore';
+import { useAuthStore, selectIsAuthenticated } from '@/features/auth';
 import { toast } from 'sonner';
 
 /**

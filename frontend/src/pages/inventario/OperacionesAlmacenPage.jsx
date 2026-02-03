@@ -43,7 +43,7 @@ import {
   COLORES_ESTADO_OPERACION,
 } from '@/hooks/almacen';
 import useSucursalStore, { selectGetSucursalId } from '@/store/sucursalStore';
-import useAuthStore, { selectUser } from '@/store/authStore';
+import { useAuthStore, selectUser } from '@/features/auth';
 
 /**
  * Iconos por tipo de operación

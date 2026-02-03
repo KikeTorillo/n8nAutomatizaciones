@@ -341,6 +341,76 @@ class WebsitePublicController {
     });
 
     /**
+     * Obtener profesionales públicos de la organización
+     * GET /api/v1/public/sitio/:slug/profesionales
+     *
+     * @public Sin autenticación requerida
+     * @query {string} departamentos - IDs de departamentos separados por coma
+     * @query {string} ids - IDs de profesionales separados por coma
+     * @returns Lista de profesionales activos de la organización
+     */
+    static obtenerProfesionales = asyncHandler(async (req, res) => {
+        const { slug } = req.params;
+        const { departamentos, ids } = req.query;
+
+        // Obtener config para validar que existe y obtener organizacion_id
+        const config = await WebsiteConfigModel.obtenerPorSlug(slug);
+        if (!config) {
+            return ResponseHelper.error(res, 'Sitio no encontrado', 404);
+        }
+
+        // Obtener profesionales activos de la organización
+        const profesionales = await RLSContextManager.withBypass(async (db) => {
+            let query = `
+                SELECT
+                    p.id,
+                    p.nombre_completo,
+                    p.foto_url,
+                    p.biografia,
+                    pu.nombre as puesto_nombre
+                FROM profesionales p
+                LEFT JOIN puestos pu ON p.puesto_id = pu.id
+                WHERE p.organizacion_id = $1
+                  AND p.activo = true
+                  AND p.estado = 'activo'
+                  AND p.eliminado_en IS NULL
+            `;
+            const params = [config.organizacion_id];
+            let paramIndex = 2;
+
+            // Filtrar por departamentos
+            if (departamentos) {
+                const deptIds = departamentos.split(',').map(d => d.trim()).filter(Boolean);
+                if (deptIds.length > 0) {
+                    query += ` AND p.departamento_id = ANY($${paramIndex}::uuid[])`;
+                    params.push(deptIds);
+                    paramIndex++;
+                }
+            }
+
+            // Filtrar por IDs específicos
+            if (ids) {
+                const profIds = ids.split(',').map(id => id.trim()).filter(Boolean);
+                if (profIds.length > 0) {
+                    query += ` AND p.id = ANY($${paramIndex}::uuid[])`;
+                    params.push(profIds);
+                }
+            }
+
+            query += ` ORDER BY p.nombre_completo ASC`;
+
+            const result = await db.query(query, params);
+            return result.rows;
+        });
+
+        return ResponseHelper.success(
+            res,
+            { profesionales },
+            'Profesionales obtenidos exitosamente'
+        );
+    });
+
+    /**
      * Obtener sitio via token de preview
      * GET /api/v1/public/preview/:token
      *

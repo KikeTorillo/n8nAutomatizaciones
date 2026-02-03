@@ -4,7 +4,7 @@
  */
 
 import { Suspense } from 'react';
-import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import { ProtectedRoute } from '@/features/auth';
 import ChunkErrorBoundary from '@/components/common/ChunkErrorBoundary';
 import ModuleGuard from '@/components/ui/templates/ModuleGuard';
 

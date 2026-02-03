@@ -1,6 +1,6 @@
 import { useToast } from '@/hooks/utils';
 import useSucursalStore, { selectGetSucursalId } from '@/store/sucursalStore';
-import useAuthStore, { selectUser } from '@/store/authStore';
+import { useAuthStore, selectUser } from '@/features/auth';
 
 import { usePOSCartState } from './usePOSCartState';
 import { usePOSCartCalculations } from './usePOSCartCalculations';

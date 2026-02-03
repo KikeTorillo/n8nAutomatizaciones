@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import useAuthStore, { selectIsAuthenticated, selectLogout } from '@/store/authStore';
-import { getAccessToken, setAccessToken } from '@/services/auth/tokenManager';
+import { useAuthStore, selectIsAuthenticated, selectLogout, getAccessToken, setAccessToken } from '@/features/auth';
 
 /**
  * Hook para inicializar autenticación al recargar página

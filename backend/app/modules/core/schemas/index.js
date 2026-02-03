@@ -7,7 +7,7 @@
  */
 
 module.exports = {
-  authSchemas: require('./auth.schemas'),
+  authSchemas: require('../../auth/schemas/auth.schemas'),
   organizacionSchemas: require('./organizacion.schemas'),
   usuarioSchemas: require('./usuario.schemas'),
   rolesSchemas: require('./roles.schemas'),

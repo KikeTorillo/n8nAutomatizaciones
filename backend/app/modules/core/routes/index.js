@@ -1,11 +1,12 @@
 /**
  * @fileoverview Routes del Módulo Core
  * @description Exporta todas las rutas del módulo core
- * @version 2.0.0
- * @date Diciembre 2025
+ * @version 2.1.0
+ * @date Febrero 2026
+ *
+ * NOTA: authRouter movido a modules/auth (ver módulo auth)
  */
 
-const authRouter = require('./auth');
 const organizacionesRouter = require('./organizaciones');
 const usuariosRouter = require('./usuarios');
 // NOTA: Sistema suscripciones v1 eliminado en Fase 0 (22 Ene 2026)
@@ -19,7 +20,7 @@ const monedasRouter = require('./monedas.routes');
 const rolesRouter = require('./roles');
 
 module.exports = {
-  auth: authRouter,
+  // auth: authRouter, // Movido a modules/auth
   organizaciones: organizacionesRouter,
   usuarios: usuariosRouter,
   // planes: planesRouter,  // v1 deprecated

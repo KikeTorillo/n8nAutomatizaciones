@@ -19,8 +19,8 @@ try {
   console.log('📦 Cargando rutas del módulo CORE...');
 
   // Intentar cargar todas las rutas del módulo CORE
-  const authRouter = require('../modules/core/routes/auth');
-  console.log('  ✅ auth.js cargado');
+  const authRouter = require('../modules/auth/routes');
+  console.log('  ✅ auth routes cargado (desde modules/auth)');
 
   const setupRouter = require('../modules/core/routes/setup');
   console.log('  ✅ setup.js cargado');
@@ -56,7 +56,7 @@ try {
 
   console.log('\n✅ ¡ÉXITO! Todos los archivos del módulo CORE cargan correctamente');
   console.log('\n📊 Resumen:');
-  console.log('  • 5 routes cargadas (legacy suscripciones v1 eliminado)');
+  console.log('  • 4 routes de core + auth desde modules/auth');
   console.log('  • Controllers, Models y Schemas cargados');
   console.log('  • Ver módulo suscripciones-negocio para pagos/suscripciones');
   console.log('\n🎉 El módulo CORE está listo para funcionar!\n');

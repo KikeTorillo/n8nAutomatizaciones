@@ -26,7 +26,7 @@ import {
   KeyRound,
 } from 'lucide-react';
 
-import useAuthStore, { selectLogout, selectUser } from '@/store/authStore';
+import { useAuthStore, selectLogout, selectUser } from '@/features/auth';
 import useOnboardingStore, { selectResetOnboarding } from '@/store/onboardingStore';
 import useSucursalStore, { selectClear as selectClearSucursal } from '@/store/sucursalStore';
 import usePermisosStore, { selectClear as selectClearPermisos } from '@/store/permisosStore';

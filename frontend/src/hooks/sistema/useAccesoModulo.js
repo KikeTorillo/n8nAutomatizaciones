@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo } from 'react';
 import { STALE_TIMES } from '@/app/queryClient';
 import { profesionalesApi, permisosApi } from '@/services/api/endpoints';
-import useAuthStore, { selectUser, selectIsAuthenticated, selectIsAdminValue } from '@/store/authStore';
+import { useAuthStore, selectUser, selectIsAuthenticated, selectIsAdminValue } from '@/features/auth';
 import usePermisosStore, {
   createSelectTienePermiso,
   selectSetPermisoVerificado,

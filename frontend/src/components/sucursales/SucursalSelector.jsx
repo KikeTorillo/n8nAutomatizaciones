@@ -7,7 +7,7 @@ import useSucursalStore, {
   selectSetSucursalesDisponibles,
 } from '@/store/sucursalStore';
 import { useSucursalesUsuario, useCambiarSucursal, useInvalidarPermisosAlCambiarSucursal } from '@/hooks/sistema';
-import useAuthStore, { selectUser } from '@/store/authStore';
+import { useAuthStore, selectUser } from '@/features/auth';
 import { useClickOutsideRef } from '@/hooks/utils';
 
 /**

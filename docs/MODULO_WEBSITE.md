@@ -82,15 +82,41 @@ Body: { campo, industria, contexto: { nombreNegocio, tono, longitud } }
 ## Endpoints Públicos (Sin Auth)
 
 ```
-GET  /api/v1/public/sitio/:slug           # Sitio completo
-GET  /api/v1/public/sitio/:slug/:pagina   # Página específica
-POST /api/v1/public/sitio/:slug/contacto  # Formulario contacto
-GET  /api/v1/public/preview/:token        # Preview no publicado
+GET  /api/v1/public/sitio/:slug              # Sitio completo
+GET  /api/v1/public/sitio/:slug/:pagina      # Página específica
+POST /api/v1/public/sitio/:slug/contacto     # Formulario contacto
+GET  /api/v1/public/sitio/:slug/servicios    # Servicios para bloque dinámico
+GET  /api/v1/public/sitio/:slug/profesionales # Profesionales para bloque equipo
+GET  /api/v1/public/preview/:token           # Preview no publicado
 ```
 
 ---
 
 ## Mejoras Recientes
+
+### Bloque Equipo - Origen Profesionales ERP (3 Feb 2026)
+
+| Funcionalidad | Detalle |
+|---------------|---------|
+| **Origen de datos** | Selector: "Manual" o "Módulo Profesionales" |
+| **Carga dinámica ERP** | Query a tabla `profesionales` con JOINs a `puestos` y `departamentos` |
+| **Filtros** | Por departamento o selección manual de profesionales |
+| **Indicador visual** | Badge azul "Profesionales desde ERP" en modo edición |
+| **Endpoint privado** | `GET /api/v1/website/profesionales-erp` |
+| **Endpoint público** | `GET /api/v1/public/sitio/:slug/profesionales` |
+
+**Archivos modificados:**
+- `bloques.controller.js` - Agregado `obtenerProfesionalesERP()`
+- `website.routes.js` - Ruta `/profesionales-erp`
+- `public.controller.js` - Agregado `obtenerProfesionales()` público
+- `public.routes.js` - Ruta `/sitio/:slug/profesionales`
+- `website.api.js` - Método `obtenerProfesionalesERP()`
+- `EquipoCanvasBlock.jsx` - Query + manejo origen + indicador ERP
+- `EquipoPublico.jsx` - Carga dinámica según origen
+
+**Patrón:** Idéntico a Servicios ERP, pero consulta tabla `profesionales`.
+
+---
 
 ### Timeline Block - Editor Avanzado (2 Feb 2026)
 
@@ -150,9 +176,9 @@ PaginasModel.crearConBloques(datos, websiteId, db) // Crear página + bloques en
 | # | Bloque | Estado | Notas |
 |---|--------|--------|-------|
 | 1 | Hero | ⏳ Pendiente | Imagen, título, CTA, alineación |
-| 2 | Servicios | ⏳ Pendiente | Columnas, precios, origen datos |
+| 2 | Servicios | ✅ Validado | Columnas, precios, origen datos (manual/ERP) |
 | 3 | Testimonios | ⏳ Pendiente | Grid/Carousel, origen datos |
-| 4 | Equipo | ⏳ Pendiente | Redes sociales, origen datos |
+| 4 | Equipo | ✅ Validado | Redes sociales, origen datos (manual/ERP) |
 | 5 | CTA | ⏳ Pendiente | Fondo tipo (color/imagen/gradiente) |
 | 6 | Contacto | ⏳ Pendiente | Formulario, info, mapa |
 | 7 | Footer | ⏳ Pendiente | Logo, redes, links |
@@ -168,4 +194,4 @@ PaginasModel.crearConBloques(datos, websiteId, db) // Crear página + bloques en
 
 ---
 
-*Actualizado: 2 Febrero 2026*
+*Actualizado: 3 Febrero 2026*

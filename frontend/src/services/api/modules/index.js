@@ -11,7 +11,8 @@
  */
 
 // Auth y Sistema
-export { authApi } from './auth.api';
+// NOTA: Importar directamente para evitar dependencia circular con el barrel @/features/auth
+export { authApi } from '@/features/auth/api/auth.api';
 export { organizacionesApi } from './organizaciones.api';
 export { usuariosApi } from './usuarios.api';
 export { modulosApi } from './modulos.api';

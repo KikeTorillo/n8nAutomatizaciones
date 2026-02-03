@@ -10,7 +10,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 import { Eye, EyeOff, CheckCircle2, AlertCircle } from 'lucide-react';
-import useAuthStore, { selectSetAuth } from '@/store/authStore';
+import { useAuthStore, selectSetAuth } from '@/features/auth';
 import { authApi } from '@/services/api/endpoints';
 import apiClient from '@/services/api/client';
 import FormField from '@/components/forms/FormField';

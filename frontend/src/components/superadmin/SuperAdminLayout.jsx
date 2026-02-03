@@ -9,7 +9,7 @@ import { LogOut, Shield, Home } from 'lucide-react';
 import { authApi } from '@/services/api/endpoints';
 import { Button, ThemeToggle, ConfirmDialog } from '@/components/ui';
 import { useModalManager } from '@/hooks/utils';
-import useAuthStore, { selectUser, selectLogout } from '../../store/authStore';
+import useAuthStore, { selectUser, selectLogout } from '@/features/auth/store/authStore';
 import useOnboardingStore, { selectResetOnboarding } from '../../store/onboardingStore';
 import useSucursalStore, { selectClear as selectClearSucursal } from '../../store/sucursalStore';
 import usePermisosStore, { selectClear as selectClearPermisos } from '../../store/permisosStore';

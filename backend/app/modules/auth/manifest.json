@@ -1,0 +1,30 @@
+{
+  "name": "auth",
+  "display_name": "Autenticación y Seguridad",
+  "version": "1.0.0",
+  "description": "Sistema de autenticación JWT, OAuth, Magic Links y gestión de sesiones",
+  "depends": [],
+  "dependencies_hard": {},
+  "dependencies_optional": {},
+  "pricing": {
+    "base_mensual": 0,
+    "currency": "MXN",
+    "incluido_en_todos_planes": true,
+    "notes": "Módulo base de seguridad, siempre activo"
+  },
+  "routes": {
+    "auth": "/api/v1/auth"
+  },
+  "features": [
+    "JWT access/refresh tokens",
+    "OAuth Google",
+    "Magic Links",
+    "Password reset con email",
+    "Token blacklist Redis",
+    "Onboarding simplificado",
+    "Verificación de email"
+  ],
+  "priority": -10,
+  "required": true,
+  "can_disable": false
+}

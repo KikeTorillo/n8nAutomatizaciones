@@ -56,6 +56,16 @@ router.get('/sitio/:slug/servicios',
 );
 
 /**
+ * GET /api/v1/public/sitio/:slug/profesionales
+ * Obtener profesionales públicos de la organización (para bloque equipo)
+ * @public Sin autenticación
+ */
+router.get('/sitio/:slug/profesionales',
+    rateLimiting.apiRateLimit,
+    WebsitePublicController.obtenerProfesionales
+);
+
+/**
  * GET /api/v1/public/sitio/:slug/:pagina
  * Obtener página específica con bloques
  * @public Sin autenticación

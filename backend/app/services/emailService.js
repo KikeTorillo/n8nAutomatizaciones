@@ -5,10 +5,12 @@
 
 const transporter = require('./email/transporter');
 const logger = require('../utils/logger');
-const { generatePasswordResetEmail, generatePasswordResetText } = require('./email/templates/passwordReset');
+// Templates de auth - desde módulo auth
+const { generatePasswordResetEmail, generatePasswordResetText } = require('../modules/auth/email-templates/passwordReset');
+const { generateActivacionEmail, generateActivacionText } = require('../modules/auth/email-templates/activacionCuenta');
+const { generateMagicLinkEmail, generateMagicLinkText } = require('../modules/auth/email-templates/magicLink');
+// Templates de invitaciones - se mantienen en services/email/templates
 const { generateInvitacionEmail, generateInvitacionText } = require('./email/templates/invitacionProfesional');
-const { generateActivacionEmail, generateActivacionText } = require('./email/templates/activacionCuenta');
-const { generateMagicLinkEmail, generateMagicLinkText } = require('./email/templates/magicLink');
 
 class EmailService {
     constructor() {

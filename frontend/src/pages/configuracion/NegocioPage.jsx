@@ -21,7 +21,7 @@ import {
   Briefcase,
 } from 'lucide-react';
 
-import useAuthStore, { selectUser } from '@/store/authStore';
+import { useAuthStore, selectUser } from '@/features/auth';
 import { organizacionesApi, monedasApi } from '@/services/api/endpoints';
 import { useToast } from '@/hooks/utils';
 import { useUploadArchivo } from '@/hooks/utils';

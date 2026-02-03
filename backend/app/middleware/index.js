@@ -3,7 +3,8 @@
  * Facilita la importación y uso en rutas y aplicación
  */
 
-const auth = require('./auth');
+// Auth middleware - Re-export desde módulo auth
+const auth = require('../modules/auth/middleware');
 const tenant = require('./tenant');
 const tenantContext = require('./tenantContext');
 const validation = require('./validation');
@@ -15,7 +16,8 @@ const suscripcionActiva = require('./suscripcionActiva');
 
 const modules = require('./modules');
 const storage = require('./storage');
-const onboarding = require('./onboarding');
+// Onboarding middleware - Re-export desde módulo auth
+const onboarding = require('../modules/auth/middleware/onboarding');
 const permisos = require('./permisos');
 
 module.exports = {

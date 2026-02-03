@@ -4,7 +4,7 @@
  */
 
 // Exportar rutas individuales por módulo
-export { authRoutes } from './auth.routes';
+export { authRoutes } from '@/features/auth';
 export { publicRoutes } from './public.routes';
 export { dashboardRoutes } from './dashboard.routes';
 export { personasRoutes } from './personas.routes';
@@ -20,7 +20,7 @@ export { suscripcionesNegocioRoutes } from './suscripciones-negocio.routes';
 export * from './helpers/routeHelpers';
 
 // Importar todas las rutas para combinarlas
-import { authRoutes } from './auth.routes';
+import { authRoutes } from '@/features/auth';
 import { publicRoutes } from './public.routes';
 import { dashboardRoutes } from './dashboard.routes';
 import { personasRoutes } from './personas.routes';

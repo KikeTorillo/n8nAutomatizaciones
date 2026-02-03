@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import useAuthStore, { selectUser } from '@/store/authStore';
+import { useAuthStore, selectUser } from '@/features/auth';
 import { organizacionesApi } from '@/services/api/modules/organizaciones.api';
 
 /**

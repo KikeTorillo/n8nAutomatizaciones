@@ -8,7 +8,7 @@ import MisComisionesSection from '@/components/profesionales/MisComisionesSectio
 import { FORMAS_PAGO } from '@/hooks/personas';
 import { useCategoriasPagoOptions } from '@/hooks/personas';
 import { useCurrency } from '@/hooks/utils';
-import useAuthStore, { selectUser } from '@/store/authStore';
+import { useAuthStore, selectUser } from '@/features/auth';
 
 /**
  * Tab Compensación del profesional

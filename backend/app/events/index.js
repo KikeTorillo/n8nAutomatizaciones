@@ -43,5 +43,6 @@ function initialize(options = {}) {
 
 module.exports = {
     initialize,
-    authEvents: require('./authEvents')
+    // Re-export desde módulo auth
+    authEvents: require('../modules/auth/events/authEvents')
 };

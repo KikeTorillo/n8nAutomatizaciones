@@ -8,7 +8,7 @@ import { useToast } from '@/hooks/utils';
 import { authApi } from '@/services/api/endpoints';
 import FormField from '@/components/forms/FormField';
 import { Button } from '@/components/ui';
-import PasswordStrengthIndicator from '@/components/auth/PasswordStrengthIndicator';
+import { PasswordStrengthIndicator } from '@/features/auth';
 
 /**
  * Schema de validación para cambio de contraseña

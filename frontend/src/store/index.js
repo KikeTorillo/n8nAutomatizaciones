@@ -7,8 +7,9 @@
  */
 
 // ========== AUTH STORE ==========
-export { default as useAuthStore } from './authStore';
+// Re-exportado desde @/features/auth (migrado Feb 2026)
 export {
+  useAuthStore,
   selectUser,
   selectIsAuthenticated,
   selectSetAuth,
@@ -25,7 +26,7 @@ export {
   selectOrganizacionId,
   selectUserRol,
   selectUserId,
-} from './authStore';
+} from '@/features/auth';
 
 // ========== SUCURSAL STORE ==========
 export { default as useSucursalStore } from './sucursalStore';

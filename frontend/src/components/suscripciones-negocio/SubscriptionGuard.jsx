@@ -20,7 +20,7 @@
 import { useEffect, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
-import useAuthStore, { selectIsAuthenticated, selectUser } from '@/store/authStore';
+import { useAuthStore, selectIsAuthenticated, selectUser } from '@/features/auth';
 import { useMiSuscripcion } from '@/hooks/suscripciones-negocio';
 import SuscripcionBanner from './SuscripcionBanner';
 
