@@ -124,6 +124,97 @@ const invitadosSchemas = {
         params: Joi.object({
             eventoId: Joi.number().integer().positive().required()
         })
+    },
+
+    // ========================================================================
+    // GRUPOS Y ETIQUETAS
+    // ========================================================================
+
+    /**
+     * Obtener grupos familiares únicos
+     * GET /api/v1/eventos-digitales/eventos/:eventoId/grupos
+     */
+    obtenerGrupos: {
+        params: Joi.object({
+            eventoId: Joi.number().integer().positive().required()
+        })
+    },
+
+    /**
+     * Obtener etiquetas únicas
+     * GET /api/v1/eventos-digitales/eventos/:eventoId/etiquetas
+     */
+    obtenerEtiquetas: {
+        params: Joi.object({
+            eventoId: Joi.number().integer().positive().required()
+        })
+    },
+
+    // ========================================================================
+    // QR + CHECK-IN
+    // ========================================================================
+
+    /**
+     * Generar QR individual
+     * GET /api/v1/eventos-digitales/eventos/:eventoId/invitados/:invitadoId/qr
+     */
+    generarQR: {
+        params: Joi.object({
+            eventoId: Joi.number().integer().positive().required(),
+            invitadoId: Joi.number().integer().positive().required()
+        }),
+        query: Joi.object({
+            formato: Joi.string().valid('png', 'base64').optional().default('png')
+        })
+    },
+
+    /**
+     * Generar QR masivo (ZIP)
+     * GET /api/v1/eventos-digitales/eventos/:eventoId/qr-masivo
+     */
+    generarQRMasivo: {
+        params: Joi.object({
+            eventoId: Joi.number().integer().positive().required()
+        })
+    },
+
+    /**
+     * Registrar check-in
+     * POST /api/v1/eventos-digitales/eventos/:eventoId/checkin
+     */
+    registrarCheckin: {
+        params: Joi.object({
+            eventoId: Joi.number().integer().positive().required()
+        }),
+        body: Joi.object({
+            token: Joi.string().uuid().required().messages({
+                'any.required': 'El token del invitado es requerido',
+                'string.guid': 'Token inválido'
+            })
+        })
+    },
+
+    /**
+     * Obtener estadísticas de check-in
+     * GET /api/v1/eventos-digitales/eventos/:eventoId/checkin/stats
+     */
+    obtenerEstadisticasCheckin: {
+        params: Joi.object({
+            eventoId: Joi.number().integer().positive().required()
+        })
+    },
+
+    /**
+     * Listar check-ins
+     * GET /api/v1/eventos-digitales/eventos/:eventoId/checkin/lista
+     */
+    listarCheckins: {
+        params: Joi.object({
+            eventoId: Joi.number().integer().positive().required()
+        }),
+        query: Joi.object({
+            limite: Joi.number().integer().min(1).max(200).optional().default(50)
+        })
     }
 };
 

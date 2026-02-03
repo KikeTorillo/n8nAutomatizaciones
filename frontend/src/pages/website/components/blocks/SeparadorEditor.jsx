@@ -1,10 +1,29 @@
+/**
+ * ====================================================================
+ * SEPARADOR EDITOR (Refactorizado)
+ * ====================================================================
+ *
+ * Editor del bloque Separador.
+ * Usa BaseBlockEditor y ColorPickerField.
+ *
+ * @version 2.0.0
+ * @since 2026-02-03
+ */
+
 import { useMemo } from 'react';
-import { Save } from 'lucide-react';
-import { Button, Input, Select } from '@/components/ui';
+import { Select } from '@/components/ui';
 import { useBlockEditor } from '../../hooks';
+import BaseBlockEditor from './BaseBlockEditor';
+import { ColorPickerField } from './fields';
 
 /**
  * SeparadorEditor - Editor del bloque Separador
+ *
+ * @param {Object} props
+ * @param {Object} props.contenido - Contenido del bloque
+ * @param {Function} props.onGuardar - Callback para guardar
+ * @param {Object} props.tema - Tema del sitio
+ * @param {boolean} props.isSaving - Estado de guardado
  */
 function SeparadorEditor({ contenido, onGuardar, tema, isSaving }) {
   // Valores por defecto del formulario
@@ -24,7 +43,9 @@ function SeparadorEditor({ contenido, onGuardar, tema, isSaving }) {
   );
 
   const colorActual = form.color || tema?.colores?.primario || '#E5E7EB';
+  const isEspacioOnly = form.estilo === 'espacio';
 
+  // Helpers para preview
   const getGrosorPx = () => {
     switch (form.grosor) {
       case 'thin': return '1px';
@@ -50,6 +71,35 @@ function SeparadorEditor({ contenido, onGuardar, tema, isSaving }) {
     }
   };
 
+  // Opciones de select
+  const estiloOptions = [
+    { value: 'linea', label: 'Linea solida' },
+    { value: 'punteado', label: 'Punteado' },
+    { value: 'gradiente', label: 'Gradiente' },
+    { value: 'ondulado', label: 'Ondulado' },
+    { value: 'espacio', label: 'Solo espacio' },
+  ];
+
+  const grosorOptions = [
+    { value: 'thin', label: 'Delgado' },
+    { value: 'normal', label: 'Normal' },
+    { value: 'thick', label: 'Grueso' },
+  ];
+
+  const anchoOptions = [
+    { value: 'full', label: 'Completo' },
+    { value: 'large', label: 'Grande (75%)' },
+    { value: 'medium', label: 'Mediano (50%)' },
+    { value: 'small', label: 'Pequeno (25%)' },
+  ];
+
+  const espaciadoOptions = [
+    { value: 'small', label: 'Pequeno' },
+    { value: 'normal', label: 'Normal' },
+    { value: 'large', label: 'Grande' },
+  ];
+
+  // Renderizado del separador para preview
   const renderSeparador = () => {
     const baseClasses = `mx-auto ${getAnchoClass()}`;
 
@@ -107,35 +157,23 @@ function SeparadorEditor({ contenido, onGuardar, tema, isSaving }) {
     }
   };
 
-  const estiloOptions = [
-    { value: 'linea', label: 'Línea sólida' },
-    { value: 'punteado', label: 'Punteado' },
-    { value: 'gradiente', label: 'Gradiente' },
-    { value: 'ondulado', label: 'Ondulado' },
-    { value: 'espacio', label: 'Solo espacio' },
-  ];
-
-  const grosorOptions = [
-    { value: 'thin', label: 'Delgado' },
-    { value: 'normal', label: 'Normal' },
-    { value: 'thick', label: 'Grueso' },
-  ];
-
-  const anchoOptions = [
-    { value: 'full', label: 'Completo' },
-    { value: 'large', label: 'Grande (75%)' },
-    { value: 'medium', label: 'Mediano (50%)' },
-    { value: 'small', label: 'Pequeño (25%)' },
-  ];
-
-  const espaciadoOptions = [
-    { value: 'small', label: 'Pequeño' },
-    { value: 'normal', label: 'Normal' },
-    { value: 'large', label: 'Grande' },
-  ];
+  // Componente de preview
+  const preview = useMemo(() => (
+    <div className={getEspaciadoClass()}>
+      {renderSeparador()}
+    </div>
+  ), [form.estilo, form.grosor, form.ancho, form.espaciado, colorActual]);
 
   return (
-    <form onSubmit={handleSubmit(onGuardar)} className="space-y-4">
+    <BaseBlockEditor
+      tipo="separador"
+      mostrarAIBanner={false}
+      cambios={cambios}
+      handleSubmit={handleSubmit}
+      onGuardar={onGuardar}
+      isSaving={isSaving}
+      preview={preview}
+    >
       <div className="grid grid-cols-2 gap-4">
         <Select
           label="Estilo"
@@ -149,7 +187,7 @@ function SeparadorEditor({ contenido, onGuardar, tema, isSaving }) {
           value={form.grosor}
           onChange={(e) => handleFieldChange('grosor', e.target.value)}
           options={grosorOptions}
-          disabled={form.estilo === 'espacio'}
+          disabled={isEspacioOnly}
           className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
       </div>
@@ -171,59 +209,14 @@ function SeparadorEditor({ contenido, onGuardar, tema, isSaving }) {
         />
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-          Color (opcional)
-        </label>
-        <div className="flex items-center gap-2">
-          <input
-            type="color"
-            value={form.color || colorActual}
-            onChange={(e) => handleFieldChange('color', e.target.value)}
-            className="w-10 h-10 rounded border border-gray-300 dark:border-gray-600 cursor-pointer"
-            disabled={form.estilo === 'espacio'}
-          />
-          <Input
-            value={form.color}
-            onChange={(e) => handleFieldChange('color', e.target.value)}
-            placeholder="Usar color del tema"
-            disabled={form.estilo === 'espacio'}
-            className="flex-1 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
-          />
-          {form.color && (
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => handleFieldChange('color', '')}
-            >
-              Resetear
-            </Button>
-          )}
-        </div>
-      </div>
-
-      {/* Preview */}
-      <div className="border border-gray-200 dark:border-gray-600 rounded-lg">
-        <div className={getEspaciadoClass()}>
-          {renderSeparador()}
-        </div>
-      </div>
-
-      {/* Botón guardar */}
-      {cambios && (
-        <div className="flex justify-end pt-2">
-          <Button
-            type="submit"
-            variant="primary"
-            isLoading={isSaving}
-          >
-            <Save className="w-4 h-4 mr-2" />
-            Guardar cambios
-          </Button>
-        </div>
-      )}
-    </form>
+      <ColorPickerField
+        label="Color (opcional)"
+        value={form.color}
+        onChange={(val) => handleFieldChange('color', val)}
+        defaultColor={colorActual}
+        disabled={isEspacioOnly}
+      />
+    </BaseBlockEditor>
   );
 }
 

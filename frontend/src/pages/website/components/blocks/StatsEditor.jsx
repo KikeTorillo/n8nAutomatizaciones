@@ -1,28 +1,44 @@
-import { useCallback, useMemo } from 'react';
-import { Save, Plus, Trash2, TrendingUp, GripVertical, Users, Calendar, Briefcase, Star, Award, Heart, Zap } from 'lucide-react';
-import {
-  Button,
-  Input,
-  Select,
-  ToggleSwitch
-} from '@/components/ui';
-import { AIGenerateButton, AISuggestionBanner } from '../AIGenerator';
-import { useBlockEditor, useArrayItems } from '../../hooks';
+/**
+ * ====================================================================
+ * STATS EDITOR (Refactorizado)
+ * ====================================================================
+ *
+ * Editor del bloque Stats (Estadisticas/Numeros).
+ * Usa BaseBlockEditor, ArrayItemsEditor, SectionTitleField e IconPickerField.
+ *
+ * @version 2.0.0
+ * @since 2026-02-03
+ */
 
-// Iconos disponibles
-const ICON_OPTIONS = [
-  { value: 'users', label: 'Usuarios', Icon: Users },
-  { value: 'calendar', label: 'Calendario', Icon: Calendar },
-  { value: 'briefcase', label: 'Portafolio', Icon: Briefcase },
-  { value: 'star', label: 'Estrella', Icon: Star },
-  { value: 'award', label: 'Premio', Icon: Award },
-  { value: 'heart', label: 'Corazon', Icon: Heart },
-  { value: 'zap', label: 'Rayo', Icon: Zap },
-  { value: 'trending', label: 'Tendencia', Icon: TrendingUp },
-];
+import { useCallback, useMemo } from 'react';
+import { BarChart3 } from 'lucide-react';
+import { Input, Select, ToggleSwitch } from '@/components/ui';
+import { IconPicker } from '@/components/ui';
+import { useBlockEditor, useArrayItems } from '../../hooks';
+import BaseBlockEditor from './BaseBlockEditor';
+import { SectionTitleField, ArrayItemsEditor } from './fields';
+
+// Mapeo de iconos para preview (subset de los más comunes en stats)
+const ICONOS_MAP = {
+  users: () => <span className="text-lg">👥</span>,
+  calendar: () => <span className="text-lg">📅</span>,
+  briefcase: () => <span className="text-lg">💼</span>,
+  star: () => <span className="text-lg">⭐</span>,
+  award: () => <span className="text-lg">🏆</span>,
+  heart: () => <span className="text-lg">❤️</span>,
+  zap: () => <span className="text-lg">⚡</span>,
+  trending: () => <span className="text-lg">📈</span>,
+};
 
 /**
- * StatsEditor - Editor del bloque Stats (Estadisticas/Numeros)
+ * StatsEditor - Editor del bloque Stats
+ *
+ * @param {Object} props
+ * @param {Object} props.contenido - Contenido del bloque
+ * @param {Function} props.onGuardar - Callback para guardar
+ * @param {Object} props.tema - Tema del sitio
+ * @param {boolean} props.isSaving - Estado de guardado
+ * @param {string} props.industria - Industria para AI
  */
 function StatsEditor({ contenido, onGuardar, tema, isSaving, industria = 'default' }) {
   // Valores por defecto del formulario
@@ -33,10 +49,10 @@ function StatsEditor({ contenido, onGuardar, tema, isSaving, industria = 'defaul
     animar: true,
     duracion_animacion: 2000,
     items: [
-      { numero: 500, sufijo: '+', prefijo: '', titulo: 'Clientes Satisfechos', icono: 'users' },
-      { numero: 10, sufijo: '', prefijo: '', titulo: 'Anos de Experiencia', icono: 'calendar' },
-      { numero: 1000, sufijo: '+', prefijo: '', titulo: 'Proyectos Completados', icono: 'briefcase' },
-      { numero: 98, sufijo: '%', prefijo: '', titulo: 'Satisfaccion', icono: 'star' },
+      { numero: 500, sufijo: '+', prefijo: '', titulo: 'Clientes Satisfechos', icono: 'Users' },
+      { numero: 10, sufijo: '', prefijo: '', titulo: 'Anos de Experiencia', icono: 'Calendar' },
+      { numero: 1000, sufijo: '+', prefijo: '', titulo: 'Proyectos Completados', icono: 'Briefcase' },
+      { numero: 98, sufijo: '%', prefijo: '', titulo: 'Satisfaccion', icono: 'Star' },
     ],
   }), []);
 
@@ -46,7 +62,7 @@ function StatsEditor({ contenido, onGuardar, tema, isSaving, industria = 'defaul
     sufijo: '',
     prefijo: '',
     titulo: 'Nueva Estadistica',
-    icono: 'star'
+    icono: 'Star'
   }), []);
 
   // Hook para manejo del formulario
@@ -80,36 +96,99 @@ function StatsEditor({ contenido, onGuardar, tema, isSaving, industria = 'defaul
     { value: 4, label: '4 columnas' },
   ];
 
-  const iconoOptions = ICON_OPTIONS.map(opt => ({ value: opt.value, label: opt.label }));
+  // Renderizador de cada stat item
+  const renderStatItem = useCallback((stat, index) => (
+    <div className="space-y-3">
+      <div className="grid grid-cols-3 gap-2">
+        <Input
+          label="Prefijo"
+          value={stat.prefijo}
+          onChange={(e) => handleChangeStat(index, 'prefijo', e.target.value)}
+          placeholder="$"
+          size="sm"
+          className="dark:bg-gray-600 dark:border-gray-500"
+        />
+        <Input
+          label="Numero"
+          type="number"
+          value={stat.numero}
+          onChange={(e) => handleChangeStat(index, 'numero', parseInt(e.target.value) || 0)}
+          size="sm"
+          className="dark:bg-gray-600 dark:border-gray-500"
+        />
+        <Input
+          label="Sufijo"
+          value={stat.sufijo}
+          onChange={(e) => handleChangeStat(index, 'sufijo', e.target.value)}
+          placeholder="+, %, K"
+          size="sm"
+          className="dark:bg-gray-600 dark:border-gray-500"
+        />
+      </div>
+
+      <Input
+        label="Titulo"
+        value={stat.titulo}
+        onChange={(e) => handleChangeStat(index, 'titulo', e.target.value)}
+        placeholder="Clientes"
+        size="sm"
+        className="dark:bg-gray-600 dark:border-gray-500"
+      />
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          Icono
+        </label>
+        <IconPicker
+          value={stat.icono}
+          onChange={(val) => handleChangeStat(index, 'icono', val)}
+        />
+      </div>
+    </div>
+  ), [handleChangeStat]);
+
+  // Componente de preview
+  const preview = useMemo(() => (
+    <>
+      <h4 className="font-bold text-center mb-4 text-gray-900 dark:text-white">
+        {form.titulo_seccion}
+      </h4>
+      <div className={`grid gap-4 grid-cols-${Math.min(form.items.length, form.columnas)}`}>
+        {form.items.slice(0, 4).map((stat, index) => {
+          const IconFn = ICONOS_MAP[stat.icono?.toLowerCase()];
+          return (
+            <div key={index} className="text-center">
+              {IconFn ? <IconFn /> : <span className="text-lg">📊</span>}
+              <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                {stat.prefijo}{stat.numero}{stat.sufijo}
+              </div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">{stat.titulo}</div>
+            </div>
+          );
+        })}
+      </div>
+    </>
+  ), [form]);
 
   return (
-    <form onSubmit={handleSubmit(onGuardar)} className="space-y-4">
-      {statsVacios && (
-        <AISuggestionBanner
-          tipo="stats"
-          industria={industria}
-          onGenerate={handleAIGenerate}
-        />
-      )}
-
+    <BaseBlockEditor
+      tipo="stats"
+      industria={industria}
+      mostrarAIBanner={statsVacios}
+      onAIGenerate={handleAIGenerate}
+      cambios={cambios}
+      handleSubmit={handleSubmit}
+      onGuardar={onGuardar}
+      isSaving={isSaving}
+      preview={preview}
+    >
       {/* Configuracion general */}
       <div className="grid grid-cols-2 gap-4">
-        <Input
-          label={
-            <span className="flex items-center gap-2">
-              Titulo de seccion
-              <AIGenerateButton
-                tipo="stats"
-                campo="titulo"
-                industria={industria}
-                onGenerate={(text) => handleFieldChange('titulo_seccion', text)}
-                size="sm"
-              />
-            </span>
-          }
+        <SectionTitleField
           value={form.titulo_seccion}
-          onChange={(e) => handleFieldChange('titulo_seccion', e.target.value)}
-          className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
+          onChange={(val) => handleFieldChange('titulo_seccion', val)}
+          tipo="stats"
+          industria={industria}
         />
         <Select
           label="Columnas"
@@ -149,125 +228,17 @@ function StatsEditor({ contenido, onGuardar, tema, isSaving, industria = 'defaul
       </div>
 
       {/* Lista de estadisticas */}
-      <div>
-        <div className="flex items-center justify-between mb-2">
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Estadisticas ({form.items.length})
-          </label>
-          <Button type="button" variant="ghost" size="sm" onClick={handleAgregarStat}>
-            <Plus className="w-4 h-4 mr-1" />
-            Agregar Stat
-          </Button>
-        </div>
-
-        <div className="grid grid-cols-2 gap-3">
-          {form.items.map((stat, index) => {
-            const IconComponent = ICON_OPTIONS.find(opt => opt.value === stat.icono)?.Icon || Star;
-
-            return (
-              <div
-                key={index}
-                className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600"
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <GripVertical className="w-4 h-4 text-gray-400" />
-                    <IconComponent className="w-4 h-4" style={{ color: tema?.color_primario || '#753572' }} />
-                  </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleEliminarStat(index)}
-                    className="text-gray-400 hover:text-red-500"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
-
-                <div className="space-y-2">
-                  <div className="grid grid-cols-3 gap-2">
-                    <Input
-                      label="Prefijo"
-                      value={stat.prefijo}
-                      onChange={(e) => handleChangeStat(index, 'prefijo', e.target.value)}
-                      placeholder="$"
-                      size="sm"
-                      className="dark:bg-gray-600 dark:border-gray-500"
-                    />
-                    <Input
-                      label="Numero"
-                      type="number"
-                      value={stat.numero}
-                      onChange={(e) => handleChangeStat(index, 'numero', parseInt(e.target.value) || 0)}
-                      size="sm"
-                      className="dark:bg-gray-600 dark:border-gray-500"
-                    />
-                    <Input
-                      label="Sufijo"
-                      value={stat.sufijo}
-                      onChange={(e) => handleChangeStat(index, 'sufijo', e.target.value)}
-                      placeholder="+, %, K"
-                      size="sm"
-                      className="dark:bg-gray-600 dark:border-gray-500"
-                    />
-                  </div>
-
-                  <Input
-                    label="Titulo"
-                    value={stat.titulo}
-                    onChange={(e) => handleChangeStat(index, 'titulo', e.target.value)}
-                    placeholder="Clientes"
-                    size="sm"
-                    className="dark:bg-gray-600 dark:border-gray-500"
-                  />
-
-                  <Select
-                    label="Icono"
-                    value={stat.icono}
-                    onChange={(e) => handleChangeStat(index, 'icono', e.target.value)}
-                    options={iconoOptions}
-                    size="sm"
-                    className="dark:bg-gray-600 dark:border-gray-500"
-                  />
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Preview */}
-      <div className="border border-gray-200 dark:border-gray-600 rounded-lg p-4">
-        <h4 className="font-bold text-center mb-4 text-gray-900 dark:text-white">
-          {form.titulo_seccion}
-        </h4>
-        <div className={`grid gap-4 grid-cols-${Math.min(form.items.length, form.columnas)}`}>
-          {form.items.slice(0, 4).map((stat, index) => {
-            const IconComponent = ICON_OPTIONS.find(opt => opt.value === stat.icono)?.Icon || Star;
-            return (
-              <div key={index} className="text-center">
-                <IconComponent className="w-6 h-6 mx-auto mb-1" style={{ color: tema?.color_primario || '#753572' }} />
-                <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {stat.prefijo}{stat.numero}{stat.sufijo}
-                </div>
-                <div className="text-xs text-gray-500 dark:text-gray-400">{stat.titulo}</div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Boton guardar */}
-      {cambios && (
-        <div className="flex justify-end pt-2">
-          <Button type="submit" variant="primary" isLoading={isSaving}>
-            <Save className="w-4 h-4 mr-2" />
-            Guardar cambios
-          </Button>
-        </div>
-      )}
-    </form>
+      <ArrayItemsEditor
+        items={form.items}
+        label="Estadisticas"
+        onAgregar={handleAgregarStat}
+        onEliminar={handleEliminarStat}
+        itemName="Stat"
+        itemIcon={BarChart3}
+        iconColor="text-green-500"
+        renderItem={renderStatItem}
+      />
+    </BaseBlockEditor>
   );
 }
 

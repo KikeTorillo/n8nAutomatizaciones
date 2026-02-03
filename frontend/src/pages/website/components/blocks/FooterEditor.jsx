@@ -1,15 +1,30 @@
-import { useMemo } from 'react';
-import { Save, Plus, Trash2 } from 'lucide-react';
-import {
-  Button,
-  Input,
-  Select,
-  Textarea
-} from '@/components/ui';
+/**
+ * ====================================================================
+ * FOOTER EDITOR (Refactorizado)
+ * ====================================================================
+ *
+ * Editor del bloque Footer.
+ * Usa BaseBlockEditor y ArrayItemsEditor.
+ *
+ * @version 2.0.0
+ * @since 2026-02-03
+ */
+
+import { useCallback, useMemo } from 'react';
+import { Link2, Share2 } from 'lucide-react';
+import { Input, Select, Textarea } from '@/components/ui';
 import { useBlockEditor, useArrayItems } from '../../hooks';
+import BaseBlockEditor from './BaseBlockEditor';
+import { ArrayItemsEditor } from './fields';
 
 /**
  * FooterEditor - Editor del bloque Footer
+ *
+ * @param {Object} props
+ * @param {Object} props.contenido - Contenido del bloque
+ * @param {Function} props.onGuardar - Callback para guardar
+ * @param {Object} props.tema - Tema del sitio
+ * @param {boolean} props.isSaving - Estado de guardado
  */
 function FooterEditor({ contenido, onGuardar, tema, isSaving }) {
   // Valores por defecto del formulario
@@ -67,8 +82,89 @@ function FooterEditor({ contenido, onGuardar, tema, isSaving }) {
     { value: 'whatsapp', label: 'WhatsApp' },
   ];
 
+  // Renderizador de cada link
+  const renderLinkItem = useCallback((link, index) => (
+    <div className="grid grid-cols-2 gap-2">
+      <Input
+        label="Texto"
+        value={link.texto}
+        onChange={(e) => handleLinkChange(index, 'texto', e.target.value)}
+        placeholder="Inicio"
+        size="sm"
+        className="dark:bg-gray-600 dark:border-gray-500 dark:text-gray-100"
+      />
+      <Input
+        label="URL"
+        value={link.url}
+        onChange={(e) => handleLinkChange(index, 'url', e.target.value)}
+        placeholder="/pagina"
+        size="sm"
+        className="dark:bg-gray-600 dark:border-gray-500 dark:text-gray-100"
+      />
+    </div>
+  ), [handleLinkChange]);
+
+  // Renderizador de cada red social
+  const renderRedItem = useCallback((red, index) => (
+    <div className="grid grid-cols-2 gap-2">
+      <Select
+        label="Red Social"
+        value={red.red}
+        onChange={(e) => handleRedChange(index, 'red', e.target.value)}
+        options={redesOptions}
+        className="dark:bg-gray-600 dark:border-gray-500 dark:text-gray-100"
+      />
+      <Input
+        label="URL del perfil"
+        type="url"
+        value={red.url}
+        onChange={(e) => handleRedChange(index, 'url', e.target.value)}
+        placeholder="https://..."
+        size="sm"
+        className="dark:bg-gray-600 dark:border-gray-500 dark:text-gray-100"
+      />
+    </div>
+  ), [handleRedChange, redesOptions]);
+
+  // Componente de preview
+  const preview = useMemo(() => (
+    <div
+      className="rounded-lg p-4"
+      style={{
+        backgroundColor: form.estilo === 'oscuro' ? '#1F2937' :
+          form.estilo === 'primario' ? tema?.colores?.primario || '#4F46E5' :
+          '#F3F4F6',
+        color: form.estilo === 'claro' ? '#1F2937' : '#FFFFFF',
+      }}
+    >
+      {form.logo && (
+        <img src={form.logo} alt="Logo" className="h-8 mb-3" />
+      )}
+      {form.descripcion && (
+        <p className="text-sm opacity-80 mb-3">{form.descripcion}</p>
+      )}
+      <div className="flex gap-4 text-sm mb-3">
+        {form.links.map((link, i) => (
+          <span key={i} className="opacity-80 hover:opacity-100">
+            {link.texto}
+          </span>
+        ))}
+      </div>
+      <p className="text-xs opacity-60">{form.copyright}</p>
+    </div>
+  ), [form, tema]);
+
   return (
-    <form onSubmit={handleSubmit(onGuardar)} className="space-y-4">
+    <BaseBlockEditor
+      tipo="footer"
+      mostrarAIBanner={false}
+      cambios={cambios}
+      handleSubmit={handleSubmit}
+      onGuardar={onGuardar}
+      isSaving={isSaving}
+      preview={preview}
+    >
+      {/* Configuracion general */}
       <div className="grid grid-cols-2 gap-4">
         <Select
           label="Estilo"
@@ -88,10 +184,10 @@ function FooterEditor({ contenido, onGuardar, tema, isSaving }) {
       </div>
 
       <Textarea
-        label="Descripción breve (opcional)"
+        label="Descripcion breve (opcional)"
         value={form.descripcion}
         onChange={(e) => handleFieldChange('descripcion', e.target.value)}
-        placeholder="Breve descripción del negocio"
+        placeholder="Breve descripcion del negocio"
         rows={2}
         className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
       />
@@ -103,138 +199,32 @@ function FooterEditor({ contenido, onGuardar, tema, isSaving }) {
         className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
       />
 
-      {/* Links */}
-      <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-        <div className="flex items-center justify-between mb-3">
-          <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Enlaces del menú</h4>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={handleAgregarLink}
-          >
-            <Plus className="w-4 h-4 mr-1" />
-            Agregar
-          </Button>
-        </div>
-
-        <div className="space-y-2">
-          {form.links.map((link, index) => (
-            <div key={index} className="flex items-center gap-2">
-              <Input
-                value={link.texto}
-                onChange={(e) => handleLinkChange(index, 'texto', e.target.value)}
-                placeholder="Texto"
-                size="sm"
-                className="dark:bg-gray-600 dark:border-gray-500 dark:text-gray-100"
-              />
-              <Input
-                value={link.url}
-                onChange={(e) => handleLinkChange(index, 'url', e.target.value)}
-                placeholder="/url"
-                size="sm"
-                className="dark:bg-gray-600 dark:border-gray-500 dark:text-gray-100"
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => handleEliminarLink(index)}
-                className="text-gray-400 hover:text-red-500 dark:hover:bg-gray-600"
-              >
-                <Trash2 className="w-4 h-4" />
-              </Button>
-            </div>
-          ))}
-        </div>
-      </div>
+      {/* Links del menú */}
+      <ArrayItemsEditor
+        items={form.links}
+        label="Enlaces del menu"
+        onAgregar={handleAgregarLink}
+        onEliminar={handleEliminarLink}
+        itemName="Enlace"
+        itemIcon={Link2}
+        iconColor="text-blue-500"
+        showDragHandle={false}
+        renderItem={renderLinkItem}
+      />
 
       {/* Redes sociales */}
-      <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-        <div className="flex items-center justify-between mb-3">
-          <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Redes sociales</h4>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={handleAgregarRed}
-          >
-            <Plus className="w-4 h-4 mr-1" />
-            Agregar
-          </Button>
-        </div>
-
-        <div className="space-y-2">
-          {form.redes_sociales.map((red, index) => (
-            <div key={index} className="flex items-center gap-2">
-              <Select
-                value={red.red}
-                onChange={(e) => handleRedChange(index, 'red', e.target.value)}
-                options={redesOptions}
-                className="w-32 dark:bg-gray-600 dark:border-gray-500 dark:text-gray-100"
-              />
-              <Input
-                type="url"
-                value={red.url}
-                onChange={(e) => handleRedChange(index, 'url', e.target.value)}
-                placeholder="URL del perfil"
-                size="sm"
-                className="dark:bg-gray-600 dark:border-gray-500 dark:text-gray-100"
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => handleEliminarRed(index)}
-                className="text-gray-400 hover:text-red-500 dark:hover:bg-gray-600"
-              >
-                <Trash2 className="w-4 h-4" />
-              </Button>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Preview */}
-      <div
-        className="rounded-lg p-4"
-        style={{
-          backgroundColor: form.estilo === 'oscuro' ? '#1F2937' :
-            form.estilo === 'primario' ? tema?.colores?.primario || '#4F46E5' :
-            '#F3F4F6',
-          color: form.estilo === 'claro' ? '#1F2937' : '#FFFFFF',
-        }}
-      >
-        {form.logo && (
-          <img src={form.logo} alt="Logo" className="h-8 mb-3" />
-        )}
-        {form.descripcion && (
-          <p className="text-sm opacity-80 mb-3">{form.descripcion}</p>
-        )}
-        <div className="flex gap-4 text-sm mb-3">
-          {form.links.map((link, i) => (
-            <span key={i} className="opacity-80 hover:opacity-100">
-              {link.texto}
-            </span>
-          ))}
-        </div>
-        <p className="text-xs opacity-60">{form.copyright}</p>
-      </div>
-
-      {/* Botón guardar */}
-      {cambios && (
-        <div className="flex justify-end pt-2">
-          <Button
-            type="submit"
-            variant="primary"
-            isLoading={isSaving}
-          >
-            <Save className="w-4 h-4 mr-2" />
-            Guardar cambios
-          </Button>
-        </div>
-      )}
-    </form>
+      <ArrayItemsEditor
+        items={form.redes_sociales}
+        label="Redes sociales"
+        onAgregar={handleAgregarRed}
+        onEliminar={handleEliminarRed}
+        itemName="Red"
+        itemIcon={Share2}
+        iconColor="text-pink-500"
+        showDragHandle={false}
+        renderItem={renderRedItem}
+      />
+    </BaseBlockEditor>
   );
 }
 

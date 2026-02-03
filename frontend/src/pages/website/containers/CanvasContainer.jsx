@@ -1,0 +1,79 @@
+/**
+ * ====================================================================
+ * CANVAS CONTAINER
+ * ====================================================================
+ * Container para el área principal del canvas.
+ * Envuelve EditorCanvas y maneja el modo de edición.
+ *
+ * @version 1.0.0
+ * @since 2026-02-03
+ */
+
+import { memo } from 'react';
+import { useEditor } from '../context';
+import EditorCanvas from '../components/EditorCanvas';
+import BlockEditor from '../components/BlockEditor';
+
+/**
+ * CanvasContainer - Área principal del editor
+ *
+ * Renderiza según modoEditor:
+ * - 'canvas': EditorCanvas (modo visual WYSIWYG)
+ * - 'bloques': BlockEditor (modo lista de bloques)
+ */
+function CanvasContainer() {
+  const {
+    // Estado
+    modoEditor,
+    paginaActiva,
+    bloques,
+    bloqueSeleccionado,
+    bloquesLoading,
+    config,
+
+    // Handlers
+    handleActualizarBloque,
+    handleEliminarBloque,
+    handleDuplicarBloque,
+    handleToggleVisibilidad,
+    handleReordenarBloques,
+
+    // Store actions
+    seleccionarBloque,
+  } = useEditor();
+
+  return (
+    <main className="flex-1 overflow-hidden" data-tour="editor-canvas">
+      {modoEditor === 'canvas' ? (
+        <EditorCanvas
+          bloques={bloques}
+          tema={config}
+          onReordenar={handleReordenarBloques}
+          onActualizarBloque={handleActualizarBloque}
+          onEliminarBloque={handleEliminarBloque}
+          onDuplicarBloque={handleDuplicarBloque}
+          onToggleVisibilidad={handleToggleVisibilidad}
+          isLoading={bloquesLoading}
+        />
+      ) : (
+        <div className="h-full overflow-y-auto p-4 sm:p-6 bg-gray-50 dark:bg-gray-900">
+          <BlockEditor
+            pagina={paginaActiva}
+            bloques={bloques}
+            bloqueSeleccionado={bloqueSeleccionado}
+            onSeleccionar={seleccionarBloque}
+            onActualizar={handleActualizarBloque}
+            onEliminar={handleEliminarBloque}
+            onDuplicar={handleDuplicarBloque}
+            onReordenar={handleReordenarBloques}
+            isLoading={bloquesLoading}
+            tema={config}
+            industria={config?.industria || 'default'}
+          />
+        </div>
+      )}
+    </main>
+  );
+}
+
+export default memo(CanvasContainer);

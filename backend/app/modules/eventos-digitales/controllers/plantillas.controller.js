@@ -22,6 +22,7 @@
 
 const PlantillaModel = require('../models/plantilla.model');
 const { ResponseHelper } = require('../../../utils/helpers');
+const logger = require('../../../utils/logger');
 
 class PlantillasController {
     /**
@@ -42,7 +43,7 @@ class PlantillasController {
                 total: plantillas.length
             });
         } catch (error) {
-            console.error('Error al listar plantillas:', error);
+            logger.error('Error al listar plantillas:', error);
             return ResponseHelper.error(res, 'Error al listar plantillas', 500);
         }
     }
@@ -63,7 +64,7 @@ class PlantillasController {
 
             return ResponseHelper.success(res, plantilla);
         } catch (error) {
-            console.error('Error al obtener plantilla:', error);
+            logger.error('Error al obtener plantilla:', error);
             return ResponseHelper.error(res, 'Error al obtener plantilla', 500);
         }
     }
@@ -83,7 +84,7 @@ class PlantillasController {
 
             return ResponseHelper.success(res, plantilla, 'Plantilla creada exitosamente', 201);
         } catch (error) {
-            console.error('Error al crear plantilla:', error);
+            logger.error('Error al crear plantilla:', error);
 
             if (error.code === '23505') {
                 return ResponseHelper.error(res, 'Ya existe una plantilla con ese código', 400);
@@ -116,7 +117,7 @@ class PlantillasController {
 
             return ResponseHelper.success(res, plantilla, 'Plantilla actualizada exitosamente');
         } catch (error) {
-            console.error('Error al actualizar plantilla:', error);
+            logger.error('Error al actualizar plantilla:', error);
             return ResponseHelper.error(res, 'Error al actualizar plantilla', 500);
         }
     }
@@ -149,7 +150,7 @@ class PlantillasController {
 
             return ResponseHelper.success(res, { id: parseInt(id) }, 'Plantilla eliminada exitosamente');
         } catch (error) {
-            console.error('Error al eliminar plantilla:', error);
+            logger.error('Error al eliminar plantilla:', error);
             return ResponseHelper.error(res, 'Error al eliminar plantilla', 500);
         }
     }
@@ -170,7 +171,7 @@ class PlantillasController {
                 total: plantillas.length
             });
         } catch (error) {
-            console.error('Error al listar plantillas por tipo:', error);
+            logger.error('Error al listar plantillas por tipo:', error);
             return ResponseHelper.error(res, 'Error al listar plantillas', 500);
         }
     }

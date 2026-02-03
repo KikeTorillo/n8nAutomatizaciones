@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState, memo } from 'react';
 import { useDraggable, useDroppable } from '@dnd-kit/core';
 import { Edit2, Trash2, X, Users, ChevronDown, ChevronUp } from 'lucide-react';
 import { Drawer } from '@/components/ui';
@@ -7,8 +7,9 @@ import { Drawer } from '@/components/ui';
  * Componente visual de una mesa en el seating chart
  * - Draggable para mover posición
  * - Droppable para recibir invitados
+ * - Memoizado para evitar re-renders innecesarios
  */
-function MesaVisual({
+const MesaVisual = memo(function MesaVisual({
   mesa,
   asignados,
   porcentaje,
@@ -194,6 +195,22 @@ function MesaVisual({
       </Drawer>
     </div>
   );
-}
+}, (prevProps, nextProps) => {
+  // Comparador personalizado: solo re-renderiza si cambian datos relevantes
+  return (
+    prevProps.mesa.id === nextProps.mesa.id &&
+    prevProps.mesa.nombre === nextProps.mesa.nombre &&
+    prevProps.mesa.numero === nextProps.mesa.numero &&
+    prevProps.mesa.tipo === nextProps.mesa.tipo &&
+    prevProps.mesa.capacidad === nextProps.mesa.capacidad &&
+    prevProps.mesa.posicion_x === nextProps.mesa.posicion_x &&
+    prevProps.mesa.posicion_y === nextProps.mesa.posicion_y &&
+    prevProps.mesa.rotacion === nextProps.mesa.rotacion &&
+    prevProps.mesa.invitados?.length === nextProps.mesa.invitados?.length &&
+    prevProps.asignados === nextProps.asignados &&
+    prevProps.porcentaje === nextProps.porcentaje &&
+    prevProps.isEditMode === nextProps.isEditMode
+  );
+});
 
 export default MesaVisual;

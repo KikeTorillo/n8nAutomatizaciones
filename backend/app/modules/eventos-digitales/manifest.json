@@ -1,10 +1,15 @@
 {
   "name": "eventos-digitales",
   "display_name": "Eventos Digitales",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Módulo de Eventos Digitales - Invitaciones para bodas, XV años, bautizos, cumpleaños y eventos corporativos",
   "author": "Nexo Team",
   "depends": ["core"],
+  "dependencies_hard": {},
+  "dependencies_optional": {
+    "storage": "Para subida de imágenes a galería compartida"
+  },
+  "used_by": [],
   "pricing": {
     "base_mensual": 199,
     "currency": "MXN",
@@ -23,26 +28,86 @@
     "galeriaRoutes": "/api/v1/eventos-digitales",
     "publicRoutes": "/api/v1/public"
   },
+  "resources": {
+    "eventos": {
+      "table": "ed_eventos",
+      "limit_field": "limite_eventos_activos",
+      "notes": "Eventos activos simultáneos"
+    },
+    "invitados": {
+      "table": "ed_invitados",
+      "limit_field": "limite_invitados_por_evento",
+      "notes": "Invitados por evento, limitado por plan"
+    },
+    "fotos_galeria": {
+      "table": "ed_fotos",
+      "limit_field": "limite_fotos_galeria",
+      "notes": "Fotos en galería compartida por evento"
+    }
+  },
+  "tables": [
+    "ed_eventos",
+    "ed_invitados",
+    "ed_ubicaciones",
+    "ed_mesa_regalos",
+    "ed_felicitaciones",
+    "ed_plantillas",
+    "ed_mesas",
+    "ed_fotos"
+  ],
   "models": [
     "evento",
     "invitado",
     "ubicacion",
     "mesa-regalos",
     "felicitacion",
-    "plantilla"
+    "plantilla",
+    "mesa",
+    "foto"
+  ],
+  "services": [
+    "qr.service",
+    "calendar.service"
   ],
   "permissions": {
     "admin": ["*"],
     "propietario": ["*"],
+    "supervisor": ["read", "create", "update"],
     "empleado": ["read", "create", "update"],
     "bot": ["read"]
   },
-  "features": {
-    "rsvp": true,
-    "mesa_regalos": true,
-    "felicitaciones": true,
-    "qr_codes": true,
-    "csv_import": true,
-    "whatsapp_share": true
-  }
+  "features": [
+    "Invitaciones digitales personalizadas",
+    "RSVP con confirmación y acompañantes",
+    "Mesa de regalos virtual",
+    "Libro de felicitaciones/firmas",
+    "Generación de códigos QR",
+    "Check-in de invitados con QR",
+    "Seating chart (asignación de mesas)",
+    "Importación/exportación CSV de invitados",
+    "Compartir por WhatsApp",
+    "Agregar a calendario (iCal)",
+    "Galería compartida de fotos",
+    "Plantillas prediseñadas por tipo de evento"
+  ],
+  "limits": {
+    "basico": {
+      "eventos_activos": 1,
+      "invitados_por_evento": 100,
+      "fotos_galeria": 50
+    },
+    "profesional": {
+      "eventos_activos": 5,
+      "invitados_por_evento": 500,
+      "fotos_galeria": 200
+    },
+    "empresarial": {
+      "eventos_activos": -1,
+      "invitados_por_evento": -1,
+      "fotos_galeria": -1
+    }
+  },
+  "priority": 10,
+  "required": false,
+  "can_disable": true
 }

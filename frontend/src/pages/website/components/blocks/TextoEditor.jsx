@@ -1,17 +1,32 @@
+/**
+ * ====================================================================
+ * TEXTO EDITOR (Refactorizado)
+ * ====================================================================
+ *
+ * Editor del bloque de texto enriquecido.
+ * Usa BaseBlockEditor con toolbar de formateo HTML.
+ *
+ * @version 2.0.0
+ * @since 2026-02-03
+ */
+
 import { useCallback, useMemo } from 'react';
-import { Save, Bold, Italic, List, AlignLeft, AlignCenter, AlignRight } from 'lucide-react';
-import {
-  Button,
-  Input,
-  Select,
-  Textarea
-} from '@/components/ui';
+import { Bold, Italic, List, AlignLeft, AlignCenter, AlignRight } from 'lucide-react';
+import { Button, Input, Select, Textarea } from '@/components/ui';
 import { sanitizeHTML } from '@/lib/sanitize';
-import { AIGenerateButton, AISuggestionBanner } from '../AIGenerator';
+import { AIGenerateButton } from '../AIGenerator';
 import { useBlockEditor } from '../../hooks';
+import BaseBlockEditor from './BaseBlockEditor';
 
 /**
  * TextoEditor - Editor del bloque de texto enriquecido
+ *
+ * @param {Object} props
+ * @param {Object} props.contenido - Contenido del bloque
+ * @param {Function} props.onGuardar - Callback para guardar
+ * @param {Object} props.tema - Tema del sitio
+ * @param {boolean} props.isSaving - Estado de guardado
+ * @param {string} props.industria - Industria para AI
  */
 function TextoEditor({ contenido, onGuardar, tema, isSaving, industria = 'default' }) {
   // Valores por defecto del formulario
@@ -29,13 +44,12 @@ function TextoEditor({ contenido, onGuardar, tema, isSaving, industria = 'defaul
     defaultValues
   );
 
-  // Verificar si el contenido está esencialmente vacío
+  // Verificar si el contenido esta vacio
   const contenidoVacio = !contenido.html || contenido.html.trim() === '';
 
-  // Callback para generación de IA de contenido de texto
+  // Callback para generacion de IA de contenido de texto
   const handleAIGenerate = useCallback((generatedContent) => {
     const content = generatedContent.contenido || generatedContent;
-    // Envolver en párrafos si no tiene HTML
     const htmlContent = content.includes('<') ? content : `<p>${content}</p>`;
     setForm(prev => ({
       ...prev,
@@ -43,6 +57,7 @@ function TextoEditor({ contenido, onGuardar, tema, isSaving, industria = 'defaul
     }));
   }, [setForm]);
 
+  // Insertar etiqueta HTML en posicion del cursor
   const insertTag = (openTag, closeTag) => {
     const textarea = document.getElementById('texto-html');
     const start = textarea.selectionStart;
@@ -53,6 +68,7 @@ function TextoEditor({ contenido, onGuardar, tema, isSaving, industria = 'defaul
     handleFieldChange('html', newText);
   };
 
+  // Opciones de select
   const anchoOptions = [
     { value: 'full', label: 'Ancho completo' },
     { value: 'medium', label: 'Mediano (75%)' },
@@ -61,27 +77,50 @@ function TextoEditor({ contenido, onGuardar, tema, isSaving, industria = 'defaul
 
   const paddingOptions = [
     { value: 'none', label: 'Sin espaciado' },
-    { value: 'small', label: 'Pequeño' },
+    { value: 'small', label: 'Pequeno' },
     { value: 'normal', label: 'Normal' },
     { value: 'large', label: 'Grande' },
   ];
 
-  return (
-    <form onSubmit={handleSubmit(onGuardar)} className="space-y-4">
-      {/* Banner de sugerencia IA para contenido vacío */}
-      {contenidoVacio && (
-        <AISuggestionBanner
-          tipo="texto"
-          industria={industria}
-          onGenerate={handleAIGenerate}
-        />
+  // Componente de preview
+  const preview = useMemo(() => (
+    <div
+      className={`
+        ${form.ancho === 'medium' ? 'max-w-3xl' : form.ancho === 'narrow' ? 'max-w-xl' : ''}
+        ${form.padding === 'small' ? 'py-2' : form.padding === 'normal' ? 'py-4' : form.padding === 'large' ? 'py-8' : ''}
+        ${form.alineacion === 'center' ? 'mx-auto text-center' : form.alineacion === 'right' ? 'ml-auto text-right' : ''}
+      `}
+    >
+      {form.titulo && (
+        <h3 className="text-lg font-bold mb-3" style={{ color: tema?.colores?.texto }}>
+          {form.titulo}
+        </h3>
       )}
+      <div
+        className="prose prose-sm max-w-none dark:prose-invert"
+        style={{ color: tema?.colores?.texto }}
+        dangerouslySetInnerHTML={{ __html: sanitizeHTML(form.html) || '<p class="text-gray-400 dark:text-gray-500">Vista previa del contenido...</p>' }}
+      />
+    </div>
+  ), [form.titulo, form.html, form.ancho, form.padding, form.alineacion, tema?.colores?.texto]);
 
+  return (
+    <BaseBlockEditor
+      tipo="texto"
+      industria={industria}
+      mostrarAIBanner={contenidoVacio}
+      onAIGenerate={handleAIGenerate}
+      cambios={cambios}
+      handleSubmit={handleSubmit}
+      onGuardar={onGuardar}
+      isSaving={isSaving}
+      preview={preview}
+    >
       <Input
-        label="Título (opcional)"
+        label="Titulo (opcional)"
         value={form.titulo}
         onChange={(e) => handleFieldChange('titulo', e.target.value)}
-        placeholder="Título de la sección"
+        placeholder="Titulo de la seccion"
         className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
       />
 
@@ -161,7 +200,7 @@ function TextoEditor({ contenido, onGuardar, tema, isSaving, industria = 'defaul
                 tipo="texto"
                 campo="contenido"
                 industria={industria}
-                contexto={{ tema: 'información general del negocio' }}
+                contexto={{ tema: 'informacion general del negocio' }}
                 onGenerate={(text) => handleFieldChange('html', text.includes('<') ? text : `<p>${text}</p>`)}
                 size="sm"
               />
@@ -169,7 +208,7 @@ function TextoEditor({ contenido, onGuardar, tema, isSaving, industria = 'defaul
           }
           value={form.html}
           onChange={(e) => handleFieldChange('html', e.target.value)}
-          placeholder="<p>Escribe tu contenido aquí...</p>"
+          placeholder="<p>Escribe tu contenido aqui...</p>"
           rows={8}
           className="font-mono text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
@@ -194,43 +233,7 @@ function TextoEditor({ contenido, onGuardar, tema, isSaving, industria = 'defaul
           className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
       </div>
-
-      {/* Preview */}
-      <div className="border border-gray-200 dark:border-gray-600 rounded-lg p-4">
-        <div
-          className={`
-            ${form.ancho === 'medium' ? 'max-w-3xl' : form.ancho === 'narrow' ? 'max-w-xl' : ''}
-            ${form.padding === 'small' ? 'py-2' : form.padding === 'normal' ? 'py-4' : form.padding === 'large' ? 'py-8' : ''}
-            ${form.alineacion === 'center' ? 'mx-auto text-center' : form.alineacion === 'right' ? 'ml-auto text-right' : ''}
-          `}
-        >
-          {form.titulo && (
-            <h3 className="text-lg font-bold mb-3" style={{ color: tema?.colores?.texto }}>
-              {form.titulo}
-            </h3>
-          )}
-          <div
-            className="prose prose-sm max-w-none dark:prose-invert"
-            style={{ color: tema?.colores?.texto }}
-            dangerouslySetInnerHTML={{ __html: sanitizeHTML(form.html) || '<p class="text-gray-400 dark:text-gray-500">Vista previa del contenido...</p>' }}
-          />
-        </div>
-      </div>
-
-      {/* Botón guardar */}
-      {cambios && (
-        <div className="flex justify-end pt-2">
-          <Button
-            type="submit"
-            variant="primary"
-            isLoading={isSaving}
-          >
-            <Save className="w-4 h-4 mr-2" />
-            Guardar cambios
-          </Button>
-        </div>
-      )}
-    </form>
+    </BaseBlockEditor>
   );
 }
 

@@ -23,6 +23,7 @@
 const MesaRegalosModel = require('../models/mesa-regalos.model');
 const EventoModel = require('../models/evento.model');
 const { ResponseHelper } = require('../../../utils/helpers');
+const logger = require('../../../utils/logger');
 
 class MesaRegalosController {
     /**
@@ -48,7 +49,7 @@ class MesaRegalosController {
 
             return ResponseHelper.success(res, regalo, 'Regalo agregado exitosamente', 201);
         } catch (error) {
-            console.error('Error al crear regalo:', error);
+            logger.error('Error al crear regalo:', error);
             return ResponseHelper.error(res, 'Error al agregar regalo', 500);
         }
     }
@@ -81,7 +82,7 @@ class MesaRegalosController {
                 total: regalos.length
             });
         } catch (error) {
-            console.error('Error al listar regalos:', error);
+            logger.error('Error al listar regalos:', error);
             return ResponseHelper.error(res, 'Error al listar regalos', 500);
         }
     }
@@ -103,7 +104,7 @@ class MesaRegalosController {
 
             return ResponseHelper.success(res, regalo);
         } catch (error) {
-            console.error('Error al obtener regalo:', error);
+            logger.error('Error al obtener regalo:', error);
             return ResponseHelper.error(res, 'Error al obtener regalo', 500);
         }
     }
@@ -127,7 +128,7 @@ class MesaRegalosController {
 
             return ResponseHelper.success(res, regalo, 'Regalo actualizado exitosamente');
         } catch (error) {
-            console.error('Error al actualizar regalo:', error);
+            logger.error('Error al actualizar regalo:', error);
             return ResponseHelper.error(res, 'Error al actualizar regalo', 500);
         }
     }
@@ -150,7 +151,7 @@ class MesaRegalosController {
 
             return ResponseHelper.success(res, regalo, 'Regalo marcado como comprado');
         } catch (error) {
-            console.error('Error al marcar regalo:', error);
+            logger.error('Error al marcar regalo:', error);
             return ResponseHelper.error(res, 'Error al marcar regalo', 500);
         }
     }
@@ -174,7 +175,7 @@ class MesaRegalosController {
 
             return ResponseHelper.success(res, { id: parseInt(id) }, 'Regalo eliminado exitosamente');
         } catch (error) {
-            console.error('Error al eliminar regalo:', error);
+            logger.error('Error al eliminar regalo:', error);
             return ResponseHelper.error(res, 'Error al eliminar regalo', 500);
         }
     }
@@ -198,7 +199,7 @@ class MesaRegalosController {
 
             return ResponseHelper.success(res, estadisticas);
         } catch (error) {
-            console.error('Error al obtener estadísticas:', error);
+            logger.error('Error al obtener estadísticas:', error);
             return ResponseHelper.error(res, 'Error al obtener estadísticas', 500);
         }
     }

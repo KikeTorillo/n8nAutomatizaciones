@@ -1,23 +1,39 @@
+/**
+ * ====================================================================
+ * SERVICIOS EDITOR (Refactorizado)
+ * ====================================================================
+ *
+ * Editor del bloque Servicios.
+ * Soporta dos modos:
+ * - manual: Items definidos manualmente con IconPicker
+ * - erp: Servicios cargados desde el módulo de Servicios del ERP
+ *
+ * Usa BaseBlockEditor y ArrayItemsEditor.
+ *
+ * @version 2.0.0
+ * @since 2026-02-03
+ */
+
 import { useCallback, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Save, Plus, Trash2, GripVertical, Database, Edit3 } from 'lucide-react';
-import {
-  Button,
-  Input,
-  Select,
-  Textarea,
-  ToggleSwitch
-} from '@/components/ui';
-import { AIGenerateButton, AISuggestionBanner } from '../AIGenerator';
+import { Briefcase, Database, Edit3 } from 'lucide-react';
+import { Input, Select, Textarea, ToggleSwitch } from '@/components/ui';
+import { IconPicker } from '@/components/ui';
 import { useBlockEditor, useArrayItems } from '../../hooks';
+import BaseBlockEditor from './BaseBlockEditor';
+import { SectionTitleField, ArrayItemsEditor } from './fields';
 import ServiciosERPSelector from './ServiciosERPSelector';
 import websiteApi from '@/services/api/modules/website.api';
 
 /**
  * ServiciosEditor - Editor del bloque Servicios
- * Soporta dos modos:
- * - manual: Items definidos manualmente
- * - erp: Servicios cargados desde el módulo de Servicios del ERP
+ *
+ * @param {Object} props
+ * @param {Object} props.contenido - Contenido del bloque
+ * @param {Function} props.onGuardar - Callback para guardar
+ * @param {Object} props.tema - Tema del sitio
+ * @param {boolean} props.isSaving - Estado de guardado
+ * @param {string} props.industria - Industria para AI
  */
 function ServiciosEditor({ contenido, onGuardar, tema, isSaving, industria = 'default' }) {
   // Valores por defecto del formulario
@@ -109,22 +125,83 @@ function ServiciosEditor({ contenido, onGuardar, tema, isSaving, industria = 'de
     { value: '4', label: '4 columnas' },
   ];
 
-  const origenOptions = [
-    { value: 'manual', label: 'Manual' },
-    { value: 'erp', label: 'Desde ERP' },
-  ];
+  // Renderizador de cada servicio manual
+  const renderServicioItem = useCallback((servicio, index) => (
+    <div className="space-y-3">
+      <Input
+        label="Nombre del servicio"
+        value={servicio.nombre}
+        onChange={(e) => handleServicioChange(index, 'nombre', e.target.value)}
+        placeholder="Nombre del servicio"
+        className="dark:bg-gray-600 dark:border-gray-500 dark:text-gray-100"
+      />
+
+      <Textarea
+        label="Descripcion"
+        value={servicio.descripcion}
+        onChange={(e) => handleServicioChange(index, 'descripcion', e.target.value)}
+        placeholder="Descripcion breve"
+        rows={2}
+        className="dark:bg-gray-600 dark:border-gray-500 dark:text-gray-100"
+      />
+
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Icono
+          </label>
+          <IconPicker
+            value={servicio.icono}
+            onChange={(val) => handleServicioChange(index, 'icono', val)}
+          />
+        </div>
+        <Input
+          label="Precio (opcional)"
+          value={servicio.precio}
+          onChange={(e) => handleServicioChange(index, 'precio', e.target.value)}
+          placeholder="$100"
+          className="dark:bg-gray-600 dark:border-gray-500 dark:text-gray-100"
+        />
+      </div>
+    </div>
+  ), [handleServicioChange]);
+
+  // Componente de preview (solo modo manual)
+  const preview = useMemo(() => {
+    if (form.origen === 'erp') return null;
+
+    return (
+      <>
+        <h4 className="font-bold text-center mb-1" style={{ color: tema?.colores?.texto || '#1F2937' }}>
+          {form.titulo_seccion}
+        </h4>
+        {form.subtitulo_seccion && (
+          <p className="text-sm text-center text-gray-500 dark:text-gray-400 mb-4">{form.subtitulo_seccion}</p>
+        )}
+        <div className={`grid gap-3 grid-cols-${Math.min(form.columnas, (form.items || []).length || 1)}`}>
+          {(form.items || []).slice(0, 4).map((s, i) => (
+            <div key={i} className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg text-center">
+              <p className="text-sm font-medium dark:text-gray-100">{s.nombre || 'Servicio'}</p>
+              {s.precio && <p className="text-xs text-primary-600 dark:text-primary-400 mt-1">{s.precio}</p>}
+            </div>
+          ))}
+        </div>
+      </>
+    );
+  }, [form, tema]);
 
   return (
-    <form onSubmit={handleSubmit(onGuardar)} className="space-y-4">
-      {/* Banner de sugerencia IA para contenido vacío (solo modo manual) */}
-      {serviciosVacios && form.origen === 'manual' && (
-        <AISuggestionBanner
-          tipo="servicios"
-          industria={industria}
-          onGenerate={handleAIGenerate}
-        />
-      )}
-
+    <BaseBlockEditor
+      tipo="servicios"
+      industria={industria}
+      mostrarAIBanner={serviciosVacios && form.origen === 'manual'}
+      onAIGenerate={handleAIGenerate}
+      cambios={cambios}
+      handleSubmit={handleSubmit}
+      onGuardar={onGuardar}
+      isSaving={isSaving}
+      preview={preview}
+    >
       {/* Selector de origen */}
       <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
         <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
@@ -164,23 +241,11 @@ function ServiciosEditor({ contenido, onGuardar, tema, isSaving, industria = 'de
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <Input
-          label={
-            <span className="flex items-center gap-2">
-              Titulo de seccion
-              <AIGenerateButton
-                tipo="servicios"
-                campo="titulo"
-                industria={industria}
-                onGenerate={(text) => handleFieldChange('titulo_seccion', text)}
-                size="sm"
-              />
-            </span>
-          }
+        <SectionTitleField
           value={form.titulo_seccion}
-          onChange={(e) => handleFieldChange('titulo_seccion', e.target.value)}
-          placeholder="Nuestros Servicios"
-          className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
+          onChange={(val) => handleFieldChange('titulo_seccion', val)}
+          tipo="servicios"
+          industria={industria}
         />
         <Select
           label="Columnas"
@@ -223,113 +288,18 @@ function ServiciosEditor({ contenido, onGuardar, tema, isSaving, industria = 'de
           isLoading={loadingERP}
         />
       ) : (
-        <>
-          {/* Lista de servicios manuales */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                Servicios ({form.items?.length || 0})
-              </label>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={handleAgregarServicio}
-              >
-                <Plus className="w-4 h-4 mr-1" />
-                Agregar
-              </Button>
-            </div>
-
-            <div className="space-y-3">
-              {(form.items || []).map((servicio, index) => (
-                <div
-                  key={index}
-                  className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600"
-                >
-                  <div className="flex items-start gap-2">
-                    <GripVertical className="w-5 h-5 text-gray-400 mt-2 cursor-grab" />
-                    <div className="flex-1 space-y-2">
-                      <Input
-                        value={servicio.nombre}
-                        onChange={(e) => handleServicioChange(index, 'nombre', e.target.value)}
-                        placeholder="Nombre del servicio"
-                        size="sm"
-                        className="dark:bg-gray-600 dark:border-gray-500 dark:text-gray-100"
-                      />
-                      <Textarea
-                        value={servicio.descripcion}
-                        onChange={(e) => handleServicioChange(index, 'descripcion', e.target.value)}
-                        placeholder="Descripcion breve"
-                        rows={2}
-                        className="dark:bg-gray-600 dark:border-gray-500 dark:text-gray-100"
-                      />
-                      <div className="grid grid-cols-2 gap-2">
-                        <Input
-                          value={servicio.icono}
-                          onChange={(e) => handleServicioChange(index, 'icono', e.target.value)}
-                          placeholder="Icono (ej: Scissors)"
-                          size="sm"
-                          className="dark:bg-gray-600 dark:border-gray-500 dark:text-gray-100"
-                        />
-                        <Input
-                          value={servicio.precio}
-                          onChange={(e) => handleServicioChange(index, 'precio', e.target.value)}
-                          placeholder="Precio (opcional)"
-                          size="sm"
-                          className="dark:bg-gray-600 dark:border-gray-500 dark:text-gray-100"
-                        />
-                      </div>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleEliminarServicio(index)}
-                      className="text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-gray-600"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Preview (solo modo manual) */}
-          <div className="border border-gray-200 dark:border-gray-600 rounded-lg p-4">
-            <h4 className="font-bold text-center mb-1" style={{ color: tema?.colores?.texto || '#1F2937' }}>
-              {form.titulo_seccion}
-            </h4>
-            {form.subtitulo_seccion && (
-              <p className="text-sm text-center text-gray-500 dark:text-gray-400 mb-4">{form.subtitulo_seccion}</p>
-            )}
-            <div className={`grid gap-3 grid-cols-${Math.min(form.columnas, (form.items || []).length || 1)}`}>
-              {(form.items || []).slice(0, 4).map((s, i) => (
-                <div key={i} className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg text-center">
-                  <p className="text-sm font-medium dark:text-gray-100">{s.nombre || 'Servicio'}</p>
-                  {s.precio && <p className="text-xs text-primary-600 dark:text-primary-400 mt-1">{s.precio}</p>}
-                </div>
-              ))}
-            </div>
-          </div>
-        </>
+        <ArrayItemsEditor
+          items={form.items || []}
+          label="Servicios"
+          onAgregar={handleAgregarServicio}
+          onEliminar={handleEliminarServicio}
+          itemName="Servicio"
+          itemIcon={Briefcase}
+          iconColor="text-blue-500"
+          renderItem={renderServicioItem}
+        />
       )}
-
-      {/* Boton guardar */}
-      {cambios && (
-        <div className="flex justify-end pt-2">
-          <Button
-            type="submit"
-            variant="primary"
-            isLoading={isSaving}
-          >
-            <Save className="w-4 h-4 mr-2" />
-            Guardar cambios
-          </Button>
-        </div>
-      )}
-    </form>
+    </BaseBlockEditor>
   );
 }
 

@@ -1,7 +1,8 @@
 const { WebsiteBloquesModel, WebsitePaginasModel } = require('../models');
 const { ResponseHelper } = require('../../../utils/helpers');
 const { asyncHandler } = require('../../../middleware');
-const RLSContextManager = require('../../../utils/rlsContextManager');
+const ErpDataService = require('../services/erp-data.service');
+const BloqueService = require('../services/bloque.service');
 
 /**
  * ====================================================================
@@ -37,39 +38,10 @@ class WebsiteBloquesController {
      * @requires tenant - organizacionId desde RLS context
      */
     static crear = asyncHandler(async (req, res) => {
-        const organizacionId = req.tenant.organizacionId;
-        const { pagina_id, tipo, contenido, estilos, orden, visible } = req.body;
-
-        // Verificar que la página pertenece a la organización
-        const pagina = await WebsitePaginasModel.obtenerPorId(pagina_id, organizacionId);
-        if (!pagina) {
-            return ResponseHelper.error(
-                res,
-                'Página no encontrada',
-                404
-            );
-        }
-
-        // Validar tipo de bloque
-        if (!WebsiteBloquesModel.TIPOS_VALIDOS.includes(tipo)) {
-            return ResponseHelper.error(
-                res,
-                `Tipo de bloque inválido. Tipos permitidos: ${WebsiteBloquesModel.TIPOS_VALIDOS.join(', ')}`,
-                400
-            );
-        }
-
-        // Si no hay contenido, usar el default para el tipo
-        const contenidoFinal = contenido || WebsiteBloquesModel.obtenerContenidoDefault(tipo);
-
-        const bloqueCreado = await WebsiteBloquesModel.crear({
-            pagina_id,
-            tipo,
-            contenido: contenidoFinal,
-            estilos: estilos || {},
-            orden,
-            visible
-        }, organizacionId);
+        const bloqueCreado = await BloqueService.crear(
+            req.body,
+            req.tenant.organizacionId
+        );
 
         return ResponseHelper.success(
             res,
@@ -221,20 +193,10 @@ class WebsiteBloquesController {
      * @requires tenant - organizacionId desde RLS context
      */
     static duplicar = asyncHandler(async (req, res) => {
-        const { id } = req.params;
-        const organizacionId = req.tenant.organizacionId;
-
-        // Verificar que el bloque existe y pertenece a la organización
-        const bloqueOriginal = await WebsiteBloquesModel.obtenerPorId(id, organizacionId);
-        if (!bloqueOriginal) {
-            return ResponseHelper.error(
-                res,
-                'Bloque no encontrado',
-                404
-            );
-        }
-
-        const bloqueDuplicado = await WebsiteBloquesModel.duplicar(id, organizacionId);
+        const bloqueDuplicado = await BloqueService.duplicar(
+            req.params.id,
+            req.tenant.organizacionId
+        );
 
         return ResponseHelper.success(
             res,
@@ -280,16 +242,7 @@ class WebsiteBloquesController {
      */
     static obtenerDefault = asyncHandler(async (req, res) => {
         const { tipo } = req.params;
-
-        if (!WebsiteBloquesModel.TIPOS_VALIDOS.includes(tipo)) {
-            return ResponseHelper.error(
-                res,
-                `Tipo de bloque inválido. Tipos permitidos: ${WebsiteBloquesModel.TIPOS_VALIDOS.join(', ')}`,
-                400
-            );
-        }
-
-        const contenidoDefault = WebsiteBloquesModel.obtenerContenidoDefault(tipo);
+        const contenidoDefault = BloqueService.obtenerContenidoDefault(tipo);
 
         return ResponseHelper.success(
             res,
@@ -305,23 +258,7 @@ class WebsiteBloquesController {
      * @requires auth - cualquier rol
      */
     static listarTipos = asyncHandler(async (req, res) => {
-        const tipos = WebsiteBloquesModel.TIPOS_VALIDOS.map(tipo => ({
-            tipo,
-            descripcion: {
-                hero: 'Banner principal con imagen/video',
-                servicios: 'Cards de servicios',
-                testimonios: 'Reseñas de clientes',
-                equipo: 'Staff/profesionales',
-                cta: 'Call to action',
-                contacto: 'Formulario + info de contacto',
-                footer: 'Pie de página',
-                texto: 'Contenido HTML libre',
-                galeria: 'Galería de imágenes',
-                video: 'Video embebido',
-                separador: 'Separador visual'
-            }[tipo]
-        }));
-
+        const tipos = BloqueService.listarTipos();
         return ResponseHelper.success(
             res,
             tipos,
@@ -340,47 +277,11 @@ class WebsiteBloquesController {
      * @returns Lista de servicios y categorías disponibles
      */
     static obtenerServiciosERP = asyncHandler(async (req, res) => {
-        const organizacionId = req.tenant.organizacionId;
         const { busqueda, categoria } = req.query;
-
-        const result = await RLSContextManager.query(organizacionId, async (db) => {
-            // Obtener servicios
-            let query = `
-                SELECT id, nombre, descripcion, precio, duracion_minutos,
-                       imagen_url, categoria, color_servicio
-                FROM servicios
-                WHERE activo = true AND eliminado_en IS NULL
-            `;
-            const params = [];
-            let paramIndex = 1;
-
-            if (busqueda) {
-                query += ` AND (nombre ILIKE $${paramIndex} OR descripcion ILIKE $${paramIndex})`;
-                params.push(`%${busqueda}%`);
-                paramIndex++;
-            }
-            if (categoria) {
-                query += ` AND categoria = $${paramIndex}`;
-                params.push(categoria);
-            }
-            query += ` ORDER BY nombre ASC LIMIT 100`;
-
-            const servicios = await db.query(query, params);
-
-            // Obtener categorías únicas
-            const categoriasResult = await db.query(`
-                SELECT DISTINCT categoria
-                FROM servicios
-                WHERE activo = true AND eliminado_en IS NULL AND categoria IS NOT NULL
-                ORDER BY categoria
-            `);
-
-            return {
-                servicios: servicios.rows,
-                categorias: categoriasResult.rows.map(r => r.categoria)
-            };
-        });
-
+        const result = await ErpDataService.obtenerServicios(
+            req.tenant.organizacionId,
+            { busqueda, categoria }
+        );
         return ResponseHelper.success(res, result, 'Servicios obtenidos');
     });
 
@@ -395,54 +296,11 @@ class WebsiteBloquesController {
      * @returns Lista de profesionales y departamentos disponibles
      */
     static obtenerProfesionalesERP = asyncHandler(async (req, res) => {
-        const organizacionId = req.tenant.organizacionId;
         const { busqueda, departamento_id } = req.query;
-
-        const result = await RLSContextManager.query(organizacionId, async (db) => {
-            // Obtener profesionales
-            let query = `
-                SELECT
-                    p.id, p.nombre_completo, p.foto_url, p.biografia, p.email,
-                    pu.nombre as puesto_nombre,
-                    d.id as departamento_id, d.nombre as departamento_nombre
-                FROM profesionales p
-                LEFT JOIN puestos pu ON p.puesto_id = pu.id
-                LEFT JOIN departamentos d ON p.departamento_id = d.id
-                WHERE p.activo = true
-                  AND p.estado = 'activo'
-                  AND p.eliminado_en IS NULL
-            `;
-            const params = [];
-            let paramIndex = 1;
-
-            if (busqueda) {
-                query += ` AND p.nombre_completo ILIKE $${paramIndex}`;
-                params.push(`%${busqueda}%`);
-                paramIndex++;
-            }
-            if (departamento_id) {
-                query += ` AND p.departamento_id = $${paramIndex}`;
-                params.push(departamento_id);
-            }
-            query += ` ORDER BY p.nombre_completo ASC LIMIT 50`;
-
-            const profesionales = await db.query(query, params);
-
-            // Obtener departamentos únicos para filtros
-            const deptosResult = await db.query(`
-                SELECT DISTINCT d.id, d.nombre
-                FROM profesionales p
-                JOIN departamentos d ON p.departamento_id = d.id
-                WHERE p.activo = true AND p.estado = 'activo' AND p.eliminado_en IS NULL
-                ORDER BY d.nombre
-            `);
-
-            return {
-                profesionales: profesionales.rows,
-                departamentos: deptosResult.rows
-            };
-        });
-
+        const result = await ErpDataService.obtenerProfesionales(
+            req.tenant.organizacionId,
+            { busqueda, departamento_id }
+        );
         return ResponseHelper.success(res, result, 'Profesionales obtenidos');
     });
 }

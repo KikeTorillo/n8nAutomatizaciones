@@ -4,7 +4,7 @@ const {
     WebsiteBloquesModel,
     WebsiteContactosModel,
 } = require('../models');
-const { ResponseHelper } = require('../../../utils/helpers');
+const { ResponseHelper, SanitizeHelper } = require('../../../utils/helpers');
 const { asyncHandler } = require('../../../middleware');
 const RLSContextManager = require('../../../utils/rlsContextManager');
 const NotificacionesService = require('../../notificaciones/services/notificaciones.service');
@@ -217,14 +217,18 @@ class WebsitePublicController {
         const ip_origen = req.ip || req.headers['x-forwarded-for'] || req.connection?.remoteAddress;
         const user_agent = req.headers['user-agent'];
 
+        // Sanitizar campos para prevenir XSS
+        const nombreSanitizado = SanitizeHelper.escapeHtml(nombre.trim());
+        const mensajeSanitizado = mensaje ? SanitizeHelper.escapeHtml(mensaje.trim()) : null;
+
         // Crear contacto en la base de datos
         const contacto = await WebsiteContactosModel.crear({
             website_id: config.id,
             organizacion_id: config.organizacion_id,
-            nombre: nombre.trim(),
+            nombre: nombreSanitizado,
             email: email?.trim() || null,
             telefono: telefono?.trim() || null,
-            mensaje: mensaje?.trim() || null,
+            mensaje: mensajeSanitizado,
             pagina_origen: pagina_origen || null,
             ip_origen,
             user_agent,
@@ -234,7 +238,7 @@ class WebsitePublicController {
             contacto_id: contacto.id,
             sitio_slug: slug,
             organizacion_id: config.organizacion_id,
-            nombre,
+            nombre: nombreSanitizado,
         });
 
         // Enviar notificación al propietario
@@ -243,13 +247,13 @@ class WebsitePublicController {
                 organizacionId: config.organizacion_id,
                 tipo: 'website_contacto',
                 titulo: `Nuevo contacto desde ${config.nombre_sitio || 'tu sitio web'}`,
-                mensaje: `${nombre} te ha enviado un mensaje${email ? ` (${email})` : ''}${telefono ? ` - Tel: ${telefono}` : ''}`,
+                mensaje: `${nombreSanitizado} te ha enviado un mensaje${email ? ` (${email})` : ''}${telefono ? ` - Tel: ${telefono}` : ''}`,
                 datos: {
                     contacto_id: contacto.id,
-                    nombre,
+                    nombre: nombreSanitizado,
                     email,
                     telefono,
-                    mensaje: mensaje?.substring(0, 200),
+                    mensaje: mensajeSanitizado?.substring(0, 200),
                 },
                 // Enviar a admins de la organización
                 canales: ['app', 'email'],

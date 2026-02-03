@@ -1,5 +1,7 @@
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { PartyPopper, Save, Image, Trash2, Plus, Upload } from 'lucide-react';
 import {
   BackButton,
@@ -16,9 +18,17 @@ import {
   useCrearEvento,
   useActualizarEvento
 } from '@/hooks/otros';
+import {
+  eventoSchema,
+  eventoDefaults,
+  eventoToFormData,
+  formDataToApi as eventoFormDataToApi,
+  TIPOS_EVENTO
+} from '@/schemas/evento.schema';
 
 /**
  * Página de formulario para crear/editar evento digital
+ * Migrado a React Hook Form + Zod - Feb 2026
  */
 function EventoFormPage() {
   const navigate = useNavigate();
@@ -26,36 +36,32 @@ function EventoFormPage() {
   const toast = useToast();
   const isEditing = !!id;
 
-  const [formData, setFormData] = useState({
-    nombre: '',
-    tipo: 'boda',
-    descripcion: '',
-    fecha_evento: '',
-    hora_evento: '',
-    fecha_limite_rsvp: '',
-    plantilla_id: '',
-    portada_url: '',
-    galeria_urls: [],
-    configuracion: {
-      mostrar_mesa_regalos: true,
-      permitir_felicitaciones: true,
-      mostrar_ubicaciones: true,
-      mostrar_contador: true,
-      mostrar_qr_invitado: false,
-      habilitar_seating_chart: false,
-      mensaje_confirmacion: '',
-    }
+  // React Hook Form
+  const {
+    control,
+    handleSubmit,
+    reset,
+    watch,
+    setValue,
+    formState: { errors, isSubmitting }
+  } = useForm({
+    resolver: zodResolver(eventoSchema),
+    defaultValues: eventoDefaults,
   });
 
+  // Watch para valores reactivos
+  const tipo = watch('tipo');
+  const portada_url = watch('portada_url');
+  const galeria_urls = watch('galeria_urls');
+  const plantilla_id = watch('plantilla_id');
+
   // Estados para subida de imágenes
-  const [uploadingPortada, setUploadingPortada] = useState(false);
-  const [uploadingGaleria, setUploadingGaleria] = useState(false);
   const portadaInputRef = useRef(null);
   const galeriaInputRef = useRef(null);
 
   // Queries
   const { data: evento, isLoading: loadingEvento } = useEvento(isEditing ? id : null);
-  const { data: plantillas } = usePlantillasPorTipo(formData.tipo);
+  const { data: plantillas } = usePlantillasPorTipo(tipo);
 
   // Mutations
   const crearEvento = useCrearEvento();
@@ -65,76 +71,25 @@ function EventoFormPage() {
   // Cargar datos si es edición
   useEffect(() => {
     if (evento) {
-      setFormData({
-        nombre: evento.nombre || '',
-        tipo: evento.tipo || 'boda',
-        descripcion: evento.descripcion || '',
-        fecha_evento: evento.fecha_evento ? evento.fecha_evento.split('T')[0] : '',
-        hora_evento: evento.hora_evento ? evento.hora_evento.substring(0, 5) : '',
-        fecha_limite_rsvp: evento.fecha_limite_rsvp ? evento.fecha_limite_rsvp.split('T')[0] : '',
-        plantilla_id: evento.plantilla_id || '',
-        portada_url: evento.portada_url || '',
-        galeria_urls: evento.galeria_urls || [],
-        configuracion: {
-          mostrar_mesa_regalos: evento.configuracion?.mostrar_mesa_regalos ?? true,
-          permitir_felicitaciones: evento.configuracion?.permitir_felicitaciones ?? true,
-          mostrar_ubicaciones: evento.configuracion?.mostrar_ubicaciones ?? true,
-          mostrar_contador: evento.configuracion?.mostrar_contador ?? true,
-          mostrar_qr_invitado: evento.configuracion?.mostrar_qr_invitado ?? false,
-          habilitar_seating_chart: evento.configuracion?.habilitar_seating_chart ?? false,
-          mensaje_confirmacion: evento.configuracion?.mensaje_confirmacion || '',
-        }
-      });
+      reset(eventoToFormData(evento));
     }
-  }, [evento]);
-
-  const tiposEvento = [
-    { value: 'boda', label: 'Boda', emoji: '' },
-    { value: 'xv_anos', label: 'XV Años', emoji: '' },
-    { value: 'bautizo', label: 'Bautizo', emoji: '' },
-    { value: 'cumpleanos', label: 'Cumpleaños', emoji: '' },
-    { value: 'corporativo', label: 'Corporativo', emoji: '' },
-    { value: 'otro', label: 'Otro', emoji: '' },
-  ];
-
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-
-    if (name.startsWith('config_')) {
-      const configKey = name.replace('config_', '');
-      setFormData(prev => ({
-        ...prev,
-        configuracion: {
-          ...prev.configuracion,
-          [configKey]: type === 'checkbox' ? checked : value
-        }
-      }));
-    } else {
-      setFormData(prev => ({
-        ...prev,
-        [name]: value
-      }));
-    }
-  };
+  }, [evento, reset]);
 
   // Handler para subir imagen de portada
-  const handlePortadaUpload = async (e) => {
+  const handlePortadaUpload = useCallback(async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validar tipo de archivo
     if (!file.type.startsWith('image/')) {
       toast.error('Solo se permiten archivos de imagen');
       return;
     }
 
-    // Validar tamaño (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
       toast.error('La imagen no debe superar los 5MB');
       return;
     }
 
-    setUploadingPortada(true);
     try {
       const resultado = await uploadArchivo.mutateAsync({
         file,
@@ -144,45 +99,37 @@ function EventoFormPage() {
         entidadId: id || undefined,
       });
 
-      setFormData(prev => ({
-        ...prev,
-        portada_url: resultado.url
-      }));
+      setValue('portada_url', resultado.url);
       toast.success('Portada subida correctamente');
     } catch (error) {
       toast.error(error.message || 'Error al subir la imagen');
     } finally {
-      setUploadingPortada(false);
       if (portadaInputRef.current) {
         portadaInputRef.current.value = '';
       }
     }
-  };
+  }, [uploadArchivo, setValue, id, toast]);
 
   // Handler para subir imagen a galería
-  const handleGaleriaUpload = async (e) => {
+  const handleGaleriaUpload = useCallback(async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validar tipo de archivo
     if (!file.type.startsWith('image/')) {
       toast.error('Solo se permiten archivos de imagen');
       return;
     }
 
-    // Validar tamaño (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
       toast.error('La imagen no debe superar los 5MB');
       return;
     }
 
-    // Máximo 10 imágenes en galería
-    if (formData.galeria_urls.length >= 10) {
+    if (galeria_urls.length >= 10) {
       toast.error('Máximo 10 imágenes en la galería');
       return;
     }
 
-    setUploadingGaleria(true);
     try {
       const resultado = await uploadArchivo.mutateAsync({
         file,
@@ -192,75 +139,41 @@ function EventoFormPage() {
         entidadId: id || undefined,
       });
 
-      setFormData(prev => ({
-        ...prev,
-        galeria_urls: [...prev.galeria_urls, resultado.url]
-      }));
+      setValue('galeria_urls', [...galeria_urls, resultado.url]);
       toast.success('Imagen agregada a la galería');
     } catch (error) {
       toast.error(error.message || 'Error al subir la imagen');
     } finally {
-      setUploadingGaleria(false);
       if (galeriaInputRef.current) {
         galeriaInputRef.current.value = '';
       }
     }
-  };
+  }, [uploadArchivo, setValue, id, galeria_urls, toast]);
 
   // Handler para eliminar portada
-  const handleRemovePortada = () => {
-    setFormData(prev => ({
-      ...prev,
-      portada_url: ''
-    }));
-  };
+  const handleRemovePortada = useCallback(() => {
+    setValue('portada_url', '');
+  }, [setValue]);
 
   // Handler para eliminar imagen de galería
-  const handleRemoveGaleriaImage = (index) => {
-    setFormData(prev => ({
-      ...prev,
-      galeria_urls: prev.galeria_urls.filter((_, i) => i !== index)
-    }));
-  };
+  const handleRemoveGaleriaImage = useCallback((index) => {
+    setValue('galeria_urls', galeria_urls.filter((_, i) => i !== index));
+  }, [setValue, galeria_urls]);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    // Validaciones
-    if (!formData.nombre.trim()) {
-      toast.error('El nombre es requerido');
-      return;
-    }
-    if (!formData.fecha_evento) {
-      toast.error('La fecha del evento es requerida');
-      return;
-    }
-
+  // Submit handler
+  const onSubmit = async (data) => {
     try {
-      const data = {
-        nombre: formData.nombre.trim(),
-        tipo: formData.tipo,
-        descripcion: formData.descripcion.trim() || undefined,
-        fecha_evento: formData.fecha_evento,
-        hora_evento: formData.hora_evento ? formData.hora_evento.substring(0, 5) : undefined,
-        fecha_limite_rsvp: formData.fecha_limite_rsvp || undefined,
-        plantilla_id: formData.plantilla_id ? parseInt(formData.plantilla_id) : undefined,
-        portada_url: formData.portada_url || null,
-        galeria_urls: formData.galeria_urls,
-        configuracion: formData.configuracion,
-      };
+      const apiData = eventoFormDataToApi(data);
 
       if (isEditing) {
-        await actualizarEvento.mutateAsync({ id, data });
+        await actualizarEvento.mutateAsync({ id, data: apiData });
         toast.success('Evento actualizado correctamente');
+        navigate(`/eventos-digitales/${id}`);
       } else {
-        const nuevoEvento = await crearEvento.mutateAsync(data);
+        const nuevoEvento = await crearEvento.mutateAsync(apiData);
         toast.success('Evento creado correctamente');
         navigate(`/eventos-digitales/${nuevoEvento.id}`);
-        return;
       }
-
-      navigate(`/eventos-digitales/${id}`);
     } catch (error) {
       toast.error(error.message || 'Error al guardar evento');
     }
@@ -273,6 +186,10 @@ function EventoFormPage() {
       </div>
     );
   }
+
+  const isLoading = crearEvento.isPending || actualizarEvento.isPending || isSubmitting;
+  const isUploadingPortada = uploadArchivo.isPending && portadaInputRef.current?.files?.length > 0;
+  const isUploadingGaleria = uploadArchivo.isPending && galeriaInputRef.current?.files?.length > 0;
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -300,55 +217,74 @@ function EventoFormPage() {
 
       {/* Form */}
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           {/* Información Básica */}
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-700">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Información Básica</h2>
 
             <div className="space-y-4">
-              <Input
-                label="Nombre del Evento *"
+              {/* Nombre */}
+              <Controller
                 name="nombre"
-                value={formData.nombre}
-                onChange={handleChange}
-                placeholder="Ej: Boda de Juan y María"
-                required
+                control={control}
+                render={({ field }) => (
+                  <Input
+                    label="Nombre del Evento *"
+                    placeholder="Ej: Boda de Juan y María"
+                    error={errors.nombre?.message}
+                    {...field}
+                  />
+                )}
               />
 
+              {/* Tipo de Evento */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tipo de Evento *</label>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  {tiposEvento.map((tipo) => (
+                  {TIPOS_EVENTO.map((tipoEvento) => (
                     <button
-                      key={tipo.value}
+                      key={tipoEvento.value}
                       type="button"
-                      onClick={() => setFormData(prev => ({ ...prev, tipo: tipo.value, plantilla_id: '' }))}
+                      onClick={() => {
+                        setValue('tipo', tipoEvento.value);
+                        setValue('plantilla_id', '');
+                      }}
                       className={`
                         p-3 rounded-lg border-2 text-center transition-all
-                        ${formData.tipo === tipo.value
+                        ${tipo === tipoEvento.value
                           ? 'border-pink-500 bg-pink-50 dark:bg-pink-900/30 text-pink-700 dark:text-pink-400'
                           : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 text-gray-900 dark:text-gray-100'
                         }
                       `}
                     >
-                      <span className="text-2xl">{tipo.emoji}</span>
-                      <p className="text-sm font-medium mt-1">{tipo.label}</p>
+                      <p className="text-sm font-medium mt-1">{tipoEvento.label}</p>
                     </button>
                   ))}
                 </div>
+                {errors.tipo && (
+                  <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.tipo.message}</p>
+                )}
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Descripción</label>
-                <textarea
-                  name="descripcion"
-                  value={formData.descripcion}
-                  onChange={handleChange}
-                  rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-pink-500"
-                  placeholder="Cuéntale a tus invitados sobre tu evento..."
-                />
-              </div>
+              {/* Descripción */}
+              <Controller
+                name="descripcion"
+                control={control}
+                render={({ field }) => (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Descripción</label>
+                    <textarea
+                      {...field}
+                      rows={3}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-pink-500"
+                      placeholder="Cuéntale a tus invitados sobre tu evento..."
+                    />
+                    {errors.descripcion && (
+                      <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.descripcion.message}</p>
+                    )}
+                  </div>
+                )}
+              />
             </div>
           </div>
 
@@ -357,30 +293,44 @@ function EventoFormPage() {
             <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Fechas</h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Input
-                label="Fecha del Evento *"
+              <Controller
                 name="fecha_evento"
-                type="date"
-                value={formData.fecha_evento}
-                onChange={handleChange}
-                required
+                control={control}
+                render={({ field }) => (
+                  <Input
+                    label="Fecha del Evento *"
+                    type="date"
+                    error={errors.fecha_evento?.message}
+                    {...field}
+                  />
+                )}
               />
 
-              <Input
-                label="Hora del Evento"
+              <Controller
                 name="hora_evento"
-                type="time"
-                value={formData.hora_evento}
-                onChange={handleChange}
+                control={control}
+                render={({ field }) => (
+                  <Input
+                    label="Hora del Evento"
+                    type="time"
+                    error={errors.hora_evento?.message}
+                    {...field}
+                  />
+                )}
               />
 
-              <Input
-                label="Fecha Límite RSVP"
+              <Controller
                 name="fecha_limite_rsvp"
-                type="date"
-                value={formData.fecha_limite_rsvp}
-                onChange={handleChange}
-                className="sm:col-span-2"
+                control={control}
+                render={({ field }) => (
+                  <Input
+                    label="Fecha Límite RSVP"
+                    type="date"
+                    error={errors.fecha_limite_rsvp?.message}
+                    className="sm:col-span-2"
+                    {...field}
+                  />
+                )}
               />
             </div>
           </div>
@@ -399,20 +349,19 @@ function EventoFormPage() {
                   Esta imagen se mostrará como fondo principal de tu invitación
                 </p>
 
-                {formData.portada_url ? (
+                {portada_url ? (
                   <div className="relative inline-block group">
                     <img
-                      src={formData.portada_url}
+                      src={portada_url}
                       alt="Portada del evento"
                       className="w-full max-w-md h-48 object-cover rounded-lg border border-gray-200 dark:border-gray-600 cursor-pointer"
-                      onClick={() => !uploadingPortada && portadaInputRef.current?.click()}
+                      onClick={() => !isUploadingPortada && portadaInputRef.current?.click()}
                     />
-                    {/* Overlay al hacer hover */}
                     <div
                       className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center cursor-pointer"
-                      onClick={() => !uploadingPortada && portadaInputRef.current?.click()}
+                      onClick={() => !isUploadingPortada && portadaInputRef.current?.click()}
                     >
-                      {uploadingPortada ? (
+                      {isUploadingPortada ? (
                         <LoadingSpinner size="sm" />
                       ) : (
                         <div className="text-white text-center">
@@ -432,13 +381,13 @@ function EventoFormPage() {
                   </div>
                 ) : (
                   <div
-                    onClick={() => !uploadingPortada && portadaInputRef.current?.click()}
+                    onClick={() => !isUploadingPortada && portadaInputRef.current?.click()}
                     className={`
                       w-full max-w-md h-48 border-2 border-dashed rounded-lg flex flex-col items-center justify-center gap-2 cursor-pointer transition-colors
-                      ${uploadingPortada ? 'border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700' : 'border-gray-300 dark:border-gray-600 hover:border-pink-400 dark:hover:border-pink-500 hover:bg-pink-50 dark:hover:bg-pink-900/20'}
+                      ${isUploadingPortada ? 'border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700' : 'border-gray-300 dark:border-gray-600 hover:border-pink-400 dark:hover:border-pink-500 hover:bg-pink-50 dark:hover:bg-pink-900/20'}
                     `}
                   >
-                    {uploadingPortada ? (
+                    {isUploadingPortada ? (
                       <>
                         <LoadingSpinner size="sm" />
                         <span className="text-sm text-gray-500 dark:text-gray-400">Subiendo...</span>
@@ -467,12 +416,11 @@ function EventoFormPage() {
                   Galería de Fotos
                 </label>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
-                  Agrega hasta 10 fotos para mostrar en tu invitación ({formData.galeria_urls.length}/10)
+                  Agrega hasta 10 fotos para mostrar en tu invitación ({galeria_urls.length}/10)
                 </p>
 
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                  {/* Imágenes existentes */}
-                  {formData.galeria_urls.map((url, index) => (
+                  {galeria_urls.map((url, index) => (
                     <div key={index} className="relative aspect-square">
                       <img
                         src={url}
@@ -490,16 +438,15 @@ function EventoFormPage() {
                     </div>
                   ))}
 
-                  {/* Botón agregar */}
-                  {formData.galeria_urls.length < 10 && (
+                  {galeria_urls.length < 10 && (
                     <div
-                      onClick={() => !uploadingGaleria && galeriaInputRef.current?.click()}
+                      onClick={() => !isUploadingGaleria && galeriaInputRef.current?.click()}
                       className={`
                         aspect-square border-2 border-dashed rounded-lg flex flex-col items-center justify-center gap-1 cursor-pointer transition-colors
-                        ${uploadingGaleria ? 'border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700' : 'border-gray-300 dark:border-gray-600 hover:border-pink-400 dark:hover:border-pink-500 hover:bg-pink-50 dark:hover:bg-pink-900/20'}
+                        ${isUploadingGaleria ? 'border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700' : 'border-gray-300 dark:border-gray-600 hover:border-pink-400 dark:hover:border-pink-500 hover:bg-pink-50 dark:hover:bg-pink-900/20'}
                       `}
                     >
-                      {uploadingGaleria ? (
+                      {isUploadingGaleria ? (
                         <LoadingSpinner size="sm" />
                       ) : (
                         <>
@@ -517,6 +464,9 @@ function EventoFormPage() {
                   onChange={handleGaleriaUpload}
                   className="hidden"
                 />
+                {errors.galeria_urls && (
+                  <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.galeria_urls.message}</p>
+                )}
               </div>
             </div>
           </div>
@@ -540,20 +490,19 @@ function EventoFormPage() {
                     <button
                       key={plantilla.id}
                       type="button"
-                      onClick={() => setFormData(prev => ({ ...prev, plantilla_id: plantilla.id }))}
+                      onClick={() => setValue('plantilla_id', plantilla.id)}
                       className={`
                         relative rounded-lg border-2 overflow-hidden transition-all
-                        ${formData.plantilla_id == plantilla.id
+                        ${plantilla_id == plantilla.id
                           ? 'ring-2 ring-offset-2'
                           : 'hover:border-gray-300'
                         }
                       `}
                       style={{
-                        borderColor: formData.plantilla_id == plantilla.id ? tema.color_primario : undefined,
+                        borderColor: plantilla_id == plantilla.id ? tema.color_primario : undefined,
                         '--tw-ring-color': tema.color_primario,
                       }}
                     >
-                      {/* Preview del tema */}
                       <div
                         className="aspect-[3/4] flex flex-col items-center justify-center p-3"
                         style={{ backgroundColor: tema.color_fondo }}
@@ -562,7 +511,6 @@ function EventoFormPage() {
                           <img src={plantilla.preview_url} alt={plantilla.nombre} className="w-full h-full object-cover rounded" />
                         ) : (
                           <>
-                            {/* Mini preview de colores */}
                             <div className="flex gap-1 mb-2">
                               <div
                                 className="w-4 h-4 rounded-full border border-white/50"
@@ -575,7 +523,6 @@ function EventoFormPage() {
                                 title="Color secundario"
                               />
                             </div>
-                            {/* Simulación de invitación */}
                             <div
                               className="w-full rounded-lg p-2 text-center"
                               style={{ backgroundColor: tema.color_secundario }}
@@ -605,11 +552,9 @@ function EventoFormPage() {
                         )}
                       </div>
 
-                      {/* Info de la plantilla */}
                       <div className="p-2 bg-white dark:bg-gray-700 border-t border-gray-200 dark:border-gray-600">
                         <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{plantilla.nombre}</p>
                         <div className="flex items-center justify-between mt-1">
-                          {/* Paleta de colores */}
                           <div className="flex gap-0.5">
                             <div
                               className="w-3 h-3 rounded-full"
@@ -630,8 +575,7 @@ function EventoFormPage() {
                         </div>
                       </div>
 
-                      {/* Indicador de seleccionado */}
-                      {formData.plantilla_id == plantilla.id && (
+                      {plantilla_id == plantilla.id && (
                         <div
                           className="absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center"
                           style={{ backgroundColor: tema.color_primario }}
@@ -653,61 +597,100 @@ function EventoFormPage() {
             <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Configuración</h2>
 
             <div className="space-y-4">
-              <Checkbox
-                name="config_mostrar_mesa_regalos"
-                checked={formData.configuracion.mostrar_mesa_regalos}
-                onChange={handleChange}
-                label="Mostrar mesa de regalos"
+              <Controller
+                name="configuracion.mostrar_mesa_regalos"
+                control={control}
+                render={({ field }) => (
+                  <Checkbox
+                    checked={field.value}
+                    onChange={field.onChange}
+                    label="Mostrar mesa de regalos"
+                  />
+                )}
               />
 
-              <Checkbox
-                name="config_permitir_felicitaciones"
-                checked={formData.configuracion.permitir_felicitaciones}
-                onChange={handleChange}
-                label="Permitir felicitaciones públicas"
+              <Controller
+                name="configuracion.permitir_felicitaciones"
+                control={control}
+                render={({ field }) => (
+                  <Checkbox
+                    checked={field.value}
+                    onChange={field.onChange}
+                    label="Permitir felicitaciones públicas"
+                  />
+                )}
               />
 
-              <Checkbox
-                name="config_mostrar_ubicaciones"
-                checked={formData.configuracion.mostrar_ubicaciones}
-                onChange={handleChange}
-                label="Mostrar ubicaciones con mapa"
+              <Controller
+                name="configuracion.mostrar_ubicaciones"
+                control={control}
+                render={({ field }) => (
+                  <Checkbox
+                    checked={field.value}
+                    onChange={field.onChange}
+                    label="Mostrar ubicaciones con mapa"
+                  />
+                )}
               />
 
-              <Checkbox
-                name="config_mostrar_contador"
-                checked={formData.configuracion.mostrar_contador}
-                onChange={handleChange}
-                label="Mostrar contador regresivo"
+              <Controller
+                name="configuracion.mostrar_contador"
+                control={control}
+                render={({ field }) => (
+                  <Checkbox
+                    checked={field.value}
+                    onChange={field.onChange}
+                    label="Mostrar contador regresivo"
+                  />
+                )}
               />
 
-              <Checkbox
-                name="config_mostrar_qr_invitado"
-                checked={formData.configuracion.mostrar_qr_invitado}
-                onChange={handleChange}
-                label="Mostrar QR de entrada al invitado"
-                description="Muestra un código QR cuando el invitado confirma asistencia"
+              <Controller
+                name="configuracion.mostrar_qr_invitado"
+                control={control}
+                render={({ field }) => (
+                  <Checkbox
+                    checked={field.value}
+                    onChange={field.onChange}
+                    label="Mostrar QR de entrada al invitado"
+                    description="Muestra un código QR cuando el invitado confirma asistencia"
+                  />
+                )}
               />
 
-              <Checkbox
-                name="config_habilitar_seating_chart"
-                checked={formData.configuracion.habilitar_seating_chart}
-                onChange={handleChange}
-                label="Habilitar asignación de mesas"
-                description="Permite asignar invitados a mesas y mostrar su ubicación"
+              <Controller
+                name="configuracion.habilitar_seating_chart"
+                control={control}
+                render={({ field }) => (
+                  <Checkbox
+                    checked={field.value}
+                    onChange={field.onChange}
+                    label="Habilitar asignación de mesas"
+                    description="Permite asignar invitados a mesas y mostrar su ubicación"
+                  />
+                )}
               />
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Mensaje de Confirmación</label>
-                <textarea
-                  name="config_mensaje_confirmacion"
-                  value={formData.configuracion.mensaje_confirmacion}
-                  onChange={handleChange}
-                  rows={2}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-pink-500"
-                  placeholder="Mensaje que verán después de confirmar asistencia"
-                />
-              </div>
+              <Controller
+                name="configuracion.mensaje_confirmacion"
+                control={control}
+                render={({ field }) => (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Mensaje de Confirmación</label>
+                    <textarea
+                      {...field}
+                      rows={2}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-pink-500"
+                      placeholder="Mensaje que verán después de confirmar asistencia"
+                    />
+                    {errors.configuracion?.mensaje_confirmacion && (
+                      <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                        {errors.configuracion.mensaje_confirmacion.message}
+                      </p>
+                    )}
+                  </div>
+                )}
+              />
             </div>
           </div>
 
@@ -722,10 +705,10 @@ function EventoFormPage() {
             </Button>
             <Button
               type="submit"
-              disabled={crearEvento.isLoading || actualizarEvento.isLoading}
+              disabled={isLoading}
             >
               <Save className="w-4 h-4 mr-2" />
-              {crearEvento.isLoading || actualizarEvento.isLoading ? 'Guardando...' : 'Guardar'}
+              {isLoading ? 'Guardando...' : 'Guardar'}
             </Button>
           </div>
         </form>

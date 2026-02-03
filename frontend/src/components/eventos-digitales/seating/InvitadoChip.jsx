@@ -1,10 +1,12 @@
+import React, { memo } from 'react';
 import { useDraggable } from '@dnd-kit/core';
 import { User, Users } from 'lucide-react';
 
 /**
  * Chip draggable de invitado para asignar a mesa
+ * Memoizado para evitar re-renders innecesarios
  */
-function InvitadoChip({ invitado, isDraggable = true }) {
+const InvitadoChip = memo(function InvitadoChip({ invitado, isDraggable = true }) {
   const {
     attributes,
     listeners,
@@ -74,6 +76,14 @@ function InvitadoChip({ invitado, isDraggable = true }) {
       )}
     </div>
   );
-}
+}, (prevProps, nextProps) => {
+  // Comparador personalizado
+  return (
+    prevProps.invitado.id === nextProps.invitado.id &&
+    prevProps.invitado.nombre === nextProps.invitado.nombre &&
+    prevProps.invitado.num_asistentes === nextProps.invitado.num_asistentes &&
+    prevProps.isDraggable === nextProps.isDraggable
+  );
+});
 
 export default InvitadoChip;

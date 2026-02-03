@@ -1,17 +1,31 @@
+/**
+ * ====================================================================
+ * HERO EDITOR (Refactorizado)
+ * ====================================================================
+ *
+ * Editor del bloque Hero.
+ * Usa BaseBlockEditor.
+ *
+ * @version 2.0.0
+ * @since 2026-02-03
+ */
+
 import { useCallback, useMemo } from 'react';
-import { Save, Image } from 'lucide-react';
-import {
-  Button,
-  Checkbox,
-  Input,
-  Select,
-  Textarea
-} from '@/components/ui';
-import { AIGenerateButton, AISuggestionBanner } from '../AIGenerator';
+import { Image } from 'lucide-react';
+import { Checkbox, Input, Select, Textarea } from '@/components/ui';
+import { AIGenerateButton } from '../AIGenerator';
 import { useBlockEditor } from '../../hooks';
+import BaseBlockEditor from './BaseBlockEditor';
 
 /**
  * HeroEditor - Editor del bloque Hero
+ *
+ * @param {Object} props
+ * @param {Object} props.contenido - Contenido del bloque
+ * @param {Function} props.onGuardar - Callback para guardar
+ * @param {Object} props.tema - Tema del sitio
+ * @param {boolean} props.isSaving - Estado de guardado
+ * @param {string} props.industria - Industria para AI
  */
 function HeroEditor({ contenido, onGuardar, tema, isSaving, industria = 'default' }) {
   // Valores por defecto del formulario
@@ -31,10 +45,10 @@ function HeroEditor({ contenido, onGuardar, tema, isSaving, industria = 'default
     defaultValues
   );
 
-  // Verificar si el contenido está esencialmente vacío
+  // Verificar si el contenido esta vacio
   const contenidoVacio = !contenido.titulo && !contenido.subtitulo;
 
-  // Callback para generación de IA de bloque completo
+  // Callback para generacion de IA de bloque completo
   const handleAIGenerate = useCallback((generatedContent) => {
     setForm(prev => ({
       ...prev,
@@ -44,74 +58,100 @@ function HeroEditor({ contenido, onGuardar, tema, isSaving, industria = 'default
     }));
   }, [setForm]);
 
+  // Opciones de select
   const alineacionOptions = [
     { value: 'left', label: 'Izquierda' },
     { value: 'center', label: 'Centro' },
     { value: 'right', label: 'Derecha' },
   ];
 
-  return (
-    <form onSubmit={handleSubmit(onGuardar)} className="space-y-4">
-      {/* Banner de sugerencia IA para contenido vacío */}
-      {contenidoVacio && (
-        <AISuggestionBanner
-          tipo="hero"
-          industria={industria}
-          onGenerate={handleAIGenerate}
-        />
+  // Componente de preview
+  const preview = useMemo(() => (
+    <div
+      className="rounded-lg overflow-hidden relative"
+      style={{
+        backgroundColor: tema?.colores?.primario || '#4F46E5',
+        backgroundImage: form.imagen_fondo ? `url(${form.imagen_fondo})` : undefined,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+      }}
+    >
+      {form.overlay && form.imagen_fondo && (
+        <div className="absolute inset-0 bg-black/50" />
       )}
-
-      {/* Título con botón IA */}
-      <div className="relative">
-        <Input
-          label={
-            <span className="flex items-center gap-2">
-              Título principal
-              <AIGenerateButton
-                tipo="hero"
-                campo="titulo"
-                industria={industria}
-                onGenerate={(text) => handleFieldChange('titulo', text)}
-                size="sm"
-              />
-            </span>
-          }
-          value={form.titulo}
-          onChange={(e) => handleFieldChange('titulo', e.target.value)}
-          placeholder="Bienvenido a nuestro negocio"
-          className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
-        />
+      <div className={`relative p-8 text-${form.alineacion}`}>
+        <h3 className="text-xl font-bold text-white mb-2">
+          {form.titulo || 'Titulo del Hero'}
+        </h3>
+        <p className="text-white/80 text-sm mb-4">
+          {form.subtitulo || 'Subtitulo descriptivo'}
+        </p>
+        {form.cta_texto && (
+          <button className="px-4 py-2 bg-white text-gray-900 rounded-lg text-sm font-medium">
+            {form.cta_texto}
+          </button>
+        )}
       </div>
+    </div>
+  ), [form.titulo, form.subtitulo, form.cta_texto, form.imagen_fondo, form.overlay, form.alineacion, tema?.colores?.primario]);
 
-      {/* Subtítulo con botón IA */}
-      <div className="relative">
-        <Textarea
-          label={
-            <span className="flex items-center gap-2">
-              Subtítulo
-              <AIGenerateButton
-                tipo="hero"
-                campo="subtitulo"
-                industria={industria}
-                contexto={{ titulo: form.titulo }}
-                onGenerate={(text) => handleFieldChange('subtitulo', text)}
-                size="sm"
-              />
-            </span>
-          }
-          value={form.subtitulo}
-          onChange={(e) => handleFieldChange('subtitulo', e.target.value)}
-          placeholder="Una descripción breve de lo que hacemos"
-          rows={2}
-          className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
-        />
-      </div>
+  return (
+    <BaseBlockEditor
+      tipo="hero"
+      industria={industria}
+      mostrarAIBanner={contenidoVacio}
+      onAIGenerate={handleAIGenerate}
+      cambios={cambios}
+      handleSubmit={handleSubmit}
+      onGuardar={onGuardar}
+      isSaving={isSaving}
+      preview={preview}
+    >
+      <Input
+        label={
+          <span className="flex items-center gap-2">
+            Titulo principal
+            <AIGenerateButton
+              tipo="hero"
+              campo="titulo"
+              industria={industria}
+              onGenerate={(text) => handleFieldChange('titulo', text)}
+              size="sm"
+            />
+          </span>
+        }
+        value={form.titulo}
+        onChange={(e) => handleFieldChange('titulo', e.target.value)}
+        placeholder="Bienvenido a nuestro negocio"
+        className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
+      />
+
+      <Textarea
+        label={
+          <span className="flex items-center gap-2">
+            Subtitulo
+            <AIGenerateButton
+              tipo="hero"
+              campo="subtitulo"
+              industria={industria}
+              contexto={{ titulo: form.titulo }}
+              onGenerate={(text) => handleFieldChange('subtitulo', text)}
+              size="sm"
+            />
+          </span>
+        }
+        value={form.subtitulo}
+        onChange={(e) => handleFieldChange('subtitulo', e.target.value)}
+        placeholder="Una descripcion breve de lo que hacemos"
+        rows={2}
+        className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
+      />
 
       <div className="grid grid-cols-2 gap-4">
         <Input
           label={
             <span className="flex items-center gap-2">
-              Texto del botón
+              Texto del boton
               <AIGenerateButton
                 tipo="hero"
                 campo="boton"
@@ -127,7 +167,7 @@ function HeroEditor({ contenido, onGuardar, tema, isSaving, industria = 'default
           className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
         <Input
-          label="URL del botón"
+          label="URL del boton"
           value={form.cta_url}
           onChange={(e) => handleFieldChange('cta_url', e.target.value)}
           placeholder="/contacto"
@@ -151,7 +191,7 @@ function HeroEditor({ contenido, onGuardar, tema, isSaving, industria = 'default
 
       <div className="grid grid-cols-2 gap-4">
         <Select
-          label="Alineación"
+          label="Alineacion"
           value={form.alineacion}
           onChange={(e) => handleFieldChange('alineacion', e.target.value)}
           options={alineacionOptions}
@@ -165,49 +205,7 @@ function HeroEditor({ contenido, onGuardar, tema, isSaving, industria = 'default
           />
         </div>
       </div>
-
-      {/* Preview */}
-      <div
-        className="rounded-lg overflow-hidden relative"
-        style={{
-          backgroundColor: tema?.colores?.primario || '#4F46E5',
-          backgroundImage: form.imagen_fondo ? `url(${form.imagen_fondo})` : undefined,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-        }}
-      >
-        {form.overlay && form.imagen_fondo && (
-          <div className="absolute inset-0 bg-black/50" />
-        )}
-        <div className={`relative p-8 text-${form.alineacion}`}>
-          <h3 className="text-xl font-bold text-white mb-2">
-            {form.titulo || 'Título del Hero'}
-          </h3>
-          <p className="text-white/80 text-sm mb-4">
-            {form.subtitulo || 'Subtítulo descriptivo'}
-          </p>
-          {form.cta_texto && (
-            <button className="px-4 py-2 bg-white text-gray-900 rounded-lg text-sm font-medium">
-              {form.cta_texto}
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Botón guardar */}
-      {cambios && (
-        <div className="flex justify-end pt-2">
-          <Button
-            type="submit"
-            variant="primary"
-            isLoading={isSaving}
-          >
-            <Save className="w-4 h-4 mr-2" />
-            Guardar cambios
-          </Button>
-        </div>
-      )}
-    </form>
+    </BaseBlockEditor>
   );
 }
 

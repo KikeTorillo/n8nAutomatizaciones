@@ -22,6 +22,7 @@
 const FelicitacionModel = require('../models/felicitacion.model');
 const EventoModel = require('../models/evento.model');
 const { ResponseHelper } = require('../../../utils/helpers');
+const logger = require('../../../utils/logger');
 
 class FelicitacionesController {
     /**
@@ -47,7 +48,7 @@ class FelicitacionesController {
 
             return ResponseHelper.success(res, felicitacion, 'Felicitación creada exitosamente', 201);
         } catch (error) {
-            console.error('Error al crear felicitación:', error);
+            logger.error('Error al crear felicitación:', error);
             return ResponseHelper.error(res, 'Error al crear felicitación', 500);
         }
     }
@@ -81,7 +82,7 @@ class FelicitacionesController {
                 estadisticas: conteo
             });
         } catch (error) {
-            console.error('Error al listar felicitaciones:', error);
+            logger.error('Error al listar felicitaciones:', error);
             return ResponseHelper.error(res, 'Error al listar felicitaciones', 500);
         }
     }
@@ -103,7 +104,7 @@ class FelicitacionesController {
 
             return ResponseHelper.success(res, felicitacion);
         } catch (error) {
-            console.error('Error al obtener felicitación:', error);
+            logger.error('Error al obtener felicitación:', error);
             return ResponseHelper.error(res, 'Error al obtener felicitación', 500);
         }
     }
@@ -125,7 +126,7 @@ class FelicitacionesController {
 
             return ResponseHelper.success(res, felicitacion, 'Felicitación aprobada');
         } catch (error) {
-            console.error('Error al aprobar felicitación:', error);
+            logger.error('Error al aprobar felicitación:', error);
             return ResponseHelper.error(res, 'Error al aprobar felicitación', 500);
         }
     }
@@ -147,7 +148,7 @@ class FelicitacionesController {
 
             return ResponseHelper.success(res, felicitacion, 'Felicitación rechazada');
         } catch (error) {
-            console.error('Error al rechazar felicitación:', error);
+            logger.error('Error al rechazar felicitación:', error);
             return ResponseHelper.error(res, 'Error al rechazar felicitación', 500);
         }
     }
@@ -171,7 +172,7 @@ class FelicitacionesController {
 
             return ResponseHelper.success(res, { id: parseInt(id) }, 'Felicitación eliminada exitosamente');
         } catch (error) {
-            console.error('Error al eliminar felicitación:', error);
+            logger.error('Error al eliminar felicitación:', error);
             return ResponseHelper.error(res, 'Error al eliminar felicitación', 500);
         }
     }

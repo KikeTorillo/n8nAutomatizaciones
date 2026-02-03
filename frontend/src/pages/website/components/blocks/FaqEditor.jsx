@@ -1,16 +1,32 @@
+/**
+ * ====================================================================
+ * FAQ EDITOR (Refactorizado)
+ * ====================================================================
+ *
+ * Editor del bloque FAQ (Preguntas Frecuentes).
+ * Usa BaseBlockEditor y componentes de fields.
+ *
+ * @version 2.0.0
+ * @since 2026-02-03
+ */
+
 import { useCallback, useMemo } from 'react';
-import { Save, Plus, Trash2, HelpCircle, GripVertical } from 'lucide-react';
-import {
-  Button,
-  Input,
-  Textarea,
-  ToggleSwitch
-} from '@/components/ui';
-import { AIGenerateButton, AISuggestionBanner } from '../AIGenerator';
+import { HelpCircle } from 'lucide-react';
+import { Input, Textarea, ToggleSwitch } from '@/components/ui';
+import { AIGenerateButton } from '../AIGenerator';
 import { useBlockEditor, useArrayItems } from '../../hooks';
+import BaseBlockEditor from './BaseBlockEditor';
+import { SectionTitleField, ArrayItemsEditor } from './fields';
 
 /**
- * FaqEditor - Editor del bloque FAQ (Preguntas Frecuentes)
+ * FaqEditor - Editor del bloque FAQ
+ *
+ * @param {Object} props
+ * @param {Object} props.contenido - Contenido del bloque
+ * @param {Function} props.onGuardar - Callback para guardar
+ * @param {Object} props.tema - Tema del sitio
+ * @param {boolean} props.isSaving - Estado de guardado
+ * @param {string} props.industria - Industria para AI
  */
 function FaqEditor({ contenido, onGuardar, tema, isSaving, industria = 'default' }) {
   // Valores por defecto del formulario
@@ -59,34 +75,91 @@ function FaqEditor({ contenido, onGuardar, tema, isSaving, industria = 'default'
     }));
   }, [setForm]);
 
-  return (
-    <form onSubmit={handleSubmit(onGuardar)} className="space-y-4">
-      {faqsVacias && (
-        <AISuggestionBanner
-          tipo="faq"
-          industria={industria}
-          onGenerate={handleAIGenerate}
-        />
-      )}
+  // Renderizador de cada FAQ item
+  const renderFaqItem = useCallback((faq, index) => (
+    <>
+      <Input
+        label={
+          <span className="flex items-center gap-2">
+            Pregunta
+            <AIGenerateButton
+              tipo="faq"
+              campo="pregunta"
+              industria={industria}
+              onGenerate={(text) => handleChangeFaq(index, 'pregunta', text)}
+              size="sm"
+            />
+          </span>
+        }
+        value={faq.pregunta}
+        onChange={(e) => handleChangeFaq(index, 'pregunta', e.target.value)}
+        placeholder="Como puedo...?"
+        className="mb-3 dark:bg-gray-600 dark:border-gray-500"
+      />
 
+      <Textarea
+        label={
+          <span className="flex items-center gap-2">
+            Respuesta
+            <AIGenerateButton
+              tipo="faq"
+              campo="respuesta"
+              industria={industria}
+              contexto={{ pregunta: faq.pregunta }}
+              onGenerate={(text) => handleChangeFaq(index, 'respuesta', text)}
+              size="sm"
+            />
+          </span>
+        }
+        value={faq.respuesta}
+        onChange={(e) => handleChangeFaq(index, 'respuesta', e.target.value)}
+        placeholder="La respuesta a la pregunta..."
+        rows={3}
+        className="dark:bg-gray-600 dark:border-gray-500"
+      />
+    </>
+  ), [industria, handleChangeFaq]);
+
+  // Componente de preview
+  const preview = useMemo(() => (
+    <>
+      <h4 className="font-bold text-center mb-4 text-gray-900 dark:text-white">
+        {form.titulo_seccion}
+      </h4>
+      <div className="space-y-2">
+        {form.items.slice(0, 2).map((faq, index) => (
+          <div key={index} className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
+            <p className="font-medium text-sm text-gray-900 dark:text-white mb-1">
+              {faq.pregunta || 'Pregunta...'}
+            </p>
+            <p className="text-xs text-gray-600 dark:text-gray-400">
+              {faq.respuesta ? faq.respuesta.substring(0, 80) + '...' : 'Respuesta...'}
+            </p>
+          </div>
+        ))}
+      </div>
+    </>
+  ), [form.titulo_seccion, form.items]);
+
+  return (
+    <BaseBlockEditor
+      tipo="faq"
+      industria={industria}
+      mostrarAIBanner={faqsVacias}
+      onAIGenerate={handleAIGenerate}
+      cambios={cambios}
+      handleSubmit={handleSubmit}
+      onGuardar={onGuardar}
+      isSaving={isSaving}
+      preview={preview}
+    >
       {/* Configuracion general */}
       <div className="grid grid-cols-2 gap-4">
-        <Input
-          label={
-            <span className="flex items-center gap-2">
-              Titulo de seccion
-              <AIGenerateButton
-                tipo="faq"
-                campo="titulo"
-                industria={industria}
-                onGenerate={(text) => handleFieldChange('titulo_seccion', text)}
-                size="sm"
-              />
-            </span>
-          }
+        <SectionTitleField
           value={form.titulo_seccion}
-          onChange={(e) => handleFieldChange('titulo_seccion', e.target.value)}
-          className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
+          onChange={(val) => handleFieldChange('titulo_seccion', val)}
+          tipo="faq"
+          industria={industria}
         />
         <div className="flex items-center pt-6">
           <ToggleSwitch
@@ -105,115 +178,17 @@ function FaqEditor({ contenido, onGuardar, tema, isSaving, industria = 'default'
       />
 
       {/* Lista de preguntas */}
-      <div>
-        <div className="flex items-center justify-between mb-2">
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Preguntas ({form.items.length})
-          </label>
-          <Button type="button" variant="ghost" size="sm" onClick={handleAgregarFaq}>
-            <Plus className="w-4 h-4 mr-1" />
-            Agregar Pregunta
-          </Button>
-        </div>
-
-        <div className="space-y-3">
-          {form.items.map((faq, index) => (
-            <div
-              key={index}
-              className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600"
-            >
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <GripVertical className="w-4 h-4 text-gray-400" />
-                  <HelpCircle className="w-4 h-4 text-blue-500" />
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Pregunta {index + 1}
-                  </span>
-                </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleEliminarFaq(index)}
-                  className="text-gray-400 hover:text-red-500"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              </div>
-
-              <Input
-                label={
-                  <span className="flex items-center gap-2">
-                    Pregunta
-                    <AIGenerateButton
-                      tipo="faq"
-                      campo="pregunta"
-                      industria={industria}
-                      onGenerate={(text) => handleChangeFaq(index, 'pregunta', text)}
-                      size="sm"
-                    />
-                  </span>
-                }
-                value={faq.pregunta}
-                onChange={(e) => handleChangeFaq(index, 'pregunta', e.target.value)}
-                placeholder="Como puedo...?"
-                className="mb-3 dark:bg-gray-600 dark:border-gray-500"
-              />
-
-              <Textarea
-                label={
-                  <span className="flex items-center gap-2">
-                    Respuesta
-                    <AIGenerateButton
-                      tipo="faq"
-                      campo="respuesta"
-                      industria={industria}
-                      contexto={{ pregunta: faq.pregunta }}
-                      onGenerate={(text) => handleChangeFaq(index, 'respuesta', text)}
-                      size="sm"
-                    />
-                  </span>
-                }
-                value={faq.respuesta}
-                onChange={(e) => handleChangeFaq(index, 'respuesta', e.target.value)}
-                placeholder="La respuesta a la pregunta..."
-                rows={3}
-                className="dark:bg-gray-600 dark:border-gray-500"
-              />
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Preview */}
-      <div className="border border-gray-200 dark:border-gray-600 rounded-lg p-4">
-        <h4 className="font-bold text-center mb-4 text-gray-900 dark:text-white">
-          {form.titulo_seccion}
-        </h4>
-        <div className="space-y-2">
-          {form.items.slice(0, 2).map((faq, index) => (
-            <div key={index} className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
-              <p className="font-medium text-sm text-gray-900 dark:text-white mb-1">
-                {faq.pregunta || 'Pregunta...'}
-              </p>
-              <p className="text-xs text-gray-600 dark:text-gray-400">
-                {faq.respuesta ? faq.respuesta.substring(0, 80) + '...' : 'Respuesta...'}
-              </p>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Boton guardar */}
-      {cambios && (
-        <div className="flex justify-end pt-2">
-          <Button type="submit" variant="primary" isLoading={isSaving}>
-            <Save className="w-4 h-4 mr-2" />
-            Guardar cambios
-          </Button>
-        </div>
-      )}
-    </form>
+      <ArrayItemsEditor
+        items={form.items}
+        label="Preguntas"
+        onAgregar={handleAgregarFaq}
+        onEliminar={handleEliminarFaq}
+        itemName="Pregunta"
+        itemIcon={HelpCircle}
+        iconColor="text-blue-500"
+        renderItem={renderFaqItem}
+      />
+    </BaseBlockEditor>
   );
 }
 

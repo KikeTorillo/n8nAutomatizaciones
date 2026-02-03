@@ -97,6 +97,7 @@ router.get('/eventos/:eventoId/invitados/exportar',
  */
 router.get('/eventos/:eventoId/grupos',
     ...middlewareComun,
+    validate(invitadosSchemas.obtenerGrupos),
     asyncHandler(InvitadosController.obtenerGrupos)
 );
 
@@ -106,6 +107,7 @@ router.get('/eventos/:eventoId/grupos',
  */
 router.get('/eventos/:eventoId/etiquetas',
     ...middlewareComun,
+    validate(invitadosSchemas.obtenerEtiquetas),
     asyncHandler(InvitadosController.obtenerEtiquetas)
 );
 
@@ -144,6 +146,7 @@ router.delete('/invitados/:id',
  */
 router.get('/eventos/:eventoId/invitados/:invitadoId/qr',
     ...middlewareComun,
+    validate(invitadosSchemas.generarQR),
     asyncHandler(InvitadosController.generarQR)
 );
 
@@ -153,6 +156,7 @@ router.get('/eventos/:eventoId/invitados/:invitadoId/qr',
  */
 router.get('/eventos/:eventoId/qr-masivo',
     ...middlewareComun,
+    validate(invitadosSchemas.generarQRMasivo),
     asyncHandler(InvitadosController.generarQRMasivo)
 );
 
@@ -163,6 +167,7 @@ router.get('/eventos/:eventoId/qr-masivo',
  */
 router.post('/eventos/:eventoId/checkin',
     ...middlewareComun,
+    validate(invitadosSchemas.registrarCheckin),
     asyncHandler(InvitadosController.registrarCheckin)
 );
 
@@ -172,6 +177,7 @@ router.post('/eventos/:eventoId/checkin',
  */
 router.get('/eventos/:eventoId/checkin/stats',
     ...middlewareComun,
+    validate(invitadosSchemas.obtenerEstadisticasCheckin),
     asyncHandler(InvitadosController.obtenerEstadisticasCheckin)
 );
 
@@ -181,6 +187,7 @@ router.get('/eventos/:eventoId/checkin/stats',
  */
 router.get('/eventos/:eventoId/checkin/lista',
     ...middlewareComun,
+    validate(invitadosSchemas.listarCheckins),
     asyncHandler(InvitadosController.listarCheckins)
 );
 

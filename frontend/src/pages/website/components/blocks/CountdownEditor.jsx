@@ -1,16 +1,31 @@
+/**
+ * ====================================================================
+ * COUNTDOWN EDITOR (Refactorizado)
+ * ====================================================================
+ *
+ * Editor del bloque Countdown (Contador Regresivo).
+ * Usa BaseBlockEditor con submit personalizado para fecha ISO.
+ *
+ * @version 2.0.0
+ * @since 2026-02-03
+ */
+
 import { useCallback, useMemo } from 'react';
-import { Save, Clock, Calendar } from 'lucide-react';
-import {
-  Button,
-  Input,
-  Select,
-  ToggleSwitch
-} from '@/components/ui';
-import { AIGenerateButton, AISuggestionBanner } from '../AIGenerator';
+import { Clock, Calendar } from 'lucide-react';
+import { Input, Select, ToggleSwitch } from '@/components/ui';
+import { AIGenerateButton } from '../AIGenerator';
 import { useBlockEditor } from '../../hooks';
+import BaseBlockEditor from './BaseBlockEditor';
 
 /**
- * CountdownEditor - Editor del bloque Countdown (Contador Regresivo)
+ * CountdownEditor - Editor del bloque Countdown
+ *
+ * @param {Object} props
+ * @param {Object} props.contenido - Contenido del bloque
+ * @param {Function} props.onGuardar - Callback para guardar
+ * @param {Object} props.tema - Tema del sitio
+ * @param {boolean} props.isSaving - Estado de guardado
+ * @param {string} props.industria - Industria para AI
  */
 function CountdownEditor({ contenido, onGuardar, tema, isSaving, industria = 'default' }) {
   // Default date: 30 days from now
@@ -52,15 +67,15 @@ function CountdownEditor({ contenido, onGuardar, tema, isSaving, industria = 'de
   const esVacio = !contenido.titulo && !contenido.fecha_objetivo;
 
   // Submit personalizado que convierte fecha a ISO
-  const onSubmit = (data) => {
+  const onSubmit = useCallback((data) => {
     const formToSave = {
       ...data,
       fecha_objetivo: new Date(data.fecha_objetivo).toISOString(),
     };
     onGuardar(formToSave);
-  };
+  }, [onGuardar]);
 
-  // Callback para generación de IA de bloque completo
+  // Callback para generacion de IA de bloque completo
   const handleAIGenerate = useCallback((generatedContent) => {
     setForm(prev => ({
       ...prev,
@@ -69,6 +84,7 @@ function CountdownEditor({ contenido, onGuardar, tema, isSaving, industria = 'de
     }));
   }, [setForm]);
 
+  // Opciones de select
   const fondoOptions = [
     { value: 'color', label: 'Color solido' },
     { value: 'gradiente', label: 'Gradiente' },
@@ -80,16 +96,40 @@ function CountdownEditor({ contenido, onGuardar, tema, isSaving, industria = 'de
     { value: 'mostrar_mensaje', label: 'Mostrar mensaje' },
   ];
 
-  return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      {esVacio && (
-        <AISuggestionBanner
-          tipo="countdown"
-          industria={industria}
-          onGenerate={handleAIGenerate}
-        />
-      )}
+  // Componente de preview
+  const preview = useMemo(() => (
+    <div
+      className="rounded-lg p-6 text-center"
+      style={{ backgroundColor: form.fondo_tipo === 'color' ? form.fondo_valor : '#1F2937' }}
+    >
+      <Clock className="w-8 h-8 mx-auto mb-2" style={{ color: tema?.color_primario || '#753572' }} />
+      <h4 className="font-bold text-lg mb-1" style={{ color: form.color_texto }}>
+        {form.titulo || 'Titulo'}
+      </h4>
+      <p className="text-sm opacity-80" style={{ color: form.color_texto }}>
+        {form.subtitulo || 'Subtitulo'}
+      </p>
+      <div className="flex justify-center gap-4 mt-4">
+        {form.mostrar_dias && <div className="text-2xl font-bold" style={{ color: form.color_texto }}>00</div>}
+        {form.mostrar_horas && <div className="text-2xl font-bold" style={{ color: form.color_texto }}>00</div>}
+        {form.mostrar_minutos && <div className="text-2xl font-bold" style={{ color: form.color_texto }}>00</div>}
+        {form.mostrar_segundos && <div className="text-2xl font-bold" style={{ color: form.color_texto }}>00</div>}
+      </div>
+    </div>
+  ), [form.titulo, form.subtitulo, form.fondo_tipo, form.fondo_valor, form.color_texto, form.mostrar_dias, form.mostrar_horas, form.mostrar_minutos, form.mostrar_segundos, tema?.color_primario]);
 
+  return (
+    <BaseBlockEditor
+      tipo="countdown"
+      industria={industria}
+      mostrarAIBanner={esVacio}
+      onAIGenerate={handleAIGenerate}
+      cambios={cambios}
+      handleSubmit={handleSubmit}
+      onGuardar={onSubmit}
+      isSaving={isSaving}
+      preview={preview}
+    >
       {/* Contenido principal */}
       <Input
         label={
@@ -234,37 +274,7 @@ function CountdownEditor({ contenido, onGuardar, tema, isSaving, industria = 'de
           />
         </div>
       </div>
-
-      {/* Preview */}
-      <div
-        className="rounded-lg p-6 text-center"
-        style={{ backgroundColor: form.fondo_tipo === 'color' ? form.fondo_valor : '#1F2937' }}
-      >
-        <Clock className="w-8 h-8 mx-auto mb-2" style={{ color: tema?.color_primario || '#753572' }} />
-        <h4 className="font-bold text-lg mb-1" style={{ color: form.color_texto }}>
-          {form.titulo || 'Titulo'}
-        </h4>
-        <p className="text-sm opacity-80" style={{ color: form.color_texto }}>
-          {form.subtitulo || 'Subtitulo'}
-        </p>
-        <div className="flex justify-center gap-4 mt-4">
-          {form.mostrar_dias && <div className="text-2xl font-bold" style={{ color: form.color_texto }}>00</div>}
-          {form.mostrar_horas && <div className="text-2xl font-bold" style={{ color: form.color_texto }}>00</div>}
-          {form.mostrar_minutos && <div className="text-2xl font-bold" style={{ color: form.color_texto }}>00</div>}
-          {form.mostrar_segundos && <div className="text-2xl font-bold" style={{ color: form.color_texto }}>00</div>}
-        </div>
-      </div>
-
-      {/* Boton guardar */}
-      {cambios && (
-        <div className="flex justify-end pt-2">
-          <Button type="submit" variant="primary" isLoading={isSaving}>
-            <Save className="w-4 h-4 mr-2" />
-            Guardar cambios
-          </Button>
-        </div>
-      )}
-    </form>
+    </BaseBlockEditor>
   );
 }
 

@@ -83,3 +83,18 @@ export {
   transformCitaToPayload,
   calcularHoraFin,
 } from './cita.schema';
+
+// ========== EVENTO SCHEMA (eventos-digitales) ==========
+export {
+  // Constantes
+  TIPOS_EVENTO,
+  TIPOS_EVENTO_VALUES,
+  // Schema
+  eventoSchema,
+  // Defaults y utilidades
+  eventoDefaults,
+  eventoToFormData,
+  formDataToApi as eventoFormDataToApi,
+  getEventoEditValues,
+  transformEventoToPayload,
+} from './evento.schema';

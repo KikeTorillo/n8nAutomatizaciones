@@ -16,3 +16,5 @@ export { useEditorLayout, PANEL_TYPES } from './useEditorLayout';
 export { useBlockEditor } from './useBlockEditor';
 export { useArrayItems } from './useArrayItems';
 export { recargarDatosServidor } from './useAutosave';
+export { useSlashMenu } from './useSlashMenu';
+export { useERPData } from './useERPData';

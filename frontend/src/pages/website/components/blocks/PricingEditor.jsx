@@ -1,17 +1,33 @@
+/**
+ * ====================================================================
+ * PRICING EDITOR (Refactorizado)
+ * ====================================================================
+ *
+ * Editor del bloque Pricing (Tablas de Precios).
+ * Usa BaseBlockEditor y ArrayItemsEditor.
+ * Mantiene funciones custom para arrays anidados (caracteristicas).
+ *
+ * @version 2.0.0
+ * @since 2026-02-03
+ */
+
 import { useCallback, useMemo } from 'react';
-import { Save, Plus, Trash2, Star, DollarSign, GripVertical } from 'lucide-react';
-import {
-  Button,
-  Input,
-  Select,
-  Textarea,
-  ToggleSwitch
-} from '@/components/ui';
-import { AIGenerateButton, AISuggestionBanner } from '../AIGenerator';
+import { DollarSign, Plus, Trash2, Star } from 'lucide-react';
+import { Button, Input, Select, ToggleSwitch } from '@/components/ui';
+import { AIGenerateButton } from '../AIGenerator';
 import { useBlockEditor, useArrayItems } from '../../hooks';
+import BaseBlockEditor from './BaseBlockEditor';
+import { SectionTitleField, ArrayItemsEditor } from './fields';
 
 /**
- * PricingEditor - Editor del bloque Pricing (Tablas de Precios)
+ * PricingEditor - Editor del bloque Pricing
+ *
+ * @param {Object} props
+ * @param {Object} props.contenido - Contenido del bloque
+ * @param {Function} props.onGuardar - Callback para guardar
+ * @param {Object} props.tema - Tema del sitio
+ * @param {boolean} props.isSaving - Estado de guardado
+ * @param {string} props.industria - Industria para AI
  */
 function PricingEditor({ contenido, onGuardar, tema, isSaving, industria = 'default' }) {
   // Valores por defecto del formulario
@@ -71,29 +87,30 @@ function PricingEditor({ contenido, onGuardar, tema, isSaving, industria = 'defa
     }));
   }, [setForm]);
 
-  const handleAgregarCaracteristica = (planIndex) => {
+  // Funciones para arrays anidados (caracteristicas)
+  const handleAgregarCaracteristica = useCallback((planIndex) => {
     setForm(prev => {
       const nuevos = [...prev.planes];
       nuevos[planIndex].caracteristicas = [...(nuevos[planIndex].caracteristicas || []), ''];
       return { ...prev, planes: nuevos };
     });
-  };
+  }, [setForm]);
 
-  const handleCambiarCaracteristica = (planIndex, featIndex, valor) => {
+  const handleCambiarCaracteristica = useCallback((planIndex, featIndex, valor) => {
     setForm(prev => {
       const nuevos = [...prev.planes];
       nuevos[planIndex].caracteristicas[featIndex] = valor;
       return { ...prev, planes: nuevos };
     });
-  };
+  }, [setForm]);
 
-  const handleEliminarCaracteristica = (planIndex, featIndex) => {
+  const handleEliminarCaracteristica = useCallback((planIndex, featIndex) => {
     setForm(prev => {
       const nuevos = [...prev.planes];
       nuevos[planIndex].caracteristicas = nuevos[planIndex].caracteristicas.filter((_, i) => i !== featIndex);
       return { ...prev, planes: nuevos };
     });
-  };
+  }, [setForm]);
 
   const columnasOptions = [
     { value: 2, label: '2 columnas' },
@@ -115,34 +132,174 @@ function PricingEditor({ contenido, onGuardar, tema, isSaving, industria = 'defa
     { value: 'unico', label: 'pago unico' },
   ];
 
-  return (
-    <form onSubmit={handleSubmit(onGuardar)} className="space-y-4">
-      {planesVacios && (
-        <AISuggestionBanner
-          tipo="pricing"
-          industria={industria}
-          onGenerate={handleAIGenerate}
+  // Renderizador de cada plan
+  const renderPlanItem = useCallback((plan, planIndex) => (
+    <div className="space-y-3">
+      <div className="grid grid-cols-2 gap-3">
+        <Input
+          label="Nombre"
+          value={plan.nombre}
+          onChange={(e) => handleChangePlan(planIndex, 'nombre', e.target.value)}
+          className="dark:bg-gray-600 dark:border-gray-500"
         />
-      )}
+        <div className="grid grid-cols-2 gap-2">
+          <Input
+            label="Precio"
+            type="number"
+            value={plan.precio}
+            onChange={(e) => handleChangePlan(planIndex, 'precio', parseFloat(e.target.value))}
+            className="dark:bg-gray-600 dark:border-gray-500"
+          />
+          <Select
+            label="Periodo"
+            value={plan.periodo}
+            onChange={(e) => handleChangePlan(planIndex, 'periodo', e.target.value)}
+            options={periodoOptions}
+            className="dark:bg-gray-600 dark:border-gray-500"
+          />
+        </div>
+      </div>
 
+      <Input
+        label="Descripcion"
+        value={plan.descripcion}
+        onChange={(e) => handleChangePlan(planIndex, 'descripcion', e.target.value)}
+        placeholder="Ideal para..."
+        className="dark:bg-gray-600 dark:border-gray-500"
+      />
+
+      <div className="flex items-center gap-4">
+        <ToggleSwitch
+          checked={plan.es_popular}
+          onChange={(checked) => handleChangePlan(planIndex, 'es_popular', checked)}
+          label="Destacar como popular"
+        />
+        {plan.es_popular && (
+          <span className="px-2 py-0.5 bg-yellow-100 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-300 text-xs rounded-full flex items-center gap-1">
+            <Star className="w-3 h-3" />
+            Popular
+          </span>
+        )}
+      </div>
+
+      {/* Caracteristicas (array anidado) */}
+      <div className="p-3 bg-gray-100 dark:bg-gray-600 rounded-lg">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-xs font-medium text-gray-600 dark:text-gray-300">
+            Caracteristicas ({(plan.caracteristicas || []).length})
+          </span>
+          <Button
+            type="button"
+            variant="ghost"
+            size="xs"
+            onClick={() => handleAgregarCaracteristica(planIndex)}
+          >
+            <Plus className="w-3 h-3 mr-1" />
+            Agregar
+          </Button>
+        </div>
+        <div className="space-y-2">
+          {(plan.caracteristicas || []).map((feat, featIndex) => (
+            <div key={featIndex} className="flex gap-2">
+              <Input
+                value={feat}
+                onChange={(e) => handleCambiarCaracteristica(planIndex, featIndex, e.target.value)}
+                placeholder="Caracteristica"
+                size="sm"
+                className="flex-1 dark:bg-gray-500 dark:border-gray-400"
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => handleEliminarCaracteristica(planIndex, featIndex)}
+                className="text-gray-400 hover:text-red-500"
+              >
+                <Trash2 className="w-3 h-3" />
+              </Button>
+            </div>
+          ))}
+          {(plan.caracteristicas || []).length === 0 && (
+            <p className="text-xs text-gray-500 dark:text-gray-400 text-center py-2">
+              Sin caracteristicas
+            </p>
+          )}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2">
+        <Input
+          label="Texto boton"
+          value={plan.boton_texto}
+          onChange={(e) => handleChangePlan(planIndex, 'boton_texto', e.target.value)}
+          className="dark:bg-gray-600 dark:border-gray-500"
+        />
+        <Input
+          label="URL boton"
+          value={plan.boton_url}
+          onChange={(e) => handleChangePlan(planIndex, 'boton_url', e.target.value)}
+          className="dark:bg-gray-600 dark:border-gray-500"
+        />
+      </div>
+    </div>
+  ), [handleChangePlan, handleAgregarCaracteristica, handleCambiarCaracteristica, handleEliminarCaracteristica, periodoOptions]);
+
+  // Componente de preview
+  const preview = useMemo(() => (
+    <>
+      <h4 className="font-bold text-center mb-4 text-gray-900 dark:text-white">
+        {form.titulo_seccion}
+      </h4>
+      {form.subtitulo_seccion && (
+        <p className="text-sm text-center text-gray-500 dark:text-gray-400 mb-4">
+          {form.subtitulo_seccion}
+        </p>
+      )}
+      <div className={`grid gap-3 grid-cols-${Math.min(form.planes.length, form.columnas)}`}>
+        {form.planes.slice(0, 3).map((plan, index) => (
+          <div
+            key={index}
+            className={`p-3 rounded-lg border ${
+              plan.es_popular
+                ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
+                : 'border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700'
+            }`}
+          >
+            {plan.es_popular && (
+              <div className="text-xs text-primary-600 dark:text-primary-400 font-medium mb-1">
+                Mas popular
+              </div>
+            )}
+            <p className="font-medium text-sm dark:text-gray-100">{plan.nombre}</p>
+            <p className="text-xl font-bold dark:text-white">
+              ${plan.precio}<span className="text-xs font-normal text-gray-500">/{plan.periodo}</span>
+            </p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{plan.descripcion}</p>
+          </div>
+        ))}
+      </div>
+    </>
+  ), [form]);
+
+  return (
+    <BaseBlockEditor
+      tipo="pricing"
+      industria={industria}
+      mostrarAIBanner={planesVacios}
+      onAIGenerate={handleAIGenerate}
+      cambios={cambios}
+      handleSubmit={handleSubmit}
+      onGuardar={onGuardar}
+      isSaving={isSaving}
+      preview={preview}
+    >
       {/* Configuracion general */}
       <div className="grid grid-cols-2 gap-4">
-        <Input
-          label={
-            <span className="flex items-center gap-2">
-              Titulo de seccion
-              <AIGenerateButton
-                tipo="pricing"
-                campo="titulo"
-                industria={industria}
-                onGenerate={(text) => handleFieldChange('titulo_seccion', text)}
-                size="sm"
-              />
-            </span>
-          }
+        <SectionTitleField
           value={form.titulo_seccion}
-          onChange={(e) => handleFieldChange('titulo_seccion', e.target.value)}
-          className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
+          onChange={(val) => handleFieldChange('titulo_seccion', val)}
+          tipo="pricing"
+          industria={industria}
         />
         <Select
           label="Columnas"
@@ -178,153 +335,17 @@ function PricingEditor({ contenido, onGuardar, tema, isSaving, industria = 'defa
       </div>
 
       {/* Lista de planes */}
-      <div>
-        <div className="flex items-center justify-between mb-2">
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Planes ({form.planes.length})
-          </label>
-          <Button type="button" variant="ghost" size="sm" onClick={handleAgregarPlan}>
-            <Plus className="w-4 h-4 mr-1" />
-            Agregar Plan
-          </Button>
-        </div>
-
-        <div className="space-y-4">
-          {form.planes.map((plan, planIndex) => (
-            <div
-              key={planIndex}
-              className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600"
-            >
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <GripVertical className="w-4 h-4 text-gray-400" />
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Plan {planIndex + 1}
-                  </span>
-                  {plan.es_popular && (
-                    <span className="px-2 py-0.5 bg-yellow-100 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-300 text-xs rounded-full flex items-center gap-1">
-                      <Star className="w-3 h-3" />
-                      Popular
-                    </span>
-                  )}
-                </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleEliminarPlan(planIndex)}
-                  className="text-gray-400 hover:text-red-500"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3 mb-3">
-                <Input
-                  label="Nombre"
-                  value={plan.nombre}
-                  onChange={(e) => handleChangePlan(planIndex, 'nombre', e.target.value)}
-                  className="dark:bg-gray-600 dark:border-gray-500"
-                />
-                <div className="grid grid-cols-2 gap-2">
-                  <Input
-                    label="Precio"
-                    type="number"
-                    value={plan.precio}
-                    onChange={(e) => handleChangePlan(planIndex, 'precio', parseFloat(e.target.value))}
-                    className="dark:bg-gray-600 dark:border-gray-500"
-                  />
-                  <Select
-                    label="Periodo"
-                    value={plan.periodo}
-                    onChange={(e) => handleChangePlan(planIndex, 'periodo', e.target.value)}
-                    options={periodoOptions}
-                    className="dark:bg-gray-600 dark:border-gray-500"
-                  />
-                </div>
-              </div>
-
-              <Input
-                label="Descripcion"
-                value={plan.descripcion}
-                onChange={(e) => handleChangePlan(planIndex, 'descripcion', e.target.value)}
-                placeholder="Ideal para..."
-                className="mb-3 dark:bg-gray-600 dark:border-gray-500"
-              />
-
-              <div className="flex items-center gap-4 mb-3">
-                <ToggleSwitch
-                  checked={plan.es_popular}
-                  onChange={(checked) => handleChangePlan(planIndex, 'es_popular', checked)}
-                  label="Destacar como popular"
-                />
-              </div>
-
-              {/* Caracteristicas */}
-              <div className="mb-3">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs text-gray-500 dark:text-gray-400">Caracteristicas</span>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="xs"
-                    onClick={() => handleAgregarCaracteristica(planIndex)}
-                  >
-                    <Plus className="w-3 h-3" />
-                  </Button>
-                </div>
-                <div className="space-y-2">
-                  {(plan.caracteristicas || []).map((feat, featIndex) => (
-                    <div key={featIndex} className="flex gap-2">
-                      <Input
-                        value={feat}
-                        onChange={(e) => handleCambiarCaracteristica(planIndex, featIndex, e.target.value)}
-                        placeholder="Caracteristica"
-                        size="sm"
-                        className="flex-1 dark:bg-gray-600 dark:border-gray-500"
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleEliminarCaracteristica(planIndex, featIndex)}
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2">
-                <Input
-                  label="Texto boton"
-                  value={plan.boton_texto}
-                  onChange={(e) => handleChangePlan(planIndex, 'boton_texto', e.target.value)}
-                  className="dark:bg-gray-600 dark:border-gray-500"
-                />
-                <Input
-                  label="URL boton"
-                  value={plan.boton_url}
-                  onChange={(e) => handleChangePlan(planIndex, 'boton_url', e.target.value)}
-                  className="dark:bg-gray-600 dark:border-gray-500"
-                />
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Boton guardar */}
-      {cambios && (
-        <div className="flex justify-end pt-2">
-          <Button type="submit" variant="primary" isLoading={isSaving}>
-            <Save className="w-4 h-4 mr-2" />
-            Guardar cambios
-          </Button>
-        </div>
-      )}
-    </form>
+      <ArrayItemsEditor
+        items={form.planes}
+        label="Planes"
+        onAgregar={handleAgregarPlan}
+        onEliminar={handleEliminarPlan}
+        itemName="Plan"
+        itemIcon={DollarSign}
+        iconColor="text-green-500"
+        renderItem={renderPlanItem}
+      />
+    </BaseBlockEditor>
   );
 }
 

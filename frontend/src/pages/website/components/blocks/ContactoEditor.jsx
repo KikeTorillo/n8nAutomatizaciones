@@ -1,12 +1,33 @@
+/**
+ * ====================================================================
+ * CONTACTO EDITOR (Refactorizado)
+ * ====================================================================
+ *
+ * Editor del bloque Contacto.
+ * Soporta formularios simples y multi-step.
+ * Usa BaseBlockEditor manteniendo estructura de tabs.
+ *
+ * @version 2.0.0
+ * @since 2026-02-03
+ */
+
 import { useState, useCallback, useMemo } from 'react';
-import { Save, MapPin, Phone, Mail, Clock, Plus, Trash2, GripVertical, Settings2 } from 'lucide-react';
+import { MapPin, Phone, Mail, Clock, Plus, Trash2, GripVertical, Settings2, MessageSquare } from 'lucide-react';
 import { Button, CheckboxField, Input, Select, ToggleSwitch } from '@/components/ui';
-import { AIGenerateButton, AISuggestionBanner } from '../AIGenerator';
+import { AIGenerateButton } from '../AIGenerator';
 import { useBlockEditor } from '../../hooks';
+import BaseBlockEditor from './BaseBlockEditor';
+import { SectionTitleField } from './fields';
 
 /**
  * ContactoEditor - Editor del bloque Contacto
- * Soporta formularios simples y multi-step
+ *
+ * @param {Object} props
+ * @param {Object} props.contenido - Contenido del bloque
+ * @param {Function} props.onGuardar - Callback para guardar
+ * @param {Object} props.tema - Tema del sitio
+ * @param {boolean} props.isSaving - Estado de guardado
+ * @param {string} props.industria - Industria para AI
  */
 function ContactoEditor({ contenido, onGuardar, tema, isSaving, industria = 'default' }) {
   // Valores por defecto del formulario
@@ -64,7 +85,7 @@ function ContactoEditor({ contenido, onGuardar, tema, isSaving, industria = 'def
     { id: 'mensaje', label: 'Mensaje', tipo: 'textarea', requerido: false },
   ];
 
-  const toggleCampo = (campo) => {
+  const toggleCampo = useCallback((campo) => {
     setForm(prev => {
       const campos = [...prev.formulario_campos];
       const index = campos.indexOf(campo);
@@ -75,32 +96,32 @@ function ContactoEditor({ contenido, onGuardar, tema, isSaving, industria = 'def
       }
       return { ...prev, formulario_campos: campos };
     });
-  };
+  }, [setForm]);
 
   // Funciones para multi-step
-  const agregarPaso = () => {
+  const agregarPaso = useCallback(() => {
     setForm(prev => ({
       ...prev,
       pasos: [...prev.pasos, { titulo: `Paso ${prev.pasos.length + 1}`, campos: [] }]
     }));
-  };
+  }, [setForm]);
 
-  const eliminarPaso = (index) => {
+  const eliminarPaso = useCallback((index) => {
     setForm(prev => ({
       ...prev,
       pasos: prev.pasos.filter((_, i) => i !== index)
     }));
-  };
+  }, [setForm]);
 
-  const actualizarPaso = (index, campo, valor) => {
+  const actualizarPaso = useCallback((index, campo, valor) => {
     setForm(prev => {
       const nuevos = [...prev.pasos];
       nuevos[index] = { ...nuevos[index], [campo]: valor };
       return { ...prev, pasos: nuevos };
     });
-  };
+  }, [setForm]);
 
-  const toggleCampoPaso = (pasoIndex, campoId) => {
+  const toggleCampoPaso = useCallback((pasoIndex, campoId) => {
     setForm(prev => {
       const nuevos = [...prev.pasos];
       const campos = nuevos[pasoIndex].campos || [];
@@ -113,23 +134,103 @@ function ContactoEditor({ contenido, onGuardar, tema, isSaving, industria = 'def
       nuevos[pasoIndex].campos = campos;
       return { ...prev, pasos: nuevos };
     });
-  };
+  }, [setForm]);
 
   const tipoFormularioOptions = [
     { value: 'simple', label: 'Simple (una pagina)' },
     { value: 'multi_step', label: 'Multi-paso (wizard)' },
   ];
 
-  return (
-    <form onSubmit={handleSubmit(onGuardar)} className="space-y-4">
-      {contenidoVacio && (
-        <AISuggestionBanner
-          tipo="contacto"
-          industria={industria}
-          onGenerate={handleAIGenerate}
-        />
+  // Componente de preview
+  const preview = useMemo(() => (
+    <>
+      <h4 className="font-bold mb-3 text-gray-900 dark:text-white">
+        {form.titulo}
+      </h4>
+      {form.subtitulo && (
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">{form.subtitulo}</p>
       )}
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
+          {form.direccion && (
+            <p className="flex items-center gap-2">
+              <MapPin className="w-4 h-4" style={{ color: tema?.color_primario || '#753572' }} />
+              {form.direccion}
+            </p>
+          )}
+          {form.telefono && (
+            <p className="flex items-center gap-2">
+              <Phone className="w-4 h-4" style={{ color: tema?.color_primario || '#753572' }} />
+              {form.telefono}
+            </p>
+          )}
+          {form.email && (
+            <p className="flex items-center gap-2">
+              <Mail className="w-4 h-4" style={{ color: tema?.color_primario || '#753572' }} />
+              {form.email}
+            </p>
+          )}
+        </div>
+        {form.mostrar_formulario && (
+          <div className="space-y-2">
+            {form.tipo_formulario === 'multi_step' && form.pasos.length > 0 && (
+              <div className="flex items-center gap-2 mb-2">
+                {form.pasos.map((paso, idx) => (
+                  <div key={idx} className="flex items-center gap-1">
+                    <div
+                      className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${
+                        idx === 0
+                          ? 'text-white'
+                          : 'bg-gray-200 dark:bg-gray-600 text-gray-500 dark:text-gray-400'
+                      }`}
+                      style={idx === 0 ? { backgroundColor: tema?.color_primario || '#753572' } : {}}
+                    >
+                      {idx + 1}
+                    </div>
+                    {idx < form.pasos.length - 1 && (
+                      <div className="w-4 h-0.5 bg-gray-200 dark:bg-gray-600" />
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+            {(form.tipo_formulario === 'simple' ? form.formulario_campos : form.pasos[0]?.campos || [])
+              .slice(0, 2)
+              .map((campoId) => {
+                const campo = camposDisponibles.find(c => c.id === campoId);
+                return campo ? (
+                  <input
+                    key={campoId}
+                    placeholder={campo.label}
+                    className="w-full px-3 py-2 text-xs border dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded"
+                    disabled
+                  />
+                ) : null;
+              })}
+            <button
+              className="w-full py-2 text-white text-xs rounded"
+              style={{ backgroundColor: tema?.color_primario || '#753572' }}
+            >
+              {form.tipo_formulario === 'multi_step' ? 'Siguiente' : form.texto_boton}
+            </button>
+          </div>
+        )}
+      </div>
+    </>
+  ), [form, tema, camposDisponibles]);
 
+  return (
+    <BaseBlockEditor
+      tipo="contacto"
+      industria={industria}
+      mostrarAIBanner={contenidoVacio}
+      onAIGenerate={handleAIGenerate}
+      cambios={cambios}
+      handleSubmit={handleSubmit}
+      onGuardar={onGuardar}
+      isSaving={isSaving}
+      preview={preview}
+    >
       {/* Tabs de navegacion */}
       <div className="flex gap-1 border-b border-gray-200 dark:border-gray-700">
         <button
@@ -171,23 +272,12 @@ function ContactoEditor({ contenido, onGuardar, tema, isSaving, industria = 'def
       {tabActiva === 'info' && (
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
-            <Input
-              label={
-                <span className="flex items-center gap-2">
-                  Titulo
-                  <AIGenerateButton
-                    tipo="contacto"
-                    campo="titulo"
-                    industria={industria}
-                    onGenerate={(text) => handleFieldChange('titulo', text)}
-                    size="sm"
-                  />
-                </span>
-              }
+            <SectionTitleField
+              label="Titulo"
               value={form.titulo}
-              onChange={(e) => handleFieldChange('titulo', e.target.value)}
-              placeholder="Contactanos"
-              className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
+              onChange={(val) => handleFieldChange('titulo', val)}
+              tipo="contacto"
+              industria={industria}
             />
             <Input
               label={
@@ -456,93 +546,7 @@ function ContactoEditor({ contenido, onGuardar, tema, isSaving, industria = 'def
           </div>
         </div>
       )}
-
-      {/* Preview */}
-      <div className="border border-gray-200 dark:border-gray-600 rounded-lg p-4">
-        <h4 className="font-bold mb-3 text-gray-900 dark:text-white">
-          {form.titulo}
-        </h4>
-        {form.subtitulo && (
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">{form.subtitulo}</p>
-        )}
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
-            {form.direccion && (
-              <p className="flex items-center gap-2">
-                <MapPin className="w-4 h-4" style={{ color: tema?.color_primario || '#753572' }} />
-                {form.direccion}
-              </p>
-            )}
-            {form.telefono && (
-              <p className="flex items-center gap-2">
-                <Phone className="w-4 h-4" style={{ color: tema?.color_primario || '#753572' }} />
-                {form.telefono}
-              </p>
-            )}
-            {form.email && (
-              <p className="flex items-center gap-2">
-                <Mail className="w-4 h-4" style={{ color: tema?.color_primario || '#753572' }} />
-                {form.email}
-              </p>
-            )}
-          </div>
-          {form.mostrar_formulario && (
-            <div className="space-y-2">
-              {form.tipo_formulario === 'multi_step' && form.pasos.length > 0 && (
-                <div className="flex items-center gap-2 mb-2">
-                  {form.pasos.map((paso, idx) => (
-                    <div key={idx} className="flex items-center gap-1">
-                      <div
-                        className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${
-                          idx === 0
-                            ? 'text-white'
-                            : 'bg-gray-200 dark:bg-gray-600 text-gray-500 dark:text-gray-400'
-                        }`}
-                        style={idx === 0 ? { backgroundColor: tema?.color_primario || '#753572' } : {}}
-                      >
-                        {idx + 1}
-                      </div>
-                      {idx < form.pasos.length - 1 && (
-                        <div className="w-4 h-0.5 bg-gray-200 dark:bg-gray-600" />
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-              {(form.tipo_formulario === 'simple' ? form.formulario_campos : form.pasos[0]?.campos || [])
-                .slice(0, 2)
-                .map((campoId) => {
-                  const campo = camposDisponibles.find(c => c.id === campoId);
-                  return campo ? (
-                    <input
-                      key={campoId}
-                      placeholder={campo.label}
-                      className="w-full px-3 py-2 text-xs border dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded"
-                      disabled
-                    />
-                  ) : null;
-                })}
-              <button
-                className="w-full py-2 text-white text-xs rounded"
-                style={{ backgroundColor: tema?.color_primario || '#753572' }}
-              >
-                {form.tipo_formulario === 'multi_step' ? 'Siguiente' : form.texto_boton}
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Boton guardar */}
-      {cambios && (
-        <div className="flex justify-end pt-2">
-          <Button type="submit" variant="primary" isLoading={isSaving}>
-            <Save className="w-4 h-4 mr-2" />
-            Guardar cambios
-          </Button>
-        </div>
-      )}
-    </form>
+    </BaseBlockEditor>
   );
 }
 

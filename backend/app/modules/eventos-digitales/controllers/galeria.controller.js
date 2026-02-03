@@ -22,6 +22,7 @@
 const FotoEventoModel = require('../models/foto.model');
 const EventoModel = require('../models/evento.model');
 const { ResponseHelper } = require('../../../utils/helpers');
+const logger = require('../../../utils/logger');
 
 class GaleriaController {
     /**
@@ -47,7 +48,7 @@ class GaleriaController {
 
             return ResponseHelper.success(res, foto, 'Foto subida exitosamente', 201);
         } catch (error) {
-            console.error('Error al subir foto:', error);
+            logger.error('Error al subir foto:', error);
             return ResponseHelper.error(res, 'Error al subir foto', 500);
         }
     }
@@ -81,7 +82,7 @@ class GaleriaController {
                 estadisticas: conteo
             });
         } catch (error) {
-            console.error('Error al listar fotos:', error);
+            logger.error('Error al listar fotos:', error);
             return ResponseHelper.error(res, 'Error al listar fotos', 500);
         }
     }
@@ -103,7 +104,7 @@ class GaleriaController {
 
             return ResponseHelper.success(res, foto);
         } catch (error) {
-            console.error('Error al obtener foto:', error);
+            logger.error('Error al obtener foto:', error);
             return ResponseHelper.error(res, 'Error al obtener foto', 500);
         }
     }
@@ -130,7 +131,7 @@ class GaleriaController {
 
             return ResponseHelper.success(res, foto, `Foto ${estado === 'visible' ? 'visible' : 'ocultada'}`);
         } catch (error) {
-            console.error('Error al cambiar estado de foto:', error);
+            logger.error('Error al cambiar estado de foto:', error);
             return ResponseHelper.error(res, 'Error al cambiar estado de foto', 500);
         }
     }
@@ -154,7 +155,7 @@ class GaleriaController {
 
             return ResponseHelper.success(res, { id: parseInt(id) }, 'Foto eliminada exitosamente');
         } catch (error) {
-            console.error('Error al eliminar foto:', error);
+            logger.error('Error al eliminar foto:', error);
             return ResponseHelper.error(res, 'Error al eliminar foto', 500);
         }
     }
@@ -180,7 +181,7 @@ class GaleriaController {
 
             return ResponseHelper.success(res, { id: parseInt(id) }, 'Foto eliminada permanentemente');
         } catch (error) {
-            console.error('Error al eliminar foto permanentemente:', error);
+            logger.error('Error al eliminar foto permanentemente:', error);
             return ResponseHelper.error(res, 'Error al eliminar foto', 500);
         }
     }

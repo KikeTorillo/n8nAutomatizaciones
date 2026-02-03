@@ -7,11 +7,10 @@
  */
 
 import { memo, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
 import { InlineText } from '../InlineEditor';
 import * as LucideIcons from 'lucide-react';
-import websiteApi from '@/services/api/modules/website.api';
+import { useERPData } from '../../hooks';
 
 /**
  * Servicios Canvas Block
@@ -29,41 +28,12 @@ function ServiciosCanvasBlock({ bloque, tema, isEditing, onContentChange }) {
     items = [],
   } = contenido;
 
-  // Query para servicios del ERP (solo si origen es 'erp')
-  const { data: serviciosERP = [], isLoading: loadingERP } = useQuery({
-    queryKey: ['website-canvas-servicios-erp', filtro_erp],
-    queryFn: async () => {
-      const response = await websiteApi.obtenerServiciosERP();
-      if (!response?.servicios) return [];
-
-      let filtrados = response.servicios;
-      const { modo = 'todos', categorias = [], servicio_ids = [] } = filtro_erp;
-
-      // Aplicar filtros
-      if (modo === 'categoria' && categorias.length > 0) {
-        filtrados = filtrados.filter(s => categorias.includes(s.categoria));
-      } else if (modo === 'seleccion' && servicio_ids.length > 0) {
-        filtrados = filtrados.filter(s => servicio_ids.includes(s.id));
-      }
-
-      return filtrados;
-    },
-    enabled: origen === 'erp',
-    staleTime: 1000 * 60,
-  });
-
-  // Mapear servicios ERP al formato esperado
-  const serviciosERPMapped = useMemo(() => {
-    return serviciosERP.map(s => ({
-      icono: null,
-      nombre: s.nombre,
-      descripcion: s.descripcion,
-      precio: s.precio,
-      duracion_minutos: s.duracion_minutos,
-      imagen_url: s.imagen_url,
-      color_servicio: s.color_servicio,
-    }));
-  }, [serviciosERP]);
+  // Hook centralizado para datos ERP (solo si origen es 'erp')
+  const { data: serviciosERPMapped, isLoading: loadingERP } = useERPData(
+    'servicios',
+    filtro_erp,
+    origen === 'erp'
+  );
 
   // Determinar servicios a renderizar segun origen
   const servicios = useMemo(() => {

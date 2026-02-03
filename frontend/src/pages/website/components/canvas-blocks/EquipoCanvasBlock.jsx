@@ -7,11 +7,10 @@
  */
 
 import { memo, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
 import { Instagram, Facebook, Linkedin, Twitter, Database, Loader2 } from 'lucide-react';
 import { InlineText } from '../InlineEditor';
-import websiteApi from '@/services/api/modules/website.api';
+import { useERPData } from '../../hooks';
 
 /**
  * Equipo Canvas Block
@@ -27,39 +26,12 @@ function EquipoCanvasBlock({ bloque, tema, isEditing, onContentChange }) {
     items = [],
   } = contenido;
 
-  // Query para profesionales del ERP (solo si origen es 'profesionales')
-  const { data: profesionalesERP = [], isLoading: loadingERP } = useQuery({
-    queryKey: ['website-canvas-profesionales-erp', filtro_profesionales],
-    queryFn: async () => {
-      const response = await websiteApi.obtenerProfesionalesERP();
-      if (!response?.profesionales) return [];
-
-      let filtrados = response.profesionales;
-      const { modo = 'todos', departamento_ids = [], profesional_ids = [] } = filtro_profesionales;
-
-      // Aplicar filtros
-      if (modo === 'departamento' && departamento_ids.length > 0) {
-        filtrados = filtrados.filter(p => departamento_ids.includes(p.departamento_id));
-      } else if (modo === 'seleccion' && profesional_ids.length > 0) {
-        filtrados = filtrados.filter(p => profesional_ids.includes(p.id));
-      }
-
-      return filtrados;
-    },
-    enabled: origen === 'profesionales',
-    staleTime: 1000 * 60,
-  });
-
-  // Mapear profesionales ERP al formato del bloque
-  const profesionalesERPMapped = useMemo(() => {
-    return profesionalesERP.map(p => ({
-      nombre: p.nombre_completo,
-      cargo: p.puesto_nombre || 'Profesional',
-      descripcion: p.biografia || '',
-      foto_url: p.foto_url,
-      redes: {},
-    }));
-  }, [profesionalesERP]);
+  // Hook centralizado para datos ERP (solo si origen es 'profesionales')
+  const { data: profesionalesERPMapped, isLoading: loadingERP } = useERPData(
+    'profesionales',
+    filtro_profesionales,
+    origen === 'profesionales'
+  );
 
   // Determinar miembros a renderizar según origen
   const miembros = useMemo(() => {

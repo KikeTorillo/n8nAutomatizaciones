@@ -15,6 +15,11 @@ import TextoPublico from './components/blocks/TextoPublico';
 import GaleriaPublico from './components/blocks/GaleriaPublico';
 import VideoPublico from './components/blocks/VideoPublico';
 import SeparadorPublico from './components/blocks/SeparadorPublico';
+import PricingPublico from './components/blocks/PricingPublico';
+import FaqPublico from './components/blocks/FaqPublico';
+import CountdownPublico from './components/blocks/CountdownPublico';
+import StatsPublico from './components/blocks/StatsPublico';
+import TimelinePublico from './components/blocks/TimelinePublico';
 
 /**
  * Mapa de renderizadores por tipo de bloque
@@ -31,6 +36,11 @@ const RENDERIZADORES = {
   galeria: GaleriaPublico,
   video: VideoPublico,
   separador: SeparadorPublico,
+  pricing: PricingPublico,
+  faq: FaqPublico,
+  countdown: CountdownPublico,
+  stats: StatsPublico,
+  timeline: TimelinePublico,
 };
 
 /**

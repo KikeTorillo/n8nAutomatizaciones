@@ -16,13 +16,10 @@
 
 const Joi = require('joi');
 const { fields } = require('../../../schemas/shared');
+const { BLOCK_TYPES } = require('../constants');
 
-// Tipos de bloques válidos
-const TIPOS_BLOQUE = [
-    'hero', 'servicios', 'testimonios', 'equipo', 'cta',
-    'contacto', 'footer', 'texto', 'galeria', 'video', 'separador',
-    'pricing', 'faq', 'countdown', 'stats', 'timeline'
-];
+// Tipos de bloques válidos (importado desde constants)
+const TIPOS_BLOQUE = BLOCK_TYPES;
 
 // Regex para slug válido (letras, números, guiones)
 const slugRegex = /^[a-z0-9-]+$/;

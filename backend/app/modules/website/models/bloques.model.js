@@ -2,6 +2,7 @@ const RLSContextManager = require('../../../utils/rlsContextManager');
 const { ErrorHelper } = require('../../../utils/helpers');
 const logger = require('../../../utils/logger');
 const blockDefaults = require('../data/block-defaults.json');
+const { BLOCK_TYPES, MAX_BLOQUES_POR_PAGINA } = require('../constants');
 
 /**
  * ====================================================================
@@ -35,18 +36,15 @@ class WebsiteBloquesModel {
 
     /**
      * Máximo de bloques permitidos por página
-     * Límite para evitar degradación de performance en el canvas
+     * Importado desde constants/block-types.js
      */
-    static MAX_BLOQUES_POR_PAGINA = 50;
+    static MAX_BLOQUES_POR_PAGINA = MAX_BLOQUES_POR_PAGINA;
 
     /**
      * Tipos de bloques válidos
+     * Importado desde constants/block-types.js
      */
-    static TIPOS_VALIDOS = [
-        'hero', 'servicios', 'testimonios', 'equipo', 'cta',
-        'contacto', 'footer', 'texto', 'galeria', 'video', 'separador',
-        'pricing', 'faq', 'countdown', 'stats', 'timeline'
-    ];
+    static TIPOS_VALIDOS = BLOCK_TYPES;
 
     /**
      * Crear nuevo bloque

@@ -1,8 +1,6 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import {
   Plus,
-  Edit,
-  Trash2,
   Users,
   Copy,
   Upload,
@@ -10,17 +8,17 @@ import {
   QrCode,
   X,
   FileText,
-  Mail,
-  Phone,
-  MoreVertical,
 } from 'lucide-react';
 import { Button, Input, LoadingSpinner } from '@/components/ui';
 import { useModalManager } from '@/hooks/utils';
 import { useToast } from '@/hooks/utils';
 import { eventosDigitalesApi } from '@/services/api/modules';
+import InvitadoTableRow from './InvitadoTableRow';
 
 /**
  * Tab de invitados del evento
+ * Refactorizado con React.memo y useCallback - Feb 2026
+ *
  * @param {Object} props
  * @param {Object} props.invitadosData - Datos de invitados { invitados: [], total: number }
  * @param {boolean} props.isLoading - Estado de carga
@@ -52,22 +50,14 @@ export default function InvitadosTab({
   const [showImportModal, setShowImportModal] = useState(false);
   const [csvText, setCsvText] = useState('');
   const [loadingQR, setLoadingQR] = useState(false);
-  const [menuAbiertoId, setMenuAbiertoId] = useState(null);
 
   const { openModal, closeModal, isOpen, getModalData } = useModalManager({
     qr: { isOpen: false, data: null },
   });
 
-  const getRSVPBadge = (estado) => {
-    const badges = {
-      pendiente: 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-400',
-      confirmado: 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-400',
-      rechazado: 'bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-400',
-    };
-    return badges[estado] || 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300';
-  };
+  // ==================== HANDLERS MEMOIZADOS ====================
 
-  const handleGuardar = async (e) => {
+  const handleGuardar = useCallback(async (e) => {
     e.preventDefault();
     try {
       const data = {
@@ -90,9 +80,9 @@ export default function InvitadosTab({
     } catch (error) {
       toast.error(error.message);
     }
-  };
+  }, [form, editingId, eventoId, actualizarInvitado, crearInvitado, toast]);
 
-  const handleEditar = (inv) => {
+  const handleEditar = useCallback((inv) => {
     setForm({
       nombre: inv.nombre,
       email: inv.email || '',
@@ -101,15 +91,24 @@ export default function InvitadosTab({
     });
     setEditingId(inv.id);
     setShowForm(true);
-  };
+  }, []);
 
-  const handleCancelar = () => {
+  const handleCancelar = useCallback(() => {
     setForm({ nombre: '', email: '', telefono: '', max_acompanantes: 0 });
     setEditingId(null);
     setShowForm(false);
-  };
+  }, []);
 
-  const handleVerQR = async (invitado) => {
+  const handleEliminar = useCallback((invitadoId) => {
+    eliminarInvitado.mutate({ id: invitadoId, eventoId });
+  }, [eliminarInvitado, eventoId]);
+
+  const handleCopyLink = useCallback((url) => {
+    navigator.clipboard.writeText(url);
+    toast.success('Link de invitacion copiado');
+  }, [toast]);
+
+  const handleVerQR = useCallback(async (invitado) => {
     setLoadingQR(true);
     openModal('qr', null);
     try {
@@ -120,15 +119,15 @@ export default function InvitadosTab({
         toast.error('Error al obtener QR');
         closeModal('qr');
       }
-    } catch (err) {
+    } catch {
       toast.error('Error al obtener QR');
       closeModal('qr');
     } finally {
       setLoadingQR(false);
     }
-  };
+  }, [eventoId, openModal, closeModal, toast]);
 
-  const handleDescargarQR = () => {
+  const handleDescargarQR = useCallback(() => {
     const qrData = getModalData('qr');
     if (!qrData?.qr) return;
     const link = document.createElement('a');
@@ -137,9 +136,9 @@ export default function InvitadosTab({
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-  };
+  }, [getModalData]);
 
-  const handleDescargarQRMasivo = async () => {
+  const handleDescargarQRMasivo = useCallback(async () => {
     toast.info('Generando ZIP con todos los QR...');
     try {
       const response = await eventosDigitalesApi.descargarQRMasivo(eventoId);
@@ -153,12 +152,12 @@ export default function InvitadosTab({
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
       toast.success('QR descargados exitosamente');
-    } catch (error) {
+    } catch {
       toast.error('Error al descargar QR');
     }
-  };
+  }, [eventoId, evento?.slug, toast]);
 
-  const parseCSV = (text) => {
+  const parseCSV = useCallback((text) => {
     const lines = text.trim().split('\n');
     if (lines.length < 2) return [];
     const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
@@ -181,9 +180,9 @@ export default function InvitadosTab({
       }
     }
     return invitados;
-  };
+  }, []);
 
-  const handleImportarCSV = async () => {
+  const handleImportarCSV = useCallback(async () => {
     try {
       const invitados = parseCSV(csvText);
       if (invitados.length === 0) {
@@ -197,9 +196,9 @@ export default function InvitadosTab({
     } catch (error) {
       toast.error(error.message);
     }
-  };
+  }, [csvText, parseCSV, importarInvitados, eventoId, toast]);
 
-  const handleExportarCSV = async () => {
+  const handleExportarCSV = useCallback(async () => {
     try {
       const blob = await exportarInvitados.mutateAsync(eventoId);
       const url = window.URL.createObjectURL(blob);
@@ -214,7 +213,9 @@ export default function InvitadosTab({
     } catch (error) {
       toast.error(error.message || 'Error al exportar');
     }
-  };
+  }, [exportarInvitados, eventoId, evento?.slug, toast]);
+
+  // ==================== RENDER ====================
 
   if (isLoading) {
     return <LoadingSpinner />;
@@ -409,138 +410,16 @@ export default function InvitadosTab({
             </thead>
             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
               {invitadosData.invitados.map((inv) => (
-                <tr key={inv.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                  <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
-                    <p className="font-medium text-gray-900 dark:text-gray-100 text-sm sm:text-base">{inv.nombre}</p>
-                    {inv.grupo_familiar && (
-                      <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">{inv.grupo_familiar}</p>
-                    )}
-                  </td>
-                  <td className="px-3 sm:px-6 py-4 whitespace-nowrap hidden sm:table-cell">
-                    <div className="text-sm text-gray-600 dark:text-gray-400">
-                      {inv.email && <p className="flex items-center gap-1"><Mail className="w-3 h-3" />{inv.email}</p>}
-                      {inv.telefono && <p className="flex items-center gap-1"><Phone className="w-3 h-3" />{inv.telefono}</p>}
-                    </div>
-                  </td>
-                  <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${getRSVPBadge(inv.estado_rsvp)}`}>
-                      {inv.estado_rsvp}
-                    </span>
-                  </td>
-                  <td className="px-3 sm:px-6 py-4 whitespace-nowrap hidden sm:table-cell">
-                    <span className="text-sm text-gray-600 dark:text-gray-400">
-                      {inv.num_asistentes || 0} / {inv.max_acompanantes + 1}
-                    </span>
-                  </td>
-                  <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-right">
-                    {/* Desktop: botones visibles */}
-                    <div className="hidden sm:flex items-center justify-end gap-2">
-                      {mostrarQR && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleVerQR(inv)}
-                          title="Ver codigo QR"
-                        >
-                          <QrCode className="w-4 h-4" />
-                        </Button>
-                      )}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          const invitacionUrl = `${window.location.origin}/e/${evento.slug}/${inv.token}`;
-                          navigator.clipboard.writeText(invitacionUrl);
-                          toast.success('Link de invitacion copiado');
-                        }}
-                        title="Copiar link de invitacion"
-                      >
-                        <Copy className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleEditar(inv)}
-                        title="Editar invitado"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => eliminarInvitado.mutate({ id: inv.id, eventoId })}
-                        className="text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30"
-                        title="Eliminar invitado"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                    {/* Mobile: menu dropdown */}
-                    <div className="sm:hidden relative">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="px-2"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setMenuAbiertoId(menuAbiertoId === inv.id ? null : inv.id);
-                        }}
-                      >
-                        <MoreVertical className="w-4 h-4" />
-                      </Button>
-                      {menuAbiertoId === inv.id && (
-                        <>
-                          <div
-                            className="fixed inset-0 z-10"
-                            onClick={() => setMenuAbiertoId(null)}
-                          />
-                          <div className="absolute right-0 top-full mt-1 w-40 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-20">
-                            {mostrarQR && (
-                              <button
-                                onClick={() => {
-                                  handleVerQR(inv);
-                                  setMenuAbiertoId(null);
-                                }}
-                                className="w-full px-3 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
-                              >
-                                <QrCode className="w-4 h-4" /> Ver QR
-                              </button>
-                            )}
-                            <button
-                              onClick={() => {
-                                const invitacionUrl = `${window.location.origin}/e/${evento.slug}/${inv.token}`;
-                                navigator.clipboard.writeText(invitacionUrl);
-                                toast.success('Link copiado');
-                                setMenuAbiertoId(null);
-                              }}
-                              className="w-full px-3 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
-                            >
-                              <Copy className="w-4 h-4" /> Copiar link
-                            </button>
-                            <button
-                              onClick={() => {
-                                handleEditar(inv);
-                                setMenuAbiertoId(null);
-                              }}
-                              className="w-full px-3 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
-                            >
-                              <Edit className="w-4 h-4" /> Editar
-                            </button>
-                            <button
-                              onClick={() => {
-                                eliminarInvitado.mutate({ id: inv.id, eventoId });
-                                setMenuAbiertoId(null);
-                              }}
-                              className="w-full px-3 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 flex items-center gap-2"
-                            >
-                              <Trash2 className="w-4 h-4" /> Eliminar
-                            </button>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  </td>
-                </tr>
+                <InvitadoTableRow
+                  key={inv.id}
+                  invitado={inv}
+                  mostrarQR={mostrarQR}
+                  eventoSlug={evento.slug}
+                  onEdit={handleEditar}
+                  onDelete={handleEliminar}
+                  onCopyLink={handleCopyLink}
+                  onViewQR={handleVerQR}
+                />
               ))}
             </tbody>
           </table>

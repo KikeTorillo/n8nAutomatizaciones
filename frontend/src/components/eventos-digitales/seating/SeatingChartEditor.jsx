@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useModalManager } from '@/hooks/utils';
 import {
   DndContext,
@@ -93,10 +93,22 @@ function SeatingChartEditor({ eventoId }) {
     id: 'sin-mesa',
   });
 
-  // Filtrar invitados sin mesa asignada
-  const invitadosSinMesa = (invitadosData?.invitados || []).filter(
-    (inv) => !inv.mesa_id && inv.estado_rsvp === 'confirmado'
+  // Filtrar invitados sin mesa asignada (memoizado)
+  const invitadosSinMesa = useMemo(
+    () => (invitadosData?.invitados || [])
+      .filter((inv) => !inv.mesa_id && inv.estado_rsvp === 'confirmado'),
+    [invitadosData?.invitados]
   );
+
+  // Precalcular ocupaciones por mesa (memoizado)
+  const ocupacionesPorMesa = useMemo(() => {
+    return mesas.reduce((acc, mesa) => {
+      const asignados = mesa.invitados?.reduce((sum, inv) => sum + (inv.num_asistentes || 1), 0) || 0;
+      const porcentaje = mesa.capacidad ? Math.round((asignados / mesa.capacidad) * 100) : 0;
+      acc[mesa.id] = { asignados, porcentaje };
+      return acc;
+    }, {});
+  }, [mesas]);
 
   // Manejar inicio de drag
   const handleDragStart = useCallback((event) => {
@@ -192,14 +204,14 @@ function SeatingChartEditor({ eventoId }) {
           eventoId,
           posiciones: [{ id: mesaId, posicion_x: newX, posicion_y: newY }],
         });
-      } catch (error) {
+      } catch {
         toast.error('Error moviendo mesa');
       }
     }
   }, [mesas, eventoId, asignarInvitado, desasignarInvitado, actualizarPosiciones, toast, invitadosData]);
 
-  // Crear nueva mesa
-  const handleCreateMesa = async () => {
+  // Crear nueva mesa (memoizado)
+  const handleCreateMesa = useCallback(async () => {
     if (!newMesaData.nombre.trim()) {
       toast.error('El nombre de la mesa es requerido');
       return;
@@ -219,10 +231,10 @@ function SeatingChartEditor({ eventoId }) {
     } catch (error) {
       toast.error(error.message);
     }
-  };
+  }, [newMesaData, crearMesa, eventoId, closeModal, toast]);
 
-  // Eliminar mesa
-  const handleDeleteMesa = async () => {
+  // Eliminar mesa (memoizado)
+  const handleDeleteMesa = useCallback(async () => {
     const mesaAEliminar = getModalData('delete');
     if (!mesaAEliminar) return;
     try {
@@ -232,20 +244,20 @@ function SeatingChartEditor({ eventoId }) {
     } catch (err) {
       toast.error(err.message);
     }
-  };
+  }, [getModalData, eliminarMesa, eventoId, closeModal, toast]);
 
-  // Desasignar invitado de mesa
-  const handleDesasignarInvitado = async (invitadoId) => {
+  // Desasignar invitado de mesa (memoizado)
+  const handleDesasignarInvitado = useCallback(async (invitadoId) => {
     try {
       await desasignarInvitado.mutateAsync({ invitadoId, eventoId });
       toast.success('Invitado desasignado');
     } catch (error) {
       toast.error(error.message);
     }
-  };
+  }, [desasignarInvitado, eventoId, toast]);
 
   // Actualizar mesa
-  const handleUpdateMesa = async (mesaId, data) => {
+  const handleUpdateMesa = useCallback(async (mesaId, data) => {
     try {
       await actualizarMesa.mutateAsync({ eventoId, mesaId, data });
       toast.success('Mesa actualizada');
@@ -253,14 +265,7 @@ function SeatingChartEditor({ eventoId }) {
     } catch (error) {
       toast.error(error.message);
     }
-  };
-
-  // Obtener ocupación de una mesa (suma num_asistentes de cada invitado)
-  const getOcupacion = (mesa) => {
-    const asignados = mesa.invitados?.reduce((sum, inv) => sum + (inv.num_asistentes || 1), 0) || 0;
-    const porcentaje = (asignados / mesa.capacidad) * 100;
-    return { asignados, porcentaje };
-  };
+  }, [actualizarMesa, eventoId, toast]);
 
   if (loadingMesas || loadingInvitados) {
     return (
@@ -392,13 +397,13 @@ function SeatingChartEditor({ eventoId }) {
 
             {/* Mesas */}
             {mesas.map((mesa) => {
-              const { asignados, porcentaje } = getOcupacion(mesa);
+              const ocupacion = ocupacionesPorMesa[mesa.id] || { asignados: 0, porcentaje: 0 };
               return (
                 <MesaVisual
                   key={mesa.id}
                   mesa={mesa}
-                  asignados={asignados}
-                  porcentaje={porcentaje}
+                  asignados={ocupacion.asignados}
+                  porcentaje={ocupacion.porcentaje}
                   isEditing={editingMesa?.id === mesa.id}
                   isEditMode={isEditMode}
                   onEdit={() => setEditingMesa(mesa)}

@@ -1,21 +1,35 @@
+/**
+ * ====================================================================
+ * CTA EDITOR (Refactorizado)
+ * ====================================================================
+ *
+ * Editor del bloque Call To Action.
+ * Usa BaseBlockEditor.
+ *
+ * @version 2.0.0
+ * @since 2026-02-03
+ */
+
 import { useCallback, useMemo } from 'react';
-import { Save } from 'lucide-react';
-import {
-  Button,
-  Input,
-  Select,
-  Textarea
-} from '@/components/ui';
-import { AIGenerateButton, AISuggestionBanner } from '../AIGenerator';
+import { Input, Select, Textarea } from '@/components/ui';
+import { AIGenerateButton } from '../AIGenerator';
 import { useBlockEditor } from '../../hooks';
+import BaseBlockEditor from './BaseBlockEditor';
 
 /**
  * CtaEditor - Editor del bloque Call To Action
+ *
+ * @param {Object} props
+ * @param {Object} props.contenido - Contenido del bloque
+ * @param {Function} props.onGuardar - Callback para guardar
+ * @param {Object} props.tema - Tema del sitio
+ * @param {boolean} props.isSaving - Estado de guardado
+ * @param {string} props.industria - Industria para AI
  */
 function CtaEditor({ contenido, onGuardar, tema, isSaving, industria = 'default' }) {
   // Valores por defecto del formulario
   const defaultValues = useMemo(() => ({
-    titulo: '¿Listo para empezar?',
+    titulo: 'Listo para empezar?',
     subtitulo: '',
     boton_texto: 'Contactar',
     boton_url: '',
@@ -31,10 +45,10 @@ function CtaEditor({ contenido, onGuardar, tema, isSaving, industria = 'default'
     defaultValues
   );
 
-  // Verificar si el contenido está esencialmente vacío (usa valores por defecto)
-  const contenidoVacio = contenido.titulo === '¿Listo para empezar?' || !contenido.titulo;
+  // Verificar si el contenido esta vacio
+  const contenidoVacio = contenido.titulo === 'Listo para empezar?' || !contenido.titulo;
 
-  // Callback para generación de IA de bloque completo
+  // Callback para generacion de IA de bloque completo
   const handleAIGenerate = useCallback((generatedContent) => {
     setForm(prev => ({
       ...prev,
@@ -44,6 +58,7 @@ function CtaEditor({ contenido, onGuardar, tema, isSaving, industria = 'default'
     }));
   }, [setForm]);
 
+  // Opciones de select
   const estiloOptions = [
     { value: 'primario', label: 'Color primario' },
     { value: 'secundario', label: 'Color secundario' },
@@ -57,21 +72,94 @@ function CtaEditor({ contenido, onGuardar, tema, isSaving, industria = 'default'
     { value: 'right', label: 'Derecha' },
   ];
 
-  return (
-    <form onSubmit={handleSubmit(onGuardar)} className="space-y-4">
-      {/* Banner de sugerencia IA para contenido vacío */}
-      {contenidoVacio && (
-        <AISuggestionBanner
-          tipo="cta"
-          industria={industria}
-          onGenerate={handleAIGenerate}
-        />
-      )}
+  // Componente de preview
+  const preview = useMemo(() => (
+    <div
+      className="rounded-lg p-6"
+      style={{
+        backgroundColor: form.estilo === 'claro'
+          ? '#F9FAFB'
+          : form.estilo === 'gradiente'
+            ? undefined
+            : tema?.colores?.primario || '#4F46E5',
+        backgroundImage: form.estilo === 'gradiente'
+          ? `linear-gradient(135deg, ${tema?.colores?.primario || '#4F46E5'}, ${tema?.colores?.secundario || '#6366F1'})`
+          : undefined,
+      }}
+    >
+      <div className={`text-${form.alineacion}`}>
+        <h3
+          className="text-xl font-bold mb-2"
+          style={{
+            color: form.estilo === 'claro'
+              ? tema?.colores?.texto || '#1F2937'
+              : '#FFFFFF'
+          }}
+        >
+          {form.titulo}
+        </h3>
+        {form.subtitulo && (
+          <p
+            className="text-sm mb-4"
+            style={{
+              color: form.estilo === 'claro'
+                ? '#6B7280'
+                : 'rgba(255,255,255,0.8)'
+            }}
+          >
+            {form.subtitulo}
+          </p>
+        )}
+        <div className={`flex gap-3 ${
+          form.alineacion === 'center' ? 'justify-center' :
+          form.alineacion === 'right' ? 'justify-end' : 'justify-start'
+        }`}>
+          <button
+            className={`px-4 py-2 rounded-lg text-sm font-medium ${
+              form.estilo === 'claro'
+                ? 'text-white'
+                : 'text-gray-900 bg-white'
+            }`}
+            style={{
+              backgroundColor: form.estilo === 'claro'
+                ? tema?.colores?.primario || '#4F46E5'
+                : undefined
+            }}
+          >
+            {form.boton_texto || 'Contactar'}
+          </button>
+          {form.boton_secundario_texto && (
+            <button
+              className={`px-4 py-2 rounded-lg text-sm font-medium border-2 ${
+                form.estilo === 'claro'
+                  ? 'border-gray-300 text-gray-700'
+                  : 'border-white text-white'
+              }`}
+            >
+              {form.boton_secundario_texto}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  ), [form.titulo, form.subtitulo, form.boton_texto, form.boton_secundario_texto, form.estilo, form.alineacion, tema?.colores]);
 
+  return (
+    <BaseBlockEditor
+      tipo="cta"
+      industria={industria}
+      mostrarAIBanner={contenidoVacio}
+      onAIGenerate={handleAIGenerate}
+      cambios={cambios}
+      handleSubmit={handleSubmit}
+      onGuardar={onGuardar}
+      isSaving={isSaving}
+      preview={preview}
+    >
       <Input
         label={
           <span className="flex items-center gap-2">
-            Título
+            Titulo
             <AIGenerateButton
               tipo="cta"
               campo="titulo"
@@ -83,14 +171,14 @@ function CtaEditor({ contenido, onGuardar, tema, isSaving, industria = 'default'
         }
         value={form.titulo}
         onChange={(e) => handleFieldChange('titulo', e.target.value)}
-        placeholder="¿Listo para empezar?"
+        placeholder="Listo para empezar?"
         className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
       />
 
       <Textarea
         label={
           <span className="flex items-center gap-2">
-            Subtítulo (opcional)
+            Subtitulo (opcional)
             <AIGenerateButton
               tipo="cta"
               campo="subtitulo"
@@ -103,7 +191,7 @@ function CtaEditor({ contenido, onGuardar, tema, isSaving, industria = 'default'
         }
         value={form.subtitulo}
         onChange={(e) => handleFieldChange('subtitulo', e.target.value)}
-        placeholder="Contáctanos hoy y recibe una consulta gratuita"
+        placeholder="Contactanos hoy y recibe una consulta gratuita"
         rows={2}
         className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
       />
@@ -112,7 +200,7 @@ function CtaEditor({ contenido, onGuardar, tema, isSaving, industria = 'default'
         <Input
           label={
             <span className="flex items-center gap-2">
-              Texto del botón
+              Texto del boton
               <AIGenerateButton
                 tipo="cta"
                 campo="boton"
@@ -128,7 +216,7 @@ function CtaEditor({ contenido, onGuardar, tema, isSaving, industria = 'default'
           className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
         <Input
-          label="URL del botón"
+          label="URL del boton"
           value={form.boton_url}
           onChange={(e) => handleFieldChange('boton_url', e.target.value)}
           placeholder="/contacto"
@@ -138,10 +226,10 @@ function CtaEditor({ contenido, onGuardar, tema, isSaving, industria = 'default'
 
       <div className="grid grid-cols-2 gap-4">
         <Input
-          label="Botón secundario (opcional)"
+          label="Boton secundario (opcional)"
           value={form.boton_secundario_texto}
           onChange={(e) => handleFieldChange('boton_secundario_texto', e.target.value)}
-          placeholder="Más información"
+          placeholder="Mas informacion"
           className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
         <Input
@@ -162,98 +250,14 @@ function CtaEditor({ contenido, onGuardar, tema, isSaving, industria = 'default'
           className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
         <Select
-          label="Alineación"
+          label="Alineacion"
           value={form.alineacion}
           onChange={(e) => handleFieldChange('alineacion', e.target.value)}
           options={alineacionOptions}
           className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
       </div>
-
-      {/* Preview */}
-      <div
-        className="rounded-lg p-6"
-        style={{
-          backgroundColor: form.estilo === 'claro'
-            ? '#F9FAFB'
-            : form.estilo === 'gradiente'
-              ? undefined
-              : tema?.colores?.primario || '#4F46E5',
-          backgroundImage: form.estilo === 'gradiente'
-            ? `linear-gradient(135deg, ${tema?.colores?.primario || '#4F46E5'}, ${tema?.colores?.secundario || '#6366F1'})`
-            : undefined,
-        }}
-      >
-        <div className={`text-${form.alineacion}`}>
-          <h3
-            className="text-xl font-bold mb-2"
-            style={{
-              color: form.estilo === 'claro'
-                ? tema?.colores?.texto || '#1F2937'
-                : '#FFFFFF'
-            }}
-          >
-            {form.titulo}
-          </h3>
-          {form.subtitulo && (
-            <p
-              className="text-sm mb-4"
-              style={{
-                color: form.estilo === 'claro'
-                  ? '#6B7280'
-                  : 'rgba(255,255,255,0.8)'
-              }}
-            >
-              {form.subtitulo}
-            </p>
-          )}
-          <div className={`flex gap-3 ${
-            form.alineacion === 'center' ? 'justify-center' :
-            form.alineacion === 'right' ? 'justify-end' : 'justify-start'
-          }`}>
-            <button
-              className={`px-4 py-2 rounded-lg text-sm font-medium ${
-                form.estilo === 'claro'
-                  ? 'text-white'
-                  : 'text-gray-900 bg-white'
-              }`}
-              style={{
-                backgroundColor: form.estilo === 'claro'
-                  ? tema?.colores?.primario || '#4F46E5'
-                  : undefined
-              }}
-            >
-              {form.boton_texto || 'Contactar'}
-            </button>
-            {form.boton_secundario_texto && (
-              <button
-                className={`px-4 py-2 rounded-lg text-sm font-medium border-2 ${
-                  form.estilo === 'claro'
-                    ? 'border-gray-300 text-gray-700'
-                    : 'border-white text-white'
-                }`}
-              >
-                {form.boton_secundario_texto}
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Botón guardar */}
-      {cambios && (
-        <div className="flex justify-end pt-2">
-          <Button
-            type="submit"
-            variant="primary"
-            isLoading={isSaving}
-          >
-            <Save className="w-4 h-4 mr-2" />
-            Guardar cambios
-          </Button>
-        </div>
-      )}
-    </form>
+    </BaseBlockEditor>
   );
 }
 
