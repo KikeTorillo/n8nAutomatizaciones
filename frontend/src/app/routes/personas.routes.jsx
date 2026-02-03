@@ -25,6 +25,9 @@ const AusenciasPage = lazy(() => import('@/pages/ausencias/AusenciasPage'));
 // Mi Perfil (Autoservicio)
 const MiPerfilPage = lazy(() => import('@/pages/mi-perfil/MiPerfilPage'));
 
+// Mi Cuenta (Accesible para todos)
+const MiCuentaPage = lazy(() => import('@/pages/mi-cuenta/MiCuentaPage'));
+
 // Onboarding Empleados
 const OnboardingAdminPage = lazy(() => import('@/pages/onboarding-empleados/OnboardingAdminPage'));
 
@@ -58,6 +61,9 @@ export const personasRoutes = [
 
   // Mi Perfil (Portal Autoservicio)
   protectedRoute('mi-perfil', MiPerfilPage, { requiredRole: ROLES.ALL_AUTHENTICATED }),
+
+  // Mi Cuenta (Gestión de cuenta - Accesible para todos)
+  protectedRoute('mi-cuenta', MiCuentaPage, { requiredRole: ROLES.ALL_AUTHENTICATED }),
 
   // Onboarding Empleados (solo admin)
   protectedRoute('onboarding-empleados', OnboardingAdminPage, { requiredRole: ROLES.ADMIN_ONLY }),

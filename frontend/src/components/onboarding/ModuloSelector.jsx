@@ -147,7 +147,7 @@ function ModuloSelector({ value = {}, onChange, modulosDisponibles = null }) {
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-2">
         <div className="flex items-center gap-2">
           <Sparkles className="w-5 h-5 text-primary-500" />
           <span className="font-medium text-gray-900 dark:text-gray-100">
@@ -155,7 +155,7 @@ function ModuloSelector({ value = {}, onChange, modulosDisponibles = null }) {
           </span>
         </div>
         {modulosSeleccionados > 0 && (
-          <span className="text-xs text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/30 px-2 py-1 rounded-full">
+          <span className="text-xs text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/30 px-2 py-1 rounded-full w-fit">
             {modulosSeleccionados} seleccionado{modulosSeleccionados !== 1 ? 's' : ''}
           </span>
         )}

@@ -30,10 +30,14 @@ export default function SuperAdminLayout() {
     });
 
     // Mutation de logout
+    // Feb 2026: Invalidar queries específicas en lugar de clear() para mejor UX
     const logoutMutation = useMutation({
         mutationFn: authApi.logout,
         onSuccess: () => {
-            queryClient.clear();
+            queryClient.invalidateQueries({ queryKey: ['usuario'], refetchType: 'active' });
+            queryClient.invalidateQueries({ queryKey: ['organizacion'], refetchType: 'active' });
+            queryClient.invalidateQueries({ queryKey: ['modulos'], refetchType: 'active' });
+            queryClient.invalidateQueries({ queryKey: ['sucursales'], refetchType: 'active' });
             resetOnboarding();
             clearSucursal();
             clearPermisos();
@@ -41,7 +45,10 @@ export default function SuperAdminLayout() {
             navigate('/login');
         },
         onError: () => {
-            queryClient.clear();
+            queryClient.invalidateQueries({ queryKey: ['usuario'], refetchType: 'active' });
+            queryClient.invalidateQueries({ queryKey: ['organizacion'], refetchType: 'active' });
+            queryClient.invalidateQueries({ queryKey: ['modulos'], refetchType: 'active' });
+            queryClient.invalidateQueries({ queryKey: ['sucursales'], refetchType: 'active' });
             resetOnboarding();
             clearSucursal();
             clearPermisos();

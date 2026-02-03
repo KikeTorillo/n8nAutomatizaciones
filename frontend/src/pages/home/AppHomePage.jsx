@@ -23,6 +23,7 @@ import {
   ClipboardCheck,
   CalendarOff,
   CreditCard,
+  KeyRound,
 } from 'lucide-react';
 
 import useAuthStore, { selectLogout, selectUser } from '@/store/authStore';
@@ -96,10 +97,14 @@ function AppHomePage() {
   const { data: estadoSuscripcion } = useEstadoSuscripcion({ enabled: esAdmin });
 
   // Mutation de logout - Ene 2026: Limpieza completa de todos los stores
+  // Feb 2026: Invalidar queries específicas en lugar de clear() para mejor UX
   const logoutMutation = useMutation({
     mutationFn: authApi.logout,
     onSuccess: () => {
-      queryClient.clear();
+      queryClient.invalidateQueries({ queryKey: ['usuario'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['organizacion'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['modulos'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['sucursales'], refetchType: 'active' });
       resetOnboarding();
       clearSucursal();
       clearPermisos();
@@ -107,7 +112,10 @@ function AppHomePage() {
       navigate('/login');
     },
     onError: () => {
-      queryClient.clear();
+      queryClient.invalidateQueries({ queryKey: ['usuario'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['organizacion'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['modulos'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['sucursales'], refetchType: 'active' });
       resetOnboarding();
       clearSucursal();
       clearPermisos();
@@ -420,6 +428,17 @@ function AppHomePage() {
                   <span className="hidden sm:inline">Mi Perfil</span>
                 </Button>
               )}
+
+              {/* Mi Cuenta - Accesible para todos */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate('/mi-cuenta')}
+                title="Mi Cuenta"
+              >
+                <KeyRound className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Mi Cuenta</span>
+              </Button>
 
               <Button
                 variant="outline"
