@@ -23,14 +23,28 @@ class ModulosSyncService {
      * Construye objeto de módulos activos desde array de habilitados
      * Función pura sin side effects - única fuente de verdad para el mapeo
      *
+     * LÓGICA DE MERGE INTELIGENTE (cuando se pasan módulos actuales):
+     * - Módulos que SALEN del plan → No se incluyen (quedan fuera)
+     * - Módulos que PERMANECEN en el plan → Mantener estado actual (respeta preferencia usuario)
+     * - Módulos NUEVOS en el plan → Activar por defecto (usuario puede desactivar después)
+     *
      * @param {string[]} modulosHabilitados - Ej: ["inventario", "pos"]
+     * @param {Object|null} modulosActivosActuales - Estado actual de la org, ej: { core: true, inventario: false }
      * @returns {Object} - Ej: { core: true, inventario: true, pos: true }
      */
-    static construirModulosActivos(modulosHabilitados) {
+    static construirModulosActivos(modulosHabilitados, modulosActivosActuales = null) {
         const modulosActivos = { core: true }; // Core siempre activo
+
         (modulosHabilitados || []).forEach(modulo => {
-            modulosActivos[modulo] = true;
+            if (modulosActivosActuales && modulosActivosActuales[modulo] !== undefined) {
+                // Módulo existía antes - mantener preferencia del usuario
+                modulosActivos[modulo] = modulosActivosActuales[modulo];
+            } else {
+                // Módulo nuevo o sin preferencia previa - activar por defecto
+                modulosActivos[modulo] = true;
+            }
         });
+
         return modulosActivos;
     }
 
@@ -73,11 +87,16 @@ class ModulosSyncService {
                 };
             }
 
-            // 2. Construir módulos activos desde el plan (usando helper centralizado)
-            const modulosHabilitados = suscripcion.modulos_habilitados || [];
-            const modulosActivos = this.construirModulosActivos(modulosHabilitados);
+            // 2. Obtener módulos activos actuales de la organización (para respetar preferencias)
+            const orgQuery = `SELECT modulos_activos FROM organizaciones WHERE id = $1`;
+            const orgResult = await db.query(orgQuery, [orgId]);
+            const modulosActivosActuales = orgResult.rows[0]?.modulos_activos || null;
 
-            // 3. Actualizar organización
+            // 3. Construir módulos activos con merge inteligente (respeta preferencias del usuario)
+            const modulosHabilitados = suscripcion.modulos_habilitados || [];
+            const modulosActivos = this.construirModulosActivos(modulosHabilitados, modulosActivosActuales);
+
+            // 4. Actualizar organización
             await db.query(`
                 UPDATE organizaciones
                 SET modulos_activos = $1::jsonb,
@@ -85,7 +104,7 @@ class ModulosSyncService {
                 WHERE id = $2
             `, [JSON.stringify(modulosActivos), orgId]);
 
-            // 4. Invalidar cache
+            // 5. Invalidar cache
             await ModulesCache.invalidate(orgId);
 
             logger.info(`[ModulosSyncService] Módulos sincronizados para org ${orgId}`, {
@@ -127,15 +146,13 @@ class ModulosSyncService {
                 return { sincronizadas: [], errores: [], mensaje: 'Plan no encontrado' };
             }
 
-            // 2. Construir módulos activos para este plan
-            const modulosActivos = this.construirModulosActivos(plan.modulos_habilitados);
-            const modulosActivosJson = JSON.stringify(modulosActivos);
-
-            // 3. Obtener todas las organizaciones con suscripción activa a este plan
+            // 2. Obtener todas las organizaciones con suscripción activa a este plan
+            // INCLUYE modulos_activos para hacer merge inteligente (respetar preferencias)
             const orgsQuery = `
                 SELECT DISTINCT ON (c.organizacion_vinculada_id)
                     c.organizacion_vinculada_id as org_id,
                     o.nombre_comercial,
+                    o.modulos_activos as modulos_activos_actuales,
                     s.id as suscripcion_id,
                     s.estado
                 FROM suscripciones_org s
@@ -158,15 +175,21 @@ class ModulosSyncService {
             const sincronizadas = [];
             const errores = [];
 
-            // 4. Actualizar cada organización
+            // 3. Actualizar cada organización con merge inteligente
             for (const org of orgsResult.rows) {
                 try {
+                    // Construir módulos respetando preferencias del usuario
+                    const modulosActivos = this.construirModulosActivos(
+                        plan.modulos_habilitados,
+                        org.modulos_activos_actuales
+                    );
+
                     await db.query(`
                         UPDATE organizaciones
                         SET modulos_activos = $1::jsonb,
                             actualizado_en = NOW()
                         WHERE id = $2
-                    `, [modulosActivosJson, org.org_id]);
+                    `, [JSON.stringify(modulosActivos), org.org_id]);
 
                     // Invalidar cache
                     await ModulesCache.invalidate(org.org_id);
@@ -195,7 +218,7 @@ class ModulosSyncService {
                 sincronizadas,
                 errores,
                 plan_codigo: plan.codigo,
-                modulos_aplicados: Object.keys(modulosActivos)
+                modulos_habilitados: plan.modulos_habilitados || []
             };
         });
     }
@@ -209,10 +232,12 @@ class ModulosSyncService {
     static async sincronizarTodas() {
         return await RLSContextManager.withBypass(async (db) => {
             // 1. Obtener todas las organizaciones con suscripción en Nexo Team
+            // INCLUYE modulos_activos para hacer merge inteligente (respetar preferencias)
             const query = `
                 SELECT DISTINCT ON (c.organizacion_vinculada_id)
                     c.organizacion_vinculada_id as org_id,
                     o.nombre_comercial,
+                    o.modulos_activos as modulos_activos_actuales,
                     s.id as suscripcion_id,
                     s.estado,
                     p.codigo as plan_codigo,
@@ -240,7 +265,11 @@ class ModulosSyncService {
             for (const org of orgsResult.rows) {
                 try {
                     const modulosHabilitados = org.modulos_habilitados || [];
-                    const modulosActivos = this.construirModulosActivos(modulosHabilitados);
+                    // Construir módulos respetando preferencias del usuario
+                    const modulosActivos = this.construirModulosActivos(
+                        modulosHabilitados,
+                        org.modulos_activos_actuales
+                    );
 
                     await db.query(`
                         UPDATE organizaciones

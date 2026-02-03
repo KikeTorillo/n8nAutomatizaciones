@@ -70,6 +70,15 @@ RolHelper.esRolAdministrativo(user);    // nivel >= 90
 
 **Bypasses**: `organizacion_id === 1`, `nivel_jerarquia >= 100`, rutas `/auth/*`, `/planes/*`
 
+### Sincronización de Módulos
+```javascript
+// Al editar entitlements, respeta preferencias del usuario:
+// - Módulos NUEVOS → se activan por defecto
+// - Módulos existentes → mantienen estado actual (respeta si usuario desactivó)
+// - Módulos que salen del plan → se eliminan
+ModulosSyncService.sincronizarPorPlan(planId);
+```
+
 ## Reglas de Desarrollo
 
 ### Backend
@@ -144,9 +153,9 @@ const groups = [
 | Prioridad | Feature |
 |-----------|---------|
 | **Alta** | Website Builder - AI Site Generator |
-| **Media** | Prorrateo en cambios de plan |
+| **Media** | Stripe Gateway completo |
 | **Baja** | 2FA/MFA |
 
 ---
 
-**Actualizado**: 28 Enero 2026
+**Actualizado**: 2 Febrero 2026

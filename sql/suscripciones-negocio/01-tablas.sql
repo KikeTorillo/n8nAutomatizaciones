@@ -394,10 +394,16 @@ CREATE POLICY planes_insert_own ON planes_suscripcion_org
     FOR INSERT WITH CHECK (organizacion_id = current_setting('app.current_tenant_id')::INTEGER);
 
 CREATE POLICY planes_update_own ON planes_suscripcion_org
-    FOR UPDATE USING (organizacion_id = current_setting('app.current_tenant_id')::INTEGER);
+    FOR UPDATE USING (
+        organizacion_id = current_setting('app.current_tenant_id', true)::INTEGER
+        OR current_setting('app.bypass_rls', true) = 'true'
+    );
 
 CREATE POLICY planes_delete_own ON planes_suscripcion_org
-    FOR DELETE USING (organizacion_id = current_setting('app.current_tenant_id')::INTEGER);
+    FOR DELETE USING (
+        organizacion_id = current_setting('app.current_tenant_id', true)::INTEGER
+        OR current_setting('app.bypass_rls', true) = 'true'
+    );
 
 -- Políticas para suscripciones_org
 -- NOTA: Incluye bypass para permitir operaciones desde webhooks, polling y búsquedas cross-org
@@ -435,7 +441,10 @@ CREATE POLICY pagos_insert_own ON pagos_suscripcion
     FOR INSERT WITH CHECK (organizacion_id = current_setting('app.current_tenant_id')::INTEGER);
 
 CREATE POLICY pagos_update_own ON pagos_suscripcion
-    FOR UPDATE USING (organizacion_id = current_setting('app.current_tenant_id')::INTEGER);
+    FOR UPDATE USING (
+        organizacion_id = current_setting('app.current_tenant_id', true)::INTEGER
+        OR current_setting('app.bypass_rls', true) = 'true'
+    );
 
 -- Políticas para cupones_suscripcion
 CREATE POLICY cupones_select_own ON cupones_suscripcion

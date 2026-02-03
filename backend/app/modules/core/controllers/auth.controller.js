@@ -1,20 +1,21 @@
 /**
  * @fileoverview Controlador de Autenticación para API SaaS
  * @description Maneja login, registro, refresh tokens y operaciones de autenticación
- * @version 3.0.0 - Migrado a asyncHandler
+ * @version 4.0.0 - Refactorizado con servicios desacoplados
  */
 
 const UsuarioModel = require('../models/usuario.model');
-const OrganizacionModel = require('../models/organizacion.model');
+const AuthModel = require('../models/auth.model');
 const ActivacionModel = require('../models/activacion.model');
 const GoogleOAuthService = require('../services/oauth/google.service');
-const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const { addToTokenBlacklist } = require('../../../middleware/auth');
 const { ResponseHelper } = require('../../../utils/helpers');
 const PasswordHelper = require('../../../utils/passwordHelper');
 const asyncHandler = require('../../../middleware/asyncHandler');
 const emailService = require('../../../services/emailService');
+const JwtService = require('../../../services/jwtService');
+const OnboardingService = require('../../../services/onboardingService');
 
 /**
  * Opciones de cookie para refreshToken - configuración centralizada
@@ -36,7 +37,8 @@ class AuthController {
         const { email, password } = req.body;
         const ipAddress = req.ip || req.connection.remoteAddress;
 
-        const resultado = await UsuarioModel.autenticar(email, password, ipAddress);
+        // Usar AuthModel para autenticación
+        const resultado = await AuthModel.autenticar(email, password, ipAddress);
 
         res.cookie('refreshToken', resultado.refreshToken, REFRESH_TOKEN_COOKIE_OPTIONS);
 
@@ -44,7 +46,7 @@ class AuthController {
             usuario: resultado.usuario,
             accessToken: resultado.accessToken,
             expiresIn: resultado.expiresIn,
-            requiere_onboarding: resultado.requiere_onboarding  // Dic 2025 - Flujo unificado
+            requiere_onboarding: resultado.requiere_onboarding
         };
 
         if (process.env.NODE_ENV !== 'production') {
@@ -81,7 +83,8 @@ class AuthController {
             return ResponseHelper.unauthorized(res, 'Refresh token requerido');
         }
 
-        const resultado = await UsuarioModel.refrescarToken(refreshToken);
+        // Usar AuthModel para refresh
+        const resultado = await AuthModel.refrescarToken(refreshToken);
 
         return ResponseHelper.success(res, {
             accessToken: resultado.accessToken,
@@ -90,20 +93,11 @@ class AuthController {
     });
 
     static logout = asyncHandler(async (req, res) => {
-        const authHeader = req.headers.authorization;
-        if (authHeader && authHeader.startsWith('Bearer ')) {
-            const token = authHeader.substring(7);
-            const decoded = jwt.decode(token);
-            if (decoded?.exp) {
-                // ✅ FIX: Calcular segundos restantes hasta expiración (no timestamp completo)
-                // decoded.exp es timestamp Unix (ej: 1762400432)
-                // Necesitamos: segundos desde AHORA hasta expiración
-                const secondsUntilExpiry = decoded.exp - Math.floor(Date.now() / 1000);
-
-                // Solo blacklist si el token aún no expiró
-                if (secondsUntilExpiry > 0) {
-                    await addToTokenBlacklist(token, secondsUntilExpiry);
-                }
+        const token = JwtService.extractFromHeader(req.headers.authorization);
+        if (token) {
+            const secondsUntilExpiry = JwtService.getSecondsUntilExpiry(token);
+            if (secondsUntilExpiry > 0) {
+                await addToTokenBlacklist(token, secondsUntilExpiry);
             }
         }
 
@@ -154,7 +148,8 @@ class AuthController {
     static cambiarPassword = asyncHandler(async (req, res) => {
         const { passwordAnterior, passwordNueva } = req.body;
 
-        await UsuarioModel.cambiarPassword(req.user.id, passwordAnterior, passwordNueva);
+        // Usar AuthModel para cambio de password
+        await AuthModel.cambiarPassword(req.user.id, passwordAnterior, passwordNueva);
 
         return ResponseHelper.success(res, null, 'Contraseña cambiada exitosamente');
     });
@@ -169,7 +164,8 @@ class AuthController {
         const { email } = req.body;
         const ipAddress = req.ip || req.connection.remoteAddress;
 
-        const resultado = await UsuarioModel.resetPassword(email, ipAddress);
+        // Usar AuthModel para reset de password
+        const resultado = await AuthModel.solicitarResetPassword(email, ipAddress);
 
         const responseData = {
             token_enviado: resultado.token_enviado,
@@ -185,7 +181,8 @@ class AuthController {
     static verificarEmail = asyncHandler(async (req, res) => {
         const { token } = req.params;
 
-        const resultado = await UsuarioModel.verificarEmail(token);
+        // Usar AuthModel para verificación de email
+        const resultado = await AuthModel.verificarEmail(token);
 
         if (!resultado.verificado && !resultado.ya_verificado) {
             return ResponseHelper.error(res, resultado.mensaje, 400, {
@@ -228,7 +225,8 @@ class AuthController {
     static validarTokenReset = asyncHandler(async (req, res) => {
         const { token } = req.params;
 
-        const resultado = await UsuarioModel.validarTokenReset(token);
+        // Usar AuthModel para validar token
+        const resultado = await AuthModel.validarTokenReset(token);
 
         if (!resultado.valido) {
             return ResponseHelper.error(res, resultado.mensaje, 400, {
@@ -252,7 +250,8 @@ class AuthController {
         const { passwordNueva } = req.body;
         const ipAddress = req.ip || req.connection.remoteAddress;
 
-        const resultado = await UsuarioModel.confirmarResetPassword(token, passwordNueva, ipAddress);
+        // Usar AuthModel para confirmar reset
+        const resultado = await AuthModel.confirmarResetPassword(token, passwordNueva, ipAddress);
 
         return ResponseHelper.success(res, {
             success: true,
@@ -396,27 +395,7 @@ class AuthController {
         }
 
         // 3. Generar tokens JWT para login automático
-        // FASE 7: Usar rol_id en JWT (sistema dinámico)
-        const crypto = require('crypto');
-        const jti = crypto.randomBytes(16).toString('hex');
-
-        const accessToken = jwt.sign(
-            {
-                userId: resultado.usuario.id,
-                email: resultado.usuario.email,
-                rolId: resultado.usuario.rol_id,
-                organizacionId: resultado.usuario.organizacion_id,  // null si flujo unificado
-                jti: jti
-            },
-            process.env.JWT_SECRET,
-            { expiresIn: process.env.JWT_EXPIRES_IN || '1h' }
-        );
-
-        const refreshToken = jwt.sign(
-            { userId: resultado.usuario.id, type: 'refresh', jti: crypto.randomBytes(16).toString('hex') },
-            process.env.JWT_REFRESH_SECRET,
-            { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d' }
-        );
+        const { accessToken, refreshToken, expiresIn } = JwtService.generateTokenPair(resultado.usuario);
 
         // 4. Establecer cookie de refresh
         res.cookie('refreshToken', refreshToken, REFRESH_TOKEN_COOKIE_OPTIONS);
@@ -429,7 +408,7 @@ class AuthController {
             },
             organizacion: resultado.organizacion,
             accessToken,
-            expiresIn: 3600,
+            expiresIn,
             requiere_onboarding: resultado.requiere_onboarding  // Flujo unificado Dic 2025
         };
 
@@ -503,27 +482,7 @@ class AuthController {
         }
 
         // 2. Generar tokens JWT
-        // FASE 7: Usar rol_id en JWT (sistema dinámico)
-        const crypto = require('crypto');
-        const jti = crypto.randomBytes(16).toString('hex');
-
-        const accessToken = jwt.sign(
-            {
-                userId: resultado.usuario.id,
-                email: resultado.usuario.email,
-                rolId: resultado.usuario.rol_id,
-                organizacionId: resultado.usuario.organizacion_id,
-                jti: jti
-            },
-            process.env.JWT_SECRET,
-            { expiresIn: process.env.JWT_EXPIRES_IN || '1h' }
-        );
-
-        const refreshToken = jwt.sign(
-            { userId: resultado.usuario.id, type: 'refresh', jti: crypto.randomBytes(16).toString('hex') },
-            process.env.JWT_REFRESH_SECRET,
-            { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d' }
-        );
+        const { accessToken, refreshToken, expiresIn } = JwtService.generateTokenPair(resultado.usuario);
 
         // 3. Establecer cookie de refresh
         res.cookie('refreshToken', refreshToken, REFRESH_TOKEN_COOKIE_OPTIONS);
@@ -533,7 +492,7 @@ class AuthController {
             usuario: resultado.usuario,
             organizacion: resultado.organizacion,
             accessToken,
-            expiresIn: 3600,
+            expiresIn,
             requiere_onboarding: !resultado.usuario.onboarding_completado
         };
 
@@ -621,28 +580,7 @@ class AuthController {
         }
 
         // 5. Generar tokens JWT
-        // FASE 7: Usar rol_id en JWT (sistema dinámico)
-        const crypto = require('crypto');
-        const jti = crypto.randomBytes(16).toString('hex');
-
-        const accessToken = jwt.sign(
-            {
-                userId: usuario.id,
-                email: usuario.email,
-                rolId: usuario.rol_id,
-                organizacionId: usuario.organizacion_id,
-                sucursalId: usuario.sucursal_id || null,
-                jti: jti
-            },
-            process.env.JWT_SECRET,
-            { expiresIn: process.env.JWT_EXPIRES_IN || '1h' }
-        );
-
-        const refreshToken = jwt.sign(
-            { userId: usuario.id, type: 'refresh', jti: crypto.randomBytes(16).toString('hex') },
-            process.env.JWT_REFRESH_SECRET,
-            { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d' }
-        );
+        const { accessToken, refreshToken, expiresIn } = JwtService.generateTokenPair(usuario);
 
         // 6. Establecer cookie de refresh
         res.cookie('refreshToken', refreshToken, REFRESH_TOKEN_COOKIE_OPTIONS);
@@ -665,7 +603,7 @@ class AuthController {
                 nombre_comercial: usuario.nombre_comercial
             } : null,
             accessToken,
-            expiresIn: 3600,
+            expiresIn,
             es_nuevo: esNuevo,
             requiere_onboarding: !usuario.onboarding_completado
         };
@@ -714,11 +652,11 @@ class AuthController {
             estado_id,
             ciudad_id,
             soy_profesional = true,
-            modulos = {}  // Módulos seleccionados (Dic 2025 - estilo Odoo)
+            modulos = {}
         } = req.body;
 
-        // Completar onboarding
-        const resultado = await UsuarioModel.completarOnboarding(req.user.id, {
+        // Usar OnboardingService (emite eventos para dogfooding y rutas)
+        const resultado = await OnboardingService.completar(req.user.id, {
             nombre_negocio,
             industria,
             estado_id,
@@ -727,10 +665,9 @@ class AuthController {
             modulos
         });
 
-        // Generar nuevos tokens con organizacion_id y sucursal_id actualizados
-        // Fix Dic 2025: Consultar usuario actualizado para obtener sucursal_id (asignada por trigger)
+        // Generar nuevos tokens con organizacion_id actualizado
         const usuarioActualizado = await UsuarioModel.buscarPorEmail(resultado.usuario.email);
-        const { accessToken, refreshToken } = UsuarioModel.generarTokens(usuarioActualizado);
+        const { accessToken, refreshToken, expiresIn } = JwtService.generateTokenPair(usuarioActualizado);
 
         // Actualizar cookie
         res.cookie('refreshToken', refreshToken, REFRESH_TOKEN_COOKIE_OPTIONS);
@@ -739,7 +676,7 @@ class AuthController {
             usuario: resultado.usuario,
             organizacion: resultado.organizacion,
             accessToken,
-            expiresIn: 3600
+            expiresIn
         };
 
         if (process.env.NODE_ENV !== 'production') {
@@ -766,15 +703,11 @@ class AuthController {
         const usuarioActualizado = await UsuarioModel.buscarPorIdConSucursal(userId, sucursal_id);
 
         // 2. Invalidar token actual (blacklist Redis)
-        const authHeader = req.headers.authorization;
-        if (authHeader?.startsWith('Bearer ')) {
-            const tokenActual = authHeader.substring(7);
-            const decoded = jwt.decode(tokenActual);
-            if (decoded?.exp) {
-                const ttl = decoded.exp - Math.floor(Date.now() / 1000);
-                if (ttl > 0) {
-                    await addToTokenBlacklist(tokenActual, ttl);
-                }
+        const tokenActual = JwtService.extractFromHeader(req.headers.authorization);
+        if (tokenActual) {
+            const ttl = JwtService.getSecondsUntilExpiry(tokenActual);
+            if (ttl > 0) {
+                await addToTokenBlacklist(tokenActual, ttl);
             }
         }
 
@@ -783,7 +716,7 @@ class AuthController {
         invalidarCacheUsuario(userId);
 
         // 4. Generar nuevos tokens
-        const { accessToken, refreshToken } = UsuarioModel.generarTokens(usuarioActualizado);
+        const { accessToken, refreshToken } = JwtService.generateTokenPair(usuarioActualizado);
 
         // 5. Actualizar cookie
         res.cookie('refreshToken', refreshToken, REFRESH_TOKEN_COOKIE_OPTIONS);

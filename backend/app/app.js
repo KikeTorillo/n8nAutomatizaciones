@@ -62,10 +62,21 @@ class SaaSApplication {
     this.environment = process.env.NODE_ENV || 'development';
 
     // Inicializa todos los componentes de la aplicación en orden específico
+    this.initializeEvents();           // 0. Sistema de eventos (debe ir primero)
     this.initializeMiddlewares();      // 1. Middlewares globales (seguridad, CORS, etc.)
     this.initializeRoutes();           // 2. Rutas de la API
     this.initializeErrorHandling();    // 3. Manejo de errores globales
     this.initializeGracefulShutdown(); // 4. Configuración para cierre limpio
+  }
+
+  /**
+   * Inicializa el sistema de eventos
+   * Los subscribers deben registrarse antes de que se procesen requests
+   */
+  initializeEvents() {
+    const events = require('./events');
+    events.initialize();
+    logger.info('[App] Sistema de eventos inicializado');
   }
 
   /**

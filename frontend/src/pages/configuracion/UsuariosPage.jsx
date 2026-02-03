@@ -18,6 +18,8 @@ import {
   Link2,
   Link2Off,
   Eye,
+  AlertTriangle,
+  DollarSign,
 } from 'lucide-react';
 
 import { Button, ConfirmDialog, StatCardGrid } from '@/components/ui';
@@ -31,6 +33,7 @@ import {
   useProfesionalesSinUsuario,
   ROLES_USUARIO,
 } from '@/hooks/personas';
+import { useVerificarLimiteUsuarios } from '@/hooks/suscripciones-negocio';
 import UsuarioFormDrawer from '@/components/usuarios/UsuarioFormDrawer';
 
 // Context para compartir estado entre UsuariosPage y UsuarioRow
@@ -73,10 +76,14 @@ function UsuariosPage() {
 
   const [vinculandoUsuario, setVinculandoUsuario] = useState(null);
 
+  // Verificación de límite de usuarios (seat-based billing)
+  const { data: limiteData, refetch: refetchLimite } = useVerificarLimiteUsuarios(1);
+
   // Modal manager
   const { openModal, closeModal, isOpen, getModalData, getModalProps } = useModalManager({
     form: { isOpen: false, data: null },
     confirm: { isOpen: false, data: null, type: '', title: '', message: '' },
+    limiteConfirm: { isOpen: false, data: null },
   });
 
   // Query params con filtrosQuery (debounced)
@@ -97,7 +104,33 @@ function UsuariosPage() {
   const vincularMutation = useVincularProfesionalAUsuario();
 
   // Handlers
-  const handleNuevo = () => openModal('form', null);
+  const handleNuevo = () => {
+    // Refetch para obtener datos actualizados
+    refetchLimite().then(({ data }) => {
+      const limite = data || limiteData;
+
+      // Si no puede crear (hard limit), mostrar error
+      if (limite && !limite.puedeCrear) {
+        toast.error(limite.advertencia || 'No puedes crear más usuarios con tu plan actual');
+        return;
+      }
+
+      // Si hay costo adicional (soft limit), mostrar confirmación
+      if (limite?.costoAdicional > 0) {
+        openModal('limiteConfirm', limite);
+        return;
+      }
+
+      // Sin restricciones, abrir formulario directamente
+      openModal('form', null);
+    });
+  };
+
+  const handleConfirmarCostoAdicional = () => {
+    closeModal('limiteConfirm');
+    openModal('form', null);
+  };
+
   const handleEditar = (usuario) => openModal('form', usuario);
 
   const handleToggleActivo = (usuario) => {
@@ -271,6 +304,36 @@ function UsuariosPage() {
           variant={getModalProps('confirm').type === 'desactivar' ? 'danger' : 'default'}
           onConfirm={confirmarAccion}
           isLoading={cambiarEstadoMutation.isPending || vincularMutation.isPending}
+        />
+
+        {/* Modal de confirmación de costo adicional (soft limit) */}
+        <ConfirmDialog
+          isOpen={isOpen('limiteConfirm')}
+          onClose={() => closeModal('limiteConfirm')}
+          title="Usuario adicional"
+          message={
+            <div className="space-y-3">
+              <div className="flex items-start gap-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
+                <DollarSign className="w-5 h-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
+                <div className="text-sm">
+                  <p className="font-medium text-yellow-800 dark:text-yellow-200">
+                    Cobro adicional
+                  </p>
+                  <p className="text-yellow-700 dark:text-yellow-300 mt-1">
+                    {getModalData('limiteConfirm')?.advertencia ||
+                      `Se agregarán $${getModalData('limiteConfirm')?.costoAdicional?.toFixed(2) || '0.00'} MXN/mes a tu próxima factura.`}
+                  </p>
+                </div>
+              </div>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Tu plan incluye {getModalData('limiteConfirm')?.detalle?.usuariosIncluidos || 0} usuarios.
+                Actualmente tienes {getModalData('limiteConfirm')?.detalle?.usuariosActuales || 0}.
+              </p>
+            </div>
+          }
+          confirmText="Continuar"
+          cancelText="Cancelar"
+          onConfirm={handleConfirmarCostoAdicional}
         />
       </ConfiguracionPageLayout>
     </UsuariosContext.Provider>

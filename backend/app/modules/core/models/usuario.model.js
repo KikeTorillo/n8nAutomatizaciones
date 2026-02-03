@@ -1,23 +1,29 @@
+/**
+ * @fileoverview Modelo de Usuario
+ * @description Maneja CRUD de usuarios y operaciones de gestión
+ * @version 4.0.0 - Refactorizado: auth movido a AuthModel, onboarding a OnboardingService
+ *
+ * NOTA: Los métodos de autenticación ahora están en auth.model.js
+ * NOTA: El onboarding ahora está en onboardingService.js
+ *
+ * Este modelo ahora maneja solo:
+ * - CRUD de usuarios
+ * - Búsquedas de usuarios
+ * - Gestión de roles y profesionales
+ * - OAuth (buscar/crear/vincular Google)
+ */
+
 const { getDb } = require('../../../config/database');
 const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
 const logger = require('../../../utils/logger');
 const RLSHelper = require('../../../utils/rlsHelper');
 const RLSContextManager = require('../../../utils/rlsContextManager');
-const emailService = require('../../../services/emailService');
-const RutasOperacionModel = require('../../inventario/models/rutas-operacion.model');
-const SecureRandom = require('../../../utils/helpers/SecureRandom');
 const tokenBlacklistService = require('../../../services/tokenBlacklistService');
 const { ErrorHelper } = require('../../../utils/helpers');
+const JwtService = require('../../../services/jwtService');
 
-const AUTH_CONFIG = {
-    BCRYPT_SALT_ROUNDS: 12,
-    TOKEN_RESET_EXPIRATION_HOURS: 1,
-    ACCESS_TOKEN_EXPIRATION: '1h',
-    ACCESS_TOKEN_EXPIRATION_SECONDS: 3600,
-    REFRESH_TOKEN_EXPIRATION: '7d',
-    RESET_TOKEN_LENGTH: 32
-};
+// Configuración de bcrypt para hashing de contraseñas
+const BCRYPT_SALT_ROUNDS = 12;
 
 class UsuarioModel {
 
@@ -25,7 +31,7 @@ class UsuarioModel {
         // ✅ Usar RLSContextManager.withBypass() para gestión automática completa
         try {
             return await RLSContextManager.withBypass(async (db) => {
-                const password_hash = await bcrypt.hash(userData.password, AUTH_CONFIG.BCRYPT_SALT_ROUNDS);
+                const password_hash = await bcrypt.hash(userData.password, BCRYPT_SALT_ROUNDS);
 
                 // Obtener rol_id basado en código de rol
                 const rolCodigo = userData.rol_codigo || userData.rol || 'empleado';
@@ -141,137 +147,34 @@ class UsuarioModel {
         return await bcrypt.compare(password, hash);
     }
 
+    /**
+     * @deprecated Usar AuthModel.autenticar() directamente
+     * Mantenido por compatibilidad hacia atrás
+     */
     static async autenticar(email, password, ipAddress = null) {
-        // Buscar usuario
-        const usuario = await this.buscarPorEmail(email);
-
-        if (!usuario) {
-            // Registrar intento de login fallido para email no existente
-            await this.registrarIntentoLogin(email, false, ipAddress);
-            ErrorHelper.throwUnauthorized('Credenciales inválidas');
-        }
-
-        // Verificar si el usuario está bloqueado
-        if (usuario.bloqueado_hasta && new Date(usuario.bloqueado_hasta) > new Date()) {
-            const tiempoBloqueo = Math.ceil((new Date(usuario.bloqueado_hasta) - new Date()) / 60000);
-            ErrorHelper.throwUnauthorized(`Usuario bloqueado. Intente nuevamente en ${tiempoBloqueo} minutos`);
-        }
-
-        // Verificar contraseña
-        const passwordValida = await this.verificarPassword(password, usuario.password_hash);
-
-        if (!passwordValida) {
-            // Registrar intento fallido
-            await this.registrarIntentoLogin(email, false, ipAddress);
-            ErrorHelper.throwUnauthorized('Credenciales inválidas');
-        }
-
-        // Login exitoso - registrar y limpiar intentos fallidos
-        await this.registrarIntentoLogin(email, true, ipAddress);
-
-        // Configurar contexto RLS para futuras operaciones
-        // FASE 7: Usar rol_codigo del sistema dinámico
-        const db = await getDb();
-        try {
-            await RLSHelper.configurarContexto(db, usuario.id, usuario.rol_codigo, usuario.organizacion_id);
-        } finally {
-            db.release();
-        }
-
-        // Generar tokens
-        const { accessToken, refreshToken } = this.generarTokens(usuario);
-
-        // Preparar datos del usuario (sin información sensible)
-        // FASE 7 COMPLETADA (Ene 2026): Solo sistema de roles dinámicos
-        const usuarioSeguro = {
-            id: usuario.id,
-            email: usuario.email,
-            nombre: usuario.nombre,
-            apellidos: usuario.apellidos,
-            telefono: usuario.telefono,
-            // Sistema de roles dinámicos (solo rol_id como fuente de verdad)
-            rol_id: usuario.rol_id,                              // FK al sistema de roles dinámicos
-            rol_codigo: usuario.rol_codigo,                      // Código del rol (para lógica de negocio)
-            rol_nombre: usuario.rol_nombre,                      // Nombre legible del rol (para UI)
-            nivel_jerarquia: usuario.nivel_jerarquia || 10,      // Nivel jerárquico para guards de rutas
-            // Contexto organizacional
-            organizacion_id: usuario.organizacion_id,
-            profesional_id: usuario.profesional_id,
-            email_verificado: usuario.email_verificado,
-            onboarding_completado: usuario.onboarding_completado,
-            // Multi-moneda
-            moneda: usuario.moneda || 'MXN',
-            zona_horaria: usuario.zona_horaria || 'America/Mexico_City'
-        };
-
-        // Determinar si requiere onboarding (Dic 2025)
-        // Ene 2026: Roles de sistema (super_admin, bot) NUNCA requieren onboarding
-        const requiereOnboarding = !usuario.es_rol_sistema &&
-                                   !usuario.organizacion_id &&
-                                   usuario.onboarding_completado === false;
-
-        return {
-            usuario: usuarioSeguro,
-            accessToken,
-            refreshToken,
-            expiresIn: AUTH_CONFIG.ACCESS_TOKEN_EXPIRATION_SECONDS,
-            requiere_onboarding: requiereOnboarding  // Dic 2025 - Flujo unificado
-        };
+        const AuthModel = require('./auth.model');
+        return AuthModel.autenticar(email, password, ipAddress);
     }
 
+    /**
+     * Genera par de tokens JWT para el usuario
+     * @deprecated Usar JwtService.generateTokenPair() directamente para nuevo código
+     * @param {Object} usuario - Datos del usuario
+     * @returns {Object} { accessToken, refreshToken }
+     */
     static generarTokens(usuario) {
-        const crypto = require('crypto');
-
-        // Generar JTI único para garantizar que cada token sea único
-        const jti = crypto.randomBytes(16).toString('hex');
-
-        // FASE 7 COMPLETADA (Ene 2026): Solo rol_id en JWT (sistema dinámico)
-        const payload = {
-            userId: usuario.id,
-            email: usuario.email,
-            rolId: usuario.rol_id,                   // FK al sistema de roles dinámicos
-            organizacionId: usuario.organizacion_id,
-            sucursalId: usuario.sucursal_id || null, // Sucursal principal del usuario
-            jti: jti // JWT ID único
-        };
-
-        const accessToken = jwt.sign(
-            payload,
-            process.env.JWT_SECRET,
-            { expiresIn: AUTH_CONFIG.ACCESS_TOKEN_EXPIRATION }
-        );
-
-        const refreshToken = jwt.sign(
-            { userId: usuario.id, type: 'refresh', jti: crypto.randomBytes(16).toString('hex') },
-            process.env.JWT_REFRESH_SECRET,
-            { expiresIn: AUTH_CONFIG.REFRESH_TOKEN_EXPIRATION }
-        );
-
+        // Delegamos a JwtService centralizado
+        const { accessToken, refreshToken } = JwtService.generateTokenPair(usuario);
         return { accessToken, refreshToken };
     }
 
+    /**
+     * @deprecated Usar AuthModel.refrescarToken() directamente
+     * Mantenido por compatibilidad hacia atrás
+     */
     static async refrescarToken(refreshToken) {
-        try {
-            // Verificar refresh token - usar secret dedicado
-            const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
-
-            // Buscar usuario por ID
-            const usuario = await this.buscarPorId(decoded.userId);
-
-            if (!usuario || !usuario.activo) {
-                ErrorHelper.throwUnauthorized('Usuario no válido');
-            }
-
-            const { accessToken } = this.generarTokens(usuario);
-
-            return {
-                accessToken,
-                expiresIn: AUTH_CONFIG.ACCESS_TOKEN_EXPIRATION_SECONDS
-            };
-
-        } catch (error) {
-            ErrorHelper.throwUnauthorized('Token de refresco inválido');
-        }
+        const AuthModel = require('./auth.model');
+        return AuthModel.refrescarToken(refreshToken);
     }
 
     // Usa bypass RLS para operaciones de sistema (refresh tokens, validaciones)
@@ -374,55 +277,22 @@ class UsuarioModel {
         });
     }
 
+    /**
+     * @deprecated Usar AuthModel.registrarIntentoLogin() directamente
+     * Mantenido por compatibilidad hacia atrás
+     */
     static async registrarIntentoLogin(email, exitoso, ipAddress = null) {
-        const db = await getDb();
-
-        try {
-            await RLSHelper.withRole(db, 'login_context', async (db) => {
-                // Llamar a la función de base de datos para registrar el intento
-                await db.query('SELECT registrar_intento_login($1, $2, $3)', [
-                    email,
-                    exitoso,
-                    ipAddress
-                ]);
-            });
-        } catch (error) {
-            // Log error pero no fallar el login por esto
-            logger.error('Error al registrar intento de login:', error);
-        } finally {
-            db.release();
-        }
+        const AuthModel = require('./auth.model');
+        return AuthModel.registrarIntentoLogin(email, exitoso, ipAddress);
     }
 
+    /**
+     * @deprecated Usar AuthModel.cambiarPassword() directamente
+     * Mantenido por compatibilidad hacia atrás
+     */
     static async cambiarPassword(userId, passwordAnterior, passwordNueva) {
-        // ✅ Usar RLSContextManager.withBypass() para gestión automática completa
-        // Primero obtener usuario con organizacion_id usando bypass
-        const usuario = await RLSContextManager.withBypass(async (db) => {
-            const query = `SELECT id, password_hash, organizacion_id FROM usuarios WHERE id = $1 AND activo = TRUE`;
-            const result = await db.query(query, [userId]);
-            ErrorHelper.throwIfNotFound(result.rows[0], 'Usuario');
-            return result.rows[0];
-        });
-
-        // Verificar contraseña anterior
-        const passwordValida = await this.verificarPassword(passwordAnterior, usuario.password_hash);
-        if (!passwordValida) {
-            ErrorHelper.throwValidation('Contraseña anterior incorrecta');
-        }
-
-        // Actualizar contraseña con contexto RLS
-        return await RLSContextManager.transaction(usuario.organizacion_id, async (db) => {
-            const nuevoHash = await bcrypt.hash(passwordNueva, AUTH_CONFIG.BCRYPT_SALT_ROUNDS);
-
-            const updateQuery = `
-                UPDATE usuarios
-                SET password_hash = $1, actualizado_en = NOW()
-                WHERE id = $2
-            `;
-
-            await db.query(updateQuery, [nuevoHash, userId]);
-            return true;
-        });
+        const AuthModel = require('./auth.model');
+        return AuthModel.cambiarPassword(userId, passwordAnterior, passwordNueva);
     }
 
     static async actualizarPerfil(userId, datos, organizacionId, currentUserId) {
@@ -838,141 +708,22 @@ class UsuarioModel {
         }); // Sin useTransaction - auto-commit cada query
     }
 
+    /**
+     * @deprecated Usar AuthModel.solicitarResetPassword() directamente
+     * Mantenido por compatibilidad hacia atrás
+     */
     static async resetPassword(email, ipAddress = null) {
-        // ✅ Usar RLSContextManager.withBypass() para gestión automática completa
-        return await RLSContextManager.withBypass(async (db) => {
-            const usuarioQuery = `
-                SELECT id, email, nombre, apellidos, organizacion_id, activo
-                FROM usuarios
-                WHERE email = $1 AND activo = true
-                LIMIT 1
-            `;
-            const usuarioResult = await db.query(usuarioQuery, [email]);
-
-            if (usuarioResult.rows.length === 0) {
-                return {
-                    mensaje: 'Si el usuario existe, se ha enviado un email con instrucciones para restablecer la contraseña',
-                    token_enviado: false
-                };
-            }
-
-            const usuario = usuarioResult.rows[0];
-
-            const crypto = require('crypto');
-            const resetToken = crypto.randomBytes(AUTH_CONFIG.RESET_TOKEN_LENGTH).toString('hex');
-            const resetExpiration = new Date(Date.now() + AUTH_CONFIG.TOKEN_RESET_EXPIRATION_HOURS * 60 * 60 * 1000);
-
-            const updateQuery = `
-                UPDATE usuarios
-                SET
-                    token_reset_password = $1,
-                    token_reset_expira = $2,
-                    token_reset_usado_en = NULL,
-                    actualizado_en = NOW()
-                WHERE id = $3
-            `;
-
-            await db.query(updateQuery, [resetToken, resetExpiration, usuario.id]);
-
-            // 📧 Enviar email de recuperación
-            try {
-                await emailService.enviarRecuperacionPassword({
-                    email: usuario.email,
-                    nombre: usuario.nombre || 'Usuario',
-                    resetToken,
-                    expirationHours: AUTH_CONFIG.TOKEN_RESET_EXPIRATION_HOURS
-                });
-
-                logger.info(`[Usuario.solicitarRecuperacion] Email de recuperación enviado a: ${email}`);
-            } catch (emailError) {
-                // NO fallar la operación si el email falla
-                // El token ya está guardado y es funcional
-                logger.error(`[Usuario.solicitarRecuperacion] Error enviando email: ${emailError.message}`);
-                logger.warn('[Usuario.solicitarRecuperacion] Token generado pero email NO enviado');
-            }
-
-            return {
-                mensaje: 'Si el usuario existe, se ha enviado un email con instrucciones para restablecer la contraseña',
-                token_enviado: true,
-                usuario_id: usuario.id,
-                expires_at: resetExpiration.toISOString(),
-                ...(process.env.NODE_ENV !== 'production' && { reset_token: resetToken })
-            };
-        });
+        const AuthModel = require('./auth.model');
+        return AuthModel.solicitarResetPassword(email, ipAddress);
     }
 
+    /**
+     * @deprecated Usar AuthModel.verificarEmail() directamente
+     * Mantenido por compatibilidad hacia atrás
+     */
     static async verificarEmail(token) {
-        // ✅ Usar RLSContextManager.withBypass() para gestión automática completa
-        return await RLSContextManager.withBypass(async (db) => {
-            // Primero buscar si el token fue usado
-            const tokenUsadoQuery = `
-                SELECT id, email, email_verificado, token_verificacion_usado_en
-                FROM usuarios
-                WHERE token_verificacion_email = $1
-                  AND token_verificacion_usado_en IS NOT NULL
-                  AND activo = true
-            `;
-            const tokenUsadoResult = await db.query(tokenUsadoQuery, [token]);
-
-            if (tokenUsadoResult.rows.length > 0) {
-                return {
-                    verificado: false,
-                    ya_verificado: true,
-                    email: tokenUsadoResult.rows[0].email,
-                    mensaje: 'El email ya había sido verificado anteriormente'
-                };
-            }
-
-            // Buscar token válido y no expirado
-            const usuarioQuery = `
-                SELECT u.id, u.email, u.nombre, u.apellidos, u.rol_id,
-                       r.codigo as rol_codigo, u.organizacion_id, u.email_verificado
-                FROM usuarios u
-                LEFT JOIN roles r ON r.id = u.rol_id
-                WHERE u.token_verificacion_email = $1
-                  AND u.token_verificacion_expira > NOW()
-                  AND u.activo = true
-            `;
-            const usuarioResult = await db.query(usuarioQuery, [token]);
-
-            if (usuarioResult.rows.length === 0) {
-                return {
-                    verificado: false,
-                    ya_verificado: false,
-                    mensaje: 'Token de verificación inválido o expirado'
-                };
-            }
-
-            const usuario = usuarioResult.rows[0];
-
-            if (usuario.email_verificado) {
-                return {
-                    ya_verificado: true,
-                    verificado: false,
-                    email: usuario.email,
-                    mensaje: 'El email ya había sido verificado anteriormente'
-                };
-            }
-
-            // Marcar token como usado
-            const updateQuery = `
-                UPDATE usuarios
-                SET
-                    email_verificado = true,
-                    token_verificacion_usado_en = NOW(),
-                    actualizado_en = NOW()
-                WHERE id = $1
-                RETURNING id, email
-            `;
-
-            const updateResult = await db.query(updateQuery, [usuario.id]);
-
-            return {
-                verificado: true,
-                mensaje: 'Email verificado exitosamente',
-                email: updateResult.rows[0].email
-            };
-        });
+        const AuthModel = require('./auth.model');
+        return AuthModel.verificarEmail(token);
     }
 
     static async existenUsuarios() {
@@ -986,183 +737,22 @@ class UsuarioModel {
         });
     }
 
+    /**
+     * @deprecated Usar AuthModel.validarTokenReset() directamente
+     * Mantenido por compatibilidad hacia atrás
+     */
     static async validarTokenReset(token) {
-        // ✅ Usar RLSContextManager.withBypass() para gestión automática completa
-        return await RLSContextManager.withBypass(async (db) => {
-            // Primero verificar si el token ya fue usado
-            const tokenUsadoQuery = `
-                SELECT id, email, token_reset_usado_en
-                FROM usuarios
-                WHERE token_reset_password = $1
-                  AND token_reset_usado_en IS NOT NULL
-                  AND activo = true
-            `;
-            const tokenUsadoResult = await db.query(tokenUsadoQuery, [token]);
-
-            if (tokenUsadoResult.rows.length > 0) {
-                return {
-                    valido: false,
-                    mensaje: 'Este token de recuperación ya fue utilizado'
-                };
-            }
-
-            // Buscar token válido
-            const query = `
-                SELECT
-                    id, email, nombre, apellidos, organizacion_id,
-                    token_reset_expira,
-                    CASE
-                        WHEN token_reset_expira > NOW() THEN true
-                        ELSE false
-                    END as token_valido,
-                    CASE
-                        WHEN token_reset_expira > NOW() THEN EXTRACT(EPOCH FROM (token_reset_expira - NOW()))/60
-                        ELSE 0
-                    END as minutos_restantes
-                FROM usuarios
-                WHERE token_reset_password = $1 AND activo = true
-            `;
-
-            const result = await db.query(query, [token]);
-
-            if (result.rows.length === 0) {
-                return {
-                    valido: false,
-                    mensaje: 'Token inválido o usuario no encontrado'
-                };
-            }
-
-            const usuario = result.rows[0];
-
-            if (!usuario.token_valido) {
-                return {
-                    valido: false,
-                    mensaje: 'Token expirado',
-                    expiro_hace_minutos: Math.abs(Math.floor(usuario.minutos_restantes))
-                };
-            }
-
-            return {
-                valido: true,
-                usuario_id: usuario.id,
-                email: usuario.email,
-                organizacion_id: usuario.organizacion_id,
-                expira_en_minutos: Math.floor(usuario.minutos_restantes),
-                expira_en: usuario.token_reset_expira
-            };
-        });
+        const AuthModel = require('./auth.model');
+        return AuthModel.validarTokenReset(token);
     }
 
+    /**
+     * @deprecated Usar AuthModel.confirmarResetPassword() directamente
+     * Mantenido por compatibilidad hacia atrás
+     */
     static async confirmarResetPassword(token, passwordNueva, ipAddress = null) {
-        // ✅ Usar RLSContextManager.withBypass() para gestión automática completa
-        const resultado = await RLSContextManager.withBypass(async (db) => {
-            await db.query('BEGIN');
-
-            try {
-                // Primero verificar si el token ya fue usado
-                const tokenUsadoQuery = `
-                    SELECT id, email, token_reset_usado_en
-                    FROM usuarios
-                    WHERE token_reset_password = $1
-                      AND token_reset_usado_en IS NOT NULL
-                      AND activo = true
-                `;
-                const tokenUsadoResult = await db.query(tokenUsadoQuery, [token]);
-
-                if (tokenUsadoResult.rows.length > 0) {
-                    ErrorHelper.throwValidation('Este token de recuperación ya fue utilizado');
-                }
-
-                // Validar token inline (usar misma conexión de transacción)
-                const validacionQuery = `
-                    SELECT
-                        id, email, nombre, apellidos, organizacion_id,
-                        token_reset_expira,
-                        CASE
-                            WHEN token_reset_expira > NOW() THEN true
-                            ELSE false
-                        END as token_valido
-                    FROM usuarios
-                    WHERE token_reset_password = $1 AND activo = true
-                `;
-
-                const validacionResult = await db.query(validacionQuery, [token]);
-
-                if (validacionResult.rows.length === 0) {
-                    ErrorHelper.throwValidation('Código de recuperación inválido o usuario no encontrado');
-                }
-
-                const usuarioValidacion = validacionResult.rows[0];
-
-                if (!usuarioValidacion.token_valido) {
-                    ErrorHelper.throwValidation('Código de recuperación expirado');
-                }
-
-                const nuevoHash = await bcrypt.hash(passwordNueva, AUTH_CONFIG.BCRYPT_SALT_ROUNDS);
-
-                const updateQuery = `
-                    UPDATE usuarios
-                    SET
-                        password_hash = $1,
-                        token_reset_usado_en = NOW(),
-                        intentos_fallidos = 0,
-                        bloqueado_hasta = NULL,
-                        actualizado_en = NOW()
-                    WHERE token_reset_password = $2 AND activo = true
-                    RETURNING id, email, nombre, apellidos, organizacion_id
-                `;
-
-                const result = await db.query(updateQuery, [nuevoHash, token]);
-
-                if (result.rows.length === 0) {
-                    ErrorHelper.throwValidation('No se pudo actualizar la contraseña');
-                }
-
-                const usuario = result.rows[0];
-
-                await db.query('COMMIT');
-
-                return {
-                    success: true,
-                    mensaje: 'Contraseña actualizada exitosamente',
-                    usuario_id: usuario.id,
-                    email: usuario.email,
-                    organizacion_id: usuario.organizacion_id
-                };
-
-            } catch (error) {
-                await db.query('ROLLBACK');
-                throw error;
-            }
-        });
-
-        // Registrar evento DESPUÉS del COMMIT (fuera de la transacción con bypass)
-        try {
-            const db = await getDb();
-            try {
-                await RLSHelper.registrarEvento(db, {
-                    organizacion_id: resultado.organizacion_id,
-                    evento_tipo: 'password_reset_confirmado',
-                    entidad_tipo: 'usuario',
-                    entidad_id: resultado.usuario_id,
-                    descripcion: 'Contraseña restablecida exitosamente mediante token de recuperación',
-                    metadatos: {
-                        email: resultado.email,
-                        timestamp: new Date().toISOString(),
-                        metodo: 'token_reset',
-                        ip: ipAddress
-                    },
-                    usuario_id: resultado.usuario_id
-                });
-            } finally {
-                db.release();
-            }
-        } catch (eventoError) {
-            // No lanzar el error, ya se hizo commit
-            logger.warn('Error al registrar evento de password reset:', eventoError.message);
-        }
-
-        return resultado;
+        const AuthModel = require('./auth.model');
+        return AuthModel.confirmarResetPassword(token, passwordNueva, ipAddress);
     }
 
     // ====================================================================
@@ -1355,7 +945,7 @@ class UsuarioModel {
                 }
 
                 // Hashear password
-                const password_hash = await bcrypt.hash(password, AUTH_CONFIG.BCRYPT_SALT_ROUNDS);
+                const password_hash = await bcrypt.hash(password, BCRYPT_SALT_ROUNDS);
 
                 // Obtener rol_id basado en código de rol
                 const rolResult = await db.query(
@@ -1659,224 +1249,12 @@ class UsuarioModel {
     }
 
     /**
-     * Completar onboarding de usuario OAuth
-     * Crea la organización y vincula al usuario
-     *
-     * @param {number} userId - ID del usuario
-     * @param {Object} orgData - Datos de la organización
-     * @returns {Promise<Object>} Usuario y organización actualizados
+     * @deprecated Usar OnboardingService.completar() directamente
+     * Mantenido por compatibilidad hacia atrás
      */
     static async completarOnboarding(userId, orgData) {
-        const {
-            nombre_negocio,
-            industria,
-            estado_id,
-            ciudad_id,
-            soy_profesional = true,
-            modulos = {}  // Módulos seleccionados por usuario (Dic 2025 - estilo Odoo)
-        } = orgData;
-
-        // Construir módulos activos con core siempre activo
-        const modulosActivos = { core: true };
-
-        // Agregar módulos seleccionados por el usuario
-        Object.entries(modulos).forEach(([key, value]) => {
-            if (value === true) {
-                modulosActivos[key] = true;
-            }
-        });
-
-        // Auto-resolver dependencias
-        // POS requiere inventario
-        if (modulosActivos.pos && !modulosActivos.inventario) {
-            modulosActivos.inventario = true;
-        }
-        // Marketplace requiere agendamiento
-        if (modulosActivos.marketplace && !modulosActivos.agendamiento) {
-            modulosActivos.agendamiento = true;
-        }
-        // Chatbots requiere agendamiento
-        if (modulosActivos.chatbots && !modulosActivos.agendamiento) {
-            modulosActivos.agendamiento = true;
-        }
-
-        // ✅ FIX v2.1: Usar transactionWithBypass en lugar de BEGIN/COMMIT manual
-        const result = await RLSContextManager.transactionWithBypass(async (db) => {
-            // 1. Obtener usuario
-                const usuarioResult = await db.query(
-                    'SELECT id, email, nombre, apellidos, onboarding_completado FROM usuarios WHERE id = $1',
-                    [userId]
-                );
-
-                ErrorHelper.throwIfNotFound(usuarioResult.rows[0], 'Usuario');
-
-                const usuario = usuarioResult.rows[0];
-
-                if (usuario.onboarding_completado) {
-                    ErrorHelper.throwConflict('El onboarding ya fue completado');
-                }
-
-                // 2. Resolver categoria_id desde código de industria (opcional - Ene 2026)
-                let categoria_id = null;
-                if (industria) {
-                    const categoriaResult = await db.query(
-                        'SELECT id FROM categorias WHERE codigo = $1 AND activo = TRUE LIMIT 1',
-                        [industria]
-                    );
-                    if (categoriaResult.rows[0]) {
-                        categoria_id = categoriaResult.rows[0].id;
-                    }
-                }
-                // Nota: categoria_id puede ser null, se configura después en Configuración > Mi Negocio
-
-                // 3. Generar código de tenant único
-                const codigoTenant = `org-${Date.now().toString(36)}`;
-                const slug = nombre_negocio
-                    .toLowerCase()
-                    .normalize('NFD')
-                    .replace(/[\u0300-\u036f]/g, '')
-                    .replace(/[^a-z0-9]+/g, '-')
-                    .replace(/^-|-$/g, '')
-                    .substring(0, 50) + '-' + SecureRandom.slugSuffix(4);
-
-                // 4. Crear organización (con módulos activos seleccionados)
-                // NOTA Feb 2026: plan_actual eliminado de organizaciones
-                // El plan se maneja via suscripciones_org (dogfooding hook)
-                const orgResult = await db.query(`
-                    INSERT INTO organizaciones (
-                        codigo_tenant, slug, nombre_comercial, razon_social,
-                        email_admin, categoria_id, estado_id, ciudad_id,
-                        activo, modulos_activos
-                    ) VALUES ($1, $2, $3, $3, $4, $5, $6, $7, TRUE, $8)
-                    RETURNING id, codigo_tenant, slug, nombre_comercial
-                `, [codigoTenant, slug, nombre_negocio, usuario.email, categoria_id, estado_id, ciudad_id, modulosActivos]);
-
-                const organizacion = orgResult.rows[0];
-
-                // 5. Módulos activos - ya no se usa tabla legacy subscripciones (Fase 0 - Ene 2026)
-                // Los módulos se guardan en la org o se omiten si la columna no existe
-                // La suscripción se maneja ahora por el módulo suscripciones-negocio via dogfooding hook
-                logger.info('[completarOnboarding] Módulos seleccionados:', { modulosActivos });
-
-                // 5.1 Asegurar que los roles default existan (el trigger puede no ser visible en la transacción)
-                // Llamamos explícitamente a la función SQL para garantizar que existan antes de buscarlos
-                await db.query(`SELECT crear_roles_default_organizacion($1)`, [organizacion.id]);
-
-                // 6. Actualizar usuario con organización y rol_id
-                // Obtener rol_id del rol 'admin' de la nueva organización
-                // El usuario que crea la org es el administrador (nivel 90)
-                const rolResult = await db.query(
-                    `SELECT id FROM roles WHERE codigo = 'admin' AND organizacion_id = $1 LIMIT 1`,
-                    [organizacion.id]
-                );
-                const rolId = rolResult.rows[0]?.id || null;
-
-                if (!rolId) {
-                    logger.error('[completarOnboarding] CRÍTICO: No se encontró rol admin para org', {
-                        organizacion_id: organizacion.id
-                    });
-                }
-
-                await db.query(`
-                    UPDATE usuarios
-                    SET organizacion_id = $1,
-                        rol_id = $2,
-                        onboarding_completado = TRUE,
-                        actualizado_en = NOW()
-                    WHERE id = $3
-                `, [organizacion.id, rolId, userId]);
-
-                // 7. Si soy_profesional, crear profesional vinculado
-                if (soy_profesional) {
-                    const nombreCompleto = usuario.nombre +
-                        (usuario.apellidos ? ' ' + usuario.apellidos : '');
-
-                    // ACTUALIZADO Dic 2025: modulos_acceso eliminado
-                    // Los permisos se asignan via permisos_rol según el rol del usuario
-                    await db.query(`
-                        INSERT INTO profesionales (
-                            organizacion_id, nombre_completo, email,
-                            usuario_id, activo
-                        ) VALUES ($1, $2, $3, $4, TRUE)
-                    `, [
-                        organizacion.id,
-                        nombreCompleto,
-                        usuario.email,
-                        userId
-                    ]);
-                }
-
-                // ═══════════════════════════════════════════════════════════════════
-                // Crear rutas de operación default para inventario
-                // ═══════════════════════════════════════════════════════════════════
-                try {
-                    await RutasOperacionModel.crearRutasDefaultConDb(organizacion.id, userId, db);
-                    logger.info('[UsuarioModel.completarOnboarding] Rutas de operación creadas', {
-                        organizacion_id: organizacion.id
-                    });
-                } catch (rutasError) {
-                    // No bloquear onboarding si falla la creación de rutas
-                    logger.warn('[UsuarioModel.completarOnboarding] Error creando rutas default', {
-                        error: rutasError.message
-                    });
-                }
-
-            logger.info('[UsuarioModel.completarOnboarding] Onboarding completado', {
-                usuario_id: userId,
-                organizacion_id: organizacion.id
-            });
-
-            // Obtener datos completos del rol para incluir en respuesta
-            const rolData = await db.query(
-                `SELECT id, codigo, nombre, nivel_jerarquia FROM roles WHERE id = $1`,
-                [rolId]
-            );
-            const rol = rolData.rows[0];
-
-            return {
-                usuario: {
-                    id: userId,
-                    email: usuario.email,
-                    nombre: usuario.nombre,
-                    apellidos: usuario.apellidos,
-                    organizacion_id: organizacion.id,
-                    onboarding_completado: true,
-                    // Fix Ene 2026: Incluir rol actualizado para que frontend actualice estado
-                    rol_id: rolId,
-                    rol_codigo: rol?.codigo,
-                    rol_nombre: rol?.nombre,
-                    nivel_jerarquia: rol?.nivel_jerarquia
-                },
-                organizacion
-            };
-            // COMMIT automático al finalizar, ROLLBACK automático si hay error
-        });
-
-        // ═══════════════════════════════════════════════════════════════════
-        // 🔗 HOOK DOGFOODING (Ene 2026)
-        // Vincular nueva org como cliente en Nexo Team (org_id = 1 en dev)
-        // ═══════════════════════════════════════════════════════════════════
-        if (result && result.organizacion) {
-            setImmediate(async () => {
-                try {
-                    const DogfoodingService = require('../../../services/dogfoodingService');
-                    await DogfoodingService.vincularOrganizacionComoCliente({
-                        id: result.organizacion.id,
-                        nombre_comercial: result.organizacion.nombre_comercial,
-                        email_admin: result.usuario.email,
-                        telefono: null,
-                        razon_social: result.organizacion.nombre_comercial
-                    });
-                    logger.info('[completarOnboarding] Dogfooding hook ejecutado', {
-                        organizacion_id: result.organizacion.id
-                    });
-                } catch (err) {
-                    logger.error('[completarOnboarding] Error en dogfooding hook:', err);
-                }
-            });
-        }
-
-        return result;
+        const OnboardingService = require('../../../services/onboardingService');
+        return OnboardingService.completar(userId, orgData);
     }
 }
 

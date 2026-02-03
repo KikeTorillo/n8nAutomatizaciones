@@ -1,7 +1,7 @@
 const UsuarioModel = require('../models/usuario.model');
 const InvitacionModel = require('../models/invitacion.model');
 const emailService = require('../../../services/emailService');
-const { ResponseHelper, RolHelper } = require('../../../utils/helpers');
+const { ResponseHelper, RolHelper, LimitesHelper } = require('../../../utils/helpers');
 const { asyncHandler } = require('../../../middleware');
 
 class UsuarioController {
@@ -151,11 +151,26 @@ class UsuarioController {
      * Crear invitación para usuario directo (sin profesional)
      * POST /usuarios/directo
      * Dic 2025: Cambiado para usar sistema de invitaciones
+     * Feb 2026: Agregada validación de límite de usuarios (seat-based billing)
      */
     static crearDirecto = asyncHandler(async (req, res) => {
         // Solo admin/propietario pueden crear usuarios
         if (!RolHelper.puedeCrearUsuarios(req.user)) {
             return ResponseHelper.error(res, 'No tienes permisos para crear usuarios', 403);
+        }
+
+        // Verificar límite de usuarios según plan (soft/hard limit)
+        const verificacionLimite = await LimitesHelper.verificarLimiteUsuariosConAjuste(
+            req.tenant.organizacionId,
+            1 // cantidad a crear
+        );
+
+        if (!verificacionLimite.puedeCrear) {
+            return ResponseHelper.error(res, verificacionLimite.advertencia || 'Límite de usuarios alcanzado', 403, {
+                codigo: 'LIMITE_USUARIOS_EXCEDIDO',
+                esHardLimit: verificacionLimite.esHardLimit,
+                detalle: verificacionLimite.detalle
+            });
         }
 
         const { email, nombre, apellidos, rol } = req.body;
@@ -185,7 +200,8 @@ class UsuarioController {
             // No fallamos la operación, la invitación se creó
         }
 
-        return ResponseHelper.success(res, {
+        // Construir respuesta con info de facturación si aplica
+        const respuesta = {
             invitacion: {
                 id: invitacion.id,
                 email: invitacion.email,
@@ -195,7 +211,18 @@ class UsuarioController {
                 expira_en: invitacion.expira_en
             },
             mensaje: 'Se ha enviado un correo de invitación al usuario'
-        }, 'Invitación enviada exitosamente', 201);
+        };
+
+        // Incluir info de cobro adicional si aplica (soft limit)
+        if (verificacionLimite.costoAdicional > 0) {
+            respuesta.facturacion = {
+                costoAdicional: verificacionLimite.costoAdicional,
+                advertencia: verificacionLimite.advertencia,
+                detalle: verificacionLimite.detalle
+            };
+        }
+
+        return ResponseHelper.success(res, respuesta, 'Invitación enviada exitosamente', 201);
     });
 
     /**
