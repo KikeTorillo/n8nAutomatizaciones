@@ -208,12 +208,16 @@ const authenticateToken = async (req, res, next) => {
                     });
                 }
             } catch (invalidationError) {
-                logger.error('Error verificando invalidación de usuario', {
+                // SECURITY FIX (Feb 2026): Fail-closed - si no podemos verificar, rechazamos
+                logger.error('Error crítico verificando invalidación de usuario - Fail-closed', {
                     error: invalidationError.message,
-                    userId: decoded.userId
+                    code: invalidationError.code,
+                    userId: decoded.userId,
+                    ip: req.ip
                 });
-                // Este check es secundario, si falla continuamos
-                // (el check de blacklist principal ya pasó)
+                return ResponseHelper.error(res, 'Servicio temporalmente no disponible', 503, {
+                    code: 'INVALIDATION_SERVICE_UNAVAILABLE'
+                });
             }
         }
 
@@ -288,7 +292,8 @@ const authenticateToken = async (req, res, next) => {
         const emailMatch = timingSafeStringCompare(usuario.email, decoded.email);
 
         // FASE 7 COMPLETADA: Solo verificar rol_id
-        const rolMatch = String(usuario.rol_id) === String(decoded.rolId);
+        // SECURITY FIX (Feb 2026): Usar comparación de tiempo constante también para rol_id
+        const rolMatch = timingSafeStringCompare(String(usuario.rol_id), String(decoded.rolId));
 
         if (!emailMatch || !rolMatch) {
             logger.warn('Inconsistencia entre token y base de datos', {

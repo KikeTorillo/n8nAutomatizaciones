@@ -100,7 +100,7 @@ class GoogleOAuthService {
 
             logger.error('[GoogleOAuth] Error verificando token', {
                 error: error.message,
-                stack: error.stack
+                ...(process.env.NODE_ENV !== 'production' && { stack: error.stack })  // SECURITY FIX (Feb 2026): No exponer stack trace en producción
             });
 
             throw new Error('Error al verificar con Google. Intenta de nuevo.');

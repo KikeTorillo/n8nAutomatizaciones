@@ -11,7 +11,7 @@ class AuthConfig {
     this.jwtSecret = process.env.JWT_SECRET;
     this.jwtExpiresIn = process.env.JWT_EXPIRES_IN || '7d';
     this.jwtRefreshExpiresIn = process.env.JWT_REFRESH_EXPIRES_IN || '7d';
-    this.bcryptRounds = parseInt(process.env.BCRYPT_ROUNDS) || 12;
+    this.bcryptRounds = parseInt(process.env.BCRYPT_ROUNDS) || 14;  // SECURITY FIX (Feb 2026): Incrementado a 14 para consistencia con auth.model.js
 
     if (!this.jwtSecret) {
       throw new Error('JWT_SECRET es requerido en variables de entorno');

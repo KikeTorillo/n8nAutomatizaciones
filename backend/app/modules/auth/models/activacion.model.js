@@ -44,11 +44,13 @@ class ActivacionModel {
 
         return RLSContextManager.withBypass(async (db) => {
             // Verificar si ya existe activación pendiente para este email
+            // SECURITY FIX (Feb 2026): Añadir LIMIT 1 para query unitaria
             const existenteResult = await db.query(`
                 SELECT id, estado, expira_en
                 FROM activaciones_cuenta
                 WHERE email = LOWER($1)
                   AND estado = 'pendiente'
+                LIMIT 1
             `, [email]);
 
             if (existenteResult.rows[0]) {
@@ -56,8 +58,9 @@ class ActivacionModel {
             }
 
             // Verificar que el email no esté registrado como usuario
+            // SECURITY FIX (Feb 2026): Añadir LIMIT 1 para query unitaria
             const emailUsuarioResult = await db.query(`
-                SELECT id FROM usuarios WHERE email = LOWER($1)
+                SELECT id FROM usuarios WHERE email = LOWER($1) LIMIT 1
             `, [email]);
 
             if (emailUsuarioResult.rows[0]) {
@@ -80,7 +83,7 @@ class ActivacionModel {
                     NOW() + MAKE_INTERVAL(hours => $6),
                     NOW()
                 )
-                RETURNING *
+                RETURNING id, token, organizacion_id, email, nombre, soy_profesional, expira_en, estado, creado_en
             `, [token, organizacion_id, email, nombre, soy_profesional, horas_expiracion]);
 
             const activacion = activacionResult.rows[0];
@@ -157,7 +160,7 @@ class ActivacionModel {
                     NOW() + MAKE_INTERVAL(mins => $3),
                     NOW()
                 )
-                RETURNING *
+                RETURNING id, token, email, tipo, expira_en, estado, creado_en
             `, [token, email, minutos_expiracion]);
 
             const magicLink = magicLinkResult.rows[0];
@@ -192,9 +195,10 @@ class ActivacionModel {
 
             // Buscar magic link pendiente
             const magicLinkResult = await db.query(`
-                SELECT a.*
+                SELECT a.id, a.token, a.email, a.estado, a.expira_en, a.tipo
                 FROM activaciones_cuenta a
                 WHERE a.token = $1 AND a.tipo = 'magic_link'
+                LIMIT 1
             `, [token]);
 
             const magicLink = magicLinkResult.rows[0];
@@ -221,6 +225,7 @@ class ActivacionModel {
                 LEFT JOIN roles r ON r.id = u.rol_id
                 LEFT JOIN organizaciones o ON u.organizacion_id = o.id
                 WHERE u.email = LOWER($1) AND u.activo = TRUE
+                LIMIT 1
             `, [magicLink.email]);
 
             const usuario = usuarioResult.rows[0];
@@ -288,14 +293,17 @@ class ActivacionModel {
             await db.query(`SELECT marcar_activaciones_expiradas()`);
 
             // LEFT JOIN para soportar magic_link (sin organizacion_id)
+            // SECURITY FIX (Feb 2026): Especificar campos explícitos en lugar de SELECT *
             const activacionResult = await db.query(`
                 SELECT
-                    a.*,
+                    a.id, a.token, a.organizacion_id, a.email, a.nombre, a.soy_profesional,
+                    a.expira_en, a.estado, a.tipo, a.creado_en,
                     o.nombre_comercial,
                     o.logo_url
                 FROM activaciones_cuenta a
                 LEFT JOIN organizaciones o ON a.organizacion_id = o.id
                 WHERE a.token = $1
+                LIMIT 1
             `, [token]);
 
             const activacion = activacionResult.rows[0];
@@ -353,11 +361,15 @@ class ActivacionModel {
     static async activar(token, password_hash) {
         return RLSContextManager.transactionWithBypass(async (db) => {
             // Obtener y validar activación (LEFT JOIN para soportar sin org)
+            // SECURITY FIX (Feb 2026): Especificar campos explícitos en lugar de SELECT *
             const activacionResult = await db.query(`
-                SELECT a.*, o.nombre_comercial
+                SELECT a.id, a.token, a.organizacion_id, a.email, a.nombre, a.soy_profesional,
+                       a.expira_en, a.estado, a.tipo, a.creado_en,
+                       o.nombre_comercial
                 FROM activaciones_cuenta a
                 LEFT JOIN organizaciones o ON a.organizacion_id = o.id
                 WHERE a.token = $1 AND a.estado = 'pendiente'
+                LIMIT 1
             `, [token]);
 
             const activacion = activacionResult.rows[0];
@@ -541,7 +553,7 @@ class ActivacionModel {
                     ultimo_reenvio = NOW(),
                     email_enviado_en = NOW()
                 WHERE id = $2
-                RETURNING *
+                RETURNING id, token, organizacion_id, email, nombre, soy_profesional, expira_en, estado, reenvios, creado_en
             `, [nuevoToken, anterior.id]);
 
             logger.info(`[ActivacionModel.reenviar] Activación reenviada para ${email}`, {
@@ -561,8 +573,11 @@ class ActivacionModel {
      */
     static async obtenerPorEmail(email) {
         return RLSContextManager.withBypass(async (db) => {
+            // SECURITY FIX (Feb 2026): Especificar campos explícitos en lugar de SELECT *
             const result = await db.query(`
-                SELECT a.*, o.nombre_comercial
+                SELECT a.id, a.token, a.organizacion_id, a.email, a.nombre, a.soy_profesional,
+                       a.expira_en, a.estado, a.tipo, a.reenvios, a.creado_en, a.actualizado_en,
+                       o.nombre_comercial
                 FROM activaciones_cuenta a
                 LEFT JOIN organizaciones o ON a.organizacion_id = o.id
                 WHERE a.email = LOWER($1)

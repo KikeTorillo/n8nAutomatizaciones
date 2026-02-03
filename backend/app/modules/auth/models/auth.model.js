@@ -28,7 +28,7 @@ const JwtService = require('../services/jwtService');
 const { ErrorHelper } = require('../../../utils/helpers');
 
 const AUTH_CONFIG = {
-    BCRYPT_SALT_ROUNDS: 12,
+    BCRYPT_SALT_ROUNDS: 14,  // SECURITY FIX (Feb 2026): Incrementado de 12 a 14 (~320ms) - OWASP recomienda 14+ para 2026
     TOKEN_RESET_EXPIRATION_HOURS: 1,
     RESET_TOKEN_LENGTH: 32
 };
@@ -51,6 +51,13 @@ class AuthModel {
         if (!usuario) {
             await this.registrarIntentoLogin(email, false, ipAddress);
             ErrorHelper.throwUnauthorized('Credenciales inválidas');
+        }
+
+        // SECURITY FIX (Feb 2026): Verificar que el email esté verificado
+        if (!usuario.email_verificado) {
+            ErrorHelper.throwValidation(
+                'Email no verificado. Revisa tu bandeja de entrada para activar tu cuenta'
+            );
         }
 
         // Verificar si está bloqueado
@@ -636,3 +643,4 @@ class AuthModel {
 }
 
 module.exports = AuthModel;
+module.exports.AUTH_CONFIG = AUTH_CONFIG;

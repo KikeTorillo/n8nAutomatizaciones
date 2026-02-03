@@ -6,6 +6,7 @@
 
 const UsuarioModel = require('../../core/models/usuario.model');
 const AuthModel = require('../models/auth.model');
+const { AUTH_CONFIG } = require('../models/auth.model');
 const ActivacionModel = require('../models/activacion.model');
 const GoogleOAuthService = require('../services/oauth/google.service');
 const bcrypt = require('bcryptjs');
@@ -49,9 +50,8 @@ class AuthController {
             requiere_onboarding: resultado.requiere_onboarding
         };
 
-        if (process.env.NODE_ENV !== 'production') {
-            responseData.refreshToken = resultado.refreshToken;
-        }
+        // SECURITY FIX (Feb 2026): Eliminada exposición de refreshToken en desarrollo
+        // El token ya está en cookie httpOnly, no necesita exponerse en JSON
 
         return ResponseHelper.success(res, responseData, 'Login exitoso');
     });
@@ -358,8 +358,8 @@ class AuthController {
         const { token } = req.params;
         const { password } = req.body;
 
-        // 1. Hashear password
-        const password_hash = await bcrypt.hash(password, 12);
+        // 1. Hashear password (SECURITY FIX Feb 2026: usar config centralizada)
+        const password_hash = await bcrypt.hash(password, AUTH_CONFIG.BCRYPT_SALT_ROUNDS);
 
         // 2. Activar cuenta (crear usuario y profesional si aplica)
         const resultado = await ActivacionModel.activar(token, password_hash);
@@ -382,9 +382,7 @@ class AuthController {
             requiere_onboarding: resultado.requiere_onboarding  // Flujo unificado Dic 2025
         };
 
-        if (process.env.NODE_ENV !== 'production') {
-            responseData.refreshToken = refreshToken;
-        }
+        // SECURITY FIX (Feb 2026): Eliminada exposición de refreshToken en desarrollo
 
         return ResponseHelper.success(res, responseData, 'Cuenta activada exitosamente', 201);
     });
@@ -466,9 +464,7 @@ class AuthController {
             requiere_onboarding: !resultado.usuario.onboarding_completado
         };
 
-        if (process.env.NODE_ENV !== 'production') {
-            responseData.refreshToken = refreshToken;
-        }
+        // SECURITY FIX (Feb 2026): Eliminada exposición de refreshToken en desarrollo
 
         return ResponseHelper.success(res, responseData, 'Login exitoso via magic link');
     });
@@ -578,9 +574,7 @@ class AuthController {
             requiere_onboarding: !usuario.onboarding_completado
         };
 
-        if (process.env.NODE_ENV !== 'production') {
-            responseData.refreshToken = refreshToken;
-        }
+        // SECURITY FIX (Feb 2026): Eliminada exposición de refreshToken en desarrollo
 
         return ResponseHelper.success(res, responseData,
             esNuevo ? 'Cuenta creada con Google' : 'Login exitoso con Google'
@@ -649,9 +643,7 @@ class AuthController {
             expiresIn
         };
 
-        if (process.env.NODE_ENV !== 'production') {
-            responseData.refreshToken = refreshToken;
-        }
+        // SECURITY FIX (Feb 2026): Eliminada exposición de refreshToken en desarrollo
 
         return ResponseHelper.success(res, responseData, 'Onboarding completado exitosamente', 201);
     });
