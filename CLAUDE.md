@@ -27,7 +27,45 @@ npm run db:connect       # psql directo (user: admin)
 
 **Nota**: HMR NO funciona en Docker. Reiniciar contenedor + Ctrl+Shift+R.
 
-## Arquitectura
+## Arquitectura Modular
+
+### Backend (`backend/app/modules/`)
+
+Cada módulo es autocontenido con `manifest.json`:
+
+```
+modules/
+├── auth/           # Autenticación (prioridad -10, carga primero)
+├── core/           # Usuarios, roles, organizaciones
+├── agendamiento/   # Citas, horarios, servicios
+├── inventario/     # Productos, stock, movimientos
+├── pos/            # Punto de venta
+├── website/        # Website builder
+└── ...
+```
+
+**Estructura de un módulo:**
+```
+modules/mi-modulo/
+├── controllers/
+├── models/
+├── routes/
+├── schemas/
+├── services/
+└── manifest.json
+```
+
+### Frontend (`frontend/src/`)
+
+```
+src/
+├── features/       # Módulos autocontenidos (auth, etc.)
+│   └── auth/       # Store, API, components, pages, routes
+├── components/ui/  # Atomic Design (atoms, molecules, organisms)
+├── hooks/          # Hooks por dominio
+├── pages/          # Páginas por módulo
+└── store/          # Stores globales + re-exports
+```
 
 ### Middlewares Chain
 ```
@@ -50,7 +88,7 @@ await RLSContextManager.withBypass(async (db) => { ... });
 | 100 | super_admin | Acceso TOTAL, bypass RLS, cross-org |
 | 90 | admin | Gestión completa de la organización |
 | 80 | propietario | Gestión alta, acceso a Dashboard/Configuración |
-| 50-79 | supervisor | Gestión de equipo (aprueba vacaciones, registra incapacidades) |
+| 50-79 | supervisor | Gestión de equipo |
 | 10 | empleado | Operaciones básicas |
 | 5 | cliente | Autoservicio |
 
@@ -70,15 +108,6 @@ RolHelper.esRolAdministrativo(user);    // nivel >= 90
 
 **Bypasses**: `organizacion_id === 1`, `nivel_jerarquia >= 100`, rutas `/auth/*`, `/planes/*`
 
-### Sincronización de Módulos
-```javascript
-// Al editar entitlements, respeta preferencias del usuario:
-// - Módulos NUEVOS → se activan por defecto
-// - Módulos existentes → mantienen estado actual (respeta si usuario desactivó)
-// - Módulos que salen del plan → se eliminan
-ModulosSyncService.sincronizarPorPlan(planId);
-```
-
 ## Reglas de Desarrollo
 
 ### Backend
@@ -93,15 +122,6 @@ ModulosSyncService.sincronizarPorPlan(planId);
 - **Colores**: Solo `primary-*` (primario: `#753572`)
 - **React.memo**: Obligatorio en componentes de lista/tabla
 - **Cache invalidation**: `queryClient.invalidateQueries({ queryKey: [...], refetchType: 'active' })`
-
-### Componentes UI (Atomic Design)
-```
-components/ui/
-├── atoms/      # Button, Input, Badge, ToggleSwitch
-├── molecules/  # StatCard, ViewTabs, EmptyState, FilterFields
-├── organisms/  # Modal, Drawer, DataTable, StateNavTabs
-└── templates/  # BasePageLayout, ModuleGuard, ListadoCRUDPage
-```
 
 ## Patrones Principales
 
@@ -125,18 +145,14 @@ const crudHooks = createCRUDHooks({
 export const useEntidades = crudHooks.useList;
 ```
 
-### Navegación con Dropdowns (StateNavTabs)
+### Feature Modules (Frontend)
 ```javascript
-// Tabs con grupos para crear dropdowns en desktop
-const tabs = [
-  { id: 'mis-items', label: 'Mis Items', icon: User },
-  { id: 'equipo-a', label: 'Sección A', icon: IconA },
-  { id: 'equipo-b', label: 'Sección B', icon: IconB },
-];
-const groups = [
-  { icon: Users, label: 'Mi Equipo', tabIds: ['equipo-a', 'equipo-b'] },
-];
-<StateNavTabs tabs={tabs} groups={groups} activeTab={activeTab} onTabChange={setTab} />
+// Importar desde barrel export
+import { useAuthStore, authApi, ProtectedRoute } from '@/features/auth';
+
+// Re-exports disponibles en ubicaciones legacy
+import { useAuthStore } from '@/store';
+import { authApi } from '@/services/api/modules';
 ```
 
 ## Troubleshooting
@@ -158,4 +174,4 @@ const groups = [
 
 ---
 
-**Actualizado**: 2 Febrero 2026
+**Actualizado**: 3 Febrero 2026
