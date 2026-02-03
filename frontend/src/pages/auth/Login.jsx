@@ -76,7 +76,10 @@ function Login() {
       return response.data.data;
     },
     onSuccess: (data) => {
-      queryClient.clear();
+      // Feb 2026: Invalidar queries específicas en lugar de clear() para mejor UX
+      queryClient.invalidateQueries({ queryKey: ['usuario'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['organizacion'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['modulos'], refetchType: 'active' });
       // Ene 2026: refreshToken viene por cookie httpOnly, no se guarda en frontend
       setAuth({
         user: data.usuario,

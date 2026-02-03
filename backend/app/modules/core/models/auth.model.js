@@ -116,6 +116,21 @@ class AuthModel {
             ErrorHelper.throwUnauthorized('Usuario no válido');
         }
 
+        // FIX: Verificar que la organización esté activa (si tiene una)
+        if (usuario.organizacion_id) {
+            const orgActiva = await RLSContextManager.withBypass(async (db) => {
+                const result = await db.query(
+                    'SELECT activo FROM organizaciones WHERE id = $1',
+                    [usuario.organizacion_id]
+                );
+                return result.rows[0]?.activo === true;
+            });
+
+            if (!orgActiva) {
+                ErrorHelper.throwUnauthorized('La organización ha sido suspendida');
+            }
+        }
+
         // Generar solo access token
         const accessToken = JwtService.generateAccessToken(usuario);
         const { expiresIn } = JwtService.getConfig();
@@ -151,7 +166,7 @@ class AuthModel {
         }
 
         // Actualizar contraseña
-        return await RLSContextManager.transaction(usuario.organizacion_id, async (db) => {
+        const resultado = await RLSContextManager.transaction(usuario.organizacion_id, async (db) => {
             const nuevoHash = await bcrypt.hash(passwordNueva, AUTH_CONFIG.BCRYPT_SALT_ROUNDS);
 
             await db.query(`
@@ -162,6 +177,30 @@ class AuthModel {
 
             return true;
         });
+
+        // Registrar evento de auditoría (después del commit)
+        try {
+            const db = await getDb();
+            try {
+                await RLSHelper.registrarEvento(db, {
+                    organizacion_id: usuario.organizacion_id,
+                    tipo_evento: 'password_cambiada',
+                    subtipo_evento: 'cambio_voluntario',
+                    descripcion: 'Usuario cambió su contraseña desde Mi Cuenta',
+                    metadata: {
+                        timestamp: new Date().toISOString(),
+                        metodo: 'cambio_autenticado'
+                    },
+                    usuario_id: userId
+                });
+            } finally {
+                db.release();
+            }
+        } catch (eventoError) {
+            logger.warn('Error al registrar evento de cambio de password:', eventoError.message);
+        }
+
+        return resultado;
     }
 
     /**
@@ -308,92 +347,84 @@ class AuthModel {
      * @throws {Error} Si el token es inválido o expirado
      */
     static async confirmarResetPassword(token, passwordNueva, ipAddress = null) {
-        const resultado = await RLSContextManager.withBypass(async (db) => {
-            await db.query('BEGIN');
+        // FIX: Usar transactionWithBypass en lugar de BEGIN/COMMIT manual
+        const resultado = await RLSContextManager.transactionWithBypass(async (db) => {
+            // Verificar si ya fue usado
+            const tokenUsadoResult = await db.query(`
+                SELECT id, email, token_reset_usado_en
+                FROM usuarios
+                WHERE token_reset_password = $1
+                  AND token_reset_usado_en IS NOT NULL
+                  AND activo = true
+            `, [token]);
 
-            try {
-                // Verificar si ya fue usado
-                const tokenUsadoResult = await db.query(`
-                    SELECT id, email, token_reset_usado_en
-                    FROM usuarios
-                    WHERE token_reset_password = $1
-                      AND token_reset_usado_en IS NOT NULL
-                      AND activo = true
-                `, [token]);
-
-                if (tokenUsadoResult.rows.length > 0) {
-                    ErrorHelper.throwValidation('Este token de recuperación ya fue utilizado');
-                }
-
-                // Validar token
-                const validacionResult = await db.query(`
-                    SELECT
-                        id, email, nombre, apellidos, organizacion_id,
-                        token_reset_expira,
-                        CASE
-                            WHEN token_reset_expira > NOW() THEN true
-                            ELSE false
-                        END as token_valido
-                    FROM usuarios
-                    WHERE token_reset_password = $1 AND activo = true
-                `, [token]);
-
-                if (validacionResult.rows.length === 0) {
-                    ErrorHelper.throwValidation('Código de recuperación inválido o usuario no encontrado');
-                }
-
-                const usuario = validacionResult.rows[0];
-
-                if (!usuario.token_valido) {
-                    ErrorHelper.throwValidation('Código de recuperación expirado');
-                }
-
-                // Actualizar contraseña
-                const nuevoHash = await bcrypt.hash(passwordNueva, AUTH_CONFIG.BCRYPT_SALT_ROUNDS);
-
-                const result = await db.query(`
-                    UPDATE usuarios
-                    SET
-                        password_hash = $1,
-                        token_reset_usado_en = NOW(),
-                        intentos_fallidos = 0,
-                        bloqueado_hasta = NULL,
-                        actualizado_en = NOW()
-                    WHERE token_reset_password = $2 AND activo = true
-                    RETURNING id, email, nombre, apellidos, organizacion_id
-                `, [nuevoHash, token]);
-
-                if (result.rows.length === 0) {
-                    ErrorHelper.throwValidation('No se pudo actualizar la contraseña');
-                }
-
-                await db.query('COMMIT');
-
-                return {
-                    success: true,
-                    mensaje: 'Contraseña actualizada exitosamente',
-                    usuario_id: result.rows[0].id,
-                    email: result.rows[0].email,
-                    organizacion_id: result.rows[0].organizacion_id
-                };
-
-            } catch (error) {
-                await db.query('ROLLBACK');
-                throw error;
+            if (tokenUsadoResult.rows.length > 0) {
+                ErrorHelper.throwValidation('Este token de recuperación ya fue utilizado');
             }
+
+            // Validar token
+            const validacionResult = await db.query(`
+                SELECT
+                    id, email, nombre, apellidos, organizacion_id,
+                    token_reset_expira,
+                    CASE
+                        WHEN token_reset_expira > NOW() THEN true
+                        ELSE false
+                    END as token_valido
+                FROM usuarios
+                WHERE token_reset_password = $1 AND activo = true
+            `, [token]);
+
+            if (validacionResult.rows.length === 0) {
+                ErrorHelper.throwValidation('Código de recuperación inválido o usuario no encontrado');
+            }
+
+            const usuario = validacionResult.rows[0];
+
+            if (!usuario.token_valido) {
+                ErrorHelper.throwValidation('Código de recuperación expirado');
+            }
+
+            // Actualizar contraseña
+            const nuevoHash = await bcrypt.hash(passwordNueva, AUTH_CONFIG.BCRYPT_SALT_ROUNDS);
+
+            const result = await db.query(`
+                UPDATE usuarios
+                SET
+                    password_hash = $1,
+                    token_reset_usado_en = NOW(),
+                    intentos_fallidos = 0,
+                    bloqueado_hasta = NULL,
+                    actualizado_en = NOW()
+                WHERE token_reset_password = $2 AND activo = true
+                RETURNING id, email, nombre, apellidos, organizacion_id
+            `, [nuevoHash, token]);
+
+            if (result.rows.length === 0) {
+                ErrorHelper.throwValidation('No se pudo actualizar la contraseña');
+            }
+
+            return {
+                success: true,
+                mensaje: 'Contraseña actualizada exitosamente',
+                usuario_id: result.rows[0].id,
+                email: result.rows[0].email,
+                organizacion_id: result.rows[0].organizacion_id
+            };
+            // COMMIT automático al finalizar, ROLLBACK automático si hay error
         });
 
         // Registrar evento después del commit
+        // FIX: Usar nombres de campos correctos según RLSHelper.registrarEvento
         try {
             const db = await getDb();
             try {
                 await RLSHelper.registrarEvento(db, {
                     organizacion_id: resultado.organizacion_id,
-                    evento_tipo: 'password_reset_confirmado',
-                    entidad_tipo: 'usuario',
-                    entidad_id: resultado.usuario_id,
+                    tipo_evento: 'password_reset_confirmado',
+                    subtipo_evento: 'recuperacion',
                     descripcion: 'Contraseña restablecida exitosamente mediante token de recuperación',
-                    metadatos: {
+                    metadata: {
                         email: resultado.email,
                         timestamp: new Date().toISOString(),
                         metodo: 'token_reset',
@@ -517,46 +548,41 @@ class AuthModel {
 
     /**
      * Busca usuario para autenticación con todos los datos necesarios
+     * FIX: Migrado de RLSHelper (legacy) a RLSContextManager
      * @private
      */
     static async _buscarUsuarioParaAuth(email) {
-        const db = await getDb();
+        return await RLSContextManager.withBypass(async (db) => {
+            const query = `
+                SELECT u.id, u.email, u.password_hash, u.nombre, u.apellidos, u.telefono,
+                       u.rol_id, u.organizacion_id, u.profesional_id, u.activo, u.email_verificado,
+                       u.ultimo_login, u.intentos_fallidos, u.bloqueado_hasta,
+                       u.onboarding_completado,
+                       r.codigo AS rol_codigo,
+                       r.nombre AS rol_nombre,
+                       r.nivel_jerarquia,
+                       r.bypass_permisos,
+                       r.es_rol_sistema,
+                       (SELECT us.sucursal_id FROM usuarios_sucursales us
+                        WHERE us.usuario_id = u.id AND us.activo = TRUE LIMIT 1) as sucursal_id,
+                       COALESCE(
+                           (SELECT s.moneda FROM sucursales s
+                            JOIN usuarios_sucursales us ON us.sucursal_id = s.id
+                            WHERE us.usuario_id = u.id AND us.activo = TRUE
+                            AND s.moneda IS NOT NULL LIMIT 1),
+                           o.moneda
+                       ) as moneda,
+                       o.zona_horaria
+                FROM usuarios u
+                LEFT JOIN organizaciones o ON o.id = u.organizacion_id
+                LEFT JOIN roles r ON r.id = u.rol_id
+                    AND (r.organizacion_id = u.organizacion_id OR r.es_rol_sistema = true)
+                WHERE u.email = $1 AND u.activo = TRUE
+            `;
 
-        try {
-            return await RLSHelper.withContext(db, { loginEmail: email, bypass: true }, async (db) => {
-                const query = `
-                    SELECT u.id, u.email, u.password_hash, u.nombre, u.apellidos, u.telefono,
-                           u.rol_id, u.organizacion_id, u.profesional_id, u.activo, u.email_verificado,
-                           u.ultimo_login, u.intentos_fallidos, u.bloqueado_hasta,
-                           u.onboarding_completado,
-                           r.codigo AS rol_codigo,
-                           r.nombre AS rol_nombre,
-                           r.nivel_jerarquia,
-                           r.bypass_permisos,
-                           r.es_rol_sistema,
-                           (SELECT us.sucursal_id FROM usuarios_sucursales us
-                            WHERE us.usuario_id = u.id AND us.activo = TRUE LIMIT 1) as sucursal_id,
-                           COALESCE(
-                               (SELECT s.moneda FROM sucursales s
-                                JOIN usuarios_sucursales us ON us.sucursal_id = s.id
-                                WHERE us.usuario_id = u.id AND us.activo = TRUE
-                                AND s.moneda IS NOT NULL LIMIT 1),
-                               o.moneda
-                           ) as moneda,
-                           o.zona_horaria
-                    FROM usuarios u
-                    LEFT JOIN organizaciones o ON o.id = u.organizacion_id
-                    LEFT JOIN roles r ON r.id = u.rol_id
-                        AND (r.organizacion_id = u.organizacion_id OR r.es_rol_sistema = true)
-                    WHERE u.email = $1 AND u.activo = TRUE
-                `;
-
-                const result = await db.query(query, [email]);
-                return result.rows[0] || null;
-            });
-        } finally {
-            db.release();
-        }
+            const result = await db.query(query, [email]);
+            return result.rows[0] || null;
+        });
     }
 
     /**

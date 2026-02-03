@@ -20,7 +20,7 @@ import AuthLayout from '@/components/auth/AuthLayout';
 import FormField from '@/components/forms/FormField';
 import SelectorUbicacion from '@/components/forms/SelectorUbicacion';
 import { Button } from '@/components/ui';
-import { Building2, UserCheck, Sparkles, ArrowRight, Loader2 } from 'lucide-react';
+import { Building2, UserCheck, Sparkles, ArrowRight } from 'lucide-react';
 import ModuloSelector from '@/components/onboarding/ModuloSelector';
 
 // Schema de validación
@@ -150,8 +150,12 @@ function OnboardingPage() {
       return response.data.data;
     },
     onSuccess: async (data) => {
-      // Limpiar cache
-      queryClient.clear();
+      // Invalidar caches relevantes (sin borrar TODO el cache)
+      // FIX: Usar invalidateQueries específico en lugar de clear() agresivo
+      await queryClient.invalidateQueries({ queryKey: ['planes'], refetchType: 'active' });
+      await queryClient.invalidateQueries({ queryKey: ['usuario'], refetchType: 'active' });
+      await queryClient.invalidateQueries({ queryKey: ['organizacion'], refetchType: 'active' });
+      await queryClient.invalidateQueries({ queryKey: ['modulos'], refetchType: 'active' });
 
       // Ene 2026: Actualizar auth (refreshToken viene por cookie httpOnly)
       setAuth({
@@ -290,10 +294,7 @@ function OnboardingPage() {
             disabled={onboardingMutation.isPending}
           >
             {onboardingMutation.isPending ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Creando tu negocio...
-              </>
+              'Creando tu negocio...'
             ) : (
               <>
                 Comenzar

@@ -11,6 +11,7 @@ const { getDb } = require('../../../config/database');
 const { ResponseHelper } = require('../../../utils/helpers');
 const asyncHandler = require('../../../middleware/asyncHandler');
 const { rateLimiting } = require('../../../middleware');
+const logger = require('../../../utils/logger');
 const { crearN8nOwner, generarN8nApiKey } = require('../../../utils/n8nSetupHelper');
 const configService = require('../../../services/configService');
 const n8nGlobalCredentialsService = require('../../../services/n8nGlobalCredentialsService');
@@ -71,7 +72,7 @@ router.get('/check',
             }, 'Setup status verificado');
 
         } catch (error) {
-            console.error('❌ Error verificando setup:', error);
+            logger.error('Error verificando setup', { error: error.message });
             ResponseHelper.error(res, 'Error verificando estado del sistema', 500);
         } finally {
             await db.query('SELECT set_config($1, $2, false)', ['app.bypass_rls', 'false']);
@@ -244,10 +245,9 @@ router.post('/create-superadmin',
             // ====================================================================
             // 8. LOG DE AUDITORÍA
             // ====================================================================
-            console.log('✅ SUPER ADMIN CREADO:', {
+            logger.info('Super admin creado exitosamente', {
                 id: superAdmin.id,
                 email: superAdmin.email,
-                timestamp: new Date().toISOString(),
                 ip: req.ip
             });
 
@@ -269,7 +269,7 @@ router.post('/create-superadmin',
                 201
             );
         } catch (error) {
-            console.error('❌ ERROR CREANDO SUPER ADMIN:', error);
+            logger.error('Error creando super admin', { error: error.message, stack: error.stack });
             ResponseHelper.error(
                 res,
                 'Error al crear super administrador: ' + error.message,
@@ -280,7 +280,7 @@ router.post('/create-superadmin',
             try {
                 await db.query('SELECT set_config($1, $2, false)', ['app.bypass_rls', 'false']);
             } catch (e) {
-                console.warn('⚠️  Error restaurando RLS:', e.message);
+                logger.warn('Error restaurando RLS', { error: e.message });
             }
             db.release();
         }
@@ -515,7 +515,7 @@ router.post('/unified-setup',
                 // FASE 7: El super_admin ya tiene rol_id = super_admin de sistema (asignado en INSERT)
                 // NO sobrescribir con rol admin de organización
 
-                console.log('✅ Organización Nexo Team creada:', {
+                logger.info('Organización Nexo Team creada', {
                     orgId: nexoTeamOrgId,
                     superAdminId: superAdminData.id
                 });
@@ -556,21 +556,14 @@ router.post('/unified-setup',
             // ====================================================================
             // 6. LOG DE AUDITORÍA
             // ====================================================================
-            console.log('✅ UNIFIED SETUP COMPLETADO:', {
-                superAdmin: {
-                    id: resultado.superAdmin.id,
-                    email: resultado.superAdmin.email
-                },
-                n8nOwner: {
-                    id: resultado.n8nOwner.id,
-                    email: resultado.n8nOwner.email
-                },
-                globalCredentials: {
-                    deepseek: globalCredentials.deepseek.id,
-                    postgres: globalCredentials.postgres.id,
-                    redis: globalCredentials.redis.id
-                },
-                timestamp: new Date().toISOString(),
+            logger.info('Unified setup completado exitosamente', {
+                superAdminId: resultado.superAdmin.id,
+                superAdminEmail: resultado.superAdmin.email,
+                n8nOwnerId: resultado.n8nOwner.id,
+                n8nOwnerEmail: resultado.n8nOwner.email,
+                credentialsDeepseek: globalCredentials.deepseek.id,
+                credentialsPostgres: globalCredentials.postgres.id,
+                credentialsRedis: globalCredentials.redis.id,
                 ip: req.ip
             });
 
@@ -619,7 +612,7 @@ router.post('/unified-setup',
             );
 
         } catch (error) {
-            console.error('❌ ERROR EN UNIFIED SETUP:', error);
+            logger.error('Error en unified setup', { error: error.message, stack: error.stack });
 
             // Errores específicos de n8n
             if (error.message.includes('n8n')) {

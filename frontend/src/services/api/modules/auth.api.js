@@ -10,12 +10,8 @@ export const authApi = {
    */
   login: (credentials) => apiClient.post('/auth/login', credentials),
 
-  /**
-   * Refresh token
-   * @param {string} refreshToken
-   * @returns {Promise<Object>} { accessToken, refreshToken }
-   */
-  refreshToken: (refreshToken) => apiClient.post('/auth/refresh', { refreshToken }),
+  // NOTA: refreshToken se maneja automáticamente en client.js via httpOnly cookie
+  // No exponer función manual para evitar confusión
 
   /**
    * Logout
@@ -28,6 +24,20 @@ export const authApi = {
    * @returns {Promise<Object>} { usuario: { ...datos, tipo_industria, nombre_comercial, plan_actual } }
    */
   me: () => apiClient.get('/auth/me'),
+
+  /**
+   * Actualizar perfil del usuario autenticado
+   * @param {Object} data - { nombre, apellidos, telefono, etc. }
+   * @returns {Promise<Object>} { usuario }
+   */
+  actualizarPerfil: (data) => apiClient.put('/auth/profile', data),
+
+  /**
+   * Verificar email con token
+   * @param {string} token - Token de verificación de email
+   * @returns {Promise<Object>} { verificado, ya_verificado, email, mensaje }
+   */
+  verificarEmail: (token) => apiClient.get(`/auth/verificar-email/${token}`),
 
   /**
    * Solicitar token de recuperación de contraseña
@@ -138,6 +148,13 @@ export const authApi = {
    * @returns {Promise<Object>} { sucursal, accessToken, expiresIn }
    */
   cambiarSucursal: (data) => apiClient.post('/auth/cambiar-sucursal', data),
+
+  /**
+   * Cambiar contraseña del usuario autenticado
+   * @param {Object} data - { passwordAnterior, passwordNueva }
+   * @returns {Promise<Object>} { success, message }
+   */
+  cambiarPassword: (data) => apiClient.post('/auth/change-password', data),
 };
 
 // ==================== ORGANIZACIONES ====================

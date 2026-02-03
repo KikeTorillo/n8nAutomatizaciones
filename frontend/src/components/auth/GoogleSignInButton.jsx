@@ -50,10 +50,10 @@ function GoogleSignInButton({
       setIsLoading(false);
 
       // Guardar auth en store
+      // FIX: refreshToken viene por cookie httpOnly, no en response body
       setAuth({
         user: data.usuario,
         accessToken: data.accessToken,
-        refreshToken: data.refreshToken,
       });
 
       // Callback personalizado

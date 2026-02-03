@@ -88,6 +88,7 @@ class InvitacionModel {
             }
 
             // Crear invitación (Dic 2025: incluye rol)
+            // FIX: Usar MAKE_INTERVAL para evitar SQL Injection
             const invitacionResult = await db.query(`
                 INSERT INTO invitaciones_profesionales (
                     token,
@@ -101,11 +102,11 @@ class InvitacionModel {
                     enviado_en
                 ) VALUES (
                     $1, $2, $3, LOWER($4), $5, $6, $7,
-                    NOW() + INTERVAL '${dias_expiracion} days',
+                    NOW() + MAKE_INTERVAL(days => $8),
                     NOW()
                 )
                 RETURNING *
-            `, [token, organizacion_id, profesional_id, email, nombre_sugerido || profesional.nombre_completo, rol, creado_por]);
+            `, [token, organizacion_id, profesional_id, email, nombre_sugerido || profesional.nombre_completo, rol, creado_por, dias_expiracion]);
 
             const invitacion = invitacionResult.rows[0];
 
@@ -172,6 +173,7 @@ class InvitacionModel {
             }
 
             // Crear invitación para usuario directo (nombre y apellidos separados)
+            // FIX: Usar MAKE_INTERVAL para evitar SQL Injection
             const invitacionResult = await db.query(`
                 INSERT INTO invitaciones_profesionales (
                     token,
@@ -187,11 +189,11 @@ class InvitacionModel {
                     enviado_en
                 ) VALUES (
                     $1, $2, NULL, 'usuario_directo', LOWER($3), $4, $5, $6, $7,
-                    NOW() + INTERVAL '${dias_expiracion} days',
+                    NOW() + MAKE_INTERVAL(days => $8),
                     NOW()
                 )
                 RETURNING *
-            `, [token, organizacion_id, email, nombre, apellidos || null, rol, creado_por]);
+            `, [token, organizacion_id, email, nombre, apellidos || null, rol, creado_por, dias_expiracion]);
 
             return invitacionResult.rows[0];
         });
@@ -394,6 +396,7 @@ class InvitacionModel {
             ErrorHelper.throwIfNotFound(anterior, 'Invitación');
 
             // Crear nueva invitación
+            // CONSISTENCY FIX: Usar MAKE_INTERVAL para consistencia con el resto del código
             const nuevaResult = await db.query(`
                 INSERT INTO invitaciones_profesionales (
                     token,
@@ -413,7 +416,7 @@ class InvitacionModel {
                     email,
                     nombre_sugerido,
                     creado_por,
-                    NOW() + INTERVAL '7 days',
+                    NOW() + MAKE_INTERVAL(days => 7),
                     NOW(),
                     reenvios + 1
                 FROM invitaciones_profesionales

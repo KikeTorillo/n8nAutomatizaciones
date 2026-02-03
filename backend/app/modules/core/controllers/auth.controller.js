@@ -361,38 +361,8 @@ class AuthController {
         // 1. Hashear password
         const password_hash = await bcrypt.hash(password, 12);
 
-        // 2. Activar cuenta (crear usuario)
+        // 2. Activar cuenta (crear usuario y profesional si aplica)
         const resultado = await ActivacionModel.activar(token, password_hash);
-
-        // 2.1 Si tiene organización Y soy_profesional, crear profesional vinculado
-        // (Solo aplica al flujo legacy con org pre-creada, no al flujo unificado)
-        if (resultado.organizacion && resultado.soy_profesional) {
-            const RLSContextManager = require('../../../utils/rlsContextManager');
-
-            await RLSContextManager.withBypass(async (db) => {
-                // Construir nombre completo
-                const nombreCompleto = resultado.usuario.nombre +
-                    (resultado.usuario.apellidos ? ' ' + resultado.usuario.apellidos : '');
-
-                // Crear profesional vinculado al usuario admin
-                // ACTUALIZADO Dic 2025: modulos_acceso eliminado
-                // Los permisos se asignan via permisos_rol según el rol del usuario
-                await db.query(`
-                    INSERT INTO profesionales (
-                        organizacion_id,
-                        nombre_completo,
-                        email,
-                        usuario_id,
-                        activo
-                    ) VALUES ($1, $2, $3, $4, TRUE)
-                `, [
-                    resultado.organizacion.id,
-                    nombreCompleto,
-                    resultado.usuario.email,
-                    resultado.usuario.id
-                ]);
-            });
-        }
 
         // 3. Generar tokens JWT para login automático
         const { accessToken, refreshToken, expiresIn } = JwtService.generateTokenPair(resultado.usuario);

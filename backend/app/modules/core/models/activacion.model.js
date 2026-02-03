@@ -65,6 +65,7 @@ class ActivacionModel {
             }
 
             // Crear activación (organizacion_id puede ser null)
+            // SECURITY FIX: Usar MAKE_INTERVAL para evitar SQL injection
             const activacionResult = await db.query(`
                 INSERT INTO activaciones_cuenta (
                     token,
@@ -76,11 +77,11 @@ class ActivacionModel {
                     email_enviado_en
                 ) VALUES (
                     $1, $2, LOWER($3), $4, $5,
-                    NOW() + INTERVAL '${horas_expiracion} hours',
+                    NOW() + MAKE_INTERVAL(hours => $6),
                     NOW()
                 )
                 RETURNING *
-            `, [token, organizacion_id, email, nombre, soy_profesional]);
+            `, [token, organizacion_id, email, nombre, soy_profesional, horas_expiracion]);
 
             const activacion = activacionResult.rows[0];
 
@@ -141,6 +142,7 @@ class ActivacionModel {
             `, [email]);
 
             // Crear magic link
+            // SECURITY FIX: Usar MAKE_INTERVAL para evitar SQL injection
             const magicLinkResult = await db.query(`
                 INSERT INTO activaciones_cuenta (
                     token,
@@ -152,11 +154,11 @@ class ActivacionModel {
                     email_enviado_en
                 ) VALUES (
                     $1, NULL, LOWER($2), NULL, 'magic_link',
-                    NOW() + INTERVAL '${minutos_expiracion} minutes',
+                    NOW() + MAKE_INTERVAL(mins => $3),
                     NOW()
                 )
                 RETURNING *
-            `, [token, email]);
+            `, [token, email, minutos_expiracion]);
 
             const magicLink = magicLinkResult.rows[0];
 
@@ -349,7 +351,7 @@ class ActivacionModel {
      * @returns {Promise<Object>} Usuario creado y datos de la organización (si existe)
      */
     static async activar(token, password_hash) {
-        return RLSContextManager.withBypass(async (db) => {
+        return RLSContextManager.transactionWithBypass(async (db) => {
             // Obtener y validar activación (LEFT JOIN para soportar sin org)
             const activacionResult = await db.query(`
                 SELECT a.*, o.nombre_comercial
@@ -452,6 +454,35 @@ class ActivacionModel {
                 WHERE id = $2
             `, [usuario.id, activacion.id]);
 
+            // Si tiene organización Y soy_profesional, crear profesional vinculado
+            // (Solo aplica al flujo legacy con org pre-creada, no al flujo unificado)
+            if (tieneOrganizacion && activacion.soy_profesional) {
+                // Construir nombre completo
+                const nombreCompleto = nombre + (apellidos ? ' ' + apellidos : '');
+
+                // Crear profesional vinculado al usuario
+                // Los permisos se asignan via permisos_rol según el rol del usuario
+                await db.query(`
+                    INSERT INTO profesionales (
+                        organizacion_id,
+                        nombre_completo,
+                        email,
+                        usuario_id,
+                        activo
+                    ) VALUES ($1, $2, $3, $4, TRUE)
+                `, [
+                    activacion.organizacion_id,
+                    nombreCompleto,
+                    activacion.email,
+                    usuario.id
+                ]);
+
+                logger.info(`[ActivacionModel.activar] Profesional creado para usuario`, {
+                    usuario_id: usuario.id,
+                    organizacion_id: activacion.organizacion_id
+                });
+            }
+
             logger.info(`[ActivacionModel.activar] Cuenta activada exitosamente`, {
                 usuario_id: usuario.id,
                 email: usuario.email,
@@ -501,10 +532,11 @@ class ActivacionModel {
             }
 
             // Actualizar con nuevo token y extender expiración
+            // CONSISTENCY FIX: Usar MAKE_INTERVAL para consistencia con el resto del código
             const nuevaResult = await db.query(`
                 UPDATE activaciones_cuenta
                 SET token = $1,
-                    expira_en = NOW() + INTERVAL '24 hours',
+                    expira_en = NOW() + MAKE_INTERVAL(hours => 24),
                     reenvios = reenvios + 1,
                     ultimo_reenvio = NOW(),
                     email_enviado_en = NOW()
@@ -553,11 +585,12 @@ class ActivacionModel {
             await db.query(`SELECT marcar_activaciones_expiradas()`);
 
             // Luego eliminar las muy antiguas
+            // SECURITY FIX: Usar MAKE_INTERVAL para evitar SQL injection
             const result = await db.query(`
                 DELETE FROM activaciones_cuenta
                 WHERE estado = 'expirada'
-                  AND actualizado_en < NOW() - INTERVAL '${diasAntiguedad} days'
-            `);
+                  AND actualizado_en < NOW() - MAKE_INTERVAL(days => $1)
+            `, [diasAntiguedad]);
 
             const eliminadas = result.rowCount;
 

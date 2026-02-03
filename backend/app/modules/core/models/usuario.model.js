@@ -20,7 +20,6 @@ const RLSHelper = require('../../../utils/rlsHelper');
 const RLSContextManager = require('../../../utils/rlsContextManager');
 const tokenBlacklistService = require('../../../services/tokenBlacklistService');
 const { ErrorHelper } = require('../../../utils/helpers');
-const JwtService = require('../../../services/jwtService');
 
 // Configuración de bcrypt para hashing de contraseñas
 const BCRYPT_SALT_ROUNDS = 12;
@@ -147,36 +146,6 @@ class UsuarioModel {
         return await bcrypt.compare(password, hash);
     }
 
-    /**
-     * @deprecated Usar AuthModel.autenticar() directamente
-     * Mantenido por compatibilidad hacia atrás
-     */
-    static async autenticar(email, password, ipAddress = null) {
-        const AuthModel = require('./auth.model');
-        return AuthModel.autenticar(email, password, ipAddress);
-    }
-
-    /**
-     * Genera par de tokens JWT para el usuario
-     * @deprecated Usar JwtService.generateTokenPair() directamente para nuevo código
-     * @param {Object} usuario - Datos del usuario
-     * @returns {Object} { accessToken, refreshToken }
-     */
-    static generarTokens(usuario) {
-        // Delegamos a JwtService centralizado
-        const { accessToken, refreshToken } = JwtService.generateTokenPair(usuario);
-        return { accessToken, refreshToken };
-    }
-
-    /**
-     * @deprecated Usar AuthModel.refrescarToken() directamente
-     * Mantenido por compatibilidad hacia atrás
-     */
-    static async refrescarToken(refreshToken) {
-        const AuthModel = require('./auth.model');
-        return AuthModel.refrescarToken(refreshToken);
-    }
-
     // Usa bypass RLS para operaciones de sistema (refresh tokens, validaciones)
     static async buscarPorId(id) {
         // ✅ Usar RLSContextManager.withBypass() para gestión automática completa
@@ -275,24 +244,6 @@ class UsuarioModel {
 
             return result.rows[0];
         });
-    }
-
-    /**
-     * @deprecated Usar AuthModel.registrarIntentoLogin() directamente
-     * Mantenido por compatibilidad hacia atrás
-     */
-    static async registrarIntentoLogin(email, exitoso, ipAddress = null) {
-        const AuthModel = require('./auth.model');
-        return AuthModel.registrarIntentoLogin(email, exitoso, ipAddress);
-    }
-
-    /**
-     * @deprecated Usar AuthModel.cambiarPassword() directamente
-     * Mantenido por compatibilidad hacia atrás
-     */
-    static async cambiarPassword(userId, passwordAnterior, passwordNueva) {
-        const AuthModel = require('./auth.model');
-        return AuthModel.cambiarPassword(userId, passwordAnterior, passwordNueva);
     }
 
     static async actualizarPerfil(userId, datos, organizacionId, currentUserId) {
@@ -449,11 +400,10 @@ class UsuarioModel {
 
                 await RLSHelper.registrarEvento(db, {
                     organizacion_id: orgId,
-                    evento_tipo: 'usuario_creado',
-                    entidad_tipo: 'usuario',
-                    entidad_id: nuevoUsuario.id,
+                    tipo_evento: 'usuario_creado',
+                    subtipo_evento: 'onboarding',
                     descripcion: `Usuario ${rol} creado automáticamente durante onboarding`,
-                    metadatos: {
+                    metadata: {
                         rol: rol,
                         email: nuevoUsuario.email,
                         nombre_completo: `${nuevoUsuario.nombre} ${nuevoUsuario.apellidos || ''}`.trim(),
@@ -708,24 +658,6 @@ class UsuarioModel {
         }); // Sin useTransaction - auto-commit cada query
     }
 
-    /**
-     * @deprecated Usar AuthModel.solicitarResetPassword() directamente
-     * Mantenido por compatibilidad hacia atrás
-     */
-    static async resetPassword(email, ipAddress = null) {
-        const AuthModel = require('./auth.model');
-        return AuthModel.solicitarResetPassword(email, ipAddress);
-    }
-
-    /**
-     * @deprecated Usar AuthModel.verificarEmail() directamente
-     * Mantenido por compatibilidad hacia atrás
-     */
-    static async verificarEmail(token) {
-        const AuthModel = require('./auth.model');
-        return AuthModel.verificarEmail(token);
-    }
-
     static async existenUsuarios() {
         // ✅ Usar RLSContextManager.withBypass() para gestión automática completa
         return await RLSContextManager.withBypass(async (db) => {
@@ -735,24 +667,6 @@ class UsuarioModel {
 
             return usuarioCount > 0;
         });
-    }
-
-    /**
-     * @deprecated Usar AuthModel.validarTokenReset() directamente
-     * Mantenido por compatibilidad hacia atrás
-     */
-    static async validarTokenReset(token) {
-        const AuthModel = require('./auth.model');
-        return AuthModel.validarTokenReset(token);
-    }
-
-    /**
-     * @deprecated Usar AuthModel.confirmarResetPassword() directamente
-     * Mantenido por compatibilidad hacia atrás
-     */
-    static async confirmarResetPassword(token, passwordNueva, ipAddress = null) {
-        const AuthModel = require('./auth.model');
-        return AuthModel.confirmarResetPassword(token, passwordNueva, ipAddress);
     }
 
     // ====================================================================
@@ -915,89 +829,80 @@ class UsuarioModel {
             activo = true
         } = userData;
 
-        return await RLSContextManager.withBypass(async (db) => {
-            await db.query('BEGIN');
+        // FIX: Usar transactionWithBypass en lugar de BEGIN/COMMIT manual
+        return await RLSContextManager.transactionWithBypass(async (db) => {
+            // Verificar que el email no exista
+            const existeEmail = await db.query(
+                'SELECT id FROM usuarios WHERE email = LOWER($1)',
+                [email]
+            );
 
-            try {
-                // Verificar que el email no exista
-                const existeEmail = await db.query(
-                    'SELECT id FROM usuarios WHERE email = LOWER($1)',
-                    [email]
-                );
-
-                if (existeEmail.rows[0]) {
-                    ErrorHelper.throwConflict('Este email ya está registrado en el sistema');
-                }
-
-                // Si se especifica profesional_id, verificar que exista y no tenga usuario
-                if (profesional_id) {
-                    const profesional = await db.query(`
-                        SELECT id, usuario_id, nombre_completo
-                        FROM profesionales
-                        WHERE id = $1 AND organizacion_id = $2
-                    `, [profesional_id, organizacionId]);
-
-                    ErrorHelper.throwIfNotFound(profesional.rows[0], 'Profesional');
-
-                    if (profesional.rows[0].usuario_id) {
-                        ErrorHelper.throwConflict('Este profesional ya tiene un usuario vinculado');
-                    }
-                }
-
-                // Hashear password
-                const password_hash = await bcrypt.hash(password, BCRYPT_SALT_ROUNDS);
-
-                // Obtener rol_id basado en código de rol
-                const rolResult = await db.query(
-                    `SELECT id FROM roles WHERE codigo = $1 AND (organizacion_id = $2 OR es_rol_sistema = TRUE) LIMIT 1`,
-                    [rol, organizacionId]
-                );
-                const rolId = rolResult.rows[0]?.id;
-
-                if (!rolId) {
-                    ErrorHelper.throwValidation(`Rol '${rol}' no encontrado en la organización`);
-                }
-
-                // Crear usuario
-                const usuarioResult = await db.query(`
-                    INSERT INTO usuarios (
-                        organizacion_id, email, password_hash, nombre, apellidos,
-                        telefono, rol_id, profesional_id, activo, email_verificado
-                    ) VALUES ($1, LOWER($2), $3, $4, $5, $6, $7, $8, $9, TRUE)
-                    RETURNING id, organizacion_id, email, nombre, apellidos, telefono,
-                              rol_id, profesional_id, activo, email_verificado, creado_en
-                `, [
-                    organizacionId, email, password_hash, nombre, apellidos || null,
-                    telefono || null, rolId, profesional_id, activo
-                ]);
-
-                const usuario = usuarioResult.rows[0];
-                logger.info('[crearUsuarioDirecto] INSERT ejecutado, usuario:', { id: usuario.id, email: usuario.email });
-
-                // Si hay profesional_id, vincular profesional al usuario
-                if (profesional_id) {
-                    await db.query(`
-                        UPDATE profesionales
-                        SET usuario_id = $1, actualizado_en = NOW()
-                        WHERE id = $2
-                    `, [usuario.id, profesional_id]);
-                }
-
-                await db.query('COMMIT');
-                logger.info('[crearUsuarioDirecto] COMMIT ejecutado');
-
-                logger.info('[UsuarioModel.crearUsuarioDirecto] Usuario creado', {
-                    usuario_id: usuario.id,
-                    email: usuario.email,
-                    con_profesional: !!profesional_id
-                });
-
-                return usuario;
-
-            } catch (error) {
-                await db.query('ROLLBACK');
-                throw error;
+            if (existeEmail.rows[0]) {
+                ErrorHelper.throwConflict('Este email ya está registrado en el sistema');
             }
+
+            // Si se especifica profesional_id, verificar que exista y no tenga usuario
+            if (profesional_id) {
+                const profesional = await db.query(`
+                    SELECT id, usuario_id, nombre_completo
+                    FROM profesionales
+                    WHERE id = $1 AND organizacion_id = $2
+                `, [profesional_id, organizacionId]);
+
+                ErrorHelper.throwIfNotFound(profesional.rows[0], 'Profesional');
+
+                if (profesional.rows[0].usuario_id) {
+                    ErrorHelper.throwConflict('Este profesional ya tiene un usuario vinculado');
+                }
+            }
+
+            // Hashear password
+            const password_hash = await bcrypt.hash(password, BCRYPT_SALT_ROUNDS);
+
+            // Obtener rol_id basado en código de rol
+            const rolResult = await db.query(
+                `SELECT id FROM roles WHERE codigo = $1 AND (organizacion_id = $2 OR es_rol_sistema = TRUE) LIMIT 1`,
+                [rol, organizacionId]
+            );
+            const rolId = rolResult.rows[0]?.id;
+
+            if (!rolId) {
+                ErrorHelper.throwValidation(`Rol '${rol}' no encontrado en la organización`);
+            }
+
+            // Crear usuario
+            const usuarioResult = await db.query(`
+                INSERT INTO usuarios (
+                    organizacion_id, email, password_hash, nombre, apellidos,
+                    telefono, rol_id, profesional_id, activo, email_verificado
+                ) VALUES ($1, LOWER($2), $3, $4, $5, $6, $7, $8, $9, TRUE)
+                RETURNING id, organizacion_id, email, nombre, apellidos, telefono,
+                          rol_id, profesional_id, activo, email_verificado, creado_en
+            `, [
+                organizacionId, email, password_hash, nombre, apellidos || null,
+                telefono || null, rolId, profesional_id, activo
+            ]);
+
+            const usuario = usuarioResult.rows[0];
+            logger.info('[crearUsuarioDirecto] INSERT ejecutado, usuario:', { id: usuario.id, email: usuario.email });
+
+            // Si hay profesional_id, vincular profesional al usuario
+            if (profesional_id) {
+                await db.query(`
+                    UPDATE profesionales
+                    SET usuario_id = $1, actualizado_en = NOW()
+                    WHERE id = $2
+                `, [usuario.id, profesional_id]);
+            }
+
+            logger.info('[UsuarioModel.crearUsuarioDirecto] Usuario creado', {
+                usuario_id: usuario.id,
+                email: usuario.email,
+                con_profesional: !!profesional_id
+            });
+
+            return usuario;
+            // COMMIT automático al finalizar, ROLLBACK automático si hay error
         });
     }
 
@@ -1248,14 +1153,6 @@ class UsuarioModel {
         });
     }
 
-    /**
-     * @deprecated Usar OnboardingService.completar() directamente
-     * Mantenido por compatibilidad hacia atrás
-     */
-    static async completarOnboarding(userId, orgData) {
-        const OnboardingService = require('../../../services/onboardingService');
-        return OnboardingService.completar(userId, orgData);
-    }
 }
 
 module.exports = UsuarioModel;

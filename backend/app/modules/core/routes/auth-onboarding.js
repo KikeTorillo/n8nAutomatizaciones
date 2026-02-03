@@ -13,9 +13,10 @@ const router = express.Router();
 
 // ========== Registro Simplificado ==========
 
-// Registro (sin password, envía email de activación)
+// Registro (sin password, envía email de activación) - doble rate limit: por IP heavy + por email
 router.post('/registrar',
     rateLimiting.heavyOperationRateLimit,
+    rateLimiting.emailRateLimit,
     validation.validate(activacionSchemas.registrar),
     AuthController.registrarSimplificado
 );
@@ -34,9 +35,10 @@ router.post('/activar/:token',
     AuthController.activarCuenta
 );
 
-// Reenviar email de activación
+// Reenviar email de activación - doble rate limit: por IP heavy + por email
 router.post('/reenviar-activacion',
     rateLimiting.heavyOperationRateLimit,
+    rateLimiting.emailRateLimit,
     validation.validate(activacionSchemas.reenviar),
     AuthController.reenviarActivacion
 );

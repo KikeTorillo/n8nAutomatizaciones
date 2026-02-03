@@ -14,9 +14,10 @@ const router = express.Router();
 
 // ========== Reset de Contraseña ==========
 
-// Solicitar reset de contraseña
+// Solicitar reset de contraseña (doble rate limit: por IP heavy + por email)
 router.post('/reset-password',
     rateLimiting.heavyOperationRateLimit,
+    rateLimiting.emailRateLimit,
     validation.validate(authSchemas.recuperarPassword),
     AuthController.recuperarPassword
 );
@@ -44,9 +45,10 @@ router.post('/password-strength',
 
 // ========== Magic Links ==========
 
-// Solicitar magic link (envía email)
+// Solicitar magic link (envía email) - doble rate limit: por IP heavy + por email
 router.post('/magic-link',
     rateLimiting.heavyOperationRateLimit,
+    rateLimiting.emailRateLimit,
     validation.validate(activacionSchemas.solicitarMagicLink),
     AuthController.solicitarMagicLink
 );

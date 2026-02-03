@@ -498,6 +498,42 @@ const heavyOperationRateLimit = createRateLimit({
 });
 
 /**
+ * Rate limiting por email para endpoints sensibles
+ *
+ * Específico para endpoints que envían emails (magic links, reset password, activación).
+ * Previene spam de emails a un mismo destinatario.
+ *
+ * Configuración:
+ * - 5 requests por email por hora
+ * - Key format: 'rate_limit:email:usuario@ejemplo.com'
+ *
+ * @type {Function} Middleware Express
+ * @example
+ * router.post('/auth/magic-link', emailRateLimit, magicLinkController);
+ * router.post('/auth/reset-password', emailRateLimit, resetPasswordController);
+ */
+const emailRateLimit = createRateLimit({
+  windowMs: 60 * 60 * 1000,                                        // 1 hora
+  max: 5,                                                          // Solo 5 emails
+  message: 'Demasiadas solicitudes para este email, intenta en 1 hora',
+  keyGenerator: (req) => {
+    // Usar email del body si existe, sino fallback a IP
+    const email = req.body?.email?.toLowerCase().trim();
+    return email ? `email:${email}` : `email:${sanitizeIP(req.ip)}`;
+  },
+  onLimitReached: (req, res) => {
+    // Log de eventos de seguridad (posible spam o enumeración de usuarios)
+    logger.warn('Rate limit de email excedido', {
+      ip: sanitizeIP(req.ip),
+      email: req.body?.email ? '[REDACTED]' : 'no email',
+      userAgent: req.get('User-Agent'),
+      path: req.path,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
+/**
  * Rate limiting permisivo para tracking de analytics
  *
  * Específico para endpoints de tracking de sitios web públicos.
@@ -620,6 +656,7 @@ module.exports = {
   heavyOperationRateLimit,        // Rate limiting para operaciones costosas
   planBasedRateLimit,             // Rate limiting dinámico por plan
   trackingRateLimit,              // Rate limiting permisivo para analytics tracking
+  emailRateLimit,                 // Rate limiting por email (magic links, reset password)
 
   // Utilidades
   createRateLimit,                // Factory para crear rate limits personalizados

@@ -20,7 +20,8 @@ const logger = require('../utils/logger');
 const JWT_CONFIG = {
     ACCESS_TOKEN_EXPIRATION: process.env.JWT_EXPIRES_IN || '1h',
     ACCESS_TOKEN_EXPIRATION_SECONDS: 3600,
-    REFRESH_TOKEN_EXPIRATION: process.env.JWT_REFRESH_EXPIRES_IN || '7d'
+    REFRESH_TOKEN_EXPIRATION: process.env.JWT_REFRESH_EXPIRES_IN || '7d',
+    ISSUER: process.env.JWT_ISSUER || 'nexo-app'
 };
 
 class JwtService {
@@ -50,7 +51,10 @@ class JwtService {
         return jwt.sign(
             payload,
             process.env.JWT_SECRET,
-            { expiresIn: JWT_CONFIG.ACCESS_TOKEN_EXPIRATION }
+            {
+                expiresIn: JWT_CONFIG.ACCESS_TOKEN_EXPIRATION,
+                issuer: JWT_CONFIG.ISSUER
+            }
         );
     }
 
@@ -66,7 +70,10 @@ class JwtService {
         return jwt.sign(
             { userId, type: 'refresh', jti },
             process.env.JWT_REFRESH_SECRET,
-            { expiresIn: JWT_CONFIG.REFRESH_TOKEN_EXPIRATION }
+            {
+                expiresIn: JWT_CONFIG.REFRESH_TOKEN_EXPIRATION,
+                issuer: JWT_CONFIG.ISSUER
+            }
         );
     }
 
@@ -96,7 +103,9 @@ class JwtService {
      */
     static verifyAccessToken(token) {
         try {
-            return jwt.verify(token, process.env.JWT_SECRET);
+            return jwt.verify(token, process.env.JWT_SECRET, {
+                issuer: JWT_CONFIG.ISSUER
+            });
         } catch (error) {
             if (error.name === 'TokenExpiredError') {
                 const err = new Error('Token expirado');
@@ -123,7 +132,9 @@ class JwtService {
      */
     static verifyRefreshToken(token) {
         try {
-            const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
+            const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET, {
+                issuer: JWT_CONFIG.ISSUER
+            });
 
             if (decoded.type !== 'refresh') {
                 const err = new Error('Token de tipo incorrecto');
