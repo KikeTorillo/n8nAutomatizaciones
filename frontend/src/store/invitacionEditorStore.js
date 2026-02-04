@@ -10,14 +10,12 @@
  */
 
 import { createEditorStore, createEditorSelectors } from './createEditorStore';
-import { getBlockDefaults } from '@/pages/eventos-digitales/editor/config';
 
 // ========== CREAR STORE ==========
 
 export const useInvitacionEditorStore = createEditorStore({
   name: 'invitacion-editor-store',
   persist: true,
-  getDefaults: getBlockDefaults,
 });
 
 // ========== SELECTORES ==========

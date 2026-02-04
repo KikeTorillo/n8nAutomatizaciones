@@ -19,14 +19,12 @@ import { subscribeWithSelector, persist, createJSONStorage } from 'zustand/middl
  * @param {Object} options - Opciones de configuración
  * @param {string} options.name - Nombre único del store (para persist)
  * @param {boolean} options.persist - Si debe persistir en localStorage (default: true)
- * @param {Function} options.getDefaults - Función que retorna defaults para un tipo de bloque
  * @returns {Object} Store de Zustand
  */
 export function createEditorStore(options = {}) {
   const {
     name = 'editor-store',
     persist: shouldPersist = true,
-    getDefaults = () => ({}),
   } = options;
 
   // Variable para cleanup del setTimeout de bloqueRecienAgregado
