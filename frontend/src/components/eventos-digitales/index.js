@@ -23,6 +23,13 @@ export {
   FelicitacionesTab,
 } from './tabs';
 
+// Drawers (formularios)
+export {
+  InvitadoFormDrawer,
+  UbicacionFormDrawer,
+  RegaloFormDrawer,
+} from './drawers';
+
 // Públicos (página de evento)
 export {
   EventoCountdown,

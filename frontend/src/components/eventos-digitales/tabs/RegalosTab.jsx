@@ -1,80 +1,28 @@
-import { useState } from 'react';
+import { memo } from 'react';
 import { Plus, Edit, Trash2, Gift, ExternalLink, Check } from 'lucide-react';
-import { Button, Input, LoadingSpinner } from '@/components/ui';
-import { useToast } from '@/hooks/utils';
+import { Button, LoadingSpinner } from '@/components/ui';
+import { useModalManager } from '@/hooks/utils';
+import RegaloFormDrawer from '../drawers/RegaloFormDrawer';
 
 /**
  * Tab de mesa de regalos del evento
+ * Refactorizado con Drawer - Feb 2026
+ *
  * @param {Object} props
  * @param {Array} props.regalos - Lista de regalos
  * @param {boolean} props.isLoading - Estado de carga
- * @param {Object} props.crearRegalo - Mutation para crear
- * @param {Object} props.actualizarRegalo - Mutation para actualizar
  * @param {Object} props.eliminarRegalo - Mutation para eliminar
  * @param {string} props.eventoId - ID del evento
  */
-export default function RegalosTab({
+function RegalosTab({
   regalos,
   isLoading,
-  crearRegalo,
-  actualizarRegalo,
   eliminarRegalo,
   eventoId,
 }) {
-  const toast = useToast();
-  const [showForm, setShowForm] = useState(false);
-  const [editingId, setEditingId] = useState(null);
-  const [form, setForm] = useState({
-    nombre: '',
-    tipo: 'producto',
-    descripcion: '',
-    precio: '',
-    url_externa: '',
+  const { openModal, closeModal, isOpen, getModalData, getModalProps } = useModalManager({
+    regalo: { isOpen: false, data: null, mode: 'create' },
   });
-
-  const handleGuardar = async (e) => {
-    e.preventDefault();
-    try {
-      const data = {
-        nombre: form.nombre,
-        tipo: form.tipo,
-        descripcion: form.descripcion || undefined,
-        precio: form.precio ? parseFloat(form.precio) : undefined,
-        url_externa: form.url_externa || undefined,
-      };
-
-      if (editingId) {
-        await actualizarRegalo.mutateAsync({ id: editingId, eventoId, data });
-        toast.success('Regalo actualizado');
-        setEditingId(null);
-      } else {
-        await crearRegalo.mutateAsync({ eventoId, data });
-        toast.success('Regalo agregado');
-      }
-      setForm({ nombre: '', tipo: 'producto', descripcion: '', precio: '', url_externa: '' });
-      setShowForm(false);
-    } catch (error) {
-      toast.error(error.message);
-    }
-  };
-
-  const handleEditar = (regalo) => {
-    setForm({
-      nombre: regalo.nombre,
-      tipo: regalo.tipo || 'producto',
-      descripcion: regalo.descripcion || '',
-      precio: regalo.precio ? String(regalo.precio) : '',
-      url_externa: regalo.url_externa || '',
-    });
-    setEditingId(regalo.id);
-    setShowForm(true);
-  };
-
-  const handleCancelar = () => {
-    setForm({ nombre: '', tipo: 'producto', descripcion: '', precio: '', url_externa: '' });
-    setEditingId(null);
-    setShowForm(false);
-  };
 
   if (isLoading) {
     return <LoadingSpinner />;
@@ -84,68 +32,20 @@ export default function RegalosTab({
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Mesa de Regalos</h2>
-        <Button onClick={() => setShowForm(true)}>
+        <Button onClick={() => openModal('regalo', null, { mode: 'create' })}>
           <Plus className="w-4 h-4 mr-2" />
           Agregar Regalo
         </Button>
       </div>
 
-      {showForm && (
-        <form onSubmit={handleGuardar} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-200 dark:border-gray-700">
-          <h3 className="font-medium text-gray-900 dark:text-gray-100 mb-4">{editingId ? 'Editar Regalo' : 'Nuevo Regalo'}</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Input
-              label="Nombre *"
-              value={form.nombre}
-              onChange={(e) => setForm({ ...form, nombre: e.target.value })}
-              placeholder="Ej: Licuadora Oster"
-              required
-            />
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tipo</label>
-              <select
-                value={form.tipo}
-                onChange={(e) => setForm({ ...form, tipo: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-              >
-                <option value="producto">Producto</option>
-                <option value="sobre_digital">Sobre Digital</option>
-                <option value="link_externo">Link Externo</option>
-              </select>
-            </div>
-            <Input
-              label="Precio"
-              type="number"
-              step="0.01"
-              value={form.precio}
-              onChange={(e) => setForm({ ...form, precio: e.target.value })}
-            />
-            <Input
-              label="URL Externa"
-              value={form.url_externa}
-              onChange={(e) => setForm({ ...form, url_externa: e.target.value })}
-              placeholder="https://..."
-            />
-            <div className="sm:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Descripcion</label>
-              <textarea
-                value={form.descripcion}
-                onChange={(e) => setForm({ ...form, descripcion: e.target.value })}
-                rows={2}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-              />
-            </div>
-          </div>
-          <div className="flex gap-2 mt-4">
-            <Button type="submit" disabled={crearRegalo.isPending || actualizarRegalo.isPending}>
-              {(crearRegalo.isPending || actualizarRegalo.isPending) ? 'Guardando...' : 'Guardar'}
-            </Button>
-            <Button variant="outline" type="button" onClick={handleCancelar}>
-              Cancelar
-            </Button>
-          </div>
-        </form>
-      )}
+      {/* Drawer de Regalo */}
+      <RegaloFormDrawer
+        isOpen={isOpen('regalo')}
+        onClose={() => closeModal('regalo')}
+        mode={getModalProps('regalo').mode}
+        regalo={getModalData('regalo')}
+        eventoId={eventoId}
+      />
 
       {regalos?.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -160,7 +60,7 @@ export default function RegalosTab({
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => handleEditar(regalo)}
+                    onClick={() => openModal('regalo', regalo, { mode: 'edit' })}
                     title="Editar regalo"
                   >
                     <Edit className="w-4 h-4" />
@@ -200,3 +100,9 @@ export default function RegalosTab({
     </div>
   );
 }
+
+export default memo(RegalosTab, (prevProps, nextProps) => {
+  return prevProps.eventoId === nextProps.eventoId &&
+         prevProps.regalos === nextProps.regalos &&
+         prevProps.isLoading === nextProps.isLoading;
+});

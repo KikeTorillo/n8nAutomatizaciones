@@ -26,16 +26,10 @@ import {
   useMesaRegalos,
   useFelicitaciones,
   usePublicarEvento,
-  useCrearInvitado,
-  useActualizarInvitado,
   useEliminarInvitado,
   useImportarInvitados,
   useExportarInvitados,
-  useCrearUbicacion,
-  useActualizarUbicacion,
   useEliminarUbicacion,
-  useCrearRegalo,
-  useActualizarRegalo,
   useEliminarRegalo,
   useAprobarFelicitacion,
   useRechazarFelicitacion,
@@ -69,19 +63,13 @@ function EventoDetailPage() {
 
   // Mutations
   const publicarEvento = usePublicarEvento();
-  const crearInvitado = useCrearInvitado();
-  const actualizarInvitado = useActualizarInvitado();
   const eliminarInvitado = useEliminarInvitado();
-  const crearUbicacion = useCrearUbicacion();
-  const actualizarUbicacion = useActualizarUbicacion();
+  const importarInvitados = useImportarInvitados();
+  const exportarInvitados = useExportarInvitados();
   const eliminarUbicacion = useEliminarUbicacion();
-  const crearRegalo = useCrearRegalo();
-  const actualizarRegalo = useActualizarRegalo();
   const eliminarRegalo = useEliminarRegalo();
   const aprobarFelicitacion = useAprobarFelicitacion();
   const rechazarFelicitacion = useRechazarFelicitacion();
-  const importarInvitados = useImportarInvitados();
-  const exportarInvitados = useExportarInvitados();
 
   // Cargar stats de check-in iniciales
   // Ene 2026: Usar hasToken() de tokenManager
@@ -288,8 +276,6 @@ function EventoDetailPage() {
             isLoading={loadingInvitados}
             evento={evento}
             mostrarQR={mostrarQR}
-            crearInvitado={crearInvitado}
-            actualizarInvitado={actualizarInvitado}
             eliminarInvitado={eliminarInvitado}
             importarInvitados={importarInvitados}
             exportarInvitados={exportarInvitados}
@@ -316,8 +302,6 @@ function EventoDetailPage() {
           <UbicacionesTab
             ubicaciones={ubicaciones}
             isLoading={loadingUbicaciones}
-            crearUbicacion={crearUbicacion}
-            actualizarUbicacion={actualizarUbicacion}
             eliminarUbicacion={eliminarUbicacion}
             eventoId={id}
           />
@@ -327,8 +311,6 @@ function EventoDetailPage() {
           <RegalosTab
             regalos={regalos}
             isLoading={loadingRegalos}
-            crearRegalo={crearRegalo}
-            actualizarRegalo={actualizarRegalo}
             eliminarRegalo={eliminarRegalo}
             eventoId={id}
           />

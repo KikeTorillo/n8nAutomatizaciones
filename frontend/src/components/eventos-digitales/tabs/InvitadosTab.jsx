@@ -14,18 +14,17 @@ import { useModalManager } from '@/hooks/utils';
 import { useToast } from '@/hooks/utils';
 import { eventosDigitalesApi } from '@/services/api/modules';
 import InvitadoTableRow from './InvitadoTableRow';
+import InvitadoFormDrawer from '../drawers/InvitadoFormDrawer';
 
 /**
  * Tab de invitados del evento
- * Refactorizado con React.memo y useCallback - Feb 2026
+ * Refactorizado con Drawer - Feb 2026
  *
  * @param {Object} props
  * @param {Object} props.invitadosData - Datos de invitados { invitados: [], total: number }
  * @param {boolean} props.isLoading - Estado de carga
  * @param {Object} props.evento - Datos del evento (slug)
  * @param {boolean} props.mostrarQR - Si mostrar opciones de QR
- * @param {Object} props.crearInvitado - Mutation para crear
- * @param {Object} props.actualizarInvitado - Mutation para actualizar
  * @param {Object} props.eliminarInvitado - Mutation para eliminar
  * @param {Object} props.importarInvitados - Mutation para importar CSV
  * @param {Object} props.exportarInvitados - Mutation para exportar CSV
@@ -36,68 +35,22 @@ export default function InvitadosTab({
   isLoading,
   evento,
   mostrarQR,
-  crearInvitado,
-  actualizarInvitado,
   eliminarInvitado,
   importarInvitados,
   exportarInvitados,
   eventoId,
 }) {
   const toast = useToast();
-  const [showForm, setShowForm] = useState(false);
-  const [editingId, setEditingId] = useState(null);
-  const [form, setForm] = useState({ nombre: '', email: '', telefono: '', max_acompanantes: 0 });
   const [showImportModal, setShowImportModal] = useState(false);
   const [csvText, setCsvText] = useState('');
   const [loadingQR, setLoadingQR] = useState(false);
 
-  const { openModal, closeModal, isOpen, getModalData } = useModalManager({
+  const { openModal, closeModal, isOpen, getModalData, getModalProps } = useModalManager({
+    invitado: { isOpen: false, data: null, mode: 'create' },
     qr: { isOpen: false, data: null },
   });
 
   // ==================== HANDLERS MEMOIZADOS ====================
-
-  const handleGuardar = useCallback(async (e) => {
-    e.preventDefault();
-    try {
-      const data = {
-        nombre: form.nombre,
-        email: form.email || undefined,
-        telefono: form.telefono || undefined,
-        max_acompanantes: parseInt(form.max_acompanantes) || 0,
-      };
-
-      if (editingId) {
-        await actualizarInvitado.mutateAsync({ id: editingId, eventoId, data });
-        toast.success('Invitado actualizado');
-        setEditingId(null);
-      } else {
-        await crearInvitado.mutateAsync({ eventoId, data });
-        toast.success('Invitado agregado');
-      }
-      setForm({ nombre: '', email: '', telefono: '', max_acompanantes: 0 });
-      setShowForm(false);
-    } catch (error) {
-      toast.error(error.message);
-    }
-  }, [form, editingId, eventoId, actualizarInvitado, crearInvitado, toast]);
-
-  const handleEditar = useCallback((inv) => {
-    setForm({
-      nombre: inv.nombre,
-      email: inv.email || '',
-      telefono: inv.telefono || '',
-      max_acompanantes: inv.max_acompanantes || 0,
-    });
-    setEditingId(inv.id);
-    setShowForm(true);
-  }, []);
-
-  const handleCancelar = useCallback(() => {
-    setForm({ nombre: '', email: '', telefono: '', max_acompanantes: 0 });
-    setEditingId(null);
-    setShowForm(false);
-  }, []);
 
   const handleEliminar = useCallback((invitadoId) => {
     eliminarInvitado.mutate({ id: invitadoId, eventoId });
@@ -251,7 +204,7 @@ export default function InvitadosTab({
               Descargar QR
             </Button>
           )}
-          <Button onClick={() => setShowForm(true)}>
+          <Button onClick={() => openModal('invitado', null, { mode: 'create' })}>
             <Plus className="w-4 h-4 mr-2" />
             Agregar
           </Button>
@@ -356,45 +309,14 @@ export default function InvitadosTab({
         </div>
       )}
 
-      {showForm && (
-        <form onSubmit={handleGuardar} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-200 dark:border-gray-700">
-          <h3 className="font-medium text-gray-900 dark:text-gray-100 mb-4">{editingId ? 'Editar Invitado' : 'Nuevo Invitado'}</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Input
-              label="Nombre *"
-              value={form.nombre}
-              onChange={(e) => setForm({ ...form, nombre: e.target.value })}
-              required
-            />
-            <Input
-              label="Email"
-              type="email"
-              value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
-            />
-            <Input
-              label="Telefono"
-              value={form.telefono}
-              onChange={(e) => setForm({ ...form, telefono: e.target.value })}
-            />
-            <Input
-              label="Max. Acompanantes"
-              type="number"
-              min="0"
-              value={form.max_acompanantes}
-              onChange={(e) => setForm({ ...form, max_acompanantes: e.target.value })}
-            />
-          </div>
-          <div className="flex gap-2 mt-4">
-            <Button type="submit" disabled={crearInvitado.isPending || actualizarInvitado.isPending}>
-              {(crearInvitado.isPending || actualizarInvitado.isPending) ? 'Guardando...' : 'Guardar'}
-            </Button>
-            <Button variant="outline" type="button" onClick={handleCancelar}>
-              Cancelar
-            </Button>
-          </div>
-        </form>
-      )}
+      {/* Drawer de Invitado */}
+      <InvitadoFormDrawer
+        isOpen={isOpen('invitado')}
+        onClose={() => closeModal('invitado')}
+        mode={getModalProps('invitado').mode}
+        invitado={getModalData('invitado')}
+        eventoId={eventoId}
+      />
 
       {invitadosData?.invitados?.length > 0 ? (
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
@@ -415,7 +337,7 @@ export default function InvitadosTab({
                   invitado={inv}
                   mostrarQR={mostrarQR}
                   eventoSlug={evento.slug}
-                  onEdit={handleEditar}
+                  onEdit={(invitado) => openModal('invitado', invitado, { mode: 'edit' })}
                   onDelete={handleEliminar}
                   onCopyLink={handleCopyLink}
                   onViewQR={handleVerQR}
