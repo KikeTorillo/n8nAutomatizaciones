@@ -13,8 +13,7 @@
 import { memo, useState, useEffect, useMemo, useCallback } from 'react';
 import { Video } from 'lucide-react';
 import { Checkbox, Input, Select } from '@/components/ui';
-import { useBlockEditor } from '../../hooks';
-import BaseBlockEditor from './BaseBlockEditor';
+import { BaseBlockEditor, useBlockEditor } from '@/components/editor-framework';
 
 /**
  * VideoEditor - Editor del bloque Video

@@ -13,8 +13,7 @@
 import { memo, useCallback, useMemo } from 'react';
 import { Link2, Share2 } from 'lucide-react';
 import { Input, Select, Textarea } from '@/components/ui';
-import { useBlockEditor, useArrayItems } from '../../hooks';
-import BaseBlockEditor from './BaseBlockEditor';
+import { BaseBlockEditor, useBlockEditor, useArrayItems } from '@/components/editor-framework';
 import { ArrayItemsEditor } from './fields';
 
 /**

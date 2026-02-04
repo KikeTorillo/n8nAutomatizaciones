@@ -5,12 +5,14 @@
  * Container para el área principal del canvas.
  * Envuelve EditorCanvas y maneja el modo de edición.
  *
- * @version 1.0.0
+ * @version 1.1.0
  * @since 2026-02-03
+ * @updated 2026-02-04 - Fix: abrir propiedades al click en bloque seleccionado
  */
 
 import { memo } from 'react';
 import { useEditor } from '../context';
+import { useBlockSelection } from '@/components/editor-framework';
 import EditorCanvas from '../components/EditorCanvas';
 import BlockEditor from '../components/BlockEditor';
 
@@ -40,7 +42,16 @@ function CanvasContainer() {
 
     // Store actions
     seleccionarBloque,
+
+    // Layout
+    abrirPropiedades,
   } = useEditor();
+
+  // Hook para selección de bloques + apertura de propiedades
+  const { handleBloqueClick } = useBlockSelection({
+    seleccionarBloque,
+    abrirPropiedades,
+  });
 
   return (
     <main className="flex-1 overflow-hidden" data-tour="editor-canvas">
@@ -48,6 +59,7 @@ function CanvasContainer() {
         <EditorCanvas
           bloques={bloques}
           tema={config}
+          onBloqueClick={handleBloqueClick}
           onReordenar={handleReordenarBloques}
           onActualizarBloque={handleActualizarBloque}
           onEliminarBloque={handleEliminarBloque}

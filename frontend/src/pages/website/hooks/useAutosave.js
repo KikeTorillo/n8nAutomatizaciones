@@ -9,7 +9,7 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { useWebsiteEditorStore } from '@/store';
 import { toast } from 'sonner';
-import { hashBloques } from './compareUtils';
+import { hashBloques } from '@/components/editor-framework';
 
 // Constantes
 const DEBOUNCE_MS = 3000; // 3 segundos de debounce

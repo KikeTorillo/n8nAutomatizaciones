@@ -13,8 +13,7 @@
 import { memo, useCallback, useMemo } from 'react';
 import { Image } from 'lucide-react';
 import { Checkbox, Input, Select } from '@/components/ui';
-import { useBlockEditor, useArrayItems } from '../../hooks';
-import BaseBlockEditor from './BaseBlockEditor';
+import { BaseBlockEditor, useBlockEditor, useArrayItems } from '@/components/editor-framework';
 import { ArrayItemsEditor } from './fields';
 
 /**

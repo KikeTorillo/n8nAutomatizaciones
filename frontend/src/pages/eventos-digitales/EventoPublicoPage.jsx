@@ -34,6 +34,7 @@ import {
   EventoRegalos,
   EventoFelicitaciones,
   EventoRSVP,
+  InvitacionDinamica,
 } from '@/components/eventos-digitales';
 import '@/components/eventos-digitales/publico/EventoAnimations.css';
 
@@ -345,7 +346,45 @@ function EventoPublicoPage() {
   const regalos = evento.regalos || [];
   const felicitaciones = evento.felicitaciones?.filter(f => f.aprobada) || [];
   const galeria = evento.galeria_urls || [];
+  const bloques = evento.bloques_invitacion || [];
 
+  // ========== RENDER: BLOQUES DINÁMICOS (si hay bloques personalizados) ==========
+  // Si el evento tiene bloques creados con el editor visual, usamos el renderizado dinámico
+  if (bloques.length > 0) {
+    return (
+      <InvitacionDinamica
+        evento={evento}
+        invitado={invitado}
+        bloques={bloques}
+        tema={tema}
+        configuracion={configuracion}
+        slug={slug}
+        token={token}
+        onConfirmRSVP={async (asistira, form) => {
+          try {
+            await confirmarRSVP.mutateAsync({
+              slug,
+              token,
+              data: {
+                asistira,
+                num_asistentes: asistira ? (form?.num_asistentes || 1) : 0,
+                mensaje_rsvp: form?.mensaje_rsvp || undefined,
+                restricciones_dieteticas: form?.restricciones_dieteticas || undefined,
+              },
+            });
+            toast.success(asistira ? '¡Asistencia confirmada!' : 'Respuesta registrada');
+          } catch (error) {
+            toast.error('Error al confirmar asistencia');
+          }
+        }}
+        isLoadingRSVP={confirmarRSVP.isLoading}
+        qrImage={qrImage}
+        loadingQR={loadingQR}
+      />
+    );
+  }
+
+  // ========== RENDER: LAYOUT LEGACY (sin bloques personalizados) ==========
   // Detectar si hay imagen de fondo para ajustar contraste
   const tieneImagenFondo = !!(evento.portada_url || tema.imagen_fondo);
 

@@ -30,7 +30,8 @@ import {
 } from './containers';
 
 // Components
-import { DndEditorProvider } from './components/DndEditorProvider';
+import { DndEditorProvider } from '@/components/editor-framework';
+import { BlockDragPreview } from './components/DragPreview';
 import ConflictAlert from './components/ConflictAlert';
 import EmptyState from './components/EmptyState';
 import CrearSitioModal from './components/CrearSitioModal';
@@ -125,6 +126,7 @@ function WebsiteEditorContent() {
         onDropFromPalette={handleDropFromPalette}
         onReorder={handleDndReorder}
         tema={config}
+        PreviewComponent={BlockDragPreview}
       >
         <div className="flex-1 flex overflow-hidden">
           {/* Sidebar */}

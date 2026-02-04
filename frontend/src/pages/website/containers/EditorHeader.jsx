@@ -1,31 +1,26 @@
 /**
  * ====================================================================
- * EDITOR HEADER
+ * EDITOR HEADER - Website Container
  * ====================================================================
- * Header del editor con controles de publicación y modo.
+ * Wrapper del EditorHeader + EditorToolbar del framework para Website Builder.
+ * Conecta con el contexto del editor y los hooks de undo/redo.
  *
- * @version 1.0.0
+ * @version 3.1.0
  * @since 2026-02-03
+ * @updated 2026-02-04 - Agregado preview mode
  */
 
 import { memo } from 'react';
+import { Globe2 } from 'lucide-react';
 import {
-  Globe2,
-  Layout,
-  FileText,
-  ExternalLink,
-  Check,
-  X,
-  Loader2,
-  Undo2,
-  Redo2,
-} from 'lucide-react';
+  EditorHeader as EditorHeaderBase,
+  EditorToolbar,
+} from '@/components/editor-framework';
 import { useEditor } from '../context';
-import { BackButton } from '@/components/ui';
-import { useUndo, useRedo, useCanUndoRedo } from '@/store';
+import { useUndo, useRedo, useCanUndoRedo, useWebsiteEditorStore } from '@/store';
 
 /**
- * EditorHeader - Cabecera del editor
+ * EditorHeader - Cabecera del editor de Website (Header + Toolbar)
  */
 function EditorHeader() {
   const {
@@ -34,6 +29,8 @@ function EditorHeader() {
     estaPublicado,
     modoEditor,
     setModoEditor,
+    modoPreview,
+    setModoPreview,
 
     // Layout
     isMobile,
@@ -45,118 +42,81 @@ function EditorHeader() {
     publicarSitio,
   } = useEditor();
 
-  // Undo/Redo
+  // Undo/Redo del store
   const undo = useUndo();
   const redo = useRedo();
   const { canUndo, canRedo } = useCanUndoRedo();
 
+  // Breakpoint y Zoom del store
+  const breakpoint = useWebsiteEditorStore((s) => s.breakpoint);
+  const setBreakpoint = useWebsiteEditorStore((s) => s.setBreakpoint);
+  const zoom = useWebsiteEditorStore((s) => s.zoom);
+  const setZoom = useWebsiteEditorStore((s) => s.setZoom);
+
+  // Estado de guardado
+  const estadoGuardado = useWebsiteEditorStore((s) => s.estadoGuardado);
+
   return (
-    <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-2 sm:px-4 h-12 sm:h-14 flex items-center justify-between flex-shrink-0">
-      <div className="flex items-center gap-2 sm:gap-4">
-        {/* BackButton */}
-        <BackButton to="/home" label={isMobile ? '' : 'Volver'} />
-        <div className="flex items-center gap-2">
-          <Globe2 className="w-4 h-4 sm:w-5 sm:h-5 text-primary-600 dark:text-primary-400" />
-          <span className="font-semibold text-gray-900 dark:text-gray-100 text-sm sm:text-base truncate max-w-[80px] sm:max-w-[150px] md:max-w-none">
-            {config?.nombre_sitio || 'Mi Sitio'}
-          </span>
-        </div>
-        {/* Status badge */}
-        <span
-          className={`px-1.5 sm:px-2 py-0.5 sm:py-1 text-xs rounded-full ${
-            estaPublicado
-              ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
-              : 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'
-          }`}
-        >
-          {estaPublicado ? (isMobile ? 'Pub' : 'Publicado') : (isMobile ? 'Borr' : 'Borrador')}
-        </span>
-      </div>
+    <>
+      {/* Header minimalista: navegación + identidad + publicación */}
+      <EditorHeaderBase
+        // Info del documento
+        title={config?.nombre_sitio || 'Mi Sitio'}
+        icon={Globe2}
+        status={estaPublicado ? 'published' : 'draft'}
 
-      <div className="flex items-center gap-1 sm:gap-2">
-        {/* Undo/Redo Buttons */}
-        <div className="hidden sm:flex items-center gap-1 mr-2">
-          <button
-            onClick={undo}
-            disabled={!canUndo}
-            title="Deshacer (Ctrl+Z)"
-            className="p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-          >
-            <Undo2 className="w-4 h-4" />
-          </button>
-          <button
-            onClick={redo}
-            disabled={!canRedo}
-            title="Rehacer (Ctrl+Shift+Z)"
-            className="p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-          >
-            <Redo2 className="w-4 h-4" />
-          </button>
-        </div>
+        // Navegación
+        backTo="/home"
+        backLabel="Volver"
 
-        {/* Editor Mode Toggle */}
-        <div className="hidden sm:flex bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
-          <button
-            onClick={() => setModoEditor('canvas')}
-            className={`flex items-center gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-md text-sm transition-colors ${
-              modoEditor === 'canvas'
-                ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
-                : 'text-gray-600 dark:text-gray-400'
-            }`}
-          >
-            <Layout className="w-4 h-4" />
-            <span className="hidden md:inline">Visual</span>
-          </button>
-          <button
-            onClick={() => setModoEditor('bloques')}
-            className={`flex items-center gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-md text-sm transition-colors ${
-              modoEditor === 'bloques'
-                ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
-                : 'text-gray-600 dark:text-gray-400'
-            }`}
-          >
-            <FileText className="w-4 h-4" />
-            <span className="hidden md:inline">Bloques</span>
-          </button>
-        </div>
+        // Publicación
+        onPublish={handlePublicar}
+        isPublishing={publicarSitio.isPending}
+        publishLabels={{ publish: 'Publicar', unpublish: 'Despublicar' }}
 
-        {/* Ver sitio publicado */}
-        {estaPublicado && config?.slug && (
-          <a
-            href={`/sitio/${config.slug}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-600 dark:text-gray-400 transition-colors"
-          >
-            <ExternalLink className="w-4 h-4" />
-            <span className="hidden lg:inline">Ver sitio</span>
-          </a>
-        )}
+        // Ver publicado
+        viewUrl={estaPublicado && config?.slug ? `/sitio/${config.slug}` : undefined}
+        viewLabel="Ver sitio"
 
-        {/* Publicar */}
-        <button
-          onClick={handlePublicar}
-          disabled={publicarSitio.isPending}
-          data-tour="publish-button"
-          className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg font-medium transition-colors text-sm ${
-            estaPublicado
-              ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 hover:bg-amber-200 dark:hover:bg-amber-900/50'
-              : 'bg-primary-600 text-white hover:bg-primary-700'
-          }`}
-        >
-          {publicarSitio.isPending ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : estaPublicado ? (
-            <X className="w-4 h-4" />
-          ) : (
-            <Check className="w-4 h-4" />
-          )}
-          <span className="hidden sm:inline">
-            {estaPublicado ? 'Despublicar' : 'Publicar'}
-          </span>
-        </button>
-      </div>
-    </header>
+        // Responsive
+        isMobile={isMobile}
+      />
+
+      {/* Toolbar: controles de edición */}
+      <EditorToolbar
+        // Undo/Redo
+        onUndo={undo}
+        onRedo={redo}
+        canUndo={canUndo}
+        canRedo={canRedo}
+
+        // Modos de editor
+        editorMode={modoEditor === 'bloques' ? 'blocks' : 'canvas'}
+        onEditorModeChange={(mode) => setModoEditor(mode === 'blocks' ? 'bloques' : 'canvas')}
+        showEditorModeToggle={true}
+
+        // Breakpoints
+        breakpoint={breakpoint}
+        onBreakpointChange={setBreakpoint}
+        showBreakpoints={true}
+
+        // Zoom (solo en modo canvas)
+        zoom={zoom}
+        onZoomChange={setZoom}
+        showZoom={modoEditor === 'canvas'}
+
+        // Estado de guardado
+        saveStatus={estadoGuardado}
+
+        // Preview mode
+        previewMode={modoPreview}
+        onPreviewModeChange={setModoPreview}
+        showPreviewToggle={true}
+
+        // Responsive
+        isMobile={isMobile}
+      />
+    </>
   );
 }
 

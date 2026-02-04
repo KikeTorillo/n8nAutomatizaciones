@@ -5,43 +5,33 @@
  * Canvas WYSIWYG principal del editor de website.
  * Permite edicion visual directa, drag-and-drop y responsive preview.
  * Soporta drops desde la paleta de bloques.
+ *
+ * NOTA: El toolbar ahora está en EditorToolbar del framework.
+ * Este componente solo renderiza el canvas y los bloques.
  */
 
-import { useCallback, useMemo, memo, useState } from 'react';
+import { useCallback, useMemo, memo } from 'react';
 import { useDroppable } from '@dnd-kit/core';
 import {
   SortableContext,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import {
-  Monitor,
-  Tablet,
-  Smartphone,
-  ZoomIn,
-  ZoomOut,
-  Undo2,
-  Redo2,
-  Loader2,
-  Plus,
-} from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Monitor, Loader2, Plus } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { useWebsiteEditorStore, useTemporalStore } from '@/store';
-import { useEstadoGuardado } from '../hooks';
-import { useDndEditor } from './DndEditorProvider';
+import { useWebsiteEditorStore } from '@/store';
+import { useDndEditor } from '@/components/editor-framework';
 
 // Canvas blocks
 import CanvasBlock from './canvas-blocks/CanvasBlock';
 
 // ========== CONSTANTS ==========
 
-const BREAKPOINTS = {
-  desktop: { width: 1200, icon: Monitor, label: 'Desktop' },
-  tablet: { width: 768, icon: Tablet, label: 'Tablet' },
-  mobile: { width: 375, icon: Smartphone, label: 'Mobile' },
+const BREAKPOINT_WIDTHS = {
+  desktop: 1200,
+  tablet: 768,
+  mobile: 375,
 };
-
-const ZOOM_LEVELS = [50, 75, 100, 125, 150, 200];
 
 // ========== MAIN COMPONENT ==========
 
@@ -51,6 +41,7 @@ const ZOOM_LEVELS = [50, 75, 100, 125, 150, 200];
  * @param {Object} props
  * @param {Array} props.bloques - Lista de bloques a renderizar
  * @param {Object} props.tema - Tema del sitio (colores, fuentes)
+ * @param {Function} props.onBloqueClick - Callback para click en bloque (selección + propiedades)
  * @param {Function} props.onReordenar - Callback para reordenar bloques
  * @param {Function} props.onActualizarBloque - Callback para actualizar bloque
  * @param {Function} props.onEliminarBloque - Callback para eliminar bloque (servidor)
@@ -61,6 +52,7 @@ const ZOOM_LEVELS = [50, 75, 100, 125, 150, 200];
 function EditorCanvas({
   bloques = [],
   tema,
+  onBloqueClick,
   onReordenar,
   onActualizarBloque,
   onEliminarBloque,
@@ -79,8 +71,6 @@ function EditorCanvas({
   );
 
   // Store actions
-  const setBreakpoint = useWebsiteEditorStore((state) => state.setBreakpoint);
-  const setZoom = useWebsiteEditorStore((state) => state.setZoom);
   const seleccionarBloque = useWebsiteEditorStore(
     (state) => state.seleccionarBloque
   );
@@ -103,21 +93,10 @@ function EditorCanvas({
     (state) => state.toggleVisibilidadBloque
   );
 
-  // Estado de guardado
-  const estadoGuardado = useEstadoGuardado();
-
-  // Temporal store para undo/redo
-  const temporal = useTemporalStore();
-  const canUndo = temporal?.pastStates?.length > 0;
-  const canRedo = temporal?.futureStates?.length > 0;
-
   // Contexto DnD compartido
   const dndContext = useDndEditor();
   const isDraggingFromPalette = dndContext?.isDraggingFromPalette || false;
   const overInfo = dndContext?.overInfo;
-
-  // Estado de drag interno para sortable
-  const [activeDragId, setActiveDragId] = useState(null);
 
   // ========== HANDLERS ==========
 
@@ -136,12 +115,17 @@ function EditorCanvas({
 
   /**
    * Manejar seleccion de bloque
+   * Usa el callback del padre si está disponible (incluye abrir propiedades)
    */
   const handleBloqueClick = useCallback(
     (id) => {
-      seleccionarBloque(id);
+      if (onBloqueClick) {
+        onBloqueClick(id);
+      } else {
+        seleccionarBloque(id);
+      }
     },
-    [seleccionarBloque]
+    [onBloqueClick, seleccionarBloque]
   );
 
   /**
@@ -214,15 +198,10 @@ function EditorCanvas({
 
   // ========== COMPUTED ==========
 
-  const canvasWidth = BREAKPOINTS[breakpoint].width;
+  const canvasWidth = BREAKPOINT_WIDTHS[breakpoint] || BREAKPOINT_WIDTHS.desktop;
   const scaleFactor = zoom / 100;
 
   const bloquesIds = useMemo(() => bloques.map((b) => b.id), [bloques]);
-
-  const activeBloque = useMemo(
-    () => bloques.find((b) => b.id === activeDragId),
-    [bloques, activeDragId]
-  );
 
   // Estilos CSS variables del tema
   const temaStyles = useMemo(
@@ -242,19 +221,6 @@ function EditorCanvas({
 
   return (
     <div className="flex flex-col h-full bg-gray-100 dark:bg-gray-900">
-      {/* Toolbar */}
-      <CanvasToolbar
-        breakpoint={breakpoint}
-        onBreakpointChange={setBreakpoint}
-        zoom={zoom}
-        onZoomChange={setZoom}
-        canUndo={canUndo}
-        canRedo={canRedo}
-        onUndo={() => temporal?.undo?.()}
-        onRedo={() => temporal?.redo?.()}
-        estadoGuardado={estadoGuardado}
-      />
-
       {/* Canvas Area */}
       <div
         className="flex-1 overflow-auto p-2 sm:p-4 md:p-6"
@@ -335,149 +301,6 @@ function EditorCanvas({
     </div>
   );
 }
-
-
-// ========== TOOLBAR COMPONENT ==========
-
-const CanvasToolbar = memo(function CanvasToolbar({
-  breakpoint,
-  onBreakpointChange,
-  zoom,
-  onZoomChange,
-  canUndo,
-  canRedo,
-  onUndo,
-  onRedo,
-  estadoGuardado,
-}) {
-  return (
-    <div className="flex items-center justify-between px-2 sm:px-4 py-2 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-      {/* Left: Undo/Redo */}
-      <div className="flex items-center gap-0.5 sm:gap-1">
-        <button
-          onClick={onUndo}
-          disabled={!canUndo}
-          className={cn(
-            'p-1.5 sm:p-2 rounded-lg transition-colors',
-            canUndo
-              ? 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400'
-              : 'text-gray-300 dark:text-gray-600 cursor-not-allowed'
-          )}
-          title="Deshacer (Ctrl+Z)"
-        >
-          <Undo2 className="w-4 h-4" />
-        </button>
-        <button
-          onClick={onRedo}
-          disabled={!canRedo}
-          className={cn(
-            'p-1.5 sm:p-2 rounded-lg transition-colors',
-            canRedo
-              ? 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400'
-              : 'text-gray-300 dark:text-gray-600 cursor-not-allowed'
-          )}
-          title="Rehacer (Ctrl+Y)"
-        >
-          <Redo2 className="w-4 h-4" />
-        </button>
-
-        {/* Divider - oculto en móvil para ahorrar espacio */}
-        <div className="hidden sm:block w-px h-6 bg-gray-200 dark:bg-gray-700 mx-2" />
-
-        {/* Save Status - solo icono en móvil */}
-        <div
-          className={cn(
-            'flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-2 py-1 rounded-md text-xs',
-            estadoGuardado.bgColor,
-            estadoGuardado.color
-          )}
-        >
-          {estadoGuardado.icono === 'loader' && (
-            <Loader2 className="w-3 h-3 animate-spin" />
-          )}
-          {estadoGuardado.icono === 'check' && (
-            <span className="w-1.5 h-1.5 bg-current rounded-full" />
-          )}
-          {estadoGuardado.icono === 'circle' && (
-            <span className="w-1.5 h-1.5 border border-current rounded-full" />
-          )}
-          {estadoGuardado.icono === 'alert' && (
-            <span className="text-xs">!</span>
-          )}
-          {/* Texto oculto en móvil */}
-          <span className="hidden sm:inline">{estadoGuardado.texto}</span>
-        </div>
-      </div>
-
-      {/* Center: Breakpoints - solo iconos en móvil */}
-      <div className="flex items-center gap-0.5 sm:gap-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-0.5 sm:p-1" data-tour="breakpoint-selector">
-        {Object.entries(BREAKPOINTS).map(([key, { icon: Icon, label }]) => (
-          <button
-            key={key}
-            onClick={() => onBreakpointChange(key)}
-            className={cn(
-              'flex items-center gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-md text-sm transition-colors',
-              breakpoint === key
-                ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
-                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-            )}
-            title={label}
-          >
-            <Icon className="w-4 h-4" />
-            {/* Label oculto en móvil y tablet */}
-            <span className="hidden lg:inline">{label}</span>
-          </button>
-        ))}
-      </div>
-
-      {/* Right: Zoom - simplificado en móvil */}
-      <div className="flex items-center gap-1 sm:gap-2">
-        {/* Botones de zoom ocultos en móvil, solo select */}
-        <button
-          onClick={() => onZoomChange(Math.max(50, zoom - 25))}
-          disabled={zoom <= 50}
-          className={cn(
-            'hidden sm:block p-2 rounded-lg transition-colors',
-            zoom > 50
-              ? 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400'
-              : 'text-gray-300 dark:text-gray-600 cursor-not-allowed'
-          )}
-          title="Alejar"
-        >
-          <ZoomOut className="w-4 h-4" />
-        </button>
-
-        <select
-          value={zoom}
-          onChange={(e) => onZoomChange(Number(e.target.value))}
-          className="px-1 sm:px-2 py-1 text-xs sm:text-sm bg-transparent border border-gray-200 dark:border-gray-700 rounded-md text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-1 focus:ring-primary-500"
-        >
-          {ZOOM_LEVELS.map((level) => (
-            <option key={level} value={level}>
-              {level}%
-            </option>
-          ))}
-        </select>
-
-        <button
-          onClick={() => onZoomChange(Math.min(200, zoom + 25))}
-          disabled={zoom >= 200}
-          className={cn(
-            'hidden sm:block p-2 rounded-lg transition-colors',
-            zoom < 200
-              ? 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400'
-              : 'text-gray-300 dark:text-gray-600 cursor-not-allowed'
-          )}
-          title="Acercar"
-        >
-          <ZoomIn className="w-4 h-4" />
-        </button>
-      </div>
-    </div>
-  );
-});
-
-// ========== EMPTY STATE WITH DROP ZONE ==========
 
 // ========== END DROP ZONE ==========
 

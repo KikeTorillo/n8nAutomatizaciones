@@ -12,9 +12,8 @@ export {
   RESPONSIVE_DEFAULTS,
   getResponsiveClasses,
 } from './useResponsiveConfig';
-export { useEditorLayout, PANEL_TYPES } from './useEditorLayout';
-export { useBlockEditor } from './useBlockEditor';
-export { useArrayItems } from './useArrayItems';
+// Re-export del framework (el hook local está deprecado)
+export { useEditorLayout, PANEL_TYPES } from '@/components/editor-framework';
 export { recargarDatosServidor } from './useAutosave';
 export { useSlashMenu } from './useSlashMenu';
 export { useERPData } from './useERPData';

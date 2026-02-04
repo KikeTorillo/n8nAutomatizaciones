@@ -14,9 +14,8 @@ import { memo, useCallback, useMemo } from 'react';
 import { Clock } from 'lucide-react';
 import { Input, Textarea, Select, ToggleSwitch } from '@/components/ui';
 import { IconPicker } from '@/components/ui';
-import { AIGenerateButton } from '../AIGenerator';
-import { useBlockEditor, useArrayItems } from '../../hooks';
-import BaseBlockEditor from './BaseBlockEditor';
+import { BaseBlockEditor, useBlockEditor, useArrayItems } from '@/components/editor-framework';
+import { AIGenerateButton, AISuggestionBanner } from '../AIGenerator';
 import { SectionTitleField, ArrayItemsEditor } from './fields';
 
 /**
@@ -204,6 +203,7 @@ function TimelineEditor({ contenido, onGuardar, tema, isSaving, industria = 'def
       industria={industria}
       mostrarAIBanner={timelineVacio}
       onAIGenerate={handleAIGenerate}
+      AIBannerComponent={AISuggestionBanner}
       cambios={cambios}
       handleSubmit={handleSubmit}
       onGuardar={onGuardar}

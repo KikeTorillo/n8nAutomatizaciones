@@ -90,6 +90,24 @@ export {
   selectResetOnboarding,
 } from './onboardingStore';
 
+// ========== EDITOR STORE FACTORY ==========
+export { createEditorStore, createEditorSelectors } from './createEditorStore';
+
+// ========== INVITACION EDITOR STORE ==========
+export {
+  useInvitacionEditorStore,
+  selectBloques as selectInvitacionBloques,
+  selectBloqueSeleccionado as selectInvitacionBloqueSeleccionado,
+  useInvitacionEditorActions,
+  useBloqueById as useInvitacionBloqueById,
+  useIsBloqueSeleccionado as useInvitacionIsBloqueSeleccionado,
+  // Temporal store hooks (undo/redo)
+  useInvitacionTemporalStore,
+  useInvitacionUndo,
+  useInvitacionRedo,
+  useInvitacionCanUndoRedo,
+} from './invitacionEditorStore';
+
 // ========== WEBSITE EDITOR STORE ==========
 export { default as useWebsiteEditorStore } from './websiteEditorStore';
 export {

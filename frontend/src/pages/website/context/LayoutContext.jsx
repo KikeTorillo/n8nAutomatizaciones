@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 /**
  * ====================================================================
  * LAYOUT CONTEXT
@@ -6,18 +7,29 @@
  * Contexto para el estado de layout responsive del editor.
  * Extraído de EditorContext para reducir re-renders.
  *
+ * Usa useEditorLayout del editor-framework con configuración
+ * específica de Website (4 paneles: bloques, paginas, tema, propiedades).
+ *
  * Responsabilidades:
  * - isMobile, isTablet, isDesktop
  * - showSidebar, showSecondaryPanel, showPropertiesPanel
  * - drawerAbierto, panelActivo
  * - openPanel, closeDrawer, abrirPropiedades, cerrarPropiedades
  *
- * @version 1.0.0
+ * @version 1.1.0 - Migrado a usar editor-framework
  * @since 2026-02-03
  */
 
 import { createContext, useContext, useMemo } from 'react';
-import { useEditorLayout, PANEL_TYPES } from '../hooks';
+import { useEditorLayout } from '@/components/editor-framework';
+
+// Tipos de panel específicos de Website
+const WEBSITE_PANEL_TYPES = {
+  BLOQUES: 'bloques',
+  PAGINAS: 'paginas',
+  TEMA: 'tema',
+  PROPIEDADES: 'propiedades',
+};
 
 // ========== CONTEXT ==========
 
@@ -32,8 +44,15 @@ const LayoutContext = createContext(null);
  * @param {React.ReactNode} props.children - Componentes hijos
  */
 export function LayoutProvider({ children }) {
-  // Hook del layout responsive
-  const layout = useEditorLayout();
+  // Hook del layout responsive con configuración de Website
+  const layout = useEditorLayout({
+    panels: ['bloques', 'paginas', 'tema', 'propiedades'],
+    defaultPanel: 'bloques',
+    customPanelTypes: {
+      PAGINAS: 'paginas',
+      TEMA: 'tema',
+    },
+  });
 
   // Memoizar valor del contexto
   const value = useMemo(() => ({
@@ -69,8 +88,8 @@ export function LayoutProvider({ children }) {
     // Helpers
     isDrawerOpen: layout.isDrawerOpen,
 
-    // Constantes
-    PANEL_TYPES,
+    // Constantes (usar los de Website para backward compatibility)
+    PANEL_TYPES: WEBSITE_PANEL_TYPES,
   }), [layout]);
 
   return (

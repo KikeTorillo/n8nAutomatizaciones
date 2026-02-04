@@ -37,4 +37,8 @@ export {
   EventoRegalos,
   EventoFelicitaciones,
   EventoRSVP,
+  BloqueRenderer,
+  BLOQUES_PUBLICOS,
+  getBloquePublico,
+  InvitacionDinamica,
 } from './publico';

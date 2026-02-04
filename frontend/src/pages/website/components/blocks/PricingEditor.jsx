@@ -14,9 +14,8 @@
 import { memo, useCallback, useMemo } from 'react';
 import { DollarSign, Plus, Trash2, Star } from 'lucide-react';
 import { Button, Input, Select, ToggleSwitch } from '@/components/ui';
-import { AIGenerateButton } from '../AIGenerator';
-import { useBlockEditor, useArrayItems } from '../../hooks';
-import BaseBlockEditor from './BaseBlockEditor';
+import { BaseBlockEditor, useBlockEditor, useArrayItems } from '@/components/editor-framework';
+import { AIGenerateButton, AISuggestionBanner } from '../AIGenerator';
 import { SectionTitleField, ArrayItemsEditor } from './fields';
 
 /**
@@ -287,6 +286,7 @@ function PricingEditor({ contenido, onGuardar, tema, isSaving, industria = 'defa
       industria={industria}
       mostrarAIBanner={planesVacios}
       onAIGenerate={handleAIGenerate}
+      AIBannerComponent={AISuggestionBanner}
       cambios={cambios}
       handleSubmit={handleSubmit}
       onGuardar={onGuardar}

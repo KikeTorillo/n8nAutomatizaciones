@@ -31,6 +31,7 @@ const MiMarketplacePage = lazy(() => import('@/pages/marketplace/MiMarketplacePa
 const EventosPage = lazy(() => import('@/pages/eventos-digitales/EventosPage'));
 const EventoDetailPage = lazy(() => import('@/pages/eventos-digitales/EventoDetailPage'));
 const EventoFormPage = lazy(() => import('@/pages/eventos-digitales/EventoFormPage'));
+const InvitacionEditorPage = lazy(() => import('@/pages/eventos-digitales/editor/InvitacionEditorPage'));
 
 // Website
 const WebsiteEditorPage = lazy(() => import('@/pages/website/WebsiteEditorPage'));
@@ -76,6 +77,7 @@ export const dashboardRoutes = [
   protectedRoute('eventos-digitales/nuevo', EventoFormPage, { requiredRole: ROLES.ADMIN_ONLY, requiredModule: 'eventos-digitales' }),
   protectedRoute('eventos-digitales/:id', EventoDetailPage, { requiredRole: ROLES.ADMIN_ONLY, requiredModule: 'eventos-digitales' }),
   protectedRoute('eventos-digitales/:id/editar', EventoFormPage, { requiredRole: ROLES.ADMIN_ONLY, requiredModule: 'eventos-digitales' }),
+  protectedRoute('eventos-digitales/:id/editor', InvitacionEditorPage, { requiredRole: ROLES.ADMIN_ONLY, requiredModule: 'eventos-digitales' }),
 
   // Website
   protectedRoute('website', WebsiteEditorPage, { requiredRole: ROLES.ADMIN_ONLY }),

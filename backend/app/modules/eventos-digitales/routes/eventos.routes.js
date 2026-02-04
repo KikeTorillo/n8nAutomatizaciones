@@ -22,6 +22,9 @@ const router = express.Router();
 // Controllers
 const EventosController = require('../controllers/eventos.controller');
 
+// Sub-routers
+const bloquesRoutes = require('./bloques.routes');
+
 // Schemas
 const eventosSchemas = require('../schemas/evento.schemas');
 
@@ -124,6 +127,17 @@ router.get('/eventos/:id/estadisticas',
     ...middlewareComun,
     validate(eventosSchemas.estadisticasEvento),
     asyncHandler(EventosController.estadisticas)
+);
+
+// ============================================================================
+// RUTAS DE BLOQUES DE INVITACIÓN
+// ============================================================================
+// Sub-router para bloques del editor de invitaciones
+// BASE: /api/v1/eventos-digitales/eventos/:id/bloques
+
+router.use('/eventos/:id/bloques',
+    ...middlewareComun,
+    bloquesRoutes
 );
 
 module.exports = router;

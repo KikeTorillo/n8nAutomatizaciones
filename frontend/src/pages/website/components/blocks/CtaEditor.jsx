@@ -12,9 +12,8 @@
 
 import { memo, useCallback, useMemo } from 'react';
 import { Input, Select, Textarea } from '@/components/ui';
-import { AIGenerateButton } from '../AIGenerator';
-import { useBlockEditor } from '../../hooks';
-import BaseBlockEditor from './BaseBlockEditor';
+import { BaseBlockEditor, useBlockEditor } from '@/components/editor-framework';
+import { AIGenerateButton, AISuggestionBanner } from '../AIGenerator';
 
 /**
  * CtaEditor - Editor del bloque Call To Action
@@ -150,6 +149,7 @@ function CtaEditor({ contenido, onGuardar, tema, isSaving, industria = 'default'
       industria={industria}
       mostrarAIBanner={contenidoVacio}
       onAIGenerate={handleAIGenerate}
+      AIBannerComponent={AISuggestionBanner}
       cambios={cambios}
       handleSubmit={handleSubmit}
       onGuardar={onGuardar}

@@ -13,9 +13,8 @@
 import { memo, useCallback, useMemo } from 'react';
 import { HelpCircle } from 'lucide-react';
 import { Input, Textarea, ToggleSwitch } from '@/components/ui';
-import { AIGenerateButton } from '../AIGenerator';
-import { useBlockEditor, useArrayItems } from '../../hooks';
-import BaseBlockEditor from './BaseBlockEditor';
+import { BaseBlockEditor, useBlockEditor, useArrayItems } from '@/components/editor-framework';
+import { AIGenerateButton, AISuggestionBanner } from '../AIGenerator';
 import { SectionTitleField, ArrayItemsEditor } from './fields';
 
 /**
@@ -147,6 +146,7 @@ function FaqEditor({ contenido, onGuardar, tema, isSaving, industria = 'default'
       industria={industria}
       mostrarAIBanner={faqsVacias}
       onAIGenerate={handleAIGenerate}
+      AIBannerComponent={AISuggestionBanner}
       cambios={cambios}
       handleSubmit={handleSubmit}
       onGuardar={onGuardar}

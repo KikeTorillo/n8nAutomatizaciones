@@ -13,8 +13,8 @@
 import { memo, useCallback, useMemo } from 'react';
 import { MessageSquare, Star } from 'lucide-react';
 import { Input, Select, Textarea } from '@/components/ui';
-import { useBlockEditor, useArrayItems } from '../../hooks';
-import BaseBlockEditor from './BaseBlockEditor';
+import { BaseBlockEditor, useBlockEditor, useArrayItems } from '@/components/editor-framework';
+import { AISuggestionBanner } from '../AIGenerator';
 import { SectionTitleField, ArrayItemsEditor } from './fields';
 
 /**
@@ -182,6 +182,7 @@ function TestimoniosEditor({ contenido, onGuardar, tema, isSaving, industria = '
       industria={industria}
       mostrarAIBanner={testimoniosVacios}
       onAIGenerate={handleAIGenerate}
+      AIBannerComponent={AISuggestionBanner}
       cambios={cambios}
       handleSubmit={handleSubmit}
       onGuardar={onGuardar}

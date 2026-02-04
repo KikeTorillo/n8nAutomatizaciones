@@ -13,9 +13,8 @@
 import { memo, useCallback, useMemo } from 'react';
 import { Clock, Calendar } from 'lucide-react';
 import { Input, Select, ToggleSwitch } from '@/components/ui';
-import { AIGenerateButton } from '../AIGenerator';
-import { useBlockEditor } from '../../hooks';
-import BaseBlockEditor from './BaseBlockEditor';
+import { BaseBlockEditor, useBlockEditor } from '@/components/editor-framework';
+import { AIGenerateButton, AISuggestionBanner } from '../AIGenerator';
 
 /**
  * CountdownEditor - Editor del bloque Countdown
@@ -124,6 +123,7 @@ function CountdownEditor({ contenido, onGuardar, tema, isSaving, industria = 'de
       industria={industria}
       mostrarAIBanner={esVacio}
       onAIGenerate={handleAIGenerate}
+      AIBannerComponent={AISuggestionBanner}
       cambios={cambios}
       handleSubmit={handleSubmit}
       onGuardar={onSubmit}

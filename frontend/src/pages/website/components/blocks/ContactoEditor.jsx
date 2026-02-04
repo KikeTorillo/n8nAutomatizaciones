@@ -14,9 +14,8 @@
 import { memo, useState, useCallback, useMemo } from 'react';
 import { MapPin, Phone, Mail, Clock, Plus, Trash2, GripVertical, Settings2, MessageSquare } from 'lucide-react';
 import { Button, CheckboxField, Input, Select, ToggleSwitch } from '@/components/ui';
-import { AIGenerateButton } from '../AIGenerator';
-import { useBlockEditor } from '../../hooks';
-import BaseBlockEditor from './BaseBlockEditor';
+import { BaseBlockEditor, useBlockEditor } from '@/components/editor-framework';
+import { AIGenerateButton, AISuggestionBanner } from '../AIGenerator';
 import { SectionTitleField } from './fields';
 
 /**
@@ -225,6 +224,7 @@ function ContactoEditor({ contenido, onGuardar, tema, isSaving, industria = 'def
       industria={industria}
       mostrarAIBanner={contenidoVacio}
       onAIGenerate={handleAIGenerate}
+      AIBannerComponent={AISuggestionBanner}
       cambios={cambios}
       handleSubmit={handleSubmit}
       onGuardar={onGuardar}

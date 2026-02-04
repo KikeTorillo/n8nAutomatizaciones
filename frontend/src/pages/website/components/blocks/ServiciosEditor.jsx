@@ -19,8 +19,8 @@ import { useQuery } from '@tanstack/react-query';
 import { Briefcase, Database, Edit3 } from 'lucide-react';
 import { Input, Select, Textarea, ToggleSwitch } from '@/components/ui';
 import { IconPicker } from '@/components/ui';
-import { useBlockEditor, useArrayItems } from '../../hooks';
-import BaseBlockEditor from './BaseBlockEditor';
+import { BaseBlockEditor, useBlockEditor, useArrayItems } from '@/components/editor-framework';
+import { AISuggestionBanner } from '../AIGenerator';
 import { SectionTitleField, ArrayItemsEditor } from './fields';
 import ServiciosERPSelector from './ServiciosERPSelector';
 import websiteApi from '@/services/api/modules/website.api';
@@ -196,6 +196,7 @@ function ServiciosEditor({ contenido, onGuardar, tema, isSaving, industria = 'de
       industria={industria}
       mostrarAIBanner={serviciosVacios && form.origen === 'manual'}
       onAIGenerate={handleAIGenerate}
+      AIBannerComponent={AISuggestionBanner}
       cambios={cambios}
       handleSubmit={handleSubmit}
       onGuardar={onGuardar}

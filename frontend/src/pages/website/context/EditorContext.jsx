@@ -153,6 +153,8 @@ function EditorContextCombiner({ children }) {
     // ========== UI CONTEXT ==========
     modoEditor: uiContext.modoEditor,
     setModoEditor: uiContext.setModoEditor,
+    modoPreview: uiContext.modoPreview,
+    setModoPreview: uiContext.setModoPreview,
     tourReady: uiContext.tourReady,
 
     // Slash menu

@@ -51,6 +51,7 @@ const UIContext = createContext(null);
 export function UIProvider({ children, blocksContext, siteContext, layoutContext }) {
   // ========== ESTADO LOCAL ==========
   const [modoEditor, setModoEditor] = useState('canvas'); // 'canvas' | 'bloques'
+  const [modoPreview, setModoPreview] = useState(false); // Preview mode
   const [slashMenu, setSlashMenu] = useState({
     isOpen: false,
     position: { x: 0, y: 0 },
@@ -65,10 +66,9 @@ export function UIProvider({ children, blocksContext, siteContext, layoutContext
 
   // ========== EXTRAER DATOS DE CONTEXTOS ==========
   const { tieneSitio, paginaActiva } = siteContext;
-  const { isMobile, abrirPropiedades } = layoutContext;
+  const { isMobile } = layoutContext;
   const {
     bloques,
-    bloqueSeleccionado,
     bloquesLoading,
     handleAgregarBloque,
     actualizarVersionBloque,
@@ -79,12 +79,8 @@ export function UIProvider({ children, blocksContext, siteContext, layoutContext
 
   // ========== EFFECTS ==========
 
-  // Abrir panel/drawer de propiedades al seleccionar bloque
-  useEffect(() => {
-    if (bloqueSeleccionado && modoEditor === 'canvas') {
-      abrirPropiedades();
-    }
-  }, [bloqueSeleccionado, modoEditor, abrirPropiedades]);
+  // NOTA: El panel de propiedades ahora se abre desde handleBloqueClick en CanvasContainer
+  // Esto evita el bug donde el panel no se abría al re-clickear el mismo bloque
 
   // Auto-ajustar breakpoint y zoom en móvil
   useEffect(() => {
@@ -222,6 +218,10 @@ export function UIProvider({ children, blocksContext, siteContext, layoutContext
       modoEditor,
       setModoEditor,
 
+      // Preview mode
+      modoPreview,
+      setModoPreview,
+
       // Tour
       tourReady,
 
@@ -237,6 +237,7 @@ export function UIProvider({ children, blocksContext, siteContext, layoutContext
     }),
     [
       modoEditor,
+      modoPreview,
       tourReady,
       slashMenu,
       handleSlashSelect,

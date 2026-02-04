@@ -13,6 +13,7 @@ import {
   PartyPopper,
   ScanLine,
   LayoutGrid,
+  Palette,
 } from 'lucide-react';
 import { BackButton, Button, LoadingSpinner } from '@/components/ui';
 import { useToast } from '@/hooks/utils';
@@ -206,6 +207,10 @@ function EventoDetailPage() {
               <Button variant="outline" onClick={() => navigate(`/eventos-digitales/${id}/editar`)}>
                 <Edit className="w-4 h-4 mr-2" />
                 Editar
+              </Button>
+              <Button onClick={() => navigate(`/eventos-digitales/${id}/editor`)}>
+                <Palette className="w-4 h-4 mr-2" />
+                Diseñar Invitación
               </Button>
             </div>
           </div>

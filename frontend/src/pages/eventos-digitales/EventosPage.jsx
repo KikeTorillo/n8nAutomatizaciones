@@ -10,7 +10,8 @@ import {
   Edit,
   Trash2,
   Share2,
-  ExternalLink
+  ExternalLink,
+  Palette,
 } from 'lucide-react';
 import {
   BackButton,
@@ -233,6 +234,15 @@ function EventosPage() {
                       >
                         <Eye className="w-4 h-4 mr-1" />
                         Ver
+                      </Button>
+
+                      <Button
+                        size="sm"
+                        onClick={() => navigate(`/eventos-digitales/${evento.id}/editor`)}
+                        className="flex-1"
+                      >
+                        <Palette className="w-4 h-4 mr-1" />
+                        Diseñar
                       </Button>
 
                       {evento.estado === 'borrador' && (

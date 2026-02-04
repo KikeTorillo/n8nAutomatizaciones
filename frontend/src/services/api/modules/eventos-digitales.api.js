@@ -519,6 +519,77 @@ export const eventosDigitalesApi = {
    */
   reportarFoto: (fotoId, motivo) =>
     publicApiClient.post(`/public/galeria/${fotoId}/reportar`, { motivo }),
+
+  // ========== Bloques de Invitación ==========
+
+  /**
+   * Obtener bloques de invitación del evento
+   * @param {number} eventoId
+   * @returns {Promise<Object>} { bloques, total }
+   */
+  getBloques: (eventoId) => apiClient.get(`/eventos-digitales/eventos/${eventoId}/bloques`),
+
+  /**
+   * Guardar todos los bloques de invitación
+   * @param {number} eventoId
+   * @param {Array} bloques - Array de bloques a guardar
+   * @returns {Promise<Object>}
+   */
+  saveBloques: (eventoId, bloques) =>
+    apiClient.put(`/eventos-digitales/eventos/${eventoId}/bloques`, { bloques }),
+
+  /**
+   * Actualizar un bloque específico
+   * @param {number} eventoId
+   * @param {string} bloqueId
+   * @param {Object} data - { contenido?, estilos?, visible? }
+   * @returns {Promise<Object>}
+   */
+  updateBloque: (eventoId, bloqueId, data) =>
+    apiClient.patch(`/eventos-digitales/eventos/${eventoId}/bloques/${bloqueId}`, data),
+
+  /**
+   * Agregar un nuevo bloque
+   * @param {number} eventoId
+   * @param {Object} bloque - Nuevo bloque a agregar
+   * @returns {Promise<Object>}
+   */
+  addBloque: (eventoId, bloque) =>
+    apiClient.post(`/eventos-digitales/eventos/${eventoId}/bloques`, bloque),
+
+  /**
+   * Eliminar un bloque
+   * @param {number} eventoId
+   * @param {string} bloqueId
+   * @returns {Promise<Object>}
+   */
+  deleteBloque: (eventoId, bloqueId) =>
+    apiClient.delete(`/eventos-digitales/eventos/${eventoId}/bloques/${bloqueId}`),
+
+  /**
+   * Reordenar bloques
+   * @param {number} eventoId
+   * @param {Array<string>} orden - Array de IDs en el nuevo orden
+   * @returns {Promise<Object>}
+   */
+  reorderBloques: (eventoId, orden) =>
+    apiClient.patch(`/eventos-digitales/eventos/${eventoId}/bloques/reordenar`, { orden }),
+
+  /**
+   * Duplicar un bloque
+   * @param {number} eventoId
+   * @param {string} bloqueId
+   * @returns {Promise<Object>}
+   */
+  duplicateBloque: (eventoId, bloqueId) =>
+    apiClient.post(`/eventos-digitales/eventos/${eventoId}/bloques/${bloqueId}/duplicar`),
+
+  // ========== Alias para compatibilidad ==========
+
+  /**
+   * Alias de obtenerEvento para compatibilidad con naming conventions
+   */
+  getById: (id) => apiClient.get(`/eventos-digitales/eventos/${id}`),
 };
 
 // ==================== WEBSITE (Dic 2025) ====================

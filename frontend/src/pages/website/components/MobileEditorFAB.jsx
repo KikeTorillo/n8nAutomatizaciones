@@ -8,6 +8,7 @@
  */
 
 import { memo, useState, useCallback } from 'react';
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Plus,
@@ -17,7 +18,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { PANEL_TYPES } from '../hooks/useEditorLayout';
+import { PANEL_TYPES } from '@/components/editor-framework';
 
 /**
  * Opciones del FAB

@@ -12,8 +12,7 @@
 
 import { memo, useMemo } from 'react';
 import { Select } from '@/components/ui';
-import { useBlockEditor } from '../../hooks';
-import BaseBlockEditor from './BaseBlockEditor';
+import { BaseBlockEditor, useBlockEditor } from '@/components/editor-framework';
 import { ColorPickerField } from './fields';
 
 /**

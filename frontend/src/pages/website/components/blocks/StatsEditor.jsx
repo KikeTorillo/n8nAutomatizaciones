@@ -14,8 +14,8 @@ import { memo, useCallback, useMemo } from 'react';
 import { BarChart3 } from 'lucide-react';
 import { Input, Select, ToggleSwitch } from '@/components/ui';
 import { IconPicker } from '@/components/ui';
-import { useBlockEditor, useArrayItems } from '../../hooks';
-import BaseBlockEditor from './BaseBlockEditor';
+import { BaseBlockEditor, useBlockEditor, useArrayItems } from '@/components/editor-framework';
+import { AISuggestionBanner } from '../AIGenerator';
 import { SectionTitleField, ArrayItemsEditor } from './fields';
 
 // Mapeo de iconos para preview (subset de los más comunes en stats)
@@ -176,6 +176,7 @@ function StatsEditor({ contenido, onGuardar, tema, isSaving, industria = 'defaul
       industria={industria}
       mostrarAIBanner={statsVacios}
       onAIGenerate={handleAIGenerate}
+      AIBannerComponent={AISuggestionBanner}
       cambios={cambios}
       handleSubmit={handleSubmit}
       onGuardar={onGuardar}

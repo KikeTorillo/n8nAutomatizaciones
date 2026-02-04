@@ -1,0 +1,13 @@
+/**
+ * Barrel export para configuración del editor de invitaciones
+ */
+export {
+  BLOQUES_INVITACION,
+  BLOCK_ICONS,
+  BLOCK_NAMES,
+  BLOCK_DESCRIPTIONS,
+  BLOCK_CONFIGS,
+  BLOCK_DEFAULTS,
+  getBlockDefaults,
+  getBlockConfig,
+} from './invitacionBlocks';

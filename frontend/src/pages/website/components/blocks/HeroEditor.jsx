@@ -13,9 +13,8 @@
 import { memo, useCallback, useMemo } from 'react';
 import { Image } from 'lucide-react';
 import { Checkbox, Input, Select, Textarea } from '@/components/ui';
-import { AIGenerateButton } from '../AIGenerator';
-import { useBlockEditor } from '../../hooks';
-import BaseBlockEditor from './BaseBlockEditor';
+import { BaseBlockEditor, useBlockEditor } from '@/components/editor-framework';
+import { AIGenerateButton, AISuggestionBanner } from '../AIGenerator';
 
 /**
  * HeroEditor - Editor del bloque Hero
@@ -101,6 +100,7 @@ function HeroEditor({ contenido, onGuardar, tema, isSaving, industria = 'default
       industria={industria}
       mostrarAIBanner={contenidoVacio}
       onAIGenerate={handleAIGenerate}
+      AIBannerComponent={AISuggestionBanner}
       cambios={cambios}
       handleSubmit={handleSubmit}
       onGuardar={onGuardar}

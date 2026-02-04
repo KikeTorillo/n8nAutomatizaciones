@@ -14,9 +14,8 @@ import { memo, useCallback, useMemo } from 'react';
 import { Bold, Italic, List, AlignLeft, AlignCenter, AlignRight } from 'lucide-react';
 import { Button, Input, Select, Textarea } from '@/components/ui';
 import { sanitizeHTML } from '@/lib/sanitize';
-import { AIGenerateButton } from '../AIGenerator';
-import { useBlockEditor } from '../../hooks';
-import BaseBlockEditor from './BaseBlockEditor';
+import { BaseBlockEditor, useBlockEditor } from '@/components/editor-framework';
+import { AIGenerateButton, AISuggestionBanner } from '../AIGenerator';
 
 /**
  * TextoEditor - Editor del bloque de texto enriquecido
@@ -110,6 +109,7 @@ function TextoEditor({ contenido, onGuardar, tema, isSaving, industria = 'defaul
       industria={industria}
       mostrarAIBanner={contenidoVacio}
       onAIGenerate={handleAIGenerate}
+      AIBannerComponent={AISuggestionBanner}
       cambios={cambios}
       handleSubmit={handleSubmit}
       onGuardar={onGuardar}
