@@ -3,13 +3,16 @@
  * HERO INVITACION CANVAS BLOCK
  * ====================================================================
  * Bloque de portada para invitaciones digitales en el canvas.
+ * Soporta edición inline de título, subtítulo y fecha.
  *
- * @version 1.0.0
+ * @version 1.1.0
  * @since 2026-02-03
+ * @updated 2026-02-04 - Agregar edición inline
  */
 
 import { memo } from 'react';
 import { cn } from '@/lib/utils';
+import { InlineText } from '@/components/editor-framework';
 
 /**
  * Hero Invitación Canvas Block
@@ -76,39 +79,80 @@ function HeroInvitacionCanvasBlock({ bloque, tema, isEditing, onContentChange })
       {/* Content */}
       <div className="relative z-10 max-w-3xl mx-auto w-full">
         {/* Título */}
-        <h1
-          className={cn(
-            'text-4xl md:text-5xl lg:text-6xl font-bold mb-4',
-            'text-white drop-shadow-lg'
-          )}
-          style={{ fontFamily: 'var(--fuente-titulos)' }}
-        >
-          {titulo}
-        </h1>
+        {isEditing ? (
+          <InlineText
+            value={contenido.titulo || ''}
+            onChange={(v) => onContentChange?.({ titulo: v })}
+            placeholder="Escribe el título..."
+            as="h1"
+            className={cn(
+              'text-4xl md:text-5xl lg:text-6xl font-bold mb-4',
+              'text-white drop-shadow-lg'
+            )}
+            style={{ fontFamily: 'var(--fuente-titulos)' }}
+          />
+        ) : (
+          <h1
+            className={cn(
+              'text-4xl md:text-5xl lg:text-6xl font-bold mb-4',
+              'text-white drop-shadow-lg'
+            )}
+            style={{ fontFamily: 'var(--fuente-titulos)' }}
+          >
+            {titulo}
+          </h1>
+        )}
 
         {/* Subtítulo */}
-        {subtitulo && (
-          <p
+        {isEditing ? (
+          <InlineText
+            value={contenido.subtitulo || ''}
+            onChange={(v) => onContentChange?.({ subtitulo: v })}
+            placeholder="Escribe el subtítulo..."
+            as="p"
             className={cn(
               'text-xl md:text-2xl mb-6',
               'text-white/90'
             )}
             style={{ fontFamily: 'var(--fuente-cuerpo)' }}
-          >
-            {subtitulo}
-          </p>
+          />
+        ) : (
+          subtitulo && (
+            <p
+              className={cn(
+                'text-xl md:text-2xl mb-6',
+                'text-white/90'
+              )}
+              style={{ fontFamily: 'var(--fuente-cuerpo)' }}
+            >
+              {subtitulo}
+            </p>
+          )
         )}
 
         {/* Fecha */}
-        {fecha_texto && (
-          <p
+        {isEditing ? (
+          <InlineText
+            value={contenido.fecha_texto || ''}
+            onChange={(v) => onContentChange?.({ fecha_texto: v })}
+            placeholder="Escribe la fecha..."
+            as="p"
             className={cn(
               'text-lg md:text-xl font-medium tracking-wider uppercase',
               'text-white/80'
             )}
-          >
-            {fecha_texto}
-          </p>
+          />
+        ) : (
+          fecha_texto && (
+            <p
+              className={cn(
+                'text-lg md:text-xl font-medium tracking-wider uppercase',
+                'text-white/80'
+              )}
+            >
+              {fecha_texto}
+            </p>
+          )
         )}
       </div>
     </section>

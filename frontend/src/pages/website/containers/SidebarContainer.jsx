@@ -5,16 +5,20 @@
  * Container para el panel lateral izquierdo del editor.
  * Incluye la barra de navegación y el panel secundario.
  *
- * @version 1.0.0
+ * @version 1.1.0 - Migrado a BlockPalette centralizado
  * @since 2026-02-03
  */
 
-import { memo } from 'react';
+import { memo, useMemo } from 'react';
 import { Plus, FileText, Palette, Sparkles } from 'lucide-react';
+import { BlockPalette } from '@/components/editor-framework';
 import { useEditor } from '../context';
 import PageManager from '../components/PageManager';
-import BlockPalette from '../components/BlockPalette';
 import ThemeEditor from '../components/ThemeEditor';
+import {
+  CATEGORIAS_WEBSITE,
+  normalizarBloques,
+} from '../config/blockConfig';
 
 /**
  * SidebarContainer - Panel lateral izquierdo
@@ -48,6 +52,12 @@ function SidebarContainer({ onOpenTemplates }) {
     eliminarPagina,
     actualizarConfig,
   } = useEditor();
+
+  // Normalizar bloques para BlockPalette
+  const bloquesNormalizados = useMemo(
+    () => normalizarBloques(tiposBloques),
+    [tiposBloques]
+  );
 
   if (!showSidebar) {
     return null;
@@ -107,9 +117,12 @@ function SidebarContainer({ onOpenTemplates }) {
         <aside className="w-72 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 overflow-y-auto flex-shrink-0">
           {panelActivo === PANEL_TYPES.BLOQUES && (
             <BlockPalette
-              tiposBloques={tiposBloques}
+              bloques={bloquesNormalizados}
+              categorias={CATEGORIAS_WEBSITE}
               onAgregarBloque={handleAgregarBloque}
               disabled={!paginaActiva}
+              variant="grid"
+              colorConfig={{ mode: 'uniform' }}
             />
           )}
           {panelActivo === PANEL_TYPES.PAGINAS && (
@@ -128,7 +141,15 @@ function SidebarContainer({ onOpenTemplates }) {
               onActualizar={(tema) =>
                 actualizarConfig.mutateAsync({
                   id: config.id,
-                  data: tema,
+                  data: {
+                    version: config.version,
+                    color_primario: tema.colores.primario,
+                    color_secundario: tema.colores.secundario,
+                    color_fondo: tema.colores.fondo,
+                    color_texto: tema.colores.texto,
+                    fuente_titulos: tema.fuente_titulos,
+                    fuente_cuerpo: tema.fuente_cuerpo,
+                  },
                 })
               }
             />

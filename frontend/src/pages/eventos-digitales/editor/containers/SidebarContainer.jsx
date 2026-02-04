@@ -2,100 +2,111 @@
  * ====================================================================
  * SIDEBAR CONTAINER - INVITACIONES
  * ====================================================================
- * Sidebar con la paleta de bloques para arrastrar al canvas.
- * Responsive: oculto en móvil, visible en tablet/desktop.
+ * Sidebar con barra de navegación vertical y panel secundario.
+ * Incluye: Bloques por categorías, Editor de colores, Plantillas (próximamente).
  *
- * @version 1.1.0 - Agregado soporte responsive
+ * @version 2.1.0 - Migrado a BlockPalette centralizado
  * @since 2026-02-03
  */
 
-import { memo } from 'react';
-import { useDraggable } from '@dnd-kit/core';
+import { memo, useState } from 'react';
+import { Plus, Palette, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useEditorLayoutContext } from '@/components/editor-framework';
-import { BLOQUES_INVITACION } from '../config';
+import { useEditorLayoutContext, BlockPalette } from '@/components/editor-framework';
+import { BLOQUES_INVITACION, CATEGORIAS_BLOQUES } from '../config';
 import { useInvitacionEditor } from '../context';
+import InvitacionThemeEditor from '../components/InvitacionThemeEditor';
 
 /**
- * SidebarContainer - Sidebar con paleta de bloques
+ * SidebarContainer - Sidebar con navegación y panel de contenido
  */
 function SidebarContainer() {
-  const { modoPreview, handleAgregarBloque } = useInvitacionEditor();
-  const { showSidebar } = useEditorLayoutContext();
+  const {
+    modoPreview,
+    handleAgregarBloque,
+    evento,
+    handleActualizarPlantilla,
+    estaActualizandoPlantilla,
+  } = useInvitacionEditor();
+  const { showSidebar, showSecondaryPanel } = useEditorLayoutContext();
+
+  // Panel activo local (bloques, tema, plantillas)
+  const [panelActivo, setPanelActivo] = useState('bloques');
 
   // Ocultar en modo preview o en móvil
   if (modoPreview || !showSidebar) return null;
 
-  return (
-    <aside className="w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden flex-shrink-0">
-      {/* Header */}
-      <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-        <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
-          Bloques
-        </h2>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-          Arrastra o haz clic para agregar
-        </p>
-      </div>
+  const PANEL_TYPES = {
+    BLOQUES: 'bloques',
+    TEMA: 'tema',
+    PLANTILLAS: 'plantillas',
+  };
 
-      {/* Lista de bloques */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-2">
-        {BLOQUES_INVITACION.map((bloque) => (
-          <DraggableBlockItem
-            key={bloque.tipo}
-            bloque={bloque}
-            onClick={() => handleAgregarBloque(bloque.tipo)}
-          />
-        ))}
-      </div>
-    </aside>
+  return (
+    <>
+      {/* Barra de navegación vertical */}
+      <aside
+        className="w-12 md:w-14 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col items-center py-2 md:py-4 gap-1 md:gap-2 flex-shrink-0"
+        data-tour="sidebar-nav"
+      >
+        <button
+          onClick={() => setPanelActivo(PANEL_TYPES.BLOQUES)}
+          className={cn(
+            'p-2 md:p-3 rounded-lg transition-colors',
+            panelActivo === PANEL_TYPES.BLOQUES
+              ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
+              : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400'
+          )}
+          title="Bloques"
+        >
+          <Plus className="w-5 h-5" />
+        </button>
+        <button
+          onClick={() => setPanelActivo(PANEL_TYPES.TEMA)}
+          className={cn(
+            'p-2 md:p-3 rounded-lg transition-colors',
+            panelActivo === PANEL_TYPES.TEMA
+              ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
+              : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400'
+          )}
+          title="Colores"
+        >
+          <Palette className="w-5 h-5" />
+        </button>
+        <button
+          disabled
+          className="p-2 md:p-3 rounded-lg text-gray-300 dark:text-gray-600 cursor-not-allowed"
+          title="Plantillas (próximamente)"
+        >
+          <Sparkles className="w-5 h-5" />
+        </button>
+      </aside>
+
+      {/* Panel secundario - Contenido según panelActivo */}
+      {showSecondaryPanel && (
+        <aside className="w-72 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col flex-shrink-0">
+          {panelActivo === PANEL_TYPES.BLOQUES && (
+            <BlockPalette
+              bloques={BLOQUES_INVITACION}
+              categorias={CATEGORIAS_BLOQUES}
+              onAgregarBloque={handleAgregarBloque}
+              variant="grid"
+              colorConfig={{ mode: 'uniform' }}
+              headerTitle="Bloques"
+              headerSubtitle="Arrastra o haz clic para agregar"
+            />
+          )}
+          {panelActivo === PANEL_TYPES.TEMA && (
+            <InvitacionThemeEditor
+              evento={evento}
+              onActualizar={handleActualizarPlantilla}
+              isLoading={estaActualizandoPlantilla}
+            />
+          )}
+        </aside>
+      )}
+    </>
   );
 }
-
-/**
- * DraggableBlockItem - Ítem de bloque draggable
- */
-const DraggableBlockItem = memo(function DraggableBlockItem({ bloque, onClick }) {
-  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
-    id: `palette-${bloque.tipo}`,
-    data: {
-      type: 'palette-item',
-      blockType: bloque.tipo,
-    },
-  });
-
-  const Icon = bloque.icon;
-
-  return (
-    <div
-      ref={setNodeRef}
-      {...attributes}
-      {...listeners}
-      onClick={onClick}
-      className={cn(
-        'flex items-center gap-3 p-3 rounded-lg cursor-grab active:cursor-grabbing',
-        'bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700',
-        'border border-transparent hover:border-primary-200 dark:hover:border-primary-800',
-        'transition-all duration-200',
-        isDragging && 'opacity-50 scale-95'
-      )}
-    >
-      <div
-        className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
-        style={{ backgroundColor: 'rgba(117, 53, 114, 0.1)' }}
-      >
-        <Icon className="w-5 h-5 text-primary-600 dark:text-primary-400" />
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-          {bloque.label}
-        </p>
-        <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-          {bloque.descripcion}
-        </p>
-      </div>
-    </div>
-  );
-});
 
 export default memo(SidebarContainer);

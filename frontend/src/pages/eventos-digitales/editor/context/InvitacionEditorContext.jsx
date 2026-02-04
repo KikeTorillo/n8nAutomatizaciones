@@ -149,6 +149,20 @@ export function InvitacionEditorProvider({ children }) {
     },
   });
 
+  // Actualizar plantilla del evento (colores del tema)
+  const actualizarPlantillaMutation = useMutation({
+    mutationFn: (plantilla) =>
+      eventosDigitalesApi.actualizarEvento(eventoId, { plantilla }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['evento', eventoId] });
+      toast.success('Colores actualizados');
+    },
+    onError: (error) => {
+      toast.error('Error al actualizar los colores');
+      console.error('[InvitacionEditor] Error actualizando plantilla:', error);
+    },
+  });
+
   // ========== AUTOSAVE ==========
 
   const autosaveTimeoutRef = useRef(null);
@@ -321,6 +335,16 @@ export function InvitacionEditorProvider({ children }) {
     publicarMutation.mutate();
   }, [publicarMutation]);
 
+  /**
+   * Actualizar plantilla (colores del tema)
+   */
+  const handleActualizarPlantilla = useCallback(
+    (plantilla) => {
+      actualizarPlantillaMutation.mutate(plantilla);
+    },
+    [actualizarPlantillaMutation]
+  );
+
   // ========== BLOQUE SELECCIONADO COMPLETO ==========
 
   const bloqueSeleccionadoCompleto = useMemo(
@@ -384,6 +408,10 @@ export function InvitacionEditorProvider({ children }) {
       // Publicación
       handlePublicar,
 
+      // Plantilla/Tema
+      handleActualizarPlantilla,
+      estaActualizandoPlantilla: actualizarPlantillaMutation.isPending,
+
       // Navegación
       handleVolver,
     }),
@@ -415,6 +443,8 @@ export function InvitacionEditorProvider({ children }) {
       deseleccionarBloque,
       guardarAhora,
       handlePublicar,
+      handleActualizarPlantilla,
+      actualizarPlantillaMutation.isPending,
       handleVolver,
     ]
   );

@@ -67,3 +67,24 @@ export { useEditorLayout, PANEL_TYPES } from './layout/useEditorLayout';
 
 // Constants
 export { TABS, TABS_SIMPLE, BREAKPOINT_ICONS, BREAKPOINT_LABELS } from './constants';
+
+// Palette
+export {
+  BlockPalette,
+  BlockCategoryGroup,
+  DraggableBlockCard,
+  DraggableBlockItem,
+  agruparBloquesPorCategoria,
+  getBlockColor,
+  getDraggableId,
+  DEFAULT_UNIFORM_COLOR,
+} from './palette';
+
+// Inline Editing
+export {
+  InlineText,
+  InlineRichText,
+  RichTextToolbar,
+  InlineEditableWrapper,
+  useInlineEditing,
+} from './inline';

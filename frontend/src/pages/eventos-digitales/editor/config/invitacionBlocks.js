@@ -25,80 +25,111 @@ import {
   Users,
 } from 'lucide-react';
 
+// ========== CATEGORÍAS DE BLOQUES ==========
+
+export const CATEGORIAS_BLOQUES = {
+  estructura: { label: 'Estructura', orden: 1 },
+  protagonistas: { label: 'Protagonistas', orden: 2 },
+  programa: { label: 'Programa', orden: 3 },
+  contenido: { label: 'Contenido', orden: 4 },
+  interaccion: { label: 'Interacción', orden: 5 },
+};
+
 // ========== TIPOS DE BLOQUES DISPONIBLES ==========
 
 export const BLOQUES_INVITACION = [
+  // ESTRUCTURA
   {
     tipo: 'hero_invitacion',
+    categoria: 'estructura',
     label: 'Portada',
     icon: Layout,
     descripcion: 'Portada principal con título y fecha',
   },
   {
+    tipo: 'separador',
+    categoria: 'estructura',
+    label: 'Separador',
+    icon: Minus,
+    descripcion: 'Línea decorativa entre secciones',
+  },
+
+  // PROTAGONISTAS
+  {
     tipo: 'protagonistas',
+    categoria: 'protagonistas',
     label: 'Protagonistas',
     icon: Heart,
     descripcion: 'Nombres destacados (novios, quinceañera)',
   },
+
+  // PROGRAMA
   {
     tipo: 'countdown',
+    categoria: 'programa',
     label: 'Cuenta Regresiva',
     icon: Clock,
     descripcion: 'Contador hasta la fecha del evento',
   },
   {
     tipo: 'timeline',
+    categoria: 'programa',
     label: 'Itinerario',
     icon: GitBranch,
     descripcion: 'Programa del día con horarios',
   },
   {
     tipo: 'ubicacion',
+    categoria: 'programa',
     label: 'Ubicación',
     icon: MapPin,
     descripcion: 'Mapa y dirección del evento',
   },
+
+  // CONTENIDO
   {
     tipo: 'galeria',
+    categoria: 'contenido',
     label: 'Galería',
     icon: Image,
     descripcion: 'Galería de fotos',
   },
   {
-    tipo: 'rsvp',
-    label: 'Confirmación',
-    icon: CheckCircle,
-    descripcion: 'Formulario de confirmación de asistencia',
-  },
-  {
-    tipo: 'mesa_regalos',
-    label: 'Mesa de Regalos',
-    icon: Gift,
-    descripcion: 'Enlaces a tiendas y registros',
-  },
-  {
     tipo: 'video',
+    categoria: 'contenido',
     label: 'Video',
     icon: Video,
     descripcion: 'Video de invitación',
   },
   {
     tipo: 'texto',
+    categoria: 'contenido',
     label: 'Texto',
     icon: Type,
     descripcion: 'Bloque de texto libre',
   },
   {
     tipo: 'faq',
+    categoria: 'contenido',
     label: 'Preguntas',
     icon: HelpCircle,
     descripcion: 'Preguntas frecuentes del evento',
   },
+
+  // INTERACCIÓN
   {
-    tipo: 'separador',
-    label: 'Separador',
-    icon: Minus,
-    descripcion: 'Línea decorativa entre secciones',
+    tipo: 'rsvp',
+    categoria: 'interaccion',
+    label: 'Confirmación',
+    icon: CheckCircle,
+    descripcion: 'Formulario de confirmación de asistencia',
+  },
+  {
+    tipo: 'mesa_regalos',
+    categoria: 'interaccion',
+    label: 'Mesa de Regalos',
+    icon: Gift,
+    descripcion: 'Enlaces a tiendas y registros',
   },
 ];
 

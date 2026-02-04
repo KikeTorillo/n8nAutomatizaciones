@@ -4,17 +4,21 @@
  * ====================================================================
  * Container para todos los drawers móviles del editor.
  *
- * @version 1.0.0
+ * @version 1.1.0 - Migrado a BlockPalette centralizado
  * @since 2026-02-03
  */
 
-import { memo } from 'react';
+import { memo, useMemo } from 'react';
 import { useEditor } from '../context';
 import { Drawer } from '@/components/ui';
+import { BlockPalette } from '@/components/editor-framework';
 import PageManager from '../components/PageManager';
-import BlockPalette from '../components/BlockPalette';
 import ThemeEditor from '../components/ThemeEditor';
 import PropertiesPanel from '../components/PropertiesPanel';
+import {
+  CATEGORIAS_WEBSITE,
+  normalizarBloques,
+} from '../config/blockConfig';
 
 /**
  * DrawersContainer - Drawers móviles para el editor
@@ -54,6 +58,12 @@ function DrawersContainer() {
     deseleccionarBloque,
   } = useEditor();
 
+  // Normalizar bloques para BlockPalette
+  const bloquesNormalizados = useMemo(
+    () => normalizarBloques(tiposBloques),
+    [tiposBloques]
+  );
+
   return (
     <>
       {/* Drawer: Bloques */}
@@ -65,13 +75,18 @@ function DrawersContainer() {
         size="lg"
       >
         <BlockPalette
-          tiposBloques={tiposBloques}
+          bloques={bloquesNormalizados}
+          categorias={CATEGORIAS_WEBSITE}
           onAgregarBloque={(tipo) => {
             handleAgregarBloque(tipo);
             closeDrawer();
           }}
           disabled={!paginaActiva}
+          variant="grid"
           isInDrawer
+          colorConfig={{ mode: 'uniform' }}
+          showHeader={false}
+          draggablePrefix="drawer-palette"
         />
       </Drawer>
 
@@ -109,7 +124,15 @@ function DrawersContainer() {
           onActualizar={(tema) =>
             actualizarConfig.mutateAsync({
               id: config.id,
-              data: tema,
+              data: {
+                version: config.version,
+                color_primario: tema.colores.primario,
+                color_secundario: tema.colores.secundario,
+                color_fondo: tema.colores.fondo,
+                color_texto: tema.colores.texto,
+                fuente_titulos: tema.fuente_titulos,
+                fuente_cuerpo: tema.fuente_cuerpo,
+              },
             })
           }
         />

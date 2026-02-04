@@ -16,7 +16,7 @@ import { Layout, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { CanvasBlock } from '../components/canvas-blocks';
 import { useInvitacionEditor } from '../context';
-import { useDndEditor, useBlockSelection, BREAKPOINTS } from '@/components/editor-framework';
+import { useDndEditor, useBlockSelection, useInlineEditing, BREAKPOINTS } from '@/components/editor-framework';
 import { useInvitacionEditorStore } from '@/store';
 
 /**
@@ -41,6 +41,11 @@ function CanvasContainer() {
   const { handleBloqueClick } = useBlockSelection({
     seleccionarBloque,
     abrirPropiedades,
+  });
+
+  // Hook para edición inline
+  const { bloqueEditandoInline, activarEdicion, desactivarEdicion } = useInlineEditing({
+    useStore: useInvitacionEditorStore,
   });
 
   // Contexto DnD compartido
@@ -87,9 +92,10 @@ function CanvasContainer() {
       // Solo deseleccionar si el click es directamente en el canvas
       if (e.target === e.currentTarget) {
         deseleccionarBloque();
+        desactivarEdicion();
       }
     },
-    [deseleccionarBloque]
+    [deseleccionarBloque, desactivarEdicion]
   );
 
   // Handler para contenido inline
@@ -146,15 +152,13 @@ function CanvasContainer() {
                       bloque={bloque}
                       tema={tema}
                       isSelected={bloqueSeleccionado === bloque.id}
-                      isEditing={false}
+                      isEditing={bloqueEditandoInline === bloque.id}
                       isDragOver={overInfo?.id === bloque.id && isDraggingFromPalette}
                       dropPosition={overInfo?.id === bloque.id ? overInfo.position : null}
                       isFirstBlock={index === 0}
                       eventoData={eventoData}
                       onClick={() => handleBloqueClick(bloque.id)}
-                      onDoubleClick={() => {
-                        // Abrir panel de propiedades en móvil
-                      }}
+                      onDoubleClick={() => activarEdicion(bloque.id)}
                       onContentChange={(cambios) => handleContentChange(bloque.id, cambios)}
                       onDuplicate={handleDuplicarBloque}
                       onDelete={handleEliminarBloque}

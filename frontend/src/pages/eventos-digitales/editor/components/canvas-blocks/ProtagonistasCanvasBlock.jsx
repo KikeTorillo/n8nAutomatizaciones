@@ -3,13 +3,16 @@
  * PROTAGONISTAS CANVAS BLOCK
  * ====================================================================
  * Bloque de protagonistas (novios, quinceañera) para invitaciones.
+ * Soporta edición inline de nombres y subtítulos.
  *
- * @version 1.0.0
+ * @version 1.1.0
  * @since 2026-02-03
+ * @updated 2026-02-04 - Agregar edición inline
  */
 
 import { memo } from 'react';
 import { cn } from '@/lib/utils';
+import { InlineText } from '@/components/editor-framework';
 
 /**
  * Protagonistas Canvas Block
@@ -17,8 +20,10 @@ import { cn } from '@/lib/utils';
  * @param {Object} props
  * @param {Object} props.bloque - Datos del bloque
  * @param {Object} props.tema - Tema de la invitación
+ * @param {boolean} props.isEditing - Si está en modo inline editing
+ * @param {Function} props.onContentChange - Callback al cambiar contenido
  */
-function ProtagonistasCanvasBlock({ bloque, tema }) {
+function ProtagonistasCanvasBlock({ bloque, tema, isEditing, onContentChange }) {
   const contenido = bloque.contenido || {};
   const estilos = bloque.estilos || {};
 
@@ -58,26 +63,58 @@ function ProtagonistasCanvasBlock({ bloque, tema }) {
               />
             </div>
           )}
-          <h2
-            className="text-3xl md:text-4xl font-bold"
-            style={{ color: colorPrimario, fontFamily: 'var(--fuente-titulos)' }}
-          >
-            {nombre_1}
-          </h2>
-          {subtitulo_1 && (
-            <p className="text-gray-600 dark:text-gray-400 mt-2 text-sm md:text-base">
-              {subtitulo_1}
-            </p>
+          {isEditing ? (
+            <InlineText
+              value={contenido.nombre_1 || ''}
+              onChange={(v) => onContentChange?.({ nombre_1: v })}
+              placeholder="Nombre 1..."
+              as="h2"
+              className="text-3xl md:text-4xl font-bold"
+              style={{ color: colorPrimario, fontFamily: 'var(--fuente-titulos)' }}
+            />
+          ) : (
+            <h2
+              className="text-3xl md:text-4xl font-bold"
+              style={{ color: colorPrimario, fontFamily: 'var(--fuente-titulos)' }}
+            >
+              {nombre_1}
+            </h2>
+          )}
+          {isEditing ? (
+            <InlineText
+              value={contenido.subtitulo_1 || ''}
+              onChange={(v) => onContentChange?.({ subtitulo_1: v })}
+              placeholder="Subtítulo (opcional)..."
+              as="p"
+              className="text-gray-600 dark:text-gray-400 mt-2 text-sm md:text-base"
+            />
+          ) : (
+            subtitulo_1 && (
+              <p className="text-gray-600 dark:text-gray-400 mt-2 text-sm md:text-base">
+                {subtitulo_1}
+              </p>
+            )
           )}
         </div>
 
         {/* Separador */}
-        <div
-          className="text-4xl md:text-5xl font-light"
-          style={{ color: colorPrimario }}
-        >
-          {separador}
-        </div>
+        {isEditing ? (
+          <InlineText
+            value={contenido.separador || ''}
+            onChange={(v) => onContentChange?.({ separador: v })}
+            placeholder="&"
+            as="div"
+            className="text-4xl md:text-5xl font-light"
+            style={{ color: colorPrimario }}
+          />
+        ) : (
+          <div
+            className="text-4xl md:text-5xl font-light"
+            style={{ color: colorPrimario }}
+          >
+            {separador}
+          </div>
+        )}
 
         {/* Protagonista 2 */}
         <div className={cn('flex-1', layout === 'horizontal' ? 'text-center md:text-left' : '')}>
@@ -90,16 +127,37 @@ function ProtagonistasCanvasBlock({ bloque, tema }) {
               />
             </div>
           )}
-          <h2
-            className="text-3xl md:text-4xl font-bold"
-            style={{ color: colorPrimario, fontFamily: 'var(--fuente-titulos)' }}
-          >
-            {nombre_2}
-          </h2>
-          {subtitulo_2 && (
-            <p className="text-gray-600 dark:text-gray-400 mt-2 text-sm md:text-base">
-              {subtitulo_2}
-            </p>
+          {isEditing ? (
+            <InlineText
+              value={contenido.nombre_2 || ''}
+              onChange={(v) => onContentChange?.({ nombre_2: v })}
+              placeholder="Nombre 2..."
+              as="h2"
+              className="text-3xl md:text-4xl font-bold"
+              style={{ color: colorPrimario, fontFamily: 'var(--fuente-titulos)' }}
+            />
+          ) : (
+            <h2
+              className="text-3xl md:text-4xl font-bold"
+              style={{ color: colorPrimario, fontFamily: 'var(--fuente-titulos)' }}
+            >
+              {nombre_2}
+            </h2>
+          )}
+          {isEditing ? (
+            <InlineText
+              value={contenido.subtitulo_2 || ''}
+              onChange={(v) => onContentChange?.({ subtitulo_2: v })}
+              placeholder="Subtítulo (opcional)..."
+              as="p"
+              className="text-gray-600 dark:text-gray-400 mt-2 text-sm md:text-base"
+            />
+          ) : (
+            subtitulo_2 && (
+              <p className="text-gray-600 dark:text-gray-400 mt-2 text-sm md:text-base">
+                {subtitulo_2}
+              </p>
+            )
           )}
         </div>
       </div>

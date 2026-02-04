@@ -3,13 +3,16 @@
  * COUNTDOWN CANVAS BLOCK
  * ====================================================================
  * Bloque de cuenta regresiva para invitaciones digitales.
+ * Soporta edición inline del título.
  *
- * @version 1.0.0
+ * @version 1.1.0
  * @since 2026-02-03
+ * @updated 2026-02-04 - Agregar edición inline
  */
 
 import { memo, useState, useEffect, useMemo } from 'react';
 import { cn } from '@/lib/utils';
+import { InlineText } from '@/components/editor-framework';
 
 /**
  * Countdown Canvas Block
@@ -17,8 +20,10 @@ import { cn } from '@/lib/utils';
  * @param {Object} props
  * @param {Object} props.bloque - Datos del bloque
  * @param {Object} props.tema - Tema de la invitación
+ * @param {boolean} props.isEditing - Si está en modo inline editing
+ * @param {Function} props.onContentChange - Callback al cambiar contenido
  */
-function CountdownCanvasBlock({ bloque, tema }) {
+function CountdownCanvasBlock({ bloque, tema, isEditing, onContentChange }) {
   const contenido = bloque.contenido || {};
   const estilos = bloque.estilos || {};
 
@@ -141,12 +146,23 @@ function CountdownCanvasBlock({ bloque, tema }) {
     <section className="py-16 px-6 bg-white dark:bg-gray-900">
       <div className="max-w-4xl mx-auto text-center">
         {/* Título */}
-        <h2
-          className="text-2xl md:text-3xl font-bold mb-8"
-          style={{ color: colorPrimario, fontFamily: 'var(--fuente-titulos)' }}
-        >
-          {titulo}
-        </h2>
+        {isEditing ? (
+          <InlineText
+            value={contenido.titulo || ''}
+            onChange={(v) => onContentChange?.({ titulo: v })}
+            placeholder="Título de la cuenta regresiva..."
+            as="h2"
+            className="text-2xl md:text-3xl font-bold mb-8"
+            style={{ color: colorPrimario, fontFamily: 'var(--fuente-titulos)' }}
+          />
+        ) : (
+          <h2
+            className="text-2xl md:text-3xl font-bold mb-8"
+            style={{ color: colorPrimario, fontFamily: 'var(--fuente-titulos)' }}
+          >
+            {titulo}
+          </h2>
+        )}
 
         {/* Countdown o texto finalizado */}
         {tiempoRestante ? (
@@ -170,6 +186,15 @@ function CountdownCanvasBlock({ bloque, tema }) {
               </>
             ))}
           </div>
+        ) : isEditing ? (
+          <InlineText
+            value={contenido.texto_finalizado || ''}
+            onChange={(v) => onContentChange?.({ texto_finalizado: v })}
+            placeholder="Texto cuando termine la cuenta..."
+            as="p"
+            className="text-2xl md:text-3xl font-medium"
+            style={{ color: colorPrimario }}
+          />
         ) : (
           <p
             className="text-2xl md:text-3xl font-medium"
