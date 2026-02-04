@@ -149,6 +149,127 @@ class ErpDataService {
         });
     }
 
+    // ========================================================================
+    // MÉTODOS PÚBLICOS (Sin autenticación - para website público)
+    // ========================================================================
+
+    /**
+     * Obtener servicios públicos para el website (sin autenticación)
+     * Usa withBypass porque es un endpoint público cross-org
+     *
+     * @param {string} organizacionId - UUID de la organización
+     * @param {Object} filtros - Filtros opcionales
+     * @param {string} [filtros.categorias] - Categorías separadas por coma
+     * @param {string} [filtros.ids] - IDs de servicios separados por coma
+     * @returns {Promise<Array>}
+     */
+    static async obtenerServiciosPublicos(organizacionId, filtros = {}) {
+        const { categorias, ids } = filtros;
+
+        return await RLSContextManager.withBypass(async (db) => {
+            let query = `
+                SELECT
+                    s.id,
+                    s.nombre,
+                    s.descripcion,
+                    s.precio,
+                    s.duracion_minutos,
+                    s.imagen_url,
+                    s.categoria
+                FROM servicios s
+                WHERE s.organizacion_id = $1
+                AND s.activo = true
+            `;
+            const params = [organizacionId];
+            let paramIndex = 2;
+
+            // Filtrar por categorías
+            if (categorias) {
+                const cats = categorias.split(',').map(c => c.trim()).filter(Boolean);
+                if (cats.length > 0) {
+                    query += ` AND s.categoria = ANY($${paramIndex})`;
+                    params.push(cats);
+                    paramIndex++;
+                }
+            }
+
+            // Filtrar por IDs específicos
+            if (ids) {
+                const idsList = ids.split(',').map(Number).filter(n => !isNaN(n));
+                if (idsList.length > 0) {
+                    query += ` AND s.id = ANY($${paramIndex})`;
+                    params.push(idsList);
+                }
+            }
+
+            query += ` ORDER BY s.nombre ASC`;
+
+            const result = await db.query(query, params);
+            return result.rows;
+        });
+    }
+
+    /**
+     * Obtener profesionales públicos para el website (sin autenticación)
+     * Usa withBypass porque es un endpoint público cross-org
+     *
+     * @param {string} organizacionId - UUID de la organización
+     * @param {Object} filtros - Filtros opcionales
+     * @param {string} [filtros.departamentos] - IDs de departamentos separados por coma
+     * @param {string} [filtros.ids] - IDs de profesionales separados por coma
+     * @returns {Promise<Array>}
+     */
+    static async obtenerProfesionalesPublicos(organizacionId, filtros = {}) {
+        const { departamentos, ids } = filtros;
+
+        return await RLSContextManager.withBypass(async (db) => {
+            let query = `
+                SELECT
+                    p.id,
+                    p.nombre_completo,
+                    p.foto_url,
+                    p.biografia,
+                    pu.nombre as puesto_nombre
+                FROM profesionales p
+                LEFT JOIN puestos pu ON p.puesto_id = pu.id
+                WHERE p.organizacion_id = $1
+                  AND p.activo = true
+                  AND p.estado = 'activo'
+                  AND p.eliminado_en IS NULL
+            `;
+            const params = [organizacionId];
+            let paramIndex = 2;
+
+            // Filtrar por departamentos
+            if (departamentos) {
+                const deptIds = departamentos.split(',').map(d => d.trim()).filter(Boolean);
+                if (deptIds.length > 0) {
+                    query += ` AND p.departamento_id = ANY($${paramIndex}::uuid[])`;
+                    params.push(deptIds);
+                    paramIndex++;
+                }
+            }
+
+            // Filtrar por IDs específicos
+            if (ids) {
+                const profIds = ids.split(',').map(id => id.trim()).filter(Boolean);
+                if (profIds.length > 0) {
+                    query += ` AND p.id = ANY($${paramIndex}::uuid[])`;
+                    params.push(profIds);
+                }
+            }
+
+            query += ` ORDER BY p.nombre_completo ASC`;
+
+            const result = await db.query(query, params);
+            return result.rows;
+        });
+    }
+
+    // ========================================================================
+    // MÉTODOS DE RESUMEN
+    // ========================================================================
+
     /**
      * Obtener resumen de datos ERP disponibles
      * Útil para mostrar al usuario qué módulos están configurados

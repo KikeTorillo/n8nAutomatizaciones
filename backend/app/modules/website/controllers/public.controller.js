@@ -1,15 +1,13 @@
 const {
     WebsiteConfigModel,
     WebsitePaginasModel,
-    WebsiteBloquesModel,
-    WebsiteContactosModel,
 } = require('../models');
-const { ResponseHelper, SanitizeHelper } = require('../../../utils/helpers');
+const { ResponseHelper } = require('../../../utils/helpers');
 const { asyncHandler } = require('../../../middleware');
-const RLSContextManager = require('../../../utils/rlsContextManager');
-const NotificacionesService = require('../../notificaciones/services/notificaciones.service');
 const websiteCacheService = require('../services/websiteCache.service');
 const WebsitePreviewService = require('../services/preview.service');
+const ContactosService = require('../services/contactos.service');
+const ErpDataService = require('../services/erp-data.service');
 
 /**
  * ====================================================================
@@ -186,83 +184,38 @@ class WebsitePublicController {
         const { slug } = req.params;
         const { nombre, email, telefono, mensaje, pagina_origen } = req.body;
 
-        // Validación básica
-        if (!nombre || nombre.trim().length < 2) {
-            return ResponseHelper.error(
-                res,
-                'El nombre es requerido (mínimo 2 caracteres)',
-                400
-            );
-        }
-
-        if (!email && !telefono) {
-            return ResponseHelper.error(
-                res,
-                'Se requiere al menos un medio de contacto (email o teléfono)',
-                400
-            );
-        }
-
         // Verificar que el sitio existe
         const config = await WebsiteConfigModel.obtenerPorSlug(slug);
         if (!config) {
-            return ResponseHelper.error(
-                res,
-                'Sitio no encontrado',
-                404
-            );
+            return ResponseHelper.error(res, 'Sitio no encontrado', 404);
         }
 
-        // Obtener metadatos del request
-        const ip_origen = req.ip || req.headers['x-forwarded-for'] || req.connection?.remoteAddress;
-        const user_agent = req.headers['user-agent'];
+        // Extraer metadatos del request
+        const metadata = ContactosService.extraerMetadatos(req);
 
-        // Sanitizar campos para prevenir XSS
-        const nombreSanitizado = SanitizeHelper.escapeHtml(nombre.trim());
-        const mensajeSanitizado = mensaje ? SanitizeHelper.escapeHtml(mensaje.trim()) : null;
+        // Crear contacto usando el servicio
+        const { contacto, nombreSanitizado, mensajeSanitizado } = await ContactosService.crearContacto({
+            websiteId: config.id,
+            organizacionId: config.organizacion_id,
+            nombre,
+            email,
+            telefono,
+            mensaje,
+            paginaOrigen: pagina_origen
+        }, metadata);
 
-        // Crear contacto en la base de datos
-        const contacto = await WebsiteContactosModel.crear({
-            website_id: config.id,
-            organizacion_id: config.organizacion_id,
-            nombre: nombreSanitizado,
-            email: email?.trim() || null,
-            telefono: telefono?.trim() || null,
-            mensaje: mensajeSanitizado,
-            pagina_origen: pagina_origen || null,
-            ip_origen,
-            user_agent,
+        // Enviar notificación a admins (async, no bloqueante)
+        ContactosService.notificarAdmins({
+            organizacionId: config.organizacion_id,
+            nombreSitio: config.nombre_sitio,
+            contacto: {
+                nombre: nombreSanitizado,
+                email,
+                telefono,
+                mensaje: mensajeSanitizado
+            },
+            contactoId: contacto.id
         });
-
-        console.log('[WebsitePublicController.enviarContacto] Contacto guardado', {
-            contacto_id: contacto.id,
-            sitio_slug: slug,
-            organizacion_id: config.organizacion_id,
-            nombre: nombreSanitizado,
-        });
-
-        // Enviar notificación al propietario
-        try {
-            await NotificacionesService.enviarNotificacion({
-                organizacionId: config.organizacion_id,
-                tipo: 'website_contacto',
-                titulo: `Nuevo contacto desde ${config.nombre_sitio || 'tu sitio web'}`,
-                mensaje: `${nombreSanitizado} te ha enviado un mensaje${email ? ` (${email})` : ''}${telefono ? ` - Tel: ${telefono}` : ''}`,
-                datos: {
-                    contacto_id: contacto.id,
-                    nombre: nombreSanitizado,
-                    email,
-                    telefono,
-                    mensaje: mensajeSanitizado?.substring(0, 200),
-                },
-                // Enviar a admins de la organización
-                canales: ['app', 'email'],
-                destinatarios: 'admins',
-            });
-        } catch (notifError) {
-            // No fallar si la notificación falla
-            console.warn('[WebsitePublicController.enviarContacto] Error enviando notificación:', notifError.message);
-        }
 
         return ResponseHelper.success(
             res,
@@ -294,48 +247,11 @@ class WebsitePublicController {
             return ResponseHelper.error(res, 'Sitio no encontrado', 404);
         }
 
-        // Obtener servicios activos de la organización
-        const servicios = await RLSContextManager.withBypass(async (db) => {
-            let query = `
-                SELECT
-                    s.id,
-                    s.nombre,
-                    s.descripcion,
-                    s.precio,
-                    s.duracion_minutos,
-                    s.imagen_url,
-                    s.categoria
-                FROM servicios s
-                WHERE s.organizacion_id = $1
-                AND s.activo = true
-            `;
-            const params = [config.organizacion_id];
-            let paramIndex = 2;
-
-            // Filtrar por categorías
-            if (categorias) {
-                const cats = categorias.split(',').map(c => c.trim()).filter(Boolean);
-                if (cats.length > 0) {
-                    query += ` AND s.categoria = ANY($${paramIndex})`;
-                    params.push(cats);
-                    paramIndex++;
-                }
-            }
-
-            // Filtrar por IDs específicos
-            if (ids) {
-                const idsList = ids.split(',').map(Number).filter(n => !isNaN(n));
-                if (idsList.length > 0) {
-                    query += ` AND s.id = ANY($${paramIndex})`;
-                    params.push(idsList);
-                }
-            }
-
-            query += ` ORDER BY s.nombre ASC`;
-
-            const result = await db.query(query, params);
-            return result.rows;
-        });
+        // Delegar a ErpDataService
+        const servicios = await ErpDataService.obtenerServiciosPublicos(
+            config.organizacion_id,
+            { categorias, ids }
+        );
 
         return ResponseHelper.success(
             res,
@@ -363,49 +279,11 @@ class WebsitePublicController {
             return ResponseHelper.error(res, 'Sitio no encontrado', 404);
         }
 
-        // Obtener profesionales activos de la organización
-        const profesionales = await RLSContextManager.withBypass(async (db) => {
-            let query = `
-                SELECT
-                    p.id,
-                    p.nombre_completo,
-                    p.foto_url,
-                    p.biografia,
-                    pu.nombre as puesto_nombre
-                FROM profesionales p
-                LEFT JOIN puestos pu ON p.puesto_id = pu.id
-                WHERE p.organizacion_id = $1
-                  AND p.activo = true
-                  AND p.estado = 'activo'
-                  AND p.eliminado_en IS NULL
-            `;
-            const params = [config.organizacion_id];
-            let paramIndex = 2;
-
-            // Filtrar por departamentos
-            if (departamentos) {
-                const deptIds = departamentos.split(',').map(d => d.trim()).filter(Boolean);
-                if (deptIds.length > 0) {
-                    query += ` AND p.departamento_id = ANY($${paramIndex}::uuid[])`;
-                    params.push(deptIds);
-                    paramIndex++;
-                }
-            }
-
-            // Filtrar por IDs específicos
-            if (ids) {
-                const profIds = ids.split(',').map(id => id.trim()).filter(Boolean);
-                if (profIds.length > 0) {
-                    query += ` AND p.id = ANY($${paramIndex}::uuid[])`;
-                    params.push(profIds);
-                }
-            }
-
-            query += ` ORDER BY p.nombre_completo ASC`;
-
-            const result = await db.query(query, params);
-            return result.rows;
-        });
+        // Delegar a ErpDataService
+        const profesionales = await ErpDataService.obtenerProfesionalesPublicos(
+            config.organizacion_id,
+            { departamentos, ids }
+        );
 
         return ResponseHelper.success(
             res,

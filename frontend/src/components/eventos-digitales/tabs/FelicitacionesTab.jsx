@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Check, X, MessageCircle } from 'lucide-react';
 import { Button, LoadingSpinner } from '@/components/ui';
 
@@ -10,7 +11,7 @@ import { Button, LoadingSpinner } from '@/components/ui';
  * @param {Object} props.rechazarFelicitacion - Mutation para rechazar
  * @param {string} props.eventoId - ID del evento
  */
-export default function FelicitacionesTab({
+function FelicitacionesTab({
   felicitacionesData,
   isLoading,
   aprobarFelicitacion,
@@ -69,9 +70,15 @@ export default function FelicitacionesTab({
       ) : (
         <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
           <MessageCircle className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-          <p className="text-gray-500 dark:text-gray-400">No hay felicitaciones todavía</p>
+          <p className="text-gray-500 dark:text-gray-400">No hay felicitaciones todavia</p>
         </div>
       )}
     </div>
   );
 }
+
+export default memo(FelicitacionesTab, (prevProps, nextProps) => {
+  return prevProps.eventoId === nextProps.eventoId &&
+         prevProps.felicitacionesData === nextProps.felicitacionesData &&
+         prevProps.isLoading === nextProps.isLoading;
+});

@@ -9,6 +9,7 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { useWebsiteEditorStore } from '@/store';
 import { toast } from 'sonner';
+import { hashBloques } from './compareUtils';
 
 // Constantes
 const DEBOUNCE_MS = 3000; // 3 segundos de debounce
@@ -54,8 +55,9 @@ export function useAutosave({ onSave, enabled = true, debounceMs = DEBOUNCE_MS }
     }
 
     // Verificar si los bloques realmente cambiaron
-    const bloquesJSON = JSON.stringify(bloques);
-    if (lastSavedBloquesRef.current === bloquesJSON) {
+    // Usa hash de IDs+versiones en lugar de JSON.stringify completo (mas eficiente)
+    const bloquesHash = hashBloques(bloques);
+    if (lastSavedBloquesRef.current === bloquesHash) {
       setGuardado();
       return;
     }
@@ -65,7 +67,7 @@ export function useAutosave({ onSave, enabled = true, debounceMs = DEBOUNCE_MS }
 
     try {
       await onSave(bloques);
-      lastSavedBloquesRef.current = bloquesJSON;
+      lastSavedBloquesRef.current = bloquesHash;
       retryCountRef.current = 0;
       setGuardado();
     } catch (error) {

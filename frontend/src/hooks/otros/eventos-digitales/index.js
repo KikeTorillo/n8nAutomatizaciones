@@ -70,6 +70,16 @@ import {
   useDesasignarInvitadoDeMesa,
 } from './useEventosPublicos';
 
+// Helpers centralizados - Feb 2026
+export {
+  EVENTO_QUERY_KEYS,
+  EVENTO_QUERY_GROUPS,
+  invalidateEventoDependencies,
+  invalidateInvitadosDependencies,
+  invalidateCheckinDependencies,
+  invalidateEventosList,
+} from './helpers';
+
 // Re-exportar named exports
 export {
   // Eventos y plantillas

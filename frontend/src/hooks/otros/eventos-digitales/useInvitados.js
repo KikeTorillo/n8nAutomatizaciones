@@ -2,6 +2,7 @@
  * Hooks para gestión de invitados
  *
  * Ene 2026: Extraído de useEventosDigitales.js para mejor mantenibilidad
+ * Feb 2026: Migrado a EVENTO_QUERY_KEYS centralizados
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -9,6 +10,7 @@ import { STALE_TIMES } from '@/app/queryClient';
 import { eventosDigitalesApi } from '@/services/api/endpoints';
 import { sanitizeParams } from '@/lib/params';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
+import { EVENTO_QUERY_KEYS, invalidateInvitadosDependencies } from './helpers';
 
 // ==================== QUERIES INVITADOS ====================
 
@@ -20,7 +22,7 @@ import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
  */
 export function useInvitados(eventoId, params = {}) {
   return useQuery({
-    queryKey: ['invitados-evento', eventoId, params],
+    queryKey: [...EVENTO_QUERY_KEYS.invitados(eventoId), params],
     queryFn: async () => {
       const response = await eventosDigitalesApi.listarInvitados(eventoId, sanitizeParams(params));
       const data = response.data.data;
@@ -58,8 +60,7 @@ export function useCrearInvitado() {
       return response.data.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['invitados-evento', variables.eventoId], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['evento-digital-estadisticas', variables.eventoId], refetchType: 'active' });
+      invalidateInvitadosDependencies(queryClient, variables.eventoId);
     },
     onError: createCRUDErrorHandler('create', 'Invitado', {
       409: 'Ya existe un invitado con ese email o telefono',
@@ -88,8 +89,7 @@ export function useActualizarInvitado() {
       return { ...response.data.data, eventoId };
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['invitados-evento', data.eventoId], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['evento-digital-estadisticas', data.eventoId], refetchType: 'active' });
+      invalidateInvitadosDependencies(queryClient, data.eventoId);
     },
     onError: createCRUDErrorHandler('update', 'Invitado'),
   });
@@ -108,8 +108,7 @@ export function useEliminarInvitado() {
       return { ...response.data, eventoId };
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['invitados-evento', data.eventoId], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['evento-digital-estadisticas', data.eventoId], refetchType: 'active' });
+      invalidateInvitadosDependencies(queryClient, data.eventoId);
     },
     onError: createCRUDErrorHandler('delete', 'Invitado'),
   });
@@ -128,8 +127,7 @@ export function useImportarInvitados() {
       return { ...response.data.data, eventoId };
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['invitados-evento', data.eventoId], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['evento-digital-estadisticas', data.eventoId], refetchType: 'active' });
+      invalidateInvitadosDependencies(queryClient, data.eventoId);
     },
     onError: createCRUDErrorHandler('create', 'Invitados'),
   });
@@ -149,29 +147,7 @@ export function useExportarInvitados() {
   });
 }
 
-// ==================== MUTATIONS UBICACIONES ====================
-
-/**
- * Extrae mensajes de error detallados de la respuesta del backend
- */
-function extraerMensajesValidacion(responseData) {
-  if (!responseData?.errors) {
-    return responseData?.message || 'Error de validación';
-  }
-
-  const errores = [];
-  for (const tipo of ['body', 'params', 'query']) {
-    if (Array.isArray(responseData.errors[tipo])) {
-      for (const err of responseData.errors[tipo]) {
-        errores.push(err.message);
-      }
-    }
-  }
-
-  return errores.length === 0
-    ? responseData?.message || 'Error de validación'
-    : errores.join('. ');
-}
+// ==================== QUERIES UBICACIONES ====================
 
 /**
  * Hook para listar ubicaciones de un evento
@@ -180,7 +156,7 @@ function extraerMensajesValidacion(responseData) {
  */
 export function useUbicacionesEvento(eventoId) {
   return useQuery({
-    queryKey: ['ubicaciones-evento', eventoId],
+    queryKey: EVENTO_QUERY_KEYS.ubicaciones(eventoId),
     queryFn: async () => {
       const response = await eventosDigitalesApi.listarUbicaciones(eventoId);
       return response.data.data.ubicaciones || [];
@@ -189,6 +165,8 @@ export function useUbicacionesEvento(eventoId) {
     staleTime: STALE_TIMES.SEMI_STATIC,
   });
 }
+
+// ==================== MUTATIONS UBICACIONES ====================
 
 /**
  * Hook para crear ubicación
@@ -211,7 +189,10 @@ export function useCrearUbicacion() {
       return response.data.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['ubicaciones-evento', variables.eventoId], refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: EVENTO_QUERY_KEYS.ubicaciones(variables.eventoId),
+        refetchType: 'active'
+      });
     },
     onError: createCRUDErrorHandler('create', 'Ubicacion'),
   });
@@ -238,7 +219,10 @@ export function useActualizarUbicacion() {
       return { ...response.data.data, eventoId };
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['ubicaciones-evento', data.eventoId], refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: EVENTO_QUERY_KEYS.ubicaciones(data.eventoId),
+        refetchType: 'active'
+      });
     },
     onError: createCRUDErrorHandler('update', 'Ubicacion'),
   });
@@ -257,7 +241,10 @@ export function useEliminarUbicacion() {
       return { ...response.data, eventoId };
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['ubicaciones-evento', data.eventoId], refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: EVENTO_QUERY_KEYS.ubicaciones(data.eventoId),
+        refetchType: 'active'
+      });
     },
     onError: createCRUDErrorHandler('delete', 'Ubicacion'),
   });

@@ -143,7 +143,10 @@ function EntitlementsPlataforma() {
     return (
         <div className="space-y-6">
             <PageHeader
+                backTo="/"
+                backLabel="Inicio"
                 icon={Settings}
+                iconColor="primary"
                 title="Entitlements de Plataforma"
                 subtitle="Configura los límites y módulos que aplican a las organizaciones según su plan"
             />

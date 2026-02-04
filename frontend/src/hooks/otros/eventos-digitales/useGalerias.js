@@ -2,6 +2,7 @@
  * Hooks para galería, felicitaciones y mesa de regalos
  *
  * Ene 2026: Extraído de useEventosDigitales.js para mejor mantenibilidad
+ * Feb 2026: Migrado a EVENTO_QUERY_KEYS centralizados
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -9,6 +10,7 @@ import { STALE_TIMES } from '@/app/queryClient';
 import { eventosDigitalesApi } from '@/services/api/endpoints';
 import { sanitizeParams } from '@/lib/params';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
+import { EVENTO_QUERY_KEYS } from './helpers';
 
 // ==================== QUERIES MESA DE REGALOS ====================
 
@@ -20,7 +22,7 @@ import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
  */
 export function useMesaRegalos(eventoId, params = {}) {
   return useQuery({
-    queryKey: ['mesa-regalos-evento', eventoId, params],
+    queryKey: [...EVENTO_QUERY_KEYS.regalos(eventoId), params],
     queryFn: async () => {
       const response = await eventosDigitalesApi.listarRegalos(eventoId, sanitizeParams(params));
       return response.data.data.regalos || [];
@@ -50,7 +52,10 @@ export function useCrearRegalo() {
       return response.data.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['mesa-regalos-evento', variables.eventoId], refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: EVENTO_QUERY_KEYS.regalos(variables.eventoId),
+        refetchType: 'active'
+      });
     },
     onError: createCRUDErrorHandler('create', 'Regalo'),
   });
@@ -74,7 +79,10 @@ export function useActualizarRegalo() {
       return { ...response.data.data, eventoId };
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['mesa-regalos-evento', data.eventoId], refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: EVENTO_QUERY_KEYS.regalos(data.eventoId),
+        refetchType: 'active'
+      });
     },
     onError: createCRUDErrorHandler('update', 'Regalo'),
   });
@@ -92,7 +100,10 @@ export function useMarcarRegaloComprado() {
       return { ...response.data.data, eventoId };
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['mesa-regalos-evento', data.eventoId], refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: EVENTO_QUERY_KEYS.regalos(data.eventoId),
+        refetchType: 'active'
+      });
     },
     onError: createCRUDErrorHandler('update', 'Regalo'),
   });
@@ -110,7 +121,10 @@ export function useEliminarRegalo() {
       return { ...response.data, eventoId };
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['mesa-regalos-evento', data.eventoId], refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: EVENTO_QUERY_KEYS.regalos(data.eventoId),
+        refetchType: 'active'
+      });
     },
     onError: createCRUDErrorHandler('delete', 'Regalo'),
   });
@@ -126,7 +140,7 @@ export function useEliminarRegalo() {
  */
 export function useFelicitaciones(eventoId, params = {}) {
   return useQuery({
-    queryKey: ['felicitaciones-evento', eventoId, params],
+    queryKey: [...EVENTO_QUERY_KEYS.felicitaciones(eventoId), params],
     queryFn: async () => {
       const response = await eventosDigitalesApi.listarFelicitaciones(eventoId, sanitizeParams(params));
       return {
@@ -158,7 +172,10 @@ export function useCrearFelicitacion() {
       return response.data.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['felicitaciones-evento', variables.eventoId], refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: EVENTO_QUERY_KEYS.felicitaciones(variables.eventoId),
+        refetchType: 'active'
+      });
     },
     onError: createCRUDErrorHandler('create', 'Felicitacion'),
   });
@@ -176,7 +193,10 @@ export function useAprobarFelicitacion() {
       return { ...response.data.data, eventoId };
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['felicitaciones-evento', data.eventoId], refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: EVENTO_QUERY_KEYS.felicitaciones(data.eventoId),
+        refetchType: 'active'
+      });
     },
     onError: createCRUDErrorHandler('update', 'Felicitacion'),
   });
@@ -194,7 +214,10 @@ export function useRechazarFelicitacion() {
       return { ...response.data.data, eventoId };
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['felicitaciones-evento', data.eventoId], refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: EVENTO_QUERY_KEYS.felicitaciones(data.eventoId),
+        refetchType: 'active'
+      });
     },
     onError: createCRUDErrorHandler('update', 'Felicitacion'),
   });
@@ -212,7 +235,10 @@ export function useEliminarFelicitacion() {
       return { ...response.data, eventoId };
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['felicitaciones-evento', data.eventoId], refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: EVENTO_QUERY_KEYS.felicitaciones(data.eventoId),
+        refetchType: 'active'
+      });
     },
     onError: createCRUDErrorHandler('delete', 'Felicitacion'),
   });
@@ -227,7 +253,7 @@ export function useEliminarFelicitacion() {
  */
 export function useGaleria(eventoId, params = {}) {
   return useQuery({
-    queryKey: ['galeria-evento', eventoId, params],
+    queryKey: [...EVENTO_QUERY_KEYS.galeria(eventoId), params],
     queryFn: async () => {
       const response = await eventosDigitalesApi.listarFotos(eventoId, sanitizeParams(params));
       return response.data.data;
@@ -275,7 +301,10 @@ export function useSubirFoto() {
       return { ...response.data.data, eventoId };
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['galeria-evento', data.eventoId], refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: EVENTO_QUERY_KEYS.galeria(data.eventoId),
+        refetchType: 'active'
+      });
     },
     onError: createCRUDErrorHandler('create', 'Foto'),
   });
@@ -293,7 +322,10 @@ export function useCambiarEstadoFoto() {
       return { ...response.data.data, eventoId };
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['galeria-evento', data.eventoId], refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: EVENTO_QUERY_KEYS.galeria(data.eventoId),
+        refetchType: 'active'
+      });
     },
     onError: createCRUDErrorHandler('update', 'Foto'),
   });
@@ -311,7 +343,10 @@ export function useEliminarFoto() {
       return { ...response.data, eventoId };
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['galeria-evento', data.eventoId], refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: EVENTO_QUERY_KEYS.galeria(data.eventoId),
+        refetchType: 'active'
+      });
     },
     onError: createCRUDErrorHandler('delete', 'Foto'),
   });
@@ -329,7 +364,10 @@ export function useEliminarFotoPermanente() {
       return { ...response.data, eventoId };
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['galeria-evento', data.eventoId], refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: EVENTO_QUERY_KEYS.galeria(data.eventoId),
+        refetchType: 'active'
+      });
     },
     onError: createCRUDErrorHandler('delete', 'Foto'),
   });
@@ -347,7 +385,10 @@ export function useSubirFotoPublica() {
       return { ...response.data.data, slug };
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['galeria-publica', data.slug], refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: ['galeria-publica', data.slug],
+        refetchType: 'active'
+      });
     },
     onError: createCRUDErrorHandler('create', 'Foto', {
       400: 'No esta permitido subir fotos en este evento',

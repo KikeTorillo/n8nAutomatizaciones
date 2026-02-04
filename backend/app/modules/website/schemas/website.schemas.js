@@ -449,6 +449,8 @@ const websiteSchemas = {
     /**
      * Schema para enviar formulario de contacto
      * POST /api/v1/public/sitio/:slug/contacto
+     *
+     * Validación: Se requiere al menos email O teléfono (uno de los dos)
      */
     enviarContacto: {
         params: Joi.object({
@@ -462,8 +464,7 @@ const websiteSchemas = {
             nombre: Joi.string().max(100).required().messages({
                 'any.required': 'El nombre es requerido'
             }),
-            email: Joi.string().email().max(150).required().messages({
-                'any.required': 'El email es requerido',
+            email: Joi.string().email().max(150).optional().allow(null, '').messages({
                 'string.email': 'Ingresa un email válido'
             }),
             telefono: Joi.string()
@@ -476,7 +477,19 @@ const websiteSchemas = {
                 }),
             mensaje: Joi.string().max(1000).optional().allow(null, '').messages({
                 'string.max': 'El mensaje no puede exceder 1000 caracteres'
-            })
+            }),
+            pagina_origen: Joi.string().max(255).optional().allow(null, '')
+        }).custom((value, helpers) => {
+            // Validar que al menos uno de los dos medios de contacto esté presente
+            const tieneEmail = value.email && value.email.trim().length > 0;
+            const tieneTelefono = value.telefono && value.telefono.trim().length > 0;
+
+            if (!tieneEmail && !tieneTelefono) {
+                return helpers.error('custom.contactRequired');
+            }
+            return value;
+        }).messages({
+            'custom.contactRequired': 'Se requiere al menos email o teléfono'
         })
     }
 };

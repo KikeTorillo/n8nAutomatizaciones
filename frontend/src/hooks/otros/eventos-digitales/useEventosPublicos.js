@@ -2,12 +2,14 @@
  * Hooks para vista pública y mesas (seating chart)
  *
  * Ene 2026: Extraído de useEventosDigitales.js para mejor mantenibilidad
+ * Feb 2026: Migrado a EVENTO_QUERY_KEYS centralizados
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { eventosDigitalesApi } from '@/services/api/endpoints';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
+import { EVENTO_QUERY_KEYS } from './helpers';
 
 // ==================== QUERIES PÚBLICOS ====================
 
@@ -67,8 +69,14 @@ export function useConfirmarRSVP() {
       return { ...response.data.data, slug, token };
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['invitacion-publica', data.slug, data.token], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['evento-publico', data.slug], refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: ['invitacion-publica', data.slug, data.token],
+        refetchType: 'active'
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['evento-publico', data.slug],
+        refetchType: 'active'
+      });
     },
     onError: createCRUDErrorHandler('update', 'RSVP', {
       410: 'La fecha limite para confirmar ha pasado',
@@ -85,7 +93,7 @@ export function useConfirmarRSVP() {
  */
 export function useMesas(eventoId) {
   return useQuery({
-    queryKey: ['mesas-evento', eventoId],
+    queryKey: EVENTO_QUERY_KEYS.mesas(eventoId),
     queryFn: async () => {
       const response = await eventosDigitalesApi.listarMesas(eventoId);
       return response.data.data || [];
@@ -102,7 +110,7 @@ export function useMesas(eventoId) {
  */
 export function useEstadisticasMesas(eventoId) {
   return useQuery({
-    queryKey: ['mesas-estadisticas', eventoId],
+    queryKey: EVENTO_QUERY_KEYS.mesasEstadisticas(eventoId),
     queryFn: async () => {
       const response = await eventosDigitalesApi.obtenerEstadisticasMesas(eventoId);
       return response.data.data;
@@ -135,8 +143,14 @@ export function useCrearMesa() {
       return { ...response.data.data, eventoId };
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['mesas-evento', data.eventoId], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['mesas-estadisticas', data.eventoId], refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: EVENTO_QUERY_KEYS.mesas(data.eventoId),
+        refetchType: 'active'
+      });
+      queryClient.invalidateQueries({
+        queryKey: EVENTO_QUERY_KEYS.mesasEstadisticas(data.eventoId),
+        refetchType: 'active'
+      });
     },
     onError: createCRUDErrorHandler('create', 'Mesa'),
   });
@@ -166,8 +180,14 @@ export function useActualizarMesa() {
       return { ...response.data.data, eventoId };
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['mesas-evento', data.eventoId], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['mesas-estadisticas', data.eventoId], refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: EVENTO_QUERY_KEYS.mesas(data.eventoId),
+        refetchType: 'active'
+      });
+      queryClient.invalidateQueries({
+        queryKey: EVENTO_QUERY_KEYS.mesasEstadisticas(data.eventoId),
+        refetchType: 'active'
+      });
     },
     onError: createCRUDErrorHandler('update', 'Mesa'),
   });
@@ -185,9 +205,18 @@ export function useEliminarMesa() {
       return { ...response.data, eventoId };
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['mesas-evento', data.eventoId], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['mesas-estadisticas', data.eventoId], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['invitados-evento', data.eventoId], refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: EVENTO_QUERY_KEYS.mesas(data.eventoId),
+        refetchType: 'active'
+      });
+      queryClient.invalidateQueries({
+        queryKey: EVENTO_QUERY_KEYS.mesasEstadisticas(data.eventoId),
+        refetchType: 'active'
+      });
+      queryClient.invalidateQueries({
+        queryKey: EVENTO_QUERY_KEYS.invitados(data.eventoId),
+        refetchType: 'active'
+      });
     },
     onError: createCRUDErrorHandler('delete', 'Mesa'),
   });
@@ -205,7 +234,10 @@ export function useActualizarPosicionesMesas() {
       return { ...response.data.data, eventoId };
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['mesas-evento', data.eventoId], refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: EVENTO_QUERY_KEYS.mesas(data.eventoId),
+        refetchType: 'active'
+      });
     },
     onError: createCRUDErrorHandler('update', 'Posiciones'),
   });
@@ -223,9 +255,18 @@ export function useAsignarInvitadoAMesa() {
       return { ...response.data.data, eventoId };
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['mesas-evento', data.eventoId], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['mesas-estadisticas', data.eventoId], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['invitados-evento', data.eventoId], refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: EVENTO_QUERY_KEYS.mesas(data.eventoId),
+        refetchType: 'active'
+      });
+      queryClient.invalidateQueries({
+        queryKey: EVENTO_QUERY_KEYS.mesasEstadisticas(data.eventoId),
+        refetchType: 'active'
+      });
+      queryClient.invalidateQueries({
+        queryKey: EVENTO_QUERY_KEYS.invitados(data.eventoId),
+        refetchType: 'active'
+      });
     },
     onError: createCRUDErrorHandler('update', 'Invitado', {
       400: 'La mesa esta llena o el invitado ya tiene mesa asignada',
@@ -245,9 +286,18 @@ export function useDesasignarInvitadoDeMesa() {
       return { ...response.data.data, eventoId };
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['mesas-evento', data.eventoId], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['mesas-estadisticas', data.eventoId], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['invitados-evento', data.eventoId], refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: EVENTO_QUERY_KEYS.mesas(data.eventoId),
+        refetchType: 'active'
+      });
+      queryClient.invalidateQueries({
+        queryKey: EVENTO_QUERY_KEYS.mesasEstadisticas(data.eventoId),
+        refetchType: 'active'
+      });
+      queryClient.invalidateQueries({
+        queryKey: EVENTO_QUERY_KEYS.invitados(data.eventoId),
+        refetchType: 'active'
+      });
     },
     onError: createCRUDErrorHandler('update', 'Invitado'),
   });

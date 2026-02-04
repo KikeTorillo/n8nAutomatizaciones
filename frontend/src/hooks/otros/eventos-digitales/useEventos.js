@@ -2,6 +2,7 @@
  * Hooks para CRUD de eventos y plantillas
  *
  * Ene 2026: Extraído de useEventosDigitales.js para mejor mantenibilidad
+ * Feb 2026: Migrado a EVENTO_QUERY_KEYS centralizados
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -9,6 +10,7 @@ import { STALE_TIMES } from '@/app/queryClient';
 import { eventosDigitalesApi } from '@/services/api/endpoints';
 import { sanitizeParams } from '@/lib/params';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
+import { EVENTO_QUERY_KEYS, invalidateEventosList } from './helpers';
 
 // ==================== QUERIES EVENTOS ====================
 
@@ -19,7 +21,7 @@ import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
  */
 export function useEventos(params = {}) {
   return useQuery({
-    queryKey: ['eventos-digitales', params],
+    queryKey: [...EVENTO_QUERY_KEYS.eventos(), params],
     queryFn: async () => {
       const response = await eventosDigitalesApi.listarEventos(sanitizeParams(params));
       return {
@@ -40,7 +42,7 @@ export function useEventos(params = {}) {
  */
 export function useEvento(id) {
   return useQuery({
-    queryKey: ['evento-digital', id],
+    queryKey: EVENTO_QUERY_KEYS.evento(id),
     queryFn: async () => {
       const response = await eventosDigitalesApi.obtenerEvento(id);
       return response.data.data;
@@ -57,7 +59,7 @@ export function useEvento(id) {
  */
 export function useEventoEstadisticas(eventoId) {
   return useQuery({
-    queryKey: ['evento-digital-estadisticas', eventoId],
+    queryKey: EVENTO_QUERY_KEYS.eventoEstadisticas(eventoId),
     queryFn: async () => {
       const response = await eventosDigitalesApi.obtenerEstadisticasEvento(eventoId);
       return response.data.data;
@@ -88,7 +90,7 @@ export function useCrearEvento() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['eventos-digitales'], refetchType: 'active' });
+      invalidateEventosList(queryClient);
     },
     onError: createCRUDErrorHandler('create', 'Evento', {
       409: 'Ya existe un evento con ese nombre',
@@ -116,10 +118,16 @@ export function useActualizarEvento() {
       return response.data.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['eventos-digitales'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['evento-digital', data.id], refetchType: 'active' });
+      invalidateEventosList(queryClient);
+      queryClient.invalidateQueries({
+        queryKey: EVENTO_QUERY_KEYS.evento(data.id),
+        refetchType: 'active'
+      });
       if (data.slug) {
-        queryClient.invalidateQueries({ queryKey: ['evento-publico', data.slug], refetchType: 'active' });
+        queryClient.invalidateQueries({
+          queryKey: ['evento-publico', data.slug],
+          refetchType: 'active'
+        });
       }
     },
     onError: createCRUDErrorHandler('update', 'Evento'),
@@ -139,7 +147,7 @@ export function useEliminarEvento() {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['eventos-digitales'], refetchType: 'active' });
+      invalidateEventosList(queryClient);
     },
     onError: createCRUDErrorHandler('delete', 'Evento'),
   });
@@ -158,8 +166,11 @@ export function usePublicarEvento() {
       return response.data.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['eventos-digitales'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['evento-digital', data.id], refetchType: 'active' });
+      invalidateEventosList(queryClient);
+      queryClient.invalidateQueries({
+        queryKey: EVENTO_QUERY_KEYS.evento(data.id),
+        refetchType: 'active'
+      });
     },
     onError: createCRUDErrorHandler('update', 'Evento', {
       400: 'El evento ya esta publicado',
@@ -176,7 +187,7 @@ export function usePublicarEvento() {
  */
 export function usePlantillas(params = {}) {
   return useQuery({
-    queryKey: ['plantillas-eventos', params],
+    queryKey: [...EVENTO_QUERY_KEYS.plantillas(), params],
     queryFn: async () => {
       const response = await eventosDigitalesApi.listarPlantillas(sanitizeParams(params));
       return response.data.data.plantillas || [];
@@ -192,7 +203,7 @@ export function usePlantillas(params = {}) {
  */
 export function usePlantilla(id) {
   return useQuery({
-    queryKey: ['plantilla-evento', id],
+    queryKey: EVENTO_QUERY_KEYS.plantilla(id),
     queryFn: async () => {
       const response = await eventosDigitalesApi.obtenerPlantilla(id);
       return response.data.data;
@@ -233,8 +244,14 @@ export function useCrearPlantilla() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['plantillas-eventos'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['plantillas-tipo'], refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: EVENTO_QUERY_KEYS.plantillas(),
+        refetchType: 'active'
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['plantillas-tipo'],
+        refetchType: 'active'
+      });
     },
   });
 }
@@ -251,9 +268,18 @@ export function useActualizarPlantilla() {
       return response.data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['plantillas-eventos'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['plantillas-tipo'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['plantilla-evento', variables.id], refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: EVENTO_QUERY_KEYS.plantillas(),
+        refetchType: 'active'
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['plantillas-tipo'],
+        refetchType: 'active'
+      });
+      queryClient.invalidateQueries({
+        queryKey: EVENTO_QUERY_KEYS.plantilla(variables.id),
+        refetchType: 'active'
+      });
     },
   });
 }
@@ -270,8 +296,14 @@ export function useEliminarPlantilla() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['plantillas-eventos'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['plantillas-tipo'], refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: EVENTO_QUERY_KEYS.plantillas(),
+        refetchType: 'active'
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['plantillas-tipo'],
+        refetchType: 'active'
+      });
     },
   });
 }

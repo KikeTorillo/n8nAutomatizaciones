@@ -47,6 +47,7 @@ const middlewareLectura = [
 // ============================================================================
 const middlewareEscritura = [
     auth.authenticateToken,
+    auth.requireRole('super_admin'),
     rateLimiting.apiRateLimit
 ];
 

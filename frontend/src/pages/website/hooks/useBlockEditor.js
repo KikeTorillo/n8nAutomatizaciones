@@ -7,6 +7,7 @@
  */
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { deepEqual } from './compareUtils';
 
 /**
  * Hook para manejar el estado de un editor de bloque
@@ -37,8 +38,9 @@ export function useBlockEditor(contenido, defaultValues) {
   const [cambios, setCambios] = useState(false);
 
   // Detectar cambios comparando con el estado inicial
+  // Usa deepEqual en lugar de JSON.stringify para mejor rendimiento
   useEffect(() => {
-    const hasChanges = JSON.stringify(form) !== JSON.stringify(initialForm);
+    const hasChanges = !deepEqual(form, initialForm);
     setCambios(hasChanges);
   }, [form, initialForm]);
 

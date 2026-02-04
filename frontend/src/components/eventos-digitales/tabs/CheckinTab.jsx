@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, memo } from 'react';
 import { Camera, ScanLine, X, UserCheck, AlertCircle } from 'lucide-react';
 import { Button, LoadingSpinner } from '@/components/ui';
 import { useToast } from '@/hooks/utils';
@@ -12,7 +12,7 @@ import { eventosDigitalesApi } from '@/services/api/modules';
  * @param {Object} props.initialStats - Stats iniciales de check-in (opcional)
  * @param {Function} props.onStatsUpdate - Callback cuando cambian los stats (opcional)
  */
-export default function CheckinTab({
+function CheckinTab({
   eventoId,
   totalInvitados = 0,
   initialStats = null,
@@ -295,3 +295,9 @@ export default function CheckinTab({
     </div>
   );
 }
+
+// Memoizar para evitar re-renders cuando el padre cambia pero estas props no
+export default memo(CheckinTab, (prevProps, nextProps) => {
+  return prevProps.eventoId === nextProps.eventoId &&
+         prevProps.totalInvitados === nextProps.totalInvitados;
+});

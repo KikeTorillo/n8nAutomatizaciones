@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import { useModalManager } from '@/hooks/utils';
 import {
   GripVertical,
@@ -236,8 +236,9 @@ function BlockEditor({
 
 /**
  * Item de bloque individual
+ * Memoizado para evitar re-renders innecesarios cuando otros bloques cambian
  */
-function BloqueItem({
+const BloqueItem = memo(function BloqueItem({
   bloque,
   index,
   total,
@@ -406,6 +407,6 @@ function BloqueItem({
       />
     </div>
   );
-}
+});
 
-export default BlockEditor;
+export default memo(BlockEditor);

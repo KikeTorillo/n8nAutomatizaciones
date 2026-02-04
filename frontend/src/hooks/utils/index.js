@@ -38,3 +38,6 @@ export * from './usePagination';
 
 // Media Queries (Ene 2026 - UX móvil)
 export * from './useMediaQuery';
+
+// Tab Form State (Feb 2026 - Refactorización eventos-digitales)
+export * from './useTabFormState';

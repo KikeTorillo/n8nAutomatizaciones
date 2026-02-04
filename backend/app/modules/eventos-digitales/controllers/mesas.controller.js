@@ -20,13 +20,17 @@
  * asignarInvitado, desasignarInvitado, estadísticas), lógica de
  * seating chart con capacidad y validaciones.
  *
+ * REFACTORIZADO Feb 2026:
+ * - Eliminados try-catch redundantes (asyncHandler en rutas)
+ * - Uso de ErrorHelper.throwIfNotFound para 404s
+ *
  * Fecha creación: 8 Diciembre 2025
  */
 
 const MesaModel = require('../models/mesa.model');
 const EventoModel = require('../models/evento.model');
 const logger = require('../../../utils/logger');
-const { ResponseHelper } = require('../../../utils/helpers');
+const { ResponseHelper, ErrorHelper } = require('../../../utils/helpers');
 
 class MesasController {
 
@@ -35,34 +39,26 @@ class MesasController {
      * POST /api/v1/eventos-digitales/eventos/:eventoId/mesas
      */
     static async crear(req, res) {
-        try {
-            const { eventoId } = req.params;
-            const organizacionId = req.tenant?.organizacionId || req.user.organizacion_id;
+        const { eventoId } = req.params;
+        const organizacionId = req.tenant.organizacionId;
 
-            // Verificar que el evento existe y pertenece a la organización
-            const evento = await EventoModel.obtenerPorId(parseInt(eventoId), organizacionId);
-            if (!evento) {
-                return ResponseHelper.error(res, 'Evento no encontrado', 404);
-            }
+        // Verificar que el evento existe y pertenece a la organización
+        const evento = await EventoModel.obtenerPorId(parseInt(eventoId), organizacionId);
+        ErrorHelper.throwIfNotFound(evento, 'Evento');
 
-            const mesa = await MesaModel.crear({
-                ...req.body,
-                evento_id: parseInt(eventoId),
-                organizacion_id: organizacionId
-            });
+        const mesa = await MesaModel.crear({
+            ...req.body,
+            evento_id: parseInt(eventoId),
+            organizacion_id: organizacionId
+        });
 
-            logger.info('[MesasController.crear] Mesa creada', {
-                mesa_id: mesa.id,
-                evento_id: eventoId,
-                nombre: mesa.nombre
-            });
+        logger.info('[MesasController.crear] Mesa creada', {
+            mesa_id: mesa.id,
+            evento_id: eventoId,
+            nombre: mesa.nombre
+        });
 
-            return ResponseHelper.success(res, mesa, 'Mesa creada exitosamente', 201);
-
-        } catch (error) {
-            logger.error('[MesasController.crear] Error', { error: error.message });
-            return ResponseHelper.error(res, error.message, 500);
-        }
+        return ResponseHelper.success(res, mesa, 'Mesa creada exitosamente', 201);
     }
 
     /**
@@ -70,18 +66,12 @@ class MesasController {
      * GET /api/v1/eventos-digitales/eventos/:eventoId/mesas
      */
     static async listar(req, res) {
-        try {
-            const { eventoId } = req.params;
-            const organizacionId = req.tenant?.organizacionId || req.user.organizacion_id;
+        const { eventoId } = req.params;
+        const organizacionId = req.tenant.organizacionId;
 
-            const mesas = await MesaModel.listar(parseInt(eventoId), organizacionId);
+        const mesas = await MesaModel.listar(parseInt(eventoId), organizacionId);
 
-            return ResponseHelper.success(res, mesas);
-
-        } catch (error) {
-            logger.error('[MesasController.listar] Error', { error: error.message });
-            return ResponseHelper.error(res, error.message, 500);
-        }
+        return ResponseHelper.success(res, mesas);
     }
 
     /**
@@ -89,22 +79,13 @@ class MesasController {
      * GET /api/v1/eventos-digitales/mesas/:mesaId
      */
     static async obtenerPorId(req, res) {
-        try {
-            const { mesaId } = req.params;
-            const organizacionId = req.tenant?.organizacionId || req.user.organizacion_id;
+        const { mesaId } = req.params;
+        const organizacionId = req.tenant.organizacionId;
 
-            const mesa = await MesaModel.obtenerPorId(parseInt(mesaId), organizacionId);
+        const mesa = await MesaModel.obtenerPorId(parseInt(mesaId), organizacionId);
+        ErrorHelper.throwIfNotFound(mesa, 'Mesa');
 
-            if (!mesa) {
-                return ResponseHelper.error(res, 'Mesa no encontrada', 404);
-            }
-
-            return ResponseHelper.success(res, mesa);
-
-        } catch (error) {
-            logger.error('[MesasController.obtenerPorId] Error', { error: error.message });
-            return ResponseHelper.error(res, error.message, 500);
-        }
+        return ResponseHelper.success(res, mesa);
     }
 
     /**
@@ -112,24 +93,15 @@ class MesasController {
      * PUT /api/v1/eventos-digitales/eventos/:eventoId/mesas/:mesaId
      */
     static async actualizar(req, res) {
-        try {
-            const { mesaId } = req.params;
-            const organizacionId = req.tenant?.organizacionId || req.user.organizacion_id;
+        const { mesaId } = req.params;
+        const organizacionId = req.tenant.organizacionId;
 
-            const mesa = await MesaModel.actualizar(parseInt(mesaId), req.body, organizacionId);
+        const mesa = await MesaModel.actualizar(parseInt(mesaId), req.body, organizacionId);
+        ErrorHelper.throwIfNotFound(mesa, 'Mesa');
 
-            if (!mesa) {
-                return ResponseHelper.error(res, 'Mesa no encontrada', 404);
-            }
+        logger.info('[MesasController.actualizar] Mesa actualizada', { mesa_id: mesaId });
 
-            logger.info('[MesasController.actualizar] Mesa actualizada', { mesa_id: mesaId });
-
-            return ResponseHelper.success(res, mesa, 'Mesa actualizada exitosamente');
-
-        } catch (error) {
-            logger.error('[MesasController.actualizar] Error', { error: error.message });
-            return ResponseHelper.error(res, error.message, 500);
-        }
+        return ResponseHelper.success(res, mesa, 'Mesa actualizada exitosamente');
     }
 
     /**
@@ -137,24 +109,15 @@ class MesasController {
      * DELETE /api/v1/eventos-digitales/mesas/:mesaId
      */
     static async eliminar(req, res) {
-        try {
-            const { mesaId } = req.params;
-            const organizacionId = req.tenant?.organizacionId || req.user.organizacion_id;
+        const { mesaId } = req.params;
+        const organizacionId = req.tenant.organizacionId;
 
-            const eliminado = await MesaModel.eliminar(parseInt(mesaId), organizacionId);
+        const eliminado = await MesaModel.eliminar(parseInt(mesaId), organizacionId);
+        ErrorHelper.throwIfNotFound(eliminado, 'Mesa');
 
-            if (!eliminado) {
-                return ResponseHelper.error(res, 'Mesa no encontrada', 404);
-            }
+        logger.info('[MesasController.eliminar] Mesa eliminada', { mesa_id: mesaId });
 
-            logger.info('[MesasController.eliminar] Mesa eliminada', { mesa_id: mesaId });
-
-            return ResponseHelper.success(res, { eliminado: true }, 'Mesa eliminada exitosamente');
-
-        } catch (error) {
-            logger.error('[MesasController.eliminar] Error', { error: error.message });
-            return ResponseHelper.error(res, error.message, 500);
-        }
+        return ResponseHelper.success(res, { eliminado: true }, 'Mesa eliminada exitosamente');
     }
 
     /**
@@ -162,28 +125,22 @@ class MesasController {
      * PATCH /api/v1/eventos-digitales/eventos/:eventoId/mesas/posiciones
      */
     static async actualizarPosiciones(req, res) {
-        try {
-            const { eventoId } = req.params;
-            const { posiciones } = req.body;
-            const organizacionId = req.tenant?.organizacionId || req.user.organizacion_id;
+        const { eventoId } = req.params;
+        const { posiciones } = req.body;
+        const organizacionId = req.tenant.organizacionId;
 
-            const resultado = await MesaModel.actualizarPosiciones(
-                parseInt(eventoId),
-                posiciones,
-                organizacionId
-            );
+        const resultado = await MesaModel.actualizarPosiciones(
+            parseInt(eventoId),
+            posiciones,
+            organizacionId
+        );
 
-            logger.info('[MesasController.actualizarPosiciones] Posiciones actualizadas', {
-                evento_id: eventoId,
-                total: resultado.actualizado
-            });
+        logger.info('[MesasController.actualizarPosiciones] Posiciones actualizadas', {
+            evento_id: eventoId,
+            total: resultado.actualizado
+        });
 
-            return ResponseHelper.success(res, resultado, 'Posiciones actualizadas');
-
-        } catch (error) {
-            logger.error('[MesasController.actualizarPosiciones] Error', { error: error.message });
-            return ResponseHelper.error(res, error.message, 500);
-        }
+        return ResponseHelper.success(res, resultado, 'Posiciones actualizadas');
     }
 
     /**
@@ -191,35 +148,22 @@ class MesasController {
      * POST /api/v1/eventos-digitales/eventos/:eventoId/mesas/:mesaId/asignar
      */
     static async asignarInvitado(req, res) {
-        try {
-            const { mesaId } = req.params;
-            const { invitado_id } = req.body;
-            const organizacionId = req.tenant?.organizacionId || req.user.organizacion_id;
+        const { mesaId } = req.params;
+        const { invitado_id } = req.body;
+        const organizacionId = req.tenant.organizacionId;
 
-            const invitado = await MesaModel.asignarInvitado(
-                parseInt(mesaId),
-                parseInt(invitado_id),
-                organizacionId
-            );
+        const invitado = await MesaModel.asignarInvitado(
+            parseInt(mesaId),
+            parseInt(invitado_id),
+            organizacionId
+        );
 
-            logger.info('[MesasController.asignarInvitado] Invitado asignado', {
-                mesa_id: mesaId,
-                invitado_id: invitado_id
-            });
+        logger.info('[MesasController.asignarInvitado] Invitado asignado', {
+            mesa_id: mesaId,
+            invitado_id: invitado_id
+        });
 
-            return ResponseHelper.success(res, invitado, 'Invitado asignado a mesa exitosamente');
-
-        } catch (error) {
-            logger.error('[MesasController.asignarInvitado] Error', { error: error.message });
-
-            // Errores de validación conocidos
-            if (error.message.includes('Capacidad insuficiente') ||
-                error.message.includes('no encontrad')) {
-                return ResponseHelper.error(res, error.message, 400);
-            }
-
-            return ResponseHelper.error(res, error.message, 500);
-        }
+        return ResponseHelper.success(res, invitado, 'Invitado asignado a mesa exitosamente');
     }
 
     /**
@@ -227,30 +171,19 @@ class MesasController {
      * DELETE /api/v1/eventos-digitales/invitados/:invitadoId/mesa
      */
     static async desasignarInvitado(req, res) {
-        try {
-            const { invitadoId } = req.params;
-            const organizacionId = req.tenant?.organizacionId || req.user.organizacion_id;
+        const { invitadoId } = req.params;
+        const organizacionId = req.tenant.organizacionId;
 
-            const invitado = await MesaModel.desasignarInvitado(
-                parseInt(invitadoId),
-                organizacionId
-            );
+        const invitado = await MesaModel.desasignarInvitado(
+            parseInt(invitadoId),
+            organizacionId
+        );
 
-            logger.info('[MesasController.desasignarInvitado] Invitado desasignado', {
-                invitado_id: invitadoId
-            });
+        logger.info('[MesasController.desasignarInvitado] Invitado desasignado', {
+            invitado_id: invitadoId
+        });
 
-            return ResponseHelper.success(res, invitado, 'Invitado removido de mesa');
-
-        } catch (error) {
-            logger.error('[MesasController.desasignarInvitado] Error', { error: error.message });
-
-            if (error.message.includes('no encontrado')) {
-                return ResponseHelper.error(res, error.message, 404);
-            }
-
-            return ResponseHelper.error(res, error.message, 500);
-        }
+        return ResponseHelper.success(res, invitado, 'Invitado removido de mesa');
     }
 
     /**
@@ -258,21 +191,15 @@ class MesasController {
      * GET /api/v1/eventos-digitales/eventos/:eventoId/mesas/estadisticas
      */
     static async obtenerEstadisticas(req, res) {
-        try {
-            const { eventoId } = req.params;
-            const organizacionId = req.tenant?.organizacionId || req.user.organizacion_id;
+        const { eventoId } = req.params;
+        const organizacionId = req.tenant.organizacionId;
 
-            const estadisticas = await MesaModel.obtenerEstadisticas(
-                parseInt(eventoId),
-                organizacionId
-            );
+        const estadisticas = await MesaModel.obtenerEstadisticas(
+            parseInt(eventoId),
+            organizacionId
+        );
 
-            return ResponseHelper.success(res, estadisticas);
-
-        } catch (error) {
-            logger.error('[MesasController.obtenerEstadisticas] Error', { error: error.message });
-            return ResponseHelper.error(res, error.message, 500);
-        }
+        return ResponseHelper.success(res, estadisticas);
     }
 }
 

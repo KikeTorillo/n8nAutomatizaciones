@@ -292,6 +292,39 @@ export const COMMON_FIELDS = {
     plazo_pago_dias: 'number',
     notas: 'string',
   },
+
+  // Campos de invitado (eventos-digitales) - Feb 2026
+  invitado: {
+    nombre: 'string',
+    email: 'email',
+    telefono: 'phone',
+    grupo_familiar: 'string',
+    etiquetas: 'array',
+    max_acompanantes: 'number',
+    notas: 'string',
+  },
+
+  // Campos de ubicación (eventos-digitales) - Feb 2026
+  ubicacion: {
+    nombre: 'string',
+    tipo: 'string',
+    direccion: 'string',
+    hora_inicio: 'string',
+    hora_fin: 'string',
+    google_maps_url: 'string',
+    latitud: 'number',
+    longitud: 'number',
+  },
+
+  // Campos de regalo (eventos-digitales) - Feb 2026
+  regalo: {
+    nombre: 'string',
+    tipo: 'string',
+    descripcion: 'string',
+    precio: 'number',
+    url_externa: 'string',
+    imagen_url: 'string',
+  },
 };
 
 /**
@@ -331,6 +364,33 @@ export function sanitizePersona(data) {
     ...COMMON_FIELDS.persona,
     ...COMMON_FIELDS.contacto,
   });
+}
+
+/**
+ * Sanitiza datos de invitado (eventos-digitales)
+ * @param {Object} data - Datos del invitado
+ * @returns {Object} - Datos sanitizados
+ */
+export function sanitizeInvitado(data) {
+  return sanitizeFields(data, COMMON_FIELDS.invitado);
+}
+
+/**
+ * Sanitiza datos de ubicación (eventos-digitales)
+ * @param {Object} data - Datos de la ubicación
+ * @returns {Object} - Datos sanitizados
+ */
+export function sanitizeUbicacion(data) {
+  return sanitizeFields(data, COMMON_FIELDS.ubicacion);
+}
+
+/**
+ * Sanitiza datos de regalo (eventos-digitales)
+ * @param {Object} data - Datos del regalo
+ * @returns {Object} - Datos sanitizados
+ */
+export function sanitizeRegalo(data) {
+  return sanitizeFields(data, COMMON_FIELDS.regalo);
 }
 
 export default sanitizeFields;

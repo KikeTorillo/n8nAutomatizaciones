@@ -17,12 +17,16 @@
  * Razón: Depende de eventoId, método custom marcarComprado(),
  * verificación de evento padre, estadísticas custom.
  *
+ * REFACTORIZADO Feb 2026:
+ * - Eliminados try-catch redundantes (asyncHandler en rutas)
+ * - Uso de ErrorHelper.throwIfNotFound para 404s
+ *
  * Fecha creación: 4 Diciembre 2025
  */
 
 const MesaRegalosModel = require('../models/mesa-regalos.model');
 const EventoModel = require('../models/evento.model');
-const { ResponseHelper } = require('../../../utils/helpers');
+const { ResponseHelper, ErrorHelper } = require('../../../utils/helpers');
 const logger = require('../../../utils/logger');
 
 class MesaRegalosController {
@@ -31,27 +35,20 @@ class MesaRegalosController {
      * Crear regalo
      */
     static async crear(req, res) {
-        try {
-            const { eventoId } = req.params;
-            const organizacionId = req.user.organizacion_id;
+        const { eventoId } = req.params;
+        const organizacionId = req.user.organizacion_id;
 
-            // Verificar que el evento existe
-            const evento = await EventoModel.obtenerPorId(eventoId, organizacionId);
-            if (!evento) {
-                return ResponseHelper.error(res, 'Evento no encontrado', 404);
-            }
+        // Verificar que el evento existe
+        const evento = await EventoModel.obtenerPorId(eventoId, organizacionId);
+        ErrorHelper.throwIfNotFound(evento, 'Evento');
 
-            const regalo = await MesaRegalosModel.crear({
-                ...req.body,
-                evento_id: parseInt(eventoId),
-                organizacion_id: organizacionId
-            });
+        const regalo = await MesaRegalosModel.crear({
+            ...req.body,
+            evento_id: parseInt(eventoId),
+            organizacion_id: organizacionId
+        });
 
-            return ResponseHelper.success(res, regalo, 'Regalo agregado exitosamente', 201);
-        } catch (error) {
-            logger.error('Error al crear regalo:', error);
-            return ResponseHelper.error(res, 'Error al agregar regalo', 500);
-        }
+        return ResponseHelper.success(res, regalo, 'Regalo agregado exitosamente', 201);
     }
 
     /**
@@ -59,32 +56,25 @@ class MesaRegalosController {
      * Listar regalos del evento
      */
     static async listar(req, res) {
-        try {
-            const { eventoId } = req.params;
-            const { disponibles } = req.query;
-            const organizacionId = req.user.organizacion_id;
+        const { eventoId } = req.params;
+        const { disponibles } = req.query;
+        const organizacionId = req.user.organizacion_id;
 
-            // Verificar que el evento existe
-            const evento = await EventoModel.obtenerPorId(eventoId, organizacionId);
-            if (!evento) {
-                return ResponseHelper.error(res, 'Evento no encontrado', 404);
-            }
+        // Verificar que el evento existe
+        const evento = await EventoModel.obtenerPorId(eventoId, organizacionId);
+        ErrorHelper.throwIfNotFound(evento, 'Evento');
 
-            const regalos = await MesaRegalosModel.listarPorEvento(eventoId, organizacionId, {
-                soloDisponibles: disponibles === 'true'
-            });
+        const regalos = await MesaRegalosModel.listarPorEvento(eventoId, organizacionId, {
+            soloDisponibles: disponibles === 'true'
+        });
 
-            const estadisticas = await MesaRegalosModel.obtenerEstadisticas(eventoId, organizacionId);
+        const estadisticas = await MesaRegalosModel.obtenerEstadisticas(eventoId, organizacionId);
 
-            return ResponseHelper.success(res, {
-                regalos,
-                estadisticas,
-                total: regalos.length
-            });
-        } catch (error) {
-            logger.error('Error al listar regalos:', error);
-            return ResponseHelper.error(res, 'Error al listar regalos', 500);
-        }
+        return ResponseHelper.success(res, {
+            regalos,
+            estadisticas,
+            total: regalos.length
+        });
     }
 
     /**
@@ -92,21 +82,13 @@ class MesaRegalosController {
      * Obtener regalo por ID
      */
     static async obtenerPorId(req, res) {
-        try {
-            const { id } = req.params;
-            const organizacionId = req.user.organizacion_id;
+        const { id } = req.params;
+        const organizacionId = req.user.organizacion_id;
 
-            const regalo = await MesaRegalosModel.obtenerPorId(id, organizacionId);
+        const regalo = await MesaRegalosModel.obtenerPorId(id, organizacionId);
+        ErrorHelper.throwIfNotFound(regalo, 'Regalo');
 
-            if (!regalo) {
-                return ResponseHelper.error(res, 'Regalo no encontrado', 404);
-            }
-
-            return ResponseHelper.success(res, regalo);
-        } catch (error) {
-            logger.error('Error al obtener regalo:', error);
-            return ResponseHelper.error(res, 'Error al obtener regalo', 500);
-        }
+        return ResponseHelper.success(res, regalo);
     }
 
     /**
@@ -114,23 +96,16 @@ class MesaRegalosController {
      * Actualizar regalo
      */
     static async actualizar(req, res) {
-        try {
-            const { id } = req.params;
-            const organizacionId = req.user.organizacion_id;
+        const { id } = req.params;
+        const organizacionId = req.user.organizacion_id;
 
-            // Verificar que existe
-            const regaloExistente = await MesaRegalosModel.obtenerPorId(id, organizacionId);
-            if (!regaloExistente) {
-                return ResponseHelper.error(res, 'Regalo no encontrado', 404);
-            }
+        // Verificar que existe
+        const regaloExistente = await MesaRegalosModel.obtenerPorId(id, organizacionId);
+        ErrorHelper.throwIfNotFound(regaloExistente, 'Regalo');
 
-            const regalo = await MesaRegalosModel.actualizar(id, req.body, organizacionId);
+        const regalo = await MesaRegalosModel.actualizar(id, req.body, organizacionId);
 
-            return ResponseHelper.success(res, regalo, 'Regalo actualizado exitosamente');
-        } catch (error) {
-            logger.error('Error al actualizar regalo:', error);
-            return ResponseHelper.error(res, 'Error al actualizar regalo', 500);
-        }
+        return ResponseHelper.success(res, regalo, 'Regalo actualizado exitosamente');
     }
 
     /**
@@ -138,22 +113,14 @@ class MesaRegalosController {
      * Marcar regalo como comprado
      */
     static async marcarComprado(req, res) {
-        try {
-            const { id } = req.params;
-            const { comprado_por } = req.body;
-            const organizacionId = req.user.organizacion_id;
+        const { id } = req.params;
+        const { comprado_por } = req.body;
+        const organizacionId = req.user.organizacion_id;
 
-            const regalo = await MesaRegalosModel.marcarComprado(id, comprado_por, organizacionId);
+        const regalo = await MesaRegalosModel.marcarComprado(id, comprado_por, organizacionId);
+        ErrorHelper.throwIfNotFound(regalo, 'Regalo', 'Regalo no encontrado o ya fue comprado');
 
-            if (!regalo) {
-                return ResponseHelper.error(res, 'Regalo no encontrado o ya fue comprado', 404);
-            }
-
-            return ResponseHelper.success(res, regalo, 'Regalo marcado como comprado');
-        } catch (error) {
-            logger.error('Error al marcar regalo:', error);
-            return ResponseHelper.error(res, 'Error al marcar regalo', 500);
-        }
+        return ResponseHelper.success(res, regalo, 'Regalo marcado como comprado');
     }
 
     /**
@@ -161,23 +128,16 @@ class MesaRegalosController {
      * Eliminar regalo
      */
     static async eliminar(req, res) {
-        try {
-            const { id } = req.params;
-            const organizacionId = req.user.organizacion_id;
+        const { id } = req.params;
+        const organizacionId = req.user.organizacion_id;
 
-            // Verificar que existe
-            const regalo = await MesaRegalosModel.obtenerPorId(id, organizacionId);
-            if (!regalo) {
-                return ResponseHelper.error(res, 'Regalo no encontrado', 404);
-            }
+        // Verificar que existe
+        const regalo = await MesaRegalosModel.obtenerPorId(id, organizacionId);
+        ErrorHelper.throwIfNotFound(regalo, 'Regalo');
 
-            await MesaRegalosModel.eliminar(id, organizacionId);
+        await MesaRegalosModel.eliminar(id, organizacionId);
 
-            return ResponseHelper.success(res, { id: parseInt(id) }, 'Regalo eliminado exitosamente');
-        } catch (error) {
-            logger.error('Error al eliminar regalo:', error);
-            return ResponseHelper.error(res, 'Error al eliminar regalo', 500);
-        }
+        return ResponseHelper.success(res, { id: parseInt(id) }, 'Regalo eliminado exitosamente');
     }
 
     /**
@@ -185,23 +145,16 @@ class MesaRegalosController {
      * Estadísticas de mesa de regalos
      */
     static async estadisticas(req, res) {
-        try {
-            const { eventoId } = req.params;
-            const organizacionId = req.user.organizacion_id;
+        const { eventoId } = req.params;
+        const organizacionId = req.user.organizacion_id;
 
-            // Verificar que el evento existe
-            const evento = await EventoModel.obtenerPorId(eventoId, organizacionId);
-            if (!evento) {
-                return ResponseHelper.error(res, 'Evento no encontrado', 404);
-            }
+        // Verificar que el evento existe
+        const evento = await EventoModel.obtenerPorId(eventoId, organizacionId);
+        ErrorHelper.throwIfNotFound(evento, 'Evento');
 
-            const estadisticas = await MesaRegalosModel.obtenerEstadisticas(eventoId, organizacionId);
+        const estadisticas = await MesaRegalosModel.obtenerEstadisticas(eventoId, organizacionId);
 
-            return ResponseHelper.success(res, estadisticas);
-        } catch (error) {
-            logger.error('Error al obtener estadísticas:', error);
-            return ResponseHelper.error(res, 'Error al obtener estadísticas', 500);
-        }
+        return ResponseHelper.success(res, estadisticas);
     }
 }
 

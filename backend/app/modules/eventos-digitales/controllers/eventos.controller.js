@@ -17,13 +17,16 @@
  * Razón: Métodos custom publicar() y estadisticas(), lógica de
  * estados de evento, no sigue firma estándar del Model.
  *
+ * REFACTORIZADO Feb 2026: Migrado a asyncHandler
+ *
  * Fecha creación: 4 Diciembre 2025
  */
 
 const EventoModel = require('../models/evento.model');
 const logger = require('../../../utils/logger');
 const { ResponseHelper, LimitesHelper } = require('../../../utils/helpers');
-const { PlanLimitExceededError } = require('../../../utils/errors');
+const asyncHandler = require('../../../middleware/asyncHandler');
+const { ResourceNotFoundError } = require('../../../utils/errors');
 
 class EventosController {
 
@@ -31,202 +34,142 @@ class EventosController {
      * Crear evento
      * POST /api/v1/eventos-digitales/eventos
      */
-    static async crear(req, res) {
-        try {
-            const organizacionId = req.tenant?.organizacionId || req.user.organizacion_id;
+    static crear = asyncHandler(async (req, res) => {
+        const organizacionId = req.tenant?.organizacionId || req.user.organizacion_id;
 
-            // Verificar límite de eventos activos
-            await LimitesHelper.verificarLimiteOLanzar(organizacionId, 'eventos_activos', 1);
+        // Verificar límite de eventos activos
+        await LimitesHelper.verificarLimiteOLanzar(organizacionId, 'eventos_activos', 1);
 
-            const datos = {
-                ...req.body,
-                organizacion_id: organizacionId
-            };
+        const datos = {
+            ...req.body,
+            organizacion_id: organizacionId
+        };
 
-            const evento = await EventoModel.crear(datos);
+        const evento = await EventoModel.crear(datos);
 
-            logger.info('[EventosController.crear] Evento creado', {
-                evento_id: evento.id,
-                organizacion_id: organizacionId,
-                usuario_id: req.user.id
-            });
+        logger.info('[EventosController.crear] Evento creado', {
+            evento_id: evento.id,
+            organizacion_id: organizacionId,
+            usuario_id: req.user.id
+        });
 
-            return ResponseHelper.success(res, evento, 'Evento creado exitosamente', 201);
-
-        } catch (error) {
-            logger.error('[EventosController.crear] Error', {
-                error: error.message,
-                stack: error.stack
-            });
-
-            if (error instanceof PlanLimitExceededError) {
-                return ResponseHelper.error(res, error.message, error.statusCode, error.toJSON());
-            }
-
-            return ResponseHelper.error(res, error.message, 500);
-        }
-    }
+        return ResponseHelper.success(res, evento, 'Evento creado exitosamente', 201);
+    });
 
     /**
      * Listar eventos de la organización
      * GET /api/v1/eventos-digitales/eventos
      */
-    static async listar(req, res) {
-        try {
-            const organizacionId = req.tenant?.organizacionId || req.user.organizacion_id;
-            const filtros = req.query;
+    static listar = asyncHandler(async (req, res) => {
+        const organizacionId = req.tenant?.organizacionId || req.user.organizacion_id;
+        const filtros = req.query;
 
-            const resultado = await EventoModel.listar(organizacionId, filtros);
+        const resultado = await EventoModel.listar(organizacionId, filtros);
 
-            return ResponseHelper.success(res, resultado);
-
-        } catch (error) {
-            logger.error('[EventosController.listar] Error', { error: error.message });
-            return ResponseHelper.error(res, error.message, 500);
-        }
-    }
+        return ResponseHelper.success(res, resultado);
+    });
 
     /**
      * Obtener evento por ID
      * GET /api/v1/eventos-digitales/eventos/:id
      */
-    static async obtenerPorId(req, res) {
-        try {
-            const { id } = req.params;
-            const organizacionId = req.tenant?.organizacionId || req.user.organizacion_id;
+    static obtenerPorId = asyncHandler(async (req, res) => {
+        const { id } = req.params;
+        const organizacionId = req.tenant?.organizacionId || req.user.organizacion_id;
 
-            const evento = await EventoModel.obtenerPorId(parseInt(id), organizacionId);
+        const evento = await EventoModel.obtenerPorId(parseInt(id), organizacionId);
 
-            if (!evento) {
-                return ResponseHelper.error(res, 'Evento no encontrado', 404);
-            }
-
-            return ResponseHelper.success(res, evento);
-
-        } catch (error) {
-            logger.error('[EventosController.obtenerPorId] Error', { error: error.message });
-            return ResponseHelper.error(res, error.message, 500);
+        if (!evento) {
+            throw new ResourceNotFoundError('Evento', id);
         }
-    }
+
+        return ResponseHelper.success(res, evento);
+    });
 
     /**
      * Actualizar evento
      * PUT /api/v1/eventos-digitales/eventos/:id
      */
-    static async actualizar(req, res) {
-        try {
-            const { id } = req.params;
-            const organizacionId = req.tenant?.organizacionId || req.user.organizacion_id;
+    static actualizar = asyncHandler(async (req, res) => {
+        const { id } = req.params;
+        const organizacionId = req.tenant?.organizacionId || req.user.organizacion_id;
 
-            // Verificar límite de fotos si se actualiza galeria_urls
-            if (req.body.galeria_urls && Array.isArray(req.body.galeria_urls)) {
-                const cantidadFotos = req.body.galeria_urls.length;
-                await LimitesHelper.verificarLimiteFotosGaleriaOLanzar(
-                    organizacionId,
-                    parseInt(id),
-                    cantidadFotos
-                );
-            }
-
-            const evento = await EventoModel.actualizar(parseInt(id), req.body, organizacionId);
-
-            if (!evento) {
-                return ResponseHelper.error(res, 'Evento no encontrado', 404);
-            }
-
-            logger.info('[EventosController.actualizar] Evento actualizado', {
-                evento_id: id,
-                usuario_id: req.user.id
-            });
-
-            return ResponseHelper.success(res, evento, 'Evento actualizado exitosamente');
-
-        } catch (error) {
-            logger.error('[EventosController.actualizar] Error', { error: error.message });
-
-            if (error instanceof PlanLimitExceededError) {
-                return ResponseHelper.error(res, error.message, error.statusCode, error.toJSON());
-            }
-
-            return ResponseHelper.error(res, error.message, 500);
+        // Verificar límite de fotos si se actualiza galeria_urls
+        if (req.body.galeria_urls && Array.isArray(req.body.galeria_urls)) {
+            const cantidadFotos = req.body.galeria_urls.length;
+            await LimitesHelper.verificarLimiteFotosGaleriaOLanzar(
+                organizacionId,
+                parseInt(id),
+                cantidadFotos
+            );
         }
-    }
+
+        const evento = await EventoModel.actualizar(parseInt(id), req.body, organizacionId);
+
+        if (!evento) {
+            throw new ResourceNotFoundError('Evento', id);
+        }
+
+        logger.info('[EventosController.actualizar] Evento actualizado', {
+            evento_id: id,
+            usuario_id: req.user.id
+        });
+
+        return ResponseHelper.success(res, evento, 'Evento actualizado exitosamente');
+    });
 
     /**
      * Publicar evento
      * POST /api/v1/eventos-digitales/eventos/:id/publicar
      */
-    static async publicar(req, res) {
-        try {
-            const { id } = req.params;
-            const organizacionId = req.tenant?.organizacionId || req.user.organizacion_id;
+    static publicar = asyncHandler(async (req, res) => {
+        const { id } = req.params;
+        const organizacionId = req.tenant?.organizacionId || req.user.organizacion_id;
 
-            const evento = await EventoModel.publicar(parseInt(id), organizacionId);
+        const evento = await EventoModel.publicar(parseInt(id), organizacionId);
 
-            logger.info('[EventosController.publicar] Evento publicado', {
-                evento_id: id,
-                usuario_id: req.user.id
-            });
+        logger.info('[EventosController.publicar] Evento publicado', {
+            evento_id: id,
+            usuario_id: req.user.id
+        });
 
-            return ResponseHelper.success(res, evento, 'Evento publicado exitosamente');
-
-        } catch (error) {
-            logger.error('[EventosController.publicar] Error', { error: error.message });
-
-            if (error.message.includes('no encontrado') || error.message.includes('no está en estado')) {
-                return ResponseHelper.error(res, error.message, 400);
-            }
-
-            return ResponseHelper.error(res, error.message, 500);
-        }
-    }
+        return ResponseHelper.success(res, evento, 'Evento publicado exitosamente');
+    });
 
     /**
      * Obtener estadísticas del evento
      * GET /api/v1/eventos-digitales/eventos/:id/estadisticas
      */
-    static async estadisticas(req, res) {
-        try {
-            const { id } = req.params;
-            const organizacionId = req.tenant?.organizacionId || req.user.organizacion_id;
+    static estadisticas = asyncHandler(async (req, res) => {
+        const { id } = req.params;
+        const organizacionId = req.tenant?.organizacionId || req.user.organizacion_id;
 
-            const estadisticas = await EventoModel.obtenerEstadisticas(parseInt(id), organizacionId);
+        const estadisticas = await EventoModel.obtenerEstadisticas(parseInt(id), organizacionId);
 
-            return ResponseHelper.success(res, estadisticas);
-
-        } catch (error) {
-            logger.error('[EventosController.estadisticas] Error', { error: error.message });
-            return ResponseHelper.error(res, error.message, 500);
-        }
-    }
+        return ResponseHelper.success(res, estadisticas);
+    });
 
     /**
      * Eliminar evento (soft delete)
      * DELETE /api/v1/eventos-digitales/eventos/:id
      */
-    static async eliminar(req, res) {
-        try {
-            const { id } = req.params;
-            const organizacionId = req.tenant?.organizacionId || req.user.organizacion_id;
+    static eliminar = asyncHandler(async (req, res) => {
+        const { id } = req.params;
+        const organizacionId = req.tenant?.organizacionId || req.user.organizacion_id;
 
-            const eliminado = await EventoModel.eliminar(parseInt(id), organizacionId);
+        const eliminado = await EventoModel.eliminar(parseInt(id), organizacionId);
 
-            if (!eliminado) {
-                return ResponseHelper.error(res, 'Evento no encontrado', 404);
-            }
-
-            logger.info('[EventosController.eliminar] Evento eliminado', {
-                evento_id: id,
-                usuario_id: req.user.id
-            });
-
-            return ResponseHelper.success(res, { id: parseInt(id) }, 'Evento eliminado exitosamente');
-
-        } catch (error) {
-            logger.error('[EventosController.eliminar] Error', { error: error.message });
-            return ResponseHelper.error(res, error.message, 500);
+        if (!eliminado) {
+            throw new ResourceNotFoundError('Evento', id);
         }
-    }
+
+        logger.info('[EventosController.eliminar] Evento eliminado', {
+            evento_id: id,
+            usuario_id: req.user.id
+        });
+
+        return ResponseHelper.success(res, { id: parseInt(id) }, 'Evento eliminado exitosamente');
+    });
 }
 
 module.exports = EventosController;

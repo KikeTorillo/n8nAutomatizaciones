@@ -16,12 +16,16 @@
  * Razón: Depende de eventoId, métodos de moderación aprobar/rechazar,
  * verificación de evento padre, conteo por estado.
  *
+ * REFACTORIZADO Feb 2026:
+ * - Eliminados try-catch redundantes (asyncHandler en rutas)
+ * - Uso de ErrorHelper.throwIfNotFound para 404s
+ *
  * Fecha creación: 4 Diciembre 2025
  */
 
 const FelicitacionModel = require('../models/felicitacion.model');
 const EventoModel = require('../models/evento.model');
-const { ResponseHelper } = require('../../../utils/helpers');
+const { ResponseHelper, ErrorHelper } = require('../../../utils/helpers');
 const logger = require('../../../utils/logger');
 
 class FelicitacionesController {
@@ -30,27 +34,20 @@ class FelicitacionesController {
      * Crear felicitación (admin)
      */
     static async crear(req, res) {
-        try {
-            const { eventoId } = req.params;
-            const organizacionId = req.user.organizacion_id;
+        const { eventoId } = req.params;
+        const organizacionId = req.user.organizacion_id;
 
-            // Verificar que el evento existe
-            const evento = await EventoModel.obtenerPorId(eventoId, organizacionId);
-            if (!evento) {
-                return ResponseHelper.error(res, 'Evento no encontrado', 404);
-            }
+        // Verificar que el evento existe
+        const evento = await EventoModel.obtenerPorId(eventoId, organizacionId);
+        ErrorHelper.throwIfNotFound(evento, 'Evento');
 
-            const felicitacion = await FelicitacionModel.crear({
-                ...req.body,
-                evento_id: parseInt(eventoId),
-                organizacion_id: organizacionId
-            });
+        const felicitacion = await FelicitacionModel.crear({
+            ...req.body,
+            evento_id: parseInt(eventoId),
+            organizacion_id: organizacionId
+        });
 
-            return ResponseHelper.success(res, felicitacion, 'Felicitación creada exitosamente', 201);
-        } catch (error) {
-            logger.error('Error al crear felicitación:', error);
-            return ResponseHelper.error(res, 'Error al crear felicitación', 500);
-        }
+        return ResponseHelper.success(res, felicitacion, 'Felicitación creada exitosamente', 201);
     }
 
     /**
@@ -58,33 +55,26 @@ class FelicitacionesController {
      * Listar felicitaciones del evento
      */
     static async listar(req, res) {
-        try {
-            const { eventoId } = req.params;
-            const { aprobadas, limit = 100, offset = 0 } = req.query;
-            const organizacionId = req.user.organizacion_id;
+        const { eventoId } = req.params;
+        const { aprobadas, limit = 100, offset = 0 } = req.query;
+        const organizacionId = req.user.organizacion_id;
 
-            // Verificar que el evento existe
-            const evento = await EventoModel.obtenerPorId(eventoId, organizacionId);
-            if (!evento) {
-                return ResponseHelper.error(res, 'Evento no encontrado', 404);
-            }
+        // Verificar que el evento existe
+        const evento = await EventoModel.obtenerPorId(eventoId, organizacionId);
+        ErrorHelper.throwIfNotFound(evento, 'Evento');
 
-            const resultado = await FelicitacionModel.listarPorEvento(eventoId, organizacionId, {
-                aprobadas: aprobadas === 'true' ? true : aprobadas === 'false' ? false : undefined,
-                limit: parseInt(limit),
-                offset: parseInt(offset)
-            });
+        const resultado = await FelicitacionModel.listarPorEvento(eventoId, organizacionId, {
+            aprobadas: aprobadas === 'true' ? true : aprobadas === 'false' ? false : undefined,
+            limit: parseInt(limit),
+            offset: parseInt(offset)
+        });
 
-            const conteo = await FelicitacionModel.contarPorEstado(eventoId, organizacionId);
+        const conteo = await FelicitacionModel.contarPorEstado(eventoId, organizacionId);
 
-            return ResponseHelper.success(res, {
-                ...resultado,
-                estadisticas: conteo
-            });
-        } catch (error) {
-            logger.error('Error al listar felicitaciones:', error);
-            return ResponseHelper.error(res, 'Error al listar felicitaciones', 500);
-        }
+        return ResponseHelper.success(res, {
+            ...resultado,
+            estadisticas: conteo
+        });
     }
 
     /**
@@ -92,21 +82,13 @@ class FelicitacionesController {
      * Obtener felicitación por ID
      */
     static async obtenerPorId(req, res) {
-        try {
-            const { id } = req.params;
-            const organizacionId = req.user.organizacion_id;
+        const { id } = req.params;
+        const organizacionId = req.user.organizacion_id;
 
-            const felicitacion = await FelicitacionModel.obtenerPorId(id, organizacionId);
+        const felicitacion = await FelicitacionModel.obtenerPorId(id, organizacionId);
+        ErrorHelper.throwIfNotFound(felicitacion, 'Felicitación');
 
-            if (!felicitacion) {
-                return ResponseHelper.error(res, 'Felicitación no encontrada', 404);
-            }
-
-            return ResponseHelper.success(res, felicitacion);
-        } catch (error) {
-            logger.error('Error al obtener felicitación:', error);
-            return ResponseHelper.error(res, 'Error al obtener felicitación', 500);
-        }
+        return ResponseHelper.success(res, felicitacion);
     }
 
     /**
@@ -114,21 +96,13 @@ class FelicitacionesController {
      * Aprobar felicitación
      */
     static async aprobar(req, res) {
-        try {
-            const { id } = req.params;
-            const organizacionId = req.user.organizacion_id;
+        const { id } = req.params;
+        const organizacionId = req.user.organizacion_id;
 
-            const felicitacion = await FelicitacionModel.cambiarAprobacion(id, true, organizacionId);
+        const felicitacion = await FelicitacionModel.cambiarAprobacion(id, true, organizacionId);
+        ErrorHelper.throwIfNotFound(felicitacion, 'Felicitación');
 
-            if (!felicitacion) {
-                return ResponseHelper.error(res, 'Felicitación no encontrada', 404);
-            }
-
-            return ResponseHelper.success(res, felicitacion, 'Felicitación aprobada');
-        } catch (error) {
-            logger.error('Error al aprobar felicitación:', error);
-            return ResponseHelper.error(res, 'Error al aprobar felicitación', 500);
-        }
+        return ResponseHelper.success(res, felicitacion, 'Felicitación aprobada');
     }
 
     /**
@@ -136,21 +110,13 @@ class FelicitacionesController {
      * Rechazar felicitación
      */
     static async rechazar(req, res) {
-        try {
-            const { id } = req.params;
-            const organizacionId = req.user.organizacion_id;
+        const { id } = req.params;
+        const organizacionId = req.user.organizacion_id;
 
-            const felicitacion = await FelicitacionModel.cambiarAprobacion(id, false, organizacionId);
+        const felicitacion = await FelicitacionModel.cambiarAprobacion(id, false, organizacionId);
+        ErrorHelper.throwIfNotFound(felicitacion, 'Felicitación');
 
-            if (!felicitacion) {
-                return ResponseHelper.error(res, 'Felicitación no encontrada', 404);
-            }
-
-            return ResponseHelper.success(res, felicitacion, 'Felicitación rechazada');
-        } catch (error) {
-            logger.error('Error al rechazar felicitación:', error);
-            return ResponseHelper.error(res, 'Error al rechazar felicitación', 500);
-        }
+        return ResponseHelper.success(res, felicitacion, 'Felicitación rechazada');
     }
 
     /**
@@ -158,23 +124,16 @@ class FelicitacionesController {
      * Eliminar felicitación
      */
     static async eliminar(req, res) {
-        try {
-            const { id } = req.params;
-            const organizacionId = req.user.organizacion_id;
+        const { id } = req.params;
+        const organizacionId = req.user.organizacion_id;
 
-            // Verificar que existe
-            const felicitacion = await FelicitacionModel.obtenerPorId(id, organizacionId);
-            if (!felicitacion) {
-                return ResponseHelper.error(res, 'Felicitación no encontrada', 404);
-            }
+        // Verificar que existe
+        const felicitacion = await FelicitacionModel.obtenerPorId(id, organizacionId);
+        ErrorHelper.throwIfNotFound(felicitacion, 'Felicitación');
 
-            await FelicitacionModel.eliminar(id, organizacionId);
+        await FelicitacionModel.eliminar(id, organizacionId);
 
-            return ResponseHelper.success(res, { id: parseInt(id) }, 'Felicitación eliminada exitosamente');
-        } catch (error) {
-            logger.error('Error al eliminar felicitación:', error);
-            return ResponseHelper.error(res, 'Error al eliminar felicitación', 500);
-        }
+        return ResponseHelper.success(res, { id: parseInt(id) }, 'Felicitación eliminada exitosamente');
     }
 }
 

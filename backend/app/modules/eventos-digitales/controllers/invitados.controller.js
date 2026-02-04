@@ -23,6 +23,8 @@
  * Razón: 8+ métodos custom (importar, exportar, QR, check-in, grupos),
  * depende de eventoId, lógica compleja de RSVP y check-in.
  *
+ * REFACTORIZADO Feb 2026: Migrado a asyncHandler + qr.service
+ *
  * Fecha creación: 4 Diciembre 2025
  */
 
@@ -30,9 +32,17 @@ const InvitadoModel = require('../models/invitado.model');
 const EventoModel = require('../models/evento.model');
 const logger = require('../../../utils/logger');
 const { ResponseHelper, LimitesHelper } = require('../../../utils/helpers');
-const { PlanLimitExceededError } = require('../../../utils/errors');
-const QRCode = require('qrcode');
+const { ResourceNotFoundError, ValidationError } = require('../../../utils/errors');
+const asyncHandler = require('../../../middleware/asyncHandler');
 const archiver = require('archiver');
+
+// Usar servicio centralizado de QR
+const {
+    generarQRInvitado,
+    generarQRBuffer,
+    generarUrlInvitacion,
+    generarNombreArchivoQR
+} = require('../services/qr.service');
 
 class InvitadosController {
 
@@ -40,265 +50,212 @@ class InvitadosController {
      * Crear invitado
      * POST /api/v1/eventos-digitales/eventos/:eventoId/invitados
      */
-    static async crear(req, res) {
-        try {
-            const { eventoId } = req.params;
-            const organizacionId = req.tenant?.organizacionId || req.user.organizacion_id;
+    static crear = asyncHandler(async (req, res) => {
+        const { eventoId } = req.params;
+        const organizacionId = req.tenant?.organizacionId || req.user.organizacion_id;
 
-            // Verificar límite de invitados por evento
-            await LimitesHelper.verificarLimiteInvitadosOLanzar(
-                organizacionId,
-                parseInt(eventoId),
-                1
-            );
+        // Verificar límite de invitados por evento
+        await LimitesHelper.verificarLimiteInvitadosOLanzar(
+            organizacionId,
+            parseInt(eventoId),
+            1
+        );
 
-            const datos = {
-                ...req.body,
-                organizacion_id: organizacionId,
-                evento_id: parseInt(eventoId)
-            };
+        const datos = {
+            ...req.body,
+            organizacion_id: organizacionId,
+            evento_id: parseInt(eventoId)
+        };
 
-            const invitado = await InvitadoModel.crear(datos);
+        const invitado = await InvitadoModel.crear(datos);
 
-            logger.info('[InvitadosController.crear] Invitado creado', {
-                invitado_id: invitado.id,
-                evento_id: eventoId
-            });
+        logger.info('[InvitadosController.crear] Invitado creado', {
+            invitado_id: invitado.id,
+            evento_id: eventoId
+        });
 
-            return ResponseHelper.success(res, invitado, 'Invitado creado exitosamente', 201);
-
-        } catch (error) {
-            logger.error('[InvitadosController.crear] Error', { error: error.message });
-
-            if (error instanceof PlanLimitExceededError) {
-                return ResponseHelper.error(res, error.message, error.statusCode, error.toJSON());
-            }
-
-            return ResponseHelper.error(res, error.message, 500);
-        }
-    }
+        return ResponseHelper.success(res, invitado, 'Invitado creado exitosamente', 201);
+    });
 
     /**
      * Importar invitados masivamente
      * POST /api/v1/eventos-digitales/eventos/:eventoId/invitados/importar
      */
-    static async importar(req, res) {
-        try {
-            const { eventoId } = req.params;
-            const organizacionId = req.tenant?.organizacionId || req.user.organizacion_id;
-            const { invitados } = req.body;
+    static importar = asyncHandler(async (req, res) => {
+        const { eventoId } = req.params;
+        const organizacionId = req.tenant?.organizacionId || req.user.organizacion_id;
+        const { invitados } = req.body;
 
-            // Verificar límite de invitados antes de importar
-            const cantidadAImportar = invitados?.length || 0;
-            const verificacion = await LimitesHelper.verificarLimiteInvitados(
-                organizacionId,
-                parseInt(eventoId),
-                cantidadAImportar
-            );
+        // Verificar límite de invitados antes de importar
+        const cantidadAImportar = invitados?.length || 0;
+        const verificacion = await LimitesHelper.verificarLimiteInvitados(
+            organizacionId,
+            parseInt(eventoId),
+            cantidadAImportar
+        );
 
-            if (!verificacion.puedeCrear) {
-                return ResponseHelper.error(
-                    res,
-                    `No puedes importar ${cantidadAImportar} invitados. ` +
-                    `Límite: ${verificacion.limite}, Usados: ${verificacion.usoActual}, ` +
-                    `Disponibles: ${verificacion.disponible}`,
-                    403,
-                    {
-                        code: 'PLAN_LIMIT_EXCEEDED',
-                        details: {
-                            recurso: 'invitados por evento',
-                            limite: verificacion.limite,
-                            uso_actual: verificacion.usoActual,
-                            disponible: verificacion.disponible,
-                            cantidad_solicitada: cantidadAImportar,
-                            plan: verificacion.nombrePlan
-                        }
+        if (!verificacion.puedeCrear) {
+            return ResponseHelper.error(
+                res,
+                `No puedes importar ${cantidadAImportar} invitados. ` +
+                `Límite: ${verificacion.limite}, Usados: ${verificacion.usoActual}, ` +
+                `Disponibles: ${verificacion.disponible}`,
+                403,
+                {
+                    code: 'PLAN_LIMIT_EXCEEDED',
+                    details: {
+                        recurso: 'invitados por evento',
+                        limite: verificacion.limite,
+                        uso_actual: verificacion.usoActual,
+                        disponible: verificacion.disponible,
+                        cantidad_solicitada: cantidadAImportar,
+                        plan: verificacion.nombrePlan
                     }
-                );
-            }
-
-            const resultado = await InvitadoModel.crearMasivo(
-                parseInt(eventoId),
-                organizacionId,
-                invitados
+                }
             );
-
-            logger.info('[InvitadosController.importar] Importación completada', {
-                evento_id: eventoId,
-                creados: resultado.creados.length,
-                errores: resultado.errores.length
-            });
-
-            return ResponseHelper.success(res, resultado, `${resultado.creados.length} invitados importados`);
-
-        } catch (error) {
-            logger.error('[InvitadosController.importar] Error', { error: error.message });
-            return ResponseHelper.error(res, error.message, 500);
         }
-    }
+
+        const resultado = await InvitadoModel.crearMasivo(
+            parseInt(eventoId),
+            organizacionId,
+            invitados
+        );
+
+        logger.info('[InvitadosController.importar] Importación completada', {
+            evento_id: eventoId,
+            creados: resultado.creados.length,
+            errores: resultado.errores.length
+        });
+
+        return ResponseHelper.success(res, resultado, `${resultado.creados.length} invitados importados`);
+    });
 
     /**
      * Listar invitados del evento
      * GET /api/v1/eventos-digitales/eventos/:eventoId/invitados
      */
-    static async listar(req, res) {
-        try {
-            const { eventoId } = req.params;
-            const organizacionId = req.tenant?.organizacionId || req.user.organizacion_id;
-            const filtros = req.query;
+    static listar = asyncHandler(async (req, res) => {
+        const { eventoId } = req.params;
+        const organizacionId = req.tenant?.organizacionId || req.user.organizacion_id;
+        const filtros = req.query;
 
-            const resultado = await InvitadoModel.listar(
-                parseInt(eventoId),
-                organizacionId,
-                filtros
-            );
+        const resultado = await InvitadoModel.listar(
+            parseInt(eventoId),
+            organizacionId,
+            filtros
+        );
 
-            return ResponseHelper.success(res, resultado);
-
-        } catch (error) {
-            logger.error('[InvitadosController.listar] Error', { error: error.message });
-            return ResponseHelper.error(res, error.message, 500);
-        }
-    }
+        return ResponseHelper.success(res, resultado);
+    });
 
     /**
      * Actualizar invitado
      * PUT /api/v1/eventos-digitales/invitados/:id
      */
-    static async actualizar(req, res) {
-        try {
-            const { id } = req.params;
-            const organizacionId = req.tenant?.organizacionId || req.user.organizacion_id;
+    static actualizar = asyncHandler(async (req, res) => {
+        const { id } = req.params;
+        const organizacionId = req.tenant?.organizacionId || req.user.organizacion_id;
 
-            const invitado = await InvitadoModel.actualizar(
-                parseInt(id),
-                req.body,
-                organizacionId
-            );
+        const invitado = await InvitadoModel.actualizar(
+            parseInt(id),
+            req.body,
+            organizacionId
+        );
 
-            if (!invitado) {
-                return ResponseHelper.error(res, 'Invitado no encontrado', 404);
-            }
-
-            return ResponseHelper.success(res, invitado, 'Invitado actualizado exitosamente');
-
-        } catch (error) {
-            logger.error('[InvitadosController.actualizar] Error', { error: error.message });
-            return ResponseHelper.error(res, error.message, 500);
+        if (!invitado) {
+            throw new ResourceNotFoundError('Invitado', id);
         }
-    }
+
+        return ResponseHelper.success(res, invitado, 'Invitado actualizado exitosamente');
+    });
 
     /**
      * Eliminar invitado
      * DELETE /api/v1/eventos-digitales/invitados/:id
      */
-    static async eliminar(req, res) {
-        try {
-            const { id } = req.params;
-            const organizacionId = req.tenant?.organizacionId || req.user.organizacion_id;
+    static eliminar = asyncHandler(async (req, res) => {
+        const { id } = req.params;
+        const organizacionId = req.tenant?.organizacionId || req.user.organizacion_id;
 
-            const eliminado = await InvitadoModel.eliminar(parseInt(id), organizacionId);
+        const eliminado = await InvitadoModel.eliminar(parseInt(id), organizacionId);
 
-            if (!eliminado) {
-                return ResponseHelper.error(res, 'Invitado no encontrado', 404);
-            }
-
-            return ResponseHelper.success(res, { id: parseInt(id) }, 'Invitado eliminado');
-
-        } catch (error) {
-            logger.error('[InvitadosController.eliminar] Error', { error: error.message });
-            return ResponseHelper.error(res, error.message, 500);
+        if (!eliminado) {
+            throw new ResourceNotFoundError('Invitado', id);
         }
-    }
+
+        return ResponseHelper.success(res, { id: parseInt(id) }, 'Invitado eliminado');
+    });
 
     /**
      * Exportar invitados a CSV
      * GET /api/v1/eventos-digitales/eventos/:eventoId/invitados/exportar
      */
-    static async exportar(req, res) {
-        try {
-            const { eventoId } = req.params;
-            const organizacionId = req.tenant?.organizacionId || req.user.organizacion_id;
+    static exportar = asyncHandler(async (req, res) => {
+        const { eventoId } = req.params;
+        const organizacionId = req.tenant?.organizacionId || req.user.organizacion_id;
 
-            const invitados = await InvitadoModel.exportar(parseInt(eventoId), organizacionId);
+        const invitados = await InvitadoModel.exportar(parseInt(eventoId), organizacionId);
 
-            // Generar CSV
-            const headers = [
-                'Nombre', 'Email', 'Teléfono', 'Grupo Familiar',
-                'Max Acompañantes', 'Estado RSVP', 'Num Asistentes',
-                'Mensaje', 'Restricciones Dietéticas', 'Confirmado En', 'Vía'
-            ];
+        // Generar CSV
+        const headers = [
+            'Nombre', 'Email', 'Teléfono', 'Grupo Familiar',
+            'Max Acompañantes', 'Estado RSVP', 'Num Asistentes',
+            'Mensaje', 'Restricciones Dietéticas', 'Confirmado En', 'Vía'
+        ];
 
-            const rows = invitados.map(i => [
-                i.nombre,
-                i.email || '',
-                i.telefono || '',
-                i.grupo_familiar || '',
-                i.max_acompanantes,
-                i.estado_rsvp,
-                i.num_asistentes || 0,
-                i.mensaje_rsvp || '',
-                i.restricciones_dieteticas || '',
-                i.confirmado_en || '',
-                i.confirmado_via || ''
-            ]);
+        const rows = invitados.map(i => [
+            i.nombre,
+            i.email || '',
+            i.telefono || '',
+            i.grupo_familiar || '',
+            i.max_acompanantes,
+            i.estado_rsvp,
+            i.num_asistentes || 0,
+            i.mensaje_rsvp || '',
+            i.restricciones_dieteticas || '',
+            i.confirmado_en || '',
+            i.confirmado_via || ''
+        ]);
 
-            const csvContent = [
-                headers.join(','),
-                ...rows.map(row => row.map(cell =>
-                    typeof cell === 'string' && cell.includes(',')
-                        ? `"${cell}"`
-                        : cell
-                ).join(','))
-            ].join('\n');
+        const csvContent = [
+            headers.join(','),
+            ...rows.map(row => row.map(cell =>
+                typeof cell === 'string' && cell.includes(',')
+                    ? `"${cell}"`
+                    : cell
+            ).join(','))
+        ].join('\n');
 
-            res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-            res.setHeader('Content-Disposition', `attachment; filename=invitados-${eventoId}.csv`);
-            return res.send(csvContent);
-
-        } catch (error) {
-            logger.error('[InvitadosController.exportar] Error', { error: error.message });
-            return ResponseHelper.error(res, error.message, 500);
-        }
-    }
+        res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+        res.setHeader('Content-Disposition', `attachment; filename=invitados-${eventoId}.csv`);
+        return res.send(csvContent);
+    });
 
     /**
      * Obtener grupos familiares únicos
      * GET /api/v1/eventos-digitales/eventos/:eventoId/grupos
      */
-    static async obtenerGrupos(req, res) {
-        try {
-            const { eventoId } = req.params;
-            const organizacionId = req.tenant?.organizacionId || req.user.organizacion_id;
+    static obtenerGrupos = asyncHandler(async (req, res) => {
+        const { eventoId } = req.params;
+        const organizacionId = req.tenant?.organizacionId || req.user.organizacion_id;
 
-            const grupos = await InvitadoModel.obtenerGrupos(parseInt(eventoId), organizacionId);
+        const grupos = await InvitadoModel.obtenerGrupos(parseInt(eventoId), organizacionId);
 
-            return ResponseHelper.success(res, grupos);
-
-        } catch (error) {
-            logger.error('[InvitadosController.obtenerGrupos] Error', { error: error.message });
-            return ResponseHelper.error(res, error.message, 500);
-        }
-    }
+        return ResponseHelper.success(res, grupos);
+    });
 
     /**
      * Obtener etiquetas únicas
      * GET /api/v1/eventos-digitales/eventos/:eventoId/etiquetas
      */
-    static async obtenerEtiquetas(req, res) {
-        try {
-            const { eventoId } = req.params;
-            const organizacionId = req.tenant?.organizacionId || req.user.organizacion_id;
+    static obtenerEtiquetas = asyncHandler(async (req, res) => {
+        const { eventoId } = req.params;
+        const organizacionId = req.tenant?.organizacionId || req.user.organizacion_id;
 
-            const etiquetas = await InvitadoModel.obtenerEtiquetas(parseInt(eventoId), organizacionId);
+        const etiquetas = await InvitadoModel.obtenerEtiquetas(parseInt(eventoId), organizacionId);
 
-            return ResponseHelper.success(res, etiquetas);
-
-        } catch (error) {
-            logger.error('[InvitadosController.obtenerEtiquetas] Error', { error: error.message });
-            return ResponseHelper.error(res, error.message, 500);
-        }
-    }
+        return ResponseHelper.success(res, etiquetas);
+    });
 
     // ========================================================================
     // QR + CHECK-IN
@@ -308,251 +265,193 @@ class InvitadosController {
      * Generar QR individual para un invitado
      * GET /api/v1/eventos-digitales/eventos/:eventoId/invitados/:invitadoId/qr
      */
-    static async generarQR(req, res) {
-        try {
-            const { eventoId, invitadoId } = req.params;
-            const organizacionId = req.tenant?.organizacionId || req.user.organizacion_id;
-            const { formato = 'png' } = req.query; // png o base64
+    static generarQR = asyncHandler(async (req, res) => {
+        const { eventoId, invitadoId } = req.params;
+        const organizacionId = req.tenant?.organizacionId || req.user.organizacion_id;
+        const { formato = 'png' } = req.query;
 
-            // Obtener invitado y evento
-            const invitado = await InvitadoModel.obtenerPorId(parseInt(invitadoId), organizacionId);
+        // Obtener invitado y evento
+        const invitado = await InvitadoModel.obtenerPorId(parseInt(invitadoId), organizacionId);
 
-            if (!invitado || invitado.evento_id !== parseInt(eventoId)) {
-                return ResponseHelper.error(res, 'Invitado no encontrado', 404);
-            }
-
-            const evento = await EventoModel.obtenerPorId(parseInt(eventoId), organizacionId);
-
-            if (!evento) {
-                return ResponseHelper.error(res, 'Evento no encontrado', 404);
-            }
-
-            // Generar URL de la invitación
-            const baseUrl = process.env.FRONTEND_URL || 'https://nexo.app';
-            const invitacionUrl = `${baseUrl}/e/${evento.slug}/${invitado.token}`;
-
-            // Opciones del QR
-            const qrOptions = {
-                errorCorrectionLevel: 'M',
-                type: 'png',
-                margin: 2,
-                width: 400,
-                color: {
-                    dark: '#000000',
-                    light: '#FFFFFF'
-                }
-            };
-
-            if (formato === 'base64') {
-                // Retornar como base64
-                const qrDataUrl = await QRCode.toDataURL(invitacionUrl, qrOptions);
-                return ResponseHelper.success(res, {
-                    qr: qrDataUrl,
-                    url: invitacionUrl,
-                    invitado: {
-                        id: invitado.id,
-                        nombre: invitado.nombre,
-                        grupo_familiar: invitado.grupo_familiar
-                    }
-                });
-            } else {
-                // Retornar como imagen PNG
-                const qrBuffer = await QRCode.toBuffer(invitacionUrl, qrOptions);
-
-                res.setHeader('Content-Type', 'image/png');
-                res.setHeader('Content-Disposition', `attachment; filename="qr-${invitado.nombre.replace(/\s+/g, '-')}.png"`);
-                return res.send(qrBuffer);
-            }
-
-        } catch (error) {
-            logger.error('[InvitadosController.generarQR] Error', { error: error.message });
-            return ResponseHelper.error(res, 'Error generando QR', 500);
+        if (!invitado || invitado.evento_id !== parseInt(eventoId)) {
+            throw new ResourceNotFoundError('Invitado', invitadoId);
         }
-    }
+
+        const evento = await EventoModel.obtenerPorId(parseInt(eventoId), organizacionId);
+
+        if (!evento) {
+            throw new ResourceNotFoundError('Evento', eventoId);
+        }
+
+        // Usar servicio de QR
+        const resultado = await generarQRInvitado(
+            {
+                slug: evento.slug,
+                token: invitado.token,
+                nombre: invitado.nombre,
+                grupoFamiliar: invitado.grupo_familiar
+            },
+            formato
+        );
+
+        if (formato === 'base64') {
+            return ResponseHelper.success(res, {
+                qr: resultado.qr,
+                url: resultado.url,
+                invitado: {
+                    id: invitado.id,
+                    nombre: resultado.invitado.nombre,
+                    grupo_familiar: resultado.invitado.grupo_familiar
+                }
+            });
+        }
+
+        // Retornar como imagen PNG
+        res.setHeader('Content-Type', resultado.contentType);
+        res.setHeader('Content-Disposition', `attachment; filename="${resultado.filename}"`);
+        return res.send(resultado.buffer);
+    });
 
     /**
      * Generar ZIP con todos los QR del evento
      * GET /api/v1/eventos-digitales/eventos/:eventoId/qr-masivo
      */
-    static async generarQRMasivo(req, res) {
-        try {
-            const { eventoId } = req.params;
-            const organizacionId = req.tenant?.organizacionId || req.user.organizacion_id;
+    static generarQRMasivo = asyncHandler(async (req, res) => {
+        const { eventoId } = req.params;
+        const organizacionId = req.tenant?.organizacionId || req.user.organizacion_id;
 
-            // Obtener evento
-            const evento = await EventoModel.obtenerPorId(parseInt(eventoId), organizacionId);
+        // Obtener evento
+        const evento = await EventoModel.obtenerPorId(parseInt(eventoId), organizacionId);
 
-            if (!evento) {
-                return ResponseHelper.error(res, 'Evento no encontrado', 404);
-            }
-
-            // Obtener todos los invitados
-            const resultado = await InvitadoModel.listar(parseInt(eventoId), organizacionId, { limite: 1000 });
-            const invitados = resultado.invitados || [];
-
-            if (invitados.length === 0) {
-                return ResponseHelper.error(res, 'No hay invitados en este evento', 400);
-            }
-
-            const baseUrl = process.env.FRONTEND_URL || 'https://nexo.app';
-
-            // Configurar respuesta como ZIP
-            res.setHeader('Content-Type', 'application/zip');
-            res.setHeader('Content-Disposition', `attachment; filename="qr-${evento.slug}.zip"`);
-
-            // Crear archivo ZIP
-            const archive = archiver('zip', { zlib: { level: 9 } });
-            archive.pipe(res);
-
-            // Generar QR para cada invitado
-            const qrOptions = {
-                errorCorrectionLevel: 'M',
-                type: 'png',
-                margin: 2,
-                width: 400
-            };
-
-            for (const invitado of invitados) {
-                const invitacionUrl = `${baseUrl}/e/${evento.slug}/${invitado.token}`;
-                const qrBuffer = await QRCode.toBuffer(invitacionUrl, qrOptions);
-
-                // Nombre del archivo: grupo_nombre.png o solo nombre.png
-                const nombreArchivo = invitado.grupo_familiar
-                    ? `${invitado.grupo_familiar}_${invitado.nombre}`.replace(/\s+/g, '-')
-                    : invitado.nombre.replace(/\s+/g, '-');
-
-                archive.append(qrBuffer, { name: `${nombreArchivo}.png` });
-            }
-
-            await archive.finalize();
-
-            logger.info('[InvitadosController.generarQRMasivo] ZIP generado', {
-                evento_id: eventoId,
-                total_qr: invitados.length
-            });
-
-        } catch (error) {
-            logger.error('[InvitadosController.generarQRMasivo] Error', { error: error.message });
-            return ResponseHelper.error(res, 'Error generando QR masivo', 500);
+        if (!evento) {
+            throw new ResourceNotFoundError('Evento', eventoId);
         }
-    }
+
+        // Obtener todos los invitados
+        const resultado = await InvitadoModel.listar(parseInt(eventoId), organizacionId, { limite: 1000 });
+        const invitados = resultado.invitados || [];
+
+        if (invitados.length === 0) {
+            throw new ValidationError('No hay invitados en este evento');
+        }
+
+        // Configurar respuesta como ZIP
+        res.setHeader('Content-Type', 'application/zip');
+        res.setHeader('Content-Disposition', `attachment; filename="qr-${evento.slug}.zip"`);
+
+        // Crear archivo ZIP
+        const archive = archiver('zip', { zlib: { level: 9 } });
+        archive.pipe(res);
+
+        // Generar QR para cada invitado usando el servicio
+        for (const invitado of invitados) {
+            const url = generarUrlInvitacion(evento.slug, invitado.token);
+            const qrBuffer = await generarQRBuffer(url);
+            const nombreArchivo = generarNombreArchivoQR(invitado.nombre, invitado.grupo_familiar);
+
+            archive.append(qrBuffer, { name: nombreArchivo });
+        }
+
+        await archive.finalize();
+
+        logger.info('[InvitadosController.generarQRMasivo] ZIP generado', {
+            evento_id: eventoId,
+            total_qr: invitados.length
+        });
+    });
 
     /**
      * Registrar check-in de un invitado
      * POST /api/v1/eventos-digitales/eventos/:eventoId/checkin
      * Body: { token: string }
      */
-    static async registrarCheckin(req, res) {
-        try {
-            const { eventoId } = req.params;
-            const { token } = req.body;
-            const organizacionId = req.tenant?.organizacionId || req.user.organizacion_id;
+    static registrarCheckin = asyncHandler(async (req, res) => {
+        const { eventoId } = req.params;
+        const { token } = req.body;
+        const organizacionId = req.tenant?.organizacionId || req.user.organizacion_id;
 
-            if (!token) {
-                return ResponseHelper.error(res, 'Token requerido', 400);
-            }
-
-            // Buscar invitado por token
-            const invitado = await InvitadoModel.obtenerPorTokenInterno(token, organizacionId);
-
-            if (!invitado) {
-                return ResponseHelper.error(res, 'QR inválido - Invitado no encontrado', 404);
-            }
-
-            if (invitado.evento_id !== parseInt(eventoId)) {
-                return ResponseHelper.error(res, 'QR inválido - No corresponde a este evento', 400);
-            }
-
-            // Verificar si ya hizo check-in
-            if (invitado.checkin_at) {
-                return res.status(200).json({
-                    success: true,
-                    status: 'already_checked_in',
-                    message: 'Ya registrado previamente',
-                    data: {
-                        invitado: {
-                            id: invitado.id,
-                            nombre: invitado.nombre,
-                            grupo_familiar: invitado.grupo_familiar,
-                            num_asistentes: invitado.num_asistentes || 1
-                        },
-                        checkin_at: invitado.checkin_at
-                    }
-                });
-            }
-
-            // Registrar check-in
-            const resultado = await InvitadoModel.registrarCheckin(invitado.id, organizacionId);
-
-            logger.info('[InvitadosController.registrarCheckin] Check-in registrado', {
-                invitado_id: invitado.id,
-                evento_id: eventoId,
-                nombre: invitado.nombre
-            });
-
-            return res.status(200).json({
-                success: true,
-                status: 'checked_in',
-                message: '¡Bienvenido!',
-                data: {
-                    invitado: {
-                        id: resultado.id,
-                        nombre: resultado.nombre,
-                        grupo_familiar: resultado.grupo_familiar,
-                        num_asistentes: resultado.num_asistentes || 1
-                    },
-                    checkin_at: resultado.checkin_at
-                }
-            });
-
-        } catch (error) {
-            logger.error('[InvitadosController.registrarCheckin] Error', { error: error.message });
-            return ResponseHelper.error(res, 'Error registrando check-in', 500);
+        if (!token) {
+            throw new ValidationError('Token requerido');
         }
-    }
+
+        // Buscar invitado por token
+        const invitado = await InvitadoModel.obtenerPorTokenInterno(token, organizacionId);
+
+        if (!invitado) {
+            throw new ResourceNotFoundError('Invitado');
+        }
+
+        if (invitado.evento_id !== parseInt(eventoId)) {
+            throw new ValidationError('QR inválido - No corresponde a este evento');
+        }
+
+        // Verificar si ya hizo check-in
+        if (invitado.checkin_at) {
+            return ResponseHelper.success(res, {
+                status: 'already_checked_in',
+                message: 'Ya registrado previamente',
+                invitado: {
+                    id: invitado.id,
+                    nombre: invitado.nombre,
+                    grupo_familiar: invitado.grupo_familiar,
+                    num_asistentes: invitado.num_asistentes || 1
+                },
+                checkin_at: invitado.checkin_at
+            });
+        }
+
+        // Registrar check-in
+        const resultadoCheckin = await InvitadoModel.registrarCheckin(invitado.id, organizacionId);
+
+        logger.info('[InvitadosController.registrarCheckin] Check-in registrado', {
+            invitado_id: invitado.id,
+            evento_id: eventoId,
+            nombre: invitado.nombre
+        });
+
+        return ResponseHelper.success(res, {
+            status: 'checked_in',
+            message: '¡Bienvenido!',
+            invitado: {
+                id: resultadoCheckin.id,
+                nombre: resultadoCheckin.nombre,
+                grupo_familiar: resultadoCheckin.grupo_familiar,
+                num_asistentes: resultadoCheckin.num_asistentes || 1
+            },
+            checkin_at: resultadoCheckin.checkin_at
+        });
+    });
 
     /**
      * Obtener estadísticas de check-in
      * GET /api/v1/eventos-digitales/eventos/:eventoId/checkin/stats
      */
-    static async obtenerEstadisticasCheckin(req, res) {
-        try {
-            const { eventoId } = req.params;
-            const organizacionId = req.tenant?.organizacionId || req.user.organizacion_id;
+    static obtenerEstadisticasCheckin = asyncHandler(async (req, res) => {
+        const { eventoId } = req.params;
+        const organizacionId = req.tenant?.organizacionId || req.user.organizacion_id;
 
-            const stats = await InvitadoModel.obtenerEstadisticasCheckin(parseInt(eventoId), organizacionId);
+        const stats = await InvitadoModel.obtenerEstadisticasCheckin(parseInt(eventoId), organizacionId);
 
-            return ResponseHelper.success(res, stats);
-
-        } catch (error) {
-            logger.error('[InvitadosController.obtenerEstadisticasCheckin] Error', { error: error.message });
-            return ResponseHelper.error(res, error.message, 500);
-        }
-    }
+        return ResponseHelper.success(res, stats);
+    });
 
     /**
      * Listar invitados con check-in (para dashboard tiempo real)
      * GET /api/v1/eventos-digitales/eventos/:eventoId/checkin/lista
      */
-    static async listarCheckins(req, res) {
-        try {
-            const { eventoId } = req.params;
-            const organizacionId = req.tenant?.organizacionId || req.user.organizacion_id;
-            const { limite = 50 } = req.query;
+    static listarCheckins = asyncHandler(async (req, res) => {
+        const { eventoId } = req.params;
+        const organizacionId = req.tenant?.organizacionId || req.user.organizacion_id;
+        const { limite = 50 } = req.query;
 
-            const checkins = await InvitadoModel.listarCheckins(
-                parseInt(eventoId),
-                organizacionId,
-                parseInt(limite)
-            );
+        const checkins = await InvitadoModel.listarCheckins(
+            parseInt(eventoId),
+            organizacionId,
+            parseInt(limite)
+        );
 
-            return ResponseHelper.success(res, checkins);
-
-        } catch (error) {
-            logger.error('[InvitadosController.listarCheckins] Error', { error: error.message });
-            return ResponseHelper.error(res, error.message, 500);
-        }
-    }
+        return ResponseHelper.success(res, checkins);
+    });
 }
 
 module.exports = InvitadosController;

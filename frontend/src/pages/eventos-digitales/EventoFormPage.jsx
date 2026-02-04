@@ -6,7 +6,8 @@ import { PartyPopper, Save, Image, Trash2, Plus, Upload } from 'lucide-react';
 import {
   BackButton,
   Button,
-  Checkbox,
+  CheckboxField,
+  FormGroup,
   Input,
   LoadingSpinner
 } from '@/components/ui';
@@ -228,12 +229,13 @@ function EventoFormPage() {
                 name="nombre"
                 control={control}
                 render={({ field }) => (
-                  <Input
-                    label="Nombre del Evento *"
-                    placeholder="Ej: Boda de Juan y María"
-                    error={errors.nombre?.message}
-                    {...field}
-                  />
+                  <FormGroup label="Nombre del Evento" required error={errors.nombre?.message}>
+                    <Input
+                      placeholder="Ej: Boda de Juan y María"
+                      hasError={!!errors.nombre}
+                      {...field}
+                    />
+                  </FormGroup>
                 )}
               />
 
@@ -297,12 +299,13 @@ function EventoFormPage() {
                 name="fecha_evento"
                 control={control}
                 render={({ field }) => (
-                  <Input
-                    label="Fecha del Evento *"
-                    type="date"
-                    error={errors.fecha_evento?.message}
-                    {...field}
-                  />
+                  <FormGroup label="Fecha del Evento" required error={errors.fecha_evento?.message}>
+                    <Input
+                      type="date"
+                      hasError={!!errors.fecha_evento}
+                      {...field}
+                    />
+                  </FormGroup>
                 )}
               />
 
@@ -310,12 +313,13 @@ function EventoFormPage() {
                 name="hora_evento"
                 control={control}
                 render={({ field }) => (
-                  <Input
-                    label="Hora del Evento"
-                    type="time"
-                    error={errors.hora_evento?.message}
-                    {...field}
-                  />
+                  <FormGroup label="Hora del Evento" error={errors.hora_evento?.message}>
+                    <Input
+                      type="time"
+                      hasError={!!errors.hora_evento}
+                      {...field}
+                    />
+                  </FormGroup>
                 )}
               />
 
@@ -323,13 +327,13 @@ function EventoFormPage() {
                 name="fecha_limite_rsvp"
                 control={control}
                 render={({ field }) => (
-                  <Input
-                    label="Fecha Límite RSVP"
-                    type="date"
-                    error={errors.fecha_limite_rsvp?.message}
-                    className="sm:col-span-2"
-                    {...field}
-                  />
+                  <FormGroup label="Fecha Límite RSVP" error={errors.fecha_limite_rsvp?.message} className="sm:col-span-2">
+                    <Input
+                      type="date"
+                      hasError={!!errors.fecha_limite_rsvp}
+                      {...field}
+                    />
+                  </FormGroup>
                 )}
               />
             </div>
@@ -601,7 +605,7 @@ function EventoFormPage() {
                 name="configuracion.mostrar_mesa_regalos"
                 control={control}
                 render={({ field }) => (
-                  <Checkbox
+                  <CheckboxField
                     checked={field.value}
                     onChange={field.onChange}
                     label="Mostrar mesa de regalos"
@@ -613,7 +617,7 @@ function EventoFormPage() {
                 name="configuracion.permitir_felicitaciones"
                 control={control}
                 render={({ field }) => (
-                  <Checkbox
+                  <CheckboxField
                     checked={field.value}
                     onChange={field.onChange}
                     label="Permitir felicitaciones públicas"
@@ -625,7 +629,7 @@ function EventoFormPage() {
                 name="configuracion.mostrar_ubicaciones"
                 control={control}
                 render={({ field }) => (
-                  <Checkbox
+                  <CheckboxField
                     checked={field.value}
                     onChange={field.onChange}
                     label="Mostrar ubicaciones con mapa"
@@ -637,7 +641,7 @@ function EventoFormPage() {
                 name="configuracion.mostrar_contador"
                 control={control}
                 render={({ field }) => (
-                  <Checkbox
+                  <CheckboxField
                     checked={field.value}
                     onChange={field.onChange}
                     label="Mostrar contador regresivo"
@@ -649,7 +653,7 @@ function EventoFormPage() {
                 name="configuracion.mostrar_qr_invitado"
                 control={control}
                 render={({ field }) => (
-                  <Checkbox
+                  <CheckboxField
                     checked={field.value}
                     onChange={field.onChange}
                     label="Mostrar QR de entrada al invitado"
@@ -662,7 +666,7 @@ function EventoFormPage() {
                 name="configuracion.habilitar_seating_chart"
                 control={control}
                 render={({ field }) => (
-                  <Checkbox
+                  <CheckboxField
                     checked={field.value}
                     onChange={field.onChange}
                     label="Habilitar asignación de mesas"
