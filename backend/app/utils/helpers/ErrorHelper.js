@@ -132,6 +132,18 @@ class ErrorHelper {
   }
 
   /**
+   * Lanza error not found (404)
+   * @param {string} resourceName - Nombre del recurso
+   * @throws {ApiError} 404
+   *
+   * @example
+   * ErrorHelper.throwNotFound('Página');
+   */
+  static throwNotFound(resourceName = 'Recurso') {
+    throw new ApiError(`${resourceName} no encontrado`, 404);
+  }
+
+  /**
    * Lanza error de conflicto (409)
    * Para registros duplicados o conflictos de estado
    * @param {string} message - Mensaje de error

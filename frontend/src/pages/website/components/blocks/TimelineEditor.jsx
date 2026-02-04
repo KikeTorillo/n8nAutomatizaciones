@@ -10,7 +10,7 @@
  * @since 2026-02-03
  */
 
-import { useCallback, useMemo } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import { Clock } from 'lucide-react';
 import { Input, Textarea, Select, ToggleSwitch } from '@/components/ui';
 import { IconPicker } from '@/components/ui';
@@ -265,4 +265,4 @@ function TimelineEditor({ contenido, onGuardar, tema, isSaving, industria = 'def
   );
 }
 
-export default TimelineEditor;
+export default memo(TimelineEditor);

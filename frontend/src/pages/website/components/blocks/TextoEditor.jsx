@@ -10,7 +10,7 @@
  * @since 2026-02-03
  */
 
-import { useCallback, useMemo } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import { Bold, Italic, List, AlignLeft, AlignCenter, AlignRight } from 'lucide-react';
 import { Button, Input, Select, Textarea } from '@/components/ui';
 import { sanitizeHTML } from '@/lib/sanitize';
@@ -237,4 +237,4 @@ function TextoEditor({ contenido, onGuardar, tema, isSaving, industria = 'defaul
   );
 }
 
-export default TextoEditor;
+export default memo(TextoEditor);

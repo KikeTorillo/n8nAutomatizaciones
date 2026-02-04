@@ -288,7 +288,6 @@ function EventoDetailPage() {
             isLoading={loadingInvitados}
             evento={evento}
             mostrarQR={mostrarQR}
-            accessToken={accessToken}
             crearInvitado={crearInvitado}
             actualizarInvitado={actualizarInvitado}
             eliminarInvitado={eliminarInvitado}
@@ -301,7 +300,6 @@ function EventoDetailPage() {
         {activeTab === 'checkin' && (
           <CheckinTab
             eventoId={id}
-            accessToken={accessToken}
             totalInvitados={invitadosData?.total || 0}
             initialStats={checkinStats}
             onStatsUpdate={setCheckinStats}

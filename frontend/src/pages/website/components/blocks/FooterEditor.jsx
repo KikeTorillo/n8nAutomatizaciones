@@ -10,7 +10,7 @@
  * @since 2026-02-03
  */
 
-import { useCallback, useMemo } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import { Link2, Share2 } from 'lucide-react';
 import { Input, Select, Textarea } from '@/components/ui';
 import { useBlockEditor, useArrayItems } from '../../hooks';
@@ -228,4 +228,4 @@ function FooterEditor({ contenido, onGuardar, tema, isSaving }) {
   );
 }
 
-export default FooterEditor;
+export default memo(FooterEditor);

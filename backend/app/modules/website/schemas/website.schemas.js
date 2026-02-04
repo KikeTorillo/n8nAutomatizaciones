@@ -466,7 +466,14 @@ const websiteSchemas = {
                 'any.required': 'El email es requerido',
                 'string.email': 'Ingresa un email válido'
             }),
-            telefono: Joi.string().max(20).optional().allow(null, ''),
+            telefono: Joi.string()
+                .max(20)
+                .pattern(/^[+]?[\d\s()\-]{7,20}$/)
+                .optional()
+                .allow(null, '')
+                .messages({
+                    'string.pattern.base': 'Formato de teléfono inválido'
+                }),
             mensaje: Joi.string().max(1000).optional().allow(null, '').messages({
                 'string.max': 'El mensaje no puede exceder 1000 caracteres'
             })

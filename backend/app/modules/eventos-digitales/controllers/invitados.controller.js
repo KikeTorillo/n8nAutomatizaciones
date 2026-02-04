@@ -29,7 +29,8 @@
 const InvitadoModel = require('../models/invitado.model');
 const EventoModel = require('../models/evento.model');
 const logger = require('../../../utils/logger');
-const { ResponseHelper } = require('../../../utils/helpers');
+const { ResponseHelper, LimitesHelper } = require('../../../utils/helpers');
+const { PlanLimitExceededError } = require('../../../utils/errors');
 const QRCode = require('qrcode');
 const archiver = require('archiver');
 
@@ -43,6 +44,13 @@ class InvitadosController {
         try {
             const { eventoId } = req.params;
             const organizacionId = req.tenant?.organizacionId || req.user.organizacion_id;
+
+            // Verificar límite de invitados por evento
+            await LimitesHelper.verificarLimiteInvitadosOLanzar(
+                organizacionId,
+                parseInt(eventoId),
+                1
+            );
 
             const datos = {
                 ...req.body,
@@ -61,6 +69,11 @@ class InvitadosController {
 
         } catch (error) {
             logger.error('[InvitadosController.crear] Error', { error: error.message });
+
+            if (error instanceof PlanLimitExceededError) {
+                return ResponseHelper.error(res, error.message, error.statusCode, error.toJSON());
+            }
+
             return ResponseHelper.error(res, error.message, 500);
         }
     }
@@ -74,6 +87,35 @@ class InvitadosController {
             const { eventoId } = req.params;
             const organizacionId = req.tenant?.organizacionId || req.user.organizacion_id;
             const { invitados } = req.body;
+
+            // Verificar límite de invitados antes de importar
+            const cantidadAImportar = invitados?.length || 0;
+            const verificacion = await LimitesHelper.verificarLimiteInvitados(
+                organizacionId,
+                parseInt(eventoId),
+                cantidadAImportar
+            );
+
+            if (!verificacion.puedeCrear) {
+                return ResponseHelper.error(
+                    res,
+                    `No puedes importar ${cantidadAImportar} invitados. ` +
+                    `Límite: ${verificacion.limite}, Usados: ${verificacion.usoActual}, ` +
+                    `Disponibles: ${verificacion.disponible}`,
+                    403,
+                    {
+                        code: 'PLAN_LIMIT_EXCEEDED',
+                        details: {
+                            recurso: 'invitados por evento',
+                            limite: verificacion.limite,
+                            uso_actual: verificacion.usoActual,
+                            disponible: verificacion.disponible,
+                            cantidad_solicitada: cantidadAImportar,
+                            plan: verificacion.nombrePlan
+                        }
+                    }
+                );
+            }
 
             const resultado = await InvitadoModel.crearMasivo(
                 parseInt(eventoId),

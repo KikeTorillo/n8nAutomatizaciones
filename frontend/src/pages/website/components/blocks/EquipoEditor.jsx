@@ -10,7 +10,7 @@
  * @since 2026-02-03
  */
 
-import { useCallback, useMemo } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import { User } from 'lucide-react';
 import { Input, Select, Textarea } from '@/components/ui';
 import { useBlockEditor, useArrayItems } from '../../hooks';
@@ -205,4 +205,4 @@ function EquipoEditor({ contenido, onGuardar, tema, isSaving, industria = 'defau
   );
 }
 
-export default EquipoEditor;
+export default memo(EquipoEditor);

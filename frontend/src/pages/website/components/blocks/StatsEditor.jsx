@@ -10,7 +10,7 @@
  * @since 2026-02-03
  */
 
-import { useCallback, useMemo } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import { BarChart3 } from 'lucide-react';
 import { Input, Select, ToggleSwitch } from '@/components/ui';
 import { IconPicker } from '@/components/ui';
@@ -242,4 +242,4 @@ function StatsEditor({ contenido, onGuardar, tema, isSaving, industria = 'defaul
   );
 }
 
-export default StatsEditor;
+export default memo(StatsEditor);

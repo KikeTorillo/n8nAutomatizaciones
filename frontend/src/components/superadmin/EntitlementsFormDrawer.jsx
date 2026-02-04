@@ -47,6 +47,10 @@ const schema = z.object({
         servicios: optionalInt,
         clientes: optionalInt,
         sucursales: optionalInt,
+        // eventos-digitales
+        eventos_activos: optionalInt,
+        invitados_evento: optionalInt,
+        fotos_galeria: optionalInt,
     }).optional(),
     modulos_habilitados: z.array(z.string()).default([]),
     sincronizar_organizaciones: z.boolean().default(true),
@@ -236,6 +240,40 @@ function EntitlementsFormDrawer({ isOpen, onClose, plan, modulosDisponibles = []
                             <Input
                                 type="number"
                                 {...register('limites.sucursales')}
+                                placeholder="-1"
+                            />
+                        </FormGroup>
+                    </div>
+                </div>
+
+                {/* Sección: Límites de Eventos Digitales */}
+                <div className="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <h4 className="font-medium text-gray-900 dark:text-white">
+                        Eventos Digitales
+                    </h4>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                        Usa -1 para ilimitado
+                    </p>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <FormGroup label="Eventos Activos">
+                            <Input
+                                type="number"
+                                {...register('limites.eventos_activos')}
+                                placeholder="-1"
+                            />
+                        </FormGroup>
+                        <FormGroup label="Invitados/Evento">
+                            <Input
+                                type="number"
+                                {...register('limites.invitados_evento')}
+                                placeholder="-1"
+                            />
+                        </FormGroup>
+                        <FormGroup label="Fotos Galería/Evento">
+                            <Input
+                                type="number"
+                                {...register('limites.fotos_galeria')}
                                 placeholder="-1"
                             />
                         </FormGroup>

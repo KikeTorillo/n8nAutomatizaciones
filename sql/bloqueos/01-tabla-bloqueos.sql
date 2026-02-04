@@ -24,7 +24,6 @@
 -- • tipos_bloqueo (catálogo de tipos)
 -- • profesionales, servicios (alcance del bloqueo)
 -- • citas (validación bidireccional)
--- • metricas_uso_organizacion (tracking)
 --
 -- ORDEN DE CARGA: #8 (después de catálogos y negocio)
 -- VERSIÓN: 1.0.0

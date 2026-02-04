@@ -10,6 +10,7 @@
  * @since 2026-02-03
  */
 
+import { memo } from 'react';
 import { Save } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { AISuggestionBanner } from '../AIGenerator';
@@ -77,4 +78,4 @@ function BaseBlockEditor({
   );
 }
 
-export default BaseBlockEditor;
+export default memo(BaseBlockEditor);

@@ -9,7 +9,6 @@
 -- • organizaciones: Aislamiento por tenant con acceso admin
 -- • planes_subscripcion: Lectura global, escritura solo super_admin
 -- • subscripciones: Aislamiento por organización
--- • metricas_uso_organizacion: Aislamiento por organización
 -- • historial_subscripciones: Solo lectura para organizaciones
 --
 -- Migrado de: sql/schema/08-rls-policies.sql y 10-subscriptions-table.sql

@@ -11,7 +11,7 @@
  * @since 2026-02-03
  */
 
-import { useCallback, useMemo } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import { DollarSign, Plus, Trash2, Star } from 'lucide-react';
 import { Button, Input, Select, ToggleSwitch } from '@/components/ui';
 import { AIGenerateButton } from '../AIGenerator';
@@ -349,4 +349,4 @@ function PricingEditor({ contenido, onGuardar, tema, isSaving, industria = 'defa
   );
 }
 
-export default PricingEditor;
+export default memo(PricingEditor);

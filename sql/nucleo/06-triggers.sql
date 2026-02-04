@@ -2,7 +2,6 @@
 -- MÓDULO NÚCLEO: TRIGGERS AUTOMÁTICOS
 -- ====================================================================
 -- Triggers que mantienen automáticamente:
--- • Métricas de uso actualizadas (contadores en metricas_uso_organizacion)
 -- • Auditoría de subscripciones (historial_subscripciones)
 -- • Timestamps de actualización (updated_at en organizaciones y usuarios)
 --

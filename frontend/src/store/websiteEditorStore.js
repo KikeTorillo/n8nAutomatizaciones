@@ -30,6 +30,9 @@ import { subscribeWithSelector, persist, createJSONStorage } from 'zustand/middl
  * @typedef {'desktop' | 'tablet' | 'mobile'} Breakpoint
  */
 
+// Variable para cleanup del setTimeout de bloqueRecienAgregado
+let bloqueRecienAgregadoTimeout = null;
+
 // ========== INITIAL STATE ==========
 const initialState = {
   // Bloques de la página actual (copia local para edición)
@@ -367,14 +370,19 @@ const useWebsiteEditorStore = create(
          * Se limpia automaticamente despues de un timeout
          */
         setBloqueRecienAgregado: (id) => {
+          // Limpiar timeout anterior si existe
+          if (bloqueRecienAgregadoTimeout) {
+            clearTimeout(bloqueRecienAgregadoTimeout);
+          }
           set({ bloqueRecienAgregado: id });
           // Limpiar automaticamente despues de 1.5s
-          setTimeout(() => {
+          bloqueRecienAgregadoTimeout = setTimeout(() => {
             set((state) =>
               state.bloqueRecienAgregado === id
                 ? { bloqueRecienAgregado: null }
                 : state
             );
+            bloqueRecienAgregadoTimeout = null;
           }, 1500);
         },
 
@@ -389,7 +397,14 @@ const useWebsiteEditorStore = create(
         /**
          * Resetea el store a estado inicial
          */
-        reset: () => set(initialState),
+        reset: () => {
+          // Limpiar timeout pendiente
+          if (bloqueRecienAgregadoTimeout) {
+            clearTimeout(bloqueRecienAgregadoTimeout);
+            bloqueRecienAgregadoTimeout = null;
+          }
+          set(initialState);
+        },
       }),
       {
         // Configuración de zundo (temporal middleware)

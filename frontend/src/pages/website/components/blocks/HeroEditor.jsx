@@ -10,7 +10,7 @@
  * @since 2026-02-03
  */
 
-import { useCallback, useMemo } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import { Image } from 'lucide-react';
 import { Checkbox, Input, Select, Textarea } from '@/components/ui';
 import { AIGenerateButton } from '../AIGenerator';
@@ -209,4 +209,4 @@ function HeroEditor({ contenido, onGuardar, tema, isSaving, industria = 'default
   );
 }
 
-export default HeroEditor;
+export default memo(HeroEditor);

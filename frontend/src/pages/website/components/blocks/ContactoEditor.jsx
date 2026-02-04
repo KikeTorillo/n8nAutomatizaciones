@@ -11,7 +11,7 @@
  * @since 2026-02-03
  */
 
-import { useState, useCallback, useMemo } from 'react';
+import { memo, useState, useCallback, useMemo } from 'react';
 import { MapPin, Phone, Mail, Clock, Plus, Trash2, GripVertical, Settings2, MessageSquare } from 'lucide-react';
 import { Button, CheckboxField, Input, Select, ToggleSwitch } from '@/components/ui';
 import { AIGenerateButton } from '../AIGenerator';
@@ -550,4 +550,4 @@ function ContactoEditor({ contenido, onGuardar, tema, isSaving, industria = 'def
   );
 }
 
-export default ContactoEditor;
+export default memo(ContactoEditor);

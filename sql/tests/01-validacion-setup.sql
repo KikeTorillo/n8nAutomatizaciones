@@ -86,7 +86,7 @@ WHERE table_schema = 'public'
       'servicios', 'servicios_profesionales', 'citas',
       'horarios_profesionales',
       'plantillas_servicios', 'planes_subscripcion', 'subscripciones',
-      'historial_subscripciones', 'metricas_uso_organizacion',
+      'historial_subscripciones',
       'eventos_sistema', 'bloqueos_horarios'
   );
 

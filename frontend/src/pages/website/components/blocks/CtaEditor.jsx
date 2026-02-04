@@ -10,7 +10,7 @@
  * @since 2026-02-03
  */
 
-import { useCallback, useMemo } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import { Input, Select, Textarea } from '@/components/ui';
 import { AIGenerateButton } from '../AIGenerator';
 import { useBlockEditor } from '../../hooks';
@@ -261,4 +261,4 @@ function CtaEditor({ contenido, onGuardar, tema, isSaving, industria = 'default'
   );
 }
 
-export default CtaEditor;
+export default memo(CtaEditor);

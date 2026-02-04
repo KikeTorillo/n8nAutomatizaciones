@@ -10,7 +10,7 @@
  * @since 2026-02-03
  */
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { memo, useState, useEffect, useMemo, useCallback } from 'react';
 import { Video } from 'lucide-react';
 import { Checkbox, Input, Select } from '@/components/ui';
 import { useBlockEditor } from '../../hooks';
@@ -252,4 +252,4 @@ function VideoEditor({ contenido, onGuardar, tema, isSaving }) {
   );
 }
 
-export default VideoEditor;
+export default memo(VideoEditor);

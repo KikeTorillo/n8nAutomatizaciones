@@ -12,7 +12,7 @@
  */
 
 import { useState } from 'react';
-import { Settings, Package } from 'lucide-react';
+import { Settings, Package, Layers } from 'lucide-react';
 import { DataTable, Button, Badge, PageHeader } from '@/components/ui';
 import { usePlanesEntitlements } from '@/hooks/superadmin/useEntitlements';
 import EntitlementsFormDrawer from '@/components/superadmin/EntitlementsFormDrawer';

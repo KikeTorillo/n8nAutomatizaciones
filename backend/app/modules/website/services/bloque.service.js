@@ -10,6 +10,7 @@
  */
 
 const { WebsiteBloquesModel, WebsitePaginasModel } = require('../models');
+const { ErrorHelper } = require('../../../utils/helpers');
 
 /**
  * BloqueService - Lógica de negocio para bloques
@@ -34,19 +35,15 @@ class BloqueService {
 
         // 1. Validar tipo de bloque
         if (!WebsiteBloquesModel.TIPOS_VALIDOS.includes(tipo)) {
-            const error = new Error(
+            ErrorHelper.throwValidation(
                 `Tipo de bloque inválido. Tipos permitidos: ${WebsiteBloquesModel.TIPOS_VALIDOS.join(', ')}`
             );
-            error.statusCode = 400;
-            throw error;
         }
 
         // 2. Verificar que la página existe y pertenece a la organización
         const pagina = await WebsitePaginasModel.obtenerPorId(pagina_id, organizacionId);
         if (!pagina) {
-            const error = new Error('Página no encontrada');
-            error.statusCode = 404;
-            throw error;
+            ErrorHelper.throwNotFound('Página');
         }
 
         // 3. Obtener contenido default si no se proporciona
@@ -77,11 +74,9 @@ class BloqueService {
     static async actualizar(bloqueId, datos, organizacionId) {
         // Validar tipo si se está actualizando
         if (datos.tipo && !WebsiteBloquesModel.TIPOS_VALIDOS.includes(datos.tipo)) {
-            const error = new Error(
+            ErrorHelper.throwValidation(
                 `Tipo de bloque inválido. Tipos permitidos: ${WebsiteBloquesModel.TIPOS_VALIDOS.join(', ')}`
             );
-            error.statusCode = 400;
-            throw error;
         }
 
         return await WebsiteBloquesModel.actualizar(bloqueId, datos, organizacionId);
@@ -99,9 +94,7 @@ class BloqueService {
         // Verificar que el bloque existe
         const bloqueOriginal = await WebsiteBloquesModel.obtenerPorId(bloqueId, organizacionId);
         if (!bloqueOriginal) {
-            const error = new Error('Bloque no encontrado');
-            error.statusCode = 404;
-            throw error;
+            ErrorHelper.throwNotFound('Bloque');
         }
 
         return await WebsiteBloquesModel.duplicar(bloqueId, organizacionId);
@@ -120,9 +113,7 @@ class BloqueService {
         // Verificar que la página existe
         const pagina = await WebsitePaginasModel.obtenerPorId(paginaId, organizacionId);
         if (!pagina) {
-            const error = new Error('Página no encontrada');
-            error.statusCode = 404;
-            throw error;
+            ErrorHelper.throwNotFound('Página');
         }
 
         // Ejecutar reordenamiento
@@ -166,9 +157,7 @@ class BloqueService {
         // Verificar que la página existe
         const pagina = await WebsitePaginasModel.obtenerPorId(paginaId, organizacionId);
         if (!pagina) {
-            const error = new Error('Página no encontrada');
-            error.statusCode = 404;
-            throw error;
+            ErrorHelper.throwNotFound('Página');
         }
 
         return await WebsiteBloquesModel.listar(paginaId, organizacionId);
@@ -183,11 +172,9 @@ class BloqueService {
      */
     static obtenerContenidoDefault(tipo) {
         if (!WebsiteBloquesModel.TIPOS_VALIDOS.includes(tipo)) {
-            const error = new Error(
+            ErrorHelper.throwValidation(
                 `Tipo de bloque inválido. Tipos permitidos: ${WebsiteBloquesModel.TIPOS_VALIDOS.join(', ')}`
             );
-            error.statusCode = 400;
-            throw error;
         }
 
         return WebsiteBloquesModel.obtenerContenidoDefault(tipo);

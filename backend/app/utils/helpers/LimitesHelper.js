@@ -37,7 +37,11 @@ const LIMITES_DEFAULT = {
     profesionales: 2,
     servicios: 10,
     citas: 50,
-    usuarios: 3
+    usuarios: 3,
+    // eventos-digitales
+    eventos_activos: 3,
+    invitados_evento: 100,
+    fotos_galeria: 20
 };
 
 class LimitesHelper {
@@ -57,6 +61,9 @@ class LimitesHelper {
                     COALESCE(NULLIF(ps.limites->>'servicios', '')::int, $4) as limite_servicios,
                     COALESCE(NULLIF(ps.limites->>'citas', '')::int, $5) as limite_citas,
                     COALESCE(NULLIF(ps.limites->>'usuarios', '')::int, $6) as limite_usuarios,
+                    COALESCE(NULLIF(ps.limites->>'eventos_activos', '')::int, $7) as limite_eventos_activos,
+                    COALESCE(NULLIF(ps.limites->>'invitados_evento', '')::int, $8) as limite_invitados_evento,
+                    COALESCE(NULLIF(ps.limites->>'fotos_galeria', '')::int, $9) as limite_fotos_galeria,
                     ps.nombre as nombre_plan,
                     ps.codigo as codigo_plan
                 FROM suscripciones_org sub
@@ -72,7 +79,10 @@ class LimitesHelper {
                 LIMITES_DEFAULT.profesionales,
                 LIMITES_DEFAULT.servicios,
                 LIMITES_DEFAULT.citas,
-                LIMITES_DEFAULT.usuarios
+                LIMITES_DEFAULT.usuarios,
+                LIMITES_DEFAULT.eventos_activos,
+                LIMITES_DEFAULT.invitados_evento,
+                LIMITES_DEFAULT.fotos_galeria
             ]);
 
             if (result.rows.length === 0) {
@@ -85,6 +95,9 @@ class LimitesHelper {
                     limite_servicios: LIMITES_DEFAULT.servicios,
                     limite_citas: LIMITES_DEFAULT.citas,
                     limite_usuarios: LIMITES_DEFAULT.usuarios,
+                    limite_eventos_activos: LIMITES_DEFAULT.eventos_activos,
+                    limite_invitados_evento: LIMITES_DEFAULT.invitados_evento,
+                    limite_fotos_galeria: LIMITES_DEFAULT.fotos_galeria,
                     nombre_plan: 'Sin plan',
                     codigo_plan: null
                 };
@@ -148,6 +161,15 @@ class LimitesHelper {
                         SELECT COUNT(*)::int as total
                         FROM usuarios
                         WHERE organizacion_id = $1 AND activo = true
+                    `;
+                    break;
+
+                case 'eventos_activos':
+                    query = `
+                        SELECT COUNT(*)::int as total
+                        FROM eventos_digitales
+                        WHERE organizacion_id = $1
+                          AND activo = true
                     `;
                     break;
 
@@ -243,6 +265,194 @@ class LimitesHelper {
     }
 
     /**
+     * Cuenta invitados de un evento específico
+     *
+     * @param {number} eventoId - ID del evento
+     * @param {Object} db - Conexión de base de datos (opcional)
+     * @returns {Promise<number>} Cantidad de invitados
+     */
+    static async contarInvitadosEvento(eventoId, db = null) {
+        const ejecutarQuery = async (conexion) => {
+            const query = `
+                SELECT COUNT(*)::int as total
+                FROM invitados_evento
+                WHERE evento_id = $1 AND activo = true
+            `;
+            const result = await conexion.query(query, [eventoId]);
+            return result.rows[0]?.total || 0;
+        };
+
+        if (db) {
+            return await ejecutarQuery(db);
+        }
+
+        return await RLSContextManager.withBypass(ejecutarQuery);
+    }
+
+    /**
+     * Cuenta fotos en galería de un evento específico
+     *
+     * @param {number} eventoId - ID del evento
+     * @param {Object} db - Conexión de base de datos (opcional)
+     * @returns {Promise<number>} Cantidad de fotos
+     */
+    static async contarFotosGaleria(eventoId, db = null) {
+        const ejecutarQuery = async (conexion) => {
+            const query = `
+                SELECT COALESCE(jsonb_array_length(galeria_urls), 0)::int as total
+                FROM eventos_digitales
+                WHERE id = $1
+            `;
+            const result = await conexion.query(query, [eventoId]);
+            return result.rows[0]?.total || 0;
+        };
+
+        if (db) {
+            return await ejecutarQuery(db);
+        }
+
+        return await RLSContextManager.withBypass(ejecutarQuery);
+    }
+
+    /**
+     * Verifica límite de invitados para un evento
+     *
+     * @param {number} organizacionId - ID de la organización
+     * @param {number} eventoId - ID del evento
+     * @param {number} cantidadACrear - Cantidad de invitados a crear (default 1)
+     * @param {Object} db - Conexión de base de datos (opcional)
+     * @returns {Promise<Object>} - {puedeCrear, limite, usoActual, disponible, nombrePlan}
+     */
+    static async verificarLimiteInvitados(organizacionId, eventoId, cantidadACrear = 1, db = null) {
+        const limites = await this.obtenerLimitesPlan(organizacionId);
+        const limite = limites.limite_invitados_evento;
+
+        // -1 = ilimitado
+        if (limite === -1) {
+            return {
+                puedeCrear: true,
+                limite: -1,
+                usoActual: 0,
+                disponible: Infinity,
+                nombrePlan: limites.nombre_plan
+            };
+        }
+
+        const usoActual = await this.contarInvitadosEvento(eventoId, db);
+        const disponible = limite - usoActual;
+
+        return {
+            puedeCrear: disponible >= cantidadACrear,
+            limite,
+            usoActual,
+            disponible,
+            nombrePlan: limites.nombre_plan
+        };
+    }
+
+    /**
+     * Verifica límite de invitados y lanza error si se excede
+     *
+     * @param {number} organizacionId - ID de la organización
+     * @param {number} eventoId - ID del evento
+     * @param {number} cantidadACrear - Cantidad de invitados a crear
+     * @param {Object} db - Conexión de base de datos (opcional)
+     * @throws {PlanLimitExceededError} Si se excede el límite
+     */
+    static async verificarLimiteInvitadosOLanzar(organizacionId, eventoId, cantidadACrear = 1, db = null) {
+        const resultado = await this.verificarLimiteInvitados(organizacionId, eventoId, cantidadACrear, db);
+
+        if (!resultado.puedeCrear) {
+            logger.warn('[LimitesHelper] Límite de invitados excedido', {
+                organizacionId,
+                eventoId,
+                cantidadACrear,
+                limite: resultado.limite,
+                usoActual: resultado.usoActual,
+                nombrePlan: resultado.nombrePlan
+            });
+
+            throw new PlanLimitExceededError(
+                'invitados por evento',
+                resultado.limite,
+                resultado.usoActual,
+                resultado.nombrePlan
+            );
+        }
+
+        return resultado;
+    }
+
+    /**
+     * Verifica límite de fotos en galería para un evento
+     *
+     * @param {number} organizacionId - ID de la organización
+     * @param {number} eventoId - ID del evento
+     * @param {number} cantidadAAgregar - Cantidad de fotos a agregar (default 1)
+     * @param {Object} db - Conexión de base de datos (opcional)
+     * @returns {Promise<Object>} - {puedeCrear, limite, usoActual, disponible, nombrePlan}
+     */
+    static async verificarLimiteFotosGaleria(organizacionId, eventoId, cantidadAAgregar = 1, db = null) {
+        const limites = await this.obtenerLimitesPlan(organizacionId);
+        const limite = limites.limite_fotos_galeria;
+
+        // -1 = ilimitado
+        if (limite === -1) {
+            return {
+                puedeCrear: true,
+                limite: -1,
+                usoActual: 0,
+                disponible: Infinity,
+                nombrePlan: limites.nombre_plan
+            };
+        }
+
+        const usoActual = await this.contarFotosGaleria(eventoId, db);
+        const disponible = limite - usoActual;
+
+        return {
+            puedeCrear: disponible >= cantidadAAgregar,
+            limite,
+            usoActual,
+            disponible,
+            nombrePlan: limites.nombre_plan
+        };
+    }
+
+    /**
+     * Verifica límite de fotos en galería y lanza error si se excede
+     *
+     * @param {number} organizacionId - ID de la organización
+     * @param {number} eventoId - ID del evento
+     * @param {number} cantidadAAgregar - Cantidad de fotos a agregar
+     * @param {Object} db - Conexión de base de datos (opcional)
+     * @throws {PlanLimitExceededError} Si se excede el límite
+     */
+    static async verificarLimiteFotosGaleriaOLanzar(organizacionId, eventoId, cantidadAAgregar = 1, db = null) {
+        const resultado = await this.verificarLimiteFotosGaleria(organizacionId, eventoId, cantidadAAgregar, db);
+
+        if (!resultado.puedeCrear) {
+            logger.warn('[LimitesHelper] Límite de fotos en galería excedido', {
+                organizacionId,
+                eventoId,
+                cantidadAAgregar,
+                limite: resultado.limite,
+                usoActual: resultado.usoActual,
+                nombrePlan: resultado.nombrePlan
+            });
+
+            throw new PlanLimitExceededError(
+                'fotos en galería',
+                resultado.limite,
+                resultado.usoActual,
+                resultado.nombrePlan
+            );
+        }
+
+        return resultado;
+    }
+
+    /**
      * Obtiene resumen de uso de todos los recursos
      *
      * @param {number} organizacionId - ID de la organización
@@ -251,7 +461,7 @@ class LimitesHelper {
     static async obtenerResumenUso(organizacionId) {
         const limites = await this.obtenerLimitesPlan(organizacionId);
 
-        const recursos = ['sucursales', 'profesionales', 'servicios', 'citas', 'usuarios'];
+        const recursos = ['sucursales', 'profesionales', 'servicios', 'citas', 'usuarios', 'eventos_activos'];
         const resumen = {};
 
         for (const recurso of recursos) {

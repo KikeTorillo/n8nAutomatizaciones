@@ -10,7 +10,7 @@
  * @since 2026-02-03
  */
 
-import { useCallback, useMemo } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import { MessageSquare, Star } from 'lucide-react';
 import { Input, Select, Textarea } from '@/components/ui';
 import { useBlockEditor, useArrayItems } from '../../hooks';
@@ -229,4 +229,4 @@ function TestimoniosEditor({ contenido, onGuardar, tema, isSaving, industria = '
   );
 }
 
-export default TestimoniosEditor;
+export default memo(TestimoniosEditor);

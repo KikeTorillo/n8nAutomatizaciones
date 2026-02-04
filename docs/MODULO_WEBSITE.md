@@ -6,8 +6,6 @@ Constructor de sitios web integrado con ERP. Ventaja competitiva: CRM, citas, se
 
 ## Estado Actual
 
-### Funcionalidades ✅
-
 | Funcionalidad | Detalle |
 |---------------|---------|
 | Editor Visual | 16 bloques, drag & drop (@dnd-kit), inline editing |
@@ -26,63 +24,57 @@ Constructor de sitios web integrado con ERP. Ventaja competitiva: CRM, citas, se
 
 ```
 frontend/src/pages/website/
-├── WebsiteEditorPage.jsx        # Componente principal
+├── WebsiteEditorPage.jsx
 ├── context/
-│   ├── EditorContext.jsx        # Wrapper + useEditor() (backward compatible)
+│   ├── EditorContext.jsx        # Wrapper + useEditor()
 │   ├── SiteContext.jsx          # Config, páginas, mutations
 │   ├── LayoutContext.jsx        # Responsive, drawers, panels
 │   ├── BlocksContext.jsx        # Bloques, CRUD, DnD handlers
-│   ├── UIContext.jsx            # Modo editor, slash menu, autosave
-│   └── index.js
+│   └── UIContext.jsx            # Modo editor, slash menu, autosave
 ├── containers/
 │   ├── EditorHeader.jsx
 │   ├── SidebarContainer.jsx
 │   ├── CanvasContainer.jsx
 │   ├── PropertiesContainer.jsx
 │   ├── DrawersContainer.jsx
-│   ├── EditorModals.jsx
-│   └── index.js
+│   └── EditorModals.jsx
 ├── hooks/
-│   ├── useERPData.js            # Query centralizada servicios/profesionales
+│   ├── useERPData.js            # Query servicios/profesionales
 │   ├── useSlashMenu.js
 │   ├── useAutosave.js
 │   ├── useEditorLayout.js
 │   ├── useEditorShortcuts.js
 │   ├── useBlockEditor.js
-│   ├── useArrayItems.js
-│   └── index.js
+│   └── useArrayItems.js
 ├── components/
 │   ├── blocks/
-│   │   ├── BaseBlockEditor.jsx  # Estructura común editores
+│   │   ├── BaseBlockEditor.jsx  # Estructura común (React.memo)
 │   │   ├── fields/              # Campos reutilizables
-│   │   │   ├── SectionTitleField.jsx   # Título + AI button
-│   │   │   ├── ArrayItemsEditor.jsx    # Lista editable genérica
-│   │   │   ├── ColorPickerField.jsx    # Selector de color
-│   │   │   ├── IconPickerField.jsx     # Wrapper IconPicker
-│   │   │   └── index.js
-│   │   └── [16 editores]        # Todos usan BaseBlockEditor
-│   ├── canvas-blocks/           # Renderizado visual
+│   │   │   ├── SectionTitleField.jsx
+│   │   │   ├── ArrayItemsEditor.jsx
+│   │   │   ├── ColorPickerField.jsx
+│   │   │   └── IconPickerField.jsx
+│   │   └── [16 editores]        # Todos con React.memo
+│   ├── canvas-blocks/
 │   ├── AIWriter/
-│   ├── UnsplashPicker/
-│   └── ...
-└── store: websiteEditorStore.js + temporal middleware
+│   └── UnsplashPicker/
+└── store/
+    └── websiteEditorStore.js    # Zustand + temporal + cleanup
 ```
 
-### Contextos (Divididos para Performance)
+### Contextos
 
 ```javascript
-// EditorProvider compone 4 contextos especializados
-<SiteProvider>      // config, paginas, paginaActiva, mutations
+<SiteProvider>      // config, paginas, mutations
   <LayoutProvider>  // isMobile, showSidebar, drawers
-    <BlocksProvider>// bloques, handlers CRUD/DnD
+    <BlocksProvider>// bloques, CRUD, DnD
       <UIProvider>  // modoEditor, slashMenu, autosave
       </UIProvider>
     </BlocksProvider>
   </LayoutProvider>
 </SiteProvider>
 
-// useEditor() retorna todo combinado (backward compatible)
-// Hooks específicos: useSite(), useLayout(), useBlocks(), useUI()
+// useEditor() combina todo | Hooks específicos: useSite(), useBlocks(), etc.
 ```
 
 ---
@@ -92,8 +84,7 @@ frontend/src/pages/website/
 ```
 backend/app/modules/website/
 ├── constants/
-│   ├── block-types.js           # BLOCK_TYPES, isValidBlockType()
-│   └── index.js
+│   └── block-types.js           # BLOCK_TYPES, isValidBlockType()
 ├── controllers/
 │   ├── ai.controller.js
 │   ├── config.controller.js
@@ -102,34 +93,31 @@ backend/app/modules/website/
 │   └── public.controller.js
 ├── services/
 │   ├── ai.service.js
-│   ├── bloque.service.js
+│   ├── bloque.service.js        # ErrorHelper para errores
 │   ├── erp-data.service.js
 │   ├── site-generator.service.js
-│   ├── websiteCache.service.js
-│   └── index.js
+│   └── websiteCache.service.js
 ├── models/
 │   ├── config.model.js
 │   ├── paginas.model.js
-│   └── bloques.model.js         # Importa BLOCK_TYPES desde constants
+│   └── bloques.model.js
 ├── schemas/
-│   └── website.schemas.js       # Importa BLOCK_TYPES desde constants
-├── data/
-│   └── block-defaults.json
-└── routes/
-    └── website.routes.js
+│   └── website.schemas.js       # Validación teléfono con regex
+└── data/
+    └── block-defaults.json
 ```
 
 ---
 
-## Endpoints Públicos (Sin Auth)
+## Endpoints Públicos
 
 ```
 GET  /api/v1/public/sitio/:slug              # Sitio completo
 GET  /api/v1/public/sitio/:slug/:pagina      # Página específica
 POST /api/v1/public/sitio/:slug/contacto     # Formulario contacto
-GET  /api/v1/public/sitio/:slug/servicios    # Servicios dinámicos
-GET  /api/v1/public/sitio/:slug/profesionales # Equipo dinámico
-GET  /api/v1/public/preview/:token           # Preview no publicado
+GET  /api/v1/public/sitio/:slug/servicios    # Servicios ERP
+GET  /api/v1/public/sitio/:slug/profesionales # Equipo ERP
+GET  /api/v1/public/preview/:token           # Preview temporal
 ```
 
 ---
@@ -153,7 +141,7 @@ GET  /api/v1/public/preview/:token           # Preview no publicado
 | FAQ | Accordion |
 | Countdown | Fecha objetivo |
 | Stats | Números animados |
-| Timeline | 3 layouts, editor de hitos con drag & drop |
+| Timeline | 3 layouts, hitos con drag & drop |
 
 ---
 
@@ -168,4 +156,4 @@ GET  /api/v1/public/preview/:token           # Preview no publicado
 
 ---
 
-*Actualizado: 3 Febrero 2026 - Migración BaseBlockEditor completada (16/16 editores)*
+*Actualizado: 3 Febrero 2026*

@@ -10,7 +10,7 @@
  * @since 2026-02-03
  */
 
-import { useCallback, useMemo } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import { HelpCircle } from 'lucide-react';
 import { Input, Textarea, ToggleSwitch } from '@/components/ui';
 import { AIGenerateButton } from '../AIGenerator';
@@ -192,4 +192,4 @@ function FaqEditor({ contenido, onGuardar, tema, isSaving, industria = 'default'
   );
 }
 
-export default FaqEditor;
+export default memo(FaqEditor);

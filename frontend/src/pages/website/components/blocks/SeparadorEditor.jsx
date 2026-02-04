@@ -10,7 +10,7 @@
  * @since 2026-02-03
  */
 
-import { useMemo } from 'react';
+import { memo, useMemo } from 'react';
 import { Select } from '@/components/ui';
 import { useBlockEditor } from '../../hooks';
 import BaseBlockEditor from './BaseBlockEditor';
@@ -220,4 +220,4 @@ function SeparadorEditor({ contenido, onGuardar, tema, isSaving }) {
   );
 }
 
-export default SeparadorEditor;
+export default memo(SeparadorEditor);

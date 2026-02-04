@@ -10,7 +10,7 @@
  * @since 2026-02-03
  */
 
-import { useCallback, useMemo } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import { Clock, Calendar } from 'lucide-react';
 import { Input, Select, ToggleSwitch } from '@/components/ui';
 import { AIGenerateButton } from '../AIGenerator';
@@ -278,4 +278,4 @@ function CountdownEditor({ contenido, onGuardar, tema, isSaving, industria = 'de
   );
 }
 
-export default CountdownEditor;
+export default memo(CountdownEditor);

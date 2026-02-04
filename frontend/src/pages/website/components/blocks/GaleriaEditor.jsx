@@ -10,7 +10,7 @@
  * @since 2026-02-03
  */
 
-import { useCallback, useMemo } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import { Image } from 'lucide-react';
 import { Checkbox, Input, Select } from '@/components/ui';
 import { useBlockEditor, useArrayItems } from '../../hooks';
@@ -216,4 +216,4 @@ function GaleriaEditor({ contenido, onGuardar, tema, isSaving }) {
   );
 }
 
-export default GaleriaEditor;
+export default memo(GaleriaEditor);

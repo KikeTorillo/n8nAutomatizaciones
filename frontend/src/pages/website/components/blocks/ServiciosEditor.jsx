@@ -14,7 +14,7 @@
  * @since 2026-02-03
  */
 
-import { useCallback, useMemo } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Briefcase, Database, Edit3 } from 'lucide-react';
 import { Input, Select, Textarea, ToggleSwitch } from '@/components/ui';
@@ -303,4 +303,4 @@ function ServiciosEditor({ contenido, onGuardar, tema, isSaving, industria = 'de
   );
 }
 
-export default ServiciosEditor;
+export default memo(ServiciosEditor);

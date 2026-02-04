@@ -22,7 +22,8 @@
 
 const EventoModel = require('../models/evento.model');
 const logger = require('../../../utils/logger');
-const { ResponseHelper } = require('../../../utils/helpers');
+const { ResponseHelper, LimitesHelper } = require('../../../utils/helpers');
+const { PlanLimitExceededError } = require('../../../utils/errors');
 
 class EventosController {
 
@@ -33,6 +34,10 @@ class EventosController {
     static async crear(req, res) {
         try {
             const organizacionId = req.tenant?.organizacionId || req.user.organizacion_id;
+
+            // Verificar límite de eventos activos
+            await LimitesHelper.verificarLimiteOLanzar(organizacionId, 'eventos_activos', 1);
+
             const datos = {
                 ...req.body,
                 organizacion_id: organizacionId
@@ -53,6 +58,11 @@ class EventosController {
                 error: error.message,
                 stack: error.stack
             });
+
+            if (error instanceof PlanLimitExceededError) {
+                return ResponseHelper.error(res, error.message, error.statusCode, error.toJSON());
+            }
+
             return ResponseHelper.error(res, error.message, 500);
         }
     }
@@ -108,6 +118,16 @@ class EventosController {
             const { id } = req.params;
             const organizacionId = req.tenant?.organizacionId || req.user.organizacion_id;
 
+            // Verificar límite de fotos si se actualiza galeria_urls
+            if (req.body.galeria_urls && Array.isArray(req.body.galeria_urls)) {
+                const cantidadFotos = req.body.galeria_urls.length;
+                await LimitesHelper.verificarLimiteFotosGaleriaOLanzar(
+                    organizacionId,
+                    parseInt(id),
+                    cantidadFotos
+                );
+            }
+
             const evento = await EventoModel.actualizar(parseInt(id), req.body, organizacionId);
 
             if (!evento) {
@@ -123,6 +143,11 @@ class EventosController {
 
         } catch (error) {
             logger.error('[EventosController.actualizar] Error', { error: error.message });
+
+            if (error instanceof PlanLimitExceededError) {
+                return ResponseHelper.error(res, error.message, error.statusCode, error.toJSON());
+            }
+
             return ResponseHelper.error(res, error.message, 500);
         }
     }
