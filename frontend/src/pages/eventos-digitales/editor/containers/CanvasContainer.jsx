@@ -3,10 +3,11 @@
  * CANVAS CONTAINER - INVITACIONES
  * ====================================================================
  * Canvas central donde se renderizan los bloques de la invitación.
+ * Soporta dos modos: 'canvas' (visual) y 'bloques' (acordeón).
  *
- * @version 1.3.0
+ * @version 1.4.0
  * @since 2026-02-03
- * @updated 2026-02-04 - Tema centralizado desde context
+ * @updated 2026-02-04 - Agregado modo bloques con BlockListEditor
  */
 
 import { memo, useCallback, useMemo } from 'react';
@@ -16,11 +17,39 @@ import { Layout, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { CanvasBlock } from '../components/canvas-blocks';
 import { useInvitacionEditor } from '../context';
-import { useDndEditor, useBlockSelection, useInlineEditing, BREAKPOINTS, useEditorLayoutContext } from '@/components/editor-framework';
-import { useInvitacionEditorStore } from '@/store'; // Solo para useInlineEditing
+import {
+  useDndEditor,
+  useBlockSelection,
+  useInlineEditing,
+  BREAKPOINTS,
+  useEditorLayoutContext,
+  BlockListEditor,
+} from '@/components/editor-framework';
+import { useInvitacionEditorStore } from '@/store';
+import { EDITORES_BLOQUE } from '../components/blocks';
+import { BLOCK_ICONS, BLOCK_NAMES } from '../config/invitacionBlocks';
+
+// ========== CONFIGURACIÓN PARA BLOCKLIST ==========
+
+/**
+ * Config de bloques para BlockListEditor (icon, label, color por tipo)
+ */
+const BLOQUES_CONFIG_INVITACIONES = Object.fromEntries(
+  Object.entries(BLOCK_ICONS).map(([tipo, icon]) => [
+    tipo,
+    {
+      icon,
+      label: BLOCK_NAMES[tipo] || tipo,
+      color: 'primary', // Usamos color primario para todos
+    },
+  ])
+);
+
+// ========== CANVAS CONTAINER ==========
 
 /**
  * CanvasContainer - Canvas central del editor
+ * Renderiza vista visual o lista de bloques según modoEditor
  */
 function CanvasContainer() {
   const {
@@ -28,13 +57,16 @@ function CanvasContainer() {
     bloques,
     bloqueSeleccionado,
     modoPreview,
+    modoEditor,
     breakpoint,
     zoom,
     tema,
+    isLoading,
     handleActualizarBloque,
     handleEliminarBloque,
     handleDuplicarBloque,
     handleToggleVisibilidad,
+    handleReordenarBloques,
     seleccionarBloque,
     deseleccionarBloque,
   } = useInvitacionEditor();
@@ -106,6 +138,31 @@ function CanvasContainer() {
   // Calcular escala del zoom (zoom viene como porcentaje: 50, 75, 100, etc.)
   const zoomScale = zoom / 100;
 
+  // ========== MODO BLOQUES (Lista acordeón) ==========
+  if (modoEditor === 'bloques') {
+    return (
+      <main className="flex-1 overflow-y-auto bg-gray-100 dark:bg-gray-900">
+        <BlockListEditor
+          bloques={bloques}
+          bloqueSeleccionado={bloqueSeleccionado}
+          bloquesConfig={BLOQUES_CONFIG_INVITACIONES}
+          editoresBloque={EDITORES_BLOQUE}
+          onSeleccionar={(bloque) => seleccionarBloque(bloque.id)}
+          onActualizar={handleActualizarBloque}
+          onEliminar={handleEliminarBloque}
+          onDuplicar={handleDuplicarBloque}
+          onReordenar={handleReordenarBloques}
+          isLoading={isLoading}
+          tema={tema}
+          emptyTitle="Invitación vacía"
+          emptyMessage="Agrega bloques desde la paleta lateral para empezar a diseñar tu invitación"
+          editorExtraProps={{ evento }}
+        />
+      </main>
+    );
+  }
+
+  // ========== MODO CANVAS (Visual) ==========
   return (
     <main
       ref={setNodeRef}
@@ -116,10 +173,10 @@ function CanvasContainer() {
         isDraggingFromPalette && 'ring-2 ring-inset ring-primary-500/50 ring-dashed'
       )}
       style={{
-        '--color-primario': tema.color_primario,
-        '--color-secundario': tema.color_secundario,
-        '--fuente-titulos': tema.fuente_titulos,
-        '--fuente-cuerpo': tema.fuente_cuerpo,
+        '--color-primario': tema?.color_primario || '#753572',
+        '--color-secundario': tema?.color_secundario || '#F59E0B',
+        '--fuente-titulos': tema?.fuente_titulos || 'Playfair Display',
+        '--fuente-cuerpo': tema?.fuente_cuerpo || 'Inter',
       }}
     >
       {/* Contenedor del canvas - ancho según breakpoint + zoom */}
@@ -148,6 +205,7 @@ function CanvasContainer() {
                       key={bloque.id}
                       bloque={bloque}
                       tema={tema}
+                      evento={evento}
                       isSelected={bloqueSeleccionado === bloque.id}
                       isEditing={bloqueEditandoInline === bloque.id}
                       isDragOver={overInfo?.id === bloque.id && isDraggingFromPalette}

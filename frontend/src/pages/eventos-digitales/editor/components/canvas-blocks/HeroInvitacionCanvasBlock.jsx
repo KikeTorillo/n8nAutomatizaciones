@@ -38,11 +38,12 @@ function HeroInvitacionCanvasBlock({ bloque, tema, isEditing, onContentChange })
   const imagen_overlay = estilos.imagen_overlay ?? contenido.imagen_overlay ?? 0.3;
   const altura = estilos.altura || contenido.altura || 'full';
 
-  // Clases de altura
+  // Clases de altura - En el canvas usamos alturas más compactas para facilitar edición
+  // La vista pública (HeroPublico) usa las alturas reales (min-h-screen, etc.)
   const alturaClasses = {
-    auto: 'min-h-[300px]',
-    medium: 'min-h-[50vh]',
-    full: 'min-h-[100vh]',
+    auto: 'min-h-[250px]',
+    medium: 'min-h-[350px]',
+    full: 'min-h-[450px]',
   };
 
   // Clases de alineación

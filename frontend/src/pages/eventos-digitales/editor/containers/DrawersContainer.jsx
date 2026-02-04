@@ -26,6 +26,7 @@ import InvitacionThemeEditor from '../components/InvitacionThemeEditor';
 function DrawersContainer() {
   const {
     evento,
+    tema,
     bloqueSeleccionadoCompleto,
     handleAgregarBloque,
     handleActualizarBloque,
@@ -37,16 +38,7 @@ function DrawersContainer() {
 
   const { closeDrawer } = useEditorLayoutContext();
 
-  // Tema del evento (debe estar antes de cualquier return)
-  const tema = useMemo(
-    () => ({
-      color_primario: evento?.plantilla?.color_primario || '#753572',
-      color_secundario: evento?.plantilla?.color_secundario || '#F59E0B',
-    }),
-    [evento]
-  );
-
-  // Props para editores
+  // Props para editores (tema viene del contexto con fuente_titulos y fuente_cuerpo)
   const editorProps = useMemo(
     () => ({
       tema,
@@ -54,7 +46,7 @@ function DrawersContainer() {
       galeria: evento?.galeria || [],
       mesaRegalos: evento?.mesa_regalos || null,
     }),
-    [tema, evento]
+    [tema, evento?.ubicaciones, evento?.galeria, evento?.mesa_regalos]
   );
 
   // Editor específico

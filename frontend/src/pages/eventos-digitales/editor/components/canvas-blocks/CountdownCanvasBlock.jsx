@@ -20,21 +20,24 @@ import { InlineText } from '@/components/editor-framework';
  * @param {Object} props
  * @param {Object} props.bloque - Datos del bloque
  * @param {Object} props.tema - Tema de la invitación
+ * @param {Object} props.evento - Objeto evento (para fallback de fecha)
  * @param {boolean} props.isEditing - Si está en modo inline editing
  * @param {Function} props.onContentChange - Callback al cambiar contenido
  */
-function CountdownCanvasBlock({ bloque, tema, isEditing, onContentChange }) {
+function CountdownCanvasBlock({ bloque, tema, evento, isEditing, onContentChange }) {
   const contenido = bloque.contenido || {};
   const estilos = bloque.estilos || {};
 
   // Usar || para fallbacks (strings vacíos necesitan ||, no default de desestructuración)
   const titulo = contenido.titulo || 'Faltan';
-  const fecha_objetivo = contenido.fecha_objetivo;
+  // Fallback a fecha/hora del evento si no hay fecha específica en el bloque
+  const fecha_objetivo = contenido.fecha_objetivo || evento?.fecha_evento;
+  const hora_objetivo = contenido.hora_objetivo || evento?.hora_evento;
   const texto_finalizado = contenido.texto_finalizado || '¡Llegó el gran día!';
 
   // Fallback: estilos pueden venir en contenido o en estilos
   const estilo = estilos.estilo || contenido.estilo || 'cajas';
-  const mostrar_segundos = estilos.mostrar_segundos ?? contenido.mostrar_segundos ?? false;
+  const mostrar_segundos = estilos.mostrar_segundos ?? contenido.mostrar_segundos ?? true;
 
   const colorPrimario = tema?.color_primario || '#753572';
 
@@ -50,6 +53,11 @@ function CountdownCanvasBlock({ bloque, tema, isEditing, onContentChange }) {
 
     const calcular = () => {
       const fecha = new Date(fecha_objetivo);
+      // Incluir hora del evento si está disponible
+      if (hora_objetivo) {
+        const [hours, minutes] = hora_objetivo.split(':');
+        fecha.setHours(parseInt(hours), parseInt(minutes));
+      }
       const ahora = new Date();
       const diff = fecha - ahora;
 
@@ -69,7 +77,7 @@ function CountdownCanvasBlock({ bloque, tema, isEditing, onContentChange }) {
     calcular();
     const interval = setInterval(calcular, 1000);
     return () => clearInterval(interval);
-  }, [fecha_objetivo]);
+  }, [fecha_objetivo, hora_objetivo]);
 
   // Unidades a mostrar
   const unidades = useMemo(() => {

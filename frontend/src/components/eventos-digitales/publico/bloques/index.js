@@ -24,6 +24,7 @@ const VideoPublico = lazy(() => import('./VideoPublico'));
 const TextoPublico = lazy(() => import('./TextoPublico'));
 const FaqPublico = lazy(() => import('./FaqPublico'));
 const SeparadorPublico = lazy(() => import('./SeparadorPublico'));
+const AgregarCalendarioPublico = lazy(() => import('./AgregarCalendarioPublico'));
 
 // Renderer principal
 export { default as BloqueRenderer } from './BloqueRenderer';
@@ -44,6 +45,7 @@ export const BLOQUES_PUBLICOS = {
   texto: TextoPublico,
   faq: FaqPublico,
   separador: SeparadorPublico,
+  agregar_calendario: AgregarCalendarioPublico,
 };
 
 /**
@@ -66,4 +68,5 @@ export {
   TextoPublico,
   FaqPublico,
   SeparadorPublico,
+  AgregarCalendarioPublico,
 };

@@ -104,7 +104,13 @@ const eventosSchemas = {
             })).max(10).optional(),
             portada_url: Joi.string().uri().max(500).optional().allow(null, ''),
             galeria_urls: Joi.array().items(Joi.string().uri()).max(50).optional(),
-            configuracion: Joi.object().optional()
+            configuracion: Joi.object().optional(),
+            plantilla: Joi.object({
+                color_primario: Joi.string().pattern(/^#[0-9A-Fa-f]{6}$/).optional(),
+                color_secundario: Joi.string().pattern(/^#[0-9A-Fa-f]{6}$/).optional(),
+                fuente_titulos: Joi.string().max(100).optional(),
+                fuente_cuerpo: Joi.string().max(100).optional()
+            }).optional()
         }).min(1).messages({
             'object.min': 'Debe proporcionar al menos un campo para actualizar'
         })

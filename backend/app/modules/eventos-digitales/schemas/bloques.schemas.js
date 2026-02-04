@@ -24,7 +24,8 @@ const bloqueSchema = Joi.object({
         'video',
         'texto',
         'faq',
-        'separador'
+        'separador',
+        'agregar_calendario'
     ),
     orden: Joi.number().integer().min(0),
     visible: Joi.boolean().default(true),
@@ -52,7 +53,8 @@ const agregarBloqueSchema = Joi.object({
         'video',
         'texto',
         'faq',
-        'separador'
+        'separador',
+        'agregar_calendario'
     ),
     orden: Joi.number().integer().min(0),
     contenido: Joi.object().default({}),

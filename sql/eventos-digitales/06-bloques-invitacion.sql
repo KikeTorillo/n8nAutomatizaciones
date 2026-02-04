@@ -114,8 +114,9 @@ BEGIN
         COALESCE(e.bloques_invitacion, '[]'::jsonb) as bloques_invitacion,
         e.estado,
         e.publicado_en,
-        -- Obtener tema de la plantilla o defaults
+        -- Obtener tema del evento (e.plantilla) o de la plantilla base (p.tema) o defaults
         COALESCE(
+            NULLIF(e.plantilla, '{}'::jsonb),
             p.tema,
             '{
                 "color_primario": "#ec4899",
@@ -165,7 +166,7 @@ BEGIN
                     'id', r.id,
                     'nombre', r.nombre,
                     'descripcion', r.descripcion,
-                    'url', r.url,
+                    'url', r.url_externa,
                     'imagen_url', r.imagen_url,
                     'orden', r.orden
                 ) ORDER BY r.orden
@@ -176,8 +177,8 @@ BEGIN
         ) as regalos,
         -- Contadores
         (SELECT COUNT(*)::INTEGER FROM invitados_evento i WHERE i.evento_id = e.id AND i.estado_rsvp = 'confirmado' AND i.activo = true) as total_confirmados,
-        (SELECT COALESCE(SUM(i.cantidad_asistentes), 0)::INTEGER FROM invitados_evento i WHERE i.evento_id = e.id AND i.estado_rsvp = 'confirmado' AND i.activo = true) as total_asistentes,
-        (SELECT COUNT(*)::INTEGER FROM felicitaciones_evento f WHERE f.evento_id = e.id AND f.estado = 'aprobada') as total_felicitaciones
+        (SELECT COALESCE(SUM(i.num_asistentes), 0)::INTEGER FROM invitados_evento i WHERE i.evento_id = e.id AND i.estado_rsvp = 'confirmado' AND i.activo = true) as total_asistentes,
+        (SELECT COUNT(*)::INTEGER FROM felicitaciones_evento f WHERE f.evento_id = e.id AND f.aprobado = true) as total_felicitaciones
     FROM
         eventos_digitales e
     LEFT JOIN

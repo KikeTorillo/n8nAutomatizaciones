@@ -158,6 +158,7 @@ function InvitacionDinamica({
               evento={evento}
               invitado={invitado}
               tema={tema}
+              ubicaciones={evento?.ubicaciones}
               isVisible={visibleSections.has(bloque.id)}
               onScrollToContent={index === 0 ? scrollToContent : undefined}
               onConfirmRSVP={onConfirmRSVP}
@@ -286,6 +287,7 @@ function getDefaultLabel(tipo) {
     texto: 'Info',
     faq: 'FAQ',
     separador: '',
+    agregar_calendario: 'Calendario',
   };
   return labels[tipo] || 'Sección';
 }

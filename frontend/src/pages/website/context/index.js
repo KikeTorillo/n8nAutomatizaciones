@@ -4,11 +4,8 @@
  * ====================================================================
  */
 
-// Main combined context (backward compatible)
-export { EditorProvider, useEditor } from './EditorContext';
+// Nuevo contexto centralizado (recomendado)
+export { WebsiteEditorProvider, useWebsiteEditorContext } from './WebsiteEditorContext';
 
-// Individual contexts (for optimized usage)
-export { SiteProvider, useSite } from './SiteContext';
-export { LayoutProvider, useLayout } from './LayoutContext';
-export { BlocksProvider, useBlocks } from './BlocksContext';
-export { UIProvider, useUI } from './UIContext';
+// Aliases para backward compatibility
+export { EditorProvider, useEditor, useSite, useLayout, useBlocks, useUI } from './EditorContext';

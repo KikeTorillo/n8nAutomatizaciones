@@ -111,13 +111,14 @@ class EventoModel {
             const camposPermitidos = [
                 'plantilla_id', 'nombre', 'descripcion', 'fecha_evento',
                 'hora_evento', 'fecha_fin_evento', 'fecha_limite_rsvp',
-                'protagonistas', 'portada_url', 'galeria_urls', 'configuracion'
+                'protagonistas', 'portada_url', 'galeria_urls', 'configuracion',
+                'plantilla'
             ];
 
             for (const campo of camposPermitidos) {
                 if (datos[campo] !== undefined) {
                     // Campos JSONB
-                    if (['protagonistas', 'galeria_urls', 'configuracion'].includes(campo)) {
+                    if (['protagonistas', 'galeria_urls', 'configuracion', 'plantilla'].includes(campo)) {
                         campos.push(`${campo} = $${paramIndex}::jsonb`);
                         valores.push(JSON.stringify(datos[campo]));
                     } else {
@@ -288,7 +289,9 @@ class EventoModel {
     }
 
     /**
-     * Publicar evento (cambiar estado a publicado)
+     * Toggle publicar/despublicar evento
+     * Si está en borrador → publicar
+     * Si está publicado → despublicar (volver a borrador)
      *
      * @param {number} id - ID del evento
      * @param {number} organizacionId - ID de la organización
@@ -296,26 +299,49 @@ class EventoModel {
      */
     static async publicar(id, organizacionId) {
         return await RLSContextManager.query(organizacionId, async (db) => {
-            const query = `
-                UPDATE eventos_digitales
-                SET estado = 'publicado',
-                    publicado_en = NOW(),
-                    actualizado_en = NOW()
-                WHERE id = $1 AND estado = 'borrador'
-                RETURNING *
-            `;
+            // Primero obtener el estado actual
+            const checkQuery = `SELECT estado FROM eventos_digitales WHERE id = $1`;
+            const checkResult = await db.query(checkQuery, [id]);
 
-            logger.info('[EventoModel.publicar] Publicando evento', {
-                evento_id: id,
-                organizacion_id: organizacionId
-            });
-
-            const result = await db.query(query, [id]);
-
-            if (result.rows.length === 0) {
-                ErrorHelper.throwConflict('Evento no encontrado o no está en estado borrador');
+            if (checkResult.rows.length === 0) {
+                ErrorHelper.throwNotFound('Evento no encontrado');
             }
 
+            const estadoActual = checkResult.rows[0].estado;
+            let query;
+
+            if (estadoActual === 'borrador') {
+                // Publicar
+                query = `
+                    UPDATE eventos_digitales
+                    SET estado = 'publicado',
+                        publicado_en = NOW(),
+                        actualizado_en = NOW()
+                    WHERE id = $1
+                    RETURNING *
+                `;
+                logger.info('[EventoModel.publicar] Publicando evento', {
+                    evento_id: id,
+                    organizacion_id: organizacionId
+                });
+            } else if (estadoActual === 'publicado') {
+                // Despublicar
+                query = `
+                    UPDATE eventos_digitales
+                    SET estado = 'borrador',
+                        actualizado_en = NOW()
+                    WHERE id = $1
+                    RETURNING *
+                `;
+                logger.info('[EventoModel.publicar] Despublicando evento', {
+                    evento_id: id,
+                    organizacion_id: organizacionId
+                });
+            } else {
+                ErrorHelper.throwConflict(`No se puede cambiar estado desde '${estadoActual}'`);
+            }
+
+            const result = await db.query(query, [id]);
             return result.rows[0];
         });
     }

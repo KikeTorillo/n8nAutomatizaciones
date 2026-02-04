@@ -1,14 +1,10 @@
 /**
  * ====================================================================
- * USE EDITOR SHORTCUTS HOOK
+ * USE EDITOR SHORTCUTS HOOK (GENERICO)
  * ====================================================================
- * Maneja los atajos de teclado del editor de website.
- */
-
-import { useEffect, useCallback } from 'react';
-import { useWebsiteEditorStore, useTemporalStore } from '@/store';
-
-/**
+ * Hook genérico para manejar atajos de teclado en editores.
+ * No depende de ningún store específico - recibe todo como parámetros.
+ *
  * Atajos disponibles:
  * - Ctrl+Z: Undo
  * - Ctrl+Y / Ctrl+Shift+Z: Redo
@@ -17,36 +13,43 @@ import { useWebsiteEditorStore, useTemporalStore } from '@/store';
  * - Delete / Backspace: Eliminar bloque seleccionado
  * - Esc: Deseleccionar / Salir de inline editing
  * - Ctrl+A: Seleccionar todo (prevenido en canvas)
+ *
+ * @version 1.0.0
+ * @since 2026-02-04
  */
 
+import { useEffect, useCallback } from 'react';
+
 /**
- * Hook para atajos de teclado del editor
- * @param {Object} options - Opciones
- * @param {Function} options.onSave - Callback para guardar
- * @param {Function} options.onDuplicate - Callback para duplicar
- * @param {Function} options.onDelete - Callback para eliminar
+ * useEditorShortcuts - Hook genérico para atajos de teclado
+ *
+ * @param {Object} options - Opciones del hook
  * @param {boolean} options.enabled - Si los shortcuts están habilitados
+ * @param {Function} options.onSave - Callback para guardar (Ctrl+S)
+ * @param {Function} options.onDuplicate - Callback para duplicar (Ctrl+D) - recibe blockId
+ * @param {Function} options.onDelete - Callback para eliminar (Delete/Backspace) - recibe blockId
+ * @param {Function} options.onUndo - Callback para deshacer (Ctrl+Z)
+ * @param {Function} options.onRedo - Callback para rehacer (Ctrl+Y / Ctrl+Shift+Z)
+ * @param {Function} options.onEscape - Callback para Escape
+ * @param {string|null} options.selectedBlockId - ID del bloque seleccionado
+ * @param {string|null} options.inlineEditingBlockId - ID del bloque en edición inline
+ * @param {Function} options.deseleccionarBloque - Función para deseleccionar bloque
+ * @param {Function} options.desactivarInlineEditing - Función para desactivar inline editing
+ * @returns {Object} - { shortcuts } Información sobre shortcuts para UI
  */
 export function useEditorShortcuts({
+  enabled = true,
   onSave,
   onDuplicate,
   onDelete,
-  enabled = true,
+  onUndo,
+  onRedo,
+  onEscape,
+  selectedBlockId,
+  inlineEditingBlockId,
+  deseleccionarBloque,
+  desactivarInlineEditing,
 }) {
-  // Acceso al store
-  const bloqueSeleccionado = useWebsiteEditorStore(
-    (state) => state.bloqueSeleccionado
-  );
-  const bloqueEditandoInline = useWebsiteEditorStore(
-    (state) => state.bloqueEditandoInline
-  );
-  const deseleccionarBloque = useWebsiteEditorStore(
-    (state) => state.deseleccionarBloque
-  );
-  const desactivarInlineEditing = useWebsiteEditorStore(
-    (state) => state.desactivarInlineEditing
-  );
-
   /**
    * Verifica si el evento viene de un elemento editable
    */
@@ -86,12 +89,9 @@ export function useEditorShortcuts({
       // ===== UNDO (Ctrl+Z) =====
       if (isModifier && key === 'z' && !shiftKey) {
         // Solo si no estamos en un input/textarea
-        if (!isEditable) {
+        if (!isEditable && onUndo) {
           event.preventDefault();
-          const temporal = useTemporalStore();
-          if (temporal.pastStates?.length > 0) {
-            temporal.undo();
-          }
+          onUndo();
         }
         return;
       }
@@ -101,12 +101,9 @@ export function useEditorShortcuts({
         (isModifier && key === 'y') ||
         (isModifier && key === 'z' && shiftKey)
       ) {
-        if (!isEditable) {
+        if (!isEditable && onRedo) {
           event.preventDefault();
-          const temporal = useTemporalStore();
-          if (temporal.futureStates?.length > 0) {
-            temporal.redo();
-          }
+          onRedo();
         }
         return;
       }
@@ -120,9 +117,9 @@ export function useEditorShortcuts({
 
       // ===== DUPLICAR (Ctrl+D) =====
       if (isModifier && key === 'd') {
-        if (!isEditable && bloqueSeleccionado) {
+        if (!isEditable && selectedBlockId && onDuplicate) {
           event.preventDefault();
-          onDuplicate?.(bloqueSeleccionado);
+          onDuplicate(selectedBlockId);
         }
         return;
       }
@@ -130,24 +127,31 @@ export function useEditorShortcuts({
       // ===== ELIMINAR (Delete/Backspace) =====
       if (key === 'Delete' || key === 'Backspace') {
         // Solo si no estamos editando texto y hay bloque seleccionado
-        if (!isEditable && bloqueSeleccionado && !bloqueEditandoInline) {
+        if (!isEditable && selectedBlockId && !inlineEditingBlockId && onDelete) {
           event.preventDefault();
-          onDelete?.(bloqueSeleccionado);
+          onDelete(selectedBlockId);
         }
         return;
       }
 
       // ===== ESCAPE =====
       if (key === 'Escape') {
+        // Callback personalizado
+        if (onEscape) {
+          event.preventDefault();
+          onEscape();
+          return;
+        }
+
         // Si estamos en inline editing, salir de él
-        if (bloqueEditandoInline) {
+        if (inlineEditingBlockId && desactivarInlineEditing) {
           event.preventDefault();
           desactivarInlineEditing();
           return;
         }
 
         // Si hay bloque seleccionado, deseleccionar
-        if (bloqueSeleccionado) {
+        if (selectedBlockId && deseleccionarBloque) {
           event.preventDefault();
           deseleccionarBloque();
           return;
@@ -163,12 +167,15 @@ export function useEditorShortcuts({
     },
     [
       enabled,
-      bloqueSeleccionado,
-      bloqueEditandoInline,
+      selectedBlockId,
+      inlineEditingBlockId,
       isEditableTarget,
       onSave,
       onDuplicate,
       onDelete,
+      onUndo,
+      onRedo,
+      onEscape,
       deseleccionarBloque,
       desactivarInlineEditing,
     ]

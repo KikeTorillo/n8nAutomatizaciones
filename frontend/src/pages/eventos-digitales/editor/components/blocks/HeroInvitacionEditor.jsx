@@ -14,7 +14,7 @@
  */
 
 import { memo, useMemo } from 'react';
-import { Input, Textarea, Select } from '@/components/ui';
+import { Input, Textarea, Select, ToggleSwitch } from '@/components/ui';
 import {
   ImageField,
   AlignmentField,
@@ -126,21 +126,19 @@ function HeroInvitacionEditor({ contenido, estilos, onChange, tema }) {
         onChange={(val) => handleFieldChange('imagen_url', val)}
       />
 
-      <div className="grid grid-cols-2 gap-4">
-        <AlignmentField
-          label="Alineación del texto"
-          value={form.alineacion || 'center'}
-          onChange={(val) => handleFieldChange('alineacion', val)}
-        />
+      <AlignmentField
+        label="Alineación del texto"
+        value={form.alineacion || 'center'}
+        onChange={(val) => handleFieldChange('alineacion', val)}
+      />
 
-        <Select
-          label="Altura de sección"
-          value={form.altura || 'full'}
-          onChange={(e) => handleFieldChange('altura', e.target.value)}
-          options={alturaOptions}
-          className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
-        />
-      </div>
+      <Select
+        label="Altura de la portada"
+        value={form.altura || 'full'}
+        onChange={(e) => handleFieldChange('altura', e.target.value)}
+        options={alturaOptions}
+        className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
+      />
 
       {form.imagen_url && (
         <RangeField
@@ -151,6 +149,23 @@ function HeroInvitacionEditor({ contenido, estilos, onChange, tema }) {
           max={1}
           step={0.1}
         />
+      )}
+
+      <div className="flex items-center justify-between">
+        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+          Mostrar botones de calendario
+        </span>
+        <ToggleSwitch
+          enabled={form.mostrar_calendario !== false}
+          onChange={(val) => handleFieldChange('mostrar_calendario', val)}
+        />
+      </div>
+
+      {form.mostrar_calendario !== false && (
+        <p className="text-xs text-gray-500 dark:text-gray-400 -mt-2">
+          Los botones de "Google Calendar" y "Descargar .ics" aparecerán en la portada.
+          Desactiva esta opción si prefieres usar el bloque "Agregar al Calendario" por separado.
+        </p>
       )}
     </BaseAutoSaveEditor>
   );

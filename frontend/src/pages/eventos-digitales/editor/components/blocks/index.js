@@ -21,6 +21,7 @@ export { default as VideoEditor } from './VideoEditor';
 export { default as TextoEditor } from './TextoEditor';
 export { default as FaqEditor } from './FaqEditor';
 export { default as SeparadorEditor } from './SeparadorEditor';
+export { default as AgregarCalendarioEditor } from './AgregarCalendarioEditor';
 
 // ========== MAPA DE EDITORES POR TIPO ==========
 
@@ -36,6 +37,7 @@ import VideoEditor from './VideoEditor';
 import TextoEditor from './TextoEditor';
 import FaqEditor from './FaqEditor';
 import SeparadorEditor from './SeparadorEditor';
+import AgregarCalendarioEditor from './AgregarCalendarioEditor';
 
 /**
  * Mapa de componentes editores por tipo de bloque
@@ -53,6 +55,7 @@ export const EDITORES_BLOQUE = {
   texto: TextoEditor,
   faq: FaqEditor,
   separador: SeparadorEditor,
+  agregar_calendario: AgregarCalendarioEditor,
 };
 
 /**

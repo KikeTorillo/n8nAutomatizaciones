@@ -46,6 +46,8 @@ function EditorHeader() {
     estaPublicado,
     modoPreview,
     setModoPreview,
+    modoEditor,
+    setModoEditor,
     breakpoint,
     setBreakpoint,
     zoom,
@@ -99,15 +101,20 @@ function EditorHeader() {
         canUndo={canUndo}
         canRedo={canRedo}
 
+        // Modos de editor (Visual/Bloques)
+        editorMode={modoEditor === 'bloques' ? 'blocks' : 'canvas'}
+        onEditorModeChange={(mode) => setModoEditor(mode === 'blocks' ? 'bloques' : 'canvas')}
+        showEditorModeToggle={!isMobile}
+
         // Breakpoints (ocultar en móvil/tablet - no tiene sentido)
         breakpoint={breakpoint}
         onBreakpointChange={setBreakpoint}
         showBreakpoints={!isMobile && !isTablet}
 
-        // Zoom
+        // Zoom (solo en modo canvas)
         zoom={zoom}
         onZoomChange={setZoom}
-        showZoom={!isMobile}
+        showZoom={!isMobile && modoEditor === 'canvas'}
 
         // Estado de guardado
         saveStatus={estadoGuardado}

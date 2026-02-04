@@ -23,6 +23,7 @@ import {
   HelpCircle,
   Minus,
   Users,
+  CalendarPlus,
 } from 'lucide-react';
 
 // ========== CATEGORÍAS DE BLOQUES ==========
@@ -131,6 +132,13 @@ export const BLOQUES_INVITACION = [
     icon: Gift,
     descripcion: 'Enlaces a tiendas y registros',
   },
+  {
+    tipo: 'agregar_calendario',
+    categoria: 'interaccion',
+    label: 'Agregar al Calendario',
+    icon: CalendarPlus,
+    descripcion: 'Botones para agregar evento a Google Calendar o descargar .ics',
+  },
 ];
 
 // ========== ICONOS POR TIPO ==========
@@ -161,6 +169,7 @@ export const BLOCK_CONFIGS = {
       { key: 'fecha_texto', label: 'Texto de fecha', type: 'text', placeholder: '15 de Junio, 2026' },
       { key: 'imagen_url', label: 'Imagen de fondo', type: 'image' },
       { key: 'alineacion', label: 'Alineación', type: 'alignment' },
+      { key: 'mostrar_calendario', label: 'Mostrar botones de calendario', type: 'toggle' },
     ],
     estilo: [
       { key: 'imagen_overlay', label: 'Oscurecer imagen', type: 'range', min: 0, max: 1, step: 0.1 },
@@ -344,6 +353,26 @@ export const BLOCK_CONFIGS = {
       { key: 'color', label: 'Color', type: 'color' },
     ],
   },
+
+  agregar_calendario: {
+    contenido: [
+      { key: 'titulo', label: 'Título (opcional)', type: 'text', placeholder: 'Añade a tu calendario' },
+      { key: 'mostrar_google', label: 'Mostrar Google Calendar', type: 'toggle' },
+      { key: 'mostrar_ics', label: 'Mostrar descarga .ics', type: 'toggle' },
+    ],
+    estilo: [
+      { key: 'variante', label: 'Estilo', type: 'select', options: [
+        { value: 'default', label: 'Por defecto' },
+        { value: 'minimal', label: 'Minimalista' },
+        { value: 'hero', label: 'Hero (fondo oscuro)' },
+      ]},
+      { key: 'alineacion', label: 'Alineación', type: 'select', options: [
+        { value: 'left', label: 'Izquierda' },
+        { value: 'center', label: 'Centro' },
+        { value: 'right', label: 'Derecha' },
+      ]},
+    ],
+  },
 };
 
 // ========== DEFAULTS POR TIPO ==========
@@ -357,6 +386,7 @@ export const BLOCK_DEFAULTS = {
     alineacion: 'center',
     imagen_overlay: 0.3,
     altura: 'full',
+    mostrar_calendario: true,
   },
   protagonistas: {
     nombre_1: '',
@@ -437,6 +467,13 @@ export const BLOCK_DEFAULTS = {
     estilo: 'linea',
     altura: 40,
     color: '',
+  },
+  agregar_calendario: {
+    titulo: '',
+    mostrar_google: true,
+    mostrar_ics: true,
+    variante: 'default',
+    alineacion: 'center',
   },
 };
 

@@ -1,3 +1,6 @@
+// Calendario
+export { default as AddToCalendar } from './AddToCalendar';
+
 // Decorativos
 export {
   PatronFondo,

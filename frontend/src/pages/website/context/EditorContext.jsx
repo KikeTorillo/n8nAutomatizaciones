@@ -1,217 +1,133 @@
 /**
  * ====================================================================
- * EDITOR CONTEXT (Refactorizado)
+ * EDITOR CONTEXT (WRAPPER DE COMPATIBILIDAD)
  * ====================================================================
  *
- * Contexto wrapper que compone los 4 contextos especializados:
- * - SiteContext: config, paginas, paginaActiva, mutations
- * - LayoutContext: isMobile, showSidebar, drawer state
- * - BlocksContext: bloques, handlers CRUD/DND
- * - UIContext: modoEditor, slashMenu, autosave, shortcuts
+ * Este archivo mantiene backward compatibility con el código existente.
+ * Internamente usa el nuevo WebsiteEditorContext centralizado.
  *
- * Mantiene backward compatibility: useEditor() retorna el mismo API.
- *
- * @version 2.0.0
- * @since 2026-02-03
+ * @deprecated Usar WebsiteEditorProvider y useWebsiteEditorContext directamente
+ * @version 3.0.0
+ * @since 2026-02-04
  */
 
-import { createContext, useContext, useMemo } from 'react';
-import { SiteProvider, useSite } from './SiteContext';
-import { LayoutProvider, useLayout } from './LayoutContext';
-import { BlocksProvider, useBlocks } from './BlocksContext';
-import { UIProvider, useUI } from './UIContext';
+import WebsiteEditorContext, { WebsiteEditorProvider, useWebsiteEditorContext } from './WebsiteEditorContext';
 
-// ========== COMBINED CONTEXT ==========
+// Re-export del nuevo provider y hook con aliases para compatibilidad
+export const EditorProvider = WebsiteEditorProvider;
+export const useEditor = useWebsiteEditorContext;
 
-const EditorContext = createContext(null);
+// Export del contexto para casos que lo necesiten
+export const EditorContext = WebsiteEditorContext;
 
-// ========== INTERNAL PROVIDERS ==========
+// Export individual hooks de sub-contextos (deprecados, usan el contexto unificado)
+// Estos wrappers permiten que imports existentes sigan funcionando
 
 /**
- * Componente interno que combina BlocksProvider y UIProvider
- * Necesita acceso a SiteContext y LayoutContext
+ * @deprecated Usar useWebsiteEditorContext directamente
  */
-function BlocksAndUIProvider({ children }) {
-  const siteContext = useSite();
-  const layoutContext = useLayout();
-
-  return (
-    <BlocksProvider
-      paginaActiva={siteContext.paginaActiva}
-      editorMutations={siteContext.editorMutations}
-    >
-      <UIProviderWithBlocks
-        siteContext={siteContext}
-        layoutContext={layoutContext}
-      >
-        {children}
-      </UIProviderWithBlocks>
-    </BlocksProvider>
-  );
+export function useSite() {
+  const ctx = useWebsiteEditorContext();
+  return {
+    paginaActiva: ctx.paginaActiva,
+    setPaginaActiva: ctx.setPaginaActiva,
+    mostrarCrearSitio: ctx.mostrarCrearSitio,
+    setMostrarCrearSitio: ctx.setMostrarCrearSitio,
+    mostrarTemplates: ctx.mostrarTemplates,
+    setMostrarTemplates: ctx.setMostrarTemplates,
+    mostrarAIWizard: ctx.mostrarAIWizard,
+    setMostrarAIWizard: ctx.setMostrarAIWizard,
+    config: ctx.config,
+    paginas: ctx.paginas,
+    tiposBloques: ctx.tiposBloques,
+    isLoading: ctx.isLoading,
+    tieneSitio: ctx.tieneSitio,
+    estaPublicado: ctx.estaPublicado,
+    handleCrearSitio: ctx.handleCrearSitio,
+    handlePublicar: ctx.handlePublicar,
+    crearConfig: ctx.crearConfig,
+    actualizarConfig: ctx.actualizarConfig,
+    publicarSitio: ctx.publicarSitio,
+    crearPagina: ctx.crearPagina,
+    actualizarPagina: ctx.actualizarPagina,
+    eliminarPagina: ctx.eliminarPagina,
+    editorMutations: {
+      crearBloque: ctx.crearBloque,
+      actualizarBloque: ctx.actualizarBloque,
+      reordenarBloques: ctx.reordenarBloques,
+      duplicarBloque: ctx.duplicarBloque,
+      eliminarBloque: ctx.eliminarBloque,
+    },
+  };
 }
 
 /**
- * UIProvider que tiene acceso a BlocksContext
+ * @deprecated Usar useWebsiteEditorContext directamente
  */
-function UIProviderWithBlocks({ children, siteContext, layoutContext }) {
-  const blocksContext = useBlocks();
-
-  return (
-    <UIProvider
-      blocksContext={blocksContext}
-      siteContext={siteContext}
-      layoutContext={layoutContext}
-    >
-      <EditorContextCombiner>
-        {children}
-      </EditorContextCombiner>
-    </UIProvider>
-  );
+export function useLayout() {
+  const ctx = useWebsiteEditorContext();
+  return {
+    isMobile: ctx.isMobile,
+    isTablet: ctx.isTablet,
+    isDesktop: ctx.isDesktop,
+    showSidebar: ctx.showSidebar,
+    showSecondaryPanel: ctx.showSecondaryPanel,
+    propertiesAsDrawer: ctx.propertiesAsDrawer,
+    showPropertiesPanel: ctx.showPropertiesPanel,
+    drawerAbierto: ctx.drawerAbierto,
+    panelActivo: ctx.panelActivo,
+    mostrarPropiedades: ctx.mostrarPropiedades,
+    openPanel: ctx.openPanel,
+    closeDrawer: ctx.closeDrawer,
+    setPanelActivo: ctx.setPanelActivo,
+    abrirPropiedades: ctx.abrirPropiedades,
+    cerrarPropiedades: ctx.cerrarPropiedades,
+    setMostrarPropiedades: ctx.setMostrarPropiedades,
+    PANEL_TYPES: ctx.PANEL_TYPES,
+  };
 }
 
 /**
- * Combina todos los contextos en uno solo para backward compatibility
+ * @deprecated Usar useWebsiteEditorContext directamente
  */
-function EditorContextCombiner({ children }) {
-  const siteContext = useSite();
-  const layoutContext = useLayout();
-  const blocksContext = useBlocks();
-  const uiContext = useUI();
-
-  // Combinar todos los contextos manteniendo el mismo API que antes
-  const combinedValue = useMemo(() => ({
-    // ========== SITE CONTEXT ==========
-    // Estado de la página
-    paginaActiva: siteContext.paginaActiva,
-    setPaginaActiva: siteContext.setPaginaActiva,
-    mostrarCrearSitio: siteContext.mostrarCrearSitio,
-    setMostrarCrearSitio: siteContext.setMostrarCrearSitio,
-    mostrarTemplates: siteContext.mostrarTemplates,
-    setMostrarTemplates: siteContext.setMostrarTemplates,
-    mostrarAIWizard: siteContext.mostrarAIWizard,
-    setMostrarAIWizard: siteContext.setMostrarAIWizard,
-
-    // Datos del editor
-    config: siteContext.config,
-    paginas: siteContext.paginas,
-    tiposBloques: siteContext.tiposBloques,
-    isLoading: siteContext.isLoading,
-    tieneSitio: siteContext.tieneSitio,
-    estaPublicado: siteContext.estaPublicado,
-
-    // Handlers de sitio
-    handleCrearSitio: siteContext.handleCrearSitio,
-    handlePublicar: siteContext.handlePublicar,
-
-    // Mutations (para componentes que los necesiten directamente)
-    crearConfig: siteContext.crearConfig,
-    actualizarConfig: siteContext.actualizarConfig,
-    publicarSitio: siteContext.publicarSitio,
-    crearPagina: siteContext.crearPagina,
-    actualizarPagina: siteContext.actualizarPagina,
-    eliminarPagina: siteContext.eliminarPagina,
-
-    // ========== LAYOUT CONTEXT ==========
-    isMobile: layoutContext.isMobile,
-    isTablet: layoutContext.isTablet,
-    isDesktop: layoutContext.isDesktop,
-    showSidebar: layoutContext.showSidebar,
-    showSecondaryPanel: layoutContext.showSecondaryPanel,
-    propertiesAsDrawer: layoutContext.propertiesAsDrawer,
-    showPropertiesPanel: layoutContext.showPropertiesPanel,
-    drawerAbierto: layoutContext.drawerAbierto,
-    panelActivo: layoutContext.panelActivo,
-    mostrarPropiedades: layoutContext.mostrarPropiedades,
-    openPanel: layoutContext.openPanel,
-    closeDrawer: layoutContext.closeDrawer,
-    setPanelActivo: layoutContext.setPanelActivo,
-    abrirPropiedades: layoutContext.abrirPropiedades,
-    cerrarPropiedades: layoutContext.cerrarPropiedades,
-    setMostrarPropiedades: layoutContext.setMostrarPropiedades,
-    PANEL_TYPES: layoutContext.PANEL_TYPES,
-
-    // ========== BLOCKS CONTEXT ==========
-    bloques: blocksContext.bloques,
-    bloqueSeleccionado: blocksContext.bloqueSeleccionado,
-    bloqueSeleccionadoCompleto: blocksContext.bloqueSeleccionadoCompleto,
-    bloquesLoading: blocksContext.bloquesLoading,
-
-    // Handlers de bloques
-    handleAgregarBloque: blocksContext.handleAgregarBloque,
-    handleActualizarBloque: blocksContext.handleActualizarBloque,
-    handleEliminarBloque: blocksContext.handleEliminarBloque,
-    handleDuplicarBloque: blocksContext.handleDuplicarBloque,
-    handleToggleVisibilidad: blocksContext.handleToggleVisibilidad,
-    handleReordenarBloques: blocksContext.handleReordenarBloques,
-    handleDropFromPalette: blocksContext.handleDropFromPalette,
-    handleDndReorder: blocksContext.handleDndReorder,
-
-    // Store actions (para casos específicos)
-    seleccionarBloque: blocksContext.seleccionarBloque,
-    deseleccionarBloque: blocksContext.deseleccionarBloque,
-
-    // ========== UI CONTEXT ==========
-    modoEditor: uiContext.modoEditor,
-    setModoEditor: uiContext.setModoEditor,
-    modoPreview: uiContext.modoPreview,
-    setModoPreview: uiContext.setModoPreview,
-    tourReady: uiContext.tourReady,
-
-    // Slash menu
-    slashMenu: uiContext.slashMenu,
-    setSlashMenu: uiContext.setSlashMenu,
-    handleSlashSelect: uiContext.handleSlashSelect,
-    handleSlashClose: uiContext.handleSlashClose,
-
-    // Autosave
-    estaGuardando: uiContext.estaGuardando,
-    guardarAhora: uiContext.guardarAhora,
-  }), [siteContext, layoutContext, blocksContext, uiContext]);
-
-  return (
-    <EditorContext.Provider value={combinedValue}>
-      {children}
-    </EditorContext.Provider>
-  );
+export function useBlocks() {
+  const ctx = useWebsiteEditorContext();
+  return {
+    bloques: ctx.bloques,
+    bloqueSeleccionado: ctx.bloqueSeleccionado,
+    bloqueSeleccionadoCompleto: ctx.bloqueSeleccionadoCompleto,
+    bloquesLoading: ctx.bloquesLoading,
+    handleAgregarBloque: ctx.handleAgregarBloque,
+    handleActualizarBloque: ctx.handleActualizarBloque,
+    handleEliminarBloque: ctx.handleEliminarBloque,
+    handleDuplicarBloque: ctx.handleDuplicarBloque,
+    handleToggleVisibilidad: ctx.handleToggleVisibilidad,
+    handleReordenarBloques: ctx.handleReordenarBloques,
+    handleDropFromPalette: ctx.handleDropFromPalette,
+    handleDndReorder: ctx.handleDndReorder,
+    seleccionarBloque: ctx.seleccionarBloque,
+    deseleccionarBloque: ctx.deseleccionarBloque,
+  };
 }
-
-// ========== PUBLIC PROVIDER ==========
 
 /**
- * EditorProvider - Proveedor principal del contexto del editor
- *
- * Compone los 4 contextos especializados y mantiene backward compatibility.
- *
- * @param {Object} props
- * @param {React.ReactNode} props.children - Componentes hijos
+ * @deprecated Usar useWebsiteEditorContext directamente
  */
-export function EditorProvider({ children }) {
-  return (
-    <SiteProvider>
-      <LayoutProvider>
-        <BlocksAndUIProvider>
-          {children}
-        </BlocksAndUIProvider>
-      </LayoutProvider>
-    </SiteProvider>
-  );
+export function useUI() {
+  const ctx = useWebsiteEditorContext();
+  return {
+    modoEditor: ctx.modoEditor,
+    setModoEditor: ctx.setModoEditor,
+    modoPreview: ctx.modoPreview,
+    setModoPreview: ctx.setModoPreview,
+    tourReady: ctx.tourReady,
+    slashMenu: ctx.slashMenu,
+    setSlashMenu: ctx.setSlashMenu,
+    handleSlashSelect: ctx.handleSlashSelect,
+    handleSlashClose: ctx.handleSlashClose,
+    estaGuardando: ctx.estaGuardando,
+    guardarAhora: ctx.guardarAhora,
+  };
 }
 
-// ========== PUBLIC HOOKS ==========
-
-/**
- * Hook para acceder al contexto del editor (combinado)
- * Mantiene backward compatibility con el API anterior.
- *
- * @returns {Object} Contexto del editor completo
- * @throws {Error} Si se usa fuera de EditorProvider
- */
-export function useEditor() {
-  const context = useContext(EditorContext);
-  if (!context) {
-    throw new Error('useEditor debe usarse dentro de un EditorProvider');
-  }
-  return context;
-}
-
-export default EditorContext;
+export default WebsiteEditorContext;

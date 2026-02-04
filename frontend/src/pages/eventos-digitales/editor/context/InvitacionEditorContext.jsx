@@ -40,6 +40,7 @@ export function InvitacionEditorProvider({ children }) {
   // ========== STATE ==========
 
   const [modoPreview, setModoPreview] = useState(false);
+  const [modoEditor, setModoEditor] = useState('canvas'); // 'canvas' | 'bloques'
 
   // Obtener estado de propiedades del layout context (única fuente de verdad)
   const {
@@ -125,7 +126,7 @@ export function InvitacionEditorProvider({ children }) {
     mutationFn: () => eventosDigitalesApi.publicarEvento(eventoId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['evento', eventoId] });
-      toast.success(evento?.publicado ? 'Invitación despublicada' : 'Invitación publicada');
+      toast.success(evento?.estado === 'publicado' ? 'Invitación despublicada' : 'Invitación publicada');
     },
     onError: (error) => {
       toast.error('Error al cambiar estado de publicación');
@@ -296,7 +297,7 @@ export function InvitacionEditorProvider({ children }) {
   const error = eventoError || bloquesError;
   const estaGuardando = estadoGuardado === 'saving';
   const estaPublicando = publicarMutation.isPending;
-  const estaPublicado = evento?.publicado || false;
+  const estaPublicado = evento?.estado === 'publicado';
 
   // ========== CONTEXT VALUE ==========
 
@@ -318,12 +319,14 @@ export function InvitacionEditorProvider({ children }) {
       estaPublicando,
       estaPublicado,
       modoPreview,
+      modoEditor,
       mostrarPropiedades,
       breakpoint,
       zoom,
 
       // Setters
       setModoPreview,
+      setModoEditor,
       setMostrarPropiedades,
       abrirPropiedades,
       setBreakpoint,
@@ -370,6 +373,7 @@ export function InvitacionEditorProvider({ children }) {
       estaPublicando,
       estaPublicado,
       modoPreview,
+      modoEditor,
       mostrarPropiedades,
       breakpoint,
       zoom,

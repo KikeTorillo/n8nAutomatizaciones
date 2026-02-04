@@ -30,6 +30,7 @@ import VideoCanvasBlock from './VideoCanvasBlock';
 import TextoCanvasBlock from './TextoCanvasBlock';
 import FaqCanvasBlock from './FaqCanvasBlock';
 import SeparadorCanvasBlock from './SeparadorCanvasBlock';
+import AgregarCalendarioCanvasBlock from './AgregarCalendarioCanvasBlock';
 
 // ========== BLOCK COMPONENT MAP ==========
 
@@ -46,6 +47,7 @@ const BLOCK_COMPONENTS = {
   texto: TextoCanvasBlock,
   faq: FaqCanvasBlock,
   separador: SeparadorCanvasBlock,
+  agregar_calendario: AgregarCalendarioCanvasBlock,
 };
 
 // ========== MAIN COMPONENT ==========
@@ -62,6 +64,7 @@ const BLOCK_COMPONENTS = {
  * @param {string} props.dropPosition - 'before' | 'after' | null
  * @param {boolean} props.isFirstBlock - Si es el primer bloque
  * @param {Object} props.eventoData - Datos del evento (ubicaciones, galería, etc.)
+ * @param {Object} props.evento - Objeto evento completo (para fallbacks en bloques)
  * @param {Function} props.onClick - Callback al hacer click
  * @param {Function} props.onDoubleClick - Callback al hacer doble click
  * @param {Function} props.onContentChange - Callback al cambiar contenido
@@ -72,6 +75,7 @@ const BLOCK_COMPONENTS = {
 function CanvasBlock({
   bloque,
   tema,
+  evento,
   isSelected = false,
   isEditing = false,
   isDragOver = false,
@@ -264,6 +268,7 @@ function CanvasBlock({
         <BlockComponent
           bloque={bloque}
           tema={tema}
+          evento={evento}
           isEditing={isEditing}
           onContentChange={onContentChange}
           ubicaciones={eventoData.ubicaciones}

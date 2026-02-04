@@ -116,6 +116,9 @@ CREATE TABLE IF NOT EXISTS eventos_digitales (
         "mensaje_confirmacion": "¡Gracias por confirmar tu asistencia!"
     }',
 
+    -- Tema personalizado del evento (colores, fuentes)
+    plantilla JSONB DEFAULT '{}',
+
     -- Estado
     estado VARCHAR(20) DEFAULT 'borrador',
     activo BOOLEAN DEFAULT true,

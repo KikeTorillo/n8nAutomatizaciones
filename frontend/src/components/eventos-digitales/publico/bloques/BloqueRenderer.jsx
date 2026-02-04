@@ -16,6 +16,7 @@ function BloqueRenderer({
   evento,
   invitado,
   tema,
+  ubicaciones,
   isVisible,
   onScrollToContent,
   onConfirmRSVP,
@@ -45,6 +46,7 @@ function BloqueRenderer({
         evento={evento}
         invitado={invitado}
         tema={tema}
+        ubicaciones={ubicaciones || evento?.ubicaciones}
         isVisible={isVisible}
         onScrollToContent={onScrollToContent}
         onConfirm={onConfirmRSVP}

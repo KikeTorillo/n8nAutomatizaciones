@@ -10,12 +10,14 @@
 
 import { memo } from 'react';
 import { Calendar, Clock, ChevronDown } from 'lucide-react';
+import { useParams } from 'react-router-dom';
 import {
   PatronFondo,
   DecoracionEsquinas,
   StickersDecorativos,
   IconoPrincipal,
   TituloTematico,
+  AddToCalendar,
 } from '@/components/eventos-digitales';
 
 function HeroPublico({
@@ -26,6 +28,7 @@ function HeroPublico({
   onScrollToContent,
   className = '',
 }) {
+  const { slug } = useParams();
   const { contenido = {}, estilos = {} } = bloque;
 
   // Usar contenido del bloque o defaults del evento
@@ -39,6 +42,10 @@ function HeroPublico({
   const overlayOpacidad = estilos.overlay_opacidad ?? contenido.imagen_overlay ?? 0.5;
   const mostrarFecha = estilos.mostrar_fecha !== false;
   const mostrarHora = estilos.mostrar_hora !== false;
+  const mostrarCalendario = contenido.mostrar_calendario !== false;
+
+  // Altura de sección (full, medium, auto)
+  const altura = estilos.altura || contenido.altura || 'full';
 
   // Detectar si hay imagen de fondo para ajustar contraste
   const tieneImagenFondo = !!imagenUrl;
@@ -50,9 +57,16 @@ function HeroPublico({
     right: 'items-end text-right',
   };
 
+  // Clases de altura
+  const heightClasses = {
+    full: 'min-h-screen',
+    medium: 'min-h-[50vh]',
+    auto: 'min-h-0 py-16',
+  };
+
   return (
     <section
-      className={`relative min-h-screen flex flex-col ${className}`}
+      className={`relative ${heightClasses[altura] || heightClasses.full} flex flex-col ${className}`}
       style={{
         '--hero-overlay': overlayOpacidad,
       }}
@@ -213,6 +227,20 @@ function HeroPublico({
                 </span>
               </div>
             )}
+          </div>
+        )}
+
+        {/* Botones Agregar al Calendario */}
+        {mostrarCalendario && evento?.fecha_evento && (
+          <div className="animate-fadeInUp stagger-4">
+            <AddToCalendar
+              evento={evento}
+              slug={slug}
+              ubicaciones={evento?.ubicaciones}
+              tema={tema}
+              tieneImagenFondo={tieneImagenFondo}
+              variant="hero"
+            />
           </div>
         )}
       </div>
