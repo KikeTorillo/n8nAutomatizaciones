@@ -5,9 +5,9 @@
  * Wrapper del EditorHeader + EditorToolbar del framework para Editor de Invitaciones.
  * Conecta con el contexto del editor y los hooks de undo/redo.
  *
- * @version 3.2.0
+ * @version 3.4.0
  * @since 2026-02-03
- * @updated 2026-02-04 - Agregado zoom y soporte responsive
+ * @updated 2026-02-04 - Zoom expuesto via context
  */
 
 import { memo } from 'react';
@@ -19,7 +19,6 @@ import {
 } from '@/components/editor-framework';
 import { useInvitacionEditor } from '../context';
 import {
-  useInvitacionEditorStore,
   useInvitacionUndo,
   useInvitacionRedo,
   useInvitacionCanUndoRedo,
@@ -47,8 +46,10 @@ function EditorHeader() {
     estaPublicado,
     modoPreview,
     setModoPreview,
-    modoEditor,
-    setModoEditor,
+    breakpoint,
+    setBreakpoint,
+    zoom,
+    setZoom,
     handlePublicar,
   } = useInvitacionEditor();
 
@@ -59,12 +60,6 @@ function EditorHeader() {
   const undo = useInvitacionUndo();
   const redo = useInvitacionRedo();
   const { canUndo, canRedo } = useInvitacionCanUndoRedo();
-
-  // Breakpoint y Zoom del store
-  const breakpoint = useInvitacionEditorStore((s) => s.breakpoint);
-  const setBreakpoint = useInvitacionEditorStore((s) => s.setBreakpoint);
-  const zoom = useInvitacionEditorStore((s) => s.zoom);
-  const setZoom = useInvitacionEditorStore((s) => s.setZoom);
 
   // Icono según tipo de evento
   const EventoIcon = EVENTO_ICONS[evento?.tipo_evento] || Calendar;
@@ -104,20 +99,15 @@ function EditorHeader() {
         canUndo={canUndo}
         canRedo={canRedo}
 
-        // Modos de editor (ocultar en móvil)
-        editorMode={modoEditor}
-        onEditorModeChange={setModoEditor}
-        showEditorModeToggle={!isMobile}
-
         // Breakpoints (ocultar en móvil/tablet - no tiene sentido)
         breakpoint={breakpoint}
         onBreakpointChange={setBreakpoint}
         showBreakpoints={!isMobile && !isTablet}
 
-        // Zoom (solo en modo canvas y no móvil)
+        // Zoom
         zoom={zoom}
         onZoomChange={setZoom}
-        showZoom={modoEditor === 'canvas' && !isMobile}
+        showZoom={!isMobile}
 
         // Estado de guardado
         saveStatus={estadoGuardado}

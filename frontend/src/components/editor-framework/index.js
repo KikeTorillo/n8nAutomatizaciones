@@ -5,9 +5,9 @@
  * Framework compartido para editores de bloques.
  * Usado por Website Builder y Editor de Invitaciones.
  *
- * @version 1.3.0
+ * @version 1.4.0
  * @since 2026-02-03
- * @updated 2026-02-04 - Separado EditorHeader + EditorToolbar
+ * @updated 2026-02-04 - Añadido useDndHandlers
  */
 
 // Hooks
@@ -17,6 +17,7 @@ export { useArrayItems } from './hooks/useArrayItems';
 export { usePropertiesState } from './hooks/usePropertiesState';
 export { useAutosave } from './hooks/useAutosave';
 export { useCanvasBreakpoint } from './hooks/useCanvasBreakpoint';
+export { useDndHandlers } from './hooks/useDndHandlers';
 export { deepEqual, hashBloques, bloquesEqual } from './hooks/compareUtils';
 
 // DnD

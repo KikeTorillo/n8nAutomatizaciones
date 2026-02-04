@@ -60,12 +60,40 @@ modules/mi-modulo/
 ```
 src/
 ├── features/       # Módulos autocontenidos (auth, etc.)
-│   └── auth/       # Store, API, components, pages, routes
-├── components/ui/  # Atomic Design (atoms, molecules, organisms)
+├── components/
+│   ├── ui/         # Atomic Design (atoms, molecules, organisms)
+│   └── editor-framework/  # Framework reutilizable para editores
 ├── hooks/          # Hooks por dominio
 ├── pages/          # Páginas por módulo
-└── store/          # Stores globales + re-exports
+└── store/          # Stores globales (createEditorStore factory)
 ```
+
+### Editor Framework (`components/editor-framework/`)
+
+Framework compartido para editores de bloques (Invitaciones, Website Builder):
+
+```javascript
+// Hooks principales
+import {
+  useAutosave,      // Autosave con debounce y detección de conflictos
+  useDndHandlers,   // Drag & drop genérico para bloques
+  useBlockSelection,
+  useInlineEditing,
+} from '@/components/editor-framework';
+
+// Layout responsive
+import {
+  EditorLayoutProvider,  // Context para responsive (isMobile, isTablet)
+  EditorHeader,          // Header con navegación y publicación
+  EditorToolbar,         // Undo/redo, breakpoints, zoom
+  BlockPalette,          // Paleta de bloques arrastrables
+} from '@/components/editor-framework';
+
+// Store factory con undo/redo
+import { createEditorStore } from '@/store/createEditorStore';
+```
+
+**Patrón de uso**: El context del editor (ej: `InvitacionEditorContext`) expone estado centralizado (`tema`, `zoom`, `breakpoint`) y usa hooks del framework para lógica reutilizable.
 
 ### Middlewares Chain
 ```
@@ -168,10 +196,10 @@ import { authApi } from '@/services/api/modules';
 
 | Prioridad | Feature |
 |-----------|---------|
-| **Alta** | Website Builder - AI Site Generator |
+| **Alta** | Website Builder (reutilizar editor-framework) |
 | **Media** | Stripe Gateway completo |
 | **Baja** | 2FA/MFA |
 
 ---
 
-**Actualizado**: 3 Febrero 2026
+**Actualizado**: 4 Febrero 2026

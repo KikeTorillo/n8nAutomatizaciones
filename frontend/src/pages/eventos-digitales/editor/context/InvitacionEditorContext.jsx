@@ -5,19 +5,20 @@
  * Contexto principal para el editor de invitaciones digitales.
  * Maneja estado, bloques, autosave y acciones del editor.
  *
- * @version 1.1.0 - Integrado con EditorLayoutContext para responsive
+ * @version 1.4.0 - Centralizado tema, zoom expuesto, hook useDndHandlers
  * @since 2026-02-03
+ * @updated 2026-02-04
  */
 
-import { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
 import { useInvitacionEditorStore } from '@/store';
 import { eventosDigitalesApi } from '@/services/api/modules';
-import { useEditorLayoutContext } from '@/components/editor-framework';
-import { getBlockDefaults } from '../config';
+import { useEditorLayoutContext, useAutosave, hashBloques, useDndHandlers } from '@/components/editor-framework';
+import { crearBloqueNuevo } from '../utils';
 
 // ========== CONTEXT ==========
 
@@ -38,23 +39,14 @@ export function InvitacionEditorProvider({ children }) {
 
   // ========== STATE ==========
 
-  const [mostrarPropiedades, setMostrarPropiedades] = useState(true);
   const [modoPreview, setModoPreview] = useState(false);
-  const [modoEditor, setModoEditor] = useState('canvas'); // 'canvas' | 'blocks'
 
-  // Obtener funciones del layout context (para abrir drawer en móvil)
-  const layoutContext = useEditorLayoutContext();
-
-  // Función helper para abrir propiedades (usa layout context para móvil)
-  const abrirPropiedades = useCallback(() => {
-    if (layoutContext.propertiesAsDrawer) {
-      // En móvil/tablet, abrir drawer
-      layoutContext.abrirPropiedades();
-    } else {
-      // En desktop, mostrar panel
-      setMostrarPropiedades(true);
-    }
-  }, [layoutContext]);
+  // Obtener estado de propiedades del layout context (única fuente de verdad)
+  const {
+    mostrarPropiedades,
+    setMostrarPropiedades,
+    abrirPropiedades,
+  } = useEditorLayoutContext();
 
   // ========== STORE ==========
 
@@ -75,6 +67,10 @@ export function InvitacionEditorProvider({ children }) {
   const setGuardado = useInvitacionEditorStore((state) => state.setGuardado);
   const setErrorGuardado = useInvitacionEditorStore((state) => state.setErrorGuardado);
   const limpiarBloques = useInvitacionEditorStore((state) => state.limpiarBloques);
+  const breakpoint = useInvitacionEditorStore((state) => state.breakpoint);
+  const setBreakpoint = useInvitacionEditorStore((state) => state.setBreakpoint);
+  const zoom = useInvitacionEditorStore((state) => state.zoom);
+  const setZoom = useInvitacionEditorStore((state) => state.setZoom);
 
   // ========== QUERIES ==========
 
@@ -118,22 +114,10 @@ export function InvitacionEditorProvider({ children }) {
 
   // ========== MUTATIONS ==========
 
-  // Guardar bloques
+  // Guardar bloques (sin callbacks - manejados por useAutosave)
   const guardarBloquesMutation = useMutation({
     mutationFn: (bloquesAGuardar) =>
       eventosDigitalesApi.saveBloques(eventoId, bloquesAGuardar),
-    onMutate: () => {
-      setGuardando();
-    },
-    onSuccess: () => {
-      setGuardado();
-      queryClient.invalidateQueries({ queryKey: ['evento', eventoId, 'bloques'] });
-    },
-    onError: (error) => {
-      setErrorGuardado();
-      toast.error('Error al guardar los cambios');
-      console.error('[InvitacionEditor] Error guardando:', error);
-    },
   });
 
   // Publicar/Despublicar evento
@@ -163,58 +147,40 @@ export function InvitacionEditorProvider({ children }) {
     },
   });
 
-  // ========== AUTOSAVE ==========
+  // ========== AUTOSAVE (usando hook del framework) ==========
 
-  const autosaveTimeoutRef = useRef(null);
-
-  // Efecto para autosave cuando cambian los bloques
-  useEffect(() => {
-    if (estadoGuardado !== 'unsaved') return;
-
-    // Limpiar timeout anterior
-    if (autosaveTimeoutRef.current) {
-      clearTimeout(autosaveTimeoutRef.current);
-    }
-
-    // Nuevo timeout para guardar
-    autosaveTimeoutRef.current = setTimeout(() => {
-      guardarBloquesMutation.mutate(bloques);
-    }, 2000); // 2 segundos de debounce
-
-    return () => {
-      if (autosaveTimeoutRef.current) {
-        clearTimeout(autosaveTimeoutRef.current);
-      }
-    };
-  }, [bloques, estadoGuardado]);
+  const { guardarAhora } = useAutosave({
+    onSave: async (bloquesAGuardar) => {
+      await guardarBloquesMutation.mutateAsync(bloquesAGuardar);
+    },
+    enabled: true,
+    debounceMs: 2000,
+    items: bloques,
+    hasChanges: estadoGuardado === 'unsaved',
+    computeHash: hashBloques,
+    onSaving: () => setGuardando(),
+    onSaved: () => {
+      setGuardado();
+      queryClient.invalidateQueries({ queryKey: ['evento', eventoId, 'bloques'] });
+    },
+    onError: (error) => {
+      setErrorGuardado();
+      toast.error('Error al guardar los cambios');
+      console.error('[InvitacionEditor] Error guardando:', error);
+    },
+    onConflict: ({ mensaje }) => {
+      toast.error(mensaje || 'Conflicto de versión detectado', { duration: 6000 });
+    },
+  });
 
   // ========== HANDLERS ==========
-
-  /**
-   * Guardar ahora (manual)
-   */
-  const guardarAhora = useCallback(() => {
-    if (autosaveTimeoutRef.current) {
-      clearTimeout(autosaveTimeoutRef.current);
-    }
-    guardarBloquesMutation.mutate(bloques);
-  }, [bloques, guardarBloquesMutation]);
 
   /**
    * Agregar nuevo bloque
    */
   const handleAgregarBloque = useCallback(
     (tipo) => {
-      const nuevoBloque = {
-        id: crypto.randomUUID(),
-        tipo,
-        orden: bloques.length,
-        visible: true,
-        contenido: getBlockDefaults(tipo),
-        estilos: {},
-        version: 1,
-      };
-
+      const nuevoBloque = crearBloqueNuevo(tipo, bloques.length);
       agregarBloqueLocal(nuevoBloque);
     },
     [bloques.length, agregarBloqueLocal]
@@ -272,54 +238,14 @@ export function InvitacionEditorProvider({ children }) {
   );
 
   /**
-   * Drop desde paleta (recibe objeto de DndEditorProvider)
+   * DnD handlers (usando hook reutilizable del framework)
    */
-  const handleDropFromPalette = useCallback(
-    ({ tipo, targetId, position }) => {
-      // Calcular índice basado en targetId y position
-      let indice = bloques.length; // Por defecto al final
-
-      if (targetId) {
-        const targetIndex = bloques.findIndex((b) => b.id === targetId);
-        if (targetIndex !== -1) {
-          indice = position === 'before' ? targetIndex : targetIndex + 1;
-        }
-      }
-
-      const nuevoBloque = {
-        id: crypto.randomUUID(),
-        tipo,
-        orden: indice,
-        visible: true,
-        contenido: getBlockDefaults(tipo),
-        estilos: {},
-        version: 1,
-      };
-
-      insertarBloqueEnPosicion(nuevoBloque, indice);
-    },
-    [bloques, insertarBloqueEnPosicion]
-  );
-
-  /**
-   * DnD reorder (recibe objeto de DndEditorProvider)
-   */
-  const handleDndReorder = useCallback(
-    ({ activeId, overId }) => {
-      const oldIndex = bloques.findIndex((b) => b.id === activeId);
-      const newIndex = bloques.findIndex((b) => b.id === overId);
-
-      if (oldIndex === -1 || newIndex === -1) return;
-
-      const newOrder = [...bloques];
-      const [removed] = newOrder.splice(oldIndex, 1);
-      newOrder.splice(newIndex, 0, removed);
-
-      const nuevoOrden = newOrder.map((b) => b.id);
-      reordenarBloquesLocal(nuevoOrden);
-    },
-    [bloques, reordenarBloquesLocal]
-  );
+  const { handleDropFromPalette, handleDndReorder } = useDndHandlers({
+    bloques,
+    onInsertBlock: insertarBloqueEnPosicion,
+    onReorderBlocks: reordenarBloquesLocal,
+    createBlock: crearBloqueNuevo,
+  });
 
   /**
    * Volver a lista de eventos
@@ -352,6 +278,18 @@ export function InvitacionEditorProvider({ children }) {
     [bloques, bloqueSeleccionado]
   );
 
+  // ========== TEMA MEMOIZADO (centralizado) ==========
+
+  const tema = useMemo(
+    () => ({
+      color_primario: evento?.plantilla?.color_primario || '#753572',
+      color_secundario: evento?.plantilla?.color_secundario || '#F59E0B',
+      fuente_titulos: evento?.plantilla?.fuente_titulos || 'Playfair Display',
+      fuente_cuerpo: evento?.plantilla?.fuente_cuerpo || 'Inter',
+    }),
+    [evento?.plantilla]
+  );
+
   // ========== COMPUTED ==========
 
   const isLoading = eventoLoading || bloquesLoading;
@@ -370,6 +308,7 @@ export function InvitacionEditorProvider({ children }) {
       bloques,
       bloqueSeleccionado,
       bloqueSeleccionadoCompleto,
+      tema,
 
       // Estado
       isLoading,
@@ -379,14 +318,16 @@ export function InvitacionEditorProvider({ children }) {
       estaPublicando,
       estaPublicado,
       modoPreview,
-      modoEditor,
       mostrarPropiedades,
+      breakpoint,
+      zoom,
 
       // Setters
       setModoPreview,
-      setModoEditor,
       setMostrarPropiedades,
       abrirPropiedades,
+      setBreakpoint,
+      setZoom,
 
       // Handlers de bloques
       handleAgregarBloque,
@@ -421,6 +362,7 @@ export function InvitacionEditorProvider({ children }) {
       bloques,
       bloqueSeleccionado,
       bloqueSeleccionadoCompleto,
+      tema,
       isLoading,
       error,
       estadoGuardado,
@@ -428,9 +370,12 @@ export function InvitacionEditorProvider({ children }) {
       estaPublicando,
       estaPublicado,
       modoPreview,
-      modoEditor,
       mostrarPropiedades,
+      breakpoint,
+      zoom,
       abrirPropiedades,
+      setBreakpoint,
+      setZoom,
       handleAgregarBloque,
       handleActualizarBloque,
       handleEliminarBloque,

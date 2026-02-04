@@ -5,8 +5,9 @@
  * Panel de propiedades para editar el bloque seleccionado.
  * Responsive: solo visible en desktop, en móvil/tablet se usa drawer.
  *
- * @version 1.1.0 - Agregado soporte responsive
+ * @version 1.2.0 - Tema centralizado desde context
  * @since 2026-02-03
+ * @updated 2026-02-04
  */
 
 import { memo, useMemo } from 'react';
@@ -24,21 +25,15 @@ function PropertiesContainer() {
     evento,
     bloqueSeleccionadoCompleto,
     modoPreview,
-    mostrarPropiedades,
-    setMostrarPropiedades,
+    tema,
     handleActualizarBloque,
   } = useInvitacionEditor();
 
-  const { propertiesAsDrawer } = useEditorLayoutContext();
-
-  // Tema del evento (hooks deben estar antes de cualquier return)
-  const tema = useMemo(
-    () => ({
-      color_primario: evento?.plantilla?.color_primario || '#753572',
-      color_secundario: evento?.plantilla?.color_secundario || '#F59E0B',
-    }),
-    [evento]
-  );
+  const {
+    mostrarPropiedades,
+    setMostrarPropiedades,
+    propertiesAsDrawer,
+  } = useEditorLayoutContext();
 
   // Datos adicionales para editores específicos
   const editorProps = useMemo(

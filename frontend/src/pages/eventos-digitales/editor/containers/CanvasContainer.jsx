@@ -4,9 +4,9 @@
  * ====================================================================
  * Canvas central donde se renderizan los bloques de la invitación.
  *
- * @version 1.1.0
+ * @version 1.3.0
  * @since 2026-02-03
- * @updated 2026-02-04 - Integración completa con DnD context y breakpoints
+ * @updated 2026-02-04 - Tema centralizado desde context
  */
 
 import { memo, useCallback, useMemo } from 'react';
@@ -16,8 +16,8 @@ import { Layout, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { CanvasBlock } from '../components/canvas-blocks';
 import { useInvitacionEditor } from '../context';
-import { useDndEditor, useBlockSelection, useInlineEditing, BREAKPOINTS } from '@/components/editor-framework';
-import { useInvitacionEditorStore } from '@/store';
+import { useDndEditor, useBlockSelection, useInlineEditing, BREAKPOINTS, useEditorLayoutContext } from '@/components/editor-framework';
+import { useInvitacionEditorStore } from '@/store'; // Solo para useInlineEditing
 
 /**
  * CanvasContainer - Canvas central del editor
@@ -28,14 +28,19 @@ function CanvasContainer() {
     bloques,
     bloqueSeleccionado,
     modoPreview,
+    breakpoint,
+    zoom,
+    tema,
     handleActualizarBloque,
     handleEliminarBloque,
     handleDuplicarBloque,
     handleToggleVisibilidad,
     seleccionarBloque,
     deseleccionarBloque,
-    abrirPropiedades,
   } = useInvitacionEditor();
+
+  // Usar abrirPropiedades del layout context (única fuente de verdad)
+  const { abrirPropiedades } = useEditorLayoutContext();
 
   // Hook para selección de bloques + apertura de propiedades
   const { handleBloqueClick } = useBlockSelection({
@@ -53,9 +58,6 @@ function CanvasContainer() {
   const isDraggingFromPalette = dndContext?.isDraggingFromPalette || false;
   const overInfo = dndContext?.overInfo;
 
-  // Breakpoint del store
-  const breakpoint = useInvitacionEditorStore((s) => s.breakpoint);
-
   // Droppable para la zona del canvas
   const { setNodeRef } = useDroppable({
     id: 'canvas-drop-zone',
@@ -64,17 +66,6 @@ function CanvasContainer() {
 
   // IDs de bloques para SortableContext
   const bloqueIds = useMemo(() => bloques.map((b) => b.id), [bloques]);
-
-  // Tema del evento (o defaults)
-  const tema = useMemo(
-    () => ({
-      color_primario: evento?.plantilla?.color_primario || '#753572',
-      color_secundario: evento?.plantilla?.color_secundario || '#F59E0B',
-      fuente_titulos: evento?.plantilla?.fuente_titulos || 'Playfair Display',
-      fuente_cuerpo: evento?.plantilla?.fuente_cuerpo || 'Inter',
-    }),
-    [evento]
-  );
 
   // Datos del evento para los canvas blocks
   const eventoData = useMemo(
@@ -112,6 +103,9 @@ function CanvasContainer() {
     return bp?.width || '100%';
   }, [breakpoint]);
 
+  // Calcular escala del zoom (zoom viene como porcentaje: 50, 75, 100, etc.)
+  const zoomScale = zoom / 100;
+
   return (
     <main
       ref={setNodeRef}
@@ -128,10 +122,13 @@ function CanvasContainer() {
         '--fuente-cuerpo': tema.fuente_cuerpo,
       }}
     >
-      {/* Contenedor del canvas - ancho según breakpoint */}
+      {/* Contenedor del canvas - ancho según breakpoint + zoom */}
       <div
-        className="mx-auto py-8 px-4 transition-all duration-300"
-        style={{ maxWidth: canvasWidth }}
+        className="mx-auto py-8 px-4 transition-all duration-300 origin-top"
+        style={{
+          maxWidth: canvasWidth,
+          transform: `scale(${zoomScale})`,
+        }}
       >
         {/* Preview wrapper con estilos del tema */}
         <div
