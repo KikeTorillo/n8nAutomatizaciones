@@ -3,16 +3,14 @@
  * INVITACIÓN DINÁMICA - RENDERIZADO DE BLOQUES
  * ====================================================================
  * Renderiza los bloques personalizados del editor de invitaciones.
- * Si no hay bloques personalizados, devuelve null para usar layout legacy.
  *
  * @version 1.0.0
  * @since 2026-02-03
  */
 
 import { memo, useMemo, useState, useEffect, useCallback, Suspense, useRef } from 'react';
-import { Heart, ChevronDown } from 'lucide-react';
+import { Heart } from 'lucide-react';
 import { BloqueRenderer, BLOQUES_PUBLICOS } from './bloques';
-import { GaleriaCompartida } from '../galeria';
 
 /**
  * InvitacionDinamica - Renderiza bloques del editor
@@ -26,15 +24,12 @@ function InvitacionDinamica({
   isLoadingRSVP,
   qrImage,
   loadingQR,
-  configuracion,
-  slug,
-  token,
 }) {
   const [visibleSections, setVisibleSections] = useState(new Set(['inicio']));
   const [activeSection, setActiveSection] = useState('inicio');
   const sectionRefs = useRef({});
 
-  // Si no hay bloques o están vacíos, retornar null para usar layout legacy
+  // Seguridad: si no hay bloques, no renderizar nada
   if (!bloques || bloques.length === 0) {
     return null;
   }
@@ -101,6 +96,7 @@ function InvitacionDinamica({
           'mesa_regalos',
           'galeria',
           'faq',
+          'felicitaciones',
         ];
         return tiposConNav.includes(b.tipo);
       })
@@ -206,42 +202,6 @@ function InvitacionDinamica({
         </nav>
       )}
 
-      {/* Galería compartida (si está habilitada) */}
-      {configuracion?.habilitar_galeria_compartida !== false && (
-        <section
-          className="py-20"
-          style={{ backgroundColor: tema?.color_secundario + '20' }}
-        >
-          <div className="max-w-5xl mx-auto px-4">
-            <div className="text-center mb-12">
-              <h2
-                className="text-4xl sm:text-5xl font-bold mb-4"
-                style={{ color: tema?.color_texto, fontFamily: tema?.fuente_titulo }}
-              >
-                Fotos del Evento
-              </h2>
-              <p className="text-lg" style={{ color: tema?.color_texto_claro }}>
-                {token
-                  ? '¡Comparte tus mejores momentos!'
-                  : 'Momentos capturados por los invitados'}
-              </p>
-            </div>
-
-            <div
-              className="bg-white/80 backdrop-blur-sm rounded-3xl p-6 sm:p-8"
-              style={{ boxShadow: `0 10px 40px ${tema?.color_primario}15` }}
-            >
-              <GaleriaCompartida
-                slug={slug}
-                token={token}
-                isAdmin={false}
-                permitirSubida={configuracion?.permitir_subida_invitados !== false}
-              />
-            </div>
-          </div>
-        </section>
-      )}
-
       {/* Footer */}
       <footer
         className="py-8 text-center border-t"
@@ -284,6 +244,7 @@ function getDefaultLabel(tipo) {
     video: 'Video',
     texto: 'Info',
     faq: 'FAQ',
+    felicitaciones: 'Felicitaciones',
     separador: '',
   };
   return labels[tipo] || 'Sección';

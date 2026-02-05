@@ -11,7 +11,6 @@ import { withSuspense, loadingFallback, ROLES } from './helpers/routeHelpers';
 const SuperAdminLayout = lazy(() => import('@/components/superadmin/SuperAdminLayout'));
 const SuperAdminDashboard = lazy(() => import('@/pages/superadmin/Dashboard'));
 const MarketplaceGestion = lazy(() => import('@/pages/superadmin/MarketplaceGestion'));
-const PlantillasEventos = lazy(() => import('@/pages/superadmin/PlantillasEventos'));
 const EntitlementsPlataforma = lazy(() => import('@/pages/superadmin/EntitlementsPlataforma'));
 
 /**
@@ -38,10 +37,6 @@ export const superadminRoutes = [
       {
         path: 'marketplace',
         element: withSuspense(MarketplaceGestion),
-      },
-      {
-        path: 'plantillas-eventos',
-        element: withSuspense(PlantillasEventos),
       },
       {
         path: 'entitlements-plataforma',

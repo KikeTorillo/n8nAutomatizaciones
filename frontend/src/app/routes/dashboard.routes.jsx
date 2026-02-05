@@ -32,6 +32,9 @@ const EventosPage = lazy(() => import('@/pages/eventos-digitales/EventosPage'));
 const EventoDetailPage = lazy(() => import('@/pages/eventos-digitales/EventoDetailPage'));
 const EventoFormPage = lazy(() => import('@/pages/eventos-digitales/EventoFormPage'));
 const InvitacionEditorPage = lazy(() => import('@/pages/eventos-digitales/editor/InvitacionEditorPage'));
+const PlantillasPage = lazy(() => import('@/pages/eventos-digitales/PlantillasPage'));
+const PlantillasGaleria = lazy(() => import('@/pages/eventos-digitales/PlantillasGaleria'));
+const PlantillaPreview = lazy(() => import('@/pages/eventos-digitales/PlantillaPreview'));
 
 // Website
 const WebsiteEditorPage = lazy(() => import('@/pages/website/WebsiteEditorPage'));
@@ -75,6 +78,9 @@ export const dashboardRoutes = [
   // Eventos Digitales (protegidos, solo admin, requiere módulo eventos-digitales)
   protectedRoute('eventos-digitales', EventosPage, { requiredRole: ROLES.ADMIN_ONLY, requiredModule: 'eventos-digitales' }),
   protectedRoute('eventos-digitales/nuevo', EventoFormPage, { requiredRole: ROLES.ADMIN_ONLY, requiredModule: 'eventos-digitales' }),
+  protectedRoute('eventos-digitales/plantillas', PlantillasPage, { requiredRole: ROLES.ADMIN_ONLY, requiredModule: 'eventos-digitales' }),
+  protectedRoute('eventos-digitales/plantillas/galeria', PlantillasGaleria, { requiredRole: ROLES.ADMIN_ONLY, requiredModule: 'eventos-digitales' }),
+  protectedRoute('eventos-digitales/plantillas/preview/:id', PlantillaPreview, { requiredRole: ROLES.ADMIN_ONLY, requiredModule: 'eventos-digitales' }),
   protectedRoute('eventos-digitales/:id', EventoDetailPage, { requiredRole: ROLES.ADMIN_ONLY, requiredModule: 'eventos-digitales' }),
   protectedRoute('eventos-digitales/:id/editar', EventoFormPage, { requiredRole: ROLES.ADMIN_ONLY, requiredModule: 'eventos-digitales' }),
   protectedRoute('eventos-digitales/:id/editor', InvitacionEditorPage, { requiredRole: ROLES.ADMIN_ONLY, requiredModule: 'eventos-digitales' }),

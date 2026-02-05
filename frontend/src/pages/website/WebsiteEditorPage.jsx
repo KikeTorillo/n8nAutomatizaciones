@@ -130,7 +130,7 @@ function WebsiteEditorContent() {
       >
         <div className="flex-1 flex overflow-hidden">
           {/* Sidebar */}
-          <SidebarContainer onOpenTemplates={() => setMostrarTemplates(true)} />
+          <SidebarContainer />
 
           {/* Canvas */}
           <CanvasContainer />

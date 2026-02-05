@@ -12,3 +12,8 @@ export {
   getBlockDefaults,
   getBlockConfig,
 } from './invitacionBlocks';
+
+export {
+  TEMAS_POR_TIPO,
+  COLOR_FIELDS,
+} from './themeConfig';

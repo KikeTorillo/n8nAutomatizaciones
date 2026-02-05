@@ -8,17 +8,17 @@
  * @since 2026-02-03
  */
 
-import { memo, useMemo } from 'react';
+import { memo, useMemo, useCallback } from 'react';
 import { useEditor } from '../context';
 import { Drawer } from '@/components/ui';
-import { BlockPalette } from '@/components/editor-framework';
+import { BlockPalette, ThemeEditorPanel } from '@/components/editor-framework';
 import PageManager from '../components/PageManager';
-import ThemeEditor from '../components/ThemeEditor';
 import PropertiesPanel from '../components/PropertiesPanel';
 import {
   CATEGORIAS_WEBSITE,
   normalizarBloques,
 } from '../config/blockConfig';
+import { TEMAS_PREDEFINIDOS, COLOR_FIELDS, FONT_FIELDS } from '../config/themeConfig';
 
 /**
  * DrawersContainer - Drawers móviles para el editor
@@ -119,22 +119,36 @@ function DrawersContainer() {
         subtitle="Personaliza colores y fuentes"
         size="lg"
       >
-        <ThemeEditor
-          config={config}
-          onActualizar={(tema) =>
-            actualizarConfig.mutateAsync({
+        <ThemeEditorPanel
+          colorFields={COLOR_FIELDS}
+          currentColors={{
+            primario: config?.tema?.colores?.primario || '#4F46E5',
+            secundario: config?.tema?.colores?.secundario || '#6366F1',
+            fondo: config?.tema?.colores?.fondo || '#FFFFFF',
+            texto: config?.tema?.colores?.texto || '#1F2937',
+          }}
+          fontFields={FONT_FIELDS}
+          currentFonts={{
+            fuente_titulos: config?.tema?.fuente_titulos || 'inter',
+            fuente_cuerpo: config?.tema?.fuente_cuerpo || 'inter',
+          }}
+          presetThemes={TEMAS_PREDEFINIDOS}
+          onSave={async ({ colores, fuentes }) => {
+            await actualizarConfig.mutateAsync({
               id: config.id,
               data: {
                 version: config.version,
-                color_primario: tema.colores.primario,
-                color_secundario: tema.colores.secundario,
-                color_fondo: tema.colores.fondo,
-                color_texto: tema.colores.texto,
-                fuente_titulos: tema.fuente_titulos,
-                fuente_cuerpo: tema.fuente_cuerpo,
+                color_primario: colores.primario,
+                color_secundario: colores.secundario,
+                color_fondo: colores.fondo,
+                color_texto: colores.texto,
+                fuente_titulos: fuentes?.fuente_titulos,
+                fuente_cuerpo: fuentes?.fuente_cuerpo,
               },
-            })
-          }
+            });
+          }}
+          title="Tema"
+          subtitle="Personaliza colores y tipografía"
         />
       </Drawer>
 

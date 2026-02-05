@@ -19,7 +19,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { BackButton } from '@/components/ui';
-import TemplateGallery from './TemplateGallery';
+import WebsiteTemplateGallery from './WebsiteTemplateGallery';
 import AIWizardModal from './AIWizard/AIWizardModal';
 
 /**
@@ -135,7 +135,7 @@ function EmptyState({
       </div>
 
       {/* Modals */}
-      <TemplateGallery
+      <WebsiteTemplateGallery
         isOpen={mostrarTemplates}
         onClose={() => setMostrarTemplates(false)}
         onTemplateApplied={() => setMostrarTemplates(false)}

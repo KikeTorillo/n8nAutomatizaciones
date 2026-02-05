@@ -1,4 +1,4 @@
-import { LayoutDashboard, Store, Palette, Settings } from 'lucide-react';
+import { LayoutDashboard, Store, Settings } from 'lucide-react';
 import { GenericNavTabs } from '@/components/ui';
 
 /**
@@ -6,11 +6,11 @@ import { GenericNavTabs } from '@/components/ui';
  *
  * Dashboard ahora incluye el listado de organizaciones consolidado
  * Planes se accede desde Home → Suscripciones
+ * Plantillas se movieron a eventos-digitales/plantillas
  */
 const NAV_ITEMS = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: '/superadmin' },
     { id: 'marketplace', label: 'Marketplace', icon: Store, path: '/superadmin/marketplace' },
-    { id: 'plantillas', label: 'Plantillas', icon: Palette, path: '/superadmin/plantillas-eventos' },
     { id: 'entitlements', label: 'Entitlements', icon: Settings, path: '/superadmin/entitlements-plataforma' },
 ];
 

@@ -21,7 +21,7 @@ import {
 import { BLOCK_CONFIGS, BLOCK_NAMES } from '../config';
 import { EDITORES_BLOQUE } from '../components/blocks';
 import { useInvitacionEditor } from '../context';
-import UnsplashModal from '@/pages/website/components/UnsplashPicker/UnsplashModal';
+import { UnsplashModal } from '@/components/shared/media/UnsplashPicker';
 import { useUploadArchivo } from '@/hooks/utils';
 import { useToast } from '@/hooks/utils';
 

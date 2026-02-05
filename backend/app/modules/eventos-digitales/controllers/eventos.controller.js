@@ -23,10 +23,13 @@
  */
 
 const EventoModel = require('../models/evento.model');
+const PlantillaModel = require('../models/plantilla.model');
+const BloquesInvitacionModel = require('../models/bloquesInvitacion.model');
 const logger = require('../../../utils/logger');
 const { ResponseHelper, LimitesHelper } = require('../../../utils/helpers');
 const asyncHandler = require('../../../middleware/asyncHandler');
 const { ResourceNotFoundError } = require('../../../utils/errors');
+const { v4: uuidv4 } = require('uuid');
 
 class EventosController {
 
@@ -45,12 +48,33 @@ class EventosController {
             organizacion_id: organizacionId
         };
 
+        // Si viene plantilla_id pero no se envió tema (plantilla), obtenerlo de la plantilla
+        if (datos.plantilla_id && !datos.plantilla) {
+            const plantilla = await PlantillaModel.obtenerPorId(datos.plantilla_id);
+            if (plantilla?.tema) {
+                datos.plantilla = plantilla.tema;
+            }
+        }
+
         const evento = await EventoModel.crear(datos);
+
+        // Generar bloques iniciales si tiene plantilla
+        if (datos.plantilla_id || datos.plantilla) {
+            const bloquesIniciales = generarBloquesIniciales(datos.tipo, evento.nombre);
+            if (bloquesIniciales.length > 0) {
+                await BloquesInvitacionModel.guardarBloques(
+                    evento.id,
+                    bloquesIniciales,
+                    organizacionId
+                );
+            }
+        }
 
         logger.info('[EventosController.crear] Evento creado', {
             evento_id: evento.id,
             organizacion_id: organizacionId,
-            usuario_id: req.user.id
+            usuario_id: req.user.id,
+            con_plantilla: !!(datos.plantilla_id || datos.plantilla)
         });
 
         return ResponseHelper.success(res, evento, 'Evento creado exitosamente', 201);
@@ -170,6 +194,108 @@ class EventosController {
 
         return ResponseHelper.success(res, { id: parseInt(id) }, 'Evento eliminado exitosamente');
     });
+}
+
+/**
+ * Genera bloques iniciales según tipo de evento
+ */
+function generarBloquesIniciales(tipoEvento, nombreEvento) {
+    const bloques = [
+        {
+            id: uuidv4(),
+            tipo: 'hero_invitacion',
+            orden: 0,
+            visible: true,
+            contenido: {
+                titulo: nombreEvento || '',
+                subtitulo: '',
+                imagen_url: '',
+                alineacion: 'center',
+                imagen_overlay: 0.3,
+                tipo_overlay: 'uniforme',
+                color_overlay: '#000000',
+                altura: 'full',
+                mostrar_calendario: true,
+            },
+            estilos: {},
+        },
+        {
+            id: uuidv4(),
+            tipo: 'countdown',
+            orden: 1,
+            visible: true,
+            contenido: {
+                titulo: 'Faltan',
+                texto_finalizado: '¡Llegó el gran día!',
+                estilo: 'cajas',
+                mostrar_segundos: false,
+            },
+            estilos: {},
+        },
+        {
+            id: uuidv4(),
+            tipo: 'timeline',
+            orden: 2,
+            visible: true,
+            contenido: {
+                titulo_seccion: 'Itinerario del Día',
+                subtitulo_seccion: '',
+                items: [],
+                layout: 'alternado',
+                color_linea: '',
+            },
+            estilos: {},
+        },
+        {
+            id: uuidv4(),
+            tipo: 'ubicacion',
+            orden: 3,
+            visible: true,
+            contenido: {
+                titulo: 'Ubicación',
+                subtitulo: '',
+                mostrar_todas: true,
+                ubicacion_id: null,
+                mostrar_mapa: true,
+                altura_mapa: 300,
+            },
+            estilos: {},
+        },
+        {
+            id: uuidv4(),
+            tipo: 'rsvp',
+            orden: 4,
+            visible: true,
+            contenido: {
+                titulo: 'Confirma tu Asistencia',
+                subtitulo: '',
+                texto_confirmado: '¡Gracias por confirmar!',
+                texto_rechazado: 'Lamentamos que no puedas asistir',
+                pedir_restricciones: false,
+            },
+            estilos: {},
+        },
+    ];
+
+    // Agregar mesa de regalos para bodas, XV años y bautizos
+    if (['boda', 'xv_anos', 'bautizo'].includes(tipoEvento)) {
+        bloques.push({
+            id: uuidv4(),
+            tipo: 'mesa_regalos',
+            orden: 5,
+            visible: true,
+            contenido: {
+                titulo: 'Mesa de Regalos',
+                subtitulo: 'Tu presencia es nuestro mejor regalo',
+                usar_mesa_evento: true,
+                items: [],
+                layout: 'grid',
+            },
+            estilos: {},
+        });
+    }
+
+    return bloques;
 }
 
 module.exports = EventosController;

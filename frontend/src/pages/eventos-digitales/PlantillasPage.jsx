@@ -1,7 +1,6 @@
 /**
  * Página de gestión de plantillas de eventos digitales
- * Solo accesible para super_admin
- * Actualizado: 14 Dic 2025 - Plantillas temáticas
+ * Accesible para admins de organización con módulo eventos-digitales
  */
 
 import { useState } from 'react';
@@ -190,7 +189,7 @@ const FUENTES_DISPONIBLES = [
   'Lobster',
 ];
 
-function PlantillasEventos() {
+function PlantillasPage() {
   const toast = useToast();
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -889,4 +888,4 @@ function PlantillasEventos() {
   );
 }
 
-export default PlantillasEventos;
+export default PlantillasPage;

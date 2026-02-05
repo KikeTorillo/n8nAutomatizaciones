@@ -95,6 +95,16 @@ router.get('/evento/:slug/calendario',
 );
 
 /**
+ * GET /evento/:slug/felicitaciones
+ * Obtener felicitaciones aprobadas del evento
+ */
+router.get('/evento/:slug/felicitaciones',
+    rateLimiting.apiRateLimit,
+    validate(publicSchemas.obtenerFelicitaciones),
+    asyncHandler(PublicController.obtenerFelicitacionesPublicas)
+);
+
+/**
  * GET /evento/:slug/galeria
  * Obtener galería pública del evento
  * IMPORTANTE: Esta ruta debe estar ANTES de /evento/:slug/:token
@@ -133,6 +143,16 @@ router.get('/evento/:slug/:token/whatsapp',
     rateLimiting.apiRateLimit,
     validate(publicSchemas.obtenerInvitacion),
     asyncHandler(PublicController.generarMensajeWhatsApp)
+);
+
+/**
+ * POST /evento/:slug/:token/felicitacion
+ * Enviar felicitación como invitado
+ */
+router.post('/evento/:slug/:token/felicitacion',
+    rateLimiting.apiRateLimit,
+    validate(publicSchemas.crearFelicitacion),
+    asyncHandler(PublicController.crearFelicitacionPublica)
 );
 
 /**

@@ -33,7 +33,7 @@ import BreakpointBadge from './BreakpointBadge';
 // Componentes integrados externos
 import SEOTipsPanel from '../SEOTips/SEOTipsPanel';
 import AIWriterPopover from '../AIWriter/AIWriterPopover';
-import UnsplashModal from '../UnsplashPicker/UnsplashModal';
+import { UnsplashModal } from '@/components/shared/media/UnsplashPicker';
 import TimelineItemsDrawer from '../TimelineItemsDrawer';
 import ServiciosItemsDrawer from '../ServiciosItemsDrawer';
 

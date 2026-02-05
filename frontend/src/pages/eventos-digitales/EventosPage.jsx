@@ -137,11 +137,17 @@ function EventosPage() {
             </div>
           </div>
 
-          <Button onClick={() => navigate('/eventos-digitales/nuevo')} className="flex-1 sm:flex-none">
-            <Plus className="w-4 h-4 mr-2" />
-            <span className="hidden sm:inline">Nuevo Evento</span>
-            <span className="sm:hidden">Nuevo</span>
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => navigate('/eventos-digitales/plantillas')} className="flex-shrink-0">
+              <Palette className="w-4 h-4 mr-2" />
+              <span className="hidden sm:inline">Plantillas</span>
+            </Button>
+            <Button onClick={() => navigate('/eventos-digitales/plantillas/galeria')} className="flex-1 sm:flex-none">
+              <Plus className="w-4 h-4 mr-2" />
+              <span className="hidden sm:inline">Nuevo Evento</span>
+              <span className="sm:hidden">Nuevo</span>
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -320,7 +326,7 @@ function EventosPage() {
             <p className="text-gray-600 dark:text-gray-400 mb-4">
               Crea tu primera invitación digital para compartir con tus invitados
             </p>
-            <Button onClick={() => navigate('/eventos-digitales/nuevo')}>
+            <Button onClick={() => navigate('/eventos-digitales/plantillas/galeria')}>
               <Plus className="w-4 h-4 mr-2" />
               Crear Primer Evento
             </Button>

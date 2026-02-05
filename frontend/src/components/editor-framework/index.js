@@ -165,6 +165,9 @@ export {
   ElementPropertiesPanel,
   SectionPropertiesPanel,
   LayersPanel,
+  ThemeEditorPanel,
+  TemplateGalleryPanel,
+  TemplateGalleryModal,
 } from './panels';
 
 // Store Actions & Factories

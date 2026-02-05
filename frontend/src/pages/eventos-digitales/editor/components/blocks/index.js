@@ -19,6 +19,7 @@ export { default as GaleriaEditor } from './GaleriaEditor';
 export { default as VideoEditor } from './VideoEditor';
 export { default as TextoEditor } from './TextoEditor';
 export { default as SeparadorEditor } from './SeparadorEditor';
+export { default as FelicitacionesEditor } from './FelicitacionesEditor';
 
 // ========== MAPA DE EDITORES POR TIPO ==========
 
@@ -32,6 +33,7 @@ import GaleriaEditor from './GaleriaEditor';
 import VideoEditor from './VideoEditor';
 import TextoEditor from './TextoEditor';
 import SeparadorEditor from './SeparadorEditor';
+import FelicitacionesEditor from './FelicitacionesEditor';
 
 /**
  * Mapa de componentes editores por tipo de bloque
@@ -47,6 +49,7 @@ export const EDITORES_BLOQUE = {
   video: VideoEditor,
   texto: TextoEditor,
   separador: SeparadorEditor,
+  felicitaciones: FelicitacionesEditor,
 };
 
 /**

@@ -35,11 +35,6 @@ export {
 
 // Públicos (página de evento)
 export {
-  EventoCountdown,
-  EventoUbicaciones,
-  EventoRegalos,
-  EventoFelicitaciones,
-  EventoRSVP,
   BloqueRenderer,
   BLOQUES_PUBLICOS,
   getBloquePublico,

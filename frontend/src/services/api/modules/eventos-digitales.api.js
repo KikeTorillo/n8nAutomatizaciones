@@ -481,6 +481,27 @@ export const eventosDigitalesApi = {
   obtenerWhatsAppUrl: (slug, token) =>
     publicApiClient.get(`/public/evento/${slug}/${token}/whatsapp`),
 
+  // ========== Felicitaciones Públicas ==========
+
+  /**
+   * Obtener felicitaciones aprobadas del evento (sin auth)
+   * @param {string} slug
+   * @param {number} limite
+   * @returns {Promise<Object>}
+   */
+  obtenerFelicitacionesPublicas: (slug, limite = 50) =>
+    publicApiClient.get(`/public/evento/${slug}/felicitaciones`, { params: { limite } }),
+
+  /**
+   * Enviar felicitación como invitado (sin auth, requiere token)
+   * @param {string} slug
+   * @param {string} token
+   * @param {Object} data - { mensaje }
+   * @returns {Promise<Object>}
+   */
+  enviarFelicitacionPublica: (slug, token, data) =>
+    publicApiClient.post(`/public/evento/${slug}/${token}/felicitacion`, data),
+
   // ========== Galería Pública ==========
 
   /**

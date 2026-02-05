@@ -15,12 +15,12 @@ import {
   PropertiesPanel,
   useEditorLayoutContext,
   BlockPalette,
+  ThemeEditorPanel,
 } from '@/components/editor-framework';
 import { useInvitacionEditor } from '../context';
-import { BLOQUES_INVITACION, CATEGORIAS_BLOQUES, BLOCK_CONFIGS, BLOCK_NAMES } from '../config';
+import { BLOQUES_INVITACION, CATEGORIAS_BLOQUES, BLOCK_CONFIGS, BLOCK_NAMES, TEMAS_POR_TIPO, COLOR_FIELDS } from '../config';
 import { EDITORES_BLOQUE } from '../components/blocks';
-import InvitacionThemeEditor from '../components/InvitacionThemeEditor';
-import UnsplashModal from '@/pages/website/components/UnsplashPicker/UnsplashModal';
+import { UnsplashModal } from '@/components/shared/media/UnsplashPicker';
 import { useUploadArchivo } from '@/hooks/utils';
 import { useToast } from '@/hooks/utils';
 
@@ -173,10 +173,23 @@ function DrawersContainer() {
         title="Colores"
         subtitle="Personaliza los colores"
       >
-        <InvitacionThemeEditor
-          evento={evento}
-          onActualizar={handleActualizarPlantilla}
+        <ThemeEditorPanel
+          colorFields={COLOR_FIELDS}
+          currentColors={{
+            primario: evento?.plantilla?.color_primario || '#753572',
+            secundario: evento?.plantilla?.color_secundario || '#F59E0B',
+          }}
+          presetThemes={TEMAS_POR_TIPO[evento?.tipo] || TEMAS_POR_TIPO.otro}
+          onSave={async ({ colores }) => {
+            await handleActualizarPlantilla({
+              ...evento?.plantilla,
+              color_primario: colores.primario,
+              color_secundario: colores.secundario,
+            });
+          }}
           isLoading={estaActualizandoPlantilla}
+          title="Colores"
+          subtitle="Personaliza los colores de tu invitación"
         />
       </EditorDrawer>
 

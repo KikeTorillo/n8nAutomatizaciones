@@ -22,6 +22,7 @@ export { default as GaleriaCanvasBlock } from './GaleriaCanvasBlock';
 export { default as VideoCanvasBlock } from './VideoCanvasBlock';
 export { default as TextoCanvasBlock } from './TextoCanvasBlock';
 export { default as SeparadorCanvasBlock } from './SeparadorCanvasBlock';
+export { default as FelicitacionesCanvasBlock } from './FelicitacionesCanvasBlock';
 
 // ========== MAPA DE COMPONENTES POR TIPO ==========
 
@@ -35,6 +36,7 @@ import GaleriaCanvasBlock from './GaleriaCanvasBlock';
 import VideoCanvasBlock from './VideoCanvasBlock';
 import TextoCanvasBlock from './TextoCanvasBlock';
 import SeparadorCanvasBlock from './SeparadorCanvasBlock';
+import FelicitacionesCanvasBlock from './FelicitacionesCanvasBlock';
 
 /**
  * Mapa de componentes canvas por tipo de bloque
@@ -50,6 +52,7 @@ export const CANVAS_BLOCKS = {
   video: VideoCanvasBlock,
   texto: TextoCanvasBlock,
   separador: SeparadorCanvasBlock,
+  felicitaciones: FelicitacionesCanvasBlock,
 };
 
 /**

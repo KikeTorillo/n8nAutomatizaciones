@@ -23,6 +23,7 @@ const bloqueSchema = Joi.object({
         'video',
         'texto',
         'faq',
+        'felicitaciones',
         'separador',
         'seccion_libre' // Modo libre (Wix-style)
     ),
@@ -51,6 +52,7 @@ const agregarBloqueSchema = Joi.object({
         'video',
         'texto',
         'faq',
+        'felicitaciones',
         'separador',
         'seccion_libre' // Modo libre (Wix-style)
     ),

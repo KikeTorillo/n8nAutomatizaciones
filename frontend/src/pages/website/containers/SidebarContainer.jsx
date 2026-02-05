@@ -5,29 +5,25 @@
  * Container para el panel lateral izquierdo del editor.
  * Incluye la barra de navegación y el panel secundario.
  *
- * @version 1.1.0 - Migrado a BlockPalette centralizado
+ * @version 1.2.0 - Migrado a ThemeEditorPanel + TemplateGalleryPanel
  * @since 2026-02-03
  */
 
-import { memo, useMemo } from 'react';
+import { memo, useMemo, useCallback } from 'react';
 import { Plus, FileText, Palette, Sparkles } from 'lucide-react';
-import { BlockPalette } from '@/components/editor-framework';
+import { BlockPalette, ThemeEditorPanel, TemplateGalleryPanel } from '@/components/editor-framework';
 import { useEditor } from '../context';
 import PageManager from '../components/PageManager';
-import ThemeEditor from '../components/ThemeEditor';
 import {
   CATEGORIAS_WEBSITE,
   normalizarBloques,
 } from '../config/blockConfig';
+import { TEMAS_PREDEFINIDOS, COLOR_FIELDS, FONT_FIELDS } from '../config/themeConfig';
 
 /**
  * SidebarContainer - Panel lateral izquierdo
- *
- * Renderiza:
- * - Barra de navegación vertical con iconos
- * - Panel secundario con contenido según panelActivo
  */
-function SidebarContainer({ onOpenTemplates }) {
+function SidebarContainer() {
   const {
     // Layout
     showSidebar,
@@ -42,6 +38,10 @@ function SidebarContainer({ onOpenTemplates }) {
     setPaginaActiva,
     tiposBloques,
     config,
+
+    // Templates
+    mostrarTemplates,
+    setMostrarTemplates,
 
     // Handlers
     handleAgregarBloque,
@@ -58,6 +58,35 @@ function SidebarContainer({ onOpenTemplates }) {
     () => normalizarBloques(tiposBloques),
     [tiposBloques]
   );
+
+  // Extraer colores actuales del config
+  const currentColors = useMemo(() => ({
+    primario: config?.tema?.colores?.primario || '#4F46E5',
+    secundario: config?.tema?.colores?.secundario || '#6366F1',
+    fondo: config?.tema?.colores?.fondo || '#FFFFFF',
+    texto: config?.tema?.colores?.texto || '#1F2937',
+  }), [config]);
+
+  const currentFonts = useMemo(() => ({
+    fuente_titulos: config?.tema?.fuente_titulos || 'inter',
+    fuente_cuerpo: config?.tema?.fuente_cuerpo || 'inter',
+  }), [config]);
+
+  // Handler de guardado de tema
+  const handleSaveTema = useCallback(async ({ colores, fuentes }) => {
+    await actualizarConfig.mutateAsync({
+      id: config.id,
+      data: {
+        version: config.version,
+        color_primario: colores.primario,
+        color_secundario: colores.secundario,
+        color_fondo: colores.fondo,
+        color_texto: colores.texto,
+        fuente_titulos: fuentes?.fuente_titulos,
+        fuente_cuerpo: fuentes?.fuente_cuerpo,
+      },
+    });
+  }, [actualizarConfig, config]);
 
   if (!showSidebar) {
     return null;
@@ -104,8 +133,12 @@ function SidebarContainer({ onOpenTemplates }) {
           <Palette className="w-5 h-5" />
         </button>
         <button
-          onClick={onOpenTemplates}
-          className="p-2 md:p-3 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-600 dark:text-gray-400 transition-colors"
+          onClick={() => openPanel(PANEL_TYPES.TEMPLATES)}
+          className={`p-2 md:p-3 rounded-lg transition-colors ${
+            panelActivo === PANEL_TYPES.TEMPLATES && showSecondaryPanel
+              ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
+              : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400'
+          }`}
           title="Templates"
         >
           <Sparkles className="w-5 h-5" />
@@ -136,22 +169,26 @@ function SidebarContainer({ onOpenTemplates }) {
             />
           )}
           {panelActivo === PANEL_TYPES.TEMA && (
-            <ThemeEditor
-              config={config}
-              onActualizar={(tema) =>
-                actualizarConfig.mutateAsync({
-                  id: config.id,
-                  data: {
-                    version: config.version,
-                    color_primario: tema.colores.primario,
-                    color_secundario: tema.colores.secundario,
-                    color_fondo: tema.colores.fondo,
-                    color_texto: tema.colores.texto,
-                    fuente_titulos: tema.fuente_titulos,
-                    fuente_cuerpo: tema.fuente_cuerpo,
-                  },
-                })
-              }
+            <ThemeEditorPanel
+              colorFields={COLOR_FIELDS}
+              currentColors={currentColors}
+              fontFields={FONT_FIELDS}
+              currentFonts={currentFonts}
+              presetThemes={TEMAS_PREDEFINIDOS}
+              onSave={handleSaveTema}
+              title="Tema"
+              subtitle="Personaliza colores y tipografía"
+            />
+          )}
+          {panelActivo === PANEL_TYPES.TEMPLATES && (
+            <TemplateGalleryPanel
+              templates={[]}
+              isLoading={false}
+              categories={[]}
+              onApply={() => {}}
+              onViewFullGallery={() => setMostrarTemplates(true)}
+              title="Templates"
+              emptyMessage="Usa la galería completa para explorar templates"
             />
           )}
         </aside>

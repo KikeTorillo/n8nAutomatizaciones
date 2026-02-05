@@ -22,6 +22,7 @@ const GaleriaPublico = lazy(() => import('./GaleriaPublico'));
 const VideoPublico = lazy(() => import('./VideoPublico'));
 const TextoPublico = lazy(() => import('./TextoPublico'));
 const SeparadorPublico = lazy(() => import('./SeparadorPublico'));
+const FelicitacionesPublico = lazy(() => import('./FelicitacionesPublico'));
 
 // Renderer principal
 export { default as BloqueRenderer } from './BloqueRenderer';
@@ -40,6 +41,7 @@ export const BLOQUES_PUBLICOS = {
   video: VideoPublico,
   texto: TextoPublico,
   separador: SeparadorPublico,
+  felicitaciones: FelicitacionesPublico,
 };
 
 /**
@@ -60,4 +62,5 @@ export {
   VideoPublico,
   TextoPublico,
   SeparadorPublico,
+  FelicitacionesPublico,
 };

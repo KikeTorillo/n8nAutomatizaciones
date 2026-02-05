@@ -20,6 +20,7 @@ import {
   Video,
   Type,
   Minus,
+  MessageSquare,
 } from 'lucide-react';
 
 // ========== CATEGORÍAS DE BLOQUES ==========
@@ -110,6 +111,13 @@ export const BLOQUES_INVITACION = [
     label: 'Mesa de Regalos',
     icon: Gift,
     descripcion: 'Enlaces a tiendas y registros',
+  },
+  {
+    tipo: 'felicitaciones',
+    categoria: 'interaccion',
+    label: 'Felicitaciones',
+    icon: MessageSquare,
+    descripcion: 'Libro de firmas y buenos deseos',
   },
 ];
 
@@ -280,6 +288,16 @@ export const BLOCK_CONFIGS = {
     ],
   },
 
+  felicitaciones: {
+    contenido: [
+      { key: 'titulo', label: 'Título', type: 'text', aiEnabled: true, placeholder: 'Libro de Firmas' },
+      { key: 'subtitulo', label: 'Subtítulo', type: 'textarea', aiEnabled: true, placeholder: 'Déjanos tus buenos deseos' },
+      { key: 'placeholder_mensaje', label: 'Placeholder del mensaje', type: 'text', placeholder: 'Escribe tus buenos deseos...' },
+      { key: 'texto_agradecimiento', label: 'Texto de agradecimiento', type: 'text', aiEnabled: true, placeholder: '¡Gracias por tus palabras!' },
+    ],
+    estilo: [],
+  },
+
   separador: {
     contenido: [
       { key: 'estilo', label: 'Estilo', type: 'select', options: [
@@ -367,6 +385,12 @@ export const BLOCK_DEFAULTS = {
     contenido: '',
     alineacion: 'center',
     tamano_fuente: 'normal',
+  },
+  felicitaciones: {
+    titulo: 'Libro de Firmas',
+    subtitulo: 'Déjanos tus buenos deseos',
+    placeholder_mensaje: 'Escribe tus buenos deseos...',
+    texto_agradecimiento: '¡Gracias por tus palabras!',
   },
   separador: {
     estilo: 'linea',

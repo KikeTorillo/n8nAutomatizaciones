@@ -78,7 +78,9 @@ const eventosSchemas = {
                 habilitar_seating_chart: Joi.boolean().optional(),
                 mensaje_bienvenida: Joi.string().max(500).optional().allow(null, ''),
                 mensaje_confirmacion: Joi.string().max(500).optional().allow(null, '')
-            }).optional()
+            }).optional(),
+
+            plantilla: Joi.object().optional()
         })
     },
 

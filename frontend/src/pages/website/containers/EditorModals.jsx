@@ -10,7 +10,7 @@
 
 import { memo } from 'react';
 import { useEditor } from '../context';
-import TemplateGallery from '../components/TemplateGallery';
+import WebsiteTemplateGallery from '../components/WebsiteTemplateGallery';
 import SlashMenu from '../components/SlashMenu';
 import AIWizardModal from '../components/AIWizard/AIWizardModal';
 import MobileEditorFAB from '../components/MobileEditorFAB';
@@ -53,7 +53,7 @@ function EditorModals() {
       )}
 
       {/* Template Gallery Modal */}
-      <TemplateGallery
+      <WebsiteTemplateGallery
         isOpen={mostrarTemplates}
         onClose={() => setMostrarTemplates(false)}
         onTemplateApplied={() => {

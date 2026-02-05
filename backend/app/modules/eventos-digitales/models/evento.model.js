@@ -56,10 +56,11 @@ class EventoModel {
                     portada_url,
                     galeria_urls,
                     configuracion,
+                    plantilla,
                     estado
                 ) VALUES (
                     $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
-                    $11, $12, $13, $14, $15
+                    $11, $12, $13, $14, $15, $16
                 )
                 RETURNING *
             `;
@@ -79,6 +80,7 @@ class EventoModel {
                 datos.portada_url || null,
                 datos.galeria_urls ? JSON.stringify(datos.galeria_urls) : '[]',
                 datos.configuracion ? JSON.stringify(datos.configuracion) : '{}',
+                datos.plantilla ? JSON.stringify(datos.plantilla) : '{}',
                 'borrador'
             ];
 

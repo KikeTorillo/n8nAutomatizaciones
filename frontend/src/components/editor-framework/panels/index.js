@@ -12,3 +12,6 @@ export { default as ElementsPalette } from './ElementsPalette';
 export { default as ElementPropertiesPanel } from './ElementPropertiesPanel';
 export { default as SectionPropertiesPanel } from './SectionPropertiesPanel';
 export { default as LayersPanel } from './LayersPanel';
+export { default as ThemeEditorPanel } from './ThemeEditorPanel';
+export { default as TemplateGalleryPanel } from './TemplateGalleryPanel';
+export { default as TemplateGalleryModal } from './TemplateGalleryModal';

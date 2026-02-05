@@ -37,11 +37,10 @@ Módulos autocontenidos con `manifest.json`: auth, core, agendamiento, inventari
 ```
 src/
 ├── components/
-│   ├── ui/                 # Atomic Design (TypeScript)
-│   │   ├── atoms/          # Button, Input, Badge, etc.
-│   │   ├── molecules/      # SearchInput, StatCard, etc.
-│   │   └── organisms/      # DataTable, Modal, FilterPanel, etc.
-│   └── editor-framework/   # Framework editores (bloques + posición libre)
+│   ├── ui/                 # Atomic Design (TypeScript): atoms, molecules, organisms
+│   ├── editor-framework/   # Framework editores compartido (ver sección abajo)
+│   └── shared/             # Componentes compartidos entre módulos
+│       └── media/          # UnsplashPicker (UnsplashModal, UnsplashGrid, useUnsplashSearch)
 ├── features/               # Módulos autocontenidos (auth)
 ├── hooks/                  # Hooks por dominio
 ├── pages/                  # Páginas por módulo
@@ -49,19 +48,24 @@ src/
 └── store/                  # Stores globales
 ```
 
-### Editor Framework
+### Editor Framework (`components/editor-framework/`)
 
-Soporta dos modos:
-- **Bloques**: Lista vertical de bloques arrastrables
-- **Posición Libre**: Secciones con elementos posicionados X/Y (estilo Wix)
+Framework compartido entre Website e Invitaciones. Soporta dos modos:
+- **Bloques**: Lista vertical de bloques arrastrables (useBlockEditor, useDndHandlers, BlockPalette)
+- **Posición Libre**: Secciones con elementos X/Y estilo Wix (FreePositionCanvas, createFreePositionStore)
 
-```javascript
-// Modo bloques
-import { useAutosave, useDndHandlers, BlockPalette } from '@/components/editor-framework';
+**Paneles unificados** (genéricos, parametrizados por props):
+- `ThemeEditorPanel` — Editor de colores/fuentes (Website: 4 colores + 2 fuentes, Invitaciones: 2 colores)
+- `TemplateGalleryPanel` — Panel compacto para sidebar
+- `TemplateGalleryModal` — Modal fullscreen con render props para cards/preview
 
-// Modo libre
-import { FreePositionCanvas, createFreePositionStore } from '@/components/editor-framework';
-```
+**Wrappers por módulo** (data fetching + lógica específica):
+- `WebsiteTemplateGallery` → `pages/website/components/`
+- `InvitacionTemplateGallery` → `pages/eventos-digitales/editor/components/`
+
+**Config de tema por módulo** (constantes compartidas Sidebar↔Drawers):
+- `pages/website/config/themeConfig.js`
+- `pages/eventos-digitales/editor/config/themeConfig.js`
 
 ### Middlewares Chain
 ```
@@ -96,6 +100,7 @@ await RLSContextManager.withBypass(async (db) => { ... });        // JOINs, supe
 - **Colores**: Solo `primary-*` (primario: `#753572`)
 - **React.memo**: Obligatorio en componentes de lista/tabla
 - **Sanitizar**: Joi rechaza `""`, usar `undefined`
+- **Desacoplamiento**: Módulos NO importan entre sí. Código compartido va en `editor-framework/` o `components/shared/`
 
 ## Patrones
 

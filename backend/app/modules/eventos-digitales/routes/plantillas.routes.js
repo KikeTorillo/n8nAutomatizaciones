@@ -4,7 +4,7 @@
  * ====================================================================
  * Rutas para gestión de plantillas.
  * Lectura: autenticado (cualquier usuario con módulo activo)
- * Escritura: solo super_admin
+ * Escritura: admin de organización
  *
  * Endpoints:
  * GET    /plantillas                  - Listar plantillas
@@ -43,11 +43,11 @@ const middlewareLectura = [
 ];
 
 // ============================================================================
-// MIDDLEWARE PARA ESCRITURA (super_admin)
+// MIDDLEWARE PARA ESCRITURA (admin de organización)
 // ============================================================================
 const middlewareEscritura = [
     auth.authenticateToken,
-    auth.requireRole('super_admin'),
+    auth.requireRole('admin'),
     rateLimiting.apiRateLimit
 ];
 

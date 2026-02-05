@@ -45,6 +45,7 @@ const WEBSITE_PANEL_TYPES = {
   BLOQUES: 'bloques',
   PAGINAS: 'paginas',
   TEMA: 'tema',
+  TEMPLATES: 'templates',
   PROPIEDADES: 'propiedades',
 };
 
@@ -105,11 +106,12 @@ export function WebsiteEditorProvider({ children }) {
   // ========== LAYOUT HOOK ==========
 
   const layout = useEditorLayout({
-    panels: ['bloques', 'paginas', 'tema', 'propiedades'],
+    panels: ['bloques', 'paginas', 'tema', 'templates', 'propiedades'],
     defaultPanel: 'bloques',
     customPanelTypes: {
       PAGINAS: 'paginas',
       TEMA: 'tema',
+      TEMPLATES: 'templates',
     },
   });
 

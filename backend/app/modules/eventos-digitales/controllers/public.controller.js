@@ -30,6 +30,7 @@
 const EventoModel = require('../models/evento.model');
 const InvitadoModel = require('../models/invitado.model');
 const MesaRegalosModel = require('../models/mesa-regalos.model');
+const FelicitacionModel = require('../models/felicitacion.model');
 const FotoEventoModel = require('../models/foto.model');
 const storageService = require('../../../services/storage');
 const logger = require('../../../utils/logger');
@@ -333,6 +334,80 @@ class PublicController {
         res.setHeader('Content-Type', resultado.contentType);
         res.setHeader('Content-Disposition', `inline; filename="${resultado.filename}"`);
         return res.send(resultado.buffer);
+    });
+
+    // ========================================================================
+    // FELICITACIONES PÚBLICAS
+    // ========================================================================
+
+    /**
+     * Obtener felicitaciones aprobadas del evento
+     * GET /api/v1/public/evento/:slug/felicitaciones
+     */
+    static obtenerFelicitacionesPublicas = asyncHandler(async (req, res) => {
+        const { slug } = req.params;
+        const { pagina = 1, limite = 20 } = req.query;
+
+        const evento = await EventoModel.obtenerPorSlug(slug);
+
+        if (!evento) {
+            throw new ResourceNotFoundError('Evento');
+        }
+
+        const felicitaciones = await FelicitacionModel.obtenerPublicas(
+            evento.id,
+            parseInt(limite)
+        );
+
+        return ResponseHelper.success(res, {
+            felicitaciones,
+            total: felicitaciones.length
+        });
+    });
+
+    /**
+     * Enviar felicitación como invitado
+     * POST /api/v1/public/evento/:slug/:token/felicitacion
+     */
+    static crearFelicitacionPublica = asyncHandler(async (req, res) => {
+        const { slug, token } = req.params;
+        const { mensaje } = req.body;
+
+        // Verificar invitado por token
+        const invitado = await InvitadoModel.obtenerPorToken(token);
+
+        if (!invitado) {
+            throw new ResourceNotFoundError('Invitación');
+        }
+
+        if (invitado.evento_slug !== slug) {
+            throw new ValidationError('Invitación no corresponde a este evento');
+        }
+
+        const evento = await EventoModel.obtenerPorSlug(slug);
+
+        if (!evento) {
+            throw new ResourceNotFoundError('Evento');
+        }
+
+        const felicitacion = await FelicitacionModel.crearPublica(
+            evento.id,
+            invitado.id,
+            invitado.nombre,
+            mensaje
+        );
+
+        if (!felicitacion) {
+            throw new ValidationError('No se pudo enviar la felicitación');
+        }
+
+        logger.info('[PublicController.crearFelicitacionPublica] Felicitación enviada', {
+            slug,
+            evento_id: evento.id,
+            invitado_id: invitado.id
+        });
+
+        return ResponseHelper.success(res, felicitacion, '¡Felicitación enviada!', 201);
     });
 
     // ========================================================================
