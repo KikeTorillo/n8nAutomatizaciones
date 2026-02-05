@@ -22,8 +22,6 @@
     "status": "docker compose -f docker-compose.dev.yml ps",
     "clean": "docker compose -f docker-compose.dev.yml down --volumes --remove-orphans && docker system prune -f",
     "clean:data": "docker compose -f docker-compose.dev.yml down --volumes --remove-orphans && sudo rm -rf ./data/postgres ./data/n8n ./data/pgadmin ./data/redis && docker system prune -f",
-    "odoo:init": "docker compose -f docker-compose.dev.yml up -d odoo-postgres && sleep 5 && docker compose -f docker-compose.dev.yml run --rm odoo -- -i base -d odoo --stop-after-init && docker compose -f docker-compose.dev.yml up -d odoo",
-    "odoo:clean": "docker compose -f docker-compose.dev.yml stop odoo odoo-postgres && sudo rm -rf ./data/odoo-postgres ./data/odoo-data && echo 'Odoo limpiado'",
     "clean:data:ai": "docker compose -f docker-compose.dev.yml down --volumes --remove-orphans && sudo rm -rf ./data/postgres ./data/n8n ./data/pgadmin ./data/redis ./data/qdrant && docker system prune -f",
     "fresh:clean": "npm run clean:data && docker compose -f docker-compose.dev.yml up -d --build",
     "backup:db": "docker exec postgres_db pg_dumpall -U admin > backup_$(date +%Y%m%d_%H%M%S).sql",

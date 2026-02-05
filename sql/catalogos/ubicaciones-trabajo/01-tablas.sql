@@ -2,7 +2,7 @@
 -- MÓDULO CATÁLOGOS: UBICACIONES DE TRABAJO
 -- ====================================================================
 -- Catálogo de oficinas/locaciones para trabajo híbrido
--- GAP-003 vs Odoo 19 - Enero 2026
+-- Enero 2026
 -- Permite asignar ubicación diferente por día de la semana a empleados
 -- ====================================================================
 
@@ -154,7 +154,7 @@ CREATE TRIGGER trigger_ubicaciones_trabajo_updated
 COMMENT ON TABLE ubicaciones_trabajo IS
 'Catálogo de ubicaciones de trabajo para soporte de trabajo híbrido.
 Cada profesional puede tener una ubicación diferente para cada día de la semana.
-GAP-003 vs Odoo 19 - Enero 2026';
+Enero 2026';
 
 COMMENT ON COLUMN ubicaciones_trabajo.codigo IS
 'Código único de la ubicación dentro de la organización. Ej: OFC-CDMX, HO, CLI-ABC';

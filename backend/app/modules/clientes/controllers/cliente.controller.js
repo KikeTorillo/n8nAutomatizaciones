@@ -3,7 +3,7 @@
  * CONTROLLER DE CLIENTES - MÓDULO CORE
  * ====================================================================
  *
- * Controller de Cliente como módulo Core compartido (patrón Odoo/Salesforce).
+ * Controller de Cliente como módulo Core compartido (patrón CRM).
  * Gestión CRUD con aislamiento multi-tenant.
  *
  * Migrado desde modules/agendamiento a modules/core (Nov 2025)

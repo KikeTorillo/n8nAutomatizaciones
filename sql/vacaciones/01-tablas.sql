@@ -127,7 +127,7 @@ CREATE TABLE IF NOT EXISTS solicitudes_vacaciones (
 -- =====================================================
 -- TABLA: dias_festivos
 -- Descripción: Días festivos y días obligatorios por organización
--- GAP-002 vs Odoo 19: Soporte para días de presencia obligatoria
+-- Soporte para días de presencia obligatoria
 -- =====================================================
 CREATE TABLE IF NOT EXISTS dias_festivos (
     id SERIAL PRIMARY KEY,

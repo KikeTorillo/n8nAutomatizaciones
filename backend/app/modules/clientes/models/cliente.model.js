@@ -3,7 +3,7 @@
  * MODELO CLIENTE - MÓDULO CORE
  * ====================================================================
  *
- * Modelo de Cliente como módulo Core compartido (patrón Odoo/Salesforce).
+ * Modelo de Cliente como módulo Core compartido (patrón CRM).
  * Los clientes son un recurso transversal usado por:
  * - Agendamiento (citas)
  * - POS (ventas)

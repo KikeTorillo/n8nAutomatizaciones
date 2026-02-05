@@ -4,7 +4,7 @@
  * @version 1.0.0
  * @date Enero 2026
  *
- * GAP-004 vs Odoo 19: Clasificación de empleados para nómina
+ * Clasificación de empleados para nómina
  */
 
 const Joi = require('joi');

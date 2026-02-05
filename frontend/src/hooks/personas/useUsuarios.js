@@ -3,12 +3,12 @@
  * HOOK - useUsuarios
  * ====================================================================
  *
- * Hook para gestión de usuarios estilo Odoo (res.users)
+ * Hook para gestión de usuarios
  * Fase 5.2 - Diciembre 2025
  *
- * Modelo Odoo:
- * - Usuario = acceso al sistema (res.users)
- * - Profesional = datos laborales (hr.employee)
+ * Modelo:
+ * - Usuario = acceso al sistema
+ * - Profesional = datos laborales
  * - Relación 1:1 opcional
  */
 
@@ -89,7 +89,6 @@ export function useUsuariosSinProfesional() {
 
 /**
  * Hook para crear usuario directamente (sin invitación)
- * Similar a crear res.users en Odoo
  */
 export function useCrearUsuarioDirecto() {
   const queryClient = useQueryClient();

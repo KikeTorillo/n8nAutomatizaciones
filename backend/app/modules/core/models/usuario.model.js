@@ -805,12 +805,11 @@ class UsuarioModel {
     }
 
     // ====================================================================
-    // GESTIÓN DE USUARIOS ESTILO ODOO - Dic 2025
+    // GESTIÓN DE USUARIOS - Dic 2025
     // ====================================================================
 
     /**
      * Crear usuario directamente sin profesional (contador, auditor, etc.)
-     * Similar a res.users en Odoo
      *
      * @param {Object} userData - Datos del usuario
      * @param {number} organizacionId - ID de la organización

@@ -4,7 +4,7 @@
  *
  * @module profesionales/controllers/categorias-pago
  * @description Endpoints para gestión de categorías de nómina
- * GAP-004 vs Odoo 19: Clasificación de empleados para nómina
+ * Clasificación de empleados para nómina
  */
 
 const { createCrudController } = require('../../../utils/BaseCrudController');

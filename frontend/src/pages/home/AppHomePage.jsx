@@ -44,7 +44,7 @@ import { NotificacionesBell } from '@/components/notificaciones';
 import { TrialBanner } from '@/components/trial';
 
 /**
- * AppHomePage - Página principal con App Launcher estilo Odoo
+ * AppHomePage - Página principal con App Launcher
  * Muestra todas las aplicaciones disponibles en un grid visual
  */
 function AppHomePage() {

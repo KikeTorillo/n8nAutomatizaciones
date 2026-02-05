@@ -4,7 +4,7 @@
  *
  * @module catalogos/controllers/ubicaciones-trabajo
  * @description Endpoints para gestión de ubicaciones (trabajo híbrido)
- * GAP-003 vs Odoo 19: Soporte para trabajo híbrido
+ * Soporte para trabajo híbrido
  */
 
 const { createCrudController } = require('../../../utils/BaseCrudController');

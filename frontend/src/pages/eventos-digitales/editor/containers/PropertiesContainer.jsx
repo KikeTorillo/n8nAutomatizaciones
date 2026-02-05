@@ -5,17 +5,18 @@
  * Panel de propiedades para editar el bloque seleccionado.
  * Responsive: solo visible en desktop, en móvil/tablet se usa drawer.
  *
- * @version 1.2.0 - Tema centralizado desde context
+ * @version 1.3.0 - Agregado UnsplashModal
  * @since 2026-02-03
  * @updated 2026-02-04
  */
 
-import { memo, useMemo } from 'react';
+import { memo, useMemo, useState, useCallback } from 'react';
 import { X } from 'lucide-react';
 import { PropertiesPanel, useEditorLayoutContext } from '@/components/editor-framework';
 import { BLOCK_CONFIGS, BLOCK_NAMES } from '../config';
 import { EDITORES_BLOQUE } from '../components/blocks';
 import { useInvitacionEditor } from '../context';
+import UnsplashModal from '@/pages/website/components/UnsplashPicker/UnsplashModal';
 
 /**
  * PropertiesContainer - Panel de propiedades (solo desktop)
@@ -35,6 +36,32 @@ function PropertiesContainer() {
     propertiesAsDrawer,
   } = useEditorLayoutContext();
 
+  // ========== UNSPLASH STATE ==========
+  const [unsplashState, setUnsplashState] = useState({
+    isOpen: false,
+    fieldKey: null,
+  });
+
+  const openUnsplash = useCallback((fieldKey) => {
+    setUnsplashState({ isOpen: true, fieldKey });
+  }, []);
+
+  const closeUnsplash = useCallback(() => {
+    setUnsplashState({ isOpen: false, fieldKey: null });
+  }, []);
+
+  const handleUnsplashSelect = useCallback(
+    (url) => {
+      if (bloqueSeleccionadoCompleto && unsplashState.fieldKey) {
+        handleActualizarBloque(bloqueSeleccionadoCompleto.id, {
+          [unsplashState.fieldKey]: url,
+        });
+      }
+      closeUnsplash();
+    },
+    [bloqueSeleccionadoCompleto, unsplashState.fieldKey, handleActualizarBloque, closeUnsplash]
+  );
+
   // Datos adicionales para editores específicos
   const editorProps = useMemo(
     () => ({
@@ -42,8 +69,9 @@ function PropertiesContainer() {
       ubicaciones: evento?.ubicaciones || [],
       galeria: evento?.galeria || [],
       mesaRegalos: evento?.mesa_regalos || null,
+      onOpenUnsplash: openUnsplash,
     }),
-    [tema, evento]
+    [tema, evento, openUnsplash]
   );
 
   // Obtener editor específico si existe
@@ -68,46 +96,56 @@ function PropertiesContainer() {
   }
 
   return (
-    <aside className="w-80 bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden flex-shrink-0">
-      {/* Header */}
-      <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-        <div>
-          <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
-            {BLOCK_NAMES[bloqueSeleccionadoCompleto.tipo] || 'Propiedades'}
-          </h2>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-            Edita las propiedades del bloque
-          </p>
+    <>
+      <aside className="w-80 bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden flex-shrink-0">
+        {/* Header */}
+        <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+          <div>
+            <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
+              {BLOCK_NAMES[bloqueSeleccionadoCompleto.tipo] || 'Propiedades'}
+            </h2>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+              Edita las propiedades del bloque
+            </p>
+          </div>
+          <button
+            onClick={() => setMostrarPropiedades(false)}
+            className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
-        <button
-          onClick={() => setMostrarPropiedades(false)}
-          className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded"
-        >
-          <X className="w-5 h-5" />
-        </button>
-      </div>
 
-      {/* Content */}
-      <div className="flex-1 overflow-y-auto">
-        {EditorComponent ? (
-          <EditorComponent
-            contenido={{
-              ...bloqueSeleccionadoCompleto.contenido,
-              _bloqueId: bloqueSeleccionadoCompleto.id,
-            }}
-            estilos={bloqueSeleccionadoCompleto.estilos || {}}
-            onChange={handleChange}
-            {...editorProps}
-          />
-        ) : (
-          <PropertiesPanel
-            bloque={bloqueSeleccionadoCompleto}
-            onSave={handleChange}
-            blockConfigs={BLOCK_CONFIGS}
-          />
-        )}
-      </div>
-    </aside>
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto">
+          {EditorComponent ? (
+            <EditorComponent
+              contenido={{
+                ...bloqueSeleccionadoCompleto.contenido,
+                _bloqueId: bloqueSeleccionadoCompleto.id,
+              }}
+              estilos={bloqueSeleccionadoCompleto.estilos || {}}
+              onChange={handleChange}
+              {...editorProps}
+            />
+          ) : (
+            <PropertiesPanel
+              bloque={bloqueSeleccionadoCompleto}
+              onSave={handleChange}
+              blockConfigs={BLOCK_CONFIGS}
+            />
+          )}
+        </div>
+      </aside>
+
+      {/* Unsplash Modal */}
+      <UnsplashModal
+        isOpen={unsplashState.isOpen}
+        onClose={closeUnsplash}
+        onSelect={handleUnsplashSelect}
+        industria="eventos"
+      />
+    </>
   );
 }
 

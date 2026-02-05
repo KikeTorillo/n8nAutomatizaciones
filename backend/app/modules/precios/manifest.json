@@ -2,7 +2,7 @@
   "name": "precios",
   "display_name": "Listas de Precios",
   "version": "1.0.0",
-  "description": "Gestión de listas de precios estilo Odoo con soporte multi-moneda",
+  "description": "Gestión de listas de precios con soporte multi-moneda",
   "depends": ["core", "inventario", "clientes"],
   "dependencies_hard": {
     "inventario": "Requiere productos para definir precios",

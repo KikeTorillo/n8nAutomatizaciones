@@ -4,7 +4,7 @@
  * @version 1.0.1
  * @date Enero 2026
  *
- * GAP-004 vs Odoo 19: Clasificación de empleados para compensación
+ * Clasificación de empleados para compensación
  */
 
 const RLSContextManager = require('../../../utils/rlsContextManager');

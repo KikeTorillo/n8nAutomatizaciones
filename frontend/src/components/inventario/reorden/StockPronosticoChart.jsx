@@ -1,7 +1,7 @@
 /**
  * Componente de Grafico de Pronostico de Stock
  * Muestra historico, lineas min/max, proyeccion y OC pendientes
- * Tipo Odoo - Modal al hacer clic en producto
+ * Modal al hacer clic en producto
  * Fecha: 30 Diciembre 2025
  */
 
@@ -43,7 +43,7 @@ ChartJS.register(
 );
 
 /**
- * Grafico de pronostico de stock tipo Odoo
+ * Grafico de pronostico de stock
  * @param {Object} props
  * @param {number} props.productoId - ID del producto
  * @param {number} props.dias - Dias de historico (default: 30)

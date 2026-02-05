@@ -5,7 +5,7 @@ import { useToast } from '@/hooks/utils';
 
 /**
  * Hook para gestionar motivos de salida
- * GAP-001 vs Odoo 19: Catálogo dinámico de razones de terminación
+ * Catálogo dinámico de razones de terminación
  */
 
 // Query Keys

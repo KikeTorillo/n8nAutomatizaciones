@@ -38,7 +38,7 @@ const onboardingSchema = z.object({
     .transform((val) => parseInt(val, 10))
     .refine((val) => !isNaN(val) && val > 0, 'Selecciona una ciudad'),
   soy_profesional: z.boolean().default(true),
-  // Módulos seleccionados (ninguno por defecto - estilo Odoo)
+  // Módulos seleccionados (ninguno por defecto)
   modulos: z.record(z.string(), z.boolean()).default({})
 });
 
@@ -276,7 +276,7 @@ function OnboardingPage() {
             </label>
           </div>
 
-          {/* Selector de Módulos (estilo Odoo) */}
+          {/* Selector de Módulos */}
           {/* Solo mostrar módulos habilitados en el plan del usuario */}
           <div className="border-t border-gray-200 dark:border-gray-700 pt-5">
             <ModuloSelector

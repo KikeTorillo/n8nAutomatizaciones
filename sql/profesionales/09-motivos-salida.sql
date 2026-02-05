@@ -3,7 +3,7 @@
 -- ====================================================================
 -- Catálogo dinámico de razones de terminación de empleados
 -- Similar a tipos_bloqueo: tipos del sistema + tipos personalizados
--- GAP-001 vs Odoo 19 - Enero 2026
+-- Enero 2026
 -- ====================================================================
 
 -- ============================================================
@@ -183,7 +183,7 @@ COMMENT ON TABLE motivos_salida IS
 'Catálogo dinámico de motivos de salida/terminación de empleados.
 Soporta tipos del sistema (globales) y tipos personalizados por organización.
 Similar a tipos_bloqueo pero para gestión de bajas de empleados.
-GAP-001 vs Odoo 19 - Enero 2026';
+Enero 2026';
 
 COMMENT ON COLUMN motivos_salida.codigo IS
 'Código único del motivo (minúsculas, números, guiones bajos). Ej: renuncia_voluntaria';

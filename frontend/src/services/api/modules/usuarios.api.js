@@ -31,7 +31,7 @@ export const usuariosApi = {
    */
   actualizar: (id, data) => apiClient.put(`/usuarios/${id}`, data),
 
-  // ========== Gestión de Usuarios Estilo Odoo - Dic 2025 ==========
+  // ========== Gestión de Usuarios - Dic 2025 ==========
 
   /**
    * Listar usuarios con filtros y paginación

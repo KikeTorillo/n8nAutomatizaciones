@@ -5,7 +5,7 @@ const logger = require('../../../utils/logger');
 
 /**
  * Controller para gestión de Sesiones de Caja POS
- * Ene 2026: Implementación basada en gaps vs Odoo POS
+ * Ene 2026: Implementación inicial
  */
 class SesionesCajaController {
 

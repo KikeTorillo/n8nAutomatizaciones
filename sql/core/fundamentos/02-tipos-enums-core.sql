@@ -35,7 +35,7 @@
 -- ====================================================================
 -- DEPRECATED (Ene 2026): -- 💰 ENUM PLAN_TIPO - PLANES DE SUBSCRIPCIÓN SAAS
 -- DEPRECATED (Ene 2026): -- ====================================================================
--- DEPRECATED (Ene 2026): -- Modelo de Negocio Estilo Odoo (Nov 2025):
+-- DEPRECATED (Ene 2026): -- Modelo de Negocio (Nov 2025):
 -- DEPRECATED (Ene 2026): -- • free: 1 App gratis a elegir, usuarios ilimitados
 -- DEPRECATED (Ene 2026): -- • pro: Todas las apps, $249 MXN/usuario/mes
 -- DEPRECATED (Ene 2026): -- • custom: Plan personalizado (precio negociado)

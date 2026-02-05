@@ -45,20 +45,6 @@ Usar **Cipher** via MCP:
 | qdrant | 6333 | Vector DB (embeddings) |
 | ollama | 11434 | LLM local |
 | pgadmin | 8001 | Administración BD |
-| **odoo** | 8069 | Competencia (análisis gaps) |
-| odoo-postgres | 5433 | BD exclusiva para Odoo |
-
-> **Nota**: Odoo es solo para desarrollo/comparación. `npm run clean:data` NO borra datos de Odoo.
-
-### Credenciales Odoo 19 (análisis competitivo)
-| Campo | Valor |
-|-------|-------|
-| URL | http://localhost:8069 |
-| Email | admin |
-| Password | admin |
-| BD Postgres | odoo:odoo@odoo-postgres:5432/odoo |
-| Idioma | Español (América Latina) |
-| Módulos instalados | Ventas, CRM, Compras, Inventario, PdV, Facturación, Empleados, Calendario, Contactos, Conversaciones |
 
 ---
 

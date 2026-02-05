@@ -4,7 +4,7 @@
  * ====================================================================
  *
  * Rutas para gestión de Clientes como módulo Core compartido.
- * Siguiendo el patrón Odoo/Salesforce donde Clientes es transversal.
+ * Siguiendo el patrón CRM donde Clientes es transversal.
  *
  * Migrado desde modules/agendamiento/routes (Nov 2025)
  * ====================================================================

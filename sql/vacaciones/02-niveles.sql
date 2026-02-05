@@ -3,7 +3,7 @@
 -- Plan de Empleados Competitivo - Fase 3
 -- Enero 2026
 --
--- Ventaja competitiva vs Odoo:
+-- Características:
 -- - Escalas configurables por organización
 -- - Datos pre-cargados según LFT México (Reforma 2022)
 -- - Fórmula automática para calcular días

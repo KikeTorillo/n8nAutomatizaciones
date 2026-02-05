@@ -6,7 +6,7 @@ const { ErrorHelper } = require('../../../utils/helpers');
  * Model para Sesiones de Caja POS
  * Gestiona apertura/cierre de caja, movimientos de efectivo y validación de diferencias
  *
- * Ene 2026: Implementación inicial basada en gaps vs Odoo POS
+ * Ene 2026: Implementación inicial
  */
 class SesionesCajaModel {
 

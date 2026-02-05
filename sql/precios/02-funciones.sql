@@ -25,11 +25,10 @@
 --     ↓ (si no existe)
 -- Usar precio base del producto
 --
--- MODELO ODOO - REGLA CRÍTICA:
+-- REGLA CRÍTICA DE RESOLUCIÓN:
 -- Las reglas de precio NO se acumulan. Se selecciona UNA sola regla:
 -- - Si hay item específico (producto/categoría) → usar SOLO ese item
 -- - Si NO hay item → aplicar descuento_global de la lista
--- Ref: Odoo 17.0 Pricelists Documentation
 -- ====================================================================
 
 CREATE OR REPLACE FUNCTION obtener_precio_producto(
@@ -157,10 +156,9 @@ BEGIN
             lpi.cantidad_minima DESC
         LIMIT 1;
 
-        -- MODELO ODOO: Las reglas NO se acumulan.
+        -- Las reglas NO se acumulan:
         -- Si se encontró un item específico → usar SOLO ese precio (ignorar descuento_global)
         -- Si NO hay item específico pero hay descuento_global → aplicar descuento_global al precio base
-        -- Ref: https://www.odoo.com/documentation/17.0/applications/sales/sales/products_prices/prices/pricing.html
 
         IF v_precio_encontrado IS NULL AND v_descuento_global > 0 THEN
             v_precio_encontrado := v_precio_base * (1 - v_descuento_global / 100);

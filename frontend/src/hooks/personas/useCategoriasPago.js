@@ -5,7 +5,7 @@ import { useToast } from '@/hooks/utils';
 
 /**
  * Hook para gestionar categorías de pago
- * GAP-004 vs Odoo 19: Clasificación de empleados para nómina
+ * Clasificación de empleados para nómina
  */
 
 // Query Keys

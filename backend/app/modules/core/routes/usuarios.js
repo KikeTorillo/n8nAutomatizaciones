@@ -91,7 +91,7 @@ router.patch('/:id/desbloquear',
     UsuarioController.desbloquear
 );
 
-// ========== Gestión de Usuarios Estilo Odoo - Dic 2025 ==========
+// ========== Gestión de Usuarios - Dic 2025 ==========
 
 // Crear usuario directo (sin invitación)
 router.post('/directo',

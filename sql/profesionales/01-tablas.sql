@@ -37,7 +37,7 @@ CREATE TABLE profesionales (
     foto_url TEXT,                             -- URL de foto de perfil
 
     -- ====================================================================
-    -- 👤 SECCIÓN: INFORMACIÓN PERSONAL (estilo Odoo)
+    -- 👤 SECCIÓN: INFORMACIÓN PERSONAL
     -- ====================================================================
     fecha_nacimiento DATE,                     -- Para validar mayoría de edad
     documento_identidad VARCHAR(30),           -- Cédula, DNI, Pasaporte, etc.
@@ -248,9 +248,9 @@ FOREIGN KEY (responsable_rrhh_id) REFERENCES usuarios(id)
     ON UPDATE CASCADE;
 
 -- ====================================================================
--- 🔗 FOREIGN KEYS DIFERIDAS - GAPS VS ODOO 19 (Enero 2026)
+-- 🔗 FOREIGN KEYS DIFERIDAS - CATÁLOGOS (Enero 2026)
 -- ====================================================================
 -- NOTA: Las FKs a motivos_salida, categorias_pago y ubicaciones_trabajo
 -- están en el archivo 11-foreign-keys-gaps.sql que se ejecuta después
--- de crear las tablas de GAPs.
+-- de crear las tablas de catálogos.
 -- ====================================================================

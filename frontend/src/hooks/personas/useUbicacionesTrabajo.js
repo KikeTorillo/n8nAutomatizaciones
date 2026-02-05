@@ -5,7 +5,7 @@ import { useToast } from '@/hooks/utils';
 
 /**
  * Hook para gestionar ubicaciones de trabajo
- * GAP-003 vs Odoo 19: Soporte para trabajo híbrido
+ * Soporte para trabajo híbrido
  */
 
 // Query Keys

@@ -6,7 +6,7 @@
  * Hook para obtener la moneda del usuario y funciones de formateo.
  * Fase 4 - Multi-Moneda (Dic 2025)
  *
- * JERARQUÍA DE MONEDA (modelo Odoo):
+ * JERARQUÍA DE MONEDA:
  * 1. Sucursal del usuario (si tiene override) - para sucursales en otros países
  * 2. Organización (fallback) - moneda base del negocio
  *

@@ -1,6 +1,6 @@
 /**
  * ModuloSelector - Selector de módulos para onboarding
- * Dic 2025 - Estilo Odoo
+ * Dic 2025
  * Feb 2026 - Refactorizado para usar constantes centralizadas
  *
  * Permite al usuario seleccionar qué módulos quiere activar

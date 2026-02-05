@@ -3,16 +3,16 @@ const logger = require('../../../utils/logger');
 const { ErrorHelper } = require('../../../utils/helpers');
 
 /**
- * Model para gestión de reservas de stock - Arquitectura Superior
+ * Model para gestión de reservas de stock - Arquitectura SSOT
  *
- * PRINCIPIOS DE DISEÑO (Superior a Odoo):
+ * PRINCIPIOS DE DISEÑO:
  * 1. SSOT: Reservas solo en una tabla
  * 2. stock_disponible SIEMPRE calculado, NUNCA almacenado
  * 3. Validación atómica en PostgreSQL
  * 4. Soporte completo para variantes de producto
  *
- * @since Dic 2025 - Fase 1 Gaps Inventario
- * @version 2.0 - Arquitectura Superior (28 Dic 2025)
+ * @since Dic 2025 - Fase 1 Inventario
+ * @version 2.0 - Arquitectura SSOT (28 Dic 2025)
  */
 class ReservasModel {
 

@@ -3,7 +3,7 @@
  * MODEL - LISTAS DE PRECIOS
  * ====================================================================
  *
- * Gestión de listas de precios estilo Odoo.
+ * Gestión de listas de precios.
  * Módulo: Precios (Fase 5)
  *
  * FUNCIONALIDADES:

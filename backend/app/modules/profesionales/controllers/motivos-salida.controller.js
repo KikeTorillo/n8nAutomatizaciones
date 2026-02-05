@@ -4,7 +4,7 @@
  *
  * @module profesionales/controllers/motivos-salida
  * @description Endpoints para gestión de motivos de terminación
- * GAP-001 vs Odoo 19: Catálogo dinámico de razones de terminación
+ * Catálogo dinámico de razones de terminación
  */
 
 const { createCrudController } = require('../../../utils/BaseCrudController');

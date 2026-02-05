@@ -4,7 +4,7 @@
  * @version 1.0.0
  * @date Enero 2026
  *
- * GAP-003 vs Odoo 19: Soporte para trabajo híbrido
+ * Soporte para trabajo híbrido
  * Permite asignar ubicación diferente por día de la semana a empleados
  */
 

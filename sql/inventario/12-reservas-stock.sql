@@ -1,23 +1,15 @@
 -- ============================================================================
--- NEXO ERP: SISTEMA DE RESERVAS DE STOCK - ARQUITECTURA SUPERIOR
+-- NEXO ERP: SISTEMA DE RESERVAS DE STOCK - ARQUITECTURA SSOT
 -- ============================================================================
 -- Versión: 2.0
 -- Fecha: 28 Diciembre 2025
 --
--- PRINCIPIOS DE DISEÑO (Superior a Odoo):
+-- PRINCIPIOS DE DISEÑO:
 -- 1. SSOT (Single Source of Truth): Reservas solo en UNA tabla
 -- 2. stock_disponible SIEMPRE calculado, NUNCA almacenado
 -- 3. Validación atómica en PostgreSQL (no en aplicación)
--- 4. Concurrencia con SKIP LOCKED + retry (más robusto que NOWAIT)
+-- 4. Concurrencia con SKIP LOCKED + retry (robusto)
 -- 5. Soporte completo para variantes de producto
---
--- PROBLEMAS DE ODOO QUE EVITAMOS:
--- ❌ Odoo: reserved_quantity duplicado en stock.quant Y stock.move.line
--- ✅ Nexo: Reservas SOLO en reservas_stock
--- ❌ Odoo: Validación en Python (falible)
--- ✅ Nexo: Validación en PostgreSQL (atómica)
--- ❌ Odoo: FOR UPDATE NOWAIT (falla rápido, sin retry)
--- ✅ Nexo: FOR UPDATE SKIP LOCKED + backoff exponencial
 -- ============================================================================
 
 -- ============================================================================
@@ -77,7 +69,7 @@ CREATE TABLE IF NOT EXISTS reservas_stock (
     )
 );
 
-COMMENT ON TABLE reservas_stock IS 'Sistema de reservas unificado para productos y variantes. Arquitectura SSOT - superior a Odoo.';
+COMMENT ON TABLE reservas_stock IS 'Sistema de reservas unificado para productos y variantes. Arquitectura SSOT.';
 COMMENT ON COLUMN reservas_stock.variante_id IS 'FK a variante específica. Si es NULL, la reserva aplica al producto base.';
 COMMENT ON COLUMN reservas_stock.tipo_origen IS 'Origen de la reserva para trazabilidad y cancelación por lote.';
 COMMENT ON COLUMN reservas_stock.estado IS 'activa=vigente, confirmada=stock descontado, expirada/liberada/cancelada=stock liberado';
@@ -189,7 +181,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql STABLE;
 
-COMMENT ON FUNCTION stock_reservado IS 'Calcula cantidad reservada activa. SIEMPRE calculado, NUNCA almacenado (evita desincronización tipo Odoo).';
+COMMENT ON FUNCTION stock_reservado IS 'Calcula cantidad reservada activa. SIEMPRE calculado, NUNCA almacenado (evita desincronización).';
 
 -- ============================================================================
 -- FUNCIÓN: stock_disponible
@@ -298,7 +290,7 @@ COMMENT ON FUNCTION stock_info_completo IS 'Retorna información completa de sto
 -- ============================================================================
 -- FUNCIÓN: crear_reserva_atomica
 -- Descripción: Crea una reserva con validación atómica y concurrencia segura
--- Usa SKIP LOCKED para evitar bloqueos (superior a Odoo NOWAIT)
+-- Usa SKIP LOCKED para evitar bloqueos
 -- ============================================================================
 CREATE OR REPLACE FUNCTION crear_reserva_atomica(
     p_organizacion_id INTEGER,
@@ -363,7 +355,7 @@ BEGIN
     FROM productos WHERE id = v_producto_id_final;
 
     -- ========================================================================
-    -- LOOP DE REINTENTOS CON SKIP LOCKED (Superior a Odoo NOWAIT)
+    -- LOOP DE REINTENTOS CON SKIP LOCKED
     -- ========================================================================
     WHILE v_intentos < v_max_intentos AND NOT v_lock_acquired LOOP
         v_intentos := v_intentos + 1;
@@ -472,7 +464,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
-COMMENT ON FUNCTION crear_reserva_atomica IS 'Crea reserva con validación atómica y SKIP LOCKED para concurrencia segura. Superior a Odoo.';
+COMMENT ON FUNCTION crear_reserva_atomica IS 'Crea reserva con validación atómica y SKIP LOCKED para concurrencia segura.';
 
 -- ============================================================================
 -- FUNCIÓN: crear_reserva_stock (wrapper simple para compatibilidad)

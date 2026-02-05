@@ -2,7 +2,7 @@
 -- MÓDULO PROFESIONALES: CATEGORÍAS DE PAGO
 -- ====================================================================
 -- Clasificación de empleados para propósitos de nómina/compensación
--- GAP-004 vs Odoo 19 - Enero 2026
+-- Enero 2026
 -- Define permisos de comisiones, bonos, viáticos según nivel jerárquico
 -- ====================================================================
 
@@ -155,7 +155,7 @@ CREATE TRIGGER trigger_categorias_pago_updated
 COMMENT ON TABLE categorias_pago IS
 'Categoría de pago para clasificación de empleados en nómina/compensación.
 Define permisos de comisiones, bonos, viáticos según nivel jerárquico.
-GAP-004 vs Odoo 19 - Enero 2026';
+Enero 2026';
 
 COMMENT ON COLUMN categorias_pago.nivel_salarial IS
 'Nivel jerárquico (1-10) para ordenar categorías. 1=base/operativo, 10=ejecutivo/dirección';

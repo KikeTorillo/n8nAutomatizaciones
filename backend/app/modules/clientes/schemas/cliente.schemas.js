@@ -4,7 +4,7 @@
  * ====================================================================
  *
  * Schemas Joi para validación de endpoints de Clientes.
- * Ubicado en schemas/ centralizado (patrón Odoo/Salesforce).
+ * Ubicado en schemas/ centralizado (patrón CRM).
  *
  * Migrado desde modules/agendamiento/schemas (Nov 2025)
  * ====================================================================

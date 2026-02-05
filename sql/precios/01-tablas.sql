@@ -1,8 +1,8 @@
 -- ====================================================================
 -- MÓDULO PRECIOS: LISTAS DE PRECIOS
 -- ====================================================================
--- Sistema de listas de precios estilo Odoo para gestión avanzada
--- de precios por cliente, cantidad y moneda.
+-- Sistema de listas de precios para gestión avanzada de precios
+-- por cliente, cantidad y moneda.
 --
 -- Fase 5 - Diciembre 2025
 --

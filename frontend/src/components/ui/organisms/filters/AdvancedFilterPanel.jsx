@@ -14,7 +14,7 @@ import { FilterField } from '../FilterField';
 import SavedSearchList from './SavedSearchList';
 
 /**
- * AdvancedFilterPanel - Panel de filtros avanzados inspirado en Odoo 19
+ * AdvancedFilterPanel - Panel de filtros avanzados
  * Panel colapsable con secciones: Filtros predefinidos y Favoritos
  *
  * @param {Object} filtros - Estado actual de filtros

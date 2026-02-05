@@ -222,7 +222,7 @@ const activacionSchemas = {
             soy_profesional: Joi.boolean()
                 .default(true),
 
-            // Módulos seleccionados por el usuario (Dic 2025 - estilo Odoo)
+            // Módulos seleccionados por el usuario (Dic 2025)
             modulos: Joi.object().pattern(
                 Joi.string().valid(
                     'agendamiento', 'inventario', 'pos', 'comisiones',

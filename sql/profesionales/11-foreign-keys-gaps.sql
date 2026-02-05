@@ -1,30 +1,26 @@
 -- ====================================================================
--- MÓDULO PROFESIONALES: FOREIGN KEYS PARA GAPS VS ODOO 19
+-- MÓDULO PROFESIONALES: FOREIGN KEYS PARA CATÁLOGOS
 -- ====================================================================
--- FKs diferidas que requieren tablas de GAPs creadas previamente.
+-- FKs diferidas que requieren tablas de catálogos creadas previamente.
 -- Ejecutar DESPUÉS de: 09-motivos-salida.sql, 10-categorias-pago.sql
--- y sql/catalogos/09-ubicaciones-trabajo.sql
---
--- GAP-001: Motivos de salida
--- GAP-003: Ubicaciones de trabajo
--- GAP-004: Categorías de pago
+-- y sql/catalogos/ubicaciones-trabajo/01-tablas.sql
 -- ====================================================================
 
--- GAP-001: FK a motivos_salida
+-- FK a motivos_salida
 ALTER TABLE profesionales
 ADD CONSTRAINT fk_profesionales_motivo_salida
 FOREIGN KEY (motivo_salida_id) REFERENCES motivos_salida(id)
     ON DELETE SET NULL
     ON UPDATE CASCADE;
 
--- GAP-004: FK a categorias_pago
+-- FK a categorias_pago
 ALTER TABLE profesionales
 ADD CONSTRAINT fk_profesionales_categoria_pago
 FOREIGN KEY (categoria_pago_id) REFERENCES categorias_pago(id)
     ON DELETE SET NULL
     ON UPDATE CASCADE;
 
--- GAP-003: FKs a ubicaciones_trabajo (7 días)
+-- FKs a ubicaciones_trabajo (7 días)
 ALTER TABLE profesionales
 ADD CONSTRAINT fk_profesionales_ubicacion_lunes
 FOREIGN KEY (ubicacion_lunes_id) REFERENCES ubicaciones_trabajo(id)

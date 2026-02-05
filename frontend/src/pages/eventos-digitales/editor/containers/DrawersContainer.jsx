@@ -4,11 +4,11 @@
  * ====================================================================
  * Container para los drawers móviles del editor de invitaciones.
  *
- * @version 1.1.0 - Migrado a BlockPalette centralizado
+ * @version 1.2.0 - Agregado UnsplashModal
  * @since 2026-02-04
  */
 
-import { memo, useMemo } from 'react';
+import { memo, useMemo, useState, useCallback } from 'react';
 import {
   EditorDrawer,
   PropertiesPanel,
@@ -19,6 +19,7 @@ import { useInvitacionEditor } from '../context';
 import { BLOQUES_INVITACION, CATEGORIAS_BLOQUES, BLOCK_CONFIGS, BLOCK_NAMES } from '../config';
 import { EDITORES_BLOQUE } from '../components/blocks';
 import InvitacionThemeEditor from '../components/InvitacionThemeEditor';
+import UnsplashModal from '@/pages/website/components/UnsplashPicker/UnsplashModal';
 
 /**
  * DrawersContainer - Drawers móviles para el editor de invitaciones
@@ -38,6 +39,32 @@ function DrawersContainer() {
 
   const { closeDrawer } = useEditorLayoutContext();
 
+  // ========== UNSPLASH STATE ==========
+  const [unsplashState, setUnsplashState] = useState({
+    isOpen: false,
+    fieldKey: null,
+  });
+
+  const openUnsplash = useCallback((fieldKey) => {
+    setUnsplashState({ isOpen: true, fieldKey });
+  }, []);
+
+  const closeUnsplash = useCallback(() => {
+    setUnsplashState({ isOpen: false, fieldKey: null });
+  }, []);
+
+  const handleUnsplashSelect = useCallback(
+    (url) => {
+      if (bloqueSeleccionadoCompleto && unsplashState.fieldKey) {
+        handleActualizarBloque(bloqueSeleccionadoCompleto.id, {
+          [unsplashState.fieldKey]: url,
+        });
+      }
+      closeUnsplash();
+    },
+    [bloqueSeleccionadoCompleto, unsplashState.fieldKey, handleActualizarBloque, closeUnsplash]
+  );
+
   // Props para editores (tema viene del contexto con fuente_titulos y fuente_cuerpo)
   const editorProps = useMemo(
     () => ({
@@ -45,8 +72,9 @@ function DrawersContainer() {
       ubicaciones: evento?.ubicaciones || [],
       galeria: evento?.galeria || [],
       mesaRegalos: evento?.mesa_regalos || null,
+      onOpenUnsplash: openUnsplash,
     }),
-    [tema, evento?.ubicaciones, evento?.galeria, evento?.mesa_regalos]
+    [tema, evento?.ubicaciones, evento?.galeria, evento?.mesa_regalos, openUnsplash]
   );
 
   // Editor específico
@@ -128,6 +156,14 @@ function DrawersContainer() {
           )
         )}
       </EditorDrawer>
+
+      {/* Unsplash Modal */}
+      <UnsplashModal
+        isOpen={unsplashState.isOpen}
+        onClose={closeUnsplash}
+        onSelect={handleUnsplashSelect}
+        industria="eventos"
+      />
     </>
   );
 }

@@ -32,8 +32,9 @@ import { BLOCK_DEFAULTS } from '../../config';
  * @param {Object} props.estilos - Estilos del bloque
  * @param {Function} props.onChange - Callback para cambios (guardado automático)
  * @param {Object} props.tema - Tema de la invitación
+ * @param {Function} props.onOpenUnsplash - Callback para abrir Unsplash
  */
-function HeroInvitacionEditor({ contenido, estilos, onChange, tema }) {
+function HeroInvitacionEditor({ contenido, estilos, onChange, tema, onOpenUnsplash }) {
   // Valores por defecto del formulario
   const defaultValues = useMemo(
     () => ({
@@ -124,6 +125,8 @@ function HeroInvitacionEditor({ contenido, estilos, onChange, tema }) {
         label="Imagen de fondo"
         value={form.imagen_url || ''}
         onChange={(val) => handleFieldChange('imagen_url', val)}
+        onOpenUnsplash={onOpenUnsplash}
+        fieldKey="imagen_url"
       />
 
       <AlignmentField

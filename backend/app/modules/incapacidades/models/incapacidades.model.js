@@ -1,7 +1,7 @@
 /**
  * IncapacidadesModel - Enero 2026
  * Gestión de incapacidades médicas con integración a bloqueos
- * Módulo de Profesionales - Gap vs Odoo 19
+ * Módulo de Profesionales
  */
 const RLSContextManager = require('../../../utils/rlsContextManager');
 const { ErrorHelper } = require('../../../utils/helpers');

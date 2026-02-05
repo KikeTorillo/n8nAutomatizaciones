@@ -36,7 +36,7 @@ class ProfesionalModel {
                     email_privado, telefono_privado, distancia_casa_trabajo_km,
                     hijos_dependientes, zona_horaria, responsable_rrhh_id,
                     codigo_nip, id_credencial,
-                    -- GAP vs Odoo 19: Nuevos campos (Ene 2026)
+                    -- Nuevos campos (Ene 2026)
                     categoria_pago_id, motivo_salida_id, fecha_baja,
                     ubicacion_lunes_id, ubicacion_martes_id, ubicacion_miercoles_id,
                     ubicacion_jueves_id, ubicacion_viernes_id, ubicacion_sabado_id,
@@ -98,7 +98,7 @@ class ProfesionalModel {
                 data.responsable_rrhh_id || null,
                 data.codigo_nip || null,
                 data.id_credencial || null,
-                // GAP vs Odoo 19: Nuevos campos (Ene 2026)
+                // Nuevos campos (Ene 2026)
                 data.categoria_pago_id || null,
                 data.motivo_salida_id || null,
                 data.fecha_baja || null,
@@ -348,7 +348,7 @@ class ProfesionalModel {
                        p.email_privado, p.telefono_privado, p.distancia_casa_trabajo_km,
                        p.hijos_dependientes, p.zona_horaria, p.responsable_rrhh_id,
                        p.codigo_nip, p.id_credencial,
-                       -- GAP vs Odoo 19: Nuevos campos (Ene 2026)
+                       -- Nuevos campos (Ene 2026)
                        p.categoria_pago_id, p.motivo_salida_id, p.fecha_baja,
                        p.ubicacion_lunes_id, p.ubicacion_martes_id, p.ubicacion_miercoles_id,
                        p.ubicacion_jueves_id, p.ubicacion_viernes_id, p.ubicacion_sabado_id,
@@ -605,7 +605,7 @@ class ProfesionalModel {
                 'zona_horaria', 'responsable_rrhh_id', 'codigo_nip', 'id_credencial',
                 // Legacy
                 'activo', 'fecha_salida', 'motivo_inactividad',
-                // GAP vs Odoo 19: Nuevos campos (Ene 2026)
+                // Nuevos campos (Ene 2026)
                 'categoria_pago_id', 'motivo_salida_id',
                 'ubicacion_lunes_id', 'ubicacion_martes_id', 'ubicacion_miercoles_id',
                 'ubicacion_jueves_id', 'ubicacion_viernes_id', 'ubicacion_sabado_id',

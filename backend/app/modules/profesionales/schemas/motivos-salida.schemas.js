@@ -4,7 +4,7 @@
  * @version 1.0.0
  * @date Enero 2026
  *
- * GAP-001 vs Odoo 19: Catálogo dinámico de razones de terminación
+ * Catálogo dinámico de razones de terminación
  */
 
 const Joi = require('joi');
