@@ -1,20 +1,27 @@
 import { memo } from 'react';
-import PropTypes from 'prop-types';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { BADGE_COLORS } from '@/lib/uiConstants';
+import type { FilterChipVariant } from '@/types/ui';
+
+export interface FilterChipProps {
+  /** Texto del chip (nombre del filtro) */
+  label: string;
+  /** Valor actual del filtro (opcional) */
+  value?: string;
+  /** Callback al hacer click en X */
+  onRemove?: () => void;
+  /** Variante de color */
+  variant?: FilterChipVariant;
+  /** Clases adicionales */
+  className?: string;
+}
 
 /**
  * FilterChip - Chip de filtro activo con botón para remover
  *
  * Ene 2026: Movido de organisms/filters a molecules
  * Componente atómico reutilizable para mostrar filtros activos.
- *
- * @param {string} label - Texto del chip (nombre del filtro)
- * @param {string} value - Valor actual del filtro (opcional)
- * @param {Function} onRemove - Callback al hacer click en X
- * @param {string} variant - Variante de color: 'primary' | 'gray'
- * @param {string} className - Clases adicionales
  *
  * @example
  * <FilterChip
@@ -29,10 +36,10 @@ const FilterChip = memo(function FilterChip({
   onRemove,
   variant = 'primary',
   className,
-}) {
+}: FilterChipProps) {
   const variants = {
-    primary: cn(BADGE_COLORS.primary, 'border-primary-200 dark:border-primary-700'),
-    gray: cn(BADGE_COLORS.default, 'border-gray-200 dark:border-gray-600'),
+    primary: cn((BADGE_COLORS as Record<string, string>).primary, 'border-primary-200 dark:border-primary-700'),
+    gray: cn((BADGE_COLORS as Record<string, string>).default, 'border-gray-200 dark:border-gray-600'),
   };
 
   return (
@@ -73,13 +80,5 @@ const FilterChip = memo(function FilterChip({
 });
 
 FilterChip.displayName = 'FilterChip';
-
-FilterChip.propTypes = {
-  label: PropTypes.string.isRequired,
-  value: PropTypes.string,
-  onRemove: PropTypes.func,
-  variant: PropTypes.oneOf(['primary', 'gray']),
-  className: PropTypes.string,
-};
 
 export { FilterChip };

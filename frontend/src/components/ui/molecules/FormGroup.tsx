@@ -5,21 +5,30 @@
  * Combina Label + children + helper/error text
  * Compatible con los atoms existentes (Input, Select, Textarea)
  */
-import { memo, useId, cloneElement, isValidElement } from 'react';
-import PropTypes from 'prop-types';
+import { memo, useId, cloneElement, isValidElement, type ReactNode, type ReactElement } from 'react';
 import { cn } from '@/lib/utils';
 import { Label } from '../atoms/Label';
 import { FORM_GROUP } from '@/lib/uiConstants';
 
+export interface FormGroupProps {
+  /** Etiqueta del campo */
+  label?: string;
+  /** Si el campo es obligatorio (muestra asterisco) */
+  required?: boolean;
+  /** Mensaje de error a mostrar */
+  error?: string;
+  /** Texto de ayuda */
+  helper?: string;
+  /** ID del elemento asociado (para htmlFor del label) */
+  htmlFor?: string;
+  /** Contenido del FormGroup (Input, Select, etc.) */
+  children: ReactNode;
+  /** Clases CSS adicionales para el contenedor */
+  className?: string;
+}
+
 /**
  * Componente FormGroup reutilizable
- * @param {string} label - Etiqueta del campo
- * @param {boolean} required - Si el campo es obligatorio
- * @param {string} error - Mensaje de error
- * @param {string} helper - Texto de ayuda
- * @param {string} htmlFor - ID del elemento asociado
- * @param {React.ReactNode} children - Contenido (Input, Select, etc.)
- * @param {string} className - Clases adicionales para el contenedor
  */
 const FormGroup = memo(function FormGroup({
   label,
@@ -29,7 +38,7 @@ const FormGroup = memo(function FormGroup({
   htmlFor,
   children,
   className,
-}) {
+}: FormGroupProps) {
   const generatedId = useId();
   const errorId = error ? `${generatedId}-error` : undefined;
   const helperId = helper && !error ? `${generatedId}-helper` : undefined;
@@ -37,7 +46,7 @@ const FormGroup = memo(function FormGroup({
 
   // Clonar children para agregar aria-describedby si es un elemento válido
   const enhancedChildren = isValidElement(children) && describedBy
-    ? cloneElement(children, { 'aria-describedby': describedBy })
+    ? cloneElement(children as ReactElement<{ 'aria-describedby'?: string }>, { 'aria-describedby': describedBy })
     : children;
 
   return (
@@ -55,22 +64,5 @@ const FormGroup = memo(function FormGroup({
 });
 
 FormGroup.displayName = 'FormGroup';
-
-FormGroup.propTypes = {
-  /** Etiqueta del campo */
-  label: PropTypes.string,
-  /** Si el campo es obligatorio (muestra asterisco) */
-  required: PropTypes.bool,
-  /** Mensaje de error a mostrar */
-  error: PropTypes.string,
-  /** Texto de ayuda */
-  helper: PropTypes.string,
-  /** ID del elemento asociado (para htmlFor del label) */
-  htmlFor: PropTypes.string,
-  /** Contenido del FormGroup (Input, Select, etc.) */
-  children: PropTypes.node.isRequired,
-  /** Clases CSS adicionales para el contenedor */
-  className: PropTypes.string,
-};
 
 export { FormGroup };

@@ -1,18 +1,27 @@
 import { memo } from 'react';
-import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import { ChevronRight, Home } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import type { BreadcrumbItem } from '@/types/ui';
+
+export interface BreadcrumbProps {
+  /** Array de items: { label, href?, icon? } */
+  items?: BreadcrumbItem[];
+  /** Clases adicionales */
+  className?: string;
+  /** Mostrar enlace a Home al inicio */
+  homeLink?: boolean;
+}
 
 /**
  * Breadcrumb - Navegación de migas de pan
  * Muestra la ruta jerárquica actual con enlaces a niveles superiores
- *
- * @param {Array} items - Array de items: { label, href?, icon? }
- * @param {string} className - Clases adicionales
- * @param {boolean} homeLink - Mostrar enlace a Home al inicio
  */
-export const Breadcrumb = memo(function Breadcrumb({ items = [], className, homeLink = false }) {
+export const Breadcrumb = memo(function Breadcrumb({
+  items = [],
+  className,
+  homeLink = false,
+}: BreadcrumbProps) {
   if (!items.length && !homeLink) return null;
 
   return (
@@ -73,16 +82,3 @@ export const Breadcrumb = memo(function Breadcrumb({ items = [], className, home
 });
 
 Breadcrumb.displayName = 'Breadcrumb';
-
-Breadcrumb.propTypes = {
-  items: PropTypes.arrayOf(
-    PropTypes.shape({
-      label: PropTypes.string.isRequired,
-      href: PropTypes.string,
-      icon: PropTypes.elementType,
-    })
-  ),
-  className: PropTypes.string,
-  homeLink: PropTypes.bool,
-};
-

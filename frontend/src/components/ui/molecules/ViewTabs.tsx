@@ -1,5 +1,4 @@
-import { memo, useCallback, useRef, forwardRef } from 'react';
-import PropTypes from 'prop-types';
+import { memo, useCallback, useRef, forwardRef, type KeyboardEvent } from 'react';
 import { cn } from '@/lib/utils';
 import {
   TAB_CONTAINER_STYLES,
@@ -7,25 +6,46 @@ import {
   getTabButtonStyles,
   getTabIconStyles,
 } from '@/lib/uiConstants';
+import type { ViewTab, LucideIcon } from '@/types/ui';
+
+export interface ViewTabsProps {
+  /** Configuración de tabs */
+  tabs: ViewTab[];
+  /** ID del tab activo */
+  activeTab: string;
+  /** Callback cuando cambia el tab */
+  onChange: (tabId: string) => void;
+  /** Clases adicionales */
+  className?: string;
+  /** Etiqueta ARIA para el tablist */
+  ariaLabel?: string;
+}
+
+interface TabButtonProps {
+  /** Configuración del tab */
+  tab: ViewTab;
+  /** Si el tab está activo */
+  isActive: boolean;
+  /** Callback cuando cambia el tab */
+  onChange: (tabId: string) => void;
+  /** Handler para navegación con teclado */
+  onKeyDown: (e: KeyboardEvent<HTMLButtonElement>) => void;
+}
 
 /**
  * ViewTabs - Tabs para cambiar entre vistas (Lista, Calendario, etc.)
- *
- * @param {Object} props
- * @param {Array<Object>} props.tabs - Configuración de tabs
- * @param {string} props.tabs[].id - ID único del tab
- * @param {string} props.tabs[].label - Texto del tab
- * @param {React.ComponentType} [props.tabs[].icon] - Icono de lucide-react (opcional)
- * @param {string} props.activeTab - ID del tab activo
- * @param {Function} props.onChange - Callback cuando cambia el tab
- * @param {string} [props.className] - Clases adicionales
- * @param {string} [props.ariaLabel] - Etiqueta ARIA para el tablist
  */
-export const ViewTabs = memo(function ViewTabs({ tabs, activeTab, onChange, className, ariaLabel = 'Cambiar vista' }) {
-  const tabRefs = useRef([]);
+export const ViewTabs = memo(function ViewTabs({
+  tabs,
+  activeTab,
+  onChange,
+  className,
+  ariaLabel = 'Cambiar vista',
+}: ViewTabsProps) {
+  const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
   // Handler para navegación con flechas
-  const handleKeyDown = useCallback((e, currentIndex) => {
+  const handleKeyDown = useCallback((e: KeyboardEvent<HTMLButtonElement>, currentIndex: number) => {
     const tabCount = tabs.length;
     let newIndex = currentIndex;
 
@@ -74,8 +94,11 @@ export const ViewTabs = memo(function ViewTabs({ tabs, activeTab, onChange, clas
 /**
  * TabButton - Botón de tab memoizado con forwardRef
  */
-const TabButton = memo(forwardRef(function TabButton({ tab, isActive, onChange, onKeyDown }, ref) {
-  const Icon = tab.icon;
+const TabButton = memo(forwardRef<HTMLButtonElement, TabButtonProps>(function TabButton(
+  { tab, isActive, onChange, onKeyDown },
+  ref
+) {
+  const Icon = tab.icon as LucideIcon | undefined;
 
   const handleClick = useCallback(() => {
     onChange(tab.id);
@@ -108,29 +131,3 @@ const TabButton = memo(forwardRef(function TabButton({ tab, isActive, onChange, 
 }));
 
 ViewTabs.displayName = 'ViewTabs';
-
-ViewTabs.propTypes = {
-  tabs: PropTypes.arrayOf(
-    PropTypes.shape({
-      id: PropTypes.string.isRequired,
-      label: PropTypes.string.isRequired,
-      icon: PropTypes.elementType,
-    })
-  ).isRequired,
-  activeTab: PropTypes.string.isRequired,
-  onChange: PropTypes.func.isRequired,
-  className: PropTypes.string,
-  ariaLabel: PropTypes.string,
-};
-
-TabButton.propTypes = {
-  tab: PropTypes.shape({
-    id: PropTypes.string.isRequired,
-    label: PropTypes.string.isRequired,
-    icon: PropTypes.elementType,
-  }).isRequired,
-  isActive: PropTypes.bool.isRequired,
-  onChange: PropTypes.func.isRequired,
-  onKeyDown: PropTypes.func,
-};
-

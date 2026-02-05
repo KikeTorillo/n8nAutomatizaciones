@@ -1,8 +1,40 @@
-import { memo } from 'react';
-import PropTypes from 'prop-types';
+import { memo, type KeyboardEvent } from 'react';
 import { cn } from '@/lib/utils';
 import { ICON_BG_COLORS, SEMANTIC_COLORS } from '@/lib/uiConstants';
 import { SkeletonStatCard } from './SkeletonStatCard';
+import type { StatCardVariant, StatCardTrend, LucideIcon } from '@/types/ui';
+
+export interface StatCardProps {
+  /** Icono de lucide-react */
+  icon: LucideIcon;
+  /** Etiqueta descriptiva */
+  label?: string;
+  /** @deprecated Usar "label" en su lugar */
+  title?: string;
+  /** Valor a mostrar */
+  value: number | string;
+  /** Texto secundario opcional */
+  subtext?: string;
+  /** @deprecated Usar "subtext" en su lugar */
+  subtitle?: string;
+  /** Color del icono */
+  color?: string;
+  /** Tendencia opcional (solo variant=compact) */
+  trend?: StatCardTrend;
+  /** Variante visual */
+  variant?: StatCardVariant;
+  /** Mostrar skeleton de carga */
+  isLoading?: boolean;
+  /** Callback al hacer clic (hace la card clickeable) */
+  onClick?: () => void;
+  /** Clases adicionales */
+  className?: string;
+}
+
+interface IconColorStyles {
+  bg: string;
+  icon: string;
+}
 
 /**
  * StatCard - Card de métrica reutilizable
@@ -10,22 +42,6 @@ import { SkeletonStatCard } from './SkeletonStatCard';
  * Soporta dos variantes:
  * - compact (default): Layout horizontal compacto con icono a la izquierda
  * - expanded: Layout vertical con título prominente (estilo dashboard)
- *
- * @param {Object} props
- * @param {React.ComponentType} props.icon - Icono de lucide-react
- * @param {string} props.label - Etiqueta descriptiva
- * @param {string} [props.title] - @deprecated Usar "label" en su lugar
- * @param {number|string} props.value - Valor a mostrar
- * @param {string} [props.subtext] - Texto secundario opcional
- * @param {string} [props.subtitle] - @deprecated Usar "subtext" en su lugar
- * @param {string} [props.color='primary'] - Color del icono
- * @param {Object} [props.trend] - Tendencia opcional (solo variant=compact)
- * @param {number} props.trend.value - Valor de la tendencia
- * @param {boolean} props.trend.isPositive - Si es positiva o negativa
- * @param {'compact'|'expanded'} [props.variant='compact'] - Variante visual
- * @param {boolean} [props.isLoading=false] - Mostrar skeleton de carga
- * @param {function} [props.onClick] - Callback al hacer clic (hace la card clickeable)
- * @param {string} [props.className] - Clases adicionales
  */
 export const StatCard = memo(function StatCard({
   icon: Icon,
@@ -40,9 +56,9 @@ export const StatCard = memo(function StatCard({
   isLoading = false,
   onClick,
   className,
-}) {
+}: StatCardProps) {
   // Deprecation warnings en desarrollo
-  if (process.env.NODE_ENV === 'development') {
+  if (import.meta.env.DEV) {
     if (title) console.warn('StatCard: prop "title" está deprecada, usar "label"');
     if (subtitle) console.warn('StatCard: prop "subtitle" está deprecada, usar "subtext"');
   }
@@ -50,12 +66,18 @@ export const StatCard = memo(function StatCard({
   // Resolver aliases (mantener retrocompatibilidad)
   const displayLabel = label || title;
   const displaySubtext = subtext || subtitle;
-  const colors = ICON_BG_COLORS[color] || ICON_BG_COLORS.primary;
+  const colors = (ICON_BG_COLORS as Record<string, IconColorStyles>)[color] || ICON_BG_COLORS.primary;
 
   // Estado de carga
   if (isLoading) {
     return <SkeletonStatCard variant={variant} />;
   }
+
+  const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    if (onClick && e.key === 'Enter') {
+      onClick();
+    }
+  };
 
   // Variante expandida (estilo dashboard)
   if (variant === 'expanded') {
@@ -70,7 +92,7 @@ export const StatCard = memo(function StatCard({
         onClick={onClick}
         role={onClick ? 'button' : undefined}
         tabIndex={onClick ? 0 : undefined}
-        onKeyDown={onClick ? (e) => e.key === 'Enter' && onClick() : undefined}
+        onKeyDown={onClick ? handleKeyDown : undefined}
         aria-label={`${displayLabel}: ${value}${displaySubtext ? `, ${displaySubtext}` : ''}`}
       >
         <div className="flex items-center justify-between mb-4">
@@ -85,7 +107,7 @@ export const StatCard = memo(function StatCard({
           {value}
         </p>
         {displaySubtext && (
-          <p className={cn('text-sm mt-1', SEMANTIC_COLORS.neutral.text)}>
+          <p className={cn('text-sm mt-1', (SEMANTIC_COLORS as Record<string, { text: string }>).neutral.text)}>
             {displaySubtext}
           </p>
         )}
@@ -106,7 +128,7 @@ export const StatCard = memo(function StatCard({
       onClick={onClick}
       role={onClick ? 'button' : undefined}
       tabIndex={onClick ? 0 : undefined}
-      onKeyDown={onClick ? (e) => e.key === 'Enter' && onClick() : undefined}
+      onKeyDown={onClick ? handleKeyDown : undefined}
       aria-label={`${displayLabel}: ${value}${displaySubtext ? `, ${displaySubtext}` : ''}`}
     >
       <div className="flex items-center gap-2 sm:gap-3">
@@ -114,7 +136,7 @@ export const StatCard = memo(function StatCard({
           <Icon className={cn('w-5 h-5 sm:w-6 sm:h-6', colors.icon)} />
         </div>
         <div className="flex-1 min-w-0">
-          <p className={cn('text-xs sm:text-sm truncate', SEMANTIC_COLORS.neutral.text)}>
+          <p className={cn('text-xs sm:text-sm truncate', (SEMANTIC_COLORS as Record<string, { text: string }>).neutral.text)}>
             {displayLabel}
           </p>
           <div className="flex items-baseline gap-2">
@@ -126,8 +148,8 @@ export const StatCard = memo(function StatCard({
                 className={cn(
                   'text-xs font-medium',
                   trend.isPositive
-                    ? SEMANTIC_COLORS.success.text
-                    : SEMANTIC_COLORS.danger.text
+                    ? (SEMANTIC_COLORS as Record<string, { text: string }>).success.text
+                    : (SEMANTIC_COLORS as Record<string, { text: string }>).danger.text
                 )}
               >
                 {trend.isPositive ? '+' : ''}{trend.value}%
@@ -135,7 +157,7 @@ export const StatCard = memo(function StatCard({
             )}
           </div>
           {displaySubtext && (
-            <p className={cn('text-xs mt-1', SEMANTIC_COLORS.neutral.textLight)}>
+            <p className={cn('text-xs mt-1', (SEMANTIC_COLORS as Record<string, { textLight: string }>).neutral.textLight)}>
               {displaySubtext}
             </p>
           )}
@@ -146,23 +168,3 @@ export const StatCard = memo(function StatCard({
 });
 
 StatCard.displayName = 'StatCard';
-
-StatCard.propTypes = {
-  icon: PropTypes.elementType.isRequired,
-  label: PropTypes.string,
-  /** @deprecated Usar "label" en su lugar */
-  title: PropTypes.string,
-  value: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
-  subtext: PropTypes.string,
-  /** @deprecated Usar "subtext" en su lugar */
-  subtitle: PropTypes.string,
-  color: PropTypes.string,
-  trend: PropTypes.shape({
-    value: PropTypes.number.isRequired,
-    isPositive: PropTypes.bool.isRequired,
-  }),
-  variant: PropTypes.oneOf(['compact', 'expanded']),
-  isLoading: PropTypes.bool,
-  onClick: PropTypes.func,
-  className: PropTypes.string,
-};

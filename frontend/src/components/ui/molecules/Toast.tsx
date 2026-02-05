@@ -1,19 +1,40 @@
 import { useEffect, memo } from 'react';
-import PropTypes from 'prop-types';
 import { X, CheckCircle, AlertCircle, Info, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { TOAST_EXTENDED_VARIANTS, TOAST_CONTAINER_STYLES } from '@/lib/uiConstants';
+import type { ToastType } from '@/types/ui';
+
+export interface ToastProps {
+  /** ID único del toast */
+  id: string | number;
+  /** Mensaje a mostrar */
+  message: string;
+  /** Tipo de toast */
+  type?: ToastType;
+  /** Duración en ms antes de auto-cerrar */
+  duration?: number;
+  /** Callback al cerrar */
+  onClose: (id: string | number) => void;
+}
+
+// Mapeo de iconos por tipo
+const icons = {
+  success: CheckCircle,
+  error: AlertCircle,
+  warning: AlertTriangle,
+  info: Info,
+} as const;
 
 /**
  * Componente Toast para notificaciones
- * @param {Object} props
- * @param {string} props.id - ID único del toast
- * @param {string} props.message - Mensaje a mostrar
- * @param {('success'|'error'|'info'|'warning')} props.type - Tipo de toast
- * @param {number} props.duration - Duración en ms antes de auto-cerrar
- * @param {Function} props.onClose - Callback al cerrar
  */
-const Toast = memo(function Toast({ id, message, type = 'info', duration = 5000, onClose }) {
+const Toast = memo(function Toast({
+  id,
+  message,
+  type = 'info',
+  duration = 5000,
+  onClose,
+}: ToastProps) {
   useEffect(() => {
     if (duration && duration > 0) {
       const timer = setTimeout(() => {
@@ -24,15 +45,7 @@ const Toast = memo(function Toast({ id, message, type = 'info', duration = 5000,
     }
   }, [id, duration, onClose]);
 
-  // Mapeo de iconos por tipo
-  const icons = {
-    success: CheckCircle,
-    error: AlertCircle,
-    warning: AlertTriangle,
-    info: Info,
-  };
-
-  const variant = TOAST_EXTENDED_VARIANTS[type] || TOAST_EXTENDED_VARIANTS.info;
+  const variant = (TOAST_EXTENDED_VARIANTS as Record<string, { bg: string; border: string; textColor: string; iconColor: string }>)[type] || TOAST_EXTENDED_VARIANTS.info;
   const Icon = icons[type] || icons.info;
 
   return (
@@ -64,13 +77,5 @@ const Toast = memo(function Toast({ id, message, type = 'info', duration = 5000,
 });
 
 Toast.displayName = 'Toast';
-
-Toast.propTypes = {
-  id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-  message: PropTypes.string.isRequired,
-  type: PropTypes.oneOf(['success', 'error', 'info', 'warning']),
-  duration: PropTypes.number,
-  onClose: PropTypes.func.isRequired,
-};
 
 export { Toast };

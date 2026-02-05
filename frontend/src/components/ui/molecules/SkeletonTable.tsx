@@ -1,16 +1,43 @@
-import { memo } from 'react';
-import PropTypes from 'prop-types';
+import { memo, type CSSProperties } from 'react';
 import { cn } from '@/lib/utils';
+import type { SkeletonColumnWidth } from '@/types/ui';
+
+export interface SkeletonTableProps {
+  /** Número de filas skeleton (default: 5) */
+  rows?: number;
+  /** Número de columnas (default: 4) */
+  columns?: number;
+  /** Mostrar header skeleton (default: true) */
+  showHeader?: boolean;
+  /** Anchos de columnas */
+  columnWidths?: SkeletonColumnWidth[];
+  /** Clases adicionales */
+  className?: string;
+}
+
+export interface SkeletonCardProps {
+  /** Clases adicionales */
+  className?: string;
+  /** Estilos inline */
+  style?: CSSProperties;
+}
+
+export interface SkeletonListProps {
+  /** Número de cards */
+  count?: number;
+  /** Clases adicionales */
+  className?: string;
+}
+
+const widthClasses: Record<SkeletonColumnWidth, string> = {
+  sm: 'w-16',
+  md: 'w-24',
+  lg: 'w-32',
+  xl: 'w-40',
+};
 
 /**
  * SkeletonTable - Skeleton loading para tablas
- *
- * @param {Object} props
- * @param {number} [props.rows] - Número de filas skeleton (default: 5)
- * @param {number} [props.columns] - Número de columnas (default: 4)
- * @param {boolean} [props.showHeader] - Mostrar header skeleton (default: true)
- * @param {Array<'sm'|'md'|'lg'>} [props.columnWidths] - Anchos de columnas
- * @param {string} [props.className] - Clases adicionales
  */
 export const SkeletonTable = memo(function SkeletonTable({
   rows = 5,
@@ -18,15 +45,8 @@ export const SkeletonTable = memo(function SkeletonTable({
   showHeader = true,
   columnWidths,
   className,
-}) {
-  const widthClasses = {
-    sm: 'w-16',
-    md: 'w-24',
-    lg: 'w-32',
-    xl: 'w-40',
-  };
-
-  const getColumnWidth = (index) => {
+}: SkeletonTableProps) {
+  const getColumnWidth = (index: number): string => {
     if (columnWidths && columnWidths[index]) {
       return widthClasses[columnWidths[index]] || 'w-24';
     }
@@ -100,7 +120,7 @@ export const SkeletonTable = memo(function SkeletonTable({
 /**
  * SkeletonCard - Skeleton loading para cards
  */
-export const SkeletonCard = memo(function SkeletonCard({ className, style }) {
+export const SkeletonCard = memo(function SkeletonCard({ className, style }: SkeletonCardProps) {
   return (
     <div
       style={style}
@@ -129,7 +149,7 @@ export const SkeletonCard = memo(function SkeletonCard({ className, style }) {
 /**
  * SkeletonList - Skeleton loading para listas de cards
  */
-export const SkeletonList = memo(function SkeletonList({ count = 3, className }) {
+export const SkeletonList = memo(function SkeletonList({ count = 3, className }: SkeletonListProps) {
   return (
     <div className={cn('space-y-3', className)}>
       {Array.from({ length: count }).map((_, index) => (
@@ -145,22 +165,3 @@ export const SkeletonList = memo(function SkeletonList({ count = 3, className })
 SkeletonTable.displayName = 'SkeletonTable';
 SkeletonCard.displayName = 'SkeletonCard';
 SkeletonList.displayName = 'SkeletonList';
-
-SkeletonTable.propTypes = {
-  rows: PropTypes.number,
-  columns: PropTypes.number,
-  showHeader: PropTypes.bool,
-  columnWidths: PropTypes.arrayOf(PropTypes.oneOf(['sm', 'md', 'lg', 'xl'])),
-  className: PropTypes.string,
-};
-
-SkeletonCard.propTypes = {
-  className: PropTypes.string,
-  style: PropTypes.object,
-};
-
-SkeletonList.propTypes = {
-  count: PropTypes.number,
-  className: PropTypes.string,
-};
-

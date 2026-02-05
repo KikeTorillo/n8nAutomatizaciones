@@ -1,10 +1,25 @@
-import { useState, useRef, useCallback, useEffect, memo, useId, forwardRef } from 'react';
-import PropTypes from 'prop-types';
+import { useState, useRef, useCallback, useEffect, memo, useId, forwardRef, type KeyboardEvent } from 'react';
 import { MoreVertical } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '../atoms/Button';
 import { useClickOutsideRef } from '@/hooks/utils/useClickOutside';
 import { useEscapeKey } from '@/hooks/utils/useEscapeKey';
+import type { DropdownMenuItem, LucideIcon } from '@/types/ui';
+
+export interface DropdownMenuProps {
+  /** Elemento que dispara el dropdown (default: ícono de 3 puntos) */
+  trigger?: React.ReactNode;
+  /** Array de items: { label, icon, onClick, variant, disabled, divider } */
+  items?: DropdownMenuItem[];
+  /** Alineación del menú: 'left' | 'right' (default: 'right') */
+  align?: 'left' | 'right';
+  /** Clases adicionales para el contenedor */
+  className?: string;
+  /** Estado controlado del dropdown */
+  isOpen?: boolean;
+  /** Callback cuando cambia el estado: (isOpen: boolean) => void */
+  onOpenChange?: (isOpen: boolean) => void;
+}
 
 /**
  * DropdownMenu - Menú desplegable para acciones
@@ -12,15 +27,6 @@ import { useEscapeKey } from '@/hooks/utils/useEscapeKey';
  * Soporta modo controlado y no controlado:
  * - No controlado (default): gestiona su propio estado interno
  * - Controlado: usa `isOpen` y `onOpenChange` props
- *
- * @param {Object} props
- * @param {React.ReactNode} props.trigger - Elemento que dispara el dropdown (default: ícono de 3 puntos)
- * @param {Array} props.items - Array de items: { label, icon, onClick, variant, disabled, divider }
- * @param {string} props.align - Alineación del menú: 'left' | 'right' (default: 'right')
- * @param {string} props.className - Clases adicionales para el contenedor
- * @param {boolean} [props.isOpen] - Estado controlado del dropdown
- * @param {Function} [props.onOpenChange] - Callback cuando cambia el estado: (isOpen: boolean) => void
- * @param {React.Ref} ref - Ref para acceder al contenedor del dropdown
  *
  * @example
  * // Modo no controlado (default)
@@ -40,7 +46,7 @@ import { useEscapeKey } from '@/hooks/utils/useEscapeKey';
  *   items={[...]}
  * />
  */
-const DropdownMenu = memo(forwardRef(function DropdownMenu({
+const DropdownMenu = memo(forwardRef<HTMLDivElement, DropdownMenuProps>(function DropdownMenu({
   trigger,
   items = [],
   align = 'right',
@@ -50,8 +56,8 @@ const DropdownMenu = memo(forwardRef(function DropdownMenu({
 }, ref) {
   const [internalIsOpen, setInternalIsOpen] = useState(false);
   const [focusedIndex, setFocusedIndex] = useState(-1);
-  const dropdownRef = useRef(null);
-  const itemRefs = useRef([]);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const itemRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const triggerId = useId();
 
   // Patrón controlled/uncontrolled
@@ -61,7 +67,7 @@ const DropdownMenu = memo(forwardRef(function DropdownMenu({
   // Items habilitados (excluye dividers y disabled)
   const enabledItems = items.filter(item => !item.divider && !item.disabled);
 
-  const setIsOpen = useCallback((newValue) => {
+  const setIsOpen = useCallback((newValue: boolean | ((prev: boolean) => boolean)) => {
     const nextValue = typeof newValue === 'function' ? newValue(isOpen) : newValue;
     if (isControlled) {
       onOpenChange?.(nextValue);
@@ -86,12 +92,12 @@ const DropdownMenu = memo(forwardRef(function DropdownMenu({
   // Focus en item cuando cambia focusedIndex
   useEffect(() => {
     if (isOpen && focusedIndex >= 0 && itemRefs.current[focusedIndex]) {
-      itemRefs.current[focusedIndex].focus();
+      itemRefs.current[focusedIndex]?.focus();
     }
   }, [isOpen, focusedIndex]);
 
   // Handler de navegación por teclado
-  const handleKeyDown = useCallback((e) => {
+  const handleKeyDown = useCallback((e: KeyboardEvent<HTMLDivElement>) => {
     if (!isOpen) return;
 
     switch (e.key) {
@@ -120,7 +126,7 @@ const DropdownMenu = memo(forwardRef(function DropdownMenu({
     }
   }, [isOpen, enabledItems.length]);
 
-  const handleItemClick = useCallback((item) => {
+  const handleItemClick = useCallback((item: DropdownMenuItem) => {
     if (item.disabled) return;
     item.onClick?.();
     setIsOpen(false);
@@ -131,7 +137,7 @@ const DropdownMenu = memo(forwardRef(function DropdownMenu({
   }, [setIsOpen]);
 
   // Combinar refs (externo + interno para click outside)
-  const setRefs = useCallback((node) => {
+  const setRefs = useCallback((node: HTMLDivElement | null) => {
     dropdownRef.current = node;
     if (typeof ref === 'function') {
       ref(node);
@@ -194,7 +200,7 @@ const DropdownMenu = memo(forwardRef(function DropdownMenu({
               if (isEnabled) enabledIndex++;
               const currentEnabledIndex = enabledIndex;
 
-              const Icon = item.icon;
+              const Icon = item.icon as LucideIcon | undefined;
               const isDanger = item.variant === 'danger';
 
               return (
@@ -239,25 +245,5 @@ const DropdownMenu = memo(forwardRef(function DropdownMenu({
 }));
 
 DropdownMenu.displayName = 'DropdownMenu';
-
-DropdownMenu.propTypes = {
-  trigger: PropTypes.node,
-  items: PropTypes.arrayOf(
-    PropTypes.shape({
-      label: PropTypes.string,
-      icon: PropTypes.elementType,
-      onClick: PropTypes.func,
-      variant: PropTypes.oneOf(['default', 'danger']),
-      disabled: PropTypes.bool,
-      divider: PropTypes.bool,
-    })
-  ),
-  align: PropTypes.oneOf(['left', 'right']),
-  className: PropTypes.string,
-  /** Estado controlado del dropdown */
-  isOpen: PropTypes.bool,
-  /** Callback cuando cambia el estado: (isOpen: boolean) => void */
-  onOpenChange: PropTypes.func,
-};
 
 export { DropdownMenu };

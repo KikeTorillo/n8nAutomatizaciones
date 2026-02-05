@@ -1,32 +1,49 @@
-import { memo } from 'react';
-import PropTypes from 'prop-types';
+import { memo, type ReactNode } from 'react';
 import { X, AlertTriangle, Info, CheckCircle, XCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ALERT_VARIANTS } from '@/lib/uiConstants';
+import type { AlertVariant, LucideIcon } from '@/types/ui';
 
 // Mapeo de iconos por defecto según la variante
-const defaultIcons = {
+const defaultIcons: Record<string, LucideIcon> = {
   info: Info,
   success: CheckCircle,
   warning: AlertTriangle,
+  danger: XCircle,
   error: XCircle,
   rose: AlertTriangle,
 };
 
+export interface AlertProps {
+  /** Variante de color */
+  variant?: AlertVariant;
+  /** Icono principal */
+  icon?: LucideIcon;
+  /** Título de la alerta */
+  title?: string;
+  /** Contenido de la alerta */
+  children?: ReactNode;
+  /** Botón/acción opcional */
+  action?: ReactNode;
+  /** Si se puede cerrar */
+  dismissible?: boolean;
+  /** Callback al cerrar */
+  onDismiss?: () => void;
+  /** Clases adicionales */
+  className?: string;
+}
+
+interface AlertVariantStyles {
+  container: string;
+  iconBg: string;
+  icon: string;
+  title: string;
+  text: string;
+}
+
 /**
  * Alert - Componente de alerta reutilizable
- *
- * @param {Object} props
- * @param {'info'|'success'|'warning'|'error'|'rose'} props.variant - Variante de color
- * @param {LucideIcon} props.icon - Icono principal
- * @param {string} props.title - Título de la alerta
- * @param {ReactNode} props.children - Contenido de la alerta
- * @param {ReactNode} [props.action] - Botón/acción opcional
- * @param {boolean} [props.dismissible] - Si se puede cerrar
- * @param {Function} [props.onDismiss] - Callback al cerrar
- * @param {string} [props.className] - Clases adicionales
  */
-
 const Alert = memo(function Alert({
   variant = 'info',
   icon: Icon,
@@ -36,8 +53,8 @@ const Alert = memo(function Alert({
   dismissible = false,
   onDismiss,
   className,
-}) {
-  const styles = ALERT_VARIANTS[variant] || ALERT_VARIANTS.info;
+}: AlertProps) {
+  const styles = (ALERT_VARIANTS as Record<string, AlertVariantStyles>)[variant] || ALERT_VARIANTS.info;
   const DefaultIcon = defaultIcons[variant] || defaultIcons.warning;
 
   return (
@@ -103,16 +120,5 @@ const Alert = memo(function Alert({
 });
 
 Alert.displayName = 'Alert';
-
-Alert.propTypes = {
-  variant: PropTypes.oneOf(['info', 'success', 'warning', 'error', 'rose']),
-  icon: PropTypes.elementType,
-  title: PropTypes.string,
-  children: PropTypes.node,
-  action: PropTypes.node,
-  dismissible: PropTypes.bool,
-  onDismiss: PropTypes.func,
-  className: PropTypes.string,
-};
 
 export { Alert };

@@ -1,7 +1,14 @@
 import { memo } from 'react';
-import PropTypes from 'prop-types';
 import { cn } from '@/lib/utils';
 import { LOADING_STATES } from '@/lib/uiConstants';
+import type { SkeletonVariant } from '@/types/ui';
+
+export interface SkeletonStatCardProps {
+  /** Variante visual del skeleton */
+  variant?: SkeletonVariant;
+  /** Clases CSS adicionales */
+  className?: string;
+}
 
 /**
  * SkeletonStatCard - Skeleton de carga para StatCard
@@ -9,12 +16,11 @@ import { LOADING_STATES } from '@/lib/uiConstants';
  * Soporta dos variantes:
  * - compact (default): Layout horizontal compacto
  * - expanded: Layout vertical (estilo dashboard)
- *
- * @param {Object} props
- * @param {'compact'|'expanded'} [props.variant='compact'] - Variante visual
- * @param {string} [props.className] - Clases adicionales
  */
-export const SkeletonStatCard = memo(function SkeletonStatCard({ variant = 'compact', className }) {
+export const SkeletonStatCard = memo(function SkeletonStatCard({
+  variant = 'compact',
+  className,
+}: SkeletonStatCardProps) {
   if (variant === 'expanded') {
     return (
       <div className={cn('bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 animate-pulse', className)}>
@@ -45,11 +51,3 @@ export const SkeletonStatCard = memo(function SkeletonStatCard({ variant = 'comp
 });
 
 SkeletonStatCard.displayName = 'SkeletonStatCard';
-
-SkeletonStatCard.propTypes = {
-  /** Variante visual del skeleton */
-  variant: PropTypes.oneOf(['compact', 'expanded']),
-  /** Clases CSS adicionales */
-  className: PropTypes.string,
-};
-

@@ -1,23 +1,26 @@
 import { memo } from 'react';
-import PropTypes from 'prop-types';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import type { RecordNavigationSize } from '@/types/ui';
 
-/**
- * RecordNavigation - Navegación entre registros (anterior/siguiente)
- * Para usar en headers de Modales/Drawers de detalle
- *
- * @param {Object} props
- * @param {number} [props.currentIndex=0] - Índice actual (0-based)
- * @param {number} [props.totalRecords=0] - Total de registros
- * @param {Function} props.onPrevious - Handler para ir al anterior
- * @param {Function} props.onNext - Handler para ir al siguiente
- * @param {boolean} [props.showIndicator=true] - Mostrar "X de Y"
- * @param {string} [props.size='md'] - Tamaño: sm, md
- * @param {string} [props.className] - Clases adicionales
- */
+export interface RecordNavigationProps {
+  /** Índice actual (0-based) */
+  currentIndex?: number;
+  /** Total de registros */
+  totalRecords?: number;
+  /** Handler para ir al anterior */
+  onPrevious?: () => void;
+  /** Handler para ir al siguiente */
+  onNext?: () => void;
+  /** Mostrar "X de Y" */
+  showIndicator?: boolean;
+  /** Tamaño: sm, md */
+  size?: RecordNavigationSize;
+  /** Clases adicionales */
+  className?: string;
+}
 
-const sizeClasses = {
+const sizeClasses: Record<RecordNavigationSize, { button: string; icon: string; text: string }> = {
   sm: {
     button: 'p-1.5 min-w-[36px] min-h-[36px]',
     icon: 'w-4 h-4',
@@ -30,6 +33,10 @@ const sizeClasses = {
   },
 };
 
+/**
+ * RecordNavigation - Navegación entre registros (anterior/siguiente)
+ * Para usar en headers de Modales/Drawers de detalle
+ */
 export const RecordNavigation = memo(function RecordNavigation({
   currentIndex = 0,
   totalRecords = 0,
@@ -38,7 +45,7 @@ export const RecordNavigation = memo(function RecordNavigation({
   showIndicator = true,
   size = 'md',
   className,
-}) {
+}: RecordNavigationProps) {
   const hasPrev = currentIndex > 0;
   const hasNext = currentIndex < totalRecords - 1;
   const styles = sizeClasses[size] || sizeClasses.md;
@@ -98,14 +105,3 @@ export const RecordNavigation = memo(function RecordNavigation({
 });
 
 RecordNavigation.displayName = 'RecordNavigation';
-
-RecordNavigation.propTypes = {
-  currentIndex: PropTypes.number,
-  totalRecords: PropTypes.number,
-  onPrevious: PropTypes.func,
-  onNext: PropTypes.func,
-  showIndicator: PropTypes.bool,
-  size: PropTypes.oneOf(['sm', 'md']),
-  className: PropTypes.string,
-};
-

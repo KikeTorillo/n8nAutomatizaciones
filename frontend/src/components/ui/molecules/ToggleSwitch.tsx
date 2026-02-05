@@ -1,25 +1,44 @@
-import { memo, forwardRef } from 'react';
-import PropTypes from 'prop-types';
+import { memo, forwardRef, type ReactNode, type KeyboardEvent } from 'react';
 import { cn } from '@/lib/utils';
 import { TOGGLE_SIZES, TOGGLE_COLORS } from '@/lib/uiConstants';
 import { Spinner } from '../atoms/Spinner';
+import type { Size } from '@/types/ui';
+
+export interface ToggleSwitchProps {
+  /** Estado del toggle (encendido/apagado) */
+  enabled?: boolean;
+  /** Callback cuando cambia el estado */
+  onChange?: (enabled: boolean) => void;
+  /** Si está deshabilitado */
+  disabled?: boolean;
+  /** Tamaño: 'sm' | 'md' | 'lg' */
+  size?: Size;
+  /** Label para accesibilidad (aria-label) */
+  label?: string;
+  /** Clases adicionales */
+  className?: string;
+  /** Icono cuando está encendido */
+  enabledIcon?: ReactNode;
+  /** Icono cuando está apagado */
+  disabledIcon?: ReactNode;
+  /** Estado de carga */
+  loading?: boolean;
+  /** Icono de carga personalizado */
+  loadingIcon?: ReactNode;
+}
+
+interface ToggleSizeConfig {
+  track: string;
+  thumb: string;
+  icon: string;
+  translate: string;
+}
 
 /**
  * ToggleSwitch - Componente de interruptor on/off
  *
  * Toggle switch accesible con soporte para dark mode, múltiples tamaños,
  * estados de loading y personalización de iconos.
- *
- * @param {boolean} enabled - Estado del toggle (encendido/apagado)
- * @param {function} onChange - Callback cuando cambia el estado
- * @param {boolean} disabled - Si está deshabilitado
- * @param {string} size - Tamaño: 'sm' | 'md' | 'lg'
- * @param {string} label - Label para accesibilidad (aria-label)
- * @param {string} className - Clases adicionales
- * @param {ReactNode} enabledIcon - Icono cuando está encendido
- * @param {ReactNode} disabledIcon - Icono cuando está apagado
- * @param {boolean} loading - Estado de carga
- * @param {ReactNode} loadingIcon - Icono de carga personalizado
  *
  * @example
  * // Toggle simple
@@ -34,7 +53,7 @@ import { Spinner } from '../atoms/Spinner';
  *   disabledIcon={<X className="h-4 w-4 text-gray-400" />}
  * />
  */
-const ToggleSwitch = memo(forwardRef(function ToggleSwitch({
+const ToggleSwitch = memo(forwardRef<HTMLButtonElement, ToggleSwitchProps>(function ToggleSwitch({
   enabled = false,
   onChange,
   disabled = false,
@@ -46,7 +65,7 @@ const ToggleSwitch = memo(forwardRef(function ToggleSwitch({
   loading = false,
   loadingIcon,
 }, ref) {
-  const sizeConfig = TOGGLE_SIZES[size] || TOGGLE_SIZES.md;
+  const sizeConfig = (TOGGLE_SIZES as Record<Size, ToggleSizeConfig>)[size] || TOGGLE_SIZES.md;
 
   const handleClick = () => {
     if (!disabled && !loading && onChange) {
@@ -54,7 +73,7 @@ const ToggleSwitch = memo(forwardRef(function ToggleSwitch({
     }
   };
 
-  const handleKeyDown = (e) => {
+  const handleKeyDown = (e: KeyboardEvent<HTMLButtonElement>) => {
     if ((e.key === 'Enter' || e.key === ' ') && !disabled && !loading) {
       e.preventDefault();
       onChange?.(!enabled);
@@ -62,7 +81,7 @@ const ToggleSwitch = memo(forwardRef(function ToggleSwitch({
   };
 
   // Renderizar icono según estado
-  const renderIcon = () => {
+  const renderIcon = (): ReactNode => {
     if (loading && loadingIcon) {
       return loadingIcon;
     }
@@ -115,18 +134,5 @@ const ToggleSwitch = memo(forwardRef(function ToggleSwitch({
 }));
 
 ToggleSwitch.displayName = 'ToggleSwitch';
-
-ToggleSwitch.propTypes = {
-  enabled: PropTypes.bool,
-  onChange: PropTypes.func,
-  disabled: PropTypes.bool,
-  size: PropTypes.oneOf(['sm', 'md', 'lg']),
-  label: PropTypes.string,
-  className: PropTypes.string,
-  enabledIcon: PropTypes.node,
-  disabledIcon: PropTypes.node,
-  loading: PropTypes.bool,
-  loadingIcon: PropTypes.node,
-};
 
 export { ToggleSwitch };

@@ -1,5 +1,4 @@
 import { memo } from 'react';
-import PropTypes from 'prop-types';
 import { cn } from '@/lib/utils';
 import {
   PROGRESS_BAR_COLORS,
@@ -8,24 +7,50 @@ import {
   PROGRESS_THRESHOLD_PRESETS,
   getProgressColorByThreshold,
 } from '@/lib/uiConstants';
+import type { ProgressLayout, ProgressPreset, Size } from '@/types/ui';
+
+export interface ProgressBarProps {
+  /** Valor actual */
+  value?: number;
+  /** Valor máximo */
+  max?: number;
+  /** Porcentaje directo (alternativo a value/max) */
+  percentage?: number;
+  /** Etiqueta descriptiva */
+  label?: string;
+  /** Mostrar porcentaje */
+  showPercentage?: boolean;
+  /** Mostrar valor/max */
+  showValue?: boolean;
+  /** Layout */
+  layout?: ProgressLayout;
+  /** Tamaño de la barra */
+  size?: Size;
+  /** Preset de colores */
+  preset?: ProgressPreset;
+  /** Color fijo (ignora preset/thresholds) */
+  color?: string;
+  /** Umbrales personalizados [umbral1, umbral2] */
+  thresholds?: number[];
+  /** Colores para cada rango ['color1', 'color2', 'color3'] */
+  colors?: string[];
+  /** Clases adicionales */
+  className?: string;
+}
+
+export interface LimitProgressBarProps {
+  /** Etiqueta */
+  label?: string;
+  /** Valor usado */
+  usado?: number;
+  /** Límite total */
+  limite?: number;
+  /** Porcentaje precalculado */
+  porcentaje?: number;
+}
 
 /**
  * ProgressBar - Barra de progreso genérica
- *
- * @param {Object} props
- * @param {number} props.value - Valor actual
- * @param {number} [props.max=100] - Valor máximo
- * @param {number} [props.percentage] - Porcentaje directo (alternativo a value/max)
- * @param {string} [props.label] - Etiqueta descriptiva
- * @param {boolean} [props.showPercentage=false] - Mostrar porcentaje
- * @param {boolean} [props.showValue=false] - Mostrar valor/max
- * @param {'horizontal'|'vertical'} [props.layout='horizontal'] - Layout
- * @param {'sm'|'md'|'lg'} [props.size='md'] - Tamaño de la barra
- * @param {'completion'|'usage'|'neutral'} [props.preset] - Preset de colores
- * @param {string} [props.color] - Color fijo (ignora preset/thresholds)
- * @param {number[]} [props.thresholds] - Umbrales personalizados [umbral1, umbral2]
- * @param {string[]} [props.colors] - Colores para cada rango ['color1', 'color2', 'color3']
- * @param {string} [props.className] - Clases adicionales
  */
 export const ProgressBar = memo(function ProgressBar({
   value = 0,
@@ -41,7 +66,7 @@ export const ProgressBar = memo(function ProgressBar({
   thresholds: thresholdsProp,
   colors: colorsProp,
   className,
-}) {
+}: ProgressBarProps) {
   // Calcular porcentaje
   const percentage = percentageProp ?? (max > 0 ? Math.round((value / max) * 100) : 0);
   const clampedPercentage = Math.min(Math.max(percentage, 0), 100);
@@ -49,8 +74,8 @@ export const ProgressBar = memo(function ProgressBar({
   // Determinar color
   let barColor = colorProp;
   if (!barColor) {
-    if (preset && PROGRESS_THRESHOLD_PRESETS[preset]) {
-      const { thresholds, colors } = PROGRESS_THRESHOLD_PRESETS[preset];
+    if (preset && (PROGRESS_THRESHOLD_PRESETS as Record<string, { thresholds: number[]; colors: string[] }>)[preset]) {
+      const { thresholds, colors } = (PROGRESS_THRESHOLD_PRESETS as Record<string, { thresholds: number[]; colors: string[] }>)[preset];
       barColor = getProgressColorByThreshold(percentage, thresholds, colors);
     } else if (thresholdsProp && colorsProp) {
       barColor = getProgressColorByThreshold(percentage, thresholdsProp, colorsProp);
@@ -71,7 +96,7 @@ export const ProgressBar = memo(function ProgressBar({
               </span>
             )}
             {showValue && (
-              <span className={cn('text-sm font-semibold', PROGRESS_TEXT_COLORS[barColor])}>
+              <span className={cn('text-sm font-semibold', (PROGRESS_TEXT_COLORS as Record<string, string>)[barColor])}>
                 {value} / {max}
               </span>
             )}
@@ -79,12 +104,12 @@ export const ProgressBar = memo(function ProgressBar({
         )}
         <div className={cn(
           'w-full bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden',
-          PROGRESS_BAR_SIZES[size]
+          (PROGRESS_BAR_SIZES as Record<Size, string>)[size]
         )}>
           <div
             className={cn(
               'h-full rounded-full transition-all duration-300',
-              PROGRESS_BAR_COLORS[barColor]
+              (PROGRESS_BAR_COLORS as Record<string, string>)[barColor]
             )}
             style={{ width: `${clampedPercentage}%` }}
             role="progressbar"
@@ -106,7 +131,7 @@ export const ProgressBar = memo(function ProgressBar({
   return (
     <div className={cn('flex items-center gap-3', className)}>
       {label && (
-        <span className={cn('text-sm font-medium flex-shrink-0', PROGRESS_TEXT_COLORS[barColor])}>
+        <span className={cn('text-sm font-medium flex-shrink-0', (PROGRESS_TEXT_COLORS as Record<string, string>)[barColor])}>
           {label}
         </span>
       )}
@@ -117,12 +142,12 @@ export const ProgressBar = memo(function ProgressBar({
       )}
       <div className={cn(
         'flex-1 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden max-w-xs',
-        PROGRESS_BAR_SIZES[size]
+        (PROGRESS_BAR_SIZES as Record<Size, string>)[size]
       )}>
         <div
           className={cn(
             'h-full rounded-full transition-all duration-300',
-            PROGRESS_BAR_COLORS[barColor]
+            (PROGRESS_BAR_COLORS as Record<string, string>)[barColor]
           )}
           style={{ width: `${clampedPercentage}%` }}
           role="progressbar"
@@ -132,7 +157,7 @@ export const ProgressBar = memo(function ProgressBar({
         />
       </div>
       {showPercentage && (
-        <span className={cn('text-sm font-medium flex-shrink-0', PROGRESS_TEXT_COLORS[barColor])}>
+        <span className={cn('text-sm font-medium flex-shrink-0', (PROGRESS_TEXT_COLORS as Record<string, string>)[barColor])}>
           {percentage}%
         </span>
       )}
@@ -144,7 +169,7 @@ export const ProgressBar = memo(function ProgressBar({
  * LimitProgressBar - Wrapper para mostrar uso de límites del plan
  * Mantiene compatibilidad con el componente anterior
  */
-export function LimitProgressBar({ label, usado, limite, porcentaje }) {
+export function LimitProgressBar({ label, usado, limite, porcentaje }: LimitProgressBarProps) {
   return (
     <ProgressBar
       value={usado}
@@ -160,27 +185,3 @@ export function LimitProgressBar({ label, usado, limite, porcentaje }) {
 }
 
 ProgressBar.displayName = 'ProgressBar';
-
-ProgressBar.propTypes = {
-  value: PropTypes.number,
-  max: PropTypes.number,
-  percentage: PropTypes.number,
-  label: PropTypes.string,
-  showPercentage: PropTypes.bool,
-  showValue: PropTypes.bool,
-  layout: PropTypes.oneOf(['horizontal', 'vertical']),
-  size: PropTypes.oneOf(['sm', 'md', 'lg']),
-  preset: PropTypes.oneOf(['completion', 'usage', 'neutral']),
-  color: PropTypes.string,
-  thresholds: PropTypes.arrayOf(PropTypes.number),
-  colors: PropTypes.arrayOf(PropTypes.string),
-  className: PropTypes.string,
-};
-
-LimitProgressBar.propTypes = {
-  label: PropTypes.string,
-  usado: PropTypes.number,
-  limite: PropTypes.number,
-  porcentaje: PropTypes.number,
-};
-

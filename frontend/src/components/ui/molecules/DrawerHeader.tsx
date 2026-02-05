@@ -1,21 +1,28 @@
 import { memo } from 'react';
-import PropTypes from 'prop-types';
 import { Drawer as VaulDrawer } from 'vaul';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
+export interface DrawerHeaderProps {
+  /** Título del drawer */
+  title?: string;
+  /** Subtítulo/descripción opcional */
+  subtitle?: string;
+  /** Callback para cerrar el drawer */
+  onClose?: () => void;
+  /** Mostrar botón de cierre */
+  showCloseButton?: boolean;
+  /** Deshabilitar cierre */
+  disableClose?: boolean;
+  /** Clases CSS adicionales */
+  className?: string;
+}
 
 /**
  * DrawerHeader - Header extraído del componente Drawer
  *
  * Componente reutilizable para headers de drawers, compatible con Vaul.
  * Usa VaulDrawer.Title y VaulDrawer.Description para accesibilidad.
- *
- * @param {string} title - Título principal
- * @param {string} subtitle - Subtítulo/descripción opcional
- * @param {function} onClose - Callback para cerrar
- * @param {boolean} showCloseButton - Mostrar botón de cierre
- * @param {boolean} disableClose - Deshabilitar cierre
- * @param {string} className - Clases adicionales
  *
  * @example
  * <DrawerHeader
@@ -32,7 +39,7 @@ const DrawerHeader = memo(function DrawerHeader({
   showCloseButton = false,
   disableClose = false,
   className,
-}) {
+}: DrawerHeaderProps) {
   if (!title && !showCloseButton) return null;
 
   return (
@@ -74,20 +81,5 @@ const DrawerHeader = memo(function DrawerHeader({
 });
 
 DrawerHeader.displayName = 'DrawerHeader';
-
-DrawerHeader.propTypes = {
-  /** Título del drawer */
-  title: PropTypes.string,
-  /** Subtítulo/descripción opcional */
-  subtitle: PropTypes.string,
-  /** Callback para cerrar el drawer */
-  onClose: PropTypes.func,
-  /** Mostrar botón de cierre */
-  showCloseButton: PropTypes.bool,
-  /** Deshabilitar cierre */
-  disableClose: PropTypes.bool,
-  /** Clases CSS adicionales */
-  className: PropTypes.string,
-};
 
 export { DrawerHeader };

@@ -1,21 +1,47 @@
-import { forwardRef, useState, useEffect, useCallback, useMemo, memo } from 'react';
-import PropTypes from 'prop-types';
+import { forwardRef, useState, useEffect, useCallback, useMemo, memo, type ChangeEvent, type InputHTMLAttributes } from 'react';
 import { Search, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SEARCH_INPUT_SIZES, getInputBaseStyles } from '@/lib/uiConstants';
+import type { Size } from '@/types/ui';
+
+interface SyntheticEvent {
+  target: { value: string };
+  currentTarget: { value: string };
+}
+
+export interface SearchInputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'size' | 'onChange'> {
+  /** Valor controlado del input */
+  value?: string;
+  /** Callback cuando cambia el valor */
+  onChange?: (e: ChangeEvent<HTMLInputElement> | SyntheticEvent) => void;
+  /** Callback con valor debounced */
+  onSearch?: (value: string) => void;
+  /** Tiempo de debounce en ms */
+  debounceMs?: number;
+  /** Placeholder del input */
+  placeholder?: string;
+  /** Tamaño del input */
+  size?: Size;
+  /** Mostrar botón de limpiar */
+  showClear?: boolean;
+  /** Auto focus al montar */
+  autoFocus?: boolean;
+  /** Estado deshabilitado */
+  disabled?: boolean;
+  /** Clases CSS adicionales */
+  className?: string;
+}
+
+interface SearchInputSizeConfig {
+  input: string;
+  icon: string;
+  paddingLeft: string;
+  paddingRightNormal: string;
+  paddingRightWithClear: string;
+}
 
 /**
  * SearchInput - Componente de búsqueda reutilizable con debounce
- *
- * @param {string} value - Valor controlado del input
- * @param {function} onChange - Callback cuando cambia el valor
- * @param {function} onSearch - Callback con valor debounced (opcional)
- * @param {number} debounceMs - Tiempo de debounce en ms (default: 300)
- * @param {string} placeholder - Placeholder del input
- * @param {string} size - Tamaño: 'sm' | 'md' | 'lg'
- * @param {boolean} showClear - Mostrar botón de limpiar (default: true)
- * @param {boolean} autoFocus - Auto focus al montar
- * @param {string} className - Clases adicionales
  *
  * @example
  * // Uso básico
@@ -34,8 +60,8 @@ import { SEARCH_INPUT_SIZES, getInputBaseStyles } from '@/lib/uiConstants';
  *   debounceMs={500}
  * />
  */
-const SearchInput = memo(forwardRef(
-  (
+const SearchInput = memo(forwardRef<HTMLInputElement, SearchInputProps>(
+  function SearchInput(
     {
       value = '',
       onChange,
@@ -50,11 +76,11 @@ const SearchInput = memo(forwardRef(
       ...props
     },
     ref
-  ) => {
+  ) {
     const [internalValue, setInternalValue] = useState(value);
 
     // Callback estable para evitar cancelaciones de debounce
-    const stableOnSearch = useCallback((searchValue) => {
+    const stableOnSearch = useCallback((searchValue: string) => {
       if (onSearch) {
         onSearch(searchValue);
       }
@@ -76,14 +102,14 @@ const SearchInput = memo(forwardRef(
       return () => clearTimeout(timer);
     }, [internalValue, debounceMs, stableOnSearch, onSearch]);
 
-    const handleChange = useCallback((e) => {
+    const handleChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
       const newValue = e.target.value;
       setInternalValue(newValue);
       onChange?.(e);
     }, [onChange]);
 
     const handleClear = useCallback(() => {
-      const syntheticEvent = {
+      const syntheticEvent: SyntheticEvent = {
         target: { value: '' },
         currentTarget: { value: '' },
       };
@@ -94,7 +120,7 @@ const SearchInput = memo(forwardRef(
 
     // Memoizar estilos de tamaño con padding dinámico
     const currentSize = useMemo(() => {
-      const baseSize = SEARCH_INPUT_SIZES[size] || SEARCH_INPUT_SIZES.md;
+      const baseSize = (SEARCH_INPUT_SIZES as Record<Size, SearchInputSizeConfig>)[size] || SEARCH_INPUT_SIZES.md;
       return {
         ...baseSize,
         paddingRight: showClear && internalValue
@@ -153,28 +179,5 @@ const SearchInput = memo(forwardRef(
 ));
 
 SearchInput.displayName = 'SearchInput';
-
-SearchInput.propTypes = {
-  /** Valor controlado del input */
-  value: PropTypes.string,
-  /** Callback cuando cambia el valor */
-  onChange: PropTypes.func,
-  /** Callback con valor debounced */
-  onSearch: PropTypes.func,
-  /** Tiempo de debounce en ms */
-  debounceMs: PropTypes.number,
-  /** Placeholder del input */
-  placeholder: PropTypes.string,
-  /** Tamaño del input */
-  size: PropTypes.oneOf(['sm', 'md', 'lg']),
-  /** Mostrar botón de limpiar */
-  showClear: PropTypes.bool,
-  /** Auto focus al montar */
-  autoFocus: PropTypes.bool,
-  /** Estado deshabilitado */
-  disabled: PropTypes.bool,
-  /** Clases CSS adicionales */
-  className: PropTypes.string,
-};
 
 export { SearchInput };

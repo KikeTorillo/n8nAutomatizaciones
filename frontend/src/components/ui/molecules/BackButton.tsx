@@ -1,22 +1,31 @@
 import { memo, forwardRef } from 'react';
-import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '../atoms/Button';
+import type { ButtonVariant, Size } from '@/types/ui';
+
+type ButtonSize = Size | 'xl';
+
+export interface BackButtonProps {
+  /** Ruta a navegar (opcional, default: navigate(-1)) */
+  to?: string;
+  /** Texto del botón (default: "Volver") */
+  label?: string;
+  /** Variante del botón (default: "outline") */
+  variant?: ButtonVariant;
+  /** Tamaño del botón (default: "sm") */
+  size?: ButtonSize;
+  /** Solo mostrar icono sin texto (útil para móvil) */
+  iconOnly?: boolean;
+  /** Clases adicionales */
+  className?: string;
+}
 
 /**
  * Componente BackButton reutilizable
  * Botón de navegación "Volver" con estilo consistente en toda la app
- *
- * @param {string} to - Ruta a navegar (opcional, default: navigate(-1))
- * @param {string} label - Texto del botón (default: "Volver")
- * @param {string} variant - Variante del botón (default: "outline")
- * @param {string} size - Tamaño del botón (default: "sm")
- * @param {boolean} iconOnly - Solo mostrar icono sin texto (útil para móvil)
- * @param {string} className - Clases adicionales
- * @param {React.Ref} ref - Ref para acceder al elemento Button
  */
-const BackButton = memo(forwardRef(function BackButton({
+const BackButton = memo(forwardRef<HTMLButtonElement, BackButtonProps>(function BackButton({
   to,
   label = 'Volver',
   variant = 'outline',
@@ -50,14 +59,5 @@ const BackButton = memo(forwardRef(function BackButton({
 }));
 
 BackButton.displayName = 'BackButton';
-
-BackButton.propTypes = {
-  to: PropTypes.string,
-  label: PropTypes.string,
-  variant: PropTypes.oneOf(['primary', 'secondary', 'outline', 'danger', 'ghost', 'warning', 'success', 'link']),
-  size: PropTypes.oneOf(['sm', 'md', 'lg', 'xl']),
-  iconOnly: PropTypes.bool,
-  className: PropTypes.string,
-};
 
 export { BackButton };

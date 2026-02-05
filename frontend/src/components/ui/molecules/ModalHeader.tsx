@@ -1,20 +1,27 @@
 import { memo } from 'react';
-import PropTypes from 'prop-types';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
+export interface ModalHeaderProps {
+  /** Título del modal */
+  title?: string;
+  /** Subtítulo opcional */
+  subtitle?: string;
+  /** Callback para cerrar el modal */
+  onClose?: () => void;
+  /** Mostrar botón de cierre */
+  showCloseButton?: boolean;
+  /** Deshabilitar cierre */
+  disableClose?: boolean;
+  /** Clases CSS adicionales */
+  className?: string;
+}
 
 /**
  * ModalHeader - Header extraído del componente Modal
  *
  * Componente reutilizable para headers de modales con título, subtítulo
  * y botón de cerrar opcionales.
- *
- * @param {string} title - Título principal
- * @param {string} subtitle - Subtítulo opcional
- * @param {function} onClose - Callback para cerrar
- * @param {boolean} showCloseButton - Mostrar botón de cierre
- * @param {boolean} disableClose - Deshabilitar cierre (para estados de carga)
- * @param {string} className - Clases adicionales
  *
  * @example
  * <ModalHeader
@@ -30,7 +37,7 @@ const ModalHeader = memo(function ModalHeader({
   showCloseButton = true,
   disableClose = false,
   className,
-}) {
+}: ModalHeaderProps) {
   if (!title && !showCloseButton) return null;
 
   return (
@@ -72,20 +79,5 @@ const ModalHeader = memo(function ModalHeader({
 });
 
 ModalHeader.displayName = 'ModalHeader';
-
-ModalHeader.propTypes = {
-  /** Título del modal */
-  title: PropTypes.string,
-  /** Subtítulo opcional */
-  subtitle: PropTypes.string,
-  /** Callback para cerrar el modal */
-  onClose: PropTypes.func,
-  /** Mostrar botón de cierre */
-  showCloseButton: PropTypes.bool,
-  /** Deshabilitar cierre */
-  disableClose: PropTypes.bool,
-  /** Clases CSS adicionales */
-  className: PropTypes.string,
-};
 
 export { ModalHeader };

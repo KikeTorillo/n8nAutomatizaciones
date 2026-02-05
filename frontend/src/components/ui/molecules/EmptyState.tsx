@@ -1,23 +1,33 @@
-import { memo } from 'react';
-import PropTypes from 'prop-types';
+import { memo, type ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 import { Inbox } from 'lucide-react';
 import { Button } from '../atoms/Button';
 import { EMPTY_STATE_SIZES, EMPTY_STATE_BASE } from '@/lib/uiConstants';
+import type { Size, ButtonVariant, LucideIcon } from '@/types/ui';
+
+export interface EmptyStateProps {
+  /** Icono de lucide-react (default: Inbox) */
+  icon?: LucideIcon;
+  /** Título del estado vacío */
+  title: string;
+  /** Descripción adicional */
+  description?: string;
+  /** Texto del botón de acción */
+  actionLabel?: string;
+  /** Callback del botón de acción */
+  onAction?: () => void;
+  /** Variante del botón */
+  actionVariant?: Extract<ButtonVariant, 'primary' | 'secondary' | 'outline'>;
+  /** Contenido adicional */
+  children?: ReactNode;
+  /** Tamaño del componente */
+  size?: Size;
+  /** Clases adicionales */
+  className?: string;
+}
 
 /**
  * EmptyState - Estado vacío reutilizable para listas y tablas
- *
- * @param {Object} props
- * @param {React.ComponentType} [props.icon] - Icono de lucide-react (default: Inbox)
- * @param {string} props.title - Título del estado vacío
- * @param {string} [props.description] - Descripción adicional
- * @param {string} [props.actionLabel] - Texto del botón de acción
- * @param {Function} [props.onAction] - Callback del botón de acción
- * @param {'primary'|'secondary'|'outline'} [props.actionVariant] - Variante del botón
- * @param {React.ReactNode} [props.children] - Contenido adicional
- * @param {'sm'|'md'|'lg'} [props.size] - Tamaño del componente
- * @param {string} [props.className] - Clases adicionales
  */
 export const EmptyState = memo(function EmptyState({
   icon: Icon = Inbox,
@@ -29,8 +39,8 @@ export const EmptyState = memo(function EmptyState({
   children,
   size = 'md',
   className,
-}) {
-  const sizes = EMPTY_STATE_SIZES[size] || EMPTY_STATE_SIZES.md;
+}: EmptyStateProps) {
+  const sizes = (EMPTY_STATE_SIZES as Record<Size, { container: string; icon: string; title: string; description: string }>)[size] || EMPTY_STATE_SIZES.md;
 
   return (
     <div
@@ -75,15 +85,3 @@ export const EmptyState = memo(function EmptyState({
 });
 
 EmptyState.displayName = 'EmptyState';
-
-EmptyState.propTypes = {
-  icon: PropTypes.elementType,
-  title: PropTypes.string.isRequired,
-  description: PropTypes.string,
-  actionLabel: PropTypes.string,
-  onAction: PropTypes.func,
-  actionVariant: PropTypes.oneOf(['primary', 'secondary', 'outline']),
-  children: PropTypes.node,
-  size: PropTypes.oneOf(['sm', 'md', 'lg']),
-  className: PropTypes.string,
-};
