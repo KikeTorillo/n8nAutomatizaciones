@@ -1,7 +1,34 @@
-import { forwardRef, memo, useId } from 'react';
-import PropTypes from 'prop-types';
+import { forwardRef, memo, useId, type InputHTMLAttributes, type ReactNode } from 'react';
 import { cn } from '@/lib/utils';
-import { INPUT_SIZE_CLASSES, INPUT_AFFIX, getInputPaddingStyles, getAriaDescribedBy } from '@/lib/uiConstants';
+import {
+  INPUT_SIZE_CLASSES,
+  INPUT_AFFIX,
+  getInputPaddingStyles,
+  getAriaDescribedBy,
+} from '@/lib/uiConstants';
+import type { Size } from '@/types/ui';
+
+export interface InputProps
+  extends Omit<InputHTMLAttributes<HTMLInputElement>, 'size' | 'prefix'> {
+  /** Tipo de input HTML */
+  type?: string;
+  /** Tamaño del input */
+  size?: Size;
+  /** Si tiene error (borde rojo) */
+  hasError?: boolean;
+  /** Si es campo requerido */
+  required?: boolean;
+  /** Si tiene texto de ayuda asociado */
+  hasHelper?: boolean;
+  /** Texto o símbolo antes del input (ej: "$") */
+  prefix?: ReactNode;
+  /** Texto o símbolo después del input (ej: "%") */
+  suffix?: ReactNode;
+  /** ID del elemento */
+  id?: string;
+  /** Clases CSS adicionales */
+  className?: string;
+}
 
 /**
  * Input - Componente input puro accesible compatible con React Hook Form
@@ -11,25 +38,12 @@ import { INPUT_SIZE_CLASSES, INPUT_AFFIX, getInputPaddingStyles, getAriaDescribe
  *   <Input hasError={!!errors.nombre} {...field} />
  * </FormGroup>
  *
- * @component
  * @example
  * <Input type="email" hasError={!!errors.email} {...register('email')} />
  * <Input prefix="$" suffix="MXN" type="number" {...register('precio')} />
- *
- * @param {Object} props
- * @param {string} [props.type='text'] - Tipo de input (text, email, number, etc.)
- * @param {'sm'|'md'|'lg'} [props.size='md'] - Tamaño del input
- * @param {boolean} [props.hasError=false] - Si tiene error (borde rojo)
- * @param {boolean} [props.required=false] - Si es campo requerido
- * @param {boolean} [props.hasHelper=false] - Si tiene texto de ayuda asociado
- * @param {string|React.ReactNode} [props.prefix] - Texto o símbolo antes del input (ej: "$")
- * @param {string|React.ReactNode} [props.suffix] - Texto o símbolo después del input (ej: "%")
- * @param {string} [props.id] - ID del elemento
- * @param {string} [props.className] - Clases adicionales
- * @param {React.Ref} ref - Forward ref
- * @returns {React.ReactElement}
  */
-const Input = memo(forwardRef(function Input(
+const Input = memo(
+  forwardRef<HTMLInputElement, InputProps>(function Input(
     {
       type = 'text',
       size = 'md',
@@ -55,7 +69,7 @@ const Input = memo(forwardRef(function Input(
       'bg-white dark:bg-gray-800',
       'text-gray-900 dark:text-gray-100',
       'placeholder:text-gray-400 dark:placeholder:text-gray-500',
-      INPUT_SIZE_CLASSES[size]
+      (INPUT_SIZE_CLASSES as Record<string, string>)[size]
     );
 
     const stateStyles = hasError
@@ -75,10 +89,7 @@ const Input = memo(forwardRef(function Input(
       return (
         <div className="relative">
           {prefix && (
-            <div
-              className={cn(INPUT_AFFIX.container, INPUT_AFFIX.left)}
-              aria-hidden="true"
-            >
+            <div className={cn(INPUT_AFFIX.container, INPUT_AFFIX.left)} aria-hidden="true">
               <span className={INPUT_AFFIX.text}>{prefix}</span>
             </div>
           )}
@@ -93,10 +104,7 @@ const Input = memo(forwardRef(function Input(
           />
 
           {suffix && (
-            <div
-              className={cn(INPUT_AFFIX.container, INPUT_AFFIX.right)}
-              aria-hidden="true"
-            >
+            <div className={cn(INPUT_AFFIX.container, INPUT_AFFIX.right)} aria-hidden="true">
               <span className={INPUT_AFFIX.text}>{suffix}</span>
             </div>
           )}
@@ -114,34 +122,9 @@ const Input = memo(forwardRef(function Input(
         {...props}
       />
     );
-  }
-));
+  })
+);
 
 Input.displayName = 'Input';
-
-Input.propTypes = {
-  /** Tipo de input HTML */
-  type: PropTypes.string,
-  /** Tamaño del input */
-  size: PropTypes.oneOf(['sm', 'md', 'lg']),
-  /** Si el input tiene error (borde rojo) */
-  hasError: PropTypes.bool,
-  /** Si el campo es requerido */
-  required: PropTypes.bool,
-  /** Si tiene texto de ayuda asociado */
-  hasHelper: PropTypes.bool,
-  /** Texto o elemento antes del input */
-  prefix: PropTypes.node,
-  /** Texto o elemento después del input */
-  suffix: PropTypes.node,
-  /** ID del elemento */
-  id: PropTypes.string,
-  /** Clases CSS adicionales */
-  className: PropTypes.string,
-  /** Placeholder del input */
-  placeholder: PropTypes.string,
-  /** Handler de cambio */
-  onChange: PropTypes.func,
-};
 
 export { Input };

@@ -1,14 +1,35 @@
-import { forwardRef, memo } from 'react';
-import PropTypes from 'prop-types';
+import { forwardRef, memo, type ButtonHTMLAttributes, type ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 import { Loader2 } from 'lucide-react';
 import { BUTTON_VARIANTS, BUTTON_SIZES, FOCUS_STATES } from '@/lib/uiConstants';
+import type { ButtonVariant, ButtonType } from '@/types/ui';
+
+type ButtonSize = 'sm' | 'md' | 'lg' | 'xl';
+
+export interface ButtonProps
+  extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'type'> {
+  /** Variante visual del botón */
+  variant?: ButtonVariant;
+  /** Tamaño del botón */
+  size?: ButtonSize;
+  /** Mostrar estado de carga con spinner */
+  isLoading?: boolean;
+  /** Deshabilitar el botón */
+  disabled?: boolean;
+  /** Tipo del botón HTML */
+  type?: ButtonType;
+  /** Contenido del botón */
+  children: ReactNode;
+  /** Clases CSS adicionales */
+  className?: string;
+}
 
 /**
  * Componente Button reutilizable
  * Soporta variantes, tamaños, estados de carga y disabled
  */
-const Button = memo(forwardRef(function Button(
+const Button = memo(
+  forwardRef<HTMLButtonElement, ButtonProps>(function Button(
     {
       className,
       variant = 'primary',
@@ -36,8 +57,8 @@ const Button = memo(forwardRef(function Button(
         aria-disabled={disabled || isLoading || undefined}
         className={cn(
           baseStyles,
-          BUTTON_VARIANTS[variant] || BUTTON_VARIANTS.primary,
-          BUTTON_SIZES[size] || BUTTON_SIZES.md,
+          (BUTTON_VARIANTS as Record<string, string>)[variant] || BUTTON_VARIANTS.primary,
+          (BUTTON_SIZES as Record<string, string>)[size] || BUTTON_SIZES.md,
           className
         )}
         {...props}
@@ -48,28 +69,9 @@ const Button = memo(forwardRef(function Button(
         {children}
       </button>
     );
-  }
-));
+  })
+);
 
 Button.displayName = 'Button';
-
-Button.propTypes = {
-  /** Variante visual del botón */
-  variant: PropTypes.oneOf(['primary', 'secondary', 'outline', 'danger', 'ghost', 'warning', 'success', 'link']),
-  /** Tamaño del botón */
-  size: PropTypes.oneOf(['sm', 'md', 'lg', 'xl']),
-  /** Mostrar estado de carga con spinner */
-  isLoading: PropTypes.bool,
-  /** Deshabilitar el botón */
-  disabled: PropTypes.bool,
-  /** Tipo del botón HTML */
-  type: PropTypes.oneOf(['button', 'submit', 'reset']),
-  /** Contenido del botón */
-  children: PropTypes.node.isRequired,
-  /** Clases CSS adicionales */
-  className: PropTypes.string,
-  /** Handler de click */
-  onClick: PropTypes.func,
-};
 
 export { Button };

@@ -1,12 +1,18 @@
-import { memo } from 'react';
-import PropTypes from 'prop-types';
+import { memo, type SVGProps } from 'react';
 import { cn } from '@/lib/utils';
 import { ICON_SIZES } from '@/lib/uiConstants';
+import type { ExtendedSize } from '@/types/ui';
+
+export interface SpinnerProps extends SVGProps<SVGSVGElement> {
+  /** Tamaño del spinner */
+  size?: ExtendedSize;
+  /** Clases adicionales */
+  className?: string;
+}
 
 /**
  * Spinner - Indicador de carga SVG reutilizable
  *
- * @component
  * @example
  * // Uso básico
  * <Spinner size="md" />
@@ -14,20 +20,15 @@ import { ICON_SIZES } from '@/lib/uiConstants';
  * @example
  * // Con color personalizado
  * <Spinner size="sm" className="text-primary-500" />
- *
- * @param {Object} props
- * @param {'xs'|'sm'|'md'|'lg'|'xl'} [props.size='md'] - Tamaño del spinner
- * @param {string} [props.className] - Clases adicionales
- * @returns {React.ReactElement}
  */
 const Spinner = memo(function Spinner({
   size = 'md',
   className,
   ...props
-}) {
+}: SpinnerProps) {
   return (
     <svg
-      className={cn(ICON_SIZES[size] || ICON_SIZES.md, 'animate-spin', className)}
+      className={cn((ICON_SIZES as Record<string, string>)[size] || ICON_SIZES.md, 'animate-spin', className)}
       xmlns="http://www.w3.org/2000/svg"
       fill="none"
       viewBox="0 0 24 24"
@@ -52,10 +53,5 @@ const Spinner = memo(function Spinner({
 });
 
 Spinner.displayName = 'Spinner';
-
-Spinner.propTypes = {
-  size: PropTypes.oneOf(['xs', 'sm', 'md', 'lg', 'xl']),
-  className: PropTypes.string,
-};
 
 export { Spinner };
