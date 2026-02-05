@@ -126,8 +126,8 @@ export { CheckboxGroup } from './CheckboxGroup';
 export type { CheckboxGroupProps } from './CheckboxGroup';
 
 // Icon picker
-export { IconPicker, ICONOS_MAP, CATEGORIAS_ICONOS, IconButton } from './icon-picker';
-export type { IconPickerProps, IconButtonProps } from './icon-picker';
+export { IconPicker, IconPickerCompact, ICONOS_MAP, CATEGORIAS_ICONOS, IconButton } from './icon-picker';
+export type { IconPickerProps, IconPickerCompactProps, IconButtonProps } from './icon-picker';
 
 // Botones inteligentes
 export { SmartButtons } from './SmartButtons';

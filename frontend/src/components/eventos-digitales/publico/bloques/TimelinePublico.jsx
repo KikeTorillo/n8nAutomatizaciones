@@ -3,13 +3,16 @@
  * TIMELINE PUBLICO - BLOQUE DE INVITACIÓN
  * ====================================================================
  * Renderiza el itinerario/agenda del evento.
+ * Diseño sincronizado con TimelineCanvasBlock (editor).
  *
- * @version 1.0.0
+ * @version 1.2.0
  * @since 2026-02-03
+ * @updated 2026-02-05 - Sincronizado con diseño del editor (sin tarjetas)
  */
 
 import { memo } from 'react';
-import { Clock, MapPin, ChevronRight } from 'lucide-react';
+import * as LucideIcons from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 function TimelinePublico({ bloque, tema, isVisible, className = '' }) {
   const { contenido = {}, estilos = {} } = bloque;
@@ -19,172 +22,133 @@ function TimelinePublico({ bloque, tema, isVisible, className = '' }) {
   const subtitulo = contenido.subtitulo_seccion || contenido.subtitulo;
   const items = contenido.items || [];
 
-  const layout = estilos.layout || contenido.layout || 'vertical';
-  const mostrarIconos = estilos.mostrar_iconos !== false;
+  // Layouts válidos: 'alternado', 'izquierda', 'derecha'
+  const layout = estilos.layout || contenido.layout || 'alternado';
+  const colorLinea = estilos.color_linea || contenido.color_linea || tema?.color_primario;
+
+  // Obtener icono de Lucide
+  const getIcon = (iconName) => {
+    const Icon = LucideIcons[iconName] || LucideIcons.Clock;
+    return Icon;
+  };
 
   const animationClass = isVisible ? 'animate-fadeInUp' : 'opacity-0';
 
   if (items.length === 0) return null;
 
   return (
-    <section
-      className={`py-20 ${className}`}
-      style={{ backgroundColor: tema?.color_secundario + '10' }}
-    >
-      <div className="max-w-4xl mx-auto px-4">
+    <section className={cn('py-16 px-6 bg-white', className)}>
+      <div className="max-w-4xl mx-auto">
         {/* Header */}
-        <div className={`text-center mb-12 ${animationClass}`}>
+        <div className={cn('text-center mb-12', animationClass)}>
           <h2
-            className="text-4xl sm:text-5xl font-bold mb-4"
-            style={{ color: tema?.color_texto, fontFamily: tema?.fuente_titulo }}
+            className="text-3xl md:text-4xl font-bold mb-4"
+            style={{ color: tema?.color_primario, fontFamily: tema?.fuente_titulo }}
           >
             {titulo}
           </h2>
           {subtitulo && (
-            <p className="text-lg" style={{ color: tema?.color_texto_claro }}>
+            <p className="text-gray-600 max-w-2xl mx-auto">
               {subtitulo}
             </p>
           )}
         </div>
 
         {/* Timeline */}
-        {layout === 'vertical' ? (
-          <div className="relative">
-            {/* Línea central */}
-            <div
-              className="absolute left-4 sm:left-1/2 top-0 bottom-0 w-0.5 -translate-x-1/2"
-              style={{ backgroundColor: tema?.color_primario + '30' }}
-            />
+        <div className="relative">
+          {/* Línea central */}
+          <div
+            className={cn(
+              'absolute w-0.5 top-0 bottom-0',
+              layout === 'izquierda' && 'left-4',
+              layout === 'derecha' && 'right-4',
+              layout === 'alternado' && 'left-4 md:left-1/2 md:-translate-x-1/2'
+            )}
+            style={{ backgroundColor: colorLinea }}
+          />
 
-            {items.map((item, idx) => (
-              <div
-                key={idx}
-                className={`relative flex items-start gap-4 sm:gap-8 mb-8 last:mb-0 ${
-                  isVisible ? 'animate-fadeInUp' : 'opacity-0'
-                }`}
-                style={{ animationDelay: `${idx * 0.15}s` }}
-              >
-                {/* Punto en la línea */}
-                <div
-                  className="absolute left-4 sm:left-1/2 w-4 h-4 rounded-full -translate-x-1/2 z-10"
-                  style={{
-                    backgroundColor: tema?.color_primario,
-                    boxShadow: `0 0 0 4px ${tema?.color_secundario}`,
-                  }}
-                />
+          {/* Items */}
+          <div className="space-y-8">
+            {items.map((item, idx) => {
+              const Icon = getIcon(item.icono);
+              const isLeft = layout === 'alternado' ? idx % 2 === 0 : layout === 'izquierda';
 
-                {/* Contenido */}
+              return (
                 <div
-                  className={`ml-10 sm:ml-0 ${
-                    idx % 2 === 0 ? 'sm:mr-[calc(50%+2rem)] sm:text-right' : 'sm:ml-[calc(50%+2rem)]'
-                  } bg-white rounded-2xl p-6 shadow-sm flex-1`}
-                  style={{ boxShadow: `0 4px 20px ${tema?.color_primario}10` }}
+                  key={idx}
+                  className={cn(
+                    'relative flex items-start gap-4',
+                    isVisible ? 'animate-fadeInUp' : 'opacity-0',
+                    layout === 'alternado' && 'md:gap-8',
+                    layout === 'alternado' && !isLeft && 'md:flex-row-reverse',
+                    layout === 'derecha' && 'flex-row-reverse'
+                  )}
+                  style={{ animationDelay: `${idx * 0.1}s` }}
                 >
-                  {/* Hora */}
-                  {item.hora && (
+                  {/* Punto con icono */}
+                  <div
+                    className={cn(
+                      'absolute w-8 h-8 rounded-full flex items-center justify-center z-10 bg-white',
+                      layout === 'izquierda' && 'left-0',
+                      layout === 'derecha' && 'right-0',
+                      layout === 'alternado' && 'left-0 md:left-1/2 md:-translate-x-1/2'
+                    )}
+                  >
                     <div
-                      className={`flex items-center gap-2 mb-2 ${
-                        idx % 2 === 0 ? 'sm:justify-end' : ''
-                      }`}
+                      className="w-6 h-6 rounded-full flex items-center justify-center"
+                      style={{ backgroundColor: colorLinea }}
                     >
-                      <Clock className="w-4 h-4" style={{ color: tema?.color_primario }} />
+                      <Icon className="w-3 h-3 text-white" />
+                    </div>
+                  </div>
+
+                  {/* Contenido - SIN tarjeta, texto directo */}
+                  <div
+                    className={cn(
+                      'flex-1',
+                      layout === 'izquierda' && 'pl-12',
+                      layout === 'derecha' && 'pr-12 text-right',
+                      // Alternado: posicionar cerca de la línea central
+                      layout === 'alternado' && 'pl-10 md:pl-0',
+                      layout === 'alternado' && isLeft && 'md:ml-0 md:mr-[calc(50%+1.5rem)] md:text-right',
+                      layout === 'alternado' && !isLeft && 'md:mr-0 md:ml-[calc(50%+1.5rem)] md:text-left'
+                    )}
+                  >
+                    {/* Hora como texto simple */}
+                    {item.hora && (
                       <span
-                        className="text-sm font-semibold"
+                        className="text-sm font-medium block mb-1"
                         style={{ color: tema?.color_primario }}
                       >
                         {item.hora}
                       </span>
-                    </div>
-                  )}
+                    )}
 
-                  {/* Título del item */}
-                  <h3
-                    className="text-xl font-semibold mb-2"
-                    style={{ color: tema?.color_texto }}
-                  >
-                    {item.titulo}
-                  </h3>
+                    {/* Título */}
+                    <h3 className="text-lg font-bold text-gray-900 mb-2">
+                      {item.titulo}
+                    </h3>
 
-                  {/* Descripción */}
-                  {item.descripcion && (
-                    <p className="text-sm" style={{ color: tema?.color_texto_claro }}>
-                      {item.descripcion}
-                    </p>
-                  )}
+                    {/* Descripción */}
+                    {item.descripcion && (
+                      <p className="text-gray-600 text-sm">
+                        {item.descripcion}
+                      </p>
+                    )}
 
-                  {/* Ubicación */}
-                  {item.ubicacion && (
-                    <div
-                      className={`flex items-center gap-1 mt-3 ${
-                        idx % 2 === 0 ? 'sm:justify-end' : ''
-                      }`}
-                    >
-                      <MapPin className="w-4 h-4" style={{ color: tema?.color_texto_claro }} />
-                      <span className="text-sm" style={{ color: tema?.color_texto_claro }}>
+                    {/* Ubicación (solo en público, si existe) */}
+                    {item.ubicacion && (
+                      <p className="text-gray-500 text-sm mt-2 flex items-center gap-1">
+                        <LucideIcons.MapPin className="w-3.5 h-3.5" />
                         {item.ubicacion}
-                      </span>
-                    </div>
-                  )}
+                      </p>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
-        ) : (
-          /* Layout horizontal (tarjetas) */
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {items.map((item, idx) => (
-              <div
-                key={idx}
-                className={`bg-white rounded-2xl p-6 ${isVisible ? 'animate-scaleIn' : 'opacity-0'}`}
-                style={{
-                  boxShadow: `0 4px 20px ${tema?.color_primario}10`,
-                  animationDelay: `${idx * 0.1}s`,
-                }}
-              >
-                {/* Hora */}
-                {item.hora && (
-                  <div
-                    className="inline-flex items-center gap-2 px-3 py-1 rounded-full mb-4"
-                    style={{ backgroundColor: tema?.color_secundario }}
-                  >
-                    <Clock className="w-4 h-4" style={{ color: tema?.color_primario }} />
-                    <span
-                      className="text-sm font-semibold"
-                      style={{ color: tema?.color_primario }}
-                    >
-                      {item.hora}
-                    </span>
-                  </div>
-                )}
-
-                {/* Título */}
-                <h3
-                  className="text-xl font-semibold mb-2"
-                  style={{ color: tema?.color_texto }}
-                >
-                  {item.titulo}
-                </h3>
-
-                {/* Descripción */}
-                {item.descripcion && (
-                  <p className="text-sm mb-3" style={{ color: tema?.color_texto_claro }}>
-                    {item.descripcion}
-                  </p>
-                )}
-
-                {/* Ubicación */}
-                {item.ubicacion && (
-                  <div className="flex items-center gap-1">
-                    <MapPin className="w-4 h-4" style={{ color: tema?.color_texto_claro }} />
-                    <span className="text-sm" style={{ color: tema?.color_texto_claro }}>
-                      {item.ubicacion}
-                    </span>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
+        </div>
       </div>
     </section>
   );

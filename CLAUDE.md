@@ -10,11 +10,10 @@ Plataforma ERP SaaS Multi-Tenant para LATAM con IA Conversacional.
 
 | Capa | Tecnologías |
 |------|-------------|
-| **Frontend** | React 18.3, Vite 7.1, Tailwind 3.4, Zustand 5, TanStack Query 5, React Hook Form + Zod |
+| **Frontend** | React 18.3, Vite 7.1, Tailwind 3.4, TypeScript, Zustand 5, TanStack Query 5 |
 | **Backend** | Node.js 18+, Express 4.18, JWT, Joi 17, Winston 3 |
 | **Database** | PostgreSQL 17, RLS multi-tenant, pg_cron |
 | **Pagos** | MercadoPago (Preapproval API) |
-| **IA** | OpenRouter, n8n workflows |
 
 ## Comandos Esenciales
 
@@ -27,139 +26,85 @@ npm run db:connect       # psql directo (user: admin)
 
 **Nota**: HMR NO funciona en Docker. Reiniciar contenedor + Ctrl+Shift+R.
 
-## Arquitectura Modular
+## Arquitectura
 
 ### Backend (`backend/app/modules/`)
 
-Cada módulo es autocontenido con `manifest.json`:
-
-```
-modules/
-├── auth/           # Autenticación (prioridad -10, carga primero)
-├── core/           # Usuarios, roles, organizaciones
-├── agendamiento/   # Citas, horarios, servicios
-├── inventario/     # Productos, stock, movimientos
-├── pos/            # Punto de venta
-├── website/        # Website builder
-└── ...
-```
-
-**Estructura de un módulo:**
-```
-modules/mi-modulo/
-├── controllers/
-├── models/
-├── routes/
-├── schemas/
-├── services/
-└── manifest.json
-```
+Módulos autocontenidos con `manifest.json`: auth, core, agendamiento, inventario, pos, website, eventos-digitales.
 
 ### Frontend (`frontend/src/`)
 
 ```
 src/
-├── features/       # Módulos autocontenidos (auth, etc.)
 ├── components/
-│   ├── ui/         # Atomic Design (atoms, molecules, organisms)
-│   └── editor-framework/  # Framework reutilizable para editores
-├── hooks/          # Hooks por dominio
-├── pages/          # Páginas por módulo
-└── store/          # Stores globales (createEditorStore factory)
+│   ├── ui/                 # Atomic Design (TypeScript)
+│   │   ├── atoms/          # Button, Input, Badge, etc.
+│   │   ├── molecules/      # SearchInput, StatCard, etc.
+│   │   └── organisms/      # DataTable, Modal, FilterPanel, etc.
+│   └── editor-framework/   # Framework editores (bloques + posición libre)
+├── features/               # Módulos autocontenidos (auth)
+├── hooks/                  # Hooks por dominio
+├── pages/                  # Páginas por módulo
+├── types/                  # Tipos TypeScript (ui.d.ts, organisms.d.ts)
+└── store/                  # Stores globales
 ```
 
-### Editor Framework (`components/editor-framework/`)
+### Editor Framework
 
-Framework compartido para editores de bloques (Invitaciones, Website Builder):
+Soporta dos modos:
+- **Bloques**: Lista vertical de bloques arrastrables
+- **Posición Libre**: Secciones con elementos posicionados X/Y (estilo Wix)
 
 ```javascript
-// Hooks principales
-import {
-  useAutosave,      // Autosave con debounce y detección de conflictos
-  useDndHandlers,   // Drag & drop genérico para bloques
-  useBlockSelection,
-  useInlineEditing,
-} from '@/components/editor-framework';
+// Modo bloques
+import { useAutosave, useDndHandlers, BlockPalette } from '@/components/editor-framework';
 
-// Layout responsive
-import {
-  EditorLayoutProvider,  // Context para responsive (isMobile, isTablet)
-  EditorHeader,          // Header con navegación y publicación
-  EditorToolbar,         // Undo/redo, breakpoints, zoom
-  BlockPalette,          // Paleta de bloques arrastrables
-} from '@/components/editor-framework';
-
-// Store factory con undo/redo
-import { createEditorStore } from '@/store/createEditorStore';
+// Modo libre
+import { FreePositionCanvas, createFreePositionStore } from '@/components/editor-framework';
 ```
-
-**Patrón de uso**: El context del editor (ej: `InvitacionEditorContext`) expone estado centralizado (`tema`, `zoom`, `breakpoint`) y usa hooks del framework para lógica reutilizable.
 
 ### Middlewares Chain
 ```
-auth.authenticateToken → tenant.setTenantContext → tenant.verifyTenantActive → suscripcionActiva.verificarSuscripcionActiva → [permisos] → controller
+auth.authenticateToken → tenant.setTenantContext → tenant.verifyTenantActive → suscripcionActiva → [permisos] → controller
 ```
 
 ### RLS (Row Level Security)
 ```javascript
-// 80% de casos - aislamiento por organización
-await RLSContextManager.query(orgId, async (db) => { ... });
-
-// JOINs multi-tabla, super_admin, o webhooks cross-org
-await RLSContextManager.withBypass(async (db) => { ... });
+await RLSContextManager.query(orgId, async (db) => { ... });      // 80% casos
+await RLSContextManager.withBypass(async (db) => { ... });        // JOINs, super_admin
 ```
 
 ## Sistema RBAC
 
 | Nivel | Rol | Capacidades |
 |-------|-----|-------------|
-| 100 | super_admin | Acceso TOTAL, bypass RLS, cross-org |
-| 90 | admin | Gestión completa de la organización |
-| 80 | propietario | Gestión alta, acceso a Dashboard/Configuración |
-| 50-79 | supervisor | Gestión de equipo |
-| 10 | empleado | Operaciones básicas |
-| 5 | cliente | Autoservicio |
-
-```javascript
-const { RolHelper } = require('../utils/helpers');
-RolHelper.esSuperAdmin(user);           // nivel === 100
-RolHelper.esRolAdministrativo(user);    // nivel >= 90
-```
-
-## Sistema de Suscripciones
-
-| Estado | Acceso | UX |
-|--------|--------|-----|
-| `trial`, `activa`, `pendiente_pago` | ✅ Completo | Normal |
-| `grace_period` | ⚠️ Solo GET | Banner urgente |
-| `pausada`, `suspendida`, `cancelada` | ❌ Bloqueado | Redirect `/planes` |
-
-**Bypasses**: `organizacion_id === 1`, `nivel_jerarquia >= 100`, rutas `/auth/*`, `/planes/*`
+| 100 | super_admin | Bypass RLS, cross-org |
+| 90 | admin | Gestión completa org |
+| 80 | propietario | Dashboard/Configuración |
+| 10-79 | empleado/supervisor | Operaciones |
 
 ## Reglas de Desarrollo
 
 ### Backend
 - **RLS SIEMPRE**: `RLSContextManager.query()` o `.transaction()`
 - **asyncHandler**: Obligatorio en routes y controllers
-- **Validación**: Joi schemas con `fields` compartidos
-- **SQL seguro**: NUNCA interpolar variables, siempre `$1`, `$2`
+- **SQL seguro**: NUNCA interpolar, siempre `$1`, `$2`
 
 ### Frontend
-- **Sanitizar opcionales**: Joi rechaza `""`, usar `undefined`
+- **TypeScript**: UI components en `/components/ui/` son `.tsx`
 - **Dark mode**: Siempre variantes `dark:` en Tailwind
 - **Colores**: Solo `primary-*` (primario: `#753572`)
 - **React.memo**: Obligatorio en componentes de lista/tabla
-- **Cache invalidation**: `queryClient.invalidateQueries({ queryKey: [...], refetchType: 'active' })`
+- **Sanitizar**: Joi rechaza `""`, usar `undefined`
 
-## Patrones Principales
+## Patrones
 
 ### Backend - BaseCrudController
 ```javascript
 module.exports = createCrudController({
   Model: MiModel,
   resourceName: 'MiEntidad',
-  filterSchema: { activo: 'boolean' },
-  allowedOrderFields: ['nombre', 'creado_en']
+  filterSchema: { activo: 'boolean' }
 });
 ```
 
@@ -167,20 +112,8 @@ module.exports = createCrudController({
 ```javascript
 const crudHooks = createCRUDHooks({
   name: 'entidad', namePlural: 'entidades',
-  api: miApi, baseKey: 'entidades',
-  staleTime: STALE_TIMES.SEMI_STATIC,
+  api: miApi, baseKey: 'entidades'
 });
-export const useEntidades = crudHooks.useList;
-```
-
-### Feature Modules (Frontend)
-```javascript
-// Importar desde barrel export
-import { useAuthStore, authApi, ProtectedRoute } from '@/features/auth';
-
-// Re-exports disponibles en ubicaciones legacy
-import { useAuthStore } from '@/store';
-import { authApi } from '@/services/api/modules';
 ```
 
 ## Troubleshooting
@@ -190,16 +123,7 @@ import { authApi } from '@/services/api/modules';
 | "Organización no encontrada" | `RLSContextManager.withBypass()` |
 | "field not allowed to be empty" | Sanitizar `""` a `undefined` |
 | Cambios no se reflejan | `docker restart <contenedor>` + Ctrl+Shift+R |
-| `X.map is not a function` | Verificar estructura: `{items, paginacion}` |
-
-## Pendientes
-
-| Prioridad | Feature |
-|-----------|---------|
-| **Alta** | Website Builder (reutilizar editor-framework) |
-| **Media** | Stripe Gateway completo |
-| **Baja** | 2FA/MFA |
 
 ---
 
-**Actualizado**: 4 Febrero 2026
+**Actualizado**: 5 Febrero 2026

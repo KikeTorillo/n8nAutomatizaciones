@@ -15,9 +15,8 @@
 
 import { memo, useCallback, useMemo } from 'react';
 import { Clock, Plus, Trash2, GripVertical } from 'lucide-react';
-import { Button, Input, Textarea, Select } from '@/components/ui';
-import { IconPicker } from '@/components/ui';
-import { ColorField, BaseAutoSaveEditor } from '@/components/editor-framework';
+import { Button, Input, Textarea, Select, IconPickerCompact } from '@/components/ui';
+import { ColorField } from '@/components/editor-framework';
 import { useInvitacionBlockEditor } from '../../hooks';
 import { BLOCK_DEFAULTS } from '../../config';
 
@@ -73,63 +72,13 @@ function TimelineEditor({ contenido, estilos, onChange, tema }) {
 
   // Opciones de layout
   const layoutOptions = [
-    { value: 'alternado', label: 'Alternado (zigzag)' },
-    { value: 'izquierda', label: 'Todo a la izquierda' },
-    { value: 'derecha', label: 'Todo a la derecha' },
+    { value: 'alternado', label: 'Alternado' },
+    { value: 'izquierda', label: 'Izquierda' },
+    { value: 'derecha', label: 'Derecha' },
   ];
 
-  // Componente de preview
-  const preview = useMemo(() => {
-    const colorPrimario = tema?.color_primario || '#753572';
-    const colorLinea = form.color_linea || colorPrimario;
-
-    return (
-      <div className="p-4">
-        <h4 className="font-bold text-center mb-4 text-gray-900 dark:text-white">
-          {form.titulo_seccion || 'Itinerario del Día'}
-        </h4>
-
-        <div className="relative space-y-4">
-          {/* Línea vertical */}
-          <div
-            className="absolute left-4 top-0 bottom-0 w-0.5"
-            style={{ backgroundColor: colorLinea }}
-          />
-
-          {(form.items || []).slice(0, 4).map((item, index) => (
-            <div key={index} className="pl-10 relative">
-              {/* Punto */}
-              <div
-                className="absolute left-[6px] top-1 w-3 h-3 rounded-full border-2 border-white dark:border-gray-800"
-                style={{ backgroundColor: colorLinea }}
-              />
-
-              <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                {item.hora || '00:00'}
-              </div>
-              <div className="text-sm font-medium text-gray-900 dark:text-white">
-                {item.titulo || 'Actividad'}
-              </div>
-              {item.descripcion && (
-                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
-                  {item.descripcion}
-                </p>
-              )}
-            </div>
-          ))}
-
-          {(form.items || []).length > 4 && (
-            <div className="pl-10 text-xs text-gray-500 dark:text-gray-400">
-              ... y {form.items.length - 4} más
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  }, [form, tema?.color_primario]);
-
   return (
-    <BaseAutoSaveEditor preview={preview}>
+    <div className="p-4 space-y-4">
       {/* Configuración general */}
       <Input
         label="Título de sección"
@@ -149,21 +98,19 @@ function TimelineEditor({ contenido, estilos, onChange, tema }) {
       />
 
       {/* Opciones de estilo */}
-      <div className="grid grid-cols-2 gap-4">
-        <Select
-          label="Disposición"
-          value={form.layout || 'alternado'}
-          onChange={(e) => handleFieldChange('layout', e.target.value)}
-          options={layoutOptions}
-          className="dark:bg-gray-700 dark:border-gray-600"
-        />
+      <Select
+        label="Disposición"
+        value={form.layout || 'alternado'}
+        onChange={(e) => handleFieldChange('layout', e.target.value)}
+        options={layoutOptions}
+        className="dark:bg-gray-700 dark:border-gray-600"
+      />
 
-        <ColorField
-          label="Color de línea"
-          value={form.color_linea || ''}
-          onChange={(val) => handleFieldChange('color_linea', val)}
-        />
-      </div>
+      <ColorField
+        label="Color de línea"
+        value={form.color_linea || ''}
+        onChange={(val) => handleFieldChange('color_linea', val)}
+      />
 
       {/* Lista de eventos */}
       <div className="space-y-3">
@@ -207,24 +154,13 @@ function TimelineEditor({ contenido, estilos, onChange, tema }) {
             </div>
 
             <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-3">
-                <Input
-                  label="Hora"
-                  type="time"
-                  value={item.hora || ''}
-                  onChange={(e) => handleChangeItem(index, 'hora', e.target.value)}
-                  className="dark:bg-gray-600 dark:border-gray-500"
-                />
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Icono
-                  </label>
-                  <IconPicker
-                    value={item.icono || 'Clock'}
-                    onChange={(val) => handleChangeItem(index, 'icono', val)}
-                  />
-                </div>
-              </div>
+              <Input
+                label="Hora"
+                type="time"
+                value={item.hora || ''}
+                onChange={(e) => handleChangeItem(index, 'hora', e.target.value)}
+                className="dark:bg-gray-600 dark:border-gray-500"
+              />
 
               <Input
                 label="Título"
@@ -234,11 +170,22 @@ function TimelineEditor({ contenido, estilos, onChange, tema }) {
                 className="dark:bg-gray-600 dark:border-gray-500"
               />
 
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                  Icono
+                </label>
+                <IconPickerCompact
+                  value={item.icono || 'Clock'}
+                  onChange={(val) => handleChangeItem(index, 'icono', val)}
+                  placeholder="Seleccionar icono"
+                />
+              </div>
+
               <Textarea
                 label="Descripción (opcional)"
                 value={item.descripcion || ''}
                 onChange={(e) => handleChangeItem(index, 'descripcion', e.target.value)}
-                placeholder="Breve descripción de la actividad"
+                placeholder="Breve descripción"
                 rows={2}
                 className="dark:bg-gray-600 dark:border-gray-500"
               />
@@ -246,7 +193,7 @@ function TimelineEditor({ contenido, estilos, onChange, tema }) {
           </div>
         ))}
       </div>
-    </BaseAutoSaveEditor>
+    </div>
   );
 }
 

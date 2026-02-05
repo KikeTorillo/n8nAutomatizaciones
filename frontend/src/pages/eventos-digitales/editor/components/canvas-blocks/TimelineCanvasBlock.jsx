@@ -114,9 +114,10 @@ function TimelineCanvasBlock({ bloque, tema }) {
                         'flex-1',
                         layout === 'izquierda' && 'pl-12',
                         layout === 'derecha' && 'pr-12 text-right',
-                        layout === 'alternado' && 'md:w-1/2',
-                        layout === 'alternado' && isLeft && 'md:pr-12 md:text-right pl-12 md:pl-0',
-                        layout === 'alternado' && !isLeft && 'md:pl-12 md:text-left pl-12'
+                        // Alternado: posicionar cerca de la línea central
+                        layout === 'alternado' && 'pl-10 md:pl-0',
+                        layout === 'alternado' && isLeft && 'md:ml-0 md:mr-[calc(50%+1.5rem)] md:text-right',
+                        layout === 'alternado' && !isLeft && 'md:mr-0 md:ml-[calc(50%+1.5rem)] md:text-left'
                       )}
                     >
                       <span

@@ -5,6 +5,9 @@
 export { IconPicker, IconPicker as default } from './IconPicker';
 export type { IconPickerProps } from './IconPicker';
 
+export { IconPickerCompact } from './IconPickerCompact';
+export type { IconPickerCompactProps } from './IconPickerCompact';
+
 export { ICONOS_MAP, CATEGORIAS_ICONOS } from './constants';
 export type { IconoNombre, CategoriaIconos } from './constants';
 

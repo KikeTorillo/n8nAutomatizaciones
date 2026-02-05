@@ -3,15 +3,17 @@
  * TIMELINE ELEMENT RENDERER
  * ====================================================================
  * Renderiza elementos de tipo timeline (itinerario/agenda) en el canvas.
- * Soporta layouts: vertical, horizontal (tarjetas).
+ * Diseño sincronizado con TimelineCanvasBlock (editor).
+ * Soporta layouts: alternado, izquierda, derecha.
  *
- * @version 1.0.0
+ * @version 1.2.0
  * @since 2026-02-04
+ * @updated 2026-02-05 - Sincronizado con diseño del editor (sin tarjetas)
  */
 
 import { memo, useMemo } from 'react';
 import PropTypes from 'prop-types';
-import { Clock, MapPin } from 'lucide-react';
+import * as LucideIcons from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 // ========== COMPONENT ==========
@@ -27,23 +29,28 @@ function TimelineElementRenderer({
   const titulo = contenido.titulo || '';
   const subtitulo = contenido.subtitulo || '';
   const items = contenido.items || [];
-  const layout = contenido.layout || 'vertical';
+  // Layouts válidos: 'alternado', 'izquierda', 'derecha'
+  const layout = estilos.layout || contenido.layout || 'alternado';
 
   // Colores
   const colorPrimario = estilos.color_primario || tema?.color_primario || '#753572';
-  const colorSecundario = estilos.color_secundario || tema?.color_secundario || '#fce7f3';
-  const colorTexto = estilos.color_texto || tema?.color_texto || '#1f2937';
-  const colorTextoClaro = estilos.color_texto_claro || tema?.color_texto_claro || '#6b7280';
+  const colorLinea = estilos.color_linea || contenido.color_linea || colorPrimario;
   const fuenteTitulo = estilos.fuente_titulo || tema?.fuente_titulos || 'inherit';
+
+  // Obtener icono de Lucide
+  const getIcon = (iconName) => {
+    const Icon = LucideIcons[iconName] || LucideIcons.Clock;
+    return Icon;
+  };
 
   // Items de ejemplo para edición
   const displayItems = useMemo(() => {
     if (items.length > 0) return items;
     if (isEditing) {
       return [
-        { hora: '14:00', titulo: 'Ceremonia', descripcion: 'Inicio de la celebración', ubicacion: '' },
-        { hora: '15:30', titulo: 'Cóctel', descripcion: 'Aperitivos y bebidas', ubicacion: '' },
-        { hora: '17:00', titulo: 'Recepción', descripcion: 'Cena y fiesta', ubicacion: '' },
+        { hora: '14:00', titulo: 'Ceremonia', descripcion: 'Inicio de la celebración' },
+        { hora: '15:30', titulo: 'Cóctel', descripcion: 'Aperitivos y bebidas' },
+        { hora: '17:00', titulo: 'Recepción', descripcion: 'Cena y fiesta' },
       ];
     }
     return [];
@@ -58,163 +65,121 @@ function TimelineElementRenderer({
   }
 
   return (
-    <div className="timeline-element w-full">
-      {/* Header */}
-      {(titulo || subtitulo) && (
-        <div className="text-center mb-6">
-          {titulo && (
-            <h3
-              className="text-2xl sm:text-3xl font-bold mb-2"
-              style={{ color: colorTexto, fontFamily: fuenteTitulo }}
-            >
-              {titulo}
-            </h3>
-          )}
-          {subtitulo && (
-            <p className="text-base" style={{ color: colorTextoClaro }}>
-              {subtitulo}
-            </p>
-          )}
-        </div>
-      )}
+    <div className="timeline-element w-full py-8 px-4 bg-white dark:bg-gray-900">
+      <div className="max-w-4xl mx-auto">
+        {/* Header */}
+        {(titulo || subtitulo) && (
+          <div className="text-center mb-8">
+            {titulo && (
+              <h3
+                className="text-2xl md:text-3xl font-bold mb-2"
+                style={{ color: colorPrimario, fontFamily: fuenteTitulo }}
+              >
+                {titulo}
+              </h3>
+            )}
+            {subtitulo && (
+              <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+                {subtitulo}
+              </p>
+            )}
+          </div>
+        )}
 
-      {/* Layout Vertical */}
-      {layout === 'vertical' && (
+        {/* Timeline */}
         <div className="relative">
           {/* Línea central */}
           <div
-            className="absolute left-4 sm:left-1/2 top-0 bottom-0 w-0.5 -translate-x-1/2"
-            style={{ backgroundColor: colorPrimario + '30' }}
+            className={cn(
+              'absolute w-0.5 top-0 bottom-0',
+              layout === 'izquierda' && 'left-4',
+              layout === 'derecha' && 'right-4',
+              layout === 'alternado' && 'left-4 md:left-1/2 md:-translate-x-1/2'
+            )}
+            style={{ backgroundColor: colorLinea }}
           />
 
-          {displayItems.map((item, idx) => (
-            <div
-              key={idx}
-              className="relative flex items-start gap-4 sm:gap-6 mb-6 last:mb-0"
-            >
-              {/* Punto en la línea */}
-              <div
-                className="absolute left-4 sm:left-1/2 w-3 h-3 rounded-full -translate-x-1/2 z-10"
-                style={{
-                  backgroundColor: colorPrimario,
-                  boxShadow: `0 0 0 3px ${colorSecundario}`,
-                }}
-              />
+          {/* Items */}
+          <div className="space-y-6">
+            {displayItems.map((item, idx) => {
+              const Icon = getIcon(item.icono);
+              const isLeft = layout === 'alternado' ? idx % 2 === 0 : layout === 'izquierda';
 
-              {/* Contenido */}
-              <div
-                className={cn(
-                  'ml-10 sm:ml-0 bg-white rounded-xl p-4 shadow-sm flex-1',
-                  idx % 2 === 0 ? 'sm:mr-[calc(50%+1.5rem)] sm:text-right' : 'sm:ml-[calc(50%+1.5rem)]',
-                )}
-                style={{ boxShadow: `0 2px 12px ${colorPrimario}10` }}
-              >
-                {/* Hora */}
-                {item.hora && (
-                  <div
-                    className={cn(
-                      'flex items-center gap-1.5 mb-1.5',
-                      idx % 2 === 0 && 'sm:justify-end',
-                    )}
-                  >
-                    <Clock className="w-3.5 h-3.5" style={{ color: colorPrimario }} />
-                    <span
-                      className="text-sm font-semibold"
-                      style={{ color: colorPrimario }}
-                    >
-                      {item.hora}
-                    </span>
-                  </div>
-                )}
-
-                {/* Título del item */}
-                <h4
-                  className="text-lg font-semibold mb-1"
-                  style={{ color: colorTexto }}
-                >
-                  {item.titulo}
-                </h4>
-
-                {/* Descripción */}
-                {item.descripcion && (
-                  <p className="text-sm" style={{ color: colorTextoClaro }}>
-                    {item.descripcion}
-                  </p>
-                )}
-
-                {/* Ubicación */}
-                {item.ubicacion && (
-                  <div
-                    className={cn(
-                      'flex items-center gap-1 mt-2',
-                      idx % 2 === 0 && 'sm:justify-end',
-                    )}
-                  >
-                    <MapPin className="w-3.5 h-3.5" style={{ color: colorTextoClaro }} />
-                    <span className="text-xs" style={{ color: colorTextoClaro }}>
-                      {item.ubicacion}
-                    </span>
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Layout Horizontal (tarjetas) */}
-      {layout === 'horizontal' && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {displayItems.map((item, idx) => (
-            <div
-              key={idx}
-              className="bg-white rounded-xl p-4"
-              style={{ boxShadow: `0 2px 12px ${colorPrimario}10` }}
-            >
-              {/* Hora */}
-              {item.hora && (
+              return (
                 <div
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full mb-3"
-                  style={{ backgroundColor: colorSecundario }}
+                  key={idx}
+                  className={cn(
+                    'relative flex items-start gap-4',
+                    layout === 'alternado' && 'md:gap-6',
+                    layout === 'alternado' && !isLeft && 'md:flex-row-reverse',
+                    layout === 'derecha' && 'flex-row-reverse'
+                  )}
                 >
-                  <Clock className="w-3.5 h-3.5" style={{ color: colorPrimario }} />
-                  <span
-                    className="text-sm font-semibold"
-                    style={{ color: colorPrimario }}
+                  {/* Punto con icono */}
+                  <div
+                    className={cn(
+                      'absolute w-7 h-7 rounded-full flex items-center justify-center z-10 bg-white dark:bg-gray-900',
+                      layout === 'izquierda' && 'left-0.5',
+                      layout === 'derecha' && 'right-0.5',
+                      layout === 'alternado' && 'left-0.5 md:left-1/2 md:-translate-x-1/2'
+                    )}
                   >
-                    {item.hora}
-                  </span>
+                    <div
+                      className="w-5 h-5 rounded-full flex items-center justify-center"
+                      style={{ backgroundColor: colorLinea }}
+                    >
+                      <Icon className="w-2.5 h-2.5 text-white" />
+                    </div>
+                  </div>
+
+                  {/* Contenido - SIN tarjeta, texto directo */}
+                  <div
+                    className={cn(
+                      'flex-1',
+                      layout === 'izquierda' && 'pl-10',
+                      layout === 'derecha' && 'pr-10 text-right',
+                      // Alternado: posicionar cerca de la línea central
+                      layout === 'alternado' && 'pl-10 md:pl-0',
+                      layout === 'alternado' && isLeft && 'md:ml-0 md:mr-[calc(50%+1.25rem)] md:text-right',
+                      layout === 'alternado' && !isLeft && 'md:mr-0 md:ml-[calc(50%+1.25rem)] md:text-left'
+                    )}
+                  >
+                    {/* Hora como texto simple */}
+                    {item.hora && (
+                      <span
+                        className="text-sm font-medium block mb-1"
+                        style={{ color: colorPrimario }}
+                      >
+                        {item.hora}
+                      </span>
+                    )}
+
+                    {/* Título */}
+                    <h4 className="text-lg font-bold text-gray-900 dark:text-white mb-1">
+                      {item.titulo}
+                    </h4>
+
+                    {/* Descripción */}
+                    {item.descripcion && (
+                      <p className="text-gray-600 dark:text-gray-400 text-sm">
+                        {item.descripcion}
+                      </p>
+                    )}
+
+                    {/* Ubicación (si existe) */}
+                    {item.ubicacion && (
+                      <p className="text-gray-500 dark:text-gray-500 text-sm mt-2 flex items-center gap-1">
+                        <LucideIcons.MapPin className="w-3 h-3" />
+                        {item.ubicacion}
+                      </p>
+                    )}
+                  </div>
                 </div>
-              )}
-
-              {/* Título */}
-              <h4
-                className="text-lg font-semibold mb-1"
-                style={{ color: colorTexto }}
-              >
-                {item.titulo}
-              </h4>
-
-              {/* Descripción */}
-              {item.descripcion && (
-                <p className="text-sm mb-2" style={{ color: colorTextoClaro }}>
-                  {item.descripcion}
-                </p>
-              )}
-
-              {/* Ubicación */}
-              {item.ubicacion && (
-                <div className="flex items-center gap-1">
-                  <MapPin className="w-3.5 h-3.5" style={{ color: colorTextoClaro }} />
-                  <span className="text-xs" style={{ color: colorTextoClaro }}>
-                    {item.ubicacion}
-                  </span>
-                </div>
-              )}
-            </div>
-          ))}
+              );
+            })}
+          </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }
@@ -229,8 +194,10 @@ TimelineElementRenderer.propTypes = {
         titulo: PropTypes.string,
         descripcion: PropTypes.string,
         ubicacion: PropTypes.string,
+        icono: PropTypes.string,
       })),
-      layout: PropTypes.oneOf(['vertical', 'horizontal']),
+      layout: PropTypes.oneOf(['alternado', 'izquierda', 'derecha']),
+      color_linea: PropTypes.string,
     }),
     estilos: PropTypes.object,
   }).isRequired,
