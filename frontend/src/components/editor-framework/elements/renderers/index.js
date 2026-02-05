@@ -17,7 +17,6 @@ export { default as SeparadorElementRenderer } from './SeparadorElementRenderer'
 
 // Invitaciones-specific renderers
 export { default as CountdownElementRenderer } from './CountdownElementRenderer';
-export { default as CalendarioElementRenderer } from './CalendarioElementRenderer';
 export { default as RsvpButtonElementRenderer } from './RsvpButtonElementRenderer';
 export { default as TimelineElementRenderer } from './TimelineElementRenderer';
 export { default as HeroInvitacionElementRenderer } from './HeroInvitacionElementRenderer';
@@ -33,7 +32,6 @@ import BotonElementRendererStatic from './BotonElementRenderer';
 import FormaElementRendererStatic from './FormaElementRenderer';
 import SeparadorElementRendererStatic from './SeparadorElementRenderer';
 import CountdownElementRendererStatic from './CountdownElementRenderer';
-import CalendarioElementRendererStatic from './CalendarioElementRenderer';
 import RsvpButtonElementRendererStatic from './RsvpButtonElementRenderer';
 import TimelineElementRendererStatic from './TimelineElementRenderer';
 import HeroInvitacionElementRendererStatic from './HeroInvitacionElementRenderer';
@@ -63,8 +61,6 @@ export function getElementRenderer(tipo) {
     // Invitaciones - básicos
     case 'countdown':
       return CountdownElementRendererStatic;
-    case 'calendario':
-      return CalendarioElementRendererStatic;
     case 'rsvp_button':
       return RsvpButtonElementRendererStatic;
     case 'timeline':

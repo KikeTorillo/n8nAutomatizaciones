@@ -25,8 +25,9 @@ function RSVPCanvasBlock({ bloque, tema }) {
   // Usar || para fallbacks (strings vacíos necesitan ||, no default de desestructuración)
   const titulo = contenido.titulo || 'Confirma tu Asistencia';
   const subtitulo = contenido.subtitulo;
-  const permitir_acompanantes = contenido.permitir_acompanantes ?? true;
-  const max_acompanantes = contenido.max_acompanantes || 4;
+  // En el preview siempre mostrar acompañantes con valor fijo (el real viene del invitado)
+  const permitir_acompanantes = true;
+  const max_acompanantes = 4; // Valor fijo para preview
   const pedir_restricciones = contenido.pedir_restricciones ?? false;
 
   const colorPrimario = tema?.color_primario || '#753572';

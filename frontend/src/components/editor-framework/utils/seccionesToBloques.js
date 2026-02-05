@@ -175,18 +175,17 @@ const ELEMENTO_TO_BLOQUE_MAP = {
   // Elementos de invitación
   hero_invitacion: 'hero_invitacion',
   countdown: 'countdown',
-  calendario: 'agregar_calendario',
   rsvp_button: 'rsvp',
   timeline: 'timeline',
   ubicacion: 'ubicacion',
   galeria: 'galeria',
-  faq: 'faq',
   mesa_regalos: 'mesa_regalos',
+  faq: 'faq',
   // Elementos básicos
   texto: 'texto',
   video: 'video',
   separador: 'separador',
-  // Nota: 'imagen' no tiene equivalente directo en bloques tradicionales
+  // Nota: 'imagen' y 'calendario' no tienen equivalente directo en bloques tradicionales
 };
 
 /**

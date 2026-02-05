@@ -14,7 +14,6 @@ const bloqueSchema = Joi.object({
     id: Joi.string().uuid(),
     tipo: Joi.string().required().valid(
         'hero_invitacion',
-        'protagonistas',
         'countdown',
         'timeline',
         'ubicacion',
@@ -25,7 +24,6 @@ const bloqueSchema = Joi.object({
         'texto',
         'faq',
         'separador',
-        'agregar_calendario',
         'seccion_libre' // Modo libre (Wix-style)
     ),
     orden: Joi.number().integer().min(0),
@@ -44,7 +42,6 @@ const guardarBloquesSchema = Joi.object({
 const agregarBloqueSchema = Joi.object({
     tipo: Joi.string().required().valid(
         'hero_invitacion',
-        'protagonistas',
         'countdown',
         'timeline',
         'ubicacion',
@@ -55,7 +52,6 @@ const agregarBloqueSchema = Joi.object({
         'texto',
         'faq',
         'separador',
-        'agregar_calendario',
         'seccion_libre' // Modo libre (Wix-style)
     ),
     orden: Joi.number().integer().min(0),

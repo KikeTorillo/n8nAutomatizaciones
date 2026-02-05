@@ -16,9 +16,7 @@ import {
   Square,
   Minus,
   Play,
-  Calendar,
   Clock,
-  CalendarPlus,
   UserCheck,
   List,
   Layout,
@@ -280,29 +278,6 @@ export const INVITACION_ELEMENT_TYPES = {
     maintainAspectRatio: false,
   },
 
-  calendario: {
-    tipo: 'calendario',
-    label: 'Agregar a Calendario',
-    categoria: 'interaccion',
-    icon: CalendarPlus,
-    variantes: ['default', 'hero', 'minimal'],
-    defaultSize: { ancho: 60, altura: 'auto' },
-    defaultPosition: { x: 50, y: 80, ancla: 'center' },
-    defaultContent: {
-      titulo: '',
-      variante: 'default',
-      alineacion: 'center',
-      mostrar_google: true,
-      mostrar_ics: true,
-      texto_google: 'Google Calendar',
-      texto_ics: 'Descargar .ics',
-    },
-    defaultStyles: {},
-    canResize: true,
-    canRotate: false,
-    maintainAspectRatio: false,
-  },
-
   rsvp_button: {
     tipo: 'rsvp_button',
     label: 'Botón RSVP',
@@ -388,25 +363,6 @@ export const INVITACION_ELEMENT_TYPES = {
     maintainAspectRatio: false,
   },
 
-  faq: {
-    tipo: 'faq',
-    label: 'Preguntas Frecuentes',
-    categoria: 'contenido',
-    icon: HelpCircle,
-    variantes: ['accordion', 'list'],
-    defaultSize: { ancho: 90, altura: 'auto' },
-    defaultPosition: { x: 50, y: 50, ancla: 'center' },
-    defaultContent: {
-      titulo_seccion: 'Preguntas Frecuentes',
-      subtitulo_seccion: '',
-      items: [],
-    },
-    defaultStyles: {},
-    canResize: true,
-    canRotate: false,
-    maintainAspectRatio: false,
-  },
-
   mesa_regalos: {
     tipo: 'mesa_regalos',
     label: 'Mesa de Regalos',
@@ -421,6 +377,25 @@ export const INVITACION_ELEMENT_TYPES = {
       usar_mesa_evento: true,
       items: [],
       layout: 'grid',
+    },
+    defaultStyles: {},
+    canResize: true,
+    canRotate: false,
+    maintainAspectRatio: false,
+  },
+
+  faq: {
+    tipo: 'faq',
+    label: 'Preguntas Frecuentes',
+    categoria: 'contenido',
+    icon: HelpCircle,
+    variantes: ['accordion', 'list'],
+    defaultSize: { ancho: 90, altura: 'auto' },
+    defaultPosition: { x: 50, y: 50, ancla: 'center' },
+    defaultContent: {
+      titulo_seccion: 'Preguntas Frecuentes',
+      subtitulo_seccion: '',
+      items: [],
     },
     defaultStyles: {},
     canResize: true,
@@ -596,12 +571,10 @@ export const INVITACION_ALLOWED_TYPES = [
   // Específicos de invitaciones
   'hero_invitacion',
   'countdown',
-  'calendario',
   'rsvp_button',
   'timeline',
   'ubicacion',
   'galeria',
-  'faq',
   'mesa_regalos',
 ];
 

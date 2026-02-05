@@ -117,7 +117,9 @@ class PublicController {
             // Incluir ubicaciones, regalos y felicitaciones
             ubicaciones: eventoCompleto.ubicaciones || [],
             regalos: eventoCompleto.regalos || [],
-            felicitaciones: eventoCompleto.felicitaciones || []
+            felicitaciones: eventoCompleto.felicitaciones || [],
+            // Incluir bloques del editor de invitaciones
+            bloques_invitacion: eventoCompleto.bloques_invitacion || []
         };
 
         const invitado = {

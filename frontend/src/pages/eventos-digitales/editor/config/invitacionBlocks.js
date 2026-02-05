@@ -19,9 +19,7 @@ import {
   Gift,
   Video,
   Type,
-  HelpCircle,
   Minus,
-  CalendarPlus,
 } from 'lucide-react';
 
 // ========== CATEGORÍAS DE BLOQUES ==========
@@ -97,13 +95,6 @@ export const BLOQUES_INVITACION = [
     icon: Type,
     descripcion: 'Bloque de texto libre',
   },
-  {
-    tipo: 'faq',
-    categoria: 'contenido',
-    label: 'Preguntas',
-    icon: HelpCircle,
-    descripcion: 'Preguntas frecuentes del evento',
-  },
 
   // INTERACCIÓN
   {
@@ -119,13 +110,6 @@ export const BLOQUES_INVITACION = [
     label: 'Mesa de Regalos',
     icon: Gift,
     descripcion: 'Enlaces a tiendas y registros',
-  },
-  {
-    tipo: 'agregar_calendario',
-    categoria: 'interaccion',
-    label: 'Agregar al Calendario',
-    icon: CalendarPlus,
-    descripcion: 'Botones para agregar evento a Google Calendar o descargar .ics',
   },
 ];
 
@@ -245,8 +229,6 @@ export const BLOCK_CONFIGS = {
       { key: 'subtitulo', label: 'Subtítulo', type: 'textarea', aiEnabled: true, placeholder: 'Necesitamos saber si podrás acompañarnos' },
       { key: 'texto_confirmado', label: 'Mensaje al confirmar', type: 'text', aiEnabled: true, placeholder: '¡Gracias por confirmar!' },
       { key: 'texto_rechazado', label: 'Mensaje al rechazar', type: 'text', aiEnabled: true, placeholder: 'Lamentamos que no puedas asistir' },
-      { key: 'permitir_acompanantes', label: 'Permitir acompañantes', type: 'toggle' },
-      { key: 'max_acompanantes', label: 'Máx. acompañantes', type: 'number', min: 0, max: 10, showWhen: (c) => c?.permitir_acompanantes },
       { key: 'pedir_restricciones', label: 'Preguntar restricciones alimenticias', type: 'toggle' },
     ],
     estilo: [],
@@ -298,15 +280,6 @@ export const BLOCK_CONFIGS = {
     ],
   },
 
-  faq: {
-    contenido: [
-      { key: 'titulo_seccion', label: 'Título', type: 'text', aiEnabled: true, placeholder: 'Preguntas Frecuentes' },
-      { key: 'subtitulo_seccion', label: 'Subtítulo', type: 'textarea', aiEnabled: true },
-      { key: 'items', label: 'Preguntas', type: 'itemsEditor', itemType: 'faq' },
-    ],
-    estilo: [],
-  },
-
   separador: {
     contenido: [
       { key: 'estilo', label: 'Estilo', type: 'select', options: [
@@ -319,26 +292,6 @@ export const BLOCK_CONFIGS = {
     estilo: [
       { key: 'altura', label: 'Altura (px)', type: 'number', min: 10, max: 200 },
       { key: 'color', label: 'Color', type: 'color' },
-    ],
-  },
-
-  agregar_calendario: {
-    contenido: [
-      { key: 'titulo', label: 'Título (opcional)', type: 'text', placeholder: 'Añade a tu calendario' },
-      { key: 'mostrar_google', label: 'Mostrar Google Calendar', type: 'toggle' },
-      { key: 'mostrar_ics', label: 'Mostrar descarga .ics', type: 'toggle' },
-    ],
-    estilo: [
-      { key: 'variante', label: 'Estilo', type: 'select', options: [
-        { value: 'default', label: 'Por defecto' },
-        { value: 'minimal', label: 'Minimalista' },
-        { value: 'hero', label: 'Hero (fondo oscuro)' },
-      ]},
-      { key: 'alineacion', label: 'Alineación', type: 'select', options: [
-        { value: 'left', label: 'Izquierda' },
-        { value: 'center', label: 'Centro' },
-        { value: 'right', label: 'Derecha' },
-      ]},
     ],
   },
 };
@@ -393,8 +346,6 @@ export const BLOCK_DEFAULTS = {
     subtitulo: '',
     texto_confirmado: '¡Gracias por confirmar!',
     texto_rechazado: 'Lamentamos que no puedas asistir',
-    permitir_acompanantes: true,
-    max_acompanantes: 4,
     pedir_restricciones: false,
   },
   mesa_regalos: {
@@ -417,22 +368,10 @@ export const BLOCK_DEFAULTS = {
     alineacion: 'center',
     tamano_fuente: 'normal',
   },
-  faq: {
-    titulo_seccion: 'Preguntas Frecuentes',
-    subtitulo_seccion: '',
-    items: [],
-  },
   separador: {
     estilo: 'linea',
     altura: 40,
     color: '',
-  },
-  agregar_calendario: {
-    titulo: '',
-    mostrar_google: true,
-    mostrar_ics: true,
-    variante: 'default',
-    alineacion: 'center',
   },
 };
 

@@ -27,9 +27,7 @@ import MesaRegalosCanvasBlock from './MesaRegalosCanvasBlock';
 import GaleriaCanvasBlock from './GaleriaCanvasBlock';
 import VideoCanvasBlock from './VideoCanvasBlock';
 import TextoCanvasBlock from './TextoCanvasBlock';
-import FaqCanvasBlock from './FaqCanvasBlock';
 import SeparadorCanvasBlock from './SeparadorCanvasBlock';
-import AgregarCalendarioCanvasBlock from './AgregarCalendarioCanvasBlock';
 
 // ========== BLOCK COMPONENT MAP ==========
 
@@ -43,9 +41,7 @@ const BLOCK_COMPONENTS = {
   galeria: GaleriaCanvasBlock,
   video: VideoCanvasBlock,
   texto: TextoCanvasBlock,
-  faq: FaqCanvasBlock,
   separador: SeparadorCanvasBlock,
-  agregar_calendario: AgregarCalendarioCanvasBlock,
 };
 
 // ========== MAIN COMPONENT ==========

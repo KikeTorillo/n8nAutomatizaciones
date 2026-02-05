@@ -21,9 +21,7 @@ const MesaRegalosPublico = lazy(() => import('./MesaRegalosPublico'));
 const GaleriaPublico = lazy(() => import('./GaleriaPublico'));
 const VideoPublico = lazy(() => import('./VideoPublico'));
 const TextoPublico = lazy(() => import('./TextoPublico'));
-const FaqPublico = lazy(() => import('./FaqPublico'));
 const SeparadorPublico = lazy(() => import('./SeparadorPublico'));
-const AgregarCalendarioPublico = lazy(() => import('./AgregarCalendarioPublico'));
 
 // Renderer principal
 export { default as BloqueRenderer } from './BloqueRenderer';
@@ -41,9 +39,7 @@ export const BLOQUES_PUBLICOS = {
   galeria: GaleriaPublico,
   video: VideoPublico,
   texto: TextoPublico,
-  faq: FaqPublico,
   separador: SeparadorPublico,
-  agregar_calendario: AgregarCalendarioPublico,
 };
 
 /**
@@ -63,7 +59,5 @@ export {
   GaleriaPublico,
   VideoPublico,
   TextoPublico,
-  FaqPublico,
   SeparadorPublico,
-  AgregarCalendarioPublico,
 };

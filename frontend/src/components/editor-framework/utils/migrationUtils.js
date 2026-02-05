@@ -356,53 +356,6 @@ export function migrateCountdownBlock(bloque) {
 }
 
 /**
- * Migra un bloque Calendario al formato de sección
- * @param {Object} bloque - Bloque calendario/agregar_calendario original
- * @returns {Object} Sección con elementos
- */
-export function migrateCalendarioBlock(bloque) {
-  const contenido = bloque.contenido || {};
-  const elementos = [];
-
-  elementos.push(createElementFromType('calendario', {
-    contenido: {
-      titulo: contenido.titulo || '',
-      variante: contenido.variante || 'default',
-      alineacion: contenido.alineacion || 'center',
-      mostrar_google: contenido.mostrar_google !== false,
-      mostrar_ics: contenido.mostrar_ics !== false,
-      texto_google: contenido.texto_google || 'Google Calendar',
-      texto_ics: contenido.texto_ics || 'Descargar .ics',
-    },
-    posicion: {
-      x: 50,
-      y: 50,
-      ancho: 60,
-      altura: 'auto',
-      ancla: 'center',
-    },
-    capa: 1,
-  }));
-
-  return createSection({
-    id: bloque.id,
-    tipo: 'seccion',
-    preset: 'calendario',
-    orden: bloque.orden,
-    visible: bloque.visible !== false,
-    config: {
-      altura: { valor: 'auto', unidad: 'auto' },
-      padding: { top: 40, bottom: 40 },
-      fondo: {
-        tipo: 'color',
-        valor: '#ffffff',
-      },
-    },
-    elementos,
-  });
-}
-
-/**
  * Migra un bloque Timeline al formato de sección
  * @param {Object} bloque - Bloque timeline original
  * @returns {Object} Sección con elementos
@@ -812,9 +765,6 @@ export function migrateBlocksToSections(bloques) {
         return migrateHeroInvitacionBlock(bloque);
       case 'countdown':
         return migrateCountdownBlock(bloque);
-      case 'calendario':
-      case 'agregar_calendario':
-        return migrateCalendarioBlock(bloque);
       case 'timeline':
         return migrateTimelineBlock(bloque);
       case 'rsvp':

@@ -15,7 +15,6 @@ export { default as BotonElementEditor } from './BotonElementEditor';
 
 // Invitaciones-specific editors
 export { default as CountdownElementEditor } from './CountdownElementEditor';
-export { default as CalendarioElementEditor } from './CalendarioElementEditor';
 export { default as RsvpButtonElementEditor } from './RsvpButtonElementEditor';
 export { default as TimelineElementEditor } from './TimelineElementEditor';
 
@@ -24,7 +23,6 @@ import TextoElementEditorStatic from './TextoElementEditor';
 import ImagenElementEditorStatic from './ImagenElementEditor';
 import BotonElementEditorStatic from './BotonElementEditor';
 import CountdownElementEditorStatic from './CountdownElementEditor';
-import CalendarioElementEditorStatic from './CalendarioElementEditor';
 import RsvpButtonElementEditorStatic from './RsvpButtonElementEditor';
 import TimelineElementEditorStatic from './TimelineElementEditor';
 
@@ -45,8 +43,6 @@ export function getElementEditor(tipo) {
     // Invitaciones
     case 'countdown':
       return CountdownElementEditorStatic;
-    case 'calendario':
-      return CalendarioElementEditorStatic;
     case 'rsvp_button':
       return RsvpButtonElementEditorStatic;
     case 'timeline':

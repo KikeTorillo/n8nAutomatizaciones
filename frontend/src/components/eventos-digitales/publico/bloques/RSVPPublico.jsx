@@ -31,14 +31,15 @@ function RSVPPublico({
   // Fallback: editor usa texto_rechazado, compatible con texto_declinado
   const textoDeclinado = contenido.texto_rechazado || contenido.texto_declinado || 'Lamentamos que no puedas asistir.';
 
-  // Fallbacks para campos que pueden venir de estilos o contenido
-  // Editor guarda permitir_acompanantes, antes se usaba mostrar_num_asistentes
-  const mostrarNumAsistentes = (estilos.mostrar_num_asistentes ?? contenido.permitir_acompanantes) !== false;
+  // Mostrar selector solo si el invitado tiene permitido llevar acompañantes
+  const tieneAcompanantes = (invitado?.max_acompanantes ?? 0) > 0;
+  const mostrarNumAsistentes = tieneAcompanantes;
   const mostrarMensaje = estilos.mostrar_mensaje !== false;
   // Editor guarda pedir_restricciones, antes se usaba mostrar_restricciones
   const mostrarRestricciones = (estilos.mostrar_restricciones ?? contenido.pedir_restricciones) !== false;
-  // Editor guarda max_acompanantes, antes se usaba max_asistentes
-  const maxAsistentes = estilos.max_asistentes || contenido.max_acompanantes || 10;
+  // Usar max_acompanantes del invitado (configurado al crear el invitado)
+  // Si invitado tiene max_acompanantes=3, puede llevar 3 acompañantes (total 4 personas)
+  const maxAsistentes = (invitado?.max_acompanantes ?? 0) + 1;
 
   const [form, setForm] = useState({
     num_asistentes: invitado?.num_asistentes || 1,
@@ -169,7 +170,8 @@ function RSVPPublico({
                   className="w-full px-4 py-3 rounded-xl border transition-colors focus:outline-none focus:ring-2"
                   style={{
                     borderColor: tema?.color_secundario,
-                    focusRingColor: tema?.color_primario,
+                    backgroundColor: 'white',
+                    color: tema?.color_texto || '#1f2937',
                   }}
                 >
                   {[...Array(maxAsistentes)].map((_, i) => (

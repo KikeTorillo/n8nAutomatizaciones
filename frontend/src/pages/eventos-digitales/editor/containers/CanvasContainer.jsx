@@ -35,9 +35,6 @@ import { BLOCK_ICONS, BLOCK_NAMES } from '../config/invitacionBlocks';
 const CountdownElementRenderer = lazy(() =>
   import('@/components/editor-framework/elements/renderers/CountdownElementRenderer')
 );
-const CalendarioElementRenderer = lazy(() =>
-  import('@/components/editor-framework/elements/renderers/CalendarioElementRenderer')
-);
 const RsvpButtonElementRenderer = lazy(() =>
   import('@/components/editor-framework/elements/renderers/RsvpButtonElementRenderer')
 );
@@ -53,9 +50,6 @@ const UbicacionElementRenderer = lazy(() =>
 const GaleriaElementRenderer = lazy(() =>
   import('@/components/editor-framework/elements/renderers/GaleriaElementRenderer')
 );
-const FaqElementRenderer = lazy(() =>
-  import('@/components/editor-framework/elements/renderers/FaqElementRenderer')
-);
 const MesaRegalosElementRenderer = lazy(() =>
   import('@/components/editor-framework/elements/renderers/MesaRegalosElementRenderer')
 );
@@ -66,14 +60,12 @@ const MesaRegalosElementRenderer = lazy(() =>
 const INVITACION_CUSTOM_RENDERERS = {
   // Elementos básicos de invitaciones
   countdown: CountdownElementRenderer,
-  calendario: CalendarioElementRenderer,
   rsvp_button: RsvpButtonElementRenderer,
   timeline: TimelineElementRenderer,
   // Elementos complejos de invitaciones
   hero_invitacion: HeroInvitacionElementRenderer,
   ubicacion: UbicacionElementRenderer,
   galeria: GaleriaElementRenderer,
-  faq: FaqElementRenderer,
   mesa_regalos: MesaRegalosElementRenderer,
 };
 

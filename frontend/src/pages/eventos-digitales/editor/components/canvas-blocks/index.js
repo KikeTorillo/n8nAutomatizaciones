@@ -21,7 +21,6 @@ export { default as MesaRegalosCanvasBlock } from './MesaRegalosCanvasBlock';
 export { default as GaleriaCanvasBlock } from './GaleriaCanvasBlock';
 export { default as VideoCanvasBlock } from './VideoCanvasBlock';
 export { default as TextoCanvasBlock } from './TextoCanvasBlock';
-export { default as FaqCanvasBlock } from './FaqCanvasBlock';
 export { default as SeparadorCanvasBlock } from './SeparadorCanvasBlock';
 
 // ========== MAPA DE COMPONENTES POR TIPO ==========
@@ -35,7 +34,6 @@ import MesaRegalosCanvasBlock from './MesaRegalosCanvasBlock';
 import GaleriaCanvasBlock from './GaleriaCanvasBlock';
 import VideoCanvasBlock from './VideoCanvasBlock';
 import TextoCanvasBlock from './TextoCanvasBlock';
-import FaqCanvasBlock from './FaqCanvasBlock';
 import SeparadorCanvasBlock from './SeparadorCanvasBlock';
 
 /**
@@ -51,7 +49,6 @@ export const CANVAS_BLOCKS = {
   galeria: GaleriaCanvasBlock,
   video: VideoCanvasBlock,
   texto: TextoCanvasBlock,
-  faq: FaqCanvasBlock,
   separador: SeparadorCanvasBlock,
 };
 

@@ -18,7 +18,6 @@ export {
   // Bloques específicos de invitaciones
   migrateHeroInvitacionBlock,
   migrateCountdownBlock,
-  migrateCalendarioBlock,
   migrateTimelineBlock,
   migrateRsvpBlock,
   migrateUbicacionBlock,

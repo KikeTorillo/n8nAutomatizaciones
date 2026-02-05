@@ -136,7 +136,6 @@ export {
   SeparadorElementRenderer,
   // Invitaciones-specific básicos
   CountdownElementRenderer,
-  CalendarioElementRenderer,
   RsvpButtonElementRenderer,
   TimelineElementRenderer,
   // Invitaciones-specific complejos
@@ -155,7 +154,6 @@ export {
   BotonElementEditor,
   // Invitaciones-specific
   CountdownElementEditor,
-  CalendarioElementEditor,
   RsvpButtonElementEditor,
   TimelineElementEditor,
   getElementEditor,
@@ -188,7 +186,6 @@ export {
   // Bloques específicos de invitaciones
   migrateHeroInvitacionBlock,
   migrateCountdownBlock,
-  migrateCalendarioBlock,
   migrateTimelineBlock,
   migrateRsvpBlock,
   migrateUbicacionBlock,

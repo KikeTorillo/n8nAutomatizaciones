@@ -285,7 +285,6 @@ function getDefaultLabel(tipo) {
     texto: 'Info',
     faq: 'FAQ',
     separador: '',
-    agregar_calendario: 'Calendario',
   };
   return labels[tipo] || 'Sección';
 }
