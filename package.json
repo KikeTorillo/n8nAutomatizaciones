@@ -22,7 +22,6 @@
     "status": "docker compose -f docker-compose.dev.yml ps",
     "clean": "docker compose -f docker-compose.dev.yml down --volumes --remove-orphans && docker system prune -f",
     "clean:data": "docker compose -f docker-compose.dev.yml down --volumes --remove-orphans && sudo rm -rf ./data/postgres ./data/n8n ./data/pgadmin ./data/redis && docker system prune -f",
-    "clean:data:ai": "docker compose -f docker-compose.dev.yml down --volumes --remove-orphans && sudo rm -rf ./data/postgres ./data/n8n ./data/pgadmin ./data/redis ./data/qdrant && docker system prune -f",
     "fresh:clean": "npm run clean:data && docker compose -f docker-compose.dev.yml up -d --build",
     "backup:db": "docker exec postgres_db pg_dumpall -U admin > backup_$(date +%Y%m%d_%H%M%S).sql",
     "db:connect": "docker exec -it postgres_db psql -U admin -d postgres",
@@ -37,10 +36,7 @@
     "mcp:restart": "docker compose -f docker-compose.dev.yml restart mcp-server",
     "mcp:rebuild": "docker compose -f docker-compose.dev.yml build --no-cache mcp-server && docker compose -f docker-compose.dev.yml up -d mcp-server",
     "frontend:restart": "docker compose -f docker-compose.dev.yml restart frontend",
-    "frontend:rebuild": "docker compose -f docker-compose.dev.yml build --no-cache frontend && docker compose -f docker-compose.dev.yml up -d frontend",
-    "cipher:init": "./scripts/init-cipher-memory.sh",
-    "cipher:status": "curl -s http://localhost:6333/collections/knowledge_memory | jq '{puntos: .result.points_count, estado: .result.status}'",
-    "dev:ai": "npm run dev && echo '⏳ Esperando servicios (30s)...' && sleep 30 && npm run cipher:init"
+    "frontend:rebuild": "docker compose -f docker-compose.dev.yml build --no-cache frontend && docker compose -f docker-compose.dev.yml up -d frontend"
   },
   "keywords": [
     "erp",

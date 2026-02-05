@@ -14,7 +14,7 @@ Plataforma ERP SaaS Multi-Tenant para LATAM con IA Conversacional.
 | **Backend** | Node.js 18+, Express 4.18, JWT, Joi 17, Winston 3 |
 | **Database** | PostgreSQL 17, RLS multi-tenant, pg_cron |
 | **Pagos** | MercadoPago (Preapproval API) |
-| **IA** | OpenRouter, Ollama (embeddings), Qdrant (vector search), n8n workflows |
+| **IA** | OpenRouter, n8n workflows |
 
 ## Comandos Esenciales
 
