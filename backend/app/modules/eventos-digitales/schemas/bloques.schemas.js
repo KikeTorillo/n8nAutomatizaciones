@@ -25,7 +25,8 @@ const bloqueSchema = Joi.object({
         'texto',
         'faq',
         'separador',
-        'agregar_calendario'
+        'agregar_calendario',
+        'seccion_libre' // Modo libre (Wix-style)
     ),
     orden: Joi.number().integer().min(0),
     visible: Joi.boolean().default(true),
@@ -54,7 +55,8 @@ const agregarBloqueSchema = Joi.object({
         'texto',
         'faq',
         'separador',
-        'agregar_calendario'
+        'agregar_calendario',
+        'seccion_libre' // Modo libre (Wix-style)
     ),
     orden: Joi.number().integer().min(0),
     contenido: Joi.object().default({}),

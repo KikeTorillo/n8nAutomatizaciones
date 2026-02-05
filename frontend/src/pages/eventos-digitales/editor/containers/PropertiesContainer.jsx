@@ -12,7 +12,12 @@
 
 import { memo, useMemo, useState, useCallback } from 'react';
 import { X } from 'lucide-react';
-import { PropertiesPanel, useEditorLayoutContext } from '@/components/editor-framework';
+import {
+  PropertiesPanel,
+  useEditorLayoutContext,
+  ElementPropertiesPanel,
+  SectionPropertiesPanel,
+} from '@/components/editor-framework';
 import { BLOCK_CONFIGS, BLOCK_NAMES } from '../config';
 import { EDITORES_BLOQUE } from '../components/blocks';
 import { useInvitacionEditor } from '../context';
@@ -26,8 +31,10 @@ function PropertiesContainer() {
     evento,
     bloqueSeleccionadoCompleto,
     modoPreview,
+    modoEditor,
     tema,
     handleActualizarBloque,
+    getFreePositionStore,
   } = useInvitacionEditor();
 
   const {
@@ -85,6 +92,88 @@ function PropertiesContainer() {
       handleActualizarBloque(bloqueSeleccionadoCompleto.id, cambios);
     }
   };
+
+  // ========== HOOKS MODO LIBRE (siempre se llaman para cumplir reglas de hooks) ==========
+  const freeStore = getFreePositionStore();
+  const elementoSeleccionadoId = freeStore((s) => s.elementoSeleccionado);
+  const seccionSeleccionadaId = freeStore((s) => s.seccionSeleccionada);
+  const secciones = freeStore((s) => s.secciones);
+
+  // Buscar el elemento seleccionado (memoizado)
+  const elementoSeleccionado = useMemo(() => {
+    if (!elementoSeleccionadoId) return null;
+    for (const s of secciones) {
+      const elem = s.elementos?.find((e) => e.id === elementoSeleccionadoId);
+      if (elem) return elem;
+    }
+    return null;
+  }, [elementoSeleccionadoId, secciones]);
+
+  // Buscar la sección seleccionada (memoizada)
+  const seccionSeleccionada = useMemo(() => {
+    if (!seccionSeleccionadaId) return null;
+    return secciones.find((s) => s.id === seccionSeleccionadaId) || null;
+  }, [seccionSeleccionadaId, secciones]);
+
+  // Callbacks del store libre (memoizados)
+  const freeStoreActions = useMemo(() => ({
+    actualizarElemento: (id, cambios) => freeStore.getState().actualizarElemento(id, cambios),
+    eliminarElemento: (id) => freeStore.getState().eliminarElemento(id),
+    duplicarElemento: (id) => freeStore.getState().duplicarElemento(id),
+    toggleVisibilidadElemento: (id) => freeStore.getState().toggleVisibilidadElemento(id),
+    moverCapaElemento: (id, dir) => freeStore.getState().moverCapaElemento(id, dir),
+    actualizarSeccion: (id, cambios) => freeStore.getState().actualizarSeccion(id, cambios),
+    eliminarSeccion: (id) => freeStore.getState().eliminarSeccion(id),
+    duplicarSeccion: (id) => freeStore.getState().duplicarSeccion(id),
+    moverSeccion: (id, dir) => freeStore.getState().moverSeccion(id, dir),
+  }), [freeStore]);
+
+  // ========== MODO LIBRE ==========
+  if (modoEditor === 'libre' && !propertiesAsDrawer && mostrarPropiedades && !modoPreview) {
+    // Si hay elemento seleccionado, mostrar ElementPropertiesPanel
+    if (elementoSeleccionado) {
+      return (
+        <>
+          <aside className="w-80 bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden flex-shrink-0">
+            <ElementPropertiesPanel
+              elemento={elementoSeleccionado}
+              onChange={freeStoreActions.actualizarElemento}
+              onDelete={freeStoreActions.eliminarElemento}
+              onDuplicate={freeStoreActions.duplicarElemento}
+              onToggleVisibility={freeStoreActions.toggleVisibilidadElemento}
+              onMoveLayer={freeStoreActions.moverCapaElemento}
+              onClose={() => setMostrarPropiedades(false)}
+            />
+          </aside>
+          <UnsplashModal
+            isOpen={unsplashState.isOpen}
+            onClose={closeUnsplash}
+            onSelect={handleUnsplashSelect}
+            industria="eventos"
+          />
+        </>
+      );
+    }
+
+    // Si hay sección seleccionada (y no elemento), mostrar SectionPropertiesPanel
+    if (seccionSeleccionada && !elementoSeleccionado) {
+      return (
+        <aside className="w-80 bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden flex-shrink-0">
+          <SectionPropertiesPanel
+            seccion={seccionSeleccionada}
+            onChange={freeStoreActions.actualizarSeccion}
+            onDelete={freeStoreActions.eliminarSeccion}
+            onDuplicate={freeStoreActions.duplicarSeccion}
+            onMoveSection={freeStoreActions.moverSeccion}
+            onClose={() => setMostrarPropiedades(false)}
+          />
+        </aside>
+      );
+    }
+
+    // No hay selección - no mostrar panel
+    return null;
+  }
 
   // Ocultar si:
   // - Modo preview

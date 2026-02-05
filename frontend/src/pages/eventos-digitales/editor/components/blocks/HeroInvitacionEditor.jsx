@@ -19,6 +19,9 @@ import {
   ImageField,
   AlignmentField,
   RangeField,
+  ImagePositionField,
+  SelectField,
+  ColorField,
   BaseAutoSaveEditor,
 } from '@/components/editor-framework';
 import { useInvitacionBlockEditor } from '../../hooks';
@@ -58,44 +61,8 @@ function HeroInvitacionEditor({ contenido, estilos, onChange, tema, onOpenUnspla
     { value: 'medium', label: 'Media pantalla' },
   ];
 
-  // Componente de preview
-  const preview = useMemo(
-    () => (
-      <div
-        className="relative min-h-[200px]"
-        style={{
-          backgroundColor: tema?.color_primario || '#753572',
-          backgroundImage: form.imagen_url ? `url(${form.imagen_url})` : undefined,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-        }}
-      >
-        {form.imagen_url && (
-          <div
-            className="absolute inset-0"
-            style={{ backgroundColor: `rgba(0,0,0,${form.imagen_overlay || 0.3})` }}
-          />
-        )}
-        <div className={`relative p-8 text-${form.alineacion || 'center'}`}>
-          <h3 className="text-2xl font-bold text-white mb-2">
-            {form.titulo || 'Título de la Invitación'}
-          </h3>
-          <p className="text-white/90 text-lg mb-4">
-            {form.subtitulo || 'Subtítulo descriptivo'}
-          </p>
-          {form.fecha_texto && (
-            <p className="text-white/80 text-sm font-medium tracking-wider uppercase">
-              {form.fecha_texto}
-            </p>
-          )}
-        </div>
-      </div>
-    ),
-    [form, tema?.color_primario]
-  );
-
   return (
-    <BaseAutoSaveEditor preview={preview}>
+    <BaseAutoSaveEditor>
       <Input
         label="Título principal"
         value={form.titulo || ''}
@@ -113,14 +80,6 @@ function HeroInvitacionEditor({ contenido, estilos, onChange, tema, onOpenUnspla
         className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
       />
 
-      <Input
-        label="Texto de fecha"
-        value={form.fecha_texto || ''}
-        onChange={(e) => handleFieldChange('fecha_texto', e.target.value)}
-        placeholder="15 de Junio, 2026"
-        className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
-      />
-
       <ImageField
         label="Imagen de fondo"
         value={form.imagen_url || ''}
@@ -128,6 +87,22 @@ function HeroInvitacionEditor({ contenido, estilos, onChange, tema, onOpenUnspla
         onOpenUnsplash={onOpenUnsplash}
         fieldKey="imagen_url"
       />
+
+      {form.imagen_url ? (
+        <ImagePositionField
+          label="Punto focal de la imagen"
+          value={form.imagen_posicion || '50% 50%'}
+          onChange={(val) => handleFieldChange('imagen_posicion', val)}
+          imageUrl={form.imagen_url}
+        />
+      ) : (
+        <ColorField
+          label="Color de fondo"
+          value={form.color_fondo_hero || tema?.color_secundario || '#fce7f3'}
+          onChange={(val) => handleFieldChange('color_fondo_hero', val)}
+          hint="Por defecto usa el color secundario del tema"
+        />
+      )}
 
       <AlignmentField
         label="Alineación del texto"
@@ -144,14 +119,32 @@ function HeroInvitacionEditor({ contenido, estilos, onChange, tema, onOpenUnspla
       />
 
       {form.imagen_url && (
-        <RangeField
-          label="Oscurecer imagen"
-          value={form.imagen_overlay || 0.3}
-          onChange={(val) => handleFieldChange('imagen_overlay', val)}
-          min={0}
-          max={1}
-          step={0.1}
-        />
+        <>
+          <SelectField
+            label="Tipo de overlay"
+            value={form.tipo_overlay || 'uniforme'}
+            onChange={(val) => handleFieldChange('tipo_overlay', val)}
+            options={[
+              { value: 'uniforme', label: 'Uniforme (solo oscurecer)' },
+              { value: 'gradiente', label: 'Gradiente (transición al fondo)' },
+            ]}
+          />
+
+          <ColorField
+            label="Color del overlay"
+            value={form.color_overlay || '#000000'}
+            onChange={(val) => handleFieldChange('color_overlay', val)}
+          />
+
+          <RangeField
+            label="Opacidad del overlay"
+            value={form.imagen_overlay ?? 0.3}
+            onChange={(val) => handleFieldChange('imagen_overlay', val)}
+            min={0}
+            max={1}
+            step={0.1}
+          />
+        </>
       )}
 
       <div className="flex items-center justify-between">

@@ -15,6 +15,7 @@ import {
   Redo2,
   Layout,
   List,
+  Move,
   Eye,
   EyeOff,
   ZoomIn,
@@ -129,6 +130,7 @@ const UndoRedoButtons = memo(function UndoRedoButtons({
 const EditorModeToggle = memo(function EditorModeToggle({
   editorMode,
   onEditorModeChange,
+  showFreeMode = false,
 }) {
   return (
     <div className="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
@@ -141,6 +143,7 @@ const EditorModeToggle = memo(function EditorModeToggle({
             ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
             : 'text-gray-600 dark:text-gray-400'
         )}
+        title="Vista visual de bloques"
       >
         <Layout className="w-4 h-4" />
         <span className="hidden lg:inline">Visual</span>
@@ -154,10 +157,27 @@ const EditorModeToggle = memo(function EditorModeToggle({
             ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
             : 'text-gray-600 dark:text-gray-400'
         )}
+        title="Lista de bloques"
       >
         <List className="w-4 h-4" />
         <span className="hidden lg:inline">Bloques</span>
       </button>
+      {showFreeMode && (
+        <button
+          type="button"
+          onClick={() => onEditorModeChange('free')}
+          className={cn(
+            'flex items-center gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-md text-sm transition-colors',
+            editorMode === 'free'
+              ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
+              : 'text-gray-600 dark:text-gray-400'
+          )}
+          title="Posición libre (estilo Wix)"
+        >
+          <Move className="w-4 h-4" />
+          <span className="hidden lg:inline">Libre</span>
+        </button>
+      )}
     </div>
   );
 });
@@ -278,6 +298,7 @@ function EditorToolbar({
   editorMode = 'canvas',
   onEditorModeChange,
   showEditorModeToggle = true,
+  showFreeMode = false,
 
   // Breakpoints
   breakpoint = 'desktop',
@@ -296,9 +317,6 @@ function EditorToolbar({
   previewMode = false,
   onPreviewModeChange,
   showPreviewToggle = false,
-
-  // Responsive
-  isMobile = false,
 
   // Custom class
   className,
@@ -339,6 +357,7 @@ function EditorToolbar({
           <EditorModeToggle
             editorMode={editorMode}
             onEditorModeChange={onEditorModeChange}
+            showFreeMode={showFreeMode}
           />
         )}
 

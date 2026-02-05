@@ -2,15 +2,15 @@
  * ====================================================================
  * EDITOR FRAMEWORK
  * ====================================================================
- * Framework compartido para editores de bloques.
+ * Framework compartido para editores de bloques y posición libre.
  * Usado por Website Builder y Editor de Invitaciones.
  *
- * @version 2.0.0
+ * @version 3.0.0
  * @since 2026-02-03
- * @updated 2026-02-04 - Añadido useEditorShortcuts, common-blocks, mejoras useBlockEditor
+ * @updated 2026-02-04 - Añadido sistema de posición libre (Wix-style)
  */
 
-// Hooks
+// ========== HOOKS ==========
 export { useBlockEditor } from './hooks/useBlockEditor';
 export { useBlockSelection } from './hooks/useBlockSelection';
 export { useArrayItems } from './hooks/useArrayItems';
@@ -20,6 +20,7 @@ export { useCanvasBreakpoint } from './hooks/useCanvasBreakpoint';
 export { useDndHandlers } from './hooks/useDndHandlers';
 export { useEditorShortcuts, ShortcutsHelp } from './hooks/useEditorShortcuts';
 export { deepEqual, hashBloques, bloquesEqual } from './hooks/compareUtils';
+export { useCanvasInteraction } from './hooks/useCanvasInteraction';
 
 // Common Blocks (bloques compartidos)
 export * from './common-blocks';
@@ -51,6 +52,7 @@ export {
   ItemsEditorField,
   DateField,
   DateTimeField,
+  ImagePositionField,
   FieldRenderer,
   TabContent,
 } from './fields';
@@ -96,3 +98,118 @@ export {
   InlineEditableWrapper,
   useInlineEditing,
 } from './inline';
+
+// ========== FREE POSITION CANVAS (Wix-style) ==========
+
+// Canvas Components
+export {
+  FreePositionCanvas,
+  CanvasSection,
+  CanvasElement,
+  SnapGuides,
+  calculateSnapGuides,
+} from './canvas';
+
+// Elements Registry & Types
+export {
+  BUILT_IN_ELEMENT_TYPES,
+  INVITACION_ELEMENT_TYPES,
+  ELEMENT_CATEGORIES,
+  registerElementType,
+  registerElementTypes,
+  registerInvitacionElementTypes,
+  getElementType,
+  getAllElementTypes,
+  getElementTypesByCategory,
+  clearElementTypesRegistry,
+  createElementFromType,
+  INVITACION_ALLOWED_TYPES,
+  ElementWrapper,
+} from './elements';
+
+// Element Renderers
+export {
+  TextoElementRenderer,
+  ImagenElementRenderer,
+  BotonElementRenderer,
+  FormaElementRenderer,
+  SeparadorElementRenderer,
+  // Invitaciones-specific básicos
+  CountdownElementRenderer,
+  CalendarioElementRenderer,
+  RsvpButtonElementRenderer,
+  TimelineElementRenderer,
+  // Invitaciones-specific complejos
+  HeroInvitacionElementRenderer,
+  ProtagonistasElementRenderer,
+  UbicacionElementRenderer,
+  GaleriaElementRenderer,
+  FaqElementRenderer,
+  MesaRegalosElementRenderer,
+  getElementRenderer,
+} from './elements/renderers';
+
+// Element Editors
+export {
+  TextoElementEditor,
+  ImagenElementEditor,
+  BotonElementEditor,
+  // Invitaciones-specific
+  CountdownElementEditor,
+  CalendarioElementEditor,
+  RsvpButtonElementEditor,
+  TimelineElementEditor,
+  getElementEditor,
+} from './elements/editors';
+
+// Panels
+export {
+  ElementsPalette,
+  ElementPropertiesPanel,
+  SectionPropertiesPanel,
+  LayersPanel,
+} from './panels';
+
+// Store Actions & Factories
+export {
+  createSectionActions,
+  createSection,
+  createElementActions,
+  createFreePositionStore,
+  createFreePositionSelectors,
+} from './store';
+
+// Migration Utils (bloques → secciones)
+export {
+  // Bloques genéricos
+  migrateHeroBlock,
+  migrateTextoBlock,
+  migrateImagenBlock,
+  migrateGenericBlock,
+  // Bloques específicos de invitaciones
+  migrateHeroInvitacionBlock,
+  migrateCountdownBlock,
+  migrateCalendarioBlock,
+  migrateTimelineBlock,
+  migrateRsvpBlock,
+  migrateProtagonistasBlock,
+  migrateUbicacionBlock,
+  migrateGaleriaBlock,
+  migrateFaqBlock,
+  migrateMesaRegalosBlock,
+  migrateSeparadorBlock,
+  migrateVideoBlock,
+  // Funciones de utilidad
+  migrateBlocksToSections,
+  detectDataFormat,
+  ensureSectionsFormat,
+} from './utils';
+
+// Secciones ↔ Bloques Conversion (autosave modo libre)
+export {
+  seccionesToBloques,
+  bloquesToSecciones,
+  detectarModoLibre,
+  hashSecciones,
+  seccionesEqual,
+} from './utils';

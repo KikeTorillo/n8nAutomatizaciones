@@ -35,14 +35,25 @@ function HeroPublico({
   const titulo = contenido.titulo || evento?.nombre || 'Título del Evento';
   const subtitulo = contenido.subtitulo || evento?.descripcion || '';
   const imagenUrl = contenido.imagen_url || evento?.portada_url || tema?.imagen_fondo;
-  const fechaTexto = contenido.fecha_texto;
+  const imagenPosicion = contenido.imagen_posicion || 'center';
 
   // Estilos - Fallback: editor guarda 'imagen_overlay', antes se usaba 'overlay_opacidad'
   const alineacion = estilos.alineacion || contenido.alineacion || 'center';
-  const overlayOpacidad = estilos.overlay_opacidad ?? contenido.imagen_overlay ?? 0.5;
+  const overlayOpacidad = contenido.imagen_overlay ?? estilos.overlay_opacidad ?? 0.3;
+  const tipoOverlay = contenido.tipo_overlay || 'uniforme';
+  const colorOverlay = contenido.color_overlay || '#000000';
   const mostrarFecha = estilos.mostrar_fecha !== false;
   const mostrarHora = estilos.mostrar_hora !== false;
   const mostrarCalendario = contenido.mostrar_calendario !== false;
+
+  // Helper para convertir hex a rgb
+  const hexToRgb = (hex) => {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result
+      ? `${parseInt(result[1], 16)},${parseInt(result[2], 16)},${parseInt(result[3], 16)}`
+      : '0,0,0';
+  };
+  const overlayRgb = hexToRgb(colorOverlay);
 
   // Altura de sección (full, medium, auto)
   const altura = estilos.altura || contenido.altura || 'full';
@@ -78,11 +89,14 @@ function HeroPublico({
             src={imagenUrl}
             alt={titulo}
             className="w-full h-full object-cover"
+            style={{ objectPosition: imagenPosicion }}
           />
           <div
             className="absolute inset-0"
             style={{
-              background: `linear-gradient(to bottom, rgba(0,0,0,${overlayOpacidad}) 0%, rgba(0,0,0,${overlayOpacidad + 0.1}) 40%, ${tema?.color_fondo || '#fdf2f8'}dd 80%, ${tema?.color_fondo || '#fdf2f8'} 100%)`,
+              background: tipoOverlay === 'gradiente'
+                ? `linear-gradient(to bottom, rgba(${overlayRgb},${overlayOpacidad}) 0%, rgba(${overlayRgb},${overlayOpacidad + 0.1}) 40%, ${tema?.color_fondo || '#fdf2f8'}dd 80%, ${tema?.color_fondo || '#fdf2f8'} 100%)`
+                : `rgba(${overlayRgb},${overlayOpacidad})`,
             }}
           />
         </div>
@@ -90,7 +104,7 @@ function HeroPublico({
         <div
           className="absolute inset-0"
           style={{
-            background: `linear-gradient(135deg, ${tema?.color_secundario || '#fce7f3'} 0%, ${tema?.color_fondo || '#fdf2f8'} 100%)`,
+            backgroundColor: contenido.color_fondo_hero || tema?.color_secundario || '#fce7f3',
           }}
         />
       )}
@@ -171,7 +185,7 @@ function HeroPublico({
         </h1>
 
         {/* Fecha y hora */}
-        {(mostrarFecha || mostrarHora) && (evento?.fecha_evento || fechaTexto) && (
+        {(mostrarFecha || mostrarHora) && evento?.fecha_evento && (
           <div
             className="inline-flex items-center gap-3 sm:gap-6 px-6 sm:px-10 py-4 sm:py-5 rounded-full backdrop-blur-sm mb-8 animate-scaleIn stagger-3"
             style={{
@@ -193,12 +207,11 @@ function HeroPublico({
                     textShadow: tieneImagenFondo ? '0 1px 4px rgba(0,0,0,0.8)' : 'none',
                   }}
                 >
-                  {fechaTexto ||
-                    new Date(evento?.fecha_evento).toLocaleDateString('es-ES', {
-                      day: 'numeric',
-                      month: 'long',
-                      year: 'numeric',
-                    })}
+                  {new Date(evento.fecha_evento).toLocaleDateString('es-ES', {
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric',
+                  })}
                 </span>
               </div>
             )}

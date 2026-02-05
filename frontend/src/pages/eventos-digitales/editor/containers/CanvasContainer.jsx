@@ -10,10 +10,10 @@
  * @updated 2026-02-04 - Agregado modo bloques con BlockListEditor
  */
 
-import { memo, useCallback, useMemo } from 'react';
+import { memo, useCallback, useMemo, lazy, Suspense } from 'react';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { useDroppable } from '@dnd-kit/core';
-import { Layout, Plus } from 'lucide-react';
+import { Layout, Plus, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { CanvasBlock } from '../components/canvas-blocks';
 import { useInvitacionEditor } from '../context';
@@ -24,10 +24,62 @@ import {
   BREAKPOINTS,
   useEditorLayoutContext,
   BlockListEditor,
+  FreePositionCanvas,
 } from '@/components/editor-framework';
 import { useInvitacionEditorStore } from '@/store';
 import { EDITORES_BLOQUE } from '../components/blocks';
 import { BLOCK_ICONS, BLOCK_NAMES } from '../config/invitacionBlocks';
+
+// ========== LAZY LOADED CUSTOM RENDERERS PARA INVITACIONES ==========
+
+const CountdownElementRenderer = lazy(() =>
+  import('@/components/editor-framework/elements/renderers/CountdownElementRenderer')
+);
+const CalendarioElementRenderer = lazy(() =>
+  import('@/components/editor-framework/elements/renderers/CalendarioElementRenderer')
+);
+const RsvpButtonElementRenderer = lazy(() =>
+  import('@/components/editor-framework/elements/renderers/RsvpButtonElementRenderer')
+);
+const TimelineElementRenderer = lazy(() =>
+  import('@/components/editor-framework/elements/renderers/TimelineElementRenderer')
+);
+const HeroInvitacionElementRenderer = lazy(() =>
+  import('@/components/editor-framework/elements/renderers/HeroInvitacionElementRenderer')
+);
+const ProtagonistasElementRenderer = lazy(() =>
+  import('@/components/editor-framework/elements/renderers/ProtagonistasElementRenderer')
+);
+const UbicacionElementRenderer = lazy(() =>
+  import('@/components/editor-framework/elements/renderers/UbicacionElementRenderer')
+);
+const GaleriaElementRenderer = lazy(() =>
+  import('@/components/editor-framework/elements/renderers/GaleriaElementRenderer')
+);
+const FaqElementRenderer = lazy(() =>
+  import('@/components/editor-framework/elements/renderers/FaqElementRenderer')
+);
+const MesaRegalosElementRenderer = lazy(() =>
+  import('@/components/editor-framework/elements/renderers/MesaRegalosElementRenderer')
+);
+
+/**
+ * Renderers personalizados para elementos específicos de invitaciones
+ */
+const INVITACION_CUSTOM_RENDERERS = {
+  // Elementos básicos de invitaciones
+  countdown: CountdownElementRenderer,
+  calendario: CalendarioElementRenderer,
+  rsvp_button: RsvpButtonElementRenderer,
+  timeline: TimelineElementRenderer,
+  // Elementos complejos de invitaciones
+  hero_invitacion: HeroInvitacionElementRenderer,
+  protagonistas: ProtagonistasElementRenderer,
+  ubicacion: UbicacionElementRenderer,
+  galeria: GaleriaElementRenderer,
+  faq: FaqElementRenderer,
+  mesa_regalos: MesaRegalosElementRenderer,
+};
 
 // ========== CONFIGURACIÓN PARA BLOCKLIST ==========
 
@@ -69,6 +121,7 @@ function CanvasContainer() {
     handleReordenarBloques,
     seleccionarBloque,
     deseleccionarBloque,
+    getFreePositionStore,
   } = useInvitacionEditor();
 
   // Usar abrirPropiedades del layout context (única fuente de verdad)
@@ -137,6 +190,51 @@ function CanvasContainer() {
 
   // Calcular escala del zoom (zoom viene como porcentaje: 50, 75, 100, etc.)
   const zoomScale = zoom / 100;
+
+  // ========== HOOKS MODO LIBRE (siempre se llaman para cumplir reglas de hooks) ==========
+  const freeStore = getFreePositionStore();
+  const secciones = freeStore((s) => s.secciones);
+  const seccionSeleccionada = freeStore((s) => s.seccionSeleccionada);
+  const elementoSeleccionado = freeStore((s) => s.elementoSeleccionado);
+  const elementoEditando = freeStore((s) => s.elementoEditando);
+
+  // Callbacks del store libre (memoizados)
+  const freeStoreActions = useMemo(() => ({
+    seleccionarSeccion: (id) => freeStore.getState().seleccionarSeccion(id),
+    seleccionarElemento: (elementoId, seccionId) => freeStore.getState().seleccionarElemento(elementoId, seccionId),
+    deseleccionarTodo: () => freeStore.getState().deseleccionarTodo(),
+    moverElemento: (elementoId, seccionId, pos) => freeStore.getState().moverElemento(elementoId, seccionId, pos),
+    redimensionarElemento: (elementoId, seccionId, size) => freeStore.getState().redimensionarElemento(elementoId, seccionId, size),
+    activarEdicionElemento: (elementoId) => freeStore.getState().activarEdicionElemento(elementoId),
+    actualizarElemento: (elementoId, cambios) => freeStore.getState().actualizarElemento(elementoId, cambios),
+  }), [freeStore]);
+
+  // ========== MODO LIBRE (Free Position Canvas) ==========
+  if (modoEditor === 'libre') {
+    return (
+      <main className="flex-1 overflow-hidden bg-gray-100 dark:bg-gray-900">
+        <FreePositionCanvas
+          secciones={secciones}
+          selectedSectionId={seccionSeleccionada}
+          selectedElementId={elementoSeleccionado}
+          editingElementId={elementoEditando}
+          onSelectSection={freeStoreActions.seleccionarSeccion}
+          onSelectElement={freeStoreActions.seleccionarElemento}
+          onDeselectAll={freeStoreActions.deseleccionarTodo}
+          onMoveElement={freeStoreActions.moverElemento}
+          onResizeElement={freeStoreActions.redimensionarElemento}
+          onElementDoubleClick={freeStoreActions.activarEdicionElemento}
+          onContentChange={freeStoreActions.actualizarElemento}
+          breakpoint={breakpoint}
+          zoom={zoom}
+          tema={tema}
+          isPreviewMode={modoPreview}
+          customRenderers={INVITACION_CUSTOM_RENDERERS}
+          evento={evento}
+        />
+      </main>
+    );
+  }
 
   // ========== MODO BLOQUES (Lista acordeón) ==========
   if (modoEditor === 'bloques') {

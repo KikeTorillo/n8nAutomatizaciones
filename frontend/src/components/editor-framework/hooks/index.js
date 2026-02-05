@@ -9,3 +9,4 @@ export { useCanvasBreakpoint } from './useCanvasBreakpoint';
 export { useDndHandlers } from './useDndHandlers';
 export { useEditorShortcuts, ShortcutsHelp } from './useEditorShortcuts.jsx';
 export { deepEqual, hashBloques, bloquesEqual } from './compareUtils';
+export { useCanvasInteraction } from './useCanvasInteraction';

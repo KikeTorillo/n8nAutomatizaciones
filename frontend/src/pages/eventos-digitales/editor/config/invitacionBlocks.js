@@ -166,13 +166,17 @@ export const BLOCK_CONFIGS = {
     contenido: [
       { key: 'titulo', label: 'Título principal', type: 'text', aiEnabled: true, placeholder: 'Nos Casamos' },
       { key: 'subtitulo', label: 'Subtítulo', type: 'textarea', aiEnabled: true, placeholder: 'Te invitamos a celebrar nuestro amor' },
-      { key: 'fecha_texto', label: 'Texto de fecha', type: 'text', placeholder: '15 de Junio, 2026' },
       { key: 'imagen_url', label: 'Imagen de fondo', type: 'image' },
       { key: 'alineacion', label: 'Alineación', type: 'alignment' },
       { key: 'mostrar_calendario', label: 'Mostrar botones de calendario', type: 'toggle' },
     ],
     estilo: [
-      { key: 'imagen_overlay', label: 'Oscurecer imagen', type: 'range', min: 0, max: 1, step: 0.1 },
+      { key: 'tipo_overlay', label: 'Tipo de overlay', type: 'select', options: [
+        { value: 'uniforme', label: 'Uniforme' },
+        { value: 'gradiente', label: 'Gradiente' },
+      ]},
+      { key: 'color_overlay', label: 'Color del overlay', type: 'color' },
+      { key: 'imagen_overlay', label: 'Opacidad del overlay', type: 'range', min: 0, max: 1, step: 0.1 },
       { key: 'altura', label: 'Altura de sección', type: 'select', options: [
         { value: 'auto', label: 'Automática' },
         { value: 'full', label: 'Pantalla completa' },
@@ -381,10 +385,12 @@ export const BLOCK_DEFAULTS = {
   hero_invitacion: {
     titulo: '',
     subtitulo: '',
-    fecha_texto: '',
     imagen_url: '',
+    imagen_posicion: '50% 50%',
     alineacion: 'center',
     imagen_overlay: 0.3,
+    tipo_overlay: 'uniforme',
+    color_overlay: '#000000',
     altura: 'full',
     mostrar_calendario: true,
   },

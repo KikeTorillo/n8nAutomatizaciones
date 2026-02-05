@@ -53,6 +53,7 @@ function EditorHeader() {
     zoom,
     setZoom,
     handlePublicar,
+    cambiarAModoLibre,
   } = useInvitacionEditor();
 
   // Layout context para responsive
@@ -101,10 +102,17 @@ function EditorHeader() {
         canUndo={canUndo}
         canRedo={canRedo}
 
-        // Modos de editor (Visual/Bloques)
-        editorMode={modoEditor === 'bloques' ? 'blocks' : 'canvas'}
-        onEditorModeChange={(mode) => setModoEditor(mode === 'blocks' ? 'bloques' : 'canvas')}
+        // Modos de editor (Visual/Bloques/Libre)
+        editorMode={modoEditor === 'bloques' ? 'blocks' : modoEditor === 'libre' ? 'free' : 'canvas'}
+        onEditorModeChange={(mode) => {
+          if (mode === 'free') {
+            cambiarAModoLibre();
+          } else {
+            setModoEditor(mode === 'blocks' ? 'bloques' : 'canvas');
+          }
+        }}
         showEditorModeToggle={!isMobile}
+        showFreeMode={true}
 
         // Breakpoints (ocultar en móvil/tablet - no tiene sentido)
         breakpoint={breakpoint}
