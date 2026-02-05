@@ -4,8 +4,9 @@
  * ====================================================================
  * Container para los drawers móviles del editor de invitaciones.
  *
- * @version 1.2.0 - Agregado UnsplashModal
+ * @version 1.3.0 - Agregado Upload de imágenes
  * @since 2026-02-04
+ * @updated 2026-02-05
  */
 
 import { memo, useMemo, useState, useCallback } from 'react';
@@ -20,6 +21,8 @@ import { BLOQUES_INVITACION, CATEGORIAS_BLOQUES, BLOCK_CONFIGS, BLOCK_NAMES } fr
 import { EDITORES_BLOQUE } from '../components/blocks';
 import InvitacionThemeEditor from '../components/InvitacionThemeEditor';
 import UnsplashModal from '@/pages/website/components/UnsplashPicker/UnsplashModal';
+import { useUploadArchivo } from '@/hooks/utils';
+import { useToast } from '@/hooks/utils';
 
 /**
  * DrawersContainer - Drawers móviles para el editor de invitaciones
@@ -39,6 +42,10 @@ function DrawersContainer() {
 
   const { closeDrawer } = useEditorLayoutContext();
 
+  // ========== UPLOAD STATE ==========
+  const uploadArchivo = useUploadArchivo();
+  const toast = useToast();
+
   // ========== UNSPLASH STATE ==========
   const [unsplashState, setUnsplashState] = useState({
     isOpen: false,
@@ -56,25 +63,70 @@ function DrawersContainer() {
   const handleUnsplashSelect = useCallback(
     (url) => {
       if (bloqueSeleccionadoCompleto && unsplashState.fieldKey) {
-        handleActualizarBloque(bloqueSeleccionadoCompleto.id, {
-          [unsplashState.fieldKey]: url,
-        });
+        // Si es para galería, agregar al array
+        if (unsplashState.fieldKey === 'galeria_nueva') {
+          const currentImages = bloqueSeleccionadoCompleto?.contenido?.imagenes || [];
+          handleActualizarBloque(bloqueSeleccionadoCompleto.id, {
+            imagenes: [...currentImages, { url, alt: '' }],
+          });
+        } else {
+          handleActualizarBloque(bloqueSeleccionadoCompleto.id, {
+            [unsplashState.fieldKey]: url,
+          });
+        }
       }
       closeUnsplash();
     },
     [bloqueSeleccionadoCompleto, unsplashState.fieldKey, handleActualizarBloque, closeUnsplash]
   );
 
+  // ========== UPLOAD HANDLER ==========
+  const handleUploadImage = useCallback(
+    async (file, fieldKey) => {
+      if (!bloqueSeleccionadoCompleto) return;
+
+      try {
+        const resultado = await uploadArchivo.mutateAsync({
+          file,
+          folder: 'eventos-digitales/imagenes',
+          isPublic: true,
+          entidadTipo: 'evento_digital',
+          entidadId: evento?.id,
+        });
+
+        // Si es para galería, agregar al array
+        if (fieldKey === 'galeria_nueva') {
+          const currentImages = bloqueSeleccionadoCompleto?.contenido?.imagenes || [];
+          handleActualizarBloque(bloqueSeleccionadoCompleto.id, {
+            imagenes: [...currentImages, { url: resultado.url, alt: '' }],
+          });
+        } else {
+          // Para Hero u otros campos individuales
+          handleActualizarBloque(bloqueSeleccionadoCompleto.id, {
+            [fieldKey]: resultado.url,
+          });
+        }
+
+        toast.success('Imagen subida correctamente');
+      } catch {
+        // El error ya se maneja en el hook
+      }
+    },
+    [bloqueSeleccionadoCompleto, evento?.id, handleActualizarBloque, uploadArchivo, toast]
+  );
+
   // Props para editores (tema viene del contexto con fuente_titulos y fuente_cuerpo)
   const editorProps = useMemo(
     () => ({
       tema,
+      evento,
       ubicaciones: evento?.ubicaciones || [],
       galeria: evento?.galeria || [],
       mesaRegalos: evento?.mesa_regalos || null,
       onOpenUnsplash: openUnsplash,
+      onUploadImage: handleUploadImage,
     }),
-    [tema, evento?.ubicaciones, evento?.galeria, evento?.mesa_regalos, openUnsplash]
+    [tema, evento, openUnsplash, handleUploadImage]
   );
 
   // Editor específico

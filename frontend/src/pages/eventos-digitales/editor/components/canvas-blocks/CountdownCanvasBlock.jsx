@@ -30,9 +30,9 @@ function CountdownCanvasBlock({ bloque, tema, evento, isEditing, onContentChange
 
   // Usar || para fallbacks (strings vacíos necesitan ||, no default de desestructuración)
   const titulo = contenido.titulo || 'Faltan';
-  // Fallback a fecha/hora del evento si no hay fecha específica en el bloque
-  const fecha_objetivo = contenido.fecha_objetivo || evento?.fecha_evento;
-  const hora_objetivo = contenido.hora_objetivo || evento?.hora_evento;
+  // Siempre usar fecha/hora del evento (configurada al crear el evento)
+  const fecha_objetivo = evento?.fecha_evento;
+  const hora_objetivo = evento?.hora_evento;
   const texto_finalizado = contenido.texto_finalizado || '¡Llegó el gran día!';
 
   // Fallback: estilos pueden venir en contenido o en estilos

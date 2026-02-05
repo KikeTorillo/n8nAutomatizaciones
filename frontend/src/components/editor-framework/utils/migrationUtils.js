@@ -494,45 +494,6 @@ export function migrateRsvpBlock(bloque) {
 }
 
 /**
- * Migra un bloque Protagonistas al formato de sección
- * @param {Object} bloque - Bloque protagonistas original
- * @returns {Object} Sección con elementos
- */
-export function migrateProtagonistasBlock(bloque) {
-  const contenido = bloque.contenido || {};
-  const elementos = [];
-
-  elementos.push(createElementFromType('protagonistas', {
-    contenido: { ...contenido },
-    posicion: {
-      x: 50,
-      y: 50,
-      ancho: 90,
-      altura: 'auto',
-      ancla: 'center',
-    },
-    capa: 1,
-  }));
-
-  return createSection({
-    id: bloque.id,
-    tipo: 'seccion',
-    preset: 'protagonistas',
-    orden: bloque.orden,
-    visible: bloque.visible !== false,
-    config: {
-      altura: { valor: 'auto', unidad: 'auto' },
-      padding: { top: 60, bottom: 60 },
-      fondo: {
-        tipo: 'color',
-        valor: '#ffffff',
-      },
-    },
-    elementos,
-  });
-}
-
-/**
  * Migra un bloque Ubicación al formato de sección
  * @param {Object} bloque - Bloque ubicacion original
  * @returns {Object} Sección con elementos
@@ -858,8 +819,6 @@ export function migrateBlocksToSections(bloques) {
         return migrateTimelineBlock(bloque);
       case 'rsvp':
         return migrateRsvpBlock(bloque);
-      case 'protagonistas':
-        return migrateProtagonistasBlock(bloque);
       case 'ubicacion':
         return migrateUbicacionBlock(bloque);
       case 'galeria':

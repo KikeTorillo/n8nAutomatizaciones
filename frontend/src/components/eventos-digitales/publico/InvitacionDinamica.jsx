@@ -94,7 +94,6 @@ function InvitacionDinamica({
         // Solo ciertos tipos generan items de nav
         const tiposConNav = [
           'hero_invitacion',
-          'protagonistas',
           'countdown',
           'timeline',
           'ubicacion',
@@ -276,7 +275,6 @@ function InvitacionDinamica({
 function getDefaultLabel(tipo) {
   const labels = {
     hero_invitacion: 'Inicio',
-    protagonistas: 'Protagonistas',
     countdown: 'Cuenta Regresiva',
     timeline: 'Itinerario',
     ubicacion: 'Ubicación',

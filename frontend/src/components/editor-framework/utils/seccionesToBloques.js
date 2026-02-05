@@ -166,3 +166,69 @@ export function hashSecciones(secciones) {
 export function seccionesEqual(a, b) {
   return hashSecciones(a) === hashSecciones(b);
 }
+
+/**
+ * Mapeo de tipos de elementos a tipos de bloques tradicionales.
+ * Los tipos deben coincidir con bloques.schemas.js del backend.
+ */
+const ELEMENTO_TO_BLOQUE_MAP = {
+  // Elementos de invitación
+  hero_invitacion: 'hero_invitacion',
+  countdown: 'countdown',
+  calendario: 'agregar_calendario',
+  rsvp_button: 'rsvp',
+  timeline: 'timeline',
+  ubicacion: 'ubicacion',
+  galeria: 'galeria',
+  faq: 'faq',
+  mesa_regalos: 'mesa_regalos',
+  // Elementos básicos
+  texto: 'texto',
+  video: 'video',
+  separador: 'separador',
+  // Nota: 'imagen' no tiene equivalente directo en bloques tradicionales
+};
+
+/**
+ * Convierte secciones del modo libre a bloques tradicionales.
+ * Esta conversión pierde el posicionamiento libre (X/Y) pero mantiene el contenido.
+ * Se usa cuando el usuario quiere salir del modo libre.
+ *
+ * @param {Array} secciones - Secciones del store de posición libre
+ * @returns {Array} Bloques en formato tradicional (no seccion_libre)
+ */
+export function seccionesToBloquesTrad(secciones) {
+  if (!Array.isArray(secciones)) return [];
+
+  const bloques = [];
+  let orden = 0;
+
+  secciones.forEach((seccion) => {
+    const elementos = seccion.elementos || [];
+
+    // Por cada elemento en la sección, crear un bloque tradicional
+    elementos
+      .sort((a, b) => (a.posicion?.y ?? 0) - (b.posicion?.y ?? 0)) // Ordenar por Y
+      .forEach((elemento) => {
+        const tipoBloque = ELEMENTO_TO_BLOQUE_MAP[elemento.tipo];
+
+        if (!tipoBloque) {
+          // Tipo no mapeado, ignorar o crear bloque genérico
+          console.warn(`[seccionesToBloquesTrad] Tipo no mapeado: ${elemento.tipo}`);
+          return;
+        }
+
+        bloques.push({
+          id: elemento.id,
+          tipo: tipoBloque,
+          orden: orden++,
+          visible: elemento.visible !== false,
+          contenido: elemento.contenido || {},
+          estilos: elemento.estilos || {},
+          version: 1,
+        });
+      });
+  });
+
+  return bloques;
+}

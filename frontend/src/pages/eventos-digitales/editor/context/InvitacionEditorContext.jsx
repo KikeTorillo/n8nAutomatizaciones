@@ -29,6 +29,7 @@ import {
   createFreePositionStore,
   // Autosave para modo libre
   seccionesToBloques,
+  seccionesToBloquesTrad,
   bloquesToSecciones,
   detectarModoLibre,
   hashSecciones,
@@ -400,6 +401,46 @@ export function InvitacionEditorProvider({ children }) {
   }, [bloques, bloquesData, eventoId, getFreePositionStore]);
 
   /**
+   * Salir del modo libre y volver a modo tradicional (canvas/bloques).
+   * Convierte las secciones a bloques tradicionales (perdiendo posicionamiento libre).
+   *
+   * @param {'canvas' | 'bloques'} modoDestino - Modo al que cambiar
+   */
+  const salirDeModoLibre = useCallback(async (modoDestino) => {
+    try {
+      const store = getFreePositionStore();
+      const secciones = store.getState().secciones;
+
+      // Convertir secciones a bloques tradicionales
+      const bloquesTrad = seccionesToBloquesTrad(secciones);
+
+      // Guardar en la API
+      await guardarBloquesMutation.mutateAsync(bloquesTrad);
+
+      // Cargar en el store de bloques
+      setBloques(bloquesTrad, eventoId);
+
+      // Limpiar el store de posición libre
+      store.getState().cargarDatos({ secciones: [] }, eventoId);
+
+      // Cambiar al modo destino
+      setModoEditor(modoDestino);
+
+      // Invalidar queries para refrescar datos
+      queryClient.invalidateQueries({ queryKey: ['evento', eventoId, 'bloques'] });
+
+      toast.success('Modo cambiado', {
+        description: 'Los elementos se han convertido a bloques tradicionales.',
+      });
+    } catch (error) {
+      console.error('[InvitacionEditor] Error al salir del modo libre:', error);
+      toast.error('Error al cambiar de modo', {
+        description: 'No se pudieron convertir los elementos.',
+      });
+    }
+  }, [getFreePositionStore, guardarBloquesMutation, setBloques, eventoId, queryClient]);
+
+  /**
    * Publicar/Despublicar invitación
    */
   const handlePublicar = useCallback(() => {
@@ -448,6 +489,10 @@ export function InvitacionEditorProvider({ children }) {
     : estadoGuardado;
   const estaPublicando = publicarMutation.isPending;
   const estaPublicado = evento?.estado === 'publicado';
+  // Detectar si los datos guardados en la API son de modo libre (irreversible)
+  const esModoLibreGuardado = useMemo(() => {
+    return detectarModoLibre(bloquesData?.bloques || []);
+  }, [bloquesData]);
 
   // ========== CONTEXT VALUE ==========
 
@@ -468,6 +513,7 @@ export function InvitacionEditorProvider({ children }) {
       estaGuardando,
       estaPublicando,
       estaPublicado,
+      esModoLibreGuardado,
       modoPreview,
       modoEditor,
       mostrarPropiedades,
@@ -485,6 +531,7 @@ export function InvitacionEditorProvider({ children }) {
       // Modo libre (Free Position Canvas)
       getFreePositionStore,
       cambiarAModoLibre,
+      salirDeModoLibre,
 
       // Handlers de bloques
       handleAgregarBloque,
@@ -527,6 +574,7 @@ export function InvitacionEditorProvider({ children }) {
       estaGuardando,
       estaPublicando,
       estaPublicado,
+      esModoLibreGuardado,
       modoPreview,
       modoEditor,
       mostrarPropiedades,
@@ -537,6 +585,7 @@ export function InvitacionEditorProvider({ children }) {
       setZoom,
       getFreePositionStore,
       cambiarAModoLibre,
+      salirDeModoLibre,
       handleAgregarBloque,
       handleActualizarBloque,
       handleEliminarBloque,

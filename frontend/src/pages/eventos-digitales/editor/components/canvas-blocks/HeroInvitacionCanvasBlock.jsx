@@ -49,8 +49,8 @@ function HeroInvitacionCanvasBlock({ bloque, tema, evento, isEditing, onContentC
   const imagen_posicion = contenido.imagen_posicion || 'center';
   const alineacion = contenido.alineacion || estilos.alineacion || 'center';
   const mostrar_calendario = contenido.mostrar_calendario !== false;
-  const mostrar_fecha = estilos.mostrar_fecha !== false;
-  const mostrar_hora = estilos.mostrar_hora !== false;
+  const mostrar_fecha = contenido.mostrar_fecha !== false;
+  const mostrar_hora = contenido.mostrar_hora !== false;
 
   // Overlay - usar ?? para permitir 0
   const imagen_overlay = contenido.imagen_overlay ?? estilos.imagen_overlay ?? 0.3;

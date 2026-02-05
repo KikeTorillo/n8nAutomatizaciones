@@ -141,7 +141,6 @@ export {
   TimelineElementRenderer,
   // Invitaciones-specific complejos
   HeroInvitacionElementRenderer,
-  ProtagonistasElementRenderer,
   UbicacionElementRenderer,
   GaleriaElementRenderer,
   FaqElementRenderer,
@@ -192,7 +191,6 @@ export {
   migrateCalendarioBlock,
   migrateTimelineBlock,
   migrateRsvpBlock,
-  migrateProtagonistasBlock,
   migrateUbicacionBlock,
   migrateGaleriaBlock,
   migrateFaqBlock,
@@ -208,6 +206,7 @@ export {
 // Secciones ↔ Bloques Conversion (autosave modo libre)
 export {
   seccionesToBloques,
+  seccionesToBloquesTrad,
   bloquesToSecciones,
   detectarModoLibre,
   hashSecciones,

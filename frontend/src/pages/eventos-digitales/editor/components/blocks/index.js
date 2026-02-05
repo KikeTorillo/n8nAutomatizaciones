@@ -10,7 +10,6 @@
 
 // Editores de bloques
 export { default as HeroInvitacionEditor } from './HeroInvitacionEditor';
-export { default as ProtagonistasEditor } from './ProtagonistasEditor';
 export { default as CountdownEditor } from './CountdownEditor';
 export { default as TimelineEditor } from './TimelineEditor';
 export { default as UbicacionEditor } from './UbicacionEditor';
@@ -26,7 +25,6 @@ export { default as AgregarCalendarioEditor } from './AgregarCalendarioEditor';
 // ========== MAPA DE EDITORES POR TIPO ==========
 
 import HeroInvitacionEditor from './HeroInvitacionEditor';
-import ProtagonistasEditor from './ProtagonistasEditor';
 import CountdownEditor from './CountdownEditor';
 import TimelineEditor from './TimelineEditor';
 import UbicacionEditor from './UbicacionEditor';
@@ -44,7 +42,6 @@ import AgregarCalendarioEditor from './AgregarCalendarioEditor';
  */
 export const EDITORES_BLOQUE = {
   hero_invitacion: HeroInvitacionEditor,
-  protagonistas: ProtagonistasEditor,
   countdown: CountdownEditor,
   timeline: TimelineEditor,
   ubicacion: UbicacionEditor,

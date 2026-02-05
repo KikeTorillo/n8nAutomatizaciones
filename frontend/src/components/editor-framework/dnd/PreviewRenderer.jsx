@@ -252,23 +252,6 @@ function PreviewRenderer({ tipo, tema }) {
         </div>
       );
 
-    case 'protagonistas':
-      return (
-        <div className="w-full h-24 bg-white dark:bg-gray-800 rounded-md p-2 border border-gray-200 dark:border-gray-700 flex flex-col items-center justify-center">
-          <div className="flex items-center gap-3">
-            <div className="text-center">
-              <div className="w-8 h-1.5 bg-pink-300 rounded mb-1" />
-              <div className="w-6 h-1 bg-gray-200 rounded" />
-            </div>
-            <div className="text-pink-400 text-lg">&</div>
-            <div className="text-center">
-              <div className="w-8 h-1.5 bg-pink-300 rounded mb-1" />
-              <div className="w-6 h-1 bg-gray-200 rounded" />
-            </div>
-          </div>
-        </div>
-      );
-
     case 'ubicacion':
       return (
         <div className="w-full h-24 bg-white dark:bg-gray-800 rounded-md p-2 border border-gray-200 dark:border-gray-700">

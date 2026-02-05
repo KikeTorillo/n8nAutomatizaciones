@@ -21,7 +21,6 @@ export { default as CalendarioElementRenderer } from './CalendarioElementRendere
 export { default as RsvpButtonElementRenderer } from './RsvpButtonElementRenderer';
 export { default as TimelineElementRenderer } from './TimelineElementRenderer';
 export { default as HeroInvitacionElementRenderer } from './HeroInvitacionElementRenderer';
-export { default as ProtagonistasElementRenderer } from './ProtagonistasElementRenderer';
 export { default as UbicacionElementRenderer } from './UbicacionElementRenderer';
 export { default as GaleriaElementRenderer } from './GaleriaElementRenderer';
 export { default as FaqElementRenderer } from './FaqElementRenderer';
@@ -38,7 +37,6 @@ import CalendarioElementRendererStatic from './CalendarioElementRenderer';
 import RsvpButtonElementRendererStatic from './RsvpButtonElementRenderer';
 import TimelineElementRendererStatic from './TimelineElementRenderer';
 import HeroInvitacionElementRendererStatic from './HeroInvitacionElementRenderer';
-import ProtagonistasElementRendererStatic from './ProtagonistasElementRenderer';
 import UbicacionElementRendererStatic from './UbicacionElementRenderer';
 import GaleriaElementRendererStatic from './GaleriaElementRenderer';
 import FaqElementRendererStatic from './FaqElementRenderer';
@@ -74,8 +72,6 @@ export function getElementRenderer(tipo) {
     // Invitaciones - complejos
     case 'hero_invitacion':
       return HeroInvitacionElementRendererStatic;
-    case 'protagonistas':
-      return ProtagonistasElementRendererStatic;
     case 'ubicacion':
       return UbicacionElementRendererStatic;
     case 'galeria':

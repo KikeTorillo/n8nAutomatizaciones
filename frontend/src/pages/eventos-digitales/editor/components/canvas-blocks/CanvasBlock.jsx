@@ -19,7 +19,6 @@ import { useInvitacionEditorStore, selectBloqueRecienAgregado } from '@/store';
 
 // Canvas block components
 import HeroInvitacionCanvasBlock from './HeroInvitacionCanvasBlock';
-import ProtagonistasCanvasBlock from './ProtagonistasCanvasBlock';
 import CountdownCanvasBlock from './CountdownCanvasBlock';
 import TimelineCanvasBlock from './TimelineCanvasBlock';
 import UbicacionCanvasBlock from './UbicacionCanvasBlock';
@@ -36,7 +35,6 @@ import AgregarCalendarioCanvasBlock from './AgregarCalendarioCanvasBlock';
 
 const BLOCK_COMPONENTS = {
   hero_invitacion: HeroInvitacionCanvasBlock,
-  protagonistas: ProtagonistasCanvasBlock,
   countdown: CountdownCanvasBlock,
   timeline: TimelineCanvasBlock,
   ubicacion: UbicacionCanvasBlock,

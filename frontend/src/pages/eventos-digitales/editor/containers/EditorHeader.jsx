@@ -10,13 +10,14 @@
  * @updated 2026-02-04 - Zoom expuesto via context
  */
 
-import { memo } from 'react';
+import { memo, useState, useCallback } from 'react';
 import { Heart, Star, Gift, Calendar, Building2 } from 'lucide-react';
 import {
   EditorHeader as EditorHeaderBase,
   EditorToolbar,
   useEditorLayoutContext,
 } from '@/components/editor-framework';
+import { ConfirmDialog } from '@/components/ui';
 import { useInvitacionEditor } from '../context';
 import {
   useInvitacionUndo,
@@ -44,6 +45,7 @@ function EditorHeader() {
     estadoGuardado,
     estaPublicando,
     estaPublicado,
+    esModoLibreGuardado,
     modoPreview,
     setModoPreview,
     modoEditor,
@@ -54,10 +56,26 @@ function EditorHeader() {
     setZoom,
     handlePublicar,
     cambiarAModoLibre,
+    salirDeModoLibre,
   } = useInvitacionEditor();
 
   // Layout context para responsive
   const { isMobile, isTablet } = useEditorLayoutContext();
+
+  // Estado para diálogo de confirmación al salir de modo libre
+  const [confirmExitDialog, setConfirmExitDialog] = useState({ open: false, targetMode: null });
+
+  // Handler cuando el usuario intenta salir del modo libre
+  const handleFreeModeExit = useCallback((targetMode) => {
+    setConfirmExitDialog({ open: true, targetMode });
+  }, []);
+
+  // Confirmar salida del modo libre
+  const handleConfirmExit = useCallback(() => {
+    const targetMode = confirmExitDialog.targetMode;
+    setConfirmExitDialog({ open: false, targetMode: null });
+    salirDeModoLibre(targetMode === 'blocks' ? 'bloques' : 'canvas');
+  }, [confirmExitDialog.targetMode, salirDeModoLibre]);
 
   // Undo/Redo hooks
   const undo = useInvitacionUndo();
@@ -113,6 +131,8 @@ function EditorHeader() {
         }}
         showEditorModeToggle={!isMobile}
         showFreeMode={true}
+        isFreeModeOnly={esModoLibreGuardado}
+        onFreeModeExit={handleFreeModeExit}
 
         // Breakpoints (ocultar en móvil/tablet - no tiene sentido)
         breakpoint={breakpoint}
@@ -134,6 +154,18 @@ function EditorHeader() {
 
         // Responsive
         isMobile={isMobile}
+      />
+
+      {/* Diálogo de confirmación para salir del modo libre */}
+      <ConfirmDialog
+        isOpen={confirmExitDialog.open}
+        onClose={() => setConfirmExitDialog({ open: false, targetMode: null })}
+        title="Cambiar modo de edición"
+        message="El modo libre tiene posicionamiento personalizado que no es compatible con el modo tradicional. Al cambiar, los elementos se convertirán a bloques secuenciales y perderás el posicionamiento libre."
+        confirmText="Cambiar de todos modos"
+        cancelText="Cancelar"
+        onConfirm={handleConfirmExit}
+        variant="warning"
       />
     </>
   );

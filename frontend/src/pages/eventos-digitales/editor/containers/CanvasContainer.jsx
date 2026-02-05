@@ -47,9 +47,6 @@ const TimelineElementRenderer = lazy(() =>
 const HeroInvitacionElementRenderer = lazy(() =>
   import('@/components/editor-framework/elements/renderers/HeroInvitacionElementRenderer')
 );
-const ProtagonistasElementRenderer = lazy(() =>
-  import('@/components/editor-framework/elements/renderers/ProtagonistasElementRenderer')
-);
 const UbicacionElementRenderer = lazy(() =>
   import('@/components/editor-framework/elements/renderers/UbicacionElementRenderer')
 );
@@ -74,7 +71,6 @@ const INVITACION_CUSTOM_RENDERERS = {
   timeline: TimelineElementRenderer,
   // Elementos complejos de invitaciones
   hero_invitacion: HeroInvitacionElementRenderer,
-  protagonistas: ProtagonistasElementRenderer,
   ubicacion: UbicacionElementRenderer,
   galeria: GaleriaElementRenderer,
   faq: FaqElementRenderer,

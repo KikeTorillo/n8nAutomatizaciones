@@ -145,6 +145,6 @@ export function invalidateCheckinDependencies(queryClient, eventoId) {
 export function invalidateEventosList(queryClient) {
   queryClient.invalidateQueries({
     queryKey: EVENTO_QUERY_KEYS.eventos(),
-    refetchType: 'active'
+    refetchType: 'all'
   });
 }

@@ -35,9 +35,11 @@ import { BLOCK_DEFAULTS } from '../../config';
  * @param {Object} props.estilos - Estilos del bloque
  * @param {Function} props.onChange - Callback para cambios (guardado automático)
  * @param {Object} props.tema - Tema de la invitación
+ * @param {Object} props.evento - Datos del evento (nombre, fecha, etc.)
  * @param {Function} props.onOpenUnsplash - Callback para abrir Unsplash
+ * @param {Function} props.onUploadImage - Callback para subir imagen
  */
-function HeroInvitacionEditor({ contenido, estilos, onChange, tema, onOpenUnsplash }) {
+function HeroInvitacionEditor({ contenido, estilos, onChange, tema, evento, onOpenUnsplash, onUploadImage }) {
   // Valores por defecto del formulario
   const defaultValues = useMemo(
     () => ({
@@ -67,7 +69,7 @@ function HeroInvitacionEditor({ contenido, estilos, onChange, tema, onOpenUnspla
         label="Título principal"
         value={form.titulo || ''}
         onChange={(e) => handleFieldChange('titulo', e.target.value)}
-        placeholder="Nos Casamos"
+        placeholder={evento?.nombre || 'Título del Evento'}
         className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
       />
 
@@ -75,7 +77,7 @@ function HeroInvitacionEditor({ contenido, estilos, onChange, tema, onOpenUnspla
         label="Subtítulo"
         value={form.subtitulo || ''}
         onChange={(e) => handleFieldChange('subtitulo', e.target.value)}
-        placeholder="Te invitamos a celebrar nuestro amor"
+        placeholder="Mensaje de bienvenida o descripción"
         rows={2}
         className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
       />
@@ -85,6 +87,7 @@ function HeroInvitacionEditor({ contenido, estilos, onChange, tema, onOpenUnspla
         value={form.imagen_url || ''}
         onChange={(val) => handleFieldChange('imagen_url', val)}
         onOpenUnsplash={onOpenUnsplash}
+        onUpload={onUploadImage}
         fieldKey="imagen_url"
       />
 
@@ -145,6 +148,34 @@ function HeroInvitacionEditor({ contenido, estilos, onChange, tema, onOpenUnspla
             step={0.1}
           />
         </>
+      )}
+
+      {evento?.fecha_evento ? (
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            Mostrar fecha del evento
+          </span>
+          <ToggleSwitch
+            enabled={form.mostrar_fecha !== false}
+            onChange={(val) => handleFieldChange('mostrar_fecha', val)}
+          />
+        </div>
+      ) : (
+        <p className="text-xs text-gray-500 dark:text-gray-400 italic">
+          No hay fecha configurada en el evento.
+        </p>
+      )}
+
+      {evento?.hora_evento && (
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            Mostrar hora del evento
+          </span>
+          <ToggleSwitch
+            enabled={form.mostrar_hora !== false}
+            onChange={(val) => handleFieldChange('mostrar_hora', val)}
+          />
+        </div>
       )}
 
       <div className="flex items-center justify-between">

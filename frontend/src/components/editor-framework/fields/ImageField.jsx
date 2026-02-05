@@ -1,13 +1,46 @@
 /**
- * ImageField - Campo de imagen con Unsplash
+ * ImageField - Campo de imagen con Unsplash y Upload
  */
-import { memo } from 'react';
-import { Image as ImageIcon, ImagePlus } from 'lucide-react';
+import { memo, useRef, useState } from 'react';
+import { Image as ImageIcon, ImagePlus, Upload, Loader2 } from 'lucide-react';
 
-function ImageField({ field, label: labelProp, fieldKey, value, onChange, onOpenUnsplash }) {
+function ImageField({
+  field,
+  label: labelProp,
+  fieldKey,
+  value,
+  onChange,
+  onOpenUnsplash,
+  onUpload,
+  isUploading = false,
+}) {
   // Soporta tanto {field} como props directos {label, fieldKey}
   const label = field?.label ?? labelProp;
   const key = field?.key ?? fieldKey ?? 'image';
+  const fileInputRef = useRef(null);
+  const [localUploading, setLocalUploading] = useState(false);
+
+  const uploading = isUploading || localUploading;
+
+  const handleFileSelect = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file || !onUpload) return;
+
+    // Validar que sea imagen
+    if (!file.type.startsWith('image/')) {
+      return;
+    }
+
+    setLocalUploading(true);
+    try {
+      await onUpload(file, key);
+    } finally {
+      setLocalUploading(false);
+    }
+
+    // Reset input
+    e.target.value = '';
+  };
 
   return (
     <div>
@@ -15,16 +48,47 @@ function ImageField({ field, label: labelProp, fieldKey, value, onChange, onOpen
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
           {label}
         </label>
-        <button
-          type="button"
-          onClick={() => onOpenUnsplash?.(key)}
-          className="flex items-center gap-1 px-2 py-1 text-xs text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded transition-colors"
-          title="Buscar en Unsplash"
-        >
-          <ImagePlus className="w-3.5 h-3.5" />
-          Unsplash
-        </button>
+        <div className="flex items-center gap-1">
+          {onOpenUnsplash && (
+            <button
+              type="button"
+              onClick={() => onOpenUnsplash?.(key)}
+              disabled={uploading}
+              className="flex items-center gap-1 px-2 py-1 text-xs text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded transition-colors disabled:opacity-50"
+              title="Buscar en Unsplash"
+            >
+              <ImagePlus className="w-3.5 h-3.5" />
+              Unsplash
+            </button>
+          )}
+          {onUpload && (
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+              className="flex items-center gap-1 px-2 py-1 text-xs text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded transition-colors disabled:opacity-50"
+              title="Subir imagen"
+            >
+              {uploading ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <Upload className="w-3.5 h-3.5" />
+              )}
+              Subir
+            </button>
+          )}
+        </div>
       </div>
+
+      {/* Input file oculto */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleFileSelect}
+        className="hidden"
+      />
+
       <div className="relative">
         <ImageIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
         <input

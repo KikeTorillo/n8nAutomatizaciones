@@ -131,33 +131,45 @@ const EditorModeToggle = memo(function EditorModeToggle({
   editorMode,
   onEditorModeChange,
   showFreeMode = false,
+  isFreeModeOnly = false,
+  onFreeModeExit,
 }) {
+  // Handler para cambiar a canvas/blocks cuando estamos en modo libre guardado
+  const handleModeChange = (targetMode) => {
+    if (isFreeModeOnly && targetMode !== 'free') {
+      // Pedir confirmación antes de salir del modo libre
+      onFreeModeExit?.(targetMode);
+    } else {
+      onEditorModeChange(targetMode);
+    }
+  };
+
   return (
     <div className="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
       <button
         type="button"
-        onClick={() => onEditorModeChange('canvas')}
+        onClick={() => handleModeChange('canvas')}
         className={cn(
           'flex items-center gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-md text-sm transition-colors',
           editorMode === 'canvas'
             ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
             : 'text-gray-600 dark:text-gray-400'
         )}
-        title="Vista visual de bloques"
+        title={isFreeModeOnly ? 'Cambiar a vista visual (se perderá el posicionamiento libre)' : 'Vista visual de bloques'}
       >
         <Layout className="w-4 h-4" />
         <span className="hidden lg:inline">Visual</span>
       </button>
       <button
         type="button"
-        onClick={() => onEditorModeChange('blocks')}
+        onClick={() => handleModeChange('blocks')}
         className={cn(
           'flex items-center gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-md text-sm transition-colors',
           editorMode === 'blocks'
             ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
             : 'text-gray-600 dark:text-gray-400'
         )}
-        title="Lista de bloques"
+        title={isFreeModeOnly ? 'Cambiar a lista de bloques (se perderá el posicionamiento libre)' : 'Lista de bloques'}
       >
         <List className="w-4 h-4" />
         <span className="hidden lg:inline">Bloques</span>
@@ -165,7 +177,7 @@ const EditorModeToggle = memo(function EditorModeToggle({
       {showFreeMode && (
         <button
           type="button"
-          onClick={() => onEditorModeChange('free')}
+          onClick={() => handleModeChange('free')}
           className={cn(
             'flex items-center gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-md text-sm transition-colors',
             editorMode === 'free'
@@ -299,6 +311,8 @@ function EditorToolbar({
   onEditorModeChange,
   showEditorModeToggle = true,
   showFreeMode = false,
+  isFreeModeOnly = false,
+  onFreeModeExit,
 
   // Breakpoints
   breakpoint = 'desktop',
@@ -358,6 +372,8 @@ function EditorToolbar({
             editorMode={editorMode}
             onEditorModeChange={onEditorModeChange}
             showFreeMode={showFreeMode}
+            isFreeModeOnly={isFreeModeOnly}
+            onFreeModeExit={onFreeModeExit}
           />
         )}
 

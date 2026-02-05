@@ -11,7 +11,6 @@
 
 import {
   Layout,
-  Heart,
   Clock,
   GitBranch,
   MapPin,
@@ -22,7 +21,6 @@ import {
   Type,
   HelpCircle,
   Minus,
-  Users,
   CalendarPlus,
 } from 'lucide-react';
 
@@ -30,10 +28,9 @@ import {
 
 export const CATEGORIAS_BLOQUES = {
   estructura: { label: 'Estructura', orden: 1 },
-  protagonistas: { label: 'Protagonistas', orden: 2 },
-  programa: { label: 'Programa', orden: 3 },
-  contenido: { label: 'Contenido', orden: 4 },
-  interaccion: { label: 'Interacción', orden: 5 },
+  programa: { label: 'Programa', orden: 2 },
+  contenido: { label: 'Contenido', orden: 3 },
+  interaccion: { label: 'Interacción', orden: 4 },
 };
 
 // ========== TIPOS DE BLOQUES DISPONIBLES ==========
@@ -53,15 +50,6 @@ export const BLOQUES_INVITACION = [
     label: 'Separador',
     icon: Minus,
     descripcion: 'Línea decorativa entre secciones',
-  },
-
-  // PROTAGONISTAS
-  {
-    tipo: 'protagonistas',
-    categoria: 'protagonistas',
-    label: 'Protagonistas',
-    icon: Heart,
-    descripcion: 'Nombres destacados (novios, quinceañera)',
   },
 
   // PROGRAMA
@@ -185,34 +173,10 @@ export const BLOCK_CONFIGS = {
     ],
   },
 
-  protagonistas: {
-    contenido: [
-      { key: 'nombre_1', label: 'Primer nombre', type: 'text', placeholder: 'María' },
-      { key: 'nombre_2', label: 'Segundo nombre', type: 'text', placeholder: 'Juan' },
-      { key: 'separador', label: 'Separador', type: 'select', options: [
-        { value: '&', label: '&' },
-        { value: 'y', label: 'y' },
-        { value: '♥', label: '♥' },
-        { value: '+', label: '+' },
-      ]},
-      { key: 'subtitulo_1', label: 'Subtítulo primer nombre', type: 'text', placeholder: 'Hija de...' },
-      { key: 'subtitulo_2', label: 'Subtítulo segundo nombre', type: 'text', placeholder: 'Hijo de...' },
-      { key: 'foto_1_url', label: 'Foto primer protagonista', type: 'image' },
-      { key: 'foto_2_url', label: 'Foto segundo protagonista', type: 'image' },
-    ],
-    estilo: [
-      { key: 'layout', label: 'Disposición', type: 'select', options: [
-        { value: 'horizontal', label: 'Horizontal' },
-        { value: 'vertical', label: 'Vertical' },
-      ]},
-      { key: 'mostrar_fotos', label: 'Mostrar fotos', type: 'toggle' },
-    ],
-  },
-
   countdown: {
     contenido: [
       { key: 'titulo', label: 'Título', type: 'text', aiEnabled: true, placeholder: 'Faltan' },
-      { key: 'fecha_objetivo', label: 'Fecha objetivo', type: 'datetime' },
+      // fecha_objetivo se toma automáticamente de evento.fecha_evento
       { key: 'texto_finalizado', label: 'Texto al finalizar', type: 'text', aiEnabled: true, placeholder: '¡Llegó el gran día!' },
     ],
     estilo: [
@@ -394,20 +358,9 @@ export const BLOCK_DEFAULTS = {
     altura: 'full',
     mostrar_calendario: true,
   },
-  protagonistas: {
-    nombre_1: '',
-    nombre_2: '',
-    separador: '&',
-    subtitulo_1: '',
-    subtitulo_2: '',
-    foto_1_url: '',
-    foto_2_url: '',
-    layout: 'horizontal',
-    mostrar_fotos: false,
-  },
   countdown: {
     titulo: 'Faltan',
-    fecha_objetivo: '',
+    // fecha_objetivo se toma de evento.fecha_evento
     texto_finalizado: '¡Llegó el gran día!',
     estilo: 'cajas',
     mostrar_segundos: false,

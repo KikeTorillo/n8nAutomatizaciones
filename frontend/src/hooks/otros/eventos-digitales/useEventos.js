@@ -119,14 +119,14 @@ export function useActualizarEvento() {
     },
     onSuccess: (data) => {
       invalidateEventosList(queryClient);
-      queryClient.invalidateQueries({
-        queryKey: EVENTO_QUERY_KEYS.evento(data.id),
-        refetchType: 'active'
-      });
+      // Actualizar el caché directamente con los datos retornados
+      // Usar String(id) porque useParams() retorna strings
+      queryClient.setQueryData(EVENTO_QUERY_KEYS.evento(String(data.id)), data);
+      queryClient.setQueryData(EVENTO_QUERY_KEYS.evento(data.id), data);
       if (data.slug) {
         queryClient.invalidateQueries({
           queryKey: ['evento-publico', data.slug],
-          refetchType: 'active'
+          refetchType: 'all'
         });
       }
     },

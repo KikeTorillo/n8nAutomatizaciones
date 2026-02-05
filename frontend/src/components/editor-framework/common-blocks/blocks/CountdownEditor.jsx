@@ -129,7 +129,8 @@ function CountdownEditor({
   const defaultValues = useMemo(() => ({
     titulo: isAutoSaveMode ? 'Faltan' : 'Gran Inauguración',
     ...(showSubtitulo && { subtitulo: 'No te pierdas este evento especial' }),
-    fecha_objetivo: defaultDateStr,
+    // fecha_objetivo solo para website (manualSave). En invitaciones usa evento.fecha_evento
+    ...(!isAutoSaveMode && { fecha_objetivo: defaultDateStr }),
     texto_finalizado: '¡Llegó el gran día!',
     ...(showEstiloVisual && { estilo: 'cajas' }),
     ...(showMostrarSegundos && { mostrar_segundos: false }),
@@ -151,11 +152,14 @@ function CountdownEditor({
     }),
   }), [defaultDateStr, isAutoSaveMode, showSubtitulo, showEstiloVisual, showMostrarSegundos, showUnidadesIndividuales, showAccionFinalizado, showApariencia, showBotonCTA]);
 
-  // Pre-procesar contenido para fecha_objetivo
+  // Pre-procesar contenido para fecha_objetivo (solo website, no invitaciones)
   const processedContenido = useMemo(() => ({
     ...contenido,
-    fecha_objetivo: contenido.fecha_objetivo ? contenido.fecha_objetivo.slice(0, 16) : undefined,
-  }), [contenido]);
+    // Solo procesar fecha_objetivo en website mode (manualSave)
+    ...(!isAutoSaveMode && contenido.fecha_objetivo && {
+      fecha_objetivo: contenido.fecha_objetivo.slice(0, 16),
+    }),
+  }), [contenido, isAutoSaveMode]);
 
   // Hook unificado
   const {
@@ -171,17 +175,16 @@ function CountdownEditor({
     onGuardar,
   });
 
-  // Fecha objetivo con fallback a fecha del evento (solo invitaciones)
+  // Fecha objetivo: en invitaciones (autoSave) siempre usa evento.fecha_evento
+  // En website (manualSave) usa form.fecha_objetivo
   const fechaObjetivoFinal = useMemo(() => {
-    if (form.fecha_objetivo) {
-      return form.fecha_objetivo;
+    if (isAutoSaveMode) {
+      // Invitaciones: siempre usar fecha del evento
+      return evento?.fecha_evento || defaultDateStr;
     }
-    // Fallback a fecha del evento (solo invitaciones con evento prop)
-    if (evento?.fecha_evento) {
-      return evento.fecha_evento;
-    }
-    return defaultDateStr;
-  }, [form.fecha_objetivo, evento?.fecha_evento, defaultDateStr]);
+    // Website: usar fecha del formulario
+    return form.fecha_objetivo || defaultDateStr;
+  }, [isAutoSaveMode, form.fecha_objetivo, evento?.fecha_evento, defaultDateStr]);
 
   // Calcular tiempo restante para preview
   const tiempoRestante = useMemo(() =>
@@ -189,7 +192,8 @@ function CountdownEditor({
   [fechaObjetivoFinal]);
 
   // Verificar si el contenido está vacío (para mostrar banner de IA)
-  const esVacio = !contenido.titulo && !contenido.fecha_objetivo;
+  // En invitaciones no verificamos fecha_objetivo porque viene del evento
+  const esVacio = isAutoSaveMode ? !contenido.titulo : !contenido.titulo && !contenido.fecha_objetivo;
 
   // Callback para generación de IA de bloque completo
   const handleAIGenerate = useCallback((generatedContent) => {
@@ -369,14 +373,8 @@ function CountdownEditor({
         />
       )}
 
-      {/* Fecha objetivo */}
-      {isAutoSaveMode ? (
-        <DateTimeField
-          label="Fecha y hora objetivo"
-          value={form.fecha_objetivo || ''}
-          onChange={(val) => handleFieldChange('fecha_objetivo', val)}
-        />
-      ) : (
+      {/* Fecha objetivo - Solo para website (manualSave). En invitaciones usa evento.fecha_evento */}
+      {!isAutoSaveMode && (
         <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
           <div className="flex items-center gap-2 mb-3">
             <Calendar className="w-5 h-5 text-blue-600 dark:text-blue-400" />
@@ -400,29 +398,33 @@ function CountdownEditor({
         className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
       />
 
-      {/* Estilo visual y mostrar segundos (invitaciones) */}
-      {(showEstiloVisual || showMostrarSegundos) && (
-        <div className="grid grid-cols-2 gap-4">
-          {showEstiloVisual && (
-            <Select
-              label="Estilo visual"
-              value={form.estilo || 'cajas'}
-              onChange={(e) => handleFieldChange('estilo', e.target.value)}
-              options={estiloOptions}
-              className="dark:bg-gray-700 dark:border-gray-600"
-            />
-          )}
+      {/* Estilo visual (invitaciones) */}
+      {showEstiloVisual && (
+        <Select
+          label="Estilo visual"
+          value={form.estilo || 'cajas'}
+          onChange={(e) => handleFieldChange('estilo', e.target.value)}
+          options={estiloOptions}
+          className="dark:bg-gray-700 dark:border-gray-600"
+        />
+      )}
 
-          {showMostrarSegundos && (
-            <div className="flex items-center pt-6">
-              <ToggleSwitch
-                checked={form.mostrar_segundos || false}
-                onChange={(checked) => handleFieldChange('mostrar_segundos', checked)}
-                label="Mostrar segundos"
-              />
-            </div>
-          )}
-        </div>
+      {/* Mostrar segundos (invitaciones) */}
+      {showMostrarSegundos && (
+        <>
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Mostrar segundos
+            </span>
+            <ToggleSwitch
+              enabled={form.mostrar_segundos === true}
+              onChange={(val) => handleFieldChange('mostrar_segundos', val)}
+            />
+          </div>
+          <p className="text-xs text-gray-500 dark:text-gray-400 -mt-2">
+            Añade la unidad de segundos a la cuenta regresiva.
+          </p>
+        </>
       )}
 
       {/* Unidades a mostrar (website) */}
@@ -540,8 +542,9 @@ function CountdownEditor({
 
   // Renderizar según el modo
   if (isAutoSaveMode) {
+    // Sin preview - el canvas ya está visible al lado
     return (
-      <BaseAutoSaveEditor preview={preview}>
+      <BaseAutoSaveEditor>
         {formFields}
       </BaseAutoSaveEditor>
     );

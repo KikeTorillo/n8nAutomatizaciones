@@ -13,7 +13,6 @@ import { lazy } from 'react';
 
 // Lazy load para mejor rendimiento
 const HeroPublico = lazy(() => import('./HeroPublico'));
-const ProtagonistasPublico = lazy(() => import('./ProtagonistasPublico'));
 const CountdownPublico = lazy(() => import('./CountdownPublico'));
 const TimelinePublico = lazy(() => import('./TimelinePublico'));
 const UbicacionPublico = lazy(() => import('./UbicacionPublico'));
@@ -34,7 +33,6 @@ export { default as BloqueRenderer } from './BloqueRenderer';
  */
 export const BLOQUES_PUBLICOS = {
   hero_invitacion: HeroPublico,
-  protagonistas: ProtagonistasPublico,
   countdown: CountdownPublico,
   timeline: TimelinePublico,
   ubicacion: UbicacionPublico,
@@ -57,7 +55,6 @@ export function getBloquePublico(tipo) {
 
 export {
   HeroPublico,
-  ProtagonistasPublico,
   CountdownPublico,
   TimelinePublico,
   UbicacionPublico,

@@ -31,6 +31,8 @@ function HeroInvitacionElementRenderer({
   const tipoOverlay = contenido.tipo_overlay || 'uniforme';
   const colorOverlay = contenido.color_overlay || '#000000';
   const mostrarCalendario = contenido.mostrar_calendario !== false;
+  const mostrarFecha = contenido.mostrar_fecha !== false;
+  const mostrarHora = contenido.mostrar_hora !== false;
   const altura = contenido.altura || 'full';
 
   // Helper para convertir hex a rgb
@@ -117,8 +119,8 @@ function HeroInvitacionElementRenderer({
           {titulo}
         </h1>
 
-        {/* Fecha y hora (si hay evento) */}
-        {evento?.fecha_evento && (
+        {/* Fecha y hora (si hay evento y están habilitadas) */}
+        {(mostrarFecha || mostrarHora) && evento?.fecha_evento && (
           <div
             className="inline-flex items-center gap-2 sm:gap-4 px-4 py-2 rounded-full backdrop-blur-sm mb-4"
             style={{
@@ -126,37 +128,39 @@ function HeroInvitacionElementRenderer({
               border: `1px solid ${tieneImagenFondo ? 'rgba(255,255,255,0.3)' : colorPrimario}20`,
             }}
           >
-            <div className="flex items-center gap-1">
-              <Calendar className="w-4 h-4" style={{ color: tieneImagenFondo ? 'white' : colorPrimario }} />
-              <span
-                className="text-sm font-medium"
-                style={{
-                  color: tieneImagenFondo ? 'white' : colorTexto,
-                }}
-              >
-                {new Date(evento.fecha_evento).toLocaleDateString('es-ES', {
-                  day: 'numeric',
-                  month: 'long',
-                  year: 'numeric',
-                })}
-              </span>
-            </div>
-            {evento?.hora_evento && (
-              <>
-                <div
-                  className="w-px h-4"
-                  style={{ backgroundColor: tieneImagenFondo ? 'rgba(255,255,255,0.4)' : colorPrimario }}
-                />
-                <div className="flex items-center gap-1">
-                  <Clock className="w-4 h-4" style={{ color: tieneImagenFondo ? 'white' : colorPrimario }} />
-                  <span
-                    className="text-sm font-medium"
-                    style={{ color: tieneImagenFondo ? 'white' : colorTexto }}
-                  >
-                    {evento.hora_evento}
-                  </span>
-                </div>
-              </>
+            {mostrarFecha && (
+              <div className="flex items-center gap-1">
+                <Calendar className="w-4 h-4" style={{ color: tieneImagenFondo ? 'white' : colorPrimario }} />
+                <span
+                  className="text-sm font-medium"
+                  style={{
+                    color: tieneImagenFondo ? 'white' : colorTexto,
+                  }}
+                >
+                  {new Date(evento.fecha_evento).toLocaleDateString('es-ES', {
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric',
+                  })}
+                </span>
+              </div>
+            )}
+            {mostrarFecha && mostrarHora && evento?.hora_evento && (
+              <div
+                className="w-px h-4"
+                style={{ backgroundColor: tieneImagenFondo ? 'rgba(255,255,255,0.4)' : colorPrimario }}
+              />
+            )}
+            {mostrarHora && evento?.hora_evento && (
+              <div className="flex items-center gap-1">
+                <Clock className="w-4 h-4" style={{ color: tieneImagenFondo ? 'white' : colorPrimario }} />
+                <span
+                  className="text-sm font-medium"
+                  style={{ color: tieneImagenFondo ? 'white' : colorTexto }}
+                >
+                  {evento.hora_evento}
+                </span>
+              </div>
             )}
           </div>
         )}

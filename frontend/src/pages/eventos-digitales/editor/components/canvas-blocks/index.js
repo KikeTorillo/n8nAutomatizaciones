@@ -13,7 +13,6 @@ export { default as CanvasBlock } from './CanvasBlock';
 
 // Canvas blocks individuales
 export { default as HeroInvitacionCanvasBlock } from './HeroInvitacionCanvasBlock';
-export { default as ProtagonistasCanvasBlock } from './ProtagonistasCanvasBlock';
 export { default as CountdownCanvasBlock } from './CountdownCanvasBlock';
 export { default as TimelineCanvasBlock } from './TimelineCanvasBlock';
 export { default as UbicacionCanvasBlock } from './UbicacionCanvasBlock';
@@ -28,7 +27,6 @@ export { default as SeparadorCanvasBlock } from './SeparadorCanvasBlock';
 // ========== MAPA DE COMPONENTES POR TIPO ==========
 
 import HeroInvitacionCanvasBlock from './HeroInvitacionCanvasBlock';
-import ProtagonistasCanvasBlock from './ProtagonistasCanvasBlock';
 import CountdownCanvasBlock from './CountdownCanvasBlock';
 import TimelineCanvasBlock from './TimelineCanvasBlock';
 import UbicacionCanvasBlock from './UbicacionCanvasBlock';
@@ -45,7 +43,6 @@ import SeparadorCanvasBlock from './SeparadorCanvasBlock';
  */
 export const CANVAS_BLOCKS = {
   hero_invitacion: HeroInvitacionCanvasBlock,
-  protagonistas: ProtagonistasCanvasBlock,
   countdown: CountdownCanvasBlock,
   timeline: TimelineCanvasBlock,
   ubicacion: UbicacionCanvasBlock,

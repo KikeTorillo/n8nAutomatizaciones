@@ -39,7 +39,6 @@ export {
   RsvpButtonElementRenderer,
   TimelineElementRenderer,
   HeroInvitacionElementRenderer,
-  ProtagonistasElementRenderer,
   UbicacionElementRenderer,
   GaleriaElementRenderer,
   FaqElementRenderer,

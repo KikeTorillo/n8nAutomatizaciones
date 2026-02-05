@@ -21,7 +21,6 @@ export {
   migrateCalendarioBlock,
   migrateTimelineBlock,
   migrateRsvpBlock,
-  migrateProtagonistasBlock,
   migrateUbicacionBlock,
   migrateGaleriaBlock,
   migrateFaqBlock,
@@ -36,6 +35,7 @@ export {
 
 export {
   seccionesToBloques,
+  seccionesToBloquesTrad,
   bloquesToSecciones,
   detectarModoLibre,
   hashSecciones,

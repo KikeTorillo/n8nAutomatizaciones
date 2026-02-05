@@ -20,8 +20,18 @@ import {
  * Wrapper del componente común con configuración específica.
  *
  * @param {Array} galeria - Galería del evento (desde el backend)
+ * @param {Function} onOpenUnsplash - Callback para abrir Unsplash
+ * @param {Function} onUploadImage - Callback para subir imagen
  */
-function GaleriaEditor({ contenido, estilos, onChange, tema, galeria = [] }) {
+function GaleriaEditor({
+  contenido,
+  estilos,
+  onChange,
+  tema,
+  galeria = [],
+  onOpenUnsplash,
+  onUploadImage,
+}) {
   return (
     <CommonGaleriaEditor
       contenido={contenido}
@@ -30,6 +40,8 @@ function GaleriaEditor({ contenido, estilos, onChange, tema, galeria = [] }) {
       tema={tema}
       galeria={galeria}
       config={GALERIA_CONFIG_INVITACIONES}
+      onOpenUnsplash={onOpenUnsplash}
+      onUploadImage={onUploadImage}
     />
   );
 }

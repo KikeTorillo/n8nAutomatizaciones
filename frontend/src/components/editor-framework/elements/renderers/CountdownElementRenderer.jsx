@@ -25,8 +25,9 @@ function CountdownElementRenderer({
 
   // Configuración
   const titulo = contenido.titulo || '';
-  const fechaObjetivo = contenido.fecha || evento?.fecha_evento;
-  const horaObjetivo = contenido.hora || evento?.hora_evento;
+  // Siempre usar fecha/hora del evento (configurada al crear el evento)
+  const fechaObjetivo = evento?.fecha_evento;
+  const horaObjetivo = evento?.hora_evento;
   const textoFinalizado = contenido.texto_finalizado || '¡Es hoy!';
 
   // Opciones de visualización
@@ -212,8 +213,7 @@ CountdownElementRenderer.propTypes = {
   elemento: PropTypes.shape({
     contenido: PropTypes.shape({
       titulo: PropTypes.string,
-      fecha: PropTypes.string,
-      hora: PropTypes.string,
+      // fecha/hora se toman de evento.fecha_evento/hora_evento
       variante: PropTypes.oneOf(['cajas', 'inline', 'circular']),
       mostrar_dias: PropTypes.bool,
       mostrar_horas: PropTypes.bool,
