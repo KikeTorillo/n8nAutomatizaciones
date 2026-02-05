@@ -34,6 +34,8 @@ export interface ConfirmDialogProps {
   size?: 'sm' | 'md';
   /** Label adicional para confirmar (compatibilidad) */
   confirmLabel?: string;
+  /** Icono custom (override del icono de la variante) */
+  icon?: LucideIcon;
 }
 
 interface VariantConfig {
@@ -60,6 +62,7 @@ const ConfirmDialog = memo(function ConfirmDialog({
   children,
   size = 'sm',
   confirmLabel,
+  icon: customIcon,
 }: ConfirmDialogProps) {
   const handleConfirm = () => {
     onConfirm();
@@ -97,7 +100,7 @@ const ConfirmDialog = memo(function ConfirmDialog({
   };
 
   const config = variants[variant] || variants.warning;
-  const Icon = config.icon;
+  const Icon = customIcon || config.icon;
   const finalConfirmText = confirmLabel || confirmText;
 
   return (
@@ -107,6 +110,7 @@ const ConfirmDialog = memo(function ConfirmDialog({
       size={size as ModalSize}
       showCloseButton={false}
       disableClose={isLoading}
+      role="alertdialog"
     >
       <div className={children ? '' : 'text-center'}>
         {/* Ícono */}

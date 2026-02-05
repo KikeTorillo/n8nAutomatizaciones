@@ -41,3 +41,7 @@ export * from './useMediaQuery';
 
 // Tab Form State (Feb 2026 - Refactorización eventos-digitales)
 export * from './useTabFormState';
+
+// Overlays (Feb 2026 - Consolidación overlays)
+export * from './useDisclosure';
+export * from './useFormDrawer';

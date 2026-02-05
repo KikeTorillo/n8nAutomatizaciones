@@ -19,17 +19,21 @@ import { useToast } from './useToast';
  * @param {Function} [options.onError] - Callback adicional tras error
  * @param {Function} [options.renderChildren] - Función para renderizar contenido adicional en el modal
  *
- * @returns {Object} { confirmDelete, DeleteConfirmModal, isDeleting, itemToDelete }
+ * @returns {Object} { confirmDelete, deleteConfirmProps, DeleteConfirmModal, isDeleting, itemToDelete }
  *
  * @example
- * const { confirmDelete, DeleteConfirmModal } = useDeleteConfirmation({
+ * // Patrón nuevo (preferido): spread de props en ConfirmDialog
+ * const { confirmDelete, deleteConfirmProps } = useDeleteConfirmation({
  *   deleteMutation: useEliminarProducto(),
  *   entityName: 'producto',
  *   getName: (p) => p.nombre,
  * });
+ * <ConfirmDialog {...deleteConfirmProps} />
  *
- * // En el handler: onClick={() => confirmDelete(item)}
- * // En el JSX: <DeleteConfirmModal />
+ * @example
+ * // Patrón legacy: componente inline (deprecated)
+ * const { confirmDelete, DeleteConfirmModal } = useDeleteConfirmation({...});
+ * <DeleteConfirmModal />
  */
 export function useDeleteConfirmation({
   deleteMutation,
@@ -109,28 +113,18 @@ export function useDeleteConfirmation({
     return template.replace('{name}', name);
   }, [confirmMessage, defaultMessage, itemToDelete, getName]);
 
-  // Componente del modal (para renderizar en el JSX)
-  const DeleteConfirmModal = useCallback(() => {
-    // Si no hay deleteMutation, no renderizar nada
-    if (!deleteMutation) return null;
-
-    const children = renderChildren ? renderChildren(itemToDelete) : null;
-
-    return (
-      <ConfirmDialog
-        isOpen={isOpen}
-        onClose={closeModal}
-        onConfirm={handleConfirm}
-        title={confirmTitle || `Eliminar ${capitalizedEntity}`}
-        message={finalMessage}
-        confirmText={confirmText}
-        variant="danger"
-        isLoading={deleteMutation.isPending}
-      >
-        {children}
-      </ConfirmDialog>
-    );
-  }, [
+  // Props para spread directo en <ConfirmDialog> (patrón preferido)
+  const deleteConfirmProps = useMemo(() => ({
+    isOpen,
+    onClose: closeModal,
+    onConfirm: handleConfirm,
+    title: confirmTitle || `Eliminar ${capitalizedEntity}`,
+    message: finalMessage,
+    confirmText,
+    variant: 'danger',
+    isLoading: deleteMutation?.isPending ?? false,
+    children: renderChildren ? renderChildren(itemToDelete) : undefined,
+  }), [
     isOpen,
     closeModal,
     handleConfirm,
@@ -143,8 +137,15 @@ export function useDeleteConfirmation({
     itemToDelete,
   ]);
 
+  /** @deprecated Usar deleteConfirmProps con <ConfirmDialog {...deleteConfirmProps} /> */
+  const DeleteConfirmModal = useCallback(() => {
+    if (!deleteMutation) return null;
+    return <ConfirmDialog {...deleteConfirmProps} />;
+  }, [deleteMutation, deleteConfirmProps]);
+
   return {
     confirmDelete,
+    deleteConfirmProps,
     DeleteConfirmModal,
     isDeleting: deleteMutation?.isPending ?? false,
     itemToDelete,

@@ -13,6 +13,9 @@ export type { DrawerProps, DrawerSize } from './Drawer';
 export { ConfirmDialog } from './ConfirmDialog';
 export type { ConfirmDialogProps } from './ConfirmDialog';
 
+export { FormDrawer } from './FormDrawer';
+export type { FormDrawerProps } from './FormDrawer';
+
 export { DeleteConfirmDialog } from './DeleteConfirmDialog';
 export type { DeleteConfirmDialogProps } from './DeleteConfirmDialog';
 

@@ -51,6 +51,7 @@ export { Card } from './molecules/Card';
 // ========== ORGANISMS ==========
 export { Modal } from './organisms/Modal';
 export { Drawer } from './organisms/Drawer';
+export { FormDrawer } from './organisms/FormDrawer';
 export { default as IconPicker, IconPickerCompact, ICONOS_MAP, CATEGORIAS_ICONOS, IconButton } from './organisms/icon-picker';
 export { MultiSelect } from './organisms/MultiSelect';
 export { BarcodeScanner } from './organisms/BarcodeScanner';

@@ -27,6 +27,8 @@ export interface ModalProps {
   showCloseButton?: boolean;
   /** Deshabilitar cierre del modal (para estados de carga) */
   disableClose?: boolean;
+  /** Rol ARIA del modal */
+  role?: 'dialog' | 'alertdialog';
 }
 
 /**
@@ -45,6 +47,7 @@ const Modal = memo(forwardRef<HTMLDivElement, ModalProps>(function Modal(
     size = 'md',
     showCloseButton = true,
     disableClose = false,
+    role = 'dialog',
   },
   ref
 ) {
@@ -104,7 +107,7 @@ const Modal = memo(forwardRef<HTMLDivElement, ModalProps>(function Modal(
             >
               <motion.div
                 ref={ref}
-                role="dialog"
+                role={role}
                 aria-modal="true"
                 aria-labelledby={title ? titleId : undefined}
                 initial={{ opacity: 0, scale: 0.95, y: 20 }}

@@ -1,23 +1,11 @@
-/**
- * ====================================================================
- * COMPONENTE - DRAWER FORMULARIO DE ETIQUETA
- * ====================================================================
- *
- * Fase 2 - Segmentación de Clientes (Ene 2026)
- * Drawer para crear y editar etiquetas
- *
- * ====================================================================
- */
-
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { COLORES_ETIQUETAS, useCrearEtiqueta, useActualizarEtiqueta } from '@/hooks/personas';
 import { useToast } from '@/hooks/utils';
-import { Drawer } from '@/components/ui';
+import { FormDrawer, FormGroup, Input, Textarea } from '@/components/ui';
 
-// Schema de validación
 const etiquetaSchema = z.object({
   nombre: z.string()
     .min(2, 'Nombre debe tener al menos 2 caracteres')
@@ -35,7 +23,7 @@ const etiquetaSchema = z.object({
 });
 
 export default function EtiquetaFormDrawer({ isOpen, onClose, etiqueta = null }) {
-  const { toast } = useToast();
+  const { success: showSuccess, error: showError } = useToast();
   const crearEtiqueta = useCrearEtiqueta();
   const actualizarEtiqueta = useActualizarEtiqueta();
 
@@ -60,7 +48,6 @@ export default function EtiquetaFormDrawer({ isOpen, onClose, etiqueta = null })
 
   const colorActual = watch('color');
 
-  // Reset form cuando cambia la etiqueta o se abre el modal
   useEffect(() => {
     if (isOpen) {
       if (etiqueta) {
@@ -71,197 +58,108 @@ export default function EtiquetaFormDrawer({ isOpen, onClose, etiqueta = null })
           orden: etiqueta.orden || 0,
         });
       } else {
-        reset({
-          nombre: '',
-          color: '#6366F1',
-          descripcion: '',
-          orden: 0,
-        });
+        reset({ nombre: '', color: '#6366F1', descripcion: '', orden: 0 });
       }
     }
   }, [isOpen, etiqueta, reset]);
 
   const onSubmit = async (data) => {
     try {
+      const payload = {
+        nombre: data.nombre,
+        color: data.color,
+        descripcion: data.descripcion || null,
+        orden: data.orden || 0,
+      };
       if (isEditing) {
-        await actualizarEtiqueta.mutateAsync({
-          id: etiqueta.id,
-          data: {
-            nombre: data.nombre,
-            color: data.color,
-            descripcion: data.descripcion || null,
-            orden: data.orden || 0,
-          },
-        });
-        toast.success('Etiqueta actualizada correctamente');
+        await actualizarEtiqueta.mutateAsync({ id: etiqueta.id, data: payload });
+        showSuccess('Etiqueta actualizada correctamente');
       } else {
-        await crearEtiqueta.mutateAsync({
-          nombre: data.nombre,
-          color: data.color,
-          descripcion: data.descripcion || null,
-          orden: data.orden || 0,
-        });
-        toast.success('Etiqueta creada correctamente');
+        await crearEtiqueta.mutateAsync(payload);
+        showSuccess('Etiqueta creada correctamente');
       }
       onClose();
     } catch (error) {
-      toast.error(error.message || 'Error al guardar etiqueta');
+      showError(error.message || 'Error al guardar etiqueta');
     }
   };
 
   return (
-    <Drawer
+    <FormDrawer
       isOpen={isOpen}
       onClose={onClose}
-      title={isEditing ? 'Editar Etiqueta' : 'Nueva Etiqueta'}
+      entityName="Etiqueta"
+      mode={isEditing ? 'edit' : 'create'}
       subtitle="Configura el nombre, color y descripción de la etiqueta"
+      onSubmit={handleSubmit(onSubmit)}
+      isSubmitting={isSubmitting}
+      header={
+        <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+          <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Vista previa:</p>
+          <span
+            className="inline-flex items-center rounded-full px-3 py-1 text-sm font-medium"
+            style={{
+              backgroundColor: colorActual,
+              color: isLightColor(colorActual) ? '#1F2937' : '#FFFFFF',
+            }}
+          >
+            {watch('nombre') || 'Nombre de etiqueta'}
+          </span>
+        </div>
+      }
     >
-      {/* Preview */}
-      <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-        <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Vista previa:</p>
-        <span
-          className="inline-flex items-center rounded-full px-3 py-1 text-sm font-medium"
-          style={{
-            backgroundColor: colorActual,
-            color: isLightColor(colorActual) ? '#1F2937' : '#FFFFFF',
-          }}
-        >
-          {watch('nombre') || 'Nombre de etiqueta'}
-        </span>
-      </div>
+      <FormGroup label="Nombre" error={errors.nombre?.message} required>
+        <Input
+          {...register('nombre')}
+          hasError={!!errors.nombre}
+          placeholder="Ej: VIP, Frecuente, Nuevo..."
+        />
+      </FormGroup>
 
-      {/* Formulario */}
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        {/* Nombre */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Nombre *
-          </label>
-          <input
-            type="text"
-            {...register('nombre')}
-            className={`
-              w-full rounded-md border-0 py-2 px-3
-              text-gray-900 dark:text-white
-              ring-1 ring-inset
-              ${errors.nombre
-                ? 'ring-red-300 focus:ring-red-500'
-                : 'ring-gray-300 dark:ring-gray-600 focus:ring-primary-500'
-              }
-              bg-white dark:bg-gray-700
-              placeholder:text-gray-400
-              sm:text-sm
-            `}
-            placeholder="Ej: VIP, Frecuente, Nuevo..."
-          />
-          {errors.nombre && (
-            <p className="mt-1 text-sm text-red-500">{errors.nombre.message}</p>
-          )}
+      <FormGroup label="Color" error={errors.color?.message}>
+        <div className="flex flex-wrap gap-2">
+          {COLORES_ETIQUETAS.map((color) => (
+            <button
+              key={color.value}
+              type="button"
+              onClick={() => setValue('color', color.value)}
+              title={color.label}
+              className={`
+                h-8 w-8 rounded-full transition-all
+                ${colorActual === color.value
+                  ? 'ring-2 ring-offset-2 ring-primary-500 dark:ring-offset-gray-800'
+                  : 'hover:scale-110'
+                }
+              `}
+              style={{ backgroundColor: color.value }}
+            />
+          ))}
         </div>
+        <input type="hidden" {...register('color')} />
+      </FormGroup>
 
-        {/* Color */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Color
-          </label>
-          <div className="flex flex-wrap gap-2">
-            {COLORES_ETIQUETAS.map((color) => (
-              <button
-                key={color.value}
-                type="button"
-                onClick={() => setValue('color', color.value)}
-                title={color.label}
-                className={`
-                  h-8 w-8 rounded-full transition-all
-                  ${colorActual === color.value
-                    ? 'ring-2 ring-offset-2 ring-primary-500 dark:ring-offset-gray-800'
-                    : 'hover:scale-110'
-                  }
-                `}
-                style={{ backgroundColor: color.value }}
-              />
-            ))}
-          </div>
-          <input type="hidden" {...register('color')} />
-          {errors.color && (
-            <p className="mt-1 text-sm text-red-500">{errors.color.message}</p>
-          )}
-        </div>
+      <FormGroup label="Descripción" error={errors.descripcion?.message}>
+        <Textarea
+          {...register('descripcion')}
+          rows={2}
+          hasError={!!errors.descripcion}
+          placeholder="Descripción opcional de la etiqueta..."
+        />
+      </FormGroup>
 
-        {/* Descripción */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Descripción
-          </label>
-          <textarea
-            {...register('descripcion')}
-            rows={2}
-            className={`
-              w-full rounded-md border-0 py-2 px-3
-              text-gray-900 dark:text-white
-              ring-1 ring-inset ring-gray-300 dark:ring-gray-600
-              focus:ring-primary-500
-              bg-white dark:bg-gray-700
-              placeholder:text-gray-400
-              sm:text-sm
-            `}
-            placeholder="Descripción opcional de la etiqueta..."
-          />
-          {errors.descripcion && (
-            <p className="mt-1 text-sm text-red-500">{errors.descripcion.message}</p>
-          )}
-        </div>
-
-        {/* Orden */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Orden de visualización
-          </label>
-          <input
-            type="number"
-            {...register('orden')}
-            min={0}
-            max={999}
-            className={`
-              w-24 rounded-md border-0 py-2 px-3
-              text-gray-900 dark:text-white
-              ring-1 ring-inset ring-gray-300 dark:ring-gray-600
-              focus:ring-primary-500
-              bg-white dark:bg-gray-700
-              sm:text-sm
-            `}
-          />
-          <p className="mt-1 text-xs text-gray-500">Menor número = aparece primero</p>
-        </div>
-
-        {/* Botones */}
-        <div className="flex justify-end gap-3 pt-4">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md"
-          >
-            Cancelar
-          </button>
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isSubmitting
-              ? 'Guardando...'
-              : isEditing
-                ? 'Guardar cambios'
-                : 'Crear etiqueta'
-            }
-          </button>
-        </div>
-      </form>
-    </Drawer>
+      <FormGroup label="Orden de visualización" helper="Menor número = aparece primero">
+        <Input
+          type="number"
+          {...register('orden')}
+          min={0}
+          max={999}
+          className="w-24"
+        />
+      </FormGroup>
+    </FormDrawer>
   );
 }
 
-// Utilidad para determinar si un color es claro
 function isLightColor(hexColor) {
   const hex = hexColor.replace('#', '');
   const r = parseInt(hex.substr(0, 2), 16);

@@ -33,6 +33,32 @@ export interface ModalProps {
   showCloseButton?: boolean;
   /** Deshabilitar cierre del modal (para estados de carga) */
   disableClose?: boolean;
+  /** Rol ARIA del modal */
+  role?: 'dialog' | 'alertdialog';
+}
+
+// ============================================
+// FORM DRAWER
+// ============================================
+
+/** Props del componente FormDrawer */
+export interface FormDrawerProps {
+  isOpen: boolean;
+  onClose: () => void;
+  size?: DrawerSize;
+  noPadding?: boolean;
+  title?: string;
+  subtitle?: string;
+  entityName?: string;
+  mode?: 'create' | 'edit';
+  onSubmit: (e: React.FormEvent) => void;
+  isSubmitting?: boolean;
+  submitLabel?: string;
+  cancelLabel?: string;
+  hideFooter?: boolean;
+  footer?: ReactNode;
+  header?: ReactNode;
+  children: ReactNode;
 }
 
 // ============================================

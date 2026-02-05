@@ -6,6 +6,7 @@ import { Button } from '../atoms/Button';
 import { StatCardGrid } from '../organisms/StatCardGrid';
 import { ViewTabs } from '../molecules/ViewTabs';
 import { useFilters, usePagination, normalizePagination, useModalManager, useDeleteConfirmation, useExportCSV } from '@/hooks/utils';
+import { ConfirmDialog } from '../organisms/ConfirmDialog';
 import { Plus, Search, Download } from 'lucide-react';
 import { SEMANTIC_COLORS } from '@/lib/uiConstants';
 
@@ -190,7 +191,7 @@ const ListadoCRUDPage = memo(function ListadoCRUDPage({
 
   // Delete mutation + confirmation
   const deleteMutation = useDeleteMutation?.();
-  const { confirmDelete, DeleteConfirmModal } = useDeleteConfirmation({
+  const { confirmDelete, deleteConfirmProps } = useDeleteConfirmation({
     deleteMutation,
     entityName: title?.toLowerCase() || 'elemento',
     ...deleteMutationOptions,
@@ -378,7 +379,7 @@ const ListadoCRUDPage = memo(function ListadoCRUDPage({
       })}
 
       {/* Delete Confirmation */}
-      {deleteMutation && <DeleteConfirmModal />}
+      {deleteMutation && <ConfirmDialog {...deleteConfirmProps} />}
 
       {/* Children slot */}
       {children}
