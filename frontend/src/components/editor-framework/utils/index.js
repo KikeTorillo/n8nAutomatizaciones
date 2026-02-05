@@ -4,9 +4,9 @@
  * ====================================================================
  * Utilidades del editor framework.
  *
- * @version 1.1.0
+ * @version 2.0.0
  * @since 2026-02-04
- * @updated 2026-02-04 - Agregadas utilidades de conversión secciones/bloques
+ * @updated 2026-02-05 - Desacoplado migradores de invitación + registry dinámico
  */
 
 export {
@@ -15,17 +15,11 @@ export {
   migrateTextoBlock,
   migrateImagenBlock,
   migrateGenericBlock,
-  // Bloques específicos de invitaciones
-  migrateHeroInvitacionBlock,
-  migrateCountdownBlock,
-  migrateTimelineBlock,
-  migrateRsvpBlock,
-  migrateUbicacionBlock,
-  migrateGaleriaBlock,
-  migrateFaqBlock,
-  migrateMesaRegalosBlock,
   migrateSeparadorBlock,
   migrateVideoBlock,
+  // Registry de migradores
+  registerBlockMigrator,
+  registerBlockMigrators,
   // Funciones de utilidad
   migrateBlocksToSections,
   detectDataFormat,
@@ -39,4 +33,5 @@ export {
   detectarModoLibre,
   hashSecciones,
   seccionesEqual,
+  registerElementoToBloqueMapping,
 } from './seccionesToBloques';

@@ -7,7 +7,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import websiteApi from '@/services/api/modules/website.api';
+import imagesApi from '@/services/api/modules/images.api';
 
 /**
  * Hook para buscar imagenes en Unsplash
@@ -40,7 +40,7 @@ export function useUnsplashSearch({ debounceMs = 300 } = {}) {
   } = useQuery({
     queryKey: ['unsplash', 'search', debouncedQuery, page],
     queryFn: () =>
-      websiteApi.buscarImagenesUnsplash({
+      imagesApi.buscarImagenes({
         query: debouncedQuery,
         page,
         per_page: 20,
@@ -52,7 +52,7 @@ export function useUnsplashSearch({ debounceMs = 300 } = {}) {
 
   // Mutation para descargar imagen
   const downloadMutation = useMutation({
-    mutationFn: (imageData) => websiteApi.descargarImagenUnsplash(imageData),
+    mutationFn: (imageData) => imagesApi.descargarImagen(imageData),
   });
 
   // Handlers

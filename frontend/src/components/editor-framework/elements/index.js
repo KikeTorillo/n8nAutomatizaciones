@@ -2,56 +2,44 @@
  * ====================================================================
  * ELEMENTS MODULE
  * ====================================================================
- * Módulo de elementos para canvas de posición libre.
+ * Módulo de elementos built-in para canvas de posición libre.
+ * Los módulos específicos registran sus propios tipos dinámicamente.
  *
- * @version 1.1.0
+ * @version 2.0.0
  * @since 2026-02-04
+ * @updated 2026-02-05 - Desacoplado de elementos de invitación
  */
 
 // Element Types Registry
 export {
   BUILT_IN_ELEMENT_TYPES,
-  INVITACION_ELEMENT_TYPES,
   ELEMENT_CATEGORIES,
   registerElementType,
   registerElementTypes,
-  registerInvitacionElementTypes,
   getElementType,
   getAllElementTypes,
   getElementTypesByCategory,
   clearElementTypesRegistry,
   createElementFromType,
-  INVITACION_ALLOWED_TYPES,
 } from './elementTypes';
 
 // Element Wrapper (HOC con interacción)
 export { default as ElementWrapper } from './ElementWrapper';
 
-// Renderers
+// Renderers (built-in only)
 export {
   TextoElementRenderer,
   ImagenElementRenderer,
   BotonElementRenderer,
   FormaElementRenderer,
   SeparadorElementRenderer,
-  CountdownElementRenderer,
-  RsvpButtonElementRenderer,
-  TimelineElementRenderer,
-  HeroInvitacionElementRenderer,
-  UbicacionElementRenderer,
-  GaleriaElementRenderer,
-  FaqElementRenderer,
-  MesaRegalosElementRenderer,
   getElementRenderer,
 } from './renderers';
 
-// Editors
+// Editors (built-in only)
 export {
   TextoElementEditor,
   ImagenElementEditor,
   BotonElementEditor,
-  CountdownElementEditor,
-  RsvpButtonElementEditor,
-  TimelineElementEditor,
   getElementEditor,
 } from './editors';

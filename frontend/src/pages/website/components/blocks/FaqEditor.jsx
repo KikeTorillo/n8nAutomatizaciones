@@ -12,7 +12,7 @@
 import { memo } from 'react';
 import {
   FaqEditor as CommonFaqEditor,
-  FAQ_CONFIG_WEBSITE,
+  FAQ_CONFIG_FULL,
 } from '@/components/editor-framework/common-blocks';
 import { AIGenerateButton, AISuggestionBanner } from '../AIGenerator';
 import { SectionTitleField, ArrayItemsEditor } from './fields';
@@ -29,7 +29,7 @@ function FaqEditor({ contenido, onGuardar, tema, isSaving, industria = 'default'
       tema={tema}
       isSaving={isSaving}
       industria={industria}
-      config={FAQ_CONFIG_WEBSITE}
+      config={FAQ_CONFIG_FULL}
       AIBannerComponent={AISuggestionBanner}
       AIGenerateButtonComponent={AIGenerateButton}
       SectionTitleFieldComponent={SectionTitleField}

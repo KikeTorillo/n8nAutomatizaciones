@@ -16,8 +16,8 @@ import {
   ToggleField,
   DateField,
   TabContent,
-} from '../../fields';
-import { TABS } from '../../constants';
+} from '@/components/editor-framework';
+import { TABS } from '@/components/editor-framework';
 
 // ========== OPTIONS ==========
 

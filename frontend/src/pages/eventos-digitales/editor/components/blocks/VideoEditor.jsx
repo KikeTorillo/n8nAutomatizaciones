@@ -12,7 +12,7 @@
 import { memo } from 'react';
 import {
   VideoEditor as CommonVideoEditor,
-  VIDEO_CONFIG_INVITACIONES,
+  VIDEO_CONFIG_MINIMAL,
 } from '@/components/editor-framework/common-blocks';
 
 /**
@@ -26,7 +26,7 @@ function VideoEditor({ contenido, estilos, onChange, tema }) {
       estilos={estilos}
       onChange={onChange}
       tema={tema}
-      config={VIDEO_CONFIG_INVITACIONES}
+      config={VIDEO_CONFIG_MINIMAL}
     />
   );
 }

@@ -12,6 +12,33 @@
 import { createElementFromType } from '../elements/elementTypes';
 import { createSection } from '../store/sectionActions';
 
+// ========== MIGRATION REGISTRY ==========
+
+/**
+ * Registry dinámico de migradores de bloques.
+ * Los módulos registran sus propios migradores al inicializarse.
+ */
+const migrationRegistry = new Map();
+
+/**
+ * Registra un migrador de bloque en el registry
+ * @param {string} tipo - Tipo de bloque
+ * @param {Function} migrator - Función migradora (bloque) => seccion
+ */
+export function registerBlockMigrator(tipo, migrator) {
+  migrationRegistry.set(tipo, migrator);
+}
+
+/**
+ * Registra múltiples migradores de bloques
+ * @param {Object.<string, Function>} migrators - { tipo: migrator }
+ */
+export function registerBlockMigrators(migrators) {
+  Object.entries(migrators).forEach(([tipo, migrator]) => {
+    migrationRegistry.set(tipo, migrator);
+  });
+}
+
 /**
  * Migra un bloque Hero al formato de sección con elementos
  * @param {Object} bloque - Bloque Hero original
@@ -255,353 +282,6 @@ export function migrateImagenBlock(bloque) {
   });
 }
 
-// ========== MIGRADORES ESPECÍFICOS PARA INVITACIONES ==========
-
-/**
- * Migra un bloque Hero de Invitación al formato de sección
- * @param {Object} bloque - Bloque hero_invitacion original
- * @returns {Object} Sección con elementos
- */
-export function migrateHeroInvitacionBlock(bloque) {
-  const contenido = bloque.contenido || {};
-  const elementos = [];
-
-  // Crear un elemento de tipo hero_invitacion que renderiza todo el bloque completo
-  // Usar top-left para elementos full-width para evitar desplazamiento
-  elementos.push(createElementFromType('hero_invitacion', {
-    contenido: { ...contenido },
-    posicion: {
-      x: 0,
-      y: 0,
-      ancho: 100,
-      altura: 'auto',
-      ancla: 'top-left',
-    },
-    capa: 1,
-  }));
-
-  return createSection({
-    id: bloque.id,
-    tipo: 'seccion',
-    preset: 'hero_invitacion',
-    orden: bloque.orden,
-    visible: bloque.visible !== false,
-    config: {
-      altura: {
-        valor: contenido.altura === 'full' ? 100 : contenido.altura === 'medium' ? 50 : 'auto',
-        unidad: contenido.altura === 'auto' ? 'auto' : 'vh',
-      },
-      padding: { top: 0, bottom: 0 },
-      fondo: {
-        tipo: contenido.imagen_url ? 'imagen' : 'color',
-        valor: contenido.imagen_url || contenido.color_fondo_hero || '#ffffff',
-        posicion: contenido.imagen_posicion || 'center center',
-        overlay: contenido.imagen_url ? {
-          color: contenido.color_overlay || '#000000',
-          opacidad: contenido.imagen_overlay || 0.3,
-        } : null,
-      },
-    },
-    elementos,
-  });
-}
-
-/**
- * Migra un bloque Countdown al formato de sección
- * @param {Object} bloque - Bloque countdown original
- * @returns {Object} Sección con elementos
- */
-export function migrateCountdownBlock(bloque) {
-  const contenido = bloque.contenido || {};
-  const elementos = [];
-
-  elementos.push(createElementFromType('countdown', {
-    contenido: {
-      titulo: contenido.titulo || 'Faltan',
-      fecha: contenido.fecha_objetivo || null,
-      hora: contenido.hora_objetivo || null,
-      variante: contenido.estilo || 'cajas',
-      mostrar_dias: contenido.mostrar_dias !== false,
-      mostrar_horas: contenido.mostrar_horas !== false,
-      mostrar_minutos: contenido.mostrar_minutos !== false,
-      mostrar_segundos: contenido.mostrar_segundos === true,
-      texto_finalizado: contenido.texto_finalizado || '¡Es hoy!',
-    },
-    posicion: {
-      x: 50,
-      y: 50,
-      ancho: 80,
-      altura: 'auto',
-      ancla: 'center',
-    },
-    capa: 1,
-  }));
-
-  return createSection({
-    id: bloque.id,
-    tipo: 'seccion',
-    preset: 'countdown',
-    orden: bloque.orden,
-    visible: bloque.visible !== false,
-    config: {
-      altura: { valor: 'auto', unidad: 'auto' },
-      padding: { top: 60, bottom: 60 },
-      fondo: {
-        tipo: 'color',
-        valor: contenido.color_fondo || '#ffffff',
-      },
-    },
-    elementos,
-  });
-}
-
-/**
- * Migra un bloque Timeline al formato de sección
- * @param {Object} bloque - Bloque timeline original
- * @returns {Object} Sección con elementos
- */
-export function migrateTimelineBlock(bloque) {
-  const contenido = bloque.contenido || {};
-  const elementos = [];
-
-  elementos.push(createElementFromType('timeline', {
-    contenido: {
-      titulo: contenido.titulo_seccion || contenido.titulo || 'Itinerario',
-      subtitulo: contenido.subtitulo_seccion || contenido.subtitulo || '',
-      layout: contenido.layout || 'vertical',
-      items: contenido.items || [],
-    },
-    posicion: {
-      x: 50,
-      y: 50,
-      ancho: 90,
-      altura: 'auto',
-      ancla: 'center',
-    },
-    capa: 1,
-  }));
-
-  return createSection({
-    id: bloque.id,
-    tipo: 'seccion',
-    preset: 'timeline',
-    orden: bloque.orden,
-    visible: bloque.visible !== false,
-    config: {
-      altura: { valor: 'auto', unidad: 'auto' },
-      padding: { top: 60, bottom: 60 },
-      fondo: {
-        tipo: 'color',
-        valor: '#ffffff',
-      },
-    },
-    elementos,
-  });
-}
-
-/**
- * Migra un bloque RSVP al formato de sección
- * @param {Object} bloque - Bloque rsvp original
- * @returns {Object} Sección con elementos
- */
-export function migrateRsvpBlock(bloque) {
-  const contenido = bloque.contenido || {};
-  const elementos = [];
-
-  elementos.push(createElementFromType('rsvp_button', {
-    contenido: {
-      texto: contenido.titulo || 'Confirmar Asistencia',
-      texto_confirmado: contenido.texto_confirmado || '¡Confirmado!',
-      variante: 'primario',
-      tamano: 'lg',
-      mostrar_icono: true,
-    },
-    posicion: {
-      x: 50,
-      y: 50,
-      ancho: 'auto',
-      altura: 'auto',
-      ancla: 'center',
-    },
-    capa: 1,
-  }));
-
-  return createSection({
-    id: bloque.id,
-    tipo: 'seccion',
-    preset: 'rsvp',
-    orden: bloque.orden,
-    visible: bloque.visible !== false,
-    config: {
-      altura: { valor: 'auto', unidad: 'auto' },
-      padding: { top: 60, bottom: 60 },
-      fondo: {
-        tipo: 'color',
-        valor: '#ffffff',
-      },
-    },
-    elementos,
-    // Guardar contenido completo para renderizado
-    _rsvpConfig: contenido,
-  });
-}
-
-/**
- * Migra un bloque Ubicación al formato de sección
- * @param {Object} bloque - Bloque ubicacion original
- * @returns {Object} Sección con elementos
- */
-export function migrateUbicacionBlock(bloque) {
-  const contenido = bloque.contenido || {};
-  const elementos = [];
-
-  elementos.push(createElementFromType('ubicacion', {
-    contenido: { ...contenido },
-    posicion: {
-      x: 50,
-      y: 50,
-      ancho: 90,
-      altura: 'auto',
-      ancla: 'center',
-    },
-    capa: 1,
-  }));
-
-  return createSection({
-    id: bloque.id,
-    tipo: 'seccion',
-    preset: 'ubicacion',
-    orden: bloque.orden,
-    visible: bloque.visible !== false,
-    config: {
-      altura: { valor: 'auto', unidad: 'auto' },
-      padding: { top: 60, bottom: 60 },
-      fondo: {
-        tipo: 'color',
-        valor: '#ffffff',
-      },
-    },
-    elementos,
-  });
-}
-
-/**
- * Migra un bloque Galería al formato de sección
- * @param {Object} bloque - Bloque galeria original
- * @returns {Object} Sección con elementos
- */
-export function migrateGaleriaBlock(bloque) {
-  const contenido = bloque.contenido || {};
-  const elementos = [];
-
-  elementos.push(createElementFromType('galeria', {
-    contenido: { ...contenido },
-    posicion: {
-      x: 50,
-      y: 50,
-      ancho: 95,
-      altura: 'auto',
-      ancla: 'center',
-    },
-    capa: 1,
-  }));
-
-  return createSection({
-    id: bloque.id,
-    tipo: 'seccion',
-    preset: 'galeria',
-    orden: bloque.orden,
-    visible: bloque.visible !== false,
-    config: {
-      altura: { valor: 'auto', unidad: 'auto' },
-      padding: { top: 60, bottom: 60 },
-      fondo: {
-        tipo: 'color',
-        valor: '#ffffff',
-      },
-    },
-    elementos,
-  });
-}
-
-/**
- * Migra un bloque FAQ al formato de sección
- * @param {Object} bloque - Bloque faq original
- * @returns {Object} Sección con elementos
- */
-export function migrateFaqBlock(bloque) {
-  const contenido = bloque.contenido || {};
-  const elementos = [];
-
-  elementos.push(createElementFromType('faq', {
-    contenido: { ...contenido },
-    posicion: {
-      x: 50,
-      y: 50,
-      ancho: 90,
-      altura: 'auto',
-      ancla: 'center',
-    },
-    capa: 1,
-  }));
-
-  return createSection({
-    id: bloque.id,
-    tipo: 'seccion',
-    preset: 'faq',
-    orden: bloque.orden,
-    visible: bloque.visible !== false,
-    config: {
-      altura: { valor: 'auto', unidad: 'auto' },
-      padding: { top: 60, bottom: 60 },
-      fondo: {
-        tipo: 'color',
-        valor: '#ffffff',
-      },
-    },
-    elementos,
-  });
-}
-
-/**
- * Migra un bloque Mesa de Regalos al formato de sección
- * @param {Object} bloque - Bloque mesa_regalos original
- * @returns {Object} Sección con elementos
- */
-export function migrateMesaRegalosBlock(bloque) {
-  const contenido = bloque.contenido || {};
-  const elementos = [];
-
-  elementos.push(createElementFromType('mesa_regalos', {
-    contenido: { ...contenido },
-    posicion: {
-      x: 50,
-      y: 50,
-      ancho: 90,
-      altura: 'auto',
-      ancla: 'center',
-    },
-    capa: 1,
-  }));
-
-  return createSection({
-    id: bloque.id,
-    tipo: 'seccion',
-    preset: 'mesa_regalos',
-    orden: bloque.orden,
-    visible: bloque.visible !== false,
-    config: {
-      altura: { valor: 'auto', unidad: 'auto' },
-      padding: { top: 60, bottom: 60 },
-      fondo: {
-        tipo: 'color',
-        valor: '#ffffff',
-      },
-    },
-    elementos,
-  });
-}
-
 /**
  * Migra un bloque Separador al formato de sección
  * @param {Object} bloque - Bloque separador original
@@ -749,8 +429,14 @@ export function migrateBlocksToSections(bloques) {
   }
 
   return bloques.map((bloque) => {
+    // Primero consultar el registry dinámico (módulos registran sus migradores)
+    const registeredMigrator = migrationRegistry.get(bloque.tipo);
+    if (registeredMigrator) {
+      return registeredMigrator(bloque);
+    }
+
+    // Migradores built-in del framework
     switch (bloque.tipo) {
-      // Bloques genéricos (Website Builder)
       case 'hero':
         return migrateHeroBlock(bloque);
       case 'texto':
@@ -759,29 +445,10 @@ export function migrateBlocksToSections(bloques) {
       case 'imagen':
       case 'image':
         return migrateImagenBlock(bloque);
-
-      // Bloques específicos de Invitaciones
-      case 'hero_invitacion':
-        return migrateHeroInvitacionBlock(bloque);
-      case 'countdown':
-        return migrateCountdownBlock(bloque);
-      case 'timeline':
-        return migrateTimelineBlock(bloque);
-      case 'rsvp':
-        return migrateRsvpBlock(bloque);
-      case 'ubicacion':
-        return migrateUbicacionBlock(bloque);
-      case 'galeria':
-        return migrateGaleriaBlock(bloque);
-      case 'faq':
-        return migrateFaqBlock(bloque);
-      case 'mesa_regalos':
-        return migrateMesaRegalosBlock(bloque);
       case 'separador':
         return migrateSeparadorBlock(bloque);
       case 'video':
         return migrateVideoBlock(bloque);
-
       default:
         return migrateGenericBlock(bloque);
     }

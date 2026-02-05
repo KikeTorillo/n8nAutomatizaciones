@@ -12,7 +12,7 @@
 import { memo } from 'react';
 import {
   CountdownEditor as CommonCountdownEditor,
-  COUNTDOWN_CONFIG_WEBSITE,
+  COUNTDOWN_CONFIG_FULL,
 } from '@/components/editor-framework/common-blocks';
 import { AIGenerateButton, AISuggestionBanner } from '../AIGenerator';
 
@@ -28,7 +28,7 @@ function CountdownEditor({ contenido, onGuardar, tema, isSaving, industria = 'de
       tema={tema}
       isSaving={isSaving}
       industria={industria}
-      config={COUNTDOWN_CONFIG_WEBSITE}
+      config={COUNTDOWN_CONFIG_FULL}
       AIBannerComponent={AISuggestionBanner}
       AIGenerateButtonComponent={AIGenerateButton}
     />

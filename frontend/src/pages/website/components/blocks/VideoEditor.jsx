@@ -12,7 +12,7 @@
 import { memo } from 'react';
 import {
   VideoEditor as CommonVideoEditor,
-  VIDEO_CONFIG_WEBSITE,
+  VIDEO_CONFIG_FULL,
 } from '@/components/editor-framework/common-blocks';
 
 /**
@@ -26,7 +26,7 @@ function VideoEditor({ contenido, onGuardar, tema, isSaving }) {
       onGuardar={onGuardar}
       tema={tema}
       isSaving={isSaving}
-      config={VIDEO_CONFIG_WEBSITE}
+      config={VIDEO_CONFIG_FULL}
     />
   );
 }

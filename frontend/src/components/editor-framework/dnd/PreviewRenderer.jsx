@@ -21,7 +21,7 @@ function PreviewRenderer({ tipo, tema }) {
   const secondaryColor = tema?.color_secundario || '#1F2937';
 
   switch (tipo) {
-    // ========== BLOQUES WEBSITE ==========
+    // ========== BLOQUES BÁSICOS ==========
     case 'hero':
       return (
         <div className="w-full h-24 bg-gradient-to-r from-primary-600 to-primary-700 rounded-md flex flex-col items-center justify-center text-white p-2">
@@ -242,7 +242,7 @@ function PreviewRenderer({ tipo, tema }) {
         </div>
       );
 
-    // ========== BLOQUES INVITACIONES ==========
+    // ========== BLOQUES EXTENDIDOS ==========
     case 'hero_invitacion':
       return (
         <div className="w-full h-24 bg-gradient-to-br from-pink-400 to-rose-500 rounded-md flex flex-col items-center justify-center text-white p-2">

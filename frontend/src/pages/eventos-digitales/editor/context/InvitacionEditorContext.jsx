@@ -23,8 +23,6 @@ import {
   hashBloques,
   useDndHandlers,
   // Free Position Canvas imports
-  registerInvitacionElementTypes,
-  INVITACION_ALLOWED_TYPES,
   ensureSectionsFormat,
   createFreePositionStore,
   // Autosave para modo libre
@@ -34,6 +32,8 @@ import {
   detectarModoLibre,
   hashSecciones,
 } from '@/components/editor-framework';
+import { registerInvitacionElementTypes } from '../elements';
+import { registerInvitacionMigrators } from '../elements';
 import { crearBloqueNuevo } from '../utils';
 
 // ========== CONTEXT ==========
@@ -75,9 +75,10 @@ export function InvitacionEditorProvider({ children }) {
     return freePositionStoreRef.current;
   }, [eventoId]);
 
-  // Registrar tipos de elementos de invitaciones al montar
+  // Registrar tipos de elementos y migradores de invitaciones al montar
   useEffect(() => {
     registerInvitacionElementTypes();
+    registerInvitacionMigrators();
   }, []);
 
   // Obtener estado de propiedades del layout context (única fuente de verdad)

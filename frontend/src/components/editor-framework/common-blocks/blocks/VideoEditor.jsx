@@ -537,7 +537,7 @@ function VideoEditor({
 export default memo(VideoEditor);
 
 // Configuraciones predefinidas para cada editor
-export const VIDEO_CONFIG_INVITACIONES = {
+export const VIDEO_CONFIG_MINIMAL = {
   showLoop: false,
   showMuted: false,
   showAncho: false,
@@ -551,7 +551,7 @@ export const VIDEO_CONFIG_INVITACIONES = {
   },
 };
 
-export const VIDEO_CONFIG_WEBSITE = {
+export const VIDEO_CONFIG_FULL = {
   showLoop: true,
   showMuted: true,
   showAncho: true,

@@ -2,10 +2,12 @@
  * ====================================================================
  * ELEMENT EDITORS
  * ====================================================================
- * Barrel export de todos los editores de elementos.
+ * Barrel export de editores de elementos built-in.
+ * Los editores específicos de cada módulo se registran dinámicamente.
  *
- * @version 1.1.0
+ * @version 2.0.0
  * @since 2026-02-04
+ * @updated 2026-02-05 - Movidos editors de invitación al módulo eventos-digitales
  */
 
 // Built-in editors
@@ -13,40 +15,24 @@ export { default as TextoElementEditor } from './TextoElementEditor';
 export { default as ImagenElementEditor } from './ImagenElementEditor';
 export { default as BotonElementEditor } from './BotonElementEditor';
 
-// Invitaciones-specific editors
-export { default as CountdownElementEditor } from './CountdownElementEditor';
-export { default as RsvpButtonElementEditor } from './RsvpButtonElementEditor';
-export { default as TimelineElementEditor } from './TimelineElementEditor';
-
 // Imports estáticos para getElementEditor
 import TextoElementEditorStatic from './TextoElementEditor';
 import ImagenElementEditorStatic from './ImagenElementEditor';
 import BotonElementEditorStatic from './BotonElementEditor';
-import CountdownElementEditorStatic from './CountdownElementEditor';
-import RsvpButtonElementEditorStatic from './RsvpButtonElementEditor';
-import TimelineElementEditorStatic from './TimelineElementEditor';
 
 /**
- * Obtiene el editor para un tipo de elemento
+ * Obtiene el editor para un tipo de elemento built-in.
  * @param {string} tipo - Tipo del elemento
  * @returns {React.ComponentType|null}
  */
 export function getElementEditor(tipo) {
   switch (tipo) {
-    // Built-in
     case 'texto':
       return TextoElementEditorStatic;
     case 'imagen':
       return ImagenElementEditorStatic;
     case 'boton':
       return BotonElementEditorStatic;
-    // Invitaciones
-    case 'countdown':
-      return CountdownElementEditorStatic;
-    case 'rsvp_button':
-      return RsvpButtonElementEditorStatic;
-    case 'timeline':
-      return TimelineElementEditorStatic;
     default:
       return null;
   }

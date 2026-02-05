@@ -12,7 +12,7 @@
 import { memo } from 'react';
 import {
   CountdownEditor as CommonCountdownEditor,
-  COUNTDOWN_CONFIG_INVITACIONES,
+  COUNTDOWN_CONFIG_MINIMAL,
 } from '@/components/editor-framework/common-blocks';
 
 /**
@@ -29,7 +29,7 @@ function CountdownEditor({ contenido, estilos, onChange, tema, evento }) {
       onChange={onChange}
       tema={tema}
       evento={evento}
-      config={COUNTDOWN_CONFIG_INVITACIONES}
+      config={COUNTDOWN_CONFIG_MINIMAL}
     />
   );
 }

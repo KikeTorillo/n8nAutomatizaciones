@@ -26,14 +26,14 @@ const ESTILOS_BASICOS = [
   { value: 'ondas', label: 'Ondas decorativas' },
 ];
 
-// Estilos adicionales para invitaciones
-const ESTILOS_INVITACIONES = [
+// Estilos adicionales (minimal)
+const ESTILOS_MINIMAL = [
   ...ESTILOS_BASICOS,
   { value: 'flores', label: 'Flores' },
 ];
 
-// Estilos adicionales para website
-const ESTILOS_WEBSITE = [
+// Estilos adicionales (full)
+const ESTILOS_FULL = [
   ...ESTILOS_BASICOS,
   { value: 'punteado', label: 'Punteado' },
   { value: 'gradiente', label: 'Gradiente' },
@@ -348,15 +348,15 @@ function SeparadorEditor({
 export default memo(SeparadorEditor);
 
 // Configuraciones predefinidas para cada editor
-export const SEPARADOR_CONFIG_INVITACIONES = {
-  estiloOptions: ESTILOS_INVITACIONES,
+export const SEPARADOR_CONFIG_MINIMAL = {
+  estiloOptions: ESTILOS_MINIMAL,
   showGrosor: false,
   showAncho: false,
   showEspaciado: false,
 };
 
-export const SEPARADOR_CONFIG_WEBSITE = {
-  estiloOptions: ESTILOS_WEBSITE,
+export const SEPARADOR_CONFIG_FULL = {
+  estiloOptions: ESTILOS_FULL,
   showGrosor: true,
   showAncho: true,
   showEspaciado: true,

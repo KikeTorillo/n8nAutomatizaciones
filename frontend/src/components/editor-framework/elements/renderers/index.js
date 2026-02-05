@@ -2,10 +2,12 @@
  * ====================================================================
  * ELEMENT RENDERERS
  * ====================================================================
- * Barrel export de todos los renderers de elementos.
+ * Barrel export de renderers de elementos built-in.
+ * Los renderers específicos de cada módulo se registran dinámicamente.
  *
- * @version 1.2.0
+ * @version 2.0.0
  * @since 2026-02-04
+ * @updated 2026-02-05 - Movidos renderers de invitación al módulo eventos-digitales
  */
 
 // Built-in renderers
@@ -15,39 +17,23 @@ export { default as BotonElementRenderer } from './BotonElementRenderer';
 export { default as FormaElementRenderer } from './FormaElementRenderer';
 export { default as SeparadorElementRenderer } from './SeparadorElementRenderer';
 
-// Invitaciones-specific renderers
-export { default as CountdownElementRenderer } from './CountdownElementRenderer';
-export { default as RsvpButtonElementRenderer } from './RsvpButtonElementRenderer';
-export { default as TimelineElementRenderer } from './TimelineElementRenderer';
-export { default as HeroInvitacionElementRenderer } from './HeroInvitacionElementRenderer';
-export { default as UbicacionElementRenderer } from './UbicacionElementRenderer';
-export { default as GaleriaElementRenderer } from './GaleriaElementRenderer';
-export { default as FaqElementRenderer } from './FaqElementRenderer';
-export { default as MesaRegalosElementRenderer } from './MesaRegalosElementRenderer';
-
 // Imports estáticos para getElementRenderer
 import TextoElementRendererStatic from './TextoElementRenderer';
 import ImagenElementRendererStatic from './ImagenElementRenderer';
 import BotonElementRendererStatic from './BotonElementRenderer';
 import FormaElementRendererStatic from './FormaElementRenderer';
 import SeparadorElementRendererStatic from './SeparadorElementRenderer';
-import CountdownElementRendererStatic from './CountdownElementRenderer';
-import RsvpButtonElementRendererStatic from './RsvpButtonElementRenderer';
-import TimelineElementRendererStatic from './TimelineElementRenderer';
-import HeroInvitacionElementRendererStatic from './HeroInvitacionElementRenderer';
-import UbicacionElementRendererStatic from './UbicacionElementRenderer';
-import GaleriaElementRendererStatic from './GaleriaElementRenderer';
-import FaqElementRendererStatic from './FaqElementRenderer';
-import MesaRegalosElementRendererStatic from './MesaRegalosElementRenderer';
 
 /**
- * Obtiene el renderer para un tipo de elemento
+ * Obtiene el renderer para un tipo de elemento built-in.
+ * Los módulos pueden pasar customRenderers al FreePositionCanvas
+ * para registrar renderers específicos.
+ *
  * @param {string} tipo - Tipo del elemento
  * @returns {React.ComponentType|null}
  */
 export function getElementRenderer(tipo) {
   switch (tipo) {
-    // Built-in
     case 'texto':
       return TextoElementRendererStatic;
     case 'imagen':
@@ -58,24 +44,6 @@ export function getElementRenderer(tipo) {
       return FormaElementRendererStatic;
     case 'separador':
       return SeparadorElementRendererStatic;
-    // Invitaciones - básicos
-    case 'countdown':
-      return CountdownElementRendererStatic;
-    case 'rsvp_button':
-      return RsvpButtonElementRendererStatic;
-    case 'timeline':
-      return TimelineElementRendererStatic;
-    // Invitaciones - complejos
-    case 'hero_invitacion':
-      return HeroInvitacionElementRendererStatic;
-    case 'ubicacion':
-      return UbicacionElementRendererStatic;
-    case 'galeria':
-      return GaleriaElementRendererStatic;
-    case 'faq':
-      return FaqElementRendererStatic;
-    case 'mesa_regalos':
-      return MesaRegalosElementRendererStatic;
     default:
       return null;
   }

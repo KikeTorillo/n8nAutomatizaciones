@@ -18,7 +18,7 @@ import { useCommonBlockEditor } from '../hooks';
 
 // ========== SUGERENCIAS DE PREGUNTAS ==========
 
-const SUGERENCIAS_INVITACIONES = [
+const SUGERENCIAS_MINIMAL = [
   '¿Cuál es el dress code?',
   '¿Hay estacionamiento?',
   '¿Puedo llevar niños?',
@@ -402,7 +402,7 @@ function FaqEditor({
             Sugerencias de preguntas frecuentes:
           </p>
           <ul className="text-xs text-blue-600 dark:text-blue-400 ml-4 list-disc space-y-1">
-            {SUGERENCIAS_INVITACIONES.map((sugerencia, idx) => (
+            {SUGERENCIAS_MINIMAL.map((sugerencia, idx) => (
               <li key={idx}>{sugerencia}</li>
             ))}
           </ul>
@@ -443,7 +443,7 @@ function FaqEditor({
 export default memo(FaqEditor);
 
 // Configuraciones predefinidas para cada editor
-export const FAQ_CONFIG_INVITACIONES = {
+export const FAQ_CONFIG_MINIMAL = {
   showLayout: false,
   showPermitirMultiple: false,
   showAI: false,
@@ -455,7 +455,7 @@ export const FAQ_CONFIG_INVITACIONES = {
   },
 };
 
-export const FAQ_CONFIG_WEBSITE = {
+export const FAQ_CONFIG_FULL = {
   showLayout: true,
   showPermitirMultiple: true,
   showAI: true,

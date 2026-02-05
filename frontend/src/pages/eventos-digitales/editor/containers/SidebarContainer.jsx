@@ -19,8 +19,8 @@ import {
   ElementsPalette,
   ThemeEditorPanel,
   TemplateGalleryPanel,
-  INVITACION_ALLOWED_TYPES,
 } from '@/components/editor-framework';
+import { INVITACION_ALLOWED_TYPES } from '../elements';
 import { BLOQUES_INVITACION, CATEGORIAS_BLOQUES, TEMAS_POR_TIPO, COLOR_FIELDS } from '../config';
 import { useInvitacionEditor } from '../context';
 import { usePlantillas } from '@/hooks/otros/eventos-digitales';

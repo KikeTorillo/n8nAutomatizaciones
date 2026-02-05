@@ -170,23 +170,24 @@ export function seccionesEqual(a, b) {
 /**
  * Mapeo de tipos de elementos a tipos de bloques tradicionales.
  * Los tipos deben coincidir con bloques.schemas.js del backend.
+ * Los módulos pueden registrar mappings adicionales con registerElementoToBloqueMapping().
  */
-const ELEMENTO_TO_BLOQUE_MAP = {
-  // Elementos de invitación
-  hero_invitacion: 'hero_invitacion',
-  countdown: 'countdown',
-  rsvp_button: 'rsvp',
-  timeline: 'timeline',
-  ubicacion: 'ubicacion',
-  galeria: 'galeria',
-  mesa_regalos: 'mesa_regalos',
-  faq: 'faq',
-  // Elementos básicos
-  texto: 'texto',
-  video: 'video',
-  separador: 'separador',
-  // Nota: 'imagen' y 'calendario' no tienen equivalente directo en bloques tradicionales
-};
+const elementoToBloqueMappings = new Map([
+  // Elementos built-in
+  ['texto', 'texto'],
+  ['video', 'video'],
+  ['separador', 'separador'],
+]);
+
+/**
+ * Registra mappings adicionales de elemento → bloque.
+ * @param {Object.<string, string>} mappings - { tipoElemento: tipoBloque }
+ */
+export function registerElementoToBloqueMapping(mappings) {
+  Object.entries(mappings).forEach(([key, value]) => {
+    elementoToBloqueMappings.set(key, value);
+  });
+}
 
 /**
  * Convierte secciones del modo libre a bloques tradicionales.
@@ -209,7 +210,7 @@ export function seccionesToBloquesTrad(secciones) {
     elementos
       .sort((a, b) => (a.posicion?.y ?? 0) - (b.posicion?.y ?? 0)) // Ordenar por Y
       .forEach((elemento) => {
-        const tipoBloque = ELEMENTO_TO_BLOQUE_MAP[elemento.tipo];
+        const tipoBloque = elementoToBloqueMappings.get(elemento.tipo);
 
         if (!tipoBloque) {
           // Tipo no mapeado, ignorar o crear bloque genérico

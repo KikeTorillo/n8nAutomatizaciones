@@ -572,7 +572,7 @@ function GaleriaEditor({
 export default memo(GaleriaEditor);
 
 // Configuraciones predefinidas para cada editor
-export const GALERIA_CONFIG_INVITACIONES = {
+export const GALERIA_CONFIG_MINIMAL = {
   showUsarGaleriaEvento: true,
   showEspaciado: false,
   showLightbox: false,
@@ -586,7 +586,7 @@ export const GALERIA_CONFIG_INVITACIONES = {
   },
 };
 
-export const GALERIA_CONFIG_WEBSITE = {
+export const GALERIA_CONFIG_FULL = {
   showUsarGaleriaEvento: false,
   showEspaciado: true,
   showLightbox: true,

@@ -11,34 +11,34 @@
 // Separador
 export {
   default as SeparadorEditor,
-  SEPARADOR_CONFIG_INVITACIONES,
-  SEPARADOR_CONFIG_WEBSITE,
+  SEPARADOR_CONFIG_MINIMAL,
+  SEPARADOR_CONFIG_FULL,
 } from './SeparadorEditor';
 
 // Video
 export {
   default as VideoEditor,
-  VIDEO_CONFIG_INVITACIONES,
-  VIDEO_CONFIG_WEBSITE,
+  VIDEO_CONFIG_MINIMAL,
+  VIDEO_CONFIG_FULL,
 } from './VideoEditor';
 
 // Galería
 export {
   default as GaleriaEditor,
-  GALERIA_CONFIG_INVITACIONES,
-  GALERIA_CONFIG_WEBSITE,
+  GALERIA_CONFIG_MINIMAL,
+  GALERIA_CONFIG_FULL,
 } from './GaleriaEditor';
 
 // FAQ
 export {
   default as FaqEditor,
-  FAQ_CONFIG_INVITACIONES,
-  FAQ_CONFIG_WEBSITE,
+  FAQ_CONFIG_MINIMAL,
+  FAQ_CONFIG_FULL,
 } from './FaqEditor';
 
 // Countdown
 export {
   default as CountdownEditor,
-  COUNTDOWN_CONFIG_INVITACIONES,
-  COUNTDOWN_CONFIG_WEBSITE,
+  COUNTDOWN_CONFIG_MINIMAL,
+  COUNTDOWN_CONFIG_FULL,
 } from './CountdownEditor';

@@ -5,9 +5,9 @@
  * Framework compartido para editores de bloques y posición libre.
  * Usado por Website Builder y Editor de Invitaciones.
  *
- * @version 3.0.0
+ * @version 4.0.0
  * @since 2026-02-03
- * @updated 2026-02-04 - Añadido sistema de posición libre (Wix-style)
+ * @updated 2026-02-05 - Desacoplado de lógica específica de invitaciones
  */
 
 // ========== HOOKS ==========
@@ -110,52 +110,35 @@ export {
   calculateSnapGuides,
 } from './canvas';
 
-// Elements Registry & Types
+// Elements Registry & Types (built-in only)
 export {
   BUILT_IN_ELEMENT_TYPES,
-  INVITACION_ELEMENT_TYPES,
   ELEMENT_CATEGORIES,
   registerElementType,
   registerElementTypes,
-  registerInvitacionElementTypes,
   getElementType,
   getAllElementTypes,
   getElementTypesByCategory,
   clearElementTypesRegistry,
   createElementFromType,
-  INVITACION_ALLOWED_TYPES,
   ElementWrapper,
 } from './elements';
 
-// Element Renderers
+// Element Renderers (built-in only)
 export {
   TextoElementRenderer,
   ImagenElementRenderer,
   BotonElementRenderer,
   FormaElementRenderer,
   SeparadorElementRenderer,
-  // Invitaciones-specific básicos
-  CountdownElementRenderer,
-  RsvpButtonElementRenderer,
-  TimelineElementRenderer,
-  // Invitaciones-specific complejos
-  HeroInvitacionElementRenderer,
-  UbicacionElementRenderer,
-  GaleriaElementRenderer,
-  FaqElementRenderer,
-  MesaRegalosElementRenderer,
   getElementRenderer,
 } from './elements/renderers';
 
-// Element Editors
+// Element Editors (built-in only)
 export {
   TextoElementEditor,
   ImagenElementEditor,
   BotonElementEditor,
-  // Invitaciones-specific
-  CountdownElementEditor,
-  RsvpButtonElementEditor,
-  TimelineElementEditor,
   getElementEditor,
 } from './elements/editors';
 
@@ -186,17 +169,11 @@ export {
   migrateTextoBlock,
   migrateImagenBlock,
   migrateGenericBlock,
-  // Bloques específicos de invitaciones
-  migrateHeroInvitacionBlock,
-  migrateCountdownBlock,
-  migrateTimelineBlock,
-  migrateRsvpBlock,
-  migrateUbicacionBlock,
-  migrateGaleriaBlock,
-  migrateFaqBlock,
-  migrateMesaRegalosBlock,
   migrateSeparadorBlock,
   migrateVideoBlock,
+  // Registry de migradores
+  registerBlockMigrator,
+  registerBlockMigrators,
   // Funciones de utilidad
   migrateBlocksToSections,
   detectDataFormat,
@@ -211,4 +188,5 @@ export {
   detectarModoLibre,
   hashSecciones,
   seccionesEqual,
+  registerElementoToBloqueMapping,
 } from './utils';

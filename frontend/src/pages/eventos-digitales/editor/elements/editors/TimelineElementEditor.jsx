@@ -16,8 +16,8 @@ import {
   TextareaField,
   SelectField,
   TabContent,
-} from '../../fields';
-import { TABS } from '../../constants';
+} from '@/components/editor-framework';
+import { TABS } from '@/components/editor-framework';
 import { cn } from '@/lib/utils';
 
 // ========== OPTIONS ==========

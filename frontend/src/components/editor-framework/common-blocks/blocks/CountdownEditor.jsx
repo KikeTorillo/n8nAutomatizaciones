@@ -19,7 +19,7 @@ import { useCommonBlockEditor } from '../hooks';
 
 // ========== OPCIONES DE SELECT ==========
 
-const ESTILO_OPTIONS_INVITACIONES = [
+const ESTILO_OPTIONS_MINIMAL = [
   { value: 'cajas', label: 'Cajas separadas' },
   { value: 'inline', label: 'En línea' },
   { value: 'circular', label: 'Circular' },
@@ -113,7 +113,7 @@ function CountdownEditor({
     showApariencia = false,
     showBotonCTA = false,
     showAccionFinalizado = false,
-    estiloOptions = ESTILO_OPTIONS_INVITACIONES,
+    estiloOptions = ESTILO_OPTIONS_MINIMAL,
   } = config;
 
   // Determinar modo
@@ -573,7 +573,7 @@ function CountdownEditor({
 export default memo(CountdownEditor);
 
 // Configuraciones predefinidas para cada editor
-export const COUNTDOWN_CONFIG_INVITACIONES = {
+export const COUNTDOWN_CONFIG_MINIMAL = {
   showSubtitulo: false,
   showEstiloVisual: true,
   showUnidadesIndividuales: false,
@@ -581,10 +581,10 @@ export const COUNTDOWN_CONFIG_INVITACIONES = {
   showApariencia: false,
   showBotonCTA: false,
   showAccionFinalizado: false,
-  estiloOptions: ESTILO_OPTIONS_INVITACIONES,
+  estiloOptions: ESTILO_OPTIONS_MINIMAL,
 };
 
-export const COUNTDOWN_CONFIG_WEBSITE = {
+export const COUNTDOWN_CONFIG_FULL = {
   showSubtitulo: true,
   showEstiloVisual: false,
   showUnidadesIndividuales: true,

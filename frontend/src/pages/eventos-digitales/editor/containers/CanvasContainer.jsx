@@ -33,25 +33,25 @@ import { BLOCK_ICONS, BLOCK_NAMES } from '../config/invitacionBlocks';
 // ========== LAZY LOADED CUSTOM RENDERERS PARA INVITACIONES ==========
 
 const CountdownElementRenderer = lazy(() =>
-  import('@/components/editor-framework/elements/renderers/CountdownElementRenderer')
+  import('../elements/renderers/CountdownElementRenderer')
 );
 const RsvpButtonElementRenderer = lazy(() =>
-  import('@/components/editor-framework/elements/renderers/RsvpButtonElementRenderer')
+  import('../elements/renderers/RsvpButtonElementRenderer')
 );
 const TimelineElementRenderer = lazy(() =>
-  import('@/components/editor-framework/elements/renderers/TimelineElementRenderer')
+  import('../elements/renderers/TimelineElementRenderer')
 );
 const HeroInvitacionElementRenderer = lazy(() =>
-  import('@/components/editor-framework/elements/renderers/HeroInvitacionElementRenderer')
+  import('../elements/renderers/HeroInvitacionElementRenderer')
 );
 const UbicacionElementRenderer = lazy(() =>
-  import('@/components/editor-framework/elements/renderers/UbicacionElementRenderer')
+  import('../elements/renderers/UbicacionElementRenderer')
 );
 const GaleriaElementRenderer = lazy(() =>
-  import('@/components/editor-framework/elements/renderers/GaleriaElementRenderer')
+  import('../elements/renderers/GaleriaElementRenderer')
 );
 const MesaRegalosElementRenderer = lazy(() =>
-  import('@/components/editor-framework/elements/renderers/MesaRegalosElementRenderer')
+  import('../elements/renderers/MesaRegalosElementRenderer')
 );
 
 /**

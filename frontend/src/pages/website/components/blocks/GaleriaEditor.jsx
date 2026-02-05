@@ -12,7 +12,7 @@
 import { memo } from 'react';
 import {
   GaleriaEditor as CommonGaleriaEditor,
-  GALERIA_CONFIG_WEBSITE,
+  GALERIA_CONFIG_FULL,
 } from '@/components/editor-framework/common-blocks';
 import { ArrayItemsEditor } from './fields';
 
@@ -27,7 +27,7 @@ function GaleriaEditor({ contenido, onGuardar, tema, isSaving }) {
       onGuardar={onGuardar}
       tema={tema}
       isSaving={isSaving}
-      config={GALERIA_CONFIG_WEBSITE}
+      config={GALERIA_CONFIG_FULL}
       ArrayItemsEditorComponent={ArrayItemsEditor}
     />
   );

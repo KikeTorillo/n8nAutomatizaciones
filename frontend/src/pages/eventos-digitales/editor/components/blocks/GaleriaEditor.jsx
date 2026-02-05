@@ -12,7 +12,7 @@
 import { memo } from 'react';
 import {
   GaleriaEditor as CommonGaleriaEditor,
-  GALERIA_CONFIG_INVITACIONES,
+  GALERIA_CONFIG_MINIMAL,
 } from '@/components/editor-framework/common-blocks';
 
 /**
@@ -39,7 +39,7 @@ function GaleriaEditor({
       onChange={onChange}
       tema={tema}
       galeria={galeria}
-      config={GALERIA_CONFIG_INVITACIONES}
+      config={GALERIA_CONFIG_MINIMAL}
       onOpenUnsplash={onOpenUnsplash}
       onUploadImage={onUploadImage}
     />
