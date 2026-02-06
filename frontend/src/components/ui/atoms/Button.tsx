@@ -2,16 +2,14 @@ import { forwardRef, memo, type ButtonHTMLAttributes, type ReactNode } from 'rea
 import { cn } from '@/lib/utils';
 import { Loader2 } from 'lucide-react';
 import { BUTTON_VARIANTS, BUTTON_SIZES, FOCUS_STATES } from '@/lib/uiConstants';
-import type { ButtonVariant, ButtonType } from '@/types/ui';
-
-type ButtonSize = 'sm' | 'md' | 'lg' | 'xl';
+import type { ButtonVariant, ButtonType, UISize } from '@/types/ui';
 
 export interface ButtonProps
   extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'type'> {
   /** Variante visual del botón */
   variant?: ButtonVariant;
   /** Tamaño del botón */
-  size?: ButtonSize;
+  size?: UISize;
   /** Mostrar estado de carga con spinner */
   isLoading?: boolean;
   /** Deshabilitar el botón */

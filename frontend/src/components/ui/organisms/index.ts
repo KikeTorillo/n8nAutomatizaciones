@@ -148,6 +148,16 @@ export type { SearchFilterBarProps } from './SearchFilterBar';
 export { StandardRowActions } from './StandardRowActions';
 export type { StandardRowActionsProps, ExtraAction } from './StandardRowActions';
 
+// Movidos desde molecules/ (Feb 2026) - complejidad justifica clasificación organism
+export { DropdownMenu } from './DropdownMenu';
+export type { DropdownMenuProps } from './DropdownMenu';
+
+export { SearchInput } from './SearchInput';
+export type { SearchInputProps } from './SearchInput';
+
+export { ViewTabs } from './ViewTabs';
+export type { ViewTabsProps } from './ViewTabs';
+
 // Re-export tipos globales de organisms.d.ts
 export type {
   ModalSize,

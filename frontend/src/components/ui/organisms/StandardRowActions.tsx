@@ -2,7 +2,7 @@ import { memo, useState, type ComponentType } from 'react';
 import { Edit2, Trash2, Eye, BarChart3, MoreVertical } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '../atoms/Button';
-import { DropdownMenu } from '../molecules/DropdownMenu';
+import { DropdownMenu } from './DropdownMenu';
 import { ConfirmDialog } from './ConfirmDialog';
 
 /**

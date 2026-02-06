@@ -4,16 +4,20 @@
  * ====================================================================
  *
  * Centraliza escalas de tamaño para consistencia en componentes UI.
+ * Todas las constantes están tipadas con Record<UISize, string> o subsets.
  *
  * Ene 2026 - Refactorización Frontend
+ * Feb 2026 - Migración a TypeScript + UISize unificado
  * ====================================================================
  */
+
+import type { UISize } from '@/types/ui';
 
 /**
  * Alturas estandarizadas para elementos de formulario
  * Garantiza consistencia entre Button, Input, Select, SearchInput
  */
-export const FORM_ELEMENT_HEIGHTS = {
+export const FORM_ELEMENT_HEIGHTS: Record<'sm' | 'md' | 'lg' | 'xl', string> = {
   sm: 'h-9',   // 36px
   md: 'h-10',  // 40px
   lg: 'h-12',  // 48px
@@ -23,7 +27,7 @@ export const FORM_ELEMENT_HEIGHTS = {
 /**
  * Tamaños para botones
  */
-export const BUTTON_SIZES = {
+export const BUTTON_SIZES: Record<'sm' | 'md' | 'lg' | 'xl', string> = {
   sm: 'px-3 text-sm h-9',
   md: 'px-4 text-base h-10',
   lg: 'px-6 text-lg h-12',
@@ -33,7 +37,7 @@ export const BUTTON_SIZES = {
 /**
  * Tamaños para iconos
  */
-export const ICON_SIZES = {
+export const ICON_SIZES: Record<UISize | '2xl' | '3xl', string> = {
   xs: 'w-3 h-3',
   sm: 'w-4 h-4',
   md: 'w-5 h-5',
@@ -46,7 +50,7 @@ export const ICON_SIZES = {
 /**
  * Tamaños para spinners/loaders
  */
-export const SPINNER_SIZES = {
+export const SPINNER_SIZES: Record<'sm' | 'md' | 'lg' | 'xl', string> = {
   sm: 'h-4 w-4',
   md: 'h-8 w-8',
   lg: 'h-12 w-12',
@@ -56,7 +60,8 @@ export const SPINNER_SIZES = {
 /**
  * Tamaños para badges
  */
-export const BADGE_SIZES = {
+export const BADGE_SIZES: Record<'xs' | 'sm' | 'md' | 'lg', string> = {
+  xs: 'text-[10px] px-1.5 py-0',
   sm: 'text-xs px-2 py-0.5',
   md: 'text-sm px-2.5 py-0.5',
   lg: 'text-base px-3 py-1',
@@ -65,7 +70,7 @@ export const BADGE_SIZES = {
 /**
  * Tamaños para inputs (altura estandarizada)
  */
-export const INPUT_SIZES = {
+export const INPUT_SIZES: Record<'sm' | 'md' | 'lg', string> = {
   sm: 'px-3 text-sm h-9',
   md: 'px-4 text-base h-10',
   lg: 'px-5 text-lg h-12',
@@ -74,7 +79,7 @@ export const INPUT_SIZES = {
 /**
  * Tamaños para avatares
  */
-export const AVATAR_SIZES = {
+export const AVATAR_SIZES: Record<UISize | '2xl', string> = {
   xs: 'h-6 w-6 text-xs',
   sm: 'h-8 w-8 text-sm',
   md: 'h-10 w-10 text-base',
@@ -86,7 +91,7 @@ export const AVATAR_SIZES = {
 /**
  * Tamaños para texto
  */
-export const TEXT_SIZES = {
+export const TEXT_SIZES: Record<UISize | '2xl' | '3xl', string> = {
   xs: 'text-xs',
   sm: 'text-sm',
   md: 'text-base',
@@ -99,7 +104,7 @@ export const TEXT_SIZES = {
 /**
  * Tamaños para contenedores con iconos (icon + bg)
  */
-export const ICON_CONTAINER_SIZES = {
+export const ICON_CONTAINER_SIZES: Record<'sm' | 'md' | 'lg' | 'xl', string> = {
   sm: 'p-1.5 rounded',
   md: 'p-2 rounded-lg',
   lg: 'p-3 rounded-lg',
@@ -109,7 +114,7 @@ export const ICON_CONTAINER_SIZES = {
 /**
  * Tamaños para modales (max-width)
  */
-export const MODAL_SIZES = {
+export const MODAL_SIZES: Record<'sm' | 'md' | 'lg' | 'xl' | 'full', string> = {
   sm: 'max-w-md',      // 448px
   md: 'max-w-2xl',     // 672px
   lg: 'max-w-4xl',     // 896px
@@ -120,7 +125,7 @@ export const MODAL_SIZES = {
 /**
  * Tamaños para Drawer (max-height)
  */
-export const DRAWER_SIZES = {
+export const DRAWER_SIZES: Record<'sm' | 'md' | 'lg' | 'xl' | 'full', string> = {
   sm: 'max-h-[50%]',
   md: 'max-h-[75%]',
   lg: 'max-h-[85%]',
@@ -128,10 +133,18 @@ export const DRAWER_SIZES = {
   full: 'max-h-full',
 };
 
+interface SearchInputSizeConfig {
+  input: string;
+  icon: string;
+  paddingLeft: string;
+  paddingRightWithClear: string;
+  paddingRightNormal: string;
+}
+
 /**
  * Tamaños para SearchInput
  */
-export const SEARCH_INPUT_SIZES = {
+export const SEARCH_INPUT_SIZES: Record<'sm' | 'md' | 'lg', SearchInputSizeConfig> = {
   sm: {
     input: 'h-9 text-sm',
     icon: 'w-4 h-4',
@@ -155,10 +168,16 @@ export const SEARCH_INPUT_SIZES = {
   },
 };
 
+interface PaginationSizeConfig {
+  button: string;
+  icon: string;
+  page: string;
+}
+
 /**
  * Tamaños para Pagination
  */
-export const PAGINATION_SIZES = {
+export const PAGINATION_SIZES: Record<'sm' | 'md' | 'lg', PaginationSizeConfig> = {
   sm: {
     button: 'px-2 py-1 text-xs',
     icon: 'w-3 h-3',
@@ -176,10 +195,17 @@ export const PAGINATION_SIZES = {
   },
 };
 
+interface ToggleSizeConfig {
+  track: string;
+  thumb: string;
+  translate: string;
+  icon: string;
+}
+
 /**
  * Tamaños para ToggleSwitch
  */
-export const TOGGLE_SIZES = {
+export const TOGGLE_SIZES: Record<'sm' | 'md' | 'lg', ToggleSizeConfig> = {
   sm: {
     track: 'h-5 w-9',
     thumb: 'h-4 w-4',
@@ -198,21 +224,4 @@ export const TOGGLE_SIZES = {
     translate: 'translate-x-7',
     icon: 'h-5 w-5 m-0.5',
   },
-};
-
-export default {
-  FORM_ELEMENT_HEIGHTS,
-  BUTTON_SIZES,
-  ICON_SIZES,
-  SPINNER_SIZES,
-  BADGE_SIZES,
-  INPUT_SIZES,
-  AVATAR_SIZES,
-  TEXT_SIZES,
-  ICON_CONTAINER_SIZES,
-  MODAL_SIZES,
-  DRAWER_SIZES,
-  SEARCH_INPUT_SIZES,
-  PAGINATION_SIZES,
-  TOGGLE_SIZES,
 };

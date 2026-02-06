@@ -9,14 +9,10 @@ export interface StatCardProps {
   icon: LucideIcon;
   /** Etiqueta descriptiva */
   label?: string;
-  /** @deprecated Usar "label" en su lugar */
-  title?: string;
   /** Valor a mostrar */
   value: number | string;
   /** Texto secundario opcional */
   subtext?: string;
-  /** @deprecated Usar "subtext" en su lugar */
-  subtitle?: string;
   /** Color del icono */
   color?: string;
   /** Tendencia opcional (solo variant=compact) */
@@ -46,10 +42,8 @@ interface IconColorStyles {
 export const StatCard = memo(function StatCard({
   icon: Icon,
   label,
-  title,
   value,
   subtext,
-  subtitle,
   color = 'primary',
   trend,
   variant = 'compact',
@@ -57,15 +51,6 @@ export const StatCard = memo(function StatCard({
   onClick,
   className,
 }: StatCardProps) {
-  // Deprecation warnings en desarrollo
-  if (import.meta.env.DEV) {
-    if (title) console.warn('StatCard: prop "title" está deprecada, usar "label"');
-    if (subtitle) console.warn('StatCard: prop "subtitle" está deprecada, usar "subtext"');
-  }
-
-  // Resolver aliases (mantener retrocompatibilidad)
-  const displayLabel = label || title;
-  const displaySubtext = subtext || subtitle;
   const colors = (ICON_BG_COLORS as Record<string, IconColorStyles>)[color] || ICON_BG_COLORS.primary;
 
   // Estado de carga
@@ -93,11 +78,11 @@ export const StatCard = memo(function StatCard({
         role={onClick ? 'button' : undefined}
         tabIndex={onClick ? 0 : undefined}
         onKeyDown={onClick ? handleKeyDown : undefined}
-        aria-label={`${displayLabel}: ${value}${displaySubtext ? `, ${displaySubtext}` : ''}`}
+        aria-label={`${label}: ${value}${subtext ? `, ${subtext}` : ''}`}
       >
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-            {displayLabel}
+            {label}
           </h3>
           <div className={cn('p-2 rounded-lg', colors.bg)}>
             <Icon className={cn('w-6 h-6', colors.icon)} />
@@ -106,9 +91,9 @@ export const StatCard = memo(function StatCard({
         <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
           {value}
         </p>
-        {displaySubtext && (
+        {subtext && (
           <p className={cn('text-sm mt-1', (SEMANTIC_COLORS as Record<string, { text: string }>).neutral.text)}>
-            {displaySubtext}
+            {subtext}
           </p>
         )}
       </div>
@@ -129,7 +114,7 @@ export const StatCard = memo(function StatCard({
       role={onClick ? 'button' : undefined}
       tabIndex={onClick ? 0 : undefined}
       onKeyDown={onClick ? handleKeyDown : undefined}
-      aria-label={`${displayLabel}: ${value}${displaySubtext ? `, ${displaySubtext}` : ''}`}
+      aria-label={`${label}: ${value}${subtext ? `, ${subtext}` : ''}`}
     >
       <div className="flex items-center gap-2 sm:gap-3">
         <div className={cn('p-2 rounded-lg', colors.bg)}>
@@ -137,7 +122,7 @@ export const StatCard = memo(function StatCard({
         </div>
         <div className="flex-1 min-w-0">
           <p className={cn('text-xs sm:text-sm truncate', (SEMANTIC_COLORS as Record<string, { text: string }>).neutral.text)}>
-            {displayLabel}
+            {label}
           </p>
           <div className="flex items-baseline gap-2">
             <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">
@@ -156,9 +141,9 @@ export const StatCard = memo(function StatCard({
               </span>
             )}
           </div>
-          {displaySubtext && (
+          {subtext && (
             <p className={cn('text-xs mt-1', (SEMANTIC_COLORS as Record<string, { textLight: string }>).neutral.textLight)}>
-              {displaySubtext}
+              {subtext}
             </p>
           )}
         </div>

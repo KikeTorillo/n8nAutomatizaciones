@@ -14,7 +14,7 @@ export interface ProgressBarProps {
   value?: number;
   /** Valor máximo */
   max?: number;
-  /** Porcentaje directo (alternativo a value/max) */
+  /** @deprecated Usar value + max en su lugar. Porcentaje directo */
   percentage?: number;
   /** Etiqueta descriptiva */
   label?: string;

@@ -1,21 +1,16 @@
 import { forwardRef, memo, type InputHTMLAttributes } from 'react';
 import { cn } from '@/lib/utils';
 import { getCheckboxStyles, CHECKBOX_SIZE_CLASSES, getAriaDescribedBy } from '@/lib/uiConstants';
-import type { Size } from '@/types/ui';
+import type { UISize } from '@/types/ui';
 
 export interface CheckboxProps
   extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type' | 'size'> {
   /** Estado del checkbox */
   checked?: boolean;
   /** Tamaño del checkbox */
-  size?: Size;
+  size?: UISize;
   /** Estado deshabilitado */
   disabled?: boolean;
-  /**
-   * Estado de error (borde rojo)
-   * @deprecated Usar hasError en su lugar
-   */
-  error?: boolean;
   /** Si el checkbox tiene error (borde rojo) */
   hasError?: boolean;
   /** Si tiene texto de ayuda asociado */
@@ -42,8 +37,7 @@ const Checkbox = memo(
       className,
       size = 'md',
       disabled = false,
-      error = false,
-      hasError,
+      hasError = false,
       hasHelper = false,
       id,
       checked,
@@ -51,14 +45,6 @@ const Checkbox = memo(
     },
     ref
   ) {
-    // Warning de deprecación para prop error (usar hasError en su lugar)
-    if (import.meta.env?.DEV && error !== false && hasError === undefined) {
-      console.warn('[Checkbox] La prop "error" está deprecada. Usar "hasError" en su lugar.');
-    }
-
-    // hasError toma precedencia sobre error para consistencia con otros inputs
-    const isError = hasError ?? error;
-
     return (
       <input
         ref={ref}
@@ -66,11 +52,10 @@ const Checkbox = memo(
         id={id}
         disabled={disabled}
         checked={checked}
-        aria-checked={checked}
-        aria-invalid={isError || undefined}
-        aria-describedby={id ? getAriaDescribedBy(id, { hasError: isError, hasHelper }) : undefined}
+        aria-invalid={hasError || undefined}
+        aria-describedby={id ? getAriaDescribedBy(id, { hasError, hasHelper }) : undefined}
         className={cn(
-          getCheckboxStyles({ disabled, error: isError }),
+          getCheckboxStyles({ disabled, error: hasError }),
           (CHECKBOX_SIZE_CLASSES as Record<string, string>)[size],
           className
         )}

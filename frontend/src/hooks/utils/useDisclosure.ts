@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 
 export interface UseDisclosureReturn<T = unknown> {
   isOpen: boolean;
@@ -21,6 +21,13 @@ export interface UseDisclosureReturn<T = unknown> {
 export function useDisclosure<T = unknown>(initialOpen = false): UseDisclosureReturn<T> {
   const [isOpen, setIsOpen] = useState(initialOpen);
   const [data, setData] = useState<T | null>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, []);
 
   const open = useCallback((d?: T) => {
     setData(d ?? null);
@@ -30,12 +37,12 @@ export function useDisclosure<T = unknown>(initialOpen = false): UseDisclosureRe
   const close = useCallback(() => {
     setIsOpen(false);
     // Limpiar data después de la animación de cierre
-    setTimeout(() => setData(null), 300);
+    timerRef.current = setTimeout(() => setData(null), 300);
   }, []);
 
   const toggle = useCallback(() => {
     setIsOpen((prev) => {
-      if (prev) setTimeout(() => setData(null), 300);
+      if (prev) timerRef.current = setTimeout(() => setData(null), 300);
       return !prev;
     });
   }, []);

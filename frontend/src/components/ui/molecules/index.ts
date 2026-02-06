@@ -7,8 +7,7 @@
 export { ToggleSwitch } from './ToggleSwitch';
 export type { ToggleSwitchProps } from './ToggleSwitch';
 
-export { SearchInput } from './SearchInput';
-export type { SearchInputProps } from './SearchInput';
+// NOTA: SearchInput movido a organisms/ (Feb 2026) - complejidad de lógica + debounce
 
 export { StatCard } from './StatCard';
 export type { StatCardProps } from './StatCard';
@@ -19,8 +18,7 @@ export type { SkeletonStatCardProps } from './SkeletonStatCard';
 export { EmptyState } from './EmptyState';
 export type { EmptyStateProps } from './EmptyState';
 
-export { ViewTabs } from './ViewTabs';
-export type { ViewTabsProps } from './ViewTabs';
+// NOTA: ViewTabs movido a organisms/ (Feb 2026) - keyboard navigation + ARIA tablist
 
 export { Breadcrumb } from './Breadcrumb';
 export type { BreadcrumbProps } from './Breadcrumb';
@@ -30,6 +28,9 @@ export type { RecordNavigationProps } from './RecordNavigation';
 
 export { SkeletonTable, SkeletonCard, SkeletonList } from './SkeletonTable';
 export type { SkeletonTableProps, SkeletonCardProps, SkeletonListProps } from './SkeletonTable';
+
+export { Skeleton } from './Skeleton';
+export type { SkeletonProps } from './Skeleton';
 
 export { Toast } from './Toast';
 export type { ToastProps } from './Toast';
@@ -60,8 +61,7 @@ export type { FilterChipProps } from './FilterChip';
 export { CheckboxField } from './CheckboxField';
 export type { CheckboxFieldProps } from './CheckboxField';
 
-export { DropdownMenu } from './DropdownMenu';
-export type { DropdownMenuProps } from './DropdownMenu';
+// NOTA: DropdownMenu movido a organisms/ (Feb 2026) - gestión estado + keyboard nav + portal
 
 // NOTA: SmartButtons movido a organisms/ (Ene 2026)
 
@@ -75,10 +75,7 @@ export type { ModalHeaderProps } from './ModalHeader';
 export { DrawerHeader } from './DrawerHeader';
 export type { DrawerHeaderProps } from './DrawerHeader';
 
-// Permisos granulares (Ene 2026) - FIX RBAC
-// DECISIÓN: Mantener en molecules - es wrapper composable similar a FormGroup, no HOC
-export { ConPermiso } from './ConPermiso';
-export type { ConPermisoProps } from './ConPermiso';
+// NOTA: ConPermiso movido a features/auth/components/ (Feb 2026) - depende de lógica RBAC
 
 // Card genérico (Ene 2026)
 export { Card } from './Card';

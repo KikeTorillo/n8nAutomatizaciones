@@ -6,14 +6,14 @@ import {
   getInputPaddingStyles,
   getAriaDescribedBy,
 } from '@/lib/uiConstants';
-import type { Size } from '@/types/ui';
+import type { UISize } from '@/types/ui';
 
 export interface InputProps
   extends Omit<InputHTMLAttributes<HTMLInputElement>, 'size' | 'prefix'> {
   /** Tipo de input HTML */
   type?: string;
   /** Tamaño del input */
-  size?: Size;
+  size?: UISize;
   /** Si tiene error (borde rojo) */
   hasError?: boolean;
   /** Si es campo requerido */

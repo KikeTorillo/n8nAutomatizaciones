@@ -6,14 +6,15 @@ import {
   SEMANTIC_COLORS,
   getLoadingAriaLabel,
 } from '@/lib/uiConstants';
-
-type SpinnerSize = 'sm' | 'md' | 'lg' | 'xl';
+import type { UISize } from '@/types/ui';
 
 export interface LoadingSpinnerProps {
   /** Tamaño del spinner */
-  size?: SpinnerSize;
+  size?: UISize;
   /** Clases adicionales para el icono */
   className?: string;
+  /** Clases adicionales para el wrapper div contenedor */
+  wrapperClassName?: string;
   /** Texto opcional visible debajo del spinner */
   text?: string;
   /** Label para screen readers (usa text si no se provee) */
@@ -29,6 +30,7 @@ export interface LoadingSpinnerProps {
 const LoadingSpinner = memo(function LoadingSpinner({
   size = 'md',
   className,
+  wrapperClassName,
   text,
   'aria-label': ariaLabel,
 }: LoadingSpinnerProps) {
@@ -36,7 +38,7 @@ const LoadingSpinner = memo(function LoadingSpinner({
 
   return (
     <div
-      className="flex flex-col items-center justify-center gap-3"
+      className={cn("flex flex-col items-center justify-center gap-3", wrapperClassName)}
       role="status"
       aria-live="polite"
       aria-label={label}

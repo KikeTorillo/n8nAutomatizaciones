@@ -50,6 +50,8 @@ const CheckboxField = memo(forwardRef<HTMLInputElement, CheckboxFieldProps>(func
 ) {
   const generatedId = useId();
   const checkboxId = id || generatedId;
+  const helperId = `${checkboxId}-helper`;
+  const errorId = `${checkboxId}-error`;
 
   return (
     <div className={cn('flex items-start gap-3', className)}>
@@ -59,6 +61,7 @@ const CheckboxField = memo(forwardRef<HTMLInputElement, CheckboxFieldProps>(func
           id={checkboxId}
           disabled={disabled}
           hasError={!!error}
+          hasHelper={!!description}
           checked={checked}
           onChange={onChange}
           name={name}
@@ -80,15 +83,18 @@ const CheckboxField = memo(forwardRef<HTMLInputElement, CheckboxFieldProps>(func
             />
           )}
           {description && (
-            <p className={cn(
-              'text-xs text-gray-500 dark:text-gray-400 mt-0.5',
-              disabled && 'opacity-50'
-            )}>
+            <p
+              id={helperId}
+              className={cn(
+                'text-xs text-gray-500 dark:text-gray-400 mt-0.5',
+                disabled && 'opacity-50'
+              )}
+            >
               {description}
             </p>
           )}
           {error && (
-            <p className="text-xs text-red-600 dark:text-red-400 mt-1">{error}</p>
+            <p id={errorId} className="text-xs text-red-600 dark:text-red-400 mt-1">{error}</p>
           )}
         </div>
       )}

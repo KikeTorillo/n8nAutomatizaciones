@@ -42,7 +42,15 @@ interface AlertVariantStyles {
 }
 
 /**
- * Alert - Componente de alerta reutilizable
+ * Alert — Mensaje inline persistente dentro del flujo de la página.
+ *
+ * Se renderiza en el lugar donde se coloca y permanece visible hasta que
+ * el usuario lo cierre (si `dismissible`) o hasta que cambie el estado.
+ * Ideal para advertencias de formulario, estados de error permanentes
+ * o información contextual (ej. "Tu suscripción expira pronto").
+ *
+ * Para notificaciones temporales tipo overlay que desaparecen solas
+ * (ej. "Guardado correctamente"), usar {@link Toast}.
  */
 const Alert = memo(function Alert({
   variant = 'info',

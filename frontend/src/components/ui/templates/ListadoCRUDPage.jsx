@@ -1,10 +1,10 @@
 import { useMemo, useCallback, useState, memo } from 'react';
 import { cn } from '@/lib/utils';
 import { DataTable } from '../organisms/DataTable';
-import { SearchInput } from '../molecules/SearchInput';
+import { SearchInput } from '../organisms/SearchInput';
 import { Button } from '../atoms/Button';
 import { StatCardGrid } from '../organisms/StatCardGrid';
-import { ViewTabs } from '../molecules/ViewTabs';
+import { ViewTabs } from '../organisms/ViewTabs';
 import { useFilters, usePagination, normalizePagination, useModalManager, useDeleteConfirmation, useExportCSV } from '@/hooks/utils';
 import { ConfirmDialog } from '../organisms/ConfirmDialog';
 import { Plus, Search, Download } from 'lucide-react';

@@ -13,6 +13,12 @@ export { Badge } from './Badge';
 export { LoadingSpinner } from './LoadingSpinner';
 export { Label } from './Label';
 export { Spinner } from './Spinner';
+export { Divider } from './Divider';
+export { Radio } from './Radio';
+export { RadioGroup } from './RadioGroup';
+export { Tooltip } from './Tooltip';
+export { Avatar } from './Avatar';
+export { Text } from './Text';
 
 // Tipos
 export type { ButtonProps } from './Button';
@@ -24,3 +30,9 @@ export type { BadgeProps } from './Badge';
 export type { LoadingSpinnerProps } from './LoadingSpinner';
 export type { LabelProps } from './Label';
 export type { SpinnerProps } from './Spinner';
+export type { DividerProps } from './Divider';
+export type { RadioProps } from './Radio';
+export type { RadioGroupProps, RadioOption } from './RadioGroup';
+export type { TooltipProps } from './Tooltip';
+export type { AvatarProps } from './Avatar';
+export type { TextProps } from './Text';

@@ -1,7 +1,7 @@
 import { memo, useMemo, type ReactNode, type ChangeEvent } from 'react';
 import { Filter, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { SearchInput } from '../molecules/SearchInput';
+import { SearchInput } from './SearchInput';
 import { Button } from '../atoms/Button';
 import { Badge } from '../atoms/Badge';
 import type { Size } from '@/types/ui';

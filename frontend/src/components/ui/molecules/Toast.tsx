@@ -26,7 +26,14 @@ const icons = {
 } as const;
 
 /**
- * Componente Toast para notificaciones
+ * Toast — Notificación temporal tipo overlay.
+ *
+ * Se muestra brevemente (por defecto 5 s) en una esquina de la pantalla
+ * y desaparece automáticamente. Ideal para confirmar acciones del usuario
+ * (ej. "Guardado correctamente") o reportar errores puntuales.
+ *
+ * Para mensajes que deben permanecer visibles dentro del flujo de la página
+ * (ej. advertencia de formulario, estado de suscripción), usar {@link Alert}.
  */
 const Toast = memo(function Toast({
   id,

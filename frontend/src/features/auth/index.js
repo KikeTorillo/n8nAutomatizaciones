@@ -59,6 +59,7 @@ export {
   SetupGuard,
   GoogleSignInButton,
   PasswordStrengthIndicator,
+  ConPermiso,
 } from './components';
 
 // ========== Páginas ==========

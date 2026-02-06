@@ -7,11 +7,14 @@
 // TAMAÑOS
 // ============================================
 
-/** Tamaños estándar */
-export type Size = 'sm' | 'md' | 'lg';
+/** Escala de tamaños unificada para todos los componentes UI */
+export type UISize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
-/** Tamaños extendidos */
-export type ExtendedSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+/** @deprecated Usar UISize. Alias temporal para backwards-compat */
+export type Size = UISize;
+
+/** @deprecated Usar UISize. Alias temporal para backwards-compat */
+export type ExtendedSize = UISize;
 
 // ============================================
 // VARIANTES

@@ -204,7 +204,7 @@ function CanvasBlock({
             exit={{ opacity: 0, y: isFirstBlock ? 10 : -10 }}
             className={cn(
               'absolute right-2 flex items-center gap-1 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-1 z-20',
-              isFirstBlock ? '-bottom-10' : '-top-10'
+              isFirstBlock ? 'bottom-2' : '-top-10'
             )}
           >
             {/* Toggle Visibility */}

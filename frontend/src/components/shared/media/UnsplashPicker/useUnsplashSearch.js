@@ -13,9 +13,10 @@ import imagesApi from '@/services/api/modules/images.api';
  * Hook para buscar imagenes en Unsplash
  * @param {Object} options - Opciones de configuracion
  * @param {number} options.debounceMs - Tiempo de debounce en ms (default: 300)
+ * @param {Object} options.apiClient - API client con buscarImagenes y descargarImagen (default: imagesApi)
  * @returns {Object} Estado y funciones de busqueda
  */
-export function useUnsplashSearch({ debounceMs = 300 } = {}) {
+export function useUnsplashSearch({ debounceMs = 300, apiClient = imagesApi } = {}) {
   const [query, setQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [page, setPage] = useState(1);
@@ -40,7 +41,7 @@ export function useUnsplashSearch({ debounceMs = 300 } = {}) {
   } = useQuery({
     queryKey: ['unsplash', 'search', debouncedQuery, page],
     queryFn: () =>
-      imagesApi.buscarImagenes({
+      apiClient.buscarImagenes({
         query: debouncedQuery,
         page,
         per_page: 20,
@@ -52,7 +53,7 @@ export function useUnsplashSearch({ debounceMs = 300 } = {}) {
 
   // Mutation para descargar imagen
   const downloadMutation = useMutation({
-    mutationFn: (imageData) => imagesApi.descargarImagen(imageData),
+    mutationFn: (imageData) => apiClient.descargarImagen(imageData),
   });
 
   // Handlers

@@ -21,19 +21,26 @@ export { Checkbox } from './atoms/Checkbox';
 export { Badge } from './atoms/Badge';
 export { LoadingSpinner } from './atoms/LoadingSpinner';
 export { Label } from './atoms/Label';
+export { Divider } from './atoms/Divider';
+export { Radio } from './atoms/Radio';
+export { RadioGroup } from './atoms/RadioGroup';
+export { Tooltip } from './atoms/Tooltip';
+export { Avatar } from './atoms/Avatar';
+export { Text } from './atoms/Text';
 // NOTA: ToggleSwitch movido a molecules/ por complejidad (Ene 2026) - ver sección MOLECULES
 
 // ========== MOLECULES ==========
 export { Alert } from './molecules/Alert';
-export { SearchInput } from './molecules/SearchInput';
+export { SearchInput } from './organisms/SearchInput';
 export { Pagination } from './organisms/Pagination';
 export { StatCard } from './molecules/StatCard';
 export { SkeletonStatCard } from './molecules/SkeletonStatCard';
 export { EmptyState } from './molecules/EmptyState';
-export { ViewTabs } from './molecules/ViewTabs';
+export { ViewTabs } from './organisms/ViewTabs';
 export { Breadcrumb } from './molecules/Breadcrumb';
 export { RecordNavigation } from './molecules/RecordNavigation';
 export { SkeletonTable, SkeletonCard, SkeletonList } from './molecules/SkeletonTable';
+export { Skeleton } from './molecules/Skeleton';
 export { Toast } from './molecules/Toast';
 export { BackButton } from './molecules/BackButton';
 // Componentes con lógica compleja (movidos desde atoms/ Ene 2026)
@@ -44,7 +51,7 @@ export { FormGroup } from './molecules/FormGroup';
 export { SearchFilterBar } from './organisms/SearchFilterBar';
 export { CheckboxGroup } from './organisms/CheckboxGroup';
 export { CheckboxField } from './molecules/CheckboxField';
-export { DropdownMenu } from './molecules/DropdownMenu';
+export { DropdownMenu } from './organisms/DropdownMenu';
 export { ToggleSwitch } from './molecules/ToggleSwitch';
 export { Card } from './molecules/Card';
 
@@ -95,8 +102,8 @@ export { FilterField } from './organisms/FilterField';
 export { ModalHeader } from './molecules/ModalHeader';
 export { DrawerHeader } from './molecules/DrawerHeader';
 
-// Permisos granulares (Ene 2026) - FIX RBAC
-export { ConPermiso } from './molecules/ConPermiso';
+// Permisos granulares - Re-export desde features/auth para no romper imports existentes
+export { ConPermiso } from '@/features/auth/components/ConPermiso';
 
 // Componentes estándar (Ene 2026)
 export { StandardRowActions } from './organisms/StandardRowActions';

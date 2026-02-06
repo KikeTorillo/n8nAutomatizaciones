@@ -6,7 +6,7 @@ import {
   SELECT_SIZE_CLASSES,
   getAriaDescribedBy,
 } from '@/lib/uiConstants';
-import type { Size, SelectOption } from '@/types/ui';
+import type { UISize, SelectOption } from '@/types/ui';
 
 export interface SelectProps
   extends Omit<SelectHTMLAttributes<HTMLSelectElement>, 'size'> {
@@ -15,7 +15,7 @@ export interface SelectProps
   /** Texto de placeholder */
   placeholder?: string;
   /** Tamaño del select */
-  size?: Size;
+  size?: UISize;
   /** Si tiene error (borde rojo) */
   hasError?: boolean;
   /** Si es campo requerido */
@@ -26,8 +26,10 @@ export interface SelectProps
   children?: ReactNode;
   /** ID del elemento */
   id?: string;
-  /** Clases CSS adicionales */
+  /** Clases CSS adicionales para el <select> */
   className?: string;
+  /** Clases CSS para el wrapper <div> contenedor */
+  wrapperClassName?: string;
 }
 
 /**
@@ -56,6 +58,7 @@ const Select = memo(
       hasHelper = false,
       children,
       className,
+      wrapperClassName,
       id,
       ...props
     },
@@ -66,7 +69,7 @@ const Select = memo(
     const selectId = id || generatedId;
 
     return (
-      <div className="relative">
+      <div className={cn("relative", wrapperClassName)}>
         <select
           ref={ref}
           id={selectId}

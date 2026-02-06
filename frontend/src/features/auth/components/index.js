@@ -8,3 +8,4 @@ export { default as ProtectedRoute, NIVEL_MINIMO_POR_ROL, hasRoleAccess } from '
 export { default as SetupGuard } from './SetupGuard';
 export { default as GoogleSignInButton } from './GoogleSignInButton';
 export { default as PasswordStrengthIndicator } from './PasswordStrengthIndicator';
+export { ConPermiso } from './ConPermiso';

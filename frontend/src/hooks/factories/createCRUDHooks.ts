@@ -6,40 +6,7 @@
  * Genera hooks CRUD estandarizados para reducir duplicación de código.
  *
  * Ene 2026 - Refactorización Frontend
- *
- * @example
- * const {
- *   useList,
- *   useDetail,
- *   useCreate,
- *   useUpdate,
- *   useDelete,
- *   useListActive,
- * } = createCRUDHooks({
- *   name: 'proveedor',
- *   namePlural: 'proveedores',
- *   api: inventarioApi,
- *   baseKey: 'proveedores',
- *   apiMethods: {
- *     list: 'listarProveedores',
- *     get: 'obtenerProveedor',
- *     create: 'crearProveedor',
- *     update: 'actualizarProveedor',
- *     delete: 'eliminarProveedor',
- *   },
- *   sanitize: (data) => ({
- *     ...data,
- *     razon_social: data.razon_social?.trim() || undefined,
- *   }),
- *   invalidateOnCreate: ['proveedores'],
- *   invalidateOnUpdate: ['proveedores'],
- *   invalidateOnDelete: ['proveedores'],
- *   errorMessages: {
- *     create: { 409: 'Ya existe un proveedor con ese RFC' },
- *   },
- *   staleTime: STALE_TIMES.SEMI_STATIC,
- *   responseKey: 'proveedores', // Key en response.data.data.proveedores
- * });
+ * Feb 2026 - Migración TypeScript con generics
  * ====================================================================
  */
 
@@ -49,41 +16,64 @@ import { sanitizeParams } from '@/lib/params';
 import { sanitizeFields } from '@/lib/sanitize';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 
-/**
- * Factory para crear hooks CRUD estandarizados
- *
- * @param {Object} config - Configuración del CRUD
- * @param {string} config.name - Nombre singular de la entidad (ej: 'proveedor')
- * @param {string} config.namePlural - Nombre plural (ej: 'proveedores')
- * @param {Object} config.api - Objeto API con los métodos
- * @param {string} config.baseKey - Key base para React Query (ej: 'proveedores')
- * @param {Object} config.apiMethods - Mapeo de métodos API
- * @param {string} config.apiMethods.list - Método para listar
- * @param {string} config.apiMethods.get - Método para obtener detalle
- * @param {string} config.apiMethods.create - Método para crear
- * @param {string} config.apiMethods.update - Método para actualizar
- * @param {string} config.apiMethods.delete - Método para eliminar
- * @param {Function} [config.sanitize] - Función para sanitizar datos antes de enviar
- * @param {string[]} [config.invalidateOnCreate] - Query keys a invalidar al crear
- * @param {string[]} [config.invalidateOnUpdate] - Query keys a invalidar al actualizar
- * @param {string[]} [config.invalidateOnDelete] - Query keys a invalidar al eliminar
- * @param {Object} [config.errorMessages] - Mensajes de error personalizados por operación
- * @param {number} [config.staleTime] - Tiempo de cache (default: SEMI_STATIC)
- * @param {string} [config.responseKey] - Key en la respuesta para extraer datos
- * @param {boolean} [config.usePreviousData] - Mantener datos previos durante paginación (placeholderData)
- * @param {Function} [config.transformList] - Transformar respuesta del list
- * @param {Function} [config.transformDetail] - Transformar respuesta del detail
- *
- * @returns {Object} Hooks CRUD generados
- */
-export function createCRUDHooks(config) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type ApiModule = Record<string, (...args: any[]) => Promise<any>>;
+
+interface ApiMethods {
+  list: string;
+  get: string;
+  create: string;
+  update: string;
+  delete: string;
+}
+
+interface ErrorMessages {
+  create?: Record<number, string>;
+  update?: Record<number, string>;
+  delete?: Record<number, string>;
+}
+
+export interface CRUDHooksConfig<TEntity = unknown, TCreate = unknown, TUpdate = unknown> {
+  name: string;
+  namePlural: string;
+  api: ApiModule;
+  baseKey: string;
+  apiMethods: ApiMethods;
+  sanitize?: (data: TCreate | TUpdate) => TCreate | TUpdate;
+  invalidateOnCreate?: string[];
+  invalidateOnUpdate?: string[];
+  invalidateOnDelete?: string[];
+  errorMessages?: ErrorMessages;
+  staleTime?: number;
+  responseKey?: string;
+  usePreviousData?: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  transformList?: (data: any, pagination: any) => any;
+  transformDetail?: (data: unknown) => TEntity;
+}
+
+export interface CRUDHooksReturn<TEntity = unknown, TCreate = unknown, TUpdate = unknown> {
+  useList: (params?: Record<string, unknown>) => ReturnType<typeof useQuery>;
+  useDetail: (id: string | number | null | undefined) => ReturnType<typeof useQuery>;
+  useCreate: () => ReturnType<typeof useMutation>;
+  useUpdate: () => ReturnType<typeof useMutation>;
+  useDelete: () => ReturnType<typeof useMutation>;
+  useListActive: (extraParams?: Record<string, unknown>) => ReturnType<typeof useQuery>;
+  [key: string]: unknown;
+}
+
+export function createCRUDHooks<
+  TEntity = unknown,
+  TCreate = unknown,
+  TUpdate = unknown,
+>(config: CRUDHooksConfig<TEntity, TCreate, TUpdate>): CRUDHooksReturn<TEntity, TCreate, TUpdate> {
   const {
     name,
     namePlural,
     api,
     baseKey,
     apiMethods,
-    sanitize = (data) => data,
+    sanitize = (data: TCreate | TUpdate) => data,
     invalidateOnCreate = [baseKey],
     invalidateOnUpdate = [baseKey],
     invalidateOnDelete = [baseKey],
@@ -95,30 +85,20 @@ export function createCRUDHooks(config) {
     transformDetail,
   } = config;
 
-  // Capitalizar para mensajes de error
   const entityName = name.charAt(0).toUpperCase() + name.slice(1);
 
-  /**
-   * Hook para listar entidades con filtros
-   */
-  function useList(params = {}) {
+  function useList(params: Record<string, unknown> = {}) {
     return useQuery({
       queryKey: [baseKey, params],
       queryFn: async () => {
         const response = await api[apiMethods.list](sanitizeParams(params));
         const data = response.data.data;
-        // Soportar múltiples ubicaciones de paginación:
-        // - response.data.pagination (legacy)
-        // - response.data.meta (BaseCrudController)
-        // - data.paginacion (modelos que retornan { items: [], paginacion: {} })
         const pagination = response.data.pagination || response.data.meta || data?.paginacion || data?.pagination;
 
-        // Si hay transformList, usarlo (pasar data y pagination)
         if (transformList) {
           return transformList(data, pagination);
         }
 
-        // Si responseKey está definido, extraer de ahí
         if (responseKey) {
           return {
             [responseKey]: data[responseKey] || data,
@@ -127,7 +107,6 @@ export function createCRUDHooks(config) {
           };
         }
 
-        // Por defecto retornar data directamente (backwards compatible)
         return data;
       },
       staleTime,
@@ -135,10 +114,7 @@ export function createCRUDHooks(config) {
     });
   }
 
-  /**
-   * Hook para obtener entidad por ID
-   */
-  function useDetail(id) {
+  function useDetail(id: string | number | null | undefined) {
     return useQuery({
       queryKey: [name, id],
       queryFn: async () => {
@@ -151,14 +127,11 @@ export function createCRUDHooks(config) {
     });
   }
 
-  /**
-   * Hook para crear entidad
-   */
   function useCreate() {
     const queryClient = useQueryClient();
 
     return useMutation({
-      mutationFn: async (data) => {
+      mutationFn: async (data: TCreate) => {
         const sanitized = sanitize(data);
         const response = await api[apiMethods.create](sanitized);
         return response.data.data;
@@ -172,38 +145,30 @@ export function createCRUDHooks(config) {
     });
   }
 
-  /**
-   * Hook para actualizar entidad
-   */
   function useUpdate() {
     const queryClient = useQueryClient();
 
     return useMutation({
-      mutationFn: async ({ id, data }) => {
+      mutationFn: async ({ id, data }: { id: string | number; data: TUpdate }) => {
         const sanitized = sanitize(data);
         const response = await api[apiMethods.update](id, sanitized);
         return response.data.data;
       },
-      onSuccess: (_, variables) => {
-        // Invalidar queries configuradas
+      onSuccess: (_: unknown, variables: { id: string | number; data: TUpdate }) => {
         invalidateOnUpdate.forEach((key) => {
           queryClient.invalidateQueries({ queryKey: [key], refetchType: 'active' });
         });
-        // Siempre invalidar el detalle específico
         queryClient.invalidateQueries({ queryKey: [name, variables.id], refetchType: 'active' });
       },
       onError: createCRUDErrorHandler('update', entityName, errorMessages.update || {}),
     });
   }
 
-  /**
-   * Hook para eliminar entidad
-   */
   function useDelete() {
     const queryClient = useQueryClient();
 
     return useMutation({
-      mutationFn: async (id) => {
+      mutationFn: async (id: string | number) => {
         const response = await api[apiMethods.delete](id);
         return response?.data?.data ?? id;
       },
@@ -216,10 +181,7 @@ export function createCRUDHooks(config) {
     });
   }
 
-  /**
-   * Hook auxiliar para listar solo activos
-   */
-  function useListActive(extraParams = {}) {
+  function useListActive(extraParams: Record<string, unknown> = {}) {
     return useList({ activo: true, ...extraParams });
   }
 
@@ -230,7 +192,6 @@ export function createCRUDHooks(config) {
     useUpdate,
     useDelete,
     useListActive,
-    // Aliases con nombres más descriptivos
     [`use${namePlural.charAt(0).toUpperCase() + namePlural.slice(1)}`]: useList,
     [`use${entityName}`]: useDetail,
     [`useCrear${entityName}`]: useCreate,
@@ -240,15 +201,10 @@ export function createCRUDHooks(config) {
   };
 }
 
-/**
- * Helper para crear funciones de sanitización
- * Wrapper sobre sanitizeFields para compatibilidad con API existente
- *
- * @param {Array} fields - Array de campos: string o { name, type }
- * @returns {Function} - Función sanitizadora
- */
-export function createSanitizer(fields) {
-  const config = {};
+type SanitizerFieldType = 'string' | 'number' | 'boolean';
+
+export function createSanitizer(fields: (string | { name: string; type: SanitizerFieldType })[]) {
+  const config: Record<string, SanitizerFieldType> = {};
 
   fields.forEach((field) => {
     if (typeof field === 'string') {
@@ -258,13 +214,10 @@ export function createSanitizer(fields) {
     }
   });
 
-  return (data) => sanitizeFields(data, config);
+  return <T extends Record<string, unknown>>(data: T) => sanitizeFields(data, config);
 }
 
-/**
- * Helper para crear invalidaciones con keys adicionales
- */
-export function createInvalidator(baseKeys, additionalKeys = []) {
+export function createInvalidator(baseKeys: string[], additionalKeys: string[] = []): string[] {
   return [...baseKeys, ...additionalKeys];
 }
 
