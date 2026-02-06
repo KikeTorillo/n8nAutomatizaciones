@@ -1,7 +1,8 @@
 /**
  * RangeField - Campo de rango/slider
  */
-import { memo } from 'react';
+import { memo, useId } from 'react';
+import { Label } from '@/components/ui/atoms';
 
 function RangeField({ field, label: labelProp, min: minProp, max: maxProp, step: stepProp, showPercent: showPercentProp = true, value, onChange }) {
   // Soporta tanto {field} como props directos
@@ -10,16 +11,16 @@ function RangeField({ field, label: labelProp, min: minProp, max: maxProp, step:
   const max = field?.max ?? maxProp;
   const step = field?.step ?? stepProp;
   const showPercent = field?.showPercent ?? showPercentProp;
+  const fieldId = useId();
   const displayValue = showPercent
     ? `${Math.round((value || 0) * 100)}%`
     : value || 0;
 
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-        {label}: {displayValue}
-      </label>
+      <Label label={`${label}: ${displayValue}`} htmlFor={fieldId} className="mb-1" />
       <input
+        id={fieldId}
         type="range"
         value={value || 0}
         onChange={(e) => onChange(Number(e.target.value))}

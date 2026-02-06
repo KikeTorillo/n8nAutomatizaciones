@@ -9,6 +9,7 @@
  */
 
 import { memo } from 'react';
+import { THEME_FALLBACK_COLORS } from '@/lib/uiConstants';
 
 /**
  * Separador Canvas Block
@@ -26,7 +27,8 @@ function SeparadorCanvasBlock({ bloque, tema }) {
   const altura = estilos.altura ?? contenido.altura ?? 40;
   const color = estilos.color || contenido.color;
 
-  const colorPrimario = tema?.color_primario || '#753572';
+  const INV = THEME_FALLBACK_COLORS.invitacion;
+  const colorPrimario = tema?.color_primario || INV.primario;
   const colorFinal = color || colorPrimario;
 
   // Renderizar separador según estilo

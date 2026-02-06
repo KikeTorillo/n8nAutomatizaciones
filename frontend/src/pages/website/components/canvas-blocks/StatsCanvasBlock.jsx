@@ -18,6 +18,7 @@ import {
   Zap,
 } from 'lucide-react';
 import { InlineText } from '../InlineEditor';
+import { THEME_FALLBACK_COLORS } from '@/lib/uiConstants';
 
 // Icon mapping
 const ICONS = {
@@ -68,9 +69,10 @@ function useCountAnimation(end, duration = 2000, shouldStart = false) {
  * Stat Item Component
  */
 function StatItem({ stat, index, tema, isEditing, onUpdate, shouldAnimate }) {
+  const WEB = THEME_FALLBACK_COLORS.website;
   const { numero, prefijo = '', sufijo = '', titulo, icono = 'star' } = stat;
   const animatedValue = useCountAnimation(numero, 2000, shouldAnimate);
-  const colorPrimario = tema?.color_primario || '#753572';
+  const colorPrimario = tema?.color_primario || WEB.primario;
   const Icon = ICONS[icono] || Star;
 
   return (
@@ -165,7 +167,8 @@ function StatsCanvasBlock({ bloque, tema, isEditing, onContentChange }) {
     onContentChange({ items: newItems });
   };
 
-  const colorPrimario = tema?.color_primario || '#753572';
+  const WEB = THEME_FALLBACK_COLORS.website;
+  const colorPrimario = tema?.color_primario || WEB.primario;
 
   return (
     <section

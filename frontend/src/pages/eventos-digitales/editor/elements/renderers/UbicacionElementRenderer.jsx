@@ -12,6 +12,7 @@
 import { memo } from 'react';
 import PropTypes from 'prop-types';
 import { MapPin, Navigation, ExternalLink } from 'lucide-react';
+import { THEME_FALLBACK_COLORS } from '@/lib/uiConstants';
 
 // Generar URL de embed de Google Maps desde coordenadas o dirección
 const getMapEmbedUrl = (ubicacion) => {
@@ -49,10 +50,11 @@ function UbicacionElementRenderer({
     : evento?.ubicaciones || [];
 
   // Estilos del tema
-  const colorPrimario = tema?.color_primario || '#753572';
-  const colorSecundario = tema?.color_secundario || '#fce7f3';
-  const colorTexto = tema?.color_texto || '#1f2937';
-  const colorTextoClaro = tema?.color_texto_claro || '#6b7280';
+  const INV = THEME_FALLBACK_COLORS.invitacion;
+  const colorPrimario = tema?.color_primario || INV.primario;
+  const colorSecundario = tema?.color_secundario || INV.secundario;
+  const colorTexto = tema?.color_texto || INV.texto;
+  const colorTextoClaro = tema?.color_texto_claro || INV.textoClaro;
   const fuenteTitulo = tema?.fuente_titulos || 'inherit';
 
   // Mostrar placeholder si no hay ubicaciones en modo edición

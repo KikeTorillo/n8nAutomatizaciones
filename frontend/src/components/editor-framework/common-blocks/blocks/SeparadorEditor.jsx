@@ -16,6 +16,7 @@ import BaseBlockEditor from '../../blocks/BaseBlockEditor';
 import BaseAutoSaveEditor from '../../blocks/BaseAutoSaveEditor';
 import { useCommonBlockEditor } from '../hooks';
 import { SEPARADOR_DEFAULTS } from '../config';
+import { THEME_FALLBACK_COLORS } from '@/lib/uiConstants';
 
 // ========== ESTILOS PREDEFINIDOS ==========
 
@@ -204,7 +205,7 @@ function SeparadorEditor({
   );
 
   // Color final (del formulario o del tema)
-  const colorFinal = form.color || tema?.color_primario || tema?.colores?.primario || '#753572';
+  const colorFinal = form.color || tema?.color_primario || tema?.colores?.primario || THEME_FALLBACK_COLORS.invitacion.primario;
 
   // Opciones de select
   const grosorOptions = [

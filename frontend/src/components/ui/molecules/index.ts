@@ -68,12 +68,9 @@ export type { CheckboxFieldProps } from './CheckboxField';
 // NOTA: FilterField movido a organisms/ por complejidad multi-tipo (Ene 2026)
 // Importar desde '@/components/ui/organisms' o '@/components/ui'
 
-// Headers extraídos (Ene 2026)
-export { ModalHeader } from './ModalHeader';
-export type { ModalHeaderProps } from './ModalHeader';
-
-export { DrawerHeader } from './DrawerHeader';
-export type { DrawerHeaderProps } from './DrawerHeader';
+// Header unificado para overlays (Feb 2026) — reemplaza ModalHeader + DrawerHeader (dead code eliminado)
+export { OverlayHeader } from './OverlayHeader';
+export type { OverlayHeaderProps } from './OverlayHeader';
 
 // NOTA: ConPermiso movido a features/auth/components/ (Feb 2026) - depende de lógica RBAC
 

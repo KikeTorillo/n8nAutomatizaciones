@@ -11,6 +11,7 @@
 import { memo, useMemo } from 'react';
 import { Video, Play } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { THEME_FALLBACK_COLORS } from '@/lib/uiConstants';
 
 /**
  * Video Canvas Block
@@ -33,9 +34,10 @@ function VideoCanvasBlock({ bloque, tema }) {
   const autoplay = estilos.autoplay ?? contenido.autoplay ?? false;
   const mostrar_controles = estilos.mostrar_controles ?? contenido.mostrar_controles ?? true;
 
-  const colorPrimario = tema?.color_primario || '#753572';
-  const colorFondo = tema?.color_fondo || '#FFFFFF';
-  const colorTextoClaro = tema?.color_texto_claro || '#6b7280';
+  const INV = THEME_FALLBACK_COLORS.invitacion;
+  const colorPrimario = tema?.color_primario || INV.primario;
+  const colorFondo = tema?.color_fondo || INV.fondo;
+  const colorTextoClaro = tema?.color_texto_claro || INV.textoClaro;
 
   // Extraer ID de YouTube
   const getYouTubeId = (url) => {

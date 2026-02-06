@@ -9,6 +9,7 @@ import { memo } from 'react';
 import { cn } from '@/lib/utils';
 import { Check, Star } from 'lucide-react';
 import { InlineText } from '../InlineEditor';
+import { THEME_FALLBACK_COLORS } from '@/lib/uiConstants';
 
 /**
  * Pricing Canvas Block
@@ -66,7 +67,8 @@ function PricingCanvasBlock({ bloque, tema, isEditing, onContentChange }) {
     onContentChange({ planes: newPlanes });
   };
 
-  const colorPrimario = tema?.color_primario || '#753572';
+  const WEB = THEME_FALLBACK_COLORS.website;
+  const colorPrimario = tema?.color_primario || WEB.primario;
 
   return (
     <section className="py-16 px-6 bg-gray-50 dark:bg-gray-900">

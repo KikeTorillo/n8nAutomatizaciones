@@ -24,6 +24,9 @@ import { AISuggestionBanner } from '../AIGenerator';
 import { SectionTitleField, ArrayItemsEditor } from './fields';
 import ServiciosERPSelector from './ServiciosERPSelector';
 import websiteApi from '@/services/api/modules/website.api';
+import { THEME_FALLBACK_COLORS } from '@/lib/uiConstants';
+
+const WEB = THEME_FALLBACK_COLORS.website;
 
 /**
  * ServiciosEditor - Editor del bloque Servicios
@@ -172,7 +175,7 @@ function ServiciosEditor({ contenido, onGuardar, tema, isSaving, industria = 'de
 
     return (
       <>
-        <h4 className="font-bold text-center mb-1" style={{ color: tema?.colores?.texto || '#1F2937' }}>
+        <h4 className="font-bold text-center mb-1" style={{ color: tema?.colores?.texto || WEB.texto }}>
           {form.titulo_seccion}
         </h4>
         {form.subtitulo_seccion && (

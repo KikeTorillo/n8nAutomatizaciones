@@ -1,8 +1,8 @@
 import { memo, forwardRef, type ReactNode } from 'react';
 import { Drawer as VaulDrawer } from 'vaul';
-import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { DRAWER_SIZES } from '@/lib/uiConstants';
+import { OverlayHeader } from '../molecules/OverlayHeader';
 
 /**
  * Tamaño del drawer
@@ -99,30 +99,16 @@ const DrawerComponent = memo(forwardRef<HTMLDivElement, DrawerProps>(function Dr
             )}
 
             {/* Header */}
-            {title && (
-              <div className="px-6 pb-4 border-b border-gray-200 dark:border-gray-700 flex items-start justify-between">
-                <div className="flex-1">
-                  <VaulDrawer.Title className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-                    {title}
-                  </VaulDrawer.Title>
-                  {subtitle && (
-                    <VaulDrawer.Description className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                      {subtitle}
-                    </VaulDrawer.Description>
-                  )}
-                </div>
-                {showCloseButton && !disableClose && (
-                  <button
-                    type="button"
-                    onClick={onClose}
-                    className="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                    aria-label="Cerrar"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                )}
-              </div>
-            )}
+            <OverlayHeader
+              title={title}
+              subtitle={subtitle}
+              titleAs={VaulDrawer.Title}
+              subtitleAs={VaulDrawer.Description}
+              onClose={disableClose ? undefined : onClose}
+              showCloseButton={showCloseButton}
+              disableClose={disableClose}
+              className="px-6 pb-4 pt-0"
+            />
 
             {/* Contenido scrollable */}
             <div

@@ -98,7 +98,9 @@ const eventosSchemas = {
                 mostrar_qr_invitado: Joi.boolean().optional(),
                 habilitar_seating_chart: Joi.boolean().optional(),
                 mensaje_bienvenida: Joi.string().max(500).optional().allow(null, ''),
-                mensaje_confirmacion: Joi.string().max(500).optional().allow(null, '')
+                mensaje_confirmacion: Joi.string().max(500).optional().allow(null, ''),
+                animacion_apertura: Joi.string().valid('none', 'sobre', 'globos', 'flores').optional(),
+                texto_apertura: Joi.string().max(100).optional().allow(null, ''),
             }).optional(),
 
             plantilla: plantillaSchema

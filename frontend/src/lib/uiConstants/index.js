@@ -261,3 +261,9 @@ export {
   getPageHeaderIconColor,
   PAGE_HEADER_STYLES,
 } from './pageHeader';
+
+// Theme Defaults (Feb 2026)
+export {
+  THEME_FALLBACK_COLORS,
+  getThemeFallback,
+} from './themeDefaults';

@@ -9,11 +9,13 @@ import { memo } from 'react';
 import { cn } from '@/lib/utils';
 import { Star, Quote } from 'lucide-react';
 import { InlineText } from '../InlineEditor';
+import { THEME_FALLBACK_COLORS } from '@/lib/uiConstants';
 
 /**
  * Testimonios Canvas Block
  */
 function TestimoniosCanvasBlock({ bloque, tema, isEditing, onContentChange }) {
+  const WEB = THEME_FALLBACK_COLORS.website;
   const contenido = bloque.contenido || {};
   const {
     titulo_seccion = 'Lo que dicen nuestros clientes',
@@ -116,7 +118,7 @@ function TestimoniosCanvasBlock({ bloque, tema, isEditing, onContentChange }) {
               {/* Quote icon */}
               <Quote
                 className="absolute top-4 right-4 w-8 h-8 opacity-10"
-                style={{ color: `var(--color-primario, ${tema?.color_primario || '#753572'})` }}
+                style={{ color: `var(--color-primario, ${tema?.color_primario || WEB.primario})` }}
               />
 
               {/* Rating */}
@@ -151,7 +153,7 @@ function TestimoniosCanvasBlock({ bloque, tema, isEditing, onContentChange }) {
                   <div
                     className="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold"
                     style={{
-                      backgroundColor: `var(--color-primario, ${tema?.color_primario || '#753572'})`,
+                      backgroundColor: `var(--color-primario, ${tema?.color_primario || WEB.primario})`,
                     }}
                   >
                     {testimonio.nombre?.charAt(0)?.toUpperCase() || '?'}

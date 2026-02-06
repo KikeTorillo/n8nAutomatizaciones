@@ -1,8 +1,8 @@
 import { memo, useEffect, useCallback, forwardRef, useId, type ReactNode } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X } from 'lucide-react';
 import FocusTrap from 'focus-trap-react';
 import { MODAL_SIZES } from '@/lib/uiConstants';
+import { OverlayHeader } from '../molecules/OverlayHeader';
 import type { ModalSize } from '@/types/organisms';
 
 /**
@@ -121,34 +121,14 @@ const Modal = memo(forwardRef<HTMLDivElement, ModalProps>(function Modal(
                 `}
               >
                 {/* Header */}
-                {title && (
-                  <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-                    <div>
-                      <h2
-                        id={titleId}
-                        className="text-xl font-semibold text-gray-900 dark:text-gray-100"
-                      >
-                        {title}
-                      </h2>
-                      {subtitle && (
-                        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                          {subtitle}
-                        </p>
-                      )}
-                    </div>
-                    {showCloseButton && (
-                      <button
-                        type="button"
-                        onClick={onClose}
-                        disabled={disableClose}
-                        className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors disabled:opacity-50"
-                        aria-label="Cerrar modal"
-                      >
-                        <X className="w-6 h-6" />
-                      </button>
-                    )}
-                  </div>
-                )}
+                <OverlayHeader
+                  title={title}
+                  subtitle={subtitle}
+                  titleId={titleId}
+                  onClose={disableClose ? undefined : onClose}
+                  showCloseButton={showCloseButton}
+                  disableClose={disableClose}
+                />
 
                 {/* Content */}
                 <div className="overflow-y-auto flex-1 p-6">{children}</div>

@@ -14,6 +14,7 @@ import { memo, useMemo } from 'react';
 import { Select } from '@/components/ui';
 import { BaseBlockEditor, useBlockEditor } from '@/components/editor-framework';
 import { ColorPickerField } from './fields';
+import { THEME_FALLBACK_COLORS } from '@/lib/uiConstants';
 
 /**
  * SeparadorEditor - Editor del bloque Separador
@@ -41,7 +42,7 @@ function SeparadorEditor({ contenido, onGuardar, tema, isSaving }) {
     defaultValues
   );
 
-  const colorActual = form.color || tema?.colores?.primario || '#E5E7EB';
+  const colorActual = form.color || tema?.colores?.primario || THEME_FALLBACK_COLORS.common.separador;
   const isEspacioOnly = form.estilo === 'espacio';
 
   // Helpers para preview

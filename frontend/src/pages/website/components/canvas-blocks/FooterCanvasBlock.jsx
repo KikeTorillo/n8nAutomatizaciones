@@ -8,6 +8,7 @@
 import { memo } from 'react';
 import { Instagram, Facebook, Twitter, Linkedin, Youtube } from 'lucide-react';
 import { InlineText } from '../InlineEditor';
+import { THEME_FALLBACK_COLORS } from '@/lib/uiConstants';
 
 /**
  * Footer Canvas Block
@@ -60,7 +61,7 @@ function FooterCanvasBlock({ bloque, tema, isEditing, onContentChange }) {
     <footer
       className="py-12 px-6"
       style={{
-        backgroundColor: `var(--color-secundario, ${tema?.color_secundario || '#1F2937'})`,
+        backgroundColor: `var(--color-secundario, ${tema?.color_secundario || THEME_FALLBACK_COLORS.website.texto})`,
       }}
     >
       <div className="max-w-6xl mx-auto">

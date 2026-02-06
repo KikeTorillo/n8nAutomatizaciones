@@ -10,6 +10,7 @@
 
 import { memo } from 'react';
 import { MapPin, Navigation, ExternalLink } from 'lucide-react';
+import { THEME_FALLBACK_COLORS } from '@/lib/uiConstants';
 
 // Generar URL de embed de Google Maps desde coordenadas o dirección
 const getMapEmbedUrl = (ubicacion) => {
@@ -49,10 +50,11 @@ function UbicacionCanvasBlock({ bloque, tema, ubicaciones = [] }) {
   // mostrar_mapa se guarda en contenido (el editor flat form → actualizarBloqueLocal → contenido)
   const mostrarMapa = (contenido.mostrar_mapa ?? estilos.mostrar_mapa) !== false;
 
-  const colorPrimario = tema?.color_primario || '#753572';
-  const colorTexto = tema?.color_texto || '#1f2937';
-  const colorTextoClaro = tema?.color_texto_claro || '#6b7280';
-  const colorSecundario = tema?.color_secundario || '#F59E0B';
+  const INV = THEME_FALLBACK_COLORS.invitacion;
+  const colorPrimario = tema?.color_primario || INV.primario;
+  const colorTexto = tema?.color_texto || INV.texto;
+  const colorTextoClaro = tema?.color_texto_claro || INV.textoClaro;
+  const colorSecundario = tema?.color_secundario || INV.acento;
 
   // Filtrar ubicaciones a mostrar (== para comparar string/number)
   const ubicacionesAMostrar = mostrar_todas

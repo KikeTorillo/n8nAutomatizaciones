@@ -11,6 +11,9 @@
 import { memo } from 'react';
 import { Calendar, Clock, ChevronDown } from 'lucide-react';
 import { useParams } from 'react-router-dom';
+import { THEME_FALLBACK_COLORS } from '@/lib/uiConstants';
+
+const INV = THEME_FALLBACK_COLORS.invitacion;
 import {
   PatronFondo,
   DecoracionEsquinas,
@@ -41,7 +44,7 @@ function HeroPublico({
   const alineacion = estilos.alineacion || contenido.alineacion || 'center';
   const overlayOpacidad = contenido.imagen_overlay ?? estilos.overlay_opacidad ?? 0.3;
   const tipoOverlay = contenido.tipo_overlay || 'uniforme';
-  const colorOverlay = contenido.color_overlay || '#000000';
+  const colorOverlay = contenido.color_overlay || INV.overlay;
   const mostrarFecha = estilos.mostrar_fecha !== false;
   const mostrarHora = estilos.mostrar_hora !== false;
   const mostrarCalendario = contenido.mostrar_calendario !== false;
@@ -95,7 +98,7 @@ function HeroPublico({
             className="absolute inset-0"
             style={{
               background: tipoOverlay === 'gradiente'
-                ? `linear-gradient(to bottom, rgba(${overlayRgb},${overlayOpacidad}) 0%, rgba(${overlayRgb},${overlayOpacidad + 0.1}) 40%, ${tema?.color_fondo || '#fdf2f8'}dd 80%, ${tema?.color_fondo || '#fdf2f8'} 100%)`
+                ? `linear-gradient(to bottom, rgba(${overlayRgb},${overlayOpacidad}) 0%, rgba(${overlayRgb},${overlayOpacidad + 0.1}) 40%, ${tema?.color_fondo || INV.fondoHero}dd 80%, ${tema?.color_fondo || INV.fondoHero} 100%)`
                 : `rgba(${overlayRgb},${overlayOpacidad})`,
             }}
           />
@@ -104,7 +107,7 @@ function HeroPublico({
         <div
           className="absolute inset-0"
           style={{
-            backgroundColor: contenido.color_fondo_hero || tema?.color_secundario || '#fce7f3',
+            backgroundColor: contenido.color_fondo_hero || tema?.color_secundario || INV.secundario,
           }}
         />
       )}

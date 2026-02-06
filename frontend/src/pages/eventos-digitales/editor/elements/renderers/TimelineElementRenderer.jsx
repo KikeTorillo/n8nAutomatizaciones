@@ -15,6 +15,7 @@ import { memo, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import * as LucideIcons from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { THEME_FALLBACK_COLORS } from '@/lib/uiConstants';
 
 // ========== COMPONENT ==========
 
@@ -33,10 +34,11 @@ function TimelineElementRenderer({
   const layout = estilos.layout || contenido.layout || 'alternado';
 
   // Colores
-  const colorPrimario = estilos.color_primario || tema?.color_primario || '#753572';
-  const colorFondo = tema?.color_fondo || '#FFFFFF';
-  const colorTexto = estilos.color_texto || tema?.color_texto || '#1f2937';
-  const colorTextoClaro = estilos.color_texto_claro || tema?.color_texto_claro || '#6b7280';
+  const INV = THEME_FALLBACK_COLORS.invitacion;
+  const colorPrimario = estilos.color_primario || tema?.color_primario || INV.primario;
+  const colorFondo = tema?.color_fondo || INV.fondo;
+  const colorTexto = estilos.color_texto || tema?.color_texto || INV.texto;
+  const colorTextoClaro = estilos.color_texto_claro || tema?.color_texto_claro || INV.textoClaro;
   const colorLinea = estilos.color_linea || contenido.color_linea || colorPrimario;
   const fuenteTitulo = estilos.fuente_titulo || tema?.fuente_titulos || 'inherit';
 

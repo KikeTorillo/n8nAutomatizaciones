@@ -12,6 +12,7 @@
 import { memo } from 'react';
 import PropTypes from 'prop-types';
 import { Calendar, Clock } from 'lucide-react';
+import { THEME_FALLBACK_COLORS } from '@/lib/uiConstants';
 
 function HeroInvitacionElementRenderer({
   elemento,
@@ -29,7 +30,8 @@ function HeroInvitacionElementRenderer({
   const alineacion = contenido.alineacion || 'center';
   const overlayOpacidad = contenido.imagen_overlay ?? 0.3;
   const tipoOverlay = contenido.tipo_overlay || 'uniforme';
-  const colorOverlay = contenido.color_overlay || '#000000';
+  const INV = THEME_FALLBACK_COLORS.invitacion;
+  const colorOverlay = contenido.color_overlay || INV.overlay;
   const mostrarCalendario = contenido.mostrar_calendario !== false;
   const mostrarFecha = contenido.mostrar_fecha !== false;
   const mostrarHora = contenido.mostrar_hora !== false;
@@ -47,10 +49,10 @@ function HeroInvitacionElementRenderer({
   const tieneImagenFondo = !!imagenUrl;
 
   // Estilos del tema
-  const colorPrimario = tema?.color_primario || '#753572';
-  const colorSecundario = tema?.color_secundario || '#fce7f3';
-  const colorTexto = tema?.color_texto || '#1f2937';
-  const colorTextoClaro = tema?.color_texto_claro || '#6b7280';
+  const colorPrimario = tema?.color_primario || INV.primario;
+  const colorSecundario = tema?.color_secundario || INV.secundario;
+  const colorTexto = tema?.color_texto || INV.texto;
+  const colorTextoClaro = tema?.color_texto_claro || INV.textoClaro;
   const fuenteTitulo = tema?.fuente_titulos || 'inherit';
 
   // Clases de alineación

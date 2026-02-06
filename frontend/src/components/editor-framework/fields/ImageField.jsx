@@ -1,8 +1,11 @@
 /**
  * ImageField - Campo de imagen con Unsplash y Upload
  */
-import { memo, useRef, useState } from 'react';
+import { memo, useRef, useState, useId } from 'react';
 import { Image as ImageIcon, ImagePlus, Upload, Loader2 } from 'lucide-react';
+import { Input } from '@/components/ui/atoms';
+import { Label } from '@/components/ui/atoms';
+import { Button } from '@/components/ui/atoms';
 
 function ImageField({
   field,
@@ -19,6 +22,7 @@ function ImageField({
   const key = field?.key ?? fieldKey ?? 'image';
   const fileInputRef = useRef(null);
   const [localUploading, setLocalUploading] = useState(false);
+  const fieldId = useId();
 
   const uploading = isUploading || localUploading;
 
@@ -45,37 +49,39 @@ function ImageField({
   return (
     <div>
       <div className="flex items-center justify-between mb-1">
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-          {label}
-        </label>
+        <Label label={label} htmlFor={fieldId} />
         <div className="flex items-center gap-1">
           {onOpenUnsplash && (
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              size="sm"
               onClick={() => onOpenUnsplash?.(key)}
               disabled={uploading}
-              className="flex items-center gap-1 px-2 py-1 text-xs text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded transition-colors disabled:opacity-50"
+              className="h-auto px-2 py-1 text-xs"
               title="Buscar en Unsplash"
             >
-              <ImagePlus className="w-3.5 h-3.5" />
+              <ImagePlus className="w-3.5 h-3.5 mr-1" />
               Unsplash
-            </button>
+            </Button>
           )}
           {onUpload && (
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              size="sm"
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
-              className="flex items-center gap-1 px-2 py-1 text-xs text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded transition-colors disabled:opacity-50"
+              className="h-auto px-2 py-1 text-xs"
               title="Subir imagen"
             >
               {uploading ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
               ) : (
-                <Upload className="w-3.5 h-3.5" />
+                <Upload className="w-3.5 h-3.5 mr-1" />
               )}
               Subir
-            </button>
+            </Button>
           )}
         </div>
       </div>
@@ -89,16 +95,14 @@ function ImageField({
         className="hidden"
       />
 
-      <div className="relative">
-        <ImageIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-        <input
-          type="url"
-          value={value || ''}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder="URL de la imagen"
-          className="w-full pl-9 pr-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white text-sm focus:ring-1 focus:ring-primary-500"
-        />
-      </div>
+      <Input
+        id={fieldId}
+        type="url"
+        value={value || ''}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="URL de la imagen"
+        prefix={<ImageIcon className="w-4 h-4 text-gray-400" />}
+      />
       {value && (
         <img
           src={value}

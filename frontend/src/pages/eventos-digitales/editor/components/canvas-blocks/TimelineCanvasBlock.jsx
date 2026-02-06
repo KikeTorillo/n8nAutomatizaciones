@@ -11,6 +11,7 @@
 import { memo } from 'react';
 import { cn } from '@/lib/utils';
 import * as LucideIcons from 'lucide-react';
+import { THEME_FALLBACK_COLORS } from '@/lib/uiConstants';
 
 /**
  * Timeline Canvas Block
@@ -32,10 +33,11 @@ function TimelineCanvasBlock({ bloque, tema }) {
   const layout = estilos.layout || contenido.layout || 'alternado';
   const color_linea = estilos.color_linea || contenido.color_linea;
 
-  const colorPrimario = tema?.color_primario || '#753572';
-  const colorFondo = tema?.color_fondo || '#FFFFFF';
-  const colorTexto = tema?.color_texto || '#1f2937';
-  const colorTextoClaro = tema?.color_texto_claro || '#6b7280';
+  const INV = THEME_FALLBACK_COLORS.invitacion;
+  const colorPrimario = tema?.color_primario || INV.primario;
+  const colorFondo = tema?.color_fondo || INV.fondo;
+  const colorTexto = tema?.color_texto || INV.texto;
+  const colorTextoClaro = tema?.color_texto_claro || INV.textoClaro;
   const colorLinea = color_linea || colorPrimario;
 
   // Obtener icono de Lucide

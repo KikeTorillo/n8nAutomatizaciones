@@ -50,6 +50,9 @@ export { StatCardGrid } from './StatCardGrid';
 export type { StatCardGridProps } from './StatCardGrid';
 
 // CRUD y secciones
+export { ExpandableSection } from './ExpandableSection';
+export type { ExpandableSectionProps } from './ExpandableSection';
+
 export { ExpandableCrudSection } from './ExpandableCrudSection';
 export type {
   ExpandableCrudSectionProps,

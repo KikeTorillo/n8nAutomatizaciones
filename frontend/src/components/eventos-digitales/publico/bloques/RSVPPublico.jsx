@@ -10,6 +10,9 @@
 
 import { memo, useState } from 'react';
 import { Check, X, Users, MessageSquare, AlertCircle, Loader2, QrCode } from 'lucide-react';
+import { THEME_FALLBACK_COLORS } from '@/lib/uiConstants';
+
+const INV = THEME_FALLBACK_COLORS.invitacion;
 
 function RSVPPublico({
   bloque,
@@ -171,7 +174,7 @@ function RSVPPublico({
                   style={{
                     borderColor: tema?.color_secundario,
                     backgroundColor: 'white',
-                    color: tema?.color_texto || '#1f2937',
+                    color: tema?.color_texto || INV.texto,
                   }}
                 >
                   {[...Array(maxAsistentes)].map((_, i) => (

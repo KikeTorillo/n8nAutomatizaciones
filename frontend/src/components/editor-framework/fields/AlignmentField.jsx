@@ -4,6 +4,7 @@
 import { memo } from 'react';
 import { AlignLeft, AlignCenter, AlignRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Label } from '@/components/ui/atoms';
 
 const ALIGNMENTS = [
   { value: 'left', Icon: AlignLeft },
@@ -17,9 +18,7 @@ function AlignmentField({ field, label: labelProp, value, onChange }) {
 
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-        {label}
-      </label>
+      <Label label={label} className="mb-1" />
       <div className="flex gap-1 bg-gray-100 dark:bg-gray-700 p-1 rounded-lg">
         {ALIGNMENTS.map(({ value: v, Icon }) => (
           <button

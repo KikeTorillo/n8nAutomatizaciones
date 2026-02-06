@@ -14,6 +14,14 @@ export {
 } from './invitacionBlocks';
 
 export {
+  ANIMACIONES_DECORATIVAS,
+  VELOCIDADES,
+  TAMANOS,
+  getAnimacionById,
+  getTamanoHeight,
+} from './animacionesDecorativas';
+
+export {
   TEMAS_POR_TIPO,
   COLOR_FIELDS,
   FONT_FIELDS,

@@ -3,6 +3,7 @@
  */
 import { memo } from 'react';
 import { ChevronRight } from 'lucide-react';
+import { Badge } from '@/components/ui/atoms';
 
 function ItemsEditorField({ field, fieldKey, label: labelProp, itemType: itemTypeProp, value, onOpenItemsEditor }) {
   // Soporta tanto {field} como props directos
@@ -22,9 +23,9 @@ function ItemsEditorField({ field, fieldKey, label: labelProp, itemType: itemTyp
           <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
             {label}
           </span>
-          <span className="px-2 py-0.5 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 text-xs font-medium rounded-full">
+          <Badge variant="primary" size="sm">
             {itemCount}
-          </span>
+          </Badge>
         </div>
         <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors" />
       </button>

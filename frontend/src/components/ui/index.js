@@ -98,9 +98,8 @@ export { FilterChip } from './molecules/FilterChip';
 // NOTA: FilterSelectField, FilterDateField, FilterTextField eliminados - usar FilterField
 export { FilterField } from './organisms/FilterField';
 
-// Headers extraídos (Ene 2026)
-export { ModalHeader } from './molecules/ModalHeader';
-export { DrawerHeader } from './molecules/DrawerHeader';
+// Header unificado para overlays (Feb 2026)
+export { OverlayHeader } from './molecules/OverlayHeader';
 
 // Permisos granulares - Re-export desde features/auth para no romper imports existentes
 export { ConPermiso } from '@/features/auth/components/ConPermiso';

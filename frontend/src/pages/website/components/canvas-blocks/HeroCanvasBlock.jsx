@@ -8,6 +8,7 @@
 import { memo } from 'react';
 import { cn } from '@/lib/utils';
 import { InlineText } from '../InlineEditor';
+import { THEME_FALLBACK_COLORS } from '@/lib/uiConstants';
 
 /**
  * Hero Canvas Block
@@ -19,6 +20,7 @@ import { InlineText } from '../InlineEditor';
  * @param {Function} props.onContentChange - Callback al cambiar contenido
  */
 function HeroCanvasBlock({ bloque, tema, isEditing, onContentChange }) {
+  const WEB = THEME_FALLBACK_COLORS.website;
   const contenido = bloque.contenido || {};
   const {
     titulo = 'Tu Título Principal',
@@ -48,7 +50,7 @@ function HeroCanvasBlock({ bloque, tema, isEditing, onContentChange }) {
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundColor: !imagen_url
-          ? `var(--color-primario, ${tema?.color_primario || '#753572'})`
+          ? `var(--color-primario, ${tema?.color_primario || WEB.primario})`
           : undefined,
       }}
     >

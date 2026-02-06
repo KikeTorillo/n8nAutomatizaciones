@@ -13,6 +13,7 @@
 import { memo, useState, useEffect, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { InlineText } from '@/components/editor-framework';
+import { THEME_FALLBACK_COLORS } from '@/lib/uiConstants';
 
 /**
  * Countdown Canvas Block
@@ -39,11 +40,12 @@ function CountdownCanvasBlock({ bloque, tema, evento, isEditing, onContentChange
   const estilo = estilos.estilo || contenido.estilo || 'cajas';
   const mostrar_segundos = estilos.mostrar_segundos ?? contenido.mostrar_segundos ?? true;
 
-  const colorPrimario = tema?.color_primario || '#753572';
-  const colorSecundario = tema?.color_secundario || '#F59E0B';
-  const colorFondo = tema?.color_fondo || '#FFFFFF';
-  const colorTexto = tema?.color_texto || '#1f2937';
-  const colorTextoClaro = tema?.color_texto_claro || '#6b7280';
+  const INV = THEME_FALLBACK_COLORS.invitacion;
+  const colorPrimario = tema?.color_primario || INV.primario;
+  const colorSecundario = tema?.color_secundario || INV.acento;
+  const colorFondo = tema?.color_fondo || INV.fondo;
+  const colorTexto = tema?.color_texto || INV.texto;
+  const colorTextoClaro = tema?.color_texto_claro || INV.textoClaro;
 
   // Estado para tiempo restante
   const [tiempoRestante, setTiempoRestante] = useState(null);

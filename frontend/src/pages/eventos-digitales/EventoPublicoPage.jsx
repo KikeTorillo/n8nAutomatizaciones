@@ -10,6 +10,7 @@ import {
 } from '@/hooks/otros';
 import { eventosDigitalesApi } from '@/services/api/endpoints';
 import { InvitacionDinamica } from '@/components/eventos-digitales';
+import OpeningOverlay from '@/components/eventos-digitales/publico/OpeningOverlay';
 import '@/components/eventos-digitales/publico/EventoAnimations.css';
 
 /**
@@ -140,9 +141,19 @@ function EventoPublicoPage() {
     );
   }
 
+  const tipoApertura = evento?.configuracion?.animacion_apertura;
+
   // Renderizar bloques dinámicos
   return (
-    <InvitacionDinamica
+    <>
+      {tipoApertura && tipoApertura !== 'none' && (
+        <OpeningOverlay
+          tipo={tipoApertura}
+          texto={evento?.configuracion?.texto_apertura || 'Desliza para abrir'}
+          tema={tema}
+        />
+      )}
+      <InvitacionDinamica
       evento={evento}
       invitado={invitado}
       bloques={bloques}
@@ -168,6 +179,7 @@ function EventoPublicoPage() {
       qrImage={qrImage}
       loadingQR={loadingQR}
     />
+    </>
   );
 }
 

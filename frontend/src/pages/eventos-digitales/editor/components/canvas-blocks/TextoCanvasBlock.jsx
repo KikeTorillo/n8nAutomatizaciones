@@ -13,6 +13,7 @@
 import { memo } from 'react';
 import { cn } from '@/lib/utils';
 import { InlineText } from '@/components/editor-framework';
+import { THEME_FALLBACK_COLORS } from '@/lib/uiConstants';
 
 /**
  * Texto Canvas Block
@@ -31,7 +32,8 @@ function TextoCanvasBlock({ bloque, tema, isEditing, onContentChange }) {
   const alineacion = estilos.alineacion || contenido.alineacion || 'center';
   const tamano_fuente = estilos.tamano_fuente || contenido.tamano_fuente || 'normal';
 
-  const colorPrimario = tema?.color_primario || '#753572';
+  const INV = THEME_FALLBACK_COLORS.invitacion;
+  const colorPrimario = tema?.color_primario || INV.primario;
 
   // Clases de tamaño
   const tamanoClasses = {

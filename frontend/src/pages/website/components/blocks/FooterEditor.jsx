@@ -15,6 +15,9 @@ import { Link2, Share2 } from 'lucide-react';
 import { Input, Select, Textarea } from '@/components/ui';
 import { BaseBlockEditor, useBlockEditor, useArrayItems } from '@/components/editor-framework';
 import { ArrayItemsEditor } from './fields';
+import { THEME_FALLBACK_COLORS } from '@/lib/uiConstants';
+
+const WEB = THEME_FALLBACK_COLORS.website;
 
 /**
  * FooterEditor - Editor del bloque Footer
@@ -130,10 +133,10 @@ function FooterEditor({ contenido, onGuardar, tema, isSaving }) {
     <div
       className="rounded-lg p-4"
       style={{
-        backgroundColor: form.estilo === 'oscuro' ? '#1F2937' :
-          form.estilo === 'primario' ? tema?.colores?.primario || '#4F46E5' :
-          '#F3F4F6',
-        color: form.estilo === 'claro' ? '#1F2937' : '#FFFFFF',
+        backgroundColor: form.estilo === 'oscuro' ? THEME_FALLBACK_COLORS.common.fondoOscuro :
+          form.estilo === 'primario' ? tema?.colores?.primario || WEB.primario :
+          THEME_FALLBACK_COLORS.common.fondoGris,
+        color: form.estilo === 'claro' ? THEME_FALLBACK_COLORS.common.fondoOscuro : THEME_FALLBACK_COLORS.common.textoBlanco,
       }}
     >
       {form.logo && (

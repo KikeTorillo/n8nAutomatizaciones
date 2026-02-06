@@ -15,6 +15,9 @@ import { Image } from 'lucide-react';
 import { Checkbox, Input, Select, Textarea } from '@/components/ui';
 import { BaseBlockEditor, useBlockEditor } from '@/components/editor-framework';
 import { AIGenerateButton, AISuggestionBanner } from '../AIGenerator';
+import { THEME_FALLBACK_COLORS } from '@/lib/uiConstants';
+
+const WEB = THEME_FALLBACK_COLORS.website;
 
 /**
  * HeroEditor - Editor del bloque Hero
@@ -69,7 +72,7 @@ function HeroEditor({ contenido, onGuardar, tema, isSaving, industria = 'default
     <div
       className="rounded-lg overflow-hidden relative"
       style={{
-        backgroundColor: tema?.colores?.primario || '#4F46E5',
+        backgroundColor: tema?.colores?.primario || WEB.primario,
         backgroundImage: form.imagen_fondo ? `url(${form.imagen_fondo})` : undefined,
         backgroundSize: 'cover',
         backgroundPosition: 'center',

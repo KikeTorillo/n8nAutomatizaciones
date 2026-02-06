@@ -8,11 +8,13 @@
 import { memo } from 'react';
 import { cn } from '@/lib/utils';
 import { InlineText } from '../InlineEditor';
+import { THEME_FALLBACK_COLORS } from '@/lib/uiConstants';
 
 /**
  * CTA Canvas Block
  */
 function CtaCanvasBlock({ bloque, tema, isEditing, onContentChange }) {
+  const WEB = THEME_FALLBACK_COLORS.website;
   const contenido = bloque.contenido || {};
   const {
     titulo = '¿Listo para comenzar?',
@@ -38,7 +40,7 @@ function CtaCanvasBlock({ bloque, tema, isEditing, onContentChange }) {
         };
       default:
         return {
-          backgroundColor: fondo_valor || `var(--color-primario, ${tema?.color_primario || '#753572'})`,
+          backgroundColor: fondo_valor || `var(--color-primario, ${tema?.color_primario || WEB.primario})`,
         };
     }
   };
@@ -99,7 +101,7 @@ function CtaCanvasBlock({ bloque, tema, isEditing, onContentChange }) {
               'shadow-lg hover:shadow-xl transform hover:-translate-y-0.5'
             )}
             style={{
-              color: `var(--color-primario, ${tema?.color_primario || '#753572'})`,
+              color: `var(--color-primario, ${tema?.color_primario || WEB.primario})`,
             }}
           >
             {isEditing ? (

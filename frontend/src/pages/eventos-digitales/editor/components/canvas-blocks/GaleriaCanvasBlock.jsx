@@ -11,6 +11,7 @@
 import { memo, useState } from 'react';
 import { Image as ImageIcon, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { THEME_FALLBACK_COLORS } from '@/lib/uiConstants';
 
 /**
  * Galería Canvas Block
@@ -34,9 +35,10 @@ function GaleriaCanvasBlock({ bloque, tema, galeria = [] }) {
   const layout = estilos.layout || contenido.layout || 'grid';
   const columnas = estilos.columnas || contenido.columnas || 3;
 
-  const colorPrimario = tema?.color_primario || '#753572';
-  const colorFondo = tema?.color_fondo || '#FFFFFF';
-  const colorTextoClaro = tema?.color_texto_claro || '#6b7280';
+  const INV = THEME_FALLBACK_COLORS.invitacion;
+  const colorPrimario = tema?.color_primario || INV.primario;
+  const colorFondo = tema?.color_fondo || INV.fondo;
+  const colorTextoClaro = tema?.color_texto_claro || INV.textoClaro;
 
   // Imágenes a mostrar
   const imagenesAMostrar = usar_galeria_evento && galeria.length > 0

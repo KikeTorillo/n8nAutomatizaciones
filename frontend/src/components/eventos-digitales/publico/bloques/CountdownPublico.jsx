@@ -9,6 +9,9 @@
  */
 
 import { memo, useState, useEffect } from 'react';
+import { THEME_FALLBACK_COLORS } from '@/lib/uiConstants';
+
+const INV = THEME_FALLBACK_COLORS.invitacion;
 
 function CountdownPublico({ bloque, evento, tema, isVisible, className = '' }) {
   const { contenido = {}, estilos = {} } = bloque;
@@ -76,7 +79,7 @@ function CountdownPublico({ bloque, evento, tema, isVisible, className = '' }) {
   const animationClass = isVisible ? 'animate-fadeInUp' : 'opacity-0';
 
   return (
-    <section className={`py-16 ${className}`} style={{ backgroundColor: tema?.color_fondo || '#FFFFFF' }}>
+    <section className={`py-16 ${className}`} style={{ backgroundColor: tema?.color_fondo || INV.fondo }}>
       <div className="max-w-4xl mx-auto px-4">
         {/* Título */}
         {titulo && (

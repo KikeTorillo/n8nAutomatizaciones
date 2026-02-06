@@ -14,6 +14,9 @@ import { memo, useCallback, useMemo } from 'react';
 import { Input, Select, Textarea } from '@/components/ui';
 import { BaseBlockEditor, useBlockEditor } from '@/components/editor-framework';
 import { AIGenerateButton, AISuggestionBanner } from '../AIGenerator';
+import { THEME_FALLBACK_COLORS } from '@/lib/uiConstants';
+
+const WEB = THEME_FALLBACK_COLORS.website;
 
 /**
  * CtaEditor - Editor del bloque Call To Action
@@ -77,12 +80,12 @@ function CtaEditor({ contenido, onGuardar, tema, isSaving, industria = 'default'
       className="rounded-lg p-6"
       style={{
         backgroundColor: form.estilo === 'claro'
-          ? '#F9FAFB'
+          ? THEME_FALLBACK_COLORS.common.fondoClaro
           : form.estilo === 'gradiente'
             ? undefined
-            : tema?.colores?.primario || '#4F46E5',
+            : tema?.colores?.primario || WEB.primario,
         backgroundImage: form.estilo === 'gradiente'
-          ? `linear-gradient(135deg, ${tema?.colores?.primario || '#4F46E5'}, ${tema?.colores?.secundario || '#6366F1'})`
+          ? `linear-gradient(135deg, ${tema?.colores?.primario || WEB.primario}, ${tema?.colores?.secundario || WEB.secundario})`
           : undefined,
       }}
     >
@@ -91,8 +94,8 @@ function CtaEditor({ contenido, onGuardar, tema, isSaving, industria = 'default'
           className="text-xl font-bold mb-2"
           style={{
             color: form.estilo === 'claro'
-              ? tema?.colores?.texto || '#1F2937'
-              : '#FFFFFF'
+              ? tema?.colores?.texto || WEB.texto
+              : THEME_FALLBACK_COLORS.common.textoBlanco
           }}
         >
           {form.titulo}
@@ -121,7 +124,7 @@ function CtaEditor({ contenido, onGuardar, tema, isSaving, industria = 'default'
             }`}
             style={{
               backgroundColor: form.estilo === 'claro'
-                ? tema?.colores?.primario || '#4F46E5'
+                ? tema?.colores?.primario || WEB.primario
                 : undefined
             }}
           >

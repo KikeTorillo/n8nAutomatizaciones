@@ -71,7 +71,9 @@ const Card = memo(forwardRef<HTMLDivElement, CardProps>(function Card(
   const isClickable = !!onClick || hover;
 
   const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
-    if (onClick && e.key === 'Enter') {
+    if (!onClick) return;
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
       onClick(e);
     }
   };

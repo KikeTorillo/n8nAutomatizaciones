@@ -10,6 +10,7 @@
 
 import { memo } from 'react';
 import { MessageSquare, Send } from 'lucide-react';
+import { THEME_FALLBACK_COLORS } from '@/lib/uiConstants';
 
 function FelicitacionesCanvasBlock({ bloque, tema }) {
   const contenido = bloque.contenido || {};
@@ -18,10 +19,11 @@ function FelicitacionesCanvasBlock({ bloque, tema }) {
   const subtitulo = contenido.subtitulo || 'Déjanos tus buenos deseos';
   const placeholderMensaje = contenido.placeholder_mensaje || 'Escribe tus buenos deseos...';
 
-  const colorPrimario = tema?.color_primario || '#753572';
-  const colorSecundario = tema?.color_secundario || '#F59E0B';
-  const colorTexto = tema?.color_texto || '#1f2937';
-  const colorTextoClaro = tema?.color_texto_claro || '#6b7280';
+  const INV = THEME_FALLBACK_COLORS.invitacion;
+  const colorPrimario = tema?.color_primario || INV.primario;
+  const colorSecundario = tema?.color_secundario || INV.acento;
+  const colorTexto = tema?.color_texto || INV.texto;
+  const colorTextoClaro = tema?.color_texto_claro || INV.textoClaro;
 
   return (
     <section

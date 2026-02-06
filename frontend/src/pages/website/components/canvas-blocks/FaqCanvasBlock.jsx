@@ -9,6 +9,7 @@ import { memo, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { ChevronDown, HelpCircle } from 'lucide-react';
 import { InlineText } from '../InlineEditor';
+import { THEME_FALLBACK_COLORS } from '@/lib/uiConstants';
 
 /**
  * FAQ Canvas Block
@@ -65,7 +66,8 @@ function FaqCanvasBlock({ bloque, tema, isEditing, onContentChange }) {
     onContentChange({ items: newItems });
   };
 
-  const colorPrimario = tema?.color_primario || '#753572';
+  const WEB = THEME_FALLBACK_COLORS.website;
+  const colorPrimario = tema?.color_primario || WEB.primario;
 
   return (
     <section className="py-16 px-6 bg-white dark:bg-gray-800">

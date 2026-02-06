@@ -17,6 +17,7 @@ import { ImageField, SelectField } from '../../fields';
 import BaseBlockEditor from '../../blocks/BaseBlockEditor';
 import BaseAutoSaveEditor from '../../blocks/BaseAutoSaveEditor';
 import { useCommonBlockEditor } from '../hooks';
+import { THEME_FALLBACK_COLORS } from '@/lib/uiConstants';
 
 // ========== OPCIONES DE SELECT ==========
 
@@ -201,7 +202,7 @@ function GaleriaEditor({
 
   // Colores del tema (usado en modo manual save)
   // eslint-disable-next-line no-unused-vars
-  const colorPrimario = tema?.color_primario || tema?.colores?.primario || '#753572';
+  const colorPrimario = tema?.color_primario || tema?.colores?.primario || THEME_FALLBACK_COLORS.invitacion.primario;
 
   // Componente de preview
   const preview = useMemo(() => {

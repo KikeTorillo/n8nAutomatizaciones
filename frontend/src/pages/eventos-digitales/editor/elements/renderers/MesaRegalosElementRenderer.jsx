@@ -13,6 +13,7 @@ import { memo } from 'react';
 import PropTypes from 'prop-types';
 import { Gift, ExternalLink, CreditCard, Copy } from 'lucide-react';
 import { toast } from 'sonner';
+import { THEME_FALLBACK_COLORS } from '@/lib/uiConstants';
 
 function MesaRegalosElementRenderer({
   elemento,
@@ -37,10 +38,11 @@ function MesaRegalosElementRenderer({
       : mesaEvento;
 
   // Estilos del tema
-  const colorPrimario = tema?.color_primario || '#753572';
-  const colorSecundario = tema?.color_secundario || '#fce7f3';
-  const colorTexto = tema?.color_texto || '#1f2937';
-  const colorTextoClaro = tema?.color_texto_claro || '#6b7280';
+  const INV = THEME_FALLBACK_COLORS.invitacion;
+  const colorPrimario = tema?.color_primario || INV.primario;
+  const colorSecundario = tema?.color_secundario || INV.secundario;
+  const colorTexto = tema?.color_texto || INV.texto;
+  const colorTextoClaro = tema?.color_texto_claro || INV.textoClaro;
   const fuenteTitulo = tema?.fuente_titulos || 'inherit';
 
   const handleCopy = (text) => {

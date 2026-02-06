@@ -10,6 +10,9 @@
 
 import { memo } from 'react';
 import { Play } from 'lucide-react';
+import { THEME_FALLBACK_COLORS } from '@/lib/uiConstants';
+
+const INV = THEME_FALLBACK_COLORS.invitacion;
 
 function VideoPublico({ bloque, tema, isVisible, className = '' }) {
   const { contenido = {}, estilos = {} } = bloque;
@@ -79,7 +82,7 @@ function VideoPublico({ bloque, tema, isVisible, className = '' }) {
   const isDirectVideo = videoUrl.match(/\.(mp4|webm|ogg)$/i);
 
   return (
-    <section className={`py-20 ${className}`} style={{ backgroundColor: tema?.color_fondo || '#FFFFFF' }}>
+    <section className={`py-20 ${className}`} style={{ backgroundColor: tema?.color_fondo || INV.fondo }}>
       <div className="max-w-4xl mx-auto px-4">
         {/* Header */}
         {(titulo || subtitulo) && (

@@ -11,6 +11,7 @@
 import { memo } from 'react';
 import { Gift, ExternalLink, CreditCard } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { THEME_FALLBACK_COLORS } from '@/lib/uiConstants';
 
 /**
  * Mesa Regalos Canvas Block
@@ -33,10 +34,11 @@ function MesaRegalosCanvasBlock({ bloque, tema, mesaRegalos }) {
   // Fallback: estilos pueden venir en contenido o en estilos
   const layout = estilos.layout || contenido.layout || 'grid';
 
-  const colorPrimario = tema?.color_primario || '#753572';
-  const colorSecundario = tema?.color_secundario || '#F59E0B';
-  const colorTexto = tema?.color_texto || '#1f2937';
-  const colorTextoClaro = tema?.color_texto_claro || '#6b7280';
+  const INV = THEME_FALLBACK_COLORS.invitacion;
+  const colorPrimario = tema?.color_primario || INV.primario;
+  const colorSecundario = tema?.color_secundario || INV.acento;
+  const colorTexto = tema?.color_texto || INV.texto;
+  const colorTextoClaro = tema?.color_texto_claro || INV.textoClaro;
 
   // Items a mostrar (del evento o personalizados)
   const itemsAMostrar = usar_mesa_evento && mesaRegalos?.tiendas

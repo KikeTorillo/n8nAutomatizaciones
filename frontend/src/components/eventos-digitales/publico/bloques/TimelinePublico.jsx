@@ -13,6 +13,9 @@
 import { memo } from 'react';
 import * as LucideIcons from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { THEME_FALLBACK_COLORS } from '@/lib/uiConstants';
+
+const INV = THEME_FALLBACK_COLORS.invitacion;
 
 function TimelinePublico({ bloque, tema, isVisible, className = '' }) {
   const { contenido = {}, estilos = {} } = bloque;
@@ -37,7 +40,7 @@ function TimelinePublico({ bloque, tema, isVisible, className = '' }) {
   if (items.length === 0) return null;
 
   return (
-    <section className={cn('py-16 px-6', className)} style={{ backgroundColor: tema?.color_fondo || '#FFFFFF' }}>
+    <section className={cn('py-16 px-6', className)} style={{ backgroundColor: tema?.color_fondo || INV.fondo }}>
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className={cn('text-center mb-12', animationClass)}>
@@ -50,7 +53,7 @@ function TimelinePublico({ bloque, tema, isVisible, className = '' }) {
           {subtitulo && (
             <p
               className="max-w-2xl mx-auto"
-              style={{ color: tema?.color_texto_claro || '#6b7280' }}
+              style={{ color: tema?.color_texto_claro || INV.textoClaro }}
             >
               {subtitulo}
             </p>
@@ -96,7 +99,7 @@ function TimelinePublico({ bloque, tema, isVisible, className = '' }) {
                       layout === 'derecha' && 'right-0',
                       layout === 'alternado' && 'left-0 md:left-1/2 md:-translate-x-1/2'
                     )}
-                    style={{ backgroundColor: tema?.color_fondo || '#FFFFFF' }}
+                    style={{ backgroundColor: tema?.color_fondo || INV.fondo }}
                   >
                     <div
                       className="w-6 h-6 rounded-full flex items-center justify-center"
@@ -131,7 +134,7 @@ function TimelinePublico({ bloque, tema, isVisible, className = '' }) {
                     {/* Título */}
                     <h3
                       className="text-lg font-bold mb-2"
-                      style={{ color: tema?.color_texto || '#1f2937' }}
+                      style={{ color: tema?.color_texto || INV.texto }}
                     >
                       {item.titulo}
                     </h3>
@@ -140,7 +143,7 @@ function TimelinePublico({ bloque, tema, isVisible, className = '' }) {
                     {item.descripcion && (
                       <p
                         className="text-sm"
-                        style={{ color: tema?.color_texto_claro || '#6b7280' }}
+                        style={{ color: tema?.color_texto_claro || INV.textoClaro }}
                       >
                         {item.descripcion}
                       </p>
@@ -150,7 +153,7 @@ function TimelinePublico({ bloque, tema, isVisible, className = '' }) {
                     {item.ubicacion && (
                       <p
                         className="text-sm mt-2 flex items-center gap-1"
-                        style={{ color: tema?.color_texto_claro || '#6b7280' }}
+                        style={{ color: tema?.color_texto_claro || INV.textoClaro }}
                       >
                         <LucideIcons.MapPin className="w-3.5 h-3.5" />
                         {item.ubicacion}

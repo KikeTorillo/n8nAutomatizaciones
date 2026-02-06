@@ -25,6 +25,7 @@ import {
   Heart,
 } from 'lucide-react';
 import { InlineText } from '../InlineEditor';
+import { THEME_FALLBACK_COLORS } from '@/lib/uiConstants';
 
 // Icon mapping
 const ICONS = {
@@ -274,7 +275,8 @@ function TimelineCanvasBlock({ bloque, tema, isEditing, onContentChange }) {
     onContentChange({ items: currentItems });
   };
 
-  const colorPrimario = tema?.color_primario || '#753572';
+  const WEB = THEME_FALLBACK_COLORS.website;
+  const colorPrimario = tema?.color_primario || WEB.primario;
   const lineColor = color_linea || colorPrimario;
 
   return (

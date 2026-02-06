@@ -9,6 +9,7 @@ import { memo, useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { Clock } from 'lucide-react';
 import { InlineText } from '../InlineEditor';
+import { THEME_FALLBACK_COLORS } from '@/lib/uiConstants';
 
 /**
  * Calculate time remaining
@@ -59,6 +60,7 @@ function TimeUnit({ value, label, colorPrimario }) {
  * Countdown Canvas Block
  */
 function CountdownCanvasBlock({ bloque, tema, isEditing, onContentChange }) {
+  const WEB = THEME_FALLBACK_COLORS.website;
   const contenido = bloque.contenido || {};
   const {
     titulo = 'Gran Inauguracion',
@@ -70,8 +72,8 @@ function CountdownCanvasBlock({ bloque, tema, isEditing, onContentChange }) {
     mostrar_segundos = true,
     texto_finalizado = 'El evento ha comenzado!',
     fondo_tipo = 'color',
-    fondo_valor = '#1F2937',
-    color_texto = '#FFFFFF',
+    fondo_valor = THEME_FALLBACK_COLORS.common.fondoOscuro,
+    color_texto = THEME_FALLBACK_COLORS.common.textoBlanco,
     boton_texto = '',
     boton_url = '',
   } = contenido;
@@ -88,7 +90,7 @@ function CountdownCanvasBlock({ bloque, tema, isEditing, onContentChange }) {
     return () => clearInterval(timer);
   }, [fecha_objetivo]);
 
-  const colorPrimario = tema?.color_primario || '#753572';
+  const colorPrimario = tema?.color_primario || WEB.primario;
 
   // Background styles
   const backgroundStyle =

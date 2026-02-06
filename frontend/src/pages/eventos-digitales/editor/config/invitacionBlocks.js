@@ -22,6 +22,7 @@ import {
   Minus,
   MessageSquare,
 } from 'lucide-react';
+import { THEME_FALLBACK_COLORS } from '@/lib/uiConstants';
 
 // ========== CATEGORÍAS DE BLOQUES ==========
 
@@ -325,7 +326,7 @@ export const BLOCK_DEFAULTS = {
     alineacion: 'center',
     imagen_overlay: 0.3,
     tipo_overlay: 'uniforme',
-    color_overlay: '#000000',
+    color_overlay: THEME_FALLBACK_COLORS.invitacion.overlay,
     altura: 'full',
     mostrar_calendario: true,
   },

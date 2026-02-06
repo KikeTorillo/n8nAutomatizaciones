@@ -8,11 +8,13 @@
 import { memo, useMemo } from 'react';
 import { Play } from 'lucide-react';
 import { InlineText } from '../InlineEditor';
+import { THEME_FALLBACK_COLORS } from '@/lib/uiConstants';
 
 /**
  * Video Canvas Block
  */
 function VideoCanvasBlock({ bloque, tema, isEditing, onContentChange }) {
+  const WEB = THEME_FALLBACK_COLORS.website;
   const contenido = bloque.contenido || {};
   const {
     titulo_seccion = '',
@@ -127,12 +129,12 @@ function VideoCanvasBlock({ bloque, tema, isEditing, onContentChange }) {
               <div
                 className="p-4 rounded-full mb-4"
                 style={{
-                  backgroundColor: `var(--color-primario, ${tema?.color_primario || '#753572'})20`,
+                  backgroundColor: `var(--color-primario, ${tema?.color_primario || WEB.primario})20`,
                 }}
               >
                 <Play
                   className="w-12 h-12"
-                  style={{ color: `var(--color-primario, ${tema?.color_primario || '#753572'})` }}
+                  style={{ color: `var(--color-primario, ${tema?.color_primario || WEB.primario})` }}
                 />
               </div>
               <p className="text-sm">

@@ -11,11 +11,13 @@ import { cn } from '@/lib/utils';
 import { InlineText } from '../InlineEditor';
 import * as LucideIcons from 'lucide-react';
 import { useERPData } from '../../hooks';
+import { THEME_FALLBACK_COLORS } from '@/lib/uiConstants';
 
 /**
  * Servicios Canvas Block
  */
 function ServiciosCanvasBlock({ bloque, tema, isEditing, onContentChange }) {
+  const WEB = THEME_FALLBACK_COLORS.website;
   const contenido = bloque.contenido || {};
   const {
     titulo_seccion = 'Nuestros Servicios',
@@ -148,8 +150,8 @@ function ServiciosCanvasBlock({ bloque, tema, isEditing, onContentChange }) {
                     style={{
                       backgroundColor: servicio.color_servicio
                         ? `${servicio.color_servicio}20`
-                        : `var(--color-primario, ${tema?.color_primario || '#753572'})20`,
-                      color: servicio.color_servicio || `var(--color-primario, ${tema?.color_primario || '#753572'})`,
+                        : `var(--color-primario, ${tema?.color_primario || WEB.primario})20`,
+                      color: servicio.color_servicio || `var(--color-primario, ${tema?.color_primario || WEB.primario})`,
                     }}
                   >
                     <IconComponent className="w-7 h-7" />
@@ -158,12 +160,12 @@ function ServiciosCanvasBlock({ bloque, tema, isEditing, onContentChange }) {
                   <div
                     className="w-14 h-14 rounded-lg flex items-center justify-center mb-4"
                     style={{
-                      backgroundColor: `var(--color-primario, ${tema?.color_primario || '#753572'})20`,
+                      backgroundColor: `var(--color-primario, ${tema?.color_primario || WEB.primario})20`,
                     }}
                   >
                     <span
                       className="text-2xl font-bold"
-                      style={{ color: `var(--color-primario, ${tema?.color_primario || '#753572'})` }}
+                      style={{ color: `var(--color-primario, ${tema?.color_primario || WEB.primario})` }}
                     >
                       {(servicioNombre || 'S').charAt(0)}
                     </span>
@@ -206,7 +208,7 @@ function ServiciosCanvasBlock({ bloque, tema, isEditing, onContentChange }) {
                   {mostrar_precio && servicio.precio > 0 && (
                     <p
                       className="text-lg font-bold"
-                      style={{ color: `var(--color-primario, ${tema?.color_primario || '#753572'})` }}
+                      style={{ color: `var(--color-primario, ${tema?.color_primario || WEB.primario})` }}
                     >
                       ${typeof servicio.precio === 'number'
                         ? servicio.precio.toLocaleString()

@@ -15,6 +15,7 @@ import { Button, Input, Textarea, ToggleSwitch } from '@/components/ui';
 import BaseBlockEditor from '../../blocks/BaseBlockEditor';
 import BaseAutoSaveEditor from '../../blocks/BaseAutoSaveEditor';
 import { useCommonBlockEditor } from '../hooks';
+import { THEME_FALLBACK_COLORS } from '@/lib/uiConstants';
 
 // ========== SUGERENCIAS DE PREGUNTAS ==========
 
@@ -147,7 +148,7 @@ function FaqEditor({
   }, [setForm, mapField]);
 
   // Colores del tema
-  const colorPrimario = tema?.color_primario || tema?.colores?.primario || '#753572';
+  const colorPrimario = tema?.color_primario || tema?.colores?.primario || THEME_FALLBACK_COLORS.invitacion.primario;
 
   // Componente de preview
   const preview = useMemo(() => {

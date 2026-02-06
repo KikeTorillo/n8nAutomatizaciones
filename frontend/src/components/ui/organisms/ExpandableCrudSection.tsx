@@ -1,7 +1,8 @@
 import { useState, memo, type ReactNode, type ComponentType } from 'react';
-import { ChevronDown, Loader2, AlertCircle, Plus } from 'lucide-react';
+import { Loader2, AlertCircle, Plus } from 'lucide-react';
 import { Button } from '../atoms/Button';
 import { ConfirmDialog } from './ConfirmDialog';
+import { ExpandableSection } from './ExpandableSection';
 import { useToast } from '@/hooks/utils';
 
 /** Interface para el retorno de useToast */
@@ -129,6 +130,8 @@ export interface ExpandableCrudSectionProps<T extends { id?: string | number }> 
 /**
  * ExpandableCrudSection - Componente genérico para secciones CRUD expandibles
  *
+ * Compone ExpandableSection (UI pura) + lógica CRUD (drawers, delete, toast).
+ *
  * IMPORTANTE: Memoizar `renderItem` con useCallback en el componente padre
  * para evitar re-renders innecesarios.
  */
@@ -171,7 +174,6 @@ function ExpandableCrudSectionComponent<T extends { id?: string | number }>({
   onItemDelete,
 }: ExpandableCrudSectionProps<T>) {
   const toast = useToast() as ToastHook;
-  const [isExpanded, setIsExpanded] = useState(defaultExpanded);
   const [showDrawer, setShowDrawer] = useState(false);
   const [itemToEdit, setItemToEdit] = useState<T | null>(null);
   const [itemToDelete, setItemToDelete] = useState<T | null>(null);
@@ -220,80 +222,63 @@ function ExpandableCrudSectionComponent<T extends { id?: string | number }>({
   const displayCount = count ?? items.length;
 
   return (
-    <div className="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">
-      {/* Header expandible */}
-      <button
-        type="button"
-        onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full flex items-center justify-between gap-2 mb-4"
+    <>
+      <ExpandableSection
+        icon={Icon}
+        title={title}
+        count={displayCount}
+        defaultExpanded={defaultExpanded}
+        headerActions={headerActions}
+        contentClassName="space-y-4"
       >
-        <div className="flex items-center gap-2">
-          {Icon && <Icon className="h-5 w-5 text-gray-500 dark:text-gray-400" />}
-          <h4 className="font-medium text-gray-900 dark:text-gray-100">{title}</h4>
-          {displayCount > 0 && (
-            <span className="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full text-gray-600 dark:text-gray-400">
-              {displayCount}
-            </span>
-          )}
-          {headerActions}
-        </div>
-        <ChevronDown
-          className={`h-5 w-5 text-gray-500 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
-        />
-      </button>
+        {/* Loading state */}
+        {isLoading && (
+          <div className="flex items-center gap-2 text-gray-500">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span className="text-sm">{loadingMessage}</span>
+          </div>
+        )}
 
-      {/* Contenido expandible */}
-      {isExpanded && (
-        <div className="pl-7 space-y-4">
-          {/* Loading state */}
-          {isLoading && (
-            <div className="flex items-center gap-2 text-gray-500">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              <span className="text-sm">{loadingMessage}</span>
-            </div>
-          )}
+        {/* Error state */}
+        {error && !isLoading && (
+          <div className="flex items-center gap-2 text-red-500 text-sm">
+            <AlertCircle className="h-4 w-4" />
+            <span>{errorMessage}</span>
+          </div>
+        )}
 
-          {/* Error state */}
-          {error && !isLoading && (
-            <div className="flex items-center gap-2 text-red-500 text-sm">
-              <AlertCircle className="h-4 w-4" />
-              <span>{errorMessage}</span>
-            </div>
-          )}
+        {/* Content */}
+        {!isLoading && !error && (
+          <>
+            {/* Empty state */}
+            {items.length === 0 ? (
+              <div className="text-sm text-gray-500 dark:text-gray-400 py-4 text-center">
+                {emptyMessage}
+              </div>
+            ) : /* List rendering */
+            renderList ? (
+              renderList(items, { onEdit: handleEdit, onDelete: handleDeleteRequest })
+            ) : (
+              <div className={listClassName}>
+                {items.map((item, index) => (
+                  <div key={item.id || index}>
+                    {renderItem?.(item, {
+                      onEdit: () => handleEdit(item),
+                      onDelete: () => handleDeleteRequest(item),
+                    })}
+                  </div>
+                ))}
+              </div>
+            )}
 
-          {/* Content */}
-          {!isLoading && !error && (
-            <>
-              {/* Empty state */}
-              {items.length === 0 ? (
-                <div className="text-sm text-gray-500 dark:text-gray-400 py-4 text-center">
-                  {emptyMessage}
-                </div>
-              ) : /* List rendering */
-              renderList ? (
-                renderList(items, { onEdit: handleEdit, onDelete: handleDeleteRequest })
-              ) : (
-                <div className={listClassName}>
-                  {items.map((item, index) => (
-                    <div key={item.id || index}>
-                      {renderItem?.(item, {
-                        onEdit: () => handleEdit(item),
-                        onDelete: () => handleDeleteRequest(item),
-                      })}
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Add button */}
-              <Button type="button" variant="outline" size="sm" onClick={handleAdd} className="w-full">
-                <Plus className="h-4 w-4 mr-2" />
-                {addButtonText}
-              </Button>
-            </>
-          )}
-        </div>
-      )}
+            {/* Add button */}
+            <Button type="button" variant="outline" size="sm" onClick={handleAdd} className="w-full">
+              <Plus className="h-4 w-4 mr-2" />
+              {addButtonText}
+            </Button>
+          </>
+        )}
+      </ExpandableSection>
 
       {/* Confirm delete dialog */}
       {deleteConfig && (
@@ -320,7 +305,7 @@ function ExpandableCrudSectionComponent<T extends { id?: string | number }>({
           {...(itemToEdit && { [itemPropName]: itemToEdit })}
         />
       )}
-    </div>
+    </>
   );
 }
 

@@ -8,6 +8,7 @@
 import { memo } from 'react';
 import { cn } from '@/lib/utils';
 import { InlineRichText } from '../InlineEditor';
+import { THEME_FALLBACK_COLORS } from '@/lib/uiConstants';
 
 /**
  * Texto Canvas Block
@@ -41,7 +42,7 @@ function TextoCanvasBlock({ bloque, tema, isEditing, onContentChange }) {
             className="prose prose-lg dark:prose-invert max-w-none"
             style={{
               fontFamily: 'var(--fuente-cuerpo)',
-              '--tw-prose-links': `var(--color-primario, ${tema?.color_primario || '#753572'})`,
+              '--tw-prose-links': `var(--color-primario, ${tema?.color_primario || THEME_FALLBACK_COLORS.website.primario})`,
             }}
             dangerouslySetInnerHTML={{ __html: htmlContent }}
           />

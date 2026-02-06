@@ -11,11 +11,13 @@ import { cn } from '@/lib/utils';
 import { Instagram, Facebook, Linkedin, Twitter, Database, Loader2 } from 'lucide-react';
 import { InlineText } from '../InlineEditor';
 import { useERPData } from '../../hooks';
+import { THEME_FALLBACK_COLORS } from '@/lib/uiConstants';
 
 /**
  * Equipo Canvas Block
  */
 function EquipoCanvasBlock({ bloque, tema, isEditing, onContentChange }) {
+  const WEB = THEME_FALLBACK_COLORS.website;
   const contenido = bloque.contenido || {};
   const {
     titulo_seccion = 'Nuestro Equipo',
@@ -136,7 +138,7 @@ function EquipoCanvasBlock({ bloque, tema, isEditing, onContentChange }) {
                     <span
                       className="text-6xl font-bold text-white"
                       style={{
-                        color: `var(--color-primario, ${tema?.color_primario || '#753572'})`,
+                        color: `var(--color-primario, ${tema?.color_primario || WEB.primario})`,
                         opacity: 0.3,
                       }}
                     >
@@ -170,12 +172,12 @@ function EquipoCanvasBlock({ bloque, tema, isEditing, onContentChange }) {
                     onChange={(value) => updateItem(index, 'cargo', value)}
                     placeholder="Cargo"
                     className="text-sm font-medium mb-3 block"
-                    style={{ color: `var(--color-primario, ${tema?.color_primario || '#753572'})` }}
+                    style={{ color: `var(--color-primario, ${tema?.color_primario || WEB.primario})` }}
                   />
                 ) : (
                   <p
                     className="text-sm font-medium mb-3"
-                    style={{ color: `var(--color-primario, ${tema?.color_primario || '#753572'})` }}
+                    style={{ color: `var(--color-primario, ${tema?.color_primario || WEB.primario})` }}
                   >
                     {miembro.cargo}
                   </p>

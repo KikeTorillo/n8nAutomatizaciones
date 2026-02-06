@@ -16,6 +16,7 @@ import { UrlField } from '../../fields';
 import BaseBlockEditor from '../../blocks/BaseBlockEditor';
 import BaseAutoSaveEditor from '../../blocks/BaseAutoSaveEditor';
 import { useCommonBlockEditor } from '../hooks';
+import { THEME_FALLBACK_COLORS } from '@/lib/uiConstants';
 import {
   detectarPlataformaVideo,
   extraerIdYoutube,
@@ -209,7 +210,7 @@ function VideoEditor({
   }, [onGuardar, embedUrl]);
 
   // Colores del tema
-  const colorPrimario = tema?.color_primario || tema?.colores?.primario || '#753572';
+  const colorPrimario = tema?.color_primario || tema?.colores?.primario || THEME_FALLBACK_COLORS.invitacion.primario;
 
   // Extraer ID de YouTube para thumbnail
   const youtubeId = getValue('tipo') === 'youtube' ? extraerIdYoutube(getValue('url')) : null;

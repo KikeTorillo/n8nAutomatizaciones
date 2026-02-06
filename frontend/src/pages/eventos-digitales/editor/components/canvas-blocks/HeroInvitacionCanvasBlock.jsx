@@ -19,6 +19,7 @@ import { memo } from 'react';
 import { Calendar, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { InlineText } from '@/components/editor-framework';
+import { THEME_FALLBACK_COLORS } from '@/lib/uiConstants';
 import {
   PatronFondo,
   DecoracionEsquinas,
@@ -55,7 +56,8 @@ function HeroInvitacionCanvasBlock({ bloque, tema, evento, isEditing, onContentC
   // Overlay - usar ?? para permitir 0
   const imagen_overlay = contenido.imagen_overlay ?? estilos.imagen_overlay ?? 0.3;
   const tipo_overlay = contenido.tipo_overlay || 'uniforme';
-  const color_overlay = contenido.color_overlay || '#000000';
+  const INV = THEME_FALLBACK_COLORS.invitacion;
+  const color_overlay = contenido.color_overlay || INV.overlay;
   const altura = contenido.altura || estilos.altura || 'full';
 
   // Helper para convertir hex a rgb
@@ -68,9 +70,9 @@ function HeroInvitacionCanvasBlock({ bloque, tema, evento, isEditing, onContentC
   const overlayRgb = hexToRgb(color_overlay);
 
   // Colores del tema
-  const colorFondo = tema?.color_fondo || '#fdf2f8';
-  const colorPrimario = tema?.color_primario || '#753572';
-  const colorSecundario = tema?.color_secundario || '#fce7f3';
+  const colorFondo = tema?.color_fondo || INV.fondoHero;
+  const colorPrimario = tema?.color_primario || INV.primario;
+  const colorSecundario = tema?.color_secundario || INV.secundario;
 
   // Detectar si hay imagen
   const tieneImagenFondo = !!imagen_url;

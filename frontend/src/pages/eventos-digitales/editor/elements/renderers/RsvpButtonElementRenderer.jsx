@@ -13,6 +13,7 @@
 import { memo, useState } from 'react';
 import PropTypes from 'prop-types';
 import { Check, X, Users, MessageSquare, AlertCircle } from 'lucide-react';
+import { THEME_FALLBACK_COLORS } from '@/lib/uiConstants';
 
 function RsvpButtonElementRenderer({
   elemento,
@@ -27,10 +28,11 @@ function RsvpButtonElementRenderer({
   const mostrarRestricciones = (estilos.mostrar_restricciones ?? contenido.pedir_restricciones) !== false;
   const maxAsistentes = 4;
 
-  const colorPrimario = tema?.color_primario || '#753572';
-  const colorSecundario = tema?.color_secundario || '#F59E0B';
-  const colorTexto = tema?.color_texto || '#1f2937';
-  const colorTextoClaro = tema?.color_texto_claro || '#6b7280';
+  const INV = THEME_FALLBACK_COLORS.invitacion;
+  const colorPrimario = tema?.color_primario || INV.primario;
+  const colorSecundario = tema?.color_secundario || INV.acento;
+  const colorTexto = tema?.color_texto || INV.texto;
+  const colorTextoClaro = tema?.color_texto_claro || INV.textoClaro;
   const fuenteTitulo = tema?.fuente_titulos || 'inherit';
 
   const [form, setForm] = useState({

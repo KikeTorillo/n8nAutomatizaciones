@@ -9,11 +9,13 @@ import { memo } from 'react';
 import { cn } from '@/lib/utils';
 import { Mail, Phone, MapPin, Clock, Send } from 'lucide-react';
 import { InlineText } from '../InlineEditor';
+import { THEME_FALLBACK_COLORS } from '@/lib/uiConstants';
 
 /**
  * Contacto Canvas Block
  */
 function ContactoCanvasBlock({ bloque, tema, isEditing, onContentChange }) {
+  const WEB = THEME_FALLBACK_COLORS.website;
   const contenido = bloque.contenido || {};
   const {
     titulo_seccion = 'Contáctanos',
@@ -122,7 +124,7 @@ function ContactoCanvasBlock({ bloque, tema, isEditing, onContentChange }) {
                   type="submit"
                   className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-semibold text-white transition-colors"
                   style={{
-                    backgroundColor: `var(--color-primario, ${tema?.color_primario || '#753572'})`,
+                    backgroundColor: `var(--color-primario, ${tema?.color_primario || WEB.primario})`,
                   }}
                   disabled={isEditing}
                 >
@@ -142,12 +144,12 @@ function ContactoCanvasBlock({ bloque, tema, isEditing, onContentChange }) {
                   <div
                     className="p-3 rounded-lg"
                     style={{
-                      backgroundColor: `var(--color-primario, ${tema?.color_primario || '#753572'})20`,
+                      backgroundColor: `var(--color-primario, ${tema?.color_primario || WEB.primario})20`,
                     }}
                   >
                     <Phone
                       className="w-6 h-6"
-                      style={{ color: `var(--color-primario, ${tema?.color_primario || '#753572'})` }}
+                      style={{ color: `var(--color-primario, ${tema?.color_primario || WEB.primario})` }}
                     />
                   </div>
                   <div>
@@ -174,12 +176,12 @@ function ContactoCanvasBlock({ bloque, tema, isEditing, onContentChange }) {
                   <div
                     className="p-3 rounded-lg"
                     style={{
-                      backgroundColor: `var(--color-primario, ${tema?.color_primario || '#753572'})20`,
+                      backgroundColor: `var(--color-primario, ${tema?.color_primario || WEB.primario})20`,
                     }}
                   >
                     <Mail
                       className="w-6 h-6"
-                      style={{ color: `var(--color-primario, ${tema?.color_primario || '#753572'})` }}
+                      style={{ color: `var(--color-primario, ${tema?.color_primario || WEB.primario})` }}
                     />
                   </div>
                   <div>
@@ -206,12 +208,12 @@ function ContactoCanvasBlock({ bloque, tema, isEditing, onContentChange }) {
                   <div
                     className="p-3 rounded-lg"
                     style={{
-                      backgroundColor: `var(--color-primario, ${tema?.color_primario || '#753572'})20`,
+                      backgroundColor: `var(--color-primario, ${tema?.color_primario || WEB.primario})20`,
                     }}
                   >
                     <MapPin
                       className="w-6 h-6"
-                      style={{ color: `var(--color-primario, ${tema?.color_primario || '#753572'})` }}
+                      style={{ color: `var(--color-primario, ${tema?.color_primario || WEB.primario})` }}
                     />
                   </div>
                   <div>
@@ -239,12 +241,12 @@ function ContactoCanvasBlock({ bloque, tema, isEditing, onContentChange }) {
                   <div
                     className="p-3 rounded-lg"
                     style={{
-                      backgroundColor: `var(--color-primario, ${tema?.color_primario || '#753572'})20`,
+                      backgroundColor: `var(--color-primario, ${tema?.color_primario || WEB.primario})20`,
                     }}
                   >
                     <Clock
                       className="w-6 h-6"
-                      style={{ color: `var(--color-primario, ${tema?.color_primario || '#753572'})` }}
+                      style={{ color: `var(--color-primario, ${tema?.color_primario || WEB.primario})` }}
                     />
                   </div>
                   <div>

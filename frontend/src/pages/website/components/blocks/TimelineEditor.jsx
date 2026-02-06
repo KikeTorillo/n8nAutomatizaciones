@@ -17,6 +17,9 @@ import { IconPicker } from '@/components/ui';
 import { BaseBlockEditor, useBlockEditor, useArrayItems } from '@/components/editor-framework';
 import { AIGenerateButton, AISuggestionBanner } from '../AIGenerator';
 import { SectionTitleField, ArrayItemsEditor } from './fields';
+import { THEME_FALLBACK_COLORS } from '@/lib/uiConstants';
+
+const WEB = THEME_FALLBACK_COLORS.website;
 
 /**
  * TimelineEditor - Editor del bloque Timeline
@@ -156,7 +159,7 @@ function TimelineEditor({ contenido, onGuardar, tema, isSaving, industria = 'def
         {form.mostrar_linea && form.orientacion === 'vertical' && (
           <div
             className="absolute left-4 top-0 bottom-0 w-0.5"
-            style={{ backgroundColor: tema?.color_primario || '#753572' }}
+            style={{ backgroundColor: tema?.color_primario || WEB.primario }}
           />
         )}
 
@@ -175,7 +178,7 @@ function TimelineEditor({ contenido, onGuardar, tema, isSaving, industria = 'def
               {form.orientacion === 'vertical' && (
                 <div
                   className={`absolute top-1 w-3 h-3 rounded-full border-2 border-white dark:border-gray-800 ${isLeft ? 'right-[6px]' : 'left-[6px]'}`}
-                  style={{ backgroundColor: tema?.color_primario || '#753572' }}
+                  style={{ backgroundColor: tema?.color_primario || WEB.primario }}
                 />
               )}
 

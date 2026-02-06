@@ -17,6 +17,9 @@ import { Button, CheckboxField, Input, Select, ToggleSwitch } from '@/components
 import { BaseBlockEditor, useBlockEditor } from '@/components/editor-framework';
 import { AIGenerateButton, AISuggestionBanner } from '../AIGenerator';
 import { SectionTitleField } from './fields';
+import { THEME_FALLBACK_COLORS } from '@/lib/uiConstants';
+
+const WEB = THEME_FALLBACK_COLORS.website;
 
 /**
  * ContactoEditor - Editor del bloque Contacto
@@ -153,19 +156,19 @@ function ContactoEditor({ contenido, onGuardar, tema, isSaving, industria = 'def
         <div className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
           {form.direccion && (
             <p className="flex items-center gap-2">
-              <MapPin className="w-4 h-4" style={{ color: tema?.color_primario || '#753572' }} />
+              <MapPin className="w-4 h-4" style={{ color: tema?.color_primario || WEB.primario }} />
               {form.direccion}
             </p>
           )}
           {form.telefono && (
             <p className="flex items-center gap-2">
-              <Phone className="w-4 h-4" style={{ color: tema?.color_primario || '#753572' }} />
+              <Phone className="w-4 h-4" style={{ color: tema?.color_primario || WEB.primario }} />
               {form.telefono}
             </p>
           )}
           {form.email && (
             <p className="flex items-center gap-2">
-              <Mail className="w-4 h-4" style={{ color: tema?.color_primario || '#753572' }} />
+              <Mail className="w-4 h-4" style={{ color: tema?.color_primario || WEB.primario }} />
               {form.email}
             </p>
           )}
@@ -182,7 +185,7 @@ function ContactoEditor({ contenido, onGuardar, tema, isSaving, industria = 'def
                           ? 'text-white'
                           : 'bg-gray-200 dark:bg-gray-600 text-gray-500 dark:text-gray-400'
                       }`}
-                      style={idx === 0 ? { backgroundColor: tema?.color_primario || '#753572' } : {}}
+                      style={idx === 0 ? { backgroundColor: tema?.color_primario || WEB.primario } : {}}
                     >
                       {idx + 1}
                     </div>
@@ -208,7 +211,7 @@ function ContactoEditor({ contenido, onGuardar, tema, isSaving, industria = 'def
               })}
             <button
               className="w-full py-2 text-white text-xs rounded"
-              style={{ backgroundColor: tema?.color_primario || '#753572' }}
+              style={{ backgroundColor: tema?.color_primario || WEB.primario }}
             >
               {form.tipo_formulario === 'multi_step' ? 'Siguiente' : form.texto_boton}
             </button>

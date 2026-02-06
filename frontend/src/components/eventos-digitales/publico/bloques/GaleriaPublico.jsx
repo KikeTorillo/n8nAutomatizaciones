@@ -11,6 +11,9 @@
 import { memo, useState } from 'react';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { MarcoFoto } from '@/components/eventos-digitales';
+import { THEME_FALLBACK_COLORS } from '@/lib/uiConstants';
+
+const INV = THEME_FALLBACK_COLORS.invitacion;
 
 function GaleriaPublico({ bloque, evento, tema, isVisible, className = '' }) {
   const { contenido = {}, estilos = {} } = bloque;
@@ -61,7 +64,7 @@ function GaleriaPublico({ bloque, evento, tema, isVisible, className = '' }) {
   };
 
   return (
-    <section className={`py-20 ${className}`} style={{ backgroundColor: tema?.color_fondo || '#FFFFFF' }}>
+    <section className={`py-20 ${className}`} style={{ backgroundColor: tema?.color_fondo || INV.fondo }}>
       <div className="max-w-5xl mx-auto px-4">
         {/* Header */}
         <div className={`text-center mb-12 ${animationClass}`}>

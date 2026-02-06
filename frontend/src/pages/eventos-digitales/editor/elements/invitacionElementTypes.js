@@ -199,6 +199,7 @@ export const INVITACION_ELEMENT_TYPES = {
     canRotate: false,
     maintainAspectRatio: false,
   },
+
 };
 
 // ========== ALLOWED TYPES ==========

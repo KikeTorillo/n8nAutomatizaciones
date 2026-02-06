@@ -7,6 +7,7 @@
 
 import { memo } from 'react';
 import { cn } from '@/lib/utils';
+import { THEME_FALLBACK_COLORS } from '@/lib/uiConstants';
 
 /**
  * Separador Canvas Block
@@ -16,7 +17,7 @@ function SeparadorCanvasBlock({ bloque, tema }) {
   const {
     tipo = 'linea', // 'linea' | 'espacio' | 'ondas'
     altura = 50,
-    color = '#E5E7EB',
+    color = THEME_FALLBACK_COLORS.common.separador,
   } = contenido;
 
   // Render based on type

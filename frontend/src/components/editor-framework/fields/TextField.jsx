@@ -1,8 +1,10 @@
 /**
  * TextField - Campo de texto con soporte para IA
  */
-import { memo, useRef } from 'react';
+import { memo, useRef, useId } from 'react';
 import { Sparkles } from 'lucide-react';
+import { Input } from '@/components/ui/atoms';
+import { Label } from '@/components/ui/atoms';
 
 function TextField({ field, label: labelProp, fieldKey, placeholder: placeholderProp, aiEnabled: aiEnabledProp, value, onChange, onOpenAIWriter }) {
   // Soporta tanto {field} como props directos
@@ -11,13 +13,12 @@ function TextField({ field, label: labelProp, fieldKey, placeholder: placeholder
   const placeholder = field?.placeholder ?? placeholderProp;
   const aiEnabled = field?.aiEnabled ?? aiEnabledProp;
   const fieldRef = useRef(null);
+  const fieldId = useId();
 
   return (
     <div ref={fieldRef}>
       <div className="flex items-center justify-between mb-1">
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-          {label}
-        </label>
+        <Label label={label} htmlFor={fieldId} />
         {aiEnabled && (
           <button
             type="button"
@@ -29,12 +30,12 @@ function TextField({ field, label: labelProp, fieldKey, placeholder: placeholder
           </button>
         )}
       </div>
-      <input
+      <Input
+        id={fieldId}
         type="text"
         value={value || ''}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white text-sm focus:ring-1 focus:ring-primary-500"
       />
     </div>
   );

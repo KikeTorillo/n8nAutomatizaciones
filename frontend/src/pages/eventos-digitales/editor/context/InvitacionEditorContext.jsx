@@ -185,6 +185,20 @@ export function InvitacionEditorProvider({ children }) {
     },
   });
 
+  // Actualizar configuración del evento (animación apertura, etc.)
+  const actualizarConfiguracionMutation = useMutation({
+    mutationFn: (configuracion) =>
+      eventosDigitalesApi.actualizarEvento(eventoId, { configuracion }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['evento', eventoId] });
+      toast.success('Configuración actualizada');
+    },
+    onError: (error) => {
+      toast.error('Error al actualizar la configuración');
+      console.error('[InvitacionEditor] Error actualizando configuración:', error);
+    },
+  });
+
   // Actualizar plantilla del evento (colores del tema)
   const actualizarPlantillaMutation = useMutation({
     mutationFn: (plantilla) =>
@@ -442,6 +456,19 @@ export function InvitacionEditorProvider({ children }) {
   }, [getFreePositionStore, guardarBloquesMutation, setBloques, eventoId, queryClient]);
 
   /**
+   * Actualizar configuración del evento
+   */
+  const handleActualizarConfiguracion = useCallback(
+    (config) => {
+      actualizarConfiguracionMutation.mutate({
+        ...evento?.configuracion,
+        ...config,
+      });
+    },
+    [evento?.configuracion, actualizarConfiguracionMutation]
+  );
+
+  /**
    * Publicar/Despublicar invitación
    */
   const handlePublicar = useCallback(() => {
@@ -571,6 +598,10 @@ export function InvitacionEditorProvider({ children }) {
       handleActualizarPlantilla,
       estaActualizandoPlantilla: actualizarPlantillaMutation.isPending,
 
+      // Configuración (animación apertura, etc.)
+      handleActualizarConfiguracion,
+      estaActualizandoConfiguracion: actualizarConfiguracionMutation.isPending,
+
       // Navegación
       handleVolver,
     }),
@@ -614,6 +645,8 @@ export function InvitacionEditorProvider({ children }) {
       handlePublicar,
       handleActualizarPlantilla,
       actualizarPlantillaMutation.isPending,
+      handleActualizarConfiguracion,
+      actualizarConfiguracionMutation.isPending,
       handleVolver,
     ]
   );

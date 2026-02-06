@@ -16,6 +16,7 @@ import { DateTimeField } from '../../fields';
 import BaseBlockEditor from '../../blocks/BaseBlockEditor';
 import BaseAutoSaveEditor from '../../blocks/BaseAutoSaveEditor';
 import { useCommonBlockEditor } from '../hooks';
+import { THEME_FALLBACK_COLORS } from '@/lib/uiConstants';
 
 // ========== OPCIONES DE SELECT ==========
 
@@ -143,8 +144,8 @@ function CountdownEditor({
     ...(showAccionFinalizado && { accion_finalizado: 'ocultar' }),
     ...(showApariencia && {
       fondo_tipo: 'color',
-      fondo_valor: '#1F2937',
-      color_texto: '#FFFFFF',
+      fondo_valor: THEME_FALLBACK_COLORS.common.fondoOscuro,
+      color_texto: THEME_FALLBACK_COLORS.common.textoBlanco,
     }),
     ...(showBotonCTA && {
       boton_texto: '',
@@ -216,7 +217,7 @@ function CountdownEditor({
   }, [onGuardar]);
 
   // Colores del tema
-  const colorPrimario = tema?.color_primario || tema?.colores?.primario || '#753572';
+  const colorPrimario = tema?.color_primario || tema?.colores?.primario || THEME_FALLBACK_COLORS.invitacion.primario;
 
   // Componente de preview
   const preview = useMemo(() => {
@@ -288,7 +289,7 @@ function CountdownEditor({
     return (
       <div
         className="rounded-lg p-6 text-center"
-        style={{ backgroundColor: form.fondo_tipo === 'color' ? form.fondo_valor : '#1F2937' }}
+        style={{ backgroundColor: form.fondo_tipo === 'color' ? form.fondo_valor : THEME_FALLBACK_COLORS.common.fondoOscuro }}
       >
         <Clock className="w-8 h-8 mx-auto mb-2" style={{ color: colorPrimario }} />
         <h4 className="font-bold text-lg mb-1" style={{ color: form.color_texto }}>
@@ -497,7 +498,7 @@ function CountdownEditor({
             <Input
               label={form.fondo_tipo === 'imagen' ? 'URL de imagen' : 'Color de fondo'}
               type={form.fondo_tipo === 'imagen' ? 'url' : 'color'}
-              value={form.fondo_valor || '#1F2937'}
+              value={form.fondo_valor || THEME_FALLBACK_COLORS.common.fondoOscuro}
               onChange={(e) => handleFieldChange('fondo_valor', e.target.value)}
               className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
             />
@@ -507,7 +508,7 @@ function CountdownEditor({
             <Input
               label="Color de texto"
               type="color"
-              value={form.color_texto || '#FFFFFF'}
+              value={form.color_texto || THEME_FALLBACK_COLORS.common.textoBlanco}
               onChange={(e) => handleFieldChange('color_texto', e.target.value)}
               className="w-20"
             />

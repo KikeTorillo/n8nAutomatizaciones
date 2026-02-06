@@ -11,6 +11,7 @@
  */
 
 import { Button, Input } from '@/components/ui';
+import { THEME_FALLBACK_COLORS } from '@/lib/uiConstants';
 
 /**
  * Campo de selección de color
@@ -30,7 +31,7 @@ export function ColorPickerField({
   label = 'Color',
   value = '',
   onChange,
-  defaultColor = '#E5E7EB',
+  defaultColor = THEME_FALLBACK_COLORS.common.separador,
   placeholder = 'Usar color del tema',
   disabled = false,
   showReset = true,
