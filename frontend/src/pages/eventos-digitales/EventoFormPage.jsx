@@ -186,25 +186,6 @@ function EventoFormPage() {
                 )}
               </div>
 
-              {/* Descripción */}
-              <Controller
-                name="descripcion"
-                control={control}
-                render={({ field }) => (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Descripción</label>
-                    <textarea
-                      {...field}
-                      rows={3}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-pink-500"
-                      placeholder="Cuéntale a tus invitados sobre tu evento..."
-                    />
-                    {errors.descripcion && (
-                      <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.descripcion.message}</p>
-                    )}
-                  </div>
-                )}
-              />
             </div>
           </div>
 
@@ -369,26 +350,6 @@ function EventoFormPage() {
                 )}
               />
 
-              <Controller
-                name="configuracion.mensaje_confirmacion"
-                control={control}
-                render={({ field }) => (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Mensaje de Confirmación</label>
-                    <textarea
-                      {...field}
-                      rows={2}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-pink-500"
-                      placeholder="Mensaje que verán después de confirmar asistencia"
-                    />
-                    {errors.configuracion?.mensaje_confirmacion && (
-                      <p className="mt-1 text-sm text-red-600 dark:text-red-400">
-                        {errors.configuracion.mensaje_confirmacion.message}
-                      </p>
-                    )}
-                  </div>
-                )}
-              />
             </div>
           </div>
 

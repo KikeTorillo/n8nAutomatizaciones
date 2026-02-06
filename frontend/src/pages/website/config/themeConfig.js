@@ -7,21 +7,14 @@
  * @since 2026-02-05
  */
 
+import { FUENTES_DISPONIBLES } from '@/components/editor-framework';
+
 export const TEMAS_PREDEFINIDOS = [
   { id: 'default', nombre: 'Clásico', colores: { primario: '#4F46E5', secundario: '#6366F1', fondo: '#FFFFFF', texto: '#1F2937' } },
   { id: 'dark', nombre: 'Oscuro', colores: { primario: '#8B5CF6', secundario: '#A78BFA', fondo: '#111827', texto: '#F9FAFB' } },
   { id: 'nature', nombre: 'Natural', colores: { primario: '#059669', secundario: '#10B981', fondo: '#ECFDF5', texto: '#064E3B' } },
   { id: 'sunset', nombre: 'Atardecer', colores: { primario: '#DC2626', secundario: '#F97316', fondo: '#FFF7ED', texto: '#7C2D12' } },
   { id: 'ocean', nombre: 'Océano', colores: { primario: '#0284C7', secundario: '#38BDF8', fondo: '#F0F9FF', texto: '#0C4A6E' } },
-];
-
-export const FUENTES_DISPONIBLES = [
-  { id: 'inter', nombre: 'Inter' },
-  { id: 'roboto', nombre: 'Roboto' },
-  { id: 'poppins', nombre: 'Poppins' },
-  { id: 'montserrat', nombre: 'Montserrat' },
-  { id: 'playfair', nombre: 'Playfair Display' },
-  { id: 'lato', nombre: 'Lato' },
 ];
 
 export const COLOR_FIELDS = [

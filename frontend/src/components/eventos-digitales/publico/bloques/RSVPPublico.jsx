@@ -231,7 +231,7 @@ function RSVPPublico({
                 onClick={() => handleConfirm(true)}
                 disabled={isLoading}
                 className="flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-xl font-semibold text-white transition-all hover:scale-[1.02] disabled:opacity-50"
-                style={{ backgroundColor: '#10b981' }}
+                style={{ backgroundColor: tema?.color_primario || '#10b981' }}
               >
                 {isLoading ? (
                   <Loader2 className="w-5 h-5 animate-spin" />

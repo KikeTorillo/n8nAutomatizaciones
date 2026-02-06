@@ -34,6 +34,9 @@ function TimelineElementRenderer({
 
   // Colores
   const colorPrimario = estilos.color_primario || tema?.color_primario || '#753572';
+  const colorFondo = tema?.color_fondo || '#FFFFFF';
+  const colorTexto = estilos.color_texto || tema?.color_texto || '#1f2937';
+  const colorTextoClaro = estilos.color_texto_claro || tema?.color_texto_claro || '#6b7280';
   const colorLinea = estilos.color_linea || contenido.color_linea || colorPrimario;
   const fuenteTitulo = estilos.fuente_titulo || tema?.fuente_titulos || 'inherit';
 
@@ -65,7 +68,7 @@ function TimelineElementRenderer({
   }
 
   return (
-    <div className="timeline-element w-full py-8 px-4 bg-white dark:bg-gray-900">
+    <div className="timeline-element w-full py-8 px-4" style={{ backgroundColor: colorFondo }}>
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         {(titulo || subtitulo) && (
@@ -79,7 +82,7 @@ function TimelineElementRenderer({
               </h3>
             )}
             {subtitulo && (
-              <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+              <p className="max-w-2xl mx-auto" style={{ color: colorTextoClaro }}>
                 {subtitulo}
               </p>
             )}
@@ -118,11 +121,12 @@ function TimelineElementRenderer({
                   {/* Punto con icono */}
                   <div
                     className={cn(
-                      'absolute w-7 h-7 rounded-full flex items-center justify-center z-10 bg-white dark:bg-gray-900',
+                      'absolute w-7 h-7 rounded-full flex items-center justify-center z-10',
                       layout === 'izquierda' && 'left-0.5',
                       layout === 'derecha' && 'right-0.5',
                       layout === 'alternado' && 'left-0.5 md:left-1/2 md:-translate-x-1/2'
                     )}
+                    style={{ backgroundColor: colorFondo }}
                   >
                     <div
                       className="w-5 h-5 rounded-full flex items-center justify-center"
@@ -155,20 +159,20 @@ function TimelineElementRenderer({
                     )}
 
                     {/* Título */}
-                    <h4 className="text-lg font-bold text-gray-900 dark:text-white mb-1">
+                    <h4 className="text-lg font-bold mb-1" style={{ color: colorTexto }}>
                       {item.titulo}
                     </h4>
 
                     {/* Descripción */}
                     {item.descripcion && (
-                      <p className="text-gray-600 dark:text-gray-400 text-sm">
+                      <p className="text-sm" style={{ color: colorTextoClaro }}>
                         {item.descripcion}
                       </p>
                     )}
 
                     {/* Ubicación (si existe) */}
                     {item.ubicacion && (
-                      <p className="text-gray-500 dark:text-gray-500 text-sm mt-2 flex items-center gap-1">
+                      <p className="text-sm mt-2 flex items-center gap-1" style={{ color: colorTextoClaro }}>
                         <LucideIcons.MapPin className="w-3 h-3" />
                         {item.ubicacion}
                       </p>

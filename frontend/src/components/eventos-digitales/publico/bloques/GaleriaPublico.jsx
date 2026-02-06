@@ -61,7 +61,7 @@ function GaleriaPublico({ bloque, evento, tema, isVisible, className = '' }) {
   };
 
   return (
-    <section className={`py-20 ${className}`}>
+    <section className={`py-20 ${className}`} style={{ backgroundColor: tema?.color_fondo || '#FFFFFF' }}>
       <div className="max-w-5xl mx-auto px-4">
         {/* Header */}
         <div className={`text-center mb-12 ${animationClass}`}>

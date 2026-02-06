@@ -33,6 +33,9 @@ function TimelineCanvasBlock({ bloque, tema }) {
   const color_linea = estilos.color_linea || contenido.color_linea;
 
   const colorPrimario = tema?.color_primario || '#753572';
+  const colorFondo = tema?.color_fondo || '#FFFFFF';
+  const colorTexto = tema?.color_texto || '#1f2937';
+  const colorTextoClaro = tema?.color_texto_claro || '#6b7280';
   const colorLinea = color_linea || colorPrimario;
 
   // Obtener icono de Lucide
@@ -42,7 +45,7 @@ function TimelineCanvasBlock({ bloque, tema }) {
   };
 
   return (
-    <section className="py-16 px-6 bg-white dark:bg-gray-900">
+    <section className="py-16 px-6" style={{ backgroundColor: colorFondo }}>
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="text-center mb-12">
@@ -53,7 +56,7 @@ function TimelineCanvasBlock({ bloque, tema }) {
             {titulo_seccion}
           </h2>
           {subtitulo_seccion && (
-            <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+            <p className="max-w-2xl mx-auto" style={{ color: colorTextoClaro }}>
               {subtitulo_seccion}
             </p>
           )}
@@ -94,11 +97,12 @@ function TimelineCanvasBlock({ bloque, tema }) {
                     {/* Punto */}
                     <div
                       className={cn(
-                        'absolute w-8 h-8 rounded-full flex items-center justify-center z-10 bg-white dark:bg-gray-900',
+                        'absolute w-8 h-8 rounded-full flex items-center justify-center z-10',
                         layout === 'izquierda' && 'left-0',
                         layout === 'derecha' && 'right-0',
                         layout === 'alternado' && 'left-1/2 -translate-x-1/2'
                       )}
+                      style={{ backgroundColor: colorFondo }}
                     >
                       <div
                         className="w-6 h-6 rounded-full flex items-center justify-center"
@@ -126,11 +130,11 @@ function TimelineCanvasBlock({ bloque, tema }) {
                       >
                         {item.hora || '00:00'}
                       </span>
-                      <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
+                      <h3 className="text-lg font-bold mb-2" style={{ color: colorTexto }}>
                         {item.titulo || 'Actividad'}
                       </h3>
                       {item.descripcion && (
-                        <p className="text-gray-600 dark:text-gray-400 text-sm">
+                        <p className="text-sm" style={{ color: colorTextoClaro }}>
                           {item.descripcion}
                         </p>
                       )}

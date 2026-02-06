@@ -68,8 +68,8 @@ function SidebarContainer() {
   }), [config]);
 
   const currentFonts = useMemo(() => ({
-    fuente_titulos: config?.tema?.fuente_titulos || 'inter',
-    fuente_cuerpo: config?.tema?.fuente_cuerpo || 'inter',
+    fuente_titulos: config?.tema?.fuente_titulos || 'Inter',
+    fuente_cuerpo: config?.tema?.fuente_cuerpo || 'Inter',
   }), [config]);
 
   // Handler de guardado de tema

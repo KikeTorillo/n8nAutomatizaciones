@@ -35,6 +35,8 @@ function GaleriaCanvasBlock({ bloque, tema, galeria = [] }) {
   const columnas = estilos.columnas || contenido.columnas || 3;
 
   const colorPrimario = tema?.color_primario || '#753572';
+  const colorFondo = tema?.color_fondo || '#FFFFFF';
+  const colorTextoClaro = tema?.color_texto_claro || '#6b7280';
 
   // Imágenes a mostrar
   const imagenesAMostrar = usar_galeria_evento && galeria.length > 0
@@ -57,7 +59,7 @@ function GaleriaCanvasBlock({ bloque, tema, galeria = [] }) {
   };
 
   return (
-    <section className="py-16 px-6 bg-gray-50 dark:bg-gray-800">
+    <section className="py-20 px-6" style={{ backgroundColor: colorFondo }}>
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="text-center mb-12">
@@ -68,7 +70,7 @@ function GaleriaCanvasBlock({ bloque, tema, galeria = [] }) {
             {titulo_seccion}
           </h2>
           {subtitulo_seccion && (
-            <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+            <p className="max-w-2xl mx-auto" style={{ color: colorTextoClaro }}>
               {subtitulo_seccion}
             </p>
           )}

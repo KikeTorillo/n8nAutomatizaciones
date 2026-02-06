@@ -13,6 +13,24 @@ import { memo } from 'react';
 import PropTypes from 'prop-types';
 import { MapPin, Navigation, ExternalLink } from 'lucide-react';
 
+// Generar URL de embed de Google Maps desde coordenadas o dirección
+const getMapEmbedUrl = (ubicacion) => {
+  if (ubicacion.coordenadas) {
+    return `https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3000!2d${ubicacion.coordenadas.lng}!3d${ubicacion.coordenadas.lat}!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zM!5e0!3m2!1ses!2smx!4v1`;
+  }
+  if (ubicacion.direccion || ubicacion.nombre) {
+    return `https://www.google.com/maps/embed/v1/place?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&q=${encodeURIComponent(ubicacion.direccion || ubicacion.nombre)}`;
+  }
+  return null;
+};
+
+const getGoogleMapsUrl = (ubicacion) => {
+  if (ubicacion.coordenadas) {
+    return `https://www.google.com/maps/search/?api=1&query=${ubicacion.coordenadas.lat},${ubicacion.coordenadas.lng}`;
+  }
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(ubicacion.direccion || ubicacion.nombre)}`;
+};
+
 function UbicacionElementRenderer({
   elemento,
   tema,
@@ -36,13 +54,6 @@ function UbicacionElementRenderer({
   const colorTexto = tema?.color_texto || '#1f2937';
   const colorTextoClaro = tema?.color_texto_claro || '#6b7280';
   const fuenteTitulo = tema?.fuente_titulos || 'inherit';
-
-  const getGoogleMapsUrl = (ubicacion) => {
-    if (ubicacion.coordenadas) {
-      return `https://www.google.com/maps/search/?api=1&query=${ubicacion.coordenadas.lat},${ubicacion.coordenadas.lng}`;
-    }
-    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(ubicacion.direccion || ubicacion.nombre)}`;
-  };
 
   // Mostrar placeholder si no hay ubicaciones en modo edición
   if (ubicaciones.length === 0) {
@@ -92,70 +103,80 @@ function UbicacionElementRenderer({
 
       {/* Ubicaciones */}
       <div className={`grid gap-4 ${ubicaciones.length === 1 ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2'}`}>
-        {ubicaciones.map((ubicacion, idx) => (
-          <div
-            key={idx}
-            className="bg-white rounded-xl overflow-hidden"
-            style={{ boxShadow: `0 4px 20px ${colorPrimario}15` }}
-          >
-            {/* Mapa placeholder */}
-            {mostrarMapa && (
-              <div
-                className="h-32 flex items-center justify-center"
-                style={{ backgroundColor: colorSecundario + '40' }}
-              >
-                <MapPin className="w-8 h-8" style={{ color: colorPrimario }} />
-              </div>
-            )}
+        {ubicaciones.map((ubicacion, idx) => {
+          const embedUrl = getMapEmbedUrl(ubicacion);
 
-            {/* Info */}
-            <div className="p-4">
-              {/* Tipo badge */}
-              {ubicacion.tipo && (
-                <span
-                  className="inline-block px-2 py-0.5 rounded-full text-xs font-medium mb-2"
-                  style={{ backgroundColor: colorSecundario, color: colorPrimario }}
+          return (
+            <div
+              key={idx}
+              className="bg-white rounded-xl overflow-hidden"
+              style={{ boxShadow: `0 4px 20px ${colorPrimario}15` }}
+            >
+              {/* Mapa */}
+              {mostrarMapa && embedUrl ? (
+                <div className="h-32 w-full">
+                  <iframe
+                    src={embedUrl}
+                    className="w-full h-full border-0"
+                    allowFullScreen=""
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                    title={`Mapa de ${ubicacion.nombre}`}
+                  />
+                </div>
+              ) : mostrarMapa ? (
+                <div
+                  className="h-32 flex items-center justify-center"
+                  style={{ backgroundColor: colorSecundario + '40' }}
                 >
-                  {ubicacion.tipo}
-                </span>
-              )}
+                  <MapPin className="w-8 h-8" style={{ color: colorPrimario }} />
+                </div>
+              ) : null}
 
-              {/* Nombre */}
-              <h3 className="text-base font-semibold mb-1" style={{ color: colorTexto }}>
-                {ubicacion.nombre}
-              </h3>
+              {/* Info */}
+              <div className="p-4">
+                {ubicacion.tipo && (
+                  <span
+                    className="inline-block px-2 py-0.5 rounded-full text-xs font-medium mb-2"
+                    style={{ backgroundColor: colorSecundario, color: colorPrimario }}
+                  >
+                    {ubicacion.tipo}
+                  </span>
+                )}
 
-              {/* Dirección */}
-              {ubicacion.direccion && (
-                <p className="flex items-start gap-1.5 text-sm mb-3" style={{ color: colorTextoClaro }}>
-                  <MapPin className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                  {ubicacion.direccion}
-                </p>
-              )}
+                <h3 className="text-base font-semibold mb-1" style={{ color: colorTexto }}>
+                  {ubicacion.nombre}
+                </h3>
 
-              {/* Hora */}
-              {ubicacion.hora && (
-                <p className="text-xs mb-2" style={{ color: colorTextoClaro }}>
-                  <span className="font-medium">Hora:</span> {ubicacion.hora}
-                </p>
-              )}
+                {ubicacion.direccion && (
+                  <p className="flex items-start gap-1.5 text-sm mb-3" style={{ color: colorTextoClaro }}>
+                    <MapPin className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                    {ubicacion.direccion}
+                  </p>
+                )}
 
-              {/* Botón */}
-              <a
-                href={getGoogleMapsUrl(ubicacion)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all hover:scale-105"
-                style={{ backgroundColor: colorPrimario, color: 'white' }}
-                onClick={(e) => isEditing && e.preventDefault()}
-              >
-                <Navigation className="w-3 h-3" />
-                Cómo llegar
-                <ExternalLink className="w-2.5 h-2.5" />
-              </a>
+                {ubicacion.hora && (
+                  <p className="text-xs mb-2" style={{ color: colorTextoClaro }}>
+                    <span className="font-medium">Hora:</span> {ubicacion.hora}
+                  </p>
+                )}
+
+                <a
+                  href={getGoogleMapsUrl(ubicacion)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold"
+                  style={{ backgroundColor: colorPrimario, color: 'white' }}
+                  onClick={(e) => isEditing && e.preventDefault()}
+                >
+                  <Navigation className="w-3 h-3" />
+                  Cómo llegar
+                  <ExternalLink className="w-2.5 h-2.5" />
+                </a>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

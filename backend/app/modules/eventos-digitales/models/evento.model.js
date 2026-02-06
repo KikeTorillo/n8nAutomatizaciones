@@ -167,7 +167,35 @@ class EventoModel {
                 SELECT
                     e.*,
                     p.nombre as plantilla_nombre,
-                    p.codigo as plantilla_codigo
+                    p.codigo as plantilla_codigo,
+                    COALESCE(
+                        (SELECT jsonb_agg(
+                            jsonb_build_object(
+                                'id', u.id, 'nombre', u.nombre, 'tipo', u.tipo,
+                                'descripcion', u.descripcion, 'direccion', u.direccion,
+                                'latitud', u.latitud, 'longitud', u.longitud,
+                                'google_maps_url', u.google_maps_url,
+                                'hora_inicio', u.hora_inicio, 'hora_fin', u.hora_fin,
+                                'codigo_vestimenta', u.codigo_vestimenta,
+                                'notas', u.notas, 'orden', u.orden
+                            ) ORDER BY u.orden
+                        ) FROM ubicaciones_evento u
+                        WHERE u.evento_id = e.id AND u.activo = true),
+                        '[]'::jsonb
+                    ) as ubicaciones,
+                    COALESCE(
+                        (SELECT jsonb_agg(
+                            jsonb_build_object(
+                                'id', r.id, 'nombre', r.nombre,
+                                'descripcion', r.descripcion,
+                                'url', r.url_externa, 'imagen_url', r.imagen_url,
+                                'precio', r.precio, 'comprado', r.comprado,
+                                'orden', r.orden
+                            ) ORDER BY r.orden
+                        ) FROM mesa_regalos_evento r
+                        WHERE r.evento_id = e.id AND r.activo = true),
+                        '[]'::jsonb
+                    ) as mesa_regalos
                 FROM eventos_digitales e
                 LEFT JOIN plantillas_evento p ON e.plantilla_id = p.id
                 WHERE e.id = $1

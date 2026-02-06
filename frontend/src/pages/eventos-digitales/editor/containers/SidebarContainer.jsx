@@ -11,7 +11,6 @@
 
 import { memo, useState, useCallback, useMemo } from 'react';
 import { Plus, Palette, Sparkles } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import {
   useEditorLayoutContext,
@@ -21,7 +20,8 @@ import {
   TemplateGalleryPanel,
 } from '@/components/editor-framework';
 import { INVITACION_ALLOWED_TYPES } from '../elements';
-import { BLOQUES_INVITACION, CATEGORIAS_BLOQUES, TEMAS_POR_TIPO, COLOR_FIELDS } from '../config';
+import { BLOQUES_INVITACION, CATEGORIAS_BLOQUES, TEMAS_POR_TIPO, COLOR_FIELDS, FONT_FIELDS } from '../config';
+import DecorationEditorSection from '../components/DecorationEditorSection';
 import { useInvitacionEditor } from '../context';
 import { usePlantillas } from '@/hooks/otros/eventos-digitales';
 import InvitacionTemplateGallery from '../components/InvitacionTemplateGallery';
@@ -45,7 +45,6 @@ const PANEL_TYPES = {
  * SidebarContainer - Sidebar con navegación y panel de contenido
  */
 function SidebarContainer() {
-  const navigate = useNavigate();
   const {
     modoPreview,
     modoEditor,
@@ -72,27 +71,52 @@ function SidebarContainer() {
   const currentColors = useMemo(() => ({
     primario: evento?.plantilla?.color_primario || '#753572',
     secundario: evento?.plantilla?.color_secundario || '#F59E0B',
-  }), [evento?.plantilla?.color_primario, evento?.plantilla?.color_secundario]);
+    fondo: evento?.plantilla?.color_fondo || '#FFFFFF',
+    texto: evento?.plantilla?.color_texto || '#1F2937',
+    texto_claro: evento?.plantilla?.color_texto_claro || '#6B7280',
+  }), [evento?.plantilla?.color_primario, evento?.plantilla?.color_secundario, evento?.plantilla?.color_fondo, evento?.plantilla?.color_texto, evento?.plantilla?.color_texto_claro]);
+
+  // Fuentes actuales
+  const currentFonts = useMemo(() => ({
+    fuente_titulos: evento?.plantilla?.fuente_titulos || 'Playfair Display',
+    fuente_cuerpo: evento?.plantilla?.fuente_cuerpo || 'Inter',
+  }), [evento?.plantilla?.fuente_titulos, evento?.plantilla?.fuente_cuerpo]);
 
   // Handler de guardado de tema
-  const handleSaveTema = useCallback(async ({ colores }) => {
+  const handleSaveTema = useCallback(async ({ colores, fuentes }) => {
     await handleActualizarPlantilla({
       ...evento?.plantilla,
       color_primario: colores.primario,
       color_secundario: colores.secundario,
+      color_fondo: colores.fondo,
+      color_texto: colores.texto,
+      color_texto_claro: colores.texto_claro,
+      fuente_titulos: fuentes?.fuente_titulos,
+      fuente_titulo: fuentes?.fuente_titulos,
+      fuente_cuerpo: fuentes?.fuente_cuerpo,
     });
   }, [handleActualizarPlantilla, evento?.plantilla]);
 
-  // Handler para aplicar plantilla
-  const handleApplyPlantilla = useCallback((plantilla) => {
-    navigate('/eventos-digitales/nuevo', {
-      state: {
-        plantilla_id: plantilla.id,
-        plantillaNombre: plantilla.nombre,
-        tema: plantilla.tema,
-      },
+  // Decoraciones globales (solo animación de entrada)
+  const currentDecoration = useMemo(() => ({
+    animacion_entrada: evento?.plantilla?.animacion_entrada || 'none',
+  }), [evento?.plantilla?.animacion_entrada]);
+
+  // Handler de guardado de decoraciones
+  const handleSaveDecoracion = useCallback(async (decoracion) => {
+    await handleActualizarPlantilla({
+      ...evento?.plantilla,
+      ...decoracion,
     });
-  }, [navigate]);
+  }, [handleActualizarPlantilla, evento?.plantilla]);
+
+  // Handler para aplicar plantilla al evento actual
+  const handleApplyPlantilla = useCallback(async (plantilla) => {
+    await handleActualizarPlantilla({
+      ...evento?.plantilla,
+      ...plantilla.tema,
+    });
+  }, [handleActualizarPlantilla, evento?.plantilla]);
 
   // Handler para agregar elemento en modo libre
   const handleAgregarElemento = useCallback((nuevoElemento, seccionId) => {
@@ -201,12 +225,20 @@ function SidebarContainer() {
             <ThemeEditorPanel
               colorFields={COLOR_FIELDS}
               currentColors={currentColors}
+              fontFields={FONT_FIELDS}
+              currentFonts={currentFonts}
               presetThemes={temasDisponibles}
               onSave={handleSaveTema}
               isLoading={estaActualizandoPlantilla}
-              title="Colores"
-              subtitle="Personaliza los colores de tu invitación"
-            />
+              title="Colores y Tipografía"
+              subtitle="Personaliza colores, fuentes y decoraciones"
+            >
+              <DecorationEditorSection
+                currentDecoration={currentDecoration}
+                onSave={handleSaveDecoracion}
+                isLoading={estaActualizandoPlantilla}
+              />
+            </ThemeEditorPanel>
           )}
           {panelActivo === PANEL_TYPES.PLANTILLAS && (
             <TemplateGalleryPanel

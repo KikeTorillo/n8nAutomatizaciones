@@ -36,6 +36,7 @@ function PropertiesContainer() {
     modoEditor,
     tema,
     handleActualizarBloque,
+    handleActualizarPlantilla,
     getFreePositionStore,
   } = useInvitacionEditor();
 
@@ -125,11 +126,14 @@ function PropertiesContainer() {
       evento,
       ubicaciones: evento?.ubicaciones || [],
       galeria: evento?.galeria || [],
-      mesaRegalos: evento?.mesa_regalos || null,
+      mesaRegalos: evento?.mesa_regalos
+        ? { tiendas: Array.isArray(evento.mesa_regalos) ? evento.mesa_regalos : evento.mesa_regalos.tiendas || [] }
+        : null,
       onOpenUnsplash: openUnsplash,
       onUploadImage: handleUploadImage,
+      onUpdatePlantilla: handleActualizarPlantilla,
     }),
-    [tema, evento, openUnsplash, handleUploadImage]
+    [tema, evento, openUnsplash, handleUploadImage, handleActualizarPlantilla]
   );
 
   // Obtener editor específico si existe

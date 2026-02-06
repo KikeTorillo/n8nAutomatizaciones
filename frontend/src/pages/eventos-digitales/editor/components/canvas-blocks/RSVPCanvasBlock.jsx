@@ -3,14 +3,15 @@
  * RSVP CANVAS BLOCK
  * ====================================================================
  * Bloque de confirmación de asistencia para invitaciones.
+ * Diseño sincronizado con RSVPPublico.jsx (vista pública).
  *
- * @version 1.0.0
+ * @version 2.0.0
  * @since 2026-02-03
+ * @updated 2026-02-05 - Sincronizar diseño con RSVPPublico
  */
 
 import { memo, useState } from 'react';
-import { CheckCircle, X, Users, UtensilsCrossed } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Check, X, Users, MessageSquare, AlertCircle } from 'lucide-react';
 
 /**
  * RSVP Canvas Block
@@ -21,149 +22,142 @@ import { cn } from '@/lib/utils';
  */
 function RSVPCanvasBlock({ bloque, tema }) {
   const contenido = bloque.contenido || {};
+  const estilos = bloque.estilos || {};
 
-  // Usar || para fallbacks (strings vacíos necesitan ||, no default de desestructuración)
   const titulo = contenido.titulo || 'Confirma tu Asistencia';
   const subtitulo = contenido.subtitulo;
-  // En el preview siempre mostrar acompañantes con valor fijo (el real viene del invitado)
-  const permitir_acompanantes = true;
-  const max_acompanantes = 4; // Valor fijo para preview
-  const pedir_restricciones = contenido.pedir_restricciones ?? false;
+  const mostrarMensaje = estilos.mostrar_mensaje !== false;
+  const mostrarRestricciones = (estilos.mostrar_restricciones ?? contenido.pedir_restricciones) !== false;
+  // Preview fijo: siempre mostrar selector de asistentes con max=4
+  const maxAsistentes = 4;
 
   const colorPrimario = tema?.color_primario || '#753572';
+  const colorSecundario = tema?.color_secundario || '#F59E0B';
+  const colorTexto = tema?.color_texto || '#1f2937';
+  const colorTextoClaro = tema?.color_texto_claro || '#6b7280';
 
-  // Estado del formulario (para preview)
-  const [formData, setFormData] = useState({
-    nombre: '',
-    email: '',
-    asistira: null,
-    num_acompanantes: 1,
-    restricciones: '',
+  const [form, setForm] = useState({
+    num_asistentes: 1,
+    mensaje_rsvp: '',
+    restricciones_dieteticas: '',
   });
 
   return (
-    <section className="py-16 px-6 bg-white dark:bg-gray-900">
+    <section
+      className="py-20 px-6"
+      style={{ backgroundColor: colorSecundario + '20' }}
+    >
       <div className="max-w-xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
           <h2
             className="text-3xl md:text-4xl font-bold mb-4"
-            style={{ color: colorPrimario, fontFamily: 'var(--fuente-titulos)' }}
+            style={{ color: colorTexto, fontFamily: 'var(--fuente-titulos)' }}
           >
             {titulo}
           </h2>
           {subtitulo && (
-            <p className="text-gray-600 dark:text-gray-400">
+            <p className="text-lg" style={{ color: colorTextoClaro }}>
               {subtitulo}
             </p>
           )}
         </div>
 
         {/* Formulario */}
-        <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-6 md:p-8 shadow-lg">
-          <div className="space-y-4">
-            {/* Nombre */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Nombre completo *
+        <div
+          className="bg-white rounded-3xl p-6 md:p-8"
+          style={{ boxShadow: `0 10px 40px ${colorPrimario}15` }}
+        >
+          {/* Número de asistentes */}
+          <div className="mb-6">
+            <label
+              className="flex items-center gap-2 text-sm font-medium mb-2"
+              style={{ color: colorTexto }}
+            >
+              <Users className="w-4 h-4" />
+              Número de asistentes
+            </label>
+            <select
+              value={form.num_asistentes}
+              onChange={(e) => setForm({ ...form, num_asistentes: parseInt(e.target.value) })}
+              className="w-full px-4 py-3 rounded-xl border transition-colors focus:outline-none focus:ring-2"
+              style={{
+                borderColor: colorSecundario,
+                backgroundColor: 'white',
+                color: colorTexto,
+              }}
+            >
+              {[...Array(maxAsistentes)].map((_, i) => (
+                <option key={i + 1} value={i + 1}>
+                  {i + 1} {i === 0 ? 'persona' : 'personas'}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Mensaje */}
+          {mostrarMensaje && (
+            <div className="mb-6">
+              <label
+                className="flex items-center gap-2 text-sm font-medium mb-2"
+                style={{ color: colorTexto }}
+              >
+                <MessageSquare className="w-4 h-4" />
+                Mensaje (opcional)
+              </label>
+              <textarea
+                value={form.mensaje_rsvp}
+                onChange={(e) => setForm({ ...form, mensaje_rsvp: e.target.value })}
+                placeholder="Escribe un mensaje para los anfitriones..."
+                rows={3}
+                className="w-full px-4 py-3 rounded-xl border transition-colors focus:outline-none focus:ring-2 resize-none"
+                style={{ borderColor: colorSecundario }}
+              />
+            </div>
+          )}
+
+          {/* Restricciones dietéticas */}
+          {mostrarRestricciones && (
+            <div className="mb-8">
+              <label
+                className="flex items-center gap-2 text-sm font-medium mb-2"
+                style={{ color: colorTexto }}
+              >
+                <AlertCircle className="w-4 h-4" />
+                Restricciones alimentarias (opcional)
               </label>
               <input
                 type="text"
-                placeholder="Tu nombre"
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:border-transparent"
-                style={{ '--tw-ring-color': colorPrimario }}
-                value={formData.nombre}
-                onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
+                value={form.restricciones_dieteticas}
+                onChange={(e) => setForm({ ...form, restricciones_dieteticas: e.target.value })}
+                placeholder="Ej: Vegetariano, sin gluten, alergia a mariscos..."
+                className="w-full px-4 py-3 rounded-xl border transition-colors focus:outline-none focus:ring-2"
+                style={{ borderColor: colorSecundario }}
               />
             </div>
+          )}
 
-            {/* Email */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Correo electrónico *
-              </label>
-              <input
-                type="email"
-                placeholder="tu@email.com"
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:border-transparent"
-                style={{ '--tw-ring-color': colorPrimario }}
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              />
-            </div>
-
-            {/* Acompañantes */}
-            {permitir_acompanantes && (
-              <div>
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
-                  <Users className="w-4 h-4" />
-                  ¿Cuántas personas asistirán?
-                </label>
-                <div className="flex gap-2 flex-wrap">
-                  {[...Array(max_acompanantes + 1)].map((_, i) => (
-                    <button
-                      key={i}
-                      type="button"
-                      onClick={() => setFormData({ ...formData, num_acompanantes: i })}
-                      className={cn(
-                        'w-10 h-10 rounded-full font-medium transition-colors',
-                        formData.num_acompanantes === i
-                          ? 'text-white'
-                          : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
-                      )}
-                      style={
-                        formData.num_acompanantes === i
-                          ? { backgroundColor: colorPrimario }
-                          : {}
-                      }
-                    >
-                      {i}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Restricciones alimenticias */}
-            {pedir_restricciones && (
-              <div>
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-2">
-                  <UtensilsCrossed className="w-4 h-4" />
-                  Restricciones alimenticias
-                </label>
-                <textarea
-                  placeholder="Indica si tienes alergias o restricciones..."
-                  rows={2}
-                  className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:border-transparent"
-                  style={{ '--tw-ring-color': colorPrimario }}
-                  value={formData.restricciones}
-                  onChange={(e) => setFormData({ ...formData, restricciones: e.target.value })}
-                />
-              </div>
-            )}
-
-            {/* Botones */}
-            <div className="flex gap-3 pt-4">
-              <button
-                type="button"
-                className={cn(
-                  'flex-1 py-3 rounded-lg font-semibold text-white flex items-center justify-center gap-2',
-                  'transform transition-transform hover:scale-[1.02]'
-                )}
-                style={{ backgroundColor: colorPrimario }}
-              >
-                <CheckCircle className="w-5 h-5" />
-                Confirmar Asistencia
-              </button>
-              <button
-                type="button"
-                className="flex-1 py-3 rounded-lg font-semibold border-2 text-gray-700 dark:text-gray-300 flex items-center justify-center gap-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                style={{ borderColor: colorPrimario }}
-              >
-                <X className="w-5 h-5" />
-                No puedo asistir
-              </button>
-            </div>
+          {/* Botones */}
+          <div className="flex flex-col sm:flex-row gap-4">
+            <button
+              type="button"
+              className="flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-xl font-semibold text-white transition-all hover:scale-[1.02]"
+              style={{ backgroundColor: colorPrimario }}
+            >
+              <Check className="w-5 h-5" />
+              ¡Sí, asistiré!
+            </button>
+            <button
+              type="button"
+              className="flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-xl font-semibold transition-all hover:scale-[1.02]"
+              style={{
+                backgroundColor: colorSecundario,
+                color: colorTexto,
+              }}
+            >
+              <X className="w-5 h-5" />
+              No podré asistir
+            </button>
           </div>
         </div>
       </div>

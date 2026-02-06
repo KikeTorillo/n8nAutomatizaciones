@@ -14,9 +14,9 @@
  */
 
 import { memo, useMemo } from 'react';
-import { CheckCircle, Users, UtensilsCrossed } from 'lucide-react';
+import { CheckCircle } from 'lucide-react';
 import { Input, Textarea, ToggleSwitch } from '@/components/ui';
-import { NumberField, BaseAutoSaveEditor } from '@/components/editor-framework';
+import { BaseAutoSaveEditor } from '@/components/editor-framework';
 import { useInvitacionBlockEditor } from '../../hooks';
 import { BLOCK_DEFAULTS } from '../../config';
 
@@ -46,73 +46,8 @@ function RSVPEditor({ contenido, estilos, onChange, tema }) {
     onChange
   );
 
-  // Componente de preview
-  const preview = useMemo(() => {
-    const colorPrimario = tema?.color_primario || '#753572';
-
-    return (
-      <div className="p-4">
-        <h4 className="font-bold text-center mb-2 text-gray-900 dark:text-white">
-          {form.titulo || 'Confirma tu Asistencia'}
-        </h4>
-
-        {form.subtitulo && (
-          <p className="text-sm text-center text-gray-600 dark:text-gray-400 mb-4">
-            {form.subtitulo}
-          </p>
-        )}
-
-        {/* Preview del formulario */}
-        <div className="space-y-3 max-w-sm mx-auto">
-          <input
-            placeholder="Nombre completo"
-            disabled
-            className="w-full px-3 py-2 text-sm border dark:border-gray-600 dark:bg-gray-700 rounded"
-          />
-
-          <input
-            placeholder="Correo electrónico"
-            disabled
-            className="w-full px-3 py-2 text-sm border dark:border-gray-600 dark:bg-gray-700 rounded"
-          />
-
-          {form.permitir_acompanantes && (
-            <div className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-700 rounded">
-              <Users className="w-4 h-4 text-gray-500" />
-              <span className="text-sm text-gray-600 dark:text-gray-400">
-                ¿Cuántos asistirán? (máx. {form.max_acompanantes || 4})
-              </span>
-            </div>
-          )}
-
-          {form.pedir_restricciones && (
-            <div className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-700 rounded">
-              <UtensilsCrossed className="w-4 h-4 text-gray-500" />
-              <span className="text-sm text-gray-600 dark:text-gray-400">
-                Restricciones alimenticias
-              </span>
-            </div>
-          )}
-
-          <div className="flex gap-2 pt-2">
-            <button
-              className="flex-1 py-2 text-white text-sm rounded font-medium"
-              style={{ backgroundColor: colorPrimario }}
-            >
-              <CheckCircle className="w-4 h-4 inline mr-2" />
-              Confirmar
-            </button>
-            <button className="flex-1 py-2 text-sm rounded border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300">
-              No puedo asistir
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }, [form, tema?.color_primario]);
-
   return (
-    <BaseAutoSaveEditor preview={preview}>
+    <BaseAutoSaveEditor>
       <Input
         label="Título"
         value={form.titulo || ''}
@@ -156,41 +91,18 @@ function RSVPEditor({ contenido, estilos, onChange, tema }) {
         />
       </div>
 
-      {/* Opciones del formulario */}
-      <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg space-y-4">
-        <h4 className="text-sm font-medium text-blue-700 dark:text-blue-300 flex items-center gap-2">
-          <Users className="w-4 h-4" />
-          Opciones del formulario
-        </h4>
-
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <ToggleSwitch
-              checked={form.permitir_acompanantes || false}
-              onChange={(checked) => handleFieldChange('permitir_acompanantes', checked)}
-              label="Permitir acompañantes"
-            />
-          </div>
-
-          {form.permitir_acompanantes && (
-            <NumberField
-              label="Máximo de acompañantes"
-              value={form.max_acompanantes || 4}
-              onChange={(val) => handleFieldChange('max_acompanantes', val)}
-              min={0}
-              max={10}
-            />
-          )}
-
-          <div className="flex items-center justify-between pt-2 border-t border-blue-200 dark:border-blue-800">
-            <ToggleSwitch
-              checked={form.pedir_restricciones || false}
-              onChange={(checked) => handleFieldChange('pedir_restricciones', checked)}
-              label="Preguntar restricciones alimenticias"
-            />
-          </div>
-        </div>
+      <div className="flex items-center justify-between gap-3 pt-2 border-t border-gray-200 dark:border-gray-700">
+        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+          Preguntar restricciones alimentarias
+        </span>
+        <ToggleSwitch
+          enabled={form.pedir_restricciones || false}
+          onChange={(val) => handleFieldChange('pedir_restricciones', val)}
+          label="Preguntar restricciones alimentarias"
+          size="sm"
+        />
       </div>
+
     </BaseAutoSaveEditor>
   );
 }

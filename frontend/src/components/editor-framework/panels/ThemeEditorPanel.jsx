@@ -15,6 +15,7 @@
 import { useState, useEffect, useCallback, memo } from 'react';
 import { HexColorPicker } from 'react-colorful';
 import { Palette, Type, Check, RotateCcw, Loader2 } from 'lucide-react';
+import FontSelect from './FontSelect';
 
 /**
  * Preview por defecto - Muestra título, texto y botón con colores del tema
@@ -88,6 +89,7 @@ function ThemeEditorPanel({
   title = 'Tema',
   subtitle = 'Personaliza colores y tipografía',
   previewComponent,
+  children,
 }) {
   // Estado interno de colores editados
   const [colores, setColores] = useState(() => {
@@ -209,12 +211,12 @@ function ThemeEditorPanel({
   return (
     <div className="h-full flex flex-col">
       {/* Header */}
-      <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+      <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
         <h3 className="font-semibold text-gray-900 dark:text-gray-100">{title}</h3>
         <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{subtitle}</p>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-6">
+      <div className="flex-1 overflow-y-auto p-4 space-y-6" data-theme-editor-content>
         {/* Temas rápidos */}
         {presetThemes.length > 0 && (
           <div>
@@ -313,17 +315,11 @@ function ThemeEditorPanel({
                   <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">
                     {label}
                   </label>
-                  <select
+                  <FontSelect
                     value={fuentes[key]}
-                    onChange={(e) => setFuentes(prev => ({ ...prev, [key]: e.target.value }))}
-                    className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
-                  >
-                    {options.map(fuente => (
-                      <option key={fuente.id} value={fuente.id}>
-                        {fuente.nombre}
-                      </option>
-                    ))}
-                  </select>
+                    options={options}
+                    onChange={(val) => setFuentes(prev => ({ ...prev, [key]: val }))}
+                  />
                 </div>
               ))}
             </div>
@@ -337,6 +333,9 @@ function ThemeEditorPanel({
           </h4>
           {previewComponent || <DefaultPreview colores={colores} />}
         </div>
+
+        {/* Contenido adicional inyectado por el consumidor */}
+        {children}
       </div>
 
       {/* Footer con acciones - Solo visible si hay cambios */}
@@ -369,5 +368,20 @@ function ThemeEditorPanel({
     </div>
   );
 }
+
+export const FUENTES_DISPONIBLES = [
+  { id: 'Playfair Display', nombre: 'Playfair Display' },
+  { id: 'Great Vibes', nombre: 'Great Vibes' },
+  { id: 'Dancing Script', nombre: 'Dancing Script' },
+  { id: 'Cormorant Garamond', nombre: 'Cormorant Garamond' },
+  { id: 'Cinzel', nombre: 'Cinzel' },
+  { id: 'Sacramento', nombre: 'Sacramento' },
+  { id: 'Montserrat', nombre: 'Montserrat' },
+  { id: 'Inter', nombre: 'Inter' },
+  { id: 'Roboto', nombre: 'Roboto' },
+  { id: 'Poppins', nombre: 'Poppins' },
+  { id: 'Lato', nombre: 'Lato' },
+  { id: 'Open Sans', nombre: 'Open Sans' },
+];
 
 export default memo(ThemeEditorPanel);

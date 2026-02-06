@@ -79,7 +79,7 @@ function VideoPublico({ bloque, tema, isVisible, className = '' }) {
   const isDirectVideo = videoUrl.match(/\.(mp4|webm|ogg)$/i);
 
   return (
-    <section className={`py-20 ${className}`}>
+    <section className={`py-20 ${className}`} style={{ backgroundColor: tema?.color_fondo || '#FFFFFF' }}>
       <div className="max-w-4xl mx-auto px-4">
         {/* Header */}
         {(titulo || subtitulo) && (

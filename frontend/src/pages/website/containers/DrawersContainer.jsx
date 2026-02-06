@@ -129,8 +129,8 @@ function DrawersContainer() {
           }}
           fontFields={FONT_FIELDS}
           currentFonts={{
-            fuente_titulos: config?.tema?.fuente_titulos || 'inter',
-            fuente_cuerpo: config?.tema?.fuente_cuerpo || 'inter',
+            fuente_titulos: config?.tema?.fuente_titulos || 'Inter',
+            fuente_cuerpo: config?.tema?.fuente_cuerpo || 'Inter',
           }}
           presetThemes={TEMAS_PREDEFINIDOS}
           onSave={async ({ colores, fuentes }) => {

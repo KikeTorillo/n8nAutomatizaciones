@@ -76,7 +76,7 @@ function CountdownPublico({ bloque, evento, tema, isVisible, className = '' }) {
   const animationClass = isVisible ? 'animate-fadeInUp' : 'opacity-0';
 
   return (
-    <section className={`py-16 ${className}`}>
+    <section className={`py-16 ${className}`} style={{ backgroundColor: tema?.color_fondo || '#FFFFFF' }}>
       <div className="max-w-4xl mx-auto px-4">
         {/* Título */}
         {titulo && (

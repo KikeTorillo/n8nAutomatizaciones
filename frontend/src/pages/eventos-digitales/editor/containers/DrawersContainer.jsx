@@ -18,7 +18,7 @@ import {
   ThemeEditorPanel,
 } from '@/components/editor-framework';
 import { useInvitacionEditor } from '../context';
-import { BLOQUES_INVITACION, CATEGORIAS_BLOQUES, BLOCK_CONFIGS, BLOCK_NAMES, TEMAS_POR_TIPO, COLOR_FIELDS } from '../config';
+import { BLOQUES_INVITACION, CATEGORIAS_BLOQUES, BLOCK_CONFIGS, BLOCK_NAMES, TEMAS_POR_TIPO, COLOR_FIELDS, FONT_FIELDS } from '../config';
 import { EDITORES_BLOQUE } from '../components/blocks';
 import { UnsplashModal } from '@/components/shared/media/UnsplashPicker';
 import { useUploadArchivo } from '@/hooks/utils';
@@ -122,11 +122,14 @@ function DrawersContainer() {
       evento,
       ubicaciones: evento?.ubicaciones || [],
       galeria: evento?.galeria || [],
-      mesaRegalos: evento?.mesa_regalos || null,
+      mesaRegalos: evento?.mesa_regalos
+        ? { tiendas: Array.isArray(evento.mesa_regalos) ? evento.mesa_regalos : evento.mesa_regalos.tiendas || [] }
+        : null,
       onOpenUnsplash: openUnsplash,
       onUploadImage: handleUploadImage,
+      onUpdatePlantilla: handleActualizarPlantilla,
     }),
-    [tema, evento, openUnsplash, handleUploadImage]
+    [tema, evento, openUnsplash, handleUploadImage, handleActualizarPlantilla]
   );
 
   // Editor específico
@@ -178,18 +181,32 @@ function DrawersContainer() {
           currentColors={{
             primario: evento?.plantilla?.color_primario || '#753572',
             secundario: evento?.plantilla?.color_secundario || '#F59E0B',
+            fondo: evento?.plantilla?.color_fondo || '#FFFFFF',
+            texto: evento?.plantilla?.color_texto || '#1F2937',
+            texto_claro: evento?.plantilla?.color_texto_claro || '#6B7280',
+          }}
+          fontFields={FONT_FIELDS}
+          currentFonts={{
+            fuente_titulos: evento?.plantilla?.fuente_titulos || 'Playfair Display',
+            fuente_cuerpo: evento?.plantilla?.fuente_cuerpo || 'Inter',
           }}
           presetThemes={TEMAS_POR_TIPO[evento?.tipo] || TEMAS_POR_TIPO.otro}
-          onSave={async ({ colores }) => {
+          onSave={async ({ colores, fuentes }) => {
             await handleActualizarPlantilla({
               ...evento?.plantilla,
               color_primario: colores.primario,
               color_secundario: colores.secundario,
+              color_fondo: colores.fondo,
+              color_texto: colores.texto,
+              color_texto_claro: colores.texto_claro,
+              fuente_titulos: fuentes?.fuente_titulos,
+              fuente_titulo: fuentes?.fuente_titulos,
+              fuente_cuerpo: fuentes?.fuente_cuerpo,
             });
           }}
           isLoading={estaActualizandoPlantilla}
-          title="Colores"
-          subtitle="Personaliza los colores de tu invitación"
+          title="Colores y Tipografía"
+          subtitle="Personaliza colores y fuentes de tu invitación"
         />
       </EditorDrawer>
 

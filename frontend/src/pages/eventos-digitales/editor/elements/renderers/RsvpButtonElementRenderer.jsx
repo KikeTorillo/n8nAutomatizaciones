@@ -2,152 +2,176 @@
  * ====================================================================
  * RSVP BUTTON ELEMENT RENDERER
  * ====================================================================
- * Renderiza elementos de tipo rsvp_button (botón de confirmación) en el canvas.
- * Versión simplificada del RSVP - solo el botón de llamada a la acción.
+ * Renderiza elementos de tipo rsvp_button en el canvas de posición libre.
+ * Diseño sincronizado con RSVPPublico.jsx (vista pública).
  *
- * @version 1.0.0
+ * @version 2.0.0
  * @since 2026-02-04
+ * @updated 2026-02-05 - Sincronizar diseño con RSVPPublico
  */
 
-import { memo, useMemo } from 'react';
+import { memo, useState } from 'react';
 import PropTypes from 'prop-types';
-import { UserCheck, Check, ArrowRight } from 'lucide-react';
-import { cn } from '@/lib/utils';
-
-// ========== COMPONENT ==========
+import { Check, X, Users, MessageSquare, AlertCircle } from 'lucide-react';
 
 function RsvpButtonElementRenderer({
   elemento,
   tema,
-  invitado,
-  onRsvpClick,
   isEditing = false,
 }) {
   const { contenido = {}, estilos = {} } = elemento;
 
-  // Configuración
-  const texto = contenido.texto || 'Confirmar Asistencia';
-  const textoConfirmado = contenido.texto_confirmado || '¡Confirmado!';
-  const variante = contenido.variante || 'primario';
-  const mostrarIcono = contenido.mostrar_icono !== false;
-  const tamano = contenido.tamano || 'lg';
+  const titulo = contenido.titulo || 'Confirma tu Asistencia';
+  const subtitulo = contenido.subtitulo;
+  const mostrarMensaje = estilos.mostrar_mensaje !== false;
+  const mostrarRestricciones = (estilos.mostrar_restricciones ?? contenido.pedir_restricciones) !== false;
+  const maxAsistentes = 4;
 
-  // Colores
-  const colorPrimario = estilos.color_primario || tema?.color_primario || '#753572';
-  const colorSecundario = estilos.color_secundario || tema?.color_secundario || '#fce7f3';
+  const colorPrimario = tema?.color_primario || '#753572';
+  const colorSecundario = tema?.color_secundario || '#F59E0B';
+  const colorTexto = tema?.color_texto || '#1f2937';
+  const colorTextoClaro = tema?.color_texto_claro || '#6b7280';
+  const fuenteTitulo = tema?.fuente_titulos || 'inherit';
 
-  // Estado del invitado
-  const yaConfirmado = invitado?.estado_rsvp === 'confirmado';
-  const yaRespondio = invitado?.estado_rsvp && invitado.estado_rsvp !== 'pendiente';
-
-  // Tamaños
-  const sizeClasses = {
-    sm: 'px-4 py-2 text-sm',
-    md: 'px-5 py-2.5 text-base',
-    lg: 'px-6 py-3 text-lg',
-    xl: 'px-8 py-4 text-xl',
-  };
-
-  // Estilos de botón según variante
-  const buttonStyles = useMemo(() => {
-    if (yaConfirmado && !isEditing) {
-      return {
-        backgroundColor: '#10b981',
-        color: 'white',
-        cursor: 'default',
-      };
-    }
-
-    switch (variante) {
-      case 'outline':
-        return {
-          backgroundColor: 'transparent',
-          color: colorPrimario,
-          border: `2px solid ${colorPrimario}`,
-        };
-      case 'minimal':
-        return {
-          backgroundColor: 'transparent',
-          color: colorPrimario,
-          textDecoration: 'underline',
-          textUnderlineOffset: '4px',
-        };
-      case 'secundario':
-        return {
-          backgroundColor: colorSecundario,
-          color: colorPrimario,
-        };
-      case 'primario':
-      default:
-        return {
-          backgroundColor: colorPrimario,
-          color: 'white',
-        };
-    }
-  }, [variante, colorPrimario, colorSecundario, yaConfirmado, isEditing]);
-
-  // Handler de click
-  const handleClick = (e) => {
-    if (isEditing) {
-      e.preventDefault();
-      return;
-    }
-    if (yaRespondio) {
-      e.preventDefault();
-      return;
-    }
-    if (onRsvpClick) {
-      onRsvpClick();
-    }
-  };
-
-  // Icono a mostrar
-  const Icon = yaConfirmado && !isEditing ? Check : UserCheck;
+  const [form, setForm] = useState({
+    num_asistentes: 1,
+    mensaje_rsvp: '',
+    restricciones_dieteticas: '',
+  });
 
   return (
-    <div className="rsvp-button-element w-full flex justify-center">
-      <button
-        type="button"
-        onClick={handleClick}
-        disabled={yaRespondio && !isEditing}
-        className={cn(
-          'inline-flex items-center justify-center gap-2 font-semibold rounded-full',
-          'transition-all duration-200',
-          !isEditing && !yaRespondio && 'hover:scale-105 hover:shadow-lg',
-          sizeClasses[tamano],
-          variante === 'minimal' && 'rounded-none',
+    <div
+      className="rsvp-element w-full py-6"
+      style={{ backgroundColor: colorSecundario + '20' }}
+    >
+      {/* Header */}
+      <div className="text-center mb-6 px-4">
+        <h2
+          className="text-2xl sm:text-3xl font-bold mb-2"
+          style={{ color: colorTexto, fontFamily: fuenteTitulo }}
+        >
+          {titulo}
+        </h2>
+        {subtitulo && (
+          <p className="text-sm" style={{ color: colorTextoClaro }}>
+            {subtitulo}
+          </p>
         )}
-        style={buttonStyles}
+      </div>
+
+      {/* Formulario */}
+      <div
+        className="bg-white rounded-3xl p-5 mx-4"
+        style={{ boxShadow: `0 10px 40px ${colorPrimario}15` }}
       >
-        {mostrarIcono && <Icon className="w-5 h-5" />}
-        {yaConfirmado && !isEditing ? textoConfirmado : texto}
-        {!yaRespondio && variante === 'minimal' && (
-          <ArrowRight className="w-4 h-4" />
+        {/* Número de asistentes */}
+        <div className="mb-4">
+          <label
+            className="flex items-center gap-2 text-xs font-medium mb-1.5"
+            style={{ color: colorTexto }}
+          >
+            <Users className="w-3.5 h-3.5" />
+            Número de asistentes
+          </label>
+          <select
+            value={form.num_asistentes}
+            onChange={(e) => !isEditing && setForm({ ...form, num_asistentes: parseInt(e.target.value) })}
+            className="w-full px-3 py-2 rounded-xl border text-sm transition-colors focus:outline-none focus:ring-2"
+            style={{
+              borderColor: colorSecundario,
+              backgroundColor: 'white',
+              color: colorTexto,
+            }}
+          >
+            {[...Array(maxAsistentes)].map((_, i) => (
+              <option key={i + 1} value={i + 1}>
+                {i + 1} {i === 0 ? 'persona' : 'personas'}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Mensaje */}
+        {mostrarMensaje && (
+          <div className="mb-4">
+            <label
+              className="flex items-center gap-2 text-xs font-medium mb-1.5"
+              style={{ color: colorTexto }}
+            >
+              <MessageSquare className="w-3.5 h-3.5" />
+              Mensaje (opcional)
+            </label>
+            <textarea
+              placeholder="Escribe un mensaje para los anfitriones..."
+              rows={2}
+              readOnly={isEditing}
+              className="w-full px-3 py-2 rounded-xl border text-sm transition-colors focus:outline-none focus:ring-2 resize-none"
+              style={{ borderColor: colorSecundario }}
+            />
+          </div>
         )}
-      </button>
+
+        {/* Restricciones dietéticas */}
+        {mostrarRestricciones && (
+          <div className="mb-5">
+            <label
+              className="flex items-center gap-2 text-xs font-medium mb-1.5"
+              style={{ color: colorTexto }}
+            >
+              <AlertCircle className="w-3.5 h-3.5" />
+              Restricciones alimentarias (opcional)
+            </label>
+            <input
+              type="text"
+              placeholder="Ej: Vegetariano, sin gluten..."
+              readOnly={isEditing}
+              className="w-full px-3 py-2 rounded-xl border text-sm transition-colors focus:outline-none focus:ring-2"
+              style={{ borderColor: colorSecundario }}
+            />
+          </div>
+        )}
+
+        {/* Botones */}
+        <div className="flex gap-3">
+          <button
+            type="button"
+            className="flex-1 flex items-center justify-center gap-1.5 px-4 py-3 rounded-xl font-semibold text-white text-sm"
+            style={{ backgroundColor: colorPrimario }}
+            onClick={(e) => isEditing && e.preventDefault()}
+          >
+            <Check className="w-4 h-4" />
+            ¡Sí, asistiré!
+          </button>
+          <button
+            type="button"
+            className="flex-1 flex items-center justify-center gap-1.5 px-4 py-3 rounded-xl font-semibold text-sm"
+            style={{
+              backgroundColor: colorSecundario,
+              color: colorTexto,
+            }}
+            onClick={(e) => isEditing && e.preventDefault()}
+          >
+            <X className="w-4 h-4" />
+            No podré asistir
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
 
 RsvpButtonElementRenderer.propTypes = {
   elemento: PropTypes.shape({
-    contenido: PropTypes.shape({
-      texto: PropTypes.string,
-      texto_confirmado: PropTypes.string,
-      variante: PropTypes.oneOf(['primario', 'secundario', 'outline', 'minimal']),
-      mostrar_icono: PropTypes.bool,
-      tamano: PropTypes.oneOf(['sm', 'md', 'lg', 'xl']),
-    }),
+    contenido: PropTypes.object,
     estilos: PropTypes.object,
   }).isRequired,
   tema: PropTypes.shape({
     color_primario: PropTypes.string,
     color_secundario: PropTypes.string,
+    color_texto: PropTypes.string,
+    color_texto_claro: PropTypes.string,
+    fuente_titulos: PropTypes.string,
   }),
-  invitado: PropTypes.shape({
-    estado_rsvp: PropTypes.string,
-  }),
-  onRsvpClick: PropTypes.func,
   isEditing: PropTypes.bool,
 };
 

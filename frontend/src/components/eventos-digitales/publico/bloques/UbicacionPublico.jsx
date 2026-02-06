@@ -21,7 +21,7 @@ function UbicacionPublico({ bloque, evento, tema, isVisible, className = '' }) {
     ? contenido.ubicaciones
     : evento?.ubicaciones || [];
 
-  const mostrarMapa = estilos.mostrar_mapa !== false;
+  const mostrarMapa = (contenido.mostrar_mapa ?? estilos.mostrar_mapa) !== false;
   const layout = estilos.layout || 'cards';
 
   const animationClass = isVisible ? 'animate-fadeInUp' : 'opacity-0';

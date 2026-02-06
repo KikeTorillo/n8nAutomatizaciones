@@ -37,7 +37,7 @@ function TimelinePublico({ bloque, tema, isVisible, className = '' }) {
   if (items.length === 0) return null;
 
   return (
-    <section className={cn('py-16 px-6 bg-white', className)}>
+    <section className={cn('py-16 px-6', className)} style={{ backgroundColor: tema?.color_fondo || '#FFFFFF' }}>
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className={cn('text-center mb-12', animationClass)}>
@@ -48,7 +48,10 @@ function TimelinePublico({ bloque, tema, isVisible, className = '' }) {
             {titulo}
           </h2>
           {subtitulo && (
-            <p className="text-gray-600 max-w-2xl mx-auto">
+            <p
+              className="max-w-2xl mx-auto"
+              style={{ color: tema?.color_texto_claro || '#6b7280' }}
+            >
               {subtitulo}
             </p>
           )}
@@ -88,11 +91,12 @@ function TimelinePublico({ bloque, tema, isVisible, className = '' }) {
                   {/* Punto con icono */}
                   <div
                     className={cn(
-                      'absolute w-8 h-8 rounded-full flex items-center justify-center z-10 bg-white',
+                      'absolute w-8 h-8 rounded-full flex items-center justify-center z-10',
                       layout === 'izquierda' && 'left-0',
                       layout === 'derecha' && 'right-0',
                       layout === 'alternado' && 'left-0 md:left-1/2 md:-translate-x-1/2'
                     )}
+                    style={{ backgroundColor: tema?.color_fondo || '#FFFFFF' }}
                   >
                     <div
                       className="w-6 h-6 rounded-full flex items-center justify-center"
@@ -125,20 +129,29 @@ function TimelinePublico({ bloque, tema, isVisible, className = '' }) {
                     )}
 
                     {/* Título */}
-                    <h3 className="text-lg font-bold text-gray-900 mb-2">
+                    <h3
+                      className="text-lg font-bold mb-2"
+                      style={{ color: tema?.color_texto || '#1f2937' }}
+                    >
                       {item.titulo}
                     </h3>
 
                     {/* Descripción */}
                     {item.descripcion && (
-                      <p className="text-gray-600 text-sm">
+                      <p
+                        className="text-sm"
+                        style={{ color: tema?.color_texto_claro || '#6b7280' }}
+                      >
                         {item.descripcion}
                       </p>
                     )}
 
                     {/* Ubicación (solo en público, si existe) */}
                     {item.ubicacion && (
-                      <p className="text-gray-500 text-sm mt-2 flex items-center gap-1">
+                      <p
+                        className="text-sm mt-2 flex items-center gap-1"
+                        style={{ color: tema?.color_texto_claro || '#6b7280' }}
+                      >
                         <LucideIcons.MapPin className="w-3.5 h-3.5" />
                         {item.ubicacion}
                       </p>

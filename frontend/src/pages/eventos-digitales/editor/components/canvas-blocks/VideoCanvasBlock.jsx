@@ -34,6 +34,8 @@ function VideoCanvasBlock({ bloque, tema }) {
   const mostrar_controles = estilos.mostrar_controles ?? contenido.mostrar_controles ?? true;
 
   const colorPrimario = tema?.color_primario || '#753572';
+  const colorFondo = tema?.color_fondo || '#FFFFFF';
+  const colorTextoClaro = tema?.color_texto_claro || '#6b7280';
 
   // Extraer ID de YouTube
   const getYouTubeId = (url) => {
@@ -83,7 +85,7 @@ function VideoCanvasBlock({ bloque, tema }) {
   }, [video_url, video_tipo, autoplay, mostrar_controles]);
 
   return (
-    <section className="py-16 px-6 bg-white dark:bg-gray-900">
+    <section className="py-20 px-6" style={{ backgroundColor: colorFondo }}>
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         {(titulo_seccion || subtitulo_seccion) && (
@@ -97,7 +99,7 @@ function VideoCanvasBlock({ bloque, tema }) {
               </h2>
             )}
             {subtitulo_seccion && (
-              <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+              <p className="max-w-2xl mx-auto" style={{ color: colorTextoClaro }}>
                 {subtitulo_seccion}
               </p>
             )}

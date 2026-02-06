@@ -469,10 +469,22 @@ export function InvitacionEditorProvider({ children }) {
 
   const tema = useMemo(
     () => ({
-      color_primario: evento?.plantilla?.color_primario || '#753572',
-      color_secundario: evento?.plantilla?.color_secundario || '#F59E0B',
-      fuente_titulos: evento?.plantilla?.fuente_titulos || 'Playfair Display',
-      fuente_cuerpo: evento?.plantilla?.fuente_cuerpo || 'Inter',
+      color_primario: '#753572',
+      color_secundario: '#F59E0B',
+      color_fondo: '#FFFFFF',
+      color_texto: '#1f2937',
+      color_texto_claro: '#6b7280',
+      fuente_titulos: 'Playfair Display',
+      fuente_titulo: 'Playfair Display',
+      fuente_cuerpo: 'Inter',
+      patron_fondo: 'none',
+      patron_opacidad: 0.1,
+      decoracion_esquinas: 'none',
+      icono_principal: 'none',
+      efecto_titulo: 'none',
+      marco_fotos: 'none',
+      stickers: [],
+      ...(evento?.plantilla || {}),
     }),
     [evento?.plantilla]
   );

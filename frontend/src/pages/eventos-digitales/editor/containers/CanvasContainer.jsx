@@ -10,7 +10,7 @@
  * @updated 2026-02-04 - Agregado modo bloques con BlockListEditor
  */
 
-import { memo, useCallback, useMemo, lazy, Suspense } from 'react';
+import { memo, useCallback, useMemo, useEffect, lazy, Suspense } from 'react';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { useDroppable } from '@dnd-kit/core';
 import { Layout, Plus, Loader2 } from 'lucide-react';
@@ -145,7 +145,9 @@ function CanvasContainer() {
     () => ({
       ubicaciones: evento?.ubicaciones || [],
       galeria: evento?.galeria || [],
-      mesaRegalos: evento?.mesa_regalos || null,
+      mesaRegalos: evento?.mesa_regalos
+        ? { tiendas: Array.isArray(evento.mesa_regalos) ? evento.mesa_regalos : evento.mesa_regalos.tiendas || [] }
+        : null,
     }),
     [evento]
   );
@@ -178,6 +180,20 @@ function CanvasContainer() {
 
   // Calcular escala del zoom (zoom viene como porcentaje: 50, 75, 100, etc.)
   const zoomScale = zoom / 100;
+
+  // Cargar Google Fonts dinámicamente según tema
+  useEffect(() => {
+    const fuentes = [tema?.fuente_titulos, tema?.fuente_cuerpo].filter(Boolean);
+    const fuentesUnicas = [...new Set(fuentes)];
+    if (fuentesUnicas.length === 0) return;
+
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = `https://fonts.googleapis.com/css2?${fuentesUnicas.map(f => `family=${f.replace(/\s+/g, '+')}:wght@300;400;500;600;700`).join('&')}&display=swap`;
+    document.head.appendChild(link);
+
+    return () => { document.head.removeChild(link); };
+  }, [tema?.fuente_titulos, tema?.fuente_cuerpo]);
 
   // ========== HOOKS MODO LIBRE (siempre se llaman para cumplir reglas de hooks) ==========
   const freeStore = getFreePositionStore();
@@ -279,6 +295,7 @@ function CanvasContainer() {
             'bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden',
             'ring-1 ring-gray-200 dark:ring-gray-700'
           )}
+          style={{ fontFamily: 'var(--fuente-cuerpo)' }}
         >
           {bloques.length > 0 ? (
             <SortableContext items={bloqueIds} strategy={verticalListSortingStrategy}>

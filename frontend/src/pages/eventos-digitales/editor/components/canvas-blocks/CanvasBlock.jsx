@@ -28,6 +28,7 @@ import GaleriaCanvasBlock from './GaleriaCanvasBlock';
 import VideoCanvasBlock from './VideoCanvasBlock';
 import TextoCanvasBlock from './TextoCanvasBlock';
 import SeparadorCanvasBlock from './SeparadorCanvasBlock';
+import FelicitacionesCanvasBlock from './FelicitacionesCanvasBlock';
 
 // ========== BLOCK COMPONENT MAP ==========
 
@@ -42,6 +43,7 @@ const BLOCK_COMPONENTS = {
   video: VideoCanvasBlock,
   texto: TextoCanvasBlock,
   separador: SeparadorCanvasBlock,
+  felicitaciones: FelicitacionesCanvasBlock,
 };
 
 // ========== MAIN COMPONENT ==========

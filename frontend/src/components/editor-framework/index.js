@@ -149,6 +149,7 @@ export {
   SectionPropertiesPanel,
   LayersPanel,
   ThemeEditorPanel,
+  FUENTES_DISPONIBLES,
   TemplateGalleryPanel,
   TemplateGalleryModal,
 } from './panels';

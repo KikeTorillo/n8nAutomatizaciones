@@ -13,6 +13,40 @@ import { Heart } from 'lucide-react';
 import { BloqueRenderer, BLOQUES_PUBLICOS } from './bloques';
 
 /**
+ * Obtener clases CSS de animación según tipo y estado de visibilidad
+ */
+function getAnimacionClasses(animacion, isVisible) {
+  if (!animacion || animacion === 'none') return '';
+
+  const base = 'transition-all duration-700 ease-out';
+
+  if (isVisible) return `${base} opacity-100 translate-y-0 translate-x-0 scale-100 rotate-0`;
+
+  const initial = {
+    fade: 'opacity-0',
+    bounce: 'opacity-0 translate-y-8',
+    slide: 'opacity-0 -translate-x-8',
+    zoom: 'opacity-0 scale-90',
+    flip: 'opacity-0',
+  };
+
+  return `${base} ${initial[animacion] || 'opacity-0'}`;
+}
+
+/**
+ * Obtener estilos inline para animaciones que CSS classes no cubren
+ */
+function getAnimacionStyle(animacion, isVisible) {
+  if (animacion === 'flip' && !isVisible) {
+    return { transform: 'perspective(800px) rotateX(15deg)', opacity: 0 };
+  }
+  if (animacion === 'flip' && isVisible) {
+    return { transform: 'perspective(800px) rotateX(0deg)', opacity: 1 };
+  }
+  return {};
+}
+
+/**
  * InvitacionDinamica - Renderiza bloques del editor
  */
 function InvitacionDinamica({
@@ -128,12 +162,17 @@ function InvitacionDinamica({
       }}
     >
       {/* Renderizar bloques */}
-      {bloquesVisibles.map((bloque, index) => (
+      {bloquesVisibles.map((bloque, index) => {
+        const animacion = tema?.animacion_entrada || 'none';
+        const isVisible = visibleSections.has(bloque.id);
+        return (
         <div
           key={bloque.id}
           ref={(el) => (sectionRefs.current[bloque.id] = el)}
           data-bloque-id={bloque.id}
           data-bloque-tipo={bloque.tipo}
+          className={getAnimacionClasses(animacion, isVisible)}
+          style={getAnimacionStyle(animacion, isVisible)}
         >
           <Suspense
             fallback={
@@ -163,7 +202,8 @@ function InvitacionDinamica({
             />
           </Suspense>
         </div>
-      ))}
+        );
+      })}
 
       {/* Navegación sticky (si hay más de un bloque) */}
       {navItems.length > 1 && (

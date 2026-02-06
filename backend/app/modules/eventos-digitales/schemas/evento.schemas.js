@@ -9,6 +9,27 @@
 
 const Joi = require('joi');
 
+// Schema completo para el campo plantilla (tema visual del evento)
+const plantillaSchema = Joi.object({
+    color_primario: Joi.string().pattern(/^#[0-9A-Fa-f]{6}$/).optional(),
+    color_secundario: Joi.string().pattern(/^#[0-9A-Fa-f]{6}$/).optional(),
+    color_fondo: Joi.string().pattern(/^#[0-9A-Fa-f]{6}$/).optional(),
+    color_texto: Joi.string().pattern(/^#[0-9A-Fa-f]{6}$/).optional(),
+    color_texto_claro: Joi.string().pattern(/^#[0-9A-Fa-f]{6}$/).optional(),
+    fuente_titulos: Joi.string().max(100).optional(),
+    fuente_titulo: Joi.string().max(100).optional(),
+    fuente_cuerpo: Joi.string().max(100).optional(),
+    patron_fondo: Joi.string().valid('none', 'confetti', 'stars', 'hearts', 'dots', 'stripes', 'bubbles', 'geometric').optional(),
+    patron_opacidad: Joi.number().min(0).max(1).optional(),
+    decoracion_esquinas: Joi.string().valid('none', 'globos', 'estrellas', 'flores', 'corazones', 'lazos', 'hojas').optional(),
+    icono_principal: Joi.string().valid('none', 'cake', 'crown', 'star', 'heart', 'mask', 'gift', 'ring', 'baby', 'balloon').optional(),
+    animacion_entrada: Joi.string().valid('none', 'fade', 'bounce', 'slide', 'zoom', 'flip').optional(),
+    efecto_titulo: Joi.string().valid('none', 'sparkle', 'glow', 'shadow', 'gradient', 'outline').optional(),
+    marco_fotos: Joi.string().valid('none', 'polaroid', 'comic', 'vintage', 'neon', 'rounded', 'ornate').optional(),
+    stickers: Joi.array().items(Joi.string().max(10)).max(10).optional(),
+    imagen_fondo: Joi.string().uri().max(500).allow(null, '').optional(),
+}).optional();
+
 const eventosSchemas = {
     // ========================================================================
     // EVENTOS
@@ -80,7 +101,7 @@ const eventosSchemas = {
                 mensaje_confirmacion: Joi.string().max(500).optional().allow(null, '')
             }).optional(),
 
-            plantilla: Joi.object().optional()
+            plantilla: plantillaSchema
         })
     },
 
@@ -107,12 +128,7 @@ const eventosSchemas = {
             portada_url: Joi.string().uri().max(500).optional().allow(null, ''),
             galeria_urls: Joi.array().items(Joi.string().uri()).max(50).optional(),
             configuracion: Joi.object().optional(),
-            plantilla: Joi.object({
-                color_primario: Joi.string().pattern(/^#[0-9A-Fa-f]{6}$/).optional(),
-                color_secundario: Joi.string().pattern(/^#[0-9A-Fa-f]{6}$/).optional(),
-                fuente_titulos: Joi.string().max(100).optional(),
-                fuente_cuerpo: Joi.string().max(100).optional()
-            }).optional()
+            plantilla: plantillaSchema
         }).min(1).messages({
             'object.min': 'Debe proporcionar al menos un campo para actualizar'
         })

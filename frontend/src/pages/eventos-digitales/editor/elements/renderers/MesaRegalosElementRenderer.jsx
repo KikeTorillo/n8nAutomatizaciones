@@ -27,11 +27,14 @@ function MesaRegalosElementRenderer({
   const layout = contenido.layout || 'grid';
 
   // Usar items del elemento o los del evento
+  const mesaEvento = Array.isArray(evento?.mesa_regalos)
+    ? evento.mesa_regalos
+    : evento?.mesa_regalos?.tiendas || evento?.regalos || [];
   const regalos = contenido.items?.length > 0
     ? contenido.items
     : contenido.regalos?.length > 0
       ? contenido.regalos
-      : evento?.regalos || [];
+      : mesaEvento;
 
   // Estilos del tema
   const colorPrimario = tema?.color_primario || '#753572';

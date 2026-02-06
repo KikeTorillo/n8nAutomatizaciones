@@ -40,6 +40,10 @@ function CountdownCanvasBlock({ bloque, tema, evento, isEditing, onContentChange
   const mostrar_segundos = estilos.mostrar_segundos ?? contenido.mostrar_segundos ?? true;
 
   const colorPrimario = tema?.color_primario || '#753572';
+  const colorSecundario = tema?.color_secundario || '#F59E0B';
+  const colorFondo = tema?.color_fondo || '#FFFFFF';
+  const colorTexto = tema?.color_texto || '#1f2937';
+  const colorTextoClaro = tema?.color_texto_claro || '#6b7280';
 
   // Estado para tiempo restante
   const [tiempoRestante, setTiempoRestante] = useState(null);
@@ -99,7 +103,8 @@ function CountdownCanvasBlock({ bloque, tema, evento, isEditing, onContentChange
         return (
           <div
             key={unidad.key}
-            className="p-4 md:p-6 rounded-lg bg-gray-100 dark:bg-gray-800 min-w-[80px] md:min-w-[100px]"
+            className="p-4 md:p-6 rounded-2xl min-w-[80px] md:min-w-[100px]"
+            style={{ backgroundColor: colorSecundario + '40' }}
           >
             <span
               className="text-3xl md:text-4xl font-bold block"
@@ -107,7 +112,10 @@ function CountdownCanvasBlock({ bloque, tema, evento, isEditing, onContentChange
             >
               {valor}
             </span>
-            <span className="text-xs md:text-sm text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+            <span
+              className="text-xs md:text-sm uppercase tracking-wider"
+              style={{ color: colorTextoClaro }}
+            >
               {unidad.label}
             </span>
           </div>
@@ -118,7 +126,7 @@ function CountdownCanvasBlock({ bloque, tema, evento, isEditing, onContentChange
           <div
             key={unidad.key}
             className="w-20 h-20 md:w-24 md:h-24 rounded-full flex flex-col items-center justify-center"
-            style={{ border: `3px solid ${colorPrimario}` }}
+            style={{ backgroundColor: colorSecundario, border: `3px solid ${colorPrimario}` }}
           >
             <span
               className="text-2xl md:text-3xl font-bold"
@@ -126,7 +134,10 @@ function CountdownCanvasBlock({ bloque, tema, evento, isEditing, onContentChange
             >
               {valor}
             </span>
-            <span className="text-xs text-gray-500 dark:text-gray-400">
+            <span
+              className="text-xs"
+              style={{ color: colorTextoClaro }}
+            >
               {unidad.label}
             </span>
           </div>
@@ -142,7 +153,10 @@ function CountdownCanvasBlock({ bloque, tema, evento, isEditing, onContentChange
             >
               {valor}
             </span>
-            <span className="text-xs text-gray-500 dark:text-gray-400 block">
+            <span
+              className="text-xs block"
+              style={{ color: colorTextoClaro }}
+            >
               {unidad.label}
             </span>
           </div>
@@ -151,7 +165,7 @@ function CountdownCanvasBlock({ bloque, tema, evento, isEditing, onContentChange
   };
 
   return (
-    <section className="py-16 px-6 bg-white dark:bg-gray-900">
+    <section className="py-16 px-6" style={{ backgroundColor: colorFondo }}>
       <div className="max-w-4xl mx-auto text-center">
         {/* Título */}
         {isEditing ? (

@@ -17,12 +17,15 @@ function MesaRegalosPublico({ bloque, evento, tema, isVisible, className = '' })
   const titulo = contenido.titulo || 'Mesa de Regalos';
   const subtitulo = contenido.subtitulo || 'Tu presencia es nuestro mejor regalo, pero si deseas obsequiarnos algo...';
   // Editor guarda 'items', antes se usaba 'regalos'
-  // Prioridad: items del bloque > regalos del bloque > regalos del evento
+  // Prioridad: items del bloque > regalos del bloque > datos del evento
+  const mesaEvento = Array.isArray(evento?.mesa_regalos)
+    ? evento.mesa_regalos
+    : evento?.mesa_regalos?.tiendas || evento?.regalos || [];
   const regalos = contenido.items?.length > 0
     ? contenido.items
     : contenido.regalos?.length > 0
       ? contenido.regalos
-      : evento?.regalos || [];
+      : mesaEvento;
 
   const layout = estilos.layout || contenido.layout || 'grid';
   const mostrarDescripcion = estilos.mostrar_descripcion !== false;
