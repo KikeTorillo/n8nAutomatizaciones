@@ -1,4 +1,4 @@
-import { memo, type ReactNode } from 'react';
+import { memo, forwardRef, type ReactNode } from 'react';
 import { X, AlertTriangle, Info, CheckCircle, XCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ALERT_VARIANTS } from '@/lib/uiConstants';
@@ -52,7 +52,8 @@ interface AlertVariantStyles {
  * Para notificaciones temporales tipo overlay que desaparecen solas
  * (ej. "Guardado correctamente"), usar {@link Toast}.
  */
-const Alert = memo(function Alert({
+const Alert = memo(
+  forwardRef<HTMLDivElement, AlertProps>(function Alert({
   variant = 'info',
   icon: Icon,
   title,
@@ -61,12 +62,13 @@ const Alert = memo(function Alert({
   dismissible = false,
   onDismiss,
   className,
-}: AlertProps) {
+}, ref) {
   const styles = ALERT_VARIANTS[variant] || ALERT_VARIANTS.info;
   const DefaultIcon = defaultIcons[variant] || defaultIcons.warning;
 
   return (
     <div
+      ref={ref}
       role="alert"
       aria-live={variant === 'error' || variant === 'danger' ? 'assertive' : 'polite'}
       className={cn(
@@ -125,7 +127,7 @@ const Alert = memo(function Alert({
       </div>
     </div>
   );
-});
+}));
 
 Alert.displayName = 'Alert';
 

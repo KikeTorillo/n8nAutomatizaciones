@@ -2,7 +2,9 @@ import { memo, forwardRef, type ReactNode, type KeyboardEvent } from 'react';
 import { cn } from '@/lib/utils';
 import { TOGGLE_SIZES, TOGGLE_COLORS } from '@/lib/uiConstants';
 import { Spinner } from '../atoms/Spinner';
-import type { Size } from '@/types/ui';
+
+/** Tamaños soportados por ToggleSwitch */
+type ToggleSwitchSize = 'sm' | 'md' | 'lg';
 
 export interface ToggleSwitchProps {
   /** Estado del toggle (encendido/apagado) */
@@ -12,7 +14,7 @@ export interface ToggleSwitchProps {
   /** Si está deshabilitado */
   disabled?: boolean;
   /** Tamaño: 'sm' | 'md' | 'lg' */
-  size?: Size;
+  size?: ToggleSwitchSize;
   /** Label para accesibilidad (aria-label) */
   label?: string;
   /** Clases adicionales */

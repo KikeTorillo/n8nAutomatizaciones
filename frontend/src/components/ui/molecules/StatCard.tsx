@@ -1,4 +1,4 @@
-import { memo, type KeyboardEvent } from 'react';
+import { memo, forwardRef, type KeyboardEvent } from 'react';
 import { cn } from '@/lib/utils';
 import { ICON_BG_COLORS, SEMANTIC_COLORS } from '@/lib/uiConstants';
 import { SkeletonStatCard } from './SkeletonStatCard';
@@ -34,7 +34,8 @@ export interface StatCardProps {
  * - compact (default): Layout horizontal compacto con icono a la izquierda
  * - expanded: Layout vertical con título prominente (estilo dashboard)
  */
-export const StatCard = memo(function StatCard({
+export const StatCard = memo(
+  forwardRef<HTMLDivElement, StatCardProps>(function StatCard({
   icon: Icon,
   label,
   value,
@@ -45,7 +46,7 @@ export const StatCard = memo(function StatCard({
   isLoading = false,
   onClick,
   className,
-}: StatCardProps) {
+}, ref) {
   const colors = ICON_BG_COLORS[color] || ICON_BG_COLORS.primary;
 
   // Estado de carga
@@ -63,6 +64,7 @@ export const StatCard = memo(function StatCard({
   if (variant === 'expanded') {
     return (
       <div
+        ref={ref}
         className={cn(
           'bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6',
           'hover:shadow-md transition-shadow',
@@ -98,6 +100,7 @@ export const StatCard = memo(function StatCard({
   // Variante compacta (default)
   return (
     <div
+      ref={ref}
       className={cn(
         'bg-white dark:bg-gray-800 rounded-lg shadow-sm',
         'border border-gray-200 dark:border-gray-700',
@@ -145,6 +148,6 @@ export const StatCard = memo(function StatCard({
       </div>
     </div>
   );
-});
+}));
 
 StatCard.displayName = 'StatCard';

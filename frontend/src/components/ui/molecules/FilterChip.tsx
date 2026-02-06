@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { memo, forwardRef } from 'react';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { BADGE_COLORS } from '@/lib/uiConstants';
@@ -30,13 +30,14 @@ export interface FilterChipProps {
  *   onRemove={() => clearFilter('categoria')}
  * />
  */
-const FilterChip = memo(function FilterChip({
+const FilterChip = memo(
+  forwardRef<HTMLButtonElement, FilterChipProps>(function FilterChip({
   label,
   value,
   onRemove,
   variant = 'primary',
   className,
-}: FilterChipProps) {
+}, ref) {
   const variants = {
     primary: cn(BADGE_COLORS.primary, 'border-primary-200 dark:border-primary-700'),
     gray: cn(BADGE_COLORS.default, 'border-gray-200 dark:border-gray-600'),
@@ -44,6 +45,7 @@ const FilterChip = memo(function FilterChip({
 
   return (
     <span
+      ref={ref as React.Ref<HTMLSpanElement>}
       className={cn(
         'inline-flex items-center gap-1.5 px-2.5 py-1 text-sm font-medium rounded-full border',
         'transition-colors',
@@ -77,7 +79,7 @@ const FilterChip = memo(function FilterChip({
       )}
     </span>
   );
-});
+}));
 
 FilterChip.displayName = 'FilterChip';
 

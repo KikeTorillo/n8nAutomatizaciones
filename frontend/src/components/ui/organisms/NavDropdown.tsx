@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback, memo, type ComponentType } from 'react';
+import { useState, useRef, useEffect, useCallback, memo, forwardRef, type ComponentType } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronDown, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -38,14 +38,15 @@ export interface NavDropdownProps {
  *
  * Ene 2026: Movido de molecules a organisms (maneja estado complejo y coordina navegación)
  */
-export const NavDropdown = memo(function NavDropdown({
+export const NavDropdown = memo(
+  forwardRef<HTMLDivElement, NavDropdownProps>(function NavDropdown({
   label,
   icon: Icon,
   items = [],
   isActive = false,
   activeItemId,
   className,
-}: NavDropdownProps) {
+}, ref) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
@@ -73,7 +74,11 @@ export const NavDropdown = memo(function NavDropdown({
   );
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div className="relative" ref={(node) => {
+        dropdownRef.current = node;
+        if (typeof ref === 'function') ref(node);
+        else if (ref) (ref as React.MutableRefObject<HTMLDivElement | null>).current = node;
+      }}>
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
@@ -135,6 +140,7 @@ export const NavDropdown = memo(function NavDropdown({
       )}
     </div>
   );
-});
+  })
+);
 
 NavDropdown.displayName = 'NavDropdown';

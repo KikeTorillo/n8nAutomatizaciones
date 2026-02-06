@@ -1,4 +1,4 @@
-import { memo, type ComponentType } from 'react';
+import { memo, forwardRef, type ComponentType } from 'react';
 import { cn } from '@/lib/utils';
 import { StatCard } from '../molecules/StatCard';
 import type { StatCardTrend } from '@/types/ui';
@@ -44,11 +44,12 @@ export interface StatCardGridProps {
 /**
  * StatCardGrid - Grid responsivo de StatCards
  */
-export const StatCardGrid = memo(function StatCardGrid({
+export const StatCardGrid = memo(
+  forwardRef<HTMLDivElement, StatCardGridProps>(function StatCardGrid({
   stats,
   columns = 4,
   className,
-}: StatCardGridProps) {
+}, ref) {
   const columnClasses: Record<StatCardGridColumns, string> = {
     2: 'grid-cols-2',
     3: 'grid-cols-1 sm:grid-cols-3',
@@ -57,6 +58,7 @@ export const StatCardGrid = memo(function StatCardGrid({
 
   return (
     <div
+      ref={ref}
       className={cn(
         'grid gap-3 sm:gap-4 mb-6',
         columnClasses[columns] || columnClasses[4],
@@ -76,6 +78,7 @@ export const StatCardGrid = memo(function StatCardGrid({
       ))}
     </div>
   );
-});
+  })
+);
 
 StatCardGrid.displayName = 'StatCardGrid';

@@ -1,4 +1,4 @@
-import { memo, type CSSProperties } from 'react';
+import { memo, forwardRef, type CSSProperties } from 'react';
 import { cn } from '@/lib/utils';
 import type { SkeletonColumnWidth } from '@/types/ui';
 
@@ -39,13 +39,14 @@ const widthClasses: Record<SkeletonColumnWidth, string> = {
 /**
  * SkeletonTable - Skeleton loading para tablas
  */
-export const SkeletonTable = memo(function SkeletonTable({
+export const SkeletonTable = memo(
+  forwardRef<HTMLDivElement, SkeletonTableProps>(function SkeletonTable({
   rows = 5,
   columns = 4,
   showHeader = true,
   columnWidths,
   className,
-}: SkeletonTableProps) {
+}, ref) {
   const getColumnWidth = (index: number): string => {
     if (columnWidths && columnWidths[index]) {
       return widthClasses[columnWidths[index]] || 'w-24';
@@ -58,6 +59,7 @@ export const SkeletonTable = memo(function SkeletonTable({
 
   return (
     <div
+      ref={ref}
       role="status"
       aria-busy="true"
       aria-label="Cargando tabla..."
@@ -115,7 +117,7 @@ export const SkeletonTable = memo(function SkeletonTable({
       </div>
     </div>
   );
-});
+}));
 
 /**
  * SkeletonCard - Skeleton loading para cards

@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { memo, forwardRef } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronRight, Home } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -17,15 +17,16 @@ export interface BreadcrumbProps {
  * Breadcrumb - Navegación de migas de pan
  * Muestra la ruta jerárquica actual con enlaces a niveles superiores
  */
-export const Breadcrumb = memo(function Breadcrumb({
+export const Breadcrumb = memo(
+  forwardRef<HTMLElement, BreadcrumbProps>(function Breadcrumb({
   items = [],
   className,
   homeLink = false,
-}: BreadcrumbProps) {
+}, ref) {
   if (!items.length && !homeLink) return null;
 
   return (
-    <nav className={cn('flex items-center text-sm', className)} aria-label="Breadcrumb">
+    <nav ref={ref} className={cn('flex items-center text-sm', className)} aria-label="Breadcrumb">
       <ol className="flex items-center gap-1.5 flex-wrap">
         {homeLink && (
           <>
@@ -79,6 +80,6 @@ export const Breadcrumb = memo(function Breadcrumb({
       </ol>
     </nav>
   );
-});
+}));
 
 Breadcrumb.displayName = 'Breadcrumb';

@@ -1,24 +1,23 @@
-import { memo } from 'react';
-import PropTypes from 'prop-types';
+import { memo, type MouseEvent } from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '../../atoms/Button';
 
-/**
- * FormFooter - Footer con botones de acción para formularios
- *
- * @param {string} submitLabel - Texto del botón principal
- * @param {string} cancelLabel - Texto del botón cancelar
- * @param {function} onCancel - Handler para cancelar
- * @param {boolean} showPreviousButton - Mostrar botón anterior (wizard)
- * @param {function} onPrevious - Handler para anterior
- * @param {string} previousLabel - Texto del botón anterior
- * @param {boolean} showNextButton - Mostrar botón siguiente (wizard)
- * @param {function} onNext - Handler para siguiente
- * @param {string} nextLabel - Texto del botón siguiente
- * @param {boolean} isSubmitting - Estado de envío
- * @param {boolean} isDisabled - Deshabilitar botón principal
- * @param {string} className - Clases adicionales
- */
+interface FormFooterProps {
+  submitLabel?: string;
+  cancelLabel?: string;
+  onCancel?: () => void;
+  showPreviousButton?: boolean;
+  onPrevious?: (e: MouseEvent<HTMLButtonElement>) => void;
+  previousLabel?: string;
+  showNextButton?: boolean;
+  onNext?: (e: MouseEvent<HTMLButtonElement>) => void;
+  nextLabel?: string;
+  isSubmitting?: boolean;
+  isDisabled?: boolean;
+  sticky?: boolean;
+  className?: string;
+}
+
 const FormFooter = memo(function FormFooter({
   submitLabel = 'Guardar',
   cancelLabel = 'Cancelar',
@@ -33,7 +32,7 @@ const FormFooter = memo(function FormFooter({
   isDisabled = false,
   sticky = false,
   className,
-}) {
+}: FormFooterProps) {
   return (
     <div
       className={cn(
@@ -102,21 +101,5 @@ const FormFooter = memo(function FormFooter({
 });
 
 FormFooter.displayName = 'FormFooter';
-
-FormFooter.propTypes = {
-  submitLabel: PropTypes.string,
-  cancelLabel: PropTypes.string,
-  onCancel: PropTypes.func,
-  showPreviousButton: PropTypes.bool,
-  onPrevious: PropTypes.func,
-  previousLabel: PropTypes.string,
-  showNextButton: PropTypes.bool,
-  onNext: PropTypes.func,
-  nextLabel: PropTypes.string,
-  isSubmitting: PropTypes.bool,
-  isDisabled: PropTypes.bool,
-  sticky: PropTypes.bool,
-  className: PropTypes.string,
-};
 
 export { FormFooter };

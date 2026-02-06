@@ -1,4 +1,4 @@
-import { useState, useRef, memo, useCallback, type ComponentType } from 'react';
+import { useState, useRef, memo, forwardRef, useCallback, type ComponentType } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronDown, Check, Menu } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -51,7 +51,8 @@ export interface MobileNavSelectorProps {
  * - Flat: Array simple de items
  * - Grouped: Array de grupos con items anidados
  */
-const MobileNavSelector = memo(function MobileNavSelector({
+const MobileNavSelector = memo(
+  forwardRef<HTMLDivElement, MobileNavSelectorProps>(function MobileNavSelector({
   items,
   groups,
   activeItem,
@@ -59,7 +60,7 @@ const MobileNavSelector = memo(function MobileNavSelector({
   activeItemId,
   fallbackLabel = 'Navegar',
   fallbackIcon: FallbackIcon = Menu,
-}: MobileNavSelectorProps) {
+}, ref) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
@@ -96,7 +97,11 @@ const MobileNavSelector = memo(function MobileNavSelector({
   const groupLabel = isGrouped ? groupedActiveGroup?.label : null;
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div className="relative" ref={(node) => {
+        dropdownRef.current = node;
+        if (typeof ref === 'function') ref(node);
+        else if (ref) (ref as React.MutableRefObject<HTMLDivElement | null>).current = node;
+      }}>
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
@@ -216,7 +221,8 @@ const MobileNavSelector = memo(function MobileNavSelector({
       )}
     </div>
   );
-});
+  })
+);
 
 MobileNavSelector.displayName = 'MobileNavSelector';
 

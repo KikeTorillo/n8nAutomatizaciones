@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { memo, forwardRef } from 'react';
 import { cn } from '@/lib/utils';
 import { PROGRESS_BAR_SIZES } from '@/lib/uiConstants';
 import { useProgressColor } from '@/hooks/ui/useProgressColor';
@@ -47,7 +47,8 @@ export interface LimitProgressBarProps {
 /**
  * ProgressBar - Barra de progreso genérica
  */
-export const ProgressBar = memo(function ProgressBar({
+export const ProgressBar = memo(
+  forwardRef<HTMLDivElement, ProgressBarProps>(function ProgressBar({
   value = 0,
   max = 100,
   percentage: percentageProp,
@@ -61,7 +62,7 @@ export const ProgressBar = memo(function ProgressBar({
   thresholds,
   colors,
   className,
-}: ProgressBarProps) {
+}, ref) {
   const percentage = percentageProp ?? (max > 0 ? Math.round((value / max) * 100) : 0);
   const clampedPercentage = Math.min(Math.max(percentage, 0), 100);
   const { barColorClass, textColorClass } = useProgressColor({
@@ -89,7 +90,7 @@ export const ProgressBar = memo(function ProgressBar({
 
   if (layout === 'vertical') {
     return (
-      <div className={cn('space-y-2', className)}>
+      <div ref={ref} className={cn('space-y-2', className)}>
         {(label || showValue) && (
           <div className="flex items-center justify-between">
             {label && (
@@ -117,7 +118,7 @@ export const ProgressBar = memo(function ProgressBar({
   }
 
   return (
-    <div className={cn('flex items-center gap-3', className)}>
+    <div ref={ref} className={cn('flex items-center gap-3', className)}>
       {label && (
         <span className={cn('text-sm font-medium flex-shrink-0', textColorClass)}>
           {label}
@@ -138,7 +139,7 @@ export const ProgressBar = memo(function ProgressBar({
       )}
     </div>
   );
-});
+}));
 
 /**
  * LimitProgressBar - Wrapper para mostrar uso de límites del plan

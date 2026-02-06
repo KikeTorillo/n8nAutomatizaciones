@@ -5,7 +5,7 @@
  * Combina Label + children + helper/error text
  * Compatible con los atoms existentes (Input, Select, Textarea)
  */
-import { memo, useId, cloneElement, isValidElement, type ReactNode, type ReactElement } from 'react';
+import { memo, forwardRef, useId, cloneElement, isValidElement, type ReactNode, type ReactElement } from 'react';
 import { cn } from '@/lib/utils';
 import { Label } from '../atoms/Label';
 import { FORM_GROUP } from '@/lib/uiConstants';
@@ -30,7 +30,8 @@ export interface FormGroupProps {
 /**
  * Componente FormGroup reutilizable
  */
-const FormGroup = memo(function FormGroup({
+const FormGroup = memo(
+  forwardRef<HTMLDivElement, FormGroupProps>(function FormGroup({
   label,
   required = false,
   error,
@@ -38,7 +39,7 @@ const FormGroup = memo(function FormGroup({
   htmlFor,
   children,
   className,
-}: FormGroupProps) {
+}, ref) {
   const generatedId = useId();
   const errorId = error ? `${generatedId}-error` : undefined;
   const helperId = helper && !error ? `${generatedId}-helper` : undefined;
@@ -50,7 +51,7 @@ const FormGroup = memo(function FormGroup({
     : children;
 
   return (
-    <div className={cn('w-full', className)}>
+    <div ref={ref} className={cn('w-full', className)}>
       <Label label={label} required={required} htmlFor={htmlFor} />
       {enhancedChildren}
       {helper && !error && (
@@ -61,7 +62,7 @@ const FormGroup = memo(function FormGroup({
       )}
     </div>
   );
-});
+}));
 
 FormGroup.displayName = 'FormGroup';
 

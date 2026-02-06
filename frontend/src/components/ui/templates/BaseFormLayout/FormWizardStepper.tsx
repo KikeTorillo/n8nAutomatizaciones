@@ -1,32 +1,36 @@
 import { memo } from 'react';
-import PropTypes from 'prop-types';
 import { Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SEMANTIC_COLORS } from '@/lib/uiConstants';
 
-/**
- * FormWizardStepper - Indicador de pasos para formularios wizard
- *
- * @param {Array} steps - Array de pasos [{id, label, description?}]
- * @param {number} activeStep - Índice del paso activo (0-based)
- * @param {Set|Array} completedSteps - IDs de pasos completados
- * @param {function} onStepChange - Callback (stepIndex) => void
- * @param {boolean} allowNavigation - Permitir click en pasos
- * @param {string} className - Clases adicionales
- */
+export interface WizardStep {
+  id: string;
+  label: string;
+  description?: string;
+}
+
+interface FormWizardStepperProps {
+  steps: WizardStep[];
+  activeStep?: number;
+  completedSteps?: Set<string> | string[];
+  onStepChange?: (index: number) => void;
+  allowNavigation?: boolean;
+  className?: string;
+}
+
 const FormWizardStepper = memo(function FormWizardStepper({
   steps = [],
   activeStep = 0,
-  completedSteps = new Set(),
+  completedSteps = new Set<string>(),
   onStepChange,
   allowNavigation = false,
   className,
-}) {
+}: FormWizardStepperProps) {
   const completedSet = completedSteps instanceof Set
     ? completedSteps
     : new Set(completedSteps);
 
-  const handleStepClick = (index) => {
+  const handleStepClick = (index: number) => {
     if (allowNavigation && onStepChange) {
       onStepChange(index);
     }
@@ -113,21 +117,5 @@ const FormWizardStepper = memo(function FormWizardStepper({
 });
 
 FormWizardStepper.displayName = 'FormWizardStepper';
-
-FormWizardStepper.propTypes = {
-  steps: PropTypes.arrayOf(PropTypes.shape({
-    id: PropTypes.string.isRequired,
-    label: PropTypes.string.isRequired,
-    description: PropTypes.string,
-  })).isRequired,
-  activeStep: PropTypes.number,
-  completedSteps: PropTypes.oneOfType([
-    PropTypes.instanceOf(Set),
-    PropTypes.array,
-  ]),
-  onStepChange: PropTypes.func,
-  allowNavigation: PropTypes.bool,
-  className: PropTypes.string,
-};
 
 export { FormWizardStepper };

@@ -1,4 +1,4 @@
-import { memo, useMemo, type ReactNode, type ChangeEvent } from 'react';
+import { memo, useMemo, forwardRef, type ReactNode, type ChangeEvent } from 'react';
 import { Filter, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SearchInput } from './SearchInput';
@@ -13,7 +13,7 @@ export interface SearchFilterBarProps {
   /** Valor actual de búsqueda */
   searchValue?: string;
   /** Callback cuando cambia búsqueda */
-  onSearchChange?: (e: ChangeEvent<HTMLInputElement>) => void;
+  onSearchChange?: (e: ChangeEvent<HTMLInputElement> | { target: { value: string }; currentTarget: { value: string } }) => void;
   /** Callback para mostrar/ocultar panel de filtros */
   onFiltersToggle?: () => void;
   /** Estado del panel de filtros */
@@ -43,7 +43,7 @@ export interface SearchFilterBarProps {
  * toggle de filtros y chips de filtros activos.
  * Movido a organisms/ por componer múltiples molecules y manejar lógica compleja.
  */
-function SearchFilterBar({
+const SearchFilterBarInner = forwardRef<HTMLDivElement, SearchFilterBarProps>(function SearchFilterBar({
   searchValue = '',
   onSearchChange,
   onFiltersToggle,
@@ -57,7 +57,7 @@ function SearchFilterBar({
   debounceMs = 300,
   onSearch,
   size = 'md',
-}: SearchFilterBarProps) {
+}, ref) {
   // Memoizar el botón de filtros para evitar re-renders
   const filterButton = useMemo(
     () => (
@@ -80,7 +80,7 @@ function SearchFilterBar({
   );
 
   return (
-    <div className={cn('flex flex-col gap-3', className)}>
+    <div ref={ref} className={cn('flex flex-col gap-3', className)}>
       {/* Barra principal */}
       <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
         {/* Búsqueda */}
@@ -118,9 +118,9 @@ function SearchFilterBar({
       </div>
     </div>
   );
-}
+});
 
-SearchFilterBar.displayName = 'SearchFilterBar';
+SearchFilterBarInner.displayName = 'SearchFilterBar';
 
-const MemoizedSearchFilterBar = memo(SearchFilterBar);
+const MemoizedSearchFilterBar = memo(SearchFilterBarInner);
 export { MemoizedSearchFilterBar as SearchFilterBar };

@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { memo, forwardRef } from 'react';
 import { cn } from '@/lib/utils';
 import { LOADING_STATES } from '@/lib/uiConstants';
 import type { SkeletonVariant } from '@/types/ui';
@@ -17,13 +17,14 @@ export interface SkeletonStatCardProps {
  * - compact (default): Layout horizontal compacto
  * - expanded: Layout vertical (estilo dashboard)
  */
-export const SkeletonStatCard = memo(function SkeletonStatCard({
+export const SkeletonStatCard = memo(
+  forwardRef<HTMLDivElement, SkeletonStatCardProps>(function SkeletonStatCard({
   variant = 'compact',
   className,
-}: SkeletonStatCardProps) {
+}, ref) {
   if (variant === 'expanded') {
     return (
-      <div role="status" aria-busy="true" className={cn('bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 animate-pulse', className)}>
+      <div ref={ref} role="status" aria-busy="true" className={cn('bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 animate-pulse', className)}>
         <div className="flex items-center justify-between mb-4">
           <div className={cn('h-5 rounded w-24', LOADING_STATES.skeleton)} />
           <div className={cn('h-8 w-8 rounded', LOADING_STATES.skeleton)} />
@@ -35,7 +36,7 @@ export const SkeletonStatCard = memo(function SkeletonStatCard({
   }
 
   return (
-    <div role="status" aria-busy="true" className={cn(
+    <div ref={ref} role="status" aria-busy="true" className={cn(
       'bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-3 sm:p-4 animate-pulse',
       className
     )}>
@@ -48,6 +49,6 @@ export const SkeletonStatCard = memo(function SkeletonStatCard({
       </div>
     </div>
   );
-});
+}));
 
 SkeletonStatCard.displayName = 'SkeletonStatCard';

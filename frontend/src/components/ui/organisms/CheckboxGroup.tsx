@@ -1,4 +1,4 @@
-import { memo, type ComponentType, type ChangeEvent } from 'react';
+import { memo, forwardRef, type ComponentType, type ChangeEvent } from 'react';
 import { cn } from '@/lib/utils';
 import { CheckboxField } from '../molecules/CheckboxField';
 
@@ -49,7 +49,8 @@ export interface CheckboxGroupProps {
  *
  * NOTA: Movido a organisms (Ene 2026) porque compone CheckboxField (molecule)
  */
-export const CheckboxGroup = memo(function CheckboxGroup({
+export const CheckboxGroup = memo(
+  forwardRef<HTMLFieldSetElement, CheckboxGroupProps>(function CheckboxGroup({
   options = [],
   values = {},
   onChange,
@@ -57,7 +58,7 @@ export const CheckboxGroup = memo(function CheckboxGroup({
   layout = 'vertical',
   columns = 2,
   className,
-}: CheckboxGroupProps) {
+}, ref) {
   if (!options.length) return null;
 
   const layoutClasses: Record<CheckboxGroupLayout, string> = {
@@ -72,11 +73,11 @@ export const CheckboxGroup = memo(function CheckboxGroup({
       : undefined;
 
   return (
-    <div className={cn('space-y-2', className)}>
+    <fieldset ref={ref} className={cn('space-y-2', className)}>
       {title && (
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <legend className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
           {title}
-        </label>
+        </legend>
       )}
 
       <div className={layoutClasses[layout]} style={gridStyle}>
@@ -110,8 +111,9 @@ export const CheckboxGroup = memo(function CheckboxGroup({
           );
         })}
       </div>
-    </div>
+    </fieldset>
   );
-});
+  })
+);
 
 CheckboxGroup.displayName = 'CheckboxGroup';

@@ -55,7 +55,7 @@ const Text = memo(
     },
     ref
   ) {
-    const resolvedSize = size || DEFAULT_SIZES[Component] || 'md';
+    const resolvedSize = (size || DEFAULT_SIZES[Component] || 'md') as keyof typeof TEXT_SIZES;
     const resolvedWeight = weight || DEFAULT_WEIGHTS[Component] || 'normal';
     const Tag = Component as ElementType;
 

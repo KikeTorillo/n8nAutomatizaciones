@@ -1,8 +1,10 @@
-import { memo } from 'react';
+import { memo, forwardRef } from 'react';
 import { Moon, Sun } from 'lucide-react';
 import { useTheme } from '@/hooks/sistema';
 import { cn } from '@/lib/utils';
-import type { Size } from '@/types/ui';
+
+/** Tamaños soportados por ThemeToggle */
+type ThemeToggleSize = 'sm' | 'md' | 'lg';
 
 /**
  * Props del componente ThemeToggle
@@ -11,7 +13,7 @@ export interface ThemeToggleProps {
   /** Clases adicionales */
   className?: string;
   /** Tamaño del botón */
-  size?: Size;
+  size?: ThemeToggleSize;
 }
 
 /**
@@ -20,19 +22,20 @@ export interface ThemeToggleProps {
  * Ene 2026: Movido de molecules/ a organisms/ porque accede a store global (useTheme)
  * Los molecules no deberían conocer stores/contextos de aplicación.
  */
-const ThemeToggle = memo(function ThemeToggle({
+const ThemeToggle = memo(
+  forwardRef<HTMLButtonElement, ThemeToggleProps>(function ThemeToggle({
   className,
   size = 'md',
-}: ThemeToggleProps) {
+}, ref) {
   const { isDark, toggleTheme } = useTheme() as { isDark: boolean; toggleTheme: () => void };
 
-  const sizes: Record<Size, string> = {
+  const sizes: Record<ThemeToggleSize, string> = {
     sm: 'p-1.5',
     md: 'p-2',
     lg: 'p-3',
   };
 
-  const iconSizes: Record<Size, string> = {
+  const iconSizes: Record<ThemeToggleSize, string> = {
     sm: 'w-4 h-4',
     md: 'w-5 h-5',
     lg: 'w-6 h-6',
@@ -40,6 +43,7 @@ const ThemeToggle = memo(function ThemeToggle({
 
   return (
     <button
+      ref={ref}
       onClick={toggleTheme}
       className={cn(
         'rounded-lg transition-colors',
@@ -60,7 +64,8 @@ const ThemeToggle = memo(function ThemeToggle({
       )}
     </button>
   );
-});
+  })
+);
 
 ThemeToggle.displayName = 'ThemeToggle';
 

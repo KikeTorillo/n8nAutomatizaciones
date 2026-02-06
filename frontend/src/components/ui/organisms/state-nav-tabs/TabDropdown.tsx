@@ -1,4 +1,4 @@
-import { memo, useState, useRef, type ComponentType } from 'react';
+import { memo, forwardRef, useState, useRef, type ComponentType } from 'react';
 import { ChevronDown, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useClickOutsideRef, useEscapeKey } from '@/hooks/utils';
@@ -36,14 +36,15 @@ export interface TabDropdownProps {
 /**
  * TabDropdown - Dropdown para agrupar tabs en desktop
  */
-const TabDropdown = memo(function TabDropdown({
+const TabDropdown = memo(
+  forwardRef<HTMLDivElement, TabDropdownProps>(function TabDropdown({
   icon: Icon,
   label,
   items,
   activeTab,
   onTabChange,
   getTabIcon,
-}: TabDropdownProps) {
+}, ref) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -62,7 +63,11 @@ const TabDropdown = memo(function TabDropdown({
   };
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div className="relative" ref={(node) => {
+        dropdownRef.current = node;
+        if (typeof ref === 'function') ref(node);
+        else if (ref) (ref as React.MutableRefObject<HTMLDivElement | null>).current = node;
+      }}>
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
@@ -119,7 +124,8 @@ const TabDropdown = memo(function TabDropdown({
       )}
     </div>
   );
-});
+  })
+);
 
 TabDropdown.displayName = 'TabDropdown';
 

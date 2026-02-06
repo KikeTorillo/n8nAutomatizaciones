@@ -1,4 +1,4 @@
-import { memo, useEffect, useId } from 'react';
+import { memo, useEffect, useId, forwardRef } from 'react';
 import { X, Camera, CameraOff, RotateCcw } from 'lucide-react';
 import { useBarcodeScanner, FORMAT_PRESETS } from '@/hooks/pos';
 
@@ -61,7 +61,8 @@ export interface BarcodeScannerProps {
  *   formats="PRODUCTOS"
  * />
  */
-const BarcodeScanner = memo(function BarcodeScanner({
+const BarcodeScanner = memo(
+  forwardRef<HTMLDivElement, BarcodeScannerProps>(function BarcodeScanner({
   onScan,
   onClose,
   onError,
@@ -73,7 +74,7 @@ const BarcodeScanner = memo(function BarcodeScanner({
   autoStart = true,
   className = '',
   fullScreen = false,
-}: BarcodeScannerProps) {
+}, ref) {
   const scannerId = useId().replace(/:/g, '-');
   const elementId = `scanner-${scannerId}`;
 
@@ -96,9 +97,9 @@ const BarcodeScanner = memo(function BarcodeScanner({
     onScan: (code: string, data: unknown) => {
       onScan?.(code, data);
     },
-    onError: onError as ((err: unknown) => void) | undefined,
+    onError,
     formats: formatPreset as number[],
-  }) as {
+  } as any) as {
     isActive: boolean;
     lastScan: LastScanData | null;
     error: string | null;
@@ -134,7 +135,7 @@ const BarcodeScanner = memo(function BarcodeScanner({
     : 'relative bg-gray-900 rounded-xl overflow-hidden';
 
   return (
-    <div className={`${containerClass} ${className}`}>
+    <div ref={ref} className={`${containerClass} ${className}`}>
       {/* Header */}
       <div className="absolute top-0 left-0 right-0 z-10 bg-gradient-to-b from-black/80 to-transparent p-4">
         <div className="flex items-center justify-between">
@@ -260,7 +261,8 @@ const BarcodeScanner = memo(function BarcodeScanner({
       </div>
     </div>
   );
-});
+  })
+);
 
 BarcodeScanner.displayName = 'BarcodeScanner';
 

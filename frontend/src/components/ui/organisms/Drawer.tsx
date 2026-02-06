@@ -160,4 +160,4 @@ Drawer.Description = VaulDrawer.Description;
 Drawer.Close = VaulDrawer.Close;
 
 export { Drawer };
-export type { DrawerProps, DrawerSize };
+export type { DrawerSize };

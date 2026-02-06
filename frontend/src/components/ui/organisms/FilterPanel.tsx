@@ -1,4 +1,4 @@
-import { useState, useCallback, memo, useMemo, type ChangeEvent, type ComponentType } from 'react';
+import { useState, useCallback, memo, useMemo, forwardRef, type ChangeEvent, type ComponentType } from 'react';
 import { Filter, X, ChevronDown, ChevronUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '../atoms/Button';
@@ -36,7 +36,8 @@ export interface FilterPanelProps {
 /**
  * FilterPanel - Panel de filtros reutilizable con búsqueda y filtros expandibles
  */
-export const FilterPanel = memo(function FilterPanel({
+export const FilterPanel = memo(
+  forwardRef<HTMLDivElement, FilterPanelProps>(function FilterPanel({
   filters = {},
   onFilterChange,
   onClearFilters,
@@ -47,14 +48,14 @@ export const FilterPanel = memo(function FilterPanel({
   expandable = true,
   defaultExpanded = false,
   className,
-}: FilterPanelProps) {
+}, ref) {
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
 
   // Usar hook centralizado para contar filtros activos
   const activeFilterCount = useActiveFilters(filters, filterConfig, searchKey);
 
   const handleSearchChange = useCallback(
-    (e: ChangeEvent<HTMLInputElement>) => {
+    (e: ChangeEvent<HTMLInputElement> | { target: { value: string } }) => {
       onFilterChange(searchKey, e.target.value);
     },
     [onFilterChange, searchKey]
@@ -91,7 +92,7 @@ export const FilterPanel = memo(function FilterPanel({
   );
 
   return (
-    <div className={cn('space-y-4', className)}>
+    <div ref={ref} className={cn('space-y-4', className)}>
       {/* Barra superior: Búsqueda + Toggle filtros */}
       <div className="flex flex-col sm:flex-row gap-3">
         {showSearch && (
@@ -146,7 +147,8 @@ export const FilterPanel = memo(function FilterPanel({
       )}
     </div>
   );
-});
+  })
+);
 
 FilterPanel.displayName = 'FilterPanel';
 

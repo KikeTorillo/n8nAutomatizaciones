@@ -1,4 +1,4 @@
-import { useState, memo, type ReactNode } from 'react';
+import { useState, memo, forwardRef, type ReactNode } from 'react';
 import { ChevronRight, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -49,7 +49,8 @@ export interface TreeNodeProps<T extends Record<string, unknown>> {
 /**
  * TreeNode - Componente reutilizable para renderizar nodos de árbol jerárquico
  */
-function TreeNodeComponent<T extends Record<string, unknown>>({
+function TreeNodeComponent<T extends Record<string, unknown>>(
+  {
   node,
   level = 0,
   childrenKey = 'children',
@@ -62,7 +63,9 @@ function TreeNodeComponent<T extends Record<string, unknown>>({
   className,
   nodeClassName,
   showToggleOnEmpty = true,
-}: TreeNodeProps<T>) {
+}: TreeNodeProps<T>,
+  ref: React.ForwardedRef<HTMLDivElement>
+) {
   const nodeId = getNodeId(node);
   const children = node[childrenKey] as T[] | undefined;
   const hasChildren = children && children.length > 0;
@@ -73,7 +76,7 @@ function TreeNodeComponent<T extends Record<string, unknown>>({
     typeof nodeClassName === 'function' ? nodeClassName(node) : nodeClassName;
 
   return (
-    <div className={className}>
+    <div ref={ref} className={className}>
       {/* Nodo Actual */}
       <div
         className={cn(
@@ -117,7 +120,7 @@ function TreeNodeComponent<T extends Record<string, unknown>>({
       {hasChildren && isExpanded && (
         <div>
           {children.map((child) => (
-            <TreeNodeComponent
+            <TreeNode
               key={getNodeId(child)}
               node={child}
               level={level + 1}
@@ -139,7 +142,11 @@ function TreeNodeComponent<T extends Record<string, unknown>>({
   );
 }
 
-export const TreeNode = memo(TreeNodeComponent) as typeof TreeNodeComponent;
+export const TreeNode = memo(forwardRef(TreeNodeComponent)) as <T extends Record<string, unknown>>(
+  props: TreeNodeProps<T> & { ref?: React.Ref<HTMLDivElement> }
+) => React.ReactElement | null;
+
+(TreeNode as any).displayName = 'TreeNode';
 
 /**
  * Props del componente TreeView

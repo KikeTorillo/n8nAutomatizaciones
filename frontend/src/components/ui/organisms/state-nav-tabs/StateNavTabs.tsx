@@ -1,4 +1,4 @@
-import { memo, useMemo, type ComponentType } from 'react';
+import { memo, forwardRef, useMemo, type ComponentType } from 'react';
 import { cn } from '@/lib/utils';
 import { TAB_STYLES, COUNT_STYLES } from './constants';
 import TabDropdown from './TabDropdown';
@@ -48,7 +48,8 @@ export interface StateNavTabsProps {
  * 1. Simple: tabs horizontales + dropdown mobile
  * 2. Agrupado: tabs con dropdowns para grupos + dropdown mobile
  */
-const StateNavTabs = memo(function StateNavTabs({
+const StateNavTabs = memo(
+  forwardRef<HTMLElement, StateNavTabsProps>(function StateNavTabs({
   tabs,
   activeTab,
   onTabChange,
@@ -58,7 +59,7 @@ const StateNavTabs = memo(function StateNavTabs({
   sticky = true,
   stickyTop = 'top-0',
   className,
-}: StateNavTabsProps) {
+}, ref) {
   // Helper para obtener icono de un tab
   const getTabIcon = (tabId: string): ComponentType<{ className?: string }> | undefined => {
     if (iconMap[tabId]) return iconMap[tabId];
@@ -120,6 +121,7 @@ const StateNavTabs = memo(function StateNavTabs({
 
   return (
     <nav
+      ref={ref}
       className={cn(
         'bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700',
         sticky && 'sticky z-10',
@@ -164,7 +166,8 @@ const StateNavTabs = memo(function StateNavTabs({
       </div>
     </nav>
   );
-});
+  })
+);
 
 StateNavTabs.displayName = 'StateNavTabs';
 

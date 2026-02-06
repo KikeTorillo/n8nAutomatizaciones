@@ -17,7 +17,8 @@ import type { UISize } from '@/types/ui';
  * Alturas estandarizadas para elementos de formulario
  * Garantiza consistencia entre Button, Input, Select, SearchInput
  */
-export const FORM_ELEMENT_HEIGHTS: Record<'sm' | 'md' | 'lg' | 'xl', string> = {
+export const FORM_ELEMENT_HEIGHTS: Record<UISize, string> = {
+  xs: 'h-7',   // 28px
   sm: 'h-9',   // 36px
   md: 'h-10',  // 40px
   lg: 'h-12',  // 48px
@@ -27,7 +28,8 @@ export const FORM_ELEMENT_HEIGHTS: Record<'sm' | 'md' | 'lg' | 'xl', string> = {
 /**
  * Tamaños para botones
  */
-export const BUTTON_SIZES: Record<'sm' | 'md' | 'lg' | 'xl', string> = {
+export const BUTTON_SIZES: Record<UISize, string> = {
+  xs: 'px-2 text-xs h-7',
   sm: 'px-3 text-sm h-9',
   md: 'px-4 text-base h-10',
   lg: 'px-6 text-lg h-12',
@@ -50,7 +52,8 @@ export const ICON_SIZES: Record<UISize | '2xl' | '3xl', string> = {
 /**
  * Tamaños para spinners/loaders
  */
-export const SPINNER_SIZES: Record<'sm' | 'md' | 'lg' | 'xl', string> = {
+export const SPINNER_SIZES: Record<UISize, string> = {
+  xs: 'h-3 w-3',
   sm: 'h-4 w-4',
   md: 'h-8 w-8',
   lg: 'h-12 w-12',
@@ -60,11 +63,12 @@ export const SPINNER_SIZES: Record<'sm' | 'md' | 'lg' | 'xl', string> = {
 /**
  * Tamaños para badges
  */
-export const BADGE_SIZES: Record<'xs' | 'sm' | 'md' | 'lg', string> = {
+export const BADGE_SIZES: Record<UISize, string> = {
   xs: 'text-[10px] px-1.5 py-0',
   sm: 'text-xs px-2 py-0.5',
   md: 'text-sm px-2.5 py-0.5',
   lg: 'text-base px-3 py-1',
+  xl: 'text-lg px-3.5 py-1',
 };
 
 /**
@@ -205,7 +209,13 @@ interface ToggleSizeConfig {
 /**
  * Tamaños para ToggleSwitch
  */
-export const TOGGLE_SIZES: Record<'sm' | 'md' | 'lg', ToggleSizeConfig> = {
+export const TOGGLE_SIZES: Record<UISize, ToggleSizeConfig> = {
+  xs: {
+    track: 'h-5 w-9',
+    thumb: 'h-4 w-4',
+    translate: 'translate-x-4',
+    icon: 'h-3 w-3 m-0.5',
+  },
   sm: {
     track: 'h-5 w-9',
     thumb: 'h-4 w-4',
@@ -219,6 +229,12 @@ export const TOGGLE_SIZES: Record<'sm' | 'md' | 'lg', ToggleSizeConfig> = {
     icon: 'h-4 w-4 m-0.5',
   },
   lg: {
+    track: 'h-7 w-14',
+    thumb: 'h-6 w-6',
+    translate: 'translate-x-7',
+    icon: 'h-5 w-5 m-0.5',
+  },
+  xl: {
     track: 'h-7 w-14',
     thumb: 'h-6 w-6',
     translate: 'translate-x-7',

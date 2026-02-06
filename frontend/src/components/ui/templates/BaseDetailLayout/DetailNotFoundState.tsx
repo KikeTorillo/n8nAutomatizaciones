@@ -1,21 +1,22 @@
 import { memo } from 'react';
-import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
 import { AlertCircle } from 'lucide-react';
 import { EmptyState } from '../../molecules/EmptyState';
 
-/**
- * DetailNotFoundState - Estado cuando no se encuentra el recurso
- *
- * @param {Object} config - Configuración personalizada
- * @param {string} config.title - Título del mensaje
- * @param {string} config.description - Descripción
- * @param {string} config.backTo - Ruta para volver
- * @param {string} config.backLabel - Texto del botón volver
- */
+interface NotFoundConfig {
+  title?: string;
+  description?: string;
+  backTo?: string;
+  backLabel?: string;
+}
+
+interface DetailNotFoundStateProps {
+  config?: NotFoundConfig;
+}
+
 const DetailNotFoundState = memo(function DetailNotFoundState({
   config = {},
-}) {
+}: DetailNotFoundStateProps) {
   const navigate = useNavigate();
 
   const {
@@ -39,14 +40,5 @@ const DetailNotFoundState = memo(function DetailNotFoundState({
 });
 
 DetailNotFoundState.displayName = 'DetailNotFoundState';
-
-DetailNotFoundState.propTypes = {
-  config: PropTypes.shape({
-    title: PropTypes.string,
-    description: PropTypes.string,
-    backTo: PropTypes.string,
-    backLabel: PropTypes.string,
-  }),
-};
 
 export { DetailNotFoundState };

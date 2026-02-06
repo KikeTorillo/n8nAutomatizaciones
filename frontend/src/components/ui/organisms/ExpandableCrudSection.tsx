@@ -1,4 +1,4 @@
-import { useState, memo, type ReactNode, type ComponentType } from 'react';
+import { useState, memo, forwardRef, type ReactNode, type ComponentType } from 'react';
 import { Loader2, AlertCircle, Plus } from 'lucide-react';
 import { Button } from '../atoms/Button';
 import { ConfirmDialog } from './ConfirmDialog';
@@ -135,7 +135,8 @@ export interface ExpandableCrudSectionProps<T extends { id?: string | number }> 
  * IMPORTANTE: Memoizar `renderItem` con useCallback en el componente padre
  * para evitar re-renders innecesarios.
  */
-function ExpandableCrudSectionComponent<T extends { id?: string | number }>({
+function ExpandableCrudSectionComponent<T extends { id?: string | number }>(
+  {
   // Header
   icon: Icon,
   title,
@@ -172,7 +173,9 @@ function ExpandableCrudSectionComponent<T extends { id?: string | number }>({
   // Callbacks
   onItemEdit,
   onItemDelete,
-}: ExpandableCrudSectionProps<T>) {
+}: ExpandableCrudSectionProps<T>,
+  ref: React.ForwardedRef<HTMLDivElement>
+) {
   const toast = useToast() as ToastHook;
   const [showDrawer, setShowDrawer] = useState(false);
   const [itemToEdit, setItemToEdit] = useState<T | null>(null);
@@ -222,7 +225,7 @@ function ExpandableCrudSectionComponent<T extends { id?: string | number }>({
   const displayCount = count ?? items.length;
 
   return (
-    <>
+    <div ref={ref}>
       <ExpandableSection
         icon={Icon}
         title={title}
@@ -240,7 +243,7 @@ function ExpandableCrudSectionComponent<T extends { id?: string | number }>({
         )}
 
         {/* Error state */}
-        {error && !isLoading && (
+        {!!error && !isLoading && (
           <div className="flex items-center gap-2 text-red-500 text-sm">
             <AlertCircle className="h-4 w-4" />
             <span>{errorMessage}</span>
@@ -305,12 +308,12 @@ function ExpandableCrudSectionComponent<T extends { id?: string | number }>({
           {...(itemToEdit && { [itemPropName]: itemToEdit })}
         />
       )}
-    </>
+    </div>
   );
 }
 
 export const ExpandableCrudSection = memo(
-  ExpandableCrudSectionComponent
+  forwardRef(ExpandableCrudSectionComponent)
 ) as typeof ExpandableCrudSectionComponent;
 
 // @ts-expect-error - displayName en memo con generics

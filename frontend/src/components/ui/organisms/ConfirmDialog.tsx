@@ -1,4 +1,4 @@
-import { memo, type ReactNode } from 'react';
+import { memo, forwardRef, type ReactNode } from 'react';
 import { AlertTriangle, CheckCircle, Info, XCircle, type LucideIcon } from 'lucide-react';
 import { Modal } from './Modal';
 import { Button } from '../atoms/Button';
@@ -48,7 +48,8 @@ interface VariantConfig {
 /**
  * Componente de diálogo de confirmación
  */
-const ConfirmDialog = memo(function ConfirmDialog({
+const ConfirmDialog = memo(
+  forwardRef<HTMLDivElement, ConfirmDialogProps>(function ConfirmDialog({
   isOpen,
   onClose,
   onConfirm,
@@ -63,7 +64,7 @@ const ConfirmDialog = memo(function ConfirmDialog({
   size = 'sm',
   confirmLabel,
   icon: customIcon,
-}: ConfirmDialogProps) {
+}, ref) {
   const handleConfirm = () => {
     onConfirm();
   };
@@ -112,7 +113,7 @@ const ConfirmDialog = memo(function ConfirmDialog({
       disableClose={isLoading}
       role="alertdialog"
     >
-      <div className={children ? '' : 'text-center'}>
+      <div ref={ref} className={children ? '' : 'text-center'}>
         {/* Ícono */}
         <div
           className={`${children ? '' : 'mx-auto'} flex items-center justify-center h-12 w-12 rounded-full ${config.iconBg} mb-4`}
@@ -148,7 +149,8 @@ const ConfirmDialog = memo(function ConfirmDialog({
       </div>
     </Modal>
   );
-});
+  })
+);
 
 ConfirmDialog.displayName = 'ConfirmDialog';
 

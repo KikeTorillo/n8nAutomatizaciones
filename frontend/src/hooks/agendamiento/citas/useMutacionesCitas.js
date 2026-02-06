@@ -1,11 +1,11 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { citasApi } from '@/services/api/endpoints';
-import { useToast } from '../../utils/useToast';
 import useSucursalStore, { selectGetSucursalId } from '@/store/sucursalStore';
-import { createCRUDErrorHandler, getErrorMessage } from '@/hooks/config/errorHandlerFactory';
+import { createStatusMutationHook } from '@/hooks/factories/createStatusMutationHook';
 
 /**
  * Hook para crear una nueva cita
+ * (manual — usa useSucursalStore para fallback de sucursal_id)
  */
 export function useCrearCita() {
   const queryClient = useQueryClient();
@@ -32,6 +32,7 @@ export function useCrearCita() {
 
 /**
  * Hook para actualizar una cita existente
+ * (manual — sanitizacion custom de notas)
  */
 export function useActualizarCita() {
   const queryClient = useQueryClient();
@@ -55,144 +56,53 @@ export function useActualizarCita() {
   });
 }
 
-/**
- * Hook para cancelar una cita
- */
-export function useCancelarCita() {
-  const queryClient = useQueryClient();
-  const { success, error: showError } = useToast();
+// --- Hooks de cambio de estado generados con factory ---
 
-  return useMutation({
-    mutationFn: async ({ id, motivo_cancelacion }) => {
-      const response = await citasApi.cancelar(id, { motivo_cancelacion });
-      return response.data;
-    },
-    onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['citas'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['citas', variables.id], refetchType: 'active' });
-      success('Cita cancelada exitosamente');
-    },
-    onError: (error) => {
-      try {
-        createCRUDErrorHandler('delete', 'Cita')(error);
-      } catch (e) {
-        showError(getErrorMessage(e));
-      }
-    },
-  });
-}
+export const useCancelarCita = createStatusMutationHook({
+  mutationFn: ({ id, motivo_cancelacion }) =>
+    citasApi.cancelar(id, { motivo_cancelacion }),
+  queryKey: 'citas',
+  getEntityId: (v) => v.id,
+  successMessage: 'Cita cancelada exitosamente',
+  errorType: 'delete',
+  entityName: 'Cita',
+});
 
-/**
- * Hook para confirmar una cita
- */
-export function useConfirmarCita() {
-  const queryClient = useQueryClient();
-  const { success, error: showError } = useToast();
+export const useConfirmarCita = createStatusMutationHook({
+  mutationFn: ({ id }) => citasApi.confirmar(id),
+  queryKey: 'citas',
+  getEntityId: (v) => v.id,
+  successMessage: 'Cita confirmada exitosamente',
+  entityName: 'Cita',
+});
 
-  return useMutation({
-    mutationFn: async ({ id }) => {
-      const response = await citasApi.confirmar(id);
-      return response.data;
-    },
-    onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['citas'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['citas', variables.id], refetchType: 'active' });
-      success('Cita confirmada exitosamente');
-    },
-    onError: (error) => {
-      try {
-        createCRUDErrorHandler('update', 'Cita')(error);
-      } catch (e) {
-        showError(getErrorMessage(e));
-      }
-    },
-  });
-}
+export const useIniciarCita = createStatusMutationHook({
+  mutationFn: ({ id }) => citasApi.iniciar(id),
+  queryKey: 'citas',
+  getEntityId: (v) => v.id,
+  successMessage: 'Cita iniciada',
+  entityName: 'Cita',
+});
 
-/**
- * Hook para iniciar una cita (cambiar a estado en_curso)
- */
-export function useIniciarCita() {
-  const queryClient = useQueryClient();
-  const { success, error: showError } = useToast();
+export const useCompletarCita = createStatusMutationHook({
+  mutationFn: ({ id, ...data }) =>
+    citasApi.completar(id, {
+      ...data,
+      notas_profesional: data.notas_profesional?.trim() || undefined,
+      comentario_profesional: data.comentario_profesional?.trim() || undefined,
+    }),
+  queryKey: 'citas',
+  getEntityId: (v) => v.id,
+  successMessage: 'Cita completada exitosamente',
+  entityName: 'Cita',
+});
 
-  return useMutation({
-    mutationFn: async ({ id }) => {
-      const response = await citasApi.iniciar(id);
-      return response.data;
-    },
-    onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['citas'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['citas', variables.id], refetchType: 'active' });
-      success('Cita iniciada');
-    },
-    onError: (error) => {
-      try {
-        createCRUDErrorHandler('update', 'Cita')(error);
-      } catch (e) {
-        showError(getErrorMessage(e));
-      }
-    },
-  });
-}
-
-/**
- * Hook para completar una cita
- */
-export function useCompletarCita() {
-  const queryClient = useQueryClient();
-  const { success, error: showError } = useToast();
-
-  return useMutation({
-    mutationFn: async ({ id, ...data }) => {
-      const sanitizedData = {
-        ...data,
-        notas_profesional: data.notas_profesional?.trim() || undefined,
-        comentario_profesional: data.comentario_profesional?.trim() || undefined,
-      };
-
-      const response = await citasApi.completar(id, sanitizedData);
-      return response.data;
-    },
-    onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['citas'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['citas', variables.id], refetchType: 'active' });
-      success('Cita completada exitosamente');
-    },
-    onError: (error) => {
-      try {
-        createCRUDErrorHandler('update', 'Cita')(error);
-      } catch (e) {
-        showError(getErrorMessage(e));
-      }
-    },
-  });
-}
-
-/**
- * Hook para marcar una cita como no show (cliente no llegó)
- */
-export function useNoShowCita() {
-  const queryClient = useQueryClient();
-  const { warning, error: showError } = useToast();
-
-  return useMutation({
-    mutationFn: async ({ id, motivo }) => {
-      // El backend espera motivo_no_show
-      const response = await citasApi.noShow(id, { motivo_no_show: motivo });
-      return response.data;
-    },
-    onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['citas'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['citas', variables.id], refetchType: 'active' });
-      warning('Cita marcada como No Show');
-    },
-    onError: (error) => {
-      try {
-        createCRUDErrorHandler('update', 'Cita')(error);
-      } catch (e) {
-        showError(getErrorMessage(e));
-      }
-    },
-  });
-}
+export const useNoShowCita = createStatusMutationHook({
+  mutationFn: ({ id, motivo }) =>
+    citasApi.noShow(id, { motivo_no_show: motivo }),
+  queryKey: 'citas',
+  getEntityId: (v) => v.id,
+  successMessage: 'Cita marcada como No Show',
+  successType: 'warning',
+  entityName: 'Cita',
+});

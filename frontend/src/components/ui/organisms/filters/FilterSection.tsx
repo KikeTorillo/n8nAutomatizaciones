@@ -1,4 +1,4 @@
-import { memo, type ReactNode, type ComponentType } from 'react';
+import { memo, forwardRef, type ReactNode, type ComponentType } from 'react';
 import { cn } from '@/lib/utils';
 import { FILTER_SECTION_TITLE } from '@/lib/uiConstants';
 
@@ -24,14 +24,15 @@ export interface FilterSectionProps {
  * FilterSection - Sección de filtros con título y contenido
  * Usado dentro de AdvancedFilterPanel para organizar filtros
  */
-export const FilterSection = memo(function FilterSection({
+export const FilterSection = memo(
+  forwardRef<HTMLDivElement, FilterSectionProps>(function FilterSection({
   title,
   children,
   icon: Icon,
   className,
-}: FilterSectionProps) {
+}, ref) {
   return (
-    <div className={cn('space-y-3', className)}>
+    <div ref={ref} className={cn('space-y-3', className)}>
       {title && (
         <h4 className={FILTER_SECTION_TITLE}>
           {Icon && <Icon className="h-4 w-4" />}
@@ -41,7 +42,8 @@ export const FilterSection = memo(function FilterSection({
       <div className="space-y-2">{children}</div>
     </div>
   );
-});
+  })
+);
 
 FilterSection.displayName = 'FilterSection';
 

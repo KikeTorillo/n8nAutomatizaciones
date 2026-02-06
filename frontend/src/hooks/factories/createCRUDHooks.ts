@@ -52,12 +52,16 @@ export interface CRUDHooksConfig<TEntity = unknown, TCreate = unknown, TUpdate =
   transformDetail?: (data: unknown) => TEntity;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface CRUDHooksReturn<TEntity = unknown, TCreate = unknown, TUpdate = unknown> {
   useList: (params?: Record<string, unknown>) => ReturnType<typeof useQuery>;
   useDetail: (id: string | number | null | undefined) => ReturnType<typeof useQuery>;
-  useCreate: () => ReturnType<typeof useMutation>;
-  useUpdate: () => ReturnType<typeof useMutation>;
-  useDelete: () => ReturnType<typeof useMutation>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  useCreate: () => ReturnType<typeof useMutation<any, any, any, any>>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  useUpdate: () => ReturnType<typeof useMutation<any, any, any, any>>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  useDelete: () => ReturnType<typeof useMutation<any, any, any, any>>;
   useListActive: (extraParams?: Record<string, unknown>) => ReturnType<typeof useQuery>;
   [key: string]: unknown;
 }
@@ -141,7 +145,8 @@ export function createCRUDHooks<
           queryClient.invalidateQueries({ queryKey: [key], refetchType: 'active' });
         });
       },
-      onError: createCRUDErrorHandler('create', entityName, errorMessages.create || {}),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      onError: createCRUDErrorHandler('create', entityName, errorMessages.create || {}) as any,
     });
   }
 
@@ -160,7 +165,8 @@ export function createCRUDHooks<
         });
         queryClient.invalidateQueries({ queryKey: [name, variables.id], refetchType: 'active' });
       },
-      onError: createCRUDErrorHandler('update', entityName, errorMessages.update || {}),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      onError: createCRUDErrorHandler('update', entityName, errorMessages.update || {}) as any,
     });
   }
 
@@ -177,7 +183,8 @@ export function createCRUDHooks<
           queryClient.invalidateQueries({ queryKey: [key], refetchType: 'active' });
         });
       },
-      onError: createCRUDErrorHandler('delete', entityName, errorMessages.delete || {}),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      onError: createCRUDErrorHandler('delete', entityName, errorMessages.delete || {}) as any,
     });
   }
 

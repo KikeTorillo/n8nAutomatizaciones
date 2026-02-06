@@ -1,4 +1,4 @@
-import { memo, useCallback } from 'react';
+import { memo, useCallback, forwardRef } from 'react';
 import { Search, X } from 'lucide-react';
 import { useIconPickerLogic } from '@/hooks/ui/useIconPickerLogic';
 import IconButton from './IconButton';
@@ -19,11 +19,12 @@ export interface IconPickerProps {
  * IconPicker - Componente selector visual de iconos Lucide
  * Fragmentado en Ene 2026 para mejor mantenibilidad
  */
-export const IconPicker = memo(function IconPicker({
+export const IconPicker = memo(
+  forwardRef<HTMLDivElement, IconPickerProps>(function IconPicker({
   value,
   onChange,
   error,
-}: IconPickerProps) {
+}, ref) {
   const {
     busqueda,
     setBusqueda,
@@ -46,7 +47,7 @@ export const IconPicker = memo(function IconPicker({
   }, [onChange, setBusqueda]);
 
   return (
-    <div className="space-y-3">
+    <div ref={ref} className="space-y-3">
       {/* Icono seleccionado */}
       {value && (
         <div className="flex items-center gap-2 p-2 bg-primary-50 dark:bg-primary-900/30 rounded-lg border border-primary-200 dark:border-primary-800">
@@ -140,7 +141,8 @@ export const IconPicker = memo(function IconPicker({
       {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
     </div>
   );
-});
+  })
+);
 
 IconPicker.displayName = 'IconPicker';
 

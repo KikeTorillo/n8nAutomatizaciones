@@ -1,24 +1,28 @@
-import { memo } from 'react';
-import PropTypes from 'prop-types';
+import { memo, type ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 import { BackButton } from '../../molecules/BackButton';
 import { Badge } from '../../atoms/Badge';
 import { SEMANTIC_COLORS } from '@/lib/uiConstants';
+import type { BadgeVariantWithAliases } from '@/types/ui';
 
-/**
- * DetailHeader - Header para páginas de detalle
- *
- * Incluye botón volver, título, subtítulo, badges y acciones.
- *
- * @param {string} backTo - Ruta para volver
- * @param {string} backLabel - Texto del botón volver
- * @param {string} title - Título principal
- * @param {string} subtitle - Subtítulo
- * @param {React.ComponentType} icon - Icono junto al título
- * @param {Array} badges - Array de badges [{label, variant}]
- * @param {ReactNode} actions - Botones de acción
- * @param {string} className - Clases adicionales
- */
+type LucideIcon = React.ComponentType<{ className?: string }>;
+
+interface BadgeItem {
+  label: string;
+  variant?: string;
+}
+
+interface DetailHeaderProps {
+  backTo?: string;
+  backLabel?: string;
+  title?: string;
+  subtitle?: string;
+  icon?: LucideIcon;
+  badges?: BadgeItem[];
+  actions?: ReactNode;
+  className?: string;
+}
+
 const DetailHeader = memo(function DetailHeader({
   backTo,
   backLabel,
@@ -28,7 +32,7 @@ const DetailHeader = memo(function DetailHeader({
   badges = [],
   actions,
   className,
-}) {
+}: DetailHeaderProps) {
   return (
     <div className={cn('mb-6', className)}>
       {/* Back button */}
@@ -56,7 +60,7 @@ const DetailHeader = memo(function DetailHeader({
               )}
 
               {badges.map((badge, idx) => (
-                <Badge key={idx} variant={badge.variant || 'default'}>
+                <Badge key={idx} variant={(badge.variant || 'default') as BadgeVariantWithAliases}>
                   {badge.label}
                 </Badge>
               ))}
@@ -82,27 +86,5 @@ const DetailHeader = memo(function DetailHeader({
 });
 
 DetailHeader.displayName = 'DetailHeader';
-
-DetailHeader.propTypes = {
-  /** Ruta para volver */
-  backTo: PropTypes.string,
-  /** Texto del botón volver */
-  backLabel: PropTypes.string,
-  /** Título principal */
-  title: PropTypes.string,
-  /** Subtítulo */
-  subtitle: PropTypes.string,
-  /** Icono (componente Lucide) */
-  icon: PropTypes.elementType,
-  /** Array de badges */
-  badges: PropTypes.arrayOf(PropTypes.shape({
-    label: PropTypes.string.isRequired,
-    variant: PropTypes.string,
-  })),
-  /** Botones de acción */
-  actions: PropTypes.node,
-  /** Clases adicionales */
-  className: PropTypes.string,
-};
 
 export { DetailHeader };

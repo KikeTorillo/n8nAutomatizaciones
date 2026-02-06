@@ -1,44 +1,36 @@
 import { memo } from 'react';
-import PropTypes from 'prop-types';
 import { cn } from '@/lib/utils';
 import { BackButton } from '../molecules/BackButton';
 import { Badge } from '../atoms/Badge';
 import { PAGE_HEADER_STYLES, getPageHeaderIconColor } from '@/lib/uiConstants/pageHeader';
+import type { BadgeVariantWithAliases } from '@/types/ui';
 
-/**
- * PageHeader - Header reutilizable para páginas de detalle/edición
- *
- * Incluye navegación (back button), título con icono temático, badges,
- * metadata y área de acciones.
- *
- * @example
- * <PageHeader
- *   backTo="/productos"
- *   backLabel="Volver a productos"
- *   icon={Package}
- *   iconColor="green"
- *   title="Laptop Gaming Pro"
- *   subtitle="SKU: LAP-001"
- *   badges={[{ label: 'Activo', variant: 'success' }]}
- *   metadata={[
- *     { icon: Tag, label: '$1,299.00' },
- *     { icon: Box, label: '25 unidades' }
- *   ]}
- *   actions={<Button>Editar</Button>}
- * />
- *
- * @param {Object} props
- * @param {string} [props.backTo] - Ruta para el botón volver
- * @param {string} [props.backLabel] - Texto del botón volver
- * @param {React.ComponentType} [props.icon] - Icono principal (componente Lucide)
- * @param {string} [props.iconColor] - Color del icono: 'primary'|'pink'|'green'|'blue'|'purple'|'orange'|'red'|'yellow'|'cyan'|'neutral'
- * @param {string} props.title - Título principal
- * @param {string} [props.subtitle] - Subtítulo/descripción
- * @param {Array<{label: string, variant?: string}>} [props.badges] - Array de badges
- * @param {Array<{icon: React.ComponentType, label: string}>} [props.metadata] - Array de metadata items
- * @param {React.ReactNode} [props.actions] - Botones de acción
- * @param {string} [props.className] - Clases adicionales
- */
+type LucideIcon = React.ComponentType<{ className?: string }>;
+type PageHeaderIconColor = 'primary' | 'pink' | 'green' | 'blue' | 'purple' | 'orange' | 'red' | 'yellow' | 'cyan' | 'neutral';
+
+interface BadgeItem {
+  label: string;
+  variant?: string;
+}
+
+interface MetadataItem {
+  icon?: LucideIcon;
+  label: string;
+}
+
+interface PageHeaderProps {
+  backTo?: string;
+  backLabel?: string;
+  icon?: LucideIcon;
+  iconColor?: PageHeaderIconColor;
+  title: string;
+  subtitle?: string;
+  badges?: BadgeItem[];
+  metadata?: MetadataItem[];
+  actions?: React.ReactNode;
+  className?: string;
+}
+
 const PageHeader = memo(function PageHeader({
   backTo,
   backLabel,
@@ -50,8 +42,8 @@ const PageHeader = memo(function PageHeader({
   metadata = [],
   actions,
   className,
-}) {
-  const iconColors = getPageHeaderIconColor(iconColor);
+}: PageHeaderProps) {
+  const iconColors = getPageHeaderIconColor(iconColor) as { bg: string; icon: string };
 
   return (
     <div className={cn(PAGE_HEADER_STYLES.container, className)}>
@@ -83,7 +75,7 @@ const PageHeader = memo(function PageHeader({
               )}
 
               {badges.map((badge, idx) => (
-                <Badge key={idx} variant={badge.variant || 'default'}>
+                <Badge key={idx} variant={(badge.variant || 'default') as BadgeVariantWithAliases}>
                   {badge.label}
                 </Badge>
               ))}
@@ -128,36 +120,5 @@ const PageHeader = memo(function PageHeader({
 
 PageHeader.displayName = 'PageHeader';
 
-PageHeader.propTypes = {
-  /** Ruta para el botón volver */
-  backTo: PropTypes.string,
-  /** Texto del botón volver */
-  backLabel: PropTypes.string,
-  /** Icono principal (componente Lucide) */
-  icon: PropTypes.elementType,
-  /** Color del icono */
-  iconColor: PropTypes.oneOf([
-    'primary', 'pink', 'green', 'blue', 'purple',
-    'orange', 'red', 'yellow', 'cyan', 'neutral'
-  ]),
-  /** Título principal */
-  title: PropTypes.string.isRequired,
-  /** Subtítulo/descripción */
-  subtitle: PropTypes.string,
-  /** Array de badges */
-  badges: PropTypes.arrayOf(PropTypes.shape({
-    label: PropTypes.string.isRequired,
-    variant: PropTypes.string,
-  })),
-  /** Array de metadata items */
-  metadata: PropTypes.arrayOf(PropTypes.shape({
-    icon: PropTypes.elementType,
-    label: PropTypes.string.isRequired,
-  })),
-  /** Botones de acción */
-  actions: PropTypes.node,
-  /** Clases adicionales */
-  className: PropTypes.string,
-};
-
 export { PageHeader };
+export type { PageHeaderProps, PageHeaderIconColor, BadgeItem, MetadataItem };

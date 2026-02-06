@@ -304,7 +304,7 @@ export const CARD_THEME_COLORS = {
  * @param {string} color - Nombre del color
  * @returns {Object} Objeto con clases bg, text, border
  */
-export const getCardThemeColor = (color: string) => CARD_THEME_COLORS[color] || CARD_THEME_COLORS.blue;
+export const getCardThemeColor = (color: string) => CARD_THEME_COLORS[color as keyof typeof CARD_THEME_COLORS] || CARD_THEME_COLORS.blue;
 
 /**
  * Colores para ToggleSwitch

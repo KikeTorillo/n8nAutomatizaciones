@@ -1,4 +1,4 @@
-import { useState, memo, type ReactNode, type ComponentType } from 'react';
+import React, { useState, memo, forwardRef, type ReactNode, type ComponentType } from 'react';
 import { ChevronDown, Filter, Star, RotateCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -85,7 +85,8 @@ export interface AdvancedFilterPanelProps {
  * AdvancedFilterPanel - Panel de filtros avanzados
  * Panel colapsable con secciones: Filtros predefinidos y Favoritos
  */
-const AdvancedFilterPanel = memo(function AdvancedFilterPanel({
+const AdvancedFilterPanel = memo(
+  forwardRef<HTMLDivElement, AdvancedFilterPanelProps>(function AdvancedFilterPanel({
   filtros,
   onFiltrosChange,
   onLimpiarFiltros,
@@ -99,7 +100,7 @@ const AdvancedFilterPanel = memo(function AdvancedFilterPanel({
   onToggleDefault,
   filtrosActivos = 0,
   className,
-}: AdvancedFilterPanelProps) {
+}, ref) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   // Manejar cambio de filtro individual
@@ -117,8 +118,7 @@ const AdvancedFilterPanel = memo(function AdvancedFilterPanel({
             id={config.id}
             label={config.label || ''}
             checked={!!filtros[config.id]}
-            onChange={(checked) => handleFilterChange(config.id, checked)}
-            icon={config.icon}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleFilterChange(config.id, e.target.checked)}
             disabled={config.disabled}
           />
         );
@@ -132,10 +132,9 @@ const AdvancedFilterPanel = memo(function AdvancedFilterPanel({
                 id={opt.field || opt.value || ''}
                 label={opt.label}
                 checked={!!filtros[opt.field || opt.value || '']}
-                onChange={(checked) =>
-                  handleFilterChange(opt.field || opt.value || '', checked)
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  handleFilterChange(opt.field || opt.value || '', e.target.checked)
                 }
-                icon={opt.icon}
                 disabled={opt.disabled}
               />
             ))}
@@ -162,7 +161,7 @@ const AdvancedFilterPanel = memo(function AdvancedFilterPanel({
   };
 
   return (
-    <div className={cn(FILTER_PANEL_CONTAINER, className)}>
+    <div ref={ref} className={cn(FILTER_PANEL_CONTAINER, className)}>
       {/* Header con barra de búsqueda y botón expandir */}
       <div className={FILTER_PANEL_HEADER}>
         {/* Barra de búsqueda personalizada */}
@@ -233,8 +232,14 @@ const AdvancedFilterPanel = memo(function AdvancedFilterPanel({
                 <SavedSearchList
                   busquedas={busquedasGuardadas}
                   onSelect={onAplicarBusqueda}
-                  onDelete={onEliminarBusqueda}
-                  onToggleDefault={onToggleDefault}
+                  onDelete={onEliminarBusqueda ? (id: string | number) => {
+                    const busqueda = busquedasGuardadas.find(b => b.id === id);
+                    if (busqueda) onEliminarBusqueda(busqueda);
+                  } : undefined}
+                  onToggleDefault={onToggleDefault ? (id: string | number) => {
+                    const busqueda = busquedasGuardadas.find(b => b.id === id);
+                    if (busqueda) onToggleDefault(busqueda);
+                  } : undefined}
                   compact
                 />
 
@@ -263,7 +268,8 @@ const AdvancedFilterPanel = memo(function AdvancedFilterPanel({
       )}
     </div>
   );
-});
+  })
+);
 
 AdvancedFilterPanel.displayName = 'AdvancedFilterPanel';
 

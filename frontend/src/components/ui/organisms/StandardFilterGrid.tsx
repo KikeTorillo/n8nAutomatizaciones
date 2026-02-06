@@ -1,4 +1,4 @@
-import { memo, type ComponentType } from 'react';
+import { memo, forwardRef, type ComponentType } from 'react';
 import { cn } from '@/lib/utils';
 import { FilterField } from './FilterField';
 import { FILTER_GRID_LAYOUTS } from '@/lib/uiConstants';
@@ -60,14 +60,15 @@ export interface StandardFilterGridProps {
  * Componente que renderiza un grid de filtros basado en una configuración declarativa.
  * Soporta múltiples tipos de campos y layouts responsivos.
  */
-const StandardFilterGrid = memo(function StandardFilterGrid({
+const StandardFilterGrid = memo(
+  forwardRef<HTMLDivElement, StandardFilterGridProps>(function StandardFilterGrid({
   config = [],
   values = {},
   onChange,
   layout = 'default',
   className,
   disabled = false,
-}: StandardFilterGridProps) {
+}, ref) {
   if (!config.length) return null;
 
   const handleChange = (key: string) => (value: unknown) => {
@@ -79,7 +80,7 @@ const StandardFilterGrid = memo(function StandardFilterGrid({
   const checkboxFields = config.filter((field) => field.type === 'checkbox');
 
   return (
-    <div className={cn('space-y-4', className)}>
+    <div ref={ref} className={cn('space-y-4', className)}>
       {/* Campos regulares en grid */}
       {regularFields.length > 0 && (
         <div className={FILTER_GRID_LAYOUTS[layout] || FILTER_GRID_LAYOUTS.default}>
@@ -121,7 +122,8 @@ const StandardFilterGrid = memo(function StandardFilterGrid({
       )}
     </div>
   );
-});
+  })
+);
 
 StandardFilterGrid.displayName = 'StandardFilterGrid';
 

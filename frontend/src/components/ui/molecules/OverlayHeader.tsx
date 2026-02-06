@@ -1,4 +1,4 @@
-import { memo, type ReactNode, type ElementType } from 'react';
+import { memo, forwardRef, type ReactNode, type ElementType } from 'react';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -46,7 +46,8 @@ export interface OverlayHeaderProps {
  *   onClose={onClose}
  * />
  */
-const OverlayHeader = memo(function OverlayHeader({
+const OverlayHeader = memo(
+  forwardRef<HTMLDivElement, OverlayHeaderProps>(function OverlayHeader({
   title,
   subtitle,
   onClose,
@@ -58,11 +59,12 @@ const OverlayHeader = memo(function OverlayHeader({
   subtitleId,
   className,
   actions,
-}: OverlayHeaderProps) {
+}, ref) {
   if (!title && !showCloseButton) return null;
 
   return (
     <div
+      ref={ref}
       className={cn(
         'flex items-start justify-between p-6 border-b border-gray-200 dark:border-gray-700',
         className
@@ -108,7 +110,7 @@ const OverlayHeader = memo(function OverlayHeader({
       </div>
     </div>
   );
-});
+}));
 
 OverlayHeader.displayName = 'OverlayHeader';
 

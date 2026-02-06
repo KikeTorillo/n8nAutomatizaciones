@@ -5,10 +5,28 @@ import { Lock, Package, ShoppingCart, DollarSign, Globe, Globe2, Bot, Calendar, 
 import { Button } from '../atoms/Button';
 import { SEMANTIC_COLORS } from '@/lib/uiConstants';
 
-/**
- * Mapeo de iconos por módulo
- */
-const ICONOS_MODULOS = {
+type LucideIcon = React.ComponentType<{ className?: string }>;
+
+interface ModuleGuardProps {
+  requiere: string | string[];
+  requiereTodos?: boolean;
+  children: React.ReactNode;
+  fallback?: React.ReactNode;
+  showUpgradeUI?: boolean;
+  redirectTo?: string;
+}
+
+interface ModuleVisibleProps {
+  modulo: string;
+  children: React.ReactNode;
+}
+
+interface ModuleHiddenProps {
+  modulo: string;
+  children: React.ReactNode;
+}
+
+const ICONOS_MODULOS: Record<string, LucideIcon> = {
   core: Lock,
   agendamiento: Calendar,
   inventario: Package,
@@ -19,10 +37,7 @@ const ICONOS_MODULOS = {
   website: Globe2,
 };
 
-/**
- * Nombres display de módulos
- */
-const NOMBRES_MODULOS = {
+const NOMBRES_MODULOS: Record<string, string> = {
   core: 'Core del Sistema',
   agendamiento: 'Sistema de Agendamiento',
   inventario: 'Gestión de Inventario',
@@ -33,42 +48,6 @@ const NOMBRES_MODULOS = {
   website: 'Mi Sitio Web',
 };
 
-/**
- * Componente ModuleGuard
- * Protege secciones del UI según módulos activos
- *
- * @param {Object} props
- * @param {string|string[]} props.requiere - Módulo(s) requerido(s)
- * @param {boolean} props.requiereTodos - Si true, requiere TODOS los módulos. Default: false (ANY)
- * @param {React.ReactNode} props.children - Contenido a mostrar si tiene acceso
- * @param {React.ReactNode} props.fallback - Contenido alternativo si no tiene acceso
- * @param {boolean} props.showUpgradeUI - Mostrar UI de upgrade si no tiene acceso (default: true)
- * @param {string} props.redirectTo - Ruta de redirección si no tiene acceso
- *
- * @example
- * // Requerir un módulo
- * <ModuleGuard requiere="inventario">
- *   <InventarioPage />
- * </ModuleGuard>
- *
- * @example
- * // Requerir cualquiera de varios módulos
- * <ModuleGuard requiere={['inventario', 'pos']}>
- *   <VentasWidget />
- * </ModuleGuard>
- *
- * @example
- * // Requerir todos los módulos
- * <ModuleGuard requiere={['inventario', 'pos']} requiereTodos>
- *   <ReporteCombinado />
- * </ModuleGuard>
- *
- * @example
- * // Con fallback personalizado
- * <ModuleGuard requiere="comisiones" fallback={<div>Módulo no disponible</div>}>
- *   <ComisionesPage />
- * </ModuleGuard>
- */
 const ModuleGuard = memo(function ModuleGuard({
   requiere,
   requiereTodos = false,
@@ -76,7 +55,7 @@ const ModuleGuard = memo(function ModuleGuard({
   fallback,
   showUpgradeUI = true,
   redirectTo,
-}) {
+}: ModuleGuardProps) {
   const navigate = useNavigate();
   const { tieneModulo, tieneAlgunModulo, tieneTodosModulos, isLoading } = useModulos();
 
@@ -177,16 +156,7 @@ const ModuleGuard = memo(function ModuleGuard({
 
 ModuleGuard.displayName = 'ModuleGuard';
 
-/**
- * Componente para mostrar/ocultar elementos basado en módulos
- * Versión ligera sin UI de upgrade
- *
- * @example
- * <ModuleVisible modulo="inventario">
- *   <AlertasInventarioWidget />
- * </ModuleVisible>
- */
-const ModuleVisible = memo(function ModuleVisible({ modulo, children }) {
+const ModuleVisible = memo(function ModuleVisible({ modulo, children }: ModuleVisibleProps) {
   const { tieneModulo, isLoading } = useModulos();
 
   if (isLoading) return null;
@@ -197,16 +167,7 @@ const ModuleVisible = memo(function ModuleVisible({ modulo, children }) {
 
 ModuleVisible.displayName = 'ModuleVisible';
 
-/**
- * Componente para mostrar contenido solo si NO tiene el módulo
- * Útil para mostrar CTAs de upgrade
- *
- * @example
- * <ModuleHidden modulo="inventario">
- *   <UpgradeInventarioCard />
- * </ModuleHidden>
- */
-const ModuleHidden = memo(function ModuleHidden({ modulo, children }) {
+const ModuleHidden = memo(function ModuleHidden({ modulo, children }: ModuleHiddenProps) {
   const { tieneModulo, isLoading } = useModulos();
 
   if (isLoading) return null;
@@ -219,3 +180,4 @@ ModuleHidden.displayName = 'ModuleHidden';
 
 export { ModuleGuard, ModuleVisible, ModuleHidden };
 export default ModuleGuard;
+export type { ModuleGuardProps, ModuleVisibleProps, ModuleHiddenProps };

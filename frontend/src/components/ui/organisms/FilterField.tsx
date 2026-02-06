@@ -1,6 +1,5 @@
 import { memo, useId, forwardRef, type ChangeEvent, type ComponentType } from 'react';
 import { cn } from '@/lib/utils';
-import { Label } from '../atoms/Label';
 import { Checkbox } from '../atoms/Checkbox';
 import {
   FILTER_INPUT_STYLES,
@@ -87,13 +86,13 @@ const FilterField = memo(
             disabled={disabled}
           />
           {label && (
-            <Label
+            <label
               htmlFor={fieldId}
               className="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer"
             >
               {Icon && <Icon className={cn(FILTER_ICON_STYLES, 'inline mr-1.5')} />}
               {label}
-            </Label>
+            </label>
           )}
         </div>
       );
@@ -107,10 +106,10 @@ const FilterField = memo(
     return (
       <div className={cn(FILTER_CONTAINER_STYLES, className)}>
         {label && (
-          <Label htmlFor={fieldId} className={FILTER_LABEL_STYLES}>
+          <label htmlFor={fieldId} className={FILTER_LABEL_STYLES}>
             {Icon && <Icon className={FILTER_ICON_STYLES} />}
             {label}
-          </Label>
+          </label>
         )}
 
         {type === 'select' ? (

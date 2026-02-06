@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { memo, forwardRef } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { RecordNavigationSize } from '@/types/ui';
@@ -37,7 +37,8 @@ const sizeClasses: Record<RecordNavigationSize, { button: string; icon: string; 
  * RecordNavigation - Navegación entre registros (anterior/siguiente)
  * Para usar en headers de Modales/Drawers de detalle
  */
-export const RecordNavigation = memo(function RecordNavigation({
+export const RecordNavigation = memo(
+  forwardRef<HTMLDivElement, RecordNavigationProps>(function RecordNavigation({
   currentIndex = 0,
   totalRecords = 0,
   onPrevious,
@@ -45,7 +46,7 @@ export const RecordNavigation = memo(function RecordNavigation({
   showIndicator = true,
   size = 'md',
   className,
-}: RecordNavigationProps) {
+}, ref) {
   const hasPrev = currentIndex > 0;
   const hasNext = currentIndex < totalRecords - 1;
   const styles = sizeClasses[size] || sizeClasses.md;
@@ -54,7 +55,7 @@ export const RecordNavigation = memo(function RecordNavigation({
   if (totalRecords <= 1) return null;
 
   return (
-    <div className={cn(
+    <div ref={ref} className={cn(
       'flex items-center justify-center gap-2',
       className
     )}>
@@ -102,6 +103,6 @@ export const RecordNavigation = memo(function RecordNavigation({
       </button>
     </div>
   );
-});
+}));
 
 RecordNavigation.displayName = 'RecordNavigation';

@@ -1,4 +1,4 @@
-import { useEffect, memo } from 'react';
+import { useEffect, memo, forwardRef } from 'react';
 import { X, CheckCircle, AlertCircle, Info, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { TOAST_EXTENDED_VARIANTS, TOAST_CONTAINER_STYLES } from '@/lib/uiConstants';
@@ -35,13 +35,14 @@ const icons = {
  * Para mensajes que deben permanecer visibles dentro del flujo de la página
  * (ej. advertencia de formulario, estado de suscripción), usar {@link Alert}.
  */
-const Toast = memo(function Toast({
+const Toast = memo(
+  forwardRef<HTMLDivElement, ToastProps>(function Toast({
   id,
   message,
   type = 'info',
   duration = 5000,
   onClose,
-}: ToastProps) {
+}, ref) {
   useEffect(() => {
     if (duration && duration > 0) {
       const timer = setTimeout(() => {
@@ -57,6 +58,7 @@ const Toast = memo(function Toast({
 
   return (
     <div
+      ref={ref}
       role="alert"
       aria-live={type === 'error' ? 'assertive' : 'polite'}
       className={cn(
@@ -81,7 +83,7 @@ const Toast = memo(function Toast({
       </button>
     </div>
   );
-});
+}));
 
 Toast.displayName = 'Toast';
 

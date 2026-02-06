@@ -19,12 +19,20 @@ import { subscribeWithSelector, persist, createJSONStorage } from 'zustand/middl
  * @param {Object} options - Opciones de configuración
  * @param {string} options.name - Nombre único del store (para persist)
  * @param {boolean} options.persist - Si debe persistir en localStorage (default: true)
+ * @param {'localStorage'|'sessionStorage'} options.storage - Tipo de storage (default: 'sessionStorage')
+ * @param {Function} options.persistFields - Función que recibe state y retorna campos a persistir
+ * @param {boolean} options.deselectOnPreview - Si deseleccionar bloque al cambiar a preview (default: false)
  * @returns {Object} Store de Zustand
  */
 export function createEditorStore(options = {}) {
   const {
     name = 'editor-store',
     persist: shouldPersist = true,
+    storage = 'sessionStorage',
+    persistFields = null,
+    persistVersion = undefined,
+    persistMigrate = undefined,
+    deselectOnPreview = false,
   } = options;
 
   // Variable para cleanup del setTimeout de bloqueRecienAgregado
@@ -269,7 +277,13 @@ export function createEditorStore(options = {}) {
      * Cambia el modo de edición
      */
     setModoEdicion: (modo) =>
-      set({ modoEdicion: modo }),
+      set({
+        modoEdicion: modo,
+        ...(deselectOnPreview && modo === 'preview' && {
+          bloqueSeleccionado: null,
+          bloqueEditandoInline: null,
+        }),
+      }),
 
     /**
      * Cambia el breakpoint
@@ -290,12 +304,23 @@ export function createEditorStore(options = {}) {
       set({
         bloqueEditandoInline: id,
         bloqueSeleccionado: id,
+        modoEdicion: 'canvas',
       }),
 
     /**
      * Desactiva modo de edición inline
      */
     desactivarEdicionInline: () =>
+      set({ bloqueEditandoInline: null }),
+
+    // Aliases para compatibilidad con website editor
+    activarInlineEditing: (id) =>
+      set({
+        bloqueEditandoInline: id,
+        bloqueSeleccionado: id,
+        modoEdicion: 'canvas',
+      }),
+    desactivarInlineEditing: () =>
       set({ bloqueEditandoInline: null }),
 
     // ========== GUARDADO ACTIONS ==========
@@ -336,13 +361,39 @@ export function createEditorStore(options = {}) {
      * Marca conflicto de versión
      */
     setConflictoVersion: (conflicto) =>
-      set({ conflictoVersion: conflicto }),
+      set({ conflictoVersion: conflicto, estadoGuardado: 'error' }),
 
     /**
      * Limpia conflicto de versión
      */
     clearConflictoVersion: () =>
       set({ conflictoVersion: null }),
+
+    // ========== ANIMACIÓN ==========
+
+    /**
+     * Marca un bloque como recién agregado (para animación)
+     */
+    setBloqueRecienAgregado: (id) => {
+      if (bloqueRecienAgregadoTimeout) {
+        clearTimeout(bloqueRecienAgregadoTimeout);
+      }
+      set({ bloqueRecienAgregado: id });
+      bloqueRecienAgregadoTimeout = setTimeout(() => {
+        set((state) =>
+          state.bloqueRecienAgregado === id
+            ? { bloqueRecienAgregado: null }
+            : state
+        );
+        bloqueRecienAgregadoTimeout = null;
+      }, 1500);
+    },
+
+    /**
+     * Limpia el bloque recién agregado manualmente
+     */
+    clearBloqueRecienAgregado: () =>
+      set({ bloqueRecienAgregado: null }),
 
     // ========== HISTORIAL ==========
 
@@ -357,8 +408,13 @@ export function createEditorStore(options = {}) {
     /**
      * Resetea el store a estado inicial
      */
-    reset: () =>
-      set(initialState),
+    reset: () => {
+      if (bloqueRecienAgregadoTimeout) {
+        clearTimeout(bloqueRecienAgregadoTimeout);
+        bloqueRecienAgregadoTimeout = null;
+      }
+      set(initialState);
+    },
 
     /**
      * Limpia solo los bloques (para cambio de página/evento)
@@ -375,6 +431,13 @@ export function createEditorStore(options = {}) {
   });
 
   // ========== CREAR STORE ==========
+  const storageProvider = storage === 'localStorage' ? localStorage : sessionStorage;
+  const defaultPartialize = (state) => ({
+    breakpoint: state.breakpoint,
+    zoom: state.zoom,
+    modoEdicion: state.modoEdicion,
+  });
+
   if (shouldPersist) {
     return create(
       subscribeWithSelector(
@@ -386,12 +449,10 @@ export function createEditorStore(options = {}) {
           }),
           {
             name: name,
-            storage: createJSONStorage(() => sessionStorage),
-            partialize: (state) => ({
-              breakpoint: state.breakpoint,
-              zoom: state.zoom,
-              modoEdicion: state.modoEdicion,
-            }),
+            storage: createJSONStorage(() => storageProvider),
+            partialize: persistFields || defaultPartialize,
+            ...(persistVersion !== undefined && { version: persistVersion }),
+            ...(persistMigrate && { migrate: persistMigrate }),
           }
         )
       )
@@ -448,9 +509,14 @@ export function createEditorSelectors(store) {
     // Animaciones
     selectBloqueRecienAgregado: (state) => state.bloqueRecienAgregado,
 
-    // Acciones
+    // Recurso (página/evento)
+    selectRecursoId: (state) => state.recursoId,
+
+    // Acciones de bloques
     selectSetBloques: (state) => state.setBloques,
     selectActualizarBloqueLocal: (state) => state.actualizarBloqueLocal,
+    selectActualizarEstilosLocal: (state) => state.actualizarEstilosLocal,
+    selectAgregarBloqueLocal: (state) => state.agregarBloqueLocal,
     selectSeleccionarBloque: (state) => state.seleccionarBloque,
     selectDeseleccionarBloque: (state) => state.deseleccionarBloque,
     selectEliminarBloqueLocal: (state) => state.eliminarBloqueLocal,
@@ -458,6 +524,31 @@ export function createEditorSelectors(store) {
     selectToggleVisibilidad: (state) => state.toggleVisibilidadBloque,
     selectInsertarBloqueEnPosicion: (state) => state.insertarBloqueEnPosicion,
     selectReordenarBloquesLocal: (state) => state.reordenarBloquesLocal,
+
+    // Acciones de UI
+    selectSetModoEdicion: (state) => state.setModoEdicion,
+    selectSetBreakpoint: (state) => state.setBreakpoint,
+    selectSetZoom: (state) => state.setZoom,
+    selectActivarEdicionInline: (state) => state.activarEdicionInline,
+    selectDesactivarEdicionInline: (state) => state.desactivarEdicionInline,
+
+    // Acciones de guardado
+    selectSetGuardando: (state) => state.setGuardando,
+    selectSetGuardado: (state) => state.setGuardado,
+    selectSetErrorGuardado: (state) => state.setErrorGuardado,
+    selectActualizarVersionBloque: (state) => state.actualizarVersionBloque,
+
+    // Acciones de conflicto
+    selectSetConflictoVersion: (state) => state.setConflictoVersion,
+    selectClearConflictoVersion: (state) => state.clearConflictoVersion,
+
+    // Acciones de animación
+    selectSetBloqueRecienAgregado: (state) => state.setBloqueRecienAgregado,
+    selectClearBloqueRecienAgregado: (state) => state.clearBloqueRecienAgregado,
+
+    // Reset
+    selectReset: (state) => state.reset,
+    selectLimpiarBloques: (state) => state.limpiarBloques,
   };
 }
 

@@ -1,4 +1,4 @@
-import { memo, type ComponentType } from 'react';
+import { memo, forwardRef, type ComponentType } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { NavDropdown } from './NavDropdown';
@@ -75,14 +75,15 @@ export interface GenericNavTabsProps {
  *
  * Mobile siempre usa MobileNavSelector
  */
-const GenericNavTabs = memo(function GenericNavTabs({
+const GenericNavTabs = memo(
+  forwardRef<HTMLElement, GenericNavTabsProps>(function GenericNavTabs({
   items,
   groups,
   defaultPath,
   fallbackLabel,
   fallbackIcon,
   className,
-}: GenericNavTabsProps) {
+}, ref) {
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -97,6 +98,7 @@ const GenericNavTabs = memo(function GenericNavTabs({
 
   return (
     <nav
+      ref={ref}
       className={cn(
         'bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700',
         className
@@ -162,7 +164,8 @@ const GenericNavTabs = memo(function GenericNavTabs({
       </div>
     </nav>
   );
-});
+  })
+);
 
 GenericNavTabs.displayName = 'GenericNavTabs';
 

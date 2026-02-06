@@ -1,4 +1,4 @@
-import { useMemo, memo, useCallback, type ReactNode, type ComponentType } from 'react';
+import { useMemo, memo, useCallback, forwardRef, type ReactNode, type ComponentType } from 'react';
 import { cn } from '@/lib/utils';
 import { SkeletonTable } from '../molecules/SkeletonTable';
 import { EmptyState } from '../molecules/EmptyState';
@@ -98,7 +98,8 @@ export interface DataTableProps<T = Record<string, unknown>> {
 /**
  * DataTable - Tabla de datos genérica reutilizable
  */
-function DataTableComponent<T = Record<string, unknown>>({
+function DataTableComponent<T = Record<string, unknown>>(
+  {
   columns,
   data = [],
   keyField = 'id' as keyof T,
@@ -112,7 +113,9 @@ function DataTableComponent<T = Record<string, unknown>>({
   skeletonRows = 5,
   className,
   tableClassName,
-}: DataTableProps<T>) {
+}: DataTableProps<T>,
+  ref: React.ForwardedRef<HTMLDivElement>
+) {
   // Calcular anchos de columna para skeleton
   const columnWidths = useMemo(() => {
     return columns.map((col) => (TABLE_WIDTH_MAP[col.width || 'md'] || 'md') as 'sm' | 'md' | 'lg' | 'xl');
@@ -129,7 +132,7 @@ function DataTableComponent<T = Record<string, unknown>>({
   // Estado de carga
   if (isLoading) {
     return (
-      <div className={className}>
+      <div ref={ref} className={className}>
         <SkeletonTable rows={skeletonRows} columns={columns.length} columnWidths={columnWidths} />
       </div>
     );
@@ -138,7 +141,7 @@ function DataTableComponent<T = Record<string, unknown>>({
   // Estado vacío
   if (!data || data.length === 0) {
     return (
-      <div className={className}>
+      <div ref={ref} className={className}>
         <EmptyState
           icon={emptyState.icon || Inbox}
           title={emptyState.title || 'No hay datos'}
@@ -152,7 +155,7 @@ function DataTableComponent<T = Record<string, unknown>>({
   }
 
   return (
-    <div className={cn('space-y-4', className)}>
+    <div ref={ref} className={cn('space-y-4', className)}>
       {/* Tabla */}
       <div className={TABLE_BASE_STYLES.container}>
         <div className={TABLE_BASE_STYLES.wrapper}>
@@ -203,10 +206,11 @@ function DataTableComponent<T = Record<string, unknown>>({
   );
 }
 
-export const DataTable = memo(DataTableComponent) as typeof DataTableComponent;
+export const DataTable = memo(forwardRef(DataTableComponent)) as <T = Record<string, unknown>>(
+  props: DataTableProps<T> & { ref?: React.Ref<HTMLDivElement> }
+) => React.ReactElement | null;
 
-// @ts-expect-error - displayName en memo con generics
-DataTable.displayName = 'DataTable';
+(DataTable as any).displayName = 'DataTable';
 
 /**
  * Props para DataTableRow

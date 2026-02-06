@@ -1,7 +1,7 @@
-import { memo, useState, useRef, useMemo, type ComponentType } from 'react';
+import { memo, forwardRef, useState, useRef, useMemo, type ComponentType } from 'react';
 import { ChevronDown, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useClickOutside, useEscapeKey } from '@/hooks/utils';
+import { useClickOutsideRef, useEscapeKey } from '@/hooks/utils';
 import { DROPDOWN_ITEM_STYLES, COUNT_STYLES } from './constants';
 
 /**
@@ -44,18 +44,19 @@ export interface MobileTabSelectorProps {
 /**
  * MobileTabSelector - Dropdown para seleccionar tabs en móvil
  */
-const MobileTabSelector = memo(function MobileTabSelector({
+const MobileTabSelector = memo(
+  forwardRef<HTMLDivElement, MobileTabSelectorProps>(function MobileTabSelector({
   tabs,
   activeTab,
   onTabChange,
   getTabIcon,
   mobileGroups,
-}: MobileTabSelectorProps) {
+}, ref) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Cerrar al hacer click fuera
-  useClickOutside(dropdownRef, () => setIsOpen(false));
+  useClickOutsideRef(dropdownRef, () => setIsOpen(false));
 
   // Cerrar con Escape
   useEscapeKey(() => setIsOpen(false), isOpen);
@@ -90,7 +91,11 @@ const MobileTabSelector = memo(function MobileTabSelector({
   const visibleTabs = tabs.filter((tab) => !tab.disabled);
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div className="relative" ref={(node) => {
+        dropdownRef.current = node;
+        if (typeof ref === 'function') ref(node);
+        else if (ref) (ref as React.MutableRefObject<HTMLDivElement | null>).current = node;
+      }}>
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
@@ -240,7 +245,8 @@ const MobileTabSelector = memo(function MobileTabSelector({
       )}
     </div>
   );
-});
+  })
+);
 
 MobileTabSelector.displayName = 'MobileTabSelector';
 

@@ -1,4 +1,4 @@
-import { useMemo, memo } from 'react';
+import { useMemo, memo, forwardRef } from 'react';
 import {
   ChevronLeft,
   ChevronRight,
@@ -33,7 +33,8 @@ export interface PaginationProps {
  * Pagination - Componente de paginación reutilizable
  * Soporta paginación server-side con info del backend
  */
-export const Pagination = memo(function Pagination({
+export const Pagination = memo(
+  forwardRef<HTMLDivElement, PaginationProps>(function Pagination({
   pagination,
   onPageChange,
   showInfo = true,
@@ -41,7 +42,7 @@ export const Pagination = memo(function Pagination({
   maxVisiblePages = 5,
   size = 'md',
   className,
-}: PaginationProps) {
+}, ref) {
   const { page, limit, total, totalPages, hasNext, hasPrev } = pagination;
 
   // Calcular rango de items mostrados
@@ -92,6 +93,7 @@ export const Pagination = memo(function Pagination({
 
   return (
     <div
+      ref={ref}
       className={cn(
         'flex flex-col sm:flex-row items-center justify-between gap-4 py-3',
         className
@@ -232,6 +234,7 @@ export const Pagination = memo(function Pagination({
       )}
     </div>
   );
-});
+  })
+);
 
 Pagination.displayName = 'Pagination';

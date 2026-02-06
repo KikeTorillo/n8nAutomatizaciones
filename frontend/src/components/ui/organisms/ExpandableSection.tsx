@@ -1,4 +1,4 @@
-import { useState, memo, type ReactNode, type ComponentType } from 'react';
+import { useState, memo, forwardRef, type ReactNode, type ComponentType } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -31,7 +31,8 @@ export interface ExpandableSectionProps {
  *   <ServiceList />
  * </ExpandableSection>
  */
-const ExpandableSection = memo(function ExpandableSection({
+const ExpandableSection = memo(
+  forwardRef<HTMLDivElement, ExpandableSectionProps>(function ExpandableSection({
   icon: Icon,
   title,
   count,
@@ -40,11 +41,11 @@ const ExpandableSection = memo(function ExpandableSection({
   children,
   className,
   contentClassName,
-}: ExpandableSectionProps) {
+}, ref) {
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
 
   return (
-    <div className={cn('border-t border-gray-200 dark:border-gray-700 pt-4 mt-4', className)}>
+    <div ref={ref} className={cn('border-t border-gray-200 dark:border-gray-700 pt-4 mt-4', className)}>
       {/* Header expandible */}
       <button
         type="button"
@@ -78,7 +79,8 @@ const ExpandableSection = memo(function ExpandableSection({
       )}
     </div>
   );
-});
+  })
+);
 
 ExpandableSection.displayName = 'ExpandableSection';
 

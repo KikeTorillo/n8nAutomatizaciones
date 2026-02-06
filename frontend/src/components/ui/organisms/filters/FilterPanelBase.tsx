@@ -8,7 +8,7 @@
  * - Cálculo de filtros activos
  * - Layout de grid responsivo
  */
-import { useMemo, useCallback, memo, type ReactNode, type ComponentType } from 'react';
+import { useMemo, useCallback, memo, forwardRef, type ReactNode, type ComponentType } from 'react';
 import { cn } from '@/lib/utils';
 import { FilterField } from '../FilterField';
 import type { FilterFieldType } from '@/types/organisms';
@@ -148,13 +148,14 @@ export interface FilterPanelBaseProps {
 /**
  * FilterPanelBase - Componente base para paneles de filtros
  */
-export const FilterPanelBase = memo(function FilterPanelBase({
+export const FilterPanelBase = memo(
+  forwardRef<HTMLDivElement, FilterPanelBaseProps>(function FilterPanelBase({
   filters = {},
   onFilterChange,
   filterConfig = [],
   children,
   className,
-}: FilterPanelBaseProps) {
+}, ref) {
   const handleChange = useCallback(
     (key: string, value: unknown) => {
       onFilterChange?.(key, value);
@@ -184,12 +185,13 @@ export const FilterPanelBase = memo(function FilterPanelBase({
   };
 
   return (
-    <div className={cn(filterPanelContainerStyles, className)}>
+    <div ref={ref} className={cn(filterPanelContainerStyles, className)}>
       <div className={filterGridStyles}>{filterConfig.map(renderFilter)}</div>
       {children}
     </div>
   );
-});
+  })
+);
 
 FilterPanelBase.displayName = 'FilterPanelBase';
 

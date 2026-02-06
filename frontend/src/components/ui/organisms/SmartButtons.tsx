@@ -1,4 +1,4 @@
-import { memo, type ComponentType } from 'react';
+import { memo, forwardRef, type ComponentType } from 'react';
 import { cn } from '@/lib/utils';
 
 /** Colores disponibles para SmartButton */
@@ -49,14 +49,15 @@ const colorClasses: Record<SmartButtonColor, string> = {
  *
  * Ene 2026: Movido de molecules a organisms (coordina múltiples botones interactivos)
  */
-export const SmartButtons = memo(function SmartButtons({
+export const SmartButtons = memo(
+  forwardRef<HTMLDivElement, SmartButtonsProps>(function SmartButtons({
   buttons = [],
   className,
-}: SmartButtonsProps) {
+}, ref) {
   if (!buttons.length) return null;
 
   return (
-    <div className={cn('flex flex-wrap gap-2 sm:gap-3', className)}>
+    <div ref={ref} className={cn('flex flex-wrap gap-2 sm:gap-3', className)}>
       {buttons.map((btn, index) => {
         const Icon = btn.icon;
         const color = btn.color || 'gray';
@@ -97,6 +98,7 @@ export const SmartButtons = memo(function SmartButtons({
       })}
     </div>
   );
-});
+  })
+);
 
 SmartButtons.displayName = 'SmartButtons';

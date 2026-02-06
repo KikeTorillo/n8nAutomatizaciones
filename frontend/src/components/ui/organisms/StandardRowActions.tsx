@@ -1,4 +1,4 @@
-import { memo, useState, type ComponentType } from 'react';
+import { memo, useState, forwardRef, type ComponentType } from 'react';
 import { Edit2, Trash2, Eye, BarChart3, MoreVertical } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '../atoms/Button';
@@ -64,7 +64,8 @@ export interface StandardRowActionsProps<T = Record<string, unknown>> {
  * editar, eliminar, ver detalle, estadísticas. Soporta modo compacto (dropdown)
  * y confirmación antes de eliminar.
  */
-function StandardRowActionsComponent<T = Record<string, unknown>>({
+function StandardRowActionsComponent<T = Record<string, unknown>>(
+  {
   row,
   onEdit,
   onDelete,
@@ -79,7 +80,9 @@ function StandardRowActionsComponent<T = Record<string, unknown>>({
   extraActions = [],
   size = 'sm',
   className,
-}: StandardRowActionsProps<T>) {
+}: StandardRowActionsProps<T>,
+  ref: React.ForwardedRef<HTMLDivElement>
+) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -133,7 +136,7 @@ function StandardRowActionsComponent<T = Record<string, unknown>>({
   // Modo compacto: dropdown con todas las acciones
   if (compact) {
     return (
-      <>
+      <div ref={ref}>
         <DropdownMenu
           trigger={
             <Button variant="ghost" size={size} className="p-1" aria-label="Más acciones">
@@ -164,7 +167,7 @@ function StandardRowActionsComponent<T = Record<string, unknown>>({
             isLoading={isDeleting}
           />
         )}
-      </>
+      </div>
     );
   }
 
@@ -173,7 +176,7 @@ function StandardRowActionsComponent<T = Record<string, unknown>>({
   const iconSize = size === 'xs' ? 'w-3.5 h-3.5' : 'w-4 h-4';
 
   return (
-    <>
+    <div ref={ref}>
       <div className={cn('flex items-center gap-1', className)}>
         {onView && (
           <Button
@@ -264,12 +267,12 @@ function StandardRowActionsComponent<T = Record<string, unknown>>({
           isLoading={isDeleting}
         />
       )}
-    </>
+    </div>
   );
 }
 
 export const StandardRowActions = memo(
-  StandardRowActionsComponent
+  forwardRef(StandardRowActionsComponent)
 ) as typeof StandardRowActionsComponent;
 
 // @ts-expect-error - displayName en memo con generics

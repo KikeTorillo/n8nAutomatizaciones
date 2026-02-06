@@ -1,4 +1,4 @@
-import { memo, useCallback } from 'react';
+import { memo, forwardRef, useCallback } from 'react';
 import { ICONOS_MAP } from './constants';
 
 /**
@@ -17,11 +17,12 @@ export interface IconButtonProps {
  * IconButton - Botón de icono memoizado
  * Componente optimizado para evitar re-renders innecesarios
  */
-const IconButton = memo(function IconButton({
+const IconButton = memo(
+  forwardRef<HTMLButtonElement, IconButtonProps>(function IconButton({
   nombreIcono,
   isSelected,
   onSelect,
-}: IconButtonProps) {
+}, ref) {
   const IconComponent = ICONOS_MAP[nombreIcono];
   if (!IconComponent) return null;
 
@@ -31,6 +32,7 @@ const IconButton = memo(function IconButton({
 
   return (
     <button
+      ref={ref}
       type="button"
       onClick={handleClick}
       className={`p-2.5 rounded-lg transition-all flex items-center justify-center ${
@@ -44,7 +46,8 @@ const IconButton = memo(function IconButton({
       <IconComponent size={20} />
     </button>
   );
-});
+  })
+);
 
 IconButton.displayName = 'IconButton';
 

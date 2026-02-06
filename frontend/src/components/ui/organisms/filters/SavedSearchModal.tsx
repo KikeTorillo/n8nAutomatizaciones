@@ -1,4 +1,4 @@
-import { useState, memo, type FormEvent, type ChangeEvent } from 'react';
+import { useState, memo, forwardRef, type FormEvent, type ChangeEvent } from 'react';
 import { Star, Save } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Modal } from '../Modal';
@@ -24,13 +24,14 @@ export interface SavedSearchModalProps {
  * SavedSearchModal - Modal para guardar búsqueda actual
  * Ene 2026: Refactorizado para usar componente Modal centralizado
  */
-const SavedSearchModal = memo(function SavedSearchModal({
+const SavedSearchModal = memo(
+  forwardRef<HTMLDivElement, SavedSearchModalProps>(function SavedSearchModal({
   isOpen,
   onClose,
   filtrosActuales,
   onSave,
   existeNombre,
-}: SavedSearchModalProps) {
+}, ref) {
   const [nombre, setNombre] = useState('');
   const [esDefault, setEsDefault] = useState(false);
   const [error, setError] = useState('');
@@ -102,6 +103,7 @@ const SavedSearchModal = memo(function SavedSearchModal({
         </>
       }
     >
+      <div ref={ref}>
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Campo nombre */}
         <div className="space-y-1.5">
@@ -181,9 +183,11 @@ const SavedSearchModal = memo(function SavedSearchModal({
           </div>
         </div>
       </form>
+      </div>
     </Modal>
   );
-});
+  })
+);
 
 SavedSearchModal.displayName = 'SavedSearchModal';
 

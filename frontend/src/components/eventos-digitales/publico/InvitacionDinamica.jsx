@@ -60,7 +60,6 @@ function InvitacionDinamica({
   loadingQR,
 }) {
   const [visibleSections, setVisibleSections] = useState(new Set(['inicio']));
-  const [activeSection, setActiveSection] = useState('inicio');
   const sectionRefs = useRef({});
 
   // Seguridad: si no hay bloques, no renderizar nada
@@ -85,9 +84,8 @@ function InvitacionDinamica({
 
     const observerCallback = (entries) => {
       entries.forEach((entry) => {
-        const sectionId = entry.target.getAttribute('data-bloque-id');
         if (entry.isIntersecting) {
-          setActiveSection(sectionId);
+          const sectionId = entry.target.getAttribute('data-bloque-id');
           setVisibleSections((prev) => new Set([...prev, sectionId]));
         }
       });
@@ -116,53 +114,11 @@ function InvitacionDinamica({
     }
   }, [bloquesVisibles]);
 
-  // Generar navegación basada en bloques
-  const navItems = useMemo(() => {
-    return bloquesVisibles
-      .filter((b) => {
-        // Solo ciertos tipos generan items de nav
-        const tiposConNav = [
-          'hero_invitacion',
-          'countdown',
-          'timeline',
-          'ubicacion',
-          'rsvp',
-          'mesa_regalos',
-          'galeria',
-          'faq',
-          'felicitaciones',
-        ];
-        return tiposConNav.includes(b.tipo);
-      })
-      .map((b) => ({
-        id: b.id,
-        label: b.contenido?.titulo || getDefaultLabel(b.tipo),
-        tipo: b.tipo,
-      }));
-  }, [bloquesVisibles]);
-
-  const scrollToSection = useCallback((id) => {
-    if (sectionRefs.current[id]) {
-      const navHeight = 60;
-      const element = sectionRefs.current[id];
-      const elementPosition = element.getBoundingClientRect().top + window.scrollY;
-      window.scrollTo({
-        top: elementPosition - navHeight,
-        behavior: 'smooth',
-      });
-    }
-  }, []);
-
   // Memoizar estilos inline para evitar recrear objetos en cada render
   const containerStyle = useMemo(() => ({
     backgroundColor: tema?.color_fondo,
     fontFamily: tema?.fuente_cuerpo,
   }), [tema?.color_fondo, tema?.fuente_cuerpo]);
-
-  const navStyle = useMemo(() => ({
-    backgroundColor: `${tema?.color_fondo}ee`,
-    borderColor: tema?.color_secundario,
-  }), [tema?.color_fondo, tema?.color_secundario]);
 
   const footerStyle = useMemo(() => ({
     borderColor: tema?.color_secundario,
@@ -220,40 +176,6 @@ function InvitacionDinamica({
         );
       })}
 
-      {/* Navegación sticky (si hay más de un bloque) */}
-      {navItems.length > 1 && (
-        <nav
-          className="sticky top-0 z-50 backdrop-blur-md border-b transition-all"
-          style={navStyle}
-        >
-          <div className="max-w-5xl mx-auto px-4">
-            <div className="flex items-center justify-center gap-2 sm:gap-8 overflow-x-auto py-4 scrollbar-hide">
-              {navItems.map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => scrollToSection(item.id)}
-                  className="relative px-4 py-2 text-sm sm:text-base font-medium whitespace-nowrap transition-all duration-300"
-                  style={{
-                    color:
-                      activeSection === item.id
-                        ? tema?.color_primario
-                        : tema?.color_texto_claro,
-                  }}
-                >
-                  {item.label}
-                  {activeSection === item.id && (
-                    <span
-                      className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full transition-all"
-                      style={{ backgroundColor: tema?.color_primario }}
-                    />
-                  )}
-                </button>
-              ))}
-            </div>
-          </div>
-        </nav>
-      )}
-
       {/* Footer */}
       <footer
         className="py-8 text-center border-t"
@@ -276,27 +198,6 @@ function InvitacionDinamica({
       </footer>
     </div>
   );
-}
-
-/**
- * Obtener label por defecto para navegación según tipo de bloque
- */
-function getDefaultLabel(tipo) {
-  const labels = {
-    hero_invitacion: 'Inicio',
-    countdown: 'Cuenta Regresiva',
-    timeline: 'Itinerario',
-    ubicacion: 'Ubicación',
-    rsvp: 'Confirmar',
-    mesa_regalos: 'Regalos',
-    galeria: 'Galería',
-    video: 'Video',
-    texto: 'Info',
-    faq: 'FAQ',
-    felicitaciones: 'Felicitaciones',
-    separador: '',
-  };
-  return labels[tipo] || 'Sección';
 }
 
 export default memo(InvitacionDinamica);

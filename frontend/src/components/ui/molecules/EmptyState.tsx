@@ -1,4 +1,4 @@
-import { memo, type ReactNode } from 'react';
+import { memo, forwardRef, type ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 import { Inbox } from 'lucide-react';
 import { Button } from '../atoms/Button';
@@ -29,7 +29,8 @@ export interface EmptyStateProps {
 /**
  * EmptyState - Estado vacío reutilizable para listas y tablas
  */
-export const EmptyState = memo(function EmptyState({
+export const EmptyState = memo(
+  forwardRef<HTMLDivElement, EmptyStateProps>(function EmptyState({
   icon: Icon = Inbox,
   title,
   description,
@@ -39,11 +40,12 @@ export const EmptyState = memo(function EmptyState({
   children,
   size = 'md',
   className,
-}: EmptyStateProps) {
+}, ref) {
   const sizes = EMPTY_STATE_SIZES[size] || EMPTY_STATE_SIZES.md;
 
   return (
     <div
+      ref={ref}
       className={cn(
         EMPTY_STATE_BASE.container,
         sizes.container,
@@ -82,6 +84,6 @@ export const EmptyState = memo(function EmptyState({
       {children}
     </div>
   );
-});
+}));
 
 EmptyState.displayName = 'EmptyState';

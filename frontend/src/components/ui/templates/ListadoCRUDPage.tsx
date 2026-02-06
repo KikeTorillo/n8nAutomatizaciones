@@ -3,49 +3,92 @@ import { cn } from '@/lib/utils';
 import { DataTable } from '../organisms/DataTable';
 import { SearchInput } from '../organisms/SearchInput';
 import { Button } from '../atoms/Button';
-import { StatCardGrid } from '../organisms/StatCardGrid';
+import { StatCardGrid, type StatConfig } from '../organisms/StatCardGrid';
 import { ViewTabs } from '../organisms/ViewTabs';
 import { useFilters, usePagination, normalizePagination, useModalManager, useDeleteConfirmation, useExportCSV } from '@/hooks/utils';
 import { ConfirmDialog } from '../organisms/ConfirmDialog';
-import { Plus, Search, Download } from 'lucide-react';
+import { Plus, Download } from 'lucide-react';
 import { SEMANTIC_COLORS } from '@/lib/uiConstants';
 
-/**
- * ListadoCRUDPage - Template para paginas CRUD estandar
- *
- * Encapsula: filtros, paginacion, tabla, modales CRUD, estadisticas
- * Reduce ~60-70% del codigo repetitivo en paginas de listado.
- *
- * @example
- * // Caso básico
- * <ListadoCRUDPage
- *   title="Cupones"
- *   icon={Ticket}
- *   useListQuery={useCupones}
- *   useDeleteMutation={useEliminarCupon}
- *   columns={cuponesColumns}
- *   FormDrawer={CuponFormDrawer}
- * />
- *
- * @example
- * // Con acciones custom por fila (toggle estado, stats, duplicar)
- * <ListadoCRUDPage
- *   title="Promociones"
- *   icon={Sparkles}
- *   useListQuery={usePromociones}
- *   useDeleteMutation={useEliminarPromocion}
- *   columns={promocionesColumns}
- *   FormDrawer={PromocionFormDrawer}
- *   StatsModal={PromocionStatsModal}
- *   rowActions={(row, handlers) => (
- *     <CustomRowActions row={row} {...handlers} />
- *   )}
- *   extraMutations={{
- *     cambiarEstado: useCambiarEstadoPromocion(),
- *     duplicar: useDuplicarPromocion(),
- *   }}
- * />
- */
+type LucideIcon = React.ComponentType<{ className?: string }>;
+
+interface ColumnDef {
+  key: string;
+  header?: string | React.ReactNode;
+  align?: 'left' | 'center' | 'right';
+  render?: (row: Record<string, unknown>) => React.ReactNode;
+  [key: string]: unknown;
+}
+
+interface ViewMode {
+  id: string;
+  label: string;
+  icon?: LucideIcon;
+  component?: React.ComponentType<any>;
+}
+
+interface ExportConfig {
+  filename?: string;
+  columns?: Array<{ key: string; header: string }>;
+  mapRow?: (row: Record<string, unknown>) => Record<string, unknown>;
+}
+
+interface ExtraModalConfig {
+  component: React.ComponentType<any>;
+  mapData?: (data: unknown) => Record<string, unknown>;
+  props?: Record<string, unknown>;
+}
+
+interface CrudHandlers {
+  onEdit: (item: Record<string, unknown>) => void;
+  onDelete: (item: Record<string, unknown>) => void;
+  onViewStats: (item: Record<string, unknown>) => void;
+  openModal: (name: string, data?: unknown) => void;
+  extraMutations: Record<string, unknown>;
+}
+
+interface ListadoCRUDPageProps {
+  title?: string;
+  subtitle?: string;
+  icon?: LucideIcon;
+  PageLayout?: React.ComponentType<any>;
+  layoutProps?: Record<string, unknown>;
+  useListQuery: (params: Record<string, unknown>) => { data?: any; isLoading: boolean };
+  queryParams?: Record<string, unknown>;
+  dataKey?: string;
+  useDeleteMutation?: () => { mutate: Function; [key: string]: unknown };
+  deleteMutationOptions?: Record<string, unknown>;
+  extraMutations?: Record<string, unknown>;
+  columns: ColumnDef[];
+  keyField?: string;
+  onRowClick?: (row: Record<string, unknown>) => void;
+  emptyState?: Record<string, unknown>;
+  rowActions?: (row: Record<string, unknown>, handlers: CrudHandlers) => React.ReactNode;
+  initialFilters?: Record<string, unknown>;
+  filterConfig?: unknown[];
+  filterPersistId?: string;
+  limit?: number;
+  statsConfig?: StatConfig[];
+  FormDrawer?: React.ComponentType<any>;
+  formDrawerProps?: Record<string, unknown>;
+  mapFormData?: (data: unknown) => Record<string, unknown>;
+  StatsModal?: React.ComponentType<any>;
+  statsModalProps?: Record<string, unknown>;
+  mapStatsData?: (data: unknown) => Record<string, unknown>;
+  actions?: React.ReactNode | ((context: { openModal: Function; closeModal: Function; items: unknown[]; isLoading: boolean; handlers: CrudHandlers }) => React.ReactNode);
+  showNewButton?: boolean;
+  newButtonLabel?: string;
+  viewModes?: ViewMode[];
+  defaultViewMode?: string;
+  extraModals?: Record<string, ExtraModalConfig>;
+  exportConfig?: ExportConfig;
+  renderFilters?: (context: { filtros: Record<string, unknown>; setFiltro: Function; limpiarFiltros: () => void; filtrosActivos: number; resetPage: () => void }) => React.ReactNode;
+  renderBeforeTable?: (context: { items: unknown[]; isLoading: boolean; paginacion: unknown; openModal: Function }) => React.ReactNode;
+  renderAfterTable?: (context: { items: unknown[]; isLoading: boolean }) => React.ReactNode;
+  className?: string;
+  children?: React.ReactNode;
+}
+
 const ListadoCRUDPage = memo(function ListadoCRUDPage({
   // Layout
   title,
@@ -57,19 +100,19 @@ const ListadoCRUDPage = memo(function ListadoCRUDPage({
   // Data
   useListQuery,
   queryParams: extraQueryParams = {},
-  dataKey = 'items', // Clave en response (productos, cupones, etc.)
+  dataKey = 'items',
 
   // Mutations
   useDeleteMutation,
   deleteMutationOptions = {},
-  extraMutations = {}, // Mutations adicionales (toggle, duplicar, etc.)
+  extraMutations = {},
 
   // Table
   columns: columnsProp,
   keyField = 'id',
   onRowClick,
   emptyState = {},
-  rowActions, // (row, handlers) => ReactNode para acciones custom
+  rowActions,
 
   // Filters
   initialFilters = { busqueda: '' },
@@ -83,10 +126,10 @@ const ListadoCRUDPage = memo(function ListadoCRUDPage({
   // Modals
   FormDrawer,
   formDrawerProps = {},
-  mapFormData, // (data) => props para FormDrawer (ej: data => ({ proveedor: data, mode: data ? 'edit' : 'create' }))
+  mapFormData,
   StatsModal,
   statsModalProps = {},
-  mapStatsData, // (data) => props para StatsModal (ej: data => ({ cupon: data }))
+  mapStatsData,
 
   // Actions
   actions,
@@ -94,14 +137,14 @@ const ListadoCRUDPage = memo(function ListadoCRUDPage({
   newButtonLabel = 'Nuevo',
 
   // ViewModes (tabla/cards)
-  viewModes, // [{ id, label, icon, component }]
+  viewModes,
   defaultViewMode = 'table',
 
   // Extra modals
-  extraModals = {}, // { nombreModal: { component, mapData } }
+  extraModals = {},
 
   // Export CSV
-  exportConfig, // { filename, columns, mapRow }
+  exportConfig,
 
   // Customization
   renderFilters,
@@ -109,7 +152,7 @@ const ListadoCRUDPage = memo(function ListadoCRUDPage({
   renderAfterTable,
   className,
   children,
-}) {
+}: ListadoCRUDPageProps) {
   // View mode state
   const [activeView, setActiveView] = useState(defaultViewMode);
   // Paginacion
@@ -130,7 +173,7 @@ const ListadoCRUDPage = memo(function ListadoCRUDPage({
 
   // Modales base + extras
   const extraModalConfig = useMemo(() =>
-    Object.keys(extraModals).reduce((acc, key) => {
+    Object.keys(extraModals).reduce((acc: Record<string, { isOpen: boolean; data: null }>, key) => {
       acc[key] = { isOpen: false, data: null };
       return acc;
     }, {}), [extraModals]
@@ -140,7 +183,14 @@ const ListadoCRUDPage = memo(function ListadoCRUDPage({
     form: { isOpen: false, data: null },
     stats: { isOpen: false, data: null },
     ...extraModalConfig,
-  });
+  }) as {
+    openModal: (name: string, data?: unknown, extraProps?: Record<string, unknown>) => void;
+    closeModal: (name: string, clearData?: boolean) => void;
+    isOpen: (name: string) => boolean;
+    getModalData: (name: string) => any;
+    modals: Record<string, unknown>;
+    closeAll: () => void;
+  };
 
   // Query de datos
   const { data, isLoading } = useListQuery({
@@ -178,37 +228,38 @@ const ListadoCRUDPage = memo(function ListadoCRUDPage({
   }, [page, queryParams.limit, data?.paginacion, data?.pagination, data?.total, data?.limit, items.length]);
 
   // Export CSV
-  const { exportar, isExporting } = useExportCSV();
+  const { exportCSV } = useExportCSV();
   const handleExport = useCallback(() => {
     if (!exportConfig || items.length === 0) return;
-    exportar({
-      data: items,
-      filename: exportConfig.filename || `${title?.toLowerCase() || 'export'}_${new Date().toISOString().split('T')[0]}.csv`,
-      columns: exportConfig.columns,
-      mapRow: exportConfig.mapRow,
-    });
-  }, [exportConfig, items, exportar, title]);
+    const filename = exportConfig.filename || `${title?.toLowerCase() || 'export'}_${new Date().toISOString().split('T')[0]}`;
+    exportCSV(items, exportConfig.columns || [], filename);
+  }, [exportConfig, items, exportCSV, title]);
 
   // Delete mutation + confirmation
   const deleteMutation = useDeleteMutation?.();
   const { confirmDelete, deleteConfirmProps } = useDeleteConfirmation({
-    deleteMutation,
+    deleteMutation: deleteMutation || null as any,
     entityName: title?.toLowerCase() || 'elemento',
     ...deleteMutationOptions,
-  });
+  }) as {
+    confirmDelete: (item: Record<string, unknown>) => void;
+    deleteConfirmProps: Record<string, unknown>;
+    isDeleting: boolean;
+    itemToDelete: unknown;
+  };
 
   // Handlers
   const handleNuevo = useCallback(() => openModal('form', null), [openModal]);
-  const handleEditar = useCallback((item) => openModal('form', item), [openModal]);
-  const handleEliminar = useCallback((item) => confirmDelete(item), [confirmDelete]);
-  const handleVerStats = useCallback((item) => openModal('stats', item), [openModal]);
+  const handleEditar = useCallback((item: Record<string, unknown>) => openModal('form', item), [openModal]);
+  const handleEliminar = useCallback((item: Record<string, unknown>) => confirmDelete(item), [confirmDelete]);
+  const handleVerStats = useCallback((item: Record<string, unknown>) => openModal('stats', item), [openModal]);
 
   // Handlers object para rowActions
   const handlers = useMemo(() => ({
     onEdit: handleEditar,
     onDelete: handleEliminar,
     onViewStats: handleVerStats,
-    openModal, // Para modales extra
+    openModal,
     extraMutations,
   }), [handleEditar, handleEliminar, handleVerStats, openModal, extraMutations]);
 
@@ -220,8 +271,8 @@ const ListadoCRUDPage = memo(function ListadoCRUDPage({
     const actionsColumn = {
       key: '_actions',
       header: '',
-      align: 'right',
-      render: (row) => rowActions(row, handlers),
+      align: 'right' as const,
+      render: (row: Record<string, unknown>) => rowActions(row, handlers),
     };
 
     // Si ya existe una columna 'actions' o '_actions', reemplazarla
@@ -238,7 +289,7 @@ const ListadoCRUDPage = memo(function ListadoCRUDPage({
     : actions;
 
   // Wrapper de layout
-  const LayoutComponent = PageLayout || 'div';
+  const LayoutComponent = (PageLayout || 'div') as React.ElementType<any>;
   const layoutContent = (
     <>
       {/* Stats */}
@@ -262,13 +313,12 @@ const ListadoCRUDPage = memo(function ListadoCRUDPage({
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="flex-1">
               <SearchInput
-                value={filtros.busqueda || ''}
+                value={(filtros.busqueda as string) || ''}
                 onChange={(e) => {
-                  setFiltro('busqueda', e.target.value);
+                  setFiltro('busqueda', (e.target as HTMLInputElement).value);
                   resetPage();
                 }}
                 placeholder="Buscar..."
-                icon={Search}
               />
             </div>
             <div className="flex gap-2">
@@ -282,7 +332,7 @@ const ListadoCRUDPage = memo(function ListadoCRUDPage({
                   variant="outline"
                   size="sm"
                   onClick={handleExport}
-                  disabled={isExporting}
+                  disabled={false}
                   className="flex items-center gap-2"
                 >
                   <Download className="h-4 w-4" />
@@ -317,7 +367,7 @@ const ListadoCRUDPage = memo(function ListadoCRUDPage({
         // Fallback a DataTable si no hay componente custom
         return (
           <DataTable
-            columns={columns}
+            columns={columns as any}
             data={items}
             isLoading={isLoading}
             keyField={keyField}
@@ -379,7 +429,7 @@ const ListadoCRUDPage = memo(function ListadoCRUDPage({
       })}
 
       {/* Delete Confirmation */}
-      {deleteMutation && <ConfirmDialog {...deleteConfirmProps} />}
+      {deleteMutation && <ConfirmDialog {...deleteConfirmProps as any} />}
 
       {/* Children slot */}
       {children}
@@ -439,3 +489,4 @@ ListadoCRUDPage.displayName = 'ListadoCRUDPage';
 
 export { ListadoCRUDPage };
 export default ListadoCRUDPage;
+export type { ListadoCRUDPageProps, ColumnDef, ViewMode, ExportConfig, ExtraModalConfig, CrudHandlers };

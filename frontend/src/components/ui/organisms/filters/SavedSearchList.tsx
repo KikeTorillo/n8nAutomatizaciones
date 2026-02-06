@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { memo, forwardRef } from 'react';
 import { Star, Trash2, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -33,17 +33,19 @@ export interface SavedSearchListProps {
 /**
  * SavedSearchList - Lista de búsquedas guardadas
  */
-export const SavedSearchList = memo(function SavedSearchList({
+export const SavedSearchList = memo(
+  forwardRef<HTMLDivElement, SavedSearchListProps>(function SavedSearchList({
   busquedas = [],
   onSelect,
   onDelete,
   onToggleDefault,
   currentSearchId,
   compact = false,
-}: SavedSearchListProps) {
+}, ref) {
   if (busquedas.length === 0) {
     return (
       <div
+        ref={ref}
         className={cn(
           'text-sm text-gray-500 dark:text-gray-400 text-center py-3',
           compact ? 'py-2' : 'py-4'
@@ -55,7 +57,7 @@ export const SavedSearchList = memo(function SavedSearchList({
   }
 
   return (
-    <div className={cn('space-y-1', compact && 'max-h-[200px] overflow-y-auto')}>
+    <div ref={ref} className={cn('space-y-1', compact && 'max-h-[200px] overflow-y-auto')}>
       {busquedas.map((busqueda) => {
         const isActive = busqueda.id === currentSearchId;
         const isDefault = busqueda.es_default;
@@ -130,7 +132,8 @@ export const SavedSearchList = memo(function SavedSearchList({
       })}
     </div>
   );
-});
+  })
+);
 
 SavedSearchList.displayName = 'SavedSearchList';
 

@@ -1,12 +1,19 @@
 import { memo } from 'react';
-import PropTypes from 'prop-types';
 import { cn } from '@/lib/utils';
 import { BackButton } from '../../molecules/BackButton';
 import { SEMANTIC_COLORS } from '@/lib/uiConstants';
 
-/**
- * FormHeader - Header para páginas de formulario
- */
+type LucideIcon = React.ComponentType<{ className?: string }>;
+
+interface FormHeaderProps {
+  title?: string;
+  subtitle?: string;
+  icon?: LucideIcon;
+  backTo?: string;
+  backLabel?: string;
+  className?: string;
+}
+
 const FormHeader = memo(function FormHeader({
   title,
   subtitle,
@@ -14,7 +21,7 @@ const FormHeader = memo(function FormHeader({
   backTo,
   backLabel,
   className,
-}) {
+}: FormHeaderProps) {
   return (
     <div className={cn('mb-6', className)}>
       {backTo && (
@@ -48,14 +55,5 @@ const FormHeader = memo(function FormHeader({
 });
 
 FormHeader.displayName = 'FormHeader';
-
-FormHeader.propTypes = {
-  title: PropTypes.string,
-  subtitle: PropTypes.string,
-  icon: PropTypes.elementType,
-  backTo: PropTypes.string,
-  backLabel: PropTypes.string,
-  className: PropTypes.string,
-};
 
 export { FormHeader };

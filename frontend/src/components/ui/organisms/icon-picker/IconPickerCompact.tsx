@@ -9,7 +9,7 @@
  * @since 2026-02-05
  */
 
-import { memo, useState, useCallback, useRef, useEffect } from 'react';
+import { memo, useState, useCallback, useRef, useEffect, forwardRef } from 'react';
 import { Search, ChevronDown, X } from 'lucide-react';
 import { useIconPickerLogic } from '@/hooks/ui/useIconPickerLogic';
 import IconButton from './IconButton';
@@ -28,12 +28,13 @@ export interface IconPickerCompactProps {
 /**
  * IconPickerCompact - Selector de iconos compacto con popover
  */
-export const IconPickerCompact = memo(function IconPickerCompact({
+export const IconPickerCompact = memo(
+  forwardRef<HTMLDivElement, IconPickerCompactProps>(function IconPickerCompact({
   value,
   onChange,
   placeholder = 'Seleccionar icono',
   iconSize = 20,
-}: IconPickerCompactProps) {
+}, ref) {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -92,7 +93,11 @@ export const IconPickerCompact = memo(function IconPickerCompact({
   }, [isOpen]);
 
   return (
-    <div ref={containerRef} className="relative">
+    <div ref={(node) => {
+        containerRef.current = node;
+        if (typeof ref === 'function') ref(node);
+        else if (ref) ref.current = node;
+      }} className="relative">
       {/* Botón trigger */}
       <button
         type="button"
@@ -204,7 +209,8 @@ export const IconPickerCompact = memo(function IconPickerCompact({
       )}
     </div>
   );
-});
+  })
+);
 
 IconPickerCompact.displayName = 'IconPickerCompact';
 

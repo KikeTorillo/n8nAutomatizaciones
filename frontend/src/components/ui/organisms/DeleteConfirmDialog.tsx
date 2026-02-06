@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { memo, forwardRef } from 'react';
 import { ConfirmDialog } from './ConfirmDialog';
 
 /**
@@ -35,7 +35,8 @@ export interface DeleteConfirmDialogProps {
  * Wrapper sobre ConfirmDialog con configuración preestablecida para operaciones
  * de eliminación, reduciendo código repetitivo.
  */
-const DeleteConfirmDialog = memo(function DeleteConfirmDialog({
+const DeleteConfirmDialog = memo(
+  forwardRef<HTMLDivElement, DeleteConfirmDialogProps>(function DeleteConfirmDialog({
   isOpen,
   onClose,
   onConfirm,
@@ -47,7 +48,7 @@ const DeleteConfirmDialog = memo(function DeleteConfirmDialog({
   message,
   confirmText = 'Eliminar',
   cancelText = 'Cancelar',
-}: DeleteConfirmDialogProps) {
+}, ref) {
   // Generar título y mensaje automáticamente si no se proporcionan
   const dialogTitle = title || 'Confirmar eliminación';
   const dialogMessage =
@@ -55,19 +56,22 @@ const DeleteConfirmDialog = memo(function DeleteConfirmDialog({
     `¿Estás seguro de eliminar ${itemType} "${itemName}"? Esta acción no se puede deshacer.${description ? ` ${description}` : ''}`;
 
   return (
-    <ConfirmDialog
-      isOpen={isOpen}
-      onClose={onClose}
-      onConfirm={onConfirm}
-      title={dialogTitle}
-      message={dialogMessage}
-      confirmText={confirmText}
-      cancelText={cancelText}
-      variant="danger"
-      isLoading={isLoading}
-    />
+    <div ref={ref}>
+      <ConfirmDialog
+        isOpen={isOpen}
+        onClose={onClose}
+        onConfirm={onConfirm}
+        title={dialogTitle}
+        message={dialogMessage}
+        confirmText={confirmText}
+        cancelText={cancelText}
+        variant="danger"
+        isLoading={isLoading}
+      />
+    </div>
   );
-});
+  })
+);
 
 DeleteConfirmDialog.displayName = 'DeleteConfirmDialog';
 
