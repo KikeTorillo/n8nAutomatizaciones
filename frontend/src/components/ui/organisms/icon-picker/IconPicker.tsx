@@ -1,6 +1,6 @@
-import { memo, useState, useMemo, useCallback, type ReactNode } from 'react';
+import { memo, useCallback } from 'react';
 import { Search, X } from 'lucide-react';
-import { ICONOS_MAP, CATEGORIAS_ICONOS } from './constants';
+import { useIconPickerLogic } from '@/hooks/ui/useIconPickerLogic';
 import IconButton from './IconButton';
 
 /**
@@ -24,49 +24,26 @@ export const IconPicker = memo(function IconPicker({
   onChange,
   error,
 }: IconPickerProps) {
-  const [busqueda, setBusqueda] = useState('');
-  const [categoriaActiva, setCategoriaActiva] = useState<string | null>(null);
-
-  // Lista plana de todos los iconos
-  const todosLosIconos = useMemo(() => Object.keys(ICONOS_MAP), []);
-
-  // Filtrar iconos según búsqueda y categoría
-  const iconosFiltrados = useMemo(() => {
-    let lista = todosLosIconos;
-
-    // Filtrar por categoría si está seleccionada
-    if (categoriaActiva) {
-      const cat = CATEGORIAS_ICONOS.find((c) => c.nombre === categoriaActiva);
-      if (cat) lista = cat.iconos.filter((i) => ICONOS_MAP[i]);
-    }
-
-    // Filtrar por búsqueda
-    if (busqueda.trim()) {
-      const termino = busqueda.toLowerCase();
-      lista = lista.filter((nombre) => nombre.toLowerCase().includes(termino));
-    }
-
-    return lista;
-  }, [busqueda, categoriaActiva, todosLosIconos]);
-
-  // Renderizar icono seleccionado
-  const renderIcon = useCallback((nombreIcono: string, size = 20): ReactNode => {
-    const IconComponent = ICONOS_MAP[nombreIcono];
-    if (!IconComponent) return null;
-    return <IconComponent size={size} />;
-  }, []);
+  const {
+    busqueda,
+    setBusqueda,
+    categoriaActiva,
+    setCategoriaActiva,
+    todosLosIconos,
+    categorias,
+    iconosFiltrados,
+    renderIcon,
+  } = useIconPickerLogic();
 
   const handleSelect = useCallback(
-    (nombreIcono: string) => {
-      onChange(nombreIcono);
-    },
+    (nombreIcono: string) => onChange(nombreIcono),
     [onChange]
   );
 
   const handleClear = useCallback(() => {
     onChange('');
     setBusqueda('');
-  }, [onChange]);
+  }, [onChange, setBusqueda]);
 
   return (
     <div className="space-y-3">
@@ -119,7 +96,7 @@ export const IconPicker = memo(function IconPicker({
         >
           Todos ({todosLosIconos.length})
         </button>
-        {CATEGORIAS_ICONOS.map((cat) => (
+        {categorias.map((cat) => (
           <button
             key={cat.nombre}
             type="button"

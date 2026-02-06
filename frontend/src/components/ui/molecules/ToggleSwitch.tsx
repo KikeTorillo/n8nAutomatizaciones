@@ -65,7 +65,7 @@ const ToggleSwitch = memo(forwardRef<HTMLButtonElement, ToggleSwitchProps>(funct
   loading = false,
   loadingIcon,
 }, ref) {
-  const sizeConfig = (TOGGLE_SIZES as Record<Size, ToggleSizeConfig>)[size] || TOGGLE_SIZES.md;
+  const sizeConfig = TOGGLE_SIZES[size] || TOGGLE_SIZES.md;
 
   const handleClick = () => {
     if (!disabled && !loading && onChange) {

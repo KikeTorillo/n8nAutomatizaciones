@@ -1,4 +1,4 @@
-import { memo, useState } from 'react';
+import { memo, forwardRef, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { AVATAR_SIZES } from '@/lib/uiConstants';
 import type { UISize } from '@/types/ui';
@@ -45,43 +45,50 @@ function getColorIndex(text: string): number {
 /**
  * Avatar - Imagen de perfil con fallback a iniciales
  */
-const Avatar = memo(function Avatar({
-  src,
-  alt,
-  fallback,
-  size = 'md',
-  className,
-}: AvatarProps) {
-  const [imgError, setImgError] = useState(false);
-  const sizeClass = (AVATAR_SIZES as Record<string, string>)[size] || AVATAR_SIZES.md;
-  const showImage = src && !imgError;
-  const initials = fallback || getInitials(alt);
+const Avatar = memo(
+  forwardRef<HTMLElement, AvatarProps>(function Avatar(
+    {
+      src,
+      alt,
+      fallback,
+      size = 'md',
+      className,
+    },
+    ref
+  ) {
+    const [imgError, setImgError] = useState(false);
+    const sizeClass = AVATAR_SIZES[size] || AVATAR_SIZES.md;
+    const showImage = src && !imgError;
+    const initials = fallback || getInitials(alt);
 
-  if (showImage) {
+    if (showImage) {
+      return (
+        <img
+          ref={ref as React.Ref<HTMLImageElement>}
+          src={src}
+          alt={alt}
+          onError={() => setImgError(true)}
+          className={cn('rounded-full object-cover', sizeClass, className)}
+        />
+      );
+    }
+
     return (
-      <img
-        src={src}
-        alt={alt}
-        onError={() => setImgError(true)}
-        className={cn('rounded-full object-cover', sizeClass, className)}
-      />
+      <div
+        ref={ref as React.Ref<HTMLDivElement>}
+        aria-label={alt}
+        className={cn(
+          'rounded-full flex items-center justify-center font-medium',
+          FALLBACK_COLORS[getColorIndex(alt)],
+          sizeClass,
+          className
+        )}
+      >
+        {initials}
+      </div>
     );
-  }
-
-  return (
-    <div
-      aria-label={alt}
-      className={cn(
-        'rounded-full flex items-center justify-center font-medium',
-        FALLBACK_COLORS[getColorIndex(alt)],
-        sizeClass,
-        className
-      )}
-    >
-      {initials}
-    </div>
-  );
-});
+  })
+);
 
 Avatar.displayName = 'Avatar';
 

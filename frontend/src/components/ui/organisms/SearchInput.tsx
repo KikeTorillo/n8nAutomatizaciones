@@ -120,7 +120,7 @@ const SearchInput = memo(forwardRef<HTMLInputElement, SearchInputProps>(
 
     // Memoizar estilos de tamaño con padding dinámico
     const currentSize = useMemo(() => {
-      const baseSize = (SEARCH_INPUT_SIZES as Record<Size, SearchInputSizeConfig>)[size] || SEARCH_INPUT_SIZES.md;
+      const baseSize = SEARCH_INPUT_SIZES[size as keyof typeof SEARCH_INPUT_SIZES] || SEARCH_INPUT_SIZES.md;
       return {
         ...baseSize,
         paddingRight: showClear && internalValue

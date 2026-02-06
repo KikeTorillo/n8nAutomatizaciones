@@ -9,9 +9,9 @@
  * @since 2026-02-05
  */
 
-import { memo, useState, useMemo, useCallback, useRef, useEffect, type ReactNode } from 'react';
+import { memo, useState, useCallback, useRef, useEffect } from 'react';
 import { Search, ChevronDown, X } from 'lucide-react';
-import { ICONOS_MAP, CATEGORIAS_ICONOS } from './constants';
+import { useIconPickerLogic } from '@/hooks/ui/useIconPickerLogic';
 import IconButton from './IconButton';
 
 export interface IconPickerCompactProps {
@@ -35,49 +35,33 @@ export const IconPickerCompact = memo(function IconPickerCompact({
   iconSize = 20,
 }: IconPickerCompactProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [busqueda, setBusqueda] = useState('');
-  const [categoriaActiva, setCategoriaActiva] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Lista plana de todos los iconos
-  const todosLosIconos = useMemo(() => Object.keys(ICONOS_MAP), []);
+  const {
+    busqueda,
+    setBusqueda,
+    categoriaActiva,
+    setCategoriaActiva,
+    categorias,
+    iconosFiltrados,
+    totalFiltrados,
+    renderIcon,
+  } = useIconPickerLogic({
+    maxItems: 49,
+    maxCategories: 6,
+    onSelectClose: () => setIsOpen(false),
+  });
 
-  // Filtrar iconos según búsqueda y categoría
-  const iconosFiltrados = useMemo(() => {
-    let lista = todosLosIconos;
-
-    if (categoriaActiva) {
-      const cat = CATEGORIAS_ICONOS.find((c) => c.nombre === categoriaActiva);
-      if (cat) lista = cat.iconos.filter((i) => ICONOS_MAP[i]);
-    }
-
-    if (busqueda.trim()) {
-      const termino = busqueda.toLowerCase();
-      lista = lista.filter((nombre) => nombre.toLowerCase().includes(termino));
-    }
-
-    return lista;
-  }, [busqueda, categoriaActiva, todosLosIconos]);
-
-  // Renderizar icono
-  const renderIcon = useCallback((nombreIcono: string, size = 20): ReactNode => {
-    const IconComponent = ICONOS_MAP[nombreIcono];
-    if (!IconComponent) return null;
-    return <IconComponent size={size} />;
-  }, []);
-
-  // Seleccionar icono
   const handleSelect = useCallback(
     (nombreIcono: string) => {
       onChange(nombreIcono);
       setIsOpen(false);
       setBusqueda('');
     },
-    [onChange]
+    [onChange, setBusqueda]
   );
 
-  // Limpiar selección
   const handleClear = useCallback(
     (e: React.MouseEvent) => {
       e.stopPropagation();
@@ -175,7 +159,7 @@ export const IconPickerCompact = memo(function IconPickerCompact({
               >
                 Todos
               </button>
-              {CATEGORIAS_ICONOS.slice(0, 6).map((cat) => (
+              {categorias.map((cat) => (
                 <button
                   key={cat.nombre}
                   type="button"
@@ -195,7 +179,7 @@ export const IconPickerCompact = memo(function IconPickerCompact({
             <div className="max-h-40 overflow-y-auto">
               {iconosFiltrados.length > 0 ? (
                 <div className="grid grid-cols-7 gap-1">
-                  {iconosFiltrados.slice(0, 49).map((nombreIcono) => (
+                  {iconosFiltrados.map((nombreIcono) => (
                     <IconButton
                       key={nombreIcono}
                       nombreIcono={nombreIcono}
@@ -213,7 +197,7 @@ export const IconPickerCompact = memo(function IconPickerCompact({
 
             {/* Contador */}
             <p className="text-xs text-gray-400 text-center">
-              {Math.min(iconosFiltrados.length, 49)} de {iconosFiltrados.length}
+              {Math.min(iconosFiltrados.length, 49)} de {totalFiltrados}
             </p>
           </div>
         </div>

@@ -56,7 +56,7 @@ const Checkbox = memo(
         aria-describedby={id ? getAriaDescribedBy(id, { hasError, hasHelper }) : undefined}
         className={cn(
           getCheckboxStyles({ disabled, error: hasError }),
-          (CHECKBOX_SIZE_CLASSES as Record<string, string>)[size],
+          CHECKBOX_SIZE_CLASSES[size],
           className
         )}
         {...props}

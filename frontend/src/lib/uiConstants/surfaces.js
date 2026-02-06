@@ -68,6 +68,7 @@ export const SECTION_FOOTER = 'border-t border-gray-200 dark:border-gray-700 bg-
 /**
  * Estilos de status para cards (success, warning, error, info)
  */
+/** @type {Record<import('@/types/ui').CardStatus, string>} */
 export const CARD_STATUS_STYLES = {
   success: 'bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800',
   warning: 'bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800',
@@ -78,6 +79,7 @@ export const CARD_STATUS_STYLES = {
 /**
  * Estilos de padding para cards
  */
+/** @type {Record<import('@/types/ui').CardPadding, string>} */
 export const CARD_PADDING_STYLES = {
   none: '',
   sm: 'p-3',

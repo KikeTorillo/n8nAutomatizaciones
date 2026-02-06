@@ -123,24 +123,28 @@ export const LABEL_REQUIRED = {
 
 // ==================== SIZE CLASSES ====================
 
+/** @type {Record<string, string>} */
 export const INPUT_SIZE_CLASSES = {
   sm: 'h-9 text-sm',
   md: 'h-10 text-base',
   lg: 'h-12 text-lg font-semibold',
 };
 
+/** @type {Record<string, string>} */
 export const SELECT_SIZE_CLASSES = {
   sm: 'h-9 text-sm',
   md: 'h-10 text-base',
   lg: 'h-12 text-lg',
 };
 
+/** @type {Record<string, string>} */
 export const CHECKBOX_SIZE_CLASSES = {
   sm: 'h-3.5 w-3.5',
   md: 'h-4 w-4',
   lg: 'h-5 w-5',
 };
 
+/** @type {Record<string, string>} */
 export const RADIO_SIZE_CLASSES = {
   sm: 'h-3.5 w-3.5',
   md: 'h-4 w-4',

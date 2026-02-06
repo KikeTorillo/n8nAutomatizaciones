@@ -27,11 +27,6 @@ export interface StatCardProps {
   className?: string;
 }
 
-interface IconColorStyles {
-  bg: string;
-  icon: string;
-}
-
 /**
  * StatCard - Card de métrica reutilizable
  *
@@ -51,7 +46,7 @@ export const StatCard = memo(function StatCard({
   onClick,
   className,
 }: StatCardProps) {
-  const colors = (ICON_BG_COLORS as Record<string, IconColorStyles>)[color] || ICON_BG_COLORS.primary;
+  const colors = ICON_BG_COLORS[color] || ICON_BG_COLORS.primary;
 
   // Estado de carga
   if (isLoading) {
@@ -92,7 +87,7 @@ export const StatCard = memo(function StatCard({
           {value}
         </p>
         {subtext && (
-          <p className={cn('text-sm mt-1', (SEMANTIC_COLORS as Record<string, { text: string }>).neutral.text)}>
+          <p className={cn('text-sm mt-1', SEMANTIC_COLORS.neutral.text)}>
             {subtext}
           </p>
         )}
@@ -121,7 +116,7 @@ export const StatCard = memo(function StatCard({
           <Icon className={cn('w-5 h-5 sm:w-6 sm:h-6', colors.icon)} />
         </div>
         <div className="flex-1 min-w-0">
-          <p className={cn('text-xs sm:text-sm truncate', (SEMANTIC_COLORS as Record<string, { text: string }>).neutral.text)}>
+          <p className={cn('text-xs sm:text-sm truncate', SEMANTIC_COLORS.neutral.text)}>
             {label}
           </p>
           <div className="flex items-baseline gap-2">
@@ -133,8 +128,8 @@ export const StatCard = memo(function StatCard({
                 className={cn(
                   'text-xs font-medium',
                   trend.isPositive
-                    ? (SEMANTIC_COLORS as Record<string, { text: string }>).success.text
-                    : (SEMANTIC_COLORS as Record<string, { text: string }>).danger.text
+                    ? SEMANTIC_COLORS.success.text
+                    : SEMANTIC_COLORS.danger.text
                 )}
               >
                 {trend.isPositive ? '+' : ''}{trend.value}%
@@ -142,7 +137,7 @@ export const StatCard = memo(function StatCard({
             )}
           </div>
           {subtext && (
-            <p className={cn('text-xs mt-1', (SEMANTIC_COLORS as Record<string, { textLight: string }>).neutral.textLight)}>
+            <p className={cn('text-xs mt-1', SEMANTIC_COLORS.neutral.textLight)}>
               {subtext}
             </p>
           )}

@@ -90,8 +90,8 @@ const Card = memo(forwardRef<HTMLDivElement, CardProps>(function Card(
       onKeyDown={onClick ? handleKeyDown : undefined}
       className={cn(
         'rounded-lg',
-        status ? (CARD_STATUS_STYLES as Record<CardStatus, string>)[status] : variantStyles[variant],
-        (CARD_PADDING_STYLES as Record<CardPadding, string>)[padding],
+        status ? CARD_STATUS_STYLES[status] : variantStyles[variant],
+        CARD_PADDING_STYLES[padding],
         isClickable && SURFACE_HOVER,
         isClickable && 'cursor-pointer',
         className

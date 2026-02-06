@@ -6,13 +6,21 @@
  * Centraliza colores, tamaños y umbrales para ProgressBar.
  *
  * Ene 2026 - Auditoría UI Components
+ * Feb 2026 - Migración TypeScript + tipos explícitos
  * ====================================================================
  */
+
+// ==================== INTERFACES ====================
+
+export interface ProgressThresholdPreset {
+  thresholds: number[];
+  colors: string[];
+}
 
 /**
  * Colores de fondo para la barra de progreso
  */
-export const PROGRESS_BAR_COLORS = {
+export const PROGRESS_BAR_COLORS: Record<string, string> = {
   primary: 'bg-primary-500 dark:bg-primary-400',
   success: 'bg-green-500 dark:bg-green-400',
   warning: 'bg-amber-500 dark:bg-amber-400',
@@ -23,7 +31,7 @@ export const PROGRESS_BAR_COLORS = {
 /**
  * Colores de texto asociados a cada estado
  */
-export const PROGRESS_TEXT_COLORS = {
+export const PROGRESS_TEXT_COLORS: Record<string, string> = {
   primary: 'text-primary-600 dark:text-primary-400',
   success: 'text-green-600 dark:text-green-400',
   warning: 'text-amber-600 dark:text-amber-400',
@@ -34,7 +42,7 @@ export const PROGRESS_TEXT_COLORS = {
 /**
  * Tamaños de la barra de progreso (altura)
  */
-export const PROGRESS_BAR_SIZES = {
+export const PROGRESS_BAR_SIZES: Record<string, string> = {
   sm: 'h-1.5',
   md: 'h-2.5',
   lg: 'h-4',
@@ -43,7 +51,7 @@ export const PROGRESS_BAR_SIZES = {
 /**
  * Presets de umbrales para diferentes casos de uso
  */
-export const PROGRESS_THRESHOLD_PRESETS = {
+export const PROGRESS_THRESHOLD_PRESETS: Record<string, ProgressThresholdPreset> = {
   // Para completitud (más alto = mejor): perfil, tareas completadas
   completion: {
     thresholds: [50, 80],
@@ -63,12 +71,8 @@ export const PROGRESS_THRESHOLD_PRESETS = {
 
 /**
  * Obtener el color según el porcentaje y los umbrales
- * @param {number} percentage - Porcentaje actual
- * @param {number[]} thresholds - Array de umbrales
- * @param {string[]} colors - Array de colores correspondientes
- * @returns {string} Color a usar
  */
-export function getProgressColorByThreshold(percentage, thresholds, colors) {
+export function getProgressColorByThreshold(percentage: number, thresholds: number[], colors: string[]): string {
   if (!thresholds?.length) return colors[0] || 'primary';
 
   for (let i = 0; i < thresholds.length; i++) {

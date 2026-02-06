@@ -8,3 +8,6 @@ export {
   useFilterContext,
   useOptionalFilterContext,
 } from './FilterContext';
+
+export { useProgressColor } from './useProgressColor';
+export { useIconPickerLogic } from './useIconPickerLogic';

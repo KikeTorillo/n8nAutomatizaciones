@@ -139,7 +139,7 @@ function SidebarContainer() {
               ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
               : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400'
           }`}
-          title="Templates"
+          title="Plantillas"
         >
           <Sparkles className="w-5 h-5" />
         </button>
@@ -176,8 +176,6 @@ function SidebarContainer() {
               currentFonts={currentFonts}
               presetThemes={TEMAS_PREDEFINIDOS}
               onSave={handleSaveTema}
-              title="Tema"
-              subtitle="Personaliza colores y tipografía"
             />
           )}
           {panelActivo === PANEL_TYPES.TEMPLATES && (
@@ -187,8 +185,7 @@ function SidebarContainer() {
               categories={[]}
               onApply={() => {}}
               onViewFullGallery={() => setMostrarTemplates(true)}
-              title="Templates"
-              emptyMessage="Usa la galería completa para explorar templates"
+              emptyMessage="Usa la galería completa para explorar plantillas"
             />
           )}
         </aside>

@@ -78,7 +78,7 @@ const Select = memo(
           aria-describedby={
             selectId ? getAriaDescribedBy(selectId, { hasError, hasHelper }) : undefined
           }
-          className={cn(getSelectStyles(hasError), (SELECT_SIZE_CLASSES as Record<string, string>)[size], className)}
+          className={cn(getSelectStyles(hasError), SELECT_SIZE_CLASSES[size], className)}
           {...props}
         >
           {children ? (

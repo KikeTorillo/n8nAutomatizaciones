@@ -1,6 +1,6 @@
 import { forwardRef, memo, type InputHTMLAttributes } from 'react';
 import { cn } from '@/lib/utils';
-import { RADIO_SIZE_CLASSES } from '@/lib/uiConstants';
+import { RADIO_SIZE_CLASSES, getAriaDescribedBy } from '@/lib/uiConstants';
 import type { UISize } from '@/types/ui';
 
 export interface RadioProps
@@ -40,6 +40,7 @@ const Radio = memo(
         id={id}
         disabled={disabled}
         aria-invalid={hasError || undefined}
+        aria-describedby={id ? getAriaDescribedBy(id, { hasError }) : undefined}
         className={cn(
           'border-gray-300 dark:border-gray-600',
           'text-primary-600 focus:ring-primary-500',

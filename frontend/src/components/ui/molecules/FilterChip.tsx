@@ -38,8 +38,8 @@ const FilterChip = memo(function FilterChip({
   className,
 }: FilterChipProps) {
   const variants = {
-    primary: cn((BADGE_COLORS as Record<string, string>).primary, 'border-primary-200 dark:border-primary-700'),
-    gray: cn((BADGE_COLORS as Record<string, string>).default, 'border-gray-200 dark:border-gray-600'),
+    primary: cn(BADGE_COLORS.primary, 'border-primary-200 dark:border-primary-700'),
+    gray: cn(BADGE_COLORS.default, 'border-gray-200 dark:border-gray-600'),
   };
 
   return (

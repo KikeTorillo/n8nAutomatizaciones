@@ -6,15 +6,39 @@
  * Centraliza variantes visuales para componentes UI.
  *
  * Ene 2026 - Refactorización Frontend
+ * Feb 2026 - Migración TypeScript + tipos explícitos
  * ====================================================================
  */
 
 import { BADGE_COLORS } from './colors';
+import type { ButtonVariant } from '@/types/ui';
+
+// ==================== INTERFACES ====================
+
+export interface AlertVariantStyles {
+  container: string;
+  iconBg: string;
+  icon: string;
+  title: string;
+  text: string;
+}
+
+export interface ToastVariantStyles {
+  icon: string;
+  progress: string;
+}
+
+export interface ToastExtendedVariantStyles {
+  bg: string;
+  border: string;
+  iconColor: string;
+  textColor: string;
+}
 
 /**
  * Variantes para botones
  */
-export const BUTTON_VARIANTS = {
+export const BUTTON_VARIANTS: Record<ButtonVariant, string> = {
   primary: 'bg-primary-700 text-white hover:bg-primary-800 focus:ring-primary-500 dark:bg-primary-600 dark:hover:bg-primary-500',
   secondary: 'bg-gray-200 text-gray-900 hover:bg-gray-300 focus:ring-gray-500 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600',
   outline: 'border-2 border-primary-300 text-primary-700 hover:bg-primary-50 focus:ring-primary-500 dark:border-primary-600 dark:text-primary-300 dark:hover:bg-primary-950',
@@ -35,7 +59,7 @@ export const BADGE_VARIANTS = BADGE_COLORS;
  * Variantes para alerts/notificaciones
  * NOTA: Usar 'danger' como nombre canónico, 'error' es alias para retrocompatibilidad
  */
-export const ALERT_VARIANTS = {
+export const ALERT_VARIANTS: Record<string, AlertVariantStyles> = {
   info: {
     container: 'bg-primary-50 border-primary-200 dark:bg-primary-900/20 dark:border-primary-800',
     iconBg: 'bg-primary-100 dark:bg-primary-900/40',
@@ -79,7 +103,7 @@ ALERT_VARIANTS.error = ALERT_VARIANTS.danger;
  * Variantes para toast notifications
  * NOTA: Usar 'danger' como nombre canónico, 'error' es alias para retrocompatibilidad
  */
-export const TOAST_VARIANTS = {
+export const TOAST_VARIANTS: Record<string, ToastVariantStyles> = {
   success: {
     icon: 'text-green-500 dark:text-green-400',
     progress: 'bg-green-500 dark:bg-green-400',
@@ -124,7 +148,7 @@ export const INPUT_VARIANTS = {
  * Variantes extendidas para toast (incluye iconos y contenedor)
  * NOTA: Usar 'danger' como nombre canónico, 'error' es alias para retrocompatibilidad
  */
-export const TOAST_EXTENDED_VARIANTS = {
+export const TOAST_EXTENDED_VARIANTS: Record<string, ToastExtendedVariantStyles> = {
   success: {
     bg: 'bg-green-50 dark:bg-green-900/30',
     border: 'border-green-200 dark:border-green-800',

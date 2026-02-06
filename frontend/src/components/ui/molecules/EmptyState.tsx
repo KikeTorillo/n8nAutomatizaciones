@@ -40,7 +40,7 @@ export const EmptyState = memo(function EmptyState({
   size = 'md',
   className,
 }: EmptyStateProps) {
-  const sizes = (EMPTY_STATE_SIZES as Record<Size, { container: string; icon: string; title: string; description: string }>)[size] || EMPTY_STATE_SIZES.md;
+  const sizes = EMPTY_STATE_SIZES[size] || EMPTY_STATE_SIZES.md;
 
   return (
     <div

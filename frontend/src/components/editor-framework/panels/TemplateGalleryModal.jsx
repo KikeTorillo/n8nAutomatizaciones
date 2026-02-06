@@ -70,7 +70,7 @@ const DefaultGalleryCard = memo(function DefaultGalleryCard({ template, isSelect
                   className="text-[9px] font-bold mb-0.5"
                   style={{ color: template.tema?.color_texto || '#1f2937' }}
                 >
-                  Template
+                  Plantilla
                 </div>
                 <div
                   className="h-0.5 rounded w-full mb-1"
@@ -278,11 +278,11 @@ function TemplateGalleryModal({
   previewWidth = 320,
   onApply,
   isApplying = false,
-  title = 'Galería de Templates',
+  title = 'Galería de Plantillas',
   subtitle = 'Elige un diseño profesional',
-  searchPlaceholder = 'Buscar templates...',
-  emptyMessage = 'No se encontraron templates',
-  applyButtonText = 'Usar este template',
+  searchPlaceholder = 'Buscar plantilla...',
+  emptyMessage = 'No se encontraron plantillas',
+  applyButtonText = 'Usar esta plantilla',
 }) {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [selectedTemplate, setSelectedTemplate] = useState(null);
@@ -378,7 +378,7 @@ function TemplateGalleryModal({
                       : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                   )}
                 >
-                  Todos
+                  Todas
                 </button>
                 {categories.map((cat) => (
                   <button

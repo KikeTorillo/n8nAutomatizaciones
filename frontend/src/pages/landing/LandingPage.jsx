@@ -4,6 +4,7 @@
  * Refactorizado para usar componentes reutilizables (Ene 2026)
  */
 import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui';
 import {
   ShoppingCart,
   Package,
@@ -128,10 +129,10 @@ function LandingPage() {
                 Empezar Gratis - 14 días
                 <ArrowRight className="w-5 h-5" />
               </Link>
-              <button className="w-full sm:w-auto px-8 py-4 border-2 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-semibold rounded-xl hover:border-primary-300 dark:hover:border-primary-600 hover:text-primary-600 dark:hover:text-primary-400 transition-all flex items-center justify-center gap-2">
+              <Button variant="outline" size="lg" className="w-full sm:w-auto rounded-xl">
                 <Play className="w-5 h-5" />
                 Ver Demo
-              </button>
+              </Button>
             </div>
             <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
               Sin tarjeta de crédito • Cancela cuando quieras

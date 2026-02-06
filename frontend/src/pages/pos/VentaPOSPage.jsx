@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { Button } from '@/components/ui';
 import { Check, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/utils';
@@ -360,10 +361,10 @@ export default function VentaPOSPage() {
 
             {cart.items.length > 0 && (
               <div className="p-3 sm:p-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
-                <button onClick={handleProcederPago} className="w-full py-3 sm:py-4 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg transition-colors flex items-center justify-center gap-2 sm:gap-3 text-base sm:text-lg shadow-lg hover:shadow-xl">
+                <Button onClick={handleProcederPago} variant="success" size="lg" className="w-full font-bold shadow-lg hover:shadow-xl">
                   <Check className="h-5 w-5 sm:h-6 sm:w-6" />
                   {tipoVenta === 'cotizacion' ? 'CREAR COTIZACIÓN' : tipoVenta === 'apartado' ? 'CREAR APARTADO' : 'PROCEDER AL PAGO'}
-                </button>
+                </Button>
               </div>
             )}
           </div>

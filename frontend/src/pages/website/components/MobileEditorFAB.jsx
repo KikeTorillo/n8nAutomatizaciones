@@ -105,7 +105,7 @@ function MobileEditorFAB({ onOpenPanel, onOpenTemplates, disabledBloques = false
                 disabledTemplates && 'opacity-50 cursor-not-allowed'
               )}
             >
-              <span className="text-sm font-medium whitespace-nowrap">Templates</span>
+              <span className="text-sm font-medium whitespace-nowrap">Plantillas</span>
               <Sparkles className="w-5 h-5" />
             </motion.button>
 

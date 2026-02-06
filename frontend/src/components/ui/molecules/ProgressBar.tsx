@@ -1,13 +1,8 @@
 import { memo } from 'react';
 import { cn } from '@/lib/utils';
-import {
-  PROGRESS_BAR_COLORS,
-  PROGRESS_TEXT_COLORS,
-  PROGRESS_BAR_SIZES,
-  PROGRESS_THRESHOLD_PRESETS,
-  getProgressColorByThreshold,
-} from '@/lib/uiConstants';
-import type { ProgressLayout, ProgressPreset, Size } from '@/types/ui';
+import { PROGRESS_BAR_SIZES } from '@/lib/uiConstants';
+import { useProgressColor } from '@/hooks/ui/useProgressColor';
+import type { ProgressLayout, ProgressPreset } from '@/types/ui';
 
 export interface ProgressBarProps {
   /** Valor actual */
@@ -25,7 +20,7 @@ export interface ProgressBarProps {
   /** Layout */
   layout?: ProgressLayout;
   /** Tamaño de la barra */
-  size?: Size;
+  size?: string;
   /** Preset de colores */
   preset?: ProgressPreset;
   /** Color fijo (ignora preset/thresholds) */
@@ -62,29 +57,36 @@ export const ProgressBar = memo(function ProgressBar({
   layout = 'horizontal',
   size = 'md',
   preset,
-  color: colorProp,
-  thresholds: thresholdsProp,
-  colors: colorsProp,
+  color,
+  thresholds,
+  colors,
   className,
 }: ProgressBarProps) {
-  // Calcular porcentaje
   const percentage = percentageProp ?? (max > 0 ? Math.round((value / max) * 100) : 0);
   const clampedPercentage = Math.min(Math.max(percentage, 0), 100);
+  const { barColorClass, textColorClass } = useProgressColor({
+    percentage,
+    color,
+    preset,
+    thresholds,
+    colors,
+  });
 
-  // Determinar color
-  let barColor = colorProp;
-  if (!barColor) {
-    if (preset && (PROGRESS_THRESHOLD_PRESETS as Record<string, { thresholds: number[]; colors: string[] }>)[preset]) {
-      const { thresholds, colors } = (PROGRESS_THRESHOLD_PRESETS as Record<string, { thresholds: number[]; colors: string[] }>)[preset];
-      barColor = getProgressColorByThreshold(percentage, thresholds, colors);
-    } else if (thresholdsProp && colorsProp) {
-      barColor = getProgressColorByThreshold(percentage, thresholdsProp, colorsProp);
-    } else {
-      barColor = 'primary';
-    }
-  }
+  const barTrack = cn(
+    'bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden',
+    PROGRESS_BAR_SIZES[size]
+  );
 
-  // Layout vertical (estilo LimitProgressBar)
+  const barFill = cn('h-full rounded-full transition-all duration-300', barColorClass);
+
+  const progressProps = {
+    role: 'progressbar' as const,
+    'aria-valuenow': value,
+    'aria-valuemin': 0,
+    'aria-valuemax': max,
+    style: { width: `${clampedPercentage}%` },
+  };
+
   if (layout === 'vertical') {
     return (
       <div className={cn('space-y-2', className)}>
@@ -96,27 +98,14 @@ export const ProgressBar = memo(function ProgressBar({
               </span>
             )}
             {showValue && (
-              <span className={cn('text-sm font-semibold', (PROGRESS_TEXT_COLORS as Record<string, string>)[barColor])}>
+              <span className={cn('text-sm font-semibold', textColorClass)}>
                 {value} / {max}
               </span>
             )}
           </div>
         )}
-        <div className={cn(
-          'w-full bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden',
-          (PROGRESS_BAR_SIZES as Record<Size, string>)[size]
-        )}>
-          <div
-            className={cn(
-              'h-full rounded-full transition-all duration-300',
-              (PROGRESS_BAR_COLORS as Record<string, string>)[barColor]
-            )}
-            style={{ width: `${clampedPercentage}%` }}
-            role="progressbar"
-            aria-valuenow={value}
-            aria-valuemin={0}
-            aria-valuemax={max}
-          />
+        <div className={cn('w-full', barTrack)}>
+          <div className={barFill} {...progressProps} />
         </div>
         {showPercentage && (
           <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -127,11 +116,10 @@ export const ProgressBar = memo(function ProgressBar({
     );
   }
 
-  // Layout horizontal (default)
   return (
     <div className={cn('flex items-center gap-3', className)}>
       {label && (
-        <span className={cn('text-sm font-medium flex-shrink-0', (PROGRESS_TEXT_COLORS as Record<string, string>)[barColor])}>
+        <span className={cn('text-sm font-medium flex-shrink-0', textColorClass)}>
           {label}
         </span>
       )}
@@ -140,24 +128,11 @@ export const ProgressBar = memo(function ProgressBar({
           ({value}/{max})
         </span>
       )}
-      <div className={cn(
-        'flex-1 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden max-w-xs',
-        (PROGRESS_BAR_SIZES as Record<Size, string>)[size]
-      )}>
-        <div
-          className={cn(
-            'h-full rounded-full transition-all duration-300',
-            (PROGRESS_BAR_COLORS as Record<string, string>)[barColor]
-          )}
-          style={{ width: `${clampedPercentage}%` }}
-          role="progressbar"
-          aria-valuenow={value}
-          aria-valuemin={0}
-          aria-valuemax={max}
-        />
+      <div className={cn('flex-1 max-w-xs', barTrack)}>
+        <div className={barFill} {...progressProps} />
       </div>
       {showPercentage && (
-        <span className={cn('text-sm font-medium flex-shrink-0', (PROGRESS_TEXT_COLORS as Record<string, string>)[barColor])}>
+        <span className={cn('text-sm font-medium flex-shrink-0', textColorClass)}>
           {percentage}%
         </span>
       )}

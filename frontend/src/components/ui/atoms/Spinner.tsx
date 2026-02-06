@@ -28,7 +28,7 @@ const Spinner = memo(function Spinner({
 }: SpinnerProps) {
   return (
     <svg
-      className={cn((ICON_SIZES as Record<string, string>)[size] || ICON_SIZES.md, 'animate-spin', className)}
+      className={cn(ICON_SIZES[size] || ICON_SIZES.md, 'animate-spin', className)}
       xmlns="http://www.w3.org/2000/svg"
       fill="none"
       viewBox="0 0 24 24"

@@ -35,8 +35,8 @@ const Badge = memo(function Badge({
       aria-label={ariaLabel}
       className={cn(
         'inline-flex items-center gap-1 font-medium rounded-full',
-        (BADGE_VARIANTS as Record<string, string>)[normalizedVariant] || BADGE_VARIANTS.default,
-        (BADGE_SIZES as Record<string, string>)[size] || BADGE_SIZES.md,
+        BADGE_VARIANTS[normalizedVariant] || BADGE_VARIANTS.default,
+        BADGE_SIZES[size] || BADGE_SIZES.md,
         className
       )}
     >

@@ -31,12 +31,9 @@ export { Text } from './atoms/Text';
 
 // ========== MOLECULES ==========
 export { Alert } from './molecules/Alert';
-export { SearchInput } from './organisms/SearchInput';
-export { Pagination } from './organisms/Pagination';
 export { StatCard } from './molecules/StatCard';
 export { SkeletonStatCard } from './molecules/SkeletonStatCard';
 export { EmptyState } from './molecules/EmptyState';
-export { ViewTabs } from './organisms/ViewTabs';
 export { Breadcrumb } from './molecules/Breadcrumb';
 export { RecordNavigation } from './molecules/RecordNavigation';
 export { SkeletonTable, SkeletonCard, SkeletonList } from './molecules/SkeletonTable';
@@ -55,6 +52,9 @@ export { ToggleSwitch } from './molecules/ToggleSwitch';
 export { Card } from './atoms/Card';
 
 // ========== ORGANISMS ==========
+export { SearchInput } from './organisms/SearchInput';
+export { Pagination } from './organisms/Pagination';
+export { ViewTabs } from './organisms/ViewTabs';
 export { Modal } from './organisms/Modal';
 export { Drawer } from './organisms/Drawer';
 export { FormDrawer } from './organisms/FormDrawer';

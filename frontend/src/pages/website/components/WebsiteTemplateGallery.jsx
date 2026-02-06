@@ -43,13 +43,13 @@ function WebsiteTemplateGallery({ isOpen, onClose, onTemplateApplied }) {
   const aplicarTemplate = useMutation({
     mutationFn: (templateId) => websiteApi.aplicarTemplate(templateId, {}),
     onSuccess: () => {
-      toast.success('Template aplicado exitosamente');
+      toast.success('Plantilla aplicada exitosamente');
       queryClient.invalidateQueries(['website']);
       onTemplateApplied?.();
       onClose?.();
     },
     onError: (error) => {
-      toast.error(error.response?.data?.message || 'Error al aplicar template');
+      toast.error(error.response?.data?.message || 'Error al aplicar plantilla');
     },
   });
 
@@ -70,11 +70,7 @@ function WebsiteTemplateGallery({ isOpen, onClose, onTemplateApplied }) {
       previewWidth={320}
       onApply={(template) => aplicarTemplate.mutate(template.id)}
       isApplying={aplicarTemplate.isPending}
-      title="Galería de Templates"
       subtitle="Elige un diseño profesional para tu sitio web"
-      searchPlaceholder="Buscar templates..."
-      emptyMessage="No se encontraron templates"
-      applyButtonText="Usar este template"
     />
   );
 }

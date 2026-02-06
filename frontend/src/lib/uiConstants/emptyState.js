@@ -11,6 +11,7 @@
 
 /**
  * Tamaños para EmptyState
+ * @type {Record<string, {container: string, icon: string, title: string, description: string}>}
  */
 export const EMPTY_STATE_SIZES = {
   sm: {

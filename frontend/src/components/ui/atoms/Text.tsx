@@ -1,4 +1,4 @@
-import { memo, type ElementType, type ReactNode, type HTMLAttributes } from 'react';
+import { memo, forwardRef, type ElementType, type ReactNode, type HTMLAttributes } from 'react';
 import { cn } from '@/lib/utils';
 import { TEXT_SIZES } from '@/lib/uiConstants';
 import type { UISize } from '@/types/ui';
@@ -43,32 +43,38 @@ export interface TextProps extends HTMLAttributes<HTMLElement> {
 /**
  * Text - Componente tipográfico polimórfico
  */
-const Text = memo(function Text({
-  as: Component = 'p' as TextElement,
-  size,
-  weight,
-  className,
-  children,
-  ...props
-}: TextProps) {
-  const resolvedSize = size || DEFAULT_SIZES[Component] || 'md';
-  const resolvedWeight = weight || DEFAULT_WEIGHTS[Component] || 'normal';
-  const Tag = Component as ElementType;
+const Text = memo(
+  forwardRef<HTMLElement, TextProps>(function Text(
+    {
+      as: Component = 'p' as TextElement,
+      size,
+      weight,
+      className,
+      children,
+      ...props
+    },
+    ref
+  ) {
+    const resolvedSize = size || DEFAULT_SIZES[Component] || 'md';
+    const resolvedWeight = weight || DEFAULT_WEIGHTS[Component] || 'normal';
+    const Tag = Component as ElementType;
 
-  return (
-    <Tag
-      className={cn(
-        'text-gray-900 dark:text-gray-100',
-        (TEXT_SIZES as Record<string, string>)[resolvedSize],
-        WEIGHT_CLASSES[resolvedWeight],
-        className
-      )}
-      {...props}
-    >
-      {children}
-    </Tag>
-  );
-});
+    return (
+      <Tag
+        ref={ref}
+        className={cn(
+          'text-gray-900 dark:text-gray-100',
+          TEXT_SIZES[resolvedSize],
+          WEIGHT_CLASSES[resolvedWeight],
+          className
+        )}
+        {...props}
+      >
+        {children}
+      </Tag>
+    );
+  })
+);
 
 Text.displayName = 'Text';
 

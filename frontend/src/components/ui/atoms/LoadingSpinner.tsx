@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { memo, forwardRef } from 'react';
 import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -27,35 +27,41 @@ export interface LoadingSpinnerProps {
  * @example
  * <LoadingSpinner size="md" text="Cargando datos..." />
  */
-const LoadingSpinner = memo(function LoadingSpinner({
-  size = 'md',
-  className,
-  wrapperClassName,
-  text,
-  'aria-label': ariaLabel,
-}: LoadingSpinnerProps) {
-  const label = ariaLabel || getLoadingAriaLabel(text);
+const LoadingSpinner = memo(
+  forwardRef<HTMLDivElement, LoadingSpinnerProps>(function LoadingSpinner(
+    {
+      size = 'md',
+      className,
+      wrapperClassName,
+      text,
+      'aria-label': ariaLabel,
+    },
+    ref
+  ) {
+    const label = ariaLabel || getLoadingAriaLabel(text);
 
-  return (
-    <div
-      className={cn("flex flex-col items-center justify-center gap-3", wrapperClassName)}
-      role="status"
-      aria-live="polite"
-      aria-label={label}
-    >
-      <Loader2
-        className={cn(
-          'animate-spin',
-          SEMANTIC_COLORS.primary.text,
-          (SPINNER_SIZES as Record<string, string>)[size] || SPINNER_SIZES.md,
-          className
-        )}
-        aria-hidden="true"
-      />
-      {text && <p className={cn('text-sm', SEMANTIC_COLORS.neutral.text)}>{text}</p>}
-    </div>
-  );
-});
+    return (
+      <div
+        ref={ref}
+        className={cn("flex flex-col items-center justify-center gap-3", wrapperClassName)}
+        role="status"
+        aria-live="polite"
+        aria-label={label}
+      >
+        <Loader2
+          className={cn(
+            'animate-spin',
+            SEMANTIC_COLORS.primary.text,
+            SPINNER_SIZES[size] || SPINNER_SIZES.md,
+            className
+          )}
+          aria-hidden="true"
+        />
+        {text && <p className={cn('text-sm', SEMANTIC_COLORS.neutral.text)}>{text}</p>}
+      </div>
+    );
+  })
+);
 
 LoadingSpinner.displayName = 'LoadingSpinner';
 

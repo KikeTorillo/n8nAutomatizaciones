@@ -7,14 +7,41 @@
  * Usar factor 40 para dark mode: dark:bg-{color}-900/40
  *
  * Ene 2026 - Refactorización Frontend
+ * Feb 2026 - Migración TypeScript + tipos explícitos
  * ====================================================================
  */
+
+// ==================== INTERFACES ====================
+
+export interface SemanticColorSet {
+  bg: string;
+  bgLight: string;
+  bgSolid: string;
+  text: string;
+  textDark: string;
+  textLight: string;
+  border: string;
+  borderSolid: string;
+  icon: string;
+  ring: string;
+  hover: string;
+  selectedBg?: string;
+  selectedBgDark?: string;
+  activeBg?: string;
+  activeText?: string;
+  hoverSubtle?: string;
+}
+
+export interface IconBgColorSet {
+  bg: string;
+  icon: string;
+}
 
 /**
  * Colores semánticos para backgrounds, textos y bordes
  * Cada color incluye variantes para diferentes niveles de intensidad
  */
-export const SEMANTIC_COLORS = {
+export const SEMANTIC_COLORS: Record<string, SemanticColorSet> = {
   primary: {
     bg: 'bg-primary-100 dark:bg-primary-900/40',
     bgLight: 'bg-primary-50 dark:bg-primary-900/20',
@@ -104,7 +131,7 @@ export const SEMANTIC_COLORS = {
 /**
  * Aliases para compatibilidad con código legacy
  */
-export const COLOR_ALIASES = {
+export const COLOR_ALIASES: Record<string, string> = {
   blue: 'primary',
   green: 'success',
   yellow: 'warning',
@@ -115,10 +142,8 @@ export const COLOR_ALIASES = {
 
 /**
  * Helper para obtener colores con fallback
- * @param {string} color - Nombre del color
- * @returns {Object} Objeto con clases de color
  */
-export function getSemanticColor(color) {
+export function getSemanticColor(color: string): SemanticColorSet {
   const normalizedColor = COLOR_ALIASES[color] || color;
   return SEMANTIC_COLORS[normalizedColor] || SEMANTIC_COLORS.neutral;
 }
@@ -128,7 +153,7 @@ export function getSemanticColor(color) {
  * Usados en indicadores de estado en tablas y cards
  * NOTA: Usar 'danger' como nombre canónico, 'error' es alias para retrocompatibilidad
  */
-export const BADGE_COLORS = {
+export const BADGE_COLORS: Record<string, string> = {
   default: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
   primary: 'bg-primary-100 text-primary-800 dark:bg-primary-900/40 dark:text-primary-300',
   success: 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300',
@@ -143,7 +168,7 @@ BADGE_COLORS.error = BADGE_COLORS.danger;
  * Colores para iconos con fondo
  * Usados en StatCards, EmptyState, etc.
  */
-export const ICON_BG_COLORS = {
+export const ICON_BG_COLORS: Record<string, IconBgColorSet> = {
   primary: {
     bg: 'bg-primary-100 dark:bg-primary-900/40',
     icon: 'text-primary-600 dark:text-primary-400',
@@ -203,7 +228,7 @@ export const ICON_BG_COLORS = {
  * Colores por estado de registro/entidad
  * Mapeo de estados comunes a colores de badge
  */
-export const STATUS_COLORS = {
+export const STATUS_COLORS: Record<string, string> = {
   activo: BADGE_COLORS.success,
   inactivo: BADGE_COLORS.default,
   pendiente: BADGE_COLORS.warning,
@@ -225,7 +250,7 @@ export const STATUS_COLORS = {
  * @param {string} status - Estado del registro
  * @returns {string} Clases de color para badge
  */
-export const getStatusColor = (status) => STATUS_COLORS[status] || BADGE_COLORS.default;
+export const getStatusColor = (status: string): string => STATUS_COLORS[status] || BADGE_COLORS.default;
 
 /**
  * Colores temáticos para cards/secciones
@@ -279,7 +304,7 @@ export const CARD_THEME_COLORS = {
  * @param {string} color - Nombre del color
  * @returns {Object} Objeto con clases bg, text, border
  */
-export const getCardThemeColor = (color) => CARD_THEME_COLORS[color] || CARD_THEME_COLORS.blue;
+export const getCardThemeColor = (color: string) => CARD_THEME_COLORS[color] || CARD_THEME_COLORS.blue;
 
 /**
  * Colores para ToggleSwitch

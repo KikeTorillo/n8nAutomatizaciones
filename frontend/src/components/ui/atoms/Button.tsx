@@ -55,8 +55,8 @@ const Button = memo(
         aria-disabled={disabled || isLoading || undefined}
         className={cn(
           baseStyles,
-          (BUTTON_VARIANTS as Record<string, string>)[variant] || BUTTON_VARIANTS.primary,
-          (BUTTON_SIZES as Record<string, string>)[size] || BUTTON_SIZES.md,
+          BUTTON_VARIANTS[variant] || BUTTON_VARIANTS.primary,
+          BUTTON_SIZES[size] || BUTTON_SIZES.md,
           className
         )}
         {...props}

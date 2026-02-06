@@ -62,7 +62,7 @@ const Alert = memo(function Alert({
   onDismiss,
   className,
 }: AlertProps) {
-  const styles = (ALERT_VARIANTS as Record<string, AlertVariantStyles>)[variant] || ALERT_VARIANTS.info;
+  const styles = ALERT_VARIANTS[variant] || ALERT_VARIANTS.info;
   const DefaultIcon = defaultIcons[variant] || defaultIcons.warning;
 
   return (

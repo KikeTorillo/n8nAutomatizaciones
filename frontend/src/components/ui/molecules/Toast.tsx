@@ -52,7 +52,7 @@ const Toast = memo(function Toast({
     }
   }, [id, duration, onClose]);
 
-  const variant = (TOAST_EXTENDED_VARIANTS as Record<string, { bg: string; border: string; textColor: string; iconColor: string }>)[type] || TOAST_EXTENDED_VARIANTS.info;
+  const variant = TOAST_EXTENDED_VARIANTS[type] || TOAST_EXTENDED_VARIANTS.info;
   const Icon = icons[type] || icons.info;
 
   return (
