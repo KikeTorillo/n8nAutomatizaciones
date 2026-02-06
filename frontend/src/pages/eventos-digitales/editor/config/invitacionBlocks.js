@@ -21,6 +21,7 @@ import {
   Type,
   Minus,
   MessageSquare,
+  Sparkles,
 } from 'lucide-react';
 import { THEME_FALLBACK_COLORS } from '@/lib/uiConstants';
 
@@ -37,6 +38,14 @@ export const CATEGORIAS_BLOQUES = {
 
 export const BLOQUES_INVITACION = [
   // ESTRUCTURA
+  {
+    tipo: 'apertura',
+    categoria: 'estructura',
+    label: 'Apertura',
+    icon: Sparkles,
+    descripcion: 'Sección de bienvenida con animación o imagen',
+    unico: true,
+  },
   {
     tipo: 'hero_invitacion',
     categoria: 'estructura',
@@ -143,6 +152,25 @@ export const BLOCK_DESCRIPTIONS = Object.fromEntries(
 // ========== CONFIGURACIÓN DE CAMPOS POR TIPO ==========
 
 export const BLOCK_CONFIGS = {
+  apertura: {
+    contenido: [
+      { key: 'modo', label: 'Modo', type: 'select', options: [
+        { value: 'animacion', label: 'Animación' },
+        { value: 'imagen', label: 'Imagen' },
+        { value: 'cortina', label: 'Cortina' },
+      ]},
+      { key: 'animacion', label: 'Animación', type: 'select' },
+      { key: 'imagen_url', label: 'Imagen de fondo', type: 'image' },
+      { key: 'imagen_marco', label: 'Imagen del marco', type: 'image' },
+      { key: 'direccion_apertura', label: 'Dirección', type: 'select', options: [
+        { value: 'vertical', label: 'Izquierda / Derecha' },
+        { value: 'horizontal', label: 'Arriba / Abajo' },
+      ]},
+      { key: 'texto', label: 'Texto', type: 'text', placeholder: 'Desliza para abrir' },
+    ],
+    estilo: [],
+  },
+
   hero_invitacion: {
     contenido: [
       { key: 'titulo', label: 'Título principal', type: 'text', aiEnabled: true, placeholder: 'Nos Casamos' },
@@ -318,6 +346,15 @@ export const BLOCK_CONFIGS = {
 // ========== DEFAULTS POR TIPO ==========
 
 export const BLOCK_DEFAULTS = {
+  apertura: {
+    modo: 'animacion',
+    animacion: 'sobre',
+    imagen_url: '',
+    imagen_marco: '',
+    direccion_apertura: 'vertical',
+    texto: 'Desliza para abrir',
+  },
+
   hero_invitacion: {
     titulo: '',
     subtitulo: '',

@@ -132,7 +132,7 @@ function SolicitudVacacionesModal({
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Alerta de saldo */}
         {saldoInsuficiente && diasCalculados > 0 && (
-          <Alert variant="error" icon={AlertCircle} title="Saldo insuficiente">
+          <Alert variant="danger" icon={AlertCircle} title="Saldo insuficiente">
             Estás solicitando {diasCalculados} días pero solo tienes {diasDisponibles} disponibles.
           </Alert>
         )}

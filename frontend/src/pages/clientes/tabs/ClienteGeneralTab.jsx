@@ -375,7 +375,7 @@ export default function ClienteGeneralTab({ cliente, estadisticas }) {
               <div className="space-y-2">
                 {estadisticas.servicios_frecuentes.map((servicio, index) => (
                   <div
-                    key={index}
+                    key={servicio.id || servicio.servicio || `srv-${index}`}
                     className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-700 last:border-0"
                   >
                     <span className="text-sm text-gray-700 dark:text-gray-300">

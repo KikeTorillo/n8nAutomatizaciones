@@ -16,8 +16,10 @@ import { GripVertical, Copy, Trash2, Eye, EyeOff } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useInvitacionEditorStore, selectBloqueRecienAgregado } from '@/store';
+import { BLOQUES_INVITACION } from '../../config';
 
 // Canvas block components
+import AperturaCanvasBlock from './AperturaCanvasBlock';
 import HeroInvitacionCanvasBlock from './HeroInvitacionCanvasBlock';
 import CountdownCanvasBlock from './CountdownCanvasBlock';
 import TimelineCanvasBlock from './TimelineCanvasBlock';
@@ -33,6 +35,7 @@ import FelicitacionesCanvasBlock from './FelicitacionesCanvasBlock';
 // ========== BLOCK COMPONENT MAP ==========
 
 const BLOCK_COMPONENTS = {
+  apertura: AperturaCanvasBlock,
   hero_invitacion: HeroInvitacionCanvasBlock,
   countdown: CountdownCanvasBlock,
   timeline: TimelineCanvasBlock,
@@ -92,6 +95,7 @@ function CanvasBlock({
   );
   const bloqueRecienAgregado = useInvitacionEditorStore(selectRecienAgregado);
   const isNewlyAdded = bloqueRecienAgregado === bloque.id;
+  const esUnico = BLOQUES_INVITACION.find(b => b.tipo === bloque.tipo)?.unico;
 
   // Sortable setup
   const {
@@ -221,14 +225,16 @@ function CanvasBlock({
               {bloque.visible ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
             </button>
 
-            {/* Duplicate */}
-            <button
-              onClick={() => onDuplicate?.(bloque.id)}
-              className="p-1.5 text-gray-500 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400 rounded transition-colors"
-              title="Duplicar bloque"
-            >
-              <Copy className="w-4 h-4" />
-            </button>
+            {/* Duplicate (oculto para bloques únicos) */}
+            {!esUnico && (
+              <button
+                onClick={() => onDuplicate?.(bloque.id)}
+                className="p-1.5 text-gray-500 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400 rounded transition-colors"
+                title="Duplicar bloque"
+              >
+                <Copy className="w-4 h-4" />
+              </button>
+            )}
 
             {/* Delete */}
             <button

@@ -437,7 +437,7 @@ function ConectorFormDrawer({ isOpen, onClose, conector = null, mode = 'create' 
                 </Badge>
               )}
               {verificacionExitosa === false && (
-                <Badge variant="error">
+                <Badge variant="danger">
                   <AlertTriangle className="w-3 h-3 mr-1" />
                   Error
                 </Badge>

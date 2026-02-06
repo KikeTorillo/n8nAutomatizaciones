@@ -349,8 +349,8 @@ function PlanesPublicPage() {
                 {/* Features */}
                 {features.length > 0 && (
                   <ul className="space-y-3 mb-6">
-                    {features.slice(0, 6).map((feature, index) => (
-                      <li key={index} className="flex items-start gap-3">
+                    {features.slice(0, 6).map((feature) => (
+                      <li key={feature} className="flex items-start gap-3">
                         <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
                         <span className="text-sm text-gray-600 dark:text-gray-300">
                           {feature}
@@ -400,13 +400,13 @@ function PlanesPublicPage() {
 
           {/* Acordeón de FAQ */}
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-            {FAQ_ITEMS.map((item, index) => (
+            {FAQ_ITEMS.map((item) => (
               <FAQItem
-                key={index}
+                key={item.pregunta}
                 pregunta={item.pregunta}
                 respuesta={item.respuesta}
-                isOpen={faqAbierto === index}
-                onToggle={() => setFaqAbierto(faqAbierto === index ? null : index)}
+                isOpen={faqAbierto === item.pregunta}
+                onToggle={() => setFaqAbierto(faqAbierto === item.pregunta ? null : item.pregunta)}
               />
             ))}
           </div>

@@ -12,6 +12,7 @@
 import { lazy } from 'react';
 
 // Lazy load para mejor rendimiento
+const AperturaPublico = lazy(() => import('./AperturaPublico'));
 const HeroPublico = lazy(() => import('./HeroPublico'));
 const CountdownPublico = lazy(() => import('./CountdownPublico'));
 const TimelinePublico = lazy(() => import('./TimelinePublico'));
@@ -31,6 +32,7 @@ export { default as BloqueRenderer } from './BloqueRenderer';
  * Mapa de componentes de bloques públicos
  */
 export const BLOQUES_PUBLICOS = {
+  apertura: AperturaPublico,
   hero_invitacion: HeroPublico,
   countdown: CountdownPublico,
   timeline: TimelinePublico,
@@ -52,6 +54,7 @@ export function getBloquePublico(tipo) {
 }
 
 export {
+  AperturaPublico,
   HeroPublico,
   CountdownPublico,
   TimelinePublico,

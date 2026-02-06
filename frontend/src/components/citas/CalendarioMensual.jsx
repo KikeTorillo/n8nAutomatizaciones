@@ -244,7 +244,7 @@ function CalendarioMensual({ onVerCita, onCrearCita }) {
 
             return (
               <CalendarioDia
-                key={index}
+                key={fechaISO}
                 dia={dia}
                 citas={citasDelDia}
                 esDelMesActual={esDelMesActual}

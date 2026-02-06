@@ -157,7 +157,7 @@ export default function SuperAdminDashboard() {
             header: 'Estado',
             render: (row) => {
                 if (row.suspendido) {
-                    return <Badge variant="error" size="sm">Suspendida</Badge>;
+                    return <Badge variant="danger" size="sm">Suspendida</Badge>;
                 }
                 return row.activo
                     ? <Badge variant="success" size="sm">Activa</Badge>

@@ -2,16 +2,23 @@
  * ====================================================================
  * OPENING OVERLAY - INVITACIONES DIGITALES
  * ====================================================================
- * Overlay fullscreen que cubre la invitación al cargar.
- * Muestra animación Lottie + texto "Desliza para abrir".
- * El usuario desliza hacia arriba (o toca) para revelar la invitación.
+ * Sección fullscreen (100vh) que se muestra al inicio de la invitación.
+ * Soporta tres modos:
+ *   - Animación: Fondo sólido del tema + animación Lottie centrada
+ *   - Imagen: Imagen de fondo fullscreen + Lottie opcional superpuesto
+ *   - Cortina: Imagen dividida en dos mitades que se abren con animación
  *
- * @version 1.0.0
+ * Modos animación/imagen: sección normal, scroll revela la invitación.
+ * Modo cortina: overlay fijo sobre todo, se abre con tap/scroll.
+ *
+ * @version 4.0.0
  * @since 2026-02-05
  */
 
-import { useState, useRef, useCallback, useEffect, Suspense, lazy } from 'react';
-import { ChevronUp } from 'lucide-react';
+import { useState, useEffect, useCallback, Suspense, lazy } from 'react';
+import { createPortal } from 'react-dom';
+import { ChevronDown } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const Lottie = lazy(() => import('lottie-react'));
 
@@ -29,7 +36,10 @@ function useLottieData(tipo) {
   const [data, setData] = useState(null);
 
   useEffect(() => {
-    if (!tipo || !LOTTIE_LOADERS[tipo]) return;
+    if (!tipo || tipo === 'none' || !LOTTIE_LOADERS[tipo]) {
+      setData(null);
+      return;
+    }
 
     let cancelled = false;
     LOTTIE_LOADERS[tipo]().then((mod) => {
@@ -43,137 +53,186 @@ function useLottieData(tipo) {
 }
 
 /**
- * OpeningOverlay - Overlay de apertura con animación Lottie
+ * CurtinaOverlay - Overlay fijo con imagen split que se abre con tap/scroll
+ *
+ * Técnica espejo: La mitad 1 muestra la imagen original y la mitad 2 la muestra
+ * volteada (scaleX/-Y). Al juntarse crean simetría perfecta (parece una sola
+ * imagen). Al abrirse, ningún elemento se corta porque cada lado tiene su
+ * propia copia completa espejada.
+ *
+ * - Scroll: parallax reversible (scroll abajo abre, arriba cierra)
+ * - Tap: smooth scroll a la portada (la cortina se abre vía scroll, reversible)
+ */
+function CurtinaOverlay({ imagenMarco, direccionApertura = 'vertical', texto, tema }) {
+  const [progress, setProgress] = useState(0); // 0=cerrado, 1=abierto
+
+  // Tap → smooth scroll a la portada (la cortina se abre via el scroll handler)
+  const handleTap = useCallback(() => {
+    window.scrollTo({ top: window.innerHeight, behavior: 'smooth' });
+  }, []);
+
+  // Scroll-linked: mapea scrollY 0→innerHeight a progress 0→1 (siempre reversible)
+  useEffect(() => {
+    function onScroll() {
+      const p = Math.min(1, window.scrollY / window.innerHeight);
+      setProgress(p);
+    }
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  const esVertical = direccionApertura === 'vertical';
+  const colorTexto = '#ffffff';
+
+  const overlayPointerEvents = progress > 0.5 ? 'none' : 'auto';
+
+  // clip-path para cada mitad + transform para deslizar
+  const half1Style = esVertical
+    ? { clipPath: 'inset(0 50% 0 0)', transform: `translateX(${-50 * progress}%)` }
+    : { clipPath: 'inset(0 0 50% 0)', transform: `translateY(${-50 * progress}%)` };
+
+  const half2Style = esVertical
+    ? { clipPath: 'inset(0 0 0 50%)', transform: `translateX(${50 * progress}%)` }
+    : { clipPath: 'inset(50% 0 0 0)', transform: `translateY(${50 * progress}%)` };
+
+  return createPortal(
+    <div
+      className="fixed inset-0 z-50"
+      style={{ pointerEvents: overlayPointerEvents, cursor: overlayPointerEvents === 'auto' ? 'pointer' : undefined }}
+      onClick={handleTap}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleTap(); }}
+      aria-label="Toca para abrir la invitación"
+    >
+      {/* Mitad 1 — izquierda (vertical) o arriba (horizontal) */}
+      <div
+        className="absolute inset-0"
+        style={half1Style}
+      >
+        <img
+          src={imagenMarco}
+          alt=""
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+      </div>
+
+      {/* Mitad 2 — derecha (vertical) o abajo (horizontal), imagen espejada */}
+      <div
+        className="absolute inset-0"
+        style={half2Style}
+      >
+        <img
+          src={imagenMarco}
+          alt=""
+          className="absolute inset-0 w-full h-full object-cover"
+          style={{ transform: esVertical ? 'scaleX(-1)' : 'scaleY(-1)' }}
+        />
+      </div>
+
+      {/* Texto + chevron */}
+      <div
+        className="absolute bottom-16 left-0 right-0 flex flex-col items-center gap-2 z-10"
+        style={{
+          opacity: 1 - progress,
+          pointerEvents: 'none',
+        }}
+      >
+        <p
+          className="text-base font-medium tracking-wide uppercase"
+          style={{
+            color: colorTexto,
+            fontFamily: tema?.fuente_cuerpo || 'Inter',
+            textShadow: '0 1px 4px rgba(0,0,0,0.5)',
+          }}
+        >
+          {texto || 'Toca para abrir'}
+        </p>
+        <ChevronDown
+          className="w-6 h-6 animate-bounce"
+          style={{
+            color: colorTexto,
+            filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.5))',
+          }}
+        />
+      </div>
+    </div>,
+    document.body
+  );
+}
+
+/**
+ * OpeningOverlay - Sección de apertura con animación, imagen o cortina
  *
  * @param {Object} props
+ * @param {'animacion'|'imagen'|'cortina'} props.modo - Modo visual del overlay
  * @param {string} props.tipo - Tipo de animación ('sobre' | 'globos' | 'flores')
- * @param {string} props.texto - Texto a mostrar (default: 'Desliza para abrir')
- * @param {Object} props.tema - Tema de la invitación (color_primario, color_fondo, etc.)
- * @param {Function} props.onOpen - Callback cuando se abre el overlay
+ * @param {string} props.imagenUrl - URL de imagen de fondo (modo imagen)
+ * @param {string} props.imagenMarco - URL de imagen del marco (modo cortina)
+ * @param {'vertical'|'horizontal'} props.direccionApertura - Dirección de la cortina
+ * @param {string} props.texto - Texto a mostrar
+ * @param {Object} props.tema - Tema de la invitación
  */
-// Umbral mínimo de drag para activar apertura (px)
-const SWIPE_THRESHOLD = 80;
-
-function OpeningOverlay({ tipo, texto = 'Desliza para abrir', tema = {}, onOpen }) {
-  const [opened, setOpened] = useState(false);
-  const [sliding, setSliding] = useState(false);
-  // Offset en tiempo real mientras el usuario arrastra (px negativos = hacia arriba)
-  const [dragOffset, setDragOffset] = useState(0);
-  const dragStartRef = useRef(null);
-  const isDraggingRef = useRef(false);
-
+function OpeningOverlay({ modo = 'animacion', tipo, imagenUrl, imagenMarco, direccionApertura = 'vertical', texto = 'Desliza para abrir', tema = {} }) {
   const animationData = useLottieData(tipo);
+  const esImagen = modo === 'imagen' && imagenUrl;
+  const esCortina = modo === 'cortina' && imagenMarco;
 
   const colorFondo = tema.color_primario || '#ec4899';
   const colorTexto = '#ffffff';
 
-  const triggerOpen = useCallback(() => {
-    if (sliding) return;
-    setDragOffset(0);
-    setSliding(true);
-  }, [sliding]);
-
-  const handleTransitionEnd = useCallback(() => {
-    if (sliding) {
-      setOpened(true);
-      onOpen?.();
-    }
-  }, [sliding, onOpen]);
-
-  // ========== TOUCH (móvil) ==========
-
-  const handleTouchStart = useCallback((e) => {
-    dragStartRef.current = e.touches[0].clientY;
-  }, []);
-
-  const handleTouchMove = useCallback((e) => {
-    if (dragStartRef.current === null) return;
-    const deltaY = dragStartRef.current - e.touches[0].clientY;
-    // Solo permitir arrastrar hacia arriba
-    if (deltaY > 0) setDragOffset(-deltaY);
-  }, []);
-
-  const handleTouchEnd = useCallback((e) => {
-    if (dragStartRef.current === null) return;
-    const deltaY = dragStartRef.current - e.changedTouches[0].clientY;
-    if (deltaY > SWIPE_THRESHOLD) {
-      triggerOpen();
-    } else {
-      setDragOffset(0);
-    }
-    dragStartRef.current = null;
-  }, [triggerOpen]);
-
-  // ========== MOUSE (desktop) ==========
-
-  const handleMouseDown = useCallback((e) => {
-    e.preventDefault(); // Prevenir drag nativo del browser
-    dragStartRef.current = e.clientY;
-    isDraggingRef.current = false;
-  }, []);
-
-  const handleMouseMove = useCallback((e) => {
-    if (dragStartRef.current === null) return;
-    e.preventDefault();
-    const deltaY = dragStartRef.current - e.clientY;
-    if (deltaY > 5) isDraggingRef.current = true;
-    if (deltaY > 0) setDragOffset(-deltaY);
-  }, []);
-
-  const handleMouseUp = useCallback((e) => {
-    if (dragStartRef.current === null) return;
-    const deltaY = dragStartRef.current - e.clientY;
-    if (deltaY > SWIPE_THRESHOLD) {
-      triggerOpen();
-    } else {
-      setDragOffset(0);
-    }
-    dragStartRef.current = null;
-  }, [triggerOpen]);
-
-  // Click solo si NO hubo drag (fallback para quienes prefieran un click)
-  const handleClick = useCallback(() => {
-    if (isDraggingRef.current) return;
-    triggerOpen();
-  }, [triggerOpen]);
-
-  // Prevenir scroll del body mientras el overlay está visible
-  useEffect(() => {
-    if (!opened) {
-      document.body.style.overflow = 'hidden';
-      return () => {
-        document.body.style.overflow = '';
-      };
-    }
-  }, [opened]);
-
-  if (opened) return null;
-
-  // Calcular transform: drag en tiempo real o slide-out final
-  const translateY = sliding ? '-100vh' : `${dragOffset}px`;
+  // Modo cortina: spacer 100vh + overlay fijo (portal)
+  // El spacer reserva espacio para que al terminar de abrir, la Portada quede en el viewport
+  if (esCortina) {
+    return (
+      <>
+        <div style={{ height: '100vh', minHeight: '100svh', backgroundColor: tema.color_secundario || '#ffffff' }} />
+        <CurtinaOverlay
+          imagenMarco={imagenMarco}
+          direccionApertura={direccionApertura}
+          texto={texto}
+          tema={tema}
+        />
+      </>
+    );
+  }
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex flex-col items-center justify-center select-none"
+    <section
+      className="relative w-full flex flex-col items-center justify-center select-none overflow-hidden"
       style={{
-        backgroundColor: colorFondo,
-        transform: `translateY(${translateY})`,
-        transition: sliding ? 'transform 600ms ease-out' : dragOffset !== 0 ? 'none' : 'transform 300ms ease-out',
-        cursor: 'grab',
+        backgroundColor: esImagen ? '#000' : colorFondo,
+        height: '100vh',
+        minHeight: '100svh',
       }}
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-      onMouseDown={handleMouseDown}
-      onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseUp}
-      onClick={handleClick}
-      onTransitionEnd={handleTransitionEnd}
     >
-      {/* Animación Lottie centrada */}
-      <div className="w-64 h-64 sm:w-80 sm:h-80 pointer-events-none">
-        {animationData && (
+      {/* Modo imagen: fondo fullscreen + gradient overlay */}
+      {esImagen && (
+        <>
+          <img
+            src={imagenUrl}
+            alt=""
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+          <div
+            className="absolute inset-0"
+            style={{
+              background: 'linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.05) 40%, rgba(0,0,0,0.3) 100%)',
+            }}
+          />
+        </>
+      )}
+
+      {/* Animación Lottie */}
+      {animationData && (
+        <div
+          className={cn(
+            'pointer-events-none relative z-10',
+            esImagen
+              ? 'w-40 h-40 sm:w-48 sm:h-48'
+              : 'w-64 h-64 sm:w-80 sm:h-80'
+          )}
+        >
           <Suspense fallback={<div className="w-full h-full" />}>
             <Lottie
               animationData={animationData}
@@ -182,26 +241,30 @@ function OpeningOverlay({ tipo, texto = 'Desliza para abrir', tema = {}, onOpen 
               style={{ width: '100%', height: '100%' }}
             />
           </Suspense>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Texto + icono chevron animado */}
-      <div className="absolute bottom-16 flex flex-col items-center gap-2 pointer-events-none">
-        <ChevronUp
-          className="w-6 h-6 animate-bounce"
-          style={{ color: colorTexto }}
-        />
+      <div className="absolute bottom-16 flex flex-col items-center gap-2 pointer-events-none z-10">
         <p
-          className="text-base font-medium tracking-wide"
+          className="text-base font-medium tracking-wide uppercase"
           style={{
             color: colorTexto,
             fontFamily: tema.fuente_cuerpo || 'Inter',
+            ...(esImagen && { textShadow: '0 1px 4px rgba(0,0,0,0.5)' }),
           }}
         >
           {texto}
         </p>
+        <ChevronDown
+          className="w-6 h-6 animate-bounce"
+          style={{
+            color: colorTexto,
+            ...(esImagen && { filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.5))' }),
+          }}
+        />
       </div>
-    </div>
+    </section>
   );
 }
 

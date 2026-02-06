@@ -123,7 +123,7 @@ function FaqEditor({
 
   // Handlers para array de items
   const handleAgregarItem = useCallback(() => {
-    handleArrayItemAdd('items', defaultItem);
+    handleArrayItemAdd('items', { ...defaultItem, _key: `faq-${Date.now()}-${Math.random().toString(36).slice(2, 7)}` });
   }, [handleArrayItemAdd, defaultItem]);
 
   const handleEliminarItem = useCallback((index) => {
@@ -349,7 +349,7 @@ function FaqEditor({
 
           {(form.items || []).map((item, index) => (
             <div
-              key={index}
+              key={item._key || `faq-${index}`}
               className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600"
             >
               <div className="flex items-center justify-between mb-3">

@@ -137,7 +137,7 @@ function ConfirmarReagendarModal({
                 <ul className="space-y-1">
                   {advertencias.map((adv, index) => (
                     <li
-                      key={index}
+                      key={adv.mensaje || `adv-${index}`}
                       className={`text-sm ${
                         tieneSolapamiento ? 'text-red-800 dark:text-red-300' : 'text-yellow-800 dark:text-yellow-300'
                       }`}

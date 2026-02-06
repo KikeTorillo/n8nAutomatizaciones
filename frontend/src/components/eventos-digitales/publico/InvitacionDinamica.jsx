@@ -153,13 +153,31 @@ function InvitacionDinamica({
     }
   }, []);
 
+  // Memoizar estilos inline para evitar recrear objetos en cada render
+  const containerStyle = useMemo(() => ({
+    backgroundColor: tema?.color_fondo,
+    fontFamily: tema?.fuente_cuerpo,
+  }), [tema?.color_fondo, tema?.fuente_cuerpo]);
+
+  const navStyle = useMemo(() => ({
+    backgroundColor: `${tema?.color_fondo}ee`,
+    borderColor: tema?.color_secundario,
+  }), [tema?.color_fondo, tema?.color_secundario]);
+
+  const footerStyle = useMemo(() => ({
+    borderColor: tema?.color_secundario,
+    backgroundColor: tema?.color_fondo,
+  }), [tema?.color_secundario, tema?.color_fondo]);
+
+  const spinnerStyle = useMemo(() => ({
+    borderColor: tema?.color_secundario,
+    borderTopColor: tema?.color_primario,
+  }), [tema?.color_secundario, tema?.color_primario]);
+
   return (
     <div
       className="min-h-screen"
-      style={{
-        backgroundColor: tema?.color_fondo,
-        fontFamily: tema?.fuente_cuerpo,
-      }}
+      style={containerStyle}
     >
       {/* Renderizar bloques */}
       {bloquesVisibles.map((bloque, index) => {
@@ -179,10 +197,7 @@ function InvitacionDinamica({
               <div className="py-20 flex items-center justify-center">
                 <div
                   className="w-8 h-8 border-2 rounded-full animate-spin"
-                  style={{
-                    borderColor: tema?.color_secundario,
-                    borderTopColor: tema?.color_primario,
-                  }}
+                  style={spinnerStyle}
                 />
               </div>
             }
@@ -209,10 +224,7 @@ function InvitacionDinamica({
       {navItems.length > 1 && (
         <nav
           className="sticky top-0 z-50 backdrop-blur-md border-b transition-all"
-          style={{
-            backgroundColor: `${tema?.color_fondo}ee`,
-            borderColor: tema?.color_secundario,
-          }}
+          style={navStyle}
         >
           <div className="max-w-5xl mx-auto px-4">
             <div className="flex items-center justify-center gap-2 sm:gap-8 overflow-x-auto py-4 scrollbar-hide">
@@ -245,10 +257,7 @@ function InvitacionDinamica({
       {/* Footer */}
       <footer
         className="py-8 text-center border-t"
-        style={{
-          borderColor: tema?.color_secundario,
-          backgroundColor: tema?.color_fondo,
-        }}
+        style={footerStyle}
       >
         <p
           className="text-sm flex items-center justify-center gap-1"

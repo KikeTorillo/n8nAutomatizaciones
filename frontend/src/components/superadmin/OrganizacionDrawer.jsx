@@ -91,7 +91,7 @@ export default function OrganizacionDrawer({
                 {/* Estado */}
                 <div className="flex items-center gap-2">
                     {estaSuspendida ? (
-                        <Badge variant="error" size="md">Suspendida</Badge>
+                        <Badge variant="danger" size="md">Suspendida</Badge>
                     ) : estaActiva ? (
                         <Badge variant="success" size="md">Activa</Badge>
                     ) : (

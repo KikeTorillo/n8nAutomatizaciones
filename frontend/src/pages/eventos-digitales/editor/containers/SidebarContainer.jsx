@@ -22,7 +22,6 @@ import {
 import { INVITACION_ALLOWED_TYPES } from '../elements';
 import { BLOQUES_INVITACION, CATEGORIAS_BLOQUES, TEMAS_POR_TIPO, COLOR_FIELDS, FONT_FIELDS } from '../config';
 import DecorationEditorSection from '../components/DecorationEditorSection';
-import AperturaSettingsSection from '../components/panels/AperturaSettingsSection';
 import { useInvitacionEditor } from '../context';
 import { usePlantillas } from '@/hooks/otros/eventos-digitales';
 import InvitacionTemplateGallery from '../components/InvitacionTemplateGallery';
@@ -53,8 +52,6 @@ function SidebarContainer() {
     evento,
     handleActualizarPlantilla,
     estaActualizandoPlantilla,
-    handleActualizarConfiguracion,
-    estaActualizandoConfiguracion,
     getFreePositionStore,
   } = useInvitacionEditor();
   const { showSidebar, showSecondaryPanel } = useEditorLayoutContext();
@@ -240,11 +237,6 @@ function SidebarContainer() {
                 currentDecoration={currentDecoration}
                 onSave={handleSaveDecoracion}
                 isLoading={estaActualizandoPlantilla}
-              />
-              <AperturaSettingsSection
-                configuracion={evento?.configuracion}
-                onSave={handleActualizarConfiguracion}
-                saving={estaActualizandoConfiguracion}
               />
             </ThemeEditorPanel>
           )}

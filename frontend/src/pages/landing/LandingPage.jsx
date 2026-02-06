@@ -173,9 +173,9 @@ function LandingPage() {
             </p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {MODULES.map((module, index) => (
+            {MODULES.map((module) => (
               <FeatureCard
-                key={index}
+                key={module.title}
                 icon={module.icon}
                 title={module.title}
                 description={module.description}
@@ -207,8 +207,8 @@ function LandingPage() {
                 atienda a tus clientes, agende citas y responda preguntas automáticamente.
               </p>
               <ul className="space-y-4">
-                {AI_FEATURES.map((feature, index) => (
-                  <li key={index} className="flex items-start gap-3">
+                {AI_FEATURES.map((feature) => (
+                  <li key={feature} className="flex items-start gap-3">
                     <CheckCircle className="w-6 h-6 text-green-400 flex-shrink-0 mt-0.5" />
                     <span className="text-gray-300">{feature}</span>
                   </li>
@@ -255,9 +255,9 @@ function LandingPage() {
             </p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {BENEFITS.map((benefit, index) => (
+            {BENEFITS.map((benefit) => (
               <FeatureCard
-                key={index}
+                key={benefit.title}
                 icon={benefit.icon}
                 title={benefit.title}
                 description={benefit.description}

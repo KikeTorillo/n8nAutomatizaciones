@@ -163,7 +163,7 @@ function MisAusenciasTab() {
 
   if (error) {
     return (
-      <Alert variant="error" icon={AlertCircle} title="Error">
+      <Alert variant="danger" icon={AlertCircle} title="Error">
         Error al cargar datos: {error.message}
       </Alert>
     );

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { PartyPopper, Heart, Layout } from 'lucide-react';
 import { LoadingSpinner } from '@/components/ui';
@@ -10,7 +10,6 @@ import {
 } from '@/hooks/otros';
 import { eventosDigitalesApi } from '@/services/api/endpoints';
 import { InvitacionDinamica } from '@/components/eventos-digitales';
-import OpeningOverlay from '@/components/eventos-digitales/publico/OpeningOverlay';
 import '@/components/eventos-digitales/publico/EventoAnimations.css';
 
 /**
@@ -88,6 +87,37 @@ function EventoPublicoPage() {
     }
   }, [token, invitado?.estado_rsvp, evento?.configuracion?.mostrar_qr_invitado, slug]);
 
+  // Migración lazy: si hay config apertura legacy sin bloque apertura, inyectarlo
+  // IMPORTANTE: useMemo debe estar antes de los early returns para no violar reglas de hooks
+  const bloquesRaw = evento?.bloques_invitacion || [];
+  const bloques = useMemo(() => {
+    const tieneBlqueApertura = bloquesRaw.some(b => b.tipo === 'apertura');
+    if (!tieneBlqueApertura && evento?.configuracion) {
+      const cfg = evento.configuracion;
+      const tieneConfigLegacy =
+        (cfg.animacion_apertura && cfg.animacion_apertura !== 'none') ||
+        (cfg.modo_apertura === 'imagen' && cfg.imagen_apertura);
+
+      if (tieneConfigLegacy) {
+        const bloqueApertura = {
+          id: 'apertura-legacy',
+          tipo: 'apertura',
+          orden: -1,
+          visible: true,
+          contenido: {
+            modo: cfg.modo_apertura || 'animacion',
+            animacion: cfg.animacion_apertura || 'sobre',
+            imagen_url: cfg.imagen_apertura || '',
+            texto: cfg.texto_apertura || 'Desliza para abrir',
+          },
+          estilos: {},
+        };
+        return [bloqueApertura, ...bloquesRaw];
+      }
+    }
+    return bloquesRaw;
+  }, [bloquesRaw, evento?.configuracion]);
+
   // Loading
   if (loadingEvento) {
     return (
@@ -109,8 +139,6 @@ function EventoPublicoPage() {
       </div>
     );
   }
-
-  const bloques = evento.bloques_invitacion || [];
 
   // Sin bloques: mostrar mensaje "en construcción"
   if (bloques.length === 0) {
@@ -141,19 +169,9 @@ function EventoPublicoPage() {
     );
   }
 
-  const tipoApertura = evento?.configuracion?.animacion_apertura;
-
-  // Renderizar bloques dinámicos
+  // Renderizar bloques dinámicos (apertura se renderiza como bloque)
   return (
-    <>
-      {tipoApertura && tipoApertura !== 'none' && (
-        <OpeningOverlay
-          tipo={tipoApertura}
-          texto={evento?.configuracion?.texto_apertura || 'Desliza para abrir'}
-          tema={tema}
-        />
-      )}
-      <InvitacionDinamica
+    <InvitacionDinamica
       evento={evento}
       invitado={invitado}
       bloques={bloques}
@@ -179,7 +197,6 @@ function EventoPublicoPage() {
       qrImage={qrImage}
       loadingQR={loadingQR}
     />
-    </>
   );
 }
 

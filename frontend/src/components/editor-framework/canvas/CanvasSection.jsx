@@ -9,7 +9,7 @@
  * @since 2026-02-04
  */
 
-import { memo, useMemo, forwardRef } from 'react';
+import { memo, useMemo, useCallback, forwardRef } from 'react';
 import PropTypes from 'prop-types';
 import { cn } from '@/lib/utils';
 
@@ -111,13 +111,13 @@ const CanvasSection = forwardRef(function CanvasSection({
   }), [padding]);
 
   // Manejar click en la sección (no en elementos)
-  const handleClick = (e) => {
+  const handleClick = useCallback((e) => {
     // Solo si el click es directamente en la sección
     if (e.target === e.currentTarget || e.target.classList.contains('section-content')) {
-      onSelect?.();
+      onSelect?.(seccion.id);
       onClick?.(e);
     }
-  };
+  }, [onSelect, onClick, seccion.id]);
 
   return (
     <section

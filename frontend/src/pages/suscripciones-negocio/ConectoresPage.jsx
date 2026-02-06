@@ -68,7 +68,7 @@ const columns = [
     key: 'entorno',
     header: 'Entorno',
     render: (row) => (
-      <Badge variant={row.entorno === 'production' ? 'error' : 'info'} size="sm">
+      <Badge variant={row.entorno === 'production' ? 'danger' : 'info'} size="sm">
         {row.entorno === 'production' ? 'Produccion' : 'Sandbox'}
       </Badge>
     ),
@@ -182,7 +182,7 @@ function ConectoresCardsView({ items, isLoading, handlers }) {
                   Principal
                 </Badge>
               )}
-              <Badge variant={conector.entorno === 'production' ? 'error' : 'info'} size="sm">
+              <Badge variant={conector.entorno === 'production' ? 'danger' : 'info'} size="sm">
                 {conector.entorno === 'production' ? 'Prod' : 'Sandbox'}
               </Badge>
             </div>

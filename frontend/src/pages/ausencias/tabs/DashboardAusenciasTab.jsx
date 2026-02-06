@@ -248,7 +248,7 @@ function DashboardAusenciasTab() {
 
   if (error) {
     return (
-      <Alert variant="error" className="my-4">
+      <Alert variant="danger" className="my-4">
         <AlertCircle className="h-5 w-5" />
         <span>Error al cargar estadísticas: {error.message}</span>
       </Alert>

@@ -169,7 +169,7 @@ export const ProgressBar = memo(function ProgressBar({
  * LimitProgressBar - Wrapper para mostrar uso de límites del plan
  * Mantiene compatibilidad con el componente anterior
  */
-export function LimitProgressBar({ label, usado, limite, porcentaje }: LimitProgressBarProps) {
+export const LimitProgressBar = memo(function LimitProgressBar({ label, usado, limite, porcentaje }: LimitProgressBarProps) {
   return (
     <ProgressBar
       value={usado}
@@ -182,6 +182,7 @@ export function LimitProgressBar({ label, usado, limite, porcentaje }: LimitProg
       preset="usage"
     />
   );
-}
+});
 
 ProgressBar.displayName = 'ProgressBar';
+LimitProgressBar.displayName = 'LimitProgressBar';

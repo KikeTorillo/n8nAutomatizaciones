@@ -275,7 +275,7 @@ function PerfilPublicoPage() {
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                       {perfil.galeria_urls.map((url, index) => (
                         <div
-                          key={index}
+                          key={url}
                           className="aspect-square rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition-opacity"
                           onClick={() => window.open(url, '_blank')}
                         >

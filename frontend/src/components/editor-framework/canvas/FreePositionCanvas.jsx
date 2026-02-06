@@ -189,7 +189,7 @@ function FreePositionCanvas({
             tema={tema}
             isSelected={seccion.id === selectedSectionId}
             isEditorMode={!isPreviewMode}
-            onSelect={() => onSelectSection?.(seccion.id)}
+            onSelect={onSelectSection}
           >
             {/* Elementos de la sección */}
             {renderSectionElements(seccion)}

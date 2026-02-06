@@ -93,7 +93,7 @@ const AsyncBoundary = memo(function AsyncBoundary({
     return (
       <div className={`py-8 ${className || ''}`}>
         <Alert
-          variant="error"
+          variant="danger"
           icon={AlertCircle}
           title={errorTitle}
           action={onRetry && (

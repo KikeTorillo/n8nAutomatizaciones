@@ -140,7 +140,7 @@ function IncapacidadDetailModal({ isOpen, onClose, incapacidad }) {
               </div>
             </div>
 
-            <Badge variant={estadoConfig.color === 'green' ? 'success' : estadoConfig.color === 'red' ? 'error' : 'default'}>
+            <Badge variant={estadoConfig.color === 'green' ? 'success' : estadoConfig.color === 'red' ? 'danger' : 'default'}>
               {estadoConfig.label}
             </Badge>
           </div>

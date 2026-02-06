@@ -29,9 +29,6 @@ export type { RecordNavigationProps } from './RecordNavigation';
 export { SkeletonTable, SkeletonCard, SkeletonList } from './SkeletonTable';
 export type { SkeletonTableProps, SkeletonCardProps, SkeletonListProps } from './SkeletonTable';
 
-export { Skeleton } from './Skeleton';
-export type { SkeletonProps } from './Skeleton';
-
 export { Toast } from './Toast';
 export type { ToastProps } from './Toast';
 
@@ -74,6 +71,4 @@ export type { OverlayHeaderProps } from './OverlayHeader';
 
 // NOTA: ConPermiso movido a features/auth/components/ (Feb 2026) - depende de lógica RBAC
 
-// Card genérico (Ene 2026)
-export { Card } from './Card';
-export type { CardProps } from './Card';
+// NOTA: Card movido a atoms/ (Feb 2026) - contenedor genérico sin lógica compuesta

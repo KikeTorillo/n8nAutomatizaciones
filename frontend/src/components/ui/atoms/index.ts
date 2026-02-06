@@ -36,3 +36,6 @@ export type { RadioGroupProps, RadioOption } from './RadioGroup';
 export type { TooltipProps } from './Tooltip';
 export type { AvatarProps } from './Avatar';
 export type { TextProps } from './Text';
+
+export { Card } from './Card';
+export type { CardProps } from './Card';

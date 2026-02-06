@@ -21,6 +21,8 @@ export {
   getTamanoHeight,
 } from './animacionesDecorativas';
 
+export { MARCOS_PRESETS } from './marcosPresets';
+
 export {
   TEMAS_POR_TIPO,
   COLOR_FIELDS,

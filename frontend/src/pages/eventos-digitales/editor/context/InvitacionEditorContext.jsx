@@ -35,6 +35,7 @@ import {
 import { registerInvitacionElementTypes } from '../elements';
 import { registerInvitacionMigrators } from '../elements';
 import { crearBloqueNuevo } from '../utils';
+import { BLOQUES_INVITACION } from '../config';
 
 // ========== CONTEXT ==========
 
@@ -143,7 +144,34 @@ export function InvitacionEditorProvider({ children }) {
   // evitando flash visual donde el toggle muestra estado incorrecto momentáneamente
   useLayoutEffect(() => {
     if (bloquesData?.bloques) {
-      const bloques = bloquesData.bloques;
+      let bloques = bloquesData.bloques;
+
+      // Migración lazy: si hay config apertura legacy sin bloque apertura, crearlo
+      const tieneBlqueApertura = bloques.some(b => b.tipo === 'apertura');
+      if (!tieneBlqueApertura && evento?.configuracion) {
+        const cfg = evento.configuracion;
+        const tieneConfigLegacy =
+          (cfg.animacion_apertura && cfg.animacion_apertura !== 'none') ||
+          (cfg.modo_apertura === 'imagen' && cfg.imagen_apertura);
+
+        if (tieneConfigLegacy) {
+          const bloqueApertura = {
+            id: crypto.randomUUID(),
+            tipo: 'apertura',
+            orden: -1,
+            visible: true,
+            contenido: {
+              modo: cfg.modo_apertura || 'animacion',
+              animacion: cfg.animacion_apertura || 'sobre',
+              imagen_url: cfg.imagen_apertura || '',
+              texto: cfg.texto_apertura || 'Desliza para abrir',
+            },
+            estilos: {},
+            version: 1,
+          };
+          bloques = [bloqueApertura, ...bloques.map((b, i) => ({ ...b, orden: i + 1 }))];
+        }
+      }
 
       // Detectar si hay secciones libres guardadas
       if (detectarModoLibre(bloques)) {
@@ -155,7 +183,7 @@ export function InvitacionEditorProvider({ children }) {
         setBloques(bloques, eventoId);
       }
     }
-  }, [bloquesData, eventoId, setBloques, getFreePositionStore]);
+  }, [bloquesData, eventoId, evento?.configuracion, setBloques, getFreePositionStore]);
 
   // Limpiar al desmontar
   useEffect(() => {
@@ -307,10 +335,23 @@ export function InvitacionEditorProvider({ children }) {
    */
   const handleAgregarBloque = useCallback(
     (tipo) => {
+      // Verificar unicidad para bloques marcados como únicos
+      const configBloque = BLOQUES_INVITACION.find(b => b.tipo === tipo);
+      if (configBloque?.unico && bloques.some(b => b.tipo === tipo)) {
+        toast.warning(`Solo puedes tener un bloque de ${configBloque.label}`);
+        return;
+      }
+
       const nuevoBloque = crearBloqueNuevo(tipo, bloques.length);
-      agregarBloqueLocal(nuevoBloque);
+
+      // Bloques de apertura siempre van en posición 0
+      if (tipo === 'apertura') {
+        insertarBloqueEnPosicion(nuevoBloque, 0);
+      } else {
+        agregarBloqueLocal(nuevoBloque);
+      }
     },
-    [bloques.length, agregarBloqueLocal]
+    [bloques, agregarBloqueLocal, insertarBloqueEnPosicion]
   );
 
   /**

@@ -13,6 +13,7 @@ const Joi = require('joi');
 const bloqueSchema = Joi.object({
     id: Joi.string().uuid(),
     tipo: Joi.string().required().valid(
+        'apertura',
         'hero_invitacion',
         'countdown',
         'timeline',
@@ -25,9 +26,10 @@ const bloqueSchema = Joi.object({
         'faq',
         'felicitaciones',
         'separador',
+        'animacion_decorativa',
         'seccion_libre' // Modo libre (Wix-style)
     ),
-    orden: Joi.number().integer().min(0),
+    orden: Joi.number().integer(),
     visible: Joi.boolean().default(true),
     contenido: Joi.object().default({}),
     estilos: Joi.object().default({}),
@@ -42,6 +44,7 @@ const guardarBloquesSchema = Joi.object({
 // Schema para agregar un bloque
 const agregarBloqueSchema = Joi.object({
     tipo: Joi.string().required().valid(
+        'apertura',
         'hero_invitacion',
         'countdown',
         'timeline',
@@ -54,6 +57,7 @@ const agregarBloqueSchema = Joi.object({
         'faq',
         'felicitaciones',
         'separador',
+        'animacion_decorativa',
         'seccion_libre' // Modo libre (Wix-style)
     ),
     orden: Joi.number().integer().min(0),

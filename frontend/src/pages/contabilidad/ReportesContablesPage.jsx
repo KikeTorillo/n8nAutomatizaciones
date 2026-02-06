@@ -416,7 +416,7 @@ function ReporteLibroMayor({ data, isLoading }) {
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
               {data.movimientos.map((mov, i) => (
-                <tr key={i} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                <tr key={mov.id || mov.numero_asiento || `mov-${i}`} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                   <td className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400">
                     {format(new Date(mov.fecha), 'dd/MM/yyyy')}
                   </td>
@@ -498,7 +498,7 @@ function ReporteEstadoResultados({ data, isLoading }) {
         {data.ingresos?.cuentas?.length > 0 ? (
           <div className="space-y-2">
             {data.ingresos.cuentas.map((cuenta, i) => (
-              <div key={i} className="flex justify-between items-center py-1 px-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded">
+              <div key={cuenta.id || cuenta.codigo || `cuenta-${i}`} className="flex justify-between items-center py-1 px-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded">
                 <span className="text-sm text-gray-700 dark:text-gray-300">{cuenta.nombre}</span>
                 <span className="font-medium text-green-600 dark:text-green-400">{formatCurrency(cuenta.saldo)}</span>
               </div>
@@ -522,7 +522,7 @@ function ReporteEstadoResultados({ data, isLoading }) {
         {data.gastos?.cuentas?.length > 0 ? (
           <div className="space-y-2">
             {data.gastos.cuentas.map((cuenta, i) => (
-              <div key={i} className="flex justify-between items-center py-1 px-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded">
+              <div key={cuenta.id || cuenta.codigo || `cuenta-${i}`} className="flex justify-between items-center py-1 px-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded">
                 <span className="text-sm text-gray-700 dark:text-gray-300">{cuenta.nombre}</span>
                 <span className="font-medium text-red-600 dark:text-red-400">{formatCurrency(cuenta.saldo)}</span>
               </div>
@@ -595,7 +595,7 @@ function ReporteBalanceGeneral({ data, isLoading }) {
       {cuentas?.length > 0 ? (
         <div className="space-y-1">
           {cuentas.map((cuenta, i) => (
-            <div key={i} className="flex justify-between items-center py-1 px-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded">
+            <div key={cuenta.id || cuenta.codigo || `cuenta-${i}`} className="flex justify-between items-center py-1 px-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded">
               <span className="text-sm text-gray-700 dark:text-gray-300">{cuenta.nombre}</span>
               <span className="font-medium text-gray-900 dark:text-gray-100">{formatCurrency(cuenta.saldo)}</span>
             </div>

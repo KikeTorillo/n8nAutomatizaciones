@@ -68,7 +68,7 @@ const Alert = memo(function Alert({
   return (
     <div
       role="alert"
-      aria-live={variant === 'error' ? 'assertive' : 'polite'}
+      aria-live={variant === 'error' || variant === 'danger' ? 'assertive' : 'polite'}
       className={cn(
         styles.container,
         'border rounded-lg p-4',

@@ -9,6 +9,7 @@
  */
 
 // Editores de bloques
+export { default as AperturaEditor } from './AperturaEditor';
 export { default as HeroInvitacionEditor } from './HeroInvitacionEditor';
 export { default as CountdownEditor } from './CountdownEditor';
 export { default as TimelineEditor } from './TimelineEditor';
@@ -23,6 +24,7 @@ export { default as FelicitacionesEditor } from './FelicitacionesEditor';
 
 // ========== MAPA DE EDITORES POR TIPO ==========
 
+import AperturaEditor from './AperturaEditor';
 import HeroInvitacionEditor from './HeroInvitacionEditor';
 import CountdownEditor from './CountdownEditor';
 import TimelineEditor from './TimelineEditor';
@@ -39,6 +41,7 @@ import FelicitacionesEditor from './FelicitacionesEditor';
  * Mapa de componentes editores por tipo de bloque
  */
 export const EDITORES_BLOQUE = {
+  apertura: AperturaEditor,
   hero_invitacion: HeroInvitacionEditor,
   countdown: CountdownEditor,
   timeline: TimelineEditor,

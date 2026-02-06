@@ -40,7 +40,6 @@ export { ViewTabs } from './organisms/ViewTabs';
 export { Breadcrumb } from './molecules/Breadcrumb';
 export { RecordNavigation } from './molecules/RecordNavigation';
 export { SkeletonTable, SkeletonCard, SkeletonList } from './molecules/SkeletonTable';
-export { Skeleton } from './molecules/Skeleton';
 export { Toast } from './molecules/Toast';
 export { BackButton } from './molecules/BackButton';
 // Componentes con lógica compleja (movidos desde atoms/ Ene 2026)
@@ -53,7 +52,7 @@ export { CheckboxGroup } from './organisms/CheckboxGroup';
 export { CheckboxField } from './molecules/CheckboxField';
 export { DropdownMenu } from './organisms/DropdownMenu';
 export { ToggleSwitch } from './molecules/ToggleSwitch';
-export { Card } from './molecules/Card';
+export { Card } from './atoms/Card';
 
 // ========== ORGANISMS ==========
 export { Modal } from './organisms/Modal';
