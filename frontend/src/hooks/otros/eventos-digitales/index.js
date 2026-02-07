@@ -82,6 +82,9 @@ export {
   invalidateEventosList,
 } from './helpers';
 
+// Preview de plantillas (Feb 2026)
+export { usePlantillaPreview } from './usePlantillaPreview';
+
 // Re-exportar named exports
 export {
   // Eventos y plantillas

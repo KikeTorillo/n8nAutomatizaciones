@@ -4,41 +4,19 @@ import { Eye, Crown, ChevronDown, ChevronUp, Sparkles } from 'lucide-react';
 import { BackButton, Button, LoadingSpinner } from '@/components/ui';
 import { InvitacionDinamica } from '@/components/eventos-digitales';
 import { usePlantillas } from '@/hooks/otros';
-import { generarPreviewData } from '@/utils/plantillaDummyData';
+import { usePlantillaPreview } from '@/hooks/otros/eventos-digitales';
+import { TIPOS_EVENTO } from '@/schemas/evento.schema';
+import { TIPOS_EVENTO_EMOJIS } from './constants';
 
-const TIPOS_EVENTO = {
-  boda: { label: 'Boda', emoji: '💍' },
-  xv_anos: { label: 'XV Años', emoji: '👑' },
-  cumpleanos: { label: 'Cumpleaños', emoji: '🎂' },
-  bautizo: { label: 'Bautizo', emoji: '✨' },
-  corporativo: { label: 'Corporativo', emoji: '🏢' },
-  otro: { label: 'Otro', emoji: '🎉' },
-};
+const TIPOS_EVENTO_MAP = Object.fromEntries(
+  TIPOS_EVENTO.map(t => [t.value, { label: t.label, emoji: TIPOS_EVENTO_EMOJIS[t.value] || '🎉' }])
+);
 
 const INITIAL_VISIBLE = 4;
 
-const TEMA_DEFAULT = {
-  color_primario: '#ec4899',
-  color_secundario: '#fce7f3',
-  color_fondo: '#fdf2f8',
-  color_texto: '#1f2937',
-  color_texto_claro: '#6b7280',
-  fuente_titulo: 'Playfair Display',
-  fuente_cuerpo: 'Inter',
-};
-
 function PlantillaCard({ plantilla, tipo }) {
   const navigate = useNavigate();
-  const tema = useMemo(
-    () => ({ ...TEMA_DEFAULT, ...(plantilla.tema || {}) }),
-    [plantilla.tema]
-  );
-
-  const tipoEvento = plantilla.tipo_evento || tipo || 'boda';
-  const { evento, bloques } = useMemo(
-    () => generarPreviewData(tipoEvento, tema),
-    [tipoEvento, tema]
-  );
+  const { tema, evento, bloques } = usePlantillaPreview(plantilla, { tipoEventoFallback: tipo });
 
   return (
     <div
@@ -107,7 +85,7 @@ function PlantillaCard({ plantilla, tipo }) {
 
 function CategoriaPlantillas({ tipo, plantillas }) {
   const [expanded, setExpanded] = useState(false);
-  const tipoInfo = TIPOS_EVENTO[tipo] || { label: tipo, emoji: '🎉' };
+  const tipoInfo = TIPOS_EVENTO_MAP[tipo] || { label: tipo, emoji: '🎉' };
   const visibles = expanded ? plantillas : plantillas.slice(0, INITIAL_VISIBLE);
   const restantes = plantillas.length - INITIAL_VISIBLE;
 

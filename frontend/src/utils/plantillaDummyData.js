@@ -2,6 +2,7 @@
  * Datos dummy para preview de plantillas
  * Genera evento y bloques ficticios por tipo de evento
  */
+import { INVITACION_TEMA_DEFAULT } from '@/pages/eventos-digitales/constants';
 
 const DATOS_POR_TIPO = {
   boda: {
@@ -137,13 +138,7 @@ export function generarPreviewData(tipoEvento, tema = {}) {
   const fechaEvento = getFechaFutura();
 
   const temaCompleto = {
-    color_primario: '#ec4899',
-    color_secundario: '#fce7f3',
-    color_fondo: '#fdf2f8',
-    color_texto: '#1f2937',
-    color_texto_claro: '#6b7280',
-    fuente_titulo: 'Playfair Display',
-    fuente_cuerpo: 'Inter',
+    ...INVITACION_TEMA_DEFAULT,
     ...tema,
   };
 

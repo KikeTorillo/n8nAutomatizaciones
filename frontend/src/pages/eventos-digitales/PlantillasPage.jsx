@@ -3,7 +3,7 @@
  * Accesible para admins de organización con módulo eventos-digitales
  */
 
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Edit, Trash2, Palette } from 'lucide-react';
 import {
@@ -19,17 +19,17 @@ import {
   usePlantillas,
   useCrearPlantilla,
   useEliminarPlantilla,
+  usePlantillaPreview,
 } from '@/hooks/otros';
-import { generarPreviewData } from '@/utils/plantillaDummyData';
+import { TIPOS_EVENTO } from '@/schemas/evento.schema';
+import {
+  INVITACION_TEMA_DEFAULT,
+  INVITACION_TEMA_DECORACION_DEFAULTS,
+} from './constants';
 
-const TIPOS_EVENTO = [
-  { value: 'boda', label: 'Boda' },
-  { value: 'xv_anos', label: 'XV Años' },
-  { value: 'bautizo', label: 'Bautizo' },
-  { value: 'cumpleanos', label: 'Cumpleaños' },
-  { value: 'corporativo', label: 'Corporativo' },
+const TIPOS_EVENTO_ADMIN = [
+  ...TIPOS_EVENTO,
   { value: 'universal', label: 'Universal' },
-  { value: 'otro', label: 'Otro' },
 ];
 
 const CATEGORIAS = [
@@ -44,35 +44,15 @@ const CATEGORIAS = [
   { value: 'clasico', label: 'Clásico' },
 ];
 
-const TEMA_DEFAULT = {
-  color_primario: '#ec4899',
-  color_secundario: '#fce7f3',
-  color_fondo: '#fdf2f8',
-  color_texto: '#1f2937',
-  color_texto_claro: '#6b7280',
-  fuente_titulo: 'Playfair Display',
-  fuente_cuerpo: 'Inter',
-  patron_fondo: 'none',
-  patron_opacidad: 0.1,
-  decoracion_esquinas: 'none',
-  icono_principal: 'none',
-  animacion_entrada: 'fade',
-  efecto_titulo: 'none',
-  marco_fotos: 'none',
-  stickers: [],
+const TEMA_DEFAULT_ADMIN = {
+  ...INVITACION_TEMA_DEFAULT,
+  ...INVITACION_TEMA_DECORACION_DEFAULTS,
 };
 
 function PlantillaAdminCard({ plantilla, onEdit, onDelete }) {
-  const tema = useMemo(
-    () => ({ ...TEMA_DEFAULT, ...(plantilla.tema || {}) }),
-    [plantilla.tema]
-  );
-
-  const tipoEvento = plantilla.tipo_evento || 'boda';
-  const { evento, bloques } = useMemo(
-    () => generarPreviewData(tipoEvento, tema),
-    [tipoEvento, tema]
-  );
+  const { tema, evento, bloques } = usePlantillaPreview(plantilla, {
+    temaDefaults: TEMA_DEFAULT_ADMIN,
+  });
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden border border-gray-200 dark:border-gray-700">
@@ -129,7 +109,7 @@ function PlantillaAdminCard({ plantilla, onEdit, onDelete }) {
         {/* Tags */}
         <div className="flex flex-wrap items-center gap-1.5 mt-2">
           <span className="px-2 py-0.5 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-full">
-            {TIPOS_EVENTO.find(t => t.value === plantilla.tipo_evento)?.label || plantilla.tipo_evento}
+            {TIPOS_EVENTO_ADMIN.find(t => t.value === plantilla.tipo_evento)?.label || plantilla.tipo_evento}
           </span>
           {plantilla.categoria && (
             <span className="px-2 py-0.5 text-xs bg-pink-100 dark:bg-pink-900/40 text-pink-600 dark:text-pink-300 rounded-full">
@@ -147,10 +127,6 @@ function PlantillaAdminCard({ plantilla, onEdit, onDelete }) {
             </span>
           )}
         </div>
-
-        {plantilla.descripcion && (
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-2 line-clamp-2">{plantilla.descripcion}</p>
-        )}
 
         {/* Actions */}
         <div className="flex gap-2 mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
@@ -200,7 +176,7 @@ function PlantillasPage() {
         nombre: 'Nueva Plantilla',
         codigo: `plantilla-${Date.now()}`,
         tipo_evento: 'cumpleanos',
-        tema: TEMA_DEFAULT,
+        tema: TEMA_DEFAULT_ADMIN,
       });
       navigate(`/eventos-digitales/plantillas/${resultado.id}/editor`);
     } catch (error) {
@@ -259,7 +235,7 @@ function PlantillasPage() {
             >
               Todos
             </button>
-            {TIPOS_EVENTO.map((tipo) => (
+            {TIPOS_EVENTO_ADMIN.map((tipo) => (
               <button
                 key={tipo.value}
                 onClick={() => setFiltroTipo(tipo.value)}
@@ -319,7 +295,7 @@ function PlantillasPage() {
           <Palette className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
           <p className="text-gray-500 dark:text-gray-400">
             No hay plantillas
-            {filtroTipo && ` de tipo "${TIPOS_EVENTO.find(t => t.value === filtroTipo)?.label}"`}
+            {filtroTipo && ` de tipo "${TIPOS_EVENTO_ADMIN.find(t => t.value === filtroTipo)?.label}"`}
             {filtroCategoria && ` en categoría "${CATEGORIAS.find(c => c.value === filtroCategoria)?.label}"`}
           </p>
           <Button onClick={handleNuevaPlantilla} className="mt-4" disabled={crearPlantilla.isPending}>

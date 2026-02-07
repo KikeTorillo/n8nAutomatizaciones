@@ -113,7 +113,6 @@ const plantillasSchemas = {
             codigo: Joi.string().max(50).pattern(/^[a-z0-9-]+$/).required(),
             nombre: Joi.string().max(100).required(),
             tipo_evento: Joi.string().valid(...tiposEvento).required(),
-            descripcion: Joi.string().max(500).allow(null, ''),
             preview_url: Joi.string().uri().max(500).allow(null, ''),
             categoria: Joi.string().valid(...categorias).allow(null),
             subcategoria: Joi.string().valid(...subcategorias).allow(null),
@@ -135,7 +134,6 @@ const plantillasSchemas = {
         body: Joi.object({
             nombre: Joi.string().max(100),
             tipo_evento: Joi.string().valid(...tiposEvento),
-            descripcion: Joi.string().max(500).allow(null, ''),
             preview_url: Joi.string().uri().max(500).allow(null, ''),
             categoria: Joi.string().valid(...categorias).allow(null),
             subcategoria: Joi.string().valid(...subcategorias).allow(null),

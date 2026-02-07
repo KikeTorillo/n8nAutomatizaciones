@@ -99,7 +99,6 @@ class PlantillaModel {
             codigo,
             nombre,
             tipo_evento,
-            descripcion,
             preview_url,
             categoria,
             subcategoria,
@@ -114,13 +113,13 @@ class PlantillaModel {
         return await RLSContextManager.withBypass(async (db) => {
             const result = await db.query(`
                 INSERT INTO plantillas_evento (
-                    codigo, nombre, tipo_evento, descripcion, preview_url,
+                    codigo, nombre, tipo_evento, preview_url,
                     categoria, subcategoria,
                     tema, bloques_plantilla, estructura_html, estilos_css, es_premium, orden
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
                 RETURNING *
             `, [
-                codigo, nombre, tipo_evento, descripcion, preview_url,
+                codigo, nombre, tipo_evento, preview_url,
                 categoria, subcategoria,
                 tema ? JSON.stringify(tema) : null,
                 bloques_plantilla ? JSON.stringify(bloques_plantilla) : '[]',
@@ -140,7 +139,7 @@ class PlantillaModel {
         let idx = 1;
 
         const camposPermitidos = [
-            'nombre', 'tipo_evento', 'descripcion', 'preview_url',
+            'nombre', 'tipo_evento', 'preview_url',
             'categoria', 'subcategoria',
             'tema', 'bloques_plantilla', 'estructura_html', 'estilos_css',
             'es_premium', 'activo', 'orden'

@@ -35,15 +35,7 @@ import DecorationEditorSection from '../components/DecorationEditorSection';
 import { useEditor as useInvitacionEditor } from '@/components/editor-framework';
 import { usePlantillas } from '@/hooks/otros/eventos-digitales';
 import InvitacionTemplateGallery from '../components/InvitacionTemplateGallery';
-
-const TIPOS_EVENTO_CATEGORIES = [
-  { key: 'boda', label: 'Boda' },
-  { key: 'xv_anos', label: 'XV Años' },
-  { key: 'bautizo', label: 'Bautizo' },
-  { key: 'cumpleanos', label: 'Cumpleaños' },
-  { key: 'corporativo', label: 'Corporativo' },
-  { key: 'otro', label: 'Otro' },
-];
+import { TIPOS_EVENTO_CATEGORIES } from '@/pages/eventos-digitales/constants';
 
 const PANEL_TYPES = {
   BLOQUES: 'bloques',

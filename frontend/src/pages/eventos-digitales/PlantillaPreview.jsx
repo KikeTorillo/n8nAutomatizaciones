@@ -1,21 +1,12 @@
-import { useEffect, useMemo, useCallback } from 'react';
+import { useCallback } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { BackButton, Button, LoadingSpinner } from '@/components/ui';
 import { usePlantilla, usePlantillas } from '@/hooks/otros';
+import { usePlantillaPreview } from '@/hooks/otros/eventos-digitales';
+import { useGoogleFonts } from '@/hooks/utils';
 import { InvitacionDinamica } from '@/components/eventos-digitales';
-import { generarPreviewData } from '@/utils/plantillaDummyData';
 import '@/components/eventos-digitales/publico/EventoAnimations.css';
-
-const TEMA_DEFAULT = {
-  color_primario: '#ec4899',
-  color_secundario: '#fce7f3',
-  color_fondo: '#fdf2f8',
-  color_texto: '#1f2937',
-  color_texto_claro: '#6b7280',
-  fuente_titulo: 'Playfair Display',
-  fuente_cuerpo: 'Inter',
-};
 
 function PlantillaPreview() {
   const { id } = useParams();
@@ -26,44 +17,22 @@ function PlantillaPreview() {
   // Query: plantilla actual
   const { data: plantilla, isLoading } = usePlantilla(id);
 
-  // Query: lista para navegación ←→
+  // Query: lista para navegación
   const { data: todasPlantillas } = usePlantillas(
     tipoFiltro ? { tipo_evento: tipoFiltro } : {}
   );
 
   // Índice actual y navegación
-  const plantillasList = useMemo(() => todasPlantillas || [], [todasPlantillas]);
-  const currentIndex = useMemo(
-    () => plantillasList.findIndex((p) => String(p.id) === String(id)),
-    [plantillasList, id]
-  );
+  const plantillasList = todasPlantillas || [];
+  const currentIndex = plantillasList.findIndex((p) => String(p.id) === String(id));
 
-  // Tema de la plantilla
-  const tema = useMemo(
-    () => ({ ...TEMA_DEFAULT, ...(plantilla?.tema || {}) }),
-    [plantilla]
-  );
-
-  // Datos dummy basados en tipo de evento
-  const tipoEvento = plantilla?.tipo_evento || tipoFiltro || 'boda';
-  const { evento, bloques } = useMemo(
-    () => generarPreviewData(tipoEvento, tema),
-    [tipoEvento, tema]
-  );
+  // Preview data (fix: usa bloques_plantilla reales si existen)
+  const { tema, evento, bloques } = usePlantillaPreview(plantilla, {
+    tipoEventoFallback: tipoFiltro || 'boda',
+  });
 
   // Cargar Google Fonts
-  useEffect(() => {
-    if (!plantilla) return;
-    const fuentes = [tema.fuente_titulo, tema.fuente_cuerpo].filter(Boolean);
-    const fuentesUnicas = [...new Set(fuentes)];
-    if (fuentesUnicas.length > 0) {
-      const link = document.createElement('link');
-      link.rel = 'stylesheet';
-      link.href = `https://fonts.googleapis.com/css2?${fuentesUnicas.map((f) => `family=${f.replace(/\s+/g, '+')}:wght@300;400;500;600;700`).join('&')}&display=swap`;
-      document.head.appendChild(link);
-      return () => document.head.removeChild(link);
-    }
-  }, [plantilla, tema.fuente_titulo, tema.fuente_cuerpo]);
+  useGoogleFonts([tema.fuente_titulo, tema.fuente_cuerpo], { enabled: !!plantilla });
 
   // Navegación entre plantillas
   const goTo = useCallback(

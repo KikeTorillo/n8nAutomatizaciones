@@ -24,7 +24,6 @@ CREATE TABLE IF NOT EXISTS plantillas_evento (
     codigo VARCHAR(50) UNIQUE NOT NULL,
     nombre VARCHAR(100) NOT NULL,
     tipo_evento VARCHAR(50) NOT NULL,
-    descripcion TEXT,
     preview_url TEXT,
 
     -- Categorización para filtros avanzados

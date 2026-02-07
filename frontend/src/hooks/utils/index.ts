@@ -47,3 +47,6 @@ export * from './useFormDrawer';
 
 // Media (Feb 2026 - Fase 2 overlays)
 export * from './useImageUpload';
+
+// Google Fonts (Feb 2026 - Centralización plantillas)
+export * from './useGoogleFonts';

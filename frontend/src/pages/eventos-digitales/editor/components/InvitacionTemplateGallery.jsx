@@ -5,65 +5,27 @@
  * Wrapper de TemplateGalleryModal para el módulo de Invitaciones.
  * Usa DefaultGalleryCard del modal + preview custom con InvitacionDinamica.
  *
- * @version 1.1.0
+ * @version 1.2.0
  * @since 2026-02-05
  */
 
-import { memo, useMemo, useEffect } from 'react';
+import { memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Check, X } from 'lucide-react';
 import { TemplateGalleryModal } from '@/components/editor-framework';
 import { InvitacionDinamica } from '@/components/eventos-digitales';
 import { usePlantillas } from '@/hooks/otros/eventos-digitales';
-import { generarPreviewData } from '@/utils/plantillaDummyData';
-
-// ========== CONSTANTS ==========
-
-const TIPOS_EVENTO_CATEGORIES = [
-  { key: 'boda', label: 'Boda' },
-  { key: 'xv_anos', label: 'XV Años' },
-  { key: 'bautizo', label: 'Bautizo' },
-  { key: 'cumpleanos', label: 'Cumpleaños' },
-  { key: 'corporativo', label: 'Corporativo' },
-  { key: 'otro', label: 'Otro' },
-];
-
-const TEMA_DEFAULT = {
-  color_primario: '#ec4899',
-  color_secundario: '#fce7f3',
-  color_fondo: '#fdf2f8',
-  color_texto: '#1f2937',
-  color_texto_claro: '#6b7280',
-  fuente_titulo: 'Playfair Display',
-  fuente_cuerpo: 'Inter',
-};
+import { usePlantillaPreview } from '@/hooks/otros/eventos-digitales';
+import { useGoogleFonts } from '@/hooks/utils';
+import { TIPOS_EVENTO_CATEGORIES } from '@/pages/eventos-digitales/constants';
 
 // ========== INVITACION PREVIEW PANEL ==========
 
 function InvitacionPreviewPanel({ template, onApply, isApplying, onClose }) {
-  const tema = useMemo(
-    () => ({ ...TEMA_DEFAULT, ...(template.tema || {}) }),
-    [template]
-  );
-
-  const tipoEvento = template.tipo_evento || 'boda';
-  const { evento, bloques } = useMemo(
-    () => generarPreviewData(tipoEvento, tema),
-    [tipoEvento, tema]
-  );
+  const { tema, evento, bloques } = usePlantillaPreview(template);
 
   // Cargar Google Fonts
-  useEffect(() => {
-    const fuentes = [tema.fuente_titulo, tema.fuente_cuerpo].filter(Boolean);
-    const fuentesUnicas = [...new Set(fuentes)];
-    if (fuentesUnicas.length > 0) {
-      const link = document.createElement('link');
-      link.rel = 'stylesheet';
-      link.href = `https://fonts.googleapis.com/css2?${fuentesUnicas.map((f) => `family=${f.replace(/\s+/g, '+')}:wght@300;400;500;600;700`).join('&')}&display=swap`;
-      document.head.appendChild(link);
-      return () => document.head.removeChild(link);
-    }
-  }, [tema.fuente_titulo, tema.fuente_cuerpo]);
+  useGoogleFonts([tema.fuente_titulo, tema.fuente_cuerpo]);
 
   return (
     <div className="h-full flex flex-col" style={{ width: 420 }}>
@@ -80,11 +42,6 @@ function InvitacionPreviewPanel({ template, onApply, isApplying, onClose }) {
             <X className="w-4 h-4" />
           </button>
         </div>
-        {template.descripcion && (
-          <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2">
-            {template.descripcion}
-          </p>
-        )}
       </div>
 
       {/* Preview - InvitacionDinamica */}
