@@ -44,3 +44,6 @@ export * from './useTabFormState';
 // Overlays (Feb 2026 - Consolidación overlays)
 export * from './useDisclosure';
 export * from './useFormDrawer';
+
+// Media (Feb 2026 - Fase 2 overlays)
+export * from './useImageUpload';

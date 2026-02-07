@@ -67,18 +67,19 @@ const Modal = memo(forwardRef<HTMLDivElement, ModalProps>(function Modal(
   // Memoizar handleEscape para evitar recrear listener en cada render
   const handleEscape = useCallback(
     (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen && !disableClose) {
+      if (e.key === 'Escape' && !disableClose) {
         onClose();
       }
     },
-    [isOpen, onClose, disableClose]
+    [onClose, disableClose]
   );
 
-  // Cerrar con ESC
+  // Cerrar con ESC — solo registrar listener cuando el modal está abierto
   useEffect(() => {
+    if (!isOpen) return;
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
-  }, [handleEscape]);
+  }, [isOpen, handleEscape]);
 
   return (
     <AnimatePresence>

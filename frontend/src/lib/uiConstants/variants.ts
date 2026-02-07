@@ -50,6 +50,16 @@ export const BUTTON_VARIANTS: Record<ButtonVariant, string> = {
 };
 
 /**
+ * Variantes para IconButton
+ */
+export const ICON_BUTTON_VARIANTS: Record<'ghost' | 'outline' | 'solid' | 'danger', string> = {
+  ghost: 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800',
+  outline: 'border border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800',
+  solid: 'bg-primary-700 text-white hover:bg-primary-800 dark:bg-primary-600 dark:hover:bg-primary-500',
+  danger: 'text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950',
+};
+
+/**
  * Variantes para badges - importadas desde colors.js (fuente única)
  * NOTA: Usar 'danger' como nombre canónico, 'error' es alias para retrocompatibilidad
  */

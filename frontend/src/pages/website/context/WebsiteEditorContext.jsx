@@ -33,6 +33,7 @@ import {
   useEditorShortcuts,
   useEditorLayout,
   useDndHandlers,
+  useSlashMenu,
 } from '@/components/editor-framework';
 
 // ========== CONTEXT ==========
@@ -63,11 +64,6 @@ export function WebsiteEditorProvider({ children }) {
   const [paginaActiva, setPaginaActiva] = useState(null);
   const [modoEditor, setModoEditor] = useState('canvas'); // 'canvas' | 'bloques'
   const [modoPreview, setModoPreview] = useState(false);
-  const [slashMenu, setSlashMenu] = useState({
-    isOpen: false,
-    position: { x: 0, y: 0 },
-    query: '',
-  });
   const [tourReady, setTourReady] = useState(false);
 
   // Modales
@@ -426,69 +422,10 @@ export function WebsiteEditorProvider({ children }) {
 
   // ========== SLASH MENU ==========
 
-  const handleSlashSelect = useCallback(
-    (tipoBloque) => {
-      setSlashMenu({ isOpen: false, position: { x: 0, y: 0 }, query: '' });
-      handleAgregarBloque(tipoBloque);
-    },
-    [handleAgregarBloque]
-  );
-
-  const handleSlashClose = useCallback(() => {
-    setSlashMenu({ isOpen: false, position: { x: 0, y: 0 }, query: '' });
-  }, []);
-
-  // Slash menu keyboard handler
-  useEffect(() => {
-    if (!tieneSitio) return;
-
-    const handleSlashKey = (e) => {
-      const target = e.target;
-      const isEditable =
-        target.tagName === 'INPUT' ||
-        target.tagName === 'TEXTAREA' ||
-        target.isContentEditable ||
-        target.closest('[contenteditable="true"]');
-
-      if (e.key === '/' && !slashMenu.isOpen && !isEditable) {
-        e.preventDefault();
-        setSlashMenu({
-          isOpen: true,
-          position: {
-            x: window.innerWidth / 2 - 150,
-            y: window.innerHeight / 3,
-          },
-          query: '',
-        });
-      } else if (slashMenu.isOpen) {
-        if (e.key === 'Escape') {
-          setSlashMenu((prev) => ({ ...prev, isOpen: false, query: '' }));
-        } else if (e.key === 'Backspace') {
-          if (slashMenu.query === '') {
-            setSlashMenu((prev) => ({ ...prev, isOpen: false }));
-          } else {
-            setSlashMenu((prev) => ({
-              ...prev,
-              query: prev.query.slice(0, -1),
-            }));
-          }
-        } else if (
-          e.key.length === 1 &&
-          !e.metaKey &&
-          !e.ctrlKey &&
-          !['ArrowUp', 'ArrowDown', 'Enter'].includes(e.key)
-        ) {
-          setSlashMenu((prev) => ({
-            ...prev,
-            query: prev.query + e.key,
-          }));
-        }
-      }
-    };
-
-    window.addEventListener('keydown', handleSlashKey);
-    return () => window.removeEventListener('keydown', handleSlashKey);
-  }, [tieneSitio, slashMenu.isOpen, slashMenu.query]);
+  const { slashMenu, setSlashMenu, handleSelect: handleSlashSelect, handleClose: handleSlashClose } = useSlashMenu({
+    enabled: tieneSitio,
+    onSelect: handleAgregarBloque,
+  });
 
   // ========== COMPUTED ==========
 

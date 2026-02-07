@@ -22,11 +22,15 @@ const subcategorias = [
     'superheroes', 'princesas', 'frozen', 'unicornios', 'dinosaurios',
     'minecraft', 'kpop', 'futbol', 'espacial', 'sirenas', 'safari', 'circo',
     // XV Años
-    'paris', 'mascarada', 'jardin_secreto', 'hollywood',
+    'paris', 'mascarada', 'jardin_secreto', 'hollywood', 'princesa', 'celestial',
     // Bodas
-    'dorado', 'floral', 'natural', 'playa', 'vintage',
+    'dorado', 'floral', 'natural', 'playa', 'vintage', 'botanico', 'clean',
+    // Cumpleaños
+    'tropical', 'dulce',
+    // Corporativo
+    'formal', 'tech', 'premium',
     // Generales
-    'minimalista', 'colorido', 'neon', 'pastel'
+    'minimalista', 'colorido', 'neon', 'pastel', 'festivo'
 ];
 
 // Opciones para campos del tema

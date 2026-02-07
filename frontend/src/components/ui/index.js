@@ -49,6 +49,7 @@ export { CheckboxGroup } from './organisms/CheckboxGroup';
 export { CheckboxField } from './molecules/CheckboxField';
 export { DropdownMenu } from './organisms/DropdownMenu';
 export { ToggleSwitch } from './molecules/ToggleSwitch';
+export { IconButton } from './atoms/IconButton';
 export { Card } from './atoms/Card';
 
 // ========== ORGANISMS ==========
@@ -58,7 +59,7 @@ export { ViewTabs } from './organisms/ViewTabs';
 export { Modal } from './organisms/Modal';
 export { Drawer } from './organisms/Drawer';
 export { FormDrawer } from './organisms/FormDrawer';
-export { default as IconPicker, IconPickerCompact, ICONOS_MAP, CATEGORIAS_ICONOS, IconButton } from './organisms/icon-picker';
+export { default as IconPicker, IconPickerCompact, ICONOS_MAP, CATEGORIAS_ICONOS, IconPickerButton } from './organisms/icon-picker';
 export { MultiSelect } from './organisms/MultiSelect';
 export { BarcodeScanner } from './organisms/BarcodeScanner';
 export { ConfirmDialog } from './organisms/ConfirmDialog';

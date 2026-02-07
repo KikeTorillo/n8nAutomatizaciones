@@ -3,11 +3,11 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useQuery } from '@tanstack/react-query';
-import { Briefcase, ImageIcon, Camera, X, Loader2, Globe, Plus, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Briefcase, Camera, X, Loader2, Globe, Plus, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
 import {
   Button,
   Checkbox,
-  Drawer,
+  FormDrawer,
   FormGroup,
   Input,
   Select,
@@ -17,9 +17,7 @@ import FormField from '@/components/forms/FormField';
 import { queryKeys } from '@/hooks/config';
 import { profesionalesApi, monedasApi } from '@/services/api/endpoints';
 import { useCrearServicio, useActualizarServicio, useServicio } from '@/hooks/agendamiento';
-import { useToast } from '@/hooks/utils';
-import { useUploadArchivo } from '@/hooks/utils';
-import { useCurrency } from '@/hooks/utils';
+import { useToast, useImageUpload, useCurrency } from '@/hooks/utils';
 
 /**
  * Schema de validación Zod para CREAR servicio
@@ -94,11 +92,8 @@ function ServicioFormDrawer({ isOpen, onClose, mode = 'create', servicio = null 
   const [selectedProfessionals, setSelectedProfessionals] = useState([]);
   const { code: monedaOrg } = useCurrency();
 
-  // Dic 2025: Estado para imagen del servicio
-  const [imagenFile, setImagenFile] = useState(null);
-  const [imagenPreview, setImagenPreview] = useState(null);
-  const [imagenUrl, setImagenUrl] = useState(null);
-  const uploadMutation = useUploadArchivo();
+  // Dic 2025: Imagen del servicio (refactorizado Feb 2026)
+  const imagen = useImageUpload({ folder: 'servicios' });
 
   // Estado para precios multi-moneda
   const [preciosMoneda, setPreciosMoneda] = useState([]);
@@ -174,14 +169,7 @@ function ServicioFormDrawer({ isOpen, onClose, mode = 'create', servicio = null 
         activo: servicioData.activo !== undefined ? servicioData.activo : true,
       });
       // Dic 2025: Cargar imagen existente
-      if (servicioData.imagen_url) {
-        setImagenUrl(servicioData.imagen_url);
-        setImagenPreview(servicioData.imagen_url);
-      } else {
-        setImagenUrl(null);
-        setImagenPreview(null);
-      }
-      setImagenFile(null);
+      imagen.loadFromUrl(servicioData.imagen_url || null);
 
       // Cargar precios multi-moneda si existen
       if (servicioData.precios_moneda && servicioData.precios_moneda.length > 0) {
@@ -204,39 +192,12 @@ function ServicioFormDrawer({ isOpen, onClose, mode = 'create', servicio = null 
     if (!isOpen) {
       reset();
       setSelectedProfessionals([]);
-      // Dic 2025: Limpiar imagen
-      setImagenFile(null);
-      setImagenPreview(null);
-      setImagenUrl(null);
+      imagen.reset();
       // Limpiar precios multi-moneda
       setPreciosMoneda([]);
       setMostrarPreciosMoneda(false);
     }
-  }, [isOpen, reset]);
-
-  // Dic 2025: Handler para seleccionar imagen
-  const handleImagenChange = (e) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (!file.type.startsWith('image/')) {
-        toast.error('Solo se permiten archivos de imagen');
-        return;
-      }
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error('La imagen no debe superar 5MB');
-        return;
-      }
-      setImagenFile(file);
-      setImagenPreview(URL.createObjectURL(file));
-    }
-  };
-
-  // Dic 2025: Handler para eliminar imagen
-  const handleEliminarImagen = () => {
-    setImagenFile(null);
-    setImagenPreview(null);
-    setImagenUrl(null);
-  };
+  }, [isOpen, reset]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Handler para toggle de profesionales
   const toggleProfessional = (profId) => {
@@ -276,27 +237,18 @@ function ServicioFormDrawer({ isOpen, onClose, mode = 'create', servicio = null 
   // Handler de submit
   const onSubmit = async (data) => {
     try {
-      // Dic 2025: Subir imagen si hay una nueva
-      let urlImagenFinal = imagenUrl;
-      if (imagenFile) {
-        const resultado = await uploadMutation.mutateAsync({
-          file: imagenFile,
-          folder: 'servicios',
-          isPublic: true,
-        });
-        urlImagenFinal = resultado?.url || resultado;
-      }
+      // Subir imagen si hay una nueva
+      const urlImagenFinal = await imagen.upload();
 
       // Sanitizar campos opcionales vacíos
       const sanitized = {
         ...data,
         descripcion: data.descripcion?.trim() || undefined,
-        // Dic 2025: Incluir imagen
         imagen_url: urlImagenFinal || undefined,
       };
 
       // Si se eliminó la imagen existente
-      if (imagenUrl === null && servicioData?.imagen_url) {
+      if (imagen.url === null && servicioData?.imagen_url) {
         sanitized.imagen_url = null;
       }
 
@@ -329,11 +281,7 @@ function ServicioFormDrawer({ isOpen, onClose, mode = 'create', servicio = null 
       onClose();
       reset();
       setSelectedProfessionals([]);
-      // Dic 2025: Limpiar imagen
-      setImagenFile(null);
-      setImagenPreview(null);
-      setImagenUrl(null);
-      // Limpiar precios multi-moneda
+      imagen.reset();
       setPreciosMoneda([]);
       setMostrarPreciosMoneda(false);
     } catch (error) {
@@ -344,64 +292,70 @@ function ServicioFormDrawer({ isOpen, onClose, mode = 'create', servicio = null 
   // Loading state durante fetch de datos
   const isLoadingData = isEditMode && loadingServicio;
 
+  const isSubmittingAny = crearMutation.isPending || actualizarMutation.isPending || imagen.isPending;
+
   return (
-    <Drawer
+    <FormDrawer
       isOpen={isOpen}
       onClose={onClose}
-      title={isEditMode ? 'Editar Servicio' : 'Nuevo Servicio'}
+      entityName="Servicio"
+      mode={isEditMode ? 'edit' : 'create'}
       subtitle={isEditMode
         ? 'Modifica los datos del servicio'
         : 'Completa la información del servicio'}
-    >
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        {/* Header con imagen del servicio */}
-        <div className="flex items-center gap-4 pb-4 border-b border-gray-200 dark:border-gray-700">
-          {/* Imagen del servicio editable */}
-          <div className="relative">
-            {imagenPreview ? (
-              <div className="relative">
-                <img
-                  src={imagenPreview}
-                  alt="Imagen del servicio"
-                  className="w-16 h-16 rounded-lg object-cover border-2 border-primary-200 dark:border-primary-700"
+      onSubmit={handleSubmit(onSubmit)}
+      isSubmitting={isSubmittingAny}
+      header={
+        <div className="px-6 pt-4">
+          <div className="flex items-center gap-4 pb-4 border-b border-gray-200 dark:border-gray-700">
+            {/* Imagen del servicio editable */}
+            <div className="relative">
+              {imagen.preview ? (
+                <div className="relative">
+                  <img
+                    src={imagen.preview}
+                    alt="Imagen del servicio"
+                    className="w-16 h-16 rounded-lg object-cover border-2 border-primary-200 dark:border-primary-700"
+                  />
+                  <button
+                    type="button"
+                    onClick={imagen.handleEliminar}
+                    className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              ) : (
+                <div className="w-16 h-16 bg-primary-100 dark:bg-primary-900/40 rounded-lg flex items-center justify-center">
+                  <Briefcase className="w-8 h-8 text-primary-600 dark:text-primary-400" />
+                </div>
+              )}
+              {/* Botón para cambiar imagen */}
+              <label className="absolute -bottom-1 -right-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-full p-1.5 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors shadow-sm">
+                <Camera className="h-3.5 w-3.5 text-gray-600 dark:text-gray-300" />
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={imagen.handleChange}
+                  className="sr-only"
+                  disabled={imagen.isPending}
                 />
-                <button
-                  type="button"
-                  onClick={handleEliminarImagen}
-                  className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
-                >
-                  <X className="h-3 w-3" />
-                </button>
-              </div>
-            ) : (
-              <div className="w-16 h-16 bg-primary-100 dark:bg-primary-900/40 rounded-lg flex items-center justify-center">
-                <Briefcase className="w-8 h-8 text-primary-600 dark:text-primary-400" />
-              </div>
-            )}
-            {/* Botón para cambiar imagen */}
-            <label className="absolute -bottom-1 -right-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-full p-1.5 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors shadow-sm">
-              <Camera className="h-3.5 w-3.5 text-gray-600 dark:text-gray-300" />
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleImagenChange}
-                className="sr-only"
-                disabled={uploadMutation.isPending}
-              />
-            </label>
-            {uploadMutation.isPending && (
-              <div className="absolute inset-0 bg-white dark:bg-gray-800 bg-opacity-75 dark:bg-opacity-75 rounded-lg flex items-center justify-center">
-                <Loader2 className="h-5 w-5 text-primary-600 dark:text-primary-400 animate-spin" />
-              </div>
-            )}
-          </div>
-          <div>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Toca la imagen para cambiarla
-            </p>
+              </label>
+              {imagen.isPending && (
+                <div className="absolute inset-0 bg-white dark:bg-gray-800 bg-opacity-75 dark:bg-opacity-75 rounded-lg flex items-center justify-center">
+                  <Loader2 className="h-5 w-5 text-primary-600 dark:text-primary-400 animate-spin" />
+                </div>
+              )}
+            </div>
+            <div>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Toca la imagen para cambiarla
+              </p>
+            </div>
           </div>
         </div>
-
+      }
+    >
         {/* Loading state durante fetch de datos en modo edición */}
         {isLoadingData ? (
           <div className="flex items-center justify-center py-12">
@@ -899,40 +853,9 @@ function ServicioFormDrawer({ isOpen, onClose, mode = 'create', servicio = null 
               />
             </div>
 
-            {/* Botones de acción */}
-            <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={onClose}
-                disabled={crearMutation.isPending || actualizarMutation.isPending}
-              >
-                Cancelar
-              </Button>
-              <Button
-                type="submit"
-                isLoading={crearMutation.isPending || actualizarMutation.isPending || uploadMutation.isPending}
-                disabled={
-                  crearMutation.isPending ||
-                  actualizarMutation.isPending ||
-                  uploadMutation.isPending
-                }
-              >
-                {uploadMutation.isPending
-                  ? 'Subiendo imagen...'
-                  : isEditMode
-                    ? actualizarMutation.isPending
-                      ? 'Actualizando...'
-                      : 'Actualizar Servicio'
-                    : crearMutation.isPending
-                      ? 'Creando...'
-                      : 'Crear Servicio'}
-              </Button>
-            </div>
           </>
         )}
-      </form>
-    </Drawer>
+    </FormDrawer>
   );
 }
 

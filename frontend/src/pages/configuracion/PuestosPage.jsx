@@ -12,6 +12,7 @@ import {
 import {
   Button,
   ConfirmDialog,
+  FormDrawer,
   FormGroup,
   Input,
   StatCardGrid
@@ -20,7 +21,6 @@ import {
   ConfiguracionPageLayout,
   ConfigSearchBar,
   ConfigEmptyState,
-  ConfigCrudDrawer,
 } from '@/components/configuracion';
 import { useConfigCrud } from '@/hooks/utils';
 import {
@@ -224,14 +224,14 @@ function PuestosPage() {
       </div>
 
       {/* Drawer Form */}
-      <ConfigCrudDrawer
+      <FormDrawer
         isOpen={isOpen('form')}
         onClose={() => closeModal('form')}
-        title={isEditing ? 'Editar Puesto' : 'Nuevo Puesto'}
+        entityName="Puesto"
+        mode={isEditing ? 'edit' : 'create'}
         subtitle={isEditing ? 'Modifica los datos del puesto' : 'Crea un nuevo puesto de trabajo'}
         onSubmit={handleSubmit}
-        isLoading={isSubmitting}
-        isEditing={isEditing}
+        isSubmitting={isSubmitting}
       >
         <FormGroup label="Nombre" error={errors.nombre?.message} required>
           <Input
@@ -297,7 +297,7 @@ function PuestosPage() {
             Puesto activo
           </label>
         </div>
-      </ConfigCrudDrawer>
+      </FormDrawer>
 
       {/* Confirm Delete Dialog */}
       <ConfirmDialog

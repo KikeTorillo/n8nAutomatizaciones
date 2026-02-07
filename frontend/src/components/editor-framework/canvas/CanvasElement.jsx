@@ -9,17 +9,17 @@
  * @since 2026-02-04
  */
 
-import { memo, useMemo, useCallback, lazy, Suspense } from 'react';
+import { memo, useMemo, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import ElementWrapper from '../elements/ElementWrapper';
 
-// ========== LAZY LOADED RENDERERS ==========
+// ========== BUILT-IN RENDERERS ==========
 
-const TextoElementRenderer = lazy(() => import('../elements/renderers/TextoElementRenderer'));
-const ImagenElementRenderer = lazy(() => import('../elements/renderers/ImagenElementRenderer'));
-const BotonElementRenderer = lazy(() => import('../elements/renderers/BotonElementRenderer'));
-const FormaElementRenderer = lazy(() => import('../elements/renderers/FormaElementRenderer'));
-const SeparadorElementRenderer = lazy(() => import('../elements/renderers/SeparadorElementRenderer'));
+import TextoElementRenderer from '../elements/renderers/TextoElementRenderer';
+import ImagenElementRenderer from '../elements/renderers/ImagenElementRenderer';
+import BotonElementRenderer from '../elements/renderers/BotonElementRenderer';
+import FormaElementRenderer from '../elements/renderers/FormaElementRenderer';
+import SeparadorElementRenderer from '../elements/renderers/SeparadorElementRenderer';
 
 // ========== RENDERER MAP ==========
 
@@ -30,16 +30,6 @@ const RENDERER_MAP = {
   forma: FormaElementRenderer,
   separador: SeparadorElementRenderer,
 };
-
-// ========== FALLBACK ==========
-
-function ElementFallback() {
-  return (
-    <div className="w-full h-full flex items-center justify-center bg-gray-100 dark:bg-gray-800 animate-pulse rounded">
-      <span className="text-gray-400 text-sm">Cargando...</span>
-    </div>
-  );
-}
 
 function UnknownElement({ tipo }) {
   return (
@@ -124,15 +114,13 @@ function CanvasElement({
       zoom={zoom}
       disabled={disabled}
     >
-      <Suspense fallback={<ElementFallback />}>
-        <Renderer
-          elemento={elemento}
-          tema={tema}
-          isEditing={isEditing}
-          onTextChange={handleContentChange}
-          evento={evento}
-        />
-      </Suspense>
+      <Renderer
+        elemento={elemento}
+        tema={tema}
+        isEditing={isEditing}
+        onTextChange={handleContentChange}
+        evento={evento}
+      />
     </ElementWrapper>
   );
 }

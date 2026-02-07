@@ -172,6 +172,15 @@ export const SEARCH_INPUT_SIZES: Record<'sm' | 'md' | 'lg', SearchInputSizeConfi
   },
 };
 
+/**
+ * Tamaños para IconButton (cuadrado)
+ */
+export const ICON_BUTTON_SIZES: Record<'sm' | 'md' | 'lg', { button: string; icon: string }> = {
+  sm: { button: 'h-8 w-8', icon: 'h-4 w-4' },
+  md: { button: 'h-10 w-10', icon: 'h-5 w-5' },
+  lg: { button: 'h-12 w-12', icon: 'h-6 w-6' },
+};
+
 interface PaginationSizeConfig {
   button: string;
   icon: string;

@@ -129,8 +129,8 @@ export { CheckboxGroup } from './CheckboxGroup';
 export type { CheckboxGroupProps } from './CheckboxGroup';
 
 // Icon picker
-export { IconPicker, IconPickerCompact, ICONOS_MAP, CATEGORIAS_ICONOS, IconButton } from './icon-picker';
-export type { IconPickerProps, IconPickerCompactProps, IconButtonProps } from './icon-picker';
+export { IconPicker, IconPickerCompact, ICONOS_MAP, CATEGORIAS_ICONOS, IconPickerButton } from './icon-picker';
+export type { IconPickerProps, IconPickerCompactProps, IconPickerButtonProps } from './icon-picker';
 
 // NOTA: SmartButtons movido a molecules/ (Feb 2026) - grid presentacional
 

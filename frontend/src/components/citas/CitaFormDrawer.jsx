@@ -3,8 +3,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { User, Briefcase, Package, Clock } from 'lucide-react';
 import {
-  Button,
-  Drawer,
+  FormDrawer,
   MultiSelect,
   Select,
 } from '@/components/ui';
@@ -307,17 +306,27 @@ function CitaFormDrawer({ isOpen, onClose, mode = 'create', cita = null, fechaPr
 
   const isPending = crearMutation.isPending || actualizarMutation.isPending || crearRecurrenteMutation.isPending;
 
+  // Label dinámico del botón submit
+  const submitLabel = isEditMode
+    ? 'Actualizar Cita'
+    : recurrenceState.esRecurrente
+      ? `Crear ${recurrenceState.previewData?.total_disponibles || recurrenceState.cantidadCitas} Citas`
+      : 'Crear Cita';
+
   // ===============================
   // RENDER
   // ===============================
   return (
-    <Drawer
+    <FormDrawer
       isOpen={isOpen}
       onClose={onClose}
-      title={isEditMode ? 'Editar Cita' : 'Nueva Cita'}
+      entityName="Cita"
+      mode={isEditMode ? 'edit' : 'create'}
       subtitle={isEditMode ? 'Modifica los datos de la cita' : 'Completa la información de la cita'}
+      onSubmit={handleSubmit(onSubmit)}
+      isSubmitting={isPending}
+      submitLabel={submitLabel}
     >
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <div className="space-y-4">
           {/* Cliente */}
           <div>
@@ -493,32 +502,7 @@ function CitaFormDrawer({ isOpen, onClose, mode = 'create', cita = null, fechaPr
           )}
         </div>
 
-        {/* Botones de acción */}
-        <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onClose}
-            disabled={isPending}
-          >
-            Cancelar
-          </Button>
-          <Button
-            type="submit"
-            isLoading={isPending}
-            disabled={isPending}
-          >
-            {isEditMode
-              ? actualizarMutation.isPending ? 'Actualizando...' : 'Actualizar Cita'
-              : recurrenceState.esRecurrente
-                ? crearRecurrenteMutation.isPending
-                  ? 'Creando serie...'
-                  : `Crear ${recurrenceState.previewData?.total_disponibles || recurrenceState.cantidadCitas} Citas`
-                : crearMutation.isPending ? 'Creando...' : 'Crear Cita'}
-          </Button>
-        </div>
-      </form>
-    </Drawer>
+    </FormDrawer>
   );
 }
 

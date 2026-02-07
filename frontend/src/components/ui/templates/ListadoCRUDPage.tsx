@@ -431,7 +431,7 @@ const ListadoCRUDPage = memo(function ListadoCRUDPage({
           isOpen={isOpen('form')}
           onClose={() => closeModal('form')}
           onSuccess={() => closeModal('form')}
-          {...(mapFormData ? mapFormData(getModalData('form')) : { data: getModalData('form') })}
+          {...(mapFormData?.(getModalData('form')) ?? { data: getModalData('form') })}
           {...formDrawerProps}
         />
       )}
@@ -441,7 +441,7 @@ const ListadoCRUDPage = memo(function ListadoCRUDPage({
         <StatsModal
           isOpen={isOpen('stats')}
           onClose={() => closeModal('stats')}
-          {...(mapStatsData ? mapStatsData(getModalData('stats')) : { data: getModalData('stats') })}
+          {...(mapStatsData?.(getModalData('stats')) ?? { data: getModalData('stats') })}
           {...statsModalProps}
         />
       )}

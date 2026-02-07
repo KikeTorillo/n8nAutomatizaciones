@@ -11,7 +11,7 @@
  * @since 2026-02-04
  */
 
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
 import { toast } from 'sonner';
 
 // Constantes por defecto
@@ -52,7 +52,7 @@ export function useAutosave({
   const mutexRef = useRef(false);
   const retryCountRef = useRef(0);
   const lastSavedHashRef = useRef(null);
-  const estaGuardandoRef = useRef(false);
+  const [estaGuardando, setEstaGuardando] = useState(false);
 
   /**
    * Guarda los cambios con mutex para evitar conflictos
@@ -78,7 +78,7 @@ export function useAutosave({
     }
 
     mutexRef.current = true;
-    estaGuardandoRef.current = true;
+    setEstaGuardando(true);
     onSaving?.();
 
     try {
@@ -116,6 +116,7 @@ export function useAutosave({
       if (retryCountRef.current < MAX_RETRIES) {
         retryCountRef.current++;
         mutexRef.current = false;
+        setEstaGuardando(false);
 
         // Programar reintento
         setTimeout(() => {
@@ -129,7 +130,7 @@ export function useAutosave({
       }
     } finally {
       mutexRef.current = false;
-      estaGuardandoRef.current = false;
+      setEstaGuardando(false);
     }
   }, [items, hasChanges, onSave, computeHash, onSaving, onSaved, onError, onConflict]);
 
@@ -183,7 +184,7 @@ export function useAutosave({
   return {
     guardarAhora,
     cancelar,
-    estaGuardando: estaGuardandoRef.current,
+    estaGuardando,
   };
 }
 

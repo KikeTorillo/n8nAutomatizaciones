@@ -55,7 +55,7 @@ export const FilterPanel = memo(
   const activeFilterCount = useActiveFilters(filters, filterConfig, searchKey);
 
   const handleSearchChange = useCallback(
-    (e: ChangeEvent<HTMLInputElement> | { target: { value: string } }) => {
+    (e: ChangeEvent<HTMLInputElement>) => {
       onFilterChange(searchKey, e.target.value);
     },
     [onFilterChange, searchKey]

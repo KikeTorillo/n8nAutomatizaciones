@@ -63,6 +63,8 @@ export function useCanvasInteraction({
     if (disabled) return;
 
     const handleKeyDown = (e) => {
+      if (e.defaultPrevented) return;
+
       // Ignorar si estamos en un input
       if (
         e.target.tagName === 'INPUT' ||

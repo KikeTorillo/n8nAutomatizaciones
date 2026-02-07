@@ -1,7 +1,7 @@
 import { memo, useCallback, forwardRef } from 'react';
 import { Search, X } from 'lucide-react';
 import { useIconPickerLogic } from '@/hooks/ui/useIconPickerLogic';
-import IconButton from './IconButton';
+import IconPickerButton from './IconPickerButton';
 
 /**
  * Props del componente IconPicker
@@ -118,7 +118,7 @@ export const IconPicker = memo(
         {iconosFiltrados.length > 0 ? (
           <div className="grid grid-cols-6 sm:grid-cols-8 gap-1">
             {iconosFiltrados.map((nombreIcono) => (
-              <IconButton
+              <IconPickerButton
                 key={nombreIcono}
                 nombreIcono={nombreIcono}
                 isSelected={value === nombreIcono}

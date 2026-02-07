@@ -14,6 +14,7 @@ import { temporal } from 'zundo';
 import { subscribeWithSelector, persist, createJSONStorage } from 'zustand/middleware';
 import { createSectionActions } from './sectionActions';
 import { createElementActions } from './elementActions';
+import { deepEqual } from '../hooks/compareUtils';
 
 /**
  * Crea un store con soporte para secciones y elementos de posición libre
@@ -160,7 +161,7 @@ export function createFreePositionStore(options = {}) {
           temporal(storeActions, {
             limit: 50,
             equality: (pastState, currentState) =>
-              JSON.stringify(pastState.secciones) === JSON.stringify(currentState.secciones),
+              deepEqual(pastState.secciones, currentState.secciones),
           }),
           {
             name: name,
@@ -181,7 +182,7 @@ export function createFreePositionStore(options = {}) {
       temporal(storeActions, {
         limit: 50,
         equality: (pastState, currentState) =>
-          JSON.stringify(pastState.secciones) === JSON.stringify(currentState.secciones),
+          deepEqual(pastState.secciones, currentState.secciones),
       })
     )
   );

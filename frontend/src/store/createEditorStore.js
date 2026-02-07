@@ -12,6 +12,7 @@
 import { create } from 'zustand';
 import { temporal } from 'zundo';
 import { subscribeWithSelector, persist, createJSONStorage } from 'zustand/middleware';
+import { deepEqual } from '@/components/editor-framework/hooks/compareUtils';
 
 /**
  * Crea un store de editor con todas las funcionalidades comunes
@@ -445,7 +446,7 @@ export function createEditorStore(options = {}) {
           temporal(storeActions, {
             limit: 50,
             equality: (pastState, currentState) =>
-              JSON.stringify(pastState.bloques) === JSON.stringify(currentState.bloques),
+              deepEqual(pastState.bloques, currentState.bloques),
           }),
           {
             name: name,
@@ -465,7 +466,7 @@ export function createEditorStore(options = {}) {
       temporal(storeActions, {
         limit: 50,
         equality: (pastState, currentState) =>
-          JSON.stringify(pastState.bloques) === JSON.stringify(currentState.bloques),
+          deepEqual(pastState.bloques, currentState.bloques),
       })
     )
   );

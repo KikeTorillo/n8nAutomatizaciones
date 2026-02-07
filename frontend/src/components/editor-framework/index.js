@@ -24,6 +24,7 @@ export { useDndHandlers } from './hooks/useDndHandlers';
 export { useEditorShortcuts, ShortcutsHelp } from './hooks/useEditorShortcuts';
 export { deepEqual, hashBloques, bloquesEqual } from './hooks/compareUtils';
 export { useCanvasInteraction } from './hooks/useCanvasInteraction';
+export { useSlashMenu } from './hooks/useSlashMenu';
 export { useImageHandlers } from './hooks/useImageHandlers';
 export { useThemeSave } from './hooks/useThemeSave';
 

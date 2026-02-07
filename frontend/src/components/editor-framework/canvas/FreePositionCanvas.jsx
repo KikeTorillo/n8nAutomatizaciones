@@ -43,6 +43,8 @@ function FreePositionCanvas({
   evento, // Datos del evento para renderers (countdown, calendario, etc.)
 }) {
   const canvasRef = useRef(null);
+  const rafRef = useRef(null);
+  const callbacksRef = useRef({});
   const [containerSize, setContainerSize] = useState({ width: 800, height: 600 });
   const [activeGuides, setActiveGuides] = useState([]);
   const [isDragging, setIsDragging] = useState(false);
@@ -68,6 +70,15 @@ function FreePositionCanvas({
     };
   }, []);
 
+  // Cleanup rAF on unmount
+  useEffect(() => {
+    return () => {
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+      }
+    };
+  }, []);
+
   // Escala aplicada al canvas
   const canvasScale = zoom / 100;
 
@@ -79,29 +90,41 @@ function FreePositionCanvas({
     }
   }, [onDeselectAll]);
 
-  // Handler para mover elemento con snap
+  // Handler para mover elemento con snap (throttled via rAF)
   const handleMoveElement = useCallback((elementId, sectionId, newPosition) => {
-    // Encontrar la sección y obtener otros elementos para snap
-    const section = secciones.find(s => s.id === sectionId);
-    const otherElements = section?.elementos?.filter(e => e.id !== elementId) || [];
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current);
+    }
 
-    // Calcular guías de snap
-    const { guides, snappedPosition } = calculateSnapGuides(
-      { x: newPosition.x, y: newPosition.y },
-      otherElements,
-      { snapThreshold: 3, snapToCenter: true, snapToEdges: true, snapToOtherElements: true }
-    );
+    rafRef.current = requestAnimationFrame(() => {
+      rafRef.current = null;
 
-    // Actualizar guías activas
-    setActiveGuides(guides);
-    setIsDragging(true);
+      // Encontrar la sección y obtener otros elementos para snap
+      const section = secciones.find(s => s.id === sectionId);
+      const otherElements = section?.elementos?.filter(e => e.id !== elementId) || [];
 
-    // Llamar al handler con la posición ajustada
-    onMoveElement?.(elementId, sectionId, snappedPosition);
+      // Calcular guías de snap
+      const { guides, snappedPosition } = calculateSnapGuides(
+        { x: newPosition.x, y: newPosition.y },
+        otherElements,
+        { snapThreshold: 3, snapToCenter: true, snapToEdges: true, snapToOtherElements: true }
+      );
+
+      // Actualizar guías activas
+      setActiveGuides(guides);
+      setIsDragging(true);
+
+      // Llamar al handler con la posición ajustada
+      onMoveElement?.(elementId, sectionId, snappedPosition);
+    });
   }, [secciones, onMoveElement]);
 
   // Handler para terminar drag
   const handleDragEnd = useCallback(() => {
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    }
     setActiveGuides([]);
     setIsDragging(false);
   }, []);
@@ -111,9 +134,13 @@ function FreePositionCanvas({
     onResizeElement?.(elementId, sectionId, newSize);
   }, [onResizeElement]);
 
+  // Sync callbacks ref for stable renderSectionElements
+  callbacksRef.current = { onSelectElement, handleMoveElement, handleResizeElement, onElementDoubleClick, onContentChange };
+
   // Renderizar elementos de una sección
   const renderSectionElements = useCallback((seccion) => {
     const elementos = seccion.elementos || [];
+    const cbs = callbacksRef.current;
 
     return elementos.map((elemento) => {
       if (!elemento.visible && !isPreviewMode) {
@@ -127,11 +154,11 @@ function FreePositionCanvas({
           elemento={elemento}
           isSelected={elemento.id === selectedElementId}
           isEditing={elemento.id === editingElementId}
-          onSelect={() => onSelectElement?.(elemento.id, seccion.id)}
-          onMove={(pos) => handleMoveElement(elemento.id, seccion.id, pos)}
-          onResize={(size) => handleResizeElement(elemento.id, seccion.id, size)}
-          onDoubleClick={() => onElementDoubleClick?.(elemento.id)}
-          onContentChange={onContentChange}
+          onSelect={() => cbs.onSelectElement?.(elemento.id, seccion.id)}
+          onMove={(pos) => cbs.handleMoveElement(elemento.id, seccion.id, pos)}
+          onResize={(size) => cbs.handleResizeElement(elemento.id, seccion.id, size)}
+          onDoubleClick={() => cbs.onElementDoubleClick?.(elemento.id)}
+          onContentChange={cbs.onContentChange}
           breakpoint={breakpoint}
           containerWidth={containerSize.width}
           containerHeight={containerSize.height}
@@ -146,11 +173,6 @@ function FreePositionCanvas({
   }, [
     selectedElementId,
     editingElementId,
-    onSelectElement,
-    handleMoveElement,
-    handleResizeElement,
-    onElementDoubleClick,
-    onContentChange,
     breakpoint,
     containerSize,
     zoom,

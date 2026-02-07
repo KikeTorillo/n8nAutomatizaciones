@@ -1,4 +1,4 @@
-import { memo, useId, type ReactNode } from 'react';
+import { memo, forwardRef, useId, type ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 import { Radio } from '../atoms/Radio';
 import type { UISize } from '@/types/ui';
@@ -39,7 +39,7 @@ export interface RadioGroupProps {
  *
  * Molecule que compone Radio atoms con labels inline.
  */
-const RadioGroup = memo(function RadioGroup({
+const RadioGroup = memo(forwardRef<HTMLDivElement, RadioGroupProps>(function RadioGroup({
   options,
   value,
   onChange,
@@ -51,12 +51,13 @@ const RadioGroup = memo(function RadioGroup({
   disabled = false,
   className,
   children,
-}: RadioGroupProps) {
+}, ref) {
   const groupId = useId();
   const groupName = name || groupId;
 
   return (
     <div
+      ref={ref}
       role="radiogroup"
       aria-labelledby={label ? `${groupId}-label` : undefined}
       className={cn(
@@ -103,7 +104,7 @@ const RadioGroup = memo(function RadioGroup({
         })}
     </div>
   );
-});
+}));
 
 RadioGroup.displayName = 'RadioGroup';
 

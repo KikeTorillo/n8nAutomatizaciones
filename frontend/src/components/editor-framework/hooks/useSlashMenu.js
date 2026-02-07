@@ -80,6 +80,8 @@ export function useSlashMenu({ enabled = true, onSelect }) {
     if (!enabled) return;
 
     const handleKeyDown = (e) => {
+      if (e.defaultPrevented) return;
+
       const target = e.target;
 
       // Detectar si estamos en un elemento editable
@@ -106,11 +108,13 @@ export function useSlashMenu({ enabled = true, onSelect }) {
       // Si el menú está abierto, manejar teclas
       if (slashMenu.isOpen) {
         if (e.key === 'Escape') {
+          e.preventDefault();
           setSlashMenu((prev) => ({ ...prev, isOpen: false, query: '' }));
           return;
         }
 
         if (e.key === 'Backspace') {
+          e.preventDefault();
           if (slashMenu.query === '') {
             // Si no hay query, cerrar el menú
             setSlashMenu((prev) => ({ ...prev, isOpen: false }));

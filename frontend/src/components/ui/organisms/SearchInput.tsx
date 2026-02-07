@@ -1,19 +1,16 @@
-import { forwardRef, useState, useEffect, useCallback, useMemo, memo, type ChangeEvent, type InputHTMLAttributes } from 'react';
+import { forwardRef, useState, useEffect, useCallback, useMemo, useRef, memo, type ChangeEvent, type InputHTMLAttributes } from 'react';
 import { Search, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SEARCH_INPUT_SIZES, getInputBaseStyles } from '@/lib/uiConstants';
 import type { Size } from '@/types/ui';
 
-interface SyntheticEvent {
-  target: { value: string };
-  currentTarget: { value: string };
-}
-
 export interface SearchInputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'size' | 'onChange'> {
   /** Valor controlado del input */
   value?: string;
-  /** Callback cuando cambia el valor */
-  onChange?: (e: ChangeEvent<HTMLInputElement> | SyntheticEvent) => void;
+  /** Callback cuando cambia el valor (evento nativo real) */
+  onChange?: (e: ChangeEvent<HTMLInputElement>) => void;
+  /** Callback simple con el valor (alternativa a onChange) */
+  onValueChange?: (value: string) => void;
   /** Callback con valor debounced */
   onSearch?: (value: string) => void;
   /** Tiempo de debounce en ms */
@@ -65,6 +62,7 @@ const SearchInput = memo(forwardRef<HTMLInputElement, SearchInputProps>(
     {
       value = '',
       onChange,
+      onValueChange,
       onSearch,
       debounceMs = 300,
       placeholder = 'Buscar...',
@@ -78,6 +76,14 @@ const SearchInput = memo(forwardRef<HTMLInputElement, SearchInputProps>(
     ref
   ) {
     const [internalValue, setInternalValue] = useState(value);
+    const internalRef = useRef<HTMLInputElement>(null);
+
+    // Combinar refs (externo + interno)
+    const setRefs = useCallback((node: HTMLInputElement | null) => {
+      internalRef.current = node;
+      if (typeof ref === 'function') ref(node);
+      else if (ref) ref.current = node;
+    }, [ref]);
 
     // Callback estable para evitar cancelaciones de debounce
     const stableOnSearch = useCallback((searchValue: string) => {
@@ -106,17 +112,26 @@ const SearchInput = memo(forwardRef<HTMLInputElement, SearchInputProps>(
       const newValue = e.target.value;
       setInternalValue(newValue);
       onChange?.(e);
-    }, [onChange]);
+      onValueChange?.(newValue);
+    }, [onChange, onValueChange]);
 
     const handleClear = useCallback(() => {
-      const syntheticEvent: SyntheticEvent = {
-        target: { value: '' },
-        currentTarget: { value: '' },
-      };
       setInternalValue('');
-      onChange?.(syntheticEvent);
+      onValueChange?.('');
       onSearch?.('');
-    }, [onChange, onSearch]);
+
+      // Disparar evento nativo real para compatibilidad con onChange
+      const input = internalRef.current;
+      if (input && onChange) {
+        const nativeSetter = Object.getOwnPropertyDescriptor(
+          window.HTMLInputElement.prototype, 'value'
+        )?.set;
+        if (nativeSetter) {
+          nativeSetter.call(input, '');
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+      }
+    }, [onChange, onValueChange, onSearch]);
 
     // Memoizar estilos de tamaño con padding dinámico
     const currentSize = useMemo(() => {
@@ -141,7 +156,7 @@ const SearchInput = memo(forwardRef<HTMLInputElement, SearchInputProps>(
 
         {/* Input */}
         <input
-          ref={ref}
+          ref={setRefs}
           type="text"
           value={internalValue}
           onChange={handleChange}

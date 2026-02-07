@@ -81,6 +81,7 @@ export function useEditorShortcuts({
   const handleKeyDown = useCallback(
     (event) => {
       if (!enabled) return;
+      if (event.defaultPrevented) return;
 
       const { key, ctrlKey, metaKey, shiftKey } = event;
       const isModifier = ctrlKey || metaKey; // Soporta Cmd en Mac

@@ -44,6 +44,7 @@ export {
   SEARCH_INPUT_SIZES,
   PAGINATION_SIZES,
   TOGGLE_SIZES,
+  ICON_BUTTON_SIZES,
 } from './sizes';
 
 // Re-exports desde spacing para compatibilidad (fuente única de verdad)
@@ -60,6 +61,7 @@ export {
   INPUT_VARIANTS,
   TOAST_EXTENDED_VARIANTS,
   TOAST_CONTAINER_STYLES,
+  ICON_BUTTON_VARIANTS,
 } from './variants';
 
 // Estados

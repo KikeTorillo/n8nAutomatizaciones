@@ -2,7 +2,6 @@
 export { default as ConfigPageHeader } from './ConfigPageHeader';
 export { default as ConfigSearchBar } from './ConfigSearchBar';
 export { default as ConfigEmptyState } from './ConfigEmptyState';
-export { default as ConfigCrudDrawer } from './ConfigCrudDrawer';
 
 // Layout unificado del módulo Configuración
 export { default as ConfiguracionPageLayout } from './ConfiguracionPageLayout';

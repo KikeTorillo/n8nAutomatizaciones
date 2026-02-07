@@ -11,12 +11,11 @@ import {
   GraduationCap,
 } from 'lucide-react';
 
-import { Button, ConfirmDialog, FormGroup, Input } from '@/components/ui';
+import { Button, ConfirmDialog, FormDrawer, FormGroup, Input } from '@/components/ui';
 import ProfesionalesPageLayout from '@/components/profesionales/ProfesionalesPageLayout';
 import {
   ConfigSearchBar,
   ConfigEmptyState,
-  ConfigCrudDrawer,
 } from '@/components/configuracion';
 import { useConfigCrud } from '@/hooks/utils';
 import {
@@ -277,14 +276,14 @@ function CategoriasProfesionalPage() {
       </div>
 
       {/* Drawer Form */}
-      <ConfigCrudDrawer
+      <FormDrawer
         isOpen={isOpen('form')}
         onClose={() => closeModal('form')}
-        title={isEditing ? 'Editar Categoría' : 'Nueva Categoría'}
+        entityName="Categoría"
+        mode={isEditing ? 'edit' : 'create'}
         subtitle={isEditing ? 'Modifica los datos de la categoría' : 'Crea una nueva categoría de profesional'}
         onSubmit={handleSubmit}
-        isLoading={isSubmitting}
-        isEditing={isEditing}
+        isSubmitting={isSubmitting}
       >
         <FormGroup label="Nombre" error={errors.nombre?.message} required>
           <Input
@@ -352,7 +351,7 @@ function CategoriasProfesionalPage() {
             Categoría activa
           </label>
         </div>
-      </ConfigCrudDrawer>
+      </FormDrawer>
 
       {/* Confirm Delete Dialog */}
       <ConfirmDialog

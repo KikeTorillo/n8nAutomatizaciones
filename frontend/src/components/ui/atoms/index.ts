@@ -36,5 +36,8 @@ export type { RadioProps } from './Radio';
 export type { AvatarProps } from './Avatar';
 export type { TextProps } from './Text';
 
+export { IconButton } from './IconButton';
+export type { IconButtonProps } from './IconButton';
+
 export { Card } from './Card';
 export type { CardProps } from './Card';
