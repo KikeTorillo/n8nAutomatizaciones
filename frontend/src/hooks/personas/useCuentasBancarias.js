@@ -5,6 +5,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { profesionalesApi } from '@/services/api/endpoints';
+import { queryKeys } from '@/hooks/config';
 
 // === Constantes ===
 export const TIPOS_CUENTA_BANCARIA = {
@@ -28,9 +29,9 @@ export const MONEDAS_CUENTA = {
   EUR: { value: 'EUR', label: 'Euro (EUR)' },
 };
 
-// Query Keys
+// Query Keys - using centralized queryKeys for base key, local for detail
 const QUERY_KEYS = {
-  cuentasBancarias: (profesionalId) => ['cuentas-bancarias', profesionalId],
+  cuentasBancarias: (profesionalId) => queryKeys.personas.cuentasBancarias(profesionalId),
   cuentaBancaria: (profesionalId, cuentaId) => ['cuenta-bancaria', profesionalId, cuentaId],
 };
 

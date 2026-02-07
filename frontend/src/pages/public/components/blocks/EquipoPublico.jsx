@@ -5,6 +5,7 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
+import { queryKeys } from '@/hooks/config';
 
 export default function EquipoPublico({ contenido, tema, slug }) {
   const {
@@ -41,7 +42,7 @@ export default function EquipoPublico({ contenido, tema, slug }) {
 
   // Cargar profesionales del sistema si origen es "profesionales"
   const { data: profesionalesSistema } = useQuery({
-    queryKey: ['profesionales-publicos', slug, queryParams],
+    queryKey: queryKeys.publico.profesionales(slug, queryParams),
     queryFn: async () => {
       const url = `/api/v1/public/sitio/${slug}/profesionales${queryParams}`;
       const response = await axios.get(url);

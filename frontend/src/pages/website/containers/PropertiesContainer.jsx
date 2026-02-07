@@ -10,7 +10,7 @@
  */
 
 import { memo } from 'react';
-import { useEditor } from '../context';
+import { useWebsiteEditorContext } from '../context';
 import PropertiesPanel from '../components/PropertiesPanel';
 
 /**
@@ -38,7 +38,7 @@ function PropertiesContainer() {
     handleDuplicarBloque,
     handleEliminarBloque,
     cerrarPropiedades,
-  } = useEditor();
+  } = useWebsiteEditorContext();
 
   // Solo mostrar en modo canvas con bloque seleccionado en desktop
   if (!showPropertiesPanel || modoEditor !== 'canvas' || !bloqueSeleccionado) {

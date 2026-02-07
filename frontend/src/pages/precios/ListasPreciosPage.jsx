@@ -10,6 +10,7 @@ import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Tag, Plus, Loader2, Search } from 'lucide-react';
 import { Button, ConfirmDialog, Drawer, Input, Modal } from '@/components/ui';
+import { queryKeys } from '@/hooks/config';
 import { useToast, useModalManager } from '@/hooks/utils';
 import { listasPreciosApi, monedasApi } from '@/services/api/endpoints';
 import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
@@ -35,7 +36,7 @@ export default function ListasPreciosPage() {
 
   // Query: Listar listas de precios
   const { data: listas = [], isLoading: loadingListas } = useQuery({
-    queryKey: ['listas-precios'],
+    queryKey: queryKeys.precios.listas.all,
     queryFn: async () => {
       const response = await listasPreciosApi.listar({ soloActivas: false });
       return response.data.data || [];
@@ -44,7 +45,7 @@ export default function ListasPreciosPage() {
 
   // Query: Listar monedas
   const { data: monedas = [] } = useQuery({
-    queryKey: ['monedas'],
+    queryKey: queryKeys.catalogos.monedas,
     queryFn: async () => {
       const response = await monedasApi.listar(true);
       return response.data.data || [];
@@ -55,7 +56,7 @@ export default function ListasPreciosPage() {
   const crearMutation = useMutation({
     mutationFn: (data) => listasPreciosApi.crear(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['listas-precios'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.precios.listas.all });
       toast.success('Lista de precios creada');
       closeModal('form');
     },
@@ -68,7 +69,7 @@ export default function ListasPreciosPage() {
   const actualizarMutation = useMutation({
     mutationFn: ({ id, data }) => listasPreciosApi.actualizar(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['listas-precios'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.precios.listas.all });
       toast.success('Lista actualizada');
       closeModal('form');
     },
@@ -81,7 +82,7 @@ export default function ListasPreciosPage() {
   const eliminarMutation = useMutation({
     mutationFn: (id) => listasPreciosApi.eliminar(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['listas-precios'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.precios.listas.all });
       toast.success('Lista eliminada');
       closeModal('delete');
     },

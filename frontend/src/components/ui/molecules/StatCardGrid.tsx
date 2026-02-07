@@ -1,6 +1,6 @@
 import { memo, forwardRef, type ComponentType } from 'react';
 import { cn } from '@/lib/utils';
-import { StatCard } from '../molecules/StatCard';
+import { StatCard } from './StatCard';
 import type { StatCardTrend } from '@/types/ui';
 
 /** Colores disponibles para StatCard */

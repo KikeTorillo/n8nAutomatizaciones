@@ -6,6 +6,7 @@
 import { useModalManager } from '@/hooks/utils';
 import { RefreshCw, Plus, Calendar, HeartPulse, AlertCircle, CheckCircle, Clock } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
+import { queryKeys } from '@/hooks/config';
 import {
   Alert,
   Badge,
@@ -157,8 +158,8 @@ function MisAusenciasTab() {
 
   const handleRefresh = () => {
     queryClient.invalidateQueries({ queryKey: ['vacaciones'] });
-    queryClient.invalidateQueries({ queryKey: ['incapacidades'] });
-    queryClient.invalidateQueries({ queryKey: ['ausencias'] });
+    queryClient.invalidateQueries({ queryKey: queryKeys.personas.incapacidades.all });
+    queryClient.invalidateQueries({ queryKey: queryKeys.ausencias.all });
   };
 
   if (error) {

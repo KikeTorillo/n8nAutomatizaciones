@@ -3,6 +3,7 @@ import { STALE_TIMES } from '@/app/queryClient';
 import { citasApi } from '@/services/api/endpoints';
 import { useToast } from '../../utils/useToast';
 import { createCRUDErrorHandler, getErrorMessage } from '@/hooks/config/errorHandlerFactory';
+import { queryKeys } from '@/hooks/config';
 
 /**
  * Hook para enviar recordatorio de cita
@@ -34,7 +35,7 @@ export function useEnviarRecordatorio() {
  */
 export function useRecordatorios(citaId) {
   return useQuery({
-    queryKey: ['citas', citaId, 'recordatorios'],
+    queryKey: [...queryKeys.agendamiento.citas.all, citaId, 'recordatorios'],
     queryFn: async () => {
       const response = await citasApi.obtenerRecordatorios(citaId);
       return response.data;

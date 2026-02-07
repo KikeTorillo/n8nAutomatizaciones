@@ -5,25 +5,24 @@
  * Panel de propiedades para editar el bloque seleccionado.
  * Responsive: solo visible en desktop, en móvil/tablet se usa drawer.
  *
- * @version 1.4.0 - Agregado Upload de imágenes
+ * @version 2.0.0 - Refactor: useImageHandlers
  * @since 2026-02-03
- * @updated 2026-02-05
+ * @updated 2026-02-06
  */
 
-import { memo, useMemo, useState, useCallback } from 'react';
+import { memo, useMemo } from 'react';
 import { X } from 'lucide-react';
 import {
   PropertiesPanel,
   useEditorLayoutContext,
   ElementPropertiesPanel,
   SectionPropertiesPanel,
+  useImageHandlers,
 } from '@/components/editor-framework';
 import { BLOCK_CONFIGS, BLOCK_NAMES } from '../config';
 import { EDITORES_BLOQUE } from '../components/blocks';
-import { useInvitacionEditor } from '../context';
+import { useEditor as useInvitacionEditor } from '@/components/editor-framework';
 import { UnsplashModal } from '@/components/shared/media/UnsplashPicker';
-import { useUploadArchivo } from '@/hooks/utils';
-import { useToast } from '@/hooks/utils';
 
 /**
  * PropertiesContainer - Panel de propiedades (solo desktop)
@@ -46,78 +45,22 @@ function PropertiesContainer() {
     propertiesAsDrawer,
   } = useEditorLayoutContext();
 
-  // ========== UPLOAD STATE ==========
-  const uploadArchivo = useUploadArchivo();
-  const toast = useToast();
-
-  // ========== UNSPLASH STATE ==========
-  const [unsplashState, setUnsplashState] = useState({
-    isOpen: false,
-    fieldKey: null,
+  // ========== IMAGE HANDLERS (Unsplash + Upload) ==========
+  const {
+    unsplashState,
+    openUnsplash,
+    closeUnsplash,
+    handleUnsplashSelect,
+    handleUploadImage,
+  } = useImageHandlers({
+    entity: bloqueSeleccionadoCompleto,
+    onUpdate: handleActualizarBloque,
+    uploadConfig: {
+      folder: 'eventos-digitales/imagenes',
+      entidadTipo: 'evento_digital',
+      entidadId: evento?.id,
+    },
   });
-
-  const openUnsplash = useCallback((fieldKey) => {
-    setUnsplashState({ isOpen: true, fieldKey });
-  }, []);
-
-  const closeUnsplash = useCallback(() => {
-    setUnsplashState({ isOpen: false, fieldKey: null });
-  }, []);
-
-  const handleUnsplashSelect = useCallback(
-    (url) => {
-      if (bloqueSeleccionadoCompleto && unsplashState.fieldKey) {
-        // Si es para galería, agregar al array
-        if (unsplashState.fieldKey === 'galeria_nueva') {
-          const currentImages = bloqueSeleccionadoCompleto?.contenido?.imagenes || [];
-          handleActualizarBloque(bloqueSeleccionadoCompleto.id, {
-            imagenes: [...currentImages, { url, alt: '' }],
-          });
-        } else {
-          handleActualizarBloque(bloqueSeleccionadoCompleto.id, {
-            [unsplashState.fieldKey]: url,
-          });
-        }
-      }
-      closeUnsplash();
-    },
-    [bloqueSeleccionadoCompleto, unsplashState.fieldKey, handleActualizarBloque, closeUnsplash]
-  );
-
-  // ========== UPLOAD HANDLER ==========
-  const handleUploadImage = useCallback(
-    async (file, fieldKey) => {
-      if (!bloqueSeleccionadoCompleto) return;
-
-      try {
-        const resultado = await uploadArchivo.mutateAsync({
-          file,
-          folder: 'eventos-digitales/imagenes',
-          isPublic: true,
-          entidadTipo: 'evento_digital',
-          entidadId: evento?.id,
-        });
-
-        // Si es para galería, agregar al array
-        if (fieldKey === 'galeria_nueva') {
-          const currentImages = bloqueSeleccionadoCompleto?.contenido?.imagenes || [];
-          handleActualizarBloque(bloqueSeleccionadoCompleto.id, {
-            imagenes: [...currentImages, { url: resultado.url, alt: '' }],
-          });
-        } else {
-          // Para Hero u otros campos individuales
-          handleActualizarBloque(bloqueSeleccionadoCompleto.id, {
-            [fieldKey]: resultado.url,
-          });
-        }
-
-        toast.success('Imagen subida correctamente');
-      } catch {
-        // El error ya se maneja en el hook
-      }
-    },
-    [bloqueSeleccionadoCompleto, evento?.id, handleActualizarBloque, uploadArchivo, toast]
-  );
 
   // Datos adicionales para editores específicos
   const editorProps = useMemo(

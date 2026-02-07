@@ -4,6 +4,7 @@ import { comisionesApi } from '@/services/api/endpoints';
 import { useToast } from '../../utils/useToast';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 import { sanitizeParams } from '@/lib/params';
+import { queryKeys } from '@/hooks/config';
 
 /**
  * Hooks personalizados para gestión de comisiones
@@ -26,7 +27,7 @@ import { sanitizeParams } from '@/lib/params';
  */
 export function useConfiguracionesComision(params = {}) {
   return useQuery({
-    queryKey: ['comisiones', 'configuracion', params],
+    queryKey: queryKeys.comisiones.configuracion(params),
     queryFn: async () => {
       // Sanitizar parámetros: eliminar valores vacíos
       const sanitizedParams = sanitizeParams(params);
@@ -51,7 +52,7 @@ export function useConfiguracionesComision(params = {}) {
  */
 export function useHistorialConfiguracion(params = {}) {
   return useQuery({
-    queryKey: ['comisiones', 'historial-configuracion', params],
+    queryKey: queryKeys.comisiones.historialConfiguracion(params),
     queryFn: async () => {
       const sanitizedParams = sanitizeParams(params);
 
@@ -161,7 +162,7 @@ export function useEliminarConfiguracionComision() {
  */
 export function useComisionesProfesional(profesionalId, params = {}) {
   return useQuery({
-    queryKey: ['comisiones', 'profesional', profesionalId, params],
+    queryKey: queryKeys.comisiones.profesional(profesionalId, params),
     queryFn: async () => {
       const sanitizedParams = sanitizeParams(params);
 
@@ -191,7 +192,7 @@ export function useComisionesProfesional(profesionalId, params = {}) {
  */
 export function useComisionesPorPeriodo(params = {}) {
   return useQuery({
-    queryKey: ['comisiones', 'periodo', params],
+    queryKey: queryKeys.comisiones.periodo(params),
     queryFn: async () => {
       const sanitizedParams = sanitizeParams(params);
 
@@ -230,7 +231,7 @@ export function useComisionesPorPeriodo(params = {}) {
  */
 export function useComision(id) {
   return useQuery({
-    queryKey: ['comisiones', id],
+    queryKey: queryKeys.comisiones.detail(id),
     queryFn: async () => {
       const response = await comisionesApi.obtener(id);
       return response.data?.data;
@@ -276,8 +277,8 @@ export function useMarcarComoPagada() {
       return response.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['comisiones'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['comisiones', variables.id], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.comisiones.all, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.comisiones.detail(variables.id), refetchType: 'active' });
       success('Comision marcada como pagada');
     },
     onError: (error) => {
@@ -307,7 +308,7 @@ export function useMarcarComoPagada() {
  */
 export function useDashboardComisiones(params = {}) {
   return useQuery({
-    queryKey: ['comisiones', 'dashboard', params],
+    queryKey: queryKeys.comisiones.dashboard(params),
     queryFn: async () => {
       const sanitizedParams = sanitizeParams(params);
 
@@ -333,7 +334,7 @@ export function useDashboardComisiones(params = {}) {
  */
 export function useEstadisticasComisiones(params = {}) {
   return useQuery({
-    queryKey: ['comisiones', 'estadisticas', params],
+    queryKey: queryKeys.comisiones.estadisticas(params),
     queryFn: async () => {
       const sanitizedParams = sanitizeParams(params);
 
@@ -360,7 +361,7 @@ export function useEstadisticasComisiones(params = {}) {
  */
 export function useGraficaComisionesPorDia(params = {}) {
   return useQuery({
-    queryKey: ['comisiones', 'grafica-por-dia', params],
+    queryKey: queryKeys.comisiones.graficaPorDia(params),
     queryFn: async () => {
       const sanitizedParams = sanitizeParams(params);
 

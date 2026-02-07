@@ -74,7 +74,7 @@ function EventoPublicoPage() {
 
   // Cargar QR cuando el invitado está confirmado y el organizador habilitó el QR
   useEffect(() => {
-    if (token && invitado?.estado_rsvp === 'confirmado' && evento?.configuracion?.mostrar_qr_invitado === true) {
+    if (token && invitado?.estado_rsvp === 'confirmado') {
       setLoadingQR(true);
       eventosDigitalesApi.obtenerQRPublico(slug, token, 'base64')
         .then(response => {
@@ -85,7 +85,7 @@ function EventoPublicoPage() {
         .catch(console.error)
         .finally(() => setLoadingQR(false));
     }
-  }, [token, invitado?.estado_rsvp, evento?.configuracion?.mostrar_qr_invitado, slug]);
+  }, [token, invitado?.estado_rsvp, slug]);
 
   // Migración lazy: si hay config apertura legacy sin bloque apertura, inyectarlo
   // IMPORTANTE: useMemo debe estar antes de los early returns para no violar reglas de hooks

@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { customFieldsApi } from '@/services/api/endpoints';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
+import { queryKeys } from '@/hooks/config';
 
 // ==================== DEFINICIONES ====================
 
@@ -11,7 +12,7 @@ import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
  */
 export function useCustomFieldsDefiniciones(params = {}) {
   return useQuery({
-    queryKey: ['custom-fields-definiciones', params],
+    queryKey: queryKeys.sistema.customFields.definiciones(params),
     queryFn: async () => {
       // Sanitizar params
       const sanitizedParams = Object.entries(params).reduce((acc, [key, value]) => {
@@ -65,7 +66,7 @@ export function useCrearCustomFieldDefinicion() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['custom-fields-definiciones'], refetchType: 'active' });
       if (variables.entidad_tipo) {
-        queryClient.invalidateQueries({ queryKey: ['custom-fields-definiciones', { entidad_tipo: variables.entidad_tipo }], refetchType: 'active' });
+        queryClient.invalidateQueries({ queryKey: queryKeys.sistema.customFields.definiciones({ entidad_tipo: variables.entidad_tipo }), refetchType: 'active' });
       }
     },
     onError: createCRUDErrorHandler('create', 'Campo personalizado'),
@@ -132,7 +133,7 @@ export function useReordenarCustomFieldDefiniciones() {
       return response.data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['custom-fields-definiciones', { entidad_tipo: variables.entidadTipo }], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.sistema.customFields.definiciones({ entidad_tipo: variables.entidadTipo }), refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('update', 'Campos'),
   });
@@ -147,7 +148,7 @@ export function useReordenarCustomFieldDefiniciones() {
  */
 export function useCustomFieldsValores(entidadTipo, entidadId) {
   return useQuery({
-    queryKey: ['custom-fields-valores', entidadTipo, entidadId],
+    queryKey: queryKeys.sistema.customFields.valores(entidadTipo, entidadId),
     queryFn: async () => {
       const response = await customFieldsApi.obtenerValores(entidadTipo, entidadId);
       return response.data.data || [];
@@ -169,7 +170,7 @@ export function useGuardarCustomFieldsValores() {
       return response.data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['custom-fields-valores', variables.entidadTipo, variables.entidadId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.sistema.customFields.valores(variables.entidadTipo, variables.entidadId), refetchType: 'active' });
     },
     onError: (error) => {
       // Si hay errores de validación, retornarlos

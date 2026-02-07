@@ -15,8 +15,8 @@ export { Label } from './Label';
 export { Spinner } from './Spinner';
 export { Divider } from './Divider';
 export { Radio } from './Radio';
-export { RadioGroup } from './RadioGroup';
-export { Tooltip } from './Tooltip';
+// NOTA: RadioGroup movido a molecules/ (Feb 2026) - compone Radio + label = molecule
+// NOTA: Tooltip movido a molecules/ (Feb 2026) - portal + posicionamiento + hooks = molecule
 export { Avatar } from './Avatar';
 export { Text } from './Text';
 
@@ -32,8 +32,7 @@ export type { LabelProps } from './Label';
 export type { SpinnerProps } from './Spinner';
 export type { DividerProps } from './Divider';
 export type { RadioProps } from './Radio';
-export type { RadioGroupProps, RadioOption } from './RadioGroup';
-export type { TooltipProps } from './Tooltip';
+// RadioGroup types re-exported from molecules/
 export type { AvatarProps } from './Avatar';
 export type { TextProps } from './Text';
 

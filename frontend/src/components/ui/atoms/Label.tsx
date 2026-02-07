@@ -1,4 +1,4 @@
-import { memo, type ReactNode } from 'react';
+import { memo, forwardRef, type ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 import { LABEL_BASE, LABEL_REQUIRED, ARIA_LABELS } from '@/lib/uiConstants';
 
@@ -19,16 +19,16 @@ export interface LabelProps {
  * @example
  * <Label label="Email" required htmlFor="email-input" />
  */
-const Label = memo(function Label({
+const Label = memo(forwardRef<HTMLLabelElement, LabelProps>(function Label({
   label,
   required = false,
   htmlFor,
   className,
-}: LabelProps) {
+}, ref) {
   if (!label) return null;
 
   return (
-    <label htmlFor={htmlFor} className={cn(LABEL_BASE, className)}>
+    <label ref={ref} htmlFor={htmlFor} className={cn(LABEL_BASE, className)}>
       {label}
       {required && (
         <>
@@ -40,7 +40,7 @@ const Label = memo(function Label({
       )}
     </label>
   );
-});
+}));
 
 Label.displayName = 'Label';
 

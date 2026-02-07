@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import * as LucideIcons from 'lucide-react';
+import { queryKeys } from '@/hooks/config';
 
 /**
  * ServiciosPublico - Renderiza bloque de servicios en sitio público
@@ -42,7 +43,7 @@ export default function ServiciosPublico({ contenido, tema, slug }) {
 
   // Cargar servicios del sistema si origen es "sistema" o "erp"
   const { data: serviciosSistema } = useQuery({
-    queryKey: ['servicios-publicos', slug, queryParams],
+    queryKey: queryKeys.publico.servicios(slug, queryParams),
     queryFn: async () => {
       const url = `/api/v1/public/sitio/${slug}/servicios${queryParams}`;
       const response = await axios.get(url);

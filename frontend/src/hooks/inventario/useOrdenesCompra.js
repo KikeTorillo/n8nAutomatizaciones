@@ -12,6 +12,7 @@ import { ordenesCompraApi } from '@/services/api/endpoints';
 import { sanitizeParams } from '@/lib/params';
 import { STALE_TIMES } from '@/app/queryClient';
 import { createCRUDHooks, createSanitizer } from '@/hooks/factories';
+import { queryKeys } from '@/hooks/config';
 
 // =========================================================================
 // HOOKS CRUD VIA FACTORY
@@ -77,7 +78,7 @@ export const useEliminarOrdenCompra = hooks.useDelete;
  */
 export function useOrdenesCompraPendientes() {
   return useQuery({
-    queryKey: ['ordenes-compra-pendientes'],
+    queryKey: queryKeys.inventario.ordenesCompra.pendientes,
     queryFn: async () => {
       const response = await ordenesCompraApi.obtenerPendientes();
       return response.data.data || [];
@@ -139,8 +140,8 @@ export function useAgregarItemsOrdenCompra() {
       return response.data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['orden-compra', variables.ordenId], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['ordenes-compra'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.ordenesCompra.detail(variables.ordenId), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.ordenesCompra.all, refetchType: 'active' });
     },
   });
 }
@@ -168,8 +169,8 @@ export function useActualizarItemOrdenCompra() {
       return response.data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['orden-compra', variables.ordenId], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['ordenes-compra'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.ordenesCompra.detail(variables.ordenId), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.ordenesCompra.all, refetchType: 'active' });
     },
   });
 }
@@ -186,8 +187,8 @@ export function useEliminarItemOrdenCompra() {
       return response.data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['orden-compra', variables.ordenId], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['ordenes-compra'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.ordenesCompra.detail(variables.ordenId), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.ordenesCompra.all, refetchType: 'active' });
     },
   });
 }
@@ -208,9 +209,9 @@ export function useEnviarOrdenCompra() {
       return response.data.data;
     },
     onSuccess: (_, id) => {
-      queryClient.invalidateQueries({ queryKey: ['orden-compra', id], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['ordenes-compra'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['ordenes-compra-pendientes'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.ordenesCompra.detail(id), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.ordenesCompra.all, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.ordenesCompra.pendientes, refetchType: 'active' });
     },
   });
 }
@@ -227,9 +228,9 @@ export function useCancelarOrdenCompra() {
       return response.data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['orden-compra', variables.id], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['ordenes-compra'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['ordenes-compra-pendientes'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.ordenesCompra.detail(variables.id), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.ordenesCompra.all, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.ordenesCompra.pendientes, refetchType: 'active' });
     },
   });
 }
@@ -258,15 +259,15 @@ export function useRecibirMercancia() {
       return response.data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['orden-compra', variables.ordenId], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['ordenes-compra'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['ordenes-compra-pendientes'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.ordenesCompra.detail(variables.ordenId), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.ordenesCompra.all, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.ordenesCompra.pendientes, refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: ['ordenes-compra-pendientes-pago'], refetchType: 'active' });
       // Invalidar inventario porque se actualizó stock
-      queryClient.invalidateQueries({ queryKey: ['productos'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['stock-critico'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['movimientos'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['valor-inventario'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.productos.all, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.productos.stockCritico, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.movimientos.all, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.valoracion.resumen, refetchType: 'active' });
     },
   });
 }
@@ -283,8 +284,8 @@ export function useRegistrarPagoOrdenCompra() {
       return response.data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['orden-compra', variables.id], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['ordenes-compra'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.ordenesCompra.detail(variables.id), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.ordenesCompra.all, refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: ['ordenes-compra-pendientes-pago'], refetchType: 'active' });
     },
   });

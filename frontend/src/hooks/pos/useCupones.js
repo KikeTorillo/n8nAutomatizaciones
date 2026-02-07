@@ -19,6 +19,7 @@ import { posApi } from '@/services/api/endpoints';
 import useSucursalStore, { selectSucursalActiva } from '@/store/sucursalStore';
 import { sanitizeParams } from '@/lib/params';
 import { createCRUDHooks } from '@/hooks/factories';
+import { queryKeys } from '@/hooks/config';
 
 // =========================================================================
 // HOOKS CRUD VIA FACTORY (base)
@@ -58,7 +59,7 @@ export function useCupones(params = {}) {
   const sucursalId = sucursalActiva?.id;
 
   return useQuery({
-    queryKey: ['cupones', params, sucursalId],
+    queryKey: [...queryKeys.pos.cupones.list(params), sucursalId],
     queryFn: async () => {
       const sanitizedParams = sanitizeParams(params);
 
@@ -95,7 +96,7 @@ export const useEliminarCupon = baseHooks.useDelete;
  */
 export function useCuponesVigentes() {
   return useQuery({
-    queryKey: ['cupones-vigentes'],
+    queryKey: queryKeys.pos.cupones.vigentes,
     queryFn: async () => {
       const response = await posApi.listarCuponesVigentes();
       return response.data.data;
@@ -142,8 +143,8 @@ export function useAplicarCupon() {
     },
     onSuccess: (data, variables) => {
       // Invalidar venta para refrescar totales
-      queryClient.invalidateQueries({ queryKey: ['venta', variables.ventaPosId], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['cupones-vigentes'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.pos.ventas.detail(variables.ventaPosId), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.pos.cupones.vigentes, refetchType: 'active' });
     },
   });
 }
@@ -161,7 +162,7 @@ export function useHistorialCupon(cuponId, params = {}) {
   const sucursalId = sucursalActiva?.id;
 
   return useQuery({
-    queryKey: ['cupon-historial', cuponId, params, sucursalId],
+    queryKey: [...queryKeys.pos.cupones.historial(cuponId, params), sucursalId],
     queryFn: async () => {
       const paramsWithSucursal = { ...params };
       if (sucursalId) {
@@ -184,7 +185,7 @@ export function useEstadisticasCupon(cuponId) {
   const sucursalId = sucursalActiva?.id;
 
   return useQuery({
-    queryKey: ['cupon-estadisticas', cuponId, sucursalId],
+    queryKey: [...queryKeys.pos.cupones.estadisticas(cuponId), sucursalId],
     queryFn: async () => {
       const params = sucursalId ? { sucursalId } : {};
       const response = await posApi.obtenerEstadisticasCupon(cuponId, params);
@@ -208,9 +209,9 @@ export function useCambiarEstadoCupon() {
       return response.data.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['cupones'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['cupon', variables.id], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['cupones-vigentes'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.pos.cupones.all, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.pos.cupones.estadisticas(variables.id), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.pos.cupones.vigentes, refetchType: 'active' });
     },
   });
 }

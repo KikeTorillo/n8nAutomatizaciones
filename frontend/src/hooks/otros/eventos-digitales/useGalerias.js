@@ -10,6 +10,7 @@ import { STALE_TIMES } from '@/app/queryClient';
 import { eventosDigitalesApi } from '@/services/api/endpoints';
 import { sanitizeParams } from '@/lib/params';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
+import { queryKeys } from '@/hooks/config';
 import { EVENTO_QUERY_KEYS } from './helpers';
 
 // ==================== QUERIES MESA DE REGALOS ====================
@@ -270,7 +271,7 @@ export function useGaleria(eventoId, params = {}) {
  */
 export function useGaleriaPublica(slug, limit = 100) {
   return useQuery({
-    queryKey: ['galeria-publica', slug, limit],
+    queryKey: queryKeys.eventosDigitales.publico.galeria(slug, limit),
     queryFn: async () => {
       const response = await eventosDigitalesApi.obtenerGaleriaPublica(slug, limit);
       return response.data.data;

@@ -1,5 +1,4 @@
-import { memo, forwardRef } from 'react';
-import { Link } from 'react-router-dom';
+import { memo, forwardRef, type ReactNode } from 'react';
 import { ChevronRight, Home } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { BreadcrumbItem } from '@/types/ui';
@@ -11,19 +10,28 @@ export interface BreadcrumbProps {
   className?: string;
   /** Mostrar enlace a Home al inicio */
   homeLink?: boolean;
+  /** Render prop para links (desacopla de router) — default: <a href> */
+  renderLink?: (props: { to: string; children: ReactNode; className?: string }) => ReactNode;
 }
 
 /**
  * Breadcrumb - Navegación de migas de pan
  * Muestra la ruta jerárquica actual con enlaces a niveles superiores
  */
+const defaultRenderLink = ({ to, children, className: cls }: { to: string; children: ReactNode; className?: string }) => (
+  <a href={to} className={cls}>{children}</a>
+);
+
 export const Breadcrumb = memo(
   forwardRef<HTMLElement, BreadcrumbProps>(function Breadcrumb({
   items = [],
   className,
   homeLink = false,
+  renderLink = defaultRenderLink,
 }, ref) {
   if (!items.length && !homeLink) return null;
+
+  const linkClass = 'text-gray-500 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors';
 
   return (
     <nav ref={ref} className={cn('flex items-center text-sm', className)} aria-label="Breadcrumb">
@@ -31,13 +39,11 @@ export const Breadcrumb = memo(
         {homeLink && (
           <>
             <li>
-              <Link
-                to="/home"
-                className="text-gray-500 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors p-1 -m-1"
-                aria-label="Inicio"
-              >
-                <Home className="h-4 w-4" />
-              </Link>
+              {renderLink({
+                to: '/home',
+                className: `${linkClass} p-1 -m-1`,
+                children: <Home className="h-4 w-4" aria-label="Inicio" />,
+              })}
             </li>
             {items.length > 0 && (
               <li aria-hidden="true">
@@ -66,13 +72,11 @@ export const Breadcrumb = memo(
                   {item.label}
                 </span>
               ) : (
-                <Link
-                  to={item.href}
-                  className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
-                >
-                  {Icon && <Icon className="h-4 w-4" />}
-                  {item.label}
-                </Link>
+                renderLink({
+                  to: item.href,
+                  className: `flex items-center gap-1.5 ${linkClass}`,
+                  children: <>{Icon && <Icon className="h-4 w-4" />}{item.label}</>,
+                })
               )}
             </li>
           );

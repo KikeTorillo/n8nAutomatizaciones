@@ -11,6 +11,7 @@
 import { puestosApi } from '@/services/api/endpoints';
 import { STALE_TIMES } from '@/app/queryClient';
 import { createCRUDHooks, createSanitizer } from '@/hooks/factories';
+import { queryKeys } from '@/hooks/config';
 
 // Sanitizador para datos de puesto
 const sanitizePuesto = createSanitizer([
@@ -35,9 +36,9 @@ const hooks = createCRUDHooks({
     delete: 'eliminar',
   },
   sanitize: sanitizePuesto,
-  invalidateOnCreate: ['puestos'],
-  invalidateOnUpdate: ['puestos'],
-  invalidateOnDelete: ['puestos'],
+  invalidateOnCreate: queryKeys.personas.puestos.all,
+  invalidateOnUpdate: queryKeys.personas.puestos.all,
+  invalidateOnDelete: queryKeys.personas.puestos.all,
   errorMessages: {
     create: { 409: 'Ya existe un puesto con ese código' },
   },

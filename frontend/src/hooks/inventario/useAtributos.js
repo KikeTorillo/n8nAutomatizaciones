@@ -12,6 +12,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { inventarioApi } from '@/services/api/endpoints';
 import { STALE_TIMES } from '@/app/queryClient';
 import { createCRUDHooks } from '@/hooks/factories';
+import { queryKeys } from '@/hooks/config';
 
 // Crear hooks CRUD
 const hooks = createCRUDHooks({
@@ -57,7 +58,7 @@ export function useAgregarValor() {
     },
     onSuccess: (_, { atributoId }) => {
       queryClient.invalidateQueries({ queryKey: ['atributo', atributoId], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['atributos'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.atributos.all, refetchType: 'active' });
     },
   });
 }
@@ -74,7 +75,7 @@ export function useActualizarValor() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['atributos'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.atributos.all, refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: ['atributo'], refetchType: 'active' });
     },
   });
@@ -92,7 +93,7 @@ export function useEliminarValor() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['atributos'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.atributos.all, refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: ['atributo'], refetchType: 'active' });
     },
   });
@@ -110,7 +111,7 @@ export function useCrearAtributosDefecto() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['atributos'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.atributos.all, refetchType: 'active' });
     },
   });
 }

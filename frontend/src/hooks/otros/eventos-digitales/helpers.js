@@ -44,6 +44,7 @@ export const EVENTO_QUERY_KEYS = {
   // Plantillas
   plantillas: () => ['plantillas-eventos'],
   plantilla: (id) => ['plantilla', id],
+  plantillaBloques: (id) => ['plantilla-bloques', id],
 };
 
 /**

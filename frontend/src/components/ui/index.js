@@ -23,8 +23,8 @@ export { LoadingSpinner } from './atoms/LoadingSpinner';
 export { Label } from './atoms/Label';
 export { Divider } from './atoms/Divider';
 export { Radio } from './atoms/Radio';
-export { RadioGroup } from './atoms/RadioGroup';
-export { Tooltip } from './atoms/Tooltip';
+export { RadioGroup } from './molecules/RadioGroup';
+export { Tooltip } from './molecules/Tooltip';
 export { Avatar } from './atoms/Avatar';
 export { Text } from './atoms/Text';
 // NOTA: ToggleSwitch movido a molecules/ por complejidad (Ene 2026) - ver sección MOLECULES
@@ -62,14 +62,14 @@ export { default as IconPicker, IconPickerCompact, ICONOS_MAP, CATEGORIAS_ICONOS
 export { MultiSelect } from './organisms/MultiSelect';
 export { BarcodeScanner } from './organisms/BarcodeScanner';
 export { ConfirmDialog } from './organisms/ConfirmDialog';
-export { DeleteConfirmDialog } from './organisms/DeleteConfirmDialog';
+export { DeleteConfirmDialog } from './molecules/DeleteConfirmDialog';
 export { DataTable, DataTableActions, DataTableActionButton } from './organisms/DataTable';
 export { FilterPanel, FilterChips } from './organisms/FilterPanel';
-export { StatCardGrid } from './organisms/StatCardGrid';
+export { StatCardGrid } from './molecules/StatCardGrid';
 export { ExpandableCrudSection } from './organisms/ExpandableCrudSection';
 export { GenericNavTabs } from './organisms/GenericNavTabs';
 export { NavDropdown } from './organisms/NavDropdown';
-export { SmartButtons } from './organisms/SmartButtons';
+export { SmartButtons } from './molecules/SmartButtons';
 export { ThemeToggle } from './organisms/ThemeToggle';
 export { TreeView, useTreeExpansion } from './organisms/TreeNode';
 export { MobileNavSelector } from './organisms/MobileNavSelector';

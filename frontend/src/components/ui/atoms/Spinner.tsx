@@ -1,4 +1,4 @@
-import { memo, type SVGProps } from 'react';
+import { memo, forwardRef, type SVGProps } from 'react';
 import { cn } from '@/lib/utils';
 import { ICON_SIZES } from '@/lib/uiConstants';
 import type { ExtendedSize } from '@/types/ui';
@@ -21,13 +21,14 @@ export interface SpinnerProps extends SVGProps<SVGSVGElement> {
  * // Con color personalizado
  * <Spinner size="sm" className="text-primary-500" />
  */
-const Spinner = memo(function Spinner({
+const Spinner = memo(forwardRef<SVGSVGElement, SpinnerProps>(function Spinner({
   size = 'md',
   className,
   ...props
-}: SpinnerProps) {
+}, ref) {
   return (
     <svg
+      ref={ref}
       className={cn(ICON_SIZES[size] || ICON_SIZES.md, 'animate-spin', className)}
       xmlns="http://www.w3.org/2000/svg"
       fill="none"
@@ -50,7 +51,7 @@ const Spinner = memo(function Spinner({
       />
     </svg>
   );
-});
+}));
 
 Spinner.displayName = 'Spinner';
 

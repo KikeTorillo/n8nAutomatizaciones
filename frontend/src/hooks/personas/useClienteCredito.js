@@ -18,6 +18,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { clientesApi } from '@/services/api/endpoints';
+import { queryKeys } from '@/hooks/config';
 
 /**
  * Hook para obtener estado de crédito de un cliente
@@ -27,7 +28,7 @@ import { clientesApi } from '@/services/api/endpoints';
  */
 export function useEstadoCredito(clienteId, options = {}) {
   return useQuery({
-    queryKey: ['cliente-credito', clienteId],
+    queryKey: queryKeys.personas.clientes.credito(clienteId),
     queryFn: async () => {
       const response = await clientesApi.obtenerEstadoCredito(clienteId);
       return response.data.data;
@@ -50,9 +51,9 @@ export function useActualizarCredito() {
       return response.data.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['cliente-credito', variables.clienteId], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['cliente', variables.clienteId], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['clientes'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.personas.clientes.credito(variables.clienteId), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.personas.clientes.detail(variables.clienteId), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.personas.clientes.all, refetchType: 'active' });
     },
   });
 }
@@ -70,8 +71,8 @@ export function useSuspenderCredito() {
       return response.data.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['cliente-credito', variables.clienteId], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['cliente', variables.clienteId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.personas.clientes.credito(variables.clienteId), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.personas.clientes.detail(variables.clienteId), refetchType: 'active' });
     },
   });
 }
@@ -90,8 +91,8 @@ export function useReactivarCredito() {
     },
     onSuccess: (data, variables) => {
       // variables es clienteId directamente
-      queryClient.invalidateQueries({ queryKey: ['cliente-credito', variables], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['cliente', variables], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.personas.clientes.credito(variables), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.personas.clientes.detail(variables), refetchType: 'active' });
     },
   });
 }
@@ -109,7 +110,7 @@ export function useRegistrarAbono() {
       return response.data.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['cliente-credito', variables.clienteId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.personas.clientes.credito(variables.clienteId), refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: ['cliente-credito-movimientos', variables.clienteId], refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: ['clientes-con-saldo'], refetchType: 'active' });
     },

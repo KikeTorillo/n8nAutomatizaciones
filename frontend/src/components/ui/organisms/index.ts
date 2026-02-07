@@ -16,8 +16,7 @@ export type { ConfirmDialogProps } from './ConfirmDialog';
 export { FormDrawer } from './FormDrawer';
 export type { FormDrawerProps } from './FormDrawer';
 
-export { DeleteConfirmDialog } from './DeleteConfirmDialog';
-export type { DeleteConfirmDialogProps } from './DeleteConfirmDialog';
+// NOTA: DeleteConfirmDialog movido a molecules/ (Feb 2026) - wrapper simple sobre ConfirmDialog
 
 export { Pagination } from './Pagination';
 export type { PaginationProps } from './Pagination';
@@ -45,9 +44,7 @@ export type { FilterFieldProps } from './FilterField';
 export { StandardFilterGrid } from './StandardFilterGrid';
 export type { StandardFilterGridProps, FilterFieldConfig, FilterGridLayout } from './StandardFilterGrid';
 
-// Grid y stats
-export { StatCardGrid } from './StatCardGrid';
-export type { StatCardGridProps } from './StatCardGrid';
+// NOTA: StatCardGrid movido a molecules/ (Feb 2026) - grid simple de StatCard molecules
 
 // CRUD y secciones
 export { ExpandableSection } from './ExpandableSection';
@@ -135,9 +132,7 @@ export type { CheckboxGroupProps } from './CheckboxGroup';
 export { IconPicker, IconPickerCompact, ICONOS_MAP, CATEGORIAS_ICONOS, IconButton } from './icon-picker';
 export type { IconPickerProps, IconPickerCompactProps, IconButtonProps } from './icon-picker';
 
-// Botones inteligentes
-export { SmartButtons } from './SmartButtons';
-export type { SmartButtonsProps } from './SmartButtons';
+// NOTA: SmartButtons movido a molecules/ (Feb 2026) - grid presentacional
 
 // Theme
 export { ThemeToggle } from './ThemeToggle';

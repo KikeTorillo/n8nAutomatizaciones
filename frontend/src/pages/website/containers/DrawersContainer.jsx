@@ -8,17 +8,24 @@
  * @since 2026-02-03
  */
 
-import { memo, useMemo, useCallback } from 'react';
-import { useEditor } from '../context';
+import { memo, useMemo } from 'react';
+import { useWebsiteEditorContext } from '../context';
 import { Drawer } from '@/components/ui';
-import { BlockPalette, ThemeEditorPanel } from '@/components/editor-framework';
+import { BlockPalette, ThemeEditorPanel, useThemeSave } from '@/components/editor-framework';
 import PageManager from '../components/PageManager';
 import PropertiesPanel from '../components/PropertiesPanel';
 import {
   CATEGORIAS_WEBSITE,
   normalizarBloques,
 } from '../config/blockConfig';
-import { TEMAS_PREDEFINIDOS, COLOR_FIELDS, FONT_FIELDS } from '../config/themeConfig';
+import {
+  TEMAS_PREDEFINIDOS,
+  COLOR_FIELDS,
+  FONT_FIELDS,
+  extractWebsiteColors,
+  extractWebsiteFonts,
+  buildWebsiteThemePayload,
+} from '../config/themeConfig';
 
 /**
  * DrawersContainer - Drawers móviles para el editor
@@ -56,13 +63,22 @@ function DrawersContainer() {
 
     // Store actions
     deseleccionarBloque,
-  } = useEditor();
+  } = useWebsiteEditorContext();
 
   // Normalizar bloques para BlockPalette
   const bloquesNormalizados = useMemo(
     () => normalizarBloques(tiposBloques),
     [tiposBloques]
   );
+
+  // Colores, fuentes y guardado de tema (centralizado)
+  const { currentColors, currentFonts, handleSaveTema } = useThemeSave({
+    source: config,
+    extractColors: extractWebsiteColors,
+    extractFonts: extractWebsiteFonts,
+    buildPayload: buildWebsiteThemePayload(config),
+    saveMutation: (payload) => actualizarConfig.mutateAsync(payload),
+  });
 
   return (
     <>
@@ -121,34 +137,11 @@ function DrawersContainer() {
       >
         <ThemeEditorPanel
           colorFields={COLOR_FIELDS}
-          currentColors={{
-            primario: config?.tema?.colores?.primario || '#4F46E5',
-            secundario: config?.tema?.colores?.secundario || '#6366F1',
-            fondo: config?.tema?.colores?.fondo || '#FFFFFF',
-            texto: config?.tema?.colores?.texto || '#1F2937',
-          }}
+          currentColors={currentColors}
           fontFields={FONT_FIELDS}
-          currentFonts={{
-            fuente_titulos: config?.tema?.fuente_titulos || 'Inter',
-            fuente_cuerpo: config?.tema?.fuente_cuerpo || 'Inter',
-          }}
+          currentFonts={currentFonts}
           presetThemes={TEMAS_PREDEFINIDOS}
-          onSave={async ({ colores, fuentes }) => {
-            await actualizarConfig.mutateAsync({
-              id: config.id,
-              data: {
-                version: config.version,
-                color_primario: colores.primario,
-                color_secundario: colores.secundario,
-                color_fondo: colores.fondo,
-                color_texto: colores.texto,
-                fuente_titulos: fuentes?.fuente_titulos,
-                fuente_cuerpo: fuentes?.fuente_cuerpo,
-              },
-            });
-          }}
-          title="Tema"
-          subtitle="Personaliza colores y tipografía"
+          onSave={handleSaveTema}
         />
       </Drawer>
 

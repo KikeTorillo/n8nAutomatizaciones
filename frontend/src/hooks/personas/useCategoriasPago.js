@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { categoriasPagoApi } from '@/services/api/endpoints';
 import { useToast } from '@/hooks/utils';
+import { queryKeys } from '@/hooks/config';
 
 /**
  * Hook para gestionar categorías de pago
@@ -10,7 +11,7 @@ import { useToast } from '@/hooks/utils';
 
 // Query Keys
 export const categoriasPagoKeys = {
-  all: ['categorias-pago'],
+  all: queryKeys.catalogos.categoriasPago,
   lists: () => [...categoriasPagoKeys.all, 'list'],
   list: (filters) => [...categoriasPagoKeys.lists(), { filters }],
   details: () => [...categoriasPagoKeys.all, 'detail'],

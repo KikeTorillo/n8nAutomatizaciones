@@ -10,6 +10,9 @@
  * @updated 2026-02-05 - Desacoplado de lógica específica de invitaciones
  */
 
+// ========== SHARED CONTEXT ==========
+export { EditorContext, useEditor } from './context/EditorContext';
+
 // ========== HOOKS ==========
 export { useBlockEditor } from './hooks/useBlockEditor';
 export { useBlockSelection } from './hooks/useBlockSelection';
@@ -21,6 +24,8 @@ export { useDndHandlers } from './hooks/useDndHandlers';
 export { useEditorShortcuts, ShortcutsHelp } from './hooks/useEditorShortcuts';
 export { deepEqual, hashBloques, bloquesEqual } from './hooks/compareUtils';
 export { useCanvasInteraction } from './hooks/useCanvasInteraction';
+export { useImageHandlers } from './hooks/useImageHandlers';
+export { useThemeSave } from './hooks/useThemeSave';
 
 // Common Blocks (bloques compartidos)
 export * from './common-blocks';

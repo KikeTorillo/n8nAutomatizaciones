@@ -29,6 +29,7 @@ import { format, formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { Modal } from '@/components/ui';
+import { queryKeys } from '@/hooks/config';
 import websiteApi from '@/services/api/modules/website.api';
 
 // Tipos de version
@@ -49,7 +50,7 @@ function VersionHistory({ isOpen, onClose }) {
 
   // Query para listar versiones
   const { data: versionesData, isLoading, error } = useQuery({
-    queryKey: ['website', 'versiones'],
+    queryKey: queryKeys.website.versiones,
     queryFn: () => websiteApi.listarVersiones({ limite: 50 }),
     enabled: isOpen,
   });
@@ -61,7 +62,7 @@ function VersionHistory({ isOpen, onClose }) {
     mutationFn: (datos) => websiteApi.crearVersion(datos),
     onSuccess: () => {
       toast.success('Version creada exitosamente');
-      queryClient.invalidateQueries(['website', 'versiones']);
+      queryClient.invalidateQueries(queryKeys.website.versiones);
       setMostrarCrear(false);
       setFormCrear({ nombre: '', descripcion: '' });
     },
@@ -89,7 +90,7 @@ function VersionHistory({ isOpen, onClose }) {
     mutationFn: (id) => websiteApi.eliminarVersion(id),
     onSuccess: () => {
       toast.success('Version eliminada');
-      queryClient.invalidateQueries(['website', 'versiones']);
+      queryClient.invalidateQueries(queryKeys.website.versiones);
     },
     onError: (error) => {
       toast.error(error.response?.data?.message || 'Error al eliminar');

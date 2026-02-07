@@ -10,3 +10,6 @@ export { useDndHandlers } from './useDndHandlers';
 export { useEditorShortcuts, ShortcutsHelp } from './useEditorShortcuts.jsx';
 export { deepEqual, hashBloques, bloquesEqual } from './compareUtils';
 export { useCanvasInteraction } from './useCanvasInteraction';
+export { useImageHandlers } from './useImageHandlers';
+export { useThemeSave } from './useThemeSave';
+export { useSlashMenu } from './useSlashMenu';

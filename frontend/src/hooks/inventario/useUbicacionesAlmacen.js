@@ -11,19 +11,21 @@ import { ordenesCompraApi } from '@/services/api/endpoints';
 import { useSucursalContext } from '@/hooks/factories';
 import { STALE_TIMES } from '@/app/queryClient';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
+import { queryKeys } from '@/hooks/config';
 
 /**
  * QUERY KEYS para ubicaciones de almacén
+ * Usa queryKeys centralizadas + keys locales para sub-recursos no cubiertos
  */
-export const UBICACIONES_ALMACEN_KEYS = {
-  all: ['ubicaciones-almacen'],
-  list: (params) => [...UBICACIONES_ALMACEN_KEYS.all, 'list', params],
-  arbol: (sucursalId) => [...UBICACIONES_ALMACEN_KEYS.all, 'arbol', sucursalId],
-  detail: (id) => [...UBICACIONES_ALMACEN_KEYS.all, 'detail', id],
-  stock: (id) => [...UBICACIONES_ALMACEN_KEYS.all, 'stock', id],
-  disponibles: (sucursalId, cantidad) => [...UBICACIONES_ALMACEN_KEYS.all, 'disponibles', sucursalId, cantidad],
-  estadisticas: (sucursalId) => [...UBICACIONES_ALMACEN_KEYS.all, 'estadisticas', sucursalId],
-  productoUbicaciones: (productoId) => [...UBICACIONES_ALMACEN_KEYS.all, 'producto', productoId],
+const UBICACIONES_ALMACEN_KEYS = {
+  all: queryKeys.inventario.ubicaciones.all,
+  list: (params) => [...queryKeys.inventario.ubicaciones.all, 'list', params],
+  arbol: (sucursalId) => [...queryKeys.inventario.ubicaciones.all, 'arbol', sucursalId],
+  detail: (id) => [...queryKeys.inventario.ubicaciones.all, 'detail', id],
+  stock: (id) => [...queryKeys.inventario.ubicaciones.all, 'stock', id],
+  disponibles: (sucursalId, cantidad) => [...queryKeys.inventario.ubicaciones.all, 'disponibles', sucursalId, cantidad],
+  estadisticas: (sucursalId) => [...queryKeys.inventario.ubicaciones.all, 'estadisticas', sucursalId],
+  productoUbicaciones: (productoId) => [...queryKeys.inventario.ubicaciones.all, 'producto', productoId],
 };
 
 // ==================== QUERIES ====================
@@ -283,7 +285,7 @@ export function useAgregarStockUbicacion() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries(UBICACIONES_ALMACEN_KEYS.stock(variables.ubicacionId));
       queryClient.invalidateQueries(UBICACIONES_ALMACEN_KEYS.all);
-      queryClient.invalidateQueries({ queryKey: ['productos'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.productos.all, refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('create', 'Stock en ubicación'),
   });

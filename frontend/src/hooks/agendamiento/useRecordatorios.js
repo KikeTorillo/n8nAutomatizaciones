@@ -25,6 +25,8 @@ import { useToast } from '../utils/useToast';
 import { createCRUDErrorHandler, getErrorMessage } from '@/hooks/config/errorHandlerFactory';
 
 // ==================== QUERY KEYS ====================
+// Nota: No hay equivalente centralizado para recordatorios en queryKeys.
+// Se mantienen las keys locales como patrón consistente.
 
 export const recordatoriosKeys = {
   all: ['recordatorios'],

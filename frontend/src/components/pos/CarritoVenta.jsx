@@ -1,6 +1,7 @@
 import { useMemo, useCallback, memo } from 'react';
 import { Plus, Minus, Trash2, ShoppingCart, Percent, Globe, Tag, RefreshCw, User } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
+import { queryKeys } from '@/hooks/config';
 import { monedasApi } from '@/services/api/endpoints';
 import { useCurrency } from '@/hooks/utils';
 import InputCupon from './InputCupon';
@@ -148,7 +149,7 @@ export default function CarritoVenta({
 
   // Obtener tasa de cambio
   const { data: tasaResponse } = useQuery({
-    queryKey: ['tasa-cambio', monedaOrg, monedaSecundaria],
+    queryKey: queryKeys.pos.tasaCambio(monedaOrg, monedaSecundaria),
     queryFn: () => monedasApi.obtenerTasa(monedaOrg, monedaSecundaria),
     staleTime: 1000 * 60 * 30,
     refetchOnWindowFocus: false,

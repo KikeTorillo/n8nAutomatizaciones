@@ -9,6 +9,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { eventosDigitalesApi } from '@/services/api/endpoints';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
+import { queryKeys } from '@/hooks/config';
 import { EVENTO_QUERY_KEYS } from './helpers';
 
 // ==================== QUERIES PÚBLICOS ====================
@@ -20,7 +21,7 @@ import { EVENTO_QUERY_KEYS } from './helpers';
  */
 export function useEventoPublico(slug) {
   return useQuery({
-    queryKey: ['evento-publico', slug],
+    queryKey: queryKeys.eventosDigitales.publico.evento(slug),
     queryFn: async () => {
       const response = await eventosDigitalesApi.obtenerEventoPublico(slug);
       return response.data.data;
@@ -38,7 +39,7 @@ export function useEventoPublico(slug) {
  */
 export function useInvitacionPublica(slug, token) {
   return useQuery({
-    queryKey: ['invitacion-publica', slug, token],
+    queryKey: queryKeys.eventosDigitales.publico.invitacion(slug, token),
     queryFn: async () => {
       const response = await eventosDigitalesApi.obtenerInvitacion(slug, token);
       return response.data.data;
@@ -70,11 +71,11 @@ export function useConfirmarRSVP() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({
-        queryKey: ['invitacion-publica', data.slug, data.token],
+        queryKey: queryKeys.eventosDigitales.publico.invitacion(data.slug, data.token),
         refetchType: 'active'
       });
       queryClient.invalidateQueries({
-        queryKey: ['evento-publico', data.slug],
+        queryKey: queryKeys.eventosDigitales.publico.evento(data.slug),
         refetchType: 'active'
       });
     },

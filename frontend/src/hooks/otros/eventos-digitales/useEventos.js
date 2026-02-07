@@ -10,6 +10,7 @@ import { STALE_TIMES } from '@/app/queryClient';
 import { eventosDigitalesApi } from '@/services/api/endpoints';
 import { sanitizeParams } from '@/lib/params';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
+import { queryKeys } from '@/hooks/config';
 import { EVENTO_QUERY_KEYS, invalidateEventosList } from './helpers';
 
 // ==================== QUERIES EVENTOS ====================
@@ -125,7 +126,7 @@ export function useActualizarEvento() {
       queryClient.setQueryData(EVENTO_QUERY_KEYS.evento(data.id), data);
       if (data.slug) {
         queryClient.invalidateQueries({
-          queryKey: ['evento-publico', data.slug],
+          queryKey: queryKeys.eventosDigitales.publico.evento(data.slug),
           refetchType: 'all'
         });
       }
@@ -220,13 +221,50 @@ export function usePlantilla(id) {
  */
 export function usePlantillasPorTipo(tipoEvento) {
   return useQuery({
-    queryKey: ['plantillas-tipo', tipoEvento],
+    queryKey: queryKeys.eventosDigitales.plantillas.porTipo(tipoEvento),
     queryFn: async () => {
       const response = await eventosDigitalesApi.listarPlantillasPorTipo(tipoEvento);
       return response.data.data.plantillas || [];
     },
     enabled: !!tipoEvento,
     staleTime: STALE_TIMES.STATIC_DATA,
+  });
+}
+
+/**
+ * Hook para obtener bloques de una plantilla
+ * @param {number} id - ID de la plantilla
+ * @returns {Object} { data: bloques[], isLoading, error }
+ */
+export function usePlantillaBloques(id) {
+  return useQuery({
+    queryKey: EVENTO_QUERY_KEYS.plantillaBloques(id),
+    queryFn: async () => {
+      const response = await eventosDigitalesApi.obtenerBloquesPlantilla(id);
+      return response.data.data.bloques || [];
+    },
+    enabled: !!id,
+    staleTime: STALE_TIMES.DYNAMIC,
+  });
+}
+
+/**
+ * Hook para guardar bloques de una plantilla (super_admin)
+ * @returns {Object} Mutation object
+ */
+export function useGuardarBloquesPlantilla() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, bloques }) => {
+      const response = await eventosDigitalesApi.guardarBloquesPlantilla(id, bloques);
+      return response.data.data;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: EVENTO_QUERY_KEYS.plantillaBloques(variables.id),
+        refetchType: 'active'
+      });
+    },
   });
 }
 

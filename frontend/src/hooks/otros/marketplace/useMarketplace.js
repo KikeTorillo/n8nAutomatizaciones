@@ -3,6 +3,7 @@ import { STALE_TIMES } from '@/app/queryClient';
 import { marketplaceApi } from '@/services/api/endpoints';
 import { sanitizeParams } from '@/lib/params';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
+import { queryKeys } from '@/hooks/config';
 
 /**
  * Hooks personalizados para el marketplace de clientes
@@ -21,7 +22,7 @@ import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
  */
 export function useCategoriasMarketplace() {
   return useQuery({
-    queryKey: ['categorias-marketplace'],
+    queryKey: queryKeys.marketplace.categorias,
     queryFn: async () => {
       const response = await marketplaceApi.getCategorias();
       return response.data.data || [];
@@ -46,7 +47,7 @@ export function useCategoriasMarketplace() {
  */
 export function usePerfilesMarketplace(params = {}) {
   return useQuery({
-    queryKey: ['perfiles-marketplace', params],
+    queryKey: queryKeys.marketplace.perfiles.list(params),
     queryFn: async () => {
       // Sanitizar params y validar rating_min (1-5)
       const sanitizedParams = sanitizeParams(params);
@@ -80,7 +81,7 @@ export function usePerfilesMarketplace(params = {}) {
  */
 export function usePerfilPublico(slug) {
   return useQuery({
-    queryKey: ['perfil-publico', slug],
+    queryKey: queryKeys.marketplace.perfiles.publico(slug),
     queryFn: async () => {
       const response = await marketplaceApi.getPerfilPorSlug(slug);
       // El backend retorna { perfil, servicios, profesionales, reseñas, stats }
@@ -108,7 +109,7 @@ export function usePerfilPublico(slug) {
  */
 export function useMiPerfilMarketplace() {
   return useQuery({
-    queryKey: ['mi-perfil-marketplace'],
+    queryKey: queryKeys.marketplace.perfiles.miPerfil,
     queryFn: async () => {
       const response = await marketplaceApi.getMiPerfil();
       return response.data.data;
@@ -131,7 +132,7 @@ export function useMiPerfilMarketplace() {
  */
 export function useEstadisticasPerfil(id, params = {}) {
   return useQuery({
-    queryKey: ['estadisticas-perfil', id, params],
+    queryKey: queryKeys.marketplace.estadisticasPerfil(id, params),
     queryFn: async () => {
       const response = await marketplaceApi.getEstadisticasPerfil(id, sanitizeParams(params));
       return response.data.data;
@@ -156,7 +157,7 @@ export function useEstadisticasPerfil(id, params = {}) {
  */
 export function useReseñasNegocio(slug, params = {}) {
   return useQuery({
-    queryKey: ['resenas-negocio', slug, params],
+    queryKey: queryKeys.marketplace.resenas(slug, params),
     queryFn: async () => {
       const response = await marketplaceApi.getReseñas(slug, sanitizeParams(params));
       return {
@@ -180,7 +181,7 @@ export function useReseñasNegocio(slug, params = {}) {
  */
 export function useServiciosPublicos(organizacionId) {
   return useQuery({
-    queryKey: ['servicios-publicos', organizacionId],
+    queryKey: queryKeys.marketplace.serviciosPublicos(organizacionId),
     queryFn: async () => {
       // Usa el endpoint público de perfil que ya retorna servicios
       // Necesitamos primero obtener el perfil de la organización
@@ -216,7 +217,7 @@ export function useServiciosPublicos(organizacionId) {
  */
 export function useDisponibilidadPublica(organizacionId, params = {}) {
   return useQuery({
-    queryKey: ['disponibilidad-publica', organizacionId, params],
+    queryKey: queryKeys.marketplace.disponibilidadPublica(organizacionId, params),
     queryFn: async () => {
       // Sanitizar parámetros
       const sanitizedParams = {
@@ -303,11 +304,11 @@ export function useCrearPerfil() {
     },
     onSuccess: () => {
       // Invalidar queries relacionadas (sin exact para capturar todas las variantes)
-      queryClient.invalidateQueries({ queryKey: ['perfiles-marketplace'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.marketplace.perfiles.all, refetchType: 'active' });
       // Invalidar mi perfil (con exact porque es específico)
-      queryClient.invalidateQueries({ queryKey: ['mi-perfil-marketplace'], exact: true, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.marketplace.perfiles.miPerfil, exact: true, refetchType: 'active' });
       // Invalidar setup progress del dashboard
-      queryClient.invalidateQueries({ queryKey: ['organizacion-setup-progress'], exact: true, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.marketplace.setupProgress, exact: true, refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('create', 'Perfil', {
       409: 'Ya existe un perfil para esta organizacion',
@@ -348,9 +349,9 @@ export function useActualizarPerfil() {
     },
     onSuccess: (data) => {
       // Invalidar queries relacionadas
-      queryClient.invalidateQueries({ queryKey: ['perfiles-marketplace'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['mi-perfil-marketplace'], exact: true, refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['perfil-publico', data.slug], exact: true, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.marketplace.perfiles.all, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.marketplace.perfiles.miPerfil, exact: true, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.marketplace.perfiles.publico(data.slug), exact: true, refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('update', 'Perfil'),
   });
@@ -423,7 +424,7 @@ export function useResponderReseña() {
     onSuccess: () => {
       // Invalidar reseñas
       queryClient.invalidateQueries({ queryKey: ['resenas-negocio'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['mi-perfil-marketplace'], exact: true, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.marketplace.perfiles.miPerfil, exact: true, refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('update', 'Resena'),
   });
@@ -458,7 +459,7 @@ export function useModerarReseña() {
     onSuccess: () => {
       // Invalidar reseñas
       queryClient.invalidateQueries({ queryKey: ['resenas-negocio'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['mi-perfil-marketplace'], exact: true, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.marketplace.perfiles.miPerfil, exact: true, refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('update', 'Resena'),
   });

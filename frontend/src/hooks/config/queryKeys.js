@@ -106,6 +106,10 @@ export const queryKeys = {
       all: ['alertas-inventario'],
       vencimientos: ['alertas-vencimientos'],
     },
+    transferencias: {
+      all: ['transferencias'],
+      list: (params) => ['transferencias', params],
+    },
     reportes: {
       abc: (params) => ['reporte-abc', params],
       rotacion: (params) => ['reporte-rotacion', params],
@@ -169,31 +173,77 @@ export const queryKeys = {
       list: (params) => ['ventas', params],
       detail: (id) => ['venta', id],
       resumen: (params) => ['ventas-resumen', params],
+      corteCajaBase: ['corte-caja'],
+      corteCaja: (params) => ['corte-caja', params],
+      diariasBase: ['ventas-diarias'],
+      diarias: (params) => ['ventas-diarias', params],
     },
     cupones: {
       all: ['cupones'],
       list: (params) => ['cupones', params],
       validar: (codigo) => ['validar-cupon', codigo],
+      historial: (cuponId, params) => ['cupon-historial', cuponId, params],
+      estadisticas: (cuponId) => ['cupon-estadisticas', cuponId],
+      vigentes: ['cupones-vigentes'],
     },
     promociones: {
       all: ['promociones'],
       list: (params) => ['promociones', params],
       evaluar: (params) => ['promociones-evaluar', params],
+      vigentesBase: ['promociones-vigentes'],
+      vigentes: (params) => ['promociones-vigentes', params],
+      historial: (promocionId, params) => ['promocion-historial', promocionId, params],
+      estadisticas: (promocionId) => ['promocion-estadisticas', promocionId],
     },
     sesionCaja: {
       actual: ['sesion-caja'],
+      activaBase: ['sesion-caja-activa'],
       activa: (params) => ['sesion-caja-activa', params],
+      historialBase: ['sesiones-caja'],
       historial: (params) => ['sesiones-caja', params],
       detail: (id) => ['sesion-caja', id],
+      resumenBase: ['resumen-sesion-caja'],
+      resumen: (id) => ['resumen-sesion-caja', id],
+      movimientos: (sesionId) => ['movimientos-caja', sesionId],
+    },
+    pagos: {
+      ventaBase: ['pagos-venta'],
+      venta: (ventaId) => ['pagos-venta', ventaId],
     },
     stockDisponible: (productoId) => ['stock-disponible', productoId],
     categoriasPOS: ['categorias-pos'],
+    productosPOS: (params) => ['productos-pos', params],
+    tasaCambio: (monedaOrg, monedaSecundaria) => ['tasa-cambio', monedaOrg, monedaSecundaria],
+    // Combos (Feb 2026)
+    combos: {
+      all: ['combos'],
+      list: (params) => ['combos', params],
+      detail: (productoId) => ['combo', productoId],
+      verificar: (productoId) => ['combo-verificar', productoId],
+      precio: (productoId) => ['combo-precio', productoId],
+      stock: (productoId, cantidad) => ['combo-stock', productoId, cantidad],
+    },
+    // Modificadores (Feb 2026)
+    modificadores: {
+      gruposBase: ['grupos-modificadores'],
+      grupos: (params) => ['grupos-modificadores', params],
+      productoBase: ['modificadores-producto'],
+      producto: (productoId) => ['modificadores-producto', productoId],
+      tieneBase: ['tiene-modificadores'],
+      tiene: (productoId) => ['tiene-modificadores', productoId],
+      asignaciones: (productoId) => ['asignaciones-producto', productoId],
+    },
     // Lealtad (Ene 2026)
     lealtad: {
       configuracion: ['lealtad-configuracion'],
       estadisticas: (sucursalId) => ['lealtad-estadisticas', sucursalId],
       puntos: (clienteId) => ['lealtad-puntos', clienteId],
+      historialBase: ['lealtad-historial'],
       historial: (clienteId, params) => ['lealtad-historial', clienteId, params],
+      nivelesBase: ['lealtad-niveles'],
+      niveles: (options) => ['lealtad-niveles', options],
+      clientesBase: ['lealtad-clientes'],
+      clientes: (params) => ['lealtad-clientes', params],
     },
     // Turnos/Colas (Ene 2026)
     turnos: {
@@ -223,11 +273,16 @@ export const queryKeys = {
       profesional: (profesionalId) => ['horarios-profesional', profesionalId],
     },
     disponibilidad: (params) => ['disponibilidad', params],
+    disponibilidadInmediata: (params) => ['disponibilidad-inmediata', params],
     bloqueos: {
       all: ['bloqueos'],
       list: (params) => ['bloqueos', params],
     },
     tiposBloqueo: ['tipos-bloqueo'],
+    citasDelDia: ['citas-del-dia'],
+    citasHoy: (hoy) => ['citas-hoy', hoy],
+    citasCliente: (clienteId) => ['citas-cliente', clienteId],
+    configuracion: ['configuracion-agendamiento'],
   },
 
   // ============================================================
@@ -366,12 +421,99 @@ export const queryKeys = {
   },
 
   // ============================================================
+  // EVENTOS DIGITALES
+  // ============================================================
+  eventosDigitales: {
+    eventos: {
+      all: ['eventos'],
+      list: (params) => ['eventos', params],
+      detail: (id) => ['evento', id],
+      bloques: (eventoId) => ['evento', eventoId, 'bloques'],
+    },
+    publico: {
+      evento: (slug) => ['evento-publico', slug],
+      estadisticas: (eventoId) => ['evento-publico-estadisticas', eventoId],
+      invitacion: (slug, token) => ['invitacion-publica', slug, token],
+      galeria: (slug, limit) => ['galeria-publica', slug, limit],
+    },
+    plantillas: {
+      porTipo: (tipoEvento) => ['plantillas-tipo', tipoEvento],
+    },
+  },
+
+  // ============================================================
+  // AUSENCIAS
+  // ============================================================
+  ausencias: {
+    all: ['ausencias'],
+    list: (params) => ['ausencias', params],
+    calendario: (params) => ['ausencias', 'calendario', params],
+    estadisticas: {
+      vacaciones: (anio) => ['ausencias', 'estadisticas', 'vacaciones', anio],
+      incapacidades: (anio) => ['ausencias', 'estadisticas', 'incapacidades', anio],
+    },
+  },
+
+  // ============================================================
+  // PRECIOS
+  // ============================================================
+  precios: {
+    listas: {
+      all: ['listas-precios'],
+      list: (params) => ['listas-precios', params],
+      activas: ['listas-precios-activas'],
+      items: (listaId) => ['lista-items', listaId],
+      clientes: (listaId) => ['lista-clientes', listaId],
+    },
+  },
+
+  // ============================================================
+  // SUSCRIPCIONES NEGOCIO
+  // ============================================================
+  suscripcionesNegocio: {
+    planes: {
+      publicos: ['planes-publicos'],
+      preview: ['planes-publicos-preview'],
+    },
+  },
+
+  // ============================================================
+  // AUTH / SETUP
+  // ============================================================
+  auth: {
+    usuario: ['usuario'],
+    organizacion: ['organizacion'],
+    setupProgress: (orgId) => ['setup-progress', orgId],
+    setupCheck: ['setup', 'check'],
+  },
+
+  // ============================================================
+  // STORAGE / MEDIA
+  // ============================================================
+  storage: {
+    archivos: {
+      all: ['archivos'],
+      list: (params) => ['archivos', params],
+      detail: (id) => ['archivo', id],
+    },
+    usage: ['storage-usage'],
+    presignedUrl: (id, expiry) => ['presigned-url', id, expiry],
+    unsplash: (query, page) => ['unsplash', 'search', query, page],
+  },
+
+  // ============================================================
   // OTROS MODULOS
   // ============================================================
   estadisticas: {
+    organizacion: (orgId) => ['estadisticas', orgId],
     dashboard: (params) => ['estadisticas-dashboard', params],
     ventas: (params) => ['estadisticas-ventas', params],
     inventario: (params) => ['estadisticas-inventario', params],
+    asignaciones: ['estadisticas-asignaciones'],
+    serviciosDashboard: ['servicios-dashboard'],
+    bloqueosDashboard: (hoy, treintaDias) => ['bloqueos-dashboard', hoy, treintaDias],
+    clientes: ['clientes-estadisticas'],
+    clienteDetail: (clienteId) => ['cliente-estadisticas', clienteId],
   },
 
   contabilidad: {
@@ -387,30 +529,58 @@ export const queryKeys = {
 
   marketplace: {
     perfiles: {
-      all: ['marketplace-perfiles'],
-      list: (params) => ['marketplace-perfiles', params],
+      all: ['perfiles-marketplace'],
+      list: (params) => ['perfiles-marketplace', params],
       miPerfil: ['mi-perfil-marketplace'],
+      publico: (slug) => ['perfil-publico', slug],
     },
-    resenas: (perfilSlug) => ['resenas', perfilSlug],
-    categorias: ['marketplace-categorias'],
+    resenas: (slug, params) => ['resenas-negocio', slug, params],
+    categorias: ['categorias-marketplace'],
+    setupProgress: ['organizacion-setup-progress'],
+    estadisticasPerfil: (id, params) => ['estadisticas-perfil', id, params],
+    serviciosPublicos: (organizacionId) => ['servicios-publicos', organizacionId],
+    disponibilidadPublica: (organizacionId, params) => ['disponibilidad-publica', organizacionId, params],
   },
 
   website: {
     config: ['website-config'],
     paginas: ['website-paginas'],
     bloques: (paginaId) => ['website-bloques', paginaId],
+    templates: {
+      all: ['website', 'templates'],
+      industrias: ['website', 'templates', 'industrias'],
+    },
+    versiones: ['website', 'versiones'],
+    serviciosErp: ['website-servicios-erp'],
+    publico: (slug, pagina) => ['sitio-publico', slug, pagina],
   },
 
   chatbots: {
     all: ['chatbots'],
     detail: (id) => ['chatbot', id],
     conversaciones: (botId) => ['conversaciones', botId],
+    estadisticas: (id, params) => ['chatbot-estadisticas', id, params],
   },
 
   comisiones: {
-    config: ['comisiones-config'],
-    calculo: (params) => ['comisiones-calculo', params],
-    historial: (params) => ['comisiones-historial', params],
+    all: ['comisiones'],
+    configuracion: (params) => ['comisiones', 'configuracion', params],
+    historialConfiguracion: (params) => ['comisiones', 'historial-configuracion', params],
+    profesional: (profesionalId, params) => ['comisiones', 'profesional', profesionalId, params],
+    periodo: (params) => ['comisiones', 'periodo', params],
+    detail: (id) => ['comisiones', id],
+    dashboard: (params) => ['comisiones', 'dashboard', params],
+    estadisticas: (params) => ['comisiones', 'estadisticas', params],
+    graficaPorDia: (params) => ['comisiones', 'grafica-por-dia', params],
+  },
+
+  // ============================================================
+  // PÚBLICO
+  // ============================================================
+  publico: {
+    servicios: (slug, params) => ['servicios-publicos', slug, params],
+    profesionales: (slug, params) => ['profesionales-publicos', slug, params],
+    disponibilidad: (organizacionId, params) => ['disponibilidad-publica', organizacionId, params],
   },
 };
 

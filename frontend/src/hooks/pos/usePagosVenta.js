@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { posApi } from '@/services/api/endpoints';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
+import { queryKeys } from '@/hooks/config';
 
 /**
  * Hook para registrar pago en venta
@@ -19,10 +20,10 @@ export function useRegistrarPago() {
       return response.data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['ventas-pos'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['venta-pos', variables.id], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['corte-caja'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['ventas-diarias'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.pos.ventas.all, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.pos.ventas.detail(variables.id), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.pos.ventas.corteCajaBase, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.pos.ventas.diariasBase, refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('create', 'Pago', {
       400: 'Monto de pago inválido',
@@ -48,14 +49,14 @@ export function useRegistrarPagosSplit() {
       return response.data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['ventas-pos'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['venta-pos', variables.ventaId], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['pagos-venta', variables.ventaId], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['corte-caja'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['ventas-diarias'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['sesion-caja-activa'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.pos.ventas.all, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.pos.ventas.detail(variables.ventaId), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.pos.pagos.venta(variables.ventaId), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.pos.ventas.corteCajaBase, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.pos.ventas.diariasBase, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.pos.sesionCaja.activaBase, refetchType: 'active' });
       if (variables.clienteId) {
-        queryClient.invalidateQueries({ queryKey: ['cliente-credito', variables.clienteId], refetchType: 'active' });
+        queryClient.invalidateQueries({ queryKey: queryKeys.personas.clientes.credito(variables.clienteId), refetchType: 'active' });
       }
     },
     onError: createCRUDErrorHandler('create', 'Pagos', {
@@ -70,7 +71,7 @@ export function useRegistrarPagosSplit() {
  */
 export function usePagosVenta(ventaId) {
   return useQuery({
-    queryKey: ['pagos-venta', ventaId],
+    queryKey: queryKeys.pos.pagos.venta(ventaId),
     queryFn: async () => {
       const response = await posApi.obtenerPagosVenta(ventaId);
       return response.data.data || { venta: null, pagos: [], resumen: {} };

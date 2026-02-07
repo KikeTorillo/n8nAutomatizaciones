@@ -7,6 +7,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
+import { queryKeys } from '@/hooks/config';
 import imagesApi from '@/services/api/modules/images.api';
 
 /**
@@ -39,7 +40,7 @@ export function useUnsplashSearch({ debounceMs = 300, apiClient = imagesApi } = 
     error,
     refetch,
   } = useQuery({
-    queryKey: ['unsplash', 'search', debouncedQuery, page],
+    queryKey: queryKeys.storage.unsplash(debouncedQuery, page),
     queryFn: () =>
       apiClient.buscarImagenes({
         query: debouncedQuery,

@@ -3,6 +3,7 @@ import { STALE_TIMES } from '@/app/queryClient';
 import { citasApi } from '@/services/api/endpoints';
 import { aFormatoISO } from '@/utils/dateHelpers';
 import { sanitizeParams } from '@/lib/params';
+import { queryKeys } from '@/hooks/config';
 
 /**
  * Hook para listar citas con filtros y paginación
@@ -11,7 +12,7 @@ import { sanitizeParams } from '@/lib/params';
  */
 export function useCitas(params = {}) {
   return useQuery({
-    queryKey: ['citas', params],
+    queryKey: queryKeys.agendamiento.citas.list(params),
     queryFn: async () => {
       const response = await citasApi.listar(sanitizeParams(params));
       const data = response.data?.data || {};
@@ -38,7 +39,7 @@ export function useCitas(params = {}) {
  */
 export function useCita(id) {
   return useQuery({
-    queryKey: ['citas', id],
+    queryKey: queryKeys.agendamiento.citas.detail(id),
     queryFn: async () => {
       const response = await citasApi.obtener(id);
       return response.data;
@@ -55,7 +56,7 @@ export function useCitasDelDia() {
   const hoy = aFormatoISO(new Date());
 
   return useQuery({
-    queryKey: ['citas', 'hoy', hoy],
+    queryKey: queryKeys.agendamiento.citasHoy(hoy),
     queryFn: async () => {
       const response = await citasApi.listar({
         fecha_desde: hoy,
@@ -73,7 +74,7 @@ export function useCitasDelDia() {
  */
 export function useCitasPendientes() {
   return useQuery({
-    queryKey: ['citas', 'pendientes'],
+    queryKey: [...queryKeys.agendamiento.citas.all, 'pendientes'],
     queryFn: async () => {
       const response = await citasApi.listar({ estado: 'pendiente' });
       return response.data?.data?.citas || [];

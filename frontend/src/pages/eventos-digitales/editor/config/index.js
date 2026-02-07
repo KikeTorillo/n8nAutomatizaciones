@@ -34,4 +34,7 @@ export {
   MARCOS_FOTOS,
   ANIMACIONES_ENTRADA,
   STICKERS_DISPONIBLES,
+  extractInvitacionColors,
+  extractInvitacionFonts,
+  buildInvitacionThemePayload,
 } from './themeConfig';

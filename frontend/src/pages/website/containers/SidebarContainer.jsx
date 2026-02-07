@@ -9,16 +9,23 @@
  * @since 2026-02-03
  */
 
-import { memo, useMemo, useCallback } from 'react';
+import { memo, useMemo } from 'react';
 import { Plus, FileText, Palette, Sparkles } from 'lucide-react';
-import { BlockPalette, ThemeEditorPanel, TemplateGalleryPanel } from '@/components/editor-framework';
-import { useEditor } from '../context';
+import { BlockPalette, ThemeEditorPanel, TemplateGalleryPanel, useThemeSave } from '@/components/editor-framework';
+import { useWebsiteEditorContext } from '../context';
 import PageManager from '../components/PageManager';
 import {
   CATEGORIAS_WEBSITE,
   normalizarBloques,
 } from '../config/blockConfig';
-import { TEMAS_PREDEFINIDOS, COLOR_FIELDS, FONT_FIELDS } from '../config/themeConfig';
+import {
+  TEMAS_PREDEFINIDOS,
+  COLOR_FIELDS,
+  FONT_FIELDS,
+  extractWebsiteColors,
+  extractWebsiteFonts,
+  buildWebsiteThemePayload,
+} from '../config/themeConfig';
 
 /**
  * SidebarContainer - Panel lateral izquierdo
@@ -51,7 +58,7 @@ function SidebarContainer() {
     actualizarPagina,
     eliminarPagina,
     actualizarConfig,
-  } = useEditor();
+  } = useWebsiteEditorContext();
 
   // Normalizar bloques para BlockPalette
   const bloquesNormalizados = useMemo(
@@ -59,34 +66,14 @@ function SidebarContainer() {
     [tiposBloques]
   );
 
-  // Extraer colores actuales del config
-  const currentColors = useMemo(() => ({
-    primario: config?.tema?.colores?.primario || '#4F46E5',
-    secundario: config?.tema?.colores?.secundario || '#6366F1',
-    fondo: config?.tema?.colores?.fondo || '#FFFFFF',
-    texto: config?.tema?.colores?.texto || '#1F2937',
-  }), [config]);
-
-  const currentFonts = useMemo(() => ({
-    fuente_titulos: config?.tema?.fuente_titulos || 'Inter',
-    fuente_cuerpo: config?.tema?.fuente_cuerpo || 'Inter',
-  }), [config]);
-
-  // Handler de guardado de tema
-  const handleSaveTema = useCallback(async ({ colores, fuentes }) => {
-    await actualizarConfig.mutateAsync({
-      id: config.id,
-      data: {
-        version: config.version,
-        color_primario: colores.primario,
-        color_secundario: colores.secundario,
-        color_fondo: colores.fondo,
-        color_texto: colores.texto,
-        fuente_titulos: fuentes?.fuente_titulos,
-        fuente_cuerpo: fuentes?.fuente_cuerpo,
-      },
-    });
-  }, [actualizarConfig, config]);
+  // Colores, fuentes y guardado de tema (centralizado)
+  const { currentColors, currentFonts, handleSaveTema } = useThemeSave({
+    source: config,
+    extractColors: extractWebsiteColors,
+    extractFonts: extractWebsiteFonts,
+    buildPayload: buildWebsiteThemePayload(config),
+    saveMutation: (payload) => actualizarConfig.mutateAsync(payload),
+  });
 
   if (!showSidebar) {
     return null;

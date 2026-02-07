@@ -15,6 +15,7 @@ import { STALE_TIMES } from '@/app/queryClient';
 import { profesionalesApi } from '@/services/api/endpoints';
 import { createCRUDHooks, createSanitizer, createSearchHook } from '@/hooks/factories';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
+import { queryKeys } from '@/hooks/config';
 
 // ====================================================================
 // CRUD BÁSICO VIA FACTORY
@@ -46,9 +47,9 @@ const hooks = createCRUDHooks({
     delete: 'eliminar',
   },
   sanitize: sanitizeProfesional,
-  invalidateOnCreate: ['profesionales', 'profesionales-dashboard', 'estadisticas'],
-  invalidateOnUpdate: ['profesionales', 'profesionales-dashboard'],
-  invalidateOnDelete: ['profesionales', 'profesionales-dashboard', 'estadisticas'],
+  invalidateOnCreate: queryKeys.personas.profesionales.all,
+  invalidateOnUpdate: queryKeys.personas.profesionales.all,
+  invalidateOnDelete: queryKeys.personas.profesionales.all,
   errorMessages: {
     create: { 409: 'Ya existe un profesional con ese email o teléfono' },
     update: { 409: 'Ya existe un profesional con ese email o teléfono' },
@@ -109,9 +110,9 @@ export function useVincularUsuario() {
       return response.data.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['profesional', data.id], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['profesionales'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['usuarios-disponibles'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.personas.profesionales.detail(data.id), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.personas.profesionales.all, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.personas.profesionales.disponibles, refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: ['profesional-usuario'], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('update', 'Profesional', {
@@ -132,8 +133,8 @@ export function useActualizarModulos() {
       return response.data.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['profesional', data.id], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['profesionales'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.personas.profesionales.detail(data.id), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.personas.profesionales.all, refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: ['profesionales-modulo'], refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: ['profesional-usuario'], refetchType: 'active' });
     },
@@ -229,7 +230,7 @@ export function useAsignarCategoria() {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['profesional-categorias', variables.profesionalId], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['profesional', variables.profesionalId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.personas.profesionales.detail(variables.profesionalId), refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: ['categoria-profesionales'], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('create', 'Categoría', {
@@ -251,7 +252,7 @@ export function useEliminarCategoriaDeProf() {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['profesional-categorias', variables.profesionalId], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['profesional', variables.profesionalId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.personas.profesionales.detail(variables.profesionalId), refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: ['categoria-profesionales'], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('delete', 'Categoría'),
@@ -271,9 +272,9 @@ export function useSincronizarCategorias() {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['profesional-categorias', variables.profesionalId], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['profesional', variables.profesionalId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.personas.profesionales.detail(variables.profesionalId), refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: ['categoria-profesionales'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['categorias-profesional'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.catalogos.categoriasProfesional, refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('update', 'Categorías'),
   });

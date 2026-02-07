@@ -262,6 +262,9 @@ export {
   PAGE_HEADER_STYLES,
 } from './pageHeader';
 
+// Normalización de variantes (Feb 2026)
+export { normalizeVariant } from './normalizeVariant';
+
 // Theme Defaults (Feb 2026)
 export {
   THEME_FALLBACK_COLORS,

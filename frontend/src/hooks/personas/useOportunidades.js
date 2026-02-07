@@ -13,6 +13,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { oportunidadesApi } from '@/services/api/endpoints';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
+import { queryKeys } from '@/hooks/config';
 
 // ====================================================================
 // CONSTANTES
@@ -67,7 +68,7 @@ export function useEtapasPipeline(incluirInactivas = false) {
  */
 export function useOportunidades(params = {}) {
   return useQuery({
-    queryKey: ['oportunidades', params],
+    queryKey: queryKeys.personas.oportunidades.list(params),
     queryFn: async () => {
       const response = await oportunidadesApi.listar(params);
       return {
@@ -102,7 +103,7 @@ export function useOportunidadesCliente(clienteId, params = {}) {
  */
 export function useOportunidad(oportunidadId) {
   return useQuery({
-    queryKey: ['oportunidad', oportunidadId],
+    queryKey: queryKeys.personas.oportunidades.detail(oportunidadId),
     queryFn: async () => {
       const response = await oportunidadesApi.obtenerPorId(oportunidadId);
       return response.data.data;
@@ -117,7 +118,7 @@ export function useOportunidad(oportunidadId) {
  */
 export function usePipeline(vendedorId = null) {
   return useQuery({
-    queryKey: ['pipeline', vendedorId],
+    queryKey: queryKeys.personas.oportunidades.pipeline(vendedorId),
     queryFn: async () => {
       const response = await oportunidadesApi.obtenerPipeline({ vendedor_id: vendedorId });
       return response.data.data;
@@ -131,7 +132,7 @@ export function usePipeline(vendedorId = null) {
  */
 export function useEstadisticasPipeline(vendedorId = null) {
   return useQuery({
-    queryKey: ['pipeline-estadisticas', vendedorId],
+    queryKey: queryKeys.personas.oportunidades.estadisticas(vendedorId),
     queryFn: async () => {
       const response = await oportunidadesApi.obtenerEstadisticas({ vendedor_id: vendedorId });
       return response.data.data;
@@ -268,7 +269,7 @@ export function useCrearOportunidad() {
       return response.data.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['oportunidades'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.personas.oportunidades.all, refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: ['pipeline'], refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: ['pipeline-estadisticas'], refetchType: 'active' });
       if (data.cliente_id) {
@@ -292,8 +293,8 @@ export function useActualizarOportunidad() {
       return response.data.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['oportunidad', variables.oportunidadId], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['oportunidades'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.personas.oportunidades.detail(variables.oportunidadId), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.personas.oportunidades.all, refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: ['pipeline'], refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: ['pipeline-estadisticas'], refetchType: 'active' });
     },
@@ -313,7 +314,7 @@ export function useEliminarOportunidad() {
       return oportunidadId;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['oportunidades'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.personas.oportunidades.all, refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: ['pipeline'], refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: ['pipeline-estadisticas'], refetchType: 'active' });
     },
@@ -348,7 +349,7 @@ export function useMoverOportunidad() {
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['pipeline'], refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: ['pipeline-estadisticas'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['oportunidades'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.personas.oportunidades.all, refetchType: 'active' });
     },
   });
 }
@@ -365,8 +366,8 @@ export function useMarcarGanada() {
       return response.data.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['oportunidad', data.id], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['oportunidades'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.personas.oportunidades.detail(data.id), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.personas.oportunidades.all, refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: ['pipeline'], refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: ['pipeline-estadisticas'], refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: ['pronostico-ventas'], refetchType: 'active' });
@@ -387,8 +388,8 @@ export function useMarcarPerdida() {
       return response.data.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['oportunidad', data.id], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['oportunidades'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.personas.oportunidades.detail(data.id), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.personas.oportunidades.all, refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: ['pipeline'], refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: ['pipeline-estadisticas'], refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: ['pronostico-ventas'], refetchType: 'active' });

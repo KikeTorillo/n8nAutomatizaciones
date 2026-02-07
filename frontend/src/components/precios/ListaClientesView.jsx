@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { Button, ConfirmDialog, Input } from '@/components/ui';
 import { useToast } from '@/hooks/utils';
+import { queryKeys } from '@/hooks/config';
 import { listasPreciosApi, clientesApi } from '@/services/api/endpoints';
 
 /**
@@ -24,7 +25,7 @@ export default function ListaClientesView({ listaId }) {
 
   // Query: Clientes asignados a esta lista
   const { data: clientes = [], isLoading } = useQuery({
-    queryKey: ['lista-clientes', listaId],
+    queryKey: queryKeys.precios.listas.clientes(listaId),
     queryFn: async () => {
       const response = await listasPreciosApi.listarClientes(listaId);
       return response.data.data || [];
@@ -48,8 +49,8 @@ export default function ListaClientesView({ listaId }) {
       return await clientesApi.actualizar(clienteId, { lista_precios_id: listaId });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['lista-clientes', listaId] });
-      queryClient.invalidateQueries({ queryKey: ['listas-precios'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.precios.listas.clientes(listaId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.precios.listas.all });
       toast.success('Cliente asignado a la lista');
       setBusqueda('');
       setShowBuscador(false);
@@ -65,8 +66,8 @@ export default function ListaClientesView({ listaId }) {
       return await clientesApi.actualizar(clienteId, { lista_precios_id: null });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['lista-clientes', listaId] });
-      queryClient.invalidateQueries({ queryKey: ['listas-precios'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.precios.listas.clientes(listaId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.precios.listas.all });
       toast.success('Cliente removido de la lista');
       setRemoveConfirm(null);
     },

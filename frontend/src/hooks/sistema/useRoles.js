@@ -9,15 +9,16 @@ import { rolesApi } from '@/services/api/endpoints';
 import { createCRUDHooks } from '@/hooks/factories';
 import { STALE_TIMES } from '@/app/queryClient';
 import { toast } from 'sonner';
+import { queryKeys } from '@/hooks/config';
 
 /**
- * Keys de query para roles
+ * Keys de query para roles (derivadas de queryKeys centralizadas)
  */
-export const rolesKeys = {
-  all: ['roles'],
-  list: (params) => ['roles', 'list', params],
-  detail: (id) => ['roles', 'detail', id],
-  permisos: (rolId) => ['roles', 'permisos', rolId],
+const rolesKeys = {
+  all: queryKeys.sistema.roles.all,
+  list: (params) => queryKeys.sistema.roles.list(params),
+  detail: (id) => queryKeys.sistema.roles.detail(id),
+  permisos: (rolId) => queryKeys.sistema.roles.permisos(rolId),
 };
 
 // ============================================================

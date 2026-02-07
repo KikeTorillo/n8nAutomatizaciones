@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { Button, ConfirmDialog, Input, Select } from '@/components/ui';
 import { useToast, useModalManager } from '@/hooks/utils';
+import { queryKeys } from '@/hooks/config';
 import { listasPreciosApi, inventarioApi } from '@/services/api/endpoints';
 
 /**
@@ -36,7 +37,7 @@ export default function ListaItemsView({ listaId }) {
 
   // Query: Items de la lista
   const { data: items = [], isLoading } = useQuery({
-    queryKey: ['lista-items', listaId],
+    queryKey: queryKeys.precios.listas.items(listaId),
     queryFn: async () => {
       const response = await listasPreciosApi.listarItems(listaId);
       return response.data.data || [];
@@ -81,8 +82,8 @@ export default function ListaItemsView({ listaId }) {
       return await listasPreciosApi.crearItem(listaId, data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['lista-items', listaId] });
-      queryClient.invalidateQueries({ queryKey: ['listas-precios'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.precios.listas.items(listaId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.precios.listas.all });
       toast.success('Item agregado a la lista');
       resetForm();
     },
@@ -97,8 +98,8 @@ export default function ListaItemsView({ listaId }) {
       return await listasPreciosApi.eliminarItem(itemId);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['lista-items', listaId] });
-      queryClient.invalidateQueries({ queryKey: ['listas-precios'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.precios.listas.items(listaId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.precios.listas.all });
       toast.success('Item eliminado de la lista');
       closeItemModal('deleteItem');
     },

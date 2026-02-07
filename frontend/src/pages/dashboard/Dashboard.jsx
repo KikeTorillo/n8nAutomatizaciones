@@ -1,6 +1,7 @@
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { serviciosApi } from '@/services/api/endpoints';
+import { queryKeys } from '@/hooks/config';
 import { useAuthStore, selectUser } from '@/features/auth';
 import { useModulos } from '@/hooks/sistema';
 import { BackButton, Button, LimitProgressBar } from '@/components/ui';
@@ -37,7 +38,7 @@ function Dashboard() {
 
   // Estadísticas de asignaciones servicio-profesional
   const { data: statsAsignaciones, isLoading: loadingStats } = useQuery({
-    queryKey: ['estadisticas-asignaciones'],
+    queryKey: queryKeys.estadisticas.asignaciones,
     queryFn: () => serviciosApi.obtenerEstadisticasAsignaciones(),
     select: (response) => response.data.data,
     staleTime: 5 * 60 * 1000,

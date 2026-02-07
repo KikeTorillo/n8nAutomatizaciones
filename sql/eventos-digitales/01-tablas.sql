@@ -50,6 +50,9 @@ CREATE TABLE IF NOT EXISTS plantillas_evento (
         "stickers": []
     }',
 
+    -- Bloques de la plantilla (diseño visual)
+    bloques_plantilla JSONB DEFAULT '[]'::jsonb,
+
     -- HTML/CSS personalizados (opcional, para plantillas avanzadas)
     estructura_html TEXT,
     estilos_css TEXT,

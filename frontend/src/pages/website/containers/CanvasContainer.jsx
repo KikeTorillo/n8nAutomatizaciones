@@ -11,7 +11,7 @@
  */
 
 import { memo } from 'react';
-import { useEditor } from '../context';
+import { useWebsiteEditorContext } from '../context';
 import { useBlockSelection } from '@/components/editor-framework';
 import EditorCanvas from '../components/EditorCanvas';
 import BlockEditor from '../components/BlockEditor';
@@ -45,7 +45,7 @@ function CanvasContainer() {
 
     // Layout
     abrirPropiedades,
-  } = useEditor();
+  } = useWebsiteEditorContext();
 
   // Hook para selección de bloques + apertura de propiedades
   const { handleBloqueClick } = useBlockSelection({

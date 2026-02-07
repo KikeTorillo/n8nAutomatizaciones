@@ -1,7 +1,7 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useEffect, useMemo, useCallback } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
-import { Button, LoadingSpinner } from '@/components/ui';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { BackButton, Button, LoadingSpinner } from '@/components/ui';
 import { usePlantilla, usePlantillas } from '@/hooks/otros';
 import { InvitacionDinamica } from '@/components/eventos-digitales';
 import { generarPreviewData } from '@/utils/plantillaDummyData';
@@ -110,27 +110,22 @@ function PlantillaPreview() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
+    <div className="min-h-screen">
       {/* Botón volver - fixed */}
-      <button
-        onClick={() => navigate('/eventos-digitales/plantillas/galeria')}
-        className="fixed top-4 left-4 z-50 flex items-center gap-2 px-3 py-2 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-full shadow-lg hover:bg-white dark:hover:bg-gray-800 transition-colors text-sm font-medium text-gray-700 dark:text-gray-300"
-      >
-        <ArrowLeft className="w-4 h-4" />
-        Volver
-      </button>
+      <BackButton
+        to="/eventos-digitales/plantillas/galeria"
+        className="fixed top-4 left-4 z-50"
+      />
 
-      {/* Preview de la invitación */}
-      <div className="max-w-lg mx-auto shadow-2xl">
-        <InvitacionDinamica
-          evento={evento}
-          invitado={null}
-          bloques={bloques}
-          tema={tema}
-          onConfirmRSVP={() => {}}
-          isLoadingRSVP={false}
-        />
-      </div>
+      {/* Preview — igual que la página pública */}
+      <InvitacionDinamica
+        evento={evento}
+        invitado={null}
+        bloques={bloques}
+        tema={tema}
+        onConfirmRSVP={() => {}}
+        isLoadingRSVP={false}
+      />
 
       {/* Barra de navegación sticky bottom */}
       <div className="sticky bottom-0 z-50 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-t border-gray-200 dark:border-gray-700 shadow-lg">

@@ -104,6 +104,7 @@ class PlantillaModel {
             categoria,
             subcategoria,
             tema,
+            bloques_plantilla,
             estructura_html,
             estilos_css,
             es_premium = false,
@@ -115,13 +116,14 @@ class PlantillaModel {
                 INSERT INTO plantillas_evento (
                     codigo, nombre, tipo_evento, descripcion, preview_url,
                     categoria, subcategoria,
-                    tema, estructura_html, estilos_css, es_premium, orden
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+                    tema, bloques_plantilla, estructura_html, estilos_css, es_premium, orden
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
                 RETURNING *
             `, [
                 codigo, nombre, tipo_evento, descripcion, preview_url,
                 categoria, subcategoria,
                 tema ? JSON.stringify(tema) : null,
+                bloques_plantilla ? JSON.stringify(bloques_plantilla) : '[]',
                 estructura_html, estilos_css, es_premium, orden
             ]);
 
@@ -140,13 +142,13 @@ class PlantillaModel {
         const camposPermitidos = [
             'nombre', 'tipo_evento', 'descripcion', 'preview_url',
             'categoria', 'subcategoria',
-            'tema', 'estructura_html', 'estilos_css',
+            'tema', 'bloques_plantilla', 'estructura_html', 'estilos_css',
             'es_premium', 'activo', 'orden'
         ];
 
         for (const campo of camposPermitidos) {
             if (datos[campo] !== undefined) {
-                if (campo === 'tema') {
+                if (campo === 'tema' || campo === 'bloques_plantilla') {
                     campos.push(`${campo} = $${idx}`);
                     valores.push(JSON.stringify(datos[campo]));
                 } else {
@@ -204,6 +206,37 @@ class PlantillaModel {
             `, [id]);
 
             return { eliminado: result.rowCount > 0, desactivado: false };
+        });
+    }
+
+    /**
+     * Obtener bloques de una plantilla
+     */
+    static async obtenerBloques(id) {
+        return await RLSContextManager.withBypass(async (db) => {
+            const result = await db.query(`
+                SELECT bloques_plantilla FROM plantillas_evento
+                WHERE id = $1
+            `, [id]);
+
+            if (!result.rows[0]) return null;
+            return result.rows[0].bloques_plantilla || [];
+        });
+    }
+
+    /**
+     * Guardar bloques de una plantilla
+     */
+    static async guardarBloques(id, bloques) {
+        return await RLSContextManager.withBypass(async (db) => {
+            const result = await db.query(`
+                UPDATE plantillas_evento
+                SET bloques_plantilla = $1
+                WHERE id = $2
+                RETURNING id, bloques_plantilla
+            `, [JSON.stringify(bloques), id]);
+
+            return result.rows[0] || null;
         });
     }
 

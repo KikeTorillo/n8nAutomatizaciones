@@ -133,3 +133,29 @@ export const STICKERS_DISPONIBLES = [
   '💖','💕','✨','⭐','🎉','🎊','🎈','🎁','🎂','🎀',
   '💐','🌸','👑','🦋','🍀','🌺','🎵','💍','👶','🎶',
 ];
+
+// Funciones extractoras para useThemeSave
+export const extractInvitacionColors = (plantilla) => ({
+  primario: plantilla?.color_primario || '#753572',
+  secundario: plantilla?.color_secundario || '#F59E0B',
+  fondo: plantilla?.color_fondo || '#FFFFFF',
+  texto: plantilla?.color_texto || '#1F2937',
+  texto_claro: plantilla?.color_texto_claro || '#6B7280',
+});
+
+export const extractInvitacionFonts = (plantilla) => ({
+  fuente_titulos: plantilla?.fuente_titulos || 'Playfair Display',
+  fuente_cuerpo: plantilla?.fuente_cuerpo || 'Inter',
+});
+
+export const buildInvitacionThemePayload = (plantilla) => ({ colores, fuentes }) => ({
+  ...plantilla,
+  color_primario: colores.primario,
+  color_secundario: colores.secundario,
+  color_fondo: colores.fondo,
+  color_texto: colores.texto,
+  color_texto_claro: colores.texto_claro,
+  fuente_titulos: fuentes?.fuente_titulos,
+  fuente_titulo: fuentes?.fuente_titulos,
+  fuente_cuerpo: fuentes?.fuente_cuerpo,
+});

@@ -6,16 +6,18 @@
 import { createCRUDHooks } from '@/hooks/factories';
 import { tiposBloqueoApi } from '@/services/api/endpoints';
 import { STALE_TIMES } from '@/app/queryClient';
+import { queryKeys } from '@/hooks/config';
 
 /**
  * Query Keys para tipos de bloqueo
+ * @deprecated Usar `queryKeys.agendamiento.tiposBloqueo` de `@/hooks/config` directamente.
  */
 export const tiposBloqueoKeys = {
-  all: ['tipos-bloqueo'],
-  lists: () => [...tiposBloqueoKeys.all, 'list'],
-  list: (filters) => [...tiposBloqueoKeys.lists(), { filters }],
-  details: () => [...tiposBloqueoKeys.all, 'detail'],
-  detail: (id) => [...tiposBloqueoKeys.details(), id],
+  all: queryKeys.agendamiento.tiposBloqueo,
+  lists: () => [...queryKeys.agendamiento.tiposBloqueo, 'list'],
+  list: (filters) => [...queryKeys.agendamiento.tiposBloqueo, 'list', { filters }],
+  details: () => [...queryKeys.agendamiento.tiposBloqueo, 'detail'],
+  detail: (id) => [...queryKeys.agendamiento.tiposBloqueo, 'detail', id],
 };
 
 /**

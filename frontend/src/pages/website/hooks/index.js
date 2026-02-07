@@ -16,5 +16,5 @@ export {
   RESPONSIVE_DEFAULTS,
   getResponsiveClasses,
 } from './useResponsiveConfig';
-export { useSlashMenu } from './useSlashMenu';
+export { useSlashMenu } from '@/components/editor-framework/hooks';
 export { useERPData } from './useERPData';

@@ -14,6 +14,7 @@ import {
   Textarea
 } from '@/components/ui';
 import FormField from '@/components/forms/FormField';
+import { queryKeys } from '@/hooks/config';
 import { profesionalesApi, monedasApi } from '@/services/api/endpoints';
 import { useCrearServicio, useActualizarServicio, useServicio } from '@/hooks/agendamiento';
 import { useToast } from '@/hooks/utils';
@@ -108,7 +109,7 @@ function ServicioFormDrawer({ isOpen, onClose, mode = 'create', servicio = null 
 
   // Query para obtener monedas disponibles
   const { data: monedasResponse } = useQuery({
-    queryKey: ['monedas'],
+    queryKey: queryKeys.catalogos.monedas,
     queryFn: () => monedasApi.listar(),
     staleTime: 1000 * 60 * 10, // 10 min
   });
@@ -122,7 +123,7 @@ function ServicioFormDrawer({ isOpen, onClose, mode = 'create', servicio = null 
 
   // Fetch profesionales para el multi-select (solo en modo create)
   const { data: profesionales, isLoading: loadingProfesionales } = useQuery({
-    queryKey: ['profesionales'],
+    queryKey: queryKeys.personas.profesionales.all,
     queryFn: async () => {
       const response = await profesionalesApi.listar();
       return response.data.data.profesionales || [];

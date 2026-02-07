@@ -17,6 +17,7 @@ import {
   Lock,
 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
+import { queryKeys } from '@/hooks/config';
 import { Button, Select, StatCardGrid, Alert } from '@/components/ui';
 import {
   useEstadisticasVacaciones,
@@ -221,11 +222,11 @@ function DashboardAusenciasTab() {
       refetchType: 'active',
     });
     queryClient.invalidateQueries({
-      queryKey: ['incapacidades'],
+      queryKey: queryKeys.personas.incapacidades.all,
       refetchType: 'active',
     });
     queryClient.invalidateQueries({
-      queryKey: ['bloqueos'],
+      queryKey: queryKeys.agendamiento.bloqueos.all,
       refetchType: 'active',
     });
   };

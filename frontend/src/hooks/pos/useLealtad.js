@@ -16,6 +16,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { posApi } from '@/services/api/endpoints';
+import { queryKeys } from '@/hooks/config';
 
 // =========================================================================
 // HOOKS PARA CONFIGURACIÓN DEL PROGRAMA
@@ -27,7 +28,7 @@ import { posApi } from '@/services/api/endpoints';
  */
 export function useConfiguracionLealtad() {
   return useQuery({
-    queryKey: ['lealtad-configuracion'],
+    queryKey: queryKeys.pos.lealtad.configuracion,
     queryFn: async () => {
       const response = await posApi.obtenerConfiguracionLealtad();
       return response.data.data;
@@ -49,8 +50,8 @@ export function useGuardarConfiguracionLealtad() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['lealtad-configuracion'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['lealtad-niveles'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.pos.lealtad.configuracion, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.pos.lealtad.nivelesBase, refetchType: 'active' });
     },
   });
 }
@@ -66,7 +67,7 @@ export function useGuardarConfiguracionLealtad() {
  */
 export function useNivelesLealtad(options = {}) {
   return useQuery({
-    queryKey: ['lealtad-niveles', options],
+    queryKey: queryKeys.pos.lealtad.niveles(options),
     queryFn: async () => {
       const response = await posApi.listarNivelesLealtad({
         incluir_inactivos: options.incluirInactivos ? 'true' : 'false',
@@ -90,7 +91,7 @@ export function useCrearNivelLealtad() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['lealtad-niveles'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.pos.lealtad.nivelesBase, refetchType: 'active' });
     },
   });
 }
@@ -108,7 +109,7 @@ export function useActualizarNivelLealtad() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['lealtad-niveles'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.pos.lealtad.nivelesBase, refetchType: 'active' });
     },
   });
 }
@@ -126,7 +127,7 @@ export function useEliminarNivelLealtad() {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['lealtad-niveles'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.pos.lealtad.nivelesBase, refetchType: 'active' });
     },
   });
 }
@@ -144,7 +145,7 @@ export function useCrearNivelesDefault() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['lealtad-niveles'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.pos.lealtad.nivelesBase, refetchType: 'active' });
     },
   });
 }
@@ -160,7 +161,7 @@ export function useCrearNivelesDefault() {
  */
 export function usePuntosCliente(clienteId) {
   return useQuery({
-    queryKey: ['lealtad-puntos', clienteId],
+    queryKey: queryKeys.pos.lealtad.puntos(clienteId),
     queryFn: async () => {
       const response = await posApi.obtenerPuntosCliente(clienteId);
       return response.data.data;
@@ -225,10 +226,10 @@ export function useCanjearPuntos() {
       return response.data.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['lealtad-puntos', variables.clienteId], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['lealtad-historial', variables.clienteId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.pos.lealtad.puntos(variables.clienteId), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: [...queryKeys.pos.lealtad.historialBase, variables.clienteId], refetchType: 'active' });
       if (variables.ventaId) {
-        queryClient.invalidateQueries({ queryKey: ['venta', variables.ventaId], refetchType: 'active' });
+        queryClient.invalidateQueries({ queryKey: queryKeys.pos.ventas.detail(variables.ventaId), refetchType: 'active' });
       }
     },
   });
@@ -252,8 +253,8 @@ export function useAcumularPuntos() {
       return response.data.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['lealtad-puntos', variables.clienteId], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['lealtad-historial', variables.clienteId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.pos.lealtad.puntos(variables.clienteId), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: [...queryKeys.pos.lealtad.historialBase, variables.clienteId], refetchType: 'active' });
     },
   });
 }
@@ -275,9 +276,9 @@ export function useAjustarPuntos() {
       return response.data.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['lealtad-puntos', variables.clienteId], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['lealtad-historial', variables.clienteId], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['lealtad-clientes'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.pos.lealtad.puntos(variables.clienteId), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: [...queryKeys.pos.lealtad.historialBase, variables.clienteId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.pos.lealtad.clientesBase, refetchType: 'active' });
     },
   });
 }
@@ -294,7 +295,7 @@ export function useAjustarPuntos() {
  */
 export function useHistorialPuntos(clienteId, params = {}) {
   return useQuery({
-    queryKey: ['lealtad-historial', clienteId, params],
+    queryKey: queryKeys.pos.lealtad.historial(clienteId, params),
     queryFn: async () => {
       const sanitizedParams = {
         limit: params.limit,
@@ -329,7 +330,7 @@ export function useHistorialPuntos(clienteId, params = {}) {
  */
 export function useClientesConPuntos(params = {}) {
   return useQuery({
-    queryKey: ['lealtad-clientes', params],
+    queryKey: queryKeys.pos.lealtad.clientes(params),
     queryFn: async () => {
       const sanitizedParams = {
         limit: params.limit,
@@ -364,7 +365,7 @@ export function useClientesConPuntos(params = {}) {
  */
 export function useEstadisticasLealtad(sucursalId) {
   return useQuery({
-    queryKey: ['lealtad-estadisticas', sucursalId],
+    queryKey: queryKeys.pos.lealtad.estadisticas(sucursalId),
     queryFn: async () => {
       const response = await posApi.obtenerEstadisticasLealtad(sucursalId);
       return response.data.data;
@@ -460,7 +461,7 @@ export function useLealtadPOS(clienteId, totalCarrito = 0, tieneCupon = false) {
   // Refrescar datos del cliente
   const refrescarPuntos = () => {
     if (clienteId) {
-      queryClient.invalidateQueries({ queryKey: ['lealtad-puntos', clienteId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.pos.lealtad.puntos(clienteId), refetchType: 'active' });
     }
   };
 

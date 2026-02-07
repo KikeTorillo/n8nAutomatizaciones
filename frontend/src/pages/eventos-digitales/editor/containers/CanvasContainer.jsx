@@ -16,7 +16,7 @@ import { useDroppable } from '@dnd-kit/core';
 import { Layout, Plus, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { CanvasBlock } from '../components/canvas-blocks';
-import { useInvitacionEditor } from '../context';
+import { useEditor as useInvitacionEditor } from '@/components/editor-framework';
 import {
   useDndEditor,
   useBlockSelection,

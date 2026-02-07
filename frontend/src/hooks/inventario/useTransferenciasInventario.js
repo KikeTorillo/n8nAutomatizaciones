@@ -1,12 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { inventarioApi } from '@/services/api/endpoints';
+import { queryKeys } from '@/hooks/config';
 
 /**
  * Hook para listar transferencias
  */
 export function useTransferenciasInventario(filtros = {}) {
   return useQuery({
-    queryKey: ['transferencias-inventario', filtros],
+    queryKey: queryKeys.inventario.transferencias.list(filtros),
     queryFn: async () => {
       const response = await inventarioApi.listarTransferencias(filtros);
       return response.data.data;
@@ -20,7 +21,7 @@ export function useTransferenciasInventario(filtros = {}) {
  */
 export function useTransferenciaInventario(id) {
   return useQuery({
-    queryKey: ['transferencia-inventario', id],
+    queryKey: [...queryKeys.inventario.transferencias.all, id],
     queryFn: async () => {
       const response = await inventarioApi.obtenerTransferencia(id);
       return response.data.data;
@@ -41,7 +42,7 @@ export function useCrearTransferencia() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['transferencias-inventario'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.transferencias.all, refetchType: 'active' });
     },
   });
 }
@@ -58,7 +59,7 @@ export function useAprobarTransferencia() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['transferencias-inventario'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.transferencias.all, refetchType: 'active' });
     },
   });
 }
@@ -75,7 +76,7 @@ export function useRechazarTransferencia() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['transferencias-inventario'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.transferencias.all, refetchType: 'active' });
     },
   });
 }
@@ -92,7 +93,7 @@ export function useEnviarTransferencia() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['transferencias-inventario'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.transferencias.all, refetchType: 'active' });
     },
   });
 }
@@ -109,8 +110,8 @@ export function useRecibirTransferencia() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['transferencias-inventario'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['productos'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.transferencias.all, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.productos.all, refetchType: 'active' });
     },
   });
 }

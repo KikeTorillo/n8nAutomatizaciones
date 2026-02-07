@@ -4,6 +4,7 @@ import { posApi } from '@/services/api/endpoints';
 import { useSucursalContext } from '@/hooks/factories';
 import { sanitizeParams } from '@/lib/params';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
+import { queryKeys } from '@/hooks/config';
 
 /**
  * Hook para obtener sesión de caja activa del usuario
@@ -13,7 +14,7 @@ export function useSesionCajaActiva(params = {}) {
   const sucursalId = useSucursalContext(params.sucursal_id);
 
   return useQuery({
-    queryKey: ['sesion-caja-activa', params],
+    queryKey: queryKeys.pos.sesionCaja.activa(params),
     queryFn: async () => {
       const response = await posApi.obtenerSesionActiva({ sucursal_id: sucursalId });
       return response.data.data || { activa: false, sesion: null, totales: null };
@@ -28,7 +29,7 @@ export function useSesionCajaActiva(params = {}) {
  */
 export function useSesionCaja(id) {
   return useQuery({
-    queryKey: ['sesion-caja', id],
+    queryKey: queryKeys.pos.sesionCaja.detail(id),
     queryFn: async () => {
       const response = await posApi.obtenerSesionCaja(id);
       return response.data.data || null;
@@ -43,7 +44,7 @@ export function useSesionCaja(id) {
  */
 export function useResumenSesionCaja(id) {
   return useQuery({
-    queryKey: ['resumen-sesion-caja', id],
+    queryKey: queryKeys.pos.sesionCaja.resumen(id),
     queryFn: async () => {
       const response = await posApi.obtenerResumenSesion(id);
       return response.data.data || null;
@@ -60,7 +61,7 @@ export function useResumenSesionCaja(id) {
  */
 export function useSesionesCaja(params = {}) {
   return useQuery({
-    queryKey: ['sesiones-caja', params],
+    queryKey: queryKeys.pos.sesionCaja.historial(params),
     queryFn: async () => {
       const response = await posApi.listarSesionesCaja(sanitizeParams(params));
       return response.data.data || { sesiones: [], total: 0 };
@@ -75,7 +76,7 @@ export function useSesionesCaja(params = {}) {
  */
 export function useMovimientosCaja(sesionId) {
   return useQuery({
-    queryKey: ['movimientos-caja', sesionId],
+    queryKey: queryKeys.pos.sesionCaja.movimientos(sesionId),
     queryFn: async () => {
       const response = await posApi.listarMovimientosCaja(sesionId);
       return response.data.data || [];
@@ -105,8 +106,8 @@ export function useAbrirSesionCaja() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['sesion-caja-activa'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['sesiones-caja'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.pos.sesionCaja.activaBase, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.pos.sesionCaja.historialBase, refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('create', 'Sesión de caja', {
       409: 'Ya existe una sesión de caja abierta',
@@ -133,9 +134,9 @@ export function useCerrarSesionCaja() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['sesion-caja-activa'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['sesiones-caja'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['resumen-sesion-caja'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.pos.sesionCaja.activaBase, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.pos.sesionCaja.historialBase, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.pos.sesionCaja.resumenBase, refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('update', 'Sesión de caja'),
   });
@@ -159,9 +160,9 @@ export function useRegistrarMovimientoCaja() {
       return response.data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['sesion-caja-activa'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['movimientos-caja', variables.sesionId], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['resumen-sesion-caja', variables.sesionId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.pos.sesionCaja.activaBase, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.pos.sesionCaja.movimientos(variables.sesionId), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.pos.sesionCaja.resumen(variables.sesionId), refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('create', 'Movimiento de caja', {
       404: 'Sesión de caja no encontrada o ya está cerrada',

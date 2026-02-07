@@ -10,14 +10,16 @@
  * @updated 2026-02-04
  */
 
-import { createContext, useContext, useState, useEffect, useLayoutEffect, useCallback, useMemo, useRef } from 'react';
+import { useContext, useState, useEffect, useLayoutEffect, useCallback, useMemo, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
+import { queryKeys } from '@/hooks/config';
 import { useInvitacionEditorStore } from '@/store';
 import { eventosDigitalesApi } from '@/services/api/modules';
 import {
+  EditorContext,
   useEditorLayoutContext,
   useAutosave,
   hashBloques,
@@ -37,9 +39,9 @@ import { registerInvitacionMigrators } from '../elements';
 import { crearBloqueNuevo } from '../utils';
 import { BLOQUES_INVITACION } from '../config';
 
-// ========== CONTEXT ==========
+// ========== CONTEXT (usa el compartido) ==========
 
-const InvitacionEditorContext = createContext(null);
+const InvitacionEditorContext = EditorContext;
 
 // ========== PROVIDER ==========
 
@@ -121,7 +123,7 @@ export function InvitacionEditorProvider({ children }) {
     isLoading: eventoLoading,
     error: eventoError,
   } = useQuery({
-    queryKey: ['evento', eventoId],
+    queryKey: queryKeys.eventosDigitales.eventos.detail(eventoId),
     queryFn: () => eventosDigitalesApi.getById(eventoId),
     select: (response) => response.data.data,
     enabled: !!eventoId,
@@ -133,7 +135,7 @@ export function InvitacionEditorProvider({ children }) {
     isLoading: bloquesLoading,
     error: bloquesError,
   } = useQuery({
-    queryKey: ['evento', eventoId, 'bloques'],
+    queryKey: queryKeys.eventosDigitales.eventos.bloques(eventoId),
     queryFn: () => eventosDigitalesApi.getBloques(eventoId),
     select: (response) => response.data.data,
     enabled: !!eventoId,
@@ -204,7 +206,7 @@ export function InvitacionEditorProvider({ children }) {
   const publicarMutation = useMutation({
     mutationFn: () => eventosDigitalesApi.publicarEvento(eventoId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['evento', eventoId] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.eventosDigitales.eventos.detail(eventoId) });
       toast.success(evento?.estado === 'publicado' ? 'Invitación despublicada' : 'Invitación publicada');
     },
     onError: (error) => {
@@ -218,7 +220,7 @@ export function InvitacionEditorProvider({ children }) {
     mutationFn: (configuracion) =>
       eventosDigitalesApi.actualizarEvento(eventoId, { configuracion }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['evento', eventoId] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.eventosDigitales.eventos.detail(eventoId) });
       toast.success('Configuración actualizada');
     },
     onError: (error) => {
@@ -232,7 +234,7 @@ export function InvitacionEditorProvider({ children }) {
     mutationFn: (plantilla) =>
       eventosDigitalesApi.actualizarEvento(eventoId, { plantilla }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['evento', eventoId] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.eventosDigitales.eventos.detail(eventoId) });
       toast.success('Colores actualizados');
     },
     onError: (error) => {
@@ -255,7 +257,7 @@ export function InvitacionEditorProvider({ children }) {
     onSaving: () => setGuardando(),
     onSaved: () => {
       setGuardado();
-      queryClient.invalidateQueries({ queryKey: ['evento', eventoId, 'bloques'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.eventosDigitales.eventos.bloques(eventoId) });
     },
     onError: (error) => {
       setErrorGuardado();
@@ -315,7 +317,7 @@ export function InvitacionEditorProvider({ children }) {
     onSaved: () => {
       const store = getFreePositionStore();
       store.getState().setGuardado();
-      queryClient.invalidateQueries({ queryKey: ['evento', eventoId, 'bloques'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.eventosDigitales.eventos.bloques(eventoId) });
     },
     onError: (error) => {
       const store = getFreePositionStore();
@@ -483,7 +485,7 @@ export function InvitacionEditorProvider({ children }) {
       setModoEditor(modoDestino);
 
       // Invalidar queries para refrescar datos
-      queryClient.invalidateQueries({ queryKey: ['evento', eventoId, 'bloques'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.eventosDigitales.eventos.bloques(eventoId) });
 
       toast.success('Modo cambiado', {
         description: 'Los elementos se han convertido a bloques tradicionales.',

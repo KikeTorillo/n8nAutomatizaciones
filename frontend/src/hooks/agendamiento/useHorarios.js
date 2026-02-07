@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { horariosApi } from '@/services/api/endpoints';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
+import { queryKeys } from '@/hooks/config';
 
 /**
  * Hook para listar horarios de un profesional
@@ -10,7 +11,7 @@ import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
  */
 export function useHorariosProfesional(profesionalId, options = {}) {
   return useQuery({
-    queryKey: ['horarios', profesionalId, options],
+    queryKey: queryKeys.agendamiento.horarios.profesional(profesionalId),
     queryFn: async () => {
       if (!profesionalId) {
         throw new Error('El ID del profesional es requerido');
@@ -49,7 +50,7 @@ export function useHorariosProfesional(profesionalId, options = {}) {
  */
 export function useHorario(horarioId) {
   return useQuery({
-    queryKey: ['horarios', horarioId],
+    queryKey: queryKeys.agendamiento.horarios.list(horarioId),
     queryFn: async () => {
       const response = await horariosApi.obtener(horarioId);
       return response.data;
@@ -73,8 +74,8 @@ export function useCrearHorarioSemanal() {
     },
     onSuccess: (_, variables) => {
       // Invalidar horarios del profesional
-      queryClient.invalidateQueries({ queryKey: ['horarios', variables.profesional_id], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['horarios'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.agendamiento.horarios.profesional(variables.profesional_id), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.agendamiento.horarios.all, refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('create', 'Horarios semanales', {
       409: 'Ya existen horarios configurados para estos dias',
@@ -94,8 +95,8 @@ export function useCrearHorario() {
       return response.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['horarios', variables.profesional_id], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['horarios'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.agendamiento.horarios.profesional(variables.profesional_id), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.agendamiento.horarios.all, refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('create', 'Horario', {
       409: 'Ya existe un horario para este dia',
@@ -115,8 +116,8 @@ export function useActualizarHorario() {
       return response.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['horarios', data.profesional_id], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['horarios'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.agendamiento.horarios.profesional(data.profesional_id), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.agendamiento.horarios.all, refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('update', 'Horario'),
   });
@@ -134,7 +135,7 @@ export function useEliminarHorario() {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['horarios'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.agendamiento.horarios.all, refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('delete', 'Horario', {
       409: 'No se puede eliminar. El horario tiene citas asociadas.',
@@ -148,7 +149,7 @@ export function useEliminarHorario() {
  */
 export function useValidarConfiguracion(profesionalId) {
   return useQuery({
-    queryKey: ['horarios', 'validacion', profesionalId],
+    queryKey: [...queryKeys.agendamiento.horarios.all, 'validacion', profesionalId],
     queryFn: async () => {
       const response = await horariosApi.validarConfiguracion(profesionalId);
       return response.data;

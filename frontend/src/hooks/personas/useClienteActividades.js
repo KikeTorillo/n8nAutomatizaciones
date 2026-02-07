@@ -13,6 +13,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { clientesApi } from '@/services/api/endpoints';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
+import { queryKeys } from '@/hooks/config';
 
 // ====================================================================
 // CONSTANTES
@@ -54,7 +55,7 @@ export const ESTADOS_TAREA = [
  */
 export function useActividadesCliente(clienteId, params = {}) {
   return useQuery({
-    queryKey: ['cliente-actividades', clienteId, params],
+    queryKey: [...queryKeys.personas.clientes.actividades(clienteId), params],
     queryFn: async () => {
       const response = await clientesApi.listarActividades(clienteId, params);
       return {
@@ -129,7 +130,7 @@ export function useCrearActividad() {
     },
     onSuccess: (data, variables) => {
       // Invalidar lista de actividades y timeline
-      queryClient.invalidateQueries({ queryKey: ['cliente-actividades', variables.clienteId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.personas.clientes.actividades(variables.clienteId), refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: ['cliente-timeline', variables.clienteId], refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: ['cliente-actividades-conteo', variables.clienteId], refetchType: 'active' });
     },
@@ -150,7 +151,7 @@ export function useActualizarActividad() {
     },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['cliente-actividad', variables.clienteId, variables.actividadId], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['cliente-actividades', variables.clienteId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.personas.clientes.actividades(variables.clienteId), refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: ['cliente-timeline', variables.clienteId], refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: ['cliente-actividades-conteo', variables.clienteId], refetchType: 'active' });
     },
@@ -170,7 +171,7 @@ export function useEliminarActividad() {
       return { clienteId, actividadId };
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['cliente-actividades', variables.clienteId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.personas.clientes.actividades(variables.clienteId), refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: ['cliente-timeline', variables.clienteId], refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: ['cliente-actividades-conteo', variables.clienteId], refetchType: 'active' });
     },
@@ -191,7 +192,7 @@ export function useCompletarTarea() {
     },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['cliente-actividad', variables.clienteId, variables.actividadId], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['cliente-actividades', variables.clienteId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.personas.clientes.actividades(variables.clienteId), refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: ['cliente-timeline', variables.clienteId], refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: ['cliente-actividades-conteo', variables.clienteId], refetchType: 'active' });
     },

@@ -16,7 +16,7 @@ import {
   EditorHeader as EditorHeaderBase,
   EditorToolbar,
 } from '@/components/editor-framework';
-import { useEditor } from '../context';
+import { useWebsiteEditorContext } from '../context';
 import { useUndo, useRedo, useCanUndoRedo, useWebsiteEditorStore } from '@/store';
 
 /**
@@ -40,7 +40,7 @@ function EditorHeader() {
 
     // Mutations
     publicarSitio,
-  } = useEditor();
+  } = useWebsiteEditorContext();
 
   // Undo/Redo del store
   const undo = useUndo();

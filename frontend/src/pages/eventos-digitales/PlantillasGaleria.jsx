@@ -1,8 +1,10 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Eye, Crown, ChevronDown, ChevronUp, Sparkles } from 'lucide-react';
-import { Button, LoadingSpinner } from '@/components/ui';
+import { Eye, Crown, ChevronDown, ChevronUp, Sparkles } from 'lucide-react';
+import { BackButton, Button, LoadingSpinner } from '@/components/ui';
+import { InvitacionDinamica } from '@/components/eventos-digitales';
 import { usePlantillas } from '@/hooks/otros';
+import { generarPreviewData } from '@/utils/plantillaDummyData';
 
 const TIPOS_EVENTO = {
   boda: { label: 'Boda', emoji: '💍' },
@@ -15,14 +17,28 @@ const TIPOS_EVENTO = {
 
 const INITIAL_VISIBLE = 4;
 
+const TEMA_DEFAULT = {
+  color_primario: '#ec4899',
+  color_secundario: '#fce7f3',
+  color_fondo: '#fdf2f8',
+  color_texto: '#1f2937',
+  color_texto_claro: '#6b7280',
+  fuente_titulo: 'Playfair Display',
+  fuente_cuerpo: 'Inter',
+};
+
 function PlantillaCard({ plantilla, tipo }) {
   const navigate = useNavigate();
-  const tema = plantilla.tema || {
-    color_primario: '#ec4899',
-    color_secundario: '#fce7f3',
-    color_fondo: '#fdf2f8',
-    color_texto: '#1f2937',
-  };
+  const tema = useMemo(
+    () => ({ ...TEMA_DEFAULT, ...(plantilla.tema || {}) }),
+    [plantilla.tema]
+  );
+
+  const tipoEvento = plantilla.tipo_evento || tipo || 'boda';
+  const { evento, bloques } = useMemo(
+    () => generarPreviewData(tipoEvento, tema),
+    [tipoEvento, tema]
+  );
 
   return (
     <div
@@ -38,55 +54,17 @@ function PlantillaCard({ plantilla, tipo }) {
             className="w-full h-full object-cover"
           />
         ) : (
-          <div
-            className="w-full h-full flex flex-col items-center justify-center p-4"
-            style={{
-              background: `linear-gradient(135deg, ${tema.color_primario}22, ${tema.color_secundario}44, ${tema.color_fondo})`,
-            }}
-          >
-            {/* Mini preview con colores del tema */}
-            <div className="w-full max-w-[120px] space-y-2">
-              <div
-                className="h-2 rounded-full mx-auto w-3/4"
-                style={{ backgroundColor: tema.color_primario }}
-              />
-              <div
-                className="rounded-lg p-3 text-center"
-                style={{ backgroundColor: `${tema.color_secundario}88` }}
-              >
-                <div
-                  className="text-[10px] font-bold mb-1"
-                  style={{ color: tema.color_texto }}
-                >
-                  Invitación
-                </div>
-                <div
-                  className="h-1 rounded w-full mb-1.5"
-                  style={{ backgroundColor: tema.color_primario }}
-                />
-                <div className="flex justify-center gap-1">
-                  {[1, 2, 3].map((i) => (
-                    <div
-                      key={i}
-                      className="w-4 h-4 rounded"
-                      style={{
-                        backgroundColor: tema.color_fondo,
-                        border: `1px solid ${tema.color_primario}`,
-                      }}
-                    />
-                  ))}
-                </div>
-              </div>
-              <div
-                className="h-1.5 rounded-full mx-auto w-1/2"
-                style={{ backgroundColor: tema.color_secundario }}
+          <div className="w-full h-full pointer-events-none">
+            <div className="transform scale-[0.22] origin-top-left" style={{ width: '455%' }}>
+              <InvitacionDinamica
+                evento={evento}
+                invitado={null}
+                bloques={bloques}
+                tema={tema}
+                onConfirmRSVP={() => {}}
+                isLoadingRSVP={false}
               />
             </div>
-
-            <Sparkles
-              className="w-8 h-8 mt-3 opacity-40"
-              style={{ color: tema.color_primario }}
-            />
           </div>
         )}
 
@@ -203,13 +181,7 @@ function PlantillasGaleria() {
       {/* Header */}
       <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-6">
         <div className="max-w-6xl mx-auto">
-          <button
-            onClick={() => navigate('/eventos-digitales')}
-            className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 mb-4 transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Volver
-          </button>
+          <BackButton to="/eventos-digitales" className="mb-4" />
 
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">
             Elige una plantilla

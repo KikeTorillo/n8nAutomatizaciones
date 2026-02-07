@@ -13,6 +13,7 @@ import { configuracionAlmacenApi } from '@/services/api/endpoints';
 import { useSucursalContext } from '@/hooks/factories';
 import { useToast } from '@/hooks/utils';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
+import { queryKeys } from '@/hooks/config';
 
 /**
  * QUERY KEYS para configuración de almacén
@@ -139,7 +140,7 @@ export function useCrearUbicacionesDefault() {
     },
     onSuccess: (data, sucursalId) => {
       // Invalidar lista de ubicaciones para que aparezcan en selectores
-      queryClient.invalidateQueries({ queryKey: ['ubicaciones-almacen'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.ubicaciones.all, refetchType: 'active' });
 
       // Actualizar cache de configuración con los nuevos IDs de ubicaciones
       if (data?.ubicaciones) {

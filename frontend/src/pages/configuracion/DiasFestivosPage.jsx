@@ -20,6 +20,7 @@ import {
   Select
 } from '@/components/ui';
 import { ConfiguracionPageLayout, ConfigEmptyState } from '@/components/configuracion';
+import { queryKeys } from '@/hooks/config';
 import { useToast } from '@/hooks/utils';
 import { useModalManager } from '@/hooks/utils';
 import { useBloqueos, useCrearBloqueo, useEliminarBloqueo } from '@/hooks/agendamiento';
@@ -125,7 +126,7 @@ function DiasFestivosPage() {
       }
     }
 
-    queryClient.invalidateQueries({ queryKey: ['bloqueos'] });
+    queryClient.invalidateQueries({ queryKey: queryKeys.agendamiento.bloqueos.all });
 
     if (importados > 0) {
       toast.success(`Se importaron ${importados} feriados de ${paisInfo.nombre}`);

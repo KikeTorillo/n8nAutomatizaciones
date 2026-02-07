@@ -17,6 +17,7 @@ import { STALE_TIMES } from '@/app/queryClient';
 import { usuariosApi } from '@/services/api/endpoints';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 import { sanitizeParams } from '@/lib/params';
+import { queryKeys } from '@/hooks/config';
 
 // ====================================================================
 // QUERIES
@@ -28,7 +29,7 @@ import { sanitizeParams } from '@/lib/params';
  */
 export function useUsuarios(params = {}) {
   return useQuery({
-    queryKey: ['usuarios', params],
+    queryKey: queryKeys.personas.usuarios.list(params),
     queryFn: async () => {
       const response = await usuariosApi.listarConFiltros(sanitizeParams(params));
       // Backend retorna: { success, data: { data: [...], pagination, resumen } }
@@ -44,7 +45,7 @@ export function useUsuarios(params = {}) {
  */
 export function useUsuario(id) {
   return useQuery({
-    queryKey: ['usuario', id],
+    queryKey: queryKeys.personas.usuarios.detail(id),
     queryFn: async () => {
       const response = await usuariosApi.obtener(id);
       return response.data.data;
@@ -106,7 +107,7 @@ export function useCrearUsuarioDirecto() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['usuarios'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.personas.usuarios.all, refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: ['profesionales-sin-usuario'], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('create', 'Usuario', {
@@ -128,12 +129,12 @@ export function useCambiarEstadoUsuario() {
       return response.data.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['usuarios'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['usuario', data.usuario?.id], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.personas.usuarios.all, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.personas.usuarios.detail(data.usuario?.id), refetchType: 'active' });
       // Si afectó un profesional, invalidar también
       if (data.profesional) {
-        queryClient.invalidateQueries({ queryKey: ['profesionales'], refetchType: 'active' });
-        queryClient.invalidateQueries({ queryKey: ['profesional', data.profesional.id], refetchType: 'active' });
+        queryClient.invalidateQueries({ queryKey: queryKeys.personas.profesionales.all, refetchType: 'active' });
+        queryClient.invalidateQueries({ queryKey: queryKeys.personas.profesionales.detail(data.profesional.id), refetchType: 'active' });
       }
     },
     onError: createCRUDErrorHandler('update', 'Usuario'),
@@ -152,8 +153,8 @@ export function useCambiarRolUsuario() {
       return response.data.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['usuarios'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['usuario', data.usuario?.id], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.personas.usuarios.all, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.personas.usuarios.detail(data.usuario?.id), refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('update', 'Usuario', {
       400: 'Rol no válido',
@@ -173,15 +174,15 @@ export function useVincularProfesionalAUsuario() {
       return response.data.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['usuarios'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['usuario', data.usuario?.id], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.personas.usuarios.all, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.personas.usuarios.detail(data.usuario?.id), refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: ['profesionales-sin-usuario'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['profesionales'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.personas.profesionales.all, refetchType: 'active' });
       if (data.profesional) {
-        queryClient.invalidateQueries({ queryKey: ['profesional', data.profesional.id], refetchType: 'active' });
+        queryClient.invalidateQueries({ queryKey: queryKeys.personas.profesionales.detail(data.profesional.id), refetchType: 'active' });
       }
       if (data.profesional_anterior) {
-        queryClient.invalidateQueries({ queryKey: ['profesional', data.profesional_anterior], refetchType: 'active' });
+        queryClient.invalidateQueries({ queryKey: queryKeys.personas.profesionales.detail(data.profesional_anterior), refetchType: 'active' });
       }
     },
     onError: createCRUDErrorHandler('update', 'Usuario', {
@@ -207,8 +208,8 @@ export function useActualizarUsuario() {
       return response.data.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['usuarios'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['usuario', data.id], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.personas.usuarios.all, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.personas.usuarios.detail(data.id), refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('update', 'Usuario'),
   });

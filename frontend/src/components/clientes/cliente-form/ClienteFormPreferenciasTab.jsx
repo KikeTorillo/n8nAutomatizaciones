@@ -13,6 +13,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Heart, Tag, DollarSign, UserCheck } from 'lucide-react';
 import { FormGroup, Select } from '@/components/ui';
 import { useProfesionales } from '@/hooks/personas';
+import { queryKeys } from '@/hooks/config';
 import { listasPreciosApi } from '@/services/api/endpoints';
 import EtiquetasSelector from '../EtiquetasSelector';
 
@@ -31,7 +32,7 @@ const ClienteFormPreferenciasTab = memo(function ClienteFormPreferenciasTab({
 
   // Cargar listas de precios
   const { data: listas = [] } = useQuery({
-    queryKey: ['listas-precios-activas'],
+    queryKey: queryKeys.precios.listas.activas,
     queryFn: async () => {
       const response = await listasPreciosApi.listar({ soloActivas: true });
       return response.data.data || [];

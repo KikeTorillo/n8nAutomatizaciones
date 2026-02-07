@@ -21,6 +21,7 @@ import {
   Briefcase,
 } from 'lucide-react';
 
+import { queryKeys } from '@/hooks/config';
 import { useAuthStore, selectUser } from '@/features/auth';
 import { organizacionesApi, monedasApi } from '@/services/api/endpoints';
 import { useToast } from '@/hooks/utils';
@@ -72,7 +73,7 @@ function NegocioPage() {
 
   // Query para obtener monedas disponibles
   const { data: monedasData } = useQuery({
-    queryKey: ['monedas'],
+    queryKey: queryKeys.catalogos.monedas,
     queryFn: () => monedasApi.listar(),
     staleTime: 1000 * 60 * 60, // 1 hora
   });

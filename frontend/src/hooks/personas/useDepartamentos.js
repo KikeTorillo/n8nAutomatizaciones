@@ -12,6 +12,7 @@ import { useQuery } from '@tanstack/react-query';
 import { departamentosApi } from '@/services/api/endpoints';
 import { STALE_TIMES } from '@/app/queryClient';
 import { createCRUDHooks, createSanitizer } from '@/hooks/factories';
+import { queryKeys } from '@/hooks/config';
 
 // Sanitizador para datos de departamento
 // NOTA: codigo/descripcion NO se incluyen aquí porque preparePayload ya los maneja
@@ -35,9 +36,9 @@ const hooks = createCRUDHooks({
     delete: 'eliminar',
   },
   sanitize: sanitizeDepartamento,
-  invalidateOnCreate: ['departamentos', 'departamentos-arbol'],
-  invalidateOnUpdate: ['departamentos', 'departamentos-arbol'],
-  invalidateOnDelete: ['departamentos', 'departamentos-arbol'],
+  invalidateOnCreate: queryKeys.personas.departamentos.all,
+  invalidateOnUpdate: queryKeys.personas.departamentos.all,
+  invalidateOnDelete: queryKeys.personas.departamentos.all,
   errorMessages: {
     create: { 409: 'Ya existe un departamento con ese código' },
   },
@@ -61,7 +62,7 @@ export const useDepartamentosActivos = hooks.useListActive;
  */
 export function useArbolDepartamentos() {
   return useQuery({
-    queryKey: ['departamentos-arbol'],
+    queryKey: queryKeys.personas.departamentos.arbol,
     queryFn: async () => {
       const response = await departamentosApi.obtenerArbol();
       const lista = response.data.data || [];

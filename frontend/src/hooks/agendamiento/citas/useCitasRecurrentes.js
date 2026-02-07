@@ -4,6 +4,7 @@ import { citasApi } from '@/services/api/endpoints';
 import { useToast } from '../../utils/useToast';
 import useSucursalStore, { selectGetSucursalId } from '@/store/sucursalStore';
 import { createCRUDErrorHandler, getErrorMessage } from '@/hooks/config/errorHandlerFactory';
+import { queryKeys } from '@/hooks/config';
 
 /**
  * Hook para crear una serie de citas recurrentes
@@ -26,7 +27,7 @@ export function useCrearCitaRecurrente() {
       return response.data?.data || response.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['citas'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.agendamiento.citas.all, refetchType: 'active' });
       success(`Serie creada: ${data.citas_creadas?.length || 0} citas`);
     },
     onError: (error) => {
@@ -46,7 +47,7 @@ export function useCrearCitaRecurrente() {
  */
 export function useSerieCitas(serieId, options = {}) {
   return useQuery({
-    queryKey: ['citas', 'serie', serieId, options],
+    queryKey: [...queryKeys.agendamiento.citas.all, 'serie', serieId, options],
     queryFn: async () => {
       const response = await citasApi.obtenerSerie(serieId, options);
       return response.data?.data || response.data;
@@ -69,7 +70,7 @@ export function useCancelarSerie() {
       return response.data?.data || response.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['citas'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.agendamiento.citas.all, refetchType: 'active' });
       success(`${data.citas_canceladas || 0} citas canceladas`);
     },
     onError: (error) => {

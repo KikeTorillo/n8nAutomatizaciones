@@ -145,6 +145,27 @@ const plantillasSchemas = {
     },
 
     /**
+     * PUT /plantillas/:id/bloques (super_admin)
+     */
+    guardarBloquesPlantilla: {
+        params: Joi.object({
+            id: Joi.number().integer().positive().required()
+        }),
+        body: Joi.object({
+            bloques: Joi.array().items(
+                Joi.object({
+                    id: Joi.string().required(),
+                    tipo: Joi.string().required(),
+                    orden: Joi.number().integer().min(0).required(),
+                    visible: Joi.boolean().default(true),
+                    contenido: Joi.object().default({}),
+                    estilos: Joi.object().default({}),
+                }).unknown(true)
+            ).required()
+        })
+    },
+
+    /**
      * DELETE /plantillas/:id (super_admin)
      */
     eliminarPlantilla: {

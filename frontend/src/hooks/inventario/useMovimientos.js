@@ -4,6 +4,7 @@ import { useSucursalContext } from '@/hooks/factories';
 import { sanitizeParams } from '@/lib/params';
 import { STALE_TIMES } from '@/app/queryClient';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
+import { queryKeys } from '@/hooks/config';
 
 /**
  * Hook para listar movimientos con filtros
@@ -11,7 +12,7 @@ import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
  */
 export function useMovimientos(params = {}) {
   return useQuery({
-    queryKey: ['movimientos', params],
+    queryKey: queryKeys.inventario.movimientos.list(params),
     queryFn: async () => {
       const response = await inventarioApi.listarMovimientos(sanitizeParams(params));
       return response.data.data || { movimientos: [], total: 0 };
@@ -27,7 +28,7 @@ export function useMovimientos(params = {}) {
  */
 export function useKardex(productoId, params = {}) {
   return useQuery({
-    queryKey: ['kardex', productoId, params],
+    queryKey: [...queryKeys.inventario.productos.kardex(productoId), params],
     queryFn: async () => {
       const response = await inventarioApi.obtenerKardex(productoId, sanitizeParams(params));
       return response.data.data || { kardex: [], producto: null };
@@ -80,12 +81,12 @@ export function useRegistrarMovimiento() {
       return response.data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['movimientos'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['kardex', variables.producto_id], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['productos'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['producto', variables.producto_id], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['stock-critico'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['valor-inventario'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.movimientos.all, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.productos.kardex(variables.producto_id), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.productos.all, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.productos.detail(variables.producto_id), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.productos.stockCritico, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.valoracion.resumen, refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('create', 'Movimiento', {
       409: 'Stock insuficiente para realizar la salida',

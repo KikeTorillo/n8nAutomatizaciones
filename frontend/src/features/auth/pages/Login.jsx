@@ -10,6 +10,7 @@ import AuthLayout from '../components/AuthLayout';
 import FormField from '@/components/forms/FormField';
 import { Button } from '@/components/ui';
 import GoogleSignInButton from '../components/GoogleSignInButton';
+import { queryKeys } from '@/hooks/config';
 import { useToast } from '@/hooks/utils';
 import { Eye, EyeOff, Mail, Loader2, ArrowLeft, CheckCircle } from 'lucide-react';
 import { z } from 'zod';
@@ -77,9 +78,9 @@ function Login() {
     },
     onSuccess: (data) => {
       // Feb 2026: Invalidar queries específicas en lugar de clear() para mejor UX
-      queryClient.invalidateQueries({ queryKey: ['usuario'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['organizacion'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['modulos'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.auth.usuario, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.auth.organizacion, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.sistema.modulos, refetchType: 'active' });
       // Ene 2026: refreshToken viene por cookie httpOnly, no se guarda en frontend
       setAuth({
         user: data.usuario,

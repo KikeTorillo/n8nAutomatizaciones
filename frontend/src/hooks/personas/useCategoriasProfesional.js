@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { categoriasProfesionalApi } from '@/services/api/endpoints';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
+import { queryKeys } from '@/hooks/config';
 
 // ==================== HOOKS CRUD CATEGORÍAS PROFESIONAL ====================
 
@@ -11,7 +12,7 @@ import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
  */
 export function useCategoriasProfesional(params = {}) {
   return useQuery({
-    queryKey: ['categorias-profesional', params],
+    queryKey: [...queryKeys.catalogos.categoriasProfesional, params],
     queryFn: async () => {
       // Sanitizar params - eliminar valores vacíos
       const sanitizedParams = Object.entries(params).reduce((acc, [key, value]) => {
@@ -35,7 +36,7 @@ export function useCategoriasProfesional(params = {}) {
  */
 export function useCategoriasAgrupadas() {
   return useQuery({
-    queryKey: ['categorias-profesional', { agrupado: true }],
+    queryKey: [...queryKeys.catalogos.categoriasProfesional, { agrupado: true }],
     queryFn: async () => {
       const response = await categoriasProfesionalApi.listarAgrupadas();
       // La API retorna { data: { area: [...], nivel: [...], ... } } directamente
@@ -97,7 +98,7 @@ export function useCrearCategoriaProfesional() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['categorias-profesional'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.catalogos.categoriasProfesional, refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('create', 'Categoría', {
       409: 'Ya existe una categoría con ese nombre en ese tipo',
@@ -125,8 +126,8 @@ export function useActualizarCategoriaProfesional() {
       return response.data.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['categoria-profesional', data.id], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['categorias-profesional'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: [...queryKeys.catalogos.categoriasProfesional, data.id], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.catalogos.categoriasProfesional, refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('update', 'Categoría'),
   });
@@ -144,7 +145,7 @@ export function useEliminarCategoriaProfesional() {
       return id;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['categorias-profesional'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.catalogos.categoriasProfesional, refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('delete', 'Categoría', {
       400: 'No se puede eliminar: hay profesionales con esta categoría',

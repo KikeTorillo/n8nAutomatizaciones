@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { citasApi } from '@/services/api/endpoints';
 import useSucursalStore, { selectGetSucursalId } from '@/store/sucursalStore';
 import { createStatusMutationHook } from '@/hooks/factories/createStatusMutationHook';
+import { queryKeys } from '@/hooks/config';
 
 /**
  * Hook para crear una nueva cita
@@ -25,7 +26,7 @@ export function useCrearCita() {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['citas'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.agendamiento.citas.all, refetchType: 'active' });
     },
   });
 }
@@ -50,8 +51,8 @@ export function useActualizarCita() {
       return response.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['citas'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['citas', variables.id], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.agendamiento.citas.all, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.agendamiento.citas.detail(variables.id), refetchType: 'active' });
     },
   });
 }

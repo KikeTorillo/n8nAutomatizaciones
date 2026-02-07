@@ -60,7 +60,21 @@ export type { CheckboxFieldProps } from './CheckboxField';
 
 // NOTA: DropdownMenu movido a organisms/ (Feb 2026) - gestión estado + keyboard nav + portal
 
-// NOTA: SmartButtons movido a organisms/ (Ene 2026)
+// Movido desde atoms/ (Feb 2026) - portal + posicionamiento + hooks = molecule
+export { Tooltip } from './Tooltip';
+export type { TooltipProps } from './Tooltip';
+
+// Movido desde organisms/ (Feb 2026) - grid presentacional de botones
+export { SmartButtons } from './SmartButtons';
+export type { SmartButtonsProps } from './SmartButtons';
+
+// Movido desde organisms/ (Feb 2026) - wrapper simple sobre ConfirmDialog
+export { DeleteConfirmDialog } from './DeleteConfirmDialog';
+export type { DeleteConfirmDialogProps } from './DeleteConfirmDialog';
+
+// Movido desde organisms/ (Feb 2026) - grid simple de StatCard molecules
+export { StatCardGrid } from './StatCardGrid';
+export type { StatCardGridProps, StatConfig, StatCardGridColumns, StatCardColor } from './StatCardGrid';
 
 // NOTA: FilterField movido a organisms/ por complejidad multi-tipo (Ene 2026)
 // Importar desde '@/components/ui/organisms' o '@/components/ui'
@@ -70,5 +84,9 @@ export { OverlayHeader } from './OverlayHeader';
 export type { OverlayHeaderProps } from './OverlayHeader';
 
 // NOTA: ConPermiso movido a features/auth/components/ (Feb 2026) - depende de lógica RBAC
+
+// Movido desde atoms/ (Feb 2026) - compone Radio + label = molecule
+export { RadioGroup } from './RadioGroup';
+export type { RadioGroupProps, RadioOption } from './RadioGroup';
 
 // NOTA: Card movido a atoms/ (Feb 2026) - contenedor genérico sin lógica compuesta

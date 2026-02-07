@@ -47,7 +47,7 @@ const colorClasses: Record<SmartButtonColor, string> = {
  * SmartButtons - Botones de métricas/acciones contextuales en header
  * Botones de contexto (Documentos, Comprado, Vendido, etc.)
  *
- * Ene 2026: Movido de molecules a organisms (coordina múltiples botones interactivos)
+ * Presentacional puro: grid de botones de métricas/acciones
  */
 export const SmartButtons = memo(
   forwardRef<HTMLDivElement, SmartButtonsProps>(function SmartButtons({

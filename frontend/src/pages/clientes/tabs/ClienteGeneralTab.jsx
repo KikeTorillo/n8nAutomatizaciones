@@ -29,6 +29,7 @@ import {
   User,
 } from 'lucide-react';
 import { Button, AsyncBoundary } from '@/components/ui';
+import { queryKeys } from '@/hooks/config';
 import { citasApi } from '@/services/api/endpoints';
 import { useQuery } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
@@ -62,7 +63,7 @@ export default function ClienteGeneralTab({ cliente, estadisticas }) {
 
   // Obtener historial de citas del cliente (últimas 5)
   const { data: citasData, isLoading: loadingCitas } = useQuery({
-    queryKey: ['citas-cliente', clienteId],
+    queryKey: queryKeys.agendamiento.citasCliente(clienteId),
     queryFn: async () => {
       const response = await citasApi.listar({ cliente_id: clienteId, limit: 5 });
       return response.data.data.citas || [];

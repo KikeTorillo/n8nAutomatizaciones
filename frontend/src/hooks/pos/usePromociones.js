@@ -17,6 +17,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { posApi } from '@/services/api/endpoints';
 import { createCRUDHooks } from '@/hooks/factories';
+import { queryKeys } from '@/hooks/config';
 
 // =========================================================================
 // HOOKS CRUD VIA FACTORY
@@ -64,7 +65,7 @@ export const useEliminarPromocion = hooks.useDelete;
  */
 export function usePromocionesVigentes(params = {}) {
   return useQuery({
-    queryKey: ['promociones-vigentes', params],
+    queryKey: queryKeys.pos.promociones.vigentes(params),
     queryFn: async () => {
       const response = await posApi.listarPromocionesVigentes(params);
       return response.data.data;
@@ -86,7 +87,7 @@ export function useEvaluarPromociones(data, options = {}) {
   const { enabled = true } = options;
 
   return useQuery({
-    queryKey: ['promociones-evaluar', { items, subtotal, clienteId, sucursalId }],
+    queryKey: queryKeys.pos.promociones.evaluar({ items, subtotal, clienteId, sucursalId }),
     queryFn: async () => {
       // Formatear items para el backend
       const itemsFormateados = items.map(item => ({
@@ -157,8 +158,8 @@ export function useAplicarPromocion() {
     },
     onSuccess: (data, variables) => {
       // Invalidar venta para refrescar totales
-      queryClient.invalidateQueries({ queryKey: ['venta', variables.ventaPosId], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['promociones-vigentes'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.pos.ventas.detail(variables.ventaPosId), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.pos.promociones.vigentesBase, refetchType: 'active' });
     },
   });
 }
@@ -173,7 +174,7 @@ export function useAplicarPromocion() {
  */
 export function useHistorialPromocion(promocionId, params = {}) {
   return useQuery({
-    queryKey: ['promocion-historial', promocionId, params],
+    queryKey: queryKeys.pos.promociones.historial(promocionId, params),
     queryFn: async () => {
       const response = await posApi.obtenerHistorialPromocion(promocionId, params);
       return response.data.data;
@@ -189,7 +190,7 @@ export function useHistorialPromocion(promocionId, params = {}) {
  */
 export function useEstadisticasPromocion(promocionId) {
   return useQuery({
-    queryKey: ['promocion-estadisticas', promocionId],
+    queryKey: queryKeys.pos.promociones.estadisticas(promocionId),
     queryFn: async () => {
       const response = await posApi.obtenerEstadisticasPromocion(promocionId);
       return response.data.data;
@@ -212,9 +213,9 @@ export function useCambiarEstadoPromocion() {
       return response.data.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['promociones'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['promocion', variables.id], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['promociones-vigentes'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.pos.promociones.all, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.pos.promociones.estadisticas(variables.id), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.pos.promociones.vigentesBase, refetchType: 'active' });
     },
   });
 }
@@ -232,7 +233,7 @@ export function useDuplicarPromocion() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['promociones'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.pos.promociones.all, refetchType: 'active' });
     },
   });
 }

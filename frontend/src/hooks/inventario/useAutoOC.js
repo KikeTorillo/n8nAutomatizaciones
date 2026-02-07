@@ -1,13 +1,14 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { inventarioApi, ordenesCompraApi } from '@/services/api/endpoints';
 import { STALE_TIMES } from '@/app/queryClient';
+import { queryKeys } from '@/hooks/config';
 
 /**
  * Hook para obtener sugerencias de OC (productos con stock bajo)
  */
 export function useSugerenciasOC() {
   return useQuery({
-    queryKey: ['sugerencias-oc'],
+    queryKey: queryKeys.inventario.ordenesCompra.sugerencias,
     queryFn: async () => {
       const response = await inventarioApi.obtenerSugerenciasOC();
       return response.data.data || [];
@@ -28,9 +29,9 @@ export function useGenerarOCDesdeProducto() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['sugerencias-oc'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.ordenesCompra.sugerencias, refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: ['alertas'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['ordenes-compra'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.ordenesCompra.all, refetchType: 'active' });
     },
   });
 }
@@ -47,9 +48,9 @@ export function useAutoGenerarOCs() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['sugerencias-oc'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.ordenesCompra.sugerencias, refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: ['alertas'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['ordenes-compra'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.ordenesCompra.all, refetchType: 'active' });
     },
   });
 }

@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo } from 'react';
 import { STALE_TIMES } from '@/app/queryClient';
 import { profesionalesApi, permisosApi } from '@/services/api/endpoints';
+import { queryKeys } from '@/hooks/config';
 import { useAuthStore, selectUser, selectIsAuthenticated, selectIsAdminValue } from '@/features/auth';
 import usePermisosStore, {
   createSelectTienePermiso,
@@ -66,7 +67,7 @@ export function useAccesoModulo(modulo) {
     isLoading: loadingPermiso,
     error: errorPermiso
   } = useQuery({
-    queryKey: ['permiso', codigoPermiso, sucursalId],
+    queryKey: queryKeys.sistema.permisos.verificar(codigoPermiso, sucursalId),
     queryFn: async () => {
       if (!sucursalId) return { tiene: false };
 
@@ -150,7 +151,7 @@ export function usePermiso(codigoPermiso, sucursalIdParam) {
   const permisoCacheado = usePermisosStore(selectPermiso);
 
   const { data, isLoading, error, isError } = useQuery({
-    queryKey: ['permiso', codigoPermiso, sucursalId],
+    queryKey: queryKeys.sistema.permisos.verificar(codigoPermiso, sucursalId),
     queryFn: async () => {
       if (!sucursalId) return { tiene: false, valor: null };
 
@@ -204,7 +205,7 @@ export function useResumenPermisos(sucursalIdParam) {
   const setMultiplesPermisos = usePermisosStore(selectSetMultiplesPermisos);
 
   const { data, isLoading, error, isError, refetch } = useQuery({
-    queryKey: ['permisos-resumen', user?.id, sucursalId],
+    queryKey: queryKeys.sistema.permisos.resumen(user?.id, sucursalId),
     queryFn: async () => {
       if (!sucursalId) return {};
 

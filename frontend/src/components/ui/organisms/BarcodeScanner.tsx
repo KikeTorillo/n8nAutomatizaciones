@@ -1,6 +1,6 @@
 import { memo, useEffect, useId, forwardRef } from 'react';
 import { X, Camera, CameraOff, RotateCcw } from 'lucide-react';
-import { useBarcodeScanner, FORMAT_PRESETS } from '@/hooks/pos';
+import { useBarcodeScanner, FORMAT_PRESETS } from '@/hooks/shared';
 
 /** Cámara disponible */
 interface CameraDevice {

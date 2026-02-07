@@ -27,6 +27,7 @@ import {
 } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useQueryClient } from '@tanstack/react-query';
+import { queryKeys } from '@/hooks/config';
 import { Badge, Button, Modal } from '@/components/ui';
 import { useCalendarioAusencias } from '@/hooks/personas';
 import { useDepartamentosActivos } from '@/hooks/personas';
@@ -349,7 +350,7 @@ function CalendarioAusenciasTab({ esAdmin }) {
   const handleRefresh = () => {
     queryClient.invalidateQueries({ queryKey: ['ausencias', 'calendario'] });
     queryClient.invalidateQueries({ queryKey: ['vacaciones'] });
-    queryClient.invalidateQueries({ queryKey: ['incapacidades'] });
+    queryClient.invalidateQueries({ queryKey: queryKeys.personas.incapacidades.all });
   };
 
   const nombreMes = format(mesActual, 'MMMM yyyy', { locale: es });

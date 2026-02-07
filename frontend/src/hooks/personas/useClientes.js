@@ -13,6 +13,7 @@ import { STALE_TIMES } from '@/app/queryClient';
 import { clientesApi, citasApi } from '@/services/api/endpoints';
 import { createCRUDHooks, createSanitizer, createSearchHook } from '@/hooks/factories';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
+import { queryKeys } from '@/hooks/config';
 
 // Crear hooks CRUD
 const hooks = createCRUDHooks({
@@ -27,9 +28,9 @@ const hooks = createCRUDHooks({
     update: 'actualizar',
     delete: 'eliminar',
   },
-  invalidateOnCreate: ['clientes'],
-  invalidateOnUpdate: ['clientes'],
-  invalidateOnDelete: ['clientes'],
+  invalidateOnCreate: queryKeys.personas.clientes.all,
+  invalidateOnUpdate: queryKeys.personas.clientes.all,
+  invalidateOnDelete: queryKeys.personas.clientes.all,
   errorMessages: {
     create: { 409: 'Ya existe un cliente con ese email o teléfono' },
     update: { 409: 'Ya existe un cliente con ese email o teléfono' },
@@ -91,8 +92,8 @@ export function useCrearWalkIn() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['citas'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['citas-del-dia'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.agendamiento.citas.all, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.agendamiento.citasDelDia, refetchType: 'active' });
     },
   });
 }
@@ -121,7 +122,7 @@ export function useDisponibilidadInmediata(servicioId, profesionalId = null) {
  */
 export function useEstadisticasClientes() {
   return useQuery({
-    queryKey: ['clientes-estadisticas'],
+    queryKey: queryKeys.estadisticas.clientes,
     queryFn: async () => {
       const response = await clientesApi.obtenerEstadisticas();
       return response.data.data;
@@ -136,7 +137,7 @@ export function useEstadisticasClientes() {
  */
 export function useEstadisticasCliente(clienteId) {
   return useQuery({
-    queryKey: ['cliente-estadisticas', clienteId],
+    queryKey: queryKeys.estadisticas.clienteDetail(clienteId),
     queryFn: async () => {
       const response = await clientesApi.obtenerEstadisticasCliente(clienteId);
       return response.data.data;
@@ -158,8 +159,8 @@ export function useImportarClientesCSV() {
       return response.data.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['clientes'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['clientes-estadisticas'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.personas.clientes.all, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.estadisticas.clientes, refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('create', 'Clientes'),
   });

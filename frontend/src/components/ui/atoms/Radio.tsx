@@ -9,8 +9,6 @@ export interface RadioProps
   size?: UISize;
   /** Si tiene error */
   hasError?: boolean;
-  /** Label visible junto al radio */
-  label?: string;
   /** Clases CSS adicionales */
   className?: string;
 }
@@ -25,7 +23,6 @@ const Radio = memo(
     {
       size = 'md',
       hasError = false,
-      label,
       className,
       id,
       disabled,
@@ -33,7 +30,7 @@ const Radio = memo(
     },
     ref
   ) {
-    const radioElement = (
+    return (
       <input
         ref={ref}
         type="radio"
@@ -51,21 +48,6 @@ const Radio = memo(
         )}
         {...props}
       />
-    );
-
-    if (!label) return radioElement;
-
-    return (
-      <label
-        htmlFor={id}
-        className={cn(
-          'inline-flex items-center gap-2 cursor-pointer',
-          disabled && 'opacity-50 cursor-not-allowed'
-        )}
-      >
-        {radioElement}
-        <span className="text-sm text-gray-700 dark:text-gray-300">{label}</span>
-      </label>
     );
   })
 );

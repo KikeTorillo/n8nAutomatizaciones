@@ -30,7 +30,8 @@ import {
 // Componentes UI
 import { BasePageLayout } from '@/components/ui/templates';
 import { Button, Badge, LoadingSpinner, SearchInput, Pagination, EmptyState } from '@/components/ui';
-import { DataTable, StatCardGrid } from '@/components/ui/organisms';
+import { DataTable } from '@/components/ui/organisms';
+import { StatCardGrid } from '@/components/ui';
 
 // Hooks
 import {

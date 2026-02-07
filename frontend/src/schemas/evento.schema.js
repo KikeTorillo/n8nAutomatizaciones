@@ -23,12 +23,6 @@ export const TIPOS_EVENTO_VALUES = TIPOS_EVENTO.map(t => t.value);
  * Schema para configuración del evento (objeto anidado)
  */
 const configuracionSchema = z.object({
-  mostrar_mesa_regalos: z.boolean().default(true),
-  permitir_felicitaciones: z.boolean().default(true),
-  mostrar_ubicaciones: z.boolean().default(true),
-  mostrar_contador: z.boolean().default(true),
-  mostrar_qr_invitado: z.boolean().default(false),
-  habilitar_seating_chart: z.boolean().default(false),
   mensaje_confirmacion: z.string().max(500, 'Máximo 500 caracteres').optional().or(z.literal('')),
 });
 
@@ -112,12 +106,6 @@ export const eventoDefaults = {
   portada_url: '',
   galeria_urls: [],
   configuracion: {
-    mostrar_mesa_regalos: true,
-    permitir_felicitaciones: true,
-    mostrar_ubicaciones: true,
-    mostrar_contador: true,
-    mostrar_qr_invitado: false,
-    habilitar_seating_chart: false,
     mensaje_confirmacion: '',
   },
 };
@@ -143,12 +131,6 @@ export const eventoToFormData = (evento) => {
     portada_url: evento.portada_url || '',
     galeria_urls: evento.galeria_urls || [],
     configuracion: {
-      mostrar_mesa_regalos: evento.configuracion?.mostrar_mesa_regalos ?? true,
-      permitir_felicitaciones: evento.configuracion?.permitir_felicitaciones ?? true,
-      mostrar_ubicaciones: evento.configuracion?.mostrar_ubicaciones ?? true,
-      mostrar_contador: evento.configuracion?.mostrar_contador ?? true,
-      mostrar_qr_invitado: evento.configuracion?.mostrar_qr_invitado ?? false,
-      habilitar_seating_chart: evento.configuracion?.habilitar_seating_chart ?? false,
       mensaje_confirmacion: evento.configuracion?.mensaje_confirmacion || '',
     },
   };
@@ -171,12 +153,6 @@ export const formDataToApi = (formData) => {
     portada_url: formData.portada_url || null,
     galeria_urls: formData.galeria_urls || [],
     configuracion: {
-      mostrar_mesa_regalos: formData.configuracion.mostrar_mesa_regalos,
-      permitir_felicitaciones: formData.configuracion.permitir_felicitaciones,
-      mostrar_ubicaciones: formData.configuracion.mostrar_ubicaciones,
-      mostrar_contador: formData.configuracion.mostrar_contador,
-      mostrar_qr_invitado: formData.configuracion.mostrar_qr_invitado,
-      habilitar_seating_chart: formData.configuracion.habilitar_seating_chart,
       mensaje_confirmacion: formData.configuracion.mensaje_confirmacion?.trim() || undefined,
     },
   };

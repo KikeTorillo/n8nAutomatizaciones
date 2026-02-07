@@ -17,6 +17,7 @@ import {
   TrendingDown,
 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
+import { queryKeys } from '@/hooks/config';
 import { Button, Modal, StatCardGrid } from '@/components/ui';
 import { useModalManager } from '@/hooks/utils';
 
@@ -346,9 +347,9 @@ function MiEquipoAusenciasTab({ seccion = 'vacaciones' }) {
     if (seccion === 'vacaciones') {
       queryClient.invalidateQueries({ queryKey: ['vacaciones'], refetchType: 'active' });
     } else if (seccion === 'incapacidades') {
-      queryClient.invalidateQueries({ queryKey: ['incapacidades'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.personas.incapacidades.all, refetchType: 'active' });
     } else if (seccion === 'bloqueos') {
-      queryClient.invalidateQueries({ queryKey: ['bloqueos'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.agendamiento.bloqueos.all, refetchType: 'active' });
     }
   }, [queryClient, seccion]);
 

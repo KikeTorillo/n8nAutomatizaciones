@@ -11,6 +11,7 @@ import {
 import { useCrearCita, useActualizarCita, useCrearCitaRecurrente, usePreviewRecurrencia } from '@/hooks/agendamiento';
 import { useClientes, useProfesionales } from '@/hooks/personas';
 import { useServicios } from '@/hooks/agendamiento';
+import { queryKeys } from '@/hooks/config';
 import { configuracionAgendamientoApi } from '@/services/api/endpoints';
 import { useToast } from '@/hooks/utils';
 import { useQuery } from '@tanstack/react-query';
@@ -53,7 +54,7 @@ function CitaFormDrawer({ isOpen, onClose, mode = 'create', cita = null, fechaPr
 
   // Configuración Round-Robin
   const { data: configAgendamiento } = useQuery({
-    queryKey: ['configuracion-agendamiento'],
+    queryKey: queryKeys.agendamiento.configuracion,
     queryFn: async () => {
       const response = await configuracionAgendamientoApi.obtener();
       return response.data.data;

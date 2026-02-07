@@ -21,6 +21,7 @@ import {
   Modal
 } from '@/components/ui';
 import { ConfiguracionPageLayout } from '@/components/configuracion';
+import { queryKeys } from '@/hooks/config';
 import { useToast } from '@/hooks/utils';
 import { monedasApi } from '@/services/api/endpoints';
 import { useCurrency } from '@/hooks/utils';
@@ -57,7 +58,7 @@ function MonedasPage() {
 
   // Query: Listar monedas
   const { data: monedas = [], isLoading: loadingMonedas } = useQuery({
-    queryKey: ['monedas'],
+    queryKey: queryKeys.catalogos.monedas,
     queryFn: async () => {
       const response = await monedasApi.listar(false);
       return response.data.data || [];

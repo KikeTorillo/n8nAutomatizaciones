@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ajustesMasivosApi } from '@/services/api/endpoints';
 import { STALE_TIMES } from '@/app/queryClient';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
+import { queryKeys } from '@/hooks/config';
 
 /**
  * Hooks para gestión de Ajustes Masivos de Inventario (CSV)
@@ -119,11 +120,11 @@ export function useAplicarAjusteMasivo() {
             queryClient.invalidateQueries({ queryKey: ['ajuste-masivo', id], refetchType: 'active' });
             queryClient.invalidateQueries({ queryKey: ['ajustes-masivos'], refetchType: 'active' });
             // Invalidar datos de inventario afectados
-            queryClient.invalidateQueries({ queryKey: ['productos'], refetchType: 'active' });
-            queryClient.invalidateQueries({ queryKey: ['movimientos'], refetchType: 'active' });
+            queryClient.invalidateQueries({ queryKey: queryKeys.inventario.productos.all, refetchType: 'active' });
+            queryClient.invalidateQueries({ queryKey: queryKeys.inventario.movimientos.all, refetchType: 'active' });
             queryClient.invalidateQueries({ queryKey: ['kardex'], refetchType: 'active' });
-            queryClient.invalidateQueries({ queryKey: ['stock-critico'], refetchType: 'active' });
-            queryClient.invalidateQueries({ queryKey: ['valor-inventario'], refetchType: 'active' });
+            queryClient.invalidateQueries({ queryKey: queryKeys.inventario.productos.stockCritico, refetchType: 'active' });
+            queryClient.invalidateQueries({ queryKey: queryKeys.inventario.valoracion.resumen, refetchType: 'active' });
         },
         onError: createCRUDErrorHandler('update', 'Ajuste masivo'),
     });

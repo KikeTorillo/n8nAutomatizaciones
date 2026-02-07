@@ -18,11 +18,21 @@ import {
   ElementsPalette,
   ThemeEditorPanel,
   TemplateGalleryPanel,
+  useThemeSave,
 } from '@/components/editor-framework';
 import { INVITACION_ALLOWED_TYPES } from '../elements';
-import { BLOQUES_INVITACION, CATEGORIAS_BLOQUES, TEMAS_POR_TIPO, COLOR_FIELDS, FONT_FIELDS } from '../config';
+import {
+  BLOQUES_INVITACION,
+  CATEGORIAS_BLOQUES,
+  TEMAS_POR_TIPO,
+  COLOR_FIELDS,
+  FONT_FIELDS,
+  extractInvitacionColors,
+  extractInvitacionFonts,
+  buildInvitacionThemePayload,
+} from '../config';
 import DecorationEditorSection from '../components/DecorationEditorSection';
-import { useInvitacionEditor } from '../context';
+import { useEditor as useInvitacionEditor } from '@/components/editor-framework';
 import { usePlantillas } from '@/hooks/otros/eventos-digitales';
 import InvitacionTemplateGallery from '../components/InvitacionTemplateGallery';
 
@@ -53,6 +63,7 @@ function SidebarContainer() {
     handleActualizarPlantilla,
     estaActualizandoPlantilla,
     getFreePositionStore,
+    esPlantilla,
   } = useInvitacionEditor();
   const { showSidebar, showSecondaryPanel } = useEditorLayoutContext();
 
@@ -67,35 +78,14 @@ function SidebarContainer() {
   const tipoEvento = evento?.tipo || 'otro';
   const temasDisponibles = TEMAS_POR_TIPO[tipoEvento] || TEMAS_POR_TIPO.otro;
 
-  // Colores actuales
-  const currentColors = useMemo(() => ({
-    primario: evento?.plantilla?.color_primario || '#753572',
-    secundario: evento?.plantilla?.color_secundario || '#F59E0B',
-    fondo: evento?.plantilla?.color_fondo || '#FFFFFF',
-    texto: evento?.plantilla?.color_texto || '#1F2937',
-    texto_claro: evento?.plantilla?.color_texto_claro || '#6B7280',
-  }), [evento?.plantilla?.color_primario, evento?.plantilla?.color_secundario, evento?.plantilla?.color_fondo, evento?.plantilla?.color_texto, evento?.plantilla?.color_texto_claro]);
-
-  // Fuentes actuales
-  const currentFonts = useMemo(() => ({
-    fuente_titulos: evento?.plantilla?.fuente_titulos || 'Playfair Display',
-    fuente_cuerpo: evento?.plantilla?.fuente_cuerpo || 'Inter',
-  }), [evento?.plantilla?.fuente_titulos, evento?.plantilla?.fuente_cuerpo]);
-
-  // Handler de guardado de tema
-  const handleSaveTema = useCallback(async ({ colores, fuentes }) => {
-    await handleActualizarPlantilla({
-      ...evento?.plantilla,
-      color_primario: colores.primario,
-      color_secundario: colores.secundario,
-      color_fondo: colores.fondo,
-      color_texto: colores.texto,
-      color_texto_claro: colores.texto_claro,
-      fuente_titulos: fuentes?.fuente_titulos,
-      fuente_titulo: fuentes?.fuente_titulos,
-      fuente_cuerpo: fuentes?.fuente_cuerpo,
-    });
-  }, [handleActualizarPlantilla, evento?.plantilla]);
+  // Colores, fuentes y guardado de tema (centralizado)
+  const { currentColors, currentFonts, handleSaveTema } = useThemeSave({
+    source: evento?.plantilla,
+    extractColors: extractInvitacionColors,
+    extractFonts: extractInvitacionFonts,
+    buildPayload: buildInvitacionThemePayload(evento?.plantilla),
+    saveMutation: handleActualizarPlantilla,
+  });
 
   // Decoraciones globales (solo animación de entrada)
   const currentDecoration = useMemo(() => ({
@@ -183,18 +173,20 @@ function SidebarContainer() {
         >
           <Palette className="w-5 h-5" />
         </button>
-        <button
-          onClick={() => setPanelActivo(PANEL_TYPES.PLANTILLAS)}
-          className={cn(
-            'p-2 md:p-3 rounded-lg transition-colors',
-            panelActivo === PANEL_TYPES.PLANTILLAS
-              ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
-              : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400'
-          )}
-          title="Plantillas"
-        >
-          <Sparkles className="w-5 h-5" />
-        </button>
+        {!esPlantilla && (
+          <button
+            onClick={() => setPanelActivo(PANEL_TYPES.PLANTILLAS)}
+            className={cn(
+              'p-2 md:p-3 rounded-lg transition-colors',
+              panelActivo === PANEL_TYPES.PLANTILLAS
+                ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
+                : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400'
+            )}
+            title="Plantillas"
+          >
+            <Sparkles className="w-5 h-5" />
+          </button>
+        )}
       </aside>
 
       {/* Panel secundario - Contenido según panelActivo */}
@@ -240,7 +232,7 @@ function SidebarContainer() {
               />
             </ThemeEditorPanel>
           )}
-          {panelActivo === PANEL_TYPES.PLANTILLAS && (
+          {panelActivo === PANEL_TYPES.PLANTILLAS && !esPlantilla && (
             <TemplateGalleryPanel
               templates={plantillas}
               isLoading={plantillasLoading}

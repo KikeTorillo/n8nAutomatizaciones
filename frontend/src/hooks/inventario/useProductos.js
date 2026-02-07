@@ -13,6 +13,7 @@ import { sanitizeParams } from '@/lib/params';
 import { STALE_TIMES } from '@/app/queryClient';
 import { createCRUDHooks, createSanitizer, createSearchHook } from '@/hooks/factories';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
+import { queryKeys } from '@/hooks/config';
 
 // =========================================================================
 // HOOKS CRUD VIA FACTORY
@@ -87,7 +88,7 @@ export const useBuscarProductos = createSearchHook({
  */
 export function useStockCritico() {
   return useQuery({
-    queryKey: ['stock-critico'],
+    queryKey: queryKeys.inventario.productos.stockCritico,
     queryFn: async () => {
       const response = await inventarioApi.obtenerStockCritico();
       return response.data.data.productos || [];
@@ -108,9 +109,9 @@ export function useBulkCrearProductos() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['productos'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['stock-critico'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['valor-inventario'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.productos.all, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.productos.stockCritico, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.valoracion.resumen, refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('create', 'Productos', {
       403: 'Alcanzaste el límite de productos de tu plan',
@@ -137,11 +138,11 @@ export function useAjustarStock() {
       return response.data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['productos'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['producto', variables.id], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['stock-critico'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['movimientos'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['kardex', variables.id], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.productos.all, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.productos.detail(variables.id), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.productos.stockCritico, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.movimientos.all, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.productos.kardex(variables.id), refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: ['stock-ubicacion'], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('update', 'Stock', {

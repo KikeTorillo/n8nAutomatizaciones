@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
+import { queryKeys } from '@/hooks/config';
 import { organizacionesApi } from '@/services/api/endpoints';
 import { useAuthStore, selectUser } from '@/features/auth';
 import { Button } from '@/components/ui';
@@ -27,7 +28,7 @@ function SetupChecklist() {
 
   // Obtener progreso del setup
   const { data: setupProgress, isLoading } = useQuery({
-    queryKey: ['setup-progress', user?.organizacion_id],
+    queryKey: queryKeys.auth.setupProgress(user?.organizacion_id),
     queryFn: () => organizacionesApi.getSetupProgress(user?.organizacion_id),
     select: (response) => response.data.data,
     enabled: !!user?.organizacion_id,

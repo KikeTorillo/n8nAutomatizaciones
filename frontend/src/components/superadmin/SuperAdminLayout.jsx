@@ -6,6 +6,7 @@
 import { Outlet, useNavigate } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { LogOut, Shield, Home } from 'lucide-react';
+import { queryKeys } from '@/hooks/config';
 import { authApi } from '@/services/api/endpoints';
 import { Button, ThemeToggle, ConfirmDialog } from '@/components/ui';
 import { useModalManager } from '@/hooks/utils';
@@ -34,10 +35,10 @@ export default function SuperAdminLayout() {
     const logoutMutation = useMutation({
         mutationFn: authApi.logout,
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['usuario'], refetchType: 'active' });
-            queryClient.invalidateQueries({ queryKey: ['organizacion'], refetchType: 'active' });
-            queryClient.invalidateQueries({ queryKey: ['modulos'], refetchType: 'active' });
-            queryClient.invalidateQueries({ queryKey: ['sucursales'], refetchType: 'active' });
+            queryClient.invalidateQueries({ queryKey: queryKeys.auth.usuario, refetchType: 'active' });
+            queryClient.invalidateQueries({ queryKey: queryKeys.auth.organizacion, refetchType: 'active' });
+            queryClient.invalidateQueries({ queryKey: queryKeys.sistema.modulos, refetchType: 'active' });
+            queryClient.invalidateQueries({ queryKey: queryKeys.sistema.sucursales.all, refetchType: 'active' });
             resetOnboarding();
             clearSucursal();
             clearPermisos();
@@ -45,10 +46,10 @@ export default function SuperAdminLayout() {
             navigate('/login');
         },
         onError: () => {
-            queryClient.invalidateQueries({ queryKey: ['usuario'], refetchType: 'active' });
-            queryClient.invalidateQueries({ queryKey: ['organizacion'], refetchType: 'active' });
-            queryClient.invalidateQueries({ queryKey: ['modulos'], refetchType: 'active' });
-            queryClient.invalidateQueries({ queryKey: ['sucursales'], refetchType: 'active' });
+            queryClient.invalidateQueries({ queryKey: queryKeys.auth.usuario, refetchType: 'active' });
+            queryClient.invalidateQueries({ queryKey: queryKeys.auth.organizacion, refetchType: 'active' });
+            queryClient.invalidateQueries({ queryKey: queryKeys.sistema.modulos, refetchType: 'active' });
+            queryClient.invalidateQueries({ queryKey: queryKeys.sistema.sucursales.all, refetchType: 'active' });
             resetOnboarding();
             clearSucursal();
             clearPermisos();

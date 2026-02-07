@@ -13,6 +13,7 @@ import { STALE_TIMES } from '@/app/queryClient';
 import { clientesApi } from '@/services/api/endpoints';
 import { createCRUDHooks } from '@/hooks/factories';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
+import { queryKeys } from '@/hooks/config';
 
 // Colores predefinidos para el selector
 export const COLORES_ETIQUETAS = [
@@ -39,9 +40,9 @@ const hooks = createCRUDHooks({
     update: 'actualizarEtiqueta',
     delete: 'eliminarEtiqueta',
   },
-  invalidateOnCreate: ['etiquetas-clientes'],
-  invalidateOnUpdate: ['etiquetas-clientes'],
-  invalidateOnDelete: ['etiquetas-clientes'],
+  invalidateOnCreate: queryKeys.catalogos.etiquetasClientes,
+  invalidateOnUpdate: queryKeys.catalogos.etiquetasClientes,
+  invalidateOnDelete: queryKeys.catalogos.etiquetasClientes,
   errorMessages: {
     create: { 409: 'Ya existe una etiqueta con ese nombre' },
     update: { 409: 'Ya existe una etiqueta con ese nombre' },
@@ -103,9 +104,9 @@ export function useAsignarEtiquetasCliente() {
       const clienteIdStr = String(variables.clienteId);
       const clienteIdNum = Number(variables.clienteId);
       queryClient.invalidateQueries({ queryKey: ['cliente-etiquetas', clienteIdNum], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['cliente', clienteIdStr], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['clientes'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['etiquetas-clientes'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.personas.clientes.detail(clienteIdStr), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.personas.clientes.all, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.catalogos.etiquetasClientes, refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('update', 'Etiquetas'),
   });
@@ -127,9 +128,9 @@ export function useAgregarEtiquetaCliente() {
       const clienteIdStr = String(variables.clienteId);
       const clienteIdNum = Number(variables.clienteId);
       queryClient.invalidateQueries({ queryKey: ['cliente-etiquetas', clienteIdNum], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['cliente', clienteIdStr], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['clientes'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['etiquetas-clientes'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.personas.clientes.detail(clienteIdStr), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.personas.clientes.all, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.catalogos.etiquetasClientes, refetchType: 'active' });
     },
   });
 }
@@ -150,9 +151,9 @@ export function useQuitarEtiquetaCliente() {
       const clienteIdStr = String(variables.clienteId);
       const clienteIdNum = Number(variables.clienteId);
       queryClient.invalidateQueries({ queryKey: ['cliente-etiquetas', clienteIdNum], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['cliente', clienteIdStr], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['clientes'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['etiquetas-clientes'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.personas.clientes.detail(clienteIdStr), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.personas.clientes.all, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.catalogos.etiquetasClientes, refetchType: 'active' });
     },
   });
 }

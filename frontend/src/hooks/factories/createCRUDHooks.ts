@@ -10,14 +10,14 @@
  * ====================================================================
  */
 
-import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, keepPreviousData, type UseQueryResult, type UseMutationResult } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { sanitizeParams } from '@/lib/params';
 import { sanitizeFields } from '@/lib/sanitize';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-type ApiModule = Record<string, (...args: any[]) => Promise<any>>;
+type ApiModule = Record<string, (...args: any[]) => Promise<{ data: { data: any; pagination?: any; meta?: any } }>>;
 
 interface ApiMethods {
   list: string;
@@ -49,20 +49,18 @@ export interface CRUDHooksConfig<TEntity = unknown, TCreate = unknown, TUpdate =
   usePreviousData?: boolean;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   transformList?: (data: any, pagination: any) => any;
-  transformDetail?: (data: unknown) => TEntity;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  transformDetail?: (data: any) => TEntity;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface CRUDHooksReturn<TEntity = unknown, TCreate = unknown, TUpdate = unknown> {
-  useList: (params?: Record<string, unknown>) => ReturnType<typeof useQuery>;
-  useDetail: (id: string | number | null | undefined) => ReturnType<typeof useQuery>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  useCreate: () => ReturnType<typeof useMutation<any, any, any, any>>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  useUpdate: () => ReturnType<typeof useMutation<any, any, any, any>>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  useDelete: () => ReturnType<typeof useMutation<any, any, any, any>>;
-  useListActive: (extraParams?: Record<string, unknown>) => ReturnType<typeof useQuery>;
+  useList: (params?: Record<string, unknown>) => UseQueryResult<TEntity>;
+  useDetail: (id: string | number | null | undefined) => UseQueryResult<TEntity>;
+  useCreate: () => UseMutationResult<TEntity, Error, TCreate>;
+  useUpdate: () => UseMutationResult<TEntity, Error, { id: string | number; data: TUpdate }>;
+  useDelete: () => UseMutationResult<unknown, Error, string | number>;
+  useListActive: (extraParams?: Record<string, unknown>) => UseQueryResult<TEntity>;
+  /** Alias dinámicos en español — usar keys genéricas para tipado completo */
   [key: string]: unknown;
 }
 
@@ -134,47 +132,45 @@ export function createCRUDHooks<
   function useCreate() {
     const queryClient = useQueryClient();
 
-    return useMutation({
+    return useMutation<TEntity, Error, TCreate>({
       mutationFn: async (data: TCreate) => {
         const sanitized = sanitize(data);
         const response = await api[apiMethods.create](sanitized);
-        return response.data.data;
+        return response.data.data as TEntity;
       },
       onSuccess: () => {
         invalidateOnCreate.forEach((key) => {
           queryClient.invalidateQueries({ queryKey: [key], refetchType: 'active' });
         });
       },
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      onError: createCRUDErrorHandler('create', entityName, errorMessages.create || {}) as any,
+      onError: createCRUDErrorHandler('create', entityName, errorMessages.create || {}) as (error: Error) => void,
     });
   }
 
   function useUpdate() {
     const queryClient = useQueryClient();
 
-    return useMutation({
-      mutationFn: async ({ id, data }: { id: string | number; data: TUpdate }) => {
+    return useMutation<TEntity, Error, { id: string | number; data: TUpdate }>({
+      mutationFn: async ({ id, data }) => {
         const sanitized = sanitize(data);
         const response = await api[apiMethods.update](id, sanitized);
-        return response.data.data;
+        return response.data.data as TEntity;
       },
-      onSuccess: (_: unknown, variables: { id: string | number; data: TUpdate }) => {
+      onSuccess: (_, variables) => {
         invalidateOnUpdate.forEach((key) => {
           queryClient.invalidateQueries({ queryKey: [key], refetchType: 'active' });
         });
         queryClient.invalidateQueries({ queryKey: [name, variables.id], refetchType: 'active' });
       },
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      onError: createCRUDErrorHandler('update', entityName, errorMessages.update || {}) as any,
+      onError: createCRUDErrorHandler('update', entityName, errorMessages.update || {}) as (error: Error) => void,
     });
   }
 
   function useDelete() {
     const queryClient = useQueryClient();
 
-    return useMutation({
-      mutationFn: async (id: string | number) => {
+    return useMutation<unknown, Error, string | number>({
+      mutationFn: async (id) => {
         const response = await api[apiMethods.delete](id);
         return response?.data?.data ?? id;
       },
@@ -183,8 +179,7 @@ export function createCRUDHooks<
           queryClient.invalidateQueries({ queryKey: [key], refetchType: 'active' });
         });
       },
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      onError: createCRUDErrorHandler('delete', entityName, errorMessages.delete || {}) as any,
+      onError: createCRUDErrorHandler('delete', entityName, errorMessages.delete || {}) as (error: Error) => void,
     });
   }
 

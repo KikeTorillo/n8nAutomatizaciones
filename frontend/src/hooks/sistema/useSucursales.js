@@ -17,6 +17,7 @@ import { STALE_TIMES } from '@/app/queryClient';
 import { sucursalesApi } from '@/services/api/endpoints';
 import { createCRUDHooks, createSanitizer } from '@/hooks/factories';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
+import { queryKeys } from '@/hooks/config';
 
 // ==================== CRUD SUCURSALES (via factory) ====================
 
@@ -46,9 +47,9 @@ const hooks = createCRUDHooks({
     delete: 'eliminar',
   },
   sanitize: sanitizeSucursal,
-  invalidateOnCreate: ['sucursales', 'sucursal-matriz'],
-  invalidateOnUpdate: ['sucursales'],
-  invalidateOnDelete: ['sucursales'],
+  invalidateOnCreate: [queryKeys.sistema.sucursales.all[0], 'sucursal-matriz'],
+  invalidateOnUpdate: [queryKeys.sistema.sucursales.all[0]],
+  invalidateOnDelete: [queryKeys.sistema.sucursales.all[0]],
   errorMessages: {
     delete: { 400: 'No se puede eliminar la sucursal matriz' },
   },
@@ -123,7 +124,7 @@ export function useAsignarUsuarioSucursal() {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['sucursal-usuarios', variables.sucursalId], exact: true, refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['sucursales'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.sistema.sucursales.all, refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: ['sucursales-usuario'], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('create', 'Usuario'),
@@ -160,7 +161,7 @@ export function useAsignarProfesionalSucursal() {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['sucursal-profesionales', variables.sucursalId], exact: true, refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['sucursales'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.sistema.sucursales.all, refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('create', 'Profesional'),
   });
@@ -202,7 +203,7 @@ export function useMetricasSucursales(params = {}, { enabled = true } = {}) {
  */
 export function useTransferencias(params = {}) {
   return useQuery({
-    queryKey: ['transferencias', params],
+    queryKey: queryKeys.inventario.transferencias.list(params),
     queryFn: async () => {
       const sanitizedParams = Object.entries(params).reduce((acc, [key, value]) => {
         if (value !== '' && value !== null && value !== undefined) {
@@ -250,7 +251,7 @@ export function useCrearTransferencia() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['transferencias'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.transferencias.all, refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('create', 'Transferencia'),
   });
@@ -269,7 +270,7 @@ export function useEnviarTransferencia() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['transferencia', data.id], exact: true, refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['transferencias'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.transferencias.all, refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('update', 'Transferencia'),
   });
@@ -288,7 +289,7 @@ export function useRecibirTransferencia() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['transferencia', data.id], exact: true, refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['transferencias'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.transferencias.all, refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('update', 'Transferencia'),
   });
@@ -307,7 +308,7 @@ export function useCancelarTransferencia() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['transferencia', data.id], exact: true, refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['transferencias'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.transferencias.all, refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('update', 'Transferencia'),
   });
@@ -326,7 +327,7 @@ export function useAgregarItemTransferencia() {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['transferencia', variables.transferenciaId], exact: true, refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['transferencias'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.transferencias.all, refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('create', 'Item'),
   });
@@ -345,7 +346,7 @@ export function useEliminarItemTransferencia() {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['transferencia', variables.transferenciaId], exact: true, refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['transferencias'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.transferencias.all, refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('delete', 'Item'),
   });

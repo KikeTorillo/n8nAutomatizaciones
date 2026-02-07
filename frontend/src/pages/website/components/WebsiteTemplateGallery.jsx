@@ -12,6 +12,7 @@
 import { memo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { queryKeys } from '@/hooks/config';
 import { websiteApi } from '@/services/api/modules/website.api';
 import { TemplateGalleryModal } from '@/components/editor-framework';
 
@@ -28,13 +29,13 @@ function WebsiteTemplateGallery({ isOpen, onClose, onTemplateApplied }) {
 
   // Queries
   const { data: templates = [], isLoading: loadingTemplates } = useQuery({
-    queryKey: ['website', 'templates'],
+    queryKey: queryKeys.website.templates.all,
     queryFn: () => websiteApi.listarTemplates(),
     enabled: isOpen,
   });
 
   const { data: industrias = [] } = useQuery({
-    queryKey: ['website', 'templates', 'industrias'],
+    queryKey: queryKeys.website.templates.industrias,
     queryFn: () => websiteApi.listarIndustrias(),
     enabled: isOpen,
   });

@@ -132,6 +132,47 @@ class PlantillasController {
     });
 
     /**
+     * GET /plantillas/:id/bloques
+     * Obtener bloques de una plantilla
+     */
+    static obtenerBloques = asyncHandler(async (req, res) => {
+        const { id } = req.params;
+
+        const plantilla = await PlantillaModel.obtenerPorId(id);
+        if (!plantilla) {
+            throw new ResourceNotFoundError('Plantilla', id);
+        }
+
+        const bloques = await PlantillaModel.obtenerBloques(id);
+
+        return ResponseHelper.success(res, { bloques: bloques || [] });
+    });
+
+    /**
+     * PUT /plantillas/:id/bloques
+     * Guardar bloques de una plantilla (super_admin)
+     */
+    static guardarBloques = asyncHandler(async (req, res) => {
+        const { id } = req.params;
+        const { bloques } = req.body;
+
+        const plantilla = await PlantillaModel.obtenerPorId(id);
+        if (!plantilla) {
+            throw new ResourceNotFoundError('Plantilla', id);
+        }
+
+        const resultado = await PlantillaModel.guardarBloques(id, bloques);
+
+        logger.info('[PlantillasController.guardarBloques] Bloques guardados', {
+            plantilla_id: id,
+            total_bloques: bloques.length,
+            usuario_id: req.user.id
+        });
+
+        return ResponseHelper.success(res, resultado, 'Bloques guardados exitosamente');
+    });
+
+    /**
      * GET /plantillas/tipo/:tipoEvento
      * Listar plantillas por tipo de evento
      */

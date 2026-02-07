@@ -18,7 +18,7 @@ import {
   useEditorLayoutContext,
 } from '@/components/editor-framework';
 import { ConfirmDialog } from '@/components/ui';
-import { useInvitacionEditor } from '../context';
+import { useEditor as useInvitacionEditor } from '@/components/editor-framework';
 import {
   useInvitacionUndo,
   useInvitacionRedo,
@@ -57,6 +57,9 @@ function EditorHeader() {
     handlePublicar,
     cambiarAModoLibre,
     salirDeModoLibre,
+    esPlantilla,
+    plantilla,
+    handleVolver,
   } = useInvitacionEditor();
 
   // Layout context para responsive
@@ -90,22 +93,23 @@ function EditorHeader() {
       {/* Header minimalista: navegación + identidad + publicación */}
       <EditorHeaderBase
         // Info del documento
-        title={evento?.nombre || 'Mi Invitación'}
+        title={esPlantilla ? (plantilla?.nombre || 'Plantilla') : (evento?.nombre || 'Mi Invitación')}
         icon={EventoIcon}
         status={estaPublicado ? 'published' : 'draft'}
         statusLabels={{ draft: 'Borrador', published: 'Publicada' }}
 
         // Navegación
-        backTo="/eventos-digitales"
+        backTo={esPlantilla ? '/eventos-digitales/plantillas' : '/eventos-digitales'}
         backLabel="Volver"
+        onBack={handleVolver}
 
-        // Publicación
-        onPublish={handlePublicar}
-        isPublishing={estaPublicando}
+        // Publicación (oculto en plantillas)
+        onPublish={esPlantilla ? undefined : handlePublicar}
+        isPublishing={esPlantilla ? false : estaPublicando}
         publishLabels={{ publish: 'Publicar', unpublish: 'Despublicar' }}
 
-        // Ver publicado
-        viewUrl={estaPublicado && evento?.slug ? `/e/${evento.slug}` : undefined}
+        // Ver publicado (oculto en plantillas)
+        viewUrl={!esPlantilla && estaPublicado && evento?.slug ? `/e/${evento.slug}` : undefined}
         viewLabel="Ver invitación"
 
         // Responsive
@@ -130,7 +134,7 @@ function EditorHeader() {
           }
         }}
         showEditorModeToggle={!isMobile}
-        showFreeMode={true}
+        showFreeMode={!esPlantilla}
         isFreeModeOnly={esModoLibreGuardado}
         onFreeModeExit={handleFreeModeExit}
 

@@ -209,11 +209,6 @@ class PublicController {
             throw new ResourceNotFoundError('Evento');
         }
 
-        // Verificar si la mesa de regalos está habilitada
-        if (evento.configuracion?.mostrar_mesa_regalos === false) {
-            return ResponseHelper.success(res, []);
-        }
-
         const regalos = await MesaRegalosModel.obtenerPublica(evento.id);
 
         logger.info('[PublicController.obtenerRegalos] Mesa de regalos consultada', {
@@ -304,12 +299,6 @@ class PublicController {
 
         if (invitacion.evento_slug !== slug) {
             throw new ValidationError('Invitación no corresponde a este evento');
-        }
-
-        // Verificar si QR está habilitado en la configuración del evento
-        const evento = await EventoModel.obtenerPorSlug(slug);
-        if (evento?.configuracion?.habilitar_qr_checkin === false) {
-            throw new ValidationError('QR no habilitado para este evento');
         }
 
         // Usar servicio de QR

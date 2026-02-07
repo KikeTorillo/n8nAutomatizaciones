@@ -3,7 +3,7 @@ import { cn } from '@/lib/utils';
 import { DataTable } from '../organisms/DataTable';
 import { SearchInput } from '../organisms/SearchInput';
 import { Button } from '../atoms/Button';
-import { StatCardGrid, type StatConfig } from '../organisms/StatCardGrid';
+import { StatCardGrid, type StatConfig } from '../molecules/StatCardGrid';
 import { ViewTabs } from '../organisms/ViewTabs';
 import { useFilters, usePagination, normalizePagination, useModalManager, useDeleteConfirmation, useExportCSV } from '@/hooks/utils';
 import { ConfirmDialog } from '../organisms/ConfirmDialog';
@@ -20,11 +20,20 @@ interface ColumnDef {
   [key: string]: unknown;
 }
 
+interface ViewComponentProps {
+  items: Record<string, unknown>[];
+  isLoading: boolean;
+  onItemClick?: (item: Record<string, unknown>) => void;
+  handlers?: CrudHandlers;
+  pagination?: unknown;
+  onPageChange?: (page: number) => void;
+}
+
 interface ViewMode {
   id: string;
   label: string;
   icon?: LucideIcon;
-  component?: React.ComponentType<any>;
+  component?: React.ComponentType<ViewComponentProps>;
 }
 
 interface ExportConfig {
@@ -33,8 +42,16 @@ interface ExportConfig {
   mapRow?: (row: Record<string, unknown>) => Record<string, unknown>;
 }
 
+interface OverlayComponentProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSuccess?: () => void;
+  data?: unknown;
+  [key: string]: unknown;
+}
+
 interface ExtraModalConfig {
-  component: React.ComponentType<any>;
+  component: React.ComponentType<OverlayComponentProps>;
   mapData?: (data: unknown) => Record<string, unknown>;
   props?: Record<string, unknown>;
 }
@@ -47,16 +64,30 @@ interface CrudHandlers {
   extraMutations: Record<string, unknown>;
 }
 
+type OpenModalFn = (name: string, data?: unknown) => void;
+type CloseModalFn = (name: string, clearData?: boolean) => void;
+type SetFiltroFn = (key: string, value: unknown) => void;
+
+interface PageLayoutProps {
+  children: React.ReactNode;
+  icon?: LucideIcon;
+  title?: string;
+  subtitle?: string;
+  actions?: React.ReactNode;
+  [key: string]: unknown;
+}
+
 interface ListadoCRUDPageProps {
   title?: string;
   subtitle?: string;
   icon?: LucideIcon;
-  PageLayout?: React.ComponentType<any>;
+  PageLayout?: React.ComponentType<PageLayoutProps>;
   layoutProps?: Record<string, unknown>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   useListQuery: (params: Record<string, unknown>) => { data?: any; isLoading: boolean };
   queryParams?: Record<string, unknown>;
   dataKey?: string;
-  useDeleteMutation?: () => { mutate: Function; [key: string]: unknown };
+  useDeleteMutation?: () => { mutate: (id: unknown) => void; [key: string]: unknown };
   deleteMutationOptions?: Record<string, unknown>;
   extraMutations?: Record<string, unknown>;
   columns: ColumnDef[];
@@ -69,21 +100,21 @@ interface ListadoCRUDPageProps {
   filterPersistId?: string;
   limit?: number;
   statsConfig?: StatConfig[];
-  FormDrawer?: React.ComponentType<any>;
+  FormDrawer?: React.ComponentType<OverlayComponentProps>;
   formDrawerProps?: Record<string, unknown>;
   mapFormData?: (data: unknown) => Record<string, unknown>;
-  StatsModal?: React.ComponentType<any>;
+  StatsModal?: React.ComponentType<OverlayComponentProps>;
   statsModalProps?: Record<string, unknown>;
   mapStatsData?: (data: unknown) => Record<string, unknown>;
-  actions?: React.ReactNode | ((context: { openModal: Function; closeModal: Function; items: unknown[]; isLoading: boolean; handlers: CrudHandlers }) => React.ReactNode);
+  actions?: React.ReactNode | ((context: { openModal: OpenModalFn; closeModal: CloseModalFn; items: unknown[]; isLoading: boolean; handlers: CrudHandlers }) => React.ReactNode);
   showNewButton?: boolean;
   newButtonLabel?: string;
   viewModes?: ViewMode[];
   defaultViewMode?: string;
   extraModals?: Record<string, ExtraModalConfig>;
   exportConfig?: ExportConfig;
-  renderFilters?: (context: { filtros: Record<string, unknown>; setFiltro: Function; limpiarFiltros: () => void; filtrosActivos: number; resetPage: () => void }) => React.ReactNode;
-  renderBeforeTable?: (context: { items: unknown[]; isLoading: boolean; paginacion: unknown; openModal: Function }) => React.ReactNode;
+  renderFilters?: (context: { filtros: Record<string, unknown>; setFiltro: SetFiltroFn; limpiarFiltros: () => void; filtrosActivos: number; resetPage: () => void }) => React.ReactNode;
+  renderBeforeTable?: (context: { items: unknown[]; isLoading: boolean; paginacion: unknown; openModal: OpenModalFn }) => React.ReactNode;
   renderAfterTable?: (context: { items: unknown[]; isLoading: boolean }) => React.ReactNode;
   className?: string;
   children?: React.ReactNode;
@@ -187,7 +218,7 @@ const ListadoCRUDPage = memo(function ListadoCRUDPage({
     openModal: (name: string, data?: unknown, extraProps?: Record<string, unknown>) => void;
     closeModal: (name: string, clearData?: boolean) => void;
     isOpen: (name: string) => boolean;
-    getModalData: (name: string) => any;
+    getModalData: (name: string) => Record<string, unknown> | null;
     modals: Record<string, unknown>;
     closeAll: () => void;
   };
@@ -238,6 +269,7 @@ const ListadoCRUDPage = memo(function ListadoCRUDPage({
   // Delete mutation + confirmation
   const deleteMutation = useDeleteMutation?.();
   const { confirmDelete, deleteConfirmProps } = useDeleteConfirmation({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     deleteMutation: deleteMutation || null as any,
     entityName: title?.toLowerCase() || 'elemento',
     ...deleteMutationOptions,
@@ -289,7 +321,7 @@ const ListadoCRUDPage = memo(function ListadoCRUDPage({
     : actions;
 
   // Wrapper de layout
-  const LayoutComponent = (PageLayout || 'div') as React.ElementType<any>;
+  const LayoutComponent = (PageLayout || 'div') as React.ElementType<PageLayoutProps>;
   const layoutContent = (
     <>
       {/* Stats */}
@@ -367,6 +399,7 @@ const ListadoCRUDPage = memo(function ListadoCRUDPage({
         // Fallback a DataTable si no hay componente custom
         return (
           <DataTable
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             columns={columns as any}
             data={items}
             isLoading={isLoading}
@@ -429,6 +462,7 @@ const ListadoCRUDPage = memo(function ListadoCRUDPage({
       })}
 
       {/* Delete Confirmation */}
+      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
       {deleteMutation && <ConfirmDialog {...deleteConfirmProps as any} />}
 
       {/* Children slot */}
@@ -489,4 +523,4 @@ ListadoCRUDPage.displayName = 'ListadoCRUDPage';
 
 export { ListadoCRUDPage };
 export default ListadoCRUDPage;
-export type { ListadoCRUDPageProps, ColumnDef, ViewMode, ExportConfig, ExtraModalConfig, CrudHandlers };
+export type { ListadoCRUDPageProps, ColumnDef, ViewMode, ViewComponentProps, ExportConfig, ExtraModalConfig, OverlayComponentProps, CrudHandlers, PageLayoutProps, OpenModalFn, CloseModalFn, SetFiltroFn };

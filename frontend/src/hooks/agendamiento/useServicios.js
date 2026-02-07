@@ -16,6 +16,7 @@ import { STALE_TIMES } from '@/app/queryClient';
 import { serviciosApi } from '@/services/api/endpoints';
 import { createCRUDHooks, createSanitizer, createSearchHook } from '@/hooks/factories';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
+import { queryKeys } from '@/hooks/config';
 
 // ==================== CRUD BÁSICO (via factory) ====================
 
@@ -80,7 +81,7 @@ export const useBuscarServicios = createSearchHook({
  */
 export function useProfesionalesServicio(servicioId) {
   return useQuery({
-    queryKey: ['servicio-profesionales', servicioId],
+    queryKey: [...queryKeys.agendamiento.servicios.all, 'profesionales', servicioId],
     queryFn: async () => {
       const response = await serviciosApi.obtenerProfesionales(servicioId);
       return response.data.data;
@@ -107,19 +108,19 @@ export function useAsignarProfesional() {
     onSuccess: (_, variables) => {
       // Invalidar cache del lado de servicios
       queryClient.invalidateQueries({
-        queryKey: ['servicio-profesionales', variables.servicioId],
+        queryKey: [...queryKeys.agendamiento.servicios.all, 'profesionales', variables.servicioId],
         exact: true
       });
-      queryClient.invalidateQueries({ queryKey: ['servicios'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['servicios-dashboard'], exact: true, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.agendamiento.servicios.all, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.estadisticas.serviciosDashboard, exact: true, refetchType: 'active' });
 
       // Resetear cache del lado de profesionales (bidireccional)
       queryClient.resetQueries({
         queryKey: ['profesional-servicios', variables.profesionalId],
         exact: true
       });
-      queryClient.invalidateQueries({ queryKey: ['profesionales'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['estadisticas-asignaciones'], exact: true, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.personas.profesionales.all, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.estadisticas.asignaciones, exact: true, refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('create', 'Asignacion de profesional'),
   });
@@ -139,19 +140,19 @@ export function useDesasignarProfesional() {
     onSuccess: (data) => {
       // Invalidar cache del lado de servicios
       queryClient.invalidateQueries({
-        queryKey: ['servicio-profesionales', data.servicioId],
+        queryKey: [...queryKeys.agendamiento.servicios.all, 'profesionales', data.servicioId],
         exact: true
       });
-      queryClient.invalidateQueries({ queryKey: ['servicios'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['servicios-dashboard'], exact: true, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.agendamiento.servicios.all, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.estadisticas.serviciosDashboard, exact: true, refetchType: 'active' });
 
       // Resetear cache del lado de profesionales (bidireccional)
       queryClient.resetQueries({
         queryKey: ['profesional-servicios', data.profesionalId],
         exact: true
       });
-      queryClient.invalidateQueries({ queryKey: ['profesionales'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['estadisticas-asignaciones'], exact: true, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.personas.profesionales.all, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.estadisticas.asignaciones, exact: true, refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('delete', 'Asignacion de profesional'),
   });

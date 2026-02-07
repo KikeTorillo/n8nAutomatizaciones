@@ -4,6 +4,7 @@ import { citasApi } from '@/services/api/endpoints';
 import { useToast } from '../../utils/useToast';
 import useSucursalStore, { selectGetSucursalId } from '@/store/sucursalStore';
 import { createCRUDErrorHandler, getErrorMessage } from '@/hooks/config/errorHandlerFactory';
+import { queryKeys } from '@/hooks/config';
 
 /**
  * Hook para crear una cita walk-in (cliente sin cita previa)
@@ -23,7 +24,7 @@ export function useCrearCitaWalkIn() {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['citas'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.agendamiento.citas.all, refetchType: 'active' });
       success('Cita walk-in creada exitosamente');
     },
     onError: (error) => {
@@ -42,7 +43,7 @@ export function useCrearCitaWalkIn() {
  */
 export function useDisponibilidadInmediata(params) {
   return useQuery({
-    queryKey: ['disponibilidad-inmediata', params],
+    queryKey: queryKeys.agendamiento.disponibilidadInmediata(params),
     queryFn: async () => {
       const response = await citasApi.disponibilidadInmediata(params);
       return response.data;

@@ -10,6 +10,7 @@ import { useProveedores } from '@/hooks/inventario';
 import { useToast } from '@/hooks/utils';
 import { useUploadArchivo } from '@/hooks/utils';
 import { useCurrency } from '@/hooks/utils';
+import { queryKeys } from '@/hooks/config';
 import { monedasApi, inventarioApi } from '@/services/api/endpoints';
 import { GenerarVariantesModal } from './variantes';
 
@@ -50,7 +51,7 @@ function ProductoFormDrawer({ isOpen, onClose, mode = 'create', producto = null 
 
   // Query para obtener monedas disponibles
   const { data: monedasResponse } = useQuery({
-    queryKey: ['monedas'],
+    queryKey: queryKeys.catalogos.monedas,
     queryFn: () => monedasApi.listar(),
     staleTime: 1000 * 60 * 10, // 10 min
   });
@@ -59,7 +60,7 @@ function ProductoFormDrawer({ isOpen, onClose, mode = 'create', producto = null 
 
   // Query para obtener producto completo con precios_moneda al editar
   const { data: productoCompleto } = useQuery({
-    queryKey: ['producto', producto?.id],
+    queryKey: queryKeys.inventario.productos.detail(producto?.id),
     queryFn: () => inventarioApi.obtenerProducto(producto.id),
     enabled: mode === 'edit' && !!producto?.id,
     staleTime: 0,

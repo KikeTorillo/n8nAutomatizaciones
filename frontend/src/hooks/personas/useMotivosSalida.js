@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { motivosSalidaApi } from '@/services/api/endpoints';
 import { useToast } from '@/hooks/utils';
+import { queryKeys } from '@/hooks/config';
 
 /**
  * Hook para gestionar motivos de salida
@@ -10,7 +11,7 @@ import { useToast } from '@/hooks/utils';
 
 // Query Keys
 export const motivosSalidaKeys = {
-  all: ['motivos-salida'],
+  all: queryKeys.catalogos.motivosSalida,
   lists: () => [...motivosSalidaKeys.all, 'list'],
   list: (filters) => [...motivosSalidaKeys.lists(), { filters }],
   details: () => [...motivosSalidaKeys.all, 'detail'],

@@ -6,6 +6,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { profesionalesApi } from '@/services/api/endpoints';
 import { STALE_TIMES } from '@/app/queryClient';
+import { queryKeys } from '@/hooks/config';
 
 /**
  * Hook para obtener usuarios que pueden ser vinculados a profesionales
@@ -16,7 +17,7 @@ import { STALE_TIMES } from '@/app/queryClient';
  */
 export function useUsuariosDisponibles({ busqueda = '', enabled = true } = {}) {
   return useQuery({
-    queryKey: ['usuarios-disponibles', busqueda],
+    queryKey: [...queryKeys.personas.profesionales.disponibles, busqueda],
     queryFn: async () => {
       const response = await profesionalesApi.usuariosDisponibles();
       const usuarios = response.data?.data?.usuarios || [];

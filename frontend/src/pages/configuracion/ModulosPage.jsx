@@ -25,6 +25,7 @@ import {
   ArrowUpRight,
   Package,
 } from 'lucide-react';
+import { queryKeys } from '@/hooks/config';
 import { configuracionAgendamientoApi } from '@/services/api/endpoints';
 import { MODULOS_ICONOS } from '@/hooks/sistema/modulosIconos';
 
@@ -58,7 +59,7 @@ function ModulosPage() {
 
   // Query para configuración de agendamiento
   const { data: configAgendamiento, isLoading: loadingConfigAgendamiento } = useQuery({
-    queryKey: ['configuracion-agendamiento'],
+    queryKey: queryKeys.agendamiento.configuracion,
     queryFn: async () => {
       const response = await configuracionAgendamientoApi.obtener();
       return response.data?.data || response.data || {};
@@ -71,7 +72,7 @@ function ModulosPage() {
     mutationFn: configuracionAgendamientoApi.toggleRoundRobin,
     onSuccess: (response) => {
       const data = response.data?.data || response.data;
-      queryClient.invalidateQueries({ queryKey: ['configuracion-agendamiento'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.agendamiento.configuracion });
       toast.success(
         data?.round_robin_habilitado
           ? 'Round-Robin activado'

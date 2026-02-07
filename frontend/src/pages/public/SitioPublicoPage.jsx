@@ -1,5 +1,6 @@
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { queryKeys } from '@/hooks/config';
 import { websiteApi } from '@/services/api/endpoints';
 import { Loader2, AlertCircle, Globe } from 'lucide-react';
 
@@ -51,7 +52,7 @@ export default function SitioPublicoPage() {
 
   // Query para obtener el sitio o página específica
   const { data, isLoading, error } = useQuery({
-    queryKey: ['sitio-publico', slug, pagina],
+    queryKey: queryKeys.website.publico(slug, pagina),
     queryFn: async () => {
       const response = pagina
         ? await websiteApi.obtenerPaginaPublica(slug, pagina)

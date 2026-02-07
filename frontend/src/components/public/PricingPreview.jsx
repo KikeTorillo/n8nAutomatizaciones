@@ -7,12 +7,13 @@ import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Check, ArrowRight, Sparkles } from 'lucide-react';
 import { LoadingSpinner } from '@/components/ui';
+import { queryKeys } from '@/hooks/config';
 import { suscripcionesNegocioApi } from '@/services/api/modules/suscripciones-negocio.api';
 import { formatCurrency, cn } from '@/lib/utils';
 
 export function PricingPreview({ maxPlanes = 3 }) {
   const { data: planesData, isLoading } = useQuery({
-    queryKey: ['planes-publicos-preview'],
+    queryKey: queryKeys.suscripcionesNegocio.planes.preview,
     queryFn: () => suscripcionesNegocioApi.listarPlanesPublicos(),
     staleTime: 5 * 60 * 1000,
   });

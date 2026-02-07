@@ -31,7 +31,7 @@ export interface FilterChipProps {
  * />
  */
 const FilterChip = memo(
-  forwardRef<HTMLButtonElement, FilterChipProps>(function FilterChip({
+  forwardRef<HTMLSpanElement, FilterChipProps>(function FilterChip({
   label,
   value,
   onRemove,
@@ -45,7 +45,7 @@ const FilterChip = memo(
 
   return (
     <span
-      ref={ref as React.Ref<HTMLSpanElement>}
+      ref={ref}
       className={cn(
         'inline-flex items-center gap-1.5 px-2.5 py-1 text-sm font-medium rounded-full border',
         'transition-colors',

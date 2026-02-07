@@ -5,7 +5,7 @@
  * Editor visual WYSIWYG del sitio web.
  *
  * Arquitectura refactorizada:
- * - EditorProvider: Centraliza estado y lógica
+ * - WebsiteEditorProvider: Centraliza estado y lógica
  * - Containers: Divididos por responsabilidad
  * - Hooks: Lógica extraída a hooks reutilizables
  * - Components: EmptyState y CrearSitioModal extraídos
@@ -17,7 +17,7 @@
 import { Loader2 } from 'lucide-react';
 
 // Context
-import { EditorProvider, useEditor } from './context';
+import { WebsiteEditorProvider, useWebsiteEditorContext } from './context';
 
 // Containers
 import {
@@ -44,13 +44,13 @@ import { ModuleGuard } from '@/components/ui';
 /**
  * WebsiteEditorPage - Componente principal del editor
  *
- * Envuelve todo con EditorProvider para centralizar el estado.
+ * Envuelve todo con WebsiteEditorProvider para centralizar el estado.
  */
 function WebsiteEditorPage() {
   return (
-    <EditorProvider>
+    <WebsiteEditorProvider>
       <WebsiteEditorContent />
-    </EditorProvider>
+    </WebsiteEditorProvider>
   );
 }
 
@@ -72,7 +72,7 @@ function WebsiteEditorContent() {
     handleDropFromPalette,
     handleDndReorder,
     crearConfig,
-  } = useEditor();
+  } = useWebsiteEditorContext();
 
   // ========== RENDER: LOADING ==========
   if (isLoading) {

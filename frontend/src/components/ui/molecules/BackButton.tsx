@@ -9,6 +9,8 @@ type ButtonSize = Size | 'xl';
 export interface BackButtonProps {
   /** Ruta a navegar (opcional, default: navigate(-1)) */
   to?: string;
+  /** Handler personalizado de click (prioridad sobre to y navigate(-1)) */
+  onClick?: () => void;
   /** Texto del botón (default: "Volver") */
   label?: string;
   /** Variante del botón (default: "outline") */
@@ -27,6 +29,7 @@ export interface BackButtonProps {
  */
 const BackButton = memo(forwardRef<HTMLButtonElement, BackButtonProps>(function BackButton({
   to,
+  onClick,
   label = 'Volver',
   variant = 'outline',
   size = 'sm',
@@ -36,7 +39,9 @@ const BackButton = memo(forwardRef<HTMLButtonElement, BackButtonProps>(function 
   const navigate = useNavigate();
 
   const handleClick = () => {
-    if (to) {
+    if (onClick) {
+      onClick();
+    } else if (to) {
       navigate(to);
     } else {
       navigate(-1);

@@ -4,25 +4,36 @@
  * ====================================================================
  * Container para los drawers móviles del editor de invitaciones.
  *
- * @version 1.3.0 - Agregado Upload de imágenes
+ * @version 2.0.0 - Refactor: useImageHandlers + useThemeSave
  * @since 2026-02-04
- * @updated 2026-02-05
+ * @updated 2026-02-06
  */
 
-import { memo, useMemo, useState, useCallback } from 'react';
+import { memo, useMemo } from 'react';
 import {
   EditorDrawer,
   PropertiesPanel,
   useEditorLayoutContext,
   BlockPalette,
   ThemeEditorPanel,
+  useImageHandlers,
+  useThemeSave,
 } from '@/components/editor-framework';
-import { useInvitacionEditor } from '../context';
-import { BLOQUES_INVITACION, CATEGORIAS_BLOQUES, BLOCK_CONFIGS, BLOCK_NAMES, TEMAS_POR_TIPO, COLOR_FIELDS, FONT_FIELDS } from '../config';
+import { useEditor as useInvitacionEditor } from '@/components/editor-framework';
+import {
+  BLOQUES_INVITACION,
+  CATEGORIAS_BLOQUES,
+  BLOCK_CONFIGS,
+  BLOCK_NAMES,
+  TEMAS_POR_TIPO,
+  COLOR_FIELDS,
+  FONT_FIELDS,
+  extractInvitacionColors,
+  extractInvitacionFonts,
+  buildInvitacionThemePayload,
+} from '../config';
 import { EDITORES_BLOQUE } from '../components/blocks';
 import { UnsplashModal } from '@/components/shared/media/UnsplashPicker';
-import { useUploadArchivo } from '@/hooks/utils';
-import { useToast } from '@/hooks/utils';
 
 /**
  * DrawersContainer - Drawers móviles para el editor de invitaciones
@@ -42,78 +53,31 @@ function DrawersContainer() {
 
   const { closeDrawer } = useEditorLayoutContext();
 
-  // ========== UPLOAD STATE ==========
-  const uploadArchivo = useUploadArchivo();
-  const toast = useToast();
-
-  // ========== UNSPLASH STATE ==========
-  const [unsplashState, setUnsplashState] = useState({
-    isOpen: false,
-    fieldKey: null,
+  // ========== IMAGE HANDLERS (Unsplash + Upload) ==========
+  const {
+    unsplashState,
+    openUnsplash,
+    closeUnsplash,
+    handleUnsplashSelect,
+    handleUploadImage,
+  } = useImageHandlers({
+    entity: bloqueSeleccionadoCompleto,
+    onUpdate: handleActualizarBloque,
+    uploadConfig: {
+      folder: 'eventos-digitales/imagenes',
+      entidadTipo: 'evento_digital',
+      entidadId: evento?.id,
+    },
   });
 
-  const openUnsplash = useCallback((fieldKey) => {
-    setUnsplashState({ isOpen: true, fieldKey });
-  }, []);
-
-  const closeUnsplash = useCallback(() => {
-    setUnsplashState({ isOpen: false, fieldKey: null });
-  }, []);
-
-  const handleUnsplashSelect = useCallback(
-    (url) => {
-      if (bloqueSeleccionadoCompleto && unsplashState.fieldKey) {
-        // Si es para galería, agregar al array
-        if (unsplashState.fieldKey === 'galeria_nueva') {
-          const currentImages = bloqueSeleccionadoCompleto?.contenido?.imagenes || [];
-          handleActualizarBloque(bloqueSeleccionadoCompleto.id, {
-            imagenes: [...currentImages, { url, alt: '' }],
-          });
-        } else {
-          handleActualizarBloque(bloqueSeleccionadoCompleto.id, {
-            [unsplashState.fieldKey]: url,
-          });
-        }
-      }
-      closeUnsplash();
-    },
-    [bloqueSeleccionadoCompleto, unsplashState.fieldKey, handleActualizarBloque, closeUnsplash]
-  );
-
-  // ========== UPLOAD HANDLER ==========
-  const handleUploadImage = useCallback(
-    async (file, fieldKey) => {
-      if (!bloqueSeleccionadoCompleto) return;
-
-      try {
-        const resultado = await uploadArchivo.mutateAsync({
-          file,
-          folder: 'eventos-digitales/imagenes',
-          isPublic: true,
-          entidadTipo: 'evento_digital',
-          entidadId: evento?.id,
-        });
-
-        // Si es para galería, agregar al array
-        if (fieldKey === 'galeria_nueva') {
-          const currentImages = bloqueSeleccionadoCompleto?.contenido?.imagenes || [];
-          handleActualizarBloque(bloqueSeleccionadoCompleto.id, {
-            imagenes: [...currentImages, { url: resultado.url, alt: '' }],
-          });
-        } else {
-          // Para Hero u otros campos individuales
-          handleActualizarBloque(bloqueSeleccionadoCompleto.id, {
-            [fieldKey]: resultado.url,
-          });
-        }
-
-        toast.success('Imagen subida correctamente');
-      } catch {
-        // El error ya se maneja en el hook
-      }
-    },
-    [bloqueSeleccionadoCompleto, evento?.id, handleActualizarBloque, uploadArchivo, toast]
-  );
+  // ========== THEME SAVE ==========
+  const { currentColors, currentFonts, handleSaveTema } = useThemeSave({
+    source: evento?.plantilla,
+    extractColors: extractInvitacionColors,
+    extractFonts: extractInvitacionFonts,
+    buildPayload: buildInvitacionThemePayload(evento?.plantilla),
+    saveMutation: handleActualizarPlantilla,
+  });
 
   // Props para editores (tema viene del contexto con fuente_titulos y fuente_cuerpo)
   const editorProps = useMemo(
@@ -178,32 +142,11 @@ function DrawersContainer() {
       >
         <ThemeEditorPanel
           colorFields={COLOR_FIELDS}
-          currentColors={{
-            primario: evento?.plantilla?.color_primario || '#753572',
-            secundario: evento?.plantilla?.color_secundario || '#F59E0B',
-            fondo: evento?.plantilla?.color_fondo || '#FFFFFF',
-            texto: evento?.plantilla?.color_texto || '#1F2937',
-            texto_claro: evento?.plantilla?.color_texto_claro || '#6B7280',
-          }}
+          currentColors={currentColors}
           fontFields={FONT_FIELDS}
-          currentFonts={{
-            fuente_titulos: evento?.plantilla?.fuente_titulos || 'Playfair Display',
-            fuente_cuerpo: evento?.plantilla?.fuente_cuerpo || 'Inter',
-          }}
+          currentFonts={currentFonts}
           presetThemes={TEMAS_POR_TIPO[evento?.tipo] || TEMAS_POR_TIPO.otro}
-          onSave={async ({ colores, fuentes }) => {
-            await handleActualizarPlantilla({
-              ...evento?.plantilla,
-              color_primario: colores.primario,
-              color_secundario: colores.secundario,
-              color_fondo: colores.fondo,
-              color_texto: colores.texto,
-              color_texto_claro: colores.texto_claro,
-              fuente_titulos: fuentes?.fuente_titulos,
-              fuente_titulo: fuentes?.fuente_titulos,
-              fuente_cuerpo: fuentes?.fuente_cuerpo,
-            });
-          }}
+          onSave={handleSaveTema}
           isLoading={estaActualizandoPlantilla}
           title="Colores y Tipografía"
           subtitle="Personaliza colores y fuentes de tu invitación"

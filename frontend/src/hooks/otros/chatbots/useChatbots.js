@@ -2,13 +2,14 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { chatbotsApi } from '@/services/api/endpoints';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
+import { queryKeys } from '@/hooks/config';
 
 /**
  * Hook para listar chatbots configurados
  */
 export function useChatbots(params = {}) {
   return useQuery({
-    queryKey: ['chatbots', params],
+    queryKey: [...queryKeys.chatbots.all, params],
     queryFn: async () => {
       const response = await chatbotsApi.listar(params);
       // El backend devuelve: { chatbots: [...], paginacion: {...}, filtros_aplicados: {...} }
@@ -23,7 +24,7 @@ export function useChatbots(params = {}) {
  */
 export function useChatbot(id) {
   return useQuery({
-    queryKey: ['chatbot', id],
+    queryKey: queryKeys.chatbots.detail(id),
     queryFn: async () => {
       const response = await chatbotsApi.obtener(id);
       return response.data.data;
@@ -59,7 +60,7 @@ export function useConfigurarTelegram() {
     },
     onSuccess: () => {
       // Invalidar lista de chatbots
-      queryClient.invalidateQueries({ queryKey: ['chatbots'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.chatbots.all, refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('create', 'Chatbot', {
       409: 'Ya existe un chatbot configurado para esta plataforma',
@@ -95,7 +96,7 @@ export function useConfigurarWhatsApp() {
     },
     onSuccess: () => {
       // Invalidar lista de chatbots
-      queryClient.invalidateQueries({ queryKey: ['chatbots'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.chatbots.all, refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('create', 'Chatbot', {
       409: 'Ya existe un chatbot configurado para esta plataforma',
@@ -116,8 +117,8 @@ export function useActualizarChatbot() {
     },
     onSuccess: (data) => {
       // Invalidar cache del chatbot específico y la lista
-      queryClient.invalidateQueries({ queryKey: ['chatbot', data.id], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['chatbots'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.chatbots.detail(data.id), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.chatbots.all, refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('update', 'Chatbot'),
   });
@@ -135,7 +136,7 @@ export function useEliminarChatbot() {
       return id;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['chatbots'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.chatbots.all, refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('delete', 'Chatbot'),
   });
@@ -153,8 +154,8 @@ export function useCambiarEstadoChatbot() {
       return response.data.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['chatbot', data.id], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['chatbots'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.chatbots.detail(data.id), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.chatbots.all, refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('update', 'Chatbot'),
   });
@@ -165,7 +166,7 @@ export function useCambiarEstadoChatbot() {
  */
 export function useEstadisticasChatbot(id, params = {}) {
   return useQuery({
-    queryKey: ['chatbot-estadisticas', id, params],
+    queryKey: queryKeys.chatbots.estadisticas(id, params),
     queryFn: async () => {
       const response = await chatbotsApi.obtenerEstadisticas(id, params);
       return response.data.data;

@@ -1,6 +1,6 @@
 import { memo, useId, type ReactNode } from 'react';
 import { cn } from '@/lib/utils';
-import { Radio } from './Radio';
+import { Radio } from '../atoms/Radio';
 import type { UISize } from '@/types/ui';
 
 export interface RadioOption {
@@ -36,6 +36,8 @@ export interface RadioGroupProps {
 
 /**
  * RadioGroup - Grupo de opciones radio accesible
+ *
+ * Molecule que compone Radio atoms con labels inline.
  */
 const RadioGroup = memo(function RadioGroup({
   options,
@@ -72,20 +74,33 @@ const RadioGroup = memo(function RadioGroup({
         </span>
       )}
       {children ||
-        options.map((option) => (
-          <Radio
-            key={option.value}
-            id={`${groupId}-${option.value}`}
-            name={groupName}
-            value={option.value}
-            checked={value === option.value}
-            onChange={() => onChange?.(option.value)}
-            label={option.label}
-            size={size}
-            hasError={hasError}
-            disabled={disabled || option.disabled}
-          />
-        ))}
+        options.map((option) => {
+          const optionId = `${groupId}-${option.value}`;
+          const isDisabled = disabled || option.disabled;
+
+          return (
+            <label
+              key={option.value}
+              htmlFor={optionId}
+              className={cn(
+                'inline-flex items-center gap-2 cursor-pointer',
+                isDisabled && 'opacity-50 cursor-not-allowed'
+              )}
+            >
+              <Radio
+                id={optionId}
+                name={groupName}
+                value={option.value}
+                checked={value === option.value}
+                onChange={() => onChange?.(option.value)}
+                size={size}
+                hasError={hasError}
+                disabled={isDisabled}
+              />
+              <span className="text-sm text-gray-700 dark:text-gray-300">{option.label}</span>
+            </label>
+          );
+        })}
     </div>
   );
 });

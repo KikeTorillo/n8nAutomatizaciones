@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { citasApi } from '@/services/api/endpoints';
 import { createSearchHook } from '@/hooks/factories';
+import { queryKeys } from '@/hooks/config';
 
 /**
  * Hook para buscar citas por código o cliente
@@ -21,7 +22,7 @@ export const useBuscarCitas = createSearchHook({
  */
 export function useCitasPorProfesional(params) {
   return useQuery({
-    queryKey: ['citas', 'profesional', params],
+    queryKey: [...queryKeys.agendamiento.citas.all, 'profesional', params],
     queryFn: async () => {
       const response = await citasApi.listar(params);
       return response.data?.data?.citas || [];
@@ -37,7 +38,7 @@ export function useCitasPorProfesional(params) {
  */
 export function useCitasPorCliente(clienteId) {
   return useQuery({
-    queryKey: ['citas', 'cliente', clienteId],
+    queryKey: queryKeys.agendamiento.citasCliente(clienteId),
     queryFn: async () => {
       const response = await citasApi.listar({ cliente_id: clienteId });
       return response.data?.data?.citas || [];

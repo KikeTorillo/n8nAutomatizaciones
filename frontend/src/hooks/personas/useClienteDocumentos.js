@@ -13,6 +13,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { clientesApi } from '@/services/api/endpoints';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
+import { queryKeys } from '@/hooks/config';
 import {
   TIPOS_DOCUMENTO_CLIENTE,
   ESTADOS_VENCIMIENTO_CLIENTE,
@@ -37,7 +38,7 @@ export const ESTADOS_VENCIMIENTO = ESTADOS_VENCIMIENTO_CLIENTE;
  */
 export function useDocumentosCliente(clienteId, params = {}) {
   return useQuery({
-    queryKey: ['cliente-documentos', clienteId, params],
+    queryKey: [...queryKeys.personas.clientes.documentos(clienteId), params],
     queryFn: async () => {
       const response = await clientesApi.listarDocumentos(clienteId, params);
       return response.data.data;
@@ -135,7 +136,7 @@ export function useCrearDocumento() {
       return response.data.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['cliente-documentos', variables.clienteId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.personas.clientes.documentos(variables.clienteId), refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: ['cliente-documentos-conteo', variables.clienteId], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('create', 'Documento'),
@@ -155,7 +156,7 @@ export function useActualizarDocumento() {
     },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['cliente-documento', variables.clienteId, variables.documentoId], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['cliente-documentos', variables.clienteId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.personas.clientes.documentos(variables.clienteId), refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('update', 'Documento'),
   });
@@ -173,7 +174,7 @@ export function useEliminarDocumento() {
       return { clienteId, documentoId };
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['cliente-documentos', variables.clienteId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.personas.clientes.documentos(variables.clienteId), refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: ['cliente-documentos-conteo', variables.clienteId], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('delete', 'Documento'),
@@ -193,7 +194,7 @@ export function useVerificarDocumento() {
     },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['cliente-documento', variables.clienteId, variables.documentoId], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['cliente-documentos', variables.clienteId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.personas.clientes.documentos(variables.clienteId), refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: ['cliente-documentos-conteo', variables.clienteId], refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('update', 'Documento'),
@@ -216,7 +217,7 @@ export function useSubirArchivoDocumento() {
     },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['cliente-documento', variables.clienteId, variables.documentoId], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['cliente-documentos', variables.clienteId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.personas.clientes.documentos(variables.clienteId), refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('update', 'Archivo'),
   });

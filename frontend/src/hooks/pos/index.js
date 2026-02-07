@@ -27,8 +27,11 @@ export * from './useVentas';
 export * from './usePOSCart';
 export * from './useCupones';
 export * from './usePromociones';
-export * from './useBarcodeScanner';
+// export * from './useBarcodeScanner'; // TODO: archivo faltante
 export * from './usePOSBroadcast';
-export * from './useCombosModificadores';
+export * from './useCombos';
+export * from './useModificadores';
+export * from './useAsignacionesModificadores';
+export * from './useCombosModificadoresPOS';
 export * from './useLealtad';
 export { useTiposVenta, TIPO_VENTA, TIPOS_VENTA_KEYS } from './useTiposVenta';

@@ -15,10 +15,13 @@ import {
 } from 'lucide-react';
 import {
   BackButton,
+  Badge,
   Button,
+  Card,
   DeleteConfirmDialog,
   Input,
-  LoadingSpinner
+  LoadingSpinner,
+  Select,
 } from '@/components/ui';
 import { useEventos, useEliminarEvento, usePublicarEvento } from '@/hooks/otros';
 import { useToast, useModalManager, usePagination } from '@/hooks/utils';
@@ -97,13 +100,10 @@ function EventosPage() {
     { value: 'finalizado', label: 'Finalizado' },
   ];
 
-  const getEstadoBadge = (estado) => {
-    const badges = {
-      borrador: 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300',
-      publicado: 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-400',
-      finalizado: 'bg-primary-100 dark:bg-primary-900/40 text-primary-800 dark:text-primary-400',
-    };
-    return badges[estado] || 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300';
+  const ESTADO_BADGE_MAP = {
+    borrador: 'default',
+    publicado: 'success',
+    finalizado: 'primary',
   };
 
   const getTipoLabel = (tipo) => {
@@ -167,25 +167,17 @@ function EventosPage() {
               />
             </div>
 
-            <select
+            <Select
+              options={tiposEvento}
               value={tipoFiltro}
               onChange={(e) => setTipoFiltro(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-pink-500"
-            >
-              {tiposEvento.map((t) => (
-                <option key={t.value} value={t.value}>{t.label}</option>
-              ))}
-            </select>
+            />
 
-            <select
+            <Select
+              options={estadosEvento}
               value={estadoFiltro}
               onChange={(e) => setEstadoFiltro(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-pink-500"
-            >
-              {estadosEvento.map((e) => (
-                <option key={e.value} value={e.value}>{e.label}</option>
-              ))}
-            </select>
+            />
           </div>
         </div>
 
@@ -198,9 +190,11 @@ function EventosPage() {
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {data.eventos.map((evento) => (
-                <div
+                <Card
                   key={evento.id}
-                  className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-md transition-shadow"
+                  hover
+                  padding="none"
+                  className="overflow-hidden"
                 >
                   {/* Imagen/Preview */}
                   <div className="h-40 bg-gradient-to-br from-pink-100 to-secondary-100 dark:from-pink-900/30 dark:to-secondary-900/30 flex items-center justify-center">
@@ -213,9 +207,9 @@ function EventosPage() {
                         <h3 className="font-semibold text-gray-900 dark:text-gray-100 line-clamp-1">{evento.nombre}</h3>
                         <p className="text-sm text-gray-500 dark:text-gray-400">{getTipoLabel(evento.tipo)}</p>
                       </div>
-                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${getEstadoBadge(evento.estado)}`}>
+                      <Badge variant={ESTADO_BADGE_MAP[evento.estado]} size="sm">
                         {evento.estado}
-                      </span>
+                      </Badge>
                     </div>
 
                     {/* Info */}
@@ -268,7 +262,7 @@ function EventosPage() {
                           variant="outline"
                           size="sm"
                           onClick={() => window.open(`/e/${evento.slug}`, '_blank')}
-                          className="flex-1"
+                          className="whitespace-nowrap"
                         >
                           <ExternalLink className="w-4 h-4 mr-1" />
                           Ver Link
@@ -286,7 +280,7 @@ function EventosPage() {
                       </Button>
                     </div>
                   </div>
-                </div>
+                </Card>
               ))}
             </div>
 

@@ -3,6 +3,7 @@ import { STALE_TIMES } from '@/app/queryClient';
 import { organizacionesApi, serviciosApi, bloqueosApi } from '@/services/api/endpoints';
 import { useAuthStore, selectUser } from '@/features/auth';
 import { aFormatoISO } from '@/utils/dateHelpers';
+import { queryKeys } from '@/hooks/config';
 
 /**
  * Hooks para obtener estadísticas y datos agregados del dashboard
@@ -25,7 +26,7 @@ export function useEstadisticasOrganizacion({ enabled = true } = {}) {
   const user = useAuthStore(selectUser);
 
   return useQuery({
-    queryKey: ['estadisticas', user?.organizacion_id],
+    queryKey: queryKeys.estadisticas.organizacion(user?.organizacion_id),
     queryFn: async () => {
       const response = await organizacionesApi.obtenerEstadisticas(user.organizacion_id);
       return response.data.data;
@@ -45,7 +46,7 @@ export function useEstadisticasOrganizacion({ enabled = true } = {}) {
  */
 export function useServiciosDashboard() {
   return useQuery({
-    queryKey: ['servicios-dashboard'],
+    queryKey: queryKeys.estadisticas.serviciosDashboard,
     queryFn: async () => {
       const response = await serviciosApi.listar();
       // Backend retorna: { data: { servicios: [...], ... } }
@@ -69,7 +70,7 @@ export function useBloqueosDashboard() {
   );
 
   return useQuery({
-    queryKey: ['bloqueos-dashboard', hoy, treintaDiasAdelante],
+    queryKey: queryKeys.estadisticas.bloqueosDashboard(hoy, treintaDiasAdelante),
     queryFn: async () => {
       const response = await bloqueosApi.listar({
         fecha_inicio: hoy,

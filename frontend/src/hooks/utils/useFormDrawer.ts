@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo } from 'react';
-import { useForm, type FieldValues, type UseFormReturn, type DefaultValues } from 'react-hook-form';
+import { useForm, type FieldValues, type UseFormReturn, type DefaultValues, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { ZodType } from 'zod';
 import { useToast } from './useToast';
@@ -188,7 +188,7 @@ export function useFormDrawer<TForm extends FieldValues, TEntity = unknown>(
     openCreate,
     openEdit,
     close,
-    form: form as unknown as UseFormReturn<TForm>,
+    form,
     handleFormSubmit,
     isSubmitting,
     formDrawerProps,

@@ -4,6 +4,7 @@ import { useSucursalContext } from '@/hooks/factories';
 import { sanitizeParams } from '@/lib/params';
 import { STALE_TIMES } from '@/app/queryClient';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
+import { queryKeys } from '@/hooks/config';
 
 /**
  * Hook para obtener stock disponible de un producto
@@ -15,7 +16,7 @@ export function useStockDisponible(productoId, options = {}) {
   const sucursalId = useSucursalContext(options.sucursalId);
 
   return useQuery({
-    queryKey: ['stock-disponible', productoId, sucursalId],
+    queryKey: [...queryKeys.pos.stockDisponible(productoId), sucursalId],
     queryFn: async () => {
       const params = sucursalId ? { sucursal_id: sucursalId } : {};
       const response = await inventarioApi.obtenerStockDisponible(productoId, params);
@@ -95,7 +96,7 @@ export function useCrearReserva() {
       return response.data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['stock-disponible', variables.producto_id], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.pos.stockDisponible(variables.producto_id), refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: ['stock-disponible-multiple'], refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: ['reservas'], refetchType: 'active' });
     },
@@ -148,7 +149,7 @@ export function useConfirmarReserva() {
       queryClient.invalidateQueries({ queryKey: ['stock-disponible'], refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: ['stock-disponible-multiple'], refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: ['reservas'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['productos'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.productos.all, refetchType: 'active' });
     },
   });
 }
@@ -168,7 +169,7 @@ export function useConfirmarReservasMultiple() {
       queryClient.invalidateQueries({ queryKey: ['stock-disponible'], refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: ['stock-disponible-multiple'], refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: ['reservas'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['productos'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.productos.all, refetchType: 'active' });
     },
   });
 }

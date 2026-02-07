@@ -9,7 +9,7 @@
  */
 
 import { memo } from 'react';
-import { useEditor } from '../context';
+import { useWebsiteEditorContext } from '../context';
 import WebsiteTemplateGallery from '../components/WebsiteTemplateGallery';
 import SlashMenu from '../components/SlashMenu';
 import AIWizardModal from '../components/AIWizard/AIWizardModal';
@@ -38,7 +38,7 @@ function EditorModals() {
     slashMenu,
     handleSlashSelect,
     handleSlashClose,
-  } = useEditor();
+  } = useWebsiteEditorContext();
 
   return (
     <>

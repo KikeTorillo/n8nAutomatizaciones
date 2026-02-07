@@ -23,6 +23,7 @@ import { BaseBlockEditor, useBlockEditor, useArrayItems } from '@/components/edi
 import { AISuggestionBanner } from '../AIGenerator';
 import { SectionTitleField, ArrayItemsEditor } from './fields';
 import ServiciosERPSelector from './ServiciosERPSelector';
+import { queryKeys } from '@/hooks/config';
 import websiteApi from '@/services/api/modules/website.api';
 import { THEME_FALLBACK_COLORS } from '@/lib/uiConstants';
 
@@ -78,7 +79,7 @@ function ServiciosEditor({ contenido, onGuardar, tema, isSaving, industria = 'de
 
   // Query para servicios del ERP (solo si origen es 'erp')
   const { data: dataERP, isLoading: loadingERP } = useQuery({
-    queryKey: ['website-servicios-erp'],
+    queryKey: queryKeys.website.serviciosErp,
     queryFn: () => websiteApi.obtenerServiciosERP(),
     enabled: form.origen === 'erp',
     staleTime: 1000 * 60 * 5,

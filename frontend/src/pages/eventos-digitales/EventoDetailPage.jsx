@@ -131,13 +131,10 @@ function EventoDetailPage() {
     );
   }
 
-  const mostrarQR = evento?.configuracion?.mostrar_qr_invitado === true;
-  const mostrarSeatingChart = evento?.configuracion?.habilitar_seating_chart === true;
-
   const tabs = [
     { id: 'invitados', label: 'Invitados', icon: Users, count: invitadosData?.total || 0 },
-    ...(mostrarQR ? [{ id: 'checkin', label: 'Check-in', icon: ScanLine, count: checkinStats?.total_checkin || 0 }] : []),
-    ...(mostrarSeatingChart ? [{ id: 'mesas', label: 'Mesas', icon: LayoutGrid }] : []),
+    { id: 'checkin', label: 'Check-in', icon: ScanLine, count: checkinStats?.total_checkin || 0 },
+    { id: 'mesas', label: 'Mesas', icon: LayoutGrid },
     { id: 'ubicaciones', label: 'Ubicaciones', icon: MapPin, count: ubicaciones?.length || 0 },
     { id: 'regalos', label: 'Mesa de Regalos', icon: Gift, count: regalos?.length || 0 },
     { id: 'felicitaciones', label: 'Felicitaciones', icon: MessageCircle, count: felicitacionesData?.total || 0 },
@@ -280,7 +277,7 @@ function EventoDetailPage() {
             invitadosData={invitadosData}
             isLoading={loadingInvitados}
             evento={evento}
-            mostrarQR={mostrarQR}
+            mostrarQR={true}
             eliminarInvitado={eliminarInvitado}
             importarInvitados={importarInvitados}
             exportarInvitados={exportarInvitados}

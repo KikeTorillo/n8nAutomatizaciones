@@ -110,28 +110,26 @@ function RSVPPublico({
                 <p style={{ color: tema?.color_texto_claro }}>{textoConfirmado}</p>
 
                 {/* QR Code para check-in */}
-                {evento?.configuracion?.mostrar_qr_invitado && (
-                  <div className="mt-8">
-                    <p
-                      className="text-sm mb-4 font-medium"
-                      style={{ color: tema?.color_texto }}
-                    >
-                      <QrCode className="w-4 h-4 inline mr-2" />
-                      Tu código QR para el día del evento:
-                    </p>
-                    {loadingQR ? (
-                      <div className="flex justify-center">
-                        <Loader2 className="w-8 h-8 animate-spin" style={{ color: tema?.color_primario }} />
-                      </div>
-                    ) : qrImage ? (
-                      <img
-                        src={qrImage}
-                        alt="QR de acceso"
-                        className="mx-auto w-48 h-48 rounded-lg shadow-md"
-                      />
-                    ) : null}
-                  </div>
-                )}
+                <div className="mt-8">
+                  <p
+                    className="text-sm mb-4 font-medium"
+                    style={{ color: tema?.color_texto }}
+                  >
+                    <QrCode className="w-4 h-4 inline mr-2" />
+                    Tu código QR para el día del evento:
+                  </p>
+                  {loadingQR ? (
+                    <div className="flex justify-center">
+                      <Loader2 className="w-8 h-8 animate-spin" style={{ color: tema?.color_primario }} />
+                    </div>
+                  ) : qrImage ? (
+                    <img
+                      src={qrImage}
+                      alt="QR de acceso"
+                      className="mx-auto w-48 h-48 rounded-lg shadow-md"
+                    />
+                  ) : null}
+                </div>
               </>
             ) : (
               <>

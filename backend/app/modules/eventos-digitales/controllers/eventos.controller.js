@@ -60,7 +60,24 @@ class EventosController {
 
         // Generar bloques iniciales si tiene plantilla
         if (datos.plantilla_id || datos.plantilla) {
-            const bloquesIniciales = generarBloquesIniciales(datos.tipo, evento.nombre);
+            let bloquesIniciales;
+
+            // Si la plantilla tiene bloques diseñados, copiarlos con IDs nuevos
+            if (datos.plantilla_id) {
+                const bloquesPlantilla = await PlantillaModel.obtenerBloques(datos.plantilla_id);
+                if (bloquesPlantilla && bloquesPlantilla.length > 0) {
+                    bloquesIniciales = bloquesPlantilla.map(b => ({
+                        ...b,
+                        id: uuidv4(),
+                    }));
+                }
+            }
+
+            // Si no hay bloques de plantilla, generar los por defecto
+            if (!bloquesIniciales) {
+                bloquesIniciales = generarBloquesIniciales(datos.tipo, evento.nombre);
+            }
+
             if (bloquesIniciales.length > 0) {
                 await BloquesInvitacionModel.guardarBloques(
                     evento.id,
@@ -277,23 +294,21 @@ function generarBloquesIniciales(tipoEvento, nombreEvento) {
         },
     ];
 
-    // Agregar mesa de regalos para bodas, XV años y bautizos
-    if (['boda', 'xv_anos', 'bautizo'].includes(tipoEvento)) {
-        bloques.push({
-            id: uuidv4(),
-            tipo: 'mesa_regalos',
-            orden: 5,
-            visible: true,
-            contenido: {
-                titulo: 'Mesa de Regalos',
-                subtitulo: 'Tu presencia es nuestro mejor regalo',
-                usar_mesa_evento: true,
-                items: [],
-                layout: 'grid',
-            },
-            estilos: {},
-        });
-    }
+    // Mesa de regalos disponible para cualquier tipo de evento
+    bloques.push({
+        id: uuidv4(),
+        tipo: 'mesa_regalos',
+        orden: 5,
+        visible: true,
+        contenido: {
+            titulo: 'Mesa de Regalos',
+            subtitulo: 'Tu presencia es nuestro mejor regalo',
+            usar_mesa_evento: true,
+            items: [],
+            layout: 'grid',
+        },
+        estilos: {},
+    });
 
     return bloques;
 }

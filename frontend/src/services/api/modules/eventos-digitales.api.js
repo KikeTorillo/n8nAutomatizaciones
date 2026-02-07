@@ -325,6 +325,21 @@ export const eventosDigitalesApi = {
    */
   eliminarPlantilla: (id) => apiClient.delete(`/eventos-digitales/plantillas/${id}`),
 
+  /**
+   * Obtener bloques de una plantilla
+   * @param {number} id - ID de la plantilla
+   * @returns {Promise<Object>} { bloques }
+   */
+  obtenerBloquesPlantilla: (id) => apiClient.get(`/eventos-digitales/plantillas/${id}/bloques`),
+
+  /**
+   * Guardar bloques de una plantilla (solo super_admin)
+   * @param {number} id - ID de la plantilla
+   * @param {Array} bloques - Array de bloques
+   * @returns {Promise<Object>}
+   */
+  guardarBloquesPlantilla: (id, bloques) => apiClient.put(`/eventos-digitales/plantillas/${id}/bloques`, { bloques }),
+
   // ========== Mesas (Seating Chart) ==========
 
   /**

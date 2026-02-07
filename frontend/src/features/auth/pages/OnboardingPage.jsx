@@ -15,6 +15,7 @@ import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { authApi } from '../api/auth.api';
 import { suscripcionesNegocioApi } from '@/services/api/modules/suscripciones-negocio.api';
 import useAuthStore, { selectUser, selectSetAuth, selectIsAuthenticated } from '../store/authStore';
+import { queryKeys } from '@/hooks/config';
 import { useToast } from '@/hooks/utils';
 import AuthLayout from '../components/AuthLayout';
 import FormField from '@/components/forms/FormField';
@@ -153,9 +154,9 @@ function OnboardingPage() {
       // Invalidar caches relevantes (sin borrar TODO el cache)
       // FIX: Usar invalidateQueries específico en lugar de clear() agresivo
       await queryClient.invalidateQueries({ queryKey: ['planes'], refetchType: 'active' });
-      await queryClient.invalidateQueries({ queryKey: ['usuario'], refetchType: 'active' });
-      await queryClient.invalidateQueries({ queryKey: ['organizacion'], refetchType: 'active' });
-      await queryClient.invalidateQueries({ queryKey: ['modulos'], refetchType: 'active' });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.auth.usuario, refetchType: 'active' });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.auth.organizacion, refetchType: 'active' });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.sistema.modulos, refetchType: 'active' });
 
       // Ene 2026: Actualizar auth (refreshToken viene por cookie httpOnly)
       setAuth({

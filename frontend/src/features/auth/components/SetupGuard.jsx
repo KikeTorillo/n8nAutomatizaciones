@@ -6,6 +6,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { queryKeys } from '@/hooks/config';
 import apiClient from '@/services/api/client';
 
 export default function SetupGuard({ children }) {
@@ -14,7 +15,7 @@ export default function SetupGuard({ children }) {
   const [isChecking, setIsChecking] = useState(true);
 
   const { data: setupStatus, isLoading } = useQuery({
-    queryKey: ['setup', 'check'],
+    queryKey: queryKeys.auth.setupCheck,
     queryFn: async () => {
       try {
         const response = await apiClient.get('/setup/check');

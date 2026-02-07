@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useAuthStore, selectUser } from '@/features/auth';
 import { organizacionesApi } from '@/services/api/modules/organizaciones.api';
+import { queryKeys } from '@/hooks/config';
 
 /**
  * Hook para obtener el estado de suscripción de la organización actual
@@ -36,7 +37,7 @@ export function useEstadoSuscripcion({ enabled = true } = {}) {
   const organizacionId = user?.organizacion_id;
 
   return useQuery({
-    queryKey: ['estado-suscripcion', organizacionId],
+    queryKey: queryKeys.sistema.suscripcion.estado(organizacionId),
     queryFn: async () => {
       const response = await organizacionesApi.getEstadoSuscripcion(organizacionId);
       return response.data?.data || response.data;

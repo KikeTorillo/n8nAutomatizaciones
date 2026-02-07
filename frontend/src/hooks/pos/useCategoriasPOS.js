@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { inventarioApi } from '@/services/api/endpoints';
+import { queryKeys } from '@/hooks/config';
 
 /**
  * Hook para obtener categorías de productos para POS
@@ -8,7 +9,7 @@ import { inventarioApi } from '@/services/api/endpoints';
  */
 export function useCategoriasPOS() {
   return useQuery({
-    queryKey: ['categorias-pos'],
+    queryKey: queryKeys.pos.categoriasPOS,
     queryFn: async () => {
       const response = await inventarioApi.listarCategorias({
         solo_activas: true,
@@ -27,7 +28,7 @@ export function useCategoriasPOS() {
  */
 export function useProductosPOS(params = {}) {
   return useQuery({
-    queryKey: ['productos-pos', params],
+    queryKey: queryKeys.pos.productosPOS(params),
     queryFn: async () => {
       const response = await inventarioApi.listarProductos({
         solo_activos: true,

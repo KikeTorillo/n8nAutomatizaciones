@@ -6,6 +6,7 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
+import { queryKeys } from '@/hooks/config';
 import {
   calcularDiasRestantes as calcularDiasRestantesLib,
   formatRangoFechas as formatRangoFechasLib,
@@ -435,7 +436,7 @@ export function useEstadisticasAusencias(filtros = {}) {
     data: statsVacaciones,
     isLoading: isLoadingVacaciones,
   } = useQuery({
-    queryKey: ['ausencias', 'estadisticas', 'vacaciones', anio],
+    queryKey: queryKeys.ausencias.estadisticas.vacaciones(anio),
     queryFn: async () => {
       const { vacacionesApi } = await import('@/services/api/endpoints');
       const response = await vacacionesApi.obtenerEstadisticas({ anio });
@@ -449,7 +450,7 @@ export function useEstadisticasAusencias(filtros = {}) {
     data: statsIncapacidades,
     isLoading: isLoadingIncapacidades,
   } = useQuery({
-    queryKey: ['ausencias', 'estadisticas', 'incapacidades', anio],
+    queryKey: queryKeys.ausencias.estadisticas.incapacidades(anio),
     queryFn: async () => {
       const { incapacidadesApi } = await import('@/services/api/endpoints');
       const response = await incapacidadesApi.obtenerEstadisticas({ anio });

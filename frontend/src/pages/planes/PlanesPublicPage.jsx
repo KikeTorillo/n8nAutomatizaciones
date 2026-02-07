@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import { Check, Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
+import { queryKeys } from '@/hooks/config';
 import { Button, Badge, LoadingSpinner } from '@/components/ui';
 import { PublicHeader, PublicFooter } from '@/components/public';
 import { suscripcionesNegocioApi } from '@/services/api/modules/suscripciones-negocio.api';
@@ -99,7 +100,7 @@ function PlanesPublicPage() {
     isLoading,
     isError,
   } = useQuery({
-    queryKey: ['planes-publicos'],
+    queryKey: queryKeys.suscripcionesNegocio.planes.publicos,
     queryFn: () => suscripcionesNegocioApi.listarPlanesPublicos(),
     staleTime: 5 * 60 * 1000, // 5 minutos
   });

@@ -12,6 +12,7 @@ import { useQuery } from '@tanstack/react-query';
 import { inventarioApi } from '@/services/api/endpoints';
 import { STALE_TIMES } from '@/app/queryClient';
 import { createCRUDHooks, createSanitizer } from '@/hooks/factories';
+import { queryKeys } from '@/hooks/config';
 
 // Sanitizador para datos de categoría
 const sanitizeCategoria = createSanitizer([
@@ -65,7 +66,7 @@ export const useCategoriasActivas = hooks.useListActive;
  */
 export function useArbolCategorias() {
   return useQuery({
-    queryKey: ['categorias-arbol'],
+    queryKey: queryKeys.inventario.categorias.arbol,
     queryFn: async () => {
       const response = await inventarioApi.obtenerArbolCategorias();
       // Backend retorna data directamente como array

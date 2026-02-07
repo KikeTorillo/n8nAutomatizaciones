@@ -3,15 +3,16 @@ import { STALE_TIMES } from '@/app/queryClient';
 import { modulosApi } from '@/services/api/endpoints';
 import { useAuthStore, selectIsAuthenticated, selectUser } from '@/features/auth';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
+import { queryKeys } from '@/hooks/config';
 
 /**
- * QUERY KEYS para módulos
+ * QUERY KEYS para módulos (derivadas de queryKeys centralizadas)
  */
-export const MODULOS_KEYS = {
-  all: ['modulos'],
-  disponibles: () => [...MODULOS_KEYS.all, 'disponibles'],
-  activos: () => [...MODULOS_KEYS.all, 'activos'],
-  verificar: (modulo) => [...MODULOS_KEYS.all, 'verificar', modulo],
+const MODULOS_KEYS = {
+  all: queryKeys.sistema.modulos,
+  disponibles: () => [...queryKeys.sistema.modulos, 'disponibles'],
+  activos: () => [...queryKeys.sistema.modulos, 'activos'],
+  verificar: (modulo) => [...queryKeys.sistema.modulos, 'verificar', modulo],
 };
 
 // ==================== QUERIES ====================

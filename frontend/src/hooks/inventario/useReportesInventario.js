@@ -2,13 +2,14 @@ import { useQuery } from '@tanstack/react-query';
 import { inventarioApi } from '@/services/api/endpoints';
 import { sanitizeParams } from '@/lib/params';
 import { STALE_TIMES } from '@/app/queryClient';
+import { queryKeys } from '@/hooks/config';
 
 /**
  * Hook para obtener valor total del inventario
  */
 export function useValorInventario() {
   return useQuery({
-    queryKey: ['valor-inventario'],
+    queryKey: queryKeys.inventario.valoracion.resumen,
     queryFn: async () => {
       const response = await inventarioApi.obtenerValorInventario();
       return response.data.data || {

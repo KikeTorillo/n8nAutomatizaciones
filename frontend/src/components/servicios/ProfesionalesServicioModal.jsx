@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Users, AlertCircle, GripVertical, ChevronDown, ChevronUp, RefreshCw, Info } from 'lucide-react';
 import { Button, Drawer } from '@/components/ui';
+import { queryKeys } from '@/hooks/config';
 import { profesionalesApi, serviciosApi } from '@/services/api/endpoints';
 import {
   useProfesionalesServicio,
@@ -37,7 +38,7 @@ function ProfesionalesServicioModal({ isOpen, onClose, servicio }) {
 
   // Fetch todos los profesionales disponibles
   const { data: todosProfesionales, isLoading: loadingTodos } = useQuery({
-    queryKey: ['profesionales'],
+    queryKey: queryKeys.personas.profesionales.all,
     queryFn: async () => {
       const response = await profesionalesApi.listar();
       return response.data.data.profesionales || [];

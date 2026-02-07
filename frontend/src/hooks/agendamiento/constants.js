@@ -2,72 +2,17 @@
  * Constantes para el módulo de Agendamiento
  * Query keys y configuración compartida
  * Ene 2026 - Centralización de query keys
+ *
+ * NOTA: Las query keys han sido migradas a `@/hooks/config/queryKeys.js`.
+ * Usar `import { queryKeys } from '@/hooks/config'` y acceder via
+ * `queryKeys.agendamiento.*` en lugar de AGENDAMIENTO_KEYS.
  */
+import { queryKeys } from '@/hooks/config';
 
 /**
- * Query keys para React Query - Agendamiento
+ * @deprecated Usar `queryKeys.agendamiento` de `@/hooks/config` directamente.
  */
-export const AGENDAMIENTO_KEYS = {
-  all: ['agendamiento'],
-
-  // Citas
-  citas: {
-    all: () => ['citas'],
-    list: (params) => [...AGENDAMIENTO_KEYS.citas.all(), 'list', params],
-    detail: (id) => ['citas', id],
-    buscar: (termino) => ['citas', 'buscar', termino],
-    byProfesional: (params) => ['citas', 'profesional', params],
-    byCliente: (clienteId) => ['citas', 'cliente', clienteId],
-    hoy: (fecha) => ['citas', 'hoy', fecha],
-    pendientes: () => ['citas', 'pendientes'],
-    serie: (serieId, options) => ['citas', 'serie', serieId, options],
-    recordatorios: (citaId) => ['citas', citaId, 'recordatorios'],
-  },
-
-  // Bloqueos
-  bloqueos: {
-    all: () => ['bloqueos'],
-    list: (params) => [...AGENDAMIENTO_KEYS.bloqueos.all(), 'list', params],
-    detail: (id) => ['bloqueo', id],
-    byProfesional: (profesionalId, params) => ['bloqueos', 'profesional', profesionalId, params],
-    organizacionales: (params) => ['bloqueos', 'organizacionales', params],
-    byRango: (fechaInicio, fechaFin, params) => ['bloqueos', 'rango', fechaInicio, fechaFin, params],
-    byTipo: (tipo, params) => ['bloqueos', 'tipo', tipo, params],
-  },
-
-  // Servicios
-  servicios: {
-    all: () => ['servicios'],
-    list: (params) => [...AGENDAMIENTO_KEYS.servicios.all(), 'list', params],
-    detail: (id) => ['servicio', id],
-    buscar: (termino) => ['buscar-servicios', termino],
-    profesionales: (servicioId) => ['servicio-profesionales', servicioId],
-    dashboard: () => ['servicios-dashboard'],
-  },
-
-  // Horarios
-  horarios: {
-    all: () => ['horarios'],
-    byProfesional: (profesionalId, options) => ['horarios', profesionalId, options],
-    detail: (id) => ['horarios', id],
-    validacion: (profesionalId) => ['horarios', 'validacion', profesionalId],
-  },
-
-  // Disponibilidad
-  disponibilidad: {
-    all: () => ['disponibilidad'],
-    inmediata: (params) => ['disponibilidad-inmediata', params],
-    profesional: (profesionalId, fecha) => ['disponibilidad', 'profesional', profesionalId, fecha],
-    servicio: (servicioId, fecha) => ['disponibilidad', 'servicio', servicioId, fecha],
-  },
-
-  // Estadísticas
-  estadisticas: {
-    all: () => ['estadisticas-agendamiento'],
-    asignaciones: () => ['estadisticas-asignaciones'],
-    ocupacion: (profesionalId, periodo) => ['estadisticas', 'ocupacion', profesionalId, periodo],
-  },
-};
+export const AGENDAMIENTO_KEYS = queryKeys.agendamiento;
 
 /**
  * Estados de Citas

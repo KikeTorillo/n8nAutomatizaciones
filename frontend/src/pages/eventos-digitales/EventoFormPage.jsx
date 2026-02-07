@@ -6,7 +6,6 @@ import { PartyPopper, Save, Palette, ArrowRight } from 'lucide-react';
 import {
   BackButton,
   Button,
-  CheckboxField,
   FormGroup,
   Input,
   LoadingSpinner
@@ -270,88 +269,6 @@ function EventoFormPage() {
               </Button>
             </div>
           )}
-
-          {/* Configuración */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-700">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Configuración</h2>
-
-            <div className="space-y-4">
-              <Controller
-                name="configuracion.mostrar_mesa_regalos"
-                control={control}
-                render={({ field }) => (
-                  <CheckboxField
-                    checked={field.value}
-                    onChange={field.onChange}
-                    label="Mostrar mesa de regalos"
-                  />
-                )}
-              />
-
-              <Controller
-                name="configuracion.permitir_felicitaciones"
-                control={control}
-                render={({ field }) => (
-                  <CheckboxField
-                    checked={field.value}
-                    onChange={field.onChange}
-                    label="Permitir felicitaciones públicas"
-                  />
-                )}
-              />
-
-              <Controller
-                name="configuracion.mostrar_ubicaciones"
-                control={control}
-                render={({ field }) => (
-                  <CheckboxField
-                    checked={field.value}
-                    onChange={field.onChange}
-                    label="Mostrar ubicaciones con mapa"
-                  />
-                )}
-              />
-
-              <Controller
-                name="configuracion.mostrar_contador"
-                control={control}
-                render={({ field }) => (
-                  <CheckboxField
-                    checked={field.value}
-                    onChange={field.onChange}
-                    label="Mostrar contador regresivo"
-                  />
-                )}
-              />
-
-              <Controller
-                name="configuracion.mostrar_qr_invitado"
-                control={control}
-                render={({ field }) => (
-                  <CheckboxField
-                    checked={field.value}
-                    onChange={field.onChange}
-                    label="Mostrar QR de entrada al invitado"
-                    description="Muestra un código QR cuando el invitado confirma asistencia"
-                  />
-                )}
-              />
-
-              <Controller
-                name="configuracion.habilitar_seating_chart"
-                control={control}
-                render={({ field }) => (
-                  <CheckboxField
-                    checked={field.value}
-                    onChange={field.onChange}
-                    label="Habilitar asignación de mesas"
-                    description="Permite asignar invitados a mesas y mostrar su ubicación"
-                  />
-                )}
-              />
-
-            </div>
-          </div>
 
           {/* Actions */}
           <div className="flex gap-3 justify-end">

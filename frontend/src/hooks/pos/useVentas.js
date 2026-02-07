@@ -4,6 +4,7 @@ import { posApi } from '@/services/api/endpoints';
 import useSucursalStore, { selectGetSucursalId } from '@/store/sucursalStore';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 import { sanitizeParams } from '@/lib/params';
+import { queryKeys } from '@/hooks/config';
 
 // ==================== VENTAS POS ====================
 // ✅ FEATURE: Multi-sucursal - Los hooks inyectan sucursal_id automáticamente
@@ -17,7 +18,7 @@ export function useVentas(params = {}) {
   const sucursalId = getSucursalId();
 
   return useQuery({
-    queryKey: ['ventas', params, sucursalId],
+    queryKey: [...queryKeys.pos.ventas.list(params), sucursalId],
     queryFn: async () => {
       // Fix 27-Dic-2025: Agregar sucursalId para permisos
       const queryParams = sanitizeParams({
@@ -39,7 +40,7 @@ export function useVentas(params = {}) {
  */
 export function useVenta(ventaId) {
   return useQuery({
-    queryKey: ['venta', ventaId],
+    queryKey: queryKeys.pos.ventas.detail(ventaId),
     queryFn: async () => {
       const response = await posApi.obtenerVenta(ventaId);
       return response.data.data || { venta: null, items: [] };
@@ -80,10 +81,10 @@ export function useCrearVenta() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['ventas'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['productos'], refetchType: 'active' }); // Stock se actualizó
-      queryClient.invalidateQueries({ queryKey: ['stock-critico'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['movimientos'], refetchType: 'active' }); // Se generó movimiento
+      queryClient.invalidateQueries({ queryKey: queryKeys.pos.ventas.all, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.productos.all, refetchType: 'active' }); // Stock se actualizó
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.productos.stockCritico, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.movimientos.all, refetchType: 'active' }); // Se generó movimiento
     },
     onError: createCRUDErrorHandler('create', 'Venta', {
       409: 'Stock insuficiente para completar la venta',
@@ -116,8 +117,8 @@ export function useActualizarVenta() {
       return response.data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['ventas'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['venta', variables.id], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.pos.ventas.all, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.pos.ventas.detail(variables.id), refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('update', 'Venta'),
   });
@@ -135,8 +136,8 @@ export function useActualizarEstadoVenta() {
       return response.data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['ventas'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['venta', variables.id], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.pos.ventas.all, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.pos.ventas.detail(variables.id), refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('update', 'Estado de venta'),
   });
@@ -160,8 +161,8 @@ export function useRegistrarPago() {
       return response.data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['ventas'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['venta', variables.id], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.pos.ventas.all, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.pos.ventas.detail(variables.id), refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('create', 'Pago', {
       409: 'El pago excede el monto pendiente',
@@ -184,10 +185,10 @@ export function useCancelarVenta() {
       return response.data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['ventas'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['venta', variables.id], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['productos'], refetchType: 'active' }); // Stock revertido
-      queryClient.invalidateQueries({ queryKey: ['movimientos'], refetchType: 'active' }); // Movimiento de reversión
+      queryClient.invalidateQueries({ queryKey: queryKeys.pos.ventas.all, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.pos.ventas.detail(variables.id), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.productos.all, refetchType: 'active' }); // Stock revertido
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.movimientos.all, refetchType: 'active' }); // Movimiento de reversión
     },
     onError: createCRUDErrorHandler('delete', 'Venta', {
       400: 'No se puede cancelar una venta ya cancelada',
@@ -211,10 +212,10 @@ export function useDevolverItems() {
       return response.data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['ventas'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['venta', variables.id], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['productos'], refetchType: 'active' }); // Stock ajustado
-      queryClient.invalidateQueries({ queryKey: ['movimientos'], refetchType: 'active' }); // Movimiento de devolución
+      queryClient.invalidateQueries({ queryKey: queryKeys.pos.ventas.all, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.pos.ventas.detail(variables.id), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.productos.all, refetchType: 'active' }); // Stock ajustado
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.movimientos.all, refetchType: 'active' }); // Movimiento de devolución
     },
     onError: createCRUDErrorHandler('update', 'Devolución', {
       400: 'Cantidad a devolver inválida',
@@ -234,9 +235,9 @@ export function useAgregarItems() {
       return response.data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['ventas'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['venta', variables.id], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['productos'], refetchType: 'active' }); // Stock actualizado
+      queryClient.invalidateQueries({ queryKey: queryKeys.pos.ventas.all, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.pos.ventas.detail(variables.id), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.productos.all, refetchType: 'active' }); // Stock actualizado
     },
     onError: createCRUDErrorHandler('update', 'Items', {
       409: 'Stock insuficiente para agregar items',
@@ -256,9 +257,9 @@ export function useEliminarVenta() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['ventas'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['productos'], refetchType: 'active' }); // Stock revertido
-      queryClient.invalidateQueries({ queryKey: ['movimientos'], refetchType: 'active' }); // Movimiento de reversión
+      queryClient.invalidateQueries({ queryKey: queryKeys.pos.ventas.all, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.productos.all, refetchType: 'active' }); // Stock revertido
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.movimientos.all, refetchType: 'active' }); // Movimiento de reversión
     },
     onError: createCRUDErrorHandler('delete', 'Venta'),
   });
@@ -275,7 +276,7 @@ export function useCorteCaja(params) {
   const sucursalId = getSucursalId();
 
   return useQuery({
-    queryKey: ['corte-caja', params, sucursalId],
+    queryKey: [...queryKeys.pos.ventas.corteCaja(params), sucursalId],
     queryFn: async () => {
       // Fix 27-Dic-2025: Agregar sucursalId para permisos
       const queryParams = sanitizeParams({
@@ -297,7 +298,7 @@ export function useCorteCaja(params) {
  */
 export function useVentasDiarias(params) {
   return useQuery({
-    queryKey: ['ventas-diarias', params],
+    queryKey: queryKeys.pos.ventas.diarias(params),
     queryFn: async () => {
       const response = await posApi.obtenerVentasDiarias(sanitizeParams(params));
       return response.data.data || { resumen: {}, ventas_por_hora: [], top_productos: [], detalle: [] };

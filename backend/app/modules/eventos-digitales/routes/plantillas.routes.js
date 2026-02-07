@@ -77,6 +77,27 @@ router.get('/plantillas/tipo/:tipoEvento',
 );
 
 /**
+ * GET /plantillas/:id/bloques
+ * Obtener bloques de una plantilla
+ * Nota: Esta ruta debe ir antes de /plantillas/:id
+ */
+router.get('/plantillas/:id/bloques',
+    ...middlewareLectura,
+    validate(plantillasSchemas.obtenerPlantilla),
+    asyncHandler(PlantillasController.obtenerBloques)
+);
+
+/**
+ * PUT /plantillas/:id/bloques
+ * Guardar bloques de una plantilla (super_admin)
+ */
+router.put('/plantillas/:id/bloques',
+    ...middlewareEscritura,
+    validate(plantillasSchemas.guardarBloquesPlantilla),
+    asyncHandler(PlantillasController.guardarBloques)
+);
+
+/**
  * GET /plantillas/:id
  * Obtener plantilla por ID
  */

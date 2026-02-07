@@ -5,6 +5,13 @@ import { useModalManager } from './useModalManager';
 import { useToast } from './useToast';
 
 /**
+ * @deprecated Usar la combinación de hooks especializados:
+ * - useFormDrawer (modal + form + mutations)
+ * - useFilters (búsqueda y filtros)
+ * - useDeleteConfirmation (confirmación de eliminación)
+ *
+ * Este hook combina demasiadas responsabilidades en uno solo.
+ *
  * useConfigCrud - Hook genérico para centralizar lógica CRUD en páginas de configuración
  *
  * Reduce boilerplate de handlers, filtrado, modales y forms en páginas CRUD simples.
