@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { MapPin } from 'lucide-react';
 import { Button, Drawer, FormGroup, Input, Select } from '@/components/ui';
 import { useCrearUbicacion, useActualizarUbicacion } from '@/hooks/otros/eventos-digitales';
 import { useToast } from '@/hooks/utils';
@@ -57,6 +58,7 @@ function UbicacionFormDrawer({ isOpen, onClose, mode = 'create', ubicacion = nul
     handleSubmit,
     formState: { errors },
     reset,
+    watch,
   } = useForm({
     resolver: zodResolver(ubicacionSchema),
     defaultValues: {
@@ -203,6 +205,13 @@ function UbicacionFormDrawer({ isOpen, onClose, mode = 'create', ubicacion = nul
             placeholder="https://maps.google.com/..."
           />
         </FormGroup>
+
+        {watch('google_maps_url')?.trim() && !errors.google_maps_url && (
+          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 text-sm">
+            <MapPin className="w-4 h-4 flex-shrink-0" />
+            <span>Las coordenadas del mapa se extraeran automaticamente al guardar</span>
+          </div>
+        )}
 
         {/* Botones */}
         <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">

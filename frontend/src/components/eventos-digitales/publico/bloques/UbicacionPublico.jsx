@@ -29,17 +29,21 @@ function UbicacionPublico({ bloque, evento, tema, isVisible, className = '' }) {
   if (ubicaciones.length === 0) return null;
 
   const getGoogleMapsUrl = (ubicacion) => {
-    if (ubicacion.coordenadas) {
-      return `https://www.google.com/maps/search/?api=1&query=${ubicacion.coordenadas.lat},${ubicacion.coordenadas.lng}`;
+    if (ubicacion.google_maps_url) return ubicacion.google_maps_url;
+    if (ubicacion.latitud && ubicacion.longitud) {
+      return `https://www.google.com/maps/search/?api=1&query=${ubicacion.latitud},${ubicacion.longitud}`;
     }
     return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(ubicacion.direccion || ubicacion.nombre)}`;
   };
 
   const getMapEmbedUrl = (ubicacion) => {
-    if (ubicacion.coordenadas) {
-      return `https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3000!2d${ubicacion.coordenadas.lng}!3d${ubicacion.coordenadas.lat}!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zM!5e0!3m2!1ses!2smx!4v1`;
+    if (ubicacion.latitud && ubicacion.longitud) {
+      return `https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3000!2d${ubicacion.longitud}!3d${ubicacion.latitud}!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zM!5e0!3m2!1ses!2smx!4v1`;
     }
-    return `https://www.google.com/maps/embed/v1/place?key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}&q=${encodeURIComponent(ubicacion.direccion || ubicacion.nombre)}`;
+    if (ubicacion.direccion || ubicacion.nombre) {
+      return `https://www.google.com/maps/embed/v1/place?key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}&q=${encodeURIComponent(ubicacion.direccion || ubicacion.nombre)}`;
+    }
+    return null;
   };
 
   return (
@@ -78,7 +82,7 @@ function UbicacionPublico({ bloque, evento, tema, isVisible, className = '' }) {
               }}
             >
               {/* Mapa embed */}
-              {mostrarMapa && (
+              {mostrarMapa && getMapEmbedUrl(ubicacion) && (
                 <div className="h-48 sm:h-64 w-full">
                   <iframe
                     src={getMapEmbedUrl(ubicacion)}

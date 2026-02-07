@@ -10,6 +10,7 @@
  */
 
 import { useState, useMemo, memo } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Search, Loader2, Sparkles, Check, Star, Crown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -320,13 +321,13 @@ function TemplateGalleryModal({
 
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <AnimatePresence>
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
+        className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4 pointer-events-auto"
         onClick={(e) => e.target === e.currentTarget && onClose?.()}
       >
         <motion.div
@@ -466,7 +467,8 @@ function TemplateGalleryModal({
           </div>
         </motion.div>
       </motion.div>
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }
 

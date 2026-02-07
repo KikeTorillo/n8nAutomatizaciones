@@ -35,6 +35,7 @@ import DecorationEditorSection from '../components/DecorationEditorSection';
 import { useEditor as useInvitacionEditor } from '@/components/editor-framework';
 import { usePlantillas } from '@/hooks/otros/eventos-digitales';
 import InvitacionTemplateGallery from '../components/InvitacionTemplateGallery';
+import InvitacionPreviewCard from '../components/InvitacionPreviewCard';
 import { TIPOS_EVENTO_CATEGORIES } from '@/pages/eventos-digitales/constants';
 
 const PANEL_TYPES = {
@@ -229,6 +230,9 @@ function SidebarContainer() {
               categories={TIPOS_EVENTO_CATEGORIES}
               categoryField="tipo_evento"
               onApply={handleApplyPlantilla}
+              renderCard={(template, isSelected, onSelect) => (
+                <InvitacionPreviewCard template={template} isSelected={isSelected} onClick={onSelect} />
+              )}
               onViewFullGallery={() => setMostrarGaleria(true)}
               title="Plantillas"
               emptyMessage="No hay plantillas disponibles"

@@ -133,8 +133,8 @@ function EditorHeader() {
             setModoEditor(mode === 'blocks' ? 'bloques' : 'canvas');
           }
         }}
-        showEditorModeToggle={!isMobile}
-        showFreeMode={!esPlantilla}
+        showEditorModeToggle={true}
+        showFreeMode={!esPlantilla && !isMobile}
         isFreeModeOnly={esModoLibreGuardado}
         onFreeModeExit={handleFreeModeExit}
 

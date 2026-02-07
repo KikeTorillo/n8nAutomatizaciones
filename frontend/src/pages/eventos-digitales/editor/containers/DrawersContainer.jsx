@@ -36,6 +36,7 @@ import { useInvitacionEditorContent } from '../hooks/useInvitacionEditorContent'
 import { UnsplashModal } from '@/components/shared/media/UnsplashPicker';
 import { usePlantillas } from '@/hooks/otros/eventos-digitales';
 import InvitacionTemplateGallery from '../components/InvitacionTemplateGallery';
+import InvitacionPreviewCard from '../components/InvitacionPreviewCard';
 import { TIPOS_EVENTO_CATEGORIES } from '@/pages/eventos-digitales/constants';
 
 /**
@@ -174,7 +175,10 @@ function DrawersContainer() {
             categories={TIPOS_EVENTO_CATEGORIES}
             categoryField="tipo_evento"
             onApply={handleApplyPlantilla}
-            onViewFullGallery={() => setMostrarGaleria(true)}
+            onViewFullGallery={() => { closeDrawer(); setMostrarGaleria(true); }}
+            renderCard={(template, isSelected, onClick) => (
+              <InvitacionPreviewCard template={template} isSelected={isSelected} onClick={onClick} />
+            )}
             title="Plantillas"
             emptyMessage="No hay plantillas disponibles"
           />

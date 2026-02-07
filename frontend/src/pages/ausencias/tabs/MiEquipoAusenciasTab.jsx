@@ -251,7 +251,7 @@ const BloqueosSection = memo(function BloqueosSection({
  * MiEquipoAusenciasTab - Componente principal
  * @param {string} seccion - 'vacaciones' | 'incapacidades' | 'bloqueos'
  */
-function MiEquipoAusenciasTab({ seccion = 'vacaciones' }) {
+function MiEquipoAusenciasTab({ seccion = 'vacaciones', extraActions }) {
   const queryClient = useQueryClient();
   const config = SECCIONES_CONFIG[seccion] || SECCIONES_CONFIG.vacaciones;
   const Icon = config.icon;
@@ -464,6 +464,7 @@ function MiEquipoAusenciasTab({ seccion = 'vacaciones' }) {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {extraActions}
           <Button variant="ghost" size="sm" onClick={handleRefresh}>
             <RefreshCw className="w-4 h-4" />
           </Button>

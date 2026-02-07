@@ -135,6 +135,7 @@ const BlockAccordionItem = memo(function BlockAccordionItem({
           {...attributes}
           {...listeners}
           className="p-1 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 cursor-grab active:cursor-grabbing"
+          style={{ touchAction: 'none' }}
           onClick={(e) => e.stopPropagation()}
         >
           <GripVertical className="w-5 h-5" />

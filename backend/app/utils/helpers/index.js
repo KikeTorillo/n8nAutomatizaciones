@@ -19,6 +19,7 @@ const ParseHelper = require('./ParseHelper');
 const JSONHelper = require('./JSONHelper');
 const RolHelper = require('./RolHelper');
 const LimitesHelper = require('./LimitesHelper');
+const GoogleMapsHelper = require('./GoogleMapsHelper');
 
 // Helpers de dominio
 const InventarioHelper = require('./InventarioHelper');
@@ -39,6 +40,7 @@ module.exports = {
   JSONHelper,
   RolHelper,
   LimitesHelper,
+  GoogleMapsHelper,
   // Helpers de dominio
   InventarioHelper,
   POSHelper

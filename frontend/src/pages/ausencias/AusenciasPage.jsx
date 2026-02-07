@@ -157,14 +157,14 @@ function AusenciasPage() {
   const renderTabContent = () => {
     // Tab principal carga sin Suspense (eager)
     if (activeTab === 'mis-ausencias') {
-      return <MisAusenciasTab />;
+      return <MisAusenciasTab extraActions={exportButton} />;
     }
 
     // Tabs secundarios con Suspense (lazy)
     let content;
     switch (activeTab) {
       case 'equipo-vacaciones':
-        content = (esSupervisor || esAdmin) ? <MiEquipoAusenciasTab seccion="vacaciones" /> : null;
+        content = (esSupervisor || esAdmin) ? <MiEquipoAusenciasTab seccion="vacaciones" extraActions={exportButton} /> : null;
         break;
       case 'equipo-incapacidades':
         content = (esSupervisor || esAdmin) ? <MiEquipoAusenciasTab seccion="incapacidades" /> : null;
@@ -182,7 +182,7 @@ function AusenciasPage() {
         content = esAdmin ? <ConfiguracionAusenciasTab /> : null;
         break;
       default:
-        return <MisAusenciasTab />;
+        return <MisAusenciasTab extraActions={exportButton} />;
     }
 
     if (!content) return null;
@@ -193,10 +193,6 @@ function AusenciasPage() {
       </Suspense>
     );
   };
-
-  // Verificar si el tab actual es exportable
-  const tabsExportables = ['mis-ausencias', 'equipo-vacaciones'];
-  const puedeExportar = tabsExportables.includes(activeTab);
 
   // Handler para exportar CSV según tab activo usando hook centralizado
   const handleExportarAusencias = () => {
@@ -260,31 +256,28 @@ function AusenciasPage() {
     }
   };
 
+  // Botón de exportar reutilizable (se pasa como prop a los tabs exportables)
+  const exportButton = (
+    <Button
+      variant="secondary"
+      size="sm"
+      onClick={handleExportarAusencias}
+      aria-label="Exportar datos a CSV"
+    >
+      <FileSpreadsheet className="w-4 h-4 sm:mr-2" />
+      <span className="hidden sm:inline">Exportar CSV</span>
+    </Button>
+  );
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header fijo del módulo */}
       <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
         <BackButton to="/home" label="Volver al Inicio" className="mb-3" />
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Ausencias</h1>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Gestión de vacaciones e incapacidades
-            </p>
-          </div>
-          {puedeExportar && (
-            <Button
-              variant="secondary"
-              onClick={handleExportarAusencias}
-              aria-label="Exportar datos a CSV"
-              className="w-full sm:w-auto"
-            >
-              <FileSpreadsheet className="w-4 h-4 sm:mr-2" />
-              <span className="hidden sm:inline">Exportar CSV</span>
-              <span className="sm:hidden">Exportar</span>
-            </Button>
-          )}
-        </div>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Ausencias</h1>
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          Gestión de vacaciones e incapacidades
+        </p>
       </div>
 
       {/* NavTabs - con grupos para evitar overflow en desktop */}

@@ -40,3 +40,7 @@ export {
   getBloquePublico,
   InvitacionDinamica,
 } from './publico';
+
+// Layout del módulo
+export { default as EventosDigitalesPageLayout } from './EventosDigitalesPageLayout';
+export { default as EventosDigitalesNavTabs } from './EventosDigitalesNavTabs';

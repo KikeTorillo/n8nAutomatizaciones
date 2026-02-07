@@ -8,8 +8,41 @@
  */
 
 const RLSContextManager = require('../../../utils/rlsContextManager');
+const { GoogleMapsHelper } = require('../../../utils/helpers');
+const logger = require('../../../utils/logger');
 
 class UbicacionModel {
+    /**
+     * Extraer coordenadas de google_maps_url si no se proporcionan manualmente
+     */
+    static async _resolverCoordenadas(datos) {
+        const { latitud, longitud, google_maps_url } = datos;
+
+        // Prioridad: coordenadas manuales > extraídas de URL > null
+        if (latitud && longitud) return { latitud, longitud };
+
+        if (google_maps_url) {
+            try {
+                const coords = await GoogleMapsHelper.extractCoordinates(google_maps_url);
+                if (coords) {
+                    logger.info('UbicacionModel: Coordenadas extraídas de Google Maps URL', {
+                        url: google_maps_url,
+                        latitud: coords.latitud,
+                        longitud: coords.longitud,
+                    });
+                    return coords;
+                }
+            } catch (error) {
+                logger.warn('UbicacionModel: Error extrayendo coordenadas, continuando sin ellas', {
+                    url: google_maps_url,
+                    error: error.message,
+                });
+            }
+        }
+
+        return { latitud: latitud || null, longitud: longitud || null };
+    }
+
     /**
      * Crear ubicación
      */
@@ -19,8 +52,6 @@ class UbicacionModel {
             nombre,
             tipo = 'ceremonia',
             direccion,
-            latitud,
-            longitud,
             google_maps_url,
             hora_inicio,
             hora_fin,
@@ -29,6 +60,9 @@ class UbicacionModel {
             orden = 0,
             organizacion_id
         } = datos;
+
+        // Extraer coordenadas del URL si no se proporcionan
+        const { latitud, longitud } = await this._resolverCoordenadas(datos);
 
         return await RLSContextManager.query(organizacion_id, async (db) => {
             const result = await db.query(`
@@ -85,6 +119,15 @@ class UbicacionModel {
      * Actualizar ubicación
      */
     static async actualizar(id, datos, organizacionId) {
+        // Si viene google_maps_url y no coordenadas manuales, extraer automáticamente
+        if (datos.google_maps_url && !datos.latitud && !datos.longitud) {
+            const coords = await this._resolverCoordenadas(datos);
+            if (coords.latitud && coords.longitud) {
+                datos.latitud = coords.latitud;
+                datos.longitud = coords.longitud;
+            }
+        }
+
         const campos = [];
         const valores = [];
         let idx = 1;

@@ -7,12 +7,11 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Edit, Trash2, Palette } from 'lucide-react';
 import {
-  BasePageLayout,
   Button,
   ConfirmDialog,
   LoadingSpinner,
 } from '@/components/ui';
-import { InvitacionDinamica } from '@/components/eventos-digitales';
+import { EventosDigitalesPageLayout, InvitacionDinamica } from '@/components/eventos-digitales';
 import { useToast } from '@/hooks/utils';
 import { useModalManager } from '@/hooks/utils';
 import {
@@ -171,13 +170,10 @@ function PlantillasPage() {
   };
 
   return (
-    <BasePageLayout
-      moduleTitle="Eventos Digitales"
-      moduleDescription="Gestión de plantillas de diseño para invitaciones digitales"
-      backTo="/eventos-digitales"
-      backLabel="Volver a Eventos"
-      sectionIcon={Palette}
-      sectionTitle="Plantillas"
+    <EventosDigitalesPageLayout
+      icon={Palette}
+      title="Gestión de Plantillas"
+      subtitle="Diseños reutilizables para invitaciones digitales"
       actions={
         <Button onClick={handleNuevaPlantilla} disabled={crearPlantilla.isPending}>
           <Plus className="w-4 h-4 mr-2" />
@@ -253,7 +249,7 @@ function PlantillasPage() {
         isLoading={eliminarPlantilla.isPending}
       />
       </div>
-    </BasePageLayout>
+    </EventosDigitalesPageLayout>
   );
 }
 

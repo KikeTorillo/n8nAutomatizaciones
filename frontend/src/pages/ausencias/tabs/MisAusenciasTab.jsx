@@ -139,7 +139,7 @@ function AusenciaCard({ ausencia, onVerDetalle }) {
  * Tab principal de Mis Ausencias
  * Muestra todas las ausencias (vacaciones + incapacidades) sin filtro
  */
-function MisAusenciasTab() {
+function MisAusenciasTab({ extraActions }) {
   const queryClient = useQueryClient();
   const anioActual = new Date().getFullYear();
 
@@ -178,6 +178,7 @@ function MisAusenciasTab() {
           Mis Ausencias
         </h2>
         <div className="flex items-center gap-2">
+          {extraActions}
           <Button
             variant="ghost"
             size="sm"

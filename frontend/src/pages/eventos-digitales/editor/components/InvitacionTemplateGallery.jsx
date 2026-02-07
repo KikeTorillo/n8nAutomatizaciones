@@ -18,6 +18,7 @@ import { usePlantillas } from '@/hooks/otros/eventos-digitales';
 import { usePlantillaPreview } from '@/hooks/otros/eventos-digitales';
 import { useGoogleFonts } from '@/hooks/utils';
 import { TIPOS_EVENTO_CATEGORIES } from '@/pages/eventos-digitales/constants';
+import InvitacionPreviewCard from './InvitacionPreviewCard';
 
 // ========== INVITACION PREVIEW PANEL ==========
 
@@ -95,6 +96,9 @@ function InvitacionTemplateGallery({ isOpen, onClose }) {
       isLoading={isLoading}
       categories={TIPOS_EVENTO_CATEGORIES}
       categoryField="tipo_evento"
+      renderCard={(template, isSelected, onClick) => (
+        <InvitacionPreviewCard template={template} isSelected={isSelected} onClick={onClick} />
+      )}
       renderPreview={(template, { onApply, isApplying, onClose: closePreview }) => (
         <InvitacionPreviewPanel
           template={template}
