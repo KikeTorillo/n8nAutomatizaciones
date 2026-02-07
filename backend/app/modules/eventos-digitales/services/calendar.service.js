@@ -48,7 +48,14 @@ function escaparTextoICal(texto) {
  * @returns {Object} { fechaInicio: Date, fechaFin: Date }
  */
 function calcularFechasEvento(fechaEvento, horaEvento, duracionHoras = CONFIG.DURACION_DEFECTO_HORAS) {
+    if (!fechaEvento) {
+        throw new Error('fechaEvento es requerida para generar calendario');
+    }
+
     const fechaInicio = new Date(fechaEvento);
+    if (isNaN(fechaInicio.getTime())) {
+        throw new Error(`Fecha de evento inválida: ${fechaEvento}`);
+    }
 
     // Parsear hora
     let hora = CONFIG.HORA_DEFECTO;
@@ -56,7 +63,7 @@ function calcularFechasEvento(fechaEvento, horaEvento, duracionHoras = CONFIG.DU
         hora = horaEvento.substring(0, 5);
     }
     const [horas, minutos] = hora.split(':').map(Number);
-    fechaInicio.setHours(horas, minutos, 0, 0);
+    fechaInicio.setHours(horas || 0, minutos || 0, 0, 0);
 
     // Calcular fin
     const fechaFin = new Date(fechaInicio.getTime() + duracionHoras * 60 * 60 * 1000);
@@ -85,7 +92,7 @@ function generarICS(evento, options = {}) {
         incluirAlarmas = true
     } = options;
 
-    const baseUrl = process.env.FRONTEND_URL || 'https://nexo.app';
+    const baseUrl = process.env.FRONTEND_URL?.replace(/\/+$/, '') || 'https://nexo.app';
     const invitacionUrl = `${baseUrl}/e/${evento.slug}`;
 
     // Calcular fechas

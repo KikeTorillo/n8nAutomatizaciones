@@ -18,12 +18,12 @@ function PlantillaPreview() {
   const { data: plantilla, isLoading } = usePlantilla(id);
 
   // Query: lista para navegación
-  const { data: todasPlantillas } = usePlantillas(
+  const { data: todasPlantillasData } = usePlantillas(
     tipoFiltro ? { tipo_evento: tipoFiltro } : {}
   );
 
   // Índice actual y navegación
-  const plantillasList = todasPlantillas || [];
+  const plantillasList = todasPlantillasData?.plantillas || [];
   const currentIndex = plantillasList.findIndex((p) => String(p.id) === String(id));
 
   // Preview data (fix: usa bloques_plantilla reales si existen)

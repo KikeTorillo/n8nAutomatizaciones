@@ -217,13 +217,23 @@ class InvitadosController {
             i.confirmado_via || ''
         ]);
 
+        // Escapar celdas CSV: comillas dobles, comas, newlines, fórmulas Excel
+        const escapeCSV = (cell) => {
+            if (cell == null) return '';
+            const str = String(cell);
+            // Prevenir inyección de fórmulas Excel (=, +, -, @, \t, \r)
+            const needsPrefix = /^[=+\-@\t\r]/.test(str);
+            const needsQuotes = str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r');
+            if (needsPrefix || needsQuotes) {
+                const escaped = str.replace(/"/g, '""');
+                return needsPrefix ? `"'${escaped}"` : `"${escaped}"`;
+            }
+            return str;
+        };
+
         const csvContent = [
-            headers.join(','),
-            ...rows.map(row => row.map(cell =>
-                typeof cell === 'string' && cell.includes(',')
-                    ? `"${cell}"`
-                    : cell
-            ).join(','))
+            headers.map(escapeCSV).join(','),
+            ...rows.map(row => row.map(escapeCSV).join(','))
         ].join('\n');
 
         res.setHeader('Content-Type', 'text/csv; charset=utf-8');
@@ -406,7 +416,6 @@ class InvitadosController {
         logger.info('[InvitadosController.registrarCheckin] Check-in registrado', {
             invitado_id: invitado.id,
             evento_id: eventoId,
-            nombre: invitado.nombre
         });
 
         return ResponseHelper.success(res, {

@@ -17,15 +17,16 @@
  * eliminarPermanente(), conteo por estado, integración storage.
  *
  * REFACTORIZADO Feb 2026:
- * - Eliminados try-catch redundantes (asyncHandler en rutas)
+ * - asyncHandler inline en controller (consistente con patrón del proyecto)
  * - Uso de ErrorHelper.throwIfNotFound para 404s
+ * - Estandarizado organizacionId via req.tenant
  *
  * Fecha creación: 14 Diciembre 2025
  */
 
 const FotoEventoModel = require('../models/foto.model');
-const EventoModel = require('../models/evento.model');
 const { ResponseHelper, ErrorHelper } = require('../../../utils/helpers');
+const { asyncHandler } = require('../../../middleware');
 const logger = require('../../../utils/logger');
 
 class GaleriaController {
@@ -33,13 +34,9 @@ class GaleriaController {
      * POST /eventos/:eventoId/galeria
      * Subir foto (admin/organizador)
      */
-    static async subir(req, res) {
+    static subir = asyncHandler(async (req, res) => {
         const { eventoId } = req.params;
-        const organizacionId = req.user.organizacion_id;
-
-        // Verificar que el evento existe
-        const evento = await EventoModel.obtenerPorId(eventoId, organizacionId);
-        ErrorHelper.throwIfNotFound(evento, 'Evento');
+        const organizacionId = req.tenant.organizacionId;
 
         const foto = await FotoEventoModel.crear({
             ...req.body,
@@ -48,20 +45,16 @@ class GaleriaController {
         });
 
         return ResponseHelper.success(res, foto, 'Foto subida exitosamente', 201);
-    }
+    });
 
     /**
      * GET /eventos/:eventoId/galeria
      * Listar fotos del evento
      */
-    static async listar(req, res) {
+    static listar = asyncHandler(async (req, res) => {
         const { eventoId } = req.params;
         const { estado, limit = 100, offset = 0 } = req.query;
-        const organizacionId = req.user.organizacion_id;
-
-        // Verificar que el evento existe
-        const evento = await EventoModel.obtenerPorId(eventoId, organizacionId);
-        ErrorHelper.throwIfNotFound(evento, 'Evento');
+        const organizacionId = req.tenant.organizacionId;
 
         const resultado = await FotoEventoModel.listarPorEvento(eventoId, organizacionId, {
             estado,
@@ -75,30 +68,30 @@ class GaleriaController {
             ...resultado,
             estadisticas: conteo
         });
-    }
+    });
 
     /**
      * GET /galeria/:id
      * Obtener foto por ID
      */
-    static async obtenerPorId(req, res) {
+    static obtenerPorId = asyncHandler(async (req, res) => {
         const { id } = req.params;
-        const organizacionId = req.user.organizacion_id;
+        const organizacionId = req.tenant.organizacionId;
 
         const foto = await FotoEventoModel.obtenerPorId(id, organizacionId);
         ErrorHelper.throwIfNotFound(foto, 'Foto');
 
         return ResponseHelper.success(res, foto);
-    }
+    });
 
     /**
      * PUT /galeria/:id/estado
      * Cambiar estado de foto (visible/oculta)
      */
-    static async cambiarEstado(req, res) {
+    static cambiarEstado = asyncHandler(async (req, res) => {
         const { id } = req.params;
         const { estado } = req.body;
-        const organizacionId = req.user.organizacion_id;
+        const organizacionId = req.tenant.organizacionId;
 
         if (!['visible', 'oculta'].includes(estado)) {
             throw new Error('Estado inválido. Use: visible, oculta');
@@ -108,32 +101,31 @@ class GaleriaController {
         ErrorHelper.throwIfNotFound(foto, 'Foto');
 
         return ResponseHelper.success(res, foto, `Foto ${estado === 'visible' ? 'visible' : 'ocultada'}`);
-    }
+    });
 
     /**
      * DELETE /galeria/:id
      * Eliminar foto (soft delete)
      */
-    static async eliminar(req, res) {
+    static eliminar = asyncHandler(async (req, res) => {
         const { id } = req.params;
-        const organizacionId = req.user.organizacion_id;
+        const organizacionId = req.tenant.organizacionId;
 
-        // Verificar que existe
         const foto = await FotoEventoModel.obtenerPorId(id, organizacionId);
         ErrorHelper.throwIfNotFound(foto, 'Foto');
 
         await FotoEventoModel.eliminar(id, organizacionId);
 
         return ResponseHelper.success(res, { id: parseInt(id) }, 'Foto eliminada exitosamente');
-    }
+    });
 
     /**
      * DELETE /galeria/:id/permanente
      * Eliminar foto permanentemente (hard delete + borrar de storage)
      */
-    static async eliminarPermanente(req, res) {
+    static eliminarPermanente = asyncHandler(async (req, res) => {
         const { id } = req.params;
-        const organizacionId = req.user.organizacion_id;
+        const organizacionId = req.tenant.organizacionId;
 
         const foto = await FotoEventoModel.eliminarPermanente(id, organizacionId);
         ErrorHelper.throwIfNotFound(foto, 'Foto');
@@ -143,7 +135,7 @@ class GaleriaController {
         // if (foto.thumbnail_url) await storageService.deleteFile(foto.thumbnail_url);
 
         return ResponseHelper.success(res, { id: parseInt(id) }, 'Foto eliminada permanentemente');
-    }
+    });
 }
 
 module.exports = GaleriaController;

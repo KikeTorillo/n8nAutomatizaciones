@@ -13,10 +13,10 @@
  * @updated 2026-02-04 - Migrado a guardado automático
  */
 
-import { memo, useCallback, useMemo } from 'react';
+import { memo, useMemo } from 'react';
 import { Clock, Plus, Trash2, GripVertical } from 'lucide-react';
 import { Button, Input, Textarea, Select, IconPickerCompact } from '@/components/ui';
-import { ColorField, useBlockEditor } from '@/components/editor-framework';
+import { ColorField, useBlockEditor, useArrayItemHandlers } from '@/components/editor-framework';
 import { BLOCK_DEFAULTS } from '../../config';
 
 /**
@@ -55,18 +55,8 @@ function TimelineEditor({ contenido, estilos, onChange, tema }) {
     bloqueIdKey: '_bloqueId',
   });
 
-  // Handlers para array de items
-  const handleAgregarItem = useCallback(() => {
-    handleArrayItemAdd('items', defaultItem);
-  }, [handleArrayItemAdd, defaultItem]);
-
-  const handleEliminarItem = useCallback((index) => {
-    handleArrayItemRemove('items', index);
-  }, [handleArrayItemRemove]);
-
-  const handleChangeItem = useCallback((index, campo, valor) => {
-    handleArrayItemChange('items', index, campo, valor);
-  }, [handleArrayItemChange]);
+  const { handleAgregar: handleAgregarItem, handleEliminar: handleEliminarItem, handleChange: handleChangeItem } =
+    useArrayItemHandlers({ handleArrayItemAdd, handleArrayItemRemove, handleArrayItemChange }, 'items', defaultItem);
 
   // Opciones de layout
   const layoutOptions = [

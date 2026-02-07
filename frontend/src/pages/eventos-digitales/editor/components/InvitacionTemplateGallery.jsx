@@ -84,7 +84,8 @@ function InvitacionPreviewPanel({ template, onApply, isApplying, onClose }) {
  */
 function InvitacionTemplateGallery({ isOpen, onClose }) {
   const navigate = useNavigate();
-  const { data: plantillas = [], isLoading } = usePlantillas();
+  const { data: plantillasData, isLoading } = usePlantillas();
+  const plantillas = plantillasData?.plantillas || [];
 
   return (
     <TemplateGalleryModal

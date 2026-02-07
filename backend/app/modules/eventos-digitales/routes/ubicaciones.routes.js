@@ -31,9 +31,9 @@ const {
     modules,
     subscription,
     rateLimiting,
-    validation: { validate },
-    asyncHandler
+    validation: { validate }
 } = require('../../../middleware');
+const { requireEvento } = require('../middleware');
 
 // ============================================================================
 // MIDDLEWARE COMÚN
@@ -55,8 +55,9 @@ const middlewareComun = [
  */
 router.post('/eventos/:eventoId/ubicaciones',
     ...middlewareComun,
+    requireEvento,
     validate(ubicacionesSchemas.crearUbicacion),
-    asyncHandler(UbicacionesController.crear)
+    UbicacionesController.crear
 );
 
 /**
@@ -65,8 +66,9 @@ router.post('/eventos/:eventoId/ubicaciones',
  */
 router.get('/eventos/:eventoId/ubicaciones',
     ...middlewareComun,
+    requireEvento,
     validate(ubicacionesSchemas.listarUbicaciones),
-    asyncHandler(UbicacionesController.listar)
+    UbicacionesController.listar
 );
 
 /**
@@ -75,8 +77,9 @@ router.get('/eventos/:eventoId/ubicaciones',
  */
 router.put('/eventos/:eventoId/ubicaciones/reordenar',
     ...middlewareComun,
+    requireEvento,
     validate(ubicacionesSchemas.reordenarUbicaciones),
-    asyncHandler(UbicacionesController.reordenar)
+    UbicacionesController.reordenar
 );
 
 // ============================================================================
@@ -90,7 +93,7 @@ router.put('/eventos/:eventoId/ubicaciones/reordenar',
 router.get('/ubicaciones/:id',
     ...middlewareComun,
     validate(ubicacionesSchemas.obtenerUbicacion),
-    asyncHandler(UbicacionesController.obtenerPorId)
+    UbicacionesController.obtenerPorId
 );
 
 /**
@@ -100,7 +103,7 @@ router.get('/ubicaciones/:id',
 router.put('/ubicaciones/:id',
     ...middlewareComun,
     validate(ubicacionesSchemas.actualizarUbicacion),
-    asyncHandler(UbicacionesController.actualizar)
+    UbicacionesController.actualizar
 );
 
 /**
@@ -110,7 +113,7 @@ router.put('/ubicaciones/:id',
 router.delete('/ubicaciones/:id',
     ...middlewareComun,
     validate(ubicacionesSchemas.eliminarUbicacion),
-    asyncHandler(UbicacionesController.eliminar)
+    UbicacionesController.eliminar
 );
 
 module.exports = router;

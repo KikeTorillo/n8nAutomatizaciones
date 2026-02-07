@@ -18,7 +18,7 @@ import { THEME_FALLBACK_COLORS } from '@/lib/uiConstants';
 function MesaRegalosElementRenderer({
   elemento,
   tema,
-  evento,
+  customData: evento,
   isEditing = false,
 }) {
   const { contenido = {} } = elemento;
@@ -214,7 +214,7 @@ MesaRegalosElementRenderer.propTypes = {
     color_texto_claro: PropTypes.string,
     fuente_titulos: PropTypes.string,
   }),
-  evento: PropTypes.shape({
+  customData: PropTypes.shape({
     regalos: PropTypes.array,
   }),
   isEditing: PropTypes.bool,

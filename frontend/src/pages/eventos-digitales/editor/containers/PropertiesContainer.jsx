@@ -5,7 +5,7 @@
  * Panel de propiedades para editar el bloque seleccionado.
  * Responsive: solo visible en desktop, en móvil/tablet se usa drawer.
  *
- * @version 2.0.0 - Refactor: useImageHandlers
+ * @version 2.1.0 - Consolidado UnsplashModal único
  * @since 2026-02-03
  * @updated 2026-02-06
  */
@@ -89,36 +89,28 @@ function PropertiesContainer() {
     moverSeccion: (id, dir) => freeStore.getState().moverSeccion(id, dir),
   }), [freeStore]);
 
-  // ========== MODO LIBRE ==========
-  if (modoEditor === 'libre' && !propertiesAsDrawer && mostrarPropiedades && !modoPreview) {
-    // Si hay elemento seleccionado, mostrar ElementPropertiesPanel
-    if (elementoSeleccionado) {
-      return (
-        <>
-          <aside className="w-80 bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden flex-shrink-0">
-            <ElementPropertiesPanel
-              elemento={elementoSeleccionado}
-              onChange={freeStoreActions.actualizarElemento}
-              onDelete={freeStoreActions.eliminarElemento}
-              onDuplicate={freeStoreActions.duplicarElemento}
-              onToggleVisibility={freeStoreActions.toggleVisibilidadElemento}
-              onMoveLayer={freeStoreActions.moverCapaElemento}
-              onClose={() => setMostrarPropiedades(false)}
-            />
-          </aside>
-          <UnsplashModal
-            isOpen={unsplashState.isOpen}
-            onClose={closeUnsplash}
-            onSelect={handleUnsplashSelect}
-            industria="eventos"
-          />
-        </>
-      );
-    }
+  // ========== DETERMINAR PANEL CONTENT ==========
 
-    // Si hay sección seleccionada (y no elemento), mostrar SectionPropertiesPanel
-    if (seccionSeleccionada && !elementoSeleccionado) {
-      return (
+  let panelContent = null;
+
+  // MODO LIBRE
+  if (modoEditor === 'libre' && !propertiesAsDrawer && mostrarPropiedades && !modoPreview) {
+    if (elementoSeleccionado) {
+      panelContent = (
+        <aside className="w-80 bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden flex-shrink-0">
+          <ElementPropertiesPanel
+            elemento={elementoSeleccionado}
+            onChange={freeStoreActions.actualizarElemento}
+            onDelete={freeStoreActions.eliminarElemento}
+            onDuplicate={freeStoreActions.duplicarElemento}
+            onToggleVisibility={freeStoreActions.toggleVisibilidadElemento}
+            onMoveLayer={freeStoreActions.moverCapaElemento}
+            onClose={() => setMostrarPropiedades(false)}
+          />
+        </aside>
+      );
+    } else if (seccionSeleccionada) {
+      panelContent = (
         <aside className="w-80 bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden flex-shrink-0">
           <SectionPropertiesPanel
             seccion={seccionSeleccionada}
@@ -131,22 +123,10 @@ function PropertiesContainer() {
         </aside>
       );
     }
-
-    // No hay selección - no mostrar panel
-    return null;
   }
-
-  // Ocultar si:
-  // - Modo preview
-  // - Panel cerrado
-  // - No hay bloque seleccionado
-  // - En móvil/tablet (se usa drawer en su lugar)
-  if (modoPreview || !mostrarPropiedades || !bloqueSeleccionadoCompleto || propertiesAsDrawer) {
-    return null;
-  }
-
-  return (
-    <>
+  // MODO BLOQUES/CANVAS
+  else if (!modoPreview && mostrarPropiedades && bloqueSeleccionadoCompleto && !propertiesAsDrawer) {
+    panelContent = (
       <aside className="w-80 bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden flex-shrink-0">
         {/* Header */}
         <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
@@ -187,8 +167,14 @@ function PropertiesContainer() {
           )}
         </div>
       </aside>
+    );
+  }
 
-      {/* Unsplash Modal */}
+  if (!panelContent) return null;
+
+  return (
+    <>
+      {panelContent}
       <UnsplashModal
         isOpen={unsplashState.isOpen}
         onClose={closeUnsplash}

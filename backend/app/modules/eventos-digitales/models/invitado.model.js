@@ -61,7 +61,6 @@ class InvitadoModel {
 
             logger.info('[InvitadoModel.crear] Creando invitado', {
                 evento_id: datos.evento_id,
-                nombre: datos.nombre
             });
 
             const result = await db.query(query, valores);
@@ -79,49 +78,62 @@ class InvitadoModel {
      */
     static async crearMasivo(eventoId, organizacionId, invitados) {
         return await RLSContextManager.transaction(organizacionId, async (db) => {
-            const creados = [];
             const errores = [];
+            const validos = [];
 
+            // Validar y preparar datos
             for (let i = 0; i < invitados.length; i++) {
                 const invitado = invitados[i];
-
-                try {
-                    const query = `
-                        INSERT INTO invitados_evento (
-                            organizacion_id,
-                            evento_id,
-                            nombre,
-                            email,
-                            telefono,
-                            grupo_familiar,
-                            etiquetas,
-                            max_acompanantes
-                        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-                        RETURNING *
-                    `;
-
-                    const valores = [
-                        organizacionId,
-                        eventoId,
-                        invitado.nombre,
-                        invitado.email || null,
-                        invitado.telefono || null,
-                        invitado.grupo_familiar || null,
-                        invitado.etiquetas ? JSON.stringify(invitado.etiquetas) : '[]',
-                        invitado.max_acompanantes || 0
-                    ];
-
-                    const result = await db.query(query, valores);
-                    creados.push(result.rows[0]);
-
-                } catch (error) {
-                    errores.push({
-                        fila: i + 1,
-                        nombre: invitado.nombre,
-                        error: error.message
-                    });
+                if (!invitado.nombre) {
+                    errores.push({ fila: i + 1, nombre: '', error: 'Nombre es requerido' });
+                    continue;
                 }
+                validos.push({ index: i, ...invitado });
             }
+
+            if (validos.length === 0) {
+                return { creados: [], errores };
+            }
+
+            // Batch INSERT con multi-row VALUES
+            const COLS = 8; // columnas por fila
+            const valuesClauses = [];
+            const valores = [];
+
+            for (let i = 0; i < validos.length; i++) {
+                const inv = validos[i];
+                const offset = i * COLS;
+                valuesClauses.push(
+                    `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}, $${offset + 6}, $${offset + 7}, $${offset + 8})`
+                );
+                valores.push(
+                    organizacionId,
+                    eventoId,
+                    inv.nombre,
+                    inv.email || null,
+                    inv.telefono || null,
+                    inv.grupo_familiar || null,
+                    inv.etiquetas ? JSON.stringify(inv.etiquetas) : '[]',
+                    inv.max_acompanantes || 0
+                );
+            }
+
+            const query = `
+                INSERT INTO invitados_evento (
+                    organizacion_id,
+                    evento_id,
+                    nombre,
+                    email,
+                    telefono,
+                    grupo_familiar,
+                    etiquetas,
+                    max_acompanantes
+                ) VALUES ${valuesClauses.join(', ')}
+                RETURNING *
+            `;
+
+            const result = await db.query(query, valores);
+            const creados = result.rows;
 
             logger.info('[InvitadoModel.crearMasivo] Importación completada', {
                 evento_id: eventoId,
@@ -248,6 +260,7 @@ class InvitadoModel {
                 WHERE i.token = $1
                   AND i.activo = true
                   AND e.activo = true
+                  AND e.estado = 'publicado'
             `;
 
             // Actualizar contador de visualizaciones

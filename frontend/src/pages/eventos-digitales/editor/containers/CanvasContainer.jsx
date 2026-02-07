@@ -234,7 +234,7 @@ function CanvasContainer() {
           tema={tema}
           isPreviewMode={modoPreview}
           customRenderers={INVITACION_CUSTOM_RENDERERS}
-          evento={evento}
+          customData={evento}
         />
       </main>
     );

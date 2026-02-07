@@ -59,7 +59,7 @@ function CanvasElement({
   tema,
   disabled = false,
   customRenderers = {},
-  evento, // Datos del evento para renderers específicos
+  customData, // Datos custom para renderers específicos
 }) {
   const { tipo } = elemento;
 
@@ -119,7 +119,7 @@ function CanvasElement({
         tema={tema}
         isEditing={isEditing}
         onTextChange={handleContentChange}
-        evento={evento}
+        customData={customData}
       />
     </ElementWrapper>
   );
@@ -149,7 +149,7 @@ CanvasElement.propTypes = {
   tema: PropTypes.object,
   disabled: PropTypes.bool,
   customRenderers: PropTypes.object,
-  evento: PropTypes.object, // Datos del evento para renderers específicos
+  customData: PropTypes.object, // Datos custom para renderers específicos
 };
 
 export default memo(CanvasElement);

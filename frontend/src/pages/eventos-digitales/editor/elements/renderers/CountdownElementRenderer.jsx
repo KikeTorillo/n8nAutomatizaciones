@@ -19,7 +19,7 @@ import { THEME_FALLBACK_COLORS } from '@/lib/uiConstants';
 function CountdownElementRenderer({
   elemento,
   tema,
-  evento,
+  customData: evento,
   isEditing = false,
 }) {
   const { contenido = {}, estilos = {} } = elemento;
@@ -232,7 +232,7 @@ CountdownElementRenderer.propTypes = {
     color_texto_claro: PropTypes.string,
     fuente_titulos: PropTypes.string,
   }),
-  evento: PropTypes.shape({
+  customData: PropTypes.shape({
     fecha_evento: PropTypes.string,
     hora_evento: PropTypes.string,
   }),

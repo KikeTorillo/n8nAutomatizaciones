@@ -40,7 +40,7 @@ function FreePositionCanvas({
   isPreviewMode = false,
   customRenderers = {},
   className,
-  evento, // Datos del evento para renderers (countdown, calendario, etc.)
+  customData, // Datos custom para renderers (countdown, calendario, etc.)
 }) {
   const canvasRef = useRef(null);
   const rafRef = useRef(null);
@@ -166,7 +166,7 @@ function FreePositionCanvas({
           tema={tema}
           disabled={isPreviewMode}
           customRenderers={customRenderers}
-          evento={evento}
+          customData={customData}
         />
       );
     });
@@ -179,7 +179,7 @@ function FreePositionCanvas({
     tema,
     isPreviewMode,
     customRenderers,
-    evento,
+    customData,
   ]);
 
   return (
@@ -267,7 +267,7 @@ FreePositionCanvas.propTypes = {
   isPreviewMode: PropTypes.bool,
   customRenderers: PropTypes.object,
   className: PropTypes.string,
-  evento: PropTypes.object, // Datos del evento para renderers específicos
+  customData: PropTypes.object, // Datos custom para renderers específicos
 };
 
 export default memo(FreePositionCanvas);

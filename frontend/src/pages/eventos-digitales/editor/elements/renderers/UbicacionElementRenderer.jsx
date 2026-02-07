@@ -35,7 +35,7 @@ const getGoogleMapsUrl = (ubicacion) => {
 function UbicacionElementRenderer({
   elemento,
   tema,
-  evento,
+  customData: evento,
   isEditing = false,
 }) {
   const { contenido = {} } = elemento;
@@ -195,7 +195,7 @@ UbicacionElementRenderer.propTypes = {
     color_texto_claro: PropTypes.string,
     fuente_titulos: PropTypes.string,
   }),
-  evento: PropTypes.shape({
+  customData: PropTypes.shape({
     ubicaciones: PropTypes.array,
   }),
   isEditing: PropTypes.bool,

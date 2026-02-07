@@ -8,13 +8,15 @@
  * Las decoraciones específicas de portada se editan en HeroInvitacionEditor.
  * El marco de fotos se edita en GaleriaEditor.
  *
- * @version 3.0.0 - Reducido a solo animacion_entrada
+ * @version 4.0.0 - Autosave con debounce (sin botón guardar manual)
  * @since 2026-02-05
  */
 
-import { useState, useEffect, useCallback, memo } from 'react';
-import { Check, RotateCcw, Loader2, Sparkles } from 'lucide-react';
+import { useState, useEffect, useRef, memo } from 'react';
+import { Sparkles } from 'lucide-react';
 import { ANIMACIONES_ENTRADA } from '../config';
+
+const AUTOSAVE_DEBOUNCE_MS = 1000;
 
 /**
  * DecorationEditorSection
@@ -22,38 +24,31 @@ import { ANIMACIONES_ENTRADA } from '../config';
  * @param {Object} props
  * @param {Object} props.currentDecoration - Decoraciones actuales { animacion_entrada }
  * @param {Function} props.onSave - Callback al guardar
- * @param {boolean} props.isLoading - Estado de carga
  */
-function DecorationEditorSection({ currentDecoration, onSave, isLoading = false }) {
+function DecorationEditorSection({ currentDecoration, onSave }) {
   const [animacion, setAnimacion] = useState(currentDecoration?.animacion_entrada || 'none');
-  const [cambiosPendientes, setCambiosPendientes] = useState(false);
-  const [guardando, setGuardando] = useState(false);
+  const skipNextSave = useRef(true);
 
+  // Sincronizar con props externas
   useEffect(() => {
     setAnimacion(currentDecoration?.animacion_entrada || 'none');
+    skipNextSave.current = true;
   }, [currentDecoration?.animacion_entrada]);
 
+  // Autosave con debounce
   useEffect(() => {
-    setCambiosPendientes(animacion !== (currentDecoration?.animacion_entrada || 'none'));
-  }, [animacion, currentDecoration?.animacion_entrada]);
-
-  const handleGuardar = useCallback(async () => {
-    setGuardando(true);
-    try {
-      await onSave({ animacion_entrada: animacion });
-      setCambiosPendientes(false);
-    } catch {
-      // El consumidor maneja el error
-    } finally {
-      setGuardando(false);
+    if (skipNextSave.current) {
+      skipNextSave.current = false;
+      return;
     }
-  }, [animacion, onSave]);
 
-  const handleRestaurar = useCallback(() => {
-    setAnimacion(currentDecoration?.animacion_entrada || 'none');
-  }, [currentDecoration?.animacion_entrada]);
+    if (animacion === (currentDecoration?.animacion_entrada || 'none')) return;
 
-  const loading = isLoading || guardando;
+    const timer = setTimeout(() => {
+      onSave({ animacion_entrada: animacion });
+    }, AUTOSAVE_DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+  }, [animacion, currentDecoration?.animacion_entrada, onSave]);
 
   return (
     <div className="space-y-4">
@@ -86,34 +81,6 @@ function DecorationEditorSection({ currentDecoration, onSave, isLoading = false 
           Los bloques se animan al hacer scroll en la vista pública.
         </p>
       </div>
-
-      {/* Footer con acciones */}
-      {cambiosPendientes && (
-        <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
-          <div className="flex gap-2">
-            <button
-              onClick={handleRestaurar}
-              disabled={loading}
-              className="flex-1 flex items-center justify-center gap-2 px-3 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-sm disabled:opacity-50"
-            >
-              <RotateCcw className="w-4 h-4" />
-              Descartar
-            </button>
-            <button
-              onClick={handleGuardar}
-              disabled={loading}
-              className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm disabled:opacity-50"
-            >
-              {loading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Check className="w-4 h-4" />
-              )}
-              Guardar
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

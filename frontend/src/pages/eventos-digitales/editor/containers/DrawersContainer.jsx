@@ -45,7 +45,6 @@ function DrawersContainer() {
     handleAgregarBloque,
     handleActualizarBloque,
     handleActualizarPlantilla,
-    estaActualizandoPlantilla,
     deseleccionarBloque,
     modoPreview,
   } = useInvitacionEditor();
@@ -110,7 +109,6 @@ function DrawersContainer() {
           currentFonts={currentFonts}
           presetThemes={TEMAS_POR_TIPO[evento?.tipo] || TEMAS_POR_TIPO.otro}
           onSave={handleSaveTema}
-          isLoading={estaActualizandoPlantilla}
           title="Colores y Tipografía"
           subtitle="Personaliza colores y fuentes de tu invitación"
         />

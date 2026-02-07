@@ -134,11 +134,12 @@ function CategoriaPlantillas({ tipo, plantillas }) {
 
 function PlantillasGaleria() {
   const navigate = useNavigate();
-  const { data: plantillas, isLoading } = usePlantillas();
+  const { data: plantillasData, isLoading } = usePlantillas();
+  const plantillas = plantillasData?.plantillas || [];
 
   // Agrupar por tipo_evento
   const porTipo = useMemo(() => {
-    if (!plantillas) return {};
+    if (!plantillas.length) return {};
     const grupos = {};
     for (const p of plantillas) {
       const tipo = p.tipo_evento || 'otro';

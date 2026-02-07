@@ -31,9 +31,9 @@ const {
     modules,
     subscription,
     rateLimiting,
-    validation: { validate },
-    asyncHandler
+    validation: { validate }
 } = require('../../../middleware');
+const { requireEvento } = require('../middleware');
 
 // ============================================================================
 // MIDDLEWARE COMÚN
@@ -55,8 +55,9 @@ const middlewareComun = [
  */
 router.post('/eventos/:eventoId/galeria',
     ...middlewareComun,
+    requireEvento,
     validate(galeriaSchemas.subirFoto),
-    asyncHandler(GaleriaController.subir)
+    GaleriaController.subir
 );
 
 /**
@@ -65,8 +66,9 @@ router.post('/eventos/:eventoId/galeria',
  */
 router.get('/eventos/:eventoId/galeria',
     ...middlewareComun,
+    requireEvento,
     validate(galeriaSchemas.listarFotos),
-    asyncHandler(GaleriaController.listar)
+    GaleriaController.listar
 );
 
 // ============================================================================
@@ -80,7 +82,7 @@ router.get('/eventos/:eventoId/galeria',
 router.get('/galeria/:id',
     ...middlewareComun,
     validate(galeriaSchemas.obtenerFoto),
-    asyncHandler(GaleriaController.obtenerPorId)
+    GaleriaController.obtenerPorId
 );
 
 /**
@@ -90,7 +92,7 @@ router.get('/galeria/:id',
 router.put('/galeria/:id/estado',
     ...middlewareComun,
     validate(galeriaSchemas.cambiarEstado),
-    asyncHandler(GaleriaController.cambiarEstado)
+    GaleriaController.cambiarEstado
 );
 
 /**
@@ -100,7 +102,7 @@ router.put('/galeria/:id/estado',
 router.delete('/galeria/:id',
     ...middlewareComun,
     validate(galeriaSchemas.eliminarFoto),
-    asyncHandler(GaleriaController.eliminar)
+    GaleriaController.eliminar
 );
 
 /**
@@ -110,7 +112,7 @@ router.delete('/galeria/:id',
 router.delete('/galeria/:id/permanente',
     ...middlewareComun,
     validate(galeriaSchemas.eliminarFoto),
-    asyncHandler(GaleriaController.eliminarPermanente)
+    GaleriaController.eliminarPermanente
 );
 
 module.exports = router;

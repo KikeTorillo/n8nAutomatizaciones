@@ -32,9 +32,9 @@ const {
     modules,
     subscription,
     rateLimiting,
-    validation: { validate },
-    asyncHandler
+    validation: { validate }
 } = require('../../../middleware');
+const { requireEvento } = require('../middleware');
 
 // ============================================================================
 // MIDDLEWARE COMÚN
@@ -56,8 +56,9 @@ const middlewareComun = [
  */
 router.post('/eventos/:eventoId/mesa-regalos',
     ...middlewareComun,
+    requireEvento,
     validate(mesaRegalosSchemas.crearRegalo),
-    asyncHandler(MesaRegalosController.crear)
+    MesaRegalosController.crear
 );
 
 /**
@@ -66,8 +67,9 @@ router.post('/eventos/:eventoId/mesa-regalos',
  */
 router.get('/eventos/:eventoId/mesa-regalos',
     ...middlewareComun,
+    requireEvento,
     validate(mesaRegalosSchemas.listarRegalos),
-    asyncHandler(MesaRegalosController.listar)
+    MesaRegalosController.listar
 );
 
 /**
@@ -76,8 +78,9 @@ router.get('/eventos/:eventoId/mesa-regalos',
  */
 router.get('/eventos/:eventoId/mesa-regalos/estadisticas',
     ...middlewareComun,
+    requireEvento,
     validate(mesaRegalosSchemas.estadisticasRegalos),
-    asyncHandler(MesaRegalosController.estadisticas)
+    MesaRegalosController.estadisticas
 );
 
 // ============================================================================
@@ -91,7 +94,7 @@ router.get('/eventos/:eventoId/mesa-regalos/estadisticas',
 router.get('/mesa-regalos/:id',
     ...middlewareComun,
     validate(mesaRegalosSchemas.obtenerRegalo),
-    asyncHandler(MesaRegalosController.obtenerPorId)
+    MesaRegalosController.obtenerPorId
 );
 
 /**
@@ -101,7 +104,7 @@ router.get('/mesa-regalos/:id',
 router.put('/mesa-regalos/:id',
     ...middlewareComun,
     validate(mesaRegalosSchemas.actualizarRegalo),
-    asyncHandler(MesaRegalosController.actualizar)
+    MesaRegalosController.actualizar
 );
 
 /**
@@ -111,7 +114,7 @@ router.put('/mesa-regalos/:id',
 router.put('/mesa-regalos/:id/comprar',
     ...middlewareComun,
     validate(mesaRegalosSchemas.marcarComprado),
-    asyncHandler(MesaRegalosController.marcarComprado)
+    MesaRegalosController.marcarComprado
 );
 
 /**
@@ -121,7 +124,7 @@ router.put('/mesa-regalos/:id/comprar',
 router.delete('/mesa-regalos/:id',
     ...middlewareComun,
     validate(mesaRegalosSchemas.eliminarRegalo),
-    asyncHandler(MesaRegalosController.eliminar)
+    MesaRegalosController.eliminar
 );
 
 module.exports = router;

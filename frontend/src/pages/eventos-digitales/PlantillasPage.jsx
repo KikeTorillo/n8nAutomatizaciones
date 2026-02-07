@@ -32,18 +32,6 @@ const TIPOS_EVENTO_ADMIN = [
   { value: 'universal', label: 'Universal' },
 ];
 
-const CATEGORIAS = [
-  { value: '', label: 'Sin categoría' },
-  { value: 'infantil', label: 'Infantil' },
-  { value: 'juvenil', label: 'Juvenil' },
-  { value: 'adulto', label: 'Adulto' },
-  { value: 'elegante', label: 'Elegante' },
-  { value: 'moderno', label: 'Moderno' },
-  { value: 'rustico', label: 'Rústico' },
-  { value: 'tematico', label: 'Temático' },
-  { value: 'clasico', label: 'Clásico' },
-];
-
 const TEMA_DEFAULT_ADMIN = {
   ...INVITACION_TEMA_DEFAULT,
   ...INVITACION_TEMA_DECORACION_DEFAULTS,
@@ -83,10 +71,7 @@ function PlantillaAdminCard({ plantilla, onEdit, onDelete }) {
       {/* Info */}
       <div className="p-4">
         <div className="flex items-start justify-between">
-          <div>
-            <h3 className="font-semibold text-gray-900 dark:text-gray-100">{plantilla.nombre}</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400">{plantilla.codigo}</p>
-          </div>
+          <h3 className="font-semibold text-gray-900 dark:text-gray-100">{plantilla.nombre}</h3>
           {plantilla.es_premium && (
             <span className="px-2 py-0.5 text-xs bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-300 rounded-full">
               Premium
@@ -111,16 +96,6 @@ function PlantillaAdminCard({ plantilla, onEdit, onDelete }) {
           <span className="px-2 py-0.5 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-full">
             {TIPOS_EVENTO_ADMIN.find(t => t.value === plantilla.tipo_evento)?.label || plantilla.tipo_evento}
           </span>
-          {plantilla.categoria && (
-            <span className="px-2 py-0.5 text-xs bg-pink-100 dark:bg-pink-900/40 text-pink-600 dark:text-pink-300 rounded-full">
-              {CATEGORIAS.find(c => c.value === plantilla.categoria)?.label || plantilla.categoria}
-            </span>
-          )}
-          {plantilla.subcategoria && (
-            <span className="px-2 py-0.5 text-xs bg-secondary-100 dark:bg-secondary-900/40 text-secondary-600 dark:text-secondary-300 rounded-full">
-              {plantilla.subcategoria}
-            </span>
-          )}
           {plantilla.activo === false && (
             <span className="px-2 py-0.5 text-xs bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-300 rounded-full">
               Inactiva
@@ -152,7 +127,6 @@ function PlantillasPage() {
   const toast = useToast();
   const navigate = useNavigate();
   const [filtroTipo, setFiltroTipo] = useState('');
-  const [filtroCategoria, setFiltroCategoria] = useState('');
 
   // Modales centralizados
   const { openModal, closeModal, isOpen, getModalData } = useModalManager({
@@ -162,9 +136,8 @@ function PlantillasPage() {
   // Queries
   const { data: plantillasData, isLoading } = usePlantillas({
     tipo_evento: filtroTipo || undefined,
-    categoria: filtroCategoria || undefined,
   });
-  const plantillas = plantillasData || [];
+  const plantillas = plantillasData?.plantillas || [];
 
   // Mutations
   const crearPlantilla = useCrearPlantilla();
@@ -221,58 +194,29 @@ function PlantillasPage() {
       }
     >
       <div className="space-y-6">
-      {/* Filtros */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700 space-y-4">
-        {/* Filtro por tipo */}
-        <div>
-          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">Tipo de Evento</label>
-          <div className="flex flex-wrap gap-2">
+      {/* Filtro por tipo */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
+        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">Tipo de Evento</label>
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => setFiltroTipo('')}
+            className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+              !filtroTipo ? 'bg-primary-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+            }`}
+          >
+            Todos
+          </button>
+          {TIPOS_EVENTO_ADMIN.map((tipo) => (
             <button
-              onClick={() => setFiltroTipo('')}
+              key={tipo.value}
+              onClick={() => setFiltroTipo(tipo.value)}
               className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                !filtroTipo ? 'bg-primary-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                filtroTipo === tipo.value ? 'bg-primary-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
               }`}
             >
-              Todos
+              {tipo.label}
             </button>
-            {TIPOS_EVENTO_ADMIN.map((tipo) => (
-              <button
-                key={tipo.value}
-                onClick={() => setFiltroTipo(tipo.value)}
-                className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                  filtroTipo === tipo.value ? 'bg-primary-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                }`}
-              >
-                {tipo.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Filtro por categoría */}
-        <div>
-          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">Categoría</label>
-          <div className="flex flex-wrap gap-2">
-            <button
-              onClick={() => setFiltroCategoria('')}
-              className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                !filtroCategoria ? 'bg-pink-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-              }`}
-            >
-              Todas
-            </button>
-            {CATEGORIAS.filter(c => c.value).map((cat) => (
-              <button
-                key={cat.value}
-                onClick={() => setFiltroCategoria(cat.value)}
-                className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                  filtroCategoria === cat.value ? 'bg-pink-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                }`}
-              >
-                {cat.label}
-              </button>
-            ))}
-          </div>
+          ))}
         </div>
       </div>
 
@@ -296,7 +240,6 @@ function PlantillasPage() {
           <p className="text-gray-500 dark:text-gray-400">
             No hay plantillas
             {filtroTipo && ` de tipo "${TIPOS_EVENTO_ADMIN.find(t => t.value === filtroTipo)?.label}"`}
-            {filtroCategoria && ` en categoría "${CATEGORIAS.find(c => c.value === filtroCategoria)?.label}"`}
           </p>
           <Button onClick={handleNuevaPlantilla} className="mt-4" disabled={crearPlantilla.isPending}>
             <Plus className="w-4 h-4 mr-2" />

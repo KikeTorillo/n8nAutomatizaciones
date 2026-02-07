@@ -17,11 +17,13 @@ import { getElementType } from './elementTypes';
 
 // ========== CONSTANTES ==========
 
+const SELECTION_COLOR = 'var(--color-primary-500, #753572)';
+
 const RESIZE_HANDLE_STYLES = {
   width: '10px',
   height: '10px',
   background: 'white',
-  border: '2px solid #753572',
+  border: `2px solid ${SELECTION_COLOR}`,
   borderRadius: '2px',
 };
 

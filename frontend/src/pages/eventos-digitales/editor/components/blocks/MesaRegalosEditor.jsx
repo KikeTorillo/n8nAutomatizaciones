@@ -13,10 +13,10 @@
  * @updated 2026-02-04 - Migrado a guardado automático
  */
 
-import { memo, useCallback, useMemo } from 'react';
+import { memo, useMemo } from 'react';
 import { Gift, Plus, Trash2, ExternalLink } from 'lucide-react';
 import { Button, Input, Textarea, Select, ToggleSwitch } from '@/components/ui';
-import { ImageField, BaseAutoSaveEditor, useBlockEditor } from '@/components/editor-framework';
+import { ImageField, BaseAutoSaveEditor, useBlockEditor, useArrayItemHandlers } from '@/components/editor-framework';
 import { BLOCK_DEFAULTS } from '../../config';
 
 /**
@@ -62,18 +62,8 @@ function MesaRegalosEditor({
     bloqueIdKey: '_bloqueId',
   });
 
-  // Handlers para array de items
-  const handleAgregarItem = useCallback(() => {
-    handleArrayItemAdd('items', defaultItem);
-  }, [handleArrayItemAdd, defaultItem]);
-
-  const handleEliminarItem = useCallback((index) => {
-    handleArrayItemRemove('items', index);
-  }, [handleArrayItemRemove]);
-
-  const handleChangeItem = useCallback((index, campo, valor) => {
-    handleArrayItemChange('items', index, campo, valor);
-  }, [handleArrayItemChange]);
+  const { handleAgregar: handleAgregarItem, handleEliminar: handleEliminarItem, handleChange: handleChangeItem } =
+    useArrayItemHandlers({ handleArrayItemAdd, handleArrayItemRemove, handleArrayItemChange }, 'items', defaultItem);
 
   // Opciones de layout
   const layoutOptions = [

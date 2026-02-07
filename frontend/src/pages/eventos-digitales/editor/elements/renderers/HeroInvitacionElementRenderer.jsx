@@ -17,7 +17,7 @@ import { THEME_FALLBACK_COLORS } from '@/lib/uiConstants';
 function HeroInvitacionElementRenderer({
   elemento,
   tema,
-  evento,
+  customData: evento,
   isEditing = false,
 }) {
   const { contenido = {} } = elemento;
@@ -197,7 +197,7 @@ HeroInvitacionElementRenderer.propTypes = {
     color_texto_claro: PropTypes.string,
     fuente_titulos: PropTypes.string,
   }),
-  evento: PropTypes.shape({
+  customData: PropTypes.shape({
     nombre: PropTypes.string,
     descripcion: PropTypes.string,
     fecha_evento: PropTypes.string,

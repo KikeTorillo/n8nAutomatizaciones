@@ -12,56 +12,10 @@
  * @since 2026-02-05
  */
 
-import { useState, useEffect, useCallback, memo } from 'react';
+import { useState, useEffect, useCallback, useRef, memo } from 'react';
 import { HexColorPicker } from 'react-colorful';
-import { Palette, Type, Check, RotateCcw, Loader2 } from 'lucide-react';
+import { Palette, Type } from 'lucide-react';
 import FontSelect from './FontSelect';
-
-/**
- * Preview por defecto - Muestra título, texto y botón con colores del tema
- */
-function DefaultPreview({ colores }) {
-  const bgColor = colores.fondo || '#FFFFFF';
-  const textColor = colores.texto || '#374151';
-  const primaryColor = colores.primario || '#4F46E5';
-  const secondaryColor = colores.secundario;
-
-  return (
-    <div
-      className="p-4 rounded-lg border border-gray-200 dark:border-gray-700"
-      style={{ backgroundColor: bgColor }}
-    >
-      <h3
-        className="font-bold text-lg mb-2"
-        style={{ color: primaryColor }}
-      >
-        Título de ejemplo
-      </h3>
-      <p
-        className="text-sm mb-3"
-        style={{ color: textColor }}
-      >
-        Texto de ejemplo para previsualizar los colores del tema.
-      </p>
-      <div className="flex gap-2">
-        <button
-          className="px-4 py-2 rounded-lg text-white text-sm font-medium"
-          style={{ backgroundColor: primaryColor }}
-        >
-          Primario
-        </button>
-        {secondaryColor && (
-          <button
-            className="px-4 py-2 rounded-lg text-white text-sm font-medium"
-            style={{ backgroundColor: secondaryColor }}
-          >
-            Secundario
-          </button>
-        )}
-      </div>
-    </div>
-  );
-}
 
 /**
  * ThemeEditorPanel - Editor de tema genérico
@@ -73,11 +27,12 @@ function DefaultPreview({ colores }) {
  * @param {Object} [props.currentFonts] - Fuentes actuales { [key]: 'id' }
  * @param {Array<{id: string, nombre: string, colores: Object}>} props.presetThemes - Temas rápidos
  * @param {Function} props.onSave - Callback al guardar ({ colores, fuentes })
- * @param {boolean} [props.isLoading] - Estado de carga del guardado
  * @param {string} [props.title] - Título del panel
  * @param {string} [props.subtitle] - Subtítulo del panel
- * @param {React.ReactNode} [props.previewComponent] - Preview custom (default: DefaultPreview)
  */
+
+const AUTOSAVE_DEBOUNCE_MS = 1500;
+
 function ThemeEditorPanel({
   colorFields,
   currentColors,
@@ -85,10 +40,8 @@ function ThemeEditorPanel({
   currentFonts,
   presetThemes = [],
   onSave,
-  isLoading = false,
   title = 'Tema',
   subtitle = 'Personaliza colores y tipografía',
-  previewComponent,
   children,
 }) {
   // Estado interno de colores editados
@@ -111,8 +64,7 @@ function ThemeEditorPanel({
   });
 
   const [colorEditando, setColorEditando] = useState(null);
-  const [cambiosPendientes, setCambiosPendientes] = useState(false);
-  const [guardando, setGuardando] = useState(false);
+  const skipNextSave = useRef(true);
 
   // Sincronizar con props externas cuando cambian
   useEffect(() => {
@@ -121,6 +73,7 @@ function ThemeEditorPanel({
       updated[key] = currentColors?.[key] || '#000000';
     });
     setColores(updated);
+    skipNextSave.current = true;
   }, [currentColors, colorFields]);
 
   useEffect(() => {
@@ -130,21 +83,24 @@ function ThemeEditorPanel({
       updated[key] = currentFonts?.[key] || options?.[0]?.id || '';
     });
     setFuentes(updated);
+    skipNextSave.current = true;
   }, [currentFonts, fontFields]);
 
-  // Detectar cambios pendientes
+  // Autosave con debounce
   useEffect(() => {
-    let hayCambios = false;
+    if (skipNextSave.current) {
+      skipNextSave.current = false;
+      return;
+    }
 
-    // Comparar colores
+    // Verificar si hay cambios reales vs props
+    let hayCambios = false;
     for (const { key } of colorFields) {
       if (colores[key] !== (currentColors?.[key] || '#000000')) {
         hayCambios = true;
         break;
       }
     }
-
-    // Comparar fuentes
     if (!hayCambios && fontFields && fuentes) {
       for (const { key, options } of fontFields) {
         if (fuentes[key] !== (currentFonts?.[key] || options?.[0]?.id || '')) {
@@ -153,9 +109,13 @@ function ThemeEditorPanel({
         }
       }
     }
+    if (!hayCambios) return;
 
-    setCambiosPendientes(hayCambios);
-  }, [colores, fuentes, currentColors, currentFonts, colorFields, fontFields]);
+    const timer = setTimeout(() => {
+      onSave({ colores, fuentes });
+    }, AUTOSAVE_DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+  }, [colores, fuentes, currentColors, currentFonts, colorFields, fontFields, onSave]);
 
   const handleColorChange = useCallback((color) => {
     if (!colorEditando) return;
@@ -165,7 +125,6 @@ function ThemeEditorPanel({
   const handleAplicarTema = useCallback((tema) => {
     setColores(prev => {
       const updated = { ...prev };
-      // Solo aplicar keys que existen en colorFields
       for (const key of Object.keys(tema.colores)) {
         if (key in updated) {
           updated[key] = tema.colores[key];
@@ -175,38 +134,6 @@ function ThemeEditorPanel({
     });
     setColorEditando(null);
   }, []);
-
-  const handleGuardar = useCallback(async () => {
-    setGuardando(true);
-    try {
-      await onSave({ colores, fuentes });
-      setCambiosPendientes(false);
-    } catch {
-      // El consumidor maneja el error
-    } finally {
-      setGuardando(false);
-    }
-  }, [colores, fuentes, onSave]);
-
-  const handleRestaurar = useCallback(() => {
-    const restored = {};
-    colorFields.forEach(({ key }) => {
-      restored[key] = currentColors?.[key] || '#000000';
-    });
-    setColores(restored);
-
-    if (fontFields) {
-      const restoredFonts = {};
-      fontFields.forEach(({ key, options }) => {
-        restoredFonts[key] = currentFonts?.[key] || options?.[0]?.id || '';
-      });
-      setFuentes(restoredFonts);
-    }
-
-    setColorEditando(null);
-  }, [colorFields, currentColors, fontFields, currentFonts]);
-
-  const loading = isLoading || guardando;
 
   return (
     <div className="h-full flex flex-col">
@@ -326,45 +253,9 @@ function ThemeEditorPanel({
           </div>
         )}
 
-        {/* Preview */}
-        <div>
-          <h4 className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">
-            Vista previa
-          </h4>
-          {previewComponent || <DefaultPreview colores={colores} />}
-        </div>
-
         {/* Contenido adicional inyectado por el consumidor */}
         {children}
       </div>
-
-      {/* Footer con acciones - Solo visible si hay cambios */}
-      {cambiosPendientes && (
-        <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
-          <div className="flex gap-2">
-            <button
-              onClick={handleRestaurar}
-              disabled={loading}
-              className="flex-1 flex items-center justify-center gap-2 px-3 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-sm disabled:opacity-50"
-            >
-              <RotateCcw className="w-4 h-4" />
-              Descartar
-            </button>
-            <button
-              onClick={handleGuardar}
-              disabled={loading}
-              className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm disabled:opacity-50"
-            >
-              {loading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Check className="w-4 h-4" />
-              )}
-              Guardar
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

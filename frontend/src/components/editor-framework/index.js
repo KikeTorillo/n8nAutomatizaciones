@@ -17,6 +17,7 @@ export { EditorContext, useEditor } from './context/EditorContext';
 export { useBlockEditor } from './hooks/useBlockEditor';
 export { useBlockSelection } from './hooks/useBlockSelection';
 export { useArrayItems } from './hooks/useArrayItems';
+export { useArrayItemHandlers } from './hooks/useArrayItemHandlers';
 export { usePropertiesState } from './hooks/usePropertiesState';
 export { useAutosave } from './hooks/useAutosave';
 export { useCanvasBreakpoint } from './hooks/useCanvasBreakpoint';
@@ -27,6 +28,7 @@ export { useCanvasInteraction } from './hooks/useCanvasInteraction';
 export { useSlashMenu } from './hooks/useSlashMenu';
 export { useImageHandlers } from './hooks/useImageHandlers';
 export { useThemeSave } from './hooks/useThemeSave';
+export { useEditorBlockHandlers } from './hooks/useEditorBlockHandlers';
 
 // Common Blocks (bloques compartidos)
 export * from './common-blocks';

@@ -32,7 +32,10 @@ const QR_DEFAULT_OPTIONS = {
  * @returns {string} URL completa de la invitación
  */
 function generarUrlInvitacion(slug, token) {
-    const baseUrl = process.env.FRONTEND_URL || 'https://nexo.app';
+    const baseUrl = process.env.FRONTEND_URL?.replace(/\/+$/, '') || 'https://nexo.app';
+    if (!slug || !token) {
+        throw new Error('slug y token son requeridos para generar URL de invitación');
+    }
     return `${baseUrl}/e/${slug}/${token}`;
 }
 
@@ -43,8 +46,12 @@ function generarUrlInvitacion(slug, token) {
  * @returns {Promise<Buffer>} Buffer de la imagen PNG
  */
 async function generarQRBuffer(url, options = {}) {
-    const qrOptions = { ...QR_DEFAULT_OPTIONS, ...options };
-    return QRCode.toBuffer(url, qrOptions);
+    try {
+        const qrOptions = { ...QR_DEFAULT_OPTIONS, ...options };
+        return await QRCode.toBuffer(url, qrOptions);
+    } catch (error) {
+        throw new Error(`Error generando QR buffer: ${error.message}`);
+    }
 }
 
 /**
@@ -54,8 +61,12 @@ async function generarQRBuffer(url, options = {}) {
  * @returns {Promise<string>} Data URL del QR (formato: data:image/png;base64,...)
  */
 async function generarQRDataURL(url, options = {}) {
-    const qrOptions = { ...QR_DEFAULT_OPTIONS, ...options };
-    return QRCode.toDataURL(url, qrOptions);
+    try {
+        const qrOptions = { ...QR_DEFAULT_OPTIONS, ...options };
+        return await QRCode.toDataURL(url, qrOptions);
+    } catch (error) {
+        throw new Error(`Error generando QR data URL: ${error.message}`);
+    }
 }
 
 /**
@@ -99,7 +110,8 @@ async function generarQRInvitado({ slug, token, nombre, grupoFamiliar }, formato
  * @returns {string} Nombre de archivo sanitizado
  */
 function generarNombreArchivoQR(nombre, grupoFamiliar) {
-    const nombreSanitizado = nombre.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '');
+    if (!nombre) return 'invitado.png';
+    const nombreSanitizado = nombre.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '') || 'invitado';
 
     if (grupoFamiliar) {
         const grupoSanitizado = grupoFamiliar.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '');

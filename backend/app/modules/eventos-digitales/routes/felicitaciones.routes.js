@@ -31,9 +31,9 @@ const {
     modules,
     subscription,
     rateLimiting,
-    validation: { validate },
-    asyncHandler
+    validation: { validate }
 } = require('../../../middleware');
+const { requireEvento } = require('../middleware');
 
 // ============================================================================
 // MIDDLEWARE COMÚN
@@ -55,8 +55,9 @@ const middlewareComun = [
  */
 router.post('/eventos/:eventoId/felicitaciones',
     ...middlewareComun,
+    requireEvento,
     validate(felicitacionesSchemas.crearFelicitacion),
-    asyncHandler(FelicitacionesController.crear)
+    FelicitacionesController.crear
 );
 
 /**
@@ -65,8 +66,9 @@ router.post('/eventos/:eventoId/felicitaciones',
  */
 router.get('/eventos/:eventoId/felicitaciones',
     ...middlewareComun,
+    requireEvento,
     validate(felicitacionesSchemas.listarFelicitaciones),
-    asyncHandler(FelicitacionesController.listar)
+    FelicitacionesController.listar
 );
 
 // ============================================================================
@@ -80,7 +82,7 @@ router.get('/eventos/:eventoId/felicitaciones',
 router.get('/felicitaciones/:id',
     ...middlewareComun,
     validate(felicitacionesSchemas.obtenerFelicitacion),
-    asyncHandler(FelicitacionesController.obtenerPorId)
+    FelicitacionesController.obtenerPorId
 );
 
 /**
@@ -90,7 +92,7 @@ router.get('/felicitaciones/:id',
 router.put('/felicitaciones/:id/aprobar',
     ...middlewareComun,
     validate(felicitacionesSchemas.cambiarAprobacion),
-    asyncHandler(FelicitacionesController.aprobar)
+    FelicitacionesController.aprobar
 );
 
 /**
@@ -100,7 +102,7 @@ router.put('/felicitaciones/:id/aprobar',
 router.put('/felicitaciones/:id/rechazar',
     ...middlewareComun,
     validate(felicitacionesSchemas.cambiarAprobacion),
-    asyncHandler(FelicitacionesController.rechazar)
+    FelicitacionesController.rechazar
 );
 
 /**
@@ -110,7 +112,7 @@ router.put('/felicitaciones/:id/rechazar',
 router.delete('/felicitaciones/:id',
     ...middlewareComun,
     validate(felicitacionesSchemas.eliminarFelicitacion),
-    asyncHandler(FelicitacionesController.eliminar)
+    FelicitacionesController.eliminar
 );
 
 module.exports = router;

@@ -3,6 +3,7 @@
  */
 export { useBlockEditor } from './useBlockEditor';
 export { useArrayItems } from './useArrayItems';
+export { useArrayItemHandlers } from './useArrayItemHandlers';
 export { usePropertiesState } from './usePropertiesState';
 export { useAutosave } from './useAutosave';
 export { useCanvasBreakpoint } from './useCanvasBreakpoint';
@@ -13,3 +14,4 @@ export { useCanvasInteraction } from './useCanvasInteraction';
 export { useImageHandlers } from './useImageHandlers';
 export { useThemeSave } from './useThemeSave';
 export { useSlashMenu } from './useSlashMenu';
+export { useEditorBlockHandlers } from './useEditorBlockHandlers';

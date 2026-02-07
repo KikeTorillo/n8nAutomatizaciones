@@ -17,7 +17,7 @@ import { THEME_FALLBACK_COLORS } from '@/lib/uiConstants';
 function GaleriaElementRenderer({
   elemento,
   tema,
-  evento,
+  customData: evento,
   isEditing = false,
 }) {
   const { contenido = {} } = elemento;
@@ -208,7 +208,7 @@ GaleriaElementRenderer.propTypes = {
     color_texto_claro: PropTypes.string,
     fuente_titulos: PropTypes.string,
   }),
-  evento: PropTypes.shape({
+  customData: PropTypes.shape({
     galeria_urls: PropTypes.array,
   }),
   isEditing: PropTypes.bool,

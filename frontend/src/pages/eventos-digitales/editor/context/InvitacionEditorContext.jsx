@@ -5,9 +5,9 @@
  * Contexto principal para el editor de invitaciones digitales.
  * Maneja estado, bloques, autosave y acciones del editor.
  *
- * @version 1.5.0 - Autosave para modo libre (secciones → bloques)
+ * @version 1.6.0 - Refactored: useEditorBlockHandlers
  * @since 2026-02-03
- * @updated 2026-02-04
+ * @updated 2026-02-06
  */
 
 import { useContext, useState, useEffect, useLayoutEffect, useCallback, useMemo, useRef } from 'react';
@@ -23,7 +23,7 @@ import {
   useEditorLayoutContext,
   useAutosave,
   hashBloques,
-  useDndHandlers,
+  useEditorBlockHandlers,
   // Free Position Canvas imports
   ensureSectionsFormat,
   createFreePositionStore,
@@ -96,13 +96,6 @@ export function InvitacionEditorProvider({ children }) {
   const bloqueSeleccionado = useInvitacionEditorStore((state) => state.bloqueSeleccionado);
   const estadoGuardado = useInvitacionEditorStore((state) => state.estadoGuardado);
   const setBloques = useInvitacionEditorStore((state) => state.setBloques);
-  const actualizarBloqueLocal = useInvitacionEditorStore((state) => state.actualizarBloqueLocal);
-  const reordenarBloquesLocal = useInvitacionEditorStore((state) => state.reordenarBloquesLocal);
-  const agregarBloqueLocal = useInvitacionEditorStore((state) => state.agregarBloqueLocal);
-  const eliminarBloqueLocal = useInvitacionEditorStore((state) => state.eliminarBloqueLocal);
-  const duplicarBloqueLocal = useInvitacionEditorStore((state) => state.duplicarBloqueLocal);
-  const toggleVisibilidadBloque = useInvitacionEditorStore((state) => state.toggleVisibilidadBloque);
-  const insertarBloqueEnPosicion = useInvitacionEditorStore((state) => state.insertarBloqueEnPosicion);
   const seleccionarBloque = useInvitacionEditorStore((state) => state.seleccionarBloque);
   const deseleccionarBloque = useInvitacionEditorStore((state) => state.deseleccionarBloque);
   const setGuardando = useInvitacionEditorStore((state) => state.setGuardando);
@@ -113,6 +106,37 @@ export function InvitacionEditorProvider({ children }) {
   const setBreakpoint = useInvitacionEditorStore((state) => state.setBreakpoint);
   const zoom = useInvitacionEditorStore((state) => state.zoom);
   const setZoom = useInvitacionEditorStore((state) => state.setZoom);
+
+  // Store actions object for useEditorBlockHandlers
+  const storeActions = useMemo(() => ({
+    bloques,
+    bloqueSeleccionado,
+    agregarBloqueLocal: useInvitacionEditorStore.getState().agregarBloqueLocal,
+    eliminarBloqueLocal: useInvitacionEditorStore.getState().eliminarBloqueLocal,
+    duplicarBloqueLocal: useInvitacionEditorStore.getState().duplicarBloqueLocal,
+    actualizarBloqueLocal: useInvitacionEditorStore.getState().actualizarBloqueLocal,
+    reordenarBloquesLocal: useInvitacionEditorStore.getState().reordenarBloquesLocal,
+    toggleVisibilidadBloque: useInvitacionEditorStore.getState().toggleVisibilidadBloque,
+    insertarBloqueEnPosicion: useInvitacionEditorStore.getState().insertarBloqueEnPosicion,
+  }), [bloques, bloqueSeleccionado]);
+
+  // ========== BLOCK HANDLERS (shared) ==========
+
+  const {
+    handleAgregarBloque,
+    handleActualizarBloque,
+    handleEliminarBloque,
+    handleDuplicarBloque,
+    handleToggleVisibilidad,
+    handleReordenarBloques,
+    handleDropFromPalette,
+    handleDndReorder,
+    bloqueSeleccionadoCompleto,
+  } = useEditorBlockHandlers({
+    store: storeActions,
+    bloquesConfig: BLOQUES_INVITACION,
+    crearBloque: crearBloqueNuevo,
+  });
 
   // ========== QUERIES ==========
 
@@ -332,91 +356,6 @@ export function InvitacionEditorProvider({ children }) {
   // ========== HANDLERS ==========
 
   /**
-   * Agregar nuevo bloque
-   */
-  const handleAgregarBloque = useCallback(
-    (tipo) => {
-      // Verificar unicidad para bloques marcados como únicos
-      const configBloque = BLOQUES_INVITACION.find(b => b.tipo === tipo);
-      if (configBloque?.unico && bloques.some(b => b.tipo === tipo)) {
-        toast.warning(`Solo puedes tener un bloque de ${configBloque.label}`);
-        return;
-      }
-
-      const nuevoBloque = crearBloqueNuevo(tipo, bloques.length);
-
-      // Bloques de apertura siempre van en posición 0
-      if (tipo === 'apertura') {
-        insertarBloqueEnPosicion(nuevoBloque, 0);
-      } else {
-        agregarBloqueLocal(nuevoBloque);
-      }
-    },
-    [bloques, agregarBloqueLocal, insertarBloqueEnPosicion]
-  );
-
-  /**
-   * Actualizar bloque
-   */
-  const handleActualizarBloque = useCallback(
-    (id, cambios) => {
-      actualizarBloqueLocal(id, cambios);
-    },
-    [actualizarBloqueLocal]
-  );
-
-  /**
-   * Eliminar bloque
-   */
-  const handleEliminarBloque = useCallback(
-    (id) => {
-      eliminarBloqueLocal(id);
-    },
-    [eliminarBloqueLocal]
-  );
-
-  /**
-   * Duplicar bloque
-   */
-  const handleDuplicarBloque = useCallback(
-    (id) => {
-      const nuevoId = crypto.randomUUID();
-      duplicarBloqueLocal(id, nuevoId);
-    },
-    [duplicarBloqueLocal]
-  );
-
-  /**
-   * Toggle visibilidad
-   */
-  const handleToggleVisibilidad = useCallback(
-    (id) => {
-      toggleVisibilidadBloque(id);
-    },
-    [toggleVisibilidadBloque]
-  );
-
-  /**
-   * Reordenar bloques (desde drag-drop)
-   */
-  const handleReordenarBloques = useCallback(
-    (nuevoOrden) => {
-      reordenarBloquesLocal(nuevoOrden);
-    },
-    [reordenarBloquesLocal]
-  );
-
-  /**
-   * DnD handlers (usando hook reutilizable del framework)
-   */
-  const { handleDropFromPalette, handleDndReorder } = useDndHandlers({
-    bloques,
-    onInsertBlock: insertarBloqueEnPosicion,
-    onReorderBlocks: reordenarBloquesLocal,
-    createBlock: crearBloqueNuevo,
-  });
-
-  /**
    * Volver a lista de eventos
    */
   const handleVolver = useCallback(() => {
@@ -525,13 +464,6 @@ export function InvitacionEditorProvider({ children }) {
       actualizarPlantillaMutation.mutate(plantilla);
     },
     [actualizarPlantillaMutation]
-  );
-
-  // ========== BLOQUE SELECCIONADO COMPLETO ==========
-
-  const bloqueSeleccionadoCompleto = useMemo(
-    () => bloques.find((b) => b.id === bloqueSeleccionado),
-    [bloques, bloqueSeleccionado]
   );
 
   // ========== TEMA MEMOIZADO (centralizado) ==========

@@ -10,22 +10,13 @@
  *
  * Fecha creación: 4 Diciembre 2025
  * Actualizado: Ene 2026 - asyncHandler + ErrorHelper
+ * Actualizado: Feb 2026 - Estandarizado organizacionId via req.tenant
  */
 
 const UbicacionModel = require('../models/ubicacion.model');
-const EventoModel = require('../models/evento.model');
 const asyncHandler = require('../../../middleware/asyncHandler');
 const { ResponseHelper, ErrorHelper } = require('../../../utils/helpers');
 const logger = require('../../../utils/logger');
-
-/**
- * Helper para verificar que el evento existe
- */
-const verificarEvento = async (eventoId, organizacionId) => {
-    const evento = await EventoModel.obtenerPorId(eventoId, organizacionId);
-    ErrorHelper.throwIfNotFound(evento, 'Evento');
-    return evento;
-};
 
 const UbicacionesController = {
     /**
@@ -34,9 +25,7 @@ const UbicacionesController = {
      */
     crear: asyncHandler(async (req, res) => {
         const { eventoId } = req.params;
-        const organizacionId = req.user.organizacion_id;
-
-        await verificarEvento(eventoId, organizacionId);
+        const organizacionId = req.tenant.organizacionId;
 
         const ubicacion = await UbicacionModel.crear({
             ...req.body,
@@ -58,9 +47,7 @@ const UbicacionesController = {
      */
     listar: asyncHandler(async (req, res) => {
         const { eventoId } = req.params;
-        const organizacionId = req.user.organizacion_id;
-
-        await verificarEvento(eventoId, organizacionId);
+        const organizacionId = req.tenant.organizacionId;
 
         const ubicaciones = await UbicacionModel.listarPorEvento(eventoId, organizacionId);
 
@@ -76,7 +63,7 @@ const UbicacionesController = {
      */
     obtenerPorId: asyncHandler(async (req, res) => {
         const { id } = req.params;
-        const organizacionId = req.user.organizacion_id;
+        const organizacionId = req.tenant.organizacionId;
 
         const ubicacion = await UbicacionModel.obtenerPorId(id, organizacionId);
         ErrorHelper.throwIfNotFound(ubicacion, 'Ubicación');
@@ -90,7 +77,7 @@ const UbicacionesController = {
      */
     actualizar: asyncHandler(async (req, res) => {
         const { id } = req.params;
-        const organizacionId = req.user.organizacion_id;
+        const organizacionId = req.tenant.organizacionId;
 
         const ubicacionExistente = await UbicacionModel.obtenerPorId(id, organizacionId);
         ErrorHelper.throwIfNotFound(ubicacionExistente, 'Ubicación');
@@ -108,7 +95,7 @@ const UbicacionesController = {
      */
     eliminar: asyncHandler(async (req, res) => {
         const { id } = req.params;
-        const organizacionId = req.user.organizacion_id;
+        const organizacionId = req.tenant.organizacionId;
 
         const ubicacion = await UbicacionModel.obtenerPorId(id, organizacionId);
         ErrorHelper.throwIfNotFound(ubicacion, 'Ubicación');
@@ -127,9 +114,7 @@ const UbicacionesController = {
     reordenar: asyncHandler(async (req, res) => {
         const { eventoId } = req.params;
         const { orden } = req.body;
-        const organizacionId = req.user.organizacion_id;
-
-        await verificarEvento(eventoId, organizacionId);
+        const organizacionId = req.tenant.organizacionId;
 
         await UbicacionModel.reordenar(eventoId, orden, organizacionId);
 

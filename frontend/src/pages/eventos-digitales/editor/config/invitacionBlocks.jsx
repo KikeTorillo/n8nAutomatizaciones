@@ -24,6 +24,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { THEME_FALLBACK_COLORS } from '@/lib/uiConstants';
+import { registerBlockPreviews } from '@/components/editor-framework/dnd/previewRegistry';
 
 // ========== CATEGORÍAS DE BLOQUES ==========
 
@@ -148,6 +149,85 @@ export const BLOCK_NAMES = Object.fromEntries(
 export const BLOCK_DESCRIPTIONS = Object.fromEntries(
   BLOQUES_INVITACION.map((b) => [b.tipo, b.descripcion])
 );
+
+// ========== PREVIEWS DE BLOQUES (registrados en previewRegistry) ==========
+
+const HeroInvitacionPreview = () => (
+  <div className="w-full h-24 bg-gradient-to-br from-pink-400 to-rose-500 rounded-md flex flex-col items-center justify-center text-white p-2">
+    <div className="text-[10px] font-serif mb-1">Maria & Juan</div>
+    <div className="w-20 h-1 bg-white/50 rounded mb-1" />
+    <div className="text-[8px] opacity-75">15 de Junio, 2026</div>
+  </div>
+);
+
+const UbicacionPreview = () => (
+  <div className="w-full h-24 bg-white dark:bg-gray-800 rounded-md p-2 border border-gray-200 dark:border-gray-700">
+    <div className="w-12 h-1.5 bg-primary-500 rounded mx-auto mb-2" />
+    <div className="flex gap-2 h-14">
+      <div className="flex-1 bg-blue-100 dark:bg-blue-900/30 rounded flex items-center justify-center">
+        <div className="w-4 h-4 bg-red-500 rounded-full" />
+      </div>
+      <div className="flex-1 space-y-1">
+        <div className="w-full h-1 bg-gray-200 dark:bg-gray-600 rounded" />
+        <div className="w-3/4 h-1 bg-gray-200 dark:bg-gray-600 rounded" />
+        <div className="w-1/2 h-1 bg-gray-200 dark:bg-gray-600 rounded" />
+      </div>
+    </div>
+  </div>
+);
+
+const RsvpPreview = () => (
+  <div className="w-full h-24 bg-white dark:bg-gray-800 rounded-md p-2 border border-gray-200 dark:border-gray-700">
+    <div className="w-16 h-1.5 bg-primary-500 rounded mx-auto mb-2" />
+    <div className="space-y-1.5">
+      <div className="w-full h-3 bg-gray-100 dark:bg-gray-700 rounded" />
+      <div className="flex gap-2">
+        <div className="flex-1 h-5 bg-green-500 rounded text-[8px] text-white flex items-center justify-center">Asistire</div>
+        <div className="flex-1 h-5 bg-gray-300 rounded text-[8px] flex items-center justify-center">No asistire</div>
+      </div>
+    </div>
+  </div>
+);
+
+const MesaRegalosPreview = () => (
+  <div className="w-full h-24 bg-white dark:bg-gray-800 rounded-md p-2 border border-gray-200 dark:border-gray-700">
+    <div className="w-16 h-1.5 bg-primary-500 rounded mx-auto mb-2" />
+    <div className="flex justify-center gap-2">
+      {[1, 2, 3].map((i) => (
+        <div key={i} className="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded flex items-center justify-center">
+          <div className="w-6 h-6 bg-gray-300 dark:bg-gray-600 rounded" />
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
+const ItinerarioPreview = () => (
+  <div className="w-full h-24 bg-white dark:bg-gray-800 rounded-md p-2 border border-gray-200 dark:border-gray-700">
+    <div className="flex items-start gap-2 h-full">
+      <div className="flex flex-col items-center h-full">
+        <div className="text-[8px] text-primary-500 font-bold">16:00</div>
+        <div className="w-0.5 flex-1 bg-primary-200" />
+        <div className="text-[8px] text-primary-400">18:00</div>
+        <div className="w-0.5 flex-1 bg-gray-200" />
+        <div className="text-[8px] text-gray-400">20:00</div>
+      </div>
+      <div className="flex-1 space-y-1">
+        <div className="w-12 h-1 bg-primary-300 rounded" />
+        <div className="w-10 h-1 bg-primary-200 rounded" />
+        <div className="w-8 h-1 bg-gray-200 rounded" />
+      </div>
+    </div>
+  </div>
+);
+
+registerBlockPreviews({
+  hero_invitacion: HeroInvitacionPreview,
+  ubicacion: UbicacionPreview,
+  rsvp: RsvpPreview,
+  mesa_regalos: MesaRegalosPreview,
+  itinerario: ItinerarioPreview,
+});
 
 // ========== CONFIGURACIÓN DE CAMPOS POR TIPO ==========
 

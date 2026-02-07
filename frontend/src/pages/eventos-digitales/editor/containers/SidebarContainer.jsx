@@ -53,7 +53,6 @@ function SidebarContainer() {
     handleAgregarBloque,
     evento,
     handleActualizarPlantilla,
-    estaActualizandoPlantilla,
     getFreePositionStore,
     esPlantilla,
   } = useInvitacionEditor();
@@ -64,7 +63,8 @@ function SidebarContainer() {
   const [mostrarGaleria, setMostrarGaleria] = useState(false);
 
   // Plantillas
-  const { data: plantillas = [], isLoading: plantillasLoading } = usePlantillas();
+  const { data: plantillasData, isLoading: plantillasLoading } = usePlantillas();
+  const plantillas = plantillasData?.plantillas || [];
 
   // Temas según tipo de evento
   const tipoEvento = evento?.tipo || 'otro';
@@ -213,14 +213,12 @@ function SidebarContainer() {
               currentFonts={currentFonts}
               presetThemes={temasDisponibles}
               onSave={handleSaveTema}
-              isLoading={estaActualizandoPlantilla}
               title="Colores y Tipografía"
               subtitle="Personaliza colores, fuentes y decoraciones"
             >
               <DecorationEditorSection
                 currentDecoration={currentDecoration}
                 onSave={handleSaveDecoracion}
-                isLoading={estaActualizandoPlantilla}
               />
             </ThemeEditorPanel>
           )}

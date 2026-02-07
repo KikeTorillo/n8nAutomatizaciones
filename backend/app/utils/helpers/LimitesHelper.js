@@ -68,8 +68,11 @@ class LimitesHelper {
                     ps.codigo as codigo_plan
                 FROM suscripciones_org sub
                 JOIN planes_suscripcion_org ps ON sub.plan_id = ps.id
-                WHERE sub.organizacion_id = $1
-                  AND sub.estado IN ('activa', 'trial')
+                WHERE sub.estado IN ('activa', 'trial')
+                  AND sub.cliente_id IN (
+                    SELECT id FROM clientes WHERE organizacion_vinculada_id = $1
+                  )
+                ORDER BY sub.estado = 'activa' DESC, sub.creado_en DESC
                 LIMIT 1
             `;
 
