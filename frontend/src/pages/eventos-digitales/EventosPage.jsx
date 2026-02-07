@@ -180,8 +180,16 @@ function EventosPage() {
                 className="overflow-hidden"
               >
                 {/* Imagen/Preview */}
-                <div className="h-40 bg-gradient-to-br from-pink-100 to-secondary-100 dark:from-pink-900/30 dark:to-secondary-900/30 flex items-center justify-center">
-                  <PartyPopper className="w-16 h-16 text-pink-300 dark:text-pink-500" />
+                <div className="h-40 bg-gradient-to-br from-pink-100 to-secondary-100 dark:from-pink-900/30 dark:to-secondary-900/30 flex items-center justify-center overflow-hidden">
+                  {evento.portada_url ? (
+                    <img
+                      src={evento.portada_url}
+                      alt={evento.nombre}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <PartyPopper className="w-16 h-16 text-pink-300 dark:text-pink-500" />
+                  )}
                 </div>
 
                 <div className="p-4">
@@ -208,12 +216,11 @@ function EventosPage() {
                   </div>
 
                   {/* Acciones */}
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center flex-wrap gap-2">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => navigate(`/eventos-digitales/${evento.id}`)}
-                      className="flex-1"
                     >
                       <Eye className="w-4 h-4 mr-1" />
                       Ver
@@ -222,7 +229,6 @@ function EventosPage() {
                     <Button
                       size="sm"
                       onClick={() => navigate(`/eventos-digitales/${evento.id}/editor`)}
-                      className="flex-1"
                     >
                       <Palette className="w-4 h-4 mr-1" />
                       Diseñar
@@ -233,7 +239,7 @@ function EventosPage() {
                         size="sm"
                         onClick={() => handlePublicar(evento.id)}
                         disabled={publicarEvento.isLoading}
-                        className="flex-1 bg-green-600 hover:bg-green-700"
+                        className="bg-green-600 hover:bg-green-700"
                       >
                         <Share2 className="w-4 h-4 mr-1" />
                         Publicar
@@ -245,7 +251,6 @@ function EventosPage() {
                         variant="outline"
                         size="sm"
                         onClick={() => window.open(`/e/${evento.slug}`, '_blank')}
-                        className="whitespace-nowrap"
                       >
                         <ExternalLink className="w-4 h-4 mr-1" />
                         Ver Link
@@ -257,7 +262,7 @@ function EventosPage() {
                       size="sm"
                       onClick={() => openModal('delete', evento)}
                       disabled={eliminarEvento.isPending}
-                      className="text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30"
+                      className="text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 ml-auto"
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>

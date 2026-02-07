@@ -42,7 +42,7 @@ const middlewareComun = [
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('eventos-digitales'),
-    rateLimiting.apiRateLimit
+    rateLimiting.userRateLimit
 ];
 
 // ============================================================================

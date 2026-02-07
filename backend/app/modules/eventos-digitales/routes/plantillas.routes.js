@@ -39,7 +39,7 @@ const {
 // ============================================================================
 const middlewareLectura = [
     auth.authenticateToken,
-    rateLimiting.apiRateLimit
+    rateLimiting.userRateLimit
 ];
 
 // ============================================================================
@@ -48,7 +48,7 @@ const middlewareLectura = [
 const middlewareEscritura = [
     auth.authenticateToken,
     auth.requireRole('admin'),
-    rateLimiting.apiRateLimit
+    rateLimiting.userRateLimit
 ];
 
 // ============================================================================
