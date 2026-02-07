@@ -30,7 +30,7 @@ const validate = validation.validate;
 router.get('/count',
   auth.authenticateToken,
   tenant.setTenantContext,
-  rateLimiting.apiRateLimit,
+  rateLimiting.userRateLimit,
   NotificacionesController.count
 );
 
@@ -41,7 +41,7 @@ router.get('/count',
 router.get('/preferencias',
   auth.authenticateToken,
   tenant.setTenantContext,
-  rateLimiting.apiRateLimit,
+  rateLimiting.userRateLimit,
   NotificacionesController.getPreferencias
 );
 
@@ -52,7 +52,7 @@ router.get('/preferencias',
 router.put('/preferencias',
   auth.authenticateToken,
   tenant.setTenantContext,
-  rateLimiting.apiRateLimit,
+  rateLimiting.userRateLimit,
   validate(notificacionesSchemas.updatePreferenciasSchema),
   NotificacionesController.updatePreferencias
 );
@@ -64,7 +64,7 @@ router.put('/preferencias',
 router.get('/tipos',
   auth.authenticateToken,
   tenant.setTenantContext,
-  rateLimiting.apiRateLimit,
+  rateLimiting.userRateLimit,
   NotificacionesController.getTipos
 );
 
@@ -75,7 +75,7 @@ router.get('/tipos',
 router.put('/leer-todas',
   auth.authenticateToken,
   tenant.setTenantContext,
-  rateLimiting.apiRateLimit,
+  rateLimiting.userRateLimit,
   NotificacionesController.marcarTodasLeidas
 );
 
@@ -92,7 +92,7 @@ router.put('/leer-todas',
 router.get('/',
   auth.authenticateToken,
   tenant.setTenantContext,
-  rateLimiting.apiRateLimit,
+  rateLimiting.userRateLimit,
   validate(notificacionesSchemas.listSchema),
   NotificacionesController.list
 );
@@ -105,7 +105,7 @@ router.post('/',
   auth.authenticateToken,
   tenant.setTenantContext,
   auth.requireRole(['super_admin', 'admin']),
-  rateLimiting.apiRateLimit,
+  rateLimiting.userRateLimit,
   validate(notificacionesSchemas.createSchema),
   NotificacionesController.create
 );
@@ -117,7 +117,7 @@ router.post('/',
 router.put('/:id/leer',
   auth.authenticateToken,
   tenant.setTenantContext,
-  rateLimiting.apiRateLimit,
+  rateLimiting.userRateLimit,
   validate(notificacionesSchemas.marcarLeidaSchema),
   NotificacionesController.marcarLeida
 );
@@ -129,7 +129,7 @@ router.put('/:id/leer',
 router.put('/:id/archivar',
   auth.authenticateToken,
   tenant.setTenantContext,
-  rateLimiting.apiRateLimit,
+  rateLimiting.userRateLimit,
   validate(notificacionesSchemas.archivarSchema),
   NotificacionesController.archivar
 );
@@ -141,7 +141,7 @@ router.put('/:id/archivar',
 router.delete('/:id',
   auth.authenticateToken,
   tenant.setTenantContext,
-  rateLimiting.apiRateLimit,
+  rateLimiting.userRateLimit,
   validate(notificacionesSchemas.deleteSchema),
   NotificacionesController.delete
 );
@@ -158,7 +158,7 @@ router.get('/plantillas',
   auth.authenticateToken,
   tenant.setTenantContext,
   auth.requireRole(['super_admin', 'admin']),
-  rateLimiting.apiRateLimit,
+  rateLimiting.userRateLimit,
   NotificacionesController.getPlantillas
 );
 
@@ -170,7 +170,7 @@ router.post('/plantillas',
   auth.authenticateToken,
   tenant.setTenantContext,
   auth.requireRole(['super_admin', 'admin']),
-  rateLimiting.apiRateLimit,
+  rateLimiting.userRateLimit,
   validate(notificacionesSchemas.createPlantillaSchema),
   NotificacionesController.createPlantilla
 );
@@ -183,7 +183,7 @@ router.put('/plantillas/:id',
   auth.authenticateToken,
   tenant.setTenantContext,
   auth.requireRole(['super_admin', 'admin']),
-  rateLimiting.apiRateLimit,
+  rateLimiting.userRateLimit,
   validate(notificacionesSchemas.updatePlantillaSchema),
   NotificacionesController.updatePlantilla
 );
@@ -196,7 +196,7 @@ router.delete('/plantillas/:id',
   auth.authenticateToken,
   tenant.setTenantContext,
   auth.requireRole(['super_admin', 'admin']),
-  rateLimiting.apiRateLimit,
+  rateLimiting.userRateLimit,
   NotificacionesController.deletePlantilla
 );
 

@@ -17,7 +17,7 @@ const { validate } = validation;
 router.get('/validar/:profesional_id',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(schemas.validarConfiguracion),
     HorarioProfesionalController.validarConfiguracion
 );
@@ -31,7 +31,7 @@ router.post('/semanales-estandar',
     tenant.setTenantContext,
     tenant.verifyTenantActive,
     auth.requireAdminRole,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(schemas.crearSemanalesEstandar),
     HorarioProfesionalController.crearSemanalesEstandar
 );
@@ -49,7 +49,7 @@ router.post('/',
     tenant.setTenantContext,
     tenant.verifyTenantActive,
     auth.requireAdminRole,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(schemas.crear),
     HorarioProfesionalController.crear
 );
@@ -61,7 +61,7 @@ router.post('/',
 router.get('/',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(schemas.listar),
     HorarioProfesionalController.listar
 );
@@ -73,7 +73,7 @@ router.get('/',
 router.get('/:id',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(schemas.obtenerPorId),
     HorarioProfesionalController.obtenerPorId
 );
@@ -87,7 +87,7 @@ router.put('/:id',
     tenant.setTenantContext,
     tenant.verifyTenantActive,
     auth.requireAdminRole,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(schemas.actualizar),
     HorarioProfesionalController.actualizar
 );
@@ -101,7 +101,7 @@ router.delete('/:id',
     tenant.setTenantContext,
     tenant.verifyTenantActive,
     auth.requireAdminRole,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(schemas.eliminar),
     HorarioProfesionalController.eliminar
 );

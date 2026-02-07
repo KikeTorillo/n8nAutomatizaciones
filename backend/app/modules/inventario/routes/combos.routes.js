@@ -21,7 +21,7 @@ const router = express.Router();
 router.get('/combos',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     CombosController.listarCombos
 );
 
@@ -32,7 +32,7 @@ router.get('/combos',
 router.get('/combos/verificar/:productoId',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     CombosController.verificarCombo
 );
 
@@ -43,7 +43,7 @@ router.get('/combos/verificar/:productoId',
 router.get('/combos/:productoId',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     CombosController.obtenerCombo
 );
 
@@ -56,7 +56,7 @@ router.post('/combos',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     CombosController.crearCombo
 );
 
@@ -69,7 +69,7 @@ router.put('/combos/:productoId',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     CombosController.actualizarCombo
 );
 
@@ -82,7 +82,7 @@ router.delete('/combos/:productoId',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     CombosController.eliminarCombo
 );
 
@@ -93,7 +93,7 @@ router.delete('/combos/:productoId',
 router.get('/combos/:productoId/precio',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     CombosController.calcularPrecio
 );
 
@@ -104,7 +104,7 @@ router.get('/combos/:productoId/precio',
 router.get('/combos/:productoId/stock',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     CombosController.verificarStock
 );
 
@@ -119,7 +119,7 @@ router.get('/combos/:productoId/stock',
 router.get('/modificadores/grupos',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     CombosController.listarGrupos
 );
 
@@ -132,7 +132,7 @@ router.post('/modificadores/grupos',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     CombosController.crearGrupo
 );
 
@@ -145,7 +145,7 @@ router.put('/modificadores/grupos/:id',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     CombosController.actualizarGrupo
 );
 
@@ -158,7 +158,7 @@ router.delete('/modificadores/grupos/:id',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     CombosController.eliminarGrupo
 );
 
@@ -175,7 +175,7 @@ router.post('/modificadores',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     CombosController.crearModificador
 );
 
@@ -188,7 +188,7 @@ router.put('/modificadores/:id',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     CombosController.actualizarModificador
 );
 
@@ -201,7 +201,7 @@ router.delete('/modificadores/:id',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     CombosController.eliminarModificador
 );
 
@@ -216,7 +216,7 @@ router.delete('/modificadores/:id',
 router.get('/productos/:productoId/modificadores',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     CombosController.obtenerModificadoresProducto
 );
 
@@ -227,7 +227,7 @@ router.get('/productos/:productoId/modificadores',
 router.get('/productos/:productoId/tiene-modificadores',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     CombosController.tieneModificadores
 );
 
@@ -238,7 +238,7 @@ router.get('/productos/:productoId/tiene-modificadores',
 router.get('/productos/:productoId/grupos',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     CombosController.listarAsignacionesProducto
 );
 
@@ -251,7 +251,7 @@ router.post('/productos/:productoId/grupos',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     CombosController.asignarGrupoAProducto
 );
 
@@ -264,7 +264,7 @@ router.delete('/productos/:productoId/grupos/:grupoId',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     CombosController.eliminarAsignacionProducto
 );
 
@@ -277,7 +277,7 @@ router.post('/categorias/:categoriaId/grupos',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     CombosController.asignarGrupoACategoria
 );
 

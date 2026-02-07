@@ -22,7 +22,7 @@ router.post('/ordenes-compra',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.crearOrdenCompra),
     InventarioController.crearOrdenCompra
 );
@@ -34,7 +34,7 @@ router.post('/ordenes-compra',
 router.get('/ordenes-compra/pendientes',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     InventarioController.obtenerOrdenesCompraPendientes
 );
 
@@ -45,7 +45,7 @@ router.get('/ordenes-compra/pendientes',
 router.get('/ordenes-compra/pendientes-pago',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     InventarioController.obtenerOrdenesCompraPendientesPago
 );
 
@@ -56,7 +56,7 @@ router.get('/ordenes-compra/pendientes-pago',
 router.get('/ordenes-compra/reportes/por-proveedor',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.estadisticasComprasPorProveedor),
     InventarioController.obtenerEstadisticasComprasPorProveedor
 );
@@ -68,7 +68,7 @@ router.get('/ordenes-compra/reportes/por-proveedor',
 router.get('/ordenes-compra/sugerencias',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     InventarioController.obtenerSugerenciasOC
 );
 
@@ -81,7 +81,7 @@ router.post('/ordenes-compra/auto-generar',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     InventarioController.autoGenerarOCs
 );
 
@@ -95,7 +95,7 @@ router.post('/ordenes-compra/reabastecimiento-rutas',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     InventarioController.generarReabastecimientoConRutas
 );
 
@@ -108,7 +108,7 @@ router.post('/ordenes-compra/generar-desde-producto/:productoId',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.generarOCDesdeProducto),
     InventarioController.generarOCDesdeProducto
 );
@@ -120,7 +120,7 @@ router.post('/ordenes-compra/generar-desde-producto/:productoId',
 router.get('/ordenes-compra/:id',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.obtenerOrdenCompraPorId),
     InventarioController.obtenerOrdenCompraPorId
 );
@@ -132,7 +132,7 @@ router.get('/ordenes-compra/:id',
 router.get('/ordenes-compra',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.listarOrdenesCompra),
     InventarioController.listarOrdenesCompra
 );
@@ -146,7 +146,7 @@ router.put('/ordenes-compra/:id',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.actualizarOrdenCompra),
     InventarioController.actualizarOrdenCompra
 );
@@ -160,7 +160,7 @@ router.delete('/ordenes-compra/:id',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.obtenerOrdenCompraPorId),
     InventarioController.eliminarOrdenCompra
 );
@@ -174,7 +174,7 @@ router.post('/ordenes-compra/:id/items',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.agregarItemsOrdenCompra),
     InventarioController.agregarItemsOrdenCompra
 );
@@ -188,7 +188,7 @@ router.put('/ordenes-compra/:id/items/:itemId',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.actualizarItemOrdenCompra),
     InventarioController.actualizarItemOrdenCompra
 );
@@ -202,7 +202,7 @@ router.delete('/ordenes-compra/:id/items/:itemId',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.eliminarItemOrdenCompra),
     InventarioController.eliminarItemOrdenCompra
 );
@@ -216,7 +216,7 @@ router.patch('/ordenes-compra/:id/enviar',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.enviarOrdenCompra),
     InventarioController.enviarOrdenCompra
 );
@@ -230,7 +230,7 @@ router.patch('/ordenes-compra/:id/cancelar',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.cancelarOrdenCompra),
     InventarioController.cancelarOrdenCompra
 );
@@ -245,7 +245,7 @@ router.post('/ordenes-compra/:id/recibir',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.recibirMercanciaOrdenCompra),
     InventarioController.recibirMercanciaOrdenCompra
 );
@@ -259,7 +259,7 @@ router.post('/ordenes-compra/:id/pago',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.registrarPagoOrdenCompra),
     InventarioController.registrarPagoOrdenCompra
 );

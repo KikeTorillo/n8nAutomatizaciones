@@ -19,7 +19,7 @@ const router = express.Router();
 router.get('/snapshots/fechas',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     asyncHandler(SnapshotsController.fechasDisponibles)
 );
 
@@ -32,7 +32,7 @@ router.get('/snapshots/fechas',
 router.get('/snapshots/historico/:productoId',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     asyncHandler(SnapshotsController.historicoProducto)
 );
 
@@ -43,7 +43,7 @@ router.get('/snapshots/historico/:productoId',
 router.get('/snapshots',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     asyncHandler(SnapshotsController.listar)
 );
 
@@ -57,7 +57,7 @@ router.post('/snapshots',
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
     auth.requireRole(['super_admin', 'admin']),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     asyncHandler(SnapshotsController.generar)
 );
 
@@ -72,7 +72,7 @@ router.post('/snapshots',
 router.get('/at-date',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     asyncHandler(SnapshotsController.stockEnFecha)
 );
 
@@ -86,7 +86,7 @@ router.get('/at-date',
 router.get('/comparar',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     asyncHandler(SnapshotsController.comparar)
 );
 

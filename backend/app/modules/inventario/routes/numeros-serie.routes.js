@@ -18,7 +18,7 @@ const router = express.Router();
 router.get('/numeros-serie/estadisticas',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     NumerosSerieController.obtenerEstadisticas
 );
 
@@ -30,7 +30,7 @@ router.get('/numeros-serie/estadisticas',
 router.get('/numeros-serie/buscar',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     NumerosSerieController.buscar
 );
 
@@ -42,7 +42,7 @@ router.get('/numeros-serie/buscar',
 router.get('/numeros-serie/proximos-vencer',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     NumerosSerieController.obtenerProximosVencer
 );
 
@@ -54,7 +54,7 @@ router.get('/numeros-serie/proximos-vencer',
 router.get('/numeros-serie/alertas-vencimiento',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     NumerosSerieController.obtenerAlertasVencimiento
 );
 
@@ -66,7 +66,7 @@ router.get('/numeros-serie/alertas-vencimiento',
 router.get('/numeros-serie/fefo/:productoId',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     NumerosSerieController.obtenerParaDespachoFEFO
 );
 
@@ -79,7 +79,7 @@ router.post('/numeros-serie/fefo/reservar',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('inventario'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     NumerosSerieController.reservarParaDespachoFEFO
 );
 
@@ -91,7 +91,7 @@ router.post('/numeros-serie/fefo/reservar',
 router.get('/numeros-serie/buscar-trazabilidad',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     NumerosSerieController.buscarConTrazabilidad
 );
 
@@ -102,7 +102,7 @@ router.get('/numeros-serie/buscar-trazabilidad',
 router.get('/numeros-serie/productos-con-serie',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     NumerosSerieController.obtenerProductosConSerie
 );
 
@@ -114,7 +114,7 @@ router.get('/numeros-serie/productos-con-serie',
 router.get('/numeros-serie/existe',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     NumerosSerieController.verificarExistencia
 );
 
@@ -127,7 +127,7 @@ router.post('/numeros-serie/bulk',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     NumerosSerieController.crearMultiple
 );
 
@@ -140,7 +140,7 @@ router.post('/numeros-serie',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     NumerosSerieController.crear
 );
 
@@ -152,7 +152,7 @@ router.post('/numeros-serie',
 router.get('/numeros-serie/producto/:productoId/disponibles',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     NumerosSerieController.obtenerDisponibles
 );
 
@@ -163,7 +163,7 @@ router.get('/numeros-serie/producto/:productoId/disponibles',
 router.get('/numeros-serie/producto/:productoId/resumen',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     NumerosSerieController.obtenerResumenProducto
 );
 
@@ -174,7 +174,7 @@ router.get('/numeros-serie/producto/:productoId/resumen',
 router.get('/numeros-serie/:id/historial',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     NumerosSerieController.obtenerHistorial
 );
 
@@ -185,7 +185,7 @@ router.get('/numeros-serie/:id/historial',
 router.get('/numeros-serie/:id/trazabilidad',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     NumerosSerieController.obtenerTrazabilidad
 );
 
@@ -196,7 +196,7 @@ router.get('/numeros-serie/:id/trazabilidad',
 router.get('/numeros-serie/:id/timeline',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     NumerosSerieController.obtenerTimeline
 );
 
@@ -209,7 +209,7 @@ router.post('/numeros-serie/:id/vender',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     NumerosSerieController.vender
 );
 
@@ -222,7 +222,7 @@ router.post('/numeros-serie/:id/transferir',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     NumerosSerieController.transferir
 );
 
@@ -235,7 +235,7 @@ router.post('/numeros-serie/:id/devolver',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     NumerosSerieController.devolver
 );
 
@@ -248,7 +248,7 @@ router.post('/numeros-serie/:id/defectuoso',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     NumerosSerieController.marcarDefectuoso
 );
 
@@ -261,7 +261,7 @@ router.post('/numeros-serie/:id/reservar',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     NumerosSerieController.reservar
 );
 
@@ -274,7 +274,7 @@ router.post('/numeros-serie/:id/liberar',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     NumerosSerieController.liberarReserva
 );
 
@@ -287,7 +287,7 @@ router.put('/numeros-serie/:id/garantia',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     NumerosSerieController.actualizarGarantia
 );
 
@@ -298,7 +298,7 @@ router.put('/numeros-serie/:id/garantia',
 router.get('/numeros-serie/:id',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     NumerosSerieController.obtenerPorId
 );
 
@@ -309,7 +309,7 @@ router.get('/numeros-serie/:id',
 router.get('/numeros-serie',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     NumerosSerieController.listar
 );
 

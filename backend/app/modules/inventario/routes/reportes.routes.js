@@ -20,7 +20,7 @@ const validate = validation.validate;
 router.get('/reportes/valor-inventario',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     InventarioController.obtenerValorInventario
 );
 
@@ -33,7 +33,7 @@ router.get('/reportes/valor-inventario',
 router.get('/reportes/analisis-abc',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.reporteAnalisisABC),
     InventarioController.obtenerAnalisisABC
 );
@@ -47,7 +47,7 @@ router.get('/reportes/analisis-abc',
 router.get('/reportes/rotacion',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.reporteRotacion),
     InventarioController.obtenerRotacionInventario
 );
@@ -60,7 +60,7 @@ router.get('/reportes/rotacion',
 router.get('/reportes/alertas',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     InventarioController.obtenerResumenAlertas
 );
 

@@ -49,14 +49,14 @@ router.post('/reenviar-activacion',
 // Estado del onboarding (requiere auth)
 router.get('/onboarding/status',
     authMiddleware.authenticateToken,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     AuthController.onboardingStatus
 );
 
 // Completar onboarding (requiere auth)
 router.post('/onboarding/complete',
     authMiddleware.authenticateToken,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(activacionSchemas.onboardingComplete),
     AuthController.onboardingComplete
 );

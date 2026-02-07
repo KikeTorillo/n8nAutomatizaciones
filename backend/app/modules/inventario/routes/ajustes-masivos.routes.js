@@ -31,7 +31,7 @@ router.post('/ajustes-masivos',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.crearAjusteMasivo),
     AjustesMasivosController.crear
 );
@@ -43,7 +43,7 @@ router.post('/ajustes-masivos',
 router.get('/ajustes-masivos',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.listarAjustesMasivos),
     AjustesMasivosController.listar
 );
@@ -55,7 +55,7 @@ router.get('/ajustes-masivos',
 router.get('/ajustes-masivos/:id',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.obtenerAjusteMasivo),
     AjustesMasivosController.obtenerPorId
 );
@@ -69,7 +69,7 @@ router.post('/ajustes-masivos/:id/validar',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.validarAjusteMasivo),
     AjustesMasivosController.validar
 );
@@ -97,7 +97,7 @@ router.delete('/ajustes-masivos/:id',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.cancelarAjusteMasivo),
     AjustesMasivosController.cancelar
 );

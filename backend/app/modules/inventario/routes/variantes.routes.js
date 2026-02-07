@@ -20,7 +20,7 @@ const validate = validation.validate;
 router.get('/variantes/buscar',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(variantesSchemas.buscarVariante),
     VariantesController.buscar
 );
@@ -32,7 +32,7 @@ router.get('/variantes/buscar',
 router.get('/variantes/:id',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     VariantesController.obtenerPorId
 );
 
@@ -45,7 +45,7 @@ router.put('/variantes/:id',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(variantesSchemas.actualizarVariante),
     VariantesController.actualizar
 );
@@ -59,7 +59,7 @@ router.patch('/variantes/:id/stock',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(variantesSchemas.ajustarStock),
     VariantesController.ajustarStock
 );
@@ -73,7 +73,7 @@ router.delete('/variantes/:id',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     VariantesController.eliminar
 );
 
@@ -84,7 +84,7 @@ router.delete('/variantes/:id',
 router.get('/productos/:productoId/variantes',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     VariantesController.listar
 );
 
@@ -95,7 +95,7 @@ router.get('/productos/:productoId/variantes',
 router.get('/productos/:productoId/variantes/resumen',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     VariantesController.obtenerResumen
 );
 
@@ -108,7 +108,7 @@ router.post('/productos/:productoId/variantes',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(variantesSchemas.crearVariante),
     VariantesController.crear
 );
@@ -122,7 +122,7 @@ router.post('/productos/:productoId/variantes/generar',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(variantesSchemas.generarVariantes),
     VariantesController.generar
 );

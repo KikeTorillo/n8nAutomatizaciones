@@ -11,7 +11,7 @@ router.get(
   '/',
   auth.authenticateToken,
   tenant.setTenantContext,
-  rateLimiting.apiRateLimit,
+  rateLimiting.userRateLimit,
   validate(schemas.listar),
   handleValidation,
   TipoBloqueoController.listar
@@ -22,7 +22,7 @@ router.get(
   '/:id',
   auth.authenticateToken,
   tenant.setTenantContext,
-  rateLimiting.apiRateLimit,
+  rateLimiting.userRateLimit,
   validate(schemas.obtenerPorId),
   handleValidation,
   TipoBloqueoController.obtenerPorId
@@ -34,7 +34,7 @@ router.post(
   auth.authenticateToken,
   tenant.setTenantContext,
   auth.requireRole(['admin']),
-  rateLimiting.apiRateLimit,
+  rateLimiting.userRateLimit,
   validate(schemas.crear),
   handleValidation,
   TipoBloqueoController.crear
@@ -46,7 +46,7 @@ router.put(
   auth.authenticateToken,
   tenant.setTenantContext,
   auth.requireRole(['admin']),
-  rateLimiting.apiRateLimit,
+  rateLimiting.userRateLimit,
   validate(schemas.actualizar),
   handleValidation,
   TipoBloqueoController.actualizar
@@ -58,7 +58,7 @@ router.delete(
   auth.authenticateToken,
   tenant.setTenantContext,
   auth.requireRole(['admin']),
-  rateLimiting.apiRateLimit,
+  rateLimiting.userRateLimit,
   validate(schemas.eliminar),
   handleValidation,
   TipoBloqueoController.eliminar

@@ -46,7 +46,7 @@ router.get(
       return tenant.setTenantContextFromQuery(req, res, next);
     }
   },
-  rateLimiting.apiRateLimit,
+  rateLimiting.userRateLimit,
   validation.validate(disponibilidadSchemas.consultar),
   DisponibilidadController.consultar
 );

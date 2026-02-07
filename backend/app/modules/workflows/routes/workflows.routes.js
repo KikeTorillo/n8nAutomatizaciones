@@ -33,7 +33,7 @@ router.get('/pendientes',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('workflows'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(workflowsSchemas.listarPendientes),
     AprobacionesController.listarPendientes
 );
@@ -46,7 +46,7 @@ router.get('/pendientes/count',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('workflows'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     AprobacionesController.contarPendientes
 );
 
@@ -62,7 +62,7 @@ router.get('/instancias/:id',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('workflows'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(workflowsSchemas.obtenerPorId),
     AprobacionesController.obtenerInstancia
 );
@@ -79,7 +79,7 @@ router.post('/instancias/:id/aprobar',
     tenant.setTenantContext,
     modules.requireModule('workflows'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(workflowsSchemas.aprobar),
     AprobacionesController.aprobar
 );
@@ -94,7 +94,7 @@ router.post('/instancias/:id/rechazar',
     tenant.setTenantContext,
     modules.requireModule('workflows'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(workflowsSchemas.rechazar),
     AprobacionesController.rechazar
 );
@@ -111,7 +111,7 @@ router.get('/historial',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('workflows'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(workflowsSchemas.listarHistorial),
     AprobacionesController.listarHistorial
 );
@@ -128,7 +128,7 @@ router.get('/delegaciones',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('workflows'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(workflowsSchemas.listarDelegaciones),
     AprobacionesController.listarDelegaciones
 );
@@ -143,7 +143,7 @@ router.post('/delegaciones',
     tenant.setTenantContext,
     modules.requireModule('workflows'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(workflowsSchemas.crearDelegacion),
     AprobacionesController.crearDelegacion
 );
@@ -157,7 +157,7 @@ router.put('/delegaciones/:id',
     tenant.setTenantContext,
     modules.requireModule('workflows'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(workflowsSchemas.actualizarDelegacion),
     AprobacionesController.actualizarDelegacion
 );
@@ -171,7 +171,7 @@ router.delete('/delegaciones/:id',
     tenant.setTenantContext,
     modules.requireModule('workflows'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(workflowsSchemas.eliminarDelegacion),
     AprobacionesController.eliminarDelegacion
 );
@@ -188,7 +188,7 @@ router.get('/definiciones',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('workflows'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(workflowsSchemas.listarDefiniciones),
     AprobacionesController.listarDefiniciones
 );
@@ -201,7 +201,7 @@ router.get('/definiciones/:id',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('workflows'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(workflowsSchemas.obtenerDefinicion),
     AprobacionesController.obtenerDefinicion
 );
@@ -220,7 +220,7 @@ router.get('/designer/entidades',
     tenant.setTenantContext,
     modules.requireModule('workflows'),
     permisos.verificarPermiso('workflows.gestionar'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     DesignerController.listarEntidades
 );
 
@@ -233,7 +233,7 @@ router.get('/designer/roles',
     tenant.setTenantContext,
     modules.requireModule('workflows'),
     permisos.verificarPermiso('workflows.gestionar'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     DesignerController.listarRoles
 );
 
@@ -246,7 +246,7 @@ router.get('/designer/permisos',
     tenant.setTenantContext,
     modules.requireModule('workflows'),
     permisos.verificarPermiso('workflows.gestionar'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     DesignerController.listarPermisos
 );
 
@@ -260,7 +260,7 @@ router.post('/designer/definiciones',
     modules.requireModule('workflows'),
     tenant.verifyTenantActive,
     permisos.verificarPermiso('workflows.gestionar'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(designerSchemas.crearDefinicion),
     DesignerController.crear
 );
@@ -275,7 +275,7 @@ router.put('/designer/definiciones/:id',
     modules.requireModule('workflows'),
     tenant.verifyTenantActive,
     permisos.verificarPermiso('workflows.gestionar'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(designerSchemas.actualizarDefinicion),
     DesignerController.actualizar
 );
@@ -290,7 +290,7 @@ router.delete('/designer/definiciones/:id',
     modules.requireModule('workflows'),
     tenant.verifyTenantActive,
     permisos.verificarPermiso('workflows.gestionar'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(designerSchemas.eliminarDefinicion),
     DesignerController.eliminar
 );
@@ -305,7 +305,7 @@ router.post('/designer/definiciones/:id/duplicar',
     modules.requireModule('workflows'),
     tenant.verifyTenantActive,
     permisos.verificarPermiso('workflows.gestionar'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(designerSchemas.duplicarDefinicion),
     DesignerController.duplicar
 );
@@ -320,7 +320,7 @@ router.patch('/designer/definiciones/:id/publicar',
     modules.requireModule('workflows'),
     tenant.verifyTenantActive,
     permisos.verificarPermiso('workflows.gestionar'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(designerSchemas.cambiarEstadoPublicacion),
     DesignerController.cambiarEstadoPublicacion
 );
@@ -334,7 +334,7 @@ router.get('/designer/definiciones/:id/validar',
     tenant.setTenantContext,
     modules.requireModule('workflows'),
     permisos.verificarPermiso('workflows.gestionar'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     DesignerController.validarWorkflow
 );
 

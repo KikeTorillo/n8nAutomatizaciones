@@ -39,7 +39,7 @@ const validate = validation.validate;
  * @returns {Array} Lista de categorías activas
  */
 router.get('/categorias',
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     PerfilesMarketplaceController.listarCategorias
 );
 
@@ -58,7 +58,7 @@ router.post('/perfiles',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('marketplace'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(marketplaceSchemas.crearPerfil),
     PerfilesMarketplaceController.crear
 );
@@ -73,7 +73,7 @@ router.put('/perfiles/:id',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('marketplace'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(marketplaceSchemas.actualizarPerfil),
     PerfilesMarketplaceController.actualizar
 );
@@ -93,7 +93,7 @@ router.put('/perfiles/:id',
 router.get('/perfiles/admin',
     auth.authenticateToken,
     auth.requireRole(['super_admin']),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(marketplaceSchemas.listarPerfilesAdmin),
     PerfilesMarketplaceController.listarParaAdmin
 );
@@ -106,7 +106,7 @@ router.get('/perfiles/admin',
 router.patch('/perfiles/:id/activar',
     auth.authenticateToken,
     auth.requireRole(['super_admin']),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(marketplaceSchemas.activarPerfil),
     PerfilesMarketplaceController.activar
 );
@@ -121,7 +121,7 @@ router.patch('/perfiles/:id/activar',
 router.get('/perfiles/mi-perfil',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     PerfilesMarketplaceController.obtenerMiPerfil
 );
 
@@ -140,7 +140,7 @@ router.get('/perfiles/mi-perfil',
  * - limite (opcional): Items por página (default: 12, max: 50)
  */
 router.get('/perfiles/buscar',
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(marketplaceSchemas.buscarPerfiles),
     PerfilesMarketplaceController.buscar
 );
@@ -153,7 +153,7 @@ router.get('/perfiles/buscar',
  * @returns {perfil, servicios, profesionales, reseñas, stats}
  */
 router.get('/perfiles/slug/:slug',
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(marketplaceSchemas.obtenerPerfilPorSlug),
     PerfilesMarketplaceController.obtenerPorSlug
 );
@@ -167,7 +167,7 @@ router.get('/perfiles/slug/:slug',
 router.get('/perfiles/:id',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(marketplaceSchemas.obtenerPerfil),
     PerfilesMarketplaceController.obtenerPorId
 );
@@ -184,7 +184,7 @@ router.get('/perfiles/:id',
 router.get('/perfiles/:id/estadisticas',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(marketplaceSchemas.estadisticasPerfil),
     PerfilesMarketplaceController.obtenerEstadisticas
 );
@@ -210,7 +210,7 @@ router.post('/resenas',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('marketplace'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(marketplaceSchemas.crearReseña),
     ReseñasMarketplaceController.crear
 );
@@ -228,7 +228,7 @@ router.post('/resenas/:id/responder',
     tenant.setTenantContext,
     modules.requireModule('marketplace'),
     auth.requireRole(['admin']),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(marketplaceSchemas.responderReseña),
     ReseñasMarketplaceController.responder
 );
@@ -247,7 +247,7 @@ router.patch('/resenas/:id/moderar',
     tenant.setTenantContext,
     modules.requireModule('marketplace'),
     auth.requireRole(['admin']),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(marketplaceSchemas.moderarReseña),
     ReseñasMarketplaceController.moderar
 );
@@ -264,7 +264,7 @@ router.patch('/resenas/:id/moderar',
  * - limite (opcional): Items por página (default: 10, max: 50)
  */
 router.get('/resenas/negocio/:organizacion_id',
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(marketplaceSchemas.listarReseñas),
     ReseñasMarketplaceController.listar
 );
@@ -287,7 +287,7 @@ router.get('/resenas/negocio/:organizacion_id',
  * - ciudad_visitante (opcional): Ciudad del visitante
  */
 router.post('/analytics',
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(marketplaceSchemas.registrarEvento),
     AnalyticsMarketplaceController.registrarEvento
 );
@@ -306,7 +306,7 @@ router.post('/analytics',
 router.get('/analytics/:organizacion_id',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(marketplaceSchemas.obtenerAnalytics),
     AnalyticsMarketplaceController.obtener
 );
@@ -322,7 +322,7 @@ router.get('/analytics/:organizacion_id',
 router.get('/analytics/:organizacion_id/estadisticas',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(marketplaceSchemas.estadisticasAnalytics),
     AnalyticsMarketplaceController.obtenerEstadisticas
 );
@@ -337,7 +337,7 @@ router.get('/analytics/:organizacion_id/estadisticas',
 router.delete('/analytics/limpiar',
     auth.authenticateToken,
     auth.requireRole(['super_admin']),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(marketplaceSchemas.limpiarAnalytics),
     AnalyticsMarketplaceController.limpiar
 );

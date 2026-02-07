@@ -14,7 +14,7 @@ const validate = validation.validate;
 router.get('/dashboard/today',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(citaSchemas.dashboardToday),
     CitaController.dashboardToday
 );
@@ -22,7 +22,7 @@ router.get('/dashboard/today',
 router.get('/cola-espera',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(citaSchemas.colaEspera),
     CitaController.colaEspera
 );
@@ -30,7 +30,7 @@ router.get('/cola-espera',
 router.get('/metricas-tiempo-real',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(citaSchemas.metricasTiempoReal),
     CitaController.metricasTiempoReal
 );
@@ -44,7 +44,7 @@ router.post('/walk-in',
     tenant.setTenantContext,
     tenant.verifyTenantActive,
     verificarPermiso('agendamiento.crear_citas'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(citaSchemas.crearWalkIn),
     CitaController.crearWalkIn
 );
@@ -52,7 +52,7 @@ router.post('/walk-in',
 router.get('/disponibilidad-inmediata',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(citaSchemas.disponibilidadInmediata),
     CitaController.disponibilidadInmediata
 );
@@ -64,7 +64,7 @@ router.get('/disponibilidad-inmediata',
 router.get('/recordatorios',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(citaSchemas.obtenerRecordatorios),
     CitaController.obtenerRecordatorios
 );
@@ -80,7 +80,7 @@ router.get('/recordatorios',
 router.post('/recurrente/preview',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(citaSchemas.previewRecurrencia),
     CitaController.previewRecurrencia
 );
@@ -94,7 +94,7 @@ router.post('/recurrente',
     tenant.setTenantContext,
     tenant.verifyTenantActive,
     verificarPermiso('agendamiento.crear_citas'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(citaSchemas.crear),  // Usa el schema crear que incluye patron_recurrencia
     CitaController.crearRecurrente
 );
@@ -106,7 +106,7 @@ router.post('/recurrente',
 router.get('/serie/:serieId',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(citaSchemas.obtenerSerie),
     CitaController.obtenerSerie
 );
@@ -120,7 +120,7 @@ router.post('/serie/:serieId/cancelar',
     tenant.setTenantContext,
     tenant.verifyTenantActive,
     verificarPermiso('agendamiento.cancelar_citas'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(citaSchemas.cancelarSerie),
     CitaController.cancelarSerie
 );
@@ -179,7 +179,7 @@ router.post('/',
             return next();
         }
     },
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(citaSchemas.crear),
     CitaController.crear
 );
@@ -187,7 +187,7 @@ router.post('/',
 router.get('/',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(citaSchemas.listar),
     CitaController.listar
 );
@@ -199,7 +199,7 @@ router.get('/',
 router.get('/:id',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(citaSchemas.obtener),
     CitaController.obtener
 );
@@ -209,7 +209,7 @@ router.put('/:id',
     tenant.setTenantContext,
     tenant.verifyTenantActive,
     verificarPermiso('agendamiento.editar_citas'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(citaSchemas.actualizar),
     CitaController.actualizar
 );
@@ -219,7 +219,7 @@ router.delete('/:id',
     tenant.setTenantContext,
     tenant.verifyTenantActive,
     verificarPermiso('agendamiento.cancelar_citas'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(citaSchemas.eliminar),
     CitaController.eliminar
 );
@@ -227,7 +227,7 @@ router.delete('/:id',
 router.patch('/:id/confirmar-asistencia',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(citaSchemas.confirmarAsistencia),
     CitaController.confirmarAsistencia
 );
@@ -240,7 +240,7 @@ router.post('/:id/check-in',
     auth.authenticateToken,
     tenant.setTenantContext,
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(citaSchemas.checkIn),
     CitaController.checkIn
 );
@@ -249,7 +249,7 @@ router.post('/:id/start-service',
     auth.authenticateToken,
     tenant.setTenantContext,
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(citaSchemas.startService),
     CitaController.startService
 );
@@ -259,7 +259,7 @@ router.post('/:id/complete',
     tenant.setTenantContext,
     tenant.verifyTenantActive,
     verificarPermiso('agendamiento.completar_citas'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(citaSchemas.complete),
     CitaController.complete
 );
@@ -269,7 +269,7 @@ router.post('/:id/reagendar',
     tenant.setTenantContext,
     tenant.verifyTenantActive,
     verificarPermiso('agendamiento.editar_citas'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(citaSchemas.reagendar),
     CitaController.reagendar
 );
@@ -278,7 +278,7 @@ router.post('/:id/no-show',
     auth.authenticateToken,
     tenant.setTenantContext,
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(citaSchemas.noShow),
     CitaController.noShow
 );
@@ -288,7 +288,7 @@ router.post('/:id/cancelar',
     tenant.setTenantContext,
     tenant.verifyTenantActive,
     verificarPermiso('agendamiento.cancelar_citas'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(citaSchemas.cancelar),
     CitaController.cancelar
 );
@@ -296,7 +296,7 @@ router.post('/:id/cancelar',
 router.patch('/:codigo/recordatorio-enviado',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(citaSchemas.marcarRecordatorioEnviado),
     CitaController.marcarRecordatorioEnviado
 );
@@ -304,7 +304,7 @@ router.patch('/:codigo/recordatorio-enviado',
 router.patch('/:codigo/calificar-cliente',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(citaSchemas.calificarCliente),
     CitaController.calificarCliente
 );

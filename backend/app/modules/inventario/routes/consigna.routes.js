@@ -25,7 +25,7 @@ router.post('/consigna/acuerdos',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.crearAcuerdoConsigna),
     ConsignaController.crearAcuerdo
 );
@@ -38,7 +38,7 @@ router.get('/consigna/acuerdos',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('inventario'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     ConsignaController.listarAcuerdos
 );
 
@@ -50,7 +50,7 @@ router.get('/consigna/acuerdos/:id',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('inventario'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     ConsignaController.obtenerAcuerdo
 );
 
@@ -63,7 +63,7 @@ router.put('/consigna/acuerdos/:id',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.actualizarAcuerdoConsigna),
     ConsignaController.actualizarAcuerdo
 );
@@ -77,7 +77,7 @@ router.post('/consigna/acuerdos/:id/activar',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     ConsignaController.activarAcuerdo
 );
 
@@ -90,7 +90,7 @@ router.post('/consigna/acuerdos/:id/pausar',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     ConsignaController.pausarAcuerdo
 );
 
@@ -103,7 +103,7 @@ router.post('/consigna/acuerdos/:id/terminar',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     ConsignaController.terminarAcuerdo
 );
 
@@ -120,7 +120,7 @@ router.post('/consigna/acuerdos/:id/productos',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.agregarProductoConsigna),
     ConsignaController.agregarProducto
 );
@@ -133,7 +133,7 @@ router.get('/consigna/acuerdos/:id/productos',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('inventario'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     ConsignaController.listarProductos
 );
 
@@ -146,7 +146,7 @@ router.put('/consigna/acuerdos/:id/productos/:productoId',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.actualizarProductoConsigna),
     ConsignaController.actualizarProducto
 );
@@ -160,7 +160,7 @@ router.delete('/consigna/acuerdos/:id/productos/:productoId',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     ConsignaController.removerProducto
 );
 
@@ -177,7 +177,7 @@ router.post('/consigna/acuerdos/:id/recibir',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.recibirMercanciaConsigna),
     ConsignaController.recibirMercancia
 );
@@ -190,7 +190,7 @@ router.get('/consigna/stock',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('inventario'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     ConsignaController.consultarStock
 );
 
@@ -203,7 +203,7 @@ router.post('/consigna/stock/:id/ajuste',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.ajustarStockConsigna),
     ConsignaController.ajustarStock
 );
@@ -217,7 +217,7 @@ router.post('/consigna/acuerdos/:id/devolver',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.devolverMercanciaConsigna),
     ConsignaController.devolverMercancia
 );
@@ -235,7 +235,7 @@ router.post('/consigna/liquidaciones',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.generarLiquidacion),
     ConsignaController.generarLiquidacion
 );
@@ -248,7 +248,7 @@ router.get('/consigna/liquidaciones',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('inventario'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     ConsignaController.listarLiquidaciones
 );
 
@@ -260,7 +260,7 @@ router.get('/consigna/liquidaciones/:id',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('inventario'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     ConsignaController.obtenerLiquidacion
 );
 
@@ -273,7 +273,7 @@ router.post('/consigna/liquidaciones/:id/confirmar',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     ConsignaController.confirmarLiquidacion
 );
 
@@ -286,7 +286,7 @@ router.post('/consigna/liquidaciones/:id/pagar',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.pagarLiquidacion),
     ConsignaController.pagarLiquidacion
 );
@@ -300,7 +300,7 @@ router.delete('/consigna/liquidaciones/:id',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     ConsignaController.cancelarLiquidacion
 );
 
@@ -316,7 +316,7 @@ router.get('/consigna/reportes/stock',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('inventario'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     ConsignaController.reporteStock
 );
 
@@ -328,7 +328,7 @@ router.get('/consigna/reportes/ventas',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('inventario'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     ConsignaController.reporteVentas
 );
 
@@ -340,7 +340,7 @@ router.get('/consigna/reportes/pendiente',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('inventario'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     ConsignaController.reportePendiente
 );
 

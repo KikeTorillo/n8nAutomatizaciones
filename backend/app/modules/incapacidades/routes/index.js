@@ -17,7 +17,7 @@ const authMiddleware = [
     auth.authenticateToken,
     tenant.setTenantContext,
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
 ];
 
 // Middleware adicional para admin

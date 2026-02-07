@@ -39,7 +39,7 @@ router.use(auth.requireRole(['super_admin']));
  * @returns {Object} Métricas globales y top organizaciones
  */
 router.get('/dashboard',
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     SuperAdminController.dashboard
 );
 
@@ -57,7 +57,7 @@ router.get('/dashboard',
  * @returns {Object} Métricas SaaS del módulo suscripciones-negocio
  */
 router.get('/metricas-saas',
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     SuperAdminController.metricasSaaS
 );
 
@@ -82,7 +82,7 @@ router.get('/metricas-saas',
  * @returns {Object} Lista paginada de organizaciones con métricas
  */
 router.get('/organizaciones',
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     SuperAdminController.listarOrganizaciones
 );
 
@@ -98,7 +98,7 @@ router.get('/organizaciones',
  * @returns {Object} Lista de planes con métricas de uso
  */
 router.get('/planes',
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     SuperAdminController.listarPlanes
 );
 

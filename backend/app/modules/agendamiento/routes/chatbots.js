@@ -21,7 +21,7 @@ const router = express.Router();
 // IMPORTANTE: Rutas específicas primero para evitar conflictos con /:id
 
 router.get('/estadisticas',
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     auth.authenticateToken,
     tenant.setTenantContext,
     validation.validate(chatbotSchemas.obtenerEstadisticas),
@@ -56,7 +56,7 @@ router.post('/configurar',
  * Listar chatbots con filtros opcionales
  */
 router.get('/',
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     auth.authenticateToken,
     tenant.setTenantContext,
     validation.validate(chatbotSchemas.listar),
@@ -68,7 +68,7 @@ router.get('/',
  * Obtener chatbot por ID
  */
 router.get('/:id',
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     auth.authenticateToken,
     tenant.setTenantContext,
     validation.validate(chatbotSchemas.obtenerPorId),
@@ -94,7 +94,7 @@ router.put('/:id',
  * Actualizar solo el estado del chatbot
  */
 router.patch('/:id/estado',
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     auth.authenticateToken,
     tenant.setTenantContext,
     tenant.verifyTenantActive,

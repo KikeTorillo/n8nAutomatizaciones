@@ -21,7 +21,7 @@ router.post('/operaciones/:operacionId/paquetes',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.crearPaquete),
     PaquetesController.crear
 );
@@ -34,7 +34,7 @@ router.get('/operaciones/:operacionId/paquetes',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('inventario'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     PaquetesController.listar
 );
 
@@ -46,7 +46,7 @@ router.get('/operaciones/:operacionId/items-disponibles',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('inventario'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     PaquetesController.itemsDisponibles
 );
 
@@ -58,7 +58,7 @@ router.get('/operaciones/:operacionId/resumen-empaque',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('inventario'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     PaquetesController.resumenEmpaque
 );
 
@@ -70,7 +70,7 @@ router.get('/paquetes/:id',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('inventario'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     PaquetesController.obtener
 );
 
@@ -83,7 +83,7 @@ router.put('/paquetes/:id',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.actualizarPaquete),
     PaquetesController.actualizar
 );
@@ -97,7 +97,7 @@ router.post('/paquetes/:id/items',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.agregarItemPaquete),
     PaquetesController.agregarItem
 );
@@ -111,7 +111,7 @@ router.delete('/paquetes/:id/items/:itemId',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     PaquetesController.removerItem
 );
 
@@ -124,7 +124,7 @@ router.post('/paquetes/:id/cerrar',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     PaquetesController.cerrar
 );
 
@@ -137,7 +137,7 @@ router.post('/paquetes/:id/cancelar',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.cancelarPaquete),
     PaquetesController.cancelar
 );
@@ -151,7 +151,7 @@ router.post('/paquetes/:id/etiquetar',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.etiquetarPaquete),
     PaquetesController.etiquetar
 );
@@ -165,7 +165,7 @@ router.post('/paquetes/:id/enviar',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     PaquetesController.enviar
 );
 
@@ -177,7 +177,7 @@ router.get('/paquetes/:id/etiqueta',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('inventario'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     PaquetesController.generarEtiqueta
 );
 

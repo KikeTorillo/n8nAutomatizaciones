@@ -28,7 +28,7 @@ router.get(
   '/',
   auth.authenticateToken,
   tenant.setTenantContext,
-  rateLimiting.apiRateLimit,
+  rateLimiting.userRateLimit,
   validate(schemas.listar),
   handleValidation,
   UbicacionTrabajoController.listar
@@ -39,7 +39,7 @@ router.get(
   '/estadisticas',
   auth.authenticateToken,
   tenant.setTenantContext,
-  rateLimiting.apiRateLimit,
+  rateLimiting.userRateLimit,
   UbicacionTrabajoController.estadisticas
 );
 
@@ -48,7 +48,7 @@ router.get(
   '/:id',
   auth.authenticateToken,
   tenant.setTenantContext,
-  rateLimiting.apiRateLimit,
+  rateLimiting.userRateLimit,
   validate(schemas.obtenerPorId),
   handleValidation,
   UbicacionTrabajoController.obtenerPorId
@@ -60,7 +60,7 @@ router.post(
   auth.authenticateToken,
   tenant.setTenantContext,
   auth.requireRole(['admin']),
-  rateLimiting.apiRateLimit,
+  rateLimiting.userRateLimit,
   validate(schemas.crear),
   handleValidation,
   UbicacionTrabajoController.crear
@@ -72,7 +72,7 @@ router.put(
   auth.authenticateToken,
   tenant.setTenantContext,
   auth.requireRole(['admin']),
-  rateLimiting.apiRateLimit,
+  rateLimiting.userRateLimit,
   validate(schemas.actualizar),
   handleValidation,
   UbicacionTrabajoController.actualizar
@@ -84,7 +84,7 @@ router.delete(
   auth.authenticateToken,
   tenant.setTenantContext,
   auth.requireRole(['admin']),
-  rateLimiting.apiRateLimit,
+  rateLimiting.userRateLimit,
   validate(schemas.eliminar),
   handleValidation,
   UbicacionTrabajoController.eliminar

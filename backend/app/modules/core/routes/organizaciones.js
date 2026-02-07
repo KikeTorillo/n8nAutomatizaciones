@@ -9,7 +9,7 @@ const router = express.Router();
 
 // Self-service signup - Clientes nuevos se registran automáticamente
 router.post('/register',
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(organizacionSchemas.onboarding),
     OrganizacionController.onboarding
 );
@@ -19,14 +19,14 @@ router.post('/register',
 router.post('/',
     auth.authenticateToken,
     auth.requireRole(['super_admin']),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(organizacionSchemas.crear),
     OrganizacionController.crear
 );
 
 router.get('/',
     auth.authenticateToken,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(organizacionSchemas.listar),
     OrganizacionController.listar
 );
@@ -44,7 +44,7 @@ router.get('/:id/limites',
 router.get('/:id/estadisticas',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     auth.requireAdminRole,
     validation.validate(organizacionSchemas.obtenerEstadisticas),
     (req, res, next) => OrganizacionController.obtenerEstadisticas(req, res, next)
@@ -53,7 +53,7 @@ router.get('/:id/estadisticas',
 router.get('/:id/setup-progress',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(organizacionSchemas.obtenerProgresoSetup),
     (req, res, next) => OrganizacionController.obtenerProgresoSetup(req, res, next)
 );
@@ -80,7 +80,7 @@ router.get('/:id/estado-suscripcion',
 router.get('/:id',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(organizacionSchemas.obtenerPorId),
     OrganizacionController.obtenerPorId
 );
@@ -88,7 +88,7 @@ router.get('/:id',
 router.put('/:id',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(organizacionSchemas.actualizar),
     OrganizacionController.actualizar
 );

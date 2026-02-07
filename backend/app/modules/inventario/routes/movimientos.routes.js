@@ -22,7 +22,7 @@ router.post('/movimientos',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.registrarMovimiento),
     InventarioController.registrarMovimiento
 );
@@ -34,7 +34,7 @@ router.post('/movimientos',
 router.get('/movimientos/kardex/:producto_id',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.obtenerKardex),
     InventarioController.obtenerKardex
 );
@@ -46,7 +46,7 @@ router.get('/movimientos/kardex/:producto_id',
 router.get('/movimientos/estadisticas',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.obtenerEstadisticasMovimientos),
     InventarioController.obtenerEstadisticasMovimientos
 );
@@ -58,7 +58,7 @@ router.get('/movimientos/estadisticas',
 router.get('/movimientos',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.listarMovimientos),
     InventarioController.listarMovimientos
 );

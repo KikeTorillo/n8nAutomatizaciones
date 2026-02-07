@@ -18,7 +18,7 @@ const router = express.Router();
 router.get('/',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(schemas.listarCatalogoHabilidades),
     CatalogoHabilidadesController.listar
 );
@@ -29,7 +29,7 @@ router.post('/',
     tenant.setTenantContext,
     tenant.verifyTenantActive,
     auth.requireAdminRole,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(schemas.crearHabilidadCatalogo),
     CatalogoHabilidadesController.crear
 );
@@ -38,7 +38,7 @@ router.post('/',
 router.get('/:habId',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(schemas.obtenerHabilidadCatalogo),
     CatalogoHabilidadesController.obtenerPorId
 );
@@ -49,7 +49,7 @@ router.put('/:habId',
     tenant.setTenantContext,
     tenant.verifyTenantActive,
     auth.requireAdminRole,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(schemas.actualizarHabilidadCatalogo),
     CatalogoHabilidadesController.actualizar
 );
@@ -60,7 +60,7 @@ router.delete('/:habId',
     tenant.setTenantContext,
     tenant.verifyTenantActive,
     auth.requireAdminRole,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(schemas.eliminarHabilidadCatalogo),
     CatalogoHabilidadesController.eliminar
 );
@@ -69,7 +69,7 @@ router.delete('/:habId',
 router.get('/:habId/profesionales',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     CatalogoHabilidadesController.listarProfesionales
 );
 

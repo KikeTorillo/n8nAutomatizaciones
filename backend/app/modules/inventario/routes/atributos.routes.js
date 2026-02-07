@@ -22,7 +22,7 @@ router.post('/atributos/defecto',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     AtributosController.crearDefecto
 );
 
@@ -35,7 +35,7 @@ router.post('/atributos',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(variantesSchemas.crearAtributo),
     AtributosController.crear
 );
@@ -47,7 +47,7 @@ router.post('/atributos',
 router.get('/atributos',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     AtributosController.listar
 );
 
@@ -58,7 +58,7 @@ router.get('/atributos',
 router.get('/atributos/:id',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     AtributosController.obtenerPorId
 );
 
@@ -71,7 +71,7 @@ router.put('/atributos/:id',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(variantesSchemas.actualizarAtributo),
     AtributosController.actualizar
 );
@@ -85,7 +85,7 @@ router.delete('/atributos/:id',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     AtributosController.eliminar
 );
 
@@ -98,7 +98,7 @@ router.post('/atributos/:id/valores',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(variantesSchemas.crearValor),
     AtributosController.agregarValor
 );
@@ -110,7 +110,7 @@ router.post('/atributos/:id/valores',
 router.get('/atributos/:id/valores',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     AtributosController.obtenerValores
 );
 
@@ -123,7 +123,7 @@ router.put('/valores/:valorId',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(variantesSchemas.actualizarValor),
     AtributosController.actualizarValor
 );
@@ -137,7 +137,7 @@ router.delete('/valores/:valorId',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     AtributosController.eliminarValor
 );
 

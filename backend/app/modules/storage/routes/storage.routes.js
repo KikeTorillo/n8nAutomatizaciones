@@ -34,7 +34,7 @@ router.get('/usage',
   auth.authenticateToken,
   tenant.setTenantContext,
   tenant.verifyTenantActive,
-  rateLimiting.apiRateLimit,
+  rateLimiting.userRateLimit,
   StorageController.getUsage
 );
 
@@ -76,7 +76,7 @@ router.get('/',
   auth.authenticateToken,
   tenant.setTenantContext,
   tenant.verifyTenantActive,
-  rateLimiting.apiRateLimit,
+  rateLimiting.userRateLimit,
   validate(storageSchemas.listSchema),
   StorageController.list
 );
@@ -89,7 +89,7 @@ router.get('/:id',
   auth.authenticateToken,
   tenant.setTenantContext,
   tenant.verifyTenantActive,
-  rateLimiting.apiRateLimit,
+  rateLimiting.userRateLimit,
   validate(storageSchemas.getByIdSchema),
   StorageController.getById
 );
@@ -105,7 +105,7 @@ router.get('/:id/presigned',
   auth.authenticateToken,
   tenant.setTenantContext,
   tenant.verifyTenantActive,
-  rateLimiting.apiRateLimit,
+  rateLimiting.userRateLimit,
   validate(storageSchemas.presignedSchema),
   StorageController.getPresignedUrl
 );
@@ -118,7 +118,7 @@ router.delete('/:id',
   auth.authenticateToken,
   tenant.setTenantContext,
   tenant.verifyTenantActive,
-  rateLimiting.apiRateLimit,
+  rateLimiting.userRateLimit,
   validate(storageSchemas.deleteSchema),
   StorageController.delete
 );

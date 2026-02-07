@@ -58,7 +58,7 @@ router.post('/refresh',
 // Logout (autenticado)
 router.post('/logout',
     authMiddleware.authenticateToken,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     AuthController.logout
 );
 
@@ -66,7 +66,7 @@ router.post('/logout',
 router.get('/me',
     authMiddleware.authenticateToken,
     tenantMiddleware.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     AuthController.me
 );
 
@@ -74,7 +74,7 @@ router.get('/me',
 router.put('/profile',
     authMiddleware.authenticateToken,
     tenantMiddleware.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(authSchemas.updateProfile),
     AuthController.actualizarPerfil
 );
@@ -92,7 +92,7 @@ router.post('/change-password',
 router.post('/cambiar-sucursal',
     authMiddleware.authenticateToken,
     tenantMiddleware.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(authSchemas.cambiarSucursal),
     AuthController.cambiarSucursal
 );

@@ -21,7 +21,7 @@ const validate = validation.validate;
 router.get('/ordenes-compra/:id/costos',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     asyncHandler(LandedCostsController.listarCostos)
 );
 
@@ -32,7 +32,7 @@ router.get('/ordenes-compra/:id/costos',
 router.get('/ordenes-compra/:id/costos/resumen',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     asyncHandler(LandedCostsController.obtenerResumen)
 );
 
@@ -43,7 +43,7 @@ router.get('/ordenes-compra/:id/costos/resumen',
 router.get('/ordenes-compra/:id/costos/:costoId',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     asyncHandler(LandedCostsController.obtenerCosto)
 );
 
@@ -56,7 +56,7 @@ router.post('/ordenes-compra/:id/costos',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.crearCostoAdicional),
     asyncHandler(LandedCostsController.crearCosto)
 );
@@ -70,7 +70,7 @@ router.put('/ordenes-compra/:id/costos/:costoId',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.actualizarCostoAdicional),
     asyncHandler(LandedCostsController.actualizarCosto)
 );
@@ -84,7 +84,7 @@ router.delete('/ordenes-compra/:id/costos/:costoId',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     asyncHandler(LandedCostsController.eliminarCosto)
 );
 
@@ -97,7 +97,7 @@ router.post('/ordenes-compra/:id/costos/:costoId/distribuir',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     asyncHandler(LandedCostsController.distribuirCosto)
 );
 
@@ -108,7 +108,7 @@ router.post('/ordenes-compra/:id/costos/:costoId/distribuir',
 router.get('/ordenes-compra/:id/costos/:costoId/distribucion',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     asyncHandler(LandedCostsController.obtenerDistribucion)
 );
 
@@ -121,7 +121,7 @@ router.post('/ordenes-compra/:id/distribuir-costos',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     asyncHandler(LandedCostsController.distribuirTodos)
 );
 
@@ -132,7 +132,7 @@ router.post('/ordenes-compra/:id/distribuir-costos',
 router.get('/ordenes-compra/:id/costos-por-items',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     asyncHandler(LandedCostsController.obtenerCostosPorItems)
 );
 

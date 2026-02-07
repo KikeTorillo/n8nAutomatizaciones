@@ -19,7 +19,7 @@ router.get('/configuracion-almacen',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('inventario'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     ConfiguracionAlmacenController.listar
 );
 
@@ -30,7 +30,7 @@ router.get('/configuracion-almacen',
 router.get('/configuracion-almacen/descripciones-pasos',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     ConfiguracionAlmacenController.obtenerDescripcionesPasos
 );
 
@@ -42,7 +42,7 @@ router.get('/configuracion-almacen/:sucursalId',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('inventario'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     ConfiguracionAlmacenController.obtenerPorSucursal
 );
 
@@ -54,7 +54,7 @@ router.get('/configuracion-almacen/:sucursalId/usa-multietapa',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('inventario'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     ConfiguracionAlmacenController.verificarMultietapa
 );
 
@@ -67,7 +67,7 @@ router.put('/configuracion-almacen/:sucursalId',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     ConfiguracionAlmacenController.actualizar
 );
 
@@ -80,7 +80,7 @@ router.post('/configuracion-almacen/:sucursalId/crear-ubicaciones',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     ConfiguracionAlmacenController.crearUbicacionesDefault
 );
 

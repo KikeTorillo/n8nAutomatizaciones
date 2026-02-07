@@ -20,7 +20,7 @@ router.get('/reorden/dashboard',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('inventario'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     ReordenController.obtenerDashboard
 );
 
@@ -32,7 +32,7 @@ router.get('/reorden/productos-bajo-minimo',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('inventario'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.listarProductosBajoMinimo),
     ReordenController.productosBajoMinimo
 );
@@ -45,7 +45,7 @@ router.get('/reorden/rutas',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('inventario'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     ReordenController.listarRutas
 );
 
@@ -57,7 +57,7 @@ router.get('/reorden/reglas',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('inventario'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.listarReglasReorden),
     ReordenController.listarReglas
 );
@@ -70,7 +70,7 @@ router.get('/reorden/reglas/:id',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('inventario'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.obtenerPorId),
     ReordenController.obtenerRegla
 );
@@ -84,7 +84,7 @@ router.post('/reorden/reglas',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.crearReglaReorden),
     ReordenController.crearRegla
 );
@@ -98,7 +98,7 @@ router.put('/reorden/reglas/:id',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.actualizarReglaReorden),
     ReordenController.actualizarRegla
 );
@@ -112,7 +112,7 @@ router.delete('/reorden/reglas/:id',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.obtenerPorId),
     ReordenController.eliminarRegla
 );
@@ -138,7 +138,7 @@ router.get('/reorden/logs',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('inventario'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.listarLogsReorden),
     ReordenController.listarLogs
 );
@@ -151,7 +151,7 @@ router.get('/reorden/logs/:id',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('inventario'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.obtenerPorId),
     ReordenController.obtenerLog
 );

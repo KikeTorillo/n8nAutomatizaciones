@@ -20,7 +20,7 @@ const { auth, tenant, rateLimiting } = require('../../../middleware');
  * Obtiene la configuración de agendamiento de la organización
  */
 router.get('/',
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     auth.authenticateToken,
     tenant.setTenantContext,
     ConfiguracionController.obtener
@@ -32,7 +32,7 @@ router.get('/',
  * Requiere rol admin
  */
 router.put('/',
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     auth.authenticateToken,
     tenant.setTenantContext,
     tenant.verifyTenantActive,
@@ -46,7 +46,7 @@ router.put('/',
  * Requiere rol admin
  */
 router.post('/round-robin/toggle',
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     auth.authenticateToken,
     tenant.setTenantContext,
     tenant.verifyTenantActive,

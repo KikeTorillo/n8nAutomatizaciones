@@ -23,7 +23,7 @@ router.post('/proveedores',
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
     verificarPermiso('inventario.crear_proveedores'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.crearProveedor),
     InventarioController.crearProveedor
 );
@@ -35,7 +35,7 @@ router.post('/proveedores',
 router.get('/proveedores/:id',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.obtenerPorId),
     InventarioController.obtenerProveedorPorId
 );
@@ -47,7 +47,7 @@ router.get('/proveedores/:id',
 router.get('/proveedores',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.listarProveedores),
     InventarioController.listarProveedores
 );
@@ -62,7 +62,7 @@ router.put('/proveedores/:id',
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
     verificarPermiso('inventario.editar_proveedores'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.actualizarProveedor),
     InventarioController.actualizarProveedor
 );
@@ -77,7 +77,7 @@ router.delete('/proveedores/:id',
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
     verificarPermiso('inventario.eliminar_proveedores'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.obtenerPorId),
     InventarioController.eliminarProveedor
 );

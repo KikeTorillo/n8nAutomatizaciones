@@ -39,7 +39,7 @@ router.get('/definiciones',
   auth.authenticateToken,
   tenant.setTenantContext,
   tenant.verifyTenantActive,
-  rateLimiting.apiRateLimit,
+  rateLimiting.userRateLimit,
   validate(customFieldsSchemas.listDefinicionesSchema),
   CustomFieldsController.listDefiniciones
 );
@@ -53,7 +53,7 @@ router.post('/definiciones',
   tenant.setTenantContext,
   tenant.verifyTenantActive,
   auth.requireRole(['super_admin', 'admin']),
-  rateLimiting.apiRateLimit,
+  rateLimiting.userRateLimit,
   validate(customFieldsSchemas.createDefinicionSchema),
   CustomFieldsController.createDefinicion
 );
@@ -68,7 +68,7 @@ router.put('/definiciones/reorder',
   tenant.setTenantContext,
   tenant.verifyTenantActive,
   auth.requireRole(['super_admin', 'admin']),
-  rateLimiting.apiRateLimit,
+  rateLimiting.userRateLimit,
   validate(customFieldsSchemas.reorderDefinicionesSchema),
   CustomFieldsController.reorderDefiniciones
 );
@@ -81,7 +81,7 @@ router.get('/definiciones/:id',
   auth.authenticateToken,
   tenant.setTenantContext,
   tenant.verifyTenantActive,
-  rateLimiting.apiRateLimit,
+  rateLimiting.userRateLimit,
   validate(customFieldsSchemas.getDefinicionSchema),
   CustomFieldsController.getDefinicion
 );
@@ -95,7 +95,7 @@ router.put('/definiciones/:id',
   tenant.setTenantContext,
   tenant.verifyTenantActive,
   auth.requireRole(['super_admin', 'admin']),
-  rateLimiting.apiRateLimit,
+  rateLimiting.userRateLimit,
   validate(customFieldsSchemas.updateDefinicionSchema),
   CustomFieldsController.updateDefinicion
 );
@@ -109,7 +109,7 @@ router.delete('/definiciones/:id',
   tenant.setTenantContext,
   tenant.verifyTenantActive,
   auth.requireRole(['super_admin', 'admin']),
-  rateLimiting.apiRateLimit,
+  rateLimiting.userRateLimit,
   validate(customFieldsSchemas.deleteDefinicionSchema),
   CustomFieldsController.deleteDefinicion
 );
@@ -126,7 +126,7 @@ router.get('/valores/:entidad_tipo/:entidad_id',
   auth.authenticateToken,
   tenant.setTenantContext,
   tenant.verifyTenantActive,
-  rateLimiting.apiRateLimit,
+  rateLimiting.userRateLimit,
   validate(customFieldsSchemas.getValoresSchema),
   CustomFieldsController.getValores
 );
@@ -139,7 +139,7 @@ router.post('/valores/:entidad_tipo/:entidad_id',
   auth.authenticateToken,
   tenant.setTenantContext,
   tenant.verifyTenantActive,
-  rateLimiting.apiRateLimit,
+  rateLimiting.userRateLimit,
   validate(customFieldsSchemas.saveValoresSchema),
   CustomFieldsController.saveValores
 );
@@ -156,7 +156,7 @@ router.post('/validar/:entidad_tipo',
   auth.authenticateToken,
   tenant.setTenantContext,
   tenant.verifyTenantActive,
-  rateLimiting.apiRateLimit,
+  rateLimiting.userRateLimit,
   validate(customFieldsSchemas.validateValoresSchema),
   CustomFieldsController.validateValores
 );
@@ -169,7 +169,7 @@ router.get('/secciones/:entidad_tipo',
   auth.authenticateToken,
   tenant.setTenantContext,
   tenant.verifyTenantActive,
-  rateLimiting.apiRateLimit,
+  rateLimiting.userRateLimit,
   CustomFieldsController.getSecciones
 );
 

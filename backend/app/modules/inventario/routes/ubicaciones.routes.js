@@ -22,7 +22,7 @@ router.post('/ubicaciones',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.crearUbicacion),
     InventarioController.crearUbicacion
 );
@@ -36,7 +36,7 @@ router.post('/ubicaciones/mover-stock',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.moverStockUbicacion),
     InventarioController.moverStockUbicacion
 );
@@ -48,7 +48,7 @@ router.post('/ubicaciones/mover-stock',
 router.get('/ubicaciones/arbol/:sucursalId',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.obtenerArbolUbicaciones),
     InventarioController.obtenerArbolUbicaciones
 );
@@ -60,7 +60,7 @@ router.get('/ubicaciones/arbol/:sucursalId',
 router.get('/ubicaciones/disponibles/:sucursalId',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.obtenerUbicacionesDisponibles),
     InventarioController.obtenerUbicacionesDisponibles
 );
@@ -72,7 +72,7 @@ router.get('/ubicaciones/disponibles/:sucursalId',
 router.get('/ubicaciones/estadisticas/:sucursalId',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.obtenerEstadisticasUbicaciones),
     InventarioController.obtenerEstadisticasUbicaciones
 );
@@ -84,7 +84,7 @@ router.get('/ubicaciones/estadisticas/:sucursalId',
 router.get('/ubicaciones/:id',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.obtenerPorId),
     InventarioController.obtenerUbicacionPorId
 );
@@ -96,7 +96,7 @@ router.get('/ubicaciones/:id',
 router.get('/ubicaciones/:id/stock',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.obtenerPorId),
     InventarioController.obtenerStockUbicacion
 );
@@ -108,7 +108,7 @@ router.get('/ubicaciones/:id/stock',
 router.get('/ubicaciones',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.listarUbicaciones),
     InventarioController.listarUbicaciones
 );
@@ -122,7 +122,7 @@ router.put('/ubicaciones/:id',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.actualizarUbicacion),
     InventarioController.actualizarUbicacion
 );
@@ -136,7 +136,7 @@ router.patch('/ubicaciones/:id/bloquear',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.toggleBloqueoUbicacion),
     InventarioController.toggleBloqueoUbicacion
 );
@@ -150,7 +150,7 @@ router.post('/ubicaciones/:id/stock',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.agregarStockUbicacion),
     InventarioController.agregarStockUbicacion
 );
@@ -164,7 +164,7 @@ router.delete('/ubicaciones/:id',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.obtenerPorId),
     InventarioController.eliminarUbicacion
 );
@@ -176,7 +176,7 @@ router.delete('/ubicaciones/:id',
 router.get('/productos/:productoId/ubicaciones',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.obtenerPorId),
     InventarioController.obtenerUbicacionesProducto
 );

@@ -22,7 +22,7 @@ const router = express.Router();
  */
 router.get('/',
   authenticateToken,
-  rateLimiting.apiRateLimit,
+  rateLimiting.userRateLimit,
   validate(rolesSchemas.listar),
   asyncHandler(RolesController.listar)
 );
@@ -34,7 +34,7 @@ router.get('/',
  */
 router.get('/:id',
   authenticateToken,
-  rateLimiting.apiRateLimit,
+  rateLimiting.userRateLimit,
   validate(rolesSchemas.obtenerPorId),
   asyncHandler(RolesController.obtenerPorId)
 );
@@ -47,7 +47,7 @@ router.get('/:id',
 router.post('/',
   authenticateToken,
   requireAdminRole,
-  rateLimiting.apiRateLimit,
+  rateLimiting.userRateLimit,
   validate(rolesSchemas.crear),
   asyncHandler(RolesController.crear)
 );
@@ -60,7 +60,7 @@ router.post('/',
 router.put('/:id',
   authenticateToken,
   requireAdminRole,
-  rateLimiting.apiRateLimit,
+  rateLimiting.userRateLimit,
   validate(rolesSchemas.actualizar),
   asyncHandler(RolesController.actualizar)
 );
@@ -73,7 +73,7 @@ router.put('/:id',
 router.delete('/:id',
   authenticateToken,
   requireAdminRole,
-  rateLimiting.apiRateLimit,
+  rateLimiting.userRateLimit,
   validate(rolesSchemas.eliminar),
   asyncHandler(RolesController.eliminar)
 );
@@ -86,7 +86,7 @@ router.delete('/:id',
 router.post('/:id/copiar-permisos',
   authenticateToken,
   requireAdminRole,
-  rateLimiting.apiRateLimit,
+  rateLimiting.userRateLimit,
   validate(rolesSchemas.copiarPermisos),
   asyncHandler(RolesController.copiarPermisos)
 );
@@ -99,7 +99,7 @@ router.post('/:id/copiar-permisos',
 router.get('/:id/permisos',
   authenticateToken,
   requireAdminRole,
-  rateLimiting.apiRateLimit,
+  rateLimiting.userRateLimit,
   validate(rolesSchemas.obtenerPermisos),
   asyncHandler(RolesController.obtenerPermisos)
 );
@@ -112,7 +112,7 @@ router.get('/:id/permisos',
 router.put('/:id/permisos/:permisoId',
   authenticateToken,
   requireAdminRole,
-  rateLimiting.apiRateLimit,
+  rateLimiting.userRateLimit,
   validate(rolesSchemas.actualizarPermiso),
   asyncHandler(RolesController.actualizarPermiso)
 );
@@ -125,7 +125,7 @@ router.put('/:id/permisos/:permisoId',
 router.put('/:id/permisos',
   authenticateToken,
   requireAdminRole,
-  rateLimiting.apiRateLimit,
+  rateLimiting.userRateLimit,
   validate(rolesSchemas.actualizarPermisosBatch),
   asyncHandler(RolesController.actualizarPermisosBatch)
 );

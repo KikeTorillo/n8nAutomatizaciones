@@ -48,7 +48,7 @@ router.post('/config',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('website'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(websiteSchemas.crearConfig),
     WebsiteConfigController.crear
 );
@@ -63,7 +63,7 @@ router.get('/config',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('website'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     WebsiteConfigController.obtener
 );
 
@@ -78,7 +78,7 @@ router.put('/config/:id',
     tenant.setTenantContext,
     modules.requireModule('website'),
     auth.requireRole(['admin']),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(websiteSchemas.actualizarConfig),
     WebsiteConfigController.actualizar
 );
@@ -94,7 +94,7 @@ router.post('/config/:id/publicar',
     tenant.setTenantContext,
     modules.requireModule('website'),
     auth.requireRole(['admin']),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(websiteSchemas.publicarConfig),
     WebsiteConfigController.publicar
 );
@@ -106,7 +106,7 @@ router.post('/config/:id/publicar',
  */
 router.get('/config/slug/:slug/disponible',
     auth.authenticateToken,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(websiteSchemas.verificarSlug),
     WebsiteConfigController.verificarSlug
 );
@@ -122,7 +122,7 @@ router.delete('/config/:id',
     tenant.setTenantContext,
     modules.requireModule('website'),
     auth.requireRole(['admin']),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(websiteSchemas.eliminarConfig),
     WebsiteConfigController.eliminar
 );
@@ -138,7 +138,7 @@ router.post('/config/:id/preview',
     tenant.setTenantContext,
     modules.requireModule('website'),
     auth.requireRole(['admin']),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     WebsiteConfigController.generarPreview
 );
 
@@ -152,7 +152,7 @@ router.get('/config/:id/preview',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('website'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     WebsiteConfigController.obtenerPreview
 );
 
@@ -167,7 +167,7 @@ router.delete('/config/:id/preview',
     tenant.setTenantContext,
     modules.requireModule('website'),
     auth.requireRole(['admin']),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     WebsiteConfigController.revocarPreview
 );
 
@@ -186,7 +186,7 @@ router.post('/paginas',
     tenant.setTenantContext,
     modules.requireModule('website'),
     auth.requireRole(['admin']),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(websiteSchemas.crearPagina),
     WebsitePaginasController.crear
 );
@@ -201,7 +201,7 @@ router.get('/paginas',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('website'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     WebsitePaginasController.listar
 );
 
@@ -216,7 +216,7 @@ router.put('/paginas/orden',
     tenant.setTenantContext,
     modules.requireModule('website'),
     auth.requireRole(['admin']),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(websiteSchemas.reordenarPaginas),
     WebsitePaginasController.reordenar
 );
@@ -231,7 +231,7 @@ router.get('/paginas/:id',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('website'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(websiteSchemas.obtenerPagina),
     WebsitePaginasController.obtener
 );
@@ -247,7 +247,7 @@ router.put('/paginas/:id',
     tenant.setTenantContext,
     modules.requireModule('website'),
     auth.requireRole(['admin']),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(websiteSchemas.actualizarPagina),
     WebsitePaginasController.actualizar
 );
@@ -263,7 +263,7 @@ router.delete('/paginas/:id',
     tenant.setTenantContext,
     modules.requireModule('website'),
     auth.requireRole(['admin']),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(websiteSchemas.eliminarPagina),
     WebsitePaginasController.eliminar
 );
@@ -282,7 +282,7 @@ router.get('/servicios-erp',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('website'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     WebsiteBloquesController.obtenerServiciosERP
 );
 
@@ -296,7 +296,7 @@ router.get('/profesionales-erp',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('website'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     WebsiteBloquesController.obtenerProfesionalesERP
 );
 
@@ -307,7 +307,7 @@ router.get('/profesionales-erp',
  */
 router.get('/bloques/tipos',
     auth.authenticateToken,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     WebsiteBloquesController.listarTipos
 );
 
@@ -318,7 +318,7 @@ router.get('/bloques/tipos',
  */
 router.get('/bloques/tipos/:tipo/default',
     auth.authenticateToken,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(websiteSchemas.obtenerDefaultBloque),
     WebsiteBloquesController.obtenerDefault
 );
@@ -334,7 +334,7 @@ router.post('/bloques',
     tenant.setTenantContext,
     modules.requireModule('website'),
     auth.requireRole(['admin']),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(websiteSchemas.crearBloque),
     WebsiteBloquesController.crear
 );
@@ -349,7 +349,7 @@ router.get('/paginas/:paginaId/bloques',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('website'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(websiteSchemas.listarBloques),
     WebsiteBloquesController.listar
 );
@@ -365,7 +365,7 @@ router.put('/paginas/:paginaId/bloques/orden',
     tenant.setTenantContext,
     modules.requireModule('website'),
     auth.requireRole(['admin']),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(websiteSchemas.reordenarBloques),
     WebsiteBloquesController.reordenar
 );
@@ -380,7 +380,7 @@ router.get('/bloques/:id',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('website'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(websiteSchemas.obtenerBloque),
     WebsiteBloquesController.obtener
 );
@@ -396,7 +396,7 @@ router.put('/bloques/:id',
     tenant.setTenantContext,
     modules.requireModule('website'),
     auth.requireRole(['admin']),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(websiteSchemas.actualizarBloque),
     WebsiteBloquesController.actualizar
 );
@@ -412,7 +412,7 @@ router.post('/bloques/:id/duplicar',
     tenant.setTenantContext,
     modules.requireModule('website'),
     auth.requireRole(['admin']),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(websiteSchemas.duplicarBloque),
     WebsiteBloquesController.duplicar
 );
@@ -428,7 +428,7 @@ router.delete('/bloques/:id',
     tenant.setTenantContext,
     modules.requireModule('website'),
     auth.requireRole(['admin']),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(websiteSchemas.eliminarBloque),
     WebsiteBloquesController.eliminar
 );
@@ -444,7 +444,7 @@ router.delete('/bloques/:id',
  */
 router.get('/templates/industrias',
     auth.authenticateToken,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     WebsiteTemplatesController.listarIndustrias
 );
 
@@ -457,7 +457,7 @@ router.get('/templates/industrias',
 router.get('/templates',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     WebsiteTemplatesController.listar
 );
 
@@ -470,7 +470,7 @@ router.get('/templates',
 router.get('/templates/:id',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     WebsiteTemplatesController.obtener
 );
 
@@ -483,7 +483,7 @@ router.get('/templates/:id',
 router.get('/templates/:id/estructura',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     WebsiteTemplatesController.obtenerEstructura
 );
 
@@ -498,7 +498,7 @@ router.post('/templates/:id/aplicar',
     tenant.setTenantContext,
     modules.requireModule('website'),
     auth.requireRole(['admin']),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     WebsiteTemplatesController.aplicar
 );
 
@@ -513,7 +513,7 @@ router.post('/templates',
     tenant.setTenantContext,
     modules.requireModule('website'),
     auth.requireRole(['admin']),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     WebsiteTemplatesController.crear
 );
 
@@ -528,7 +528,7 @@ router.delete('/templates/:id',
     tenant.setTenantContext,
     modules.requireModule('website'),
     auth.requireRole(['admin']),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     WebsiteTemplatesController.eliminar
 );
 
@@ -543,7 +543,7 @@ router.delete('/templates/:id',
  */
 router.get('/ai/status',
     auth.authenticateToken,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     WebsiteAIController.obtenerStatus
 );
 
@@ -557,7 +557,7 @@ router.post('/ai/generar',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('website'),
-    rateLimiting.aiRateLimit || rateLimiting.apiRateLimit,
+    rateLimiting.aiRateLimit || rateLimiting.userRateLimit,
     WebsiteAIController.generarContenido
 );
 
@@ -571,7 +571,7 @@ router.post('/ai/generar-bloque',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('website'),
-    rateLimiting.aiRateLimit || rateLimiting.apiRateLimit,
+    rateLimiting.aiRateLimit || rateLimiting.userRateLimit,
     WebsiteAIController.generarBloque
 );
 
@@ -586,7 +586,7 @@ router.post('/ai/generar-sitio',
     tenant.setTenantContext,
     modules.requireModule('website'),
     auth.requireRole(['admin']),
-    rateLimiting.aiRateLimit || rateLimiting.apiRateLimit,
+    rateLimiting.aiRateLimit || rateLimiting.userRateLimit,
     WebsiteAIController.generarSitio
 );
 
@@ -597,7 +597,7 @@ router.post('/ai/generar-sitio',
  */
 router.post('/ai/detectar-industria',
     auth.authenticateToken,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     WebsiteAIController.detectarIndustria
 );
 
@@ -611,7 +611,7 @@ router.post('/ai/generar-texto',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('website'),
-    rateLimiting.aiRateLimit || rateLimiting.apiRateLimit,
+    rateLimiting.aiRateLimit || rateLimiting.userRateLimit,
     WebsiteAIController.generarTextoConTono
 );
 
@@ -629,7 +629,7 @@ router.get('/analytics',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('website'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     WebsiteAnalyticsController.listarEventos
 );
 
@@ -643,7 +643,7 @@ router.get('/analytics/resumen',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('website'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     WebsiteAnalyticsController.obtenerResumen
 );
 
@@ -657,7 +657,7 @@ router.get('/analytics/paginas',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('website'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     WebsiteAnalyticsController.obtenerPaginasPopulares
 );
 
@@ -671,7 +671,7 @@ router.get('/analytics/tiempo-real',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('website'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     WebsiteAnalyticsController.obtenerTiempoReal
 );
 
@@ -689,7 +689,7 @@ router.get('/seo/auditoria',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('website'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     WebsiteSEOController.obtenerAuditoria
 );
 
@@ -703,7 +703,7 @@ router.get('/seo/preview-google',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('website'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     WebsiteSEOController.previewGoogle
 );
 
@@ -717,7 +717,7 @@ router.get('/seo/schema',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('website'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     WebsiteSEOController.obtenerSchema
 );
 
@@ -735,7 +735,7 @@ router.get('/versiones',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('website'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     WebsiteVersionesController.listar
 );
 
@@ -749,7 +749,7 @@ router.get('/versiones/comparar',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('website'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     WebsiteVersionesController.comparar
 );
 
@@ -763,7 +763,7 @@ router.get('/versiones/:id',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('website'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     WebsiteVersionesController.obtener
 );
 
@@ -777,7 +777,7 @@ router.get('/versiones/:id/preview',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('website'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     WebsiteVersionesController.obtenerPreview
 );
 
@@ -792,7 +792,7 @@ router.post('/versiones',
     tenant.setTenantContext,
     modules.requireModule('website'),
     auth.requireRole(['admin']),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     WebsiteVersionesController.crear
 );
 
@@ -807,7 +807,7 @@ router.post('/versiones/:id/restaurar',
     tenant.setTenantContext,
     modules.requireModule('website'),
     auth.requireRole(['admin']),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     WebsiteVersionesController.restaurar
 );
 
@@ -822,7 +822,7 @@ router.delete('/versiones/:id',
     tenant.setTenantContext,
     modules.requireModule('website'),
     auth.requireRole(['admin']),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     WebsiteVersionesController.eliminar
 );
 
@@ -837,7 +837,7 @@ router.delete('/versiones/:id',
  */
 router.get('/health',
     auth.authenticateToken,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     WebsiteHealthController.obtenerHealth
 );
 
@@ -848,7 +848,7 @@ router.get('/health',
  */
 router.get('/health/ping',
     auth.authenticateToken,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     WebsiteHealthController.ping
 );
 

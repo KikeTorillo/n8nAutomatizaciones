@@ -44,7 +44,7 @@ const {
 // Todas las rutas requieren autenticación
 router.use(auth.authenticateToken);
 router.use(tenant.setTenantContext);
-router.use(rateLimiting.apiRateLimit);
+router.use(rateLimiting.userRateLimit);
 
 // ====================================================================
 // RUTAS DE CONFIGURACIÓN

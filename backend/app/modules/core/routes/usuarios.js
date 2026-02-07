@@ -20,7 +20,7 @@ router.post('/',
 router.get('/',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(usuarioSchemas.listar),
     UsuarioController.listar
 );
@@ -28,7 +28,7 @@ router.get('/',
 router.get('/bloqueados',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(usuarioSchemas.obtenerBloqueados),
     UsuarioController.obtenerBloqueados
 );
@@ -37,7 +37,7 @@ router.get('/bloqueados',
 router.get('/profesionales-disponibles',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(usuarioSchemas.obtenerProfesionalesDisponibles),
     UsuarioController.obtenerProfesionalesDisponibles
 );
@@ -46,7 +46,7 @@ router.get('/profesionales-disponibles',
 router.get('/sin-profesional',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(usuarioSchemas.obtenerUsuariosSinProfesional),
     UsuarioController.obtenerUsuariosSinProfesional
 );
@@ -54,7 +54,7 @@ router.get('/sin-profesional',
 router.get('/:id',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(usuarioSchemas.obtenerPorId),
     UsuarioController.obtenerPorId
 );
@@ -62,7 +62,7 @@ router.get('/:id',
 router.get('/:id/bloqueo',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(usuarioSchemas.verificarBloqueo),
     UsuarioController.verificarBloqueo
 );
@@ -70,7 +70,7 @@ router.get('/:id/bloqueo',
 router.put('/:id',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(usuarioSchemas.actualizar),
     UsuarioController.actualizar
 );
@@ -129,7 +129,7 @@ router.patch('/:id/vincular-profesional',
 router.get('/:id/ubicaciones-disponibles',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(usuariosUbicacionesSchemas.ubicacionesDisponibles),
     UsuariosUbicacionesController.obtenerDisponibles
 );
@@ -138,7 +138,7 @@ router.get('/:id/ubicaciones-disponibles',
 router.get('/:id/ubicaciones',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(usuariosUbicacionesSchemas.listarUbicaciones),
     UsuariosUbicacionesController.obtenerUbicaciones
 );

@@ -24,7 +24,7 @@ const validate = validation.validate;
 const authMiddleware = [
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit
+    rateLimiting.userRateLimit
 ];
 
 // ===================================================================

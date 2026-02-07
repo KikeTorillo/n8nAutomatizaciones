@@ -18,7 +18,7 @@ const router = express.Router();
 router.get('/valoracion/configuracion',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     ValoracionController.obtenerConfiguracion
 );
 
@@ -31,7 +31,7 @@ router.put('/valoracion/configuracion',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     ValoracionController.actualizarConfiguracion
 );
 
@@ -42,7 +42,7 @@ router.put('/valoracion/configuracion',
 router.get('/valoracion/resumen',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     ValoracionController.resumen
 );
 
@@ -54,7 +54,7 @@ router.get('/valoracion/resumen',
 router.get('/valoracion/total',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     ValoracionController.valorTotal
 );
 
@@ -66,7 +66,7 @@ router.get('/valoracion/total',
 router.get('/valoracion/comparativa',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     ValoracionController.comparativa
 );
 
@@ -77,7 +77,7 @@ router.get('/valoracion/comparativa',
 router.get('/valoracion/reporte/categorias',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     ValoracionController.reportePorCategorias
 );
 
@@ -89,7 +89,7 @@ router.get('/valoracion/reporte/categorias',
 router.get('/valoracion/reporte/diferencias',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     ValoracionController.reporteDiferencias
 );
 
@@ -100,7 +100,7 @@ router.get('/valoracion/reporte/diferencias',
 router.get('/valoracion/producto/:id',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     ValoracionController.valorProducto
 );
 
@@ -111,7 +111,7 @@ router.get('/valoracion/producto/:id',
 router.get('/valoracion/producto/:id/fifo',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     ValoracionController.valorFIFO
 );
 
@@ -122,7 +122,7 @@ router.get('/valoracion/producto/:id/fifo',
 router.get('/valoracion/producto/:id/avco',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     ValoracionController.valorAVCO
 );
 
@@ -133,7 +133,7 @@ router.get('/valoracion/producto/:id/avco',
 router.get('/valoracion/producto/:id/capas',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     ValoracionController.capasProducto
 );
 

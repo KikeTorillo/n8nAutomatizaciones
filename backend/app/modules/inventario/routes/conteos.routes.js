@@ -20,7 +20,7 @@ const validate = validation.validate;
 router.get('/conteos/estadisticas',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.estadisticasConteos),
     ConteosController.obtenerEstadisticas
 );
@@ -34,7 +34,7 @@ router.post('/conteos',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.crearConteo),
     ConteosController.crear
 );
@@ -46,7 +46,7 @@ router.post('/conteos',
 router.get('/conteos/:id/buscar-item',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.buscarItemConteo),
     ConteosController.buscarItem
 );
@@ -58,7 +58,7 @@ router.get('/conteos/:id/buscar-item',
 router.get('/conteos/:id',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.obtenerConteoPorId),
     ConteosController.obtenerPorId
 );
@@ -70,7 +70,7 @@ router.get('/conteos/:id',
 router.get('/conteos',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.listarConteos),
     ConteosController.listar
 );
@@ -84,7 +84,7 @@ router.post('/conteos/:id/iniciar',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.iniciarConteo),
     ConteosController.iniciar
 );
@@ -98,7 +98,7 @@ router.put('/conteos/items/:itemId',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.registrarConteoItem),
     ConteosController.registrarConteo
 );
@@ -112,7 +112,7 @@ router.post('/conteos/:id/completar',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.completarConteo),
     ConteosController.completar
 );
@@ -126,7 +126,7 @@ router.post('/conteos/:id/aplicar-ajustes',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.aplicarAjustesConteo),
     ConteosController.aplicarAjustes
 );
@@ -140,7 +140,7 @@ router.post('/conteos/:id/cancelar',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.cancelarConteo),
     ConteosController.cancelar
 );

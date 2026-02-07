@@ -45,7 +45,7 @@ const router = express.Router();
 router.get('/etapas',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     OportunidadController.listarEtapas
 );
 
@@ -56,7 +56,7 @@ router.get('/etapas',
 router.post('/etapas',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validateBody(oportunidadSchemas.etapaSchema),
     OportunidadController.crearEtapa
 );
@@ -68,7 +68,7 @@ router.post('/etapas',
 router.put('/etapas/reordenar',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validateBody(oportunidadSchemas.reordenarEtapasSchema),
     OportunidadController.reordenarEtapas
 );
@@ -80,7 +80,7 @@ router.put('/etapas/reordenar',
 router.put('/etapas/:etapaId',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validateBody(oportunidadSchemas.actualizarEtapaSchema),
     OportunidadController.actualizarEtapa
 );
@@ -92,7 +92,7 @@ router.put('/etapas/:etapaId',
 router.delete('/etapas/:etapaId',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     OportunidadController.eliminarEtapa
 );
 
@@ -107,7 +107,7 @@ router.delete('/etapas/:etapaId',
 router.get('/pipeline',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     OportunidadController.obtenerPipeline
 );
 
@@ -118,7 +118,7 @@ router.get('/pipeline',
 router.get('/estadisticas',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     OportunidadController.obtenerEstadisticasPipeline
 );
 
@@ -129,7 +129,7 @@ router.get('/estadisticas',
 router.get('/pronostico',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validateQuery(oportunidadSchemas.pronosticoQuerySchema),
     OportunidadController.obtenerPronostico
 );
@@ -145,7 +145,7 @@ router.get('/pronostico',
 router.get('/',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validateQuery(oportunidadSchemas.listarOportunidadesQuerySchema),
     OportunidadController.listar
 );
@@ -157,7 +157,7 @@ router.get('/',
 router.post('/',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validateBody(oportunidadSchemas.oportunidadSchema),
     OportunidadController.crear
 );
@@ -169,7 +169,7 @@ router.post('/',
 router.get('/:oportunidadId',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     OportunidadController.obtenerPorId
 );
 
@@ -180,7 +180,7 @@ router.get('/:oportunidadId',
 router.put('/:oportunidadId',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validateBody(oportunidadSchemas.actualizarOportunidadSchema),
     OportunidadController.actualizar
 );
@@ -192,7 +192,7 @@ router.put('/:oportunidadId',
 router.delete('/:oportunidadId',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     OportunidadController.eliminar
 );
 
@@ -203,7 +203,7 @@ router.delete('/:oportunidadId',
 router.patch('/:oportunidadId/mover',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validateBody(oportunidadSchemas.moverOportunidadSchema),
     OportunidadController.moverAEtapa
 );
@@ -215,7 +215,7 @@ router.patch('/:oportunidadId/mover',
 router.patch('/:oportunidadId/ganar',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     OportunidadController.marcarGanada
 );
 
@@ -226,7 +226,7 @@ router.patch('/:oportunidadId/ganar',
 router.patch('/:oportunidadId/perder',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validateBody(oportunidadSchemas.marcarPerdidaSchema),
     OportunidadController.marcarPerdida
 );

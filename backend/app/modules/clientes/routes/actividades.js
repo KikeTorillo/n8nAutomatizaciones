@@ -37,7 +37,7 @@ const router = express.Router({ mergeParams: true }); // Para acceder a :cliente
 router.get('/',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(actividadSchemas.listar),
     ActividadClienteController.listar
 );
@@ -49,7 +49,7 @@ router.get('/',
 router.get('/timeline',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(actividadSchemas.timeline),
     ActividadClienteController.obtenerTimeline
 );
@@ -61,7 +61,7 @@ router.get('/timeline',
 router.get('/conteo',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(actividadSchemas.conteo),
     ActividadClienteController.contarActividades
 );
@@ -77,7 +77,7 @@ router.get('/conteo',
 router.post('/',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(actividadSchemas.crear),
     ActividadClienteController.crear
 );
@@ -89,7 +89,7 @@ router.post('/',
 router.get('/:actividadId',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(actividadSchemas.obtenerPorId),
     ActividadClienteController.obtenerPorId
 );
@@ -101,7 +101,7 @@ router.get('/:actividadId',
 router.put('/:actividadId',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(actividadSchemas.actualizar),
     ActividadClienteController.actualizar
 );
@@ -113,7 +113,7 @@ router.put('/:actividadId',
 router.delete('/:actividadId',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(actividadSchemas.eliminar),
     ActividadClienteController.eliminar
 );
@@ -125,7 +125,7 @@ router.delete('/:actividadId',
 router.patch('/:actividadId/completar',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(actividadSchemas.marcarCompletada),
     ActividadClienteController.marcarCompletada
 );

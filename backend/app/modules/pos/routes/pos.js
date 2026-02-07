@@ -32,7 +32,7 @@ const router = express.Router();
 router.get('/config/tipos-venta',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     POSController.obtenerTiposVenta
 );
 const validate = validation.validate;

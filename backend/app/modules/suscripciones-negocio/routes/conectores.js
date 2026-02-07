@@ -64,7 +64,7 @@ router.post('/',
     auth.authenticateToken,
     tenant.setTenantContext,
     auth.requireRole(['super_admin', 'admin']),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(conectoresSchemas.crear),
     ConectoresController.crear
 );
@@ -78,7 +78,7 @@ router.put('/:id',
     auth.authenticateToken,
     tenant.setTenantContext,
     auth.requireRole(['super_admin', 'admin']),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(conectoresSchemas.actualizar),
     ConectoresController.actualizar
 );
@@ -92,7 +92,7 @@ router.delete('/:id',
     auth.authenticateToken,
     tenant.setTenantContext,
     auth.requireRole(['super_admin', 'admin']),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(conectoresSchemas.porId),
     ConectoresController.eliminar
 );
@@ -106,7 +106,7 @@ router.post('/:id/verificar',
     auth.authenticateToken,
     tenant.setTenantContext,
     auth.requireRole(['super_admin', 'admin']),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(conectoresSchemas.verificar),
     ConectoresController.verificarConectividad
 );

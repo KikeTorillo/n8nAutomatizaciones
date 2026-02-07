@@ -18,7 +18,7 @@ const router = express.Router();
 router.get('/plantillas',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(schemas.listarPlantillas),
     OnboardingController.listarPlantillas
 );
@@ -29,7 +29,7 @@ router.post('/plantillas',
     tenant.setTenantContext,
     tenant.verifyTenantActive,
     auth.requireAdminRole,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(schemas.crearPlantilla),
     OnboardingController.crearPlantilla
 );
@@ -38,7 +38,7 @@ router.post('/plantillas',
 router.get('/plantillas/sugeridas/:profesionalId',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(schemas.plantillasSugeridas),
     OnboardingController.obtenerPlantillasSugeridas
 );
@@ -47,7 +47,7 @@ router.get('/plantillas/sugeridas/:profesionalId',
 router.get('/plantillas/:id',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(schemas.obtenerPlantilla),
     OnboardingController.obtenerPlantilla
 );
@@ -58,7 +58,7 @@ router.put('/plantillas/:id',
     tenant.setTenantContext,
     tenant.verifyTenantActive,
     auth.requireAdminRole,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(schemas.actualizarPlantilla),
     OnboardingController.actualizarPlantilla
 );
@@ -69,7 +69,7 @@ router.delete('/plantillas/:id',
     tenant.setTenantContext,
     tenant.verifyTenantActive,
     auth.requireAdminRole,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(schemas.eliminarPlantilla),
     OnboardingController.eliminarPlantilla
 );
@@ -82,7 +82,7 @@ router.post('/plantillas/:id/tareas',
     tenant.setTenantContext,
     tenant.verifyTenantActive,
     auth.requireAdminRole,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(schemas.crearTarea),
     OnboardingController.crearTarea
 );
@@ -93,7 +93,7 @@ router.patch('/plantillas/:id/tareas/reordenar',
     tenant.setTenantContext,
     tenant.verifyTenantActive,
     auth.requireAdminRole,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(schemas.reordenarTareas),
     OnboardingController.reordenarTareas
 );
@@ -104,7 +104,7 @@ router.put('/tareas/:tareaId',
     tenant.setTenantContext,
     tenant.verifyTenantActive,
     auth.requireAdminRole,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(schemas.actualizarTarea),
     OnboardingController.actualizarTarea
 );
@@ -115,7 +115,7 @@ router.delete('/tareas/:tareaId',
     tenant.setTenantContext,
     tenant.verifyTenantActive,
     auth.requireAdminRole,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(schemas.eliminarTarea),
     OnboardingController.eliminarTarea
 );
@@ -126,7 +126,7 @@ router.delete('/tareas/:tareaId',
 router.get('/dashboard',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(schemas.obtenerDashboard),
     OnboardingController.obtenerDashboard
 );
@@ -135,7 +135,7 @@ router.get('/dashboard',
 router.get('/vencidas',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(schemas.obtenerTareasVencidas),
     OnboardingController.obtenerTareasVencidas
 );

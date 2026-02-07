@@ -9,7 +9,7 @@ const router = express.Router();
 
 // ========== Rutas de Búsqueda ==========
 router.get('/buscar',
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     auth.authenticateToken,
     tenant.setTenantContext,
     validation.validate(servicioSchemas.buscar),
@@ -17,7 +17,7 @@ router.get('/buscar',
 );
 
 router.get('/estadisticas',
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     auth.authenticateToken,
     tenant.setTenantContext,
     validation.validate(servicioSchemas.obtenerEstadisticas),
@@ -25,7 +25,7 @@ router.get('/estadisticas',
 );
 
 router.get('/estadisticas/asignaciones',
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     auth.authenticateToken,
     tenant.setTenantContext,
     (req, res, next) => ServicioController.obtenerEstadisticasAsignaciones(req, res, next)
@@ -42,7 +42,7 @@ router.post('/desde-plantilla',
 
 // ========== Rutas Servicios-Profesionales ==========
 router.get('/profesionales/:profesional_id/servicios',
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     auth.authenticateToken,
     tenant.setTenantContext,
     validation.validate(servicioSchemas.obtenerServiciosPorProfesional),
@@ -50,7 +50,7 @@ router.get('/profesionales/:profesional_id/servicios',
 );
 
 router.post('/:id/profesionales',
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     auth.authenticateToken,
     tenant.setTenantContext,
     validation.validate(servicioSchemas.asignarProfesional),
@@ -58,7 +58,7 @@ router.post('/:id/profesionales',
 );
 
 router.get('/:id/profesionales',
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     auth.authenticateToken,
     tenant.setTenantContext,
     validation.validate(servicioSchemas.obtenerProfesionales),
@@ -66,7 +66,7 @@ router.get('/:id/profesionales',
 );
 
 router.delete('/:id/profesionales/:profesional_id',
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     auth.authenticateToken,
     tenant.setTenantContext,
     validation.validate(servicioSchemas.desasignarProfesional),
@@ -76,7 +76,7 @@ router.delete('/:id/profesionales/:profesional_id',
 // ========== Rutas Round-Robin (Ene 2026) ==========
 // GET /api/v1/servicios/:id/profesionales/orden - Obtener profesionales con orden de rotación
 router.get('/:id/profesionales/orden',
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     auth.authenticateToken,
     tenant.setTenantContext,
     validation.validate(servicioSchemas.obtenerProfesionalesConOrden),
@@ -85,7 +85,7 @@ router.get('/:id/profesionales/orden',
 
 // PUT /api/v1/servicios/:id/profesionales/orden - Actualizar orden de rotación
 router.put('/:id/profesionales/orden',
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     auth.authenticateToken,
     tenant.setTenantContext,
     tenant.verifyTenantActive,
@@ -109,7 +109,7 @@ router.post('/bulk-create',
 
 // ========== Rutas CRUD Estándar ==========
 router.post('/',
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     auth.authenticateToken,
     tenant.setTenantContext,
     tenant.verifyTenantActive,
@@ -118,7 +118,7 @@ router.post('/',
 );
 
 router.get('/:id',
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     auth.authenticateToken,
     tenant.setTenantContext,
     validation.validate(servicioSchemas.obtenerPorId),
@@ -126,7 +126,7 @@ router.get('/:id',
 );
 
 router.get('/',
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     auth.authenticateToken,
     tenant.setTenantContext,
     validation.validate(servicioSchemas.listar),

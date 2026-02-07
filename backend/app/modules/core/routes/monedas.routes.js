@@ -22,7 +22,7 @@ const router = express.Router();
  * Listar monedas disponibles (público)
  */
 router.get('/',
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     MonedasController.listar
 );
 
@@ -31,7 +31,7 @@ router.get('/',
  * Obtener moneda por código (público)
  */
 router.get('/:codigo',
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     MonedasController.obtenerPorCodigo
 );
 
@@ -46,7 +46,7 @@ router.get('/:codigo',
 router.get('/tasas/actual',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     MonedasController.obtenerTasa
 );
 
@@ -57,7 +57,7 @@ router.get('/tasas/actual',
 router.get('/tasas/historial',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     MonedasController.obtenerHistorialTasas
 );
 
@@ -69,7 +69,7 @@ router.post('/tasas',
     auth.authenticateToken,
     tenant.setTenantContext,
     auth.requireRole(['admin', 'super_admin']),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     MonedasController.guardarTasa
 );
 
@@ -80,7 +80,7 @@ router.post('/tasas',
 router.post('/convertir',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     MonedasController.convertir
 );
 
@@ -91,7 +91,7 @@ router.post('/convertir',
 router.post('/convertir/multiple',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     MonedasController.convertirMultiple
 );
 

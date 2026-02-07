@@ -19,7 +19,7 @@ router.get('/batch-picking',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('inventario'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     BatchPickingController.listar
 );
 
@@ -31,7 +31,7 @@ router.get('/batch-picking/pendientes/:sucursalId',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('inventario'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     BatchPickingController.obtenerPendientes
 );
 
@@ -43,7 +43,7 @@ router.get('/batch-picking/operaciones-disponibles/:sucursalId',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('inventario'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     BatchPickingController.obtenerOperacionesDisponibles
 );
 
@@ -55,7 +55,7 @@ router.get('/batch-picking/:id',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('inventario'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     BatchPickingController.obtenerPorId
 );
 
@@ -67,7 +67,7 @@ router.get('/batch-picking/:id/lista-consolidada',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('inventario'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     BatchPickingController.obtenerListaConsolidada
 );
 
@@ -79,7 +79,7 @@ router.get('/batch-picking/:id/estadisticas',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('inventario'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     BatchPickingController.obtenerEstadisticas
 );
 
@@ -92,7 +92,7 @@ router.post('/batch-picking',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     BatchPickingController.crear
 );
 
@@ -105,7 +105,7 @@ router.put('/batch-picking/:id',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     BatchPickingController.actualizar
 );
 
@@ -118,7 +118,7 @@ router.delete('/batch-picking/:id',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     BatchPickingController.eliminar
 );
 
@@ -131,7 +131,7 @@ router.post('/batch-picking/:id/operaciones',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     BatchPickingController.agregarOperacion
 );
 
@@ -144,7 +144,7 @@ router.delete('/batch-picking/:id/operaciones/:operacionId',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     BatchPickingController.quitarOperacion
 );
 
@@ -157,7 +157,7 @@ router.post('/batch-picking/:id/iniciar',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     BatchPickingController.iniciar
 );
 
@@ -170,7 +170,7 @@ router.post('/batch-picking/:id/procesar-item',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     BatchPickingController.procesarItem
 );
 
@@ -183,7 +183,7 @@ router.post('/batch-picking/:id/completar',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     BatchPickingController.completar
 );
 
@@ -196,7 +196,7 @@ router.post('/batch-picking/:id/cancelar',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     BatchPickingController.cancelar
 );
 

@@ -33,7 +33,7 @@ const validate = validation.validate;
 router.get('/dashboard',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(comisionesSchemas.metricasDashboard),
     ComisionesController.metricasDashboard
 );
@@ -46,7 +46,7 @@ router.get('/dashboard',
 router.get('/estadisticas',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(comisionesSchemas.metricasDashboard),
     ComisionesController.estadisticasBasicas
 );
@@ -62,7 +62,7 @@ router.get('/estadisticas',
 router.get('/grafica/por-dia',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(comisionesSchemas.graficaPorDia),
     ComisionesController.graficaPorDia
 );
@@ -85,7 +85,7 @@ router.get('/grafica/por-dia',
 router.get('/reporte',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(comisionesSchemas.generarReporte),
     ComisionesController.generarReporte
 );
@@ -104,7 +104,7 @@ router.get('/reporte',
 router.get('/configuracion/historial',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     ComisionesController.obtenerHistorialConfiguracion
 );
 
@@ -124,7 +124,7 @@ router.post('/configuracion',
     tenant.setTenantContext,
     modules.requireModule('comisiones'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(comisionesSchemas.crearConfiguracion),
     ComisionesController.crearOActualizarConfiguracion
 );
@@ -141,7 +141,7 @@ router.post('/configuracion',
 router.get('/configuracion',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(comisionesSchemas.listarConfiguracion),
     ComisionesController.listarConfiguracion
 );
@@ -155,7 +155,7 @@ router.delete('/configuracion/:id',
     tenant.setTenantContext,
     modules.requireModule('comisiones'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(comisionesSchemas.eliminarConfiguracion),
     ComisionesController.eliminarConfiguracion
 );
@@ -179,7 +179,7 @@ router.delete('/configuracion/:id',
 router.get('/profesional/:id',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(comisionesSchemas.listarPorProfesional),
     ComisionesController.listarPorProfesional
 );
@@ -196,7 +196,7 @@ router.get('/profesional/:id',
 router.get('/periodo',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(comisionesSchemas.consultarPorPeriodo),
     ComisionesController.consultarPorPeriodo
 );
@@ -219,7 +219,7 @@ router.patch('/:id/pagar',
     tenant.setTenantContext,
     modules.requireModule('comisiones'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(comisionesSchemas.marcarComoPagada),
     ComisionesController.marcarComoPagada
 );
@@ -231,7 +231,7 @@ router.patch('/:id/pagar',
 router.get('/:id',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     ComisionesController.obtenerComisionPorId
 );
 

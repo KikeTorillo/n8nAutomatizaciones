@@ -19,7 +19,7 @@ router.get('/operaciones',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('inventario'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     OperacionesAlmacenController.listar
 );
 
@@ -31,7 +31,7 @@ router.get('/operaciones/pendientes/:sucursalId',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('inventario'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     OperacionesAlmacenController.obtenerPendientes
 );
 
@@ -43,7 +43,7 @@ router.get('/operaciones/estadisticas/:sucursalId',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('inventario'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     OperacionesAlmacenController.obtenerEstadisticas
 );
 
@@ -55,7 +55,7 @@ router.get('/operaciones/kanban/:sucursalId',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('inventario'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     OperacionesAlmacenController.obtenerResumenKanban
 );
 
@@ -67,7 +67,7 @@ router.get('/operaciones/:id',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('inventario'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     OperacionesAlmacenController.obtenerPorId
 );
 
@@ -79,7 +79,7 @@ router.get('/operaciones/:id/cadena',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('inventario'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     OperacionesAlmacenController.obtenerCadena
 );
 
@@ -92,7 +92,7 @@ router.post('/operaciones',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     OperacionesAlmacenController.crear
 );
 
@@ -105,7 +105,7 @@ router.put('/operaciones/:id',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     OperacionesAlmacenController.actualizar
 );
 
@@ -118,7 +118,7 @@ router.post('/operaciones/:id/asignar',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     OperacionesAlmacenController.asignar
 );
 
@@ -131,7 +131,7 @@ router.post('/operaciones/:id/iniciar',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     OperacionesAlmacenController.iniciar
 );
 
@@ -144,7 +144,7 @@ router.post('/operaciones/:id/completar',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     OperacionesAlmacenController.completar
 );
 
@@ -157,7 +157,7 @@ router.post('/operaciones/:id/cancelar',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     OperacionesAlmacenController.cancelar
 );
 
@@ -170,7 +170,7 @@ router.post('/operaciones/items/:itemId/procesar',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     OperacionesAlmacenController.procesarItem
 );
 
@@ -183,7 +183,7 @@ router.post('/operaciones/items/:itemId/cancelar',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     OperacionesAlmacenController.cancelarItem
 );
 

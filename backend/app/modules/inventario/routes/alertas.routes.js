@@ -19,7 +19,7 @@ const validate = validation.validate;
 router.get('/alertas/dashboard',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     InventarioController.obtenerDashboardAlertas
 );
 
@@ -32,7 +32,7 @@ router.patch('/alertas/marcar-varias-leidas',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.marcarVariasAlertasLeidas),
     InventarioController.marcarVariasAlertasLeidas
 );
@@ -44,7 +44,7 @@ router.patch('/alertas/marcar-varias-leidas',
 router.get('/alertas/:id',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.obtenerPorId),
     InventarioController.obtenerAlertaPorId
 );
@@ -58,7 +58,7 @@ router.patch('/alertas/:id/marcar-leida',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.obtenerPorId),
     InventarioController.marcarAlertaLeida
 );
@@ -70,7 +70,7 @@ router.patch('/alertas/:id/marcar-leida',
 router.get('/alertas',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.listarAlertas),
     InventarioController.listarAlertas
 );

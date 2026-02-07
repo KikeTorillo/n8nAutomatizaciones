@@ -23,7 +23,7 @@ router.post('/rutas-operacion/init',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('inventario'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     RutasOperacionController.crearRutasDefault
 );
 
@@ -34,7 +34,7 @@ router.post('/rutas-operacion/init',
 router.get('/rutas-operacion',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     RutasOperacionController.listarRutas
 );
 
@@ -46,7 +46,7 @@ router.post('/rutas-operacion',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('inventario'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     RutasOperacionController.crearRuta
 );
 
@@ -57,7 +57,7 @@ router.post('/rutas-operacion',
 router.get('/rutas-operacion/:id',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     RutasOperacionController.obtenerRuta
 );
 
@@ -69,7 +69,7 @@ router.put('/rutas-operacion/:id',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('inventario'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     RutasOperacionController.actualizarRuta
 );
 
@@ -81,7 +81,7 @@ router.delete('/rutas-operacion/:id',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('inventario'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     RutasOperacionController.eliminarRuta
 );
 
@@ -96,7 +96,7 @@ router.delete('/rutas-operacion/:id',
 router.get('/productos/:productoId/rutas',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     RutasOperacionController.obtenerRutasDeProducto
 );
 
@@ -108,7 +108,7 @@ router.post('/productos/:productoId/rutas',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('inventario'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     RutasOperacionController.asignarRutaAProducto
 );
 
@@ -120,7 +120,7 @@ router.delete('/productos/:productoId/rutas/:rutaId',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('inventario'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     RutasOperacionController.quitarRutaDeProducto
 );
 
@@ -131,7 +131,7 @@ router.delete('/productos/:productoId/rutas/:rutaId',
 router.get('/productos/:productoId/determinar-ruta',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     RutasOperacionController.determinarRutaReabastecimiento
 );
 
@@ -146,7 +146,7 @@ router.get('/productos/:productoId/determinar-ruta',
 router.get('/reglas-reabastecimiento',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     RutasOperacionController.listarReglas
 );
 
@@ -158,7 +158,7 @@ router.post('/reglas-reabastecimiento',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('inventario'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     RutasOperacionController.crearRegla
 );
 
@@ -169,7 +169,7 @@ router.post('/reglas-reabastecimiento',
 router.get('/reglas-reabastecimiento/:id',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     RutasOperacionController.obtenerRegla
 );
 
@@ -181,7 +181,7 @@ router.put('/reglas-reabastecimiento/:id',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('inventario'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     RutasOperacionController.actualizarRegla
 );
 
@@ -193,7 +193,7 @@ router.delete('/reglas-reabastecimiento/:id',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('inventario'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     RutasOperacionController.eliminarRegla
 );
 
@@ -208,7 +208,7 @@ router.delete('/reglas-reabastecimiento/:id',
 router.get('/transferencias',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     RutasOperacionController.listarSolicitudesTransferencia
 );
 
@@ -220,7 +220,7 @@ router.post('/transferencias',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('inventario'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     RutasOperacionController.crearSolicitudTransferencia
 );
 
@@ -231,7 +231,7 @@ router.post('/transferencias',
 router.get('/transferencias/:id',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     RutasOperacionController.obtenerSolicitudTransferencia
 );
 
@@ -243,7 +243,7 @@ router.post('/transferencias/:id/aprobar',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('inventario'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     RutasOperacionController.aprobarSolicitud
 );
 
@@ -255,7 +255,7 @@ router.post('/transferencias/:id/rechazar',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('inventario'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     RutasOperacionController.rechazarSolicitud
 );
 
@@ -267,7 +267,7 @@ router.post('/transferencias/:id/enviar',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('inventario'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     RutasOperacionController.enviarTransferencia
 );
 
@@ -279,7 +279,7 @@ router.post('/transferencias/:id/recibir',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('inventario'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     RutasOperacionController.recibirTransferencia
 );
 

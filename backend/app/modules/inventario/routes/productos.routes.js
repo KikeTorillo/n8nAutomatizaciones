@@ -23,7 +23,7 @@ router.post('/productos',
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
     verificarPermiso('inventario.crear_productos'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.crearProducto),
     InventarioController.crearProducto
 );
@@ -39,7 +39,7 @@ router.post('/productos/bulk',
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
     verificarPermiso('inventario.crear_productos'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.bulkCrearProductos),
     InventarioController.bulkCrearProductos
 );
@@ -52,7 +52,7 @@ router.post('/productos/bulk',
 router.get('/productos/buscar',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.buscarProductos),
     InventarioController.buscarProductos
 );
@@ -64,7 +64,7 @@ router.get('/productos/buscar',
 router.get('/productos/stock-critico',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.obtenerStockCritico),
     InventarioController.obtenerStockCritico
 );
@@ -77,7 +77,7 @@ router.get('/productos/stock-critico',
 router.get('/productos/stock-filtrado',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.listarProductosStockFiltrado),
     InventarioController.listarConStockFiltrado
 );
@@ -89,7 +89,7 @@ router.get('/productos/stock-filtrado',
 router.post('/productos/stock-disponible',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.stockDisponibleMultiple),
     InventarioController.stockDisponibleMultiple
 );
@@ -101,7 +101,7 @@ router.post('/productos/stock-disponible',
 router.get('/productos/:id',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.obtenerPorId),
     InventarioController.obtenerProductoPorId
 );
@@ -113,7 +113,7 @@ router.get('/productos/:id',
 router.get('/productos',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.listarProductos),
     InventarioController.listarProductos
 );
@@ -128,7 +128,7 @@ router.put('/productos/:id',
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
     verificarPermiso('inventario.editar_productos'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.actualizarProducto),
     InventarioController.actualizarProducto
 );
@@ -145,7 +145,7 @@ router.patch('/productos/:id/stock',
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
     verificarPermiso('inventario.ajustar_stock'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.ajustarStock),
     InventarioController.ajustarStockProducto
 );
@@ -157,7 +157,7 @@ router.patch('/productos/:id/stock',
 router.get('/productos/:id/stock-disponible',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.stockDisponible),
     InventarioController.stockDisponible
 );
@@ -170,7 +170,7 @@ router.get('/productos/:id/stock-disponible',
 router.get('/productos/:id/stock-ubicaciones',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.obtenerStockUbicaciones),
     InventarioController.obtenerStockPorUbicacion
 );
@@ -182,7 +182,7 @@ router.get('/productos/:id/stock-ubicaciones',
 router.get('/productos/:id/mi-stock',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.obtenerPorId),
     InventarioController.obtenerMiStock
 );
@@ -194,7 +194,7 @@ router.get('/productos/:id/mi-stock',
 router.get('/productos/:id/verificar-disponibilidad',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.verificarDisponibilidad),
     InventarioController.verificarDisponibilidad
 );
@@ -209,7 +209,7 @@ router.delete('/productos/:id',
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
     verificarPermiso('inventario.eliminar_productos'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.obtenerPorId),
     InventarioController.eliminarProducto
 );

@@ -21,7 +21,7 @@ router.get('/dropship/estadisticas',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('inventario'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     DropshipController.obtenerEstadisticas
 );
 
@@ -33,7 +33,7 @@ router.get('/dropship/configuracion',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('inventario'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     DropshipController.obtenerConfiguracion
 );
 
@@ -46,7 +46,7 @@ router.patch('/dropship/configuracion',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.actualizarConfigDropship),
     DropshipController.actualizarConfiguracion
 );
@@ -59,7 +59,7 @@ router.get('/dropship/pendientes',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('inventario'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     DropshipController.obtenerVentasPendientes
 );
 
@@ -72,7 +72,7 @@ router.post('/dropship/desde-venta/:ventaId',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     DropshipController.crearDesdeVenta
 );
 
@@ -84,7 +84,7 @@ router.get('/dropship/ordenes',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('inventario'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     DropshipController.listarOrdenes
 );
 
@@ -96,7 +96,7 @@ router.get('/dropship/ordenes/:id',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('inventario'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     DropshipController.obtenerOrden
 );
 
@@ -109,7 +109,7 @@ router.patch('/dropship/ordenes/:id/confirmar-entrega',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     DropshipController.confirmarEntrega
 );
 
@@ -122,7 +122,7 @@ router.patch('/dropship/ordenes/:id/cancelar',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     DropshipController.cancelar
 );
 

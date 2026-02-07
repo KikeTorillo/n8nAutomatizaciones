@@ -12,7 +12,7 @@ const InvitacionController = require('../../../modules/core/controllers/invitaci
 const { authenticateToken, requireRole } = require('../../../middleware/auth');
 const { setTenantContext } = require('../../../middleware/tenant');
 const { validate } = require('../../../middleware/validation');
-const { apiRateLimit } = require('../../../middleware/rateLimiting');
+const { apiRateLimit, userRateLimit } = require('../../../middleware/rateLimiting');
 const invitacionSchemas = require('../../../schemas/invitacion.schemas');
 
 // ====================================================================
@@ -54,7 +54,7 @@ router.post('/',
     authenticateToken,
     setTenantContext,
     requireRole(['admin']),
-    apiRateLimit,
+    userRateLimit,
     validate(invitacionSchemas.crear),
     InvitacionController.crear
 );
@@ -68,7 +68,7 @@ router.get('/',
     authenticateToken,
     setTenantContext,
     requireRole(['admin']),
-    apiRateLimit,
+    userRateLimit,
     validate(invitacionSchemas.listar),
     InvitacionController.listar
 );
@@ -82,7 +82,7 @@ router.get('/profesional/:profesionalId',
     authenticateToken,
     setTenantContext,
     requireRole(['admin']),
-    apiRateLimit,
+    userRateLimit,
     validate(invitacionSchemas.obtenerPorProfesional),
     InvitacionController.obtenerPorProfesional
 );
@@ -96,7 +96,7 @@ router.post('/:id/reenviar',
     authenticateToken,
     setTenantContext,
     requireRole(['admin']),
-    apiRateLimit,
+    userRateLimit,
     validate(invitacionSchemas.reenviar),
     InvitacionController.reenviar
 );
@@ -110,7 +110,7 @@ router.delete('/:id',
     authenticateToken,
     setTenantContext,
     requireRole(['admin']),
-    apiRateLimit,
+    userRateLimit,
     validate(invitacionSchemas.cancelar),
     InvitacionController.cancelar
 );

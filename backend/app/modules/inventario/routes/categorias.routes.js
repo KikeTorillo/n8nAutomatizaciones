@@ -21,7 +21,7 @@ router.post('/categorias',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.crearCategoria),
     InventarioController.crearCategoria
 );
@@ -33,7 +33,7 @@ router.post('/categorias',
 router.get('/categorias/arbol',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     InventarioController.obtenerArbolCategorias
 );
 
@@ -44,7 +44,7 @@ router.get('/categorias/arbol',
 router.get('/categorias/:id',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.obtenerPorId),
     InventarioController.obtenerCategoriaPorId
 );
@@ -56,7 +56,7 @@ router.get('/categorias/:id',
 router.get('/categorias',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.listarCategorias),
     InventarioController.listarCategorias
 );
@@ -70,7 +70,7 @@ router.put('/categorias/:id',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.actualizarCategoria),
     InventarioController.actualizarCategoria
 );
@@ -84,7 +84,7 @@ router.delete('/categorias/:id',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.obtenerPorId),
     InventarioController.eliminarCategoria
 );

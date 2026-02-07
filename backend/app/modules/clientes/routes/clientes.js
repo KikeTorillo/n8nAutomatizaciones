@@ -37,7 +37,7 @@ const router = express.Router();
 router.post('/',
     ...composed.requireFullAuth,
     verificarPermiso('clientes.crear'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(clienteSchemas.crear),
     ClienteController.crear
 );
@@ -48,7 +48,7 @@ router.post('/',
  */
 router.get('/',
     ...composed.requireFullAuth,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(clienteSchemas.listar),
     ClienteController.listar
 );
@@ -64,7 +64,7 @@ router.get('/',
 router.get('/estadisticas',
     ...composed.requireFullAuth,
     verificarPermiso('clientes.ver_historial'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(clienteSchemas.obtenerEstadisticas),
     ClienteController.obtenerEstadisticas
 );
@@ -75,7 +75,7 @@ router.get('/estadisticas',
  */
 router.get('/buscar-telefono',
     ...composed.requireFullAuth,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(clienteSchemas.buscarPorTelefono),
     ClienteController.buscarPorTelefono
 );
@@ -86,7 +86,7 @@ router.get('/buscar-telefono',
  */
 router.get('/buscar-nombre',
     ...composed.requireFullAuth,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(clienteSchemas.buscarPorNombre),
     ClienteController.buscarPorNombre
 );
@@ -97,7 +97,7 @@ router.get('/buscar-nombre',
  */
 router.get('/buscar',
     ...composed.requireFullAuth,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(clienteSchemas.buscar),
     ClienteController.buscar
 );
@@ -110,7 +110,7 @@ router.post('/importar-csv',
     ...composed.requireFullAuth,
     verificarPermiso('clientes.crear'),
     auth.requireMinLevel(80),  // Mantener nivel alto para operaciones masivas
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(clienteSchemas.importarCSV),
     ClienteController.importarCSV
 );
@@ -126,7 +126,7 @@ router.post('/importar-csv',
  */
 router.get('/etiquetas',
     ...composed.requireFullAuth,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(etiquetaSchemas.listar),
     EtiquetaClienteController.listar
 );
@@ -138,7 +138,7 @@ router.get('/etiquetas',
 router.post('/etiquetas',
     ...composed.requireFullAuth,
     verificarPermiso('clientes.editar'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(etiquetaSchemas.crear),
     EtiquetaClienteController.crear
 );
@@ -149,7 +149,7 @@ router.post('/etiquetas',
  */
 router.get('/etiquetas/:etiquetaId',
     ...composed.requireFullAuth,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(etiquetaSchemas.obtenerPorId),
     EtiquetaClienteController.obtenerPorId
 );
@@ -161,7 +161,7 @@ router.get('/etiquetas/:etiquetaId',
 router.put('/etiquetas/:etiquetaId',
     ...composed.requireFullAuth,
     verificarPermiso('clientes.editar'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(etiquetaSchemas.actualizar),
     EtiquetaClienteController.actualizar
 );
@@ -173,7 +173,7 @@ router.put('/etiquetas/:etiquetaId',
 router.delete('/etiquetas/:etiquetaId',
     ...composed.requireFullAuth,
     verificarPermiso('clientes.eliminar'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(etiquetaSchemas.eliminar),
     EtiquetaClienteController.eliminar
 );
@@ -188,7 +188,7 @@ router.delete('/etiquetas/:etiquetaId',
  */
 router.get('/:id',
     ...composed.requireFullAuth,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(clienteSchemas.obtenerPorId),
     ClienteController.obtenerPorId
 );
@@ -199,7 +199,7 @@ router.get('/:id',
  */
 router.get('/:id/estadisticas',
     ...composed.requireFullAuth,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(clienteSchemas.obtenerEstadisticasCliente),
     ClienteController.obtenerEstadisticasCliente
 );
@@ -211,7 +211,7 @@ router.get('/:id/estadisticas',
 router.put('/:id',
     ...composed.requireFullAuth,
     verificarPermiso('clientes.editar'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(clienteSchemas.actualizar),
     ClienteController.actualizar
 );
@@ -223,7 +223,7 @@ router.put('/:id',
 router.patch('/:id/estado',
     ...composed.requireFullAuth,
     verificarPermiso('clientes.editar'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(clienteSchemas.cambiarEstado),
     ClienteController.cambiarEstado
 );
@@ -235,7 +235,7 @@ router.patch('/:id/estado',
 router.delete('/:id',
     ...composed.requireFullAuth,
     verificarPermiso('clientes.eliminar'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(clienteSchemas.eliminar),
     ClienteController.eliminar
 );
@@ -250,7 +250,7 @@ router.delete('/:id',
  */
 router.get('/:clienteId/etiquetas',
     ...composed.requireFullAuth,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(etiquetaSchemas.obtenerEtiquetasCliente),
     EtiquetaClienteController.obtenerEtiquetasCliente
 );
@@ -261,7 +261,7 @@ router.get('/:clienteId/etiquetas',
  */
 router.post('/:clienteId/etiquetas',
     ...composed.requireFullAuth,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(etiquetaSchemas.asignarEtiquetas),
     EtiquetaClienteController.asignarEtiquetas
 );
@@ -272,7 +272,7 @@ router.post('/:clienteId/etiquetas',
  */
 router.post('/:clienteId/etiquetas/:etiquetaId',
     ...composed.requireFullAuth,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(etiquetaSchemas.agregarEtiqueta),
     EtiquetaClienteController.agregarEtiqueta
 );
@@ -283,7 +283,7 @@ router.post('/:clienteId/etiquetas/:etiquetaId',
  */
 router.delete('/:clienteId/etiquetas/:etiquetaId',
     ...composed.requireFullAuth,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(etiquetaSchemas.quitarEtiqueta),
     EtiquetaClienteController.quitarEtiqueta
 );
@@ -298,7 +298,7 @@ router.delete('/:clienteId/etiquetas/:etiquetaId',
  */
 router.get('/:clienteId/actividades',
     ...composed.requireFullAuth,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(actividadSchemas.listar),
     ActividadClienteController.listar
 );
@@ -309,7 +309,7 @@ router.get('/:clienteId/actividades',
  */
 router.get('/:clienteId/timeline',
     ...composed.requireFullAuth,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(actividadSchemas.timeline),
     ActividadClienteController.obtenerTimeline
 );
@@ -320,7 +320,7 @@ router.get('/:clienteId/timeline',
  */
 router.get('/:clienteId/actividades/conteo',
     ...composed.requireFullAuth,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(actividadSchemas.conteo),
     ActividadClienteController.contarActividades
 );
@@ -331,7 +331,7 @@ router.get('/:clienteId/actividades/conteo',
  */
 router.post('/:clienteId/actividades',
     ...composed.requireFullAuth,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(actividadSchemas.crear),
     ActividadClienteController.crear
 );
@@ -342,7 +342,7 @@ router.post('/:clienteId/actividades',
  */
 router.get('/:clienteId/actividades/:actividadId',
     ...composed.requireFullAuth,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(actividadSchemas.obtenerPorId),
     ActividadClienteController.obtenerPorId
 );
@@ -353,7 +353,7 @@ router.get('/:clienteId/actividades/:actividadId',
  */
 router.put('/:clienteId/actividades/:actividadId',
     ...composed.requireFullAuth,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(actividadSchemas.actualizar),
     ActividadClienteController.actualizar
 );
@@ -364,7 +364,7 @@ router.put('/:clienteId/actividades/:actividadId',
  */
 router.delete('/:clienteId/actividades/:actividadId',
     ...composed.requireFullAuth,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(actividadSchemas.eliminar),
     ActividadClienteController.eliminar
 );
@@ -375,7 +375,7 @@ router.delete('/:clienteId/actividades/:actividadId',
  */
 router.patch('/:clienteId/actividades/:actividadId/completar',
     ...composed.requireFullAuth,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(actividadSchemas.marcarCompletada),
     ActividadClienteController.marcarCompletada
 );
@@ -391,7 +391,7 @@ router.patch('/:clienteId/actividades/:actividadId/completar',
  */
 router.get('/documentos/tipos',
     ...composed.requireFullAuth,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     DocumentoClienteController.obtenerTipos
 );
 
@@ -401,7 +401,7 @@ router.get('/documentos/tipos',
  */
 router.get('/documentos/por-vencer',
     ...composed.requireFullAuth,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(documentoSchemas.porVencer),
     DocumentoClienteController.listarPorVencer
 );
@@ -412,7 +412,7 @@ router.get('/documentos/por-vencer',
  */
 router.get('/:clienteId/documentos',
     ...composed.requireFullAuth,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(documentoSchemas.listar),
     DocumentoClienteController.listar
 );
@@ -423,7 +423,7 @@ router.get('/:clienteId/documentos',
  */
 router.get('/:clienteId/documentos/conteo',
     ...composed.requireFullAuth,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(documentoSchemas.conteo),
     DocumentoClienteController.contarDocumentos
 );
@@ -434,7 +434,7 @@ router.get('/:clienteId/documentos/conteo',
  */
 router.post('/:clienteId/documentos',
     ...composed.requireFullAuth,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     storage.createUploadSingle('archivo'),
     validation.validate(documentoSchemas.crear),
     DocumentoClienteController.crear
@@ -446,7 +446,7 @@ router.post('/:clienteId/documentos',
  */
 router.get('/:clienteId/documentos/:documentoId',
     ...composed.requireFullAuth,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(documentoSchemas.obtenerPorId),
     DocumentoClienteController.obtenerPorId
 );
@@ -457,7 +457,7 @@ router.get('/:clienteId/documentos/:documentoId',
  */
 router.get('/:clienteId/documentos/:documentoId/presigned',
     ...composed.requireFullAuth,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(documentoSchemas.presigned),
     DocumentoClienteController.obtenerPresigned
 );
@@ -468,7 +468,7 @@ router.get('/:clienteId/documentos/:documentoId/presigned',
  */
 router.put('/:clienteId/documentos/:documentoId',
     ...composed.requireFullAuth,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(documentoSchemas.actualizar),
     DocumentoClienteController.actualizar
 );
@@ -479,7 +479,7 @@ router.put('/:clienteId/documentos/:documentoId',
  */
 router.delete('/:clienteId/documentos/:documentoId',
     ...composed.requireFullAuth,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(documentoSchemas.eliminar),
     DocumentoClienteController.eliminar
 );
@@ -491,7 +491,7 @@ router.delete('/:clienteId/documentos/:documentoId',
 router.patch('/:clienteId/documentos/:documentoId/verificar',
     ...composed.requireFullAuth,
     verificarPermiso('clientes.editar'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(documentoSchemas.verificar),
     DocumentoClienteController.verificar
 );
@@ -502,7 +502,7 @@ router.patch('/:clienteId/documentos/:documentoId/verificar',
  */
 router.post('/:clienteId/documentos/:documentoId/archivo',
     ...composed.requireFullAuth,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     storage.createUploadSingle('archivo'),
     validation.validate(documentoSchemas.subirArchivo),
     DocumentoClienteController.subirArchivo
@@ -520,7 +520,7 @@ router.post('/:clienteId/documentos/:documentoId/archivo',
 router.get('/credito/con-saldo',
     ...composed.requireFullAuth,
     verificarPermiso('clientes.ver_historial'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     ClienteController.listarClientesConSaldo
 );
 
@@ -530,7 +530,7 @@ router.get('/credito/con-saldo',
  */
 router.get('/:id/credito',
     ...composed.requireFullAuth,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(clienteSchemas.obtenerPorId),
     ClienteController.obtenerEstadoCredito
 );
@@ -542,7 +542,7 @@ router.get('/:id/credito',
 router.patch('/:id/credito',
     ...composed.requireFullAuth,
     verificarPermiso('clientes.editar'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(clienteSchemas.actualizarCredito),
     ClienteController.actualizarConfigCredito
 );
@@ -554,7 +554,7 @@ router.patch('/:id/credito',
 router.post('/:id/credito/suspender',
     ...composed.requireFullAuth,
     verificarPermiso('clientes.editar'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(clienteSchemas.suspenderCredito),
     ClienteController.suspenderCredito
 );
@@ -566,7 +566,7 @@ router.post('/:id/credito/suspender',
 router.post('/:id/credito/reactivar',
     ...composed.requireFullAuth,
     verificarPermiso('clientes.editar'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(clienteSchemas.obtenerPorId),
     ClienteController.reactivarCredito
 );
@@ -578,7 +578,7 @@ router.post('/:id/credito/reactivar',
 router.post('/:id/credito/abono',
     ...composed.requireFullAuth,
     verificarPermiso('clientes.editar'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(clienteSchemas.registrarAbono),
     ClienteController.registrarAbono
 );
@@ -589,7 +589,7 @@ router.post('/:id/credito/abono',
  */
 router.get('/:id/credito/movimientos',
     ...composed.requireFullAuth,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(clienteSchemas.listarMovimientosCredito),
     ClienteController.listarMovimientosCredito
 );
@@ -604,7 +604,7 @@ router.get('/:id/credito/movimientos',
  */
 router.get('/:clienteId/oportunidades',
     ...composed.requireFullAuth,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validateQuery(oportunidadSchemas.listarOportunidadesQuerySchema),
     OportunidadController.listarPorCliente
 );
@@ -615,7 +615,7 @@ router.get('/:clienteId/oportunidades',
  */
 router.post('/:clienteId/oportunidades',
     ...composed.requireFullAuth,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validateBody(oportunidadSchemas.oportunidadSchema),
     OportunidadController.crear
 );
@@ -626,7 +626,7 @@ router.post('/:clienteId/oportunidades',
  */
 router.get('/:clienteId/oportunidades/estadisticas',
     ...composed.requireFullAuth,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     OportunidadController.obtenerEstadisticasCliente
 );
 

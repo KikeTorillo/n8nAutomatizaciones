@@ -21,7 +21,7 @@ router.post('/bulk-create',
     tenant.verifyTenantActive,
     // NO agregar checkResourceLimit aquí - se valida dentro del método bulkCrear
     verificarPermiso('profesionales.crear'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(schemas.bulkCrear),
     ProfesionalController.bulkCrear
 );
@@ -33,7 +33,7 @@ router.post('/',
     tenant.setTenantContext,
     tenant.verifyTenantActive,
     verificarPermiso('profesionales.crear'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(schemas.crear),
     ProfesionalController.crear
 );
@@ -42,7 +42,7 @@ router.get('/estadisticas',
     auth.authenticateToken,
     tenant.setTenantContext,
     verificarPermiso('profesionales.ver'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(schemas.obtenerEstadisticas),
     ProfesionalController.obtenerEstadisticas
 );
@@ -51,7 +51,7 @@ router.post('/validar-email',
     auth.authenticateToken,
     tenant.setTenantContext,
     verificarPermiso('profesionales.crear'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(schemas.validarEmail),
     ProfesionalController.validarEmail
 );
@@ -61,7 +61,7 @@ router.put('/:id',
     tenant.setTenantContext,
     tenant.verifyTenantActive,
     verificarPermiso('profesionales.editar'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(schemas.actualizar),
     ProfesionalController.actualizar
 );
@@ -71,7 +71,7 @@ router.patch('/:id/estado',
     tenant.setTenantContext,
     tenant.verifyTenantActive,
     verificarPermiso('profesionales.editar'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(schemas.cambiarEstado),
     ProfesionalController.cambiarEstado
 );
@@ -81,7 +81,7 @@ router.delete('/:id',
     tenant.setTenantContext,
     tenant.verifyTenantActive,
     verificarPermiso('profesionales.eliminar'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(schemas.eliminar),
     ProfesionalController.eliminar
 );
@@ -93,7 +93,7 @@ router.get('/usuarios-disponibles',
     auth.authenticateToken,
     tenant.setTenantContext,
     verificarPermiso('profesionales.crear'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     ProfesionalController.obtenerUsuariosDisponibles
 );
 
@@ -101,7 +101,7 @@ router.get('/usuarios-disponibles',
 router.get('/por-modulo/:modulo',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(schemas.listarPorModulo),
     ProfesionalController.listarPorModulo
 );
@@ -110,7 +110,7 @@ router.get('/por-modulo/:modulo',
 router.get('/por-usuario/:usuarioId',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(schemas.buscarPorUsuario),
     ProfesionalController.buscarPorUsuario
 );
@@ -121,7 +121,7 @@ router.patch('/:id/vincular-usuario',
     tenant.setTenantContext,
     tenant.verifyTenantActive,
     verificarPermiso('profesionales.editar'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(schemas.vincularUsuario),
     ProfesionalController.vincularUsuario
 );
@@ -132,7 +132,7 @@ router.patch('/:id/modulos',
     tenant.setTenantContext,
     tenant.verifyTenantActive,
     verificarPermiso('profesionales.editar'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(schemas.actualizarModulos),
     ProfesionalController.actualizarModulos
 );
@@ -143,7 +143,7 @@ router.patch('/:id/modulos',
 router.get('/',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(schemas.listar),
     ProfesionalController.listar
 );
@@ -151,7 +151,7 @@ router.get('/',
 router.get('/:id',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(schemas.obtenerPorId),
     ProfesionalController.obtenerPorId
 );
@@ -159,7 +159,7 @@ router.get('/:id',
 router.patch('/:id/metricas',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(schemas.actualizarMetricas),
     ProfesionalController.actualizarMetricas
 );
@@ -170,7 +170,7 @@ router.patch('/:id/metricas',
 router.get('/:id/subordinados',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(schemas.obtenerSubordinados),
     ProfesionalController.obtenerSubordinados
 );
@@ -179,7 +179,7 @@ router.get('/:id/subordinados',
 router.get('/:id/supervisores',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(schemas.obtenerSupervisores),
     ProfesionalController.obtenerSupervisores
 );
@@ -190,7 +190,7 @@ router.get('/:id/supervisores',
 router.get('/:id/categorias',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(schemas.obtenerCategoriasProfesional),
     ProfesionalController.obtenerCategorias
 );
@@ -201,7 +201,7 @@ router.post('/:id/categorias',
     tenant.setTenantContext,
     tenant.verifyTenantActive,
     verificarPermiso('profesionales.editar'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(schemas.asignarCategoria),
     ProfesionalController.asignarCategoria
 );
@@ -212,7 +212,7 @@ router.delete('/:id/categorias/:categoriaId',
     tenant.setTenantContext,
     tenant.verifyTenantActive,
     verificarPermiso('profesionales.editar'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(schemas.eliminarCategoria),
     ProfesionalController.eliminarCategoria
 );
@@ -223,7 +223,7 @@ router.put('/:id/categorias',
     tenant.setTenantContext,
     tenant.verifyTenantActive,
     verificarPermiso('profesionales.editar'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(schemas.sincronizarCategorias),
     ProfesionalController.sincronizarCategorias
 );
@@ -234,7 +234,7 @@ router.put('/:id/categorias',
 router.get('/:id/documentos',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(schemas.listarDocumentos),
     DocumentoEmpleadoController.listar
 );
@@ -248,7 +248,7 @@ router.post('/:id/documentos',
     storage.checkStorageLimit,
     storage.uploadSingle,
     storage.validateFileSize,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(schemas.crearDocumento),
     DocumentoEmpleadoController.crear
 );
@@ -257,7 +257,7 @@ router.post('/:id/documentos',
 router.get('/:id/documentos/:docId',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(schemas.obtenerDocumento),
     DocumentoEmpleadoController.obtenerPorId
 );
@@ -268,7 +268,7 @@ router.put('/:id/documentos/:docId',
     tenant.setTenantContext,
     tenant.verifyTenantActive,
     verificarPermiso('profesionales.editar'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(schemas.actualizarDocumento),
     DocumentoEmpleadoController.actualizar
 );
@@ -279,7 +279,7 @@ router.delete('/:id/documentos/:docId',
     tenant.setTenantContext,
     tenant.verifyTenantActive,
     verificarPermiso('profesionales.editar'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(schemas.eliminarDocumento),
     DocumentoEmpleadoController.eliminar
 );
@@ -290,7 +290,7 @@ router.patch('/:id/documentos/:docId/verificar',
     tenant.setTenantContext,
     tenant.verifyTenantActive,
     verificarPermiso('profesionales.editar'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(schemas.verificarDocumento),
     DocumentoEmpleadoController.verificar
 );
@@ -299,7 +299,7 @@ router.patch('/:id/documentos/:docId/verificar',
 router.get('/:id/documentos/:docId/presigned',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(schemas.obtenerUrlPresigned),
     DocumentoEmpleadoController.obtenerUrlPresigned
 );
@@ -313,7 +313,7 @@ router.post('/:id/documentos/:docId/reemplazar-archivo',
     storage.checkStorageLimit,
     storage.uploadSingle,
     storage.validateFileSize,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     DocumentoEmpleadoController.reemplazarArchivo
 );
 
@@ -323,7 +323,7 @@ router.post('/:id/documentos/:docId/reemplazar-archivo',
 router.get('/:id/cuentas-bancarias',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(schemas.listarCuentasBancarias),
     CuentaBancariaController.listar
 );
@@ -334,7 +334,7 @@ router.post('/:id/cuentas-bancarias',
     tenant.setTenantContext,
     tenant.verifyTenantActive,
     verificarPermiso('profesionales.editar'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(schemas.crearCuentaBancaria),
     CuentaBancariaController.crear
 );
@@ -343,7 +343,7 @@ router.post('/:id/cuentas-bancarias',
 router.get('/:id/cuentas-bancarias/:cuentaId',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(schemas.obtenerCuentaBancaria),
     CuentaBancariaController.obtenerPorId
 );
@@ -354,7 +354,7 @@ router.put('/:id/cuentas-bancarias/:cuentaId',
     tenant.setTenantContext,
     tenant.verifyTenantActive,
     verificarPermiso('profesionales.editar'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(schemas.actualizarCuentaBancaria),
     CuentaBancariaController.actualizar
 );
@@ -365,7 +365,7 @@ router.delete('/:id/cuentas-bancarias/:cuentaId',
     tenant.setTenantContext,
     tenant.verifyTenantActive,
     verificarPermiso('profesionales.editar'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(schemas.eliminarCuentaBancaria),
     CuentaBancariaController.eliminar
 );
@@ -376,7 +376,7 @@ router.patch('/:id/cuentas-bancarias/:cuentaId/principal',
     tenant.setTenantContext,
     tenant.verifyTenantActive,
     verificarPermiso('profesionales.editar'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(schemas.establecerCuentaPrincipal),
     CuentaBancariaController.establecerPrincipal
 );
@@ -387,7 +387,7 @@ router.patch('/:id/cuentas-bancarias/:cuentaId/principal',
 router.get('/:id/experiencia',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(schemas.listarExperiencia),
     ExperienciaController.listar
 );
@@ -396,7 +396,7 @@ router.get('/:id/experiencia',
 router.get('/:id/experiencia/actual',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     ExperienciaController.obtenerEmpleoActual
 );
 
@@ -406,7 +406,7 @@ router.post('/:id/experiencia',
     tenant.setTenantContext,
     tenant.verifyTenantActive,
     verificarPermiso('profesionales.editar'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(schemas.crearExperiencia),
     ExperienciaController.crear
 );
@@ -417,7 +417,7 @@ router.patch('/:id/experiencia/reordenar',
     tenant.setTenantContext,
     tenant.verifyTenantActive,
     verificarPermiso('profesionales.editar'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(schemas.reordenarExperiencia),
     ExperienciaController.reordenar
 );
@@ -426,7 +426,7 @@ router.patch('/:id/experiencia/reordenar',
 router.get('/:id/experiencia/:expId',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(schemas.obtenerExperiencia),
     ExperienciaController.obtenerPorId
 );
@@ -437,7 +437,7 @@ router.put('/:id/experiencia/:expId',
     tenant.setTenantContext,
     tenant.verifyTenantActive,
     verificarPermiso('profesionales.editar'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(schemas.actualizarExperiencia),
     ExperienciaController.actualizar
 );
@@ -448,7 +448,7 @@ router.delete('/:id/experiencia/:expId',
     tenant.setTenantContext,
     tenant.verifyTenantActive,
     verificarPermiso('profesionales.editar'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(schemas.eliminarExperiencia),
     ExperienciaController.eliminar
 );
@@ -459,7 +459,7 @@ router.delete('/:id/experiencia/:expId',
 router.get('/:id/educacion',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(schemas.listarEducacion),
     EducacionController.listar
 );
@@ -468,7 +468,7 @@ router.get('/:id/educacion',
 router.get('/:id/educacion/en-curso',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     EducacionController.obtenerEnCurso
 );
 
@@ -478,7 +478,7 @@ router.post('/:id/educacion',
     tenant.setTenantContext,
     tenant.verifyTenantActive,
     verificarPermiso('profesionales.editar'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(schemas.crearEducacion),
     EducacionController.crear
 );
@@ -489,7 +489,7 @@ router.patch('/:id/educacion/reordenar',
     tenant.setTenantContext,
     tenant.verifyTenantActive,
     verificarPermiso('profesionales.editar'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(schemas.reordenarEducacion),
     EducacionController.reordenar
 );
@@ -498,7 +498,7 @@ router.patch('/:id/educacion/reordenar',
 router.get('/:id/educacion/:eduId',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(schemas.obtenerEducacion),
     EducacionController.obtenerPorId
 );
@@ -509,7 +509,7 @@ router.put('/:id/educacion/:eduId',
     tenant.setTenantContext,
     tenant.verifyTenantActive,
     verificarPermiso('profesionales.editar'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(schemas.actualizarEducacion),
     EducacionController.actualizar
 );
@@ -520,7 +520,7 @@ router.delete('/:id/educacion/:eduId',
     tenant.setTenantContext,
     tenant.verifyTenantActive,
     verificarPermiso('profesionales.editar'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(schemas.eliminarEducacion),
     EducacionController.eliminar
 );
@@ -531,7 +531,7 @@ router.delete('/:id/educacion/:eduId',
 router.get('/:id/habilidades',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(schemas.listarHabilidadesEmpleado),
     HabilidadEmpleadoController.listar
 );
@@ -542,7 +542,7 @@ router.post('/:id/habilidades',
     tenant.setTenantContext,
     tenant.verifyTenantActive,
     verificarPermiso('profesionales.editar'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(schemas.asignarHabilidad),
     HabilidadEmpleadoController.asignar
 );
@@ -553,7 +553,7 @@ router.post('/:id/habilidades/batch',
     tenant.setTenantContext,
     tenant.verifyTenantActive,
     verificarPermiso('profesionales.editar'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     HabilidadEmpleadoController.asignarBatch
 );
 
@@ -561,7 +561,7 @@ router.post('/:id/habilidades/batch',
 router.get('/:id/habilidades/:habEmpId',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(schemas.obtenerHabilidadEmpleado),
     HabilidadEmpleadoController.obtenerPorId
 );
@@ -572,7 +572,7 @@ router.put('/:id/habilidades/:habEmpId',
     tenant.setTenantContext,
     tenant.verifyTenantActive,
     verificarPermiso('profesionales.editar'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(schemas.actualizarHabilidadEmpleado),
     HabilidadEmpleadoController.actualizar
 );
@@ -583,7 +583,7 @@ router.patch('/:id/habilidades/:habEmpId/verificar',
     tenant.setTenantContext,
     tenant.verifyTenantActive,
     verificarPermiso('profesionales.editar'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(schemas.verificarHabilidadEmpleado),
     HabilidadEmpleadoController.verificar
 );
@@ -594,7 +594,7 @@ router.delete('/:id/habilidades/:habEmpId',
     tenant.setTenantContext,
     tenant.verifyTenantActive,
     verificarPermiso('profesionales.editar'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(schemas.eliminarHabilidadEmpleado),
     HabilidadEmpleadoController.eliminar
 );
@@ -607,7 +607,7 @@ router.post('/:id/onboarding/aplicar',
     tenant.setTenantContext,
     tenant.verifyTenantActive,
     verificarPermiso('profesionales.editar'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(onboardingSchemas.aplicarPlantilla),
     OnboardingController.aplicarPlantilla
 );
@@ -616,7 +616,7 @@ router.post('/:id/onboarding/aplicar',
 router.get('/:id/onboarding/progreso',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(onboardingSchemas.obtenerProgreso),
     OnboardingController.obtenerProgreso
 );
@@ -626,7 +626,7 @@ router.patch('/:id/onboarding/progreso/:tareaId',
     auth.authenticateToken,
     tenant.setTenantContext,
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(onboardingSchemas.marcarTarea),
     OnboardingController.marcarTarea
 );
@@ -637,7 +637,7 @@ router.delete('/:id/onboarding',
     tenant.setTenantContext,
     tenant.verifyTenantActive,
     verificarPermiso('profesionales.editar'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validation.validate(onboardingSchemas.eliminarProgreso),
     OnboardingController.eliminarProgreso
 );
