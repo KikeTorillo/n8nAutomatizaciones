@@ -86,7 +86,7 @@ function TemplateGalleryPanel({
   templates = [],
   isLoading = false,
   categories = [],
-  categoryField = 'tipo_evento',
+  categoryField = 'categoria',
   onApply,
   isApplying = false,
   renderCard,

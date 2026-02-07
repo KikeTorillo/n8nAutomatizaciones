@@ -9,6 +9,7 @@
  */
 
 import { memo } from 'react';
+import { getBlockPreview } from './previewRegistry';
 
 /**
  * Renderiza un preview visual del tipo de bloque
@@ -17,6 +18,10 @@ import { memo } from 'react';
  * @param {Object} props.tema - Tema del sitio (colores)
  */
 function PreviewRenderer({ tipo, tema }) {
+  // Primero buscar en el registry (extensible por módulos)
+  const CustomPreview = getBlockPreview(tipo);
+  if (CustomPreview) return <CustomPreview tipo={tipo} tema={tema} />;
+
   const primaryColor = tema?.color_primario || '#753572';
   const secondaryColor = tema?.color_secundario || '#1F2937';
 

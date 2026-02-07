@@ -34,8 +34,7 @@ const {
     modules,
     subscription,
     rateLimiting,
-    validation: { validate },
-    asyncHandler
+    validation: { validate }
 } = require('../../../middleware');
 
 // ============================================================================
@@ -59,7 +58,7 @@ const middlewareComun = [
 router.post('/eventos/:eventoId/mesas',
     ...middlewareComun,
     validate(mesasSchemas.crearMesa),
-    asyncHandler(MesasController.crear)
+    MesasController.crear
 );
 
 /**
@@ -69,7 +68,7 @@ router.post('/eventos/:eventoId/mesas',
 router.get('/eventos/:eventoId/mesas',
     ...middlewareComun,
     validate(mesasSchemas.listarMesas),
-    asyncHandler(MesasController.listar)
+    MesasController.listar
 );
 
 /**
@@ -79,7 +78,7 @@ router.get('/eventos/:eventoId/mesas',
 router.get('/eventos/:eventoId/mesas/estadisticas',
     ...middlewareComun,
     validate(mesasSchemas.obtenerEstadisticas),
-    asyncHandler(MesasController.obtenerEstadisticas)
+    MesasController.obtenerEstadisticas
 );
 
 /**
@@ -89,7 +88,7 @@ router.get('/eventos/:eventoId/mesas/estadisticas',
 router.patch('/eventos/:eventoId/mesas/posiciones',
     ...middlewareComun,
     validate(mesasSchemas.actualizarPosiciones),
-    asyncHandler(MesasController.actualizarPosiciones)
+    MesasController.actualizarPosiciones
 );
 
 /**
@@ -99,7 +98,7 @@ router.patch('/eventos/:eventoId/mesas/posiciones',
 router.put('/eventos/:eventoId/mesas/:mesaId',
     ...middlewareComun,
     validate(mesasSchemas.actualizarMesa),
-    asyncHandler(MesasController.actualizar)
+    MesasController.actualizar
 );
 
 /**
@@ -109,7 +108,7 @@ router.put('/eventos/:eventoId/mesas/:mesaId',
 router.post('/eventos/:eventoId/mesas/:mesaId/asignar',
     ...middlewareComun,
     validate(mesasSchemas.asignarInvitado),
-    asyncHandler(MesasController.asignarInvitado)
+    MesasController.asignarInvitado
 );
 
 // ============================================================================
@@ -123,7 +122,7 @@ router.post('/eventos/:eventoId/mesas/:mesaId/asignar',
 router.get('/mesas/:mesaId',
     ...middlewareComun,
     validate(mesasSchemas.obtenerMesa),
-    asyncHandler(MesasController.obtenerPorId)
+    MesasController.obtenerPorId
 );
 
 /**
@@ -133,7 +132,7 @@ router.get('/mesas/:mesaId',
 router.delete('/mesas/:mesaId',
     ...middlewareComun,
     validate(mesasSchemas.eliminarMesa),
-    asyncHandler(MesasController.eliminar)
+    MesasController.eliminar
 );
 
 // ============================================================================
@@ -147,7 +146,7 @@ router.delete('/mesas/:mesaId',
 router.delete('/invitados/:invitadoId/mesa',
     ...middlewareComun,
     validate(mesasSchemas.desasignarInvitado),
-    asyncHandler(MesasController.desasignarInvitado)
+    MesasController.desasignarInvitado
 );
 
 module.exports = router;

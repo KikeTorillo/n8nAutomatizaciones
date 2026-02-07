@@ -16,8 +16,7 @@
 import { memo, useMemo } from 'react';
 import { MapPin, ExternalLink } from 'lucide-react';
 import { Input, Textarea, Select, ToggleSwitch } from '@/components/ui';
-import { BaseAutoSaveEditor } from '@/components/editor-framework';
-import { useInvitacionBlockEditor } from '../../hooks';
+import { BaseAutoSaveEditor, useBlockEditor } from '@/components/editor-framework';
 import { BLOCK_DEFAULTS } from '../../config';
 
 /**
@@ -46,12 +45,11 @@ function UbicacionEditor({
   );
 
   // Hook para manejo del formulario con guardado automático
-  const { form, handleFieldChange } = useInvitacionBlockEditor(
-    contenido,
+  const { form, handleFieldChange } = useBlockEditor(contenido, defaultValues, {
     estilos,
-    defaultValues,
-    onChange
-  );
+    onChange,
+    bloqueIdKey: '_bloqueId',
+  });
 
   // Opciones de ubicaciones disponibles (sin placeholder propio, Select ya lo tiene)
   const ubicacionOptions = useMemo(() => {

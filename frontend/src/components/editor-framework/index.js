@@ -38,6 +38,7 @@ export { BlockListEditor, BlockAccordionItem } from './blocks-list';
 export { DndEditorProvider, useDndEditor } from './dnd/DndEditorProvider';
 export { BlockDragPreview } from './dnd/BlockDragPreview';
 export { PreviewRenderer } from './dnd/PreviewRenderer';
+export { registerBlockPreview, registerBlockPreviews, getBlockPreview } from './dnd/previewRegistry';
 
 // Blocks
 export { default as BaseBlockEditor } from './blocks/BaseBlockEditor';

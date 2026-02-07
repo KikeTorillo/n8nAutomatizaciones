@@ -16,8 +16,7 @@
 import { memo, useCallback, useMemo } from 'react';
 import { Gift, Plus, Trash2, ExternalLink } from 'lucide-react';
 import { Button, Input, Textarea, Select, ToggleSwitch } from '@/components/ui';
-import { ImageField, BaseAutoSaveEditor } from '@/components/editor-framework';
-import { useInvitacionBlockEditor } from '../../hooks';
+import { ImageField, BaseAutoSaveEditor, useBlockEditor } from '@/components/editor-framework';
 import { BLOCK_DEFAULTS } from '../../config';
 
 /**
@@ -57,12 +56,11 @@ function MesaRegalosEditor({
   );
 
   // Hook para manejo del formulario con guardado automático
-  const { form, handleFieldChange, handleArrayItemAdd, handleArrayItemRemove, handleArrayItemChange } = useInvitacionBlockEditor(
-    contenido,
+  const { form, handleFieldChange, handleArrayItemAdd, handleArrayItemRemove, handleArrayItemChange } = useBlockEditor(contenido, defaultValues, {
     estilos,
-    defaultValues,
-    onChange
-  );
+    onChange,
+    bloqueIdKey: '_bloqueId',
+  });
 
   // Handlers para array de items
   const handleAgregarItem = useCallback(() => {

@@ -16,8 +16,7 @@
 import { memo, useMemo } from 'react';
 import { CheckCircle } from 'lucide-react';
 import { Input, Textarea, ToggleSwitch } from '@/components/ui';
-import { BaseAutoSaveEditor } from '@/components/editor-framework';
-import { useInvitacionBlockEditor } from '../../hooks';
+import { BaseAutoSaveEditor, useBlockEditor } from '@/components/editor-framework';
 import { BLOCK_DEFAULTS } from '../../config';
 
 /**
@@ -39,12 +38,11 @@ function RSVPEditor({ contenido, estilos, onChange, tema }) {
   );
 
   // Hook para manejo del formulario con guardado automático
-  const { form, handleFieldChange } = useInvitacionBlockEditor(
-    contenido,
+  const { form, handleFieldChange } = useBlockEditor(contenido, defaultValues, {
     estilos,
-    defaultValues,
-    onChange
-  );
+    onChange,
+    bloqueIdKey: '_bloqueId',
+  });
 
   return (
     <BaseAutoSaveEditor>

@@ -13,9 +13,8 @@ import { memo, useMemo, useState, Suspense, lazy } from 'react';
 import { ImagePlus, X, MoveHorizontal, MoveVertical } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Select } from '@/components/ui';
-import { BaseAutoSaveEditor } from '@/components/editor-framework';
+import { BaseAutoSaveEditor, useBlockEditor } from '@/components/editor-framework';
 import { UnsplashModal } from '@/components/shared/media/UnsplashPicker';
-import { useInvitacionBlockEditor } from '../../hooks';
 import { BLOCK_DEFAULTS } from '../../config';
 import { ANIMACIONES_DECORATIVAS } from '../../config/animacionesDecorativas';
 import { MARCOS_PRESETS } from '../../config/marcosPresets';
@@ -69,12 +68,11 @@ function AperturaEditor({ contenido, estilos, onChange, tema }) {
     []
   );
 
-  const { form, handleFieldChange } = useInvitacionBlockEditor(
-    contenido,
+  const { form, handleFieldChange } = useBlockEditor(contenido, defaultValues, {
     estilos,
-    defaultValues,
-    onChange
-  );
+    onChange,
+    bloqueIdKey: '_bloqueId',
+  });
 
   const modo = form.modo || 'animacion';
   const animacion = form.animacion || 'sobre';

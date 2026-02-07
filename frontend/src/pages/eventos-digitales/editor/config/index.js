@@ -11,6 +11,7 @@ export {
   BLOCK_DEFAULTS,
   getBlockDefaults,
   getBlockConfig,
+  crearBloqueNuevo,
 } from './invitacionBlocks';
 
 export {

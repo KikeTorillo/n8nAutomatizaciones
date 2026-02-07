@@ -24,8 +24,8 @@ import {
   SelectField,
   ColorField,
   BaseAutoSaveEditor,
+  useBlockEditor,
 } from '@/components/editor-framework';
-import { useInvitacionBlockEditor } from '../../hooks';
 import {
   BLOCK_DEFAULTS,
   DECORACIONES_ESQUINAS,
@@ -59,12 +59,11 @@ function HeroInvitacionEditor({ contenido, estilos, onChange, tema, evento, onOp
   );
 
   // Hook para manejo del formulario con guardado automático
-  const { form, handleFieldChange } = useInvitacionBlockEditor(
-    contenido,
+  const { form, handleFieldChange } = useBlockEditor(contenido, defaultValues, {
     estilos,
-    defaultValues,
-    onChange
-  );
+    onChange,
+    bloqueIdKey: '_bloqueId',
+  });
 
   // Opciones de altura
   const alturaOptions = [

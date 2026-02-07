@@ -31,8 +31,7 @@ import {
 } from '@/hooks/otros/eventos-digitales';
 import { registerInvitacionElementTypes } from '../../editor/elements';
 import { registerInvitacionMigrators } from '../../editor/elements';
-import { crearBloqueNuevo } from '../../editor/utils';
-import { BLOQUES_INVITACION } from '../../editor/config';
+import { crearBloqueNuevo, BLOQUES_INVITACION } from '../../editor/config';
 import { generarPreviewData } from '@/utils/plantillaDummyData';
 
 // ========== PROVIDER ==========

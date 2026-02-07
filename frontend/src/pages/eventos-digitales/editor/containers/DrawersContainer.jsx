@@ -9,14 +9,13 @@
  * @updated 2026-02-06
  */
 
-import { memo, useMemo } from 'react';
+import { memo } from 'react';
 import {
   EditorDrawer,
   PropertiesPanel,
   useEditorLayoutContext,
   BlockPalette,
   ThemeEditorPanel,
-  useImageHandlers,
   useThemeSave,
 } from '@/components/editor-framework';
 import { useEditor as useInvitacionEditor } from '@/components/editor-framework';
@@ -32,7 +31,7 @@ import {
   extractInvitacionFonts,
   buildInvitacionThemePayload,
 } from '../config';
-import { EDITORES_BLOQUE } from '../components/blocks';
+import { useInvitacionEditorContent } from '../hooks/useInvitacionEditorContent';
 import { UnsplashModal } from '@/components/shared/media/UnsplashPicker';
 
 /**
@@ -53,22 +52,15 @@ function DrawersContainer() {
 
   const { closeDrawer } = useEditorLayoutContext();
 
-  // ========== IMAGE HANDLERS (Unsplash + Upload) ==========
+  // ========== EDITOR CONTENT (shared hook) ==========
   const {
     unsplashState,
-    openUnsplash,
     closeUnsplash,
     handleUnsplashSelect,
-    handleUploadImage,
-  } = useImageHandlers({
-    entity: bloqueSeleccionadoCompleto,
-    onUpdate: handleActualizarBloque,
-    uploadConfig: {
-      folder: 'eventos-digitales/imagenes',
-      entidadTipo: 'evento_digital',
-      entidadId: evento?.id,
-    },
-  });
+    editorProps,
+    EditorComponent,
+    handleChange,
+  } = useInvitacionEditorContent();
 
   // ========== THEME SAVE ==========
   const { currentColors, currentFonts, handleSaveTema } = useThemeSave({
@@ -78,35 +70,6 @@ function DrawersContainer() {
     buildPayload: buildInvitacionThemePayload(evento?.plantilla),
     saveMutation: handleActualizarPlantilla,
   });
-
-  // Props para editores (tema viene del contexto con fuente_titulos y fuente_cuerpo)
-  const editorProps = useMemo(
-    () => ({
-      tema,
-      evento,
-      ubicaciones: evento?.ubicaciones || [],
-      galeria: evento?.galeria || [],
-      mesaRegalos: evento?.mesa_regalos
-        ? { tiendas: Array.isArray(evento.mesa_regalos) ? evento.mesa_regalos : evento.mesa_regalos.tiendas || [] }
-        : null,
-      onOpenUnsplash: openUnsplash,
-      onUploadImage: handleUploadImage,
-      onUpdatePlantilla: handleActualizarPlantilla,
-    }),
-    [tema, evento, openUnsplash, handleUploadImage, handleActualizarPlantilla]
-  );
-
-  // Editor específico
-  const EditorComponent = bloqueSeleccionadoCompleto
-    ? EDITORES_BLOQUE[bloqueSeleccionadoCompleto.tipo]
-    : null;
-
-  // Handler de cambios
-  const handleChange = (cambios) => {
-    if (bloqueSeleccionadoCompleto) {
-      handleActualizarBloque(bloqueSeleccionadoCompleto.id, cambios);
-    }
-  };
 
   // Ocultar en modo preview
   if (modoPreview) return null;

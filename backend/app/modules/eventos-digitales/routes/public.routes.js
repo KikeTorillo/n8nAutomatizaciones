@@ -186,7 +186,7 @@ router.post('/evento/:slug/:token/galeria',
  * Reportar foto inapropiada
  */
 router.post('/galeria/:id/reportar',
-    rateLimiting.apiRateLimit,
+    rateLimiting.heavyOperationRateLimit,
     validate(publicSchemas.reportarFoto),
     asyncHandler(PublicController.reportarFoto)
 );

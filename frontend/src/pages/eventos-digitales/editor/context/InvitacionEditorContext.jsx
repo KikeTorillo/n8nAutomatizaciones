@@ -36,8 +36,7 @@ import {
 } from '@/components/editor-framework';
 import { registerInvitacionElementTypes } from '../elements';
 import { registerInvitacionMigrators } from '../elements';
-import { crearBloqueNuevo } from '../utils';
-import { BLOQUES_INVITACION } from '../config';
+import { crearBloqueNuevo, BLOQUES_INVITACION } from '../config';
 
 // ========== CONTEXT (usa el compartido) ==========
 

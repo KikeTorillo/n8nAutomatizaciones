@@ -272,7 +272,7 @@ function TemplateGalleryModal({
   templates = [],
   isLoading = false,
   categories = [],
-  categoryField = 'tipo_evento',
+  categoryField = 'categoria',
   renderCard,
   renderPreview,
   previewWidth = 320,

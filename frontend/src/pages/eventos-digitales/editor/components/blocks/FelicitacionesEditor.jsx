@@ -10,8 +10,7 @@
 
 import { memo, useMemo } from 'react';
 import { Input, Textarea } from '@/components/ui';
-import { BaseAutoSaveEditor } from '@/components/editor-framework';
-import { useInvitacionBlockEditor } from '../../hooks';
+import { BaseAutoSaveEditor, useBlockEditor } from '@/components/editor-framework';
 import { BLOCK_DEFAULTS } from '../../config';
 
 function FelicitacionesEditor({ contenido, estilos, onChange }) {
@@ -22,12 +21,11 @@ function FelicitacionesEditor({ contenido, estilos, onChange }) {
     []
   );
 
-  const { form, handleFieldChange } = useInvitacionBlockEditor(
-    contenido,
+  const { form, handleFieldChange } = useBlockEditor(contenido, defaultValues, {
     estilos,
-    defaultValues,
-    onChange
-  );
+    onChange,
+    bloqueIdKey: '_bloqueId',
+  });
 
   return (
     <BaseAutoSaveEditor>

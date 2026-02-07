@@ -17,11 +17,10 @@ import {
   useEditorLayoutContext,
   ElementPropertiesPanel,
   SectionPropertiesPanel,
-  useImageHandlers,
 } from '@/components/editor-framework';
 import { BLOCK_CONFIGS, BLOCK_NAMES } from '../config';
-import { EDITORES_BLOQUE } from '../components/blocks';
 import { useEditor as useInvitacionEditor } from '@/components/editor-framework';
+import { useInvitacionEditorContent } from '../hooks/useInvitacionEditorContent';
 import { UnsplashModal } from '@/components/shared/media/UnsplashPicker';
 
 /**
@@ -45,51 +44,15 @@ function PropertiesContainer() {
     propertiesAsDrawer,
   } = useEditorLayoutContext();
 
-  // ========== IMAGE HANDLERS (Unsplash + Upload) ==========
+  // ========== EDITOR CONTENT (shared hook) ==========
   const {
     unsplashState,
-    openUnsplash,
     closeUnsplash,
     handleUnsplashSelect,
-    handleUploadImage,
-  } = useImageHandlers({
-    entity: bloqueSeleccionadoCompleto,
-    onUpdate: handleActualizarBloque,
-    uploadConfig: {
-      folder: 'eventos-digitales/imagenes',
-      entidadTipo: 'evento_digital',
-      entidadId: evento?.id,
-    },
-  });
-
-  // Datos adicionales para editores específicos
-  const editorProps = useMemo(
-    () => ({
-      tema,
-      evento,
-      ubicaciones: evento?.ubicaciones || [],
-      galeria: evento?.galeria || [],
-      mesaRegalos: evento?.mesa_regalos
-        ? { tiendas: Array.isArray(evento.mesa_regalos) ? evento.mesa_regalos : evento.mesa_regalos.tiendas || [] }
-        : null,
-      onOpenUnsplash: openUnsplash,
-      onUploadImage: handleUploadImage,
-      onUpdatePlantilla: handleActualizarPlantilla,
-    }),
-    [tema, evento, openUnsplash, handleUploadImage, handleActualizarPlantilla]
-  );
-
-  // Obtener editor específico si existe
-  const EditorComponent = bloqueSeleccionadoCompleto
-    ? EDITORES_BLOQUE[bloqueSeleccionadoCompleto.tipo]
-    : null;
-
-  // Handler para cambios (guardado automático)
-  const handleChange = (cambios) => {
-    if (bloqueSeleccionadoCompleto) {
-      handleActualizarBloque(bloqueSeleccionadoCompleto.id, cambios);
-    }
-  };
+    editorProps,
+    EditorComponent,
+    handleChange,
+  } = useInvitacionEditorContent();
 
   // ========== HOOKS MODO LIBRE (siempre se llaman para cumplir reglas de hooks) ==========
   const freeStore = getFreePositionStore();

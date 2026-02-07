@@ -16,8 +16,7 @@
 import { memo, useCallback, useMemo } from 'react';
 import { Clock, Plus, Trash2, GripVertical } from 'lucide-react';
 import { Button, Input, Textarea, Select, IconPickerCompact } from '@/components/ui';
-import { ColorField } from '@/components/editor-framework';
-import { useInvitacionBlockEditor } from '../../hooks';
+import { ColorField, useBlockEditor } from '@/components/editor-framework';
 import { BLOCK_DEFAULTS } from '../../config';
 
 /**
@@ -50,12 +49,11 @@ function TimelineEditor({ contenido, estilos, onChange, tema }) {
   );
 
   // Hook para manejo del formulario con guardado automático
-  const { form, handleFieldChange, handleArrayItemAdd, handleArrayItemRemove, handleArrayItemChange } = useInvitacionBlockEditor(
-    contenido,
+  const { form, handleFieldChange, handleArrayItemAdd, handleArrayItemRemove, handleArrayItemChange } = useBlockEditor(contenido, defaultValues, {
     estilos,
-    defaultValues,
-    onChange
-  );
+    onChange,
+    bloqueIdKey: '_bloqueId',
+  });
 
   // Handlers para array de items
   const handleAgregarItem = useCallback(() => {

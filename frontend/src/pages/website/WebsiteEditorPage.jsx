@@ -31,7 +31,7 @@ import {
 
 // Components
 import { DndEditorProvider } from '@/components/editor-framework';
-import { BlockDragPreview } from './components/DragPreview';
+import { ICONOS_BLOQUES, NOMBRES_BLOQUES, DESCRIPCIONES_BLOQUES } from './config/blockConfig';
 import ConflictAlert from './components/ConflictAlert';
 import EmptyState from './components/EmptyState';
 import CrearSitioModal from './components/CrearSitioModal';
@@ -126,7 +126,9 @@ function WebsiteEditorContent() {
         onDropFromPalette={handleDropFromPalette}
         onReorder={handleDndReorder}
         tema={config}
-        PreviewComponent={BlockDragPreview}
+        blockIcons={ICONOS_BLOQUES}
+        blockNames={NOMBRES_BLOQUES}
+        blockDescriptions={DESCRIPCIONES_BLOQUES}
       >
         <div className="flex-1 flex overflow-hidden">
           {/* Sidebar */}

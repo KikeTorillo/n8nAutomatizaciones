@@ -57,6 +57,27 @@ export const ICONOS_BLOQUES = {
   timeline: GitBranch,
 };
 
+// ========== NOMBRES POR TIPO ==========
+
+export const NOMBRES_BLOQUES = {
+  hero: 'Hero',
+  servicios: 'Servicios',
+  testimonios: 'Testimonios',
+  equipo: 'Equipo',
+  cta: 'Llamada a Accion',
+  contacto: 'Contacto',
+  footer: 'Pie de Pagina',
+  texto: 'Texto',
+  galeria: 'Galeria',
+  video: 'Video',
+  separador: 'Separador',
+  pricing: 'Precios',
+  faq: 'Preguntas Frecuentes',
+  countdown: 'Cuenta Regresiva',
+  stats: 'Estadisticas',
+  timeline: 'Linea de Tiempo',
+};
+
 // ========== COLORES ÚNICOS POR TIPO ==========
 
 export const COLORES_BLOQUES = {

@@ -4,9 +4,9 @@
  * ====================================================================
  * Barrel export para hooks del editor de invitaciones.
  *
- * @version 1.1.0
+ * @version 1.2.0
  * @since 2026-02-04
- * @updated 2026-02-04 - Reemplazado useAutoSaveEditor por useInvitacionBlockEditor
+ * @updated 2026-02-06 - Eliminado useInvitacionBlockEditor (wrapper trivial)
  */
 
-export { useInvitacionBlockEditor } from './useInvitacionBlockEditor';
+export { useInvitacionEditorContent } from './useInvitacionEditorContent';

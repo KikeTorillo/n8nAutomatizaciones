@@ -21,7 +21,7 @@
  * seating chart con capacidad y validaciones.
  *
  * REFACTORIZADO Feb 2026:
- * - Eliminados try-catch redundantes (asyncHandler en rutas)
+ * - asyncHandler inline en controller (consistente con patrón del proyecto)
  * - Uso de ErrorHelper.throwIfNotFound para 404s
  *
  * Fecha creación: 8 Diciembre 2025
@@ -31,6 +31,7 @@ const MesaModel = require('../models/mesa.model');
 const EventoModel = require('../models/evento.model');
 const logger = require('../../../utils/logger');
 const { ResponseHelper, ErrorHelper } = require('../../../utils/helpers');
+const { asyncHandler } = require('../../../middleware');
 
 class MesasController {
 
@@ -38,7 +39,7 @@ class MesasController {
      * Crear mesa
      * POST /api/v1/eventos-digitales/eventos/:eventoId/mesas
      */
-    static async crear(req, res) {
+    static crear = asyncHandler(async (req, res) => {
         const { eventoId } = req.params;
         const organizacionId = req.tenant.organizacionId;
 
@@ -59,26 +60,26 @@ class MesasController {
         });
 
         return ResponseHelper.success(res, mesa, 'Mesa creada exitosamente', 201);
-    }
+    });
 
     /**
      * Listar mesas del evento
      * GET /api/v1/eventos-digitales/eventos/:eventoId/mesas
      */
-    static async listar(req, res) {
+    static listar = asyncHandler(async (req, res) => {
         const { eventoId } = req.params;
         const organizacionId = req.tenant.organizacionId;
 
         const mesas = await MesaModel.listar(parseInt(eventoId), organizacionId);
 
         return ResponseHelper.success(res, mesas);
-    }
+    });
 
     /**
      * Obtener mesa por ID
      * GET /api/v1/eventos-digitales/mesas/:mesaId
      */
-    static async obtenerPorId(req, res) {
+    static obtenerPorId = asyncHandler(async (req, res) => {
         const { mesaId } = req.params;
         const organizacionId = req.tenant.organizacionId;
 
@@ -86,13 +87,13 @@ class MesasController {
         ErrorHelper.throwIfNotFound(mesa, 'Mesa');
 
         return ResponseHelper.success(res, mesa);
-    }
+    });
 
     /**
      * Actualizar mesa
      * PUT /api/v1/eventos-digitales/eventos/:eventoId/mesas/:mesaId
      */
-    static async actualizar(req, res) {
+    static actualizar = asyncHandler(async (req, res) => {
         const { mesaId } = req.params;
         const organizacionId = req.tenant.organizacionId;
 
@@ -102,13 +103,13 @@ class MesasController {
         logger.info('[MesasController.actualizar] Mesa actualizada', { mesa_id: mesaId });
 
         return ResponseHelper.success(res, mesa, 'Mesa actualizada exitosamente');
-    }
+    });
 
     /**
      * Eliminar mesa
      * DELETE /api/v1/eventos-digitales/mesas/:mesaId
      */
-    static async eliminar(req, res) {
+    static eliminar = asyncHandler(async (req, res) => {
         const { mesaId } = req.params;
         const organizacionId = req.tenant.organizacionId;
 
@@ -118,13 +119,13 @@ class MesasController {
         logger.info('[MesasController.eliminar] Mesa eliminada', { mesa_id: mesaId });
 
         return ResponseHelper.success(res, { eliminado: true }, 'Mesa eliminada exitosamente');
-    }
+    });
 
     /**
      * Actualizar posiciones de múltiples mesas (batch)
      * PATCH /api/v1/eventos-digitales/eventos/:eventoId/mesas/posiciones
      */
-    static async actualizarPosiciones(req, res) {
+    static actualizarPosiciones = asyncHandler(async (req, res) => {
         const { eventoId } = req.params;
         const { posiciones } = req.body;
         const organizacionId = req.tenant.organizacionId;
@@ -141,13 +142,13 @@ class MesasController {
         });
 
         return ResponseHelper.success(res, resultado, 'Posiciones actualizadas');
-    }
+    });
 
     /**
      * Asignar invitado a mesa
      * POST /api/v1/eventos-digitales/eventos/:eventoId/mesas/:mesaId/asignar
      */
-    static async asignarInvitado(req, res) {
+    static asignarInvitado = asyncHandler(async (req, res) => {
         const { mesaId } = req.params;
         const { invitado_id } = req.body;
         const organizacionId = req.tenant.organizacionId;
@@ -164,13 +165,13 @@ class MesasController {
         });
 
         return ResponseHelper.success(res, invitado, 'Invitado asignado a mesa exitosamente');
-    }
+    });
 
     /**
      * Desasignar invitado de mesa
      * DELETE /api/v1/eventos-digitales/invitados/:invitadoId/mesa
      */
-    static async desasignarInvitado(req, res) {
+    static desasignarInvitado = asyncHandler(async (req, res) => {
         const { invitadoId } = req.params;
         const organizacionId = req.tenant.organizacionId;
 
@@ -184,13 +185,13 @@ class MesasController {
         });
 
         return ResponseHelper.success(res, invitado, 'Invitado removido de mesa');
-    }
+    });
 
     /**
      * Obtener estadísticas de ocupación
      * GET /api/v1/eventos-digitales/eventos/:eventoId/mesas/estadisticas
      */
-    static async obtenerEstadisticas(req, res) {
+    static obtenerEstadisticas = asyncHandler(async (req, res) => {
         const { eventoId } = req.params;
         const organizacionId = req.tenant.organizacionId;
 
@@ -200,7 +201,7 @@ class MesasController {
         );
 
         return ResponseHelper.success(res, estadisticas);
-    }
+    });
 }
 
 module.exports = MesasController;

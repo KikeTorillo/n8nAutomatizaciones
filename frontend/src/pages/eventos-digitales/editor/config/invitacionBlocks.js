@@ -454,3 +454,22 @@ export function getBlockDefaults(tipo) {
 export function getBlockConfig(tipo) {
   return BLOCK_CONFIGS[tipo] || { contenido: [], estilo: [] };
 }
+
+/**
+ * Crea un nuevo bloque con valores por defecto
+ *
+ * @param {string} tipo - Tipo de bloque (ej: 'hero', 'countdown', etc.)
+ * @param {number} orden - Posición del bloque (default: 0)
+ * @returns {Object} Bloque nuevo con estructura completa
+ */
+export function crearBloqueNuevo(tipo, orden = 0) {
+  return {
+    id: crypto.randomUUID(),
+    tipo,
+    orden,
+    visible: true,
+    contenido: getBlockDefaults(tipo),
+    estilos: {},
+    version: 1,
+  };
+}

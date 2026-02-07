@@ -15,8 +15,7 @@
 import { memo, useMemo } from 'react';
 import { Type } from 'lucide-react';
 import { Textarea, Select } from '@/components/ui';
-import { AlignmentField, BaseAutoSaveEditor } from '@/components/editor-framework';
-import { useInvitacionBlockEditor } from '../../hooks';
+import { AlignmentField, BaseAutoSaveEditor, useBlockEditor } from '@/components/editor-framework';
 import { BLOCK_DEFAULTS } from '../../config';
 
 /**
@@ -38,12 +37,11 @@ function TextoEditor({ contenido, estilos, onChange }) {
   );
 
   // Hook para manejo del formulario con guardado automático
-  const { form, handleFieldChange } = useInvitacionBlockEditor(
-    contenido,
+  const { form, handleFieldChange } = useBlockEditor(contenido, defaultValues, {
     estilos,
-    defaultValues,
-    onChange
-  );
+    onChange,
+    bloqueIdKey: '_bloqueId',
+  });
 
   // Opciones de tamaño de fuente
   const tamanoOptions = [
