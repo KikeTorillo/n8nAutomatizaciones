@@ -22,24 +22,16 @@ import {
   usePlantillaPreview,
 } from '@/hooks/otros';
 import { TIPOS_EVENTO } from '@/schemas/evento.schema';
-import {
-  INVITACION_TEMA_DEFAULT,
-  INVITACION_TEMA_DECORACION_DEFAULTS,
-} from './constants';
+import { INVITACION_TEMA_DEFAULT } from './constants';
 
 const TIPOS_EVENTO_ADMIN = [
   ...TIPOS_EVENTO,
   { value: 'universal', label: 'Universal' },
 ];
 
-const TEMA_DEFAULT_ADMIN = {
-  ...INVITACION_TEMA_DEFAULT,
-  ...INVITACION_TEMA_DECORACION_DEFAULTS,
-};
-
 function PlantillaAdminCard({ plantilla, onEdit, onDelete }) {
   const { tema, evento, bloques } = usePlantillaPreview(plantilla, {
-    temaDefaults: TEMA_DEFAULT_ADMIN,
+    temaDefaults: INVITACION_TEMA_DEFAULT,
   });
 
   return (
@@ -149,7 +141,7 @@ function PlantillasPage() {
         nombre: 'Nueva Plantilla',
         codigo: `plantilla-${Date.now()}`,
         tipo_evento: 'cumpleanos',
-        tema: TEMA_DEFAULT_ADMIN,
+        tema: INVITACION_TEMA_DEFAULT,
       });
       navigate(`/eventos-digitales/plantillas/${resultado.id}/editor`);
     } catch (error) {

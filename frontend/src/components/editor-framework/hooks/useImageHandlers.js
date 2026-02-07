@@ -81,8 +81,10 @@ export function useImageHandlers({ entity, onUpdate, uploadConfig }) {
         }
 
         toast.success('Imagen subida correctamente');
+        return resultado.url;
       } catch {
         // El error ya se maneja en useUploadArchivo
+        return null;
       }
     },
     [entity, uploadConfig, onUpdate, uploadArchivo, toast]

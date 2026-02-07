@@ -53,7 +53,7 @@ function HeroInvitacionElementRenderer({
   const colorSecundario = tema?.color_secundario || INV.secundario;
   const colorTexto = tema?.color_texto || INV.texto;
   const colorTextoClaro = tema?.color_texto_claro || INV.textoClaro;
-  const fuenteTitulo = tema?.fuente_titulos || 'inherit';
+  const fuenteTitulo = tema?.fuente_titulo || 'inherit';
 
   // Clases de alineación
   const alignClasses = {
@@ -195,7 +195,7 @@ HeroInvitacionElementRenderer.propTypes = {
     color_secundario: PropTypes.string,
     color_texto: PropTypes.string,
     color_texto_claro: PropTypes.string,
-    fuente_titulos: PropTypes.string,
+    fuente_titulo: PropTypes.string,
   }),
   customData: PropTypes.shape({
     nombre: PropTypes.string,

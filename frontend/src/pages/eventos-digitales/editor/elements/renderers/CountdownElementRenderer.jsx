@@ -46,7 +46,7 @@ function CountdownElementRenderer({
   const colorSecundario = estilos.color_secundario || tema?.color_secundario || INV.secundario;
   const colorTexto = estilos.color_texto || tema?.color_texto || INV.texto;
   const colorTextoClaro = estilos.color_texto_claro || tema?.color_texto_claro || INV.textoClaro;
-  const fuenteTitulo = estilos.fuente_titulo || tema?.fuente_titulos || 'inherit';
+  const fuenteTitulo = estilos.fuente_titulo || tema?.fuente_titulo || 'inherit';
 
   // Estado del countdown
   const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
@@ -230,7 +230,7 @@ CountdownElementRenderer.propTypes = {
     color_secundario: PropTypes.string,
     color_texto: PropTypes.string,
     color_texto_claro: PropTypes.string,
-    fuente_titulos: PropTypes.string,
+    fuente_titulo: PropTypes.string,
   }),
   customData: PropTypes.shape({
     fecha_evento: PropTypes.string,

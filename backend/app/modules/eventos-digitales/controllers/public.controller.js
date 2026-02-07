@@ -43,6 +43,20 @@ const { generarQRInvitado, generarUrlInvitacion } = require('../services/qr.serv
 const { generarICS, enviarArchivoICS } = require('../services/calendar.service');
 
 class PublicController {
+    /**
+     * Valida que la galería y la subida de fotos estén habilitadas para el evento.
+     * @param {Object} evento - Evento con configuración
+     * @throws {ValidationError}
+     */
+    static _validarPermisoGaleria(evento) {
+        if (evento.configuracion?.habilitar_galeria_compartida === false) {
+            throw new ValidationError('La galería no está habilitada para este evento');
+        }
+        if (evento.configuracion?.permitir_subida_invitados === false) {
+            throw new ValidationError('No está permitido subir fotos en este evento');
+        }
+    }
+
 
     /**
      * Obtener evento público por slug
@@ -466,15 +480,7 @@ class PublicController {
             throw new ResourceNotFoundError('Evento');
         }
 
-        // Verificar si la galería compartida está habilitada
-        if (evento.configuracion?.habilitar_galeria_compartida === false) {
-            throw new ValidationError('La galería no está habilitada para este evento');
-        }
-
-        // Verificar si invitados pueden subir fotos
-        if (evento.configuracion?.permitir_subida_invitados === false) {
-            throw new ValidationError('No está permitido subir fotos en este evento');
-        }
+        PublicController._validarPermisoGaleria(evento);
 
         // Crear foto
         const foto = await FotoEventoModel.crearPublica({
@@ -526,15 +532,7 @@ class PublicController {
             throw new ResourceNotFoundError('Evento');
         }
 
-        // Verificar si la galería compartida está habilitada
-        if (evento.configuracion?.habilitar_galeria_compartida === false) {
-            throw new ValidationError('La galería no está habilitada para este evento');
-        }
-
-        // Verificar si invitados pueden subir fotos
-        if (evento.configuracion?.permitir_subida_invitados === false) {
-            throw new ValidationError('No está permitido subir fotos en este evento');
-        }
+        PublicController._validarPermisoGaleria(evento);
 
         // Subir archivo a MinIO
         const uploadResult = await storageService.upload({

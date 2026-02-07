@@ -162,6 +162,96 @@ function CurtinaOverlay({ imagenMarco, direccionApertura = 'vertical', texto, te
 }
 
 /**
+ * CurtinaPreview - Versión inline de la cortina para preview del editor.
+ * Misma técnica espejo que CurtinaOverlay pero sin portal ni window.scrollY.
+ * Animación de apertura activada por click/tap.
+ */
+function CurtinaPreview({ imagenMarco, direccionApertura = 'vertical', texto, tema }) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const handleToggle = useCallback(() => setIsOpen((prev) => !prev), []);
+
+  const esVertical = direccionApertura === 'vertical';
+  const colorTexto = '#ffffff';
+
+  // Transform dinámico — la transición se aplica vía clase CSS (siempre activa)
+  const half1Transform = esVertical
+    ? `translateX(${isOpen ? -50 : 0}%)`
+    : `translateY(${isOpen ? -50 : 0}%)`;
+
+  const half2Transform = esVertical
+    ? `translateX(${isOpen ? 50 : 0}%)`
+    : `translateY(${isOpen ? 50 : 0}%)`;
+
+  const half1Clip = esVertical ? 'inset(0 50% 0 0)' : 'inset(0 0 50% 0)';
+  const half2Clip = esVertical ? 'inset(0 0 0 50%)' : 'inset(50% 0 0 0)';
+
+  return (
+    <section
+      className="relative w-full overflow-hidden cursor-pointer select-none"
+      style={{ height: '100vh', minHeight: '100svh', backgroundColor: tema?.color_secundario || '#ffffff' }}
+      onClick={handleToggle}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleToggle(); }}
+      aria-label={isOpen ? 'Toca para cerrar la cortina' : 'Toca para abrir la cortina'}
+    >
+      {/* Mitad 1 — izquierda (vertical) o arriba (horizontal) */}
+      <div
+        className="absolute inset-0 z-10 transition-transform duration-700 ease-out"
+        style={{ clipPath: half1Clip, transform: half1Transform }}
+      >
+        <img src={imagenMarco} alt="" className="absolute inset-0 w-full h-full object-cover" />
+      </div>
+
+      {/* Mitad 2 — derecha (vertical) o abajo (horizontal), imagen espejada */}
+      <div
+        className="absolute inset-0 z-10 transition-transform duration-700 ease-out"
+        style={{ clipPath: half2Clip, transform: half2Transform }}
+      >
+        <img
+          src={imagenMarco}
+          alt=""
+          className="absolute inset-0 w-full h-full object-cover"
+          style={{ transform: esVertical ? 'scaleX(-1)' : 'scaleY(-1)' }}
+        />
+      </div>
+
+      {/* Texto + chevron (desaparece al abrir) */}
+      <div
+        className={cn(
+          'absolute bottom-16 left-0 right-0 flex flex-col items-center gap-2 z-20 pointer-events-none transition-opacity duration-500',
+          isOpen ? 'opacity-0' : 'opacity-100'
+        )}
+      >
+        <p
+          className="text-base font-medium tracking-wide uppercase"
+          style={{ color: colorTexto, fontFamily: tema?.fuente_cuerpo || 'Inter', textShadow: '0 1px 4px rgba(0,0,0,0.5)' }}
+        >
+          {texto || 'Toca para abrir'}
+        </p>
+        <ChevronDown
+          className="w-6 h-6 animate-bounce"
+          style={{ color: colorTexto, filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.5))' }}
+        />
+      </div>
+
+      {/* Indicador "click para cerrar" cuando está abierta */}
+      <div
+        className={cn(
+          'absolute inset-0 flex items-center justify-center z-0 pointer-events-none transition-opacity duration-500 delay-300',
+          isOpen ? 'opacity-100' : 'opacity-0'
+        )}
+      >
+        <p className="text-sm text-gray-400" style={{ fontFamily: tema?.fuente_cuerpo || 'Inter' }}>
+          Toca para cerrar
+        </p>
+      </div>
+    </section>
+  );
+}
+
+/**
  * OpeningOverlay - Sección de apertura con animación, imagen o cortina
  *
  * @param {Object} props
@@ -173,7 +263,7 @@ function CurtinaOverlay({ imagenMarco, direccionApertura = 'vertical', texto, te
  * @param {string} props.texto - Texto a mostrar
  * @param {Object} props.tema - Tema de la invitación
  */
-function OpeningOverlay({ modo = 'animacion', tipo, imagenUrl, imagenMarco, direccionApertura = 'vertical', texto = 'Desliza para abrir', tema = {} }) {
+function OpeningOverlay({ modo = 'animacion', tipo, imagenUrl, imagenMarco, direccionApertura = 'vertical', texto = 'Desliza para abrir', tema = {}, isPreview = false }) {
   const animationData = useLottieData(tipo);
   const esImagen = modo === 'imagen' && imagenUrl;
   const esCortina = modo === 'cortina' && imagenMarco;
@@ -181,9 +271,20 @@ function OpeningOverlay({ modo = 'animacion', tipo, imagenUrl, imagenMarco, dire
   const colorFondo = tema.color_primario || '#ec4899';
   const colorTexto = '#ffffff';
 
-  // Modo cortina: spacer 100vh + overlay fijo (portal)
-  // El spacer reserva espacio para que al terminar de abrir, la Portada quede en el viewport
+  // Modo cortina: en preview renderizar inline con click-to-open (sin portal ni window.scrollY)
+  // porque el portal cubre toda la página del editor y window.scrollY no funciona en el contenedor
   if (esCortina) {
+    if (isPreview) {
+      return (
+        <CurtinaPreview
+          imagenMarco={imagenMarco}
+          direccionApertura={direccionApertura}
+          texto={texto}
+          tema={tema}
+        />
+      );
+    }
+
     return (
       <>
         <div style={{ height: '100vh', minHeight: '100svh', backgroundColor: tema.color_secundario || '#ffffff' }} />

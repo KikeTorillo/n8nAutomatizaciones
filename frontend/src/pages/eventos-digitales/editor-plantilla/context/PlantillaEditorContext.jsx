@@ -34,6 +34,7 @@ import { registerInvitacionElementTypes } from '../../editor/elements';
 import { registerInvitacionMigrators } from '../../editor/elements';
 import { crearBloqueNuevo, BLOQUES_INVITACION } from '../../editor/config';
 import { generarPreviewData } from '@/utils/plantillaDummyData';
+import { INVITACION_TEMA_DEFAULT } from '../../constants';
 
 // ========== PROVIDER ==========
 
@@ -202,21 +203,7 @@ export function PlantillaEditorProvider({ children }) {
 
   const tema = useMemo(
     () => ({
-      color_primario: '#753572',
-      color_secundario: '#F59E0B',
-      color_fondo: '#FFFFFF',
-      color_texto: '#1f2937',
-      color_texto_claro: '#6b7280',
-      fuente_titulos: 'Playfair Display',
-      fuente_titulo: 'Playfair Display',
-      fuente_cuerpo: 'Inter',
-      patron_fondo: 'none',
-      patron_opacidad: 0.1,
-      decoracion_esquinas: 'none',
-      icono_principal: 'none',
-      efecto_titulo: 'none',
-      marco_fotos: 'none',
-      stickers: [],
+      ...INVITACION_TEMA_DEFAULT,
       ...(plantilla?.tema || {}),
     }),
     [plantilla?.tema]

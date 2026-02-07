@@ -133,7 +133,7 @@ export {
   ElementWrapper,
 } from './elements';
 
-// Element Renderers (built-in only)
+// Element Renderers (built-in + registry)
 export {
   TextoElementRenderer,
   ImagenElementRenderer,
@@ -141,14 +141,18 @@ export {
   FormaElementRenderer,
   SeparadorElementRenderer,
   getElementRenderer,
+  registerElementRenderer,
+  registerElementRenderers,
 } from './elements/renderers';
 
-// Element Editors (built-in only)
+// Element Editors (built-in + registry)
 export {
   TextoElementEditor,
   ImagenElementEditor,
   BotonElementEditor,
   getElementEditor,
+  registerElementEditor,
+  registerElementEditors,
 } from './elements/editors';
 
 // Panels

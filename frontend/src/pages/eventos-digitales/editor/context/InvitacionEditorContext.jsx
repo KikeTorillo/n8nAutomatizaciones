@@ -5,12 +5,12 @@
  * Contexto principal para el editor de invitaciones digitales.
  * Maneja estado, bloques, autosave y acciones del editor.
  *
- * @version 1.6.0 - Refactored: useEditorBlockHandlers
+ * @version 2.0.0 - Descompuesto: useFreePositionManager, useInvitacionAutosave, useInvitacionTema
  * @since 2026-02-03
- * @updated 2026-02-06
+ * @updated 2026-02-07
  */
 
-import { useContext, useState, useEffect, useLayoutEffect, useCallback, useMemo, useRef } from 'react';
+import { useContext, useState, useEffect, useLayoutEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -21,22 +21,17 @@ import { eventosDigitalesApi } from '@/services/api/modules';
 import {
   EditorContext,
   useEditorLayoutContext,
-  useAutosave,
-  hashBloques,
   useEditorBlockHandlers,
-  // Free Position Canvas imports
-  ensureSectionsFormat,
-  createFreePositionStore,
-  // Autosave para modo libre
-  seccionesToBloques,
-  seccionesToBloquesTrad,
   bloquesToSecciones,
   detectarModoLibre,
-  hashSecciones,
 } from '@/components/editor-framework';
 import { registerInvitacionElementTypes } from '../elements';
 import { registerInvitacionMigrators } from '../elements';
 import { crearBloqueNuevo, BLOQUES_INVITACION } from '../config';
+import { crearBloqueAperturaLegacy } from '../../constants';
+import { useFreePositionManager } from '../hooks/useFreePositionManager';
+import { useInvitacionAutosave } from '../hooks/useInvitacionAutosave';
+import { useInvitacionTema } from '../hooks/useInvitacionTema';
 
 // ========== CONTEXT (usa el compartido) ==========
 
@@ -59,23 +54,6 @@ export function InvitacionEditorProvider({ children }) {
 
   const [modoPreview, setModoPreview] = useState(false);
   const [modoEditor, setModoEditor] = useState('canvas'); // 'canvas' | 'bloques' | 'libre'
-
-  // ========== FREE POSITION STORE (Modo Libre) ==========
-
-  const freePositionStoreRef = useRef(null);
-
-  /**
-   * Obtiene o crea el store de posición libre (lazy initialization)
-   */
-  const getFreePositionStore = useCallback(() => {
-    if (!freePositionStoreRef.current) {
-      freePositionStoreRef.current = createFreePositionStore({
-        name: `invitacion-${eventoId}`,
-        persist: true,
-      });
-    }
-    return freePositionStoreRef.current;
-  }, [eventoId]);
 
   // Registrar tipos de elementos y migradores de invitaciones al montar
   useEffect(() => {
@@ -164,6 +142,41 @@ export function InvitacionEditorProvider({ children }) {
     enabled: !!eventoId,
   });
 
+  const bloquesQueryKey = queryKeys.eventosDigitales.eventos.bloques(eventoId);
+
+  // ========== MUTATIONS ==========
+
+  // Guardar bloques (sin callbacks - manejados por useAutosave)
+  const guardarBloquesMutation = useMutation({
+    mutationFn: (bloquesAGuardar) =>
+      eventosDigitalesApi.saveBloques(eventoId, bloquesAGuardar),
+  });
+
+  // ========== FREE POSITION MANAGER ==========
+
+  const {
+    getFreePositionStore,
+    cambiarAModoLibre,
+    salirDeModoLibre,
+    seccionesSnapshot,
+    estadoGuardadoLibreSnapshot,
+    subscribirAStoreLibre,
+  } = useFreePositionManager({
+    eventoId,
+    bloques,
+    bloquesData,
+    setBloques,
+    setModoEditor,
+    guardarBloquesMutation,
+    queryClient,
+    bloquesQueryKey,
+  });
+
+  // Suscribirse a cambios del store libre cuando estamos en modo libre
+  useEffect(() => {
+    return subscribirAStoreLibre(modoEditor);
+  }, [modoEditor, subscribirAStoreLibre]);
+
   // Cargar bloques en store cuando lleguen (detecta modo libre automáticamente)
   // Usar useLayoutEffect para que el cambio de modoEditor se aplique ANTES del paint,
   // evitando flash visual donde el toggle muestra estado incorrecto momentáneamente
@@ -173,27 +186,9 @@ export function InvitacionEditorProvider({ children }) {
 
       // Migración lazy: si hay config apertura legacy sin bloque apertura, crearlo
       const tieneBlqueApertura = bloques.some(b => b.tipo === 'apertura');
-      if (!tieneBlqueApertura && evento?.configuracion) {
-        const cfg = evento.configuracion;
-        const tieneConfigLegacy =
-          (cfg.animacion_apertura && cfg.animacion_apertura !== 'none') ||
-          (cfg.modo_apertura === 'imagen' && cfg.imagen_apertura);
-
-        if (tieneConfigLegacy) {
-          const bloqueApertura = {
-            id: crypto.randomUUID(),
-            tipo: 'apertura',
-            orden: -1,
-            visible: true,
-            contenido: {
-              modo: cfg.modo_apertura || 'animacion',
-              animacion: cfg.animacion_apertura || 'sobre',
-              imagen_url: cfg.imagen_apertura || '',
-              texto: cfg.texto_apertura || 'Desliza para abrir',
-            },
-            estilos: {},
-            version: 1,
-          };
+      if (!tieneBlqueApertura) {
+        const bloqueApertura = crearBloqueAperturaLegacy(evento?.configuracion);
+        if (bloqueApertura) {
           bloques = [bloqueApertura, ...bloques.map((b, i) => ({ ...b, orden: i + 1 }))];
         }
       }
@@ -217,13 +212,25 @@ export function InvitacionEditorProvider({ children }) {
     };
   }, [limpiarBloques]);
 
-  // ========== MUTATIONS ==========
+  // ========== AUTOSAVE ==========
 
-  // Guardar bloques (sin callbacks - manejados por useAutosave)
-  const guardarBloquesMutation = useMutation({
-    mutationFn: (bloquesAGuardar) =>
-      eventosDigitalesApi.saveBloques(eventoId, bloquesAGuardar),
+  const { guardarAhora, guardarSeccionesAhora } = useInvitacionAutosave({
+    modoEditor,
+    bloques,
+    estadoGuardado,
+    seccionesSnapshot,
+    estadoGuardadoLibreSnapshot,
+    guardarBloquesMutation,
+    getFreePositionStore,
+    setGuardando,
+    setGuardado,
+    setErrorGuardado,
+    queryClient,
+    eventoId,
+    bloquesQueryKey,
   });
+
+  // ========== MUTATIONS (UI) ==========
 
   // Publicar/Despublicar evento
   const publicarMutation = useMutation({
@@ -266,179 +273,12 @@ export function InvitacionEditorProvider({ children }) {
     },
   });
 
-  // ========== AUTOSAVE BLOQUES (modo canvas/bloques) ==========
-
-  const { guardarAhora } = useAutosave({
-    onSave: async (bloquesAGuardar) => {
-      await guardarBloquesMutation.mutateAsync(bloquesAGuardar);
-    },
-    enabled: modoEditor !== 'libre',
-    debounceMs: 2000,
-    items: bloques,
-    hasChanges: estadoGuardado === 'unsaved',
-    computeHash: hashBloques,
-    onSaving: () => setGuardando(),
-    onSaved: () => {
-      setGuardado();
-      queryClient.invalidateQueries({ queryKey: queryKeys.eventosDigitales.eventos.bloques(eventoId) });
-    },
-    onError: (error) => {
-      setErrorGuardado();
-      toast.error('Error al guardar los cambios');
-      console.error('[InvitacionEditor] Error guardando:', error);
-    },
-    onConflict: ({ mensaje }) => {
-      toast.error(mensaje || 'Conflicto de versión detectado', { duration: 6000 });
-    },
-  });
-
-  // ========== AUTOSAVE MODO LIBRE (secciones con posición libre) ==========
-
-  // Suscribirse a cambios en secciones para re-render (siempre se ejecuta para mantener hooks consistentes)
-  const [seccionesSnapshot, setSeccionesSnapshot] = useState([]);
-  const [estadoGuardadoLibreSnapshot, setEstadoGuardadoLibreSnapshot] = useState('saved');
-
-  useEffect(() => {
-    // Solo suscribirse cuando estamos en modo libre
-    if (modoEditor !== 'libre') return;
-
-    const store = getFreePositionStore();
-
-    // Suscribirse a cambios en el store usando subscribeWithSelector
-    const unsubscribe = store.subscribe(
-      (state) => ({
-        secciones: state.secciones,
-        estadoGuardado: state.estadoGuardado,
-      }),
-      (selected) => {
-        setSeccionesSnapshot(selected.secciones);
-        setEstadoGuardadoLibreSnapshot(selected.estadoGuardado);
-      },
-      { fireImmediately: true }
-    );
-
-    return unsubscribe;
-  }, [modoEditor, getFreePositionStore]);
-
-  const { guardarAhora: guardarSeccionesAhora } = useAutosave({
-    onSave: async () => {
-      // Leer directamente del store para evitar snapshots desactualizados
-      const store = getFreePositionStore();
-      const secciones = store.getState().secciones;
-      const bloquesConvertidos = seccionesToBloques(secciones);
-      await guardarBloquesMutation.mutateAsync(bloquesConvertidos);
-    },
-    enabled: modoEditor === 'libre',
-    debounceMs: 2000,
-    items: seccionesSnapshot,
-    hasChanges: estadoGuardadoLibreSnapshot === 'unsaved',
-    computeHash: hashSecciones,
-    onSaving: () => {
-      const store = getFreePositionStore();
-      store.getState().setGuardando();
-    },
-    onSaved: () => {
-      const store = getFreePositionStore();
-      store.getState().setGuardado();
-      queryClient.invalidateQueries({ queryKey: queryKeys.eventosDigitales.eventos.bloques(eventoId) });
-    },
-    onError: (error) => {
-      const store = getFreePositionStore();
-      store.getState().setErrorGuardado();
-      toast.error('Error al guardar los cambios');
-      console.error('[InvitacionEditor] Error guardando modo libre:', error);
-    },
-    onConflict: ({ mensaje }) => {
-      toast.error(mensaje || 'Conflicto de versión detectado', { duration: 6000 });
-    },
-  });
-
   // ========== HANDLERS ==========
 
-  /**
-   * Volver a lista de eventos
-   */
   const handleVolver = useCallback(() => {
     navigate('/eventos-digitales');
   }, [navigate]);
 
-  /**
-   * Cambiar a modo libre (migra bloques a secciones si es necesario)
-   */
-  const cambiarAModoLibre = useCallback(() => {
-    const store = getFreePositionStore();
-    const storeState = store.getState();
-
-    // 1. Si el store ya tiene secciones cargadas, solo cambiar el modo
-    if (storeState.secciones && storeState.secciones.length > 0) {
-      setModoEditor('libre');
-      toast.info('Modo libre activado');
-      return;
-    }
-
-    // 2. Verificar si los datos originales de la API tienen secciones libres
-    const bloquesOriginales = bloquesData?.bloques || [];
-    if (detectarModoLibre(bloquesOriginales)) {
-      const secciones = bloquesToSecciones(bloquesOriginales);
-      storeState.cargarDatos({ secciones }, eventoId);
-      setModoEditor('libre');
-      toast.info('Modo libre activado');
-      return;
-    }
-
-    // 3. Si no hay secciones libres, migrar bloques tradicionales
-    const { secciones } = ensureSectionsFormat({ bloques });
-    storeState.cargarDatos({ secciones }, eventoId);
-    setModoEditor('libre');
-
-    toast.info('Modo libre activado', {
-      description: 'Los bloques han sido convertidos a secciones editables.',
-    });
-  }, [bloques, bloquesData, eventoId, getFreePositionStore]);
-
-  /**
-   * Salir del modo libre y volver a modo tradicional (canvas/bloques).
-   * Convierte las secciones a bloques tradicionales (perdiendo posicionamiento libre).
-   *
-   * @param {'canvas' | 'bloques'} modoDestino - Modo al que cambiar
-   */
-  const salirDeModoLibre = useCallback(async (modoDestino) => {
-    try {
-      const store = getFreePositionStore();
-      const secciones = store.getState().secciones;
-
-      // Convertir secciones a bloques tradicionales
-      const bloquesTrad = seccionesToBloquesTrad(secciones);
-
-      // Guardar en la API
-      await guardarBloquesMutation.mutateAsync(bloquesTrad);
-
-      // Cargar en el store de bloques
-      setBloques(bloquesTrad, eventoId);
-
-      // Limpiar el store de posición libre
-      store.getState().cargarDatos({ secciones: [] }, eventoId);
-
-      // Cambiar al modo destino
-      setModoEditor(modoDestino);
-
-      // Invalidar queries para refrescar datos
-      queryClient.invalidateQueries({ queryKey: queryKeys.eventosDigitales.eventos.bloques(eventoId) });
-
-      toast.success('Modo cambiado', {
-        description: 'Los elementos se han convertido a bloques tradicionales.',
-      });
-    } catch (error) {
-      console.error('[InvitacionEditor] Error al salir del modo libre:', error);
-      toast.error('Error al cambiar de modo', {
-        description: 'No se pudieron convertir los elementos.',
-      });
-    }
-  }, [getFreePositionStore, guardarBloquesMutation, setBloques, eventoId, queryClient]);
-
-  /**
-   * Actualizar configuración del evento
-   */
   const handleActualizarConfiguracion = useCallback(
     (config) => {
       actualizarConfiguracionMutation.mutate({
@@ -449,16 +289,10 @@ export function InvitacionEditorProvider({ children }) {
     [evento?.configuracion, actualizarConfiguracionMutation]
   );
 
-  /**
-   * Publicar/Despublicar invitación
-   */
   const handlePublicar = useCallback(() => {
     publicarMutation.mutate();
   }, [publicarMutation]);
 
-  /**
-   * Actualizar plantilla (colores del tema)
-   */
   const handleActualizarPlantilla = useCallback(
     (plantilla) => {
       actualizarPlantillaMutation.mutate(plantilla);
@@ -466,35 +300,14 @@ export function InvitacionEditorProvider({ children }) {
     [actualizarPlantillaMutation]
   );
 
-  // ========== TEMA MEMOIZADO (centralizado) ==========
+  // ========== TEMA MEMOIZADO ==========
 
-  const tema = useMemo(
-    () => ({
-      color_primario: '#753572',
-      color_secundario: '#F59E0B',
-      color_fondo: '#FFFFFF',
-      color_texto: '#1f2937',
-      color_texto_claro: '#6b7280',
-      fuente_titulos: 'Playfair Display',
-      fuente_titulo: 'Playfair Display',
-      fuente_cuerpo: 'Inter',
-      patron_fondo: 'none',
-      patron_opacidad: 0.1,
-      decoracion_esquinas: 'none',
-      icono_principal: 'none',
-      efecto_titulo: 'none',
-      marco_fotos: 'none',
-      stickers: [],
-      ...(evento?.plantilla || {}),
-    }),
-    [evento?.plantilla]
-  );
+  const tema = useInvitacionTema(evento?.plantilla);
 
   // ========== COMPUTED ==========
 
   const isLoading = eventoLoading || bloquesLoading;
   const error = eventoError || bloquesError;
-  // Estado de guardado unificado (depende del modo actual)
   const estaGuardando = modoEditor === 'libre'
     ? estadoGuardadoLibreSnapshot === 'saving'
     : estadoGuardado === 'saving';
@@ -503,7 +316,6 @@ export function InvitacionEditorProvider({ children }) {
     : estadoGuardado;
   const estaPublicando = publicarMutation.isPending;
   const estaPublicado = evento?.estado === 'publicado';
-  // Detectar si los datos guardados en la API son de modo libre (irreversible)
   const esModoLibreGuardado = useMemo(() => {
     return detectarModoLibre(bloquesData?.bloques || []);
   }, [bloquesData]);

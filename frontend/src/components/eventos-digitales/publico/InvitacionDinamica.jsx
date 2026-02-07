@@ -58,6 +58,7 @@ function InvitacionDinamica({
   isLoadingRSVP,
   qrImage,
   loadingQR,
+  isPreview,
 }) {
   const [visibleSections, setVisibleSections] = useState(new Set(['inicio']));
   const sectionRefs = useRef({});
@@ -170,6 +171,7 @@ function InvitacionDinamica({
               isLoadingRSVP={isLoadingRSVP}
               qrImage={qrImage}
               loadingQR={loadingQR}
+              isPreview={isPreview}
             />
           </Suspense>
         </div>

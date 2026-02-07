@@ -12,6 +12,7 @@ import { memo, useState } from 'react';
 import { Image as ImageIcon, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { THEME_FALLBACK_COLORS } from '@/lib/uiConstants';
+import { MarcoFoto } from '@/components/eventos-digitales';
 
 /**
  * Galería Canvas Block
@@ -91,13 +92,19 @@ function GaleriaCanvasBlock({ bloque, tema, galeria = [] }) {
                       className="flex-shrink-0 w-64 md:w-80 snap-center cursor-pointer"
                       onClick={() => openLightbox(idx)}
                     >
-                      <div className="aspect-[4/3] rounded-lg overflow-hidden">
-                        <img
-                          src={img.url}
-                          alt={img.alt || `Imagen ${idx + 1}`}
-                          className="w-full h-full object-cover hover:scale-105 transition-transform"
-                        />
-                      </div>
+                      <MarcoFoto
+                        marco={tema?.marco_fotos}
+                        colorPrimario={colorPrimario}
+                        colorSecundario={tema?.color_secundario}
+                      >
+                        <div className="aspect-[4/3] rounded-lg overflow-hidden">
+                          <img
+                            src={img.url}
+                            alt={img.alt || `Imagen ${idx + 1}`}
+                            className="w-full h-full object-cover hover:scale-105 transition-transform"
+                          />
+                        </div>
+                      </MarcoFoto>
                     </div>
                   ))}
                 </div>
@@ -111,17 +118,23 @@ function GaleriaCanvasBlock({ bloque, tema, galeria = [] }) {
                 )}
               >
                 {imagenesAMostrar.map((img, idx) => (
-                  <div
+                  <MarcoFoto
                     key={idx}
-                    className="aspect-square rounded-lg overflow-hidden cursor-pointer group"
-                    onClick={() => openLightbox(idx)}
+                    marco={tema?.marco_fotos}
+                    colorPrimario={colorPrimario}
+                    colorSecundario={tema?.color_secundario}
                   >
-                    <img
-                      src={img.url}
-                      alt={img.alt || `Imagen ${idx + 1}`}
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                    />
-                  </div>
+                    <div
+                      className="aspect-square rounded-lg overflow-hidden cursor-pointer group"
+                      onClick={() => openLightbox(idx)}
+                    >
+                      <img
+                        src={img.url}
+                        alt={img.alt || `Imagen ${idx + 1}`}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                      />
+                    </div>
+                  </MarcoFoto>
                 ))}
               </div>
             )}

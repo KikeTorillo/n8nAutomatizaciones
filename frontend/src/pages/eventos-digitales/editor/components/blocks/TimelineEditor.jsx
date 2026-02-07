@@ -122,7 +122,7 @@ function TimelineEditor({ contenido, estilos, onChange, tema }) {
                 <GripVertical className="w-4 h-4 text-gray-400 cursor-grab" />
                 <Clock
                   className="w-4 h-4"
-                  style={{ color: tema?.color_primario || '#753572' }}
+                  style={{ color: tema?.color_primario || '#ec4899' }}
                 />
                 <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                   Actividad {index + 1}

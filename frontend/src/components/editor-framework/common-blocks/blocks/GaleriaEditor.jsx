@@ -356,12 +356,14 @@ function GaleriaEditor({
           options={layoutOptions}
         />
 
-        <SelectField
-          label="Columnas"
-          value={isAutoSaveMode ? (form.columnas || 3) : String(form.columnas || 3)}
-          onChange={(val) => handleFieldChange('columnas', isAutoSaveMode ? parseInt(val) : parseInt(val))}
-          options={columnasOptionsFormatted}
-        />
+        {getValue('layout') === 'grid' && (
+          <SelectField
+            label="Columnas"
+            value={isAutoSaveMode ? (form.columnas || 3) : String(form.columnas || 3)}
+            onChange={(val) => handleFieldChange('columnas', isAutoSaveMode ? parseInt(val) : parseInt(val))}
+            options={columnasOptionsFormatted}
+          />
+        )}
 
         {showEspaciado && (
           <SelectField
@@ -441,53 +443,54 @@ function GaleriaEditor({
           ) : (
             // Lista para invitaciones con Unsplash/Upload
             <div className="space-y-3">
-              {/* Header con botones de acción */}
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Imágenes ({(form.imagenes || []).length})
-                </p>
-                <div className="flex items-center gap-1">
-                  {onOpenUnsplash && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => onOpenUnsplash('galeria_nueva')}
-                      disabled={isUploading}
-                      className="text-xs"
-                    >
-                      <ImagePlus className="w-3.5 h-3.5 mr-1" />
-                      Unsplash
-                    </Button>
-                  )}
-                  {onUploadImage && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={handleUploadClick}
-                      disabled={isUploading}
-                      className="text-xs"
-                    >
-                      {isUploading ? (
-                        <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
-                      ) : (
-                        <Upload className="w-3.5 h-3.5 mr-1" />
-                      )}
-                      Subir
-                    </Button>
-                  )}
+              {/* Contador de imágenes */}
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                <ImageIcon className="w-4 h-4" />
+                Imágenes ({(form.imagenes || []).length})
+              </p>
+
+              {/* Botones de acción en fila separada */}
+              <div className="flex items-center gap-2">
+                {onOpenUnsplash && (
                   <Button
                     type="button"
-                    variant="ghost"
+                    variant="outline"
                     size="sm"
-                    onClick={handleAgregarItem}
-                    className="text-xs"
+                    onClick={() => onOpenUnsplash('galeria_nueva')}
+                    disabled={isUploading}
+                    className="flex-1 text-xs"
                   >
-                    <Plus className="w-3.5 h-3.5 mr-1" />
-                    URL
+                    <ImagePlus className="w-3.5 h-3.5 mr-1" />
+                    Unsplash
                   </Button>
-                </div>
+                )}
+                {onUploadImage && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleUploadClick}
+                    disabled={isUploading}
+                    className="flex-1 text-xs"
+                  >
+                    {isUploading ? (
+                      <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
+                    ) : (
+                      <Upload className="w-3.5 h-3.5 mr-1" />
+                    )}
+                    Subir
+                  </Button>
+                )}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleAgregarItem}
+                  className="flex-1 text-xs"
+                >
+                  <Plus className="w-3.5 h-3.5 mr-1" />
+                  URL
+                </Button>
               </div>
 
               {/* Grid de miniaturas */}
@@ -496,30 +499,33 @@ function GaleriaEditor({
                   {(form.imagenes || []).map((img, idx) => (
                     <div
                       key={idx}
-                      className="relative group aspect-square bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden"
+                      className="relative group aspect-square bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden transition-all duration-200 ease-out hover:scale-[1.04] hover:shadow-lg hover:ring-2 hover:ring-primary-400/50 hover:z-10 cursor-pointer"
                     >
                       {img.url ? (
                         <img
                           src={img.url}
                           alt={img.alt || `Imagen ${idx + 1}`}
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                          loading="lazy"
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
                           <ImageIcon className="w-6 h-6 text-gray-400" />
                         </div>
                       )}
+                      {/* Overlay degradado en hover */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
                       {/* Botón eliminar */}
                       <button
                         type="button"
                         onClick={() => handleRemoveImageFromGrid(idx)}
-                        className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-sm hover:bg-red-600"
+                        className="absolute top-1 right-1 p-1.5 bg-red-500/90 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all duration-200 scale-75 group-hover:scale-100 shadow-md hover:bg-red-600"
                         title="Eliminar imagen"
                       >
                         <X className="w-3 h-3" />
                       </button>
                       {/* Número de imagen */}
-                      <span className="absolute bottom-1 left-1 px-1.5 py-0.5 bg-black/50 text-white text-[10px] rounded">
+                      <span className="absolute bottom-1 left-1 px-1.5 py-0.5 bg-black/60 text-white text-[10px] rounded font-medium backdrop-blur-sm transition-all duration-200 group-hover:bg-primary-500/80">
                         {idx + 1}
                       </span>
                     </div>
@@ -529,8 +535,8 @@ function GaleriaEditor({
 
               {/* Mensaje si no hay imágenes */}
               {(form.imagenes || []).length === 0 && (
-                <div className="p-6 bg-gray-50 dark:bg-gray-700 rounded-lg text-center border-2 border-dashed border-gray-200 dark:border-gray-600">
-                  <ImageIcon className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                <div className="p-8 bg-gray-50 dark:bg-gray-700/50 rounded-xl text-center border-2 border-dashed border-gray-300 dark:border-gray-600 hover:border-primary-400 dark:hover:border-primary-500 transition-colors duration-300">
+                  <ImageIcon className="w-10 h-10 mx-auto mb-3 text-gray-300 dark:text-gray-500" />
                   <p className="text-sm text-gray-500 dark:text-gray-400">
                     Agrega imágenes usando Unsplash, subiendo archivos o por URL
                   </p>
@@ -574,7 +580,7 @@ export default memo(GaleriaEditor);
 
 // Configuraciones predefinidas para cada editor
 export const GALERIA_CONFIG_MINIMAL = {
-  showUsarGaleriaEvento: true,
+  showUsarGaleriaEvento: false,
   showEspaciado: false,
   showLightbox: false,
   showImagenTitulo: false,

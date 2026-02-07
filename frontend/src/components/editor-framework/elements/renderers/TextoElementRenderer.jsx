@@ -81,7 +81,7 @@ function TextoElementRenderer({
       styles.fontFamily = fuente;
     } else if (tema) {
       styles.fontFamily = variante === 'titulo' || variante === 'subtitulo'
-        ? tema.fuente_titulos
+        ? (tema.fuente_titulo || tema.fuente_titulos)
         : tema.fuente_cuerpo;
     }
 

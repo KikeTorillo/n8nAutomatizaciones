@@ -76,7 +76,10 @@ export function useEditorBlockHandlers({ store, bloquesConfig, crearBloque }) {
 
   const handleReordenarBloques = useCallback(
     (nuevoOrden) => {
-      store.reordenarBloquesLocal(nuevoOrden);
+      const ids = nuevoOrden.map((item) =>
+        typeof item === 'string' ? item : item.id
+      );
+      store.reordenarBloquesLocal(ids);
     },
     [store]
   );

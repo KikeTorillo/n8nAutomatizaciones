@@ -81,7 +81,7 @@ function MesaRegalosEditor({
 
   // Componente de preview
   const preview = useMemo(() => {
-    const colorPrimario = tema?.color_primario || '#753572';
+    const colorPrimario = tema?.color_primario || '#ec4899';
 
     return (
       <div className="p-4">
@@ -226,7 +226,7 @@ function MesaRegalosEditor({
                 <span className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
                   <Gift
                     className="w-4 h-4"
-                    style={{ color: tema?.color_primario || '#753572' }}
+                    style={{ color: tema?.color_primario || '#ec4899' }}
                   />
                   Tienda {index + 1}
                 </span>

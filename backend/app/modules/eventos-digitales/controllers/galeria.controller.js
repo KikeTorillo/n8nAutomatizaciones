@@ -28,6 +28,7 @@ const FotoEventoModel = require('../models/foto.model');
 const { ResponseHelper, ErrorHelper } = require('../../../utils/helpers');
 const { asyncHandler } = require('../../../middleware');
 const logger = require('../../../utils/logger');
+const { minioClient, BUCKETS } = require('../../../services/storage');
 
 class GaleriaController {
     /**
@@ -130,9 +131,25 @@ class GaleriaController {
         const foto = await FotoEventoModel.eliminarPermanente(id, organizacionId);
         ErrorHelper.throwIfNotFound(foto, 'Foto');
 
-        // TODO: Borrar archivos de MinIO (url y thumbnail_url)
-        // await storageService.deleteFile(foto.url);
-        // if (foto.thumbnail_url) await storageService.deleteFile(foto.thumbnail_url);
+        // Borrar archivos de MinIO (parsear URL → bucket + path)
+        const borrarDeStorage = async (url) => {
+            if (!url) return;
+            try {
+                const urlObj = new URL(url);
+                const parts = urlObj.pathname.split('/').filter(Boolean); // ['nexo-public', 'org-1', ...]
+                if (parts.length < 2) return;
+                const bucket = parts[0];
+                const objectPath = parts.slice(1).join('/');
+                await minioClient.removeObject(bucket, objectPath);
+            } catch (err) {
+                logger.warn('[GaleriaController] No se pudo borrar archivo de storage', { url, error: err.message });
+            }
+        };
+
+        await Promise.all([
+            borrarDeStorage(foto.url),
+            borrarDeStorage(foto.thumbnail_url),
+        ]);
 
         return ResponseHelper.success(res, { id: parseInt(id) }, 'Foto eliminada permanentemente');
     });

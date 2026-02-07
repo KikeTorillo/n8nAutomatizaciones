@@ -13,6 +13,7 @@ import { memo, useState } from 'react';
 import PropTypes from 'prop-types';
 import { X, ChevronLeft, ChevronRight, Images } from 'lucide-react';
 import { THEME_FALLBACK_COLORS } from '@/lib/uiConstants';
+import { MarcoFoto } from '@/components/eventos-digitales';
 
 function GaleriaElementRenderer({
   elemento,
@@ -41,7 +42,7 @@ function GaleriaElementRenderer({
   const colorSecundario = tema?.color_secundario || INV.secundario;
   const colorTexto = tema?.color_texto || INV.texto;
   const colorTextoClaro = tema?.color_texto_claro || INV.textoClaro;
-  const fuenteTitulo = tema?.fuente_titulos || 'inherit';
+  const fuenteTitulo = tema?.fuente_titulo || 'inherit';
 
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
@@ -107,23 +108,30 @@ function GaleriaElementRenderer({
       {layout === 'masonry' ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
           {imagenes.slice(0, 6).map((url, idx) => (
-            <div
+            <MarcoFoto
               key={idx}
-              className={`relative overflow-hidden cursor-pointer group rounded-lg ${
-                idx === 0 ? 'sm:col-span-2 sm:row-span-2' : ''
-              } ${idx === 0 ? 'aspect-square sm:aspect-auto' : 'aspect-square'}`}
-              onClick={() => openLightbox(idx)}
+              marco={tema?.marco_fotos}
+              colorPrimario={colorPrimario}
+              colorSecundario={colorSecundario}
+              className={idx === 0 ? 'sm:col-span-2 sm:row-span-2' : ''}
             >
-              <img
-                src={url}
-                alt={`Foto ${idx + 1}`}
-                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-              />
               <div
-                className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                style={{ backgroundColor: `${colorPrimario}30` }}
-              />
-            </div>
+                className={`relative overflow-hidden cursor-pointer group rounded-lg ${
+                  idx === 0 ? 'aspect-square sm:aspect-auto' : 'aspect-square'
+                }`}
+                onClick={() => openLightbox(idx)}
+              >
+                <img
+                  src={url}
+                  alt={`Foto ${idx + 1}`}
+                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                />
+                <div
+                  className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                  style={{ backgroundColor: `${colorPrimario}30` }}
+                />
+              </div>
+            </MarcoFoto>
           ))}
         </div>
       ) : (
@@ -132,21 +140,27 @@ function GaleriaElementRenderer({
           style={{ gridTemplateColumns: `repeat(${Math.min(columnas, 4)}, minmax(0, 1fr))` }}
         >
           {imagenes.slice(0, columnas * 2).map((url, idx) => (
-            <div
+            <MarcoFoto
               key={idx}
-              className="relative overflow-hidden cursor-pointer group rounded-lg aspect-square"
-              onClick={() => openLightbox(idx)}
+              marco={tema?.marco_fotos}
+              colorPrimario={colorPrimario}
+              colorSecundario={colorSecundario}
             >
-              <img
-                src={url}
-                alt={`Foto ${idx + 1}`}
-                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-              />
               <div
-                className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                style={{ backgroundColor: `${colorPrimario}30` }}
-              />
-            </div>
+                className="relative overflow-hidden cursor-pointer group rounded-lg aspect-square"
+                onClick={() => openLightbox(idx)}
+              >
+                <img
+                  src={url}
+                  alt={`Foto ${idx + 1}`}
+                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                />
+                <div
+                  className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                  style={{ backgroundColor: `${colorPrimario}30` }}
+                />
+              </div>
+            </MarcoFoto>
           ))}
         </div>
       )}
@@ -206,7 +220,7 @@ GaleriaElementRenderer.propTypes = {
     color_secundario: PropTypes.string,
     color_texto: PropTypes.string,
     color_texto_claro: PropTypes.string,
-    fuente_titulos: PropTypes.string,
+    fuente_titulo: PropTypes.string,
   }),
   customData: PropTypes.shape({
     galeria_urls: PropTypes.array,

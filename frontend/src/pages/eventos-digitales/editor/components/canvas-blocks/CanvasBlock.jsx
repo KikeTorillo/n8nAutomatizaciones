@@ -12,7 +12,7 @@
 import { memo, useCallback } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, Copy, Trash2, Eye, EyeOff } from 'lucide-react';
+import { Copy, Trash2, Eye, EyeOff, ChevronUp, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useInvitacionEditorStore, selectBloqueRecienAgregado } from '@/store';
@@ -80,6 +80,7 @@ function CanvasBlock({
   isDragOver = false,
   dropPosition = null,
   isFirstBlock = false,
+  isLastBlock = false,
   eventoData = {},
   onClick,
   onDoubleClick,
@@ -87,6 +88,8 @@ function CanvasBlock({
   onDuplicate,
   onDelete,
   onToggleVisibility,
+  onMoveUp,
+  onMoveDown,
 }) {
   // Verificar si es un bloque recien agregado
   const selectRecienAgregado = useCallback(
@@ -99,8 +102,6 @@ function CanvasBlock({
 
   // Sortable setup
   const {
-    attributes,
-    listeners,
     setNodeRef,
     transform,
     transition,
@@ -182,22 +183,47 @@ function CanvasBlock({
         )}
       </AnimatePresence>
 
-      {/* Hover Controls - Drag Handle */}
-      <div
-        className={cn(
-          'absolute -left-10 top-1/2 -translate-y-1/2 opacity-0 group-hover/block:opacity-100 transition-opacity z-20',
-          isSelected && 'opacity-100'
+      {/* Move Controls - Upper Left */}
+      <AnimatePresence>
+        {isSelected && (
+          <motion.div
+            initial={{ opacity: 0, y: isFirstBlock ? 10 : -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: isFirstBlock ? 10 : -10 }}
+            className={cn(
+              'absolute left-2 flex items-center gap-1 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-1 z-20',
+              isFirstBlock ? 'bottom-2' : '-top-10'
+            )}
+          >
+            <button
+              onClick={() => onMoveUp?.(bloque.id)}
+              disabled={isFirstBlock}
+              className={cn(
+                'p-1.5 rounded transition-colors',
+                isFirstBlock
+                  ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed'
+                  : 'text-gray-500 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400'
+              )}
+              title="Mover arriba"
+            >
+              <ChevronUp className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => onMoveDown?.(bloque.id)}
+              disabled={isLastBlock}
+              className={cn(
+                'p-1.5 rounded transition-colors',
+                isLastBlock
+                  ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed'
+                  : 'text-gray-500 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400'
+              )}
+              title="Mover abajo"
+            >
+              <ChevronDown className="w-4 h-4" />
+            </button>
+          </motion.div>
         )}
-      >
-        <button
-          {...attributes}
-          {...listeners}
-          className="p-1.5 bg-white dark:bg-gray-700 rounded shadow-md text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 cursor-grab active:cursor-grabbing"
-          title="Arrastrar para reordenar"
-        >
-          <GripVertical className="w-4 h-4" />
-        </button>
-      </div>
+      </AnimatePresence>
 
       {/* Block Controls */}
       <AnimatePresence>

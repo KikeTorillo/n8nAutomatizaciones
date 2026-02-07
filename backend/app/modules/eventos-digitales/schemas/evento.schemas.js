@@ -16,7 +16,6 @@ const plantillaSchema = Joi.object({
     color_fondo: Joi.string().pattern(/^#[0-9A-Fa-f]{6}$/).optional(),
     color_texto: Joi.string().pattern(/^#[0-9A-Fa-f]{6}$/).optional(),
     color_texto_claro: Joi.string().pattern(/^#[0-9A-Fa-f]{6}$/).optional(),
-    fuente_titulos: Joi.string().max(100).optional(),
     fuente_titulo: Joi.string().max(100).optional(),
     fuente_cuerpo: Joi.string().max(100).optional(),
     patron_fondo: Joi.string().valid('none', 'confetti', 'stars', 'hearts', 'dots', 'stripes', 'bubbles', 'geometric').optional(),

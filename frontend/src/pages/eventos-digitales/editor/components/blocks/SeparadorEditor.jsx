@@ -52,7 +52,7 @@ function SeparadorEditor({ contenido, estilos, onChange, tema }) {
 
   // Renderizar el separador según el estilo
   const renderSeparador = (estilo, color, altura) => {
-    const colorFinal = color || tema?.color_primario || '#753572';
+    const colorFinal = color || tema?.color_primario || '#ec4899';
 
     switch (estilo) {
       case 'linea':

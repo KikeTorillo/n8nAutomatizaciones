@@ -43,7 +43,7 @@ function MesaRegalosElementRenderer({
   const colorSecundario = tema?.color_secundario || INV.secundario;
   const colorTexto = tema?.color_texto || INV.texto;
   const colorTextoClaro = tema?.color_texto_claro || INV.textoClaro;
-  const fuenteTitulo = tema?.fuente_titulos || 'inherit';
+  const fuenteTitulo = tema?.fuente_titulo || 'inherit';
 
   const handleCopy = (text) => {
     if (isEditing) return;
@@ -212,7 +212,7 @@ MesaRegalosElementRenderer.propTypes = {
     color_secundario: PropTypes.string,
     color_texto: PropTypes.string,
     color_texto_claro: PropTypes.string,
-    fuente_titulos: PropTypes.string,
+    fuente_titulo: PropTypes.string,
   }),
   customData: PropTypes.shape({
     regalos: PropTypes.array,

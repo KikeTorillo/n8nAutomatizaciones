@@ -40,7 +40,7 @@ function TimelineElementRenderer({
   const colorTexto = estilos.color_texto || tema?.color_texto || INV.texto;
   const colorTextoClaro = estilos.color_texto_claro || tema?.color_texto_claro || INV.textoClaro;
   const colorLinea = estilos.color_linea || contenido.color_linea || colorPrimario;
-  const fuenteTitulo = estilos.fuente_titulo || tema?.fuente_titulos || 'inherit';
+  const fuenteTitulo = estilos.fuente_titulo || tema?.fuente_titulo || 'inherit';
 
   // Obtener icono de Lucide
   const getIcon = (iconName) => {
@@ -212,7 +212,7 @@ TimelineElementRenderer.propTypes = {
     color_secundario: PropTypes.string,
     color_texto: PropTypes.string,
     color_texto_claro: PropTypes.string,
-    fuente_titulos: PropTypes.string,
+    fuente_titulo: PropTypes.string,
   }),
   isEditing: PropTypes.bool,
 };

@@ -94,12 +94,11 @@ async function checkStorageLimit(req, res, next) {
       return ResponseHelper.unauthorized(res, 'No se pudo determinar la organización');
     }
 
-    // Obtener límite del plan y uso actual
-    // Nota: usamos suscripciones_org (tabla del módulo suscripciones-negocio)
-    // Usamos bypass_rls porque esta query cruza varias tablas y necesita ver todos los datos
+    // Obtener límite del plan (JSONB limites->>'almacenamiento_mb') y uso actual
+    // Usamos bypass_rls porque esta query cruza varias tablas
     const query = `
       SELECT
-        p.limite_almacenamiento_mb,
+        (p.limites->>'almacenamiento_mb')::int as limite_almacenamiento_mb,
         COALESCE(SUM(a.tamano_bytes), 0) as uso_actual_bytes
       FROM organizaciones o
       JOIN suscripciones_org s ON s.cliente_id IN (
@@ -108,11 +107,9 @@ async function checkStorageLimit(req, res, next) {
       JOIN planes_suscripcion_org p ON p.id = s.plan_id
       LEFT JOIN archivos_storage a ON a.organizacion_id = o.id AND a.activo = true
       WHERE o.id = $1
-      GROUP BY p.limite_almacenamiento_mb
+      GROUP BY p.limites
     `;
 
-    // Establecer bypass RLS para esta consulta (cross-table query)
-    // Usamos set_config con is_local=false (sesión) en lugar de BEGIN/COMMIT
     const db = await getDb();
     let result;
     try {
@@ -121,21 +118,20 @@ async function checkStorageLimit(req, res, next) {
     } catch (err) {
       throw err;
     } finally {
-      // Limpiar bypass_rls antes de liberar la conexión al pool
       await db.query('SELECT set_config($1, $2, false)', ['app.bypass_rls', 'false']).catch(() => {});
       db.release();
     }
 
+    // Si no hay suscripción, permitir upload (sin límites configurados)
     if (result.rows.length === 0) {
-      return ResponseHelper.forbidden(res, 'No se encontró suscripción activa');
+      return next();
     }
 
     const { limite_almacenamiento_mb, uso_actual_bytes } = result.rows[0];
     const usoActualMb = parseInt(uso_actual_bytes) / 1024 / 1024;
 
-    // Si el límite es NULL, es ilimitado (plan custom)
-    if (limite_almacenamiento_mb !== null) {
-      // Verificar si ya está al límite
+    // Si el límite es NULL o -1, es ilimitado (no configurado o plan sin restricción)
+    if (limite_almacenamiento_mb != null && limite_almacenamiento_mb !== -1) {
       if (usoActualMb >= limite_almacenamiento_mb) {
         return ResponseHelper.forbidden(res, 'Límite de almacenamiento alcanzado', {
           limite_mb: limite_almacenamiento_mb,
@@ -144,7 +140,6 @@ async function checkStorageLimit(req, res, next) {
         });
       }
 
-      // Adjuntar info de límites al request para validar después del upload
       req.storageLimit = {
         limiteMb: limite_almacenamiento_mb,
         usoActualMb,

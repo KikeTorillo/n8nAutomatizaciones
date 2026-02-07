@@ -10,6 +10,7 @@ import {
 } from '@/hooks/otros';
 import { eventosDigitalesApi } from '@/services/api/endpoints';
 import { InvitacionDinamica } from '@/components/eventos-digitales';
+import { INVITACION_TEMA_DEFAULT, crearBloqueAperturaLegacy } from './constants';
 import '@/components/eventos-digitales/publico/EventoAnimations.css';
 
 /**
@@ -34,24 +35,7 @@ function EventoPublicoPage() {
   const invitado = token ? eventoPublico?.invitado : null;
 
   // Tema de la plantilla (con defaults)
-  const temaDefault = {
-    color_primario: '#ec4899',
-    color_secundario: '#fce7f3',
-    color_fondo: '#fdf2f8',
-    color_texto: '#1f2937',
-    color_texto_claro: '#6b7280',
-    fuente_titulo: 'Playfair Display',
-    fuente_cuerpo: 'Inter',
-    patron_fondo: 'none',
-    patron_opacidad: 0.1,
-    decoracion_esquinas: 'none',
-    icono_principal: 'none',
-    animacion_entrada: 'fade',
-    efecto_titulo: 'none',
-    marco_fotos: 'none',
-    stickers: []
-  };
-  const tema = { ...temaDefault, ...(evento?.tema || {}) };
+  const tema = { ...INVITACION_TEMA_DEFAULT, ...(evento?.tema || {}) };
 
   // Cargar Google Fonts dinámicamente
   useEffect(() => {
@@ -92,26 +76,9 @@ function EventoPublicoPage() {
   const bloquesRaw = evento?.bloques_invitacion || [];
   const bloques = useMemo(() => {
     const tieneBlqueApertura = bloquesRaw.some(b => b.tipo === 'apertura');
-    if (!tieneBlqueApertura && evento?.configuracion) {
-      const cfg = evento.configuracion;
-      const tieneConfigLegacy =
-        (cfg.animacion_apertura && cfg.animacion_apertura !== 'none') ||
-        (cfg.modo_apertura === 'imagen' && cfg.imagen_apertura);
-
-      if (tieneConfigLegacy) {
-        const bloqueApertura = {
-          id: 'apertura-legacy',
-          tipo: 'apertura',
-          orden: -1,
-          visible: true,
-          contenido: {
-            modo: cfg.modo_apertura || 'animacion',
-            animacion: cfg.animacion_apertura || 'sobre',
-            imagen_url: cfg.imagen_apertura || '',
-            texto: cfg.texto_apertura || 'Desliza para abrir',
-          },
-          estilos: {},
-        };
+    if (!tieneBlqueApertura) {
+      const bloqueApertura = crearBloqueAperturaLegacy(evento?.configuracion);
+      if (bloqueApertura) {
         return [bloqueApertura, ...bloquesRaw];
       }
     }

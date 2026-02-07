@@ -47,6 +47,7 @@ const schema = z.object({
         servicios: optionalInt,
         clientes: optionalInt,
         sucursales: optionalInt,
+        almacenamiento_mb: optionalInt,
         // eventos-digitales
         eventos_activos: optionalInt,
         invitados_evento: optionalInt,
@@ -240,6 +241,13 @@ function EntitlementsFormDrawer({ isOpen, onClose, plan, modulosDisponibles = []
                             <Input
                                 type="number"
                                 {...register('limites.sucursales')}
+                                placeholder="-1"
+                            />
+                        </FormGroup>
+                        <FormGroup label="Almacenamiento (MB)" helper="-1 = ilimitado">
+                            <Input
+                                type="number"
+                                {...register('limites.almacenamiento_mb')}
                                 placeholder="-1"
                             />
                         </FormGroup>

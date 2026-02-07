@@ -10,7 +10,7 @@
 import { FUENTES_DISPONIBLES } from '@/components/editor-framework';
 
 export const FONT_FIELDS = [
-  { key: 'fuente_titulos', label: 'Fuente de títulos', options: FUENTES_DISPONIBLES },
+  { key: 'fuente_titulo', label: 'Fuente de títulos', options: FUENTES_DISPONIBLES },
   { key: 'fuente_cuerpo', label: 'Fuente del cuerpo', options: FUENTES_DISPONIBLES },
 ];
 
@@ -136,15 +136,15 @@ export const STICKERS_DISPONIBLES = [
 
 // Funciones extractoras para useThemeSave
 export const extractInvitacionColors = (plantilla) => ({
-  primario: plantilla?.color_primario || '#753572',
-  secundario: plantilla?.color_secundario || '#F59E0B',
-  fondo: plantilla?.color_fondo || '#FFFFFF',
-  texto: plantilla?.color_texto || '#1F2937',
-  texto_claro: plantilla?.color_texto_claro || '#6B7280',
+  primario: plantilla?.color_primario || '#ec4899',
+  secundario: plantilla?.color_secundario || '#fce7f3',
+  fondo: plantilla?.color_fondo || '#fdf2f8',
+  texto: plantilla?.color_texto || '#1f2937',
+  texto_claro: plantilla?.color_texto_claro || '#6b7280',
 });
 
 export const extractInvitacionFonts = (plantilla) => ({
-  fuente_titulos: plantilla?.fuente_titulos || 'Playfair Display',
+  fuente_titulo: plantilla?.fuente_titulo || 'Playfair Display',
   fuente_cuerpo: plantilla?.fuente_cuerpo || 'Inter',
 });
 
@@ -155,7 +155,6 @@ export const buildInvitacionThemePayload = (plantilla) => ({ colores, fuentes })
   color_fondo: colores.fondo,
   color_texto: colores.texto,
   color_texto_claro: colores.texto_claro,
-  fuente_titulos: fuentes?.fuente_titulos,
-  fuente_titulo: fuentes?.fuente_titulos,
+  fuente_titulo: fuentes?.fuente_titulo,
   fuente_cuerpo: fuentes?.fuente_cuerpo,
 });

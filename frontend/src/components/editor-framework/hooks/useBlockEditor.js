@@ -33,6 +33,8 @@ export function useBlockEditor(contenido, defaultValues, options = {}) {
 
   // Ref para detectar cambio de bloque (evita reset mientras el usuario edita)
   const bloqueIdRef = useRef(null);
+  // Ref para detectar cambios externos vs propios en autoSave
+  const prevInitialFormRef = useRef(null);
 
   // Inicializar formulario mezclando contenido con defaults y estilos
   const initialForm = useMemo(() => {
@@ -95,22 +97,48 @@ export function useBlockEditor(contenido, defaultValues, options = {}) {
     }
   }, [form, initialForm, isAutoSaveMode]);
 
-  // Sincronizar cuando cambia el bloque seleccionado (por ID)
-  // NO cuando cambia el contenido (eso causaría reset mientras el usuario edita)
+  // Sincronizar cuando cambia el bloque seleccionado o hay cambios externos
   useEffect(() => {
     const currentId = contenido?.[bloqueIdKey];
 
     if (currentId && currentId !== bloqueIdRef.current) {
-      // Cambió el bloque seleccionado, resetear formulario
+      // Cambió el bloque seleccionado, resetear formulario completo
       bloqueIdRef.current = currentId;
+      prevInitialFormRef.current = initialForm;
       setFormInternal(initialForm);
     } else if (!isAutoSaveMode) {
-      // Modo manual: actualizar si cambió el contenido desde el servidor
+      // Modo manual: sincronizar si cambió el contenido desde el servidor
+      prevInitialFormRef.current = initialForm;
       setFormInternal((prev) => {
         if (!deepEqual(prev, initialForm)) {
           return initialForm;
         }
         return prev;
+      });
+    } else {
+      // Modo autoSave: detectar cambios EXTERNOS (upload, Unsplash, etc.)
+      // Comparar initialForm actual vs anterior para identificar qué campos cambiaron afuera
+      const prevInitial = prevInitialFormRef.current;
+      prevInitialFormRef.current = initialForm;
+
+      setFormInternal((prev) => {
+        if (deepEqual(prev, initialForm)) return prev;
+
+        // Mergear solo campos que cambiaron externamente,
+        // preservando ediciones locales del usuario en otros campos
+        const merged = { ...prev };
+        let hasExternalChanges = false;
+
+        for (const key of Object.keys(initialForm)) {
+          const wasChanged = !deepEqual(prevInitial?.[key], initialForm[key]);
+          const differsFromForm = !deepEqual(prev[key], initialForm[key]);
+          if (wasChanged && differsFromForm) {
+            merged[key] = initialForm[key];
+            hasExternalChanges = true;
+          }
+        }
+
+        return hasExternalChanges ? merged : prev;
       });
     }
   }, [contenido?.[bloqueIdKey], initialForm, isAutoSaveMode, bloqueIdKey]);

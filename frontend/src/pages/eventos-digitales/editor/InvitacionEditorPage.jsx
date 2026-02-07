@@ -140,7 +140,7 @@ function InvitacionEditorContent() {
 
   // Tema para DndEditorProvider
   const tema = {
-    color_primario: evento?.plantilla?.color_primario || '#753572',
+    color_primario: evento?.plantilla?.color_primario || '#ec4899',
   };
 
   // ========== RENDER: EDITOR PRINCIPAL ==========

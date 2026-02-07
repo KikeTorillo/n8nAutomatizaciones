@@ -10,7 +10,7 @@
 
 import OpeningOverlay from '../OpeningOverlay';
 
-function AperturaPublico({ bloque, tema }) {
+function AperturaPublico({ bloque, tema, isPreview }) {
   const c = bloque.contenido || {};
   return (
     <OpeningOverlay
@@ -21,6 +21,7 @@ function AperturaPublico({ bloque, tema }) {
       direccionApertura={c.direccion_apertura || 'vertical'}
       texto={c.texto || 'Desliza para abrir'}
       tema={tema}
+      isPreview={isPreview}
     />
   );
 }

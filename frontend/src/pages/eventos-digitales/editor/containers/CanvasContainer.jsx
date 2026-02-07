@@ -21,6 +21,7 @@ import {
   useDndEditor,
   useBlockSelection,
   useInlineEditing,
+  useImageHandlers,
   BREAKPOINTS,
   useEditorLayoutContext,
   BlockListEditor,
@@ -29,6 +30,9 @@ import {
 import { useInvitacionEditorStore } from '@/store';
 import { EDITORES_BLOQUE } from '../components/blocks';
 import { BLOCK_ICONS, BLOCK_NAMES } from '../config/invitacionBlocks';
+import { InvitacionDinamica } from '@/components/eventos-digitales';
+import { UnsplashModal } from '@/components/shared/media/UnsplashPicker';
+import '@/components/eventos-digitales/publico/EventoAnimations.css';
 
 // ========== LAZY LOADED CUSTOM RENDERERS PARA INVITACIONES ==========
 
@@ -96,6 +100,7 @@ function CanvasContainer() {
     evento,
     bloques,
     bloqueSeleccionado,
+    bloqueSeleccionadoCompleto,
     modoPreview,
     modoEditor,
     breakpoint,
@@ -107,6 +112,7 @@ function CanvasContainer() {
     handleDuplicarBloque,
     handleToggleVisibilidad,
     handleReordenarBloques,
+    handleActualizarPlantilla,
     seleccionarBloque,
     deseleccionarBloque,
     getFreePositionStore,
@@ -131,6 +137,23 @@ function CanvasContainer() {
   const isDraggingFromPalette = dndContext?.isDraggingFromPalette || false;
   const overInfo = dndContext?.overInfo;
 
+  // Image handlers para modo bloques (Unsplash + Upload)
+  const {
+    unsplashState,
+    openUnsplash,
+    closeUnsplash,
+    handleUnsplashSelect,
+    handleUploadImage,
+  } = useImageHandlers({
+    entity: bloqueSeleccionadoCompleto,
+    onUpdate: handleActualizarBloque,
+    uploadConfig: {
+      folder: 'eventos-digitales/imagenes',
+      entidadTipo: 'evento_digital',
+      entidadId: evento?.id,
+    },
+  });
+
   // Droppable para la zona del canvas
   const { setNodeRef } = useDroppable({
     id: 'canvas-drop-zone',
@@ -139,6 +162,19 @@ function CanvasContainer() {
 
   // IDs de bloques para SortableContext
   const bloqueIds = useMemo(() => bloques.map((b) => b.id), [bloques]);
+
+  // Props completas para editores en modo bloques (réplica de useInvitacionEditorContent)
+  const editorExtraProps = useMemo(() => ({
+    evento,
+    ubicaciones: evento?.ubicaciones || [],
+    galeria: evento?.galeria || [],
+    mesaRegalos: evento?.mesa_regalos
+      ? { tiendas: Array.isArray(evento.mesa_regalos) ? evento.mesa_regalos : evento.mesa_regalos.tiendas || [] }
+      : null,
+    onOpenUnsplash: openUnsplash,
+    onUploadImage: handleUploadImage,
+    onUpdatePlantilla: handleActualizarPlantilla,
+  }), [evento, openUnsplash, handleUploadImage, handleActualizarPlantilla]);
 
   // Datos del evento para los canvas blocks
   const eventoData = useMemo(
@@ -150,6 +186,20 @@ function CanvasContainer() {
         : null,
     }),
     [evento]
+  );
+
+  // Handler para mover bloque arriba/abajo
+  const handleMoveBlock = useCallback(
+    (bloqueId, direction) => {
+      const sorted = [...bloques].sort((a, b) => a.orden - b.orden);
+      const index = sorted.findIndex((b) => b.id === bloqueId);
+      if (index === -1) return;
+      const targetIndex = direction === 'up' ? index - 1 : index + 1;
+      if (targetIndex < 0 || targetIndex >= sorted.length) return;
+      [sorted[index], sorted[targetIndex]] = [sorted[targetIndex], sorted[index]];
+      handleReordenarBloques(sorted.map((b) => b.id));
+    },
+    [bloques, handleReordenarBloques]
   );
 
   // Handler para click en el canvas (deseleccionar)
@@ -183,7 +233,7 @@ function CanvasContainer() {
 
   // Cargar Google Fonts dinámicamente según tema
   useEffect(() => {
-    const fuentes = [tema?.fuente_titulos, tema?.fuente_cuerpo].filter(Boolean);
+    const fuentes = [tema?.fuente_titulo, tema?.fuente_cuerpo].filter(Boolean);
     const fuentesUnicas = [...new Set(fuentes)];
     if (fuentesUnicas.length === 0) return;
 
@@ -193,7 +243,7 @@ function CanvasContainer() {
     document.head.appendChild(link);
 
     return () => { document.head.removeChild(link); };
-  }, [tema?.fuente_titulos, tema?.fuente_cuerpo]);
+  }, [tema?.fuente_titulo, tema?.fuente_cuerpo]);
 
   // ========== HOOKS MODO LIBRE (siempre se llaman para cumplir reglas de hooks) ==========
   const freeStore = getFreePositionStore();
@@ -240,6 +290,30 @@ function CanvasContainer() {
     );
   }
 
+  // ========== MODO PREVIEW (visual y bloques) ==========
+  if (modoPreview && modoEditor !== 'libre') {
+    return (
+      <main className="flex-1 overflow-y-auto bg-gray-100 dark:bg-gray-900">
+        <div
+          className="mx-auto py-8 px-4 transition-all duration-300 origin-top"
+          style={{ maxWidth: canvasWidth, transform: `scale(${zoomScale})` }}
+        >
+          <div className="bg-white rounded-xl shadow-lg overflow-hidden ring-1 ring-gray-200">
+            <InvitacionDinamica
+              evento={evento}
+              invitado={null}
+              bloques={bloques}
+              tema={tema}
+              onConfirmRSVP={() => {}}
+              isLoadingRSVP={false}
+              isPreview
+            />
+          </div>
+        </div>
+      </main>
+    );
+  }
+
   // ========== MODO BLOQUES (Lista acordeón) ==========
   if (modoEditor === 'bloques') {
     return (
@@ -258,7 +332,12 @@ function CanvasContainer() {
           tema={tema}
           emptyTitle="Invitación vacía"
           emptyMessage="Agrega bloques desde la paleta lateral para empezar a diseñar tu invitación"
-          editorExtraProps={{ evento }}
+          editorExtraProps={editorExtraProps}
+        />
+        <UnsplashModal
+          isOpen={unsplashState.isOpen}
+          onClose={closeUnsplash}
+          onSelect={handleUnsplashSelect}
         />
       </main>
     );
@@ -275,9 +354,9 @@ function CanvasContainer() {
         isDraggingFromPalette && 'ring-2 ring-inset ring-primary-500/50 ring-dashed'
       )}
       style={{
-        '--color-primario': tema?.color_primario || '#753572',
-        '--color-secundario': tema?.color_secundario || '#F59E0B',
-        '--fuente-titulos': tema?.fuente_titulos || 'Playfair Display',
+        '--color-primario': tema?.color_primario || '#ec4899',
+        '--color-secundario': tema?.color_secundario || '#fce7f3',
+        '--fuente-titulos': tema?.fuente_titulo || 'Playfair Display',
         '--fuente-cuerpo': tema?.fuente_cuerpo || 'Inter',
       }}
     >
@@ -300,10 +379,11 @@ function CanvasContainer() {
           {bloques.length > 0 ? (
             <SortableContext items={bloqueIds} strategy={verticalListSortingStrategy}>
               <div className="relative">
-                {bloques
-                  .filter((b) => modoPreview ? b.visible : true)
-                  .sort((a, b) => a.orden - b.orden)
-                  .map((bloque, index) => (
+                {(() => {
+                  const bloquesVisibles = bloques
+                    .filter((b) => modoPreview ? b.visible : true)
+                    .sort((a, b) => a.orden - b.orden);
+                  return bloquesVisibles.map((bloque, index) => (
                     <CanvasBlock
                       key={bloque.id}
                       bloque={bloque}
@@ -314,6 +394,7 @@ function CanvasContainer() {
                       isDragOver={overInfo?.id === bloque.id && isDraggingFromPalette}
                       dropPosition={overInfo?.id === bloque.id ? overInfo.position : null}
                       isFirstBlock={index === 0}
+                      isLastBlock={index === bloquesVisibles.length - 1}
                       eventoData={eventoData}
                       onClick={() => handleBloqueClick(bloque.id)}
                       onDoubleClick={() => activarEdicion(bloque.id)}
@@ -321,8 +402,11 @@ function CanvasContainer() {
                       onDuplicate={handleDuplicarBloque}
                       onDelete={handleEliminarBloque}
                       onToggleVisibility={handleToggleVisibilidad}
+                      onMoveUp={(id) => handleMoveBlock(id, 'up')}
+                      onMoveDown={(id) => handleMoveBlock(id, 'down')}
                     />
-                  ))}
+                  ));
+                })()}
                 {/* Drop zone al final de los bloques */}
                 <EndDropZone isDraggingFromPalette={isDraggingFromPalette} />
               </div>

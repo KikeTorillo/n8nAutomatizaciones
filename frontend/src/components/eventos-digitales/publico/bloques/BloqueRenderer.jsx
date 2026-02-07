@@ -23,6 +23,7 @@ function BloqueRenderer({
   isLoadingRSVP,
   qrImage,
   loadingQR,
+  isPreview,
 }) {
   if (!bloque || !bloque.visible) return null;
 
@@ -53,6 +54,7 @@ function BloqueRenderer({
         isLoading={isLoadingRSVP}
         qrImage={qrImage}
         loadingQR={loadingQR}
+        isPreview={isPreview}
       />
     </Suspense>
   );
