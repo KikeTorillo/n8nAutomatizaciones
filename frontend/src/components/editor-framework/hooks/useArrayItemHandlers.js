@@ -14,13 +14,13 @@
 import { useCallback } from 'react';
 
 /**
- * @param {Object} arrayMethods - { handleArrayItemAdd, handleArrayItemRemove, handleArrayItemChange } de useBlockEditor
+ * @param {Object} arrayMethods - { handleArrayItemAdd, handleArrayItemRemove, handleArrayItemChange, handleArrayItemReorder } de useBlockEditor
  * @param {string} fieldName - Nombre del campo array (ej: 'items')
  * @param {Object} defaultItem - Objeto por defecto para nuevos items
- * @returns {{ handleAgregar: Function, handleEliminar: Function, handleChange: Function }}
+ * @returns {{ handleAgregar: Function, handleEliminar: Function, handleChange: Function, handleReordenar: Function }}
  */
 export function useArrayItemHandlers(arrayMethods, fieldName, defaultItem) {
-  const { handleArrayItemAdd, handleArrayItemRemove, handleArrayItemChange } = arrayMethods;
+  const { handleArrayItemAdd, handleArrayItemRemove, handleArrayItemChange, handleArrayItemReorder } = arrayMethods;
 
   const handleAgregar = useCallback(() => {
     handleArrayItemAdd(fieldName, defaultItem);
@@ -34,5 +34,9 @@ export function useArrayItemHandlers(arrayMethods, fieldName, defaultItem) {
     handleArrayItemChange(fieldName, index, campo, valor);
   }, [handleArrayItemChange, fieldName]);
 
-  return { handleAgregar, handleEliminar, handleChange };
+  const handleReordenar = useCallback((fromIndex, toIndex) => {
+    handleArrayItemReorder(fieldName, fromIndex, toIndex);
+  }, [handleArrayItemReorder, fieldName]);
+
+  return { handleAgregar, handleEliminar, handleChange, handleReordenar };
 }

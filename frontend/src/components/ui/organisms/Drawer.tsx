@@ -81,6 +81,7 @@ const DrawerComponent = memo(forwardRef<HTMLDivElement, DrawerProps>(function Dr
           ref={ref}
           role="dialog"
           aria-modal="true"
+          aria-describedby={undefined}
           className={cn(
             'fixed bottom-0 left-0 right-0 z-50 flex flex-col rounded-t-2xl bg-white dark:bg-gray-800',
             DRAWER_SIZES[size] || DRAWER_SIZES.xl
@@ -91,6 +92,11 @@ const DrawerComponent = memo(forwardRef<HTMLDivElement, DrawerProps>(function Dr
             El padding y overflow deben estar en este div interno
           */}
           <div className="flex flex-col overflow-hidden rounded-t-2xl h-full">
+            {/* a11y: Radix requiere DialogTitle directo dentro de DialogContent */}
+            <VaulDrawer.Title className="sr-only">
+              {title || 'Panel'}
+            </VaulDrawer.Title>
+
             {/* Handle para arrastrar */}
             {!disableClose && (
               <div className="flex justify-center pt-4 pb-2">
@@ -102,8 +108,6 @@ const DrawerComponent = memo(forwardRef<HTMLDivElement, DrawerProps>(function Dr
             <OverlayHeader
               title={title}
               subtitle={subtitle}
-              titleAs={VaulDrawer.Title}
-              subtitleAs={VaulDrawer.Description}
               onClose={disableClose ? undefined : onClose}
               showCloseButton={showCloseButton}
               disableClose={disableClose}

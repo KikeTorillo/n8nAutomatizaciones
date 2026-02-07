@@ -272,6 +272,7 @@ services:
         condition: service_healthy
     environment:
       VITE_MERCADOPAGO_PUBLIC_KEY: ${VITE_MERCADOPAGO_PUBLIC_KEY}
+      VITE_GOOGLE_MAPS_API_KEY: ${VITE_GOOGLE_MAPS_API_KEY}
     # No necesitamos VITE_API_URL porque usamos el proxy de Vite
     # El proxy redirige /api -> http://back:3000/api desde DENTRO del contenedor
     healthcheck:

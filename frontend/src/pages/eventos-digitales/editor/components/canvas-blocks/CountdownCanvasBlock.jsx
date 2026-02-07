@@ -10,7 +10,7 @@
  * @updated 2026-02-04 - Agregar edición inline
  */
 
-import { memo, useState, useEffect, useMemo } from 'react';
+import { memo, useState, useEffect, useMemo, Fragment } from 'react';
 import { cn } from '@/lib/utils';
 import { InlineText } from '@/components/editor-framework';
 import { THEME_FALLBACK_COLORS } from '@/lib/uiConstants';
@@ -197,7 +197,7 @@ function CountdownCanvasBlock({ bloque, tema, evento, isEditing, onContentChange
             )}
           >
             {unidades.map((unidad, idx) => (
-              <>
+              <Fragment key={unidad.key}>
                 {renderUnidad(unidad, tiempoRestante[unidad.key])}
                 {estilo === 'inline' && idx < unidades.length - 1 && (
                   <span
@@ -207,7 +207,7 @@ function CountdownCanvasBlock({ bloque, tema, evento, isEditing, onContentChange
                     :
                   </span>
                 )}
-              </>
+              </Fragment>
             ))}
           </div>
         ) : isEditing ? (

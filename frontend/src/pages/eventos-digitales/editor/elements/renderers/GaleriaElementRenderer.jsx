@@ -28,12 +28,12 @@ function GaleriaElementRenderer({
   const layout = contenido.layout || 'grid';
   const columnas = contenido.columnas || 3;
 
-  // Usar imágenes del elemento o las del evento
+  // Usar imágenes del elemento o las del evento (filtrar inválidos)
   let imagenes = [];
   if (contenido.imagenes?.length > 0) {
-    imagenes = contenido.imagenes.map(img => typeof img === 'string' ? img : img.url).filter(Boolean);
+    imagenes = contenido.imagenes.filter(Boolean).map(img => typeof img === 'string' ? img : img?.url).filter(Boolean);
   } else if (evento?.galeria_urls?.length > 0) {
-    imagenes = evento.galeria_urls;
+    imagenes = evento.galeria_urls.filter(Boolean);
   }
 
   // Estilos del tema
@@ -190,12 +190,14 @@ function GaleriaElementRenderer({
           >
             <ChevronLeft className="w-6 h-6" />
           </button>
-          <img
-            src={imagenes[lightboxIndex]}
-            alt={`Foto ${lightboxIndex + 1}`}
-            className="max-h-[85vh] max-w-[85vw] object-contain"
-            onClick={(e) => e.stopPropagation()}
-          />
+          {imagenes[lightboxIndex] && (
+            <img
+              src={imagenes[lightboxIndex]}
+              alt={`Foto ${lightboxIndex + 1}`}
+              className="max-h-[85vh] max-w-[85vw] object-contain"
+              onClick={(e) => e.stopPropagation()}
+            />
+          )}
           <button
             className="absolute right-4 text-white p-2 hover:bg-white/20 rounded-full"
             onClick={(e) => { e.stopPropagation(); nextImage(); }}

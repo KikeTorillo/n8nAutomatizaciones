@@ -9,7 +9,7 @@
  */
 
 import { memo } from 'react';
-import { Loader2, AlertCircle, ArrowLeft, Plus, Palette } from 'lucide-react';
+import { Loader2, AlertCircle, ArrowLeft, Plus, Palette, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 // Context
@@ -49,6 +49,12 @@ const FAB_OPTIONS = [
     icon: Palette,
     color: 'bg-amber-500',
   },
+  {
+    id: 'plantillas',
+    label: 'Plantillas',
+    icon: Sparkles,
+    color: 'bg-pink-500',
+  },
 ];
 
 // ========== MAIN COMPONENT ==========
@@ -58,7 +64,7 @@ const FAB_OPTIONS = [
  */
 function InvitacionEditorPage() {
   return (
-    <EditorLayoutProvider panels={['bloques', 'tema', 'propiedades']} customPanelTypes={{ TEMA: 'tema' }}>
+    <EditorLayoutProvider panels={['bloques', 'tema', 'propiedades', 'plantillas']} customPanelTypes={{ TEMA: 'tema' }}>
       <InvitacionEditorProvider>
         <InvitacionEditorContent />
       </InvitacionEditorProvider>

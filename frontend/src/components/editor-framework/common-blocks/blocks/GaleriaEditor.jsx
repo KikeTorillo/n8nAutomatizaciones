@@ -241,12 +241,12 @@ function GaleriaEditor({
               className={`grid ${getEspaciadoClass()}`}
               style={{ gridTemplateColumns: `repeat(${Math.min(columnas, imagenesAMostrar.length, 3)}, 1fr)` }}
             >
-              {imagenesAMostrar.slice(0, 6).map((img, idx) => (
+              {imagenesAMostrar.filter(Boolean).slice(0, 6).map((img, idx) => (
                 <div
                   key={idx}
                   className="aspect-square bg-gray-200 dark:bg-gray-700 rounded overflow-hidden"
                 >
-                  {img.url ? (
+                  {img?.url ? (
                     <img
                       src={img.url}
                       alt={img.alt || `Imagen ${idx + 1}`}
@@ -501,7 +501,7 @@ function GaleriaEditor({
                       key={idx}
                       className="relative group aspect-square bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden transition-all duration-200 ease-out hover:scale-[1.04] hover:shadow-lg hover:ring-2 hover:ring-primary-400/50 hover:z-10 cursor-pointer"
                     >
-                      {img.url ? (
+                      {img?.url ? (
                         <img
                           src={img.url}
                           alt={img.alt || `Imagen ${idx + 1}`}

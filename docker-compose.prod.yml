@@ -198,6 +198,7 @@ services:
       # External APIs
       DEEPSEEKAPIKEY: ${DEEPSEEKAPIKEY}
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
+      UNSPLASH_ACCESS_KEY: ${UNSPLASH_ACCESS_KEY}
       SKIP_TELEGRAM_VALIDATION: ${SKIP_TELEGRAM_VALIDATION}
 
       # Security
@@ -269,6 +270,7 @@ services:
       target: runtime
       args:
         VITE_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+        VITE_GOOGLE_MAPS_API_KEY: ${VITE_GOOGLE_MAPS_API_KEY}
     image: saas-frontend:${VERSION:-latest}
     container_name: front
     restart: always

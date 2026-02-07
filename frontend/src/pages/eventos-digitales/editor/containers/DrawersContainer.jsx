@@ -9,13 +9,14 @@
  * @updated 2026-02-06
  */
 
-import { memo } from 'react';
+import { memo, useState, useCallback } from 'react';
 import {
   EditorDrawer,
   PropertiesPanel,
   useEditorLayoutContext,
   BlockPalette,
   ThemeEditorPanel,
+  TemplateGalleryPanel,
   useThemeSave,
 } from '@/components/editor-framework';
 import { useEditor as useInvitacionEditor } from '@/components/editor-framework';
@@ -33,6 +34,9 @@ import {
 } from '../config';
 import { useInvitacionEditorContent } from '../hooks/useInvitacionEditorContent';
 import { UnsplashModal } from '@/components/shared/media/UnsplashPicker';
+import { usePlantillas } from '@/hooks/otros/eventos-digitales';
+import InvitacionTemplateGallery from '../components/InvitacionTemplateGallery';
+import { TIPOS_EVENTO_CATEGORIES } from '@/pages/eventos-digitales/constants';
 
 /**
  * DrawersContainer - Drawers móviles para el editor de invitaciones
@@ -47,9 +51,23 @@ function DrawersContainer() {
     handleActualizarPlantilla,
     deseleccionarBloque,
     modoPreview,
+    esPlantilla,
   } = useInvitacionEditor();
 
   const { closeDrawer } = useEditorLayoutContext();
+
+  // Plantillas
+  const [mostrarGaleria, setMostrarGaleria] = useState(false);
+  const { data: plantillasData, isLoading: plantillasLoading } = usePlantillas();
+  const plantillas = plantillasData?.plantillas || [];
+
+  const handleApplyPlantilla = useCallback(async (plantilla) => {
+    await handleActualizarPlantilla({
+      ...evento?.plantilla,
+      ...plantilla.tema,
+    });
+    closeDrawer();
+  }, [handleActualizarPlantilla, evento?.plantilla, closeDrawer]);
 
   // ========== EDITOR CONTENT (shared hook) ==========
   const {
@@ -143,12 +161,38 @@ function DrawersContainer() {
         )}
       </EditorDrawer>
 
+      {/* Drawer: Plantillas */}
+      {!esPlantilla && (
+        <EditorDrawer
+          panelType="plantillas"
+          title="Plantillas"
+          subtitle="Elige un diseño para tu invitación"
+        >
+          <TemplateGalleryPanel
+            templates={plantillas}
+            isLoading={plantillasLoading}
+            categories={TIPOS_EVENTO_CATEGORIES}
+            categoryField="tipo_evento"
+            onApply={handleApplyPlantilla}
+            onViewFullGallery={() => setMostrarGaleria(true)}
+            title="Plantillas"
+            emptyMessage="No hay plantillas disponibles"
+          />
+        </EditorDrawer>
+      )}
+
       {/* Unsplash Modal */}
       <UnsplashModal
         isOpen={unsplashState.isOpen}
         onClose={closeUnsplash}
         onSelect={handleUnsplashSelect}
         industria="eventos"
+      />
+
+      {/* Modal galería completa de plantillas */}
+      <InvitacionTemplateGallery
+        isOpen={mostrarGaleria}
+        onClose={() => setMostrarGaleria(false)}
       />
     </>
   );

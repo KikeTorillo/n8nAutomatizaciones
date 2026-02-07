@@ -5,9 +5,9 @@
  * Renderiza el itinerario/agenda del evento.
  * Diseño sincronizado con TimelineCanvasBlock (editor).
  *
- * @version 1.2.0
+ * @version 1.3.0
  * @since 2026-02-03
- * @updated 2026-02-05 - Sincronizado con diseño del editor (sin tarjetas)
+ * @updated 2026-02-07 - Fix semántica izquierda/derecha + mobile fallback
  */
 
 import { memo } from 'react';
@@ -62,13 +62,13 @@ function TimelinePublico({ bloque, tema, isVisible, className = '' }) {
 
         {/* Timeline */}
         <div className="relative">
-          {/* Línea central */}
+          {/* Línea central — izquierda=contenido izq/línea der, derecha=contenido der/línea izq */}
           <div
             className={cn(
               'absolute w-0.5 top-0 bottom-0',
-              layout === 'izquierda' && 'left-4',
-              layout === 'derecha' && 'right-4',
-              layout === 'alternado' && 'left-4 md:left-1/2 md:-translate-x-1/2'
+              layout === 'izquierda' && 'right-4',
+              layout === 'derecha' && 'left-4',
+              layout === 'alternado' && 'left-1/2 -translate-x-1/2'
             )}
             style={{ backgroundColor: colorLinea }}
           />
@@ -78,6 +78,8 @@ function TimelinePublico({ bloque, tema, isVisible, className = '' }) {
             {items.map((item, idx) => {
               const Icon = getIcon(item.icono);
               const isLeft = layout === 'alternado' ? idx % 2 === 0 : layout === 'izquierda';
+              // izquierda: contenido a la izq, línea a la der → flex-row-reverse
+              // derecha: contenido a la der, línea a la izq → normal
 
               return (
                 <div
@@ -85,9 +87,8 @@ function TimelinePublico({ bloque, tema, isVisible, className = '' }) {
                   className={cn(
                     'relative flex items-start gap-4',
                     isVisible ? 'animate-fadeInUp' : 'opacity-0',
-                    layout === 'alternado' && 'md:gap-8',
-                    layout === 'alternado' && !isLeft && 'md:flex-row-reverse',
-                    layout === 'derecha' && 'flex-row-reverse'
+                    layout === 'alternado' && !isLeft && 'flex-row-reverse',
+                    layout === 'izquierda' && 'flex-row-reverse'
                   )}
                   style={{ animationDelay: `${idx * 0.1}s` }}
                 >
@@ -95,9 +96,9 @@ function TimelinePublico({ bloque, tema, isVisible, className = '' }) {
                   <div
                     className={cn(
                       'absolute w-8 h-8 rounded-full flex items-center justify-center z-10',
-                      layout === 'izquierda' && 'left-0',
-                      layout === 'derecha' && 'right-0',
-                      layout === 'alternado' && 'left-0 md:left-1/2 md:-translate-x-1/2'
+                      layout === 'izquierda' && 'right-0',
+                      layout === 'derecha' && 'left-0',
+                      layout === 'alternado' && 'left-1/2 -translate-x-1/2'
                     )}
                     style={{ backgroundColor: tema?.color_fondo || INV.fondo }}
                   >
@@ -113,12 +114,11 @@ function TimelinePublico({ bloque, tema, isVisible, className = '' }) {
                   <div
                     className={cn(
                       'flex-1',
-                      layout === 'izquierda' && 'pl-12',
-                      layout === 'derecha' && 'pr-12 text-right',
-                      // Alternado: posicionar cerca de la línea central
-                      layout === 'alternado' && 'pl-10 md:pl-0',
-                      layout === 'alternado' && isLeft && 'md:ml-0 md:mr-[calc(50%+1.5rem)] md:text-right',
-                      layout === 'alternado' && !isLeft && 'md:mr-0 md:ml-[calc(50%+1.5rem)] md:text-left'
+                      layout === 'izquierda' && 'pr-12 text-right',
+                      layout === 'derecha' && 'pl-12',
+                      // Alternado: contenido alterna izq/der respecto a línea central
+                      layout === 'alternado' && isLeft && 'mr-[calc(50%+1rem)] text-right',
+                      layout === 'alternado' && !isLeft && 'ml-[calc(50%+1rem)] text-left'
                     )}
                   >
                     {/* Hora como texto simple */}

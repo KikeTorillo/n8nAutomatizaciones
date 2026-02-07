@@ -41,10 +41,11 @@ function GaleriaCanvasBlock({ bloque, tema, galeria = [] }) {
   const colorFondo = tema?.color_fondo || INV.fondo;
   const colorTextoClaro = tema?.color_texto_claro || INV.textoClaro;
 
-  // Imágenes a mostrar
-  const imagenesAMostrar = usar_galeria_evento && galeria.length > 0
+  // Imágenes a mostrar (filtrar elementos inválidos para evitar crash)
+  const imagenesAMostrar = (usar_galeria_evento && galeria.length > 0
     ? galeria
-    : imagenes;
+    : imagenes
+  ).filter(img => img && img.url);
 
   // Estado para lightbox
   const [lightboxIndex, setLightboxIndex] = useState(null);
@@ -168,12 +169,14 @@ function GaleriaCanvasBlock({ bloque, tema, galeria = [] }) {
                 </button>
 
                 {/* Image */}
-                <img
-                  src={imagenesAMostrar[lightboxIndex].url}
-                  alt={imagenesAMostrar[lightboxIndex].alt || ''}
-                  className="max-w-[90vw] max-h-[90vh] object-contain"
-                  onClick={(e) => e.stopPropagation()}
-                />
+                {imagenesAMostrar[lightboxIndex] && (
+                  <img
+                    src={imagenesAMostrar[lightboxIndex].url}
+                    alt={imagenesAMostrar[lightboxIndex].alt || ''}
+                    className="max-w-[90vw] max-h-[90vh] object-contain"
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                )}
 
                 {/* Counter */}
                 <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white text-sm bg-black/50 px-4 py-2 rounded-full">

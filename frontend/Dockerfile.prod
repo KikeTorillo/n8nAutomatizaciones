@@ -21,6 +21,8 @@ COPY . .
 # Build args para variables de entorno de Vite (se inyectan en tiempo de build)
 ARG VITE_GOOGLE_CLIENT_ID
 ENV VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID
+ARG VITE_GOOGLE_MAPS_API_KEY
+ENV VITE_GOOGLE_MAPS_API_KEY=$VITE_GOOGLE_MAPS_API_KEY
 
 # Build de producción (genera carpeta /app/dist)
 # Vite optimiza y minifica automáticamente

@@ -147,13 +147,13 @@ function GaleriaPublico({ bloque, evento, tema, isVisible, className = '' }) {
   const titulo = contenido.titulo_seccion || contenido.titulo || 'Galería';
   const subtitulo = contenido.subtitulo_seccion || contenido.subtitulo || 'Momentos que atesoramos';
 
-  // Usar imágenes del bloque o las del evento
+  // Usar imágenes del bloque o las del evento (filtrar inválidos)
   // El editor guarda array de {url, alt}, necesitamos extraer solo URLs para compatibilidad
   let imagenes = [];
   if (contenido.imagenes?.length > 0) {
-    imagenes = contenido.imagenes.map(img => typeof img === 'string' ? img : img.url).filter(Boolean);
+    imagenes = contenido.imagenes.filter(Boolean).map(img => typeof img === 'string' ? img : img?.url).filter(Boolean);
   } else if (evento?.galeria_urls?.length > 0) {
-    imagenes = evento.galeria_urls;
+    imagenes = evento.galeria_urls.filter(Boolean);
   }
 
   const layout = estilos.layout || contenido.layout || 'masonry';
@@ -308,12 +308,14 @@ function GaleriaPublico({ bloque, evento, tema, isVisible, className = '' }) {
             >
               <ChevronLeft className="w-8 h-8" />
             </button>
-            <img
-              src={imagenes[lightboxIndex]}
-              alt={`Foto ${lightboxIndex + 1}`}
-              className="max-h-[90vh] max-w-[90vw] object-contain"
-              onClick={(e) => e.stopPropagation()}
-            />
+            {imagenes[lightboxIndex] && (
+              <img
+                src={imagenes[lightboxIndex]}
+                alt={`Foto ${lightboxIndex + 1}`}
+                className="max-h-[90vh] max-w-[90vw] object-contain"
+                onClick={(e) => e.stopPropagation()}
+              />
+            )}
             <button
               className="absolute right-4 text-white p-2 hover:bg-white/20 rounded-full transition-colors"
               onClick={(e) => {
