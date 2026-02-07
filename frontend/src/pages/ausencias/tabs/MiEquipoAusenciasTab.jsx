@@ -10,14 +10,11 @@ import {
   HeartPulse,
   Lock,
   Plus,
-  RefreshCw,
   Calendar,
   Clock,
   CheckCircle,
   TrendingDown,
 } from 'lucide-react';
-import { useQueryClient } from '@tanstack/react-query';
-import { queryKeys } from '@/hooks/config';
 import { Button, Modal, StatCardGrid } from '@/components/ui';
 import { useModalManager } from '@/hooks/utils';
 
@@ -252,7 +249,7 @@ const BloqueosSection = memo(function BloqueosSection({
  * @param {string} seccion - 'vacaciones' | 'incapacidades' | 'bloqueos'
  */
 function MiEquipoAusenciasTab({ seccion = 'vacaciones', extraActions }) {
-  const queryClient = useQueryClient();
+
   const config = SECCIONES_CONFIG[seccion] || SECCIONES_CONFIG.vacaciones;
   const Icon = config.icon;
 
@@ -343,15 +340,6 @@ function MiEquipoAusenciasTab({ seccion = 'vacaciones', extraActions }) {
   }, [seccion, bloqueos]);
 
   // Handlers
-  const handleRefresh = useCallback(() => {
-    if (seccion === 'vacaciones') {
-      queryClient.invalidateQueries({ queryKey: ['vacaciones'], refetchType: 'active' });
-    } else if (seccion === 'incapacidades') {
-      queryClient.invalidateQueries({ queryKey: queryKeys.personas.incapacidades.all, refetchType: 'active' });
-    } else if (seccion === 'bloqueos') {
-      queryClient.invalidateQueries({ queryKey: queryKeys.agendamiento.bloqueos.all, refetchType: 'active' });
-    }
-  }, [queryClient, seccion]);
 
   const handleLimpiarFiltros = useCallback(() => {
     setFiltrosBloqueos({
@@ -465,9 +453,6 @@ function MiEquipoAusenciasTab({ seccion = 'vacaciones', extraActions }) {
         </div>
         <div className="flex items-center gap-2">
           {extraActions}
-          <Button variant="ghost" size="sm" onClick={handleRefresh}>
-            <RefreshCw className="w-4 h-4" />
-          </Button>
           {renderActionButton()}
         </div>
       </div>

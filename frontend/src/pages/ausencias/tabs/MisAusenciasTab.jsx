@@ -4,9 +4,7 @@
  * Enero 2026
  */
 import { useModalManager } from '@/hooks/utils';
-import { RefreshCw, Plus, Calendar, HeartPulse, AlertCircle, CheckCircle, Clock } from 'lucide-react';
-import { useQueryClient } from '@tanstack/react-query';
-import { queryKeys } from '@/hooks/config';
+import { Plus, Calendar, HeartPulse, AlertCircle, CheckCircle, Clock } from 'lucide-react';
 import {
   Alert,
   Badge,
@@ -140,7 +138,6 @@ function AusenciaCard({ ausencia, onVerDetalle }) {
  * Muestra todas las ausencias (vacaciones + incapacidades) sin filtro
  */
 function MisAusenciasTab({ extraActions }) {
-  const queryClient = useQueryClient();
   const anioActual = new Date().getFullYear();
 
   // Modales centralizados
@@ -155,12 +152,6 @@ function MisAusenciasTab({ extraActions }) {
   const { data: ausencias, isLoading: isLoadingAusencias } = useMisAusencias({
     anio: anioActual,
   });
-
-  const handleRefresh = () => {
-    queryClient.invalidateQueries({ queryKey: ['vacaciones'] });
-    queryClient.invalidateQueries({ queryKey: queryKeys.personas.incapacidades.all });
-    queryClient.invalidateQueries({ queryKey: queryKeys.ausencias.all });
-  };
 
   if (error) {
     return (
@@ -179,14 +170,6 @@ function MisAusenciasTab({ extraActions }) {
         </h2>
         <div className="flex items-center gap-2">
           {extraActions}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleRefresh}
-            disabled={isLoading}
-          >
-            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
-          </Button>
           <Button
             variant="primary"
             size="sm"
