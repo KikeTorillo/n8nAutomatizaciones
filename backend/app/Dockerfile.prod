@@ -56,6 +56,7 @@ COPY --chown=nodejs:nodejs models ./models
 COPY --chown=nodejs:nodejs routes ./routes
 COPY --chown=nodejs:nodejs flows ./flows
 COPY --chown=nodejs:nodejs core ./core
+COPY --chown=nodejs:nodejs events ./events
 
 # Cambiar a usuario no-root
 USER nodejs
