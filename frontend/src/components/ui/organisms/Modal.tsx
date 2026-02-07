@@ -29,6 +29,29 @@ export interface ModalProps {
   disableClose?: boolean;
   /** Rol ARIA del modal */
   role?: 'dialog' | 'alertdialog';
+  /** Desactivar focus trap (necesario cuando se abre desde dentro de otro overlay como Vaul Drawer) */
+  disableFocusTrap?: boolean;
+}
+
+/**
+ * Wrapper condicional para FocusTrap.
+ * Cuando disabled=true, renderiza solo los children (sin trap).
+ * Necesario para evitar conflictos con Vaul Drawer que tiene su propio focus management.
+ */
+function FocusTrapWrapper({ active, disabled, children }: { active: boolean; disabled: boolean; children: ReactNode }) {
+  if (disabled) return <>{children}</>;
+  return (
+    <FocusTrap
+      active={active}
+      focusTrapOptions={{
+        allowOutsideClick: true,
+        escapeDeactivates: false,
+        fallbackFocus: '[role="dialog"]',
+      }}
+    >
+      {children}
+    </FocusTrap>
+  );
 }
 
 /**
@@ -48,6 +71,7 @@ const Modal = memo(forwardRef<HTMLDivElement, ModalProps>(function Modal(
     showCloseButton = true,
     disableClose = false,
     role = 'dialog',
+    disableFocusTrap = false,
   },
   ref
 ) {
@@ -93,18 +117,14 @@ const Modal = memo(forwardRef<HTMLDivElement, ModalProps>(function Modal(
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             onClick={disableClose ? undefined : onClose}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 pointer-events-auto"
           />
 
           {/* Modal */}
-          <div className="fixed inset-0 flex items-center justify-center p-4 z-50">
-            <FocusTrap
-              active={isOpen && !disableClose}
-              focusTrapOptions={{
-                allowOutsideClick: true,
-                escapeDeactivates: false, // Ya manejamos ESC manualmente
-                fallbackFocus: '[role="dialog"]',
-              }}
+          <div className="fixed inset-0 flex items-center justify-center p-4 z-50 pointer-events-auto">
+            <FocusTrapWrapper
+              active={isOpen && !disableClose && !disableFocusTrap}
+              disabled={disableFocusTrap}
             >
               <motion.div
                 ref={ref}
@@ -141,7 +161,7 @@ const Modal = memo(forwardRef<HTMLDivElement, ModalProps>(function Modal(
                   </div>
                 )}
               </motion.div>
-            </FocusTrap>
+            </FocusTrapWrapper>
           </div>
         </>
       )}

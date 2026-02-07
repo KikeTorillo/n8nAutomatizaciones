@@ -6,6 +6,7 @@
  */
 
 import { useState, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import {
   X,
   Search,
@@ -100,13 +101,16 @@ function UnsplashModal({ isOpen, onClose, onSelect, industria = 'default' }) {
     onClose?.();
   }, [handleSearch, onClose]);
 
-  return (
+  // Renderizar via portal a body para evitar quedar detrás de Vaul Drawer,
+  // y desactivar FocusTrap para evitar conflicto con el focus management de Vaul
+  return createPortal(
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
       title=""
       size="xl"
       showCloseButton={false}
+      disableFocusTrap
     >
       <div className="flex flex-col max-h-[80vh]">
         {/* Header */}
@@ -233,7 +237,8 @@ function UnsplashModal({ isOpen, onClose, onSelect, industria = 'default' }) {
           </a>
         </div>
       </div>
-    </Modal>
+    </Modal>,
+    document.body
   );
 }
 
