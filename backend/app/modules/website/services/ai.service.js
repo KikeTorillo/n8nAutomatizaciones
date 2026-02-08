@@ -19,7 +19,7 @@ const fetch = require('node-fetch');
 const AbortController = require('abort-controller');
 
 // Circuit Breaker distribuido
-const { aiCircuitBreaker, CircuitOpenError } = require('./circuitBreaker.service');
+const { aiCircuitBreaker, CircuitOpenError } = require('../../../services/circuitBreaker.service');
 
 // Configuración de OpenRouter (requiere API key)
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;

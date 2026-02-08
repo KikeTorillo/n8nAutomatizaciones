@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { INVITACION_TEMA_DEFAULT } from '@/pages/eventos-digitales/constants';
-import { generarPreviewData } from '@/utils/plantillaDummyData';
+import { generarPreviewData } from '@/pages/eventos-digitales/utils/plantillaDummyData';
 
 /**
  * Encapsula la lógica de preview de plantilla:

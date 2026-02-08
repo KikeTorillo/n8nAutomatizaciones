@@ -1,7 +1,8 @@
-import { memo, useEffect, useCallback, forwardRef, useId, type ReactNode } from 'react';
+import { memo, useEffect, forwardRef, useId, type ReactNode } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import FocusTrap from 'focus-trap-react';
 import { MODAL_SIZES } from '@/lib/uiConstants';
+import { useEscapeKey } from '@/hooks/utils/useEscapeKey';
 import { OverlayHeader } from '../molecules/OverlayHeader';
 import type { ModalSize } from '@/types/organisms';
 
@@ -88,22 +89,10 @@ const Modal = memo(forwardRef<HTMLDivElement, ModalProps>(function Modal(
     };
   }, [isOpen]);
 
-  // Memoizar handleEscape para evitar recrear listener en cada render
-  const handleEscape = useCallback(
-    (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !disableClose) {
-        onClose();
-      }
-    },
-    [onClose, disableClose]
-  );
-
-  // Cerrar con ESC — solo registrar listener cuando el modal está abierto
-  useEffect(() => {
-    if (!isOpen) return;
-    document.addEventListener('keydown', handleEscape);
-    return () => document.removeEventListener('keydown', handleEscape);
-  }, [isOpen, handleEscape]);
+  // Cerrar con ESC — useEscapeKey usa callbackRef (estable, sin memory leak)
+  useEscapeKey(() => {
+    if (!disableClose) onClose();
+  }, isOpen && !disableClose);
 
   return (
     <AnimatePresence>

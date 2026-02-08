@@ -14,7 +14,7 @@ const { auth } = require('../../../middleware');
 router.use(auth.authenticateToken);
 
 /**
- * @route   GET /api/v1/website/images/search
+ * @route   GET /api/v1/images/search
  * @desc    Buscar imagenes en Unsplash
  * @access  Private
  * @query   q - Termino de busqueda (requerido)
@@ -25,7 +25,7 @@ router.use(auth.authenticateToken);
 router.get('/search', imagesController.buscarImagenes);
 
 /**
- * @route   POST /api/v1/website/images/download
+ * @route   POST /api/v1/images/download
  * @desc    Descargar imagen (registra descarga y retorna URL optimizada)
  * @access  Private
  * @body    url - URL de la imagen
@@ -36,7 +36,7 @@ router.get('/search', imagesController.buscarImagenes);
 router.post('/download', imagesController.descargarImagen);
 
 /**
- * @route   GET /api/v1/website/images/random
+ * @route   GET /api/v1/images/random
  * @desc    Obtener imagen aleatoria
  * @access  Private
  * @query   query - Termino de busqueda opcional

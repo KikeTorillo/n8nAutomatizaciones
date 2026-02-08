@@ -3,17 +3,7 @@ import { useFilters } from '@/hooks/utils';
 import {
   ShoppingCart,
   Plus,
-  Eye,
-  Edit,
-  Trash2,
-  Send,
-  XCircle,
-  Package,
-  DollarSign,
   Filter,
-  Search,
-  Building2,
-  Zap,
   AlertTriangle,
   ChevronDown,
   ChevronUp,
@@ -22,18 +12,16 @@ import {
   Clock,
   CheckCircle,
   FileSpreadsheet,
+  Edit,
+  Zap,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import {
-  Badge,
   Button,
   ConfirmDialog,
   DataTable,
-  DataTableActionButton,
-  DataTableActions,
   Modal,
   SmartButtons,
-  StatCardGrid,
   Textarea
 } from '@/components/ui';
 import { useToast } from '@/hooks/utils';
@@ -52,6 +40,15 @@ import OrdenCompraFormDrawer from '@/components/inventario/ordenes-compra/OrdenC
 import OrdenCompraDetalleModal from '@/components/inventario/ordenes-compra/OrdenCompraDetalleModal';
 import RecibirMercanciaModal from '@/components/inventario/ordenes-compra/RecibirMercanciaModal';
 import RegistrarPagoModal from '@/components/inventario/ordenes-compra/RegistrarPagoModal';
+
+import {
+  getOrdenesColumns,
+  formatearEstado,
+  formatearEstadoPago,
+  OC_CSV_COLUMNS,
+} from './components/OrdenesCompraColumns';
+import OrdenesCompraFilters from './components/OrdenesCompraFilters';
+import OrdenesCompraStatsGrid from './components/OrdenesCompraStatsGrid';
 
 // Filtros iniciales (fuera del componente)
 const INITIAL_FILTERS = {
@@ -299,41 +296,6 @@ export default function OrdenesCompraPage() {
     });
   };
 
-  // Helpers de visualización
-  const ESTADO_OC_VARIANT = {
-    borrador: 'default',
-    enviada: 'primary',
-    parcial: 'warning',
-    recibida: 'success',
-    cancelada: 'error',
-  };
-
-  const ESTADO_PAGO_VARIANT = {
-    pendiente: 'warning',
-    parcial: 'warning',
-    pagado: 'success',
-  };
-
-  const formatearEstado = (estado) => {
-    const estados = {
-      borrador: 'Borrador',
-      enviada: 'Enviada',
-      parcial: 'Parcial',
-      recibida: 'Recibida',
-      cancelada: 'Cancelada',
-    };
-    return estados[estado] || estado;
-  };
-
-  const formatearEstadoPago = (estado) => {
-    const estados = {
-      pendiente: 'Pendiente',
-      parcial: 'Parcial',
-      pagado: 'Pagado',
-    };
-    return estados[estado] || estado;
-  };
-
   // Exportar CSV usando hook centralizado
   const handleExportarCSV = () => {
     if (!ordenes || ordenes.length === 0) {
@@ -352,17 +314,24 @@ export default function OrdenesCompraPage() {
       notas: oc.notas || '',
     }));
 
-    exportCSV(datosExportar, [
-      { key: 'folio', header: 'Folio' },
-      { key: 'fecha', header: 'Fecha' },
-      { key: 'proveedor', header: 'Proveedor' },
-      { key: 'items', header: 'Items' },
-      { key: 'total', header: 'Total' },
-      { key: 'estado', header: 'Estado' },
-      { key: 'estado_pago', header: 'Estado Pago' },
-      { key: 'notas', header: 'Notas' },
-    ], `ordenes_compra_${format(new Date(), 'yyyyMMdd')}`);
+    exportCSV(datosExportar, OC_CSV_COLUMNS, `ordenes_compra_${format(new Date(), 'yyyyMMdd')}`);
   };
+
+  // Columnas memoizadas con handlers
+  const columns = useMemo(
+    () =>
+      getOrdenesColumns({
+        onVerDetalle: handleVerDetalle,
+        onEditar: handleEditar,
+        onEnviar: handleAbrirModalEnviar,
+        onRecibirMercancia: handleRecibirMercancia,
+        onRegistrarPago: handleRegistrarPago,
+        onCancelar: handleAbrirModalCancelar,
+        onEliminar: handleAbrirModalEliminar,
+      }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
 
   return (
     <InventarioPageLayout
@@ -490,270 +459,21 @@ export default function OrdenesCompraPage() {
       )}
 
       {/* Resumen de totales */}
-      {totales && (
-        <StatCardGrid
-          stats={[
-            {
-              icon: ShoppingCart,
-              label: 'Total Órdenes',
-              value: totales.cantidad || 0,
-            },
-            {
-              icon: DollarSign,
-              label: 'Valor Total',
-              value: `$${parseFloat(totales.valor_total || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}`,
-              color: 'primary',
-            },
-            {
-              icon: Package,
-              label: 'Total Pagado',
-              value: `$${parseFloat(totales.total_pagado || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}`,
-              color: 'green',
-            },
-            {
-              icon: AlertTriangle,
-              label: 'Pendiente de Pago',
-              value: `$${parseFloat(totales.pendiente_pago || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}`,
-              color: 'orange',
-            },
-          ]}
-        />
-      )}
+      <OrdenesCompraStatsGrid totales={totales} />
 
       {/* Panel de filtros */}
       {mostrarFiltros && (
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Búsqueda por folio */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Buscar por folio
-              </label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500" />
-                <input
-                  type="text"
-                  value={filtros.folio}
-                  onChange={(e) => handleFiltroChange('folio', e.target.value)}
-                  placeholder="OC-2025-0001"
-                  className="pl-10 w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                />
-              </div>
-            </div>
-
-            {/* Proveedor */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Proveedor
-              </label>
-              <select
-                value={filtros.proveedor_id}
-                onChange={(e) => handleFiltroChange('proveedor_id', e.target.value)}
-                className="w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-              >
-                <option value="">Todos</option>
-                {proveedores.map((prov) => (
-                  <option key={prov.id} value={prov.id}>
-                    {prov.nombre}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Estado */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Estado
-              </label>
-              <select
-                value={filtros.estado}
-                onChange={(e) => handleFiltroChange('estado', e.target.value)}
-                className="w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-              >
-                <option value="">Todos</option>
-                <option value="borrador">Borrador</option>
-                <option value="enviada">Enviada</option>
-                <option value="parcial">Parcial</option>
-                <option value="recibida">Recibida</option>
-                <option value="cancelada">Cancelada</option>
-              </select>
-            </div>
-
-            {/* Estado de pago */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Estado de Pago
-              </label>
-              <select
-                value={filtros.estado_pago}
-                onChange={(e) => handleFiltroChange('estado_pago', e.target.value)}
-                className="w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-              >
-                <option value="">Todos</option>
-                <option value="pendiente">Pendiente</option>
-                <option value="parcial">Parcial</option>
-                <option value="pagado">Pagado</option>
-              </select>
-            </div>
-
-            {/* Fecha desde */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Fecha Desde
-              </label>
-              <input
-                type="date"
-                value={filtros.fecha_desde}
-                onChange={(e) => handleFiltroChange('fecha_desde', e.target.value)}
-                className="w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-              />
-            </div>
-
-            {/* Fecha hasta */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Fecha Hasta
-              </label>
-              <input
-                type="date"
-                value={filtros.fecha_hasta}
-                onChange={(e) => handleFiltroChange('fecha_hasta', e.target.value)}
-                className="w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-              />
-            </div>
-          </div>
-
-          {/* Botones de acción */}
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={handleLimpiarFiltros}>
-              Limpiar Filtros
-            </Button>
-          </div>
-        </div>
+        <OrdenesCompraFilters
+          filtros={filtros}
+          proveedores={proveedores}
+          onFiltroChange={handleFiltroChange}
+          onLimpiar={handleLimpiarFiltros}
+        />
       )}
 
       {/* Tabla de órdenes */}
       <DataTable
-        columns={[
-          {
-            key: 'folio',
-            header: 'Folio',
-            width: 'md',
-            render: (row) => (
-              <div>
-                <div className="text-sm font-medium text-primary-600 dark:text-primary-400">{row.folio}</div>
-                {row.referencia_proveedor && (
-                  <div className="text-xs text-gray-400 dark:text-gray-500">Ref: {row.referencia_proveedor}</div>
-                )}
-              </div>
-            ),
-          },
-          {
-            key: 'fecha',
-            header: 'Fecha',
-            hideOnMobile: true,
-            render: (row) => (
-              <div>
-                <div className="text-sm text-gray-900 dark:text-gray-100">
-                  {new Date(row.fecha_orden).toLocaleDateString('es-MX', {
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric',
-                  })}
-                </div>
-                {row.fecha_entrega_esperada && (
-                  <div className="text-xs text-gray-400 dark:text-gray-500">
-                    Entrega: {new Date(row.fecha_entrega_esperada).toLocaleDateString('es-MX')}
-                  </div>
-                )}
-              </div>
-            ),
-          },
-          {
-            key: 'proveedor',
-            header: 'Proveedor',
-            hideOnMobile: true,
-            render: (row) => (
-              <div className="flex items-center">
-                <Building2 className="h-4 w-4 mr-2 text-gray-400 dark:text-gray-500" />
-                <div className="text-sm text-gray-900 dark:text-gray-100">{row.proveedor_nombre}</div>
-              </div>
-            ),
-          },
-          {
-            key: 'items',
-            header: 'Items',
-            hideOnMobile: true,
-            render: (row) => (
-              <div className="text-sm text-gray-900 dark:text-gray-100">{row.items_count || 0} productos</div>
-            ),
-          },
-          {
-            key: 'total',
-            header: 'Total',
-            render: (row) => (
-              <div>
-                <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                  ${parseFloat(row.total || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
-                </div>
-                {parseFloat(row.monto_pagado || 0) > 0 && (
-                  <div className="text-xs text-green-600 dark:text-green-400">
-                    Pagado: ${parseFloat(row.monto_pagado).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
-                  </div>
-                )}
-              </div>
-            ),
-          },
-          {
-            key: 'estado',
-            header: 'Estado',
-            align: 'center',
-            render: (row) => (
-              <Badge variant={ESTADO_OC_VARIANT[row.estado] || 'default'} size="sm">
-                {formatearEstado(row.estado)}
-              </Badge>
-            ),
-          },
-          {
-            key: 'pago',
-            header: 'Pago',
-            align: 'center',
-            hideOnMobile: true,
-            render: (row) => (
-              <Badge variant={ESTADO_PAGO_VARIANT[row.estado_pago] || 'default'} size="sm">
-                {formatearEstadoPago(row.estado_pago)}
-              </Badge>
-            ),
-          },
-          {
-            key: 'actions',
-            header: '',
-            align: 'right',
-            render: (row) => (
-              <DataTableActions>
-                <DataTableActionButton icon={Eye} label="Ver detalle" onClick={() => handleVerDetalle(row.id)} variant="ghost" />
-                {row.estado === 'borrador' && (
-                  <DataTableActionButton icon={Edit} label="Editar" onClick={() => handleEditar(row)} variant="primary" />
-                )}
-                {row.estado === 'borrador' && (row.items_count || 0) > 0 && (
-                  <DataTableActionButton icon={Send} label="Enviar" onClick={() => handleAbrirModalEnviar(row)} variant="primary" />
-                )}
-                {['enviada', 'parcial'].includes(row.estado) && (
-                  <DataTableActionButton icon={Package} label="Recibir" onClick={() => handleRecibirMercancia(row)} variant="ghost" />
-                )}
-                {row.estado !== 'cancelada' && row.estado !== 'borrador' && row.estado_pago !== 'pagado' && (
-                  <DataTableActionButton icon={DollarSign} label="Pago" onClick={() => handleRegistrarPago(row)} variant="ghost" />
-                )}
-                {['borrador', 'enviada', 'parcial'].includes(row.estado) && (
-                  <DataTableActionButton icon={XCircle} label="Cancelar" onClick={() => handleAbrirModalCancelar(row)} variant="ghost" />
-                )}
-                {row.estado === 'borrador' && (
-                  <DataTableActionButton icon={Trash2} label="Eliminar" onClick={() => handleAbrirModalEliminar(row)} variant="danger" />
-                )}
-              </DataTableActions>
-            ),
-          },
-        ]}
+        columns={columns}
         data={ordenes}
         isLoading={isLoading}
         emptyState={{

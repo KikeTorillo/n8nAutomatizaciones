@@ -10,13 +10,13 @@
  * @since 2026-01-29
  */
 
-const UnsplashService = require('../services/unsplash.service');
-const { CircuitOpenError } = require('../services/circuitBreaker.service');
+const UnsplashService = require('../../../services/unsplash.service');
+const { CircuitOpenError } = require('../../../services/circuitBreaker.service');
 const asyncHandler = require('express-async-handler');
 
 /**
  * Buscar imagenes en Unsplash
- * GET /api/v1/website/images/search
+ * GET /api/v1/images/search
  */
 const buscarImagenes = asyncHandler(async (req, res) => {
   const { q: query, page = 1, per_page = 20, orientation } = req.query;
@@ -63,7 +63,7 @@ const buscarImagenes = asyncHandler(async (req, res) => {
 
 /**
  * Descargar imagen de Unsplash (registra descarga y retorna URL optimizada)
- * POST /api/v1/website/images/download
+ * POST /api/v1/images/download
  */
 const descargarImagen = asyncHandler(async (req, res) => {
   const { url, photographer, unsplashId, downloadLocation } = req.body;
@@ -100,7 +100,7 @@ const descargarImagen = asyncHandler(async (req, res) => {
 
 /**
  * Obtener imagen aleatoria
- * GET /api/v1/website/images/random
+ * GET /api/v1/images/random
  */
 const imagenAleatoria = asyncHandler(async (req, res) => {
   const { query } = req.query;
@@ -135,7 +135,7 @@ const imagenAleatoria = asyncHandler(async (req, res) => {
 
 /**
  * Obtener estado del circuit breaker de Unsplash
- * GET /api/v1/website/images/status
+ * GET /api/v1/images/status
  */
 const obtenerStatus = asyncHandler(async (req, res) => {
   const status = UnsplashService.getCircuitBreakerStatus();

@@ -120,7 +120,7 @@ const SearchInput = memo(forwardRef<HTMLInputElement, SearchInputProps>(
       onValueChange?.('');
       onSearch?.('');
 
-      // Disparar evento nativo real para compatibilidad con onChange
+      // Disparar evento change nativo que React intercepta como SyntheticEvent
       const input = internalRef.current;
       if (input && onChange) {
         const nativeSetter = Object.getOwnPropertyDescriptor(
@@ -128,7 +128,7 @@ const SearchInput = memo(forwardRef<HTMLInputElement, SearchInputProps>(
         )?.set;
         if (nativeSetter) {
           nativeSetter.call(input, '');
-          input.dispatchEvent(new Event('input', { bubbles: true }));
+          input.dispatchEvent(new Event('change', { bubbles: true }));
         }
       }
     }, [onChange, onValueChange, onSearch]);

@@ -2,7 +2,7 @@
  * Datos dummy para preview de plantillas
  * Genera evento y bloques ficticios por tipo de evento
  */
-import { INVITACION_TEMA_DEFAULT } from '@/pages/eventos-digitales/constants';
+import { INVITACION_TEMA_DEFAULT } from '../constants';
 
 const DATOS_POR_TIPO = {
   boda: {

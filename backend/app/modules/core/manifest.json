@@ -17,7 +17,8 @@
     "usuarios": "/api/v1/usuarios",
     "superadmin": "/api/v1/superadmin",
     "monedas": "/api/v1/monedas",
-    "roles": "/api/v1/roles"
+    "roles": "/api/v1/roles",
+    "images": "/api/v1/images"
   },
   "resources": {
     "organizaciones": {

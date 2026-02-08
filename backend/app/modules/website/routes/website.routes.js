@@ -852,11 +852,4 @@ router.get('/health/ping',
     WebsiteHealthController.ping
 );
 
-// ===================================================================
-// IMÁGENES (UNSPLASH)
-// ===================================================================
-
-const imagesRouter = require('./images.routes');
-router.use('/images', imagesRouter);
-
 module.exports = router;

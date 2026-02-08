@@ -18,7 +18,7 @@ export const imagesApi = {
    * @returns {Promise<Object>}
    */
   buscarImagenes: (params) =>
-    apiClient.get('/website/images/search', { params: { q: params.query, ...params } })
+    apiClient.get('/images/search', { params: { q: params.query, ...params } })
       .then((res) => res.data?.data || res.data),
 
   /**
@@ -27,7 +27,7 @@ export const imagesApi = {
    * @returns {Promise<Object>}
    */
   descargarImagen: (datos) =>
-    apiClient.post('/website/images/download', datos)
+    apiClient.post('/images/download', datos)
       .then((res) => res.data?.data || res.data),
 
   /**
@@ -36,7 +36,7 @@ export const imagesApi = {
    * @returns {Promise<Object>}
    */
   obtenerImagenAleatoria: (query) =>
-    apiClient.get('/website/images/random', { params: query ? { query } : {} })
+    apiClient.get('/images/random', { params: query ? { query } : {} })
       .then((res) => res.data?.data || res.data),
 };
 

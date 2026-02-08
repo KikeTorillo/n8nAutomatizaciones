@@ -1,24 +1,18 @@
 import { useMemo, useCallback, useState, memo } from 'react';
 import { cn } from '@/lib/utils';
-import { DataTable } from '../organisms/DataTable';
+import { DataTable, type DataTableColumn } from '../organisms/DataTable';
 import { SearchInput } from '../organisms/SearchInput';
 import { Button } from '../atoms/Button';
 import { StatCardGrid, type StatConfig } from '../molecules/StatCardGrid';
 import { ViewTabs } from '../organisms/ViewTabs';
 import { useFilters, usePagination, normalizePagination, useModalManager, useDeleteConfirmation, useExportCSV } from '@/hooks/utils';
-import { ConfirmDialog } from '../organisms/ConfirmDialog';
+import { ConfirmDialog, type ConfirmDialogProps } from '../organisms/ConfirmDialog';
 import { Plus, Download } from 'lucide-react';
 import { SEMANTIC_COLORS } from '@/lib/uiConstants';
 
 type LucideIcon = React.ComponentType<{ className?: string }>;
 
-interface ColumnDef {
-  key: string;
-  header?: string | React.ReactNode;
-  align?: 'left' | 'center' | 'right';
-  render?: (row: Record<string, unknown>) => React.ReactNode;
-  [key: string]: unknown;
-}
+type ColumnDef = DataTableColumn;
 
 interface ViewComponentProps {
   items: Record<string, unknown>[];
@@ -269,16 +263,10 @@ const ListadoCRUDPage = memo(function ListadoCRUDPage({
   // Delete mutation + confirmation
   const deleteMutation = useDeleteMutation?.();
   const { confirmDelete, deleteConfirmProps } = useDeleteConfirmation({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    deleteMutation: deleteMutation || null as any,
+    deleteMutation: deleteMutation ?? null,
     entityName: title?.toLowerCase() || 'elemento',
     ...deleteMutationOptions,
-  }) as {
-    confirmDelete: (item: Record<string, unknown>) => void;
-    deleteConfirmProps: Record<string, unknown>;
-    isDeleting: boolean;
-    itemToDelete: unknown;
-  };
+  });
 
   // Handlers
   const handleNuevo = useCallback(() => openModal('form', null), [openModal]);
@@ -399,8 +387,7 @@ const ListadoCRUDPage = memo(function ListadoCRUDPage({
         // Fallback a DataTable si no hay componente custom
         return (
           <DataTable
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            columns={columns as any}
+            columns={columns}
             data={items}
             isLoading={isLoading}
             keyField={keyField}
@@ -462,8 +449,7 @@ const ListadoCRUDPage = memo(function ListadoCRUDPage({
       })}
 
       {/* Delete Confirmation */}
-      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-      {deleteMutation && <ConfirmDialog {...deleteConfirmProps as any} />}
+      {deleteMutation && <ConfirmDialog {...deleteConfirmProps as ConfirmDialogProps} />}
 
       {/* Children slot */}
       {children}

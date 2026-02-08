@@ -33,7 +33,7 @@ import {
 import { registerInvitacionElementTypes } from '../../editor/elements';
 import { registerInvitacionMigrators } from '../../editor/elements';
 import { crearBloqueNuevo, BLOQUES_INVITACION } from '../../editor/config';
-import { generarPreviewData } from '@/utils/plantillaDummyData';
+import { generarPreviewData } from '../../utils/plantillaDummyData';
 import { INVITACION_TEMA_DEFAULT } from '../../constants';
 
 // ========== PROVIDER ==========

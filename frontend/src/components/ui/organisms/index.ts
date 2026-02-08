@@ -46,6 +46,10 @@ export type { StandardFilterGridProps, FilterFieldConfig, FilterGridLayout } fro
 
 // NOTA: StatCardGrid movido a molecules/ (Feb 2026) - grid simple de StatCard molecules
 
+// Accordion
+export { Accordion } from './Accordion';
+export type { AccordionProps, AccordionItem } from './Accordion';
+
 // CRUD y secciones
 export { ExpandableSection } from './ExpandableSection';
 export type { ExpandableSectionProps } from './ExpandableSection';

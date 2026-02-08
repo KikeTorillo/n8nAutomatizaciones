@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import {
   Plus,
   Search,
-  PartyPopper,
   Calendar,
   Users,
   Eye,
@@ -11,7 +10,9 @@ import {
   Share2,
   ExternalLink,
   Palette,
+  PartyPopper,
 } from 'lucide-react';
+import EventoInvitacionPreview from './components/EventoInvitacionPreview';
 import {
   Badge,
   Button,
@@ -180,17 +181,7 @@ function EventosPage() {
                 className="overflow-hidden"
               >
                 {/* Imagen/Preview */}
-                <div className="h-40 bg-gradient-to-br from-pink-100 to-secondary-100 dark:from-pink-900/30 dark:to-secondary-900/30 flex items-center justify-center overflow-hidden">
-                  {evento.portada_url ? (
-                    <img
-                      src={evento.portada_url}
-                      alt={evento.nombre}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <PartyPopper className="w-16 h-16 text-pink-300 dark:text-pink-500" />
-                  )}
-                </div>
+                <EventoInvitacionPreview evento={evento} />
 
                 <div className="p-4">
                   <div className="flex items-start justify-between mb-2">

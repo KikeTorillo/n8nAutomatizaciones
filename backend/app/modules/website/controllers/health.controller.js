@@ -11,8 +11,8 @@
  */
 
 const asyncHandler = require('express-async-handler');
-const { CircuitBreakerFactory } = require('../services/circuitBreaker.service');
-const UnsplashService = require('../services/unsplash.service');
+const { CircuitBreakerFactory } = require('../../../services/circuitBreaker.service');
+const UnsplashService = require('../../../services/unsplash.service');
 const WebsiteAIService = require('../services/ai.service');
 const RedisClientFactory = require('../../../services/RedisClientFactory');
 const { pool } = require('../../../config/database');

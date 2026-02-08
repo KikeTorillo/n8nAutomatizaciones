@@ -18,6 +18,7 @@ const usuariosRouter = require('./usuarios');
 const superadminRouter = require('./superadmin');
 const monedasRouter = require('./monedas.routes');
 const rolesRouter = require('./roles');
+const imagesRouter = require('./images.routes');
 
 module.exports = {
   // auth: authRouter, // Movido a modules/auth
@@ -29,5 +30,6 @@ module.exports = {
   // webhooks: webhooksRouter,  // v1 deprecated - usar suscripciones-negocio
   superadmin: superadminRouter,
   monedas: monedasRouter,
-  roles: rolesRouter
+  roles: rolesRouter,
+  images: imagesRouter
 };

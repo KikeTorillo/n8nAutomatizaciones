@@ -89,4 +89,8 @@ export type { OverlayHeaderProps } from './OverlayHeader';
 export { RadioGroup } from './RadioGroup';
 export type { RadioGroupProps, RadioOption } from './RadioGroup';
 
+// Popover (Feb 2026) - contenido flotante activado por click
+export { Popover } from './Popover';
+export type { PopoverProps } from './Popover';
+
 // NOTA: Card movido a atoms/ (Feb 2026) - contenedor genérico sin lógica compuesta

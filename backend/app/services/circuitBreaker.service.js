@@ -17,8 +17,8 @@
  * @since 2026-01-29
  */
 
-const RedisClientFactory = require('../../../services/RedisClientFactory');
-const logger = require('../../../utils/logger');
+const RedisClientFactory = require('./RedisClientFactory');
+const logger = require('../utils/logger');
 
 /**
  * Estados posibles del circuito
