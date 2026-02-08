@@ -45,7 +45,7 @@ export default function OrdenCompraDetalleModal({
   currentIndex = 0,
   onNavigate,
 }) {
-  const { showToast } = useToast();
+  const toast = useToast();
 
   // Query de la orden
   const { data: orden, isLoading } = useOrdenCompra(ordenId);
@@ -131,11 +131,11 @@ export default function OrdenCompraDetalleModal({
   // Handlers de items
   const handleAgregarItem = () => {
     if (!productoSeleccionado) {
-      showToast('Selecciona un producto', 'warning');
+      toast.warning('Selecciona un producto');
       return;
     }
     if (cantidadItem <= 0) {
-      showToast('La cantidad debe ser mayor a 0', 'warning');
+      toast.warning('La cantidad debe ser mayor a 0');
       return;
     }
 
@@ -152,7 +152,7 @@ export default function OrdenCompraDetalleModal({
       },
       {
         onSuccess: () => {
-          showToast('Producto agregado correctamente', 'success');
+          toast.success('Producto agregado correctamente');
           setMostrarAgregarItem(false);
           setProductoSeleccionado(null);
           setBusquedaProducto('');
@@ -160,9 +160,8 @@ export default function OrdenCompraDetalleModal({
           setPrecioItem('');
         },
         onError: (error) => {
-          showToast(
-            error.response?.data?.mensaje || 'Error al agregar el producto',
-            'error'
+          toast.error(
+            error.response?.data?.mensaje || 'Error al agregar el producto'
           );
         },
       }
@@ -187,13 +186,12 @@ export default function OrdenCompraDetalleModal({
       },
       {
         onSuccess: () => {
-          showToast('Item actualizado correctamente', 'success');
+          toast.success('Item actualizado correctamente');
           setItemEditando(null);
         },
         onError: (error) => {
-          showToast(
-            error.response?.data?.mensaje || 'Error al actualizar el item',
-            'error'
+          toast.error(
+            error.response?.data?.mensaje || 'Error al actualizar el item'
           );
         },
       }
@@ -211,13 +209,12 @@ export default function OrdenCompraDetalleModal({
       { ordenId: orden.id, itemId: itemAEliminar },
       {
         onSuccess: () => {
-          showToast('Producto eliminado de la orden', 'success');
+          toast.success('Producto eliminado de la orden');
           setItemAEliminar(null);
         },
         onError: (error) => {
-          showToast(
-            error.response?.data?.mensaje || 'Error al eliminar el producto',
-            'error'
+          toast.error(
+            error.response?.data?.mensaje || 'Error al eliminar el producto'
           );
         },
       }

@@ -18,3 +18,5 @@ export {
 } from './useResponsiveConfig';
 export { useSlashMenu } from '@/components/editor-framework/hooks';
 export { useERPData } from './useERPData';
+export { useWebsiteAutosave } from './useWebsiteAutosave';
+export { useWebsiteBloqueHandlers } from './useWebsiteBloqueHandlers';

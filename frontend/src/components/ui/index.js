@@ -45,7 +45,7 @@ export { ProgressBar, LimitProgressBar } from './molecules/ProgressBar';
 export { FormGroup } from './molecules/FormGroup';
 // Nuevos (Ene 2026) - Optimización arquitectónica
 export { SearchFilterBar } from './organisms/SearchFilterBar';
-export { CheckboxGroup } from './organisms/CheckboxGroup';
+export { CheckboxGroup } from './molecules/CheckboxGroup';
 export { CheckboxField } from './molecules/CheckboxField';
 export { DropdownMenu } from './organisms/DropdownMenu';
 export { ToggleSwitch } from './molecules/ToggleSwitch';

@@ -207,56 +207,62 @@ function EventosPage() {
                   </div>
 
                   {/* Acciones */}
-                  <div className="flex items-center flex-wrap gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => navigate(`/eventos-digitales/${evento.id}`)}
-                    >
-                      <Eye className="w-4 h-4 mr-1" />
-                      Ver
-                    </Button>
-
-                    <Button
-                      size="sm"
-                      onClick={() => navigate(`/eventos-digitales/${evento.id}/editor`)}
-                    >
-                      <Palette className="w-4 h-4 mr-1" />
-                      Diseñar
-                    </Button>
-
-                    {evento.estado === 'borrador' && (
-                      <Button
-                        size="sm"
-                        onClick={() => handlePublicar(evento.id)}
-                        disabled={publicarEvento.isLoading}
-                        className="bg-green-600 hover:bg-green-700"
-                      >
-                        <Share2 className="w-4 h-4 mr-1" />
-                        Publicar
-                      </Button>
-                    )}
-
-                    {evento.estado === 'publicado' && evento.slug && (
+                  <div className="flex flex-col gap-2">
+                    <div className="grid grid-cols-2 gap-2">
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => window.open(`/e/${evento.slug}`, '_blank')}
+                        onClick={() => navigate(`/eventos-digitales/${evento.id}`)}
+                        className="w-full"
                       >
-                        <ExternalLink className="w-4 h-4 mr-1" />
-                        Ver Link
+                        <Eye className="w-4 h-4 mr-1" />
+                        Ver
                       </Button>
-                    )}
+                      <Button
+                        size="sm"
+                        onClick={() => navigate(`/eventos-digitales/${evento.id}/editor`)}
+                        className="w-full"
+                      >
+                        <Palette className="w-4 h-4 mr-1" />
+                        Diseñar
+                      </Button>
+                    </div>
 
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => openModal('delete', evento)}
-                      disabled={eliminarEvento.isPending}
-                      className="text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 ml-auto"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      {evento.estado === 'borrador' && (
+                        <Button
+                          size="sm"
+                          onClick={() => handlePublicar(evento.id)}
+                          disabled={publicarEvento.isLoading}
+                          className="flex-1 bg-green-600 hover:bg-green-700"
+                        >
+                          <Share2 className="w-4 h-4 mr-1" />
+                          Publicar
+                        </Button>
+                      )}
+
+                      {evento.estado === 'publicado' && evento.slug && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => window.open(`/e/${evento.slug}`, '_blank')}
+                          className="flex-1"
+                        >
+                          <ExternalLink className="w-4 h-4 mr-1" />
+                          Ver Link
+                        </Button>
+                      )}
+
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openModal('delete', evento)}
+                        disabled={eliminarEvento.isPending}
+                        className="text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 ml-auto"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </Card>

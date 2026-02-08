@@ -8,7 +8,7 @@
 import { memo } from 'react';
 import { cn } from '@/lib/utils';
 import { Check, Star } from 'lucide-react';
-import { InlineText } from '../InlineEditor';
+import { InlineText } from '@/components/editor-framework';
 import { THEME_FALLBACK_COLORS } from '@/lib/uiConstants';
 
 /**

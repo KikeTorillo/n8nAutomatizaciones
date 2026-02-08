@@ -11,6 +11,7 @@
 import { memo, useMemo, useState, useEffect, useCallback, Suspense, useRef } from 'react';
 import { Heart } from 'lucide-react';
 import { BloqueRenderer, BLOQUES_PUBLICOS } from './bloques';
+import BlockErrorBoundary from '@/components/editor-framework/common-blocks/canvas/BlockErrorBoundary';
 
 /**
  * Obtener clases CSS de animación según tipo y estado de visibilidad
@@ -159,20 +160,22 @@ function InvitacionDinamica({
               </div>
             }
           >
-            <BloqueRenderer
-              bloque={bloque}
-              evento={evento}
-              invitado={invitado}
-              tema={tema}
-              ubicaciones={evento?.ubicaciones}
-              isVisible={visibleSections.has(bloque.id)}
-              onScrollToContent={index === 0 ? scrollToContent : undefined}
-              onConfirmRSVP={onConfirmRSVP}
-              isLoadingRSVP={isLoadingRSVP}
-              qrImage={qrImage}
-              loadingQR={loadingQR}
-              isPreview={isPreview}
-            />
+            <BlockErrorBoundary bloqueId={bloque.id}>
+              <BloqueRenderer
+                bloque={bloque}
+                evento={evento}
+                invitado={invitado}
+                tema={tema}
+                ubicaciones={evento?.ubicaciones}
+                isVisible={visibleSections.has(bloque.id)}
+                onScrollToContent={index === 0 ? scrollToContent : undefined}
+                onConfirmRSVP={onConfirmRSVP}
+                isLoadingRSVP={isLoadingRSVP}
+                qrImage={qrImage}
+                loadingQR={loadingQR}
+                isPreview={isPreview}
+              />
+            </BlockErrorBoundary>
           </Suspense>
         </div>
         );

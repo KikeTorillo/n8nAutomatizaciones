@@ -67,6 +67,7 @@ const CheckboxField = memo(forwardRef<HTMLInputElement, CheckboxFieldProps>(func
           name={name}
           value={value}
           defaultChecked={defaultChecked}
+          aria-describedby={error ? errorId : description ? helperId : undefined}
         />
       </div>
 

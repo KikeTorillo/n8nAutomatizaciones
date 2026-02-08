@@ -45,6 +45,28 @@ export function getCheckboxStyles({ disabled = false, error = false } = {}) {
   );
 }
 
+// ==================== RADIO ====================
+
+export const RADIO_BASE = cn(
+  'border-gray-300 dark:border-gray-600',
+  'text-primary-600 focus:ring-primary-500',
+  'disabled:opacity-50 disabled:cursor-not-allowed'
+);
+
+export const RADIO_STATES = {
+  error: 'border-red-500 dark:border-red-500',
+};
+
+/**
+ * Genera clases de estilo para radio
+ *
+ * @param {boolean} [hasError=false] - Estado de error
+ * @returns {string} - Clases Tailwind
+ */
+export function getRadioStyles(hasError = false) {
+  return cn(RADIO_BASE, hasError && RADIO_STATES.error);
+}
+
 // ==================== SELECT ====================
 
 export const SELECT_BASE = cn(

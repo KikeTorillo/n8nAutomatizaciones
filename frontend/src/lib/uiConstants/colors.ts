@@ -160,6 +160,8 @@ export const BADGE_COLORS: Record<string, string> = {
   warning: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300',
   danger: 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300',
   info: 'bg-primary-100 text-primary-800 dark:bg-primary-900/40 dark:text-primary-300',
+  outline: 'bg-transparent border border-gray-300 text-gray-700 dark:border-gray-600 dark:text-gray-300',
+  ghost: 'bg-transparent text-gray-600 dark:text-gray-400',
 };
 // Alias para retrocompatibilidad
 BADGE_COLORS.error = BADGE_COLORS.danger;

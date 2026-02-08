@@ -10,7 +10,7 @@ export * from './operaciones-almacen';
 // Otros hooks
 export * from './useBatchPicking';
 export * from './usePaquetes';
-export * from './useConsigna';
+export * from './consigna';
 export * from './useDropship';
 export * from './useReorden';
 export * from './useConfiguracionAlmacen';

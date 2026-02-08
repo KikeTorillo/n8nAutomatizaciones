@@ -204,7 +204,7 @@ export default function InvitadosTab({
               Descargar QR
             </Button>
           )}
-          <Button onClick={() => openModal('invitado', null, { mode: 'create' })}>
+          <Button size="sm" onClick={() => openModal('invitado', null, { mode: 'create' })}>
             <Plus className="w-4 h-4 mr-2" />
             Agregar
           </Button>

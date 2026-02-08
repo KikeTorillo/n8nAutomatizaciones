@@ -68,7 +68,7 @@ export {
 // RRHH - DATOS DE EMPLEADO
 // ========================================
 
-// useOnboardingEmpleados - exports selectivos para evitar conflicto con calcularDiasRestantes
+// Onboarding - exports selectivos para evitar conflicto con calcularDiasRestantes
 export {
   onboardingKeys,
   usePlantillasOnboarding,
@@ -92,7 +92,7 @@ export {
   getColorProgreso,
   formatearFechaOnboarding,
   calcularDiasRestantes as calcularDiasRestantesOnboarding,
-} from './useOnboardingEmpleados';
+} from './onboarding';
 
 // useDocumentosEmpleado - exports selectivos para evitar conflictos
 export {

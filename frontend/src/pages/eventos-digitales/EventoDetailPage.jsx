@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   Edit,
@@ -15,10 +15,9 @@ import {
   LayoutGrid,
   Palette,
 } from 'lucide-react';
-import { BackButton, Button, LoadingSpinner } from '@/components/ui';
+import { BackButton, Button, LoadingSpinner, MobileTabSelector } from '@/components/ui';
 import { useToast } from '@/hooks/utils';
 import { SeatingChartEditor } from '@/components/eventos-digitales';
-import { hasToken } from '@/features/auth';
 import {
   useEvento,
   useEventoEstadisticas,
@@ -34,6 +33,7 @@ import {
   useEliminarRegalo,
   useAprobarFelicitacion,
   useRechazarFelicitacion,
+  useCheckinStats,
 } from '@/hooks/otros';
 import {
   InvitadosTab,
@@ -42,7 +42,6 @@ import {
   RegalosTab,
   FelicitacionesTab,
 } from '@/components/eventos-digitales';
-import { eventosDigitalesApi } from '@/services/api/modules';
 
 /**
  * Pagina de detalle de evento digital con tabs
@@ -52,7 +51,6 @@ function EventoDetailPage() {
   const { id } = useParams();
   const toast = useToast();
   const [activeTab, setActiveTab] = useState('invitados');
-  const [checkinStats, setCheckinStats] = useState(null);
 
   // Queries
   const { data: evento, isLoading: loadingEvento } = useEvento(id);
@@ -61,6 +59,7 @@ function EventoDetailPage() {
   const { data: ubicaciones, isLoading: loadingUbicaciones } = useUbicacionesEvento(id);
   const { data: regalos, isLoading: loadingRegalos } = useMesaRegalos(id);
   const { data: felicitacionesData, isLoading: loadingFelicitaciones } = useFelicitaciones(id);
+  const { data: checkinStats } = useCheckinStats(id);
 
   // Mutations
   const publicarEvento = usePublicarEvento();
@@ -71,25 +70,6 @@ function EventoDetailPage() {
   const eliminarRegalo = useEliminarRegalo();
   const aprobarFelicitacion = useAprobarFelicitacion();
   const rechazarFelicitacion = useRechazarFelicitacion();
-
-  // Cargar stats de check-in iniciales
-  // Ene 2026: Usar hasToken() de tokenManager
-  useEffect(() => {
-    if (id && hasToken()) {
-      fetchCheckinStats();
-    }
-  }, [id]);
-
-  const fetchCheckinStats = async () => {
-    try {
-      const response = await eventosDigitalesApi.obtenerCheckinStats(id);
-      if (response.data?.success) {
-        setCheckinStats(response.data.data);
-      }
-    } catch (error) {
-      console.error('Error fetching checkin stats:', error);
-    }
-  };
 
   const handlePublicar = async () => {
     try {
@@ -182,32 +162,34 @@ function EventoDetailPage() {
               </div>
             </div>
 
-            <div className="flex gap-2">
+            <div className="grid grid-cols-2 sm:flex gap-2 w-full sm:w-auto">
               {evento.estado === 'borrador' && (
-                <Button onClick={handlePublicar} disabled={publicarEvento.isPending} className="bg-green-600 hover:bg-green-700">
-                  <Share2 className="w-4 h-4 mr-2" />
+                <Button size="sm" onClick={handlePublicar} disabled={publicarEvento.isPending} className="bg-green-600 hover:bg-green-700">
+                  <Share2 className="w-4 h-4 mr-1 sm:mr-2" />
                   Publicar
                 </Button>
               )}
               {evento.estado === 'publicado' && evento.slug && (
                 <>
-                  <Button variant="outline" onClick={handleCopiarLink}>
-                    <Copy className="w-4 h-4 mr-2" />
-                    Copiar Link
+                  <Button variant="outline" size="sm" onClick={handleCopiarLink}>
+                    <Copy className="w-4 h-4 mr-1 sm:mr-2" />
+                    <span className="sm:hidden">Link</span>
+                    <span className="hidden sm:inline">Copiar Link</span>
                   </Button>
-                  <Button variant="outline" onClick={() => window.open(`/e/${evento.slug}`, '_blank')}>
-                    <ExternalLink className="w-4 h-4 mr-2" />
+                  <Button variant="outline" size="sm" onClick={() => window.open(`/e/${evento.slug}`, '_blank')}>
+                    <ExternalLink className="w-4 h-4 mr-1 sm:mr-2" />
                     Ver
                   </Button>
                 </>
               )}
-              <Button variant="outline" onClick={() => navigate(`/eventos-digitales/${id}/editar`)}>
-                <Edit className="w-4 h-4 mr-2" />
+              <Button variant="outline" size="sm" onClick={() => navigate(`/eventos-digitales/${id}/editar`)}>
+                <Edit className="w-4 h-4 mr-1 sm:mr-2" />
                 Editar
               </Button>
-              <Button onClick={() => navigate(`/eventos-digitales/${id}/editor`)}>
-                <Palette className="w-4 h-4 mr-2" />
-                Diseñar Invitación
+              <Button size="sm" onClick={() => navigate(`/eventos-digitales/${id}/editor`)}>
+                <Palette className="w-4 h-4 mr-1 sm:mr-2" />
+                <span className="sm:hidden">Diseñar</span>
+                <span className="hidden sm:inline">Diseñar Invitación</span>
               </Button>
             </div>
           </div>
@@ -238,27 +220,36 @@ function EventoDetailPage() {
 
       {/* Tabs */}
       <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-          <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white dark:from-gray-800 to-transparent pointer-events-none z-10 sm:hidden" />
-          <nav className="flex gap-4 sm:gap-6 overflow-x-auto scrollbar-hide pb-px -mb-px" aria-label="Tabs">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Móvil: Select dropdown */}
+          <div className="py-3 sm:hidden">
+            <MobileTabSelector
+              tabs={tabs}
+              activeTab={activeTab}
+              onTabChange={setActiveTab}
+              getTabIcon={(tabId) => tabs.find((t) => t.id === tabId)?.icon}
+            />
+          </div>
+
+          {/* Desktop: Tab bar horizontal */}
+          <nav className="hidden sm:flex gap-6 pb-px -mb-px" aria-label="Tabs">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={`
-                  flex items-center gap-1.5 sm:gap-2 py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-colors flex-shrink-0
+                  flex items-center gap-2 py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-colors
                   ${activeTab === tab.id
                     ? 'border-pink-500 text-pink-600 dark:text-pink-400'
                     : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
                   }
                 `}
               >
-                <tab.icon className="w-4 h-4 sm:w-5 sm:h-5" />
-                <span className="hidden xs:inline sm:inline">{tab.label}</span>
-                <span className="xs:hidden sm:hidden">{tab.label.substring(0, 3)}</span>
+                <tab.icon className="w-5 h-5" />
+                {tab.label}
                 {tab.count !== undefined && (
                   <span className={`
-                    px-1.5 sm:px-2 py-0.5 text-xs rounded-full
+                    px-2 py-0.5 text-xs rounded-full
                     ${activeTab === tab.id ? 'bg-pink-100 dark:bg-pink-900/40 text-pink-600 dark:text-pink-400' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'}
                   `}>
                     {tab.count}
@@ -289,8 +280,6 @@ function EventoDetailPage() {
           <CheckinTab
             eventoId={id}
             totalInvitados={invitadosData?.total || 0}
-            initialStats={checkinStats}
-            onStatsUpdate={setCheckinStats}
           />
         )}
 

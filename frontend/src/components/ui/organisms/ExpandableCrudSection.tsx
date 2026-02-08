@@ -37,12 +37,16 @@ export interface DeleteConfig<T> {
   title?: string;
   /** Función para obtener el mensaje de confirmación */
   getMessage: (item: T) => string;
-  /** Mutación de TanStack Query */
-  mutation: {
+  /** Callback de eliminación (preferido sobre mutation) */
+  onDelete?: (item: T) => Promise<void>;
+  /** Si está eliminando (preferido sobre mutation.isPending) */
+  isDeleting?: boolean;
+  /** @deprecated Usar onDelete en su lugar */
+  mutation?: {
     mutateAsync: (params: unknown) => Promise<unknown>;
     isPending?: boolean;
   };
-  /** Función para obtener parámetros de eliminación */
+  /** @deprecated Usar onDelete en su lugar */
   getDeleteParams?: (item: T) => unknown;
   /** Mensaje de éxito */
   successMessage?: string;
@@ -61,7 +65,6 @@ export interface DrawerComponentProps<T> {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
-  [key: string]: unknown;
 }
 
 /**
@@ -204,14 +207,19 @@ function ExpandableCrudSectionComponent<T extends { id?: string | number }>(
   };
 
   const handleDeleteConfirm = async () => {
-    if (!itemToDelete || !deleteConfig?.mutation) return;
+    if (!itemToDelete || !deleteConfig) return;
 
     try {
-      const deleteParams = deleteConfig.getDeleteParams
-        ? deleteConfig.getDeleteParams(itemToDelete)
-        : { id: itemToDelete.id, ...drawerProps };
-
-      await deleteConfig.mutation.mutateAsync(deleteParams);
+      if (deleteConfig.onDelete) {
+        await deleteConfig.onDelete(itemToDelete);
+      } else if (deleteConfig.mutation) {
+        const deleteParams = deleteConfig.getDeleteParams
+          ? deleteConfig.getDeleteParams(itemToDelete)
+          : { id: itemToDelete.id, ...drawerProps };
+        await deleteConfig.mutation.mutateAsync(deleteParams);
+      } else {
+        return;
+      }
       toast.success(deleteConfig.successMessage || 'Eliminado correctamente');
       setItemToDelete(null);
     } catch (err) {
@@ -294,7 +302,7 @@ function ExpandableCrudSectionComponent<T extends { id?: string | number }>(
           confirmText={deleteConfig.confirmText || 'Eliminar'}
           cancelText={deleteConfig.cancelText || 'Cancelar'}
           variant="danger"
-          isLoading={deleteConfig.mutation?.isPending}
+          isLoading={deleteConfig.isDeleting ?? deleteConfig.mutation?.isPending}
         />
       )}
 
@@ -312,11 +320,11 @@ function ExpandableCrudSectionComponent<T extends { id?: string | number }>(
   );
 }
 
-export const ExpandableCrudSection = memo(
+const _ExpandableCrudSection = memo(
   forwardRef(ExpandableCrudSectionComponent)
-) as typeof ExpandableCrudSectionComponent;
+);
+(_ExpandableCrudSection as { displayName?: string }).displayName = 'ExpandableCrudSection';
 
-// @ts-expect-error - displayName en memo con generics
-ExpandableCrudSection.displayName = 'ExpandableCrudSection';
+export const ExpandableCrudSection = _ExpandableCrudSection as typeof ExpandableCrudSectionComponent;
 
 export { ExpandableCrudSection as default };

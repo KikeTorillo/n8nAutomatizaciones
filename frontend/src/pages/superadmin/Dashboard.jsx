@@ -3,7 +3,7 @@
  * Vista consolidada con métricas globales + listado de organizaciones
  */
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { Building2, Users, Calendar, UserCircle, Eye, Ban, CheckCircle, DollarSign, Clock, TrendingDown, TrendingUp } from 'lucide-react';
 import { useSuperAdmin } from '@/hooks/sistema';
 import {
@@ -17,6 +17,7 @@ import {
     Input,
 } from '@/components/ui';
 import { useToast } from '@/hooks/utils/useToast';
+import { useDisclosure } from '@/hooks/utils';
 import OrganizacionDrawer from '@/components/superadmin/OrganizacionDrawer';
 
 // Helper para formatear moneda MXN
@@ -85,26 +86,24 @@ export default function SuperAdminDashboard() {
     }, [planes]);
 
     // Estados para modales
-    const [drawerOpen, setDrawerOpen] = useState(false);
-    const [orgSeleccionada, setOrgSeleccionada] = useState(null);
-    const [confirmSuspender, setConfirmSuspender] = useState({ open: false, org: null });
-    const [confirmReactivar, setConfirmReactivar] = useState({ open: false, org: null });
+    const drawer = useDisclosure();
+    const confirmSuspender = useDisclosure();
+    const confirmReactivar = useDisclosure();
     const [motivoSuspension, setMotivoSuspension] = useState('');
 
     // Handlers
     const handleVerDetalle = useCallback((org) => {
-        setOrgSeleccionada(org);
-        setDrawerOpen(true);
-    }, []);
+        drawer.open(org);
+    }, [drawer]);
 
     const handleSuspender = useCallback((org) => {
         setMotivoSuspension('');
-        setConfirmSuspender({ open: true, org });
-    }, []);
+        confirmSuspender.open(org);
+    }, [confirmSuspender]);
 
     const handleReactivar = useCallback((org) => {
-        setConfirmReactivar({ open: true, org });
-    }, []);
+        confirmReactivar.open(org);
+    }, [confirmReactivar]);
 
     const handleEstadoChange = useCallback((e) => {
         const valor = e.target.value || undefined;
@@ -195,33 +194,33 @@ export default function SuperAdminDashboard() {
 
     // Confirmar suspensión
     const confirmarSuspension = useCallback(() => {
-        if (!confirmSuspender.org || !motivoSuspension || motivoSuspension.length < 10) {
+        if (!confirmSuspender.data || !motivoSuspension || motivoSuspension.length < 10) {
             toast.error('El motivo debe tener al menos 10 caracteres');
             return;
         }
         suspenderOrganizacion.mutate(
-            { organizacionId: confirmSuspender.org.id, motivo: motivoSuspension },
+            { organizacionId: confirmSuspender.data.id, motivo: motivoSuspension },
             {
                 onSuccess: () => {
                     toast.success('Organización suspendida correctamente');
-                    setConfirmSuspender({ open: false, org: null });
-                    setDrawerOpen(false);
+                    confirmSuspender.close();
+                    drawer.close();
                 },
             }
         );
-    }, [confirmSuspender.org, motivoSuspension, suspenderOrganizacion, toast]);
+    }, [confirmSuspender, motivoSuspension, suspenderOrganizacion, toast, drawer]);
 
     // Confirmar reactivación
     const confirmarReactivacion = useCallback(() => {
-        if (!confirmReactivar.org) return;
-        reactivarOrganizacion.mutate(confirmReactivar.org.id, {
+        if (!confirmReactivar.data) return;
+        reactivarOrganizacion.mutate(confirmReactivar.data.id, {
             onSuccess: () => {
                 toast.success('Organización reactivada correctamente');
-                setConfirmReactivar({ open: false, org: null });
-                setDrawerOpen(false);
+                confirmReactivar.close();
+                drawer.close();
             },
         });
-    }, [confirmReactivar.org, reactivarOrganizacion, toast]);
+    }, [confirmReactivar, reactivarOrganizacion, toast, drawer]);
 
     // Loading del dashboard
     if (isLoadingDashboard || isLoadingMetricas) {
@@ -377,9 +376,9 @@ export default function SuperAdminDashboard() {
 
             {/* Drawer de detalle */}
             <OrganizacionDrawer
-                isOpen={drawerOpen}
-                onClose={() => setDrawerOpen(false)}
-                organizacion={orgSeleccionada}
+                isOpen={drawer.isOpen}
+                onClose={drawer.close}
+                organizacion={drawer.data}
                 onSuspender={handleSuspender}
                 onReactivar={handleReactivar}
                 isLoadingAction={suspenderOrganizacion.isPending || reactivarOrganizacion.isPending}
@@ -387,15 +386,15 @@ export default function SuperAdminDashboard() {
 
             {/* ConfirmDialog para suspender */}
             <ConfirmDialog
-                isOpen={confirmSuspender.open}
-                onClose={() => setConfirmSuspender({ open: false, org: null })}
+                isOpen={confirmSuspender.isOpen}
+                onClose={confirmSuspender.close}
                 onConfirm={confirmarSuspension}
                 title="Suspender Organización"
                 message={
                     <div className="space-y-4">
                         <p>
                             ¿Estás seguro que deseas suspender a{' '}
-                            <strong>{confirmSuspender.org?.nombre_comercial}</strong>?
+                            <strong>{confirmSuspender.data?.nombre_comercial}</strong>?
                         </p>
                         <p className="text-sm text-gray-500 dark:text-gray-400">
                             Los usuarios de esta organización no podrán acceder al sistema.
@@ -420,14 +419,14 @@ export default function SuperAdminDashboard() {
 
             {/* ConfirmDialog para reactivar */}
             <ConfirmDialog
-                isOpen={confirmReactivar.open}
-                onClose={() => setConfirmReactivar({ open: false, org: null })}
+                isOpen={confirmReactivar.isOpen}
+                onClose={confirmReactivar.close}
                 onConfirm={confirmarReactivacion}
                 title="Reactivar Organización"
                 message={
                     <>
                         ¿Estás seguro que deseas reactivar a{' '}
-                        <strong>{confirmReactivar.org?.nombre_comercial}</strong>?
+                        <strong>{confirmReactivar.data?.nombre_comercial}</strong>?
                         <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
                             Los usuarios de esta organización podrán acceder nuevamente al sistema.
                         </p>

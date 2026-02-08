@@ -367,7 +367,7 @@ function HistorialModal({ isOpen, onClose, historial }) {
 // ==================== PÁGINA PRINCIPAL ====================
 
 function NumerosSeriesPage() {
-  const { showToast } = useToast();
+  const toast = useToast();
   const { exportCSV } = useExportCSV();
 
   // Filtros con persistencia
@@ -438,25 +438,25 @@ function NumerosSeriesPage() {
 
   const handleMarcarDefectuoso = async () => {
     if (!motivoDefectuoso.trim()) {
-      showToast('Ingresa un motivo', 'error');
+      toast.error('Ingresa un motivo');
       return;
     }
 
     const { id } = getModalData('defectuoso');
     try {
       await marcarDefectuosoMutation.mutateAsync({ id, motivo: motivoDefectuoso });
-      showToast('Marcado como defectuoso', 'success');
+      toast.success('Marcado como defectuoso');
       closeModal('defectuoso');
       setMotivoDefectuoso('');
       refetch();
     } catch (error) {
-      showToast(error.message || 'Error al procesar', 'error');
+      toast.error(error.message || 'Error al procesar');
     }
   };
 
   const handleExportarCSV = useCallback(() => {
     if (!numerosSerie || numerosSerie.length === 0) {
-      showToast('No hay datos para exportar', 'warning');
+      toast.warning('No hay datos para exportar');
       return;
     }
 
@@ -481,7 +481,7 @@ function NumerosSeriesPage() {
       { key: 'sucursal', header: 'Sucursal' },
       { key: 'costo', header: 'Costo' },
     ], `numeros_serie_${format(new Date(), 'yyyyMMdd')}`);
-  }, [numerosSerie, exportCSV, showToast]);
+  }, [numerosSerie, exportCSV, toast]);
 
   // Columnas con acciones
   const columnsWithActions = useMemo(() => [

@@ -1,4 +1,5 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
+import { useForm } from 'react-hook-form';
 import {
   Building,
   Plus,
@@ -24,7 +25,7 @@ import {
   ConfigSearchBar,
   ConfigEmptyState,
 } from '@/components/configuracion';
-import { useConfigCrud } from '@/hooks/utils';
+import { useDisclosure, useDeleteConfirmation, useToast } from '@/hooks/utils';
 import {
   useDepartamentos,
   useArbolDepartamentos,
@@ -33,11 +34,39 @@ import {
   useEliminarDepartamento,
 } from '@/hooks/personas';
 
+const DEFAULT_VALUES = {
+  nombre: '',
+  codigo: '',
+  descripcion: '',
+  parent_id: '',
+  activo: true,
+};
+
+function preparePayload(data) {
+  return {
+    nombre: data.nombre.trim(),
+    codigo: data.codigo?.trim() || null,
+    descripcion: data.descripcion?.trim() || null,
+    parent_id: data.parent_id ? parseInt(data.parent_id) : null,
+    activo: Boolean(data.activo),
+  };
+}
+
+function entityToFormValues(item) {
+  return {
+    nombre: item.nombre || '',
+    codigo: item.codigo || '',
+    descripcion: item.descripcion || '',
+    parent_id: item.parent_id?.toString() || '',
+    activo: item.activo ?? true,
+  };
+}
+
 /**
  * Página de configuración de Departamentos
- * Refactorizada con componentes genéricos (mantiene TreeNode específico)
  */
 function DepartamentosPage() {
+  const toast = useToast();
   const [expandedNodes, setExpandedNodes] = useState(new Set());
 
   // Queries
@@ -49,62 +78,60 @@ function DepartamentosPage() {
   const actualizarMutation = useActualizarDepartamento();
   const eliminarMutation = useEliminarDepartamento();
 
-  // CRUD hook centralizado
-  const {
-    searchTerm,
-    setSearchTerm,
-    filteredItems,
-    isOpen,
-    closeModal,
-    getModalData,
-    handleNew,
-    handleEdit,
-    handleDelete,
-    confirmDelete,
-    form,
-    handleSubmit,
-    isSubmitting,
-    isEditing,
-  } = useConfigCrud({
-    items: departamentos,
-    defaultValues: {
-      nombre: '',
-      codigo: '',
-      descripcion: '',
-      parent_id: '',
-      activo: true,
-    },
-    createMutation: crearMutation,
-    updateMutation: actualizarMutation,
+  // Búsqueda
+  const [searchTerm, setSearchTerm] = useState('');
+
+  // Form drawer state
+  const drawer = useDisclosure();
+  const form = useForm({ defaultValues: DEFAULT_VALUES });
+  const { register, reset, formState: { errors }, handleSubmit } = form;
+  const isEditing = !!drawer.data;
+  const isSubmitting = crearMutation.isPending || actualizarMutation.isPending;
+
+  // Delete confirmation
+  const { confirmDelete, deleteConfirmProps } = useDeleteConfirmation({
     deleteMutation: eliminarMutation,
-    toastMessages: {
-      created: 'Departamento creado',
-      updated: 'Departamento actualizado',
-      deleted: 'Departamento eliminado',
-    },
-    filterFn: (item, { searchTerm }) => {
-      if (!searchTerm) return true;
-      const term = searchTerm.toLowerCase();
-      return item.nombre?.toLowerCase().includes(term) ||
-             item.codigo?.toLowerCase().includes(term);
-    },
-    preparePayload: (data) => ({
-      nombre: data.nombre.trim(),
-      codigo: data.codigo?.trim() || null,
-      descripcion: data.descripcion?.trim() || null,
-      parent_id: data.parent_id ? parseInt(data.parent_id) : null,
-      activo: Boolean(data.activo),
-    }),
-    prepareEditValues: (item) => ({
-      nombre: item.nombre || '',
-      codigo: item.codigo || '',
-      descripcion: item.descripcion || '',
-      parent_id: item.parent_id?.toString() || '',
-      activo: item.activo ?? true,
-    }),
+    entityName: 'departamento',
+    getName: (d) => d.nombre,
   });
 
-  const { register, formState: { errors } } = form;
+  // Filtrar items
+  const filteredItems = useMemo(() => {
+    if (!searchTerm) return departamentos;
+    const term = searchTerm.toLowerCase();
+    return departamentos.filter(item =>
+      item.nombre?.toLowerCase().includes(term) ||
+      item.codigo?.toLowerCase().includes(term)
+    );
+  }, [departamentos, searchTerm]);
+
+  // Handlers
+  const handleNew = useCallback(() => {
+    reset(DEFAULT_VALUES);
+    drawer.open();
+  }, [reset, drawer]);
+
+  const handleEdit = useCallback((item) => {
+    reset(entityToFormValues(item));
+    drawer.open(item);
+  }, [reset, drawer]);
+
+  const onSubmit = useCallback(async (data) => {
+    const payload = preparePayload(data);
+    try {
+      if (drawer.data) {
+        await actualizarMutation.mutateAsync({ id: drawer.data.id, data: payload });
+        toast.success('Departamento actualizado');
+      } else {
+        await crearMutation.mutateAsync(payload);
+        toast.success('Departamento creado');
+      }
+      drawer.close();
+      reset(DEFAULT_VALUES);
+    } catch (err) {
+      toast.error(err.message || 'Error al guardar departamento');
+    }
+  }, [drawer, actualizarMutation, crearMutation, toast, reset]);
 
   // Toggle expandir nodo
   const toggleNode = (id) => {
@@ -196,7 +223,7 @@ function DepartamentosPage() {
               <Edit2 className="w-4 h-4" />
             </button>
             <button
-              onClick={() => handleDelete(node)}
+              onClick={() => confirmDelete(node)}
               className="p-2 text-gray-400 hover:text-red-600 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
               title="Eliminar"
             >
@@ -281,12 +308,12 @@ function DepartamentosPage() {
 
       {/* Drawer Form */}
       <FormDrawer
-        isOpen={isOpen('form')}
-        onClose={() => closeModal('form')}
+        isOpen={drawer.isOpen}
+        onClose={drawer.close}
         entityName="Departamento"
         mode={isEditing ? 'edit' : 'create'}
         subtitle={isEditing ? 'Modifica los datos del departamento' : 'Crea un nuevo departamento'}
-        onSubmit={handleSubmit}
+        onSubmit={handleSubmit(onSubmit)}
         isSubmitting={isSubmitting}
       >
         <FormGroup label="Nombre" error={errors.nombre?.message} required>
@@ -311,7 +338,7 @@ function DepartamentosPage() {
           >
             <option value="">Sin departamento padre</option>
             {departamentos
-              .filter(d => d.id !== getModalData('form')?.id)
+              .filter(d => d.id !== drawer.data?.id)
               .map(d => (
                 <option key={d.id} value={d.id}>
                   {d.nombre}
@@ -343,16 +370,7 @@ function DepartamentosPage() {
       </FormDrawer>
 
       {/* Confirm Delete Dialog */}
-      <ConfirmDialog
-        isOpen={isOpen('delete')}
-        onClose={() => closeModal('delete')}
-        title="Eliminar departamento"
-        message={`¿Estás seguro de eliminar "${getModalData('delete')?.nombre}"? Esta acción no se puede deshacer.`}
-        confirmText="Eliminar"
-        variant="danger"
-        onConfirm={confirmDelete}
-        isLoading={eliminarMutation.isPending}
-      />
+      <ConfirmDialog {...deleteConfirmProps} />
     </ConfiguracionPageLayout>
   );
 }

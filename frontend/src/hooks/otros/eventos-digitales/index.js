@@ -82,6 +82,9 @@ export {
   invalidateEventosList,
 } from './helpers';
 
+// Check-in stats (Feb 2026 — reemplaza fetch manual en EventoDetailPage)
+export { useCheckinStats } from './useCheckinStats';
+
 // Preview de plantillas (Feb 2026)
 export { usePlantillaPreview } from './usePlantillaPreview';
 

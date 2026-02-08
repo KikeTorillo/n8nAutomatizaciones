@@ -239,7 +239,7 @@ export const TreeView = memo(TreeViewComponent) as typeof TreeViewComponent;
 /**
  * Resultado del hook useTreeExpansion
  */
-export interface UseTreeExpansionResult {
+export interface UseTreeExpansionReturn {
   expanded: TreeExpandedState;
   toggle: (nodeId: string | number) => void;
   expandAll: <T extends Record<string, unknown>>(
@@ -254,7 +254,7 @@ export interface UseTreeExpansionResult {
 /**
  * Hook para manejar el estado de expansión del árbol
  */
-export function useTreeExpansion(initialState: TreeExpandedState = {}): UseTreeExpansionResult {
+export function useTreeExpansion(initialState: TreeExpandedState = {}): UseTreeExpansionReturn {
   const [expanded, setExpanded] = useState<TreeExpandedState>(initialState);
 
   const toggle = (nodeId: string | number) => {

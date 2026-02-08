@@ -32,9 +32,9 @@ function UbicacionesTab({
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Ubicaciones del Evento</h2>
-        <Button onClick={() => openModal('ubicacion', null, { mode: 'create' })}>
+        <Button size="sm" onClick={() => openModal('ubicacion', null, { mode: 'create' })}>
           <Plus className="w-4 h-4 mr-2" />
-          Agregar Ubicacion
+          Agregar
         </Button>
       </div>
 

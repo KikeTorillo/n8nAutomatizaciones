@@ -33,6 +33,8 @@ export interface ModalProps {
   showCloseButton?: boolean;
   /** Deshabilitar cierre del modal (para estados de carga) */
   disableClose?: boolean;
+  /** Desactivar focus trap (necesario dentro de otro overlay como Vaul Drawer) */
+  disableFocusTrap?: boolean;
   /** Rol ARIA del modal */
   role?: 'dialog' | 'alertdialog';
 }
@@ -181,7 +183,7 @@ export type TableColumnWidth = 'sm' | 'md' | 'lg' | 'xl' | 'auto';
 /** Configuración de columna de DataTable */
 export interface DataTableColumn<T = Record<string, unknown>> {
   /** Key del dato en cada fila */
-  key: keyof T | string;
+  key?: keyof T | string;
   /** Texto del header */
   header: string;
   /** Función de renderizado custom */
@@ -201,7 +203,7 @@ export interface DataTableColumn<T = Record<string, unknown>> {
 /** Configuración del estado vacío de DataTable */
 export interface DataTableEmptyState {
   /** Icono del estado vacío */
-  icon?: LucideIcon;
+  icon?: ComponentType<{ className?: string }>;
   /** Título cuando no hay datos */
   title?: string;
   /** Descripción del estado vacío */
@@ -217,7 +219,7 @@ export interface DataTableProps<T extends Record<string, unknown> = Record<strin
   /** Configuración de columnas */
   columns: DataTableColumn<T>[];
   /** Array de datos a mostrar */
-  data: T[];
+  data?: T[];
   /** Campo a usar como key */
   keyField?: keyof T;
   /** Estado de carga */
@@ -381,7 +383,7 @@ export interface UseTreeExpansionReturn {
 /** Acción extra para StandardRowActions */
 export interface ExtraAction<T = Record<string, unknown>> {
   /** Icono de la acción */
-  icon: LucideIcon;
+  icon: ComponentType<{ className?: string }>;
   /** Label de la acción */
   label: string;
   /** Callback al hacer click */
@@ -650,10 +652,18 @@ export interface CheckboxGroupProps {
 // MULTISELECT
 // ============================================
 
+/** Opción de MultiSelect */
+export interface MultiSelectOption {
+  /** Valor único */
+  value: string | number;
+  /** Label visible */
+  label: string;
+}
+
 /** Props del componente MultiSelect */
 export interface MultiSelectProps {
   /** Opciones disponibles */
-  options: SelectOption[];
+  options: MultiSelectOption[];
   /** Valores seleccionados */
   value: (string | number)[];
   /** Callback al cambiar selección */
@@ -662,6 +672,14 @@ export interface MultiSelectProps {
   placeholder?: string;
   /** Label del campo */
   label?: string;
+  /** Mensaje de error */
+  error?: string;
+  /** Texto de ayuda */
+  helper?: string;
+  /** Si es requerido */
+  required?: boolean;
+  /** Máximo de opciones seleccionables */
+  max?: number;
   /** Si está deshabilitado */
   disabled?: boolean;
   /** Clases adicionales */

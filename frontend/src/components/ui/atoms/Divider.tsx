@@ -1,5 +1,11 @@
 import { memo, forwardRef } from 'react';
 import { cn } from '@/lib/utils';
+import { SEMANTIC_COLORS } from '@/lib/uiConstants';
+
+const DIVIDER_COLORS = {
+  horizontal: `border-t ${SEMANTIC_COLORS.neutral.border}`,
+  vertical: `w-px self-stretch bg-gray-200 dark:bg-gray-700`,
+} as const;
 
 export interface DividerProps {
   /** Orientación del separador */
@@ -12,7 +18,7 @@ export interface DividerProps {
  * Divider - Separador visual horizontal o vertical
  */
 const Divider = memo(
-  forwardRef<HTMLElement, DividerProps>(function Divider(
+  forwardRef<HTMLHRElement | HTMLDivElement, DividerProps>(function Divider(
     {
       orientation = 'horizontal',
       className,
@@ -25,7 +31,7 @@ const Divider = memo(
           ref={ref as React.Ref<HTMLDivElement>}
           role="separator"
           aria-orientation="vertical"
-          className={cn('w-px self-stretch bg-gray-200 dark:bg-gray-700', className)}
+          className={cn(DIVIDER_COLORS.vertical, className)}
         />
       );
     }
@@ -35,7 +41,7 @@ const Divider = memo(
         ref={ref as React.Ref<HTMLHRElement>}
         role="separator"
         aria-orientation="horizontal"
-        className={cn('border-t border-gray-200 dark:border-gray-700', className)}
+        className={cn(DIVIDER_COLORS.horizontal, className)}
       />
     );
   })

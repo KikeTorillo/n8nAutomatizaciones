@@ -8,6 +8,8 @@ export interface BadgeProps {
   variant?: BadgeVariantWithAliases;
   /** Tamaño del badge */
   size?: UISize;
+  /** Icono a mostrar antes del texto */
+  icon?: ReactNode;
   /** Contenido del badge */
   children: ReactNode;
   /** Clases CSS adicionales */
@@ -22,6 +24,7 @@ export interface BadgeProps {
 const Badge = memo(forwardRef<HTMLSpanElement, BadgeProps>(function Badge({
   variant = 'default',
   size = 'md',
+  icon,
   children,
   className = '',
   'aria-label': ariaLabel,
@@ -40,6 +43,7 @@ const Badge = memo(forwardRef<HTMLSpanElement, BadgeProps>(function Badge({
         className
       )}
     >
+      {icon && <span className="inline-flex" aria-hidden="true">{icon}</span>}
       {children}
     </span>
   );

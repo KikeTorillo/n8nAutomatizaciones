@@ -12,7 +12,7 @@ import { useAuth } from '@/hooks/sistema';
  * Permite registrar cantidades recibidas parciales o totales
  */
 export default function RecibirMercanciaModal({ isOpen, onClose, orden }) {
-  const { showToast } = useToast();
+  const toast = useToast();
   const { user } = useAuth();
 
   // Query detalle de la orden
@@ -197,9 +197,9 @@ export default function RecibirMercanciaModal({ isOpen, onClose, orden }) {
             if (gs1.serial) extras.push(`NS: ${gs1.serial}`);
 
             if (extras.length > 0) {
-              showToast(`+1 ${item.producto_nombre} (${extras.join(', ')})`, 'success');
+              toast.success(`+1 ${item.producto_nombre} (${extras.join(', ')})`);
             } else {
-              showToast(`+1 ${item.producto_nombre}`, 'success');
+              toast.success(`+1 ${item.producto_nombre}`);
             }
 
             // Si producto requiere NS y el GS1 trae serial, auto-llenarlo
@@ -218,13 +218,13 @@ export default function RecibirMercanciaModal({ isOpen, onClose, orden }) {
               }
             }
           } else {
-            showToast(`+1 ${item.producto_nombre}`, 'success');
+            toast.success(`+1 ${item.producto_nombre}`);
           }
         } else {
-          showToast(`${item.producto_nombre} ya tiene la cantidad máxima`, 'warning');
+          toast.warning(`${item.producto_nombre} ya tiene la cantidad máxima`);
         }
       } else {
-        showToast(`Producto con código "${code}" no está en esta orden`, 'error');
+        toast.error(`Producto con código "${code}" no está en esta orden`);
       }
     } else if (scanMode === 'ns' && scanTargetItem !== null) {
       // Agregar número de serie escaneado
@@ -239,7 +239,7 @@ export default function RecibirMercanciaModal({ isOpen, onClose, orden }) {
           // Verificar que no esté duplicado
           const yaExiste = item.numeros_serie.some(ns => ns.numero_serie === numeroSerie);
           if (yaExiste) {
-            showToast(`NS "${numeroSerie}" ya fue escaneado`, 'warning');
+            toast.warning(`NS "${numeroSerie}" ya fue escaneado`);
           } else {
             // Actualizar con todos los datos disponibles del GS1
             const nuevasRecepciones = [...recepciones];
@@ -256,18 +256,18 @@ export default function RecibirMercanciaModal({ isOpen, onClose, orden }) {
             if (gs1?.expirationDateFormatted) extras.push(`Venc: ${gs1.expirationDateFormatted}`);
             const extraMsg = extras.length > 0 ? ` (${extras.join(', ')})` : '';
 
-            showToast(`NS ${nsIndex + 1}/${item.cantidad}: ${numeroSerie}${extraMsg}`, 'success');
+            toast.success(`NS ${nsIndex + 1}/${item.cantidad}: ${numeroSerie}${extraMsg}`);
 
             // Si completó todos los NS, cerrar scanner
             const nsCompletos = item.numeros_serie.filter(ns => ns.numero_serie?.trim()).length + 1;
             if (nsCompletos >= item.cantidad) {
-              showToast(`Todos los NS de ${item.producto_nombre} escaneados`, 'success');
+              toast.success(`Todos los NS de ${item.producto_nombre} escaneados`);
               setShowScanner(false);
               setScanTargetItem(null);
             }
           }
         } else {
-          showToast('Ya se escanearon todos los números de serie', 'info');
+          toast.info('Ya se escanearon todos los números de serie');
         }
       }
     }
@@ -295,9 +295,8 @@ export default function RecibirMercanciaModal({ isOpen, onClose, orden }) {
     );
 
     if (itemsConNSIncompletos.length > 0) {
-      showToast(
-        `Faltan números de serie para: ${itemsConNSIncompletos.map(i => i.producto_nombre).join(', ')}`,
-        'warning'
+      toast.warning(
+        `Faltan números de serie para: ${itemsConNSIncompletos.map(i => i.producto_nombre).join(', ')}`
       );
       return;
     }
@@ -312,7 +311,7 @@ export default function RecibirMercanciaModal({ isOpen, onClose, orden }) {
     );
 
     if (duplicados.length > 0) {
-      showToast('Hay números de serie duplicados', 'error');
+      toast.error('Hay números de serie duplicados');
       return;
     }
 
@@ -335,7 +334,7 @@ export default function RecibirMercanciaModal({ isOpen, onClose, orden }) {
       }));
 
     if (recepcionesAEnviar.length === 0) {
-      showToast('Indica al menos una cantidad a recibir', 'warning');
+      toast.warning('Indica al menos una cantidad a recibir');
       return;
     }
 
@@ -343,13 +342,12 @@ export default function RecibirMercanciaModal({ isOpen, onClose, orden }) {
       { ordenId: orden.id, recepciones: recepcionesAEnviar },
       {
         onSuccess: () => {
-          showToast('Mercancía recibida correctamente', 'success');
+          toast.success('Mercancía recibida correctamente');
           onClose();
         },
         onError: (error) => {
-          showToast(
-            error.response?.data?.mensaje || 'Error al registrar la recepción',
-            'error'
+          toast.error(
+            error.response?.data?.mensaje || 'Error al registrar la recepción'
           );
         },
       }

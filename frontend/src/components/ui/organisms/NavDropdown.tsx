@@ -1,8 +1,9 @@
-import { useState, useRef, useEffect, useCallback, memo, forwardRef, type ComponentType } from 'react';
+import { useState, useRef, useCallback, memo, forwardRef, type ComponentType, type ForwardedRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronDown, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useClickOutsideRef } from '@/hooks/utils/useClickOutside';
+import { useEscapeKey } from '@/hooks/utils';
 
 /**
  * Item del dropdown de navegación
@@ -28,6 +29,8 @@ export interface NavDropdownProps {
   isActive?: boolean;
   /** ID del item activo dentro del grupo */
   activeItemId?: string;
+  /** Handler para selección (modo controlado, sin router) */
+  onItemSelect?: (item: NavDropdownItem) => void;
   /** Clases adicionales */
   className?: string;
 }
@@ -45,40 +48,39 @@ export const NavDropdown = memo(
   items = [],
   isActive = false,
   activeItemId,
+  onItemSelect,
   className,
 }, ref) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
+  const setRefs = useCallback((node: HTMLDivElement | null) => {
+    dropdownRef.current = node;
+    if (typeof ref === 'function') ref(node);
+    else if (ref) (ref as React.MutableRefObject<HTMLDivElement | null>).current = node;
+  }, [ref]);
+
   // Cerrar al hacer click fuera (usando hook centralizado)
   useClickOutsideRef(dropdownRef, () => setIsOpen(false), isOpen);
 
   // Cerrar con Escape
-  useEffect(() => {
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') setIsOpen(false);
-    }
-    if (isOpen) {
-      document.addEventListener('keydown', handleKeyDown);
-      return () => document.removeEventListener('keydown', handleKeyDown);
-    }
-  }, [isOpen]);
+  useEscapeKey(() => setIsOpen(false), isOpen);
 
   const handleItemClick = useCallback(
-    (path: string) => {
-      navigate(path);
+    (item: NavDropdownItem) => {
+      if (onItemSelect) {
+        onItemSelect(item);
+      } else {
+        navigate!(item.path);
+      }
       setIsOpen(false);
     },
-    [navigate]
+    [onItemSelect, navigate]
   );
 
   return (
-    <div className="relative" ref={(node) => {
-        dropdownRef.current = node;
-        if (typeof ref === 'function') ref(node);
-        else if (ref) (ref as React.MutableRefObject<HTMLDivElement | null>).current = node;
-      }}>
+    <div className="relative" ref={setRefs}>
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
@@ -110,7 +112,7 @@ export const NavDropdown = memo(
             return (
               <button
                 key={item.id}
-                onClick={() => handleItemClick(item.path)}
+                onClick={() => handleItemClick(item)}
                 className={cn(
                   'w-full flex items-center gap-3 px-4 py-2.5 text-sm text-left transition-colors min-h-[44px]',
                   isItemActive

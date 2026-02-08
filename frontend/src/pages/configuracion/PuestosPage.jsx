@@ -1,4 +1,5 @@
-import { useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
+import { useForm } from 'react-hook-form';
 import {
   Briefcase,
   Plus,
@@ -22,20 +23,55 @@ import {
   ConfigSearchBar,
   ConfigEmptyState,
 } from '@/components/configuracion';
-import { useConfigCrud } from '@/hooks/utils';
+import { useDisclosure, useDeleteConfirmation, useToast } from '@/hooks/utils';
 import {
   usePuestos,
   useCrearPuesto,
   useActualizarPuesto,
   useEliminarPuesto,
+  useDepartamentos,
 } from '@/hooks/personas';
-import { useDepartamentos } from '@/hooks/personas';
+
+const DEFAULT_VALUES = {
+  nombre: '',
+  codigo: '',
+  descripcion: '',
+  departamento_id: '',
+  salario_minimo: '',
+  salario_maximo: '',
+  activo: true,
+};
+
+function preparePayload(data) {
+  return {
+    nombre: data.nombre.trim(),
+    codigo: data.codigo?.trim() || undefined,
+    descripcion: data.descripcion?.trim() || undefined,
+    departamento_id: data.departamento_id ? parseInt(data.departamento_id) : null,
+    salario_minimo: data.salario_minimo ? parseFloat(data.salario_minimo) : null,
+    salario_maximo: data.salario_maximo ? parseFloat(data.salario_maximo) : null,
+    activo: data.activo,
+  };
+}
+
+function entityToFormValues(item) {
+  return {
+    nombre: item.nombre || '',
+    codigo: item.codigo || '',
+    descripcion: item.descripcion || '',
+    departamento_id: item.departamento_id?.toString() || '',
+    salario_minimo: item.salario_minimo?.toString() || '',
+    salario_maximo: item.salario_maximo?.toString() || '',
+    activo: item.activo ?? true,
+  };
+}
 
 /**
  * Página de configuración de Puestos
- * Refactorizada con componentes genéricos
  */
 function PuestosPage() {
+  const toast = useToast();
+
   // Queries
   const { data: puestos = [], isLoading } = usePuestos();
   const { data: departamentos = [] } = useDepartamentos();
@@ -45,88 +81,78 @@ function PuestosPage() {
   const actualizarMutation = useActualizarPuesto();
   const eliminarMutation = useEliminarPuesto();
 
+  // Búsqueda y filtros
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterDepartamento, setFilterDepartamento] = useState('');
+
+  // Form drawer state
+  const drawer = useDisclosure();
+  const form = useForm({ defaultValues: DEFAULT_VALUES });
+  const { register, reset, formState: { errors }, handleSubmit } = form;
+  const isEditing = !!drawer.data;
+  const isSubmitting = crearMutation.isPending || actualizarMutation.isPending;
+
+  // Delete confirmation
+  const { confirmDelete, deleteConfirmProps } = useDeleteConfirmation({
+    deleteMutation: eliminarMutation,
+    entityName: 'puesto',
+    getName: (p) => p.nombre,
+  });
+
   // Opciones de filtro por departamento
   const departamentoOptions = departamentos.map(d => ({
     value: d.id.toString(),
     label: d.nombre,
   }));
 
-  // CRUD hook centralizado
-  const {
-    searchTerm,
-    setSearchTerm,
-    filters,
-    setFilter,
-    filteredItems,
-    isOpen,
-    closeModal,
-    getModalData,
-    handleNew,
-    handleEdit,
-    handleDelete,
-    confirmDelete,
-    form,
-    handleSubmit,
-    isSubmitting,
-    isEditing,
-  } = useConfigCrud({
-    items: puestos,
-    defaultValues: {
-      nombre: '',
-      codigo: '',
-      descripcion: '',
-      departamento_id: '',
-      salario_minimo: '',
-      salario_maximo: '',
-      activo: true,
-    },
-    createMutation: crearMutation,
-    updateMutation: actualizarMutation,
-    deleteMutation: eliminarMutation,
-    filterFn: (item, { searchTerm, filters }) => {
-      // Filtrar por búsqueda
-      if (searchTerm) {
-        const term = searchTerm.toLowerCase();
-        if (!item.nombre?.toLowerCase().includes(term) &&
-            !item.codigo?.toLowerCase().includes(term)) {
-          return false;
-        }
-      }
-      // Filtrar por departamento
-      if (filters.departamento_id) {
-        if (item.departamento_id !== parseInt(filters.departamento_id)) {
-          return false;
-        }
-      }
-      return true;
-    },
-    toastMessages: {
-      created: 'Puesto creado',
-      updated: 'Puesto actualizado',
-      deleted: 'Puesto eliminado',
-    },
-    preparePayload: (data) => ({
-      nombre: data.nombre.trim(),
-      codigo: data.codigo?.trim() || undefined,
-      descripcion: data.descripcion?.trim() || undefined,
-      departamento_id: data.departamento_id ? parseInt(data.departamento_id) : null,
-      salario_minimo: data.salario_minimo ? parseFloat(data.salario_minimo) : null,
-      salario_maximo: data.salario_maximo ? parseFloat(data.salario_maximo) : null,
-      activo: data.activo,
-    }),
-    prepareEditValues: (item) => ({
-      nombre: item.nombre || '',
-      codigo: item.codigo || '',
-      descripcion: item.descripcion || '',
-      departamento_id: item.departamento_id?.toString() || '',
-      salario_minimo: item.salario_minimo?.toString() || '',
-      salario_maximo: item.salario_maximo?.toString() || '',
-      activo: item.activo ?? true,
-    }),
-  });
+  // Filtrar items
+  const filteredItems = useMemo(() => {
+    let result = puestos;
 
-  const { register, formState: { errors } } = form;
-  const filterDepartamento = filters.departamento_id || '';
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      result = result.filter(item =>
+        item.nombre?.toLowerCase().includes(term) ||
+        item.codigo?.toLowerCase().includes(term)
+      );
+    }
+
+    if (filterDepartamento) {
+      result = result.filter(item =>
+        item.departamento_id === parseInt(filterDepartamento)
+      );
+    }
+
+    return result;
+  }, [puestos, searchTerm, filterDepartamento]);
+
+  // Handlers
+  const handleNew = useCallback(() => {
+    reset(DEFAULT_VALUES);
+    drawer.open();
+  }, [reset, drawer]);
+
+  const handleEdit = useCallback((item) => {
+    reset(entityToFormValues(item));
+    drawer.open(item);
+  }, [reset, drawer]);
+
+  const onSubmit = useCallback(async (data) => {
+    const payload = preparePayload(data);
+    try {
+      if (drawer.data) {
+        await actualizarMutation.mutateAsync({ id: drawer.data.id, data: payload });
+        toast.success('Puesto actualizado');
+      } else {
+        await crearMutation.mutateAsync(payload);
+        toast.success('Puesto creado');
+      }
+      drawer.close();
+      reset(DEFAULT_VALUES);
+    } catch (err) {
+      toast.error(err.message || 'Error al guardar puesto');
+    }
+  }, [drawer, actualizarMutation, crearMutation, toast, reset]);
 
   // Obtener nombre del departamento
   const getDepartamentoNombre = (departamentoId) => {
@@ -182,7 +208,7 @@ function PuestosPage() {
             {
               name: 'departamento_id',
               value: filterDepartamento,
-              onChange: (v) => setFilter('departamento_id', v),
+              onChange: (v) => setFilterDepartamento(v),
               options: departamentoOptions,
               placeholder: 'Todos los departamentos',
             },
@@ -215,7 +241,7 @@ function PuestosPage() {
                   departamentoNombre={getDepartamentoNombre(puesto.departamento_id)}
                   formatCurrency={formatCurrency}
                   onEdit={() => handleEdit(puesto)}
-                  onDelete={() => handleDelete(puesto)}
+                  onDelete={() => confirmDelete(puesto)}
                 />
               ))}
             </div>
@@ -225,12 +251,12 @@ function PuestosPage() {
 
       {/* Drawer Form */}
       <FormDrawer
-        isOpen={isOpen('form')}
-        onClose={() => closeModal('form')}
+        isOpen={drawer.isOpen}
+        onClose={drawer.close}
         entityName="Puesto"
         mode={isEditing ? 'edit' : 'create'}
         subtitle={isEditing ? 'Modifica los datos del puesto' : 'Crea un nuevo puesto de trabajo'}
-        onSubmit={handleSubmit}
+        onSubmit={handleSubmit(onSubmit)}
         isSubmitting={isSubmitting}
       >
         <FormGroup label="Nombre" error={errors.nombre?.message} required>
@@ -300,16 +326,7 @@ function PuestosPage() {
       </FormDrawer>
 
       {/* Confirm Delete Dialog */}
-      <ConfirmDialog
-        isOpen={isOpen('delete')}
-        onClose={() => closeModal('delete')}
-        title="Eliminar puesto"
-        message={`¿Estás seguro de eliminar "${getModalData('delete')?.nombre}"? Esta acción no se puede deshacer.`}
-        confirmText="Eliminar"
-        variant="danger"
-        onConfirm={confirmDelete}
-        isLoading={eliminarMutation.isPending}
-      />
+      <ConfirmDialog {...deleteConfirmProps} />
     </ConfiguracionPageLayout>
   );
 }

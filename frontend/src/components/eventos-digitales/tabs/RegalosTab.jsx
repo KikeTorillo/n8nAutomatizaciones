@@ -32,9 +32,9 @@ function RegalosTab({
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Mesa de Regalos</h2>
-        <Button onClick={() => openModal('regalo', null, { mode: 'create' })}>
+        <Button size="sm" onClick={() => openModal('regalo', null, { mode: 'create' })}>
           <Plus className="w-4 h-4 mr-2" />
-          Agregar Regalo
+          Agregar
         </Button>
       </div>
 

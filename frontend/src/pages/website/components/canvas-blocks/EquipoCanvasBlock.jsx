@@ -9,7 +9,7 @@
 import { memo, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { Instagram, Facebook, Linkedin, Twitter, Database, Loader2 } from 'lucide-react';
-import { InlineText } from '../InlineEditor';
+import { InlineText } from '@/components/editor-framework';
 import { useERPData } from '../../hooks';
 import { THEME_FALLBACK_COLORS } from '@/lib/uiConstants';
 

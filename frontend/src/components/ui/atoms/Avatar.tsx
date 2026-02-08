@@ -46,7 +46,7 @@ function getColorIndex(text: string): number {
  * Avatar - Imagen de perfil con fallback a iniciales
  */
 const Avatar = memo(
-  forwardRef<HTMLElement, AvatarProps>(function Avatar(
+  forwardRef<HTMLImageElement | HTMLDivElement, AvatarProps>(function Avatar(
     {
       src,
       alt,

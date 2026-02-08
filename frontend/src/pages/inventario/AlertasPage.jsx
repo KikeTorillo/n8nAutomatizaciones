@@ -36,7 +36,7 @@ const ITEMS_PER_PAGE = 20;
  * Página principal de Alertas de Inventario
  */
 function AlertasPage() {
-  const { showToast } = useToast();
+  const toast = useToast();
 
   // Estado de filtros
   // NOTA: soloNoLeidas controla el checkbox, luego se convierte a leida para el backend
@@ -170,13 +170,12 @@ function AlertasPage() {
   const handleMarcarLeida = (alertaId) => {
     marcarUnaMutation.mutate(alertaId, {
       onSuccess: () => {
-        showToast('Alerta marcada como leída', 'success');
+        toast.success('Alerta marcada como leída');
         setAlertasSeleccionadas((prev) => prev.filter((id) => id !== alertaId));
       },
       onError: (error) => {
-        showToast(
-          error.response?.data?.mensaje || 'Error al marcar alerta',
-          'error'
+        toast.error(
+          error.response?.data?.mensaje || 'Error al marcar alerta'
         );
       },
     });
@@ -184,7 +183,7 @@ function AlertasPage() {
 
   const handleMarcarVariasLeidas = () => {
     if (alertasSeleccionadas.length === 0) {
-      showToast('Debes seleccionar al menos una alerta', 'warning');
+      toast.warning('Debes seleccionar al menos una alerta');
       return;
     }
 
@@ -192,16 +191,14 @@ function AlertasPage() {
       { alerta_ids: alertasSeleccionadas },
       {
         onSuccess: () => {
-          showToast(
-            `${alertasSeleccionadas.length} alerta${alertasSeleccionadas.length !== 1 ? 's' : ''} marcada${alertasSeleccionadas.length !== 1 ? 's' : ''} como leída${alertasSeleccionadas.length !== 1 ? 's' : ''}`,
-            'success'
+          toast.success(
+            `${alertasSeleccionadas.length} alerta${alertasSeleccionadas.length !== 1 ? 's' : ''} marcada${alertasSeleccionadas.length !== 1 ? 's' : ''} como leída${alertasSeleccionadas.length !== 1 ? 's' : ''}`
           );
           setAlertasSeleccionadas([]);
         },
         onError: (error) => {
-          showToast(
-            error.response?.data?.mensaje || 'Error al marcar alertas',
-            'error'
+          toast.error(
+            error.response?.data?.mensaje || 'Error al marcar alertas'
           );
         },
       }
@@ -211,15 +208,13 @@ function AlertasPage() {
   const handleGenerarOC = (productoId, productoNombre) => {
     generarOCMutation.mutate(productoId, {
       onSuccess: (orden) => {
-        showToast(
-          `Orden de compra ${orden.folio} creada para "${productoNombre}"`,
-          'success'
+        toast.success(
+          `Orden de compra ${orden.folio} creada para "${productoNombre}"`
         );
       },
       onError: (error) => {
-        showToast(
-          error.response?.data?.mensaje || 'Error al generar orden de compra',
-          'error'
+        toast.error(
+          error.response?.data?.mensaje || 'Error al generar orden de compra'
         );
       },
     });

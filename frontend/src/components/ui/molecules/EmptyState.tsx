@@ -46,6 +46,7 @@ export const EmptyState = memo(
   return (
     <div
       ref={ref}
+      role="status"
       className={cn(
         EMPTY_STATE_BASE.container,
         sizes.container,

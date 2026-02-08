@@ -5,15 +5,16 @@
  * Framework compartido para editores de bloques y posición libre.
  * Usado por Website Builder y Editor de Invitaciones.
  *
- * @version 4.0.0
+ * @version 4.1.0
  * @since 2026-02-03
- * @updated 2026-02-05 - Desacoplado de lógica específica de invitaciones
+ * @updated 2026-02-08 - Reorganizado por categoría
  */
 
-// ========== SHARED CONTEXT ==========
+// ========== CONTEXT & CORE ==========
 export { EditorContext, useEditor } from './context/EditorContext';
+export { TABS, TABS_SIMPLE, BREAKPOINT_ICONS, BREAKPOINT_LABELS } from './constants';
 
-// ========== HOOKS ==========
+// ========== EDITOR HOOKS ==========
 export { useBlockEditor } from './hooks/useBlockEditor';
 export { useBlockSelection } from './hooks/useBlockSelection';
 export { useArrayItems } from './hooks/useArrayItems';
@@ -23,92 +24,17 @@ export { useAutosave } from './hooks/useAutosave';
 export { useCanvasBreakpoint } from './hooks/useCanvasBreakpoint';
 export { useDndHandlers } from './hooks/useDndHandlers';
 export { useEditorShortcuts, ShortcutsHelp } from './hooks/useEditorShortcuts';
-export { deepEqual, hashBloques, bloquesEqual } from './hooks/compareUtils';
 export { useCanvasInteraction } from './hooks/useCanvasInteraction';
 export { useSlashMenu } from './hooks/useSlashMenu';
 export { useImageHandlers } from './hooks/useImageHandlers';
 export { useThemeSave } from './hooks/useThemeSave';
 export { useEditorBlockHandlers } from './hooks/useEditorBlockHandlers';
+export { deepEqual, hashBloques, bloquesEqual } from './hooks/compareUtils';
 
-// Common Blocks (bloques compartidos)
+// ========== COMMON BLOCKS ==========
 export * from './common-blocks';
 
-// Blocks List (acordeón de bloques)
-export { BlockListEditor, BlockAccordionItem } from './blocks-list';
-
-// DnD
-export { DndEditorProvider, useDndEditor } from './dnd/DndEditorProvider';
-export { BlockDragPreview } from './dnd/BlockDragPreview';
-export { PreviewRenderer } from './dnd/PreviewRenderer';
-export { registerBlockPreview, registerBlockPreviews, getBlockPreview } from './dnd/previewRegistry';
-
-// Blocks
-export { default as BaseBlockEditor } from './blocks/BaseBlockEditor';
-export { default as BaseAutoSaveEditor } from './blocks/BaseAutoSaveEditor';
-
-// Fields
-export {
-  TextField,
-  TextareaField,
-  UrlField,
-  ImageField,
-  SelectField,
-  ToggleField,
-  NumberField,
-  RangeField,
-  ColorField,
-  AlignmentField,
-  ItemsEditorField,
-  DateField,
-  DateTimeField,
-  ImagePositionField,
-  FieldRenderer,
-  TabContent,
-} from './fields';
-
-// Layout
-export { default as EditorHeader } from './layout/EditorHeader';
-export { default as EditorToolbar } from './layout/EditorToolbar';
-export { default as PropertiesPanel } from './layout/PropertiesPanel';
-export { default as BreakpointSelector } from './layout/BreakpointSelector';
-export { BREAKPOINTS } from './layout/breakpointConfig';
-export { default as ResponsiveCanvas } from './layout/ResponsiveCanvas';
-export { default as EditorFAB } from './layout/EditorFAB';
-export { default as EditorDrawer } from './layout/EditorDrawer';
-
-// Layout Context (responsive)
-export {
-  EditorLayoutProvider,
-  useEditorLayoutContext,
-  withEditorLayout,
-} from './layout/EditorLayoutContext';
-export { useEditorLayout, PANEL_TYPES } from './layout/useEditorLayout';
-
-// Constants
-export { TABS, TABS_SIMPLE, BREAKPOINT_ICONS, BREAKPOINT_LABELS } from './constants';
-
-// Palette
-export {
-  BlockPalette,
-  BlockCategoryGroup,
-  DraggableBlockCard,
-  DraggableBlockItem,
-  agruparBloquesPorCategoria,
-  getBlockColor,
-  getDraggableId,
-  DEFAULT_UNIFORM_COLOR,
-} from './palette';
-
-// Inline Editing
-export {
-  InlineText,
-  InlineRichText,
-  RichTextToolbar,
-  InlineEditableWrapper,
-  useInlineEditing,
-} from './inline';
-
-// ========== FREE POSITION CANVAS (Wix-style) ==========
+// ========== CANVAS & ELEMENTS (Free Position / Wix-style) ==========
 
 // Canvas Components
 export {
@@ -155,6 +81,8 @@ export {
   registerElementEditors,
 } from './elements/editors';
 
+// ========== PANELS & LAYOUT ==========
+
 // Panels
 export {
   ElementsPalette,
@@ -167,7 +95,77 @@ export {
   TemplateGalleryModal,
 } from './panels';
 
-// Store Actions & Factories
+// Layout
+export { default as EditorHeader } from './layout/EditorHeader';
+export { default as EditorToolbar } from './layout/EditorToolbar';
+export { default as PropertiesPanel } from './layout/PropertiesPanel';
+export { default as BreakpointSelector } from './layout/BreakpointSelector';
+export { BREAKPOINTS } from './layout/breakpointConfig';
+export { default as ResponsiveCanvas } from './layout/ResponsiveCanvas';
+export { default as EditorFAB } from './layout/EditorFAB';
+export { default as EditorDrawer } from './layout/EditorDrawer';
+
+// Layout Context (responsive)
+export {
+  EditorLayoutProvider,
+  useEditorLayoutContext,
+  withEditorLayout,
+} from './layout/EditorLayoutContext';
+export { useEditorLayout, PANEL_TYPES } from './layout/useEditorLayout';
+
+// ========== FIELDS ==========
+export {
+  TextField,
+  TextareaField,
+  UrlField,
+  ImageField,
+  SelectField,
+  ToggleField,
+  NumberField,
+  RangeField,
+  ColorField,
+  AlignmentField,
+  ItemsEditorField,
+  DateField,
+  DateTimeField,
+  ImagePositionField,
+  FieldRenderer,
+  TabContent,
+} from './fields';
+
+// ========== DND & PREVIEW ==========
+export { DndEditorProvider, useDndEditor } from './dnd/DndEditorProvider';
+export { BlockDragPreview } from './dnd/BlockDragPreview';
+export { PreviewRenderer } from './dnd/PreviewRenderer';
+export { registerBlockPreview, registerBlockPreviews, getBlockPreview } from './dnd/previewRegistry';
+
+// Palette
+export {
+  BlockPalette,
+  BlockCategoryGroup,
+  DraggableBlockCard,
+  DraggableBlockItem,
+  agruparBloquesPorCategoria,
+  getBlockColor,
+  getDraggableId,
+  DEFAULT_UNIFORM_COLOR,
+} from './palette';
+
+// ========== BLOCKS (legacy list editors) ==========
+export { default as BaseBlockEditor } from './blocks/BaseBlockEditor';
+export { default as BaseAutoSaveEditor } from './blocks/BaseAutoSaveEditor';
+export { BlockListEditor, BlockAccordionItem } from './blocks-list';
+
+// ========== INLINE EDITING ==========
+export {
+  InlineText,
+  InlineRichText,
+  RichTextToolbar,
+  InlineEditableWrapper,
+  useInlineEditing,
+} from './inline';
+
+// ========== STORE ==========
 export {
   createSectionActions,
   createSection,
@@ -176,19 +174,18 @@ export {
   createFreePositionSelectors,
 } from './store';
 
-// Migration Utils (bloques → secciones)
+// ========== UTILITIES ==========
+
+// Migration (bloques → secciones)
 export {
-  // Bloques genéricos
   migrateHeroBlock,
   migrateTextoBlock,
   migrateImagenBlock,
   migrateGenericBlock,
   migrateSeparadorBlock,
   migrateVideoBlock,
-  // Registry de migradores
   registerBlockMigrator,
   registerBlockMigrators,
-  // Funciones de utilidad
   migrateBlocksToSections,
   detectDataFormat,
   ensureSectionsFormat,
@@ -204,3 +201,15 @@ export {
   seccionesEqual,
   registerElementoToBloqueMapping,
 } from './utils';
+
+// Video & Countdown Utils (compartidas entre canvas blocks)
+export {
+  extractYouTubeId,
+  extractVimeoId,
+  buildEmbedUrl,
+  isDirectVideo,
+  calculateTimeRemaining,
+} from './utils';
+
+// Theme Colors Helper
+export { getThemeColors } from './utils';

@@ -18,10 +18,6 @@ export * from './useExportCSV';
 export * from './useCurrency';
 export * from './useStorage';
 
-// CRUD genérico
-export * from './useCrudHandlers';
-export * from './useConfigCrud';
-
 // Eventos DOM (Ene 2026 - Optimización arquitectónica)
 export * from './useClickOutside';
 export * from './useEscapeKey';
@@ -50,3 +46,6 @@ export * from './useImageUpload';
 
 // Google Fonts (Feb 2026 - Centralización plantillas)
 export * from './useGoogleFonts';
+
+// Previous value (Feb 2026 - Auditoría Fase 5)
+export * from './usePrevious';

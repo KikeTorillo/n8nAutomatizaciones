@@ -5,7 +5,7 @@
 
 export * from './useInventario';
 export * from './useProductos';
-export * from './useNumerosSerie';
+export * from './numeros-serie';
 export * from './useVariantes';
 export * from './useAtributos';
 export * from './useCategorias';

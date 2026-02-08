@@ -16,6 +16,10 @@ export interface ButtonProps
   disabled?: boolean;
   /** Tipo del botón HTML */
   type?: ButtonType;
+  /** Icono a mostrar junto al texto */
+  icon?: ReactNode;
+  /** Posición del icono */
+  iconPosition?: 'left' | 'right';
   /** Contenido del botón */
   children: ReactNode;
   /** Clases CSS adicionales */
@@ -34,6 +38,8 @@ const Button = memo(
       size = 'md',
       isLoading = false,
       disabled = false,
+      icon,
+      iconPosition = 'left',
       children,
       type = 'button',
       ...props
@@ -64,7 +70,13 @@ const Button = memo(
         {isLoading && (
           <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
         )}
+        {!isLoading && icon && iconPosition === 'left' && (
+          <span className="mr-2 inline-flex" aria-hidden="true">{icon}</span>
+        )}
         {children}
+        {!isLoading && icon && iconPosition === 'right' && (
+          <span className="ml-2 inline-flex" aria-hidden="true">{icon}</span>
+        )}
       </button>
     );
   })

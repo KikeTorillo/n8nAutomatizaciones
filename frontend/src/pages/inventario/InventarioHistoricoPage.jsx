@@ -12,7 +12,7 @@ import { es } from 'date-fns/locale';
  * Página de Inventario Histórico - Consulta de snapshots
  */
 function InventarioHistoricoPage() {
-  const { showToast } = useToast();
+  const toast = useToast();
 
   // Estado
   const [fechaSeleccionada, setFechaSeleccionada] = useState('');
@@ -82,10 +82,10 @@ function InventarioHistoricoPage() {
       { descripcion: 'Snapshot manual desde UI' },
       {
         onSuccess: (data) => {
-          showToast('success', `Snapshot generado: ${data.total_productos} productos, ${data.total_unidades} unidades`);
+          toast.success(`Snapshot generado: ${data.total_productos} productos, ${data.total_unidades} unidades`);
         },
         onError: (error) => {
-          showToast('error', error.message || 'Error al generar snapshot');
+          toast.error(error.message || 'Error al generar snapshot');
         },
       }
     );

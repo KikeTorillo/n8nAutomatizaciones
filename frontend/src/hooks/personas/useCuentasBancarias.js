@@ -6,6 +6,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { profesionalesApi } from '@/services/api/endpoints';
 import { queryKeys } from '@/hooks/config';
+import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 
 // === Constantes ===
 export const TIPOS_CUENTA_BANCARIA = {
@@ -82,6 +83,7 @@ export function useCrearCuentaBancaria() {
     onSuccess: (data, { profesionalId }) => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.cuentasBancarias(profesionalId), refetchType: 'active' });
     },
+    onError: createCRUDErrorHandler('create', 'cuenta bancaria'),
   });
 }
 
@@ -100,6 +102,7 @@ export function useActualizarCuentaBancaria() {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.cuentasBancarias(profesionalId), refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.cuentaBancaria(profesionalId, cuentaId), refetchType: 'active' });
     },
+    onError: createCRUDErrorHandler('update', 'cuenta bancaria'),
   });
 }
 
@@ -117,6 +120,7 @@ export function useEliminarCuentaBancaria() {
     onSuccess: (data, { profesionalId }) => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.cuentasBancarias(profesionalId), refetchType: 'active' });
     },
+    onError: createCRUDErrorHandler('delete', 'cuenta bancaria'),
   });
 }
 
@@ -134,6 +138,7 @@ export function useEstablecerCuentaPrincipal() {
     onSuccess: (data, { profesionalId }) => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.cuentasBancarias(profesionalId), refetchType: 'active' });
     },
+    onError: createCRUDErrorHandler('update', 'cuenta bancaria'),
   });
 }
 

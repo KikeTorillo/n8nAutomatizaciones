@@ -19,6 +19,60 @@ export type {
 // Entidades
 export type { Cliente, ClienteEstadisticas, Etiqueta } from './cliente';
 export type { Producto, Categoria } from './producto';
-export type { Cita, EstadoCita } from './cita';
+export type {
+  Cita,
+  EstadoCita,
+  CitasListParams,
+  CitasListResponse,
+  CrearCitaData,
+  ActualizarCitaData,
+  CancelarCitaVariables,
+  ConfirmarCitaVariables,
+  IniciarCitaVariables,
+  CompletarCitaVariables,
+  NoShowCitaVariables,
+} from './cita';
 export type { OrdenCompra, OrdenCompraItem, EstadoOrdenCompra } from './orden-compra';
 export type { Servicio } from './servicio';
+export type {
+  PlanSuscripcion,
+  SuscripcionOrg,
+  PagoSuscripcion,
+  CuponSuscripcion,
+  CicloFacturacion,
+  EstadoSuscripcion,
+  EstadoPago,
+  TipoDescuento,
+} from './suscripcion';
+export type {
+  EventoDigital,
+  Invitado,
+  Plantilla,
+  Mesa,
+  FotoGaleria,
+  Felicitacion,
+  Ubicacion,
+  Regalo,
+  TipoEvento,
+  EstadoEvento,
+  EstadoRsvp,
+  TipoMesa,
+  EstadoFoto,
+  TipoUbicacion,
+} from './evento';
+export type {
+  Venta,
+  VentaItem,
+  SesionCaja,
+  MovimientoCaja,
+  Cupon,
+  Promocion,
+  EstadoVenta,
+  EstadoPagoVenta,
+  TipoVenta,
+  MetodoPago,
+  TipoDescuentoPOS,
+  EstadoSesionCaja,
+  TipoMovimientoCaja,
+  TipoPromocion,
+} from './venta';

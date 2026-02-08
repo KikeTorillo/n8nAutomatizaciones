@@ -206,7 +206,7 @@ const createColumns = (onVerKardex) => [
 // ==================== PÁGINA PRINCIPAL ====================
 
 function MovimientosPage() {
-  const { showToast } = useToast();
+  const toast = useToast();
   const { exportCSV } = useExportCSV();
 
   // Filtros con persistencia
@@ -307,7 +307,7 @@ function MovimientosPage() {
 
   const handleExportarCSV = useCallback(() => {
     if (!movimientos || movimientos.length === 0) {
-      showToast('No hay datos para exportar', 'warning');
+      toast.warning('No hay datos para exportar');
       return;
     }
 
@@ -336,7 +336,7 @@ function MovimientosPage() {
       { key: 'referencia', header: 'Referencia' },
       { key: 'motivo', header: 'Motivo' },
     ], `kardex_${format(new Date(), 'yyyyMMdd')}`);
-  }, [movimientos, exportCSV, showToast]);
+  }, [movimientos, exportCSV, toast]);
 
   // Columnas memoizadas
   const columns = useMemo(() => createColumns(handleVerKardex), [handleVerKardex]);

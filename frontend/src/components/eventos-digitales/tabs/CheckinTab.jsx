@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, memo } from 'react';
 import { Camera, ScanLine, X, UserCheck, AlertCircle } from 'lucide-react';
 import { Button, LoadingSpinner } from '@/components/ui';
 import { useToast } from '@/hooks/utils';
+import { useCheckinStats } from '@/hooks/otros';
 import { eventosDigitalesApi } from '@/services/api/modules';
 
 /**
@@ -9,35 +10,19 @@ import { eventosDigitalesApi } from '@/services/api/modules';
  * @param {Object} props
  * @param {string} props.eventoId - ID del evento
  * @param {number} props.totalInvitados - Total de invitados
- * @param {Object} props.initialStats - Stats iniciales de check-in (opcional)
- * @param {Function} props.onStatsUpdate - Callback cuando cambian los stats (opcional)
  */
 function CheckinTab({
   eventoId,
   totalInvitados = 0,
-  initialStats = null,
-  onStatsUpdate,
 }) {
   const toast = useToast();
   const [scannerActive, setScannerActive] = useState(false);
-  const [checkinStats, setCheckinStats] = useState(initialStats);
+  const { data: checkinStats, refetch: refetchCheckinStats } = useCheckinStats(eventoId);
   const [recentCheckins, setRecentCheckins] = useState([]);
   const [loadingCheckin, setLoadingCheckin] = useState(false);
   const [lastCheckin, setLastCheckin] = useState(null);
   const html5QrCodeRef = useRef(null);
   const scannerRef = useRef(null);
-
-  const fetchCheckinStats = async () => {
-    try {
-      const response = await eventosDigitalesApi.obtenerCheckinStats(eventoId);
-      if (response.data?.success) {
-        setCheckinStats(response.data.data);
-        onStatsUpdate?.(response.data.data);
-      }
-    } catch (error) {
-      console.error('Error fetching checkin stats:', error);
-    }
-  };
 
   const fetchRecentCheckins = async () => {
     try {
@@ -57,7 +42,7 @@ function CheckinTab({
       if (response.data?.success) {
         setLastCheckin({ ...response.data.data, success: true });
         toast.success(`Check-in exitoso: ${response.data.data.nombre}`);
-        fetchCheckinStats();
+        refetchCheckinStats();
         fetchRecentCheckins();
       } else {
         setLastCheckin({ success: false, mensaje: response.data?.message });
@@ -119,7 +104,6 @@ function CheckinTab({
   };
 
   useEffect(() => {
-    fetchCheckinStats();
     fetchRecentCheckins();
     return () => {
       stopScanner();
@@ -138,14 +122,14 @@ function CheckinTab({
               Escaner de QR
             </h2>
             {scannerActive ? (
-              <Button variant="outline" onClick={stopScanner} className="text-red-600 dark:text-red-400">
+              <Button size="sm" variant="outline" onClick={stopScanner} className="text-red-600 dark:text-red-400">
                 <X className="w-4 h-4 mr-2" />
                 Detener
               </Button>
             ) : (
-              <Button onClick={startScanner}>
+              <Button size="sm" onClick={startScanner}>
                 <ScanLine className="w-4 h-4 mr-2" />
-                Iniciar Escaner
+                Escanear
               </Button>
             )}
           </div>
@@ -153,11 +137,11 @@ function CheckinTab({
           {/* Area del escaner */}
           <div className="relative">
             {!scannerActive && (
-              <div className="w-full aspect-video bg-gray-900 rounded-lg overflow-hidden flex items-center justify-center">
-                <div className="text-center text-gray-400">
-                  <Camera className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                  <p>Presiona "Iniciar Escaner" para activar la camara</p>
-                  <p className="text-sm mt-2">Apunta al codigo QR del invitado</p>
+              <div className="w-full aspect-video bg-gray-900 rounded-lg overflow-hidden flex items-center justify-center p-6">
+                <div className="text-center text-gray-400 px-4">
+                  <Camera className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                  <p className="text-sm">Presiona "Escanear" para activar la camara</p>
+                  <p className="text-xs mt-1 opacity-70">Apunta al codigo QR del invitado</p>
                 </div>
               </div>
             )}
@@ -251,7 +235,8 @@ function CheckinTab({
           <Button
             variant="outline"
             className="w-full"
-            onClick={() => { fetchCheckinStats(); fetchRecentCheckins(); }}
+            onClick={() => { refetchCheckinStats(); fetchRecentCheckins(); }}
+
           >
             Actualizar datos
           </Button>
@@ -296,8 +281,4 @@ function CheckinTab({
   );
 }
 
-// Memoizar para evitar re-renders cuando el padre cambia pero estas props no
-export default memo(CheckinTab, (prevProps, nextProps) => {
-  return prevProps.eventoId === nextProps.eventoId &&
-         prevProps.totalInvitados === nextProps.totalInvitados;
-});
+export default memo(CheckinTab);

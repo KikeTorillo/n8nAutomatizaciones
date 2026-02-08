@@ -1,4 +1,5 @@
-import { useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
+import { useForm } from 'react-hook-form';
 import {
   Tag,
   Plus,
@@ -17,7 +18,7 @@ import {
   ConfigSearchBar,
   ConfigEmptyState,
 } from '@/components/configuracion';
-import { useConfigCrud } from '@/hooks/utils';
+import { useDisclosure, useDeleteConfirmation, useToast } from '@/hooks/utils';
 import {
   useCategoriasProfesional,
   useCategoriasAgrupadas,
@@ -42,11 +43,46 @@ const TIPO_OPTIONS = Object.entries(TIPOS_CATEGORIA).map(([key, value]) => ({
   label: value.label,
 }));
 
+const DEFAULT_VALUES = {
+  nombre: '',
+  tipo_categoria: 'especialidad',
+  descripcion: '',
+  color: '#753572',
+  icono: '',
+  orden: '',
+  activo: true,
+};
+
+function preparePayload(data) {
+  return {
+    nombre: data.nombre.trim(),
+    tipo_categoria: data.tipo_categoria,
+    descripcion: data.descripcion?.trim() || undefined,
+    color: data.color || undefined,
+    icono: data.icono?.trim() || undefined,
+    orden: data.orden ? parseInt(data.orden) : undefined,
+    activo: data.activo,
+  };
+}
+
+function entityToFormValues(item) {
+  return {
+    nombre: item.nombre || '',
+    tipo_categoria: item.tipo_categoria || 'general',
+    descripcion: item.descripcion || '',
+    color: item.color || '#753572',
+    icono: item.icono || '',
+    orden: item.orden?.toString() || '',
+    activo: item.activo ?? true,
+  };
+}
+
 /**
  * Página de Categorías de Profesional
- * Reubicada desde Configuración al módulo Profesionales
  */
 function CategoriasProfesionalPage() {
+  const toast = useToast();
+
   // Queries
   const { data: categorias = [], isLoading } = useCategoriasProfesional();
   const { data: categoriasAgrupadas = {} } = useCategoriasAgrupadas();
@@ -56,65 +92,24 @@ function CategoriasProfesionalPage() {
   const actualizarMutation = useActualizarCategoriaProfesional();
   const eliminarMutation = useEliminarCategoriaProfesional();
 
-  // CRUD hook centralizado
-  const {
-    searchTerm,
-    setSearchTerm,
-    filters,
-    setFilter,
-    isOpen,
-    closeModal,
-    getModalData,
-    handleNew,
-    handleEdit,
-    handleDelete,
-    confirmDelete,
-    form,
-    handleSubmit,
-    isSubmitting,
-    isEditing,
-  } = useConfigCrud({
-    items: categorias,
-    defaultValues: {
-      nombre: '',
-      tipo_categoria: 'especialidad',
-      descripcion: '',
-      color: '#753572',
-      icono: '',
-      orden: '',
-      activo: true,
-    },
-    createMutation: crearMutation,
-    updateMutation: actualizarMutation,
-    deleteMutation: eliminarMutation,
-    toastMessages: {
-      created: 'Categoría creada',
-      updated: 'Categoría actualizada',
-      deleted: 'Categoría eliminada',
-    },
-    preparePayload: (data) => ({
-      nombre: data.nombre.trim(),
-      tipo_categoria: data.tipo_categoria,
-      descripcion: data.descripcion?.trim() || undefined,
-      color: data.color || undefined,
-      icono: data.icono?.trim() || undefined,
-      orden: data.orden ? parseInt(data.orden) : undefined,
-      activo: data.activo,
-    }),
-    prepareEditValues: (item) => ({
-      nombre: item.nombre || '',
-      tipo_categoria: item.tipo_categoria || 'general',
-      descripcion: item.descripcion || '',
-      color: item.color || '#753572',
-      icono: item.icono || '',
-      orden: item.orden?.toString() || '',
-      activo: item.activo ?? true,
-    }),
-  });
+  // Búsqueda y filtros
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterTipo, setFilterTipo] = useState('');
 
-  const { register, watch, formState: { errors } } = form;
+  // Form drawer state
+  const drawer = useDisclosure();
+  const form = useForm({ defaultValues: DEFAULT_VALUES });
+  const { register, reset, watch, formState: { errors }, handleSubmit } = form;
   const colorSeleccionado = watch('color');
-  const filterTipo = filters.tipo_categoria || '';
+  const isEditing = !!drawer.data;
+  const isSubmitting = crearMutation.isPending || actualizarMutation.isPending;
+
+  // Delete confirmation
+  const { confirmDelete, deleteConfirmProps } = useDeleteConfirmation({
+    deleteMutation: eliminarMutation,
+    entityName: 'categoría',
+    getName: (c) => c.nombre,
+  });
 
   // Filtrar categorías
   const categoriasFiltradas = useMemo(() => {
@@ -146,8 +141,18 @@ function CategoriasProfesionalPage() {
     }, {});
   }, [categoriasFiltradas, filterTipo]);
 
-  // Handler especial para crear con tipo preseleccionado
-  const handleNuevoConTipo = (tipo = 'especialidad') => {
+  // Handlers
+  const handleNew = useCallback((extraDefaults = {}) => {
+    reset({ ...DEFAULT_VALUES, ...extraDefaults });
+    drawer.open();
+  }, [reset, drawer]);
+
+  const handleEdit = useCallback((item) => {
+    reset(entityToFormValues(item));
+    drawer.open(item);
+  }, [reset, drawer]);
+
+  const handleNuevoConTipo = useCallback((tipo = 'especialidad') => {
     const colorMap = {
       especialidad: '#753572',
       nivel: '#3B82F6',
@@ -155,11 +160,25 @@ function CategoriasProfesionalPage() {
       certificacion: '#F59E0B',
       general: '#6B7280',
     };
-    handleNew({
-      tipo_categoria: tipo,
-      color: colorMap[tipo] || '#753572',
-    });
-  };
+    handleNew({ tipo_categoria: tipo, color: colorMap[tipo] || '#753572' });
+  }, [handleNew]);
+
+  const onSubmit = useCallback(async (data) => {
+    const payload = preparePayload(data);
+    try {
+      if (drawer.data) {
+        await actualizarMutation.mutateAsync({ id: drawer.data.id, data: payload });
+        toast.success('Categoría actualizada');
+      } else {
+        await crearMutation.mutateAsync(payload);
+        toast.success('Categoría creada');
+      }
+      drawer.close();
+      reset(DEFAULT_VALUES);
+    } catch (err) {
+      toast.error(err.message || 'Error al guardar categoría');
+    }
+  }, [drawer, actualizarMutation, crearMutation, toast, reset]);
 
   // Componente de grupo (específico de esta página)
   const GrupoCategoria = ({ tipo, items }) => {
@@ -189,7 +208,7 @@ function CategoriasProfesionalPage() {
               key={categoria.id}
               categoria={categoria}
               onEdit={() => handleEdit(categoria)}
-              onDelete={() => handleDelete(categoria)}
+              onDelete={() => confirmDelete(categoria)}
             />
           ))}
         </div>
@@ -220,7 +239,7 @@ function CategoriasProfesionalPage() {
             {
               name: 'tipo_categoria',
               value: filterTipo,
-              onChange: (v) => setFilter('tipo_categoria', v),
+              onChange: (v) => setFilterTipo(v),
               options: TIPO_OPTIONS,
               placeholder: 'Todos los tipos',
             },
@@ -277,12 +296,12 @@ function CategoriasProfesionalPage() {
 
       {/* Drawer Form */}
       <FormDrawer
-        isOpen={isOpen('form')}
-        onClose={() => closeModal('form')}
+        isOpen={drawer.isOpen}
+        onClose={drawer.close}
         entityName="Categoría"
         mode={isEditing ? 'edit' : 'create'}
         subtitle={isEditing ? 'Modifica los datos de la categoría' : 'Crea una nueva categoría de profesional'}
-        onSubmit={handleSubmit}
+        onSubmit={handleSubmit(onSubmit)}
         isSubmitting={isSubmitting}
       >
         <FormGroup label="Nombre" error={errors.nombre?.message} required>
@@ -354,16 +373,7 @@ function CategoriasProfesionalPage() {
       </FormDrawer>
 
       {/* Confirm Delete Dialog */}
-      <ConfirmDialog
-        isOpen={isOpen('delete')}
-        onClose={() => closeModal('delete')}
-        title="Eliminar categoría"
-        message={`¿Estás seguro de eliminar "${getModalData('delete')?.nombre}"? Esta acción no se puede deshacer.`}
-        confirmText="Eliminar"
-        variant="danger"
-        onConfirm={confirmDelete}
-        isLoading={eliminarMutation.isPending}
-      />
+      <ConfirmDialog {...deleteConfirmProps} />
     </ProfesionalesPageLayout>
   );
 }

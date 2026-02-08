@@ -41,7 +41,7 @@ import {
  * @param {string} entidadTipo - Tipo de entidad seleccionado (opcional, para filtrar)
  */
 function CustomFieldsBuilder({ entidadTipo: initialEntidadTipo = null }) {
-  const { showToast } = useToast();
+  const toast = useToast();
 
   // Estado
   const [entidadTipo, setEntidadTipo] = useState(initialEntidadTipo || 'cliente');
@@ -152,16 +152,16 @@ function CustomFieldsBuilder({ entidadTipo: initialEntidadTipo = null }) {
 
       if (editando) {
         await actualizarMutation.mutateAsync({ id: editando.id, data });
-        showToast('Campo actualizado correctamente', 'success');
+        toast.success('Campo actualizado correctamente');
       } else {
         await crearMutation.mutateAsync(data);
-        showToast('Campo creado correctamente', 'success');
+        toast.success('Campo creado correctamente');
       }
 
       handleCerrarDrawer();
       refetch();
     } catch (error) {
-      showToast(error.message, 'error');
+      toast.error(error.message);
     }
   }
 
@@ -170,11 +170,11 @@ function CustomFieldsBuilder({ entidadTipo: initialEntidadTipo = null }) {
 
     try {
       await eliminarMutation.mutateAsync(confirmDelete.id);
-      showToast('Campo eliminado correctamente', 'success');
+      toast.success('Campo eliminado correctamente');
       setConfirmDelete(null);
       refetch();
     } catch (error) {
-      showToast(error.message, 'error');
+      toast.error(error.message);
     }
   }
 
@@ -197,7 +197,7 @@ function CustomFieldsBuilder({ entidadTipo: initialEntidadTipo = null }) {
       });
       refetch();
     } catch (error) {
-      showToast(error.message, 'error');
+      toast.error(error.message);
     }
   }
 

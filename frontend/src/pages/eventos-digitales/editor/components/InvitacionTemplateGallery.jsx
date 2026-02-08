@@ -29,7 +29,7 @@ function InvitacionPreviewPanel({ template, onApply, isApplying, onClose }) {
   useGoogleFonts([tema.fuente_titulo, tema.fuente_cuerpo]);
 
   return (
-    <div className="h-full flex flex-col" style={{ width: 420 }}>
+    <div className="h-full flex flex-col w-full">
       {/* Header */}
       <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
         <div className="flex items-center justify-between mb-1">
@@ -46,8 +46,8 @@ function InvitacionPreviewPanel({ template, onApply, isApplying, onClose }) {
       </div>
 
       {/* Preview - InvitacionDinamica */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="transform scale-[0.55] origin-top" style={{ width: '182%' }}>
+      <div className="flex-1 overflow-y-auto overflow-x-hidden">
+        <div className="pointer-events-none select-none origin-top-left" style={{ transform: 'scale(0.55)', width: '182%' }}>
           <InvitacionDinamica
             evento={evento}
             invitado={null}
@@ -55,6 +55,7 @@ function InvitacionPreviewPanel({ template, onApply, isApplying, onClose }) {
             tema={tema}
             onConfirmRSVP={() => {}}
             isLoadingRSVP={false}
+            isPreview
           />
         </div>
       </div>

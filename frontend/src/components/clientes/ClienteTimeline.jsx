@@ -10,6 +10,7 @@
  */
 
 import { useState, useCallback } from 'react';
+import { useDisclosure } from '@/hooks/utils';
 import { History, RefreshCw, Filter, Loader2 } from 'lucide-react';
 import {
   useTimelineCliente,
@@ -35,10 +36,10 @@ export default function ClienteTimeline({
   const [filtroTipo, setFiltroTipo] = useState(null);
 
   // Estado para drawer de tarea
-  const [tareaDrawerOpen, setTareaDrawerOpen] = useState(false);
+  const tareaDrawer = useDisclosure();
 
   // Estado para confirmación de eliminación
-  const [deleteConfirm, setDeleteConfirm] = useState({ open: false, item: null });
+  const deleteConfirm = useDisclosure();
 
   // Queries y mutations
   const {
@@ -96,24 +97,24 @@ export default function ClienteTimeline({
   }, [clienteId, completarTarea, toast]);
 
   const handleEliminar = useCallback((item) => {
-    setDeleteConfirm({ open: true, item });
-  }, []);
+    deleteConfirm.open(item);
+  }, [deleteConfirm]);
 
   const confirmEliminar = useCallback(async () => {
-    if (!deleteConfirm.item) return;
+    if (!deleteConfirm.data) return;
 
     try {
       await eliminarActividad.mutateAsync({
         clienteId,
-        actividadId: deleteConfirm.item.id,
+        actividadId: deleteConfirm.data.id,
       });
       toast('Actividad eliminada del timeline', { type: 'success' });
     } catch (error) {
       toast(error.message || 'No se pudo eliminar la actividad', { type: 'error' });
     } finally {
-      setDeleteConfirm({ open: false, item: null });
+      deleteConfirm.close();
     }
-  }, [clienteId, deleteConfirm.item, eliminarActividad, toast]);
+  }, [clienteId, deleteConfirm, eliminarActividad, toast]);
 
   // Loading state
   if (isLoading) {
@@ -144,7 +145,7 @@ export default function ClienteTimeline({
       {/* Input rápido */}
       <QuickNoteInput
         onSubmit={handleCrearNota}
-        onOpenTareaDrawer={() => setTareaDrawerOpen(true)}
+        onOpenTareaDrawer={tareaDrawer.open}
         isLoading={crearActividad.isPending}
       />
 
@@ -225,8 +226,8 @@ export default function ClienteTimeline({
 
       {/* Drawer para tareas */}
       <TareaDrawer
-        isOpen={tareaDrawerOpen}
-        onClose={() => setTareaDrawerOpen(false)}
+        isOpen={tareaDrawer.isOpen}
+        onClose={tareaDrawer.close}
         onSubmit={handleCrearTarea}
         isLoading={crearActividad.isPending}
         usuarios={usuarios}
@@ -234,11 +235,11 @@ export default function ClienteTimeline({
 
       {/* Confirmación de eliminación */}
       <ConfirmDialog
-        isOpen={deleteConfirm.open}
-        onClose={() => setDeleteConfirm({ open: false, item: null })}
+        isOpen={deleteConfirm.isOpen}
+        onClose={deleteConfirm.close}
         onConfirm={confirmEliminar}
         title="Eliminar actividad"
-        description={`¿Estás seguro de eliminar "${deleteConfirm.item?.titulo}"? Esta acción no se puede deshacer.`}
+        description={`¿Estás seguro de eliminar "${deleteConfirm.data?.titulo}"? Esta acción no se puede deshacer.`}
         confirmText="Eliminar"
         confirmVariant="danger"
         isLoading={eliminarActividad.isPending}

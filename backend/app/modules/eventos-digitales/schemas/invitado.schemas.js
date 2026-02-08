@@ -187,9 +187,10 @@ const invitadosSchemas = {
             eventoId: Joi.number().integer().positive().required()
         }),
         body: Joi.object({
-            token: Joi.string().uuid().required().messages({
+            token: Joi.string().hex().length(64).required().messages({
                 'any.required': 'El token del invitado es requerido',
-                'string.guid': 'Token inválido'
+                'string.hex': 'Token inválido',
+                'string.length': 'Token inválido'
             })
         })
     },

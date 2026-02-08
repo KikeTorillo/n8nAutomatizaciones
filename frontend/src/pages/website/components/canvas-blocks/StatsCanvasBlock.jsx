@@ -17,7 +17,7 @@ import {
   Heart,
   Zap,
 } from 'lucide-react';
-import { InlineText } from '../InlineEditor';
+import { InlineText } from '@/components/editor-framework';
 import { THEME_FALLBACK_COLORS } from '@/lib/uiConstants';
 
 // Icon mapping

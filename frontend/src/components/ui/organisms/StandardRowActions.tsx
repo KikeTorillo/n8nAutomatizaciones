@@ -271,11 +271,11 @@ function StandardRowActionsComponent<T = Record<string, unknown>>(
   );
 }
 
-export const StandardRowActions = memo(
+const _StandardRowActions = memo(
   forwardRef(StandardRowActionsComponent)
-) as typeof StandardRowActionsComponent;
+);
+(_StandardRowActions as { displayName?: string }).displayName = 'StandardRowActions';
 
-// @ts-expect-error - displayName en memo con generics
-StandardRowActions.displayName = 'StandardRowActions';
+export const StandardRowActions = _StandardRowActions as typeof StandardRowActionsComponent;
 
 export { StandardRowActions as default };

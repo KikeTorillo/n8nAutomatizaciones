@@ -16,7 +16,7 @@ const CSV_TEMPLATE = `nombre,descripcion,sku,categoria_id,proveedor_id,precio_co
  * Modal para carga masiva de productos
  */
 function BulkProductosModal({ isOpen, onClose }) {
-  const { showToast } = useToast();
+  const toast = useToast();
   const [productosTexto, setProductosTexto] = useState('');
   const [erroresValidacion, setErroresValidacion] = useState([]);
 
@@ -31,7 +31,7 @@ function BulkProductosModal({ isOpen, onClose }) {
     link.download = 'template_productos.csv';
     link.click();
     URL.revokeObjectURL(link.href);
-    showToast('Template descargado correctamente', 'success');
+    toast.success('Template descargado correctamente');
   };
 
   // Parsear CSV a JSON
@@ -117,19 +117,19 @@ function BulkProductosModal({ isOpen, onClose }) {
   // Submit handler
   const handleSubmit = () => {
     if (!productosTexto.trim()) {
-      showToast('Debes pegar el contenido CSV o usar el template', 'error');
+      toast.error('Debes pegar el contenido CSV o usar el template');
       return;
     }
 
     const productos = parsearCSV(productosTexto);
 
     if (productos.length === 0) {
-      showToast('No se pudieron procesar los productos. Revisa los errores.', 'error');
+      toast.error('No se pudieron procesar los productos. Revisa los errores.');
       return;
     }
 
     if (productos.length > 50) {
-      showToast('Máximo 50 productos por carga', 'error');
+      toast.error('Máximo 50 productos por carga');
       return;
     }
 
@@ -141,14 +141,13 @@ function BulkProductosModal({ isOpen, onClose }) {
           const errores = data.errores?.length || 0;
 
           if (errores === 0) {
-            showToast(`${creados} productos creados correctamente`, 'success');
+            toast.success(`${creados} productos creados correctamente`);
             setProductosTexto('');
             setErroresValidacion([]);
             onClose();
           } else {
-            showToast(
-              `${creados} productos creados, ${errores} con errores`,
-              'warning'
+            toast.warning(
+              `${creados} productos creados, ${errores} con errores`
             );
             if (data.errores) {
               setErroresValidacion(
@@ -161,9 +160,8 @@ function BulkProductosModal({ isOpen, onClose }) {
           }
         },
         onError: (error) => {
-          showToast(
-            error.response?.data?.mensaje || 'Error al crear productos',
-            'error'
+          toast.error(
+            error.response?.data?.mensaje || 'Error al crear productos'
           );
         },
       }

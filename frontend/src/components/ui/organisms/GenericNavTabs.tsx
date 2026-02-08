@@ -58,6 +58,10 @@ export interface GenericNavTabsProps {
   groups?: NavGroup[];
   /** Path base del módulo para detección de activo */
   defaultPath?: string;
+  /** ID del item activo (modo controlado, sin router) */
+  activeItemId?: string;
+  /** Handler para selección (modo controlado, sin router) */
+  onItemSelect?: (item: NavItem) => void;
   /** Label para mobile si no hay item activo */
   fallbackLabel?: string;
   /** Icono para mobile si no hay item activo */
@@ -80,6 +84,8 @@ const GenericNavTabs = memo(
   items,
   groups,
   defaultPath,
+  activeItemId: controlledActiveItemId,
+  onItemSelect,
   fallbackLabel,
   fallbackIcon,
   className,
@@ -88,13 +94,36 @@ const GenericNavTabs = memo(
   const navigate = useNavigate();
 
   const isGrouped = !!groups;
+  const isControlled = !!onItemSelect;
 
   // Calcular estado activo según modo
-  const activeItem =
-    !isGrouped && items ? getActiveItem(location.pathname, items, defaultPath) : null;
-  const { groupId, itemId } = isGrouped && groups
+  const routerActiveItem =
+    !isGrouped && items && !isControlled ? getActiveItem(location.pathname, items, defaultPath) : null;
+
+  // Modo controlado: buscar item activo por ID
+  const controlledActiveItem =
+    !isGrouped && items && isControlled && controlledActiveItemId
+      ? items.find((item) => item.id === controlledActiveItemId) || null
+      : null;
+
+  const activeItem = isControlled ? controlledActiveItem : routerActiveItem;
+
+  // Modo grouped: calcular activo
+  const routerGroupInfo = isGrouped && groups && !isControlled
     ? getActiveInfo(location.pathname, groups)
     : { groupId: null, itemId: null };
+
+  const controlledGroupInfo = isGrouped && groups && isControlled && controlledActiveItemId
+    ? (() => {
+        for (const group of groups) {
+          const found = group.items.find((item) => item.id === controlledActiveItemId);
+          if (found) return { groupId: group.id, itemId: found.id };
+        }
+        return { groupId: null, itemId: null };
+      })()
+    : { groupId: null, itemId: null };
+
+  const { groupId, itemId } = isControlled ? controlledGroupInfo : routerGroupInfo;
 
   return (
     <nav
@@ -116,6 +145,7 @@ const GenericNavTabs = memo(
               items={group.items}
               isActive={group.id === groupId}
               activeItemId={itemId || undefined}
+              onItemSelect={onItemSelect}
             />
           ))
         ) : items ? (
@@ -127,7 +157,7 @@ const GenericNavTabs = memo(
             return (
               <button
                 key={item.id}
-                onClick={() => navigate(item.path)}
+                onClick={() => onItemSelect ? onItemSelect(item) : navigate(item.path)}
                 className={cn(
                   'flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors',
                   isActive
@@ -158,6 +188,7 @@ const GenericNavTabs = memo(
           activeItem={activeItem || undefined}
           activeGroupId={groupId || undefined}
           activeItemId={itemId || undefined}
+          onItemSelect={onItemSelect}
           fallbackLabel={fallbackLabel}
           fallbackIcon={fallbackIcon}
         />

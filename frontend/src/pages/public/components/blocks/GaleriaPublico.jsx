@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useDisclosure } from '@/hooks/utils';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 
 /**
@@ -13,7 +13,7 @@ export default function GaleriaPublico({ contenido }) {
     espaciado = 'normal',
   } = contenido;
 
-  const [lightbox, setLightbox] = useState({ open: false, index: 0 });
+  const lightbox = useDisclosure();
 
   const columnasClases = {
     2: 'md:grid-cols-2',
@@ -28,13 +28,12 @@ export default function GaleriaPublico({ contenido }) {
     grande: 'gap-6',
   };
 
-  const openLightbox = (index) => setLightbox({ open: true, index });
-  const closeLightbox = () => setLightbox({ open: false, index: 0 });
+  const currentIndex = lightbox.data ?? 0;
 
   const navigate = (direction) => {
-    const newIndex = lightbox.index + direction;
+    const newIndex = currentIndex + direction;
     if (newIndex >= 0 && newIndex < imagenes.length) {
-      setLightbox({ ...lightbox, index: newIndex });
+      lightbox.open(newIndex);
     }
   };
 
@@ -69,7 +68,7 @@ export default function GaleriaPublico({ contenido }) {
             <div
               key={index}
               className="relative aspect-square overflow-hidden cursor-pointer group"
-              onClick={() => openLightbox(index)}
+              onClick={() => lightbox.open(index)}
             >
               <img
                 src={imagen.url || imagen}
@@ -83,16 +82,16 @@ export default function GaleriaPublico({ contenido }) {
       </div>
 
       {/* Lightbox */}
-      {lightbox.open && (
+      {lightbox.isOpen && (
         <div className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center">
           <button
-            onClick={closeLightbox}
+            onClick={lightbox.close}
             className="absolute top-4 right-4 text-white hover:text-gray-300 transition-colors"
           >
             <X className="w-8 h-8" />
           </button>
 
-          {lightbox.index > 0 && (
+          {currentIndex > 0 && (
             <button
               onClick={() => navigate(-1)}
               className="absolute left-4 text-white hover:text-gray-300 transition-colors"
@@ -102,12 +101,12 @@ export default function GaleriaPublico({ contenido }) {
           )}
 
           <img
-            src={imagenes[lightbox.index]?.url || imagenes[lightbox.index]}
-            alt={imagenes[lightbox.index]?.alt || ''}
+            src={imagenes[currentIndex]?.url || imagenes[currentIndex]}
+            alt={imagenes[currentIndex]?.alt || ''}
             className="max-w-[90vw] max-h-[90vh] object-contain"
           />
 
-          {lightbox.index < imagenes.length - 1 && (
+          {currentIndex < imagenes.length - 1 && (
             <button
               onClick={() => navigate(1)}
               className="absolute right-4 text-white hover:text-gray-300 transition-colors"
@@ -117,7 +116,7 @@ export default function GaleriaPublico({ contenido }) {
           )}
 
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white text-sm">
-            {lightbox.index + 1} / {imagenes.length}
+            {currentIndex + 1} / {imagenes.length}
           </div>
         </div>
       )}

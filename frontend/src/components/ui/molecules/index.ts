@@ -54,7 +54,10 @@ export { FilterChip } from './FilterChip';
 export type { FilterChipProps } from './FilterChip';
 
 // NOTA: SearchFilterBar movido a organisms/ (Ene 2026) - compone múltiples molecules
-// NOTA: CheckboxGroup movido a organisms/ (Ene 2026) - compone CheckboxField (molecule)
+// CheckboxGroup — grupo presentacional de CheckboxField (devuelto a molecules Feb 2026)
+export { CheckboxGroup } from './CheckboxGroup';
+export type { CheckboxGroupProps, CheckboxGroupOption, CheckboxGroupLayout } from './CheckboxGroup';
+
 export { CheckboxField } from './CheckboxField';
 export type { CheckboxFieldProps } from './CheckboxField';
 

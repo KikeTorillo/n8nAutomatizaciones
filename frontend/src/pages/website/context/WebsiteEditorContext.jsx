@@ -7,8 +7,9 @@
  *
  * Sigue el patrón de InvitacionEditorContext para consistencia entre editores.
  *
- * @version 1.0.0
+ * @version 2.0.0
  * @since 2026-02-04
+ * @updated 2026-02-08 - Extraídos useWebsiteAutosave y useWebsiteBloqueHandlers
  */
 
 import {
@@ -28,13 +29,14 @@ import {
 import { useWebsiteEditor } from '@/hooks/otros';
 import { useWebsiteBloques } from '@/hooks/otros/website';
 import {
-  useAutosave,
-  hashBloques,
   useEditorShortcuts,
   useEditorLayout,
   useDndHandlers,
   useSlashMenu,
 } from '@/components/editor-framework';
+
+import { useWebsiteAutosave } from '../hooks/useWebsiteAutosave';
+import { useWebsiteBloqueHandlers } from '../hooks/useWebsiteBloqueHandlers';
 
 // ========== CONTEXT ==========
 
@@ -176,39 +178,33 @@ export function WebsiteEditorProvider({ children }) {
     }
   }, [tieneSitio, bloquesLoading, paginaActiva]);
 
-  // ========== AUTOSAVE ==========
+  // ========== AUTOSAVE (extraído) ==========
 
-  const handleSaveAll = useCallback(
-    async (bloquesToSave) => {
-      for (const bloque of bloquesToSave) {
-        const resultado = await actualizarBloque.mutateAsync({
-          id: bloque.id,
-          data: {
-            contenido: bloque.contenido,
-            version: bloque.version,
-          },
-          paginaId: bloque.pagina_id,
-        });
-        if (resultado?.version) {
-          actualizarVersionBloque(bloque.id, resultado.version);
-        }
-      }
-    },
-    [actualizarBloque, actualizarVersionBloque]
-  );
+  const { guardarAhora, estaGuardando } = useWebsiteAutosave({
+    bloques,
+    actualizarBloque,
+    actualizarVersionBloque,
+    tieneClambiosLocales,
+    setGuardando,
+    setGuardado,
+    setErrorGuardado,
+    setConflictoVersion,
+  });
 
-  const { guardarAhora, estaGuardando } = useAutosave({
-    onSave: handleSaveAll,
-    enabled: true,
-    debounceMs: 3000,
-    items: bloques,
-    hasChanges: tieneClambiosLocales,
-    computeHash: hashBloques,
-    onSaving: () => setGuardando(),
-    onSaved: () => setGuardado(),
-    onError: () => setErrorGuardado(),
-    onConflict: ({ mensaje }) =>
-      setConflictoVersion({ mensaje, timestamp: new Date().toISOString() }),
+  // ========== BLOQUE HANDLERS (extraídos) ==========
+
+  const {
+    handleAgregarBloque,
+    handleActualizarBloque,
+    handleEliminarBloque,
+    handleDuplicarBloque,
+    handleToggleVisibilidad,
+    handleReordenarBloques,
+  } = useWebsiteBloqueHandlers({
+    bloques,
+    paginaActiva,
+    mutations: { crearBloque, eliminarBloque, duplicarBloque, actualizarBloque, reordenarBloques },
+    storeActions: { seleccionarBloque, deseleccionarBloque, actualizarBloqueLocal, toggleVisibilidadBloque, reordenarBloquesLocal, setBloqueRecienAgregado },
   });
 
   // ========== KEYBOARD SHORTCUTS ==========
@@ -269,122 +265,8 @@ export function WebsiteEditorProvider({ children }) {
     }
   }, [publicarSitio, config?.id, estaPublicado]);
 
-  // ========== HANDLERS BLOQUES ==========
-
-  const handleAgregarBloque = useCallback(
-    async (tipo) => {
-      if (!paginaActiva) {
-        toast.error('Selecciona una página primero');
-        return;
-      }
-
-      try {
-        const nuevoBloque = await crearBloque.mutateAsync({
-          pagina_id: paginaActiva.id,
-          tipo: tipo,
-          orden: bloques.length,
-        });
-        seleccionarBloque(nuevoBloque.id);
-        setBloqueRecienAgregado(nuevoBloque.id);
-        toast.success('Bloque agregado');
-        return nuevoBloque;
-      } catch (error) {
-        toast.error(error.response?.data?.message || 'Error al agregar bloque');
-      }
-    },
-    [paginaActiva, bloques.length, crearBloque, seleccionarBloque, setBloqueRecienAgregado]
-  );
-
-  const handleActualizarBloque = useCallback(
-    (bloqueId, contenido) => {
-      actualizarBloqueLocal(bloqueId, contenido);
-    },
-    [actualizarBloqueLocal]
-  );
-
-  const handleEliminarBloque = useCallback(
-    async (bloqueId) => {
-      const bloque = bloques.find((b) => b.id === bloqueId);
-      if (!bloque) {
-        toast.error('Bloque no encontrado');
-        return;
-      }
-      try {
-        await eliminarBloque.mutateAsync({
-          id: bloqueId,
-          paginaId: bloque.pagina_id,
-        });
-        deseleccionarBloque();
-        toast.success('Bloque eliminado');
-      } catch (error) {
-        toast.error(error.response?.data?.message || 'Error al eliminar');
-      }
-    },
-    [bloques, eliminarBloque, deseleccionarBloque]
-  );
-
-  const handleDuplicarBloque = useCallback(
-    async (bloqueId) => {
-      try {
-        const duplicado = await duplicarBloque.mutateAsync(bloqueId);
-        seleccionarBloque(duplicado.id);
-        toast.success('Bloque duplicado');
-        return duplicado;
-      } catch (error) {
-        toast.error(error.response?.data?.message || 'Error al duplicar');
-      }
-    },
-    [duplicarBloque, seleccionarBloque]
-  );
-
-  const handleToggleVisibilidad = useCallback(
-    async (bloqueId) => {
-      const bloque = bloques.find((b) => b.id === bloqueId);
-      if (!bloque) return;
-
-      const nuevoVisible = !bloque.visible;
-      toggleVisibilidadBloque(bloqueId);
-
-      try {
-        await actualizarBloque.mutateAsync({
-          id: bloqueId,
-          data: {
-            visible: nuevoVisible,
-            version: bloque.version,
-          },
-          paginaId: bloque.pagina_id,
-        });
-      } catch (error) {
-        toggleVisibilidadBloque(bloqueId);
-        toast.error(error.response?.data?.message || 'Error al cambiar visibilidad');
-      }
-    },
-    [bloques, toggleVisibilidadBloque, actualizarBloque]
-  );
-
-  const handleReordenarBloques = useCallback(
-    async (nuevoOrden) => {
-      const idsOrdenados = nuevoOrden.map((item) =>
-        typeof item === 'string' ? item : item.id
-      );
-
-      reordenarBloquesLocal(idsOrdenados);
-
-      try {
-        await reordenarBloques.mutateAsync({
-          paginaId: paginaActiva.id,
-          ordenamiento: idsOrdenados.map((id, index) => ({ id, orden: index })),
-        });
-      } catch (error) {
-        toast.error('Error al reordenar');
-      }
-    },
-    [reordenarBloques, reordenarBloquesLocal, paginaActiva?.id]
-  );
-
   // ========== DND HANDLERS ==========
 
-  // Crear función para crear bloques (usado por useDndHandlers)
   const crearBloqueNuevo = useCallback((tipo, orden) => ({
     id: crypto.randomUUID(),
     tipo,

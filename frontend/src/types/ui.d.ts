@@ -38,7 +38,9 @@ export type BadgeVariant =
   | 'success'
   | 'warning'
   | 'danger'
-  | 'info';
+  | 'info'
+  | 'outline'
+  | 'ghost';
 
 /** Variantes de badge incluyendo aliases */
 export type BadgeVariantWithAliases = BadgeVariant | 'error';

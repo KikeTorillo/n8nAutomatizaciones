@@ -8,7 +8,7 @@ import { useRegistrarPagoOrdenCompra } from '@/hooks/inventario';
  * Modal para registrar pagos de una orden de compra
  */
 export default function RegistrarPagoModal({ isOpen, onClose, orden }) {
-  const { showToast } = useToast();
+  const toast = useToast();
 
   // Estado del formulario
   const [monto, setMonto] = useState('');
@@ -46,12 +46,12 @@ export default function RegistrarPagoModal({ isOpen, onClose, orden }) {
     const montoNum = parseFloat(monto) || 0;
 
     if (montoNum <= 0) {
-      showToast('El monto debe ser mayor a 0', 'warning');
+      toast.warning('El monto debe ser mayor a 0');
       return;
     }
 
     if (montoNum > pendiente) {
-      showToast('El monto no puede ser mayor al saldo pendiente', 'warning');
+      toast.warning('El monto no puede ser mayor al saldo pendiente');
       return;
     }
 
@@ -60,18 +60,16 @@ export default function RegistrarPagoModal({ isOpen, onClose, orden }) {
       {
         onSuccess: () => {
           const esPagoTotal = montoNum >= pendiente;
-          showToast(
+          toast.success(
             esPagoTotal
               ? 'Orden pagada completamente'
-              : 'Pago registrado correctamente',
-            'success'
+              : 'Pago registrado correctamente'
           );
           onClose();
         },
         onError: (error) => {
-          showToast(
-            error.response?.data?.mensaje || 'Error al registrar el pago',
-            'error'
+          toast.error(
+            error.response?.data?.mensaje || 'Error al registrar el pago'
           );
         },
       }

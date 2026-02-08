@@ -141,6 +141,7 @@ const Popover = memo(forwardRef<HTMLDivElement, PopoverProps>(function Popover(
       {isOpen && createPortal(
         <div
           ref={popoverRef}
+          role="dialog"
           style={{
             position: 'fixed',
             top: position.top,

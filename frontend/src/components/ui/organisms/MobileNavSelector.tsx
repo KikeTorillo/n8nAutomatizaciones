@@ -38,6 +38,8 @@ export interface MobileNavSelectorProps {
   activeGroupId?: string;
   /** ID del item activo (modo grouped) */
   activeItemId?: string;
+  /** Handler para selección (modo controlado, sin router) */
+  onItemSelect?: (item: NavItem) => void;
   /** Label si no hay item activo */
   fallbackLabel?: string;
   /** Icono si no hay item activo */
@@ -58,6 +60,7 @@ const MobileNavSelector = memo(
   activeItem,
   activeGroupId,
   activeItemId,
+  onItemSelect,
   fallbackLabel = 'Navegar',
   fallbackIcon: FallbackIcon = Menu,
 }, ref) {
@@ -80,11 +83,15 @@ const MobileNavSelector = memo(
   useEscapeKey(() => setIsOpen(false), isOpen);
 
   const handleItemClick = useCallback(
-    (path: string) => {
-      navigate(path);
+    (item: NavItem) => {
+      if (onItemSelect) {
+        onItemSelect(item);
+      } else {
+        navigate(item.path);
+      }
       setIsOpen(false);
     },
-    [navigate]
+    [onItemSelect, navigate]
   );
 
   // Determinar icono y label del botón
@@ -155,7 +162,7 @@ const MobileNavSelector = memo(
                     return (
                       <button
                         key={item.id}
-                        onClick={() => handleItemClick(item.path)}
+                        onClick={() => handleItemClick(item)}
                         className={cn(
                           'w-full flex items-center gap-3 px-4 pl-10 py-2.5 text-sm text-left transition-colors',
                           isItemActive
@@ -192,7 +199,7 @@ const MobileNavSelector = memo(
               return (
                 <button
                   key={item.id}
-                  onClick={() => handleItemClick(item.path)}
+                  onClick={() => handleItemClick(item)}
                   className={cn(
                     'w-full flex items-center gap-3 px-4 py-2.5 text-sm text-left transition-colors',
                     isItemActive

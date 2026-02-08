@@ -35,3 +35,14 @@ export {
   seccionesEqual,
   registerElementoToBloqueMapping,
 } from './seccionesToBloques';
+
+export {
+  extractYouTubeId,
+  extractVimeoId,
+  buildEmbedUrl,
+  isDirectVideo,
+} from './videoEmbedUtils';
+
+export { calculateTimeRemaining } from './countdownUtils';
+
+export { getThemeColors } from './themeColors';

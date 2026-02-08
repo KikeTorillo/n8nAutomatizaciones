@@ -37,3 +37,11 @@ export {
   COUNTDOWN_CONFIG_MINIMAL,
   COUNTDOWN_CONFIG_FULL,
 } from './blocks';
+
+// Canvas Blocks (renderers compartidos)
+export { default as TextoCanvasBlock } from './canvas/TextoCanvasBlock';
+export { default as VideoCanvasBlock } from './canvas/VideoCanvasBlock';
+export { default as SeparadorCanvasBlock } from './canvas/SeparadorCanvasBlock';
+export { default as CountdownCanvasBlock } from './canvas/CountdownCanvasBlock';
+export { default as GaleriaCanvasBlock } from './canvas/GaleriaCanvasBlock';
+export { default as BlockErrorBoundary } from './canvas/BlockErrorBoundary';

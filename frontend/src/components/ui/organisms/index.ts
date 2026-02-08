@@ -80,7 +80,7 @@ export type {
   TreeViewProps,
   TreeRenderContext,
   TreeExpandedState,
-  UseTreeExpansionResult,
+  UseTreeExpansionReturn,
 } from './TreeNode';
 
 // Scanner
@@ -129,8 +129,9 @@ export type {
 export { MultiSelect } from './MultiSelect';
 export type { MultiSelectProps, MultiSelectOption } from './MultiSelect';
 
-export { CheckboxGroup } from './CheckboxGroup';
-export type { CheckboxGroupProps } from './CheckboxGroup';
+// NOTA: CheckboxGroup movido a molecules/ (Feb 2026) - es un grupo presentacional de CheckboxField
+export { CheckboxGroup } from '../molecules/CheckboxGroup';
+export type { CheckboxGroupProps } from '../molecules/CheckboxGroup';
 
 // Icon picker
 export { IconPicker, IconPickerCompact, ICONOS_MAP, CATEGORIAS_ICONOS, IconPickerButton } from './icon-picker';

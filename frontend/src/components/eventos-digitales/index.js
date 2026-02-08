@@ -1,5 +1,5 @@
-// Calendario
-export { default as AddToCalendar } from './AddToCalendar';
+// Calendario (re-export desde shared para retrocompatibilidad)
+export { AddToCalendar } from '@/components/shared/calendar';
 
 // Decorativos
 export {

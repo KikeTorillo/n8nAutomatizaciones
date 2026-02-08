@@ -369,11 +369,11 @@ function TemplateGalleryModal({
             </div>
 
             {categories.length > 0 && (
-              <div className="flex gap-2 flex-wrap">
+              <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1 sm:flex-wrap sm:overflow-visible">
                 <button
                   onClick={() => setSelectedCategory(null)}
                   className={cn(
-                    'px-3 py-1.5 rounded-full text-sm font-medium transition-colors',
+                    'px-3 py-1.5 rounded-full text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0',
                     !selectedCategory
                       ? 'bg-primary-600 text-white'
                       : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
@@ -386,7 +386,7 @@ function TemplateGalleryModal({
                     key={cat.key}
                     onClick={() => setSelectedCategory(cat.key)}
                     className={cn(
-                      'px-3 py-1.5 rounded-full text-sm font-medium transition-colors',
+                      'px-3 py-1.5 rounded-full text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0',
                       selectedCategory === cat.key
                         ? 'bg-primary-600 text-white'
                         : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
@@ -400,9 +400,9 @@ function TemplateGalleryModal({
           </div>
 
           {/* Content */}
-          <div className="flex-1 overflow-hidden flex">
+          <div className="flex-1 overflow-hidden flex relative">
             {/* Templates Grid */}
-            <div className="flex-1 overflow-y-auto p-6">
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6">
               {isLoading ? (
                 <div className="flex items-center justify-center py-12">
                   <Loader2 className="w-8 h-8 animate-spin text-primary-600" />
@@ -414,7 +414,12 @@ function TemplateGalleryModal({
                   </p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className={cn(
+                  'grid gap-4',
+                  selectedTemplate
+                    ? 'grid-cols-2 lg:grid-cols-3'
+                    : 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4'
+                )}>
                   {filteredTemplates.map((template) =>
                     renderCard ? (
                       <div key={template.id}>
@@ -437,14 +442,43 @@ function TemplateGalleryModal({
               )}
             </div>
 
-            {/* Preview Panel */}
+            {/* Preview Panel — overlay en móvil, side panel en desktop */}
             <AnimatePresence>
               {selectedTemplate && (
                 <motion.div
                   initial={{ width: 0, opacity: 0 }}
                   animate={{ width: previewWidth, opacity: 1 }}
                   exit={{ width: 0, opacity: 0 }}
-                  className="border-l border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 overflow-hidden flex-shrink-0"
+                  className="hidden md:block border-l border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 overflow-hidden flex-shrink-0"
+                >
+                  {renderPreview ? (
+                    renderPreview(selectedTemplate, {
+                      onApply: handleApply,
+                      isApplying,
+                      onClose: handleClosePreview,
+                    })
+                  ) : (
+                    <DefaultPreviewPanel
+                      template={selectedTemplate}
+                      onApply={handleApply}
+                      isApplying={isApplying}
+                      onClose={handleClosePreview}
+                      applyButtonText={applyButtonText}
+                    />
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Preview Panel — overlay móvil */}
+            <AnimatePresence>
+              {selectedTemplate && (
+                <motion.div
+                  initial={{ y: '100%' }}
+                  animate={{ y: 0 }}
+                  exit={{ y: '100%' }}
+                  transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+                  className="md:hidden absolute inset-0 bg-gray-50 dark:bg-gray-900 z-10 overflow-hidden"
                 >
                   {renderPreview ? (
                     renderPreview(selectedTemplate, {

@@ -27,9 +27,5 @@ export {
 
 export { createSearchHook } from './createSearchHook';
 
-// Nuevas factories (Ene 2026)
-export { createStatsHook } from './createStatsHook';
-export { createBulkOperationHook } from './createBulkOperationHook';
-
 // Status mutation factory (Feb 2026 - Auditoría Fase 1)
 export { createStatusMutationHook } from './createStatusMutationHook';
