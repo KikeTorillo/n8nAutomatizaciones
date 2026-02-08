@@ -17,7 +17,7 @@ import { sanitizeFields } from '@/lib/sanitize';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-type ApiModule = Record<string, (...args: any[]) => Promise<{ data: { data: any; pagination?: any; meta?: any } }>>;
+type ApiModule = Record<string, (...args: any[]) => Promise<any>>;
 
 interface ApiMethods {
   list: string;
@@ -39,7 +39,8 @@ export interface CRUDHooksConfig<TEntity = unknown, TCreate = unknown, TUpdate =
   api: ApiModule;
   baseKey: string;
   apiMethods: ApiMethods;
-  sanitize?: (data: TCreate | TUpdate) => TCreate | TUpdate;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  sanitize?: (data: any) => any;
   invalidateOnCreate?: string[];
   invalidateOnUpdate?: string[];
   invalidateOnDelete?: string[];
@@ -75,7 +76,7 @@ export function createCRUDHooks<
     api,
     baseKey,
     apiMethods,
-    sanitize = (data: TCreate | TUpdate) => data,
+    sanitize = (data: unknown) => data,
     invalidateOnCreate = [baseKey],
     invalidateOnUpdate = [baseKey],
     invalidateOnDelete = [baseKey],
@@ -203,7 +204,7 @@ export function createCRUDHooks<
   };
 }
 
-type SanitizerFieldType = 'string' | 'number' | 'boolean';
+type SanitizerFieldType = 'string' | 'number' | 'boolean' | 'id';
 
 export function createSanitizer(fields: (string | { name: string; type: SanitizerFieldType })[]) {
   const config: Record<string, SanitizerFieldType> = {};

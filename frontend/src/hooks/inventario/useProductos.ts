@@ -170,10 +170,10 @@ export const useEliminarProducto = hooks.useDelete;
  * @param termino - Término de búsqueda
  * @param options - { tipo_busqueda?, categoria_id?, proveedor_id?, solo_activos?, solo_con_stock?, limit? }
  */
-export const useBuscarProductos = createSearchHook({
+export const useBuscarProductos = createSearchHook<Producto>({
   key: 'productos',
-  searchFn: (params: BusquedaProductosParams) => inventarioApi.buscarProductos(sanitizeParams(params)),
-  transformResponse: (data: Producto[] | undefined) => data || [],
+  searchFn: (params) => inventarioApi.buscarProductos(sanitizeParams(params)),
+  transformResponse: (data) => data || [],
 });
 
 /**
@@ -185,7 +185,9 @@ export function useStockCritico(): UseQueryResult<Producto[], Error> {
     queryKey: queryKeys.inventario.productos.stockCritico,
     queryFn: async () => {
       const response = await inventarioApi.obtenerStockCritico();
-      return (response.data.data as StockCriticoResponse).productos || [];
+      // Backend wraps in { data: T } — AxiosResponse.data.data
+      const data = (response.data as any).data;
+      return data?.productos || [];
     },
     staleTime: STALE_TIMES.REAL_TIME, // 30 seg - stock crítico requiere actualización frecuente
   });
@@ -203,8 +205,8 @@ export function useBulkCrearProductos(): UseMutationResult<
 
   return useMutation({
     mutationFn: async (data: BulkCrearProductosData) => {
-      const response = await inventarioApi.bulkCrearProductos(data);
-      return response.data.data as BulkCrearProductosResponse;
+      const response = await inventarioApi.bulkCrearProductos(data as any);
+      return (response.data as any).data as BulkCrearProductosResponse;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.inventario.productos.all, refetchType: 'active' });
@@ -312,7 +314,7 @@ export function useProductosStockFiltrado(
   return useQuery({
     queryKey: ['productos-stock-filtrado', params],
     queryFn: async () => {
-      const cleanParams = sanitizeParams(params);
+      const cleanParams = sanitizeParams(params as Record<string, unknown>);
       const response = await inventarioApi.listarProductosStockFiltrado(cleanParams);
       return response.data.data as ProductosStockFiltradoResponse;
     },

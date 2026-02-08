@@ -33,7 +33,7 @@ export function useCrearCita() {
       };
 
       const response = await citasApi.crear(sanitizedData);
-      return response.data;
+      return response.data.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.agendamiento.citas.all, refetchType: 'active' });
@@ -58,7 +58,7 @@ export function useActualizarCita() {
       };
 
       const response = await citasApi.actualizar(id, sanitizedData);
-      return response.data;
+      return response.data.data;
     },
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.agendamiento.citas.all, refetchType: 'active' });

@@ -43,7 +43,7 @@ export function useCita(id: number | undefined) {
     queryKey: queryKeys.agendamiento.citas.detail(id),
     queryFn: async (): Promise<Cita> => {
       const response = await citasApi.obtener(id!);
-      return response.data;
+      return response.data.data;
     },
     enabled: !!id,
     staleTime: STALE_TIMES.DYNAMIC,

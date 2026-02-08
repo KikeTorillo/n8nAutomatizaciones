@@ -1,6 +1,7 @@
 /**
  * useCuentasBancarias - Hook de React Query para cuentas bancarias
  * Fase 1 del Plan de Empleados Competitivo - Enero 2026
+ * Feb 2026 - Mutations extraídas a helper interno createCuentaBancariaMutation
  */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
@@ -36,6 +37,8 @@ const QUERY_KEYS = {
   cuentaBancaria: (profesionalId, cuentaId) => ['cuenta-bancaria', profesionalId, cuentaId],
 };
 
+// ==================== QUERIES ====================
+
 /**
  * Lista cuentas bancarias de un profesional
  * @param {number} profesionalId - ID del profesional
@@ -69,78 +72,64 @@ export function useCuentaBancaria(profesionalId, cuentaId) {
   });
 }
 
-/**
- * Crea una nueva cuenta bancaria
- */
-export function useCrearCuentaBancaria() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ profesionalId, data }) => {
-      const response = await profesionalesApi.crearCuentaBancaria(profesionalId, data);
-      return response.data.data;
-    },
-    onSuccess: (data, { profesionalId }) => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.cuentasBancarias(profesionalId), refetchType: 'active' });
-    },
-    onError: createCRUDErrorHandler('create', 'cuenta bancaria'),
-  });
-}
+// ==================== MUTATION HELPER ====================
 
 /**
- * Actualiza una cuenta bancaria existente
+ * Factory interna para mutations de cuentas bancarias.
+ * Reduce boilerplate de useQueryClient + useMutation + onError.
  */
-export function useActualizarCuentaBancaria() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ profesionalId, cuentaId, data }) => {
-      const response = await profesionalesApi.actualizarCuentaBancaria(profesionalId, cuentaId, data);
-      return response.data.data;
-    },
-    onSuccess: (data, { profesionalId, cuentaId }) => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.cuentasBancarias(profesionalId), refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.cuentaBancaria(profesionalId, cuentaId), refetchType: 'active' });
-    },
-    onError: createCRUDErrorHandler('update', 'cuenta bancaria'),
-  });
+function createCuentaBancariaMutation(mutationFn, { errorOp = 'update', invalidateDetail = false } = {}) {
+  return function useCuentaBancariaMutation() {
+    const queryClient = useQueryClient();
+    return useMutation({
+      mutationFn,
+      onSuccess: (_, variables) => {
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.cuentasBancarias(variables.profesionalId), refetchType: 'active' });
+        if (invalidateDetail && variables.cuentaId) {
+          queryClient.invalidateQueries({ queryKey: QUERY_KEYS.cuentaBancaria(variables.profesionalId, variables.cuentaId), refetchType: 'active' });
+        }
+      },
+      onError: createCRUDErrorHandler(errorOp, 'cuenta bancaria'),
+    });
+  };
 }
 
-/**
- * Elimina una cuenta bancaria
- */
-export function useEliminarCuentaBancaria() {
-  const queryClient = useQueryClient();
+// ==================== MUTATIONS (via factory helper) ====================
 
-  return useMutation({
-    mutationFn: async ({ profesionalId, cuentaId }) => {
-      const response = await profesionalesApi.eliminarCuentaBancaria(profesionalId, cuentaId);
-      return response.data.data;
-    },
-    onSuccess: (data, { profesionalId }) => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.cuentasBancarias(profesionalId), refetchType: 'active' });
-    },
-    onError: createCRUDErrorHandler('delete', 'cuenta bancaria'),
-  });
-}
+/** Crea una nueva cuenta bancaria */
+export const useCrearCuentaBancaria = createCuentaBancariaMutation(
+  async ({ profesionalId, data }) => {
+    const response = await profesionalesApi.crearCuentaBancaria(profesionalId, data);
+    return response.data.data;
+  },
+  { errorOp: 'create' }
+);
 
-/**
- * Establece una cuenta como principal
- */
-export function useEstablecerCuentaPrincipal() {
-  const queryClient = useQueryClient();
+/** Actualiza una cuenta bancaria existente */
+export const useActualizarCuentaBancaria = createCuentaBancariaMutation(
+  async ({ profesionalId, cuentaId, data }) => {
+    const response = await profesionalesApi.actualizarCuentaBancaria(profesionalId, cuentaId, data);
+    return response.data.data;
+  },
+  { invalidateDetail: true }
+);
 
-  return useMutation({
-    mutationFn: async ({ profesionalId, cuentaId }) => {
-      const response = await profesionalesApi.establecerCuentaPrincipal(profesionalId, cuentaId);
-      return response.data.data;
-    },
-    onSuccess: (data, { profesionalId }) => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.cuentasBancarias(profesionalId), refetchType: 'active' });
-    },
-    onError: createCRUDErrorHandler('update', 'cuenta bancaria'),
-  });
-}
+/** Elimina una cuenta bancaria */
+export const useEliminarCuentaBancaria = createCuentaBancariaMutation(
+  async ({ profesionalId, cuentaId }) => {
+    const response = await profesionalesApi.eliminarCuentaBancaria(profesionalId, cuentaId);
+    return response.data.data;
+  },
+  { errorOp: 'delete' }
+);
+
+/** Establece una cuenta como principal */
+export const useEstablecerCuentaPrincipal = createCuentaBancariaMutation(
+  async ({ profesionalId, cuentaId }) => {
+    const response = await profesionalesApi.establecerCuentaPrincipal(profesionalId, cuentaId);
+    return response.data.data;
+  }
+);
 
 export default {
   useCuentasBancarias,

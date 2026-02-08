@@ -17,7 +17,8 @@ type ErrorType = 'create' | 'update' | 'delete';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface StatusMutationConfig<TVariables = { id: string | number }, TData = any> {
   /** Funcion que ejecuta la llamada API */
-  mutationFn: (variables: TVariables) => Promise<{ data: TData }>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  mutationFn: (variables: TVariables) => Promise<{ data: any }>;
 
   /** Query key principal a invalidar */
   queryKey: string;
@@ -106,7 +107,7 @@ export function createStatusMutationHook<TVariables = { id: string | number }, T
       },
       onError: (error: unknown) => {
         try {
-          createCRUDErrorHandler(errorType, entityName)(error);
+          createCRUDErrorHandler(errorType, entityName)(error as Error);
         } catch (e) {
           toast.error(getErrorMessage(e instanceof Error ? e : new Error(String(e))));
         }

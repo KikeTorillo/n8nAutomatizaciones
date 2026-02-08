@@ -81,7 +81,7 @@ interface ListadoCRUDPageProps {
   useListQuery: (params: Record<string, unknown>) => { data?: any; isLoading: boolean };
   queryParams?: Record<string, unknown>;
   dataKey?: string;
-  useDeleteMutation?: () => { mutate: (id: unknown) => void; [key: string]: unknown };
+  useDeleteMutation?: () => { mutate: (id: unknown) => void; isPending: boolean; [key: string]: unknown };
   deleteMutationOptions?: Record<string, unknown>;
   extraMutations?: Record<string, unknown>;
   columns: ColumnDef[];

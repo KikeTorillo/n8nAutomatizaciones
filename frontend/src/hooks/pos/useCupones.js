@@ -18,7 +18,7 @@ import { STALE_TIMES } from '@/app/queryClient';
 import { posApi } from '@/services/api/endpoints';
 import useSucursalStore, { selectSucursalActiva } from '@/store/sucursalStore';
 import { sanitizeParams } from '@/lib/params';
-import { createCRUDHooks } from '@/hooks/factories';
+import { createCRUDHooks, createStatusMutationHook } from '@/hooks/factories';
 import { queryKeys } from '@/hooks/config';
 
 // =========================================================================
@@ -200,18 +200,11 @@ export function useEstadisticasCupon(cuponId) {
  * Hook para cambiar estado de cupón (activar/desactivar)
  * PATCH /pos/cupones/:id/estado
  */
-export function useCambiarEstadoCupon() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ id, activo }) => {
-      const response = await posApi.cambiarEstadoCupon(id, activo);
-      return response.data.data;
-    },
-    onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.pos.cupones.all, refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: queryKeys.pos.cupones.estadisticas(variables.id), refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: queryKeys.pos.cupones.vigentes, refetchType: 'active' });
-    },
-  });
-}
+export const useCambiarEstadoCupon = createStatusMutationHook({
+  mutationFn: ({ id, activo }) =>
+    posApi.cambiarEstadoCupon(id, activo),
+  queryKey: queryKeys.pos.cupones.all[0],
+  relatedKeys: [queryKeys.pos.cupones.vigentes[0], 'cupon-estadisticas'],
+  getEntityId: (v) => v.id,
+  entityName: 'Cupón',
+});

@@ -10,6 +10,7 @@
  */
 
 import { X, Tag } from 'lucide-react';
+import { TAG_COLORS, CONTRAST_COLORS } from '@/constants/colors';
 
 /**
  * Badge individual de etiqueta
@@ -29,10 +30,10 @@ function EtiquetaBadge({ etiqueta, onRemove, size = 'sm' }) {
     const g = parseInt(hex.substr(2, 2), 16);
     const b = parseInt(hex.substr(4, 2), 16);
     const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-    return luminance > 0.5 ? '#1F2937' : '#FFFFFF';
+    return luminance > 0.5 ? CONTRAST_COLORS.dark : CONTRAST_COLORS.light;
   };
 
-  const backgroundColor = etiqueta.color || '#6366F1';
+  const backgroundColor = etiqueta.color || TAG_COLORS.default;
   const textColor = getContrastColor(backgroundColor);
 
   return (
@@ -114,8 +115,8 @@ export default function EtiquetasBadges({
  * Badge con contador (para filtros)
  */
 export function EtiquetaBadgeWithCount({ etiqueta, count, selected, onClick }) {
-  const backgroundColor = etiqueta.color || '#6366F1';
-  const textColor = '#FFFFFF';
+  const backgroundColor = etiqueta.color || TAG_COLORS.default;
+  const textColor = CONTRAST_COLORS.light;
 
   return (
     <button

@@ -1,13 +1,17 @@
 /**
  * Mutations para operaciones de Numeros de Serie
+ *
+ * Feb 2026 - Migrado a createStatusMutationHook (status mutations)
+ * Se mantienen manuales: useCrearNumeroSerie y useCrearNumerosSerieMultiple (bulk create)
  */
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { inventarioApi } from '@/services/api/endpoints';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
+import { createStatusMutationHook } from '@/hooks/factories';
 import { numeroSerieQueryKeys } from './numeroSerieConstants';
 
-// ==================== MUTACIONES ====================
+// ==================== CREAR (mantener manual por bulk) ====================
 
 /**
  * Hook para crear numero de serie
@@ -45,139 +49,69 @@ export function useCrearNumerosSerieMultiple() {
     });
 }
 
-/**
- * Hook para vender numero de serie
- */
-export function useVenderNumeroSerie() {
-    const queryClient = useQueryClient();
+// ==================== STATUS MUTATIONS (via factory) ====================
 
-    return useMutation({
-        mutationFn: async ({ id, ventaId, clienteId }) => {
-            const response = await inventarioApi.venderNumeroSerie(id, {
-                venta_id: ventaId,
-                cliente_id: clienteId
-            });
-            return response.data;
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: numeroSerieQueryKeys.all, refetchType: 'active' });
-        },
-        onError: createCRUDErrorHandler('update', 'número de serie'),
-    });
-}
+/** Hook para vender numero de serie */
+export const useVenderNumeroSerie = createStatusMutationHook({
+    mutationFn: ({ id, ventaId, clienteId }) =>
+        inventarioApi.venderNumeroSerie(id, { venta_id: ventaId, cliente_id: clienteId }),
+    queryKey: numeroSerieQueryKeys.all[0],
+    entityName: 'número de serie',
+});
 
-/**
- * Hook para transferir numero de serie
- */
-export function useTransferirNumeroSerie() {
-    const queryClient = useQueryClient();
+/** Hook para transferir numero de serie */
+export const useTransferirNumeroSerie = createStatusMutationHook({
+    mutationFn: ({ id, sucursalDestinoId, ubicacionDestinoId, notas }) =>
+        inventarioApi.transferirNumeroSerie(id, {
+            sucursal_destino_id: sucursalDestinoId,
+            ubicacion_destino_id: ubicacionDestinoId,
+            notas,
+        }),
+    queryKey: numeroSerieQueryKeys.all[0],
+    entityName: 'número de serie',
+});
 
-    return useMutation({
-        mutationFn: async ({ id, sucursalDestinoId, ubicacionDestinoId, notas }) => {
-            const response = await inventarioApi.transferirNumeroSerie(id, {
-                sucursal_destino_id: sucursalDestinoId,
-                ubicacion_destino_id: ubicacionDestinoId,
-                notas
-            });
-            return response.data;
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: numeroSerieQueryKeys.all, refetchType: 'active' });
-        },
-        onError: createCRUDErrorHandler('update', 'número de serie'),
-    });
-}
+/** Hook para devolver numero de serie */
+export const useDevolverNumeroSerie = createStatusMutationHook({
+    mutationFn: ({ id, sucursalId, ubicacionId, motivo }) =>
+        inventarioApi.devolverNumeroSerie(id, {
+            sucursal_id: sucursalId,
+            ubicacion_id: ubicacionId,
+            motivo,
+        }),
+    queryKey: numeroSerieQueryKeys.all[0],
+    entityName: 'número de serie',
+});
 
-/**
- * Hook para devolver numero de serie
- */
-export function useDevolverNumeroSerie() {
-    const queryClient = useQueryClient();
+/** Hook para marcar como defectuoso */
+export const useMarcarDefectuoso = createStatusMutationHook({
+    mutationFn: ({ id, motivo }) =>
+        inventarioApi.marcarNumeroSerieDefectuoso(id, { motivo }),
+    queryKey: numeroSerieQueryKeys.all[0],
+    entityName: 'número de serie',
+});
 
-    return useMutation({
-        mutationFn: async ({ id, sucursalId, ubicacionId, motivo }) => {
-            const response = await inventarioApi.devolverNumeroSerie(id, {
-                sucursal_id: sucursalId,
-                ubicacion_id: ubicacionId,
-                motivo
-            });
-            return response.data;
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: numeroSerieQueryKeys.all, refetchType: 'active' });
-        },
-        onError: createCRUDErrorHandler('update', 'número de serie'),
-    });
-}
+/** Hook para reservar numero de serie */
+export const useReservarNumeroSerie = createStatusMutationHook({
+    mutationFn: ({ id, notas }) =>
+        inventarioApi.reservarNumeroSerie(id, { notas }),
+    queryKey: numeroSerieQueryKeys.all[0],
+    entityName: 'número de serie',
+});
 
-/**
- * Hook para marcar como defectuoso
- */
-export function useMarcarDefectuoso() {
-    const queryClient = useQueryClient();
+/** Hook para liberar reserva */
+export const useLiberarReservaNumeroSerie = createStatusMutationHook({
+    mutationFn: (id) =>
+        inventarioApi.liberarReservaNumeroSerie(id),
+    queryKey: numeroSerieQueryKeys.all[0],
+    entityName: 'número de serie',
+});
 
-    return useMutation({
-        mutationFn: async ({ id, motivo }) => {
-            const response = await inventarioApi.marcarNumeroSerieDefectuoso(id, { motivo });
-            return response.data;
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: numeroSerieQueryKeys.all, refetchType: 'active' });
-        },
-        onError: createCRUDErrorHandler('update', 'número de serie'),
-    });
-}
-
-/**
- * Hook para reservar numero de serie
- */
-export function useReservarNumeroSerie() {
-    const queryClient = useQueryClient();
-
-    return useMutation({
-        mutationFn: async ({ id, notas }) => {
-            const response = await inventarioApi.reservarNumeroSerie(id, { notas });
-            return response.data;
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: numeroSerieQueryKeys.all, refetchType: 'active' });
-        },
-        onError: createCRUDErrorHandler('update', 'número de serie'),
-    });
-}
-
-/**
- * Hook para liberar reserva
- */
-export function useLiberarReservaNumeroSerie() {
-    const queryClient = useQueryClient();
-
-    return useMutation({
-        mutationFn: async (id) => {
-            const response = await inventarioApi.liberarReservaNumeroSerie(id);
-            return response.data;
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: numeroSerieQueryKeys.all, refetchType: 'active' });
-        },
-        onError: createCRUDErrorHandler('update', 'número de serie'),
-    });
-}
-
-/**
- * Hook para actualizar garantia
- */
-export function useActualizarGarantia() {
-    const queryClient = useQueryClient();
-
-    return useMutation({
-        mutationFn: async ({ id, garantiaData }) => {
-            const response = await inventarioApi.actualizarGarantiaNumeroSerie(id, garantiaData);
-            return response.data;
-        },
-        onSuccess: (_, variables) => {
-            queryClient.invalidateQueries({ queryKey: numeroSerieQueryKeys.detail(variables.id), refetchType: 'active' });
-        },
-        onError: createCRUDErrorHandler('update', 'garantía'),
-    });
-}
+/** Hook para actualizar garantia */
+export const useActualizarGarantia = createStatusMutationHook({
+    mutationFn: ({ id, garantiaData }) =>
+        inventarioApi.actualizarGarantiaNumeroSerie(id, garantiaData),
+    queryKey: numeroSerieQueryKeys.all[0],
+    getEntityId: (v) => v.id,
+    entityName: 'garantía',
+});

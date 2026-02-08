@@ -14,18 +14,10 @@ import { clientesApi } from '@/services/api/endpoints';
 import { createCRUDHooks } from '@/hooks/factories';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 import { queryKeys } from '@/hooks/config';
+import { TAG_COLORS } from '@/constants/colors';
 
-// Colores predefinidos para el selector
-export const COLORES_ETIQUETAS = [
-  { value: '#EF4444', label: 'Rojo', description: 'VIP, Urgente' },
-  { value: '#F59E0B', label: 'Naranja', description: 'Nuevo, Pendiente' },
-  { value: '#10B981', label: 'Verde', description: 'Activo, Frecuente' },
-  { value: '#3B82F6', label: 'Azul', description: 'Corporativo' },
-  { value: '#8B5CF6', label: 'Morado', description: 'Premium' },
-  { value: '#EC4899', label: 'Rosa', description: 'Especial' },
-  { value: '#6366F1', label: 'Indigo', description: 'Default' },
-  { value: '#14B8A6', label: 'Teal', description: 'Referido' },
-];
+// Re-exportar para retrocompatibilidad
+export const COLORES_ETIQUETAS = TAG_COLORS.palette;
 
 // Crear hooks CRUD
 const hooks = createCRUDHooks({

@@ -8,14 +8,9 @@
  */
 
 import { FUENTES_DISPONIBLES } from '@/components/editor-framework';
+import { WEBSITE_THEME_PRESETS, WEBSITE_DEFAULT_COLORS } from '@/constants/colors';
 
-export const TEMAS_PREDEFINIDOS = [
-  { id: 'default', nombre: 'Clásico', colores: { primario: '#4F46E5', secundario: '#6366F1', fondo: '#FFFFFF', texto: '#1F2937' } },
-  { id: 'dark', nombre: 'Oscuro', colores: { primario: '#8B5CF6', secundario: '#A78BFA', fondo: '#111827', texto: '#F9FAFB' } },
-  { id: 'nature', nombre: 'Natural', colores: { primario: '#059669', secundario: '#10B981', fondo: '#ECFDF5', texto: '#064E3B' } },
-  { id: 'sunset', nombre: 'Atardecer', colores: { primario: '#DC2626', secundario: '#F97316', fondo: '#FFF7ED', texto: '#7C2D12' } },
-  { id: 'ocean', nombre: 'Océano', colores: { primario: '#0284C7', secundario: '#38BDF8', fondo: '#F0F9FF', texto: '#0C4A6E' } },
-];
+export const TEMAS_PREDEFINIDOS = WEBSITE_THEME_PRESETS;
 
 export const COLOR_FIELDS = [
   { key: 'primario', label: 'Color primario' },
@@ -31,10 +26,10 @@ export const FONT_FIELDS = [
 
 // Funciones extractoras para useThemeSave
 export const extractWebsiteColors = (config) => ({
-  primario: config?.tema?.colores?.primario || '#4F46E5',
-  secundario: config?.tema?.colores?.secundario || '#6366F1',
-  fondo: config?.tema?.colores?.fondo || '#FFFFFF',
-  texto: config?.tema?.colores?.texto || '#1F2937',
+  primario: config?.tema?.colores?.primario || WEBSITE_DEFAULT_COLORS.primario,
+  secundario: config?.tema?.colores?.secundario || WEBSITE_DEFAULT_COLORS.secundario,
+  fondo: config?.tema?.colores?.fondo || WEBSITE_DEFAULT_COLORS.fondo,
+  texto: config?.tema?.colores?.texto || WEBSITE_DEFAULT_COLORS.texto,
 });
 
 export const extractWebsiteFonts = (config) => ({

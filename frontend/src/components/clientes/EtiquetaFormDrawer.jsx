@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { COLORES_ETIQUETAS, useCrearEtiqueta, useActualizarEtiqueta } from '@/hooks/personas';
 import { useToast } from '@/hooks/utils';
 import { FormDrawer, FormGroup, Input, Textarea } from '@/components/ui';
+import { TAG_COLORS, CONTRAST_COLORS } from '@/constants/colors';
 
 const etiquetaSchema = z.object({
   nombre: z.string()
@@ -40,7 +41,7 @@ export default function EtiquetaFormDrawer({ isOpen, onClose, etiqueta = null })
     resolver: zodResolver(etiquetaSchema),
     defaultValues: {
       nombre: '',
-      color: '#6366F1',
+      color: TAG_COLORS.default,
       descripcion: '',
       orden: 0,
     },
@@ -53,12 +54,12 @@ export default function EtiquetaFormDrawer({ isOpen, onClose, etiqueta = null })
       if (etiqueta) {
         reset({
           nombre: etiqueta.nombre || '',
-          color: etiqueta.color || '#6366F1',
+          color: etiqueta.color || TAG_COLORS.default,
           descripcion: etiqueta.descripcion || '',
           orden: etiqueta.orden || 0,
         });
       } else {
-        reset({ nombre: '', color: '#6366F1', descripcion: '', orden: 0 });
+        reset({ nombre: '', color: TAG_COLORS.default, descripcion: '', orden: 0 });
       }
     }
   }, [isOpen, etiqueta, reset]);
@@ -100,7 +101,7 @@ export default function EtiquetaFormDrawer({ isOpen, onClose, etiqueta = null })
             className="inline-flex items-center rounded-full px-3 py-1 text-sm font-medium"
             style={{
               backgroundColor: colorActual,
-              color: isLightColor(colorActual) ? '#1F2937' : '#FFFFFF',
+              color: isLightColor(colorActual) ? CONTRAST_COLORS.dark : CONTRAST_COLORS.light,
             }}
           >
             {watch('nombre') || 'Nombre de etiqueta'}

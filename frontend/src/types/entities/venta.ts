@@ -143,3 +143,74 @@ export interface Promocion extends BaseEntity {
   // Calculado
   usos_registrados?: number;
 }
+
+// ========== Lealtad ==========
+
+export interface ConfiguracionLealtad {
+  id?: number;
+  activo: boolean;
+  puntos_por_peso: number;
+  puntos_por_peso_descuento: number;
+  meses_expiracion: number;
+}
+
+export interface NivelLealtad {
+  id: number;
+  nombre: string;
+  codigo: string;
+  color?: string;
+  puntos_minimos: number;
+  puntos_maximos?: number;
+  multiplicador_puntos: number;
+  activo: boolean;
+}
+
+export interface PuntosCliente {
+  puntos_disponibles: number;
+  puntos_totales: number;
+  nivel?: NivelLealtad;
+  proximo_nivel?: NivelLealtad;
+}
+
+// ========== Combos ==========
+
+export interface Combo {
+  id: number;
+  producto_id: number;
+  tipo_precio: string;
+  descuento_porcentaje?: number;
+  componentes: ComboComponente[];
+}
+
+export interface ComboComponente {
+  id: number;
+  combo_id: number;
+  producto_id: number;
+  cantidad: number;
+  producto_nombre?: string;
+}
+
+// ========== Modificadores ==========
+
+export interface GrupoModificadores {
+  id: number;
+  nombre: string;
+  descripcion?: string;
+  tipo_seleccion: string;
+  es_obligatorio: boolean;
+  minimo_seleccion?: number;
+  maximo_seleccion?: number;
+  activo: boolean;
+  modificadores?: Modificador[];
+}
+
+export interface Modificador {
+  id: number;
+  grupo_id: number;
+  nombre: string;
+  descripcion?: string;
+  precio_adicional: number;
+  prefijo?: string;
+  orden: number;
+  activo: boolean;
+}

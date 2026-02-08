@@ -15,7 +15,7 @@ import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-type SearchApiFn = (params: Record<string, unknown>) => Promise<{ data: { data: any } }>;
+type SearchApiFn = (...args: any[]) => Promise<any>;
 
 export interface SearchHookConfig<TItem = unknown> {
   /** Query key base (ej: 'clientes') */
@@ -31,7 +31,8 @@ export interface SearchHookConfig<TItem = unknown> {
   /** Tiempo de cache */
   staleTime?: number;
   /** Función para transformar la respuesta */
-  transformResponse?: (data: unknown) => TItem[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  transformResponse?: (data: any) => TItem[];
 }
 
 export interface SearchHookOptions {

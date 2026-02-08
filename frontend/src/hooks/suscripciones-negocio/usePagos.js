@@ -3,14 +3,14 @@
  * HOOKS: PAGOS DE SUSCRIPCIONES
  * ====================================================================
  * Hooks manuales para gestión de pagos con operaciones especiales.
+ * Feb 2026 - Mutations migradas a createStatusMutationHook
  */
 
-import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { suscripcionesNegocioApi } from '@/services/api/modules';
 import { sanitizeParams } from '@/lib/params';
-import { useToast } from '@/hooks/utils/useToast';
-import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
+import { createStatusMutationHook } from '@/hooks/factories';
 import { QUERY_KEYS } from './constants';
 
 // ==================== QUERY HOOKS ====================
@@ -90,87 +90,49 @@ export function usePagoPorTransaccion(gateway, transactionId) {
   });
 }
 
-// ==================== MUTATION HOOKS ====================
+// ==================== MUTATION HOOKS (via factory) ====================
 
-/**
- * Hook para crear pago manual
- */
-export function useCrearPago() {
-  const queryClient = useQueryClient();
-  const { success } = useToast();
+/** Hook para crear pago manual */
+export const useCrearPago = createStatusMutationHook({
+  mutationFn: (data) => {
+    const sanitized = {
+      suscripcion_id: data.suscripcion_id,
+      monto: data.monto,
+      moneda: data.moneda || 'MXN',
+      metodo_pago: data.metodo_pago,
+      referencia_externa: data.referencia_externa?.trim() || undefined,
+      notas: data.notas?.trim() || undefined,
+    };
+    return suscripcionesNegocioApi.crearPago(sanitized);
+  },
+  queryKey: QUERY_KEYS.PAGOS,
+  relatedKeys: [QUERY_KEYS.PAGOS_RESUMEN, QUERY_KEYS.SUSCRIPCIONES, QUERY_KEYS.METRICAS_DASHBOARD],
+  successMessage: 'Pago registrado exitosamente',
+  errorType: 'create',
+  entityName: 'Pago',
+});
 
-  return useMutation({
-    mutationFn: async (data) => {
-      const sanitized = {
-        suscripcion_id: data.suscripcion_id,
-        monto: data.monto,
-        moneda: data.moneda || 'MXN',
-        metodo_pago: data.metodo_pago,
-        referencia_externa: data.referencia_externa?.trim() || undefined,
-        notas: data.notas?.trim() || undefined,
-      };
-      const response = await suscripcionesNegocioApi.crearPago(sanitized);
-      return response.data?.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.PAGOS], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.PAGOS_RESUMEN], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.SUSCRIPCIONES], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.METRICAS_DASHBOARD], refetchType: 'active' });
-      success('Pago registrado exitosamente');
-    },
-    onError: createCRUDErrorHandler('create', 'Pago'),
-  });
-}
+/** Hook para actualizar estado del pago */
+export const useActualizarEstadoPago = createStatusMutationHook({
+  mutationFn: ({ id, estado, notas }) =>
+    suscripcionesNegocioApi.actualizarEstadoPago(id, { estado, notas }),
+  queryKey: QUERY_KEYS.PAGOS,
+  relatedKeys: [QUERY_KEYS.PAGOS_RESUMEN],
+  getEntityId: (v) => v.id,
+  successMessage: 'Estado de pago actualizado',
+  entityName: 'Pago',
+});
 
-/**
- * Hook para actualizar estado del pago
- */
-export function useActualizarEstadoPago() {
-  const queryClient = useQueryClient();
-  const { success } = useToast();
-
-  return useMutation({
-    mutationFn: async ({ id, estado, notas }) => {
-      const response = await suscripcionesNegocioApi.actualizarEstadoPago(id, { estado, notas });
-      return response.data?.data;
-    },
-    onSuccess: (_, { id }) => {
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.PAGOS], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.PAGO, id], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.PAGOS_RESUMEN], refetchType: 'active' });
-      success('Estado de pago actualizado');
-    },
-    onError: createCRUDErrorHandler('update', 'Pago'),
-  });
-}
-
-/**
- * Hook para procesar reembolso
- */
-export function useProcesarReembolso() {
-  const queryClient = useQueryClient();
-  const { success } = useToast();
-
-  return useMutation({
-    mutationFn: async ({ id, monto_reembolso, motivo, reembolso_parcial }) => {
-      const response = await suscripcionesNegocioApi.procesarReembolso(id, {
-        monto_reembolso,
-        motivo,
-        reembolso_parcial,
-      });
-      return response.data?.data;
-    },
-    onSuccess: (_, { id }) => {
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.PAGOS], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.PAGO, id], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.PAGOS_RESUMEN], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.METRICAS_DASHBOARD], refetchType: 'active' });
-      success('Reembolso procesado');
-    },
-    onError: createCRUDErrorHandler('update', 'Pago'),
-  });
-}
+/** Hook para procesar reembolso */
+export const useProcesarReembolso = createStatusMutationHook({
+  mutationFn: ({ id, monto_reembolso, motivo, reembolso_parcial }) =>
+    suscripcionesNegocioApi.procesarReembolso(id, { monto_reembolso, motivo, reembolso_parcial }),
+  queryKey: QUERY_KEYS.PAGOS,
+  relatedKeys: [QUERY_KEYS.PAGOS_RESUMEN, QUERY_KEYS.METRICAS_DASHBOARD],
+  getEntityId: (v) => v.id,
+  successMessage: 'Reembolso procesado',
+  entityName: 'Pago',
+});
 
 export default {
   // Queries

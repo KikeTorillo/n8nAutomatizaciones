@@ -75,4 +75,35 @@ export type {
   EstadoSesionCaja,
   TipoMovimientoCaja,
   TipoPromocion,
+  ConfiguracionLealtad,
+  NivelLealtad,
+  PuntosCliente,
+  Combo,
+  ComboComponente,
+  GrupoModificadores,
+  Modificador,
 } from './venta';
+export type {
+  Usuario,
+  RolUsuario,
+  CrearUsuarioData,
+  ActualizarUsuarioData,
+  AsignacionUbicacion,
+} from './usuario';
+export type {
+  Organizacion,
+  OrganizacionRegisterData,
+  SetupProgress,
+  EstadoSuscripcionOrg,
+  EstadisticasOrganizacion,
+} from './organizacion';
+export type {
+  WebsiteConfig,
+  WebsiteTema,
+  WebsitePagina,
+  WebsiteBloque,
+  WebsiteTemplate,
+  WebsiteVersion,
+  AnalyticsResumen,
+  AuditoriaSEO,
+} from './website';

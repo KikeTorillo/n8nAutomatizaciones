@@ -11,13 +11,14 @@ import { driver } from 'driver.js';
 import 'driver.js/dist/driver.css';
 import { useTourSteps } from './useTourSteps';
 import { useTourState } from './useTourState';
+import { BRAND_COLORS, CONTRAST_COLORS } from '@/constants/colors';
 
 /**
  * Estilos custom para el tour (tema Nexo)
  */
 const TOUR_STYLES = `
   .driver-popover {
-    background: linear-gradient(135deg, #753572 0%, #1F2937 100%) !important;
+    background: linear-gradient(135deg, ${BRAND_COLORS.primary} 0%, ${CONTRAST_COLORS.dark} 100%) !important;
     border: none !important;
     border-radius: 12px !important;
     box-shadow: 0 25px 50px -12px rgba(117, 53, 114, 0.4) !important;
@@ -59,7 +60,7 @@ const TOUR_STYLES = `
 
   .driver-popover-next-btn {
     background: #fff !important;
-    color: #753572 !important;
+    color: ${BRAND_COLORS.primary} !important;
     border: none !important;
     border-radius: 8px !important;
     padding: 8px 20px !important;
@@ -81,19 +82,19 @@ const TOUR_STYLES = `
   }
 
   .driver-popover-arrow-side-left {
-    border-right-color: #753572 !important;
+    border-right-color: ${BRAND_COLORS.primary} !important;
   }
 
   .driver-popover-arrow-side-right {
-    border-left-color: #753572 !important;
+    border-left-color: ${BRAND_COLORS.primary} !important;
   }
 
   .driver-popover-arrow-side-top {
-    border-bottom-color: #753572 !important;
+    border-bottom-color: ${BRAND_COLORS.primary} !important;
   }
 
   .driver-popover-arrow-side-bottom {
-    border-top-color: #753572 !important;
+    border-top-color: ${BRAND_COLORS.primary} !important;
   }
 `;
 

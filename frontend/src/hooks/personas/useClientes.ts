@@ -121,7 +121,7 @@ const hooks = createCRUDHooks<Cliente>({
 });
 
 // Exportar hooks CRUD
-export const useClientes = hooks.useList as (params?: Record<string, unknown>) => UseQueryResult<ClientesListResponse>;
+export const useClientes = hooks.useList as unknown as (params?: Record<string, unknown>) => UseQueryResult<ClientesListResponse>;
 export const useCliente = hooks.useDetail as (id: string | number | null | undefined) => UseQueryResult<Cliente>;
 export const useCrearCliente = hooks.useCreate as () => UseMutationResult<Cliente, Error, Partial<Cliente>>;
 export const useActualizarCliente = hooks.useUpdate as () => UseMutationResult<Cliente, Error, { id: string | number; data: Partial<Cliente> }>;
@@ -203,7 +203,7 @@ export function useEstadisticasClientes(): UseQueryResult<ClienteEstadisticas> {
     queryKey: queryKeys.estadisticas.clientes,
     queryFn: async () => {
       const response = await clientesApi.obtenerEstadisticas();
-      return response.data.data;
+      return (response.data as any).data;
     },
     staleTime: STALE_TIMES.SEMI_STATIC,
   });
@@ -216,7 +216,7 @@ export function useEstadisticasCliente(clienteId: string | number | null): UseQu
   return useQuery({
     queryKey: queryKeys.estadisticas.clienteDetail(clienteId),
     queryFn: async () => {
-      const response = await clientesApi.obtenerEstadisticasCliente(clienteId);
+      const response = await clientesApi.obtenerEstadisticasCliente(clienteId as number);
       return response.data.data;
     },
     enabled: !!clienteId,
@@ -232,8 +232,8 @@ export function useImportarClientesCSV(): UseMutationResult<ImportCSVResult, Err
 
   return useMutation({
     mutationFn: async (data: FormData) => {
-      const response = await clientesApi.importarCSV(data);
-      return response.data.data;
+      const response = await clientesApi.importarCSV(data as any);
+      return (response.data as any).data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.personas.clientes.all, refetchType: 'active' });

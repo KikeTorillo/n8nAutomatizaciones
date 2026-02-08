@@ -15,6 +15,7 @@ import { Input, Select, Textarea } from '@/components/ui';
 import { BaseBlockEditor, useBlockEditor } from '@/components/editor-framework';
 import { AIGenerateButton, AISuggestionBanner } from '../AIGenerator';
 import { THEME_FALLBACK_COLORS } from '@/lib/uiConstants';
+import { NEUTRAL_COLORS } from '@/constants/colors';
 
 const WEB = THEME_FALLBACK_COLORS.website;
 
@@ -105,7 +106,7 @@ function CtaEditor({ contenido, onGuardar, tema, isSaving, industria = 'default'
             className="text-sm mb-4"
             style={{
               color: form.estilo === 'claro'
-                ? '#6B7280'
+                ? NEUTRAL_COLORS.gray500
                 : 'rgba(255,255,255,0.8)'
             }}
           >
