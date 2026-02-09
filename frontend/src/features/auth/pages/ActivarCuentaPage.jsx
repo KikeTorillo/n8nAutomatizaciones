@@ -100,6 +100,30 @@ export default function ActivarCuentaPage() {
 
       // Flujo unificado (Dic 2025): redirigir a onboarding si no tiene organización
       if (requiere_onboarding) {
+        // Detectar flujo B2C invitaciones
+        const esB2C = localStorage.getItem('nexo_origen_b2c');
+        if (esB2C) {
+          try {
+            // Auto-onboarding rápido (sin wizard empresarial)
+            const quickRes = await authApi.onboardingQuick({
+              nombre_negocio: activacion?.nombre || usuario.nombre
+            });
+            const quickData = quickRes.data?.data;
+            // Actualizar auth store con nuevos tokens
+            if (quickData?.accessToken) {
+              setAuth({
+                user: quickData.usuario,
+                accessToken: quickData.accessToken,
+              });
+            }
+            localStorage.removeItem('nexo_origen_b2c');
+            navigate('/invitaciones/precios');
+          } catch {
+            // Si falla el quick onboarding, ir al wizard normal
+            navigate('/onboarding');
+          }
+          return;
+        }
         navigate('/onboarding');
       } else {
         navigate('/home');

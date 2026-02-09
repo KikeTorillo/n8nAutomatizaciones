@@ -74,6 +74,10 @@ function PaymentCallbackPage() {
       collectionStatus === 'pending' ? 'pendiente' :
         collectionStatus === 'rejected' ? 'rechazado' : 'desconocido');
 
+  // Detectar si hay borrador B2C para redirect post-pago
+  const tieneBorrador = !!localStorage.getItem('nexo-borrador-invitacion');
+  const destinoPostPago = tieneBorrador ? '/invitaciones/editor' : '/';
+
   // Invalidar caché cuando el pago es exitoso para que MiPlanPage muestre datos frescos
   useEffect(() => {
     if (estadoFinal === 'aprobado' && !isLoading) {
@@ -233,9 +237,9 @@ function PaymentCallbackPage() {
               <Button
                 variant="primary"
                 className="w-full"
-                onClick={() => navigate('/')}
+                onClick={() => navigate(destinoPostPago)}
               >
-                Ir al Inicio
+                {tieneBorrador ? 'Continuar con mi invitación' : 'Ir al Inicio'}
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             )}
@@ -254,9 +258,9 @@ function PaymentCallbackPage() {
                 <Button
                   variant="ghost"
                   className="w-full"
-                  onClick={() => navigate('/')}
+                  onClick={() => navigate(destinoPostPago)}
                 >
-                  Ir al Inicio
+                  {tieneBorrador ? 'Volver a mi invitación' : 'Ir al Inicio'}
                 </Button>
               </>
             )}
@@ -266,16 +270,16 @@ function PaymentCallbackPage() {
                 <Button
                   variant="primary"
                   className="w-full"
-                  onClick={() => navigate('/planes')}
+                  onClick={() => navigate(tieneBorrador ? '/invitaciones/precios' : '/planes')}
                 >
                   Intentar de nuevo
                 </Button>
                 <Button
                   variant="ghost"
                   className="w-full"
-                  onClick={() => navigate('/')}
+                  onClick={() => navigate(destinoPostPago)}
                 >
-                  Ir al Inicio
+                  {tieneBorrador ? 'Volver a mi invitación' : 'Ir al Inicio'}
                 </Button>
               </>
             )}
@@ -284,9 +288,9 @@ function PaymentCallbackPage() {
               <Button
                 variant="outline"
                 className="w-full"
-                onClick={() => navigate('/')}
+                onClick={() => navigate(destinoPostPago)}
               >
-                Ir al Inicio
+                {tieneBorrador ? 'Volver a mi invitación' : 'Ir al Inicio'}
               </Button>
             )}
           </div>

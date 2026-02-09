@@ -18,6 +18,7 @@ import { useContext, useState, useEffect, useCallback, useMemo, useRef } from 'r
 import { useNavigate } from 'react-router-dom';
 import { create } from 'zustand';
 
+import useAuthStore, { selectIsAuthenticated } from '@/features/auth/store/authStore';
 import { useInvitacionEditorStore } from '@/store';
 import {
   EditorContext,
@@ -55,6 +56,8 @@ export function BorradorEditorProvider({ children }) {
   const navigate = useNavigate();
   const storage = useBorradorStorage();
 
+  const isAuthenticated = useAuthStore(selectIsAuthenticated);
+
   // ========== STATE ==========
 
   const [modoPreview, setModoPreview] = useState(false);
@@ -63,6 +66,7 @@ export function BorradorEditorProvider({ children }) {
   const [isLoading, setIsLoading] = useState(true);
   const [gateModalAbierto, setGateModalAbierto] = useState(false);
   const borradorRef = useRef(null);
+  const autoOpenedRef = useRef(false);
 
   // Layout context
   const {
@@ -131,6 +135,14 @@ export function BorradorEditorProvider({ children }) {
     setBloques(data.bloques || [], 'borrador');
     setIsLoading(false);
   }, []); // Solo al montar
+
+  // Auto-abrir modal de conversión si el usuario está autenticado y tiene borrador
+  useEffect(() => {
+    if (isAuthenticated && borrador && !autoOpenedRef.current && !isLoading) {
+      autoOpenedRef.current = true;
+      setGateModalAbierto(true);
+    }
+  }, [isAuthenticated, borrador, isLoading]);
 
   // Limpiar al desmontar
   useEffect(() => {

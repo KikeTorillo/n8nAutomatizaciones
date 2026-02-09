@@ -140,6 +140,13 @@ export const authApi = {
    */
   completarOnboarding: (data) => apiClient.post('/auth/onboarding/complete', data),
 
+  /**
+   * Onboarding rápido B2C (sin wizard empresarial)
+   * @param {Object} data - { nombre_negocio? }
+   * @returns {Promise<Object>} { usuario, organizacion, accessToken }
+   */
+  onboardingQuick: (data) => apiClient.post('/auth/onboarding/quick', data),
+
   // ===== Cambio de Sucursal - Ene 2026 =====
 
   /**

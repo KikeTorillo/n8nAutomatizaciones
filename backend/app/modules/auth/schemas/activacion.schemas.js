@@ -182,6 +182,24 @@ const activacionSchemas = {
     // ====================================================================
 
     /**
+     * POST /auth/onboarding/quick - Onboarding rápido B2C (solo nombre opcional)
+     */
+    onboardingQuick: Joi.object({
+        body: Joi.object({
+            nombre_negocio: Joi.string()
+                .min(2)
+                .max(150)
+                .optional()
+                .messages({
+                    'string.min': 'El nombre del negocio debe tener al menos 2 caracteres',
+                    'string.max': 'El nombre del negocio no puede exceder 150 caracteres'
+                })
+        }),
+        query: Joi.object(),
+        params: Joi.object()
+    }),
+
+    /**
      * POST /auth/onboarding/complete - Completar onboarding
      */
     onboardingComplete: Joi.object({

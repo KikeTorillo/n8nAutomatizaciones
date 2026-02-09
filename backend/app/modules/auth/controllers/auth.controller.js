@@ -605,6 +605,39 @@ class AuthController {
     });
 
     /**
+     * POST /api/v1/auth/onboarding/quick
+     * Onboarding rápido B2C — crea org mínima con solo eventos-digitales
+     * Sin wizard de industria/estado/ciudad
+     * @authenticated
+     */
+    static onboardingQuick = asyncHandler(async (req, res) => {
+        const nombre = req.body.nombre_negocio || req.user.nombre || 'Mi negocio';
+
+        const resultado = await OnboardingService.completar(req.user.id, {
+            nombre_negocio: nombre,
+            industria: null,
+            estado_id: null,
+            ciudad_id: null,
+            soy_profesional: false,
+            modulos: { 'eventos-digitales': true }
+        });
+
+        // Generar nuevos tokens con organizacion_id actualizado
+        const usuarioActualizado = await UsuarioModel.buscarPorEmail(resultado.usuario.email);
+        const { accessToken, refreshToken, expiresIn } = JwtService.generateTokenPair(usuarioActualizado);
+
+        // Actualizar cookie
+        res.cookie('refreshToken', refreshToken, REFRESH_TOKEN_COOKIE_OPTIONS);
+
+        return ResponseHelper.success(res, {
+            usuario: resultado.usuario,
+            organizacion: resultado.organizacion,
+            accessToken,
+            expiresIn
+        }, 'Onboarding B2C completado exitosamente', 201);
+    });
+
+    /**
      * POST /api/v1/auth/onboarding/complete
      * Completa el onboarding creando la organización
      * @authenticated

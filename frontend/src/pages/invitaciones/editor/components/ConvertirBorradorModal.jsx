@@ -1,12 +1,12 @@
 /**
  * ConvertirBorradorModal — Modal para convertir borrador local a evento real.
  *
- * Si el usuario no está autenticado, redirige a login.
+ * Si el usuario no está autenticado, muestra opciones de registro/login.
  * Si está autenticado, muestra formulario para crear el evento.
  */
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Loader2 } from 'lucide-react';
+import { Loader2, UserPlus, LogIn } from 'lucide-react';
 import { Modal, Button, Input } from '@/components/ui';
 import useAuthStore from '@/features/auth/store/authStore';
 import { selectIsAuthenticated } from '@/features/auth/store/authStore';
@@ -27,23 +27,15 @@ export default function ConvertirBorradorModal({ isOpen, onClose }) {
   const [horaEvento, setHoraEvento] = useState('');
   const [isConverting, setIsConverting] = useState(false);
 
-  // Si no está autenticado, redirigir a login
   const handleSubmit = useCallback(async (e) => {
     e.preventDefault();
-
-    if (!isAuthenticated) {
-      onClose();
-      navigate('/login?returnTo=/invitaciones/editor');
-      return;
-    }
-
     if (!nombre.trim() || !fechaEvento) return;
 
     setIsConverting(true);
     try {
       const borrador = storage.cargar();
       if (!borrador) {
-        toast.error('No se encontr\u00f3 el borrador');
+        toast.error('No se encontró el borrador');
         return;
       }
 
@@ -77,39 +69,55 @@ export default function ConvertirBorradorModal({ isOpen, onClose }) {
       // 4. Limpiar localStorage
       storage.limpiar();
 
-      toast.success('Invitaci\u00f3n guardada exitosamente');
+      toast.success('Invitación guardada exitosamente');
       navigate(`/eventos-digitales/${eventoId}/editor`, { replace: true });
     } catch {
-      toast.error('Error al guardar la invitaci\u00f3n');
+      toast.error('Error al guardar la invitación');
     } finally {
       setIsConverting(false);
     }
-  }, [isAuthenticated, nombre, fechaEvento, horaEvento, storage, crearEvento, navigate, toast, onClose]);
+  }, [nombre, fechaEvento, horaEvento, storage, crearEvento, navigate, toast]);
 
   if (!isOpen) return null;
 
-  // Si no está autenticado, mostrar modal de login
+  // Si no está autenticado, mostrar opciones de registro/login
   if (!isAuthenticated) {
     return (
-      <Modal isOpen={isOpen} onClose={onClose} title="Inicia sesi\u00f3n para guardar">
+      <Modal isOpen={isOpen} onClose={onClose} title="Guarda tu invitación">
         <div className="space-y-4">
           <p className="text-gray-600 dark:text-gray-400">
-            Para guardar tu invitaci\u00f3n necesitas una cuenta. Tu borrador se conservar\u00e1 hasta que vuelvas.
+            Para publicar tu invitación necesitas una cuenta. Tu borrador se conservará hasta que vuelvas.
           </p>
-          <div className="flex gap-3 justify-end">
-            <Button variant="ghost" onClick={onClose}>
-              Cancelar
+          <div className="space-y-3">
+            <Button
+              className="w-full bg-pink-500 hover:bg-pink-600 text-white"
+              onClick={() => {
+                localStorage.setItem('nexo_origen_b2c', 'true');
+                onClose();
+                navigate('/registro');
+              }}
+            >
+              <UserPlus className="w-4 h-4 mr-2" />
+              Crear cuenta gratis
             </Button>
             <Button
+              variant="outline"
+              className="w-full"
               onClick={() => {
                 onClose();
                 navigate('/login?returnTo=/invitaciones/editor');
               }}
-              className="bg-pink-500 hover:bg-pink-600 text-white"
             >
-              Iniciar sesi\u00f3n
+              <LogIn className="w-4 h-4 mr-2" />
+              Ya tengo cuenta
             </Button>
           </div>
+          <button
+            onClick={onClose}
+            className="w-full text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+          >
+            Seguir editando
+          </button>
         </div>
       </Modal>
     );

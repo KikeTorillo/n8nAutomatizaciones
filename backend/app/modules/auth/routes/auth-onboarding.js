@@ -53,6 +53,14 @@ router.get('/onboarding/status',
     AuthController.onboardingStatus
 );
 
+// Onboarding rápido B2C (requiere auth, sin wizard)
+router.post('/onboarding/quick',
+    authMiddleware.authenticateToken,
+    rateLimiting.userRateLimit,
+    validation.validate(activacionSchemas.onboardingQuick),
+    AuthController.onboardingQuick
+);
+
 // Completar onboarding (requiere auth)
 router.post('/onboarding/complete',
     authMiddleware.authenticateToken,
