@@ -2,7 +2,7 @@ import { Receipt, Eye, MoreVertical, RefreshCw } from 'lucide-react';
 import { Button, Badge, DropdownMenu, SearchInput } from '@/components/ui';
 import { ListadoCRUDPage } from '@/components/ui/templates';
 import { usePagos, ESTADO_PAGO_LABELS, ESTADO_PAGO_COLORS, METODO_PAGO_LABELS } from '@/hooks/suscripciones-negocio';
-import { SuscripcionesNegocioPageLayout } from '@/components/suscripciones-negocio';
+import { SuscripcionesNegocioPageLayout } from './components';
 import { formatCurrency, formatDate } from '@/lib/utils';
 
 /**

@@ -67,6 +67,7 @@ class PlanesModel {
                 SELECT
                     id, codigo, nombre, descripcion,
                     precio_mensual, precio_trimestral, precio_semestral, precio_anual, moneda,
+                    tipo_cobro,
                     dias_trial, limites, features, modulos_habilitados,
                     precio_usuario_adicional, usuarios_incluidos, max_usuarios_hard,
                     color, icono, destacado, activo, publico, orden_display,
@@ -111,6 +112,7 @@ class PlanesModel {
                 SELECT
                     id, codigo, nombre, descripcion,
                     precio_mensual, precio_trimestral, precio_semestral, precio_anual, moneda,
+                    tipo_cobro,
                     dias_trial, limites, features, modulos_habilitados,
                     precio_usuario_adicional, usuarios_incluidos, max_usuarios_hard,
                     color, icono, destacado, publico, orden_display
@@ -137,6 +139,7 @@ class PlanesModel {
                 SELECT
                     id, codigo, nombre, descripcion,
                     precio_mensual, precio_trimestral, precio_semestral, precio_anual, moneda,
+                    tipo_cobro,
                     dias_trial, limites, features, modulos_habilitados,
                     precio_usuario_adicional, usuarios_incluidos, max_usuarios_hard,
                     color, icono, destacado, activo, publico, orden_display,
@@ -163,6 +166,7 @@ class PlanesModel {
                 SELECT
                     id, codigo, nombre, descripcion,
                     precio_mensual, precio_trimestral, precio_semestral, precio_anual, moneda,
+                    tipo_cobro,
                     dias_trial, limites, features, modulos_habilitados,
                     precio_usuario_adicional, usuarios_incluidos, max_usuarios_hard,
                     color, icono, destacado, activo, publico
@@ -194,6 +198,7 @@ class PlanesModel {
                 precio_semestral,
                 precio_anual,
                 moneda = 'MXN',
+                tipo_cobro = 'recurrente',
                 dias_trial = 0,
                 limites = {},
                 features = [],
@@ -210,10 +215,11 @@ class PlanesModel {
                 INSERT INTO planes_suscripcion_org (
                     organizacion_id, codigo, nombre, descripcion,
                     precio_mensual, precio_trimestral, precio_semestral, precio_anual, moneda,
+                    tipo_cobro,
                     dias_trial, limites, features, modulos_habilitados,
                     color, icono, destacado, activo, publico, orden_display,
                     creado_por
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
                 RETURNING *
             `;
 
@@ -227,6 +233,7 @@ class PlanesModel {
                 precio_semestral,
                 precio_anual,
                 moneda,
+                tipo_cobro,
                 dias_trial,
                 JSON.stringify(limites),
                 JSON.stringify(features),
@@ -270,6 +277,7 @@ class PlanesModel {
                 precio_semestral,
                 precio_anual,
                 moneda,
+                tipo_cobro,
                 dias_trial,
                 limites,
                 features,
@@ -313,6 +321,10 @@ class PlanesModel {
             if (moneda !== undefined) {
                 updates.push(`moneda = $${paramCount++}`);
                 values.push(moneda);
+            }
+            if (tipo_cobro !== undefined) {
+                updates.push(`tipo_cobro = $${paramCount++}`);
+                values.push(tipo_cobro);
             }
             if (dias_trial !== undefined) {
                 updates.push(`dias_trial = $${paramCount++}`);

@@ -16,7 +16,7 @@ import {
   DistribucionEstadoChart,
   TopPlanesChart,
   SuscripcionesNegocioPageLayout,
-} from '@/components/suscripciones-negocio';
+} from './components';
 import { formatCurrency } from '@/lib/utils';
 
 /**

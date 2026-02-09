@@ -41,12 +41,12 @@ import {
   SuscripcionStatusBadge,
   CancelarSuscripcionDrawer,
   HistorialPagosCard,
-} from '@/components/suscripciones-negocio';
-import UsageIndicator from '@/components/suscripciones-negocio/UsageIndicator';
-import BalanceAjustesCard from '@/components/suscripciones-negocio/BalanceAjustesCard';
+} from './components';
+import UsageIndicator from './components/UsageIndicator';
+import BalanceAjustesCard from './components/BalanceAjustesCard';
 import { useToast } from '@/hooks/utils';
 import { formatCurrency, formatDate } from '@/lib/utils';
-import CambiarPlanDrawer from '@/components/suscripciones-negocio/CambiarPlanDrawer';
+import CambiarPlanDrawer from './components/CambiarPlanDrawer';
 
 /**
  * Componente de estado vacío cuando no hay suscripción

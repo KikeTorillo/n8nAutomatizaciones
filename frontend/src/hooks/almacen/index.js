@@ -8,7 +8,7 @@
 export * from './operaciones-almacen';
 
 // Otros hooks
-export * from './useBatchPicking';
+export * from './batch-picking';
 export * from './usePaquetes';
 export * from './consigna';
 export * from './useDropship';

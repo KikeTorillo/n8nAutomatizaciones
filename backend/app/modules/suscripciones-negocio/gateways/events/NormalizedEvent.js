@@ -50,6 +50,14 @@ const EventTypes = Object.freeze({
     PAYMENT_REFUNDED: 'payment.refunded',
     PAYMENT_CANCELLED: 'payment.cancelled',
 
+    // Orders (Point Terminal)
+    ORDER_PROCESSED: 'order.processed',
+    ORDER_CANCELLED: 'order.cancelled',
+    ORDER_FAILED: 'order.failed',
+    ORDER_EXPIRED: 'order.expired',
+    ORDER_REFUNDED: 'order.refunded',
+    ORDER_ACTION_REQUIRED: 'order.action_required',
+
     // Otros
     UNKNOWN: 'unknown'
 });
@@ -83,6 +91,9 @@ const PaymentStatusMap = Object.freeze({
     'cancelled': 'fallido',
     'refunded': 'reembolsado',
 
+    // Estados de Orders (Point)
+    'order.processed': 'completado',
+
     // Estados de Stripe
     'succeeded': 'completado',
     'requires_payment_method': 'pendiente',
@@ -90,6 +101,19 @@ const PaymentStatusMap = Object.freeze({
     'requires_action': 'pendiente',
     'processing': 'pendiente',
     'canceled': 'fallido'       // Stripe usa 'canceled' con una 'l'
+});
+
+/**
+ * Mapeo de estados de orden a estados internos
+ * @enum {string}
+ */
+const OrderStatusMap = Object.freeze({
+    'order.processed':  'completado',
+    'order.canceled':   'cancelado',
+    'order.cancelled':  'cancelado',
+    'order.failed':     'fallido',
+    'order.expired':    'expirado',
+    'order.refunded':   'reembolsado',
 });
 
 /**
@@ -132,6 +156,22 @@ class NormalizedEvent {
      */
     isPaymentEvent() {
         return this.type.startsWith('payment.');
+    }
+
+    /**
+     * Verificar si es un evento de orden (Point Terminal)
+     * @returns {boolean}
+     */
+    isOrderEvent() {
+        return this.type.startsWith('order.');
+    }
+
+    /**
+     * Obtener estado interno de orden basado en el evento
+     * @returns {string|null}
+     */
+    getInternalOrderStatus() {
+        return OrderStatusMap[this.type] || null;
     }
 
     /**
@@ -318,5 +358,6 @@ module.exports = {
     NormalizedEvent,
     EventTypes,
     SubscriptionStatusMap,
-    PaymentStatusMap
+    PaymentStatusMap,
+    OrderStatusMap
 };

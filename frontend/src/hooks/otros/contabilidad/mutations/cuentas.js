@@ -14,7 +14,7 @@ import { CONTABILIDAD_KEYS } from '../constants';
  */
 export function useCrearCuenta() {
   const queryClient = useQueryClient();
-  const { success, error: showError } = useToast();
+  const { success } = useToast();
 
   return useMutation({
     mutationFn: async (data) => {
@@ -32,14 +32,7 @@ export function useCrearCuenta() {
       queryClient.invalidateQueries({ queryKey: CONTABILIDAD_KEYS.dashboard(), refetchType: 'active' });
       success('Cuenta creada exitosamente');
     },
-    onError: (error) => {
-      const handler = createCRUDErrorHandler('create', 'Cuenta');
-      try {
-        handler(error);
-      } catch (e) {
-        showError(e.message);
-      }
-    },
+    onError: createCRUDErrorHandler('create', 'Cuenta'),
   });
 }
 
@@ -49,7 +42,7 @@ export function useCrearCuenta() {
  */
 export function useActualizarCuenta() {
   const queryClient = useQueryClient();
-  const { success, error: showError } = useToast();
+  const { success } = useToast();
 
   return useMutation({
     mutationFn: async ({ id, ...data }) => {
@@ -66,14 +59,7 @@ export function useActualizarCuenta() {
       queryClient.invalidateQueries({ queryKey: CONTABILIDAD_KEYS.cuentas.detail(variables.id), refetchType: 'active' });
       success('Cuenta actualizada exitosamente');
     },
-    onError: (error) => {
-      const handler = createCRUDErrorHandler('update', 'Cuenta');
-      try {
-        handler(error);
-      } catch (e) {
-        showError(e.message);
-      }
-    },
+    onError: createCRUDErrorHandler('update', 'Cuenta'),
   });
 }
 
@@ -83,7 +69,7 @@ export function useActualizarCuenta() {
  */
 export function useEliminarCuenta() {
   const queryClient = useQueryClient();
-  const { success, error: showError } = useToast();
+  const { success } = useToast();
 
   return useMutation({
     mutationFn: async (id) => {
@@ -95,14 +81,7 @@ export function useEliminarCuenta() {
       queryClient.invalidateQueries({ queryKey: CONTABILIDAD_KEYS.dashboard(), refetchType: 'active' });
       success('Cuenta eliminada exitosamente');
     },
-    onError: (error) => {
-      const handler = createCRUDErrorHandler('delete', 'Cuenta');
-      try {
-        handler(error);
-      } catch (e) {
-        showError(e.message);
-      }
-    },
+    onError: createCRUDErrorHandler('delete', 'Cuenta'),
   });
 }
 
@@ -112,7 +91,7 @@ export function useEliminarCuenta() {
  */
 export function useInicializarCatalogoSAT() {
   const queryClient = useQueryClient();
-  const { success, error: showError } = useToast();
+  const { success } = useToast();
 
   return useMutation({
     mutationFn: async () => {
@@ -124,13 +103,6 @@ export function useInicializarCatalogoSAT() {
       queryClient.invalidateQueries({ queryKey: CONTABILIDAD_KEYS.dashboard(), refetchType: 'active' });
       success(`Catalogo SAT inicializado: ${data?.data?.cuentas_creadas || 0} cuentas creadas`);
     },
-    onError: (error) => {
-      const handler = createCRUDErrorHandler('create', 'Catalogo SAT');
-      try {
-        handler(error);
-      } catch (e) {
-        showError(e.message);
-      }
-    },
+    onError: createCRUDErrorHandler('create', 'Catalogo SAT'),
   });
 }

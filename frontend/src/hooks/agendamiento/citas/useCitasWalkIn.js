@@ -3,7 +3,7 @@ import { STALE_TIMES } from '@/app/queryClient';
 import { citasApi } from '@/services/api/endpoints';
 import { useToast } from '../../utils/useToast';
 import useSucursalStore, { selectGetSucursalId } from '@/store/sucursalStore';
-import { createCRUDErrorHandler, getErrorMessage } from '@/hooks/config/errorHandlerFactory';
+import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 import { queryKeys } from '@/hooks/config';
 
 /**
@@ -11,7 +11,7 @@ import { queryKeys } from '@/hooks/config';
  */
 export function useCrearCitaWalkIn() {
   const queryClient = useQueryClient();
-  const { success, error: showError } = useToast();
+  const { success } = useToast();
   const getSucursalId = useSucursalStore(selectGetSucursalId);
 
   return useMutation({
@@ -27,13 +27,7 @@ export function useCrearCitaWalkIn() {
       queryClient.invalidateQueries({ queryKey: queryKeys.agendamiento.citas.all, refetchType: 'active' });
       success('Cita walk-in creada exitosamente');
     },
-    onError: (error) => {
-      try {
-        createCRUDErrorHandler('create', 'Cita walk-in')(error);
-      } catch (e) {
-        showError(getErrorMessage(e));
-      }
-    },
+    onError: createCRUDErrorHandler('create', 'Cita walk-in'),
   });
 }
 

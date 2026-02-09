@@ -20,7 +20,7 @@ import {
   SkeletonTable
 } from '@/components/ui';
 import { useToast, usePagination } from '@/hooks/utils';
-import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
+import InventarioPageLayout from '@/pages/inventario/components/InventarioPageLayout';
 import {
   useAlertas,
   useMarcarAlertaLeida,

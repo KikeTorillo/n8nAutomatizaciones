@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS venta_pagos (
         'tarjeta_credito',
         'transferencia',
         'qr_mercadopago',
+        'terminal_mercadopago',  -- Cobro con terminal Point MP
         'cuenta_cliente'    -- Fiado/Crédito
     )),
     monto DECIMAL(10, 2) NOT NULL CHECK (monto > 0),
@@ -49,7 +50,7 @@ CREATE TABLE IF NOT EXISTS venta_pagos (
 );
 
 COMMENT ON TABLE venta_pagos IS 'Pagos individuales para soporte de pago split (múltiples métodos por venta)';
-COMMENT ON COLUMN venta_pagos.metodo_pago IS 'Método de pago: efectivo, tarjeta_debito, tarjeta_credito, transferencia, qr_mercadopago, cuenta_cliente';
+COMMENT ON COLUMN venta_pagos.metodo_pago IS 'Método de pago: efectivo, tarjeta_debito, tarjeta_credito, transferencia, qr_mercadopago, terminal_mercadopago, cuenta_cliente';
 COMMENT ON COLUMN venta_pagos.monto IS 'Monto del pago parcial';
 COMMENT ON COLUMN venta_pagos.monto_recibido IS 'Solo efectivo: monto entregado por el cliente';
 COMMENT ON COLUMN venta_pagos.cambio IS 'Solo efectivo: cambio devuelto (monto_recibido - monto)';
@@ -175,7 +176,7 @@ BEGIN
     ELSIF v_num_metodos = 1 THEN
         -- Solo un método: usar ese
         -- Mapear variantes de tarjeta a 'tarjeta'
-        IF v_metodo_unico IN ('tarjeta_debito', 'tarjeta_credito') THEN
+        IF v_metodo_unico IN ('tarjeta_debito', 'tarjeta_credito', 'terminal_mercadopago') THEN
             v_nuevo_metodo_pago := 'tarjeta';
         ELSIF v_metodo_unico = 'qr_mercadopago' THEN
             v_nuevo_metodo_pago := 'qr';

@@ -45,7 +45,7 @@ import {
   StatCardGrid
 } from '@/components/ui';
 import { formatCurrency } from '@/lib/utils';
-import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
+import InventarioPageLayout from '@/pages/inventario/components/InventarioPageLayout';
 
 // Estados con colores
 const ESTADOS = {

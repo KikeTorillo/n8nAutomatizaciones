@@ -3,7 +3,7 @@ import { DollarSign, Calendar, TrendingUp, CreditCard, Package, Download } from 
 import { BackButton, Button, Input } from '@/components/ui';
 import { useToast } from '@/hooks/utils';
 import { useCorteCaja } from '@/hooks/pos';
-import POSNavTabs from '@/components/pos/POSNavTabs';
+import POSNavTabs from '@/pages/pos/components/POSNavTabs';
 
 /**
  * Página de Corte de Caja

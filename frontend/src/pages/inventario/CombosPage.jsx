@@ -14,8 +14,8 @@ import { memo } from 'react';
 import { Layers, Box, Edit2, Trash2 } from 'lucide-react';
 
 import ListadoCRUDPage from '@/components/ui/templates/ListadoCRUDPage';
-import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
-import ComboFormDrawer from '@/components/inventario/ComboFormDrawer';
+import InventarioPageLayout from '@/pages/inventario/components/InventarioPageLayout';
+import ComboFormDrawer from '@/pages/inventario/components/ComboFormDrawer';
 import { useCombos, useEliminarCombo } from '@/hooks/pos';
 import useSucursalStore, { selectSucursalActiva } from '@/store/sucursalStore';
 

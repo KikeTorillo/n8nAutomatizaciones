@@ -5,8 +5,8 @@ import { BackButton, Button, LoadingSpinner } from '@/components/ui';
 import { usePlantilla, usePlantillas } from '@/hooks/otros';
 import { usePlantillaPreview } from '@/hooks/otros/eventos-digitales';
 import { useGoogleFonts } from '@/hooks/utils';
-import { InvitacionDinamica } from '@/components/eventos-digitales';
-import '@/components/eventos-digitales/publico/EventoAnimations.css';
+import { InvitacionDinamica } from '@/pages/eventos-digitales/components';
+import '@/pages/eventos-digitales/components/publico/EventoAnimations.css';
 
 function PlantillaPreview() {
   const { id } = useParams();

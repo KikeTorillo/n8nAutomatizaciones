@@ -19,6 +19,7 @@ import { posApi } from '@/services/api/endpoints';
 import useSucursalStore, { selectSucursalActiva } from '@/store/sucursalStore';
 import { sanitizeParams } from '@/lib/params';
 import { createCRUDHooks, createStatusMutationHook } from '@/hooks/factories';
+import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 import { queryKeys } from '@/hooks/config';
 
 // =========================================================================
@@ -121,6 +122,7 @@ export function useValidarCupon() {
       });
       return response.data.data;
     },
+    onError: createCRUDErrorHandler('fetch', 'Cupón', { 404: 'Cupón no encontrado', 400: 'Cupón no válido o expirado' }),
   });
 }
 
@@ -146,6 +148,7 @@ export function useAplicarCupon() {
       queryClient.invalidateQueries({ queryKey: queryKeys.pos.ventas.detail(variables.ventaPosId), refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: queryKeys.pos.cupones.vigentes, refetchType: 'active' });
     },
+    onError: createCRUDErrorHandler('update', 'Cupón', { 400: 'No se pudo aplicar el cupón', 409: 'El cupón ya fue utilizado' }),
   });
 }
 

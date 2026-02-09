@@ -254,11 +254,11 @@ class CheckoutController {
         }, vendorId);
 
         // ═══════════════════════════════════════════════════════════════
-        // PASO 12: Crear suscripción en el gateway de pagos
+        // PASO 12: Crear en el gateway de pagos (bifurcación por tipo_cobro)
         // ═══════════════════════════════════════════════════════════════
-        // Formato: org_{vendorId}_sus_{suscripcionId}_pago_{pagoId}_cliente_{orgCliente}
         const externalReference = `org_${vendorId}_sus_${suscripcion.id}_pago_${pago.id}_cliente_${organizacionId}`;
         const gateway = await GatewayFactory.getGateway(vendorId);
+        const tipoCobro = plan.tipo_cobro || 'recurrente';
 
         // Determinar email del pagador basado en el entorno del gateway
         let emailPagador;
@@ -272,31 +272,62 @@ class CheckoutController {
             emailPagador = req.user.email;
         }
 
-        const gatewayResponse = await gateway.createSubscription({
-            nombre: `Suscripción ${plan.nombre} - ${periodo}`,
-            precio: precioFinal,
-            moneda: plan.moneda || 'MXN',
-            email: emailPagador,
-            returnUrl: `${FRONTEND_URL}/payment/callback`,
-            externalReference
-        });
+        let gatewayResponse;
+        const baseUrl = process.env.API_BASE_URL || `${req.protocol}://${req.get('host')}`;
+        const webhookUrl = `${baseUrl}/api/v1/suscripciones-negocio/webhooks/mercadopago/${vendorId}`;
+
+        if (tipoCobro === 'unico') {
+            // PAGO ÚNICO: Usar Checkout Pro (preferencia)
+            gatewayResponse = await gateway.createSinglePayment({
+                titulo: `${plan.nombre} - ${periodo}`,
+                precio: precioFinal,
+                moneda: plan.moneda || 'MXN',
+                email: emailPagador,
+                returnUrl: `${FRONTEND_URL}/payment/callback`,
+                notificationUrl: webhookUrl,
+                externalReference
+            });
+
+            // Guardar preference_id en el registro de pago
+            await PagosModel.actualizar(pago.id, {
+                metadata: { preference_id: gatewayResponse.preferenceId }
+            }, vendorId);
+
+            logger.info(`[Checkout ${billingType}] Pago único creado - Plan: ${plan.nombre}, Precio: ${precioFinal}, Preference: ${gatewayResponse.preferenceId}`);
+        } else {
+            // COBRO RECURRENTE: Usar Preapproval (flujo existente)
+            gatewayResponse = await gateway.createSubscription({
+                nombre: `Suscripción ${plan.nombre} - ${periodo}`,
+                precio: precioFinal,
+                moneda: plan.moneda || 'MXN',
+                email: emailPagador,
+                returnUrl: `${FRONTEND_URL}/payment/callback`,
+                externalReference
+            });
+
+            logger.info(`[Checkout ${billingType}] Suscripción ${suscripcion.id} creada - Plan: ${plan.nombre}, Precio: ${precioFinal}, Cliente: ${clienteId}`);
+        }
 
         // ═══════════════════════════════════════════════════════════════
         // PASO 13: Actualizar suscripción con ID del gateway
         // ═══════════════════════════════════════════════════════════════
-        await SuscripcionesModel.actualizarGatewayIds(suscripcion.id, {
-            subscription_id_gateway: gatewayResponse.subscriptionId
-        }, vendorId);
-
-        logger.info(`[Checkout ${billingType}] Suscripción ${suscripcion.id} creada - Plan: ${plan.nombre}, Precio: ${precioFinal}, Cliente: ${clienteId}, Gateway: ${gateway.getGatewayName()}`);
+        if (tipoCobro === 'unico') {
+            // Para pagos únicos no hay subscription_id_gateway
+            // El preference_id ya fue guardado en el pago
+        } else {
+            await SuscripcionesModel.actualizarGatewayIds(suscripcion.id, {
+                subscription_id_gateway: gatewayResponse.subscriptionId
+            }, vendorId);
+        }
 
         res.json({
             success: true,
-            message: 'Checkout iniciado correctamente',
+            message: tipoCobro === 'unico' ? 'Pago único iniciado' : 'Checkout iniciado correctamente',
             data: {
                 init_point: gatewayResponse.checkoutUrl,
                 suscripcion_id: suscripcion.id,
                 pago_id: pago.id,
+                tipo_cobro: tipoCobro,
                 plan: {
                     id: plan.id,
                     nombre: plan.nombre,

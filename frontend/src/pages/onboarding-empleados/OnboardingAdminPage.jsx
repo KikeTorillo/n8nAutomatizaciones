@@ -10,7 +10,7 @@ import {
   Calendar, Clock
 } from 'lucide-react';
 import { Button, ConfirmDialog, StatCardGrid } from '@/components/ui';
-import ProfesionalesPageLayout from '@/components/profesionales/ProfesionalesPageLayout';
+import ProfesionalesPageLayout from '@/pages/profesionales/components/ProfesionalesPageLayout';
 import {
   usePlantillasOnboarding,
   useDashboardOnboarding,

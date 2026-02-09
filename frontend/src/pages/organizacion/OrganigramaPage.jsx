@@ -12,12 +12,12 @@ import {
 } from 'lucide-react';
 
 import { Button, StatCardGrid } from '@/components/ui';
-import ProfesionalesPageLayout from '@/components/profesionales/ProfesionalesPageLayout';
+import ProfesionalesPageLayout from '@/pages/profesionales/components/ProfesionalesPageLayout';
 import { useOrganigrama } from '@/hooks/personas';
 import useThemeStore, { selectResolvedTheme } from '@/store/themeStore';
 
 // Ene 2026: Lazy loading de D3OrgChart (~650KB d3)
-const D3OrgChart = lazy(() => import('@/components/profesionales/D3OrgChart'));
+const D3OrgChart = lazy(() => import('@/pages/profesionales/components/D3OrgChart'));
 
 // Colores por tipo de empleado (para leyenda)
 const TIPO_COLORS = {

@@ -9,7 +9,7 @@ import {
   SuscripcionFormDrawer,
   SuscripcionStatusBadge,
   SuscripcionesNegocioPageLayout,
-} from '@/components/suscripciones-negocio';
+} from './components';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { usePagination, useFilters, normalizePagination, useModalManager } from '@/hooks/utils';
 

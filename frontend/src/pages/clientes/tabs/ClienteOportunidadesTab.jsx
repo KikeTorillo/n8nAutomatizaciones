@@ -38,7 +38,7 @@ import {
 } from '@/hooks/personas';
 import { useEtapasPipeline } from '@/hooks/personas';
 import { useToast } from '@/hooks/utils';
-import OportunidadFormDrawer from '@/components/clientes/OportunidadFormDrawer';
+import OportunidadFormDrawer from '@/pages/clientes/components/OportunidadFormDrawer';
 
 /**
  * Card de oportunidad individual

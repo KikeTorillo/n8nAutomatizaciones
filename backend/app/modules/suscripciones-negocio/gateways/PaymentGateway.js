@@ -206,6 +206,90 @@ class PaymentGateway {
     }
 
     // ====================================================================
+    // PAGOS ÚNICOS
+    // ====================================================================
+
+    /**
+     * Crear un pago único (Checkout Pro / Stripe Checkout Session)
+     *
+     * @param {Object} params - Parámetros del pago
+     * @param {string} params.titulo - Título del producto/servicio
+     * @param {number} params.precio - Precio a cobrar
+     * @param {string} [params.moneda='MXN'] - Código de moneda
+     * @param {string} params.email - Email del pagador
+     * @param {string} params.returnUrl - URL de retorno
+     * @param {string} params.notificationUrl - URL del webhook
+     * @param {string} params.externalReference - Referencia externa para tracking
+     * @returns {Promise<SinglePaymentResult>}
+     * @abstract
+     *
+     * @typedef {Object} SinglePaymentResult
+     * @property {string} preferenceId - ID de la preferencia/sesión en el gateway
+     * @property {string} checkoutUrl - URL para completar el pago
+     * @property {string} status - Estado inicial
+     * @property {Object} [raw] - Respuesta completa del gateway
+     */
+    async createSinglePayment(params) {
+        throw new Error('Método abstracto createSinglePayment() debe ser implementado');
+    }
+
+    // ====================================================================
+    // POINT TERMINAL
+    // ====================================================================
+
+    /**
+     * Crear orden de pago para terminal Point
+     *
+     * @param {Object} params
+     * @param {string} params.terminalId - ID del terminal
+     * @param {number} params.monto - Monto a cobrar
+     * @param {string} params.externalReference - Referencia externa
+     * @param {string} [params.descripcion] - Descripción
+     * @param {string} [params.expirationTime='PT5M'] - Tiempo de expiración
+     * @returns {Promise<OrderResult>}
+     * @abstract
+     *
+     * @typedef {Object} OrderResult
+     * @property {string} orderId - ID de la orden en el gateway
+     * @property {string} status - Estado de la orden
+     * @property {Object} [raw] - Respuesta completa
+     */
+    async createPointOrder(params) {
+        throw new Error('Método abstracto createPointOrder() debe ser implementado');
+    }
+
+    /**
+     * Obtener información de una orden
+     *
+     * @param {string} orderId - ID de la orden
+     * @returns {Promise<Object|null>}
+     * @abstract
+     */
+    async getOrder(orderId) {
+        throw new Error('Método abstracto getOrder() debe ser implementado');
+    }
+
+    /**
+     * Cancelar una orden
+     *
+     * @param {string} orderId - ID de la orden
+     * @returns {Promise<boolean>}
+     * @abstract
+     */
+    async cancelOrder(orderId) {
+        throw new Error('Método abstracto cancelOrder() debe ser implementado');
+    }
+
+    /**
+     * Listar terminales de pago disponibles
+     *
+     * @returns {Promise<Array>}
+     */
+    async listTerminals() {
+        return []; // Default: no terminals
+    }
+
+    // ====================================================================
     // WEBHOOKS
     // ====================================================================
 

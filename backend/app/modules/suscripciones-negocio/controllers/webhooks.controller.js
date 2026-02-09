@@ -187,7 +187,12 @@ class WebhooksController {
         }
 
         // 4. Validar HMAC con credenciales de ESTA organización
-        const esValido = gateway.validateWebhook({ signature, requestId, dataId });
+        // NOTA: Para orders de Point, data.id viene en MAYÚSCULAS pero debe
+        // usarse en minúsculas para la validación HMAC
+        const dataIdForHmac = (req.body.type === 'order' && dataId)
+            ? dataId.toLowerCase()
+            : dataId;
+        const esValido = gateway.validateWebhook({ signature, requestId, dataId: dataIdForHmac });
 
         if (!esValido) {
             logger.warn('Webhook MercadoPago inválido', {
@@ -234,6 +239,9 @@ class WebhooksController {
             } else if (type === 'subscription_authorized_payment') {
                 // Pago de suscripción autorizado - procesar como pago
                 await this._procesarPagoSuscripcionMercadoPago(data.id, organizacionId, gateway);
+            } else if (type === 'order') {
+                // Orden Point Terminal - procesar pago presencial
+                await this._procesarOrdenMercadoPago(normalizedEvent, organizacionId, gateway);
             } else if (normalizedEvent.isUnknown()) {
                 resultado = 'skipped';
                 mensaje = `Evento no manejado: ${type}`;
@@ -387,11 +395,27 @@ class WebhooksController {
 
             // Buscar pago en nuestra BD por transaction_id
             // Nota: organizacionId viene de la URL, no del metadata de MP
-            const pagoLocal = await PagosModel.buscarPorTransactionId(
+            let pagoLocal = await PagosModel.buscarPorTransactionId(
                 'mercadopago',
                 paymentId.toString(),
                 organizacionId
             );
+
+            // Fallback para pagos de Checkout Pro: buscar por external_reference
+            if (!pagoLocal && pagoDetails.raw?.external_reference) {
+                const extRef = pagoDetails.raw.external_reference;
+                const match = extRef.match(/^org_(\d+)_sus_(\d+)_pago_(\d+)_cliente_(\d+)$/);
+                if (match) {
+                    const pagoId = parseInt(match[3]);
+                    pagoLocal = await PagosModel.buscarPorId(pagoId, organizacionId);
+                    if (pagoLocal) {
+                        logger.info('Pago encontrado por external_reference (Checkout Pro)', {
+                            payment_id: paymentId,
+                            pago_id: pagoLocal.id
+                        });
+                    }
+                }
+            }
 
             if (!pagoLocal) {
                 logger.warn('Pago MercadoPago no encontrado en BD', {
@@ -774,6 +798,174 @@ class WebhooksController {
                 authorized_payment_id: authorizedPaymentId,
                 organizacionId,
                 error: error.message
+            });
+        }
+    }
+    // ====================================================================
+    // PROCESADOR DE ÓRDENES MERCADOPAGO (POINT TERMINAL)
+    // ====================================================================
+
+    /**
+     * Procesar evento de orden MercadoPago (Point Terminal)
+     * Evento: order (action: order.processed, order.canceled, order.failed, etc.)
+     *
+     * Point orders incluyen datos completos en el body del webhook.
+     * El external_reference determina el contexto:
+     * - POS: "pos_venta_{ventaId}_org_{orgId}"
+     * - Suscripción: "org_X_sus_Y_pago_Z_cliente_W"
+     *
+     * @param {NormalizedEvent} normalizedEvent - Evento normalizado
+     * @param {number} organizacionId - ID de la organización (del webhook URL)
+     * @param {Object} gateway - Instancia del gateway
+     */
+    static async _procesarOrdenMercadoPago(normalizedEvent, organizacionId, gateway) {
+        try {
+            const orderId = normalizedEvent.resourceId;
+            const action = normalizedEvent.data.action;
+            const externalReference = normalizedEvent.data.externalReference;
+            const internalStatus = normalizedEvent.getInternalOrderStatus();
+
+            logger.info('Procesando orden MercadoPago (Point)', {
+                orderId,
+                action,
+                externalReference,
+                internalStatus,
+                organizacionId
+            });
+
+            if (!externalReference) {
+                // Si no hay external_reference en el body, intentar obtener del API
+                const orderDetails = await gateway.getOrder(orderId);
+                if (!orderDetails) {
+                    logger.warn('Orden Point no encontrada en MercadoPago', { orderId });
+                    return;
+                }
+
+                // Reintentar con external_reference del API
+                return await this._procesarOrdenPorReferencia(
+                    orderId,
+                    action,
+                    orderDetails.external_reference,
+                    internalStatus,
+                    organizacionId,
+                    orderDetails
+                );
+            }
+
+            await this._procesarOrdenPorReferencia(
+                orderId,
+                action,
+                externalReference,
+                internalStatus,
+                organizacionId,
+                null
+            );
+
+        } catch (error) {
+            logger.error('Error procesando orden MercadoPago', {
+                orderId: normalizedEvent.resourceId,
+                organizacionId,
+                error: error.message
+            });
+        }
+    }
+
+    /**
+     * Procesar orden según su external_reference
+     * @private
+     */
+    static async _procesarOrdenPorReferencia(orderId, action, externalReference, internalStatus, organizacionId, orderDetails) {
+        if (!externalReference) {
+            logger.warn('Orden sin external_reference, no se puede procesar', { orderId });
+            return;
+        }
+
+        // Determinar contexto por formato de external_reference
+        const posMatch = externalReference.match(/^pos_venta_(\d+)_org_(\d+)$/);
+        const susMatch = externalReference.match(/^org_(\d+)_sus_(\d+)_pago_(\d+)_cliente_(\d+)$/);
+
+        if (posMatch) {
+            // POS: Actualizar venta_pagos
+            const ventaId = parseInt(posMatch[1]);
+            const orgId = parseInt(posMatch[2]);
+
+            logger.info('Orden Point para POS', { orderId, ventaId, orgId, action });
+
+            const RLSContextManager = require('../../../utils/rlsContextManager');
+
+            if (internalStatus === 'completado') {
+                // Marcar pago como completado via referencia
+                await RLSContextManager.query(orgId, async (db) => {
+                    await db.query(
+                        `UPDATE venta_pagos
+                         SET referencia = $1
+                         WHERE venta_pos_id = $2 AND metodo_pago = 'terminal_mercadopago' AND referencia = $3`,
+                        [orderId, ventaId, orderId]
+                    );
+                });
+
+                logger.info('Pago POS Point completado', { orderId, ventaId });
+            } else if (['cancelado', 'fallido', 'expirado'].includes(internalStatus)) {
+                // Eliminar pago pendiente de terminal
+                await RLSContextManager.query(orgId, async (db) => {
+                    await db.query(
+                        `DELETE FROM venta_pagos
+                         WHERE venta_pos_id = $1 AND metodo_pago = 'terminal_mercadopago' AND referencia = $2`,
+                        [ventaId, orderId]
+                    );
+                });
+
+                logger.info('Pago POS Point eliminado por fallo/cancelación', {
+                    orderId,
+                    ventaId,
+                    status: internalStatus
+                });
+            }
+
+        } else if (susMatch) {
+            // Suscripción: Actualizar pagos_suscripcion
+            const vendorId = parseInt(susMatch[1]);
+            const suscripcionId = parseInt(susMatch[2]);
+            const pagoId = parseInt(susMatch[3]);
+
+            logger.info('Orden Point para suscripción', {
+                orderId,
+                vendorId,
+                suscripcionId,
+                pagoId,
+                action
+            });
+
+            if (internalStatus === 'completado') {
+                await PagosModel.actualizarEstadoBypass(pagoId, 'completado', {
+                    transaction_id: orderId
+                });
+
+                await SuscripcionesModel.cambiarEstadoBypass(
+                    suscripcionId,
+                    'activa',
+                    { razon: 'Pago completado vía Point Terminal' }
+                );
+
+                logger.info('Suscripción activada vía Point Terminal', {
+                    suscripcionId,
+                    orderId
+                });
+            } else if (internalStatus === 'fallido' || internalStatus === 'cancelado') {
+                await PagosModel.actualizarEstadoBypass(pagoId, 'fallido', {
+                    transaction_id: orderId
+                });
+
+                logger.warn('Pago Point para suscripción fallido', {
+                    suscripcionId,
+                    orderId,
+                    status: internalStatus
+                });
+            }
+        } else {
+            logger.warn('Formato de external_reference no reconocido para orden', {
+                orderId,
+                externalReference
             });
         }
     }

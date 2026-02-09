@@ -9,7 +9,7 @@
  * ====================================================================
  */
 
-import ClienteTimeline from '@/components/clientes/ClienteTimeline';
+import ClienteTimeline from '@/pages/clientes/components/ClienteTimeline';
 
 export default function ClienteTimelineTab({ clienteId, usuarios = [] }) {
   return (

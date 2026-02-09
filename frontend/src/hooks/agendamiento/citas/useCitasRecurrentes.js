@@ -3,7 +3,7 @@ import { STALE_TIMES } from '@/app/queryClient';
 import { citasApi } from '@/services/api/endpoints';
 import { useToast } from '../../utils/useToast';
 import useSucursalStore, { selectGetSucursalId } from '@/store/sucursalStore';
-import { createCRUDErrorHandler, getErrorMessage } from '@/hooks/config/errorHandlerFactory';
+import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 import { queryKeys } from '@/hooks/config';
 
 /**
@@ -11,7 +11,7 @@ import { queryKeys } from '@/hooks/config';
  */
 export function useCrearCitaRecurrente() {
   const queryClient = useQueryClient();
-  const { success, error: showError } = useToast();
+  const { success } = useToast();
   const getSucursalId = useSucursalStore(selectGetSucursalId);
 
   return useMutation({
@@ -30,13 +30,7 @@ export function useCrearCitaRecurrente() {
       queryClient.invalidateQueries({ queryKey: queryKeys.agendamiento.citas.all, refetchType: 'active' });
       success(`Serie creada: ${data.citas_creadas?.length || 0} citas`);
     },
-    onError: (error) => {
-      try {
-        createCRUDErrorHandler('create', 'Serie recurrente')(error);
-      } catch (e) {
-        showError(getErrorMessage(e));
-      }
-    },
+    onError: createCRUDErrorHandler('create', 'Serie recurrente'),
   });
 }
 
@@ -62,7 +56,7 @@ export function useSerieCitas(serieId, options = {}) {
  */
 export function useCancelarSerie() {
   const queryClient = useQueryClient();
-  const { success, error: showError } = useToast();
+  const { success } = useToast();
 
   return useMutation({
     mutationFn: async ({ serieId, ...opciones }) => {
@@ -73,13 +67,7 @@ export function useCancelarSerie() {
       queryClient.invalidateQueries({ queryKey: queryKeys.agendamiento.citas.all, refetchType: 'active' });
       success(`${data.citas_canceladas || 0} citas canceladas`);
     },
-    onError: (error) => {
-      try {
-        createCRUDErrorHandler('delete', 'Serie de citas')(error);
-      } catch (e) {
-        showError(getErrorMessage(e));
-      }
-    },
+    onError: createCRUDErrorHandler('delete', 'Serie de citas'),
   });
 }
 
@@ -92,5 +80,6 @@ export function usePreviewRecurrencia() {
       const response = await citasApi.previewRecurrencia(datos);
       return response.data?.data || response.data;
     },
+    onError: createCRUDErrorHandler('fetch', 'Preview de recurrencia'),
   });
 }

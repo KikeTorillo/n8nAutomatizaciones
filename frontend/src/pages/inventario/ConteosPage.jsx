@@ -24,7 +24,7 @@ import {
 } from '@/components/ui';
 import { useModalManager } from '@/hooks/utils';
 import { useToast } from '@/hooks/utils';
-import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
+import InventarioPageLayout from '@/pages/inventario/components/InventarioPageLayout';
 import {
     useConteos,
     useCrearConteo,
@@ -36,7 +36,7 @@ import {
     TIPOS_CONTEO_LABELS,
     ESTADOS_CONTEO_CONFIG,
 } from '@/hooks/inventario';
-import ConteoFormModal from '@/components/inventario/conteos/ConteoFormModal';
+import ConteoFormModal from '@/pages/inventario/components/conteos/ConteoFormModal';
 
 /**
  * Página principal de Conteos de Inventario

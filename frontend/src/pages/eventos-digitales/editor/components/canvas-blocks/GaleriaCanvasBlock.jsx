@@ -4,7 +4,7 @@
 
 import { memo, useCallback } from 'react';
 import { GaleriaCanvasBlock as SharedGaleriaCanvasBlock } from '@/components/editor-framework';
-import { MarcoFoto } from '@/components/eventos-digitales';
+import { MarcoFoto } from '@/pages/eventos-digitales/components';
 
 function GaleriaCanvasBlock({ bloque, tema, galeria = [] }) {
   const contenido = bloque.contenido || {};

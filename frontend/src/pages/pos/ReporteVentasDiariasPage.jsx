@@ -9,7 +9,7 @@ import {
 } from '@/components/ui';
 import { useToast } from '@/hooks/utils';
 import { useVentasDiarias } from '@/hooks/pos';
-import POSNavTabs from '@/components/pos/POSNavTabs';
+import POSNavTabs from '@/pages/pos/components/POSNavTabs';
 import { exportarReporteVentasDiarias } from '@/utils/exportToExcel';
 
 /**

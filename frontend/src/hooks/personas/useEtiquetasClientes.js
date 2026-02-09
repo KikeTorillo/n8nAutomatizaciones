@@ -124,6 +124,7 @@ export function useAgregarEtiquetaCliente() {
       queryClient.invalidateQueries({ queryKey: queryKeys.personas.clientes.all, refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: queryKeys.catalogos.etiquetasClientes, refetchType: 'active' });
     },
+    onError: createCRUDErrorHandler('update', 'Etiqueta de cliente'),
   });
 }
 
@@ -147,5 +148,6 @@ export function useQuitarEtiquetaCliente() {
       queryClient.invalidateQueries({ queryKey: queryKeys.personas.clientes.all, refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: queryKeys.catalogos.etiquetasClientes, refetchType: 'active' });
     },
+    onError: createCRUDErrorHandler('delete', 'Etiqueta de cliente'),
   });
 }

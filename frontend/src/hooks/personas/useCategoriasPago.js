@@ -1,47 +1,50 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { STALE_TIMES } from '@/app/queryClient';
-import { categoriasPagoApi } from '@/services/api/endpoints';
-import { useToast } from '@/hooks/utils';
-import { queryKeys } from '@/hooks/config';
-
 /**
  * Hook para gestionar categorías de pago
  * Clasificación de empleados para nómina
+ * Feb 2026 - Migrado a createCRUDHooks
  */
+import { useQuery } from '@tanstack/react-query';
+import { STALE_TIMES } from '@/app/queryClient';
+import { categoriasPagoApi } from '@/services/api/endpoints';
+import { createCRUDHooks } from '@/hooks/factories';
+import { queryKeys } from '@/hooks/config';
 
-// Query Keys
-export const categoriasPagoKeys = {
-  all: queryKeys.catalogos.categoriasPago,
-  lists: () => [...categoriasPagoKeys.all, 'list'],
-  list: (filters) => [...categoriasPagoKeys.lists(), { filters }],
-  details: () => [...categoriasPagoKeys.all, 'detail'],
-  detail: (id) => [...categoriasPagoKeys.details(), id],
-  estadisticas: () => [...categoriasPagoKeys.all, 'estadisticas'],
-};
+// =========================================================================
+// HOOKS CRUD VIA FACTORY
+// =========================================================================
 
-/**
- * Hook para listar categorías de pago
- * @param {Object} filtros - { activas, ordenar_por }
- * @returns {Object} Query de React Query
- */
-export const useCategoriasPago = (filtros = {}) => {
-  return useQuery({
-    queryKey: categoriasPagoKeys.list(filtros),
-    queryFn: async () => {
-      const response = await categoriasPagoApi.listar(filtros);
-      return response.data.data;
-    },
-    staleTime: STALE_TIMES.SEMI_STATIC, // 5 minutos
-  });
-};
+const hooks = createCRUDHooks({
+  name: 'categoriaPago',
+  namePlural: 'categoriasPago',
+  api: categoriasPagoApi,
+  baseKey: 'categorias-pago',
+  apiMethods: {
+    list: 'listar',
+    get: 'obtener',
+    create: 'crear',
+    update: 'actualizar',
+    delete: 'eliminar',
+  },
+  staleTime: STALE_TIMES.SEMI_STATIC,
+});
+
+// Exportar hooks CRUD
+export const useCategoriasPago = hooks.useList;
+export const useCategoriaPago = hooks.useDetail;
+export const useCrearCategoriaPago = hooks.useCreate;
+export const useActualizarCategoriaPago = hooks.useUpdate;
+export const useEliminarCategoriaPago = hooks.useDelete;
+
+// =========================================================================
+// HOOKS ESPECIALIZADOS
+// =========================================================================
 
 /**
  * Hook para obtener estadísticas de uso de categorías
- * @returns {Object} Query de React Query
  */
 export const useCategoriasPagoEstadisticas = () => {
   return useQuery({
-    queryKey: categoriasPagoKeys.estadisticas(),
+    queryKey: [...queryKeys.catalogos.categoriasPago, 'estadisticas'],
     queryFn: async () => {
       const response = await categoriasPagoApi.estadisticas();
       return response.data.data;
@@ -51,97 +54,8 @@ export const useCategoriasPagoEstadisticas = () => {
 };
 
 /**
- * Hook para obtener una categoría de pago por ID
- * @param {number} id
- * @param {Object} options - Opciones adicionales para useQuery
- * @returns {Object} Query de React Query
- */
-export const useCategoriaPago = (id, options = {}) => {
-  return useQuery({
-    queryKey: categoriasPagoKeys.detail(id),
-    queryFn: async () => {
-      const response = await categoriasPagoApi.obtener(id);
-      return response.data.data;
-    },
-    enabled: !!id,
-    ...options,
-  });
-};
-
-/**
- * Hook para crear una categoría de pago
- * @returns {Object} Mutation de React Query
- */
-export const useCrearCategoriaPago = () => {
-  const queryClient = useQueryClient();
-  const { success, error } = useToast();
-
-  return useMutation({
-    mutationFn: async (data) => {
-      const response = await categoriasPagoApi.crear(data);
-      return response.data.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: categoriasPagoKeys.lists(), refetchType: 'active' });
-      success('Categoría de pago creada exitosamente');
-    },
-    onError: (err) => {
-      error(err.response?.data?.mensaje || 'Error al crear categoría de pago');
-    },
-  });
-};
-
-/**
- * Hook para actualizar una categoría de pago
- * @returns {Object} Mutation de React Query
- */
-export const useActualizarCategoriaPago = () => {
-  const queryClient = useQueryClient();
-  const { success, error } = useToast();
-
-  return useMutation({
-    mutationFn: async ({ id, data }) => {
-      const response = await categoriasPagoApi.actualizar(id, data);
-      return response.data.data;
-    },
-    onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: categoriasPagoKeys.lists(), refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: categoriasPagoKeys.detail(variables.id), refetchType: 'active' });
-      success('Categoría de pago actualizada exitosamente');
-    },
-    onError: (err) => {
-      error(err.response?.data?.mensaje || 'Error al actualizar categoría de pago');
-    },
-  });
-};
-
-/**
- * Hook para eliminar una categoría de pago
- * @returns {Object} Mutation de React Query
- */
-export const useEliminarCategoriaPago = () => {
-  const queryClient = useQueryClient();
-  const { success, error } = useToast();
-
-  return useMutation({
-    mutationFn: async (id) => {
-      const response = await categoriasPagoApi.eliminar(id);
-      return response.data.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: categoriasPagoKeys.lists(), refetchType: 'active' });
-      success('Categoría de pago eliminada exitosamente');
-    },
-    onError: (err) => {
-      error(err.response?.data?.mensaje || 'Error al eliminar categoría de pago');
-    },
-  });
-};
-
-/**
  * Hook para obtener opciones de categoría para select
  * Devuelve las categorías activas formateadas para usar en un Select
- * @returns {Object} Query con categorías formateadas
  */
 export const useCategoriasPagoOptions = () => {
   const query = useCategoriasPago({ activas: true });

@@ -14,9 +14,9 @@
 
 import { Tag, Pencil, Trash2, Users } from 'lucide-react';
 import { useEtiquetas, useEliminarEtiqueta } from '@/hooks/personas';
-import EtiquetaFormDrawer from '@/components/clientes/EtiquetaFormDrawer';
+import EtiquetaFormDrawer from '@/pages/clientes/components/EtiquetaFormDrawer';
 import { ListadoCRUDPage } from '@/components/ui';
-import ClientesPageLayout from '@/components/clientes/ClientesPageLayout';
+import ClientesPageLayout from '@/pages/clientes/components/ClientesPageLayout';
 
 // ==================== UTILIDADES ====================
 

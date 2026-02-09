@@ -22,7 +22,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { recordatoriosApi } from '@/services/api/endpoints';
 import { useToast } from '../utils/useToast';
-import { createCRUDErrorHandler, getErrorMessage } from '@/hooks/config/errorHandlerFactory';
+import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 
 // ==================== QUERY KEYS ====================
 // Nota: No hay equivalente centralizado para recordatorios en queryKeys.
@@ -126,13 +126,7 @@ export function useActualizarConfiguracion() {
       queryClient.invalidateQueries({ queryKey: recordatoriosKeys.configuracion(), refetchType: 'active' });
       success('Configuracion de recordatorios actualizada');
     },
-    onError: (error) => {
-      try {
-        createCRUDErrorHandler('update', 'Configuracion de recordatorios')(error);
-      } catch (e) {
-        showError(getErrorMessage(e));
-      }
-    },
+    onError: createCRUDErrorHandler('update', 'Configuracion de recordatorios'),
   });
 }
 
@@ -159,13 +153,7 @@ export function useEnviarPrueba() {
     onSuccess: (data) => {
       success(`Mensaje de prueba enviado via ${data.plataforma}`);
     },
-    onError: (error) => {
-      try {
-        createCRUDErrorHandler('create', 'Mensaje de prueba')(error);
-      } catch (e) {
-        showError(getErrorMessage(e));
-      }
-    },
+    onError: createCRUDErrorHandler('create', 'Mensaje de prueba'),
   });
 }
 

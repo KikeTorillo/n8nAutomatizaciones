@@ -3,7 +3,7 @@ import { Package, Plus, Pencil, Trash2, MoreVertical } from 'lucide-react';
 import { Button, DropdownMenu } from '@/components/ui';
 import { ListadoCRUDPage } from '@/components/ui/templates';
 import { usePlanes, useEliminarPlan } from '@/hooks/suscripciones-negocio';
-import { PlanFormDrawer, PlanCard, SuscripcionesNegocioPageLayout } from '@/components/suscripciones-negocio';
+import { PlanFormDrawer, PlanCard, SuscripcionesNegocioPageLayout } from './components';
 import { formatCurrency } from '@/lib/utils';
 
 /**

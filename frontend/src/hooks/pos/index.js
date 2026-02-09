@@ -21,7 +21,7 @@ export {
 } from './usePOS';
 
 // useVentas - todos los hooks de ventas (prioridad sobre usePOS)
-export * from './useVentas';
+export * from './ventas';
 
 // Otros hooks de POS
 export * from './usePOSCart';
@@ -33,5 +33,5 @@ export * from './useCombos';
 export * from './useModificadores';
 export * from './useAsignacionesModificadores';
 export * from './useCombosModificadoresPOS';
-export * from './useLealtad';
+export * from './lealtad';
 export { useTiposVenta, TIPO_VENTA, TIPOS_VENTA_KEYS } from './useTiposVenta';

@@ -10,13 +10,13 @@ import {
   useTreeExpansion
 } from '@/components/ui';
 import { useToast } from '@/hooks/utils';
-import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
+import InventarioPageLayout from '@/pages/inventario/components/InventarioPageLayout';
 import {
   useCategorias,
   useArbolCategorias,
   useEliminarCategoria,
 } from '@/hooks/inventario';
-import CategoriaFormDrawer from '@/components/inventario/CategoriaFormDrawer';
+import CategoriaFormDrawer from '@/pages/inventario/components/CategoriaFormDrawer';
 
 /**
  * Página principal de Gestión de Categorías

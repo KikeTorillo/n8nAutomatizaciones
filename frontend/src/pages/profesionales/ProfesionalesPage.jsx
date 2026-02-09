@@ -26,11 +26,11 @@ import {
   Modal,
   ViewTabs,
 } from '@/components/ui';
-import ProfesionalesPageLayout from '@/components/profesionales/ProfesionalesPageLayout';
-import ProfesionalesList from '@/components/profesionales/ProfesionalesList';
-import HorariosProfesionalModal from '@/components/profesionales/HorariosProfesionalModal';
-import ServiciosProfesionalModal from '@/components/profesionales/ServiciosProfesionalModal';
-import ProfesionalFormDrawer from '@/components/profesionales/ProfesionalFormDrawer';
+import ProfesionalesPageLayout from '@/pages/profesionales/components/ProfesionalesPageLayout';
+import ProfesionalesList from '@/pages/profesionales/components/ProfesionalesList';
+import HorariosProfesionalModal from '@/pages/profesionales/components/HorariosProfesionalModal';
+import ServiciosProfesionalModal from '@/pages/profesionales/components/ServiciosProfesionalModal';
+import ProfesionalFormDrawer from '@/pages/profesionales/components/ProfesionalFormDrawer';
 import { useProfesionales, ESTADOS_LABORALES } from '@/hooks/personas';
 import { useDepartamentos } from '@/hooks/personas';
 import { useToast, useExportCSV, useFilters } from '@/hooks/utils';

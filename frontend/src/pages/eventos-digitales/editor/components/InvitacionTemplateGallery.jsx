@@ -13,7 +13,7 @@ import { memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Check, X } from 'lucide-react';
 import { TemplateGalleryModal } from '@/components/editor-framework';
-import { InvitacionDinamica } from '@/components/eventos-digitales';
+import { InvitacionDinamica } from '@/pages/eventos-digitales/components';
 import { usePlantillas } from '@/hooks/otros/eventos-digitales';
 import { usePlantillaPreview } from '@/hooks/otros/eventos-digitales';
 import { useGoogleFonts } from '@/hooks/utils';

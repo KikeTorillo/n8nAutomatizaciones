@@ -1,6 +1,6 @@
 import { Users, TrendingUp, DollarSign, Percent } from 'lucide-react';
 import { StatCard } from '@/components/ui';
-import { SuscripcionesNegocioPageLayout } from '@/components/suscripciones-negocio';
+import { SuscripcionesNegocioPageLayout } from './components';
 import { useMetricasDashboard } from '@/hooks/suscripciones-negocio';
 import { formatCurrency } from '@/lib/utils';
 

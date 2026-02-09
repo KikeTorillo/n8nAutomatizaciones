@@ -25,7 +25,7 @@ export {
   // Reportes (consolidados en useVentas.js)
   useCorteCaja,
   useVentasDiarias,
-} from './useVentas';
+} from './ventas';
 
 // ==================== PAGOS ====================
 export {

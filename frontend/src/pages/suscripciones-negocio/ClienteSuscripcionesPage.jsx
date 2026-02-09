@@ -43,7 +43,7 @@ import {
 } from '@/hooks/suscripciones-negocio';
 
 // Componentes locales
-import { CrearSuscripcionClienteDrawer } from '@/components/suscripciones-negocio';
+import { CrearSuscripcionClienteDrawer } from './components';
 
 // Utils
 import { formatDistanceToNow, format } from 'date-fns';

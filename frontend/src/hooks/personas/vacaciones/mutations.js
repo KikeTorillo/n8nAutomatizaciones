@@ -26,13 +26,7 @@ export function useActualizarPoliticaVacaciones() {
       queryClient.invalidateQueries({ queryKey: VACACIONES_KEYS.politica(), refetchType: 'active' });
       toast.success('Política de vacaciones actualizada');
     },
-    onError: (error) => {
-      try {
-        createCRUDErrorHandler('update', 'Política')(error);
-      } catch (e) {
-        toast.error(e.message);
-      }
-    },
+    onError: createCRUDErrorHandler('update', 'Política'),
   });
 }
 
@@ -54,13 +48,7 @@ export function useCrearNivelVacaciones() {
       queryClient.invalidateQueries({ queryKey: VACACIONES_KEYS.all, refetchType: 'active' });
       toast.success('Nivel creado correctamente');
     },
-    onError: (error) => {
-      try {
-        createCRUDErrorHandler('create', 'Nivel')(error);
-      } catch (e) {
-        toast.error(e.message);
-      }
-    },
+    onError: createCRUDErrorHandler('create', 'Nivel'),
   });
 }
 
@@ -80,13 +68,7 @@ export function useActualizarNivelVacaciones() {
       queryClient.invalidateQueries({ queryKey: VACACIONES_KEYS.all, refetchType: 'active' });
       toast.success('Nivel actualizado');
     },
-    onError: (error) => {
-      try {
-        createCRUDErrorHandler('update', 'Nivel')(error);
-      } catch (e) {
-        toast.error(e.message);
-      }
-    },
+    onError: createCRUDErrorHandler('update', 'Nivel'),
   });
 }
 
@@ -106,13 +88,7 @@ export function useEliminarNivelVacaciones() {
       queryClient.invalidateQueries({ queryKey: VACACIONES_KEYS.all, refetchType: 'active' });
       toast.success('Nivel eliminado');
     },
-    onError: (error) => {
-      try {
-        createCRUDErrorHandler('delete', 'Nivel')(error);
-      } catch (e) {
-        toast.error(e.message);
-      }
-    },
+    onError: createCRUDErrorHandler('delete', 'Nivel'),
   });
 }
 
@@ -133,13 +109,7 @@ export function useCrearNivelesPreset() {
       const pais = variables.pais === 'mexico' ? 'México (LFT)' : 'Colombia';
       toast.success(`Niveles de ${pais} creados correctamente`);
     },
-    onError: (error) => {
-      try {
-        createCRUDErrorHandler('create', 'Niveles preset')(error);
-      } catch (e) {
-        toast.error(e.message);
-      }
-    },
+    onError: createCRUDErrorHandler('create', 'Niveles preset'),
   });
 }
 
@@ -161,13 +131,7 @@ export function useAjustarSaldo() {
       queryClient.invalidateQueries({ queryKey: VACACIONES_KEYS.all, refetchType: 'active' });
       toast.success('Saldo ajustado correctamente');
     },
-    onError: (error) => {
-      try {
-        createCRUDErrorHandler('update', 'Saldo')(error);
-      } catch (e) {
-        toast.error(e.message);
-      }
-    },
+    onError: createCRUDErrorHandler('update', 'Saldo'),
   });
 }
 
@@ -187,13 +151,7 @@ export function useGenerarSaldosAnio() {
       queryClient.invalidateQueries({ queryKey: VACACIONES_KEYS.all, refetchType: 'active' });
       toast.success(`Saldos generados: ${result.creados} nuevos, ${result.actualizados} actualizados`);
     },
-    onError: (error) => {
-      try {
-        createCRUDErrorHandler('create', 'Saldos')(error);
-      } catch (e) {
-        toast.error(e.message);
-      }
-    },
+    onError: createCRUDErrorHandler('create', 'Saldos'),
   });
 }
 
@@ -215,13 +173,7 @@ export function useCrearSolicitudVacaciones() {
       queryClient.invalidateQueries({ queryKey: VACACIONES_KEYS.all, refetchType: 'active' });
       toast.success('Solicitud de vacaciones enviada');
     },
-    onError: (error) => {
-      try {
-        createCRUDErrorHandler('create', 'Solicitud')(error);
-      } catch (e) {
-        toast.error(e.message);
-      }
-    },
+    onError: createCRUDErrorHandler('create', 'Solicitud'),
   });
 }
 
@@ -241,13 +193,7 @@ export function useAprobarSolicitud() {
       queryClient.invalidateQueries({ queryKey: VACACIONES_KEYS.all, refetchType: 'active' });
       toast.success('Solicitud aprobada. Se ha creado el bloqueo en el calendario.');
     },
-    onError: (error) => {
-      try {
-        createCRUDErrorHandler('update', 'Solicitud')(error);
-      } catch (e) {
-        toast.error(e.message);
-      }
-    },
+    onError: createCRUDErrorHandler('update', 'Solicitud'),
   });
 }
 
@@ -267,13 +213,7 @@ export function useRechazarSolicitud() {
       queryClient.invalidateQueries({ queryKey: VACACIONES_KEYS.all, refetchType: 'active' });
       toast.success('Solicitud rechazada');
     },
-    onError: (error) => {
-      try {
-        createCRUDErrorHandler('update', 'Solicitud')(error);
-      } catch (e) {
-        toast.error(e.message);
-      }
-    },
+    onError: createCRUDErrorHandler('update', 'Solicitud'),
   });
 }
 
@@ -293,12 +233,6 @@ export function useCancelarSolicitud() {
       queryClient.invalidateQueries({ queryKey: VACACIONES_KEYS.all, refetchType: 'active' });
       toast.success('Solicitud cancelada');
     },
-    onError: (error) => {
-      try {
-        createCRUDErrorHandler('update', 'Solicitud')(error);
-      } catch (e) {
-        toast.error(e.message);
-      }
-    },
+    onError: createCRUDErrorHandler('update', 'Solicitud'),
   });
 }

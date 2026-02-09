@@ -27,7 +27,7 @@ import {
   IconoPrincipal,
   TituloTematico,
   AddToCalendar,
-} from '@/components/eventos-digitales';
+} from '@/pages/eventos-digitales/components';
 
 /**
  * Hero Invitación Canvas Block

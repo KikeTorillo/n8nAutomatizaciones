@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, Crown, ChevronDown, ChevronUp, Sparkles } from 'lucide-react';
 import { BackButton, Button, LoadingSpinner } from '@/components/ui';
-import { InvitacionDinamica } from '@/components/eventos-digitales';
+import { InvitacionDinamica } from '@/pages/eventos-digitales/components';
 import { usePlantillas } from '@/hooks/otros';
 import { usePlantillaPreview } from '@/hooks/otros/eventos-digitales';
 import { TIPOS_EVENTO } from '@/schemas/evento.schema';

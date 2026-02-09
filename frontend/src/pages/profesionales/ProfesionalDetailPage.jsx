@@ -18,21 +18,21 @@ import {
   DetailLoadingState,
   DetailNotFoundState,
 } from '@/components/ui';
-import ProfesionalHeader from '@/components/profesionales/ProfesionalHeader';
-import ProfesionalProgressBar from '@/components/profesionales/ProfesionalProgressBar';
+import ProfesionalHeader from '@/pages/profesionales/components/ProfesionalHeader';
+import ProfesionalProgressBar from '@/pages/profesionales/components/ProfesionalProgressBar';
 import { useProfesional } from '@/hooks/personas';
 
 // Tab principal (carga eager)
-import GeneralTab from '@/components/profesionales/tabs/GeneralTab';
+import GeneralTab from '@/pages/profesionales/components/tabs/GeneralTab';
 
 // Tabs secundarios (carga lazy para mejor performance)
-const TrabajoTab = lazy(() => import('@/components/profesionales/tabs/TrabajoTab'));
-const PersonalTab = lazy(() => import('@/components/profesionales/tabs/PersonalTab'));
-const CurriculumTab = lazy(() => import('@/components/profesionales/tabs/CurriculumTab'));
-const DocumentosTab = lazy(() => import('@/components/profesionales/tabs/DocumentosTab'));
-const CompensacionTab = lazy(() => import('@/components/profesionales/tabs/CompensacionTab'));
-const AusenciasTab = lazy(() => import('@/components/profesionales/tabs/AusenciasTab'));
-const ConfiguracionTab = lazy(() => import('@/components/profesionales/tabs/ConfiguracionTab'));
+const TrabajoTab = lazy(() => import('@/pages/profesionales/components/tabs/TrabajoTab'));
+const PersonalTab = lazy(() => import('@/pages/profesionales/components/tabs/PersonalTab'));
+const CurriculumTab = lazy(() => import('@/pages/profesionales/components/tabs/CurriculumTab'));
+const DocumentosTab = lazy(() => import('@/pages/profesionales/components/tabs/DocumentosTab'));
+const CompensacionTab = lazy(() => import('@/pages/profesionales/components/tabs/CompensacionTab'));
+const AusenciasTab = lazy(() => import('@/pages/profesionales/components/tabs/AusenciasTab'));
+const ConfiguracionTab = lazy(() => import('@/pages/profesionales/components/tabs/ConfiguracionTab'));
 
 // Fallback para tabs lazy
 function TabLoadingFallback() {

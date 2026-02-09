@@ -4,9 +4,9 @@ import {
   StandardRowActions,
   ListadoCRUDPage
 } from '@/components/ui';
-import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
+import InventarioPageLayout from '@/pages/inventario/components/InventarioPageLayout';
 import { useProveedores, useEliminarProveedor } from '@/hooks/inventario';
-import ProveedorFormDrawer from '@/components/inventario/ProveedorFormDrawer';
+import ProveedorFormDrawer from '@/pages/inventario/components/ProveedorFormDrawer';
 
 /**
  * Configuracion de columnas para la tabla de proveedores

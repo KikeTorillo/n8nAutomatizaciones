@@ -16,7 +16,7 @@ import {
   StatCardGrid
 } from '@/components/ui';
 import { useToast, useExportCSV, useFilters, useModalManager } from '@/hooks/utils';
-import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
+import InventarioPageLayout from '@/pages/inventario/components/InventarioPageLayout';
 import {
   useNumerosSerie,
   useNumeroSerie,

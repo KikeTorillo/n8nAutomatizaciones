@@ -21,12 +21,12 @@ import {
   ToggleSwitch,
 } from '@/components/ui';
 import { useToast, useFilters, useSavedFilters, useExportCSV } from '@/hooks/utils';
-import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
+import InventarioPageLayout from '@/pages/inventario/components/InventarioPageLayout';
 import { useProductos, useEliminarProducto, useCategorias, useProveedores, useProductosStockFiltrado } from '@/hooks/inventario';
-import ProductoFormDrawer from '@/components/inventario/ProductoFormDrawer';
-import BulkProductosModal from '@/components/inventario/BulkProductosModal';
-import AjustarStockModal from '@/components/inventario/AjustarStockModal';
-import GenerarEtiquetaModal from '@/components/inventario/GenerarEtiquetaModal';
+import ProductoFormDrawer from '@/pages/inventario/components/ProductoFormDrawer';
+import BulkProductosModal from '@/pages/inventario/components/BulkProductosModal';
+import AjustarStockModal from '@/pages/inventario/components/AjustarStockModal';
+import GenerarEtiquetaModal from '@/pages/inventario/components/GenerarEtiquetaModal';
 import {
   ProductoRowActions,
   createProductosColumns,

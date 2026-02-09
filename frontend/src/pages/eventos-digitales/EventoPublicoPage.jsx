@@ -9,9 +9,9 @@ import {
   useConfirmarRSVP,
 } from '@/hooks/otros';
 import { eventosDigitalesApi } from '@/services/api/endpoints';
-import { InvitacionDinamica } from '@/components/eventos-digitales';
+import { InvitacionDinamica } from '@/pages/eventos-digitales/components';
 import { INVITACION_TEMA_DEFAULT, crearBloqueAperturaLegacy } from './constants';
-import '@/components/eventos-digitales/publico/EventoAnimations.css';
+import '@/pages/eventos-digitales/components/publico/EventoAnimations.css';
 
 /**
  * Página pública del evento digital (RSVP)

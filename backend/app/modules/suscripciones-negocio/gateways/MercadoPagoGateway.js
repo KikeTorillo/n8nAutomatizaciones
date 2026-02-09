@@ -310,6 +310,109 @@ class MercadoPagoGateway extends PaymentGateway {
     }
 
     // ====================================================================
+    // PAGOS ÚNICOS (CHECKOUT PRO)
+    // ====================================================================
+
+    /**
+     * @override
+     * @param {Object} params
+     * @returns {Promise<SinglePaymentResult>}
+     */
+    async createSinglePayment(params) {
+        await this._ensureInitialized();
+
+        const { titulo, precio, moneda = 'MXN', email, returnUrl, notificationUrl, externalReference } = params;
+
+        logger.info('[MercadoPagoGateway] Creando pago único (Checkout Pro)', {
+            organizacionId: this.organizacionId,
+            titulo,
+            precio,
+            email
+        });
+
+        const result = await this._mpService.crearCheckoutPreference({
+            titulo,
+            precio,
+            moneda,
+            email,
+            returnUrl,
+            notificationUrl,
+            externalReference
+        });
+
+        return {
+            preferenceId: result.id,
+            checkoutUrl: result.init_point,
+            status: 'pending',
+            raw: result
+        };
+    }
+
+    // ====================================================================
+    // POINT TERMINAL
+    // ====================================================================
+
+    /**
+     * @override
+     * @param {Object} params
+     * @returns {Promise<OrderResult>}
+     */
+    async createPointOrder(params) {
+        await this._ensureInitialized();
+
+        const { terminalId, monto, externalReference, descripcion, expirationTime } = params;
+
+        logger.info('[MercadoPagoGateway] Creando orden Point', {
+            organizacionId: this.organizacionId,
+            terminalId,
+            monto
+        });
+
+        const result = await this._mpService.crearOrdenPoint({
+            terminalId,
+            monto,
+            externalReference,
+            descripcion,
+            expirationTime
+        });
+
+        return {
+            orderId: result.id,
+            status: result.status,
+            raw: result
+        };
+    }
+
+    /**
+     * @override
+     * @param {string} orderId
+     * @returns {Promise<Object|null>}
+     */
+    async getOrder(orderId) {
+        await this._ensureInitialized();
+        return await this._mpService.obtenerOrden(orderId);
+    }
+
+    /**
+     * @override
+     * @param {string} orderId
+     * @returns {Promise<boolean>}
+     */
+    async cancelOrder(orderId) {
+        await this._ensureInitialized();
+        return await this._mpService.cancelarOrden(orderId);
+    }
+
+    /**
+     * @override
+     * @returns {Promise<Array>}
+     */
+    async listTerminals() {
+        await this._ensureInitialized();
+        return await this._mpService.listarTerminales();
+    }
+
+    // ====================================================================
     // WEBHOOKS
     // ====================================================================
 
@@ -358,6 +461,11 @@ class MercadoPagoGateway extends PaymentGateway {
         // Eventos de pago directo (payment)
         if (type === 'payment') {
             return this._normalizePayment(rawEvent);
+        }
+
+        // Eventos de orden (Point Terminal)
+        if (type === 'order') {
+            return this._normalizeOrder(rawEvent);
         }
 
         // Evento desconocido
@@ -418,6 +526,40 @@ class MercadoPagoGateway extends PaymentGateway {
                 requiresStatusCheck: true,
                 isSubscriptionPayment: true
             }
+        });
+    }
+
+    /**
+     * Normalizar evento order (Point Terminal)
+     * @private
+     */
+    _normalizeOrder(rawEvent) {
+        const { action, data } = rawEvent;
+        const orderId = data?.id?.toString();
+
+        const actionMap = {
+            'order.processed':       EventTypes.ORDER_PROCESSED,
+            'order.canceled':        EventTypes.ORDER_CANCELLED,
+            'order.failed':          EventTypes.ORDER_FAILED,
+            'order.expired':         EventTypes.ORDER_EXPIRED,
+            'order.refunded':        EventTypes.ORDER_REFUNDED,
+            'order.action_required': EventTypes.ORDER_ACTION_REQUIRED,
+        };
+
+        return new NormalizedEvent({
+            type: actionMap[action] || EventTypes.UNKNOWN,
+            gateway: 'mercadopago',
+            resourceId: orderId,
+            resourceType: 'order',
+            data: {
+                action,
+                orderId,
+                externalReference: data?.external_reference,
+                totalPaidAmount: data?.total_paid_amount,
+                transactions: data?.transactions,
+            },
+            raw: rawEvent,
+            metadata: { isPointPayment: true }
         });
     }
 

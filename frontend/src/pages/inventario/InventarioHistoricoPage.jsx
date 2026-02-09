@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { Calendar, RefreshCw, Clock, Package, TrendingUp, TrendingDown, Minus, AlertCircle, Download, Filter, X } from 'lucide-react';
 import { Button, EmptyState, Select } from '@/components/ui';
 import { useToast } from '@/hooks/utils';
-import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
+import InventarioPageLayout from '@/pages/inventario/components/InventarioPageLayout';
 import { useInventoryAtDate, useFechasDisponibles, useGenerarSnapshot, useCompararInventario } from '@/hooks/inventario';
 import { useCategorias } from '@/hooks/inventario';
 import { format, parseISO } from 'date-fns';

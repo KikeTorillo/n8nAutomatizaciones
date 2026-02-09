@@ -6,7 +6,7 @@ import { useAuthStore, selectUser } from '@/features/auth';
 import { useModulos } from '@/hooks/sistema';
 import { BackButton, Button, LimitProgressBar } from '@/components/ui';
 import CitasDelDia from '@/components/dashboard/CitasDelDia';
-import AlertasWidget from '@/components/inventario/AlertasWidget';
+import AlertasWidget from '@/pages/inventario/components/AlertasWidget';
 import { useEstadisticasOrganizacion } from '@/hooks/otros';
 import { useCitasDelDia } from '@/hooks/agendamiento';
 import {

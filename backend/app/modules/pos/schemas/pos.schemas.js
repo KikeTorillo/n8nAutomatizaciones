@@ -122,7 +122,7 @@ const posSchemas = {
 
             // Ene 2026: Opcional para soportar pago split (se asigna 'mixto' cuando hay múltiples pagos)
             metodo_pago: Joi.string()
-                .valid('efectivo', 'tarjeta_debito', 'tarjeta_credito', 'transferencia', 'mixto', 'qr_mercadopago')
+                .valid('efectivo', 'tarjeta_debito', 'tarjeta_credito', 'transferencia', 'mixto', 'qr_mercadopago', 'terminal_mercadopago')
                 .optional()
                 .messages({
                     'any.only': 'metodo_pago inválido'
@@ -213,7 +213,7 @@ const posSchemas = {
             profesional_id: Joi.number().integer().positive().optional(),
 
             metodo_pago: Joi.string()
-                .valid('efectivo', 'tarjeta_debito', 'tarjeta_credito', 'transferencia', 'mixto', 'qr_mercadopago')
+                .valid('efectivo', 'tarjeta_debito', 'tarjeta_credito', 'transferencia', 'mixto', 'qr_mercadopago', 'terminal_mercadopago')
                 .optional(),
 
             fecha_desde: Joi.string().isoDate().optional(),
@@ -265,7 +265,7 @@ const posSchemas = {
             }),
 
             metodo_pago: Joi.string()
-                .valid('efectivo', 'tarjeta_debito', 'tarjeta_credito', 'transferencia', 'mixto', 'qr_mercadopago')
+                .valid('efectivo', 'tarjeta_debito', 'tarjeta_credito', 'transferencia', 'mixto', 'qr_mercadopago', 'terminal_mercadopago')
                 .required()
                 .messages({
                     'any.required': 'metodo_pago es requerido'
@@ -425,7 +425,7 @@ const posSchemas = {
             descuento_monto: Joi.number().min(0).optional(),
             impuestos: Joi.number().min(0).optional(),
             metodo_pago: Joi.string()
-                .valid('efectivo', 'tarjeta_debito', 'tarjeta_credito', 'transferencia', 'mixto', 'qr_mercadopago')
+                .valid('efectivo', 'tarjeta_debito', 'tarjeta_credito', 'transferencia', 'mixto', 'qr_mercadopago', 'terminal_mercadopago')
                 .optional(),
             fecha_apartado: Joi.date().iso().optional().allow(null),
             fecha_vencimiento_apartado: Joi.date().iso().optional().allow(null),
@@ -617,7 +617,7 @@ const posSchemas = {
                 .items(
                     Joi.object({
                         metodo_pago: Joi.string()
-                            .valid('efectivo', 'tarjeta_debito', 'tarjeta_credito', 'transferencia', 'qr_mercadopago', 'cuenta_cliente')
+                            .valid('efectivo', 'tarjeta_debito', 'tarjeta_credito', 'transferencia', 'qr_mercadopago', 'terminal_mercadopago', 'cuenta_cliente')
                             .required()
                             .messages({
                                 'any.required': 'metodo_pago es requerido en cada pago',
@@ -1659,6 +1659,52 @@ const posSchemas = {
             }),
             requerido: Joi.boolean().optional().allow(null),
             orden: Joi.number().integer().min(0).optional().default(0)
+        })
+    },
+
+    // ========================================================================
+    // POINT TERMINAL (Feb 2026)
+    // ========================================================================
+
+    /**
+     * Schema para crear orden Point
+     * POST /api/v1/pos/point/orders
+     */
+    crearOrdenPoint: {
+        body: Joi.object({
+            terminal_id: Joi.string().required().messages({
+                'any.required': 'terminal_id es requerido'
+            }),
+
+            venta_id: Joi.number().integer().positive().required().messages({
+                'any.required': 'venta_id es requerido',
+                'number.base': 'venta_id debe ser un número'
+            }),
+
+            monto: Joi.number().positive().required().messages({
+                'any.required': 'monto es requerido',
+                'number.positive': 'monto debe ser mayor a 0'
+            }),
+
+            descripcion: Joi.string().max(200).optional().allow(null, ''),
+
+            expiration_time: Joi.string()
+                .pattern(/^PT\d+[MS]$/)
+                .optional()
+                .default('PT5M')
+                .messages({
+                    'string.pattern.base': 'expiration_time debe tener formato ISO 8601 duración (ej: PT5M, PT30S)'
+                })
+        })
+    },
+
+    /**
+     * Schema para obtener/cancelar orden Point por ID
+     * GET/DELETE /api/v1/pos/point/orders/:orderId
+     */
+    obtenerOrdenPoint: {
+        params: Joi.object({
+            orderId: Joi.string().required()
         })
     }
 };

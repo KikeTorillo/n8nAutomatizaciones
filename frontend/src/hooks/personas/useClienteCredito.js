@@ -18,6 +18,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { clientesApi } from '@/services/api/endpoints';
+import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 import { queryKeys } from '@/hooks/config';
 
 /**
@@ -55,6 +56,7 @@ export function useActualizarCredito() {
       queryClient.invalidateQueries({ queryKey: queryKeys.personas.clientes.detail(variables.clienteId), refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: queryKeys.personas.clientes.all, refetchType: 'active' });
     },
+    onError: createCRUDErrorHandler('update', 'Crédito'),
   });
 }
 
@@ -74,6 +76,7 @@ export function useSuspenderCredito() {
       queryClient.invalidateQueries({ queryKey: queryKeys.personas.clientes.credito(variables.clienteId), refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: queryKeys.personas.clientes.detail(variables.clienteId), refetchType: 'active' });
     },
+    onError: createCRUDErrorHandler('update', 'Crédito', { 400: 'No se puede suspender el crédito' }),
   });
 }
 
@@ -94,6 +97,7 @@ export function useReactivarCredito() {
       queryClient.invalidateQueries({ queryKey: queryKeys.personas.clientes.credito(variables), refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: queryKeys.personas.clientes.detail(variables), refetchType: 'active' });
     },
+    onError: createCRUDErrorHandler('update', 'Crédito'),
   });
 }
 
@@ -114,6 +118,7 @@ export function useRegistrarAbono() {
       queryClient.invalidateQueries({ queryKey: ['cliente-credito-movimientos', variables.clienteId], refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: ['clientes-con-saldo'], refetchType: 'active' });
     },
+    onError: createCRUDErrorHandler('create', 'Abono'),
   });
 }
 

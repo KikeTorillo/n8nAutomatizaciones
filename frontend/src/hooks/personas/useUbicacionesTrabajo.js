@@ -1,47 +1,50 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { STALE_TIMES } from '@/app/queryClient';
-import { ubicacionesTrabajoApi } from '@/services/api/endpoints';
-import { useToast } from '@/hooks/utils';
-import { queryKeys } from '@/hooks/config';
-
 /**
  * Hook para gestionar ubicaciones de trabajo
  * Soporte para trabajo híbrido
+ * Feb 2026 - Migrado a createCRUDHooks
  */
+import { useQuery } from '@tanstack/react-query';
+import { STALE_TIMES } from '@/app/queryClient';
+import { ubicacionesTrabajoApi } from '@/services/api/endpoints';
+import { createCRUDHooks } from '@/hooks/factories';
+import { queryKeys } from '@/hooks/config';
 
-// Query Keys
-export const ubicacionesTrabajoKeys = {
-  all: queryKeys.catalogos.ubicacionesTrabajo,
-  lists: () => [...ubicacionesTrabajoKeys.all, 'list'],
-  list: (filters) => [...ubicacionesTrabajoKeys.lists(), { filters }],
-  details: () => [...ubicacionesTrabajoKeys.all, 'detail'],
-  detail: (id) => [...ubicacionesTrabajoKeys.details(), id],
-  estadisticas: () => [...ubicacionesTrabajoKeys.all, 'estadisticas'],
-};
+// =========================================================================
+// HOOKS CRUD VIA FACTORY
+// =========================================================================
 
-/**
- * Hook para listar ubicaciones de trabajo
- * @param {Object} filtros - { activas, es_remoto, es_oficina_principal, sucursal_id }
- * @returns {Object} Query de React Query
- */
-export const useUbicacionesTrabajo = (filtros = {}) => {
-  return useQuery({
-    queryKey: ubicacionesTrabajoKeys.list(filtros),
-    queryFn: async () => {
-      const response = await ubicacionesTrabajoApi.listar(filtros);
-      return response.data.data;
-    },
-    staleTime: STALE_TIMES.SEMI_STATIC, // 5 minutos
-  });
-};
+const hooks = createCRUDHooks({
+  name: 'ubicacionTrabajo',
+  namePlural: 'ubicacionesTrabajo',
+  api: ubicacionesTrabajoApi,
+  baseKey: 'ubicaciones-trabajo',
+  apiMethods: {
+    list: 'listar',
+    get: 'obtener',
+    create: 'crear',
+    update: 'actualizar',
+    delete: 'eliminar',
+  },
+  staleTime: STALE_TIMES.SEMI_STATIC,
+});
+
+// Exportar hooks CRUD
+export const useUbicacionesTrabajo = hooks.useList;
+export const useUbicacionTrabajo = hooks.useDetail;
+export const useCrearUbicacionTrabajo = hooks.useCreate;
+export const useActualizarUbicacionTrabajo = hooks.useUpdate;
+export const useEliminarUbicacionTrabajo = hooks.useDelete;
+
+// =========================================================================
+// HOOKS ESPECIALIZADOS
+// =========================================================================
 
 /**
  * Hook para obtener estadísticas de uso por día de la semana
- * @returns {Object} Query de React Query
  */
 export const useUbicacionesTrabajoEstadisticas = () => {
   return useQuery({
-    queryKey: ubicacionesTrabajoKeys.estadisticas(),
+    queryKey: [...queryKeys.catalogos.ubicacionesTrabajo, 'estadisticas'],
     queryFn: async () => {
       const response = await ubicacionesTrabajoApi.estadisticas();
       return response.data.data;
@@ -51,97 +54,8 @@ export const useUbicacionesTrabajoEstadisticas = () => {
 };
 
 /**
- * Hook para obtener una ubicación de trabajo por ID
- * @param {number} id
- * @param {Object} options - Opciones adicionales para useQuery
- * @returns {Object} Query de React Query
- */
-export const useUbicacionTrabajo = (id, options = {}) => {
-  return useQuery({
-    queryKey: ubicacionesTrabajoKeys.detail(id),
-    queryFn: async () => {
-      const response = await ubicacionesTrabajoApi.obtener(id);
-      return response.data.data;
-    },
-    enabled: !!id,
-    ...options,
-  });
-};
-
-/**
- * Hook para crear una ubicación de trabajo
- * @returns {Object} Mutation de React Query
- */
-export const useCrearUbicacionTrabajo = () => {
-  const queryClient = useQueryClient();
-  const { success, error } = useToast();
-
-  return useMutation({
-    mutationFn: async (data) => {
-      const response = await ubicacionesTrabajoApi.crear(data);
-      return response.data.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ubicacionesTrabajoKeys.lists(), refetchType: 'active' });
-      success('Ubicación de trabajo creada exitosamente');
-    },
-    onError: (err) => {
-      error(err.response?.data?.mensaje || 'Error al crear ubicación de trabajo');
-    },
-  });
-};
-
-/**
- * Hook para actualizar una ubicación de trabajo
- * @returns {Object} Mutation de React Query
- */
-export const useActualizarUbicacionTrabajo = () => {
-  const queryClient = useQueryClient();
-  const { success, error } = useToast();
-
-  return useMutation({
-    mutationFn: async ({ id, data }) => {
-      const response = await ubicacionesTrabajoApi.actualizar(id, data);
-      return response.data.data;
-    },
-    onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ubicacionesTrabajoKeys.lists(), refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ubicacionesTrabajoKeys.detail(variables.id), refetchType: 'active' });
-      success('Ubicación de trabajo actualizada exitosamente');
-    },
-    onError: (err) => {
-      error(err.response?.data?.mensaje || 'Error al actualizar ubicación de trabajo');
-    },
-  });
-};
-
-/**
- * Hook para eliminar una ubicación de trabajo
- * @returns {Object} Mutation de React Query
- */
-export const useEliminarUbicacionTrabajo = () => {
-  const queryClient = useQueryClient();
-  const { success, error } = useToast();
-
-  return useMutation({
-    mutationFn: async (id) => {
-      const response = await ubicacionesTrabajoApi.eliminar(id);
-      return response.data.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ubicacionesTrabajoKeys.lists(), refetchType: 'active' });
-      success('Ubicación de trabajo eliminada exitosamente');
-    },
-    onError: (err) => {
-      error(err.response?.data?.mensaje || 'Error al eliminar ubicación de trabajo');
-    },
-  });
-};
-
-/**
  * Hook para obtener opciones de ubicación para select
  * Devuelve las ubicaciones activas formateadas para usar en un Select
- * @returns {Object} Query con ubicaciones formateadas
  */
 export const useUbicacionesTrabajoOptions = () => {
   const query = useUbicacionesTrabajo({ activas: true });

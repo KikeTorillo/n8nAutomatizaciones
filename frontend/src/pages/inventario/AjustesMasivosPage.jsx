@@ -28,7 +28,7 @@ import {
 } from '@/components/ui';
 import { useModalManager } from '@/hooks/utils';
 import { useToast } from '@/hooks/utils';
-import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
+import InventarioPageLayout from '@/pages/inventario/components/InventarioPageLayout';
 import {
     useAjustesMasivos,
     useValidarAjusteMasivo,
@@ -38,7 +38,7 @@ import {
     ESTADOS_AJUSTE_MASIVO,
     ESTADOS_AJUSTE_MASIVO_CONFIG,
 } from '@/hooks/inventario';
-import AjusteMasivoModal from '@/components/inventario/ajustes-masivos/AjusteMasivoModal';
+import AjusteMasivoModal from '@/pages/inventario/components/ajustes-masivos/AjusteMasivoModal';
 
 // Formatear fecha
 const formatFecha = (fecha) => {

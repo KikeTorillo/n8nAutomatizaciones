@@ -13,7 +13,7 @@ import { memo, useState } from 'react';
 import PropTypes from 'prop-types';
 import { X, ChevronLeft, ChevronRight, Images } from 'lucide-react';
 import { THEME_FALLBACK_COLORS } from '@/lib/uiConstants';
-import { MarcoFoto } from '@/components/eventos-digitales';
+import { MarcoFoto } from '@/pages/eventos-digitales/components';
 
 function GaleriaElementRenderer({
   elemento,

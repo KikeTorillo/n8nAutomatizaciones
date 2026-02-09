@@ -28,7 +28,7 @@ import {
   CreditoEstadoCard,
   AbonoFormModal,
   MovimientosTable,
-} from '@/components/clientes/credito';
+} from '@/pages/clientes/components/credito';
 
 /**
  * Tab de crédito del cliente

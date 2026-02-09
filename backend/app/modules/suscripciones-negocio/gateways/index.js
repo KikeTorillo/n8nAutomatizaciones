@@ -27,7 +27,7 @@
 const MercadoPagoGateway = require('./MercadoPagoGateway');
 const StripeGateway = require('./StripeGateway');
 const PaymentGateway = require('./PaymentGateway');
-const { NormalizedEvent, EventTypes, SubscriptionStatusMap, PaymentStatusMap } = require('./events/NormalizedEvent');
+const { NormalizedEvent, EventTypes, SubscriptionStatusMap, PaymentStatusMap, OrderStatusMap } = require('./events/NormalizedEvent');
 const logger = require('../../../utils/logger');
 
 // Cache de instancias de gateways
@@ -236,5 +236,6 @@ module.exports = {
     NormalizedEvent,
     EventTypes,
     SubscriptionStatusMap,
-    PaymentStatusMap
+    PaymentStatusMap,
+    OrderStatusMap
 };

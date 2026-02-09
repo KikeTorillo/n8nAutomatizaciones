@@ -163,7 +163,9 @@ class PagosModel {
                 fecha_inicio_periodo,
                 fecha_fin_periodo,
                 metadata = {},
-                procesado_por
+                procesado_por,
+                preference_id,
+                order_id
             } = pagoData;
 
             const query = `
@@ -173,8 +175,9 @@ class PagosModel {
                     gateway, transaction_id, payment_intent_id, charge_id,
                     metodo_pago, ultimos_digitos,
                     fecha_inicio_periodo, fecha_fin_periodo,
-                    metadata, procesado_por
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+                    metadata, procesado_por,
+                    preference_id, order_id
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
                 RETURNING *
             `;
 
@@ -193,7 +196,9 @@ class PagosModel {
                 fecha_inicio_periodo,
                 fecha_fin_periodo,
                 JSON.stringify(metadata),
-                procesado_por
+                procesado_por,
+                preference_id || null,
+                order_id || null
             ];
 
             const result = await db.query(query, values);
@@ -227,7 +232,9 @@ class PagosModel {
                 ultimos_digitos,
                 fecha_inicio_periodo,
                 fecha_fin_periodo,
-                metadata = {}
+                metadata = {},
+                preference_id,
+                order_id
             } = pagoData;
 
             const query = `
@@ -237,8 +244,9 @@ class PagosModel {
                     gateway, transaction_id, payment_intent_id, charge_id,
                     metodo_pago, ultimos_digitos,
                     fecha_inicio_periodo, fecha_fin_periodo,
-                    metadata
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+                    metadata,
+                    preference_id, order_id
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
                 RETURNING *
             `;
 
@@ -256,7 +264,9 @@ class PagosModel {
                 ultimos_digitos,
                 fecha_inicio_periodo,
                 fecha_fin_periodo,
-                JSON.stringify(metadata)
+                JSON.stringify(metadata),
+                preference_id || null,
+                order_id || null
             ];
 
             const result = await db.query(query, values);
@@ -339,7 +349,8 @@ class PagosModel {
 
             const camposPermitidos = [
                 'payment_intent_id', 'charge_id', 'transaction_id',
-                'metodo_pago', 'ultimos_digitos', 'metadata'
+                'metodo_pago', 'ultimos_digitos', 'metadata',
+                'preference_id', 'order_id'
             ];
 
             const updates = [];
@@ -597,6 +608,46 @@ class PagosModel {
 
             const result = await db.query(query, [suscripcionId, limite]);
             return result.rows;
+        });
+    }
+
+    /**
+     * Buscar pago por order_id (Point Terminal)
+     * Usado por webhooks de Orders API
+     *
+     * @param {string} orderId - ID de la orden MercadoPago
+     * @returns {Promise<Object|null>} - Pago encontrado o null
+     */
+    static async buscarPorOrderId(orderId) {
+        return await RLSContextManager.withBypass(async (db) => {
+            const query = `
+                SELECT * FROM pagos_suscripcion
+                WHERE order_id = $1
+                LIMIT 1
+            `;
+
+            const result = await db.query(query, [orderId]);
+            return result.rows[0] || null;
+        });
+    }
+
+    /**
+     * Buscar pago por preference_id (Checkout Pro)
+     * Usado por webhooks de pagos únicos
+     *
+     * @param {string} preferenceId - ID de la preferencia MercadoPago
+     * @returns {Promise<Object|null>} - Pago encontrado o null
+     */
+    static async buscarPorPreferenceId(preferenceId) {
+        return await RLSContextManager.withBypass(async (db) => {
+            const query = `
+                SELECT * FROM pagos_suscripcion
+                WHERE preference_id = $1
+                LIMIT 1
+            `;
+
+            const result = await db.query(query, [preferenceId]);
+            return result.rows[0] || null;
         });
     }
 }

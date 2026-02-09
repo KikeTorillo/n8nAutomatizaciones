@@ -19,7 +19,7 @@ import {
   ConectorFormDrawer,
   ConectorStatusBadge,
   SuscripcionesNegocioPageLayout,
-} from '@/components/suscripciones-negocio';
+} from './components';
 
 /**
  * Nombres de gateways

@@ -1,13 +1,41 @@
 /**
- * Componentes auxiliares para páginas de Inventario
+ * ====================================================================
+ * COMPONENTES INVENTARIO - BARREL EXPORTS
+ * ====================================================================
+ *
+ * Re-exports centralizados de componentes del modulo Inventario
+ *
+ * Ene 2026 - Refactorizacion Frontend
+ * ====================================================================
  */
 
+// Layout y Navegacion
+export { default as InventarioPageLayout } from './InventarioPageLayout';
+export { default as InventarioNavTabs } from './InventarioNavTabs';
+
+// Formularios Drawer
+export { default as ProductoFormDrawer } from './ProductoFormDrawer';
+export { default as CategoriaFormDrawer } from './CategoriaFormDrawer';
+export { default as ProveedorFormDrawer } from './ProveedorFormDrawer';
+export { default as ComboFormDrawer } from './ComboFormDrawer';
+
+// Modales
+export { default as KardexModal } from './KardexModal';
+export { default as AjustarStockModal } from './AjustarStockModal';
+export { default as BulkProductosModal } from './BulkProductosModal';
+export { default as GenerarEtiquetaModal } from './GenerarEtiquetaModal';
+export { default as GenerarEtiquetaGS1Modal } from './GenerarEtiquetaGS1Modal';
+
+// Widgets
+export { default as AlertasWidget } from './AlertasWidget';
+
+// Tablas y Acciones
 export { default as ProductoRowActions } from './ProductoRowActions';
 export * from './ProductosColumns';
 export { ReglaCard } from './ReglaCard';
 export { default as ReglaForm } from './ReglaForm';
 
-// Órdenes de Compra
+// Ordenes de Compra
 export * from './OrdenesCompraColumns';
 export { default as OrdenesCompraFilters } from './OrdenesCompraFilters';
 export { default as OrdenesCompraStatsGrid } from './OrdenesCompraStatsGrid';

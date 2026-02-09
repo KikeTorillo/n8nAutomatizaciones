@@ -13,10 +13,10 @@ import {
 } from 'lucide-react';
 
 import { getEstadoVigencia } from '@/lib/estadoVigencia';
-import POSPageLayout from '@/components/pos/POSPageLayout';
+import POSPageLayout from '@/pages/pos/components/POSPageLayout';
 import { ListadoCRUDPage } from '@/components/ui';
-import CuponFormDrawer from '@/components/pos/CuponFormDrawer';
-import CuponStatsModal from '@/components/pos/CuponStatsModal';
+import CuponFormDrawer from '@/pages/pos/components/CuponFormDrawer';
+import CuponStatsModal from '@/pages/pos/components/CuponStatsModal';
 import { useToast } from '@/hooks/utils';
 import {
   useCupones,

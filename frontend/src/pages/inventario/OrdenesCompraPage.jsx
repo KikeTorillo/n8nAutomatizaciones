@@ -27,7 +27,7 @@ import {
 import { useToast } from '@/hooks/utils';
 import { useExportCSV } from '@/hooks/utils';
 import { useModalManager } from '@/hooks/utils';
-import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
+import InventarioPageLayout from '@/pages/inventario/components/InventarioPageLayout';
 import {
   useOrdenesCompra,
   useEliminarOrdenCompra,
@@ -36,10 +36,10 @@ import {
 } from '@/hooks/inventario';
 import { useProveedores } from '@/hooks/inventario';
 import { useSugerenciasOC, useAutoGenerarOCs } from '@/hooks/inventario';
-import OrdenCompraFormDrawer from '@/components/inventario/ordenes-compra/OrdenCompraFormDrawer';
-import OrdenCompraDetalleModal from '@/components/inventario/ordenes-compra/OrdenCompraDetalleModal';
-import RecibirMercanciaModal from '@/components/inventario/ordenes-compra/RecibirMercanciaModal';
-import RegistrarPagoModal from '@/components/inventario/ordenes-compra/RegistrarPagoModal';
+import OrdenCompraFormDrawer from '@/pages/inventario/components/ordenes-compra/OrdenCompraFormDrawer';
+import OrdenCompraDetalleModal from '@/pages/inventario/components/ordenes-compra/OrdenCompraDetalleModal';
+import RecibirMercanciaModal from '@/pages/inventario/components/ordenes-compra/RecibirMercanciaModal';
+import RegistrarPagoModal from '@/pages/inventario/components/ordenes-compra/RegistrarPagoModal';
 
 import {
   getOrdenesColumns,

@@ -105,6 +105,7 @@ export function useCrearConfiguracionComision() {
       // Invalidar queries de configuración
       queryClient.invalidateQueries({ queryKey: ['comisiones', 'configuracion'], refetchType: 'active' });
     },
+    onError: createCRUDErrorHandler('create', 'Configuración de comisión', { 409: 'Ya existe una configuración para este profesional y servicio' }),
   });
 }
 
@@ -121,7 +122,7 @@ export function useCrearConfiguracionComision() {
  */
 export function useEliminarConfiguracionComision() {
   const queryClient = useQueryClient();
-  const { success, error: showError } = useToast();
+  const { success } = useToast();
 
   return useMutation({
     mutationFn: async ({ id }) => {
@@ -133,14 +134,7 @@ export function useEliminarConfiguracionComision() {
       queryClient.invalidateQueries({ queryKey: ['comisiones', 'historial-configuracion'], refetchType: 'active' });
       success('Configuracion eliminada exitosamente');
     },
-    onError: (error) => {
-      const handler = createCRUDErrorHandler('delete', 'Configuracion');
-      try {
-        handler(error);
-      } catch (e) {
-        showError(e.message);
-      }
-    },
+    onError: createCRUDErrorHandler('delete', 'Configuración de comisión'),
   });
 }
 
@@ -262,7 +256,7 @@ export function useComision(id) {
  */
 export function useMarcarComoPagada() {
   const queryClient = useQueryClient();
-  const { success, error: showError } = useToast();
+  const { success } = useToast();
 
   return useMutation({
     mutationFn: async ({ id, ...data }) => {
@@ -281,14 +275,7 @@ export function useMarcarComoPagada() {
       queryClient.invalidateQueries({ queryKey: queryKeys.comisiones.detail(variables.id), refetchType: 'active' });
       success('Comision marcada como pagada');
     },
-    onError: (error) => {
-      const handler = createCRUDErrorHandler('update', 'Comision');
-      try {
-        handler(error);
-      } catch (e) {
-        showError(e.message);
-      }
-    },
+    onError: createCRUDErrorHandler('update', 'Comisión'),
   });
 }
 

@@ -1025,6 +1025,65 @@ router.get('/lealtad/estadisticas',
 );
 
 // ===================================================================
+// POINT TERMINAL (Feb 2026)
+// ===================================================================
+
+const PointController = require('../controllers/point.controller');
+
+/**
+ * POST /api/v1/pos/point/orders
+ * Crear orden de pago para terminal Point
+ */
+router.post('/point/orders',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('pos'),
+    tenant.verifyTenantActive,
+    verificarPermiso('pos.crear_ventas'),
+    rateLimiting.userRateLimit,
+    validate(posSchemas.crearOrdenPoint),
+    PointController.crearOrden
+);
+
+/**
+ * GET /api/v1/pos/point/orders/:orderId
+ * Obtener estado de una orden Point
+ */
+router.get('/point/orders/:orderId',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.userRateLimit,
+    validate(posSchemas.obtenerOrdenPoint),
+    PointController.obtenerOrden
+);
+
+/**
+ * DELETE /api/v1/pos/point/orders/:orderId
+ * Cancelar una orden Point
+ */
+router.delete('/point/orders/:orderId',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('pos'),
+    tenant.verifyTenantActive,
+    verificarPermiso('pos.crear_ventas'),
+    rateLimiting.userRateLimit,
+    validate(posSchemas.obtenerOrdenPoint),
+    PointController.cancelarOrden
+);
+
+/**
+ * GET /api/v1/pos/point/terminals
+ * Listar terminales Point disponibles
+ */
+router.get('/point/terminals',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.userRateLimit,
+    PointController.listarTerminales
+);
+
+// ===================================================================
 // NOTA: Combos y Modificadores migrados a /api/v1/inventario/combos
 // Ver: backend/app/modules/inventario/routes/inventario.js
 // Fecha: 14 Enero 2026

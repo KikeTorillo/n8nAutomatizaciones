@@ -22,7 +22,7 @@ import {
   LoadingSpinner,
   Select,
 } from '@/components/ui';
-import { EventosDigitalesPageLayout } from '@/components/eventos-digitales';
+import { EventosDigitalesPageLayout } from '@/pages/eventos-digitales/components';
 import { useEventos, useEliminarEvento, usePublicarEvento } from '@/hooks/otros';
 import { useToast, useModalManager, usePagination } from '@/hooks/utils';
 

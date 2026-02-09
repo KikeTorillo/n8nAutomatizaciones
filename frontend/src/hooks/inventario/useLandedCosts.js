@@ -8,6 +8,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { landedCostsApi } from '@/services/api/endpoints';
 import { STALE_TIMES } from '@/app/queryClient';
 import { queryKeys } from '@/hooks/config';
+import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 
 // ==================== QUERIES ====================
 
@@ -89,6 +90,7 @@ export function useCrearCostoAdicional() {
       queryClient.invalidateQueries({ queryKey: queryKeys.inventario.landedCosts.list(variables.ordenCompraId), refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: queryKeys.inventario.ordenesCompra.all, refetchType: 'active' });
     },
+    onError: createCRUDErrorHandler('create', 'Costo adicional'),
   });
 }
 
@@ -104,6 +106,7 @@ export function useActualizarCostoAdicional() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.inventario.landedCosts.list(variables.ordenCompraId), refetchType: 'active' });
     },
+    onError: createCRUDErrorHandler('update', 'Costo adicional'),
   });
 }
 
@@ -119,6 +122,7 @@ export function useEliminarCostoAdicional() {
       queryClient.invalidateQueries({ queryKey: queryKeys.inventario.landedCosts.list(variables.ordenCompraId), refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: queryKeys.inventario.ordenesCompra.all, refetchType: 'active' });
     },
+    onError: createCRUDErrorHandler('delete', 'Costo adicional'),
   });
 }
 
@@ -134,6 +138,7 @@ export function useDistribuirCosto() {
       queryClient.invalidateQueries({ queryKey: queryKeys.inventario.landedCosts.list(variables.ordenCompraId), refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: queryKeys.inventario.ordenesCompra.all, refetchType: 'active' });
     },
+    onError: createCRUDErrorHandler('update', 'Distribución de costo'),
   });
 }
 
@@ -149,5 +154,6 @@ export function useDistribuirTodosCostos() {
       queryClient.invalidateQueries({ queryKey: queryKeys.inventario.landedCosts.list(ordenCompraId), refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: queryKeys.inventario.ordenesCompra.all, refetchType: 'active' });
     },
+    onError: createCRUDErrorHandler('update', 'Distribución de costos'),
   });
 }

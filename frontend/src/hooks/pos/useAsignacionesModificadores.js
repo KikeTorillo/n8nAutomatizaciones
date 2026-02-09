@@ -59,13 +59,7 @@ export function useAsignarGrupoAProducto() {
                 variant: 'success',
             });
         },
-        onError: (error) => {
-            try {
-                createCRUDErrorHandler('create', 'Asignacion de grupo')(error);
-            } catch (e) {
-                toast.error(e.message);
-            }
-        },
+        onError: createCRUDErrorHandler('create', 'Asignacion de grupo'),
     });
 }
 
@@ -89,13 +83,7 @@ export function useAsignarGrupoACategoria() {
                 variant: 'success',
             });
         },
-        onError: (error) => {
-            try {
-                createCRUDErrorHandler('create', 'Asignacion de grupo')(error);
-            } catch (e) {
-                toast.error(e.message);
-            }
-        },
+        onError: createCRUDErrorHandler('create', 'Asignacion de grupo'),
     });
 }
 
@@ -119,12 +107,6 @@ export function useEliminarAsignacionProducto() {
                 variant: 'success',
             });
         },
-        onError: (error) => {
-            try {
-                createCRUDErrorHandler('delete', 'Asignacion')(error);
-            } catch (e) {
-                toast.error(e.message);
-            }
-        },
+        onError: createCRUDErrorHandler('delete', 'Asignacion'),
     });
 }

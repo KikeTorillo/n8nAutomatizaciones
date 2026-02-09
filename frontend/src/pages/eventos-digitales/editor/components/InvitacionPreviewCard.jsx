@@ -13,7 +13,7 @@
 import { memo, useRef, useState, useEffect } from 'react';
 import { Check, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { InvitacionDinamica } from '@/components/eventos-digitales';
+import { InvitacionDinamica } from '@/pages/eventos-digitales/components';
 import { usePlantillaPreview } from '@/hooks/otros/eventos-digitales';
 import { useGoogleFonts } from '@/hooks/utils';
 

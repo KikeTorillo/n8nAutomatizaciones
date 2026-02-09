@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { BackButton, Button, LoadingSpinner, MobileTabSelector } from '@/components/ui';
 import { useToast } from '@/hooks/utils';
-import { SeatingChartEditor } from '@/components/eventos-digitales';
+import { SeatingChartEditor } from '@/pages/eventos-digitales/components';
 import {
   useEvento,
   useEventoEstadisticas,
@@ -41,7 +41,7 @@ import {
   UbicacionesTab,
   RegalosTab,
   FelicitacionesTab,
-} from '@/components/eventos-digitales';
+} from '@/pages/eventos-digitales/components';
 
 /**
  * Pagina de detalle de evento digital con tabs

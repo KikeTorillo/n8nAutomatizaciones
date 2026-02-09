@@ -195,5 +195,6 @@ export function useGuardarBloquesPlantilla() {
         refetchType: 'active',
       });
     },
+    onError: createCRUDErrorHandler('update', 'Bloques de plantilla'),
   });
 }

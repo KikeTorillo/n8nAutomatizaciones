@@ -24,7 +24,7 @@ import {
 } from '@/components/ui';
 import { useToast } from '@/hooks/utils';
 import useSucursalStore, { selectGetSucursalId } from '@/store/sucursalStore';
-import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
+import InventarioPageLayout from '@/pages/inventario/components/InventarioPageLayout';
 import {
   useArbolUbicaciones,
   useEstadisticasUbicaciones,
@@ -32,8 +32,8 @@ import {
   useEliminarUbicacion,
   useToggleBloqueoUbicacion,
 } from '@/hooks/inventario';
-import UbicacionFormDrawer from '@/components/inventario/ubicaciones/UbicacionFormDrawer';
-import MoverStockDrawer from '@/components/inventario/ubicaciones/MoverStockDrawer';
+import UbicacionFormDrawer from '@/pages/inventario/components/ubicaciones/UbicacionFormDrawer';
+import MoverStockDrawer from '@/pages/inventario/components/ubicaciones/MoverStockDrawer';
 
 // Tipos de ubicación con íconos y colores
 const TIPOS_UBICACION = {

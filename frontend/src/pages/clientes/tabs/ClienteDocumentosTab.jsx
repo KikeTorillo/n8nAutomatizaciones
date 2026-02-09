@@ -39,7 +39,7 @@ import {
 } from '@/hooks/personas';
 import { formatFileSize } from '@/lib/utils';
 import { useToast } from '@/hooks/utils';
-import DocumentoUploadDrawer from '@/components/clientes/DocumentoUploadDrawer';
+import DocumentoUploadDrawer from '@/pages/clientes/components/DocumentoUploadDrawer';
 
 /**
  * Card de documento individual

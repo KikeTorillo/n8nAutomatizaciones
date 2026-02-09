@@ -30,9 +30,9 @@ import {
 import { useInvitacionEditorStore } from '@/store';
 import { EDITORES_BLOQUE } from '../components/blocks';
 import { BLOCK_ICONS, BLOCK_NAMES } from '../config/invitacionBlocks';
-import { InvitacionDinamica } from '@/components/eventos-digitales';
+import { InvitacionDinamica } from '@/pages/eventos-digitales/components';
 import { UnsplashModal } from '@/components/shared/media/UnsplashPicker';
-import '@/components/eventos-digitales/publico/EventoAnimations.css';
+import '@/pages/eventos-digitales/components/publico/EventoAnimations.css';
 
 // ========== LAZY LOADED CUSTOM RENDERERS PARA INVITACIONES ==========
 

@@ -17,13 +17,13 @@ import {
 import { useProveedores } from '@/hooks/inventario';
 import { Button, ConfirmDialog, DataTable, StatCardGrid } from '@/components/ui';
 import { formatCurrency } from '@/lib/utils';
-import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
-import AcuerdoFormDrawer from '@/components/inventario/consigna/AcuerdoFormDrawer';
-import AcuerdoDetalleModal from '@/components/inventario/consigna/AcuerdoDetalleModal';
-import RecibirMercanciaDrawer from '@/components/inventario/consigna/RecibirMercanciaDrawer';
-import DevolverMercanciaDrawer from '@/components/inventario/consigna/DevolverMercanciaDrawer';
-import LiquidacionFormModal from '@/components/inventario/consigna/LiquidacionFormModal';
-import LiquidacionDetalleModal from '@/components/inventario/consigna/LiquidacionDetalleModal';
+import InventarioPageLayout from '@/pages/inventario/components/InventarioPageLayout';
+import AcuerdoFormDrawer from '@/pages/inventario/components/consigna/AcuerdoFormDrawer';
+import AcuerdoDetalleModal from '@/pages/inventario/components/consigna/AcuerdoDetalleModal';
+import RecibirMercanciaDrawer from '@/pages/inventario/components/consigna/RecibirMercanciaDrawer';
+import DevolverMercanciaDrawer from '@/pages/inventario/components/consigna/DevolverMercanciaDrawer';
+import LiquidacionFormModal from '@/pages/inventario/components/consigna/LiquidacionFormModal';
+import LiquidacionDetalleModal from '@/pages/inventario/components/consigna/LiquidacionDetalleModal';
 import {
   getAcuerdosColumns, getStockColumns, getLiquidacionesColumns,
   ESTADOS_ACUERDO, ESTADOS_LIQUIDACION,

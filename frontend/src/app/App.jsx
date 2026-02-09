@@ -8,7 +8,7 @@ import { queryClient } from './queryClient';
 import { ToastContainer } from '@/components/ui';
 import GlobalErrorBoundary from '@/components/common/GlobalErrorBoundary';
 import { SetupGuard, useAuthStore, selectIsAuthenticated, selectSetUser } from '@/features/auth';
-import { SubscriptionGuard } from '@/components/suscripciones-negocio';
+import { SubscriptionGuard } from '@/pages/suscripciones-negocio/components';
 import useThemeStore, { selectApplyTheme, selectInitSystemListener } from '@/store/themeStore';
 import { useAuthInit } from '@/hooks/sistema/useAuthInit';
 import { authApi } from '@/services/api/endpoints';

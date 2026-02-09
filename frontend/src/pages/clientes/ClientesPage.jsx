@@ -32,15 +32,15 @@ import {
   MultiSelect,
   ListadoCRUDPage,
 } from '@/components/ui';
-import ClientesPageLayout from '@/components/clientes/ClientesPageLayout';
+import ClientesPageLayout from '@/pages/clientes/components/ClientesPageLayout';
 import { useClientes } from '@/hooks/personas';
 import { useEtiquetas } from '@/hooks/personas';
 import { useToast, useExportCSV, useFilters, usePagination } from '@/hooks/utils';
-import WalkInModal from '@/components/clientes/WalkInModal';
-import ImportarClientesModal from '@/components/clientes/ImportarClientesModal';
-import ClienteFormDrawer from '@/components/clientes/ClienteFormDrawer';
-import ClientesList from '@/components/clientes/ClientesList';
-import ClientesCardsGrid from '@/components/clientes/ClientesCardsGrid';
+import WalkInModal from '@/pages/clientes/components/WalkInModal';
+import ImportarClientesModal from '@/pages/clientes/components/ImportarClientesModal';
+import ClienteFormDrawer from '@/pages/clientes/components/ClienteFormDrawer';
+import ClientesList from '@/pages/clientes/components/ClientesList';
+import ClientesCardsGrid from '@/pages/clientes/components/ClientesCardsGrid';
 import { ClientesStatsGrid } from './components';
 
 /**

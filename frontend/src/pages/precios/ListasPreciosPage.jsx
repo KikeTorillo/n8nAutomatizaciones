@@ -13,7 +13,7 @@ import { Button, ConfirmDialog, Drawer, Input, Modal } from '@/components/ui';
 import { queryKeys } from '@/hooks/config';
 import { useToast, useModalManager } from '@/hooks/utils';
 import { listasPreciosApi, monedasApi } from '@/services/api/endpoints';
-import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
+import InventarioPageLayout from '@/pages/inventario/components/InventarioPageLayout';
 import {
   ListaCard,
   ListaForm,

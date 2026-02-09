@@ -50,7 +50,7 @@ import {
   SuscripcionPagosTab,
   SuscripcionHistorialTab,
   CambiarPlanDrawer,
-} from '@/components/suscripciones-negocio';
+} from './components';
 import { useToast } from '@/hooks/utils';
 import { formatCurrency, formatDate } from '@/lib/utils';
 

@@ -35,8 +35,8 @@ import {
   LoadingSpinner,
   BaseDetailLayout,
 } from '@/components/ui';
-import ClienteEtiquetasEditor from '@/components/clientes/ClienteEtiquetasEditor';
-import ClienteFormDrawer from '@/components/clientes/ClienteFormDrawer';
+import ClienteEtiquetasEditor from '@/pages/clientes/components/ClienteEtiquetasEditor';
+import ClienteFormDrawer from '@/pages/clientes/components/ClienteFormDrawer';
 import { useCliente, useEstadisticasCliente } from '@/hooks/personas';
 import { useUsuarios } from '@/hooks/personas';
 

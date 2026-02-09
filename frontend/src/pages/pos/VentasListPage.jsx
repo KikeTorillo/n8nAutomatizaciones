@@ -13,10 +13,10 @@ import {
 } from '@/components/ui';
 import { useToast, useExportCSV, useModalManager, useFilters } from '@/hooks/utils';
 import { useVentas } from '@/hooks/pos';
-import VentaDetalleModal from '@/components/pos/VentaDetalleModal';
-import CancelarVentaModal from '@/components/pos/CancelarVentaModal';
-import DevolverItemsModal from '@/components/pos/DevolverItemsModal';
-import POSNavTabs from '@/components/pos/POSNavTabs';
+import VentaDetalleModal from '@/pages/pos/components/VentaDetalleModal';
+import CancelarVentaModal from '@/pages/pos/components/CancelarVentaModal';
+import DevolverItemsModal from '@/pages/pos/components/DevolverItemsModal';
+import POSNavTabs from '@/pages/pos/components/POSNavTabs';
 
 /**
  * Página de lista de ventas POS con filtros

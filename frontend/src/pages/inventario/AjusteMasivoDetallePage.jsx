@@ -25,7 +25,7 @@ import {
   StatCardGrid
 } from '@/components/ui';
 import { useToast } from '@/hooks/utils';
-import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
+import InventarioPageLayout from '@/pages/inventario/components/InventarioPageLayout';
 import {
     useAjusteMasivo,
     useValidarAjusteMasivo,

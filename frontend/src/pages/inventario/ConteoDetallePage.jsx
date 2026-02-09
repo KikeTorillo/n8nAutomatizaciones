@@ -8,7 +8,7 @@ import {
     CompletarConteoModal,
     AplicarAjustesModal,
     CancelarConteoModal,
-} from '@/components/inventario/conteos/modales';
+} from '@/pages/inventario/components/conteos/modales';
 import { useToast } from '@/hooks/utils';
 import { useModalManager } from '@/hooks/utils';
 import {

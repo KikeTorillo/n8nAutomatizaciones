@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 
 import { Button, ConfirmDialog, FormDrawer, FormGroup, Input } from '@/components/ui';
-import ProfesionalesPageLayout from '@/components/profesionales/ProfesionalesPageLayout';
+import ProfesionalesPageLayout from '@/pages/profesionales/components/ProfesionalesPageLayout';
 import {
   ConfigSearchBar,
   ConfigEmptyState,

@@ -26,7 +26,7 @@
  * @date Enero 2026
  */
 
-const { MercadoPagoConfig, PreApproval, Payment } = require('mercadopago');
+const { MercadoPagoConfig, PreApproval, Payment, Preference } = require('mercadopago');
 const crypto = require('crypto');
 const logger = require('../utils/logger');
 const { CircuitBreakerFactory } = require('../utils/circuitBreaker');
@@ -196,6 +196,7 @@ class MercadoPagoService {
         // Inicializar clientes especializados
         this.subscriptionClient = new PreApproval(this.client);
         this.paymentClient = new Payment(this.client);
+        this.preferenceClient = new Preference(this.client);
 
         this._initialized = true;
 
@@ -664,6 +665,267 @@ class MercadoPagoService {
                 requestId
             });
             return false;
+        }
+    }
+
+    // ====================================================================
+    // PAGOS ÚNICOS (CHECKOUT PRO)
+    // ====================================================================
+
+    /**
+     * Crear preferencia de pago único (Checkout Pro)
+     * Genera un init_point para redirigir al comprador a MercadoPago.
+     *
+     * @param {Object} params
+     * @param {string} params.titulo - Título del producto/servicio
+     * @param {number} params.precio - Precio a cobrar
+     * @param {string} [params.moneda='MXN'] - Moneda
+     * @param {string} params.email - Email del pagador
+     * @param {string} params.returnUrl - URL de retorno
+     * @param {string} params.notificationUrl - URL del webhook
+     * @param {string} params.externalReference - Referencia externa
+     * @returns {Promise<Object>} { id, init_point, sandbox_init_point }
+     */
+    async crearCheckoutPreference({ titulo, precio, moneda = 'MXN', email, returnUrl, notificationUrl, externalReference }) {
+        this._ensureInitialized();
+        const circuitBreaker = this._getCircuitBreaker();
+
+        return await circuitBreaker.execute(async () => {
+            try {
+                logger.info('Creando preferencia Checkout Pro', {
+                    titulo,
+                    precio,
+                    moneda,
+                    email,
+                    externalReference,
+                    organizacionId: this.organizacionId
+                });
+
+                const response = await this.preferenceClient.create({
+                    body: {
+                        items: [{
+                            title: titulo,
+                            quantity: 1,
+                            unit_price: precio,
+                            currency_id: moneda
+                        }],
+                        payer: { email },
+                        back_urls: {
+                            success: returnUrl,
+                            failure: returnUrl,
+                            pending: returnUrl
+                        },
+                        auto_return: 'approved',
+                        external_reference: externalReference,
+                        notification_url: notificationUrl,
+                        binary_mode: true // Solo aprobado o rechazado
+                    }
+                });
+
+                const isTestMode = this.isSandbox();
+                const initPointUrl = isTestMode
+                    ? response.sandbox_init_point
+                    : response.init_point;
+
+                logger.info('Preferencia Checkout Pro creada', {
+                    preferenceId: response.id,
+                    hasInitPoint: !!initPointUrl,
+                    isTestMode,
+                    organizacionId: this.organizacionId
+                });
+
+                return {
+                    id: response.id,
+                    init_point: initPointUrl,
+                    sandbox_init_point: response.sandbox_init_point
+                };
+            } catch (error) {
+                logger.error('Error creando preferencia Checkout Pro:', {
+                    error: error.message,
+                    titulo,
+                    precio,
+                    responseData: error.response?.data,
+                    organizacionId: this.organizacionId
+                });
+                throw new Error(`Error creando preferencia de pago: ${error.message}`);
+            }
+        });
+    }
+
+    // ====================================================================
+    // POINT TERMINAL (ORDERS API)
+    // ====================================================================
+
+    /**
+     * Crear orden de pago para terminal Point
+     * Usa la Orders API v1 de MercadoPago (no hay clase SDK para esto).
+     *
+     * @param {Object} params
+     * @param {string} params.terminalId - ID del terminal Point
+     * @param {number} params.monto - Monto a cobrar
+     * @param {string} params.externalReference - Referencia externa
+     * @param {string} [params.descripcion] - Descripción del cobro
+     * @param {string} [params.expirationTime='PT5M'] - Tiempo de expiración ISO 8601
+     * @returns {Promise<Object>} { id, status, transactions }
+     */
+    async crearOrdenPoint({ terminalId, monto, externalReference, descripcion, expirationTime = 'PT5M' }) {
+        this._ensureInitialized();
+        const circuitBreaker = this._getCircuitBreaker();
+
+        return await circuitBreaker.execute(async () => {
+            try {
+                logger.info('Creando orden Point', {
+                    terminalId,
+                    monto,
+                    externalReference,
+                    organizacionId: this.organizacionId
+                });
+
+                const axios = require('axios');
+                const response = await axios.post(
+                    'https://api.mercadopago.com/v1/orders',
+                    {
+                        type: 'point',
+                        external_reference: externalReference,
+                        expiration_time: expirationTime,
+                        description: descripcion || 'Cobro POS',
+                        transactions: {
+                            payments: [{
+                                amount: monto.toString()
+                            }]
+                        },
+                        config: {
+                            point: {
+                                terminal_id: terminalId,
+                                print_on_terminal: 'default'
+                            }
+                        }
+                    },
+                    {
+                        headers: {
+                            'Authorization': `Bearer ${this.credentials.accessToken}`,
+                            'Content-Type': 'application/json',
+                            'X-Idempotency-Key': this._generateIdempotencyKey()
+                        },
+                        timeout: 10000
+                    }
+                );
+
+                logger.info('Orden Point creada', {
+                    orderId: response.data.id,
+                    status: response.data.status,
+                    organizacionId: this.organizacionId
+                });
+
+                return {
+                    id: response.data.id,
+                    status: response.data.status,
+                    transactions: response.data.transactions
+                };
+            } catch (error) {
+                logger.error('Error creando orden Point:', {
+                    error: error.message,
+                    terminalId,
+                    monto,
+                    responseData: error.response?.data,
+                    organizacionId: this.organizacionId
+                });
+                throw new Error(`Error creando orden Point: ${error.response?.data?.message || error.message}`);
+            }
+        });
+    }
+
+    /**
+     * Obtener estado de una orden Point
+     *
+     * @param {string} orderId - ID de la orden (ORD01...)
+     * @returns {Promise<Object>} Datos de la orden
+     */
+    async obtenerOrden(orderId) {
+        this._ensureInitialized();
+        try {
+            const axios = require('axios');
+            const response = await axios.get(
+                `https://api.mercadopago.com/v1/orders/${orderId}`,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${this.credentials.accessToken}`
+                    },
+                    timeout: 5000
+                }
+            );
+            return response.data;
+        } catch (error) {
+            logger.error('Error obteniendo orden Point:', {
+                orderId,
+                error: error.message,
+                status: error.response?.status
+            });
+            if (error.response?.status === 404) {
+                return null;
+            }
+            throw new Error(`Error obteniendo orden: ${error.message}`);
+        }
+    }
+
+    /**
+     * Cancelar una orden Point
+     *
+     * @param {string} orderId - ID de la orden
+     * @returns {Promise<boolean>} true si se canceló
+     */
+    async cancelarOrden(orderId) {
+        this._ensureInitialized();
+        try {
+            const axios = require('axios');
+            await axios.delete(
+                `https://api.mercadopago.com/v1/orders/${orderId}`,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${this.credentials.accessToken}`
+                    },
+                    timeout: 5000
+                }
+            );
+
+            logger.info('Orden Point cancelada', { orderId, organizacionId: this.organizacionId });
+            return true;
+        } catch (error) {
+            logger.error('Error cancelando orden Point:', {
+                orderId,
+                error: error.message,
+                status: error.response?.status
+            });
+            throw new Error(`Error cancelando orden: ${error.message}`);
+        }
+    }
+
+    /**
+     * Listar terminales Point asignadas a la cuenta
+     *
+     * @returns {Promise<Array>} Array de terminales { id, model, serial_number, ... }
+     */
+    async listarTerminales() {
+        this._ensureInitialized();
+        try {
+            const axios = require('axios');
+            const response = await axios.get(
+                'https://api.mercadopago.com/terminals/v1/list',
+                {
+                    headers: {
+                        'Authorization': `Bearer ${this.credentials.accessToken}`
+                    },
+                    timeout: 5000
+                }
+            );
+            return response.data?.devices || response.data || [];
+        } catch (error) {
+            logger.error('Error listando terminales Point:', {
+                error: error.message,
+                status: error.response?.status,
+                organizacionId: this.organizacionId
+            });
+            throw new Error(`Error listando terminales: ${error.message}`);
         }
     }
 

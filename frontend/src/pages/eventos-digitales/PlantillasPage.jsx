@@ -11,7 +11,7 @@ import {
   ConfirmDialog,
   LoadingSpinner,
 } from '@/components/ui';
-import { EventosDigitalesPageLayout, InvitacionDinamica } from '@/components/eventos-digitales';
+import { EventosDigitalesPageLayout, InvitacionDinamica } from '@/pages/eventos-digitales/components';
 import { useToast } from '@/hooks/utils';
 import { useModalManager } from '@/hooks/utils';
 import {

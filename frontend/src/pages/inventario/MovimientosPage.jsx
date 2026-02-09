@@ -10,9 +10,9 @@ import {
   FilterPanel,
   Pagination
 } from '@/components/ui';
-import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
+import InventarioPageLayout from '@/pages/inventario/components/InventarioPageLayout';
 import { useMovimientos, useProductos, useProveedores, useUbicacionesAlmacen } from '@/hooks/inventario';
-import KardexModal from '@/components/inventario/KardexModal';
+import KardexModal from '@/pages/inventario/components/KardexModal';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 

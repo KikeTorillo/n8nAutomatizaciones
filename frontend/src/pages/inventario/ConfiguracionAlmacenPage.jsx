@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { Button, Modal, Select } from '@/components/ui';
 import { useToast } from '@/hooks/utils';
-import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
+import InventarioPageLayout from '@/pages/inventario/components/InventarioPageLayout';
 import {
   useConfiguracionAlmacen,
   useActualizarConfiguracion,

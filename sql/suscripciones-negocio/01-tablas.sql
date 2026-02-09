@@ -40,6 +40,8 @@ CREATE TABLE IF NOT EXISTS planes_suscripcion_org (
     precio_semestral NUMERIC(10,2),
     precio_anual NUMERIC(10,2),
     moneda VARCHAR(3) DEFAULT 'MXN',                -- MXN, USD, EUR
+    tipo_cobro VARCHAR(20) NOT NULL DEFAULT 'recurrente'
+        CHECK (tipo_cobro IN ('recurrente', 'unico')),  -- recurrente = preapproval, unico = checkout pro
 
     -- Trial
     dias_trial INTEGER DEFAULT 0,                   -- 0 = sin trial, 14 = trial 14 días
@@ -233,6 +235,10 @@ CREATE TABLE IF NOT EXISTS pagos_suscripcion (
     monto_reembolsado NUMERIC(10,2),
     razon_reembolso TEXT,
 
+    -- IDs adicionales de gateway (pagos únicos y Point)
+    preference_id VARCHAR(100),                      -- ID preferencia Checkout Pro
+    order_id VARCHAR(100),                           -- ORD01... para Point orders
+
     -- Metadata
     metadata JSONB,                                  -- Datos adicionales del gateway
 
@@ -365,6 +371,8 @@ CREATE INDEX IF NOT EXISTS idx_pagos_suscripcion ON pagos_suscripcion(suscripcio
 CREATE INDEX IF NOT EXISTS idx_pagos_estado ON pagos_suscripcion(estado);
 CREATE INDEX IF NOT EXISTS idx_pagos_completados ON pagos_suscripcion(estado, fecha_pago) WHERE estado = 'completado';
 CREATE INDEX IF NOT EXISTS idx_pagos_transaction_id ON pagos_suscripcion(gateway, transaction_id);
+CREATE INDEX IF NOT EXISTS idx_pagos_preference_id ON pagos_suscripcion(preference_id) WHERE preference_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_pagos_order_id ON pagos_suscripcion(order_id) WHERE order_id IS NOT NULL;
 
 -- Índices para cupones_suscripcion
 CREATE INDEX IF NOT EXISTS idx_cupones_organizacion ON cupones_suscripcion(organizacion_id);

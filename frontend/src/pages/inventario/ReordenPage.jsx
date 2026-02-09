@@ -31,10 +31,10 @@ import { Link } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Button, ConfirmDialog, Modal } from '@/components/ui';
-import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
+import InventarioPageLayout from '@/pages/inventario/components/InventarioPageLayout';
 
 // Ene 2026: Lazy loading de StockPronosticoChart (~200KB chart.js)
-const StockPronosticoChart = lazy(() => import('@/components/inventario/reorden/StockPronosticoChart'));
+const StockPronosticoChart = lazy(() => import('@/pages/inventario/components/reorden/StockPronosticoChart'));
 
 export default function ReordenPage() {
   const [soloSinOC, setSoloSinOC] = useState(true);

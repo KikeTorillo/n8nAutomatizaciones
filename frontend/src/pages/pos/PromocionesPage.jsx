@@ -16,10 +16,10 @@ import {
 } from 'lucide-react';
 
 import { getEstadoVigencia, LABELS_FEMENINO } from '@/lib/estadoVigencia';
-import POSPageLayout from '@/components/pos/POSPageLayout';
+import POSPageLayout from '@/pages/pos/components/POSPageLayout';
 import { ListadoCRUDPage } from '@/components/ui';
-import PromocionFormDrawer from '@/components/pos/PromocionFormDrawer';
-import PromocionStatsModal from '@/components/pos/PromocionStatsModal';
+import PromocionFormDrawer from '@/pages/pos/components/PromocionFormDrawer';
+import PromocionStatsModal from '@/pages/pos/components/PromocionStatsModal';
 import { useToast } from '@/hooks/utils';
 import useSucursalStore, { selectSucursalActiva } from '@/store/sucursalStore';
 import {
@@ -28,7 +28,7 @@ import {
   useCambiarEstadoPromocion,
   useDuplicarPromocion,
 } from '@/hooks/pos';
-import { TIPOS_PROMOCION } from '@/components/pos/promocion-form';
+import { TIPOS_PROMOCION } from '@/pages/pos/components/promocion-form';
 
 // =========== CONSTANTES ===========
 

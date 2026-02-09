@@ -2,11 +2,11 @@ import { useState } from 'react';
 import { Award, Settings, BarChart3, Gift } from 'lucide-react';
 
 import { ConfirmDialog } from '@/components/ui';
-import NivelLealtadDrawer from '@/components/pos/NivelLealtadDrawer';
-import POSPageHeader from '@/components/pos/POSPageHeader';
-import ConfiguracionLealtadTab from '@/components/pos/tabs/ConfiguracionLealtadTab';
-import NivelesLealtadTab from '@/components/pos/tabs/NivelesLealtadTab';
-import EstadisticasLealtadTab from '@/components/pos/tabs/EstadisticasLealtadTab';
+import NivelLealtadDrawer from '@/pages/pos/components/NivelLealtadDrawer';
+import POSPageHeader from '@/pages/pos/components/POSPageHeader';
+import ConfiguracionLealtadTab from '@/pages/pos/components/tabs/ConfiguracionLealtadTab';
+import NivelesLealtadTab from '@/pages/pos/components/tabs/NivelesLealtadTab';
+import EstadisticasLealtadTab from '@/pages/pos/components/tabs/EstadisticasLealtadTab';
 import { useToast } from '@/hooks/utils';
 import { useModalManager } from '@/hooks/utils';
 import {

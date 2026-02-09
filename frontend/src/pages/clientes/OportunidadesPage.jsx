@@ -11,7 +11,7 @@
 
 import { useState, useMemo } from 'react';
 import { TrendingUp, List, Columns3, DollarSign, Target, Clock, CheckCircle, Settings } from 'lucide-react';
-import ClientesPageLayout from '@/components/clientes/ClientesPageLayout';
+import ClientesPageLayout from '@/pages/clientes/components/ClientesPageLayout';
 import {
   EmptyState,
   SkeletonTable,
@@ -19,8 +19,8 @@ import {
   ViewTabs,
   Button,
 } from '@/components/ui';
-import PipelineKanban from '@/components/clientes/PipelineKanban';
-import { EtapasConfigDrawer } from '@/components/clientes/etapas';
+import PipelineKanban from '@/pages/clientes/components/PipelineKanban';
+import { EtapasConfigDrawer } from '@/pages/clientes/components/etapas';
 import {
   useOportunidades,
   useEstadisticasPipeline,

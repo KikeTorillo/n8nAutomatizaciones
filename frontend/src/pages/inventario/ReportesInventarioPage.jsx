@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { BarChart3, TrendingUp, DollarSign, AlertCircle, Calculator } from 'lucide-react';
-import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
+import InventarioPageLayout from '@/pages/inventario/components/InventarioPageLayout';
 import {
   ReporteValorInventario,
   ReporteValoracionFIFOAVCO,

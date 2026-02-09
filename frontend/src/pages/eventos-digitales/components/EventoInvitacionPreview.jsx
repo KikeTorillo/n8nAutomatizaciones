@@ -6,7 +6,7 @@
 
 import { memo, useRef, useState, useEffect, useMemo } from 'react';
 import { PartyPopper } from 'lucide-react';
-import { InvitacionDinamica } from '@/components/eventos-digitales';
+import { InvitacionDinamica } from '@/pages/eventos-digitales/components';
 import { useGoogleFonts } from '@/hooks/utils';
 import { INVITACION_TEMA_DEFAULT } from '../constants';
 

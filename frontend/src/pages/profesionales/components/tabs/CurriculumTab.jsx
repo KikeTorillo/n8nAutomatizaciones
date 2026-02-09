@@ -1,0 +1,40 @@
+import EducacionFormalSection from '@/pages/profesionales/components/EducacionFormalSection';
+import ExperienciaLaboralSection from '@/pages/profesionales/components/ExperienciaLaboralSection';
+import HabilidadesSection from '@/pages/profesionales/components/HabilidadesSection';
+import { useAuthStore, selectUser } from '@/features/auth';
+
+/**
+ * Tab Currículum del profesional
+ * Integra Educación, Experiencia Laboral y Habilidades
+ */
+function CurriculumTab({ profesional }) {
+  const user = useAuthStore(selectUser);
+
+  // Verificar si puede verificar habilidades (admin/propietario)
+  // FASE 7: Usa nivel_jerarquia >= 80 para admin/propietario
+  const puedeVerificar = user?.nivel_jerarquia >= 80;
+
+  return (
+    <div className="space-y-6">
+      {/* Educación Formal */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+        <EducacionFormalSection profesionalId={profesional.id} />
+      </div>
+
+      {/* Experiencia Laboral */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+        <ExperienciaLaboralSection profesionalId={profesional.id} />
+      </div>
+
+      {/* Habilidades */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+        <HabilidadesSection
+          profesionalId={profesional.id}
+          canVerify={puedeVerificar}
+        />
+      </div>
+    </div>
+  );
+}
+
+export default CurriculumTab;

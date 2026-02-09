@@ -7,7 +7,7 @@ import { Button, Badge, LoadingSpinner } from '@/components/ui';
 import { PublicHeader, PublicFooter } from '@/components/public';
 import { suscripcionesNegocioApi } from '@/services/api/modules/suscripciones-negocio.api';
 import { CheckoutModal } from '@/components/checkout';
-import { AlertaBloqueado } from '@/components/suscripciones-negocio';
+import { AlertaBloqueado } from '@/pages/suscripciones-negocio/components';
 import { formatCurrency, cn } from '@/lib/utils';
 import { CICLO_LABELS, CICLOS_FACTURACION, CICLO_PRECIO_FIELD } from '@/hooks/suscripciones-negocio';
 

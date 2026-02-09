@@ -34,63 +34,55 @@ npm run db:connect       # psql directo
 
 Módulos autocontenidos con `manifest.json`: auth, core, agendamiento, inventario, pos, website, eventos-digitales, suscripciones-negocio.
 
+**Formato de respuesta** (ResponseHelper):
+```json
+{ "success": true, "data": <payload>, "message": "...", "timestamp": "..." }
+```
+Axios: `response.data` = objeto completo → `response.data.data` = payload real.
+
 ### Frontend (`frontend/src/`)
 
 ```
 src/
 ├── components/
-│   ├── ui/                 # Atomic Design (TypeScript): atoms, molecules, organisms
-│   ├── editor-framework/   # Framework editores compartido (ver sección abajo)
-│   └── shared/             # Componentes compartidos entre módulos
-│       └── media/          # UnsplashPicker (UnsplashModal, UnsplashGrid, useUnsplashSearch)
-├── features/               # Módulos autocontenidos (auth)
-├── hooks/                  # Hooks por dominio + factories (createCRUDHooks)
-├── pages/                  # Páginas por módulo
-├── types/                  # Tipos TypeScript (ui.d.ts, organisms.d.ts)
-└── store/                  # Stores globales
+│   ├── ui/                 # Atomic Design (TS): atoms, molecules, organisms, templates
+│   ├── editor-framework/   # Framework editores (Website + Invitaciones)
+│   └── shared/             # Componentes cross-módulo (UnsplashPicker, AddToCalendar)
+├── constants/              # colors.ts, entityStates.js
+├── features/               # Módulos autocontenidos (auth con authStore.ts)
+├── hooks/
+│   ├── factories/          # createCRUDHooks, createStatusMutationHook, createSearchHook
+│   ├── config/             # errorHandlerFactory.ts, queryKeys.js, queryConfig.js
+│   └── <dominio>/          # Hooks por módulo, algunos con subcarpetas (pos/lealtad/, pos/ventas/)
+├── lib/                    # params.ts (sanitizeParams), uiConstants/ (.ts con as const)
+├── pages/<módulo>/         # Páginas + components/ específicos del módulo
+├── services/api/modules/   # APIs tipadas (.ts)
+├── store/                  # Stores globales (TS): permisosStore, onboardingStore, createEditorStore
+└── types/entities/         # Entity types: cita, cliente, producto, venta, usuario, sucursal, profesional...
 ```
 
 ### Editor Framework (`components/editor-framework/`)
 
-Framework compartido entre Website e Invitaciones. Soporta dos modos:
-- **Bloques**: Lista vertical arrastrables (useBlockEditor, useDndHandlers, BlockPalette)
-- **Posición Libre**: Secciones con elementos X/Y estilo Wix (FreePositionCanvas, createFreePositionStore)
+Dos modos: **Bloques** (lista vertical, Website) y **Posición Libre** (X/Y estilo Wix, Invitaciones).
 
-**Paneles unificados** (genéricos, parametrizados por props):
-- `ThemeEditorPanel` — Editor de colores/fuentes
-- `TemplateGalleryPanel` — Panel compacto para sidebar
-- `TemplateGalleryModal` — Modal fullscreen con render props
-
-**Hooks compartidos**:
-- `useEditorBlockHandlers` — 6 handlers + DnD para contexts de editor
-- `useArrayItemHandlers` — add/remove/change para editores con listas
-
-**Config por módulo** (constantes + previews, extensión `.jsx`):
-- `pages/website/config/blockConfig.jsx` — previews registrados en previewRegistry
-- `pages/eventos-digitales/editor/config/invitacionBlocks.jsx` — ídem
-- `pages/*/config/themeConfig.js` — constantes de tema
+- **Store factory**: `createEditorStore(options)` — Zustand + temporal (undo/redo) + subscribeWithSelector + persist opcional. Exporta `EditorState`, `EditorBloque`, `EditorSelectors`.
+- **Hooks**: `useEditorBlockHandlers`, `useArrayItemHandlers`.
+- **Common blocks**: `common-blocks/canvas/` — 5 renderers compartidos (Video, Countdown, Separador, Galeria, Texto).
+- **Config por módulo**: `blockConfig.jsx`, `invitacionBlocks.jsx`, `themeConfig.js`.
 
 ### Modelo de Suscripciones (Dogfooding)
 
-Todas las organizaciones se suscriben a planes de Nexo Team (org 1) vía dogfooding:
+Todas las orgs se suscriben a planes de Nexo Team (org 1) vía `dogfoodingService.js`.
 
-```
-Org 1 (Nexo Team) → crea planes en planes_suscripcion_org
-                   → dogfoodingService crea cliente con organizacion_vinculada_id = org_nueva
-                   → crea suscripcion_org con organizacion_id=1, cliente_id=cliente_vinculado
-```
-
-**LimitesHelper** busca suscripción SOLO por dogfooding:
+**LimitesHelper** busca SOLO por `organizacion_vinculada_id`:
 ```sql
 WHERE sub.cliente_id IN (SELECT id FROM clientes WHERE organizacion_vinculada_id = $1)
 ```
-NO usar `sub.organizacion_id = $1` — eso matchea suscripciones de clientes de la org, no la suscripción de la org misma.
 
 ### Middlewares Chain
 ```
 auth.authenticateToken → tenant.setTenantContext → tenant.verifyTenantActive → suscripcionActiva → [permisos] → controller
 ```
-
 Para rutas con `:eventoId`: agregar `requireEvento` después de middlewares comunes.
 
 ### RLS (Row Level Security)
@@ -118,47 +110,62 @@ await RLSContextManager.withBypass(async (db) => { ... });        // JOINs, supe
 
 ### Frontend
 - **JSX**: Archivos con JSX DEBEN tener extensión `.jsx`/`.tsx` (Vite lo requiere)
-- **TypeScript**: UI components en `/components/ui/` son `.tsx`
+- **TypeScript**: UI components, APIs, hooks, stores y factories son `.ts`/`.tsx`
 - **Dark mode**: Siempre variantes `dark:` en Tailwind
-- **Colores**: Solo `primary-*`, usar `var(--color-primary-500)` en vez de hardcodear `#753572`
+- **Colores**: Importar de `constants/colors.ts` (`BRAND_COLORS`, `TAG_COLORS`). En CSS usar `primary-*` / `var(--color-primary-500)`. NO hardcodear hex.
 - **React.memo**: Obligatorio en componentes de lista/tabla
-- **Sanitizar**: Joi rechaza `""`, usar `undefined`
+- **Sanitizar**: Joi rechaza `""`, usar `sanitizeParams()` de `lib/params.ts`
 - **Desacoplamiento**: Módulos NO importan entre sí. Código compartido va en `editor-framework/` o `components/shared/`
 
-## Patrones
+## Patrones Frontend
+
+### Factories (hooks/)
+
+```typescript
+// CRUD completo — genera useList, useDetail, useCreate, useUpdate, useDelete
+const hooks = createCRUDHooks<Entidad>({
+  name: 'entidad', namePlural: 'entidades',
+  api: miApi, baseKey: 'entidades',
+  apiMethods: { list: 'listar', get: 'obtener', create: 'crear', update: 'actualizar', delete: 'eliminar' },
+  sanitize: createSanitizer(['campo1', { name: 'campo_id', type: 'id' }]),
+});
+
+// Mutaciones de estado
+const useCancelar = createStatusMutationHook({
+  mutationFn: ({ id }) => miApi.cancelar(id),
+  queryKey: 'entidades', successMessage: 'Cancelado', entityName: 'Entidad',
+});
+
+// Búsqueda con debounce
+const useBuscar = createSearchHook<Entidad>({ key: 'entidades', searchFn: miApi.buscar });
+```
+
+### Error Handling (hooks/config/errorHandlerFactory.ts)
+
+```typescript
+// Toda mutation debe tener onError — estandarizado con factory
+onError: createCRUDErrorHandler('create', 'Producto', { 409: 'Ya existe' })
+```
+
+### Overlays
+- **FormDrawer** (`organisms/FormDrawer.tsx`): Drawer + form + footer estándar
+- **useFormDrawer**: open/close + RHF + mutations + toast
+- **useDeleteConfirmation**: confirmDelete + deleteConfirmProps
+- **useDisclosure**: Estado boolean open/close
 
 ### Backend - BaseCrudController
 ```javascript
-module.exports = createCrudController({
-  Model: MiModel,
-  resourceName: 'MiEntidad',
-  filterSchema: { activo: 'boolean' }
-});
+module.exports = createCrudController({ Model: MiModel, resourceName: 'MiEntidad', filterSchema: { activo: 'boolean' } });
 ```
-
-### Frontend - createCRUDHooks
-```javascript
-const crudHooks = createCRUDHooks({
-  name: 'entidad', namePlural: 'entidades',
-  api: miApi, baseKey: 'entidades'
-});
-```
-
-### Frontend - Overlays
-- **FormDrawer** (`organisms/FormDrawer.tsx`): Drawer + form + footer estándar
-- **useFormDrawer** (`hooks/utils/useFormDrawer.ts`): open/close + RHF + mutations + toast
-- **useDisclosure** (`hooks/utils/useDisclosure.ts`): Estado boolean open/close
 
 ## Troubleshooting
 
 | Error | Solución |
 |-------|----------|
 | "Organización no encontrada" | `RLSContextManager.withBypass()` |
-| "field not allowed to be empty" | Sanitizar `""` a `undefined` |
+| "field not allowed to be empty" | Sanitizar `""` a `undefined` con `sanitizeParams()` |
 | Cambios no se reflejan | `docker restart <contenedor>` + Ctrl+Shift+R |
 | JSX parse error en Vite | Renombrar archivo a `.jsx`/`.tsx` |
-| "Sin plan (X/X)" al crear recurso | Verificar que `planes_suscripcion_org.limites` tiene el campo del recurso |
-
----
-
-**Actualizado**: 7 Febrero 2026
+| "Sin plan (X/X)" al crear recurso | Verificar `planes_suscripcion_org.limites` tiene el campo |
+| TS: `response.data.data` no existe | Backend wraps en `{ data: T }` → usar `(response.data as any).data` |
+| TS: Zustand middleware `set` overloads | En factories usar `_set: any` + `const set = _set as SetFn` |

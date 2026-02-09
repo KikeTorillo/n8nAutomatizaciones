@@ -1,4 +1,6 @@
 /**
  * Hooks para el módulo Marketplace
  */
-export * from './useMarketplace';
+export * from './usePerfilesMarketplace';
+export * from './useReseñasMarketplace';
+export * from './useDisponibilidadMarketplace';
