@@ -10,96 +10,31 @@ Plataforma standalone donde cualquier persona crea invitaciones digitales (bodas
 
 ### Implementado dentro de Nexo (sin fork aún)
 
-El frontend B2C se construyó **dentro de Nexo** como módulo `pages/invitaciones/`, reutilizando la infraestructura existente. No se ha hecho fork — todo convive con el ERP.
-
-#### Frontend B2C — Páginas públicas
-- **Landing**: 7 secciones (Hero, ComoFunciona, TiposEvento, PlantillasCarousel, Caracteristicas, Testimonios, CTA)
-- **Tipos**: TipoEventoPage (genérica por slug), EjemplosPage (galería filtrable)
-- **Precios**: PreciosInvitacionesPage (planes + FAQ + CheckoutModal)
-
-#### Frontend B2C — Dashboard (protegido)
-- **MisEventosPage**: Grid de cards de eventos del anfitrión
-- **EventoDashboardPage**: Stats + countdown + acciones rápidas
-- **InvitadosManagerPage**: Tabla + agregar + importar CSV + filtros RSVP
-- **CompartirPage**: Link copiable + WhatsApp + QR + RSVPTracker
-- **GaleriaModeracionPage**: Grid fotos + aprobar/ocultar/eliminar
-
-#### Editor Anónimo B2C (completado)
-Flujo estilo invitio.events — el visitante edita sin registrarse:
-
-```
-Landing → Wizard (2 pasos: tipo + plantilla)
-  → Guardar borrador en localStorage
-  → Editor completo (/invitaciones/editor — PÚBLICO)
-  → Editar bloques, colores, decoraciones
-  → "Publicar" / "Guardar" → Gate modal → Login
-  → Convertir borrador → evento real en BD
-  → Redirigir a editor B2B (/eventos-digitales/:id/editor)
-```
-
-**Archivos clave:**
-
-| Archivo | Función |
-|---------|---------|
-| `editor/hooks/useBorradorStorage.js` | localStorage (key: `nexo-borrador-invitacion`, version: 1) |
-| `editor/context/BorradorEditorContext.jsx` | Tercer variant de EditorContext (misma shape, datos locales) |
-| `editor/BorradorEditorPage.jsx` | Página wrapper, reutiliza containers del editor B2B |
-| `editor/components/BorradorBanner.jsx` | Banner "Borrador local" con CTA |
-| `editor/components/ConvertirBorradorModal.jsx` | Gate: login prompt / formulario datos → crear evento |
-
-**Decisiones técnicas:**
-- **Noop Zustand store** para `getFreePositionStore()` — containers lo llaman como hook selector, retornar `null` crashea
-- **`createCRUDHooks.useList`** acepta `options?: { enabled?: boolean }` — necesario para desactivar `usePlantillas` sin auth
-- **SidebarContainer + DrawersContainer + InvitacionTemplateGallery** usan `isBorrador` del contexto para elegir `usePlantillasPublicas` vs `usePlantillas` (evita 401 → hard redirect a `/login` del interceptor axios)
-
-#### Backend — Pagos únicos (Checkout Pro)
-- `tipo_cobro = 'unico'` implementado en suscripciones-negocio
-- Terminal Point (POS) integrada
-- Planes B2C configurados
-
-#### Rutas
-```
-invitaciones.routes.jsx — 9 públicas + 5 protegidas
-Públicas: landing, precios, bodas, xv-anos, bautizos, cumpleanos, ejemplos, crear, editor
-Protegidas: mis-eventos, evento/:id, evento/:id/invitados, evento/:id/compartir, evento/:id/galeria
-```
-
-`/invitaciones` agregado a `RUTAS_EXENTAS` en SubscriptionGuard.
+El frontend B2C se construyó **dentro de Nexo** como módulo `pages/invitaciones/`, reutilizando la infraestructura existente.
 
 ---
 
-## Decisión Pendiente: Fork vs Módulo
+## Flujo Completo B2C
 
-### Opción A: Mantener dentro de Nexo (actual)
-- **Pro**: Una sola codebase, shared components sin duplicación, deploys unificados
-- **Contra**: Carga de módulos innecesarios para B2C, routing complejo, bundle más grande
-
-### Opción B: Fork a repo independiente
-- **Pro**: Bundle optimizado, dominio propio, UX limpia sin sidebar empresarial
-- **Contra**: Mantenimiento de dos codebases, divergencia del editor framework
-
-### Recomendación
-Mantener como módulo hasta validar product-market fit. Si escala → fork conservando:
-- `auth`, `core` (simplificado: 1 user = 1 org), `eventos-digitales`, `suscripciones-negocio`
-- `editor-framework`, `ui/`, `shared/`
-
----
-
-## Modelo de Negocio
-
-- **Pagos únicos** por evento (Checkout Pro de MercadoPago)
-- Planes: Básico (gratis/limitado), Premium, Deluxe
-- Límites: eventos_activos, invitados_evento, fotos_galeria, plantillas_premium, mesa_regalos, mesas_asignacion
-
----
-
-## Flujos de Usuario
-
-### Anfitrión (B2C)
+### Anfitrión nuevo (sin cuenta)
 ```
-Landing → Wizard (tipo + plantilla) → Editor borrador (localStorage)
-  → Login/Registro → Convertir borrador → Dashboard evento
-  → Agregar invitados → Seleccionar plan → Pagar → Compartir link → Trackear RSVPs
+Landing → Wizard (tipo + plantilla)
+  → Editor borrador (localStorage, sin auth)
+  → "Publicar" → Gate modal
+  → "Crear cuenta gratis" (guarda flag nexo_origen_b2c) → /registro
+  → Email activación → Crear contraseña
+  → Auto-onboarding quick (sin wizard empresarial)
+  → /invitaciones/precios → Elegir plan → Pagar (MercadoPago)
+  → /payment/callback → "Continuar con mi invitación"
+  → /invitaciones/editor → Auto-open ConvertirBorradorModal
+  → nombre + fecha → Crear evento BD → Editor real (/eventos-digitales/:id/editor)
+```
+
+### Anfitrión existente (con cuenta)
+```
+Editor borrador → "Publicar" → Gate modal
+  → "Ya tengo cuenta" → /login?returnTo=/invitaciones/editor
+  → Vuelve al editor → Auto-open ConvertirBorradorModal → Crear evento BD
 ```
 
 ### Invitado (sin auth)
@@ -110,11 +45,95 @@ Recibir link → Ver invitación animada → RSVP → Ver mesa de regalos
 
 ---
 
+## Arquitectura
+
+### Páginas públicas
+- **Landing**: 7 secciones (Hero, ComoFunciona, TiposEvento, PlantillasCarousel, Caracteristicas, Testimonios, CTA)
+- **Tipos**: TipoEventoPage (genérica por slug), EjemplosPage (galería filtrable)
+- **Precios**: PreciosInvitacionesPage (planes + FAQ + CheckoutModal)
+- **Wizard**: CrearEventoWizardPage (2 pasos: tipo → plantilla → localStorage)
+- **Editor borrador**: BorradorEditorPage (reutiliza containers del editor B2B)
+
+### Dashboard protegido
+- **MisEventosPage**: Grid cards de eventos
+- **EventoDashboardPage**: Stats + countdown + acciones
+- **InvitadosManagerPage**: Tabla + CSV import + filtros RSVP
+- **CompartirPage**: Link + WhatsApp + QR + RSVPTracker
+- **GaleriaModeracionPage**: Grid fotos + moderación
+
+### Rutas
+```
+invitaciones.routes.jsx
+Públicas: landing, precios, bodas, xv-anos, bautizos, cumpleanos, ejemplos, crear, editor
+Protegidas: mis-eventos, evento/:id, evento/:id/invitados, evento/:id/compartir, evento/:id/galeria
+```
+`/invitaciones` en `RUTAS_EXENTAS` de SubscriptionGuard.
+
+---
+
+## Editor Anónimo
+
+| Archivo | Función |
+|---------|---------|
+| `editor/hooks/useBorradorStorage.js` | CRUD localStorage (key: `nexo-borrador-invitacion`) |
+| `editor/context/BorradorEditorContext.jsx` | Tercer variant de EditorContext (datos locales, autosave 1.5s) |
+| `editor/BorradorEditorPage.jsx` | Página wrapper, reutiliza containers B2B |
+| `editor/components/BorradorBanner.jsx` | Banner "Borrador local" con CTA |
+| `editor/components/ConvertirBorradorModal.jsx` | Gate (registro/login) + formulario conversión |
+
+**Decisiones técnicas:**
+- **Noop Zustand store** para `getFreePositionStore()` — containers lo llaman como hook selector
+- **`isBorrador` guard**: `usePlantillas({}, { enabled: !isBorrador })` + `usePlantillasPublicas()` evita 401 sin auth
+- **Auto-open modal**: `useEffect` + `autoOpenedRef` detecta `isAuthenticated + borrador` al volver del login/pago
+
+---
+
+## Gate B2C — Registro + Pago + Conversión
+
+### localStorage Keys
+
+| Key | Contenido | Ciclo de vida |
+|-----|-----------|---------------|
+| `nexo-borrador-invitacion` | `{ version, tipoEvento, plantilla, bloques, tema, updatedAt }` | Wizard → Editor → Limpiado al convertir |
+| `nexo_origen_b2c` | `"true"` | Gate modal → ActivarCuentaPage consume y elimina |
+| `nexo_plan_seleccionado` | `{ plan_id, plan_nombre, periodo, timestamp }` | CheckoutModal → Se usa post-login |
+
+### Backend: Onboarding Quick
+
+`POST /auth/onboarding/quick` (autenticado)
+- Schema: solo `nombre_negocio` opcional
+- Crea org mínima: módulo `eventos-digitales` únicamente, sin estado/ciudad
+- Reutiliza `OnboardingService.completar()` internamente
+- Retorna nuevos tokens JWT con `organizacion_id`
+
+### Archivos modificados para el Gate
+
+| Archivo | Cambio |
+|---------|--------|
+| `auth/schemas/activacion.schemas.js` | Schema `onboardingQuick` |
+| `auth/controllers/auth.controller.js` | Método `onboardingQuick` |
+| `auth/routes/auth-onboarding.js` | Ruta `POST /onboarding/quick` |
+| `features/auth/api/auth.api.js` | Método `onboardingQuick()` |
+| `features/auth/pages/ActivarCuentaPage.jsx` | Detecta flag B2C → auto-onboard → redirect precios |
+| `pages/payment/PaymentCallbackPage.jsx` | Detecta borrador → "Continuar con mi invitación" |
+
+---
+
+## Modelo de Negocio
+
+- **Pago único por invitación** (Checkout Pro de MercadoPago)
+- Sin planes ni suscripciones — el usuario paga una vez para publicar su invitación
+
+---
+
+## Decisión Pendiente: Fork vs Módulo
+
+**Recomendación**: Mantener como módulo hasta validar product-market fit. Si escala → fork conservando `auth`, `core` (1 user = 1 org), `eventos-digitales`, `suscripciones-negocio`, `editor-framework`, `ui/`, `shared/`.
+
+---
+
 ## Pendiente
 
-- [ ] Rutas públicas backend para invitado (RSVP, galería, felicitaciones sin auth)
 - [ ] SEO / Open Graph preview para links compartidos
 - [ ] Email de confirmación RSVP
-- [ ] Flujo completo de ConvertirBorradorModal (crear evento + guardar bloques + limpiar localStorage)
-- [ ] Verificar editor B2B no se afectó (necesita test con sesión autenticada)
 - [ ] Analytics (eventos creados, RSVPs, conversión)

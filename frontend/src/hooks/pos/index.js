@@ -35,3 +35,4 @@ export * from './useAsignacionesModificadores';
 export * from './useCombosModificadoresPOS';
 export * from './lealtad';
 export { useTiposVenta, TIPO_VENTA, TIPOS_VENTA_KEYS } from './useTiposVenta';
+export * from './usePointTerminal';
