@@ -103,6 +103,7 @@ function HeroInvitacionCanvasBlock({ bloque, tema, evento, isEditing, onContentC
           <img
             src={imagen_url}
             alt={titulo}
+            loading="lazy"
             className="w-full h-full object-cover"
             style={{ objectPosition: imagen_posicion }}
           />

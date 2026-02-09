@@ -123,6 +123,7 @@ export default function VariantesGrid({
                   <img
                     src={variante.imagen_url_efectiva}
                     alt={variante.nombre_variante}
+                    loading="lazy"
                     className="w-full h-full object-cover rounded-lg"
                   />
                 ) : (

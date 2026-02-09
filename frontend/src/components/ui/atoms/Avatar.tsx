@@ -67,6 +67,7 @@ const Avatar = memo(
           ref={ref as React.Ref<HTMLImageElement>}
           src={src}
           alt={alt}
+          loading="lazy"
           onError={() => setImgError(true)}
           className={cn('rounded-full object-cover', sizeClass, className)}
         />

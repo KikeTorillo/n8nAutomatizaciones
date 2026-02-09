@@ -73,6 +73,7 @@ export default function GaleriaPublico({ contenido }) {
               <img
                 src={imagen.url || imagen}
                 alt={imagen.alt || `Imagen ${index + 1}`}
+                loading="lazy"
                 className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
               />
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors" />
@@ -103,6 +104,7 @@ export default function GaleriaPublico({ contenido }) {
           <img
             src={imagenes[currentIndex]?.url || imagenes[currentIndex]}
             alt={imagenes[currentIndex]?.alt || ''}
+            loading="lazy"
             className="max-w-[90vw] max-h-[90vh] object-contain"
           />
 

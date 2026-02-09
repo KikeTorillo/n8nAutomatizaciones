@@ -51,7 +51,7 @@ export interface EditorState {
   bloqueEditandoInline: BloqueId | null;
   puedeUndo: boolean;
   puedeRedo: boolean;
-  tieneClambiosLocales: boolean;
+  tieneCambiosLocales: boolean;
   bloqueRecienAgregado: BloqueId | null;
   conflictoVersion: ConflictoVersion | null;
 
@@ -138,7 +138,7 @@ export function createEditorStore(options: CreateEditorStoreOptions = {}) {
     bloqueEditandoInline: null as BloqueId | null,
     puedeUndo: false,
     puedeRedo: false,
-    tieneClambiosLocales: false,
+    tieneCambiosLocales: false,
     bloqueRecienAgregado: null as BloqueId | null,
     conflictoVersion: null as ConflictoVersion | null,
   };
@@ -158,7 +158,7 @@ export function createEditorStore(options: CreateEditorStoreOptions = {}) {
       set({
         bloques: bloques || [],
         recursoId,
-        tieneClambiosLocales: false,
+        tieneCambiosLocales: false,
         estadoGuardado: 'saved',
       }),
 
@@ -169,7 +169,7 @@ export function createEditorStore(options: CreateEditorStoreOptions = {}) {
             ? { ...b, contenido: { ...b.contenido, ...contenido } }
             : b
         ),
-        tieneClambiosLocales: true,
+        tieneCambiosLocales: true,
         estadoGuardado: 'unsaved',
       })),
 
@@ -180,7 +180,7 @@ export function createEditorStore(options: CreateEditorStoreOptions = {}) {
             ? { ...b, estilos: { ...b.estilos, ...estilos } }
             : b
         ),
-        tieneClambiosLocales: true,
+        tieneCambiosLocales: true,
         estadoGuardado: 'unsaved',
       })),
 
@@ -196,7 +196,7 @@ export function createEditorStore(options: CreateEditorStoreOptions = {}) {
 
         return {
           bloques: bloquesReordenados,
-          tieneClambiosLocales: true,
+          tieneCambiosLocales: true,
           estadoGuardado: 'unsaved' as const,
         };
       }),
@@ -205,7 +205,7 @@ export function createEditorStore(options: CreateEditorStoreOptions = {}) {
       set((state) => ({
         bloques: [...state.bloques, bloque],
         bloqueSeleccionado: bloque.id,
-        tieneClambiosLocales: true,
+        tieneCambiosLocales: true,
         estadoGuardado: 'unsaved',
       })),
 
@@ -216,7 +216,7 @@ export function createEditorStore(options: CreateEditorStoreOptions = {}) {
           state.bloqueSeleccionado === id ? null : state.bloqueSeleccionado,
         bloqueEditandoInline:
           state.bloqueEditandoInline === id ? null : state.bloqueEditandoInline,
-        tieneClambiosLocales: true,
+        tieneCambiosLocales: true,
         estadoGuardado: 'unsaved',
       })),
 
@@ -242,7 +242,7 @@ export function createEditorStore(options: CreateEditorStoreOptions = {}) {
             (a, b) => a.orden - b.orden
           ),
           bloqueSeleccionado: nuevoId,
-          tieneClambiosLocales: true,
+          tieneCambiosLocales: true,
           estadoGuardado: 'unsaved' as const,
         };
       }),
@@ -252,7 +252,7 @@ export function createEditorStore(options: CreateEditorStoreOptions = {}) {
         bloques: state.bloques.map((b) =>
           b.id === id ? { ...b, visible: !b.visible } : b
         ),
-        tieneClambiosLocales: true,
+        tieneCambiosLocales: true,
         estadoGuardado: 'unsaved',
       })),
 
@@ -285,7 +285,7 @@ export function createEditorStore(options: CreateEditorStoreOptions = {}) {
           ),
           bloqueSeleccionado: bloque.id,
           bloqueRecienAgregado: bloque.id,
-          tieneClambiosLocales: true,
+          tieneCambiosLocales: true,
           estadoGuardado: 'unsaved' as const,
         };
       }),
@@ -351,7 +351,7 @@ export function createEditorStore(options: CreateEditorStoreOptions = {}) {
       set({
         estadoGuardado: 'saved',
         ultimoGuardado: new Date(),
-        tieneClambiosLocales: false,
+        tieneCambiosLocales: false,
       }),
 
     setErrorGuardado: () =>
@@ -410,7 +410,7 @@ export function createEditorStore(options: CreateEditorStoreOptions = {}) {
         bloques: [],
         bloqueSeleccionado: null,
         bloqueEditandoInline: null,
-        tieneClambiosLocales: false,
+        tieneCambiosLocales: false,
         estadoGuardado: 'saved',
         conflictoVersion: null,
       }),
@@ -551,7 +551,7 @@ export function createEditorSelectors(_store: unknown): EditorSelectors {
 
     // Guardado
     selectEstadoGuardado: (state) => state.estadoGuardado,
-    selectTieneCambios: (state) => state.tieneClambiosLocales,
+    selectTieneCambios: (state) => state.tieneCambiosLocales,
     selectUltimoGuardado: (state) => state.ultimoGuardado,
 
     // Historial

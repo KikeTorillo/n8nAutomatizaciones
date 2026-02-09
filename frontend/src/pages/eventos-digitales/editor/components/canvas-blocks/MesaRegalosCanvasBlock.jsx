@@ -91,6 +91,7 @@ function MesaRegalosCanvasBlock({ bloque, tema, mesaRegalos }) {
                     <img
                       src={item.logo_url}
                       alt={item.nombre}
+                      loading="lazy"
                       className="max-h-full max-w-full object-contain"
                     />
                   </div>

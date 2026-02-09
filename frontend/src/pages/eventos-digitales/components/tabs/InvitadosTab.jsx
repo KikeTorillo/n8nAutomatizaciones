@@ -281,6 +281,7 @@ export default function InvitadosTab({
                   <img
                     src={getModalData('qr')?.qr}
                     alt={`QR de ${getModalData('qr')?.invitado?.nombre}`}
+                    loading="lazy"
                     className="w-48 h-48 mx-auto"
                   />
                 </div>

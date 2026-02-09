@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { type AxiosResponse, type InternalAxiosRequestConfig } from 'axios';
 import axiosRetry from 'axios-retry';
 // NOTA: Importar directamente para evitar dependencia circular con features/auth/index.js
 import useAuthStore from '@/features/auth/store/authStore';
@@ -11,6 +11,28 @@ import {
   notifyRefreshSubscribers,
   resetTokenManager,
 } from '@/features/auth/services/tokenManager';
+
+// ========== TYPES ==========
+
+export interface ApiResponse<T = unknown> {
+  success: boolean;
+  data: T;
+  message?: string;
+  timestamp?: string;
+}
+
+export interface ApiError {
+  success: false;
+  message: string;
+  errors?: Record<string, string[]>;
+  statusCode?: number;
+}
+
+interface RetryableRequestConfig extends InternalAxiosRequestConfig {
+  _retry?: boolean;
+}
+
+// ========== API CLIENT ==========
 
 const apiClient = axios.create({
   // Usar ruta relativa para que el proxy de Vite funcione
@@ -34,7 +56,7 @@ axiosRetry(apiClient, {
     // Reintentar en errores de red o errores 5xx del servidor
     return (
       axiosRetry.isNetworkOrIdempotentRequestError(error) ||
-      (error.response?.status >= 500 && error.response?.status < 600)
+      (error.response?.status !== undefined && error.response.status >= 500 && error.response.status < 600)
     );
   },
   onRetry: () => {
@@ -45,7 +67,7 @@ axiosRetry(apiClient, {
 // ========== INTERCEPTOR DE REQUEST ==========
 // Agregar token a todas las peticiones
 apiClient.interceptors.request.use(
-  (config) => {
+  (config: InternalAxiosRequestConfig) => {
     // Ene 2026: Obtener token de memoria via tokenManager
     const accessToken = getAccessToken();
 
@@ -69,16 +91,16 @@ apiClient.interceptors.request.use(
 // ========== INTERCEPTOR DE RESPONSE ==========
 // Manejo de errores y auto-refresh de token
 apiClient.interceptors.response.use(
-  (response) => response,
+  (response: AxiosResponse) => response,
   async (error) => {
-    const originalRequest = error.config;
+    const originalRequest = error.config as RetryableRequestConfig;
 
     // Si el error es 401 y no hemos intentado refresh aún
     if (error.response?.status === 401 && !originalRequest._retry) {
       // Si ya hay un refresh en progreso, agregar a la cola
       if (getIsRefreshing()) {
         return new Promise((resolve, reject) => {
-          subscribeToRefresh((refreshError, newToken) => {
+          subscribeToRefresh((refreshError: Error | null, newToken: string | null) => {
             if (refreshError) {
               reject(refreshError);
             } else {
@@ -95,7 +117,7 @@ apiClient.interceptors.response.use(
       try {
         // Hacer refresh con body vacío
         // La cookie httpOnly (refreshToken) se envía automáticamente
-        const response = await axios.post(
+        const response = await axios.post<ApiResponse<{ accessToken: string }>>(
           `${apiClient.defaults.baseURL}/auth/refresh`,
           {}, // Body vacío - el refreshToken viene en la cookie
           { withCredentials: true, timeout: 10000 } // 10s para refresh
@@ -117,8 +139,8 @@ apiClient.interceptors.response.use(
         // Reintentar la petición original
         return apiClient(originalRequest);
       } catch (refreshError) {
-        console.error('❌ Error al refrescar token:', refreshError);
-        notifyRefreshSubscribers(refreshError, null);
+        console.error('Error al refrescar token:', refreshError);
+        notifyRefreshSubscribers(refreshError as Error, null);
         setIsRefreshing(false);
 
         // Limpiar estado de autenticación
@@ -156,3 +178,4 @@ axiosRetry(publicApiClient, {
 
 export default apiClient;
 export { apiClient as api, publicApiClient };
+export type { AxiosResponse };

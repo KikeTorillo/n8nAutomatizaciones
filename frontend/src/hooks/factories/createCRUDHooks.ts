@@ -41,9 +41,9 @@ export interface CRUDHooksConfig<TEntity = unknown, TCreate = unknown, TUpdate =
   apiMethods: ApiMethods;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   sanitize?: (data: any) => any;
-  invalidateOnCreate?: string[];
-  invalidateOnUpdate?: string[];
-  invalidateOnDelete?: string[];
+  invalidateOnCreate?: readonly string[];
+  invalidateOnUpdate?: readonly string[];
+  invalidateOnDelete?: readonly string[];
   errorMessages?: ErrorMessages;
   staleTime?: number;
   responseKey?: string;

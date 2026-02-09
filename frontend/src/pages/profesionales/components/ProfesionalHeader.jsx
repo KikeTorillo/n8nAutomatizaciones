@@ -73,6 +73,7 @@ function ProfesionalHeader({ profesional }) {
                   <img
                     src={profesional.foto_url}
                     alt={profesional.nombre_completo}
+                    loading="lazy"
                     className="w-full h-full object-cover"
                   />
                 ) : (

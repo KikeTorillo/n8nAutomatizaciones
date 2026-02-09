@@ -126,7 +126,7 @@ export const TEXTAREA_RESIZE = {
  * @param {'none'|'vertical'|'horizontal'|'both'} [resize='none'] - Modo de resize
  * @returns {string} - Clases Tailwind
  */
-export function getTextareaStyles(hasError = false, resize = 'none') {
+export function getTextareaStyles(hasError = false, resize: keyof typeof TEXTAREA_RESIZE = 'none') {
   return cn(
     TEXTAREA_BASE,
     TEXTAREA_RESIZE[resize] || TEXTAREA_RESIZE.none,
@@ -189,7 +189,7 @@ export const INPUT_AFFIX = {
  * @param {boolean} hasSuffix - Si tiene suffix
  * @returns {string} - Clases de padding
  */
-export function getInputPaddingStyles(hasPrefix, hasSuffix) {
+export function getInputPaddingStyles(hasPrefix: boolean, hasSuffix: boolean) {
   if (hasPrefix && hasSuffix) return 'px-8';
   if (hasPrefix) return 'pl-8 pr-4';
   if (hasSuffix) return 'pl-4 pr-8';

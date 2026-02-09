@@ -127,6 +127,7 @@ export const ProfesionalesList = memo(function ProfesionalesList({
             <img
               src={row.foto_url}
               alt={row.nombre_completo}
+              loading="lazy"
               className="flex-shrink-0 h-10 w-10 rounded-full object-cover border border-gray-200 dark:border-gray-600"
             />
           ) : (
@@ -283,6 +284,7 @@ export const ProfesionalesList = memo(function ProfesionalesList({
                     <img
                       src={profesional.foto_url}
                       alt={profesional.nombre_completo}
+                      loading="lazy"
                       className="w-16 h-16 rounded-full object-cover flex-shrink-0 border-2"
                       style={{ borderColor: profesional.color_calendario || '#753572' }}
                     />

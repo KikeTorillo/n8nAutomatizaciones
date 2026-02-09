@@ -406,6 +406,7 @@ export default function GenerarEtiquetaModal({
                                 <img
                                     src={codigoGenerado}
                                     alt="Código generado"
+                                    loading="lazy"
                                     className="max-h-[180px] max-w-full mx-auto"
                                 />
                                 {mostrarSKU && (

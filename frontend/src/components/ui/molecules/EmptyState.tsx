@@ -3,7 +3,7 @@ import { cn } from '@/lib/utils';
 import { Inbox } from 'lucide-react';
 import { Button } from '../atoms/Button';
 import { EMPTY_STATE_SIZES, EMPTY_STATE_BASE } from '@/lib/uiConstants';
-import type { Size, ButtonVariant, LucideIcon } from '@/types/ui';
+import type { FormSize, ButtonVariant, LucideIcon } from '@/types/ui';
 
 export interface EmptyStateProps {
   /** Icono de lucide-react (default: Inbox) */
@@ -21,7 +21,7 @@ export interface EmptyStateProps {
   /** Contenido adicional */
   children?: ReactNode;
   /** Tamaño del componente */
-  size?: Size;
+  size?: FormSize;
   /** Clases adicionales */
   className?: string;
 }

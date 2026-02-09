@@ -15,7 +15,7 @@ import { useAutosave, hashBloques } from '@/components/editor-framework';
  * @param {Array} params.bloques - Bloques actuales
  * @param {Object} params.actualizarBloque - Mutation de actualización
  * @param {Function} params.actualizarVersionBloque - Actualiza versión en store
- * @param {boolean} params.tieneClambiosLocales - Si hay cambios sin guardar
+ * @param {boolean} params.tieneCambiosLocales - Si hay cambios sin guardar
  * @param {Function} params.setGuardando - Callback inicio guardado
  * @param {Function} params.setGuardado - Callback guardado exitoso
  * @param {Function} params.setErrorGuardado - Callback error guardado
@@ -25,7 +25,7 @@ export function useWebsiteAutosave({
   bloques,
   actualizarBloque,
   actualizarVersionBloque,
-  tieneClambiosLocales,
+  tieneCambiosLocales,
   setGuardando,
   setGuardado,
   setErrorGuardado,
@@ -55,7 +55,7 @@ export function useWebsiteAutosave({
     enabled: true,
     debounceMs: 3000,
     items: bloques,
-    hasChanges: tieneClambiosLocales,
+    hasChanges: tieneCambiosLocales,
     computeHash: hashBloques,
     onSaving: () => setGuardando(),
     onSaved: () => setGuardado(),

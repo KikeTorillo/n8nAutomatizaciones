@@ -5,3 +5,6 @@ export { UnsplashModal, UnsplashGrid, useUnsplashSearch } from './media/Unsplash
 
 // Calendar
 export { AddToCalendar } from './calendar';
+
+// Documentos
+export { DocumentoUploadDrawer } from './DocumentoUploadDrawer';

@@ -1,14 +1,14 @@
 import { forwardRef, memo, type InputHTMLAttributes } from 'react';
 import { cn } from '@/lib/utils';
 import { getCheckboxStyles, CHECKBOX_SIZE_CLASSES, getAriaDescribedBy } from '@/lib/uiConstants';
-import type { UISize } from '@/types/ui';
+import type { FormSize } from '@/types/ui';
 
 export interface CheckboxProps
   extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type' | 'size'> {
   /** Estado del checkbox */
   checked?: boolean;
   /** Tamaño del checkbox */
-  size?: UISize;
+  size?: FormSize;
   /** Estado deshabilitado */
   disabled?: boolean;
   /** Si el checkbox tiene error (borde rojo) */

@@ -415,6 +415,7 @@ export default function GenerarEtiquetaGS1Modal({
                 <img
                   src={barcodeImage}
                   alt="Código GS1"
+                  loading="lazy"
                   className="max-h-[80px] mx-auto"
                 />
                 <div className="flex items-center justify-center gap-2">

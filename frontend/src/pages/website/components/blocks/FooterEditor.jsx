@@ -140,7 +140,7 @@ function FooterEditor({ contenido, onGuardar, tema, isSaving }) {
       }}
     >
       {form.logo && (
-        <img src={form.logo} alt="Logo" className="h-8 mb-3" />
+        <img src={form.logo} alt="Logo" loading="lazy" className="h-8 mb-3" />
       )}
       {form.descripcion && (
         <p className="text-sm opacity-80 mb-3">{form.descripcion}</p>

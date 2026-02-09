@@ -43,6 +43,7 @@ function IdleState({ organizacion, message }) {
         <img
           src={organizacion.logo}
           alt={organizacion.nombre}
+          loading="lazy"
           className="w-40 h-40 object-contain mb-8 drop-shadow-xl"
         />
       ) : (
@@ -96,6 +97,7 @@ function CartState({ cart, organizacion }) {
               <img
                 src={organizacion.logo}
                 alt=""
+                loading="lazy"
                 className="w-10 h-10 object-contain"
               />
             ) : (

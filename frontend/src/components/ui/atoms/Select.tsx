@@ -6,7 +6,7 @@ import {
   SELECT_SIZE_CLASSES,
   getAriaDescribedBy,
 } from '@/lib/uiConstants';
-import type { UISize, SelectOption } from '@/types/ui';
+import type { FormSize, SelectOption } from '@/types/ui';
 
 export interface SelectProps
   extends Omit<SelectHTMLAttributes<HTMLSelectElement>, 'size'> {
@@ -15,7 +15,7 @@ export interface SelectProps
   /** Texto de placeholder */
   placeholder?: string;
   /** Tamaño del select */
-  size?: UISize;
+  size?: FormSize;
   /** Si tiene error (borde rojo) */
   hasError?: boolean;
   /** Si es campo requerido */

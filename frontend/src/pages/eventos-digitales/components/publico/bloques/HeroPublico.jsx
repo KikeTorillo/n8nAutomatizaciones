@@ -91,6 +91,7 @@ function HeroPublico({
           <img
             src={imagenUrl}
             alt={titulo}
+            loading="lazy"
             className="w-full h-full object-cover"
             style={{ objectPosition: imagenPosicion }}
           />

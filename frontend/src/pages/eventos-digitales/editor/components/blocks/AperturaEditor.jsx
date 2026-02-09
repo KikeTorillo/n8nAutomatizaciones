@@ -143,6 +143,7 @@ function AperturaEditor({ contenido, estilos, onChange, tema }) {
               <img
                 src={imagenUrl}
                 alt="Apertura"
+                loading="lazy"
                 className="w-full h-32 object-cover"
               />
               <button
@@ -212,6 +213,7 @@ function AperturaEditor({ contenido, estilos, onChange, tema }) {
                     <img
                       src={preset.url}
                       alt={preset.label}
+                      loading="lazy"
                       className="w-full h-20 object-cover"
                     />
                     <span className="absolute bottom-0 inset-x-0 bg-black/50 text-white text-[10px] py-0.5 text-center">
@@ -229,6 +231,7 @@ function AperturaEditor({ contenido, estilos, onChange, tema }) {
               <img
                 src={imagenMarco}
                 alt="Marco cortina"
+                loading="lazy"
                 className="w-full h-32 object-cover"
               />
               <button

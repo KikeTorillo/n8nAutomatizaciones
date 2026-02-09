@@ -81,7 +81,7 @@ export function WebsiteEditorProvider({ children }) {
   const estadoGuardado = useWebsiteEditorStore((s) => s.estadoGuardado);
   const breakpoint = useWebsiteEditorStore((s) => s.breakpoint);
   const zoom = useWebsiteEditorStore((s) => s.zoom);
-  const tieneClambiosLocales = useWebsiteEditorStore((s) => s.tieneClambiosLocales);
+  const tieneCambiosLocales = useWebsiteEditorStore((s) => s.tieneCambiosLocales);
 
   // Store actions
   const setBloques = useWebsiteEditorStore((s) => s.setBloques);
@@ -184,7 +184,7 @@ export function WebsiteEditorProvider({ children }) {
     bloques,
     actualizarBloque,
     actualizarVersionBloque,
-    tieneClambiosLocales,
+    tieneCambiosLocales,
     setGuardando,
     setGuardado,
     setErrorGuardado,

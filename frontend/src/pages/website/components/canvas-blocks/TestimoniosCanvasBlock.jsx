@@ -147,6 +147,7 @@ function TestimoniosCanvasBlock({ bloque, tema, isEditing, onContentChange }) {
                   <img
                     src={testimonio.foto_url}
                     alt={testimonio.nombre}
+                    loading="lazy"
                     className="w-10 h-10 rounded-full object-cover"
                   />
                 ) : (

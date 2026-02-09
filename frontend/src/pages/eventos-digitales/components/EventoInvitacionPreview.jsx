@@ -59,6 +59,7 @@ function EventoInvitacionPreview({ evento }) {
         <img
           src={evento.portada_url}
           alt={evento.nombre}
+          loading="lazy"
           className="w-full h-full object-cover"
         />
       </div>

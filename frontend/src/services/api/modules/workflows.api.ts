@@ -7,7 +7,7 @@ export const workflowsApi = {
   // ========== Bandeja de Aprobaciones ==========
 
   /** Listar aprobaciones pendientes del usuario actual */
-  listarPendientes: (params: Record<string, unknown>) => apiClient.get('/workflows/pendientes', { params }),
+  listarPendientes: (params: Record<string, any>) => apiClient.get('/workflows/pendientes', { params }),
 
   /** Contar aprobaciones pendientes (para badge) */
   contarPendientes: () => apiClient.get('/workflows/pendientes/count'),
@@ -18,26 +18,26 @@ export const workflowsApi = {
   // ========== Acciones ==========
 
   /** Aprobar una solicitud */
-  aprobar: (id: number, data: Record<string, unknown>) => apiClient.post(`/workflows/instancias/${id}/aprobar`, data),
+  aprobar: (id: number, data: Record<string, any>) => apiClient.post(`/workflows/instancias/${id}/aprobar`, data),
 
   /** Rechazar una solicitud */
-  rechazar: (id: number, data: Record<string, unknown>) => apiClient.post(`/workflows/instancias/${id}/rechazar`, data),
+  rechazar: (id: number, data: Record<string, any>) => apiClient.post(`/workflows/instancias/${id}/rechazar`, data),
 
   // ========== Historial ==========
 
   /** Obtener historial de aprobaciones */
-  listarHistorial: (params: Record<string, unknown>) => apiClient.get('/workflows/historial', { params }),
+  listarHistorial: (params: Record<string, any>) => apiClient.get('/workflows/historial', { params }),
 
   // ========== Delegaciones ==========
 
   /** Listar delegaciones del usuario */
-  listarDelegaciones: (params: Record<string, unknown>) => apiClient.get('/workflows/delegaciones', { params }),
+  listarDelegaciones: (params: Record<string, any>) => apiClient.get('/workflows/delegaciones', { params }),
 
   /** Crear delegación */
-  crearDelegacion: (data: Record<string, unknown>) => apiClient.post('/workflows/delegaciones', data),
+  crearDelegacion: (data: Record<string, any>) => apiClient.post('/workflows/delegaciones', data),
 
   /** Actualizar delegación */
-  actualizarDelegacion: (id: number, data: Record<string, unknown>) => apiClient.put(`/workflows/delegaciones/${id}`, data),
+  actualizarDelegacion: (id: number, data: Record<string, any>) => apiClient.put(`/workflows/delegaciones/${id}`, data),
 
   /** Eliminar delegación */
   eliminarDelegacion: (id: number) => apiClient.delete(`/workflows/delegaciones/${id}`),
@@ -45,7 +45,7 @@ export const workflowsApi = {
   // ========== Definiciones (lectura) ==========
 
   /** Listar definiciones de workflows */
-  listarDefiniciones: (params: Record<string, unknown>) => apiClient.get('/workflows/definiciones', { params }),
+  listarDefiniciones: (params: Record<string, any>) => apiClient.get('/workflows/definiciones', { params }),
 
   /** Obtener definición por ID */
   obtenerDefinicion: (id: number) => apiClient.get(`/workflows/definiciones/${id}`),

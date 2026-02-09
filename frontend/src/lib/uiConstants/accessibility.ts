@@ -139,7 +139,7 @@ export const ARIA_LABELS = {
  * getAriaDescribedBy('email', { hasError: true, hasHelper: true })
  * // => 'email-error email-helper'
  */
-export function getAriaDescribedBy(id, { hasError = false, hasHelper = false, hasHint = false } = {}) {
+export function getAriaDescribedBy(id: string, { hasError = false, hasHelper = false, hasHint = false }: { hasError?: boolean; hasHelper?: boolean; hasHint?: boolean } = {}) {
   const ids = [];
   if (hasError) ids.push(`${id}-error`);
   if (hasHelper) ids.push(`${id}-helper`);
@@ -159,7 +159,7 @@ export function getAriaDescribedBy(id, { hasError = false, hasHelper = false, ha
  * getCharCountAriaLabel('Descripción', 45, 200)
  * // => 'Descripción, 45 de 200 caracteres'
  */
-export function getCharCountAriaLabel(label, current, max) {
+export function getCharCountAriaLabel(label: string, current: number, max: number) {
   return `${label}, ${current} de ${max} caracteres`;
 }
 
@@ -174,7 +174,7 @@ export function getCharCountAriaLabel(label, current, max) {
  * getPaginationAriaLabel(3, true)
  * // => 'Página 3, página actual'
  */
-export function getPaginationAriaLabel(page, isCurrent = false) {
+export function getPaginationAriaLabel(page: number, isCurrent = false) {
   return isCurrent ? `Página ${page}, página actual` : `Ir a página ${page}`;
 }
 
@@ -184,7 +184,7 @@ export function getPaginationAriaLabel(page, isCurrent = false) {
  * @param {string} [text] - Texto personalizado opcional
  * @returns {string} - Label descriptivo
  */
-export function getLoadingAriaLabel(text) {
+export function getLoadingAriaLabel(text?: string) {
   return text || ARIA_LABELS.loading;
 }
 
@@ -196,7 +196,7 @@ export function getLoadingAriaLabel(text) {
  * @param {string} [errorMessage] - Mensaje de error opcional
  * @returns {string} - Label descriptivo
  */
-export function getValidationAriaLabel(fieldName, isValid, errorMessage) {
+export function getValidationAriaLabel(fieldName: string, isValid: boolean, errorMessage?: string) {
   if (isValid) return `${fieldName}, válido`;
   return errorMessage ? `${fieldName}, error: ${errorMessage}` : `${fieldName}, inválido`;
 }

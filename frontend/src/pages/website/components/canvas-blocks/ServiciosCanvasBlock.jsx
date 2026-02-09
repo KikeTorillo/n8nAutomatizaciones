@@ -141,6 +141,7 @@ function ServiciosCanvasBlock({ bloque, tema, isEditing, onContentChange }) {
                     <img
                       src={servicio.imagen_url}
                       alt={servicioNombre}
+                      loading="lazy"
                       className="w-full h-full object-cover"
                     />
                   </div>

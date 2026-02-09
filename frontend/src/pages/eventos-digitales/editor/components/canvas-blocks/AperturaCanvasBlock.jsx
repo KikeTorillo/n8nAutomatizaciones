@@ -61,6 +61,7 @@ function AperturaCanvasBlock({ bloque, tema }) {
         <img
           src={imagenMarco}
           alt=""
+          loading="lazy"
           className="absolute inset-0 w-full h-full object-cover"
         />
 
@@ -120,6 +121,7 @@ function AperturaCanvasBlock({ bloque, tema }) {
           <img
             src={imagenUrl}
             alt=""
+            loading="lazy"
             className="absolute inset-0 w-full h-full object-cover"
           />
           <div

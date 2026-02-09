@@ -303,6 +303,7 @@ function CheckoutLayout({ children, logoUrl, orgName }) {
               <img
                 src={logoUrl}
                 alt={orgName || 'Logo'}
+                loading="lazy"
                 className="h-16 w-auto object-contain"
               />
             </div>

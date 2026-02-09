@@ -134,6 +134,7 @@ export default function SitioPublicoPage() {
                   <img
                     src={config.logo_url}
                     alt={config.nombre_sitio}
+                    loading="lazy"
                     className="h-8 w-auto"
                   />
                 ) : (

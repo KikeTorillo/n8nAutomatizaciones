@@ -43,6 +43,7 @@ function ClientesList({
               <img
                 src={row.foto_url}
                 alt={row.nombre}
+                loading="lazy"
                 className="flex-shrink-0 h-10 w-10 rounded-full object-cover border border-gray-200 dark:border-gray-600"
               />
             ) : (

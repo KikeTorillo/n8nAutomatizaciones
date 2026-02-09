@@ -129,6 +129,7 @@ function MesaRegalosElementRenderer({
                 <img
                   src={regalo.logo_url || regalo.imagen_url}
                   alt={regalo.nombre}
+                  loading="lazy"
                   className="max-h-full max-w-full object-contain"
                 />
               </div>

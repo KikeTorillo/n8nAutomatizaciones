@@ -41,6 +41,7 @@ function PlantillaAdminCard({ plantilla, onEdit, onDelete }) {
           <img
             src={plantilla.preview_url}
             alt={plantilla.nombre}
+            loading="lazy"
             className="w-full h-full object-cover"
           />
         ) : (

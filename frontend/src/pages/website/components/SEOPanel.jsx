@@ -180,7 +180,7 @@ function SEOPanel({ websiteId, slug }) {
           <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 font-sans">
             <div className="flex items-center gap-2 mb-1">
               {previewGoogle.favicon && (
-                <img src={previewGoogle.favicon} alt="" className="w-4 h-4 rounded" />
+                <img src={previewGoogle.favicon} alt="" loading="lazy" className="w-4 h-4 rounded" />
               )}
               <span className="text-xs text-gray-600 dark:text-gray-400">
                 {previewGoogle.url}

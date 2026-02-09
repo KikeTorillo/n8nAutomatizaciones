@@ -131,6 +131,7 @@ function EquipoCanvasBlock({ bloque, tema, isEditing, onContentChange }) {
                   <img
                     src={miembro.foto_url}
                     alt={miembro.nombre}
+                    loading="lazy"
                     className="w-full h-full object-cover"
                   />
                 ) : (

@@ -58,6 +58,7 @@ function TextoPublico({ bloque, tema, isVisible, className = '' }) {
                 <img
                   src={imagenUrl}
                   alt={titulo || 'Imagen'}
+                  loading="lazy"
                   className="w-full rounded-2xl shadow-lg"
                   style={{ boxShadow: `0 10px 40px ${tema?.color_primario}15` }}
                 />
@@ -99,6 +100,7 @@ function TextoPublico({ bloque, tema, isVisible, className = '' }) {
             <img
               src={imagenUrl}
               alt=""
+              loading="lazy"
               className="absolute inset-0 w-full h-full object-cover"
             />
             <div className="absolute inset-0 bg-black/50" />
@@ -154,6 +156,7 @@ function TextoPublico({ bloque, tema, isVisible, className = '' }) {
               <img
                 src={imagenUrl}
                 alt={titulo || 'Imagen'}
+                loading="lazy"
                 className="mt-8 mx-auto rounded-2xl shadow-lg max-w-full"
                 style={{ boxShadow: `0 10px 40px ${tema?.color_primario}15` }}
               />

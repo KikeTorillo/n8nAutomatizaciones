@@ -118,7 +118,7 @@ export const FILTER_GRID_LAYOUTS = {
  * @param {boolean} isOpen - Si el panel está abierto
  * @returns {string} Clases CSS concatenadas
  */
-export function getFilterToggleStyles(isOpen) {
+export function getFilterToggleStyles(isOpen: boolean) {
   return `${FILTER_TOGGLE_BUTTON_STYLES.base} ${isOpen ? FILTER_TOGGLE_BUTTON_STYLES.active : FILTER_TOGGLE_BUTTON_STYLES.inactive} ${FILTER_TOGGLE_BUTTON_STYLES.hover}`;
 }
 

@@ -1,7 +1,7 @@
 import { memo, forwardRef, useId, type ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 import { Radio } from '../atoms/Radio';
-import type { UISize } from '@/types/ui';
+import type { FormSize } from '@/types/ui';
 
 export interface RadioOption {
   value: string;
@@ -23,7 +23,7 @@ export interface RadioGroupProps {
   /** Orientación del grupo */
   orientation?: 'horizontal' | 'vertical';
   /** Tamaño de los radios */
-  size?: UISize;
+  size?: FormSize;
   /** Si tiene error */
   hasError?: boolean;
   /** Deshabilitado completo */

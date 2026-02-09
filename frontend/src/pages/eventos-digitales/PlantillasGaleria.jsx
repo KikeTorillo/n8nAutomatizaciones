@@ -29,6 +29,7 @@ function PlantillaCard({ plantilla, tipo }) {
           <img
             src={plantilla.preview_url}
             alt={plantilla.nombre}
+            loading="lazy"
             className="w-full h-full object-cover"
           />
         ) : (

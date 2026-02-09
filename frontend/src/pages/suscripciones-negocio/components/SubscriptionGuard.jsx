@@ -42,7 +42,8 @@ const RUTAS_EXENTAS = [
     '/checkout',
     '/onboarding',
     '/mi-plan',
-    '/setup'
+    '/setup',
+    '/invitaciones'
 ];
 
 /**

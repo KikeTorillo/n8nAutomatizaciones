@@ -36,6 +36,7 @@ const COLUMNS = [
           <img
             src={row.imagen_url}
             alt={row.nombre}
+            loading="lazy"
             className="flex-shrink-0 h-10 w-10 rounded-lg object-cover border border-gray-200 dark:border-gray-600"
           />
         ) : (

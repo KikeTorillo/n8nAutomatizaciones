@@ -64,6 +64,7 @@ function ImageField({
           <img
             src={value}
             alt="Preview"
+            loading="lazy"
             className="w-full h-32 object-cover transition-transform duration-300 group-hover/preview:scale-105"
             onError={(e) => (e.target.style.display = 'none')}
           />

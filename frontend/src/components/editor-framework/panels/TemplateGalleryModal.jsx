@@ -49,6 +49,7 @@ const DefaultGalleryCard = memo(function DefaultGalleryCard({ template, isSelect
           <img
             src={template.thumbnail_url}
             alt={template.nombre}
+            loading="lazy"
             className="w-full h-full object-cover"
           />
         ) : (
@@ -187,6 +188,7 @@ function DefaultPreviewPanel({ template, onApply, isApplying, onClose, applyButt
             <img
               src={template.thumbnail_url}
               alt={template.nombre}
+              loading="lazy"
               className="w-full h-full object-cover"
             />
           ) : (

@@ -49,7 +49,7 @@ export const EMPTY_STATE_BASE = {
  * @param {string} size - 'sm' | 'md' | 'lg'
  * @returns {Object} Objeto con clases de tamaño
  */
-export function getEmptyStateSize(size) {
+export function getEmptyStateSize(size: keyof typeof EMPTY_STATE_SIZES) {
   return EMPTY_STATE_SIZES[size] || EMPTY_STATE_SIZES.md;
 }
 

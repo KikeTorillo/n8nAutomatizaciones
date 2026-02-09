@@ -146,6 +146,7 @@ function GeneralTab({ profesional }) {
                   <img
                     src={fotoPreview}
                     alt={profesional?.nombre_completo}
+                    loading="lazy"
                     className="w-full h-full object-cover"
                   />
                 ) : (

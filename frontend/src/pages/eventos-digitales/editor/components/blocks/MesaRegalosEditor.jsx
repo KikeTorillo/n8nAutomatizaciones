@@ -114,6 +114,7 @@ function MesaRegalosEditor({
                 <img
                   src={item.logo_url}
                   alt={item.nombre}
+                  loading="lazy"
                   className={`${
                     form.layout === 'grid'
                       ? 'w-12 h-12 mx-auto mb-2'

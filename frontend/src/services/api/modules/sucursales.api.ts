@@ -63,7 +63,7 @@ export const sucursalesApi = {
   crearTransferencia: (data: Record<string, unknown>) => apiClient.post('/sucursales/transferencias', data),
 
   /** Agregar item a transferencia */
-  agregarItemTransferencia: (transferenciaId: number, data: Record<string, unknown>) =>
+  agregarItemTransferencia: (transferenciaId: number, data: { producto_id: number; cantidad: number }) =>
     apiClient.post(`/sucursales/transferencias/${transferenciaId}/items`, data),
 
   /** Eliminar item de transferencia */
@@ -74,7 +74,7 @@ export const sucursalesApi = {
   enviarTransferencia: (id: number) => apiClient.post(`/sucursales/transferencias/${id}/enviar`),
 
   /** Recibir transferencia (enviado -> recibido) */
-  recibirTransferencia: (id: number, data: Record<string, unknown> = {}) =>
+  recibirTransferencia: (id: number, data: { items?: Array<{ id: number; cantidad_recibida: number }>; notas?: string } = {}) =>
     apiClient.post(`/sucursales/transferencias/${id}/recibir`, data),
 
   /** Cancelar transferencia */

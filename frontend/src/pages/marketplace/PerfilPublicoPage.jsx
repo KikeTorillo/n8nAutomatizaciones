@@ -140,6 +140,7 @@ function PerfilPublicoPage() {
             <img
               src={perfil.portada_url}
               alt={perfil.nombre_comercial}
+              loading="lazy"
               className="w-full h-full object-cover"
             />
           ) : (
@@ -173,6 +174,7 @@ function PerfilPublicoPage() {
                   <img
                     src={perfil.logo_url}
                     alt={perfil.nombre_comercial}
+                    loading="lazy"
                     className="w-full h-full object-cover"
                   />
                 </div>
@@ -282,6 +284,7 @@ function PerfilPublicoPage() {
                           <img
                             src={url}
                             alt={`${perfil.nombre_comercial} - Imagen ${index + 1}`}
+                            loading="lazy"
                             className="w-full h-full object-cover"
                           />
                         </div>

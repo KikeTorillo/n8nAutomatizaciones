@@ -113,6 +113,7 @@ function CurtinaOverlay({ imagenMarco, direccionApertura = 'vertical', texto, te
         <img
           src={imagenMarco}
           alt=""
+          loading="lazy"
           className="absolute inset-0 w-full h-full object-cover"
         />
       </div>
@@ -125,6 +126,7 @@ function CurtinaOverlay({ imagenMarco, direccionApertura = 'vertical', texto, te
         <img
           src={imagenMarco}
           alt=""
+          loading="lazy"
           className="absolute inset-0 w-full h-full object-cover"
           style={{ transform: esVertical ? 'scaleX(-1)' : 'scaleY(-1)' }}
         />
@@ -201,7 +203,7 @@ function CurtinaPreview({ imagenMarco, direccionApertura = 'vertical', texto, te
         className="absolute inset-0 z-10 transition-transform duration-700 ease-out"
         style={{ clipPath: half1Clip, transform: half1Transform }}
       >
-        <img src={imagenMarco} alt="" className="absolute inset-0 w-full h-full object-cover" />
+        <img src={imagenMarco} alt="" loading="lazy" className="absolute inset-0 w-full h-full object-cover" />
       </div>
 
       {/* Mitad 2 — derecha (vertical) o abajo (horizontal), imagen espejada */}
@@ -212,6 +214,7 @@ function CurtinaPreview({ imagenMarco, direccionApertura = 'vertical', texto, te
         <img
           src={imagenMarco}
           alt=""
+          loading="lazy"
           className="absolute inset-0 w-full h-full object-cover"
           style={{ transform: esVertical ? 'scaleX(-1)' : 'scaleY(-1)' }}
         />
@@ -313,6 +316,7 @@ function OpeningOverlay({ modo = 'animacion', tipo, imagenUrl, imagenMarco, dire
           <img
             src={imagenUrl}
             alt=""
+            loading="lazy"
             className="absolute inset-0 w-full h-full object-cover"
           />
           <div

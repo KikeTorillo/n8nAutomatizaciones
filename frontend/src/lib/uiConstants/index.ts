@@ -26,6 +26,7 @@ export {
   CARD_THEME_COLORS,
   getCardThemeColor,
   TOGGLE_COLORS,
+  SMART_BUTTON_COLORS,
 } from './colors';
 
 // Tamaños

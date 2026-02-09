@@ -73,6 +73,7 @@ function GaleriaEditor({ imagenes = [], onChange, maxImagenes = 10 }) {
             <img
               src={url}
               alt={`Galería ${index + 1}`}
+              loading="lazy"
               className="w-full h-full object-cover"
               onError={(e) => {
                 e.target.src = '/placeholder-image.png';

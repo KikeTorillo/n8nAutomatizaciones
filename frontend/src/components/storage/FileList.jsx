@@ -208,6 +208,7 @@ function FileList({
               <img
                 src={previewImage.url_publica}
                 alt={previewImage.nombre_original}
+                loading="lazy"
                 className="max-w-full max-h-full object-contain"
               />
               <p className="text-center text-white mt-2">{previewImage.nombre_original}</p>
@@ -311,6 +312,7 @@ function FileList({
             <img
               src={previewImage.url_publica}
               alt={previewImage.nombre_original}
+              loading="lazy"
               className="max-w-full max-h-full object-contain"
             />
             <p className="text-center text-white mt-2">{previewImage.nombre_original}</p>

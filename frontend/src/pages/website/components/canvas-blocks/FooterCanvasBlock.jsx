@@ -73,6 +73,7 @@ function FooterCanvasBlock({ bloque, tema, isEditing, onContentChange }) {
               <img
                 src={logo_url}
                 alt="Logo"
+                loading="lazy"
                 className="h-10 w-auto mb-4 brightness-0 invert"
               />
             ) : (

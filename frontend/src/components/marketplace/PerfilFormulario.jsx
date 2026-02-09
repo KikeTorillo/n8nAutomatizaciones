@@ -234,6 +234,7 @@ function PerfilFormulario({ perfil, onSuccess }) {
                 <img
                   src={perfil.logo_url}
                   alt="Logo"
+                  loading="lazy"
                   className="w-24 h-24 rounded-full object-cover border-2 border-gray-200 dark:border-gray-700"
                 />
               ) : (
@@ -250,6 +251,7 @@ function PerfilFormulario({ perfil, onSuccess }) {
                 <img
                   src={perfil.portada_url}
                   alt="Portada"
+                  loading="lazy"
                   className="w-full h-32 rounded-lg object-cover border border-gray-200 dark:border-gray-700"
                 />
               ) : (
@@ -272,6 +274,7 @@ function PerfilFormulario({ perfil, onSuccess }) {
                     key={index}
                     src={url}
                     alt={`Galería ${index + 1}`}
+                    loading="lazy"
                     className="aspect-square rounded-lg object-cover border border-gray-200 dark:border-gray-700"
                   />
                 ))}
@@ -400,6 +403,7 @@ function PerfilFormulario({ perfil, onSuccess }) {
                     <img
                       src={logoPreview}
                       alt="Logo"
+                      loading="lazy"
                       className="w-full h-full object-cover"
                       onError={() => setLogoPreview(null)}
                     />
@@ -439,6 +443,7 @@ function PerfilFormulario({ perfil, onSuccess }) {
                   <img
                     src={portadaPreview}
                     alt="Portada"
+                    loading="lazy"
                     className="w-full h-full object-cover"
                     onError={() => setPortadaPreview(null)}
                   />

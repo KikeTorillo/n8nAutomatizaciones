@@ -72,6 +72,7 @@ function EquipoEditor({ contenido, onGuardar, tema, isSaving, industria = 'defau
           <img
             src={miembro.foto}
             alt=""
+            loading="lazy"
             className="w-10 h-10 rounded-full object-cover"
           />
         ) : (
@@ -133,6 +134,7 @@ function EquipoEditor({ contenido, onGuardar, tema, isSaving, industria = 'defau
               <img
                 src={miembro.foto}
                 alt=""
+                loading="lazy"
                 className="w-16 h-16 rounded-full object-cover mx-auto mb-2"
               />
             ) : (

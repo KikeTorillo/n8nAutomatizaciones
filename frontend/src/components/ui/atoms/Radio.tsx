@@ -1,12 +1,12 @@
 import { forwardRef, memo, type InputHTMLAttributes } from 'react';
 import { cn } from '@/lib/utils';
 import { RADIO_SIZE_CLASSES, getRadioStyles, getAriaDescribedBy } from '@/lib/uiConstants';
-import type { UISize } from '@/types/ui';
+import type { FormSize } from '@/types/ui';
 
 export interface RadioProps
   extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type' | 'size'> {
   /** Tamaño del radio */
-  size?: UISize;
+  size?: FormSize;
   /** Si tiene error */
   hasError?: boolean;
   /** Clases CSS adicionales */

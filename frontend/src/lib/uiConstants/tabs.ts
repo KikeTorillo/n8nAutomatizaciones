@@ -42,7 +42,7 @@ export const TAB_ICON_STYLES = {
  * @param {boolean} isActive - Si el tab está activo
  * @returns {string} Clases CSS concatenadas
  */
-export function getTabButtonStyles(isActive) {
+export function getTabButtonStyles(isActive: boolean) {
   return `${TAB_BUTTON_STYLES.base} ${isActive ? TAB_BUTTON_STYLES.active : TAB_BUTTON_STYLES.inactive}`;
 }
 
@@ -51,7 +51,7 @@ export function getTabButtonStyles(isActive) {
  * @param {boolean} isActive - Si el tab está activo
  * @returns {string} Clases CSS concatenadas
  */
-export function getTabIconStyles(isActive) {
+export function getTabIconStyles(isActive: boolean) {
   return `${TAB_ICON_STYLES.base} ${isActive ? TAB_ICON_STYLES.active : TAB_ICON_STYLES.inactive}`;
 }
 

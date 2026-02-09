@@ -190,6 +190,7 @@ export default function ProductoSelectorInline({
                     <img
                       src={producto.imagen_url}
                       alt={producto.nombre}
+                      loading="lazy"
                       className="w-full h-full object-cover rounded-lg"
                     />
                   ) : (

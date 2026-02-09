@@ -247,6 +247,7 @@ function NegocioPage() {
                     <img
                       src={logoPreview}
                       alt="Logo"
+                      loading="lazy"
                       className="w-full h-full object-contain"
                       onError={() => setLogoPreview(null)}
                     />

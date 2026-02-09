@@ -79,6 +79,7 @@ function ClienteHeaderContent({ cliente, onEdit }) {
             <img
               src={cliente.foto_url}
               alt={cliente.nombre}
+              loading="lazy"
               className="flex-shrink-0 h-16 w-16 rounded-full object-cover border-2 border-gray-200 dark:border-gray-600"
             />
           ) : (

@@ -19,6 +19,7 @@ function ClienteCard({ cliente }) {
             <img
               src={cliente.foto_url}
               alt={cliente.nombre}
+              loading="lazy"
               className="flex-shrink-0 h-12 w-12 rounded-full object-cover border border-gray-200 dark:border-gray-600"
             />
           ) : (

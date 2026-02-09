@@ -317,4 +317,16 @@ export const TOGGLE_COLORS = {
   disabled: 'bg-gray-300 dark:bg-gray-600',
 };
 
+/**
+ * Colores para SmartButtons (métricas/acciones en headers)
+ */
+export const SMART_BUTTON_COLORS = {
+  primary: 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300',
+  blue: 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300',
+  green: 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300',
+  yellow: 'bg-yellow-50 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300',
+  red: 'bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300',
+  gray: 'bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300',
+} as const;
+
 export default SEMANTIC_COLORS;

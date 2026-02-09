@@ -10,6 +10,9 @@
 /** Escala de tamaños unificada para todos los componentes UI */
 export type UISize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
+/** Tamaños para campos de formulario (sin xs/xl) */
+export type FormSize = 'sm' | 'md' | 'lg';
+
 /** @deprecated Usar UISize. Alias temporal para backwards-compat */
 export type Size = UISize;
 

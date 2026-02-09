@@ -315,6 +315,7 @@ function ServicioFormDrawer({ isOpen, onClose, mode = 'create', servicio = null 
                   <img
                     src={imagen.preview}
                     alt="Imagen del servicio"
+                    loading="lazy"
                     className="w-16 h-16 rounded-lg object-cover border-2 border-primary-200 dark:border-primary-700"
                   />
                   <button

@@ -56,6 +56,7 @@ export const NegocioCard = memo(function NegocioCard({ perfil, className }) {
           <img
             src={imagenUrl}
             alt={perfil.nombre_comercial}
+            loading="lazy"
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />
         ) : (

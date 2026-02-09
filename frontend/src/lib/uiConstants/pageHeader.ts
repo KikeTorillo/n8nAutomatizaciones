@@ -63,8 +63,8 @@ export const PAGE_HEADER_ICON_COLORS = {
  * @param {string} color - Nombre del color
  * @returns {Object} Objeto con clases bg e icon
  */
-export const getPageHeaderIconColor = (color) =>
-  PAGE_HEADER_ICON_COLORS[color] || PAGE_HEADER_ICON_COLORS.primary;
+export const getPageHeaderIconColor = (color: string) =>
+  PAGE_HEADER_ICON_COLORS[color as keyof typeof PAGE_HEADER_ICON_COLORS] || PAGE_HEADER_ICON_COLORS.primary;
 
 /**
  * Estilos base para PageHeader

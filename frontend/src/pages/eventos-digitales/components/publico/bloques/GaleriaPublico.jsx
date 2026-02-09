@@ -239,6 +239,7 @@ function GaleriaPublico({ bloque, evento, tema, isVisible, className = '' }) {
                   <img
                     src={url}
                     alt={`Foto ${idx + 1}`}
+                    loading="lazy"
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                   />
                   <div
@@ -273,6 +274,7 @@ function GaleriaPublico({ bloque, evento, tema, isVisible, className = '' }) {
                   <img
                     src={url}
                     alt={`Foto ${idx + 1}`}
+                    loading="lazy"
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                   />
                   <div
@@ -312,6 +314,7 @@ function GaleriaPublico({ bloque, evento, tema, isVisible, className = '' }) {
               <img
                 src={imagenes[lightboxIndex]}
                 alt={`Foto ${lightboxIndex + 1}`}
+                loading="lazy"
                 className="max-h-[90vh] max-w-[90vw] object-contain"
                 onClick={(e) => e.stopPropagation()}
               />

@@ -43,6 +43,7 @@ const ClienteFormBasicoTab = memo(function ClienteFormBasicoTab({
                 <img
                   src={fotoPreview}
                   alt="Preview"
+                  loading="lazy"
                   className="w-24 h-24 object-cover rounded-full border-2 border-gray-200 dark:border-gray-700"
                 />
                 <button

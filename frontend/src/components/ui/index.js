@@ -25,6 +25,7 @@ export { Divider } from './atoms/Divider';
 export { Radio } from './atoms/Radio';
 export { RadioGroup } from './molecules/RadioGroup';
 export { Tooltip } from './molecules/Tooltip';
+export { Popover } from './molecules/Popover';
 export { Avatar } from './atoms/Avatar';
 export { Text } from './atoms/Text';
 // NOTA: ToggleSwitch movido a molecules/ por complejidad (Ene 2026) - ver sección MOLECULES

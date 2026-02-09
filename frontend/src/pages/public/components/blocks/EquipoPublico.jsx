@@ -117,6 +117,7 @@ export default function EquipoPublico({ contenido, tema, slug }) {
                   <img
                     src={miembro.foto || miembro.foto_url}
                     alt={miembro.nombre}
+                    loading="lazy"
                     className="w-full aspect-square object-cover group-hover:scale-105 transition-transform duration-300"
                   />
                 ) : (

@@ -255,6 +255,7 @@ function VideoEditor({
                   <img
                     src={`https://img.youtube.com/vi/${youtubeId}/maxresdefault.jpg`}
                     alt="Video thumbnail"
+                    loading="lazy"
                     className="w-full h-full object-cover"
                   />
                 ) : (

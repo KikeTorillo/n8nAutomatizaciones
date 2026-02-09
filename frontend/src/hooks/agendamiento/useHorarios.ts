@@ -80,7 +80,7 @@ export function useHorariosProfesional(profesionalId: number | undefined | null,
  */
 export function useHorario(horarioId: number | undefined | null) {
   return useQuery({
-    queryKey: queryKeys.agendamiento.horarios.list(horarioId),
+    queryKey: queryKeys.agendamiento.horarios.detail(horarioId),
     queryFn: async () => {
       const response = await horariosApi.obtener(horarioId!);
       return (response as any).data;

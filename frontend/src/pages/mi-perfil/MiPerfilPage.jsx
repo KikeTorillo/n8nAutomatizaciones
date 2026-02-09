@@ -149,6 +149,7 @@ function MiPerfilPage() {
               <img
                 src={profesional.foto_url}
                 alt={profesional.nombre_completo}
+                loading="lazy"
                 className="w-20 h-20 rounded-full object-cover border-4 border-primary-100 dark:border-primary-900"
               />
             ) : (

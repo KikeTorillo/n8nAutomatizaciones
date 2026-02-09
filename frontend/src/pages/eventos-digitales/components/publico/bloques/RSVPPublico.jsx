@@ -126,6 +126,7 @@ function RSVPPublico({
                     <img
                       src={qrImage}
                       alt="QR de acceso"
+                      loading="lazy"
                       className="mx-auto w-48 h-48 rounded-lg shadow-md"
                     />
                   ) : null}

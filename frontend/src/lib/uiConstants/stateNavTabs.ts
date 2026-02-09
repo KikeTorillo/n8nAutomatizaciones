@@ -49,7 +49,7 @@ export const TAB_STYLES = STATE_TAB_STYLES;
  * @param {boolean} isActive - Si el tab está activo
  * @returns {string} - Clases Tailwind
  */
-export function getStateTabStyles(isActive) {
+export function getStateTabStyles(isActive: boolean) {
   return cn(STATE_TAB_STYLES.base, isActive ? STATE_TAB_STYLES.active : STATE_TAB_STYLES.inactive);
 }
 
@@ -73,7 +73,7 @@ export const COUNT_STYLES = STATE_COUNT_STYLES;
  * @param {boolean} isActive - Si el tab padre está activo
  * @returns {string} - Clases Tailwind
  */
-export function getStateCountStyles(isActive) {
+export function getStateCountStyles(isActive: boolean) {
   return cn(STATE_COUNT_STYLES.base, isActive ? STATE_COUNT_STYLES.active : STATE_COUNT_STYLES.inactive);
 }
 
@@ -108,7 +108,7 @@ export const DROPDOWN_ITEM_STYLES = STATE_DROPDOWN_ITEM_STYLES;
  * @param {boolean} [isDisabled=false] - Si el item está deshabilitado
  * @returns {string} - Clases Tailwind
  */
-export function getStateDropdownItemStyles(isActive, isDisabled = false) {
+export function getStateDropdownItemStyles(isActive: boolean, isDisabled = false) {
   return cn(
     STATE_DROPDOWN_ITEM_STYLES.base,
     isDisabled && STATE_DROPDOWN_ITEM_STYLES.disabled,

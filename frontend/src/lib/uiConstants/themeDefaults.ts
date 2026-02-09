@@ -50,7 +50,7 @@ export const THEME_FALLBACK_COLORS = {
  * Obtiene un color de fallback por modulo y key.
  * Si no existe en el modulo, busca en common, luego en website.
  */
-export const getThemeFallback = (module, key) =>
-  THEME_FALLBACK_COLORS[module]?.[key]
-  ?? THEME_FALLBACK_COLORS.common?.[key]
-  ?? THEME_FALLBACK_COLORS.website?.[key];
+export const getThemeFallback = (module: keyof typeof THEME_FALLBACK_COLORS, key: string) =>
+  THEME_FALLBACK_COLORS[module]?.[key as keyof (typeof THEME_FALLBACK_COLORS)[typeof module]]
+  ?? THEME_FALLBACK_COLORS.common?.[key as keyof typeof THEME_FALLBACK_COLORS.common]
+  ?? THEME_FALLBACK_COLORS.website?.[key as keyof typeof THEME_FALLBACK_COLORS.website];

@@ -250,6 +250,7 @@ function GaleriaEditor({
                     <img
                       src={img.url}
                       alt={img.alt || `Imagen ${idx + 1}`}
+                      loading="lazy"
                       className="w-full h-full object-cover"
                     />
                   ) : (
@@ -413,6 +414,7 @@ function GaleriaEditor({
                     <img
                       src={imagen.url}
                       alt={imagen.alt}
+                      loading="lazy"
                       className="w-16 h-16 object-cover rounded flex-shrink-0"
                     />
                   ) : (

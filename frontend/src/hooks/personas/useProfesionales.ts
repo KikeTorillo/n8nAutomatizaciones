@@ -115,11 +115,11 @@ export function useVincularUsuario(): UseMutationResult<Profesional, Error, { pr
   });
 }
 
-export function useActualizarModulos(): UseMutationResult<Profesional, Error, { profesionalId: number; modulosAcceso: string[] }> {
+export function useActualizarModulos(): UseMutationResult<Profesional, Error, { profesionalId: number; modulosAcceso: Record<string, boolean> }> {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ profesionalId, modulosAcceso }: { profesionalId: number; modulosAcceso: string[] }) => {
+    mutationFn: async ({ profesionalId, modulosAcceso }: { profesionalId: number; modulosAcceso: Record<string, boolean> }) => {
       const response = await profesionalesApi.actualizarModulos(profesionalId, modulosAcceso);
       return (response as any).data.data;
     },

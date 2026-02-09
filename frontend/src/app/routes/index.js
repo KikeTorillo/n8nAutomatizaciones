@@ -15,6 +15,7 @@ export { sucursalesRoutes } from './sucursales.routes';
 export { contabilidadRoutes } from './contabilidad.routes';
 export { superadminRoutes } from './superadmin.routes';
 export { suscripcionesNegocioRoutes } from './suscripciones-negocio.routes';
+export { invitacionesRoutes } from './invitaciones.routes';
 
 // Exportar helpers
 export * from './helpers/routeHelpers';
@@ -31,6 +32,7 @@ import { sucursalesRoutes } from './sucursales.routes';
 import { contabilidadRoutes } from './contabilidad.routes';
 import { superadminRoutes } from './superadmin.routes';
 import { suscripcionesNegocioRoutes } from './suscripciones-negocio.routes';
+import { invitacionesRoutes } from './invitaciones.routes';
 
 /**
  * Todas las rutas combinadas en el orden correcto
@@ -69,6 +71,9 @@ export const allRoutes = [
 
   // Super Admin (rutas anidadas)
   ...superadminRoutes,
+
+  // Invitaciones B2C (ANTES de publicRoutes para prioridad sobre /:slug)
+  ...invitacionesRoutes,
 
   // Rutas públicas (SIEMPRE AL FINAL - incluye catch-all /:slug)
   ...publicRoutes,

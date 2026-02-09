@@ -28,7 +28,7 @@ export default function FooterPublico({ contenido, tema }) {
           {/* Logo y texto */}
           <div className="col-span-1">
             {logo ? (
-              <img src={logo} alt="Logo" className="h-10 w-auto mb-4" />
+              <img src={logo} alt="Logo" loading="lazy" className="h-10 w-auto mb-4" />
             ) : (
               <div className="flex items-center gap-2 mb-4">
                 <Globe className="w-6 h-6" style={{ color: 'var(--color-primario)' }} />

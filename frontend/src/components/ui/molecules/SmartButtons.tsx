@@ -1,8 +1,9 @@
 import { memo, forwardRef, type ComponentType } from 'react';
 import { cn } from '@/lib/utils';
+import { SMART_BUTTON_COLORS } from '@/lib/uiConstants';
 
 /** Colores disponibles para SmartButton */
-export type SmartButtonColor = 'primary' | 'blue' | 'green' | 'yellow' | 'red' | 'gray';
+export type SmartButtonColor = keyof typeof SMART_BUTTON_COLORS;
 
 /**
  * Configuración individual de un botón inteligente
@@ -33,15 +34,6 @@ export interface SmartButtonsProps {
   /** Clases adicionales */
   className?: string;
 }
-
-const colorClasses: Record<SmartButtonColor, string> = {
-  primary: 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300',
-  blue: 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300',
-  green: 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300',
-  yellow: 'bg-yellow-50 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300',
-  red: 'bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300',
-  gray: 'bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300',
-};
 
 /**
  * SmartButtons - Botones de métricas/acciones contextuales en header
@@ -75,7 +67,7 @@ export const SmartButtons = memo(
               'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2',
               'dark:focus:ring-offset-gray-900',
               'disabled:opacity-50 disabled:cursor-not-allowed',
-              colorClasses[color]
+              SMART_BUTTON_COLORS[color]
             )}
             aria-label={`${btn.label}: ${btn.value}`}
           >

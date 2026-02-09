@@ -65,6 +65,7 @@ export default function TestimoniosPublico({ contenido }) {
                   <img
                     src={testimonio.foto}
                     alt={testimonio.nombre}
+                    loading="lazy"
                     className="w-12 h-12 rounded-full object-cover"
                   />
                 ) : (

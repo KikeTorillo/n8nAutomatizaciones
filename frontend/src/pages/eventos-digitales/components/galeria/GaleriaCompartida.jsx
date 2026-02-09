@@ -427,6 +427,7 @@ function GaleriaCompartida({
             <img
               src={fotos[lightboxIndex].url}
               alt={fotos[lightboxIndex].caption || 'Foto del evento'}
+              loading="lazy"
               className="max-w-full max-h-[75vh] object-contain"
             />
 
@@ -495,6 +496,7 @@ function GaleriaCompartida({
                 <img
                   src={previewUrl}
                   alt="Preview"
+                  loading="lazy"
                   className="w-full h-64 object-contain rounded-lg bg-gray-100 dark:bg-gray-700"
                 />
                 <button
