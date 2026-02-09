@@ -7,7 +7,9 @@
 export { ToggleSwitch } from './ToggleSwitch';
 export type { ToggleSwitchProps } from './ToggleSwitch';
 
-// NOTA: SearchInput movido a organisms/ (Feb 2026) - complejidad de lógica + debounce
+// SearchInput — devuelto a molecules (Feb 2026) - input + ícono + debounce = molecule
+export { SearchInput } from './SearchInput';
+export type { SearchInputProps } from './SearchInput';
 
 export { StatCard } from './StatCard';
 export type { StatCardProps } from './StatCard';

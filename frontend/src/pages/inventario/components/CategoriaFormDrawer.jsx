@@ -1,12 +1,11 @@
-import { useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { FolderTree, Palette } from 'lucide-react';
+import { Palette } from 'lucide-react';
 import {
-  Button,
   Checkbox,
-  Drawer,
+  FormDrawer,
   FormGroup,
   IconPicker,
   Input,
@@ -16,9 +15,6 @@ import {
 import { useCrearCategoria, useActualizarCategoria, useCategorias } from '@/hooks/inventario';
 import { useToast } from '@/hooks/utils';
 
-/**
- * Schema de validación Zod para categorías
- */
 const categoriaSchema = z.object({
   nombre: z.string().min(1, 'El nombre es requerido').max(100, 'Máximo 100 caracteres'),
   descripcion: z.string().max(500, 'Máximo 500 caracteres').optional(),
@@ -33,37 +29,43 @@ const categoriaSchema = z.object({
   activo: z.boolean().default(true),
 });
 
-/**
- * Colores predefinidos para categorías
- */
 const COLORES_PREDEFINIDOS = [
-  '#EF4444', // red-500
-  '#F59E0B', // amber-500
-  '#10B981', // green-500
-  '#753572', // primary-500
-  '#8B5CF6', // primary-500 (violet)
-  '#EC4899', // pink-500
-  '#753572', // primary-500
-  '#14B8A6', // teal-500
+  '#EF4444', '#F59E0B', '#10B981', '#753572',
+  '#8B5CF6', '#EC4899', '#753572', '#14B8A6',
 ];
 
-/**
- * Modal para crear/editar categorías
- */
+const DEFAULT_VALUES = {
+  nombre: '',
+  descripcion: '',
+  categoria_padre_id: '',
+  icono: '',
+  color: '#3B82F6',
+  orden: 0,
+  activo: true,
+};
+
+function entityToFormValues(categoria) {
+  return {
+    nombre: categoria.nombre || '',
+    descripcion: categoria.descripcion || '',
+    categoria_padre_id: categoria.categoria_padre_id?.toString() || '',
+    icono: categoria.icono || '',
+    color: categoria.color || '#3B82F6',
+    orden: categoria.orden || 0,
+    activo: categoria.activo ?? true,
+  };
+}
+
 function CategoriaFormDrawer({ isOpen, onClose, categoria = null, mode = 'create' }) {
   const { success: showSuccess, error: showError } = useToast();
   const esEdicion = mode === 'edit' && categoria;
 
-  // Queries
   const { data: categoriasData } = useCategorias({ activo: true });
   const categorias = categoriasData?.categorias || [];
 
-  // Mutations
   const crearMutation = useCrearCategoria();
   const actualizarMutation = useActualizarCategoria();
-  const mutation = esEdicion ? actualizarMutation : crearMutation;
 
-  // Form
   const {
     register,
     handleSubmit,
@@ -73,48 +75,19 @@ function CategoriaFormDrawer({ isOpen, onClose, categoria = null, mode = 'create
     setValue,
   } = useForm({
     resolver: zodResolver(categoriaSchema),
-    defaultValues: {
-      nombre: '',
-      descripcion: '',
-      categoria_padre_id: '',
-      icono: '',
-      color: '#3B82F6',
-      orden: 0,
-      activo: true,
-    },
+    defaultValues: DEFAULT_VALUES,
   });
 
   const colorSeleccionado = watch('color');
   const iconoSeleccionado = watch('icono');
 
-  // Cargar datos al editar
   useEffect(() => {
-    if (esEdicion && categoria) {
-      reset({
-        nombre: categoria.nombre || '',
-        descripcion: categoria.descripcion || '',
-        categoria_padre_id: categoria.categoria_padre_id?.toString() || '',
-        icono: categoria.icono || '',
-        color: categoria.color || '#3B82F6',
-        orden: categoria.orden || 0,
-        activo: categoria.activo ?? true,
-      });
-    } else {
-      reset({
-        nombre: '',
-        descripcion: '',
-        categoria_padre_id: '',
-        icono: '',
-        color: '#3B82F6',
-        orden: 0,
-        activo: true,
-      });
+    if (isOpen) {
+      reset(esEdicion && categoria ? entityToFormValues(categoria) : DEFAULT_VALUES);
     }
-  }, [esEdicion, categoria, reset]);
+  }, [isOpen, esEdicion, categoria, reset]);
 
-  // Submit handler
-  const onSubmit = (data) => {
-    // Sanitizar datos
+  const onSubmit = useCallback(async (data) => {
     const payload = {
       nombre: data.nombre,
       descripcion: data.descripcion || undefined,
@@ -125,167 +98,132 @@ function CategoriaFormDrawer({ isOpen, onClose, categoria = null, mode = 'create
       activo: data.activo,
     };
 
-    if (esEdicion) {
-      mutation.mutate(
-        { id: categoria.id, data: payload },
-        {
-          onSuccess: () => {
-            showSuccess('Categoría actualizada correctamente');
-            reset();
-            onClose();
-          },
-          onError: (err) => {
-            showError(err.message || 'Error al actualizar categoría');
-          },
-        }
-      );
-    } else {
-      mutation.mutate(payload, {
-        onSuccess: () => {
-          showSuccess('Categoría creada correctamente');
-          reset();
-          onClose();
-        },
-        onError: (err) => {
-          showError(err.message || 'Error al crear categoría');
-        },
-      });
+    try {
+      if (esEdicion) {
+        await actualizarMutation.mutateAsync({ id: categoria.id, data: payload });
+        showSuccess('Categoría actualizada correctamente');
+      } else {
+        await crearMutation.mutateAsync(payload);
+        showSuccess('Categoría creada correctamente');
+      }
+      onClose();
+    } catch (err) {
+      showError(err.message || `Error al ${esEdicion ? 'actualizar' : 'crear'} categoría`);
     }
-  };
+  }, [esEdicion, categoria, actualizarMutation, crearMutation, showSuccess, showError, onClose]);
 
-  // Filtrar categorías para selector de padre (excluir la actual y sus hijos)
   const categoriasDisponibles = categorias.filter((cat) => {
     if (!esEdicion) return true;
-    return cat.id !== categoria?.id; // No puede ser su propio padre
+    return cat.id !== categoria?.id;
   });
 
+  const isSubmitting = crearMutation.isPending || actualizarMutation.isPending;
+
   return (
-    <Drawer
+    <FormDrawer
       isOpen={isOpen}
       onClose={onClose}
-      title={esEdicion ? 'Editar Categoría' : 'Nueva Categoría'}
+      entityName="Categoría"
+      mode={esEdicion ? 'edit' : 'create'}
       subtitle={esEdicion ? 'Modifica los datos de la categoría' : 'Completa la información de la categoría'}
+      onSubmit={handleSubmit(onSubmit)}
+      isSubmitting={isSubmitting}
     >
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        {/* Nombre */}
-        <FormGroup label="Nombre" error={errors.nombre?.message} required>
-          <Input
-            {...register('nombre')}
-            hasError={!!errors.nombre}
-            placeholder="Ej: Cuidado Capilar, Productos de Limpieza"
-          />
-        </FormGroup>
+      <FormGroup label="Nombre" error={errors.nombre?.message} required>
+        <Input
+          {...register('nombre')}
+          hasError={!!errors.nombre}
+          placeholder="Ej: Cuidado Capilar, Productos de Limpieza"
+        />
+      </FormGroup>
 
-        {/* Descripción */}
-        <FormGroup label="Descripción" error={errors.descripcion?.message}>
-          <Textarea
-            {...register('descripcion')}
-            rows={3}
-            hasError={!!errors.descripcion}
-            placeholder="Descripción opcional de la categoría"
-          />
-        </FormGroup>
+      <FormGroup label="Descripción" error={errors.descripcion?.message}>
+        <Textarea
+          {...register('descripcion')}
+          rows={3}
+          hasError={!!errors.descripcion}
+          placeholder="Descripción opcional de la categoría"
+        />
+      </FormGroup>
 
-        {/* Categoría Padre */}
-        <FormGroup
-          label="Categoría Padre"
-          error={errors.categoria_padre_id?.message}
-          helper="Opcional - Permite crear subcategorías"
-        >
-          <Select
-            {...register('categoria_padre_id')}
-            hasError={!!errors.categoria_padre_id}
-            placeholder="Sin categoría padre (categoría raíz)"
-            options={categoriasDisponibles.map((cat) => ({
-              value: cat.id.toString(),
-              label: cat.nombre,
-            }))}
-          />
-        </FormGroup>
+      <FormGroup
+        label="Categoría Padre"
+        error={errors.categoria_padre_id?.message}
+        helper="Opcional - Permite crear subcategorías"
+      >
+        <Select
+          {...register('categoria_padre_id')}
+          hasError={!!errors.categoria_padre_id}
+          placeholder="Sin categoría padre (categoría raíz)"
+          options={categoriasDisponibles.map((cat) => ({
+            value: cat.id.toString(),
+            label: cat.nombre,
+          }))}
+        />
+      </FormGroup>
 
-        {/* Icono */}
-        <FormGroup label="Icono" error={errors.icono?.message}>
-          <IconPicker
-            value={iconoSeleccionado}
-            onChange={(icono) => setValue('icono', icono)}
-            hasError={!!errors.icono}
-          />
-        </FormGroup>
+      <FormGroup label="Icono" error={errors.icono?.message}>
+        <IconPicker
+          value={iconoSeleccionado}
+          onChange={(icono) => setValue('icono', icono)}
+          hasError={!!errors.icono}
+        />
+      </FormGroup>
 
-        {/* Orden */}
-        <FormGroup label="Orden de visualización" error={errors.orden?.message}>
-          <Input
-            type="number"
-            min="0"
-            {...register('orden')}
-            hasError={!!errors.orden}
-            placeholder="0"
-          />
-        </FormGroup>
+      <FormGroup label="Orden de visualización" error={errors.orden?.message}>
+        <Input
+          type="number"
+          min="0"
+          {...register('orden')}
+          hasError={!!errors.orden}
+          placeholder="0"
+        />
+      </FormGroup>
 
-        {/* Color */}
-        <FormGroup label="Color" error={errors.color?.message}>
-          <div className="space-y-3">
-            {/* Colores Predefinidos */}
-            <div className="flex items-center space-x-2">
-              {COLORES_PREDEFINIDOS.map((color) => (
-                <button
-                  key={color}
-                  type="button"
-                  onClick={() => setValue('color', color)}
-                  className={`w-10 h-10 rounded-lg transition-all ${
-                    colorSeleccionado === color
-                      ? 'ring-2 ring-offset-2 ring-primary-500 scale-110'
-                      : 'hover:scale-105'
-                  }`}
-                  style={{ backgroundColor: color }}
-                  title={color}
-                />
-              ))}
-            </div>
+      <FormGroup label="Color" error={errors.color?.message}>
+        <div className="space-y-3">
+          <div className="flex items-center space-x-2">
+            {COLORES_PREDEFINIDOS.map((color) => (
+              <button
+                key={color}
+                type="button"
+                onClick={() => setValue('color', color)}
+                className={`w-10 h-10 rounded-lg transition-all ${
+                  colorSeleccionado === color
+                    ? 'ring-2 ring-offset-2 ring-primary-500 scale-110'
+                    : 'hover:scale-105'
+                }`}
+                style={{ backgroundColor: color }}
+                title={color}
+              />
+            ))}
+          </div>
 
-            {/* Input Color Personalizado */}
-            <div className="flex items-center space-x-3">
-              <div className="relative flex-1">
-                <Palette className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-gray-500" />
-                <input
-                  type="text"
-                  {...register('color')}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent font-mono bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                  placeholder="#RRGGBB"
-                />
-              </div>
+          <div className="flex items-center space-x-3">
+            <div className="relative flex-1">
+              <Palette className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-gray-500" />
               <input
-                type="color"
-                value={colorSeleccionado || '#3B82F6'}
-                onChange={(e) => setValue('color', e.target.value.toUpperCase())}
-                className="w-12 h-10 border border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer"
+                type="text"
+                {...register('color')}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent font-mono bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                placeholder="#RRGGBB"
               />
             </div>
+            <input
+              type="color"
+              value={colorSeleccionado || '#3B82F6'}
+              onChange={(e) => setValue('color', e.target.value.toUpperCase())}
+              className="w-12 h-10 border border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer"
+            />
           </div>
-        </FormGroup>
-
-        {/* Activo */}
-        <Checkbox
-          label="Categoría activa"
-          {...register('activo')}
-        />
-
-        {/* Botones */}
-        <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-          <Button type="button" variant="secondary" onClick={onClose}>
-            Cancelar
-          </Button>
-          <Button
-            type="submit"
-            variant="primary"
-            isLoading={mutation.isPending}
-          >
-            {esEdicion ? 'Actualizar' : 'Crear'} Categoría
-          </Button>
         </div>
-      </form>
-    </Drawer>
+      </FormGroup>
+
+      <Checkbox
+        label="Categoría activa"
+        {...register('activo')}
+      />
+    </FormDrawer>
   );
 }
 

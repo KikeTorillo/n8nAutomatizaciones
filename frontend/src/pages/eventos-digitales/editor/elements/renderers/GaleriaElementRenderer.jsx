@@ -125,6 +125,8 @@ function GaleriaElementRenderer({
                   src={url}
                   alt={`Foto ${idx + 1}`}
                   loading="lazy"
+                  width={400}
+                  height={300}
                   className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                 />
                 <div
@@ -155,6 +157,8 @@ function GaleriaElementRenderer({
                   src={url}
                   alt={`Foto ${idx + 1}`}
                   loading="lazy"
+                  width={400}
+                  height={300}
                   className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                 />
                 <div
@@ -197,6 +201,8 @@ function GaleriaElementRenderer({
               src={imagenes[lightboxIndex]}
               alt={`Foto ${lightboxIndex + 1}`}
               loading="lazy"
+              width={800}
+              height={600}
               className="max-h-[85vh] max-w-[85vw] object-contain"
               onClick={(e) => e.stopPropagation()}
             />

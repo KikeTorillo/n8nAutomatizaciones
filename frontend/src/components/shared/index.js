@@ -9,5 +9,8 @@ export { AddToCalendar } from './calendar';
 // Documentos
 export { DocumentoUploadDrawer } from './DocumentoUploadDrawer';
 
+// Selectores compartidos
+export { ProductoSelectorInline } from './selectors';
+
 // Invitación Dinámica (bridge para módulos externos)
 export { InvitacionDinamica } from './InvitacionDinamica';

@@ -44,6 +44,8 @@ function Lightbox({ imagenes, index, onClose, onPrev, onNext }) {
         src={imagenes[index].url}
         alt={imagenes[index].alt || ''}
         loading="lazy"
+        width={800}
+        height={600}
         className="max-w-[90vw] max-h-[90vh] object-contain"
         onClick={(e) => e.stopPropagation()}
       />
@@ -132,6 +134,8 @@ function GaleriaCanvasBlock({
           src={imagen.url}
           alt={imagen.alt || `Imagen ${idx + 1}`}
           loading="lazy"
+          width={400}
+          height={300}
           className={cn(
             'w-full h-full object-cover',
             showLightbox && 'group-hover:scale-110 transition-transform duration-300'

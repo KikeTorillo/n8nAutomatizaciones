@@ -14,6 +14,8 @@ const PlantillaPreviewImage = memo(function PlantillaPreviewImage({ plantilla, c
       <img
         src={plantilla.preview_url}
         alt={plantilla.nombre}
+        width={300}
+        height={400}
         className={`w-full h-full object-cover ${className}`}
         loading="lazy"
       />

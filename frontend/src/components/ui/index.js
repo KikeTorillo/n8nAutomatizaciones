@@ -54,7 +54,7 @@ export { IconButton } from './atoms/IconButton';
 export { Card } from './atoms/Card';
 
 // ========== ORGANISMS ==========
-export { SearchInput } from './organisms/SearchInput';
+export { SearchInput } from './molecules/SearchInput';
 export { Pagination } from './organisms/Pagination';
 export { ViewTabs } from './organisms/ViewTabs';
 export { Modal } from './organisms/Modal';

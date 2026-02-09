@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * Configuración centralizada para hooks
  * Ene 2026

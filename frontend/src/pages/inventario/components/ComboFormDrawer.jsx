@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { Loader2, Package, Plus, Trash2, AlertCircle } from 'lucide-react';
 
 import { Button, Drawer, Input } from '@/components/ui';
-import ProductoSelectorInline from '@/pages/pos/components/ProductoSelectorInline';
+import { ProductoSelectorInline } from '@/components/shared';
 import { useToast } from '@/hooks/utils';
 import { useCombo, useCrearCombo, useActualizarCombo } from '@/hooks/pos';
 import useSucursalStore, { selectSucursalActiva } from '@/store/sucursalStore';

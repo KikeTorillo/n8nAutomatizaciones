@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -23,6 +23,31 @@ const etiquetaSchema = z.object({
     .optional(),
 });
 
+const DEFAULT_VALUES = {
+  nombre: '',
+  color: TAG_COLORS.default,
+  descripcion: '',
+  orden: 0,
+};
+
+function entityToFormValues(etiqueta) {
+  return {
+    nombre: etiqueta.nombre || '',
+    color: etiqueta.color || TAG_COLORS.default,
+    descripcion: etiqueta.descripcion || '',
+    orden: etiqueta.orden || 0,
+  };
+}
+
+function isLightColor(hexColor) {
+  const hex = hexColor.replace('#', '');
+  const r = parseInt(hex.substr(0, 2), 16);
+  const g = parseInt(hex.substr(2, 2), 16);
+  const b = parseInt(hex.substr(4, 2), 16);
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance > 0.5;
+}
+
 export default function EtiquetaFormDrawer({ isOpen, onClose, etiqueta = null }) {
   const { success: showSuccess, error: showError } = useToast();
   const crearEtiqueta = useCrearEtiqueta();
@@ -36,42 +61,28 @@ export default function EtiquetaFormDrawer({ isOpen, onClose, etiqueta = null })
     reset,
     watch,
     setValue,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm({
     resolver: zodResolver(etiquetaSchema),
-    defaultValues: {
-      nombre: '',
-      color: TAG_COLORS.default,
-      descripcion: '',
-      orden: 0,
-    },
+    defaultValues: DEFAULT_VALUES,
   });
 
   const colorActual = watch('color');
 
   useEffect(() => {
     if (isOpen) {
-      if (etiqueta) {
-        reset({
-          nombre: etiqueta.nombre || '',
-          color: etiqueta.color || TAG_COLORS.default,
-          descripcion: etiqueta.descripcion || '',
-          orden: etiqueta.orden || 0,
-        });
-      } else {
-        reset({ nombre: '', color: TAG_COLORS.default, descripcion: '', orden: 0 });
-      }
+      reset(etiqueta ? entityToFormValues(etiqueta) : DEFAULT_VALUES);
     }
   }, [isOpen, etiqueta, reset]);
 
-  const onSubmit = async (data) => {
+  const onSubmit = useCallback(async (data) => {
+    const payload = {
+      nombre: data.nombre,
+      color: data.color,
+      descripcion: data.descripcion || null,
+      orden: data.orden || 0,
+    };
     try {
-      const payload = {
-        nombre: data.nombre,
-        color: data.color,
-        descripcion: data.descripcion || null,
-        orden: data.orden || 0,
-      };
       if (isEditing) {
         await actualizarEtiqueta.mutateAsync({ id: etiqueta.id, data: payload });
         showSuccess('Etiqueta actualizada correctamente');
@@ -83,7 +94,9 @@ export default function EtiquetaFormDrawer({ isOpen, onClose, etiqueta = null })
     } catch (error) {
       showError(error.message || 'Error al guardar etiqueta');
     }
-  };
+  }, [isEditing, etiqueta, actualizarEtiqueta, crearEtiqueta, showSuccess, showError, onClose]);
+
+  const isSubmitting = crearEtiqueta.isPending || actualizarEtiqueta.isPending;
 
   return (
     <FormDrawer
@@ -159,13 +172,4 @@ export default function EtiquetaFormDrawer({ isOpen, onClose, etiqueta = null })
       </FormGroup>
     </FormDrawer>
   );
-}
-
-function isLightColor(hexColor) {
-  const hex = hexColor.replace('#', '');
-  const r = parseInt(hex.substr(0, 2), 16);
-  const g = parseInt(hex.substr(2, 2), 16);
-  const b = parseInt(hex.substr(4, 2), 16);
-  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  return luminance > 0.5;
 }

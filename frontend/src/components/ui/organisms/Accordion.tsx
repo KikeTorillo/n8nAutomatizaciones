@@ -88,6 +88,7 @@ const Accordion = memo(forwardRef<HTMLDivElement, AccordionProps>(function Accor
           <div key={item.id}>
             <button
               type="button"
+              id={`accordion-trigger-${item.id}`}
               onClick={() => !item.disabled && toggle(item.id)}
               disabled={item.disabled}
               aria-expanded={isOpen}
