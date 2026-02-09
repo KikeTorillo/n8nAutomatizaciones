@@ -117,6 +117,18 @@ export const CICLO_MESES = {
   [CICLOS_FACTURACION.ANUAL]: 12,
 };
 
+// Tipos de cobro
+export const TIPOS_COBRO = {
+  RECURRENTE: 'recurrente',
+  UNICO: 'unico',
+};
+
+// Labels para tipos de cobro
+export const TIPO_COBRO_LABELS = {
+  [TIPOS_COBRO.RECURRENTE]: 'Recurrente',
+  [TIPOS_COBRO.UNICO]: 'Pago único',
+};
+
 // Tipos de descuento
 export const TIPOS_DESCUENTO = {
   PORCENTAJE: 'porcentaje',

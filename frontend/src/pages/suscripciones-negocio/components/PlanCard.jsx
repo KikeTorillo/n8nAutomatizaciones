@@ -39,9 +39,12 @@ function calcularPrecioPorPeriodo(plan, periodo) {
 function PlanCard({ plan, isPopular, isSelected, onSelect, onEdit, periodoSeleccionado = 'mensual' }) {
   if (!plan) return null;
 
+  const esUnico = plan.tipo_cobro === 'unico';
   const meses = CICLO_MESES[periodoSeleccionado] || 1;
-  const precioTotal = calcularPrecioPorPeriodo(plan, periodoSeleccionado);
-  const precioMensualEquiv = precioTotal / meses;
+  const precioTotal = esUnico
+    ? (parseFloat(plan.precio_mensual) || 0)
+    : calcularPrecioPorPeriodo(plan, periodoSeleccionado);
+  const precioMensualEquiv = esUnico ? precioTotal : precioTotal / meses;
   const diasTrial = plan.dias_trial ?? plan.dias_prueba ?? 0;
   const caracteristicas = plan.features || plan.caracteristicas || [];
 
@@ -79,16 +82,31 @@ function PlanCard({ plan, isPopular, isSelected, onSelect, onEdit, periodoSelecc
 
       {/* Precio */}
       <div className="text-center mb-6">
-        <div className="flex items-baseline justify-center gap-1">
-          <span className="text-4xl font-bold text-gray-900 dark:text-gray-100">
-            {formatCurrency(precioMensualEquiv)}
-          </span>
-          <span className="text-gray-500 dark:text-gray-400">/mes</span>
-        </div>
-        {meses > 1 && (
-          <p className="mt-1 text-sm text-primary-600 dark:text-primary-400">
-            Total: {formatCurrency(precioTotal)}/{CICLO_LABELS[periodoSeleccionado]?.toLowerCase()}
-          </p>
+        {esUnico ? (
+          <>
+            <div className="flex items-baseline justify-center gap-1">
+              <span className="text-4xl font-bold text-gray-900 dark:text-gray-100">
+                {formatCurrency(precioTotal)}
+              </span>
+            </div>
+            <p className="mt-1 text-sm text-primary-600 dark:text-primary-400 font-medium">
+              Pago único
+            </p>
+          </>
+        ) : (
+          <>
+            <div className="flex items-baseline justify-center gap-1">
+              <span className="text-4xl font-bold text-gray-900 dark:text-gray-100">
+                {formatCurrency(precioMensualEquiv)}
+              </span>
+              <span className="text-gray-500 dark:text-gray-400">/mes</span>
+            </div>
+            {meses > 1 && (
+              <p className="mt-1 text-sm text-primary-600 dark:text-primary-400">
+                Total: {formatCurrency(precioTotal)}/{CICLO_LABELS[periodoSeleccionado]?.toLowerCase()}
+              </p>
+            )}
+          </>
         )}
         {diasTrial > 0 && (
           <p className="mt-2 text-sm text-primary-600 dark:text-primary-400">
@@ -119,7 +137,7 @@ function PlanCard({ plan, isPopular, isSelected, onSelect, onEdit, periodoSelecc
             className="w-full"
             onClick={() => onSelect(plan)}
           >
-            {isSelected ? 'Plan Actual' : 'Seleccionar'}
+            {isSelected ? 'Plan Actual' : esUnico ? 'Comprar' : 'Seleccionar'}
           </Button>
         )}
         {onEdit && (

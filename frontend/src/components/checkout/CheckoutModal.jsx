@@ -25,8 +25,9 @@ function CheckoutModal({ isOpen, onClose, plan, periodo = 'mensual' }) {
   const [cuponValidado, setCuponValidado] = useState(null);
   const [cuponError, setCuponError] = useState(null);
 
-  // Detectar si es trial
+  // Detectar tipo de cobro
   const esTrial = plan?.dias_trial > 0;
+  const esUnico = plan?.tipo_cobro === 'unico';
 
   // Guardar plan en localStorage y redirigir
   const handleGuardarPlanYRedirigir = useCallback((destino) => {
@@ -42,9 +43,10 @@ function CheckoutModal({ isOpen, onClose, plan, periodo = 'mensual' }) {
     navigate(destino);
   }, [plan, periodo, onClose, navigate]);
 
-  // Calcular precio base según período
+  // Calcular precio base según período (pago único usa precio_mensual directamente)
   const calcularPrecioBase = useCallback(() => {
     if (!plan) return 0;
+    if (esUnico) return parseFloat(plan.precio_mensual) || 0;
     switch (periodo) {
       case 'mensual':
         return parseFloat(plan.precio_mensual) || 0;
@@ -57,7 +59,7 @@ function CheckoutModal({ isOpen, onClose, plan, periodo = 'mensual' }) {
       default:
         return parseFloat(plan.precio_mensual) || 0;
     }
-  }, [plan, periodo]);
+  }, [plan, periodo, esUnico]);
 
   const precioBase = calcularPrecioBase();
 
@@ -181,7 +183,9 @@ function CheckoutModal({ isOpen, onClose, plan, periodo = 'mensual' }) {
           <p className="text-gray-500 dark:text-gray-400 mb-6">
             {esTrial
               ? `Comienza tu prueba gratuita de ${plan.dias_trial} días con el plan ${plan.nombre}`
-              : `Suscríbete al plan ${plan.nombre}`
+              : esUnico
+                ? `Compra el plan ${plan.nombre}`
+                : `Suscríbete al plan ${plan.nombre}`
             }
           </p>
 
@@ -192,7 +196,7 @@ function CheckoutModal({ isOpen, onClose, plan, periodo = 'mensual' }) {
                 {plan.nombre}
               </span>
               <Badge variant="info" size="sm">
-                {CICLO_LABELS[periodo] || periodo}
+                {esUnico ? 'Pago único' : (CICLO_LABELS[periodo] || periodo)}
               </Badge>
             </div>
             {esTrial ? (
@@ -201,7 +205,9 @@ function CheckoutModal({ isOpen, onClose, plan, periodo = 'mensual' }) {
               </p>
             ) : (
               <p className="text-gray-900 dark:text-gray-100 font-semibold">
-                {formatCurrency(precioBase)}/{periodo === 'mensual' ? 'mes' : periodo}
+                {esUnico
+                  ? formatCurrency(precioBase)
+                  : `${formatCurrency(precioBase)}/${periodo === 'mensual' ? 'mes' : periodo}`}
               </p>
             )}
           </div>
@@ -229,8 +235,10 @@ function CheckoutModal({ isOpen, onClose, plan, periodo = 'mensual' }) {
     );
   }
 
-  // CASO 2 y 3: Usuario autenticado (Trial o Pago)
-  const tituloModal = esTrial ? 'Comenzar Prueba Gratuita' : 'Confirmar Suscripción';
+  // CASO 2 y 3: Usuario autenticado (Trial, Pago único o Recurrente)
+  const tituloModal = esTrial
+    ? 'Comenzar Prueba Gratuita'
+    : esUnico ? 'Confirmar Compra' : 'Confirmar Suscripción';
 
   return (
     <Modal
@@ -268,7 +276,7 @@ function CheckoutModal({ isOpen, onClose, plan, periodo = 'mensual' }) {
             ) : (
               <>
                 <CreditCard className="w-4 h-4 mr-2" />
-                Pagar {formatCurrency(precioFinal)}
+                {esUnico ? 'Comprar' : 'Pagar'} {formatCurrency(precioFinal)}
               </>
             )}
           </Button>
@@ -283,7 +291,7 @@ function CheckoutModal({ isOpen, onClose, plan, periodo = 'mensual' }) {
               {plan.nombre}
             </h3>
             <Badge variant="info" size="sm">
-              {CICLO_LABELS[periodo] || periodo}
+              {esUnico ? 'Pago único' : (CICLO_LABELS[periodo] || periodo)}
             </Badge>
           </div>
           {plan.descripcion && (
@@ -292,7 +300,7 @@ function CheckoutModal({ isOpen, onClose, plan, periodo = 'mensual' }) {
             </p>
           )}
 
-          {/* Precio: Trial vs Normal */}
+          {/* Precio: Trial vs Único vs Recurrente */}
           {esTrial ? (
             <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-3 text-center">
               <p className="text-2xl font-bold text-green-600 dark:text-green-400">
@@ -301,6 +309,10 @@ function CheckoutModal({ isOpen, onClose, plan, periodo = 'mensual' }) {
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                 Después: {formatCurrency(precioBase)}/{periodo === 'mensual' ? 'mes' : periodo}
               </p>
+            </div>
+          ) : esUnico ? (
+            <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+              {formatCurrency(precioBase)}
             </div>
           ) : (
             <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
@@ -420,7 +432,9 @@ function CheckoutModal({ isOpen, onClose, plan, periodo = 'mensual' }) {
         <p className="text-xs text-center text-gray-500 dark:text-gray-400">
           {esTrial
             ? 'Sin tarjeta requerida. Al terminar el trial podrás elegir continuar o cancelar.'
-            : 'Serás redirigido a MercadoPago para completar el pago de forma segura.'
+            : esUnico
+              ? 'Serás redirigido a MercadoPago para completar tu compra de forma segura.'
+              : 'Serás redirigido a MercadoPago para completar el pago de forma segura.'
           }
         </p>
       </div>

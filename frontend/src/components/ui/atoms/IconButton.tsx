@@ -1,12 +1,24 @@
-import { forwardRef, memo, type ButtonHTMLAttributes, type ReactNode } from 'react';
+import { forwardRef, memo, isValidElement, createElement, type ButtonHTMLAttributes, type ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 import { Loader2 } from 'lucide-react';
 import { ICON_BUTTON_VARIANTS, ICON_BUTTON_SIZES, FOCUS_STATES } from '@/lib/uiConstants';
 
+type IconComponent = React.ComponentType<{ className?: string }>;
+
+/** Resuelve icon como componente o JSX */
+const resolveIcon = (icon: ReactNode | IconComponent, sizeClass: string): ReactNode => {
+  if (!icon) return null;
+  if (isValidElement(icon)) return icon;
+  if (typeof icon === 'function' || (typeof icon === 'object' && '$$typeof' in icon)) {
+    return createElement(icon as IconComponent, { className: sizeClass });
+  }
+  return icon as ReactNode;
+};
+
 export interface IconButtonProps
   extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children'> {
-  /** Icono a renderizar */
-  icon: ReactNode;
+  /** Icono a renderizar (componente o JSX) */
+  icon: ReactNode | IconComponent;
   /** Variante visual */
   variant?: 'ghost' | 'outline' | 'solid' | 'danger';
   /** Tamaño del botón */
@@ -68,7 +80,7 @@ const IconButton = memo(
           <Loader2 className={cn(sizeConfig.icon, 'animate-spin')} aria-hidden="true" />
         ) : (
           <span className={cn('flex items-center justify-center', sizeConfig.icon)} aria-hidden="true">
-            {icon}
+            {resolveIcon(icon, sizeConfig.icon)}
           </span>
         )}
       </button>

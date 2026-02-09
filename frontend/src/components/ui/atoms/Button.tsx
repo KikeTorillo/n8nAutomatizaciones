@@ -1,8 +1,20 @@
-import { forwardRef, memo, type ButtonHTMLAttributes, type ReactNode } from 'react';
+import { forwardRef, memo, isValidElement, createElement, type ButtonHTMLAttributes, type ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 import { Loader2 } from 'lucide-react';
 import { BUTTON_VARIANTS, BUTTON_SIZES, FOCUS_STATES } from '@/lib/uiConstants';
 import type { ButtonVariant, ButtonType, UISize } from '@/types/ui';
+
+type IconComponent = React.ComponentType<{ className?: string }>;
+
+/** Resuelve icon como componente o JSX */
+const resolveIcon = (icon: ReactNode | IconComponent): ReactNode => {
+  if (!icon) return null;
+  if (isValidElement(icon)) return icon;
+  if (typeof icon === 'function' || (typeof icon === 'object' && '$$typeof' in icon)) {
+    return createElement(icon as IconComponent, { className: 'h-4 w-4' });
+  }
+  return icon as ReactNode;
+};
 
 export interface ButtonProps
   extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'type'> {
@@ -16,8 +28,8 @@ export interface ButtonProps
   disabled?: boolean;
   /** Tipo del botón HTML */
   type?: ButtonType;
-  /** Icono a mostrar junto al texto */
-  icon?: ReactNode;
+  /** Icono a mostrar junto al texto (componente o JSX) */
+  icon?: ReactNode | IconComponent;
   /** Posición del icono */
   iconPosition?: 'left' | 'right';
   /** Contenido del botón */
@@ -71,11 +83,11 @@ const Button = memo(
           <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
         )}
         {!isLoading && icon && iconPosition === 'left' && (
-          <span className="mr-2 inline-flex" aria-hidden="true">{icon}</span>
+          <span className="mr-2 inline-flex" aria-hidden="true">{resolveIcon(icon)}</span>
         )}
         {children}
         {!isLoading && icon && iconPosition === 'right' && (
-          <span className="ml-2 inline-flex" aria-hidden="true">{icon}</span>
+          <span className="ml-2 inline-flex" aria-hidden="true">{resolveIcon(icon)}</span>
         )}
       </button>
     );

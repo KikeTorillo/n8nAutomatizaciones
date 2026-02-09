@@ -681,6 +681,24 @@ export const posApi = {
   asignarGrupoACategoria: (categoriaId: number, data: { grupo_id: number; orden?: number }): Promise<AxiosResponse> =>
     apiClient.post(`/inventario/categorias/${categoriaId}/grupos`, data),
 
+  // ========== Point Terminal - MercadoPago (Feb 2026) ==========
+
+  /** Crear orden de pago en terminal Point */
+  crearOrdenPoint: (data: { terminal_id: string; venta_id: number; monto: number; descripcion?: string; expiration_time?: string }): Promise<AxiosResponse> =>
+    apiClient.post('/pos/point/orders', data),
+
+  /** Obtener estado de una orden Point */
+  obtenerOrdenPoint: (orderId: string): Promise<AxiosResponse> =>
+    apiClient.get(`/pos/point/orders/${orderId}`),
+
+  /** Cancelar orden Point */
+  cancelarOrdenPoint: (orderId: string): Promise<AxiosResponse> =>
+    apiClient.delete(`/pos/point/orders/${orderId}`),
+
+  /** Listar terminales Point disponibles */
+  listarTerminales: (): Promise<AxiosResponse> =>
+    apiClient.get('/pos/point/terminals'),
+
   // Alias de compatibilidad (Ene 2026)
   obtenerVentas: (params: ListarVentasParams = {}): Promise<AxiosResponse<ApiListResponse<Venta>>> =>
     apiClient.get('/pos/ventas', { params }),

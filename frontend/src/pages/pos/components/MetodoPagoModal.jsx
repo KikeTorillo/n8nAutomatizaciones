@@ -8,10 +8,12 @@ import {
   Plus,
   Trash2,
   Wallet,
-  AlertCircle
+  AlertCircle,
+  Monitor,
 } from 'lucide-react';
 import { Button, Input, Drawer } from '@/components/ui';
 import TecladoBilletes from './TecladoBilletes';
+import PointPaymentModal from './PointPaymentModal';
 import { generateId } from '@/lib/utils';
 
 /**
@@ -34,6 +36,9 @@ export default function MetodoPagoModal({
   const [montoRecibidoActual, setMontoRecibidoActual] = useState(0);
   const [referenciaActual, setReferenciaActual] = useState('');
 
+  // Estado para Point Terminal
+  const [showPointModal, setShowPointModal] = useState(false);
+
   // Métodos de pago disponibles
   const metodosDisponibles = useMemo(() => {
     const metodos = [
@@ -42,6 +47,7 @@ export default function MetodoPagoModal({
       { value: 'tarjeta_credito', label: 'Credito', icon: CreditCard, color: 'secondary' },
       { value: 'transferencia', label: 'Transferencia', icon: RefreshCw, color: 'orange' },
       { value: 'qr_mercadopago', label: 'QR MP', icon: Smartphone, color: 'cyan' },
+      { value: 'terminal_mercadopago', label: 'Terminal Point', icon: Monitor, color: 'purple' },
     ];
 
     // Agregar cuenta_cliente solo si el cliente tiene crédito habilitado
@@ -169,6 +175,12 @@ export default function MetodoPagoModal({
 
   // Pago rápido con un solo método
   const pagoRapido = useCallback(() => {
+    // Si es terminal Point, abrir modal dedicado
+    if (metodoPagoActual === 'terminal_mercadopago') {
+      setShowPointModal(true);
+      return;
+    }
+
     const monto = total;
     let cambio = 0;
     let montoRecibido = null;
@@ -193,6 +205,25 @@ export default function MetodoPagoModal({
     });
   }, [total, metodoPagoActual, montoRecibidoActual, referenciaActual, clienteId, onConfirmar]);
 
+  // Callback cuando Point Payment completa exitosamente
+  const handlePointSuccess = useCallback((orden) => {
+    setShowPointModal(false);
+
+    const pago = {
+      metodo_pago: 'terminal_mercadopago',
+      monto: total,
+      referencia: orden?.order_id || orden?.id || undefined,
+    };
+
+    onConfirmar({
+      pagos: [pago],
+      total_pagado: total,
+      cambio_total: 0,
+      cliente_id: clienteId,
+      point_order: orden,
+    });
+  }, [total, clienteId, onConfirmar]);
+
   // Clases de color
   const colorClasses = {
     green: 'bg-green-50 dark:bg-green-900/30 border-green-200 dark:border-green-800',
@@ -201,6 +232,7 @@ export default function MetodoPagoModal({
     orange: 'bg-orange-50 dark:bg-orange-900/30 border-orange-200 dark:border-orange-800',
     cyan: 'bg-cyan-50 dark:bg-cyan-900/30 border-cyan-200 dark:border-cyan-800',
     amber: 'bg-amber-50 dark:bg-amber-900/30 border-amber-200 dark:border-amber-800',
+    purple: 'bg-purple-50 dark:bg-purple-900/30 border-purple-200 dark:border-purple-800',
   };
 
   const selectedColorClasses = {
@@ -210,6 +242,7 @@ export default function MetodoPagoModal({
     orange: 'ring-2 ring-orange-500 border-orange-500',
     cyan: 'ring-2 ring-cyan-500 border-cyan-500',
     amber: 'ring-2 ring-amber-500 border-amber-500',
+    purple: 'ring-2 ring-purple-500 border-purple-500',
   };
 
   const iconColorClasses = {
@@ -219,6 +252,7 @@ export default function MetodoPagoModal({
     orange: 'text-orange-600 dark:text-orange-400',
     cyan: 'text-cyan-600 dark:text-cyan-400',
     amber: 'text-amber-600 dark:text-amber-400',
+    purple: 'text-purple-600 dark:text-purple-400',
   };
 
   const getMetodoInfo = (metodoPago) =>
@@ -522,6 +556,15 @@ export default function MetodoPagoModal({
           {footerContent}
         </div>
       </div>
+
+      {/* Point Payment Modal */}
+      <PointPaymentModal
+        isOpen={showPointModal}
+        onClose={() => setShowPointModal(false)}
+        monto={pagos.length > 0 ? restante : total}
+        ventaId={null}
+        onSuccess={handlePointSuccess}
+      />
     </Drawer>
   );
 }

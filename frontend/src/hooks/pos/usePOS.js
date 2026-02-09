@@ -51,3 +51,11 @@ export {
   useCategoriasPOS,
   useProductosPOS,
 } from './useCategoriasPOS';
+
+// ==================== POINT TERMINAL (Feb 2026) ====================
+export {
+  useListarTerminales,
+  useCrearOrdenPoint,
+  useCancelarOrdenPoint,
+  usePollingOrdenPoint,
+} from './usePointTerminal';

@@ -5,7 +5,11 @@ import type { BaseEntity } from './common';
 export type EstadoVenta = 'cotizacion' | 'apartado' | 'completada' | 'cancelada';
 export type EstadoPagoVenta = 'pendiente' | 'parcial' | 'pagado';
 export type TipoVenta = 'directa' | 'apartado' | 'cotizacion';
-export type MetodoPago = 'efectivo' | 'tarjeta' | 'transferencia' | 'mixto';
+export type MetodoPago =
+  | 'efectivo' | 'tarjeta_debito' | 'tarjeta_credito'
+  | 'transferencia' | 'qr_mercadopago' | 'terminal_mercadopago'
+  | 'cuenta_cliente'
+  | 'tarjeta' | 'mixto';
 export type TipoDescuentoPOS = 'porcentaje' | 'monto';
 export type EstadoSesionCaja = 'abierta' | 'cerrada';
 export type TipoMovimientoCaja = 'entrada' | 'salida';

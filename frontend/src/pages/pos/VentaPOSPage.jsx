@@ -195,6 +195,7 @@ export default function VentaPOSPage() {
 
   const handleConfirmarVenta = async (datosPago) => {
     const esPagoSplit = Array.isArray(datosPago.pagos) && datosPago.pagos.length > 1;
+    const esPointTerminal = datosPago.pagos?.[0]?.metodo_pago === 'terminal_mercadopago';
     try {
       const datosVenta = {
         tipo_venta: tipoVenta,
@@ -214,6 +215,10 @@ export default function VentaPOSPage() {
         descuento_promociones: descuentoPromociones,
         descuento_puntos: cart.descuentoPuntos || 0,
         puntos_canjeados: cart.puntosCanjeados || 0,
+        // Referencia de Point order si aplica
+        ...(esPointTerminal && datosPago.point_order && {
+          point_order_id: datosPago.point_order.order_id || datosPago.point_order.id,
+        }),
         // Datos condicionales para apartado
         ...(tipoVenta === 'apartado' && {
           fecha_apartado: datosApartado.fecha_apartado,
@@ -222,7 +227,7 @@ export default function VentaPOSPage() {
       };
 
       const resultado = await crearVenta.mutateAsync(datosVenta);
-      if (esPagoSplit) {
+      if (esPagoSplit && !esPointTerminal) {
         await registrarPagosSplit.mutateAsync({ ventaId: resultado.id, pagos: datosPago.pagos, clienteId: cart.clienteSeleccionado?.id || undefined });
       }
 

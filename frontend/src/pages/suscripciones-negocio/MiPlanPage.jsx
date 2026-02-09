@@ -82,8 +82,9 @@ function NoSuscripcionCard() {
 function PlanActualCard({ suscripcion, onCambiarPlan, onCancelar, onPausar, onReactivar, isPending }) {
   const diasTrialRestantes = suscripcion.dias_trial_restantes;
   const esTrial = suscripcion.es_trial && diasTrialRestantes > 0;
-  const isPausable = suscripcion.estado === ESTADOS_SUSCRIPCION.ACTIVA;
-  const isReactivable = suscripcion.estado === ESTADOS_SUSCRIPCION.PAUSADA;
+  const esUnico = suscripcion.plan?.tipo_cobro === 'unico' || suscripcion.tipo_cobro === 'unico';
+  const isPausable = !esUnico && suscripcion.estado === ESTADOS_SUSCRIPCION.ACTIVA;
+  const isReactivable = !esUnico && suscripcion.estado === ESTADOS_SUSCRIPCION.PAUSADA;
   const isCancelable =
     suscripcion.estado !== ESTADOS_SUSCRIPCION.CANCELADA &&
     suscripcion.estado !== ESTADOS_SUSCRIPCION.VENCIDA;
@@ -110,7 +111,7 @@ function PlanActualCard({ suscripcion, onCambiarPlan, onCancelar, onPausar, onRe
               {formatCurrency(suscripcion.precio_actual)}
             </div>
             <div className="text-primary-100 text-sm">
-              /{suscripcion.periodo === 'mensual' ? 'mes' : suscripcion.periodo}
+              {esUnico ? 'Pago único' : `/${suscripcion.periodo === 'mensual' ? 'mes' : suscripcion.periodo}`}
             </div>
           </div>
         </div>
@@ -146,7 +147,7 @@ function PlanActualCard({ suscripcion, onCambiarPlan, onCancelar, onPausar, onRe
               </p>
             </div>
           </div>
-          {suscripcion.fecha_proximo_cobro && (
+          {!esUnico && suscripcion.fecha_proximo_cobro && (
             <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
               <CreditCard className="w-5 h-5 text-gray-400" />
               <div>
@@ -193,20 +194,28 @@ function PlanActualCard({ suscripcion, onCambiarPlan, onCancelar, onPausar, onRe
         )}
 
         {/* Métricas */}
-        <div className="grid grid-cols-2 gap-4 mb-6 p-4 bg-gray-50 dark:bg-gray-700/30 rounded-lg">
-          <div className="text-center">
-            <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-              {suscripcion.meses_activo || 0}
+        {esUnico ? (
+          <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/20 rounded-lg text-center">
+            <p className="text-sm font-medium text-green-700 dark:text-green-300">
+              Plan activo — Pago único
             </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">Meses activo</p>
           </div>
-          <div className="text-center">
-            <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-              {formatCurrency(suscripcion.total_pagado || 0)}
-            </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">Total pagado</p>
+        ) : (
+          <div className="grid grid-cols-2 gap-4 mb-6 p-4 bg-gray-50 dark:bg-gray-700/30 rounded-lg">
+            <div className="text-center">
+              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                {suscripcion.meses_activo || 0}
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Meses activo</p>
+            </div>
+            <div className="text-center">
+              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                {formatCurrency(suscripcion.total_pagado || 0)}
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Total pagado</p>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Acciones */}
         <div className="flex flex-wrap gap-3">

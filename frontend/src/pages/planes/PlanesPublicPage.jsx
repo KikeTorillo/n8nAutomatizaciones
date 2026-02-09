@@ -110,16 +110,21 @@ function PlanesPublicPage() {
     ? planesData.data.data
     : planesData?.data?.items || planesData?.data?.planes || [];
 
-  // Detectar qué períodos tienen precios configurados en al menos un plan
+  // Separar planes recurrentes de únicos
+  const planesRecurrentes = useMemo(() =>
+    planes.filter(plan => plan.tipo_cobro !== 'unico'), [planes]
+  );
+  const soloUnicos = planesRecurrentes.length === 0 && planes.length > 0;
+
+  // Detectar qué períodos tienen precios configurados (solo en planes recurrentes)
   const periodosDisponibles = useMemo(() => {
-    if (!planes.length) return [CICLOS_FACTURACION.MENSUAL];
+    if (!planesRecurrentes.length) return [CICLOS_FACTURACION.MENSUAL];
 
     const disponibles = [];
 
     // Verificar cada período
     Object.entries(CICLO_PRECIO_FIELD).forEach(([ciclo, campo]) => {
-      // Un período está disponible si al menos un plan tiene precio > 0 configurado
-      const tienePrecios = planes.some(plan => {
+      const tienePrecios = planesRecurrentes.some(plan => {
         const precio = parseFloat(plan[campo]);
         return !isNaN(precio) && precio >= 0 && plan[campo] !== null;
       });
@@ -129,9 +134,8 @@ function PlanesPublicPage() {
       }
     });
 
-    // Si no hay ninguno, al menos mostrar mensual
     return disponibles.length > 0 ? disponibles : [CICLOS_FACTURACION.MENSUAL];
-  }, [planes]);
+  }, [planesRecurrentes]);
 
   // Asegurar que el período seleccionado esté disponible
   useEffect(() => {
@@ -225,8 +229,8 @@ function PlanesPublicPage() {
         </p>
       </div>
 
-      {/* Selector de período - solo mostrar si hay más de uno disponible */}
-      {periodosDisponibles.length > 1 && (
+      {/* Selector de período - ocultar si solo hay planes únicos o un solo período */}
+      {!soloUnicos && periodosDisponibles.length > 1 && (
       <div className="flex justify-center mb-12">
         <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-1 inline-flex">
           {periodosDisponibles.map((key) => (
@@ -263,9 +267,12 @@ function PlanesPublicPage() {
           planes.length >= 4 && 'md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
         )}>
           {planes.map((plan) => {
-            const precio = calcularPrecio(plan, periodoSeleccionado);
+            const esUnico = plan.tipo_cobro === 'unico';
+            const precio = esUnico
+              ? (parseFloat(plan.precio_mensual) || 0)
+              : calcularPrecio(plan, periodoSeleccionado);
             const precioMensual = parseFloat(plan.precio_mensual) || 0;
-            const ahorro = periodoSeleccionado === CICLOS_FACTURACION.ANUAL
+            const ahorro = !esUnico && periodoSeleccionado === CICLOS_FACTURACION.ANUAL
               ? calcularAhorro(plan)
               : 0;
             const features = plan.features || [];
@@ -316,27 +323,42 @@ function PlanesPublicPage() {
 
                 {/* Precio */}
                 <div className="text-center mb-6">
-                  <div className="flex items-baseline justify-center gap-1">
-                    <span className="text-4xl font-bold text-gray-900 dark:text-gray-100">
-                      {formatCurrency(precio)}
-                    </span>
-                    <span className="text-gray-500 dark:text-gray-400">
-                      /{CICLO_LABELS[periodoSeleccionado]?.toLowerCase() || 'mes'}
-                    </span>
-                  </div>
+                  {esUnico ? (
+                    <>
+                      <div className="flex items-baseline justify-center gap-1">
+                        <span className="text-4xl font-bold text-gray-900 dark:text-gray-100">
+                          {formatCurrency(precio)}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-sm text-primary-600 dark:text-primary-400 font-medium">
+                        Pago único
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex items-baseline justify-center gap-1">
+                        <span className="text-4xl font-bold text-gray-900 dark:text-gray-100">
+                          {formatCurrency(precio)}
+                        </span>
+                        <span className="text-gray-500 dark:text-gray-400">
+                          /{CICLO_LABELS[periodoSeleccionado]?.toLowerCase() || 'mes'}
+                        </span>
+                      </div>
 
-                  {/* Precio mensual equivalente para planes anuales */}
-                  {periodoSeleccionado === CICLOS_FACTURACION.ANUAL && precioMensual > 0 && (
-                    <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                      {formatCurrency(precio / 12)}/mes
-                    </p>
-                  )}
+                      {/* Precio mensual equivalente para planes anuales */}
+                      {periodoSeleccionado === CICLOS_FACTURACION.ANUAL && precioMensual > 0 && (
+                        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                          {formatCurrency(precio / 12)}/mes
+                        </p>
+                      )}
 
-                  {/* Ahorro */}
-                  {ahorro > 0 && (
-                    <p className="mt-2 text-sm text-green-600 dark:text-green-400">
-                      Ahorras {formatCurrency(ahorro)} al año
-                    </p>
+                      {/* Ahorro */}
+                      {ahorro > 0 && (
+                        <p className="mt-2 text-sm text-green-600 dark:text-green-400">
+                          Ahorras {formatCurrency(ahorro)} al año
+                        </p>
+                      )}
+                    </>
                   )}
 
                   {/* Trial */}
@@ -372,7 +394,9 @@ function PlanesPublicPage() {
                   className="w-full"
                   onClick={() => handleSeleccionarPlan(plan)}
                 >
-                  {diasTrial > 0 ? 'Comenzar prueba gratis' : 'Seleccionar plan'}
+                  {diasTrial > 0
+                    ? 'Comenzar prueba gratis'
+                    : esUnico ? 'Comprar' : 'Seleccionar plan'}
                 </Button>
               </div>
             );
