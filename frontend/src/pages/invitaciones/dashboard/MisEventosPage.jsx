@@ -9,7 +9,7 @@ import EventoCard from './components/EventoCard';
 
 export default function MisEventosPage() {
   const { data: eventosData, isLoading } = useEventos();
-  const eventos = eventosData?.data || eventosData || [];
+  const eventos = eventosData?.eventos || [];
 
   return (
     <InvitacionesPublicLayout>

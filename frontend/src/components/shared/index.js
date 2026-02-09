@@ -8,3 +8,6 @@ export { AddToCalendar } from './calendar';
 
 // Documentos
 export { DocumentoUploadDrawer } from './DocumentoUploadDrawer';
+
+// Invitación Dinámica (bridge para módulos externos)
+export { InvitacionDinamica } from './InvitacionDinamica';

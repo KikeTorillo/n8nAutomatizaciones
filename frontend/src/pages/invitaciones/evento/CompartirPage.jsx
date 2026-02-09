@@ -12,8 +12,8 @@ export default function CompartirPage() {
   const { id } = useParams();
   const { data: eventoData, isLoading } = useEvento(id);
   const { data: statsData } = useEventoEstadisticas(id);
-  const evento = eventoData?.data || eventoData;
-  const stats = statsData?.data || statsData;
+  const evento = eventoData;
+  const stats = statsData;
 
   if (isLoading) {
     return (

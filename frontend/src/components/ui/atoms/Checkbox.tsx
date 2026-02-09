@@ -1,4 +1,4 @@
-import { forwardRef, memo, type InputHTMLAttributes } from 'react';
+import { forwardRef, memo, useId, type InputHTMLAttributes } from 'react';
 import { cn } from '@/lib/utils';
 import { getCheckboxStyles, CHECKBOX_SIZE_CLASSES, getAriaDescribedBy } from '@/lib/uiConstants';
 import type { FormSize } from '@/types/ui';
@@ -45,15 +45,18 @@ const Checkbox = memo(
     },
     ref
   ) {
+    const generatedId = useId();
+    const checkboxId = id || generatedId;
+
     return (
       <input
         ref={ref}
         type="checkbox"
-        id={id}
+        id={checkboxId}
         disabled={disabled}
         checked={checked}
         aria-invalid={hasError || undefined}
-        aria-describedby={id ? getAriaDescribedBy(id, { hasError, hasHelper }) : undefined}
+        aria-describedby={getAriaDescribedBy(checkboxId, { hasError, hasHelper })}
         className={cn(
           getCheckboxStyles({ disabled, error: hasError }),
           CHECKBOX_SIZE_CLASSES[size],

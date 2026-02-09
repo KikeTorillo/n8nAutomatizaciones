@@ -1,14 +1,14 @@
-import { useMemo, useCallback, useState, memo } from 'react';
+import { memo } from 'react';
 import { cn } from '@/lib/utils';
 import { DataTable, type DataTableColumn } from '../organisms/DataTable';
 import { SearchInput } from '../organisms/SearchInput';
 import { Button } from '../atoms/Button';
 import { StatCardGrid, type StatConfig } from '../molecules/StatCardGrid';
 import { ViewTabs } from '../organisms/ViewTabs';
-import { useFilters, usePagination, normalizePagination, useModalManager, useDeleteConfirmation, useExportCSV } from '@/hooks/utils';
 import { ConfirmDialog, type ConfirmDialogProps } from '../organisms/ConfirmDialog';
 import { Plus, Download } from 'lucide-react';
 import { SEMANTIC_COLORS } from '@/lib/uiConstants';
+import { useListadoCRUDState } from './useListadoCRUDState';
 
 type LucideIcon = React.ComponentType<{ className?: string }>;
 
@@ -178,127 +178,46 @@ const ListadoCRUDPage = memo(function ListadoCRUDPage({
   className,
   children,
 }: ListadoCRUDPageProps) {
-  // View mode state
-  const [activeView, setActiveView] = useState(defaultViewMode);
-  // Paginacion
-  const { page, handlePageChange, resetPage, queryParams } = usePagination({
-    limit
-  });
-
-  // Filtros
   const {
+    activeView,
+    setActiveView,
+    handlePageChange,
+    resetPage,
     filtros,
-    filtrosQuery,
     setFiltro,
     limpiarFiltros,
-    filtrosActivos
-  } = useFilters(initialFilters, {
-    moduloId: filterPersistId
-  });
-
-  // Modales base + extras
-  const extraModalConfig = useMemo(() =>
-    Object.keys(extraModals).reduce((acc: Record<string, { isOpen: boolean; data: null }>, key) => {
-      acc[key] = { isOpen: false, data: null };
-      return acc;
-    }, {}), [extraModals]
-  );
-
-  const { openModal, closeModal, isOpen, getModalData } = useModalManager({
-    form: { isOpen: false, data: null },
-    stats: { isOpen: false, data: null },
-    ...extraModalConfig,
-  }) as {
-    openModal: (name: string, data?: unknown, extraProps?: Record<string, unknown>) => void;
-    closeModal: (name: string, clearData?: boolean) => void;
-    isOpen: (name: string) => boolean;
-    getModalData: (name: string) => Record<string, unknown> | null;
-    modals: Record<string, unknown>;
-    closeAll: () => void;
-  };
-
-  // Query de datos
-  const { data, isLoading } = useListQuery({
-    ...queryParams,
-    ...filtrosQuery,
-    ...extraQueryParams,
-  });
-
-  // Memoizar items derivados para evitar re-renders innecesarios
-  const items = useMemo(() =>
-    data?.[dataKey] || data?.items || [],
-    [data, dataKey]
-  );
-
-  // Normalizar paginación del backend (soporta nombres en español e inglés)
-  const paginacion = useMemo(() => {
-    const backendPagination = data?.paginacion || data?.pagination;
-    const normalized = normalizePagination(backendPagination);
-
-    // Si no hay objeto de paginación anidado, usar total/limit directos de data
-    const total = normalized.total || data?.total || items.length;
-    const limit = normalized.limit || data?.limit || queryParams.limit;
-    const totalPages = Math.ceil(total / limit) || 1;
-
-    return {
-      ...normalized,
-      total,
-      totalPages,
-      // Usar el page del hook local si el backend no lo devuelve
-      page: normalized.page || page,
-      limit,
-      hasNext: page < totalPages,
-      hasPrev: page > 1,
-    };
-  }, [page, queryParams.limit, data?.paginacion, data?.pagination, data?.total, data?.limit, items.length]);
-
-  // Export CSV
-  const { exportCSV } = useExportCSV();
-  const handleExport = useCallback(() => {
-    if (!exportConfig || items.length === 0) return;
-    const filename = exportConfig.filename || `${title?.toLowerCase() || 'export'}_${new Date().toISOString().split('T')[0]}`;
-    exportCSV(items, exportConfig.columns || [], filename);
-  }, [exportConfig, items, exportCSV, title]);
-
-  // Delete mutation + confirmation
-  const deleteMutation = useDeleteMutation?.();
-  const { confirmDelete, deleteConfirmProps } = useDeleteConfirmation({
-    deleteMutation: deleteMutation ?? null,
-    entityName: title?.toLowerCase() || 'elemento',
-    ...deleteMutationOptions,
-  });
-
-  // Handlers
-  const handleNuevo = useCallback(() => openModal('form', null), [openModal]);
-  const handleEditar = useCallback((item: Record<string, unknown>) => openModal('form', item), [openModal]);
-  const handleEliminar = useCallback((item: Record<string, unknown>) => confirmDelete(item), [confirmDelete]);
-  const handleVerStats = useCallback((item: Record<string, unknown>) => openModal('stats', item), [openModal]);
-
-  // Handlers object para rowActions
-  const handlers = useMemo(() => ({
-    onEdit: handleEditar,
-    onDelete: handleEliminar,
-    onViewStats: handleVerStats,
+    filtrosActivos,
     openModal,
+    closeModal,
+    isOpen,
+    getModalData,
+    isLoading,
+    items,
+    paginacion,
+    handleExport,
+    deleteMutation,
+    deleteConfirmProps,
+    handleNuevo,
+    handleEditar,
+    handlers,
+    columns,
+  } = useListadoCRUDState({
+    useListQuery,
+    queryParams: extraQueryParams,
+    dataKey,
+    useDeleteMutation,
+    deleteMutationOptions,
     extraMutations,
-  }), [handleEditar, handleEliminar, handleVerStats, openModal, extraMutations]);
-
-  // Columnas con acciones automáticas si rowActions está definido
-  const columns = useMemo(() => {
-    if (!rowActions) return columnsProp;
-
-    // Agregar columna de acciones al final
-    const actionsColumn = {
-      key: '_actions',
-      header: '',
-      align: 'right' as const,
-      render: (row: Record<string, unknown>) => rowActions(row, handlers),
-    };
-
-    // Si ya existe una columna 'actions' o '_actions', reemplazarla
-    const filtered = columnsProp.filter(col => col.key !== 'actions' && col.key !== '_actions');
-    return [...filtered, actionsColumn];
-  }, [columnsProp, rowActions, handlers]);
+    columns: columnsProp,
+    rowActions,
+    initialFilters,
+    filterPersistId,
+    limit,
+    extraModals,
+    exportConfig,
+    title,
+    defaultViewMode,
+  });
 
   // Computed subtitle
   const computedSubtitle = subtitle || `${paginacion.total} ${title?.toLowerCase() || 'elementos'}`;

@@ -23,7 +23,7 @@ export default function CrearEventoWizardPage() {
 
   const [paso, setPaso] = useState(0);
   const [tipoEvento, setTipoEvento] = useState('');
-  const [datos, setDatos] = useState({ nombre: '', fecha: '', hora: '', ubicacion: '', descripcion: '' });
+  const [datos, setDatos] = useState({ nombre: '', fecha_evento: '', hora_evento: '', descripcion: '' });
   const [plantilla, setPlantilla] = useState(null);
 
   const crearEvento = useCrearEvento();
@@ -34,7 +34,7 @@ export default function CrearEventoWizardPage() {
   const puedeAvanzar = useCallback(() => {
     switch (paso) {
       case 0: return !!tipoEvento;
-      case 1: return !!datos.nombre?.trim() && !!datos.fecha;
+      case 1: return !!datos.nombre?.trim() && !!datos.fecha_evento;
       case 2: return true; // Plantilla es opcional
       case 3: return true;
       default: return false;
@@ -57,10 +57,9 @@ export default function CrearEventoWizardPage() {
     try {
       const payload = {
         nombre: datos.nombre.trim(),
-        tipo_evento: tipoEvento,
-        fecha: datos.fecha,
-        ...(datos.hora && { hora: datos.hora }),
-        ...(datos.ubicacion?.trim() && { ubicacion: datos.ubicacion.trim() }),
+        tipo: tipoEvento,
+        fecha_evento: datos.fecha_evento,
+        ...(datos.hora_evento && { hora_evento: datos.hora_evento }),
         ...(datos.descripcion?.trim() && { descripcion: datos.descripcion.trim() }),
         ...(plantilla && { plantilla_id: plantilla.id }),
       };

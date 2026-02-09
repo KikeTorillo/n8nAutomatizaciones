@@ -15,6 +15,7 @@ import {
   useEliminarEvento,
   usePublicarEvento,
   usePlantillas,
+  usePlantillasPublicas,
   usePlantilla,
   usePlantillasPorTipo,
   usePlantillaBloques,
@@ -99,6 +100,7 @@ export {
   useEliminarEvento,
   usePublicarEvento,
   usePlantillas,
+  usePlantillasPublicas,
   usePlantilla,
   usePlantillasPorTipo,
   usePlantillaBloques,
@@ -163,6 +165,7 @@ export default {
 
   // Plantillas
   usePlantillas,
+  usePlantillasPublicas,
   usePlantilla,
   usePlantillasPorTipo,
   usePlantillaBloques,

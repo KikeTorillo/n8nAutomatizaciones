@@ -9,7 +9,7 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/utils/useToast';
-import { createCRUDErrorHandler, getErrorMessage } from '@/hooks/config/errorHandlerFactory';
+import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 
 type ToastType = 'success' | 'warning' | 'info';
 type ErrorType = 'create' | 'update' | 'delete';
@@ -105,13 +105,7 @@ export function createStatusMutationHook<TVariables = { id: string | number }, T
           toast[successType](successMessage);
         }
       },
-      onError: (error: unknown) => {
-        try {
-          createCRUDErrorHandler(errorType, entityName)(error as Error);
-        } catch (e) {
-          toast.error(getErrorMessage(e instanceof Error ? e : new Error(String(e))));
-        }
-      },
+      onError: createCRUDErrorHandler(errorType, entityName),
     });
   };
 }

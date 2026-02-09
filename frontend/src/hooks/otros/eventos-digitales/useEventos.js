@@ -147,6 +147,22 @@ export const useCrearPlantilla = plantillaHooks.useCreate;
 export const useActualizarPlantilla = plantillaHooks.useUpdate;
 export const useEliminarPlantilla = plantillaHooks.useDelete;
 
+// ==================== PLANTILLAS PÚBLICAS (sin auth) ====================
+
+/**
+ * Hook para listar plantillas sin autenticación (rutas B2C públicas)
+ */
+export function usePlantillasPublicas(params = {}) {
+  return useQuery({
+    queryKey: ['plantillas-publicas', params],
+    queryFn: async () => {
+      const response = await eventosDigitalesApi.listarPlantillasPublicas(params);
+      return response.data.data;
+    },
+    staleTime: STALE_TIMES.STATIC_DATA,
+  });
+}
+
 // ==================== HOOKS MANUALES (endpoints especializados) ====================
 
 /**

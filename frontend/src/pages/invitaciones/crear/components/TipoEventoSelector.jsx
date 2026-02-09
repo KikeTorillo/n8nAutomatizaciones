@@ -6,7 +6,7 @@ import { memo } from 'react';
 
 const TIPOS = [
   { value: 'boda', label: 'Boda', icono: Heart, color: 'from-pink-500 to-rose-500', ring: 'ring-pink-500' },
-  { value: 'xv', label: 'XV Años', icono: Crown, color: 'from-purple-500 to-fuchsia-500', ring: 'ring-purple-500' },
+  { value: 'xv_anos', label: 'XV Años', icono: Crown, color: 'from-purple-500 to-fuchsia-500', ring: 'ring-purple-500' },
   { value: 'bautizo', label: 'Bautizo', icono: Baby, color: 'from-blue-400 to-cyan-400', ring: 'ring-blue-400' },
   { value: 'cumpleanos', label: 'Cumpleaños', icono: Cake, color: 'from-amber-400 to-orange-500', ring: 'ring-amber-400' },
 ];

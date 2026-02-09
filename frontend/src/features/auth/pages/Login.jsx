@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -22,6 +22,8 @@ const magicLinkSchema = z.object({
 
 function Login() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const returnTo = searchParams.get('returnTo');
   const queryClient = useQueryClient();
   const setAuth = useAuthStore(selectSetAuth);
   const isAuthenticated = useAuthStore(selectIsAuthenticated);
@@ -41,10 +43,10 @@ function Login() {
       if (user.nivel_jerarquia < 100 && !user.organizacion_id && user.onboarding_completado === false) {
         navigate('/onboarding', { replace: true });
       } else {
-        navigate('/home', { replace: true });
+        navigate(returnTo || '/home', { replace: true });
       }
     }
-  }, [isAuthenticated, user, navigate]);
+  }, [isAuthenticated, user, navigate, returnTo]);
 
   // Form para login tradicional
   const {
@@ -92,7 +94,7 @@ function Login() {
       if (data.requiere_onboarding) {
         navigate('/onboarding');
       } else {
-        navigate('/home');
+        navigate(returnTo || '/home');
       }
     },
     onError: (error) => {

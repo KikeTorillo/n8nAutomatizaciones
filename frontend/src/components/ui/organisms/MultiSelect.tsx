@@ -136,11 +136,11 @@ const MultiSelect = memo(
 
     // min-h-10 (40px) alineado con FORM_ELEMENT_HEIGHTS.md para consistencia con Select/Input/Button
     const baseStyles =
-      'w-full min-h-10 px-4 py-1.5 border rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-0 disabled:opacity-50 disabled:cursor-not-allowed bg-white dark:bg-gray-800 cursor-pointer';
+      'w-full min-h-10 px-4 py-1.5 border rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-0 disabled:opacity-50 disabled:cursor-not-allowed bg-white dark:bg-gray-800 cursor-pointer';
 
     const stateStyles = error
-      ? 'border-red-500 focus:border-red-500 focus:ring-red-500 dark:border-red-400'
-      : 'border-gray-300 dark:border-gray-600 focus:border-primary-500 focus:ring-primary-500 hover:border-gray-400 dark:hover:border-gray-500';
+      ? 'border-red-500 focus-visible:border-red-500 focus-visible:ring-red-500 dark:border-red-400'
+      : 'border-gray-300 dark:border-gray-600 focus-visible:border-primary-500 focus-visible:ring-primary-500 hover:border-gray-400 dark:hover:border-gray-500';
 
     return (
       <div className="w-full" ref={containerRef}>

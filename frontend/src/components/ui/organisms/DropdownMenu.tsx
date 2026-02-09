@@ -212,7 +212,7 @@ const DropdownMenu = memo(forwardRef<HTMLDivElement, DropdownMenuProps>(function
                   tabIndex={isEnabled && focusedIndex === currentEnabledIndex ? 0 : -1}
                   className={cn(
                     'w-full flex items-center gap-2 px-3 py-2 text-sm text-left transition-colors',
-                    'focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-700',
+                    'focus-visible:outline-none focus:bg-gray-100 dark:focus:bg-gray-700',
                     item.disabled
                       ? 'text-gray-400 dark:text-gray-500 cursor-not-allowed'
                       : isDanger

@@ -128,6 +128,10 @@ export interface ExpandableCrudSectionProps<T extends { id?: string | number }> 
   onItemEdit?: (item: T) => void;
   /** Callback cuando se elimina un item */
   onItemDelete?: (item: T) => void;
+  /** Callback al eliminar exitosamente (reemplaza toast.success interno) */
+  onDeleteSuccess?: (message: string) => void;
+  /** Callback al fallar eliminación (reemplaza toast.error interno) */
+  onDeleteError?: (message: string) => void;
 }
 
 /**
@@ -176,6 +180,8 @@ function ExpandableCrudSectionComponent<T extends { id?: string | number }>(
   // Callbacks
   onItemEdit,
   onItemDelete,
+  onDeleteSuccess,
+  onDeleteError,
 }: ExpandableCrudSectionProps<T>,
   ref: React.ForwardedRef<HTMLDivElement>
 ) {
@@ -220,12 +226,13 @@ function ExpandableCrudSectionComponent<T extends { id?: string | number }>(
       } else {
         return;
       }
-      toast.success(deleteConfig.successMessage || 'Eliminado correctamente');
+      const successMsg = deleteConfig.successMessage || 'Eliminado correctamente';
+      (onDeleteSuccess || toast.success)(successMsg);
       setItemToDelete(null);
     } catch (err) {
       const errorMsg =
         err instanceof Error ? err.message : deleteConfig.errorMessage || 'Error al eliminar';
-      toast.error(errorMsg);
+      (onDeleteError || toast.error)(errorMsg);
     }
   };
 

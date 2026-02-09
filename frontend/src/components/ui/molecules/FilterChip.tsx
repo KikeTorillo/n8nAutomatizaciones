@@ -63,6 +63,7 @@ const FilterChip = memo(
         )}
       </span>
 
+      {/* Botón inline intencional: p-0.5 con icono 3.5x3.5 es más compacto que IconButton sm */}
       {onRemove && (
         <button
           type="button"
@@ -70,7 +71,7 @@ const FilterChip = memo(
           className={cn(
             'flex-shrink-0 p-0.5 rounded-full transition-colors',
             'hover:bg-primary-200 dark:hover:bg-primary-800',
-            'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-1'
+            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1'
           )}
           aria-label={`Quitar filtro ${label}`}
         >

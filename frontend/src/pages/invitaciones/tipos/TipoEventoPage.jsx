@@ -5,8 +5,9 @@
 import { useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { ArrowRight, Loader2, Heart, Crown, Baby, Cake } from 'lucide-react';
-import { usePlantillas } from '@/hooks/otros/eventos-digitales';
+import { usePlantillasPublicas } from '@/hooks/otros/eventos-digitales';
 import InvitacionesPublicLayout from '../InvitacionesPublicLayout';
+import PlantillaPreviewImage from '../components/PlantillaPreviewImage';
 
 const TIPOS_CONFIG = {
   bodas: {
@@ -22,7 +23,7 @@ const TIPOS_CONFIG = {
     titulo: 'Invitaciones de XV Años',
     subtitulo: 'Diseños únicos para celebrar esta fecha tan especial',
     descripcion: 'Invitaciones de quinceañera con diseños modernos, elegantes y vibrantes. Personaliza cada detalle para tu gran día.',
-    tipoEvento: 'xv',
+    tipoEvento: 'xv_anos',
     icono: Crown,
     color: 'from-purple-500 to-fuchsia-500',
     bgGradient: 'from-purple-50 via-white to-fuchsia-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950',
@@ -53,11 +54,11 @@ export default function TipoEventoPage() {
   const config = TIPOS_CONFIG[slug] || TIPOS_CONFIG.bodas;
   const Icon = config.icono;
 
-  const { data: plantillasData, isLoading } = usePlantillas({
+  const { data: plantillasData, isLoading } = usePlantillasPublicas({
     tipo_evento: config.tipoEvento,
     activo: true,
   });
-  const plantillas = useMemo(() => plantillasData?.data || plantillasData || [], [plantillasData]);
+  const plantillas = useMemo(() => plantillasData?.plantillas || [], [plantillasData]);
 
   return (
     <InvitacionesPublicLayout>
@@ -115,18 +116,7 @@ export default function TipoEventoPage() {
                   className="group"
                 >
                   <div className="aspect-[3/4] rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800 mb-3 shadow-sm group-hover:shadow-lg transition-shadow">
-                    {p.imagen_preview || p.thumbnail ? (
-                      <img
-                        src={p.imagen_preview || p.thumbnail}
-                        alt={p.nombre}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-pink-100 to-rose-100 dark:from-pink-900/20 dark:to-rose-900/20">
-                        <span className="text-5xl">💌</span>
-                      </div>
-                    )}
+                    <PlantillaPreviewImage plantilla={p} className="group-hover:scale-105 transition-transform duration-300" />
                   </div>
                   <h3 className="font-semibold text-gray-900 dark:text-white">{p.nombre}</h3>
                   <p className="text-sm text-gray-500 dark:text-gray-400">{p.descripcion}</p>

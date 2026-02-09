@@ -1,4 +1,4 @@
-import { memo, useId, useState, useRef, useEffect, useCallback, type ReactNode } from 'react';
+import { memo, useId, useState, useRef, useEffect, useCallback, forwardRef, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { cn } from '@/lib/utils';
 
@@ -27,18 +27,25 @@ const OFFSET = 8; // px de separación del trigger
 /**
  * Tooltip - Tooltip accesible con portal y soporte de teclado
  */
-const Tooltip = memo(function Tooltip({
+const Tooltip = memo(forwardRef<HTMLDivElement, TooltipProps>(function Tooltip({
   content,
   position = 'top',
   delay = 200,
   children,
   className,
-}: TooltipProps) {
+}: TooltipProps, ref) {
   const tooltipId = useId();
   const [visible, setVisible] = useState(false);
   const [coords, setCoords] = useState({ top: 0, left: 0 });
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const triggerRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLDivElement | null>(null);
+
+  // Combinar ref externo con triggerRef interno
+  const setRefs = useCallback((node: HTMLDivElement | null) => {
+    triggerRef.current = node;
+    if (typeof ref === 'function') ref(node);
+    else if (ref) ref.current = node;
+  }, [ref]);
 
   // Limpiar timeout al desmontar
   useEffect(() => {
@@ -109,7 +116,7 @@ const Tooltip = memo(function Tooltip({
       onMouseLeave={hide}
       onFocus={show}
       onBlur={hide}
-      ref={triggerRef}
+      ref={setRefs}
     >
       <div aria-describedby={visible ? tooltipId : undefined}>
         {children}
@@ -133,7 +140,7 @@ const Tooltip = memo(function Tooltip({
       )}
     </div>
   );
-});
+}));
 
 Tooltip.displayName = 'Tooltip';
 

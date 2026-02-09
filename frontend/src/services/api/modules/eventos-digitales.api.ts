@@ -459,6 +459,12 @@ export const eventosDigitalesApi = {
     apiClient.delete(`/eventos-digitales/plantillas/${id}`),
 
   /**
+   * Listar plantillas públicas (sin auth)
+   */
+  listarPlantillasPublicas: (params: ListarPlantillasParams = {}): Promise<PlantillasListResponse> =>
+    publicApiClient.get('/public/plantillas', { params }),
+
+  /**
    * Obtener bloques de una plantilla
    */
   obtenerBloquesPlantilla: (id: number): Promise<AxiosResponse<{ bloques: BloqueInvitacion[] }>> =>

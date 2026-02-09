@@ -61,7 +61,7 @@ export default function PreciosInvitacionesPage() {
   const isAuthenticated = useAuthStore(selectIsAuthenticated);
 
   const { data: planesData, isLoading } = usePlanesPublicos();
-  const planes = useMemo(() => (planesData?.data || planesData || []).filter(p => p.activo), [planesData]);
+  const planes = useMemo(() => (Array.isArray(planesData) ? planesData : []).filter(p => p.activo), [planesData]);
 
   const handleSeleccionar = (plan) => {
     setPlanSeleccionado(plan);

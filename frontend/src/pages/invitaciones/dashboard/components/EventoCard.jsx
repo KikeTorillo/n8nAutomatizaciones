@@ -6,7 +6,7 @@ import { Calendar, Users, CheckCircle2, Clock, Edit3, Share2, Eye } from 'lucide
 import { memo } from 'react';
 
 const EventoCard = memo(function EventoCard({ evento }) {
-  const fecha = evento.fecha ? new Date(evento.fecha).toLocaleDateString('es-MX', {
+  const fecha = evento.fecha_evento ? new Date(evento.fecha_evento).toLocaleDateString('es-MX', {
     day: 'numeric', month: 'long', year: 'numeric'
   }) : 'Sin fecha';
 
@@ -22,9 +22,9 @@ const EventoCard = memo(function EventoCard({ evento }) {
     <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-md transition-shadow">
       {/* Preview */}
       <div className="aspect-[16/9] bg-gradient-to-br from-pink-100 to-rose-100 dark:from-pink-900/20 dark:to-rose-900/20 relative">
-        {evento.imagen_preview ? (
+        {evento.preview_url ? (
           <img
-            src={evento.imagen_preview}
+            src={evento.preview_url}
             alt={evento.nombre}
             className="w-full h-full object-cover"
             loading="lazy"

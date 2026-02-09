@@ -1,7 +1,8 @@
 import { memo, forwardRef, type ReactNode } from 'react';
-import { X, AlertTriangle, Info, CheckCircle, XCircle } from 'lucide-react';
+import { AlertTriangle, Info, CheckCircle, XCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ALERT_VARIANTS } from '@/lib/uiConstants';
+import { IconButton } from '../atoms/IconButton';
 import type { AlertVariant, LucideIcon } from '@/types/ui';
 
 // Mapeo de iconos por defecto según la variante
@@ -97,17 +98,14 @@ const Alert = memo(
                 </h3>
               </div>
               {dismissible && onDismiss && (
-                <button
-                  type="button"
+                <IconButton
+                  icon={XCircle}
+                  label="Cerrar alerta"
+                  variant="ghost"
+                  size="sm"
                   onClick={onDismiss}
-                  className={cn(
-                    'p-1 rounded-lg transition-colors',
-                    styles.text,
-                    'hover:bg-black/5 dark:hover:bg-white/5'
-                  )}
-                >
-                  <X className="h-4 w-4" />
-                </button>
+                  className={styles.text}
+                />
               )}
             </div>
           )}

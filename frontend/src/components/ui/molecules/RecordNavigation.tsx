@@ -1,6 +1,7 @@
 import { memo, forwardRef } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { IconButton } from '../atoms/IconButton';
 import type { RecordNavigationSize } from '@/types/ui';
 
 export interface RecordNavigationProps {
@@ -20,17 +21,9 @@ export interface RecordNavigationProps {
   className?: string;
 }
 
-const sizeClasses: Record<RecordNavigationSize, { button: string; icon: string; text: string }> = {
-  sm: {
-    button: 'p-1.5 min-w-[36px] min-h-[36px]',
-    icon: 'w-4 h-4',
-    text: 'text-xs',
-  },
-  md: {
-    button: 'p-2 min-w-[44px] min-h-[44px]',
-    icon: 'w-5 h-5',
-    text: 'text-sm',
-  },
+const sizeClasses: Record<RecordNavigationSize, { text: string }> = {
+  sm: { text: 'text-xs' },
+  md: { text: 'text-sm' },
 };
 
 /**
@@ -59,22 +52,15 @@ export const RecordNavigation = memo(
       'flex items-center justify-center gap-2',
       className
     )}>
-      <button
+      <IconButton
+        icon={ChevronLeft}
+        label="Registro anterior"
+        variant="ghost"
+        size={size}
         onClick={onPrevious}
         disabled={!hasPrev}
-        className={cn(
-          'flex items-center justify-center rounded-lg',
-          'bg-gray-100 dark:bg-gray-700',
-          'hover:bg-gray-200 dark:hover:bg-gray-600',
-          'disabled:opacity-40 disabled:cursor-not-allowed',
-          'transition-colors duration-200',
-          'focus:outline-none focus:ring-2 focus:ring-primary-500',
-          styles.button
-        )}
-        aria-label="Registro anterior"
-      >
-        <ChevronLeft className={styles.icon} />
-      </button>
+        className="bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600"
+      />
 
       {showIndicator && (
         <span className={cn(
@@ -85,22 +71,15 @@ export const RecordNavigation = memo(
         </span>
       )}
 
-      <button
+      <IconButton
+        icon={ChevronRight}
+        label="Siguiente registro"
+        variant="ghost"
+        size={size}
         onClick={onNext}
         disabled={!hasNext}
-        className={cn(
-          'flex items-center justify-center rounded-lg',
-          'bg-gray-100 dark:bg-gray-700',
-          'hover:bg-gray-200 dark:hover:bg-gray-600',
-          'disabled:opacity-40 disabled:cursor-not-allowed',
-          'transition-colors duration-200',
-          'focus:outline-none focus:ring-2 focus:ring-primary-500',
-          styles.button
-        )}
-        aria-label="Siguiente registro"
-      >
-        <ChevronRight className={styles.icon} />
-      </button>
+        className="bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600"
+      />
     </div>
   );
 }));

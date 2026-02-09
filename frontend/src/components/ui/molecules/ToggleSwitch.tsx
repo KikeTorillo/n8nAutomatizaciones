@@ -112,8 +112,8 @@ const ToggleSwitch = memo(forwardRef<HTMLButtonElement, ToggleSwitchProps>(funct
       className={cn(
         'relative inline-flex flex-shrink-0 cursor-pointer rounded-full',
         'border-2 border-transparent transition-colors duration-200 ease-in-out',
-        'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2',
-        'dark:focus:ring-offset-gray-900',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2',
+        'dark:focus-visible:ring-offset-gray-900',
         sizeConfig.track,
         enabled ? TOGGLE_COLORS.enabled : TOGGLE_COLORS.disabled,
         (disabled || loading) && 'opacity-50 cursor-not-allowed',

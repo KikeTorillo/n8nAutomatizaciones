@@ -4,26 +4,14 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight, Loader2 } from 'lucide-react';
 import { memo, useRef } from 'react';
-import { usePlantillas } from '@/hooks/otros/eventos-digitales';
+import { usePlantillasPublicas } from '@/hooks/otros/eventos-digitales';
+import PlantillaPreviewImage from '../../components/PlantillaPreviewImage';
 
 const PlantillaCard = memo(function PlantillaCard({ plantilla }) {
-  const imagen = plantilla.imagen_preview || plantilla.thumbnail;
-
   return (
     <div className="flex-shrink-0 w-64 sm:w-72 group">
       <div className="aspect-[3/4] rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800 mb-3 shadow-sm group-hover:shadow-md transition-shadow">
-        {imagen ? (
-          <img
-            src={imagen}
-            alt={plantilla.nombre}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-            loading="lazy"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-pink-100 to-rose-100 dark:from-pink-900/20 dark:to-rose-900/20">
-            <span className="text-4xl">💌</span>
-          </div>
-        )}
+        <PlantillaPreviewImage plantilla={plantilla} className="group-hover:scale-105 transition-transform duration-300" />
       </div>
       <h3 className="font-semibold text-gray-900 dark:text-white text-sm truncate">{plantilla.nombre}</h3>
       <p className="text-xs text-pink-600 dark:text-pink-400 capitalize">{plantilla.tipo_evento?.replace('_', ' ')}</p>
@@ -33,8 +21,8 @@ const PlantillaCard = memo(function PlantillaCard({ plantilla }) {
 
 export default function PlantillasCarousel() {
   const scrollRef = useRef(null);
-  const { data: plantillasData, isLoading } = usePlantillas({ limit: 8, activo: true });
-  const plantillas = plantillasData?.data || plantillasData || [];
+  const { data: plantillasData, isLoading } = usePlantillasPublicas({ limit: 8, activo: true });
+  const plantillas = plantillasData?.plantillas || [];
 
   if (isLoading) {
     return (

@@ -17,10 +17,10 @@ export default function GaleriaModeracionPage() {
   const toast = useToast();
 
   const { data: eventoData } = useEvento(eventoId);
-  const evento = eventoData?.data || eventoData;
+  const evento = eventoData;
 
   const { data: galeriaData, isLoading } = useGaleria(eventoId);
-  const fotos = galeriaData?.data || galeriaData || [];
+  const fotos = galeriaData?.fotos || galeriaData || [];
 
   const cambiarEstado = useCambiarEstadoFoto();
   const eliminarFoto = useEliminarFoto();

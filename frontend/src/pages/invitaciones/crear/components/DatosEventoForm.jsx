@@ -38,8 +38,8 @@ const DatosEventoForm = memo(function DatosEventoForm({ datos, onChange }) {
             </label>
             <input
               type="date"
-              value={datos.fecha || ''}
-              onChange={(e) => handleChange('fecha', e.target.value)}
+              value={datos.fecha_evento || ''}
+              onChange={(e) => handleChange('fecha_evento', e.target.value)}
               className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 outline-none"
             />
           </div>
@@ -49,24 +49,11 @@ const DatosEventoForm = memo(function DatosEventoForm({ datos, onChange }) {
             </label>
             <input
               type="time"
-              value={datos.hora || ''}
-              onChange={(e) => handleChange('hora', e.target.value)}
+              value={datos.hora_evento || ''}
+              onChange={(e) => handleChange('hora_evento', e.target.value)}
               className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 outline-none"
             />
           </div>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-            Ubicación
-          </label>
-          <input
-            type="text"
-            value={datos.ubicacion || ''}
-            onChange={(e) => handleChange('ubicacion', e.target.value)}
-            placeholder="Ej: Salón Las Palmas, CDMX"
-            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder:text-gray-400 focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 outline-none"
-          />
         </div>
 
         <div>

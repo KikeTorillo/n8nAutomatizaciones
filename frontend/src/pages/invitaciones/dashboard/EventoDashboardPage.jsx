@@ -68,8 +68,8 @@ export default function EventoDashboardPage() {
   const { id } = useParams();
   const { data: eventoData, isLoading: loadingEvento } = useEvento(id);
   const { data: statsData } = useEventoEstadisticas(id);
-  const evento = eventoData?.data || eventoData;
-  const stats = statsData?.data || statsData;
+  const evento = eventoData;
+  const stats = statsData;
 
   if (loadingEvento) {
     return (
@@ -114,7 +114,7 @@ export default function EventoDashboardPage() {
                 {evento.nombre}
               </h1>
               <p className="text-gray-500 dark:text-gray-400 mt-1">
-                {evento.fecha ? new Date(evento.fecha).toLocaleDateString('es-MX', {
+                {evento.fecha_evento ? new Date(evento.fecha_evento).toLocaleDateString('es-MX', {
                   weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
                 }) : 'Sin fecha'}
               </p>
@@ -134,7 +134,7 @@ export default function EventoDashboardPage() {
 
           {/* Countdown */}
           <div className="mb-8">
-            <CountdownDisplay fecha={evento.fecha} />
+            <CountdownDisplay fecha={evento.fecha_evento} />
           </div>
 
           {/* Stats */}

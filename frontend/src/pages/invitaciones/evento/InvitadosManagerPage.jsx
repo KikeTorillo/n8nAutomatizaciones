@@ -30,7 +30,7 @@ export default function InvitadosManagerPage() {
   const [filtroEstado, setFiltroEstado] = useState('');
 
   const { data: eventoData } = useEvento(eventoId);
-  const evento = eventoData?.data || eventoData;
+  const evento = eventoData;
 
   const params = useMemo(() => ({
     ...(busqueda && { busqueda }),
@@ -38,7 +38,7 @@ export default function InvitadosManagerPage() {
   }), [busqueda, filtroEstado]);
 
   const { data: invitadosData, isLoading } = useInvitados(eventoId, params);
-  const invitados = invitadosData?.data || invitadosData || [];
+  const invitados = invitadosData?.invitados || [];
 
   const crearInvitado = useCrearInvitado();
   const eliminarInvitado = useEliminarInvitado();
@@ -46,7 +46,7 @@ export default function InvitadosManagerPage() {
   const exportarInvitados = useExportarInvitados();
 
   const stats = useMemo(() => {
-    const todos = invitadosData?.data || invitadosData || [];
+    const todos = invitadosData?.invitados || [];
     return {
       total_invitados: todos.length,
       total_confirmados: todos.filter(i => i.estado_rsvp === 'confirmado').length,

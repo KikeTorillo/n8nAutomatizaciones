@@ -64,7 +64,7 @@ const Input = memo(
 
     const baseStyles = cn(
       'w-full border rounded-lg transition-colors',
-      'focus:outline-none focus:ring-2 focus:ring-offset-0',
+      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-0',
       'disabled:opacity-50 disabled:cursor-not-allowed',
       'bg-white dark:bg-gray-800',
       'text-gray-900 dark:text-gray-100',
@@ -73,8 +73,8 @@ const Input = memo(
     );
 
     const stateStyles = hasError
-      ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
-      : 'border-gray-300 dark:border-gray-600 focus:border-primary-500 focus:ring-primary-500';
+      ? 'border-red-500 focus-visible:border-red-500 focus-visible:ring-red-500'
+      : 'border-gray-300 dark:border-gray-600 focus-visible:border-primary-500 focus-visible:ring-primary-500';
 
     const paddingStyles = getInputPaddingStyles(!!prefix, !!suffix);
 

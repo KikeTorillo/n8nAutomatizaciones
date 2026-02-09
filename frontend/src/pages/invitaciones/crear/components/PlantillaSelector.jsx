@@ -4,10 +4,9 @@
 import { memo, useMemo } from 'react';
 import { Check, Loader2 } from 'lucide-react';
 import { usePlantillas } from '@/hooks/otros/eventos-digitales';
+import PlantillaPreviewImage from '../../components/PlantillaPreviewImage';
 
 const PlantillaCard = memo(function PlantillaCard({ plantilla, selected, onSelect }) {
-  const imagen = plantilla.imagen_preview || plantilla.thumbnail;
-
   return (
     <button
       onClick={() => onSelect(plantilla)}
@@ -18,18 +17,7 @@ const PlantillaCard = memo(function PlantillaCard({ plantilla, selected, onSelec
       }`}
     >
       <div className="aspect-[3/4] bg-gray-100 dark:bg-gray-800">
-        {imagen ? (
-          <img
-            src={imagen}
-            alt={plantilla.nombre}
-            className="w-full h-full object-cover"
-            loading="lazy"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-pink-100 to-rose-100 dark:from-pink-900/20 dark:to-rose-900/20">
-            <span className="text-4xl">💌</span>
-          </div>
-        )}
+        <PlantillaPreviewImage plantilla={plantilla} />
       </div>
       <div className="p-3">
         <h3 className="font-medium text-gray-900 dark:text-white text-sm truncate">{plantilla.nombre}</h3>
@@ -50,7 +38,7 @@ const PlantillaSelector = memo(function PlantillaSelector({ tipoEvento, plantill
   }), [tipoEvento]);
 
   const { data: plantillasData, isLoading } = usePlantillas(params);
-  const plantillas = plantillasData?.data || plantillasData || [];
+  const plantillas = plantillasData?.plantillas || [];
 
   return (
     <div>

@@ -49,8 +49,8 @@ const ThemeToggle = memo(
         'rounded-lg transition-colors',
         'text-gray-600 hover:text-gray-900 hover:bg-gray-100',
         'dark:text-gray-400 dark:hover:text-gray-100 dark:hover:bg-gray-800',
-        'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2',
-        'dark:focus:ring-offset-gray-900',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2',
+        'dark:focus-visible:ring-offset-gray-900',
         sizes[size],
         className
       )}

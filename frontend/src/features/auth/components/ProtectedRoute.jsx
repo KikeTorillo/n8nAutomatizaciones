@@ -1,4 +1,4 @@
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import useAuthStore, { selectIsAuthenticated, selectUser } from '../store/authStore';
 
 /**
@@ -66,10 +66,12 @@ function ProtectedRoute({ children, requiredRole = null, excludeRoles = null, re
   // Ene 2026: Usar selectores para evitar re-renders
   const isAuthenticated = useAuthStore(selectIsAuthenticated);
   const user = useAuthStore(selectUser);
+  const location = useLocation();
 
   // Verificación 1: Autenticación
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    const returnTo = location.pathname + location.search;
+    return <Navigate to={`/login?returnTo=${encodeURIComponent(returnTo)}`} replace />;
   }
 
   // Verificación 2: Onboarding pendiente (Dic 2025 - OAuth flow)

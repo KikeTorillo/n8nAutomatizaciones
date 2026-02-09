@@ -58,7 +58,7 @@ const PlanCard = memo(function PlanCard({ plan, destacado }) {
 
 export default function PreciosPreview() {
   const { data: planesData, isLoading } = usePlanesPublicos();
-  const planes = (planesData?.data || planesData || [])
+  const planes = (Array.isArray(planesData) ? planesData : [])
     .filter(p => p.activo)
     .slice(0, 3);
 

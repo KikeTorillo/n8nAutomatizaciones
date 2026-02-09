@@ -4,8 +4,9 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, Loader2 } from 'lucide-react';
-import { usePlantillas } from '@/hooks/otros/eventos-digitales';
+import { usePlantillasPublicas } from '@/hooks/otros/eventos-digitales';
 import InvitacionesPublicLayout from '../InvitacionesPublicLayout';
+import PlantillaPreviewImage from '../components/PlantillaPreviewImage';
 
 const FILTROS = [
   { label: 'Todas', value: '' },
@@ -24,9 +25,9 @@ export default function EjemplosPage() {
     ...(filtroTipo && { tipo_evento: filtroTipo }),
   }), [filtroTipo]);
 
-  const { data: plantillasData, isLoading } = usePlantillas(params);
+  const { data: plantillasData, isLoading } = usePlantillasPublicas(params);
   const plantillas = useMemo(() => {
-    const data = plantillasData?.data || plantillasData || [];
+    const data = plantillasData?.plantillas || [];
     if (!busqueda.trim()) return data;
     const term = busqueda.toLowerCase();
     return data.filter(p =>
@@ -101,18 +102,7 @@ export default function EjemplosPage() {
                   className="group"
                 >
                   <div className="aspect-[3/4] rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800 mb-3 shadow-sm group-hover:shadow-lg transition-shadow">
-                    {p.imagen_preview || p.thumbnail ? (
-                      <img
-                        src={p.imagen_preview || p.thumbnail}
-                        alt={p.nombre}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-pink-100 to-rose-100 dark:from-pink-900/20 dark:to-rose-900/20">
-                        <span className="text-5xl">💌</span>
-                      </div>
-                    )}
+                    <PlantillaPreviewImage plantilla={p} className="group-hover:scale-105 transition-transform duration-300" />
                   </div>
                   <h3 className="font-semibold text-gray-900 dark:text-white">{p.nombre}</h3>
                   <p className="text-sm text-pink-600 dark:text-pink-400 capitalize">

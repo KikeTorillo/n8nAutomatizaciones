@@ -138,6 +138,14 @@ export const queryKeys = {
       all: ['consigna'] as const,
       list: (params?: Params) => ['consigna', params] as const,
     },
+    paquetes: {
+      all: ['paquetes'] as const,
+      porOperacion: (operacionId: Id) => ['paquetes', 'operacion', operacionId] as const,
+      detail: (id: Id) => ['paquetes', 'detail', id] as const,
+      itemsDisponibles: (operacionId: Id) => ['paquetes', 'items-disponibles', operacionId] as const,
+      resumen: (operacionId: Id) => ['paquetes', 'resumen', operacionId] as const,
+      etiqueta: (id: Id) => ['paquetes', 'etiqueta', id] as const,
+    },
     dropship: {
       all: ['dropship'] as const,
       list: (params?: Params) => ['dropship', params] as const,

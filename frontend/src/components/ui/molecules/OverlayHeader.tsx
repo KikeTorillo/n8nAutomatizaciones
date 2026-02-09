@@ -1,6 +1,7 @@
 import { memo, forwardRef, type ReactNode, type ElementType } from 'react';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { IconButton } from '../atoms/IconButton';
 
 export interface OverlayHeaderProps {
   /** Titulo del overlay */
@@ -92,20 +93,15 @@ const OverlayHeader = memo(
       <div className="flex items-center gap-2 ml-4">
         {actions}
         {showCloseButton && onClose && (
-          <button
-            type="button"
+          <IconButton
+            icon={X}
+            label="Cerrar"
+            variant="ghost"
+            size="md"
             onClick={onClose}
             disabled={disableClose}
-            className={cn(
-              'p-2 -mr-2 text-gray-400 rounded-lg transition-colors',
-              'hover:text-gray-600 dark:hover:text-gray-300',
-              'hover:bg-gray-100 dark:hover:bg-gray-700',
-              disableClose && 'opacity-50 cursor-not-allowed'
-            )}
-            aria-label="Cerrar"
-          >
-            <X className="w-5 h-5" />
-          </button>
+            className="-mr-2"
+          />
         )}
       </div>
     </div>

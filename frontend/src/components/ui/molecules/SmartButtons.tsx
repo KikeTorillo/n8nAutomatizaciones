@@ -64,8 +64,8 @@ export const SmartButtons = memo(
               'border border-transparent',
               'transition-all duration-200',
               'hover:border-gray-300 dark:hover:border-gray-600',
-              'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2',
-              'dark:focus:ring-offset-gray-900',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2',
+              'dark:focus-visible:ring-offset-gray-900',
               'disabled:opacity-50 disabled:cursor-not-allowed',
               SMART_BUTTON_COLORS[color]
             )}

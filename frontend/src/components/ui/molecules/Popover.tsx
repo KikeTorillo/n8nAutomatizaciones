@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect, memo, forwardRef, type ReactNode } from 'react';
+import { useState, useRef, useCallback, useEffect, memo, forwardRef, useId, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { cn } from '@/lib/utils';
 
@@ -71,6 +71,8 @@ const Popover = memo(forwardRef<HTMLDivElement, PopoverProps>(function Popover(
   const [position, setPosition] = useState({ top: 0, left: 0 });
   const triggerRef = useRef<HTMLDivElement>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
+  const popoverId = useId();
+  const rafRef = useRef<number>(0);
 
   const updatePosition = useCallback(() => {
     const triggerEl = triggerRef.current;
@@ -121,27 +123,41 @@ const Popover = memo(forwardRef<HTMLDivElement, PopoverProps>(function Popover(
     };
   }, [isOpen, handleClose]);
 
-  // Actualizar posición en scroll/resize
+  // Actualizar posición en scroll/resize (debounced con rAF)
   useEffect(() => {
     if (!isOpen) return;
 
-    window.addEventListener('scroll', updatePosition, true);
-    window.addEventListener('resize', updatePosition);
+    const debouncedUpdate = () => {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = requestAnimationFrame(updatePosition);
+    };
+
+    window.addEventListener('scroll', debouncedUpdate, true);
+    window.addEventListener('resize', debouncedUpdate);
     return () => {
-      window.removeEventListener('scroll', updatePosition, true);
-      window.removeEventListener('resize', updatePosition);
+      cancelAnimationFrame(rafRef.current);
+      window.removeEventListener('scroll', debouncedUpdate, true);
+      window.removeEventListener('resize', debouncedUpdate);
     };
   }, [isOpen, updatePosition]);
 
   return (
     <div ref={ref} className={cn('inline-block', className)}>
-      <div ref={triggerRef} onClick={handleToggle}>
+      <div
+        ref={triggerRef}
+        onClick={handleToggle}
+        aria-haspopup="dialog"
+        aria-expanded={isOpen}
+        aria-controls={popoverId}
+      >
         {trigger}
       </div>
       {isOpen && createPortal(
         <div
           ref={popoverRef}
+          id={popoverId}
           role="dialog"
+          aria-modal="true"
           style={{
             position: 'fixed',
             top: position.top,

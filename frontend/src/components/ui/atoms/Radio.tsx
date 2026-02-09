@@ -1,4 +1,4 @@
-import { forwardRef, memo, type InputHTMLAttributes } from 'react';
+import { forwardRef, memo, useId, type InputHTMLAttributes } from 'react';
 import { cn } from '@/lib/utils';
 import { RADIO_SIZE_CLASSES, getRadioStyles, getAriaDescribedBy } from '@/lib/uiConstants';
 import type { FormSize } from '@/types/ui';
@@ -9,6 +9,10 @@ export interface RadioProps
   size?: FormSize;
   /** Si tiene error */
   hasError?: boolean;
+  /** Si es requerido */
+  required?: boolean;
+  /** Si tiene texto de ayuda asociado */
+  hasHelper?: boolean;
   /** Clases CSS adicionales */
   className?: string;
 }
@@ -23,6 +27,8 @@ const Radio = memo(
     {
       size = 'md',
       hasError = false,
+      required = false,
+      hasHelper = false,
       className,
       id,
       disabled,
@@ -30,14 +36,18 @@ const Radio = memo(
     },
     ref
   ) {
+    const generatedId = useId();
+    const radioId = id || generatedId;
+
     return (
       <input
         ref={ref}
         type="radio"
-        id={id}
+        id={radioId}
         disabled={disabled}
         aria-invalid={hasError || undefined}
-        aria-describedby={id ? getAriaDescribedBy(id, { hasError }) : undefined}
+        aria-required={required || undefined}
+        aria-describedby={getAriaDescribedBy(radioId, { hasError, hasHelper })}
         className={cn(
           getRadioStyles(hasError),
           RADIO_SIZE_CLASSES[size] || RADIO_SIZE_CLASSES.md,

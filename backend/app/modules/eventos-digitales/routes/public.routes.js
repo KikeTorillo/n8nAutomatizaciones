@@ -21,9 +21,11 @@ const multer = require('multer');
 
 // Controllers
 const PublicController = require('../controllers/public.controller');
+const PlantillasController = require('../controllers/plantillas.controller');
 
 // Schemas
 const publicSchemas = require('../schemas/public.schemas');
+const plantillasSchemas = require('../schemas/plantilla.schemas');
 
 // Middlewares
 const {
@@ -53,6 +55,16 @@ const uploadGaleria = multer({
 // ============================================================================
 // Estas rutas solo usan rate limiting y validación de schema.
 // Los models usan RLSContextManager.withBypass() internamente.
+
+/**
+ * GET /plantillas
+ * Listar plantillas públicas (sin auth)
+ */
+router.get('/plantillas',
+    rateLimiting.apiRateLimit,
+    validate(plantillasSchemas.listarPlantillas),
+    asyncHandler(PlantillasController.listar)
+);
 
 /**
  * GET /evento/:slug

@@ -4,6 +4,7 @@
  * ====================================================================
  * React Query hooks para gestion de paquetes/bultos durante empaque
  * Fecha: 31 Diciembre 2025
+ * Feb 2026: Migrado a queryKeys centralizadas
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -11,18 +12,9 @@ import { STALE_TIMES } from '@/app/queryClient';
 import { paquetesApi } from '@/services/api/endpoints';
 import { useToast } from '@/hooks/utils';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
+import { queryKeys } from '@/hooks/config/queryKeys';
 
-/**
- * QUERY KEYS para paquetes
- */
-export const PAQUETES_KEYS = {
-  all: ['paquetes'],
-  porOperacion: (operacionId) => [...PAQUETES_KEYS.all, 'operacion', operacionId],
-  detail: (id) => [...PAQUETES_KEYS.all, 'detail', id],
-  itemsDisponibles: (operacionId) => [...PAQUETES_KEYS.all, 'items-disponibles', operacionId],
-  resumen: (operacionId) => [...PAQUETES_KEYS.all, 'resumen', operacionId],
-  etiqueta: (id) => [...PAQUETES_KEYS.all, 'etiqueta', id],
-};
+const PAQUETES_KEYS = queryKeys.almacen.paquetes;
 
 // ==================== QUERIES ====================
 

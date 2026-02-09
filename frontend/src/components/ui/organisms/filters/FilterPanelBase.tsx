@@ -23,7 +23,7 @@ export const filterInputStyles = cn(
   'bg-white dark:bg-gray-800',
   'text-gray-900 dark:text-gray-100',
   'border-gray-300 dark:border-gray-600',
-  'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500',
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:border-primary-500',
   'text-sm'
 );
 
@@ -33,7 +33,7 @@ export const filterLabelStyles = cn(
 
 export const filterCheckboxStyles = cn(
   'w-4 h-4 rounded border-gray-300 dark:border-gray-600',
-  'text-primary-600 focus:ring-primary-500'
+  'text-primary-600 focus-visible:ring-primary-500'
 );
 
 export const filterPanelContainerStyles = cn(
