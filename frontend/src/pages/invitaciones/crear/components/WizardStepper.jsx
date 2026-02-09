@@ -6,9 +6,7 @@ import { memo } from 'react';
 
 const PASOS = [
   { label: 'Tipo' },
-  { label: 'Datos' },
   { label: 'Plantilla' },
-  { label: 'Confirmar' },
 ];
 
 const WizardStepper = memo(function WizardStepper({ pasoActual }) {

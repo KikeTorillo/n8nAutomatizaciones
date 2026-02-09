@@ -47,12 +47,12 @@ src/
 ├── components/
 │   ├── ui/                 # Atomic Design (TS): atoms, molecules, organisms, templates
 │   ├── editor-framework/   # Framework editores (Website + Invitaciones)
-│   └── shared/             # Componentes cross-módulo (UnsplashPicker, AddToCalendar)
+│   └── shared/             # Componentes cross-módulo (UnsplashPicker, AddToCalendar, InvitacionDinamica)
 ├── constants/              # colors.ts, entityStates.js
 ├── features/               # Módulos autocontenidos (auth con authStore.ts)
 ├── hooks/
 │   ├── factories/          # createCRUDHooks, createStatusMutationHook, createSearchHook
-│   ├── config/             # errorHandlerFactory.ts, queryKeys.js, queryConfig.js
+│   ├── config/             # errorHandlerFactory.ts, queryKeys.ts, queryConfig.js
 │   └── <dominio>/          # Hooks por módulo, algunos con subcarpetas (pos/lealtad/, pos/ventas/)
 ├── lib/                    # params.ts (sanitizeParams), uiConstants/ (.ts con as const)
 ├── pages/<módulo>/         # Páginas + components/ específicos del módulo
@@ -112,10 +112,12 @@ await RLSContextManager.withBypass(async (db) => { ... });        // JOINs, supe
 - **JSX**: Archivos con JSX DEBEN tener extensión `.jsx`/`.tsx` (Vite lo requiere)
 - **TypeScript**: UI components, APIs, hooks, stores y factories son `.ts`/`.tsx`
 - **Dark mode**: Siempre variantes `dark:` en Tailwind
+- **Focus**: Usar `focus-visible:` (no `focus:`) para outline/ring en componentes UI. Excepción: `focus:bg-*` en items de menú (mouse+keyboard)
 - **Colores**: Importar de `constants/colors.ts` (`BRAND_COLORS`, `TAG_COLORS`). En CSS usar `primary-*` / `var(--color-primary-500)`. NO hardcodear hex.
 - **React.memo**: Obligatorio en componentes de lista/tabla
 - **Sanitizar**: Joi rechaza `""`, usar `sanitizeParams()` de `lib/params.ts`
-- **Desacoplamiento**: Módulos NO importan entre sí. Código compartido va en `editor-framework/` o `components/shared/`
+- **Desacoplamiento**: Módulos NO importan entre sí. Código compartido va en `editor-framework/` o `components/shared/`. Usar bridges en `shared/` para re-exports cross-módulo
+- **Query keys**: Centralizar en `hooks/config/queryKeys.ts`. NO definir keys locales en hooks individuales
 
 ## Patrones Frontend
 
@@ -146,6 +148,10 @@ const useBuscar = createSearchHook<Entidad>({ key: 'entidades', searchFn: miApi.
 // Toda mutation debe tener onError — estandarizado con factory
 onError: createCRUDErrorHandler('create', 'Producto', { 409: 'Ya existe' })
 ```
+
+### Templates
+- **ListadoCRUDPage**: Template CRUD genérica. Lógica extraída a `useListadoCRUDState.ts`
+- **useListadoCRUDState**: Paginación, filtros, modales, query, export CSV, delete, handlers, columnas
 
 ### Overlays
 - **FormDrawer** (`organisms/FormDrawer.tsx`): Drawer + form + footer estándar

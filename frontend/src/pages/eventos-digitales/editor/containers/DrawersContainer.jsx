@@ -34,7 +34,7 @@ import {
 } from '../config';
 import { useInvitacionEditorContent } from '../hooks/useInvitacionEditorContent';
 import { UnsplashModal } from '@/components/shared/media/UnsplashPicker';
-import { usePlantillas } from '@/hooks/otros/eventos-digitales';
+import { usePlantillas, usePlantillasPublicas } from '@/hooks/otros/eventos-digitales';
 import InvitacionTemplateGallery from '../components/InvitacionTemplateGallery';
 import InvitacionPreviewCard from '../components/InvitacionPreviewCard';
 import { TIPOS_EVENTO_CATEGORIES } from '@/pages/eventos-digitales/constants';
@@ -53,13 +53,19 @@ function DrawersContainer() {
     deseleccionarBloque,
     modoPreview,
     esPlantilla,
+    isBorrador,
   } = useInvitacionEditor();
 
   const { closeDrawer } = useEditorLayoutContext();
 
-  // Plantillas
+  // Plantillas (público para borrador, autenticado para editor real)
   const [mostrarGaleria, setMostrarGaleria] = useState(false);
-  const { data: plantillasData, isLoading: plantillasLoading } = usePlantillas();
+  const { data: plantillasAuthData, isLoading: plantillasAuthLoading } = usePlantillas({}, { enabled: !isBorrador });
+  const { data: plantillasPublicData, isLoading: plantillasPublicLoading } = usePlantillasPublicas(
+    isBorrador ? { activo: true } : {}
+  );
+  const plantillasData = isBorrador ? plantillasPublicData : plantillasAuthData;
+  const plantillasLoading = isBorrador ? plantillasPublicLoading : plantillasAuthLoading;
   const plantillas = plantillasData?.plantillas || [];
 
   const handleApplyPlantilla = useCallback(async (plantilla) => {

@@ -14,8 +14,9 @@ import { useNavigate } from 'react-router-dom';
 import { Check, X } from 'lucide-react';
 import { TemplateGalleryModal } from '@/components/editor-framework';
 import { InvitacionDinamica } from '@/pages/eventos-digitales/components';
-import { usePlantillas } from '@/hooks/otros/eventos-digitales';
+import { usePlantillas, usePlantillasPublicas } from '@/hooks/otros/eventos-digitales';
 import { usePlantillaPreview } from '@/hooks/otros/eventos-digitales';
+import { useEditor as useInvitacionEditor } from '@/components/editor-framework';
 import { useGoogleFonts } from '@/hooks/utils';
 import { TIPOS_EVENTO_CATEGORIES } from '@/pages/eventos-digitales/constants';
 import InvitacionPreviewCard from './InvitacionPreviewCard';
@@ -86,7 +87,13 @@ function InvitacionPreviewPanel({ template, onApply, isApplying, onClose }) {
  */
 function InvitacionTemplateGallery({ isOpen, onClose }) {
   const navigate = useNavigate();
-  const { data: plantillasData, isLoading } = usePlantillas();
+  const { isBorrador } = useInvitacionEditor();
+  const { data: plantillasAuthData, isLoading: authLoading } = usePlantillas({}, { enabled: !isBorrador });
+  const { data: plantillasPublicData, isLoading: publicLoading } = usePlantillasPublicas(
+    isBorrador ? { activo: true } : {}
+  );
+  const plantillasData = isBorrador ? plantillasPublicData : plantillasAuthData;
+  const isLoading = isBorrador ? publicLoading : authLoading;
   const plantillas = plantillasData?.plantillas || [];
 
   return (

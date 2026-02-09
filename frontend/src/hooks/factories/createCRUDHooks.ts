@@ -90,7 +90,7 @@ export function createCRUDHooks<
 
   const entityName = name.charAt(0).toUpperCase() + name.slice(1);
 
-  function useList(params: Record<string, unknown> = {}) {
+  function useList(params: Record<string, unknown> = {}, options?: { enabled?: boolean }) {
     return useQuery({
       queryKey: [baseKey, params],
       queryFn: async () => {
@@ -114,6 +114,7 @@ export function createCRUDHooks<
       },
       staleTime,
       placeholderData: usePreviousData ? keepPreviousData : undefined,
+      ...(options?.enabled !== undefined && { enabled: options.enabled }),
     });
   }
 

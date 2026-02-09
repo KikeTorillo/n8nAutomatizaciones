@@ -3,7 +3,7 @@
  */
 import { memo, useMemo } from 'react';
 import { Check, Loader2 } from 'lucide-react';
-import { usePlantillas } from '@/hooks/otros/eventos-digitales';
+import { usePlantillasPublicas } from '@/hooks/otros/eventos-digitales';
 import PlantillaPreviewImage from '../../components/PlantillaPreviewImage';
 
 const PlantillaCard = memo(function PlantillaCard({ plantilla, selected, onSelect }) {
@@ -37,7 +37,7 @@ const PlantillaSelector = memo(function PlantillaSelector({ tipoEvento, plantill
     ...(tipoEvento && { tipo_evento: tipoEvento }),
   }), [tipoEvento]);
 
-  const { data: plantillasData, isLoading } = usePlantillas(params);
+  const { data: plantillasData, isLoading } = usePlantillasPublicas(params);
   const plantillas = plantillasData?.plantillas || [];
 
   return (

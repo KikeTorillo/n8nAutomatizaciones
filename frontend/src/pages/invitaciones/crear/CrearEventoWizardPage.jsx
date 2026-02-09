@@ -1,45 +1,34 @@
 /**
- * CrearEventoWizardPage — Wizard de 4 pasos para crear un evento
- * 1. Tipo de evento  2. Datos  3. Plantilla  4. Preview y confirmar
+ * CrearEventoWizardPage — Wizard de 2 pasos para personalizar una invitacion
+ * 1. Tipo de evento  2. Elegir plantilla → guardar borrador en localStorage → editor
  */
 import { useState, useCallback } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, Loader2 } from 'lucide-react';
-import { useCrearEvento } from '@/hooks/otros/eventos-digitales';
-import { useToast } from '@/hooks/utils';
+import { useNavigate } from 'react-router-dom';
+import { ArrowLeft, ArrowRight, Sparkles } from 'lucide-react';
+import { INVITACION_TEMA_DEFAULT } from '@/pages/eventos-digitales/constants';
+import { useBorradorStorage } from '../editor/hooks/useBorradorStorage';
 import InvitacionesPublicLayout from '../InvitacionesPublicLayout';
 import WizardStepper from './components/WizardStepper';
 import TipoEventoSelector from './components/TipoEventoSelector';
-import DatosEventoForm from './components/DatosEventoForm';
 import PlantillaSelector from './components/PlantillaSelector';
-import EventoPreview from './components/EventoPreview';
 
-const TOTAL_PASOS = 4;
+const TOTAL_PASOS = 2;
 
 export default function CrearEventoWizardPage() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const toast = useToast();
+  const storage = useBorradorStorage();
 
   const [paso, setPaso] = useState(0);
   const [tipoEvento, setTipoEvento] = useState('');
-  const [datos, setDatos] = useState({ nombre: '', fecha_evento: '', hora_evento: '', descripcion: '' });
   const [plantilla, setPlantilla] = useState(null);
-
-  const crearEvento = useCrearEvento();
-
-  // Pre-seleccionar plantilla de query params
-  const plantillaIdParam = searchParams.get('plantilla');
 
   const puedeAvanzar = useCallback(() => {
     switch (paso) {
       case 0: return !!tipoEvento;
-      case 1: return !!datos.nombre?.trim() && !!datos.fecha_evento;
-      case 2: return true; // Plantilla es opcional
-      case 3: return true;
+      case 1: return true; // Plantilla es opcional
       default: return false;
     }
-  }, [paso, tipoEvento, datos]);
+  }, [paso, tipoEvento]);
 
   const handleSiguiente = () => {
     if (paso < TOTAL_PASOS - 1) {
@@ -53,30 +42,22 @@ export default function CrearEventoWizardPage() {
     }
   };
 
-  const handleCrear = async () => {
-    try {
-      const payload = {
-        nombre: datos.nombre.trim(),
-        tipo: tipoEvento,
-        fecha_evento: datos.fecha_evento,
-        ...(datos.hora_evento && { hora_evento: datos.hora_evento }),
-        ...(datos.descripcion?.trim() && { descripcion: datos.descripcion.trim() }),
-        ...(plantilla && { plantilla_id: plantilla.id }),
-      };
+  const handlePersonalizar = () => {
+    const plantillaData = plantilla || {};
+    const bloques = plantillaData.bloques_plantilla?.map((b, i) => ({
+      ...b,
+      id: crypto.randomUUID(),
+      orden: i,
+    })) || [];
 
-      const result = await crearEvento.mutateAsync(payload);
-      const eventoId = result?.data?.id || result?.id;
+    storage.guardar({
+      tipoEvento,
+      plantilla: plantillaData,
+      bloques,
+      tema: plantillaData.tema || INVITACION_TEMA_DEFAULT,
+    });
 
-      toast.success('Evento creado exitosamente');
-
-      if (eventoId) {
-        navigate(`/eventos-digitales/${eventoId}/editor`);
-      } else {
-        navigate('/invitaciones/mis-eventos');
-      }
-    } catch {
-      // Error ya manejado por onError del hook
-    }
+    navigate('/invitaciones/editor');
   };
 
   return (
@@ -94,25 +75,15 @@ export default function CrearEventoWizardPage() {
               <TipoEventoSelector valor={tipoEvento} onChange={setTipoEvento} />
             )}
             {paso === 1 && (
-              <DatosEventoForm datos={datos} onChange={setDatos} />
-            )}
-            {paso === 2 && (
               <PlantillaSelector
                 tipoEvento={tipoEvento}
                 plantillaSeleccionada={plantilla}
                 onChange={setPlantilla}
               />
             )}
-            {paso === 3 && (
-              <EventoPreview
-                tipoEvento={tipoEvento}
-                datos={datos}
-                plantilla={plantilla}
-              />
-            )}
           </div>
 
-          {/* Navegación */}
+          {/* Navegacion */}
           <div className="flex items-center justify-between">
             <button
               onClick={handleAnterior}
@@ -134,18 +105,11 @@ export default function CrearEventoWizardPage() {
               </button>
             ) : (
               <button
-                onClick={handleCrear}
-                disabled={crearEvento.isPending}
-                className="inline-flex items-center gap-2 px-6 py-2.5 bg-pink-500 text-white font-semibold rounded-xl hover:bg-pink-600 transition-colors disabled:opacity-50"
+                onClick={handlePersonalizar}
+                className="inline-flex items-center gap-2 px-6 py-2.5 bg-pink-500 text-white font-semibold rounded-xl hover:bg-pink-600 transition-colors"
               >
-                {crearEvento.isPending ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Creando...
-                  </>
-                ) : (
-                  'Crear evento'
-                )}
+                <Sparkles className="w-4 h-4" />
+                Personalizar invitación
               </button>
             )}
           </div>
