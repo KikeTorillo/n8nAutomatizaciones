@@ -1,6 +1,6 @@
-import { useState, useRef, useEffect, memo } from 'react';
+import { useState, useCallback, useEffect, memo } from 'react';
 import { Camera, ScanLine, X, UserCheck, AlertCircle } from 'lucide-react';
-import { Button, LoadingSpinner } from '@/components/ui';
+import { Button, LoadingSpinner, BarcodeScanner } from '@/components/ui';
 import { useToast } from '@/hooks/utils';
 import { useCheckinStats } from '@/hooks/otros';
 import { eventosDigitalesApi } from '@/services/api/modules';
@@ -21,8 +21,6 @@ function CheckinTab({
   const [recentCheckins, setRecentCheckins] = useState([]);
   const [loadingCheckin, setLoadingCheckin] = useState(false);
   const [lastCheckin, setLastCheckin] = useState(null);
-  const html5QrCodeRef = useRef(null);
-  const scannerRef = useRef(null);
 
   const fetchRecentCheckins = async () => {
     try {
@@ -56,58 +54,17 @@ function CheckinTab({
     }
   };
 
-  const startScanner = async () => {
-    try {
-      const { Html5Qrcode } = await import('html5-qrcode');
-      if (html5QrCodeRef.current) {
-        await html5QrCodeRef.current.stop();
-      }
-
-      html5QrCodeRef.current = new Html5Qrcode('qr-scanner');
-      await html5QrCodeRef.current.start(
-        { facingMode: 'environment' },
-        { fps: 10, qrbox: { width: 250, height: 250 } },
-        (decodedText) => {
-          const urlParts = decodedText.split('/');
-          const token = urlParts[urlParts.length - 1];
-          if (token && token.length > 10) {
-            handleCheckin(token);
-            if (html5QrCodeRef.current) {
-              html5QrCodeRef.current.pause(true);
-              setTimeout(() => {
-                if (html5QrCodeRef.current) {
-                  html5QrCodeRef.current.resume();
-                }
-              }, 2000);
-            }
-          }
-        },
-        () => {}
-      );
-      setScannerActive(true);
-    } catch (error) {
-      toast.error('No se pudo acceder a la camara');
-      console.error('Scanner error:', error);
+  const handleScan = useCallback((code) => {
+    // Extraer token de URL o usar código directo
+    const urlParts = code.split('/');
+    const token = urlParts[urlParts.length - 1];
+    if (token && token.length > 10) {
+      handleCheckin(token);
     }
-  };
-
-  const stopScanner = async () => {
-    if (html5QrCodeRef.current) {
-      try {
-        await html5QrCodeRef.current.stop();
-        html5QrCodeRef.current = null;
-      } catch (error) {
-        console.error('Error stopping scanner:', error);
-      }
-    }
-    setScannerActive(false);
-  };
+  }, [eventoId]);
 
   useEffect(() => {
     fetchRecentCheckins();
-    return () => {
-      stopScanner();
-    };
   }, []);
 
   return (
@@ -122,12 +79,12 @@ function CheckinTab({
               Escaner de QR
             </h2>
             {scannerActive ? (
-              <Button size="sm" variant="outline" onClick={stopScanner} className="text-red-600 dark:text-red-400">
+              <Button size="sm" variant="outline" onClick={() => setScannerActive(false)} className="text-red-600 dark:text-red-400">
                 <X className="w-4 h-4 mr-2" />
                 Detener
               </Button>
             ) : (
-              <Button size="sm" onClick={startScanner}>
+              <Button size="sm" onClick={() => setScannerActive(true)}>
                 <ScanLine className="w-4 h-4 mr-2" />
                 Escanear
               </Button>
@@ -136,7 +93,18 @@ function CheckinTab({
 
           {/* Area del escaner */}
           <div className="relative">
-            {!scannerActive && (
+            {scannerActive ? (
+              <BarcodeScanner
+                onScan={handleScan}
+                onClose={() => setScannerActive(false)}
+                title="Check-in QR"
+                subtitle="Apunta al codigo QR del invitado"
+                formats="QR_ONLY"
+                showLastScan={false}
+                showCameraSwitch
+                autoStart
+              />
+            ) : (
               <div className="w-full aspect-video bg-gray-900 rounded-lg overflow-hidden flex items-center justify-center p-6">
                 <div className="text-center text-gray-400 px-4">
                   <Camera className="w-12 h-12 mx-auto mb-3 opacity-50" />
@@ -145,22 +113,6 @@ function CheckinTab({
                 </div>
               </div>
             )}
-            <div
-              id="qr-scanner"
-              ref={scannerRef}
-              className={`w-full min-h-[300px] bg-gray-900 rounded-lg ${!scannerActive ? 'hidden' : ''}`}
-              style={{ position: 'relative' }}
-            />
-            <style>{`
-              #qr-scanner video {
-                width: 100% !important;
-                height: auto !important;
-                border-radius: 0.5rem;
-              }
-              #qr-scanner #qr-shaded-region {
-                border-width: 50px !important;
-              }
-            `}</style>
           </div>
 
           {/* Ultimo check-in */}

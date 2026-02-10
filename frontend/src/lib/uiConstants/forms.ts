@@ -20,7 +20,7 @@ export const CHECKBOX_BASE = cn(
   'rounded',
   'border-gray-300 dark:border-gray-600',
   'accent-primary-600 dark:accent-primary-500',
-  'focus:ring-primary-500 dark:focus:ring-primary-400',
+  'focus-visible:ring-primary-500 dark:focus-visible:ring-primary-400',
   'transition-colors dark:bg-gray-700'
 );
 
@@ -49,7 +49,7 @@ export function getCheckboxStyles({ disabled = false, error = false } = {}) {
 
 export const RADIO_BASE = cn(
   'border-gray-300 dark:border-gray-600',
-  'text-primary-600 focus:ring-primary-500',
+  'text-primary-600 focus-visible:ring-primary-500',
   'disabled:opacity-50 disabled:cursor-not-allowed'
 );
 
@@ -71,14 +71,14 @@ export function getRadioStyles(hasError = false) {
 
 export const SELECT_BASE = cn(
   'w-full px-4 border rounded-lg transition-colors',
-  'focus:outline-none focus:ring-2 focus:ring-offset-0',
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-0',
   'disabled:opacity-50 disabled:cursor-not-allowed appearance-none',
   'bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100'
 );
 
 export const SELECT_STATES = {
-  default: 'border-gray-300 dark:border-gray-600 focus:border-primary-500 focus:ring-primary-500',
-  error: 'border-red-500 focus:border-red-500 focus:ring-red-500 dark:border-red-400 dark:focus:border-red-400',
+  default: 'border-gray-300 dark:border-gray-600 focus-visible:border-primary-500 focus-visible:ring-primary-500',
+  error: 'border-red-500 focus-visible:border-red-500 focus-visible:ring-red-500 dark:border-red-400 dark:focus-visible:border-red-400',
 } as const;
 
 export const SELECT_ARROW = {
@@ -100,7 +100,7 @@ export function getSelectStyles(hasError = false) {
 
 export const TEXTAREA_BASE = cn(
   'w-full px-4 py-3 border rounded-lg transition-colors',
-  'focus:outline-none focus:ring-2 focus:ring-offset-0',
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-0',
   'disabled:opacity-50 disabled:cursor-not-allowed',
   'bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100',
   'placeholder:text-gray-400 dark:placeholder:text-gray-500'

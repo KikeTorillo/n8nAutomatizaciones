@@ -19,11 +19,8 @@ export interface PaginatedResponse<T> {
   totalPages: number;
 }
 
-/** Respuesta API genérica */
-export interface ApiResponse<T> {
-  data: T;
-  message?: string;
-}
+/** @deprecated Usar ApiResponse de '@/services/api/client' */
+export type { ApiResponse } from '@/services/api/client';
 
 /** Respuesta API con paginación (formato backend Nexo) */
 export interface ApiListResponse<T> {

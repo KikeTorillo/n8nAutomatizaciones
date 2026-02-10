@@ -5,6 +5,7 @@ import {
   useRef,
   useMemo,
   useCallback,
+  useId,
   type KeyboardEvent,
   type MouseEvent,
 } from 'react';
@@ -71,7 +72,9 @@ const MultiSelect = memo(
     ref
   ) {
     const [isOpen, setIsOpen] = useState(false);
+    const [focusedIndex, setFocusedIndex] = useState(-1);
     const containerRef = useRef<HTMLDivElement>(null);
+    const listboxId = useId();
 
     // Cerrar dropdown al hacer click fuera (usando hook centralizado)
     useClickOutsideRef(containerRef, () => setIsOpen(false), isOpen);
@@ -128,9 +131,41 @@ const MultiSelect = memo(
 
     // Handler para teclado
     const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
-      if (!disabled && (e.key === 'Enter' || e.key === ' ')) {
-        e.preventDefault();
-        setIsOpen(!isOpen);
+      if (disabled) return;
+
+      switch (e.key) {
+        case 'Enter':
+        case ' ':
+          e.preventDefault();
+          if (isOpen && focusedIndex >= 0) {
+            const opt = options[focusedIndex];
+            if (opt && !opt.disabled) handleToggle(opt.value);
+          } else {
+            setIsOpen(!isOpen);
+          }
+          break;
+        case 'ArrowDown':
+          e.preventDefault();
+          if (!isOpen) {
+            setIsOpen(true);
+            setFocusedIndex(0);
+          } else {
+            setFocusedIndex(prev => prev < options.length - 1 ? prev + 1 : 0);
+          }
+          break;
+        case 'ArrowUp':
+          e.preventDefault();
+          if (isOpen) {
+            setFocusedIndex(prev => prev > 0 ? prev - 1 : options.length - 1);
+          }
+          break;
+        case 'Escape':
+          if (isOpen) {
+            e.preventDefault();
+            setIsOpen(false);
+            setFocusedIndex(-1);
+          }
+          break;
       }
     };
 
@@ -158,6 +193,8 @@ const MultiSelect = memo(
             aria-label={label || placeholder}
             aria-expanded={isOpen}
             aria-haspopup="listbox"
+            aria-controls={isOpen ? listboxId : undefined}
+            aria-activedescendant={isOpen && focusedIndex >= 0 ? `${listboxId}-opt-${focusedIndex}` : undefined}
             tabIndex={disabled ? -1 : 0}
             className={cn(baseStyles, stateStyles, className)}
             onClick={() => !disabled && setIsOpen(!isOpen)}
@@ -208,7 +245,12 @@ const MultiSelect = memo(
 
           {/* Dropdown de opciones */}
           {isOpen && !disabled && (
-            <div className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+            <div
+              id={listboxId}
+              role="listbox"
+              aria-multiselectable="true"
+              className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-y-auto"
+            >
               {options.length === 0 ? (
                 <div className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 text-center">
                   No hay opciones disponibles
@@ -220,7 +262,7 @@ const MultiSelect = memo(
                       {value.length}/{max} seleccionados
                     </div>
                   )}
-                  {options.map((option) => {
+                  {options.map((option, optIndex) => {
                     const isSelected = value.includes(option.value);
                     const isDisabled =
                       option.disabled || (max && value.length >= max && !isSelected);
@@ -228,10 +270,15 @@ const MultiSelect = memo(
                     return (
                       <div
                         key={option.value}
+                        id={`${listboxId}-opt-${optIndex}`}
+                        role="option"
+                        aria-selected={isSelected}
+                        aria-disabled={isDisabled ? true : undefined}
                         className={cn(
                           'px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors flex items-center justify-between',
                           isDisabled &&
-                            'opacity-50 cursor-not-allowed hover:bg-white dark:hover:bg-gray-800'
+                            'opacity-50 cursor-not-allowed hover:bg-white dark:hover:bg-gray-800',
+                          focusedIndex === optIndex && 'bg-gray-100 dark:bg-gray-700'
                         )}
                         onClick={() => !isDisabled && handleToggle(option.value)}
                       >

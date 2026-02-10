@@ -8,6 +8,7 @@ import {
   CARD_STATUS_STYLES,
   CARD_PADDING_STYLES,
   SURFACE_HOVER,
+  FOCUS_STATES,
 } from '@/lib/uiConstants';
 import type { CardVariant, CardStatus, CardPadding } from '@/types/ui';
 
@@ -94,6 +95,7 @@ const Card = memo(forwardRef<HTMLDivElement, CardProps>(function Card(
         CARD_PADDING_STYLES[padding],
         isClickable && SURFACE_HOVER,
         isClickable && 'cursor-pointer',
+        onClick && FOCUS_STATES.ring,
         className
       )}
       {...props}

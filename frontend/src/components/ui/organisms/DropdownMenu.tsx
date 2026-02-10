@@ -150,7 +150,21 @@ const DropdownMenu = memo(forwardRef<HTMLDivElement, DropdownMenuProps>(function
     <div className={cn('relative inline-block', className)} ref={setRefs}>
       {/* Trigger */}
       {trigger ? (
-        <div id={triggerId} onClick={handleToggle}>
+        <div
+          id={triggerId}
+          role="button"
+          tabIndex={0}
+          onClick={handleToggle}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              handleToggle();
+            }
+          }}
+          aria-expanded={isOpen}
+          aria-haspopup="menu"
+          aria-controls={`${triggerId}-menu`}
+        >
           {trigger}
         </div>
       ) : (
@@ -163,6 +177,7 @@ const DropdownMenu = memo(forwardRef<HTMLDivElement, DropdownMenuProps>(function
           aria-label="Más opciones"
           aria-expanded={isOpen}
           aria-haspopup="menu"
+          aria-controls={`${triggerId}-menu`}
         >
           <MoreVertical className="h-4 w-4" />
         </Button>
@@ -171,6 +186,7 @@ const DropdownMenu = memo(forwardRef<HTMLDivElement, DropdownMenuProps>(function
       {/* Menu */}
       {isOpen && (
         <div
+          id={`${triggerId}-menu`}
           className={cn(
             'absolute z-50 mt-1 min-w-[160px] bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1',
             align === 'right' ? 'right-0' : 'left-0'

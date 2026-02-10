@@ -1,4 +1,4 @@
-import { useMemo, memo, useCallback, forwardRef, type ReactNode, type ComponentType } from 'react';
+import { useMemo, memo, useCallback, forwardRef, type ReactNode, type ComponentType, type KeyboardEvent } from 'react';
 import { cn } from '@/lib/utils';
 import { SkeletonTable } from '../molecules/SkeletonTable';
 import { EmptyState } from '../molecules/EmptyState';
@@ -12,6 +12,7 @@ import {
   TABLE_HEADER_CELL,
   TABLE_BODY_CELL,
   TABLE_ROW_STYLES,
+  FOCUS_STATES,
 } from '@/lib/uiConstants';
 import type { PaginationInfo } from '@/types/organisms';
 
@@ -155,7 +156,7 @@ function DataTableComponent<T = Record<string, unknown>>(
   }
 
   return (
-    <div ref={ref} className={cn('space-y-4', className)}>
+    <div ref={ref} className={cn('space-y-4', className)} aria-live="polite">
       {/* Tabla */}
       <div className={TABLE_BASE_STYLES.container}>
         <div className={TABLE_BASE_STYLES.wrapper}>
@@ -239,14 +240,25 @@ const DataTableRow = memo(function DataTableRow<T>({
     if (onRowClick) onRowClick(row);
   }, [onRowClick, row]);
 
+  const handleKeyDown = useCallback((e: KeyboardEvent<HTMLTableRowElement>) => {
+    if (!onRowClick) return;
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      onRowClick(row);
+    }
+  }, [onRowClick, row]);
+
   return (
     <tr
-      role="row"
+      role={onRowClick ? 'button' : 'row'}
+      tabIndex={onRowClick ? 0 : undefined}
       onClick={onRowClick ? handleClick : undefined}
+      onKeyDown={onRowClick ? handleKeyDown : undefined}
       className={cn(
         TABLE_ROW_STYLES.base,
         hoverable && TABLE_ROW_STYLES.hoverable,
         onRowClick && TABLE_ROW_STYLES.clickable,
+        onRowClick && FOCUS_STATES.ring,
         striped && rowIndex % 2 === 1 && TABLE_ROW_STYLES.striped
       )}
     >
