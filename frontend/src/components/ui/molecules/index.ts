@@ -99,4 +99,14 @@ export type { RadioGroupProps, RadioOption } from './RadioGroup';
 export { Popover } from './Popover';
 export type { PopoverProps } from './Popover';
 
+// Field molecules — FormGroup + atom (Feb 2026 - Auditoría Fases 0-1)
+export { InputField } from './InputField';
+export type { InputFieldProps } from './InputField';
+
+export { SelectField } from './SelectField';
+export type { SelectFieldProps } from './SelectField';
+
+export { TextareaField } from './TextareaField';
+export type { TextareaFieldProps } from './TextareaField';
+
 // NOTA: Card movido a atoms/ (Feb 2026) - contenedor genérico sin lógica compuesta

@@ -1,12 +1,15 @@
 import { memo, useId, useState, useRef, useEffect, useCallback, forwardRef, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { cn } from '@/lib/utils';
+import { useCombineRefs } from '@/hooks/utils/useCombineRefs';
+import { useFloatingPosition, type Placement } from '@/hooks/utils/useFloatingPosition';
+import { useEscapeKey } from '@/hooks/utils/useEscapeKey';
 
 export interface TooltipProps {
   /** Contenido del tooltip */
   content: ReactNode;
-  /** Posición del tooltip */
-  position?: 'top' | 'bottom' | 'left' | 'right';
+  /** Posicion del tooltip */
+  position?: Placement;
   /** Delay en ms antes de mostrar */
   delay?: number;
   /** Elemento que activa el tooltip */
@@ -22,7 +25,7 @@ const PORTAL_TRANSFORMS = {
   right: '-translate-y-1/2',
 } as const;
 
-const OFFSET = 8; // px de separación del trigger
+const OFFSET = 8;
 
 /**
  * Tooltip - Tooltip accesible con portal y soporte de teclado
@@ -36,16 +39,14 @@ const Tooltip = memo(forwardRef<HTMLDivElement, TooltipProps>(function Tooltip({
 }: TooltipProps, ref) {
   const tooltipId = useId();
   const [visible, setVisible] = useState(false);
-  const [coords, setCoords] = useState({ top: 0, left: 0 });
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const triggerRef = useRef<HTMLDivElement | null>(null);
+  const [triggerRef, setRefs] = useCombineRefs<HTMLDivElement>(ref);
 
-  // Combinar ref externo con triggerRef interno
-  const setRefs = useCallback((node: HTMLDivElement | null) => {
-    triggerRef.current = node;
-    if (typeof ref === 'function') ref(node);
-    else if (ref) ref.current = node;
-  }, [ref]);
+  const { position: coords } = useFloatingPosition(triggerRef, {
+    placement: position,
+    offset: OFFSET,
+    enabled: visible,
+  });
 
   // Limpiar timeout al desmontar
   useEffect(() => {
@@ -55,49 +56,14 @@ const Tooltip = memo(forwardRef<HTMLDivElement, TooltipProps>(function Tooltip({
   }, []);
 
   // Escape key para cerrar
-  useEffect(() => {
-    if (!visible) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setVisible(false);
-        if (timeoutRef.current) {
-          clearTimeout(timeoutRef.current);
-          timeoutRef.current = null;
-        }
-      }
-    };
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [visible]);
-
-  // Calcular posición cuando se muestra
-  useEffect(() => {
-    if (!visible || !triggerRef.current) return;
-    const rect = triggerRef.current.getBoundingClientRect();
-    let top = 0;
-    let left = 0;
-
-    switch (position) {
-      case 'top':
-        top = rect.top - OFFSET;
-        left = rect.left + rect.width / 2;
-        break;
-      case 'bottom':
-        top = rect.bottom + OFFSET;
-        left = rect.left + rect.width / 2;
-        break;
-      case 'left':
-        top = rect.top + rect.height / 2;
-        left = rect.left - OFFSET;
-        break;
-      case 'right':
-        top = rect.top + rect.height / 2;
-        left = rect.right + OFFSET;
-        break;
+  const handleEscape = useCallback(() => {
+    setVisible(false);
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
     }
-
-    setCoords({ top, left });
-  }, [visible, position]);
+  }, []);
+  useEscapeKey(handleEscape, visible);
 
   const show = useCallback(() => {
     timeoutRef.current = setTimeout(() => setVisible(true), delay);

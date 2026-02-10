@@ -1,14 +1,16 @@
-import { useState, useRef, useCallback, useEffect, memo, forwardRef, useId, type ReactNode } from 'react';
+import { useState, useRef, useCallback, memo, forwardRef, useId, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { cn } from '@/lib/utils';
+import { useFloatingPosition, type Placement } from '@/hooks/utils/useFloatingPosition';
+import { useFloatingDismiss } from '@/hooks/utils/useFloatingDismiss';
 
 export interface PopoverProps {
   /** Elemento que dispara el popover (click) */
   trigger: ReactNode;
   /** Contenido del popover */
   content: ReactNode;
-  /** Posición relativa al trigger */
-  placement?: 'top' | 'bottom' | 'left' | 'right';
+  /** Posicion relativa al trigger */
+  placement?: Placement;
   /** Offset en px desde el trigger */
   offset?: number;
   /** Clases CSS para el contenedor del popover */
@@ -16,32 +18,6 @@ export interface PopoverProps {
   /** Clases CSS para el contenido */
   contentClassName?: string;
 }
-
-const PLACEMENT_STYLES: Record<string, (rect: DOMRect, offset: number) => { top: number; left: number }> = {
-  bottom: (rect, offset) => ({
-    top: rect.bottom + offset,
-    left: rect.left + rect.width / 2,
-  }),
-  top: (rect, offset) => ({
-    top: rect.top - offset,
-    left: rect.left + rect.width / 2,
-  }),
-  left: (rect, offset) => ({
-    top: rect.top + rect.height / 2,
-    left: rect.left - offset,
-  }),
-  right: (rect, offset) => ({
-    top: rect.top + rect.height / 2,
-    left: rect.right + offset,
-  }),
-};
-
-const TRANSFORM: Record<string, string> = {
-  bottom: 'translate(-50%, 0)',
-  top: 'translate(-50%, -100%)',
-  left: 'translate(-100%, -50%)',
-  right: 'translate(0, -50%)',
-};
 
 /**
  * Popover - Contenido flotante activado por click
@@ -68,78 +44,33 @@ const Popover = memo(forwardRef<HTMLDivElement, PopoverProps>(function Popover(
   ref
 ) {
   const [isOpen, setIsOpen] = useState(false);
-  const [position, setPosition] = useState({ top: 0, left: 0 });
   const triggerRef = useRef<HTMLDivElement>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
   const popoverId = useId();
-  const rafRef = useRef<number>(0);
 
-  const updatePosition = useCallback(() => {
-    const triggerEl = triggerRef.current;
-    if (!triggerEl) return;
-
-    const rect = triggerEl.getBoundingClientRect();
-    const calcPosition = PLACEMENT_STYLES[placement] || PLACEMENT_STYLES.bottom;
-    setPosition(calcPosition(rect, offset));
-  }, [placement, offset]);
-
-  const handleToggle = useCallback(() => {
-    setIsOpen(prev => {
-      if (!prev) {
-        // Calcular posición al abrir
-        requestAnimationFrame(updatePosition);
-      }
-      return !prev;
-    });
-  }, [updatePosition]);
+  const { position, transform, updatePosition } = useFloatingPosition(triggerRef, {
+    placement,
+    offset,
+    enabled: isOpen,
+  });
 
   const handleClose = useCallback(() => {
     setIsOpen(false);
   }, []);
 
-  // Cerrar al click fuera
-  useEffect(() => {
-    if (!isOpen) return;
+  useFloatingDismiss(handleClose, {
+    enabled: isOpen,
+    excludeRefs: [triggerRef, popoverRef],
+  });
 
-    const handleClickOutside = (e: MouseEvent) => {
-      const target = e.target as Node;
-      if (
-        triggerRef.current && !triggerRef.current.contains(target) &&
-        popoverRef.current && !popoverRef.current.contains(target)
-      ) {
-        handleClose();
+  const handleToggle = useCallback(() => {
+    setIsOpen(prev => {
+      if (!prev) {
+        requestAnimationFrame(updatePosition);
       }
-    };
-
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') handleClose();
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    document.addEventListener('keydown', handleEscape);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-      document.removeEventListener('keydown', handleEscape);
-    };
-  }, [isOpen, handleClose]);
-
-  // Actualizar posición en scroll/resize (debounced con rAF)
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const debouncedUpdate = () => {
-      cancelAnimationFrame(rafRef.current);
-      rafRef.current = requestAnimationFrame(updatePosition);
-    };
-
-    window.addEventListener('scroll', debouncedUpdate, true);
-    window.addEventListener('resize', debouncedUpdate);
-    return () => {
-      cancelAnimationFrame(rafRef.current);
-      window.removeEventListener('scroll', debouncedUpdate, true);
-      window.removeEventListener('resize', debouncedUpdate);
-    };
-  }, [isOpen, updatePosition]);
+      return !prev;
+    });
+  }, [updatePosition]);
 
   return (
     <div ref={ref} className={cn('inline-block', className)}>
@@ -162,7 +93,7 @@ const Popover = memo(forwardRef<HTMLDivElement, PopoverProps>(function Popover(
             position: 'fixed',
             top: position.top,
             left: position.left,
-            transform: TRANSFORM[placement],
+            transform,
             zIndex: 50,
           }}
           className={cn(

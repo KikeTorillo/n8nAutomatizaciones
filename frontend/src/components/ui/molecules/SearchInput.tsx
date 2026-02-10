@@ -1,7 +1,8 @@
-import { forwardRef, useState, useEffect, useCallback, useMemo, useRef, memo, type ChangeEvent, type InputHTMLAttributes } from 'react';
+import { forwardRef, useState, useEffect, useCallback, useMemo, memo, type ChangeEvent, type InputHTMLAttributes } from 'react';
 import { Search, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SEARCH_INPUT_SIZES, getInputBaseStyles } from '@/lib/uiConstants';
+import { useCombineRefs } from '@/hooks/utils/useCombineRefs';
 import type { Size } from '@/types/ui';
 
 export interface SearchInputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'size' | 'onChange'> {
@@ -76,14 +77,7 @@ const SearchInput = memo(forwardRef<HTMLInputElement, SearchInputProps>(
     ref
   ) {
     const [internalValue, setInternalValue] = useState(value);
-    const internalRef = useRef<HTMLInputElement>(null);
-
-    // Combinar refs (externo + interno)
-    const setRefs = useCallback((node: HTMLInputElement | null) => {
-      internalRef.current = node;
-      if (typeof ref === 'function') ref(node);
-      else if (ref) ref.current = node;
-    }, [ref]);
+    const [internalRef, setRefs] = useCombineRefs<HTMLInputElement>(ref);
 
     // Callback estable para evitar cancelaciones de debounce
     const stableOnSearch = useCallback((searchValue: string) => {

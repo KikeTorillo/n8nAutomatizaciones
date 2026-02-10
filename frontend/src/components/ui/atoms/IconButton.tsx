@@ -26,7 +26,7 @@ export interface IconButtonProps
   /** aria-label obligatorio para accesibilidad */
   label: string;
   /** Mostrar estado de carga con spinner */
-  loading?: boolean;
+  isLoading?: boolean;
   /** Estado activo (ej: filtro seleccionado) */
   active?: boolean;
   /** Clases CSS adicionales */
@@ -46,7 +46,7 @@ const IconButton = memo(
       variant = 'ghost',
       size = 'md',
       label,
-      loading = false,
+      isLoading = false,
       active = false,
       disabled = false,
       className,
@@ -61,9 +61,9 @@ const IconButton = memo(
       <button
         ref={ref}
         type={type}
-        disabled={disabled || loading}
+        disabled={disabled || isLoading}
         aria-label={label}
-        aria-busy={loading || undefined}
+        aria-busy={isLoading || undefined}
         aria-pressed={active || undefined}
         className={cn(
           'inline-flex items-center justify-center rounded-lg transition-colors',
@@ -76,7 +76,7 @@ const IconButton = memo(
         )}
         {...props}
       >
-        {loading ? (
+        {isLoading ? (
           <Loader2 className={cn(sizeConfig.icon, 'animate-spin')} aria-hidden="true" />
         ) : (
           <span className={cn('flex items-center justify-center', sizeConfig.icon)} aria-hidden="true">

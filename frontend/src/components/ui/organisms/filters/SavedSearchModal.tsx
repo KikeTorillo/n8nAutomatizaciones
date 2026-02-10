@@ -127,8 +127,8 @@ const SavedSearchModal = memo(
                 : 'border-gray-300 dark:border-gray-600',
               'text-gray-900 dark:text-gray-100',
               'placeholder-gray-400 dark:placeholder-gray-500',
-              'focus:ring-2 focus:ring-primary-500 focus:border-primary-500',
-              'dark:focus:ring-primary-400 dark:focus:border-primary-400'
+              'focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:border-primary-500',
+              'dark:focus-visible:ring-primary-400 dark:focus-visible:border-primary-400'
             )}
             autoFocus
           />
@@ -145,7 +145,7 @@ const SavedSearchModal = memo(
             onChange={handleDefaultChange}
             className={cn(
               'h-4 w-4 rounded border-gray-300 dark:border-gray-600',
-              'text-primary-600 focus:ring-primary-500',
+              'text-primary-600 focus-visible:ring-primary-500',
               'dark:bg-gray-700'
             )}
           />

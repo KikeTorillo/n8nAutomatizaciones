@@ -24,7 +24,7 @@ export interface ToggleSwitchProps {
   /** Icono cuando está apagado */
   disabledIcon?: ReactNode;
   /** Estado de carga */
-  loading?: boolean;
+  isLoading?: boolean;
   /** Icono de carga personalizado */
   loadingIcon?: ReactNode;
 }
@@ -64,19 +64,19 @@ const ToggleSwitch = memo(forwardRef<HTMLButtonElement, ToggleSwitchProps>(funct
   className,
   enabledIcon,
   disabledIcon,
-  loading = false,
+  isLoading = false,
   loadingIcon,
 }, ref) {
   const sizeConfig = TOGGLE_SIZES[size] || TOGGLE_SIZES.md;
 
   const handleClick = () => {
-    if (!disabled && !loading && onChange) {
+    if (!disabled && !isLoading && onChange) {
       onChange(!enabled);
     }
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLButtonElement>) => {
-    if ((e.key === 'Enter' || e.key === ' ') && !disabled && !loading) {
+    if ((e.key === 'Enter' || e.key === ' ') && !disabled && !isLoading) {
       e.preventDefault();
       onChange?.(!enabled);
     }
@@ -84,10 +84,10 @@ const ToggleSwitch = memo(forwardRef<HTMLButtonElement, ToggleSwitchProps>(funct
 
   // Renderizar icono según estado
   const renderIcon = (): ReactNode => {
-    if (loading && loadingIcon) {
+    if (isLoading && loadingIcon) {
       return loadingIcon;
     }
-    if (loading) {
+    if (isLoading) {
       return <Spinner className={cn(sizeConfig.icon, 'text-gray-400')} />;
     }
     if (enabled && enabledIcon) {
@@ -106,7 +106,7 @@ const ToggleSwitch = memo(forwardRef<HTMLButtonElement, ToggleSwitchProps>(funct
       role="switch"
       aria-checked={enabled}
       aria-label={label}
-      disabled={disabled || loading}
+      disabled={disabled || isLoading}
       onClick={handleClick}
       onKeyDown={handleKeyDown}
       className={cn(
@@ -116,7 +116,7 @@ const ToggleSwitch = memo(forwardRef<HTMLButtonElement, ToggleSwitchProps>(funct
         'dark:focus-visible:ring-offset-gray-900',
         sizeConfig.track,
         enabled ? TOGGLE_COLORS.enabled : TOGGLE_COLORS.disabled,
-        (disabled || loading) && 'opacity-50 cursor-not-allowed',
+        (disabled || isLoading) && 'opacity-50 cursor-not-allowed',
         className
       )}
     >

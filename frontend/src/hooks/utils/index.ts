@@ -49,3 +49,8 @@ export * from './useGoogleFonts';
 
 // Previous value (Feb 2026 - Auditoría Fase 5)
 export * from './usePrevious';
+
+// Ref combining + floating utilities (Feb 2026 - Auditoría Fases 0-1)
+export * from './useCombineRefs';
+export * from './useFloatingPosition';
+export * from './useFloatingDismiss';

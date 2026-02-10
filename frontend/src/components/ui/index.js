@@ -28,6 +28,7 @@ export { Tooltip } from './molecules/Tooltip';
 export { Popover } from './molecules/Popover';
 export { Avatar } from './atoms/Avatar';
 export { Text } from './atoms/Text';
+export { Skeleton } from './atoms/Skeleton';
 // NOTA: ToggleSwitch movido a molecules/ por complejidad (Ene 2026) - ver sección MOLECULES
 
 // ========== MOLECULES ==========
@@ -52,6 +53,9 @@ export { DropdownMenu } from './organisms/DropdownMenu';
 export { ToggleSwitch } from './molecules/ToggleSwitch';
 export { IconButton } from './atoms/IconButton';
 export { Card } from './atoms/Card';
+export { InputField } from './molecules/InputField';
+export { SelectField } from './molecules/SelectField';
+export { TextareaField } from './molecules/TextareaField';
 
 // ========== ORGANISMS ==========
 export { SearchInput } from './molecules/SearchInput';
