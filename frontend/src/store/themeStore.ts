@@ -7,7 +7,6 @@ type ResolvedTheme = 'light' | 'dark';
 interface ThemeState {
   theme: ThemeMode;
   resolvedTheme: ResolvedTheme;
-  _cleanupFn: (() => void) | null;
   setTheme: (theme: ThemeMode) => void;
   toggleTheme: () => void;
   applyTheme: () => void;
@@ -15,83 +14,86 @@ interface ThemeState {
   isDark: () => boolean;
 }
 
+// Cleanup ref fuera del store — evita memory leak por acumulación en state
+let _activeCleanup: (() => void) | null = null;
+
 const useThemeStore = create<ThemeState>()(
   devtools(
     persist(
       (set, get) => ({
-      theme: 'dark' as ThemeMode,
-      resolvedTheme: 'dark' as ResolvedTheme,
-      _cleanupFn: null,
+        theme: 'dark' as ThemeMode,
+        resolvedTheme: 'dark' as ResolvedTheme,
 
-      setTheme: (theme: ThemeMode) => {
-        set({ theme });
-        get().applyTheme();
-      },
+        setTheme: (theme: ThemeMode) => {
+          set({ theme });
+          get().applyTheme();
+        },
 
-      toggleTheme: () => {
-        const { theme } = get();
-        const newTheme: ThemeMode = theme === 'dark' ? 'light' : 'dark';
-        set({ theme: newTheme });
-        get().applyTheme();
-      },
-
-      applyTheme: () => {
-        const { theme } = get();
-        let resolved: ResolvedTheme = theme as ResolvedTheme;
-
-        if (theme === 'system') {
-          resolved = window.matchMedia('(prefers-color-scheme: dark)').matches
-            ? 'dark'
-            : 'light';
-        }
-
-        const root = document.documentElement;
-        root.classList.remove('light', 'dark');
-        root.classList.add(resolved);
-
-        const metaThemeColor = document.querySelector('meta[name="theme-color"]');
-        if (metaThemeColor) {
-          metaThemeColor.setAttribute(
-            'content',
-            resolved === 'dark' ? '#111827' : '#ffffff'
-          );
-        }
-
-        set({ resolvedTheme: resolved });
-      },
-
-      initSystemListener: () => {
-        const currentCleanup = get()._cleanupFn;
-        if (currentCleanup) {
-          currentCleanup();
-        }
-
-        const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-
-        const handleChange = () => {
+        toggleTheme: () => {
           const { theme } = get();
+          const newTheme: ThemeMode = theme === 'dark' ? 'light' : 'dark';
+          set({ theme: newTheme });
+          get().applyTheme();
+        },
+
+        applyTheme: () => {
+          const { theme } = get();
+          let resolved: ResolvedTheme = theme as ResolvedTheme;
+
           if (theme === 'system') {
-            get().applyTheme();
+            resolved = window.matchMedia('(prefers-color-scheme: dark)').matches
+              ? 'dark'
+              : 'light';
           }
-        };
 
-        mediaQuery.addEventListener('change', handleChange);
-        get().applyTheme();
+          const root = document.documentElement;
+          root.classList.remove('light', 'dark');
+          root.classList.add(resolved);
 
-        const cleanup = () => {
-          mediaQuery.removeEventListener('change', handleChange);
-          set({ _cleanupFn: null });
-        };
+          const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+          if (metaThemeColor) {
+            metaThemeColor.setAttribute(
+              'content',
+              resolved === 'dark' ? '#111827' : '#ffffff'
+            );
+          }
 
-        set({ _cleanupFn: cleanup });
+          set({ resolvedTheme: resolved });
+        },
 
-        return cleanup;
-      },
+        initSystemListener: () => {
+          // Idempotente: remover listener anterior antes de crear uno nuevo
+          if (_activeCleanup) {
+            _activeCleanup();
+            _activeCleanup = null;
+          }
 
-      isDark: () => {
-        return get().resolvedTheme === 'dark';
-      },
-    }),
+          const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+
+          const handleChange = () => {
+            const { theme } = get();
+            if (theme === 'system') {
+              get().applyTheme();
+            }
+          };
+
+          mediaQuery.addEventListener('change', handleChange);
+          get().applyTheme();
+
+          const cleanup = () => {
+            mediaQuery.removeEventListener('change', handleChange);
+            _activeCleanup = null;
+          };
+
+          _activeCleanup = cleanup;
+
+          return cleanup;
+        },
+
+        isDark: () => {
+          return get().resolvedTheme === 'dark';
+        },
+      }),
       {
         name: 'theme-storage',
         partialize: (state) => ({

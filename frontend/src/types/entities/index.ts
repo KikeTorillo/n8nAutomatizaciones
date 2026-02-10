@@ -197,3 +197,32 @@ export type {
   LiquidacionConsigna,
   EstadoLiquidacion,
 } from './inventario';
+export type {
+  PerfilMarketplace,
+  CategoriaMarketplace,
+  ResenaMarketplace,
+  EstadoPerfil,
+} from './marketplace';
+export type {
+  Conector,
+  Gateway,
+  ConectorListParams,
+  ConectorCreateData,
+  ConectorUpdateData,
+} from './conector';
+export type {
+  Chatbot,
+  ChatbotConfigData,
+  ChatbotUpdateData,
+  ChatbotListParams,
+  PlataformaChatbot,
+} from './chatbot';
+export type {
+  Moneda,
+  TipoMoneda,
+} from './moneda';
+export type {
+  Paquete,
+  PaqueteItem,
+  EstadoPaquete,
+} from './paquete';

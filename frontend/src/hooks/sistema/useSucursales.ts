@@ -77,7 +77,7 @@ const hooks = createCRUDHooks<Sucursal, CrearSucursalData, ActualizarSucursalDat
     delete: 'eliminar',
   },
   sanitize: sanitizeSucursal,
-  invalidateOnCreate: [queryKeys.sistema.sucursales.all[0], 'sucursal-matriz'],
+  invalidateOnCreate: [queryKeys.sistema.sucursales.all[0], queryKeys.sistema.sucursales.matriz[0]],
   invalidateOnUpdate: [queryKeys.sistema.sucursales.all[0]],
   invalidateOnDelete: [queryKeys.sistema.sucursales.all[0]],
   errorMessages: {
@@ -97,7 +97,7 @@ export const useEliminarSucursal = hooks.useDelete;
 
 export function useSucursalMatriz(): UseQueryResult<Sucursal> {
   return useQuery({
-    queryKey: ['sucursal-matriz'],
+    queryKey: queryKeys.sistema.sucursales.matriz,
     queryFn: async () => {
       const response = await sucursalesApi.obtenerMatriz();
       return (response as any).data.data;
@@ -108,7 +108,7 @@ export function useSucursalMatriz(): UseQueryResult<Sucursal> {
 
 export function useSucursalesUsuario(usuarioId: number | string | null | undefined): UseQueryResult<Sucursal[]> {
   return useQuery({
-    queryKey: ['sucursales-usuario', usuarioId],
+    queryKey: queryKeys.sistema.sucursales.porUsuario(usuarioId),
     queryFn: async () => {
       const response = await sucursalesApi.obtenerPorUsuario(usuarioId as number);
       return (response as any).data.data || [];
@@ -122,7 +122,7 @@ export function useSucursalesUsuario(usuarioId: number | string | null | undefin
 
 export function useUsuariosSucursal(sucursalId: number | string | null | undefined): UseQueryResult<Usuario[]> {
   return useQuery({
-    queryKey: ['sucursal-usuarios', sucursalId],
+    queryKey: queryKeys.sistema.sucursales.usuarios(sucursalId),
     queryFn: async () => {
       const response = await sucursalesApi.obtenerUsuarios(sucursalId as number);
       return (response as any).data.data || [];
@@ -141,7 +141,7 @@ export function useAsignarUsuarioSucursal(): UseMutationResult<unknown, Error, {
       return (response as any).data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['sucursal-usuarios', variables.sucursalId], exact: true, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.sistema.sucursales.usuarios(variables.sucursalId), exact: true, refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: queryKeys.sistema.sucursales.all, refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: ['sucursales-usuario'], refetchType: 'active' });
     },
@@ -153,7 +153,7 @@ export function useAsignarUsuarioSucursal(): UseMutationResult<unknown, Error, {
 
 export function useProfesionalesSucursal(sucursalId: number | string | null | undefined): UseQueryResult<Profesional[]> {
   return useQuery({
-    queryKey: ['sucursal-profesionales', sucursalId],
+    queryKey: queryKeys.sistema.sucursales.profesionales(sucursalId),
     queryFn: async () => {
       const response = await sucursalesApi.obtenerProfesionales(sucursalId as number);
       return (response as any).data.data || [];
@@ -172,7 +172,7 @@ export function useAsignarProfesionalSucursal(): UseMutationResult<unknown, Erro
       return (response as any).data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['sucursal-profesionales', variables.sucursalId], exact: true, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.sistema.sucursales.profesionales(variables.sucursalId), exact: true, refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: queryKeys.sistema.sucursales.all, refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('create', 'Profesional'),
@@ -186,7 +186,7 @@ export function useMetricasSucursales(
   { enabled = true }: { enabled?: boolean } = {},
 ): UseQueryResult<unknown> {
   return useQuery({
-    queryKey: ['metricas-sucursales', params],
+    queryKey: queryKeys.sistema.sucursales.metricas(params),
     queryFn: async () => {
       const sanitizedParams = Object.entries(params).reduce<Record<string, unknown>>((acc, [key, value]) => {
         if (value !== '' && value !== null && value !== undefined) {
@@ -227,7 +227,7 @@ export function useTransferencias(params: Record<string, unknown> = {}): UseQuer
 
 export function useTransferencia(id: number | string | null | undefined): UseQueryResult<Transferencia> {
   return useQuery({
-    queryKey: ['transferencia', id],
+    queryKey: queryKeys.sistema.sucursales.transferencia(id),
     queryFn: async () => {
       const response = await sucursalesApi.obtenerTransferencia(id as number);
       return (response as any).data.data;
@@ -265,7 +265,7 @@ export function useEnviarTransferencia() {
       return (response as any).data.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['transferencia', data.id], exact: true, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.sistema.sucursales.transferencia(data.id), exact: true, refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: queryKeys.inventario.transferencias.all, refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('update', 'Transferencia'),
@@ -281,7 +281,7 @@ export function useRecibirTransferencia() {
       return (response as any).data.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['transferencia', data.id], exact: true, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.sistema.sucursales.transferencia(data.id), exact: true, refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: queryKeys.inventario.transferencias.all, refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('update', 'Transferencia'),
@@ -297,7 +297,7 @@ export function useCancelarTransferencia() {
       return (response as any).data.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['transferencia', data.id], exact: true, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.sistema.sucursales.transferencia(data.id), exact: true, refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: queryKeys.inventario.transferencias.all, refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('update', 'Transferencia'),
@@ -313,7 +313,7 @@ export function useAgregarItemTransferencia() {
       return (response as any).data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['transferencia', variables.transferenciaId], exact: true, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.sistema.sucursales.transferencia(variables.transferenciaId), exact: true, refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: queryKeys.inventario.transferencias.all, refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('create', 'Item'),
@@ -329,7 +329,7 @@ export function useEliminarItemTransferencia() {
       return (response as any).data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['transferencia', variables.transferenciaId], exact: true, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.sistema.sucursales.transferencia(variables.transferenciaId), exact: true, refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: queryKeys.inventario.transferencias.all, refetchType: 'active' });
     },
     onError: createCRUDErrorHandler('delete', 'Item'),

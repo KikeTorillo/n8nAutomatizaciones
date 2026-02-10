@@ -34,7 +34,7 @@ const FelicitacionModel = require('../models/felicitacion.model');
 const FotoEventoModel = require('../models/foto.model');
 const storageService = require('../../../services/storage');
 const logger = require('../../../utils/logger');
-const { ResponseHelper } = require('../../../utils/helpers');
+const { ResponseHelper, LimitesHelper } = require('../../../utils/helpers');
 const { ResourceNotFoundError, ValidationError } = require('../../../utils/errors');
 const asyncHandler = require('../../../middleware/asyncHandler');
 
@@ -482,6 +482,9 @@ class PublicController {
 
         PublicController._validarPermisoGaleria(evento);
 
+        // Verificar límite de fotos del plan
+        await LimitesHelper.verificarLimiteFotosGaleriaOLanzar(evento.organizacion_id, evento.id, 1);
+
         // Crear foto
         const foto = await FotoEventoModel.crearPublica({
             ...datos,
@@ -533,6 +536,9 @@ class PublicController {
         }
 
         PublicController._validarPermisoGaleria(evento);
+
+        // Verificar límite de fotos del plan
+        await LimitesHelper.verificarLimiteFotosGaleriaOLanzar(evento.organizacion_id, evento.id, 1);
 
         // Subir archivo a MinIO
         const uploadResult = await storageService.upload({

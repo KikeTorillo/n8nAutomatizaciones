@@ -9,6 +9,7 @@ import { STALE_TIMES } from '@/app/queryClient';
 import { profesionalesApi, habilidadesApi } from '@/services/api/endpoints';
 import { useToast } from '@/hooks/utils';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
+import { queryKeys } from '@/hooks/config';
 
 // ==================== INTERFACES ====================
 
@@ -122,22 +123,11 @@ export const NIVELES_HABILIDAD: NivelHabilidad[] = [
 
 // ==================== QUERY KEYS ====================
 
-export const catalogoKeys = {
-  all: ['catalogo-habilidades'] as const,
-  lists: () => [...catalogoKeys.all, 'list'] as const,
-  list: (filters: CatalogoFiltros) => [...catalogoKeys.lists(), filters] as const,
-  details: () => [...catalogoKeys.all, 'detail'] as const,
-  detail: (habilidadId: number) => [...catalogoKeys.details(), habilidadId] as const,
-  profesionales: (habilidadId: number) => [...catalogoKeys.all, 'profesionales', habilidadId] as const,
-};
+/** @deprecated Usar queryKeys.personas.habilidades.catalogo */
+export const catalogoKeys = queryKeys.personas.habilidades.catalogo;
 
-export const habilidadesEmpleadoKeys = {
-  all: ['habilidades-empleado'] as const,
-  lists: () => [...habilidadesEmpleadoKeys.all, 'list'] as const,
-  list: (profesionalId: number, filters: EmpleadoHabilidadFiltros) => [...habilidadesEmpleadoKeys.lists(), profesionalId, filters] as const,
-  details: () => [...habilidadesEmpleadoKeys.all, 'detail'] as const,
-  detail: (profesionalId: number, habilidadEmpleadoId: number) => [...habilidadesEmpleadoKeys.details(), profesionalId, habilidadEmpleadoId] as const,
-};
+/** @deprecated Usar queryKeys.personas.habilidades.empleado */
+export const habilidadesEmpleadoKeys = queryKeys.personas.habilidades.empleado;
 
 // ==================== HOOKS CATÁLOGO ====================
 

@@ -338,10 +338,35 @@ export const queryKeys = {
     },
     // Tabs de profesionales
     educacionFormal: (profesionalId: Id) => ['educacion-formal', profesionalId] as const,
-    experienciaLaboral: (profesionalId: Id) => ['experiencia-laboral', profesionalId] as const,
-    habilidades: (profesionalId: Id) => ['habilidades', profesionalId] as const,
     cuentasBancarias: (profesionalId: Id) => ['cuentas-bancarias', profesionalId] as const,
     documentosEmpleado: (profesionalId: Id) => ['documentos-empleado', profesionalId] as const,
+    // Experiencia laboral (centralizado Feb 2026)
+    experienciaLaboral: {
+      all: ['experiencia-laboral'] as const,
+      lists: () => ['experiencia-laboral', 'list'] as const,
+      list: (profesionalId: Id, filters?: Params) => ['experiencia-laboral', 'list', profesionalId, filters] as const,
+      details: () => ['experiencia-laboral', 'detail'] as const,
+      detail: (profesionalId: Id, experienciaId: Id) => ['experiencia-laboral', 'detail', profesionalId, experienciaId] as const,
+      actual: (profesionalId: Id) => ['experiencia-laboral', 'actual', profesionalId] as const,
+    },
+    // Habilidades (centralizado Feb 2026)
+    habilidades: {
+      catalogo: {
+        all: ['catalogo-habilidades'] as const,
+        lists: () => ['catalogo-habilidades', 'list'] as const,
+        list: (filters?: Params) => ['catalogo-habilidades', 'list', filters] as const,
+        details: () => ['catalogo-habilidades', 'detail'] as const,
+        detail: (habilidadId: Id) => ['catalogo-habilidades', 'detail', habilidadId] as const,
+        profesionales: (habilidadId: Id) => ['catalogo-habilidades', 'profesionales', habilidadId] as const,
+      },
+      empleado: {
+        all: ['habilidades-empleado'] as const,
+        lists: () => ['habilidades-empleado', 'list'] as const,
+        list: (profesionalId: Id, filters?: Params) => ['habilidades-empleado', 'list', profesionalId, filters] as const,
+        details: () => ['habilidades-empleado', 'detail'] as const,
+        detail: (profesionalId: Id, habilidadEmpleadoId: Id) => ['habilidades-empleado', 'detail', profesionalId, habilidadEmpleadoId] as const,
+      },
+    },
     // Incapacidades (Ene 2026)
     incapacidades: {
       all: ['incapacidades'] as const,
@@ -380,6 +405,12 @@ export const queryKeys = {
     sucursales: {
       all: ['sucursales'] as const,
       detail: (id: Id) => ['sucursal', id] as const,
+      matriz: ['sucursal-matriz'] as const,
+      porUsuario: (usuarioId: Id) => ['sucursales-usuario', usuarioId] as const,
+      usuarios: (sucursalId: Id) => ['sucursal-usuarios', sucursalId] as const,
+      profesionales: (sucursalId: Id) => ['sucursal-profesionales', sucursalId] as const,
+      metricas: (params?: Params) => ['metricas-sucursales', params] as const,
+      transferencia: (id: Id) => ['transferencia', id] as const,
     },
     workflows: {
       all: ['workflows'] as const,

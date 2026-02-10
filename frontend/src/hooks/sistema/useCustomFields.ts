@@ -163,7 +163,7 @@ export function useCrearCustomFieldDefinicion() {
         return acc;
       }, {});
 
-      const response = await customFieldsApi.crearDefinicion(sanitized);
+      const response = await customFieldsApi.crearDefinicion(sanitized as any);
       return (response as any).data.data;
     },
     onSuccess: (_: unknown, variables: CrearDefinicionData) => {

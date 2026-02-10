@@ -1,5 +1,5 @@
 import { memo, forwardRef } from 'react';
-import { ConfirmDialog } from '../organisms/ConfirmDialog';
+import { ConfirmDialog } from './ConfirmDialog';
 
 /**
  * Props del componente DeleteConfirmDialog

@@ -73,9 +73,10 @@ export type { TooltipProps } from './Tooltip';
 export { SmartButtons } from './SmartButtons';
 export type { SmartButtonsProps } from './SmartButtons';
 
-// Movido desde organisms/ (Feb 2026) - wrapper simple sobre ConfirmDialog
-export { DeleteConfirmDialog } from './DeleteConfirmDialog';
-export type { DeleteConfirmDialogProps } from './DeleteConfirmDialog';
+// NOTA: DeleteConfirmDialog movido a organisms/ (Feb 2026) - importa de organism (ConfirmDialog)
+// Re-export para retrocompat
+export { DeleteConfirmDialog } from '../organisms/DeleteConfirmDialog';
+export type { DeleteConfirmDialogProps } from '../organisms/DeleteConfirmDialog';
 
 // Movido desde organisms/ (Feb 2026) - grid simple de StatCard molecules
 export { StatCardGrid } from './StatCardGrid';

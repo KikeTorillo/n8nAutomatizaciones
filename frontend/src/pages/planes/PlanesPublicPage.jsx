@@ -106,9 +106,11 @@ function PlanesPublicPage() {
   });
 
   // planesData.data = respuesta del API { success, data: [...planes...] }
-  const planes = Array.isArray(planesData?.data?.data)
+  // Excluir planes de pago único (B2C invitaciones) — se muestran en /invitaciones/precios
+  const todosPlanes = Array.isArray(planesData?.data?.data)
     ? planesData.data.data
     : planesData?.data?.items || planesData?.data?.planes || [];
+  const planes = useMemo(() => todosPlanes.filter(p => p.tipo_cobro !== 'unico'), [todosPlanes]);
 
   // Separar planes recurrentes de únicos
   const planesRecurrentes = useMemo(() =>

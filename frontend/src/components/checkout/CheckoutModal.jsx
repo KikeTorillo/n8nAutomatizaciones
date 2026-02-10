@@ -17,7 +17,7 @@ import { useAuthStore, selectIsAuthenticated } from '@/store';
  * @param {Object} plan - Plan seleccionado
  * @param {string} periodo - Período de facturación (mensual, trimestral, anual)
  */
-function CheckoutModal({ isOpen, onClose, plan, periodo = 'mensual' }) {
+function CheckoutModal({ isOpen, onClose, plan, periodo = 'mensual', returnTo }) {
   const navigate = useNavigate();
   const isAuthenticated = useAuthStore(selectIsAuthenticated);
 
@@ -39,9 +39,17 @@ function CheckoutModal({ isOpen, onClose, plan, periodo = 'mensual' }) {
         timestamp: Date.now()
       }));
     }
+    // Marcar origen B2C para que ActivarCuentaPage haga quick onboarding
+    if (returnTo) {
+      localStorage.setItem('nexo_origen_b2c', 'true');
+    }
     onClose();
-    navigate(destino);
-  }, [plan, periodo, onClose, navigate]);
+    // Login soporta returnTo en URL; registro usa nexo_origen_b2c vía ActivarCuentaPage
+    const url = returnTo && destino === '/login'
+      ? `${destino}?returnTo=${encodeURIComponent(returnTo)}`
+      : destino;
+    navigate(url);
+  }, [plan, periodo, onClose, navigate, returnTo]);
 
   // Calcular precio base según período (pago único usa precio_mensual directamente)
   const calcularPrecioBase = useCallback(() => {

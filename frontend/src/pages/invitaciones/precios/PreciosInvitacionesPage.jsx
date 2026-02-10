@@ -2,7 +2,7 @@
  * PreciosInvitacionesPage — Planes y precios B2C con FAQ
  * Wrapper sobre usePlanesPublicos con layout B2C y solo planes tipo_cobro='unico'
  */
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Check, Loader2, ChevronDown } from 'lucide-react';
 import { usePlanesPublicos } from '@/hooks/suscripciones-negocio';
 import { useAuthStore, selectIsAuthenticated } from '@/store';
@@ -61,7 +61,35 @@ export default function PreciosInvitacionesPage() {
   const isAuthenticated = useAuthStore(selectIsAuthenticated);
 
   const { data: planesData, isLoading } = usePlanesPublicos();
-  const planes = useMemo(() => (Array.isArray(planesData) ? planesData : []).filter(p => p.activo), [planesData]);
+  const planes = useMemo(
+    () => (Array.isArray(planesData) ? planesData : []).filter(p => p.tipo_cobro === 'unico'),
+    [planesData]
+  );
+
+  // Auto-checkout: si el usuario acaba de registrarse/loguearse y tiene un plan guardado
+  useEffect(() => {
+    if (!isAuthenticated || planes.length === 0) return;
+
+    const saved = localStorage.getItem('nexo_plan_seleccionado');
+    if (!saved) return;
+
+    try {
+      const { plan_id, timestamp } = JSON.parse(saved);
+      const UNA_HORA = 60 * 60 * 1000;
+      if (Date.now() - timestamp > UNA_HORA) {
+        localStorage.removeItem('nexo_plan_seleccionado');
+        return;
+      }
+      const plan = planes.find(p => p.id === plan_id);
+      if (plan) {
+        localStorage.removeItem('nexo_plan_seleccionado');
+        setPlanSeleccionado(plan);
+        setCheckoutOpen(true);
+      }
+    } catch {
+      localStorage.removeItem('nexo_plan_seleccionado');
+    }
+  }, [isAuthenticated, planes]);
 
   const handleSeleccionar = (plan) => {
     setPlanSeleccionado(plan);
@@ -93,10 +121,10 @@ export default function PreciosInvitacionesPage() {
             <div className={`grid gap-6 max-w-5xl mx-auto ${
               planes.length <= 3 ? `grid-cols-1 md:grid-cols-${planes.length}` : 'grid-cols-1 md:grid-cols-3'
             }`}>
-              {planes.map((plan, i) => {
-                const precio = plan.precios?.find(p => p.tipo_cobro === 'unico') || plan.precios?.[0];
+              {planes.map((plan) => {
+                const precio = parseFloat(plan.precio_mensual) || 0;
                 const features = plan.features || [];
-                const destacado = plan.destacado || i === 1;
+                const destacado = !!plan.destacado;
 
                 return (
                   <div
@@ -114,21 +142,12 @@ export default function PreciosInvitacionesPage() {
                     )}
                     <h3 className="text-xl font-bold text-gray-900 dark:text-white">{plan.nombre}</h3>
                     <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 mb-6">{plan.descripcion}</p>
-                    {precio && (
-                      <div className="mb-6">
-                        <span className="text-4xl font-bold text-gray-900 dark:text-white">
-                          {formatCurrency(precio.precio)}
-                        </span>
-                        {precio.tipo_cobro === 'unico' && (
-                          <span className="text-sm text-gray-500 dark:text-gray-400 ml-2">pago único</span>
-                        )}
-                        {plan.dias_trial > 0 && (
-                          <p className="text-sm text-pink-600 dark:text-pink-400 mt-1">
-                            {plan.dias_trial} días de prueba gratis
-                          </p>
-                        )}
-                      </div>
-                    )}
+                    <div className="mb-6">
+                      <span className="text-4xl font-bold text-gray-900 dark:text-white">
+                        {formatCurrency(precio)}
+                      </span>
+                      <span className="text-sm text-gray-500 dark:text-gray-400 ml-2">pago único</span>
+                    </div>
                     <ul className="space-y-3 mb-8 flex-1">
                       {features.map((f, j) => (
                         <li key={j} className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
@@ -174,6 +193,7 @@ export default function PreciosInvitacionesPage() {
         isOpen={checkoutOpen}
         onClose={() => { setCheckoutOpen(false); setPlanSeleccionado(null); }}
         plan={planSeleccionado}
+        returnTo="/invitaciones/precios"
       />
     </InvitacionesPublicLayout>
   );

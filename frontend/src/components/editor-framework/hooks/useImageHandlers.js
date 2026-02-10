@@ -18,7 +18,7 @@ import { useUploadArchivo, useToast } from '@/hooks/utils';
  * @param {Function} options.onUpdate - Callback para actualizar el bloque (id, cambios)
  * @param {Object} options.uploadConfig - Config de upload { folder, entidadTipo, entidadId }
  */
-export function useImageHandlers({ entity, onUpdate, uploadConfig }) {
+export function useImageHandlers({ entity, onUpdate, uploadConfig, enabled = true }) {
   const uploadArchivo = useUploadArchivo();
   const toast = useToast();
 
@@ -92,10 +92,10 @@ export function useImageHandlers({ entity, onUpdate, uploadConfig }) {
 
   return {
     unsplashState,
-    openUnsplash,
+    openUnsplash: enabled ? openUnsplash : null,
     closeUnsplash,
     handleUnsplashSelect,
-    handleUploadImage,
+    handleUploadImage: enabled ? handleUploadImage : null,
     isUploading: uploadArchivo.isPending,
   };
 }

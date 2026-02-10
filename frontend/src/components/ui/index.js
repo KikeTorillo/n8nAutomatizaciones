@@ -64,7 +64,7 @@ export { default as IconPicker, IconPickerCompact, ICONOS_MAP, CATEGORIAS_ICONOS
 export { MultiSelect } from './organisms/MultiSelect';
 export { BarcodeScanner } from './organisms/BarcodeScanner';
 export { ConfirmDialog } from './organisms/ConfirmDialog';
-export { DeleteConfirmDialog } from './molecules/DeleteConfirmDialog';
+export { DeleteConfirmDialog } from './organisms/DeleteConfirmDialog';
 export { DataTable, DataTableActions, DataTableActionButton } from './organisms/DataTable';
 export { FilterPanel, FilterChips } from './organisms/FilterPanel';
 export { StatCardGrid } from './molecules/StatCardGrid';

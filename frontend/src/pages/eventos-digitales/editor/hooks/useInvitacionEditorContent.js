@@ -25,6 +25,7 @@ export function useInvitacionEditorContent() {
     evento,
     bloqueSeleccionadoCompleto,
     tema,
+    isBorrador,
     handleActualizarBloque,
     handleActualizarPlantilla,
   } = useInvitacionEditor();
@@ -44,6 +45,7 @@ export function useInvitacionEditorContent() {
       entidadTipo: 'evento_digital',
       entidadId: evento?.id,
     },
+    enabled: !isBorrador,
   });
 
   // Props para editores específicos

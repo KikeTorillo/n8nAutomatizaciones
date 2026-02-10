@@ -8,6 +8,7 @@ import { STALE_TIMES } from '@/app/queryClient';
 import { profesionalesApi } from '@/services/api/endpoints';
 import { useToast } from '@/hooks/utils';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
+import { queryKeys } from '@/hooks/config';
 
 // ==================== INTERFACES ====================
 
@@ -44,17 +45,8 @@ interface ReordenarExperienciaParams {
 
 // ==================== QUERY KEYS ====================
 
-export const experienciaKeys = {
-  all: ['experiencia-laboral'] as const,
-  lists: () => [...experienciaKeys.all, 'list'] as const,
-  list: (profesionalId: number | string | null | undefined, filters?: ExperienciaFiltros) =>
-    [...experienciaKeys.lists(), profesionalId, filters] as const,
-  details: () => [...experienciaKeys.all, 'detail'] as const,
-  detail: (profesionalId: number | string | null | undefined, experienciaId: number | string | null | undefined) =>
-    [...experienciaKeys.details(), profesionalId, experienciaId] as const,
-  actual: (profesionalId: number | string | null | undefined) =>
-    [...experienciaKeys.all, 'actual', profesionalId] as const,
-};
+/** @deprecated Usar queryKeys.personas.experienciaLaboral */
+export const experienciaKeys = queryKeys.personas.experienciaLaboral;
 
 // ==================== HOOKS DE QUERY ====================
 

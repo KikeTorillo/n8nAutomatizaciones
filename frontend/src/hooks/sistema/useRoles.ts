@@ -49,7 +49,7 @@ interface ActualizarPermisoParams {
 
 interface ActualizarPermisosBatchParams {
   rolId: number;
-  permisos: Array<{ permiso_id: number; valor: unknown }>;
+  permisos: Array<{ permiso_id: number; valor: boolean | number | string }>;
 }
 
 interface CopiarPermisosParams {

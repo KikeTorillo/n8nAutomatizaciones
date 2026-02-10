@@ -16,7 +16,8 @@ export type { ConfirmDialogProps } from './ConfirmDialog';
 export { FormDrawer } from './FormDrawer';
 export type { FormDrawerProps } from './FormDrawer';
 
-// NOTA: DeleteConfirmDialog movido a molecules/ (Feb 2026) - wrapper simple sobre ConfirmDialog
+export { DeleteConfirmDialog } from './DeleteConfirmDialog';
+export type { DeleteConfirmDialogProps } from './DeleteConfirmDialog';
 
 export { Pagination } from './Pagination';
 export type { PaginationProps } from './Pagination';
