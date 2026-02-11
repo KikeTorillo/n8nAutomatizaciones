@@ -1,9 +1,15 @@
-import { useState, memo, forwardRef, type ReactNode, type ComponentType } from 'react';
+import {
+  useState,
+  memo,
+  forwardRef,
+  type ReactNode,
+  type ComponentType,
+} from 'react';
 import { Loader2, AlertCircle, Plus } from 'lucide-react';
 import { Button } from '../atoms/Button';
 import { ConfirmDialog } from './ConfirmDialog';
 import { ExpandableSection } from './ExpandableSection';
-import { useToast } from '@/hooks/utils';
+import { useToast } from '../hooks/useToast';
 
 /** Interface para el retorno de useToast */
 interface ToastHook {
@@ -70,7 +76,9 @@ export interface DrawerComponentProps<T> {
 /**
  * Props del componente ExpandableCrudSection
  */
-export interface ExpandableCrudSectionProps<T extends { id?: string | number }> {
+export interface ExpandableCrudSectionProps<
+  T extends { id?: string | number },
+> {
   // Header
   /** Icono del header */
   icon?: ComponentType<{ className?: string }>;
@@ -144,45 +152,45 @@ export interface ExpandableCrudSectionProps<T extends { id?: string | number }> 
  */
 function ExpandableCrudSectionComponent<T extends { id?: string | number }>(
   {
-  // Header
-  icon: Icon,
-  title,
-  count,
-  defaultExpanded = false,
+    // Header
+    icon: Icon,
+    title,
+    count,
+    defaultExpanded = false,
 
-  // Data
-  items = [],
-  isLoading = false,
-  error = null,
+    // Data
+    items = [],
+    isLoading = false,
+    error = null,
 
-  // Messages
-  emptyMessage = 'No hay registros',
-  loadingMessage = 'Cargando...',
-  errorMessage = 'Error al cargar datos',
-  addButtonText = 'Agregar',
+    // Messages
+    emptyMessage = 'No hay registros',
+    loadingMessage = 'Cargando...',
+    errorMessage = 'Error al cargar datos',
+    addButtonText = 'Agregar',
 
-  // Rendering
-  renderItem,
-  renderList,
-  listClassName = 'space-y-2',
+    // Rendering
+    renderItem,
+    renderList,
+    listClassName = 'space-y-2',
 
-  // Delete
-  deleteConfig,
+    // Delete
+    deleteConfig,
 
-  // Drawer/Modal
-  DrawerComponent,
-  drawerProps = {},
-  itemPropName = 'item',
+    // Drawer/Modal
+    DrawerComponent,
+    drawerProps = {},
+    itemPropName = 'item',
 
-  // Extra actions
-  headerActions,
+    // Extra actions
+    headerActions,
 
-  // Callbacks
-  onItemEdit,
-  onItemDelete,
-  onDeleteSuccess,
-  onDeleteError,
-}: ExpandableCrudSectionProps<T>,
+    // Callbacks
+    onItemEdit,
+    onItemDelete,
+    onDeleteSuccess,
+    onDeleteError,
+  }: ExpandableCrudSectionProps<T>,
   ref: React.ForwardedRef<HTMLDivElement>
 ) {
   const toast = useToast() as ToastHook;
@@ -226,12 +234,15 @@ function ExpandableCrudSectionComponent<T extends { id?: string | number }>(
       } else {
         return;
       }
-      const successMsg = deleteConfig.successMessage || 'Eliminado correctamente';
+      const successMsg =
+        deleteConfig.successMessage || 'Eliminado correctamente';
       (onDeleteSuccess || toast.success)(successMsg);
       setItemToDelete(null);
     } catch (err) {
       const errorMsg =
-        err instanceof Error ? err.message : deleteConfig.errorMessage || 'Error al eliminar';
+        err instanceof Error
+          ? err.message
+          : deleteConfig.errorMessage || 'Error al eliminar';
       (onDeleteError || toast.error)(errorMsg);
     }
   };
@@ -275,7 +286,10 @@ function ExpandableCrudSectionComponent<T extends { id?: string | number }>(
               </div>
             ) : /* List rendering */
             renderList ? (
-              renderList(items, { onEdit: handleEdit, onDelete: handleDeleteRequest })
+              renderList(items, {
+                onEdit: handleEdit,
+                onDelete: handleDeleteRequest,
+              })
             ) : (
               <div className={listClassName}>
                 {items.map((item, index) => (
@@ -290,7 +304,13 @@ function ExpandableCrudSectionComponent<T extends { id?: string | number }>(
             )}
 
             {/* Add button */}
-            <Button type="button" variant="outline" size="sm" onClick={handleAdd} className="w-full">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleAdd}
+              className="w-full"
+            >
               <Plus className="h-4 w-4 mr-2" />
               {addButtonText}
             </Button>
@@ -309,7 +329,9 @@ function ExpandableCrudSectionComponent<T extends { id?: string | number }>(
           confirmText={deleteConfig.confirmText || 'Eliminar'}
           cancelText={deleteConfig.cancelText || 'Cancelar'}
           variant="danger"
-          isLoading={deleteConfig.isDeleting ?? deleteConfig.mutation?.isPending}
+          isLoading={
+            deleteConfig.isDeleting ?? deleteConfig.mutation?.isPending
+          }
         />
       )}
 
@@ -327,11 +349,11 @@ function ExpandableCrudSectionComponent<T extends { id?: string | number }>(
   );
 }
 
-const _ExpandableCrudSection = memo(
-  forwardRef(ExpandableCrudSectionComponent)
-);
-(_ExpandableCrudSection as { displayName?: string }).displayName = 'ExpandableCrudSection';
+const _ExpandableCrudSection = memo(forwardRef(ExpandableCrudSectionComponent));
+(_ExpandableCrudSection as { displayName?: string }).displayName =
+  'ExpandableCrudSection';
 
-export const ExpandableCrudSection = _ExpandableCrudSection as typeof ExpandableCrudSectionComponent;
+export const ExpandableCrudSection =
+  _ExpandableCrudSection as typeof ExpandableCrudSectionComponent;
 
 export { ExpandableCrudSection as default };

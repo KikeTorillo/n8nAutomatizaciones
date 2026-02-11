@@ -1,9 +1,25 @@
-import { Plus, Bot, MessageCircle, MessageSquare, Power, Trash2 } from 'lucide-react';
-import { BackButton, Button, DeleteConfirmDialog, LoadingSpinner } from '@/components/ui';
-import { useChatbots, useEliminarChatbot, useCambiarEstadoChatbot } from '@/hooks/otros';
+import {
+  Plus,
+  Bot,
+  MessageCircle,
+  MessageSquare,
+  Power,
+  Trash2,
+} from 'lucide-react';
+import {
+  BackButton,
+  Button,
+  DeleteConfirmDialog,
+  LoadingSpinner,
+} from '@/components/ui';
+import {
+  useChatbots,
+  useEliminarChatbot,
+  useCambiarEstadoChatbot,
+} from '@/hooks/otros';
 import { useToast } from '@/hooks/utils';
 import { useModalManager } from '@/hooks/utils';
-import ConfigurarChatbotModal from '@/components/chatbots/ConfigurarChatbotModal';
+import ConfigurarChatbotModal from '@/pages/chatbots/components/ConfigurarChatbotModal';
 
 /**
  * Página principal de gestión de chatbots
@@ -112,9 +128,12 @@ function ChatbotsPage() {
 
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">Chatbots con IA</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">
+                Chatbots con IA
+              </h1>
               <p className="mt-2 text-sm sm:text-base text-gray-600 dark:text-gray-400">
-                Gestiona tus asistentes virtuales inteligentes para agendamiento automático
+                Gestiona tus asistentes virtuales inteligentes para agendamiento
+                automático
               </p>
             </div>
 
@@ -154,9 +173,13 @@ function ChatbotsPage() {
               No tienes chatbots configurados
             </h3>
             <p className="text-gray-600 dark:text-gray-400 mb-6">
-              Crea tu primer chatbot con inteligencia artificial para automatizar el agendamiento de citas.
+              Crea tu primer chatbot con inteligencia artificial para
+              automatizar el agendamiento de citas.
             </p>
-            <Button onClick={handleNuevoChatbot} className="inline-flex items-center gap-2">
+            <Button
+              onClick={handleNuevoChatbot}
+              className="inline-flex items-center gap-2"
+            >
               <Plus className="w-5 h-5" />
               Crear Primer Chatbot
             </Button>
@@ -174,11 +197,15 @@ function ChatbotsPage() {
                 {/* Header con ícono y nombre */}
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-3">
-                    <div className={`w-12 h-12 rounded-full flex items-center justify-center ${getPlatformColor(chatbot.plataforma)}`}>
+                    <div
+                      className={`w-12 h-12 rounded-full flex items-center justify-center ${getPlatformColor(chatbot.plataforma)}`}
+                    >
                       {getPlatformIcon(chatbot.plataforma)}
                     </div>
                     <div>
-                      <h3 className="font-semibold text-gray-900 dark:text-gray-100">{chatbot.nombre}</h3>
+                      <h3 className="font-semibold text-gray-900 dark:text-gray-100">
+                        {chatbot.nombre}
+                      </h3>
                       <p className="text-sm text-gray-500 dark:text-gray-400">
                         {getPlatformName(chatbot.plataforma)}
                       </p>
@@ -200,14 +227,18 @@ function ChatbotsPage() {
                 {/* Información del chatbot */}
                 <div className="space-y-2 mb-4">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-600 dark:text-gray-400">Modelo IA:</span>
+                    <span className="text-gray-600 dark:text-gray-400">
+                      Modelo IA:
+                    </span>
                     <span className="font-medium text-gray-900 dark:text-gray-100">
                       {chatbot.ai_model || 'deepseek-chat'}
                     </span>
                   </div>
                   {chatbot.workflow_id && (
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600 dark:text-gray-400">Workflow:</span>
+                      <span className="text-gray-600 dark:text-gray-400">
+                        Workflow:
+                      </span>
                       <span className="font-mono text-xs text-gray-500 dark:text-gray-400">
                         #{chatbot.workflow_id}
                       </span>

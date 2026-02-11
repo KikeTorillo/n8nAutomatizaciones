@@ -3,12 +3,14 @@ import { useModalManager } from '@/hooks/utils';
 import { Store, FileText, BarChart3, Loader2 } from 'lucide-react';
 import { BackButton, Button, LoadingSpinner } from '@/components/ui';
 import { useMiPerfilMarketplace } from '@/hooks/otros';
-import PerfilFormulario from '@/components/marketplace/PerfilFormulario';
-import ListaReseñas from '@/components/marketplace/ListaReseñas';
-import CrearPerfilMarketplaceModal from '@/components/marketplace/CrearPerfilMarketplaceModal';
+import PerfilFormulario from '@/pages/marketplace/components/PerfilFormulario';
+import ListaReseñas from '@/pages/marketplace/components/ListaReseñas';
+import CrearPerfilMarketplaceModal from '@/pages/marketplace/components/CrearPerfilMarketplaceModal';
 
 // Ene 2026: Lazy loading de AnalyticsDashboard (~200KB chart.js)
-const AnalyticsDashboard = lazy(() => import('@/components/marketplace/AnalyticsDashboard'));
+const AnalyticsDashboard = lazy(
+  () => import('@/pages/marketplace/components/AnalyticsDashboard')
+);
 
 /**
  * Página de gestión del perfil de marketplace
@@ -49,7 +51,9 @@ function MiMarketplacePage() {
         {/* Header */}
         <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
           <BackButton to="/home" label="Volver al Inicio" className="mb-3" />
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Mi Marketplace</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+            Mi Marketplace
+          </h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
             Gestiona tu perfil público en el directorio
           </p>
@@ -62,7 +66,8 @@ function MiMarketplacePage() {
               Aún no tienes un perfil de marketplace
             </h2>
             <p className="text-gray-600 dark:text-gray-400 mb-6">
-              Crea tu perfil público para aparecer en el directorio y captar nuevos clientes
+              Crea tu perfil público para aparecer en el directorio y captar
+              nuevos clientes
             </p>
             <Button size="lg" onClick={() => openModal('crear')}>
               Crear Perfil de Marketplace
@@ -85,7 +90,9 @@ function MiMarketplacePage() {
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-8">
         <div className="max-w-4xl mx-auto">
           <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg p-6 text-center">
-            <p className="text-red-800 dark:text-red-300">Error al cargar el perfil. Intenta nuevamente.</p>
+            <p className="text-red-800 dark:text-red-300">
+              Error al cargar el perfil. Intenta nuevamente.
+            </p>
           </div>
         </div>
       </div>
@@ -99,8 +106,14 @@ function MiMarketplacePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <div>
-              <BackButton to="/home" label="Volver al Inicio" className="mb-3" />
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Mi Marketplace</h1>
+              <BackButton
+                to="/home"
+                label="Volver al Inicio"
+                className="mb-3"
+              />
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+                Mi Marketplace
+              </h1>
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                 Gestiona tu perfil público, reseñas y estadísticas
               </p>
@@ -167,7 +180,9 @@ function MiMarketplacePage() {
         {tabActivo === 'perfil' && (
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
             <div className="mb-6">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Información del Perfil</h2>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                Información del Perfil
+              </h2>
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                 Actualiza la información pública de tu negocio
               </p>
@@ -180,7 +195,9 @@ function MiMarketplacePage() {
         {tabActivo === 'resenas' && (
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
             <div className="mb-6">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Reseñas</h2>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                Reseñas
+              </h2>
               <div className="flex items-center gap-6 mt-2">
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   <span className="font-semibold text-gray-900 dark:text-gray-100">
@@ -190,7 +207,9 @@ function MiMarketplacePage() {
                 </p>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   <span className="font-semibold text-gray-900 dark:text-gray-100">
-                    {perfil.rating_promedio ? perfil.rating_promedio.toFixed(1) : '0.0'}
+                    {perfil.rating_promedio
+                      ? perfil.rating_promedio.toFixed(1)
+                      : '0.0'}
                   </span>
                   /5 rating promedio
                 </p>
@@ -204,16 +223,20 @@ function MiMarketplacePage() {
         {tabActivo === 'analytics' && (
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
             <div className="mb-6">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Analytics</h2>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                Analytics
+              </h2>
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                 Métricas de visibilidad y conversión de tu perfil público
               </p>
             </div>
-            <Suspense fallback={
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="w-8 h-8 animate-spin text-primary-600" />
-              </div>
-            }>
+            <Suspense
+              fallback={
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="w-8 h-8 animate-spin text-primary-600" />
+                </div>
+              }
+            >
               <AnalyticsDashboard perfilId={perfil.id} />
             </Suspense>
           </div>

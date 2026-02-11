@@ -1,6 +1,13 @@
-import { useState, memo, forwardRef, useId, type ReactNode, type ComponentType } from 'react';
+import {
+  useState,
+  memo,
+  forwardRef,
+  useId,
+  type ReactNode,
+  type ComponentType,
+} from 'react';
 import { ChevronDown } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '../lib/cn';
 
 export interface ExpandableSectionProps {
   /** Icono del header */
@@ -32,58 +39,79 @@ export interface ExpandableSectionProps {
  * </ExpandableSection>
  */
 const ExpandableSection = memo(
-  forwardRef<HTMLDivElement, ExpandableSectionProps>(function ExpandableSection({
-  icon: Icon,
-  title,
-  count,
-  defaultExpanded = false,
-  headerActions,
-  children,
-  className,
-  contentClassName,
-}, ref) {
-  const [isExpanded, setIsExpanded] = useState(defaultExpanded);
-  const sectionId = useId();
-  const headingId = `${sectionId}-heading`;
-  const contentId = `${sectionId}-content`;
+  forwardRef<HTMLDivElement, ExpandableSectionProps>(function ExpandableSection(
+    {
+      icon: Icon,
+      title,
+      count,
+      defaultExpanded = false,
+      headerActions,
+      children,
+      className,
+      contentClassName,
+    },
+    ref
+  ) {
+    const [isExpanded, setIsExpanded] = useState(defaultExpanded);
+    const sectionId = useId();
+    const headingId = `${sectionId}-heading`;
+    const contentId = `${sectionId}-content`;
 
-  return (
-    <div ref={ref} className={cn('border-t border-gray-200 dark:border-gray-700 pt-4 mt-4', className)}>
-      {/* Header expandible */}
-      <button
-        type="button"
-        onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full flex items-center justify-between gap-2 mb-4"
-        aria-expanded={isExpanded}
-        aria-controls={contentId}
-        aria-labelledby={headingId}
+    return (
+      <div
+        ref={ref}
+        className={cn(
+          'border-t border-gray-200 dark:border-gray-700 pt-4 mt-4',
+          className
+        )}
       >
-        <div className="flex items-center gap-2">
-          {Icon && <Icon className="h-5 w-5 text-gray-500 dark:text-gray-400" />}
-          <h4 id={headingId} className="font-medium text-gray-900 dark:text-gray-100">{title}</h4>
-          {count != null && count > 0 && (
-            <span className="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full text-gray-600 dark:text-gray-400">
-              {count}
-            </span>
-          )}
-          {headerActions}
-        </div>
-        <ChevronDown
-          className={cn(
-            'h-5 w-5 text-gray-500 transition-transform',
-            isExpanded && 'rotate-180'
-          )}
-        />
-      </button>
+        {/* Header expandible */}
+        <button
+          type="button"
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="w-full flex items-center justify-between gap-2 mb-4"
+          aria-expanded={isExpanded}
+          aria-controls={contentId}
+          aria-labelledby={headingId}
+        >
+          <div className="flex items-center gap-2">
+            {Icon && (
+              <Icon className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+            )}
+            <h4
+              id={headingId}
+              className="font-medium text-gray-900 dark:text-gray-100"
+            >
+              {title}
+            </h4>
+            {count != null && count > 0 && (
+              <span className="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full text-gray-600 dark:text-gray-400">
+                {count}
+              </span>
+            )}
+            {headerActions}
+          </div>
+          <ChevronDown
+            className={cn(
+              'h-5 w-5 text-gray-500 transition-transform',
+              isExpanded && 'rotate-180'
+            )}
+          />
+        </button>
 
-      {/* Contenido expandible */}
-      {isExpanded && (
-        <div id={contentId} role="region" aria-labelledby={headingId} className={cn('pl-7', contentClassName)}>
-          {children}
-        </div>
-      )}
-    </div>
-  );
+        {/* Contenido expandible */}
+        {isExpanded && (
+          <div
+            id={contentId}
+            role="region"
+            aria-labelledby={headingId}
+            className={cn('pl-7', contentClassName)}
+          >
+            {children}
+          </div>
+        )}
+      </div>
+    );
   })
 );
 

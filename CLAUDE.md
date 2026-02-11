@@ -45,15 +45,28 @@ Axios: `response.data` = objeto completo → `response.data.data` = payload real
 ```
 src/
 ├── components/
-│   ├── ui/                 # Atomic Design (TS): atoms, molecules, organisms, templates
+│   ├── ui/                 # UI Library (Atomic Design, TS, autocontenida)
+│   │   ├── atoms/          # Button, Input, Select, Badge, Card, IconButton...
+│   │   ├── molecules/      # SearchInput, FormGroup, Tooltip, Popover, FileUpload...
+│   │   ├── organisms/      # Modal, DataTable, FilterPanel, BarcodeScanner...
+│   │   ├── templates/      # ListadoCRUDPage, BaseDetailLayout, BaseFormLayout, PageHeader
+│   │   ├── hooks/          # useFilters, usePagination, useToast, useDisclosure, useModalManager...
+│   │   ├── lib/            # cn.ts (clsx+twMerge), formatters.ts, exportCSV.ts, gs1Parser.ts
+│   │   └── __tests__/      # 16 test files, 136 tests (Vitest + @testing-library/react)
 │   ├── editor-framework/   # Framework editores (Website + Invitaciones)
-│   └── shared/             # Componentes cross-módulo (UnsplashPicker, AddToCalendar, InvitacionDinamica)
+│   └── shared/             # Componentes cross-módulo
+│       ├── agendamiento/   # HorariosWidget, DisponibilidadCalendario
+│       ├── checkout/       # CheckoutForm, PagoResult
+│       ├── ModuleGuard.tsx # Guard RBAC por módulos
+│       ├── media/          # UnsplashPicker
+│       ├── calendar/       # AddToCalendar
+│       └── ...             # DocumentoUploadDrawer, InvitacionDinamica, selectors, widgets
 ├── constants/              # colors.ts, entityStates.js
-├── features/               # Módulos autocontenidos (auth con authStore.ts)
+├── features/               # Módulos autocontenidos (auth con authStore.ts, onboarding)
 ├── hooks/
 │   ├── factories/          # createCRUDHooks, createStatusMutationHook, createSearchHook
-│   ├── config/             # errorHandlerFactory.ts, queryKeys.ts, queryConfig.js
-│   └── <dominio>/          # Hooks por módulo, algunos con subcarpetas (pos/lealtad/, pos/ventas/)
+│   ├── config/             # errorHandlerFactory.ts, queryKeys.ts, queryConfig.ts
+│   └── <dominio>/          # Hooks por módulo (pos/lealtad/, pos/ventas/, personas/...)
 ├── lib/                    # params.ts (sanitizeParams), uiConstants/ (.ts con as const)
 ├── pages/<módulo>/         # Páginas + components/ específicos del módulo
 ├── services/api/modules/   # APIs tipadas (.ts)
@@ -116,8 +129,12 @@ await RLSContextManager.withBypass(async (db) => { ... });        // JOINs, supe
 - **Colores**: Importar de `constants/colors.ts` (`BRAND_COLORS`, `TAG_COLORS`). En CSS usar `primary-*` / `var(--color-primary-500)`. NO hardcodear hex.
 - **React.memo**: Obligatorio en componentes de lista/tabla
 - **Sanitizar**: Joi rechaza `""`, usar `sanitizeParams()` de `lib/params.ts`
+- **Colocalización**: Componentes específicos de un módulo van en `pages/<módulo>/components/`. Solo `components/shared/` para cross-módulo. `components/ui/` es la UI library genérica (sin deps de negocio)
 - **Desacoplamiento**: Módulos NO importan entre sí. Código compartido va en `editor-framework/` o `components/shared/`. Usar bridges en `shared/` para re-exports cross-módulo
 - **Query keys**: Centralizar en `hooks/config/queryKeys.ts`. NO definir keys locales en hooks individuales
+- **UI Library**: `components/ui/` es autocontenida — usa `../lib/cn` (no `@/lib/utils`), hooks propios en `ui/hooks/`. Preparada para extracción como paquete
+- **Testing**: Vitest + @testing-library/react. Tests en `components/ui/__tests__/`. Correr con `npx vitest run`
+- **Pre-commit**: husky + lint-staged (ESLint en archivos staged)
 
 ## Patrones Frontend
 

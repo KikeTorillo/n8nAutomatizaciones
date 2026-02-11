@@ -1,5 +1,5 @@
 import { memo, forwardRef } from 'react';
-import { cn } from '@/lib/utils';
+import { cn } from '../lib/cn';
 import { SEMANTIC_COLORS } from '@/lib/uiConstants';
 
 const DIVIDER_COLORS = {
@@ -19,10 +19,7 @@ export interface DividerProps {
  */
 const Divider = memo(
   forwardRef<HTMLHRElement | HTMLDivElement, DividerProps>(function Divider(
-    {
-      orientation = 'horizontal',
-      className,
-    },
+    { orientation = 'horizontal', className },
     ref
   ) {
     if (orientation === 'vertical') {

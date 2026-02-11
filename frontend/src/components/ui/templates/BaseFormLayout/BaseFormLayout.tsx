@@ -1,5 +1,5 @@
 import { memo, type ReactNode, type FormEvent } from 'react';
-import { cn } from '@/lib/utils';
+import { cn } from '../../lib/cn';
 import { FormHeader } from './FormHeader';
 import { FormWizardStepper, type WizardStep } from './FormWizardStepper';
 import { FormFooter } from './FormFooter';
@@ -71,7 +71,9 @@ const BaseFormLayout = memo(function BaseFormLayout({
   // Estado de carga inicial
   if (isLoading) {
     return (
-      <div className={cn('mx-auto px-4 sm:px-6 lg:px-8 py-6', maxWidth, className)}>
+      <div
+        className={cn('mx-auto px-4 sm:px-6 lg:px-8 py-6', maxWidth, className)}
+      >
         <div className="flex items-center justify-center min-h-[400px]">
           <LoadingSpinner size="lg" />
         </div>
@@ -87,7 +89,9 @@ const BaseFormLayout = memo(function BaseFormLayout({
   };
 
   return (
-    <div className={cn('mx-auto px-4 sm:px-6 lg:px-8 py-6', maxWidth, className)}>
+    <div
+      className={cn('mx-auto px-4 sm:px-6 lg:px-8 py-6', maxWidth, className)}
+    >
       {/* Header */}
       {(title || backTo) && (
         <FormHeader
@@ -114,9 +118,7 @@ const BaseFormLayout = memo(function BaseFormLayout({
       <form onSubmit={handleFormSubmit}>
         {/* Card container */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-          <div className="p-6">
-            {children}
-          </div>
+          <div className="p-6">{children}</div>
 
           {/* Footer */}
           {!hideFooter && (

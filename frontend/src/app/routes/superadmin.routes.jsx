@@ -8,10 +8,16 @@ import { ProtectedRoute } from '@/features/auth';
 import { withSuspense, loadingFallback, ROLES } from './helpers/routeHelpers';
 
 // Super Admin Layout y páginas
-const SuperAdminLayout = lazy(() => import('@/components/superadmin/SuperAdminLayout'));
+const SuperAdminLayout = lazy(
+  () => import('@/pages/superadmin/components/SuperAdminLayout')
+);
 const SuperAdminDashboard = lazy(() => import('@/pages/superadmin/Dashboard'));
-const MarketplaceGestion = lazy(() => import('@/pages/superadmin/MarketplaceGestion'));
-const EntitlementsPlataforma = lazy(() => import('@/pages/superadmin/EntitlementsPlataforma'));
+const MarketplaceGestion = lazy(
+  () => import('@/pages/superadmin/MarketplaceGestion')
+);
+const EntitlementsPlataforma = lazy(
+  () => import('@/pages/superadmin/EntitlementsPlataforma')
+);
 
 /**
  * Rutas de Super Admin con nested routes

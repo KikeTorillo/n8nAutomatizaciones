@@ -11,7 +11,8 @@
 import { memo, forwardRef, useCallback, type ReactNode } from 'react';
 import { useDropzone, type Accept } from 'react-dropzone';
 import { Upload, AlertCircle } from 'lucide-react';
-import { cn, formatFileSize } from '@/lib/utils';
+import { cn } from '../lib/cn';
+import { formatFileSize } from '../lib/formatters';
 import { FOCUS_STATES, DRAG_STATES } from '@/lib/uiConstants';
 
 // ====================================================================

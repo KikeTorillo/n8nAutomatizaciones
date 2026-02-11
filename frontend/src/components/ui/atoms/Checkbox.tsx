@@ -1,6 +1,10 @@
 import { forwardRef, memo, useId, type InputHTMLAttributes } from 'react';
-import { cn } from '@/lib/utils';
-import { getCheckboxStyles, CHECKBOX_SIZE_CLASSES, getAriaDescribedBy } from '@/lib/uiConstants';
+import { cn } from '../lib/cn';
+import {
+  getCheckboxStyles,
+  CHECKBOX_SIZE_CLASSES,
+  getAriaDescribedBy,
+} from '@/lib/uiConstants';
 import type { FormSize } from '@/types/ui';
 
 export interface CheckboxProps
@@ -56,7 +60,10 @@ const Checkbox = memo(
         disabled={disabled}
         checked={checked}
         aria-invalid={hasError || undefined}
-        aria-describedby={getAriaDescribedBy(checkboxId, { hasError, hasHelper })}
+        aria-describedby={getAriaDescribedBy(checkboxId, {
+          hasError,
+          hasHelper,
+        })}
         className={cn(
           getCheckboxStyles({ disabled, error: hasError }),
           CHECKBOX_SIZE_CLASSES[size],

@@ -4,13 +4,20 @@
  * Enero 2026
  */
 import { useModalManager } from '@/hooks/utils';
-import { Plus, Calendar, HeartPulse, AlertCircle, CheckCircle, Clock } from 'lucide-react';
+import {
+  Plus,
+  Calendar,
+  HeartPulse,
+  AlertCircle,
+  CheckCircle,
+  Clock,
+} from 'lucide-react';
 import {
   Alert,
   Badge,
   Button,
   EmptyState,
-  StatCardGrid
+  StatCardGrid,
 } from '@/components/ui';
 import {
   useDashboardAusencias,
@@ -20,7 +27,7 @@ import {
   TIPOS_AUSENCIA_CONFIG,
   getTipoIncapacidadConfig,
 } from '@/hooks/personas';
-import { SolicitudVacacionesModal } from '@/components/vacaciones';
+import { SolicitudVacacionesModal } from '@/pages/ausencias/components/vacaciones';
 import { formatDias, ESTADOS_SOLICITUD } from '@/hooks/personas';
 
 /**
@@ -101,7 +108,9 @@ function AusenciaCard({ ausencia, onVerDetalle }) {
           {/* Tipo y código */}
           <div className="flex items-center gap-2 mb-2">
             <Badge variant={colorMap[tipoConfig?.color] || 'default'} size="sm">
-              {esVacaciones ? 'Vacaciones' : ausencia.subTipoConfig?.label || 'Incapacidad'}
+              {esVacaciones
+                ? 'Vacaciones'
+                : ausencia.subTipoConfig?.label || 'Incapacidad'}
             </Badge>
             <span className="text-xs text-gray-400">{ausencia.codigo}</span>
           </div>
@@ -146,7 +155,7 @@ function MisAusenciasTab({ extraActions }) {
   });
 
   // Dashboard consolidado
-  const { data: dashboard, isLoading, error, vacaciones } = useDashboardAusencias(anioActual);
+  const { data: dashboard, error } = useDashboardAusencias(anioActual);
 
   // Mis ausencias (lista) - sin filtro de tipo, muestra todo
   const { data: ausencias, isLoading: isLoadingAusencias } = useMisAusencias({
@@ -260,7 +269,10 @@ function MisAusenciasTab({ extraActions }) {
         ) : (
           <div className="space-y-3">
             {ausencias?.map((ausencia) => (
-              <AusenciaCard key={`${ausencia.tipo}-${ausencia.id}`} ausencia={ausencia} />
+              <AusenciaCard
+                key={`${ausencia.tipo}-${ausencia.id}`}
+                ausencia={ausencia}
+              />
             ))}
           </div>
         )}

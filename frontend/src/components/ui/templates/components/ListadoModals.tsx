@@ -1,6 +1,9 @@
 import { memo } from 'react';
-import { ConfirmDialog, type ConfirmDialogProps } from '../../organisms/ConfirmDialog';
-import type { DeleteConfirmProps } from '@/hooks/utils/useDeleteConfirmation';
+import {
+  ConfirmDialog,
+  type ConfirmDialogProps,
+} from '../../organisms/ConfirmDialog';
+import type { DeleteConfirmProps } from '../../hooks/useDeleteConfirmation';
 
 interface OverlayComponentProps {
   isOpen: boolean;
@@ -54,7 +57,9 @@ export const ListadoModals = memo(function ListadoModals({
           isOpen={isOpen('form')}
           onClose={() => closeModal('form')}
           onSuccess={() => closeModal('form')}
-          {...(mapFormData?.(getModalData('form')) ?? { data: getModalData('form') })}
+          {...(mapFormData?.(getModalData('form')) ?? {
+            data: getModalData('form'),
+          })}
           {...formDrawerProps}
         />
       )}
@@ -64,28 +69,38 @@ export const ListadoModals = memo(function ListadoModals({
         <StatsModal
           isOpen={isOpen('stats')}
           onClose={() => closeModal('stats')}
-          {...(mapStatsData?.(getModalData('stats')) ?? { data: getModalData('stats') })}
+          {...(mapStatsData?.(getModalData('stats')) ?? {
+            data: getModalData('stats'),
+          })}
           {...statsModalProps}
         />
       )}
 
       {/* Extra Modals */}
       {Object.entries(extraModals).map(([modalKey, modalConfig]) => {
-        const { component: ModalComponent, mapData, props: modalProps = {} } = modalConfig;
+        const {
+          component: ModalComponent,
+          mapData,
+          props: modalProps = {},
+        } = modalConfig;
         if (!ModalComponent) return null;
         return (
           <ModalComponent
             key={modalKey}
             isOpen={isOpen(modalKey)}
             onClose={() => closeModal(modalKey)}
-            {...(mapData ? mapData(getModalData(modalKey)) : { data: getModalData(modalKey) })}
+            {...(mapData
+              ? mapData(getModalData(modalKey))
+              : { data: getModalData(modalKey) })}
             {...modalProps}
           />
         );
       })}
 
       {/* Delete Confirmation */}
-      {deleteMutation && <ConfirmDialog {...deleteConfirmProps as ConfirmDialogProps} />}
+      {deleteMutation && (
+        <ConfirmDialog {...(deleteConfirmProps as ConfirmDialogProps)} />
+      )}
     </>
   );
 });

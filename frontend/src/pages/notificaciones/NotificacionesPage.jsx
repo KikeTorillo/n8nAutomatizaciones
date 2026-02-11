@@ -1,8 +1,7 @@
-import { useState } from 'react';
 import { Bell, Settings } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { BackButton, Button } from '@/components/ui';
-import { NotificacionesLista } from '@/components/notificaciones';
+import { NotificacionesLista } from '@/pages/notificaciones/components';
 
 /**
  * NotificacionesPage - Pagina principal del centro de notificaciones

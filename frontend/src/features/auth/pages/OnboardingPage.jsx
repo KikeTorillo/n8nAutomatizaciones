@@ -6,7 +6,7 @@
  * Flujo: Usuario nuevo via Google → Esta página → Crear organización → Dashboard
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -14,7 +14,11 @@ import { z } from 'zod';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { authApi } from '../api/auth.api';
 import { suscripcionesNegocioApi } from '@/services/api/modules/suscripciones-negocio.api';
-import useAuthStore, { selectUser, selectSetAuth, selectIsAuthenticated } from '../store/authStore';
+import useAuthStore, {
+  selectUser,
+  selectSetAuth,
+  selectIsAuthenticated,
+} from '../store/authStore';
 import { queryKeys } from '@/hooks/config';
 import { useToast } from '@/hooks/utils';
 import AuthLayout from '../components/AuthLayout';
@@ -22,25 +26,28 @@ import FormField from '@/components/forms/FormField';
 import SelectorUbicacion from '@/components/forms/SelectorUbicacion';
 import { Button } from '@/components/ui';
 import { Building2, UserCheck, Sparkles, ArrowRight } from 'lucide-react';
-import ModuloSelector from '@/components/onboarding/ModuloSelector';
+import ModuloSelector from '@/features/auth/components/onboarding/ModuloSelector';
 
 // Schema de validación
 // Industria removida del onboarding - se configura en Configuración > Mi Negocio (Ene 2026)
 const onboardingSchema = z.object({
-  nombre_negocio: z.string()
+  nombre_negocio: z
+    .string()
     .min(2, 'El nombre debe tener al menos 2 caracteres')
     .max(150, 'El nombre es muy largo'),
-  estado_id: z.string()
+  estado_id: z
+    .string()
     .min(1, 'Selecciona un estado')
     .transform((val) => parseInt(val, 10))
     .refine((val) => !isNaN(val) && val > 0, 'Selecciona un estado'),
-  ciudad_id: z.string()
+  ciudad_id: z
+    .string()
     .min(1, 'Selecciona una ciudad')
     .transform((val) => parseInt(val, 10))
     .refine((val) => !isNaN(val) && val > 0, 'Selecciona una ciudad'),
   soy_profesional: z.boolean().default(true),
   // Módulos seleccionados (ninguno por defecto)
-  modulos: z.record(z.string(), z.boolean()).default({})
+  modulos: z.record(z.string(), z.boolean()).default({}),
 });
 
 /**
@@ -52,7 +59,7 @@ const onboardingSchema = z.object({
  */
 const validarPlanGuardado = (planId, planesDisponibles) => {
   if (!planId || !planesDisponibles?.length) return null;
-  return planesDisponibles.find(p => p.id === planId) || null;
+  return planesDisponibles.find((p) => p.id === planId) || null;
 };
 
 function OnboardingPage() {
@@ -91,7 +98,10 @@ function OnboardingPage() {
           // Validar que el plan_id existe en los planes disponibles
           plan = validarPlanGuardado(plan_id, planesData);
           if (!plan && import.meta.env.DEV) {
-            console.warn('[Onboarding] Plan guardado no encontrado en planesData:', plan_id);
+            console.warn(
+              '[Onboarding] Plan guardado no encontrado en planesData:',
+              plan_id
+            );
           }
         }
       } catch (e) {
@@ -103,7 +113,7 @@ function OnboardingPage() {
 
     // Si no hay plan guardado o no se encontró, usar plan trial
     if (!plan) {
-      plan = planesData.find(p => p.codigo === 'trial');
+      plan = planesData.find((p) => p.codigo === 'trial');
     }
 
     // Fallback: usar el primer plan disponible
@@ -132,7 +142,7 @@ function OnboardingPage() {
     handleSubmit,
     setValue,
     watch,
-    formState: { errors }
+    formState: { errors },
   } = useForm({
     resolver: zodResolver(onboardingSchema),
     defaultValues: {
@@ -140,8 +150,8 @@ function OnboardingPage() {
       estado_id: '',
       ciudad_id: '',
       soy_profesional: true,
-      modulos: {}
-    }
+      modulos: {},
+    },
   });
 
   // Mutation para completar onboarding
@@ -153,17 +163,29 @@ function OnboardingPage() {
     onSuccess: async (data) => {
       // Invalidar caches relevantes (sin borrar TODO el cache)
       // FIX: Usar invalidateQueries específico en lugar de clear() agresivo
-      await queryClient.invalidateQueries({ queryKey: ['planes'], refetchType: 'active' });
-      await queryClient.invalidateQueries({ queryKey: queryKeys.auth.usuario, refetchType: 'active' });
-      await queryClient.invalidateQueries({ queryKey: queryKeys.auth.organizacion, refetchType: 'active' });
-      await queryClient.invalidateQueries({ queryKey: queryKeys.sistema.modulos, refetchType: 'active' });
+      await queryClient.invalidateQueries({
+        queryKey: ['planes'],
+        refetchType: 'active',
+      });
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.auth.usuario,
+        refetchType: 'active',
+      });
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.auth.organizacion,
+        refetchType: 'active',
+      });
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.sistema.modulos,
+        refetchType: 'active',
+      });
 
       // Ene 2026: Actualizar auth (refreshToken viene por cookie httpOnly)
       setAuth({
         user: {
           ...user,
           ...data.usuario,
-          organizacion_id: data.organizacion.id
+          organizacion_id: data.organizacion.id,
         },
         accessToken: data.accessToken,
       });
@@ -180,7 +202,9 @@ function OnboardingPage() {
           if (Date.now() - timestamp < UNA_HORA) {
             // Iniciar trial del plan seleccionado
             await suscripcionesNegocioApi.iniciarTrial({ plan_id, periodo });
-            toast.success('¡Tu negocio y prueba gratuita están listos! Bienvenido a Nexo.');
+            toast.success(
+              '¡Tu negocio y prueba gratuita están listos! Bienvenido a Nexo.'
+            );
           } else {
             toast.success('¡Tu negocio está listo! Bienvenido a Nexo.');
           }
@@ -198,7 +222,8 @@ function OnboardingPage() {
       navigate('/home');
     },
     onError: (error) => {
-      const message = error.response?.data?.message || 'Error al crear tu negocio';
+      const message =
+        error.response?.data?.message || 'Error al crear tu negocio';
       toast.error(message);
     },
   });
@@ -268,7 +293,9 @@ function OnboardingPage() {
               <div className="flex-1">
                 <div className="flex items-center gap-2">
                   <UserCheck className="h-4 w-4 text-primary-600 dark:text-primary-400" />
-                  <span className="font-medium text-gray-900 dark:text-gray-100">Yo atiendo clientes</span>
+                  <span className="font-medium text-gray-900 dark:text-gray-100">
+                    Yo atiendo clientes
+                  </span>
                 </div>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                   Activa esto si tú también realizarás servicios o ventas.

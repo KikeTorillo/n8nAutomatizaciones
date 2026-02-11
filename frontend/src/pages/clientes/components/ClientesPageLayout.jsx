@@ -14,8 +14,10 @@ import ClientesNavTabs from './ClientesNavTabs';
  * @param {React.ReactNode} children - Contenido principal
  * @param {string} [className] - Clases adicionales
  */
-export default createModuleLayout({
+const ClientesPageLayout = createModuleLayout({
   moduleTitle: 'Clientes',
   moduleDescription: 'Gestiona tu base de clientes y relaciones comerciales',
   NavTabsComponent: ClientesNavTabs,
 });
+
+export default ClientesPageLayout;

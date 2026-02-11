@@ -1,6 +1,6 @@
 import { memo } from 'react';
 import { Check } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '../../lib/cn';
 import { SEMANTIC_COLORS } from '@/lib/uiConstants';
 
 export interface WizardStep {
@@ -26,9 +26,8 @@ const FormWizardStepper = memo(function FormWizardStepper({
   allowNavigation = false,
   className,
 }: FormWizardStepperProps) {
-  const completedSet = completedSteps instanceof Set
-    ? completedSteps
-    : new Set(completedSteps);
+  const completedSet =
+    completedSteps instanceof Set ? completedSteps : new Set(completedSteps);
 
   const handleStepClick = (index: number) => {
     if (allowNavigation && onStepChange) {
@@ -42,7 +41,8 @@ const FormWizardStepper = memo(function FormWizardStepper({
         {steps.map((step, index) => {
           const isActive = index === activeStep;
           const isCompleted = completedSet.has(step.id) || index < activeStep;
-          const isClickable = allowNavigation && (isCompleted || index <= activeStep);
+          const isClickable =
+            allowNavigation && (isCompleted || index <= activeStep);
 
           return (
             <li
@@ -57,7 +57,9 @@ const FormWizardStepper = memo(function FormWizardStepper({
                 <div
                   className={cn(
                     'absolute top-4 left-8 -right-4 sm:left-12 h-0.5',
-                    isCompleted ? SEMANTIC_COLORS.primary.bgSolid : 'bg-gray-200 dark:bg-gray-700'
+                    isCompleted
+                      ? SEMANTIC_COLORS.primary.bgSolid
+                      : 'bg-gray-200 dark:bg-gray-700'
                   )}
                   aria-hidden="true"
                 />
@@ -78,8 +80,15 @@ const FormWizardStepper = memo(function FormWizardStepper({
                   className={cn(
                     'w-8 h-8 flex items-center justify-center rounded-full text-sm font-medium transition-colors',
                     isCompleted && SEMANTIC_COLORS.primary.selectedBg,
-                    isActive && !isCompleted && cn(SEMANTIC_COLORS.primary.selectedBg, 'ring-4 ring-primary-100 dark:ring-primary-900/30'),
-                    !isActive && !isCompleted && 'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
+                    isActive &&
+                      !isCompleted &&
+                      cn(
+                        SEMANTIC_COLORS.primary.selectedBg,
+                        'ring-4 ring-primary-100 dark:ring-primary-900/30'
+                      ),
+                    !isActive &&
+                      !isCompleted &&
+                      'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
                   )}
                 >
                   {isCompleted ? (
@@ -94,7 +103,7 @@ const FormWizardStepper = memo(function FormWizardStepper({
                   <span
                     className={cn(
                       'text-sm font-medium truncate',
-                      (isActive || isCompleted)
+                      isActive || isCompleted
                         ? 'text-gray-900 dark:text-gray-100'
                         : 'text-gray-500 dark:text-gray-400'
                     )}

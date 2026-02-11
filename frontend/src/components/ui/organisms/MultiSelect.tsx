@@ -9,9 +9,9 @@ import {
   type KeyboardEvent,
   type MouseEvent,
 } from 'react';
-import { cn } from '@/lib/utils';
+import { cn } from '../lib/cn';
 import { Check, ChevronDown, X } from 'lucide-react';
-import { useClickOutsideRef } from '@/hooks/utils/useClickOutside';
+import { useClickOutsideRef } from '../hooks/useClickOutside';
 
 /**
  * Opción para MultiSelect
@@ -150,13 +150,17 @@ const MultiSelect = memo(
             setIsOpen(true);
             setFocusedIndex(0);
           } else {
-            setFocusedIndex(prev => prev < options.length - 1 ? prev + 1 : 0);
+            setFocusedIndex((prev) =>
+              prev < options.length - 1 ? prev + 1 : 0
+            );
           }
           break;
         case 'ArrowUp':
           e.preventDefault();
           if (isOpen) {
-            setFocusedIndex(prev => prev > 0 ? prev - 1 : options.length - 1);
+            setFocusedIndex((prev) =>
+              prev > 0 ? prev - 1 : options.length - 1
+            );
           }
           break;
         case 'Escape':
@@ -182,7 +186,9 @@ const MultiSelect = memo(
         {label && (
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             {label}
-            {required && <span className="text-red-500 dark:text-red-400 ml-1">*</span>}
+            {required && (
+              <span className="text-red-500 dark:text-red-400 ml-1">*</span>
+            )}
           </label>
         )}
 
@@ -194,7 +200,11 @@ const MultiSelect = memo(
             aria-expanded={isOpen}
             aria-haspopup="listbox"
             aria-controls={isOpen ? listboxId : undefined}
-            aria-activedescendant={isOpen && focusedIndex >= 0 ? `${listboxId}-opt-${focusedIndex}` : undefined}
+            aria-activedescendant={
+              isOpen && focusedIndex >= 0
+                ? `${listboxId}-opt-${focusedIndex}`
+                : undefined
+            }
             tabIndex={disabled ? -1 : 0}
             className={cn(baseStyles, stateStyles, className)}
             onClick={() => !disabled && setIsOpen(!isOpen)}
@@ -219,7 +229,9 @@ const MultiSelect = memo(
                   </span>
                 ))
               ) : (
-                <span className="text-gray-500 dark:text-gray-400 text-sm">{placeholder}</span>
+                <span className="text-gray-500 dark:text-gray-400 text-sm">
+                  {placeholder}
+                </span>
               )}
             </div>
 
@@ -265,7 +277,8 @@ const MultiSelect = memo(
                   {options.map((option, optIndex) => {
                     const isSelected = value.includes(option.value);
                     const isDisabled =
-                      option.disabled || (max && value.length >= max && !isSelected);
+                      option.disabled ||
+                      (max && value.length >= max && !isSelected);
 
                     return (
                       <div
@@ -278,9 +291,12 @@ const MultiSelect = memo(
                           'px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors flex items-center justify-between',
                           isDisabled &&
                             'opacity-50 cursor-not-allowed hover:bg-white dark:hover:bg-gray-800',
-                          focusedIndex === optIndex && 'bg-gray-100 dark:bg-gray-700'
+                          focusedIndex === optIndex &&
+                            'bg-gray-100 dark:bg-gray-700'
                         )}
-                        onClick={() => !isDisabled && handleToggle(option.value)}
+                        onClick={() =>
+                          !isDisabled && handleToggle(option.value)
+                        }
                       >
                         <div className="flex items-center gap-3 flex-1">
                           {/* Checkbox */}
@@ -292,7 +308,9 @@ const MultiSelect = memo(
                                 : 'border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-800'
                             )}
                           >
-                            {isSelected && <Check className="w-3.5 h-3.5 text-white" />}
+                            {isSelected && (
+                              <Check className="w-3.5 h-3.5 text-white" />
+                            )}
                           </div>
 
                           {/* Label */}
@@ -310,10 +328,14 @@ const MultiSelect = memo(
         </div>
 
         {helper && !error && (
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{helper}</p>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            {helper}
+          </p>
         )}
 
-        {error && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{error}</p>}
+        {error && (
+          <p className="mt-1 text-sm text-red-600 dark:text-red-400">{error}</p>
+        )}
       </div>
     );
   })

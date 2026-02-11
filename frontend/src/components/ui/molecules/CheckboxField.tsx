@@ -1,5 +1,5 @@
 import { forwardRef, useId, memo } from 'react';
-import { cn } from '@/lib/utils';
+import { cn } from '../lib/cn';
 import { Checkbox } from '../atoms/Checkbox';
 import { Label } from '../atoms/Label';
 
@@ -32,76 +32,85 @@ export interface CheckboxFieldProps {
  * CheckboxField - Checkbox con label, description y error
  * Molecule que combina Checkbox atom con Label y feedback
  */
-const CheckboxField = memo(forwardRef<HTMLInputElement, CheckboxFieldProps>(function CheckboxField(
-  {
-    className,
-    label,
-    description,
-    disabled = false,
-    error,
-    id,
-    checked,
-    onChange,
-    name,
-    value,
-    defaultChecked,
-  },
-  ref
-) {
-  const generatedId = useId();
-  const checkboxId = id || generatedId;
-  const helperId = `${checkboxId}-helper`;
-  const errorId = `${checkboxId}-error`;
+const CheckboxField = memo(
+  forwardRef<HTMLInputElement, CheckboxFieldProps>(function CheckboxField(
+    {
+      className,
+      label,
+      description,
+      disabled = false,
+      error,
+      id,
+      checked,
+      onChange,
+      name,
+      value,
+      defaultChecked,
+    },
+    ref
+  ) {
+    const generatedId = useId();
+    const checkboxId = id || generatedId;
+    const helperId = `${checkboxId}-helper`;
+    const errorId = `${checkboxId}-error`;
 
-  return (
-    <div className={cn('flex items-start gap-3', className)}>
-      <div className="flex items-center h-5 mt-0.5">
-        <Checkbox
-          ref={ref}
-          id={checkboxId}
-          disabled={disabled}
-          hasError={!!error}
-          hasHelper={!!description}
-          checked={checked}
-          onChange={onChange}
-          name={name}
-          value={value}
-          defaultChecked={defaultChecked}
-          aria-describedby={error ? errorId : description ? helperId : undefined}
-        />
-      </div>
-
-      {(label || description) && (
-        <div className="flex-1">
-          {label && (
-            <Label
-              label={label}
-              htmlFor={checkboxId}
-              className={cn(
-                'text-sm font-medium text-gray-900 dark:text-gray-100 cursor-pointer',
-                disabled && 'opacity-50 cursor-not-allowed'
-              )}
-            />
-          )}
-          {description && (
-            <p
-              id={helperId}
-              className={cn(
-                'text-xs text-gray-500 dark:text-gray-400 mt-0.5',
-                disabled && 'opacity-50'
-              )}
-            >
-              {description}
-            </p>
-          )}
-          {error && (
-            <p id={errorId} className="text-xs text-red-600 dark:text-red-400 mt-1">{error}</p>
-          )}
+    return (
+      <div className={cn('flex items-start gap-3', className)}>
+        <div className="flex items-center h-5 mt-0.5">
+          <Checkbox
+            ref={ref}
+            id={checkboxId}
+            disabled={disabled}
+            hasError={!!error}
+            hasHelper={!!description}
+            checked={checked}
+            onChange={onChange}
+            name={name}
+            value={value}
+            defaultChecked={defaultChecked}
+            aria-describedby={
+              error ? errorId : description ? helperId : undefined
+            }
+          />
         </div>
-      )}
-    </div>
-  );
-}));
+
+        {(label || description) && (
+          <div className="flex-1">
+            {label && (
+              <Label
+                label={label}
+                htmlFor={checkboxId}
+                className={cn(
+                  'text-sm font-medium text-gray-900 dark:text-gray-100 cursor-pointer',
+                  disabled && 'opacity-50 cursor-not-allowed'
+                )}
+              />
+            )}
+            {description && (
+              <p
+                id={helperId}
+                className={cn(
+                  'text-xs text-gray-500 dark:text-gray-400 mt-0.5',
+                  disabled && 'opacity-50'
+                )}
+              >
+                {description}
+              </p>
+            )}
+            {error && (
+              <p
+                id={errorId}
+                className="text-xs text-red-600 dark:text-red-400 mt-1"
+              >
+                {error}
+              </p>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  })
+);
 
 CheckboxField.displayName = 'CheckboxField';
 

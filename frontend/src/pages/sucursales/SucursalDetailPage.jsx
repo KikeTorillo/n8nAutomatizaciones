@@ -21,7 +21,7 @@ import {
   SucursalUsuariosModal,
   SucursalProfesionalesModal,
   SucursalesPageLayout,
-} from '@/components/sucursales';
+} from '@/pages/sucursales/components';
 import {
   useSucursal,
   useUsuariosSucursal,
@@ -60,7 +60,8 @@ function SucursalDetailPage() {
 
   // Fetch data
   const { data: sucursal, isLoading: isLoadingSucursal } = useSucursal(id);
-  const { data: usuarios = [], isLoading: isLoadingUsuarios } = useUsuariosSucursal(id);
+  const { data: usuarios = [], isLoading: isLoadingUsuarios } =
+    useUsuariosSucursal(id);
   const { data: profesionales = [], isLoading: isLoadingProfesionales } =
     useProfesionalesSucursal(id);
 
@@ -109,8 +110,11 @@ function SucursalDetailPage() {
 
   // Formatear dias laborales
   const formatDiasLaborales = () => {
-    if (!sucursal.dias_laborales || sucursal.dias_laborales.length === 0) return null;
-    return sucursal.dias_laborales.map((dia) => DIAS_SEMANA[dia] || dia).join(', ');
+    if (!sucursal.dias_laborales || sucursal.dias_laborales.length === 0)
+      return null;
+    return sucursal.dias_laborales
+      .map((dia) => DIAS_SEMANA[dia] || dia)
+      .join(', ');
   };
 
   return (
@@ -314,14 +318,18 @@ function SucursalDetailPage() {
                 <p className="text-2xl font-bold text-primary-700 dark:text-primary-300">
                   {usuarios.length}
                 </p>
-                <p className="text-xs text-primary-600 dark:text-primary-400">Usuarios</p>
+                <p className="text-xs text-primary-600 dark:text-primary-400">
+                  Usuarios
+                </p>
               </div>
               <div className="text-center p-4 bg-primary-50 dark:bg-primary-900/20 rounded-lg">
                 <UserCheck className="w-6 h-6 mx-auto text-primary-600 dark:text-primary-400 mb-2" />
                 <p className="text-2xl font-bold text-primary-700 dark:text-primary-300">
                   {profesionales.length}
                 </p>
-                <p className="text-xs text-primary-600 dark:text-primary-400">Profesionales</p>
+                <p className="text-xs text-primary-600 dark:text-primary-400">
+                  Profesionales
+                </p>
               </div>
             </div>
           </div>
@@ -444,7 +452,10 @@ function SucursalDetailPage() {
                     <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
                       Profesionales asignados
                     </h3>
-                    <Button size="sm" onClick={() => openModal('profesionales')}>
+                    <Button
+                      size="sm"
+                      onClick={() => openModal('profesionales')}
+                    >
                       <Plus className="w-4 h-4 mr-1" />
                       Asignar Profesional
                     </Button>

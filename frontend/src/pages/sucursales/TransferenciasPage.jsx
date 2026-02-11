@@ -31,7 +31,10 @@ import {
   SmartButtons,
   StatCardGrid,
 } from '@/components/ui';
-import { TransferenciaFormDrawer, SucursalesPageLayout } from '@/components/sucursales';
+import {
+  TransferenciaFormDrawer,
+  SucursalesPageLayout,
+} from '@/pages/sucursales/components';
 import {
   useTransferencias,
   useSucursales,
@@ -47,7 +50,8 @@ const estadoConfig = {
     label: 'Borrador',
   },
   enviado: {
-    color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
+    color:
+      'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
     icon: Send,
     label: 'Enviado',
   },
@@ -132,7 +136,9 @@ const COLUMNS = [
       const config = estadoConfig[row.estado] || estadoConfig.borrador;
       const IconEstado = config.icon;
       return (
-        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${config.color}`}>
+        <span
+          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${config.color}`}
+        >
           <IconEstado className="w-3.5 h-3.5" />
           {config.label}
         </span>
@@ -209,10 +215,13 @@ function TransferenciasPage() {
       };
     }
 
-    const porEstado = transferencias.reduce((acc, t) => {
-      acc[t.estado] = (acc[t.estado] || 0) + 1;
-      return acc;
-    }, { borrador: 0, enviado: 0, recibido: 0, cancelado: 0 });
+    const porEstado = transferencias.reduce(
+      (acc, t) => {
+        acc[t.estado] = (acc[t.estado] || 0) + 1;
+        return acc;
+      },
+      { borrador: 0, enviado: 0, recibido: 0, cancelado: 0 }
+    );
 
     const totalUnidades = transferencias.reduce(
       (sum, t) => sum + (t.total_unidades || 0),
@@ -238,68 +247,74 @@ function TransferenciasPage() {
   }, [transferencias]);
 
   // Configuración de SmartButtons para filtros rápidos
-  const smartButtonsConfig = useMemo(() => [
-    {
-      id: 'todas',
-      icon: FileText,
-      value: estadisticas.total,
-      label: 'Total',
-      color: filtros.estado === '' ? 'primary' : 'gray',
-      onClick: () => setFiltros((prev) => ({ ...prev, estado: '' })),
-    },
-    {
-      id: 'borrador',
-      icon: Edit,
-      value: estadisticas.porEstado.borrador,
-      label: 'Borradores',
-      color: filtros.estado === 'borrador' ? 'yellow' : 'gray',
-      onClick: () => setFiltros((prev) => ({ ...prev, estado: 'borrador' })),
-    },
-    {
-      id: 'enviado',
-      icon: Send,
-      value: estadisticas.porEstado.enviado,
-      label: 'Enviados',
-      color: filtros.estado === 'enviado' ? 'primary' : 'gray',
-      onClick: () => setFiltros((prev) => ({ ...prev, estado: 'enviado' })),
-    },
-    {
-      id: 'recibido',
-      icon: CheckCircle,
-      value: estadisticas.porEstado.recibido,
-      label: 'Recibidos',
-      color: filtros.estado === 'recibido' ? 'green' : 'gray',
-      onClick: () => setFiltros((prev) => ({ ...prev, estado: 'recibido' })),
-    },
-  ], [estadisticas, filtros.estado]);
+  const smartButtonsConfig = useMemo(
+    () => [
+      {
+        id: 'todas',
+        icon: FileText,
+        value: estadisticas.total,
+        label: 'Total',
+        color: filtros.estado === '' ? 'primary' : 'gray',
+        onClick: () => setFiltros((prev) => ({ ...prev, estado: '' })),
+      },
+      {
+        id: 'borrador',
+        icon: Edit,
+        value: estadisticas.porEstado.borrador,
+        label: 'Borradores',
+        color: filtros.estado === 'borrador' ? 'yellow' : 'gray',
+        onClick: () => setFiltros((prev) => ({ ...prev, estado: 'borrador' })),
+      },
+      {
+        id: 'enviado',
+        icon: Send,
+        value: estadisticas.porEstado.enviado,
+        label: 'Enviados',
+        color: filtros.estado === 'enviado' ? 'primary' : 'gray',
+        onClick: () => setFiltros((prev) => ({ ...prev, estado: 'enviado' })),
+      },
+      {
+        id: 'recibido',
+        icon: CheckCircle,
+        value: estadisticas.porEstado.recibido,
+        label: 'Recibidos',
+        color: filtros.estado === 'recibido' ? 'green' : 'gray',
+        onClick: () => setFiltros((prev) => ({ ...prev, estado: 'recibido' })),
+      },
+    ],
+    [estadisticas, filtros.estado]
+  );
 
   // Configuración de StatCardGrid
-  const statsConfig = useMemo(() => [
-    {
-      icon: ArrowRightLeft,
-      label: 'Total Transferencias',
-      value: estadisticas.total,
-      color: 'primary',
-    },
-    {
-      icon: Calendar,
-      label: 'Este Mes',
-      value: estadisticas.mesActual,
-      color: 'blue',
-    },
-    {
-      icon: Package,
-      label: 'Unidades Movidas',
-      value: estadisticas.totalUnidades.toLocaleString('es-MX'),
-      color: 'green',
-    },
-    {
-      icon: TrendingUp,
-      label: 'En Tránsito',
-      value: estadisticas.porEstado.enviado,
-      color: 'yellow',
-    },
-  ], [estadisticas]);
+  const statsConfig = useMemo(
+    () => [
+      {
+        icon: ArrowRightLeft,
+        label: 'Total Transferencias',
+        value: estadisticas.total,
+        color: 'primary',
+      },
+      {
+        icon: Calendar,
+        label: 'Este Mes',
+        value: estadisticas.mesActual,
+        color: 'blue',
+      },
+      {
+        icon: Package,
+        label: 'Unidades Movidas',
+        value: estadisticas.totalUnidades.toLocaleString('es-MX'),
+        color: 'green',
+      },
+      {
+        icon: TrendingUp,
+        label: 'En Tránsito',
+        value: estadisticas.porEstado.enviado,
+        color: 'yellow',
+      },
+    ],
+    [estadisticas]
+  );
 
   // Handler para exportar CSV
   const handleExportarCSV = () => {
@@ -315,20 +330,26 @@ function TransferenciasPage() {
       estado: estadoConfig[t.estado]?.label || t.estado,
       total_items: t.total_items || 0,
       total_unidades: t.total_unidades || 0,
-      fecha_creacion: t.creado_en ? format(new Date(t.creado_en), 'dd/MM/yyyy HH:mm') : '',
+      fecha_creacion: t.creado_en
+        ? format(new Date(t.creado_en), 'dd/MM/yyyy HH:mm')
+        : '',
       notas: t.notas || '',
     }));
 
-    exportCSV(datosExportar, [
-      { key: 'codigo', header: 'Código' },
-      { key: 'sucursal_origen', header: 'Sucursal Origen' },
-      { key: 'sucursal_destino', header: 'Sucursal Destino' },
-      { key: 'estado', header: 'Estado' },
-      { key: 'total_items', header: 'Items' },
-      { key: 'total_unidades', header: 'Unidades' },
-      { key: 'fecha_creacion', header: 'Fecha Creación' },
-      { key: 'notas', header: 'Notas' },
-    ], `transferencias_${format(new Date(), 'yyyyMMdd')}`);
+    exportCSV(
+      datosExportar,
+      [
+        { key: 'codigo', header: 'Código' },
+        { key: 'sucursal_origen', header: 'Sucursal Origen' },
+        { key: 'sucursal_destino', header: 'Sucursal Destino' },
+        { key: 'estado', header: 'Estado' },
+        { key: 'total_items', header: 'Items' },
+        { key: 'total_unidades', header: 'Unidades' },
+        { key: 'fecha_creacion', header: 'Fecha Creación' },
+        { key: 'notas', header: 'Notas' },
+      ],
+      `transferencias_${format(new Date(), 'yyyyMMdd')}`
+    );
   };
 
   // Handler para limpiar filtros
@@ -361,7 +382,10 @@ function TransferenciasPage() {
   };
 
   const handleCancelar = (transferencia) => {
-    if (transferencia.estado === 'recibido' || transferencia.estado === 'cancelado') {
+    if (
+      transferencia.estado === 'recibido' ||
+      transferencia.estado === 'cancelado'
+    ) {
       toast.error('No se puede cancelar esta transferencia');
       return;
     }
@@ -384,7 +408,8 @@ function TransferenciasPage() {
   // Opciones para selects
   const sucursalesOptions = [
     { value: '', label: 'Todas las sucursales' },
-    ...(sucursales?.map((s) => ({ value: s.id.toString(), label: s.nombre })) || []),
+    ...(sucursales?.map((s) => ({ value: s.id.toString(), label: s.nombre })) ||
+      []),
   ];
 
   const estadosOptions = [
@@ -396,7 +421,12 @@ function TransferenciasPage() {
   ];
 
   // Calcular filtros activos
-  const filtrosActivos = [filtros.estado, filtros.sucursal_origen_id, filtros.sucursal_destino_id, busqueda].filter(Boolean).length;
+  const filtrosActivos = [
+    filtros.estado,
+    filtros.sucursal_origen_id,
+    filtros.sucursal_destino_id,
+    busqueda,
+  ].filter(Boolean).length;
 
   return (
     <SucursalesPageLayout
@@ -408,7 +438,9 @@ function TransferenciasPage() {
           <Button
             variant="secondary"
             onClick={handleExportarCSV}
-            disabled={!transferenciasFiltradas || transferenciasFiltradas.length === 0}
+            disabled={
+              !transferenciasFiltradas || transferenciasFiltradas.length === 0
+            }
             icon={FileSpreadsheet}
             className="flex-1 sm:flex-none text-sm"
           >
@@ -427,7 +459,6 @@ function TransferenciasPage() {
         </>
       }
     >
-
       <div className="space-y-6">
         {/* SmartButtons - Filtros rápidos por estado */}
         <SmartButtons buttons={smartButtonsConfig} className="mb-2" />
@@ -499,19 +530,31 @@ function TransferenciasPage() {
                 <Select
                   label="Estado"
                   value={filtros.estado}
-                  onChange={(e) => setFiltros({ ...filtros, estado: e.target.value })}
+                  onChange={(e) =>
+                    setFiltros({ ...filtros, estado: e.target.value })
+                  }
                   options={estadosOptions}
                 />
                 <Select
                   label="Sucursal Origen"
                   value={filtros.sucursal_origen_id}
-                  onChange={(e) => setFiltros({ ...filtros, sucursal_origen_id: e.target.value })}
+                  onChange={(e) =>
+                    setFiltros({
+                      ...filtros,
+                      sucursal_origen_id: e.target.value,
+                    })
+                  }
                   options={sucursalesOptions}
                 />
                 <Select
                   label="Sucursal Destino"
                   value={filtros.sucursal_destino_id}
-                  onChange={(e) => setFiltros({ ...filtros, sucursal_destino_id: e.target.value })}
+                  onChange={(e) =>
+                    setFiltros({
+                      ...filtros,
+                      sucursal_destino_id: e.target.value,
+                    })
+                  }
                   options={sucursalesOptions}
                 />
               </div>
@@ -538,7 +581,8 @@ function TransferenciasPage() {
                       icon: Send,
                       label: 'Enviar',
                       onClick: () => handleEnviar(row),
-                      show: row.estado === 'borrador' && !enviarMutation.isPending,
+                      show:
+                        row.estado === 'borrador' && !enviarMutation.isPending,
                     },
                   ]}
                   entityName="transferencia"
@@ -552,11 +596,16 @@ function TransferenciasPage() {
           emptyState={{
             icon: ArrowRightLeft,
             title: 'No hay transferencias',
-            description: busqueda || filtros.estado
-              ? 'No se encontraron transferencias con los filtros aplicados'
-              : 'Crea tu primera transferencia para mover stock entre sucursales',
-            actionLabel: !busqueda && !filtros.estado ? 'Nueva Transferencia' : undefined,
-            onAction: !busqueda && !filtros.estado ? handleNuevaTransferencia : undefined,
+            description:
+              busqueda || filtros.estado
+                ? 'No se encontraron transferencias con los filtros aplicados'
+                : 'Crea tu primera transferencia para mover stock entre sucursales',
+            actionLabel:
+              !busqueda && !filtros.estado ? 'Nueva Transferencia' : undefined,
+            onAction:
+              !busqueda && !filtros.estado
+                ? handleNuevaTransferencia
+                : undefined,
           }}
           skeletonRows={5}
         />

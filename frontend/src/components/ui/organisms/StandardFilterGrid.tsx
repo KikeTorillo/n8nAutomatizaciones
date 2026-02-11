@@ -1,5 +1,5 @@
 import { memo, forwardRef, type ComponentType } from 'react';
-import { cn } from '@/lib/utils';
+import { cn } from '../lib/cn';
 import { FilterField } from '../molecules/FilterField';
 import { FILTER_GRID_LAYOUTS } from '@/lib/uiConstants';
 import type { FilterFieldType } from '@/types/organisms';
@@ -61,68 +61,81 @@ export interface StandardFilterGridProps {
  * Soporta múltiples tipos de campos y layouts responsivos.
  */
 const StandardFilterGrid = memo(
-  forwardRef<HTMLDivElement, StandardFilterGridProps>(function StandardFilterGrid({
-  config = [],
-  values = {},
-  onChange,
-  layout = 'default',
-  className,
-  disabled = false,
-}, ref) {
-  if (!config.length) return null;
+  forwardRef<HTMLDivElement, StandardFilterGridProps>(
+    function StandardFilterGrid(
+      {
+        config = [],
+        values = {},
+        onChange,
+        layout = 'default',
+        className,
+        disabled = false,
+      },
+      ref
+    ) {
+      if (!config.length) return null;
 
-  const handleChange = (key: string) => (value: unknown) => {
-    onChange?.(key, value);
-  };
+      const handleChange = (key: string) => (value: unknown) => {
+        onChange?.(key, value);
+      };
 
-  // Separar checkboxes para renderizarlos en fila aparte (mejor UX)
-  const regularFields = config.filter((field) => field.type !== 'checkbox');
-  const checkboxFields = config.filter((field) => field.type === 'checkbox');
+      // Separar checkboxes para renderizarlos en fila aparte (mejor UX)
+      const regularFields = config.filter((field) => field.type !== 'checkbox');
+      const checkboxFields = config.filter(
+        (field) => field.type === 'checkbox'
+      );
 
-  return (
-    <div ref={ref} className={cn('space-y-4', className)}>
-      {/* Campos regulares en grid */}
-      {regularFields.length > 0 && (
-        <div className={FILTER_GRID_LAYOUTS[layout] || FILTER_GRID_LAYOUTS.default}>
-          {regularFields.map((field) => (
-            <FilterField
-              key={field.key}
-              type={field.type || 'text'}
-              label={field.label}
-              value={values[field.key] as string | boolean | number | undefined}
-              onChange={handleChange(field.key)}
-              options={field.options}
-              placeholder={field.placeholder}
-              icon={field.icon}
-              min={field.min}
-              max={field.max}
-              step={field.step}
-              disabled={disabled || field.disabled}
-              className={field.className}
-            />
-          ))}
+      return (
+        <div ref={ref} className={cn('space-y-4', className)}>
+          {/* Campos regulares en grid */}
+          {regularFields.length > 0 && (
+            <div
+              className={
+                FILTER_GRID_LAYOUTS[layout] || FILTER_GRID_LAYOUTS.default
+              }
+            >
+              {regularFields.map((field) => (
+                <FilterField
+                  key={field.key}
+                  type={field.type || 'text'}
+                  label={field.label}
+                  value={
+                    values[field.key] as string | boolean | number | undefined
+                  }
+                  onChange={handleChange(field.key)}
+                  options={field.options}
+                  placeholder={field.placeholder}
+                  icon={field.icon}
+                  min={field.min}
+                  max={field.max}
+                  step={field.step}
+                  disabled={disabled || field.disabled}
+                  className={field.className}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* Checkboxes en fila separada */}
+          {checkboxFields.length > 0 && (
+            <div className="flex flex-wrap items-center gap-4">
+              {checkboxFields.map((field) => (
+                <FilterField
+                  key={field.key}
+                  type="checkbox"
+                  label={field.label}
+                  value={values[field.key] as boolean | undefined}
+                  onChange={handleChange(field.key)}
+                  icon={field.icon}
+                  disabled={disabled || field.disabled}
+                />
+              ))}
+            </div>
+          )}
         </div>
-      )}
-
-      {/* Checkboxes en fila separada */}
-      {checkboxFields.length > 0 && (
-        <div className="flex flex-wrap items-center gap-4">
-          {checkboxFields.map((field) => (
-            <FilterField
-              key={field.key}
-              type="checkbox"
-              label={field.label}
-              value={values[field.key] as boolean | undefined}
-              onChange={handleChange(field.key)}
-              icon={field.icon}
-              disabled={disabled || field.disabled}
-            />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-  })
+      );
+    }
+  )
 );
 
 StandardFilterGrid.displayName = 'StandardFilterGrid';

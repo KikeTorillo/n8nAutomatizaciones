@@ -1,5 +1,5 @@
 import { memo, forwardRef, useId, type ReactNode } from 'react';
-import { cn } from '@/lib/utils';
+import { cn } from '../lib/cn';
 import { Radio } from '../atoms/Radio';
 import type { FormSize } from '@/types/ui';
 
@@ -39,70 +39,75 @@ export interface RadioGroupProps {
  *
  * Molecule que compone Radio atoms con labels inline.
  */
-const RadioGroup = memo(forwardRef<HTMLFieldSetElement, RadioGroupProps>(function RadioGroup({
-  options,
-  value,
-  onChange,
-  name,
-  label,
-  orientation = 'vertical',
-  size = 'md',
-  hasError = false,
-  disabled = false,
-  className,
-  children,
-}, ref) {
-  const groupId = useId();
-  const groupName = name || groupId;
+const RadioGroup = memo(
+  forwardRef<HTMLFieldSetElement, RadioGroupProps>(function RadioGroup(
+    {
+      options,
+      value,
+      onChange,
+      name,
+      label,
+      orientation = 'vertical',
+      size = 'md',
+      hasError = false,
+      disabled = false,
+      className,
+      children,
+    },
+    ref
+  ) {
+    const groupId = useId();
+    const groupName = name || groupId;
 
-  return (
-    <fieldset
-      ref={ref}
-      className={cn(
-        'border-0 p-0 m-0 flex gap-3',
-        orientation === 'vertical' ? 'flex-col' : 'flex-row flex-wrap',
-        className
-      )}
-      disabled={disabled}
-    >
-      {label && (
-        <legend
-          className="text-sm font-medium text-gray-700 dark:text-gray-300"
-        >
-          {label}
-        </legend>
-      )}
-      {children ||
-        options.map((option) => {
-          const optionId = `${groupId}-${option.value}`;
-          const isDisabled = disabled || option.disabled;
+    return (
+      <fieldset
+        ref={ref}
+        className={cn(
+          'border-0 p-0 m-0 flex gap-3',
+          orientation === 'vertical' ? 'flex-col' : 'flex-row flex-wrap',
+          className
+        )}
+        disabled={disabled}
+      >
+        {label && (
+          <legend className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            {label}
+          </legend>
+        )}
+        {children ||
+          options.map((option) => {
+            const optionId = `${groupId}-${option.value}`;
+            const isDisabled = disabled || option.disabled;
 
-          return (
-            <label
-              key={option.value}
-              htmlFor={optionId}
-              className={cn(
-                'inline-flex items-center gap-2 cursor-pointer',
-                isDisabled && 'opacity-50 cursor-not-allowed'
-              )}
-            >
-              <Radio
-                id={optionId}
-                name={groupName}
-                value={option.value}
-                checked={value === option.value}
-                onChange={() => onChange?.(option.value)}
-                size={size}
-                hasError={hasError}
-                disabled={isDisabled}
-              />
-              <span className="text-sm text-gray-700 dark:text-gray-300">{option.label}</span>
-            </label>
-          );
-        })}
-    </fieldset>
-  );
-}));
+            return (
+              <label
+                key={option.value}
+                htmlFor={optionId}
+                className={cn(
+                  'inline-flex items-center gap-2 cursor-pointer',
+                  isDisabled && 'opacity-50 cursor-not-allowed'
+                )}
+              >
+                <Radio
+                  id={optionId}
+                  name={groupName}
+                  value={option.value}
+                  checked={value === option.value}
+                  onChange={() => onChange?.(option.value)}
+                  size={size}
+                  hasError={hasError}
+                  disabled={isDisabled}
+                />
+                <span className="text-sm text-gray-700 dark:text-gray-300">
+                  {option.label}
+                </span>
+              </label>
+            );
+          })}
+      </fieldset>
+    );
+  })
+);
 
 RadioGroup.displayName = 'RadioGroup';
 

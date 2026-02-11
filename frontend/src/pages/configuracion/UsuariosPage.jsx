@@ -23,7 +23,11 @@ import {
 } from 'lucide-react';
 
 import { Button, ConfirmDialog, StatCardGrid } from '@/components/ui';
-import { ConfiguracionPageLayout, ConfigSearchBar, ConfigEmptyState } from '@/components/configuracion';
+import {
+  ConfiguracionPageLayout,
+  ConfigSearchBar,
+  ConfigEmptyState,
+} from '@/pages/configuracion/components';
 import { useToast, useModalManager, useFilters } from '@/hooks/utils';
 import {
   useUsuarios,
@@ -34,7 +38,7 @@ import {
   ROLES_USUARIO,
 } from '@/hooks/personas';
 import { useVerificarLimiteUsuarios } from '@/hooks/suscripciones-negocio';
-import UsuarioFormDrawer from '@/components/usuarios/UsuarioFormDrawer';
+import UsuarioFormDrawer from '@/pages/configuracion/components/usuarios/UsuarioFormDrawer';
 
 // Context para compartir estado entre UsuariosPage y UsuarioRow
 const UsuariosContext = createContext(null);
@@ -63,34 +67,36 @@ function UsuariosPage() {
   const navigate = useNavigate();
 
   // Filtros consolidados con useFilters
-  const {
-    filtros,
-    filtrosQuery,
-    setFiltro,
-    limpiarFiltros,
-    hasFiltrosActivos,
-  } = useFilters(INITIAL_FILTERS, {
-    moduloId: 'configuracion.usuarios',
-    debounceFields: ['buscar'],
-  });
+  const { filtros, filtrosQuery, setFiltro, hasFiltrosActivos } = useFilters(
+    INITIAL_FILTERS,
+    {
+      moduloId: 'configuracion.usuarios',
+      debounceFields: ['buscar'],
+    }
+  );
 
   const [vinculandoUsuario, setVinculandoUsuario] = useState(null);
 
   // Verificación de límite de usuarios (seat-based billing)
-  const { data: limiteData, refetch: refetchLimite } = useVerificarLimiteUsuarios(1);
+  const { data: limiteData, refetch: refetchLimite } =
+    useVerificarLimiteUsuarios(1);
 
   // Modal manager
-  const { openModal, closeModal, isOpen, getModalData, getModalProps } = useModalManager({
-    form: { isOpen: false, data: null },
-    confirm: { isOpen: false, data: null, type: '', title: '', message: '' },
-    limiteConfirm: { isOpen: false, data: null },
-  });
+  const { openModal, closeModal, isOpen, getModalData, getModalProps } =
+    useModalManager({
+      form: { isOpen: false, data: null },
+      confirm: { isOpen: false, data: null, type: '', title: '', message: '' },
+      limiteConfirm: { isOpen: false, data: null },
+    });
 
   // Query params con filtrosQuery (debounced)
-  const queryParams = useMemo(() => ({
-    ...filtrosQuery,
-    limit: 100,
-  }), [filtrosQuery]);
+  const queryParams = useMemo(
+    () => ({
+      ...filtrosQuery,
+      limit: 100,
+    }),
+    [filtrosQuery]
+  );
 
   // Queries
   const { data: usuariosData, isLoading } = useUsuarios(queryParams);
@@ -111,7 +117,10 @@ function UsuariosPage() {
 
       // Si no puede crear (hard limit), mostrar error
       if (limite && !limite.puedeCrear) {
-        toast.error(limite.advertencia || 'No puedes crear más usuarios con tu plan actual');
+        toast.error(
+          limite.advertencia ||
+            'No puedes crear más usuarios con tu plan actual'
+        );
         return;
       }
 
@@ -163,10 +172,16 @@ function UsuariosPage() {
     try {
       if (actionType === 'desactivar' || actionType === 'activar') {
         const nuevoEstado = actionType === 'activar';
-        await cambiarEstadoMutation.mutateAsync({ id: usuario.id, activo: nuevoEstado });
+        await cambiarEstadoMutation.mutateAsync({
+          id: usuario.id,
+          activo: nuevoEstado,
+        });
         toast.success(nuevoEstado ? 'Usuario activado' : 'Usuario desactivado');
       } else if (actionType === 'desvincular') {
-        await vincularMutation.mutateAsync({ id: usuario.id, profesionalId: null });
+        await vincularMutation.mutateAsync({
+          id: usuario.id,
+          profesionalId: null,
+        });
         toast.success('Profesional desvinculado');
       }
       closeModal('confirm');
@@ -181,7 +196,9 @@ function UsuariosPage() {
         id: usuarioId,
         profesionalId: profesionalId ? parseInt(profesionalId) : null,
       });
-      toast.success(profesionalId ? 'Profesional vinculado' : 'Profesional desvinculado');
+      toast.success(
+        profesionalId ? 'Profesional vinculado' : 'Profesional desvinculado'
+      );
       setVinculandoUsuario(null);
     } catch (error) {
       toast.error(error.message || 'Error al vincular profesional');
@@ -197,11 +214,30 @@ function UsuariosPage() {
   };
 
   // Stats
-  const stats = useMemo(() => [
-    { label: 'Total', value: resumen.total_usuarios || usuarios.length, icon: Users, color: 'primary' },
-    { label: 'Activos', value: resumen.usuarios_activos || usuarios.filter(u => u.activo).length, icon: UserCheck, color: 'green' },
-    { label: 'Bloqueados', value: resumen.usuarios_bloqueados || 0, icon: UserX, color: 'yellow' },
-  ], [resumen, usuarios]);
+  const stats = useMemo(
+    () => [
+      {
+        label: 'Total',
+        value: resumen.total_usuarios || usuarios.length,
+        icon: Users,
+        color: 'primary',
+      },
+      {
+        label: 'Activos',
+        value:
+          resumen.usuarios_activos || usuarios.filter((u) => u.activo).length,
+        icon: UserCheck,
+        color: 'green',
+      },
+      {
+        label: 'Bloqueados',
+        value: resumen.usuarios_bloqueados || 0,
+        icon: UserX,
+        color: 'yellow',
+      },
+    ],
+    [resumen, usuarios]
+  );
 
   const getRolBadgeColor = (rol) => {
     const colors = { admin: 'purple', empleado: 'green' };
@@ -216,18 +252,27 @@ function UsuariosPage() {
   };
 
   // Contexto compartido para UsuarioRow (reduce prop drilling)
-  const contextValue = useMemo(() => ({
-    onCambiarRol: handleCambiarRol,
-    onDesvincular: handleDesvincular,
-    onVincular: handleVincularProfesional,
-    onVerDetalle: handleVerDetalle,
-    vinculandoUsuario,
-    setVinculandoUsuario,
-    profesionalesDisponibles,
-    getRolBadgeColor,
-    cambiarRolMutation,
-    cambiarEstadoMutation,
-  }), [vinculandoUsuario, profesionalesDisponibles, cambiarRolMutation, cambiarEstadoMutation, navigate]);
+  const contextValue = useMemo(
+    () => ({
+      onCambiarRol: handleCambiarRol,
+      onDesvincular: handleDesvincular,
+      onVincular: handleVincularProfesional,
+      onVerDetalle: handleVerDetalle,
+      vinculandoUsuario,
+      setVinculandoUsuario,
+      profesionalesDisponibles,
+      getRolBadgeColor,
+      cambiarRolMutation,
+      cambiarEstadoMutation,
+    }),
+    [
+      vinculandoUsuario,
+      profesionalesDisponibles,
+      cambiarRolMutation,
+      cambiarEstadoMutation,
+      navigate,
+    ]
+  );
 
   return (
     <UsuariosContext.Provider value={contextValue}>
@@ -250,8 +295,20 @@ function UsuariosPage() {
             onChange={(value) => setFiltro('buscar', value)}
             placeholder="Buscar por nombre o email..."
             filters={[
-              { name: 'rol', value: filtros.rol, onChange: (value) => setFiltro('rol', value), options: FILTROS_ROL, placeholder: 'Todos los roles' },
-              { name: 'estado', value: filtros.activo, onChange: (value) => setFiltro('activo', value), options: FILTROS_ESTADO, placeholder: 'Todos' },
+              {
+                name: 'rol',
+                value: filtros.rol,
+                onChange: (value) => setFiltro('rol', value),
+                options: FILTROS_ROL,
+                placeholder: 'Todos los roles',
+              },
+              {
+                name: 'estado',
+                value: filtros.activo,
+                onChange: (value) => setFiltro('activo', value),
+                options: FILTROS_ESTADO,
+                placeholder: 'Todos',
+              },
             ]}
           />
 
@@ -298,12 +355,21 @@ function UsuariosPage() {
           title={getModalProps('confirm').title}
           message={getModalProps('confirm').message}
           confirmText={
-            getModalProps('confirm').type === 'desactivar' ? 'Desactivar' :
-            getModalProps('confirm').type === 'activar' ? 'Activar' : 'Confirmar'
+            getModalProps('confirm').type === 'desactivar'
+              ? 'Desactivar'
+              : getModalProps('confirm').type === 'activar'
+                ? 'Activar'
+                : 'Confirmar'
           }
-          variant={getModalProps('confirm').type === 'desactivar' ? 'danger' : 'default'}
+          variant={
+            getModalProps('confirm').type === 'desactivar'
+              ? 'danger'
+              : 'default'
+          }
           onConfirm={confirmarAccion}
-          isLoading={cambiarEstadoMutation.isPending || vincularMutation.isPending}
+          isLoading={
+            cambiarEstadoMutation.isPending || vincularMutation.isPending
+          }
         />
 
         {/* Modal de confirmación de costo adicional (soft limit) */}
@@ -326,8 +392,10 @@ function UsuariosPage() {
                 </div>
               </div>
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                Tu plan incluye {getModalData('limiteConfirm')?.detalle?.usuariosIncluidos || 0} usuarios.
-                Actualmente tienes {getModalData('limiteConfirm')?.detalle?.usuariosActuales || 0}.
+                Tu plan incluye{' '}
+                {getModalData('limiteConfirm')?.detalle?.usuariosIncluidos || 0}{' '}
+                usuarios. Actualmente tienes{' '}
+                {getModalData('limiteConfirm')?.detalle?.usuariosActuales || 0}.
               </p>
             </div>
           }
@@ -361,10 +429,12 @@ function UsuarioRow({ usuario, onEdit, onToggleActivo }) {
   return (
     <div className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
       <div className="flex items-start gap-4">
-        <div className={`
+        <div
+          className={`
           w-12 h-12 rounded-full flex items-center justify-center text-white font-semibold
           ${usuario.activo ? 'bg-primary-500' : 'bg-gray-400'}
-        `}>
+        `}
+        >
           {usuario.nombre?.[0]?.toUpperCase() || 'U'}
         </div>
 
@@ -386,7 +456,9 @@ function UsuarioRow({ usuario, onEdit, onToggleActivo }) {
               `}
             >
               {Object.entries(ROLES_USUARIO).map(([value, config]) => (
-                <option key={value} value={value}>{config.label}</option>
+                <option key={value} value={value}>
+                  {config.label}
+                </option>
               ))}
             </select>
 
@@ -416,7 +488,9 @@ function UsuarioRow({ usuario, onEdit, onToggleActivo }) {
           </div>
 
           <div className="mt-2 flex items-center gap-2">
-            <span className="text-xs text-gray-500 dark:text-gray-400">Profesional:</span>
+            <span className="text-xs text-gray-500 dark:text-gray-400">
+              Profesional:
+            </span>
             {usuario.profesional_id ? (
               <div className="flex items-center gap-1">
                 <Link2 className="w-3.5 h-3.5 text-green-500" />
@@ -439,8 +513,10 @@ function UsuarioRow({ usuario, onEdit, onToggleActivo }) {
                 className="text-xs px-2 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700"
               >
                 <option value="">Seleccionar...</option>
-                {profesionalesDisponibles.map(p => (
-                  <option key={p.id} value={p.id}>{p.nombre_completo}</option>
+                {profesionalesDisponibles.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.nombre_completo}
+                  </option>
                 ))}
               </select>
             ) : (
@@ -466,16 +542,25 @@ function UsuarioRow({ usuario, onEdit, onToggleActivo }) {
             `}
             title={usuario.activo ? 'Desactivar usuario' : 'Activar usuario'}
           >
-            <span className={`
+            <span
+              className={`
               pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0
               transition duration-200 ease-in-out
               ${usuario.activo ? 'translate-x-5' : 'translate-x-0'}
-            `} />
+            `}
+            />
           </button>
-          <Button variant="ghost" size="sm" onClick={() => onVerDetalle(usuario.id)} title="Ver detalle">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onVerDetalle(usuario.id)}
+            title="Ver detalle"
+          >
             <Eye className="w-4 h-4" />
           </Button>
-          <Button variant="ghost" size="sm" onClick={onEdit}>Editar</Button>
+          <Button variant="ghost" size="sm" onClick={onEdit}>
+            Editar
+          </Button>
         </div>
       </div>
     </div>

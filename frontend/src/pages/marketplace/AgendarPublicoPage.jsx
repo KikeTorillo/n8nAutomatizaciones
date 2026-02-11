@@ -3,10 +3,10 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Check } from 'lucide-react';
 import { Button, LoadingSpinner } from '@/components/ui';
 import { usePerfilPublico } from '@/hooks/otros';
-import SelectorServiciosPublico from '@/components/marketplace/agendamiento/SelectorServiciosPublico';
-import SelectorFechaHoraPublico from '@/components/marketplace/agendamiento/SelectorFechaHoraPublico';
-import FormularioDatosCliente from '@/components/marketplace/agendamiento/FormularioDatosCliente';
-import ConfirmacionCita from '@/components/marketplace/agendamiento/ConfirmacionCita';
+import SelectorServiciosPublico from '@/pages/marketplace/components/agendamiento/SelectorServiciosPublico';
+import SelectorFechaHoraPublico from '@/pages/marketplace/components/agendamiento/SelectorFechaHoraPublico';
+import FormularioDatosCliente from '@/pages/marketplace/components/agendamiento/FormularioDatosCliente';
+import ConfirmacionCita from '@/pages/marketplace/components/agendamiento/ConfirmacionCita';
 
 /**
  * Página de agendamiento público
@@ -122,7 +122,9 @@ function AgendarPublicoPage() {
               <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
                 Agendar Cita
               </h1>
-              <p className="text-gray-600 dark:text-gray-400 mt-1">{perfil.nombre_comercial}</p>
+              <p className="text-gray-600 dark:text-gray-400 mt-1">
+                {perfil.nombre_comercial}
+              </p>
             </div>
           </div>
         </div>
@@ -143,8 +145,8 @@ function AgendarPublicoPage() {
                         paso.completado
                           ? 'bg-green-600 text-white'
                           : paso.numero === pasoActual
-                          ? 'bg-primary-600 text-white'
-                          : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+                            ? 'bg-primary-600 text-white'
+                            : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
                       }
                     `}
                   >

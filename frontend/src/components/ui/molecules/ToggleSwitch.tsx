@@ -1,5 +1,5 @@
 import { memo, forwardRef, type ReactNode, type KeyboardEvent } from 'react';
-import { cn } from '@/lib/utils';
+import { cn } from '../lib/cn';
 import { TOGGLE_SIZES, TOGGLE_COLORS } from '@/lib/uiConstants';
 import { Spinner } from '../atoms/Spinner';
 
@@ -55,85 +55,90 @@ interface ToggleSizeConfig {
  *   disabledIcon={<X className="h-4 w-4 text-gray-400" />}
  * />
  */
-const ToggleSwitch = memo(forwardRef<HTMLButtonElement, ToggleSwitchProps>(function ToggleSwitch({
-  enabled = false,
-  onChange,
-  disabled = false,
-  size = 'md',
-  label,
-  className,
-  enabledIcon,
-  disabledIcon,
-  isLoading = false,
-  loadingIcon,
-}, ref) {
-  const sizeConfig = TOGGLE_SIZES[size] || TOGGLE_SIZES.md;
+const ToggleSwitch = memo(
+  forwardRef<HTMLButtonElement, ToggleSwitchProps>(function ToggleSwitch(
+    {
+      enabled = false,
+      onChange,
+      disabled = false,
+      size = 'md',
+      label,
+      className,
+      enabledIcon,
+      disabledIcon,
+      isLoading = false,
+      loadingIcon,
+    },
+    ref
+  ) {
+    const sizeConfig = TOGGLE_SIZES[size] || TOGGLE_SIZES.md;
 
-  const handleClick = () => {
-    if (!disabled && !isLoading && onChange) {
-      onChange(!enabled);
-    }
-  };
+    const handleClick = () => {
+      if (!disabled && !isLoading && onChange) {
+        onChange(!enabled);
+      }
+    };
 
-  const handleKeyDown = (e: KeyboardEvent<HTMLButtonElement>) => {
-    if ((e.key === 'Enter' || e.key === ' ') && !disabled && !isLoading) {
-      e.preventDefault();
-      onChange?.(!enabled);
-    }
-  };
+    const handleKeyDown = (e: KeyboardEvent<HTMLButtonElement>) => {
+      if ((e.key === 'Enter' || e.key === ' ') && !disabled && !isLoading) {
+        e.preventDefault();
+        onChange?.(!enabled);
+      }
+    };
 
-  // Renderizar icono según estado
-  const renderIcon = (): ReactNode => {
-    if (isLoading && loadingIcon) {
-      return loadingIcon;
-    }
-    if (isLoading) {
-      return <Spinner className={cn(sizeConfig.icon, 'text-gray-400')} />;
-    }
-    if (enabled && enabledIcon) {
-      return enabledIcon;
-    }
-    if (!enabled && disabledIcon) {
-      return disabledIcon;
-    }
-    return null;
-  };
+    // Renderizar icono según estado
+    const renderIcon = (): ReactNode => {
+      if (isLoading && loadingIcon) {
+        return loadingIcon;
+      }
+      if (isLoading) {
+        return <Spinner className={cn(sizeConfig.icon, 'text-gray-400')} />;
+      }
+      if (enabled && enabledIcon) {
+        return enabledIcon;
+      }
+      if (!enabled && disabledIcon) {
+        return disabledIcon;
+      }
+      return null;
+    };
 
-  return (
-    <button
-      ref={ref}
-      type="button"
-      role="switch"
-      aria-checked={enabled}
-      aria-label={label}
-      disabled={disabled || isLoading}
-      onClick={handleClick}
-      onKeyDown={handleKeyDown}
-      className={cn(
-        'relative inline-flex flex-shrink-0 cursor-pointer rounded-full',
-        'border-2 border-transparent transition-colors duration-200 ease-in-out',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2',
-        'dark:focus-visible:ring-offset-gray-900',
-        sizeConfig.track,
-        enabled ? TOGGLE_COLORS.enabled : TOGGLE_COLORS.disabled,
-        (disabled || isLoading) && 'opacity-50 cursor-not-allowed',
-        className
-      )}
-    >
-      <span
+    return (
+      <button
+        ref={ref}
+        type="button"
+        role="switch"
+        aria-checked={enabled}
+        aria-label={label}
+        disabled={disabled || isLoading}
+        onClick={handleClick}
+        onKeyDown={handleKeyDown}
         className={cn(
-          'pointer-events-none inline-flex items-center justify-center',
-          'transform rounded-full bg-white shadow ring-0',
-          'transition duration-200 ease-in-out',
-          sizeConfig.thumb,
-          enabled ? sizeConfig.translate : 'translate-x-0'
+          'relative inline-flex flex-shrink-0 cursor-pointer rounded-full',
+          'border-2 border-transparent transition-colors duration-200 ease-in-out',
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2',
+          'dark:focus-visible:ring-offset-gray-900',
+          sizeConfig.track,
+          enabled ? TOGGLE_COLORS.enabled : TOGGLE_COLORS.disabled,
+          (disabled || isLoading) && 'opacity-50 cursor-not-allowed',
+          className
         )}
       >
-        {renderIcon()}
-      </span>
-    </button>
-  );
-}));
+        <span
+          className={cn(
+            'pointer-events-none inline-flex items-center justify-center',
+            'transform rounded-full bg-white shadow ring-0',
+            'transition duration-200 ease-in-out',
+            sizeConfig.thumb,
+            enabled ? sizeConfig.translate : 'translate-x-0'
+          )}
+        >
+          {renderIcon()}
+        </span>
+      </button>
+    );
+  })
+);
 
 ToggleSwitch.displayName = 'ToggleSwitch';
 

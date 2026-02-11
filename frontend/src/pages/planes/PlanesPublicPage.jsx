@@ -6,7 +6,7 @@ import { queryKeys } from '@/hooks/config';
 import { Button, Badge, LoadingSpinner } from '@/components/ui';
 import { PublicHeader, PublicFooter } from '@/components/public';
 import { suscripcionesNegocioApi } from '@/services/api/modules/suscripciones-negocio.api';
-import { CheckoutModal } from '@/components/checkout';
+import { CheckoutModal } from '@/components/shared/checkout';
 import { AlertaBloqueado } from '@/components/shared';
 import { formatCurrency, cn } from '@/lib/utils';
 import {

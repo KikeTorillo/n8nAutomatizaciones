@@ -28,21 +28,28 @@ import {
 
 import { queryKeys } from '@/hooks/config';
 import { useAuthStore, selectLogout, selectUser } from '@/features/auth';
-import useOnboardingStore, { selectResetOnboarding } from '@/store/onboardingStore';
-import useSucursalStore, { selectClear as selectClearSucursal } from '@/store/sucursalStore';
-import usePermisosStore, { selectClear as selectClearPermisos } from '@/store/permisosStore';
+import useOnboardingStore, {
+  selectResetOnboarding,
+} from '@/store/onboardingStore';
+import useSucursalStore, {
+  selectClear as selectClearSucursal,
+} from '@/store/sucursalStore';
+import usePermisosStore, {
+  selectClear as selectClearPermisos,
+} from '@/store/permisosStore';
 import { useModulos } from '@/hooks/sistema';
 import { useAppNotifications } from '@/hooks/sistema';
 import { useSucursales, useMetricasSucursales } from '@/hooks/sistema';
 import { useEstadoSuscripcion } from '@/hooks/sistema';
 import { authApi } from '@/services/api/endpoints';
 
-import AppCard from '@/components/home/AppCard';
-import QuickActions from '@/components/home/QuickActions';
-import { Button, ConfirmDialog, ThemeToggle } from '@/components/ui';
-import SucursalSelector from '@/components/sucursales/SucursalSelector';
-import { NotificacionesBell } from '@/components/notificaciones';
-import { TrialBanner } from '@/components/trial';
+import AppCard from '@/pages/home/components/AppCard';
+import QuickActions from '@/pages/home/components/QuickActions';
+import { Button, ConfirmDialog } from '@/components/ui';
+import { ThemeToggleConnected as ThemeToggle } from '@/components/shared/ThemeToggleConnected';
+import SucursalSelector from '@/pages/sucursales/components/SucursalSelector';
+import { NotificacionesBell } from '@/pages/notificaciones/components';
+import { TrialBanner } from '@/pages/home/components/trial';
 
 /**
  * AppHomePage - Página principal con App Launcher
@@ -92,20 +99,37 @@ function AppHomePage() {
   const { data: sucursales = [] } = useSucursales({ activo: true });
   const tieneMultiplesSucursales = sucursales.length > 1;
   // FIX RBAC Ene 2026: Solo admin puede ver métricas
-  const { data: metricasSucursales } = useMetricasSucursales({}, { enabled: esAdmin });
+  const { data: metricasSucursales } = useMetricasSucursales(
+    {},
+    { enabled: esAdmin }
+  );
 
   // Estado de suscripción (para TrialBanner) - FIX RBAC Ene 2026: Solo admin
-  const { data: estadoSuscripcion } = useEstadoSuscripcion({ enabled: esAdmin });
+  const { data: estadoSuscripcion } = useEstadoSuscripcion({
+    enabled: esAdmin,
+  });
 
   // Mutation de logout - Ene 2026: Limpieza completa de todos los stores
   // Feb 2026: Invalidar queries específicas en lugar de clear() para mejor UX
   const logoutMutation = useMutation({
     mutationFn: authApi.logout,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.auth.usuario, refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: queryKeys.auth.organizacion, refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: queryKeys.sistema.modulos, refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: queryKeys.sistema.sucursales.all, refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.auth.usuario,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.auth.organizacion,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.sistema.modulos,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.sistema.sucursales.all,
+        refetchType: 'active',
+      });
       resetOnboarding();
       clearSucursal();
       clearPermisos();
@@ -113,10 +137,22 @@ function AppHomePage() {
       navigate('/login');
     },
     onError: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.auth.usuario, refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: queryKeys.auth.organizacion, refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: queryKeys.sistema.modulos, refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: queryKeys.sistema.sucursales.all, refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.auth.usuario,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.auth.organizacion,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.sistema.modulos,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.sistema.sucursales.all,
+        refetchType: 'active',
+      });
       resetOnboarding();
       clearSucursal();
       clearPermisos();
@@ -374,7 +410,7 @@ function AppHomePage() {
   // Empleados: solo ven apps habilitadas y no administrativas
   // Admin/Propietario: ven todas las apps (excepto superAdminOnly)
   // Super_admin: ve todas las apps incluyendo Admin Plataforma
-  const apps = allApps.filter(app => {
+  const apps = allApps.filter((app) => {
     // Super_admin ve todo
     if (esSuperAdmin) return app.enabled;
 
@@ -482,9 +518,13 @@ function AppHomePage() {
                   </div>
                   <div>
                     <span className="font-medium text-primary-900 dark:text-primary-100">
-                      Plan {estadoSuscripcion.plan_actual.charAt(0).toUpperCase() + estadoSuscripcion.plan_actual.slice(1)}
+                      Plan{' '}
+                      {estadoSuscripcion.plan_actual.charAt(0).toUpperCase() +
+                        estadoSuscripcion.plan_actual.slice(1)}
                     </span>
-                    <span className="mx-2 text-primary-300 dark:text-primary-600">•</span>
+                    <span className="mx-2 text-primary-300 dark:text-primary-600">
+                      •
+                    </span>
                     <span className="text-sm text-primary-600 dark:text-primary-400">
                       Suscripción activa
                     </span>
@@ -523,30 +563,42 @@ function AppHomePage() {
                     <p className="text-lg font-bold text-gray-900 dark:text-gray-100">
                       {sucursales.length}
                     </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Sucursales</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      Sucursales
+                    </p>
                   </div>
                   <div className="text-center p-2 bg-primary-50 dark:bg-primary-900/20 rounded">
                     <p className="text-lg font-bold text-primary-600 dark:text-primary-400">
-                      {new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', minimumFractionDigits: 0 }).format(metricasSucursales?.ventas?.hoy?.total || 0)}
+                      {new Intl.NumberFormat('es-MX', {
+                        style: 'currency',
+                        currency: 'MXN',
+                        minimumFractionDigits: 0,
+                      }).format(metricasSucursales?.ventas?.hoy?.total || 0)}
                     </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Ventas Hoy</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      Ventas Hoy
+                    </p>
                   </div>
                   <div className="text-center p-2 bg-primary-50 dark:bg-primary-900/20 rounded">
                     <p className="text-lg font-bold text-primary-600 dark:text-primary-400">
                       {metricasSucursales?.citas?.hoy?.total || 0}
                     </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Citas Hoy</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      Citas Hoy
+                    </p>
                   </div>
                   <div className="text-center p-2 bg-amber-50 dark:bg-amber-900/20 rounded">
                     <p className="text-lg font-bold text-amber-600 dark:text-amber-400">
-                      {(metricasSucursales?.transferencias?.pendientes || 0) + (metricasSucursales?.transferencias?.enviadas || 0)}
+                      {(metricasSucursales?.transferencias?.pendientes || 0) +
+                        (metricasSucursales?.transferencias?.enviadas || 0)}
                     </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Transferencias</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      Transferencias
+                    </p>
                   </div>
                 </div>
               </div>
             )}
-
           </>
         )}
 
@@ -575,19 +627,22 @@ function AppHomePage() {
         {!esEmpleado && <QuickActions />}
 
         {/* Mensaje para plan Free - Solo si NO está en trial y NO tiene plan activo */}
-        {!esEmpleado && esPlanFree && !estadoSuscripcion?.es_trial && !estadoSuscripcion?.plan_actual && (
-          <div className="mt-10 text-center">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-full text-amber-700 dark:text-amber-300 text-sm">
-              <span>Algunas apps requieren</span>
-              <button
-                onClick={() => navigate('/mi-plan')}
-                className="font-semibold hover:underline"
-              >
-                Plan Pro
-              </button>
+        {!esEmpleado &&
+          esPlanFree &&
+          !estadoSuscripcion?.es_trial &&
+          !estadoSuscripcion?.plan_actual && (
+            <div className="mt-10 text-center">
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-full text-amber-700 dark:text-amber-300 text-sm">
+                <span>Algunas apps requieren</span>
+                <button
+                  onClick={() => navigate('/mi-plan')}
+                  className="font-semibold hover:underline"
+                >
+                  Plan Pro
+                </button>
+              </div>
             </div>
-          </div>
-        )}
+          )}
       </main>
 
       {/* Modal de confirmación de logout */}

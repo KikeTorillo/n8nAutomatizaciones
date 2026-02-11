@@ -1,6 +1,10 @@
 import { forwardRef, memo, useId, type InputHTMLAttributes } from 'react';
-import { cn } from '@/lib/utils';
-import { RADIO_SIZE_CLASSES, getRadioStyles, getAriaDescribedBy } from '@/lib/uiConstants';
+import { cn } from '../lib/cn';
+import {
+  RADIO_SIZE_CLASSES,
+  getRadioStyles,
+  getAriaDescribedBy,
+} from '@/lib/uiConstants';
 import type { FormSize } from '@/types/ui';
 
 export interface RadioProps

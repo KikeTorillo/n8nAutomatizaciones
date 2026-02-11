@@ -1,6 +1,6 @@
 import { memo, forwardRef, type ReactNode } from 'react';
 import { AlertTriangle, Info, CheckCircle, XCircle } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '../lib/cn';
 import { ALERT_VARIANTS } from '@/lib/uiConstants';
 import { IconButton } from '../atoms/IconButton';
 import type { AlertVariant, LucideIcon } from '@/types/ui';
@@ -54,78 +54,74 @@ interface AlertVariantStyles {
  * (ej. "Guardado correctamente"), usar {@link Toast}.
  */
 const Alert = memo(
-  forwardRef<HTMLDivElement, AlertProps>(function Alert({
-  variant = 'info',
-  icon: Icon,
-  title,
-  children,
-  action,
-  dismissible = false,
-  onDismiss,
-  className,
-}, ref) {
-  const styles = ALERT_VARIANTS[variant] || ALERT_VARIANTS.info;
-  const DefaultIcon = defaultIcons[variant] || defaultIcons.warning;
+  forwardRef<HTMLDivElement, AlertProps>(function Alert(
+    {
+      variant = 'info',
+      icon: Icon,
+      title,
+      children,
+      action,
+      dismissible = false,
+      onDismiss,
+      className,
+    },
+    ref
+  ) {
+    const styles = ALERT_VARIANTS[variant] || ALERT_VARIANTS.info;
+    const DefaultIcon = defaultIcons[variant] || defaultIcons.warning;
 
-  return (
-    <div
-      ref={ref}
-      role="alert"
-      aria-live={variant === 'error' || variant === 'danger' ? 'assertive' : 'polite'}
-      className={cn(
-        styles.container,
-        'border rounded-lg p-4',
-        className
-      )}
-    >
-      <div className="flex items-start gap-4">
-        {/* Icono principal */}
-        {Icon && (
-          <div className={cn('p-3 rounded-lg', styles.iconBg)}>
-            <Icon className={cn('h-6 w-6', styles.icon)} />
-          </div>
-        )}
+    return (
+      <div
+        ref={ref}
+        role="alert"
+        aria-live={
+          variant === 'error' || variant === 'danger' ? 'assertive' : 'polite'
+        }
+        className={cn(styles.container, 'border rounded-lg p-4', className)}
+      >
+        <div className="flex items-start gap-4">
+          {/* Icono principal */}
+          {Icon && (
+            <div className={cn('p-3 rounded-lg', styles.iconBg)}>
+              <Icon className={cn('h-6 w-6', styles.icon)} />
+            </div>
+          )}
 
-        {/* Contenido */}
-        <div className="flex-1 min-w-0">
-          {/* Header con título y botón cerrar */}
-          {title && (
-            <div className="flex items-center justify-between gap-2 mb-1">
-              <div className="flex items-center gap-2">
-                {!Icon && <DefaultIcon className={cn('h-4 w-4', styles.icon)} />}
-                <h3 className={cn('font-semibold', styles.title)}>
-                  {title}
-                </h3>
+          {/* Contenido */}
+          <div className="flex-1 min-w-0">
+            {/* Header con título y botón cerrar */}
+            {title && (
+              <div className="flex items-center justify-between gap-2 mb-1">
+                <div className="flex items-center gap-2">
+                  {!Icon && (
+                    <DefaultIcon className={cn('h-4 w-4', styles.icon)} />
+                  )}
+                  <h3 className={cn('font-semibold', styles.title)}>{title}</h3>
+                </div>
+                {dismissible && onDismiss && (
+                  <IconButton
+                    icon={XCircle}
+                    label="Cerrar alerta"
+                    variant="ghost"
+                    size="sm"
+                    onClick={onDismiss}
+                    className={styles.text}
+                  />
+                )}
               </div>
-              {dismissible && onDismiss && (
-                <IconButton
-                  icon={XCircle}
-                  label="Cerrar alerta"
-                  variant="ghost"
-                  size="sm"
-                  onClick={onDismiss}
-                  className={styles.text}
-                />
-              )}
-            </div>
-          )}
+            )}
 
-          {/* Contenido de la alerta */}
-          <div className={styles.text}>
-            {children}
+            {/* Contenido de la alerta */}
+            <div className={styles.text}>{children}</div>
+
+            {/* Acción opcional */}
+            {action && <div className="mt-3">{action}</div>}
           </div>
-
-          {/* Acción opcional */}
-          {action && (
-            <div className="mt-3">
-              {action}
-            </div>
-          )}
         </div>
       </div>
-    </div>
-  );
-}));
+    );
+  })
+);
 
 Alert.displayName = 'Alert';
 

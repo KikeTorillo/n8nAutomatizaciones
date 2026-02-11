@@ -1,8 +1,19 @@
-import { useState, useRef, useCallback, memo, forwardRef, useId, type ReactNode } from 'react';
+import {
+  useState,
+  useRef,
+  useCallback,
+  memo,
+  forwardRef,
+  useId,
+  type ReactNode,
+} from 'react';
 import { createPortal } from 'react-dom';
-import { cn } from '@/lib/utils';
-import { useFloatingPosition, type Placement } from '@/hooks/utils/useFloatingPosition';
-import { useFloatingDismiss } from '@/hooks/utils/useFloatingDismiss';
+import { cn } from '../lib/cn';
+import {
+  useFloatingPosition,
+  type Placement,
+} from '../hooks/useFloatingPosition';
+import { useFloatingDismiss } from '../hooks/useFloatingDismiss';
 
 export interface PopoverProps {
   /** Elemento que dispara el popover (click) */
@@ -32,83 +43,89 @@ export interface PopoverProps {
  *   placement="bottom"
  * />
  */
-const Popover = memo(forwardRef<HTMLDivElement, PopoverProps>(function Popover(
-  {
-    trigger,
-    content,
-    placement = 'bottom',
-    offset = 8,
-    className,
-    contentClassName,
-  },
-  ref
-) {
-  const [isOpen, setIsOpen] = useState(false);
-  const triggerRef = useRef<HTMLDivElement>(null);
-  const popoverRef = useRef<HTMLDivElement>(null);
-  const popoverId = useId();
+const Popover = memo(
+  forwardRef<HTMLDivElement, PopoverProps>(function Popover(
+    {
+      trigger,
+      content,
+      placement = 'bottom',
+      offset = 8,
+      className,
+      contentClassName,
+    },
+    ref
+  ) {
+    const [isOpen, setIsOpen] = useState(false);
+    const triggerRef = useRef<HTMLDivElement>(null);
+    const popoverRef = useRef<HTMLDivElement>(null);
+    const popoverId = useId();
 
-  const { position, transform, updatePosition } = useFloatingPosition(triggerRef, {
-    placement,
-    offset,
-    enabled: isOpen,
-  });
-
-  const handleClose = useCallback(() => {
-    setIsOpen(false);
-  }, []);
-
-  useFloatingDismiss(handleClose, {
-    enabled: isOpen,
-    excludeRefs: [triggerRef, popoverRef],
-  });
-
-  const handleToggle = useCallback(() => {
-    setIsOpen(prev => {
-      if (!prev) {
-        requestAnimationFrame(updatePosition);
+    const { position, transform, updatePosition } = useFloatingPosition(
+      triggerRef,
+      {
+        placement,
+        offset,
+        enabled: isOpen,
       }
-      return !prev;
-    });
-  }, [updatePosition]);
+    );
 
-  return (
-    <div ref={ref} className={cn('inline-block', className)}>
-      <div
-        ref={triggerRef}
-        onClick={handleToggle}
-        aria-haspopup="dialog"
-        aria-expanded={isOpen}
-        aria-controls={popoverId}
-      >
-        {trigger}
-      </div>
-      {isOpen && createPortal(
+    const handleClose = useCallback(() => {
+      setIsOpen(false);
+    }, []);
+
+    useFloatingDismiss(handleClose, {
+      enabled: isOpen,
+      excludeRefs: [triggerRef, popoverRef],
+    });
+
+    const handleToggle = useCallback(() => {
+      setIsOpen((prev) => {
+        if (!prev) {
+          requestAnimationFrame(updatePosition);
+        }
+        return !prev;
+      });
+    }, [updatePosition]);
+
+    return (
+      <div ref={ref} className={cn('inline-block', className)}>
         <div
-          ref={popoverRef}
-          id={popoverId}
-          role="dialog"
-          aria-modal="true"
-          style={{
-            position: 'fixed',
-            top: position.top,
-            left: position.left,
-            transform,
-            zIndex: 50,
-          }}
-          className={cn(
-            'bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700',
-            'animate-in fade-in-0 zoom-in-95 duration-150',
-            contentClassName,
-          )}
+          ref={triggerRef}
+          onClick={handleToggle}
+          aria-haspopup="dialog"
+          aria-expanded={isOpen}
+          aria-controls={popoverId}
         >
-          {content}
-        </div>,
-        document.body
-      )}
-    </div>
-  );
-}));
+          {trigger}
+        </div>
+        {isOpen &&
+          createPortal(
+            <div
+              ref={popoverRef}
+              id={popoverId}
+              role="dialog"
+              aria-modal="true"
+              style={{
+                position: 'fixed',
+                top: position.top,
+                left: position.left,
+                transform,
+                zIndex: 50,
+              }}
+              className={cn(
+                'bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700',
+                'animate-in fade-in-0 zoom-in-95 duration-150',
+                contentClassName
+              )}
+            >
+              {content}
+            </div>,
+            document.body
+          )}
+      </div>
+    );
+  })
+);
 
 Popover.displayName = 'Popover';
 

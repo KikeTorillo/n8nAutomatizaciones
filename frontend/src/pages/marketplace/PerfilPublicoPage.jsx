@@ -12,12 +12,12 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { Button, LoadingSpinner } from '@/components/ui';
-import SEOHead from '@/components/marketplace/SEOHead';
-import EstrellaRating from '@/components/marketplace/EstrellaRating';
-import ReseñasSection from '@/components/marketplace/ReseñasSection';
-import MapaUbicacion from '@/components/marketplace/MapaUbicacion';
-import ServicioCard from '@/components/marketplace/ServicioCard';
-import ProfesionalCard from '@/components/marketplace/ProfesionalCard';
+import SEOHead from '@/pages/marketplace/components/SEOHead';
+import EstrellaRating from '@/pages/marketplace/components/EstrellaRating';
+import ReseñasSection from '@/pages/marketplace/components/ReseñasSection';
+import MapaUbicacion from '@/pages/marketplace/components/MapaUbicacion';
+import ServicioCard from '@/pages/marketplace/components/ServicioCard';
+import ProfesionalCard from '@/pages/marketplace/components/ProfesionalCard';
 import { usePerfilPublico, useReseñasNegocio } from '@/hooks/otros';
 import { marketplaceApi } from '@/services/api/endpoints';
 
@@ -106,14 +106,18 @@ function PerfilPublicoPage() {
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 max-w-md w-full text-center">
           <AlertCircle className="w-16 h-16 text-red-500 dark:text-red-400 mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-            {error.response?.status === 404 ? 'Perfil no encontrado' : 'Error al cargar'}
+            {error.response?.status === 404
+              ? 'Perfil no encontrado'
+              : 'Error al cargar'}
           </h2>
           <p className="text-gray-600 dark:text-gray-400 mb-6">
             {error.response?.status === 404
               ? 'El negocio que buscas no existe o ha sido desactivado'
               : 'Hubo un problema al cargar el perfil. Intenta nuevamente.'}
           </p>
-          <Button onClick={() => navigate('/marketplace')}>Volver al directorio</Button>
+          <Button onClick={() => navigate('/marketplace')}>
+            Volver al directorio
+          </Button>
         </div>
       </div>
     );
@@ -215,7 +219,11 @@ function PerfilPublicoPage() {
                   </div>
 
                   {/* CTA Agendar */}
-                  <Button size="lg" onClick={handleClickAgendar} className="flex-shrink-0">
+                  <Button
+                    size="lg"
+                    onClick={handleClickAgendar}
+                    className="flex-shrink-0"
+                  >
                     <Calendar className="w-5 h-5 mr-2" />
                     Agendar cita
                   </Button>
@@ -260,20 +268,26 @@ function PerfilPublicoPage() {
               <div className="space-y-6">
                 {/* Descripción */}
                 <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-                  <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">Sobre nosotros</h2>
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+                    Sobre nosotros
+                  </h2>
                   {perfil.descripcion_larga ? (
                     <p className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
                       {perfil.descripcion_larga}
                     </p>
                   ) : (
-                    <p className="text-gray-500 dark:text-gray-400 italic">No hay descripción disponible</p>
+                    <p className="text-gray-500 dark:text-gray-400 italic">
+                      No hay descripción disponible
+                    </p>
                   )}
                 </div>
 
                 {/* Galería de Imágenes */}
                 {perfil.galeria_urls && perfil.galeria_urls.length > 0 && (
                   <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-                    <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">Galería</h2>
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+                      Galería
+                    </h2>
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                       {perfil.galeria_urls.map((url, index) => (
                         <div
@@ -298,7 +312,9 @@ function PerfilPublicoPage() {
             {/* Tab: Servicios */}
             {tabActivo === 'servicios' && (
               <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">Servicios</h2>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">
+                  Servicios
+                </h2>
 
                 {perfil.servicios && perfil.servicios.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -319,12 +335,17 @@ function PerfilPublicoPage() {
             {/* Tab: Profesionales */}
             {tabActivo === 'profesionales' && (
               <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">Nuestro equipo</h2>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">
+                  Nuestro equipo
+                </h2>
 
                 {perfil.profesionales && perfil.profesionales.length > 0 ? (
                   <div className="grid grid-cols-1 gap-4">
                     {perfil.profesionales.map((profesional) => (
-                      <ProfesionalCard key={profesional.id} profesional={profesional} />
+                      <ProfesionalCard
+                        key={profesional.id}
+                        profesional={profesional}
+                      />
                     ))}
                   </div>
                 ) : (
@@ -362,7 +383,9 @@ function PerfilPublicoPage() {
           {/* Sidebar */}
           <aside className="w-full lg:w-80 flex-shrink-0">
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 sticky top-24">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Información de contacto</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+                Información de contacto
+              </h3>
 
               <div className="space-y-4">
                 {/* Teléfono */}
@@ -445,7 +468,9 @@ function PerfilPublicoPage() {
               {/* Mapa */}
               {perfil.ciudad && (
                 <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-                  <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">Ubicación</h4>
+                  <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">
+                    Ubicación
+                  </h4>
                   <MapaUbicacion
                     direccion={perfil.direccion}
                     ciudad={perfil.ciudad}

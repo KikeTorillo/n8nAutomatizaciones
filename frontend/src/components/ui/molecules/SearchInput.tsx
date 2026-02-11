@@ -1,11 +1,21 @@
-import { forwardRef, useState, useEffect, useCallback, useMemo, memo, type ChangeEvent, type InputHTMLAttributes } from 'react';
+import {
+  forwardRef,
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  memo,
+  type ChangeEvent,
+  type InputHTMLAttributes,
+} from 'react';
 import { Search, X } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '../lib/cn';
 import { SEARCH_INPUT_SIZES, getInputBaseStyles } from '@/lib/uiConstants';
-import { useCombineRefs } from '@/hooks/utils/useCombineRefs';
+import { useCombineRefs } from '../hooks/useCombineRefs';
 import type { Size } from '@/types/ui';
 
-export interface SearchInputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'size' | 'onChange'> {
+export interface SearchInputProps
+  extends Omit<InputHTMLAttributes<HTMLInputElement>, 'size' | 'onChange'> {
   /** Valor controlado del input */
   value?: string;
   /** Callback cuando cambia el valor (evento nativo real) */
@@ -58,8 +68,8 @@ interface SearchInputSizeConfig {
  *   debounceMs={500}
  * />
  */
-const SearchInput = memo(forwardRef<HTMLInputElement, SearchInputProps>(
-  function SearchInput(
+const SearchInput = memo(
+  forwardRef<HTMLInputElement, SearchInputProps>(function SearchInput(
     {
       value = '',
       onChange,
@@ -80,11 +90,14 @@ const SearchInput = memo(forwardRef<HTMLInputElement, SearchInputProps>(
     const [internalRef, setRefs] = useCombineRefs<HTMLInputElement>(ref);
 
     // Callback estable para evitar cancelaciones de debounce
-    const stableOnSearch = useCallback((searchValue: string) => {
-      if (onSearch) {
-        onSearch(searchValue);
-      }
-    }, [onSearch]);
+    const stableOnSearch = useCallback(
+      (searchValue: string) => {
+        if (onSearch) {
+          onSearch(searchValue);
+        }
+      },
+      [onSearch]
+    );
 
     // Sincronizar valor externo
     useEffect(() => {
@@ -102,12 +115,15 @@ const SearchInput = memo(forwardRef<HTMLInputElement, SearchInputProps>(
       return () => clearTimeout(timer);
     }, [internalValue, debounceMs, stableOnSearch, onSearch]);
 
-    const handleChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
-      const newValue = e.target.value;
-      setInternalValue(newValue);
-      onChange?.(e);
-      onValueChange?.(newValue);
-    }, [onChange, onValueChange]);
+    const handleChange = useCallback(
+      (e: ChangeEvent<HTMLInputElement>) => {
+        const newValue = e.target.value;
+        setInternalValue(newValue);
+        onChange?.(e);
+        onValueChange?.(newValue);
+      },
+      [onChange, onValueChange]
+    );
 
     const handleClear = useCallback(() => {
       setInternalValue('');
@@ -118,7 +134,8 @@ const SearchInput = memo(forwardRef<HTMLInputElement, SearchInputProps>(
       const input = internalRef.current;
       if (input && onChange) {
         const nativeSetter = Object.getOwnPropertyDescriptor(
-          window.HTMLInputElement.prototype, 'value'
+          window.HTMLInputElement.prototype,
+          'value'
         )?.set;
         if (nativeSetter) {
           nativeSetter.call(input, '');
@@ -129,12 +146,15 @@ const SearchInput = memo(forwardRef<HTMLInputElement, SearchInputProps>(
 
     // Memoizar estilos de tamaño con padding dinámico
     const currentSize = useMemo(() => {
-      const baseSize = SEARCH_INPUT_SIZES[size as keyof typeof SEARCH_INPUT_SIZES] || SEARCH_INPUT_SIZES.md;
+      const baseSize =
+        SEARCH_INPUT_SIZES[size as keyof typeof SEARCH_INPUT_SIZES] ||
+        SEARCH_INPUT_SIZES.md;
       return {
         ...baseSize,
-        paddingRight: showClear && internalValue
-          ? baseSize.paddingRightWithClear
-          : baseSize.paddingRightNormal,
+        paddingRight:
+          showClear && internalValue
+            ? baseSize.paddingRightWithClear
+            : baseSize.paddingRightNormal,
       };
     }, [size, showClear, internalValue]);
 
@@ -142,10 +162,9 @@ const SearchInput = memo(forwardRef<HTMLInputElement, SearchInputProps>(
       <div className={cn('relative', className)} role="search">
         {/* Icono de búsqueda */}
         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <Search className={cn(
-            currentSize.icon,
-            'text-gray-400 dark:text-gray-500'
-          )} />
+          <Search
+            className={cn(currentSize.icon, 'text-gray-400 dark:text-gray-500')}
+          />
         </div>
 
         {/* Input */}
@@ -184,8 +203,8 @@ const SearchInput = memo(forwardRef<HTMLInputElement, SearchInputProps>(
         )}
       </div>
     );
-  }
-));
+  })
+);
 
 SearchInput.displayName = 'SearchInput';
 

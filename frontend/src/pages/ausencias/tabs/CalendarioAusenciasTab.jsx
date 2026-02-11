@@ -31,7 +31,7 @@ import { queryKeys } from '@/hooks/config';
 import { Badge, Button, Modal } from '@/components/ui';
 import { useCalendarioAusencias } from '@/hooks/personas';
 import { useDepartamentosActivos } from '@/hooks/personas';
-import { useCalendarioMobile } from '@/components/calendario-shared';
+import { useCalendarioMobile } from '@/pages/ausencias/components/calendario';
 import AusenciasDiaDrawer from './AusenciasDiaDrawer';
 
 /**
@@ -65,12 +65,18 @@ const CalendarioDia = memo(function CalendarioDia({
 
   // Agrupar eventos por tipo para dots
   const tieneIncapacidades = eventos.some((e) => e.tipo === 'incapacidad');
-  const tieneVacacionesPendientes = eventos.some((e) => e.tipo !== 'incapacidad' && e.estado === 'pendiente');
-  const tieneVacacionesAprobadas = eventos.some((e) => e.tipo !== 'incapacidad' && e.estado === 'aprobada');
+  const tieneVacacionesPendientes = eventos.some(
+    (e) => e.tipo !== 'incapacidad' && e.estado === 'pendiente'
+  );
+  const tieneVacacionesAprobadas = eventos.some(
+    (e) => e.tipo !== 'incapacidad' && e.estado === 'aprobada'
+  );
 
   if (isLoading) {
     return (
-      <div className={`${compactMode ? 'aspect-square' : 'min-h-[100px]'} p-1 border-r border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50`}>
+      <div
+        className={`${compactMode ? 'aspect-square' : 'min-h-[100px]'} p-1 border-r border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50`}
+      >
         <div className="h-4 w-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
       </div>
     );
@@ -80,18 +86,22 @@ const CalendarioDia = memo(function CalendarioDia({
   if (compactMode) {
     return (
       <button
-        onClick={() => esDelMesActual && onDiaClick && onDiaClick(fechaISO, eventos)}
+        onClick={() =>
+          esDelMesActual && onDiaClick && onDiaClick(fechaISO, eventos)
+        }
         disabled={!esDelMesActual}
         className={`
           aspect-square flex flex-col items-center justify-center rounded-lg
           transition-all relative
-          ${esDelMesActual
-            ? 'bg-white dark:bg-gray-800 active:scale-95'
-            : 'bg-gray-50 dark:bg-gray-900 opacity-40'
+          ${
+            esDelMesActual
+              ? 'bg-white dark:bg-gray-800 active:scale-95'
+              : 'bg-gray-50 dark:bg-gray-900 opacity-40'
           }
-          ${esHoy
-            ? 'ring-2 ring-primary-500 dark:ring-primary-400'
-            : 'border border-gray-200 dark:border-gray-700'
+          ${
+            esHoy
+              ? 'ring-2 ring-primary-500 dark:ring-primary-400'
+              : 'border border-gray-200 dark:border-gray-700'
           }
           ${esDelMesActual && eventos.length > 0 ? 'cursor-pointer' : ''}
         `}
@@ -111,13 +121,22 @@ const CalendarioDia = memo(function CalendarioDia({
         {eventos.length > 0 && (
           <div className="flex items-center justify-center gap-0.5 mt-1">
             {tieneIncapacidades && (
-              <span className="w-1.5 h-1.5 rounded-full bg-red-500" title="Incapacidades" />
+              <span
+                className="w-1.5 h-1.5 rounded-full bg-red-500"
+                title="Incapacidades"
+              />
             )}
             {tieneVacacionesPendientes && (
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-500" title="Pendientes" />
+              <span
+                className="w-1.5 h-1.5 rounded-full bg-amber-500"
+                title="Pendientes"
+              />
             )}
             {tieneVacacionesAprobadas && (
-              <span className="w-1.5 h-1.5 rounded-full bg-green-500" title="Aprobadas" />
+              <span
+                className="w-1.5 h-1.5 rounded-full bg-green-500"
+                title="Aprobadas"
+              />
             )}
           </div>
         )}
@@ -146,11 +165,12 @@ const CalendarioDia = memo(function CalendarioDia({
         <span
           className={`
             text-xs font-medium px-1.5 py-0.5 rounded
-            ${esHoy
-              ? 'bg-primary-500 text-white'
-              : !esDelMesActual
-                ? 'text-gray-400 dark:text-gray-600'
-                : 'text-gray-700 dark:text-gray-300'
+            ${
+              esHoy
+                ? 'bg-primary-500 text-white'
+                : !esDelMesActual
+                  ? 'text-gray-400 dark:text-gray-600'
+                  : 'text-gray-700 dark:text-gray-300'
             }
           `}
         >
@@ -174,11 +194,12 @@ const CalendarioDia = memo(function CalendarioDia({
               className={`
                 w-full text-left px-1.5 py-0.5 rounded text-xs truncate
                 hover:opacity-80 transition-opacity
-                ${esIncapacidad
-                  ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
-                  : esPendiente
-                    ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300'
-                    : 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
+                ${
+                  esIncapacidad
+                    ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
+                    : esPendiente
+                      ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300'
+                      : 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
                 }
               `}
             >
@@ -205,14 +226,15 @@ function EventoDetailModal({ isOpen, onClose, evento }) {
 
   const esIncapacidad = evento.tipo === 'incapacidad';
 
-  const estadoVariant = {
-    aprobada: 'success',
-    pendiente: 'warning',
-    rechazada: 'error',
-    cancelada: 'default',
-    activa: 'success',
-    finalizada: 'default',
-  }[evento.estado] || 'default';
+  const estadoVariant =
+    {
+      aprobada: 'success',
+      pendiente: 'warning',
+      rechazada: 'error',
+      cancelada: 'default',
+      activa: 'success',
+      finalizada: 'default',
+    }[evento.estado] || 'default';
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} size="sm">
@@ -223,13 +245,16 @@ function EventoDetailModal({ isOpen, onClose, evento }) {
             <span
               className={`
                 px-2 py-1 text-xs font-medium rounded
-                ${esIncapacidad
-                  ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
-                  : 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
+                ${
+                  esIncapacidad
+                    ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
+                    : 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
                 }
               `}
             >
-              {esIncapacidad ? evento.subTipoConfig?.label || 'Incapacidad' : 'Vacaciones'}
+              {esIncapacidad
+                ? evento.subTipoConfig?.label || 'Incapacidad'
+                : 'Vacaciones'}
             </span>
             <Badge variant={estadoVariant}>
               {evento.estadoConfig?.label || evento.estado}
@@ -260,13 +285,17 @@ function EventoDetailModal({ isOpen, onClose, evento }) {
             <div>
               <p className="text-gray-500 dark:text-gray-400">Inicio</p>
               <p className="font-medium text-gray-900 dark:text-white">
-                {format(new Date(evento.fechaInicio), 'dd MMM yyyy', { locale: es })}
+                {format(new Date(evento.fechaInicio), 'dd MMM yyyy', {
+                  locale: es,
+                })}
               </p>
             </div>
             <div>
               <p className="text-gray-500 dark:text-gray-400">Fin</p>
               <p className="font-medium text-gray-900 dark:text-white">
-                {format(new Date(evento.fechaFin), 'dd MMM yyyy', { locale: es })}
+                {format(new Date(evento.fechaFin), 'dd MMM yyyy', {
+                  locale: es,
+                })}
               </p>
             </div>
           </div>
@@ -313,7 +342,13 @@ function CalendarioAusenciasTab({ esAdmin }) {
   const [eventoSeleccionado, setEventoSeleccionado] = useState(null);
 
   // Hook para móvil
-  const { isMobile, drawerDia, handleDiaClick, handleCerrarDrawer, diasSemanaHeaders } = useCalendarioMobile();
+  const {
+    isMobile,
+    drawerDia,
+    handleDiaClick,
+    handleCerrarDrawer,
+    diasSemanaHeaders,
+  } = useCalendarioMobile();
 
   // Departamentos para filtro
   const { data: departamentosData } = useDepartamentosActivos();
@@ -330,7 +365,11 @@ function CalendarioAusenciasTab({ esAdmin }) {
   }, [mesActual]);
 
   // Query de eventos
-  const { data: eventos, eventosPorFecha, isLoading } = useCalendarioAusencias({
+  const {
+    data: eventos,
+    eventosPorFecha,
+    isLoading,
+  } = useCalendarioAusencias({
     fecha_inicio: rangoMes.inicio,
     fecha_fin: rangoMes.fin,
     tipo: filtros.tipo,
@@ -350,7 +389,9 @@ function CalendarioAusenciasTab({ esAdmin }) {
   const handleRefresh = () => {
     queryClient.invalidateQueries({ queryKey: ['ausencias', 'calendario'] });
     queryClient.invalidateQueries({ queryKey: ['vacaciones'] });
-    queryClient.invalidateQueries({ queryKey: queryKeys.personas.incapacidades.all });
+    queryClient.invalidateQueries({
+      queryKey: queryKeys.personas.incapacidades.all,
+    });
   };
 
   const nombreMes = format(mesActual, 'MMMM yyyy', { locale: es });
@@ -434,7 +475,9 @@ function CalendarioAusenciasTab({ esAdmin }) {
               onChange={(e) =>
                 setFiltros({
                   ...filtros,
-                  departamento_id: e.target.value ? parseInt(e.target.value) : null,
+                  departamento_id: e.target.value
+                    ? parseInt(e.target.value)
+                    : null,
                 })
               }
               className="text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-2 py-1 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
@@ -451,25 +494,39 @@ function CalendarioAusenciasTab({ esAdmin }) {
       </div>
 
       {/* Leyenda */}
-      <div className={`flex items-center ${isMobile ? 'gap-2 text-[10px]' : 'gap-4 text-xs'}`}>
+      <div
+        className={`flex items-center ${isMobile ? 'gap-2 text-[10px]' : 'gap-4 text-xs'}`}
+      >
         <div className="flex items-center gap-1">
-          <span className={`${isMobile ? 'w-2 h-2' : 'w-3 h-3'} rounded bg-green-500`} />
-          <span className="text-gray-600 dark:text-gray-400">{isMobile ? 'Aprobadas' : 'Vacaciones aprobadas'}</span>
+          <span
+            className={`${isMobile ? 'w-2 h-2' : 'w-3 h-3'} rounded bg-green-500`}
+          />
+          <span className="text-gray-600 dark:text-gray-400">
+            {isMobile ? 'Aprobadas' : 'Vacaciones aprobadas'}
+          </span>
         </div>
         <div className="flex items-center gap-1">
-          <span className={`${isMobile ? 'w-2 h-2' : 'w-3 h-3'} rounded bg-amber-500`} />
+          <span
+            className={`${isMobile ? 'w-2 h-2' : 'w-3 h-3'} rounded bg-amber-500`}
+          />
           <span className="text-gray-600 dark:text-gray-400">Pendientes</span>
         </div>
         <div className="flex items-center gap-1">
-          <span className={`${isMobile ? 'w-2 h-2' : 'w-3 h-3'} rounded bg-red-500`} />
-          <span className="text-gray-600 dark:text-gray-400">Incapacidades</span>
+          <span
+            className={`${isMobile ? 'w-2 h-2' : 'w-3 h-3'} rounded bg-red-500`}
+          />
+          <span className="text-gray-600 dark:text-gray-400">
+            Incapacidades
+          </span>
         </div>
       </div>
 
       {/* Calendario */}
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
         {/* Header días de la semana */}
-        <div className={`grid grid-cols-7 border-b border-gray-200 dark:border-gray-700 ${isMobile ? '' : ''}`}>
+        <div
+          className={`grid grid-cols-7 border-b border-gray-200 dark:border-gray-700 ${isMobile ? '' : ''}`}
+        >
           {diasSemanaHeaders.map((dia, idx) => (
             <div
               key={idx}

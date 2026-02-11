@@ -16,13 +16,13 @@ import {
   FormDrawer,
   FormGroup,
   Input,
-  StatCardGrid
+  StatCardGrid,
 } from '@/components/ui';
 import {
   ConfiguracionPageLayout,
   ConfigSearchBar,
   ConfigEmptyState,
-} from '@/components/configuracion';
+} from '@/pages/configuracion/components';
 import { useDisclosure, useDeleteConfirmation, useToast } from '@/hooks/utils';
 import {
   usePuestos,
@@ -47,9 +47,15 @@ function preparePayload(data) {
     nombre: data.nombre.trim(),
     codigo: data.codigo?.trim() || undefined,
     descripcion: data.descripcion?.trim() || undefined,
-    departamento_id: data.departamento_id ? parseInt(data.departamento_id) : null,
-    salario_minimo: data.salario_minimo ? parseFloat(data.salario_minimo) : null,
-    salario_maximo: data.salario_maximo ? parseFloat(data.salario_maximo) : null,
+    departamento_id: data.departamento_id
+      ? parseInt(data.departamento_id)
+      : null,
+    salario_minimo: data.salario_minimo
+      ? parseFloat(data.salario_minimo)
+      : null,
+    salario_maximo: data.salario_maximo
+      ? parseFloat(data.salario_maximo)
+      : null,
     activo: data.activo,
   };
 }
@@ -88,7 +94,12 @@ function PuestosPage() {
   // Form drawer state
   const drawer = useDisclosure();
   const form = useForm({ defaultValues: DEFAULT_VALUES });
-  const { register, reset, formState: { errors }, handleSubmit } = form;
+  const {
+    register,
+    reset,
+    formState: { errors },
+    handleSubmit,
+  } = form;
   const isEditing = !!drawer.data;
   const isSubmitting = crearMutation.isPending || actualizarMutation.isPending;
 
@@ -100,7 +111,7 @@ function PuestosPage() {
   });
 
   // Opciones de filtro por departamento
-  const departamentoOptions = departamentos.map(d => ({
+  const departamentoOptions = departamentos.map((d) => ({
     value: d.id.toString(),
     label: d.nombre,
   }));
@@ -111,15 +122,16 @@ function PuestosPage() {
 
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
-      result = result.filter(item =>
-        item.nombre?.toLowerCase().includes(term) ||
-        item.codigo?.toLowerCase().includes(term)
+      result = result.filter(
+        (item) =>
+          item.nombre?.toLowerCase().includes(term) ||
+          item.codigo?.toLowerCase().includes(term)
       );
     }
 
     if (filterDepartamento) {
-      result = result.filter(item =>
-        item.departamento_id === parseInt(filterDepartamento)
+      result = result.filter(
+        (item) => item.departamento_id === parseInt(filterDepartamento)
       );
     }
 
@@ -132,31 +144,40 @@ function PuestosPage() {
     drawer.open();
   }, [reset, drawer]);
 
-  const handleEdit = useCallback((item) => {
-    reset(entityToFormValues(item));
-    drawer.open(item);
-  }, [reset, drawer]);
+  const handleEdit = useCallback(
+    (item) => {
+      reset(entityToFormValues(item));
+      drawer.open(item);
+    },
+    [reset, drawer]
+  );
 
-  const onSubmit = useCallback(async (data) => {
-    const payload = preparePayload(data);
-    try {
-      if (drawer.data) {
-        await actualizarMutation.mutateAsync({ id: drawer.data.id, data: payload });
-        toast.success('Puesto actualizado');
-      } else {
-        await crearMutation.mutateAsync(payload);
-        toast.success('Puesto creado');
+  const onSubmit = useCallback(
+    async (data) => {
+      const payload = preparePayload(data);
+      try {
+        if (drawer.data) {
+          await actualizarMutation.mutateAsync({
+            id: drawer.data.id,
+            data: payload,
+          });
+          toast.success('Puesto actualizado');
+        } else {
+          await crearMutation.mutateAsync(payload);
+          toast.success('Puesto creado');
+        }
+        drawer.close();
+        reset(DEFAULT_VALUES);
+      } catch (err) {
+        toast.error(err.message || 'Error al guardar puesto');
       }
-      drawer.close();
-      reset(DEFAULT_VALUES);
-    } catch (err) {
-      toast.error(err.message || 'Error al guardar puesto');
-    }
-  }, [drawer, actualizarMutation, crearMutation, toast, reset]);
+    },
+    [drawer, actualizarMutation, crearMutation, toast, reset]
+  );
 
   // Obtener nombre del departamento
   const getDepartamentoNombre = (departamentoId) => {
-    const dep = departamentos.find(d => d.id === departamentoId);
+    const dep = departamentos.find((d) => d.id === departamentoId);
     return dep?.nombre || 'Sin departamento';
   };
 
@@ -170,20 +191,24 @@ function PuestosPage() {
   };
 
   // Stats
-  const stats = useMemo(() => [
-    {
-      label: 'Puestos',
-      value: puestos.length,
-      icon: Briefcase,
-      color: 'primary',
-    },
-    {
-      label: 'Con rango salarial',
-      value: puestos.filter(p => p.salario_minimo || p.salario_maximo).length,
-      icon: DollarSign,
-      color: 'green',
-    },
-  ], [puestos]);
+  const stats = useMemo(
+    () => [
+      {
+        label: 'Puestos',
+        value: puestos.length,
+        icon: Briefcase,
+        color: 'primary',
+      },
+      {
+        label: 'Con rango salarial',
+        value: puestos.filter((p) => p.salario_minimo || p.salario_maximo)
+          .length,
+        icon: DollarSign,
+        color: 'green',
+      },
+    ],
+    [puestos]
+  );
 
   const isFiltered = !!(searchTerm || filterDepartamento);
 
@@ -234,11 +259,13 @@ function PuestosPage() {
             />
           ) : (
             <div className="divide-y divide-gray-200 dark:divide-gray-700">
-              {filteredItems.map(puesto => (
+              {filteredItems.map((puesto) => (
                 <PuestoRow
                   key={puesto.id}
                   puesto={puesto}
-                  departamentoNombre={getDepartamentoNombre(puesto.departamento_id)}
+                  departamentoNombre={getDepartamentoNombre(
+                    puesto.departamento_id
+                  )}
                   formatCurrency={formatCurrency}
                   onEdit={() => handleEdit(puesto)}
                   onDelete={() => confirmDelete(puesto)}
@@ -255,7 +282,11 @@ function PuestosPage() {
         onClose={drawer.close}
         entityName="Puesto"
         mode={isEditing ? 'edit' : 'create'}
-        subtitle={isEditing ? 'Modifica los datos del puesto' : 'Crea un nuevo puesto de trabajo'}
+        subtitle={
+          isEditing
+            ? 'Modifica los datos del puesto'
+            : 'Crea un nuevo puesto de trabajo'
+        }
         onSubmit={handleSubmit(onSubmit)}
         isSubmitting={isSubmitting}
       >
@@ -268,10 +299,7 @@ function PuestosPage() {
         </FormGroup>
 
         <FormGroup label="Codigo (Opcional)">
-          <Input
-            placeholder="Ej: GER-VEN"
-            {...register('codigo')}
-          />
+          <Input placeholder="Ej: GER-VEN" {...register('codigo')} />
         </FormGroup>
 
         <FormGroup label="Departamento">
@@ -280,8 +308,10 @@ function PuestosPage() {
             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500"
           >
             <option value="">Selecciona un departamento</option>
-            {departamentos.map(d => (
-              <option key={d.id} value={d.id}>{d.nombre}</option>
+            {departamentos.map((d) => (
+              <option key={d.id} value={d.id}>
+                {d.nombre}
+              </option>
             ))}
           </select>
         </FormGroup>
@@ -319,7 +349,10 @@ function PuestosPage() {
             {...register('activo')}
             className="w-4 h-4 text-primary-600 rounded focus:ring-primary-500"
           />
-          <label htmlFor="activo" className="text-sm text-gray-700 dark:text-gray-300">
+          <label
+            htmlFor="activo"
+            className="text-sm text-gray-700 dark:text-gray-300"
+          >
             Puesto activo
           </label>
         </div>
@@ -334,7 +367,13 @@ function PuestosPage() {
 /**
  * Fila de puesto individual
  */
-function PuestoRow({ puesto, departamentoNombre, formatCurrency, onEdit, onDelete }) {
+function PuestoRow({
+  puesto,
+  departamentoNombre,
+  formatCurrency,
+  onEdit,
+  onDelete,
+}) {
   return (
     <div className="flex items-center gap-4 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50">
       <div className="p-2 bg-primary-100 dark:bg-primary-900/40 rounded-lg">
@@ -365,7 +404,8 @@ function PuestoRow({ puesto, departamentoNombre, formatCurrency, onEdit, onDelet
           {(puesto.salario_minimo || puesto.salario_maximo) && (
             <span className="flex items-center gap-1">
               <DollarSign className="w-3 h-3" />
-              {formatCurrency(puesto.salario_minimo)} - {formatCurrency(puesto.salario_maximo)}
+              {formatCurrency(puesto.salario_minimo)} -{' '}
+              {formatCurrency(puesto.salario_maximo)}
             </span>
           )}
         </div>

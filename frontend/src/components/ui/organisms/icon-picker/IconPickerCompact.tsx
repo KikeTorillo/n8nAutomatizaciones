@@ -9,9 +9,16 @@
  * @since 2026-02-05
  */
 
-import { memo, useState, useCallback, useRef, useEffect, forwardRef } from 'react';
+import {
+  memo,
+  useState,
+  useCallback,
+  useRef,
+  useEffect,
+  forwardRef,
+} from 'react';
 import { Search, ChevronDown, X } from 'lucide-react';
-import { useIconPickerLogic } from '@/hooks/ui/useIconPickerLogic';
+import { useIconPickerLogic } from '../../hooks/useIconPickerLogic';
 import IconPickerButton from './IconPickerButton';
 
 export interface IconPickerCompactProps {
@@ -29,186 +36,193 @@ export interface IconPickerCompactProps {
  * IconPickerCompact - Selector de iconos compacto con popover
  */
 export const IconPickerCompact = memo(
-  forwardRef<HTMLDivElement, IconPickerCompactProps>(function IconPickerCompact({
-  value,
-  onChange,
-  placeholder = 'Seleccionar icono',
-  iconSize = 20,
-}, ref) {
-  const [isOpen, setIsOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  forwardRef<HTMLDivElement, IconPickerCompactProps>(function IconPickerCompact(
+    { value, onChange, placeholder = 'Seleccionar icono', iconSize = 20 },
+    ref
+  ) {
+    const [isOpen, setIsOpen] = useState(false);
+    const containerRef = useRef<HTMLDivElement>(null);
+    const inputRef = useRef<HTMLInputElement>(null);
 
-  const {
-    busqueda,
-    setBusqueda,
-    categoriaActiva,
-    setCategoriaActiva,
-    categorias,
-    iconosFiltrados,
-    totalFiltrados,
-    renderIcon,
-  } = useIconPickerLogic({
-    maxItems: 49,
-    maxCategories: 6,
-    onSelectClose: () => setIsOpen(false),
-  });
+    const {
+      busqueda,
+      setBusqueda,
+      categoriaActiva,
+      setCategoriaActiva,
+      categorias,
+      iconosFiltrados,
+      totalFiltrados,
+      renderIcon,
+    } = useIconPickerLogic({
+      maxItems: 49,
+      maxCategories: 6,
+      onSelectClose: () => setIsOpen(false),
+    });
 
-  const handleSelect = useCallback(
-    (nombreIcono: string) => {
-      onChange(nombreIcono);
-      setIsOpen(false);
-      setBusqueda('');
-    },
-    [onChange, setBusqueda]
-  );
-
-  const handleClear = useCallback(
-    (e: React.MouseEvent) => {
-      e.stopPropagation();
-      onChange('');
-    },
-    [onChange]
-  );
-
-  // Cerrar al hacer click fuera
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const handleClickOutside = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+    const handleSelect = useCallback(
+      (nombreIcono: string) => {
+        onChange(nombreIcono);
         setIsOpen(false);
+        setBusqueda('');
+      },
+      [onChange, setBusqueda]
+    );
+
+    const handleClear = useCallback(
+      (e: React.MouseEvent) => {
+        e.stopPropagation();
+        onChange('');
+      },
+      [onChange]
+    );
+
+    // Cerrar al hacer click fuera
+    useEffect(() => {
+      if (!isOpen) return;
+
+      const handleClickOutside = (e: MouseEvent) => {
+        if (
+          containerRef.current &&
+          !containerRef.current.contains(e.target as Node)
+        ) {
+          setIsOpen(false);
+        }
+      };
+
+      document.addEventListener('mousedown', handleClickOutside);
+      return () =>
+        document.removeEventListener('mousedown', handleClickOutside);
+    }, [isOpen]);
+
+    // Focus en el input al abrir
+    useEffect(() => {
+      if (isOpen && inputRef.current) {
+        inputRef.current.focus();
       }
-    };
+    }, [isOpen]);
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isOpen]);
-
-  // Focus en el input al abrir
-  useEffect(() => {
-    if (isOpen && inputRef.current) {
-      inputRef.current.focus();
-    }
-  }, [isOpen]);
-
-  return (
-    <div ref={(node) => {
-        containerRef.current = node;
-        if (typeof ref === 'function') ref(node);
-        else if (ref) ref.current = node;
-      }} className="relative">
-      {/* Botón trigger */}
-      <button
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between gap-2 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 hover:border-gray-400 dark:hover:border-gray-500 transition-colors"
+    return (
+      <div
+        ref={(node) => {
+          containerRef.current = node;
+          if (typeof ref === 'function') ref(node);
+          else if (ref) ref.current = node;
+        }}
+        className="relative"
       >
-        <div className="flex items-center gap-2 min-w-0">
-          {value ? (
-            <>
-              <span className="text-gray-700 dark:text-gray-200 flex-shrink-0">
-                {renderIcon(value, iconSize)}
+        {/* Botón trigger */}
+        <button
+          type="button"
+          onClick={() => setIsOpen(!isOpen)}
+          className="w-full flex items-center justify-between gap-2 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 hover:border-gray-400 dark:hover:border-gray-500 transition-colors"
+        >
+          <div className="flex items-center gap-2 min-w-0">
+            {value ? (
+              <>
+                <span className="text-gray-700 dark:text-gray-200 flex-shrink-0">
+                  {renderIcon(value, iconSize)}
+                </span>
+                <span className="text-gray-700 dark:text-gray-200 truncate text-xs">
+                  {value}
+                </span>
+              </>
+            ) : (
+              <span className="text-gray-400 dark:text-gray-500">
+                {placeholder}
               </span>
-              <span className="text-gray-700 dark:text-gray-200 truncate text-xs">
-                {value}
-              </span>
-            </>
-          ) : (
-            <span className="text-gray-400 dark:text-gray-500">{placeholder}</span>
-          )}
-        </div>
-        <div className="flex items-center gap-1 flex-shrink-0">
-          {value && (
-            <span
-              onClick={handleClear}
-              className="p-0.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 rounded"
-            >
-              <X size={14} />
-            </span>
-          )}
-          <ChevronDown
-            size={16}
-            className={`text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
-          />
-        </div>
-      </button>
-
-      {/* Popover */}
-      {isOpen && (
-        <div className="absolute z-50 mt-1 w-72 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg">
-          <div className="p-2 space-y-2">
-            {/* Buscador */}
-            <div className="relative">
-              <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <input
-                ref={inputRef}
-                type="text"
-                value={busqueda}
-                onChange={(e) => setBusqueda(e.target.value)}
-                placeholder="Buscar..."
-                className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded-md focus-visible:ring-1 focus-visible:ring-primary-500 focus-visible:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-              />
-            </div>
-
-            {/* Categorías (scroll horizontal) */}
-            <div className="flex gap-1 overflow-x-auto pb-1 scrollbar-thin">
-              <button
-                type="button"
-                onClick={() => setCategoriaActiva(null)}
-                className={`px-2 py-0.5 text-xs rounded-full whitespace-nowrap transition-colors ${
-                  !categoriaActiva
-                    ? 'bg-primary-100 dark:bg-primary-900/50 text-primary-700 dark:text-primary-300'
-                    : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
-                }`}
+            )}
+          </div>
+          <div className="flex items-center gap-1 flex-shrink-0">
+            {value && (
+              <span
+                onClick={handleClear}
+                className="p-0.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 rounded"
               >
-                Todos
-              </button>
-              {categorias.map((cat) => (
+                <X size={14} />
+              </span>
+            )}
+            <ChevronDown
+              size={16}
+              className={`text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+            />
+          </div>
+        </button>
+
+        {/* Popover */}
+        {isOpen && (
+          <div className="absolute z-50 mt-1 w-72 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg">
+            <div className="p-2 space-y-2">
+              {/* Buscador */}
+              <div className="relative">
+                <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={busqueda}
+                  onChange={(e) => setBusqueda(e.target.value)}
+                  placeholder="Buscar..."
+                  className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded-md focus-visible:ring-1 focus-visible:ring-primary-500 focus-visible:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                />
+              </div>
+
+              {/* Categorías (scroll horizontal) */}
+              <div className="flex gap-1 overflow-x-auto pb-1 scrollbar-thin">
                 <button
-                  key={cat.nombre}
                   type="button"
-                  onClick={() => setCategoriaActiva(cat.nombre)}
+                  onClick={() => setCategoriaActiva(null)}
                   className={`px-2 py-0.5 text-xs rounded-full whitespace-nowrap transition-colors ${
-                    categoriaActiva === cat.nombre
+                    !categoriaActiva
                       ? 'bg-primary-100 dark:bg-primary-900/50 text-primary-700 dark:text-primary-300'
                       : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
                   }`}
                 >
-                  {cat.nombre}
+                  Todos
                 </button>
-              ))}
-            </div>
+                {categorias.map((cat) => (
+                  <button
+                    key={cat.nombre}
+                    type="button"
+                    onClick={() => setCategoriaActiva(cat.nombre)}
+                    className={`px-2 py-0.5 text-xs rounded-full whitespace-nowrap transition-colors ${
+                      categoriaActiva === cat.nombre
+                        ? 'bg-primary-100 dark:bg-primary-900/50 text-primary-700 dark:text-primary-300'
+                        : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
+                    }`}
+                  >
+                    {cat.nombre}
+                  </button>
+                ))}
+              </div>
 
-            {/* Grid de iconos */}
-            <div className="max-h-40 overflow-y-auto">
-              {iconosFiltrados.length > 0 ? (
-                <div className="grid grid-cols-7 gap-1">
-                  {iconosFiltrados.map((nombreIcono) => (
-                    <IconPickerButton
-                      key={nombreIcono}
-                      nombreIcono={nombreIcono}
-                      isSelected={value === nombreIcono}
-                      onSelect={handleSelect}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <p className="text-center text-xs text-gray-500 dark:text-gray-400 py-3">
-                  No encontrado
-                </p>
-              )}
-            </div>
+              {/* Grid de iconos */}
+              <div className="max-h-40 overflow-y-auto">
+                {iconosFiltrados.length > 0 ? (
+                  <div className="grid grid-cols-7 gap-1">
+                    {iconosFiltrados.map((nombreIcono) => (
+                      <IconPickerButton
+                        key={nombreIcono}
+                        nombreIcono={nombreIcono}
+                        isSelected={value === nombreIcono}
+                        onSelect={handleSelect}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-center text-xs text-gray-500 dark:text-gray-400 py-3">
+                    No encontrado
+                  </p>
+                )}
+              </div>
 
-            {/* Contador */}
-            <p className="text-xs text-gray-400 text-center">
-              {Math.min(iconosFiltrados.length, 49)} de {totalFiltrados}
-            </p>
+              {/* Contador */}
+              <p className="text-xs text-gray-400 text-center">
+                {Math.min(iconosFiltrados.length, 49)} de {totalFiltrados}
+              </p>
+            </div>
           </div>
-        </div>
-      )}
-    </div>
-  );
+        )}
+      </div>
+    );
   })
 );
 

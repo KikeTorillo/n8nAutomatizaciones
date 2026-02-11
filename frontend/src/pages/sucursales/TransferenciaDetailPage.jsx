@@ -14,13 +14,11 @@ import {
   Edit,
   MapPin,
 } from 'lucide-react';
+import { Button, Input, LoadingSpinner, Modal } from '@/components/ui';
 import {
-  Button,
-  Input,
-  LoadingSpinner,
-  Modal
-} from '@/components/ui';
-import { SucursalesPageLayout, TransferenciaItemsDrawer } from '@/components/sucursales';
+  SucursalesPageLayout,
+  TransferenciaItemsDrawer,
+} from '@/pages/sucursales/components';
 import {
   useTransferencia,
   useEnviarTransferencia,
@@ -41,7 +39,8 @@ const estadoConfig = {
     description: 'La transferencia esta en preparacion',
   },
   enviado: {
-    color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
+    color:
+      'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
     borderColor: 'border-yellow-300 dark:border-yellow-600',
     icon: Send,
     label: 'Enviado',
@@ -189,7 +188,9 @@ function TransferenciaDetailPage() {
   // Handler: Actualizar ubicación destino
   const handleUbicacionDestinoChange = (index, ubicacionId) => {
     const newItems = [...itemsRecepcion];
-    newItems[index].ubicacion_destino_id = ubicacionId ? parseInt(ubicacionId) : undefined;
+    newItems[index].ubicacion_destino_id = ubicacionId
+      ? parseInt(ubicacionId)
+      : undefined;
     setItemsRecepcion(newItems);
   };
 
@@ -226,8 +227,16 @@ function TransferenciaDetailPage() {
 
   // Calcular totales
   const totalItems = transferencia.items?.length || 0;
-  const totalUnidades = transferencia.items?.reduce((sum, i) => sum + (i.cantidad_enviada || 0), 0) || 0;
-  const totalRecibidas = transferencia.items?.reduce((sum, i) => sum + (i.cantidad_recibida || 0), 0) || 0;
+  const totalUnidades =
+    transferencia.items?.reduce(
+      (sum, i) => sum + (i.cantidad_enviada || 0),
+      0
+    ) || 0;
+  const totalRecibidas =
+    transferencia.items?.reduce(
+      (sum, i) => sum + (i.cantidad_recibida || 0),
+      0
+    ) || 0;
 
   return (
     <SucursalesPageLayout
@@ -236,7 +245,9 @@ function TransferenciaDetailPage() {
       subtitle={config.description}
       actions={
         <div className="flex items-center gap-2">
-          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium ${config.color}`}>
+          <span
+            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium ${config.color}`}
+          >
             <IconEstado className="w-4 h-4" />
             {config.label}
           </span>
@@ -244,10 +255,7 @@ function TransferenciaDetailPage() {
           {/* Acciones segun estado */}
           {transferencia.estado === 'borrador' && (
             <>
-              <Button
-                variant="secondary"
-                onClick={() => openModal('items')}
-              >
+              <Button variant="secondary" onClick={() => openModal('items')}>
                 <Edit className="w-4 h-4 mr-2" />
                 Editar Items
               </Button>
@@ -259,10 +267,7 @@ function TransferenciaDetailPage() {
                 <Send className="w-4 h-4 mr-2" />
                 {enviarMutation.isPending ? 'Enviando...' : 'Enviar'}
               </Button>
-              <Button
-                variant="danger"
-                onClick={() => openModal('cancelar')}
-              >
+              <Button variant="danger" onClick={() => openModal('cancelar')}>
                 <XCircle className="w-4 h-4 mr-2" />
                 Cancelar
               </Button>
@@ -279,10 +284,7 @@ function TransferenciaDetailPage() {
                 <CheckCircle className="w-4 h-4 mr-2" />
                 Recibir Transferencia
               </Button>
-              <Button
-                variant="danger"
-                onClick={() => openModal('cancelar')}
-              >
+              <Button variant="danger" onClick={() => openModal('cancelar')}>
                 <XCircle className="w-4 h-4 mr-2" />
                 Cancelar
               </Button>
@@ -333,11 +335,12 @@ function TransferenciaDetailPage() {
                       <p className="font-medium text-gray-900 dark:text-white">
                         {item.cantidad_enviada} uds
                       </p>
-                      {transferencia.estado === 'recibido' && item.cantidad_recibida !== item.cantidad_enviada && (
-                        <p className="text-sm text-yellow-600 dark:text-yellow-400">
-                          Recibidas: {item.cantidad_recibida}
-                        </p>
-                      )}
+                      {transferencia.estado === 'recibido' &&
+                        item.cantidad_recibida !== item.cantidad_enviada && (
+                          <p className="text-sm text-yellow-600 dark:text-yellow-400">
+                            Recibidas: {item.cantidad_recibida}
+                          </p>
+                        )}
                     </div>
                   </div>
                 ))}
@@ -348,17 +351,29 @@ function TransferenciaDetailPage() {
             {totalItems > 0 && (
               <div className="px-4 py-3 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-600 dark:text-gray-400">Total productos:</span>
-                  <span className="font-medium text-gray-900 dark:text-white">{totalItems}</span>
+                  <span className="text-gray-600 dark:text-gray-400">
+                    Total productos:
+                  </span>
+                  <span className="font-medium text-gray-900 dark:text-white">
+                    {totalItems}
+                  </span>
                 </div>
                 <div className="flex justify-between text-sm mt-1">
-                  <span className="text-gray-600 dark:text-gray-400">Total unidades enviadas:</span>
-                  <span className="font-medium text-gray-900 dark:text-white">{totalUnidades}</span>
+                  <span className="text-gray-600 dark:text-gray-400">
+                    Total unidades enviadas:
+                  </span>
+                  <span className="font-medium text-gray-900 dark:text-white">
+                    {totalUnidades}
+                  </span>
                 </div>
                 {transferencia.estado === 'recibido' && (
                   <div className="flex justify-between text-sm mt-1">
-                    <span className="text-gray-600 dark:text-gray-400">Total unidades recibidas:</span>
-                    <span className={`font-medium ${totalRecibidas === totalUnidades ? 'text-green-600' : 'text-yellow-600'}`}>
+                    <span className="text-gray-600 dark:text-gray-400">
+                      Total unidades recibidas:
+                    </span>
+                    <span
+                      className={`font-medium ${totalRecibidas === totalUnidades ? 'text-green-600' : 'text-yellow-600'}`}
+                    >
                       {totalRecibidas}
                     </span>
                   </div>
@@ -523,8 +538,8 @@ function TransferenciaDetailPage() {
       >
         <div className="p-4">
           <p className="text-gray-600 dark:text-gray-300 mb-4">
-            Confirma las cantidades recibidas de cada producto. Si hay diferencias,
-            ajusta la cantidad.
+            Confirma las cantidades recibidas de cada producto. Si hay
+            diferencias, ajusta la cantidad.
           </p>
 
           <div className="space-y-3 max-h-96 overflow-y-auto">
@@ -551,7 +566,9 @@ function TransferenciaDetailPage() {
                       min={0}
                       max={item.cantidad_enviada}
                       value={item.cantidad_recibida}
-                      onChange={(e) => handleCantidadChange(index, e.target.value)}
+                      onChange={(e) =>
+                        handleCantidadChange(index, e.target.value)
+                      }
                       className="w-20 text-center"
                     />
                   </div>
@@ -563,7 +580,9 @@ function TransferenciaDetailPage() {
                       <MapPin className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                       <select
                         value={item.ubicacion_destino_id || ''}
-                        onChange={(e) => handleUbicacionDestinoChange(index, e.target.value)}
+                        onChange={(e) =>
+                          handleUbicacionDestinoChange(index, e.target.value)
+                        }
                         className="pl-8 w-full text-sm rounded border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                       >
                         <option value="">Ubicacion por defecto</option>
@@ -581,21 +600,23 @@ function TransferenciaDetailPage() {
           </div>
 
           {/* Advertencia si hay diferencias */}
-          {itemsRecepcion.some((i) => i.cantidad_recibida !== i.cantidad_enviada) && (
+          {itemsRecepcion.some(
+            (i) => i.cantidad_recibida !== i.cantidad_enviada
+          ) && (
             <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg flex items-start gap-2">
               <AlertTriangle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
               <div className="text-sm text-yellow-700 dark:text-yellow-300">
                 <p className="font-medium">Hay diferencias en las cantidades</p>
-                <p>Las cantidades recibidas no coinciden con las enviadas. Esto quedara registrado.</p>
+                <p>
+                  Las cantidades recibidas no coinciden con las enviadas. Esto
+                  quedara registrado.
+                </p>
               </div>
             </div>
           )}
 
           <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
-            <Button
-              variant="secondary"
-              onClick={() => closeModal('recibir')}
-            >
+            <Button variant="secondary" onClick={() => closeModal('recibir')}>
               Cancelar
             </Button>
             <Button
@@ -603,7 +624,9 @@ function TransferenciaDetailPage() {
               onClick={handleConfirmarRecepcion}
               disabled={recibirMutation.isPending}
             >
-              {recibirMutation.isPending ? 'Procesando...' : 'Confirmar Recepcion'}
+              {recibirMutation.isPending
+                ? 'Procesando...'
+                : 'Confirmar Recepcion'}
             </Button>
           </div>
         </div>
@@ -617,7 +640,8 @@ function TransferenciaDetailPage() {
       >
         <div className="p-4">
           <p className="text-gray-600 dark:text-gray-300 mb-4">
-            Estas seguro de cancelar la transferencia <strong>{transferencia.codigo}</strong>?
+            Estas seguro de cancelar la transferencia{' '}
+            <strong>{transferencia.codigo}</strong>?
           </p>
 
           {transferencia.estado === 'enviado' && (
@@ -625,16 +649,15 @@ function TransferenciaDetailPage() {
               <AlertTriangle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
               <div className="text-sm text-yellow-700 dark:text-yellow-300">
                 <p className="font-medium">El stock sera devuelto</p>
-                <p>Al cancelar, el stock sera devuelto a la sucursal de origen.</p>
+                <p>
+                  Al cancelar, el stock sera devuelto a la sucursal de origen.
+                </p>
               </div>
             </div>
           )}
 
           <div className="flex justify-end gap-3">
-            <Button
-              variant="secondary"
-              onClick={() => closeModal('cancelar')}
-            >
+            <Button variant="secondary" onClick={() => closeModal('cancelar')}>
               No, mantener
             </Button>
             <Button

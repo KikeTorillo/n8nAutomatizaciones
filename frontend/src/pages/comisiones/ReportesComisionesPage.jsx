@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { FileText } from 'lucide-react';
 import { Modal } from '@/components/ui';
-import ComisionesPageLayout from '@/components/comisiones/ComisionesPageLayout';
-import ReportesComisionesFiltros from '@/components/comisiones/ReportesComisionesFiltros';
-import ReporteComisionesTable from '@/components/comisiones/ReporteComisionesTable';
-import ExportButtons from '@/components/comisiones/ExportButtons';
+import ComisionesPageLayout from '@/pages/comisiones/components/ComisionesPageLayout';
+import ReportesComisionesFiltros from '@/pages/comisiones/components/ReportesComisionesFiltros';
+import ReporteComisionesTable from '@/pages/comisiones/components/ReporteComisionesTable';
+import ExportButtons from '@/pages/comisiones/components/ExportButtons';
 import { useComisionesPorPeriodo } from '@/hooks/otros';
 import { useModalManager } from '@/hooks/utils';
 import { formatCurrency } from '@/lib/utils';
@@ -110,10 +110,12 @@ function ReportesComisionesPage() {
           </h4>
           <ul className="text-sm text-green-800 dark:text-green-300 space-y-1 list-disc list-inside">
             <li>
-              <strong>CSV:</strong> Compatible con Excel, Numbers y Google Sheets
+              <strong>CSV:</strong> Compatible con Excel, Numbers y Google
+              Sheets
             </li>
             <li>
-              <strong>JSON:</strong> Formato estructurado para integración con otros sistemas (PDF próximamente)
+              <strong>JSON:</strong> Formato estructurado para integración con
+              otros sistemas (PDF próximamente)
             </li>
           </ul>
         </div>
@@ -131,50 +133,78 @@ function ReportesComisionesPage() {
             {/* Info General */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Profesional</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Profesional
+                </p>
                 <p className="font-medium text-gray-900 dark:text-gray-100">
-                  {getModalData('detalle').profesional_nombre} {getModalData('detalle').profesional_apellidos}
+                  {getModalData('detalle').profesional_nombre}{' '}
+                  {getModalData('detalle').profesional_apellidos}
                 </p>
               </div>
               <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Código Cita</p>
-                <p className="font-medium text-gray-900 dark:text-gray-100 font-mono">{getModalData('detalle').codigo_cita}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Fecha Cita</p>
-                <p className="font-medium text-gray-900 dark:text-gray-100">
-                  {format(new Date(getModalData('detalle').fecha_cita), 'dd/MM/yyyy')}
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Código Cita
+                </p>
+                <p className="font-medium text-gray-900 dark:text-gray-100 font-mono">
+                  {getModalData('detalle').codigo_cita}
                 </p>
               </div>
               <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Estado Pago</p>
-                <p className="font-medium text-gray-900 dark:text-gray-100">{getModalData('detalle').estado_pago}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Fecha Cita
+                </p>
+                <p className="font-medium text-gray-900 dark:text-gray-100">
+                  {format(
+                    new Date(getModalData('detalle').fecha_cita),
+                    'dd/MM/yyyy'
+                  )}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Estado Pago
+                </p>
+                <p className="font-medium text-gray-900 dark:text-gray-100">
+                  {getModalData('detalle').estado_pago}
+                </p>
               </div>
             </div>
 
             {/* Detalle de Servicios (JSONB) */}
             {getModalData('detalle').detalle_servicios && (
               <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-                <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-3">Detalle de Servicios</h4>
+                <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-3">
+                  Detalle de Servicios
+                </h4>
                 <div className="space-y-2">
-                  {getModalData('detalle').detalle_servicios.map((servicio, idx) => (
-                    <div key={idx} className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 border border-gray-200 dark:border-gray-600">
-                      <div className="flex justify-between items-center">
-                        <div>
-                          <p className="font-medium text-gray-900 dark:text-gray-100">{servicio.nombre}</p>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">
-                            {servicio.tipo_comision === 'porcentaje'
-                              ? `${parseFloat(servicio.valor_comision)}%`
-                              : 'Monto Fijo'}{' '}
-                            - Base: {formatCurrency(parseFloat(servicio.precio))}
+                  {getModalData('detalle').detalle_servicios.map(
+                    (servicio, idx) => (
+                      <div
+                        key={idx}
+                        className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 border border-gray-200 dark:border-gray-600"
+                      >
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <p className="font-medium text-gray-900 dark:text-gray-100">
+                              {servicio.nombre}
+                            </p>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                              {servicio.tipo_comision === 'porcentaje'
+                                ? `${parseFloat(servicio.valor_comision)}%`
+                                : 'Monto Fijo'}{' '}
+                              - Base:{' '}
+                              {formatCurrency(parseFloat(servicio.precio))}
+                            </p>
+                          </div>
+                          <p className="font-semibold text-green-600 dark:text-green-400">
+                            {formatCurrency(
+                              parseFloat(servicio.comision_calculada)
+                            )}
                           </p>
                         </div>
-                        <p className="font-semibold text-green-600 dark:text-green-400">
-                          {formatCurrency(parseFloat(servicio.comision_calculada))}
-                        </p>
                       </div>
-                    </div>
-                  ))}
+                    )
+                  )}
                 </div>
               </div>
             )}
@@ -184,13 +214,19 @@ function ReportesComisionesPage() {
               <div className="flex justify-between items-center mb-2">
                 <p className="text-gray-600 dark:text-gray-400">Monto Base:</p>
                 <p className="font-medium text-gray-900 dark:text-gray-100">
-                  {formatCurrency(parseFloat(getModalData('detalle').monto_base))}
+                  {formatCurrency(
+                    parseFloat(getModalData('detalle').monto_base)
+                  )}
                 </p>
               </div>
               <div className="flex justify-between items-center">
-                <p className="text-lg font-medium text-gray-900 dark:text-gray-100">Comisión Total:</p>
+                <p className="text-lg font-medium text-gray-900 dark:text-gray-100">
+                  Comisión Total:
+                </p>
                 <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-                  {formatCurrency(parseFloat(getModalData('detalle').monto_comision))}
+                  {formatCurrency(
+                    parseFloat(getModalData('detalle').monto_comision)
+                  )}
                 </p>
               </div>
             </div>
@@ -198,25 +234,38 @@ function ReportesComisionesPage() {
             {/* Datos de Pago */}
             {getModalData('detalle').estado_pago === 'pagada' && (
               <div className="pt-4 border-t border-gray-200 dark:border-gray-700 bg-green-50 dark:bg-green-900/30 rounded-lg p-3">
-                <h4 className="font-medium text-green-900 dark:text-green-300 mb-2">Información de Pago</h4>
+                <h4 className="font-medium text-green-900 dark:text-green-300 mb-2">
+                  Información de Pago
+                </h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                   {getModalData('detalle').fecha_pago && (
                     <div>
-                      <p className="text-green-700 dark:text-green-400">Fecha Pago:</p>
+                      <p className="text-green-700 dark:text-green-400">
+                        Fecha Pago:
+                      </p>
                       <p className="font-medium text-green-900 dark:text-green-300">
-                        {format(new Date(getModalData('detalle').fecha_pago), 'dd/MM/yyyy')}
+                        {format(
+                          new Date(getModalData('detalle').fecha_pago),
+                          'dd/MM/yyyy'
+                        )}
                       </p>
                     </div>
                   )}
                   {getModalData('detalle').metodo_pago && (
                     <div>
-                      <p className="text-green-700 dark:text-green-400">Método:</p>
-                      <p className="font-medium text-green-900 dark:text-green-300">{getModalData('detalle').metodo_pago}</p>
+                      <p className="text-green-700 dark:text-green-400">
+                        Método:
+                      </p>
+                      <p className="font-medium text-green-900 dark:text-green-300">
+                        {getModalData('detalle').metodo_pago}
+                      </p>
                     </div>
                   )}
                   {getModalData('detalle').referencia_pago && (
                     <div className="col-span-2">
-                      <p className="text-green-700 dark:text-green-400">Referencia:</p>
+                      <p className="text-green-700 dark:text-green-400">
+                        Referencia:
+                      </p>
                       <p className="font-medium text-green-900 dark:text-green-300 font-mono">
                         {getModalData('detalle').referencia_pago}
                       </p>

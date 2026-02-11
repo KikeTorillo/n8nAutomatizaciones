@@ -1,5 +1,11 @@
-import { memo, forwardRef, type ElementType, type ReactNode, type HTMLAttributes } from 'react';
-import { cn } from '@/lib/utils';
+import {
+  memo,
+  forwardRef,
+  type ElementType,
+  type ReactNode,
+  type HTMLAttributes,
+} from 'react';
+import { cn } from '../lib/cn';
 import { TEXT_SIZES } from '@/lib/uiConstants';
 import type { UISize } from '@/types/ui';
 
@@ -55,7 +61,9 @@ const Text = memo(
     },
     ref
   ) {
-    const resolvedSize = (size || DEFAULT_SIZES[Component] || 'md') as keyof typeof TEXT_SIZES;
+    const resolvedSize = (size ||
+      DEFAULT_SIZES[Component] ||
+      'md') as keyof typeof TEXT_SIZES;
     const resolvedWeight = weight || DEFAULT_WEIGHTS[Component] || 'normal';
     const Tag = Component as ElementType;
 

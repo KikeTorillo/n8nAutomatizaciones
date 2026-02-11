@@ -12,12 +12,18 @@ import {
   GraduationCap,
 } from 'lucide-react';
 
-import { Button, ConfirmDialog, FormDrawer, FormGroup, Input } from '@/components/ui';
+import {
+  Button,
+  ConfirmDialog,
+  FormDrawer,
+  FormGroup,
+  Input,
+} from '@/components/ui';
 import ProfesionalesPageLayout from '@/pages/profesionales/components/ProfesionalesPageLayout';
 import {
   ConfigSearchBar,
   ConfigEmptyState,
-} from '@/components/configuracion';
+} from '@/pages/configuracion/components';
 import { useDisclosure, useDeleteConfirmation, useToast } from '@/hooks/utils';
 import {
   useCategoriasProfesional,
@@ -99,7 +105,13 @@ function CategoriasProfesionalPage() {
   // Form drawer state
   const drawer = useDisclosure();
   const form = useForm({ defaultValues: DEFAULT_VALUES });
-  const { register, reset, watch, formState: { errors }, handleSubmit } = form;
+  const {
+    register,
+    reset,
+    watch,
+    formState: { errors },
+    handleSubmit,
+  } = form;
   const colorSeleccionado = watch('color');
   const isEditing = !!drawer.data;
   const isSubmitting = crearMutation.isPending || actualizarMutation.isPending;
@@ -117,11 +129,11 @@ function CategoriasProfesionalPage() {
 
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(c => c.nombre?.toLowerCase().includes(term));
+      filtered = filtered.filter((c) => c.nombre?.toLowerCase().includes(term));
     }
 
     if (filterTipo) {
-      filtered = filtered.filter(c => c.tipo_categoria === filterTipo);
+      filtered = filtered.filter((c) => c.tipo_categoria === filterTipo);
     }
 
     return filtered;
@@ -142,43 +154,58 @@ function CategoriasProfesionalPage() {
   }, [categoriasFiltradas, filterTipo]);
 
   // Handlers
-  const handleNew = useCallback((extraDefaults = {}) => {
-    reset({ ...DEFAULT_VALUES, ...extraDefaults });
-    drawer.open();
-  }, [reset, drawer]);
+  const handleNew = useCallback(
+    (extraDefaults = {}) => {
+      reset({ ...DEFAULT_VALUES, ...extraDefaults });
+      drawer.open();
+    },
+    [reset, drawer]
+  );
 
-  const handleEdit = useCallback((item) => {
-    reset(entityToFormValues(item));
-    drawer.open(item);
-  }, [reset, drawer]);
+  const handleEdit = useCallback(
+    (item) => {
+      reset(entityToFormValues(item));
+      drawer.open(item);
+    },
+    [reset, drawer]
+  );
 
-  const handleNuevoConTipo = useCallback((tipo = 'especialidad') => {
-    const colorMap = {
-      especialidad: '#753572',
-      nivel: '#3B82F6',
-      area: '#10B981',
-      certificacion: '#F59E0B',
-      general: '#6B7280',
-    };
-    handleNew({ tipo_categoria: tipo, color: colorMap[tipo] || '#753572' });
-  }, [handleNew]);
+  const handleNuevoConTipo = useCallback(
+    (tipo = 'especialidad') => {
+      const colorMap = {
+        especialidad: '#753572',
+        nivel: '#3B82F6',
+        area: '#10B981',
+        certificacion: '#F59E0B',
+        general: '#6B7280',
+      };
+      handleNew({ tipo_categoria: tipo, color: colorMap[tipo] || '#753572' });
+    },
+    [handleNew]
+  );
 
-  const onSubmit = useCallback(async (data) => {
-    const payload = preparePayload(data);
-    try {
-      if (drawer.data) {
-        await actualizarMutation.mutateAsync({ id: drawer.data.id, data: payload });
-        toast.success('Categoría actualizada');
-      } else {
-        await crearMutation.mutateAsync(payload);
-        toast.success('Categoría creada');
+  const onSubmit = useCallback(
+    async (data) => {
+      const payload = preparePayload(data);
+      try {
+        if (drawer.data) {
+          await actualizarMutation.mutateAsync({
+            id: drawer.data.id,
+            data: payload,
+          });
+          toast.success('Categoría actualizada');
+        } else {
+          await crearMutation.mutateAsync(payload);
+          toast.success('Categoría creada');
+        }
+        drawer.close();
+        reset(DEFAULT_VALUES);
+      } catch (err) {
+        toast.error(err.message || 'Error al guardar categoría');
       }
-      drawer.close();
-      reset(DEFAULT_VALUES);
-    } catch (err) {
-      toast.error(err.message || 'Error al guardar categoría');
-    }
-  }, [drawer, actualizarMutation, crearMutation, toast, reset]);
+    },
+    [drawer, actualizarMutation, crearMutation, toast, reset]
+  );
 
   // Componente de grupo (específico de esta página)
   const GrupoCategoria = ({ tipo, items }) => {
@@ -197,13 +224,17 @@ function CategoriasProfesionalPage() {
               {items.length}
             </span>
           </div>
-          <Button variant="ghost" size="sm" onClick={() => handleNuevoConTipo(tipo)}>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => handleNuevoConTipo(tipo)}
+          >
             <Plus className="w-4 h-4" />
           </Button>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {items.map(categoria => (
+          {items.map((categoria) => (
             <CategoriaCard
               key={categoria.id}
               categoria={categoria}
@@ -248,27 +279,37 @@ function CategoriasProfesionalPage() {
 
         {/* Stats por tipo */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-          {Object.entries(TIPOS_CATEGORIA).slice(0, 4).map(([tipo, info]) => {
-            const TipoIcon = TIPO_ICONS[tipo] || Tag;
-            const count = categoriasAgrupadas[tipo]?.length || 0;
+          {Object.entries(TIPOS_CATEGORIA)
+            .slice(0, 4)
+            .map(([tipo, info]) => {
+              const TipoIcon = TIPO_ICONS[tipo] || Tag;
+              const count = categoriasAgrupadas[tipo]?.length || 0;
 
-            return (
-              <div
-                key={tipo}
-                className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-200 dark:border-gray-700"
-              >
-                <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-lg bg-${info.color}-100 dark:bg-${info.color}-900/40`}>
-                    <TipoIcon className={`w-5 h-5 text-${info.color}-600 dark:text-${info.color}-400`} />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{count}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">{info.label}</p>
+              return (
+                <div
+                  key={tipo}
+                  className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-200 dark:border-gray-700"
+                >
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`p-2 rounded-lg bg-${info.color}-100 dark:bg-${info.color}-900/40`}
+                    >
+                      <TipoIcon
+                        className={`w-5 h-5 text-${info.color}-600 dark:text-${info.color}-400`}
+                      />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                        {count}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {info.label}
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
         </div>
 
         {/* Lista agrupada */}
@@ -287,9 +328,12 @@ function CategoriasProfesionalPage() {
               isFiltered={isFiltered}
             />
           ) : (
-            Object.entries(categoriasAgrupadasFiltradas).map(([tipo, items]) => (
-              items.length > 0 && <GrupoCategoria key={tipo} tipo={tipo} items={items} />
-            ))
+            Object.entries(categoriasAgrupadasFiltradas).map(
+              ([tipo, items]) =>
+                items.length > 0 && (
+                  <GrupoCategoria key={tipo} tipo={tipo} items={items} />
+                )
+            )
           )}
         </div>
       </div>
@@ -300,7 +344,11 @@ function CategoriasProfesionalPage() {
         onClose={drawer.close}
         entityName="Categoría"
         mode={isEditing ? 'edit' : 'create'}
-        subtitle={isEditing ? 'Modifica los datos de la categoría' : 'Crea una nueva categoría de profesional'}
+        subtitle={
+          isEditing
+            ? 'Modifica los datos de la categoría'
+            : 'Crea una nueva categoría de profesional'
+        }
         onSubmit={handleSubmit(onSubmit)}
         isSubmitting={isSubmitting}
       >
@@ -318,7 +366,9 @@ function CategoriasProfesionalPage() {
             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500"
           >
             {TIPO_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
             ))}
           </select>
         </FormGroup>
@@ -344,19 +394,12 @@ function CategoriasProfesionalPage() {
             </div>
           </FormGroup>
           <FormGroup label="Orden">
-            <Input
-              type="number"
-              placeholder="0"
-              {...register('orden')}
-            />
+            <Input type="number" placeholder="0" {...register('orden')} />
           </FormGroup>
         </div>
 
         <FormGroup label="Icono (Opcional)">
-          <Input
-            placeholder="Nombre del icono Lucide"
-            {...register('icono')}
-          />
+          <Input placeholder="Nombre del icono Lucide" {...register('icono')} />
         </FormGroup>
 
         <div className="flex items-center gap-2">
@@ -366,7 +409,10 @@ function CategoriasProfesionalPage() {
             {...register('activo')}
             className="w-4 h-4 text-primary-600 rounded focus:ring-primary-500"
           />
-          <label htmlFor="activo" className="text-sm text-gray-700 dark:text-gray-300">
+          <label
+            htmlFor="activo"
+            className="text-sm text-gray-700 dark:text-gray-300"
+          >
             Categoría activa
           </label>
         </div>

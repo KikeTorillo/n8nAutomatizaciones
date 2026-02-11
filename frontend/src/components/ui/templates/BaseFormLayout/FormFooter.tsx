@@ -1,5 +1,5 @@
 import { memo, type MouseEvent } from 'react';
-import { cn } from '@/lib/utils';
+import { cn } from '../../lib/cn';
 import { Button } from '../../atoms/Button';
 
 interface FormFooterProps {
@@ -38,7 +38,8 @@ const FormFooter = memo(function FormFooter({
       className={cn(
         'flex items-center justify-between gap-4 pt-6',
         'border-t border-gray-200 dark:border-gray-700 mt-6',
-        sticky && 'sticky bottom-0 bg-white dark:bg-gray-900 pb-4 -mx-4 px-4 sm:-mx-6 sm:px-6',
+        sticky &&
+          'sticky bottom-0 bg-white dark:bg-gray-900 pb-4 -mx-4 px-4 sm:-mx-6 sm:px-6',
         className
       )}
     >

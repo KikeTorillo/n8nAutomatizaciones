@@ -1,5 +1,11 @@
-import { forwardRef, memo, useId, type InputHTMLAttributes, type ReactNode } from 'react';
-import { cn } from '@/lib/utils';
+import {
+  forwardRef,
+  memo,
+  useId,
+  type InputHTMLAttributes,
+  type ReactNode,
+} from 'react';
+import { cn } from '../lib/cn';
 import {
   INPUT_SIZE_CLASSES,
   INPUT_AFFIX,
@@ -81,7 +87,9 @@ const Input = memo(
     const ariaProps = {
       'aria-invalid': hasError || undefined,
       'aria-required': required || undefined,
-      'aria-describedby': id ? getAriaDescribedBy(id, { hasError, hasHelper }) : undefined,
+      'aria-describedby': id
+        ? getAriaDescribedBy(id, { hasError, hasHelper })
+        : undefined,
     };
 
     // Componente input con soporte para prefix/suffix
@@ -89,7 +97,10 @@ const Input = memo(
       return (
         <div className="relative">
           {prefix && (
-            <div className={cn(INPUT_AFFIX.container, INPUT_AFFIX.left)} aria-hidden="true">
+            <div
+              className={cn(INPUT_AFFIX.container, INPUT_AFFIX.left)}
+              aria-hidden="true"
+            >
               <span className={INPUT_AFFIX.text}>{prefix}</span>
             </div>
           )}
@@ -104,7 +115,10 @@ const Input = memo(
           />
 
           {suffix && (
-            <div className={cn(INPUT_AFFIX.container, INPUT_AFFIX.right)} aria-hidden="true">
+            <div
+              className={cn(INPUT_AFFIX.container, INPUT_AFFIX.right)}
+              aria-hidden="true"
+            >
               <span className={INPUT_AFFIX.text}>{suffix}</span>
             </div>
           )}

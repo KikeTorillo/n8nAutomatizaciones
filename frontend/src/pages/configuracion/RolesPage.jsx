@@ -24,7 +24,7 @@ import {
 
 import { Button, Input, Badge, Modal } from '@/components/ui';
 import { ConfirmDialog } from '@/components/ui/organisms';
-import { ConfiguracionPageLayout } from '@/components/configuracion';
+import { ConfiguracionPageLayout } from '@/pages/configuracion/components';
 import {
   useRoles,
   useCrearRol,
@@ -82,12 +82,19 @@ function RolFormModal({ isOpen, onClose, rol = null, onSave }) {
             </label>
             <Input
               value={formData.codigo}
-              onChange={(e) => setFormData({ ...formData, codigo: e.target.value.toLowerCase().replace(/\s/g, '_') })}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  codigo: e.target.value.toLowerCase().replace(/\s/g, '_'),
+                })
+              }
               placeholder="gerente_ventas"
               disabled={isEditing && !rol?.es_rol_sistema === false}
               required
             />
-            <p className="text-xs text-gray-500 mt-1">Solo letras, números y guiones bajos</p>
+            <p className="text-xs text-gray-500 mt-1">
+              Solo letras, números y guiones bajos
+            </p>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -95,7 +102,9 @@ function RolFormModal({ isOpen, onClose, rol = null, onSave }) {
             </label>
             <Input
               value={formData.nombre}
-              onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, nombre: e.target.value })
+              }
               placeholder="Gerente de Ventas"
               required
             />
@@ -108,7 +117,9 @@ function RolFormModal({ isOpen, onClose, rol = null, onSave }) {
           </label>
           <textarea
             value={formData.descripcion}
-            onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, descripcion: e.target.value })
+            }
             placeholder="Descripción del rol y sus responsabilidades..."
             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
             rows={2}
@@ -125,9 +136,16 @@ function RolFormModal({ isOpen, onClose, rol = null, onSave }) {
               min={1}
               max={89}
               value={formData.nivel_jerarquia}
-              onChange={(e) => setFormData({ ...formData, nivel_jerarquia: parseInt(e.target.value) || 10 })}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  nivel_jerarquia: parseInt(e.target.value) || 10,
+                })
+              }
             />
-            <p className="text-xs text-gray-500 mt-1">Mayor = más privilegios (90+ reservado)</p>
+            <p className="text-xs text-gray-500 mt-1">
+              Mayor = más privilegios (90+ reservado)
+            </p>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -137,12 +155,16 @@ function RolFormModal({ isOpen, onClose, rol = null, onSave }) {
               <input
                 type="color"
                 value={formData.color}
-                onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, color: e.target.value })
+                }
                 className="h-10 w-14 rounded cursor-pointer"
               />
               <Input
                 value={formData.color}
-                onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, color: e.target.value })
+                }
                 placeholder="#6B7280"
                 className="flex-1"
               />
@@ -155,18 +177,26 @@ function RolFormModal({ isOpen, onClose, rol = null, onSave }) {
             <input
               type="checkbox"
               checked={formData.bypass_permisos}
-              onChange={(e) => setFormData({ ...formData, bypass_permisos: e.target.checked })}
+              onChange={(e) =>
+                setFormData({ ...formData, bypass_permisos: e.target.checked })
+              }
               className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
             />
             <span className="text-sm text-gray-700 dark:text-gray-300">
-              <strong>Bypass de permisos</strong> - No verifica permisos granulares (acceso total)
+              <strong>Bypass de permisos</strong> - No verifica permisos
+              granulares (acceso total)
             </span>
           </label>
           <label className="flex items-center gap-2 cursor-pointer">
             <input
               type="checkbox"
               checked={formData.puede_crear_usuarios}
-              onChange={(e) => setFormData({ ...formData, puede_crear_usuarios: e.target.checked })}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  puede_crear_usuarios: e.target.checked,
+                })
+              }
               className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
             />
             <span className="text-sm text-gray-700 dark:text-gray-300">
@@ -177,7 +207,12 @@ function RolFormModal({ isOpen, onClose, rol = null, onSave }) {
             <input
               type="checkbox"
               checked={formData.puede_modificar_permisos}
-              onChange={(e) => setFormData({ ...formData, puede_modificar_permisos: e.target.checked })}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  puede_modificar_permisos: e.target.checked,
+                })
+              }
               className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
             />
             <span className="text-sm text-gray-700 dark:text-gray-300">
@@ -202,7 +237,12 @@ function RolFormModal({ isOpen, onClose, rol = null, onSave }) {
 /**
  * Tarjeta de rol
  */
-const RolCard = memo(function RolCard({ rol, onEdit, onDelete, onCopyPermisos }) {
+const RolCard = memo(function RolCard({
+  rol,
+  onEdit,
+  onDelete,
+  onCopyPermisos,
+}) {
   const IconComponent = ICONOS_ROL[rol.codigo] || User;
   const cantidadUsuarios = rol.usuarios_count || 0;
 
@@ -220,10 +260,14 @@ const RolCard = memo(function RolCard({ rol, onEdit, onDelete, onCopyPermisos })
             <h3 className="font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2">
               {rol.nombre}
               {rol.es_rol_sistema && (
-                <Badge variant="secondary" size="sm">Sistema</Badge>
+                <Badge variant="secondary" size="sm">
+                  Sistema
+                </Badge>
               )}
               {rol.bypass_permisos && (
-                <Badge variant="warning" size="sm">Bypass</Badge>
+                <Badge variant="warning" size="sm">
+                  Bypass
+                </Badge>
               )}
             </h3>
             <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -242,11 +286,7 @@ const RolCard = memo(function RolCard({ rol, onEdit, onDelete, onCopyPermisos })
               >
                 <Copy className="w-4 h-4" />
               </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onEdit(rol)}
-              >
+              <Button variant="ghost" size="sm" onClick={() => onEdit(rol)}>
                 <Edit2 className="w-4 h-4" />
               </Button>
               <Button
@@ -254,7 +294,11 @@ const RolCard = memo(function RolCard({ rol, onEdit, onDelete, onCopyPermisos })
                 size="sm"
                 onClick={() => onDelete(rol)}
                 disabled={cantidadUsuarios > 0}
-                title={cantidadUsuarios > 0 ? `No se puede eliminar: ${cantidadUsuarios} usuario(s) asignado(s)` : 'Eliminar rol'}
+                title={
+                  cantidadUsuarios > 0
+                    ? `No se puede eliminar: ${cantidadUsuarios} usuario(s) asignado(s)`
+                    : 'Eliminar rol'
+                }
               >
                 <Trash2 className="w-4 h-4 text-red-500" />
               </Button>
@@ -320,16 +364,17 @@ function RolesPage() {
     if (!searchTerm) return roles;
     const term = searchTerm.toLowerCase();
     return roles.filter(
-      rol => rol.nombre?.toLowerCase().includes(term) ||
-             rol.codigo?.toLowerCase().includes(term) ||
-             rol.descripcion?.toLowerCase().includes(term)
+      (rol) =>
+        rol.nombre?.toLowerCase().includes(term) ||
+        rol.codigo?.toLowerCase().includes(term) ||
+        rol.descripcion?.toLowerCase().includes(term)
     );
   }, [roles, searchTerm]);
 
   // Separar roles de sistema y de organización
   const { rolesSistema, rolesOrganizacion } = useMemo(() => {
-    const sistema = rolesFiltrados.filter(r => r.es_rol_sistema);
-    const org = rolesFiltrados.filter(r => !r.es_rol_sistema);
+    const sistema = rolesFiltrados.filter((r) => r.es_rol_sistema);
+    const org = rolesFiltrados.filter((r) => !r.es_rol_sistema);
     return { rolesSistema: sistema, rolesOrganizacion: org };
   }, [rolesFiltrados]);
 
@@ -357,13 +402,16 @@ function RolesPage() {
   const handleSaveRol = async (formData) => {
     try {
       if (rolEditando) {
-        await actualizarRolMutation.mutateAsync({ id: rolEditando.id, data: formData });
+        await actualizarRolMutation.mutateAsync({
+          id: rolEditando.id,
+          data: formData,
+        });
       } else {
         await crearRolMutation.mutateAsync(formData);
       }
       setShowFormModal(false);
       setRolEditando(null);
-    } catch (error) {
+    } catch {
       // Error manejado por el mutation
     }
   };
@@ -374,7 +422,7 @@ function RolesPage() {
       await eliminarRolMutation.mutateAsync(rolAEliminar.id);
       setShowDeleteConfirm(false);
       setRolAEliminar(null);
-    } catch (error) {
+    } catch {
       // Error manejado por el mutation
     }
   };
@@ -388,7 +436,7 @@ function RolesPage() {
       });
       setShowCopyModal(false);
       setRolDestinoCopy(null);
-    } catch (error) {
+    } catch {
       // Error manejado por el mutation
     }
   };
@@ -408,70 +456,70 @@ function RolesPage() {
       <div className="space-y-6">
         {/* Barra de búsqueda */}
         <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-        <Input
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          placeholder="Buscar roles..."
-          className="pl-10"
-        />
-      </div>
-
-      {isLoading ? (
-        <div className="text-center py-8 text-gray-500">
-          Cargando roles...
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Input
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Buscar roles..."
+            className="pl-10"
+          />
         </div>
-      ) : (
-        <div className="space-y-8">
-          {/* Roles de la Organización */}
-          <div>
-            <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
-              <Users className="w-5 h-5" />
-              Roles de la Organización
-              <Badge variant="secondary">{rolesOrganizacion.length}</Badge>
-            </h2>
-            {rolesOrganizacion.length === 0 ? (
-              <div className="text-center py-8 text-gray-500 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-                No hay roles personalizados. Crea uno nuevo para empezar.
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {rolesOrganizacion.map(rol => (
-                  <RolCard
-                    key={rol.id}
-                    rol={rol}
-                    onEdit={handleEditar}
-                    onDelete={handleEliminar}
-                    onCopyPermisos={handleCopyPermisos}
-                  />
-                ))}
+
+        {isLoading ? (
+          <div className="text-center py-8 text-gray-500">
+            Cargando roles...
+          </div>
+        ) : (
+          <div className="space-y-8">
+            {/* Roles de la Organización */}
+            <div>
+              <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+                <Users className="w-5 h-5" />
+                Roles de la Organización
+                <Badge variant="secondary">{rolesOrganizacion.length}</Badge>
+              </h2>
+              {rolesOrganizacion.length === 0 ? (
+                <div className="text-center py-8 text-gray-500 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                  No hay roles personalizados. Crea uno nuevo para empezar.
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {rolesOrganizacion.map((rol) => (
+                    <RolCard
+                      key={rol.id}
+                      rol={rol}
+                      onEdit={handleEditar}
+                      onDelete={handleEliminar}
+                      onCopyPermisos={handleCopyPermisos}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Roles de Sistema (solo lectura) */}
+            {rolesSistema.length > 0 && (
+              <div>
+                <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+                  <Lock className="w-5 h-5" />
+                  Roles de Sistema
+                  <Badge variant="outline">{rolesSistema.length}</Badge>
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 opacity-75">
+                  {rolesSistema.map((rol) => (
+                    <RolCard
+                      key={rol.id}
+                      rol={rol}
+                      onEdit={() => {}}
+                      onDelete={() => {}}
+                      onCopyPermisos={() => {}}
+                    />
+                  ))}
+                </div>
               </div>
             )}
           </div>
-
-          {/* Roles de Sistema (solo lectura) */}
-          {rolesSistema.length > 0 && (
-            <div>
-              <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
-                <Lock className="w-5 h-5" />
-                Roles de Sistema
-                <Badge variant="outline">{rolesSistema.length}</Badge>
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 opacity-75">
-                {rolesSistema.map(rol => (
-                  <RolCard
-                    key={rol.id}
-                    rol={rol}
-                    onEdit={() => {}}
-                    onDelete={() => {}}
-                    onCopyPermisos={() => {}}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
+        )}
       </div>
 
       {/* Modal de formulario */}
@@ -514,12 +562,13 @@ function RolesPage() {
       >
         <div className="space-y-4">
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            Selecciona el rol del cual copiar los permisos. Los permisos actuales de "{rolDestinoCopy?.nombre}" serán reemplazados.
+            Selecciona el rol del cual copiar los permisos. Los permisos
+            actuales de "{rolDestinoCopy?.nombre}" serán reemplazados.
           </p>
           <div className="space-y-2">
             {rolesOrganizacion
-              .filter(r => r.id !== rolDestinoCopy?.id)
-              .map(rol => (
+              .filter((r) => r.id !== rolDestinoCopy?.id)
+              .map((rol) => (
                 <button
                   key={rol.id}
                   onClick={() => handleConfirmCopy(rol.id)}
@@ -533,7 +582,9 @@ function RolesPage() {
                     <User className="w-4 h-4" style={{ color: rol.color }} />
                   </div>
                   <div className="text-left">
-                    <div className="font-medium text-gray-900 dark:text-gray-100">{rol.nombre}</div>
+                    <div className="font-medium text-gray-900 dark:text-gray-100">
+                      {rol.nombre}
+                    </div>
                     <div className="text-xs text-gray-500">{rol.codigo}</div>
                   </div>
                 </button>

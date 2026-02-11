@@ -1,7 +1,6 @@
 import { memo, forwardRef } from 'react';
 import { Moon, Sun } from 'lucide-react';
-import { useTheme } from '@/hooks/sistema';
-import { cn } from '@/lib/utils';
+import { cn } from '../lib/cn';
 
 /** Tamaños soportados por ThemeToggle */
 type ThemeToggleSize = 'sm' | 'md' | 'lg';
@@ -10,6 +9,10 @@ type ThemeToggleSize = 'sm' | 'md' | 'lg';
  * Props del componente ThemeToggle
  */
 export interface ThemeToggleProps {
+  /** Si el tema oscuro está activo */
+  isDark: boolean;
+  /** Callback para alternar tema */
+  onToggle: () => void;
   /** Clases adicionales */
   className?: string;
   /** Tamaño del botón */
@@ -19,51 +22,49 @@ export interface ThemeToggleProps {
 /**
  * ThemeToggle - Componente para alternar entre tema claro y oscuro
  *
- * Ene 2026: Movido de molecules/ a organisms/ porque accede a store global (useTheme)
- * Los molecules no deberían conocer stores/contextos de aplicación.
+ * Componente controlado: recibe isDark y onToggle como props.
+ * Usar ThemeToggleConnected para integración con useTheme store.
  */
 const ThemeToggle = memo(
-  forwardRef<HTMLButtonElement, ThemeToggleProps>(function ThemeToggle({
-  className,
-  size = 'md',
-}, ref) {
-  const { isDark, toggleTheme } = useTheme() as { isDark: boolean; toggleTheme: () => void };
+  forwardRef<HTMLButtonElement, ThemeToggleProps>(function ThemeToggle(
+    { isDark, onToggle, className, size = 'md' },
+    ref
+  ) {
+    const sizes: Record<ThemeToggleSize, string> = {
+      sm: 'p-1.5',
+      md: 'p-2',
+      lg: 'p-3',
+    };
 
-  const sizes: Record<ThemeToggleSize, string> = {
-    sm: 'p-1.5',
-    md: 'p-2',
-    lg: 'p-3',
-  };
+    const iconSizes: Record<ThemeToggleSize, string> = {
+      sm: 'w-4 h-4',
+      md: 'w-5 h-5',
+      lg: 'w-6 h-6',
+    };
 
-  const iconSizes: Record<ThemeToggleSize, string> = {
-    sm: 'w-4 h-4',
-    md: 'w-5 h-5',
-    lg: 'w-6 h-6',
-  };
-
-  return (
-    <button
-      ref={ref}
-      onClick={toggleTheme}
-      className={cn(
-        'rounded-lg transition-colors',
-        'text-gray-600 hover:text-gray-900 hover:bg-gray-100',
-        'dark:text-gray-400 dark:hover:text-gray-100 dark:hover:bg-gray-800',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2',
-        'dark:focus-visible:ring-offset-gray-900',
-        sizes[size],
-        className
-      )}
-      aria-label={isDark ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'}
-      title={isDark ? 'Tema claro' : 'Tema oscuro'}
-    >
-      {isDark ? (
-        <Sun className={cn(iconSizes[size], 'transition-transform')} />
-      ) : (
-        <Moon className={cn(iconSizes[size], 'transition-transform')} />
-      )}
-    </button>
-  );
+    return (
+      <button
+        ref={ref}
+        onClick={onToggle}
+        className={cn(
+          'rounded-lg transition-colors',
+          'text-gray-600 hover:text-gray-900 hover:bg-gray-100',
+          'dark:text-gray-400 dark:hover:text-gray-100 dark:hover:bg-gray-800',
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2',
+          'dark:focus-visible:ring-offset-gray-900',
+          sizes[size],
+          className
+        )}
+        aria-label={isDark ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'}
+        title={isDark ? 'Tema claro' : 'Tema oscuro'}
+      >
+        {isDark ? (
+          <Sun className={cn(iconSizes[size], 'transition-transform')} />
+        ) : (
+          <Moon className={cn(iconSizes[size], 'transition-transform')} />
+        )}
+      </button>
+    );
   })
 );
 

@@ -1,0 +1,295 @@
+import { memo } from 'react';
+import { format } from 'date-fns';
+import { Lock, Clock, Building, User, Plus } from 'lucide-react';
+import {
+  obtenerColorTipoBloqueo,
+  esBloqueoDiaCompleto,
+} from '@/utils/bloqueoHelpers';
+import { aFormatoISO } from '@/utils/dateHelpers';
+
+/**
+ * Componente de celda individual del calendario para bloqueos
+ * Muestra el día y los bloqueos programados para ese día
+ *
+ * Memoizado para evitar re-renders innecesarios (Fase 3 Ene 2026)
+ * Ene 2026: Agregado modo compacto para móvil
+ */
+function CalendarioDiaBloqueo({
+  dia,
+  bloqueos,
+  esDelMesActual,
+  esHoy,
+  onVerBloqueo,
+  onCrearBloqueo,
+  isLoading,
+  compactMode = false,
+  onDiaClick,
+}) {
+  const numeroDia = format(dia, 'd');
+  const maxBloqueosVisibles = 2;
+  const bloqueosVisibles = bloqueos.slice(0, maxBloqueosVisibles);
+  const bloqueosOcultos = bloqueos.length - maxBloqueosVisibles;
+
+  // Verificar si hay bloqueo organizacional (afecta a todos)
+  const tieneBloqueoOrganizacional = bloqueos.some((b) => !b.profesional_id);
+
+  // Agrupar bloqueos por tipo para mostrar dots en modo compacto
+  const bloqueosPorTipo = bloqueos.reduce((acc, bloqueo) => {
+    const tipo = bloqueo.tipo_bloqueo_codigo || 'otro';
+    acc[tipo] = (acc[tipo] || 0) + 1;
+    return acc;
+  }, {});
+
+  // Modo compacto para móvil - solo número y dots indicadores
+  if (compactMode) {
+    const fechaISO = aFormatoISO(dia);
+
+    return (
+      <button
+        onClick={() =>
+          esDelMesActual && onDiaClick && onDiaClick(fechaISO, bloqueos)
+        }
+        disabled={!esDelMesActual}
+        className={`
+          aspect-square flex flex-col items-center justify-center rounded-lg
+          transition-all relative
+          ${
+            esDelMesActual
+              ? tieneBloqueoOrganizacional
+                ? 'bg-red-50 dark:bg-red-900/20 active:scale-95'
+                : 'bg-white dark:bg-gray-800 active:scale-95'
+              : 'bg-gray-50 dark:bg-gray-900 opacity-40'
+          }
+          ${
+            esHoy
+              ? 'ring-2 ring-primary-500 dark:ring-primary-400'
+              : tieneBloqueoOrganizacional && esDelMesActual
+                ? 'border border-red-300 dark:border-red-700'
+                : 'border border-gray-200 dark:border-gray-700'
+          }
+          ${esDelMesActual && bloqueos.length > 0 ? 'cursor-pointer' : ''}
+        `}
+      >
+        {/* Número del día */}
+        <span
+          className={`
+            text-sm font-semibold leading-none
+            ${esDelMesActual ? 'text-gray-900 dark:text-gray-100' : 'text-gray-400 dark:text-gray-600'}
+            ${esHoy ? 'text-primary-600 dark:text-primary-400' : ''}
+          `}
+        >
+          {numeroDia}
+        </span>
+
+        {/* Dots indicadores por tipo */}
+        {bloqueos.length > 0 && (
+          <div className="flex items-center justify-center gap-0.5 mt-1">
+            {Object.entries(bloqueosPorTipo)
+              .slice(0, 4)
+              .map(([tipo, count], idx) => {
+                const colores = obtenerColorTipoBloqueo(tipo);
+                return (
+                  <span
+                    key={idx}
+                    className={`w-1.5 h-1.5 rounded-full ${colores.bg}`}
+                    title={`${count} ${tipo}`}
+                  />
+                );
+              })}
+          </div>
+        )}
+
+        {/* Icono organizacional */}
+        {tieneBloqueoOrganizacional && esDelMesActual && (
+          <Lock className="absolute top-0.5 right-0.5 w-2.5 h-2.5 text-red-500" />
+        )}
+
+        {/* Badge de cantidad (solo si hay más de 1) */}
+        {bloqueos.length > 1 && (
+          <span className="absolute -top-1 -right-1 w-4 h-4 text-[10px] font-bold text-white bg-red-600 rounded-full flex items-center justify-center">
+            {bloqueos.length > 9 ? '9+' : bloqueos.length}
+          </span>
+        )}
+      </button>
+    );
+  }
+
+  // Modo normal (desktop)
+  return (
+    <div
+      className={`
+        min-h-[100px] border border-gray-200 dark:border-gray-700 rounded-lg p-2 transition-all
+        ${esDelMesActual ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-900'}
+        ${esHoy ? 'ring-2 ring-primary-500 dark:ring-primary-400 ring-inset' : ''}
+        ${tieneBloqueoOrganizacional && esDelMesActual ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800' : ''}
+        hover:shadow-md dark:hover:shadow-gray-900/50
+        relative
+        group
+      `}
+    >
+      {/* Número del día */}
+      <div className="flex items-center justify-between mb-1">
+        <span
+          className={`
+            text-sm font-semibold
+            ${esDelMesActual ? 'text-gray-900 dark:text-gray-100' : 'text-gray-400 dark:text-gray-600'}
+            ${esHoy ? 'text-primary-600 dark:text-primary-400' : ''}
+          `}
+        >
+          {numeroDia}
+        </span>
+
+        {/* Badge de bloqueo organizacional o botón crear */}
+        {tieneBloqueoOrganizacional && esDelMesActual ? (
+          <div
+            className="flex items-center gap-1"
+            title="Bloqueo organizacional"
+          >
+            <Building className="w-3 h-3 text-red-600 dark:text-red-400" />
+            <Lock className="w-3 h-3 text-red-600 dark:text-red-400" />
+          </div>
+        ) : (
+          /* Botón para crear bloqueo (solo visible cuando NO hay bloqueos) */
+          esDelMesActual &&
+          bloqueos.length === 0 &&
+          onCrearBloqueo && (
+            <button
+              onClick={onCrearBloqueo}
+              className="
+                opacity-0 group-hover:opacity-100
+                w-5 h-5 rounded-full bg-red-600 text-white
+                flex items-center justify-center
+                transition-opacity
+                hover:bg-red-700
+              "
+              title="Crear bloqueo"
+            >
+              <Plus className="w-3 h-3" />
+            </button>
+          )
+        )}
+      </div>
+
+      {/* Lista de bloqueos */}
+      <div className="space-y-1">
+        {isLoading ? (
+          // Loading skeleton
+          <div className="space-y-1">
+            {[1, 2].map((i) => (
+              <div
+                key={i}
+                className="h-5 bg-gray-200 dark:bg-gray-600 rounded animate-pulse"
+              />
+            ))}
+          </div>
+        ) : (
+          <>
+            {bloqueosVisibles.map((bloqueo) => {
+              const colores = obtenerColorTipoBloqueo(
+                bloqueo.tipo_bloqueo_codigo
+              );
+              const esDiaCompleto = esBloqueoDiaCompleto(bloqueo);
+              const esOrganizacional = !bloqueo.profesional_id;
+
+              return (
+                <button
+                  key={bloqueo.id}
+                  onClick={() => onVerBloqueo(bloqueo)}
+                  className={`
+                    w-full text-left px-1.5 py-1 rounded text-xs
+                    ${colores.bg} ${colores.text}
+                    hover:opacity-80
+                    border-l-2 ${colores.border}
+                    transition-all
+                    truncate
+                  `}
+                  title={`${bloqueo.titulo}${!esDiaCompleto ? ' (Parcial)' : ''}`}
+                >
+                  <div className="flex items-center gap-1">
+                    {/* Icono de tipo */}
+                    {esOrganizacional ? (
+                      <Building className="w-2.5 h-2.5 flex-shrink-0" />
+                    ) : (
+                      <User className="w-2.5 h-2.5 flex-shrink-0" />
+                    )}
+
+                    {/* Título truncado */}
+                    <span className="font-medium truncate">
+                      {bloqueo.titulo}
+                    </span>
+
+                    {/* Indicador de horario parcial */}
+                    {!esDiaCompleto && (
+                      <Clock className="w-2.5 h-2.5 ml-auto flex-shrink-0" />
+                    )}
+                  </div>
+                </button>
+              );
+            })}
+
+            {/* Indicador de más bloqueos */}
+            {bloqueosOcultos > 0 && (
+              <div className="text-xs text-gray-500 dark:text-gray-400 font-medium text-center py-0.5">
+                +{bloqueosOcultos} más
+              </div>
+            )}
+
+            {/* Badge de cantidad de bloqueos (esquina superior derecha) */}
+            {bloqueos.length > 0 && (
+              <div className="absolute top-1 right-1">
+                <span className="inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-red-600 dark:bg-red-500 rounded-full">
+                  {bloqueos.length}
+                </span>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+
+      {/* Botón para agregar más bloqueos cuando ya hay bloqueos */}
+      {!isLoading &&
+        bloqueos.length > 0 &&
+        esDelMesActual &&
+        onCrearBloqueo && (
+          <button
+            onClick={onCrearBloqueo}
+            className="
+            w-full mt-1 py-1 rounded
+            text-xs font-medium text-red-600 dark:text-red-400
+            opacity-0 group-hover:opacity-100
+            transition-all
+            hover:bg-red-50 dark:hover:bg-red-900/30
+            flex items-center justify-center gap-1
+          "
+            title="Agregar otro bloqueo"
+          >
+            <Plus className="w-3 h-3" />
+            <span>Agregar bloqueo</span>
+          </button>
+        )}
+
+      {/* Empty state para días sin bloqueos */}
+      {!isLoading && bloqueos.length === 0 && esDelMesActual && (
+        <div className="flex items-center justify-center h-12 text-gray-400 dark:text-gray-500">
+          <span className="text-xs opacity-0 group-hover:opacity-100 transition-opacity">
+            Sin bloqueos
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Función de comparación para memo (Fase 3 Ene 2026)
+function areEqual(prev, next) {
+  return (
+    prev.dia.getTime() === next.dia.getTime() &&
+    prev.bloqueos.length === next.bloqueos.length &&
+    prev.esDelMesActual === next.esDelMesActual &&
+    prev.esHoy === next.esHoy &&
+    prev.isLoading === next.isLoading &&
+    prev.compactMode === next.compactMode
+  );
+}
+
+export default memo(CalendarioDiaBloqueo, areEqual);

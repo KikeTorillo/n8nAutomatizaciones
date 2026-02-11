@@ -16,14 +16,11 @@ import {
   Trash2,
   Star,
 } from 'lucide-react';
+import { Button, Input, LoadingSpinner, Modal, Select } from '@/components/ui';
 import {
-  Button,
-  Input,
-  LoadingSpinner,
-  Modal,
-  Select
-} from '@/components/ui';
-import { SucursalFormDrawer, SucursalesPageLayout } from '@/components/sucursales';
+  SucursalFormDrawer,
+  SucursalesPageLayout,
+} from '@/pages/sucursales/components';
 import { useSucursales, useEliminarSucursal } from '@/hooks/sistema';
 import { useToast } from '@/hooks/utils';
 import { useModalManager } from '@/hooks/utils';
@@ -44,10 +41,11 @@ function SucursalesPage() {
   });
 
   // Estado de modales centralizado con useModalManager
-  const { openModal, closeModal, isOpen, getModalData, getModalProps } = useModalManager({
-    form: { isOpen: false, data: null, mode: 'create' },
-    delete: { isOpen: false, data: null },
-  });
+  const { openModal, closeModal, isOpen, getModalData, getModalProps } =
+    useModalManager({
+      form: { isOpen: false, data: null, mode: 'create' },
+      delete: { isOpen: false, data: null },
+    });
 
   // Fetch sucursales con filtros
   const { data: sucursales, isLoading } = useSucursales({
@@ -102,10 +100,14 @@ function SucursalesPage() {
 
     try {
       await eliminarMutation.mutateAsync(sucursalAEliminar.id);
-      toast.success(`Sucursal "${sucursalAEliminar.nombre}" eliminada correctamente`);
+      toast.success(
+        `Sucursal "${sucursalAEliminar.nombre}" eliminada correctamente`
+      );
       closeModal('delete');
     } catch (err) {
-      toast.error(err.message || 'Error al eliminar la sucursal. Intenta nuevamente.');
+      toast.error(
+        err.message || 'Error al eliminar la sucursal. Intenta nuevamente.'
+      );
     }
   };
 
@@ -150,7 +152,8 @@ function SucursalesPage() {
             Filtros
             {hasFiltrosActivos && (
               <span className="ml-2 px-2 py-0.5 text-xs bg-primary-600 text-white rounded-full">
-                {Object.values(filtros).filter((v) => v !== '').length + (busqueda ? 1 : 0)}
+                {Object.values(filtros).filter((v) => v !== '').length +
+                  (busqueda ? 1 : 0)}
               </span>
             )}
           </Button>
@@ -167,7 +170,9 @@ function SucursalesPage() {
                 </label>
                 <Select
                   value={filtros.activo}
-                  onChange={(e) => setFiltros({ ...filtros, activo: e.target.value })}
+                  onChange={(e) =>
+                    setFiltros({ ...filtros, activo: e.target.value })
+                  }
                 >
                   <option value="">Todas</option>
                   <option value="true">Activas</option>
@@ -179,7 +184,11 @@ function SucursalesPage() {
             {/* Boton para limpiar filtros */}
             {hasFiltrosActivos && (
               <div className="mt-4 flex justify-end">
-                <Button variant="outline" size="sm" onClick={handleLimpiarFiltros}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleLimpiarFiltros}
+                >
                   <X className="w-4 h-4 mr-1" />
                   Limpiar Filtros
                 </Button>
@@ -321,7 +330,11 @@ function SucursalesPage() {
                       ? 'opacity-50 cursor-not-allowed'
                       : 'text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20'
                   }`}
-                  title={sucursal.es_matriz ? 'No se puede eliminar la sucursal matriz' : ''}
+                  title={
+                    sucursal.es_matriz
+                      ? 'No se puede eliminar la sucursal matriz'
+                      : ''
+                  }
                 >
                   <Trash2 className="w-4 h-4" />
                 </Button>
@@ -384,8 +397,9 @@ function SucursalesPage() {
           {/* Mensaje de advertencia */}
           <div className="bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
             <p className="text-sm text-amber-900 dark:text-amber-200">
-              <strong>Importante:</strong> La sucursal sera desactivada (soft delete). Los datos
-              historicos se mantendran, pero no se podran crear nuevas citas ni asignar recursos.
+              <strong>Importante:</strong> La sucursal sera desactivada (soft
+              delete). Los datos historicos se mantendran, pero no se podran
+              crear nuevas citas ni asignar recursos.
             </p>
           </div>
 
@@ -406,7 +420,9 @@ function SucursalesPage() {
               disabled={eliminarMutation.isPending}
               className="bg-red-600 hover:bg-red-700 text-white"
             >
-              {eliminarMutation.isPending ? 'Eliminando...' : 'Si, Eliminar Sucursal'}
+              {eliminarMutation.isPending
+                ? 'Eliminando...'
+                : 'Si, Eliminar Sucursal'}
             </Button>
           </div>
         </div>

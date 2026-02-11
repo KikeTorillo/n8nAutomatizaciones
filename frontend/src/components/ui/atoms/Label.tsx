@@ -1,5 +1,5 @@
 import { memo, forwardRef, type ReactNode } from 'react';
-import { cn } from '@/lib/utils';
+import { cn } from '../lib/cn';
 import { LABEL_BASE, LABEL_REQUIRED, ARIA_LABELS } from '@/lib/uiConstants';
 
 export interface LabelProps {
@@ -19,28 +19,30 @@ export interface LabelProps {
  * @example
  * <Label label="Email" required htmlFor="email-input" />
  */
-const Label = memo(forwardRef<HTMLLabelElement, LabelProps>(function Label({
-  label,
-  required = false,
-  htmlFor,
-  className,
-}, ref) {
-  if (!label) return null;
+const Label = memo(
+  forwardRef<HTMLLabelElement, LabelProps>(function Label(
+    { label, required = false, htmlFor, className },
+    ref
+  ) {
+    if (!label) return null;
 
-  return (
-    <label ref={ref} htmlFor={htmlFor} className={cn(LABEL_BASE, className)}>
-      {label}
-      {required && (
-        <>
-          <span className={LABEL_REQUIRED.asterisk} aria-hidden="true">
-            *
-          </span>
-          <span className={LABEL_REQUIRED.srOnly}>{ARIA_LABELS.required}</span>
-        </>
-      )}
-    </label>
-  );
-}));
+    return (
+      <label ref={ref} htmlFor={htmlFor} className={cn(LABEL_BASE, className)}>
+        {label}
+        {required && (
+          <>
+            <span className={LABEL_REQUIRED.asterisk} aria-hidden="true">
+              *
+            </span>
+            <span className={LABEL_REQUIRED.srOnly}>
+              {ARIA_LABELS.required}
+            </span>
+          </>
+        )}
+      </label>
+    );
+  })
+);
 
 Label.displayName = 'Label';
 

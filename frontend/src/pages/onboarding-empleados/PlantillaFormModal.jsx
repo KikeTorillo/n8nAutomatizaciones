@@ -4,8 +4,16 @@
  */
 import { useState, useEffect } from 'react';
 import {
-  Plus, Trash2, GripVertical, Loader2, User, UserCheck, Users,
-  ExternalLink, ChevronDown, ChevronUp
+  Plus,
+  Trash2,
+  GripVertical,
+  Loader2,
+  User,
+  UserCheck,
+  Users,
+  ExternalLink,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import {
   Button,
@@ -14,17 +22,18 @@ import {
   Input,
   Modal,
   Select,
-  Textarea
+  Textarea,
 } from '@/components/ui';
-import { DepartamentoSelect, PuestoSelect } from '@/components/organizacion';
+import {
+  DepartamentoSelect,
+  PuestoSelect,
+} from '@/pages/organizacion/components';
 import {
   usePlantillaOnboarding,
   useCrearPlantilla,
   useActualizarPlantilla,
   useCrearTarea,
-  useActualizarTarea,
   useEliminarTarea,
-  useReordenarTareas
 } from '@/hooks/personas';
 
 const RESPONSABLES = [
@@ -39,7 +48,7 @@ const INITIAL_PLANTILLA = {
   departamento_id: null,
   puesto_id: null,
   duracion_dias: 30,
-  activo: true
+  activo: true,
 };
 
 const INITIAL_TAREA = {
@@ -48,35 +57,34 @@ const INITIAL_TAREA = {
   responsable_tipo: 'empleado',
   dias_limite: null,
   es_obligatoria: true,
-  url_recurso: ''
+  url_recurso: '',
 };
 
 export default function PlantillaFormModal({
   isOpen,
   onClose,
-  plantilla = null // null = crear, objeto = editar
+  plantilla = null, // null = crear, objeto = editar
 }) {
   const isEditing = !!plantilla;
 
   const [formData, setFormData] = useState(INITIAL_PLANTILLA);
-  const [tareas, setTareas] = useState([]);
+  const [, setTareas] = useState([]);
   const [nuevaTarea, setNuevaTarea] = useState(INITIAL_TAREA);
   const [showNuevaTarea, setShowNuevaTarea] = useState(false);
   const [errors, setErrors] = useState({});
 
   // Query para obtener plantilla con tareas (solo en modo edicion)
-  const { data: plantillaData, isLoading: loadingPlantilla } = usePlantillaOnboarding(
-    isEditing ? plantilla.id : null
-  );
+  const { data: plantillaData, isLoading: loadingPlantilla } =
+    usePlantillaOnboarding(isEditing ? plantilla.id : null);
 
   // Mutations
   const crearPlantillaMutation = useCrearPlantilla();
   const actualizarPlantillaMutation = useActualizarPlantilla();
   const crearTareaMutation = useCrearTarea();
-  const actualizarTareaMutation = useActualizarTarea();
   const eliminarTareaMutation = useEliminarTarea();
 
-  const isLoading = crearPlantillaMutation.isPending ||
+  const isLoading =
+    crearPlantillaMutation.isPending ||
     actualizarPlantillaMutation.isPending ||
     crearTareaMutation.isPending;
 
@@ -89,7 +97,7 @@ export default function PlantillaFormModal({
         departamento_id: plantillaData.departamento_id,
         puesto_id: plantillaData.puesto_id,
         duracion_dias: plantillaData.duracion_dias || 30,
-        activo: plantillaData.activo !== false
+        activo: plantillaData.activo !== false,
       });
       setTareas(plantillaData.tareas || []);
     } else if (isOpen && !isEditing) {
@@ -119,7 +127,10 @@ export default function PlantillaFormModal({
       newErrors.nombre = 'Minimo 3 caracteres';
     }
 
-    if (formData.duracion_dias && (formData.duracion_dias < 1 || formData.duracion_dias > 365)) {
+    if (
+      formData.duracion_dias &&
+      (formData.duracion_dias < 1 || formData.duracion_dias > 365)
+    ) {
       newErrors.duracion_dias = 'Debe ser entre 1 y 365 dias';
     }
 
@@ -137,19 +148,19 @@ export default function PlantillaFormModal({
         ...formData,
         departamento_id: formData.departamento_id || null,
         puesto_id: formData.puesto_id || null,
-        descripcion: formData.descripcion?.trim() || null
+        descripcion: formData.descripcion?.trim() || null,
       };
 
       if (isEditing) {
         await actualizarPlantillaMutation.mutateAsync({
           plantillaId: plantilla.id,
-          data: dataToSend
+          data: dataToSend,
         });
       } else {
         await crearPlantillaMutation.mutateAsync(dataToSend);
       }
       onClose();
-    } catch (err) {
+    } catch {
       // Error manejado por el hook
     }
   };
@@ -164,13 +175,15 @@ export default function PlantillaFormModal({
         plantillaId: plantilla.id,
         data: {
           ...nuevaTarea,
-          dias_limite: nuevaTarea.dias_limite ? parseInt(nuevaTarea.dias_limite) : null,
-          url_recurso: nuevaTarea.url_recurso?.trim() || null
-        }
+          dias_limite: nuevaTarea.dias_limite
+            ? parseInt(nuevaTarea.dias_limite)
+            : null,
+          url_recurso: nuevaTarea.url_recurso?.trim() || null,
+        },
       });
       setNuevaTarea(INITIAL_TAREA);
       setShowNuevaTarea(false);
-    } catch (err) {
+    } catch {
       // Error manejado por el hook
     }
   };
@@ -182,9 +195,9 @@ export default function PlantillaFormModal({
     try {
       await eliminarTareaMutation.mutateAsync({
         tareaId,
-        plantillaId: plantilla.id
+        plantillaId: plantilla.id,
       });
-    } catch (err) {
+    } catch {
       // Error manejado por el hook
     }
   };
@@ -202,7 +215,9 @@ export default function PlantillaFormModal({
           <FormGroup label="Nombre" error={errors.nombre} required>
             <Input
               value={formData.nombre}
-              onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, nombre: e.target.value })
+              }
               placeholder="Ej: Onboarding General"
               hasError={!!errors.nombre}
             />
@@ -211,7 +226,9 @@ export default function PlantillaFormModal({
           <FormGroup label="Descripcion">
             <Textarea
               value={formData.descripcion}
-              onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, descripcion: e.target.value })
+              }
               placeholder="Descripcion opcional de la plantilla..."
               rows={2}
             />
@@ -221,7 +238,9 @@ export default function PlantillaFormModal({
             <FormGroup label="Departamento (opcional)">
               <DepartamentoSelect
                 value={formData.departamento_id}
-                onChange={(val) => setFormData({ ...formData, departamento_id: val })}
+                onChange={(val) =>
+                  setFormData({ ...formData, departamento_id: val })
+                }
                 placeholder="Cualquier departamento"
                 allowNull
               />
@@ -242,7 +261,12 @@ export default function PlantillaFormModal({
               <Input
                 type="number"
                 value={formData.duracion_dias}
-                onChange={(e) => setFormData({ ...formData, duracion_dias: parseInt(e.target.value) || 30 })}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    duracion_dias: parseInt(e.target.value) || 30,
+                  })
+                }
                 min={1}
                 max={365}
                 hasError={!!errors.duracion_dias}
@@ -253,7 +277,9 @@ export default function PlantillaFormModal({
               <Checkbox
                 id="activo"
                 checked={formData.activo}
-                onChange={(e) => setFormData({ ...formData, activo: e.target.checked })}
+                onChange={(e) =>
+                  setFormData({ ...formData, activo: e.target.checked })
+                }
                 label="Plantilla activa"
               />
             </div>
@@ -292,39 +318,66 @@ export default function PlantillaFormModal({
               <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 mb-4 space-y-3">
                 <Input
                   value={nuevaTarea.titulo}
-                  onChange={(e) => setNuevaTarea({ ...nuevaTarea, titulo: e.target.value })}
+                  onChange={(e) =>
+                    setNuevaTarea({ ...nuevaTarea, titulo: e.target.value })
+                  }
                   placeholder="Titulo de la tarea"
                 />
                 <Textarea
                   value={nuevaTarea.descripcion}
-                  onChange={(e) => setNuevaTarea({ ...nuevaTarea, descripcion: e.target.value })}
+                  onChange={(e) =>
+                    setNuevaTarea({
+                      ...nuevaTarea,
+                      descripcion: e.target.value,
+                    })
+                  }
                   placeholder="Descripcion (opcional)"
                   rows={2}
                 />
                 <div className="grid grid-cols-3 gap-3">
                   <Select
                     value={nuevaTarea.responsable_tipo}
-                    onChange={(e) => setNuevaTarea({ ...nuevaTarea, responsable_tipo: e.target.value })}
+                    onChange={(e) =>
+                      setNuevaTarea({
+                        ...nuevaTarea,
+                        responsable_tipo: e.target.value,
+                      })
+                    }
                     options={RESPONSABLES}
                   />
                   <Input
                     type="number"
                     value={nuevaTarea.dias_limite || ''}
-                    onChange={(e) => setNuevaTarea({ ...nuevaTarea, dias_limite: e.target.value })}
+                    onChange={(e) =>
+                      setNuevaTarea({
+                        ...nuevaTarea,
+                        dias_limite: e.target.value,
+                      })
+                    }
                     placeholder="Dias limite"
                     min={0}
                   />
                   <div className="flex items-center">
                     <Checkbox
                       checked={nuevaTarea.es_obligatoria}
-                      onChange={(e) => setNuevaTarea({ ...nuevaTarea, es_obligatoria: e.target.checked })}
+                      onChange={(e) =>
+                        setNuevaTarea({
+                          ...nuevaTarea,
+                          es_obligatoria: e.target.checked,
+                        })
+                      }
                       label="Obligatoria"
                     />
                   </div>
                 </div>
                 <Input
                   value={nuevaTarea.url_recurso}
-                  onChange={(e) => setNuevaTarea({ ...nuevaTarea, url_recurso: e.target.value })}
+                  onChange={(e) =>
+                    setNuevaTarea({
+                      ...nuevaTarea,
+                      url_recurso: e.target.value,
+                    })
+                  }
                   placeholder="URL de recurso (opcional)"
                 />
                 <div className="flex justify-end">
@@ -333,7 +386,9 @@ export default function PlantillaFormModal({
                     variant="primary"
                     size="sm"
                     onClick={handleAgregarTarea}
-                    disabled={!nuevaTarea.titulo?.trim() || crearTareaMutation.isPending}
+                    disabled={
+                      !nuevaTarea.titulo?.trim() || crearTareaMutation.isPending
+                    }
                   >
                     {crearTareaMutation.isPending ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -357,14 +412,18 @@ export default function PlantillaFormModal({
             ) : (
               <div className="space-y-2 max-h-60 overflow-y-auto">
                 {(plantillaData?.tareas || []).map((tarea, idx) => {
-                  const ResponsableIcon = RESPONSABLES.find(r => r.value === tarea.responsable_tipo)?.icon || User;
+                  const ResponsableIcon =
+                    RESPONSABLES.find((r) => r.value === tarea.responsable_tipo)
+                      ?.icon || User;
 
                   return (
                     <div
                       key={tarea.id}
                       className="flex items-start gap-3 p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg"
                     >
-                      <span className="text-xs text-gray-400 mt-1 w-5">{idx + 1}</span>
+                      <span className="text-xs text-gray-400 mt-1 w-5">
+                        {idx + 1}
+                      </span>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <span className="font-medium text-gray-900 dark:text-white text-sm">
@@ -379,7 +438,11 @@ export default function PlantillaFormModal({
                         <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
                           <span className="flex items-center gap-1">
                             <ResponsableIcon className="h-3.5 w-3.5" />
-                            {RESPONSABLES.find(r => r.value === tarea.responsable_tipo)?.label}
+                            {
+                              RESPONSABLES.find(
+                                (r) => r.value === tarea.responsable_tipo
+                              )?.label
+                            }
                           </span>
                           {tarea.dias_limite && (
                             <span>Dia {tarea.dias_limite}</span>
@@ -422,18 +485,16 @@ export default function PlantillaFormModal({
           >
             Cancelar
           </Button>
-          <Button
-            type="submit"
-            variant="primary"
-            disabled={isLoading}
-          >
+          <Button type="submit" variant="primary" disabled={isLoading}>
             {isLoading ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
                 Guardando...
               </>
+            ) : isEditing ? (
+              'Guardar Cambios'
             ) : (
-              isEditing ? 'Guardar Cambios' : 'Crear Plantilla'
+              'Crear Plantilla'
             )}
           </Button>
         </div>

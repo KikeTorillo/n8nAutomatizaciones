@@ -19,16 +19,19 @@ import { Button, Modal, StatCardGrid } from '@/components/ui';
 import { useModalManager } from '@/hooks/utils';
 
 // Componentes de Vacaciones
-import { SolicitudesEquipoSection } from '@/components/vacaciones';
+import { SolicitudesEquipoSection } from '@/pages/ausencias/components/vacaciones';
 
 // Componentes de Incapacidades
-import { IncapacidadesList, IncapacidadFormModal } from '@/components/incapacidades';
+import {
+  IncapacidadesList,
+  IncapacidadFormModal,
+} from '@/pages/ausencias/components/incapacidades';
 
 // Componentes de Bloqueos
-import BloqueosList from '@/components/bloqueos/BloqueosList';
-import BloqueoFilters from '@/components/bloqueos/BloqueoFilters';
-import BloqueoFormDrawer from '@/components/bloqueos/BloqueoFormDrawer';
-import BloqueoDetailModal from '@/components/bloqueos/BloqueoDetailModal';
+import BloqueosList from '@/pages/ausencias/components/bloqueos/BloqueosList';
+import BloqueoFilters from '@/pages/ausencias/components/bloqueos/BloqueoFilters';
+import BloqueoFormDrawer from '@/pages/ausencias/components/bloqueos/BloqueoFormDrawer';
+import BloqueoDetailModal from '@/pages/ausencias/components/bloqueos/BloqueoDetailModal';
 
 // Hooks
 import { useBloqueos, useEliminarBloqueo } from '@/hooks/agendamiento';
@@ -59,14 +62,18 @@ const SECCIONES_CONFIG = {
   bloqueos: {
     icon: Lock,
     title: 'Bloqueos del Equipo',
-    description: 'Bloqueos manuales: mantenimiento, eventos especiales, emergencias',
+    description:
+      'Bloqueos manuales: mantenimiento, eventos especiales, emergencias',
   },
 };
 
 /**
  * Sección de Vacaciones con estadísticas
  */
-const VacacionesSection = memo(function VacacionesSection({ stats, isLoading }) {
+const VacacionesSection = memo(function VacacionesSection({
+  stats,
+  isLoading,
+}) {
   const vacaciones = stats || {};
   const totalProfesionales = vacaciones.saldos?.total_empleados || 0;
   const pendientesVac = vacaciones.solicitudes?.pendientes || 0;
@@ -120,7 +127,11 @@ const VacacionesSection = memo(function VacacionesSection({ stats, isLoading }) 
 /**
  * Sección de Incapacidades con estadísticas
  */
-const IncapacidadesSection = memo(function IncapacidadesSection({ stats, isLoading, onRegistrar }) {
+const IncapacidadesSection = memo(function IncapacidadesSection({
+  stats,
+  isLoading,
+  onRegistrar,
+}) {
   const incapacidades = stats || {};
 
   return (
@@ -249,7 +260,6 @@ const BloqueosSection = memo(function BloqueosSection({
  * @param {string} seccion - 'vacaciones' | 'incapacidades' | 'bloqueos'
  */
 function MiEquipoAusenciasTab({ seccion = 'vacaciones', extraActions }) {
-
   const config = SECCIONES_CONFIG[seccion] || SECCIONES_CONFIG.vacaciones;
   const Icon = config.icon;
 
@@ -275,34 +285,33 @@ function MiEquipoAusenciasTab({ seccion = 'vacaciones', extraActions }) {
   const anioActual = new Date().getFullYear();
 
   // Estadísticas de vacaciones (solo se cargan si la sección es vacaciones)
-  const {
-    data: statsVacaciones,
-    isLoading: isLoadingVacaciones,
-  } = useEstadisticasVacaciones(
-    seccion === 'vacaciones' ? { anio: anioActual } : false
-  );
+  const { data: statsVacaciones, isLoading: isLoadingVacaciones } =
+    useEstadisticasVacaciones(
+      seccion === 'vacaciones' ? { anio: anioActual } : false
+    );
 
   // Estadísticas de incapacidades (solo se cargan si la sección es incapacidades)
-  const {
-    data: statsIncapacidades,
-    isLoading: isLoadingIncapacidades,
-  } = useEstadisticasIncapacidades(
-    seccion === 'incapacidades' ? { anio: anioActual } : false
-  );
+  const { data: statsIncapacidades, isLoading: isLoadingIncapacidades } =
+    useEstadisticasIncapacidades(
+      seccion === 'incapacidades' ? { anio: anioActual } : false
+    );
 
   // Queries para bloqueos (solo se cargan si la sección es bloqueos)
-  const { data: profesionalesData, isLoading: isLoadingProfesionales } = useProfesionales(
-    seccion === 'bloqueos' ? { activo: true } : false
-  );
+  const { data: profesionalesData, isLoading: isLoadingProfesionales } =
+    useProfesionales(seccion === 'bloqueos' ? { activo: true } : false);
   const profesionales = profesionalesData?.profesionales || [];
 
   const queryParams = useMemo(() => {
     if (seccion !== 'bloqueos') return null;
     const params = {};
-    if (filtrosBloqueos.fecha_desde) params.fecha_inicio = filtrosBloqueos.fecha_desde;
-    if (filtrosBloqueos.fecha_hasta) params.fecha_fin = filtrosBloqueos.fecha_hasta;
-    if (filtrosBloqueos.tipo_bloqueo_id) params.tipo_bloqueo_id = filtrosBloqueos.tipo_bloqueo_id;
-    if (filtrosBloqueos.profesional_id) params.profesional_id = parseInt(filtrosBloqueos.profesional_id);
+    if (filtrosBloqueos.fecha_desde)
+      params.fecha_inicio = filtrosBloqueos.fecha_desde;
+    if (filtrosBloqueos.fecha_hasta)
+      params.fecha_fin = filtrosBloqueos.fecha_hasta;
+    if (filtrosBloqueos.tipo_bloqueo_id)
+      params.tipo_bloqueo_id = filtrosBloqueos.tipo_bloqueo_id;
+    if (filtrosBloqueos.profesional_id)
+      params.profesional_id = parseInt(filtrosBloqueos.profesional_id);
     return params;
   }, [seccion, filtrosBloqueos]);
 
@@ -319,7 +328,12 @@ function MiEquipoAusenciasTab({ seccion = 'vacaciones', extraActions }) {
       busqueda: filtrosBloqueos.busqueda,
       activo: filtrosBloqueos.solo_activos ? true : undefined,
     });
-  }, [seccion, bloqueos, filtrosBloqueos.busqueda, filtrosBloqueos.solo_activos]);
+  }, [
+    seccion,
+    bloqueos,
+    filtrosBloqueos.busqueda,
+    filtrosBloqueos.solo_activos,
+  ]);
 
   // Estadísticas de bloqueos manuales
   const statsBloqueos = useMemo(() => {
@@ -353,22 +367,39 @@ function MiEquipoAusenciasTab({ seccion = 'vacaciones', extraActions }) {
   }, []);
 
   const handleNuevoBloqueo = useCallback(() => {
-    openModal('bloqueoForm', { bloqueo: null, mode: 'crear', fechaPreseleccionada: null });
+    openModal('bloqueoForm', {
+      bloqueo: null,
+      mode: 'crear',
+      fechaPreseleccionada: null,
+    });
   }, [openModal]);
 
-  const handleVerBloqueo = useCallback((bloqueo) => {
-    if (!esBloqueoAutoGenerado(bloqueo)) {
-      openModal('bloqueoDetalle', bloqueo);
-    }
-  }, [openModal]);
+  const handleVerBloqueo = useCallback(
+    (bloqueo) => {
+      if (!esBloqueoAutoGenerado(bloqueo)) {
+        openModal('bloqueoDetalle', bloqueo);
+      }
+    },
+    [openModal]
+  );
 
-  const handleEditarBloqueo = useCallback((bloqueo) => {
-    openModal('bloqueoForm', { bloqueo, mode: 'editar', fechaPreseleccionada: null });
-  }, [openModal]);
+  const handleEditarBloqueo = useCallback(
+    (bloqueo) => {
+      openModal('bloqueoForm', {
+        bloqueo,
+        mode: 'editar',
+        fechaPreseleccionada: null,
+      });
+    },
+    [openModal]
+  );
 
-  const handleEliminarBloqueo = useCallback((bloqueo) => {
-    openModal('bloqueoDelete', bloqueo);
-  }, [openModal]);
+  const handleEliminarBloqueo = useCallback(
+    (bloqueo) => {
+      openModal('bloqueoDelete', bloqueo);
+    },
+    [openModal]
+  );
 
   const handleConfirmarEliminar = useCallback(async () => {
     const bloqueoParaEliminar = getModalData('bloqueoDelete');
@@ -406,7 +437,12 @@ function MiEquipoAusenciasTab({ seccion = 'vacaciones', extraActions }) {
   const renderContent = () => {
     switch (seccion) {
       case 'vacaciones':
-        return <VacacionesSection stats={statsVacaciones} isLoading={isLoadingVacaciones} />;
+        return (
+          <VacacionesSection
+            stats={statsVacaciones}
+            isLoading={isLoadingVacaciones}
+          />
+        );
       case 'incapacidades':
         return (
           <IncapacidadesSection
@@ -432,7 +468,12 @@ function MiEquipoAusenciasTab({ seccion = 'vacaciones', extraActions }) {
           />
         );
       default:
-        return <VacacionesSection stats={statsVacaciones} isLoading={isLoadingVacaciones} />;
+        return (
+          <VacacionesSection
+            stats={statsVacaciones}
+            isLoading={isLoadingVacaciones}
+          />
+        );
     }
   };
 
@@ -506,18 +547,23 @@ function MiEquipoAusenciasTab({ seccion = 'vacaciones', extraActions }) {
                   <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
                     <p>Tipo: {getModalData('bloqueoDelete')?.tipo_bloqueo}</p>
                     <p>
-                      Fecha: {getModalData('bloqueoDelete')?.fecha_inicio} - {getModalData('bloqueoDelete')?.fecha_fin}
+                      Fecha: {getModalData('bloqueoDelete')?.fecha_inicio} -{' '}
+                      {getModalData('bloqueoDelete')?.fecha_fin}
                     </p>
                     {getModalData('bloqueoDelete')?.citas_afectadas > 0 && (
                       <p className="text-red-600 dark:text-red-400 font-medium mt-2">
-                        Este bloqueo afecta {getModalData('bloqueoDelete')?.citas_afectadas} citas
+                        Este bloqueo afecta{' '}
+                        {getModalData('bloqueoDelete')?.citas_afectadas} citas
                       </p>
                     )}
                   </div>
                 </div>
 
                 <div className="flex justify-end gap-3">
-                  <Button variant="secondary" onClick={() => closeModal('bloqueoDelete')}>
+                  <Button
+                    variant="secondary"
+                    onClick={() => closeModal('bloqueoDelete')}
+                  >
                     Cancelar
                   </Button>
                   <Button
@@ -525,7 +571,9 @@ function MiEquipoAusenciasTab({ seccion = 'vacaciones', extraActions }) {
                     onClick={handleConfirmarEliminar}
                     disabled={eliminarMutation.isPending}
                   >
-                    {eliminarMutation.isPending ? 'Eliminando...' : 'Eliminar Bloqueo'}
+                    {eliminarMutation.isPending
+                      ? 'Eliminando...'
+                      : 'Eliminar Bloqueo'}
                   </Button>
                 </div>
               </div>

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Coins,
@@ -15,12 +15,8 @@ import {
   AlertCircle,
 } from 'lucide-react';
 
-import {
-  Button,
-  Input,
-  Modal
-} from '@/components/ui';
-import { ConfiguracionPageLayout } from '@/components/configuracion';
+import { Button, Input, Modal } from '@/components/ui';
+import { ConfiguracionPageLayout } from '@/pages/configuracion/components';
 import { queryKeys } from '@/hooks/config';
 import { useToast } from '@/hooks/utils';
 import { monedasApi } from '@/services/api/endpoints';
@@ -45,7 +41,7 @@ const PARES_PRINCIPALES = [
 function MonedasPage() {
   const toast = useToast();
   const queryClient = useQueryClient();
-  const { formatCurrency } = useCurrency();
+  const { formatCurrency: _formatCurrency } = useCurrency();
 
   // Estado de formulario
   const [nuevaTasa, setNuevaTasa] = useState('');
@@ -66,13 +62,20 @@ function MonedasPage() {
   });
 
   // Query: Obtener tasas actuales para cada par
-  const { data: tasasActuales = {}, isLoading: loadingTasas, refetch: refetchTasas } = useQuery({
+  const {
+    data: tasasActuales = {},
+    isLoading: loadingTasas,
+    refetch: refetchTasas,
+  } = useQuery({
     queryKey: ['tasas-cambio-actuales'],
     queryFn: async () => {
       const tasas = {};
       for (const par of PARES_PRINCIPALES) {
         try {
-          const response = await monedasApi.obtenerTasa(par.origen, par.destino);
+          const response = await monedasApi.obtenerTasa(
+            par.origen,
+            par.destino
+          );
           if (response.data.data) {
             tasas[`${par.origen}_${par.destino}`] = response.data.data;
           }
@@ -88,7 +91,11 @@ function MonedasPage() {
   // Query: Historial de tasas para el par seleccionado
   const parSeleccionado = getModalData('historial');
   const { data: historial = [], isLoading: loadingHistorial } = useQuery({
-    queryKey: ['historial-tasas', parSeleccionado?.origen, parSeleccionado?.destino],
+    queryKey: [
+      'historial-tasas',
+      parSeleccionado?.origen,
+      parSeleccionado?.destino,
+    ],
     queryFn: async () => {
       if (!parSeleccionado) return [];
       const response = await monedasApi.obtenerHistorialTasas(
@@ -123,7 +130,7 @@ function MonedasPage() {
   });
 
   // Encontrar la moneda completa por código
-  const getMoneda = (codigo) => monedas.find(m => m.codigo === codigo);
+  const getMoneda = (codigo) => monedas.find((m) => m.codigo === codigo);
 
   // Manejar click en editar tasa
   const handleEditarTasa = (par, tasaActual) => {
@@ -195,9 +202,10 @@ function MonedasPage() {
                   key={moneda.codigo}
                   className={`
                     bg-white dark:bg-gray-800 rounded-lg border p-4
-                    ${moneda.activo
-                      ? 'border-gray-200 dark:border-gray-700'
-                      : 'border-gray-100 dark:border-gray-800 opacity-50'
+                    ${
+                      moneda.activo
+                        ? 'border-gray-200 dark:border-gray-700'
+                        : 'border-gray-100 dark:border-gray-800 opacity-50'
                     }
                   `}
                 >
@@ -287,14 +295,21 @@ function MonedasPage() {
                         <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                           {tasa.tasa.toLocaleString('es-MX', {
                             minimumFractionDigits: 4,
-                            maximumFractionDigits: 4
+                            maximumFractionDigits: 4,
                           })}
                         </div>
                         <div className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                          1 {par.origen} = {tasa.tasa.toLocaleString('es-MX', { maximumFractionDigits: 2 })} {par.destino}
+                          1 {par.origen} ={' '}
+                          {tasa.tasa.toLocaleString('es-MX', {
+                            maximumFractionDigits: 2,
+                          })}{' '}
+                          {par.destino}
                         </div>
                         <div className="flex items-center gap-2 mt-2 text-xs text-gray-400">
-                          <span>Actualizado: {formatFecha(tasa.fecha || tasa.creado_en)}</span>
+                          <span>
+                            Actualizado:{' '}
+                            {formatFecha(tasa.fecha || tasa.creado_en)}
+                          </span>
                           {tasa.fuente && (
                             <span className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded">
                               {tasa.fuente}
@@ -315,7 +330,8 @@ function MonedasPage() {
           )}
 
           <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
-            Las tasas de cambio se utilizan para mostrar equivalencias en el POS y convertir precios entre monedas.
+            Las tasas de cambio se utilizan para mostrar equivalencias en el POS
+            y convertir precios entre monedas.
           </p>
         </section>
 
@@ -339,7 +355,8 @@ function MonedasPage() {
       >
         <div className="space-y-4">
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            Ingresa la nueva tasa de cambio. Esta será la tasa vigente desde hoy.
+            Ingresa la nueva tasa de cambio. Esta será la tasa vigente desde
+            hoy.
           </p>
 
           <div>
@@ -423,7 +440,7 @@ function MonedasPage() {
                       <td className="py-2 font-mono text-gray-900 dark:text-gray-100">
                         {item.tasa.toLocaleString('es-MX', {
                           minimumFractionDigits: 4,
-                          maximumFractionDigits: 4
+                          maximumFractionDigits: 4,
                         })}
                       </td>
                       <td className="py-2 text-gray-500 dark:text-gray-400">
@@ -463,13 +480,15 @@ function ConversionCalculator({ monedas }) {
       });
       setResultado(response.data.data);
     } catch (error) {
-      setResultado({ error: error.response?.data?.message || 'Error al convertir' });
+      setResultado({
+        error: error.response?.data?.message || 'Error al convertir',
+      });
     } finally {
       setIsConverting(false);
     }
   };
 
-  const monedasActivas = monedas.filter(m => m.activo);
+  const monedasActivas = monedas.filter((m) => m.activo);
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
@@ -496,7 +515,7 @@ function ConversionCalculator({ monedas }) {
             onChange={(e) => setOrigen(e.target.value)}
             className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500"
           >
-            {monedasActivas.map(m => (
+            {monedasActivas.map((m) => (
               <option key={m.codigo} value={m.codigo}>
                 {m.codigo} ({m.simbolo})
               </option>
@@ -513,7 +532,7 @@ function ConversionCalculator({ monedas }) {
             onChange={(e) => setDestino(e.target.value)}
             className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500"
           >
-            {monedasActivas.map(m => (
+            {monedasActivas.map((m) => (
               <option key={m.codigo} value={m.codigo}>
                 {m.codigo} ({m.simbolo})
               </option>
@@ -538,16 +557,19 @@ function ConversionCalculator({ monedas }) {
           ) : (
             <div className="text-center">
               <div className="text-sm text-gray-500 dark:text-gray-400">
-                {resultado.monto_original.toLocaleString('es-MX')} {resultado.moneda_origen} =
+                {resultado.monto_original.toLocaleString('es-MX')}{' '}
+                {resultado.moneda_origen} =
               </div>
               <div className="text-3xl font-bold text-primary-600 dark:text-primary-400 mt-1">
                 {resultado.monto_convertido.toLocaleString('es-MX', {
                   minimumFractionDigits: 2,
-                  maximumFractionDigits: 2
-                })} {resultado.moneda_destino}
+                  maximumFractionDigits: 2,
+                })}{' '}
+                {resultado.moneda_destino}
               </div>
               <div className="text-xs text-gray-400 mt-2">
-                Tasa: {resultado.tasa_utilizada.toFixed(4)} | Fuente: {resultado.fuente_tasa}
+                Tasa: {resultado.tasa_utilizada.toFixed(4)} | Fuente:{' '}
+                {resultado.fuente_tasa}
               </div>
             </div>
           )}

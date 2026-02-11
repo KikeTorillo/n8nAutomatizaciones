@@ -1,15 +1,32 @@
-import { forwardRef, memo, isValidElement, createElement, type ButtonHTMLAttributes, type ReactNode } from 'react';
-import { cn } from '@/lib/utils';
+import {
+  forwardRef,
+  memo,
+  isValidElement,
+  createElement,
+  type ButtonHTMLAttributes,
+  type ReactNode,
+} from 'react';
+import { cn } from '../lib/cn';
 import { Loader2 } from 'lucide-react';
-import { ICON_BUTTON_VARIANTS, ICON_BUTTON_SIZES, FOCUS_STATES } from '@/lib/uiConstants';
+import {
+  ICON_BUTTON_VARIANTS,
+  ICON_BUTTON_SIZES,
+  FOCUS_STATES,
+} from '@/lib/uiConstants';
 
 type IconComponent = React.ComponentType<{ className?: string }>;
 
 /** Resuelve icon como componente o JSX */
-const resolveIcon = (icon: ReactNode | IconComponent, sizeClass: string): ReactNode => {
+const resolveIcon = (
+  icon: ReactNode | IconComponent,
+  sizeClass: string
+): ReactNode => {
   if (!icon) return null;
   if (isValidElement(icon)) return icon;
-  if (typeof icon === 'function' || (typeof icon === 'object' && '$$typeof' in icon)) {
+  if (
+    typeof icon === 'function' ||
+    (typeof icon === 'object' && '$$typeof' in icon)
+  ) {
     return createElement(icon as IconComponent, { className: sizeClass });
   }
   return icon as ReactNode;
@@ -71,15 +88,22 @@ const IconButton = memo(
           'disabled:opacity-50 disabled:cursor-not-allowed',
           sizeConfig.button,
           ICON_BUTTON_VARIANTS[variant] || ICON_BUTTON_VARIANTS.ghost,
-          active && 'bg-primary-50 text-primary-700 dark:bg-primary-950 dark:text-primary-300',
+          active &&
+            'bg-primary-50 text-primary-700 dark:bg-primary-950 dark:text-primary-300',
           className
         )}
         {...props}
       >
         {isLoading ? (
-          <Loader2 className={cn(sizeConfig.icon, 'animate-spin')} aria-hidden="true" />
+          <Loader2
+            className={cn(sizeConfig.icon, 'animate-spin')}
+            aria-hidden="true"
+          />
         ) : (
-          <span className={cn('flex items-center justify-center', sizeConfig.icon)} aria-hidden="true">
+          <span
+            className={cn('flex items-center justify-center', sizeConfig.icon)}
+            aria-hidden="true"
+          >
             {resolveIcon(icon, sizeConfig.icon)}
           </span>
         )}

@@ -19,7 +19,7 @@ import {
   ListaForm,
   ListaItemsView,
   ListaClientesView,
-} from '@/components/precios';
+} from '@/pages/precios/components';
 
 export default function ListasPreciosPage() {
   const toast = useToast();
@@ -92,11 +92,13 @@ export default function ListasPreciosPage() {
   });
 
   // Filtrar listas (memoizado para evitar re-cálculos innecesarios)
-  const listasFiltradas = useMemo(() =>
-    listas.filter(lista =>
-      lista.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      lista.codigo.toLowerCase().includes(searchTerm.toLowerCase())
-    ),
+  const listasFiltradas = useMemo(
+    () =>
+      listas.filter(
+        (lista) =>
+          lista.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          lista.codigo.toLowerCase().includes(searchTerm.toLowerCase())
+      ),
     [listas, searchTerm]
   );
 
@@ -149,10 +151,14 @@ export default function ListasPreciosPage() {
           <div className="text-center py-12">
             <Tag className="w-12 h-12 mx-auto text-gray-400 mb-4" />
             <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
-              {searchTerm ? 'No se encontraron listas' : 'Sin listas de precios'}
+              {searchTerm
+                ? 'No se encontraron listas'
+                : 'Sin listas de precios'}
             </h3>
             <p className="text-gray-500 dark:text-gray-400 mt-1">
-              {searchTerm ? 'Intenta con otro termino' : 'Crea tu primera lista de precios'}
+              {searchTerm
+                ? 'Intenta con otro termino'
+                : 'Crea tu primera lista de precios'}
             </p>
             {!searchTerm && (
               <Button onClick={handleNueva} className="mt-4">

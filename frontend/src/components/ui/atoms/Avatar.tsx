@@ -1,5 +1,5 @@
 import { memo, forwardRef, useState } from 'react';
-import { cn } from '@/lib/utils';
+import { cn } from '../lib/cn';
 import { AVATAR_SIZES } from '@/lib/uiConstants';
 import type { UISize } from '@/types/ui';
 
@@ -47,13 +47,7 @@ function getColorIndex(text: string): number {
  */
 const Avatar = memo(
   forwardRef<HTMLImageElement | HTMLDivElement, AvatarProps>(function Avatar(
-    {
-      src,
-      alt,
-      fallback,
-      size = 'md',
-      className,
-    },
+    { src, alt, fallback, size = 'md', className },
     ref
   ) {
     const [imgError, setImgError] = useState(false);

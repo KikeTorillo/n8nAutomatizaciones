@@ -5,8 +5,16 @@
  * Combina Label + children + helper/error text
  * Compatible con los atoms existentes (Input, Select, Textarea)
  */
-import { memo, forwardRef, useId, cloneElement, isValidElement, type ReactNode, type ReactElement } from 'react';
-import { cn } from '@/lib/utils';
+import {
+  memo,
+  forwardRef,
+  useId,
+  cloneElement,
+  isValidElement,
+  type ReactNode,
+  type ReactElement,
+} from 'react';
+import { cn } from '../lib/cn';
 import { Label } from '../atoms/Label';
 import { FORM_GROUP } from '@/lib/uiConstants';
 
@@ -31,38 +39,42 @@ export interface FormGroupProps {
  * Componente FormGroup reutilizable
  */
 const FormGroup = memo(
-  forwardRef<HTMLDivElement, FormGroupProps>(function FormGroup({
-  label,
-  required = false,
-  error,
-  helper,
-  htmlFor,
-  children,
-  className,
-}, ref) {
-  const generatedId = useId();
-  const errorId = error ? `${generatedId}-error` : undefined;
-  const helperId = helper && !error ? `${generatedId}-helper` : undefined;
-  const describedBy = errorId || helperId;
+  forwardRef<HTMLDivElement, FormGroupProps>(function FormGroup(
+    { label, required = false, error, helper, htmlFor, children, className },
+    ref
+  ) {
+    const generatedId = useId();
+    const errorId = error ? `${generatedId}-error` : undefined;
+    const helperId = helper && !error ? `${generatedId}-helper` : undefined;
+    const describedBy = errorId || helperId;
 
-  // Clonar children para agregar aria-describedby si es un elemento válido
-  const enhancedChildren = isValidElement(children) && describedBy
-    ? cloneElement(children as ReactElement<{ 'aria-describedby'?: string }>, { 'aria-describedby': describedBy })
-    : children;
+    // Clonar children para agregar aria-describedby si es un elemento válido
+    const enhancedChildren =
+      isValidElement(children) && describedBy
+        ? cloneElement(
+            children as ReactElement<{ 'aria-describedby'?: string }>,
+            { 'aria-describedby': describedBy }
+          )
+        : children;
 
-  return (
-    <div ref={ref} className={cn('w-full', className)}>
-      <Label label={label} required={required} htmlFor={htmlFor} />
-      {enhancedChildren}
-      {helper && !error && (
-        <p id={helperId} className={FORM_GROUP.helper}>{helper}</p>
-      )}
-      {error && (
-        <p id={errorId} className={FORM_GROUP.error}>{error}</p>
-      )}
-    </div>
-  );
-}));
+    return (
+      <div ref={ref} className={cn('w-full', className)}>
+        <Label label={label} required={required} htmlFor={htmlFor} />
+        {enhancedChildren}
+        {helper && !error && (
+          <p id={helperId} className={FORM_GROUP.helper}>
+            {helper}
+          </p>
+        )}
+        {error && (
+          <p id={errorId} className={FORM_GROUP.error}>
+            {error}
+          </p>
+        )}
+      </div>
+    );
+  })
+);
 
 FormGroup.displayName = 'FormGroup';
 

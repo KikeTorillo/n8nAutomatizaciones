@@ -26,13 +26,27 @@ import { useProfesional } from '@/hooks/personas';
 import GeneralTab from '@/pages/profesionales/components/tabs/GeneralTab';
 
 // Tabs secundarios (carga lazy para mejor performance)
-const TrabajoTab = lazy(() => import('@/pages/profesionales/components/tabs/TrabajoTab'));
-const PersonalTab = lazy(() => import('@/pages/profesionales/components/tabs/PersonalTab'));
-const CurriculumTab = lazy(() => import('@/pages/profesionales/components/tabs/CurriculumTab'));
-const DocumentosTab = lazy(() => import('@/pages/profesionales/components/tabs/DocumentosTab'));
-const CompensacionTab = lazy(() => import('@/pages/profesionales/components/tabs/CompensacionTab'));
-const AusenciasTab = lazy(() => import('@/pages/profesionales/components/tabs/AusenciasTab'));
-const ConfiguracionTab = lazy(() => import('@/pages/profesionales/components/tabs/ConfiguracionTab'));
+const TrabajoTab = lazy(
+  () => import('@/pages/profesionales/components/tabs/TrabajoTab')
+);
+const PersonalTab = lazy(
+  () => import('@/pages/profesionales/components/tabs/PersonalTab')
+);
+const CurriculumTab = lazy(
+  () => import('@/pages/profesionales/components/tabs/CurriculumTab')
+);
+const DocumentosTab = lazy(
+  () => import('@/pages/profesionales/components/tabs/DocumentosTab')
+);
+const CompensacionTab = lazy(
+  () => import('@/pages/profesionales/components/tabs/CompensacionTab')
+);
+const AusenciasTab = lazy(
+  () => import('@/pages/profesionales/components/tabs/AusenciasTab')
+);
+const ConfiguracionTab = lazy(
+  () => import('@/pages/profesionales/components/tabs/ConfiguracionTab')
+);
 
 // Fallback para tabs lazy
 function TabLoadingFallback() {
@@ -57,7 +71,11 @@ const TABS = [
 
 // Grupos de tabs para desktop (dropdowns)
 const TAB_GROUPS = [
-  { icon: UserCircle, label: 'Perfil', tabIds: ['personal', 'curriculum', 'documentos'] },
+  {
+    icon: UserCircle,
+    label: 'Perfil',
+    tabIds: ['personal', 'curriculum', 'documentos'],
+  },
   { icon: Shield, label: 'Gestión', tabIds: ['ausencias', 'configuracion'] },
 ];
 
@@ -71,7 +89,7 @@ function ProfesionalDetailPage() {
   const navigate = useNavigate();
 
   // Tab activa (default: general)
-  const activeTab = tab && TABS.some(t => t.id === tab) ? tab : 'general';
+  const activeTab = tab && TABS.some((t) => t.id === tab) ? tab : 'general';
 
   // Fetch profesional
   const { data: profesional, isLoading, error } = useProfesional(id);
@@ -98,9 +116,9 @@ function ProfesionalDetailPage() {
           config={{
             title: 'Profesional no encontrado',
             description: 'El profesional que buscas no existe o fue eliminado',
-            backTo: '/profesionales',
             backLabel: 'Volver a Profesionales',
           }}
+          onBack={() => navigate('/profesionales')}
         />
       </div>
     );

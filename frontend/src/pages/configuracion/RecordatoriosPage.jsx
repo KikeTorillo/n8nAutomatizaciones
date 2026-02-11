@@ -23,7 +23,7 @@ import {
   Settings,
   TestTube,
 } from 'lucide-react';
-import AgendamientoPageLayout from '@/components/agendamiento/AgendamientoPageLayout';
+import AgendamientoPageLayout from '@/components/shared/agendamiento/AgendamientoPageLayout';
 
 /**
  * Schema de validación para configuración
@@ -51,17 +51,29 @@ function VariablesDisponibles() {
     { variable: '{{hora}}', descripcion: 'Hora de la cita' },
     { variable: '{{servicios}}', descripcion: 'Lista de servicios' },
     { variable: '{{precio}}', descripcion: 'Precio total' },
-    { variable: '{{profesional_nombre}}', descripcion: 'Nombre del profesional' },
+    {
+      variable: '{{profesional_nombre}}',
+      descripcion: 'Nombre del profesional',
+    },
   ];
 
   return (
     <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 sm:p-4 mt-2">
-      <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Variables disponibles:</h4>
+      <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        Variables disponibles:
+      </h4>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         {variables.map((v) => (
-          <div key={v.variable} className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 text-sm">
-            <code className="bg-gray-200 dark:bg-gray-700 px-2 py-0.5 rounded text-xs w-fit text-gray-800 dark:text-gray-200">{v.variable}</code>
-            <span className="text-gray-500 dark:text-gray-400 text-xs sm:text-sm">{v.descripcion}</span>
+          <div
+            key={v.variable}
+            className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 text-sm"
+          >
+            <code className="bg-gray-200 dark:bg-gray-700 px-2 py-0.5 rounded text-xs w-fit text-gray-800 dark:text-gray-200">
+              {v.variable}
+            </code>
+            <span className="text-gray-500 dark:text-gray-400 text-xs sm:text-sm">
+              {v.descripcion}
+            </span>
           </div>
         ))}
       </div>
@@ -110,20 +122,48 @@ function TestForm({ onEnviar, isLoading }) {
  */
 function RecordatoriosPage() {
   // Queries
-  const { data: config, isLoading: loadingConfig } = useConfiguracionRecordatorios();
-  const { data: stats, isLoading: loadingStats } = useEstadisticasRecordatorios();
+  const { data: config, isLoading: loadingConfig } =
+    useConfiguracionRecordatorios();
+  const { data: stats } = useEstadisticasRecordatorios();
 
   // Mutations
   const actualizarMutation = useActualizarConfiguracion();
   const enviarPruebaMutation = useEnviarPrueba();
 
   // Configuración de estadísticas
-  const statsConfig = useMemo(() => [
-    { key: 'enviados', icon: Send, label: 'Total enviados', value: stats?.total || 0, color: 'primary' },
-    { key: 'confirmados', icon: CheckCircle, label: 'Confirmados', value: stats?.confirmados || 0, color: 'green' },
-    { key: 'fallidos', icon: XCircle, label: 'Fallidos', value: stats?.fallidos || 0, color: 'red' },
-    { key: 'tasa', icon: BarChart3, label: 'Tasa de confirmación', value: `${stats?.tasa_confirmacion || 0}%`, color: 'purple' },
-  ], [stats]);
+  const statsConfig = useMemo(
+    () => [
+      {
+        key: 'enviados',
+        icon: Send,
+        label: 'Total enviados',
+        value: stats?.total || 0,
+        color: 'primary',
+      },
+      {
+        key: 'confirmados',
+        icon: CheckCircle,
+        label: 'Confirmados',
+        value: stats?.confirmados || 0,
+        color: 'green',
+      },
+      {
+        key: 'fallidos',
+        icon: XCircle,
+        label: 'Fallidos',
+        value: stats?.fallidos || 0,
+        color: 'red',
+      },
+      {
+        key: 'tasa',
+        icon: BarChart3,
+        label: 'Tasa de confirmación',
+        value: `${stats?.tasa_confirmacion || 0}%`,
+        color: 'purple',
+      },
+    ],
+    [stats]
+  );
 
   // Form
   const {
@@ -203,203 +243,241 @@ function RecordatoriosPage() {
       }
     >
       <div className="space-y-6">
+        {/* Estadísticas */}
+        <StatCardGrid stats={statsConfig} columns={4} />
 
-      {/* Estadísticas */}
-      <StatCardGrid stats={statsConfig} columns={4} />
-
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        {/* Activación global */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className={`p-2 rounded-full ${habilitado ? 'bg-green-100 dark:bg-green-900/40' : 'bg-gray-100 dark:bg-gray-700'}`}>
-                <Bell className={`w-5 h-5 ${habilitado ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-500'}`} />
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          {/* Activación global */}
+          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div
+                  className={`p-2 rounded-full ${habilitado ? 'bg-green-100 dark:bg-green-900/40' : 'bg-gray-100 dark:bg-gray-700'}`}
+                >
+                  <Bell
+                    className={`w-5 h-5 ${habilitado ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-500'}`}
+                  />
+                </div>
+                <div>
+                  <h3 className="font-medium text-gray-900 dark:text-gray-100">
+                    Recordatorios automáticos
+                  </h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Envía recordatorios automáticos a los clientes antes de sus
+                    citas
+                  </p>
+                </div>
               </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  {...register('habilitado')}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-gray-200 dark:bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+              </label>
+            </div>
+
+            {!habilitado && (
+              <div className="mt-4 flex items-center gap-2 text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900/30 p-3 rounded-lg">
+                <AlertTriangle className="w-5 h-5" />
+                <span className="text-sm">
+                  Los recordatorios están desactivados
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Configuración de tiempos */}
+          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+            <h3 className="font-medium text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+              <Clock className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+              Tiempos de envío
+            </h3>
+
+            <div className="space-y-4">
+              {/* Recordatorio 1 */}
+              <div
+                className={`p-4 rounded-lg border ${recordatorio1Activo ? 'border-primary-200 dark:border-primary-800 bg-primary-50 dark:bg-primary-900/30' : 'border-gray-200 dark:border-gray-700'}`}
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium text-gray-900 dark:text-gray-100">
+                      Recordatorio principal
+                    </span>
+                    <span className="text-xs bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300 px-2 py-0.5 rounded">
+                      Recomendado
+                    </span>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      {...register('recordatorio_1_activo')}
+                      className="sr-only peer"
+                    />
+                    <div className="w-9 h-5 bg-gray-200 dark:bg-gray-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary-600"></div>
+                  </label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    {...register('recordatorio_1_horas', {
+                      valueAsNumber: true,
+                    })}
+                    disabled={recordatorio1Activo !== true}
+                    className="w-20 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 disabled:bg-gray-100 dark:disabled:bg-gray-800"
+                    min="1"
+                    max="168"
+                  />
+                  <span className="text-gray-600 dark:text-gray-400">
+                    horas antes de la cita
+                  </span>
+                </div>
+                {errors.recordatorio_1_horas && (
+                  <p className="text-red-500 dark:text-red-400 text-sm mt-1">
+                    {errors.recordatorio_1_horas.message}
+                  </p>
+                )}
+              </div>
+
+              {/* Recordatorio 2 */}
+              <div
+                className={`p-4 rounded-lg border ${recordatorio2Activo ? 'border-primary-200 dark:border-primary-800 bg-primary-50 dark:bg-primary-900/30' : 'border-gray-200 dark:border-gray-700'}`}
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium text-gray-900 dark:text-gray-100">
+                      Recordatorio secundario
+                    </span>
+                    <span className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-2 py-0.5 rounded">
+                      Opcional
+                    </span>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      {...register('recordatorio_2_activo')}
+                      className="sr-only peer"
+                    />
+                    <div className="w-9 h-5 bg-gray-200 dark:bg-gray-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary-600"></div>
+                  </label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    {...register('recordatorio_2_horas', {
+                      valueAsNumber: true,
+                    })}
+                    disabled={recordatorio2Activo !== true}
+                    className="w-20 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 disabled:bg-gray-100 dark:disabled:bg-gray-800"
+                    min="1"
+                    max="24"
+                  />
+                  <span className="text-gray-600 dark:text-gray-400">
+                    horas antes de la cita
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Ventana horaria */}
+          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+            <h3 className="font-medium text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+              <Settings className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+              Ventana horaria
+            </h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+              Define el horario en el que se pueden enviar recordatorios (para
+              no molestar de noche)
+            </p>
+            <div className="flex items-center gap-4">
               <div>
-                <h3 className="font-medium text-gray-900 dark:text-gray-100">Recordatorios automáticos</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  Envía recordatorios automáticos a los clientes antes de sus citas
-                </p>
+                <label className="text-sm text-gray-600 dark:text-gray-400">
+                  Desde
+                </label>
+                <input
+                  type="time"
+                  {...register('hora_inicio')}
+                  className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg mt-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                />
+              </div>
+              <span className="text-gray-400 dark:text-gray-500 mt-6">-</span>
+              <div>
+                <label className="text-sm text-gray-600 dark:text-gray-400">
+                  Hasta
+                </label>
+                <input
+                  type="time"
+                  {...register('hora_fin')}
+                  className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg mt-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                />
               </div>
             </div>
-            <label className="relative inline-flex items-center cursor-pointer">
+          </div>
+
+          {/* Plantilla de mensaje */}
+          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+            <h3 className="font-medium text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+              <MessageSquare className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+              Plantilla del mensaje
+            </h3>
+            <textarea
+              {...register('plantilla_mensaje')}
+              rows={8}
+              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              placeholder="Escribe el mensaje que recibirán tus clientes..."
+            />
+            {errors.plantilla_mensaje && (
+              <p className="text-red-500 dark:text-red-400 text-sm mt-1">
+                {errors.plantilla_mensaje.message}
+              </p>
+            )}
+            <VariablesDisponibles />
+          </div>
+
+          {/* Configuración avanzada */}
+          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+            <h3 className="font-medium text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+              <RefreshCw className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+              Reintentos
+            </h3>
+            <div className="flex items-center gap-2">
+              <span className="text-gray-600 dark:text-gray-400">
+                Reintentar hasta
+              </span>
               <input
-                type="checkbox"
-                {...register('habilitado')}
-                className="sr-only peer"
+                type="number"
+                {...register('max_reintentos', { valueAsNumber: true })}
+                className="w-16 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-center bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                min="1"
+                max="5"
               />
-              <div className="w-11 h-6 bg-gray-200 dark:bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
-            </label>
-          </div>
-
-          {!habilitado && (
-            <div className="mt-4 flex items-center gap-2 text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900/30 p-3 rounded-lg">
-              <AlertTriangle className="w-5 h-5" />
-              <span className="text-sm">Los recordatorios están desactivados</span>
-            </div>
-          )}
-        </div>
-
-        {/* Configuración de tiempos */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-          <h3 className="font-medium text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
-            <Clock className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-            Tiempos de envío
-          </h3>
-
-          <div className="space-y-4">
-            {/* Recordatorio 1 */}
-            <div className={`p-4 rounded-lg border ${recordatorio1Activo ? 'border-primary-200 dark:border-primary-800 bg-primary-50 dark:bg-primary-900/30' : 'border-gray-200 dark:border-gray-700'}`}>
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <span className="font-medium text-gray-900 dark:text-gray-100">Recordatorio principal</span>
-                  <span className="text-xs bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300 px-2 py-0.5 rounded">
-                    Recomendado
-                  </span>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    {...register('recordatorio_1_activo')}
-                    className="sr-only peer"
-                  />
-                  <div className="w-9 h-5 bg-gray-200 dark:bg-gray-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary-600"></div>
-                </label>
-              </div>
-              <div className="flex items-center gap-2">
-                <input
-                  type="number"
-                  {...register('recordatorio_1_horas', { valueAsNumber: true })}
-                  disabled={recordatorio1Activo !== true}
-                  className="w-20 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 disabled:bg-gray-100 dark:disabled:bg-gray-800"
-                  min="1"
-                  max="168"
-                />
-                <span className="text-gray-600 dark:text-gray-400">horas antes de la cita</span>
-              </div>
-              {errors.recordatorio_1_horas && (
-                <p className="text-red-500 dark:text-red-400 text-sm mt-1">{errors.recordatorio_1_horas.message}</p>
-              )}
-            </div>
-
-            {/* Recordatorio 2 */}
-            <div className={`p-4 rounded-lg border ${recordatorio2Activo ? 'border-primary-200 dark:border-primary-800 bg-primary-50 dark:bg-primary-900/30' : 'border-gray-200 dark:border-gray-700'}`}>
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <span className="font-medium text-gray-900 dark:text-gray-100">Recordatorio secundario</span>
-                  <span className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-2 py-0.5 rounded">
-                    Opcional
-                  </span>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    {...register('recordatorio_2_activo')}
-                    className="sr-only peer"
-                  />
-                  <div className="w-9 h-5 bg-gray-200 dark:bg-gray-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary-600"></div>
-                </label>
-              </div>
-              <div className="flex items-center gap-2">
-                <input
-                  type="number"
-                  {...register('recordatorio_2_horas', { valueAsNumber: true })}
-                  disabled={recordatorio2Activo !== true}
-                  className="w-20 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 disabled:bg-gray-100 dark:disabled:bg-gray-800"
-                  min="1"
-                  max="24"
-                />
-                <span className="text-gray-600 dark:text-gray-400">horas antes de la cita</span>
-              </div>
+              <span className="text-gray-600 dark:text-gray-400">
+                veces si falla el envío
+              </span>
             </div>
           </div>
-        </div>
+        </form>
 
-        {/* Ventana horaria */}
+        {/* Prueba de envío */}
+        {/* Test de envío */}
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
           <h3 className="font-medium text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
-            <Settings className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-            Ventana horaria
+            <TestTube className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+            Enviar mensaje de prueba
           </h3>
           <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-            Define el horario en el que se pueden enviar recordatorios (para no molestar de noche)
+            Envía un mensaje de prueba para verificar que la configuración es
+            correcta
           </p>
-          <div className="flex items-center gap-4">
-            <div>
-              <label className="text-sm text-gray-600 dark:text-gray-400">Desde</label>
-              <input
-                type="time"
-                {...register('hora_inicio')}
-                className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg mt-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-              />
-            </div>
-            <span className="text-gray-400 dark:text-gray-500 mt-6">-</span>
-            <div>
-              <label className="text-sm text-gray-600 dark:text-gray-400">Hasta</label>
-              <input
-                type="time"
-                {...register('hora_fin')}
-                className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg mt-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Plantilla de mensaje */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-          <h3 className="font-medium text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
-            <MessageSquare className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-            Plantilla del mensaje
-          </h3>
-          <textarea
-            {...register('plantilla_mensaje')}
-            rows={8}
-            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-            placeholder="Escribe el mensaje que recibirán tus clientes..."
+          <TestForm
+            onEnviar={handleEnviarPrueba}
+            isLoading={enviarPruebaMutation.isPending}
           />
-          {errors.plantilla_mensaje && (
-            <p className="text-red-500 dark:text-red-400 text-sm mt-1">{errors.plantilla_mensaje.message}</p>
-          )}
-          <VariablesDisponibles />
         </div>
-
-        {/* Configuración avanzada */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-          <h3 className="font-medium text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
-            <RefreshCw className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-            Reintentos
-          </h3>
-          <div className="flex items-center gap-2">
-            <span className="text-gray-600 dark:text-gray-400">Reintentar hasta</span>
-            <input
-              type="number"
-              {...register('max_reintentos', { valueAsNumber: true })}
-              className="w-16 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-center bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-              min="1"
-              max="5"
-            />
-            <span className="text-gray-600 dark:text-gray-400">veces si falla el envío</span>
-          </div>
-        </div>
-      </form>
-
-      {/* Prueba de envío */}
-      {/* Test de envío */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-        <h3 className="font-medium text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
-          <TestTube className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-          Enviar mensaje de prueba
-        </h3>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-          Envía un mensaje de prueba para verificar que la configuración es correcta
-        </p>
-        <TestForm
-          onEnviar={handleEnviarPrueba}
-          isLoading={enviarPruebaMutation.isPending}
-        />
       </div>
-
-      </div>{/* Cierre space-y-6 */}
+      {/* Cierre space-y-6 */}
     </AgendamientoPageLayout>
   );
 }

@@ -2,17 +2,27 @@ import { useState } from 'react';
 import { Plus, Filter, X, Calendar, Package, Settings } from 'lucide-react';
 import { useModalManager } from '@/hooks/utils';
 import { Button, Select } from '@/components/ui';
-import ComisionesPageLayout from '@/components/comisiones/ComisionesPageLayout';
-import ConfiguracionComisionesTable from '@/components/comisiones/ConfiguracionComisionesTable';
-import ConfigComisionModal from '@/components/comisiones/ConfigComisionModal';
-import HistorialCambiosModal from '@/components/comisiones/HistorialCambiosModal';
+import ComisionesPageLayout from '@/pages/comisiones/components/ComisionesPageLayout';
+import ConfiguracionComisionesTable from '@/pages/comisiones/components/ConfiguracionComisionesTable';
+import ConfigComisionModal from '@/pages/comisiones/components/ConfigComisionModal';
+import HistorialCambiosModal from '@/pages/comisiones/components/HistorialCambiosModal';
 import { useConfiguracionesComision } from '@/hooks/otros';
 import { useProfesionales } from '@/hooks/personas';
 
 // Tabs disponibles
 const TABS = [
-  { id: 'servicio', label: 'Servicios', icon: Calendar, description: 'Comisiones por citas' },
-  { id: 'producto', label: 'Productos', icon: Package, description: 'Comisiones por ventas POS' },
+  {
+    id: 'servicio',
+    label: 'Servicios',
+    icon: Calendar,
+    description: 'Comisiones por citas',
+  },
+  {
+    id: 'producto',
+    label: 'Productos',
+    icon: Package,
+    description: 'Comisiones por ventas POS',
+  },
 ];
 
 /**
@@ -80,10 +90,7 @@ function ConfiguracionComisionesPage() {
             <Filter className="w-4 h-4 mr-2" />
             <span className="hidden sm:inline">Filtros</span>
           </Button>
-          <Button
-            variant="primary"
-            onClick={handleNuevaConfiguracion}
-          >
+          <Button variant="primary" onClick={handleNuevaConfiguracion}>
             <Plus className="w-4 h-4 mr-2" />
             <span className="hidden sm:inline">Nueva Configuración</span>
             <span className="sm:hidden">Nueva</span>
@@ -104,9 +111,10 @@ function ConfiguracionComisionesPage() {
                   onClick={() => setActiveTab(tab.id)}
                   className={`
                     flex-1 sm:flex-none group inline-flex items-center justify-center sm:justify-start py-3 sm:py-4 px-2 sm:px-4 border-b-2 font-medium text-xs sm:text-sm
-                    ${isActive
-                      ? 'border-primary-500 text-primary-600 dark:text-primary-400'
-                      : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
+                    ${
+                      isActive
+                        ? 'border-primary-500 text-primary-600 dark:text-primary-400'
+                        : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
                     }
                   `}
                 >
@@ -131,7 +139,9 @@ function ConfiguracionComisionesPage() {
       {showFilters && (
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-6 border border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Filtros</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+              Filtros
+            </h3>
             <Button
               variant="ghost"
               size="sm"
@@ -149,7 +159,9 @@ function ConfiguracionComisionesPage() {
               </label>
               <Select
                 value={filtros.profesional_id}
-                onChange={(e) => setFiltros({ ...filtros, profesional_id: e.target.value })}
+                onChange={(e) =>
+                  setFiltros({ ...filtros, profesional_id: e.target.value })
+                }
               >
                 <option value="">Todos los profesionales</option>
                 {profesionales?.map((prof) => (
@@ -167,7 +179,9 @@ function ConfiguracionComisionesPage() {
               </label>
               <Select
                 value={filtros.activo}
-                onChange={(e) => setFiltros({ ...filtros, activo: e.target.value })}
+                onChange={(e) =>
+                  setFiltros({ ...filtros, activo: e.target.value })
+                }
               >
                 <option value="">Todos los estados</option>
                 <option value="true">Activas</option>
@@ -201,35 +215,41 @@ function ConfiguracionComisionesPage() {
         <h4 className="text-sm font-medium text-primary-900 dark:text-primary-300 mb-2">
           {activeTab === 'servicio'
             ? 'Comisiones por Servicios (Citas)'
-            : 'Comisiones por Productos (Ventas POS)'
-          }
+            : 'Comisiones por Productos (Ventas POS)'}
         </h4>
         <ul className="text-sm text-primary-800 dark:text-primary-300 space-y-1 list-disc list-inside">
           {activeTab === 'servicio' ? (
             <>
               <li>
-                <strong>Configuración Global:</strong> Se aplica a todos los servicios del profesional
+                <strong>Configuración Global:</strong> Se aplica a todos los
+                servicios del profesional
               </li>
               <li>
-                <strong>Configuración Específica:</strong> Se aplica solo al servicio seleccionado y tiene prioridad sobre la global
+                <strong>Configuración Específica:</strong> Se aplica solo al
+                servicio seleccionado y tiene prioridad sobre la global
               </li>
               <li>
-                Las comisiones se calculan automáticamente cuando una cita cambia a estado "completada"
+                Las comisiones se calculan automáticamente cuando una cita
+                cambia a estado "completada"
               </li>
             </>
           ) : (
             <>
               <li>
-                <strong>Configuración Global:</strong> Se aplica a todas las ventas del profesional
+                <strong>Configuración Global:</strong> Se aplica a todas las
+                ventas del profesional
               </li>
               <li>
-                <strong>Por Categoría:</strong> Se aplica a todos los productos de una categoría
+                <strong>Por Categoría:</strong> Se aplica a todos los productos
+                de una categoría
               </li>
               <li>
-                <strong>Por Producto:</strong> Aplica solo al producto específico (máxima prioridad)
+                <strong>Por Producto:</strong> Aplica solo al producto
+                específico (máxima prioridad)
               </li>
               <li>
-                Las comisiones se calculan automáticamente al completar una venta POS
+                Las comisiones se calculan automáticamente al completar una
+                venta POS
               </li>
             </>
           )}

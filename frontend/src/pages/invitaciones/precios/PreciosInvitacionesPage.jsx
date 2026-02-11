@@ -8,32 +8,38 @@ import { usePlanesPublicos } from '@/hooks/suscripciones-negocio';
 import { useAuthStore, selectIsAuthenticated } from '@/store';
 import { formatCurrency } from '@/lib/utils';
 import InvitacionesPublicLayout from '../InvitacionesPublicLayout';
-import { CheckoutModal } from '@/components/checkout';
+import { CheckoutModal } from '@/components/shared/checkout';
 
 const FAQ = [
   {
     pregunta: '¿Es un pago único o suscripción?',
-    respuesta: 'Es un pago único. No hay cargos mensuales ni renovaciones. Tu invitación se mantiene activa hasta la fecha de tu evento.',
+    respuesta:
+      'Es un pago único. No hay cargos mensuales ni renovaciones. Tu invitación se mantiene activa hasta la fecha de tu evento.',
   },
   {
     pregunta: '¿Puedo crear mi invitación antes de pagar?',
-    respuesta: 'Sí, puedes crear y personalizar tu invitación gratis. Solo necesitas un plan activo para publicarla y compartirla.',
+    respuesta:
+      'Sí, puedes crear y personalizar tu invitación gratis. Solo necesitas un plan activo para publicarla y compartirla.',
   },
   {
     pregunta: '¿Qué métodos de pago aceptan?',
-    respuesta: 'Aceptamos tarjetas de crédito, débito y transferencia bancaria a través de MercadoPago.',
+    respuesta:
+      'Aceptamos tarjetas de crédito, débito y transferencia bancaria a través de MercadoPago.',
   },
   {
     pregunta: '¿Cuántos invitados puedo agregar?',
-    respuesta: 'Depende del plan que elijas. El plan básico incluye hasta 100 invitados, mientras que los planes premium ofrecen invitados ilimitados.',
+    respuesta:
+      'Depende del plan que elijas. El plan básico incluye hasta 100 invitados, mientras que los planes premium ofrecen invitados ilimitados.',
   },
   {
     pregunta: '¿Puedo cambiar la plantilla después de empezar?',
-    respuesta: 'Sí, puedes cambiar de plantilla en cualquier momento sin perder la información de tu evento.',
+    respuesta:
+      'Sí, puedes cambiar de plantilla en cualquier momento sin perder la información de tu evento.',
   },
   {
     pregunta: '¿Mis invitados necesitan crear cuenta?',
-    respuesta: 'No, tus invitados no necesitan registrarse. Pueden ver la invitación, confirmar asistencia y subir fotos sin crear cuenta.',
+    respuesta:
+      'No, tus invitados no necesitan registrarse. Pueden ver la invitación, confirmar asistencia y subir fotos sin crear cuenta.',
   },
 ];
 
@@ -45,11 +51,17 @@ function FAQItem({ item }) {
         onClick={() => setAbierto(!abierto)}
         className="w-full flex items-center justify-between py-4 text-left"
       >
-        <span className="font-medium text-gray-900 dark:text-white">{item.pregunta}</span>
-        <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform ${abierto ? 'rotate-180' : ''}`} />
+        <span className="font-medium text-gray-900 dark:text-white">
+          {item.pregunta}
+        </span>
+        <ChevronDown
+          className={`w-5 h-5 text-gray-400 transition-transform ${abierto ? 'rotate-180' : ''}`}
+        />
       </button>
       {abierto && (
-        <p className="pb-4 text-sm text-gray-600 dark:text-gray-400">{item.respuesta}</p>
+        <p className="pb-4 text-sm text-gray-600 dark:text-gray-400">
+          {item.respuesta}
+        </p>
       )}
     </div>
   );
@@ -62,7 +74,10 @@ export default function PreciosInvitacionesPage() {
 
   const { data: planesData, isLoading } = usePlanesPublicos();
   const planes = useMemo(
-    () => (Array.isArray(planesData) ? planesData : []).filter(p => p.tipo_cobro === 'unico'),
+    () =>
+      (Array.isArray(planesData) ? planesData : []).filter(
+        (p) => p.tipo_cobro === 'unico'
+      ),
     [planesData]
   );
 
@@ -80,7 +95,7 @@ export default function PreciosInvitacionesPage() {
         localStorage.removeItem('nexo_plan_seleccionado');
         return;
       }
-      const plan = planes.find(p => p.id === plan_id);
+      const plan = planes.find((p) => p.id === plan_id);
       if (plan) {
         localStorage.removeItem('nexo_plan_seleccionado');
         setPlanSeleccionado(plan);
@@ -118,9 +133,13 @@ export default function PreciosInvitacionesPage() {
               <Loader2 className="w-8 h-8 text-pink-500 animate-spin mx-auto" />
             </div>
           ) : (
-            <div className={`grid gap-6 max-w-5xl mx-auto ${
-              planes.length <= 3 ? `grid-cols-1 md:grid-cols-${planes.length}` : 'grid-cols-1 md:grid-cols-3'
-            }`}>
+            <div
+              className={`grid gap-6 max-w-5xl mx-auto ${
+                planes.length <= 3
+                  ? `grid-cols-1 md:grid-cols-${planes.length}`
+                  : 'grid-cols-1 md:grid-cols-3'
+              }`}
+            >
               {planes.map((plan) => {
                 const precio = parseFloat(plan.precio_mensual) || 0;
                 const features = plan.features || [];
@@ -140,17 +159,26 @@ export default function PreciosInvitacionesPage() {
                         Recomendado
                       </span>
                     )}
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-white">{plan.nombre}</h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 mb-6">{plan.descripcion}</p>
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+                      {plan.nombre}
+                    </h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 mb-6">
+                      {plan.descripcion}
+                    </p>
                     <div className="mb-6">
                       <span className="text-4xl font-bold text-gray-900 dark:text-white">
                         {formatCurrency(precio)}
                       </span>
-                      <span className="text-sm text-gray-500 dark:text-gray-400 ml-2">pago único</span>
+                      <span className="text-sm text-gray-500 dark:text-gray-400 ml-2">
+                        pago único
+                      </span>
                     </div>
                     <ul className="space-y-3 mb-8 flex-1">
                       {features.map((f, j) => (
-                        <li key={j} className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
+                        <li
+                          key={j}
+                          className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300"
+                        >
                           <Check className="w-4 h-4 text-pink-500 mt-0.5 flex-shrink-0" />
                           {f}
                         </li>
@@ -191,7 +219,10 @@ export default function PreciosInvitacionesPage() {
       {/* Checkout Modal */}
       <CheckoutModal
         isOpen={checkoutOpen}
-        onClose={() => { setCheckoutOpen(false); setPlanSeleccionado(null); }}
+        onClose={() => {
+          setCheckoutOpen(false);
+          setPlanSeleccionado(null);
+        }}
         plan={planSeleccionado}
         returnTo="/invitaciones/precios"
       />

@@ -1,5 +1,5 @@
 import { memo, forwardRef, type CSSProperties } from 'react';
-import { cn } from '@/lib/utils';
+import { cn } from '../lib/cn';
 import type { SkeletonColumnWidth } from '@/types/ui';
 
 export interface SkeletonTableProps {
@@ -40,89 +40,84 @@ const widthClasses: Record<SkeletonColumnWidth, string> = {
  * SkeletonTable - Skeleton loading para tablas
  */
 export const SkeletonTable = memo(
-  forwardRef<HTMLDivElement, SkeletonTableProps>(function SkeletonTable({
-  rows = 5,
-  columns = 4,
-  showHeader = true,
-  columnWidths,
-  className,
-}, ref) {
-  const getColumnWidth = (index: number): string => {
-    if (columnWidths && columnWidths[index]) {
-      return widthClasses[columnWidths[index]] || 'w-24';
-    }
-    // Patrón por defecto: primera col más ancha, última más estrecha
-    if (index === 0) return 'w-32';
-    if (index === columns - 1) return 'w-20';
-    return 'w-24';
-  };
+  forwardRef<HTMLDivElement, SkeletonTableProps>(function SkeletonTable(
+    { rows = 5, columns = 4, showHeader = true, columnWidths, className },
+    ref
+  ) {
+    const getColumnWidth = (index: number): string => {
+      if (columnWidths && columnWidths[index]) {
+        return widthClasses[columnWidths[index]] || 'w-24';
+      }
+      // Patrón por defecto: primera col más ancha, última más estrecha
+      if (index === 0) return 'w-32';
+      if (index === columns - 1) return 'w-20';
+      return 'w-24';
+    };
 
-  return (
-    <div
-      ref={ref}
-      role="status"
-      aria-busy="true"
-      aria-label="Cargando tabla..."
-      className={cn(
-        'bg-white dark:bg-gray-800 rounded-lg shadow-sm',
-        'border border-gray-200 dark:border-gray-700',
-        'overflow-hidden',
-        className
-      )}
-    >
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-          {showHeader && (
-            <thead className="bg-gray-50 dark:bg-gray-900/50">
-              <tr>
-                {Array.from({ length: columns }).map((_, colIndex) => (
-                  <th
-                    key={colIndex}
-                    className="px-4 sm:px-6 py-3 text-left"
-                  >
-                    <div
-                      className={cn(
-                        'h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse',
-                        getColumnWidth(colIndex)
-                      )}
-                    />
-                  </th>
-                ))}
-              </tr>
-            </thead>
-          )}
-          <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-            {Array.from({ length: rows }).map((_, rowIndex) => (
-              <tr key={rowIndex}>
-                {Array.from({ length: columns }).map((_, colIndex) => (
-                  <td
-                    key={colIndex}
-                    className="px-4 sm:px-6 py-4"
-                  >
-                    <div
-                      className={cn(
-                        'h-4 bg-gray-200 dark:bg-gray-600 rounded animate-pulse',
-                        getColumnWidth(colIndex)
-                      )}
-                      style={{
-                        animationDelay: `${(rowIndex * columns + colIndex) * 50}ms`,
-                      }}
-                    />
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
+    return (
+      <div
+        ref={ref}
+        role="status"
+        aria-busy="true"
+        aria-label="Cargando tabla..."
+        className={cn(
+          'bg-white dark:bg-gray-800 rounded-lg shadow-sm',
+          'border border-gray-200 dark:border-gray-700',
+          'overflow-hidden',
+          className
+        )}
+      >
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+            {showHeader && (
+              <thead className="bg-gray-50 dark:bg-gray-900/50">
+                <tr>
+                  {Array.from({ length: columns }).map((_, colIndex) => (
+                    <th key={colIndex} className="px-4 sm:px-6 py-3 text-left">
+                      <div
+                        className={cn(
+                          'h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse',
+                          getColumnWidth(colIndex)
+                        )}
+                      />
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+            )}
+            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+              {Array.from({ length: rows }).map((_, rowIndex) => (
+                <tr key={rowIndex}>
+                  {Array.from({ length: columns }).map((_, colIndex) => (
+                    <td key={colIndex} className="px-4 sm:px-6 py-4">
+                      <div
+                        className={cn(
+                          'h-4 bg-gray-200 dark:bg-gray-600 rounded animate-pulse',
+                          getColumnWidth(colIndex)
+                        )}
+                        style={{
+                          animationDelay: `${(rowIndex * columns + colIndex) * 50}ms`,
+                        }}
+                      />
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
-    </div>
-  );
-}));
+    );
+  })
+);
 
 /**
  * SkeletonCard - Skeleton loading para cards
  */
-export const SkeletonCard = memo(function SkeletonCard({ className, style }: SkeletonCardProps) {
+export const SkeletonCard = memo(function SkeletonCard({
+  className,
+  style,
+}: SkeletonCardProps) {
   return (
     <div
       style={style}
@@ -151,7 +146,10 @@ export const SkeletonCard = memo(function SkeletonCard({ className, style }: Ske
 /**
  * SkeletonList - Skeleton loading para listas de cards
  */
-export const SkeletonList = memo(function SkeletonList({ count = 3, className }: SkeletonListProps) {
+export const SkeletonList = memo(function SkeletonList({
+  count = 3,
+  className,
+}: SkeletonListProps) {
   return (
     <div className={cn('space-y-3', className)}>
       {Array.from({ length: count }).map((_, index) => (

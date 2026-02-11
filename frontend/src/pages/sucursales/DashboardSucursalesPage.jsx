@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSucursales, useMetricasSucursales } from '@/hooks/sistema';
 import { Button } from '@/components/ui';
-import { SucursalesPageLayout } from '@/components/sucursales';
+import { SucursalesPageLayout } from '@/pages/sucursales/components';
 import {
   Building2,
   TrendingUp,
@@ -26,14 +26,16 @@ function DashboardSucursalesPage() {
   const [sucursalSeleccionada, setSucursalSeleccionada] = useState(null);
 
   // Cargar sucursales para el selector
-  const { data: sucursales = [], isLoading: loadingSucursales } = useSucursales({ activo: true });
+  const { data: sucursales = [], isLoading: loadingSucursales } = useSucursales(
+    { activo: true }
+  );
 
   // Cargar metricas segun sucursal seleccionada
   const {
     data: metricas,
     isLoading: loadingMetricas,
     error: errorMetricas,
-    refetch: refetchMetricas
+    refetch: refetchMetricas,
   } = useMetricasSucursales({
     sucursal_id: sucursalSeleccionada || undefined,
   });
@@ -51,42 +53,66 @@ function DashboardSucursalesPage() {
   // Calcular variacion porcentual
   const calcularVariacion = (actual, anterior) => {
     if (!anterior || anterior === 0) return null;
-    return ((actual - anterior) / anterior * 100).toFixed(1);
+    return (((actual - anterior) / anterior) * 100).toFixed(1);
   };
 
   // Componente de Card KPI
-  const KPICard = ({ title, value, previousValue, icon, color = 'primary', isMoney = false }) => {
-    const displayValue = isMoney ? formatMoney(value) : value?.toLocaleString() || '0';
+  const KPICard = ({
+    title,
+    value,
+    previousValue,
+    icon,
+    color = 'primary',
+    isMoney = false,
+  }) => {
+    const displayValue = isMoney
+      ? formatMoney(value)
+      : value?.toLocaleString() || '0';
     const variacion = calcularVariacion(value, previousValue);
     const isPositive = variacion > 0;
     const isNegative = variacion < 0;
     const Icon = icon;
 
     const colorClasses = {
-      primary: 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400',
-      green: 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400',
+      primary:
+        'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400',
+      green:
+        'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400',
       blue: 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400',
-      amber: 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400',
+      amber:
+        'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400',
     };
 
     return (
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
         <div className="flex items-center justify-between mb-4">
-          <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${colorClasses[color]}`}>
+          <div
+            className={`w-12 h-12 rounded-lg flex items-center justify-center ${colorClasses[color]}`}
+          >
             <Icon className="w-6 h-6" />
           </div>
           {variacion !== null && (
-            <div className={`flex items-center gap-1 text-sm font-medium ${
-              isPositive ? 'text-green-600 dark:text-green-400' :
-              isNegative ? 'text-red-600 dark:text-red-400' :
-              'text-gray-500 dark:text-gray-400'
-            }`}>
-              {isPositive ? <TrendingUp className="w-4 h-4" /> : isNegative ? <TrendingDown className="w-4 h-4" /> : null}
+            <div
+              className={`flex items-center gap-1 text-sm font-medium ${
+                isPositive
+                  ? 'text-green-600 dark:text-green-400'
+                  : isNegative
+                    ? 'text-red-600 dark:text-red-400'
+                    : 'text-gray-500 dark:text-gray-400'
+              }`}
+            >
+              {isPositive ? (
+                <TrendingUp className="w-4 h-4" />
+              ) : isNegative ? (
+                <TrendingDown className="w-4 h-4" />
+              ) : null}
               {Math.abs(variacion)}%
             </div>
           )}
         </div>
-        <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{displayValue}</p>
+        <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+          {displayValue}
+        </p>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{title}</p>
       </div>
     );
@@ -94,7 +120,7 @@ function DashboardSucursalesPage() {
 
   // Componente de barra de progreso para comparativa
   const ProgressBar = ({ label, value, maxValue, color = 'primary' }) => {
-    const percentage = maxValue > 0 ? (value / maxValue * 100) : 0;
+    const percentage = maxValue > 0 ? (value / maxValue) * 100 : 0;
     const colorClasses = {
       primary: 'bg-primary-500',
       blue: 'bg-primary-500',
@@ -125,22 +151,30 @@ function DashboardSucursalesPage() {
   // Encontrar el valor maximo para las barras de progreso
   const maxVentas = useMemo(() => {
     if (!metricas?.comparativaSucursales) return 0;
-    return Math.max(...metricas.comparativaSucursales.map(s => s.total_ventas || 0));
+    return Math.max(
+      ...metricas.comparativaSucursales.map((s) => s.total_ventas || 0)
+    );
   }, [metricas?.comparativaSucursales]);
 
   return (
     <SucursalesPageLayout
       icon={LayoutDashboard}
       title="Dashboard Multi-Sucursal"
-      subtitle={sucursalSeleccionada
-        ? sucursales.find(s => s.id === sucursalSeleccionada)?.nombre
-        : 'Todas las sucursales'}
+      subtitle={
+        sucursalSeleccionada
+          ? sucursales.find((s) => s.id === sucursalSeleccionada)?.nombre
+          : 'Todas las sucursales'
+      }
       actions={
         <div className="flex items-center gap-3">
           {/* Selector de Sucursal */}
           <select
             value={sucursalSeleccionada || ''}
-            onChange={(e) => setSucursalSeleccionada(e.target.value ? parseInt(e.target.value) : null)}
+            onChange={(e) =>
+              setSucursalSeleccionada(
+                e.target.value ? parseInt(e.target.value) : null
+              )
+            }
             className="text-sm bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-lg px-3 py-2 focus:ring-primary-500 focus:border-primary-500"
             disabled={loadingSucursales}
           >
@@ -158,7 +192,9 @@ function DashboardSucursalesPage() {
             onClick={() => refetchMetricas()}
             disabled={loadingMetricas}
           >
-            <RefreshCw className={`w-4 h-4 ${loadingMetricas ? 'animate-spin' : ''}`} />
+            <RefreshCw
+              className={`w-4 h-4 ${loadingMetricas ? 'animate-spin' : ''}`}
+            />
           </Button>
         </div>
       }
@@ -182,7 +218,10 @@ function DashboardSucursalesPage() {
       {loadingMetricas ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 animate-pulse">
+            <div
+              key={i}
+              className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 animate-pulse"
+            >
               <div className="flex items-center justify-between mb-4">
                 <div className="w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded-lg" />
                 <div className="w-16 h-5 bg-gray-200 dark:bg-gray-700 rounded" />
@@ -254,7 +293,15 @@ function DashboardSucursalesPage() {
                       label={sucursal.nombre}
                       value={sucursal.total_ventas || 0}
                       maxValue={maxVentas}
-                      color={index === 0 ? 'primary' : index === 1 ? 'blue' : index === 2 ? 'green' : 'amber'}
+                      color={
+                        index === 0
+                          ? 'primary'
+                          : index === 1
+                            ? 'blue'
+                            : index === 2
+                              ? 'green'
+                              : 'amber'
+                      }
                     />
                   ))}
                 </div>
@@ -284,13 +331,17 @@ function DashboardSucursalesPage() {
                     <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">
                       {metricas.transferencias?.pendientes || 0}
                     </p>
-                    <p className="text-xs text-amber-700 dark:text-amber-300">Pendientes</p>
+                    <p className="text-xs text-amber-700 dark:text-amber-300">
+                      Pendientes
+                    </p>
                   </div>
                   <div className="text-center p-3 bg-primary-50 dark:bg-primary-900/20 rounded-lg">
                     <p className="text-2xl font-bold text-primary-600 dark:text-primary-400">
                       {metricas.transferencias?.enviadas || 0}
                     </p>
-                    <p className="text-xs text-primary-700 dark:text-primary-300">Enviadas</p>
+                    <p className="text-xs text-primary-700 dark:text-primary-300">
+                      Enviadas
+                    </p>
                   </div>
                 </div>
 
@@ -312,13 +363,18 @@ function DashboardSucursalesPage() {
                 {metricas.tendencia?.length > 0 ? (
                   <div className="space-y-2">
                     {metricas.tendencia.map((dia, index) => {
-                      const maxDia = Math.max(...metricas.tendencia.map(d => d.total || 0));
-                      const percentage = maxDia > 0 ? ((dia.total || 0) / maxDia * 100) : 0;
+                      const maxDia = Math.max(
+                        ...metricas.tendencia.map((d) => d.total || 0)
+                      );
+                      const percentage =
+                        maxDia > 0 ? ((dia.total || 0) / maxDia) * 100 : 0;
 
                       return (
                         <div key={index} className="flex items-center gap-3">
                           <span className="text-xs text-gray-500 dark:text-gray-400 w-8">
-                            {new Date(dia.fecha).toLocaleDateString('es-MX', { weekday: 'short' })}
+                            {new Date(dia.fecha).toLocaleDateString('es-MX', {
+                              weekday: 'short',
+                            })}
                           </span>
                           <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                             <div
@@ -351,19 +407,25 @@ function DashboardSucursalesPage() {
                     <p className="text-lg font-bold text-green-600 dark:text-green-400">
                       {metricas.citas?.mes?.confirmadas || 0}
                     </p>
-                    <p className="text-xs text-green-700 dark:text-green-300">Confirmadas</p>
+                    <p className="text-xs text-green-700 dark:text-green-300">
+                      Confirmadas
+                    </p>
                   </div>
                   <div className="p-2 bg-amber-50 dark:bg-amber-900/20 rounded">
                     <p className="text-lg font-bold text-amber-600 dark:text-amber-400">
                       {metricas.citas?.mes?.pendientes || 0}
                     </p>
-                    <p className="text-xs text-amber-700 dark:text-amber-300">Pendientes</p>
+                    <p className="text-xs text-amber-700 dark:text-amber-300">
+                      Pendientes
+                    </p>
                   </div>
                   <div className="p-2 bg-red-50 dark:bg-red-900/20 rounded">
                     <p className="text-lg font-bold text-red-600 dark:text-red-400">
                       {metricas.citas?.mes?.canceladas || 0}
                     </p>
-                    <p className="text-xs text-red-700 dark:text-red-300">Canceladas</p>
+                    <p className="text-xs text-red-700 dark:text-red-300">
+                      Canceladas
+                    </p>
                   </div>
                 </div>
 
@@ -416,16 +478,20 @@ function DashboardSucursalesPage() {
                       >
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center gap-3">
-                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                              sucursal.es_matriz
-                                ? 'bg-primary-100 dark:bg-primary-900/30'
-                                : 'bg-gray-100 dark:bg-gray-700'
-                            }`}>
-                              <Building2 className={`w-4 h-4 ${
+                            <div
+                              className={`w-8 h-8 rounded-lg flex items-center justify-center ${
                                 sucursal.es_matriz
-                                  ? 'text-primary-600 dark:text-primary-400'
-                                  : 'text-gray-500 dark:text-gray-400'
-                              }`} />
+                                  ? 'bg-primary-100 dark:bg-primary-900/30'
+                                  : 'bg-gray-100 dark:bg-gray-700'
+                              }`}
+                            >
+                              <Building2
+                                className={`w-4 h-4 ${
+                                  sucursal.es_matriz
+                                    ? 'text-primary-600 dark:text-primary-400'
+                                    : 'text-gray-500 dark:text-gray-400'
+                                }`}
+                              />
                             </div>
                             <div>
                               <p className="text-sm font-medium text-gray-900 dark:text-gray-100">

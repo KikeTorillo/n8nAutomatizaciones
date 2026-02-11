@@ -1,6 +1,6 @@
 import { Bell, Settings } from 'lucide-react';
 import { BackButton } from '@/components/ui';
-import { NotificacionesPreferencias } from '@/components/notificaciones';
+import { NotificacionesPreferencias } from '@/pages/notificaciones/components';
 
 /**
  * NotificacionesPreferenciasPage - Pagina de preferencias de notificaciones
@@ -11,7 +11,11 @@ function NotificacionesPreferenciasPage() {
       {/* Header */}
       <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
         <div className="max-w-4xl mx-auto">
-          <BackButton to="/notificaciones" label="Volver a Notificaciones" className="mb-2" />
+          <BackButton
+            to="/notificaciones"
+            label="Volver a Notificaciones"
+            className="mb-2"
+          />
           <div className="flex items-center gap-3">
             <div className="p-2 bg-primary-100 dark:bg-primary-900/40 rounded-lg">
               <Settings className="w-6 h-6 text-primary-600 dark:text-primary-400" />

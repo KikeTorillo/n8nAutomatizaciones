@@ -1,10 +1,21 @@
-import { useState, useCallback, memo, useMemo, forwardRef, type ChangeEvent, type ComponentType } from 'react';
+import {
+  useState,
+  useCallback,
+  memo,
+  useMemo,
+  forwardRef,
+  type ChangeEvent,
+  type ComponentType,
+} from 'react';
 import { Filter, X, ChevronDown, ChevronUp } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '../lib/cn';
 import { Button } from '../atoms/Button';
 import { SearchInput } from './SearchInput';
 import { FilterField } from '../molecules/FilterField';
-import { useActiveFilters, type FilterConfigItem } from './filters/FilterPanelBase';
+import {
+  useActiveFilters,
+  type FilterConfigItem,
+} from './filters/FilterPanelBase';
 import type { SelectOption } from '@/types/ui';
 
 /**
@@ -37,116 +48,133 @@ export interface FilterPanelProps {
  * FilterPanel - Panel de filtros reutilizable con búsqueda y filtros expandibles
  */
 export const FilterPanel = memo(
-  forwardRef<HTMLDivElement, FilterPanelProps>(function FilterPanel({
-  filters = {},
-  onFilterChange,
-  onClearFilters,
-  filterConfig = [],
-  searchKey = 'busqueda',
-  searchPlaceholder = 'Buscar...',
-  showSearch = true,
-  expandable = true,
-  defaultExpanded = false,
-  className,
-}, ref) {
-  const [isExpanded, setIsExpanded] = useState(defaultExpanded);
-
-  // Usar hook centralizado para contar filtros activos
-  const activeFilterCount = useActiveFilters(filters, filterConfig, searchKey);
-
-  const handleSearchChange = useCallback(
-    (e: ChangeEvent<HTMLInputElement>) => {
-      onFilterChange(searchKey, e.target.value);
+  forwardRef<HTMLDivElement, FilterPanelProps>(function FilterPanel(
+    {
+      filters = {},
+      onFilterChange,
+      onClearFilters,
+      filterConfig = [],
+      searchKey = 'busqueda',
+      searchPlaceholder = 'Buscar...',
+      showSearch = true,
+      expandable = true,
+      defaultExpanded = false,
+      className,
     },
-    [onFilterChange, searchKey]
-  );
+    ref
+  ) {
+    const [isExpanded, setIsExpanded] = useState(defaultExpanded);
 
-  const handleFilterChange = useCallback(
-    (key: string) => (value: unknown) => {
-      onFilterChange(key, value);
-    },
-    [onFilterChange]
-  );
+    // Usar hook centralizado para contar filtros activos
+    const activeFilterCount = useActiveFilters(
+      filters,
+      filterConfig,
+      searchKey
+    );
 
-  const renderFilterInput = useCallback(
-    (config: FilterConfigItem) => {
-      const key = config.key || config.id || '';
-      const value = filters[key] ?? (config.type === 'checkbox' ? false : '');
-      const onChange = handleFilterChange(key);
+    const handleSearchChange = useCallback(
+      (e: ChangeEvent<HTMLInputElement>) => {
+        onFilterChange(searchKey, e.target.value);
+      },
+      [onFilterChange, searchKey]
+    );
 
-      return (
-        <FilterField
-          type={config.type || 'text'}
-          label={config.type === 'checkbox' ? config.checkboxLabel || config.label : config.label}
-          value={value as string | boolean | number}
-          onChange={onChange}
-          options={config.options}
-          placeholder={config.placeholder}
-          icon={config.icon}
-          min={config.min}
-          max={config.max}
-        />
-      );
-    },
-    [filters, handleFilterChange]
-  );
+    const handleFilterChange = useCallback(
+      (key: string) => (value: unknown) => {
+        onFilterChange(key, value);
+      },
+      [onFilterChange]
+    );
 
-  return (
-    <div ref={ref} className={cn('space-y-4', className)}>
-      {/* Barra superior: Búsqueda + Toggle filtros */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        {showSearch && (
-          <div className="flex-1">
-            <SearchInput
-              value={(filters[searchKey] as string) || ''}
-              onChange={handleSearchChange}
-              placeholder={searchPlaceholder}
-              size="md"
-            />
+    const renderFilterInput = useCallback(
+      (config: FilterConfigItem) => {
+        const key = config.key || config.id || '';
+        const value = filters[key] ?? (config.type === 'checkbox' ? false : '');
+        const onChange = handleFilterChange(key);
+
+        return (
+          <FilterField
+            type={config.type || 'text'}
+            label={
+              config.type === 'checkbox'
+                ? config.checkboxLabel || config.label
+                : config.label
+            }
+            value={value as string | boolean | number}
+            onChange={onChange}
+            options={config.options}
+            placeholder={config.placeholder}
+            icon={config.icon}
+            min={config.min}
+            max={config.max}
+          />
+        );
+      },
+      [filters, handleFilterChange]
+    );
+
+    return (
+      <div ref={ref} className={cn('space-y-4', className)}>
+        {/* Barra superior: Búsqueda + Toggle filtros */}
+        <div className="flex flex-col sm:flex-row gap-3">
+          {showSearch && (
+            <div className="flex-1">
+              <SearchInput
+                value={(filters[searchKey] as string) || ''}
+                onChange={handleSearchChange}
+                placeholder={searchPlaceholder}
+                size="md"
+              />
+            </div>
+          )}
+
+          {expandable && filterConfig.length > 0 && (
+            <Button
+              variant="outline"
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="flex items-center gap-2"
+            >
+              <Filter className="w-4 h-4" />
+              <span>Filtros</span>
+              {activeFilterCount > 0 && (
+                <span className="px-1.5 py-0.5 text-xs font-medium bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300 rounded-full">
+                  {activeFilterCount}
+                </span>
+              )}
+              {isExpanded ? (
+                <ChevronUp className="w-4 h-4" />
+              ) : (
+                <ChevronDown className="w-4 h-4" />
+              )}
+            </Button>
+          )}
+
+          {activeFilterCount > 0 && onClearFilters && (
+            <Button
+              variant="ghost"
+              onClick={onClearFilters}
+              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+            >
+              <X className="w-4 h-4 mr-1" />
+              Limpiar
+            </Button>
+          )}
+        </div>
+
+        {/* Panel de filtros expandible */}
+        {isExpanded && filterConfig.length > 0 && (
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {filterConfig.map((config) => (
+                <div key={config.key || config.id}>
+                  {renderFilterInput(config)}
+                </div>
+              ))}
+            </div>
           </div>
-        )}
-
-        {expandable && filterConfig.length > 0 && (
-          <Button
-            variant="outline"
-            onClick={() => setIsExpanded(!isExpanded)}
-            className="flex items-center gap-2"
-          >
-            <Filter className="w-4 h-4" />
-            <span>Filtros</span>
-            {activeFilterCount > 0 && (
-              <span className="px-1.5 py-0.5 text-xs font-medium bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300 rounded-full">
-                {activeFilterCount}
-              </span>
-            )}
-            {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-          </Button>
-        )}
-
-        {activeFilterCount > 0 && onClearFilters && (
-          <Button
-            variant="ghost"
-            onClick={onClearFilters}
-            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-          >
-            <X className="w-4 h-4 mr-1" />
-            Limpiar
-          </Button>
         )}
       </div>
-
-      {/* Panel de filtros expandible */}
-      {isExpanded && filterConfig.length > 0 && (
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {filterConfig.map((config) => (
-              <div key={config.key || config.id}>{renderFilterInput(config)}</div>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  );
+    );
   })
 );
 
@@ -202,11 +230,17 @@ export const FilterChips = memo(function FilterChips({
     filterConfig.forEach((config) => {
       const key = config.key || config.id || '';
       const value = filters[key];
-      if (value !== undefined && value !== '' && value !== null && value !== false) {
+      if (
+        value !== undefined &&
+        value !== '' &&
+        value !== null &&
+        value !== false
+      ) {
         let displayValue = String(value);
         if (config.type === 'select' && config.options) {
           displayValue =
-            config.options.find((opt) => opt.value === value)?.label || displayValue;
+            config.options.find((opt) => opt.value === value)?.label ||
+            displayValue;
         }
         if (config.type === 'checkbox') displayValue = 'Sí';
 

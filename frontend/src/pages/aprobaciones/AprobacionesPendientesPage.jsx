@@ -8,11 +8,7 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import { useModalManager } from '@/hooks/utils';
-import {
-  Button,
-  Modal,
-  Textarea
-} from '@/components/ui';
+import { Button, Modal, Textarea } from '@/components/ui';
 import { useToast } from '@/hooks/utils';
 import {
   useAprobacionesPendientes,
@@ -20,7 +16,7 @@ import {
   useRechazarSolicitud,
   useInstanciaWorkflow,
 } from '@/hooks/sistema';
-import { AprobacionesPageLayout } from '@/components/aprobaciones';
+import { AprobacionesPageLayout } from '@/pages/aprobaciones/components';
 
 // Formatters
 const formatMoney = (amount) => {
@@ -51,11 +47,14 @@ const getTipoEntidadLabel = (tipo) => {
 
 // Estados badge config
 const ESTADO_ESTILOS = {
-  en_progreso: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
-  aprobado: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
+  en_progreso:
+    'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
+  aprobado:
+    'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
   rechazado: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
   cancelado: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400',
-  expirado: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400',
+  expirado:
+    'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400',
 };
 
 const ESTADO_TEXTOS = {
@@ -85,10 +84,13 @@ export default function AprobacionesPendientesPage() {
   const [motivoRechazo, setMotivoRechazo] = useState('');
 
   // Queries
-  const { data: pendientesData, isLoading: loadingPendientes } = useAprobacionesPendientes();
+  const { data: pendientesData, isLoading: loadingPendientes } =
+    useAprobacionesPendientes();
   const pendientes = pendientesData?.instancias || [];
 
-  const { data: instanciaDetalle } = useInstanciaWorkflow(getModalData('detalle'));
+  const { data: instanciaDetalle } = useInstanciaWorkflow(
+    getModalData('detalle')
+  );
 
   // Mutations
   const aprobarMutation = useAprobarSolicitud();
@@ -115,7 +117,9 @@ export default function AprobacionesPendientesPage() {
           setComentarioAprobacion('');
         },
         onError: (err) => {
-          showError(err.response?.data?.mensaje || 'Error al aprobar la solicitud');
+          showError(
+            err.response?.data?.mensaje || 'Error al aprobar la solicitud'
+          );
         },
       }
     );
@@ -142,7 +146,9 @@ export default function AprobacionesPendientesPage() {
           setMotivoRechazo('');
         },
         onError: (err) => {
-          showError(err.response?.data?.mensaje || 'Error al rechazar la solicitud');
+          showError(
+            err.response?.data?.mensaje || 'Error al rechazar la solicitud'
+          );
         },
       }
     );
@@ -150,7 +156,9 @@ export default function AprobacionesPendientesPage() {
 
   // getEstadoBadge helper for modal
   const getEstadoBadge = (estado) => (
-    <span className={`px-2 py-1 text-xs font-medium rounded-full ${ESTADO_ESTILOS[estado] || ESTADO_ESTILOS.cancelado}`}>
+    <span
+      className={`px-2 py-1 text-xs font-medium rounded-full ${ESTADO_ESTILOS[estado] || ESTADO_ESTILOS.cancelado}`}
+    >
       {ESTADO_TEXTOS[estado] || estado}
     </span>
   );
@@ -159,7 +167,9 @@ export default function AprobacionesPendientesPage() {
     <AprobacionesPageLayout
       icon={Clock}
       title="Pendientes"
-      subtitle={pendientes.length > 0 ? `${pendientes.length} solicitudes` : undefined}
+      subtitle={
+        pendientes.length > 0 ? `${pendientes.length} solicitudes` : undefined
+      }
     >
       {loadingPendientes ? (
         <div className="flex justify-center items-center py-12">
@@ -190,7 +200,8 @@ export default function AprobacionesPendientesPage() {
                     </div>
                     <div>
                       <h3 className="font-medium text-gray-900 dark:text-white">
-                        {instancia.entidad_resumen?.folio || `#${instancia.entidad_id}`}
+                        {instancia.entidad_resumen?.folio ||
+                          `#${instancia.entidad_id}`}
                       </h3>
                       <p className="text-sm text-gray-500 dark:text-gray-400">
                         {getTipoEntidadLabel(instancia.entidad_tipo)}
@@ -205,27 +216,36 @@ export default function AprobacionesPendientesPage() {
 
                   <div className="mt-3 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                     <div>
-                      <span className="text-gray-500 dark:text-gray-400">Monto:</span>
+                      <span className="text-gray-500 dark:text-gray-400">
+                        Monto:
+                      </span>
                       <p className="font-medium text-gray-900 dark:text-white">
                         {formatMoney(instancia.entidad_resumen?.total)}
                       </p>
                     </div>
                     {instancia.entidad_resumen?.proveedor_nombre && (
                       <div>
-                        <span className="text-gray-500 dark:text-gray-400">Proveedor:</span>
+                        <span className="text-gray-500 dark:text-gray-400">
+                          Proveedor:
+                        </span>
                         <p className="font-medium text-gray-900 dark:text-white">
                           {instancia.entidad_resumen.proveedor_nombre}
                         </p>
                       </div>
                     )}
                     <div>
-                      <span className="text-gray-500 dark:text-gray-400">Solicitante:</span>
+                      <span className="text-gray-500 dark:text-gray-400">
+                        Solicitante:
+                      </span>
                       <p className="font-medium text-gray-900 dark:text-white">
-                        {instancia.solicitante_nombre || instancia.solicitante_email}
+                        {instancia.solicitante_nombre ||
+                          instancia.solicitante_email}
                       </p>
                     </div>
                     <div>
-                      <span className="text-gray-500 dark:text-gray-400">Fecha:</span>
+                      <span className="text-gray-500 dark:text-gray-400">
+                        Fecha:
+                      </span>
                       <p className="font-medium text-gray-900 dark:text-white">
                         {formatDate(instancia.iniciado_en)}
                       </p>
@@ -236,7 +256,8 @@ export default function AprobacionesPendientesPage() {
                     <div className="mt-2 flex items-center gap-1 text-sm text-amber-600 dark:text-amber-400">
                       <AlertTriangle className="h-4 w-4" />
                       <span>
-                        Pendiente hace {Math.floor(instancia.horas_pendiente)} horas
+                        Pendiente hace {Math.floor(instancia.horas_pendiente)}{' '}
+                        horas
                       </span>
                     </div>
                   )}
@@ -295,17 +316,24 @@ export default function AprobacionesPendientesPage() {
                 </p>
               </div>
               <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Estado</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Estado
+                </p>
                 {getEstadoBadge(instanciaDetalle.estado)}
               </div>
               <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Solicitante</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Solicitante
+                </p>
                 <p className="font-medium text-gray-900 dark:text-white">
-                  {instanciaDetalle.solicitante_nombre || instanciaDetalle.solicitante_email}
+                  {instanciaDetalle.solicitante_nombre ||
+                    instanciaDetalle.solicitante_email}
                 </p>
               </div>
               <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Fecha solicitud</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Fecha solicitud
+                </p>
                 <p className="font-medium text-gray-900 dark:text-white">
                   {formatDate(instanciaDetalle.iniciado_en)}
                 </p>
@@ -320,25 +348,33 @@ export default function AprobacionesPendientesPage() {
                 </h4>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Folio</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      Folio
+                    </p>
                     <p className="font-medium text-gray-900 dark:text-white">
                       {instanciaDetalle.entidad.folio}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Proveedor</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      Proveedor
+                    </p>
                     <p className="font-medium text-gray-900 dark:text-white">
                       {instanciaDetalle.entidad.proveedor_nombre}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Total</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      Total
+                    </p>
                     <p className="font-medium text-gray-900 dark:text-white">
                       {formatMoney(instanciaDetalle.entidad.total)}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Items</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      Items
+                    </p>
                     <p className="font-medium text-gray-900 dark:text-white">
                       {instanciaDetalle.entidad.items?.length || 0} productos
                     </p>
@@ -346,53 +382,68 @@ export default function AprobacionesPendientesPage() {
                 </div>
 
                 {/* Lista de items */}
-                {instanciaDetalle.entidad.items && instanciaDetalle.entidad.items.length > 0 && (
-                  <div className="mt-4">
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Productos:</p>
-                    <div className="border border-gray-200 dark:border-gray-700 rounded-lg divide-y divide-gray-200 dark:divide-gray-700 max-h-48 overflow-y-auto">
-                      {instanciaDetalle.entidad.items.map((item) => (
-                        <div key={item.id} className="flex justify-between items-center p-2 text-sm">
-                          <span className="text-gray-900 dark:text-white">{item.nombre_producto}</span>
-                          <span className="text-gray-500 dark:text-gray-400">
-                            {item.cantidad_ordenada} x {formatMoney(item.precio_unitario)}
-                          </span>
-                        </div>
-                      ))}
+                {instanciaDetalle.entidad.items &&
+                  instanciaDetalle.entidad.items.length > 0 && (
+                    <div className="mt-4">
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
+                        Productos:
+                      </p>
+                      <div className="border border-gray-200 dark:border-gray-700 rounded-lg divide-y divide-gray-200 dark:divide-gray-700 max-h-48 overflow-y-auto">
+                        {instanciaDetalle.entidad.items.map((item) => (
+                          <div
+                            key={item.id}
+                            className="flex justify-between items-center p-2 text-sm"
+                          >
+                            <span className="text-gray-900 dark:text-white">
+                              {item.nombre_producto}
+                            </span>
+                            <span className="text-gray-500 dark:text-gray-400">
+                              {item.cantidad_ordenada} x{' '}
+                              {formatMoney(item.precio_unitario)}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
               </div>
             )}
 
             {/* Historial */}
-            {instanciaDetalle.historial && instanciaDetalle.historial.length > 0 && (
-              <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
-                <h4 className="font-medium text-gray-900 dark:text-white mb-3">Historial</h4>
-                <div className="space-y-3">
-                  {instanciaDetalle.historial.map((evento, idx) => (
-                    <div key={idx} className="flex gap-3 text-sm">
-                      <div className="flex-shrink-0 w-2 h-2 mt-2 rounded-full bg-primary-500"></div>
-                      <div>
-                        <p className="text-gray-900 dark:text-white">
-                          {evento.accion === 'iniciar' && 'Solicitud iniciada'}
-                          {evento.accion === 'avanzar' && 'Pasó a aprobación'}
-                          {evento.accion === 'aprobar' && `Aprobado por ${evento.usuario_nombre}`}
-                          {evento.accion === 'rechazar' && `Rechazado por ${evento.usuario_nombre}`}
-                        </p>
-                        <p className="text-gray-500 dark:text-gray-400 text-xs">
-                          {formatDate(evento.ejecutado_en)}
-                        </p>
-                        {evento.comentario && (
-                          <p className="text-gray-600 dark:text-gray-300 mt-1 italic">
-                            "{evento.comentario}"
+            {instanciaDetalle.historial &&
+              instanciaDetalle.historial.length > 0 && (
+                <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+                  <h4 className="font-medium text-gray-900 dark:text-white mb-3">
+                    Historial
+                  </h4>
+                  <div className="space-y-3">
+                    {instanciaDetalle.historial.map((evento, idx) => (
+                      <div key={idx} className="flex gap-3 text-sm">
+                        <div className="flex-shrink-0 w-2 h-2 mt-2 rounded-full bg-primary-500"></div>
+                        <div>
+                          <p className="text-gray-900 dark:text-white">
+                            {evento.accion === 'iniciar' &&
+                              'Solicitud iniciada'}
+                            {evento.accion === 'avanzar' && 'Pasó a aprobación'}
+                            {evento.accion === 'aprobar' &&
+                              `Aprobado por ${evento.usuario_nombre}`}
+                            {evento.accion === 'rechazar' &&
+                              `Rechazado por ${evento.usuario_nombre}`}
                           </p>
-                        )}
+                          <p className="text-gray-500 dark:text-gray-400 text-xs">
+                            {formatDate(evento.ejecutado_en)}
+                          </p>
+                          {evento.comentario && (
+                            <p className="text-gray-600 dark:text-gray-300 mt-1 italic">
+                              "{evento.comentario}"
+                            </p>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
           </div>
         ) : (
           <div className="flex justify-center py-8">
@@ -411,7 +462,8 @@ export default function AprobacionesPendientesPage() {
           <p className="text-gray-600 dark:text-gray-400">
             ¿Confirmas la aprobación de{' '}
             <span className="font-medium text-gray-900 dark:text-white">
-              {getModalData('aprobar')?.entidad_resumen?.folio || `#${getModalData('aprobar')?.entidad_id}`}
+              {getModalData('aprobar')?.entidad_resumen?.folio ||
+                `#${getModalData('aprobar')?.entidad_id}`}
             </span>
             ?
           </p>
@@ -425,10 +477,7 @@ export default function AprobacionesPendientesPage() {
           />
 
           <div className="flex justify-end gap-3">
-            <Button
-              variant="ghost"
-              onClick={() => closeModal('aprobar')}
-            >
+            <Button variant="ghost" onClick={() => closeModal('aprobar')}>
               Cancelar
             </Button>
             <Button
@@ -453,7 +502,8 @@ export default function AprobacionesPendientesPage() {
           <p className="text-gray-600 dark:text-gray-400">
             ¿Confirmas el rechazo de{' '}
             <span className="font-medium text-gray-900 dark:text-white">
-              {getModalData('rechazar')?.entidad_resumen?.folio || `#${getModalData('rechazar')?.entidad_id}`}
+              {getModalData('rechazar')?.entidad_resumen?.folio ||
+                `#${getModalData('rechazar')?.entidad_id}`}
             </span>
             ?
           </p>
@@ -468,10 +518,7 @@ export default function AprobacionesPendientesPage() {
           />
 
           <div className="flex justify-end gap-3">
-            <Button
-              variant="ghost"
-              onClick={() => closeModal('rechazar')}
-            >
+            <Button variant="ghost" onClick={() => closeModal('rechazar')}>
               Cancelar
             </Button>
             <Button

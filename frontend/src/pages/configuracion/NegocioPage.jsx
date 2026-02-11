@@ -28,7 +28,7 @@ import { useToast } from '@/hooks/utils';
 import { useUploadArchivo } from '@/hooks/utils';
 import { useCategoriasMarketplace } from '@/hooks/otros';
 import { Button, Input } from '@/components/ui';
-import { ConfiguracionPageLayout } from '@/components/configuracion';
+import { ConfiguracionPageLayout } from '@/pages/configuracion/components';
 
 /**
  * Página de configuración del negocio
@@ -81,7 +81,8 @@ function NegocioPage() {
   const monedas = monedasData?.data?.data || [];
 
   // Query para obtener categorías/industrias (Ene 2026)
-  const { data: categorias = [], isLoading: isLoadingCategorias } = useCategoriasMarketplace();
+  const { data: categorias = [], isLoading: isLoadingCategorias } =
+    useCategoriasMarketplace();
 
   // Query para obtener datos de la organización
   const { data, isLoading, error } = useQuery({
@@ -145,13 +146,16 @@ function NegocioPage() {
 
   // Mutation para actualizar
   const updateMutation = useMutation({
-    mutationFn: (formData) => organizacionesApi.actualizar(organizacionId, formData),
+    mutationFn: (formData) =>
+      organizacionesApi.actualizar(organizacionId, formData),
     onSuccess: () => {
       queryClient.invalidateQueries(['organizacion', organizacionId]);
       toast.success('La información del negocio se guardó correctamente');
     },
     onError: (error) => {
-      toast.error(error.response?.data?.message || 'No se pudieron guardar los cambios');
+      toast.error(
+        error.response?.data?.message || 'No se pudieron guardar los cambios'
+      );
     },
   });
 
@@ -197,7 +201,7 @@ function NegocioPage() {
 
       updateMutation.mutate(cleanData);
       setLogoFile(null); // Limpiar archivo después de guardar
-    } catch (error) {
+    } catch {
       toast.error('No se pudo subir el logo');
     }
   };
@@ -216,7 +220,9 @@ function NegocioPage() {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-red-600 dark:text-red-400 mb-4">Error al cargar los datos</p>
+          <p className="text-red-600 dark:text-red-400 mb-4">
+            Error al cargar los datos
+          </p>
           <Button onClick={() => navigate('/configuracion')}>Volver</Button>
         </div>
       </div>
@@ -231,7 +237,6 @@ function NegocioPage() {
     >
       <div className="max-w-3xl mx-auto">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
-
           {/* Logo Section */}
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
@@ -287,7 +292,8 @@ function NegocioPage() {
               {/* Opciones */}
               <div className="flex-1">
                 <p className="text-sm text-gray-700 dark:text-gray-300 mb-3">
-                  Haz clic en el ícono de cámara para subir tu logo, o ingresa una URL directamente.
+                  Haz clic en el ícono de cámara para subir tu logo, o ingresa
+                  una URL directamente.
                 </p>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   URL del logo (opcional)
@@ -322,7 +328,9 @@ function NegocioPage() {
                   type="text"
                   {...register('nombre_comercial', { required: true })}
                   className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
-                    errors.nombre_comercial ? 'border-red-300 dark:border-red-600' : 'border-gray-300 dark:border-gray-600'
+                    errors.nombre_comercial
+                      ? 'border-red-300 dark:border-red-600'
+                      : 'border-gray-300 dark:border-gray-600'
                   }`}
                   placeholder="Mi Negocio S.A."
                 />
@@ -362,7 +370,8 @@ function NegocioPage() {
               Tipo de Negocio
             </h2>
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-              Selecciona la industria de tu negocio. Esto ayuda a los clientes a encontrarte en el marketplace.
+              Selecciona la industria de tu negocio. Esto ayuda a los clientes a
+              encontrarte en el marketplace.
             </p>
 
             <div>
@@ -385,7 +394,8 @@ function NegocioPage() {
                 ))}
               </select>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                Esta información se muestra en tu perfil público del marketplace.
+                Esta información se muestra en tu perfil público del
+                marketplace.
               </p>
             </div>
           </div>
@@ -485,13 +495,19 @@ function NegocioPage() {
                   {...register('zona_horaria')}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                 >
-                  <option value="America/Mexico_City">Ciudad de México (GMT-6)</option>
+                  <option value="America/Mexico_City">
+                    Ciudad de México (GMT-6)
+                  </option>
                   <option value="America/Bogota">Bogotá (GMT-5)</option>
                   <option value="America/Lima">Lima (GMT-5)</option>
                   <option value="America/Santiago">Santiago (GMT-3)</option>
-                  <option value="America/Buenos_Aires">Buenos Aires (GMT-3)</option>
+                  <option value="America/Buenos_Aires">
+                    Buenos Aires (GMT-3)
+                  </option>
                   <option value="America/New_York">Nueva York (GMT-5)</option>
-                  <option value="America/Los_Angeles">Los Ángeles (GMT-8)</option>
+                  <option value="America/Los_Angeles">
+                    Los Ángeles (GMT-8)
+                  </option>
                   <option value="Europe/Madrid">Madrid (GMT+1)</option>
                 </select>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -515,8 +531,9 @@ function NegocioPage() {
                     Requerir profesional para ventas
                   </label>
                   <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                    Si está activado, solo usuarios con un profesional vinculado podrán realizar ventas en el POS.
-                    Útil para negocios que calculan comisiones por vendedor.
+                    Si está activado, solo usuarios con un profesional vinculado
+                    podrán realizar ventas en el POS. Útil para negocios que
+                    calculan comisiones por vendedor.
                   </p>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
@@ -543,7 +560,11 @@ function NegocioPage() {
 
             <Button
               type="submit"
-              disabled={(!isDirty && !logoFile) || updateMutation.isPending || uploadMutation.isPending}
+              disabled={
+                (!isDirty && !logoFile) ||
+                updateMutation.isPending ||
+                uploadMutation.isPending
+              }
               className="flex items-center gap-2"
             >
               {uploadMutation.isPending ? (

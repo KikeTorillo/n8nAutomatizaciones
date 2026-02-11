@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { cn } from '@/lib/utils';
+import { cn } from '../../lib/cn';
 import { Button } from '../../atoms/Button';
 import { Plus } from 'lucide-react';
 import { SEMANTIC_COLORS } from '@/lib/uiConstants';
@@ -28,9 +28,13 @@ export const ListadoHeader = memo(function ListadoHeader({
   return (
     <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div className="flex items-center gap-3">
-        {Icon && <Icon className={cn('h-7 w-7', SEMANTIC_COLORS.primary.icon)} />}
+        {Icon && (
+          <Icon className={cn('h-7 w-7', SEMANTIC_COLORS.primary.icon)} />
+        )}
         <div>
-          <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">{title}</h1>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">
+            {title}
+          </h1>
           <p className="text-sm text-gray-600 dark:text-gray-400">{subtitle}</p>
         </div>
       </div>

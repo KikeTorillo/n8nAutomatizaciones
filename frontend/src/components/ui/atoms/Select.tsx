@@ -1,5 +1,11 @@
-import { forwardRef, memo, useId, type SelectHTMLAttributes, type ReactNode } from 'react';
-import { cn } from '@/lib/utils';
+import {
+  forwardRef,
+  memo,
+  useId,
+  type SelectHTMLAttributes,
+  type ReactNode,
+} from 'react';
+import { cn } from '../lib/cn';
 import {
   getSelectStyles,
   SELECT_ARROW,
@@ -69,16 +75,22 @@ const Select = memo(
     const selectId = id || generatedId;
 
     return (
-      <div className={cn("relative", wrapperClassName)}>
+      <div className={cn('relative', wrapperClassName)}>
         <select
           ref={ref}
           id={selectId}
           aria-invalid={hasError || undefined}
           aria-required={required || undefined}
           aria-describedby={
-            selectId ? getAriaDescribedBy(selectId, { hasError, hasHelper }) : undefined
+            selectId
+              ? getAriaDescribedBy(selectId, { hasError, hasHelper })
+              : undefined
           }
-          className={cn(getSelectStyles(hasError), SELECT_SIZE_CLASSES[size], className)}
+          className={cn(
+            getSelectStyles(hasError),
+            SELECT_SIZE_CLASSES[size],
+            className
+          )}
           {...props}
         >
           {children ? (
@@ -97,7 +109,11 @@ const Select = memo(
 
         {/* Flecha personalizada */}
         <div className={SELECT_ARROW.container} aria-hidden="true">
-          <svg className={SELECT_ARROW.icon} viewBox="0 0 20 20" fill="currentColor">
+          <svg
+            className={SELECT_ARROW.icon}
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
             <path
               fillRule="evenodd"
               d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"

@@ -14,13 +14,17 @@ import {
   DataTableActionButton,
   ListadoCRUDPage,
 } from '@/components/ui';
-import AgendamientoPageLayout from '@/components/agendamiento/AgendamientoPageLayout';
-import ServicioFormDrawer from '@/components/servicios/ServicioFormDrawer';
-import ProfesionalesServicioModal from '@/components/servicios/ProfesionalesServicioModal';
-import ServiciosSinProfesionalesAlert from '@/components/servicios/ServiciosSinProfesionalesAlert';
+import AgendamientoPageLayout from '@/components/shared/agendamiento/AgendamientoPageLayout';
+import ServicioFormDrawer from '@/pages/servicios/components/ServicioFormDrawer';
+import ProfesionalesServicioModal from '@/pages/servicios/components/ProfesionalesServicioModal';
+import ServiciosSinProfesionalesAlert from '@/pages/servicios/components/ServiciosSinProfesionalesAlert';
 import { useServicios, useEliminarServicio } from '@/hooks/agendamiento';
 import { formatCurrency } from '@/lib/utils';
-import { formatDuration, parseProfessionalsCount, parsePrice } from '@/utils/formatters';
+import {
+  formatDuration,
+  parseProfessionalsCount,
+  parsePrice,
+} from '@/utils/formatters';
 
 /**
  * Configuracion de columnas para la tabla de servicios
@@ -61,13 +65,14 @@ const COLUMNS = [
     key: 'categoria',
     header: 'Categoria',
     hideOnMobile: true,
-    render: (row) => (
+    render: (row) =>
       row.categoria ? (
-        <Badge variant="primary" size="sm">{row.categoria}</Badge>
+        <Badge variant="primary" size="sm">
+          {row.categoria}
+        </Badge>
       ) : (
         <span className="text-sm text-gray-400 dark:text-gray-500">-</span>
-      )
-    ),
+      ),
   },
   {
     key: 'duracion',
@@ -93,7 +98,9 @@ const COLUMNS = [
     header: 'Profesionales',
     hideOnMobile: true,
     render: (row) => {
-      const totalProfs = parseProfessionalsCount(row.total_profesionales_asignados);
+      const totalProfs = parseProfessionalsCount(
+        row.total_profesionales_asignados
+      );
       if (totalProfs === 0) {
         return (
           <div className="inline-flex items-center gap-1 px-2 py-1 bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-400 rounded-md text-xs font-medium">
@@ -181,22 +188,20 @@ function ServiciosPage() {
       subtitle="Gestiona los servicios de tu negocio"
       icon={Briefcase}
       PageLayout={AgendamientoPageLayout}
-
       // Data
       useListQuery={useServicios}
       dataKey="servicios"
-
       // Mutations
       useDeleteMutation={useEliminarServicio}
       deleteMutationOptions={{
         entityName: 'servicio',
         getName: (s) => s.nombre,
         confirmTitle: 'Desactivar servicio',
-        confirmMessage: 'Estas seguro de desactivar el servicio "{name}"? Las citas existentes se mantendran, pero no se podran crear nuevas.',
+        confirmMessage:
+          'Estas seguro de desactivar el servicio "{name}"? Las citas existentes se mantendran, pero no se podran crear nuevas.',
         confirmText: 'Si, Desactivar',
         successMessage: 'Servicio desactivado correctamente',
       }}
-
       // Table
       columns={COLUMNS}
       rowActions={(row, handlers) => (
@@ -208,19 +213,15 @@ function ServiciosPage() {
         description: 'Comienza agregando tu primer servicio',
         actionLabel: 'Nuevo Servicio',
       }}
-
       // Filters
       initialFilters={INITIAL_FILTERS}
       filterPersistId="agendamiento.servicios"
       limit={20}
-
       // Stats - Calculadas desde los datos
       statsConfig={null} // Se implementan en renderBeforeTable
-
       // Modals
       FormDrawer={ServicioFormDrawer}
       mapFormData={mapFormData}
-
       // Extra Modals
       extraModals={{
         profesionales: {
@@ -228,7 +229,6 @@ function ServiciosPage() {
           mapData: (data) => ({ servicio: data }),
         },
       }}
-
       // Custom slots
       renderBeforeTable={({ items }) => (
         <>
@@ -238,7 +238,6 @@ function ServiciosPage() {
           <ServiciosSinProfesionalesAlert servicios={items} />
         </>
       )}
-
       // Actions
       newButtonLabel="Nuevo Servicio"
     />
@@ -251,19 +250,46 @@ function ServiciosPage() {
 function ServiciosStats({ servicios = [] }) {
   const stats = useMemo(() => {
     const total = servicios.length;
-    const activos = servicios.filter(s => s.activo).length;
+    const activos = servicios.filter((s) => s.activo).length;
     const sinProfesionales = servicios.filter(
-      s => parseProfessionalsCount(s.total_profesionales_asignados) === 0 && s.activo
+      (s) =>
+        parseProfessionalsCount(s.total_profesionales_asignados) === 0 &&
+        s.activo
     ).length;
-    const precioPromedio = total > 0
-      ? servicios.reduce((sum, s) => sum + parsePrice(s.precio), 0) / total
-      : 0;
+    const precioPromedio =
+      total > 0
+        ? servicios.reduce((sum, s) => sum + parsePrice(s.precio), 0) / total
+        : 0;
 
     return [
-      { key: 'total', icon: Briefcase, label: 'Total', value: total, color: 'primary' },
-      { key: 'activos', icon: CheckCircle, label: 'Activos', value: activos, color: 'green' },
-      { key: 'sinProf', icon: AlertTriangle, label: 'Sin Prof.', value: sinProfesionales, color: 'yellow' },
-      { key: 'precio', icon: DollarSign, label: 'Precio Prom.', value: formatCurrency(precioPromedio), color: 'primary' },
+      {
+        key: 'total',
+        icon: Briefcase,
+        label: 'Total',
+        value: total,
+        color: 'primary',
+      },
+      {
+        key: 'activos',
+        icon: CheckCircle,
+        label: 'Activos',
+        value: activos,
+        color: 'green',
+      },
+      {
+        key: 'sinProf',
+        icon: AlertTriangle,
+        label: 'Sin Prof.',
+        value: sinProfesionales,
+        color: 'yellow',
+      },
+      {
+        key: 'precio',
+        icon: DollarSign,
+        label: 'Precio Prom.',
+        value: formatCurrency(precioPromedio),
+        color: 'primary',
+      },
     ];
   }, [servicios]);
 
@@ -274,9 +300,12 @@ function ServiciosStats({ servicios = [] }) {
       {stats.map((stat) => {
         const Icon = stat.icon;
         const colorClasses = {
-          primary: 'bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400',
-          green: 'bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400',
-          yellow: 'bg-yellow-50 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400',
+          primary:
+            'bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400',
+          green:
+            'bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400',
+          yellow:
+            'bg-yellow-50 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400',
         };
 
         return (
@@ -285,7 +314,9 @@ function ServiciosStats({ servicios = [] }) {
             className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-3 sm:p-4"
           >
             <div className="flex items-center gap-2 sm:gap-3">
-              <div className={`p-2 rounded-lg ${colorClasses[stat.color] || colorClasses.primary}`}>
+              <div
+                className={`p-2 rounded-lg ${colorClasses[stat.color] || colorClasses.primary}`}
+              >
                 <Icon className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
               <div className="flex-1 min-w-0">

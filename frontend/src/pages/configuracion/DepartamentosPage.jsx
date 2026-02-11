@@ -18,13 +18,13 @@ import {
   FormDrawer,
   FormGroup,
   Input,
-  StatCardGrid
+  StatCardGrid,
 } from '@/components/ui';
 import {
   ConfiguracionPageLayout,
   ConfigSearchBar,
   ConfigEmptyState,
-} from '@/components/configuracion';
+} from '@/pages/configuracion/components';
 import { useDisclosure, useDeleteConfirmation, useToast } from '@/hooks/utils';
 import {
   useDepartamentos,
@@ -84,7 +84,12 @@ function DepartamentosPage() {
   // Form drawer state
   const drawer = useDisclosure();
   const form = useForm({ defaultValues: DEFAULT_VALUES });
-  const { register, reset, formState: { errors }, handleSubmit } = form;
+  const {
+    register,
+    reset,
+    formState: { errors },
+    handleSubmit,
+  } = form;
   const isEditing = !!drawer.data;
   const isSubmitting = crearMutation.isPending || actualizarMutation.isPending;
 
@@ -99,9 +104,10 @@ function DepartamentosPage() {
   const filteredItems = useMemo(() => {
     if (!searchTerm) return departamentos;
     const term = searchTerm.toLowerCase();
-    return departamentos.filter(item =>
-      item.nombre?.toLowerCase().includes(term) ||
-      item.codigo?.toLowerCase().includes(term)
+    return departamentos.filter(
+      (item) =>
+        item.nombre?.toLowerCase().includes(term) ||
+        item.codigo?.toLowerCase().includes(term)
     );
   }, [departamentos, searchTerm]);
 
@@ -111,31 +117,40 @@ function DepartamentosPage() {
     drawer.open();
   }, [reset, drawer]);
 
-  const handleEdit = useCallback((item) => {
-    reset(entityToFormValues(item));
-    drawer.open(item);
-  }, [reset, drawer]);
+  const handleEdit = useCallback(
+    (item) => {
+      reset(entityToFormValues(item));
+      drawer.open(item);
+    },
+    [reset, drawer]
+  );
 
-  const onSubmit = useCallback(async (data) => {
-    const payload = preparePayload(data);
-    try {
-      if (drawer.data) {
-        await actualizarMutation.mutateAsync({ id: drawer.data.id, data: payload });
-        toast.success('Departamento actualizado');
-      } else {
-        await crearMutation.mutateAsync(payload);
-        toast.success('Departamento creado');
+  const onSubmit = useCallback(
+    async (data) => {
+      const payload = preparePayload(data);
+      try {
+        if (drawer.data) {
+          await actualizarMutation.mutateAsync({
+            id: drawer.data.id,
+            data: payload,
+          });
+          toast.success('Departamento actualizado');
+        } else {
+          await crearMutation.mutateAsync(payload);
+          toast.success('Departamento creado');
+        }
+        drawer.close();
+        reset(DEFAULT_VALUES);
+      } catch (err) {
+        toast.error(err.message || 'Error al guardar departamento');
       }
-      drawer.close();
-      reset(DEFAULT_VALUES);
-    } catch (err) {
-      toast.error(err.message || 'Error al guardar departamento');
-    }
-  }, [drawer, actualizarMutation, crearMutation, toast, reset]);
+    },
+    [drawer, actualizarMutation, crearMutation, toast, reset]
+  );
 
   // Toggle expandir nodo
   const toggleNode = (id) => {
-    setExpandedNodes(prev => {
+    setExpandedNodes((prev) => {
       const next = new Set(prev);
       if (next.has(id)) {
         next.delete(id);
@@ -147,20 +162,23 @@ function DepartamentosPage() {
   };
 
   // Stats
-  const stats = useMemo(() => [
-    {
-      label: 'Departamentos',
-      value: departamentos.length,
-      icon: FolderTree,
-      color: 'primary',
-    },
-    {
-      label: 'Activos',
-      value: departamentos.filter(d => d.activo).length,
-      icon: Users,
-      color: 'green',
-    },
-  ], [departamentos]);
+  const stats = useMemo(
+    () => [
+      {
+        label: 'Departamentos',
+        value: departamentos.length,
+        icon: FolderTree,
+        color: 'primary',
+      },
+      {
+        label: 'Activos',
+        value: departamentos.filter((d) => d.activo).length,
+        icon: Users,
+        color: 'green',
+      },
+    ],
+    [departamentos]
+  );
 
   // Componente de nodo del árbol (específico de esta página)
   const TreeNode = ({ node, level = 0 }) => {
@@ -234,7 +252,7 @@ function DepartamentosPage() {
 
         {hasChildren && isExpanded && (
           <div className="border-l-2 border-gray-200 dark:border-gray-700 ml-5">
-            {node.children.map(child => (
+            {node.children.map((child) => (
               <TreeNode key={child.id} node={child} level={level + 1} />
             ))}
           </div>
@@ -281,7 +299,7 @@ function DepartamentosPage() {
                 />
               ) : (
                 <div className="p-4">
-                  {filteredItems.map(dep => (
+                  {filteredItems.map((dep) => (
                     <TreeNode key={dep.id} node={dep} />
                   ))}
                 </div>
@@ -299,7 +317,7 @@ function DepartamentosPage() {
                   onAction={handleNew}
                 />
               ) : (
-                arbol.map(node => <TreeNode key={node.id} node={node} />)
+                arbol.map((node) => <TreeNode key={node.id} node={node} />)
               )}
             </div>
           )}
@@ -312,7 +330,11 @@ function DepartamentosPage() {
         onClose={drawer.close}
         entityName="Departamento"
         mode={isEditing ? 'edit' : 'create'}
-        subtitle={isEditing ? 'Modifica los datos del departamento' : 'Crea un nuevo departamento'}
+        subtitle={
+          isEditing
+            ? 'Modifica los datos del departamento'
+            : 'Crea un nuevo departamento'
+        }
         onSubmit={handleSubmit(onSubmit)}
         isSubmitting={isSubmitting}
       >
@@ -325,10 +347,7 @@ function DepartamentosPage() {
         </FormGroup>
 
         <FormGroup label="Codigo (Opcional)">
-          <Input
-            placeholder="Ej: RRHH"
-            {...register('codigo')}
-          />
+          <Input placeholder="Ej: RRHH" {...register('codigo')} />
         </FormGroup>
 
         <FormGroup label="Departamento Padre (Opcional)">
@@ -338,8 +357,8 @@ function DepartamentosPage() {
           >
             <option value="">Sin departamento padre</option>
             {departamentos
-              .filter(d => d.id !== drawer.data?.id)
-              .map(d => (
+              .filter((d) => d.id !== drawer.data?.id)
+              .map((d) => (
                 <option key={d.id} value={d.id}>
                   {d.nombre}
                 </option>
@@ -363,7 +382,10 @@ function DepartamentosPage() {
             {...register('activo')}
             className="w-4 h-4 text-primary-600 rounded focus:ring-primary-500"
           />
-          <label htmlFor="activo" className="text-sm text-gray-700 dark:text-gray-300">
+          <label
+            htmlFor="activo"
+            className="text-sm text-gray-700 dark:text-gray-300"
+          >
             Departamento activo
           </label>
         </div>

@@ -1,6 +1,13 @@
-import { useState, useCallback, memo, forwardRef, type ReactNode, type ComponentType } from 'react';
+import {
+  useState,
+  useCallback,
+  memo,
+  forwardRef,
+  type ReactNode,
+  type ComponentType,
+} from 'react';
 import { ChevronDown } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '../lib/cn';
 
 export interface AccordionItem {
   /** Identificador único del item */
@@ -49,85 +56,93 @@ export interface AccordionProps {
  *   ]}
  * />
  */
-const Accordion = memo(forwardRef<HTMLDivElement, AccordionProps>(function Accordion(
-  {
-    items,
-    type = 'single',
-    defaultOpenIds = [],
-    className,
-  },
-  ref
-) {
-  const [openIds, setOpenIds] = useState<Set<string>>(new Set(defaultOpenIds));
+const Accordion = memo(
+  forwardRef<HTMLDivElement, AccordionProps>(function Accordion(
+    { items, type = 'single', defaultOpenIds = [], className },
+    ref
+  ) {
+    const [openIds, setOpenIds] = useState<Set<string>>(
+      new Set(defaultOpenIds)
+    );
 
-  const toggle = useCallback((id: string) => {
-    setOpenIds(prev => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        if (type === 'single') {
-          next.clear();
-        }
-        next.add(id);
-      }
-      return next;
-    });
-  }, [type]);
+    const toggle = useCallback(
+      (id: string) => {
+        setOpenIds((prev) => {
+          const next = new Set(prev);
+          if (next.has(id)) {
+            next.delete(id);
+          } else {
+            if (type === 'single') {
+              next.clear();
+            }
+            next.add(id);
+          }
+          return next;
+        });
+      },
+      [type]
+    );
 
-  return (
-    <div
-      ref={ref}
-      className={cn('divide-y divide-gray-200 dark:divide-gray-700 border border-gray-200 dark:border-gray-700 rounded-lg', className)}
-    >
-      {items.map((item) => {
-        const isOpen = openIds.has(item.id);
-        const Icon = item.icon;
+    return (
+      <div
+        ref={ref}
+        className={cn(
+          'divide-y divide-gray-200 dark:divide-gray-700 border border-gray-200 dark:border-gray-700 rounded-lg',
+          className
+        )}
+      >
+        {items.map((item) => {
+          const isOpen = openIds.has(item.id);
+          const Icon = item.icon;
 
-        return (
-          <div key={item.id}>
-            <button
-              type="button"
-              id={`accordion-trigger-${item.id}`}
-              onClick={() => !item.disabled && toggle(item.id)}
-              disabled={item.disabled}
-              aria-expanded={isOpen}
-              aria-controls={`accordion-content-${item.id}`}
-              className={cn(
-                'w-full flex items-center justify-between gap-3 px-4 py-3 text-left transition-colors',
-                'hover:bg-gray-50 dark:hover:bg-gray-800/50',
-                item.disabled && 'opacity-50 cursor-not-allowed hover:bg-transparent dark:hover:bg-transparent',
-              )}
-            >
-              <div className="flex items-center gap-2 min-w-0">
-                {Icon && <Icon className="h-4 w-4 text-gray-500 dark:text-gray-400 flex-shrink-0" />}
-                <span className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                  {item.title}
-                </span>
-              </div>
-              <ChevronDown
+          return (
+            <div key={item.id}>
+              <button
+                type="button"
+                id={`accordion-trigger-${item.id}`}
+                onClick={() => !item.disabled && toggle(item.id)}
+                disabled={item.disabled}
+                aria-expanded={isOpen}
+                aria-controls={`accordion-content-${item.id}`}
                 className={cn(
-                  'h-4 w-4 text-gray-500 dark:text-gray-400 transition-transform flex-shrink-0',
-                  isOpen && 'rotate-180'
+                  'w-full flex items-center justify-between gap-3 px-4 py-3 text-left transition-colors',
+                  'hover:bg-gray-50 dark:hover:bg-gray-800/50',
+                  item.disabled &&
+                    'opacity-50 cursor-not-allowed hover:bg-transparent dark:hover:bg-transparent'
                 )}
-              />
-            </button>
-            {isOpen && (
-              <div
-                id={`accordion-content-${item.id}`}
-                role="region"
-                aria-labelledby={`accordion-trigger-${item.id}`}
-                className="px-4 pb-4 text-sm text-gray-700 dark:text-gray-300"
               >
-                {item.content}
-              </div>
-            )}
-          </div>
-        );
-      })}
-    </div>
-  );
-}));
+                <div className="flex items-center gap-2 min-w-0">
+                  {Icon && (
+                    <Icon className="h-4 w-4 text-gray-500 dark:text-gray-400 flex-shrink-0" />
+                  )}
+                  <span className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                    {item.title}
+                  </span>
+                </div>
+                <ChevronDown
+                  className={cn(
+                    'h-4 w-4 text-gray-500 dark:text-gray-400 transition-transform flex-shrink-0',
+                    isOpen && 'rotate-180'
+                  )}
+                />
+              </button>
+              {isOpen && (
+                <div
+                  id={`accordion-content-${item.id}`}
+                  role="region"
+                  aria-labelledby={`accordion-trigger-${item.id}`}
+                  className="px-4 pb-4 text-sm text-gray-700 dark:text-gray-300"
+                >
+                  {item.content}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    );
+  })
+);
 
 Accordion.displayName = 'Accordion';
 

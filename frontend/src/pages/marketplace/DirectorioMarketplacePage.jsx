@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Search } from 'lucide-react';
 import { Input } from '@/components/ui';
-import DirectorioFiltros from '@/components/marketplace/DirectorioFiltros';
-import DirectorioGrid from '@/components/marketplace/DirectorioGrid';
+import DirectorioFiltros from '@/pages/marketplace/components/DirectorioFiltros';
+import DirectorioGrid from '@/pages/marketplace/components/DirectorioGrid';
 import { usePerfilesMarketplace } from '@/hooks/otros';
 
 /**

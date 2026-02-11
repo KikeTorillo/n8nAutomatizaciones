@@ -8,8 +8,16 @@
  * - Cálculo de filtros activos
  * - Layout de grid responsivo
  */
-import { useMemo, useCallback, memo, forwardRef, type ReactNode, type ComponentType } from 'react';
-import { cn } from '@/lib/utils';
+/* eslint-disable react-refresh/only-export-components */
+import {
+  useMemo,
+  useCallback,
+  memo,
+  forwardRef,
+  type ReactNode,
+  type ComponentType,
+} from 'react';
+import { cn } from '../../lib/cn';
 import { FilterField } from '../../molecules/FilterField';
 import type { FilterFieldType } from '@/types/organisms';
 import type { SelectOption } from '@/types/ui';
@@ -90,7 +98,12 @@ export function countActiveFilters(
 
   filterConfig.forEach((config) => {
     const value = filters[config.key || config.id || ''];
-    if (value !== undefined && value !== '' && value !== null && value !== false) {
+    if (
+      value !== undefined &&
+      value !== '' &&
+      value !== null &&
+      value !== false
+    ) {
       count++;
     }
   });
@@ -149,47 +162,48 @@ export interface FilterPanelBaseProps {
  * FilterPanelBase - Componente base para paneles de filtros
  */
 export const FilterPanelBase = memo(
-  forwardRef<HTMLDivElement, FilterPanelBaseProps>(function FilterPanelBase({
-  filters = {},
-  onFilterChange,
-  filterConfig = [],
-  children,
-  className,
-}, ref) {
-  const handleChange = useCallback(
-    (key: string, value: unknown) => {
-      onFilterChange?.(key, value);
-    },
-    [onFilterChange]
-  );
+  forwardRef<HTMLDivElement, FilterPanelBaseProps>(function FilterPanelBase(
+    { filters = {}, onFilterChange, filterConfig = [], children, className },
+    ref
+  ) {
+    const handleChange = useCallback(
+      (key: string, value: unknown) => {
+        onFilterChange?.(key, value);
+      },
+      [onFilterChange]
+    );
 
-  const renderFilter = (config: FilterConfigItem) => {
-    const key = config.key || config.id || '';
-    const value = filters[key] ?? (config.type === 'checkbox' ? false : '');
+    const renderFilter = (config: FilterConfigItem) => {
+      const key = config.key || config.id || '';
+      const value = filters[key] ?? (config.type === 'checkbox' ? false : '');
+
+      return (
+        <div key={key}>
+          <FilterField
+            type={config.type || 'text'}
+            label={
+              config.type === 'checkbox'
+                ? config.checkboxLabel || config.label
+                : config.label
+            }
+            value={value as string | boolean | number}
+            onChange={(v) => handleChange(key, v)}
+            options={config.options}
+            placeholder={config.placeholder}
+            icon={config.icon}
+            min={config.min}
+            max={config.max}
+          />
+        </div>
+      );
+    };
 
     return (
-      <div key={key}>
-        <FilterField
-          type={config.type || 'text'}
-          label={config.type === 'checkbox' ? config.checkboxLabel || config.label : config.label}
-          value={value as string | boolean | number}
-          onChange={(v) => handleChange(key, v)}
-          options={config.options}
-          placeholder={config.placeholder}
-          icon={config.icon}
-          min={config.min}
-          max={config.max}
-        />
+      <div ref={ref} className={cn(filterPanelContainerStyles, className)}>
+        <div className={filterGridStyles}>{filterConfig.map(renderFilter)}</div>
+        {children}
       </div>
     );
-  };
-
-  return (
-    <div ref={ref} className={cn(filterPanelContainerStyles, className)}>
-      <div className={filterGridStyles}>{filterConfig.map(renderFilter)}</div>
-      {children}
-    </div>
-  );
   })
 );
 

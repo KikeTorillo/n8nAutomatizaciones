@@ -1,7 +1,8 @@
 import { memo, forwardRef, useState, useRef, type ComponentType } from 'react';
 import { ChevronDown, Check } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { useClickOutsideRef, useEscapeKey } from '@/hooks/utils';
+import { cn } from '../../lib/cn';
+import { useClickOutsideRef } from '../../hooks/useClickOutside';
+import { useEscapeKey } from '../../hooks/useEscapeKey';
 import { TAB_STYLES, DROPDOWN_ITEM_STYLES } from './constants';
 
 /**
@@ -30,100 +31,115 @@ export interface TabDropdownProps {
   /** Callback al cambiar tab */
   onTabChange: (tabId: string) => void;
   /** Función para obtener icono de tab */
-  getTabIcon: (tabId: string) => ComponentType<{ className?: string }> | undefined;
+  getTabIcon: (
+    tabId: string
+  ) => ComponentType<{ className?: string }> | undefined;
 }
 
 /**
  * TabDropdown - Dropdown para agrupar tabs en desktop
  */
 const TabDropdown = memo(
-  forwardRef<HTMLDivElement, TabDropdownProps>(function TabDropdown({
-  icon: Icon,
-  label,
-  items,
-  activeTab,
-  onTabChange,
-  getTabIcon,
-}, ref) {
-  const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  forwardRef<HTMLDivElement, TabDropdownProps>(function TabDropdown(
+    { icon: Icon, label, items, activeTab, onTabChange, getTabIcon },
+    ref
+  ) {
+    const [isOpen, setIsOpen] = useState(false);
+    const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Cerrar al hacer click fuera (useClickOutsideRef para refs externas)
-  useClickOutsideRef(dropdownRef, () => setIsOpen(false), isOpen);
+    // Cerrar al hacer click fuera (useClickOutsideRef para refs externas)
+    useClickOutsideRef(dropdownRef, () => setIsOpen(false), isOpen);
 
-  // Cerrar con Escape
-  useEscapeKey(() => setIsOpen(false), isOpen);
+    // Cerrar con Escape
+    useEscapeKey(() => setIsOpen(false), isOpen);
 
-  // Verificar si algún item del grupo está activo
-  const hasActiveItem = items.some((item) => item.id === activeTab);
+    // Verificar si algún item del grupo está activo
+    const hasActiveItem = items.some((item) => item.id === activeTab);
 
-  const handleItemClick = (tabId: string) => {
-    onTabChange(tabId);
-    setIsOpen(false);
-  };
+    const handleItemClick = (tabId: string) => {
+      onTabChange(tabId);
+      setIsOpen(false);
+    };
 
-  return (
-    <div className="relative" ref={(node) => {
-        dropdownRef.current = node;
-        if (typeof ref === 'function') ref(node);
-        else if (ref) (ref as React.MutableRefObject<HTMLDivElement | null>).current = node;
-      }}>
-      <button
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className={cn(TAB_STYLES.base, hasActiveItem ? TAB_STYLES.active : TAB_STYLES.inactive)}
-        aria-expanded={isOpen}
-        aria-haspopup="true"
+    return (
+      <div
+        className="relative"
+        ref={(node) => {
+          dropdownRef.current = node;
+          if (typeof ref === 'function') ref(node);
+          else if (ref)
+            (ref as React.MutableRefObject<HTMLDivElement | null>).current =
+              node;
+        }}
       >
-        {Icon && <Icon className="h-4 w-4 flex-shrink-0" />}
-        <span>{label}</span>
-        <ChevronDown className={cn('h-4 w-4 transition-transform', isOpen && 'rotate-180')} />
-      </button>
-
-      {isOpen && (
-        <div
-          className="absolute left-0 mt-1 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-50"
-          role="menu"
+        <button
+          type="button"
+          onClick={() => setIsOpen(!isOpen)}
+          className={cn(
+            TAB_STYLES.base,
+            hasActiveItem ? TAB_STYLES.active : TAB_STYLES.inactive
+          )}
+          aria-expanded={isOpen}
+          aria-haspopup="true"
         >
-          {items.map((item) => {
-            const ItemIcon = getTabIcon(item.id) || item.icon;
-            const isItemActive = activeTab === item.id;
-            return (
-              <button
-                key={item.id}
-                onClick={() => handleItemClick(item.id)}
-                disabled={item.disabled}
-                className={cn(
-                  DROPDOWN_ITEM_STYLES.base,
-                  item.disabled && DROPDOWN_ITEM_STYLES.disabled,
-                  isItemActive ? DROPDOWN_ITEM_STYLES.active : DROPDOWN_ITEM_STYLES.inactive
-                )}
-                role="menuitem"
-              >
-                {ItemIcon && (
-                  <ItemIcon
-                    className={cn(
-                      'h-4 w-4',
-                      isItemActive ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400'
-                    )}
-                  />
-                )}
-                <span className="flex-1">{item.label}</span>
-                {item.count !== undefined && item.count > 0 && (
-                  <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400">
-                    {item.count}
-                  </span>
-                )}
-                {isItemActive && (
-                  <Check className="h-4 w-4 text-primary-600 dark:text-primary-400" />
-                )}
-              </button>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
+          {Icon && <Icon className="h-4 w-4 flex-shrink-0" />}
+          <span>{label}</span>
+          <ChevronDown
+            className={cn(
+              'h-4 w-4 transition-transform',
+              isOpen && 'rotate-180'
+            )}
+          />
+        </button>
+
+        {isOpen && (
+          <div
+            className="absolute left-0 mt-1 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-50"
+            role="menu"
+          >
+            {items.map((item) => {
+              const ItemIcon = getTabIcon(item.id) || item.icon;
+              const isItemActive = activeTab === item.id;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => handleItemClick(item.id)}
+                  disabled={item.disabled}
+                  className={cn(
+                    DROPDOWN_ITEM_STYLES.base,
+                    item.disabled && DROPDOWN_ITEM_STYLES.disabled,
+                    isItemActive
+                      ? DROPDOWN_ITEM_STYLES.active
+                      : DROPDOWN_ITEM_STYLES.inactive
+                  )}
+                  role="menuitem"
+                >
+                  {ItemIcon && (
+                    <ItemIcon
+                      className={cn(
+                        'h-4 w-4',
+                        isItemActive
+                          ? 'text-primary-600 dark:text-primary-400'
+                          : 'text-gray-400'
+                      )}
+                    />
+                  )}
+                  <span className="flex-1">{item.label}</span>
+                  {item.count !== undefined && item.count > 0 && (
+                    <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400">
+                      {item.count}
+                    </span>
+                  )}
+                  {isItemActive && (
+                    <Check className="h-4 w-4 text-primary-600 dark:text-primary-400" />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
   })
 );
 

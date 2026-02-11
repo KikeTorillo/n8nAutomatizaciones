@@ -1,15 +1,21 @@
 import { useState } from 'react';
-import { usePerfilesAdmin, useActivarPerfil, useLimpiarAnalytics } from '@/hooks/sistema';
+import {
+  usePerfilesAdmin,
+  useActivarPerfil,
+  useLimpiarAnalytics,
+} from '@/hooks/sistema';
 import { useToast } from '@/hooks/utils';
 import { useModalManager } from '@/hooks/utils';
+import { Button, ConfirmDialog, Input, Select } from '@/components/ui';
+import EstrellaRating from '@/pages/marketplace/components/EstrellaRating';
 import {
-  Button,
-  ConfirmDialog,
-  Input,
-  Select
-} from '@/components/ui';
-import EstrellaRating from '@/components/marketplace/EstrellaRating';
-import { Store, Filter, Trash2, ExternalLink, CheckCircle, XCircle } from 'lucide-react';
+  Store,
+  Filter,
+  Trash2,
+  ExternalLink,
+  CheckCircle,
+  XCircle,
+} from 'lucide-react';
 
 /**
  * Página de Gestión de Marketplace para Super Admin
@@ -35,7 +41,7 @@ export default function MarketplaceGestion() {
   });
 
   // Queries y Mutations
-  const { data, isLoading, refetch } = usePerfilesAdmin(filtros);
+  const { data, isLoading } = usePerfilesAdmin(filtros);
   const activarPerfil = useActivarPerfil();
   const limpiarAnalytics = useLimpiarAnalytics();
 
@@ -109,7 +115,9 @@ export default function MarketplaceGestion() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Gestión de Marketplace</h1>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+            Gestión de Marketplace
+          </h1>
           <p className="text-gray-600 dark:text-gray-400 mt-1">
             Administra todos los perfiles del directorio público
           </p>
@@ -132,7 +140,9 @@ export default function MarketplaceGestion() {
         >
           <div className="flex items-center gap-2">
             <Filter className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-            <span className="font-semibold text-gray-900 dark:text-gray-100">Filtros</span>
+            <span className="font-semibold text-gray-900 dark:text-gray-100">
+              Filtros
+            </span>
           </div>
           <span className="text-sm text-gray-500 dark:text-gray-400">
             {showFilters ? 'Ocultar' : 'Mostrar'}
@@ -175,7 +185,9 @@ export default function MarketplaceGestion() {
                 step="0.5"
                 placeholder="0.0 - 5.0"
                 value={filtros.rating_min}
-                onChange={(e) => handleFiltroChange('rating_min', e.target.value)}
+                onChange={(e) =>
+                  handleFiltroChange('rating_min', e.target.value)
+                }
               />
 
               {/* Botón Limpiar */}
@@ -198,7 +210,9 @@ export default function MarketplaceGestion() {
         {perfiles.length === 0 ? (
           <div className="text-center py-12">
             <Store className="w-12 h-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
-            <p className="text-gray-500 dark:text-gray-400">No se encontraron perfiles con los filtros aplicados</p>
+            <p className="text-gray-500 dark:text-gray-400">
+              No se encontraron perfiles con los filtros aplicados
+            </p>
           </div>
         ) : (
           <>
@@ -252,9 +266,13 @@ export default function MarketplaceGestion() {
 
                       {/* Ubicación */}
                       <td className="px-6 py-4 text-sm">
-                        <div className="text-gray-900 dark:text-gray-100">{perfil.ciudad}</div>
+                        <div className="text-gray-900 dark:text-gray-100">
+                          {perfil.ciudad}
+                        </div>
                         {perfil.estado && (
-                          <div className="text-gray-500 dark:text-gray-400">{perfil.estado}, {perfil.pais || 'México'}</div>
+                          <div className="text-gray-500 dark:text-gray-400">
+                            {perfil.estado}, {perfil.pais || 'México'}
+                          </div>
                         )}
                       </td>
 
@@ -314,7 +332,10 @@ export default function MarketplaceGestion() {
 
                       {/* Acciones */}
                       <td className="px-6 py-4">
-                        <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                        <div
+                          className="flex items-center gap-2"
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           {/* Toggle Activo */}
                           <button
                             onClick={() => handleToggleActivo(perfil)}
@@ -360,7 +381,8 @@ export default function MarketplaceGestion() {
                     Anterior
                   </Button>
                   <span className="text-sm text-gray-600 dark:text-gray-400">
-                    Página {paginacion.pagina_actual} de {paginacion.total_paginas}
+                    Página {paginacion.pagina_actual} de{' '}
+                    {paginacion.total_paginas}
                   </span>
                   <Button
                     onClick={() => handleCambiarPagina(filtros.pagina + 1)}

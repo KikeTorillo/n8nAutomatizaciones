@@ -1,6 +1,6 @@
 import { memo, useState, forwardRef, type ComponentType } from 'react';
 import { Edit2, Trash2, Eye, BarChart3, MoreVertical } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '../lib/cn';
 import { Button } from '../atoms/Button';
 import { DropdownMenu } from './DropdownMenu';
 import { ConfirmDialog } from './ConfirmDialog';
@@ -66,21 +66,21 @@ export interface StandardRowActionsProps<T = Record<string, unknown>> {
  */
 function StandardRowActionsComponent<T = Record<string, unknown>>(
   {
-  row,
-  onEdit,
-  onDelete,
-  onView,
-  onStats,
-  canEdit = true,
-  canDelete = true,
-  compact = false,
-  confirmDelete = true,
-  deleteMessage,
-  entityName = 'registro',
-  extraActions = [],
-  size = 'sm',
-  className,
-}: StandardRowActionsProps<T>,
+    row,
+    onEdit,
+    onDelete,
+    onView,
+    onStats,
+    canEdit = true,
+    canDelete = true,
+    compact = false,
+    confirmDelete = true,
+    deleteMessage,
+    entityName = 'registro',
+    extraActions = [],
+    size = 'sm',
+    className,
+  }: StandardRowActionsProps<T>,
   ref: React.ForwardedRef<HTMLDivElement>
 ) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -108,8 +108,13 @@ function StandardRowActionsComponent<T = Record<string, unknown>>(
   // Construir lista de acciones para dropdown
   const dropdownActions = [
     onView && { icon: Eye, label: 'Ver detalle', onClick: () => onView(row) },
-    onEdit && canEdit && { icon: Edit2, label: 'Editar', onClick: () => onEdit(row) },
-    onStats && { icon: BarChart3, label: 'Estadísticas', onClick: () => onStats(row) },
+    onEdit &&
+      canEdit && { icon: Edit2, label: 'Editar', onClick: () => onEdit(row) },
+    onStats && {
+      icon: BarChart3,
+      label: 'Estadísticas',
+      onClick: () => onStats(row),
+    },
     ...extraActions
       .filter((a) => a.show !== false)
       .map((a) => ({
@@ -139,7 +144,12 @@ function StandardRowActionsComponent<T = Record<string, unknown>>(
       <div ref={ref}>
         <DropdownMenu
           trigger={
-            <Button variant="ghost" size={size} className="p-1" aria-label="Más acciones">
+            <Button
+              variant="ghost"
+              size={size}
+              className="p-1"
+              aria-label="Más acciones"
+            >
               <MoreVertical className="w-4 h-4" />
             </Button>
           }
@@ -147,7 +157,10 @@ function StandardRowActionsComponent<T = Record<string, unknown>>(
             label: action.label,
             icon: action.icon,
             onClick: action.onClick,
-            className: action.variant === 'danger' ? 'text-red-600 dark:text-red-400' : undefined,
+            className:
+              action.variant === 'danger'
+                ? 'text-red-600 dark:text-red-400'
+                : undefined,
           }))}
           align="right"
         />
@@ -229,7 +242,10 @@ function StandardRowActionsComponent<T = Record<string, unknown>>(
                 size={buttonSize}
                 onClick={() => action.onClick?.(row)}
                 disabled={isDisabled}
-                className={cn('p-1.5', isDisabled && 'opacity-50 cursor-not-allowed')}
+                className={cn(
+                  'p-1.5',
+                  isDisabled && 'opacity-50 cursor-not-allowed'
+                )}
                 aria-label={action.label}
                 title={action.label}
               >
@@ -271,11 +287,11 @@ function StandardRowActionsComponent<T = Record<string, unknown>>(
   );
 }
 
-const _StandardRowActions = memo(
-  forwardRef(StandardRowActionsComponent)
-);
-(_StandardRowActions as { displayName?: string }).displayName = 'StandardRowActions';
+const _StandardRowActions = memo(forwardRef(StandardRowActionsComponent));
+(_StandardRowActions as { displayName?: string }).displayName =
+  'StandardRowActions';
 
-export const StandardRowActions = _StandardRowActions as typeof StandardRowActionsComponent;
+export const StandardRowActions =
+  _StandardRowActions as typeof StandardRowActionsComponent;
 
 export { StandardRowActions as default };

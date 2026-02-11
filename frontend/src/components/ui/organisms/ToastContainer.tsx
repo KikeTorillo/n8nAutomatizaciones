@@ -1,6 +1,6 @@
 import { memo, forwardRef } from 'react';
 import { Toast } from '@/components/ui';
-import { useToast } from '@/hooks/utils';
+import { useToast } from '../hooks/useToast';
 import type { ToastType } from '@/types/ui';
 
 /** Interface para un toast individual */
@@ -32,28 +32,33 @@ export interface ToastContainerProps {}
  * estados no relacionados en componentes padre.
  */
 const ToastContainer = memo(
-  forwardRef<HTMLDivElement, ToastContainerProps>(function ToastContainer(_props, ref) {
-  const { toasts, remove } = useToast() as UseToastResult;
+  forwardRef<HTMLDivElement, ToastContainerProps>(
+    function ToastContainer(_props, ref) {
+      const { toasts, remove } = useToast() as UseToastResult;
 
-  if (toasts.length === 0) {
-    return null;
-  }
+      if (toasts.length === 0) {
+        return null;
+      }
 
-  return (
-    <div ref={ref} className="fixed top-4 right-4 z-[100] flex flex-col gap-2">
-      {toasts.map((toast) => (
-        <Toast
-          key={toast.id}
-          id={toast.id}
-          message={toast.message}
-          type={toast.type}
-          duration={toast.duration}
-          onClose={remove}
-        />
-      ))}
-    </div>
-  );
-  })
+      return (
+        <div
+          ref={ref}
+          className="fixed top-4 right-4 z-[100] flex flex-col gap-2"
+        >
+          {toasts.map((toast) => (
+            <Toast
+              key={toast.id}
+              id={toast.id}
+              message={toast.message}
+              type={toast.type}
+              duration={toast.duration}
+              onClose={remove}
+            />
+          ))}
+        </div>
+      );
+    }
+  )
 );
 
 ToastContainer.displayName = 'ToastContainer';

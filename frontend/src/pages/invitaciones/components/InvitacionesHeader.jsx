@@ -5,9 +5,13 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { Menu, X, User, LogOut, Heart } from 'lucide-react';
 import { useState } from 'react';
-import { ThemeToggle } from '@/components/ui';
-import { useAuthStore, selectUser, selectIsAuthenticated, selectLogout } from '@/store';
-import { cn } from '@/lib/utils';
+import { ThemeToggleConnected as ThemeToggle } from '@/components/shared/ThemeToggleConnected';
+import {
+  useAuthStore,
+  selectUser,
+  selectIsAuthenticated,
+  selectLogout,
+} from '@/store';
 
 const NAV_ITEMS = [
   { label: 'Ejemplos', to: '/invitaciones/ejemplos' },
@@ -102,7 +106,11 @@ export default function InvitacionesHeader() {
               className="sm:hidden p-2 text-gray-600 dark:text-gray-300"
               aria-label={mobileMenuOpen ? 'Cerrar menú' : 'Abrir menú'}
             >
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              {mobileMenuOpen ? (
+                <X className="w-6 h-6" />
+              ) : (
+                <Menu className="w-6 h-6" />
+              )}
             </button>
           </div>
         </div>
@@ -133,7 +141,10 @@ export default function InvitacionesHeader() {
                     Mis eventos
                   </Link>
                   <button
-                    onClick={() => { handleLogout(); setMobileMenuOpen(false); }}
+                    onClick={() => {
+                      handleLogout();
+                      setMobileMenuOpen(false);
+                    }}
                     className="flex items-center gap-2 px-3 py-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                   >
                     <LogOut className="w-4 h-4" />

@@ -1,5 +1,5 @@
 import { forwardRef, memo, useId, type TextareaHTMLAttributes } from 'react';
-import { cn } from '@/lib/utils';
+import { cn } from '../lib/cn';
 import { getTextareaStyles, getAriaDescribedBy } from '@/lib/uiConstants';
 import type { ResizeMode } from '@/types/ui';
 
@@ -67,7 +67,9 @@ const Textarea = memo(
         aria-invalid={hasError || undefined}
         aria-required={required || undefined}
         aria-describedby={
-          textareaId ? getAriaDescribedBy(textareaId, { hasError, hasHelper }) : undefined
+          textareaId
+            ? getAriaDescribedBy(textareaId, { hasError, hasHelper })
+            : undefined
         }
         className={cn(getTextareaStyles(hasError, resizable), className)}
         {...props}

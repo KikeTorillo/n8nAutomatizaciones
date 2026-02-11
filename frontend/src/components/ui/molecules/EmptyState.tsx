@@ -1,5 +1,5 @@
 import { memo, forwardRef, type ReactNode } from 'react';
-import { cn } from '@/lib/utils';
+import { cn } from '../lib/cn';
 import { Inbox } from 'lucide-react';
 import { Button } from '../atoms/Button';
 import { EMPTY_STATE_SIZES, EMPTY_STATE_BASE } from '@/lib/uiConstants';
@@ -30,61 +30,44 @@ export interface EmptyStateProps {
  * EmptyState - Estado vacío reutilizable para listas y tablas
  */
 export const EmptyState = memo(
-  forwardRef<HTMLDivElement, EmptyStateProps>(function EmptyState({
-  icon: Icon = Inbox,
-  title,
-  description,
-  actionLabel,
-  onAction,
-  actionVariant = 'primary',
-  children,
-  size = 'md',
-  className,
-}, ref) {
-  const sizes = EMPTY_STATE_SIZES[size] || EMPTY_STATE_SIZES.md;
+  forwardRef<HTMLDivElement, EmptyStateProps>(function EmptyState(
+    {
+      icon: Icon = Inbox,
+      title,
+      description,
+      actionLabel,
+      onAction,
+      actionVariant = 'primary',
+      children,
+      size = 'md',
+      className,
+    },
+    ref
+  ) {
+    const sizes = EMPTY_STATE_SIZES[size] || EMPTY_STATE_SIZES.md;
 
-  return (
-    <div
-      ref={ref}
-      role="status"
-      className={cn(
-        EMPTY_STATE_BASE.container,
-        sizes.container,
-        className
-      )}
-    >
-      <Icon
-        className={cn(
-          EMPTY_STATE_BASE.icon,
-          sizes.icon
-        )}
-      />
-      <h3
-        className={cn(
-          EMPTY_STATE_BASE.title,
-          sizes.title
-        )}
+    return (
+      <div
+        ref={ref}
+        role="status"
+        className={cn(EMPTY_STATE_BASE.container, sizes.container, className)}
       >
-        {title}
-      </h3>
-      {description && (
-        <p
-          className={cn(
-            EMPTY_STATE_BASE.description,
-            sizes.description
-          )}
-        >
-          {description}
-        </p>
-      )}
-      {actionLabel && onAction && (
-        <Button variant={actionVariant} onClick={onAction}>
-          {actionLabel}
-        </Button>
-      )}
-      {children}
-    </div>
-  );
-}));
+        <Icon className={cn(EMPTY_STATE_BASE.icon, sizes.icon)} />
+        <h3 className={cn(EMPTY_STATE_BASE.title, sizes.title)}>{title}</h3>
+        {description && (
+          <p className={cn(EMPTY_STATE_BASE.description, sizes.description)}>
+            {description}
+          </p>
+        )}
+        {actionLabel && onAction && (
+          <Button variant={actionVariant} onClick={onAction}>
+            {actionLabel}
+          </Button>
+        )}
+        {children}
+      </div>
+    );
+  })
+);
 
 EmptyState.displayName = 'EmptyState';

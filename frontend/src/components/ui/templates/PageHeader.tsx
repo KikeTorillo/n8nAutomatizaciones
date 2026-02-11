@@ -1,12 +1,25 @@
 import { memo } from 'react';
-import { cn } from '@/lib/utils';
+import { cn } from '../lib/cn';
 import { BackButton } from '../molecules/BackButton';
 import { Badge } from '../atoms/Badge';
-import { PAGE_HEADER_STYLES, getPageHeaderIconColor } from '@/lib/uiConstants/pageHeader';
+import {
+  PAGE_HEADER_STYLES,
+  getPageHeaderIconColor,
+} from '@/lib/uiConstants/pageHeader';
 import type { BadgeVariantWithAliases } from '@/types/ui';
 
 type LucideIcon = React.ComponentType<{ className?: string }>;
-type PageHeaderIconColor = 'primary' | 'pink' | 'green' | 'blue' | 'purple' | 'orange' | 'red' | 'yellow' | 'cyan' | 'neutral';
+type PageHeaderIconColor =
+  | 'primary'
+  | 'pink'
+  | 'green'
+  | 'blue'
+  | 'purple'
+  | 'orange'
+  | 'red'
+  | 'yellow'
+  | 'cyan'
+  | 'neutral';
 
 interface BadgeItem {
   label: string;
@@ -43,7 +56,10 @@ const PageHeader = memo(function PageHeader({
   actions,
   className,
 }: PageHeaderProps) {
-  const iconColors = getPageHeaderIconColor(iconColor) as { bg: string; icon: string };
+  const iconColors = getPageHeaderIconColor(iconColor) as {
+    bg: string;
+    icon: string;
+  };
 
   return (
     <div className={cn(PAGE_HEADER_STYLES.container, className)}>
@@ -75,7 +91,12 @@ const PageHeader = memo(function PageHeader({
               )}
 
               {badges.map((badge, idx) => (
-                <Badge key={idx} variant={(badge.variant || 'default') as BadgeVariantWithAliases}>
+                <Badge
+                  key={idx}
+                  variant={
+                    (badge.variant || 'default') as BadgeVariantWithAliases
+                  }
+                >
                   {badge.label}
                 </Badge>
               ))}
@@ -83,9 +104,7 @@ const PageHeader = memo(function PageHeader({
 
             {/* Subtitle */}
             {subtitle && (
-              <p className={PAGE_HEADER_STYLES.subtitle}>
-                {subtitle}
-              </p>
+              <p className={PAGE_HEADER_STYLES.subtitle}>{subtitle}</p>
             )}
 
             {/* Metadata */}
@@ -109,9 +128,7 @@ const PageHeader = memo(function PageHeader({
 
         {/* Actions */}
         {actions && (
-          <div className={PAGE_HEADER_STYLES.actionsContainer}>
-            {actions}
-          </div>
+          <div className={PAGE_HEADER_STYLES.actionsContainer}>{actions}</div>
         )}
       </div>
     </div>

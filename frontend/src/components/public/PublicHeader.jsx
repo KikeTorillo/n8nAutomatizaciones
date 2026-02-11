@@ -13,9 +13,15 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { Menu, X, User, LogOut } from 'lucide-react';
 import { useState } from 'react';
-import { ThemeToggle, BackButton } from '@/components/ui';
+import { BackButton } from '@/components/ui';
+import { ThemeToggleConnected as ThemeToggle } from '@/components/shared/ThemeToggleConnected';
 import { NexoLogo } from './NexoLogo';
-import { useAuthStore, selectUser, selectIsAuthenticated, selectLogout } from '@/store';
+import {
+  useAuthStore,
+  selectUser,
+  selectIsAuthenticated,
+  selectLogout,
+} from '@/store';
 import { cn } from '@/lib/utils';
 
 const LANDING_NAV_ITEMS = [
@@ -55,11 +61,13 @@ export function PublicHeader({
   };
 
   return (
-    <header className={cn(
-      'top-0 left-0 right-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm z-50',
-      'border-b border-gray-100 dark:border-gray-800',
-      position === 'fixed' ? 'fixed' : 'sticky'
-    )}>
+    <header
+      className={cn(
+        'top-0 left-0 right-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm z-50',
+        'border-b border-gray-100 dark:border-gray-800',
+        position === 'fixed' ? 'fixed' : 'sticky'
+      )}
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Lado izquierdo: Logo o Back + Logo */}
@@ -142,7 +150,11 @@ export function PublicHeader({
               className="sm:hidden p-2 text-gray-600 dark:text-gray-300"
               aria-label={mobileMenuOpen ? 'Cerrar menú' : 'Abrir menú'}
             >
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              {mobileMenuOpen ? (
+                <X className="w-6 h-6" />
+              ) : (
+                <Menu className="w-6 h-6" />
+              )}
             </button>
           </div>
         </div>

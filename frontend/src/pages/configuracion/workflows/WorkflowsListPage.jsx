@@ -22,7 +22,11 @@ import {
 } from 'lucide-react';
 
 import { Button, ConfirmDialog } from '@/components/ui';
-import { ConfiguracionPageLayout, ConfigSearchBar, ConfigEmptyState } from '@/components/configuracion';
+import {
+  ConfiguracionPageLayout,
+  ConfigSearchBar,
+  ConfigEmptyState,
+} from '@/pages/configuracion/components';
 import { useToast } from '@/hooks/utils';
 import { useModalManager } from '@/hooks/utils';
 import {
@@ -57,12 +61,16 @@ const ENTIDAD_LABELS = {
 };
 
 const ENTIDAD_COLORS = {
-  orden_compra: 'bg-primary-100 text-primary-800 dark:bg-primary-900/30 dark:text-primary-300',
-  venta_pos: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
-  descuento_pos: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
+  orden_compra:
+    'bg-primary-100 text-primary-800 dark:bg-primary-900/30 dark:text-primary-300',
+  venta_pos:
+    'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
+  descuento_pos:
+    'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
   cita: 'bg-secondary-100 text-secondary-800 dark:bg-secondary-900/30 dark:text-secondary-300',
   gasto: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
-  requisicion: 'bg-primary-100 text-primary-800 dark:bg-primary-900/30 dark:text-primary-300',
+  requisicion:
+    'bg-primary-100 text-primary-800 dark:bg-primary-900/30 dark:text-primary-300',
 };
 
 function WorkflowsListPage() {
@@ -81,13 +89,17 @@ function WorkflowsListPage() {
   });
 
   // Query params
-  const queryParams = useMemo(() => ({
-    entidad_tipo: filtroEntidad || undefined,
-    activo: filtroEstado === '' ? undefined : filtroEstado === 'true',
-  }), [filtroEntidad, filtroEstado]);
+  const queryParams = useMemo(
+    () => ({
+      entidad_tipo: filtroEntidad || undefined,
+      activo: filtroEstado === '' ? undefined : filtroEstado === 'true',
+    }),
+    [filtroEntidad, filtroEstado]
+  );
 
   // Queries
-  const { data: workflows = [], isLoading } = useWorkflowDefiniciones(queryParams);
+  const { data: workflows = [], isLoading } =
+    useWorkflowDefiniciones(queryParams);
 
   // Mutations
   const eliminarMutation = useEliminarWorkflow();
@@ -99,13 +111,16 @@ function WorkflowsListPage() {
     if (!searchTerm) return workflows;
     const term = searchTerm.toLowerCase();
     return workflows.filter(
-      (w) => w.nombre.toLowerCase().includes(term) || w.codigo.toLowerCase().includes(term)
+      (w) =>
+        w.nombre.toLowerCase().includes(term) ||
+        w.codigo.toLowerCase().includes(term)
     );
   }, [workflows, searchTerm]);
 
   // Handlers
   const handleNuevo = () => navigate('/configuracion/workflows/nuevo');
-  const handleEditar = (workflow) => navigate(`/configuracion/workflows/${workflow.id}`);
+  const handleEditar = (workflow) =>
+    navigate(`/configuracion/workflows/${workflow.id}`);
 
   const handleDuplicar = async (workflow) => {
     try {
@@ -113,15 +128,22 @@ function WorkflowsListPage() {
       toast.success('Workflow duplicado exitosamente');
       setMenuAbierto(null);
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Error al duplicar workflow');
+      toast.error(
+        error.response?.data?.message || 'Error al duplicar workflow'
+      );
     }
   };
 
   const handlePublicar = async (workflow) => {
     const nuevoEstado = !workflow.activo;
     try {
-      await publicarMutation.mutateAsync({ id: workflow.id, activo: nuevoEstado });
-      toast.success(nuevoEstado ? 'Workflow publicado' : 'Workflow despublicado');
+      await publicarMutation.mutateAsync({
+        id: workflow.id,
+        activo: nuevoEstado,
+      });
+      toast.success(
+        nuevoEstado ? 'Workflow publicado' : 'Workflow despublicado'
+      );
       setMenuAbierto(null);
     } catch (error) {
       toast.error(error.response?.data?.message || 'Error al cambiar estado');
@@ -169,8 +191,20 @@ function WorkflowsListPage() {
           onChange={setSearchTerm}
           placeholder="Buscar por nombre o código..."
           filters={[
-            { name: 'entidad', value: filtroEntidad, onChange: setFiltroEntidad, options: ENTIDADES_TIPO, placeholder: 'Todas las entidades' },
-            { name: 'estado', value: filtroEstado, onChange: setFiltroEstado, options: FILTROS_ESTADO, placeholder: 'Todos' },
+            {
+              name: 'entidad',
+              value: filtroEntidad,
+              onChange: setFiltroEntidad,
+              options: ENTIDADES_TIPO,
+              placeholder: 'Todas las entidades',
+            },
+            {
+              name: 'estado',
+              value: filtroEstado,
+              onChange: setFiltroEstado,
+              options: FILTROS_ESTADO,
+              placeholder: 'Todos',
+            },
           ]}
         />
 
@@ -241,21 +275,32 @@ function WorkflowCard({
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-3 mb-2">
-            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
-              workflow.activo
-                ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
-                : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
-            }`}>
+            <span
+              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
+                workflow.activo
+                  ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+                  : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
+              }`}
+            >
               {workflow.activo ? (
-                <><CheckCircle className="w-3 h-3" />Publicado</>
+                <>
+                  <CheckCircle className="w-3 h-3" />
+                  Publicado
+                </>
               ) : (
-                <><Clock className="w-3 h-3" />Borrador</>
+                <>
+                  <Clock className="w-3 h-3" />
+                  Borrador
+                </>
               )}
             </span>
 
-            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-              ENTIDAD_COLORS[workflow.entidad_tipo] || 'bg-gray-100 text-gray-600'
-            }`}>
+            <span
+              className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                ENTIDAD_COLORS[workflow.entidad_tipo] ||
+                'bg-gray-100 text-gray-600'
+              }`}
+            >
               {ENTIDAD_LABELS[workflow.entidad_tipo] || workflow.entidad_tipo}
             </span>
 
@@ -275,7 +320,9 @@ function WorkflowCard({
             <code className="bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded text-xs">
               {workflow.codigo}
             </code>
-            {workflow.descripcion && <span className="ml-2">{workflow.descripcion}</span>}
+            {workflow.descripcion && (
+              <span className="ml-2">{workflow.descripcion}</span>
+            )}
           </p>
 
           <div className="flex items-center gap-4 mt-3 text-xs text-gray-500 dark:text-gray-400">
@@ -318,7 +365,17 @@ function WorkflowCard({
                 onClick={() => onPublicar(workflow)}
                 className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
               >
-                {workflow.activo ? <><Pause className="w-4 h-4" />Despublicar</> : <><Play className="w-4 h-4" />Publicar</>}
+                {workflow.activo ? (
+                  <>
+                    <Pause className="w-4 h-4" />
+                    Despublicar
+                  </>
+                ) : (
+                  <>
+                    <Play className="w-4 h-4" />
+                    Publicar
+                  </>
+                )}
               </button>
 
               <hr className="my-1 border-gray-200 dark:border-gray-700" />
@@ -330,7 +387,9 @@ function WorkflowCard({
               >
                 <Trash2 className="w-4 h-4" />
                 Eliminar
-                {tieneInstanciasActivas && <span className="text-xs text-gray-400 ml-auto">En uso</span>}
+                {tieneInstanciasActivas && (
+                  <span className="text-xs text-gray-400 ml-auto">En uso</span>
+                )}
               </button>
             </div>
           )}

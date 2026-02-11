@@ -14,11 +14,14 @@ import { useModalManager } from '@/hooks/utils';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useNodesState, useEdgesState, addEdge, Panel } from 'reactflow';
 
-import WorkflowCanvas from '@/components/workflows/canvas/WorkflowCanvas';
-import WorkflowToolbar from '@/components/workflows/toolbar/WorkflowToolbar';
-import NodePalette from '@/components/workflows/toolbar/NodePalette';
-import { NodeConfigDrawer, WorkflowSettingsDrawer } from '@/components/workflows/drawers';
-import { PublishWorkflowModal } from '@/components/workflows/modals';
+import WorkflowCanvas from '@/pages/configuracion/workflows/components/canvas/WorkflowCanvas';
+import WorkflowToolbar from '@/pages/configuracion/workflows/components/toolbar/WorkflowToolbar';
+import NodePalette from '@/pages/configuracion/workflows/components/toolbar/NodePalette';
+import {
+  NodeConfigDrawer,
+  WorkflowSettingsDrawer,
+} from '@/pages/configuracion/workflows/components/drawers';
+import { PublishWorkflowModal } from '@/pages/configuracion/workflows/components/modals';
 import { useToast } from '@/hooks/utils';
 import { useWorkflowValidation } from '@/hooks/sistema';
 import {
@@ -53,7 +56,7 @@ function WorkflowDesignerPage() {
   const navigate = useNavigate();
   const toast = useToast();
   const reactFlowWrapper = useRef(null);
-  const [reactFlowInstance, setReactFlowInstance] = useState(null);
+  const [reactFlowInstance] = useState(null);
 
   const isNew = !id || id === 'nuevo';
 
@@ -123,7 +126,6 @@ function WorkflowDesignerPage() {
     }
   }, [existingWorkflow, isNew, setNodes, setEdges]);
 
-
   // Handler para conectar nodos
   const onConnect = useCallback(
     (connection) => {
@@ -170,34 +172,40 @@ function WorkflowDesignerPage() {
   );
 
   // Handler click en nodo
-  const onNodeClick = useCallback((event, node) => {
-    // Solo abrir drawer si no está en modo publicado
-    if (!workflowData.activo) {
-      setSelectedNode(node);
-      setIsNodeConfigOpen(true);
-    }
-  }, [workflowData.activo]);
+  const onNodeClick = useCallback(
+    (event, node) => {
+      // Solo abrir drawer si no está en modo publicado
+      if (!workflowData.activo) {
+        setSelectedNode(node);
+        setIsNodeConfigOpen(true);
+      }
+    },
+    [workflowData.activo]
+  );
 
   // Handler para guardar configuración del nodo
-  const handleNodeConfigSave = useCallback(({ label, config }) => {
-    setNodes((nds) =>
-      nds.map((node) => {
-        if (node.id === selectedNode?.id) {
-          return {
-            ...node,
-            data: {
-              ...node.data,
-              label,
-              config,
-            },
-          };
-        }
-        return node;
-      })
-    );
-    setIsDirty(true);
-    setIsNodeConfigOpen(false);
-  }, [selectedNode, setNodes]);
+  const handleNodeConfigSave = useCallback(
+    ({ label, config }) => {
+      setNodes((nds) =>
+        nds.map((node) => {
+          if (node.id === selectedNode?.id) {
+            return {
+              ...node,
+              data: {
+                ...node.data,
+                label,
+                config,
+              },
+            };
+          }
+          return node;
+        })
+      );
+      setIsDirty(true);
+      setIsNodeConfigOpen(false);
+    },
+    [selectedNode, setNodes]
+  );
 
   // Handler para cerrar drawer de configuración
   const handleNodeConfigClose = useCallback(() => {
@@ -294,7 +302,9 @@ function WorkflowDesignerPage() {
       });
       setWorkflowData((prev) => ({ ...prev, activo: nuevoEstado }));
       closeModal('publish');
-      toast.success(nuevoEstado ? 'Workflow publicado' : 'Workflow despublicado');
+      toast.success(
+        nuevoEstado ? 'Workflow publicado' : 'Workflow despublicado'
+      );
     } catch (error) {
       toast.error(error.response?.data?.message || 'Error al cambiar estado');
     }
@@ -307,11 +317,14 @@ function WorkflowDesignerPage() {
   };
 
   // Handler para eliminar nodos/edges seleccionados
-  const handleSelectionChange = useCallback(({ nodes: selectedNodes, edges: selectedEdges }) => {
-    // Guardar selección actual para referencia
-    selectedNodesRef.current = selectedNodes;
-    selectedEdgesRef.current = selectedEdges;
-  }, []);
+  const handleSelectionChange = useCallback(
+    ({ nodes: selectedNodes, edges: selectedEdges }) => {
+      // Guardar selección actual para referencia
+      selectedNodesRef.current = selectedNodes;
+      selectedEdgesRef.current = selectedEdges;
+    },
+    []
+  );
 
   // Refs para nodos/edges seleccionados
   const selectedNodesRef = useRef([]);
@@ -322,8 +335,11 @@ function WorkflowDesignerPage() {
     const handleKeyDown = (event) => {
       // Solo si no estamos en modo publicado y no hay inputs activos
       if (workflowData.activo) return;
-      if (document.activeElement.tagName === 'INPUT' ||
-          document.activeElement.tagName === 'TEXTAREA') return;
+      if (
+        document.activeElement.tagName === 'INPUT' ||
+        document.activeElement.tagName === 'TEXTAREA'
+      )
+        return;
 
       // Delete o Backspace para eliminar selección
       if (event.key === 'Delete' || event.key === 'Backspace') {
@@ -334,15 +350,21 @@ function WorkflowDesignerPage() {
           event.preventDefault();
 
           // No permitir eliminar nodo inicio
-          const nodesToDelete = selectedNodes.filter((n) => n.type !== 'inicio');
+          const nodesToDelete = selectedNodes.filter(
+            (n) => n.type !== 'inicio'
+          );
 
           if (nodesToDelete.length > 0) {
             const nodeIdsToDelete = nodesToDelete.map((n) => n.id);
-            setNodes((nds) => nds.filter((n) => !nodeIdsToDelete.includes(n.id)));
+            setNodes((nds) =>
+              nds.filter((n) => !nodeIdsToDelete.includes(n.id))
+            );
             // También eliminar edges conectados
             setEdges((eds) =>
               eds.filter(
-                (e) => !nodeIdsToDelete.includes(e.source) && !nodeIdsToDelete.includes(e.target)
+                (e) =>
+                  !nodeIdsToDelete.includes(e.source) &&
+                  !nodeIdsToDelete.includes(e.target)
               )
             );
             setIsDirty(true);
@@ -350,7 +372,9 @@ function WorkflowDesignerPage() {
 
           if (selectedEdges.length > 0) {
             const edgeIdsToDelete = selectedEdges.map((e) => e.id);
-            setEdges((eds) => eds.filter((e) => !edgeIdsToDelete.includes(e.id)));
+            setEdges((eds) =>
+              eds.filter((e) => !edgeIdsToDelete.includes(e.id))
+            );
             setIsDirty(true);
           }
         }
@@ -378,7 +402,9 @@ function WorkflowDesignerPage() {
       <div className="h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600 dark:text-gray-400">Cargando workflow...</p>
+          <p className="mt-4 text-gray-600 dark:text-gray-400">
+            Cargando workflow...
+          </p>
         </div>
       </div>
     );

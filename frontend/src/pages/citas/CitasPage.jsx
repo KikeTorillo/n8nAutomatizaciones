@@ -1,23 +1,32 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { format } from 'date-fns';
-import { Calendar, Plus, TrendingUp, Clock, CheckCircle, List, CalendarDays, FileSpreadsheet } from 'lucide-react';
+import {
+  Calendar,
+  Plus,
+  TrendingUp,
+  Clock,
+  CheckCircle,
+  List,
+  CalendarDays,
+  FileSpreadsheet,
+} from 'lucide-react';
 import {
   Button,
   Pagination,
   StatCardGrid,
   ViewTabs,
-  ConPermiso
+  ConPermiso,
 } from '@/components/ui';
-import CitasList from '@/components/citas/CitasList';
-import CitaFilters from '@/components/citas/CitaFilters';
-import CitaDetailModal from '@/components/citas/CitaDetailModal';
-import CitaFormDrawer from '@/components/citas/CitaFormDrawer';
-import CompletarCitaModal from '@/components/citas/CompletarCitaModal';
-import NoShowModal from '@/components/citas/NoShowModal';
-import CancelarCitaModal from '@/components/citas/CancelarCitaModal';
-import CalendarioMensual from '@/components/citas/CalendarioMensual';
-import AgendamientoPageLayout from '@/components/agendamiento/AgendamientoPageLayout';
+import CitasList from '@/pages/citas/components/CitasList';
+import CitaFilters from '@/pages/citas/components/CitaFilters';
+import CitaDetailModal from '@/pages/citas/components/CitaDetailModal';
+import CitaFormDrawer from '@/pages/citas/components/CitaFormDrawer';
+import CompletarCitaModal from '@/pages/citas/components/CompletarCitaModal';
+import NoShowModal from '@/pages/citas/components/NoShowModal';
+import CancelarCitaModal from '@/pages/citas/components/CancelarCitaModal';
+import CalendarioMensual from '@/pages/citas/components/CalendarioMensual';
+import AgendamientoPageLayout from '@/components/shared/agendamiento/AgendamientoPageLayout';
 import { useModalManager, useFilters, usePagination } from '@/hooks/utils';
 import {
   useCitas,
@@ -46,12 +55,7 @@ function CitasPage() {
   const ITEMS_PER_PAGE = 20;
 
   // Estado de filtros con persistencia usando useFilters
-  const {
-    filtros,
-    filtrosQuery,
-    setFiltros,
-    limpiarFiltros,
-  } = useFilters(
+  const { filtros, filtrosQuery, setFiltros, limpiarFiltros } = useFilters(
     {
       busqueda: '',
       estado: '',
@@ -80,7 +84,13 @@ function CitasPage() {
     getModalProps,
   } = useModalManager({
     detalles: { isOpen: false, data: null },
-    formulario: { isOpen: false, data: null, mode: 'create', fechaPreseleccionada: null, clientePreseleccionado: null },
+    formulario: {
+      isOpen: false,
+      data: null,
+      mode: 'create',
+      fechaPreseleccionada: null,
+      clientePreseleccionado: null,
+    },
     cancelar: { isOpen: false, data: null },
     completar: { isOpen: false, data: null },
     noShow: { isOpen: false, data: null },
@@ -106,13 +116,21 @@ function CitasPage() {
     limit: ITEMS_PER_PAGE,
   });
   const citas = citasData?.citas || [];
-  const citasMeta = citasData?.meta || { total: 0, page: 1, limit: ITEMS_PER_PAGE, total_pages: 1 };
+  const citasMeta = citasData?.meta || {
+    total: 0,
+    page: 1,
+    limit: ITEMS_PER_PAGE,
+    total_pages: 1,
+  };
 
   const { data: citasDelDiaData } = useCitasDelDia();
   const citasDelDia = citasDelDiaData || [];
 
   // ✅ FIX: Query para citas pendientes (backend limita a max 100)
-  const { data: todasCitasPendientesData } = useCitas({ estado: 'pendiente', limit: 100 });
+  const { data: todasCitasPendientesData } = useCitas({
+    estado: 'pendiente',
+    limit: 100,
+  });
   const todasCitasPendientes = todasCitasPendientesData?.citas || [];
 
   const { data: profesionalesData } = useProfesionales({ activo: true });
@@ -174,8 +192,8 @@ function CitasPage() {
     navigate('/pos/venta', {
       state: {
         cita,
-        fromCitas: true
-      }
+        fromCitas: true,
+      },
     });
   };
 
@@ -204,50 +222,93 @@ function CitasPage() {
 
     const datosExportar = citas.map((c) => ({
       codigo: c.codigo_cita || '',
-      fecha: c.fecha_cita ? format(new Date(c.fecha_cita.split('T')[0] + 'T12:00:00'), 'dd/MM/yyyy') : '',
+      fecha: c.fecha_cita
+        ? format(
+            new Date(c.fecha_cita.split('T')[0] + 'T12:00:00'),
+            'dd/MM/yyyy'
+          )
+        : '',
       hora: c.hora_inicio || '',
       cliente: c.cliente_nombre || '',
       telefono: c.cliente_telefono || '',
       profesional: c.profesional_nombre || '',
-      servicios: c.servicios?.map((s) => s.nombre).join(', ') || c.servicio_nombre || '',
+      servicios:
+        c.servicios?.map((s) => s.nombre).join(', ') || c.servicio_nombre || '',
       total: c.precio_total ? `$${Number(c.precio_total).toFixed(2)}` : '',
       estado: estadoLabels[c.estado] || c.estado || '',
     }));
 
-    exportCSV(datosExportar, [
-      { key: 'codigo', header: 'Código' },
-      { key: 'fecha', header: 'Fecha' },
-      { key: 'hora', header: 'Hora' },
-      { key: 'cliente', header: 'Cliente' },
-      { key: 'telefono', header: 'Teléfono' },
-      { key: 'profesional', header: 'Profesional' },
-      { key: 'servicios', header: 'Servicios' },
-      { key: 'total', header: 'Total' },
-      { key: 'estado', header: 'Estado' },
-    ], `citas_${format(new Date(), 'yyyyMMdd_HHmm')}`);
+    exportCSV(
+      datosExportar,
+      [
+        { key: 'codigo', header: 'Código' },
+        { key: 'fecha', header: 'Fecha' },
+        { key: 'hora', header: 'Hora' },
+        { key: 'cliente', header: 'Cliente' },
+        { key: 'telefono', header: 'Teléfono' },
+        { key: 'profesional', header: 'Profesional' },
+        { key: 'servicios', header: 'Servicios' },
+        { key: 'total', header: 'Total' },
+        { key: 'estado', header: 'Estado' },
+      ],
+      `citas_${format(new Date(), 'yyyyMMdd_HHmm')}`
+    );
   };
 
   // Calcular estadísticas memoizadas para evitar recálculos innecesarios
-  const estadisticas = useMemo(() => ({
-    hoy: citasDelDia.length,
-    pendientes: todasCitasPendientes.length,
-    enCurso: citasDelDia.filter((c) => c.estado === 'en_curso').length,
-    completadas: citasDelDia.filter((c) => c.estado === 'completada').length,
-  }), [citasDelDia, todasCitasPendientes]);
+  const estadisticas = useMemo(
+    () => ({
+      hoy: citasDelDia.length,
+      pendientes: todasCitasPendientes.length,
+      enCurso: citasDelDia.filter((c) => c.estado === 'en_curso').length,
+      completadas: citasDelDia.filter((c) => c.estado === 'completada').length,
+    }),
+    [citasDelDia, todasCitasPendientes]
+  );
 
   // Configuración de StatCards
-  const statsConfig = useMemo(() => [
-    { key: 'hoy', icon: Calendar, label: 'Citas Hoy', value: estadisticas.hoy, color: 'primary' },
-    { key: 'pendientes', icon: Clock, label: 'Pendientes', value: estadisticas.pendientes, color: 'yellow' },
-    { key: 'enCurso', icon: TrendingUp, label: 'En Curso', value: estadisticas.enCurso, color: 'primary' },
-    { key: 'completadas', icon: CheckCircle, label: 'Completadas', value: estadisticas.completadas, color: 'green' },
-  ], [estadisticas]);
+  const statsConfig = useMemo(
+    () => [
+      {
+        key: 'hoy',
+        icon: Calendar,
+        label: 'Citas Hoy',
+        value: estadisticas.hoy,
+        color: 'primary',
+      },
+      {
+        key: 'pendientes',
+        icon: Clock,
+        label: 'Pendientes',
+        value: estadisticas.pendientes,
+        color: 'yellow',
+      },
+      {
+        key: 'enCurso',
+        icon: TrendingUp,
+        label: 'En Curso',
+        value: estadisticas.enCurso,
+        color: 'primary',
+      },
+      {
+        key: 'completadas',
+        icon: CheckCircle,
+        label: 'Completadas',
+        value: estadisticas.completadas,
+        color: 'green',
+      },
+    ],
+    [estadisticas]
+  );
 
   // Configuración de ViewTabs
-  const viewTabsConfig = useMemo(() => [
-    { id: 'lista', label: 'Vista Lista', icon: List },
-    { id: 'calendario', label: 'Vista Calendario', icon: CalendarDays },
-  ], []);
+  const viewTabsConfig = useMemo(
+    () => [
+      { id: 'lista', label: 'Vista Lista', icon: List },
+      { id: 'calendario', label: 'Vista Calendario', icon: CalendarDays },
+    ],
+    []
+  );
 
   return (
     <AgendamientoPageLayout
@@ -283,67 +344,67 @@ function CitasPage() {
       }
     >
       {/* Estadísticas Rápidas */}
-        <StatCardGrid stats={statsConfig} columns={4} />
+      <StatCardGrid stats={statsConfig} columns={4} />
 
-        {/* Sistema de Tabs - Vista Lista / Calendario */}
-        <div className="bg-white dark:bg-gray-800 rounded-t-lg px-6">
-          <ViewTabs
-            tabs={viewTabsConfig}
-            activeTab={vistaActiva}
-            onChange={setVistaActiva}
+      {/* Sistema de Tabs - Vista Lista / Calendario */}
+      <div className="bg-white dark:bg-gray-800 rounded-t-lg px-6">
+        <ViewTabs
+          tabs={viewTabsConfig}
+          activeTab={vistaActiva}
+          onChange={setVistaActiva}
+        />
+      </div>
+
+      {/* Contenido según vista activa */}
+      {vistaActiva === 'lista' ? (
+        <>
+          {/* Filtros (solo en vista lista) */}
+          <CitaFilters
+            filtros={filtros}
+            onFiltrosChange={handleFiltrosChange}
+            profesionales={profesionales}
+            servicios={servicios}
+            onLimpiarFiltros={handleLimpiarFiltros}
           />
-        </div>
 
-        {/* Contenido según vista activa */}
-        {vistaActiva === 'lista' ? (
-          <>
-            {/* Filtros (solo en vista lista) */}
-            <CitaFilters
-              filtros={filtros}
-              onFiltrosChange={handleFiltrosChange}
-              profesionales={profesionales}
-              servicios={servicios}
-              onLimpiarFiltros={handleLimpiarFiltros}
-            />
+          {/* Lista de Citas */}
+          <CitasList
+            citas={citas}
+            isLoading={cargandoCitas}
+            onVerDetalles={handleVerDetalles}
+            onCambiarEstado={handleCambiarEstado}
+            onEditar={handleEditar}
+            onCancelar={handleAbrirModalCancelar}
+            onLimpiarFiltros={handleLimpiarFiltros}
+          />
 
-            {/* Lista de Citas */}
-            <CitasList
-              citas={citas}
-              isLoading={cargandoCitas}
-              onVerDetalles={handleVerDetalles}
-              onCambiarEstado={handleCambiarEstado}
-              onEditar={handleEditar}
-              onCancelar={handleAbrirModalCancelar}
-              onLimpiarFiltros={handleLimpiarFiltros}
-            />
-
-            {/* Paginación */}
-            {citasMeta.total_pages > 1 && (
-              <div className="mt-4">
-                <Pagination
-                  pagination={{
-                    page: citasMeta.page,
-                    limit: citasMeta.limit,
-                    total: citasMeta.total,
-                    totalPages: citasMeta.total_pages,
-                    hasNext: citasMeta.has_next,
-                    hasPrev: citasMeta.has_prev,
-                  }}
-                  onPageChange={handlePageChange}
-                />
-              </div>
-            )}
-          </>
-        ) : (
-          <>
-            {/* Calendario Mensual */}
-            <CalendarioMensual
-              onVerCita={handleVerDetalles}
-              onCrearCita={handleNuevaCita}
-              onEditarCita={handleEditar}
-            />
-          </>
-        )}
+          {/* Paginación */}
+          {citasMeta.total_pages > 1 && (
+            <div className="mt-4">
+              <Pagination
+                pagination={{
+                  page: citasMeta.page,
+                  limit: citasMeta.limit,
+                  total: citasMeta.total,
+                  totalPages: citasMeta.total_pages,
+                  hasNext: citasMeta.has_next,
+                  hasPrev: citasMeta.has_prev,
+                }}
+                onPageChange={handlePageChange}
+              />
+            </div>
+          )}
+        </>
+      ) : (
+        <>
+          {/* Calendario Mensual */}
+          <CalendarioMensual
+            onVerCita={handleVerDetalles}
+            onCrearCita={handleNuevaCita}
+            onEditarCita={handleEditar}
+          />
+        </>
+      )}
 
       {/* Modal de Detalles */}
       <CitaDetailModal
@@ -364,7 +425,9 @@ function CitasPage() {
         mode={getModalProps('formulario').mode || 'create'}
         cita={getModalData('formulario')}
         fechaPreseleccionada={getModalProps('formulario').fechaPreseleccionada}
-        clientePreseleccionado={getModalProps('formulario').clientePreseleccionado}
+        clientePreseleccionado={
+          getModalProps('formulario').clientePreseleccionado
+        }
       />
 
       {/* Modal de Completar Cita */}

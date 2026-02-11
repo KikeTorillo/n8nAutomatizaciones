@@ -1,28 +1,26 @@
 import { memo } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { AlertCircle } from 'lucide-react';
 import { EmptyState } from '../../molecules/EmptyState';
 
 interface NotFoundConfig {
   title?: string;
   description?: string;
-  backTo?: string;
   backLabel?: string;
 }
 
 interface DetailNotFoundStateProps {
   config?: NotFoundConfig;
+  /** Callback para el botón de volver (modo controlado, sin router) */
+  onBack?: () => void;
 }
 
 const DetailNotFoundState = memo(function DetailNotFoundState({
   config = {},
+  onBack,
 }: DetailNotFoundStateProps) {
-  const navigate = useNavigate();
-
   const {
     title = 'No encontrado',
     description = 'El recurso que buscas no existe o fue eliminado.',
-    backTo,
     backLabel = 'Volver',
   } = config;
 
@@ -32,8 +30,8 @@ const DetailNotFoundState = memo(function DetailNotFoundState({
         icon={AlertCircle}
         title={title}
         description={description}
-        actionLabel={backTo ? backLabel : undefined}
-        onAction={backTo ? () => navigate(backTo) : undefined}
+        actionLabel={onBack ? backLabel : undefined}
+        onAction={onBack}
       />
     </div>
   );

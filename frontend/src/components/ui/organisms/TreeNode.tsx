@@ -1,6 +1,6 @@
 import { useState, memo, forwardRef, type ReactNode } from 'react';
 import { ChevronRight, ChevronDown } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '../lib/cn';
 
 /**
  * Contexto de renderizado para nodos del árbol
@@ -51,19 +51,19 @@ export interface TreeNodeProps<T extends Record<string, unknown>> {
  */
 function TreeNodeComponent<T extends Record<string, unknown>>(
   {
-  node,
-  level = 0,
-  childrenKey = 'children',
-  expandedState,
-  onToggleExpand,
-  renderContent,
-  renderActions,
-  getNodeId = (n) => n.id as string | number,
-  indentSize = 2,
-  className,
-  nodeClassName,
-  showToggleOnEmpty = true,
-}: TreeNodeProps<T>,
+    node,
+    level = 0,
+    childrenKey = 'children',
+    expandedState,
+    onToggleExpand,
+    renderContent,
+    renderActions,
+    getNodeId = (n) => n.id as string | number,
+    indentSize = 2,
+    className,
+    nodeClassName,
+    showToggleOnEmpty = true,
+  }: TreeNodeProps<T>,
   ref: React.ForwardedRef<HTMLDivElement>
 ) {
   const nodeId = getNodeId(node);
@@ -83,7 +83,9 @@ function TreeNodeComponent<T extends Record<string, unknown>>(
           'flex items-center justify-between p-3 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-700 mb-2 bg-white dark:bg-gray-800',
           computedNodeClassName
         )}
-        style={{ marginLeft: level > 0 ? `${level * indentSize}rem` : undefined }}
+        style={{
+          marginLeft: level > 0 ? `${level * indentSize}rem` : undefined,
+        }}
       >
         <div className="flex items-center space-x-3 flex-1 min-w-0">
           {/* Toggle Expansión */}
@@ -105,13 +107,21 @@ function TreeNodeComponent<T extends Record<string, unknown>>(
           ) : null}
 
           {/* Contenido personalizado */}
-          {renderContent(node, { isExpanded: !!isExpanded, hasChildren: !!hasChildren, level })}
+          {renderContent(node, {
+            isExpanded: !!isExpanded,
+            hasChildren: !!hasChildren,
+            level,
+          })}
         </div>
 
         {/* Acciones personalizadas */}
         {renderActions && (
           <div className="flex items-center space-x-1 ml-2 flex-shrink-0">
-            {renderActions(node, { isExpanded: !!isExpanded, hasChildren: !!hasChildren, level })}
+            {renderActions(node, {
+              isExpanded: !!isExpanded,
+              hasChildren: !!hasChildren,
+              level,
+            })}
           </div>
         )}
       </div>
@@ -142,7 +152,9 @@ function TreeNodeComponent<T extends Record<string, unknown>>(
   );
 }
 
-export const TreeNode = memo(forwardRef(TreeNodeComponent)) as <T extends Record<string, unknown>>(
+export const TreeNode = memo(forwardRef(TreeNodeComponent)) as <
+  T extends Record<string, unknown>,
+>(
   props: TreeNodeProps<T> & { ref?: React.Ref<HTMLDivElement> }
 ) => React.ReactElement | null;
 
@@ -203,7 +215,9 @@ function TreeViewComponent<T extends Record<string, unknown>>({
       loadingState || (
         <div className="flex items-center justify-center py-12">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-          <span className="ml-3 text-gray-600 dark:text-gray-400">Cargando...</span>
+          <span className="ml-3 text-gray-600 dark:text-gray-400">
+            Cargando...
+          </span>
         </div>
       )
     );
@@ -254,7 +268,10 @@ export interface UseTreeExpansionReturn {
 /**
  * Hook para manejar el estado de expansión del árbol
  */
-export function useTreeExpansion(initialState: TreeExpandedState = {}): UseTreeExpansionReturn {
+// eslint-disable-next-line react-refresh/only-export-components
+export function useTreeExpansion(
+  initialState: TreeExpandedState = {}
+): UseTreeExpansionReturn {
   const [expanded, setExpanded] = useState<TreeExpandedState>(initialState);
 
   const toggle = (nodeId: string | number) => {

@@ -6,26 +6,47 @@
  */
 
 import { useMemo, useCallback, useState } from 'react';
-import { useFilters, usePagination, normalizePagination, useModalManager, useDeleteConfirmation, useExportCSV } from '@/hooks/utils';
+import {
+  useFilters,
+  usePagination,
+  normalizePagination,
+  useModalManager,
+  useDeleteConfirmation,
+  useExportCSV,
+} from '../hooks';
 import type { ConfirmDialogProps } from '../organisms/ConfirmDialog';
 import type { DataTableColumn } from '../organisms/DataTable';
-import type { CrudHandlers, ExtraModalConfig, ExportConfig } from './ListadoCRUDPage';
+import type {
+  CrudHandlers,
+  ExtraModalConfig,
+  ExportConfig,
+} from './ListadoCRUDPage';
 
 interface UseListadoCRUDStateOptions {
   // Data
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  useListQuery: (params: Record<string, unknown>) => { data?: any; isLoading: boolean };
+   
+  useListQuery: (params: Record<string, unknown>) => {
+    data?: any;
+    isLoading: boolean;
+  };
   queryParams?: Record<string, unknown>;
   dataKey?: string;
 
   // Mutations
-  useDeleteMutation?: () => { mutate: (id: unknown) => void; isPending: boolean; [key: string]: unknown };
+  useDeleteMutation?: () => {
+    mutate: (id: unknown) => void;
+    isPending: boolean;
+    [key: string]: unknown;
+  };
   deleteMutationOptions?: Record<string, unknown>;
   extraMutations?: Record<string, unknown>;
 
   // Table
   columns: DataTableColumn[];
-  rowActions?: (row: Record<string, unknown>, handlers: CrudHandlers) => React.ReactNode;
+  rowActions?: (
+    row: Record<string, unknown>,
+    handlers: CrudHandlers
+  ) => React.ReactNode;
 
   // Filters
   initialFilters?: Record<string, unknown>;
@@ -64,13 +85,13 @@ export function useListadoCRUDState({
   const [activeView, setActiveView] = useState(defaultViewMode);
 
   // Paginación
-  const { page, handlePageChange, resetPage, queryParams } = usePagination({ limit });
+  const { page, handlePageChange, resetPage, queryParams } = usePagination({
+    limit,
+  });
 
   // Filtros
-  const { filtros, filtrosQuery, setFiltro, limpiarFiltros, filtrosActivos } = useFilters(
-    initialFilters,
-    { moduloId: filterPersistId }
-  );
+  const { filtros, filtrosQuery, setFiltro, limpiarFiltros, filtrosActivos } =
+    useFilters(initialFilters, { moduloId: filterPersistId });
 
   // Modales base + extras
   const extraModalConfig = useMemo(
@@ -90,7 +111,11 @@ export function useListadoCRUDState({
     stats: { isOpen: false, data: null },
     ...extraModalConfig,
   }) as {
-    openModal: (name: string, data?: unknown, extraProps?: Record<string, unknown>) => void;
+    openModal: (
+      name: string,
+      data?: unknown,
+      extraProps?: Record<string, unknown>
+    ) => void;
     closeModal: (name: string, clearData?: boolean) => void;
     isOpen: (name: string) => boolean;
     getModalData: (name: string) => Record<string, unknown> | null;
@@ -106,7 +131,10 @@ export function useListadoCRUDState({
   });
 
   // Items derivados
-  const items = useMemo(() => data?.[dataKey] || data?.items || [], [data, dataKey]);
+  const items = useMemo(
+    () => data?.[dataKey] || data?.items || [],
+    [data, dataKey]
+  );
 
   // Normalizar paginación del backend
   const paginacion = useMemo(() => {
@@ -126,7 +154,15 @@ export function useListadoCRUDState({
       hasNext: page < totalPages,
       hasPrev: page > 1,
     };
-  }, [page, queryParams.limit, data?.paginacion, data?.pagination, data?.total, data?.limit, items.length]);
+  }, [
+    page,
+    queryParams.limit,
+    data?.paginacion,
+    data?.pagination,
+    data?.total,
+    data?.limit,
+    items.length,
+  ]);
 
   // Export CSV
   const { exportCSV } = useExportCSV();

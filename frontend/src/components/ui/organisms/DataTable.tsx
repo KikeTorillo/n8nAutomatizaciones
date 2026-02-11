@@ -1,5 +1,13 @@
-import { useMemo, memo, useCallback, forwardRef, type ReactNode, type ComponentType, type KeyboardEvent } from 'react';
-import { cn } from '@/lib/utils';
+import {
+  useMemo,
+  memo,
+  useCallback,
+  forwardRef,
+  type ReactNode,
+  type ComponentType,
+  type KeyboardEvent,
+} from 'react';
+import { cn } from '../lib/cn';
 import { SkeletonTable } from '../molecules/SkeletonTable';
 import { EmptyState } from '../molecules/EmptyState';
 import { Pagination } from './Pagination';
@@ -101,25 +109,32 @@ export interface DataTableProps<T = Record<string, unknown>> {
  */
 function DataTableComponent<T = Record<string, unknown>>(
   {
-  columns,
-  data = [],
-  keyField = 'id' as keyof T,
-  isLoading = false,
-  onRowClick,
-  hoverable = true,
-  striped = false,
-  emptyState = {},
-  pagination,
-  onPageChange,
-  skeletonRows = 5,
-  className,
-  tableClassName,
-}: DataTableProps<T>,
+    columns,
+    data = [],
+    keyField = 'id' as keyof T,
+    isLoading = false,
+    onRowClick,
+    hoverable = true,
+    striped = false,
+    emptyState = {},
+    pagination,
+    onPageChange,
+    skeletonRows = 5,
+    className,
+    tableClassName,
+  }: DataTableProps<T>,
   ref: React.ForwardedRef<HTMLDivElement>
 ) {
   // Calcular anchos de columna para skeleton
   const columnWidths = useMemo(() => {
-    return columns.map((col) => (TABLE_WIDTH_MAP[col.width || 'md'] || 'md') as 'sm' | 'md' | 'lg' | 'xl');
+    return columns.map(
+      (col) =>
+        (TABLE_WIDTH_MAP[col.width || 'md'] || 'md') as
+          | 'sm'
+          | 'md'
+          | 'lg'
+          | 'xl'
+    );
   }, [columns]);
 
   // Handler memoizado para click en fila
@@ -134,7 +149,11 @@ function DataTableComponent<T = Record<string, unknown>>(
   if (isLoading) {
     return (
       <div ref={ref} className={className}>
-        <SkeletonTable rows={skeletonRows} columns={columns.length} columnWidths={columnWidths} />
+        <SkeletonTable
+          rows={skeletonRows}
+          columns={columns.length}
+          columnWidths={columnWidths}
+        />
       </div>
     );
   }
@@ -160,7 +179,10 @@ function DataTableComponent<T = Record<string, unknown>>(
       {/* Tabla */}
       <div className={TABLE_BASE_STYLES.container}>
         <div className={TABLE_BASE_STYLES.wrapper}>
-          <table role="table" className={cn(TABLE_BASE_STYLES.table, tableClassName)}>
+          <table
+            role="table"
+            className={cn(TABLE_BASE_STYLES.table, tableClassName)}
+          >
             {/* Header */}
             <thead role="rowgroup" className={TABLE_BASE_STYLES.thead}>
               <tr role="row">
@@ -171,7 +193,8 @@ function DataTableComponent<T = Record<string, unknown>>(
                     role="columnheader"
                     className={cn(
                       TABLE_HEADER_CELL,
-                      TABLE_ALIGN_CLASSES[column.align || 'left'] || 'text-left',
+                      TABLE_ALIGN_CLASSES[column.align || 'left'] ||
+                        'text-left',
                       TABLE_WIDTH_CLASSES[column.width || 'auto'],
                       column.hideOnMobile && 'hidden md:table-cell',
                       column.headerClassName
@@ -187,7 +210,10 @@ function DataTableComponent<T = Record<string, unknown>>(
             <tbody role="rowgroup" className={TABLE_BASE_STYLES.tbody}>
               {data.map((row, rowIndex) => (
                 <DataTableRow
-                  key={String((row as Record<string, unknown>)[keyField as string] || rowIndex)}
+                  key={String(
+                    (row as Record<string, unknown>)[keyField as string] ||
+                      rowIndex
+                  )}
                   row={row}
                   rowIndex={rowIndex}
                   columns={columns}
@@ -202,12 +228,16 @@ function DataTableComponent<T = Record<string, unknown>>(
       </div>
 
       {/* Paginación */}
-      {pagination && onPageChange && <Pagination pagination={pagination} onPageChange={onPageChange} />}
+      {pagination && onPageChange && (
+        <Pagination pagination={pagination} onPageChange={onPageChange} />
+      )}
     </div>
   );
 }
 
-export const DataTable = memo(forwardRef(DataTableComponent)) as <T = Record<string, unknown>>(
+export const DataTable = memo(forwardRef(DataTableComponent)) as <
+  T = Record<string, unknown>,
+>(
   props: DataTableProps<T> & { ref?: React.Ref<HTMLDivElement> }
 ) => React.ReactElement | null;
 
@@ -240,13 +270,16 @@ const DataTableRow = memo(function DataTableRow<T>({
     if (onRowClick) onRowClick(row);
   }, [onRowClick, row]);
 
-  const handleKeyDown = useCallback((e: KeyboardEvent<HTMLTableRowElement>) => {
-    if (!onRowClick) return;
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      onRowClick(row);
-    }
-  }, [onRowClick, row]);
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent<HTMLTableRowElement>) => {
+      if (!onRowClick) return;
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        onRowClick(row);
+      }
+    },
+    [onRowClick, row]
+  );
 
   return (
     <tr
@@ -264,8 +297,12 @@ const DataTableRow = memo(function DataTableRow<T>({
       )}
     >
       {columns.map((column, colIndex) => {
-        const value = column.key ? (row as Record<string, unknown>)[column.key as string] : null;
-        const content = column.render ? column.render(row, value, rowIndex) : (value as ReactNode);
+        const value = column.key
+          ? (row as Record<string, unknown>)[column.key as string]
+          : null;
+        const content = column.render
+          ? column.render(row, value, rowIndex)
+          : (value as ReactNode);
 
         return (
           <td
@@ -301,7 +338,13 @@ export const DataTableActions = memo(function DataTableActions({
   children,
   className,
 }: DataTableActionsProps) {
-  return <div className={cn('flex items-center justify-end gap-1 sm:gap-2', className)}>{children}</div>;
+  return (
+    <div
+      className={cn('flex items-center justify-end gap-1 sm:gap-2', className)}
+    >
+      {children}
+    </div>
+  );
 });
 
 DataTableActions.displayName = 'DataTableActions';

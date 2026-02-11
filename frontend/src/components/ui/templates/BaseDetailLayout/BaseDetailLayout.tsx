@@ -1,5 +1,6 @@
-import { memo, type ReactNode } from 'react';
-import { cn } from '@/lib/utils';
+import { memo, useCallback, type ReactNode } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { cn } from '../../lib/cn';
 import { DetailHeader } from './DetailHeader';
 import { DetailLoadingState } from './DetailLoadingState';
 import { DetailNotFoundState } from './DetailNotFoundState';
@@ -63,10 +64,17 @@ const BaseDetailLayout = memo(function BaseDetailLayout({
   notFoundConfig = {},
   className,
 }: BaseDetailLayoutProps) {
+  const navigate = useNavigate();
+  const handleBack = useCallback(() => {
+    if (backTo) navigate(backTo);
+  }, [backTo, navigate]);
+
   // Estado de carga
   if (isLoading) {
     return (
-      <div className={cn('max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6', className)}>
+      <div
+        className={cn('max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6', className)}
+      >
         {backTo && (
           <div className="mb-6">
             <div className="h-8 w-32 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
@@ -80,8 +88,13 @@ const BaseDetailLayout = memo(function BaseDetailLayout({
   // Estado no encontrado
   if (notFound || error?.response?.status === 404) {
     return (
-      <div className={cn('max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6', className)}>
-        <DetailNotFoundState config={{ backTo, ...notFoundConfig }} />
+      <div
+        className={cn('max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6', className)}
+      >
+        <DetailNotFoundState
+          config={notFoundConfig}
+          onBack={backTo ? handleBack : undefined}
+        />
       </div>
     );
   }
@@ -89,21 +102,26 @@ const BaseDetailLayout = memo(function BaseDetailLayout({
   // Estado de error generico
   if (error) {
     return (
-      <div className={cn('max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6', className)}>
+      <div
+        className={cn('max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6', className)}
+      >
         <DetailNotFoundState
           config={{
             title: 'Error',
-            description: error.message || 'Ocurrio un error al cargar los datos.',
-            backTo,
+            description:
+              error.message || 'Ocurrio un error al cargar los datos.',
             ...notFoundConfig,
           }}
+          onBack={backTo ? handleBack : undefined}
         />
       </div>
     );
   }
 
   return (
-    <div className={cn('max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6', className)}>
+    <div
+      className={cn('max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6', className)}
+    >
       {/* Header */}
       <DetailHeader
         backTo={backTo}
@@ -131,9 +149,7 @@ const BaseDetailLayout = memo(function BaseDetailLayout({
       )}
 
       {/* Main content */}
-      <div className="mt-6">
-        {children}
-      </div>
+      <div className="mt-6">{children}</div>
     </div>
   );
 });

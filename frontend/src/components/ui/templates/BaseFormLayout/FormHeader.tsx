@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { cn } from '@/lib/utils';
+import { cn } from '../../lib/cn';
 import { BackButton } from '../../molecules/BackButton';
 import { SEMANTIC_COLORS } from '@/lib/uiConstants';
 
@@ -32,7 +32,12 @@ const FormHeader = memo(function FormHeader({
 
       <div className="flex items-center gap-3">
         {Icon && (
-          <div className={cn('flex-shrink-0 p-2 rounded-lg', SEMANTIC_COLORS.primary.bg)}>
+          <div
+            className={cn(
+              'flex-shrink-0 p-2 rounded-lg',
+              SEMANTIC_COLORS.primary.bg
+            )}
+          >
             <Icon className={cn('w-6 h-6', SEMANTIC_COLORS.primary.icon)} />
           </div>
         )}

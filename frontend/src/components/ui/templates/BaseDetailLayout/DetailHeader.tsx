@@ -1,5 +1,5 @@
 import { memo, type ReactNode } from 'react';
-import { cn } from '@/lib/utils';
+import { cn } from '../../lib/cn';
 import { BackButton } from '../../molecules/BackButton';
 import { Badge } from '../../atoms/Badge';
 import { SEMANTIC_COLORS } from '@/lib/uiConstants';
@@ -46,7 +46,12 @@ const DetailHeader = memo(function DetailHeader({
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div className="flex items-start gap-3">
           {Icon && (
-            <div className={cn('flex-shrink-0 p-2 rounded-lg', SEMANTIC_COLORS.primary.bg)}>
+            <div
+              className={cn(
+                'flex-shrink-0 p-2 rounded-lg',
+                SEMANTIC_COLORS.primary.bg
+              )}
+            >
               <Icon className={cn('w-6 h-6', SEMANTIC_COLORS.primary.icon)} />
             </div>
           )}
@@ -60,7 +65,12 @@ const DetailHeader = memo(function DetailHeader({
               )}
 
               {badges.map((badge, idx) => (
-                <Badge key={idx} variant={(badge.variant || 'default') as BadgeVariantWithAliases}>
+                <Badge
+                  key={idx}
+                  variant={
+                    (badge.variant || 'default') as BadgeVariantWithAliases
+                  }
+                >
                   {badge.label}
                 </Badge>
               ))}
@@ -76,9 +86,7 @@ const DetailHeader = memo(function DetailHeader({
 
         {/* Actions */}
         {actions && (
-          <div className="flex items-center gap-2 flex-shrink-0">
-            {actions}
-          </div>
+          <div className="flex items-center gap-2 flex-shrink-0">{actions}</div>
         )}
       </div>
     </div>

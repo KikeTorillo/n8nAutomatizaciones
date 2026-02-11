@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { cn } from '@/lib/utils';
+import { cn } from '../lib/cn';
 import type { DataTableColumn } from '../organisms/DataTable';
 import { StatCardGrid, type StatConfig } from '../molecules/StatCardGrid';
 import { ViewTabs } from '../organisms/ViewTabs';
@@ -78,18 +78,28 @@ interface ListadoCRUDPageProps {
   icon?: LucideIcon;
   PageLayout?: React.ComponentType<PageLayoutProps>;
   layoutProps?: Record<string, unknown>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  useListQuery: (params: Record<string, unknown>) => { data?: any; isLoading: boolean };
+   
+  useListQuery: (params: Record<string, unknown>) => {
+    data?: any;
+    isLoading: boolean;
+  };
   queryParams?: Record<string, unknown>;
   dataKey?: string;
-  useDeleteMutation?: () => { mutate: (id: unknown) => void; isPending: boolean; [key: string]: unknown };
+  useDeleteMutation?: () => {
+    mutate: (id: unknown) => void;
+    isPending: boolean;
+    [key: string]: unknown;
+  };
   deleteMutationOptions?: Record<string, unknown>;
   extraMutations?: Record<string, unknown>;
   columns: ColumnDef[];
   keyField?: string;
   onRowClick?: (row: Record<string, unknown>) => void;
   emptyState?: Record<string, unknown>;
-  rowActions?: (row: Record<string, unknown>, handlers: CrudHandlers) => React.ReactNode;
+  rowActions?: (
+    row: Record<string, unknown>,
+    handlers: CrudHandlers
+  ) => React.ReactNode;
   initialFilters?: Record<string, unknown>;
   filterConfig?: unknown[];
   filterPersistId?: string;
@@ -101,53 +111,129 @@ interface ListadoCRUDPageProps {
   StatsModal?: React.ComponentType<OverlayComponentProps>;
   statsModalProps?: Record<string, unknown>;
   mapStatsData?: (data: unknown) => Record<string, unknown>;
-  actions?: React.ReactNode | ((context: { openModal: OpenModalFn; closeModal: CloseModalFn; items: unknown[]; isLoading: boolean; handlers: CrudHandlers }) => React.ReactNode);
+  actions?:
+    | React.ReactNode
+    | ((context: {
+        openModal: OpenModalFn;
+        closeModal: CloseModalFn;
+        items: unknown[];
+        isLoading: boolean;
+        handlers: CrudHandlers;
+      }) => React.ReactNode);
   showNewButton?: boolean;
   newButtonLabel?: string;
   viewModes?: ViewMode[];
   defaultViewMode?: string;
   extraModals?: Record<string, ExtraModalConfig>;
   exportConfig?: ExportConfig;
-  renderFilters?: (context: { filtros: Record<string, unknown>; setFiltro: SetFiltroFn; limpiarFiltros: () => void; filtrosActivos: number; resetPage: () => void }) => React.ReactNode;
-  renderBeforeTable?: (context: { items: unknown[]; isLoading: boolean; paginacion: unknown; openModal: OpenModalFn }) => React.ReactNode;
-  renderAfterTable?: (context: { items: unknown[]; isLoading: boolean }) => React.ReactNode;
+  renderFilters?: (context: {
+    filtros: Record<string, unknown>;
+    setFiltro: SetFiltroFn;
+    limpiarFiltros: () => void;
+    filtrosActivos: number;
+    resetPage: () => void;
+  }) => React.ReactNode;
+  renderBeforeTable?: (context: {
+    items: unknown[];
+    isLoading: boolean;
+    paginacion: unknown;
+    openModal: OpenModalFn;
+  }) => React.ReactNode;
+  renderAfterTable?: (context: {
+    items: unknown[];
+    isLoading: boolean;
+  }) => React.ReactNode;
   className?: string;
   children?: React.ReactNode;
 }
 
 const ListadoCRUDPage = memo(function ListadoCRUDPage({
-  title, subtitle, icon: Icon, PageLayout, layoutProps = {},
-  useListQuery, queryParams: extraQueryParams = {}, dataKey = 'items',
-  useDeleteMutation, deleteMutationOptions = {}, extraMutations = {},
-  columns: columnsProp, keyField = 'id', onRowClick, emptyState = {}, rowActions,
-  initialFilters = { busqueda: '' }, filterPersistId, limit = 20,
+  title,
+  subtitle,
+  icon: Icon,
+  PageLayout,
+  layoutProps = {},
+  useListQuery,
+  queryParams: extraQueryParams = {},
+  dataKey = 'items',
+  useDeleteMutation,
+  deleteMutationOptions = {},
+  extraMutations = {},
+  columns: columnsProp,
+  keyField = 'id',
+  onRowClick,
+  emptyState = {},
+  rowActions,
+  initialFilters = { busqueda: '' },
+  filterPersistId,
+  limit = 20,
   statsConfig,
-  FormDrawer, formDrawerProps = {}, mapFormData,
-  StatsModal, statsModalProps = {}, mapStatsData,
-  actions, showNewButton = true, newButtonLabel = 'Nuevo',
-  viewModes, defaultViewMode = 'table',
-  extraModals = {}, exportConfig,
-  renderFilters, renderBeforeTable, renderAfterTable,
-  className, children,
+  FormDrawer,
+  formDrawerProps = {},
+  mapFormData,
+  StatsModal,
+  statsModalProps = {},
+  mapStatsData,
+  actions,
+  showNewButton = true,
+  newButtonLabel = 'Nuevo',
+  viewModes,
+  defaultViewMode = 'table',
+  extraModals = {},
+  exportConfig,
+  renderFilters,
+  renderBeforeTable,
+  renderAfterTable,
+  className,
+  children,
 }: ListadoCRUDPageProps) {
   const {
-    activeView, setActiveView, handlePageChange, resetPage,
-    filtros, setFiltro, limpiarFiltros, filtrosActivos,
-    openModal, closeModal, isOpen, getModalData,
-    isLoading, items, paginacion, handleExport,
-    deleteMutation, deleteConfirmProps,
-    handleNuevo, handleEditar, handlers, columns,
+    activeView,
+    setActiveView,
+    handlePageChange,
+    resetPage,
+    filtros,
+    setFiltro,
+    limpiarFiltros,
+    filtrosActivos,
+    openModal,
+    closeModal,
+    isOpen,
+    getModalData,
+    isLoading,
+    items,
+    paginacion,
+    handleExport,
+    deleteMutation,
+    deleteConfirmProps,
+    handleNuevo,
+    handleEditar,
+    handlers,
+    columns,
   } = useListadoCRUDState({
-    useListQuery, queryParams: extraQueryParams, dataKey,
-    useDeleteMutation, deleteMutationOptions, extraMutations,
-    columns: columnsProp, rowActions, initialFilters, filterPersistId, limit,
-    extraModals, exportConfig, title, defaultViewMode,
+    useListQuery,
+    queryParams: extraQueryParams,
+    dataKey,
+    useDeleteMutation,
+    deleteMutationOptions,
+    extraMutations,
+    columns: columnsProp,
+    rowActions,
+    initialFilters,
+    filterPersistId,
+    limit,
+    extraModals,
+    exportConfig,
+    title,
+    defaultViewMode,
   });
 
-  const computedSubtitle = subtitle || `${paginacion.total} ${title?.toLowerCase() || 'elementos'}`;
-  const computedActions = typeof actions === 'function'
-    ? actions({ openModal, closeModal, items, isLoading, handlers })
-    : actions;
+  const computedSubtitle =
+    subtitle || `${paginacion.total} ${title?.toLowerCase() || 'elementos'}`;
+  const computedActions =
+    typeof actions === 'function'
+      ? actions({ openModal, closeModal, items, isLoading, handlers })
+      : actions;
 
   const layoutContent = (
     <>
@@ -155,60 +241,97 @@ const ListadoCRUDPage = memo(function ListadoCRUDPage({
 
       <div className="mb-6 space-y-4">
         {viewModes && viewModes.length > 1 && (
-          <ViewTabs tabs={viewModes} activeTab={activeView} onChange={setActiveView} />
+          <ViewTabs
+            tabs={viewModes}
+            activeTab={activeView}
+            onChange={setActiveView}
+          />
         )}
 
-        {renderFilters
-          ? renderFilters({ filtros, setFiltro, limpiarFiltros, filtrosActivos, resetPage })
-          : (
-            <ListadoFilters
-              filtros={filtros} setFiltro={setFiltro} limpiarFiltros={limpiarFiltros}
-              filtrosActivos={filtrosActivos} resetPage={resetPage}
-              exportConfig={exportConfig} itemsCount={items.length} onExport={handleExport}
-            />
-          )
-        }
+        {renderFilters ? (
+          renderFilters({
+            filtros,
+            setFiltro,
+            limpiarFiltros,
+            filtrosActivos,
+            resetPage,
+          })
+        ) : (
+          <ListadoFilters
+            filtros={filtros}
+            setFiltro={setFiltro}
+            limpiarFiltros={limpiarFiltros}
+            filtrosActivos={filtrosActivos}
+            resetPage={resetPage}
+            exportConfig={exportConfig}
+            itemsCount={items.length}
+            onExport={handleExport}
+          />
+        )}
       </div>
 
       {renderBeforeTable?.({ items, isLoading, paginacion, openModal })}
 
       <ListadoTableView
-        viewModes={viewModes} activeView={activeView} columns={columns}
-        items={items} isLoading={isLoading} keyField={keyField}
-        onRowClick={onRowClick} handleEditar={handleEditar}
-        paginacion={paginacion} handlePageChange={handlePageChange}
-        handlers={handlers} icon={Icon} title={title}
-        filtrosActivos={filtrosActivos} showNewButton={showNewButton}
-        newButtonLabel={newButtonLabel} handleNuevo={handleNuevo}
+        viewModes={viewModes}
+        activeView={activeView}
+        columns={columns}
+        items={items}
+        isLoading={isLoading}
+        keyField={keyField}
+        onRowClick={onRowClick}
+        handleEditar={handleEditar}
+        paginacion={paginacion}
+        handlePageChange={handlePageChange}
+        handlers={handlers}
+        icon={Icon}
+        title={title}
+        filtrosActivos={filtrosActivos}
+        showNewButton={showNewButton}
+        newButtonLabel={newButtonLabel}
+        handleNuevo={handleNuevo}
         emptyState={emptyState}
       />
 
       {renderAfterTable?.({ items, isLoading })}
 
       <ListadoModals
-        FormDrawer={FormDrawer} formDrawerProps={formDrawerProps} mapFormData={mapFormData}
-        StatsModal={StatsModal} statsModalProps={statsModalProps} mapStatsData={mapStatsData}
-        extraModals={extraModals} deleteMutation={deleteMutation}
+        FormDrawer={FormDrawer}
+        formDrawerProps={formDrawerProps}
+        mapFormData={mapFormData}
+        StatsModal={StatsModal}
+        statsModalProps={statsModalProps}
+        mapStatsData={mapStatsData}
+        extraModals={extraModals}
+        deleteMutation={deleteMutation}
         deleteConfirmProps={deleteConfirmProps}
-        isOpen={isOpen} closeModal={closeModal} getModalData={getModalData}
+        isOpen={isOpen}
+        closeModal={closeModal}
+        getModalData={getModalData}
       />
 
       {children}
     </>
   );
 
-  const LayoutComponent = (PageLayout || 'div') as React.ElementType<PageLayoutProps>;
+  const LayoutComponent = (PageLayout ||
+    'div') as React.ElementType<PageLayoutProps>;
 
   if (PageLayout) {
     return (
       <LayoutComponent
-        icon={Icon} title={title} subtitle={computedSubtitle}
-        actions={computedActions || (showNewButton && (
-          <Button onClick={handleNuevo} className="flex items-center gap-2">
-            <Plus className="h-4 w-4" />
-            <span className="hidden sm:inline">{newButtonLabel}</span>
-          </Button>
-        ))}
+        icon={Icon}
+        title={title}
+        subtitle={computedSubtitle}
+        actions={
+          computedActions ||
+          (showNewButton && (
+            <Button onClick={handleNuevo} className="flex items-center gap-2">
+              <Plus className="h-4 w-4" />
+              <span className="hidden sm:inline">{newButtonLabel}</span>
+            </Button>
+          ))
+        }
         {...layoutProps}
       >
         {layoutContent}
@@ -219,9 +342,13 @@ const ListadoCRUDPage = memo(function ListadoCRUDPage({
   return (
     <div className={cn('p-6', className)}>
       <ListadoHeader
-        icon={Icon} title={title} subtitle={computedSubtitle}
-        actions={computedActions} showNewButton={showNewButton}
-        newButtonLabel={newButtonLabel} onNuevo={handleNuevo}
+        icon={Icon}
+        title={title}
+        subtitle={computedSubtitle}
+        actions={computedActions}
+        showNewButton={showNewButton}
+        newButtonLabel={newButtonLabel}
+        onNuevo={handleNuevo}
       />
       {layoutContent}
     </div>
@@ -232,4 +359,17 @@ ListadoCRUDPage.displayName = 'ListadoCRUDPage';
 
 export { ListadoCRUDPage };
 export default ListadoCRUDPage;
-export type { ListadoCRUDPageProps, ColumnDef, ViewMode, ViewComponentProps, ExportConfig, ExtraModalConfig, OverlayComponentProps, CrudHandlers, PageLayoutProps, OpenModalFn, CloseModalFn, SetFiltroFn };
+export type {
+  ListadoCRUDPageProps,
+  ColumnDef,
+  ViewMode,
+  ViewComponentProps,
+  ExportConfig,
+  ExtraModalConfig,
+  OverlayComponentProps,
+  CrudHandlers,
+  PageLayoutProps,
+  OpenModalFn,
+  CloseModalFn,
+  SetFiltroFn,
+};

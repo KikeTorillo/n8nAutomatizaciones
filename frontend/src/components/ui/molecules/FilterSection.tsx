@@ -1,5 +1,5 @@
 import { memo, forwardRef, type ReactNode, type ComponentType } from 'react';
-import { cn } from '@/lib/utils';
+import { cn } from '../lib/cn';
 import { FILTER_SECTION_TITLE } from '@/lib/uiConstants';
 
 // Re-exportar componentes unificados para compatibilidad
@@ -25,23 +25,21 @@ export interface FilterSectionProps {
  * Usado dentro de AdvancedFilterPanel para organizar filtros
  */
 export const FilterSection = memo(
-  forwardRef<HTMLDivElement, FilterSectionProps>(function FilterSection({
-  title,
-  children,
-  icon: Icon,
-  className,
-}, ref) {
-  return (
-    <div ref={ref} className={cn('space-y-3', className)}>
-      {title && (
-        <h4 className={FILTER_SECTION_TITLE}>
-          {Icon && <Icon className="h-4 w-4" />}
-          {title}
-        </h4>
-      )}
-      <div className="space-y-2">{children}</div>
-    </div>
-  );
+  forwardRef<HTMLDivElement, FilterSectionProps>(function FilterSection(
+    { title, children, icon: Icon, className },
+    ref
+  ) {
+    return (
+      <div ref={ref} className={cn('space-y-3', className)}>
+        {title && (
+          <h4 className={FILTER_SECTION_TITLE}>
+            {Icon && <Icon className="h-4 w-4" />}
+            {title}
+          </h4>
+        )}
+        <div className="space-y-2">{children}</div>
+      </div>
+    );
   })
 );
 

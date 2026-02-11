@@ -1,5 +1,12 @@
-import { memo, forwardRef, type ReactNode, type HTMLAttributes, type KeyboardEvent, type ElementType } from 'react';
-import { cn } from '@/lib/utils';
+import {
+  memo,
+  forwardRef,
+  type ReactNode,
+  type HTMLAttributes,
+  type KeyboardEvent,
+  type ElementType,
+} from 'react';
+import { cn } from '../lib/cn';
 import {
   CARD_BASE,
   CARD_ELEVATED,
@@ -14,7 +21,8 @@ import type { CardVariant, CardStatus, CardPadding } from '@/types/ui';
 
 type CardElement = 'div' | 'article' | 'section' | 'aside';
 
-export interface CardProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onClick'> {
+export interface CardProps
+  extends Omit<HTMLAttributes<HTMLDivElement>, 'onClick'> {
   /** Variante visual */
   variant?: CardVariant;
   /** Estado del borde */
@@ -28,7 +36,9 @@ export interface CardProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onClick
   /** Contenido */
   children?: ReactNode;
   /** Callback al hacer clic */
-  onClick?: (e: React.MouseEvent<HTMLDivElement> | KeyboardEvent<HTMLDivElement>) => void;
+  onClick?: (
+    e: React.MouseEvent<HTMLDivElement> | KeyboardEvent<HTMLDivElement>
+  ) => void;
   /** Tipo de elemento HTML */
   as?: CardElement;
 }
@@ -55,56 +65,58 @@ const variantStyles: Record<CardVariant, string> = {
  *   Contenido interactivo
  * </Card>
  */
-const Card = memo(forwardRef<HTMLDivElement, CardProps>(function Card(
-  {
-    variant = 'base',
-    status,
-    padding = 'md',
-    hover = false,
-    className,
-    children,
-    onClick,
-    as: Component = 'div',
-    ...props
-  },
-  ref
-) {
-  const isClickable = !!onClick || hover;
+const Card = memo(
+  forwardRef<HTMLDivElement, CardProps>(function Card(
+    {
+      variant = 'base',
+      status,
+      padding = 'md',
+      hover = false,
+      className,
+      children,
+      onClick,
+      as: Component = 'div',
+      ...props
+    },
+    ref
+  ) {
+    const isClickable = !!onClick || hover;
 
-  const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
-    if (!onClick) return;
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      onClick(e);
-    }
-  };
+    const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+      if (!onClick) return;
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        onClick(e);
+      }
+    };
 
-  // TypeScript requires explicit handling for polymorphic components
-  const Element = Component as ElementType;
+    // TypeScript requires explicit handling for polymorphic components
+    const Element = Component as ElementType;
 
-  return (
-    <Element
-      ref={ref}
-      onClick={onClick}
-      role={onClick ? 'button' : undefined}
-      tabIndex={onClick ? 0 : undefined}
-      onKeyDown={onClick ? handleKeyDown : undefined}
-      className={cn(
-        'rounded-lg',
-        status ? CARD_STATUS_STYLES[status] : variantStyles[variant],
-        CARD_PADDING_STYLES[padding],
-        isClickable && SURFACE_HOVER,
-        isClickable && 'cursor-pointer',
-        onClick && FOCUS_STATES.ring,
-        onClick && 'focus-visible:ring-primary-500',
-        className
-      )}
-      {...props}
-    >
-      {children}
-    </Element>
-  );
-}));
+    return (
+      <Element
+        ref={ref}
+        onClick={onClick}
+        role={onClick ? 'button' : undefined}
+        tabIndex={onClick ? 0 : undefined}
+        onKeyDown={onClick ? handleKeyDown : undefined}
+        className={cn(
+          'rounded-lg',
+          status ? CARD_STATUS_STYLES[status] : variantStyles[variant],
+          CARD_PADDING_STYLES[padding],
+          isClickable && SURFACE_HOVER,
+          isClickable && 'cursor-pointer',
+          onClick && FOCUS_STATES.ring,
+          onClick && 'focus-visible:ring-primary-500',
+          className
+        )}
+        {...props}
+      >
+        {children}
+      </Element>
+    );
+  })
+);
 
 Card.displayName = 'Card';
 
