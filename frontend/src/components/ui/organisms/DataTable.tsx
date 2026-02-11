@@ -259,6 +259,7 @@ const DataTableRow = memo(function DataTableRow<T>({
         hoverable && TABLE_ROW_STYLES.hoverable,
         onRowClick && TABLE_ROW_STYLES.clickable,
         onRowClick && FOCUS_STATES.ring,
+        onRowClick && 'focus-visible:ring-primary-500',
         striped && rowIndex % 2 === 1 && TABLE_ROW_STYLES.striped
       )}
     >

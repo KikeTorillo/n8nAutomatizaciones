@@ -78,8 +78,8 @@ export const VISIBILITY_STATES = {
  * Estados de focus para accesibilidad
  */
 export const FOCUS_STATES = {
-  ring: 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900',
-  visible: 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2',
+  ring: 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900',
+  visible: 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
   within: 'focus-within:ring-2 focus-within:ring-primary-500 focus-within:ring-offset-2',
 } as const;
 

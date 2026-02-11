@@ -96,6 +96,7 @@ const Card = memo(forwardRef<HTMLDivElement, CardProps>(function Card(
         isClickable && SURFACE_HOVER,
         isClickable && 'cursor-pointer',
         onClick && FOCUS_STATES.ring,
+        onClick && 'focus-visible:ring-primary-500',
         className
       )}
       {...props}

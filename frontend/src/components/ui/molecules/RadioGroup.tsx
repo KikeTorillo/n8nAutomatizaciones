@@ -39,7 +39,7 @@ export interface RadioGroupProps {
  *
  * Molecule que compone Radio atoms con labels inline.
  */
-const RadioGroup = memo(forwardRef<HTMLDivElement, RadioGroupProps>(function RadioGroup({
+const RadioGroup = memo(forwardRef<HTMLFieldSetElement, RadioGroupProps>(function RadioGroup({
   options,
   value,
   onChange,
@@ -56,23 +56,21 @@ const RadioGroup = memo(forwardRef<HTMLDivElement, RadioGroupProps>(function Rad
   const groupName = name || groupId;
 
   return (
-    <div
+    <fieldset
       ref={ref}
-      role="radiogroup"
-      aria-labelledby={label ? `${groupId}-label` : undefined}
       className={cn(
-        'flex gap-3',
+        'border-0 p-0 m-0 flex gap-3',
         orientation === 'vertical' ? 'flex-col' : 'flex-row flex-wrap',
         className
       )}
+      disabled={disabled}
     >
       {label && (
-        <span
-          id={`${groupId}-label`}
+        <legend
           className="text-sm font-medium text-gray-700 dark:text-gray-300"
         >
           {label}
-        </span>
+        </legend>
       )}
       {children ||
         options.map((option) => {
@@ -102,7 +100,7 @@ const RadioGroup = memo(forwardRef<HTMLDivElement, RadioGroupProps>(function Rad
             </label>
           );
         })}
-    </div>
+    </fieldset>
   );
 }));
 
