@@ -1,14 +1,15 @@
 import { memo } from 'react';
 import { cn } from '@/lib/utils';
-import { DataTable, type DataTableColumn } from '../organisms/DataTable';
-import { SearchInput } from '../organisms/SearchInput';
-import { Button } from '../atoms/Button';
+import type { DataTableColumn } from '../organisms/DataTable';
 import { StatCardGrid, type StatConfig } from '../molecules/StatCardGrid';
 import { ViewTabs } from '../organisms/ViewTabs';
-import { ConfirmDialog, type ConfirmDialogProps } from '../organisms/ConfirmDialog';
-import { Plus, Download } from 'lucide-react';
-import { SEMANTIC_COLORS } from '@/lib/uiConstants';
+import { Button } from '../atoms/Button';
+import { Plus } from 'lucide-react';
 import { useListadoCRUDState } from './useListadoCRUDState';
+import { ListadoHeader } from './components/ListadoHeader';
+import { ListadoModals } from './components/ListadoModals';
+import { ListadoFilters } from './components/ListadoFilters';
+import { ListadoTableView } from './components/ListadoTableView';
 
 type LucideIcon = React.ComponentType<{ className?: string }>;
 
@@ -115,281 +116,99 @@ interface ListadoCRUDPageProps {
 }
 
 const ListadoCRUDPage = memo(function ListadoCRUDPage({
-  // Layout
-  title,
-  subtitle,
-  icon: Icon,
-  PageLayout,
-  layoutProps = {},
-
-  // Data
-  useListQuery,
-  queryParams: extraQueryParams = {},
-  dataKey = 'items',
-
-  // Mutations
-  useDeleteMutation,
-  deleteMutationOptions = {},
-  extraMutations = {},
-
-  // Table
-  columns: columnsProp,
-  keyField = 'id',
-  onRowClick,
-  emptyState = {},
-  rowActions,
-
-  // Filters
-  initialFilters = { busqueda: '' },
-  filterConfig = [],
-  filterPersistId,
-  limit = 20,
-
-  // Stats (opcional)
+  title, subtitle, icon: Icon, PageLayout, layoutProps = {},
+  useListQuery, queryParams: extraQueryParams = {}, dataKey = 'items',
+  useDeleteMutation, deleteMutationOptions = {}, extraMutations = {},
+  columns: columnsProp, keyField = 'id', onRowClick, emptyState = {}, rowActions,
+  initialFilters = { busqueda: '' }, filterPersistId, limit = 20,
   statsConfig,
-
-  // Modals
-  FormDrawer,
-  formDrawerProps = {},
-  mapFormData,
-  StatsModal,
-  statsModalProps = {},
-  mapStatsData,
-
-  // Actions
-  actions,
-  showNewButton = true,
-  newButtonLabel = 'Nuevo',
-
-  // ViewModes (tabla/cards)
-  viewModes,
-  defaultViewMode = 'table',
-
-  // Extra modals
-  extraModals = {},
-
-  // Export CSV
-  exportConfig,
-
-  // Customization
-  renderFilters,
-  renderBeforeTable,
-  renderAfterTable,
-  className,
-  children,
+  FormDrawer, formDrawerProps = {}, mapFormData,
+  StatsModal, statsModalProps = {}, mapStatsData,
+  actions, showNewButton = true, newButtonLabel = 'Nuevo',
+  viewModes, defaultViewMode = 'table',
+  extraModals = {}, exportConfig,
+  renderFilters, renderBeforeTable, renderAfterTable,
+  className, children,
 }: ListadoCRUDPageProps) {
   const {
-    activeView,
-    setActiveView,
-    handlePageChange,
-    resetPage,
-    filtros,
-    setFiltro,
-    limpiarFiltros,
-    filtrosActivos,
-    openModal,
-    closeModal,
-    isOpen,
-    getModalData,
-    isLoading,
-    items,
-    paginacion,
-    handleExport,
-    deleteMutation,
-    deleteConfirmProps,
-    handleNuevo,
-    handleEditar,
-    handlers,
-    columns,
+    activeView, setActiveView, handlePageChange, resetPage,
+    filtros, setFiltro, limpiarFiltros, filtrosActivos,
+    openModal, closeModal, isOpen, getModalData,
+    isLoading, items, paginacion, handleExport,
+    deleteMutation, deleteConfirmProps,
+    handleNuevo, handleEditar, handlers, columns,
   } = useListadoCRUDState({
-    useListQuery,
-    queryParams: extraQueryParams,
-    dataKey,
-    useDeleteMutation,
-    deleteMutationOptions,
-    extraMutations,
-    columns: columnsProp,
-    rowActions,
-    initialFilters,
-    filterPersistId,
-    limit,
-    extraModals,
-    exportConfig,
-    title,
-    defaultViewMode,
+    useListQuery, queryParams: extraQueryParams, dataKey,
+    useDeleteMutation, deleteMutationOptions, extraMutations,
+    columns: columnsProp, rowActions, initialFilters, filterPersistId, limit,
+    extraModals, exportConfig, title, defaultViewMode,
   });
 
-  // Computed subtitle
   const computedSubtitle = subtitle || `${paginacion.total} ${title?.toLowerCase() || 'elementos'}`;
-
-  // Computed actions - permite función o ReactNode
   const computedActions = typeof actions === 'function'
     ? actions({ openModal, closeModal, items, isLoading, handlers })
     : actions;
 
-  // Wrapper de layout
-  const LayoutComponent = (PageLayout || 'div') as React.ElementType<PageLayoutProps>;
   const layoutContent = (
     <>
-      {/* Stats */}
       {statsConfig && <StatCardGrid stats={statsConfig} className="mb-6" />}
 
-      {/* ViewTabs + Filtros + Export */}
       <div className="mb-6 space-y-4">
-        {/* ViewTabs si hay múltiples vistas */}
         {viewModes && viewModes.length > 1 && (
-          <ViewTabs
-            tabs={viewModes}
-            activeTab={activeView}
-            onChange={setActiveView}
-          />
+          <ViewTabs tabs={viewModes} activeTab={activeView} onChange={setActiveView} />
         )}
 
-        {/* Filtros */}
-        {renderFilters ? (
-          renderFilters({ filtros, setFiltro, limpiarFiltros, filtrosActivos, resetPage })
-        ) : (
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="flex-1">
-              <SearchInput
-                value={(filtros.busqueda as string) || ''}
-                onChange={(e) => {
-                  setFiltro('busqueda', (e.target as HTMLInputElement).value);
-                  resetPage();
-                }}
-                placeholder="Buscar..."
-              />
-            </div>
-            <div className="flex gap-2">
-              {filtrosActivos > 0 && (
-                <Button variant="ghost" size="sm" onClick={limpiarFiltros}>
-                  Limpiar filtros
-                </Button>
-              )}
-              {exportConfig && items.length > 0 && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleExport}
-                  disabled={false}
-                  className="flex items-center gap-2"
-                >
-                  <Download className="h-4 w-4" />
-                  <span className="hidden sm:inline">Exportar</span>
-                </Button>
-              )}
-            </div>
-          </div>
-        )}
+        {renderFilters
+          ? renderFilters({ filtros, setFiltro, limpiarFiltros, filtrosActivos, resetPage })
+          : (
+            <ListadoFilters
+              filtros={filtros} setFiltro={setFiltro} limpiarFiltros={limpiarFiltros}
+              filtrosActivos={filtrosActivos} resetPage={resetPage}
+              exportConfig={exportConfig} itemsCount={items.length} onExport={handleExport}
+            />
+          )
+        }
       </div>
 
-      {/* Before table slot */}
       {renderBeforeTable?.({ items, isLoading, paginacion, openModal })}
 
-      {/* Table o Vista Custom */}
-      {(() => {
-        // Buscar componente custom para el activeView actual
-        const viewConfig = viewModes?.find(v => v.id === activeView);
-        if (viewConfig?.component) {
-          const ViewComponent = viewConfig.component;
-          return (
-            <ViewComponent
-              items={items}
-              isLoading={isLoading}
-              onItemClick={onRowClick || handleEditar}
-              handlers={handlers}
-              pagination={paginacion}
-              onPageChange={handlePageChange}
-            />
-          );
-        }
-        // Fallback a DataTable si no hay componente custom
-        return (
-          <DataTable
-            columns={columns}
-            data={items}
-            isLoading={isLoading}
-            keyField={keyField}
-            onRowClick={onRowClick || handleEditar}
-            pagination={paginacion}
-            onPageChange={handlePageChange}
-            emptyState={{
-              icon: Icon,
-              title: `No hay ${title?.toLowerCase() || 'elementos'}`,
-              description: filtrosActivos > 0
-                ? 'No se encontraron resultados con esos filtros'
-                : `Crea tu primer ${title?.toLowerCase() || 'elemento'}`,
-              actionLabel: filtrosActivos === 0 && showNewButton ? newButtonLabel : undefined,
-              onAction: filtrosActivos === 0 && showNewButton ? handleNuevo : undefined,
-              ...emptyState,
-            }}
-          />
-        );
-      })()}
+      <ListadoTableView
+        viewModes={viewModes} activeView={activeView} columns={columns}
+        items={items} isLoading={isLoading} keyField={keyField}
+        onRowClick={onRowClick} handleEditar={handleEditar}
+        paginacion={paginacion} handlePageChange={handlePageChange}
+        handlers={handlers} icon={Icon} title={title}
+        filtrosActivos={filtrosActivos} showNewButton={showNewButton}
+        newButtonLabel={newButtonLabel} handleNuevo={handleNuevo}
+        emptyState={emptyState}
+      />
 
-      {/* After table slot */}
       {renderAfterTable?.({ items, isLoading })}
 
-      {/* Form Drawer */}
-      {FormDrawer && isOpen('form') && (
-        <FormDrawer
-          key={`form-${getModalData('form')?.id || 'new'}`}
-          isOpen={isOpen('form')}
-          onClose={() => closeModal('form')}
-          onSuccess={() => closeModal('form')}
-          {...(mapFormData?.(getModalData('form')) ?? { data: getModalData('form') })}
-          {...formDrawerProps}
-        />
-      )}
+      <ListadoModals
+        FormDrawer={FormDrawer} formDrawerProps={formDrawerProps} mapFormData={mapFormData}
+        StatsModal={StatsModal} statsModalProps={statsModalProps} mapStatsData={mapStatsData}
+        extraModals={extraModals} deleteMutation={deleteMutation}
+        deleteConfirmProps={deleteConfirmProps}
+        isOpen={isOpen} closeModal={closeModal} getModalData={getModalData}
+      />
 
-      {/* Stats Modal */}
-      {StatsModal && (
-        <StatsModal
-          isOpen={isOpen('stats')}
-          onClose={() => closeModal('stats')}
-          {...(mapStatsData?.(getModalData('stats')) ?? { data: getModalData('stats') })}
-          {...statsModalProps}
-        />
-      )}
-
-      {/* Extra Modals */}
-      {Object.entries(extraModals).map(([modalKey, modalConfig]) => {
-        const { component: ModalComponent, mapData, props: modalProps = {} } = modalConfig;
-        if (!ModalComponent) return null;
-        return (
-          <ModalComponent
-            key={modalKey}
-            isOpen={isOpen(modalKey)}
-            onClose={() => closeModal(modalKey)}
-            {...(mapData ? mapData(getModalData(modalKey)) : { data: getModalData(modalKey) })}
-            {...modalProps}
-          />
-        );
-      })}
-
-      {/* Delete Confirmation */}
-      {deleteMutation && <ConfirmDialog {...deleteConfirmProps as ConfirmDialogProps} />}
-
-      {/* Children slot */}
       {children}
     </>
   );
 
-  // Render con o sin PageLayout
+  const LayoutComponent = (PageLayout || 'div') as React.ElementType<PageLayoutProps>;
+
   if (PageLayout) {
     return (
       <LayoutComponent
-        icon={Icon}
-        title={title}
-        subtitle={computedSubtitle}
-        actions={
-          computedActions || (showNewButton && (
-            <Button onClick={handleNuevo} className="flex items-center gap-2">
-              <Plus className="h-4 w-4" />
-              <span className="hidden sm:inline">{newButtonLabel}</span>
-            </Button>
-          ))
-        }
+        icon={Icon} title={title} subtitle={computedSubtitle}
+        actions={computedActions || (showNewButton && (
+          <Button onClick={handleNuevo} className="flex items-center gap-2">
+            <Plus className="h-4 w-4" />
+            <span className="hidden sm:inline">{newButtonLabel}</span>
+          </Button>
+        ))}
         {...layoutProps}
       >
         {layoutContent}
@@ -399,26 +218,11 @@ const ListadoCRUDPage = memo(function ListadoCRUDPage({
 
   return (
     <div className={cn('p-6', className)}>
-      {/* Header simple si no hay PageLayout */}
-      <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="flex items-center gap-3">
-          {Icon && <Icon className={cn('h-7 w-7', SEMANTIC_COLORS.primary.icon)} />}
-          <div>
-            <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">{title}</h1>
-            <p className="text-sm text-gray-600 dark:text-gray-400">{computedSubtitle}</p>
-          </div>
-        </div>
-        {(computedActions || showNewButton) && (
-          <div className="flex gap-2">
-            {computedActions || (
-              <Button onClick={handleNuevo} className="flex items-center gap-2">
-                <Plus className="h-4 w-4" />
-                {newButtonLabel}
-              </Button>
-            )}
-          </div>
-        )}
-      </div>
+      <ListadoHeader
+        icon={Icon} title={title} subtitle={computedSubtitle}
+        actions={computedActions} showNewButton={showNewButton}
+        newButtonLabel={newButtonLabel} onNuevo={handleNuevo}
+      />
       {layoutContent}
     </div>
   );
