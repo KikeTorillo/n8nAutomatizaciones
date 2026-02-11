@@ -31,13 +31,17 @@ import {
 
 // Components
 import { DndEditorProvider } from '@/components/editor-framework';
-import { ICONOS_BLOQUES, NOMBRES_BLOQUES, DESCRIPCIONES_BLOQUES } from './config/blockConfig';
+import {
+  ICONOS_BLOQUES,
+  NOMBRES_BLOQUES,
+  DESCRIPCIONES_BLOQUES,
+} from './config/blockConfig';
 import ConflictAlert from './components/ConflictAlert';
 import EmptyState from './components/EmptyState';
 import CrearSitioModal from './components/CrearSitioModal';
 
 // UI
-import { ModuleGuard } from '@/components/ui';
+import { ModuleGuard } from '@/components/shared/ModuleGuard';
 
 // ========== MAIN COMPONENT ==========
 

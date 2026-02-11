@@ -1,7 +1,7 @@
 import { memo, forwardRef } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '../atoms/Button';
+import { useUILibraryRouter } from '../providers';
 import type { ButtonVariant, Size } from '../types';
 
 type ButtonSize = Size | 'xl';
@@ -11,6 +11,8 @@ export interface BackButtonProps {
   to?: string;
   /** Handler personalizado de click (prioridad sobre to y navigate(-1)) */
   onClick?: () => void;
+  /** Handler de navegación inyectable (prioridad sobre provider) */
+  onNavigate?: (to: string | number) => void;
   /** Texto del botón (default: "Volver") */
   label?: string;
   /** Variante del botón (default: "outline") */
@@ -26,12 +28,15 @@ export interface BackButtonProps {
 /**
  * Componente BackButton reutilizable
  * Botón de navegación "Volver" con estilo consistente en toda la app
+ *
+ * Prioridad de navegación: onClick > onNavigate prop > provider navigate > console.warn
  */
 const BackButton = memo(
   forwardRef<HTMLButtonElement, BackButtonProps>(function BackButton(
     {
       to,
       onClick,
+      onNavigate,
       label = 'Volver',
       variant = 'outline',
       size = 'sm',
@@ -40,15 +45,20 @@ const BackButton = memo(
     },
     ref
   ) {
-    const navigate = useNavigate();
+    const router = useUILibraryRouter();
 
     const handleClick = () => {
       if (onClick) {
         onClick();
-      } else if (to) {
-        navigate(to);
       } else {
-        navigate(-1);
+        const nav = onNavigate || router?.navigate;
+        if (nav) {
+          nav(to || -1);
+        } else {
+          console.warn(
+            '[BackButton] No navigate function available. Provide onClick, onNavigate, or wrap in UILibraryProvider.'
+          );
+        }
       }
     };
 

@@ -1,5 +1,4 @@
 import { memo, forwardRef, type ComponentType } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '../lib/cn';
 import { NavDropdown } from './NavDropdown';
 import {
@@ -7,6 +6,7 @@ import {
   type NavItem,
   type NavGroup,
 } from './MobileNavSelector';
+import { useUILibraryRouter } from '../providers';
 
 /**
  * Encuentra el item activo basado en la ruta actual (modo flat)
@@ -97,8 +97,8 @@ const GenericNavTabs = memo(
     },
     ref
   ) {
-    const location = useLocation();
-    const navigate = useNavigate();
+    const router = useUILibraryRouter();
+    const currentPath = router?.currentPath || '';
 
     const isGrouped = !!groups;
     const isControlled = !!onItemSelect;
@@ -106,7 +106,7 @@ const GenericNavTabs = memo(
     // Calcular estado activo según modo
     const routerActiveItem =
       !isGrouped && items && !isControlled
-        ? getActiveItem(location.pathname, items, defaultPath)
+        ? getActiveItem(currentPath, items, defaultPath)
         : null;
 
     // Modo controlado: buscar item activo por ID
@@ -120,7 +120,7 @@ const GenericNavTabs = memo(
     // Modo grouped: calcular activo
     const routerGroupInfo =
       isGrouped && groups && !isControlled
-        ? getActiveInfo(location.pathname, groups)
+        ? getActiveInfo(currentPath, groups)
         : { groupId: null, itemId: null };
 
     const controlledGroupInfo =
@@ -139,6 +139,14 @@ const GenericNavTabs = memo(
     const { groupId, itemId } = isControlled
       ? controlledGroupInfo
       : routerGroupInfo;
+
+    const handleNavigate = (item: NavItem) => {
+      if (onItemSelect) {
+        onItemSelect(item);
+      } else if (router?.navigate) {
+        router.navigate(item.path);
+      }
+    };
 
     return (
       <nav
@@ -172,9 +180,7 @@ const GenericNavTabs = memo(
                   return (
                     <button
                       key={item.id}
-                      onClick={() =>
-                        onItemSelect ? onItemSelect(item) : navigate(item.path)
-                      }
+                      onClick={() => handleNavigate(item)}
                       className={cn(
                         'flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors',
                         isActive

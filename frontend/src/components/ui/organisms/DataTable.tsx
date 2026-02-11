@@ -184,7 +184,7 @@ function DataTableComponent<T = Record<string, unknown>>(
             className={cn(TABLE_BASE_STYLES.table, tableClassName)}
           >
             {/* Header */}
-            <thead role="rowgroup" className={TABLE_BASE_STYLES.thead}>
+            <thead className={TABLE_BASE_STYLES.thead}>
               <tr role="row">
                 {columns.map((column, index) => (
                   <th
@@ -207,7 +207,7 @@ function DataTableComponent<T = Record<string, unknown>>(
             </thead>
 
             {/* Body */}
-            <tbody role="rowgroup" className={TABLE_BASE_STYLES.tbody}>
+            <tbody className={TABLE_BASE_STYLES.tbody}>
               {data.map((row, rowIndex) => (
                 <DataTableRow
                   key={String(
@@ -241,7 +241,7 @@ export const DataTable = memo(forwardRef(DataTableComponent)) as <
   props: DataTableProps<T> & { ref?: React.Ref<HTMLDivElement> }
 ) => React.ReactElement | null;
 
-(DataTable as any).displayName = 'DataTable';
+(DataTable as unknown as { displayName?: string }).displayName = 'DataTable';
 
 /**
  * Props para DataTableRow
@@ -307,7 +307,6 @@ const DataTableRow = memo(function DataTableRow<T>({
         return (
           <td
             key={(column.key as string) || colIndex}
-            role="cell"
             className={cn(
               TABLE_BODY_CELL,
               TABLE_ALIGN_CLASSES[column.align || 'left'] || 'text-left',

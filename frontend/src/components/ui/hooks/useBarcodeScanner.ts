@@ -82,6 +82,7 @@ export function useBarcodeScanner(options: UseBarcodeeScannerOptions = {}) {
   const [cameras, setCameras] = useState<CameraDevice[]>([]);
   const [selectedCamera, setSelectedCamera] = useState<string | null>(null);
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- html5-qrcode no exporta tipo del scanner
   const html5QrCodeRef = useRef<any>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
 
@@ -90,7 +91,8 @@ export function useBarcodeScanner(options: UseBarcodeeScannerOptions = {}) {
     try {
       if (!audioContextRef.current) {
         audioContextRef.current = new (window.AudioContext ||
-          (window as any).webkitAudioContext)();
+          (window as unknown as { webkitAudioContext?: typeof AudioContext })
+            .webkitAudioContext)();
       }
       const ctx = audioContextRef.current;
       const oscillator = ctx.createOscillator();
@@ -158,13 +160,18 @@ export function useBarcodeScanner(options: UseBarcodeeScannerOptions = {}) {
         await html5QrCodeRef.current.start(
           cameraConfig,
           config,
-          (decodedText: string, decodedResult: any) => {
+          (decodedText: string, decodedResult: unknown) => {
             const gs1Data = parseGS1Enabled ? parseGS1(decodedText) : null;
             const scanData: ScanData = {
               code: extractProductCode(decodedText),
               raw: decodedText,
               gs1: gs1Data?.isGS1 ? gs1Data : null,
-              format: decodedResult?.result?.format?.formatName || 'UNKNOWN',
+              format:
+                (
+                  decodedResult as
+                    | { result?: { format?: { formatName?: string } } }
+                    | undefined
+                )?.result?.format?.formatName || 'UNKNOWN',
               timestamp: new Date().toISOString(),
             };
             setLastScan(scanData);
@@ -190,10 +197,11 @@ export function useBarcodeScanner(options: UseBarcodeeScannerOptions = {}) {
         );
 
         setIsActive(true);
-      } catch (err: any) {
-        const errorMsg = err.message?.includes('Permission')
-          ? 'Permiso de cámara denegado'
-          : 'No se pudo iniciar el scanner';
+      } catch (err: unknown) {
+        const errorMsg =
+          err instanceof Error && err.message?.includes('Permission')
+            ? 'Permiso de cámara denegado'
+            : 'No se pudo iniciar el scanner';
         setError(errorMsg);
         onError?.(err);
       }

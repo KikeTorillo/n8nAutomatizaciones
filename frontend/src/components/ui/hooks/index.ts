@@ -43,6 +43,11 @@ export { useFloatingDismiss } from './useFloatingDismiss';
 // Hooks UI internos
 export { useProgressColor } from './useProgressColor';
 export { useIconPickerLogic } from './useIconPickerLogic';
+export { useExpandableCrudLogic } from './useExpandableCrudLogic';
+export type {
+  UseExpandableCrudLogicOptions,
+  UseExpandableCrudLogicReturn,
+} from './useExpandableCrudLogic';
 
 // Hook de scanner
 export {

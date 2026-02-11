@@ -78,9 +78,9 @@ interface ListadoCRUDPageProps {
   icon?: LucideIcon;
   PageLayout?: React.ComponentType<PageLayoutProps>;
   layoutProps?: Record<string, unknown>;
-   
+
   useListQuery: (params: Record<string, unknown>) => {
-    data?: any;
+    data?: Record<string, unknown>;
     isLoading: boolean;
   };
   queryParams?: Record<string, unknown>;

@@ -24,9 +24,9 @@ import type {
 
 interface UseListadoCRUDStateOptions {
   // Data
-   
+
   useListQuery: (params: Record<string, unknown>) => {
-    data?: any;
+    data?: Record<string, unknown>;
     isLoading: boolean;
   };
   queryParams?: Record<string, unknown>;

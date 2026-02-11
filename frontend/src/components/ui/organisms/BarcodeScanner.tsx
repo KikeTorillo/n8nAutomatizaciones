@@ -103,7 +103,7 @@ const BarcodeScanner = memo(
       },
       onError,
       formats: formatPreset as number[],
-    } as any) as {
+    }) as {
       isActive: boolean;
       lastScan: LastScanData | null;
       error: string | null;

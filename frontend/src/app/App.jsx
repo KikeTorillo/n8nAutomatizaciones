@@ -1,17 +1,44 @@
 import { useEffect } from 'react';
-import { Outlet, ScrollRestoration } from 'react-router-dom';
+import {
+  Outlet,
+  ScrollRestoration,
+  useNavigate,
+  useLocation,
+} from 'react-router-dom';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { HelmetProvider } from 'react-helmet-async';
 import { Toaster } from 'sonner';
 import { Loader2 } from 'lucide-react';
 import { queryClient } from './queryClient';
-import { ToastContainer } from '@/components/ui';
+import { ToastContainer, UILibraryProvider } from '@/components/ui';
 import GlobalErrorBoundary from '@/components/common/GlobalErrorBoundary';
-import { SetupGuard, useAuthStore, selectIsAuthenticated, selectSetUser } from '@/features/auth';
+import {
+  SetupGuard,
+  useAuthStore,
+  selectIsAuthenticated,
+  selectSetUser,
+} from '@/features/auth';
 import { SubscriptionGuard } from '@/pages/suscripciones-negocio/components';
-import useThemeStore, { selectApplyTheme, selectInitSystemListener } from '@/store/themeStore';
+import useThemeStore, {
+  selectApplyTheme,
+  selectInitSystemListener,
+} from '@/store/themeStore';
 import { useAuthInit } from '@/hooks/sistema/useAuthInit';
 import { authApi } from '@/services/api/endpoints';
+
+/**
+ * Bridge que conecta react-router-dom con UILibraryProvider
+ * para que la UI Library sea agnóstica del router.
+ */
+function UILibraryBridge({ children }) {
+  const navigate = useNavigate();
+  const location = useLocation();
+  return (
+    <UILibraryProvider navigate={navigate} currentPath={location.pathname}>
+      {children}
+    </UILibraryProvider>
+  );
+}
 
 function App() {
   // Ene 2026: Inicializar autenticación al recargar (restaurar sesión)
@@ -54,7 +81,9 @@ function App() {
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="h-10 w-10 text-primary-600 dark:text-primary-400 animate-spin mx-auto mb-3" />
-          <p className="text-sm text-gray-600 dark:text-gray-400">Cargando...</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Cargando...
+          </p>
         </div>
       </div>
     );
@@ -63,18 +92,25 @@ function App() {
   return (
     <HelmetProvider>
       <QueryClientProvider client={queryClient}>
-        <GlobalErrorBoundary>
-          <SetupGuard>
-            <SubscriptionGuard>
-              <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors">
-                <ScrollRestoration />
-                <Outlet />
-                <ToastContainer />
-                <Toaster position="top-center" richColors closeButton theme="system" />
-              </div>
-            </SubscriptionGuard>
-          </SetupGuard>
-        </GlobalErrorBoundary>
+        <UILibraryBridge>
+          <GlobalErrorBoundary>
+            <SetupGuard>
+              <SubscriptionGuard>
+                <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors">
+                  <ScrollRestoration />
+                  <Outlet />
+                  <ToastContainer />
+                  <Toaster
+                    position="top-center"
+                    richColors
+                    closeButton
+                    theme="system"
+                  />
+                </div>
+              </SubscriptionGuard>
+            </SetupGuard>
+          </GlobalErrorBoundary>
+        </UILibraryBridge>
       </QueryClientProvider>
     </HelmetProvider>
   );

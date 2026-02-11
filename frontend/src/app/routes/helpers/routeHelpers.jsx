@@ -6,7 +6,7 @@
 import { Suspense } from 'react';
 import { ProtectedRoute } from '@/features/auth';
 import ChunkErrorBoundary from '@/components/common/ChunkErrorBoundary';
-import ModuleGuard from '@/components/ui/templates/ModuleGuard';
+import { ModuleGuard } from '@/components/shared/ModuleGuard';
 
 /**
  * Fallback de carga mientras se carga el componente lazy
@@ -22,6 +22,7 @@ export const loadingFallback = (
  * @param {React.LazyExoticComponent} Component - Componente lazy a envolver
  * @returns {JSX.Element}
  */
+// eslint-disable-next-line no-unused-vars
 export const withSuspense = (Component) => (
   <ChunkErrorBoundary>
     <Suspense fallback={loadingFallback}>
@@ -44,7 +45,12 @@ export const withSuspense = (Component) => (
  * @returns {Object} Objeto de configuración de ruta
  */
 export const protectedRoute = (path, Component, options = {}) => {
-  const { requiredModule, requiredModules, requireAllModules, ...protectedOptions } = options;
+  const {
+    requiredModule,
+    requiredModules,
+    requireAllModules,
+    ...protectedOptions
+  } = options;
 
   // Determinar si necesita ModuleGuard
   const moduleToRequire = requiredModules || requiredModule;
@@ -61,9 +67,7 @@ export const protectedRoute = (path, Component, options = {}) => {
     element: (
       <ProtectedRoute {...protectedOptions}>
         {needsModuleGuard ? (
-          <ModuleGuard {...moduleProps}>
-            {withSuspense(Component)}
-          </ModuleGuard>
+          <ModuleGuard {...moduleProps}>{withSuspense(Component)}</ModuleGuard>
         ) : (
           withSuspense(Component)
         )}
@@ -91,13 +95,11 @@ export const publicRoute = (path, Component) => ({
  */
 export const indexRoute = (Component, options = null) => ({
   index: true,
-  element: options
-    ? (
-        <ProtectedRoute {...options}>
-          {withSuspense(Component)}
-        </ProtectedRoute>
-      )
-    : withSuspense(Component),
+  element: options ? (
+    <ProtectedRoute {...options}>{withSuspense(Component)}</ProtectedRoute>
+  ) : (
+    withSuspense(Component)
+  ),
 });
 
 /**

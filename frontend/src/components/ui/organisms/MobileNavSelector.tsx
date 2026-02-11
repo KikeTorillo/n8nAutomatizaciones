@@ -6,11 +6,11 @@ import {
   useCallback,
   type ComponentType,
 } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { ChevronDown, Check, Menu } from 'lucide-react';
 import { cn } from '../lib/cn';
 import { useClickOutsideRef } from '../hooks/useClickOutside';
 import { useEscapeKey } from '../hooks/useEscapeKey';
+import { useUILibraryRouter } from '../providers';
 
 /**
  * Item de navegación
@@ -77,7 +77,7 @@ const MobileNavSelector = memo(
   ) {
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
-    const navigate = useNavigate();
+    const router = useUILibraryRouter();
 
     const isGrouped = !!groups;
 
@@ -99,12 +99,12 @@ const MobileNavSelector = memo(
       (item: NavItem) => {
         if (onItemSelect) {
           onItemSelect(item);
-        } else {
-          navigate(item.path);
+        } else if (router?.navigate) {
+          router.navigate(item.path);
         }
         setIsOpen(false);
       },
-      [onItemSelect, navigate]
+      [onItemSelect, router]
     );
 
     // Determinar icono y label del botón

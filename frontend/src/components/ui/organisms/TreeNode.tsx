@@ -158,7 +158,7 @@ export const TreeNode = memo(forwardRef(TreeNodeComponent)) as <
   props: TreeNodeProps<T> & { ref?: React.Ref<HTMLDivElement> }
 ) => React.ReactElement | null;
 
-(TreeNode as any).displayName = 'TreeNode';
+(TreeNode as unknown as { displayName?: string }).displayName = 'TreeNode';
 
 /**
  * Props del componente TreeView

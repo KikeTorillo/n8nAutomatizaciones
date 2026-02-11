@@ -1,5 +1,5 @@
 import { memo, forwardRef } from 'react';
-import { Toast } from '@/components/ui';
+import { Toast } from '../molecules/Toast';
 import { useToast } from '../hooks/useToast';
 import type { ToastType } from '../types';
 

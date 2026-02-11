@@ -1,10 +1,10 @@
 import { memo, useCallback, type ReactNode } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { cn } from '../../lib/cn';
 import { DetailHeader } from './DetailHeader';
 import { DetailLoadingState } from './DetailLoadingState';
 import { DetailNotFoundState } from './DetailNotFoundState';
 import StateNavTabs from '../../organisms/state-nav-tabs';
+import { useUILibraryRouter } from '../../providers';
 
 type LucideIcon = React.ComponentType<{ className?: string }>;
 
@@ -28,6 +28,7 @@ interface NotFoundConfig {
 interface BaseDetailLayoutProps {
   backTo?: string;
   backLabel?: string;
+  onBack?: () => void;
   title?: string;
   subtitle?: string;
   icon?: LucideIcon;
@@ -48,6 +49,7 @@ interface BaseDetailLayoutProps {
 const BaseDetailLayout = memo(function BaseDetailLayout({
   backTo,
   backLabel,
+  onBack,
   title,
   subtitle,
   icon,
@@ -64,10 +66,14 @@ const BaseDetailLayout = memo(function BaseDetailLayout({
   notFoundConfig = {},
   className,
 }: BaseDetailLayoutProps) {
-  const navigate = useNavigate();
+  const router = useUILibraryRouter();
   const handleBack = useCallback(() => {
-    if (backTo) navigate(backTo);
-  }, [backTo, navigate]);
+    if (onBack) {
+      onBack();
+    } else if (backTo && router?.navigate) {
+      router.navigate(backTo);
+    }
+  }, [onBack, backTo, router]);
 
   // Estado de carga
   if (isLoading) {
@@ -93,7 +99,7 @@ const BaseDetailLayout = memo(function BaseDetailLayout({
       >
         <DetailNotFoundState
           config={notFoundConfig}
-          onBack={backTo ? handleBack : undefined}
+          onBack={backTo || onBack ? handleBack : undefined}
         />
       </div>
     );
@@ -112,7 +118,7 @@ const BaseDetailLayout = memo(function BaseDetailLayout({
               error.message || 'Ocurrio un error al cargar los datos.',
             ...notFoundConfig,
           }}
-          onBack={backTo ? handleBack : undefined}
+          onBack={backTo || onBack ? handleBack : undefined}
         />
       </div>
     );

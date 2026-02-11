@@ -11,13 +11,8 @@ import {
   CalendarDays,
   FileSpreadsheet,
 } from 'lucide-react';
-import {
-  Button,
-  Pagination,
-  StatCardGrid,
-  ViewTabs,
-  ConPermiso,
-} from '@/components/ui';
+import { Button, Pagination, StatCardGrid, ViewTabs } from '@/components/ui';
+import { ConPermiso } from '@/features/auth';
 import CitasList from '@/pages/citas/components/CitasList';
 import CitaFilters from '@/pages/citas/components/CitaFilters';
 import CitaDetailModal from '@/pages/citas/components/CitaDetailModal';

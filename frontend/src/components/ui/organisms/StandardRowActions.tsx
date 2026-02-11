@@ -138,6 +138,22 @@ function StandardRowActionsComponent<T = Record<string, unknown>>(
     variant?: 'danger';
   }>;
 
+  const deleteConfirmDialog = confirmDelete && onDelete && canDelete && (
+    <ConfirmDialog
+      isOpen={showDeleteConfirm}
+      onClose={() => setShowDeleteConfirm(false)}
+      onConfirm={handleConfirmDelete}
+      title={`Eliminar ${entityName}`}
+      message={
+        deleteMessage ||
+        `¿Estás seguro de que deseas eliminar este ${entityName}? Esta acción no se puede deshacer.`
+      }
+      confirmText="Eliminar"
+      variant="danger"
+      isLoading={isDeleting}
+    />
+  );
+
   // Modo compacto: dropdown con todas las acciones
   if (compact) {
     return (
@@ -164,22 +180,7 @@ function StandardRowActionsComponent<T = Record<string, unknown>>(
           }))}
           align="right"
         />
-
-        {confirmDelete && onDelete && canDelete && (
-          <ConfirmDialog
-            isOpen={showDeleteConfirm}
-            onClose={() => setShowDeleteConfirm(false)}
-            onConfirm={handleConfirmDelete}
-            title={`Eliminar ${entityName}`}
-            message={
-              deleteMessage ||
-              `¿Estás seguro de que deseas eliminar este ${entityName}? Esta acción no se puede deshacer.`
-            }
-            confirmText="Eliminar"
-            variant="danger"
-            isLoading={isDeleting}
-          />
-        )}
+        {deleteConfirmDialog}
       </div>
     );
   }
@@ -267,22 +268,7 @@ function StandardRowActionsComponent<T = Record<string, unknown>>(
           </Button>
         )}
       </div>
-
-      {confirmDelete && onDelete && canDelete && (
-        <ConfirmDialog
-          isOpen={showDeleteConfirm}
-          onClose={() => setShowDeleteConfirm(false)}
-          onConfirm={handleConfirmDelete}
-          title={`Eliminar ${entityName}`}
-          message={
-            deleteMessage ||
-            `¿Estás seguro de que deseas eliminar este ${entityName}? Esta acción no se puede deshacer.`
-          }
-          confirmText="Eliminar"
-          variant="danger"
-          isLoading={isDeleting}
-        />
-      )}
+      {deleteConfirmDialog}
     </div>
   );
 }

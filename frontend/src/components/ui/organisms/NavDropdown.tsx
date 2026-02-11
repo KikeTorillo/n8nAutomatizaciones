@@ -5,13 +5,12 @@ import {
   memo,
   forwardRef,
   type ComponentType,
-  type ForwardedRef,
 } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { ChevronDown, Check } from 'lucide-react';
 import { cn } from '../lib/cn';
 import { useClickOutsideRef } from '../hooks/useClickOutside';
 import { useEscapeKey } from '../hooks/useEscapeKey';
+import { useUILibraryRouter } from '../providers';
 
 /**
  * Item del dropdown de navegación
@@ -46,8 +45,6 @@ export interface NavDropdownProps {
 /**
  * NavDropdown - Dropdown de navegación con items agrupados
  * Usado para agrupar múltiples rutas bajo un mismo menú desplegable
- *
- * Ene 2026: Movido de molecules a organisms (maneja estado complejo y coordina navegación)
  */
 export const NavDropdown = memo(
   forwardRef<HTMLDivElement, NavDropdownProps>(function NavDropdown(
@@ -64,7 +61,7 @@ export const NavDropdown = memo(
   ) {
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
-    const navigate = useNavigate();
+    const router = useUILibraryRouter();
 
     const setRefs = useCallback(
       (node: HTMLDivElement | null) => {
@@ -86,12 +83,12 @@ export const NavDropdown = memo(
       (item: NavDropdownItem) => {
         if (onItemSelect) {
           onItemSelect(item);
-        } else {
-          navigate!(item.path);
+        } else if (router?.navigate) {
+          router.navigate(item.path);
         }
         setIsOpen(false);
       },
-      [onItemSelect, navigate]
+      [onItemSelect, router]
     );
 
     return (

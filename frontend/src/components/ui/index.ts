@@ -5,7 +5,7 @@
  * - atoms/     - Elementos básicos (Button, Input, Select, etc.)
  * - molecules/ - Combinaciones de átomos (SearchInput, Pagination, etc.)
  * - organisms/ - Componentes complejos (Modal, DataTable, etc.)
- * - templates/ - Layouts de página (BasePageLayout, ModuleGuard)
+ * - templates/ - Layouts de página (BasePageLayout, ListadoCRUDPage, etc.)
  *
  * Los imports existentes siguen funcionando:
  *   import Button from '@/components/ui/Button'
@@ -130,11 +130,6 @@ export { StandardFilterGrid } from './organisms/StandardFilterGrid';
 
 // ========== TEMPLATES ==========
 export { BasePageLayout } from './templates/BasePageLayout';
-export {
-  ModuleGuard,
-  ModuleVisible,
-  ModuleHidden,
-} from './templates/ModuleGuard';
 export { ListadoCRUDPage } from './templates/ListadoCRUDPage';
 
 // Nuevos templates (Ene 2026)
@@ -152,6 +147,13 @@ export {
 } from './templates/BaseFormLayout';
 export { AsyncBoundary } from './templates/AsyncBoundary';
 export { PageHeader } from './templates/PageHeader';
+
+// ========== PROVIDERS ==========
+export { UILibraryProvider, useUILibraryRouter } from './providers';
+export type {
+  UILibraryRouterContext,
+  UILibraryProviderProps,
+} from './providers';
 
 // ========== ERROR BOUNDARIES ==========
 export { default as ChunkErrorBoundary } from './organisms/ChunkErrorBoundary';

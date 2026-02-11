@@ -44,9 +44,10 @@ function getColorIndex(text: string): number {
 
 /**
  * Avatar - Imagen de perfil con fallback a iniciales
+ * Usa un span contenedor para ref consistente (siempre HTMLSpanElement)
  */
 const Avatar = memo(
-  forwardRef<HTMLImageElement | HTMLDivElement, AvatarProps>(function Avatar(
+  forwardRef<HTMLSpanElement, AvatarProps>(function Avatar(
     { src, alt, fallback, size = 'md', className },
     ref
   ) {
@@ -55,32 +56,32 @@ const Avatar = memo(
     const showImage = src && !imgError;
     const initials = fallback || getInitials(alt);
 
-    if (showImage) {
-      return (
-        <img
-          ref={ref as React.Ref<HTMLImageElement>}
-          src={src}
-          alt={alt}
-          loading="lazy"
-          onError={() => setImgError(true)}
-          className={cn('rounded-full object-cover', sizeClass, className)}
-        />
-      );
-    }
-
     return (
-      <div
-        ref={ref as React.Ref<HTMLDivElement>}
-        aria-label={alt}
+      <span
+        ref={ref}
         className={cn(
-          'rounded-full flex items-center justify-center font-medium',
-          FALLBACK_COLORS[getColorIndex(alt)],
+          'inline-flex rounded-full overflow-hidden',
           sizeClass,
+          !showImage && [
+            'items-center justify-center font-medium',
+            FALLBACK_COLORS[getColorIndex(alt)],
+          ],
           className
         )}
+        aria-label={!showImage ? alt : undefined}
       >
-        {initials}
-      </div>
+        {showImage ? (
+          <img
+            src={src}
+            alt={alt}
+            loading="lazy"
+            onError={() => setImgError(true)}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          initials
+        )}
+      </span>
     );
   })
 );
