@@ -1,5 +1,2 @@
-/**
- * @deprecated Importar desde '@/components/ui/constants' en nuevos archivos.
- * Este archivo es un stub de retrocompatibilidad.
- */
-export * from '@/components/ui/constants';
+/** @deprecated Importar desde '@nexo2/ui/constants' */
+export * from '@nexo2/ui/constants';

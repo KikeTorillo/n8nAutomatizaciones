@@ -1,10 +1,10 @@
 /**
  * Hooks compartidos entre módulos
- * @deprecated Importar desde '@/components/ui/hooks/useBarcodeScanner'
+ * @deprecated Importar desde '@nexo2/ui/hooks'
  */
 
 export {
   useBarcodeScanner,
   BARCODE_FORMATS,
   FORMAT_PRESETS,
-} from '@/components/ui/hooks/useBarcodeScanner';
+} from '@nexo2/ui/hooks';

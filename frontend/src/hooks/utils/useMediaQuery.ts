@@ -3,5 +3,4 @@ export {
   BREAKPOINTS,
   useIsMobile,
   useIsTablet,
-} from '@/components/ui/hooks/useMediaQuery';
-export { default } from '@/components/ui/hooks/useMediaQuery';
+} from '@nexo2/ui/hooks';

@@ -1,4 +1,1 @@
-export {
-  useFloatingPosition,
-  type Placement,
-} from '@/components/ui/hooks/useFloatingPosition';
+export { useFloatingPosition, type Placement } from '@nexo2/ui/hooks';

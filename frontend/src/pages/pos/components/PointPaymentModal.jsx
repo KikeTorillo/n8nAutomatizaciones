@@ -8,8 +8,14 @@
  */
 
 import { useState, useCallback, useEffect } from 'react';
-import { Loader2, CheckCircle, XCircle, CreditCard, AlertCircle } from 'lucide-react';
-import { Modal } from '@/components/ui/organisms/Modal';
+import {
+  Loader2,
+  CheckCircle,
+  XCircle,
+  CreditCard,
+  AlertCircle,
+} from 'lucide-react';
+import { Modal } from '@nexo2/ui/organisms';
 import { Button, LoadingSpinner } from '@/components/ui';
 import {
   useListarTerminales,
@@ -18,7 +24,11 @@ import {
   usePollingOrdenPoint,
 } from '@/hooks/pos';
 
-const PASO = { TERMINAL: 'terminal', ESPERANDO: 'esperando', RESULTADO: 'resultado' };
+const PASO = {
+  TERMINAL: 'terminal',
+  ESPERANDO: 'esperando',
+  RESULTADO: 'resultado',
+};
 
 const TIMEOUT_MS = 5 * 60 * 1000; // 5 minutos
 
@@ -28,17 +38,25 @@ const MENSAJES_ERROR = {
   expired: 'El tiempo de espera expiró. Intenta de nuevo.',
 };
 
-export default function PointPaymentModal({ isOpen, onClose, monto, ventaId, onSuccess, onError }) {
+export default function PointPaymentModal({
+  isOpen,
+  onClose,
+  monto,
+  ventaId,
+  onSuccess,
+  onError: _onError,
+}) {
   const [paso, setPaso] = useState(PASO.TERMINAL);
   const [terminalId, setTerminalId] = useState('');
   const [orderId, setOrderId] = useState(null);
   const [errorMsg, setErrorMsg] = useState('');
 
   // Hooks
-  const { data: terminales = [], isLoading: cargandoTerminales } = useListarTerminales({ enabled: isOpen });
+  const { data: terminales = [], isLoading: cargandoTerminales } =
+    useListarTerminales({ enabled: isOpen });
   const crearOrden = useCrearOrdenPoint();
   const cancelarOrden = useCancelarOrdenPoint();
-  const { orden, status, isCompleted, isFailed, isPolling } = usePollingOrdenPoint(
+  const { orden, status, isCompleted, isFailed } = usePollingOrdenPoint(
     orderId,
     paso === PASO.ESPERANDO
   );
@@ -97,7 +115,9 @@ export default function PointPaymentModal({ isOpen, onClose, monto, ventaId, onS
       setOrderId(resultado.order_id || resultado.id);
       setPaso(PASO.ESPERANDO);
     } catch (err) {
-      setErrorMsg(err.response?.data?.message || 'Error al enviar a la terminal');
+      setErrorMsg(
+        err.response?.data?.message || 'Error al enviar a la terminal'
+      );
       setPaso(PASO.RESULTADO);
     }
   }, [terminalId, ventaId, monto, crearOrden]);
@@ -153,14 +173,16 @@ export default function PointPaymentModal({ isOpen, onClose, monto, ventaId, onS
               <div className="text-center py-4">
                 <AlertCircle className="w-8 h-8 mx-auto text-amber-500 mb-2" />
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  No hay terminales disponibles. Verifica tu configuración de MercadoPago.
+                  No hay terminales disponibles. Verifica tu configuración de
+                  MercadoPago.
                 </p>
               </div>
             ) : (
               <div className="space-y-2">
                 {terminales.map((terminal) => {
                   const id = terminal.id || terminal.terminal_id;
-                  const nombre = terminal.nombre || terminal.external_id || `Terminal ${id}`;
+                  const nombre =
+                    terminal.nombre || terminal.external_id || `Terminal ${id}`;
                   const isSelected = terminalId === id;
 
                   return (
@@ -174,9 +196,13 @@ export default function PointPaymentModal({ isOpen, onClose, monto, ventaId, onS
                           : 'border-gray-200 dark:border-gray-700 hover:border-primary-300 dark:hover:border-primary-600'
                       }`}
                     >
-                      <CreditCard className={`w-5 h-5 flex-shrink-0 ${
-                        isSelected ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400'
-                      }`} />
+                      <CreditCard
+                        className={`w-5 h-5 flex-shrink-0 ${
+                          isSelected
+                            ? 'text-primary-600 dark:text-primary-400'
+                            : 'text-gray-400'
+                        }`}
+                      />
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-gray-900 dark:text-gray-100 truncate">
                           {nombre}
@@ -263,7 +289,11 @@ export default function PointPaymentModal({ isOpen, onClose, monto, ventaId, onS
 
             <div className="flex gap-3">
               {!isCompleted && (
-                <Button variant="outline" onClick={handleReintentar} className="flex-1">
+                <Button
+                  variant="outline"
+                  onClick={handleReintentar}
+                  className="flex-1"
+                >
                   Reintentar
                 </Button>
               )}

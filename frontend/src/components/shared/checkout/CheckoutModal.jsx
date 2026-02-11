@@ -11,7 +11,7 @@ import {
   Sparkles,
   LogIn,
 } from 'lucide-react';
-import { Modal } from '@/components/ui/organisms/Modal';
+import { Modal } from '@nexo2/ui/organisms';
 import { Button, Input, Badge } from '@/components/ui';
 import { suscripcionesNegocioApi } from '@/services/api/modules/suscripciones-negocio.api';
 import { formatCurrency } from '@/lib/utils';
@@ -368,13 +368,17 @@ function CheckoutModal({
         {/* Campo de cupón - SOLO si NO es trial */}
         {!esTrial && (
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label
+              htmlFor="cupon-input"
+              className="text-sm font-medium text-gray-700 dark:text-gray-300"
+            >
               Cupón de descuento (opcional)
             </label>
             <div className="flex gap-2">
               <div className="flex-1 relative">
                 <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <Input
+                  id="cupon-input"
                   value={cuponCodigo}
                   onChange={(e) => setCuponCodigo(e.target.value.toUpperCase())}
                   placeholder="Ingresa tu cupón"

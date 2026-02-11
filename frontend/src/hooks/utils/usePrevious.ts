@@ -1,1 +1,1 @@
-export { usePrevious } from '@/components/ui/hooks/usePrevious';
+export { usePrevious } from '@nexo2/ui/hooks';

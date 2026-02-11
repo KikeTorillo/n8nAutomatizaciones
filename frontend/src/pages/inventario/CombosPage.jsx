@@ -13,7 +13,7 @@
 import { memo } from 'react';
 import { Layers, Box, Edit2, Trash2 } from 'lucide-react';
 
-import ListadoCRUDPage from '@/components/ui/templates/ListadoCRUDPage';
+import { ListadoCRUDPage } from '@nexo2/ui/templates';
 import InventarioPageLayout from '@/pages/inventario/components/InventarioPageLayout';
 import ComboFormDrawer from '@/pages/inventario/components/ComboFormDrawer';
 import { useCombos, useEliminarCombo } from '@/hooks/pos';
@@ -21,9 +21,20 @@ import useSucursalStore, { selectSucursalActiva } from '@/store/sucursalStore';
 
 // Etiquetas para tipos de precio
 const TIPO_PRECIO_LABELS = {
-  fijo: { label: 'Precio fijo', color: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300' },
-  suma_componentes: { label: 'Suma', color: 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300' },
-  descuento_porcentaje: { label: 'Descuento', color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' },
+  fijo: {
+    label: 'Precio fijo',
+    color: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300',
+  },
+  suma_componentes: {
+    label: 'Suma',
+    color:
+      'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300',
+  },
+  descuento_porcentaje: {
+    label: 'Descuento',
+    color:
+      'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
+  },
 };
 
 // Etiquetas para manejo de stock
@@ -33,18 +44,28 @@ const MANEJO_STOCK_LABELS = {
 };
 
 // Componente de acciones por fila
-const ComboRowActions = memo(function ComboRowActions({ row, onEdit, onDelete }) {
+const ComboRowActions = memo(function ComboRowActions({
+  row,
+  onEdit,
+  onDelete,
+}) {
   return (
     <div className="flex items-center gap-1 flex-shrink-0">
       <button
-        onClick={(e) => { e.stopPropagation(); onEdit(row); }}
+        onClick={(e) => {
+          e.stopPropagation();
+          onEdit(row);
+        }}
         className="p-2 text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
         title="Editar"
       >
         <Edit2 className="h-4 w-4" />
       </button>
       <button
-        onClick={(e) => { e.stopPropagation(); onDelete(row); }}
+        onClick={(e) => {
+          e.stopPropagation();
+          onDelete(row);
+        }}
         className="p-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
         title="Eliminar"
       >
@@ -79,11 +100,13 @@ const COLUMNS = [
     key: 'tipo_precio',
     header: 'Tipo',
     render: (row) => {
-      const tipoPrecioInfo = TIPO_PRECIO_LABELS[row.tipo_precio] || TIPO_PRECIO_LABELS.fijo;
+      const tipoPrecioInfo =
+        TIPO_PRECIO_LABELS[row.tipo_precio] || TIPO_PRECIO_LABELS.fijo;
       return (
         <span className={`text-xs px-2 py-1 rounded ${tipoPrecioInfo.color}`}>
           {tipoPrecioInfo.label}
-          {row.tipo_precio === 'descuento_porcentaje' && ` ${row.descuento_porcentaje}%`}
+          {row.tipo_precio === 'descuento_porcentaje' &&
+            ` ${row.descuento_porcentaje}%`}
         </span>
       );
     },
@@ -126,7 +149,10 @@ const COLUMNS = [
     render: (row) => (
       <div className="text-right">
         <p className="font-bold text-gray-900 dark:text-gray-100">
-          ${parseFloat(row.precio_calculado || row.producto_precio || 0).toFixed(2)}
+          $
+          {parseFloat(row.precio_calculado || row.producto_precio || 0).toFixed(
+            2
+          )}
         </p>
         <p className="text-xs text-gray-500 dark:text-gray-400">
           {row.total_componentes || row.componentes?.length || 0} items
@@ -161,11 +187,16 @@ export default function CombosPage() {
       // Table
       columns={COLUMNS}
       rowActions={(row, handlers) => (
-        <ComboRowActions row={row} onEdit={handlers.onEdit} onDelete={handlers.onDelete} />
+        <ComboRowActions
+          row={row}
+          onEdit={handlers.onEdit}
+          onDelete={handlers.onDelete}
+        />
       )}
       emptyState={{
         title: 'No hay combos',
-        description: 'Crea combos para vender paquetes de productos con descuento',
+        description:
+          'Crea combos para vender paquetes de productos con descuento',
         actionLabel: 'Crear primer combo',
       }}
       // Form

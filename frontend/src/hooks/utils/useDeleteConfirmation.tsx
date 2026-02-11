@@ -4,5 +4,4 @@ export {
   type DeleteConfirmationOptions,
   type DeleteConfirmProps,
   type DeleteConfirmationReturn,
-} from '@/components/ui/hooks/useDeleteConfirmation';
-export { default } from '@/components/ui/hooks/useDeleteConfirmation';
+} from '@nexo2/ui/hooks';

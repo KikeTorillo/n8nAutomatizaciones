@@ -1,4 +1,4 @@
-import { createModuleLayout } from '@/components/ui/templates/createModuleLayout';
+import { createModuleLayout } from '@nexo2/ui/templates';
 import SucursalesNavTabs from './SucursalesNavTabs';
 
 /**

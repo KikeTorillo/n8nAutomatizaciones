@@ -1,2 +1,2 @@
-/** @deprecated Importar desde '@/components/ui/organisms/GlobalErrorBoundary' */
-export { default } from '@/components/ui/organisms/GlobalErrorBoundary';
+/** @deprecated Importar desde '@nexo2/ui' */
+export { GlobalErrorBoundary as default } from '@nexo2/ui';

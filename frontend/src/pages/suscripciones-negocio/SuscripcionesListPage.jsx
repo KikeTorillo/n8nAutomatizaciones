@@ -3,26 +3,55 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Users, Plus, Eye, MoreVertical, Pause, Play, X } from 'lucide-react';
 import { Button, DropdownMenu, SearchInput } from '@/components/ui';
 import { StateNavTabs } from '@/components/ui/organisms';
-import { DataTable } from '@/components/ui/organisms/DataTable';
-import { useSuscripciones, ESTADOS_SUSCRIPCION, ESTADO_LABELS } from '@/hooks/suscripciones-negocio';
+import { DataTable } from '@nexo2/ui/organisms';
+import {
+  useSuscripciones,
+  ESTADOS_SUSCRIPCION,
+  ESTADO_LABELS,
+} from '@/hooks/suscripciones-negocio';
 import {
   SuscripcionFormDrawer,
   SuscripcionStatusBadge,
   SuscripcionesNegocioPageLayout,
 } from './components';
 import { formatCurrency, formatDate } from '@/lib/utils';
-import { usePagination, useFilters, normalizePagination, useModalManager } from '@/hooks/utils';
+import { usePagination, useFilters, useModalManager } from '@/hooks/utils';
 
 /**
  * Tabs por estado
  */
 const STATE_TABS = [
   { id: 'todas', label: 'Todas', count: 0 },
-  { id: ESTADOS_SUSCRIPCION.ACTIVA, label: 'Activas', count: 0, color: 'green' },
-  { id: ESTADOS_SUSCRIPCION.TRIAL, label: 'En Prueba', count: 0, color: 'blue' },
-  { id: ESTADOS_SUSCRIPCION.PAUSADA, label: 'Pausadas', count: 0, color: 'yellow' },
-  { id: ESTADOS_SUSCRIPCION.PENDIENTE_PAGO, label: 'Pendientes', count: 0, color: 'orange' },
-  { id: ESTADOS_SUSCRIPCION.CANCELADA, label: 'Canceladas', count: 0, color: 'red' },
+  {
+    id: ESTADOS_SUSCRIPCION.ACTIVA,
+    label: 'Activas',
+    count: 0,
+    color: 'green',
+  },
+  {
+    id: ESTADOS_SUSCRIPCION.TRIAL,
+    label: 'En Prueba',
+    count: 0,
+    color: 'blue',
+  },
+  {
+    id: ESTADOS_SUSCRIPCION.PAUSADA,
+    label: 'Pausadas',
+    count: 0,
+    color: 'yellow',
+  },
+  {
+    id: ESTADOS_SUSCRIPCION.PENDIENTE_PAGO,
+    label: 'Pendientes',
+    count: 0,
+    color: 'orange',
+  },
+  {
+    id: ESTADOS_SUSCRIPCION.CANCELADA,
+    label: 'Canceladas',
+    count: 0,
+    color: 'red',
+  },
 ];
 
 /**
@@ -51,7 +80,9 @@ const columns = [
     render: (row) => (
       <div>
         <p className="font-medium">{row.plan_nombre}</p>
-        <p className="text-sm text-gray-500">{formatCurrency(row.precio)}/mes</p>
+        <p className="text-sm text-gray-500">
+          {formatCurrency(row.precio)}/mes
+        </p>
       </div>
     ),
   },
@@ -143,7 +174,6 @@ function SuscripcionesListPage() {
   });
 
   const items = data?.items || [];
-  const paginacion = normalizePagination(data?.paginacion);
   const total = data?.total || items.length;
   const totalPages = Math.ceil(total / queryParams.limit) || 1;
 
@@ -159,7 +189,10 @@ function SuscripcionesListPage() {
       title="Lista de Suscripciones"
       subtitle={`${total} suscripciones`}
       actions={
-        <Button onClick={() => openModal('form', null)} className="flex items-center gap-2">
+        <Button
+          onClick={() => openModal('form', null)}
+          className="flex items-center gap-2"
+        >
           <Plus className="h-4 w-4" />
           Nueva Suscripción
         </Button>
@@ -195,7 +228,9 @@ function SuscripcionesListPage() {
         data={items}
         isLoading={isLoading}
         keyField="id"
-        onRowClick={(row) => navigate(`/suscripciones-negocio/suscripciones/${row.id}`)}
+        onRowClick={(row) =>
+          navigate(`/suscripciones-negocio/suscripciones/${row.id}`)
+        }
         pagination={{
           page,
           limit: queryParams.limit,
@@ -212,8 +247,12 @@ function SuscripcionesListPage() {
             estadoFiltro !== 'todas'
               ? `No hay suscripciones con estado "${ESTADO_LABELS[estadoFiltro]}"`
               : 'Crea tu primera suscripción',
-          actionLabel: estadoFiltro === 'todas' ? 'Nueva Suscripción' : undefined,
-          onAction: estadoFiltro === 'todas' ? () => openModal('form', null) : undefined,
+          actionLabel:
+            estadoFiltro === 'todas' ? 'Nueva Suscripción' : undefined,
+          onAction:
+            estadoFiltro === 'todas'
+              ? () => openModal('form', null)
+              : undefined,
         }}
       />
 

@@ -8,7 +8,7 @@ import {
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { ZodType } from 'zod';
 import { useToast } from './useToast';
-import type { FormDrawerProps } from '@/components/ui/organisms/FormDrawer';
+import type { FormDrawerProps } from '@nexo2/ui/organisms';
 
 interface MutationLike {
   mutateAsync: (data: unknown) => Promise<unknown>;

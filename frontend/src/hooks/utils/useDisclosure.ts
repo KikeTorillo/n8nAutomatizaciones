@@ -1,4 +1,1 @@
-export {
-  useDisclosure,
-  type UseDisclosureReturn,
-} from '@/components/ui/hooks/useDisclosure';
+export { useDisclosure, type UseDisclosureReturn } from '@nexo2/ui/hooks';

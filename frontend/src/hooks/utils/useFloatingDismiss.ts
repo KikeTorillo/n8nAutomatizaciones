@@ -1,1 +1,1 @@
-export { useFloatingDismiss } from '@/components/ui/hooks/useFloatingDismiss';
+export { useFloatingDismiss } from '@nexo2/ui/hooks';

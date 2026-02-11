@@ -1,4 +1,4 @@
 /**
- * @deprecated Importar desde '@/components/shared/AlertaBloqueado'
+ * @deprecated Importar desde '@/pages/planes/components/AlertaBloqueado'
  */
-export { default } from '@/components/shared/AlertaBloqueado';
+export { default } from '@/pages/planes/components/AlertaBloqueado';

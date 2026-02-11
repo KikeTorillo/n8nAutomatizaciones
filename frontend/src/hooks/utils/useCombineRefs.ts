@@ -1,1 +1,1 @@
-export { useCombineRefs } from '@/components/ui/hooks/useCombineRefs';
+export { useCombineRefs } from '@nexo2/ui/hooks';

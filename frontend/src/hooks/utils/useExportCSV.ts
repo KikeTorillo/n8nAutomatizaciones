@@ -1,2 +1,1 @@
-export { useExportCSV } from '@/components/ui/hooks/useExportCSV';
-export { default } from '@/components/ui/hooks/useExportCSV';
+export { useExportCSV } from '@nexo2/ui/hooks';

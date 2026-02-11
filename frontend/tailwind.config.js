@@ -1,9 +1,13 @@
+import nexoPreset from '@nexo2/ui/tailwind';
+
 /** @type {import('tailwindcss').Config} */
 export default {
+  presets: [nexoPreset],
   darkMode: 'class',
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
+    "./node_modules/@nexo2/ui/dist/**/*.{js,mjs}",
   ],
   theme: {
     extend: {

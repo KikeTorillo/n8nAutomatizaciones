@@ -12,7 +12,7 @@ import {
   Calendar,
   ArrowLeft,
 } from 'lucide-react';
-import { Button } from '@/components/ui/atoms/Button';
+import { Button } from '@nexo2/ui/atoms';
 import { SEMANTIC_COLORS } from '@/lib/uiConstants';
 
 type LucideIcon = React.ComponentType<{ className?: string }>;

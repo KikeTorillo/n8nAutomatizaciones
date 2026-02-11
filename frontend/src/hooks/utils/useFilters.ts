@@ -9,7 +9,7 @@ import {
   type UseFiltersOptions as UIFiltersOptions,
   type UseFiltersReturn,
   type FilterPersistence,
-} from '@/components/ui/hooks/useFilters';
+} from '@nexo2/ui/hooks';
 import {
   getLastFilters,
   saveLastFilters,
