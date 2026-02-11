@@ -16,10 +16,19 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { UseQueryResult, UseMutationResult } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { profesionalesApi } from '@/services/api/endpoints';
-import { createCRUDHooks, createSanitizer, createSearchHook } from '@/hooks/factories';
+import {
+  createCRUDHooks,
+  createSanitizer,
+  createSearchHook,
+} from '@/hooks/factories';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 import { queryKeys } from '@/hooks/config';
-import type { Profesional, CrearProfesionalData, ActualizarProfesionalData } from '@/types/entities';
+import { extractData } from '@/lib/apiHelpers';
+import type {
+  Profesional,
+  CrearProfesionalData,
+  ActualizarProfesionalData,
+} from '@/types/entities';
 
 // ====================================================================
 // CRUD BÁSICO VIA FACTORY
@@ -38,7 +47,11 @@ const sanitizeProfesional = createSanitizer([
 ]);
 
 // Crear hooks CRUD básicos
-const hooks = createCRUDHooks<Profesional, CrearProfesionalData, ActualizarProfesionalData>({
+const hooks = createCRUDHooks<
+  Profesional,
+  CrearProfesionalData,
+  ActualizarProfesionalData
+>({
   name: 'profesional',
   namePlural: 'profesionales',
   api: profesionalesApi,
@@ -57,7 +70,9 @@ const hooks = createCRUDHooks<Profesional, CrearProfesionalData, ActualizarProfe
   errorMessages: {
     create: { 409: 'Ya existe un profesional con ese email o teléfono' },
     update: { 409: 'Ya existe un profesional con ese email o teléfono' },
-    delete: { 400: 'No se puede eliminar el profesional (puede tener citas asociadas)' },
+    delete: {
+      400: 'No se puede eliminar el profesional (puede tener citas asociadas)',
+    },
   },
   staleTime: STALE_TIMES.SEMI_STATIC,
   responseKey: 'profesionales',
@@ -77,37 +92,67 @@ export const useEliminarProfesional = hooks.useDelete;
 
 export const useBuscarProfesionales = createSearchHook<Profesional>({
   key: 'profesionales',
-  searchFn: (params: Record<string, unknown>) => profesionalesApi.listar({ ...params, limit: 50 }),
+  searchFn: (params: Record<string, unknown>) =>
+    profesionalesApi.listar({ ...params, limit: 50 }),
   searchParam: 'busqueda',
-  transformResponse: (data: Record<string, unknown>) => (data?.profesionales as Profesional[]) || [],
+  transformResponse: (data: Record<string, unknown>) =>
+    (data?.profesionales as Profesional[]) || [],
   staleTime: STALE_TIMES.REAL_TIME,
 });
 
-export function useProfesionalesPorModulo(modulo: string, options: Record<string, unknown> = {}): UseQueryResult<Profesional[]> {
+export function useProfesionalesPorModulo(
+  modulo: string,
+  options: Record<string, unknown> = {}
+): UseQueryResult<Profesional[]> {
   return useQuery({
     queryKey: ['profesionales-modulo', modulo, options],
     queryFn: async () => {
       const response = await profesionalesApi.listarPorModulo(modulo, options);
-      return (response as any).data.data?.profesionales || [];
+      return extractData<any>(response)?.profesionales || [];
     },
     enabled: !!modulo,
     staleTime: STALE_TIMES.SEMI_STATIC,
   });
 }
 
-export function useVincularUsuario(): UseMutationResult<Profesional, Error, { profesionalId: number; usuarioId: number }> {
+export function useVincularUsuario(): UseMutationResult<
+  Profesional,
+  Error,
+  { profesionalId: number; usuarioId: number }
+> {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ profesionalId, usuarioId }: { profesionalId: number; usuarioId: number }) => {
-      const response = await profesionalesApi.vincularUsuario(profesionalId, usuarioId);
-      return (response as any).data.data;
+    mutationFn: async ({
+      profesionalId,
+      usuarioId,
+    }: {
+      profesionalId: number;
+      usuarioId: number;
+    }) => {
+      const response = await profesionalesApi.vincularUsuario(
+        profesionalId,
+        usuarioId
+      );
+      return extractData(response);
     },
     onSuccess: (data: Profesional) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.personas.profesionales.detail(data.id), refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: queryKeys.personas.profesionales.all, refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: queryKeys.personas.profesionales.disponibles, refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['profesional-usuario'], refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.personas.profesionales.detail(data.id),
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.personas.profesionales.all,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.personas.profesionales.disponibles,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['profesional-usuario'],
+        refetchType: 'active',
+      });
     },
     onError: createCRUDErrorHandler('update', 'Profesional', {
       409: 'El usuario ya está vinculado a otro profesional',
@@ -115,66 +160,112 @@ export function useVincularUsuario(): UseMutationResult<Profesional, Error, { pr
   });
 }
 
-export function useActualizarModulos(): UseMutationResult<Profesional, Error, { profesionalId: number; modulosAcceso: Record<string, boolean> }> {
+export function useActualizarModulos(): UseMutationResult<
+  Profesional,
+  Error,
+  { profesionalId: number; modulosAcceso: Record<string, boolean> }
+> {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ profesionalId, modulosAcceso }: { profesionalId: number; modulosAcceso: Record<string, boolean> }) => {
-      const response = await profesionalesApi.actualizarModulos(profesionalId, modulosAcceso);
-      return (response as any).data.data;
+    mutationFn: async ({
+      profesionalId,
+      modulosAcceso,
+    }: {
+      profesionalId: number;
+      modulosAcceso: Record<string, boolean>;
+    }) => {
+      const response = await profesionalesApi.actualizarModulos(
+        profesionalId,
+        modulosAcceso
+      );
+      return extractData(response);
     },
     onSuccess: (data: Profesional) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.personas.profesionales.detail(data.id), refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: queryKeys.personas.profesionales.all, refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['profesionales-modulo'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['profesional-usuario'], refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.personas.profesionales.detail(data.id),
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.personas.profesionales.all,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['profesionales-modulo'],
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['profesional-usuario'],
+        refetchType: 'active',
+      });
     },
     onError: createCRUDErrorHandler('update', 'Módulos'),
   });
 }
 
-export function useProfesionalesPorEstado(estado: string, options: Record<string, unknown> = {}): UseQueryResult<Profesional[]> {
+export function useProfesionalesPorEstado(
+  estado: string,
+  options: Record<string, unknown> = {}
+): UseQueryResult<Profesional[]> {
   return useQuery({
     queryKey: ['profesionales', { estado, ...options }],
     queryFn: async () => {
       const response = await profesionalesApi.listarPorEstado(estado, options);
-      return (response as any).data.data?.profesionales || [];
+      return extractData<any>(response)?.profesionales || [];
     },
     enabled: !!estado,
     staleTime: STALE_TIMES.SEMI_STATIC,
   });
 }
 
-export function useProfesionalesPorDepartamento(departamentoId: number, options: Record<string, unknown> = {}): UseQueryResult<Profesional[]> {
+export function useProfesionalesPorDepartamento(
+  departamentoId: number,
+  options: Record<string, unknown> = {}
+): UseQueryResult<Profesional[]> {
   return useQuery({
-    queryKey: ['profesionales', { departamento_id: departamentoId, ...options }],
+    queryKey: [
+      'profesionales',
+      { departamento_id: departamentoId, ...options },
+    ],
     queryFn: async () => {
-      const response = await profesionalesApi.listarPorDepartamento(departamentoId, options);
-      return (response as any).data.data?.profesionales || [];
+      const response = await profesionalesApi.listarPorDepartamento(
+        departamentoId,
+        options
+      );
+      return extractData<any>(response)?.profesionales || [];
     },
     enabled: !!departamentoId,
     staleTime: STALE_TIMES.SEMI_STATIC,
   });
 }
 
-export function useSubordinados(profesionalId: number, options: Record<string, unknown> = {}): UseQueryResult<Profesional[]> {
+export function useSubordinados(
+  profesionalId: number,
+  options: Record<string, unknown> = {}
+): UseQueryResult<Profesional[]> {
   return useQuery({
     queryKey: ['profesional-subordinados', profesionalId, options],
     queryFn: async () => {
-      const response = await profesionalesApi.obtenerSubordinados(profesionalId, options);
-      return (response as any).data.data?.subordinados || [];
+      const response = await profesionalesApi.obtenerSubordinados(
+        profesionalId,
+        options
+      );
+      return extractData<any>(response)?.subordinados || [];
     },
     enabled: !!profesionalId,
     staleTime: STALE_TIMES.SEMI_STATIC,
   });
 }
 
-export function useCadenaSupervisores(profesionalId: number): UseQueryResult<Profesional[]> {
+export function useCadenaSupervisores(
+  profesionalId: number
+): UseQueryResult<Profesional[]> {
   return useQuery({
     queryKey: ['profesional-supervisores', profesionalId],
     queryFn: async () => {
-      const response = await profesionalesApi.obtenerCadenaSupervisores(profesionalId);
-      return (response as any).data.data?.supervisores || [];
+      const response =
+        await profesionalesApi.obtenerCadenaSupervisores(profesionalId);
+      return extractData<any>(response)?.supervisores || [];
     },
     enabled: !!profesionalId,
     staleTime: STALE_TIMES.SEMI_STATIC,
@@ -187,30 +278,59 @@ interface Categoria {
   [key: string]: unknown;
 }
 
-export function useCategoriasDeProfesional(profesionalId: number): UseQueryResult<Categoria[]> {
+export function useCategoriasDeProfesional(
+  profesionalId: number
+): UseQueryResult<Categoria[]> {
   return useQuery({
     queryKey: ['profesional-categorias', profesionalId],
     queryFn: async () => {
       const response = await profesionalesApi.obtenerCategorias(profesionalId);
-      return (response as any).data.data?.categorias || [];
+      return extractData<any>(response)?.categorias || [];
     },
     enabled: !!profesionalId,
     staleTime: STALE_TIMES.SEMI_STATIC,
   });
 }
 
-export function useAsignarCategoria(): UseMutationResult<unknown, Error, { profesionalId: number; categoriaId: number }> {
+export function useAsignarCategoria(): UseMutationResult<
+  unknown,
+  Error,
+  { profesionalId: number; categoriaId: number }
+> {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ profesionalId, categoriaId }: { profesionalId: number; categoriaId: number }) => {
-      const response = await profesionalesApi.asignarCategoria(profesionalId, categoriaId);
-      return (response as any).data.data;
+    mutationFn: async ({
+      profesionalId,
+      categoriaId,
+    }: {
+      profesionalId: number;
+      categoriaId: number;
+    }) => {
+      const response = await profesionalesApi.asignarCategoria(
+        profesionalId,
+        categoriaId
+      );
+      return extractData(response);
     },
-    onSuccess: (_: unknown, variables: { profesionalId: number; categoriaId: number }) => {
-      queryClient.invalidateQueries({ queryKey: ['profesional-categorias', variables.profesionalId], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: queryKeys.personas.profesionales.detail(variables.profesionalId), refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['categoria-profesionales'], refetchType: 'active' });
+    onSuccess: (
+      _: unknown,
+      variables: { profesionalId: number; categoriaId: number }
+    ) => {
+      queryClient.invalidateQueries({
+        queryKey: ['profesional-categorias', variables.profesionalId],
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.personas.profesionales.detail(
+          variables.profesionalId
+        ),
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['categoria-profesionales'],
+        refetchType: 'active',
+      });
     },
     onError: createCRUDErrorHandler('create', 'Categoría', {
       409: 'El profesional ya tiene asignada esta categoría',
@@ -218,36 +338,90 @@ export function useAsignarCategoria(): UseMutationResult<unknown, Error, { profe
   });
 }
 
-export function useEliminarCategoriaDeProf(): UseMutationResult<{ profesionalId: number; categoriaId: number }, Error, { profesionalId: number; categoriaId: number }> {
+export function useEliminarCategoriaDeProf(): UseMutationResult<
+  { profesionalId: number; categoriaId: number },
+  Error,
+  { profesionalId: number; categoriaId: number }
+> {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ profesionalId, categoriaId }: { profesionalId: number; categoriaId: number }) => {
+    mutationFn: async ({
+      profesionalId,
+      categoriaId,
+    }: {
+      profesionalId: number;
+      categoriaId: number;
+    }) => {
       await profesionalesApi.eliminarCategoria(profesionalId, categoriaId);
       return { profesionalId, categoriaId };
     },
-    onSuccess: (_: { profesionalId: number; categoriaId: number }, variables: { profesionalId: number; categoriaId: number }) => {
-      queryClient.invalidateQueries({ queryKey: ['profesional-categorias', variables.profesionalId], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: queryKeys.personas.profesionales.detail(variables.profesionalId), refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['categoria-profesionales'], refetchType: 'active' });
+    onSuccess: (
+      _: { profesionalId: number; categoriaId: number },
+      variables: { profesionalId: number; categoriaId: number }
+    ) => {
+      queryClient.invalidateQueries({
+        queryKey: ['profesional-categorias', variables.profesionalId],
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.personas.profesionales.detail(
+          variables.profesionalId
+        ),
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['categoria-profesionales'],
+        refetchType: 'active',
+      });
     },
     onError: createCRUDErrorHandler('delete', 'Categoría'),
   });
 }
 
-export function useSincronizarCategorias(): UseMutationResult<unknown, Error, { profesionalId: number; categoriaIds: number[] }> {
+export function useSincronizarCategorias(): UseMutationResult<
+  unknown,
+  Error,
+  { profesionalId: number; categoriaIds: number[] }
+> {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ profesionalId, categoriaIds }: { profesionalId: number; categoriaIds: number[] }) => {
-      const response = await profesionalesApi.sincronizarCategorias(profesionalId, categoriaIds);
-      return (response as any).data.data;
+    mutationFn: async ({
+      profesionalId,
+      categoriaIds,
+    }: {
+      profesionalId: number;
+      categoriaIds: number[];
+    }) => {
+      const response = await profesionalesApi.sincronizarCategorias(
+        profesionalId,
+        categoriaIds
+      );
+      return extractData(response);
     },
-    onSuccess: (_: unknown, variables: { profesionalId: number; categoriaIds: number[] }) => {
-      queryClient.invalidateQueries({ queryKey: ['profesional-categorias', variables.profesionalId], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: queryKeys.personas.profesionales.detail(variables.profesionalId), refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['categoria-profesionales'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: queryKeys.catalogos.categoriasProfesional, refetchType: 'active' });
+    onSuccess: (
+      _: unknown,
+      variables: { profesionalId: number; categoriaIds: number[] }
+    ) => {
+      queryClient.invalidateQueries({
+        queryKey: ['profesional-categorias', variables.profesionalId],
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.personas.profesionales.detail(
+          variables.profesionalId
+        ),
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['categoria-profesionales'],
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.catalogos.categoriasProfesional,
+        refetchType: 'active',
+      });
     },
     onError: createCRUDErrorHandler('update', 'Categorías'),
   });

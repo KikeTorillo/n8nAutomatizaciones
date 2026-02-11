@@ -10,7 +10,14 @@
  * ====================================================================
  */
 
-import { useQuery, useMutation, useQueryClient, keepPreviousData, type UseQueryResult, type UseMutationResult } from '@tanstack/react-query';
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  keepPreviousData,
+  type UseQueryResult,
+  type UseMutationResult,
+} from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { sanitizeParams } from '@/lib/params';
 import { sanitizeFields } from '@/lib/sanitize';
@@ -33,14 +40,17 @@ interface ErrorMessages {
   delete?: Record<number, string>;
 }
 
-export interface CRUDHooksConfig<TEntity = unknown, TCreate = unknown, TUpdate = unknown> {
+export interface CRUDHooksConfig<
+  TEntity = unknown,
+  _TCreate = unknown,
+  _TUpdate = unknown,
+> {
   name: string;
   namePlural: string;
   api: ApiModule;
   baseKey: string;
   apiMethods: ApiMethods;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  sanitize?: (data: any) => any;
+  sanitize?: (data: unknown) => unknown;
   invalidateOnCreate?: readonly string[];
   invalidateOnUpdate?: readonly string[];
   invalidateOnDelete?: readonly string[];
@@ -48,19 +58,29 @@ export interface CRUDHooksConfig<TEntity = unknown, TCreate = unknown, TUpdate =
   staleTime?: number;
   responseKey?: string;
   usePreviousData?: boolean;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  transformList?: (data: any, pagination: any) => any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  transformDetail?: (data: any) => TEntity;
+  transformList?: (data: unknown, pagination: unknown) => unknown;
+  transformDetail?: (data: unknown) => TEntity;
 }
 
-export interface CRUDHooksReturn<TEntity = unknown, TCreate = unknown, TUpdate = unknown> {
+export interface CRUDHooksReturn<
+  TEntity = unknown,
+  TCreate = unknown,
+  TUpdate = unknown,
+> {
   useList: (params?: Record<string, unknown>) => UseQueryResult<TEntity>;
-  useDetail: (id: string | number | null | undefined) => UseQueryResult<TEntity>;
+  useDetail: (
+    id: string | number | null | undefined
+  ) => UseQueryResult<TEntity>;
   useCreate: () => UseMutationResult<TEntity, Error, TCreate>;
-  useUpdate: () => UseMutationResult<TEntity, Error, { id: string | number; data: TUpdate }>;
+  useUpdate: () => UseMutationResult<
+    TEntity,
+    Error,
+    { id: string | number; data: TUpdate }
+  >;
   useDelete: () => UseMutationResult<unknown, Error, string | number>;
-  useListActive: (extraParams?: Record<string, unknown>) => UseQueryResult<TEntity>;
+  useListActive: (
+    extraParams?: Record<string, unknown>
+  ) => UseQueryResult<TEntity>;
   /** Alias dinámicos en español — usar keys genéricas para tipado completo */
   [key: string]: unknown;
 }
@@ -69,7 +89,9 @@ export function createCRUDHooks<
   TEntity = unknown,
   TCreate = unknown,
   TUpdate = unknown,
->(config: CRUDHooksConfig<TEntity, TCreate, TUpdate>): CRUDHooksReturn<TEntity, TCreate, TUpdate> {
+>(
+  config: CRUDHooksConfig<TEntity, TCreate, TUpdate>
+): CRUDHooksReturn<TEntity, TCreate, TUpdate> {
   const {
     name,
     namePlural,
@@ -90,13 +112,20 @@ export function createCRUDHooks<
 
   const entityName = name.charAt(0).toUpperCase() + name.slice(1);
 
-  function useList(params: Record<string, unknown> = {}, options?: { enabled?: boolean }) {
+  function useList(
+    params: Record<string, unknown> = {},
+    options?: { enabled?: boolean }
+  ) {
     return useQuery({
       queryKey: [baseKey, params],
       queryFn: async () => {
         const response = await api[apiMethods.list](sanitizeParams(params));
         const data = response.data.data;
-        const pagination = response.data.pagination || response.data.meta || data?.paginacion || data?.pagination;
+        const pagination =
+          response.data.pagination ||
+          response.data.meta ||
+          data?.paginacion ||
+          data?.pagination;
 
         if (transformList) {
           return transformList(data, pagination);
@@ -105,7 +134,10 @@ export function createCRUDHooks<
         if (responseKey) {
           return {
             [responseKey]: data[responseKey] || data,
-            total: data.total || pagination?.total || (data[responseKey]?.length ?? 0),
+            total:
+              data.total ||
+              pagination?.total ||
+              (data[responseKey]?.length ?? 0),
             paginacion: pagination,
           };
         }
@@ -142,10 +174,17 @@ export function createCRUDHooks<
       },
       onSuccess: () => {
         invalidateOnCreate.forEach((key) => {
-          queryClient.invalidateQueries({ queryKey: [key], refetchType: 'active' });
+          queryClient.invalidateQueries({
+            queryKey: [key],
+            refetchType: 'active',
+          });
         });
       },
-      onError: createCRUDErrorHandler('create', entityName, errorMessages.create || {}) as (error: Error) => void,
+      onError: createCRUDErrorHandler(
+        'create',
+        entityName,
+        errorMessages.create || {}
+      ) as (error: Error) => void,
     });
   }
 
@@ -160,11 +199,21 @@ export function createCRUDHooks<
       },
       onSuccess: (_, variables) => {
         invalidateOnUpdate.forEach((key) => {
-          queryClient.invalidateQueries({ queryKey: [key], refetchType: 'active' });
+          queryClient.invalidateQueries({
+            queryKey: [key],
+            refetchType: 'active',
+          });
         });
-        queryClient.invalidateQueries({ queryKey: [name, variables.id], refetchType: 'active' });
+        queryClient.invalidateQueries({
+          queryKey: [name, variables.id],
+          refetchType: 'active',
+        });
       },
-      onError: createCRUDErrorHandler('update', entityName, errorMessages.update || {}) as (error: Error) => void,
+      onError: createCRUDErrorHandler(
+        'update',
+        entityName,
+        errorMessages.update || {}
+      ) as (error: Error) => void,
     });
   }
 
@@ -178,10 +227,17 @@ export function createCRUDHooks<
       },
       onSuccess: () => {
         invalidateOnDelete.forEach((key) => {
-          queryClient.invalidateQueries({ queryKey: [key], refetchType: 'active' });
+          queryClient.invalidateQueries({
+            queryKey: [key],
+            refetchType: 'active',
+          });
         });
       },
-      onError: createCRUDErrorHandler('delete', entityName, errorMessages.delete || {}) as (error: Error) => void,
+      onError: createCRUDErrorHandler(
+        'delete',
+        entityName,
+        errorMessages.delete || {}
+      ) as (error: Error) => void,
     });
   }
 
@@ -201,13 +257,16 @@ export function createCRUDHooks<
     [`useCrear${entityName}`]: useCreate,
     [`useActualizar${entityName}`]: useUpdate,
     [`useEliminar${entityName}`]: useDelete,
-    [`use${namePlural.charAt(0).toUpperCase() + namePlural.slice(1)}Activos`]: useListActive,
+    [`use${namePlural.charAt(0).toUpperCase() + namePlural.slice(1)}Activos`]:
+      useListActive,
   };
 }
 
 type SanitizerFieldType = 'string' | 'number' | 'boolean' | 'id';
 
-export function createSanitizer(fields: (string | { name: string; type: SanitizerFieldType })[]) {
+export function createSanitizer(
+  fields: (string | { name: string; type: SanitizerFieldType })[]
+) {
   const config: Record<string, SanitizerFieldType> = {};
 
   fields.forEach((field) => {
@@ -218,10 +277,14 @@ export function createSanitizer(fields: (string | { name: string; type: Sanitize
     }
   });
 
-  return <T extends Record<string, unknown>>(data: T) => sanitizeFields(data, config);
+  return <T extends Record<string, unknown>>(data: T) =>
+    sanitizeFields(data, config);
 }
 
-export function createInvalidator(baseKeys: string[], additionalKeys: string[] = []): string[] {
+export function createInvalidator(
+  baseKeys: string[],
+  additionalKeys: string[] = []
+): string[] {
   return [...baseKeys, ...additionalKeys];
 }
 

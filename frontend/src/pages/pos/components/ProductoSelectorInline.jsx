@@ -1,2 +1,2 @@
-// Re-export desde shared/selectors para retrocompatibilidad
-export { default } from '@/components/shared/selectors/ProductoSelectorInline';
+// Re-export desde inventario para retrocompatibilidad
+export { default } from '@/pages/inventario/components/ProductoSelectorInline';

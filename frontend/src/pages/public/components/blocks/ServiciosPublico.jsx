@@ -1,14 +1,15 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
-import * as LucideIcons from 'lucide-react';
+import { getDynamicIcon } from '@/lib/dynamicIcons';
+import { Star } from 'lucide-react';
 import { queryKeys } from '@/hooks/config';
 
 /**
  * ServiciosPublico - Renderiza bloque de servicios en sitio público
  * Soporta origen manual o desde ERP (sistema)
  */
-export default function ServiciosPublico({ contenido, tema, slug }) {
+export default function ServiciosPublico({ contenido, tema: _tema, slug }) {
   const {
     titulo_seccion = 'Nuestros Servicios',
     subtitulo_seccion = '',
@@ -54,14 +55,13 @@ export default function ServiciosPublico({ contenido, tema, slug }) {
   });
 
   // Usar servicios del sistema o manuales segun el origen
-  const servicios = (origen === 'sistema' || origen === 'erp')
-    ? (serviciosSistema || [])
-    : items;
+  const servicios =
+    origen === 'sistema' || origen === 'erp' ? serviciosSistema || [] : items;
 
   const columnasClases = {
-    '2': 'md:grid-cols-2',
-    '3': 'md:grid-cols-3',
-    '4': 'md:grid-cols-2 lg:grid-cols-4',
+    2: 'md:grid-cols-2',
+    3: 'md:grid-cols-3',
+    4: 'md:grid-cols-2 lg:grid-cols-4',
   };
   const colKey = String(columnas);
 
@@ -85,14 +85,19 @@ export default function ServiciosPublico({ contenido, tema, slug }) {
           )}
           <h2
             className="text-3xl sm:text-4xl font-bold"
-            style={{ color: 'var(--color-texto)', fontFamily: 'var(--font-titulos)' }}
+            style={{
+              color: 'var(--color-texto)',
+              fontFamily: 'var(--font-titulos)',
+            }}
           >
             {titulo}
           </h2>
         </div>
 
         {/* Grid de servicios */}
-        <div className={`grid grid-cols-1 gap-8 ${columnasClases[colKey] || columnasClases['3']}`}>
+        <div
+          className={`grid grid-cols-1 gap-8 ${columnasClases[colKey] || columnasClases['3']}`}
+        >
           {servicios.map((servicio, index) => (
             <div
               key={servicio.id || index}
@@ -110,11 +115,14 @@ export default function ServiciosPublico({ contenido, tema, slug }) {
                 </div>
               ) : servicio.icono ? (
                 (() => {
-                  const IconComponent = LucideIcons[servicio.icono] || LucideIcons.Star;
+                  const IconComponent = getDynamicIcon(servicio.icono, Star);
                   return (
                     <div
                       className="h-48 flex items-center justify-center"
-                      style={{ backgroundColor: `var(--color-primario)15`, color: 'var(--color-primario)' }}
+                      style={{
+                        backgroundColor: `var(--color-primario)15`,
+                        color: 'var(--color-primario)',
+                      }}
                     >
                       <IconComponent size={64} />
                     </div>
@@ -125,7 +133,10 @@ export default function ServiciosPublico({ contenido, tema, slug }) {
                   className="h-48 flex items-center justify-center"
                   style={{ backgroundColor: `var(--color-primario)15` }}
                 >
-                  <span className="text-6xl font-bold opacity-20" style={{ color: 'var(--color-primario)' }}>
+                  <span
+                    className="text-6xl font-bold opacity-20"
+                    style={{ color: 'var(--color-primario)' }}
+                  >
                     {(servicio.nombre || servicio.titulo || 'S').charAt(0)}
                   </span>
                 </div>
@@ -152,7 +163,8 @@ export default function ServiciosPublico({ contenido, tema, slug }) {
                       className="text-xl font-bold"
                       style={{ color: 'var(--color-primario)' }}
                     >
-                      ${typeof servicio.precio === 'number'
+                      $
+                      {typeof servicio.precio === 'number'
                         ? servicio.precio.toLocaleString()
                         : parseFloat(servicio.precio || 0).toLocaleString()}
                     </p>

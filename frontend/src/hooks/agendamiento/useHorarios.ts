@@ -1,8 +1,9 @@
-import { useQuery, useMutation, useQueryClient, type UseQueryResult, type UseMutationResult } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { horariosApi } from '@/services/api/endpoints';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 import { queryKeys } from '@/hooks/config';
+import { extractData } from '@/lib/apiHelpers';
 
 // ==================== Interfaces ====================
 
@@ -39,7 +40,10 @@ interface ActualizarHorarioVariables {
  * @param profesionalId - ID del profesional
  * @param options - Opciones adicionales (dia_semana, tipo_horario, etc.)
  */
-export function useHorariosProfesional(profesionalId: number | undefined | null, options: Record<string, unknown> = {}) {
+export function useHorariosProfesional(
+  profesionalId: number | undefined | null,
+  options: Record<string, unknown> = {}
+) {
   return useQuery({
     queryKey: queryKeys.agendamiento.horarios.profesional(profesionalId),
     queryFn: async () => {
@@ -51,7 +55,9 @@ export function useHorariosProfesional(profesionalId: number | undefined | null,
       const params = {
         profesional_id: profesionalId,
         ...Object.fromEntries(
-          Object.entries(options).filter(([, value]) => value !== '' && value !== null && value !== undefined)
+          Object.entries(options).filter(
+            ([, value]) => value !== '' && value !== null && value !== undefined
+          )
         ),
       };
 
@@ -63,11 +69,11 @@ export function useHorariosProfesional(profesionalId: number | undefined | null,
       }
 
       // Si hay datos, puede ser array directo o { data: { horarios: [...] } }
-      if (Array.isArray((response as any).data.data)) {
-        return (response as any).data.data;
+      if (Array.isArray(extractData(response))) {
+        return extractData(response);
       }
 
-      return (response as any).data.data?.horarios || [];
+      return extractData<any>(response)?.horarios || [];
     },
     enabled: !!profesionalId,
     staleTime: STALE_TIMES.SEMI_STATIC, // 5 minutos
@@ -106,8 +112,16 @@ export function useCrearHorarioSemanal() {
     },
     onSuccess: (_: unknown, variables: HorarioSemanalData) => {
       // Invalidar horarios del profesional
-      queryClient.invalidateQueries({ queryKey: queryKeys.agendamiento.horarios.profesional(variables.profesional_id), refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: queryKeys.agendamiento.horarios.all, refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.agendamiento.horarios.profesional(
+          variables.profesional_id
+        ),
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.agendamiento.horarios.all,
+        refetchType: 'active',
+      });
     },
     onError: createCRUDErrorHandler('create', 'Horarios semanales', {
       409: 'Ya existen horarios configurados para estos dias',
@@ -127,8 +141,16 @@ export function useCrearHorario() {
       return (response as any).data;
     },
     onSuccess: (_: unknown, variables: HorarioData) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.agendamiento.horarios.profesional(variables.profesional_id), refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: queryKeys.agendamiento.horarios.all, refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.agendamiento.horarios.profesional(
+          variables.profesional_id
+        ),
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.agendamiento.horarios.all,
+        refetchType: 'active',
+      });
     },
     onError: createCRUDErrorHandler('create', 'Horario', {
       409: 'Ya existe un horario para este dia',
@@ -148,8 +170,16 @@ export function useActualizarHorario() {
       return (response as any).data;
     },
     onSuccess: (data: any) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.agendamiento.horarios.profesional(data.profesional_id), refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: queryKeys.agendamiento.horarios.all, refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.agendamiento.horarios.profesional(
+          data.profesional_id
+        ),
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.agendamiento.horarios.all,
+        refetchType: 'active',
+      });
     },
     onError: createCRUDErrorHandler('update', 'Horario'),
   });
@@ -167,7 +197,10 @@ export function useEliminarHorario() {
       return (response as any).data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.agendamiento.horarios.all, refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.agendamiento.horarios.all,
+        refetchType: 'active',
+      });
     },
     onError: createCRUDErrorHandler('delete', 'Horario', {
       409: 'No se puede eliminar. El horario tiene citas asociadas.',
@@ -179,9 +212,15 @@ export function useEliminarHorario() {
  * Hook para validar si un profesional tiene horarios configurados
  * @param profesionalId - ID del profesional
  */
-export function useValidarConfiguracion(profesionalId: number | undefined | null) {
+export function useValidarConfiguracion(
+  profesionalId: number | undefined | null
+) {
   return useQuery({
-    queryKey: [...queryKeys.agendamiento.horarios.all, 'validacion', profesionalId],
+    queryKey: [
+      ...queryKeys.agendamiento.horarios.all,
+      'validacion',
+      profesionalId,
+    ],
     queryFn: async () => {
       const response = await horariosApi.validarConfiguracion(profesionalId!);
       return (response as any).data;

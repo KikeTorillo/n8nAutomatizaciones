@@ -13,13 +13,19 @@
  * ====================================================================
  */
 
-import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  keepPreviousData,
+} from '@tanstack/react-query';
 import type { UseQueryResult, UseMutationResult } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { sucursalesApi } from '@/services/api/endpoints';
 import { createCRUDHooks, createSanitizer } from '@/hooks/factories';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 import { queryKeys } from '@/hooks/config';
+import { extractData, extractDataOr } from '@/lib/apiHelpers';
 import type {
   Sucursal,
   CrearSucursalData,
@@ -64,7 +70,11 @@ const sanitizeSucursal = createSanitizer([
   { name: 'ciudad_id', type: 'id' },
 ]);
 
-const hooks = createCRUDHooks<Sucursal, CrearSucursalData, ActualizarSucursalData>({
+const hooks = createCRUDHooks<
+  Sucursal,
+  CrearSucursalData,
+  ActualizarSucursalData
+>({
   name: 'sucursal',
   namePlural: 'sucursales',
   api: sucursalesApi,
@@ -77,7 +87,10 @@ const hooks = createCRUDHooks<Sucursal, CrearSucursalData, ActualizarSucursalDat
     delete: 'eliminar',
   },
   sanitize: sanitizeSucursal,
-  invalidateOnCreate: [queryKeys.sistema.sucursales.all[0], queryKeys.sistema.sucursales.matriz[0]],
+  invalidateOnCreate: [
+    queryKeys.sistema.sucursales.all[0],
+    queryKeys.sistema.sucursales.matriz[0],
+  ],
   invalidateOnUpdate: [queryKeys.sistema.sucursales.all[0]],
   invalidateOnDelete: [queryKeys.sistema.sucursales.all[0]],
   errorMessages: {
@@ -100,18 +113,22 @@ export function useSucursalMatriz(): UseQueryResult<Sucursal> {
     queryKey: queryKeys.sistema.sucursales.matriz,
     queryFn: async () => {
       const response = await sucursalesApi.obtenerMatriz();
-      return (response as any).data.data;
+      return extractData(response);
     },
     staleTime: STALE_TIMES.STATIC_DATA,
   });
 }
 
-export function useSucursalesUsuario(usuarioId: number | string | null | undefined): UseQueryResult<Sucursal[]> {
+export function useSucursalesUsuario(
+  usuarioId: number | string | null | undefined
+): UseQueryResult<Sucursal[]> {
   return useQuery({
     queryKey: queryKeys.sistema.sucursales.porUsuario(usuarioId),
     queryFn: async () => {
-      const response = await sucursalesApi.obtenerPorUsuario(usuarioId as number);
-      return (response as any).data.data || [];
+      const response = await sucursalesApi.obtenerPorUsuario(
+        usuarioId as number
+      );
+      return extractDataOr(response, []);
     },
     enabled: !!usuarioId,
     staleTime: STALE_TIMES.SEMI_STATIC,
@@ -120,30 +137,54 @@ export function useSucursalesUsuario(usuarioId: number | string | null | undefin
 
 // ==================== USUARIOS DE SUCURSAL ====================
 
-export function useUsuariosSucursal(sucursalId: number | string | null | undefined): UseQueryResult<Usuario[]> {
+export function useUsuariosSucursal(
+  sucursalId: number | string | null | undefined
+): UseQueryResult<Usuario[]> {
   return useQuery({
     queryKey: queryKeys.sistema.sucursales.usuarios(sucursalId),
     queryFn: async () => {
-      const response = await sucursalesApi.obtenerUsuarios(sucursalId as number);
-      return (response as any).data.data || [];
+      const response = await sucursalesApi.obtenerUsuarios(
+        sucursalId as number
+      );
+      return extractDataOr(response, []);
     },
     enabled: !!sucursalId,
     staleTime: STALE_TIMES.SEMI_STATIC,
   });
 }
 
-export function useAsignarUsuarioSucursal(): UseMutationResult<unknown, Error, { sucursalId: number; data: { usuario_id: number } }> {
+export function useAsignarUsuarioSucursal(): UseMutationResult<
+  unknown,
+  Error,
+  { sucursalId: number; data: { usuario_id: number } }
+> {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ sucursalId, data }: { sucursalId: number; data: { usuario_id: number } }) => {
+    mutationFn: async ({
+      sucursalId,
+      data,
+    }: {
+      sucursalId: number;
+      data: { usuario_id: number };
+    }) => {
       const response = await sucursalesApi.asignarUsuario(sucursalId, data);
-      return (response as any).data.data;
+      return extractData(response);
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.sistema.sucursales.usuarios(variables.sucursalId), exact: true, refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: queryKeys.sistema.sucursales.all, refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['sucursales-usuario'], refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.sistema.sucursales.usuarios(variables.sucursalId),
+        exact: true,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.sistema.sucursales.all,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['sucursales-usuario'],
+        refetchType: 'active',
+      });
     },
     onError: createCRUDErrorHandler('create', 'Usuario'),
   });
@@ -151,29 +192,52 @@ export function useAsignarUsuarioSucursal(): UseMutationResult<unknown, Error, {
 
 // ==================== PROFESIONALES DE SUCURSAL ====================
 
-export function useProfesionalesSucursal(sucursalId: number | string | null | undefined): UseQueryResult<Profesional[]> {
+export function useProfesionalesSucursal(
+  sucursalId: number | string | null | undefined
+): UseQueryResult<Profesional[]> {
   return useQuery({
     queryKey: queryKeys.sistema.sucursales.profesionales(sucursalId),
     queryFn: async () => {
-      const response = await sucursalesApi.obtenerProfesionales(sucursalId as number);
-      return (response as any).data.data || [];
+      const response = await sucursalesApi.obtenerProfesionales(
+        sucursalId as number
+      );
+      return extractDataOr(response, []);
     },
     enabled: !!sucursalId,
     staleTime: STALE_TIMES.SEMI_STATIC,
   });
 }
 
-export function useAsignarProfesionalSucursal(): UseMutationResult<unknown, Error, { sucursalId: number; data: { profesional_id: number } }> {
+export function useAsignarProfesionalSucursal(): UseMutationResult<
+  unknown,
+  Error,
+  { sucursalId: number; data: { profesional_id: number } }
+> {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ sucursalId, data }: { sucursalId: number; data: { profesional_id: number } }) => {
+    mutationFn: async ({
+      sucursalId,
+      data,
+    }: {
+      sucursalId: number;
+      data: { profesional_id: number };
+    }) => {
       const response = await sucursalesApi.asignarProfesional(sucursalId, data);
-      return (response as any).data.data;
+      return extractData(response);
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.sistema.sucursales.profesionales(variables.sucursalId), exact: true, refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: queryKeys.sistema.sucursales.all, refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.sistema.sucursales.profesionales(
+          variables.sucursalId
+        ),
+        exact: true,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.sistema.sucursales.all,
+        refetchType: 'active',
+      });
     },
     onError: createCRUDErrorHandler('create', 'Profesional'),
   });
@@ -183,12 +247,14 @@ export function useAsignarProfesionalSucursal(): UseMutationResult<unknown, Erro
 
 export function useMetricasSucursales(
   params: Record<string, unknown> = {},
-  { enabled = true }: { enabled?: boolean } = {},
+  { enabled = true }: { enabled?: boolean } = {}
 ): UseQueryResult<unknown> {
   return useQuery({
     queryKey: queryKeys.sistema.sucursales.metricas(params),
     queryFn: async () => {
-      const sanitizedParams = Object.entries(params).reduce<Record<string, unknown>>((acc, [key, value]) => {
+      const sanitizedParams = Object.entries(params).reduce<
+        Record<string, unknown>
+      >((acc, [key, value]) => {
         if (value !== '' && value !== null && value !== undefined) {
           acc[key] = value;
         }
@@ -196,7 +262,7 @@ export function useMetricasSucursales(
       }, {});
 
       const response = await sucursalesApi.obtenerMetricas(sanitizedParams);
-      return (response as any).data.data;
+      return extractData(response);
     },
     enabled, // FIX RBAC Ene 2026: Solo ejecutar si está habilitado
     staleTime: STALE_TIMES.DYNAMIC,
@@ -206,38 +272,49 @@ export function useMetricasSucursales(
 
 // ==================== TRANSFERENCIAS DE STOCK ====================
 
-export function useTransferencias(params: Record<string, unknown> = {}): UseQueryResult<Transferencia[]> {
+export function useTransferencias(
+  params: Record<string, unknown> = {}
+): UseQueryResult<Transferencia[]> {
   return useQuery({
     queryKey: queryKeys.inventario.transferencias.list(params),
     queryFn: async () => {
-      const sanitizedParams = Object.entries(params).reduce<Record<string, unknown>>((acc, [key, value]) => {
+      const sanitizedParams = Object.entries(params).reduce<
+        Record<string, unknown>
+      >((acc, [key, value]) => {
         if (value !== '' && value !== null && value !== undefined) {
           acc[key] = value;
         }
         return acc;
       }, {});
 
-      const response = await sucursalesApi.listarTransferencias(sanitizedParams);
-      return (response as any).data.data || [];
+      const response =
+        await sucursalesApi.listarTransferencias(sanitizedParams);
+      return extractDataOr(response, []);
     },
     staleTime: STALE_TIMES.DYNAMIC,
     placeholderData: keepPreviousData,
   });
 }
 
-export function useTransferencia(id: number | string | null | undefined): UseQueryResult<Transferencia> {
+export function useTransferencia(
+  id: number | string | null | undefined
+): UseQueryResult<Transferencia> {
   return useQuery({
     queryKey: queryKeys.sistema.sucursales.transferencia(id),
     queryFn: async () => {
       const response = await sucursalesApi.obtenerTransferencia(id as number);
-      return (response as any).data.data;
+      return extractData(response);
     },
     enabled: !!id,
     staleTime: STALE_TIMES.DYNAMIC,
   });
 }
 
-export function useCrearTransferencia(): UseMutationResult<Transferencia, Error, CrearTransferenciaData> {
+export function useCrearTransferencia(): UseMutationResult<
+  Transferencia,
+  Error,
+  CrearTransferenciaData
+> {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -247,10 +324,13 @@ export function useCrearTransferencia(): UseMutationResult<Transferencia, Error,
         notas: data.notas?.trim() || undefined,
       };
       const response = await sucursalesApi.crearTransferencia(sanitized);
-      return (response as any).data.data;
+      return extractData(response);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.transferencias.all, refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.inventario.transferencias.all,
+        refetchType: 'active',
+      });
     },
     onError: createCRUDErrorHandler('create', 'Transferencia'),
   });
@@ -262,11 +342,18 @@ export function useEnviarTransferencia() {
   return useMutation({
     mutationFn: async (id: number) => {
       const response = await sucursalesApi.enviarTransferencia(id);
-      return (response as any).data.data;
+      return extractData(response);
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.sistema.sucursales.transferencia(data.id), exact: true, refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.transferencias.all, refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.sistema.sucursales.transferencia(data.id),
+        exact: true,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.inventario.transferencias.all,
+        refetchType: 'active',
+      });
     },
     onError: createCRUDErrorHandler('update', 'Transferencia'),
   });
@@ -276,13 +363,26 @@ export function useRecibirTransferencia() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, data = {} }: { id: number; data?: RecibirTransferenciaData }) => {
+    mutationFn: async ({
+      id,
+      data = {},
+    }: {
+      id: number;
+      data?: RecibirTransferenciaData;
+    }) => {
       const response = await sucursalesApi.recibirTransferencia(id, data);
-      return (response as any).data.data;
+      return extractData(response);
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.sistema.sucursales.transferencia(data.id), exact: true, refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.transferencias.all, refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.sistema.sucursales.transferencia(data.id),
+        exact: true,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.inventario.transferencias.all,
+        refetchType: 'active',
+      });
     },
     onError: createCRUDErrorHandler('update', 'Transferencia'),
   });
@@ -294,11 +394,18 @@ export function useCancelarTransferencia() {
   return useMutation({
     mutationFn: async (id: number) => {
       const response = await sucursalesApi.cancelarTransferencia(id);
-      return (response as any).data.data;
+      return extractData(response);
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.sistema.sucursales.transferencia(data.id), exact: true, refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.transferencias.all, refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.sistema.sucursales.transferencia(data.id),
+        exact: true,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.inventario.transferencias.all,
+        refetchType: 'active',
+      });
     },
     onError: createCRUDErrorHandler('update', 'Transferencia'),
   });
@@ -308,13 +415,31 @@ export function useAgregarItemTransferencia() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ transferenciaId, data }: { transferenciaId: number; data: AgregarItemData }) => {
-      const response = await sucursalesApi.agregarItemTransferencia(transferenciaId, data);
-      return (response as any).data.data;
+    mutationFn: async ({
+      transferenciaId,
+      data,
+    }: {
+      transferenciaId: number;
+      data: AgregarItemData;
+    }) => {
+      const response = await sucursalesApi.agregarItemTransferencia(
+        transferenciaId,
+        data
+      );
+      return extractData(response);
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.sistema.sucursales.transferencia(variables.transferenciaId), exact: true, refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.transferencias.all, refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.sistema.sucursales.transferencia(
+          variables.transferenciaId
+        ),
+        exact: true,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.inventario.transferencias.all,
+        refetchType: 'active',
+      });
     },
     onError: createCRUDErrorHandler('create', 'Item'),
   });
@@ -324,13 +449,31 @@ export function useEliminarItemTransferencia() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ transferenciaId, itemId }: { transferenciaId: number; itemId: number }) => {
-      const response = await sucursalesApi.eliminarItemTransferencia(transferenciaId, itemId);
-      return (response as any).data.data;
+    mutationFn: async ({
+      transferenciaId,
+      itemId,
+    }: {
+      transferenciaId: number;
+      itemId: number;
+    }) => {
+      const response = await sucursalesApi.eliminarItemTransferencia(
+        transferenciaId,
+        itemId
+      );
+      return extractData(response);
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.sistema.sucursales.transferencia(variables.transferenciaId), exact: true, refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: queryKeys.inventario.transferencias.all, refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.sistema.sucursales.transferencia(
+          variables.transferenciaId
+        ),
+        exact: true,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.inventario.transferencias.all,
+        refetchType: 'active',
+      });
     },
     onError: createCRUDErrorHandler('delete', 'Item'),
   });

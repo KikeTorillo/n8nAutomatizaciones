@@ -1,5 +1,10 @@
 import { useState, useCallback, useMemo } from 'react';
-import { useForm, type FieldValues, type UseFormReturn, type DefaultValues, type SubmitHandler } from 'react-hook-form';
+import {
+  useForm,
+  type FieldValues,
+  type UseFormReturn,
+  type DefaultValues,
+} from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { ZodType } from 'zod';
 import { useToast } from './useToast';
@@ -10,7 +15,10 @@ interface MutationLike {
   isPending: boolean;
 }
 
-export interface UseFormDrawerOptions<TForm extends FieldValues, TEntity = unknown> {
+export interface UseFormDrawerOptions<
+  TForm extends FieldValues,
+  TEntity = unknown,
+> {
   /** Schema Zod para validación */
   schema: ZodType<TForm>;
   /** Valores por defecto del form */
@@ -24,7 +32,11 @@ export interface UseFormDrawerOptions<TForm extends FieldValues, TEntity = unkno
   /** Convierte entidad del backend a valores del form */
   entityToFormValues?: (entity: TEntity) => Partial<TForm>;
   /** Prepara el payload antes de enviar a la mutation */
-  preparePayload?: (data: TForm, mode: 'create' | 'edit', entity: TEntity | null) => unknown;
+  preparePayload?: (
+    data: TForm,
+    mode: 'create' | 'edit',
+    entity: TEntity | null
+  ) => unknown;
   /** Callback tras éxito */
   onSuccess?: (result: unknown, mode: 'create' | 'edit') => void;
   /** Callback tras error */
@@ -38,7 +50,10 @@ export interface UseFormDrawerOptions<TForm extends FieldValues, TEntity = unkno
   };
 }
 
-export interface UseFormDrawerReturn<TForm extends FieldValues, TEntity = unknown> {
+export interface UseFormDrawerReturn<
+  TForm extends FieldValues,
+  TEntity = unknown,
+> {
   /** Si el drawer está abierto */
   isOpen: boolean;
   /** Modo actual */
@@ -58,7 +73,10 @@ export interface UseFormDrawerReturn<TForm extends FieldValues, TEntity = unknow
   /** Si está enviando */
   isSubmitting: boolean;
   /** Props listas para spread en FormDrawer */
-  formDrawerProps: Pick<FormDrawerProps, 'isOpen' | 'onClose' | 'entityName' | 'mode' | 'onSubmit' | 'isSubmitting'>;
+  formDrawerProps: Pick<
+    FormDrawerProps,
+    'isOpen' | 'onClose' | 'entityName' | 'mode' | 'onSubmit' | 'isSubmitting'
+  >;
 }
 
 /**
@@ -118,15 +136,18 @@ export function useFormDrawer<TForm extends FieldValues, TEntity = unknown>(
     setIsOpen(true);
   }, [form, defaultValues]);
 
-  const openEdit = useCallback((e: TEntity) => {
-    const values = entityToFormValues
-      ? { ...defaultValues, ...entityToFormValues(e) }
-      : defaultValues;
-    form.reset(values as DefaultValues<TForm>);
-    setEntity(e);
-    setMode('edit');
-    setIsOpen(true);
-  }, [form, defaultValues, entityToFormValues]);
+  const openEdit = useCallback(
+    (e: TEntity) => {
+      const values = entityToFormValues
+        ? { ...defaultValues, ...entityToFormValues(e) }
+        : defaultValues;
+      form.reset(values as DefaultValues<TForm>);
+      setEntity(e);
+      setMode('edit');
+      setIsOpen(true);
+    },
+    [form, defaultValues, entityToFormValues]
+  );
 
   const close = useCallback(() => {
     setIsOpen(false);
@@ -139,47 +160,74 @@ export function useFormDrawer<TForm extends FieldValues, TEntity = unknown>(
   const mutation = mode === 'edit' ? updateMutation : createMutation;
   const isSubmitting = mutation?.isPending ?? false;
 
-  const onSubmitHandler = useCallback(async (data: TForm) => {
-    if (!mutation) return;
+  const onSubmitHandler = useCallback(
+    async (data: TForm) => {
+      if (!mutation) return;
 
-    const payload = preparePayload
-      ? preparePayload(data, mode, entity)
-      : data;
+      const payload = preparePayload
+        ? preparePayload(data, mode, entity)
+        : data;
 
-    try {
-      const result = await mutation.mutateAsync(payload);
-      const successMsg = mode === 'edit'
-        ? (messages.updateSuccess ?? `${entityName} actualizado/a correctamente`)
-        : (messages.createSuccess ?? `${entityName} creado/a correctamente`);
-      showSuccess(successMsg);
-      onSuccess?.(result, mode);
-      close();
-    } catch (err) {
-      const error = err as Error & { response?: { data?: { mensaje?: string } } };
-      const errorMsg = error.response?.data?.mensaje
-        ?? error.message
-        ?? (mode === 'edit'
-          ? (messages.updateError ?? `Error al actualizar ${entityName}`)
-          : (messages.createError ?? `Error al crear ${entityName}`));
-      showError(errorMsg);
-      onError?.(error, mode);
-    }
-  }, [mutation, preparePayload, mode, entity, messages, entityName, showSuccess, showError, onSuccess, onError, close]);
+      try {
+        const result = await mutation.mutateAsync(payload);
+        const successMsg =
+          mode === 'edit'
+            ? (messages.updateSuccess ??
+              `${entityName} actualizado/a correctamente`)
+            : (messages.createSuccess ??
+              `${entityName} creado/a correctamente`);
+        showSuccess(successMsg);
+        onSuccess?.(result, mode);
+        close();
+      } catch (err) {
+        const error = err as Error & {
+          response?: { data?: { mensaje?: string } };
+        };
+        const errorMsg =
+          error.response?.data?.mensaje ??
+          error.message ??
+          (mode === 'edit'
+            ? (messages.updateError ?? `Error al actualizar ${entityName}`)
+            : (messages.createError ?? `Error al crear ${entityName}`));
+        showError(errorMsg);
+        onError?.(error, mode);
+      }
+    },
+    [
+      mutation,
+      preparePayload,
+      mode,
+      entity,
+      messages,
+      entityName,
+      showSuccess,
+      showError,
+      onSuccess,
+      onError,
+      close,
+    ]
+  );
 
-  const handleFormSubmit = useCallback((e: React.FormEvent) => {
-    e.preventDefault();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    form.handleSubmit(onSubmitHandler as any)(e);
-  }, [form, onSubmitHandler]);
+  const handleFormSubmit = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      form.handleSubmit(onSubmitHandler as any)(e);
+    },
+    [form, onSubmitHandler]
+  );
 
-  const formDrawerProps = useMemo(() => ({
-    isOpen,
-    onClose: close,
-    entityName,
-    mode,
-    onSubmit: handleFormSubmit,
-    isSubmitting,
-  }), [isOpen, close, entityName, mode, handleFormSubmit, isSubmitting]);
+  const formDrawerProps = useMemo(
+    () => ({
+      isOpen,
+      onClose: close,
+      entityName,
+      mode,
+      onSubmit: handleFormSubmit,
+      isSubmitting,
+    }),
+    [isOpen, close, entityName, mode, handleFormSubmit, isSubmitting]
+  );
 
   return {
     isOpen,

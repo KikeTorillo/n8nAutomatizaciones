@@ -1,4 +1,4 @@
-import { memo, useState, forwardRef, type ComponentType } from 'react';
+import { memo, useMemo, useState, forwardRef, type ComponentType } from 'react';
 import { Edit2, Trash2, Eye, BarChart3, MoreVertical } from 'lucide-react';
 import { cn } from '../lib/cn';
 import { Button } from '../atoms/Button';
@@ -106,37 +106,59 @@ function StandardRowActionsComponent<T = Record<string, unknown>>(
   };
 
   // Construir lista de acciones para dropdown
-  const dropdownActions = [
-    onView && { icon: Eye, label: 'Ver detalle', onClick: () => onView(row) },
-    onEdit &&
-      canEdit && { icon: Edit2, label: 'Editar', onClick: () => onEdit(row) },
-    onStats && {
-      icon: BarChart3,
-      label: 'Estadísticas',
-      onClick: () => onStats(row),
-    },
-    ...extraActions
-      .filter((a) => a.show !== false)
-      .map((a) => ({
-        icon: a.icon,
-        label: a.label,
-        onClick: () => a.onClick?.(row),
-        disabled: a.disabled || a.loading,
-      })),
-    onDelete &&
-      canDelete && {
-        icon: Trash2,
-        label: 'Eliminar',
-        onClick: handleDeleteClick,
-        variant: 'danger' as const,
-      },
-  ].filter(Boolean) as Array<{
-    icon: ComponentType<{ className?: string }>;
-    label: string;
-    onClick: () => void;
-    disabled?: boolean;
-    variant?: 'danger';
-  }>;
+  const dropdownActions = useMemo(
+    () =>
+      [
+        onView && {
+          icon: Eye,
+          label: 'Ver detalle',
+          onClick: () => onView(row),
+        },
+        onEdit &&
+          canEdit && {
+            icon: Edit2,
+            label: 'Editar',
+            onClick: () => onEdit(row),
+          },
+        onStats && {
+          icon: BarChart3,
+          label: 'Estadísticas',
+          onClick: () => onStats(row),
+        },
+        ...extraActions
+          .filter((a) => a.show !== false)
+          .map((a) => ({
+            icon: a.icon,
+            label: a.label,
+            onClick: () => a.onClick?.(row),
+            disabled: a.disabled || a.loading,
+          })),
+        onDelete &&
+          canDelete && {
+            icon: Trash2,
+            label: 'Eliminar',
+            onClick: handleDeleteClick,
+            variant: 'danger' as const,
+          },
+      ].filter(Boolean) as Array<{
+        icon: ComponentType<{ className?: string }>;
+        label: string;
+        onClick: () => void;
+        disabled?: boolean;
+        variant?: 'danger';
+      }>,
+    [
+      onView,
+      onEdit,
+      onDelete,
+      onStats,
+      canEdit,
+      canDelete,
+      extraActions,
+      row,
+      handleDeleteClick,
+    ]
+  );
 
   const deleteConfirmDialog = confirmDelete && onDelete && canDelete && (
     <ConfirmDialog

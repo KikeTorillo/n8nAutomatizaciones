@@ -1,6 +1,6 @@
 import { useRef, useEffect, useCallback } from 'react';
 import { OrgChart } from 'd3-org-chart';
-import * as d3 from 'd3';
+import { select } from 'd3-selection';
 
 // Colores por tipo de empleado
 const TIPO_COLORS = {
@@ -33,14 +33,15 @@ const ESTADO_COLORS = {
 function flattenTree(nodes, parentId = null) {
   const result = [];
 
-  nodes.forEach(node => {
+  nodes.forEach((node) => {
     result.push({
       id: String(node.id),
       parentId: parentId ? String(parentId) : null,
       nombre_completo: node.nombre_completo || 'Sin nombre',
       foto_url: node.foto_url,
       puesto_nombre: node.puesto?.nombre || node.puesto_nombre || '',
-      departamento_nombre: node.departamento?.nombre || node.departamento_nombre || '',
+      departamento_nombre:
+        node.departamento?.nombre || node.departamento_nombre || '',
       estado: node.estado || 'activo',
       tipo: node.tipo || '',
       email: node.email || '',
@@ -92,9 +93,10 @@ function renderNodeContent(d, isDarkMode) {
     : '';
 
   // Contador de subordinados
-  const childrenBadge = data.childrenCount > 0
-    ? `<div style="font-size:11px;color:${textSecondary};margin-top:4px;">${data.childrenCount} reporte${data.childrenCount !== 1 ? 's' : ''}</div>`
-    : '';
+  const childrenBadge =
+    data.childrenCount > 0
+      ? `<div style="font-size:11px;color:${textSecondary};margin-top:4px;">${data.childrenCount} reporte${data.childrenCount !== 1 ? 's' : ''}</div>`
+      : '';
 
   return `
     <div style="
@@ -185,7 +187,7 @@ function D3OrgChart({
     let chartData = flattenTree(data);
 
     // Si hay múltiples raíces, crear nodo virtual de organización
-    const rootNodes = chartData.filter(d => !d.parentId);
+    const rootNodes = chartData.filter((d) => !d.parentId);
     if (rootNodes.length > 1) {
       chartData = [
         {
@@ -201,7 +203,7 @@ function D3OrgChart({
           childrenCount: rootNodes.length,
           _isVirtual: true,
         },
-        ...chartData.map(d => ({
+        ...chartData.map((d) => ({
           ...d,
           parentId: d.parentId || 'org-root',
         })),
@@ -226,11 +228,9 @@ function D3OrgChart({
       .neighbourMargin(() => 40)
       .layout('top') // Layout vertical top-down
       .compact(false)
-      .linkUpdate(function (d) {
+      .linkUpdate(function (_d) {
         // Estilizar las líneas de conexión
-        d3.select(this)
-          .attr('stroke', linkColor)
-          .attr('stroke-width', 2);
+        select(this).attr('stroke', linkColor).attr('stroke-width', 2);
       })
       .nodeContent((d) => renderNodeContent(d, isDarkMode))
       .onNodeClick((d) => {
@@ -303,7 +303,8 @@ function D3OrgChart({
 
       {/* Instrucciones */}
       <div className="absolute bottom-4 left-4 text-xs text-gray-500 dark:text-gray-400 bg-white/80 dark:bg-gray-800/80 px-2 py-1 rounded">
-        Usa la rueda del mouse para zoom • Arrastra para mover • Click en nodo para ver detalle
+        Usa la rueda del mouse para zoom • Arrastra para mover • Click en nodo
+        para ver detalle
       </div>
     </div>
   );

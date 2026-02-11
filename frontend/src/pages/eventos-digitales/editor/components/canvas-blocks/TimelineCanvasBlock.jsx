@@ -11,7 +11,8 @@
 
 import { memo } from 'react';
 import { cn } from '@/lib/utils';
-import * as LucideIcons from 'lucide-react';
+import { getDynamicIcon } from '@/lib/dynamicIcons';
+import { Clock } from 'lucide-react';
 import { THEME_FALLBACK_COLORS } from '@/lib/uiConstants';
 
 /**
@@ -42,10 +43,7 @@ function TimelineCanvasBlock({ bloque, tema }) {
   const colorLinea = color_linea || colorPrimario;
 
   // Obtener icono de Lucide
-  const getIcon = (iconName) => {
-    const Icon = LucideIcons[iconName] || LucideIcons.Clock;
-    return Icon;
-  };
+  const getIcon = (iconName) => getDynamicIcon(iconName, Clock);
 
   return (
     <section className="py-16 px-6" style={{ backgroundColor: colorFondo }}>
@@ -54,7 +52,10 @@ function TimelineCanvasBlock({ bloque, tema }) {
         <div className="text-center mb-12">
           <h2
             className="text-3xl md:text-4xl font-bold mb-4"
-            style={{ color: colorPrimario, fontFamily: 'var(--fuente-titulos)' }}
+            style={{
+              color: colorPrimario,
+              fontFamily: 'var(--fuente-titulos)',
+            }}
           >
             {titulo_seccion}
           </h2>
@@ -83,7 +84,10 @@ function TimelineCanvasBlock({ bloque, tema }) {
             <div className="space-y-8">
               {items.map((item, idx) => {
                 const Icon = getIcon(item.icono);
-                const isLeft = layout === 'alternado' ? idx % 2 === 0 : layout === 'izquierda';
+                const isLeft =
+                  layout === 'alternado'
+                    ? idx % 2 === 0
+                    : layout === 'izquierda';
 
                 return (
                   <div
@@ -118,8 +122,12 @@ function TimelineCanvasBlock({ bloque, tema }) {
                         'flex-1',
                         layout === 'izquierda' && 'pr-12 text-right',
                         layout === 'derecha' && 'pl-12',
-                        layout === 'alternado' && isLeft && 'mr-[calc(50%+1rem)] text-right',
-                        layout === 'alternado' && !isLeft && 'ml-[calc(50%+1rem)] text-left'
+                        layout === 'alternado' &&
+                          isLeft &&
+                          'mr-[calc(50%+1rem)] text-right',
+                        layout === 'alternado' &&
+                          !isLeft &&
+                          'ml-[calc(50%+1rem)] text-left'
                       )}
                     >
                       <span
@@ -128,11 +136,17 @@ function TimelineCanvasBlock({ bloque, tema }) {
                       >
                         {item.hora || '00:00'}
                       </span>
-                      <h3 className="text-lg font-bold mb-2" style={{ color: colorTexto }}>
+                      <h3
+                        className="text-lg font-bold mb-2"
+                        style={{ color: colorTexto }}
+                      >
                         {item.titulo || 'Actividad'}
                       </h3>
                       {item.descripcion && (
-                        <p className="text-sm" style={{ color: colorTextoClaro }}>
+                        <p
+                          className="text-sm"
+                          style={{ color: colorTextoClaro }}
+                        >
                           {item.descripcion}
                         </p>
                       )}
@@ -144,7 +158,7 @@ function TimelineCanvasBlock({ bloque, tema }) {
           </div>
         ) : (
           <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-            <LucideIcons.Clock className="w-12 h-12 mx-auto mb-4 opacity-50" />
+            <Clock className="w-12 h-12 mx-auto mb-4 opacity-50" />
             <p>No hay actividades en el itinerario</p>
           </div>
         )}

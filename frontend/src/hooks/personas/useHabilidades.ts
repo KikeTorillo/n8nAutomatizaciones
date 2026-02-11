@@ -10,6 +10,7 @@ import { profesionalesApi, habilidadesApi } from '@/services/api/endpoints';
 import { useToast } from '@/hooks/utils';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 import { queryKeys } from '@/hooks/config';
+import { extractData } from '@/lib/apiHelpers';
 
 // ==================== INTERFACES ====================
 
@@ -110,7 +111,12 @@ export const CATEGORIAS_HABILIDAD: CategoriaHabilidad[] = [
   { value: 'blanda', label: 'Blanda', color: 'purple', icon: 'users' },
   { value: 'idioma', label: 'Idioma', color: 'green', icon: 'globe' },
   { value: 'software', label: 'Software', color: 'orange', icon: 'laptop' },
-  { value: 'certificacion', label: 'Certificación', color: 'red', icon: 'certificate' },
+  {
+    value: 'certificacion',
+    label: 'Certificación',
+    color: 'red',
+    icon: 'certificate',
+  },
   { value: 'otro', label: 'Otra', color: 'gray', icon: 'tag' },
 ];
 
@@ -141,7 +147,7 @@ export function useCatalogoHabilidades(options: CatalogoQueryOptions = {}) {
     queryKey: catalogoKeys.list(filtros),
     queryFn: async () => {
       const response = await habilidadesApi.listar(filtros);
-      return (response as any).data?.data || (response as any).data;
+      return extractData(response);
     },
     enabled,
     staleTime: STALE_TIMES.FREQUENT,
@@ -156,7 +162,7 @@ export function useHabilidadCatalogo(habilidadId: number | null | undefined) {
     queryKey: catalogoKeys.detail(habilidadId!),
     queryFn: async () => {
       const response = await habilidadesApi.obtener(habilidadId!);
-      return (response as any).data?.data || (response as any).data;
+      return extractData(response);
     },
     enabled: !!habilidadId,
   });
@@ -165,14 +171,20 @@ export function useHabilidadCatalogo(habilidadId: number | null | undefined) {
 /**
  * Lista profesionales con una habilidad específica
  */
-export function useProfesionalesConHabilidad(habilidadId: number | null | undefined, options: CatalogoQueryOptions = {}) {
+export function useProfesionalesConHabilidad(
+  habilidadId: number | null | undefined,
+  options: CatalogoQueryOptions = {}
+) {
   const { filtros = {}, enabled = true } = options;
 
   return useQuery({
     queryKey: catalogoKeys.profesionales(habilidadId!),
     queryFn: async () => {
-      const response = await habilidadesApi.listarProfesionales(habilidadId!, filtros);
-      return (response as any).data?.data || (response as any).data;
+      const response = await habilidadesApi.listarProfesionales(
+        habilidadId!,
+        filtros
+      );
+      return extractData(response);
     },
     enabled: enabled && !!habilidadId,
     staleTime: STALE_TIMES.REAL_TIME,
@@ -191,10 +203,13 @@ export function useCrearHabilidadCatalogo() {
   return useMutation({
     mutationFn: async (data: Partial<HabilidadCatalogo>) => {
       const response = await habilidadesApi.crear(data as any);
-      return (response as any).data?.data || (response as any).data;
+      return extractData(response);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: catalogoKeys.lists(), refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: catalogoKeys.lists(),
+        refetchType: 'active',
+      });
       toast.success('Habilidad creada en catálogo');
     },
     onError: createCRUDErrorHandler('create', 'Habilidad'),
@@ -210,12 +225,21 @@ export function useActualizarHabilidadCatalogo() {
 
   return useMutation({
     mutationFn: async ({ habilidadId, data }: ActualizarCatalogoParams) => {
-      const response = await habilidadesApi.actualizar(habilidadId, data as any);
-      return (response as any).data?.data || (response as any).data;
+      const response = await habilidadesApi.actualizar(
+        habilidadId,
+        data as any
+      );
+      return extractData(response);
     },
     onSuccess: (_data: unknown, variables: ActualizarCatalogoParams) => {
-      queryClient.invalidateQueries({ queryKey: catalogoKeys.lists(), refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: catalogoKeys.detail(variables.habilidadId), refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: catalogoKeys.lists(),
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: catalogoKeys.detail(variables.habilidadId),
+        refetchType: 'active',
+      });
       toast.success('Habilidad actualizada');
     },
     onError: createCRUDErrorHandler('update', 'Habilidad'),
@@ -232,10 +256,13 @@ export function useEliminarHabilidadCatalogo() {
   return useMutation({
     mutationFn: async (habilidadId: number) => {
       const response = await habilidadesApi.eliminar(habilidadId);
-      return (response as any).data?.data || (response as any).data;
+      return extractData(response);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: catalogoKeys.lists(), refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: catalogoKeys.lists(),
+        refetchType: 'active',
+      });
       toast.success('Habilidad eliminada del catálogo');
     },
     onError: createCRUDErrorHandler('delete', 'Habilidad'),
@@ -247,14 +274,20 @@ export function useEliminarHabilidadCatalogo() {
 /**
  * Lista habilidades de un profesional
  */
-export function useHabilidadesEmpleado(profesionalId: number | null | undefined, options: EmpleadoQueryOptions = {}) {
+export function useHabilidadesEmpleado(
+  profesionalId: number | null | undefined,
+  options: EmpleadoQueryOptions = {}
+) {
   const { filtros = {}, enabled = true } = options;
 
   return useQuery({
     queryKey: habilidadesEmpleadoKeys.list(profesionalId!, filtros),
     queryFn: async () => {
-      const response = await profesionalesApi.listarHabilidades(profesionalId!, filtros);
-      return (response as any).data?.data || (response as any).data;
+      const response = await profesionalesApi.listarHabilidades(
+        profesionalId!,
+        filtros
+      );
+      return extractData(response);
     },
     enabled: enabled && !!profesionalId,
     staleTime: STALE_TIMES.REAL_TIME,
@@ -264,12 +297,21 @@ export function useHabilidadesEmpleado(profesionalId: number | null | undefined,
 /**
  * Obtiene una habilidad específica de un empleado
  */
-export function useHabilidadEmpleadoDetalle(profesionalId: number | null | undefined, habilidadEmpleadoId: number | null | undefined) {
+export function useHabilidadEmpleadoDetalle(
+  profesionalId: number | null | undefined,
+  habilidadEmpleadoId: number | null | undefined
+) {
   return useQuery({
-    queryKey: habilidadesEmpleadoKeys.detail(profesionalId!, habilidadEmpleadoId!),
+    queryKey: habilidadesEmpleadoKeys.detail(
+      profesionalId!,
+      habilidadEmpleadoId!
+    ),
     queryFn: async () => {
-      const response = await profesionalesApi.obtenerHabilidadEmpleado(profesionalId!, habilidadEmpleadoId!);
-      return (response as any).data?.data || (response as any).data;
+      const response = await profesionalesApi.obtenerHabilidadEmpleado(
+        profesionalId!,
+        habilidadEmpleadoId!
+      );
+      return extractData(response);
     },
     enabled: !!profesionalId && !!habilidadEmpleadoId,
   });
@@ -286,11 +328,17 @@ export function useAsignarHabilidad() {
 
   return useMutation({
     mutationFn: async ({ profesionalId, data }: AsignarHabilidadParams) => {
-      const response = await profesionalesApi.asignarHabilidad(profesionalId, data);
-      return (response as any).data?.data || (response as any).data;
+      const response = await profesionalesApi.asignarHabilidad(
+        profesionalId,
+        data
+      );
+      return extractData(response);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: habilidadesEmpleadoKeys.lists(), refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: habilidadesEmpleadoKeys.lists(),
+        refetchType: 'active',
+      });
       toast.success('Habilidad asignada');
     },
     onError: createCRUDErrorHandler('create', 'Habilidad'),
@@ -306,11 +354,17 @@ export function useAsignarHabilidadesBatch() {
 
   return useMutation({
     mutationFn: async ({ profesionalId, habilidades }: AsignarBatchParams) => {
-      const response = await profesionalesApi.asignarHabilidadesBatch(profesionalId, { habilidades });
-      return (response as any).data?.data || (response as any).data;
+      const response = await profesionalesApi.asignarHabilidadesBatch(
+        profesionalId,
+        { habilidades }
+      );
+      return extractData(response);
     },
     onSuccess: (data: any) => {
-      queryClient.invalidateQueries({ queryKey: habilidadesEmpleadoKeys.lists(), refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: habilidadesEmpleadoKeys.lists(),
+        refetchType: 'active',
+      });
       toast.success(`${data.asignadas || 'Varias'} habilidades asignadas`);
     },
     onError: createCRUDErrorHandler('create', 'Habilidades'),
@@ -325,14 +379,28 @@ export function useActualizarHabilidadEmpleado() {
   const toast = useToast();
 
   return useMutation({
-    mutationFn: async ({ profesionalId, habilidadEmpleadoId, data }: ActualizarEmpleadoParams) => {
-      const response = await profesionalesApi.actualizarHabilidadEmpleado(profesionalId, habilidadEmpleadoId, data as any);
-      return (response as any).data?.data || (response as any).data;
+    mutationFn: async ({
+      profesionalId,
+      habilidadEmpleadoId,
+      data,
+    }: ActualizarEmpleadoParams) => {
+      const response = await profesionalesApi.actualizarHabilidadEmpleado(
+        profesionalId,
+        habilidadEmpleadoId,
+        data as any
+      );
+      return extractData(response);
     },
     onSuccess: (_data: unknown, variables: ActualizarEmpleadoParams) => {
-      queryClient.invalidateQueries({ queryKey: habilidadesEmpleadoKeys.lists(), refetchType: 'active' });
       queryClient.invalidateQueries({
-        queryKey: habilidadesEmpleadoKeys.detail(variables.profesionalId, variables.habilidadEmpleadoId),
+        queryKey: habilidadesEmpleadoKeys.lists(),
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: habilidadesEmpleadoKeys.detail(
+          variables.profesionalId,
+          variables.habilidadEmpleadoId
+        ),
       });
       toast.success('Habilidad actualizada');
     },
@@ -348,12 +416,21 @@ export function useEliminarHabilidadEmpleado() {
   const toast = useToast();
 
   return useMutation({
-    mutationFn: async ({ profesionalId, habilidadEmpleadoId }: EliminarEmpleadoParams) => {
-      const response = await profesionalesApi.eliminarHabilidadEmpleado(profesionalId, habilidadEmpleadoId);
-      return (response as any).data?.data || (response as any).data;
+    mutationFn: async ({
+      profesionalId,
+      habilidadEmpleadoId,
+    }: EliminarEmpleadoParams) => {
+      const response = await profesionalesApi.eliminarHabilidadEmpleado(
+        profesionalId,
+        habilidadEmpleadoId
+      );
+      return extractData(response);
     },
-    onSuccess: (_data: unknown, variables: EliminarEmpleadoParams) => {
-      queryClient.invalidateQueries({ queryKey: habilidadesEmpleadoKeys.lists(), refetchType: 'active' });
+    onSuccess: (_data: unknown, _variables: EliminarEmpleadoParams) => {
+      queryClient.invalidateQueries({
+        queryKey: habilidadesEmpleadoKeys.lists(),
+        refetchType: 'active',
+      });
       toast.success('Habilidad eliminada');
     },
     onError: createCRUDErrorHandler('delete', 'Habilidad'),
@@ -368,14 +445,28 @@ export function useVerificarHabilidadEmpleado() {
   const toast = useToast();
 
   return useMutation({
-    mutationFn: async ({ profesionalId, habilidadEmpleadoId, verificado }: VerificarParams) => {
-      const response = await profesionalesApi.verificarHabilidadEmpleado(profesionalId, habilidadEmpleadoId, { verificado });
-      return (response as any).data?.data || (response as any).data;
+    mutationFn: async ({
+      profesionalId,
+      habilidadEmpleadoId,
+      verificado,
+    }: VerificarParams) => {
+      const response = await profesionalesApi.verificarHabilidadEmpleado(
+        profesionalId,
+        habilidadEmpleadoId,
+        { verificado }
+      );
+      return extractData(response);
     },
     onSuccess: (_data: unknown, variables: VerificarParams) => {
-      queryClient.invalidateQueries({ queryKey: habilidadesEmpleadoKeys.lists(), refetchType: 'active' });
       queryClient.invalidateQueries({
-        queryKey: habilidadesEmpleadoKeys.detail(variables.profesionalId, variables.habilidadEmpleadoId),
+        queryKey: habilidadesEmpleadoKeys.lists(),
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: habilidadesEmpleadoKeys.detail(
+          variables.profesionalId,
+          variables.habilidadEmpleadoId
+        ),
       });
       const accion = variables.verificado ? 'verificada' : 'desverificada';
       toast.success(`Habilidad ${accion}`);
@@ -390,20 +481,27 @@ export function useVerificarHabilidadEmpleado() {
  * Obtiene la configuración de una categoría de habilidad
  */
 export function getCategoriaConfig(categoria: string): CategoriaHabilidad {
-  return CATEGORIAS_HABILIDAD.find(c => c.value === categoria) || CATEGORIAS_HABILIDAD[5]; // 'otro' como default
+  return (
+    CATEGORIAS_HABILIDAD.find((c) => c.value === categoria) ||
+    CATEGORIAS_HABILIDAD[5]
+  ); // 'otro' como default
 }
 
 /**
  * Obtiene la configuración de un nivel de habilidad
  */
 export function getNivelConfig(nivel: string): NivelHabilidad {
-  return NIVELES_HABILIDAD.find(n => n.value === nivel) || NIVELES_HABILIDAD[0]; // 'basico' como default
+  return (
+    NIVELES_HABILIDAD.find((n) => n.value === nivel) || NIVELES_HABILIDAD[0]
+  ); // 'basico' como default
 }
 
 /**
  * Agrupa habilidades por categoría
  */
-export function agruparPorCategoria(habilidades: HabilidadEmpleado[]): Record<string, HabilidadEmpleado[]> {
+export function agruparPorCategoria(
+  habilidades: HabilidadEmpleado[]
+): Record<string, HabilidadEmpleado[]> {
   return habilidades.reduce<Record<string, HabilidadEmpleado[]>>((acc, hab) => {
     const cat = hab.categoria || 'otro';
     if (!acc[cat]) {
@@ -417,15 +515,20 @@ export function agruparPorCategoria(habilidades: HabilidadEmpleado[]): Record<st
 /**
  * Filtra habilidades del catálogo que no están asignadas al empleado
  */
-export function filtrarDisponibles(catalogo: HabilidadCatalogo[], asignadas: HabilidadEmpleado[]): HabilidadCatalogo[] {
-  const idsAsignados = new Set(asignadas.map(h => h.habilidad_id));
-  return catalogo.filter(h => !idsAsignados.has(h.id));
+export function filtrarDisponibles(
+  catalogo: HabilidadCatalogo[],
+  asignadas: HabilidadEmpleado[]
+): HabilidadCatalogo[] {
+  const idsAsignados = new Set(asignadas.map((h) => h.habilidad_id));
+  return catalogo.filter((h) => !idsAsignados.has(h.id));
 }
 
 /**
  * Formatea años de experiencia
  */
-export function formatearAniosExperiencia(anios: number | null | undefined): string {
+export function formatearAniosExperiencia(
+  anios: number | null | undefined
+): string {
   if (!anios || anios === 0) return 'Sin experiencia';
   if (anios < 1) return 'Menos de 1 año';
   if (anios === 1) return '1 año';

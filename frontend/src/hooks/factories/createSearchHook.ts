@@ -14,8 +14,9 @@
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type SearchApiFn = (...args: any[]) => Promise<any>;
+type SearchApiFn = (
+  params: Record<string, unknown>
+) => Promise<{ data: { data: unknown } }>;
 
 export interface SearchHookConfig<TItem = unknown> {
   /** Query key base (ej: 'clientes') */
@@ -31,8 +32,7 @@ export interface SearchHookConfig<TItem = unknown> {
   /** Tiempo de cache */
   staleTime?: number;
   /** Función para transformar la respuesta */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  transformResponse?: (data: any) => TItem[];
+  transformResponse?: (data: unknown) => TItem[];
 }
 
 export interface SearchHookOptions {
@@ -50,7 +50,7 @@ export interface SearchHookOptions {
  * });
  */
 export function createSearchHook<TItem = unknown>(
-  config: SearchHookConfig<TItem>,
+  config: SearchHookConfig<TItem>
 ): (termino: string, options?: SearchHookOptions) => UseQueryResult<TItem[]> {
   const {
     key,
@@ -62,7 +62,10 @@ export function createSearchHook<TItem = unknown>(
     transformResponse,
   } = config;
 
-  return function useSearch(termino: string, options: SearchHookOptions = {}): UseQueryResult<TItem[]> {
+  return function useSearch(
+    termino: string,
+    options: SearchHookOptions = {}
+  ): UseQueryResult<TItem[]> {
     const { enabled: externalEnabled = true, ...queryOptions } = options;
 
     return useQuery({

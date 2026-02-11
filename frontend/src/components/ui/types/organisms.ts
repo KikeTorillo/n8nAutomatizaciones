@@ -474,7 +474,7 @@ export interface ItemActions {
 }
 
 /** Props de componente Drawer para ExpandableCrudSection */
-export interface DrawerComponentProps<T = Record<string, unknown>> {
+export interface DrawerComponentProps<_T = Record<string, unknown>> {
   /** Si el drawer está abierto */
   isOpen: boolean;
   /** Callback para cerrar */

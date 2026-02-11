@@ -22,8 +22,18 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html'],
-      include: ['src/components/ui/**'],
+      include: [
+        'src/components/ui/**',
+        'src/hooks/factories/**',
+        'src/hooks/config/**',
+      ],
       reportsDirectory: './coverage',
+      thresholds: {
+        'src/components/ui/**': {
+          statements: 60,
+          branches: 50,
+        },
+      },
     },
   },
 });

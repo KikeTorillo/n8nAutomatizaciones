@@ -13,12 +13,6 @@ export { AddToCalendar } from './calendar';
 // Documentos
 export { DocumentoUploadDrawer } from './DocumentoUploadDrawer';
 
-// Selectores compartidos
-export { ProductoSelectorInline } from './selectors';
-
-// Widgets compartidos
-export { default as AlertasWidget } from './widgets/AlertasWidget';
-
 // Alertas
 export { default as AlertaBloqueado } from './AlertaBloqueado';
 

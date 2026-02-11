@@ -9,7 +9,6 @@ import { STALE_TIMES } from '@/app/queryClient';
 import { profesionalesApi } from '@/services/api/endpoints';
 import { useToast } from '@/hooks/utils';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
-import { queryKeys } from '@/hooks/config';
 
 // ==================== INTERFACES ====================
 
@@ -89,10 +88,13 @@ export const NIVELES_EDUCACION: NivelEducacion[] = [
 export const educacionKeys = {
   all: ['educacion-formal'] as const,
   lists: () => [...educacionKeys.all, 'list'] as const,
-  list: (profesionalId: number, filters: EducacionFiltros) => [...educacionKeys.lists(), profesionalId, filters] as const,
+  list: (profesionalId: number, filters: EducacionFiltros) =>
+    [...educacionKeys.lists(), profesionalId, filters] as const,
   details: () => [...educacionKeys.all, 'detail'] as const,
-  detail: (profesionalId: number, educacionId: number) => [...educacionKeys.details(), profesionalId, educacionId] as const,
-  enCurso: (profesionalId: number) => [...educacionKeys.all, 'en-curso', profesionalId] as const,
+  detail: (profesionalId: number, educacionId: number) =>
+    [...educacionKeys.details(), profesionalId, educacionId] as const,
+  enCurso: (profesionalId: number) =>
+    [...educacionKeys.all, 'en-curso', profesionalId] as const,
 };
 
 // ==================== HOOKS DE QUERY ====================
@@ -100,13 +102,19 @@ export const educacionKeys = {
 /**
  * Lista educación formal de un profesional
  */
-export function useEducacionFormal(profesionalId: number | null | undefined, options: EducacionQueryOptions = {}) {
+export function useEducacionFormal(
+  profesionalId: number | null | undefined,
+  options: EducacionQueryOptions = {}
+) {
   const { filtros = {}, enabled = true } = options;
 
   return useQuery({
     queryKey: educacionKeys.list(profesionalId!, filtros),
     queryFn: async () => {
-      const response = await profesionalesApi.listarEducacion(profesionalId!, filtros);
+      const response = await profesionalesApi.listarEducacion(
+        profesionalId!,
+        filtros
+      );
       return (response as any).data?.data || (response as any).data;
     },
     enabled: enabled && !!profesionalId,
@@ -117,11 +125,17 @@ export function useEducacionFormal(profesionalId: number | null | undefined, opt
 /**
  * Obtiene una educación específica
  */
-export function useEducacionFormalDetalle(profesionalId: number | null | undefined, educacionId: number | null | undefined) {
+export function useEducacionFormalDetalle(
+  profesionalId: number | null | undefined,
+  educacionId: number | null | undefined
+) {
   return useQuery({
     queryKey: educacionKeys.detail(profesionalId!, educacionId!),
     queryFn: async () => {
-      const response = await profesionalesApi.obtenerEducacion(profesionalId!, educacionId!);
+      const response = await profesionalesApi.obtenerEducacion(
+        profesionalId!,
+        educacionId!
+      );
       return (response as any).data?.data || (response as any).data;
     },
     enabled: !!profesionalId && !!educacionId,
@@ -135,7 +149,9 @@ export function useEducacionEnCurso(profesionalId: number | null | undefined) {
   return useQuery({
     queryKey: educacionKeys.enCurso(profesionalId!),
     queryFn: async () => {
-      const response = await profesionalesApi.obtenerEducacionEnCurso(profesionalId!);
+      const response = await profesionalesApi.obtenerEducacionEnCurso(
+        profesionalId!
+      );
       return (response as any).data?.data || (response as any).data;
     },
     enabled: !!profesionalId,
@@ -154,12 +170,21 @@ export function useCrearEducacion() {
 
   return useMutation({
     mutationFn: async ({ profesionalId, data }: CrearEducacionParams) => {
-      const response = await profesionalesApi.crearEducacion(profesionalId, data as any);
+      const response = await profesionalesApi.crearEducacion(
+        profesionalId,
+        data as any
+      );
       return (response as any).data?.data || (response as any).data;
     },
     onSuccess: (_data: unknown, variables: CrearEducacionParams) => {
-      queryClient.invalidateQueries({ queryKey: educacionKeys.lists(), refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: educacionKeys.enCurso(variables.profesionalId), refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: educacionKeys.lists(),
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: educacionKeys.enCurso(variables.profesionalId),
+        refetchType: 'active',
+      });
       toast.success('Educación agregada');
     },
     onError: createCRUDErrorHandler('create', 'Educación'),
@@ -174,16 +199,33 @@ export function useActualizarEducacion() {
   const toast = useToast();
 
   return useMutation({
-    mutationFn: async ({ profesionalId, educacionId, data }: ActualizarEducacionParams) => {
-      const response = await profesionalesApi.actualizarEducacion(profesionalId, educacionId, data as any);
+    mutationFn: async ({
+      profesionalId,
+      educacionId,
+      data,
+    }: ActualizarEducacionParams) => {
+      const response = await profesionalesApi.actualizarEducacion(
+        profesionalId,
+        educacionId,
+        data as any
+      );
       return (response as any).data?.data || (response as any).data;
     },
     onSuccess: (_data: unknown, variables: ActualizarEducacionParams) => {
-      queryClient.invalidateQueries({ queryKey: educacionKeys.lists(), refetchType: 'active' });
       queryClient.invalidateQueries({
-        queryKey: educacionKeys.detail(variables.profesionalId, variables.educacionId),
+        queryKey: educacionKeys.lists(),
+        refetchType: 'active',
       });
-      queryClient.invalidateQueries({ queryKey: educacionKeys.enCurso(variables.profesionalId), refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: educacionKeys.detail(
+          variables.profesionalId,
+          variables.educacionId
+        ),
+      });
+      queryClient.invalidateQueries({
+        queryKey: educacionKeys.enCurso(variables.profesionalId),
+        refetchType: 'active',
+      });
       toast.success('Educación actualizada');
     },
     onError: createCRUDErrorHandler('update', 'Educación'),
@@ -198,13 +240,25 @@ export function useEliminarEducacion() {
   const toast = useToast();
 
   return useMutation({
-    mutationFn: async ({ profesionalId, educacionId }: EliminarEducacionParams) => {
-      const response = await profesionalesApi.eliminarEducacion(profesionalId, educacionId);
+    mutationFn: async ({
+      profesionalId,
+      educacionId,
+    }: EliminarEducacionParams) => {
+      const response = await profesionalesApi.eliminarEducacion(
+        profesionalId,
+        educacionId
+      );
       return (response as any).data?.data || (response as any).data;
     },
     onSuccess: (_data: unknown, variables: EliminarEducacionParams) => {
-      queryClient.invalidateQueries({ queryKey: educacionKeys.lists(), refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: educacionKeys.enCurso(variables.profesionalId), refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: educacionKeys.lists(),
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: educacionKeys.enCurso(variables.profesionalId),
+        refetchType: 'active',
+      });
       toast.success('Educación eliminada');
     },
     onError: createCRUDErrorHandler('delete', 'Educación'),
@@ -220,11 +274,17 @@ export function useReordenarEducacion() {
 
   return useMutation({
     mutationFn: async ({ profesionalId, orden }: ReordenarEducacionParams) => {
-      const response = await profesionalesApi.reordenarEducacion(profesionalId, { orden });
+      const response = await profesionalesApi.reordenarEducacion(
+        profesionalId,
+        { orden }
+      );
       return (response as any).data?.data || (response as any).data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: educacionKeys.lists(), refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: educacionKeys.lists(),
+        refetchType: 'active',
+      });
       toast.success('Orden actualizado');
     },
     onError: createCRUDErrorHandler('update', 'Educación'),
@@ -237,17 +297,20 @@ export function useReordenarEducacion() {
  * Obtiene el label de un nivel de educación
  */
 export function getNivelEducacionLabel(nivel: string): string {
-  return NIVELES_EDUCACION.find(n => n.value === nivel)?.label || nivel;
+  return NIVELES_EDUCACION.find((n) => n.value === nivel)?.label || nivel;
 }
 
 /**
  * Ordena niveles de educación por jerarquía
  */
 export function ordenarPorNivel(educaciones: Educacion[]): Educacion[] {
-  const ordenNiveles = NIVELES_EDUCACION.reduce<Record<string, number>>((acc, n) => {
-    acc[n.value] = n.orden;
-    return acc;
-  }, {});
+  const ordenNiveles = NIVELES_EDUCACION.reduce<Record<string, number>>(
+    (acc, n) => {
+      acc[n.value] = n.orden;
+      return acc;
+    },
+    {}
+  );
 
   return [...educaciones].sort((a, b) => {
     const ordenA = ordenNiveles[a.nivel] || 0;
@@ -259,7 +322,10 @@ export function ordenarPorNivel(educaciones: Educacion[]): Educacion[] {
 /**
  * Formatea estado del estudio
  */
-export function getEstadoEstudio(enCurso: boolean, fechaFin: string | null | undefined): EstadoEstudio {
+export function getEstadoEstudio(
+  enCurso: boolean,
+  fechaFin: string | null | undefined
+): EstadoEstudio {
   if (enCurso) {
     return { label: 'En curso', color: 'blue' };
   }
@@ -272,7 +338,11 @@ export function getEstadoEstudio(enCurso: boolean, fechaFin: string | null | und
 /**
  * Formatea rango de años para educación
  */
-export function formatearRangoAnios(fechaInicio: string | null | undefined, fechaFin: string | null | undefined, enCurso: boolean): string {
+export function formatearRangoAnios(
+  fechaInicio: string | null | undefined,
+  fechaFin: string | null | undefined,
+  enCurso: boolean
+): string {
   const anioInicio = fechaInicio ? new Date(fechaInicio).getFullYear() : '';
   if (enCurso) {
     return `${anioInicio} - Presente`;

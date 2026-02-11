@@ -29,7 +29,7 @@ import {
   obtenerMensajeBloqueoProtegido,
 } from '@/utils/bloqueoHelpers';
 import { formatCurrency } from '@/lib/utils';
-import { useState } from 'react';
+import { memo, useState } from 'react';
 
 /**
  * Obtener componente de ícono según el tipo de bloqueo
@@ -50,7 +50,12 @@ const obtenerIconoComponente = (tipo) => {
 /**
  * BloqueoCard - Card individual de bloqueo
  */
-function BloqueoCard({ bloqueo, onVer, onEditar, onEliminar }) {
+const BloqueoCard = memo(function BloqueoCard({
+  bloqueo,
+  onVer,
+  onEditar,
+  onEliminar,
+}) {
   const [menuAbierto, setMenuAbierto] = useState(false);
 
   const colores = obtenerColorTipoBloqueo(bloqueo.tipo_bloqueo_codigo);
@@ -257,7 +262,7 @@ function BloqueoCard({ bloqueo, onVer, onEditar, onEliminar }) {
       </div>
     </div>
   );
-}
+});
 
 BloqueoCard.propTypes = {
   bloqueo: PropTypes.object.isRequired,

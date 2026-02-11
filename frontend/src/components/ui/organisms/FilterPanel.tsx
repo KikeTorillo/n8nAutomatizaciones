@@ -5,7 +5,6 @@ import {
   useMemo,
   forwardRef,
   type ChangeEvent,
-  type ComponentType,
 } from 'react';
 import { Filter, X, ChevronDown, ChevronUp } from 'lucide-react';
 import { cn } from '../lib/cn';
@@ -16,7 +15,6 @@ import {
   useActiveFilters,
   type FilterConfigItem,
 } from './filters/FilterPanelBase';
-import type { SelectOption } from '../types';
 
 /**
  * Props del componente FilterPanel

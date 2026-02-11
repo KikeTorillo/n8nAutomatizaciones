@@ -13,17 +13,14 @@
 
 import { memo, useMemo } from 'react';
 import PropTypes from 'prop-types';
-import * as LucideIcons from 'lucide-react';
+import { getDynamicIcon } from '@/lib/dynamicIcons';
+import { Clock, MapPin } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { THEME_FALLBACK_COLORS } from '@/lib/uiConstants';
 
 // ========== COMPONENT ==========
 
-function TimelineElementRenderer({
-  elemento,
-  tema,
-  isEditing = false,
-}) {
+function TimelineElementRenderer({ elemento, tema, isEditing = false }) {
   const { contenido = {}, estilos = {} } = elemento;
 
   // Configuración
@@ -35,26 +32,35 @@ function TimelineElementRenderer({
 
   // Colores
   const INV = THEME_FALLBACK_COLORS.invitacion;
-  const colorPrimario = estilos.color_primario || tema?.color_primario || INV.primario;
+  const colorPrimario =
+    estilos.color_primario || tema?.color_primario || INV.primario;
   const colorFondo = tema?.color_fondo || INV.fondo;
   const colorTexto = estilos.color_texto || tema?.color_texto || INV.texto;
-  const colorTextoClaro = estilos.color_texto_claro || tema?.color_texto_claro || INV.textoClaro;
-  const colorLinea = estilos.color_linea || contenido.color_linea || colorPrimario;
-  const fuenteTitulo = estilos.fuente_titulo || tema?.fuente_titulo || 'inherit';
+  const colorTextoClaro =
+    estilos.color_texto_claro || tema?.color_texto_claro || INV.textoClaro;
+  const colorLinea =
+    estilos.color_linea || contenido.color_linea || colorPrimario;
+  const fuenteTitulo =
+    estilos.fuente_titulo || tema?.fuente_titulo || 'inherit';
 
   // Obtener icono de Lucide
-  const getIcon = (iconName) => {
-    const Icon = LucideIcons[iconName] || LucideIcons.Clock;
-    return Icon;
-  };
+  const getIcon = (iconName) => getDynamicIcon(iconName, Clock);
 
   // Items de ejemplo para edición
   const displayItems = useMemo(() => {
     if (items.length > 0) return items;
     if (isEditing) {
       return [
-        { hora: '14:00', titulo: 'Ceremonia', descripcion: 'Inicio de la celebración' },
-        { hora: '15:30', titulo: 'Cóctel', descripcion: 'Aperitivos y bebidas' },
+        {
+          hora: '14:00',
+          titulo: 'Ceremonia',
+          descripcion: 'Inicio de la celebración',
+        },
+        {
+          hora: '15:30',
+          titulo: 'Cóctel',
+          descripcion: 'Aperitivos y bebidas',
+        },
         { hora: '17:00', titulo: 'Recepción', descripcion: 'Cena y fiesta' },
       ];
     }
@@ -70,7 +76,10 @@ function TimelineElementRenderer({
   }
 
   return (
-    <div className="timeline-element w-full py-8 px-4" style={{ backgroundColor: colorFondo }}>
+    <div
+      className="timeline-element w-full py-8 px-4"
+      style={{ backgroundColor: colorFondo }}
+    >
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         {(titulo || subtitulo) && (
@@ -84,7 +93,10 @@ function TimelineElementRenderer({
               </h3>
             )}
             {subtitulo && (
-              <p className="max-w-2xl mx-auto" style={{ color: colorTextoClaro }}>
+              <p
+                className="max-w-2xl mx-auto"
+                style={{ color: colorTextoClaro }}
+              >
                 {subtitulo}
               </p>
             )}
@@ -108,7 +120,8 @@ function TimelineElementRenderer({
           <div className="space-y-6">
             {displayItems.map((item, idx) => {
               const Icon = getIcon(item.icono);
-              const isLeft = layout === 'alternado' ? idx % 2 === 0 : layout === 'izquierda';
+              const isLeft =
+                layout === 'alternado' ? idx % 2 === 0 : layout === 'izquierda';
 
               return (
                 <div
@@ -126,7 +139,8 @@ function TimelineElementRenderer({
                       'absolute w-7 h-7 rounded-full flex items-center justify-center z-10',
                       layout === 'izquierda' && 'left-0.5',
                       layout === 'derecha' && 'right-0.5',
-                      layout === 'alternado' && 'left-0.5 md:left-1/2 md:-translate-x-1/2'
+                      layout === 'alternado' &&
+                        'left-0.5 md:left-1/2 md:-translate-x-1/2'
                     )}
                     style={{ backgroundColor: colorFondo }}
                   >
@@ -146,8 +160,12 @@ function TimelineElementRenderer({
                       layout === 'derecha' && 'pr-10 text-right',
                       // Alternado: posicionar cerca de la línea central
                       layout === 'alternado' && 'pl-10 md:pl-0',
-                      layout === 'alternado' && isLeft && 'md:ml-0 md:mr-[calc(50%+1.25rem)] md:text-right',
-                      layout === 'alternado' && !isLeft && 'md:mr-0 md:ml-[calc(50%+1.25rem)] md:text-left'
+                      layout === 'alternado' &&
+                        isLeft &&
+                        'md:ml-0 md:mr-[calc(50%+1.25rem)] md:text-right',
+                      layout === 'alternado' &&
+                        !isLeft &&
+                        'md:mr-0 md:ml-[calc(50%+1.25rem)] md:text-left'
                     )}
                   >
                     {/* Hora como texto simple */}
@@ -161,7 +179,10 @@ function TimelineElementRenderer({
                     )}
 
                     {/* Título */}
-                    <h4 className="text-lg font-bold mb-1" style={{ color: colorTexto }}>
+                    <h4
+                      className="text-lg font-bold mb-1"
+                      style={{ color: colorTexto }}
+                    >
                       {item.titulo}
                     </h4>
 
@@ -174,8 +195,11 @@ function TimelineElementRenderer({
 
                     {/* Ubicación (si existe) */}
                     {item.ubicacion && (
-                      <p className="text-sm mt-2 flex items-center gap-1" style={{ color: colorTextoClaro }}>
-                        <LucideIcons.MapPin className="w-3 h-3" />
+                      <p
+                        className="text-sm mt-2 flex items-center gap-1"
+                        style={{ color: colorTextoClaro }}
+                      >
+                        <MapPin className="w-3 h-3" />
                         {item.ubicacion}
                       </p>
                     )}
@@ -195,13 +219,15 @@ TimelineElementRenderer.propTypes = {
     contenido: PropTypes.shape({
       titulo: PropTypes.string,
       subtitulo: PropTypes.string,
-      items: PropTypes.arrayOf(PropTypes.shape({
-        hora: PropTypes.string,
-        titulo: PropTypes.string,
-        descripcion: PropTypes.string,
-        ubicacion: PropTypes.string,
-        icono: PropTypes.string,
-      })),
+      items: PropTypes.arrayOf(
+        PropTypes.shape({
+          hora: PropTypes.string,
+          titulo: PropTypes.string,
+          descripcion: PropTypes.string,
+          ubicacion: PropTypes.string,
+          icono: PropTypes.string,
+        })
+      ),
       layout: PropTypes.oneOf(['alternado', 'izquierda', 'derecha']),
       color_linea: PropTypes.string,
     }),

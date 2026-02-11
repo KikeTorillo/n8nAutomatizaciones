@@ -1,4 +1,4 @@
 /**
- * @deprecated Importar desde '@/components/shared/widgets/AlertasWidget'
+ * @deprecated Importar desde '@/pages/dashboard/components/AlertasWidget'
  */
-export { default } from '@/components/shared/widgets/AlertasWidget';
+export { default } from '@/pages/dashboard/components/AlertasWidget';

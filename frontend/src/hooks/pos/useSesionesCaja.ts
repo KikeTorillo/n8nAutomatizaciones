@@ -5,6 +5,7 @@ import { useSucursalContext } from '@/hooks/factories';
 import { sanitizeParams } from '@/lib/params';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 import { queryKeys } from '@/hooks/config';
+import { extractData, extractDataOr } from '@/lib/apiHelpers';
 import type { TipoMovimientoCaja } from '@/types/entities';
 
 // ========================================================================
@@ -46,8 +47,14 @@ export function useSesionCajaActiva(params: SesionCajaActivaParams = {}) {
   return useQuery({
     queryKey: queryKeys.pos.sesionCaja.activa(params),
     queryFn: async () => {
-      const response = await posApi.obtenerSesionActiva({ sucursal_id: sucursalId || undefined });
-      return (response as any).data.data || { activa: false, sesion: null, totales: null };
+      const response = await posApi.obtenerSesionActiva({
+        sucursal_id: sucursalId || undefined,
+      });
+      return extractDataOr(response, {
+        activa: false,
+        sesion: null,
+        totales: null,
+      });
     },
     staleTime: STALE_TIMES.MEDIUM,
     refetchOnWindowFocus: false,
@@ -62,7 +69,7 @@ export function useSesionCaja(id: number | undefined | null) {
     queryKey: queryKeys.pos.sesionCaja.detail(id),
     queryFn: async () => {
       const response = await posApi.obtenerSesionCaja(id!);
-      return (response as any).data.data || null;
+      return extractDataOr(response, null);
     },
     enabled: !!id,
     staleTime: STALE_TIMES.DYNAMIC,
@@ -77,7 +84,7 @@ export function useResumenSesionCaja(id: number | undefined | null) {
     queryKey: queryKeys.pos.sesionCaja.resumen(id),
     queryFn: async () => {
       const response = await posApi.obtenerResumenSesion(id!);
-      return (response as any).data.data || null;
+      return extractDataOr(response, null);
     },
     enabled: !!id,
     staleTime: STALE_TIMES.SEMI_STATIC,
@@ -93,7 +100,7 @@ export function useSesionesCaja(params: Record<string, unknown> = {}) {
     queryKey: queryKeys.pos.sesionCaja.historial(params),
     queryFn: async () => {
       const response = await posApi.listarSesionesCaja(sanitizeParams(params));
-      return (response as any).data.data || { sesiones: [], total: 0 };
+      return extractDataOr(response, { sesiones: [], total: 0 });
     },
     staleTime: STALE_TIMES.SEMI_STATIC,
     refetchOnWindowFocus: false,
@@ -108,7 +115,7 @@ export function useMovimientosCaja(sesionId: number | undefined | null) {
     queryKey: queryKeys.pos.sesionCaja.movimientos(sesionId),
     queryFn: async () => {
       const response = await posApi.listarMovimientosCaja(sesionId!);
-      return (response as any).data.data || [];
+      return extractDataOr(response, []);
     },
     enabled: !!sesionId,
     staleTime: STALE_TIMES.SEMI_STATIC,
@@ -132,11 +139,17 @@ export function useAbrirSesionCaja() {
       };
 
       const response = await posApi.abrirSesionCaja(sanitized as any);
-      return (response as any).data.data;
+      return extractData(response);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.pos.sesionCaja.activaBase, refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: queryKeys.pos.sesionCaja.historialBase, refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.pos.sesionCaja.activaBase,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.pos.sesionCaja.historialBase,
+        refetchType: 'active',
+      });
     },
     onError: createCRUDErrorHandler('create', 'Sesion de caja', {
       409: 'Ya existe una sesion de caja abierta',
@@ -160,12 +173,21 @@ export function useCerrarSesionCaja() {
       };
 
       const response = await posApi.cerrarSesionCaja(sanitized);
-      return (response as any).data.data;
+      return extractData(response);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.pos.sesionCaja.activaBase, refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: queryKeys.pos.sesionCaja.historialBase, refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: queryKeys.pos.sesionCaja.resumenBase, refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.pos.sesionCaja.activaBase,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.pos.sesionCaja.historialBase,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.pos.sesionCaja.resumenBase,
+        refetchType: 'active',
+      });
     },
     onError: createCRUDErrorHandler('update', 'Sesion de caja'),
   });
@@ -185,13 +207,25 @@ export function useRegistrarMovimientoCaja() {
         motivo: data.motivo?.trim() || undefined,
       };
 
-      const response = await posApi.registrarMovimientoCaja(sesionId, sanitized as any);
-      return (response as any).data.data;
+      const response = await posApi.registrarMovimientoCaja(
+        sesionId,
+        sanitized as any
+      );
+      return extractData(response);
     },
     onSuccess: (_: unknown, variables: RegistrarMovimientoData) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.pos.sesionCaja.activaBase, refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: queryKeys.pos.sesionCaja.movimientos(variables.sesionId), refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: queryKeys.pos.sesionCaja.resumen(variables.sesionId), refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.pos.sesionCaja.activaBase,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.pos.sesionCaja.movimientos(variables.sesionId),
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.pos.sesionCaja.resumen(variables.sesionId),
+        refetchType: 'active',
+      });
     },
     onError: createCRUDErrorHandler('create', 'Movimiento de caja', {
       404: 'Sesion de caja no encontrada o ya esta cerrada',

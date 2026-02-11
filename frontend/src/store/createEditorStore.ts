@@ -11,7 +11,11 @@
 
 import { create } from 'zustand';
 import { temporal } from 'zundo';
-import { subscribeWithSelector, persist, createJSONStorage } from 'zustand/middleware';
+import {
+  subscribeWithSelector,
+  persist,
+  createJSONStorage,
+} from 'zustand/middleware';
 import { deepEqual } from '@/components/editor-framework/hooks/compareUtils';
 
 // ========== TYPES ==========
@@ -57,14 +61,23 @@ export interface EditorState {
 
   // Bloques actions
   setBloques: (bloques: EditorBloque[], recursoId: BloqueId) => void;
-  actualizarBloqueLocal: (id: BloqueId, contenido: Record<string, unknown>) => void;
-  actualizarEstilosLocal: (id: BloqueId, estilos: Record<string, unknown>) => void;
+  actualizarBloqueLocal: (
+    id: BloqueId,
+    contenido: Record<string, unknown>
+  ) => void;
+  actualizarEstilosLocal: (
+    id: BloqueId,
+    estilos: Record<string, unknown>
+  ) => void;
   reordenarBloquesLocal: (nuevoOrden: BloqueId[]) => void;
   agregarBloqueLocal: (bloque: EditorBloque) => void;
   eliminarBloqueLocal: (id: BloqueId) => void;
   duplicarBloqueLocal: (id: BloqueId, nuevoId: BloqueId) => void;
   toggleVisibilidadBloque: (id: BloqueId) => void;
-  insertarBloqueEnPosicion: (bloque: EditorBloque, indice?: number | null) => void;
+  insertarBloqueEnPosicion: (
+    bloque: EditorBloque,
+    indice?: number | null
+  ) => void;
 
   // Selection actions
   seleccionarBloque: (id: BloqueId | null) => void;
@@ -144,281 +157,281 @@ export function createEditorStore(options: CreateEditorStoreOptions = {}) {
   };
 
   // ========== STORE ACTIONS ==========
-  type SetFn = (partial: Partial<EditorState> | ((state: EditorState) => Partial<EditorState> | EditorState)) => void;
+  type SetFn = (
+    partial:
+      | Partial<EditorState>
+      | ((state: EditorState) => Partial<EditorState> | EditorState)
+  ) => void;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const storeActions = (_set: any, get: () => EditorState): EditorState => {
-  const set = _set as SetFn;
-  return {
-    ...initialState,
+  const storeActions = (_set: any, _get: () => EditorState): EditorState => {
+    const set = _set as SetFn;
+    return {
+      ...initialState,
 
-    // ========== BLOQUES ACTIONS ==========
+      // ========== BLOQUES ACTIONS ==========
 
-    setBloques: (bloques, recursoId) =>
-      set({
-        bloques: bloques || [],
-        recursoId,
-        tieneCambiosLocales: false,
-        estadoGuardado: 'saved',
-      }),
+      setBloques: (bloques, recursoId) =>
+        set({
+          bloques: bloques || [],
+          recursoId,
+          tieneCambiosLocales: false,
+          estadoGuardado: 'saved',
+        }),
 
-    actualizarBloqueLocal: (id, contenido) =>
-      set((state) => ({
-        bloques: state.bloques.map((b) =>
-          b.id === id
-            ? { ...b, contenido: { ...b.contenido, ...contenido } }
-            : b
-        ),
-        tieneCambiosLocales: true,
-        estadoGuardado: 'unsaved',
-      })),
-
-    actualizarEstilosLocal: (id, estilos) =>
-      set((state) => ({
-        bloques: state.bloques.map((b) =>
-          b.id === id
-            ? { ...b, estilos: { ...b.estilos, ...estilos } }
-            : b
-        ),
-        tieneCambiosLocales: true,
-        estadoGuardado: 'unsaved',
-      })),
-
-    reordenarBloquesLocal: (nuevoOrden) =>
-      set((state) => {
-        const bloquesMap = new Map(state.bloques.map((b) => [b.id, b]));
-        const bloquesReordenados = nuevoOrden
-          .map((id, index) => {
-            const bloque = bloquesMap.get(id);
-            return bloque ? { ...bloque, orden: index } : null;
-          })
-          .filter(Boolean) as EditorBloque[];
-
-        return {
-          bloques: bloquesReordenados,
-          tieneCambiosLocales: true,
-          estadoGuardado: 'unsaved' as const,
-        };
-      }),
-
-    agregarBloqueLocal: (bloque) =>
-      set((state) => ({
-        bloques: [...state.bloques, bloque],
-        bloqueSeleccionado: bloque.id,
-        tieneCambiosLocales: true,
-        estadoGuardado: 'unsaved',
-      })),
-
-    eliminarBloqueLocal: (id) =>
-      set((state) => ({
-        bloques: state.bloques.filter((b) => b.id !== id),
-        bloqueSeleccionado:
-          state.bloqueSeleccionado === id ? null : state.bloqueSeleccionado,
-        bloqueEditandoInline:
-          state.bloqueEditandoInline === id ? null : state.bloqueEditandoInline,
-        tieneCambiosLocales: true,
-        estadoGuardado: 'unsaved',
-      })),
-
-    duplicarBloqueLocal: (id, nuevoId) =>
-      set((state) => {
-        const bloqueOriginal = state.bloques.find((b) => b.id === id);
-        if (!bloqueOriginal) return state;
-
-        const indiceDespues = bloqueOriginal.orden + 1;
-        const bloqueDuplicado = {
-          ...bloqueOriginal,
-          id: nuevoId,
-          orden: indiceDespues,
-          version: 1,
-        };
-
-        const bloquesActualizados = state.bloques.map((b) =>
-          b.orden >= indiceDespues ? { ...b, orden: b.orden + 1 } : b
-        );
-
-        return {
-          bloques: [...bloquesActualizados, bloqueDuplicado].sort(
-            (a, b) => a.orden - b.orden
+      actualizarBloqueLocal: (id, contenido) =>
+        set((state) => ({
+          bloques: state.bloques.map((b) =>
+            b.id === id
+              ? { ...b, contenido: { ...b.contenido, ...contenido } }
+              : b
           ),
-          bloqueSeleccionado: nuevoId,
           tieneCambiosLocales: true,
-          estadoGuardado: 'unsaved' as const,
-        };
-      }),
+          estadoGuardado: 'unsaved',
+        })),
 
-    toggleVisibilidadBloque: (id) =>
-      set((state) => ({
-        bloques: state.bloques.map((b) =>
-          b.id === id ? { ...b, visible: !b.visible } : b
-        ),
-        tieneCambiosLocales: true,
-        estadoGuardado: 'unsaved',
-      })),
-
-    insertarBloqueEnPosicion: (bloque, indice = null) =>
-      set((state) => {
-        const posicion = indice !== null ? indice : state.bloques.length;
-
-        const bloquesActualizados = state.bloques.map((b) =>
-          b.orden >= posicion ? { ...b, orden: b.orden + 1 } : b
-        );
-
-        const nuevoBloque = {
-          ...bloque,
-          orden: posicion,
-        };
-
-        // Limpiar timeout anterior si existe
-        if (bloqueRecienAgregadoTimeout) {
-          clearTimeout(bloqueRecienAgregadoTimeout);
-        }
-
-        // Marcar bloque como recién agregado (para animación)
-        bloqueRecienAgregadoTimeout = setTimeout(() => {
-          set({ bloqueRecienAgregado: null });
-        }, 1500);
-
-        return {
-          bloques: [...bloquesActualizados, nuevoBloque].sort(
-            (a, b) => a.orden - b.orden
+      actualizarEstilosLocal: (id, estilos) =>
+        set((state) => ({
+          bloques: state.bloques.map((b) =>
+            b.id === id ? { ...b, estilos: { ...b.estilos, ...estilos } } : b
           ),
+          tieneCambiosLocales: true,
+          estadoGuardado: 'unsaved',
+        })),
+
+      reordenarBloquesLocal: (nuevoOrden) =>
+        set((state) => {
+          const bloquesMap = new Map(state.bloques.map((b) => [b.id, b]));
+          const bloquesReordenados = nuevoOrden
+            .map((id, index) => {
+              const bloque = bloquesMap.get(id);
+              return bloque ? { ...bloque, orden: index } : null;
+            })
+            .filter(Boolean) as EditorBloque[];
+
+          return {
+            bloques: bloquesReordenados,
+            tieneCambiosLocales: true,
+            estadoGuardado: 'unsaved' as const,
+          };
+        }),
+
+      agregarBloqueLocal: (bloque) =>
+        set((state) => ({
+          bloques: [...state.bloques, bloque],
           bloqueSeleccionado: bloque.id,
-          bloqueRecienAgregado: bloque.id,
           tieneCambiosLocales: true,
-          estadoGuardado: 'unsaved' as const,
-        };
-      }),
+          estadoGuardado: 'unsaved',
+        })),
 
-    // ========== SELECCIÓN ACTIONS ==========
+      eliminarBloqueLocal: (id) =>
+        set((state) => ({
+          bloques: state.bloques.filter((b) => b.id !== id),
+          bloqueSeleccionado:
+            state.bloqueSeleccionado === id ? null : state.bloqueSeleccionado,
+          bloqueEditandoInline:
+            state.bloqueEditandoInline === id
+              ? null
+              : state.bloqueEditandoInline,
+          tieneCambiosLocales: true,
+          estadoGuardado: 'unsaved',
+        })),
 
-    seleccionarBloque: (id) =>
-      set((state) => ({
-        bloqueSeleccionado: id,
-        bloqueEditandoInline:
-          state.bloqueEditandoInline !== id ? null : state.bloqueEditandoInline,
-      })),
+      duplicarBloqueLocal: (id, nuevoId) =>
+        set((state) => {
+          const bloqueOriginal = state.bloques.find((b) => b.id === id);
+          if (!bloqueOriginal) return state;
 
-    deseleccionarBloque: () =>
-      set({
-        bloqueSeleccionado: null,
-        bloqueEditandoInline: null,
-      }),
+          const indiceDespues = bloqueOriginal.orden + 1;
+          const bloqueDuplicado = {
+            ...bloqueOriginal,
+            id: nuevoId,
+            orden: indiceDespues,
+            version: 1,
+          };
 
-    // ========== UI ACTIONS ==========
+          const bloquesActualizados = state.bloques.map((b) =>
+            b.orden >= indiceDespues ? { ...b, orden: b.orden + 1 } : b
+          );
 
-    setModoEdicion: (modo) =>
-      set({
-        modoEdicion: modo,
-        ...(deselectOnPreview && modo === 'preview' && {
+          return {
+            bloques: [...bloquesActualizados, bloqueDuplicado].sort(
+              (a, b) => a.orden - b.orden
+            ),
+            bloqueSeleccionado: nuevoId,
+            tieneCambiosLocales: true,
+            estadoGuardado: 'unsaved' as const,
+          };
+        }),
+
+      toggleVisibilidadBloque: (id) =>
+        set((state) => ({
+          bloques: state.bloques.map((b) =>
+            b.id === id ? { ...b, visible: !b.visible } : b
+          ),
+          tieneCambiosLocales: true,
+          estadoGuardado: 'unsaved',
+        })),
+
+      insertarBloqueEnPosicion: (bloque, indice = null) =>
+        set((state) => {
+          const posicion = indice !== null ? indice : state.bloques.length;
+
+          const bloquesActualizados = state.bloques.map((b) =>
+            b.orden >= posicion ? { ...b, orden: b.orden + 1 } : b
+          );
+
+          const nuevoBloque = {
+            ...bloque,
+            orden: posicion,
+          };
+
+          // Limpiar timeout anterior si existe
+          if (bloqueRecienAgregadoTimeout) {
+            clearTimeout(bloqueRecienAgregadoTimeout);
+          }
+
+          // Marcar bloque como recién agregado (para animación)
+          bloqueRecienAgregadoTimeout = setTimeout(() => {
+            set({ bloqueRecienAgregado: null });
+          }, 1500);
+
+          return {
+            bloques: [...bloquesActualizados, nuevoBloque].sort(
+              (a, b) => a.orden - b.orden
+            ),
+            bloqueSeleccionado: bloque.id,
+            bloqueRecienAgregado: bloque.id,
+            tieneCambiosLocales: true,
+            estadoGuardado: 'unsaved' as const,
+          };
+        }),
+
+      // ========== SELECCIÓN ACTIONS ==========
+
+      seleccionarBloque: (id) =>
+        set((state) => ({
+          bloqueSeleccionado: id,
+          bloqueEditandoInline:
+            state.bloqueEditandoInline !== id
+              ? null
+              : state.bloqueEditandoInline,
+        })),
+
+      deseleccionarBloque: () =>
+        set({
           bloqueSeleccionado: null,
           bloqueEditandoInline: null,
         }),
-      }),
 
-    setBreakpoint: (breakpoint) =>
-      set({ breakpoint }),
+      // ========== UI ACTIONS ==========
 
-    setZoom: (zoom) =>
-      set({ zoom: Math.max(50, Math.min(200, zoom)) }),
+      setModoEdicion: (modo) =>
+        set({
+          modoEdicion: modo,
+          ...(deselectOnPreview &&
+            modo === 'preview' && {
+              bloqueSeleccionado: null,
+              bloqueEditandoInline: null,
+            }),
+        }),
 
-    activarEdicionInline: (id) =>
-      set({
-        bloqueEditandoInline: id,
-        bloqueSeleccionado: id,
-        modoEdicion: 'canvas',
-      }),
+      setBreakpoint: (breakpoint) => set({ breakpoint }),
 
-    desactivarEdicionInline: () =>
-      set({ bloqueEditandoInline: null }),
+      setZoom: (zoom) => set({ zoom: Math.max(50, Math.min(200, zoom)) }),
 
-    // Aliases para compatibilidad con website editor
-    activarInlineEditing: (id) =>
-      set({
-        bloqueEditandoInline: id,
-        bloqueSeleccionado: id,
-        modoEdicion: 'canvas',
-      }),
-    desactivarInlineEditing: () =>
-      set({ bloqueEditandoInline: null }),
+      activarEdicionInline: (id) =>
+        set({
+          bloqueEditandoInline: id,
+          bloqueSeleccionado: id,
+          modoEdicion: 'canvas',
+        }),
 
-    // ========== GUARDADO ACTIONS ==========
+      desactivarEdicionInline: () => set({ bloqueEditandoInline: null }),
 
-    setGuardando: () =>
-      set({ estadoGuardado: 'saving' }),
+      // Aliases para compatibilidad con website editor
+      activarInlineEditing: (id) =>
+        set({
+          bloqueEditandoInline: id,
+          bloqueSeleccionado: id,
+          modoEdicion: 'canvas',
+        }),
+      desactivarInlineEditing: () => set({ bloqueEditandoInline: null }),
 
-    setGuardado: () =>
-      set({
-        estadoGuardado: 'saved',
-        ultimoGuardado: new Date(),
-        tieneCambiosLocales: false,
-      }),
+      // ========== GUARDADO ACTIONS ==========
 
-    setErrorGuardado: () =>
-      set({ estadoGuardado: 'error' }),
+      setGuardando: () => set({ estadoGuardado: 'saving' }),
 
-    actualizarVersionBloque: (id, version) =>
-      set((state) => ({
-        bloques: state.bloques.map((b) =>
-          b.id === id ? { ...b, version } : b
-        ),
-      })),
+      setGuardado: () =>
+        set({
+          estadoGuardado: 'saved',
+          ultimoGuardado: new Date(),
+          tieneCambiosLocales: false,
+        }),
 
-    setConflictoVersion: (conflicto) =>
-      set({ conflictoVersion: conflicto, estadoGuardado: 'error' }),
+      setErrorGuardado: () => set({ estadoGuardado: 'error' }),
 
-    clearConflictoVersion: () =>
-      set({ conflictoVersion: null }),
+      actualizarVersionBloque: (id, version) =>
+        set((state) => ({
+          bloques: state.bloques.map((b) =>
+            b.id === id ? { ...b, version } : b
+          ),
+        })),
 
-    // ========== ANIMACIÓN ==========
+      setConflictoVersion: (conflicto) =>
+        set({ conflictoVersion: conflicto, estadoGuardado: 'error' }),
 
-    setBloqueRecienAgregado: (id) => {
-      if (bloqueRecienAgregadoTimeout) {
-        clearTimeout(bloqueRecienAgregadoTimeout);
-      }
-      set({ bloqueRecienAgregado: id });
-      bloqueRecienAgregadoTimeout = setTimeout(() => {
-        set((state) =>
-          state.bloqueRecienAgregado === id
-            ? { bloqueRecienAgregado: null }
-            : state
-        );
-        bloqueRecienAgregadoTimeout = null;
-      }, 1500);
-    },
+      clearConflictoVersion: () => set({ conflictoVersion: null }),
 
-    clearBloqueRecienAgregado: () =>
-      set({ bloqueRecienAgregado: null }),
+      // ========== ANIMACIÓN ==========
 
-    // ========== HISTORIAL ==========
+      setBloqueRecienAgregado: (id) => {
+        if (bloqueRecienAgregadoTimeout) {
+          clearTimeout(bloqueRecienAgregadoTimeout);
+        }
+        set({ bloqueRecienAgregado: id });
+        bloqueRecienAgregadoTimeout = setTimeout(() => {
+          set((state) =>
+            state.bloqueRecienAgregado === id
+              ? { bloqueRecienAgregado: null }
+              : state
+          );
+          bloqueRecienAgregadoTimeout = null;
+        }, 1500);
+      },
 
-    updateHistorialState: (puedeUndo, puedeRedo) =>
-      set({ puedeUndo, puedeRedo }),
+      clearBloqueRecienAgregado: () => set({ bloqueRecienAgregado: null }),
 
-    // ========== RESET ==========
+      // ========== HISTORIAL ==========
 
-    reset: () => {
-      if (bloqueRecienAgregadoTimeout) {
-        clearTimeout(bloqueRecienAgregadoTimeout);
-        bloqueRecienAgregadoTimeout = null;
-      }
-      set(initialState);
-    },
+      updateHistorialState: (puedeUndo, puedeRedo) =>
+        set({ puedeUndo, puedeRedo }),
 
-    limpiarBloques: () =>
-      set({
-        bloques: [],
-        bloqueSeleccionado: null,
-        bloqueEditandoInline: null,
-        tieneCambiosLocales: false,
-        estadoGuardado: 'saved',
-        conflictoVersion: null,
-      }),
-  };
+      // ========== RESET ==========
+
+      reset: () => {
+        if (bloqueRecienAgregadoTimeout) {
+          clearTimeout(bloqueRecienAgregadoTimeout);
+          bloqueRecienAgregadoTimeout = null;
+        }
+        set(initialState);
+      },
+
+      limpiarBloques: () =>
+        set({
+          bloques: [],
+          bloqueSeleccionado: null,
+          bloqueEditandoInline: null,
+          tieneCambiosLocales: false,
+          estadoGuardado: 'saved',
+          conflictoVersion: null,
+        }),
+    };
   };
 
   // ========== CREAR STORE ==========
-  const storageProvider = storage === 'localStorage' ? localStorage : sessionStorage;
+  const storageProvider =
+    storage === 'localStorage' ? localStorage : sessionStorage;
   const defaultPartialize = (state: EditorState) => ({
     breakpoint: state.breakpoint,
     zoom: state.zoom,
@@ -493,37 +506,73 @@ export interface EditorSelectors {
 
   // Acciones de bloques
   selectSetBloques: (state: EditorState) => EditorState['setBloques'];
-  selectActualizarBloqueLocal: (state: EditorState) => EditorState['actualizarBloqueLocal'];
-  selectActualizarEstilosLocal: (state: EditorState) => EditorState['actualizarEstilosLocal'];
-  selectAgregarBloqueLocal: (state: EditorState) => EditorState['agregarBloqueLocal'];
-  selectSeleccionarBloque: (state: EditorState) => EditorState['seleccionarBloque'];
-  selectDeseleccionarBloque: (state: EditorState) => EditorState['deseleccionarBloque'];
-  selectEliminarBloqueLocal: (state: EditorState) => EditorState['eliminarBloqueLocal'];
-  selectDuplicarBloqueLocal: (state: EditorState) => EditorState['duplicarBloqueLocal'];
-  selectToggleVisibilidad: (state: EditorState) => EditorState['toggleVisibilidadBloque'];
-  selectInsertarBloqueEnPosicion: (state: EditorState) => EditorState['insertarBloqueEnPosicion'];
-  selectReordenarBloquesLocal: (state: EditorState) => EditorState['reordenarBloquesLocal'];
+  selectActualizarBloqueLocal: (
+    state: EditorState
+  ) => EditorState['actualizarBloqueLocal'];
+  selectActualizarEstilosLocal: (
+    state: EditorState
+  ) => EditorState['actualizarEstilosLocal'];
+  selectAgregarBloqueLocal: (
+    state: EditorState
+  ) => EditorState['agregarBloqueLocal'];
+  selectSeleccionarBloque: (
+    state: EditorState
+  ) => EditorState['seleccionarBloque'];
+  selectDeseleccionarBloque: (
+    state: EditorState
+  ) => EditorState['deseleccionarBloque'];
+  selectEliminarBloqueLocal: (
+    state: EditorState
+  ) => EditorState['eliminarBloqueLocal'];
+  selectDuplicarBloqueLocal: (
+    state: EditorState
+  ) => EditorState['duplicarBloqueLocal'];
+  selectToggleVisibilidad: (
+    state: EditorState
+  ) => EditorState['toggleVisibilidadBloque'];
+  selectInsertarBloqueEnPosicion: (
+    state: EditorState
+  ) => EditorState['insertarBloqueEnPosicion'];
+  selectReordenarBloquesLocal: (
+    state: EditorState
+  ) => EditorState['reordenarBloquesLocal'];
 
   // Acciones de UI
   selectSetModoEdicion: (state: EditorState) => EditorState['setModoEdicion'];
   selectSetBreakpoint: (state: EditorState) => EditorState['setBreakpoint'];
   selectSetZoom: (state: EditorState) => EditorState['setZoom'];
-  selectActivarEdicionInline: (state: EditorState) => EditorState['activarEdicionInline'];
-  selectDesactivarEdicionInline: (state: EditorState) => EditorState['desactivarEdicionInline'];
+  selectActivarEdicionInline: (
+    state: EditorState
+  ) => EditorState['activarEdicionInline'];
+  selectDesactivarEdicionInline: (
+    state: EditorState
+  ) => EditorState['desactivarEdicionInline'];
 
   // Acciones de guardado
   selectSetGuardando: (state: EditorState) => EditorState['setGuardando'];
   selectSetGuardado: (state: EditorState) => EditorState['setGuardado'];
-  selectSetErrorGuardado: (state: EditorState) => EditorState['setErrorGuardado'];
-  selectActualizarVersionBloque: (state: EditorState) => EditorState['actualizarVersionBloque'];
+  selectSetErrorGuardado: (
+    state: EditorState
+  ) => EditorState['setErrorGuardado'];
+  selectActualizarVersionBloque: (
+    state: EditorState
+  ) => EditorState['actualizarVersionBloque'];
 
   // Acciones de conflicto
-  selectSetConflictoVersion: (state: EditorState) => EditorState['setConflictoVersion'];
-  selectClearConflictoVersion: (state: EditorState) => EditorState['clearConflictoVersion'];
+  selectSetConflictoVersion: (
+    state: EditorState
+  ) => EditorState['setConflictoVersion'];
+  selectClearConflictoVersion: (
+    state: EditorState
+  ) => EditorState['clearConflictoVersion'];
 
   // Acciones de animación
-  selectSetBloqueRecienAgregado: (state: EditorState) => EditorState['setBloqueRecienAgregado'];
-  selectClearBloqueRecienAgregado: (state: EditorState) => EditorState['clearBloqueRecienAgregado'];
+  selectSetBloqueRecienAgregado: (
+    state: EditorState
+  ) => EditorState['setBloqueRecienAgregado'];
+  selectClearBloqueRecienAgregado: (
+    state: EditorState
+  ) => EditorState['clearBloqueRecienAgregado'];
 
   // Reset
   selectReset: (state: EditorState) => EditorState['reset'];

@@ -22,7 +22,7 @@ export default function ProductoSelectorInline({
   disabled = false,
   label,
   error,
-  required = false
+  required = false,
 }) {
   const [query, setQuery] = useState('');
   const [mostrarResultados, setMostrarResultados] = useState(false);
@@ -33,23 +33,27 @@ export default function ProductoSelectorInline({
   const debouncedQuery = useDebounce(query, 300);
 
   // Búsqueda de productos
-  const { data: productos, isLoading } = useBuscarProductos({
-    q: debouncedQuery,
-    solo_activos: true,
-    limit: 10
-  }, {
-    enabled: debouncedQuery.length >= 2
-  });
+  const { data: productos, isLoading } = useBuscarProductos(
+    {
+      q: debouncedQuery,
+      solo_activos: true,
+      limit: 10,
+    },
+    {
+      enabled: debouncedQuery.length >= 2,
+    }
+  );
 
   // Normalizar productos (la API de búsqueda devuelve producto_id, no id)
-  const productosNormalizados = productos?.map(p => ({
-    ...p,
-    id: p.producto_id || p.id // Normalizar a "id" para consistencia
-  })) || [];
+  const productosNormalizados =
+    productos?.map((p) => ({
+      ...p,
+      id: p.producto_id || p.id, // Normalizar a "id" para consistencia
+    })) || [];
 
   // Filtrar productos excluidos
   const productosFiltrados = productosNormalizados.filter(
-    p => !excludeIds.includes(p.id)
+    (p) => !excludeIds.includes(p.id)
   );
 
   // Cerrar resultados al hacer clic fuera
@@ -115,7 +119,8 @@ export default function ProductoSelectorInline({
               {productoSeleccionado.nombre}
             </p>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              SKU: {productoSeleccionado.sku || 'N/A'} • ${parseFloat(productoSeleccionado.precio_venta || 0).toFixed(2)}
+              SKU: {productoSeleccionado.sku || 'N/A'} • $
+              {parseFloat(productoSeleccionado.precio_venta || 0).toFixed(2)}
             </p>
           </div>
           {!disabled && (
@@ -128,7 +133,9 @@ export default function ProductoSelectorInline({
             </button>
           )}
         </div>
-        {error && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{error}</p>}
+        {error && (
+          <p className="mt-1 text-sm text-red-600 dark:text-red-400">{error}</p>
+        )}
       </div>
     );
   }
@@ -162,7 +169,9 @@ export default function ProductoSelectorInline({
         />
       </div>
 
-      {error && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{error}</p>}
+      {error && (
+        <p className="mt-1 text-sm text-red-600 dark:text-red-400">{error}</p>
+      )}
 
       {/* Dropdown de resultados */}
       {mostrarResultados && (
@@ -203,7 +212,8 @@ export default function ProductoSelectorInline({
                     {producto.nombre}
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400">
-                    SKU: {producto.sku || 'N/A'} • Stock: {producto.stock_actual || 0}
+                    SKU: {producto.sku || 'N/A'} • Stock:{' '}
+                    {producto.stock_actual || 0}
                   </p>
                 </div>
                 <span className="text-sm font-medium text-gray-900 dark:text-gray-100">

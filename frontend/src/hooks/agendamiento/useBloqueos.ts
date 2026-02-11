@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient, type UseQueryResult, type UseMutationResult } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { bloqueosApi } from '@/services/api/endpoints';
 import { useToast } from '../utils/useToast';
@@ -97,11 +97,22 @@ export const useBloqueo = (id: number | undefined | null) => {
  *   fecha_fin: '2025-12-31'
  * });
  */
-export const useBloqueosPorProfesional = (profesionalId: number | undefined | null, params: Record<string, unknown> = {}) => {
+export const useBloqueosPorProfesional = (
+  profesionalId: number | undefined | null,
+  params: Record<string, unknown> = {}
+) => {
   return useQuery({
-    queryKey: [...queryKeys.agendamiento.bloqueos.all, 'profesional', profesionalId, params],
+    queryKey: [
+      ...queryKeys.agendamiento.bloqueos.all,
+      'profesional',
+      profesionalId,
+      params,
+    ],
     queryFn: async () => {
-      const response = await bloqueosApi.obtenerPorProfesional(profesionalId!, params);
+      const response = await bloqueosApi.obtenerPorProfesional(
+        profesionalId!,
+        params
+      );
       return (response as any).data;
     },
     enabled: !!profesionalId,
@@ -116,9 +127,15 @@ export const useBloqueosPorProfesional = (profesionalId: number | undefined | nu
  * @example
  * const { data: bloqueosOrg } = useBloqueosOrganizacionales({ tipo_bloqueo: 'feriado' });
  */
-export const useBloqueosOrganizacionales = (params: Record<string, unknown> = {}) => {
+export const useBloqueosOrganizacionales = (
+  params: Record<string, unknown> = {}
+) => {
   return useQuery({
-    queryKey: [...queryKeys.agendamiento.bloqueos.all, 'organizacionales', params],
+    queryKey: [
+      ...queryKeys.agendamiento.bloqueos.all,
+      'organizacionales',
+      params,
+    ],
     queryFn: async () => {
       const response = await bloqueosApi.obtenerOrganizacionales(params);
       return (response as any).data;
@@ -136,11 +153,25 @@ export const useBloqueosOrganizacionales = (params: Record<string, unknown> = {}
  * @example
  * const { data: bloqueos } = useBloqueosPorRangoFechas('2025-01-01', '2025-01-31');
  */
-export const useBloqueosPorRangoFechas = (fechaInicio: string | undefined | null, fechaFin: string | undefined | null, params: Record<string, unknown> = {}) => {
+export const useBloqueosPorRangoFechas = (
+  fechaInicio: string | undefined | null,
+  fechaFin: string | undefined | null,
+  params: Record<string, unknown> = {}
+) => {
   return useQuery({
-    queryKey: [...queryKeys.agendamiento.bloqueos.all, 'rango', fechaInicio, fechaFin, params],
+    queryKey: [
+      ...queryKeys.agendamiento.bloqueos.all,
+      'rango',
+      fechaInicio,
+      fechaFin,
+      params,
+    ],
     queryFn: async () => {
-      const response = await bloqueosApi.obtenerPorRangoFechas(fechaInicio!, fechaFin!, params);
+      const response = await bloqueosApi.obtenerPorRangoFechas(
+        fechaInicio!,
+        fechaFin!,
+        params
+      );
       return (response as any).data;
     },
     enabled: !!fechaInicio && !!fechaFin,
@@ -156,11 +187,17 @@ export const useBloqueosPorRangoFechas = (fechaInicio: string | undefined | null
  * @example
  * const { data: vacaciones } = useBloqueosPorTipo('vacaciones');
  */
-export const useBloqueosPorTipo = (tipo: string | undefined | null, params: Record<string, unknown> = {}) => {
+export const useBloqueosPorTipo = (
+  tipo: string | undefined | null,
+  params: Record<string, unknown> = {}
+) => {
   return useQuery({
     queryKey: [...queryKeys.agendamiento.bloqueos.all, 'tipo', tipo, params],
     queryFn: async () => {
-      const response = await bloqueosApi.listar({ ...params, tipo_bloqueo: tipo });
+      const response = await bloqueosApi.listar({
+        ...params,
+        tipo_bloqueo: tipo,
+      });
       return (response as any).data;
     },
     enabled: !!tipo,
@@ -205,7 +242,10 @@ export const useCrearBloqueo = () => {
       return (response as any).data;
     },
     onSuccess: (data: unknown) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.agendamiento.bloqueos.all, refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.agendamiento.bloqueos.all,
+        refetchType: 'active',
+      });
       toast.success('Bloqueo creado exitosamente');
       return data;
     },
@@ -243,8 +283,18 @@ export const useActualizarBloqueo = () => {
       return (response as any).data;
     },
     onSuccess: (data: unknown, variables: ActualizarBloqueoVariables) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.agendamiento.bloqueos.all, refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: [...queryKeys.agendamiento.bloqueos.all, 'detail', variables.id], refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.agendamiento.bloqueos.all,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: [
+          ...queryKeys.agendamiento.bloqueos.all,
+          'detail',
+          variables.id,
+        ],
+        refetchType: 'active',
+      });
       toast.success('Bloqueo actualizado exitosamente');
       return data;
     },
@@ -269,7 +319,10 @@ export const useEliminarBloqueo = () => {
       return (response as any).data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.agendamiento.bloqueos.all, refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.agendamiento.bloqueos.all,
+        refetchType: 'active',
+      });
       toast.success('Bloqueo eliminado exitosamente');
     },
     onError: createCRUDErrorHandler('delete', 'Bloqueo'),
@@ -292,7 +345,9 @@ export const useBatchCrearBloqueos = () => {
   const toast = useToast();
 
   return useMutation({
-    mutationFn: async (bloqueosArray: BloqueoData[]): Promise<BatchResultado> => {
+    mutationFn: async (
+      bloqueosArray: BloqueoData[]
+    ): Promise<BatchResultado> => {
       // Crear todos los bloqueos en paralelo
       const promesas = bloqueosArray.map((bloqueo) => {
         const sanitizedData = {
@@ -310,19 +365,28 @@ export const useBatchCrearBloqueos = () => {
 
       const resultados = await Promise.allSettled(promesas);
 
-      const exitosos = resultados.filter((r) => r.status === 'fulfilled') as PromiseFulfilledResult<unknown>[];
-      const fallidos = resultados.filter((r) => r.status === 'rejected') as PromiseRejectedResult[];
+      const exitosos = resultados.filter(
+        (r) => r.status === 'fulfilled'
+      ) as PromiseFulfilledResult<unknown>[];
+      const fallidos = resultados.filter(
+        (r) => r.status === 'rejected'
+      ) as PromiseRejectedResult[];
 
       return {
         exitosos: exitosos.length,
         fallidos: fallidos.length,
         total: resultados.length,
         resultados: exitosos.map((r) => (r.value as any).data),
-        errores: fallidos.map((r) => r.reason?.response?.data?.mensaje || 'Error desconocido'),
+        errores: fallidos.map(
+          (r) => r.reason?.response?.data?.mensaje || 'Error desconocido'
+        ),
       };
     },
     onSuccess: (data: BatchResultado) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.agendamiento.bloqueos.all, refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.agendamiento.bloqueos.all,
+        refetchType: 'active',
+      });
 
       if (data.fallidos === 0) {
         toast.success(`${data.exitosos} bloqueos creados exitosamente`);

@@ -11,7 +11,8 @@
  */
 
 import { memo } from 'react';
-import * as LucideIcons from 'lucide-react';
+import { getDynamicIcon } from '@/lib/dynamicIcons';
+import { Clock, MapPin } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { THEME_FALLBACK_COLORS } from '@/lib/uiConstants';
 
@@ -27,26 +28,30 @@ function TimelinePublico({ bloque, tema, isVisible, className = '' }) {
 
   // Layouts válidos: 'alternado', 'izquierda', 'derecha'
   const layout = estilos.layout || contenido.layout || 'alternado';
-  const colorLinea = estilos.color_linea || contenido.color_linea || tema?.color_primario;
+  const colorLinea =
+    estilos.color_linea || contenido.color_linea || tema?.color_primario;
 
   // Obtener icono de Lucide
-  const getIcon = (iconName) => {
-    const Icon = LucideIcons[iconName] || LucideIcons.Clock;
-    return Icon;
-  };
+  const getIcon = (iconName) => getDynamicIcon(iconName, Clock);
 
   const animationClass = isVisible ? 'animate-fadeInUp' : 'opacity-0';
 
   if (items.length === 0) return null;
 
   return (
-    <section className={cn('py-16 px-6', className)} style={{ backgroundColor: tema?.color_fondo || INV.fondo }}>
+    <section
+      className={cn('py-16 px-6', className)}
+      style={{ backgroundColor: tema?.color_fondo || INV.fondo }}
+    >
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className={cn('text-center mb-12', animationClass)}>
           <h2
             className="text-3xl md:text-4xl font-bold mb-4"
-            style={{ color: tema?.color_primario, fontFamily: tema?.fuente_titulo }}
+            style={{
+              color: tema?.color_primario,
+              fontFamily: tema?.fuente_titulo,
+            }}
           >
             {titulo}
           </h2>
@@ -77,7 +82,8 @@ function TimelinePublico({ bloque, tema, isVisible, className = '' }) {
           <div className="space-y-8">
             {items.map((item, idx) => {
               const Icon = getIcon(item.icono);
-              const isLeft = layout === 'alternado' ? idx % 2 === 0 : layout === 'izquierda';
+              const isLeft =
+                layout === 'alternado' ? idx % 2 === 0 : layout === 'izquierda';
               // izquierda: contenido a la izq, línea a la der → flex-row-reverse
               // derecha: contenido a la der, línea a la izq → normal
 
@@ -117,8 +123,12 @@ function TimelinePublico({ bloque, tema, isVisible, className = '' }) {
                       layout === 'izquierda' && 'pr-12 text-right',
                       layout === 'derecha' && 'pl-12',
                       // Alternado: contenido alterna izq/der respecto a línea central
-                      layout === 'alternado' && isLeft && 'mr-[calc(50%+1rem)] text-right',
-                      layout === 'alternado' && !isLeft && 'ml-[calc(50%+1rem)] text-left'
+                      layout === 'alternado' &&
+                        isLeft &&
+                        'mr-[calc(50%+1rem)] text-right',
+                      layout === 'alternado' &&
+                        !isLeft &&
+                        'ml-[calc(50%+1rem)] text-left'
                     )}
                   >
                     {/* Hora como texto simple */}
@@ -143,7 +153,9 @@ function TimelinePublico({ bloque, tema, isVisible, className = '' }) {
                     {item.descripcion && (
                       <p
                         className="text-sm"
-                        style={{ color: tema?.color_texto_claro || INV.textoClaro }}
+                        style={{
+                          color: tema?.color_texto_claro || INV.textoClaro,
+                        }}
                       >
                         {item.descripcion}
                       </p>
@@ -153,9 +165,11 @@ function TimelinePublico({ bloque, tema, isVisible, className = '' }) {
                     {item.ubicacion && (
                       <p
                         className="text-sm mt-2 flex items-center gap-1"
-                        style={{ color: tema?.color_texto_claro || INV.textoClaro }}
+                        style={{
+                          color: tema?.color_texto_claro || INV.textoClaro,
+                        }}
                       >
-                        <LucideIcons.MapPin className="w-3.5 h-3.5" />
+                        <MapPin className="w-3.5 h-3.5" />
                         {item.ubicacion}
                       </p>
                     )}

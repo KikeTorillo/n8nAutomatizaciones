@@ -20,6 +20,7 @@ import { posApi } from '@/services/api/endpoints';
 import { createCRUDHooks } from '@/hooks/factories';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 import { queryKeys } from '@/hooks/config';
+import { extractData } from '@/lib/apiHelpers';
 import type { Promocion } from '@/types/entities';
 
 // =========================================================================
@@ -119,7 +120,7 @@ export function usePromocionesVigentes(params: Record<string, unknown> = {}) {
     queryKey: queryKeys.pos.promociones.vigentes(params),
     queryFn: async () => {
       const response = await posApi.listarPromocionesVigentes(params);
-      return (response as any).data.data;
+      return extractData(response);
     },
     staleTime: STALE_TIMES.SEMI_STATIC, // 5 minutos
   });
@@ -129,18 +130,27 @@ export function usePromocionesVigentes(params: Record<string, unknown> = {}) {
  * Hook para evaluar promociones aplicables a un carrito
  * POST /pos/promociones/evaluar
  */
-export function useEvaluarPromociones(data: EvaluarPromocionesData, options: EvaluarPromocionesOptions = {}) {
+export function useEvaluarPromociones(
+  data: EvaluarPromocionesData,
+  options: EvaluarPromocionesOptions = {}
+) {
   const { items = [], subtotal = 0, clienteId, sucursalId } = data;
   const { enabled = true } = options;
 
   return useQuery({
-    queryKey: queryKeys.pos.promociones.evaluar({ items, subtotal, clienteId, sucursalId }),
+    queryKey: queryKeys.pos.promociones.evaluar({
+      items,
+      subtotal,
+      clienteId,
+      sucursalId,
+    }),
     queryFn: async () => {
       // Formatear items para el backend
-      const itemsFormateados = items.map(item => ({
+      const itemsFormateados = items.map((item) => ({
         producto_id: item.productoId || item.producto_id || item.id || 0,
         cantidad: item.cantidad,
-        precio_unitario: item.precioUnitario || item.precio_unitario || item.precio || 0,
+        precio_unitario:
+          item.precioUnitario || item.precio_unitario || item.precio || 0,
         categoria_id: item.categoriaId || item.categoria_id,
       }));
 
@@ -151,7 +161,7 @@ export function useEvaluarPromociones(data: EvaluarPromocionesData, options: Eva
         sucursal_id: sucursalId,
       });
 
-      return (response as any).data.data;
+      return extractData(response);
     },
     enabled: enabled && items.length > 0,
     staleTime: STALE_TIMES.REAL_TIME, // 30 segundos - evaluar frecuentemente
@@ -165,11 +175,17 @@ export function useEvaluarPromociones(data: EvaluarPromocionesData, options: Eva
  */
 export function useEvaluarPromocionesMutation() {
   return useMutation({
-    mutationFn: async ({ items, subtotal, clienteId, sucursalId }: EvaluarPromocionesData) => {
-      const itemsFormateados = items.map(item => ({
+    mutationFn: async ({
+      items,
+      subtotal,
+      clienteId,
+      sucursalId,
+    }: EvaluarPromocionesData) => {
+      const itemsFormateados = items.map((item) => ({
         producto_id: item.productoId || item.producto_id || item.id || 0,
         cantidad: item.cantidad,
-        precio_unitario: item.precioUnitario || item.precio_unitario || item.precio || 0,
+        precio_unitario:
+          item.precioUnitario || item.precio_unitario || item.precio || 0,
         categoria_id: item.categoriaId || item.categoria_id,
       }));
 
@@ -180,7 +196,7 @@ export function useEvaluarPromocionesMutation() {
         sucursal_id: sucursalId,
       });
 
-      return (response as any).data.data;
+      return extractData(response);
     },
     onError: createCRUDErrorHandler('fetch', 'Promociones'),
   });
@@ -194,7 +210,13 @@ export function useAplicarPromocion() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ promocionId, ventaPosId, clienteId, descuentoTotal, productosAplicados }: AplicarPromocionData) => {
+    mutationFn: async ({
+      promocionId,
+      ventaPosId,
+      clienteId,
+      descuentoTotal,
+      productosAplicados,
+    }: AplicarPromocionData) => {
       const response = await posApi.aplicarPromocion({
         promocion_id: promocionId,
         venta_pos_id: ventaPosId,
@@ -202,14 +224,22 @@ export function useAplicarPromocion() {
         descuento_total: descuentoTotal,
         productos_aplicados: productosAplicados,
       });
-      return (response as any).data.data;
+      return extractData(response);
     },
     onSuccess: (_data: unknown, variables: AplicarPromocionData) => {
       // Invalidar venta para refrescar totales
-      queryClient.invalidateQueries({ queryKey: queryKeys.pos.ventas.detail(variables.ventaPosId), refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: queryKeys.pos.promociones.vigentesBase, refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.pos.ventas.detail(variables.ventaPosId),
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.pos.promociones.vigentesBase,
+        refetchType: 'active',
+      });
     },
-    onError: createCRUDErrorHandler('update', 'Promocion', { 400: 'No se pudo aplicar la promocion' }),
+    onError: createCRUDErrorHandler('update', 'Promocion', {
+      400: 'No se pudo aplicar la promocion',
+    }),
   });
 }
 
@@ -221,12 +251,18 @@ export function useAplicarPromocion() {
  * Hook para obtener historial de uso de una promocion
  * GET /pos/promociones/:id/historial
  */
-export function useHistorialPromocion(promocionId: number | undefined | null, params: Record<string, unknown> = {}) {
+export function useHistorialPromocion(
+  promocionId: number | undefined | null,
+  params: Record<string, unknown> = {}
+) {
   return useQuery({
     queryKey: queryKeys.pos.promociones.historial(promocionId, params),
     queryFn: async () => {
-      const response = await posApi.obtenerHistorialPromocion(promocionId!, params);
-      return (response as any).data.data;
+      const response = await posApi.obtenerHistorialPromocion(
+        promocionId!,
+        params
+      );
+      return extractData(response);
     },
     enabled: !!promocionId,
     staleTime: STALE_TIMES.REAL_TIME, // 30 segundos
@@ -237,12 +273,14 @@ export function useHistorialPromocion(promocionId: number | undefined | null, pa
  * Hook para obtener estadisticas de una promocion
  * GET /pos/promociones/:id/estadisticas
  */
-export function useEstadisticasPromocion(promocionId: number | undefined | null) {
+export function useEstadisticasPromocion(
+  promocionId: number | undefined | null
+) {
   return useQuery({
     queryKey: queryKeys.pos.promociones.estadisticas(promocionId),
     queryFn: async () => {
       const response = await posApi.obtenerEstadisticasPromocion(promocionId!);
-      return (response as any).data.data;
+      return extractData(response);
     },
     enabled: !!promocionId,
     staleTime: STALE_TIMES.FREQUENT, // 1 minuto
@@ -259,12 +297,21 @@ export function useCambiarEstadoPromocion() {
   return useMutation({
     mutationFn: async ({ id, activo }: CambiarEstadoData) => {
       const response = await posApi.cambiarEstadoPromocion(id, activo);
-      return (response as any).data.data;
+      return extractData(response);
     },
     onSuccess: (_data: unknown, variables: CambiarEstadoData) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.pos.promociones.all, refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: queryKeys.pos.promociones.estadisticas(variables.id), refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: queryKeys.pos.promociones.vigentesBase, refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.pos.promociones.all,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.pos.promociones.estadisticas(variables.id),
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.pos.promociones.vigentesBase,
+        refetchType: 'active',
+      });
     },
     onError: createCRUDErrorHandler('update', 'Promocion'),
   });
@@ -280,10 +327,13 @@ export function useDuplicarPromocion() {
   return useMutation({
     mutationFn: async (id: number) => {
       const response = await posApi.duplicarPromocion(id);
-      return (response as any).data.data;
+      return extractData(response);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.pos.promociones.all, refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.pos.promociones.all,
+        refetchType: 'active',
+      });
     },
     onError: createCRUDErrorHandler('create', 'Promocion'),
   });

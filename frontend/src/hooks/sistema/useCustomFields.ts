@@ -13,6 +13,7 @@ import { STALE_TIMES } from '@/app/queryClient';
 import { customFieldsApi } from '@/services/api/endpoints';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 import { queryKeys } from '@/hooks/config';
+import { extractData, extractDataOr } from '@/lib/apiHelpers';
 
 // ==================== TIPOS ====================
 
@@ -131,7 +132,7 @@ export function useCustomFieldsDefiniciones(
 
       const response =
         await customFieldsApi.listarDefiniciones(sanitizedParams);
-      return (response as any).data.data || [];
+      return extractDataOr(response, []);
     },
     staleTime: STALE_TIMES.SEMI_STATIC, // 5 minutos
   });
@@ -145,7 +146,7 @@ export function useCustomFieldDefinicion(id: number | null | undefined) {
     queryKey: queryKeys.sistema.customFields.definicion(id),
     queryFn: async () => {
       const response = await customFieldsApi.obtenerDefinicion(id!);
-      return (response as any).data.data;
+      return extractData(response);
     },
     enabled: !!id,
     staleTime: STALE_TIMES.SEMI_STATIC,
@@ -172,7 +173,7 @@ export function useCrearCustomFieldDefinicion() {
       );
 
       const response = await customFieldsApi.crearDefinicion(sanitized as any);
-      return (response as any).data.data;
+      return extractData(response);
     },
     onSuccess: (_: unknown, variables: CrearDefinicionData) => {
       queryClient.invalidateQueries({
@@ -215,7 +216,7 @@ export function useActualizarCustomFieldDefinicion() {
         id,
         sanitized
       );
-      return (response as any).data.data;
+      return extractData(response);
     },
     onSuccess: (data: any) => {
       queryClient.invalidateQueries({
@@ -264,7 +265,7 @@ export function useReordenarCustomFieldDefiniciones() {
         entidad_tipo: entidadTipo,
         orden,
       });
-      return (response as any).data.data;
+      return extractData(response);
     },
     onSuccess: (_: unknown, variables: ReordenarDefinicionesParams) => {
       queryClient.invalidateQueries({
@@ -294,7 +295,7 @@ export function useCustomFieldsValores(
         entidadTipo!,
         entidadId!
       );
-      return (response as any).data.data || [];
+      return extractDataOr(response, []);
     },
     enabled: !!entidadTipo && !!entidadId,
     staleTime: STALE_TIMES.DYNAMIC, // 2 minutos
@@ -318,7 +319,7 @@ export function useGuardarCustomFieldsValores() {
         entidadId,
         valores
       );
-      return (response as any).data.data;
+      return extractData(response);
     },
     onSuccess: (_: unknown, variables: GuardarValoresParams) => {
       queryClient.invalidateQueries({
@@ -357,7 +358,7 @@ export function useValidarCustomFieldsValores() {
         entidadTipo,
         valores
       );
-      return (response as any).data.data;
+      return extractData(response);
     },
   });
 }
@@ -374,7 +375,7 @@ export function useCustomFieldsSecciones(
     queryKey: queryKeys.sistema.customFields.secciones(entidadTipo),
     queryFn: async () => {
       const response = await customFieldsApi.obtenerSecciones(entidadTipo!);
-      return (response as any).data.data || [];
+      return extractDataOr(response, []);
     },
     enabled: !!entidadTipo,
     staleTime: STALE_TIMES.STATIC_DATA, // 10 minutos

@@ -12,6 +12,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { workflowsApi } from '@/services/api/endpoints';
 import { queryKeys } from '@/hooks/config';
+import { extractData, extractDataOr } from '@/lib/apiHelpers';
 
 // Alias para brevedad
 const WF_KEYS = queryKeys.sistema.workflows;
@@ -135,7 +136,7 @@ export function useAprobacionesPendientes(
       }, {});
 
       const response = await workflowsApi.listarPendientes(sanitizedParams);
-      return (response as any).data.data || { instancias: [], total: 0 };
+      return extractDataOr(response, { instancias: [], total: 0 });
     },
     staleTime: STALE_TIMES.REAL_TIME, // 30 segundos - se refresca frecuentemente
   });
@@ -150,7 +151,7 @@ export function useContadorAprobaciones() {
     queryKey: WF_KEYS.aprobacionesCount,
     queryFn: async () => {
       const response = await workflowsApi.contarPendientes();
-      return (response as any).data.data?.total || 0;
+      return extractData<any>(response)?.total || 0;
     },
     staleTime: STALE_TIMES.REAL_TIME, // 30 segundos
     refetchInterval: 1000 * 30, // Polling cada 30 segundos
@@ -165,7 +166,7 @@ export function useInstanciaWorkflow(id: number | null | undefined) {
     queryKey: WF_KEYS.instancia(id),
     queryFn: async () => {
       const response = await workflowsApi.obtenerInstancia(id!);
-      return (response as any).data.data || null;
+      return extractDataOr(response, null);
     },
     enabled: !!id,
     staleTime: STALE_TIMES.DYNAMIC,
@@ -189,7 +190,7 @@ export function useHistorialAprobaciones(params: HistorialParams = {}) {
       }, {});
 
       const response = await workflowsApi.listarHistorial(sanitizedParams);
-      return (response as any).data.data || { instancias: [], total: 0 };
+      return extractDataOr(response, { instancias: [], total: 0 });
     },
     staleTime: STALE_TIMES.DYNAMIC,
   });
@@ -203,7 +204,7 @@ export function useDelegaciones(params: DelegacionesParams = {}) {
     queryKey: WF_KEYS.delegaciones(params),
     queryFn: async () => {
       const response = await workflowsApi.listarDelegaciones(params);
-      return (response as any).data.data || [];
+      return extractDataOr(response, []);
     },
     staleTime: STALE_TIMES.SEMI_STATIC,
   });
@@ -219,7 +220,7 @@ export function useDefinicionesWorkflow(
     queryKey: WF_KEYS.definiciones(params),
     queryFn: async () => {
       const response = await workflowsApi.listarDefiniciones(params);
-      return (response as any).data.data || [];
+      return extractDataOr(response, []);
     },
     staleTime: STALE_TIMES.STATIC_DATA,
   });
@@ -233,7 +234,7 @@ export function useDefinicionWorkflow(id: number | null | undefined) {
     queryKey: WF_KEYS.definicion(id),
     queryFn: async () => {
       const response = await workflowsApi.obtenerDefinicion(id!);
-      return (response as any).data.data || null;
+      return extractDataOr(response, null);
     },
     enabled: !!id,
     staleTime: STALE_TIMES.STATIC_DATA,
@@ -253,7 +254,7 @@ export function useAprobarSolicitud() {
       const response = await workflowsApi.aprobar(id, {
         comentario: comentario?.trim() || undefined,
       });
-      return (response as any).data.data;
+      return extractData(response);
     },
     onSuccess: (_: unknown, variables: AprobarSolicitudParams) => {
       // Invalidar queries relacionadas
@@ -295,7 +296,7 @@ export function useRechazarSolicitud() {
   return useMutation({
     mutationFn: async ({ id, motivo }: RechazarSolicitudParams) => {
       const response = await workflowsApi.rechazar(id, { motivo });
-      return (response as any).data.data;
+      return extractData(response);
     },
     onSuccess: (_: unknown, variables: RechazarSolicitudParams) => {
       queryClient.invalidateQueries({
@@ -339,7 +340,7 @@ export function useCrearDelegacion() {
       };
 
       const response = await workflowsApi.crearDelegacion(sanitized);
-      return (response as any).data.data;
+      return extractData(response);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
@@ -370,7 +371,7 @@ export function useActualizarDelegacion() {
       });
 
       const response = await workflowsApi.actualizarDelegacion(id, sanitized);
-      return (response as any).data.data;
+      return extractData(response);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
@@ -390,7 +391,7 @@ export function useEliminarDelegacion() {
   return useMutation({
     mutationFn: async (id: number) => {
       const response = await workflowsApi.eliminarDelegacion(id);
-      return (response as any).data.data;
+      return extractData(response);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({

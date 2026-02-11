@@ -53,7 +53,7 @@ export interface DeleteConfig<T> {
 /**
  * Props base para el drawer
  */
-export interface DrawerComponentProps<T> {
+export interface DrawerComponentProps<_T> {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;

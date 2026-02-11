@@ -26,16 +26,6 @@ interface ModuleGuardProps {
   redirectTo?: string;
 }
 
-interface ModuleVisibleProps {
-  modulo: string;
-  children: React.ReactNode;
-}
-
-interface ModuleHiddenProps {
-  modulo: string;
-  children: React.ReactNode;
-}
-
 const ICONOS_MODULOS: Record<string, LucideIcon> = {
   core: Lock,
   agendamiento: Calendar,
@@ -168,34 +158,6 @@ const ModuleGuard = memo(function ModuleGuard({
 
 ModuleGuard.displayName = 'ModuleGuard';
 
-const ModuleVisible = memo(function ModuleVisible({
-  modulo,
-  children,
-}: ModuleVisibleProps) {
-  const { tieneModulo, isLoading } = useModulos();
-
-  if (isLoading) return null;
-  if (!tieneModulo(modulo)) return null;
-
-  return children;
-});
-
-ModuleVisible.displayName = 'ModuleVisible';
-
-const ModuleHidden = memo(function ModuleHidden({
-  modulo,
-  children,
-}: ModuleHiddenProps) {
-  const { tieneModulo, isLoading } = useModulos();
-
-  if (isLoading) return null;
-  if (tieneModulo(modulo)) return null;
-
-  return children;
-});
-
-ModuleHidden.displayName = 'ModuleHidden';
-
-export { ModuleGuard, ModuleVisible, ModuleHidden };
+export { ModuleGuard };
 export default ModuleGuard;
-export type { ModuleGuardProps, ModuleVisibleProps, ModuleHiddenProps };
+export type { ModuleGuardProps };

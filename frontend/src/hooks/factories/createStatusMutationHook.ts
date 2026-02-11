@@ -14,11 +14,12 @@ import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 type ToastType = 'success' | 'warning' | 'info';
 type ErrorType = 'create' | 'update' | 'delete';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export interface StatusMutationConfig<TVariables = { id: string | number }, TData = any> {
+export interface StatusMutationConfig<
+  TVariables = { id: string | number },
+  _TData = unknown,
+> {
   /** Funcion que ejecuta la llamada API */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  mutationFn: (variables: TVariables) => Promise<{ data: any }>;
+  mutationFn: (variables: TVariables) => Promise<{ data: unknown }>;
 
   /** Query key principal a invalidar */
   queryKey: string;
@@ -59,10 +60,10 @@ export interface StatusMutationConfig<TVariables = { id: string | number }, TDat
  *   entityName: 'Cita',
  * });
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function createStatusMutationHook<TVariables = { id: string | number }, TData = any>(
-  config: StatusMutationConfig<TVariables, TData>,
-) {
+export function createStatusMutationHook<
+  TVariables = { id: string | number },
+  TData = unknown,
+>(config: StatusMutationConfig<TVariables, TData>) {
   const {
     mutationFn,
     queryKey,
@@ -87,17 +88,26 @@ export function createStatusMutationHook<TVariables = { id: string | number }, T
       },
       onSuccess: (_data: unknown, variables: TVariables) => {
         // Invalidar query principal
-        queryClient.invalidateQueries({ queryKey: [queryKey], refetchType: 'active' });
+        queryClient.invalidateQueries({
+          queryKey: [queryKey],
+          refetchType: 'active',
+        });
 
         // Invalidar query de detalle si hay getEntityId
         if (getEntityId) {
           const entityId = getEntityId(variables);
-          queryClient.invalidateQueries({ queryKey: [queryKey, entityId], refetchType: 'active' });
+          queryClient.invalidateQueries({
+            queryKey: [queryKey, entityId],
+            refetchType: 'active',
+          });
         }
 
         // Invalidar keys relacionadas
         relatedKeys.forEach((key) => {
-          queryClient.invalidateQueries({ queryKey: [key], refetchType: 'active' });
+          queryClient.invalidateQueries({
+            queryKey: [key],
+            refetchType: 'active',
+          });
         });
 
         // Toast de exito

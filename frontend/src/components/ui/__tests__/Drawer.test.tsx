@@ -5,7 +5,6 @@ import { Drawer } from '../organisms/Drawer';
 vi.mock('vaul', () => {
   const Root = ({
     open,
-    _onOpenChange,
     children,
   }: {
     open: boolean;
