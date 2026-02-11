@@ -1,13 +1,7 @@
-import { clsx, type ClassValue } from 'clsx';
-import { twMerge } from 'tailwind-merge';
 import { formatCurrencyDynamic, DEFAULT_CURRENCY } from '@/utils/currency';
 
-/**
- * Combina clases de Tailwind CSS evitando conflictos
- */
-export function cn(...inputs: ClassValue[]): string {
-  return twMerge(clsx(inputs));
-}
+// Re-exportar desde @nexo2/ui (fuente canónica)
+export { cn, formatFileSize } from '@nexo2/ui/lib';
 
 /**
  * Formatea números a moneda
@@ -18,7 +12,10 @@ export function cn(...inputs: ClassValue[]): string {
  * NOTA: Para formateo dinámico basado en la moneda del usuario,
  * usar el hook useCurrency() en componentes React.
  */
-export function formatCurrency(amount: number, currency: string = DEFAULT_CURRENCY): string {
+export function formatCurrency(
+  amount: number,
+  currency: string = DEFAULT_CURRENCY
+): string {
   return formatCurrencyDynamic(amount, currency);
 }
 
@@ -33,7 +30,10 @@ type DateFormat = 'short' | 'long' | 'time';
  * @param format - Formato: 'short', 'long', 'time'
  * @returns Fecha formateada
  */
-export function formatDate(date: Date | string, format: DateFormat = 'long'): string {
+export function formatDate(
+  date: Date | string,
+  format: DateFormat = 'long'
+): string {
   const options: Record<DateFormat, Intl.DateTimeFormatOptions> = {
     short: { year: 'numeric', month: 'short', day: 'numeric' },
     long: {
@@ -47,22 +47,10 @@ export function formatDate(date: Date | string, format: DateFormat = 'long'): st
   };
 
   // Usar locale de México por defecto (consistente con MXN)
-  return new Intl.DateTimeFormat('es-MX', options[format] || options.long).format(
-    new Date(date)
-  );
-}
-
-/**
- * Formatear tamaño de archivo en formato legible
- * @param bytes - Tamaño en bytes
- * @returns Tamaño formateado (ej: "2.5 MB")
- */
-export function formatFileSize(bytes: number): string {
-  if (!bytes) return '0 B';
-  const k = 1024;
-  const sizes = ['B', 'KB', 'MB', 'GB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  return new Intl.DateTimeFormat(
+    'es-MX',
+    options[format] || options.long
+  ).format(new Date(date));
 }
 
 /**
