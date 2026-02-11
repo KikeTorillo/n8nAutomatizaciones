@@ -1,16 +1,36 @@
 import { useMemo, useCallback, useEffect } from 'react';
 
+interface RecordWithId {
+  id: string | number;
+  [key: string]: unknown;
+}
+
+interface RecordNavigationOptions {
+  enableKeyboard?: boolean;
+}
+
+interface RecordNavigationReturn<T extends RecordWithId> {
+  currentIndex: number;
+  totalRecords: number;
+  hasPrev: boolean;
+  hasNext: boolean;
+  goToPrev: () => void;
+  goToNext: () => void;
+  goToIndex: (index: number) => void;
+  currentRecord: T | null;
+  prevRecord: T | null;
+  nextRecord: T | null;
+}
+
 /**
  * Hook para gestionar navegación entre registros
- *
- * @param {Array} records - Array de registros
- * @param {string|number} currentId - ID del registro actual
- * @param {Function} onNavigate - Callback cuando se navega (recibe nuevo record)
- * @param {Object} options - Opciones adicionales
- * @param {boolean} [options.enableKeyboard=true] - Habilitar atajos de teclado (← →)
- * @returns {Object} - Estado y funciones de navegación
  */
-export function useRecordNavigation(records = [], currentId, onNavigate, options = {}) {
+export function useRecordNavigation<T extends RecordWithId>(
+  records: T[] = [],
+  currentId: string | number | null | undefined,
+  onNavigate: ((record: T) => void) | undefined,
+  options: RecordNavigationOptions = {}
+): RecordNavigationReturn<T> {
   const { enableKeyboard = true } = options;
 
   const currentIndex = useMemo(() => {
@@ -33,7 +53,7 @@ export function useRecordNavigation(records = [], currentId, onNavigate, options
     }
   }, [hasNext, currentIndex, records, onNavigate]);
 
-  const goToIndex = useCallback((index) => {
+  const goToIndex = useCallback((index: number) => {
     if (index >= 0 && index < records.length && onNavigate) {
       onNavigate(records[index]);
     }
@@ -43,12 +63,9 @@ export function useRecordNavigation(records = [], currentId, onNavigate, options
   useEffect(() => {
     if (!enableKeyboard) return;
 
-    const handleKeyDown = (e) => {
-      // Solo si no hay input/textarea/select enfocado
-      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return;
-
-      // Solo si no hay modal con formulario activo (evitar conflictos)
-      if (e.target.closest('[role="dialog"]')?.querySelector('input:focus, textarea:focus')) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes((e.target as HTMLElement).tagName)) return;
+      if ((e.target as HTMLElement).closest('[role="dialog"]')?.querySelector('input:focus, textarea:focus')) return;
 
       if (e.key === 'ArrowLeft' && hasPrev) {
         e.preventDefault();

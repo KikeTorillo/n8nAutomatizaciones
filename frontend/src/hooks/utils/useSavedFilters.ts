@@ -6,18 +6,32 @@ import {
   setSearchAsDefault,
 } from '@/lib/filterStorage';
 
+export interface SavedSearch {
+  id: string;
+  nombre: string;
+  filtros: Record<string, unknown>;
+  es_default: boolean;
+  [key: string]: unknown;
+}
+
+interface SavedFiltersReturn {
+  busquedas: SavedSearch[];
+  busquedaDefault: SavedSearch | null;
+  isLoading: boolean;
+  guardarBusqueda: (nombre: string, filtros: Record<string, unknown>, esDefault?: boolean) => SavedSearch | null;
+  eliminarBusqueda: (searchId: string) => void;
+  toggleDefault: (searchId: string) => void;
+  renombrarBusqueda: (searchId: string, nuevoNombre: string) => void;
+  existeNombre: (nombre: string) => boolean;
+}
+
 /**
  * Hook para CRUD de búsquedas guardadas
- * Gestiona la persistencia en localStorage con estructura compatible para BD futura
- *
- * @param {string} moduloId - Identificador del módulo (ej: 'inventario.productos')
- * @returns {Object} Estado y funciones para gestionar búsquedas guardadas
  */
-export function useSavedFilters(moduloId) {
-  const [busquedas, setBusquedas] = useState([]);
+export function useSavedFilters(moduloId: string): SavedFiltersReturn {
+  const [busquedas, setBusquedas] = useState<SavedSearch[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Cargar búsquedas al montar o cuando cambia el módulo
   useEffect(() => {
     if (!moduloId) {
       setBusquedas([]);
@@ -37,9 +51,8 @@ export function useSavedFilters(moduloId) {
     }
   }, [moduloId]);
 
-  // Guardar nueva búsqueda
   const guardarBusqueda = useCallback(
-    (nombre, filtros, esDefault = false) => {
+    (nombre: string, filtros: Record<string, unknown>, esDefault = false): SavedSearch | null => {
       if (!moduloId || !nombre || !filtros) {
         console.warn('guardarBusqueda: moduloId, nombre y filtros son requeridos');
         return null;
@@ -52,7 +65,7 @@ export function useSavedFilters(moduloId) {
           es_default: esDefault,
         });
         setBusquedas(updated);
-        return updated[updated.length - 1]; // Retornar la búsqueda creada
+        return updated[updated.length - 1];
       } catch (error) {
         console.error('Error saving search:', error);
         return null;
@@ -61,9 +74,8 @@ export function useSavedFilters(moduloId) {
     [moduloId]
   );
 
-  // Eliminar búsqueda
   const eliminarBusqueda = useCallback(
-    (searchId) => {
+    (searchId: string) => {
       if (!moduloId || !searchId) return;
 
       try {
@@ -76,16 +88,13 @@ export function useSavedFilters(moduloId) {
     [moduloId]
   );
 
-  // Marcar/desmarcar como default
   const toggleDefault = useCallback(
-    (searchId) => {
+    (searchId: string) => {
       if (!moduloId || !searchId) return;
 
       try {
-        // Si ya es default, quitarlo
         const current = busquedas.find((b) => b.id === searchId);
         if (current?.es_default) {
-          // Quitar default (pasar null como searchId para quitar a todos)
           const updated = busquedas.map((b) => ({ ...b, es_default: false }));
           setBusquedas(updated);
           localStorage.setItem(
@@ -106,14 +115,12 @@ export function useSavedFilters(moduloId) {
     [moduloId, busquedas]
   );
 
-  // Obtener búsqueda default (si existe)
   const busquedaDefault = useMemo(() => {
     return busquedas.find((b) => b.es_default) || null;
   }, [busquedas]);
 
-  // Verificar si existe una búsqueda con el mismo nombre
   const existeNombre = useCallback(
-    (nombre) => {
+    (nombre: string): boolean => {
       return busquedas.some(
         (b) => b.nombre.toLowerCase() === nombre.toLowerCase()
       );
@@ -121,9 +128,8 @@ export function useSavedFilters(moduloId) {
     [busquedas]
   );
 
-  // Renombrar búsqueda
   const renombrarBusqueda = useCallback(
-    (searchId, nuevoNombre) => {
+    (searchId: string, nuevoNombre: string) => {
       if (!moduloId || !searchId || !nuevoNombre) return;
 
       try {
@@ -132,7 +138,6 @@ export function useSavedFilters(moduloId) {
         );
         setBusquedas(updated);
 
-        // Actualizar en localStorage
         const stored = localStorage.getItem('nexo_saved_searches');
         const all = stored ? JSON.parse(stored) : {};
         all[moduloId] = updated;
@@ -145,19 +150,14 @@ export function useSavedFilters(moduloId) {
   );
 
   return {
-    // Estado
-    busquedas, // Array de búsquedas guardadas
-    busquedaDefault, // Búsqueda marcada como default (o null)
-    isLoading, // Si está cargando
-
-    // Acciones
-    guardarBusqueda, // (nombre, filtros, esDefault?) => búsqueda creada
-    eliminarBusqueda, // (searchId) => void
-    toggleDefault, // (searchId) => void
-    renombrarBusqueda, // (searchId, nuevoNombre) => void
-
-    // Utilidades
-    existeNombre, // (nombre) => boolean
+    busquedas,
+    busquedaDefault,
+    isLoading,
+    guardarBusqueda,
+    eliminarBusqueda,
+    toggleDefault,
+    renombrarBusqueda,
+    existeNombre,
   };
 }
 

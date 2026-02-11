@@ -2,35 +2,23 @@ import { useCallback } from 'react';
 import { useToast } from '@/hooks/utils';
 import { exportarTablaCSV, exportarDatosCSV } from '@/utils/exportToExcel';
 
+interface CSVColumn {
+  key: string;
+  header: string;
+}
+
+interface ExportSimpleOptions {
+  headerMap?: Record<string, string>;
+  excludeKeys?: string[];
+}
+
 /**
  * Hook para exportar datos a CSV con feedback de toast
- *
- * @example
- * // Uso básico con columnas definidas
- * const { exportCSV } = useExportCSV();
- * exportCSV(productos, [
- *   { key: 'nombre', header: 'Nombre' },
- *   { key: 'precio', header: 'Precio' }
- * ], 'productos');
- *
- * @example
- * // Uso simple (infiere columnas de los datos)
- * const { exportSimple } = useExportCSV();
- * exportSimple(clientes, 'clientes', {
- *   headerMap: { nombre_completo: 'Nombre', telefono: 'Teléfono' },
- *   excludeKeys: ['id', 'created_at']
- * });
  */
 export function useExportCSV() {
   const toast = useToast();
 
-  /**
-   * Exportar con columnas definidas
-   * @param {Array} data - Datos a exportar
-   * @param {Array} columns - Columnas [{key, header}]
-   * @param {string} filename - Nombre del archivo (sin extensión)
-   */
-  const exportCSV = useCallback((data, columns, filename) => {
+  const exportCSV = useCallback((data: Record<string, unknown>[], columns: CSVColumn[], filename: string): boolean => {
     if (!data || data.length === 0) {
       toast.warning('No hay datos para exportar');
       return false;
@@ -47,13 +35,7 @@ export function useExportCSV() {
     }
   }, [toast]);
 
-  /**
-   * Exportar simple (infiere columnas de los datos)
-   * @param {Array} data - Datos a exportar
-   * @param {string} filename - Nombre del archivo (sin extensión)
-   * @param {Object} options - Opciones de exportación
-   */
-  const exportSimple = useCallback((data, filename, options = {}) => {
+  const exportSimple = useCallback((data: Record<string, unknown>[], filename: string, options: ExportSimpleOptions = {}): boolean => {
     if (!data || data.length === 0) {
       toast.warning('No hay datos para exportar');
       return false;

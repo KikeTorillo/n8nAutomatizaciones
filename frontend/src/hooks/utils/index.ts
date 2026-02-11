@@ -26,7 +26,7 @@ export * from './useEscapeKey';
 export * from './useMultiTenantMutation';
 
 // Confirmación de eliminación (Ene 2026 - Correcciones auditoría)
-export * from './useDeleteConfirmation.jsx';
+export * from './useDeleteConfirmation';
 
 // Paginación (Ene 2026 - Correcciones auditoría)
 export * from './usePagination';

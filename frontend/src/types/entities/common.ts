@@ -34,6 +34,18 @@ export interface ApiListResponse<T> {
   };
 }
 
+/** Respuesta paginada formato servicio (usado por algunos endpoints) */
+export interface PaginatedResponseServicio<T> {
+  items: T[];
+  total: number;
+  pagina: number;
+  limite: number;
+  total_paginas: number;
+}
+
+/** Union de todos los formatos de paginación del backend */
+export type AnyPaginatedResponse<T> = PaginatedResponse<T> | ApiListResponse<T> | PaginatedResponseServicio<T>;
+
 /** Parámetros comunes de listado */
 export interface ListParams {
   page?: number;

@@ -1,100 +1,69 @@
-/**
- * Hook wrapper para mutaciones que requieren sucursal_id
- *
- * Ene 2026: Centraliza la inyección de sucursal_id en mutaciones
- * para evitar errores 400 por falta de contexto de sucursal.
- *
- * El middleware de permisos del backend requiere sucursal_id en el body
- * para endpoints protegidos con verificarPermiso.
- */
-
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient, type UseMutationResult } from '@tanstack/react-query';
 import useSucursalStore, { selectSucursalActiva } from '@/store/sucursalStore';
 import { useCallback } from 'react';
 
+interface MultiTenantMutationOptions<TData = unknown, TVariables extends Record<string, unknown> = Record<string, unknown>> {
+  mutationFn: (data: TVariables & { sucursal_id?: number }) => Promise<TData>;
+  invalidateKeys?: string[];
+  onSuccess?: (data: TData, variables: TVariables, context: unknown) => void;
+  onError?: (error: Error, variables: TVariables, context: unknown) => void;
+  [key: string]: unknown;
+}
+
 /**
  * Hook que envuelve useMutation para inyectar sucursal_id automáticamente
- *
- * @param {Object} options - Opciones de useMutation
- * @param {Function} options.mutationFn - Función de mutación (recibe data con sucursal_id)
- * @param {Array<string>} options.invalidateKeys - Keys de query a invalidar on success
- * @param {Object} options.rest - Otras opciones de useMutation (onSuccess, onError, etc.)
- * @returns {Object} Mutation object con mutate modificado
- *
- * @example
- * const crearProducto = useMultiTenantMutation({
- *   mutationFn: (data) => productosApi.crear(data),
- *   invalidateKeys: ['productos'],
- * });
- *
- * // La mutación inyecta sucursal_id automáticamente
- * crearProducto.mutate({ nombre: 'Producto', precio: 100 });
- * // Se envía: { nombre: 'Producto', precio: 100, sucursal_id: 1 }
  */
-export function useMultiTenantMutation({
+export function useMultiTenantMutation<TData = unknown, TVariables extends Record<string, unknown> = Record<string, unknown>>({
   mutationFn,
   invalidateKeys = [],
   ...rest
-}) {
+}: MultiTenantMutationOptions<TData, TVariables>): UseMutationResult<TData, Error, TVariables> {
   const queryClient = useQueryClient();
   const sucursalActiva = useSucursalStore(selectSucursalActiva);
 
-  // Wrapper que inyecta sucursal_id
-  const wrappedMutationFn = useCallback(async (data) => {
+  const wrappedMutationFn = useCallback(async (data: TVariables) => {
     const dataConSucursal = {
       ...data,
-      sucursal_id: data.sucursal_id || sucursalActiva?.id,
+      sucursal_id: (data as Record<string, unknown>).sucursal_id || sucursalActiva?.id,
     };
-    return mutationFn(dataConSucursal);
+    return mutationFn(dataConSucursal as TVariables & { sucursal_id?: number });
   }, [mutationFn, sucursalActiva?.id]);
 
-  const mutation = useMutation({
+  const mutation = useMutation<TData, Error, TVariables>({
     mutationFn: wrappedMutationFn,
-    onSuccess: (data, variables, context) => {
-      // Invalidar queries especificadas
+    onSuccess: (data: TData, variables: TVariables, context: unknown) => {
       invalidateKeys.forEach((key) => {
         queryClient.invalidateQueries({ queryKey: [key], refetchType: 'active' });
       });
-
-      // Ejecutar onSuccess original si existe
-      rest.onSuccess?.(data, variables, context);
+      (rest as MultiTenantMutationOptions<TData, TVariables>).onSuccess?.(data, variables, context);
     },
     ...rest,
-  });
+  } as Parameters<typeof useMutation<TData, Error, TVariables>>[0]);
 
   return mutation;
 }
 
 /**
  * Hook que crea un mutationFn que inyecta sucursal_id
- * Para usar con useMutation directamente
- *
- * @param {Function} originalFn - Función de API original
- * @returns {Function} Función wrapeada que inyecta sucursal_id
- *
- * @example
- * const mutationFn = useWithSucursalId((data) => api.crear(data));
- * const { mutate } = useMutation({ mutationFn });
  */
-export function useWithSucursalId(originalFn) {
+export function useWithSucursalId<TData = unknown, TVariables extends Record<string, unknown> = Record<string, unknown>>(
+  originalFn: (data: TVariables) => Promise<TData>
+): (data: TVariables) => Promise<TData> {
   const sucursalActiva = useSucursalStore(selectSucursalActiva);
 
-  return useCallback(async (data) => {
+  return useCallback(async (data: TVariables) => {
     const dataConSucursal = {
       ...data,
-      sucursal_id: data.sucursal_id || sucursalActiva?.id,
+      sucursal_id: (data as Record<string, unknown>).sucursal_id || sucursalActiva?.id,
     };
-    return originalFn(dataConSucursal);
+    return originalFn(dataConSucursal as TVariables);
   }, [originalFn, sucursalActiva?.id]);
 }
 
 /**
  * Getter para obtener sucursal_id actual (para usar fuera de hooks)
- * NOTA: Preferir usar el hook cuando sea posible
- *
- * @returns {number|null} ID de la sucursal activa
  */
-export function getSucursalIdActiva() {
+export function getSucursalIdActiva(): number | null {
   return useSucursalStore.getState().sucursalActiva?.id || null;
 }
 

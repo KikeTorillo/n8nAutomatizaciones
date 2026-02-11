@@ -1,44 +1,54 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, type ReactNode } from 'react';
+import type { UseMutationResult } from '@tanstack/react-query';
 import { ConfirmDialog } from '@/components/ui';
 import { useToast } from './useToast';
 
+type EntityItem = Record<string, unknown>;
+
+export interface DeleteConfirmationOptions {
+  deleteMutation: Pick<UseMutationResult<unknown, Error, unknown>, 'mutate' | 'isPending'> | null;
+  entityName: string;
+  getName?: (item: EntityItem) => string;
+  successMessage?: string;
+  errorMessage?: string;
+  confirmTitle?: string;
+  confirmMessage?: string;
+  confirmText?: string;
+  onSuccess?: (item: EntityItem) => void;
+  onError?: (error: Error, item: EntityItem) => void;
+  renderChildren?: (item: EntityItem | null) => ReactNode;
+}
+
+export interface DeleteConfirmProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  title: string;
+  message: string;
+  confirmText: string;
+  variant: string;
+  isLoading: boolean;
+  children?: ReactNode;
+}
+
+export interface DeleteConfirmationReturn {
+  confirmDelete: (item: EntityItem) => void;
+  deleteConfirmProps: DeleteConfirmProps;
+  /** @deprecated Usar deleteConfirmProps con <ConfirmDialog {...deleteConfirmProps} /> */
+  DeleteConfirmModal: () => JSX.Element | null;
+  isDeleting: boolean;
+  itemToDelete: EntityItem | null;
+  isOpen: boolean;
+  closeModal: () => void;
+}
+
 /**
  * Hook para manejar confirmación de eliminación con patrón estandarizado.
- * Encapsula el estado del modal, la mutación y los mensajes toast.
- *
- * @param {Object} options - Opciones de configuración
- * @param {Object} options.deleteMutation - Mutación de TanStack Query (useEliminar*)
- * @param {string} options.entityName - Nombre de la entidad (ej: 'producto', 'categoría')
- * @param {Function} [options.getName] - Función para obtener el nombre del item (item => item.nombre)
- * @param {string} [options.successMessage] - Mensaje personalizado de éxito
- * @param {string} [options.errorMessage] - Mensaje personalizado de error
- * @param {string} [options.confirmTitle] - Título del modal (default: "Eliminar {entityName}")
- * @param {string} [options.confirmMessage] - Mensaje del modal (puede usar {name} como placeholder)
- * @param {string} [options.confirmText] - Texto del botón confirmar (default: "Eliminar")
- * @param {Function} [options.onSuccess] - Callback adicional tras éxito
- * @param {Function} [options.onError] - Callback adicional tras error
- * @param {Function} [options.renderChildren] - Función para renderizar contenido adicional en el modal
- *
- * @returns {Object} { confirmDelete, deleteConfirmProps, DeleteConfirmModal, isDeleting, itemToDelete }
- *
- * @example
- * // Patrón nuevo (preferido): spread de props en ConfirmDialog
- * const { confirmDelete, deleteConfirmProps } = useDeleteConfirmation({
- *   deleteMutation: useEliminarProducto(),
- *   entityName: 'producto',
- *   getName: (p) => p.nombre,
- * });
- * <ConfirmDialog {...deleteConfirmProps} />
- *
- * @example
- * // Patrón legacy: componente inline (deprecated)
- * const { confirmDelete, DeleteConfirmModal } = useDeleteConfirmation({...});
- * <DeleteConfirmModal />
  */
 export function useDeleteConfirmation({
   deleteMutation,
   entityName,
-  getName = (item) => item?.nombre || item?.name || 'este elemento',
+  getName = (item) => (item?.nombre as string) || (item?.name as string) || 'este elemento',
   successMessage,
   errorMessage,
   confirmTitle,
@@ -47,35 +57,29 @@ export function useDeleteConfirmation({
   onSuccess,
   onError,
   renderChildren,
-}) {
+}: DeleteConfirmationOptions): DeleteConfirmationReturn {
   const { success: showSuccess, error: showError } = useToast();
-  const [itemToDelete, setItemToDelete] = useState(null);
+  const [itemToDelete, setItemToDelete] = useState<EntityItem | null>(null);
   const [isOpen, setIsOpen] = useState(false);
 
-  // Capitalizar primera letra del nombre de entidad
   const capitalizedEntity = useMemo(() => {
     return entityName.charAt(0).toUpperCase() + entityName.slice(1);
   }, [entityName]);
 
-  // Abrir modal de confirmación
-  const confirmDelete = useCallback((item) => {
+  const confirmDelete = useCallback((item: EntityItem) => {
     setItemToDelete(item);
     setIsOpen(true);
   }, []);
 
-  // Cerrar modal
   const closeModal = useCallback(() => {
     setIsOpen(false);
-    // Delay para permitir animación de cierre
     setTimeout(() => setItemToDelete(null), 200);
   }, []);
 
-  // Ejecutar eliminación
   const handleConfirm = useCallback(() => {
     if (!itemToDelete || !deleteMutation) return;
 
     const itemId = itemToDelete.id;
-    const itemName = getName(itemToDelete);
 
     deleteMutation.mutate(itemId, {
       onSuccess: () => {
@@ -83,7 +87,7 @@ export function useDeleteConfirmation({
         closeModal();
         onSuccess?.(itemToDelete);
       },
-      onError: (err) => {
+      onError: (err: Error & { response?: { data?: { mensaje?: string } } }) => {
         const mensaje = err.response?.data?.mensaje || err.message || errorMessage || `Error al eliminar ${entityName}`;
         showError(mensaje);
         onError?.(err, itemToDelete);
@@ -92,7 +96,6 @@ export function useDeleteConfirmation({
   }, [
     itemToDelete,
     deleteMutation,
-    getName,
     successMessage,
     errorMessage,
     capitalizedEntity,
@@ -104,7 +107,6 @@ export function useDeleteConfirmation({
     onError,
   ]);
 
-  // Mensaje por defecto con placeholder {name}
   const defaultMessage = `¿Estás seguro de que deseas eliminar ${entityName === 'el' || entityName.startsWith('el ') ? '' : (entityName.match(/^[aeiou]/i) ? 'la ' : 'el ')}${entityName} "{name}"? Esta acción no se puede deshacer.`;
 
   const finalMessage = useMemo(() => {
@@ -113,8 +115,7 @@ export function useDeleteConfirmation({
     return template.replace('{name}', name);
   }, [confirmMessage, defaultMessage, itemToDelete, getName]);
 
-  // Props para spread directo en <ConfirmDialog> (patrón preferido)
-  const deleteConfirmProps = useMemo(() => ({
+  const deleteConfirmProps = useMemo((): DeleteConfirmProps => ({
     isOpen,
     onClose: closeModal,
     onConfirm: handleConfirm,
@@ -137,7 +138,6 @@ export function useDeleteConfirmation({
     itemToDelete,
   ]);
 
-  /** @deprecated Usar deleteConfirmProps con <ConfirmDialog {...deleteConfirmProps} /> */
   const DeleteConfirmModal = useCallback(() => {
     if (!deleteMutation) return null;
     return <ConfirmDialog {...deleteConfirmProps} />;

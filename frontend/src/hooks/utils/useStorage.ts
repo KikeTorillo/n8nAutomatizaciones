@@ -3,15 +3,36 @@ import { storageApi } from '@/services/api/endpoints';
 import { STALE_TIMES } from '@/app/queryClient';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 
+interface ArchivosParams {
+  entidadTipo?: string;
+  entidadId?: string | number;
+  limit?: number;
+  offset?: number;
+  [key: string]: unknown;
+}
+
+interface UploadArchivoParams {
+  file: File;
+  folder?: string;
+  isPublic?: boolean;
+  generateThumbnail?: boolean;
+  entidadTipo?: string;
+  entidadId?: string | number;
+}
+
+interface PresignedUrlOptions {
+  expiry?: number;
+  enabled?: boolean;
+}
+
 /**
  * Hook para listar archivos con filtros
- * @param {Object} params - { entidadTipo?, entidadId?, limit?, offset? }
  */
-export function useArchivos(params = {}) {
+export function useArchivos(params: ArchivosParams = {}) {
   return useQuery({
     queryKey: ['archivos', params],
     queryFn: async () => {
-      const sanitizedParams = Object.entries(params).reduce((acc, [key, value]) => {
+      const sanitizedParams = Object.entries(params).reduce<Record<string, unknown>>((acc, [key, value]) => {
         if (value !== '' && value !== null && value !== undefined) {
           acc[key] = value;
         }
@@ -19,7 +40,7 @@ export function useArchivos(params = {}) {
       }, {});
 
       const response = await storageApi.listar(sanitizedParams);
-      return response.data.data || [];
+      return (response as any).data.data || [];
     },
     staleTime: STALE_TIMES.DYNAMIC,
   });
@@ -28,12 +49,12 @@ export function useArchivos(params = {}) {
 /**
  * Hook para obtener archivo por ID
  */
-export function useArchivo(id) {
+export function useArchivo(id: string | number | null) {
   return useQuery({
     queryKey: ['archivo', id],
     queryFn: async () => {
-      const response = await storageApi.obtener(id);
-      return response.data.data;
+      const response = await storageApi.obtener(id!);
+      return (response as any).data.data;
     },
     enabled: !!id,
     staleTime: STALE_TIMES.SEMI_STATIC,
@@ -48,7 +69,7 @@ export function useStorageUsage() {
     queryKey: ['storage-usage'],
     queryFn: async () => {
       const response = await storageApi.obtenerUso();
-      return response.data.data;
+      return (response as any).data.data;
     },
     staleTime: STALE_TIMES.DYNAMIC,
   });
@@ -61,7 +82,7 @@ export function useUploadArchivo() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ file, folder = 'general', isPublic = true, generateThumbnail = false, entidadTipo, entidadId }) => {
+    mutationFn: async ({ file, folder = 'general', isPublic = true, generateThumbnail = false, entidadTipo, entidadId }: UploadArchivoParams) => {
       const formData = new FormData();
       formData.append('file', file);
       formData.append('folder', folder);
@@ -72,7 +93,7 @@ export function useUploadArchivo() {
       if (entidadId) formData.append('entidadId', entidadId.toString());
 
       const response = await storageApi.upload(formData);
-      return response.data.data;
+      return (response as any).data.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['archivos'], refetchType: 'active' });
@@ -92,9 +113,9 @@ export function useEliminarArchivo() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (id) => {
+    mutationFn: async (id: string | number) => {
       const response = await storageApi.eliminar(id);
-      return response.data.data;
+      return (response as any).data.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['archivos'], refetchType: 'active' });
@@ -107,16 +128,16 @@ export function useEliminarArchivo() {
 /**
  * Hook para obtener URL firmada (archivos privados)
  */
-export function usePresignedUrl(id, options = {}) {
+export function usePresignedUrl(id: string | number | null, options: PresignedUrlOptions = {}) {
   const { expiry = 3600, enabled = true } = options;
 
   return useQuery({
     queryKey: ['presigned-url', id, expiry],
     queryFn: async () => {
-      const response = await storageApi.obtenerPresignedUrl(id, { expiry });
-      return response.data.data;
+      const response = await storageApi.obtenerPresignedUrl(id!, { expiry });
+      return (response as any).data.data;
     },
     enabled: !!id && enabled,
-    staleTime: (expiry - 60) * 1000, // Refrescar 1 minuto antes de expirar
+    staleTime: (expiry - 60) * 1000,
   });
 }

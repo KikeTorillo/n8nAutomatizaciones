@@ -1,77 +1,46 @@
 import { useState, useCallback, useMemo } from 'react';
 
+export interface ModalState {
+  isOpen: boolean;
+  data: unknown;
+  [key: string]: unknown;
+}
+
+type ModalMap = Record<string, ModalState>;
+
+interface ModalManagerReturn {
+  modals: ModalMap;
+  openModal: (modalKey: string, data?: unknown, extraProps?: Record<string, unknown>) => void;
+  closeModal: (modalKey: string, clearData?: boolean) => void;
+  closeAll: () => void;
+  isOpen: (modalKey: string) => boolean;
+  getModalData: (modalKey: string) => unknown;
+  getModalProps: (modalKey: string) => ModalState;
+  updateModal: (modalKey: string, updates: Partial<ModalState>) => void;
+  transitionModal: (fromModal: string, toModal: string, data?: unknown, delay?: number) => void;
+}
+
 /**
  * useModalManager - Hook para gestionar múltiples modales de forma organizada
- *
- * Reduce el boilerplate de múltiples useState para modales en páginas complejas.
- *
- * @param {Object} initialState - Estado inicial con claves para cada modal
- * @returns {Object} - Objeto con estado y funciones de control
- *
- * IMPORTANTE: `initialState` se captura solo en el primer render (useMemo con deps vacías).
- * Para evitar problemas:
- * - Definir initialState como constante fuera del componente, o
- * - Memoizarlo con useMemo si depende de props
- *
- * Esto es intencional: los estados iniciales de modales raramente necesitan
- * cambiar dinámicamente después del primer render.
- *
- * @example
- * // ✅ Correcto: constante fuera del componente
- * const MODAL_INITIAL_STATE = {
- *   detalles: { isOpen: false, data: null },
- *   formulario: { isOpen: false, data: null, mode: 'create' },
- * };
- *
- * function MiComponente() {
- *   const { modals, openModal, closeModal } = useModalManager(MODAL_INITIAL_STATE);
- * }
- *
- * @example
- * // ✅ Correcto: inline (objeto literal estable)
- * const { modals, openModal, closeModal, closeAll, isOpen, getModalData } = useModalManager({
- *   detalles: { isOpen: false, data: null },
- *   formulario: { isOpen: false, data: null, mode: 'create' },
- *   cancelar: { isOpen: false, data: null },
- *   completar: { isOpen: false, data: null },
- * });
- *
- * // Abrir modal
- * openModal('detalles', { cita });
- *
- * // Cerrar modal
- * closeModal('detalles');
- *
- * // Verificar si está abierto
- * if (isOpen('detalles')) { ... }
- *
- * // Obtener datos del modal
- * const { cita } = getModalData('detalles');
  */
-export function useModalManager(initialState = {}) {
-  // Normalizar estado inicial
-  const normalizedInitial = useMemo(() => {
-    const normalized = {};
+export function useModalManager(initialState: Record<string, Partial<ModalState>> = {}): ModalManagerReturn {
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const normalizedInitial = useMemo<ModalMap>(() => {
+    const normalized: ModalMap = {};
     Object.keys(initialState).forEach((key) => {
       const value = initialState[key];
       normalized[key] = {
         isOpen: value?.isOpen ?? false,
         data: value?.data ?? null,
         ...value,
-      };
+      } as ModalState;
     });
     return normalized;
-  }, []); // Solo se ejecuta una vez
+  }, []);
 
-  const [modals, setModals] = useState(normalizedInitial);
+  const [modals, setModals] = useState<ModalMap>(normalizedInitial);
 
-  /**
-   * Abrir un modal con datos opcionales
-   * @param {string} modalKey - Clave del modal
-   * @param {Object} data - Datos a pasar al modal
-   * @param {Object} extraProps - Props adicionales (ej: mode, fechaPreseleccionada)
-   */
-  const openModal = useCallback((modalKey, data = null, extraProps = {}) => {
+  const openModal = useCallback((modalKey: string, data: unknown = null, extraProps: Record<string, unknown> = {}) => {
     setModals((prev) => ({
       ...prev,
       [modalKey]: {
@@ -83,12 +52,7 @@ export function useModalManager(initialState = {}) {
     }));
   }, []);
 
-  /**
-   * Cerrar un modal y opcionalmente limpiar sus datos
-   * @param {string} modalKey - Clave del modal
-   * @param {boolean} clearData - Si se deben limpiar los datos (default: true)
-   */
-  const closeModal = useCallback((modalKey, clearData = true) => {
+  const closeModal = useCallback((modalKey: string, clearData = true) => {
     setModals((prev) => ({
       ...prev,
       [modalKey]: {
@@ -99,12 +63,9 @@ export function useModalManager(initialState = {}) {
     }));
   }, []);
 
-  /**
-   * Cerrar todos los modales
-   */
   const closeAll = useCallback(() => {
     setModals((prev) => {
-      const closed = {};
+      const closed: ModalMap = {};
       Object.keys(prev).forEach((key) => {
         closed[key] = {
           ...prev[key],
@@ -116,48 +77,28 @@ export function useModalManager(initialState = {}) {
     });
   }, []);
 
-  /**
-   * Verificar si un modal está abierto
-   * @param {string} modalKey - Clave del modal
-   * @returns {boolean}
-   */
   const isOpen = useCallback(
-    (modalKey) => {
-      return modals[modalKey]?.isOpen ?? false;
+    (modalKey: string): boolean => {
+      return (modals[modalKey]?.isOpen as boolean) ?? false;
     },
     [modals]
   );
 
-  /**
-   * Obtener los datos de un modal
-   * @param {string} modalKey - Clave del modal
-   * @returns {any}
-   */
   const getModalData = useCallback(
-    (modalKey) => {
+    (modalKey: string): unknown => {
       return modals[modalKey]?.data ?? null;
     },
     [modals]
   );
 
-  /**
-   * Obtener todas las props de un modal
-   * @param {string} modalKey - Clave del modal
-   * @returns {Object}
-   */
   const getModalProps = useCallback(
-    (modalKey) => {
+    (modalKey: string): ModalState => {
       return modals[modalKey] ?? { isOpen: false, data: null };
     },
     [modals]
   );
 
-  /**
-   * Actualizar props de un modal sin cambiar su estado abierto/cerrado
-   * @param {string} modalKey - Clave del modal
-   * @param {Object} updates - Props a actualizar
-   */
-  const updateModal = useCallback((modalKey, updates) => {
+  const updateModal = useCallback((modalKey: string, updates: Partial<ModalState>) => {
     setModals((prev) => ({
       ...prev,
       [modalKey]: {
@@ -167,16 +108,9 @@ export function useModalManager(initialState = {}) {
     }));
   }, []);
 
-  /**
-   * Transición suave entre modales (cierra uno y abre otro con delay)
-   * @param {string} fromModal - Modal a cerrar
-   * @param {string} toModal - Modal a abrir
-   * @param {Object} data - Datos para el nuevo modal
-   * @param {number} delay - Delay en ms (default: 300)
-   */
   const transitionModal = useCallback(
-    (fromModal, toModal, data = null, delay = 300) => {
-      closeModal(fromModal, false); // No limpiar datos aún
+    (fromModal: string, toModal: string, data: unknown = null, delay = 300) => {
+      closeModal(fromModal, false);
       setTimeout(() => {
         openModal(toModal, data);
       }, delay);
@@ -197,25 +131,23 @@ export function useModalManager(initialState = {}) {
   };
 }
 
+interface SimpleModalReturn<T> {
+  isOpen: boolean;
+  data: T | null;
+  open: (newData?: T | null) => void;
+  close: (clearData?: boolean) => void;
+  toggle: () => void;
+  setData: React.Dispatch<React.SetStateAction<T | null>>;
+}
+
 /**
  * useSimpleModal - Hook simplificado para un solo modal
- *
- * @param {any} initialData - Datos iniciales del modal
- * @returns {Object}
- *
- * @example
- * const { isOpen, data, open, close, toggle } = useSimpleModal();
- *
- * <Button onClick={() => open(cita)}>Ver</Button>
- * <Modal isOpen={isOpen} onClose={close}>
- *   <CitaDetail cita={data} />
- * </Modal>
  */
-export function useSimpleModal(initialData = null) {
+export function useSimpleModal<T = unknown>(initialData: T | null = null): SimpleModalReturn<T> {
   const [isOpen, setIsOpen] = useState(false);
-  const [data, setData] = useState(initialData);
+  const [data, setData] = useState<T | null>(initialData);
 
-  const open = useCallback((newData = null) => {
+  const open = useCallback((newData: T | null = null) => {
     setData(newData);
     setIsOpen(true);
   }, []);

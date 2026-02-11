@@ -1,109 +1,73 @@
-/**
- * Hook para manejo de estado de formularios en tabs
- * Extrae patrón repetido de showForm/editingId/form en tabs de eventos-digitales
- *
- * Fecha creación: 3 Febrero 2026
- */
+import { useState, useCallback, useMemo, type ChangeEvent } from 'react';
 
-import { useState, useCallback, useMemo } from 'react';
+interface TabFormStateReturn<T extends Record<string, unknown>> {
+  showForm: boolean;
+  setShowForm: (show: boolean) => void;
+  editingId: string | number | null;
+  isEditing: boolean;
+  form: T;
+  setForm: React.Dispatch<React.SetStateAction<T>>;
+  handleNuevo: () => void;
+  handleEditar: (item: Record<string, unknown>, mapper?: ((item: Record<string, unknown>) => T) | null) => void;
+  handleCancelar: () => void;
+  handleGuardadoExitoso: () => void;
+  resetForm: () => void;
+  updateField: (field: string, value: unknown) => void;
+  getFieldHandler: (field: string) => (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void;
+}
 
 /**
  * Hook genérico para manejo de estado de formularios en tabs
- * @param {Object} initialForm - Valores iniciales del formulario
- * @returns {Object} Estado y handlers del formulario
- *
- * @example
- * const {
- *   showForm, setShowForm,
- *   editingId, isEditing,
- *   form, setForm, updateField,
- *   handleNuevo, handleEditar, handleCancelar, resetForm
- * } = useTabFormState({
- *   nombre: '',
- *   tipo: 'producto',
- *   descripcion: ''
- * });
  */
-export function useTabFormState(initialForm) {
+export function useTabFormState<T extends Record<string, unknown>>(initialForm: T): TabFormStateReturn<T> {
   const [showForm, setShowForm] = useState(false);
-  const [editingId, setEditingId] = useState(null);
-  const [form, setForm] = useState(initialForm);
+  const [editingId, setEditingId] = useState<string | number | null>(null);
+  const [form, setForm] = useState<T>(initialForm);
 
-  // Indica si estamos editando un registro existente
   const isEditing = editingId !== null;
 
-  /**
-   * Resetea el formulario a valores iniciales
-   */
   const resetForm = useCallback(() => {
     setForm(initialForm);
     setEditingId(null);
   }, [initialForm]);
 
-  /**
-   * Iniciar creación de nuevo registro
-   */
   const handleNuevo = useCallback(() => {
     resetForm();
     setShowForm(true);
   }, [resetForm]);
 
-  /**
-   * Iniciar edición de registro existente
-   * @param {Object} item - Registro a editar
-   * @param {Function} mapper - Función opcional para mapear item a form
-   */
-  const handleEditar = useCallback((item, mapper = null) => {
-    const formData = mapper ? mapper(item) : { ...item };
+  const handleEditar = useCallback((item: Record<string, unknown>, mapper: ((item: Record<string, unknown>) => T) | null = null) => {
+    const formData = mapper ? mapper(item) : { ...item } as T;
     setForm(formData);
-    setEditingId(item.id);
+    setEditingId(item.id as string | number);
     setShowForm(true);
   }, []);
 
-  /**
-   * Cancelar edición/creación
-   */
   const handleCancelar = useCallback(() => {
     resetForm();
     setShowForm(false);
   }, [resetForm]);
 
-  /**
-   * Llamar después de guardar exitosamente
-   */
   const handleGuardadoExitoso = useCallback(() => {
     resetForm();
     setShowForm(false);
   }, [resetForm]);
 
-  /**
-   * Actualizar un campo específico del formulario
-   * @param {string} field - Nombre del campo
-   * @param {*} value - Nuevo valor
-   */
-  const updateField = useCallback((field, value) => {
+  const updateField = useCallback((field: string, value: unknown) => {
     setForm(prev => ({ ...prev, [field]: value }));
   }, []);
 
-  /**
-   * Handler para onChange de inputs
-   * @param {string} field - Nombre del campo
-   * @returns {Function} Handler para onChange
-   */
-  const getFieldHandler = useCallback((field) => {
-    return (e) => updateField(field, e.target.value);
+  const getFieldHandler = useCallback((field: string) => {
+    return (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => updateField(field, e.target.value);
   }, [updateField]);
 
   return useMemo(() => ({
-    // Estado
     showForm,
     setShowForm,
     editingId,
     isEditing,
     form,
     setForm,
-
-    // Handlers
     handleNuevo,
     handleEditar,
     handleCancelar,
