@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { storageApi } from '@/services/api/endpoints';
 import { STALE_TIMES } from '@/app/queryClient';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
+import { queryKeys } from '@/hooks/config';
 
 interface ArchivosParams {
   entidadTipo?: string;
@@ -30,9 +31,11 @@ interface PresignedUrlOptions {
  */
 export function useArchivos(params: ArchivosParams = {}) {
   return useQuery({
-    queryKey: ['archivos', params],
+    queryKey: queryKeys.storage.archivos.list(params),
     queryFn: async () => {
-      const sanitizedParams = Object.entries(params).reduce<Record<string, unknown>>((acc, [key, value]) => {
+      const sanitizedParams = Object.entries(params).reduce<
+        Record<string, unknown>
+      >((acc, [key, value]) => {
         if (value !== '' && value !== null && value !== undefined) {
           acc[key] = value;
         }
@@ -51,7 +54,7 @@ export function useArchivos(params: ArchivosParams = {}) {
  */
 export function useArchivo(id: string | number | null) {
   return useQuery({
-    queryKey: ['archivo', id],
+    queryKey: queryKeys.storage.archivos.detail(id),
     queryFn: async () => {
       const response = await storageApi.obtener(id!);
       return (response as any).data.data;
@@ -66,7 +69,7 @@ export function useArchivo(id: string | number | null) {
  */
 export function useStorageUsage() {
   return useQuery({
-    queryKey: ['storage-usage'],
+    queryKey: queryKeys.storage.usage,
     queryFn: async () => {
       const response = await storageApi.obtenerUso();
       return (response as any).data.data;
@@ -82,7 +85,14 @@ export function useUploadArchivo() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ file, folder = 'general', isPublic = true, generateThumbnail = false, entidadTipo, entidadId }: UploadArchivoParams) => {
+    mutationFn: async ({
+      file,
+      folder = 'general',
+      isPublic = true,
+      generateThumbnail = false,
+      entidadTipo,
+      entidadId,
+    }: UploadArchivoParams) => {
       const formData = new FormData();
       formData.append('file', file);
       formData.append('folder', folder);
@@ -96,8 +106,14 @@ export function useUploadArchivo() {
       return (response as any).data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['archivos'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['storage-usage'], refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.storage.archivos.all,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.storage.usage,
+        refetchType: 'active',
+      });
     },
     onError: createCRUDErrorHandler('create', 'Archivo', {
       413: 'El archivo excede el tamano maximo permitido',
@@ -118,8 +134,14 @@ export function useEliminarArchivo() {
       return (response as any).data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['archivos'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['storage-usage'], refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.storage.archivos.all,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.storage.usage,
+        refetchType: 'active',
+      });
     },
     onError: createCRUDErrorHandler('delete', 'Archivo'),
   });
@@ -128,11 +150,14 @@ export function useEliminarArchivo() {
 /**
  * Hook para obtener URL firmada (archivos privados)
  */
-export function usePresignedUrl(id: string | number | null, options: PresignedUrlOptions = {}) {
+export function usePresignedUrl(
+  id: string | number | null,
+  options: PresignedUrlOptions = {}
+) {
   const { expiry = 3600, enabled = true } = options;
 
   return useQuery({
-    queryKey: ['presigned-url', id, expiry],
+    queryKey: queryKeys.storage.presignedUrl(id, expiry),
     queryFn: async () => {
       const response = await storageApi.obtenerPresignedUrl(id!, { expiry });
       return (response as any).data.data;

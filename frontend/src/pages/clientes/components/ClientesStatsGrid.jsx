@@ -3,7 +3,7 @@
  * Ene 2026 - Migración a ListadoCRUDPage
  */
 
-import { useMemo } from 'react';
+import { memo, useMemo } from 'react';
 import { Users, UserCheck, Mail, UserX } from 'lucide-react';
 import { StatCardGrid } from '@/components/ui';
 import { useEstadisticasClientes } from '@/hooks/personas';
@@ -11,7 +11,7 @@ import { useEstadisticasClientes } from '@/hooks/personas';
 /**
  * Componente de estadísticas de clientes
  */
-export default function ClientesStatsGrid({ className }) {
+const ClientesStatsGrid = memo(function ClientesStatsGrid({ className }) {
   const { data: estadisticas } = useEstadisticasClientes();
 
   const stats = useMemo(
@@ -49,4 +49,6 @@ export default function ClientesStatsGrid({ className }) {
   );
 
   return <StatCardGrid stats={stats} columns={4} className={className} />;
-}
+});
+
+export default ClientesStatsGrid;

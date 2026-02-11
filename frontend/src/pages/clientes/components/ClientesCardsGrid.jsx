@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { memo } from 'react';
 import { UserCircle } from 'lucide-react';
 import ClienteCard from './ClienteCard';
 import { EmptyState, LoadingSpinner, Pagination } from '@/components/ui';
@@ -8,9 +8,14 @@ import { EmptyState, LoadingSpinner, Pagination } from '@/components/ui';
  * Vista alternativa a la tabla
  * @param {boolean} showPagination - Mostrar paginación (default: true)
  */
-function ClientesCardsGrid({ clientes, pagination, isLoading, onPageChange, onNuevoCliente, showPagination = true }) {
-  const navigate = useNavigate();
-
+const ClientesCardsGrid = memo(function ClientesCardsGrid({
+  clientes,
+  pagination,
+  isLoading,
+  onPageChange,
+  onNuevoCliente,
+  showPagination = true,
+}) {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -25,7 +30,7 @@ function ClientesCardsGrid({ clientes, pagination, isLoading, onPageChange, onNu
         icon={UserCircle}
         title="No hay clientes registrados"
         description="Comienza agregando tu primer cliente o atiende un cliente walk-in"
-        actionLabel={onNuevoCliente ? "Agregar Cliente" : undefined}
+        actionLabel={onNuevoCliente ? 'Agregar Cliente' : undefined}
         onAction={onNuevoCliente}
       />
     );
@@ -53,6 +58,6 @@ function ClientesCardsGrid({ clientes, pagination, isLoading, onPageChange, onNu
       )}
     </div>
   );
-}
+});
 
 export default ClientesCardsGrid;

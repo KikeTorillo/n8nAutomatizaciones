@@ -11,6 +11,15 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { workflowsApi } from '@/services/api/endpoints';
+import { queryKeys } from '@/hooks/config';
+
+// Alias para brevedad
+const WF_KEYS = queryKeys.sistema.workflows;
+
+// Prefijos base para invalidación (arrays de 1 elemento para prefix-matching de TanStack Query)
+const APROBACIONES_PREFIX = [WF_KEYS.aprobacionesPendientes()[0]] as const;
+const HISTORIAL_PREFIX = [WF_KEYS.historialAprobaciones()[0]] as const;
+const DELEGACIONES_PREFIX = [WF_KEYS.delegaciones()[0]] as const;
 
 // ==================== TIPOS ====================
 
@@ -110,11 +119,15 @@ interface ActualizarDelegacionParams {
 /**
  * Hook para obtener aprobaciones pendientes del usuario actual
  */
-export function useAprobacionesPendientes(params: AprobacionesPendientesParams = {}) {
+export function useAprobacionesPendientes(
+  params: AprobacionesPendientesParams = {}
+) {
   return useQuery({
-    queryKey: ['aprobaciones-pendientes', params],
+    queryKey: WF_KEYS.aprobacionesPendientes(params),
     queryFn: async () => {
-      const sanitizedParams = Object.entries(params).reduce<Record<string, unknown>>((acc, [key, value]) => {
+      const sanitizedParams = Object.entries(params).reduce<
+        Record<string, unknown>
+      >((acc, [key, value]) => {
         if (value !== '' && value !== null && value !== undefined) {
           acc[key] = value;
         }
@@ -134,7 +147,7 @@ export function useAprobacionesPendientes(params: AprobacionesPendientesParams =
  */
 export function useContadorAprobaciones() {
   return useQuery({
-    queryKey: ['aprobaciones-count'],
+    queryKey: WF_KEYS.aprobacionesCount,
     queryFn: async () => {
       const response = await workflowsApi.contarPendientes();
       return (response as any).data.data?.total || 0;
@@ -149,7 +162,7 @@ export function useContadorAprobaciones() {
  */
 export function useInstanciaWorkflow(id: number | null | undefined) {
   return useQuery({
-    queryKey: ['instancia-workflow', id],
+    queryKey: WF_KEYS.instancia(id),
     queryFn: async () => {
       const response = await workflowsApi.obtenerInstancia(id!);
       return (response as any).data.data || null;
@@ -164,9 +177,11 @@ export function useInstanciaWorkflow(id: number | null | undefined) {
  */
 export function useHistorialAprobaciones(params: HistorialParams = {}) {
   return useQuery({
-    queryKey: ['historial-aprobaciones', params],
+    queryKey: WF_KEYS.historialAprobaciones(params),
     queryFn: async () => {
-      const sanitizedParams = Object.entries(params).reduce<Record<string, unknown>>((acc, [key, value]) => {
+      const sanitizedParams = Object.entries(params).reduce<
+        Record<string, unknown>
+      >((acc, [key, value]) => {
         if (value !== '' && value !== null && value !== undefined) {
           acc[key] = value;
         }
@@ -185,7 +200,7 @@ export function useHistorialAprobaciones(params: HistorialParams = {}) {
  */
 export function useDelegaciones(params: DelegacionesParams = {}) {
   return useQuery({
-    queryKey: ['delegaciones', params],
+    queryKey: WF_KEYS.delegaciones(params),
     queryFn: async () => {
       const response = await workflowsApi.listarDelegaciones(params);
       return (response as any).data.data || [];
@@ -197,9 +212,11 @@ export function useDelegaciones(params: DelegacionesParams = {}) {
 /**
  * Hook para listar definiciones de workflows
  */
-export function useDefinicionesWorkflow(params: DefinicionesWorkflowParams = {}) {
+export function useDefinicionesWorkflow(
+  params: DefinicionesWorkflowParams = {}
+) {
   return useQuery({
-    queryKey: ['definiciones-workflow', params],
+    queryKey: WF_KEYS.definiciones(params),
     queryFn: async () => {
       const response = await workflowsApi.listarDefiniciones(params);
       return (response as any).data.data || [];
@@ -213,7 +230,7 @@ export function useDefinicionesWorkflow(params: DefinicionesWorkflowParams = {})
  */
 export function useDefinicionWorkflow(id: number | null | undefined) {
   return useQuery({
-    queryKey: ['definicion-workflow', id],
+    queryKey: WF_KEYS.definicion(id),
     queryFn: async () => {
       const response = await workflowsApi.obtenerDefinicion(id!);
       return (response as any).data.data || null;
@@ -240,13 +257,31 @@ export function useAprobarSolicitud() {
     },
     onSuccess: (_: unknown, variables: AprobarSolicitudParams) => {
       // Invalidar queries relacionadas
-      queryClient.invalidateQueries({ queryKey: ['aprobaciones-pendientes'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['aprobaciones-count'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['instancia-workflow', variables.id], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['historial-aprobaciones'], refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: APROBACIONES_PREFIX,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: WF_KEYS.aprobacionesCount,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: WF_KEYS.instancia(variables.id),
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: HISTORIAL_PREFIX,
+        refetchType: 'active',
+      });
       // Invalidar ordenes de compra si aplica
-      queryClient.invalidateQueries({ queryKey: ['ordenes-compra'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['ordenes-compra-pendientes'], refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.inventario.ordenesCompra.all,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.inventario.ordenesCompra.pendientes,
+        refetchType: 'active',
+      });
     },
   });
 }
@@ -263,11 +298,26 @@ export function useRechazarSolicitud() {
       return (response as any).data.data;
     },
     onSuccess: (_: unknown, variables: RechazarSolicitudParams) => {
-      queryClient.invalidateQueries({ queryKey: ['aprobaciones-pendientes'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['aprobaciones-count'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['instancia-workflow', variables.id], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['historial-aprobaciones'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['ordenes-compra'], refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: APROBACIONES_PREFIX,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: WF_KEYS.aprobacionesCount,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: WF_KEYS.instancia(variables.id),
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: HISTORIAL_PREFIX,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.inventario.ordenesCompra.all,
+        refetchType: 'active',
+      });
     },
   });
 }
@@ -292,7 +342,10 @@ export function useCrearDelegacion() {
       return (response as any).data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['delegaciones'], refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: DELEGACIONES_PREFIX,
+        refetchType: 'active',
+      });
     },
   });
 }
@@ -320,7 +373,10 @@ export function useActualizarDelegacion() {
       return (response as any).data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['delegaciones'], refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: DELEGACIONES_PREFIX,
+        refetchType: 'active',
+      });
     },
   });
 }
@@ -337,7 +393,10 @@ export function useEliminarDelegacion() {
       return (response as any).data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['delegaciones'], refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: DELEGACIONES_PREFIX,
+        refetchType: 'active',
+      });
     },
   });
 }

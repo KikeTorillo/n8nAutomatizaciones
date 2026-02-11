@@ -113,19 +113,24 @@ interface AnchoOption {
 /**
  * Hook para listar definiciones de campos personalizados
  */
-export function useCustomFieldsDefiniciones(params: CustomFieldDefinicionParams = {}) {
+export function useCustomFieldsDefiniciones(
+  params: CustomFieldDefinicionParams = {}
+) {
   return useQuery({
     queryKey: queryKeys.sistema.customFields.definiciones(params),
     queryFn: async () => {
       // Sanitizar params
-      const sanitizedParams = Object.entries(params).reduce<Record<string, unknown>>((acc, [key, value]) => {
+      const sanitizedParams = Object.entries(params).reduce<
+        Record<string, unknown>
+      >((acc, [key, value]) => {
         if (value !== '' && value !== null && value !== undefined) {
           acc[key] = value;
         }
         return acc;
       }, {});
 
-      const response = await customFieldsApi.listarDefiniciones(sanitizedParams);
+      const response =
+        await customFieldsApi.listarDefiniciones(sanitizedParams);
       return (response as any).data.data || [];
     },
     staleTime: STALE_TIMES.SEMI_STATIC, // 5 minutos
@@ -137,7 +142,7 @@ export function useCustomFieldsDefiniciones(params: CustomFieldDefinicionParams 
  */
 export function useCustomFieldDefinicion(id: number | null | undefined) {
   return useQuery({
-    queryKey: ['custom-field-definicion', id],
+    queryKey: queryKeys.sistema.customFields.definicion(id),
     queryFn: async () => {
       const response = await customFieldsApi.obtenerDefinicion(id!);
       return (response as any).data.data;
@@ -156,20 +161,31 @@ export function useCrearCustomFieldDefinicion() {
   return useMutation({
     mutationFn: async (data: CrearDefinicionData) => {
       // Sanitizar campos opcionales vacios
-      const sanitized = Object.entries(data).reduce<Record<string, unknown>>((acc, [key, value]) => {
-        if (value !== '' && value !== null && value !== undefined) {
-          acc[key] = value;
-        }
-        return acc;
-      }, {});
+      const sanitized = Object.entries(data).reduce<Record<string, unknown>>(
+        (acc, [key, value]) => {
+          if (value !== '' && value !== null && value !== undefined) {
+            acc[key] = value;
+          }
+          return acc;
+        },
+        {}
+      );
 
       const response = await customFieldsApi.crearDefinicion(sanitized as any);
       return (response as any).data.data;
     },
     onSuccess: (_: unknown, variables: CrearDefinicionData) => {
-      queryClient.invalidateQueries({ queryKey: ['custom-fields-definiciones'], refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.sistema.customFields.definiciones(),
+        refetchType: 'active',
+      });
       if (variables.entidad_tipo) {
-        queryClient.invalidateQueries({ queryKey: queryKeys.sistema.customFields.definiciones({ entidad_tipo: variables.entidad_tipo }), refetchType: 'active' });
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.sistema.customFields.definiciones({
+            entidad_tipo: variables.entidad_tipo,
+          }),
+          refetchType: 'active',
+        });
       }
     },
     onError: createCRUDErrorHandler('create', 'Campo personalizado'),
@@ -185,19 +201,31 @@ export function useActualizarCustomFieldDefinicion() {
   return useMutation({
     mutationFn: async ({ id, data }: ActualizarDefinicionParams) => {
       // Sanitizar campos opcionales
-      const sanitized = Object.entries(data).reduce<Record<string, unknown>>((acc, [key, value]) => {
-        if (value !== undefined) {
-          acc[key] = value === '' ? null : value;
-        }
-        return acc;
-      }, {});
+      const sanitized = Object.entries(data).reduce<Record<string, unknown>>(
+        (acc, [key, value]) => {
+          if (value !== undefined) {
+            acc[key] = value === '' ? null : value;
+          }
+          return acc;
+        },
+        {}
+      );
 
-      const response = await customFieldsApi.actualizarDefinicion(id, sanitized);
+      const response = await customFieldsApi.actualizarDefinicion(
+        id,
+        sanitized
+      );
       return (response as any).data.data;
     },
     onSuccess: (data: any) => {
-      queryClient.invalidateQueries({ queryKey: ['custom-field-definicion', data.id], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['custom-fields-definiciones'], refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.sistema.customFields.definicion(data.id),
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.sistema.customFields.definiciones(),
+        refetchType: 'active',
+      });
     },
     onError: createCRUDErrorHandler('update', 'Campo personalizado'),
   });
@@ -215,7 +243,10 @@ export function useEliminarCustomFieldDefinicion() {
       return id;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['custom-fields-definiciones'], refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.sistema.customFields.definiciones(),
+        refetchType: 'active',
+      });
     },
     onError: createCRUDErrorHandler('delete', 'Campo personalizado'),
   });
@@ -236,7 +267,12 @@ export function useReordenarCustomFieldDefiniciones() {
       return (response as any).data.data;
     },
     onSuccess: (_: unknown, variables: ReordenarDefinicionesParams) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.sistema.customFields.definiciones({ entidad_tipo: variables.entidadTipo }), refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.sistema.customFields.definiciones({
+          entidad_tipo: variables.entidadTipo,
+        }),
+        refetchType: 'active',
+      });
     },
     onError: createCRUDErrorHandler('update', 'Campos'),
   });
@@ -247,11 +283,17 @@ export function useReordenarCustomFieldDefiniciones() {
 /**
  * Hook para obtener valores de campos personalizados de una entidad
  */
-export function useCustomFieldsValores(entidadTipo: string | null | undefined, entidadId: number | null | undefined) {
+export function useCustomFieldsValores(
+  entidadTipo: string | null | undefined,
+  entidadId: number | null | undefined
+) {
   return useQuery({
     queryKey: queryKeys.sistema.customFields.valores(entidadTipo, entidadId),
     queryFn: async () => {
-      const response = await customFieldsApi.obtenerValores(entidadTipo!, entidadId!);
+      const response = await customFieldsApi.obtenerValores(
+        entidadTipo!,
+        entidadId!
+      );
       return (response as any).data.data || [];
     },
     enabled: !!entidadTipo && !!entidadId,
@@ -266,19 +308,35 @@ export function useGuardarCustomFieldsValores() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ entidadTipo, entidadId, valores }: GuardarValoresParams) => {
-      const response = await customFieldsApi.guardarValores(entidadTipo, entidadId, valores);
+    mutationFn: async ({
+      entidadTipo,
+      entidadId,
+      valores,
+    }: GuardarValoresParams) => {
+      const response = await customFieldsApi.guardarValores(
+        entidadTipo,
+        entidadId,
+        valores
+      );
       return (response as any).data.data;
     },
     onSuccess: (_: unknown, variables: GuardarValoresParams) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.sistema.customFields.valores(variables.entidadTipo, variables.entidadId), refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.sistema.customFields.valores(
+          variables.entidadTipo,
+          variables.entidadId
+        ),
+        refetchType: 'active',
+      });
     },
     onError: (error: Error) => {
       // Si hay errores de validacion, retornarlos
       const apiError = error as ApiError;
       const errores = apiError.response?.data?.data?.errores;
       if (errores && errores.length > 0) {
-        const errorMessages = errores.map((e) => `${e.campo}: ${e.error}`).join(', ');
+        const errorMessages = errores
+          .map((e) => `${e.campo}: ${e.error}`)
+          .join(', ');
         throw new Error(errorMessages);
       }
 
@@ -295,7 +353,10 @@ export function useGuardarCustomFieldsValores() {
 export function useValidarCustomFieldsValores() {
   return useMutation({
     mutationFn: async ({ entidadTipo, valores }: ValidarValoresParams) => {
-      const response = await customFieldsApi.validarValores(entidadTipo, valores);
+      const response = await customFieldsApi.validarValores(
+        entidadTipo,
+        valores
+      );
       return (response as any).data.data;
     },
   });
@@ -306,9 +367,11 @@ export function useValidarCustomFieldsValores() {
 /**
  * Hook para obtener secciones disponibles
  */
-export function useCustomFieldsSecciones(entidadTipo: string | null | undefined) {
+export function useCustomFieldsSecciones(
+  entidadTipo: string | null | undefined
+) {
   return useQuery({
-    queryKey: ['custom-fields-secciones', entidadTipo],
+    queryKey: queryKeys.sistema.customFields.secciones(entidadTipo),
     queryFn: async () => {
       const response = await customFieldsApi.obtenerSecciones(entidadTipo!);
       return (response as any).data.data || [];

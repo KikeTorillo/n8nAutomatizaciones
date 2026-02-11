@@ -12,7 +12,13 @@
  * - Relación 1:1 opcional
  */
 
-import { useQuery, useMutation, useQueryClient, UseQueryResult, UseMutationResult } from '@tanstack/react-query';
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  UseQueryResult,
+  UseMutationResult,
+} from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
 import { usuariosApi } from '@/services/api/endpoints';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
@@ -29,6 +35,42 @@ import type {
 // ====================================================================
 // TYPES
 // ====================================================================
+
+/** Respuesta API genérica de AxiosResponse wrapping ApiResponse */
+interface AxiosApiResponse<T> {
+  data: { data: T };
+}
+
+/** Profesional sin usuario vinculado (datos parciales del selector) */
+interface ProfesionalSinUsuario {
+  id: number;
+  nombre: string;
+  apellidos?: string;
+  email?: string;
+  puesto?: string;
+  departamento?: string;
+  [key: string]: unknown;
+}
+
+/** Usuario sin profesional vinculado (datos parciales) */
+interface UsuarioSinProfesional {
+  id: number;
+  nombre: string;
+  apellidos?: string;
+  email: string;
+  rol: RolUsuario;
+  [key: string]: unknown;
+}
+
+/** Ubicación disponible para asignar */
+interface UbicacionDisponible {
+  id: number;
+  nombre: string;
+  codigo?: string;
+  sucursal_id?: number;
+  sucursal_nombre?: string;
+  [key: string]: unknown;
+}
 
 interface ListarUsuariosParams {
   rol?: RolUsuario;
@@ -117,43 +159,56 @@ export function useUsuarios(params: ListarUsuariosParams = {}) {
   return useQuery({
     queryKey: queryKeys.personas.usuarios.list(params),
     queryFn: async () => {
-      const response = await usuariosApi.listarConFiltros(sanitizeParams(params));
+      const response = await usuariosApi.listarConFiltros(
+        sanitizeParams(params)
+      );
       // Backend retorna: { success, data: { data: [...], pagination, resumen } }
-      return (response as any).data.data as UsuarioListData;
+      return (response as unknown as AxiosApiResponse<UsuarioListData>).data
+        .data;
     },
     staleTime: STALE_TIMES.SEMI_STATIC, // 5 minutos
   });
 }
 
-export function useUsuario(id: number | undefined | null): UseQueryResult<Usuario> {
+export function useUsuario(
+  id: number | undefined | null
+): UseQueryResult<Usuario> {
   return useQuery({
     queryKey: queryKeys.personas.usuarios.detail(id),
     queryFn: async () => {
       const response = await usuariosApi.obtener(id!);
-      return (response as any).data.data;
+      return (response as AxiosApiResponse<Usuario>).data.data;
     },
     enabled: !!id,
     staleTime: STALE_TIMES.SEMI_STATIC,
   });
 }
 
-export function useProfesionalesSinUsuario(): UseQueryResult<unknown[]> {
+export function useProfesionalesSinUsuario(): UseQueryResult<
+  ProfesionalSinUsuario[]
+> {
   return useQuery({
-    queryKey: ['profesionales-sin-usuario'],
+    queryKey: queryKeys.personas.usuarios.profesionalesSinUsuario,
     queryFn: async () => {
       const response = await usuariosApi.profesionalesDisponibles();
-      return (response as any).data.data || [];
+      return (
+        (response as AxiosApiResponse<ProfesionalSinUsuario[]>).data.data || []
+      );
     },
     staleTime: STALE_TIMES.DYNAMIC, // 2 minutos
   });
 }
 
-export function useUsuariosSinProfesional(): UseQueryResult<unknown[]> {
+export function useUsuariosSinProfesional(): UseQueryResult<
+  UsuarioSinProfesional[]
+> {
   return useQuery({
-    queryKey: ['usuarios-sin-profesional'],
+    queryKey: queryKeys.personas.usuarios.usuariosSinProfesional,
     queryFn: async () => {
       const response = await usuariosApi.sinProfesional();
-      return (response as any).data.data || [];
+      return (
+        (response as AxiosApiResponse<UsuarioSinProfesional[]>).data.data || []
+      );
     },
     staleTime: STALE_TIMES.DYNAMIC, // 2 minutos
   });
@@ -163,7 +218,11 @@ export function useUsuariosSinProfesional(): UseQueryResult<unknown[]> {
 // MUTATIONS
 // ====================================================================
 
-export function useCrearUsuarioDirecto(): UseMutationResult<Usuario, Error, CrearUsuarioData> {
+export function useCrearUsuarioDirecto(): UseMutationResult<
+  Usuario,
+  Error,
+  CrearUsuarioData
+> {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -176,11 +235,17 @@ export function useCrearUsuarioDirecto(): UseMutationResult<Usuario, Error, Crea
         profesional_id: data.profesional_id || undefined,
       };
       const response = await usuariosApi.crearDirecto(sanitized);
-      return (response as any).data.data;
+      return (response as AxiosApiResponse<Usuario>).data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.personas.usuarios.all, refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['profesionales-sin-usuario'], refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.personas.usuarios.all,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.personas.usuarios.profesionalesSinUsuario,
+        refetchType: 'active',
+      });
     },
     onError: createCRUDErrorHandler('create', 'Usuario', {
       409: 'Ya existe un usuario con ese email',
@@ -194,15 +259,29 @@ export function useCambiarEstadoUsuario() {
   return useMutation({
     mutationFn: async ({ id, activo }: CambiarEstadoParams) => {
       const response = await usuariosApi.cambiarEstado(id, activo);
-      return (response as any).data.data as CambiarEstadoResult;
+      return (response as AxiosApiResponse<CambiarEstadoResult>).data.data;
     },
     onSuccess: (data: CambiarEstadoResult) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.personas.usuarios.all, refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: queryKeys.personas.usuarios.detail(data.usuario?.id), refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.personas.usuarios.all,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.personas.usuarios.detail(data.usuario?.id),
+        refetchType: 'active',
+      });
       // Si afectó un profesional, invalidar también
       if (data.profesional) {
-        queryClient.invalidateQueries({ queryKey: queryKeys.personas.profesionales.all, refetchType: 'active' });
-        queryClient.invalidateQueries({ queryKey: queryKeys.personas.profesionales.detail(data.profesional.id), refetchType: 'active' });
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.personas.profesionales.all,
+          refetchType: 'active',
+        });
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.personas.profesionales.detail(
+            data.profesional.id
+          ),
+          refetchType: 'active',
+        });
       }
     },
     onError: createCRUDErrorHandler('update', 'Usuario'),
@@ -215,11 +294,17 @@ export function useCambiarRolUsuario() {
   return useMutation({
     mutationFn: async ({ id, rol }: CambiarRolParams) => {
       const response = await usuariosApi.cambiarRol(id, rol);
-      return (response as any).data.data as CambiarRolResult;
+      return (response as AxiosApiResponse<CambiarRolResult>).data.data;
     },
     onSuccess: (data: CambiarRolResult) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.personas.usuarios.all, refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: queryKeys.personas.usuarios.detail(data.usuario?.id), refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.personas.usuarios.all,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.personas.usuarios.detail(data.usuario?.id),
+        refetchType: 'active',
+      });
     },
     onError: createCRUDErrorHandler('update', 'Usuario', {
       400: 'Rol no válido',
@@ -233,18 +318,41 @@ export function useVincularProfesionalAUsuario() {
   return useMutation({
     mutationFn: async ({ id, profesionalId }: VincularProfesionalParams) => {
       const response = await usuariosApi.vincularProfesional(id, profesionalId);
-      return (response as any).data.data as VincularProfesionalResult;
+      return (response as AxiosApiResponse<VincularProfesionalResult>).data
+        .data;
     },
     onSuccess: (data: VincularProfesionalResult) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.personas.usuarios.all, refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: queryKeys.personas.usuarios.detail(data.usuario?.id), refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['profesionales-sin-usuario'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: queryKeys.personas.profesionales.all, refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.personas.usuarios.all,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.personas.usuarios.detail(data.usuario?.id),
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.personas.usuarios.profesionalesSinUsuario,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.personas.profesionales.all,
+        refetchType: 'active',
+      });
       if (data.profesional) {
-        queryClient.invalidateQueries({ queryKey: queryKeys.personas.profesionales.detail(data.profesional.id), refetchType: 'active' });
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.personas.profesionales.detail(
+            data.profesional.id
+          ),
+          refetchType: 'active',
+        });
       }
       if (data.profesional_anterior) {
-        queryClient.invalidateQueries({ queryKey: queryKeys.personas.profesionales.detail(data.profesional_anterior), refetchType: 'active' });
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.personas.profesionales.detail(
+            data.profesional_anterior
+          ),
+          refetchType: 'active',
+        });
       }
     },
     onError: createCRUDErrorHandler('update', 'Usuario', {
@@ -253,7 +361,11 @@ export function useVincularProfesionalAUsuario() {
   });
 }
 
-export function useActualizarUsuario(): UseMutationResult<Usuario, Error, ActualizarUsuarioParams> {
+export function useActualizarUsuario(): UseMutationResult<
+  Usuario,
+  Error,
+  ActualizarUsuarioParams
+> {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -264,11 +376,17 @@ export function useActualizarUsuario(): UseMutationResult<Usuario, Error, Actual
         telefono: data.telefono?.trim() || undefined,
       };
       const response = await usuariosApi.actualizar(id, sanitized);
-      return (response as any).data.data;
+      return (response as AxiosApiResponse<Usuario>).data.data;
     },
     onSuccess: (data: Usuario) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.personas.usuarios.all, refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: queryKeys.personas.usuarios.detail(data.id), refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.personas.usuarios.all,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.personas.usuarios.detail(data.id),
+        refetchType: 'active',
+      });
     },
     onError: createCRUDErrorHandler('update', 'Usuario'),
   });
@@ -300,41 +418,64 @@ export const ESTADOS_USUARIO = {
 // UBICACIONES DE USUARIO - Ene 2026
 // ====================================================================
 
-export function useUbicacionesUsuario(usuarioId: number | undefined | null): UseQueryResult<AsignacionUbicacion[]> {
+export function useUbicacionesUsuario(
+  usuarioId: number | undefined | null
+): UseQueryResult<AsignacionUbicacion[]> {
   return useQuery({
-    queryKey: ['usuario-ubicaciones', usuarioId],
+    queryKey: queryKeys.personas.usuarios.ubicaciones(usuarioId),
     queryFn: async () => {
       const response = await usuariosApi.obtenerUbicaciones(usuarioId!);
-      return (response as any).data.data || [];
+      return (
+        (response as AxiosApiResponse<AsignacionUbicacion[]>).data.data || []
+      );
     },
     enabled: !!usuarioId,
     staleTime: STALE_TIMES.SEMI_STATIC,
   });
 }
 
-export function useUbicacionesDisponiblesUsuario(usuarioId: number | undefined | null): UseQueryResult<unknown[]> {
+export function useUbicacionesDisponiblesUsuario(
+  usuarioId: number | undefined | null
+): UseQueryResult<UbicacionDisponible[]> {
   return useQuery({
-    queryKey: ['usuario-ubicaciones-disponibles', usuarioId],
+    queryKey: queryKeys.personas.usuarios.ubicacionesDisponibles(usuarioId),
     queryFn: async () => {
       const response = await usuariosApi.ubicacionesDisponibles(usuarioId!);
-      return (response as any).data.data || [];
+      return (
+        (response as AxiosApiResponse<UbicacionDisponible[]>).data.data || []
+      );
     },
     enabled: !!usuarioId,
     staleTime: STALE_TIMES.DYNAMIC,
   });
 }
 
-export function useAsignarUbicacionUsuario(): UseMutationResult<AsignacionUbicacion, Error, AsignarUbicacionParams> {
+export function useAsignarUbicacionUsuario(): UseMutationResult<
+  AsignacionUbicacion,
+  Error,
+  AsignarUbicacionParams
+> {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async ({ usuarioId, data }: AsignarUbicacionParams) => {
       const response = await usuariosApi.asignarUbicacion(usuarioId, data);
-      return (response as any).data.data;
+      return (response as AxiosApiResponse<AsignacionUbicacion>).data.data;
     },
-    onSuccess: (_data: AsignacionUbicacion, variables: AsignarUbicacionParams) => {
-      queryClient.invalidateQueries({ queryKey: ['usuario-ubicaciones', variables.usuarioId], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['usuario-ubicaciones-disponibles', variables.usuarioId], refetchType: 'active' });
+    onSuccess: (
+      _data: AsignacionUbicacion,
+      variables: AsignarUbicacionParams
+    ) => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.personas.usuarios.ubicaciones(variables.usuarioId),
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.personas.usuarios.ubicacionesDisponibles(
+          variables.usuarioId
+        ),
+        refetchType: 'active',
+      });
     },
     onError: createCRUDErrorHandler('create', 'Asignación de ubicación', {
       400: 'El usuario no está asignado a la sucursal de esta ubicación',
@@ -342,32 +483,68 @@ export function useAsignarUbicacionUsuario(): UseMutationResult<AsignacionUbicac
   });
 }
 
-export function useActualizarAsignacionUbicacion(): UseMutationResult<AsignacionUbicacion, Error, ActualizarAsignacionParams> {
+export function useActualizarAsignacionUbicacion(): UseMutationResult<
+  AsignacionUbicacion,
+  Error,
+  ActualizarAsignacionParams
+> {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ usuarioId, ubicacionId, data }: ActualizarAsignacionParams) => {
-      const response = await usuariosApi.actualizarAsignacionUbicacion(usuarioId, ubicacionId, data);
-      return (response as any).data.data;
+    mutationFn: async ({
+      usuarioId,
+      ubicacionId,
+      data,
+    }: ActualizarAsignacionParams) => {
+      const response = await usuariosApi.actualizarAsignacionUbicacion(
+        usuarioId,
+        ubicacionId,
+        data
+      );
+      return (response as AxiosApiResponse<AsignacionUbicacion>).data.data;
     },
-    onSuccess: (_data: AsignacionUbicacion, variables: ActualizarAsignacionParams) => {
-      queryClient.invalidateQueries({ queryKey: ['usuario-ubicaciones', variables.usuarioId], refetchType: 'active' });
+    onSuccess: (
+      _data: AsignacionUbicacion,
+      variables: ActualizarAsignacionParams
+    ) => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.personas.usuarios.ubicaciones(variables.usuarioId),
+        refetchType: 'active',
+      });
     },
     onError: createCRUDErrorHandler('update', 'Asignación de ubicación'),
   });
 }
 
-export function useDesasignarUbicacionUsuario(): UseMutationResult<unknown, Error, DesasignarUbicacionParams> {
+export function useDesasignarUbicacionUsuario(): UseMutationResult<
+  unknown,
+  Error,
+  DesasignarUbicacionParams
+> {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ usuarioId, ubicacionId }: DesasignarUbicacionParams) => {
-      const response = await usuariosApi.desasignarUbicacion(usuarioId, ubicacionId);
-      return (response as any).data.data;
+    mutationFn: async ({
+      usuarioId,
+      ubicacionId,
+    }: DesasignarUbicacionParams) => {
+      const response = await usuariosApi.desasignarUbicacion(
+        usuarioId,
+        ubicacionId
+      );
+      return (response as AxiosApiResponse<unknown>).data.data;
     },
     onSuccess: (_data: unknown, variables: DesasignarUbicacionParams) => {
-      queryClient.invalidateQueries({ queryKey: ['usuario-ubicaciones', variables.usuarioId], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['usuario-ubicaciones-disponibles', variables.usuarioId], refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.personas.usuarios.ubicaciones(variables.usuarioId),
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.personas.usuarios.ubicacionesDisponibles(
+          variables.usuarioId
+        ),
+        refetchType: 'active',
+      });
     },
     onError: createCRUDErrorHandler('delete', 'Asignación de ubicación'),
   });

@@ -38,7 +38,11 @@ export { SkeletonStatCard } from './molecules/SkeletonStatCard';
 export { EmptyState } from './molecules/EmptyState';
 export { Breadcrumb } from './molecules/Breadcrumb';
 export { RecordNavigation } from './molecules/RecordNavigation';
-export { SkeletonTable, SkeletonCard, SkeletonList } from './molecules/SkeletonTable';
+export {
+  SkeletonTable,
+  SkeletonCard,
+  SkeletonList,
+} from './molecules/SkeletonTable';
 export { Toast } from './molecules/Toast';
 export { BackButton } from './molecules/BackButton';
 // Componentes con lógica compleja (movidos desde atoms/ Ene 2026)
@@ -56,6 +60,7 @@ export { Card } from './atoms/Card';
 export { InputField } from './molecules/InputField';
 export { SelectField } from './molecules/SelectField';
 export { TextareaField } from './molecules/TextareaField';
+export { FileUpload } from './molecules/FileUpload';
 
 // ========== ORGANISMS ==========
 export { SearchInput } from './molecules/SearchInput';
@@ -64,12 +69,22 @@ export { ViewTabs } from './organisms/ViewTabs';
 export { Modal } from './organisms/Modal';
 export { Drawer } from './organisms/Drawer';
 export { FormDrawer } from './organisms/FormDrawer';
-export { default as IconPicker, IconPickerCompact, ICONOS_MAP, CATEGORIAS_ICONOS, IconPickerButton } from './organisms/icon-picker';
+export {
+  default as IconPicker,
+  IconPickerCompact,
+  ICONOS_MAP,
+  CATEGORIAS_ICONOS,
+  IconPickerButton,
+} from './organisms/icon-picker';
 export { MultiSelect } from './organisms/MultiSelect';
 export { BarcodeScanner } from './organisms/BarcodeScanner';
 export { ConfirmDialog } from './organisms/ConfirmDialog';
 export { DeleteConfirmDialog } from './organisms/DeleteConfirmDialog';
-export { DataTable, DataTableActions, DataTableActionButton } from './organisms/DataTable';
+export {
+  DataTable,
+  DataTableActions,
+  DataTableActionButton,
+} from './organisms/DataTable';
 export { FilterPanel, FilterChips } from './organisms/FilterPanel';
 export { StatCardGrid } from './molecules/StatCardGrid';
 export { ExpandableCrudSection } from './organisms/ExpandableCrudSection';
@@ -80,7 +95,11 @@ export { ThemeToggle } from './organisms/ThemeToggle';
 export { TreeView, useTreeExpansion } from './organisms/TreeNode';
 export { MobileNavSelector } from './organisms/MobileNavSelector';
 export { ToastContainer } from './organisms/ToastContainer';
-export { default as StateNavTabs, TabDropdown, MobileTabSelector } from './organisms/state-nav-tabs';
+export {
+  default as StateNavTabs,
+  TabDropdown,
+  MobileTabSelector,
+} from './organisms/state-nav-tabs';
 
 // Filters (organisms)
 export {
@@ -114,12 +133,26 @@ export { StandardFilterGrid } from './organisms/StandardFilterGrid';
 
 // ========== TEMPLATES ==========
 export { BasePageLayout } from './templates/BasePageLayout';
-export { ModuleGuard, ModuleVisible, ModuleHidden } from './templates/ModuleGuard';
+export {
+  ModuleGuard,
+  ModuleVisible,
+  ModuleHidden,
+} from './templates/ModuleGuard';
 export { ListadoCRUDPage } from './templates/ListadoCRUDPage';
 
 // Nuevos templates (Ene 2026)
-export { BaseDetailLayout, DetailHeader, DetailLoadingState, DetailNotFoundState } from './templates/BaseDetailLayout';
-export { BaseFormLayout, FormHeader, FormWizardStepper, FormFooter } from './templates/BaseFormLayout';
+export {
+  BaseDetailLayout,
+  DetailHeader,
+  DetailLoadingState,
+  DetailNotFoundState,
+} from './templates/BaseDetailLayout';
+export {
+  BaseFormLayout,
+  FormHeader,
+  FormWizardStepper,
+  FormFooter,
+} from './templates/BaseFormLayout';
 export { AsyncBoundary } from './templates/AsyncBoundary';
 export { PageHeader } from './templates/PageHeader';
 

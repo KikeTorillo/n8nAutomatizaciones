@@ -36,7 +36,8 @@
     "mcp:restart": "docker compose -f docker-compose.dev.yml restart mcp-server",
     "mcp:rebuild": "docker compose -f docker-compose.dev.yml build --no-cache mcp-server && docker compose -f docker-compose.dev.yml up -d mcp-server",
     "frontend:restart": "docker compose -f docker-compose.dev.yml restart frontend",
-    "frontend:rebuild": "docker compose -f docker-compose.dev.yml build --no-cache frontend && docker compose -f docker-compose.dev.yml up -d frontend"
+    "frontend:rebuild": "docker compose -f docker-compose.dev.yml build --no-cache frontend && docker compose -f docker-compose.dev.yml up -d frontend",
+    "prepare": "husky"
   },
   "keywords": [
     "erp",

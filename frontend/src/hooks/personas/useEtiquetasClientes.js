@@ -38,7 +38,9 @@ const hooks = createCRUDHooks({
   errorMessages: {
     create: { 409: 'Ya existe una etiqueta con ese nombre' },
     update: { 409: 'Ya existe una etiqueta con ese nombre' },
-    delete: { 400: 'No se puede eliminar la etiqueta (tiene clientes asignados)' },
+    delete: {
+      400: 'No se puede eliminar la etiqueta (tiene clientes asignados)',
+    },
   },
   staleTime: STALE_TIMES.SEMI_STATIC,
   usePreviousData: true,
@@ -70,7 +72,7 @@ export const useEliminarEtiqueta = hooks.useDelete;
  */
 export function useEtiquetasCliente(clienteId) {
   return useQuery({
-    queryKey: ['cliente-etiquetas', clienteId],
+    queryKey: queryKeys.personas.clientes.etiquetas(clienteId),
     queryFn: async () => {
       const response = await clientesApi.obtenerEtiquetasCliente(clienteId);
       return response.data.data;
@@ -88,17 +90,32 @@ export function useAsignarEtiquetasCliente() {
 
   return useMutation({
     mutationFn: async ({ clienteId, etiquetaIds }) => {
-      const response = await clientesApi.asignarEtiquetasCliente(clienteId, etiquetaIds);
+      const response = await clientesApi.asignarEtiquetasCliente(
+        clienteId,
+        etiquetaIds
+      );
       return response.data.data;
     },
     onSuccess: (data, variables) => {
       // Invalidar con ambos tipos (string y number) para asegurar coincidencia
       const clienteIdStr = String(variables.clienteId);
       const clienteIdNum = Number(variables.clienteId);
-      queryClient.invalidateQueries({ queryKey: ['cliente-etiquetas', clienteIdNum], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: queryKeys.personas.clientes.detail(clienteIdStr), refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: queryKeys.personas.clientes.all, refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: queryKeys.catalogos.etiquetasClientes, refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.personas.clientes.etiquetas(clienteIdNum),
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.personas.clientes.detail(clienteIdStr),
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.personas.clientes.all,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.catalogos.etiquetasClientes,
+        refetchType: 'active',
+      });
     },
     onError: createCRUDErrorHandler('update', 'Etiquetas'),
   });
@@ -112,17 +129,32 @@ export function useAgregarEtiquetaCliente() {
 
   return useMutation({
     mutationFn: async ({ clienteId, etiquetaId }) => {
-      const response = await clientesApi.agregarEtiquetaCliente(clienteId, etiquetaId);
+      const response = await clientesApi.agregarEtiquetaCliente(
+        clienteId,
+        etiquetaId
+      );
       return response.data.data;
     },
     onSuccess: (data, variables) => {
       // Invalidar con ambos tipos (string y number) para asegurar coincidencia
       const clienteIdStr = String(variables.clienteId);
       const clienteIdNum = Number(variables.clienteId);
-      queryClient.invalidateQueries({ queryKey: ['cliente-etiquetas', clienteIdNum], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: queryKeys.personas.clientes.detail(clienteIdStr), refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: queryKeys.personas.clientes.all, refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: queryKeys.catalogos.etiquetasClientes, refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.personas.clientes.etiquetas(clienteIdNum),
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.personas.clientes.detail(clienteIdStr),
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.personas.clientes.all,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.catalogos.etiquetasClientes,
+        refetchType: 'active',
+      });
     },
     onError: createCRUDErrorHandler('update', 'Etiqueta de cliente'),
   });
@@ -136,17 +168,32 @@ export function useQuitarEtiquetaCliente() {
 
   return useMutation({
     mutationFn: async ({ clienteId, etiquetaId }) => {
-      const response = await clientesApi.quitarEtiquetaCliente(clienteId, etiquetaId);
+      const response = await clientesApi.quitarEtiquetaCliente(
+        clienteId,
+        etiquetaId
+      );
       return response.data.data;
     },
     onSuccess: (data, variables) => {
       // Invalidar con ambos tipos (string y number) para asegurar coincidencia
       const clienteIdStr = String(variables.clienteId);
       const clienteIdNum = Number(variables.clienteId);
-      queryClient.invalidateQueries({ queryKey: ['cliente-etiquetas', clienteIdNum], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: queryKeys.personas.clientes.detail(clienteIdStr), refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: queryKeys.personas.clientes.all, refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: queryKeys.catalogos.etiquetasClientes, refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.personas.clientes.etiquetas(clienteIdNum),
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.personas.clientes.detail(clienteIdStr),
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.personas.clientes.all,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.catalogos.etiquetasClientes,
+        refetchType: 'active',
+      });
     },
     onError: createCRUDErrorHandler('delete', 'Etiqueta de cliente'),
   });

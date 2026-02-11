@@ -66,12 +66,112 @@ import {
 
 import {
   useMisIncapacidades,
-  useIncapacidades,
   TIPOS_INCAPACIDAD_CONFIG,
   ESTADOS_INCAPACIDAD_CONFIG,
 } from './useIncapacidades';
 
 // ==================== INTERFACES ====================
+
+// --- Interfaces de respuesta API (eliminar `as any` en response casts) ---
+
+/** Estructura del dashboard de vacaciones (retornado por useDashboardVacaciones) */
+interface DashboardVacacionesData {
+  saldo?: SaldoVacaciones;
+  nivel?: NivelVacaciones;
+  conteos?: Record<string, number>;
+}
+
+/** Saldo de vacaciones del empleado */
+interface SaldoVacaciones {
+  dias_pendientes?: number;
+  dias_usados?: number;
+  dias_solicitados_pendientes?: number;
+  dias_totales?: number;
+  [key: string]: unknown;
+}
+
+interface NivelVacaciones {
+  nombre?: string;
+  dias_vacaciones?: number;
+  anios_antiguedad_min?: number;
+  [key: string]: unknown;
+}
+
+/** Respuesta paginada de solicitudes de vacaciones */
+interface SolicitudesVacacionesResponse {
+  data?: SolicitudVacaciones[] | SolicitudesPaginadas;
+}
+
+interface SolicitudesPaginadas {
+  data?: SolicitudVacaciones[];
+  total?: number;
+}
+
+/** Solicitud de vacaciones individual */
+interface SolicitudVacaciones {
+  id: number;
+  fecha_inicio: string;
+  fecha_fin: string;
+  dias_habiles?: number;
+  dias_solicitados?: number;
+  estado: string;
+  motivo_solicitud?: string;
+  motivo_rechazo?: string;
+  creado_en?: string;
+  codigo?: string;
+  profesional_id?: number;
+  profesional_nombre?: string;
+  departamento_nombre?: string;
+  puesto_nombre?: string;
+  [key: string]: unknown;
+}
+
+/** Incapacidad individual (datos que vienen de la API) */
+interface IncapacidadItem {
+  id: number;
+  tipo_incapacidad: string;
+  fecha_inicio: string;
+  fecha_fin: string;
+  dias_autorizados: number;
+  estado: string;
+  diagnostico?: string;
+  folio_imss?: string;
+  creado_en?: string;
+  codigo?: string;
+  profesional_id?: number;
+  profesional_nombre?: string;
+  departamento_nombre?: string;
+  [key: string]: unknown;
+}
+
+/** Respuesta de incapacidades (retornado por useMisIncapacidades / useIncapacidades) */
+interface IncapacidadesResponse {
+  data?: IncapacidadItem[] | { data?: IncapacidadItem[]; total?: number };
+}
+
+/** Respuesta de solicitudes pendientes */
+interface SolicitudesPendientesResponse {
+  data?: SolicitudVacaciones[];
+}
+
+/** Estadísticas de vacaciones */
+interface EstadisticasVacacionesData {
+  total_dias?: number;
+  pendientes?: number;
+  [key: string]: unknown;
+}
+
+/** Estadísticas de incapacidades */
+interface EstadisticasIncapacidadesData {
+  dias_totales?: number;
+  activas?: number;
+  [key: string]: unknown;
+}
+
+/** Respuesta API genérica de AxiosResponse wrapping ApiResponse */
+interface AxiosApiResponse<T> {
+  data: { data: T };
+}
 
 interface TipoAusenciaConfig {
   label: string;
@@ -81,12 +181,15 @@ interface TipoAusenciaConfig {
   icon: string;
 }
 
+/** Config genérica de estado/tipo con label y color mínimo */
+type StatusConfig = { label: string; color: string };
+
 interface AusenciaItem {
   id: number | string;
   tipo: string;
   tipoConfig: TipoAusenciaConfig;
   subTipo?: string;
-  subTipoConfig?: Record<string, unknown>;
+  subTipoConfig?: StatusConfig;
   profesionalId?: number;
   profesionalNombre?: string;
   puestoNombre?: string;
@@ -95,7 +198,7 @@ interface AusenciaItem {
   fechaFin: string;
   dias: number;
   estado: string;
-  estadoConfig?: Record<string, unknown>;
+  estadoConfig?: StatusConfig;
   motivo?: string;
   motivoRechazo?: string;
   folioImss?: string;
@@ -160,7 +263,9 @@ export function useDashboardAusencias(anio: number | null = null) {
     data: vacacionesData,
     isLoading: isLoadingVacaciones,
     error: errorVacaciones,
-  } = useDashboardVacaciones(anioActual as any);
+    // useDashboardVacaciones viene de JS (anio = null), TS infiere tipo literal null
+     
+  } = useDashboardVacaciones(anioActual as never);
 
   // Mis incapacidades
   const {
@@ -173,30 +278,41 @@ export function useDashboardAusencias(anio: number | null = null) {
   const dashboard = useMemo(() => {
     if (!vacacionesData && !incapacidadesData) return null;
 
-    const rawIncapacidades = (incapacidadesData as any)?.data;
-    const incapacidades = Array.isArray(rawIncapacidades) ? rawIncapacidades : [];
-    const incapacidadesActivas = incapacidades.filter((i: any) => i.estado === 'activa');
+    const typedVacaciones = vacacionesData as
+      | DashboardVacacionesData
+      | undefined;
+    const typedIncapacidades = incapacidadesData as
+      | IncapacidadesResponse
+      | undefined;
+
+    const rawIncapacidades = typedIncapacidades?.data;
+    const incapacidades: IncapacidadItem[] = Array.isArray(rawIncapacidades)
+      ? rawIncapacidades
+      : [];
+    const incapacidadesActivas = incapacidades.filter(
+      (i) => i.estado === 'activa'
+    );
 
     return {
       // Vacaciones
-      saldoVacaciones: (vacacionesData as any)?.saldo || null,
-      nivelVacaciones: (vacacionesData as any)?.nivel || null,
-      conteosSolicitudes: (vacacionesData as any)?.conteos || {},
+      saldoVacaciones: typedVacaciones?.saldo || null,
+      nivelVacaciones: typedVacaciones?.nivel || null,
+      conteosSolicitudes: typedVacaciones?.conteos || {},
 
       // Incapacidades
       incapacidadesActivas,
       totalIncapacidadesAnio: incapacidades.length,
       diasIncapacidadAnio: incapacidades.reduce(
-        (sum: number, i: any) => sum + (i.dias_autorizados || 0),
-        0,
+        (sum: number, i: IncapacidadItem) => sum + (i.dias_autorizados || 0),
+        0
       ),
 
       // Resumen
       tieneIncapacidadActiva: incapacidadesActivas.length > 0,
-      diasVacacionesDisponibles: (vacacionesData as any)?.saldo?.dias_pendientes || 0,
-      diasVacacionesUsados: (vacacionesData as any)?.saldo?.dias_usados || 0,
+      diasVacacionesDisponibles: typedVacaciones?.saldo?.dias_pendientes || 0,
+      diasVacacionesUsados: typedVacaciones?.saldo?.dias_usados || 0,
       diasVacacionesEnTramite:
-        (vacacionesData as any)?.saldo?.dias_solicitados_pendientes || 0,
+        typedVacaciones?.saldo?.dias_solicitados_pendientes || 0,
     };
   }, [vacacionesData, incapacidadesData]);
 
@@ -221,20 +337,16 @@ export function useMisAusencias(filtros: MisAusenciasFiltros = {}) {
     anio,
     estado: tipo === 'incapacidad' ? undefined : estado,
   };
-  const {
-    data: vacacionesData,
-    isLoading: isLoadingVacaciones,
-  } = useMisSolicitudesVacaciones(filtrosVacaciones);
+  const { data: vacacionesData, isLoading: isLoadingVacaciones } =
+    useMisSolicitudesVacaciones(filtrosVacaciones);
 
   // Mis incapacidades
   const filtrosIncapacidades = {
     anio,
     estado: tipo === 'vacaciones' ? undefined : estado,
   };
-  const {
-    data: incapacidadesData,
-    isLoading: isLoadingIncapacidades,
-  } = useMisIncapacidades(filtrosIncapacidades);
+  const { data: incapacidadesData, isLoading: isLoadingIncapacidades } =
+    useMisIncapacidades(filtrosIncapacidades);
 
   // Combinar y ordenar por fecha
   const ausencias = useMemo(() => {
@@ -243,23 +355,33 @@ export function useMisAusencias(filtros: MisAusenciasFiltros = {}) {
     // Agregar vacaciones
     if (tipo !== 'incapacidad') {
       // La respuesta tiene estructura { data: { data: [...], total, ... } }
-      const rawSolicitudes = (vacacionesData as any)?.data?.data || (vacacionesData as any)?.data;
-      const solicitudes = Array.isArray(rawSolicitudes) ? rawSolicitudes : [];
-      solicitudes.forEach((s: any) => {
+      const typedVacaciones = vacacionesData as
+        | SolicitudesVacacionesResponse
+        | undefined;
+      const rawData = typedVacaciones?.data;
+      const rawSolicitudes =
+        rawData && !Array.isArray(rawData) && 'data' in rawData
+          ? rawData.data
+          : rawData;
+      const solicitudes: SolicitudVacaciones[] = Array.isArray(rawSolicitudes)
+        ? rawSolicitudes
+        : [];
+      solicitudes.forEach((s) => {
         items.push({
           id: s.id,
           tipo: 'vacaciones',
           tipoConfig: TIPOS_AUSENCIA_CONFIG.vacaciones,
           fechaInicio: s.fecha_inicio,
           fechaFin: s.fecha_fin,
-          dias: s.dias_habiles || s.dias_solicitados,
+          dias: s.dias_habiles || s.dias_solicitados || 0,
           estado: s.estado,
-          estadoConfig: (ESTADOS_SOLICITUD as any)[s.estado],
+          estadoConfig:
+            ESTADOS_SOLICITUD[s.estado as keyof typeof ESTADOS_SOLICITUD],
           motivo: s.motivo_solicitud,
           motivoRechazo: s.motivo_rechazo,
           creadoEn: s.creado_en,
           codigo: s.codigo,
-          raw: s,
+          raw: s as unknown as Record<string, unknown>,
         });
       });
     }
@@ -267,31 +389,43 @@ export function useMisAusencias(filtros: MisAusenciasFiltros = {}) {
     // Agregar incapacidades
     if (tipo !== 'vacaciones') {
       // La respuesta tiene estructura { data: { data: [...], total, ... } }
-      const rawIncapacidades = (incapacidadesData as any)?.data?.data || (incapacidadesData as any)?.data;
-      const incapacidades = Array.isArray(rawIncapacidades) ? rawIncapacidades : [];
-      incapacidades.forEach((i: any) => {
+      const typedIncapacidades = incapacidadesData as
+        | IncapacidadesResponse
+        | undefined;
+      const rawData = typedIncapacidades?.data;
+      const rawIncapacidades =
+        rawData && !Array.isArray(rawData) && 'data' in rawData
+          ? rawData.data
+          : rawData;
+      const incapacidades: IncapacidadItem[] = Array.isArray(rawIncapacidades)
+        ? rawIncapacidades
+        : [];
+      incapacidades.forEach((i) => {
         items.push({
           id: i.id,
           tipo: 'incapacidad',
           tipoConfig: TIPOS_AUSENCIA_CONFIG.incapacidad,
           subTipo: i.tipo_incapacidad,
-          subTipoConfig: (TIPOS_INCAPACIDAD_CONFIG as any)[i.tipo_incapacidad],
+          subTipoConfig: TIPOS_INCAPACIDAD_CONFIG[i.tipo_incapacidad],
           fechaInicio: i.fecha_inicio,
           fechaFin: i.fecha_fin,
           dias: i.dias_autorizados,
           estado: i.estado,
-          estadoConfig: (ESTADOS_INCAPACIDAD_CONFIG as any)[i.estado],
+          estadoConfig: ESTADOS_INCAPACIDAD_CONFIG[i.estado],
           motivo: i.diagnostico,
           folioImss: i.folio_imss,
           creadoEn: i.creado_en,
           codigo: i.codigo,
-          raw: i,
+          raw: i as unknown as Record<string, unknown>,
         });
       });
     }
 
     // Ordenar por fecha de inicio (más reciente primero)
-    items.sort((a, b) => new Date(b.fechaInicio).getTime() - new Date(a.fechaInicio).getTime());
+    items.sort(
+      (a, b) =>
+        new Date(b.fechaInicio).getTime() - new Date(a.fechaInicio).getTime()
+    );
 
     return items;
   }, [vacacionesData, incapacidadesData, tipo]);
@@ -317,38 +451,43 @@ export function useCalendarioAusencias(filtros: CalendarioFiltros = {}) {
     estado: tipo === 'incapacidad' ? undefined : estado,
     departamento_id,
   };
-  const {
-    data: vacacionesData,
-    isLoading: isLoadingVacaciones,
-  } = useSolicitudesCalendario(filtrosVacaciones);
+  const { data: vacacionesData, isLoading: isLoadingVacaciones } =
+    useSolicitudesCalendario(filtrosVacaciones);
 
   // Estados válidos para incapacidades (diferente a vacaciones)
   const estadosIncapacidadesValidos = ['activa', 'finalizada', 'cancelada'];
-  const estadoIncapacidad = estado && estadosIncapacidadesValidos.includes(estado) ? estado : undefined;
+  const estadoIncapacidad =
+    estado && estadosIncapacidadesValidos.includes(estado) ? estado : undefined;
 
   // Incapacidades para el rango (usando query directa)
-  const {
-    data: incapacidadesData,
-    isLoading: isLoadingIncapacidades,
-  } = useQuery({
-    queryKey: ['ausencias', 'calendario', 'incapacidades', { fecha_inicio, fecha_fin, estado: estadoIncapacidad }],
-    queryFn: async () => {
-      if (tipo === 'vacaciones') return [];
+  const { data: incapacidadesData, isLoading: isLoadingIncapacidades } =
+    useQuery({
+      queryKey: [
+        'ausencias',
+        'calendario',
+        'incapacidades',
+        { fecha_inicio, fecha_fin, estado: estadoIncapacidad },
+      ],
+      queryFn: async () => {
+        if (tipo === 'vacaciones') return [];
 
-      // Importar dinámicamente para evitar dependencia circular
-      const { incapacidadesApi } = await import('@/services/api/endpoints');
-      const response = await incapacidadesApi.listar({
-        fecha_inicio,
-        fecha_fin,
-        estado: estadoIncapacidad,
-        limite: 100, // Máximo permitido por el backend
-      });
-      return (response as any).data?.data || [];
-    },
-    enabled: !!fecha_inicio && !!fecha_fin && tipo !== 'vacaciones',
-    staleTime: STALE_TIMES.REAL_TIME,
-    placeholderData: keepPreviousData,
-  });
+        // Importar dinámicamente para evitar dependencia circular
+        const { incapacidadesApi } = await import('@/services/api/endpoints');
+        const response = await incapacidadesApi.listar({
+          fecha_inicio,
+          fecha_fin,
+          estado: estadoIncapacidad,
+          limite: 100, // Máximo permitido por el backend
+        });
+        return (
+          (response as unknown as AxiosApiResponse<IncapacidadItem[]>).data
+            ?.data || []
+        );
+      },
+      enabled: !!fecha_inicio && !!fecha_fin && tipo !== 'vacaciones',
+      staleTime: STALE_TIMES.REAL_TIME,
+      placeholderData: keepPreviousData,
+    });
 
   // Combinar eventos para el calendario
   const eventos = useMemo(() => {
@@ -356,8 +495,10 @@ export function useCalendarioAusencias(filtros: CalendarioFiltros = {}) {
 
     // Agregar vacaciones
     if (tipo !== 'incapacidad') {
-      const solicitudes = Array.isArray(vacacionesData) ? vacacionesData : [];
-      solicitudes.forEach((s: any) => {
+      const solicitudes: SolicitudVacaciones[] = Array.isArray(vacacionesData)
+        ? vacacionesData
+        : [];
+      solicitudes.forEach((s) => {
         items.push({
           id: `vac-${s.id}`,
           tipo: 'vacaciones',
@@ -367,25 +508,27 @@ export function useCalendarioAusencias(filtros: CalendarioFiltros = {}) {
           departamentoNombre: s.departamento_nombre,
           fechaInicio: s.fecha_inicio,
           fechaFin: s.fecha_fin,
-          dias: s.dias_habiles || s.dias_solicitados,
+          dias: s.dias_habiles || s.dias_solicitados || 0,
           estado: s.estado,
-          estadoConfig: (ESTADOS_SOLICITUD as any)[s.estado],
+          estadoConfig:
+            ESTADOS_SOLICITUD[s.estado as keyof typeof ESTADOS_SOLICITUD],
           codigo: s.codigo,
-          raw: s,
+          raw: s as unknown as Record<string, unknown>,
         });
       });
     }
 
     // Agregar incapacidades
     if (tipo !== 'vacaciones') {
-      const incapacidades = (incapacidadesData as any[]) || [];
-      incapacidades.forEach((i: any) => {
+      const incapacidades: IncapacidadItem[] =
+        (incapacidadesData as IncapacidadItem[]) || [];
+      incapacidades.forEach((i) => {
         items.push({
           id: `inc-${i.id}`,
           tipo: 'incapacidad',
           tipoConfig: TIPOS_AUSENCIA_CONFIG.incapacidad,
           subTipo: i.tipo_incapacidad,
-          subTipoConfig: (TIPOS_INCAPACIDAD_CONFIG as any)[i.tipo_incapacidad],
+          subTipoConfig: TIPOS_INCAPACIDAD_CONFIG[i.tipo_incapacidad],
           profesionalId: i.profesional_id,
           profesionalNombre: i.profesional_nombre,
           departamentoNombre: i.departamento_nombre,
@@ -393,9 +536,9 @@ export function useCalendarioAusencias(filtros: CalendarioFiltros = {}) {
           fechaFin: i.fecha_fin,
           dias: i.dias_autorizados,
           estado: i.estado,
-          estadoConfig: (ESTADOS_INCAPACIDAD_CONFIG as any)[i.estado],
+          estadoConfig: ESTADOS_INCAPACIDAD_CONFIG[i.estado],
           codigo: i.codigo,
-          raw: i,
+          raw: i as unknown as Record<string, unknown>,
         });
       });
     }
@@ -444,27 +587,34 @@ export function useCalendarioAusencias(filtros: CalendarioFiltros = {}) {
  * Solicitudes pendientes de aprobación (para supervisores)
  * Actualmente solo vacaciones tienen flujo de aprobación
  */
-export function useSolicitudesPendientesAusencias(filtros: Record<string, unknown> = {}) {
+export function useSolicitudesPendientesAusencias(
+  filtros: Record<string, unknown> = {}
+) {
   const { data, isLoading, error } = useSolicitudesPendientes(filtros);
 
   const solicitudes = useMemo(() => {
-    const rawItems = (data as any)?.data;
-    const items = Array.isArray(rawItems) ? rawItems : [];
-    return items.map((s: any): AusenciaItem => ({
-      id: s.id,
-      tipo: 'vacaciones',
-      tipoConfig: TIPOS_AUSENCIA_CONFIG.vacaciones,
-      profesionalId: s.profesional_id,
-      profesionalNombre: s.profesional_nombre,
-      puestoNombre: s.puesto_nombre,
-      fechaInicio: s.fecha_inicio,
-      fechaFin: s.fecha_fin,
-      dias: s.dias_habiles || s.dias_solicitados,
-      estado: s.estado,
-      motivo: s.motivo_solicitud,
-      creadoEn: s.creado_en,
-      raw: s,
-    }));
+    const typedData = data as SolicitudesPendientesResponse | undefined;
+    const rawItems = typedData?.data;
+    const items: SolicitudVacaciones[] = Array.isArray(rawItems)
+      ? rawItems
+      : [];
+    return items.map(
+      (s): AusenciaItem => ({
+        id: s.id,
+        tipo: 'vacaciones',
+        tipoConfig: TIPOS_AUSENCIA_CONFIG.vacaciones,
+        profesionalId: s.profesional_id,
+        profesionalNombre: s.profesional_nombre,
+        puestoNombre: s.puesto_nombre,
+        fechaInicio: s.fecha_inicio,
+        fechaFin: s.fecha_fin,
+        dias: s.dias_habiles || s.dias_solicitados || 0,
+        estado: s.estado,
+        motivo: s.motivo_solicitud,
+        creadoEn: s.creado_en,
+        raw: s as unknown as Record<string, unknown>,
+      })
+    );
   }, [data]);
 
   return {
@@ -484,42 +634,51 @@ export function useEstadisticasAusencias(filtros: EstadisticasFiltros = {}) {
   const { anio = new Date().getFullYear() } = filtros;
 
   // Estadísticas de vacaciones
-  const {
-    data: statsVacaciones,
-    isLoading: isLoadingVacaciones,
-  } = useQuery({
+  const { data: statsVacaciones, isLoading: isLoadingVacaciones } = useQuery({
     queryKey: queryKeys.ausencias.estadisticas.vacaciones(anio),
     queryFn: async () => {
       const { vacacionesApi } = await import('@/services/api/endpoints');
       const response = await vacacionesApi.obtenerEstadisticas({ anio });
-      return (response as any).data?.data || {};
+      return (
+        (response as unknown as AxiosApiResponse<EstadisticasVacacionesData>)
+          .data?.data || {}
+      );
     },
     staleTime: STALE_TIMES.FREQUENT,
   });
 
   // Estadísticas de incapacidades
-  const {
-    data: statsIncapacidades,
-    isLoading: isLoadingIncapacidades,
-  } = useQuery({
-    queryKey: queryKeys.ausencias.estadisticas.incapacidades(anio),
-    queryFn: async () => {
-      const { incapacidadesApi } = await import('@/services/api/endpoints');
-      const response = await incapacidadesApi.obtenerEstadisticas({ anio });
-      return (response as any).data?.data || {};
-    },
-    staleTime: STALE_TIMES.FREQUENT,
-  });
+  const { data: statsIncapacidades, isLoading: isLoadingIncapacidades } =
+    useQuery({
+      queryKey: queryKeys.ausencias.estadisticas.incapacidades(anio),
+      queryFn: async () => {
+        const { incapacidadesApi } = await import('@/services/api/endpoints');
+        const response = await incapacidadesApi.obtenerEstadisticas({ anio });
+        return (
+          (
+            response as unknown as AxiosApiResponse<EstadisticasIncapacidadesData>
+          ).data?.data || {}
+        );
+      },
+      staleTime: STALE_TIMES.FREQUENT,
+    });
 
   const estadisticas = useMemo(() => {
+    const typedVacaciones = statsVacaciones as
+      | EstadisticasVacacionesData
+      | undefined;
+    const typedIncapacidades = statsIncapacidades as
+      | EstadisticasIncapacidadesData
+      | undefined;
+
     return {
       vacaciones: statsVacaciones || {},
       incapacidades: statsIncapacidades || {},
       resumen: {
-        totalDiasVacaciones: (statsVacaciones as any)?.total_dias || 0,
-        totalDiasIncapacidades: (statsIncapacidades as any)?.dias_totales || 0,
-        solicitudesPendientes: (statsVacaciones as any)?.pendientes || 0,
-        incapacidadesActivas: (statsIncapacidades as any)?.activas || 0,
+        totalDiasVacaciones: typedVacaciones?.total_dias || 0,
+        totalDiasIncapacidades: typedIncapacidades?.dias_totales || 0,
+        solicitudesPendientes: typedVacaciones?.pendientes || 0,
+        incapacidadesActivas: typedIncapacidades?.activas || 0,
       },
     };
   }, [statsVacaciones, statsIncapacidades]);
@@ -536,13 +695,15 @@ export function useEstadisticasAusencias(filtros: EstadisticasFiltros = {}) {
  * Obtiene la configuración de un tipo de ausencia
  */
 export function getTipoAusenciaConfig(tipo: string): TipoAusenciaConfig {
-  return TIPOS_AUSENCIA_CONFIG[tipo] || {
-    label: tipo,
-    color: 'gray',
-    bgColor: 'bg-gray-100',
-    textColor: 'text-gray-700',
-    icon: '',
-  };
+  return (
+    TIPOS_AUSENCIA_CONFIG[tipo] || {
+      label: tipo,
+      color: 'gray',
+      bgColor: 'bg-gray-100',
+      textColor: 'text-gray-700',
+      icon: '',
+    }
+  );
 }
 
 /**

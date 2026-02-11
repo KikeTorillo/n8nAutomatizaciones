@@ -9,6 +9,7 @@
  * ====================================================================
  */
 
+import { memo } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, User, Calendar } from 'lucide-react';
@@ -22,7 +23,10 @@ import { formatMoney, getPrioridadOportunidad } from '@/hooks/personas';
  * @param {Object} props.oportunidad - Datos de la oportunidad
  * @param {boolean} [props.isDragging] - Si esta siendo arrastrada (para overlay)
  */
-export default function KanbanCard({ oportunidad, isDragging = false }) {
+const KanbanCard = memo(function KanbanCard({
+  oportunidad,
+  isDragging = false,
+}) {
   const {
     attributes,
     listeners,
@@ -82,7 +86,9 @@ export default function KanbanCard({ oportunidad, isDragging = false }) {
       {/* Cliente */}
       <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 mb-2">
         <User className="h-3 w-3" />
-        <span className="truncate">{oportunidad.cliente_nombre || 'Sin cliente'}</span>
+        <span className="truncate">
+          {oportunidad.cliente_nombre || 'Sin cliente'}
+        </span>
       </div>
 
       {/* Footer con valor y probabilidad */}
@@ -108,13 +114,18 @@ export default function KanbanCard({ oportunidad, isDragging = false }) {
         <div className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 mt-2">
           <Calendar className="h-3 w-3" />
           <span>
-            {new Date(oportunidad.fecha_cierre_esperada).toLocaleDateString('es-MX', {
-              day: 'numeric',
-              month: 'short',
-            })}
+            {new Date(oportunidad.fecha_cierre_esperada).toLocaleDateString(
+              'es-MX',
+              {
+                day: 'numeric',
+                month: 'short',
+              }
+            )}
           </span>
         </div>
       )}
     </div>
   );
-}
+});
+
+export default KanbanCard;

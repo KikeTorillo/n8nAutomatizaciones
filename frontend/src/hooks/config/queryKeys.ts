@@ -41,7 +41,8 @@ export const queryKeys = {
       search: (params?: Params) => ['buscar-productos', params] as const,
       stockCritico: ['stock-critico'] as const,
       kardex: (id: Id) => ['kardex', id] as const,
-      historicoStock: (productoId: Id, dias: number) => ['inventario', 'historico-stock', productoId, dias] as const,
+      historicoStock: (productoId: Id, dias: number) =>
+        ['inventario', 'historico-stock', productoId, dias] as const,
     },
     categorias: {
       all: ['categorias'] as const,
@@ -70,12 +71,16 @@ export const queryKeys = {
       list: (params?: Params) => ['numeros-serie', params] as const,
       detail: (id: Id) => ['numeros-serie', id] as const,
       historial: (id: Id) => ['numeros-serie', id, 'historial'] as const,
-      disponibles: (productoId: Id, sucursalId: Id) => ['numeros-serie', 'disponibles', productoId, sucursalId] as const,
-      resumen: (productoId: Id) => ['numeros-serie', 'resumen', productoId] as const,
+      disponibles: (productoId: Id, sucursalId: Id) =>
+        ['numeros-serie', 'disponibles', productoId, sucursalId] as const,
+      resumen: (productoId: Id) =>
+        ['numeros-serie', 'resumen', productoId] as const,
       productosConSerie: ['numeros-serie', 'productos-con-serie'] as const,
       estadisticas: ['numeros-serie', 'estadisticas'] as const,
-      proximosVencer: (dias: number) => ['numeros-serie', 'proximos-vencer', dias] as const,
-      existe: (productoId: Id, numeroSerie: string) => ['numeros-serie', 'existe', productoId, numeroSerie] as const,
+      proximosVencer: (dias: number) =>
+        ['numeros-serie', 'proximos-vencer', dias] as const,
+      existe: (productoId: Id, numeroSerie: string) =>
+        ['numeros-serie', 'existe', productoId, numeroSerie] as const,
     },
     variantes: {
       all: ['variantes'] as const,
@@ -90,7 +95,8 @@ export const queryKeys = {
       all: ['conteos'] as const,
       list: (params?: Params) => ['conteos', params] as const,
       detail: (id: Id) => ['conteo', id] as const,
-      estadisticas: (params?: Params) => ['estadisticas-conteos', params] as const,
+      estadisticas: (params?: Params) =>
+        ['estadisticas-conteos', params] as const,
     },
     ubicaciones: {
       all: ['ubicaciones-almacen'] as const,
@@ -140,10 +146,13 @@ export const queryKeys = {
     },
     paquetes: {
       all: ['paquetes'] as const,
-      porOperacion: (operacionId: Id) => ['paquetes', 'operacion', operacionId] as const,
+      porOperacion: (operacionId: Id) =>
+        ['paquetes', 'operacion', operacionId] as const,
       detail: (id: Id) => ['paquetes', 'detail', id] as const,
-      itemsDisponibles: (operacionId: Id) => ['paquetes', 'items-disponibles', operacionId] as const,
-      resumen: (operacionId: Id) => ['paquetes', 'resumen', operacionId] as const,
+      itemsDisponibles: (operacionId: Id) =>
+        ['paquetes', 'items-disponibles', operacionId] as const,
+      resumen: (operacionId: Id) =>
+        ['paquetes', 'resumen', operacionId] as const,
       etiqueta: (id: Id) => ['paquetes', 'etiqueta', id] as const,
     },
     dropship: {
@@ -161,7 +170,8 @@ export const queryKeys = {
     reorden: {
       all: ['reorden'] as const,
       dashboard: ['reorden', 'dashboard'] as const,
-      productosBajoMinimo: (filtros?: Params) => ['reorden', 'productos-bajo-minimo', filtros] as const,
+      productosBajoMinimo: (filtros?: Params) =>
+        ['reorden', 'productos-bajo-minimo', filtros] as const,
       rutas: (filtros?: Params) => ['reorden', 'rutas', filtros] as const,
       reglas: {
         all: ['reorden', 'reglas'] as const,
@@ -194,7 +204,8 @@ export const queryKeys = {
       all: ['cupones'] as const,
       list: (params?: Params) => ['cupones', params] as const,
       validar: (codigo: string) => ['validar-cupon', codigo] as const,
-      historial: (cuponId: Id, params?: Params) => ['cupon-historial', cuponId, params] as const,
+      historial: (cuponId: Id, params?: Params) =>
+        ['cupon-historial', cuponId, params] as const,
       estadisticas: (cuponId: Id) => ['cupon-estadisticas', cuponId] as const,
       vigentes: ['cupones-vigentes'] as const,
     },
@@ -204,8 +215,10 @@ export const queryKeys = {
       evaluar: (params?: Params) => ['promociones-evaluar', params] as const,
       vigentesBase: ['promociones-vigentes'] as const,
       vigentes: (params?: Params) => ['promociones-vigentes', params] as const,
-      historial: (promocionId: Id, params?: Params) => ['promocion-historial', promocionId, params] as const,
-      estadisticas: (promocionId: Id) => ['promocion-estadisticas', promocionId] as const,
+      historial: (promocionId: Id, params?: Params) =>
+        ['promocion-historial', promocionId, params] as const,
+      estadisticas: (promocionId: Id) =>
+        ['promocion-estadisticas', promocionId] as const,
     },
     sesionCaja: {
       actual: ['sesion-caja'] as const,
@@ -222,10 +235,12 @@ export const queryKeys = {
       ventaBase: ['pagos-venta'] as const,
       venta: (ventaId: Id) => ['pagos-venta', ventaId] as const,
     },
-    stockDisponible: (productoId: Id) => ['stock-disponible', productoId] as const,
+    stockDisponible: (productoId: Id) =>
+      ['stock-disponible', productoId] as const,
     categoriasPOS: ['categorias-pos'] as const,
     productosPOS: (params?: Params) => ['productos-pos', params] as const,
-    tasaCambio: (monedaOrg: string, monedaSecundaria: string) => ['tasa-cambio', monedaOrg, monedaSecundaria] as const,
+    tasaCambio: (monedaOrg: string, monedaSecundaria: string) =>
+      ['tasa-cambio', monedaOrg, monedaSecundaria] as const,
     // Combos (Feb 2026)
     combos: {
       all: ['combos'] as const,
@@ -233,25 +248,30 @@ export const queryKeys = {
       detail: (productoId: Id) => ['combo', productoId] as const,
       verificar: (productoId: Id) => ['combo-verificar', productoId] as const,
       precio: (productoId: Id) => ['combo-precio', productoId] as const,
-      stock: (productoId: Id, cantidad: number) => ['combo-stock', productoId, cantidad] as const,
+      stock: (productoId: Id, cantidad: number) =>
+        ['combo-stock', productoId, cantidad] as const,
     },
     // Modificadores (Feb 2026)
     modificadores: {
       gruposBase: ['grupos-modificadores'] as const,
       grupos: (params?: Params) => ['grupos-modificadores', params] as const,
       productoBase: ['modificadores-producto'] as const,
-      producto: (productoId: Id) => ['modificadores-producto', productoId] as const,
+      producto: (productoId: Id) =>
+        ['modificadores-producto', productoId] as const,
       tieneBase: ['tiene-modificadores'] as const,
       tiene: (productoId: Id) => ['tiene-modificadores', productoId] as const,
-      asignaciones: (productoId: Id) => ['asignaciones-producto', productoId] as const,
+      asignaciones: (productoId: Id) =>
+        ['asignaciones-producto', productoId] as const,
     },
     // Lealtad (Ene 2026)
     lealtad: {
       configuracion: ['lealtad-configuracion'] as const,
-      estadisticas: (sucursalId: Id) => ['lealtad-estadisticas', sucursalId] as const,
+      estadisticas: (sucursalId: Id) =>
+        ['lealtad-estadisticas', sucursalId] as const,
       puntos: (clienteId: Id) => ['lealtad-puntos', clienteId] as const,
       historialBase: ['lealtad-historial'] as const,
-      historial: (clienteId: Id, params?: Params) => ['lealtad-historial', clienteId, params] as const,
+      historial: (clienteId: Id, params?: Params) =>
+        ['lealtad-historial', clienteId, params] as const,
       nivelesBase: ['lealtad-niveles'] as const,
       niveles: (options?: Params) => ['lealtad-niveles', options] as const,
       clientesBase: ['lealtad-clientes'] as const,
@@ -278,15 +298,19 @@ export const queryKeys = {
       all: ['servicios'] as const,
       list: (params?: Params) => ['servicios', params] as const,
       detail: (id: Id) => ['servicio', id] as const,
+      porProfesional: (profesionalId: Id) =>
+        ['profesional-servicios', profesionalId] as const,
     },
     horarios: {
       all: ['horarios'] as const,
       list: (params?: Params) => ['horarios', params] as const,
       detail: (id: Id) => ['horario', id] as const,
-      profesional: (profesionalId: Id) => ['horarios-profesional', profesionalId] as const,
+      profesional: (profesionalId: Id) =>
+        ['horarios-profesional', profesionalId] as const,
     },
     disponibilidad: (params?: Params) => ['disponibilidad', params] as const,
-    disponibilidadInmediata: (params?: Params) => ['disponibilidad-inmediata', params] as const,
+    disponibilidadInmediata: (params?: Params) =>
+      ['disponibilidad-inmediata', params] as const,
     bloqueos: {
       all: ['bloqueos'] as const,
       list: (params?: Params) => ['bloqueos', params] as const,
@@ -307,7 +331,21 @@ export const queryKeys = {
       list: (params?: Params) => ['clientes', params] as const,
       detail: (id: Id) => ['cliente', id] as const,
       actividades: (id: Id) => ['cliente-actividades', id] as const,
+      timeline: (clienteId: Id, params?: Params) =>
+        ['cliente-timeline', clienteId, params] as const,
+      actividad: (clienteId: Id, actividadId: Id) =>
+        ['cliente-actividad', clienteId, actividadId] as const,
+      actividadesConteo: (clienteId: Id) =>
+        ['cliente-actividades-conteo', clienteId] as const,
       documentos: (id: Id) => ['cliente-documentos', id] as const,
+      documento: (clienteId: Id, documentoId: Id) =>
+        ['cliente-documento', clienteId, documentoId] as const,
+      documentosConteo: (clienteId: Id) =>
+        ['cliente-documentos-conteo', clienteId] as const,
+      tiposDocumento: ['tipos-documento-cliente'] as const,
+      documentosPorVencer: (dias?: number) =>
+        ['documentos-por-vencer', dias] as const,
+      etiquetas: (clienteId: Id) => ['cliente-etiquetas', clienteId] as const,
       credito: (id: Id) => ['cliente-credito', id] as const,
     },
     profesionales: {
@@ -321,6 +359,12 @@ export const queryKeys = {
       all: ['usuarios'] as const,
       list: (params?: Params) => ['usuarios', params] as const,
       detail: (id: Id) => ['usuario', id] as const,
+      profesionalesSinUsuario: ['profesionales-sin-usuario'] as const,
+      usuariosSinProfesional: ['usuarios-sin-profesional'] as const,
+      ubicaciones: (usuarioId: Id) =>
+        ['usuario-ubicaciones', usuarioId] as const,
+      ubicacionesDisponibles: (usuarioId: Id) =>
+        ['usuario-ubicaciones-disponibles', usuarioId] as const,
     },
     departamentos: {
       all: ['departamentos'] as const,
@@ -332,39 +376,61 @@ export const queryKeys = {
       list: (params?: Params) => ['puestos', params] as const,
     },
     vacaciones: {
-      solicitudes: (params?: Params) => ['vacaciones-solicitudes', params] as const,
+      solicitudes: (params?: Params) =>
+        ['vacaciones-solicitudes', params] as const,
       saldos: (usuarioId: Id) => ['vacaciones-saldos', usuarioId] as const,
       politicas: ['vacaciones-politicas'] as const,
     },
     // Tabs de profesionales
-    educacionFormal: (profesionalId: Id) => ['educacion-formal', profesionalId] as const,
-    cuentasBancarias: (profesionalId: Id) => ['cuentas-bancarias', profesionalId] as const,
-    documentosEmpleado: (profesionalId: Id) => ['documentos-empleado', profesionalId] as const,
+    educacionFormal: (profesionalId: Id) =>
+      ['educacion-formal', profesionalId] as const,
+    cuentasBancarias: (profesionalId: Id) =>
+      ['cuentas-bancarias', profesionalId] as const,
+    documentosEmpleado: (profesionalId: Id) =>
+      ['documentos-empleado', profesionalId] as const,
     // Experiencia laboral (centralizado Feb 2026)
     experienciaLaboral: {
       all: ['experiencia-laboral'] as const,
       lists: () => ['experiencia-laboral', 'list'] as const,
-      list: (profesionalId: Id, filters?: Params) => ['experiencia-laboral', 'list', profesionalId, filters] as const,
+      list: (profesionalId: Id, filters?: Params) =>
+        ['experiencia-laboral', 'list', profesionalId, filters] as const,
       details: () => ['experiencia-laboral', 'detail'] as const,
-      detail: (profesionalId: Id, experienciaId: Id) => ['experiencia-laboral', 'detail', profesionalId, experienciaId] as const,
-      actual: (profesionalId: Id) => ['experiencia-laboral', 'actual', profesionalId] as const,
+      detail: (profesionalId: Id, experienciaId: Id) =>
+        [
+          'experiencia-laboral',
+          'detail',
+          profesionalId,
+          experienciaId,
+        ] as const,
+      actual: (profesionalId: Id) =>
+        ['experiencia-laboral', 'actual', profesionalId] as const,
     },
     // Habilidades (centralizado Feb 2026)
     habilidades: {
       catalogo: {
         all: ['catalogo-habilidades'] as const,
         lists: () => ['catalogo-habilidades', 'list'] as const,
-        list: (filters?: Params) => ['catalogo-habilidades', 'list', filters] as const,
+        list: (filters?: Params) =>
+          ['catalogo-habilidades', 'list', filters] as const,
         details: () => ['catalogo-habilidades', 'detail'] as const,
-        detail: (habilidadId: Id) => ['catalogo-habilidades', 'detail', habilidadId] as const,
-        profesionales: (habilidadId: Id) => ['catalogo-habilidades', 'profesionales', habilidadId] as const,
+        detail: (habilidadId: Id) =>
+          ['catalogo-habilidades', 'detail', habilidadId] as const,
+        profesionales: (habilidadId: Id) =>
+          ['catalogo-habilidades', 'profesionales', habilidadId] as const,
       },
       empleado: {
         all: ['habilidades-empleado'] as const,
         lists: () => ['habilidades-empleado', 'list'] as const,
-        list: (profesionalId: Id, filters?: Params) => ['habilidades-empleado', 'list', profesionalId, filters] as const,
+        list: (profesionalId: Id, filters?: Params) =>
+          ['habilidades-empleado', 'list', profesionalId, filters] as const,
         details: () => ['habilidades-empleado', 'detail'] as const,
-        detail: (profesionalId: Id, habilidadEmpleadoId: Id) => ['habilidades-empleado', 'detail', profesionalId, habilidadEmpleadoId] as const,
+        detail: (profesionalId: Id, habilidadEmpleadoId: Id) =>
+          [
+            'habilidades-empleado',
+            'detail',
+            profesionalId,
+            habilidadEmpleadoId,
+          ] as const,
       },
     },
     // Incapacidades (Ene 2026)
@@ -372,7 +438,8 @@ export const queryKeys = {
       all: ['incapacidades'] as const,
       list: (filtros?: Params) => ['incapacidades', filtros] as const,
       detail: (id: Id) => ['incapacidades', id] as const,
-      estadisticas: (filtros?: Params) => ['incapacidades', 'estadisticas', filtros] as const,
+      estadisticas: (filtros?: Params) =>
+        ['incapacidades', 'estadisticas', filtros] as const,
     },
     // Oportunidades/CRM (Ene 2026)
     oportunidades: {
@@ -380,7 +447,10 @@ export const queryKeys = {
       list: (params?: Params) => ['oportunidades', params] as const,
       detail: (id: Id) => ['oportunidad', id] as const,
       pipeline: (vendedorId: Id) => ['pipeline', vendedorId] as const,
-      estadisticas: (vendedorId: Id) => ['pipeline-estadisticas', vendedorId] as const,
+      etapasPipeline: (incluirInactivas?: boolean) =>
+        ['etapas-pipeline', incluirInactivas] as const,
+      estadisticas: (vendedorId: Id) =>
+        ['pipeline-estadisticas', vendedorId] as const,
     },
   },
 
@@ -389,8 +459,10 @@ export const queryKeys = {
   // ============================================================
   sistema: {
     permisos: {
-      verificar: (codigo: string, sucursalId: Id) => ['permiso', codigo, sucursalId] as const,
-      resumen: (usuarioId: Id, sucursalId: Id) => ['permisos-resumen', usuarioId, sucursalId] as const,
+      verificar: (codigo: string, sucursalId: Id) =>
+        ['permiso', codigo, sucursalId] as const,
+      resumen: (usuarioId: Id, sucursalId: Id) =>
+        ['permisos-resumen', usuarioId, sucursalId] as const,
     },
     modulos: ['modulos'] as const,
     notificaciones: {
@@ -408,7 +480,8 @@ export const queryKeys = {
       matriz: ['sucursal-matriz'] as const,
       porUsuario: (usuarioId: Id) => ['sucursales-usuario', usuarioId] as const,
       usuarios: (sucursalId: Id) => ['sucursal-usuarios', sucursalId] as const,
-      profesionales: (sucursalId: Id) => ['sucursal-profesionales', sucursalId] as const,
+      profesionales: (sucursalId: Id) =>
+        ['sucursal-profesionales', sucursalId] as const,
       metricas: (params?: Params) => ['metricas-sucursales', params] as const,
       transferencia: (id: Id) => ['transferencia', id] as const,
     },
@@ -416,11 +489,26 @@ export const queryKeys = {
       all: ['workflows'] as const,
       list: (params?: Params) => ['workflows', params] as const,
       detail: (id: Id) => ['workflow', id] as const,
+      aprobacionesPendientes: (params?: Params) =>
+        ['aprobaciones-pendientes', params] as const,
+      aprobacionesCount: ['aprobaciones-count'] as const,
+      instancia: (id: Id) => ['instancia-workflow', id] as const,
+      historialAprobaciones: (params?: Params) =>
+        ['historial-aprobaciones', params] as const,
+      delegaciones: (params?: Params) => ['delegaciones', params] as const,
+      definiciones: (params?: Params) =>
+        ['definiciones-workflow', params] as const,
+      definicion: (id: Id) => ['definicion-workflow', id] as const,
     },
     customFields: {
       byEntity: (entidad: string) => ['custom-fields', entidad] as const,
-      definiciones: (params?: Params) => ['custom-fields-definiciones', params] as const,
-      valores: (tipo: string | null | undefined, id: Id) => ['custom-fields-valores', tipo, id] as const,
+      definiciones: (params?: Params) =>
+        ['custom-fields-definiciones', params] as const,
+      definicion: (id: Id) => ['custom-field-definicion', id] as const,
+      secciones: (entidadTipo?: string) =>
+        ['custom-fields-secciones', entidadTipo] as const,
+      valores: (tipo: string | null | undefined, id: Id) =>
+        ['custom-fields-valores', tipo, id] as const,
     },
     // Suscripciones (Ene 2026)
     suscripcion: {
@@ -438,9 +526,12 @@ export const queryKeys = {
     // Superadmin (Ene 2026)
     superadmin: {
       dashboard: ['superadmin', 'dashboard'] as const,
-      organizaciones: (filtros?: Params) => ['superadmin', 'organizaciones', filtros] as const,
-      organizacionDetail: (id: Id) => ['superadmin', 'organizacion', id] as const,
-      metricas: (params?: Params) => ['superadmin', 'metricas', params] as const,
+      organizaciones: (filtros?: Params) =>
+        ['superadmin', 'organizaciones', filtros] as const,
+      organizacionDetail: (id: Id) =>
+        ['superadmin', 'organizacion', id] as const,
+      metricas: (params?: Params) =>
+        ['superadmin', 'metricas', params] as const,
     },
     // Auditoría (Ene 2026)
     auditoria: {
@@ -476,9 +567,12 @@ export const queryKeys = {
     },
     publico: {
       evento: (slug: string) => ['evento-publico', slug] as const,
-      estadisticas: (eventoId: Id) => ['evento-publico-estadisticas', eventoId] as const,
-      invitacion: (slug: string, token: string) => ['invitacion-publica', slug, token] as const,
-      galeria: (slug: string, limit?: number) => ['galeria-publica', slug, limit] as const,
+      estadisticas: (eventoId: Id) =>
+        ['evento-publico-estadisticas', eventoId] as const,
+      invitacion: (slug: string, token: string) =>
+        ['invitacion-publica', slug, token] as const,
+      galeria: (slug: string, limit?: number) =>
+        ['galeria-publica', slug, limit] as const,
     },
     plantillas: {
       porTipo: (tipoEvento: string) => ['plantillas-tipo', tipoEvento] as const,
@@ -491,10 +585,13 @@ export const queryKeys = {
   ausencias: {
     all: ['ausencias'] as const,
     list: (params?: Params) => ['ausencias', params] as const,
-    calendario: (params?: Params) => ['ausencias', 'calendario', params] as const,
+    calendario: (params?: Params) =>
+      ['ausencias', 'calendario', params] as const,
     estadisticas: {
-      vacaciones: (anio: number) => ['ausencias', 'estadisticas', 'vacaciones', anio] as const,
-      incapacidades: (anio: number) => ['ausencias', 'estadisticas', 'incapacidades', anio] as const,
+      vacaciones: (anio: number) =>
+        ['ausencias', 'estadisticas', 'vacaciones', anio] as const,
+      incapacidades: (anio: number) =>
+        ['ausencias', 'estadisticas', 'incapacidades', anio] as const,
     },
   },
 
@@ -541,8 +638,10 @@ export const queryKeys = {
       detail: (id: Id) => ['archivo', id] as const,
     },
     usage: ['storage-usage'] as const,
-    presignedUrl: (id: Id, expiry?: number) => ['presigned-url', id, expiry] as const,
-    unsplash: (query: string, page?: number) => ['unsplash', 'search', query, page] as const,
+    presignedUrl: (id: Id, expiry?: number) =>
+      ['presigned-url', id, expiry] as const,
+    unsplash: (query: string, page?: number) =>
+      ['unsplash', 'search', query, page] as const,
   },
 
   // ============================================================
@@ -552,12 +651,15 @@ export const queryKeys = {
     organizacion: (orgId: Id) => ['estadisticas', orgId] as const,
     dashboard: (params?: Params) => ['estadisticas-dashboard', params] as const,
     ventas: (params?: Params) => ['estadisticas-ventas', params] as const,
-    inventario: (params?: Params) => ['estadisticas-inventario', params] as const,
+    inventario: (params?: Params) =>
+      ['estadisticas-inventario', params] as const,
     asignaciones: ['estadisticas-asignaciones'] as const,
     serviciosDashboard: ['servicios-dashboard'] as const,
-    bloqueosDashboard: (hoy: string, treintaDias: string) => ['bloqueos-dashboard', hoy, treintaDias] as const,
+    bloqueosDashboard: (hoy: string, treintaDias: string) =>
+      ['bloqueos-dashboard', hoy, treintaDias] as const,
     clientes: ['clientes-estadisticas'] as const,
-    clienteDetail: (clienteId: Id) => ['cliente-estadisticas', clienteId] as const,
+    clienteDetail: (clienteId: Id) =>
+      ['cliente-estadisticas', clienteId] as const,
   },
 
   contabilidad: {
@@ -578,12 +680,16 @@ export const queryKeys = {
       miPerfil: ['mi-perfil-marketplace'] as const,
       publico: (slug: string) => ['perfil-publico', slug] as const,
     },
-    resenas: (slug: string, params?: Params) => ['resenas-negocio', slug, params] as const,
+    resenas: (slug: string, params?: Params) =>
+      ['resenas-negocio', slug, params] as const,
     categorias: ['categorias-marketplace'] as const,
     setupProgress: ['organizacion-setup-progress'] as const,
-    estadisticasPerfil: (id: Id, params?: Params) => ['estadisticas-perfil', id, params] as const,
-    serviciosPublicos: (organizacionId: Id) => ['servicios-publicos', organizacionId] as const,
-    disponibilidadPublica: (organizacionId: Id, params?: Params) => ['disponibilidad-publica', organizacionId, params] as const,
+    estadisticasPerfil: (id: Id, params?: Params) =>
+      ['estadisticas-perfil', id, params] as const,
+    serviciosPublicos: (organizacionId: Id) =>
+      ['servicios-publicos', organizacionId] as const,
+    disponibilidadPublica: (organizacionId: Id, params?: Params) =>
+      ['disponibilidad-publica', organizacionId, params] as const,
   },
 
   website: {
@@ -596,35 +702,46 @@ export const queryKeys = {
     },
     versiones: ['website', 'versiones'] as const,
     serviciosErp: ['website-servicios-erp'] as const,
-    publico: (slug: string, pagina?: string) => ['sitio-publico', slug, pagina] as const,
+    publico: (slug: string, pagina?: string) =>
+      ['sitio-publico', slug, pagina] as const,
   },
 
   chatbots: {
     all: ['chatbots'] as const,
     detail: (id: Id) => ['chatbot', id] as const,
     conversaciones: (botId: Id) => ['conversaciones', botId] as const,
-    estadisticas: (id: Id, params?: Params) => ['chatbot-estadisticas', id, params] as const,
+    estadisticas: (id: Id, params?: Params) =>
+      ['chatbot-estadisticas', id, params] as const,
   },
 
   comisiones: {
     all: ['comisiones'] as const,
-    configuracion: (params?: Params) => ['comisiones', 'configuracion', params] as const,
-    historialConfiguracion: (params?: Params) => ['comisiones', 'historial-configuracion', params] as const,
-    profesional: (profesionalId: Id, params?: Params) => ['comisiones', 'profesional', profesionalId, params] as const,
+    configuracion: (params?: Params) =>
+      ['comisiones', 'configuracion', params] as const,
+    historialConfiguracion: (params?: Params) =>
+      ['comisiones', 'historial-configuracion', params] as const,
+    profesional: (profesionalId: Id, params?: Params) =>
+      ['comisiones', 'profesional', profesionalId, params] as const,
     periodo: (params?: Params) => ['comisiones', 'periodo', params] as const,
     detail: (id: Id) => ['comisiones', id] as const,
-    dashboard: (params?: Params) => ['comisiones', 'dashboard', params] as const,
-    estadisticas: (params?: Params) => ['comisiones', 'estadisticas', params] as const,
-    graficaPorDia: (params?: Params) => ['comisiones', 'grafica-por-dia', params] as const,
+    dashboard: (params?: Params) =>
+      ['comisiones', 'dashboard', params] as const,
+    estadisticas: (params?: Params) =>
+      ['comisiones', 'estadisticas', params] as const,
+    graficaPorDia: (params?: Params) =>
+      ['comisiones', 'grafica-por-dia', params] as const,
   },
 
   // ============================================================
   // PÚBLICO
   // ============================================================
   publico: {
-    servicios: (slug: string, params?: Params) => ['servicios-publicos', slug, params] as const,
-    profesionales: (slug: string, params?: Params) => ['profesionales-publicos', slug, params] as const,
-    disponibilidad: (organizacionId: Id, params?: Params) => ['disponibilidad-publica', organizacionId, params] as const,
+    servicios: (slug: string, params?: Params) =>
+      ['servicios-publicos', slug, params] as const,
+    profesionales: (slug: string, params?: Params) =>
+      ['profesionales-publicos', slug, params] as const,
+    disponibilidad: (organizacionId: Id, params?: Params) =>
+      ['disponibilidad-publica', organizacionId, params] as const,
   },
 } as const;
 

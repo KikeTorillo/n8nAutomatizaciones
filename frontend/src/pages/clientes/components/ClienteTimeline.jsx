@@ -9,7 +9,7 @@
  * ====================================================================
  */
 
-import { useState, useCallback } from 'react';
+import { memo, useState, useCallback } from 'react';
 import { useDisclosure } from '@/hooks/utils';
 import { History, RefreshCw, Filter, Loader2 } from 'lucide-react';
 import {
@@ -25,7 +25,7 @@ import TareaDrawer from './TareaDrawer';
 import { ConfirmDialog, EmptyState } from '@/components/ui';
 import { useToast } from '@/hooks/utils';
 
-export default function ClienteTimeline({
+const ClienteTimeline = memo(function ClienteTimeline({
   clienteId,
   usuarios = [],
   limit = 20,
@@ -60,45 +60,59 @@ export default function ClienteTimeline({
     : timeline?.timeline;
 
   // Handlers
-  const handleCrearNota = useCallback(async (data) => {
-    try {
-      await crearActividad.mutateAsync({
-        clienteId,
-        data,
-      });
-      toast('Nota agregada al timeline', { type: 'success' });
-    } catch (error) {
-      toast(error.message || 'No se pudo agregar la nota', { type: 'error' });
-    }
-  }, [clienteId, crearActividad, toast]);
+  const handleCrearNota = useCallback(
+    async (data) => {
+      try {
+        await crearActividad.mutateAsync({
+          clienteId,
+          data,
+        });
+        toast('Nota agregada al timeline', { type: 'success' });
+      } catch (error) {
+        toast(error.message || 'No se pudo agregar la nota', { type: 'error' });
+      }
+    },
+    [clienteId, crearActividad, toast]
+  );
 
-  const handleCrearTarea = useCallback(async (data) => {
-    try {
-      await crearActividad.mutateAsync({
-        clienteId,
-        data,
-      });
-      toast('Tarea creada exitosamente', { type: 'success' });
-    } catch (error) {
-      toast(error.message || 'No se pudo crear la tarea', { type: 'error' });
-    }
-  }, [clienteId, crearActividad, toast]);
+  const handleCrearTarea = useCallback(
+    async (data) => {
+      try {
+        await crearActividad.mutateAsync({
+          clienteId,
+          data,
+        });
+        toast('Tarea creada exitosamente', { type: 'success' });
+      } catch (error) {
+        toast(error.message || 'No se pudo crear la tarea', { type: 'error' });
+      }
+    },
+    [clienteId, crearActividad, toast]
+  );
 
-  const handleCompletarTarea = useCallback(async (item) => {
-    try {
-      await completarTarea.mutateAsync({
-        clienteId,
-        actividadId: item.id,
-      });
-      toast('Tarea marcada como completada', { type: 'success' });
-    } catch (error) {
-      toast(error.message || 'No se pudo completar la tarea', { type: 'error' });
-    }
-  }, [clienteId, completarTarea, toast]);
+  const handleCompletarTarea = useCallback(
+    async (item) => {
+      try {
+        await completarTarea.mutateAsync({
+          clienteId,
+          actividadId: item.id,
+        });
+        toast('Tarea marcada como completada', { type: 'success' });
+      } catch (error) {
+        toast(error.message || 'No se pudo completar la tarea', {
+          type: 'error',
+        });
+      }
+    },
+    [clienteId, completarTarea, toast]
+  );
 
-  const handleEliminar = useCallback((item) => {
-    deleteConfirm.open(item);
-  }, [deleteConfirm]);
+  const handleEliminar = useCallback(
+    (item) => {
+      deleteConfirm.open(item);
+    },
+    [deleteConfirm]
+  );
 
   const confirmEliminar = useCallback(async () => {
     if (!deleteConfirm.data) return;
@@ -110,7 +124,9 @@ export default function ClienteTimeline({
       });
       toast('Actividad eliminada del timeline', { type: 'success' });
     } catch (error) {
-      toast(error.message || 'No se pudo eliminar la actividad', { type: 'error' });
+      toast(error.message || 'No se pudo eliminar la actividad', {
+        type: 'error',
+      });
     } finally {
       deleteConfirm.close();
     }
@@ -194,7 +210,9 @@ export default function ClienteTimeline({
             className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
             title="Refrescar"
           >
-            <RefreshCw className={`w-4 h-4 text-gray-500 ${isFetching ? 'animate-spin' : ''}`} />
+            <RefreshCw
+              className={`w-4 h-4 text-gray-500 ${isFetching ? 'animate-spin' : ''}`}
+            />
           </button>
         </div>
       </div>
@@ -208,7 +226,9 @@ export default function ClienteTimeline({
               item={item}
               onComplete={handleCompletarTarea}
               onDelete={handleEliminar}
-              isLoading={completarTarea.isPending || eliminarActividad.isPending}
+              isLoading={
+                completarTarea.isPending || eliminarActividad.isPending
+              }
             />
           ))}
         </div>
@@ -218,7 +238,7 @@ export default function ClienteTimeline({
           title="Sin actividad"
           description={
             filtroTipo
-              ? `No hay ${TIPOS_TIMELINE.find(t => t.value === filtroTipo)?.label.toLowerCase() || 'actividades'} para mostrar`
+              ? `No hay ${TIPOS_TIMELINE.find((t) => t.value === filtroTipo)?.label.toLowerCase() || 'actividades'} para mostrar`
               : 'Agrega una nota o registra una actividad para comenzar'
           }
         />
@@ -246,4 +266,6 @@ export default function ClienteTimeline({
       />
     </div>
   );
-}
+});
+
+export default ClienteTimeline;

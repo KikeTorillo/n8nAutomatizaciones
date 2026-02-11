@@ -53,9 +53,12 @@ export function useDocumentosCliente(clienteId, params = {}) {
  */
 export function useDocumento(clienteId, documentoId) {
   return useQuery({
-    queryKey: ['cliente-documento', clienteId, documentoId],
+    queryKey: queryKeys.personas.clientes.documento(clienteId, documentoId),
     queryFn: async () => {
-      const response = await clientesApi.obtenerDocumento(clienteId, documentoId);
+      const response = await clientesApi.obtenerDocumento(
+        clienteId,
+        documentoId
+      );
       return response.data.data;
     },
     enabled: !!clienteId && !!documentoId,
@@ -68,7 +71,7 @@ export function useDocumento(clienteId, documentoId) {
  */
 export function useConteoDocumentos(clienteId) {
   return useQuery({
-    queryKey: ['cliente-documentos-conteo', clienteId],
+    queryKey: queryKeys.personas.clientes.documentosConteo(clienteId),
     queryFn: async () => {
       const response = await clientesApi.contarDocumentos(clienteId);
       return response.data.data;
@@ -83,7 +86,7 @@ export function useConteoDocumentos(clienteId) {
  */
 export function useTiposDocumento() {
   return useQuery({
-    queryKey: ['tipos-documento-cliente'],
+    queryKey: queryKeys.personas.clientes.tiposDocumento,
     queryFn: async () => {
       const response = await clientesApi.obtenerTiposDocumento();
       return response.data.data;
@@ -97,7 +100,7 @@ export function useTiposDocumento() {
  */
 export function useDocumentosPorVencer(dias = 30) {
   return useQuery({
-    queryKey: ['documentos-por-vencer', dias],
+    queryKey: queryKeys.personas.clientes.documentosPorVencer(dias),
     queryFn: async () => {
       const response = await clientesApi.listarDocumentosPorVencer({ dias });
       return response.data.data;
@@ -136,8 +139,16 @@ export function useCrearDocumento() {
       return response.data.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.personas.clientes.documentos(variables.clienteId), refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['cliente-documentos-conteo', variables.clienteId], refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.personas.clientes.documentos(variables.clienteId),
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.personas.clientes.documentosConteo(
+          variables.clienteId
+        ),
+        refetchType: 'active',
+      });
     },
     onError: createCRUDErrorHandler('create', 'Documento'),
   });
@@ -151,12 +162,25 @@ export function useActualizarDocumento() {
 
   return useMutation({
     mutationFn: async ({ clienteId, documentoId, data }) => {
-      const response = await clientesApi.actualizarDocumento(clienteId, documentoId, data);
+      const response = await clientesApi.actualizarDocumento(
+        clienteId,
+        documentoId,
+        data
+      );
       return response.data.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['cliente-documento', variables.clienteId, variables.documentoId], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: queryKeys.personas.clientes.documentos(variables.clienteId), refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.personas.clientes.documento(
+          variables.clienteId,
+          variables.documentoId
+        ),
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.personas.clientes.documentos(variables.clienteId),
+        refetchType: 'active',
+      });
     },
     onError: createCRUDErrorHandler('update', 'Documento'),
   });
@@ -174,8 +198,16 @@ export function useEliminarDocumento() {
       return { clienteId, documentoId };
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.personas.clientes.documentos(variables.clienteId), refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['cliente-documentos-conteo', variables.clienteId], refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.personas.clientes.documentos(variables.clienteId),
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.personas.clientes.documentosConteo(
+          variables.clienteId
+        ),
+        refetchType: 'active',
+      });
     },
     onError: createCRUDErrorHandler('delete', 'Documento'),
   });
@@ -189,13 +221,31 @@ export function useVerificarDocumento() {
 
   return useMutation({
     mutationFn: async ({ clienteId, documentoId, verificado }) => {
-      const response = await clientesApi.verificarDocumento(clienteId, documentoId, verificado);
+      const response = await clientesApi.verificarDocumento(
+        clienteId,
+        documentoId,
+        verificado
+      );
       return response.data.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['cliente-documento', variables.clienteId, variables.documentoId], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: queryKeys.personas.clientes.documentos(variables.clienteId), refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['cliente-documentos-conteo', variables.clienteId], refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.personas.clientes.documento(
+          variables.clienteId,
+          variables.documentoId
+        ),
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.personas.clientes.documentos(variables.clienteId),
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.personas.clientes.documentosConteo(
+          variables.clienteId
+        ),
+        refetchType: 'active',
+      });
     },
     onError: createCRUDErrorHandler('update', 'Documento'),
   });
@@ -212,12 +262,25 @@ export function useSubirArchivoDocumento() {
       const formData = new FormData();
       formData.append('archivo', archivo);
 
-      const response = await clientesApi.subirArchivoDocumento(clienteId, documentoId, formData);
+      const response = await clientesApi.subirArchivoDocumento(
+        clienteId,
+        documentoId,
+        formData
+      );
       return response.data.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['cliente-documento', variables.clienteId, variables.documentoId], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: queryKeys.personas.clientes.documentos(variables.clienteId), refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.personas.clientes.documento(
+          variables.clienteId,
+          variables.documentoId
+        ),
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.personas.clientes.documentos(variables.clienteId),
+        refetchType: 'active',
+      });
     },
     onError: createCRUDErrorHandler('update', 'Archivo'),
   });
@@ -229,7 +292,11 @@ export function useSubirArchivoDocumento() {
 export function useObtenerPresigned() {
   return useMutation({
     mutationFn: async ({ clienteId, documentoId, expiry = 3600 }) => {
-      const response = await clientesApi.obtenerDocumentoPresigned(clienteId, documentoId, { expiry });
+      const response = await clientesApi.obtenerDocumentoPresigned(
+        clienteId,
+        documentoId,
+        { expiry }
+      );
       return response.data.data;
     },
     onError: createCRUDErrorHandler('fetch', 'URL de descarga'),

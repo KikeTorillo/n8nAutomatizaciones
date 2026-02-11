@@ -20,7 +20,9 @@ import useSucursalStore, { selectGetSucursalId } from '@/store/sucursalStore';
  * 1. Si se proporciona sucursalId, usarlo
  * 2. Si no, obtener del store (sucursal activa)
  */
-export function useSucursalContext(sucursalId?: number | string | null): number | null {
+export function useSucursalContext(
+  sucursalId?: number | string | null
+): number | null {
   const getSucursalId = useSucursalStore(selectGetSucursalId);
   return (sucursalId as number) || getSucursalId();
 }
@@ -36,10 +38,16 @@ export function useSucursalContext(sucursalId?: number | string | null): number 
  *   useQuery({ queryKey: ['config', sucursalId], ... })
  * );
  */
-export function createSucursalContextHook<TReturn, TArgs extends unknown[] = []>(
-  hookFn: (sucursalId: number | null, ...args: TArgs) => TReturn,
+export function createSucursalContextHook<
+  TReturn,
+  TArgs extends unknown[] = [],
+>(
+  hookFn: (sucursalId: number | null, ...args: TArgs) => TReturn
 ): (sucursalIdParam?: number | string | null, ...args: TArgs) => TReturn {
-  return function useSucursalHook(sucursalIdParam?: number | string | null, ...args: TArgs): TReturn {
+  return function useSucursalHook(
+    sucursalIdParam?: number | string | null,
+    ...args: TArgs
+  ): TReturn {
     const sucursalId = useSucursalContext(sucursalIdParam);
     return hookFn(sucursalId, ...args);
   };
@@ -55,12 +63,20 @@ export function createSucursalContextHook<TReturn, TArgs extends unknown[] = []>
  *   enabled: !!sucursalId,
  * }));
  */
-export function createSucursalQueryOptions<TOptions, TArgs extends unknown[] = []>(
-  createOptions: (sucursalId: number | null, ...args: TArgs) => TOptions,
+export function createSucursalQueryOptions<
+  TOptions,
+  TArgs extends unknown[] = [],
+>(
+  createOptions: (sucursalId: number | null, ...args: TArgs) => TOptions
 ): (sucursalIdParam?: number | string | null, ...args: TArgs) => TOptions {
-  return function getOptions(sucursalIdParam?: number | string | null, ...args: TArgs): TOptions {
-    const getSucursalId = useSucursalStore.getState().sucursalActiva?.id;
-    const sucursalId = (sucursalIdParam as number) || getSucursalId || null;
+  return function getOptions(
+    sucursalIdParam?: number | string | null,
+    ...args: TArgs
+  ): TOptions {
+    const sucursalId =
+      (sucursalIdParam as number) ||
+      useSucursalStore.getState().getSucursalId() ||
+      null;
     return createOptions(sucursalId, ...args);
   };
 }

@@ -6,7 +6,7 @@ import { useAuthStore, selectUser } from '@/features/auth';
 import { useModulos } from '@/hooks/sistema';
 import { BackButton, Button, LimitProgressBar } from '@/components/ui';
 import CitasDelDia from '@/components/dashboard/CitasDelDia';
-import AlertasWidget from '@/pages/inventario/components/AlertasWidget';
+import { AlertasWidget } from '@/components/shared';
 import { useEstadisticasOrganizacion } from '@/hooks/otros';
 import { useCitasDelDia } from '@/hooks/agendamiento';
 import {
@@ -32,8 +32,11 @@ function Dashboard() {
   const { tieneInventario } = useModulos();
 
   // Queries de datos - Solo cargar si es admin
-  const { data: estadisticas, isLoading: loadingEstadisticas, error: errorEstadisticas } =
-    useEstadisticasOrganizacion({ enabled: esAdmin });
+  const {
+    data: estadisticas,
+    isLoading: loadingEstadisticas,
+    error: errorEstadisticas,
+  } = useEstadisticasOrganizacion({ enabled: esAdmin });
   const { data: citasDelDia, isLoading: loadingCitas } = useCitasDelDia();
 
   // Estadísticas de asignaciones servicio-profesional
@@ -59,7 +62,9 @@ function Dashboard() {
                   <BarChart3 className="w-5 h-5 text-primary-600 dark:text-primary-400" />
                 </div>
                 <div>
-                  <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Estadísticas</h1>
+                  <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                    Estadísticas
+                  </h1>
                   {estadisticas?.organizacion && (
                     <p className="text-xs text-gray-500 dark:text-gray-400">
                       {estadisticas.organizacion.nombre}
@@ -89,7 +94,8 @@ function Dashboard() {
                 Error al cargar estadísticas
               </h3>
               <p className="text-sm text-red-700 dark:text-red-300 mt-1">
-                {errorEstadisticas.message || 'Ocurrió un error al cargar los datos'}
+                {errorEstadisticas.message ||
+                  'Ocurrió un error al cargar los datos'}
               </p>
             </div>
           </div>
@@ -133,7 +139,9 @@ function Dashboard() {
                   label="Profesionales"
                   usado={estadisticas.uso_actual.profesionales.usado}
                   limite={estadisticas.uso_actual.profesionales.limite}
-                  porcentaje={estadisticas.uso_actual.profesionales.porcentaje_uso}
+                  porcentaje={
+                    estadisticas.uso_actual.profesionales.porcentaje_uso
+                  }
                 />
 
                 <LimitProgressBar
@@ -201,10 +209,16 @@ function Dashboard() {
                     <AlertTriangle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
                     <div className="flex-1">
                       <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
-                        Atención: {statsAsignaciones.servicios_sin_profesional} servicio{statsAsignaciones.servicios_sin_profesional !== 1 ? 's' : ''} sin profesionales asignados
+                        Atención: {statsAsignaciones.servicios_sin_profesional}{' '}
+                        servicio
+                        {statsAsignaciones.servicios_sin_profesional !== 1
+                          ? 's'
+                          : ''}{' '}
+                        sin profesionales asignados
                       </h3>
                       <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
-                        Asigna profesionales a estos servicios para poder crear citas con ellos.
+                        Asigna profesionales a estos servicios para poder crear
+                        citas con ellos.
                       </p>
                       <Button
                         size="sm"
@@ -226,10 +240,16 @@ function Dashboard() {
                     <AlertTriangle className="w-5 h-5 text-primary-600 dark:text-primary-400 flex-shrink-0 mt-0.5" />
                     <div className="flex-1">
                       <h3 className="text-sm font-medium text-primary-800 dark:text-primary-200">
-                        {statsAsignaciones.profesionales_sin_servicio} profesional{statsAsignaciones.profesionales_sin_servicio !== 1 ? 'es' : ''} sin servicios asignados
+                        {statsAsignaciones.profesionales_sin_servicio}{' '}
+                        profesional
+                        {statsAsignaciones.profesionales_sin_servicio !== 1
+                          ? 'es'
+                          : ''}{' '}
+                        sin servicios asignados
                       </h3>
                       <p className="text-sm text-primary-700 dark:text-primary-300 mt-1">
-                        Asigna servicios a estos profesionales para que puedan atender citas.
+                        Asigna servicios a estos profesionales para que puedan
+                        atender citas.
                       </p>
                       <Button
                         size="sm"
@@ -246,21 +266,22 @@ function Dashboard() {
 
               {/* Todo en orden */}
               {statsAsignaciones.servicios_sin_profesional === 0 &&
-               statsAsignaciones.profesionales_sin_servicio === 0 && (
-                <div className="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg p-4">
-                  <div className="flex items-start gap-3">
-                    <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
-                    <div>
-                      <h3 className="text-sm font-medium text-green-800 dark:text-green-200">
-                        Todas las asignaciones están completas
-                      </h3>
-                      <p className="text-sm text-green-700 dark:text-green-300 mt-1">
-                        Todos los servicios y profesionales activos tienen asignaciones correctas.
-                      </p>
+                statsAsignaciones.profesionales_sin_servicio === 0 && (
+                  <div className="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg p-4">
+                    <div className="flex items-start gap-3">
+                      <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <h3 className="text-sm font-medium text-green-800 dark:text-green-200">
+                          Todas las asignaciones están completas
+                        </h3>
+                        <p className="text-sm text-green-700 dark:text-green-300 mt-1">
+                          Todos los servicios y profesionales activos tienen
+                          asignaciones correctas.
+                        </p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
+                )}
 
               {/* Resumen de estadísticas */}
               <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
@@ -268,26 +289,36 @@ function Dashboard() {
                   <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                     {statsAsignaciones.servicios_activos || 0}
                   </p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Servicios activos</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Servicios activos
+                  </p>
                 </div>
                 <div className="text-center">
                   <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                     {statsAsignaciones.profesionales_activos || 0}
                   </p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Profesionales activos</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Profesionales activos
+                  </p>
                 </div>
                 <div className="text-center">
                   <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                     {statsAsignaciones.total_asignaciones_activas || 0}
                   </p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Asignaciones activas</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Asignaciones activas
+                  </p>
                 </div>
                 <div className="text-center">
                   <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                    {((statsAsignaciones.total_asignaciones_activas || 0) /
-                      Math.max(1, (statsAsignaciones.servicios_activos || 0))).toFixed(1)}
+                    {(
+                      (statsAsignaciones.total_asignaciones_activas || 0) /
+                      Math.max(1, statsAsignaciones.servicios_activos || 0)
+                    ).toFixed(1)}
                   </p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Promedio prof./servicio</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Promedio prof./servicio
+                  </p>
                 </div>
               </div>
             </div>
@@ -297,7 +328,6 @@ function Dashboard() {
             </p>
           )}
         </div>
-
       </main>
     </div>
   );

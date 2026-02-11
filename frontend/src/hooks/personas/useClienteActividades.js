@@ -21,29 +21,84 @@ import { queryKeys } from '@/hooks/config';
 
 export const TIPOS_ACTIVIDAD = [
   { value: 'nota', label: 'Nota', icon: 'FileText', color: 'text-primary-500' },
-  { value: 'llamada', label: 'Llamada', icon: 'Phone', color: 'text-green-500' },
+  {
+    value: 'llamada',
+    label: 'Llamada',
+    icon: 'Phone',
+    color: 'text-green-500',
+  },
   { value: 'email', label: 'Email', icon: 'Mail', color: 'text-secondary-500' },
-  { value: 'tarea', label: 'Tarea', icon: 'CheckSquare', color: 'text-orange-500' },
-  { value: 'sistema', label: 'Sistema', icon: 'Settings', color: 'text-gray-500' },
+  {
+    value: 'tarea',
+    label: 'Tarea',
+    icon: 'CheckSquare',
+    color: 'text-orange-500',
+  },
+  {
+    value: 'sistema',
+    label: 'Sistema',
+    icon: 'Settings',
+    color: 'text-gray-500',
+  },
 ];
 
 export const TIPOS_TIMELINE = [
   ...TIPOS_ACTIVIDAD,
   { value: 'cita', label: 'Cita', icon: 'Calendar', color: 'text-primary-500' },
-  { value: 'venta', label: 'Venta', icon: 'ShoppingCart', color: 'text-emerald-500' },
+  {
+    value: 'venta',
+    label: 'Venta',
+    icon: 'ShoppingCart',
+    color: 'text-emerald-500',
+  },
 ];
 
 export const PRIORIDADES = [
-  { value: 'baja', label: 'Baja', color: 'text-gray-500', bgColor: 'bg-gray-100 dark:bg-gray-700' },
-  { value: 'normal', label: 'Normal', color: 'text-primary-500', bgColor: 'bg-primary-100 dark:bg-primary-900' },
-  { value: 'alta', label: 'Alta', color: 'text-orange-500', bgColor: 'bg-orange-100 dark:bg-orange-900' },
-  { value: 'urgente', label: 'Urgente', color: 'text-red-500', bgColor: 'bg-red-100 dark:bg-red-900' },
+  {
+    value: 'baja',
+    label: 'Baja',
+    color: 'text-gray-500',
+    bgColor: 'bg-gray-100 dark:bg-gray-700',
+  },
+  {
+    value: 'normal',
+    label: 'Normal',
+    color: 'text-primary-500',
+    bgColor: 'bg-primary-100 dark:bg-primary-900',
+  },
+  {
+    value: 'alta',
+    label: 'Alta',
+    color: 'text-orange-500',
+    bgColor: 'bg-orange-100 dark:bg-orange-900',
+  },
+  {
+    value: 'urgente',
+    label: 'Urgente',
+    color: 'text-red-500',
+    bgColor: 'bg-red-100 dark:bg-red-900',
+  },
 ];
 
 export const ESTADOS_TAREA = [
-  { value: 'pendiente', label: 'Pendiente', color: 'text-yellow-500', bgColor: 'bg-yellow-100 dark:bg-yellow-900' },
-  { value: 'completada', label: 'Completada', color: 'text-green-500', bgColor: 'bg-green-100 dark:bg-green-900' },
-  { value: 'cancelada', label: 'Cancelada', color: 'text-gray-500', bgColor: 'bg-gray-100 dark:bg-gray-700' },
+  {
+    value: 'pendiente',
+    label: 'Pendiente',
+    color: 'text-yellow-500',
+    bgColor: 'bg-yellow-100 dark:bg-yellow-900',
+  },
+  {
+    value: 'completada',
+    label: 'Completada',
+    color: 'text-green-500',
+    bgColor: 'bg-green-100 dark:bg-green-900',
+  },
+  {
+    value: 'cancelada',
+    label: 'Cancelada',
+    color: 'text-gray-500',
+    bgColor: 'bg-gray-100 dark:bg-gray-700',
+  },
 ];
 
 // ====================================================================
@@ -73,7 +128,7 @@ export function useActividadesCliente(clienteId, params = {}) {
  */
 export function useTimelineCliente(clienteId, params = {}) {
   return useQuery({
-    queryKey: ['cliente-timeline', clienteId, params],
+    queryKey: queryKeys.personas.clientes.timeline(clienteId, params),
     queryFn: async () => {
       const response = await clientesApi.obtenerTimeline(clienteId, params);
       return response.data.data;
@@ -88,9 +143,12 @@ export function useTimelineCliente(clienteId, params = {}) {
  */
 export function useActividad(clienteId, actividadId) {
   return useQuery({
-    queryKey: ['cliente-actividad', clienteId, actividadId],
+    queryKey: queryKeys.personas.clientes.actividad(clienteId, actividadId),
     queryFn: async () => {
-      const response = await clientesApi.obtenerActividad(clienteId, actividadId);
+      const response = await clientesApi.obtenerActividad(
+        clienteId,
+        actividadId
+      );
       return response.data.data;
     },
     enabled: !!clienteId && !!actividadId,
@@ -103,7 +161,7 @@ export function useActividad(clienteId, actividadId) {
  */
 export function useConteoActividades(clienteId) {
   return useQuery({
-    queryKey: ['cliente-actividades-conteo', clienteId],
+    queryKey: queryKeys.personas.clientes.actividadesConteo(clienteId),
     queryFn: async () => {
       const response = await clientesApi.contarActividades(clienteId);
       return response.data.data;
@@ -130,9 +188,20 @@ export function useCrearActividad() {
     },
     onSuccess: (data, variables) => {
       // Invalidar lista de actividades y timeline
-      queryClient.invalidateQueries({ queryKey: queryKeys.personas.clientes.actividades(variables.clienteId), refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['cliente-timeline', variables.clienteId], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['cliente-actividades-conteo', variables.clienteId], refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.personas.clientes.actividades(variables.clienteId),
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.personas.clientes.timeline(variables.clienteId),
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.personas.clientes.actividadesConteo(
+          variables.clienteId
+        ),
+        refetchType: 'active',
+      });
     },
     onError: createCRUDErrorHandler('create', 'Actividad'),
   });
@@ -146,14 +215,35 @@ export function useActualizarActividad() {
 
   return useMutation({
     mutationFn: async ({ clienteId, actividadId, data }) => {
-      const response = await clientesApi.actualizarActividad(clienteId, actividadId, data);
+      const response = await clientesApi.actualizarActividad(
+        clienteId,
+        actividadId,
+        data
+      );
       return response.data.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['cliente-actividad', variables.clienteId, variables.actividadId], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: queryKeys.personas.clientes.actividades(variables.clienteId), refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['cliente-timeline', variables.clienteId], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['cliente-actividades-conteo', variables.clienteId], refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.personas.clientes.actividad(
+          variables.clienteId,
+          variables.actividadId
+        ),
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.personas.clientes.actividades(variables.clienteId),
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.personas.clientes.timeline(variables.clienteId),
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.personas.clientes.actividadesConteo(
+          variables.clienteId
+        ),
+        refetchType: 'active',
+      });
     },
     onError: createCRUDErrorHandler('update', 'Actividad'),
   });
@@ -171,9 +261,20 @@ export function useEliminarActividad() {
       return { clienteId, actividadId };
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.personas.clientes.actividades(variables.clienteId), refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['cliente-timeline', variables.clienteId], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['cliente-actividades-conteo', variables.clienteId], refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.personas.clientes.actividades(variables.clienteId),
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.personas.clientes.timeline(variables.clienteId),
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.personas.clientes.actividadesConteo(
+          variables.clienteId
+        ),
+        refetchType: 'active',
+      });
     },
     onError: createCRUDErrorHandler('delete', 'Actividad'),
   });
@@ -191,10 +292,27 @@ export function useCompletarTarea() {
       return response.data.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['cliente-actividad', variables.clienteId, variables.actividadId], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: queryKeys.personas.clientes.actividades(variables.clienteId), refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['cliente-timeline', variables.clienteId], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['cliente-actividades-conteo', variables.clienteId], refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.personas.clientes.actividad(
+          variables.clienteId,
+          variables.actividadId
+        ),
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.personas.clientes.actividades(variables.clienteId),
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.personas.clientes.timeline(variables.clienteId),
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.personas.clientes.actividadesConteo(
+          variables.clienteId
+        ),
+        refetchType: 'active',
+      });
     },
     onError: createCRUDErrorHandler('update', 'Tarea'),
   });
@@ -208,21 +326,21 @@ export function useCompletarTarea() {
  * Obtener configuración de un tipo de actividad
  */
 export function getTipoActividad(tipo) {
-  return TIPOS_TIMELINE.find(t => t.value === tipo) || TIPOS_ACTIVIDAD[0];
+  return TIPOS_TIMELINE.find((t) => t.value === tipo) || TIPOS_ACTIVIDAD[0];
 }
 
 /**
  * Obtener configuración de prioridad
  */
 export function getPrioridad(prioridad) {
-  return PRIORIDADES.find(p => p.value === prioridad) || PRIORIDADES[1]; // Default: normal
+  return PRIORIDADES.find((p) => p.value === prioridad) || PRIORIDADES[1]; // Default: normal
 }
 
 /**
  * Obtener configuración de estado
  */
 export function getEstadoTarea(estado) {
-  return ESTADOS_TAREA.find(e => e.value === estado) || ESTADOS_TAREA[0];
+  return ESTADOS_TAREA.find((e) => e.value === estado) || ESTADOS_TAREA[0];
 }
 
 /**
@@ -240,7 +358,8 @@ export function formatRelativeDate(date) {
 
   if (diffMins < 1) return 'Hace un momento';
   if (diffMins < 60) return `Hace ${diffMins} minuto${diffMins > 1 ? 's' : ''}`;
-  if (diffHours < 24) return `Hace ${diffHours} hora${diffHours > 1 ? 's' : ''}`;
+  if (diffHours < 24)
+    return `Hace ${diffHours} hora${diffHours > 1 ? 's' : ''}`;
   if (diffDays < 7) return `Hace ${diffDays} día${diffDays > 1 ? 's' : ''}`;
 
   return then.toLocaleDateString('es-MX', {

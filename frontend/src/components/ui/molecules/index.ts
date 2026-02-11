@@ -29,7 +29,11 @@ export { RecordNavigation } from './RecordNavigation';
 export type { RecordNavigationProps } from './RecordNavigation';
 
 export { SkeletonTable, SkeletonCard, SkeletonList } from './SkeletonTable';
-export type { SkeletonTableProps, SkeletonCardProps, SkeletonListProps } from './SkeletonTable';
+export type {
+  SkeletonTableProps,
+  SkeletonCardProps,
+  SkeletonListProps,
+} from './SkeletonTable';
 
 export { Toast } from './Toast';
 export type { ToastProps } from './Toast';
@@ -58,7 +62,11 @@ export type { FilterChipProps } from './FilterChip';
 // NOTA: SearchFilterBar movido a organisms/ (Ene 2026) - compone múltiples molecules
 // CheckboxGroup — grupo presentacional de CheckboxField (devuelto a molecules Feb 2026)
 export { CheckboxGroup } from './CheckboxGroup';
-export type { CheckboxGroupProps, CheckboxGroupOption, CheckboxGroupLayout } from './CheckboxGroup';
+export type {
+  CheckboxGroupProps,
+  CheckboxGroupOption,
+  CheckboxGroupLayout,
+} from './CheckboxGroup';
 
 export { CheckboxField } from './CheckboxField';
 export type { CheckboxFieldProps } from './CheckboxField';
@@ -80,7 +88,12 @@ export type { DeleteConfirmDialogProps } from '../organisms/DeleteConfirmDialog'
 
 // Movido desde organisms/ (Feb 2026) - grid simple de StatCard molecules
 export { StatCardGrid } from './StatCardGrid';
-export type { StatCardGridProps, StatConfig, StatCardGridColumns, StatCardColor } from './StatCardGrid';
+export type {
+  StatCardGridProps,
+  StatConfig,
+  StatCardGridColumns,
+  StatCardColor,
+} from './StatCardGrid';
 
 // NOTA: FilterField movido a organisms/ por complejidad multi-tipo (Ene 2026)
 // Importar desde '@/components/ui/organisms' o '@/components/ui'
@@ -115,5 +128,9 @@ export type { FilterFieldProps } from './FilterField';
 
 export { FilterSection } from './FilterSection';
 export type { FilterSectionProps } from './FilterSection';
+
+// FileUpload — dropzone genérica con react-dropzone (Feb 2026)
+export { FileUpload } from './FileUpload';
+export type { FileUploadProps, SelectedFile } from './FileUpload';
 
 // NOTA: Card movido a atoms/ (Feb 2026) - contenedor genérico sin lógica compuesta

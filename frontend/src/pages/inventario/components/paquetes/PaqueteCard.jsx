@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { memo, useState } from 'react';
 import {
   Package,
   Box,
@@ -36,7 +36,7 @@ const ESTADOS_PAQUETE = {
  * @param {Function} onEnviar - Callback para marcar como enviado
  * @param {Function} onImprimir - Callback para imprimir etiqueta
  */
-function PaqueteCard({
+const PaqueteCard = memo(function PaqueteCard({
   paquete,
   onVerDetalle,
   onCerrar,
@@ -52,7 +52,8 @@ function PaqueteCard({
   const EstadoIcon = estado.icon;
 
   const tieneItems = (paquete.total_items || 0) > 0;
-  const tieneDimensiones = paquete.largo_cm && paquete.ancho_cm && paquete.alto_cm;
+  const tieneDimensiones =
+    paquete.largo_cm && paquete.ancho_cm && paquete.alto_cm;
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
@@ -60,8 +61,12 @@ function PaqueteCard({
       <div className="p-4">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
-            <div className={`p-2 rounded-lg bg-${estado.color}-100 dark:bg-${estado.color}-900/30`}>
-              <EstadoIcon className={`w-5 h-5 text-${estado.color}-600 dark:text-${estado.color}-400`} />
+            <div
+              className={`p-2 rounded-lg bg-${estado.color}-100 dark:bg-${estado.color}-900/30`}
+            >
+              <EstadoIcon
+                className={`w-5 h-5 text-${estado.color}-600 dark:text-${estado.color}-400`}
+              />
             </div>
             <div>
               <h3 className="font-semibold text-gray-900 dark:text-white">
@@ -101,7 +106,10 @@ function PaqueteCard({
                   <div className="py-1">
                     {onVerDetalle && (
                       <button
-                        onClick={() => { onVerDetalle(paquete); setMenuAbierto(false); }}
+                        onClick={() => {
+                          onVerDetalle(paquete);
+                          setMenuAbierto(false);
+                        }}
                         className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
                       >
                         Ver detalle
@@ -109,7 +117,10 @@ function PaqueteCard({
                     )}
                     {paquete.estado === 'abierto' && onCerrar && tieneItems && (
                       <button
-                        onClick={() => { onCerrar(paquete); setMenuAbierto(false); }}
+                        onClick={() => {
+                          onCerrar(paquete);
+                          setMenuAbierto(false);
+                        }}
                         className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
                       >
                         Cerrar paquete
@@ -117,37 +128,53 @@ function PaqueteCard({
                     )}
                     {paquete.estado === 'cerrado' && onEtiquetar && (
                       <button
-                        onClick={() => { onEtiquetar(paquete); setMenuAbierto(false); }}
+                        onClick={() => {
+                          onEtiquetar(paquete);
+                          setMenuAbierto(false);
+                        }}
                         className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
                       >
                         Etiquetar
                       </button>
                     )}
-                    {['cerrado', 'etiquetado'].includes(paquete.estado) && onEnviar && (
-                      <button
-                        onClick={() => { onEnviar(paquete); setMenuAbierto(false); }}
-                        className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
-                      >
-                        Marcar enviado
-                      </button>
-                    )}
-                    {['cerrado', 'etiquetado'].includes(paquete.estado) && onImprimir && (
-                      <button
-                        onClick={() => { onImprimir(paquete); setMenuAbierto(false); }}
-                        className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
-                      >
-                        <Printer className="w-3 h-3 inline mr-2" />
-                        Imprimir etiqueta
-                      </button>
-                    )}
-                    {paquete.estado !== 'enviado' && paquete.estado !== 'cancelado' && onCancelar && (
-                      <button
-                        onClick={() => { onCancelar(paquete); setMenuAbierto(false); }}
-                        className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
-                      >
-                        Cancelar
-                      </button>
-                    )}
+                    {['cerrado', 'etiquetado'].includes(paquete.estado) &&
+                      onEnviar && (
+                        <button
+                          onClick={() => {
+                            onEnviar(paquete);
+                            setMenuAbierto(false);
+                          }}
+                          className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
+                        >
+                          Marcar enviado
+                        </button>
+                      )}
+                    {['cerrado', 'etiquetado'].includes(paquete.estado) &&
+                      onImprimir && (
+                        <button
+                          onClick={() => {
+                            onImprimir(paquete);
+                            setMenuAbierto(false);
+                          }}
+                          className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
+                        >
+                          <Printer className="w-3 h-3 inline mr-2" />
+                          Imprimir etiqueta
+                        </button>
+                      )}
+                    {paquete.estado !== 'enviado' &&
+                      paquete.estado !== 'cancelado' &&
+                      onCancelar && (
+                        <button
+                          onClick={() => {
+                            onCancelar(paquete);
+                            setMenuAbierto(false);
+                          }}
+                          className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                        >
+                          Cancelar
+                        </button>
+                      )}
                   </div>
                 </div>
               </>
@@ -174,7 +201,9 @@ function PaqueteCard({
           {tieneDimensiones && (
             <div className="flex items-center gap-1">
               <Ruler className="w-4 h-4" />
-              <span>{paquete.largo_cm}x{paquete.ancho_cm}x{paquete.alto_cm} cm</span>
+              <span>
+                {paquete.largo_cm}x{paquete.ancho_cm}x{paquete.alto_cm} cm
+              </span>
             </div>
           )}
         </div>
@@ -182,7 +211,8 @@ function PaqueteCard({
         {/* Tracking */}
         {paquete.tracking_carrier && (
           <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-            Tracking: <span className="font-mono">{paquete.tracking_carrier}</span>
+            Tracking:{' '}
+            <span className="font-mono">{paquete.tracking_carrier}</span>
           </div>
         )}
       </div>
@@ -195,7 +225,11 @@ function PaqueteCard({
             className="w-full px-4 py-2 flex items-center justify-between text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700/50 border-t border-gray-200 dark:border-gray-700"
           >
             <span>Ver contenido ({paquete.items.length} productos)</span>
-            {expandido ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            {expandido ? (
+              <ChevronUp className="w-4 h-4" />
+            ) : (
+              <ChevronDown className="w-4 h-4" />
+            )}
           </button>
 
           {expandido && (
@@ -245,6 +279,6 @@ function PaqueteCard({
       )}
     </div>
   );
-}
+});
 
 export default PaqueteCard;

@@ -1,10 +1,13 @@
+import { memo } from 'react';
 import { Star, Calendar, Users, TrendingUp } from 'lucide-react';
 
 /**
  * Componente para mostrar estadísticas de un profesional
  * Muestra métricas clave como citas, calificación y clientes atendidos
  */
-function ProfesionalStatsCard({ profesional }) {
+const ProfesionalStatsCard = memo(function ProfesionalStatsCard({
+  profesional,
+}) {
   // Calcular estrellas para la calificación
   const calificacion = parseFloat(profesional.calificacion_promedio || 0);
   const estrellasLlenas = Math.floor(calificacion);
@@ -22,19 +25,25 @@ function ProfesionalStatsCard({ profesional }) {
         <div className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-100 dark:border-gray-700">
           <div className="flex items-center gap-2 mb-1">
             <Calendar className="w-4 h-4 text-primary-600 dark:text-primary-400" />
-            <span className="text-xs text-gray-600 dark:text-gray-400">Citas</span>
+            <span className="text-xs text-gray-600 dark:text-gray-400">
+              Citas
+            </span>
           </div>
           <p className="text-xl font-bold text-gray-900 dark:text-gray-100">
             {profesional.total_citas_completadas || 0}
           </p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">completadas</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            completadas
+          </p>
         </div>
 
         {/* Clientes Atendidos */}
         <div className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-100 dark:border-gray-700">
           <div className="flex items-center gap-2 mb-1">
             <Users className="w-4 h-4 text-green-600 dark:text-green-400" />
-            <span className="text-xs text-gray-600 dark:text-gray-400">Clientes</span>
+            <span className="text-xs text-gray-600 dark:text-gray-400">
+              Clientes
+            </span>
           </div>
           <p className="text-xl font-bold text-gray-900 dark:text-gray-100">
             {profesional.total_clientes_atendidos || 0}
@@ -46,7 +55,9 @@ function ProfesionalStatsCard({ profesional }) {
         <div className="col-span-2 bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-100 dark:border-gray-700">
           <div className="flex items-center gap-2 mb-2">
             <Star className="w-4 h-4 text-amber-500" />
-            <span className="text-xs text-gray-600 dark:text-gray-400">Calificación</span>
+            <span className="text-xs text-gray-600 dark:text-gray-400">
+              Calificación
+            </span>
           </div>
 
           <div className="flex items-center gap-2">
@@ -74,7 +85,10 @@ function ProfesionalStatsCard({ profesional }) {
                 } else {
                   // Estrella vacía
                   return (
-                    <Star key={index} className="w-4 h-4 text-gray-300 dark:text-gray-600" />
+                    <Star
+                      key={index}
+                      className="w-4 h-4 text-gray-300 dark:text-gray-600"
+                    />
                   );
                 }
               })}
@@ -85,7 +99,9 @@ function ProfesionalStatsCard({ profesional }) {
               <span className="text-lg font-bold text-gray-900 dark:text-gray-100">
                 {calificacion.toFixed(1)}
               </span>
-              <span className="text-xs text-gray-500 dark:text-gray-400">/5.0</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                /5.0
+              </span>
             </div>
           </div>
 
@@ -99,6 +115,6 @@ function ProfesionalStatsCard({ profesional }) {
       </div>
     </div>
   );
-}
+});
 
 export default ProfesionalStatsCard;

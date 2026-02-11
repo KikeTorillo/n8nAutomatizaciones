@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Phone, Mail, Calendar, Edit } from 'lucide-react';
 import { Button } from '@/components/ui';
@@ -7,7 +8,7 @@ import EtiquetasBadges from './EtiquetasBadges';
  * Componente Card individual de cliente
  * Para vistas de cuadrícula o destacados
  */
-function ClienteCard({ cliente }) {
+const ClienteCard = memo(function ClienteCard({ cliente }) {
   const navigate = useNavigate();
 
   return (
@@ -36,9 +37,10 @@ function ClienteCard({ cliente }) {
             <span
               className={`
                 inline-block mt-1 px-2 py-0.5 text-xs font-medium rounded-full
-                ${cliente.activo
-                  ? 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300'
-                  : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
+                ${
+                  cliente.activo
+                    ? 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
                 }
               `}
             >
@@ -51,7 +53,11 @@ function ClienteCard({ cliente }) {
       {/* Etiquetas (Fase 2 - Ene 2026) */}
       {cliente.etiquetas && cliente.etiquetas.length > 0 && (
         <div className="mb-4">
-          <EtiquetasBadges etiquetas={cliente.etiquetas} size="sm" maxVisible={3} />
+          <EtiquetasBadges
+            etiquetas={cliente.etiquetas}
+            size="sm"
+            maxVisible={3}
+          />
         </div>
       )}
 
@@ -115,6 +121,6 @@ function ClienteCard({ cliente }) {
       </div>
     </div>
   );
-}
+});
 
 export default ClienteCard;

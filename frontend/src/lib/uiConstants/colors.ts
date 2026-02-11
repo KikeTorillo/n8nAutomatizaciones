@@ -52,7 +52,7 @@ export const SEMANTIC_COLORS: Record<string, SemanticColorSet> = {
     border: 'border-primary-200 dark:border-primary-700',
     borderSolid: 'border-primary-500 dark:border-primary-400',
     icon: 'text-primary-600 dark:text-primary-400',
-    ring: 'focus:ring-primary-500',
+    ring: 'focus-visible:ring-primary-500',
     hover: 'hover:bg-primary-200 dark:hover:bg-primary-800/40',
     // Estados de selección/activación para tabs, listas, navegación
     selectedBg: 'bg-primary-600 text-white',
@@ -71,7 +71,7 @@ export const SEMANTIC_COLORS: Record<string, SemanticColorSet> = {
     border: 'border-green-200 dark:border-green-700',
     borderSolid: 'border-green-500 dark:border-green-400',
     icon: 'text-green-600 dark:text-green-400',
-    ring: 'focus:ring-green-500',
+    ring: 'focus-visible:ring-green-500',
     hover: 'hover:bg-green-200 dark:hover:bg-green-800/40',
   },
   warning: {
@@ -84,7 +84,7 @@ export const SEMANTIC_COLORS: Record<string, SemanticColorSet> = {
     border: 'border-amber-200 dark:border-amber-700',
     borderSolid: 'border-amber-500 dark:border-amber-400',
     icon: 'text-amber-600 dark:text-amber-400',
-    ring: 'focus:ring-amber-500',
+    ring: 'focus-visible:ring-amber-500',
     hover: 'hover:bg-amber-200 dark:hover:bg-amber-800/40',
   },
   danger: {
@@ -97,7 +97,7 @@ export const SEMANTIC_COLORS: Record<string, SemanticColorSet> = {
     border: 'border-red-200 dark:border-red-700',
     borderSolid: 'border-red-500 dark:border-red-400',
     icon: 'text-red-600 dark:text-red-400',
-    ring: 'focus:ring-red-500',
+    ring: 'focus-visible:ring-red-500',
     hover: 'hover:bg-red-200 dark:hover:bg-red-800/40',
   },
   info: {
@@ -110,7 +110,7 @@ export const SEMANTIC_COLORS: Record<string, SemanticColorSet> = {
     border: 'border-primary-200 dark:border-primary-700',
     borderSolid: 'border-primary-500 dark:border-primary-400',
     icon: 'text-primary-600 dark:text-primary-400',
-    ring: 'focus:ring-primary-500',
+    ring: 'focus-visible:ring-primary-500',
     hover: 'hover:bg-primary-200 dark:hover:bg-primary-800/40',
   },
   neutral: {
@@ -123,7 +123,7 @@ export const SEMANTIC_COLORS: Record<string, SemanticColorSet> = {
     border: 'border-gray-200 dark:border-gray-700',
     borderSolid: 'border-gray-500 dark:border-gray-400',
     icon: 'text-gray-600 dark:text-gray-400',
-    ring: 'focus:ring-gray-500',
+    ring: 'focus-visible:ring-gray-500',
     hover: 'hover:bg-gray-200 dark:hover:bg-gray-700',
   },
 };
@@ -155,12 +155,16 @@ export function getSemanticColor(color: string): SemanticColorSet {
  */
 export const BADGE_COLORS: Record<string, string> = {
   default: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
-  primary: 'bg-primary-100 text-primary-800 dark:bg-primary-900/40 dark:text-primary-300',
-  success: 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300',
-  warning: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300',
+  primary:
+    'bg-primary-100 text-primary-800 dark:bg-primary-900/40 dark:text-primary-300',
+  success:
+    'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300',
+  warning:
+    'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300',
   danger: 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300',
   info: 'bg-primary-100 text-primary-800 dark:bg-primary-900/40 dark:text-primary-300',
-  outline: 'bg-transparent border border-gray-300 text-gray-700 dark:border-gray-600 dark:text-gray-300',
+  outline:
+    'bg-transparent border border-gray-300 text-gray-700 dark:border-gray-600 dark:text-gray-300',
   ghost: 'bg-transparent text-gray-600 dark:text-gray-400',
 };
 // Alias para retrocompatibilidad
@@ -252,7 +256,8 @@ export const STATUS_COLORS: Record<string, string> = {
  * @param {string} status - Estado del registro
  * @returns {string} Clases de color para badge
  */
-export const getStatusColor = (status: string): string => STATUS_COLORS[status] || BADGE_COLORS.default;
+export const getStatusColor = (status: string): string =>
+  STATUS_COLORS[status] || BADGE_COLORS.default;
 
 /**
  * Colores temáticos para cards/secciones
@@ -306,7 +311,9 @@ export const CARD_THEME_COLORS = {
  * @param {string} color - Nombre del color
  * @returns {Object} Objeto con clases bg, text, border
  */
-export const getCardThemeColor = (color: string) => CARD_THEME_COLORS[color as keyof typeof CARD_THEME_COLORS] || CARD_THEME_COLORS.blue;
+export const getCardThemeColor = (color: string) =>
+  CARD_THEME_COLORS[color as keyof typeof CARD_THEME_COLORS] ||
+  CARD_THEME_COLORS.blue;
 
 /**
  * Colores para ToggleSwitch
@@ -321,10 +328,12 @@ export const TOGGLE_COLORS = {
  * Colores para SmartButtons (métricas/acciones en headers)
  */
 export const SMART_BUTTON_COLORS = {
-  primary: 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300',
+  primary:
+    'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300',
   blue: 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300',
   green: 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300',
-  yellow: 'bg-yellow-50 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300',
+  yellow:
+    'bg-yellow-50 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300',
   red: 'bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300',
   gray: 'bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300',
 } as const;

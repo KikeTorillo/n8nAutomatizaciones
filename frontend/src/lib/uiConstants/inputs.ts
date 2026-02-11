@@ -16,7 +16,8 @@ import { cn } from '@/lib/utils';
  */
 export const INPUT_BASE_CLASSES = {
   container: 'w-full border rounded-lg transition-colors',
-  focus: 'focus:outline-none focus:ring-2 focus:ring-offset-0',
+  focus:
+    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-0',
   disabled: 'disabled:opacity-50 disabled:cursor-not-allowed',
   bg: 'bg-white dark:bg-gray-800',
   text: 'text-gray-900 dark:text-gray-100',
@@ -27,8 +28,10 @@ export const INPUT_BASE_CLASSES = {
  * Estados de borde para inputs
  */
 export const INPUT_BORDER_STATES = {
-  default: 'border-gray-300 dark:border-gray-600 focus:border-primary-500 focus:ring-primary-500',
-  error: 'border-red-500 focus:border-red-500 focus:ring-red-500',
+  default:
+    'border-gray-300 dark:border-gray-600 focus-visible:border-primary-500 focus-visible:ring-primary-500',
+  error:
+    'border-red-500 focus-visible:border-red-500 focus-visible:ring-red-500',
 } as const;
 
 /**
