@@ -9,8 +9,8 @@ import {
   FILTER_GRID_LAYOUTS,
   getFilterToggleStyles,
 } from '@/lib/uiConstants';
-import { FilterSection, FilterCheckbox } from './FilterSection';
-import { FilterField } from '../FilterField';
+import { FilterSection, FilterCheckbox } from '../../molecules/FilterSection';
+import { FilterField } from '../../molecules/FilterField';
 import { SavedSearchList, type SavedSearch } from './SavedSearchList';
 import type { SelectOption } from '@/types/ui';
 

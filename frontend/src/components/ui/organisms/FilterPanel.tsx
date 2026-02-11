@@ -3,7 +3,7 @@ import { Filter, X, ChevronDown, ChevronUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '../atoms/Button';
 import { SearchInput } from './SearchInput';
-import { FilterField } from './FilterField';
+import { FilterField } from '../molecules/FilterField';
 import { useActiveFilters, type FilterConfigItem } from './filters/FilterPanelBase';
 import type { SelectOption } from '@/types/ui';
 

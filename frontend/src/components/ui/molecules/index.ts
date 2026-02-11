@@ -109,4 +109,11 @@ export type { SelectFieldProps } from './SelectField';
 export { TextareaField } from './TextareaField';
 export type { TextareaFieldProps } from './TextareaField';
 
+// Filtros — movidos desde organisms/ (Feb 2026) - componentes presentacionales simples
+export { FilterField } from './FilterField';
+export type { FilterFieldProps } from './FilterField';
+
+export { FilterSection } from './FilterSection';
+export type { FilterSectionProps } from './FilterSection';
+
 // NOTA: Card movido a atoms/ (Feb 2026) - contenedor genérico sin lógica compuesta

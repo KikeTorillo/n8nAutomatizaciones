@@ -39,8 +39,9 @@ export type {
 export { FilterPanel, FilterChips } from './FilterPanel';
 export type { FilterPanelProps, FilterChipsProps } from './FilterPanel';
 
-export { FilterField } from './FilterField';
-export type { FilterFieldProps } from './FilterField';
+// @deprecated Importar desde molecules/FilterField
+export { FilterField } from '../molecules/FilterField';
+export type { FilterFieldProps } from '../molecules/FilterField';
 
 export { StandardFilterGrid } from './StandardFilterGrid';
 export type { StandardFilterGridProps, FilterFieldConfig, FilterGridLayout } from './StandardFilterGrid';

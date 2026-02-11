@@ -3,9 +3,9 @@
  */
 export { AdvancedFilterPanel } from './AdvancedFilterPanel';
 export type { AdvancedFilterPanelProps, AdvancedFilterConfig } from './AdvancedFilterPanel';
-// NOTA: FilterChip está en molecules/FilterChip - importar desde allí directamente
-export { FilterSection, FilterCheckbox, FilterField } from './FilterSection';
-export type { FilterSectionProps } from './FilterSection';
+// NOTA: FilterSection y FilterField movidos a molecules/ (Feb 2026)
+export { FilterSection, FilterCheckbox, FilterField } from '../../molecules/FilterSection';
+export type { FilterSectionProps } from '../../molecules/FilterSection';
 export { SavedSearchList } from './SavedSearchList';
 export type { SavedSearchListProps, SavedSearch } from './SavedSearchList';
 export { SavedSearchModal } from './SavedSearchModal';

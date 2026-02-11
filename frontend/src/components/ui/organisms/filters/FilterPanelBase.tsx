@@ -10,7 +10,7 @@
  */
 import { useMemo, useCallback, memo, forwardRef, type ReactNode, type ComponentType } from 'react';
 import { cn } from '@/lib/utils';
-import { FilterField } from '../FilterField';
+import { FilterField } from '../../molecules/FilterField';
 import type { FilterFieldType } from '@/types/organisms';
 import type { SelectOption } from '@/types/ui';
 
@@ -122,7 +122,7 @@ export function useActiveFilters(
 // ============================================
 
 // Re-exportar FilterField unificado para compatibilidad con código existente
-export { FilterField } from '../FilterField';
+export { FilterField } from '../../molecules/FilterField';
 export { CheckboxField as FilterCheckboxInput } from '../../molecules/CheckboxField';
 
 // ============================================

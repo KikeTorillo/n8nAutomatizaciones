@@ -99,9 +99,8 @@ export {
 // FilterChip está en molecules (Ene 2026)
 export { FilterChip } from './molecules/FilterChip';
 
-// Campo de filtro unificado (movido a organisms/ Ene 2026)
-// NOTA: FilterSelectField, FilterDateField, FilterTextField eliminados - usar FilterField
-export { FilterField } from './organisms/FilterField';
+// Campo de filtro unificado (movido a molecules/ Feb 2026)
+export { FilterField } from './molecules/FilterField';
 
 // Header unificado para overlays (Feb 2026)
 export { OverlayHeader } from './molecules/OverlayHeader';

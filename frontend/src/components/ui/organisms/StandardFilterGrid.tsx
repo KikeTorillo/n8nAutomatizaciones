@@ -1,6 +1,6 @@
 import { memo, forwardRef, type ComponentType } from 'react';
 import { cn } from '@/lib/utils';
-import { FilterField } from './FilterField';
+import { FilterField } from '../molecules/FilterField';
 import { FILTER_GRID_LAYOUTS } from '@/lib/uiConstants';
 import type { FilterFieldType } from '@/types/organisms';
 import type { SelectOption } from '@/types/ui';

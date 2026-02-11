@@ -3,8 +3,8 @@ import { cn } from '@/lib/utils';
 import { FILTER_SECTION_TITLE } from '@/lib/uiConstants';
 
 // Re-exportar componentes unificados para compatibilidad
-export { FilterField } from '../FilterField';
-export { CheckboxField as FilterCheckbox } from '../../molecules/CheckboxField';
+export { FilterField } from './FilterField';
+export { CheckboxField as FilterCheckbox } from './CheckboxField';
 
 /**
  * Props del componente FilterSection
