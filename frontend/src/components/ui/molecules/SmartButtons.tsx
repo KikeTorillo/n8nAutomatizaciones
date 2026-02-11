@@ -1,6 +1,6 @@
 import { memo, forwardRef, type ComponentType } from 'react';
 import { cn } from '../lib/cn';
-import { SMART_BUTTON_COLORS } from '@/lib/uiConstants';
+import { SMART_BUTTON_COLORS } from '../constants';
 
 /** Colores disponibles para SmartButton */
 export type SmartButtonColor = keyof typeof SMART_BUTTON_COLORS;

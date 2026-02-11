@@ -9,7 +9,7 @@
  * Ene 2026 - Auditoría UI Components
  * ====================================================================
  */
-import { cn } from '@/lib/utils';
+import { cn } from '../lib/cn';
 
 /**
  * Clases base para todos los inputs

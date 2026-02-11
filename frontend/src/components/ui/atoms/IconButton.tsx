@@ -12,7 +12,7 @@ import {
   ICON_BUTTON_VARIANTS,
   ICON_BUTTON_SIZES,
   FOCUS_STATES,
-} from '@/lib/uiConstants';
+} from '../constants';
 
 type IconComponent = React.ComponentType<{ className?: string }>;
 

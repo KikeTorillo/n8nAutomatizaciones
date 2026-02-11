@@ -1,7 +1,7 @@
 import { memo, forwardRef, type ReactNode } from 'react';
 import { ChevronRight, Home } from 'lucide-react';
 import { cn } from '../lib/cn';
-import type { BreadcrumbItem } from '@/types/ui';
+import type { BreadcrumbItem } from '../types';
 
 export interface BreadcrumbProps {
   /** Array de items: { label, href?, icon? } */

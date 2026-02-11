@@ -12,9 +12,9 @@ import {
   FILTER_LABEL_STYLES,
   FILTER_CONTAINER_STYLES,
   FILTER_ICON_STYLES,
-} from '@/lib/uiConstants';
-import type { FilterFieldType } from '@/types/organisms';
-import type { SelectOption } from '@/types/ui';
+} from '../constants';
+import type { FilterFieldType } from '../types';
+import type { SelectOption } from '../types';
 
 /**
  * Props del componente FilterField

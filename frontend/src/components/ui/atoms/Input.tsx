@@ -11,8 +11,8 @@ import {
   INPUT_AFFIX,
   getInputPaddingStyles,
   getAriaDescribedBy,
-} from '@/lib/uiConstants';
-import type { FormSize } from '@/types/ui';
+} from '../constants';
+import type { FormSize } from '../types';
 
 export interface InputProps
   extends Omit<InputHTMLAttributes<HTMLInputElement>, 'size' | 'prefix'> {

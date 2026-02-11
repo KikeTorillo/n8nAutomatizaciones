@@ -5,8 +5,8 @@ import {
   SPINNER_SIZES,
   SEMANTIC_COLORS,
   getLoadingAriaLabel,
-} from '@/lib/uiConstants';
-import type { UISize } from '@/types/ui';
+} from '../constants';
+import type { UISize } from '../types';
 
 export interface LoadingSpinnerProps {
   /** Tamaño del spinner */

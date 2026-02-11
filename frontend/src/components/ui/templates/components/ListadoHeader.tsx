@@ -2,7 +2,7 @@ import { memo } from 'react';
 import { cn } from '../../lib/cn';
 import { Button } from '../../atoms/Button';
 import { Plus } from 'lucide-react';
-import { SEMANTIC_COLORS } from '@/lib/uiConstants';
+import { SEMANTIC_COLORS } from '../../constants';
 
 type LucideIcon = React.ComponentType<{ className?: string }>;
 

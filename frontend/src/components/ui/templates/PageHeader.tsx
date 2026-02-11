@@ -5,8 +5,8 @@ import { Badge } from '../atoms/Badge';
 import {
   PAGE_HEADER_STYLES,
   getPageHeaderIconColor,
-} from '@/lib/uiConstants/pageHeader';
-import type { BadgeVariantWithAliases } from '@/types/ui';
+} from '../constants/pageHeader';
+import type { BadgeVariantWithAliases } from '../types';
 
 type LucideIcon = React.ComponentType<{ className?: string }>;
 type PageHeaderIconColor =

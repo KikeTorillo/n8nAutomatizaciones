@@ -1,7 +1,7 @@
 import { memo, type ReactNode } from 'react';
 import { cn } from '../lib/cn';
 import { BackButton } from '../molecules/BackButton';
-import { SEMANTIC_COLORS } from '@/lib/uiConstants';
+import { SEMANTIC_COLORS } from '../constants';
 
 type LucideIcon = React.ComponentType<{ className?: string }>;
 

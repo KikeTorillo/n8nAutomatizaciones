@@ -1,7 +1,7 @@
 import { memo, forwardRef } from 'react';
 import { cn } from '../lib/cn';
-import { LOADING_STATES } from '@/lib/uiConstants';
-import type { SkeletonVariant } from '@/types/ui';
+import { LOADING_STATES } from '../constants';
+import type { SkeletonVariant } from '../types';
 
 export interface SkeletonStatCardProps {
   /** Variante visual del skeleton */

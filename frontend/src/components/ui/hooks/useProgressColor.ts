@@ -4,7 +4,7 @@ import {
   PROGRESS_TEXT_COLORS,
   PROGRESS_THRESHOLD_PRESETS,
   getProgressColorByThreshold,
-} from '../lib/progress';
+} from '../constants';
 
 type ProgressPreset = 'completion' | 'usage' | 'neutral';
 

@@ -13,7 +13,7 @@ import { cn } from '../lib/cn';
 import { Button } from '../atoms/Button';
 import { useClickOutsideRef } from '../hooks/useClickOutside';
 import { useEscapeKey } from '../hooks/useEscapeKey';
-import type { DropdownMenuItem, LucideIcon } from '@/types/ui';
+import type { DropdownMenuItem, LucideIcon } from '../types';
 
 export interface DropdownMenuProps {
   /** Elemento que dispara el dropdown (default: ícono de 3 puntos) */

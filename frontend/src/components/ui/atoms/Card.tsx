@@ -16,8 +16,8 @@ import {
   CARD_PADDING_STYLES,
   SURFACE_HOVER,
   FOCUS_STATES,
-} from '@/lib/uiConstants';
-import type { CardVariant, CardStatus, CardPadding } from '@/types/ui';
+} from '../constants';
+import type { CardVariant, CardStatus, CardPadding } from '../types';
 
 type CardElement = 'div' | 'article' | 'section' | 'aside';
 

@@ -15,7 +15,7 @@
  * ====================================================================
  */
 
-import { cn } from '@/lib/utils';
+import { cn } from '../lib/cn';
 
 // ==================== ESTILOS DE TABS ====================
 
@@ -50,7 +50,10 @@ export const TAB_STYLES = STATE_TAB_STYLES;
  * @returns {string} - Clases Tailwind
  */
 export function getStateTabStyles(isActive: boolean) {
-  return cn(STATE_TAB_STYLES.base, isActive ? STATE_TAB_STYLES.active : STATE_TAB_STYLES.inactive);
+  return cn(
+    STATE_TAB_STYLES.base,
+    isActive ? STATE_TAB_STYLES.active : STATE_TAB_STYLES.inactive
+  );
 }
 
 // ==================== ESTILOS DE COUNTS/BADGES ====================
@@ -60,8 +63,14 @@ export function getStateTabStyles(isActive: boolean) {
  */
 export const STATE_COUNT_STYLES = {
   base: cn('ml-1 px-2 py-0.5 text-xs rounded-full font-semibold'),
-  active: cn('bg-primary-200 dark:bg-primary-800', 'text-primary-800 dark:text-primary-200'),
-  inactive: cn('bg-red-100 dark:bg-red-900/30', 'text-red-600 dark:text-red-400'),
+  active: cn(
+    'bg-primary-200 dark:bg-primary-800',
+    'text-primary-800 dark:text-primary-200'
+  ),
+  inactive: cn(
+    'bg-red-100 dark:bg-red-900/30',
+    'text-red-600 dark:text-red-400'
+  ),
 } as const;
 
 // Alias para backward compatibility
@@ -74,7 +83,10 @@ export const COUNT_STYLES = STATE_COUNT_STYLES;
  * @returns {string} - Clases Tailwind
  */
 export function getStateCountStyles(isActive: boolean) {
-  return cn(STATE_COUNT_STYLES.base, isActive ? STATE_COUNT_STYLES.active : STATE_COUNT_STYLES.inactive);
+  return cn(
+    STATE_COUNT_STYLES.base,
+    isActive ? STATE_COUNT_STYLES.active : STATE_COUNT_STYLES.inactive
+  );
 }
 
 // ==================== ESTILOS DE DROPDOWN ITEMS ====================
@@ -108,11 +120,16 @@ export const DROPDOWN_ITEM_STYLES = STATE_DROPDOWN_ITEM_STYLES;
  * @param {boolean} [isDisabled=false] - Si el item está deshabilitado
  * @returns {string} - Clases Tailwind
  */
-export function getStateDropdownItemStyles(isActive: boolean, isDisabled = false) {
+export function getStateDropdownItemStyles(
+  isActive: boolean,
+  isDisabled = false
+) {
   return cn(
     STATE_DROPDOWN_ITEM_STYLES.base,
     isDisabled && STATE_DROPDOWN_ITEM_STYLES.disabled,
-    isActive ? STATE_DROPDOWN_ITEM_STYLES.active : STATE_DROPDOWN_ITEM_STYLES.inactive
+    isActive
+      ? STATE_DROPDOWN_ITEM_STYLES.active
+      : STATE_DROPDOWN_ITEM_STYLES.inactive
   );
 }
 

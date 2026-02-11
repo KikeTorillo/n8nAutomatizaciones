@@ -1,6 +1,6 @@
 import { memo, forwardRef, type ReactNode, type KeyboardEvent } from 'react';
 import { cn } from '../lib/cn';
-import { TOGGLE_SIZES, TOGGLE_COLORS } from '@/lib/uiConstants';
+import { TOGGLE_SIZES, TOGGLE_COLORS } from '../constants';
 import { Spinner } from '../atoms/Spinner';
 
 /** Tamaños soportados por ToggleSwitch */

@@ -4,8 +4,8 @@ import {
   RADIO_SIZE_CLASSES,
   getRadioStyles,
   getAriaDescribedBy,
-} from '@/lib/uiConstants';
-import type { FormSize } from '@/types/ui';
+} from '../constants';
+import type { FormSize } from '../types';
 
 export interface RadioProps
   extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type' | 'size'> {

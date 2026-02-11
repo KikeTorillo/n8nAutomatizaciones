@@ -19,8 +19,8 @@ import {
 } from 'react';
 import { cn } from '../../lib/cn';
 import { FilterField } from '../../molecules/FilterField';
-import type { FilterFieldType } from '@/types/organisms';
-import type { SelectOption } from '@/types/ui';
+import type { FilterFieldType } from '../../types';
+import type { SelectOption } from '../../types';
 
 // ============================================
 // ESTILOS COMPARTIDOS

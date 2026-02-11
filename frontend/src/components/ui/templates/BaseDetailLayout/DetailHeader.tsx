@@ -2,8 +2,8 @@ import { memo, type ReactNode } from 'react';
 import { cn } from '../../lib/cn';
 import { BackButton } from '../../molecules/BackButton';
 import { Badge } from '../../atoms/Badge';
-import { SEMANTIC_COLORS } from '@/lib/uiConstants';
-import type { BadgeVariantWithAliases } from '@/types/ui';
+import { SEMANTIC_COLORS } from '../../constants';
+import type { BadgeVariantWithAliases } from '../../types';
 
 type LucideIcon = React.ComponentType<{ className?: string }>;
 

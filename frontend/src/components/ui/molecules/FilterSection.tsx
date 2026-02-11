@@ -1,6 +1,6 @@
 import { memo, forwardRef, type ReactNode, type ComponentType } from 'react';
 import { cn } from '../lib/cn';
-import { FILTER_SECTION_TITLE } from '@/lib/uiConstants';
+import { FILTER_SECTION_TITLE } from '../constants';
 
 // Re-exportar componentes unificados para compatibilidad
 export { FilterField } from './FilterField';

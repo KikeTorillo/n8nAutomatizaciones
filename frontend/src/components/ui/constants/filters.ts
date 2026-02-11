@@ -9,7 +9,7 @@
  * ====================================================================
  */
 
-import { cn } from '@/lib/utils';
+import { cn } from '../lib/cn';
 
 // ============================================================
 // ESTILOS DE CAMPOS DE FILTRO (Filter*Field components)

@@ -1,9 +1,9 @@
 import { memo, forwardRef, type ComponentType } from 'react';
 import { cn } from '../lib/cn';
 import { FilterField } from '../molecules/FilterField';
-import { FILTER_GRID_LAYOUTS } from '@/lib/uiConstants';
-import type { FilterFieldType } from '@/types/organisms';
-import type { SelectOption } from '@/types/ui';
+import { FILTER_GRID_LAYOUTS } from '../constants';
+import type { FilterFieldType } from '../types';
+import type { SelectOption } from '../types';
 
 /**
  * Configuración de un campo de filtro

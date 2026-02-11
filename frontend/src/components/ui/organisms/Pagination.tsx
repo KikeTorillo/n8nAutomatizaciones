@@ -6,8 +6,8 @@ import {
   ChevronsRight,
 } from 'lucide-react';
 import { cn } from '../lib/cn';
-import { PAGINATION_SIZES, SEMANTIC_COLORS } from '@/lib/uiConstants';
-import type { PaginationInfo, PaginationSize } from '@/types/organisms';
+import { PAGINATION_SIZES, SEMANTIC_COLORS } from '../constants';
+import type { PaginationInfo, PaginationSize } from '../types';
 
 /**
  * Props del componente Pagination

@@ -1,6 +1,6 @@
 import { memo, forwardRef } from 'react';
 import { cn } from '../lib/cn';
-import { SEMANTIC_COLORS } from '@/lib/uiConstants';
+import { SEMANTIC_COLORS } from '../constants';
 
 const DIVIDER_COLORS = {
   horizontal: `border-t ${SEMANTIC_COLORS.neutral.border}`,

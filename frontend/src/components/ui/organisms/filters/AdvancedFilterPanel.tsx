@@ -14,11 +14,11 @@ import {
   FILTER_COUNT_BADGE,
   FILTER_GRID_LAYOUTS,
   getFilterToggleStyles,
-} from '@/lib/uiConstants';
+} from '../../constants';
 import { FilterSection, FilterCheckbox } from '../../molecules/FilterSection';
 import { FilterField } from '../../molecules/FilterField';
 import { SavedSearchList, type SavedSearch } from './SavedSearchList';
-import type { SelectOption } from '@/types/ui';
+import type { SelectOption } from '../../types';
 
 /**
  * Opción para checkbox-group

@@ -64,7 +64,8 @@ export const PAGE_HEADER_ICON_COLORS = {
  * @returns {Object} Objeto con clases bg e icon
  */
 export const getPageHeaderIconColor = (color: string) =>
-  PAGE_HEADER_ICON_COLORS[color as keyof typeof PAGE_HEADER_ICON_COLORS] || PAGE_HEADER_ICON_COLORS.primary;
+  PAGE_HEADER_ICON_COLORS[color as keyof typeof PAGE_HEADER_ICON_COLORS] ||
+  PAGE_HEADER_ICON_COLORS.primary;
 
 /**
  * Estilos base para PageHeader
@@ -79,7 +80,8 @@ export const PAGE_HEADER_STYLES = {
   title: 'text-2xl font-bold text-gray-900 dark:text-gray-100',
   subtitle: 'mt-1 text-sm text-gray-500 dark:text-gray-400',
   metadataContainer: 'mt-2 flex flex-wrap items-center gap-x-4 gap-y-1',
-  metadataItem: 'flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400',
+  metadataItem:
+    'flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400',
   metadataIcon: 'w-4 h-4',
   actionsContainer: 'flex items-center gap-2 flex-shrink-0',
 } as const;

@@ -1,7 +1,7 @@
 import { memo, forwardRef, useId, type ReactNode } from 'react';
 import { cn } from '../lib/cn';
 import { Radio } from '../atoms/Radio';
-import type { FormSize } from '@/types/ui';
+import type { FormSize } from '../types';
 
 export interface RadioOption {
   value: string;

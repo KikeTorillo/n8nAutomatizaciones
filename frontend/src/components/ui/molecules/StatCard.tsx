@@ -1,8 +1,8 @@
 import { memo, forwardRef, type KeyboardEvent } from 'react';
 import { cn } from '../lib/cn';
-import { ICON_BG_COLORS, SEMANTIC_COLORS } from '@/lib/uiConstants';
+import { ICON_BG_COLORS, SEMANTIC_COLORS } from '../constants';
 import { SkeletonStatCard } from './SkeletonStatCard';
-import type { StatCardVariant, StatCardTrend, LucideIcon } from '@/types/ui';
+import type { StatCardVariant, StatCardTrend, LucideIcon } from '../types';
 
 export interface StatCardProps {
   /** Icono de lucide-react */

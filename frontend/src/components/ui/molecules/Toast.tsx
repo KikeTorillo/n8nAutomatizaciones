@@ -1,11 +1,8 @@
 import { useEffect, memo, forwardRef } from 'react';
 import { X, CheckCircle, AlertCircle, Info, AlertTriangle } from 'lucide-react';
 import { cn } from '../lib/cn';
-import {
-  TOAST_EXTENDED_VARIANTS,
-  TOAST_CONTAINER_STYLES,
-} from '@/lib/uiConstants';
-import type { ToastType } from '@/types/ui';
+import { TOAST_EXTENDED_VARIANTS, TOAST_CONTAINER_STYLES } from '../constants';
+import type { ToastType } from '../types';
 
 export interface ToastProps {
   /** ID único del toast */

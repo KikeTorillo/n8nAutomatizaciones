@@ -38,7 +38,8 @@ export const EMPTY_STATE_SIZES = {
  * Estilos base para EmptyState
  */
 export const EMPTY_STATE_BASE = {
-  container: 'bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 text-center',
+  container:
+    'bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 text-center',
   icon: 'mx-auto mb-4 text-gray-400 dark:text-gray-500',
   title: 'font-semibold text-gray-900 dark:text-gray-100 mb-2',
   description: 'text-gray-600 dark:text-gray-400 mb-6',

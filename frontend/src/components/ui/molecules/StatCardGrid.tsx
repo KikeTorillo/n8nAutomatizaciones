@@ -1,7 +1,7 @@
 import { memo, forwardRef, type ComponentType } from 'react';
 import { cn } from '../lib/cn';
 import { StatCard } from './StatCard';
-import type { StatCardTrend } from '@/types/ui';
+import type { StatCardTrend } from '../types';
 
 /** Colores disponibles para StatCard */
 export type StatCardColor =

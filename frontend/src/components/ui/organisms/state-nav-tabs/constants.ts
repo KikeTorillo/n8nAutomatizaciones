@@ -1,10 +1,10 @@
 /**
  * Constantes y estilos para StateNavTabs
  *
- * Re-exporta desde uiConstants para backward compatibility.
- * Para nuevos usos, importar directamente desde '@/lib/uiConstants'.
+ * Re-exporta desde constants para backward compatibility.
+ * Para nuevos usos, importar directamente desde '../../constants'.
  *
- * @deprecated Importar desde '@/lib/uiConstants' en nuevos archivos
+ * @deprecated Importar desde '../../constants' en nuevos archivos
  */
 
 export {
@@ -17,4 +17,4 @@ export {
   STATE_NAV_CONTAINER_STYLES,
   STATE_DROPDOWN_MENU_STYLES,
   STATE_MOBILE_SELECTOR_STYLES,
-} from '@/lib/uiConstants/stateNavTabs';
+} from '../../constants/stateNavTabs';

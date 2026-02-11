@@ -12,20 +12,24 @@
 /**
  * Estilos del contenedor de tabs
  */
-export const TAB_CONTAINER_STYLES = 'border-b border-gray-200 dark:border-gray-700 mb-4' as const;
+export const TAB_CONTAINER_STYLES =
+  'border-b border-gray-200 dark:border-gray-700 mb-4' as const;
 
 /**
  * Estilos de navegación de tabs
  */
-export const TAB_NAV_STYLES = 'flex space-x-4 sm:space-x-8 overflow-x-auto scrollbar-hide' as const;
+export const TAB_NAV_STYLES =
+  'flex space-x-4 sm:space-x-8 overflow-x-auto scrollbar-hide' as const;
 
 /**
  * Estilos de botones de tab por estado
  */
 export const TAB_BUTTON_STYLES = {
   base: 'flex items-center gap-2 px-1 py-3 text-sm font-medium border-b-2 transition-colors duration-200 whitespace-nowrap',
-  active: 'border-primary-600 text-primary-600 dark:border-primary-400 dark:text-primary-400',
-  inactive: 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600',
+  active:
+    'border-primary-600 text-primary-600 dark:border-primary-400 dark:text-primary-400',
+  inactive:
+    'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600',
 } as const;
 
 /**

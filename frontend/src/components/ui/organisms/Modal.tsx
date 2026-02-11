@@ -1,10 +1,10 @@
 import { memo, useEffect, forwardRef, useId, type ReactNode } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import FocusTrap from 'focus-trap-react';
-import { MODAL_SIZES } from '@/lib/uiConstants';
+import { MODAL_SIZES } from '../constants';
 import { useEscapeKey } from '../hooks/useEscapeKey';
 import { OverlayHeader } from '../molecules/OverlayHeader';
-import type { ModalSize } from '@/types/organisms';
+import type { ModalSize } from '../types';
 
 /**
  * Props del componente Modal

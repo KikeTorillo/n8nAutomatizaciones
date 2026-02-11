@@ -16,7 +16,7 @@ import {
   useActiveFilters,
   type FilterConfigItem,
 } from './filters/FilterPanelBase';
-import type { SelectOption } from '@/types/ui';
+import type { SelectOption } from '../types';
 
 /**
  * Props del componente FilterPanel

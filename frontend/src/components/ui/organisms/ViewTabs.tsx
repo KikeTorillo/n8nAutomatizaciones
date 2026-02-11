@@ -11,8 +11,8 @@ import {
   TAB_NAV_STYLES,
   getTabButtonStyles,
   getTabIconStyles,
-} from '@/lib/uiConstants';
-import type { ViewTab, LucideIcon } from '@/types/ui';
+} from '../constants';
+import type { ViewTab, LucideIcon } from '../types';
 
 export interface ViewTabsProps {
   /** Configuración de tabs */

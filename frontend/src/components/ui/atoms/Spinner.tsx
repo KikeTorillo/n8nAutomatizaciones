@@ -1,7 +1,7 @@
 import { memo, forwardRef, type SVGProps } from 'react';
 import { cn } from '../lib/cn';
-import { ICON_SIZES } from '@/lib/uiConstants';
-import type { ExtendedSize } from '@/types/ui';
+import { ICON_SIZES } from '../constants';
+import type { ExtendedSize } from '../types';
 
 export interface SpinnerProps extends SVGProps<SVGSVGElement> {
   /** Tamaño del spinner */

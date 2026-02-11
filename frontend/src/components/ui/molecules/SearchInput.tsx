@@ -10,9 +10,9 @@ import {
 } from 'react';
 import { Search, X } from 'lucide-react';
 import { cn } from '../lib/cn';
-import { SEARCH_INPUT_SIZES, getInputBaseStyles } from '@/lib/uiConstants';
+import { SEARCH_INPUT_SIZES, getInputBaseStyles } from '../constants';
 import { useCombineRefs } from '../hooks/useCombineRefs';
-import type { Size } from '@/types/ui';
+import type { Size } from '../types';
 
 export interface SearchInputProps
   extends Omit<InputHTMLAttributes<HTMLInputElement>, 'size' | 'onChange'> {

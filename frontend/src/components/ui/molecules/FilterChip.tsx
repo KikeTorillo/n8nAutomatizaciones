@@ -1,8 +1,8 @@
 import { memo, forwardRef } from 'react';
 import { X } from 'lucide-react';
 import { cn } from '../lib/cn';
-import { BADGE_COLORS } from '@/lib/uiConstants';
-import type { FilterChipVariant } from '@/types/ui';
+import { BADGE_COLORS } from '../constants';
+import type { FilterChipVariant } from '../types';
 
 export interface FilterChipProps {
   /** Texto del chip (nombre del filtro) */

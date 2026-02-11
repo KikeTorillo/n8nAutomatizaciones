@@ -2,7 +2,7 @@ import { memo, forwardRef } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '../lib/cn';
 import { IconButton } from '../atoms/IconButton';
-import type { RecordNavigationSize } from '@/types/ui';
+import type { RecordNavigationSize } from '../types';
 
 export interface RecordNavigationProps {
   /** Índice actual (0-based) */

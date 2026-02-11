@@ -1,7 +1,7 @@
 import { forwardRef, memo, useId, type TextareaHTMLAttributes } from 'react';
 import { cn } from '../lib/cn';
-import { getTextareaStyles, getAriaDescribedBy } from '@/lib/uiConstants';
-import type { ResizeMode } from '@/types/ui';
+import { getTextareaStyles, getAriaDescribedBy } from '../constants';
+import type { ResizeMode } from '../types';
 
 export interface TextareaProps
   extends Omit<TextareaHTMLAttributes<HTMLTextAreaElement>, 'rows'> {

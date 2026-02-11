@@ -6,8 +6,8 @@ import {
   type HTMLAttributes,
 } from 'react';
 import { cn } from '../lib/cn';
-import { TEXT_SIZES } from '@/lib/uiConstants';
-import type { UISize } from '@/types/ui';
+import { TEXT_SIZES } from '../constants';
+import type { UISize } from '../types';
 
 type TextElement = 'h1' | 'h2' | 'h3' | 'h4' | 'p' | 'span';
 type TextWeight = 'normal' | 'medium' | 'semibold' | 'bold';

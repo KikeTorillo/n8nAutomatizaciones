@@ -23,7 +23,11 @@ export { Pagination } from './Pagination';
 export type { PaginationProps } from './Pagination';
 
 // DataTable
-export { DataTable, DataTableActions, DataTableActionButton } from './DataTable';
+export {
+  DataTable,
+  DataTableActions,
+  DataTableActionButton,
+} from './DataTable';
 export type {
   DataTableProps,
   DataTableColumn,
@@ -44,7 +48,11 @@ export { FilterField } from '../molecules/FilterField';
 export type { FilterFieldProps } from '../molecules/FilterField';
 
 export { StandardFilterGrid } from './StandardFilterGrid';
-export type { StandardFilterGridProps, FilterFieldConfig, FilterGridLayout } from './StandardFilterGrid';
+export type {
+  StandardFilterGridProps,
+  FilterFieldConfig,
+  FilterGridLayout,
+} from './StandardFilterGrid';
 
 // NOTA: StatCardGrid movido a molecules/ (Feb 2026) - grid simple de StatCard molecules
 
@@ -70,7 +78,11 @@ export { GenericNavTabs } from './GenericNavTabs';
 export type { GenericNavTabsProps } from './GenericNavTabs';
 
 export { MobileNavSelector } from './MobileNavSelector';
-export type { MobileNavSelectorProps, NavItem, NavGroup } from './MobileNavSelector';
+export type {
+  MobileNavSelectorProps,
+  NavItem,
+  NavGroup,
+} from './MobileNavSelector';
 
 export { NavDropdown } from './NavDropdown';
 export type { NavDropdownProps } from './NavDropdown';
@@ -87,7 +99,10 @@ export type {
 
 // Scanner
 export { BarcodeScanner } from './BarcodeScanner';
-export type { BarcodeScannerProps, BarcodeFormatPreset } from './BarcodeScanner';
+export type {
+  BarcodeScannerProps,
+  BarcodeFormatPreset,
+} from './BarcodeScanner';
 
 // Toast
 export { ToastContainer } from './ToastContainer';
@@ -136,8 +151,18 @@ export { CheckboxGroup } from '../molecules/CheckboxGroup';
 export type { CheckboxGroupProps } from '../molecules/CheckboxGroup';
 
 // Icon picker
-export { IconPicker, IconPickerCompact, ICONOS_MAP, CATEGORIAS_ICONOS, IconPickerButton } from './icon-picker';
-export type { IconPickerProps, IconPickerCompactProps, IconPickerButtonProps } from './icon-picker';
+export {
+  IconPicker,
+  IconPickerCompact,
+  ICONOS_MAP,
+  CATEGORIAS_ICONOS,
+  IconPickerButton,
+} from './icon-picker';
+export type {
+  IconPickerProps,
+  IconPickerCompactProps,
+  IconPickerButtonProps,
+} from './icon-picker';
 
 // NOTA: SmartButtons movido a molecules/ (Feb 2026) - grid presentacional
 
@@ -151,7 +176,10 @@ export type { SearchFilterBarProps } from './SearchFilterBar';
 
 // Acciones de fila
 export { StandardRowActions } from './StandardRowActions';
-export type { StandardRowActionsProps, ExtraAction } from './StandardRowActions';
+export type {
+  StandardRowActionsProps,
+  ExtraAction,
+} from './StandardRowActions';
 
 // Movidos desde molecules/ (Feb 2026) - complejidad justifica clasificación organism
 export { DropdownMenu } from './DropdownMenu';
@@ -164,8 +192,4 @@ export { ViewTabs } from './ViewTabs';
 export type { ViewTabsProps } from './ViewTabs';
 
 // Re-export tipos globales de organisms.d.ts
-export type {
-  ModalSize,
-  ConfirmDialogVariant,
-  PaginationInfo,
-} from '@/types/organisms';
+export type { ModalSize, ConfirmDialogVariant, PaginationInfo } from '../types';

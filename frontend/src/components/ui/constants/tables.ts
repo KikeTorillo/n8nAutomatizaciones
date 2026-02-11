@@ -44,22 +44,26 @@ export const TABLE_WIDTH_MAP = {
  * Estilos base para tablas
  */
 export const TABLE_BASE_STYLES = {
-  container: 'bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden',
+  container:
+    'bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden',
   wrapper: 'overflow-x-auto',
   table: 'min-w-full divide-y divide-gray-200 dark:divide-gray-700',
   thead: 'bg-gray-50 dark:bg-gray-900/50',
-  tbody: 'bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700',
+  tbody:
+    'bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700',
 } as const;
 
 /**
  * Estilos para celdas de header
  */
-export const TABLE_HEADER_CELL = 'px-4 sm:px-6 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider';
+export const TABLE_HEADER_CELL =
+  'px-4 sm:px-6 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider';
 
 /**
  * Estilos para celdas de body
  */
-export const TABLE_BODY_CELL = 'px-4 sm:px-6 py-4 text-sm text-gray-900 dark:text-gray-100';
+export const TABLE_BODY_CELL =
+  'px-4 sm:px-6 py-4 text-sm text-gray-900 dark:text-gray-100';
 
 /**
  * Estilos para filas

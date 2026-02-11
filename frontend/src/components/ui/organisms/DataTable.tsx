@@ -21,8 +21,8 @@ import {
   TABLE_BODY_CELL,
   TABLE_ROW_STYLES,
   FOCUS_STATES,
-} from '@/lib/uiConstants';
-import type { PaginationInfo } from '@/types/organisms';
+} from '../constants';
+import type { PaginationInfo } from '../types';
 
 /**
  * Alineación de columna

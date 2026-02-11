@@ -17,7 +17,8 @@ export const INTERACTIVE_STATES = {
   disabled: 'opacity-50 cursor-not-allowed',
   loading: 'opacity-70 cursor-wait',
   selected: 'ring-2 ring-primary-500 ring-offset-2 dark:ring-offset-gray-900',
-  focused: 'outline-none ring-2 ring-primary-500 ring-offset-2 dark:ring-offset-gray-900',
+  focused:
+    'outline-none ring-2 ring-primary-500 ring-offset-2 dark:ring-offset-gray-900',
 } as const;
 
 /**
@@ -60,7 +61,8 @@ export const VALIDATION_STATES = {
  */
 export const LOADING_STATES = {
   skeleton: 'animate-pulse bg-gray-200 dark:bg-gray-700 rounded',
-  shimmer: 'animate-shimmer bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700',
+  shimmer:
+    'animate-shimmer bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700',
   spinner: 'animate-spin',
 } as const;
 
@@ -79,8 +81,10 @@ export const VISIBILITY_STATES = {
  */
 export const FOCUS_STATES = {
   ring: 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900',
-  visible: 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
-  within: 'focus-within:ring-2 focus-within:ring-primary-500 focus-within:ring-offset-2',
+  visible:
+    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
+  within:
+    'focus-within:ring-2 focus-within:ring-primary-500 focus-within:ring-offset-2',
 } as const;
 
 /**
@@ -88,7 +92,8 @@ export const FOCUS_STATES = {
  */
 export const DRAG_STATES = {
   dragging: 'opacity-50 scale-105 shadow-lg z-50',
-  dropTarget: 'border-2 border-dashed border-primary-400 bg-primary-50 dark:bg-primary-900/20',
+  dropTarget:
+    'border-2 border-dashed border-primary-400 bg-primary-50 dark:bg-primary-900/20',
   dropOver: 'border-primary-500 bg-primary-100 dark:bg-primary-900/40',
 } as const;
 
@@ -97,8 +102,10 @@ export const DRAG_STATES = {
  */
 export const SELECTION_STATES = {
   unselected: 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800',
-  selected: 'border-primary-500 bg-primary-500 dark:border-primary-400 dark:bg-primary-400',
-  indeterminate: 'border-primary-500 bg-primary-500 dark:border-primary-400 dark:bg-primary-400',
+  selected:
+    'border-primary-500 bg-primary-500 dark:border-primary-400 dark:bg-primary-400',
+  indeterminate:
+    'border-primary-500 bg-primary-500 dark:border-primary-400 dark:bg-primary-400',
 } as const;
 
 /**

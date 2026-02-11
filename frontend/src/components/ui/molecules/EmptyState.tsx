@@ -2,8 +2,8 @@ import { memo, forwardRef, type ReactNode } from 'react';
 import { cn } from '../lib/cn';
 import { Inbox } from 'lucide-react';
 import { Button } from '../atoms/Button';
-import { EMPTY_STATE_SIZES, EMPTY_STATE_BASE } from '@/lib/uiConstants';
-import type { FormSize, ButtonVariant, LucideIcon } from '@/types/ui';
+import { EMPTY_STATE_SIZES, EMPTY_STATE_BASE } from '../constants';
+import type { FormSize, ButtonVariant, LucideIcon } from '../types';
 
 export interface EmptyStateProps {
   /** Icono de lucide-react (default: Inbox) */

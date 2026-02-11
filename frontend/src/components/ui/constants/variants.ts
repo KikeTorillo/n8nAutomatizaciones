@@ -11,7 +11,7 @@
  */
 
 import { BADGE_COLORS } from './colors';
-import type { ButtonVariant } from '@/types/ui';
+import type { ButtonVariant } from '../types';
 
 // ==================== INTERFACES ====================
 

@@ -139,7 +139,14 @@ export const ARIA_LABELS = {
  * getAriaDescribedBy('email', { hasError: true, hasHelper: true })
  * // => 'email-error email-helper'
  */
-export function getAriaDescribedBy(id: string, { hasError = false, hasHelper = false, hasHint = false }: { hasError?: boolean; hasHelper?: boolean; hasHint?: boolean } = {}) {
+export function getAriaDescribedBy(
+  id: string,
+  {
+    hasError = false,
+    hasHelper = false,
+    hasHint = false,
+  }: { hasError?: boolean; hasHelper?: boolean; hasHint?: boolean } = {}
+) {
   const ids = [];
   if (hasError) ids.push(`${id}-error`);
   if (hasHelper) ids.push(`${id}-helper`);
@@ -159,7 +166,11 @@ export function getAriaDescribedBy(id: string, { hasError = false, hasHelper = f
  * getCharCountAriaLabel('Descripción', 45, 200)
  * // => 'Descripción, 45 de 200 caracteres'
  */
-export function getCharCountAriaLabel(label: string, current: number, max: number) {
+export function getCharCountAriaLabel(
+  label: string,
+  current: number,
+  max: number
+) {
   return `${label}, ${current} de ${max} caracteres`;
 }
 
@@ -196,7 +207,13 @@ export function getLoadingAriaLabel(text?: string) {
  * @param {string} [errorMessage] - Mensaje de error opcional
  * @returns {string} - Label descriptivo
  */
-export function getValidationAriaLabel(fieldName: string, isValid: boolean, errorMessage?: string) {
+export function getValidationAriaLabel(
+  fieldName: string,
+  isValid: boolean,
+  errorMessage?: string
+) {
   if (isValid) return `${fieldName}, válido`;
-  return errorMessage ? `${fieldName}, error: ${errorMessage}` : `${fieldName}, inválido`;
+  return errorMessage
+    ? `${fieldName}, error: ${errorMessage}`
+    : `${fieldName}, inválido`;
 }

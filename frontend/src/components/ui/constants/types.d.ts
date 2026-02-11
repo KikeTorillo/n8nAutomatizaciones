@@ -132,10 +132,19 @@ export type GetAriaDescribedBy = (
 
 export type GetLoadingAriaLabel = (text?: string) => string;
 
-export type GetCheckboxStyles = (options: { disabled?: boolean; error?: boolean }) => string;
+export type GetCheckboxStyles = (options: {
+  disabled?: boolean;
+  error?: boolean;
+}) => string;
 
 export type GetSelectStyles = (hasError?: boolean) => string;
 
-export type GetTextareaStyles = (hasError?: boolean, resizable?: string) => string;
+export type GetTextareaStyles = (
+  hasError?: boolean,
+  resizable?: string
+) => string;
 
-export type GetInputPaddingStyles = (hasPrefix?: boolean, hasSuffix?: boolean) => string;
+export type GetInputPaddingStyles = (
+  hasPrefix?: boolean,
+  hasSuffix?: boolean
+) => string;

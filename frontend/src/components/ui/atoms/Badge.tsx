@@ -1,11 +1,7 @@
 import { memo, forwardRef, type ReactNode } from 'react';
 import { cn } from '../lib/cn';
-import {
-  BADGE_VARIANTS,
-  BADGE_SIZES,
-  normalizeVariant,
-} from '@/lib/uiConstants';
-import type { BadgeVariantWithAliases, UISize } from '@/types/ui';
+import { BADGE_VARIANTS, BADGE_SIZES, normalizeVariant } from '../constants';
+import type { BadgeVariantWithAliases, UISize } from '../types';
 
 export interface BadgeProps {
   /** Variante de color del badge */

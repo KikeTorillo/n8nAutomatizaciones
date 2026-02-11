@@ -1,9 +1,9 @@
 import { memo, forwardRef, type ReactNode } from 'react';
 import { AlertTriangle, Info, CheckCircle, XCircle } from 'lucide-react';
 import { cn } from '../lib/cn';
-import { ALERT_VARIANTS } from '@/lib/uiConstants';
+import { ALERT_VARIANTS } from '../constants';
 import { IconButton } from '../atoms/IconButton';
-import type { AlertVariant, LucideIcon } from '@/types/ui';
+import type { AlertVariant, LucideIcon } from '../types';
 
 // Mapeo de iconos por defecto según la variante
 const defaultIcons: Record<string, LucideIcon> = {

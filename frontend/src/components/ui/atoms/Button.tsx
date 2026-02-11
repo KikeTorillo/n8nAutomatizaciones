@@ -8,8 +8,8 @@ import {
 } from 'react';
 import { cn } from '../lib/cn';
 import { Loader2 } from 'lucide-react';
-import { BUTTON_VARIANTS, BUTTON_SIZES, FOCUS_STATES } from '@/lib/uiConstants';
-import type { ButtonVariant, ButtonType, UISize } from '@/types/ui';
+import { BUTTON_VARIANTS, BUTTON_SIZES, FOCUS_STATES } from '../constants';
+import type { ButtonVariant, ButtonType, UISize } from '../types';
 
 type IconComponent = React.ComponentType<{ className?: string }>;
 

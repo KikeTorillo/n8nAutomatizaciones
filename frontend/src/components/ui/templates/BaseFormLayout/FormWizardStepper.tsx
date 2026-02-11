@@ -1,7 +1,7 @@
 import { memo } from 'react';
 import { Check } from 'lucide-react';
 import { cn } from '../../lib/cn';
-import { SEMANTIC_COLORS } from '@/lib/uiConstants';
+import { SEMANTIC_COLORS } from '../../constants';
 
 export interface WizardStep {
   id: string;

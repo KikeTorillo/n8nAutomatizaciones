@@ -1,6 +1,6 @@
 import { memo, forwardRef } from 'react';
 import { cn } from '../lib/cn';
-import { PROGRESS_BAR_SIZES } from '../lib/progress';
+import { PROGRESS_BAR_SIZES } from '../constants';
 import { useProgressColor } from '../hooks/useProgressColor';
 
 type ProgressLayout = 'inline' | 'stacked';

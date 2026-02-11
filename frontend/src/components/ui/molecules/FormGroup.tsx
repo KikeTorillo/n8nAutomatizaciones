@@ -16,7 +16,7 @@ import {
 } from 'react';
 import { cn } from '../lib/cn';
 import { Label } from '../atoms/Label';
-import { FORM_GROUP } from '@/lib/uiConstants';
+import { FORM_GROUP } from '../constants';
 
 export interface FormGroupProps {
   /** Etiqueta del campo */

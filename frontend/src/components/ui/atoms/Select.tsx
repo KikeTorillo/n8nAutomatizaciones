@@ -11,8 +11,8 @@ import {
   SELECT_ARROW,
   SELECT_SIZE_CLASSES,
   getAriaDescribedBy,
-} from '@/lib/uiConstants';
-import type { FormSize, SelectOption } from '@/types/ui';
+} from '../constants';
+import type { FormSize, SelectOption } from '../types';
 
 export interface SelectProps
   extends Omit<SelectHTMLAttributes<HTMLSelectElement>, 'size'> {

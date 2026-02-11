@@ -1,7 +1,7 @@
 import { memo, forwardRef, useState } from 'react';
 import { cn } from '../lib/cn';
-import { AVATAR_SIZES } from '@/lib/uiConstants';
-import type { UISize } from '@/types/ui';
+import { AVATAR_SIZES } from '../constants';
+import type { UISize } from '../types';
 
 export interface AvatarProps {
   /** URL de la imagen */

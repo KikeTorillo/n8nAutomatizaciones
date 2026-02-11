@@ -1,6 +1,6 @@
 import { memo, forwardRef, type ReactNode } from 'react';
 import { cn } from '../lib/cn';
-import { LABEL_BASE, LABEL_REQUIRED, ARIA_LABELS } from '@/lib/uiConstants';
+import { LABEL_BASE, LABEL_REQUIRED, ARIA_LABELS } from '../constants';
 
 export interface LabelProps {
   /** Texto o nodo React para la etiqueta */

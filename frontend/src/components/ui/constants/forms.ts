@@ -12,7 +12,7 @@
  * ====================================================================
  */
 
-import { cn } from '@/lib/utils';
+import { cn } from '../lib/cn';
 
 // ==================== CHECKBOX ====================
 
@@ -77,12 +77,15 @@ export const SELECT_BASE = cn(
 );
 
 export const SELECT_STATES = {
-  default: 'border-gray-300 dark:border-gray-600 focus-visible:border-primary-500 focus-visible:ring-primary-500',
-  error: 'border-red-500 focus-visible:border-red-500 focus-visible:ring-red-500 dark:border-red-400 dark:focus-visible:border-red-400',
+  default:
+    'border-gray-300 dark:border-gray-600 focus-visible:border-primary-500 focus-visible:ring-primary-500',
+  error:
+    'border-red-500 focus-visible:border-red-500 focus-visible:ring-red-500 dark:border-red-400 dark:focus-visible:border-red-400',
 } as const;
 
 export const SELECT_ARROW = {
-  container: 'pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-700 dark:text-gray-300',
+  container:
+    'pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-700 dark:text-gray-300',
   icon: 'h-5 w-5',
 } as const;
 
@@ -93,7 +96,10 @@ export const SELECT_ARROW = {
  * @returns {string} - Clases Tailwind
  */
 export function getSelectStyles(hasError = false) {
-  return cn(SELECT_BASE, hasError ? SELECT_STATES.error : SELECT_STATES.default);
+  return cn(
+    SELECT_BASE,
+    hasError ? SELECT_STATES.error : SELECT_STATES.default
+  );
 }
 
 // ==================== TEXTAREA ====================
@@ -126,7 +132,10 @@ export const TEXTAREA_RESIZE = {
  * @param {'none'|'vertical'|'horizontal'|'both'} [resize='none'] - Modo de resize
  * @returns {string} - Clases Tailwind
  */
-export function getTextareaStyles(hasError = false, resize: keyof typeof TEXTAREA_RESIZE = 'none') {
+export function getTextareaStyles(
+  hasError = false,
+  resize: keyof typeof TEXTAREA_RESIZE = 'none'
+) {
   return cn(
     TEXTAREA_BASE,
     TEXTAREA_RESIZE[resize] || TEXTAREA_RESIZE.none,
@@ -136,7 +145,8 @@ export function getTextareaStyles(hasError = false, resize: keyof typeof TEXTARE
 
 // ==================== LABEL ====================
 
-export const LABEL_BASE = 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1';
+export const LABEL_BASE =
+  'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1';
 
 export const LABEL_REQUIRED = {
   asterisk: 'text-red-500 ml-1',

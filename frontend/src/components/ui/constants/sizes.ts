@@ -11,18 +11,18 @@
  * ====================================================================
  */
 
-import type { UISize } from '@/types/ui';
+import type { UISize } from '../types';
 
 /**
  * Alturas estandarizadas para elementos de formulario
  * Garantiza consistencia entre Button, Input, Select, SearchInput
  */
 export const FORM_ELEMENT_HEIGHTS: Record<UISize, string> = {
-  xs: 'h-7',   // 28px
-  sm: 'h-9',   // 36px
-  md: 'h-10',  // 40px
-  lg: 'h-12',  // 48px
-  xl: 'h-14',  // 56px
+  xs: 'h-7', // 28px
+  sm: 'h-9', // 36px
+  md: 'h-10', // 40px
+  lg: 'h-12', // 48px
+  xl: 'h-14', // 56px
 };
 
 /**
@@ -119,23 +119,24 @@ export const ICON_CONTAINER_SIZES: Record<'sm' | 'md' | 'lg' | 'xl', string> = {
  * Tamaños para modales (max-width)
  */
 export const MODAL_SIZES: Record<'sm' | 'md' | 'lg' | 'xl' | 'full', string> = {
-  sm: 'max-w-md',      // 448px
-  md: 'max-w-2xl',     // 672px
-  lg: 'max-w-4xl',     // 896px
-  xl: 'max-w-6xl',     // 1152px
+  sm: 'max-w-md', // 448px
+  md: 'max-w-2xl', // 672px
+  lg: 'max-w-4xl', // 896px
+  xl: 'max-w-6xl', // 1152px
   full: 'max-w-full',
 };
 
 /**
  * Tamaños para Drawer (max-height)
  */
-export const DRAWER_SIZES: Record<'sm' | 'md' | 'lg' | 'xl' | 'full', string> = {
-  sm: 'max-h-[50%]',
-  md: 'max-h-[75%]',
-  lg: 'max-h-[85%]',
-  xl: 'max-h-[96%]',
-  full: 'max-h-full',
-};
+export const DRAWER_SIZES: Record<'sm' | 'md' | 'lg' | 'xl' | 'full', string> =
+  {
+    sm: 'max-h-[50%]',
+    md: 'max-h-[75%]',
+    lg: 'max-h-[85%]',
+    xl: 'max-h-[96%]',
+    full: 'max-h-full',
+  };
 
 interface SearchInputSizeConfig {
   input: string;
@@ -148,7 +149,10 @@ interface SearchInputSizeConfig {
 /**
  * Tamaños para SearchInput
  */
-export const SEARCH_INPUT_SIZES: Record<'sm' | 'md' | 'lg', SearchInputSizeConfig> = {
+export const SEARCH_INPUT_SIZES: Record<
+  'sm' | 'md' | 'lg',
+  SearchInputSizeConfig
+> = {
   sm: {
     input: 'h-9 text-sm',
     icon: 'w-4 h-4',
@@ -175,7 +179,10 @@ export const SEARCH_INPUT_SIZES: Record<'sm' | 'md' | 'lg', SearchInputSizeConfi
 /**
  * Tamaños para IconButton (cuadrado)
  */
-export const ICON_BUTTON_SIZES: Record<'sm' | 'md' | 'lg', { button: string; icon: string }> = {
+export const ICON_BUTTON_SIZES: Record<
+  'sm' | 'md' | 'lg',
+  { button: string; icon: string }
+> = {
   sm: { button: 'h-8 w-8', icon: 'h-4 w-4' },
   md: { button: 'h-10 w-10', icon: 'h-5 w-5' },
   lg: { button: 'h-12 w-12', icon: 'h-6 w-6' },
@@ -190,7 +197,10 @@ interface PaginationSizeConfig {
 /**
  * Tamaños para Pagination
  */
-export const PAGINATION_SIZES: Record<'sm' | 'md' | 'lg', PaginationSizeConfig> = {
+export const PAGINATION_SIZES: Record<
+  'sm' | 'md' | 'lg',
+  PaginationSizeConfig
+> = {
   sm: {
     button: 'px-2 py-1 text-xs',
     icon: 'w-3 h-3',

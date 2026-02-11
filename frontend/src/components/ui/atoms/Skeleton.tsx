@@ -1,6 +1,6 @@
 import { memo } from 'react';
 import { cn } from '../lib/cn';
-import { LOADING_STATES } from '@/lib/uiConstants';
+import { LOADING_STATES } from '../constants';
 
 export interface SkeletonProps {
   /** Forma del skeleton */

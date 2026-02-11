@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { DropdownMenu } from '../organisms/DropdownMenu';
-import type { DropdownMenuItem } from '@/types/ui';
+import type { DropdownMenuItem } from '../types';
 
 const defaultItems: DropdownMenuItem[] = [
   { label: 'Editar', onClick: vi.fn() },

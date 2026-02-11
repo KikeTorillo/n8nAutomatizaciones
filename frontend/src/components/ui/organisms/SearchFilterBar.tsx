@@ -10,7 +10,7 @@ import { cn } from '../lib/cn';
 import { SearchInput } from './SearchInput';
 import { Button } from '../atoms/Button';
 import { Badge } from '../atoms/Badge';
-import type { Size } from '@/types/ui';
+import type { Size } from '../types';
 
 /**
  * Props del componente SearchFilterBar

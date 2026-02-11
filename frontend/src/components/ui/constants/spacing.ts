@@ -14,12 +14,12 @@
  * Clases de gap para flex/grid layouts
  */
 export const GAP = {
-  xs: 'gap-1',      // 4px
-  sm: 'gap-2',      // 8px
-  md: 'gap-3',      // 12px
-  lg: 'gap-4',      // 16px
-  xl: 'gap-6',      // 24px
-  '2xl': 'gap-8',   // 32px
+  xs: 'gap-1', // 4px
+  sm: 'gap-2', // 8px
+  md: 'gap-3', // 12px
+  lg: 'gap-4', // 16px
+  xl: 'gap-6', // 24px
+  '2xl': 'gap-8', // 32px
 } as const;
 
 /**
@@ -27,11 +27,11 @@ export const GAP = {
  */
 export const PADDING = {
   none: 'p-0',
-  xs: 'p-1',        // 4px
-  sm: 'p-2',        // 8px
-  md: 'p-4',        // 16px
-  lg: 'p-6',        // 24px
-  xl: 'p-8',        // 32px
+  xs: 'p-1', // 4px
+  sm: 'p-2', // 8px
+  md: 'p-4', // 16px
+  lg: 'p-6', // 24px
+  xl: 'p-8', // 32px
 } as const;
 
 /**
@@ -63,11 +63,11 @@ export const PADDING_Y = {
  */
 export const MARGIN = {
   none: 'm-0',
-  xs: 'm-1',        // 4px
-  sm: 'm-2',        // 8px
-  md: 'm-4',        // 16px
-  lg: 'm-6',        // 24px
-  xl: 'm-8',        // 32px
+  xs: 'm-1', // 4px
+  sm: 'm-2', // 8px
+  md: 'm-4', // 16px
+  lg: 'm-6', // 24px
+  xl: 'm-8', // 32px
 } as const;
 
 /**

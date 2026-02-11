@@ -1,6 +1,6 @@
 import { memo, forwardRef, type CSSProperties } from 'react';
 import { cn } from '../lib/cn';
-import type { SkeletonColumnWidth } from '@/types/ui';
+import type { SkeletonColumnWidth } from '../types';
 
 export interface SkeletonTableProps {
   /** Número de filas skeleton (default: 5) */

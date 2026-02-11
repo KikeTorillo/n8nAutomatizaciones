@@ -1,7 +1,7 @@
 import { memo, forwardRef, type ReactNode } from 'react';
 import { Drawer as VaulDrawer } from 'vaul';
 import { cn } from '../lib/cn';
-import { DRAWER_SIZES } from '@/lib/uiConstants';
+import { DRAWER_SIZES } from '../constants';
 import { OverlayHeader } from '../molecules/OverlayHeader';
 
 /**

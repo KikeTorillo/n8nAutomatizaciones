@@ -1,7 +1,7 @@
 import { memo, forwardRef } from 'react';
 import { Toast } from '@/components/ui';
 import { useToast } from '../hooks/useToast';
-import type { ToastType } from '@/types/ui';
+import type { ToastType } from '../types';
 
 /** Interface para un toast individual */
 interface ToastItem {
