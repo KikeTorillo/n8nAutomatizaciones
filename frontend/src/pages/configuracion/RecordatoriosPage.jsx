@@ -23,7 +23,7 @@ import {
   Settings,
   TestTube,
 } from 'lucide-react';
-import AgendamientoPageLayout from '@/components/shared/agendamiento/AgendamientoPageLayout';
+import AgendamientoPageLayout from '@/pages/citas/components/agendamiento/AgendamientoPageLayout';
 
 /**
  * Schema de validación para configuración
@@ -393,10 +393,14 @@ function RecordatoriosPage() {
             </p>
             <div className="flex items-center gap-4">
               <div>
-                <label className="text-sm text-gray-600 dark:text-gray-400">
+                <label
+                  htmlFor="hora_inicio"
+                  className="text-sm text-gray-600 dark:text-gray-400"
+                >
                   Desde
                 </label>
                 <input
+                  id="hora_inicio"
                   type="time"
                   {...register('hora_inicio')}
                   className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg mt-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
@@ -404,10 +408,14 @@ function RecordatoriosPage() {
               </div>
               <span className="text-gray-400 dark:text-gray-500 mt-6">-</span>
               <div>
-                <label className="text-sm text-gray-600 dark:text-gray-400">
+                <label
+                  htmlFor="hora_fin"
+                  className="text-sm text-gray-600 dark:text-gray-400"
+                >
                   Hasta
                 </label>
                 <input
+                  id="hora_fin"
                   type="time"
                   {...register('hora_fin')}
                   className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg mt-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"

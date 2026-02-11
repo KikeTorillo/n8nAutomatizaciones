@@ -3,6 +3,7 @@ import { X } from 'lucide-react';
 import { cn } from '../lib/cn';
 import { BADGE_COLORS } from '../constants';
 import type { FilterChipVariant } from '../types';
+import { useUIMessages } from '../providers';
 
 export interface FilterChipProps {
   /** Texto del chip (nombre del filtro) */
@@ -35,6 +36,8 @@ const FilterChip = memo(
     { label, value, onRemove, variant = 'primary', className },
     ref
   ) {
+    const messages = useUIMessages();
+
     const variants = {
       primary: cn(
         BADGE_COLORS.primary,
@@ -73,7 +76,7 @@ const FilterChip = memo(
               'hover:bg-primary-200 dark:hover:bg-primary-800',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1'
             )}
-            aria-label={`Quitar filtro ${label}`}
+            aria-label={`${messages.forms.removeFilter} ${label}`}
           >
             <X className="h-3.5 w-3.5" />
           </button>

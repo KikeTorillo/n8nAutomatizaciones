@@ -1,6 +1,7 @@
 import { memo, forwardRef } from 'react';
 import { Moon, Sun } from 'lucide-react';
 import { cn } from '../lib/cn';
+import { useUIMessages } from '../providers';
 
 /** Tamaños soportados por ThemeToggle */
 type ThemeToggleSize = 'sm' | 'md' | 'lg';
@@ -30,6 +31,7 @@ const ThemeToggle = memo(
     { isDark, onToggle, className, size = 'md' },
     ref
   ) {
+    const messages = useUIMessages();
     const sizes: Record<ThemeToggleSize, string> = {
       sm: 'p-1.5',
       md: 'p-2',
@@ -55,8 +57,10 @@ const ThemeToggle = memo(
           sizes[size],
           className
         )}
-        aria-label={isDark ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'}
-        title={isDark ? 'Tema claro' : 'Tema oscuro'}
+        aria-label={
+          isDark ? messages.theme.switchToLight : messages.theme.switchToDark
+        }
+        title={isDark ? messages.theme.light : messages.theme.dark}
       >
         {isDark ? (
           <Sun className={cn(iconSizes[size], 'transition-transform')} />

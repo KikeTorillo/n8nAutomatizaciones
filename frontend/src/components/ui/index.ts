@@ -19,6 +19,8 @@ export { Select } from './atoms/Select';
 export { Textarea } from './atoms/Textarea';
 export { Checkbox } from './atoms/Checkbox';
 export { Badge } from './atoms/Badge';
+export { PageLoader } from './atoms/PageLoader';
+/** @deprecated Usa PageLoader */
 export { LoadingSpinner } from './atoms/LoadingSpinner';
 export { Label } from './atoms/Label';
 export { Divider } from './atoms/Divider';
@@ -149,10 +151,19 @@ export { AsyncBoundary } from './templates/AsyncBoundary';
 export { PageHeader } from './templates/PageHeader';
 
 // ========== PROVIDERS ==========
-export { UILibraryProvider, useUILibraryRouter } from './providers';
+export {
+  UILibraryProvider,
+  useUILibraryRouter,
+  UILibraryMessagesProvider,
+  useUIMessages,
+  esMessages,
+  enMessages,
+} from './providers';
 export type {
   UILibraryRouterContext,
   UILibraryProviderProps,
+  UILibraryMessages,
+  UILibraryMessagesProviderProps,
 } from './providers';
 
 // ========== ERROR BOUNDARIES ==========

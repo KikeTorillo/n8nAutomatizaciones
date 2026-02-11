@@ -1,5 +1,6 @@
 import { memo, forwardRef } from 'react';
 import { ConfirmDialog } from './ConfirmDialog';
+import { useUIMessages } from '../providers';
 
 /**
  * Props del componente DeleteConfirmDialog
@@ -36,41 +37,48 @@ export interface DeleteConfirmDialogProps {
  * de eliminación, reduciendo código repetitivo.
  */
 const DeleteConfirmDialog = memo(
-  forwardRef<HTMLDivElement, DeleteConfirmDialogProps>(function DeleteConfirmDialog({
-  isOpen,
-  onClose,
-  onConfirm,
-  itemName,
-  itemType = 'elemento',
-  description,
-  isLoading = false,
-  title,
-  message,
-  confirmText = 'Eliminar',
-  cancelText = 'Cancelar',
-}, ref) {
-  // Generar título y mensaje automáticamente si no se proporcionan
-  const dialogTitle = title || 'Confirmar eliminación';
-  const dialogMessage =
-    message ||
-    `¿Estás seguro de eliminar ${itemType} "${itemName}"? Esta acción no se puede deshacer.${description ? ` ${description}` : ''}`;
+  forwardRef<HTMLDivElement, DeleteConfirmDialogProps>(
+    function DeleteConfirmDialog(
+      {
+        isOpen,
+        onClose,
+        onConfirm,
+        itemName,
+        itemType = 'elemento',
+        description,
+        isLoading = false,
+        title,
+        message,
+        confirmText,
+        cancelText,
+      },
+      ref
+    ) {
+      const messages = useUIMessages();
 
-  return (
-    <div ref={ref}>
-      <ConfirmDialog
-        isOpen={isOpen}
-        onClose={onClose}
-        onConfirm={onConfirm}
-        title={dialogTitle}
-        message={dialogMessage}
-        confirmText={confirmText}
-        cancelText={cancelText}
-        variant="danger"
-        isLoading={isLoading}
-      />
-    </div>
-  );
-  })
+      // Generar título y mensaje automáticamente si no se proporcionan
+      const dialogTitle = title || messages.crud.confirmDelete;
+      const dialogMessage =
+        message ||
+        `${messages.crud.deleteMessage} ${itemType} "${itemName}"? Esta acción no se puede deshacer.${description ? ` ${description}` : ''}`;
+
+      return (
+        <div ref={ref}>
+          <ConfirmDialog
+            isOpen={isOpen}
+            onClose={onClose}
+            onConfirm={onConfirm}
+            title={dialogTitle}
+            message={dialogMessage}
+            confirmText={confirmText ?? messages.actions.delete}
+            cancelText={cancelText ?? messages.actions.cancel}
+            variant="danger"
+            isLoading={isLoading}
+          />
+        </div>
+      );
+    }
+  )
 );
 
 DeleteConfirmDialog.displayName = 'DeleteConfirmDialog';

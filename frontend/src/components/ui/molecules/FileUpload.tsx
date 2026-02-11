@@ -14,6 +14,7 @@ import { Upload, AlertCircle } from 'lucide-react';
 import { cn } from '../lib/cn';
 import { formatFileSize } from '../lib/formatters';
 import { FOCUS_STATES, DRAG_STATES } from '../constants';
+import { useUIMessages } from '../providers';
 
 // ====================================================================
 // TYPES
@@ -130,6 +131,8 @@ const FileUpload = memo(
     },
     ref
   ) {
+    const messages = useUIMessages();
+
     // ------------------------------------------------------------------
     // Dropzone
     // ------------------------------------------------------------------
@@ -172,11 +175,11 @@ const FileUpload = memo(
       fileRejections.length > 0
         ? fileRejections[0].errors.map((e) => {
             if (e.code === 'file-too-large')
-              return `El archivo excede el limite de ${formatFileSize(maxSize)}`;
+              return `${messages.forms.fileTooLarge} ${formatFileSize(maxSize)}`;
             if (e.code === 'file-invalid-type')
-              return 'Tipo de archivo no permitido';
+              return messages.forms.invalidType;
             if (e.code === 'too-many-files')
-              return `Maximo ${maxFiles ?? 1} archivo${(maxFiles ?? 1) > 1 ? 's' : ''}`;
+              return `${messages.forms.maxFiles} ${maxFiles ?? 1} archivo${(maxFiles ?? 1) > 1 ? 's' : ''}`;
             return e.message;
           })[0]
         : null;
@@ -187,9 +190,8 @@ const FileUpload = memo(
     // Textos
     // ------------------------------------------------------------------
 
-    const idleText =
-      dropzoneText ?? 'Arrastra archivos o haz clic para seleccionar';
-    const activeText = dropzoneActiveText ?? 'Suelta los archivos aqui...';
+    const idleText = dropzoneText ?? messages.forms.dragDrop;
+    const activeText = dropzoneActiveText ?? messages.forms.dragActive;
     const extensionsText = getAcceptedExtensions(accept);
 
     // ------------------------------------------------------------------

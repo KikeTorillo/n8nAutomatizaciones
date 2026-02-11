@@ -5,6 +5,7 @@
  *
  * Hook para gestión de usuarios
  * Fase 5.2 - Diciembre 2025
+ * Feb 2026 - Migración a createCRUDHooks factory
  *
  * Modelo:
  * - Usuario = acceso al sistema
@@ -22,8 +23,8 @@ import {
 import { STALE_TIMES } from '@/app/queryClient';
 import { usuariosApi } from '@/services/api/endpoints';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
-import { sanitizeParams } from '@/lib/params';
 import { queryKeys } from '@/hooks/config';
+import { createCRUDHooks, createSanitizer } from '@/hooks/factories';
 import type {
   Usuario,
   RolUsuario,
@@ -72,7 +73,7 @@ interface UbicacionDisponible {
   [key: string]: unknown;
 }
 
-interface ListarUsuariosParams {
+export interface ListarUsuariosParams {
   rol?: RolUsuario;
   activo?: boolean;
   buscar?: string;
@@ -121,11 +122,6 @@ interface VincularProfesionalResult {
   profesional_anterior?: number;
 }
 
-interface ActualizarUsuarioParams {
-  id: number;
-  data: ActualizarUsuarioData;
-}
-
 interface AsignarUbicacionParams {
   usuarioId: number;
   data: {
@@ -152,37 +148,53 @@ interface DesasignarUbicacionParams {
 }
 
 // ====================================================================
-// QUERIES
+// FACTORY CRUD - Feb 2026
 // ====================================================================
 
-export function useUsuarios(params: ListarUsuariosParams = {}) {
-  return useQuery({
-    queryKey: queryKeys.personas.usuarios.list(params),
-    queryFn: async () => {
-      const response = await usuariosApi.listarConFiltros(
-        sanitizeParams(params)
-      );
-      // Backend retorna: { success, data: { data: [...], pagination, resumen } }
-      return (response as unknown as AxiosApiResponse<UsuarioListData>).data
-        .data;
-    },
-    staleTime: STALE_TIMES.SEMI_STATIC, // 5 minutos
-  });
-}
+// Sanitizador para datos de usuario
+const sanitizeUsuario = createSanitizer([
+  'nombre',
+  'apellidos',
+  'email',
+  'telefono',
+  { name: 'profesional_id', type: 'id' },
+]);
 
-export function useUsuario(
-  id: number | undefined | null
-): UseQueryResult<Usuario> {
-  return useQuery({
-    queryKey: queryKeys.personas.usuarios.detail(id),
-    queryFn: async () => {
-      const response = await usuariosApi.obtener(id!);
-      return (response as AxiosApiResponse<Usuario>).data.data;
-    },
-    enabled: !!id,
-    staleTime: STALE_TIMES.SEMI_STATIC,
-  });
-}
+const usuariosCRUD = createCRUDHooks<
+  UsuarioListData, // TEntity (list retorna UsuarioListData)
+  CrearUsuarioData, // TCreate
+  ActualizarUsuarioData // TUpdate
+>({
+  name: 'usuario',
+  namePlural: 'usuarios',
+  api: usuariosApi,
+  baseKey: 'usuarios',
+  apiMethods: {
+    list: 'listarConFiltros',
+    get: 'obtener',
+    create: 'crearDirecto',
+    update: 'actualizar',
+    delete: 'actualizar', // dummy, no se usa
+  },
+  invalidateOnCreate: ['usuarios', 'profesionales-sin-usuario'],
+  invalidateOnUpdate: ['usuarios'],
+  sanitize: sanitizeUsuario as (data: unknown) => unknown,
+  errorMessages: {
+    create: { 409: 'Ya existe un usuario con ese email' },
+  },
+  staleTime: STALE_TIMES.SEMI_STATIC,
+});
+
+// ====================================================================
+// QUERIES CRUD - Re-exports desde factory
+// ====================================================================
+
+export const useUsuarios = usuariosCRUD.useList;
+export const useUsuario = usuariosCRUD.useDetail;
+
+// ====================================================================
+// QUERIES ESPECIALIZADAS
+// ====================================================================
 
 export function useProfesionalesSinUsuario(): UseQueryResult<
   ProfesionalSinUsuario[]
@@ -215,43 +227,15 @@ export function useUsuariosSinProfesional(): UseQueryResult<
 }
 
 // ====================================================================
-// MUTATIONS
+// MUTATIONS CRUD - Re-exports desde factory
 // ====================================================================
 
-export function useCrearUsuarioDirecto(): UseMutationResult<
-  Usuario,
-  Error,
-  CrearUsuarioData
-> {
-  const queryClient = useQueryClient();
+export const useCrearUsuarioDirecto = usuariosCRUD.useCreate;
+export const useActualizarUsuario = usuariosCRUD.useUpdate;
 
-  return useMutation({
-    mutationFn: async (data: CrearUsuarioData) => {
-      // Sanitizar campos opcionales vacíos
-      const sanitized = {
-        ...data,
-        apellidos: data.apellidos?.trim() || undefined,
-        telefono: data.telefono?.trim() || undefined,
-        profesional_id: data.profesional_id || undefined,
-      };
-      const response = await usuariosApi.crearDirecto(sanitized);
-      return (response as AxiosApiResponse<Usuario>).data.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.personas.usuarios.all,
-        refetchType: 'active',
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.personas.usuarios.profesionalesSinUsuario,
-        refetchType: 'active',
-      });
-    },
-    onError: createCRUDErrorHandler('create', 'Usuario', {
-      409: 'Ya existe un usuario con ese email',
-    }),
-  });
-}
+// ====================================================================
+// MUTATIONS ESPECIALIZADAS
+// ====================================================================
 
 export function useCambiarEstadoUsuario() {
   const queryClient = useQueryClient();
@@ -358,37 +342,6 @@ export function useVincularProfesionalAUsuario() {
     onError: createCRUDErrorHandler('update', 'Usuario', {
       409: 'El profesional ya está vinculado a otro usuario',
     }),
-  });
-}
-
-export function useActualizarUsuario(): UseMutationResult<
-  Usuario,
-  Error,
-  ActualizarUsuarioParams
-> {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ id, data }: ActualizarUsuarioParams) => {
-      const sanitized = {
-        ...data,
-        apellidos: data.apellidos?.trim() || undefined,
-        telefono: data.telefono?.trim() || undefined,
-      };
-      const response = await usuariosApi.actualizar(id, sanitized);
-      return (response as AxiosApiResponse<Usuario>).data.data;
-    },
-    onSuccess: (data: Usuario) => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.personas.usuarios.all,
-        refetchType: 'active',
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.personas.usuarios.detail(data.id),
-        refetchType: 'active',
-      });
-    },
-    onError: createCRUDErrorHandler('update', 'Usuario'),
   });
 }
 

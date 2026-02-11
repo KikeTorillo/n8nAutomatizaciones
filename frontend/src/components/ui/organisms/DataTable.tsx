@@ -12,6 +12,7 @@ import { SkeletonTable } from '../molecules/SkeletonTable';
 import { EmptyState } from '../molecules/EmptyState';
 import { Pagination } from './Pagination';
 import { Inbox } from 'lucide-react';
+import { useUIMessages } from '../providers';
 import {
   TABLE_ALIGN_CLASSES,
   TABLE_WIDTH_CLASSES,
@@ -125,6 +126,8 @@ function DataTableComponent<T = Record<string, unknown>>(
   }: DataTableProps<T>,
   ref: React.ForwardedRef<HTMLDivElement>
 ) {
+  const messages = useUIMessages();
+
   // Calcular anchos de columna para skeleton
   const columnWidths = useMemo(() => {
     return columns.map(
@@ -164,7 +167,7 @@ function DataTableComponent<T = Record<string, unknown>>(
       <div ref={ref} className={className}>
         <EmptyState
           icon={emptyState.icon || Inbox}
-          title={emptyState.title || 'No hay datos'}
+          title={emptyState.title || messages.states.empty}
           description={emptyState.description}
           actionLabel={emptyState.actionLabel}
           onAction={emptyState.onAction}

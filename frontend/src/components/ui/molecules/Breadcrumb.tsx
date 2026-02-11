@@ -2,6 +2,7 @@ import { memo, forwardRef, type ReactNode } from 'react';
 import { ChevronRight, Home } from 'lucide-react';
 import { cn } from '../lib/cn';
 import type { BreadcrumbItem } from '../types';
+import { useUIMessages } from '../providers';
 
 export interface BreadcrumbProps {
   /** Array de items: { label, href?, icon? } */
@@ -41,6 +42,8 @@ export const Breadcrumb = memo(
     { items = [], className, homeLink = false, renderLink = defaultRenderLink },
     ref
   ) {
+    const messages = useUIMessages();
+
     if (!items.length && !homeLink) return null;
 
     const linkClass =
@@ -59,7 +62,12 @@ export const Breadcrumb = memo(
                 {renderLink({
                   to: '/home',
                   className: `${linkClass} p-1 -m-1`,
-                  children: <Home className="h-4 w-4" aria-label="Inicio" />,
+                  children: (
+                    <Home
+                      className="h-4 w-4"
+                      aria-label={messages.breadcrumb.home}
+                    />
+                  ),
                 })}
               </li>
               {items.length > 0 && (

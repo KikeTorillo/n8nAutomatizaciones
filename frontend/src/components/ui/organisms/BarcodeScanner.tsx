@@ -1,6 +1,7 @@
 import { memo, useEffect, useId, forwardRef } from 'react';
 import { X, Camera, CameraOff, RotateCcw } from 'lucide-react';
 import { useBarcodeScanner, FORMAT_PRESETS } from '../hooks/useBarcodeScanner';
+import { useUIMessages } from '../providers';
 
 /** Cámara disponible */
 interface CameraDevice {
@@ -67,8 +68,8 @@ const BarcodeScanner = memo(
       onScan,
       onClose,
       onError,
-      title = 'Escanear Código',
-      subtitle = 'Apunta la cámara al código de barras o QR',
+      title,
+      subtitle,
       formats = 'INVENTARIO',
       showLastScan = true,
       showCameraSwitch = true,
@@ -78,8 +79,12 @@ const BarcodeScanner = memo(
     },
     ref
   ) {
+    const messages = useUIMessages();
     const scannerId = useId().replace(/:/g, '-');
     const elementId = `scanner-${scannerId}`;
+
+    const displayTitle = title || messages.scanner.title;
+    const displaySubtitle = subtitle || messages.scanner.subtitle;
 
     const formatPreset =
       typeof formats === 'string'
@@ -144,8 +149,10 @@ const BarcodeScanner = memo(
         <div className="absolute top-0 left-0 right-0 z-10 bg-gradient-to-b from-black/80 to-transparent p-4">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-white font-semibold text-lg">{title}</h3>
-              <p className="text-white/70 text-sm">{subtitle}</p>
+              <h3 className="text-white font-semibold text-lg">
+                {displayTitle}
+              </h3>
+              <p className="text-white/70 text-sm">{displaySubtitle}</p>
             </div>
             {onClose && (
               <button
@@ -196,7 +203,7 @@ const BarcodeScanner = memo(
                   className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 flex items-center gap-2 mx-auto"
                 >
                   <RotateCcw className="w-4 h-4" />
-                  Reintentar
+                  {messages.actions.retry}
                 </button>
               </div>
             </div>
@@ -207,7 +214,9 @@ const BarcodeScanner = memo(
             <div className="absolute inset-0 flex items-center justify-center bg-black">
               <div className="text-center">
                 <Camera className="w-12 h-12 text-white/50 mx-auto mb-3 animate-pulse" />
-                <p className="text-white/70">Iniciando cámara...</p>
+                <p className="text-white/70">
+                  {messages.scanner.startingCamera}
+                </p>
               </div>
             </div>
           )}
@@ -221,7 +230,7 @@ const BarcodeScanner = memo(
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
                 <span className="text-green-400 text-sm font-medium">
-                  Último escaneo:
+                  {messages.scanner.lastScan}
                 </span>
               </div>
               <p className="text-white font-mono text-lg mt-1">
@@ -247,12 +256,12 @@ const BarcodeScanner = memo(
               {isActive ? (
                 <>
                   <CameraOff className="w-5 h-5" />
-                  Detener
+                  {messages.actions.stop}
                 </>
               ) : (
                 <>
                   <Camera className="w-5 h-5" />
-                  Iniciar
+                  {messages.actions.start}
                 </>
               )}
             </button>

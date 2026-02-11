@@ -14,6 +14,7 @@ import { Button } from '../atoms/Button';
 import { useClickOutsideRef } from '../hooks/useClickOutside';
 import { useEscapeKey } from '../hooks/useEscapeKey';
 import type { DropdownMenuItem, LucideIcon } from '../types';
+import { useUIMessages } from '../providers';
 
 export interface DropdownMenuProps {
   /** Elemento que dispara el dropdown (default: ícono de 3 puntos) */
@@ -67,6 +68,7 @@ const DropdownMenu = memo(
     },
     ref
   ) {
+    const messages = useUIMessages();
     const [internalIsOpen, setInternalIsOpen] = useState(false);
     const [focusedIndex, setFocusedIndex] = useState(-1);
     const dropdownRef = useRef<HTMLDivElement>(null);
@@ -202,7 +204,7 @@ const DropdownMenu = memo(
             size="sm"
             onClick={handleToggle}
             className="p-1.5"
-            aria-label="Más opciones"
+            aria-label={messages.actions.moreOptions}
             aria-expanded={isOpen}
             aria-haspopup="menu"
             aria-controls={`${triggerId}-menu`}
@@ -213,6 +215,7 @@ const DropdownMenu = memo(
 
         {/* Menu */}
         {isOpen && (
+          // eslint-disable-next-line jsx-a11y/interactive-supports-focus
           <div
             id={`${triggerId}-menu`}
             className={cn(

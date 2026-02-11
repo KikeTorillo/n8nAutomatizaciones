@@ -2,6 +2,7 @@ import { memo, forwardRef, type ReactNode, type ElementType } from 'react';
 import { X } from 'lucide-react';
 import { cn } from '../lib/cn';
 import { IconButton } from '../atoms/IconButton';
+import { useUIMessages } from '../providers';
 
 export interface OverlayHeaderProps {
   /** Titulo del overlay */
@@ -64,6 +65,7 @@ const OverlayHeader = memo(
     },
     ref
   ) {
+    const { actions: messageActions } = useUIMessages();
     if (!title && !showCloseButton) return null;
 
     return (
@@ -98,7 +100,7 @@ const OverlayHeader = memo(
           {showCloseButton && onClose && (
             <IconButton
               icon={X}
-              label="Cerrar"
+              label={messageActions.close}
               variant="ghost"
               size="md"
               onClick={onClose}

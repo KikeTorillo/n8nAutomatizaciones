@@ -11,6 +11,9 @@ import { extractData, extractDataOr } from '@/lib/apiHelpers';
  * Ciclo: borrador -> en_proceso -> completado -> ajustado | cancelado
  *
  * Feb 2026 - Migrado a TypeScript
+ * - Usa extractData/extractDataOr para respuestas API
+ * - Helpers de sanitización e invalidación para reducir duplicación
+ * - createCRUDErrorHandler en todas las mutations
  */
 
 // ==================== TIPOS ====================
@@ -52,6 +55,51 @@ interface BuscarItemConteoParams {
   codigo: string;
 }
 
+// ==================== HELPERS ====================
+
+/**
+ * Sanitiza parámetros removiendo valores vacíos
+ */
+function sanitizeParams(
+  params: Record<string, unknown>
+): Record<string, unknown> {
+  return Object.entries(params).reduce<Record<string, unknown>>(
+    (acc, [key, value]) => {
+      if (value !== '' && value !== null && value !== undefined) {
+        acc[key] = value;
+      }
+      return acc;
+    },
+    {}
+  );
+}
+
+/**
+ * Helper para invalidar queries relacionadas con conteos
+ */
+function invalidateConteosQueries(
+  queryClient: ReturnType<typeof useQueryClient>,
+  conteoId?: number
+) {
+  // Invalidar detalle específico si se proporciona ID
+  if (conteoId) {
+    queryClient.invalidateQueries({
+      queryKey: queryKeys.inventario.conteos.detail(conteoId),
+      refetchType: 'active',
+    });
+  }
+
+  // Invalidar listas y estadísticas
+  queryClient.invalidateQueries({
+    queryKey: queryKeys.inventario.conteos.all,
+    refetchType: 'active',
+  });
+  queryClient.invalidateQueries({
+    queryKey: queryKeys.inventario.conteos.estadisticas({}),
+    refetchType: 'active',
+  });
+}
+
 // ==================== CONSULTAS ====================
 
 /**
@@ -63,15 +111,10 @@ export function useConteos(params: ConteosParams = {}) {
   return useQuery({
     queryKey: queryKeys.inventario.conteos.list(params),
     queryFn: async () => {
-      const sanitizedParams = Object.entries({
+      const sanitizedParams = sanitizeParams({
         ...params,
         sucursal_id: params.sucursal_id || getSucursalId() || undefined,
-      }).reduce<Record<string, unknown>>((acc, [key, value]) => {
-        if (value !== '' && value !== null && value !== undefined) {
-          acc[key] = value;
-        }
-        return acc;
-      }, {});
+      });
 
       const response = await conteosApi.listar(sanitizedParams);
       return extractDataOr(response, { conteos: [], totales: {} });
@@ -110,15 +153,7 @@ export function useEstadisticasConteos(params: Record<string, unknown> = {}) {
   return useQuery({
     queryKey: queryKeys.inventario.conteos.estadisticas(params),
     queryFn: async () => {
-      const sanitizedParams = Object.entries(params).reduce<
-        Record<string, unknown>
-      >((acc, [key, value]) => {
-        if (value !== '' && value !== null && value !== undefined) {
-          acc[key] = value;
-        }
-        return acc;
-      }, {});
-
+      const sanitizedParams = sanitizeParams(params);
       const response = await conteosApi.obtenerEstadisticas(sanitizedParams);
       return extractDataOr(response, {});
     },
@@ -137,28 +172,21 @@ export function useCrearConteo() {
 
   return useMutation({
     mutationFn: async (data: CrearConteoData) => {
-      const sanitized = {
+      const sanitized = sanitizeParams({
         tipo_conteo: data.tipo_conteo,
         sucursal_id: data.sucursal_id || getSucursalId() || undefined,
         filtros: data.filtros || {},
-        fecha_programada: data.fecha_programada || undefined,
-        usuario_contador_id: data.usuario_contador_id || undefined,
-        usuario_supervisor_id: data.usuario_supervisor_id || undefined,
-        notas: data.notas?.trim() || undefined,
-      };
+        fecha_programada: data.fecha_programada,
+        usuario_contador_id: data.usuario_contador_id,
+        usuario_supervisor_id: data.usuario_supervisor_id,
+        notas: data.notas?.trim(),
+      });
 
       const response = await conteosApi.crear(sanitized);
       return extractData(response);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.inventario.conteos.all,
-        refetchType: 'active',
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.inventario.conteos.estadisticas({}),
-        refetchType: 'active',
-      });
+      invalidateConteosQueries(queryClient);
     },
     onError: createCRUDErrorHandler('create', 'Conteo', {
       409: 'Ya existe un conteo en proceso',
@@ -178,14 +206,7 @@ export function useIniciarConteo() {
       return extractData(response);
     },
     onSuccess: (_, id) => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.inventario.conteos.detail(id),
-        refetchType: 'active',
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.inventario.conteos.all,
-        refetchType: 'active',
-      });
+      invalidateConteosQueries(queryClient, id);
     },
     onError: createCRUDErrorHandler('update', 'Conteo'),
   });
@@ -203,17 +224,20 @@ export function useRegistrarConteoItem() {
       cantidad_contada,
       notas,
     }: RegistrarConteoItemParams) => {
-      const response = await conteosApi.registrarConteo(itemId, {
+      const sanitized = sanitizeParams({
         cantidad_contada,
-        notas: notas?.trim() || undefined,
+        notas: notas?.trim(),
       });
+
+      const response = await conteosApi.registrarConteo(itemId, sanitized);
       return extractData(response);
     },
     onSuccess: (data) => {
-      // Invalidar el conteo padre para actualizar resumen
-      if (data?.conteo_id) {
+      // Invalidar el conteo padre si está disponible, sino invalidar lista
+      const conteoId = data?.conteo_id;
+      if (conteoId) {
         queryClient.invalidateQueries({
-          queryKey: queryKeys.inventario.conteos.detail(data.conteo_id),
+          queryKey: queryKeys.inventario.conteos.detail(conteoId),
           refetchType: 'active',
         });
       } else {
@@ -239,18 +263,7 @@ export function useCompletarConteo() {
       return extractData(response);
     },
     onSuccess: (_, id) => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.inventario.conteos.detail(id),
-        refetchType: 'active',
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.inventario.conteos.all,
-        refetchType: 'active',
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.inventario.conteos.estadisticas({}),
-        refetchType: 'active',
-      });
+      invalidateConteosQueries(queryClient, id);
     },
     onError: createCRUDErrorHandler('update', 'Conteo'),
   });
@@ -268,19 +281,9 @@ export function useAplicarAjustesConteo() {
       return extractData(response);
     },
     onSuccess: (_, id) => {
-      // Invalidar conteos
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.inventario.conteos.detail(id),
-        refetchType: 'active',
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.inventario.conteos.all,
-        refetchType: 'active',
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.inventario.conteos.estadisticas({}),
-        refetchType: 'active',
-      });
+      // Invalidar queries de conteos
+      invalidateConteosQueries(queryClient, id);
+
       // Invalidar datos de inventario afectados (solo queries activas)
       queryClient.invalidateQueries({
         queryKey: queryKeys.inventario.movimientos.all,
@@ -307,24 +310,15 @@ export function useCancelarConteo() {
 
   return useMutation({
     mutationFn: async ({ id, motivo }: CancelarConteoParams) => {
-      const response = await conteosApi.cancelar(id, {
-        motivo: motivo?.trim() || undefined,
+      const sanitized = sanitizeParams({
+        motivo: motivo?.trim(),
       });
+
+      const response = await conteosApi.cancelar(id, sanitized);
       return extractData(response);
     },
     onSuccess: (_, { id }) => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.inventario.conteos.detail(id),
-        refetchType: 'active',
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.inventario.conteos.all,
-        refetchType: 'active',
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.inventario.conteos.estadisticas({}),
-        refetchType: 'active',
-      });
+      invalidateConteosQueries(queryClient, id);
     },
     onError: createCRUDErrorHandler('delete', 'Conteo'),
   });

@@ -1,12 +1,11 @@
 import {
   forwardRef,
   memo,
-  isValidElement,
-  createElement,
   type ButtonHTMLAttributes,
   type ReactNode,
 } from 'react';
 import { cn } from '../lib/cn';
+import { resolveIcon } from '../lib/resolveIcon';
 import { Loader2 } from 'lucide-react';
 import {
   ICON_BUTTON_VARIANTS,
@@ -15,22 +14,6 @@ import {
 } from '../constants';
 
 type IconComponent = React.ComponentType<{ className?: string }>;
-
-/** Resuelve icon como componente o JSX */
-const resolveIcon = (
-  icon: ReactNode | IconComponent,
-  sizeClass: string
-): ReactNode => {
-  if (!icon) return null;
-  if (isValidElement(icon)) return icon;
-  if (
-    typeof icon === 'function' ||
-    (typeof icon === 'object' && '$$typeof' in icon)
-  ) {
-    return createElement(icon as IconComponent, { className: sizeClass });
-  }
-  return icon as ReactNode;
-};
 
 export interface IconButtonProps
   extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children'> {

@@ -21,7 +21,7 @@ import CompletarCitaModal from '@/pages/citas/components/CompletarCitaModal';
 import NoShowModal from '@/pages/citas/components/NoShowModal';
 import CancelarCitaModal from '@/pages/citas/components/CancelarCitaModal';
 import CalendarioMensual from '@/pages/citas/components/CalendarioMensual';
-import AgendamientoPageLayout from '@/components/shared/agendamiento/AgendamientoPageLayout';
+import AgendamientoPageLayout from './components/agendamiento/AgendamientoPageLayout';
 import { useModalManager, useFilters, usePagination } from '@/hooks/utils';
 import {
   useCitas,

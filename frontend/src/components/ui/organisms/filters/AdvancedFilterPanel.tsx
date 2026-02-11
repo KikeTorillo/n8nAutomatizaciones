@@ -18,6 +18,7 @@ import {
 import { FilterSection, FilterCheckbox } from '../../molecules/FilterSection';
 import { FilterField } from '../../molecules/FilterField';
 import { SavedSearchList, type SavedSearch } from './SavedSearchList';
+import { useUIMessages } from '../../providers';
 import type { SelectOption } from '../../types';
 
 /**
@@ -111,6 +112,7 @@ const AdvancedFilterPanel = memo(
       },
       ref
     ) {
+      const messages = useUIMessages();
       const [isOpen, setIsOpen] = useState(defaultOpen);
 
       // Manejar cambio de filtro individual
@@ -195,7 +197,7 @@ const AdvancedFilterPanel = memo(
                 aria-controls="filter-panel-content"
               >
                 <Filter className="h-4 w-4" />
-                <span>Filtros</span>
+                <span>{messages.filters.title}</span>
                 {filtrosActivos > 0 && (
                   <span className={FILTER_COUNT_BADGE}>{filtrosActivos}</span>
                 )}
@@ -217,10 +219,12 @@ const AdvancedFilterPanel = memo(
                     'text-gray-600 dark:text-gray-400',
                     'hover:bg-gray-100 dark:hover:bg-gray-700'
                   )}
-                  aria-label="Limpiar todos los filtros"
+                  aria-label={messages.filters.clear}
                 >
                   <RotateCcw className="h-4 w-4" />
-                  <span className="hidden sm:inline">Limpiar</span>
+                  <span className="hidden sm:inline">
+                    {messages.actions.clear}
+                  </span>
                 </button>
               )}
             </div>
@@ -232,7 +236,7 @@ const AdvancedFilterPanel = memo(
               <div className={FILTER_GRID_LAYOUTS.default}>
                 {/* Columna 1: Checkboxes y checkbox-groups */}
                 <div className="space-y-4">
-                  <FilterSection title="Filtros" icon={Filter}>
+                  <FilterSection title={messages.filters.title} icon={Filter}>
                     {filterConfig
                       .filter(
                         (c) =>
@@ -251,7 +255,7 @@ const AdvancedFilterPanel = memo(
 
                 {/* Columna 3: Favoritos (Búsquedas guardadas) */}
                 <div className="space-y-4">
-                  <FilterSection title="Favoritos" icon={Star}>
+                  <FilterSection title={messages.filters.favorites} icon={Star}>
                     <SavedSearchList
                       busquedas={busquedasGuardadas}
                       onSelect={onAplicarBusqueda}
@@ -293,7 +297,7 @@ const AdvancedFilterPanel = memo(
                         )}
                       >
                         <Star className="h-4 w-4" />
-                        Guardar búsqueda actual
+                        {messages.filters.saveSearch}
                       </button>
                     )}
                   </FilterSection>

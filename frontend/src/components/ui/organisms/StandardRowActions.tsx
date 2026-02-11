@@ -4,6 +4,7 @@ import { cn } from '../lib/cn';
 import { Button } from '../atoms/Button';
 import { DropdownMenu } from './DropdownMenu';
 import { ConfirmDialog } from './ConfirmDialog';
+import { useUIMessages } from '../providers';
 
 /**
  * Acción extra para filas
@@ -83,6 +84,7 @@ function StandardRowActionsComponent<T = Record<string, unknown>>(
   }: StandardRowActionsProps<T>,
   ref: React.ForwardedRef<HTMLDivElement>
 ) {
+  const messages = useUIMessages();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -111,18 +113,18 @@ function StandardRowActionsComponent<T = Record<string, unknown>>(
       [
         onView && {
           icon: Eye,
-          label: 'Ver detalle',
+          label: messages.actions.viewDetail,
           onClick: () => onView(row),
         },
         onEdit &&
           canEdit && {
             icon: Edit2,
-            label: 'Editar',
+            label: messages.actions.edit,
             onClick: () => onEdit(row),
           },
         onStats && {
           icon: BarChart3,
-          label: 'Estadísticas',
+          label: messages.actions.statistics,
           onClick: () => onStats(row),
         },
         ...extraActions
@@ -136,7 +138,7 @@ function StandardRowActionsComponent<T = Record<string, unknown>>(
         onDelete &&
           canDelete && {
             icon: Trash2,
-            label: 'Eliminar',
+            label: messages.actions.delete,
             onClick: handleDeleteClick,
             variant: 'danger' as const,
           },
@@ -157,6 +159,7 @@ function StandardRowActionsComponent<T = Record<string, unknown>>(
       extraActions,
       row,
       handleDeleteClick,
+      messages,
     ]
   );
 
@@ -186,7 +189,7 @@ function StandardRowActionsComponent<T = Record<string, unknown>>(
               variant="ghost"
               size={size}
               className="p-1"
-              aria-label="Más acciones"
+              aria-label={messages.actions.moreOptions}
             >
               <MoreVertical className="w-4 h-4" />
             </Button>
@@ -220,8 +223,8 @@ function StandardRowActionsComponent<T = Record<string, unknown>>(
             size={buttonSize}
             onClick={() => onView(row)}
             className="p-1.5"
-            aria-label="Ver detalle"
-            title="Ver detalle"
+            aria-label={messages.actions.viewDetail}
+            title={messages.actions.viewDetail}
           >
             <Eye className={iconSize} />
           </Button>
@@ -233,8 +236,8 @@ function StandardRowActionsComponent<T = Record<string, unknown>>(
             size={buttonSize}
             onClick={() => onEdit(row)}
             className="p-1.5"
-            aria-label="Editar"
-            title="Editar"
+            aria-label={messages.actions.edit}
+            title={messages.actions.edit}
           >
             <Edit2 className={iconSize} />
           </Button>
@@ -246,8 +249,8 @@ function StandardRowActionsComponent<T = Record<string, unknown>>(
             size={buttonSize}
             onClick={() => onStats(row)}
             className="p-1.5"
-            aria-label="Estadísticas"
-            title="Estadísticas"
+            aria-label={messages.actions.statistics}
+            title={messages.actions.statistics}
           >
             <BarChart3 className={iconSize} />
           </Button>
@@ -283,8 +286,8 @@ function StandardRowActionsComponent<T = Record<string, unknown>>(
             size={buttonSize}
             onClick={handleDeleteClick}
             className="p-1.5 text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900/20"
-            aria-label="Eliminar"
-            title="Eliminar"
+            aria-label={messages.actions.delete}
+            title={messages.actions.delete}
           >
             <Trash2 className={iconSize} />
           </Button>

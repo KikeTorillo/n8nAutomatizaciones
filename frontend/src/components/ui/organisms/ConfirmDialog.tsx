@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { Modal } from './Modal';
 import { Button } from '../atoms/Button';
+import { useUIMessages } from '../providers';
 import type { ConfirmDialogVariant, ModalSize } from '../types';
 
 /**
@@ -62,8 +63,8 @@ const ConfirmDialog = memo(
       onConfirm,
       title,
       message,
-      confirmText = 'Confirmar',
-      cancelText = 'Cancelar',
+      confirmText,
+      cancelText,
       variant = 'warning',
       isLoading = false,
       disabled = false,
@@ -74,9 +75,14 @@ const ConfirmDialog = memo(
     },
     ref
   ) {
+    const messages = useUIMessages();
     const handleConfirm = () => {
       onConfirm();
     };
+
+    // Resolver textos con fallback a mensajes internacionalizables
+    const resolvedConfirmText = confirmText ?? messages.actions.confirm;
+    const resolvedCancelText = cancelText ?? messages.actions.cancel;
 
     // Configuración de variantes
     const variants: Record<ConfirmDialogVariant, VariantConfig> = {
@@ -112,7 +118,7 @@ const ConfirmDialog = memo(
 
     const config = variants[variant] || variants.warning;
     const Icon = customIcon || config.icon;
-    const finalConfirmText = confirmLabel || confirmText;
+    const finalConfirmText = confirmLabel || resolvedConfirmText;
 
     return (
       <Modal
@@ -154,7 +160,7 @@ const ConfirmDialog = memo(
               disabled={isLoading}
               className="px-6"
             >
-              {cancelText}
+              {resolvedCancelText}
             </Button>
             <Button
               onClick={handleConfirm}

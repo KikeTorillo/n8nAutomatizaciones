@@ -8,22 +8,64 @@
  * @since 2026-02-04
  */
 
-import { memo, useMemo } from 'react';
+import { memo, useMemo, CSSProperties } from 'react';
 import { CalendarPlus, Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+interface GoogleCalendarParams {
+  nombre: string;
+  descripcion?: string;
+  fecha: string;
+  hora?: string;
+  ubicacion: string;
+  url: string;
+}
+
+interface Ubicacion {
+  direccion?: string;
+  nombre?: string;
+}
+
+interface Evento {
+  nombre: string;
+  descripcion?: string;
+  fecha_evento: string;
+  hora_evento?: string;
+}
+
+interface Tema {
+  color_primario?: string;
+  color_secundario?: string;
+}
+
+export interface AddToCalendarProps {
+  /** Datos del evento */
+  evento: Evento;
+  /** Slug del evento (para .ics) */
+  slug?: string;
+  /** Array de ubicaciones del evento */
+  ubicaciones?: Ubicacion[];
+  /** Tema de colores */
+  tema?: Tema;
+  /** Si hay imagen de fondo (para contraste) */
+  tieneImagenFondo?: boolean;
+  /** Variante de estilo */
+  variant?: 'default' | 'minimal' | 'hero';
+  /** Clases adicionales */
+  className?: string;
+}
+
 /**
  * Genera URL para Google Calendar
- * @param {Object} params
- * @param {string} params.nombre - Nombre del evento
- * @param {string} params.descripcion - Descripción del evento
- * @param {string} params.fecha - Fecha del evento (YYYY-MM-DD)
- * @param {string} params.hora - Hora del evento (HH:mm)
- * @param {string} params.ubicacion - Dirección de la ubicación
- * @param {string} params.url - URL de la invitación
- * @returns {string} URL de Google Calendar
  */
-function generarGoogleCalendarUrl({ nombre, descripcion, fecha, hora, ubicacion, url }) {
+function generarGoogleCalendarUrl({
+  nombre,
+  descripcion,
+  fecha,
+  hora,
+  ubicacion,
+  url,
+}: GoogleCalendarParams): string {
   const fechaEvento = new Date(fecha);
   const horaInicio = hora || '12:00';
   const [horas, minutos] = horaInicio.split(':').map(Number);
@@ -32,7 +74,8 @@ function generarGoogleCalendarUrl({ nombre, descripcion, fecha, hora, ubicacion,
   // Evento de 4 horas por defecto
   const fechaFin = new Date(fechaEvento.getTime() + 4 * 60 * 60 * 1000);
 
-  const formatGCal = (d) => d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+  const formatGCal = (d: Date): string =>
+    d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
 
   const detalles = descripcion
     ? `${descripcion}\n\nMás información: ${url}`
@@ -51,19 +94,6 @@ function generarGoogleCalendarUrl({ nombre, descripcion, fecha, hora, ubicacion,
 
 /**
  * AddToCalendar - Botones para agregar a calendario
- *
- * @param {Object} props
- * @param {Object} props.evento - Datos del evento
- * @param {string} props.evento.nombre - Nombre del evento
- * @param {string} props.evento.descripcion - Descripción
- * @param {string} props.evento.fecha_evento - Fecha (YYYY-MM-DD)
- * @param {string} props.evento.hora_evento - Hora (HH:mm)
- * @param {string} props.slug - Slug del evento (para .ics)
- * @param {Array} props.ubicaciones - Array de ubicaciones del evento
- * @param {Object} props.tema - Tema de colores
- * @param {boolean} props.tieneImagenFondo - Si hay imagen de fondo (para contraste)
- * @param {string} props.variant - Variante de estilo: 'default' | 'minimal' | 'hero'
- * @param {string} props.className - Clases adicionales
  */
 function AddToCalendar({
   evento,
@@ -73,7 +103,7 @@ function AddToCalendar({
   tieneImagenFondo = false,
   variant = 'default',
   className = '',
-}) {
+}: AddToCalendarProps) {
   // URL actual para agregar a los detalles
   const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
 
@@ -100,11 +130,8 @@ function AddToCalendar({
   // URL para descargar .ics
   const icsUrl = slug ? `/api/v1/public/evento/${slug}/calendario` : null;
 
-  // No renderizar si no hay fecha
-  if (!evento?.fecha_evento) return null;
-
   // Estilos base según variante
-  const buttonStyles = useMemo(() => {
+  const buttonStyles = useMemo<CSSProperties>(() => {
     if (variant === 'hero' || tieneImagenFondo) {
       return {
         backgroundColor: 'rgba(0,0,0,0.4)',
@@ -126,6 +153,9 @@ function AddToCalendar({
     'inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all hover:scale-105',
     className
   );
+
+  // No renderizar si no hay fecha
+  if (!evento?.fecha_evento) return null;
 
   return (
     <div className="flex flex-wrap justify-center gap-3">

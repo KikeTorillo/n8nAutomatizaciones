@@ -1,9 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
-import { bloqueosApi } from '@/services/api/endpoints';
+import { bloqueosApi } from '@/services/api/modules/bloqueos.api';
 import { useToast } from '../utils/useToast';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 import { queryKeys } from '@/hooks/config';
+import { createCRUDHooks } from '@/hooks/factories/createCRUDHooks';
 
 // ==================== Interfaces ====================
 
@@ -45,46 +46,41 @@ interface BatchResultado {
   errores: string[];
 }
 
-// ==================== QUERY HOOKS ====================
+// ==================== CRUD FACTORY ====================
 
 /**
- * Hook para listar bloqueos con filtros
- * @param params - Filtros: { profesional_id, tipo_bloqueo, fecha_inicio, fecha_fin, solo_organizacionales, limite, offset }
- *
- * @example
- * const { data: bloqueos, isLoading } = useBloqueos({ profesional_id: 1 });
+ * Factory CRUD para bloqueos
+ * Genera: useList, useDetail, useCreate, useUpdate, useDelete
  */
-export const useBloqueos = (params: Record<string, unknown> = {}) => {
-  return useQuery({
-    queryKey: queryKeys.agendamiento.bloqueos.list(params),
-    queryFn: async () => {
-      const response = await bloqueosApi.listar(params);
-      // El API devuelve { success, data: { bloqueos, paginacion, filtros_aplicados } }
-      return (response as any).data.data?.bloqueos || [];
-    },
-    staleTime: STALE_TIMES.DYNAMIC, // 2 min - Ene 2026: bloqueos afectan disponibilidad en tiempo real
-    enabled: true,
-  });
-};
+const bloqueosCRUD = createCRUDHooks({
+  name: 'bloqueo',
+  namePlural: 'bloqueos',
+  api: bloqueosApi,
+  baseKey: 'bloqueos',
+  apiMethods: {
+    list: 'listar',
+    get: 'obtener',
+    create: 'crear',
+    update: 'actualizar',
+    delete: 'eliminar',
+  },
+  invalidateOnCreate: ['bloqueos'],
+  invalidateOnUpdate: ['bloqueos'],
+  invalidateOnDelete: ['bloqueos'],
+  staleTime: STALE_TIMES.DYNAMIC, // 2 min - Ene 2026: bloqueos afectan disponibilidad en tiempo real
+  // El API devuelve { success, data: { bloqueos, paginacion, filtros_aplicados } }
+  // transformList extrae solo el array de bloqueos
+  transformList: (data: any) => data?.bloqueos || [],
+});
 
-/**
- * Hook para obtener un bloqueo por ID
- * @param id - ID del bloqueo
- *
- * @example
- * const { data: bloqueo } = useBloqueo(1);
- */
-export const useBloqueo = (id: number | undefined | null) => {
-  return useQuery({
-    queryKey: [...queryKeys.agendamiento.bloqueos.all, 'detail', id],
-    queryFn: async () => {
-      const response = await bloqueosApi.obtener(id!);
-      return (response as any).data;
-    },
-    enabled: !!id,
-    staleTime: STALE_TIMES.SEMI_STATIC,
-  });
-};
+// Re-exportar hooks CRUD base desde la factory
+export const useBloqueos = bloqueosCRUD.useList;
+export const useBloqueo = bloqueosCRUD.useDetail;
+export const useCrearBloqueo = bloqueosCRUD.useCreate;
+export const useActualizarBloqueo = bloqueosCRUD.useUpdate;
+export const useEliminarBloqueo = bloqueosCRUD.useDelete;
+
+// ==================== QUERY HOOKS ESPECIALIZADOS ====================
 
 /**
  * Hook para obtener bloqueos de un profesional especifico
@@ -205,129 +201,7 @@ export const useBloqueosPorTipo = (
   });
 };
 
-// ==================== MUTATION HOOKS ====================
-
-/**
- * Hook para crear un bloqueo
- *
- * @example
- * const crearBloqueo = useCrearBloqueo();
- * crearBloqueo.mutate({
- *   tipo_bloqueo: 'vacaciones',
- *   titulo: 'Vacaciones de verano',
- *   fecha_inicio: '2025-07-01',
- *   fecha_fin: '2025-07-15',
- *   profesional_id: 1
- * });
- */
-export const useCrearBloqueo = () => {
-  const queryClient = useQueryClient();
-  const toast = useToast();
-
-  return useMutation({
-    mutationFn: async (data: BloqueoData) => {
-      // Sanitizar campos opcionales vacios
-      const sanitizedData = {
-        ...data,
-        descripcion: data.descripcion?.trim() || undefined,
-        hora_inicio: data.hora_inicio?.trim() || undefined,
-        hora_fin: data.hora_fin?.trim() || undefined,
-        mensaje_clientes: data.mensaje_clientes?.trim() || undefined,
-        notas_internas: data.notas_internas?.trim() || undefined,
-        profesional_id: data.profesional_id || undefined,
-        servicio_id: data.servicio_id || undefined,
-      };
-
-      const response = await bloqueosApi.crear(sanitizedData);
-      return (response as any).data;
-    },
-    onSuccess: (data: unknown) => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.agendamiento.bloqueos.all,
-        refetchType: 'active',
-      });
-      toast.success('Bloqueo creado exitosamente');
-      return data;
-    },
-    onError: createCRUDErrorHandler('create', 'Bloqueo'),
-  });
-};
-
-/**
- * Hook para actualizar un bloqueo
- *
- * @example
- * const actualizarBloqueo = useActualizarBloqueo();
- * actualizarBloqueo.mutate({
- *   id: 1,
- *   titulo: 'Vacaciones modificadas'
- * });
- */
-export const useActualizarBloqueo = () => {
-  const queryClient = useQueryClient();
-  const toast = useToast();
-
-  return useMutation({
-    mutationFn: async ({ id, ...data }: ActualizarBloqueoVariables) => {
-      // Sanitizar campos opcionales vacios
-      const sanitizedData = {
-        ...data,
-        descripcion: data.descripcion?.trim() || undefined,
-        hora_inicio: data.hora_inicio?.trim() || undefined,
-        hora_fin: data.hora_fin?.trim() || undefined,
-        mensaje_clientes: data.mensaje_clientes?.trim() || undefined,
-        notas_internas: data.notas_internas?.trim() || undefined,
-      };
-
-      const response = await bloqueosApi.actualizar(id, sanitizedData);
-      return (response as any).data;
-    },
-    onSuccess: (data: unknown, variables: ActualizarBloqueoVariables) => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.agendamiento.bloqueos.all,
-        refetchType: 'active',
-      });
-      queryClient.invalidateQueries({
-        queryKey: [
-          ...queryKeys.agendamiento.bloqueos.all,
-          'detail',
-          variables.id,
-        ],
-        refetchType: 'active',
-      });
-      toast.success('Bloqueo actualizado exitosamente');
-      return data;
-    },
-    onError: createCRUDErrorHandler('update', 'Bloqueo'),
-  });
-};
-
-/**
- * Hook para eliminar un bloqueo
- *
- * @example
- * const eliminarBloqueo = useEliminarBloqueo();
- * eliminarBloqueo.mutate(1);
- */
-export const useEliminarBloqueo = () => {
-  const queryClient = useQueryClient();
-  const toast = useToast();
-
-  return useMutation({
-    mutationFn: async (id: number) => {
-      const response = await bloqueosApi.eliminar(id);
-      return (response as any).data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.agendamiento.bloqueos.all,
-        refetchType: 'active',
-      });
-      toast.success('Bloqueo eliminado exitosamente');
-    },
-    onError: createCRUDErrorHandler('delete', 'Bloqueo'),
-  });
-};
+// ==================== MUTATION HOOKS ESPECIALIZADOS ====================
 
 /**
  * Hook para crear multiples bloqueos (batch)

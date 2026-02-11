@@ -12,6 +12,7 @@ import { Search, X } from 'lucide-react';
 import { cn } from '../lib/cn';
 import { SEARCH_INPUT_SIZES, getInputBaseStyles } from '../constants';
 import { useCombineRefs } from '../hooks/useCombineRefs';
+import { useUIMessages } from '../providers';
 import type { Size } from '../types';
 
 export interface SearchInputProps
@@ -76,7 +77,7 @@ const SearchInput = memo(
       onValueChange,
       onSearch,
       debounceMs = 300,
-      placeholder = 'Buscar...',
+      placeholder,
       size = 'md',
       showClear = true,
       autoFocus = false,
@@ -86,6 +87,8 @@ const SearchInput = memo(
     },
     ref
   ) {
+    const messages = useUIMessages();
+    const resolvedPlaceholder = placeholder ?? messages.forms.searchPlaceholder;
     const [internalValue, setInternalValue] = useState(value);
     const [internalRef, setRefs] = useCombineRefs<HTMLInputElement>(ref);
 
@@ -173,7 +176,8 @@ const SearchInput = memo(
           type="text"
           value={internalValue}
           onChange={handleChange}
-          placeholder={placeholder}
+          placeholder={resolvedPlaceholder}
+          // eslint-disable-next-line jsx-a11y/no-autofocus
           autoFocus={autoFocus}
           disabled={disabled}
           className={cn(
@@ -196,7 +200,7 @@ const SearchInput = memo(
               'dark:text-gray-500 dark:hover:text-gray-300',
               'transition-colors'
             )}
-            aria-label="Limpiar búsqueda"
+            aria-label={`${messages.actions.clear} ${messages.actions.search.toLowerCase()}`}
           >
             <X className={currentSize.icon} />
           </button>

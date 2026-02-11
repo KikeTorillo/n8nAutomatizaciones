@@ -8,6 +8,7 @@ import {
 import { cn } from '../lib/cn';
 import { PAGINATION_SIZES, SEMANTIC_COLORS } from '../constants';
 import type { PaginationInfo, PaginationSize } from '../types';
+import { useUIMessages } from '../providers';
 
 /**
  * Props del componente Pagination
@@ -46,6 +47,7 @@ export const Pagination = memo(
     },
     ref
   ) {
+    const messages = useUIMessages();
     const { page, limit, total, totalPages, hasNext, hasPrev } = pagination;
 
     // Calcular rango de items mostrados
@@ -110,11 +112,11 @@ export const Pagination = memo(
             aria-atomic="true"
             className="text-sm text-gray-600 dark:text-gray-400 order-2 sm:order-1"
           >
-            Mostrando{' '}
+            {messages.pagination.showing}{' '}
             <span className="font-medium text-gray-900 dark:text-gray-100">
               {startItem}-{endItem}
             </span>{' '}
-            de{' '}
+            {messages.pagination.of}{' '}
             <span className="font-medium text-gray-900 dark:text-gray-100">
               {total}
             </span>
@@ -137,7 +139,7 @@ export const Pagination = memo(
                     ? 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
                     : 'text-gray-400 dark:text-gray-600 cursor-not-allowed'
                 )}
-                aria-label="Ir a primera página"
+                aria-label={messages.pagination.first}
               >
                 <ChevronsLeft className={sizes.icon} />
               </button>
@@ -148,7 +150,7 @@ export const Pagination = memo(
               type="button"
               onClick={() => onPageChange(page - 1)}
               disabled={!hasPrev}
-              aria-label="Ir a página anterior"
+              aria-label={messages.pagination.previous}
               className={cn(
                 sizes.button,
                 'rounded-lg transition-colors flex items-center gap-1',
@@ -158,7 +160,9 @@ export const Pagination = memo(
               )}
             >
               <ChevronLeft className={sizes.icon} />
-              <span className="hidden sm:inline">Anterior</span>
+              <span className="hidden sm:inline">
+                {messages.pagination.previous}
+              </span>
             </button>
 
             {/* Números de página */}
@@ -177,7 +181,7 @@ export const Pagination = memo(
                     type="button"
                     onClick={() => onPageChange(pageNum as number)}
                     aria-current={pageNum === page ? 'page' : undefined}
-                    aria-label={`Ir a página ${pageNum}`}
+                    aria-label={`${messages.pagination.goToPage} ${pageNum}`}
                     className={cn(
                       sizes.page,
                       'rounded-lg font-medium transition-colors flex items-center justify-center',
@@ -202,7 +206,7 @@ export const Pagination = memo(
               type="button"
               onClick={() => onPageChange(page + 1)}
               disabled={!hasNext}
-              aria-label="Ir a página siguiente"
+              aria-label={messages.pagination.next}
               className={cn(
                 sizes.button,
                 'rounded-lg transition-colors flex items-center gap-1',
@@ -211,7 +215,9 @@ export const Pagination = memo(
                   : 'text-gray-400 dark:text-gray-600 cursor-not-allowed'
               )}
             >
-              <span className="hidden sm:inline">Siguiente</span>
+              <span className="hidden sm:inline">
+                {messages.pagination.next}
+              </span>
               <ChevronRight className={sizes.icon} />
             </button>
 
@@ -228,7 +234,7 @@ export const Pagination = memo(
                     ? 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
                     : 'text-gray-400 dark:text-gray-600 cursor-not-allowed'
                 )}
-                aria-label="Ir a última página"
+                aria-label={messages.pagination.last}
               >
                 <ChevronsRight className={sizes.icon} />
               </button>

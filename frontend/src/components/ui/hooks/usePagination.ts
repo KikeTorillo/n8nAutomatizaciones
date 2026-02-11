@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 
 export interface UsePaginationOptions {
   initialPage?: number;
@@ -75,10 +75,7 @@ export function usePagination({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, resetOnChange);
 
-  const queryParams = {
-    page,
-    limit,
-  };
+  const queryParams = useMemo(() => ({ page, limit }), [page, limit]);
 
   return {
     page,

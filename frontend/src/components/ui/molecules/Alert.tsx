@@ -3,6 +3,7 @@ import { AlertTriangle, Info, CheckCircle, XCircle } from 'lucide-react';
 import { cn } from '../lib/cn';
 import { ALERT_VARIANTS } from '../constants';
 import { IconButton } from '../atoms/IconButton';
+import { useUIMessages } from '../providers';
 import type { AlertVariant, LucideIcon } from '../types';
 
 // Mapeo de iconos por defecto según la variante
@@ -67,6 +68,7 @@ const Alert = memo(
     },
     ref
   ) {
+    const { overlay } = useUIMessages();
     const styles = ALERT_VARIANTS[variant] || ALERT_VARIANTS.info;
     const DefaultIcon = defaultIcons[variant] || defaultIcons.warning;
 
@@ -101,7 +103,7 @@ const Alert = memo(
                 {dismissible && onDismiss && (
                   <IconButton
                     icon={XCircle}
-                    label="Cerrar alerta"
+                    label={overlay.closeAlert}
                     variant="ghost"
                     size="sm"
                     onClick={onDismiss}

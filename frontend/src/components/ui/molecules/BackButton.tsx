@@ -1,7 +1,7 @@
 import { memo, forwardRef } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '../atoms/Button';
-import { useUILibraryRouter } from '../providers';
+import { useUILibraryRouter, useUIMessages } from '../providers';
 import type { ButtonVariant, Size } from '../types';
 
 type ButtonSize = Size | 'xl';
@@ -37,7 +37,7 @@ const BackButton = memo(
       to,
       onClick,
       onNavigate,
-      label = 'Volver',
+      label,
       variant = 'outline',
       size = 'sm',
       iconOnly = false,
@@ -46,6 +46,8 @@ const BackButton = memo(
     ref
   ) {
     const router = useUILibraryRouter();
+    const { actions } = useUIMessages();
+    const resolvedLabel = label ?? actions.back;
 
     const handleClick = () => {
       if (onClick) {
@@ -69,10 +71,10 @@ const BackButton = memo(
         size={size}
         onClick={handleClick}
         className={className}
-        aria-label={iconOnly ? label : undefined}
+        aria-label={iconOnly ? resolvedLabel : undefined}
       >
         <ArrowLeft className={`w-4 h-4 ${iconOnly ? '' : 'mr-2'}`} />
-        {!iconOnly && label}
+        {!iconOnly && resolvedLabel}
       </Button>
     );
   })

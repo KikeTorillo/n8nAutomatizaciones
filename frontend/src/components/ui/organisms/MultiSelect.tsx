@@ -12,6 +12,7 @@ import {
 import { cn } from '../lib/cn';
 import { Check, ChevronDown, X } from 'lucide-react';
 import { useClickOutsideRef } from '../hooks/useClickOutside';
+import { useUIMessages } from '../providers';
 
 /**
  * Opción para MultiSelect
@@ -64,13 +65,14 @@ const MultiSelect = memo(
       error,
       label,
       helper,
-      placeholder = 'Selecciona opciones',
+      placeholder,
       required = false,
       max,
       disabled = false,
     },
     ref
   ) {
+    const messages = useUIMessages();
     const [isOpen, setIsOpen] = useState(false);
     const [focusedIndex, setFocusedIndex] = useState(-1);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -230,7 +232,7 @@ const MultiSelect = memo(
                 ))
               ) : (
                 <span className="text-gray-500 dark:text-gray-400 text-sm">
-                  {placeholder}
+                  {placeholder || messages.forms.selectOptions}
                 </span>
               )}
             </div>
@@ -265,13 +267,13 @@ const MultiSelect = memo(
             >
               {options.length === 0 ? (
                 <div className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 text-center">
-                  No hay opciones disponibles
+                  {messages.states.noOptions}
                 </div>
               ) : (
                 <>
                   {max && (
                     <div className="px-4 py-2 text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700 border-b dark:border-gray-600">
-                      {value.length}/{max} seleccionados
+                      {value.length}/{max} {messages.forms.selected}
                     </div>
                   )}
                   {options.map((option, optIndex) => {
@@ -281,6 +283,7 @@ const MultiSelect = memo(
                       (max && value.length >= max && !isSelected);
 
                     return (
+                      // eslint-disable-next-line jsx-a11y/interactive-supports-focus, jsx-a11y/click-events-have-key-events
                       <div
                         key={option.value}
                         id={`${listboxId}-opt-${optIndex}`}

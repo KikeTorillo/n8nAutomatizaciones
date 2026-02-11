@@ -2,6 +2,7 @@ import { useEffect, memo, forwardRef } from 'react';
 import { X, CheckCircle, AlertCircle, Info, AlertTriangle } from 'lucide-react';
 import { cn } from '../lib/cn';
 import { TOAST_EXTENDED_VARIANTS, TOAST_CONTAINER_STYLES } from '../constants';
+import { useUIMessages } from '../providers';
 import type { ToastType } from '../types';
 
 export interface ToastProps {
@@ -40,6 +41,8 @@ const Toast = memo(
     { id, message, type = 'info', duration = 5000, onClose },
     ref
   ) {
+    const { overlay } = useUIMessages();
+
     useEffect(() => {
       if (duration && duration > 0) {
         const timer = setTimeout(() => {
@@ -80,7 +83,7 @@ const Toast = memo(
             variant.iconColor,
             'hover:opacity-70 transition-opacity flex-shrink-0'
           )}
-          aria-label="Cerrar notificación"
+          aria-label={overlay.closeNotification}
         >
           <X className="w-4 h-4" />
         </button>

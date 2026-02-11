@@ -138,7 +138,7 @@ describe('StandardRowActions', () => {
       />
     );
     expect(
-      screen.getByRole('button', { name: /más acciones/i })
+      screen.getByRole('button', { name: /más opciones/i })
     ).toBeInTheDocument();
     // Inline buttons should not be visible
     expect(
@@ -156,7 +156,7 @@ describe('StandardRowActions', () => {
         compact
       />
     );
-    await user.click(screen.getByRole('button', { name: /más acciones/i }));
+    await user.click(screen.getByRole('button', { name: /más opciones/i }));
     expect(screen.getByRole('menu')).toBeInTheDocument();
     expect(
       screen.getByRole('menuitem', { name: /editar/i })

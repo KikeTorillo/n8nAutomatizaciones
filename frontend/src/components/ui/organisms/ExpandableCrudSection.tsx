@@ -4,6 +4,7 @@ import { Button } from '../atoms/Button';
 import { ConfirmDialog } from './ConfirmDialog';
 import { ExpandableSection } from './ExpandableSection';
 import { useExpandableCrudLogic } from '../hooks/useExpandableCrudLogic';
+import { useUIMessages } from '../providers';
 
 /**
  * Contexto de acciones para renderItem
@@ -104,10 +105,10 @@ function ExpandableCrudSectionComponent<T extends { id?: string | number }>(
     items = [],
     isLoading = false,
     error = null,
-    emptyMessage = 'No hay registros',
-    loadingMessage = 'Cargando...',
-    errorMessage = 'Error al cargar datos',
-    addButtonText = 'Agregar',
+    emptyMessage,
+    loadingMessage,
+    errorMessage,
+    addButtonText,
     renderItem,
     renderList,
     listClassName = 'space-y-2',
@@ -123,6 +124,7 @@ function ExpandableCrudSectionComponent<T extends { id?: string | number }>(
   }: ExpandableCrudSectionProps<T>,
   ref: React.ForwardedRef<HTMLDivElement>
 ) {
+  const messages = useUIMessages();
   const {
     showDrawer,
     itemToEdit,
@@ -166,14 +168,16 @@ function ExpandableCrudSectionComponent<T extends { id?: string | number }>(
         {isLoading && (
           <div className="flex items-center gap-2 text-gray-500">
             <Loader2 className="h-4 w-4 animate-spin" />
-            <span className="text-sm">{loadingMessage}</span>
+            <span className="text-sm">
+              {loadingMessage ?? messages.states.loading}
+            </span>
           </div>
         )}
 
         {!!error && !isLoading && (
           <div className="flex items-center gap-2 text-red-500 text-sm">
             <AlertCircle className="h-4 w-4" />
-            <span>{errorMessage}</span>
+            <span>{errorMessage ?? messages.states.error}</span>
           </div>
         )}
 
@@ -181,7 +185,7 @@ function ExpandableCrudSectionComponent<T extends { id?: string | number }>(
           <>
             {items.length === 0 ? (
               <div className="text-sm text-gray-500 dark:text-gray-400 py-4 text-center">
-                {emptyMessage}
+                {emptyMessage ?? messages.states.empty}
               </div>
             ) : renderList ? (
               renderList(items, {
@@ -209,7 +213,7 @@ function ExpandableCrudSectionComponent<T extends { id?: string | number }>(
               className="w-full"
             >
               <Plus className="h-4 w-4 mr-2" />
-              {addButtonText}
+              {addButtonText ?? messages.actions.add}
             </Button>
           </>
         )}
@@ -220,10 +224,10 @@ function ExpandableCrudSectionComponent<T extends { id?: string | number }>(
           isOpen={!!itemToDelete}
           onClose={clearItemToDelete}
           onConfirm={handleDeleteConfirm}
-          title={deleteConfig.title || 'Confirmar eliminación'}
+          title={deleteConfig.title || messages.crud.confirmDelete}
           message={itemToDelete ? deleteConfig.getMessage(itemToDelete) : ''}
-          confirmText={deleteConfig.confirmText || 'Eliminar'}
-          cancelText={deleteConfig.cancelText || 'Cancelar'}
+          confirmText={deleteConfig.confirmText || messages.actions.delete}
+          cancelText={deleteConfig.cancelText || messages.actions.cancel}
           variant="danger"
           isLoading={
             deleteConfig.isDeleting ?? deleteConfig.mutation?.isPending

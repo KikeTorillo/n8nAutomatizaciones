@@ -56,10 +56,11 @@ export function useFilters<T extends Record<string, unknown>>(
     if (!persist || !moduloId) return null;
     if (typeof persist === 'object') return persist;
     // persist === true: usar localStorage como default
+    const storageKey = 'ui_last_filters';
     return {
       load: (key: string) => {
         try {
-          const stored = localStorage.getItem('nexo_last_filters');
+          const stored = localStorage.getItem(storageKey);
           if (!stored) return null;
           const all = JSON.parse(stored);
           return all[key] || null;
@@ -69,21 +70,21 @@ export function useFilters<T extends Record<string, unknown>>(
       },
       save: (key: string, filters: Record<string, unknown>) => {
         try {
-          const stored = localStorage.getItem('nexo_last_filters');
+          const stored = localStorage.getItem(storageKey);
           const all = stored ? JSON.parse(stored) : {};
           all[key] = filters;
-          localStorage.setItem('nexo_last_filters', JSON.stringify(all));
+          localStorage.setItem(storageKey, JSON.stringify(all));
         } catch {
           /* ignore */
         }
       },
       clear: (key: string) => {
         try {
-          const stored = localStorage.getItem('nexo_last_filters');
+          const stored = localStorage.getItem(storageKey);
           if (!stored) return;
           const all = JSON.parse(stored);
           delete all[key];
-          localStorage.setItem('nexo_last_filters', JSON.stringify(all));
+          localStorage.setItem(storageKey, JSON.stringify(all));
         } catch {
           /* ignore */
         }

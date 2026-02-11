@@ -1,6 +1,7 @@
 import { memo, useCallback, forwardRef } from 'react';
 import { Search, X } from 'lucide-react';
 import { useIconPickerLogic } from '../../hooks/useIconPickerLogic';
+import { useUIMessages } from '../../providers';
 import IconPickerButton from './IconPickerButton';
 
 /**
@@ -24,6 +25,7 @@ export const IconPicker = memo(
     { value, onChange, error },
     ref
   ) {
+    const messages = useUIMessages();
     const {
       busqueda,
       setBusqueda,
@@ -55,7 +57,7 @@ export const IconPicker = memo(
             </div>
             <div className="flex-1">
               <p className="text-sm font-medium text-primary-700 dark:text-primary-300">
-                Icono seleccionado
+                {messages.iconPicker.selected}
               </p>
               <p className="text-xs text-primary-600 dark:text-primary-400 font-mono">
                 {value}
@@ -65,8 +67,8 @@ export const IconPicker = memo(
               type="button"
               onClick={handleClear}
               className="p-1 text-primary-500 hover:text-primary-700 dark:hover:text-primary-300 hover:bg-primary-100 dark:hover:bg-primary-800 rounded"
-              title="Quitar icono"
-              aria-label="Quitar icono seleccionado"
+              title={messages.iconPicker.removeSelected}
+              aria-label={messages.iconPicker.removeSelected}
             >
               <X size={16} />
             </button>
@@ -80,7 +82,7 @@ export const IconPicker = memo(
             type="text"
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
-            placeholder="Buscar icono..."
+            placeholder={messages.iconPicker.searchPlaceholder}
             className="w-full pl-9 pr-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
           />
         </div>
@@ -96,7 +98,7 @@ export const IconPicker = memo(
                 : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
             }`}
           >
-            Todos ({todosLosIconos.length})
+            {messages.iconPicker.all} ({todosLosIconos.length})
           </button>
           {categorias.map((cat) => (
             <button
@@ -129,7 +131,7 @@ export const IconPicker = memo(
             </div>
           ) : (
             <p className="text-center text-sm text-gray-500 dark:text-gray-400 py-4">
-              No se encontraron iconos con "{busqueda}"
+              {messages.iconPicker.noResults} "{busqueda}"
             </p>
           )}
         </div>
@@ -137,7 +139,9 @@ export const IconPicker = memo(
         {/* Contador */}
         <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
           {iconosFiltrados.length} iconos{' '}
-          {categoriaActiva ? `en ${categoriaActiva}` : 'disponibles'}
+          {categoriaActiva
+            ? `${messages.iconPicker.inCategory} ${categoriaActiva}`
+            : messages.iconPicker.available}
         </p>
 
         {error && (

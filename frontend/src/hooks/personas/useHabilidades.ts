@@ -3,6 +3,7 @@
  * Fase 4 del Plan de Empleados Competitivo
  * Enero 2026
  * Feb 2026 - Migrado a TypeScript
+ * Feb 2026 - Migrado CRUD del catálogo a createCRUDHooks factory
  */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/app/queryClient';
@@ -11,6 +12,7 @@ import { useToast } from '@/hooks/utils';
 import { createCRUDErrorHandler } from '@/hooks/config/errorHandlerFactory';
 import { queryKeys } from '@/hooks/config';
 import { extractData } from '@/lib/apiHelpers';
+import { createCRUDHooks } from '@/hooks/factories/createCRUDHooks';
 
 // ==================== INTERFACES ====================
 
@@ -72,11 +74,6 @@ interface EmpleadoQueryOptions {
   enabled?: boolean;
 }
 
-interface ActualizarCatalogoParams {
-  habilidadId: number;
-  data: Partial<HabilidadCatalogo>;
-}
-
 interface AsignarHabilidadParams {
   profesionalId: number;
   data: Record<string, unknown>;
@@ -135,41 +132,47 @@ export const catalogoKeys = queryKeys.personas.habilidades.catalogo;
 /** @deprecated Usar queryKeys.personas.habilidades.empleado */
 export const habilidadesEmpleadoKeys = queryKeys.personas.habilidades.empleado;
 
+// ==================== FACTORY CRUD CATÁLOGO ====================
+
+const catalogoCRUD = createCRUDHooks<HabilidadCatalogo, CatalogoFiltros>({
+  name: 'habilidad',
+  namePlural: 'habilidades',
+  api: habilidadesApi,
+  baseKey: 'catalogo-habilidades',
+  apiMethods: {
+    list: 'listar',
+    get: 'obtener',
+    create: 'crear',
+    update: 'actualizar',
+    delete: 'eliminar',
+  },
+  invalidateOnCreate: ['catalogo-habilidades'],
+  invalidateOnUpdate: ['catalogo-habilidades'],
+  invalidateOnDelete: ['catalogo-habilidades'],
+  successMessages: {
+    create: 'Habilidad creada en catálogo',
+    update: 'Habilidad actualizada',
+    delete: 'Habilidad eliminada del catálogo',
+  },
+});
+
 // ==================== HOOKS CATÁLOGO ====================
 
 /**
  * Lista catálogo de habilidades de la organización
+ * @deprecated Factory-generated hook
  */
-export function useCatalogoHabilidades(options: CatalogoQueryOptions = {}) {
-  const { filtros = {}, enabled = true } = options;
-
-  return useQuery({
-    queryKey: catalogoKeys.list(filtros),
-    queryFn: async () => {
-      const response = await habilidadesApi.listar(filtros);
-      return extractData(response);
-    },
-    enabled,
-    staleTime: STALE_TIMES.FREQUENT,
-  });
-}
+export const useCatalogoHabilidades = catalogoCRUD.useList;
 
 /**
  * Obtiene una habilidad del catálogo
+ * @deprecated Factory-generated hook
  */
-export function useHabilidadCatalogo(habilidadId: number | null | undefined) {
-  return useQuery({
-    queryKey: catalogoKeys.detail(habilidadId!),
-    queryFn: async () => {
-      const response = await habilidadesApi.obtener(habilidadId!);
-      return extractData(response);
-    },
-    enabled: !!habilidadId,
-  });
-}
+export const useHabilidadCatalogo = catalogoCRUD.useDetail;
 
 /**
  * Lista profesionales con una habilidad específica
+ * Hook especializado (no CRUD)
  */
 export function useProfesionalesConHabilidad(
   habilidadId: number | null | undefined,
@@ -195,79 +198,21 @@ export function useProfesionalesConHabilidad(
 
 /**
  * Crea una habilidad en el catálogo
+ * @deprecated Factory-generated hook
  */
-export function useCrearHabilidadCatalogo() {
-  const queryClient = useQueryClient();
-  const toast = useToast();
-
-  return useMutation({
-    mutationFn: async (data: Partial<HabilidadCatalogo>) => {
-      const response = await habilidadesApi.crear(data as any);
-      return extractData(response);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: catalogoKeys.lists(),
-        refetchType: 'active',
-      });
-      toast.success('Habilidad creada en catálogo');
-    },
-    onError: createCRUDErrorHandler('create', 'Habilidad'),
-  });
-}
+export const useCrearHabilidadCatalogo = catalogoCRUD.useCreate;
 
 /**
  * Actualiza una habilidad del catálogo
+ * @deprecated Factory-generated hook
  */
-export function useActualizarHabilidadCatalogo() {
-  const queryClient = useQueryClient();
-  const toast = useToast();
-
-  return useMutation({
-    mutationFn: async ({ habilidadId, data }: ActualizarCatalogoParams) => {
-      const response = await habilidadesApi.actualizar(
-        habilidadId,
-        data as any
-      );
-      return extractData(response);
-    },
-    onSuccess: (_data: unknown, variables: ActualizarCatalogoParams) => {
-      queryClient.invalidateQueries({
-        queryKey: catalogoKeys.lists(),
-        refetchType: 'active',
-      });
-      queryClient.invalidateQueries({
-        queryKey: catalogoKeys.detail(variables.habilidadId),
-        refetchType: 'active',
-      });
-      toast.success('Habilidad actualizada');
-    },
-    onError: createCRUDErrorHandler('update', 'Habilidad'),
-  });
-}
+export const useActualizarHabilidadCatalogo = catalogoCRUD.useUpdate;
 
 /**
  * Elimina una habilidad del catálogo
+ * @deprecated Factory-generated hook
  */
-export function useEliminarHabilidadCatalogo() {
-  const queryClient = useQueryClient();
-  const toast = useToast();
-
-  return useMutation({
-    mutationFn: async (habilidadId: number) => {
-      const response = await habilidadesApi.eliminar(habilidadId);
-      return extractData(response);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: catalogoKeys.lists(),
-        refetchType: 'active',
-      });
-      toast.success('Habilidad eliminada del catálogo');
-    },
-    onError: createCRUDErrorHandler('delete', 'Habilidad'),
-  });
-}
+export const useEliminarHabilidadCatalogo = catalogoCRUD.useDelete;
 
 // ==================== HOOKS HABILIDADES EMPLEADO ====================
 

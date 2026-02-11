@@ -14,7 +14,7 @@ import {
   DataTableActionButton,
   ListadoCRUDPage,
 } from '@/components/ui';
-import AgendamientoPageLayout from '@/components/shared/agendamiento/AgendamientoPageLayout';
+import AgendamientoPageLayout from '@/pages/citas/components/agendamiento/AgendamientoPageLayout';
 import ServicioFormDrawer from '@/pages/servicios/components/ServicioFormDrawer';
 import ProfesionalesServicioModal from '@/pages/servicios/components/ProfesionalesServicioModal';
 import ServiciosSinProfesionalesAlert from '@/pages/servicios/components/ServiciosSinProfesionalesAlert';

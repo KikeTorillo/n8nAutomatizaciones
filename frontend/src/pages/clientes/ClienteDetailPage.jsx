@@ -16,7 +16,7 @@
  */
 
 import { lazy, Suspense, useMemo, useState } from 'react';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import {
   Edit,
   Phone,
@@ -30,11 +30,7 @@ import {
   TrendingUp,
   CreditCard,
 } from 'lucide-react';
-import {
-  Button,
-  LoadingSpinner,
-  BaseDetailLayout,
-} from '@/components/ui';
+import { Button, LoadingSpinner, BaseDetailLayout } from '@/components/ui';
 import ClienteEtiquetasEditor from '@/pages/clientes/components/ClienteEtiquetasEditor';
 import ClienteFormDrawer from '@/pages/clientes/components/ClienteFormDrawer';
 import { useCliente, useEstadisticasCliente } from '@/hooks/personas';
@@ -46,7 +42,9 @@ import ClienteGeneralTab from './tabs/ClienteGeneralTab';
 // Tabs secundarios (carga lazy para mejor performance)
 const ClienteTimelineTab = lazy(() => import('./tabs/ClienteTimelineTab'));
 const ClienteDocumentosTab = lazy(() => import('./tabs/ClienteDocumentosTab'));
-const ClienteOportunidadesTab = lazy(() => import('./tabs/ClienteOportunidadesTab'));
+const ClienteOportunidadesTab = lazy(
+  () => import('./tabs/ClienteOportunidadesTab')
+);
 const ClienteCreditoTab = lazy(() => import('./tabs/ClienteCreditoTab'));
 
 // Fallback para tabs lazy
@@ -173,7 +171,6 @@ function ClienteHeaderContent({ cliente, onEdit }) {
  * Refactorizado para usar BaseDetailLayout (Ene 2026)
  */
 function ClienteDetailPage() {
-  const navigate = useNavigate();
   const { id } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -189,14 +186,19 @@ function ClienteDetailPage() {
   };
 
   // Obtener datos del cliente
-  const { data: cliente, isLoading: loadingCliente, error, refetch } = useCliente(id);
+  const {
+    data: cliente,
+    isLoading: loadingCliente,
+    error,
+    refetch,
+  } = useCliente(id);
 
   // Obtener estadísticas del cliente (Vista 360°)
   const { data: estadisticas } = useEstadisticasCliente(id);
 
   // Obtener usuarios para asignación de tareas
   const { data: usuariosData } = useUsuarios({ activo: true, limit: 100 });
-  const usuarios = usuariosData?.usuarios || [];
+  const usuarios = usuariosData?.data || [];
 
   // Memoizar el contenido del header
   const headerContent = useMemo(() => {
@@ -214,10 +216,7 @@ function ClienteDetailPage() {
     // Tab general carga sin Suspense (eager)
     if (activeTab === 'general') {
       return (
-        <ClienteGeneralTab
-          cliente={cliente}
-          estadisticas={estadisticas}
-        />
+        <ClienteGeneralTab cliente={cliente} estadisticas={estadisticas} />
       );
     }
 
@@ -226,18 +225,11 @@ function ClienteDetailPage() {
     switch (activeTab) {
       case 'historial':
         content = (
-          <ClienteTimelineTab
-            clienteId={parseInt(id)}
-            usuarios={usuarios}
-          />
+          <ClienteTimelineTab clienteId={parseInt(id)} usuarios={usuarios} />
         );
         break;
       case 'documentos':
-        content = (
-          <ClienteDocumentosTab
-            clienteId={parseInt(id)}
-          />
-        );
+        content = <ClienteDocumentosTab clienteId={parseInt(id)} />;
         break;
       case 'oportunidades':
         content = (
@@ -248,26 +240,15 @@ function ClienteDetailPage() {
         );
         break;
       case 'credito':
-        content = (
-          <ClienteCreditoTab
-            clienteId={parseInt(id)}
-          />
-        );
+        content = <ClienteCreditoTab clienteId={parseInt(id)} />;
         break;
       default:
         return (
-          <ClienteGeneralTab
-            cliente={cliente}
-            estadisticas={estadisticas}
-          />
+          <ClienteGeneralTab cliente={cliente} estadisticas={estadisticas} />
         );
     }
 
-    return (
-      <Suspense fallback={<TabLoadingFallback />}>
-        {content}
-      </Suspense>
-    );
+    return <Suspense fallback={<TabLoadingFallback />}>{content}</Suspense>;
   };
 
   return (
